@@ -879,6 +879,14 @@ function RelationshipReviewForm({
 }) {
   const [open, setOpen] = useState(false);
   const [decision, setDecision] = useState<'rejected' | 'ambiguous' | 'verified'>('ambiguous');
+  const [relationshipType, setRelationshipType] = useState<'same_payoff' | 'logical_implication'>(
+    relationship.relationship_type === 'logical_implication'
+      ? 'logical_implication'
+      : 'same_payoff',
+  );
+  const [implicationDirection, setImplicationDirection] = useState<
+    'left_to_right' | 'right_to_left'
+  >('left_to_right');
   const [reviewer, setReviewer] = useState('');
   const [reason, setReason] = useState('');
   const [assertion, setAssertion] = useState('');
@@ -895,6 +903,21 @@ function RelationshipReviewForm({
   const evidenceReady = Boolean(
     left?.source_observation_record_id && right?.source_observation_record_id,
   );
+  const logicalImplicationReady = Boolean(
+    evidenceReady &&
+    [left, right].every(
+      (market) =>
+        market?.market_kind === 'binary_event' &&
+        market.payoff.verified &&
+        market.payoff.exhaustive &&
+        market.payoff.state_ids.length > 0 &&
+        market.payoff.state_ids.length <= 1024 &&
+        market.payoff.state_ids.every((stateId) => stateId.length <= 128) &&
+        market.resolution.verified &&
+        market.instruments.filter((instrument) => instrument.outcome_id === 'yes').length === 1 &&
+        market.instruments.filter((instrument) => instrument.outcome_id === 'no').length === 1,
+    ),
+  );
   const review = useMutation({
     mutationFn: async () => {
       const parseMapping = (value: string, title: string) => {
@@ -908,13 +931,28 @@ function RelationshipReviewForm({
         method: 'POST',
         body: JSON.stringify({
           decision,
+          relationship_type: relationshipType,
           reviewer_label: reviewer,
           reason,
           evidence_observation_ids: evidenceIds,
           external_assertion_id: decision === 'verified' ? assertion : undefined,
           state_mapping: decision === 'verified' ? parseMapping(stateMapping, 'State mapping') : {},
           instrument_mapping:
-            decision === 'verified' ? parseMapping(instrumentMapping, 'Instrument mapping') : {},
+            decision === 'verified' && relationshipType === 'same_payoff'
+              ? parseMapping(instrumentMapping, 'Instrument mapping')
+              : {},
+          implication_from_market_id:
+            decision === 'verified' && relationshipType === 'logical_implication'
+              ? implicationDirection === 'left_to_right'
+                ? left?.canonical_id
+                : right?.canonical_id
+              : undefined,
+          implication_to_market_id:
+            decision === 'verified' && relationshipType === 'logical_implication'
+              ? implicationDirection === 'left_to_right'
+                ? right?.canonical_id
+                : left?.canonical_id
+              : undefined,
           expected_latest_review_id: relationship.latest_review?.review_id ?? null,
         }),
       });
@@ -993,7 +1031,7 @@ function RelationshipReviewForm({
             >
               <option value="ambiguous">Ambiguous</option>
               <option value="rejected">Reject relationship</option>
-              <option value="verified">Verify same payoff</option>
+              <option value="verified">Verify relationship</option>
             </select>
           </label>
           <label>
@@ -1018,7 +1056,23 @@ function RelationshipReviewForm({
           {decision === 'verified' && (
             <>
               <label>
-                Independent assertion ID
+                Relationship claim
+                <select
+                  aria-label="Relationship claim"
+                  value={relationshipType}
+                  onChange={(event) =>
+                    setRelationshipType(event.target.value as typeof relationshipType)
+                  }
+                >
+                  <option value="same_payoff">Equivalent payoff</option>
+                  <option value="logical_implication" disabled={!logicalImplicationReady}>
+                    Directed YES implication
+                    {!logicalImplicationReady ? ' · requirements not met' : ''}
+                  </option>
+                </select>
+              </label>
+              <label>
+                External assertion ID (reference only)
                 <input
                   value={assertion}
                   onChange={(event) => setAssertion(event.target.value)}
@@ -1027,7 +1081,7 @@ function RelationshipReviewForm({
                 />
               </label>
               <label>
-                Complete state mapping (JSON)
+                Complete state mapping (left to right JSON)
                 <textarea
                   value={stateMapping}
                   onChange={(event) => setStateMapping(event.target.value)}
@@ -1035,21 +1089,53 @@ function RelationshipReviewForm({
                   required
                 />
               </label>
-              <label>
-                Complete instrument mapping (JSON)
-                <textarea
-                  value={instrumentMapping}
-                  onChange={(event) => setInstrumentMapping(event.target.value)}
-                  placeholder={'{"left-instrument":"right-instrument"}'}
-                  required
-                />
-              </label>
-              <p className="fr-review-verifier-note">
-                Mapping keys are from the left node to the right node. The independent verifier
-                checks exhaustive outcomes, payout vectors, currency, resolution fingerprints,
-                authorities, and settlement timing against stored market fields. It does not verify
-                the source truth of those fields or the assertion ID.
-              </p>
+              {relationshipType === 'same_payoff' ? (
+                <>
+                  <label>
+                    Complete instrument mapping (JSON)
+                    <textarea
+                      value={instrumentMapping}
+                      onChange={(event) => setInstrumentMapping(event.target.value)}
+                      placeholder={'{"left-instrument":"right-instrument"}'}
+                      required
+                    />
+                  </label>
+                  <p className="fr-review-verifier-note">
+                    Mapping keys are from the left node to the right node. The independent verifier
+                    checks exhaustive outcomes, payout vectors, currency, resolution fingerprints,
+                    authorities, and settlement timing against stored market fields. It does not
+                    verify the source truth of those fields or the assertion ID.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <label>
+                    YES implication direction
+                    <select
+                      aria-label="YES implication direction"
+                      value={implicationDirection}
+                      onChange={(event) =>
+                        setImplicationDirection(event.target.value as typeof implicationDirection)
+                      }
+                    >
+                      <option value="left_to_right">
+                        {left?.title ?? 'Left market'} YES implies {right?.title ?? 'right market'}{' '}
+                        YES
+                      </option>
+                      <option value="right_to_left">
+                        {right?.title ?? 'Right market'} YES implies {left?.title ?? 'left market'}{' '}
+                        YES
+                      </option>
+                    </select>
+                  </label>
+                  <p className="fr-review-verifier-note">
+                    The verifier checks the directed payout inequality over the supplied state
+                    mapping. It does not authenticate that the mapping describes the same real-world
+                    event or verify the assertion ID. Both source market records are pinned as
+                    evidence; incompatible settlement terms are rejected by replay.
+                  </p>
+                </>
+              )}
             </>
           )}
           <small>Source evidence: {evidenceIds.map(shortHash).join(' · ') || 'unavailable'}</small>

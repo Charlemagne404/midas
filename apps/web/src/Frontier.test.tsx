@@ -1507,13 +1507,16 @@ it('records a self-attributed relationship review with both stored market source
       venue: 'polymarket',
       title: 'Election event at Polymarket',
       market_kind: 'binary_event',
-      instruments: [],
-      settlement_asset: null,
+      instruments: [
+        { native_instrument_id: 'poly-yes', label: 'Yes', outcome_id: 'yes' },
+        { native_instrument_id: 'poly-no', label: 'No', outcome_id: 'no' },
+      ],
+      settlement_asset: 'USD',
       payoff: {
-        state_ids: [],
-        payout_currency: null,
-        exhaustive: false,
-        verified: false,
+        state_ids: ['left-state'],
+        payout_currency: 'USD',
+        exhaustive: true,
+        verified: true,
         verification_basis: 'fixture only',
       },
       resolution: {
@@ -1521,6 +1524,7 @@ it('records a self-attributed relationship review with both stored market source
         closes_at_utc: null,
         settles_at_utc: null,
         resolution_fingerprint: null,
+        verified: true,
       },
     },
     {
@@ -1530,13 +1534,16 @@ it('records a self-attributed relationship review with both stored market source
       venue: 'kalshi',
       title: 'Election event at Kalshi',
       market_kind: 'binary_event',
-      instruments: [],
-      settlement_asset: null,
+      instruments: [
+        { native_instrument_id: 'kalshi-yes', label: 'Yes', outcome_id: 'yes' },
+        { native_instrument_id: 'kalshi-no', label: 'No', outcome_id: 'no' },
+      ],
+      settlement_asset: 'USD',
       payoff: {
-        state_ids: [],
-        payout_currency: null,
-        exhaustive: false,
-        verified: false,
+        state_ids: ['right-state'],
+        payout_currency: 'USD',
+        exhaustive: true,
+        verified: true,
         verification_basis: 'fixture only',
       },
       resolution: {
@@ -1544,6 +1551,7 @@ it('records a self-attributed relationship review with both stored market source
         closes_at_utc: null,
         settles_at_utc: null,
         resolution_fingerprint: null,
+        verified: true,
       },
     },
   ];
@@ -1647,9 +1655,38 @@ it('records a self-attributed relationship review with both stored market source
   await vi.waitFor(() => expect(reviewRequest).toHaveBeenCalledOnce());
   expect(reviewRequest.mock.calls[0][0]).toMatchObject({
     decision: 'ambiguous',
+    relationship_type: 'same_payoff',
     reviewer_label: 'reviewer-1',
     evidence_observation_ids: ['a'.repeat(64), 'b'.repeat(64)],
     expected_latest_review_id: null,
+  });
+
+  fireEvent.click(screen.getByRole('button', { name: 'Review hypothesis' }));
+  fireEvent.change(screen.getByLabelText('Decision'), { target: { value: 'verified' } });
+  fireEvent.change(screen.getByLabelText('Relationship claim'), {
+    target: { value: 'logical_implication' },
+  });
+  fireEvent.change(screen.getByLabelText('External assertion ID (reference only)'), {
+    target: { value: 'fixture-assertion-1' },
+  });
+  fireEvent.change(screen.getByLabelText('Complete state mapping (left to right JSON)'), {
+    target: { value: '{"left-state":"right-state"}' },
+  });
+  fireEvent.change(screen.getByLabelText('YES implication direction'), {
+    target: { value: 'right_to_left' },
+  });
+  fireEvent.click(screen.getByRole('button', { name: 'Record immutable review' }));
+
+  await vi.waitFor(() => expect(reviewRequest).toHaveBeenCalledTimes(2));
+  expect(reviewRequest.mock.calls[1][0]).toMatchObject({
+    decision: 'verified',
+    relationship_type: 'logical_implication',
+    reviewer_label: 'reviewer-1',
+    external_assertion_id: 'fixture-assertion-1',
+    state_mapping: { 'left-state': 'right-state' },
+    instrument_mapping: {},
+    implication_from_market_id: 'kalshi:event-1',
+    implication_to_market_id: 'polymarket:event-1',
   });
 });
 

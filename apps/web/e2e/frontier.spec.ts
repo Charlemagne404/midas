@@ -203,22 +203,23 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
     description: '',
     base_asset: null,
     quote_asset: null,
-    settlement_asset: null,
+    settlement_asset: 'USD',
     payoff: {
-      state_ids: [],
-      payout_currency: null,
-      exhaustive: false,
-      verified: false,
-      verification_basis: 'fixture, not attested',
+      state_ids: [`${nativeId}-world`],
+      payout_currency: 'USD',
+      exhaustive: true,
+      verified: true,
+      verification_basis: 'bounded browser fixture',
     },
     resolution: {
-      primary_rule: null,
+      primary_rule: 'Fixture rules only.',
       secondary_rule: null,
-      authority: null,
-      closes_at_utc: null,
-      settles_at_utc: null,
-      evidence_sha256: null,
-      verified: false,
+      authority: 'Fixture authority',
+      closes_at_utc: '2026-12-01T00:00:00Z',
+      settles_at_utc: '2026-12-02T00:00:00Z',
+      evidence_sha256: 'b'.repeat(64),
+      resolution_fingerprint: `${nativeId}-rules-v1`,
+      verified: true,
     },
     fees: {
       status: 'unknown',
@@ -231,7 +232,10 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
       note: 'unknown',
     },
     native_fields: venue === 'polymarket' ? { conditionId: `0x${'a'.repeat(64)}` } : {},
-    instruments: [],
+    instruments: [
+      { native_instrument_id: `${nativeId}-yes`, label: 'Yes', outcome_id: 'yes' },
+      { native_instrument_id: `${nativeId}-no`, label: 'No', outcome_id: 'no' },
+    ],
     selected_components:
       venue === 'kalshi'
         ? [
@@ -698,12 +702,34 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
       expected_latest_review_id: null,
     });
 
+  await page.getByRole('button', { name: 'Review hypothesis' }).click();
+  await page.getByLabel('Decision').selectOption('verified');
+  await page.getByLabel('Relationship claim').selectOption('logical_implication');
+  await page.getByLabel('External assertion ID (reference only)').fill('fixture-assertion-e2e');
+  await page
+    .getByLabel('Complete state mapping (left to right JSON)')
+    .fill('{"election-1-world":"election-1-world"}');
+  await page.getByLabel('YES implication direction').selectOption('right_to_left');
+  await page.getByRole('button', { name: 'Record immutable review' }).click();
+  await expect
+    .poll(() => submittedReview)
+    .toMatchObject({
+      decision: 'verified',
+      relationship_type: 'logical_implication',
+      external_assertion_id: 'fixture-assertion-e2e',
+      state_mapping: { 'election-1-world': 'election-1-world' },
+      instrument_mapping: {},
+      implication_from_market_id: 'kalshi:election-1',
+      implication_to_market_id: 'polymarket:election-1',
+    });
+
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(page.getByRole('group', { name: /Relationship network showing 1/ })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
   await expect(page.locator('.fr-network-scroll')).toHaveCSS('overflow-x', 'auto');
   await page.getByRole('button', { name: 'Review hypothesis' }).click();
   await expect(page.locator('.fr-review-form')).toBeVisible();
+  await page.getByLabel('Decision').selectOption('ambiguous');
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
 
   await page.setViewportSize({ width: 1440, height: 1000 });
