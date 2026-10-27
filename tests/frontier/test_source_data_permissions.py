@@ -84,6 +84,19 @@ def test_permission_references_do_not_enable_sources_unless_probe_is_requested()
     assert requested.frontier_kraken_probe_allowed is True
 
 
+def test_whitespace_permission_references_never_unlock_live_probes():
+    settings = Settings(
+        _env_file=None,
+        frontier_kalshi_public_probe_enabled=True,
+        frontier_kalshi_research_authorization_ref=" \t\n ",
+        frontier_kraken_public_probe_enabled=True,
+        frontier_kraken_market_data_permission_ref=" \t\n ",
+    )
+
+    assert settings.frontier_kalshi_probe_allowed is False
+    assert settings.frontier_kraken_probe_allowed is False
+
+
 def test_held_source_observations_relationships_and_replays_are_quarantined(tmp_path):
     settings = Settings(
         _env_file=None,
