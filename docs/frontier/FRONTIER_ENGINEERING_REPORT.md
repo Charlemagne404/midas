@@ -57,6 +57,16 @@ to pass with an empty candidate list. This is independent arithmetic over shared
 normalized evidence; it does not independently validate exchange truth, source
 timing, external resolution documents, or real execution.
 
+Replay v4 also includes effective relationship mappings and the relationship
+proposal limit in each normalized-input digest. A bounded paired-replay path runs
+two named scenarios over the same saved markets, books, verified relationships,
+effective mappings, code version, and UTC time; its shared evidence digest omits
+only the per-arm scenario. It stores both replay arms and the comparison
+atomically. The comparison reports matched construction counts and modeled
+classification/count deltas without assigning an improvement score. The
+workbench exposes the result, but no genuine live cross-venue pair exists in the
+captured evidence and paired fixture outputs are not market findings.
+
 The bounded probe API now preserves a successful HTTP response whose JSON shape
 fails adapter normalization as an append-only source-failure observation. Its
 error response returns the observation ID, and source health reports the venue
@@ -113,11 +123,12 @@ The primary layers are:
 4. `independent_audit.py`: a separately coded candidate arithmetic audit over
    pinned normalized contracts, books, relationships, and scenarios.
 5. `storage.py` and `replay.py`: isolated bounded evidence persistence and
-   deterministic replay over pinned local inputs, including audit results and
-   typed diagnostics for captured responses that fail normalization.
+   deterministic and paired replay over pinned local inputs, including audit
+   results and typed diagnostics for captured responses that fail normalization.
 6. `apps/api/frontier.py`: bounded local reads, explicit proposal/replay writes,
    bounded graph-neighborhood queries, and separately configured public captures.
-7. `apps/web/src/Frontier.tsx`: native Mission Control research workspace.
+7. `apps/web/src/Frontier.tsx`: native Mission Control research workspace and
+   paired-assumption workbench.
 
 The three adapters are registered at API construction, but that action is
 local-only. Network access is gated separately for each source. There is no
@@ -355,7 +366,7 @@ The audit records a disposition (`verified`, `disagreement`, `incomplete`, or
 `not_evaluated`), checked market/leg counts, recomputed values, and a versioned
 input SHA-256. Missing decisive evidence yields `INCOMPLETE`; calculation
 disagreement preserves recomputed figures and downgrades the candidate to
-`INCOMPLETE_EVIDENCE`. Replay version 3 includes this audit in its deterministic
+`INCOMPLETE_EVIDENCE`. Replay version 4 includes this audit in its deterministic
 result. Readiness aggregates dispositions only across the latest three
 hash-valid runs, and the UI shows the audit state, recomputed cost/fees/net result,
 and shortened input hash.
@@ -377,19 +388,20 @@ is never called executable profit.
 ## 9. Storage, replay, and provenance
 
 Frontier stores data under its own configurable root, default
-`data/frontier-store`. SQLite schema v5 defaults to a 64 MiB cap, 50,000
+`data/frontier-store`. SQLite schema v6 defaults to a 64 MiB cap, 50,000
 observations, 100,000 relationship records, and 512 KiB per record. An additive
-migration upgrades v2/v3/v4 stores with relationship revision, review, and
-left/right endpoint indexes without rewriting existing relationship payloads.
+migration upgrades v2/v3/v4/v5 stores with relationship revision, review,
+left/right endpoint indexes, and the append-only paired-comparison table without
+rewriting existing relationship payloads.
 Append-only triggers reject row updates/deletes on observations, indexes,
-relationships, review records, and runs. Relationship review and its derived
+relationships, review records, runs, and paired comparisons. Relationship review and its derived
 state revision are inserted in one bounded transaction. Effective queries and
 replay select the last compare-and-set review revision while the earlier record
 history remains immutable. Query methods open read-only connections.
 Observation and relationship list reads verify content hashes and indexed fields
 before returning records. They also validate the current review-to-revision
-link; replay reads recompute the pinned output digest. Offline tamper tests cover
-observation, relationship, and replay list paths.
+link; replay and comparison reads recompute their pinned output digests. Offline
+tamper tests cover observation, relationship, replay, and comparison list paths.
 
 Captures retain request URL/status/times, local receipt time, raw bytes and
 SHA-256, normalized record (or a bounded `SourceFailureRecord` when a decoded
@@ -402,8 +414,13 @@ hash. Oversized or partial response bodies are not stored. Replay consumes only
 stored data, fixes source observation IDs,
 relationships, assumptions and time, sorts inputs deterministically, and pins a
 hash of normalized inputs and the Frontier backend source set. No adapter is
-called from replay. Replay version 3 includes each candidate's independent audit
-disposition and its input hash. The store has no compaction/retention worker; once the cap is
+called from replay. Replay version 4 includes each candidate's independent audit
+disposition and its input hash, plus effective state/instrument mappings and the
+relationship proposal limit in normalized-input identity. Paired replay is
+limited to 100 markets, 200 books, 500 verified relationships, and 500 proposed
+relationships. It persists two replay records and one comparison in one SQLite
+transaction; all three records are hash-validated and protected by append-only
+triggers. The store has no compaction/retention worker; once the cap is
 reached, writes fail closed and require an explicitly reviewed storage policy.
 
 Polymarket v2 trade pages are each stored as one raw observation plus one
@@ -528,6 +545,8 @@ Verification on this branch:
 - Python Ruff check/format and mypy passed for the Frontier/API source set checked at this checkpoint. `git diff --check` passed before the documentation checkpoint.
 - Frontend after the sensitivity work: **37 passed across 7 files**; TypeScript typecheck, ESLint and Prettier passed. Production build passed; Frontier JS is 56.47 kB and CSS is 26.85 kB. Existing main (503.86 kB) and Chart (544.41 kB) chunks retain the Vite large-chunk warning.
 - Targeted Frontier Playwright: **2 passed** in 6.3 seconds, one worker, using isolated temporary API/storage roots and no live probe. A subsequent full 10-case run had two Laboratory failures: Arena admission returned `host_memory_pressure`, then an experiment-report wait timed out after the denied launch. No experiment started and no resource gate was bypassed; full E2E verification remains incomplete.
+- Paired-replay checkpoint: the focused command across `tests/frontier`, adapter contracts, and the offline API workflow passed **96 tests**. Pytest took 20.28 seconds; `/usr/bin/time -v` measured 21.07 seconds wall, 5.38 seconds user CPU, 154,656 KiB peak RSS, zero swaps, and zero socket messages. Ruff check/format, mypy across 16 Frontier/API source files, and `git diff --check` passed. One upstream Starlette/httpx deprecation warning remains; the complete repository Python suite was not run.
+- Frontend paired-comparison checkpoint: **38 tests passed across 7 files**; typecheck, ESLint, and Prettier checks passed. Production build passed; Frontier's lazy chunk is 60.41 kB JavaScript and 27.64 kB CSS. The pre-existing 503.86 kB main and 544.41 kB Chart chunks still trigger Vite's size warning. Targeted Frontier Playwright passed **2 cases** in 7.1 seconds using one worker, an isolated temporary store, and zero source-probe requests. It verifies paired comparison save/read through the local research API and responsive layout, not live market matching.
 
 Backend tests emitted one upstream Starlette/httpx TestClient deprecation
 warning. No tests modified legacy expectations to make them pass. Fixture network
@@ -560,6 +579,12 @@ swaps. The legacy adapter/offline-API regression passed 10 tests in 3.09 seconds
 wall time at 121,420 KiB peak RSS. Frontier browser cases ran serially with one
 worker and completed in 6.3 seconds. These are isolated verification jobs, not a
 production capacity guarantee.
+
+The paired-replay focused regression completed in 21.07 seconds wall time and
+peaked at 154,656 KiB RSS (about 151 MiB), with zero swaps and zero socket
+messages. Targeted Frontier Playwright completed in 7.1 seconds with one worker.
+These remain bounded local development measurements and do not establish host
+admission headroom or service capacity.
 
 ## 14. Actual scientific findings
 
@@ -829,6 +854,10 @@ Implementation and documentation commits on this branch:
 - `127176b708a941f7f22fd643ea0e20addb91bf7a` — checked one-fill precision
   against Kalshi's documented rounding example and updated the capability
   declaration to describe the remaining candidate-fee boundary.
+- `1e3d30a13db8588fae5e72a39f56fa7db625479a` — added bounded paired replay
+  over identical local evidence, atomic persistence for both arms and the
+  comparison, comparison API/workbench, replay-v4 mapping/proposal-limit input
+  hashing, and adversarial storage/identity/UI coverage.
 
 Principal changed paths:
 
@@ -864,11 +893,12 @@ cross-venue economics.
 | Relationship hypotheses, review revisions, indexed neighborhoods, and explicit same-payoff verifier | PARTIALLY VERIFIED | Self-attributed review API/UI, append-only revisions, latest-state replay, tamper/migration checks, left/right endpoint-indexed 1–3 hop scans capped at 500 rows, revision-bound centered one-hop keyset pages, stale-cursor rejection, and a 501-edge scan-bound test; no genuine equivalent pair, reviewer authentication, or multi-hop pagination. |
 | Opportunity candidate and independent economic checks | PARTIALLY VERIFIED | Two-venue all-long binary and same-market 3–16 state one-hot exhaustive coverage, with a separate pinned-input arithmetic audit; controlled fixtures only, with source semantics, fees, broader costs and operational feasibility incomplete. |
 | Kalshi taker-fee sensitivity | PARTIALLY VERIFIED | Saved, hash-matched public event/series fee evidence supports a local one-fill calculation for two documented quadratic fee types, with Decimal and rounding tests. Manual inputs are not live quotes; account-specific, multi-fill and full candidate fee integration remain unresolved. |
-| Append-only evidence store and deterministic replay | COMPLETE AND VERIFIED | Schema v5, v2/v3/v4 additive migration, bounds, hash validation, immutability, replay tests; not integrated as an Arena campaign. |
+| Append-only evidence store and deterministic replay | COMPLETE AND VERIFIED | Schema v6, additive v2/v3/v4/v5 migration, bounds, hash validation, immutability, replay-v4 identity includes effective mappings and proposal limit, and tests; not integrated as an Arena campaign. |
+| Paired scenario comparison | COMPLETE AND VERIFIED | Two scenarios reuse identical bounded saved inputs; evidence/input/results are hashed, the two runs and comparison save atomically, API/UI and isolated browser tests pass. Fixture-driven only; no genuine matched live cross-venue pair or Arena job integration. |
 | Live market/book/trade and fee metadata through adapters/API | PARTIALLY VERIFIED | One bounded listing, book, and legacy trade response per venue is hash-pinned; Polymarket v2 pages have distinct IDs; a Kalshi event/series fee-metadata read-back and a new cursor-page response are hash-pinned. The cursor page was empty and terminal, so its live row mapping is not established. Samples are not synchronized and do not prove venue-wide coverage, fees, or execution. |
 | Source workers and broad historical data | DEFERRED | No persistent worker or long-duration collection. |
 | Laboratory/Arena research orchestration | DEFERRED | Workspace navigation and deterministic Frontier replay only. |
-| Native Mission Control workspace | PARTIALLY VERIFIED | Local API, bounded graph/review UI, Polymarket and Kalshi trade-page controls, and a Kalshi fee-metadata inspection action; unit tests and Frontier E2E cover fixture paths. Production deployment and live browser-to-source validation are not done. |
+| Native Mission Control workspace | PARTIALLY VERIFIED | Local API, bounded graph/review UI, Polymarket/Kalshi trade-page controls, Kalshi fee inspection, and paired-replay workbench; unit tests and isolated Frontier E2E cover fixture/local-store paths. Production deployment and live browser-to-source validation are not done. |
 | Production readiness/deployment | DEFERRED | Separate review and authorization required; production eligibility is false. |
 | Positive economic result | NOT ESTABLISHED | No genuine cross-venue equivalent or economically eligible result in captured evidence. |
 

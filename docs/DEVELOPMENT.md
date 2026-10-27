@@ -148,20 +148,33 @@ The Kalshi trade-page route follows the same saved-market and source-configurati
 gates, persists one raw and normalized page per click, and returns no next cursor
 when Kalshi's response cursor is empty. It does not start a history crawl.
 
+The Economic Workbench can compare two named virtual scenarios through
+`POST /api/frontier/replay/compare`. Both arms use the same stored evidence and
+pinned replay time, with an explicit shared-input digest. The API bounds each
+comparison to 100 saved markets, 200 saved books, 500 verified relationships,
+and 500 proposed relationships; it makes no public-source requests. Both replay
+arms and the comparison record are appended atomically. Saved results are
+available from `GET /api/frontier/comparisons` and
+`GET /api/frontier/comparisons/{comparison_id}`. The comparison reports matched
+candidate identities and modeled classification/count changes. It does not
+score the scenarios or establish fills, simultaneous availability, or profit.
+The UI's baseline is the quoted-input assumption and the second arm uses the
+current workbench assumptions; both remain hypothetical.
+
 Relationship decisions use `POST /api/frontier/relationships/{id}/review`. The
 review form records source market observation IDs and appends a linked revision;
 it cannot bypass the same-payoff verifier. Reviewer labels and external assertion
 IDs are self-attributed references, not authenticated identities or fetched
-documents. The Frontier SQLite schema upgrades v2/v3/v4 stores additively to
-v5; the v5 migration adds separate indexes for each relationship endpoint while
-preserving existing relationship records.
+documents. The Frontier SQLite schema upgrades v2/v3/v4/v5 stores additively to
+v6; the v5 migration adds separate indexes for each relationship endpoint, and
+v6 adds an append-only paired-comparison table without rewriting earlier records.
 The relationship graph route accepts an optional `center_market_id`, a `depth`
 from 1 to 3, and an edge `limit` up to 200. It loads at most 200 recorded
 markets. Centered traversal uses indexed left/right adjacency and scans at most
 500 relationship rows per request; the response includes the row count and marks
 when the scan may be incomplete. The uncentered view remains a bounded recent-edge
-query. List reads recheck stored observation, relationship, review-lineage, and
-replay hashes before research use.
+query. List reads recheck stored observation, relationship, review-lineage,
+replay, and comparison hashes before research use.
 
 Deterministic replay currently evaluates verified cross-venue binary coverage
 and an all-long, same-market construction for three to sixteen verified
@@ -170,9 +183,11 @@ verified; it does not evaluate captured listings without verified payoff and
 resolution evidence. Both paths are hypothetical research only and always leave
 practical execution eligibility false.
 
-Replay version 3 attaches a separately coded arithmetic audit to each candidate.
+Replay version 4 attaches a separately coded arithmetic audit to each candidate.
 It re-derives the supported payoff, pinned quote/depth, applicable fee, modeled
-cost, and terminal result from stored inputs. An audit disposition of `verified`
+cost, and terminal result from stored inputs. Its normalized-input digest also
+includes effective relationship mappings and the proposal limit, so those
+assumptions cannot change under the same run identity. An audit disposition of `verified`
 means these calculations agree over those pinned inputs; it does not validate
 external market truth, reviewer assertions, source synchronization, or execution.
 The audit's input SHA-256 is shown in candidate details.

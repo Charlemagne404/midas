@@ -1,6 +1,6 @@
 # Project Frontier Mission Ledger
 
-**Current stage:** isolated engine/API/UI, immutable relationship review, schema-v5
+**Current stage:** isolated engine/API/UI, immutable relationship review, schema-v6
 indexed bounded graph neighborhoods with UI scan-quality status, hash-verified
 public book/trade capture, exact fixture-verified multi-outcome coverage, and a
 separate candidate arithmetic audit; plus captured-response failure diagnostics
@@ -24,7 +24,13 @@ The saved Kalshi event/series fee evidence can now drive a local, one-fill
 quadratic taker-fee sensitivity for two documented fee types and two balance
 precision cases. Manual price/size inputs are not quotes; the calculator does
 not change the unknown canonical fee schedule or candidate economics. An offline
-derived example is hash-pinned. Remaining acceptance work is substantial.
+derived example is hash-pinned. Replay v4 now pins effective state/instrument
+mappings and proposal limits into each replay identity. A bounded paired replay
+compares two named scenarios over identical saved inputs, with an evidence digest
+and atomic persistence of two run records plus the comparison. The Mission
+Control workbench can save and inspect these comparisons. This is fixture/local
+store validation; the captured markets do not form a verified cross-venue pair.
+Remaining acceptance work is substantial.
 **Branch:** `codex/frontier-20261026`
 **Worktree:** `/home/charlie/midas-frontier`
 **Baseline:** `11d32a0693b25c290fd273f23e40cf7b5950d95d` (`codex/veritas-v6-integration-20261026`)
@@ -84,8 +90,28 @@ derived example is hash-pinned. Remaining acceptance work is substantial.
 | `a6bcf60` | Added Kalshi cursor-paginated public trade pages, a ticker/page-size-bound API cursor, raw/normalized persistence, a source-neutral Polymarket/Kalshi trade panel, contract/API/UI tests, and one live hash-verified empty-page capture. |
 | `225dc8d` | Added a saved-evidence-bound Kalshi one-fill fee sensitivity API and UI, Decimal calculation tests, an offline derived artifact, and API/UI regressions. Candidate economics remains unchanged. |
 | `127176b` | Added a regression against Kalshi's documented one-fill rounding example and clarified why the adapter still does not advertise a candidate fee schedule. |
+| `1e3d30a` | Added paired deterministic replay, schema-v6 comparison storage, mapping/proposal-limit-aware replay-v4 identities, bounded API/UI, and atomicity, integrity, adversarial, and browser coverage. |
 
 ## Latest checkpoint verification (2026-10-27)
+
+- Paired replay and replay-v4 checkpoint: **96 passed** across `tests/frontier`,
+  adapter contract integration, and the offline API workflow in 20.28 seconds
+  pytest time. `/usr/bin/time -v` measured 21.07 seconds wall, 5.38 seconds user
+  CPU, 154,656 KiB peak RSS, zero swaps, and zero socket messages. Ruff check and
+  format, mypy for 16 Frontier/API sources, and `git diff --check` passed. One
+  upstream Starlette/httpx deprecation warning remains.
+- Frontend comparison checkpoint: **38 passed across 7 files**; typecheck,
+  ESLint, Prettier, and production build passed. Frontier's lazy chunk is
+  60.41 kB JS and 27.64 kB CSS; the existing main and Chart chunks still trigger
+  Vite's size warning.
+- Frontier Playwright: **2 passed** in 7.1 seconds with one worker, isolated
+  temporary API/store roots, and zero source-probe requests. Includes saving a
+  paired comparison through the local API; does not validate a live market pair.
+- Replay v4 now includes effective relationship mappings and proposal limit in
+  the normalized input digest; adversarial tests show either change alters the
+  run identity. The comparison's persisted arms must match stored scenario and
+  replay-time values. No source probe, Reality service, Arena/Laboratory job,
+  or production service was started for this checkpoint.
 
 - Focused Python regression: **86 passed**, 18.05 seconds pytest time; 18.90
   seconds wall, 5.16 seconds user CPU, 151,728 KiB peak RSS, zero swaps and
@@ -261,10 +287,11 @@ Reproduction commands and environment boundaries are in
 | Canonical normalization and native evidence | PARTIALLY VERIFIED | Distinct event, conditional event and spot forms; v2 Polymarket trades preserve token and outcome identity, while earlier v1 batches still load with those new fields unknown. Other settlement/payoff semantics remain intentionally unverified. |
 | Relationship matching, immutable review, indexed neighborhoods, and strict payoff verifier | PARTIALLY VERIFIED | Self-attributed review API/UI with stored source refs, append-only revisions, compare-and-set, latest-state replay, query-plan/migration tests, and 1–3 hop left/right indexed scans capped at 500 rows. Centered one-hop keyset pages bind listing/instrument-metadata observation, relationship, and review counts; changed inputs reject stale cursors. A 501-edge fixture verifies the scan cap. No authenticated reviewer/assertion, genuine equivalent pair, or multi-hop pagination. |
 | Economic candidate verifier and independent audit | PARTIALLY VERIFIED | Exact two-venue binary all-long coverage and same-market 3–16-state exhaustive one-hot coverage. A separate Decimal implementation recomputes supported candidate arithmetic from hash-pinned normalized inputs; controlled fixtures only, no genuine eligible event, independently authenticated market truth, or practical execution proof. |
-| Bounded store and deterministic replay | COMPLETE AND VERIFIED | Schema v5, additive v2/v3/v4 migration with preserved relationship payloads, append-only review/revision history, content integrity checks, persisted replay-v3 audit results, and tests that later review revokes earlier verified replay input. |
+| Bounded store and deterministic replay | COMPLETE AND VERIFIED | Schema v6 with additive v2/v3/v4/v5 migrations, immutable replay/comparison records, replay-v4 identity includes effective mappings and proposal limit, and tests that later review revokes earlier verified replay input. |
+| Paired scenario comparison | COMPLETE AND VERIFIED | Two named scenarios reuse identical bounded local evidence; evidence/result hashes, transactionally saved run arms/comparison, API/UI, integrity/adversarial tests, and isolated browser coverage pass. No live equivalent market pair or Arena job integration. |
 | Frontier API and source configuration | COMPLETE AND VERIFIED | Local reads include hash-verified legacy and cursor-page batches. Polymarket and Kalshi page routes are capability/config/recorded-market gated, bounded to one page and retries, and bind cursors to market and size. Polymarket two-page and Kalshi empty-terminal-page persistence/read-back are tested. Kalshi live trade-row mapping remains fixture-only. |
 | Live adapter-to-API listing, book, and trade persistence | PARTIALLY VERIFIED | Three genuine venue captures, Polymarket v2 first/continuation pages with distinct IDs, and one Kalshi empty cursor page have hash-pinned temporary-store evidence. Samples are sequential and do not establish synchronization, depth, complete histories, or execution. |
-| Mission Control Frontier workspace | IMPLEMENTED, LIVE VALIDATION PENDING | Native view selects Polymarket or Kalshi for a manual trade-page request, displays evidence hashes and request bounds, and uses fixture-backed unit/E2E coverage. The workspace is not deployed and no live browser source request was made. |
+| Mission Control Frontier workspace | IMPLEMENTED, LIVE VALIDATION PENDING | Native view includes Polymarket/Kalshi trade-page controls, fee inspection, graph/review, and paired-replay workbench; unit/E2E cover isolated local data. The workspace is not deployed and no live browser source request was made. |
 | Laboratory/Arena research orchestration | DEFERRED | Navigation links only; no Frontier experiment job type/scheduler. |
 | Persistent source collection, streaming and broad historical replay | DEFERRED | No background worker or long-duration campaign. |
 | Cross-venue FX, comprehensive capital and settlement costs | DEFERRED | Unknown costs remain unknown and block decisive net economics. |
@@ -335,4 +362,6 @@ v2 page support is `67f79cde6b37ac51c226c4338196a1b2482e37aa`; the Mission
 Control continuation is `7c6cc21764d124f61211b79299335d78e8260c69`. The
 capture and documentation checkpoint is
 `e661e06e22b2d29bd68e13dd6e6b423c698fec27`. This ledger amendment is the
-current branch checkpoint; no deployment or production change was made.
+current branch checkpoint. The paired replay implementation and tests are
+`1e3d30a13db8588fae5e72a39f56fa7db625479a`; this report/ledger amendment records
+its v6/v4 contracts and verification. No deployment or production change was made.

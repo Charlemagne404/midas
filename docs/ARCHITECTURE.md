@@ -117,6 +117,17 @@ hop neighborhoods from a recorded market, capped at 200 source markets and 500
 scanned effective edges; this remains a bounded recent-window traversal rather
 than a large-universe graph index.
 
+Replay v4 also hashes effective outcome/instrument mappings and the proposal
+limit into the replay input identity. A local paired-replay route evaluates two
+named scenarios over one pinned set of stored markets, books, verified
+relationships, mappings, code version, and replay time. Its API bound is 100
+markets, 200 books, 500 verified relationships, and 500 proposals; it makes no
+network requests and atomically appends both arm runs plus a comparison record.
+The Mission Control workbench exposes the paired result. It reports matched
+candidate and classification/count changes without scoring an assumption as
+better or suggesting an executable fill. SQLite schema v6 stores comparisons
+append-only and retains additive upgrade paths from earlier schemas.
+
 Polymarket additionally exposes an explicit, one-page-at-a-time v2 public trade
 capture route. Schema-v2 trade records retain condition, token, outcome, and
 transaction identities; an opaque source cursor is wrapped with the requested

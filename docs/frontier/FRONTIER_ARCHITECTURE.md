@@ -17,10 +17,10 @@ as mutable Frontier storage.
 | Relationship intelligence | `relationships.py` | Deterministic indexed hypotheses, strict payoff checks, and immutable review contracts. |
 | Candidate calculators | `economics.py` | Decimal cross-venue binary and same-market exhaustive multi-outcome all-long checks with fee, depth, freshness, timing, and scenario bounds; separate Kalshi one-fill fee sensitivity. |
 | Independent arithmetic audit | `independent_audit.py` | Separately recomputes supported candidate identities, payoff vectors, pinned quotes/depth, fees, costs, terminal P&L, and classification from replay inputs. |
-| Durable evidence | `storage.py` | Append-only, size- and row-bounded SQLite observations, markets, relationship reviews/revisions, and runs. |
-| Replay | `replay.py` | Stable input ordering, manifest and implementation digest, deterministic result identity. |
-| HTTP API | `apps/api/frontier.py` | Bounded local queries and graph neighborhoods, relationship proposals/reviews, deterministic replay, config-gated public capture, and evidence-bound Kalshi fee sensitivity. |
-| Mission Control workspace | `apps/web/src/Frontier.tsx` | Sources, markets/books, relationship hypotheses, candidates, workbench, replay, readiness. |
+| Durable evidence | `storage.py` | Append-only, size- and row-bounded SQLite observations, markets, relationship reviews/revisions, runs, and paired comparisons. |
+| Replay | `replay.py` | Stable input ordering, scenario/mapping/proposal-limit-aware replay identities, deterministic results, and paired assumption comparisons. |
+| HTTP API | `apps/api/frontier.py` | Bounded local queries and graph neighborhoods, relationship proposals/reviews, deterministic and paired replay, config-gated public capture, and evidence-bound Kalshi fee sensitivity. |
+| Mission Control workspace | `apps/web/src/Frontier.tsx` | Sources, markets/books, relationship hypotheses, candidates, workbench, replay comparisons, and readiness. |
 
 ## Adapter capability contract
 
@@ -161,14 +161,15 @@ resolution assertions, fee authority, source timing, or execution.
 ## Persistence and deterministic replay
 
 The API uses a separate `MIDAS_FRONTIER_ROOT`. Raw source observations, normalized
-records, relationship decisions/reviews, and replay results are append-only.
-SQLite schema v5 migrates older v2/v3/v4 stores additively and enforces
-update/delete triggers on evidence tables. The v5 migration adds endpoint
-indexes without rewriting stored relationship rows. Review records link to their
+records, relationship decisions/reviews, replay results, and paired comparisons
+are append-only. SQLite schema v6 migrates older v2/v3/v4/v5 stores additively
+and enforces update/delete triggers on evidence tables. The v5 migration adds
+endpoint indexes without rewriting stored relationship rows; v6 adds an indexed
+comparison table without changing earlier evidence. Review records link to their
 derived relationship revision, and effective queries resolve the latest decision. Query methods use
 SQLite read-only mode; they do not initialize or mutate the store. Listing reads
 recheck raw body and normalized row hashes, relationship/review hashes and
-revision linkage, and replay result digests. Write routes
+revision linkage, and replay/comparison result digests. Write routes
 enforce row and database byte budgets before committing. Repeated captures remain
 distinct because their request and receipt timestamps form part of the evidence
 identity.
@@ -184,14 +185,28 @@ stored losslessly as base64 with the hash computed over original bytes. Oversize
 or partial bodies are rejected without persistence. A later successful probe
 clears the adapter's degraded health state.
 
-Replay reads only stored inputs, sorts records by canonical IDs, pins the source
-observation IDs and relationship IDs, hashes normalized input, persists scenario
-assumptions, and records a SHA-256 over the backend Frontier source set. Re-running
-the same recorded inputs, implementation, and assumptions yields the same result
-identity. Replay version 3 includes the independent per-candidate arithmetic
-audit and its pinned-input hash. Replay time defaults to the latest selected
-source receipt time; empty input uses a fixed epoch. No network adapter is called
-from replay.
+Replay reads only stored inputs, sorts records by canonical IDs, pins source
+observation IDs, effective state/instrument mappings, relationship IDs, proposal
+limit, scenario assumptions, and a SHA-256 over the backend Frontier source set.
+Re-running the same recorded inputs, implementation, and assumptions yields the
+same result identity. Replay version 4 includes the independent per-candidate
+arithmetic audit and hashes effective mappings and the relationship-proposal
+limit into its normalized-input digest. Replay time defaults to the latest
+selected source receipt time; empty input uses a fixed epoch. No network adapter
+is called from replay.
+
+Paired replay compares exactly two named scenarios over the same selected and
+hash-pinned local inputs. Its shared-evidence digest includes normalized markets,
+books, relationships, effective mappings, code/replay versions, proposal limit,
+and the pinned UTC replay time, while each arm separately hashes its scenario.
+The API bounds paired runs to 100 markets, 200 books, 500 verified relationships,
+and at most 500 proposed relationships. Both run records and the comparison are
+committed atomically under the existing 512 KiB per-record and store byte caps.
+The comparison summarizes matched constructions and classification/count
+changes; it is not a score, fills report, or profit estimate. `POST
+/api/frontier/replay/compare` performs no network calls, while `GET
+/api/frontier/comparisons` and `GET /api/frontier/comparisons/{id}` return
+hash-validated saved comparison records.
 
 ## API and UI behavior
 
