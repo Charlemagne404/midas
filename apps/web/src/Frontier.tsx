@@ -454,6 +454,9 @@ type Candidate = {
     recomputed_modeled_net_cost: string | null;
     recomputed_worst_case_gross_pnl: string | null;
     recomputed_worst_case_net_pnl: string | null;
+    recomputed_received_skew_ms?: number | null;
+    recomputed_exchange_skew_ms?: number | null;
+    recomputed_timing_verified?: boolean | null;
     checks: string[];
     message: string;
   } | null;
@@ -3764,6 +3767,32 @@ function CandidateCard({ candidate }: { candidate: Candidate }) {
               <span>
                 Recomputed worst net result
                 <strong>{money(candidate.independent_audit.recomputed_worst_case_net_pnl)}</strong>
+              </span>
+              <span>
+                Recomputed receipt skew
+                <strong>
+                  {candidate.independent_audit.recomputed_received_skew_ms == null
+                    ? 'Not recorded'
+                    : `${count(candidate.independent_audit.recomputed_received_skew_ms)} ms`}
+                </strong>
+              </span>
+              <span>
+                Recomputed exchange timestamp skew
+                <strong>
+                  {candidate.independent_audit.recomputed_exchange_skew_ms == null
+                    ? 'Not recorded'
+                    : `${count(candidate.independent_audit.recomputed_exchange_skew_ms)} ms`}
+                </strong>
+              </span>
+              <span>
+                Independent timing gate
+                <strong>
+                  {candidate.independent_audit.recomputed_timing_verified == null
+                    ? 'Not recorded'
+                    : candidate.independent_audit.recomputed_timing_verified
+                      ? 'Pass'
+                      : 'Fail'}
+                </strong>
               </span>
             </div>
             <small>

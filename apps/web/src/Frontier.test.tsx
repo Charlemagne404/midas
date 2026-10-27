@@ -255,6 +255,9 @@ it('renders recorded-evidence empty states and never probes a source automatical
           recomputed_modeled_net_cost: '9',
           recomputed_worst_case_gross_pnl: '1',
           recomputed_worst_case_net_pnl: '1',
+          recomputed_received_skew_ms: 12,
+          recomputed_exchange_skew_ms: 5,
+          recomputed_timing_verified: true,
           checks: ['fixture audit checks'],
           message: 'Independent arithmetic agrees for every terminal state.',
         },
@@ -282,6 +285,11 @@ it('renders recorded-evidence empty states and never probes a source automatical
     screen.getByText('Independent arithmetic agrees for every terminal state.'),
   ).toBeInTheDocument();
   expect(screen.getByText('Recomputed basket cost')).toBeInTheDocument();
+  expect(screen.getByText('Recomputed receipt skew').parentElement).toHaveTextContent('12 ms');
+  expect(screen.getByText('Recomputed exchange timestamp skew').parentElement).toHaveTextContent(
+    '5 ms',
+  );
+  expect(screen.getByText('Independent timing gate').parentElement).toHaveTextContent('Pass');
   expect(screen.getByText('Gross basket cost')).toBeInTheDocument();
   const capital = screen.getByRole('region', { name: 'Venue-separated virtual funding' });
   expect(capital).toHaveTextContent('Modeled requirement: 9 USD (fiat:USD)');
