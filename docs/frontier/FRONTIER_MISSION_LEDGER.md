@@ -901,3 +901,10 @@ only. The full 148-test Frontier/Arena run predates the output source-link field
 the final focused 17-test Python selection and four Frontier browser cases
 include it. See the 13:01 UTC checkpoint above for resource and validation
 boundaries. No live settlement observation or production action occurred.
+
+The venue-separated virtual balance comparison is implementation commit
+`9d7b599516ca70895525c701543c507054bcfbe6`; the corresponding README,
+development, current-state, architecture, report, and ledger documentation
+checkpoint is `e3d974d`. The feature remains browser-local and research-only.
+Its focused UI/browser verification passed; a production build after the UI
+change remains unverified because it was stopped under rising memory PSI.
