@@ -1496,6 +1496,33 @@ it('renders a bounded accessible relationship graph and opens selected evidence'
   ).toBeInTheDocument();
   expect(screen.getByText(/matcher frontier-relationship-matcher-5/)).toBeInTheDocument();
   expect(screen.getByText('shared_terms=mayor,election')).toBeInTheDocument();
+
+  fireEvent.change(screen.getByLabelText('Relationship graph center market'), {
+    target: { value: '' },
+  });
+  fireEvent.change(screen.getByLabelText('Relationship graph depth'), {
+    target: { value: '1' },
+  });
+  fireEvent.change(screen.getByPlaceholderText('Search recorded market titles or IDs'), {
+    target: { value: 'mayor election' },
+  });
+  await vi.waitFor(() =>
+    expect(fetchMock.mock.calls.some(([input]) => String(input).includes('q=mayor+election'))).toBe(
+      true,
+    ),
+  );
+  expect(
+    await screen.findByText(/Text search seeds at most 200 recorded markets/),
+  ).toBeInTheDocument();
+  fireEvent.click(await screen.findByRole('button', { name: 'Load more matches' }));
+  expect(await screen.findByText('Search page 2')).toBeInTheDocument();
+  expect(
+    fetchMock.mock.calls.some(
+      ([input]) =>
+        String(input).includes('q=mayor+election') &&
+        String(input).includes('cursor=cursor-page-2'),
+    ),
+  ).toBe(true);
 });
 
 it('records a self-attributed relationship review with both stored market sources', async () => {

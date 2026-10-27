@@ -2546,6 +2546,98 @@ def test_graph_neighborhood_is_centered_bounded_and_review_aware(tmp_path):
         asyncio.run(http_client.aclose())
 
 
+def test_uncentered_graph_search_pages_pinned_bounded_results(tmp_path):
+    client, registry, http_client, requests, store = _client(tmp_path)
+    center = market(Venue.POLYMARKET, "search-event-center").model_copy(
+        update={"title": "Unique Civic Search Event"}
+    )
+    neighbors = tuple(market(Venue.POLYMARKET, f"search-event-{index}") for index in range(3))
+    leaf = market(Venue.POLYMARKET, "search-event-leaf")
+    markets = (center, *neighbors, leaf)
+    body = '{"fixture":"uncentered-graph-search-pagination"}'
+    store.append_observation(
+        RawObservation(
+            venue=Venue.POLYMARKET,
+            observation_kind="market_listing",
+            request_url="https://public.example.test/frontier/search-markets",
+            http_status=200,
+            request_started_at_utc=T0,
+            received_at_utc=T0,
+            raw_body=body,
+            raw_sha256=hashlib.sha256(body.encode()).hexdigest(),
+            adapter_version="graph-search-fixture-v1",
+        ),
+        MarketBatch(venue=Venue.POLYMARKET, markets=markets),
+    )
+    edges = (
+        *(_graph_fixture_edge(center, neighbor) for neighbor in neighbors),
+        _graph_fixture_edge(neighbors[0], leaf),
+    )
+    for edge in edges:
+        store.append_relationship(edge)
+
+    params = {"q": "  unique civic search  ", "depth": 2, "limit": 1}
+    try:
+        first = client.get("/api/frontier/graph", params=params)
+        assert first.status_code == 200, first.text
+        first_payload = first.json()
+        assert first_payload["search"] == "unique civic search"
+        assert first_payload["returned_edges"] == 1
+        assert first_payload["relationships_scanned"] == 7
+        assert first_payload["next_cursor"]
+        assert any(
+            node["market"]["canonical_id"] == center.canonical_id for node in first_payload["nodes"]
+        )
+
+        repeated = client.get("/api/frontier/graph", params=params)
+        assert repeated.status_code == 200
+        assert repeated.json()["edges"] == first_payload["edges"]
+        cursor = first_payload["next_cursor"]
+        page_ids = [first_payload["edges"][0]["relationship_id"]]
+        for _ in range(3):
+            page = client.get(
+                "/api/frontier/graph",
+                params={**params, "q": params["q"].strip(), "cursor": cursor},
+            )
+            assert page.status_code == 200, page.text
+            payload = page.json()
+            assert payload["relationships_scanned"] == 7
+            page_ids.extend(item["relationship_id"] for item in payload["edges"])
+            cursor = payload["next_cursor"]
+        assert cursor is None
+        assert len(page_ids) == len(edges)
+        assert set(page_ids) == {edge.relationship_id for edge in edges}
+
+        wrong_query = client.get(
+            "/api/frontier/graph",
+            params={**params, "q": "another search", "cursor": first_payload["next_cursor"]},
+        )
+        wrong_depth = client.get(
+            "/api/frontier/graph",
+            params={**params, "depth": 1, "cursor": first_payload["next_cursor"]},
+        )
+        wrong_page_size = client.get(
+            "/api/frontier/graph",
+            params={**params, "limit": 2, "cursor": first_payload["next_cursor"]},
+        )
+        assert wrong_query.status_code == 422
+        assert wrong_depth.status_code == 422
+        assert wrong_page_size.status_code == 422
+
+        store.append_relationship(_graph_fixture_edge(neighbors[1], leaf))
+        stale = client.get(
+            "/api/frontier/graph",
+            params={**params, "q": params["q"].strip(), "cursor": first_payload["next_cursor"]},
+        )
+        assert stale.status_code == 409
+        assert "Graph changed" in stale.json()["detail"]
+        assert requests == []
+    finally:
+        client.close()
+        asyncio.run(registry.aclose())
+        asyncio.run(http_client.aclose())
+
+
 def test_graph_page_cursor_rejects_a_changed_append_only_graph(tmp_path):
     client, registry, http_client, requests, store = _client(tmp_path)
     markets = (

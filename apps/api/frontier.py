@@ -543,6 +543,70 @@ def _decode_multihop_graph_cursor(cursor: str) -> dict[str, Any]:
     }
 
 
+def _encode_search_graph_cursor(
+    query: str,
+    depth: int,
+    edge_limit: int,
+    graph_revision: tuple[int, int, int],
+    after_index: int,
+) -> str:
+    value = {
+        "v": 3,
+        "search_query": query,
+        "depth": depth,
+        "edge_limit": edge_limit,
+        "graph_revision": list(graph_revision),
+        "after_index": after_index,
+    }
+    raw = json.dumps(value, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return base64.urlsafe_b64encode(raw).decode("ascii").rstrip("=")
+
+
+def _decode_search_graph_cursor(cursor: str) -> dict[str, Any]:
+    if not cursor or len(cursor) > 2048:
+        raise ValueError("Graph search cursor is empty or exceeds its bound")
+    padded = cursor + "=" * (-len(cursor) % 4)
+    try:
+        decoded = base64.b64decode(padded, altchars=b"-_", validate=True)
+        value = json.loads(decoded)
+    except (ValueError, UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise ValueError("Graph search cursor is not valid base64 JSON") from error
+    expected = {"v", "search_query", "depth", "edge_limit", "graph_revision", "after_index"}
+    if (
+        not isinstance(value, dict)
+        or set(value) != expected
+        or type(value.get("v")) is not int
+        or value["v"] != 3
+    ):
+        raise ValueError("Graph search cursor has an unsupported shape or version")
+    query = value["search_query"]
+    depth = value["depth"]
+    limit = value["edge_limit"]
+    revision = value["graph_revision"]
+    after_index = value["after_index"]
+    if not isinstance(query, str) or not query.strip() or len(query) > 120:
+        raise ValueError("Graph search cursor query is invalid")
+    if type(depth) is not int or not 1 <= depth <= 3:
+        raise ValueError("Graph search cursor traversal depth is invalid")
+    if type(limit) is not int or not 1 <= limit <= 200:
+        raise ValueError("Graph search cursor edge limit is invalid")
+    if (
+        not isinstance(revision, list)
+        or len(revision) != 3
+        or any(type(item) is not int or item < 0 for item in revision)
+    ):
+        raise ValueError("Graph search cursor revision is invalid")
+    if type(after_index) is not int or not 1 <= after_index <= 500:
+        raise ValueError("Graph search cursor continuation index is invalid")
+    return {
+        "search_query": query,
+        "depth": depth,
+        "edge_limit": limit,
+        "graph_revision": tuple(revision),
+        "after_index": after_index,
+    }
+
+
 def _bounded_graph_neighbors(
     store: FrontierStore,
     market_ids: tuple[str, ...],
@@ -2257,28 +2321,41 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
             )
         if q is not None and not q.strip():
             raise HTTPException(status_code=422, detail="Graph search text cannot be blank")
-        if cursor is not None and center_market_id is None:
+        q = q.strip() if q is not None else None
+        if cursor is not None and center_market_id is None and q is None:
             raise HTTPException(
                 status_code=422,
-                detail="Graph cursors require a centered neighborhood",
+                detail="Graph cursors require a centered neighborhood or text search",
             )
         cursor_value = None
         if cursor is not None:
             try:
-                cursor_value = (
-                    _decode_graph_cursor(cursor)
-                    if depth == 1
-                    else _decode_multihop_graph_cursor(cursor)
-                )
+                if center_market_id is not None:
+                    cursor_value = (
+                        _decode_graph_cursor(cursor)
+                        if depth == 1
+                        else _decode_multihop_graph_cursor(cursor)
+                    )
+                else:
+                    cursor_value = _decode_search_graph_cursor(cursor)
             except ValueError as error:
                 raise HTTPException(status_code=422, detail=str(error)) from error
-            if (
-                cursor_value["center_market_id"] != center_market_id
+            if center_market_id is not None:
+                if (
+                    cursor_value["center_market_id"] != center_market_id
+                    or cursor_value["edge_limit"] != limit
+                    or (depth > 1 and cursor_value["depth"] != depth)
+                ):
+                    raise HTTPException(
+                        status_code=422, detail="Graph cursor does not match this query"
+                    )
+            elif (
+                cursor_value["search_query"] != q
                 or cursor_value["edge_limit"] != limit
-                or (depth > 1 and cursor_value["depth"] != depth)
+                or cursor_value["depth"] != depth
             ):
                 raise HTTPException(
-                    status_code=422, detail="Graph cursor does not match this query"
+                    status_code=422, detail="Graph search cursor does not match this query"
                 )
         try:
             graph_revision_before = store.graph_revision()
@@ -2455,15 +2532,35 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
                         if not endpoints.intersection(frontier):
                             continue
                         if relationship.relationship_id not in selected:
-                            if len(selected) >= limit:
-                                truncated_by_edge_limit = True
+                            if len(selected) >= scan_limit:
+                                relationship_scan_may_be_incomplete = True
                                 break
                             selected[relationship.relationship_id] = item
                         next_frontier.update(endpoints - visited)
-                    if truncated_by_edge_limit or not next_frontier:
+                    if relationship_scan_may_be_incomplete or not next_frontier:
                         break
                     visited.update(next_frontier)
                     frontier = next_frontier
+                revision_after = store.graph_revision()
+                if revision_after != graph_revision_before:
+                    raise HTTPException(
+                        status_code=409,
+                        detail="Graph changed while paging; restart the text search",
+                    )
+                page_offset = cursor_value["after_index"] if cursor_value is not None else 0
+                traversal_edges = list(selected.values())
+                page_edges = traversal_edges[page_offset : page_offset + limit]
+                has_more = page_offset + len(page_edges) < len(traversal_edges)
+                selected = {item["relationship_id"]: item for item in page_edges}
+                truncated_by_edge_limit = has_more
+                if has_more:
+                    next_cursor = _encode_search_graph_cursor(
+                        q or "",
+                        depth,
+                        limit,
+                        graph_revision_before,
+                        page_offset + len(page_edges),
+                    )
         elif q is None:
             try:
                 relationship_rows = store.relationships(

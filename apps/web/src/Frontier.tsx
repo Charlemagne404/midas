@@ -1248,6 +1248,7 @@ function RelationshipReviewForm({
 export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }) {
   const [section, setSection] = useState<Section>('overview');
   const [search, setSearch] = useState('');
+  const [graphSearch, setGraphSearch] = useState('');
   const [selectedMarketId, setSelectedMarketId] = useState<string | null>(null);
   const [selectedRelationshipId, setSelectedRelationshipId] = useState<string | null>(null);
   const [relationshipState, setRelationshipState] = useState('all');
@@ -1305,6 +1306,7 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
       'frontier',
       'graph',
       graphCenterMarketId,
+      graphSearch.trim(),
       graphDepth,
       graphPageSize,
       graphCursor,
@@ -1316,6 +1318,7 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
         limit: String(graphPageSize),
       });
       if (graphCenterMarketId) params.set('center_market_id', graphCenterMarketId);
+      if (graphSearch.trim()) params.set('q', graphSearch.trim());
       if (graphCursor) params.set('cursor', graphCursor);
       return api<GraphResponse>(`/frontier/graph?${params.toString()}`);
     },
@@ -1689,7 +1692,7 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
     .filter((relationship) => {
       const left = graphMarketById.get(relationship.left_market_id);
       const right = graphMarketById.get(relationship.right_market_id);
-      const needle = search.trim().toLocaleLowerCase();
+      const needle = graphSearch.trim().toLocaleLowerCase();
       const matchesText =
         !needle ||
         `${left?.title ?? ''} ${right?.title ?? ''} ${relationship.relationship_type}`
@@ -2189,9 +2192,12 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
           </div>
           <div className="fr-filter-row">
             <SearchBox
-              value={search}
-              onChange={setSearch}
-              placeholder="Find events, venues, or relationship types"
+              value={graphSearch}
+              onChange={(value) => {
+                setGraphSearch(value);
+                resetGraphPagination();
+              }}
+              placeholder="Search recorded market titles or IDs"
             />
             <select
               aria-label="Filter relationship state"
@@ -2351,21 +2357,31 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
             graph.data?.relationship_scan_may_be_incomplete) && (
             <div className="fr-footnote">
               {graph.data.relationship_scan_may_be_incomplete
-                ? graph.data.next_cursor && graphCenterMarketId && graphDepth === 1
-                  ? `This page reached its ${graph.data.relationship_scan_limit}-row scan bound. Continue with the next page; graph changes invalidate the cursor.`
-                  : graph.data.next_cursor && graphCenterMarketId && graphDepth > 1
-                    ? `This breadth-first traversal reached its ${graph.data.relationship_scan_limit}-row scan bound. Continue through the captured result window; additional neighbors may still be omitted.`
-                    : `This query considered ${graph.data.relationships_scanned} relationship rows, reaching its ${graph.data.relationship_scan_limit}-row scan bound; additional neighbors may be omitted.`
-                : graph.data.next_cursor && graphCenterMarketId && graphDepth === 1
-                  ? `This page returned ${graph.data.returned_edges} edges. More neighbors are available through keyset pages; graph changes make the cursor stale.`
-                  : graph.data.next_cursor && graphCenterMarketId && graphDepth > 1
-                    ? `This page returned ${graph.data.returned_edges} edges in breadth-first order. Continue through the bounded traversal; graph changes make the cursor stale.`
-                    : `This view is capped at ${graph.data.edge_limit} edges after considering ${graph.data.relationships_scanned} relationship rows.`}{' '}
-              {!graphCenterMarketId && 'Choose a center market to inspect a smaller neighborhood.'}
+                ? graph.data.next_cursor && graphSearch.trim()
+                  ? `Text search reached the ${graph.data.relationship_scan_limit}-row scan bound. Continue through its captured result window; additional matches may be omitted.`
+                  : graph.data.next_cursor && graphCenterMarketId && graphDepth === 1
+                    ? `This page reached its ${graph.data.relationship_scan_limit}-row scan bound. Continue with the next page; graph changes invalidate the cursor.`
+                    : graph.data.next_cursor && graphCenterMarketId && graphDepth > 1
+                      ? `This breadth-first traversal reached its ${graph.data.relationship_scan_limit}-row scan bound. Continue through the captured result window; additional neighbors may still be omitted.`
+                      : `This query considered ${graph.data.relationships_scanned} relationship rows, reaching its ${graph.data.relationship_scan_limit}-row scan bound; additional neighbors may be omitted.`
+                : graph.data.next_cursor && graphSearch.trim()
+                  ? `Text search returned ${graph.data.returned_edges} edges on this page. Continue through the bounded result window; graph changes invalidate the cursor.`
+                  : graph.data.next_cursor && graphCenterMarketId && graphDepth === 1
+                    ? `This page returned ${graph.data.returned_edges} edges. More neighbors are available through keyset pages; graph changes make the cursor stale.`
+                    : graph.data.next_cursor && graphCenterMarketId && graphDepth > 1
+                      ? `This page returned ${graph.data.returned_edges} edges in breadth-first order. Continue through the bounded traversal; graph changes make the cursor stale.`
+                      : `This view is capped at ${graph.data.edge_limit} edges after considering ${graph.data.relationships_scanned} relationship rows.`}{' '}
+              {!graphCenterMarketId &&
+                !graphSearch.trim() &&
+                'Choose a center market or search recorded markets to inspect relationship edges.'}
             </div>
           )}
-          {graph.data && graphCenterMarketId && (
-            <div className="fr-graph-pagination" role="group" aria-label="Relationship pages">
+          {graph.data && (graphCenterMarketId || graphSearch.trim()) && (
+            <div
+              className="fr-graph-pagination"
+              role="group"
+              aria-label={graphSearch.trim() ? 'Relationship search pages' : 'Relationship pages'}
+            >
               <button
                 className="fr-action"
                 disabled={graphPageIndex === 0 || graph.isFetching}
@@ -2373,7 +2389,9 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
               >
                 Previous page
               </button>
-              <span>Neighborhood page {graphPageIndex + 1}</span>
+              <span>
+                {graphSearch.trim() ? 'Search' : 'Neighborhood'} page {graphPageIndex + 1}
+              </span>
               <button
                 className="fr-action"
                 disabled={!graph.data.next_cursor || graph.isFetching}
@@ -2387,7 +2405,11 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
                   setGraphPageIndex(graphPageIndex + 1);
                 }}
               >
-                {graph.isFetching ? 'Loading…' : 'Load more neighbors'}
+                {graph.isFetching
+                  ? 'Loading…'
+                  : graphSearch.trim()
+                    ? 'Load more matches'
+                    : 'Load more neighbors'}
               </button>
             </div>
           )}
@@ -2395,6 +2417,13 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
             The evidence list shows up to 30 edges per page; the network shows the first 18. Similar
             titles never certify payoff equivalence. Relationship identity is versioned and tied to
             pinned observation IDs.
+            {graphSearch.trim() && (
+              <>
+                {' '}
+                Text search seeds at most {graph.data?.source_market_window_limit ?? 200} recorded
+                markets and remains bounded; it does not represent the full market universe.
+              </>
+            )}
           </div>
         </section>
       )}
@@ -3863,6 +3892,7 @@ function SearchBox({
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
+        maxLength={120}
       />
     </label>
   );
