@@ -52,7 +52,7 @@ def _verify(
     source: FrontierMarket,
     target: FrontierMarket,
     *,
-    evidence_ids: tuple[str, ...] = ("a" * 64, "b" * 64),
+    evidence_ids: tuple[str, ...] | None = None,
     asserted_at_utc=T0,
 ):
     return verify_logical_implication(
@@ -62,7 +62,11 @@ def _verify(
         implication_to_market_id=target.canonical_id,
         state_mapping={state: state for state in JOINT_STATES},
         external_assertion_id="fixture-joint-outcome-assertion-1",
-        evidence_observation_ids=evidence_ids,
+        evidence_observation_ids=(
+            evidence_ids
+            if evidence_ids is not None
+            else (source.provenance.observation_id, target.provenance.observation_id)
+        ),
         asserted_at_utc=asserted_at_utc,
     )
 
@@ -183,7 +187,10 @@ def test_rejects_incomplete_or_non_bijective_joint_state_mapping():
         implication_to_market_id=target.canonical_id,
         state_mapping={"a_no_b_no": "a_no_b_no", "a_no_b_yes": "a_no_b_no"},
         external_assertion_id="fixture-joint-outcome-assertion-1",
-        evidence_observation_ids=("a" * 64, "b" * 64),
+        evidence_observation_ids=(
+            source.provenance.observation_id,
+            target.provenance.observation_id,
+        ),
         asserted_at_utc=T0,
     )
     assert relationship.state == VerificationState.REJECTED
@@ -201,7 +208,10 @@ def test_rejects_joint_state_mappings_above_the_bounded_verifier_limit():
         implication_to_market_id=target.canonical_id,
         state_mapping=oversized_mapping,
         external_assertion_id="fixture-joint-outcome-assertion-1",
-        evidence_observation_ids=("a" * 64, "b" * 64),
+        evidence_observation_ids=(
+            source.provenance.observation_id,
+            target.provenance.observation_id,
+        ),
         asserted_at_utc=T0,
     )
     assert relationship.state == VerificationState.REJECTED

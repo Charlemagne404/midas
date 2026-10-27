@@ -14,6 +14,7 @@ from midas.frontier.economics import (
     ExecutionScenario,
     OpportunityCandidate,
     generate_binary_coverage_candidates,
+    generate_logical_implication_candidates,
     generate_multi_outcome_coverage_candidate,
 )
 from midas.frontier.independent_audit import independently_audit_candidate
@@ -21,11 +22,12 @@ from midas.frontier.models import BookSnapshot, FrontierMarket, FrontierModel, M
 from midas.frontier.relationships import (
     MATCHER_VERSION,
     Relationship,
+    RelationshipType,
     evidence_mapping,
     propose_relationships,
 )
 
-REPLAY_VERSION = "frontier-deterministic-replay-8"
+REPLAY_VERSION = "frontier-deterministic-replay-9"
 PAIRED_COMPARISON_VERSION = "frontier-paired-replay-1"
 
 
@@ -228,19 +230,33 @@ def deterministic_replay(
             continue
         state_mapping = states.get(relationship.relationship_id, {})
         instrument_mapping = instruments.get(relationship.relationship_id, {})
-        candidates.extend(
-            generate_binary_coverage_candidates(
-                left,
-                right,
-                relationship,
-                book_index.get(left.canonical_id, {}),
-                book_index.get(right.canonical_id, {}),
-                state_mapping=state_mapping,
-                instrument_mapping=instrument_mapping,
-                scenario=scenario,
-                as_of_utc=pinned_as_of,
+        if relationship.relationship_type == RelationshipType.LOGICAL_IMPLICATION:
+            candidates.extend(
+                generate_logical_implication_candidates(
+                    left,
+                    right,
+                    relationship,
+                    book_index.get(left.canonical_id, {}),
+                    book_index.get(right.canonical_id, {}),
+                    state_mapping=state_mapping,
+                    scenario=scenario,
+                    as_of_utc=pinned_as_of,
+                )
             )
-        )
+        else:
+            candidates.extend(
+                generate_binary_coverage_candidates(
+                    left,
+                    right,
+                    relationship,
+                    book_index.get(left.canonical_id, {}),
+                    book_index.get(right.canonical_id, {}),
+                    state_mapping=state_mapping,
+                    instrument_mapping=instrument_mapping,
+                    scenario=scenario,
+                    as_of_utc=pinned_as_of,
+                )
+            )
     for market in ordered_markets:
         if (
             market.market_kind == MarketKind.MULTI_OUTCOME_EVENT

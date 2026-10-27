@@ -37,14 +37,18 @@ from midas.frontier.models import (
     Venue,
 )
 from midas.frontier.relationships import (
+    LOGICAL_IMPLICATION_VERIFIER_VERSION,
+    MAX_LOGICAL_IMPLICATION_STATES,
+    MAX_LOGICAL_STATE_ID_CHARS,
     Relationship,
     RelationshipType,
     VerificationState,
+    evidence_detail,
     evidence_mapping,
 )
 
 D = Decimal
-_AUDIT_VERSION = "frontier-independent-economic-audit-5"
+_AUDIT_VERSION = "frontier-independent-economic-audit-6"
 _FEE_QUANTUM = D("0.00001")
 _KALSHI_FEE_MAX_EVIDENCE_AGE = timedelta(hours=24)
 
@@ -193,6 +197,14 @@ def _recompute(
             relationships,
             state_mappings,
             instrument_mappings,
+            mismatches,
+        )
+    elif candidate.family == OpportunityFamily.LOGICAL_IMPLICATION_COVERAGE:
+        state_ids = _verify_logical_implication_relationship(
+            candidate,
+            selected_markets,
+            relationships,
+            state_mappings,
             mismatches,
         )
     elif candidate.family == OpportunityFamily.WITHIN_MARKET_MULTI_OUTCOME_COVERAGE:
@@ -382,6 +394,17 @@ def _recompute(
     expected_classification = _classification(
         worst_gross, worst_net, fees_computable, fees_authoritative
     )
+    if (
+        candidate.family == OpportunityFamily.LOGICAL_IMPLICATION_COVERAGE
+        and expected_classification == OpportunityClassification.VERIFIED_MATHEMATICAL_INCONSISTENCY
+    ):
+        expected_classification = OpportunityClassification.CONDITIONAL_ECONOMIC_OPPORTUNITY
+    if (
+        candidate.family == OpportunityFamily.LOGICAL_IMPLICATION_COVERAGE
+        and not timing_verified
+        and expected_classification == OpportunityClassification.CONDITIONAL_ECONOMIC_OPPORTUNITY
+    ):
+        expected_classification = OpportunityClassification.INCOMPLETE_EVIDENCE
     capital_by_venue: dict[str, Decimal] = {}
     for leg in candidate.legs:
         capital_by_venue[leg.venue] = capital_by_venue.get(leg.venue, D(0)) + (
@@ -477,7 +500,10 @@ def _independent_timing_summary(
     if any(book.quality_flags for book in books):
         timing_valid = False
 
-    if candidate.family == OpportunityFamily.CROSS_VENUE_COMPLETE_COVERAGE:
+    if candidate.family in {
+        OpportunityFamily.CROSS_VENUE_COMPLETE_COVERAGE,
+        OpportunityFamily.LOGICAL_IMPLICATION_COVERAGE,
+    }:
         if any(value is None for value in exchange_values):
             timing_valid = False
         else:
@@ -703,6 +729,197 @@ def _verify_multi_outcome_market(
             "Candidate legs do not buy exactly one instrument for each verified outcome"
         )
     return state_ids
+
+
+def _verify_logical_implication_relationship(
+    candidate: OpportunityCandidate,
+    markets: dict[str, FrontierMarket],
+    relationships: dict[str, Relationship],
+    state_mappings: dict[str, dict[str, str]],
+    mismatches: list[str],
+) -> tuple[str, ...]:
+    """Independently validate direction, mapped states, and the selected basket."""
+    if len(markets) != 2 or len(candidate.legs) != 2:
+        raise _MissingAuditEvidence(
+            "Logical-implication audit requires exactly two markets and two position legs."
+        )
+    if candidate.relationship_id is None:
+        raise _MissingAuditEvidence("Logical-implication candidate has no relationship identity.")
+    relationship = relationships.get(candidate.relationship_id)
+    if relationship is None:
+        raise _MissingAuditEvidence("Logical-implication edge is absent from replay inputs.")
+    if (
+        relationship.state != VerificationState.VERIFIED
+        or relationship.relationship_type != RelationshipType.LOGICAL_IMPLICATION
+        or {relationship.left_market_id, relationship.right_market_id} != set(markets)
+    ):
+        raise _MissingAuditEvidence(
+            "Candidate does not reference the verified directed implication for its two markets."
+        )
+
+    left = markets[relationship.left_market_id]
+    right = markets[relationship.right_market_id]
+    _require_verified_event(left)
+    _require_verified_event(right)
+    if (
+        left.venue == right.venue
+        or left.market_kind != MarketKind.BINARY_EVENT
+        or right.market_kind != MarketKind.BINARY_EVENT
+        or len(left.payoff.state_ids) > MAX_LOGICAL_IMPLICATION_STATES
+        or len(right.payoff.state_ids) > MAX_LOGICAL_IMPLICATION_STATES
+        or left.payoff.payout_currency != right.payoff.payout_currency
+        or left.payoff.settlement_asset != right.payoff.settlement_asset
+        or left.payoff.settlement_asset_identity != right.payoff.settlement_asset_identity
+        or left.payoff.settlement_asset_identity is None
+        or left.resolution.closes_at_utc is None
+        or right.resolution.closes_at_utc is None
+        or left.resolution.settles_at_utc is None
+        or right.resolution.settles_at_utc is None
+        or left.resolution.closes_at_utc != right.resolution.closes_at_utc
+        or left.resolution.settles_at_utc != right.resolution.settles_at_utc
+        or left.resolution.closes_at_utc <= candidate.observed_at_utc
+        or left.resolution.settles_at_utc <= candidate.observed_at_utc
+    ):
+        raise _MissingAuditEvidence(
+            "Implication markets have unsupported kinds or incompatible denomination/close/settlement terms."
+        )
+
+    implication_from = evidence_detail(relationship, "implication_from_market_id")
+    implication_to = evidence_detail(relationship, "implication_to_market_id")
+    if {implication_from, implication_to} != {
+        left.canonical_id,
+        right.canonical_id,
+    } or implication_from == implication_to:
+        raise _MissingAuditEvidence("Directed implication endpoints are missing or inconsistent.")
+    evidence = tuple(
+        item
+        for item in relationship.evidence
+        if item.method == "explicit-joint-state-payout-implication-v1"
+        and item.verifier_version == LOGICAL_IMPLICATION_VERIFIER_VERSION
+    )
+    required_observations = {
+        left.provenance.observation_id,
+        right.provenance.observation_id,
+    }
+    if (
+        len(evidence) != 1
+        or evidence[0].external_assertion_id is None
+        or not evidence[0].external_assertion_id.strip()
+        or not required_observations.issubset(set(evidence[0].observation_ids))
+        or evidence[0].created_at_utc
+        < max(
+            left.provenance.response_received_at_utc,
+            right.provenance.response_received_at_utc,
+        )
+        or evidence[0].created_at_utc > candidate.observed_at_utc
+    ):
+        raise _MissingAuditEvidence(
+            "Directed implication evidence lacks a post-observation external assertion citing both pinned market records by the replay cutoff."
+        )
+
+    relation_mapping = evidence_mapping(relationship, "state_mapping")
+    state_map = state_mappings.get(relationship.relationship_id) or relation_mapping
+    if (
+        not relation_mapping
+        or state_map != relation_mapping
+        or len(state_map) > MAX_LOGICAL_IMPLICATION_STATES
+        or any(
+            len(state_id) > MAX_LOGICAL_STATE_ID_CHARS
+            for state_id in (*state_map.keys(), *state_map.values())
+        )
+        or set(state_map) != set(left.payoff.state_ids)
+        or set(state_map.values()) != set(right.payoff.state_ids)
+    ):
+        raise _MissingAuditEvidence(
+            "Directed implication state mapping is absent, differs from evidence, or is not bijective."
+        )
+
+    def binary_outcomes(market: FrontierMarket) -> dict[str, MarketInstrument]:
+        instruments: dict[str, MarketInstrument] = {}
+        for item in market.instruments:
+            outcome = item.outcome_id
+            if (
+                outcome is None
+                or outcome not in {"yes", "no"}
+                or outcome in instruments
+                or item.quantity_unit == QuantityUnit.UNKNOWN
+            ):
+                raise _MissingAuditEvidence(
+                    "A market does not define exactly one supported YES and NO contract."
+                )
+            instruments[outcome] = item
+        if len(market.instruments) != 2 or len(instruments) != 2:
+            raise _MissingAuditEvidence(
+                "A market does not define exactly one supported YES and NO contract."
+            )
+        vectors: dict[str, dict[str, Decimal]] = {}
+        for outcome, instrument in instruments.items():
+            if (
+                instrument.price_currency != market.payoff.payout_currency
+                or instrument.price_currency_identity != market.payoff.settlement_asset_identity
+                or len(instrument.payouts) != len(market.payoff.state_ids)
+            ):
+                raise _MissingAuditEvidence(
+                    "Binary contract quote denomination or payout vector is incomplete."
+                )
+            vector = {item.state_id: item.amount for item in instrument.payouts}
+            if (
+                len(vector) != len(instrument.payouts)
+                or set(vector) != set(market.payoff.state_ids)
+                or any(value not in (D(0), D(1)) for value in vector.values())
+            ):
+                raise _MissingAuditEvidence(
+                    "Binary contract payout vector is duplicated, incomplete, or non-Boolean."
+                )
+            vectors[outcome] = vector
+        if any(
+            vectors["yes"][state] + vectors["no"][state] != D(1)
+            for state in market.payoff.state_ids
+        ):
+            raise _MissingAuditEvidence(
+                "YES and NO contracts are not complementary in every state."
+            )
+        return instruments
+
+    left_outcomes = binary_outcomes(left)
+    right_outcomes = binary_outcomes(right)
+    source = left if implication_from == left.canonical_id else right
+    target = right if implication_to == right.canonical_id else left
+    source_outcomes = left_outcomes if source.canonical_id == left.canonical_id else right_outcomes
+    target_outcomes = right_outcomes if target.canonical_id == right.canonical_id else left_outcomes
+    for left_state, right_state in state_map.items():
+        source_state = left_state if source.canonical_id == left.canonical_id else right_state
+        target_state = right_state if target.canonical_id == right.canonical_id else left_state
+        source_yes = _payout(source_outcomes["yes"], source_state)
+        target_yes = _payout(target_outcomes["yes"], target_state)
+        if source_yes > target_yes:
+            raise _MissingAuditEvidence(
+                "The stored directed YES implication fails for a mapped terminal state."
+            )
+
+    required_left_outcome = "no" if source.canonical_id == left.canonical_id else "yes"
+    required_right_outcome = "yes" if target.canonical_id == right.canonical_id else "no"
+    left_leg = next((leg for leg in candidate.legs if leg.market_id == left.canonical_id), None)
+    right_leg = next((leg for leg in candidate.legs if leg.market_id == right.canonical_id), None)
+    if (
+        left_leg is None
+        or right_leg is None
+        or left_leg.outcome_id != required_left_outcome
+        or right_leg.outcome_id != required_right_outcome
+        or left_leg.instrument_id != left_outcomes[required_left_outcome].native_instrument_id
+        or right_leg.instrument_id != right_outcomes[required_right_outcome].native_instrument_id
+    ):
+        mismatches.append("Candidate legs do not match the directed implication construction")
+        raise _MissingAuditEvidence("Selected legs do not buy NO(source) and YES(target).")
+    for left_state, right_state in state_map.items():
+        combined = _payout(left_outcomes[required_left_outcome], left_state) + _payout(
+            right_outcomes[required_right_outcome], right_state
+        )
+        if combined < D(1):
+            raise _MissingAuditEvidence(
+                "Selected long contracts do not guarantee at least one settlement unit in every mapped state."
+            )
+    return left.payoff.state_ids
 
 
 def _verify_cross_venue_relationship(

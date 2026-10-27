@@ -694,6 +694,12 @@ def verify_logical_implication(
         not item.strip() for item in evidence_observation_ids
     ):
         checks.append("Distinct source observation identities for both markets are required")
+    required_observations = {
+        left.provenance.observation_id,
+        right.provenance.observation_id,
+    }
+    if not required_observations.issubset(set(evidence_observation_ids)):
+        checks.append("Evidence must cite the pinned observation for each supplied market")
     if any(market.market_kind != MarketKind.BINARY_EVENT for market in markets.values()):
         checks.append("Only binary event contracts are supported")
 
@@ -880,23 +886,36 @@ def verify_logical_implication(
 def evidence_mapping(relationship: Relationship, name: str) -> dict[str, str]:
     if name not in {"state_mapping", "instrument_mapping"}:
         raise ValueError("Unsupported relationship evidence mapping")
-    prefix = f"{name}="
-    for item in relationship.evidence:
-        for detail in item.details:
-            if detail.startswith(prefix):
-                import json
+    raw_value = evidence_detail(relationship, name)
+    if raw_value is None:
+        return {}
+    import json
 
-                try:
-                    value = json.loads(detail.removeprefix(prefix))
-                except json.JSONDecodeError:
-                    return {}
-                if isinstance(value, dict) and all(
-                    isinstance(key, str) and isinstance(target, str)
-                    for key, target in value.items()
-                ):
-                    return value
-                return {}
+    try:
+        value = json.loads(raw_value)
+    except json.JSONDecodeError:
+        return {}
+    if isinstance(value, dict) and all(
+        isinstance(key, str) and isinstance(target, str) for key, target in value.items()
+    ):
+        return value
     return {}
+
+
+def evidence_detail(relationship: Relationship, name: str) -> str | None:
+    """Return one unambiguous scalar detail from a relationship evidence record."""
+    if not name or not name.replace("_", "").isalnum():
+        raise ValueError("Invalid relationship evidence detail name")
+    prefix = f"{name}="
+    matches = [
+        detail.removeprefix(prefix)
+        for evidence in relationship.evidence
+        for detail in evidence.details
+        if detail.startswith(prefix)
+    ]
+    if len(matches) != 1:
+        return None
+    return matches[0]
 
 
 def json_compact(value: dict[str, str]) -> str:

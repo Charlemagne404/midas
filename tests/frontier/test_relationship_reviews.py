@@ -3,7 +3,8 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import sqlite3
-from datetime import timedelta
+from datetime import UTC, datetime, timedelta
+from decimal import Decimal
 from pathlib import Path
 
 import httpx
@@ -20,6 +21,7 @@ from pydantic import ValidationError
 
 from apps.api.frontier import RelationshipReviewRequest, router
 from tests.frontier.builders import T0, market
+from tests.frontier.builders import book as build_book
 
 
 def _body(venue: Venue, native_id: str) -> tuple[str, RawObservation]:
@@ -100,6 +102,82 @@ def _seed_logical_implication_pair(store: FrontierStore):
     left_evidence = store.append_observation(left_raw, left)
     right_evidence = store.append_observation(right_raw, right)
     return left, right, (left_evidence, right_evidence)
+
+
+def _seed_future_logical_pair(store: FrontierStore):
+    anchor = datetime.now(UTC)
+    left = _joint_state_market(market(Venue.POLYMARKET, "implication-replay-left"), (0, 0, 1))
+    right = _joint_state_market(market(Venue.KALSHI, "implication-replay-right"), (0, 1, 1))
+    evidence_ids = {}
+    for venue, value in ((Venue.POLYMARKET, left), (Venue.KALSHI, right)):
+        _body_text, raw = _body(venue, value.native_market_id)
+        raw = raw.model_copy(
+            update={
+                "request_started_at_utc": anchor,
+                "received_at_utc": anchor,
+            }
+        )
+        value = value.model_copy(
+            update={
+                "resolution": value.resolution.model_copy(
+                    update={
+                        "closes_at_utc": anchor + timedelta(hours=2),
+                        "settles_at_utc": anchor + timedelta(hours=3),
+                    }
+                ),
+                "provenance": value.provenance.model_copy(
+                    update={
+                        "request_started_at_utc": anchor,
+                        "response_received_at_utc": anchor,
+                        "processed_at_utc": anchor,
+                        "raw_sha256": raw.raw_sha256,
+                    }
+                ),
+            }
+        )
+        evidence_id = store.append_observation(raw, value)
+        if venue == Venue.POLYMARKET:
+            left = value
+            evidence_ids[venue] = evidence_id
+        else:
+            right = value
+            evidence_ids[venue] = evidence_id
+    return left, right, (evidence_ids[Venue.POLYMARKET], evidence_ids[Venue.KALSHI]), anchor
+
+
+def _append_book(store: FrontierStore, market_value, instrument_id: str, price: str, received):
+    body = f'{{"instrument":"{instrument_id}","price":"{price}"}}'
+    raw = RawObservation(
+        venue=market_value.venue,
+        observation_kind="book_snapshot",
+        request_url=f"https://public.example.test/{market_value.venue.value}/{instrument_id}/book",
+        http_status=200,
+        request_started_at_utc=received - timedelta(milliseconds=1),
+        received_at_utc=received,
+        raw_body=body,
+        raw_sha256=hashlib.sha256(body.encode()).hexdigest(),
+        adapter_version="relationship-replay-test-v1",
+    )
+    base_book = build_book(market_value, instrument_id, price)
+    snapshot = base_book.model_copy(
+        update={
+            "received_at_utc": received,
+            "exchange_timestamp_utc": received,
+            "provenance": base_book.provenance.model_copy(
+                update={
+                    "source_url": raw.request_url,
+                    "adapter_version": raw.adapter_version,
+                    "request_started_at_utc": raw.request_started_at_utc,
+                    "response_received_at_utc": received,
+                    "processed_at_utc": received,
+                    "raw_sha256": raw.raw_sha256,
+                    "exchange_timestamp_utc": received,
+                    "clock_uncertainty_ms": Decimal(0),
+                }
+            ),
+        }
+    )
+    store.append_observation(raw, snapshot)
 
 
 def _close(client, registry, http_client):
@@ -254,6 +332,61 @@ def test_logical_implication_review_persists_directed_edge_with_stored_provenanc
         assert len(effective) == 1
         assert effective[0]["relationship"]["relationship_type"] == "logical_implication"
         assert effective[0]["relationship"]["supersedes"] == candidate["relationship_id"]
+    finally:
+        _close(client, registry, http_client)
+
+
+def test_logical_implication_replay_api_persists_candidate_and_independent_audit(tmp_path):
+    client, registry, http_client, store = _client(tmp_path)
+    left, right, evidence, anchor = _seed_future_logical_pair(store)
+    try:
+        proposals = client.post("/api/frontier/relationships/propose")
+        proposal = next(
+            item
+            for item in proposals.json()["items"]
+            if {item["left_market_id"], item["right_market_id"]}
+            == {left.canonical_id, right.canonical_id}
+        )
+        review = client.post(
+            f"/api/frontier/relationships/{proposal['relationship_id']}/review",
+            json={
+                "decision": "verified",
+                "relationship_type": "logical_implication",
+                "reviewer_label": "fixture-reviewer",
+                "reason": "Validated the bounded joint-state fixture.",
+                "evidence_observation_ids": evidence,
+                "external_assertion_id": "fixture-implication-replay-v1",
+                "implication_from_market_id": left.canonical_id,
+                "implication_to_market_id": right.canonical_id,
+                "state_mapping": {
+                    "a_no_b_no": "a_no_b_no",
+                    "a_no_b_yes": "a_no_b_yes",
+                    "a_yes_b_yes": "a_yes_b_yes",
+                },
+            },
+        )
+        assert review.status_code == 200, review.text
+        source_no = next(item for item in left.instruments if item.outcome_id == "no")
+        target_yes = next(item for item in right.instruments if item.outcome_id == "yes")
+        book_time = anchor + timedelta(minutes=1)
+        _append_book(store, left, source_no.native_instrument_id, "0.30", book_time)
+        _append_book(store, right, target_yes.native_instrument_id, "0.65", book_time)
+
+        response = client.post("/api/frontier/replay", json={})
+        assert response.status_code == 200, response.text
+        result = response.json()
+        assert len(result["candidates"]) == 1
+        candidate = result["candidates"][0]
+        assert candidate["family"] == "logical_implication_coverage"
+        assert candidate["classification"] == "CONDITIONAL ECONOMIC OPPORTUNITY"
+        assert candidate["independent_audit"]["disposition"] == "verified"
+
+        persisted = store.replay(result["run_id"])
+        assert persisted is not None
+        stored_candidate = persisted["result"]["candidates"][0]
+        assert stored_candidate["candidate_id"] == candidate["candidate_id"]
+        assert stored_candidate["independent_audit"]["disposition"] == "verified"
+        assert stored_candidate["outcome_payout_by_state"] == candidate["outcome_payout_by_state"]
     finally:
         _close(client, registry, http_client)
 

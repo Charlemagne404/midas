@@ -40,10 +40,19 @@ from midas.frontier.models import (
     SettlementAuditState,
     Venue,
 )
-from midas.frontier.relationships import Relationship, VerificationState
+from midas.frontier.relationships import (
+    LOGICAL_IMPLICATION_VERIFIER_VERSION,
+    MAX_LOGICAL_IMPLICATION_STATES,
+    MAX_LOGICAL_STATE_ID_CHARS,
+    Relationship,
+    RelationshipType,
+    VerificationState,
+    evidence_detail,
+    evidence_mapping,
+)
 
 D = Decimal
-ECONOMIC_MODEL_VERSION = "frontier-economic-verifiers-8"
+ECONOMIC_MODEL_VERSION = "frontier-economic-verifiers-9"
 KALSHI_MVE_SETTLEMENT_AUDIT_VERSION = "kalshi-mve-settlement-audit-2"
 _KALSHI_TAKER_FEE_TYPES = frozenset({"quadratic", "quadratic_with_combo_maker_fees"})
 _KALSHI_FEE_SCHEDULE_VERSION = "kalshi-event-taker-2026-07-07-v1"
@@ -165,6 +174,7 @@ def audit_kalshi_mve_reported_settlement(market: FrontierMarket) -> KalshiMveSet
 
 class OpportunityFamily(StrEnum):
     CROSS_VENUE_COMPLETE_COVERAGE = "cross_venue_complete_coverage"
+    LOGICAL_IMPLICATION_COVERAGE = "logical_implication_coverage"
     WITHIN_MARKET_MULTI_OUTCOME_COVERAGE = "within_market_multi_outcome_coverage"
     PRICE_DISCREPANCY = "price_discrepancy"
 
@@ -953,6 +963,256 @@ def generate_binary_coverage_candidates(
 
 
 @_high_precision_decimal_context
+def generate_logical_implication_candidates(
+    left: FrontierMarket,
+    right: FrontierMarket,
+    relationship: Relationship,
+    left_books: dict[str, BookSnapshot],
+    right_books: dict[str, BookSnapshot],
+    *,
+    state_mapping: dict[str, str] | None = None,
+    scenario: ExecutionScenario | None = None,
+    as_of_utc: datetime | None = None,
+    quantity: Decimal | None = None,
+) -> tuple[OpportunityCandidate, ...]:
+    """Evaluate the conservative long-only basket implied by a directed YES edge.
+
+    The state map and economic relationship are separate claims. The stored
+    relationship supplies a bounded candidate state relation; the audit checks
+    the payout inequalities independently. External semantic assertions remain
+    unauthenticated, so positive results are capped at conditional.
+    """
+    scenario = scenario or ExecutionScenario()
+    as_of = as_of_utc or datetime.now(UTC)
+    if as_of.tzinfo is None or as_of.utcoffset() is None:
+        raise ValueError("Evaluation timestamp must be timezone-aware")
+    as_of = as_of.astimezone(UTC)
+    family = OpportunityFamily.LOGICAL_IMPLICATION_COVERAGE
+
+    def empty(
+        classification: OpportunityClassification, reason: str
+    ) -> tuple[OpportunityCandidate, ...]:
+        return (
+            _empty_candidate(
+                left,
+                right,
+                relationship,
+                classification,
+                as_of,
+                reason,
+                family=family,
+            ),
+        )
+
+    if {relationship.left_market_id, relationship.right_market_id} != {
+        left.canonical_id,
+        right.canonical_id,
+    }:
+        return empty(
+            OpportunityClassification.INVALID_RELATIONSHIP,
+            "Relationship endpoints do not match the supplied markets.",
+        )
+    if relationship.state == VerificationState.REJECTED:
+        return empty(
+            OpportunityClassification.INVALID_RELATIONSHIP,
+            "Relationship has an explicit rejection state.",
+        )
+    if (
+        relationship.relationship_type != RelationshipType.LOGICAL_IMPLICATION
+        or relationship.state != VerificationState.VERIFIED
+    ):
+        return empty(
+            OpportunityClassification.PRICE_DISCREPANCY_ONLY,
+            "A hypothesis or non-implication edge cannot support payoff arithmetic.",
+        )
+    if left.lifecycle != Lifecycle.OPEN or right.lifecycle != Lifecycle.OPEN:
+        return empty(
+            OpportunityClassification.INCOMPLETE_EVIDENCE,
+            "Both implication markets must be recorded as open for quote evaluation.",
+        )
+    if left.venue == right.venue:
+        return empty(
+            OpportunityClassification.UNSUPPORTED_ECONOMICS,
+            "This bounded implication opportunity family requires two distinct venues.",
+        )
+    if any(
+        market.market_kind != MarketKind.BINARY_EVENT
+        or not market.payoff.verified
+        or not market.payoff.exhaustive
+        or not market.resolution.verified
+        or not market.resolution.resolution_fingerprint
+        or not market.resolution.evidence_sha256
+        for market in (left, right)
+    ):
+        return empty(
+            OpportunityClassification.UNSUPPORTED_ECONOMICS,
+            "Both markets require verified exhaustive binary payoffs and fingerprinted resolution evidence.",
+        )
+    if (
+        left.payoff.payout_currency != right.payoff.payout_currency
+        or left.payoff.settlement_asset != right.payoff.settlement_asset
+        or left.payoff.payout_currency != left.payoff.settlement_asset
+        or right.payoff.payout_currency != right.payoff.settlement_asset
+        or left.settlement_asset != left.payoff.settlement_asset
+        or right.settlement_asset != right.payoff.settlement_asset
+        or not left.has_consistent_settlement_asset_identity()
+        or not right.has_consistent_settlement_asset_identity()
+        or left.payoff.settlement_asset_identity != right.payoff.settlement_asset_identity
+        or left.payoff.settlement_asset_identity is None
+        or left.payoff.settlement_asset_identity.code != left.payoff.payout_currency
+    ):
+        return empty(
+            OpportunityClassification.INCOMPLETE_EVIDENCE,
+            "Settlement currency or canonical asset identity differs or is incomplete; no valuation bridge is modeled.",
+        )
+    if (
+        left.resolution.closes_at_utc is None
+        or right.resolution.closes_at_utc is None
+        or left.resolution.settles_at_utc is None
+        or right.resolution.settles_at_utc is None
+        or left.resolution.closes_at_utc != right.resolution.closes_at_utc
+        or left.resolution.settles_at_utc != right.resolution.settles_at_utc
+        or left.resolution.closes_at_utc <= as_of
+        or left.resolution.settles_at_utc <= as_of
+    ):
+        return empty(
+            OpportunityClassification.INCOMPLETE_EVIDENCE,
+            "Market close or settlement times differ, are absent, or have passed the replay cutoff; the candidate does not bridge timing differences.",
+        )
+
+    stored_mapping = evidence_mapping(relationship, "state_mapping")
+    mapping = state_mapping or stored_mapping
+    if (
+        not mapping
+        or mapping != stored_mapping
+        or len(mapping) > MAX_LOGICAL_IMPLICATION_STATES
+        or any(
+            len(state_id) > MAX_LOGICAL_STATE_ID_CHARS
+            for state_id in (*mapping.keys(), *mapping.values())
+        )
+        or set(mapping) != set(left.payoff.state_ids)
+        or set(mapping.values()) != set(right.payoff.state_ids)
+    ):
+        return empty(
+            OpportunityClassification.INVALID_RELATIONSHIP,
+            "The supplied joint-state mapping is absent, differs from relationship evidence, or is not bijective.",
+        )
+    implication_from = evidence_detail(relationship, "implication_from_market_id")
+    implication_to = evidence_detail(relationship, "implication_to_market_id")
+    if {implication_from, implication_to} != {
+        left.canonical_id,
+        right.canonical_id,
+    } or implication_from == implication_to:
+        return empty(
+            OpportunityClassification.INVALID_RELATIONSHIP,
+            "Directed implication endpoints are missing or do not identify these two markets.",
+        )
+    evidence_records = tuple(
+        item
+        for item in relationship.evidence
+        if item.method == "explicit-joint-state-payout-implication-v1"
+        and item.verifier_version == LOGICAL_IMPLICATION_VERIFIER_VERSION
+    )
+    required_observations = {
+        left.provenance.observation_id,
+        right.provenance.observation_id,
+    }
+    if (
+        len(evidence_records) != 1
+        or evidence_records[0].external_assertion_id is None
+        or not evidence_records[0].external_assertion_id.strip()
+        or not required_observations.issubset(set(evidence_records[0].observation_ids))
+        or evidence_records[0].created_at_utc
+        < max(
+            left.provenance.response_received_at_utc,
+            right.provenance.response_received_at_utc,
+        )
+        or evidence_records[0].created_at_utc > as_of
+    ):
+        return empty(
+            OpportunityClassification.INCOMPLETE_EVIDENCE,
+            "The directed relationship lacks a post-observation external assertion record citing both pinned market observations by the replay cutoff.",
+        )
+
+    def outcome_instruments(market: FrontierMarket) -> dict[str, MarketInstrument] | None:
+        values: dict[str, MarketInstrument] = {}
+        for item in market.instruments:
+            outcome = item.outcome_id
+            if (
+                outcome is None
+                or outcome not in {"yes", "no"}
+                or outcome in values
+                or item.quantity_unit == QuantityUnit.UNKNOWN
+            ):
+                return None
+            values[outcome] = item
+        if len(values) != 2:
+            return None
+        payouts: dict[str, dict[str, Decimal]] = {}
+        expected_states = set(market.payoff.state_ids)
+        for outcome, instrument in values.items():
+            vector = {item.state_id: item.amount for item in instrument.payouts}
+            if (
+                len(vector) != len(instrument.payouts)
+                or set(vector) != expected_states
+                or any(amount not in (D(0), D(1)) for amount in vector.values())
+            ):
+                return None
+            payouts[outcome] = vector
+        if any(payouts["yes"][state] + payouts["no"][state] != D(1) for state in expected_states):
+            return None
+        return values
+
+    left_outcomes = outcome_instruments(left)
+    right_outcomes = outcome_instruments(right)
+    if left_outcomes is None or right_outcomes is None:
+        return empty(
+            OpportunityClassification.UNSUPPORTED_ECONOMICS,
+            "Each market must define exactly complementary binary YES and NO contracts over all mapped states.",
+        )
+    source = left if implication_from == left.canonical_id else right
+    target = right if source.canonical_id == left.canonical_id else left
+    source_outcomes = left_outcomes if source.canonical_id == left.canonical_id else right_outcomes
+    target_outcomes = right_outcomes if target.canonical_id == right.canonical_id else left_outcomes
+    for left_state, right_state in mapping.items():
+        source_state = left_state if source.canonical_id == left.canonical_id else right_state
+        target_state = right_state if target.canonical_id == right.canonical_id else left_state
+        source_yes = next(
+            item.amount for item in source_outcomes["yes"].payouts if item.state_id == source_state
+        )
+        target_yes = next(
+            item.amount for item in target_outcomes["yes"].payouts if item.state_id == target_state
+        )
+        if source_yes > target_yes:
+            return empty(
+                OpportunityClassification.INVALID_RELATIONSHIP,
+                "The stored directed YES implication fails for at least one mapped terminal state.",
+            )
+
+    left_instrument = (
+        left_outcomes["no"] if source.canonical_id == left.canonical_id else left_outcomes["yes"]
+    )
+    right_instrument = (
+        right_outcomes["yes"] if target.canonical_id == right.canonical_id else right_outcomes["no"]
+    )
+    candidate = _evaluate_pair(
+        left,
+        right,
+        relationship,
+        left_instrument,
+        right_instrument,
+        left_books.get(left_instrument.native_instrument_id),
+        right_books.get(right_instrument.native_instrument_id),
+        scenario,
+        as_of,
+        quantity,
+        mapping,
+        family=family,
+    )
+    return (candidate,)
+
+
+@_high_precision_decimal_context
 def generate_multi_outcome_coverage_candidate(
     market: FrontierMarket,
     books: dict[str, BookSnapshot],
@@ -1508,9 +1768,12 @@ def _evaluate_pair(
     as_of: datetime,
     requested_quantity: Decimal | None,
     state_mapping: dict[str, str],
+    *,
+    family: OpportunityFamily = OpportunityFamily.CROSS_VENUE_COMPLETE_COVERAGE,
 ) -> OpportunityCandidate:
-    family = OpportunityFamily.CROSS_VENUE_COMPLETE_COVERAGE
-    identity = _candidate_id(left, right, relationship, left_instrument, right_instrument, scenario)
+    identity = _candidate_id(
+        left, right, relationship, left_instrument, right_instrument, scenario, family=family
+    )
     if left_book is None or right_book is None:
         return _empty_candidate(
             left,
@@ -1814,6 +2077,10 @@ def _evaluate_pair(
         "Venue balances are isolated; no transfer or shared-collateral assumption is used.",
         "Public snapshots do not establish fill probability, queue position, or simultaneous execution.",
     ]
+    if family == OpportunityFamily.LOGICAL_IMPLICATION_COVERAGE:
+        assumptions.append(
+            "The joint-state mapping and implication assertion are self-attributed and unauthenticated; positive results remain conditional."
+        )
     reasons.append(
         "Practical execution eligibility is not established from public market-data snapshots."
     )
@@ -1864,6 +2131,23 @@ def _evaluate_pair(
         classification = OpportunityClassification.VERIFIED_MATHEMATICAL_INCONSISTENCY
         reasons.append(
             "Verified exhaustive payoffs guarantee the modeled gross discrepancy under recorded prices."
+        )
+    if (
+        family == OpportunityFamily.LOGICAL_IMPLICATION_COVERAGE
+        and classification == OpportunityClassification.VERIFIED_MATHEMATICAL_INCONSISTENCY
+    ):
+        classification = OpportunityClassification.CONDITIONAL_ECONOMIC_OPPORTUNITY
+        reasons.append(
+            "The payoff arithmetic depends on an unauthenticated external assertion that the mapped states describe the same joint world."
+        )
+    if (
+        family == OpportunityFamily.LOGICAL_IMPLICATION_COVERAGE
+        and timing_reasons
+        and classification == OpportunityClassification.CONDITIONAL_ECONOMIC_OPPORTUNITY
+    ):
+        classification = OpportunityClassification.INCOMPLETE_EVIDENCE
+        reasons.append(
+            "Timing evidence does not support a fresh, bounded comparison of both implication legs."
         )
     if (
         timing_reasons
@@ -2063,10 +2347,13 @@ def _candidate_id(
     left_instrument: MarketInstrument,
     right_instrument: MarketInstrument,
     scenario: ExecutionScenario,
+    *,
+    family: OpportunityFamily = OpportunityFamily.CROSS_VENUE_COMPLETE_COVERAGE,
 ) -> str:
     raw = "|".join(
         (
             ECONOMIC_MODEL_VERSION,
+            family.value,
             relationship.relationship_id,
             left.canonical_id,
             right.canonical_id,
