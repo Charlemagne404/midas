@@ -35,10 +35,19 @@ def test_kalshi_and_kraken_live_capture_require_recorded_permission_references(t
                 item = source_by_venue[venue.value]
                 assert item["public_probe_enabled"] is False
                 assert item["probe_policy_block_reason"]
+                assert item["probe_policy_block_reason"] in item["health"]["notes"]
                 response = client.post(f"/api/frontier/probe/{venue.value}", json={})
                 assert response.status_code == 409
                 assert response.json()["detail"] == item["probe_policy_block_reason"]
                 assert app.state.frontier_registry.get(venue).transport.request_count == 0
+            readiness = client.get("/api/frontier/readiness")
+            assert readiness.status_code == 200
+            permission_gate = next(
+                gate
+                for gate in readiness.json()["gates"]
+                if gate["name"] == "source_data_use_permissions"
+            )
+            assert permission_gate["state"] == "BLOCKED"
 
         for venue in (Venue.KALSHI, Venue.KRAKEN):
             config = app.state.frontier_registry.get(venue).config
