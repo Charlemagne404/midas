@@ -919,3 +919,6 @@ change remains unverified because it was stopped under rising memory PSI.
 Commit `cca4038` tightens the per-venue currency guard and adds an unrun
 regression test for incomplete currency metadata. Its focused test and
 typecheck remain the next safe verification action after memory pressure eases.
+The full implementation commit is `cca403886c5dd9f026baf97a8337fa68752e57cc`;
+the report, ledger, and current-state follow-up is
+`528aac29f233dcb364ba00849d4eed240bb500d5`.
