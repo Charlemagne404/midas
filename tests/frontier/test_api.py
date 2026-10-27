@@ -351,7 +351,7 @@ def test_captured_cross_venue_event_context_creates_reviewable_hypothesis(tmp_pa
         response = client.post("/api/frontier/relationships/propose?market_limit=200&max_pairs=500")
         assert response.status_code == 200, response.text
         payload = response.json()
-        assert payload["matcher_version"] == "frontier-relationship-matcher-3"
+        assert payload["matcher_version"] == "frontier-relationship-matcher-4"
         target_ids = {"polymarket:562802", "kalshi:CONTROLH-2026-D"}
         relationship = next(
             item

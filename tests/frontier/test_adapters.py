@@ -207,6 +207,10 @@ async def test_public_event_group_capture_retains_parent_context_and_only_propos
         update={"native_event_title": "Which party will win the U.S. House in 2028?"}
     )
     assert propose_relationships((poly_yes, different_year), max_pairs=20) == ()
+    different_child_year = kalshi_yes.model_copy(
+        update={"title": "Will Democrats win the House in 2028?"}
+    )
+    assert propose_relationships((poly_yes, different_child_year), max_pairs=20) == ()
 
     audit = verify_same_payoff(
         poly_yes,

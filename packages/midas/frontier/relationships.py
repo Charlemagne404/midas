@@ -16,7 +16,7 @@ from pydantic import Field, field_validator, model_validator
 from midas.frontier.models import FrontierMarket, FrontierModel, MarketKind, Venue
 
 D = Decimal
-MATCHER_VERSION = "frontier-relationship-matcher-3"
+MATCHER_VERSION = "frontier-relationship-matcher-4"
 DEFAULT_MINIMUM_JACCARD = D("0.45")
 _STOP_WORDS = {
     "a",
@@ -180,6 +180,23 @@ def _event_context_years(value: str) -> frozenset[str]:
     return frozenset(re.findall(r"\b(?:19|20)\d{2}\b", normalize_title(value)))
 
 
+def _market_year_context(market: FrontierMarket) -> tuple[frozenset[str], bool]:
+    parent_years = _event_context_years(market.native_event_title or "")
+    market_years = _event_context_years(market.title)
+    contradictory = bool(parent_years and market_years and not parent_years & market_years)
+    return parent_years or market_years, contradictory
+
+
+def _market_years_conflict(left: FrontierMarket, right: FrontierMarket) -> bool:
+    left_years, left_contradictory = _market_year_context(left)
+    right_years, right_contradictory = _market_year_context(right)
+    return (
+        left_contradictory
+        or right_contradictory
+        or bool(left_years and right_years and not left_years & right_years)
+    )
+
+
 def _outcome_context_tokens(market: FrontierMarket) -> frozenset[str]:
     if market.outcome_label:
         values = title_tokens(market.outcome_label)
@@ -282,7 +299,7 @@ def propose_relationships(
                 if len(compared) > comparison_budget:
                     break
                 a, b = by_id[pair[0]], by_id[pair[1]]
-                if a.venue == b.venue:
+                if a.venue == b.venue or _market_years_conflict(a, b):
                     continue
                 ta, tb = token_map[pair[0]], token_map[pair[1]]
                 union = ta | tb
@@ -346,13 +363,11 @@ def propose_relationships(
                 shared_events = left_events & right_events
                 event_union = left_events | right_events
                 event_score = D(len(shared_events)) / D(len(event_union))
-                left_years = _event_context_years(left_market.native_event_title or "")
-                right_years = _event_context_years(right_market.native_event_title or "")
                 shared_outcomes = outcome_tokens[pair[0]] & outcome_tokens[pair[1]]
                 if (
                     len(shared_events) < 2
                     or event_score < D("0.4")
-                    or (left_years and right_years and not left_years & right_years)
+                    or _market_years_conflict(left_market, right_market)
                     or not shared_outcomes
                 ):
                     continue
