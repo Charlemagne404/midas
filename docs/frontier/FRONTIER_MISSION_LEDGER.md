@@ -1414,6 +1414,15 @@ passed for `apps/api/frontier.py`; Ruff check/format and `git diff --check`
 passed. One existing Starlette/httpx TestClient deprecation warning remains.
 No held capture, live endpoint, production database, or service was accessed.
 
-**Next safe action:** review source-observation read routes for the same
-explicit integrity response. Use a temporary corrupted observation fixture and
-preserve its row after the API rejects it.
+Commit `a675a3f` adds one fail-closed observation reader for direct evidence,
+market, book, trade, and overview queries. Its test corrupts three temporary
+source rows, checks each API returns HTTP 409, and confirms the stored damaged
+payloads remain untouched. The eight focused readiness, quarantine, replay,
+comparison, review, and observation regressions passed **8 tests** in 3.96
+seconds. Strict mypy passed for the API route; Ruff check/format and
+`git diff --check` passed. One upstream Starlette/httpx deprecation warning
+remains. No production or held-source records were read.
+
+**Next safe action:** remeasure local cgroup headroom and PSI, then run the
+complete `tests/frontier` suite only if current resource admission gates allow
+it. Keep test data roots temporary and report an incomplete run as incomplete.

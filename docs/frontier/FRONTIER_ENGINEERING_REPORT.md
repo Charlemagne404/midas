@@ -2409,6 +2409,16 @@ source quarantine behavior on synthetic fixtures only. They do not validate
 held source records, live source quality, or economic performance. No held
 capture, production database, live endpoint, service, or deployment was used.
 
-**Next safe action:** review source-observation read routes for the same
-explicit integrity response. Use a temporary corrupted observation fixture and
-preserve its row after the API rejects it.
+Commit `a675a3f` adds a shared verified observation reader for direct evidence,
+market, book, trade, and overview queries. Its synthetic fixture corrupts
+three temporary source rows, checks that each API returns HTTP 409, and
+confirms the damaged rows remain unchanged. The eight focused readiness,
+quarantine, replay, comparison, review, and observation regressions passed
+**8 tests** in 3.96 seconds. Strict mypy for the API route, Ruff, formatting,
+and `git diff --check` passed. One Starlette/httpx TestClient deprecation
+warning remains. No production or held-source records were read.
+
+**Next safe action:** remeasure local cgroup headroom and PSI, then run the
+complete `tests/frontier` suite only if the current resource admission gates
+allow it. Use temporary test data roots and leave any interrupted run
+classified as incomplete.
