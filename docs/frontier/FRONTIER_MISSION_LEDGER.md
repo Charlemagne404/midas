@@ -1515,20 +1515,23 @@ Available memory was 9,581,096 KiB, with 484,348 KiB of 4 GiB swap free. The
 full Frontier suite and production build remain deferred. No source request,
 held data read, service, production setting, or historical store was accessed.
 
-## 2026-10-27 16:52 UTC — replay API fee-provenance check
+## 2026-10-27 16:54 UTC — end-to-end fee candidate API replay
 
-Test commit `65a4f4e` extends the saved Kalshi event/series fee fixture to call
-the local replay API. The result manifest contains both fee metadata
-observation IDs, and the stored replay retains the same IDs. The focused API
-test passed (**1 passed** in 1.36 seconds); Ruff, format check, and
-`git diff --check` passed. One existing Starlette/httpx deprecation warning
-remains. This temporary-database fixture has an empty adapter registry and
-does not call a source. It verifies the evidence-to-manifest path only; it does
-not establish live fees or create a candidate.
+Test commit `65a4f4e` checked fee observation IDs in both the returned and
+persisted replay manifests. Follow-up test commit `dc5ef43` extends the same
+temporary-store fixture with a controlled cross-venue binary pair, explicit
+same-payoff assertion, and four stored books. The local replay API returns a
+conditional candidate with `$0.18` modeled fees and `$1.32` worst-case modeled
+net P&L. The independent audit reproduces the calculation and practical
+eligibility remains false. The response and persisted replay both pin the fee
+observation IDs. The focused test passed (**1 passed** in 1.36 seconds);
+Ruff, format check, and `git diff --check` passed. One existing
+Starlette/httpx deprecation warning remains. Data and the assertion are
+controlled fixtures, not live venue evidence. The empty adapter registry
+caused no source request.
 
-At `2026-10-27T16:52:41Z`, memory PSI was `avg10` 1.41% (`some`) / 1.26%
-(`full`), `avg60` 24.80% / 22.29%, and `avg300` 35.23% / 31.79%.
-`MemAvailable` was 9,835,924 KiB; swap free was 484,420 KiB of 4 GiB. CPU
-`avg10` was 2.64% (`some`) / 0.00% (`full`); I/O `avg10` was 1.53% / 1.49%.
-The full Frontier suite, production build, and browser E2E remain deferred.
-No source, held data, service, or production setting was accessed.
+At `2026-10-27T16:54:49Z`, memory PSI was `avg10` 0.00% (`some`) / 0.00%
+(`full`), `avg60` 2.94% / 2.64%, and `avg300` 22.70% / 20.48%.
+`MemAvailable` was 9,845,932 KiB; swap free was 484,520 KiB of 4 GiB. The full
+Frontier suite, production build, and browser E2E remain deferred. No source,
+held data, service, or production setting was accessed.
