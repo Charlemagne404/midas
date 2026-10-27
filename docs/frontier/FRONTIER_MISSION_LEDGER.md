@@ -1399,13 +1399,15 @@ counts.
 
 Commit `163ab79` makes readiness return HTTP 409 with a storage-integrity
 diagnostic if a replay payload no longer matches its pinned result hash. The
-focused legacy, unaudited, quarantine, and hash-mismatch API regressions passed
-**4 tests** in 2.26 seconds. Strict mypy passed for `apps/api/frontier.py`; Ruff
+follow-up `e491f3f` centralizes replay reads and applies the same 409 response
+to `/runs`, `/opportunities`, and held-filtered `/overview`. A synthetic held
+source configuration verifies all four read routes including `/readiness`.
+The focused legacy, unaudited, quarantine, and hash-mismatch regressions passed
+**4 tests** in 2.59 seconds. Strict mypy passed for `apps/api/frontier.py`; Ruff
 check/format and `git diff --check` passed. One existing Starlette/httpx
 TestClient deprecation warning remains. No held capture, live endpoint,
 production database, or service was accessed.
 
-**Next safe action:** use the same explicit integrity response for `/runs`,
-`/opportunities`, and held-filtered `/overview` when a replay row fails hash
-validation. Keep the immutable replay record in place and exercise the behavior
-with a temporary corrupted fixture only.
+**Next safe action:** extend the explicit integrity response to paired
+comparison and relationship reads. Test corrupted fixture rows through their
+API routes while preserving the immutable database rows.

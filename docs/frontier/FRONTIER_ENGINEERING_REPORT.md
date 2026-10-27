@@ -2390,17 +2390,20 @@ remain preserved.
 
 Commit `163ab79` makes readiness return HTTP 409 with a concise storage
 integrity detail when a replay payload no longer matches its pinned result
-hash. The legacy, unaudited, quarantine, and hash-mismatch API regressions
-passed **4 tests** in 2.26 seconds. Strict mypy for the API route, Ruff,
-formatting, and `git diff --check` passed. One existing Starlette/httpx
-TestClient deprecation warning remains.
+hash. Follow-up commit `e491f3f` centralizes reads of replay rows and applies
+the same 409 response to `/runs`, `/opportunities`, and held-filtered
+`/overview`. A synthetic source hold verifies that all four routes, including
+`/readiness`, reject the corrupted row consistently. The legacy, unaudited,
+quarantine, and hash-mismatch API regressions passed **4 tests** in 2.59
+seconds. Strict mypy for the API route, Ruff, formatting, and
+`git diff --check` passed. One existing Starlette/httpx TestClient deprecation
+warning remains.
 
 These checks establish backward-compatible local replay reading and API-level
 source quarantine behavior on synthetic fixtures only. They do not validate
 held source records, live source quality, or economic performance. No held
 capture, production database, live endpoint, service, or deployment was used.
 
-**Next safe action:** apply the same explicit replay-integrity response to the
-`/runs` and `/opportunities` readers and held-filtered `/overview`. Preserve
-the immutable corrupted row in the test database and verify the response with
-a temporary fixture only.
+**Next safe action:** extend explicit integrity failures to paired comparison
+and relationship reads. Preserve corrupted rows in the temporary test
+database and verify that APIs fail closed without returning partial evidence.
