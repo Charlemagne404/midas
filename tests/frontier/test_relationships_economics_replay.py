@@ -1190,6 +1190,45 @@ def test_independent_audit_rejects_quantity_step_mutation():
     assert "violates its quantity step" in audited.independent_audit.message.lower()
 
 
+def test_independent_audit_rejects_state_mapping_mutation():
+    left, right, relationship, instrument_mapping = _verified_pair()
+    left_books, right_books = _books(left, right)
+    candidate = next(
+        item
+        for item in generate_binary_coverage_candidates(
+            left,
+            right,
+            relationship,
+            left_books,
+            right_books,
+            state_mapping={"yes": "yes", "no": "no"},
+            instrument_mapping=instrument_mapping,
+            as_of_utc=T0 + timedelta(milliseconds=100),
+        )
+        if item.legs
+    )
+    canonical_mapping = (
+        instrument_mapping
+        if relationship.left_market_id == left.canonical_id
+        else {right_id: left_id for left_id, right_id in instrument_mapping.items()}
+    )
+    audited = independently_audit_candidate(
+        candidate.model_copy(update={"independent_audit": None}),
+        markets={left.canonical_id: left, right.canonical_id: right},
+        books_by_market={left.canonical_id: left_books, right.canonical_id: right_books},
+        relationships={relationship.relationship_id: relationship},
+        state_mappings={relationship.relationship_id: {"yes": "no", "no": "yes"}},
+        instrument_mappings={relationship.relationship_id: canonical_mapping},
+        scenario=ExecutionScenario(),
+    )
+    assert audited.independent_audit is not None
+    assert audited.independent_audit.disposition.value == "incomplete"
+    assert audited.classification == OpportunityClassification.INCOMPLETE_EVIDENCE
+    assert "relationship instrument mapping has mismatched payoffs" in (
+        audited.independent_audit.message.lower()
+    )
+
+
 def test_candidate_generation_and_independent_audit_enforce_price_ticks():
     left, right, relationship, instrument_mapping = _verified_pair()
     left_books, right_books = _books(left, right)
