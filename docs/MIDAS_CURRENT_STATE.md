@@ -258,10 +258,11 @@ Reality/Veritas state above. See the [Frontier mission ledger](frontier/FRONTIER
 and [engineering report](frontier/FRONTIER_ENGINEERING_REPORT.md).
 
 Review follow-up commit `cca4038` disables virtual-funding comparison if any
-leg is missing a quote currency. Its regression case is committed but was not
-run because memory PSI remained high at 13:18 UTC; the earlier component and
-browser results predate this fix. The focused component test and typecheck
-remain pending a safer host sample.
+leg is missing a quote currency. The Frontier component file now passes 8/8
+tests after this correction, and the web TypeScript typecheck passes. The
+focused depth-two/capital-fragmentation/mobile browser case predates the fix
+and was not rerun. The production build remains unverified because it was
+stopped under rising PSI.
 
 ## Frontier economics and API provenance checkpoint — 2026-10-27 13:28 UTC
 
@@ -296,3 +297,18 @@ unverified; no production service or historical evidence changed. See the
 [Frontier ledger](frontier/FRONTIER_MISSION_LEDGER.md),
 [engineering report](frontier/FRONTIER_ENGINEERING_REPORT.md), and
 [operations guide](frontier/FRONTIER_OPERATIONS.md).
+
+## Frontier focused regression checkpoint — 2026-10-27 13:40 UTC
+
+The core API, adapter, and economics test files passed 99 tests with one
+Starlette/httpx deprecation warning. The web component file passed 8/8 tests,
+including the per-leg missing-currency case, after test commit
+`f206dfedc34cf3fafae0b74afc5e13376c036b4a`; TypeScript typecheck, targeted
+ESLint, and Prettier passed. No live source or browser E2E run occurred in this
+checkpoint.
+
+Targeted mypy exited 1 on 14 diagnostics in four unmodified imported
+Veritas/Arena modules and reported none in its six explicit Frontier/API
+targets. The complete repository test suite, remaining Frontier/Arena tests,
+and production build remain unverified. The separate Frontier engineering
+report records the exact commands and mypy module names.

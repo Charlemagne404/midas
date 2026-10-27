@@ -1851,14 +1851,41 @@ The API regression command, from the Frontier worktree, was
 `/home/charlie/midas/.venv/bin/pytest -q --tb=short tests/frontier/test_api.py -k 'preserves_drained_capture_on_lineage_mismatch or cursor_pages_are_bound_and_persisted'`;
 it reported **4 passed, 31 deselected**. The focused economics selection
 reported **6 passed**. Ruff check and formatting passed for all changed Python
-files; no full test suite or new typecheck was run.
+files.
 
 Ruff check and formatting passed for the changed Python files. At `13:28:55Z`,
 host memory PSI `avg10` was 39.81% (`some`) / 34.86% (`full`), available memory
-was about 9.1 GB, and 553 MiB of swap remained free. Broad suites, UI typecheck,
-and the production build were not run under this condition. The quote-currency
-completeness UI regression and typecheck remain pending. No protected service,
-production configuration, or historical evidence was changed.
+was about 9.1 GB, and 553 MiB of swap remained free. That older pressure sample
+is not the admission state for the later focused run below. No protected
+service, production configuration, or historical evidence was changed.
+
+### Focused regression and static-check results (2026-10-27 13:40 UTC)
+
+The following combined engine/API regression run passed **99 tests** with one
+Starlette/httpx deprecation warning:
+
+`/home/charlie/midas/.venv/bin/pytest -q --tb=short tests/frontier/test_api.py tests/frontier/test_adapters.py tests/frontier/test_relationships_economics_replay.py`
+
+The Frontier component file passed **8/8** tests after the missing-quote-
+currency case was corrected to use Testing Library's scoped `within` query.
+Web TypeScript typecheck, targeted ESLint, and Prettier passed. The test-helper
+correction is code commit `f206dfedc34cf3fafae0b74afc5e13376c036b4a`. The
+focused depth-two/capital-fragmentation/mobile browser case passed earlier but
+was not rerun after this correction.
+
+The targeted mypy command was
+`/home/charlie/midas/.venv/bin/mypy packages/midas/frontier/adapters/base.py packages/midas/frontier/adapters/transport.py packages/midas/frontier/economics.py packages/midas/frontier/relationships.py packages/midas/frontier/independent_audit.py apps/api/frontier.py`.
+It exited 1 after reporting 14 errors in four unmodified imported modules:
+`packages/midas/veritas/independent_economics.py`,
+`packages/midas/veritas/analysis_catalog.py`,
+`packages/midas/veritas/continuous_analysis.py`, and
+`packages/midas/arena/director.py`. It emitted no diagnostics in the six
+explicit Frontier/API targets. The full repository suite, remaining
+Frontier/Arena tests, and production frontend build remain unverified.
+
+At `13:40:25Z`, memory PSI `avg10` was 0% (`some`/`full`), `avg300` was
+19.26% / 16.92%, available memory was about 9.3 GB, and 553 MiB of swap remained
+free. No live source request was made.
 
 ### Kalshi MVE reported settlement arithmetic (2026-10-27 13:01 UTC)
 
@@ -1933,7 +1960,7 @@ cross-venue economics.
 | Live market/book/trade and fee metadata through adapters/API | PARTIALLY VERIFIED | Earlier listing/book/trade, event-group, fee-metadata, and trade-page captures are hash-pinned. Kalshi MVE captures include filtered pages whose nested markets were omitted and one detail response with explicit top-level `markets: []`. The new one-request child detail capture matches a selected leg's saved ticker/event identities and has raw/store hashes; its rules expose fair-price fallbacks, but it has no book/price and proves neither child nor combo payoff. No cross-venue timing, combo economics, venue-wide coverage, or execution is established. |
 | Source workers and broad historical data | DEFERRED | No persistent worker or long-duration collection. |
 | Laboratory/Arena research orchestration | PARTIALLY VERIFIED | Arena job kind, content-addressed snapshots, bounded offline execution, API submission/history/result verification, process CPU/RSS capture, and explicit workspace controls are implemented and tested; two fixture jobs passed the host-wide gate and completed under systemd. Laboratory campaign management and resource-sustainability evidence remain incomplete. |
-| Native Mission Control workspace | PARTIALLY VERIFIED | Local API, bounded graph/review UI, Polymarket/Kalshi trade-page and event-group controls, explicit filtered one-page Kalshi MVE capture by series, collection, or one event ticker with returned member-list state, parent-event context, instrument-bound fee sensitivity, selected-leg component-rule and recorded-settlement arithmetic inspection, paired replay, candidate fill stress, venue-separated local virtual balances, and Arena job history/result display. The original capital UI checkpoint's Frontier component suite passes 8 tests; typecheck, ESLint, Prettier, and the focused depth-two/capital-fragmentation/mobile browser case pass. The UI regression for complete per-venue quote-currency metadata and its typecheck have not been run. Backend payout/settlement denomination guards have focused coverage. A production build after the capital UI change was stopped under rising memory PSI and remains unverified; the workspace is not deployed. |
+| Native Mission Control workspace | PARTIALLY VERIFIED | Local API, bounded graph/review UI, Polymarket/Kalshi trade-page and event-group controls, explicit filtered one-page Kalshi MVE capture by series, collection, or one event ticker with returned member-list state, parent-event context, instrument-bound fee sensitivity, selected-leg component-rule and recorded-settlement arithmetic inspection, paired replay, candidate fill stress, venue-separated local virtual balances, and Arena job history/result display. The Frontier component file passes 8 tests after the per-leg currency fix; web typecheck passes, and targeted ESLint/Prettier pass for the test correction. The earlier focused depth-two/capital-fragmentation/mobile browser case predates that correction. Backend payout/settlement denomination guards have focused coverage. A production build after the capital UI change was stopped under rising memory PSI and remains unverified; the workspace is not deployed. |
 | Production readiness/deployment | DEFERRED | Separate review and authorization required; production eligibility is false. |
 | Positive economic result | NOT ESTABLISHED | No genuine cross-venue equivalent or economically eligible result in captured evidence. |
 

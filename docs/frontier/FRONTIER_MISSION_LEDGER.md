@@ -95,9 +95,10 @@ stopped under rising memory PSI and remains unverified. Comprehensive capital
 transfer, collateral, FX, and settlement-duration modeling remains incomplete.
 Follow-up review commit `cca4038` closes a partial-currency metadata gap by
 requiring every leg in a venue to declare the same quote currency. Its
-new UI regression remains pending with the UI typecheck; the earlier
-8-test/browser results predate this correction. The focused backend regression
-was exercised separately below.
+currency-completeness regression is now covered by the rerun eight-test
+Frontier component suite and web TypeScript typecheck. The focused browser case
+predates this correction and was not rerun. The production build remains
+unverified after it was stopped under rising memory PSI.
 
 The latest economics review closed a unit-valuation gap: a verified payoff is
 now rejected when payout currency and settlement asset differ, or when the
@@ -114,8 +115,10 @@ diagnostics and remove already persisted captures from the pending set, avoiding
 duplicate failure records after a later book/trade error.
 The focused USD/USDC economics selection passed 6 tests; the API capture
 selection passed 4 tests with 31 unrelated API tests deselected. Ruff check and
-formatting passed. Broader suites, the UI typecheck, and the production build
-remain pending while the host memory PSI is high.
+formatting passed. A combined API/adapter/economics run later passed 99 tests.
+The full Frontier/Arena and repository suites remain unrun. Targeted mypy
+reported errors in four unmodified dependency modules and none in its six
+explicit Frontier/API targets. The production build remains unverified.
 Remaining acceptance work is substantial.
 **Branch:** `codex/frontier-20261026`
 **Worktree:** `/home/charlie/midas-frontier`
@@ -808,7 +811,7 @@ same-input runs do not change the resource sustainability gate.
 | Paired scenario comparison | PARTIALLY VERIFIED | Direct local comparison and API/UI/browser tests pass. Two actual systemd-supervised fixture replays completed over the same pinned inputs and their result hashes verify. The latest run measured worker process CPU/RSS and exposes it in Mission Control. No genuine equivalent live market pair exists. |
 | Frontier API and source configuration | COMPLETE AND VERIFIED | Local reads include hash-verified legacy and cursor-page batches. Polymarket and Kalshi page routes are capability/config/recorded-market gated, bounded to one page and retries, and bind cursors to market and size. Kalshi MVE discovery validates exactly one series/collection/event-ticker filter and does not follow its cursor. Component-detail fetches are bound pre-request to saved selected-leg metadata and post-response to saved market/event identity. Four focused API regressions verify raw market/book/trade capture retention after post-drain lineage failures, preserve a drained Polymarket v2 page, and ensure earlier successful listings are not duplicated. |
 | Live adapter, API and store evidence | PARTIALLY VERIFIED | Three venue listing/book/trade captures, Polymarket v2 first/continuation pages with distinct IDs, a Kalshi empty cursor page, event-group responses and MVE endpoint responses have hash-pinned evidence. A single selected-child market-detail response is also hash/store verified and has matching saved-parent ticker/event IDs; it contains close lifecycle and native fair-price rule text but no price/book. Kalshi trade-row mapping remains fixture-only. Samples are asynchronous and establish no synchronized prices, complete history, child payout, combo payout, or execution. |
-| Mission Control Frontier workspace | PARTIALLY VERIFIED | Native view includes Polymarket/Kalshi trade-page, event-group and one-page MVE controls; MVE can filter by series, collection or event ticker; saved selected-leg rules, recorded settlement arithmetic, official source links and provenance hashes can be inspected. Graph/review, depth-paged traversal, paired replay, one-sided fill stress, instrument-bound Kalshi order-fee sensitivity, Arena history/results, and venue-separated virtual balance comparison are integrated. The original capital UI checkpoint's Frontier component suite passes 8 tests; typecheck, ESLint, Prettier and the focused depth-two/capital-fragmentation/mobile browser case pass. The UI regression for missing quote currency on any leg and its typecheck remain pending. Backend payout/settlement denomination guards have focused regression coverage. The production build after the capital UI change was stopped under rising memory PSI and remains pending. It is not deployed. |
+| Mission Control Frontier workspace | PARTIALLY VERIFIED | Native view includes Polymarket/Kalshi trade-page, event-group and one-page MVE controls; MVE can filter by series, collection or event ticker; saved selected-leg rules, recorded settlement arithmetic, official source links and provenance hashes can be inspected. Graph/review, depth-paged traversal, paired replay, one-sided fill stress, instrument-bound Kalshi order-fee sensitivity, Arena history/results, and venue-separated virtual balance comparison are integrated. The Frontier component file passes 8 tests after the per-leg currency fix; web typecheck passes, and targeted ESLint/Prettier pass for the test correction. The earlier focused depth-two/capital-fragmentation/mobile browser case predates that correction. Backend payout/settlement denomination guards have focused coverage. The production build after the capital UI change was stopped under rising memory PSI and remains unverified. It is not deployed. |
 | Laboratory/Arena research orchestration | PARTIALLY VERIFIED | Bounded Frontier Arena job type, snapshot, offline executor, API, worker CPU/RSS capture, and workspace history/result view are implemented and tested; two fixture jobs passed the host gate and completed under systemd. Resource sustainability and Laboratory campaign management remain incomplete. |
 | Persistent source collection, streaming and broad historical replay | DEFERRED | No background worker or long-duration campaign. |
 | Cross-venue FX, comprehensive capital and settlement costs | DEFERRED | Unknown costs remain unknown and block decisive net economics. |
@@ -856,10 +859,9 @@ The highest-value next steps are:
    The worker now captures and displays process CPU/RSS, but do not make a
    capacity claim from two tiny same-input runs. Add Laboratory campaign
    management only if a concrete need remains.
-7. Run the focused UI test and typecheck for commit `cca4038` after host memory
-   pressure eases. Its regression case ensures missing currency on any leg
-   disables that venue's virtual balance comparison. The backend USD/USDC
-   fail-closed regression has already passed.
+7. The complete `Frontier.test.tsx` file and web typecheck now pass after the
+   missing-currency regression. Keep the production build pending until a fresh
+   admission sample supports it; a previously stopped build is not evidence.
 
 Do not connect Frontier to Reality’s recorder, enable probes as a default,
 deploy, or alter protected evidence as part of ordinary continuation. The next
@@ -984,3 +986,19 @@ supply clock uncertainty, so recorded cross-venue candidate timing remains
 unverified. No live data, service, or historical evidence was changed.
 Architecture, operations, current-state, and report notes record the boundary
 in documentation checkpoint `a69d81c8fadb4d7833ff912ad169211afa767f10`.
+
+## 2026-10-27 13:40 UTC — focused regression closeout
+
+After a fresh low-`avg10` PSI sample, the API, adapter, and economics files
+passed **99 tests** with one existing Starlette/httpx deprecation warning. The
+Frontier component file passed **8/8** tests after fixing its `within` query;
+web TypeScript typecheck, targeted ESLint, and Prettier passed. Code commit
+`f206dfedc34cf3fafae0b74afc5e13376c036b4a` contains the test-helper correction.
+
+Targeted mypy was run on six changed engine/API modules and exited 1 after
+finding 14 errors in four unmodified imported Veritas/Arena modules; it emitted
+no diagnostics in the six explicit Frontier/API targets. The full repository
+suite, remaining Frontier/Arena tests, production build, and browser E2E were
+not run. At `13:40:25Z`, memory PSI `avg10` was 0% (`some`/`full`), `avg300`
+was 19.26% / 16.92%, available RAM was 9.3 GB, and 553 MiB swap remained free.
+No live source request, production service, or historical evidence was changed.
