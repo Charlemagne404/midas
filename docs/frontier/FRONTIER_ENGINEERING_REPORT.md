@@ -2200,17 +2200,16 @@ corepack pnpm --dir apps/web build
 
 ## API denomination read-back regression — 2026-10-27
 
-Follow-up commit `8a1f41e` adds an API-level persistence/read-back assertion to
-the controlled multi-outcome replay fixture. It confirms the exact fiat USD
-identity is preserved by `/api/frontier/markets` and `/api/frontier/books`,
-then appears on replay candidate capital and every candidate leg. The focused
-test passed (**1 passed**) with the existing Starlette/httpx `TestClient`
-deprecation warning; Ruff check/format and `git diff --check` passed. This
-closes the serialization check for this fixture path, not live-source
-validation. No external source, production service, or historical store was
-changed.
+Follow-up commits `8a1f41e` and `43b5a08` add API-level persistence/read-back
+assertions to controlled replay and trade fixtures. They confirm the exact fiat
+USD identity is preserved by `/api/frontier/markets`, `/api/frontier/books`,
+and `/api/frontier/trades`, then appears on replay candidate capital and every
+candidate leg. Both focused tests passed (**2 passed**) with the existing
+Starlette/httpx `TestClient` deprecation warning; Ruff check/format and
+`git diff --check` passed. This closes the serialization check for these
+fixture paths, not live-source validation. No external source, production
+service, or historical store was changed.
 
-The current source changes are in `03dbc92` (denomination model and propagation)
-and `8a1f41e` (API read-back regression). The denomination-model documentation
-checkpoint is `48c75fa`; this API read-back note is also recorded in the
-mission ledger.
+The current source changes are in `03dbc92` (denomination model and propagation),
+`8a1f41e` and `43b5a08` (API read-back regressions). Documentation checkpoints
+are `48c75fa` and `2dd6b13`, with this update recorded in the mission ledger.
