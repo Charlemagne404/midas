@@ -2,18 +2,17 @@
 
 **Report date:** 2026-10-27
 
-**Latest code checkpoint:** `6bc0351` adds per-request monotonic elapsed time
-to successful and complete-error response evidence, normalized provenance,
-and the Mission Control evidence disclosure. Its focused Python selection
-passes 86/86 and the targeted UI test passes 1/1. The complete Frontier Python
-suite passed 265/265 on predecessor `51afe86`; it has not been rerun after
-`6bc0351`. The 40/40 Web suite and TypeScript typecheck are also prior
-checkpoint results and have not been rerun after the new evidence display. The
-preceding `51afe86` adds typed writer timestamps, content-addressed snapshot
-preservation, and legacy-row compatibility. `cfda4ad` adds the Coinbase
-Exchange spot adapter and exact terms-version gate. Production build and
-browser E2E remain pending safe resource admission. Project Frontier remains
-incomplete, isolated, and undeployed.
+**Latest code checkpoint:** `008106b` hardens Coinbase Decimal exponent
+validation. It builds on `6bc0351`'s per-request monotonic elapsed provenance
+and Mission Control disclosure and `51afe86`'s append-only writer timestamps.
+The full Frontier suite passes 269/269, Web unit suite 40/40, TypeScript
+typecheck, targeted ESLint/Prettier, a production frontend build, and the full
+12/12 browser suite. Strict direct mypy passes the seven changed Python source
+modules with imported legacy modules silent; an earlier full import-following
+check reported transitive Veritas/Arena diagnostics and has not been rerun
+after the Coinbase guard. No Coinbase live data was requested. Exact source
+permission and cross-venue live economic verification remain unresolved;
+Frontier is isolated, incomplete, and undeployed.
 
 **Branch:** `codex/frontier-20261026`
 
@@ -2008,6 +2007,32 @@ Commit `74d9a76` clarifies that matching an event ID is conditional on the
 selected-component record providing one. The full Frontier/Arena regression
 passed 137 tests after matcher v5; the saved-source replay passed separately.
 
+Latest isolated checkpoint commits and exact changed files:
+
+- `51afe86` — `packages/midas/frontier/storage.py`,
+  `tests/frontier/test_storage.py`, `tests/frontier/test_coinbase.py`,
+  `docs/frontier/FRONTIER_ARCHITECTURE.md`,
+  `docs/frontier/FRONTIER_OPERATIONS.md`,
+  `docs/frontier/FRONTIER_ENGINEERING_REPORT.md`,
+  `docs/frontier/FRONTIER_MISSION_LEDGER.md`,
+  `docs/MIDAS_CURRENT_STATE.md`.
+- `999561c` — `docs/frontier/FRONTIER_ENGINEERING_REPORT.md`,
+  `docs/frontier/FRONTIER_MISSION_LEDGER.md`, `docs/MIDAS_CURRENT_STATE.md`.
+- `6bc0351` — `packages/midas/frontier/models.py`,
+  `packages/midas/frontier/adapters/transport.py`,
+  `packages/midas/frontier/adapters/base.py`,
+  `packages/midas/frontier/adapters/normalization.py`,
+  `packages/midas/frontier/storage.py`, `apps/api/frontier.py`,
+  `apps/web/src/Frontier.tsx`, `apps/web/src/Frontier.test.tsx`,
+  `tests/frontier/test_adapters.py`, `tests/frontier/test_api.py`,
+  `tests/frontier/test_coinbase.py`, `tests/frontier/test_storage.py`,
+  `docs/frontier/FRONTIER_ARCHITECTURE.md`,
+  `docs/frontier/FRONTIER_OPERATIONS.md`.
+- `3665aec` — `docs/frontier/FRONTIER_ENGINEERING_REPORT.md`,
+  `docs/frontier/FRONTIER_MISSION_LEDGER.md`, `docs/MIDAS_CURRENT_STATE.md`.
+- `008106b` — `packages/midas/frontier/adapters/coinbase.py`,
+  `tests/frontier/test_coinbase.py`.
+
 ## 20. Final status and continuation instructions
 
 ### Saved fee-evidence replay checkpoint — 2026-10-27
@@ -2225,22 +2250,22 @@ cross-venue economics.
 | Major component | Status | Evidence and limit |
 | --- | --- | --- |
 | Isolated baseline/worktree and preserved unrelated changes | COMPLETE AND VERIFIED | Branch starts at verified V6 commit; original dirty worktrees untouched. |
-| Adapter protocol, capability registry, bounded GET transport | COMPLETE AND VERIFIED | Contract tests, all capability declarations, host/size/rate/redirect bounds; Kalshi MVE discovery is explicitly supported while Polymarket/Kraken remain unsupported. Kalshi adapter v17 parses documented `price_ranges` into exact-Decimal instrument intervals, preserves raw native metadata, distinguishes absent from empty, and rejects malformed/oversized ranges. The grid anchor and endpoint treatment remain conservative implementation choices, not live-verified semantics. |
+| Adapter protocol, capability registry, bounded GET transport | COMPLETE AND VERIFIED | Contract tests, all capability declarations, host/size/rate/redirect bounds; the transport also preserves request/body elapsed nanoseconds from a monotonic clock in successful and complete-error evidence. Kalshi MVE discovery is explicitly supported while Polymarket/Kraken remain unsupported. Kalshi adapter v17 parses documented `price_ranges` into exact-Decimal instrument intervals, preserves raw native metadata, distinguishes absent from empty, and rejects malformed/oversized ranges. The grid anchor and endpoint treatment remain conservative implementation choices, not live-verified semantics. |
 | Kalshi MVE settlement metadata and arithmetic audit | PARTIALLY VERIFIED | Adapter v13 introduced bounded component YES settlement values and optional parent settlement/provisional fields; Kalshi adapter v15 retains that behavior. A saved-evidence-only API/UI audit recomputes the selected component product for up to 64 legs and compares it with the parent value only for complete evidence and explicit finality; audit schema v2 identifies its algorithm and returns the parent lifecycle/provisional flag. Direct official rule/schema links and observation/raw hashes are shown. All settlement arithmetic remains fixture-only; the preserved live child lacks values, no live audit result exists, and the method does not verify outcomes/rules or alter candidate economics. |
 | Polymarket, Kalshi, Kraken Spot, and Coinbase Exchange Spot adapters | PARTIALLY VERIFIED | Polymarket/Kalshi/Kraken fixture and prior bounded live evidence remain as described above. Coinbase adapter v1 implements configured product metadata, aggregated L2, and one bounded trade page with explicit maker-side semantics, exact increments, source sequence/time retained in raw evidence, and no account fee assertion. Coinbase behavior is fixture-only; the terms version gate and separate public-probe flag default off. No Coinbase API request or capture has occurred, and no cross-venue Coinbase relationship is validated. Account fees and spot/event payoff equivalence remain unresolved. |
 | Canonical market/instrument normalization | PARTIALLY VERIFIED | Binary event, conditional event, multi-outcome event, and spot-pair forms are represented; FrontierMarket schema v4, BookSnapshot v2 and TradeObservation v3 retain exact quote-denomination identities where a source mapping is established. `MarketInstrument.price_increment_ranges` distinguishes missing from explicitly empty Kalshi source data and preserves exact start/end/step values while `native_fields` keeps the original values. Coinbase product fixtures retain exact base/quote units and source constraints but remain contextual spot instruments with no event payoff. Candidate and independent audit checks reject out-of-range, off-step, empty-list, and boundary quotes; range endpoint semantics remain undocumented, so endpoints fail closed. Instrument, book, fee, trade, candidate-leg and capital units are distinguished from display codes. Legacy rows load with identity absent and remain economically incomplete. V2 Polymarket trades retain native outcome-token identity; Kalshi MVE component references remain source assertions; `MarketBatch` schema v2 preserves typed `MarketGroup` membership state. The genuine MVE response records member-list state `omitted` and zero child markets. Payoff/resolution semantics remain unverified. |
 | Relationship hypotheses, review revisions, indexed neighborhoods, and payoff/implication verifiers | PARTIALLY VERIFIED | Self-attributed review API/UI, append-only revisions, latest-state replay, tamper/migration checks, left/right endpoint-indexed 1–3 hop scans capped at 500 rows, one-hop keyset pages, and revision-bound multi-hop BFS pages with deterministic recomputation and 201-market chunk coverage. Matcher v5 includes bounded exact-ID MVE selected-component references as HYPOTHESIS edges with both source record IDs; a saved Kalshi parent listing and child detail replay into one such edge. A bounded directed binary implication verifier checks complete complementary payout vectors over a bijective state mapping (maximum 1,024 states), records each side's settlement asset/time, and requires the pinned observation for both source markets. Review history now has a hash-checked API endpoint with bounded keyset pagination and on-demand Mission Control drill-down; held-source rejection and two-page history are fixture tested. Uncentered text search pages a deterministic BFS result window with a query/depth/page-size/graph-revision cursor; search still covers at most 200 recorded markets and 500 relationship rows. Mission Control review controls select the YES direction and left-to-right state mapping, gated on verified exhaustive binary payoff, resolution, YES/NO instruments, and pinned market records. The API verifier remains authoritative, and the semantic state mapping plus reviewer identity are not authenticated. The economic engine consumes verified edges only in its conditional long-only implication family. Matcher v4's explicit year-conflict rejection remains. A genuine House-control topic pair remains text-only HYPOTHESIS and fails strict same-payoff verification. Reviewer authentication and full-universe search remain absent. |
-| Opportunity candidate and independent economic checks | PARTIALLY VERIFIED | Two-venue all-long binary, directed YES implication, and same-market 3–16 state one-hot exhaustive coverage; economic model v13 computes exact full/no-fill exposure plus a five-point, quantity-step-filtered partial-fill sensitivity for up to 16 legs, with source-supported fees recalculated per aggregate partial quantity; independent audit v10 rederives both. Controlled replay tests reject off-step Kalshi quotes and quantities in generator/audit. Three-leg differential fixtures enumerate the entire 125-point partial grid; a rounded Kalshi fee fixture checks that partial fees are not linearly scaled; quantity-step grid filtering, unknown fees, audit agreement, and the 16-leg bound are tested. The separable partial grid does not estimate fill probabilities, intermediate continuous fractions, multi-fill rounding, price paths, or hedge/unwind. Per-venue delay and fee expiry are modeled at declared future execution time, not observed latency. Positive implication results remain conditional because semantic mapping evidence is unauthenticated. No genuine implication pair or economically eligible live result is present. Current venue adapters omit clock uncertainty, leaving live cross-venue timing unverified. Broader funding/settlement costs and operational feasibility remain incomplete. |
+| Opportunity candidate and independent economic checks | PARTIALLY VERIFIED | Two-venue all-long binary, directed YES implication, and same-market 3–16 state one-hot exhaustive coverage; economic model v13 computes exact full/no-fill exposure plus a five-point, quantity-step-filtered partial-fill sensitivity for up to 16 legs, with source-supported fees recalculated per aggregate partial quantity; independent audit v10 rederives both. Controlled replay tests reject off-step Kalshi quotes and quantities in generator/audit. Three-leg differential fixtures enumerate the entire 125-point partial grid; a rounded Kalshi fee fixture checks that partial fees are not linearly scaled; quantity-step grid filtering, unknown fees, audit agreement, and the 16-leg bound are tested. The separable partial grid does not estimate fill probabilities, intermediate continuous fractions, multi-fill rounding, price paths, or hedge/unwind. Per-venue delay and fee expiry are modeled at declared future execution time, not observed latency. Positive implication results remain conditional because semantic mapping evidence is unauthenticated. No genuine implication pair or economically eligible live result is present. The transport now records per-request monotonic elapsed duration, but adapters still omit source-clock uncertainty, so live cross-venue timing remains unverified. Broader funding/settlement costs and operational feasibility remain incomplete. |
 | Kalshi taker-fee sensitivity and replay estimate | PARTIALLY VERIFIED | Hash-matched event/series evidence supports one-fill and bounded one-order Decimal sensitivities for two documented quadratic taker fee types, both balance-precision cases, per-fill rounding, order accumulation, and capped rebates. Adapter v17 preserves complete override, explicit series inheritance, partial, and unreported states. Saved-evidence replay compiles only complete, identity- and raw-hash-matched supported quadratic fee metadata into a FeeStatus.ESTIMATE; it enforces no-look-ahead and 24-hour quote/replay freshness, models a single fill, and uses `$0.01` non-direct balance alignment as a conservative scenario. The independent audit re-derives that estimate, and Replay v10 pins fee metadata observation IDs separately. Partial/unreported/mismatched/stale evidence remains unknown; the July schedule's `KXMVE` multiplier is not transferred to differently named MVE series. All candidate-fee coverage is fixture-based. Account-specific precision, exact maker/mixed-order applicability, multi-fill rounding/rebates, FCM charges, later schedule changes, and actual net economics remain unresolved. |
 | Append-only evidence store and deterministic replay | COMPLETE AND VERIFIED | Storage schema v6, additive v2/v3/v4/v5 migration, bounds, hash validation, and immutability. Replay v10 carries exact store record IDs, denomination fields, and separate fee metadata observation IDs through API-loaded market/book provenance, manifests, candidate legs, and Arena snapshots; direct in-memory replay retains adapter IDs. Replay-v5 economic output includes full/no-fill sensitivity and pins effective mappings/proposal limit. The separate Arena wrapper uses immutable content-addressed snapshots and hash-verified result artifacts; two controlled fixture workers completed and the latest recorded CPU/RSS. |
-| Frontier API and source configuration | PARTIALLY VERIFIED | Kalshi MVE discovery validates exactly one series/collection/event-ticker filter, capability/config gates, one-page bounds, and raw/normalized lineage; it does not follow the source cursor. Component detail is a separate one-GET capability, bound before the request to a ticker in a saved parent's selected legs and after the response to the saved event identity. Saved fee metadata is joined only after hash/path/identity checks, omitted for held venues, and becomes an input only to later replay. Coinbase source registration, exact reviewed-terms acknowledgement gate, explicit product allowlist, and separate public-probe flag are implemented; no Coinbase network request is allowed by default. The Coinbase tests and complete 262-test Frontier suite pass; exact source permission, live validation, production build, and current browser regression remain pending. Frontier readiness summarizes candidate timing audits over its latest three non-held replays as within bounds, outside bounds, or unrecorded while retaining the existing source-quality gate state. |
+| Frontier API and source configuration | PARTIALLY VERIFIED | Kalshi MVE discovery validates exactly one series/collection/event-ticker filter, capability/config gates, one-page bounds, and raw/normalized lineage; it does not follow the source cursor. Component detail is a separate one-GET capability, bound before the request to a ticker in a saved parent's selected legs and after the response to the saved event identity. Saved fee metadata is joined only after hash/path/identity checks, omitted for held venues, and becomes an input only to later replay. Coinbase source registration, exact reviewed-terms acknowledgement gate, explicit product allowlist, and separate public-probe flag are implemented; no Coinbase network request is allowed by default. The complete 269-test Frontier suite passes. Exact source permission and live Coinbase validation remain pending. Production build and the full 12-test browser suite now pass in isolated output/temporary workspaces. Frontier readiness summarizes candidate timing audits over its latest three non-held replays as within bounds, outside bounds, or unrecorded while retaining the existing source-quality gate state. |
 | Paired scenario comparison | PARTIALLY VERIFIED | Local deterministic comparison, atomic result persistence, API/UI, and isolated browser tests pass. Two systemd-supervised Arena jobs completed over the same controlled fixture with verified result identities; the latest worker's process CPU and peak RSS are visible in Mission Control. No genuine matched live cross-venue pair or live economic claim exists. |
 | Live market/book/trade and fee metadata through adapters/API | PARTIALLY VERIFIED | Earlier listing/book/trade, event-group, fee-metadata, and trade-page captures are hash-pinned. Kalshi MVE captures include filtered pages whose nested markets were omitted and one detail response with explicit top-level `markets: []`. The new one-request child detail capture matches a selected leg's saved ticker/event identities and has raw/store hashes; its rules expose fair-price fallbacks, but it has no book/price and proves neither child nor combo payoff. Fee metadata now has fixture-verified candidate replay integration, but no new public observation, current schedule verification, cross-venue timing, combo economics, venue-wide coverage, or execution was established in this checkpoint. |
 | Source workers and broad historical data | DEFERRED | No persistent worker or long-duration collection. |
 | Laboratory/Arena research orchestration | PARTIALLY VERIFIED | Arena job kind, content-addressed snapshots, bounded offline execution, API submission/history/result verification, process CPU/RSS capture, and explicit workspace controls are implemented and tested; two fixture jobs passed the host-wide gate and completed under systemd. Laboratory campaign management and resource-sustainability evidence remain incomplete. |
-| Native Mission Control workspace | PARTIALLY VERIFIED | Local API, bounded graph/review UI with on-demand revision history and paginated 200-market-capped text search, Polymarket/Kalshi trade-page and event-group controls, explicit filtered one-page Kalshi MVE capture by series, collection, or one event ticker with returned member-list state, parent-event context, instrument-bound fee sensitivity, selected-leg component-rule and recorded-settlement arithmetic inspection, paired replay, candidate fill stress, virtual balances keyed by venue and exact denomination identity, and Arena job history/result display. The current Coinbase addition places its spot source/capability, terms gate, and four-venue graph column in the native workspace; no real Coinbase data is displayed. The 40-test web suite, TypeScript typecheck, and targeted Frontier ESLint pass. The current production build and browser regression are still pending; the workspace is not deployed. |
+| Native Mission Control workspace | PARTIALLY VERIFIED | Local API, bounded graph/review UI with on-demand revision history and paginated 200-market-capped text search, Polymarket/Kalshi trade-page and event-group controls, explicit filtered one-page Kalshi MVE capture by series, collection, or one event ticker with returned member-list state, parent-event context, instrument-bound fee sensitivity, selected-leg component-rule and recorded-settlement arithmetic inspection, paired replay, candidate fill stress, virtual balances keyed by venue and exact denomination identity, and Arena job history/result display. The Coinbase source/capability, terms gate, and four-venue graph column are present; no real Coinbase data is displayed. The evidence disclosure now shows request start/receipt and monotonic elapsed duration. The full 40-test web suite, TypeScript typecheck, targeted ESLint/Prettier, isolated production build, and full 12-test browser suite pass. The workspace is not deployed. |
 | Source data use/retention permission | BLOCKED | Kalshi Developer Agreement and Data Terms restrict the relevant API/data uses; the applicable regional Kraken terms and Frontier authorization remain unverified. Coinbase Market Data Terms dated 2026-08-07 impose additional research/redistribution scope conditions; Frontier's exact organization, region, retention, and display applicability is unvalidated. Coinbase requires exact-version operator acknowledgement plus a separate public-probe flag, both off by default. No Coinbase API request or capture occurred. No new Kalshi/Kraken capture or research use of held data is authorized; existing artifacts are preserved unchanged. The 18:41 full-suite run read files later identified as held captures; no mutation is known. |
-| Offline test-source separation from held captures | COMPLETE AND VERIFIED | All 15 discovered references were replaced by synthetic inputs. A scan over `tests`, `packages`, and `apps` returns no `live-probes` references. The runtime guard blocks direct path, symlink, symlink-plus-`..`, and relative `dir_fd` file-open cases through built-in `open`, `io.open`, and `os.open`; its 2 tests pass, and the complete 262-test Frontier suite passes with the guard active. A read-only code review found no ordinary test interference. Existing capture files remain unchanged. |
+| Offline test-source separation from held captures | COMPLETE AND VERIFIED | All 15 discovered references were replaced by synthetic inputs. A scan over `tests`, `packages`, and `apps` returns no `live-probes` references. The runtime guard blocks direct path, symlink, symlink-plus-`..`, and relative `dir_fd` file-open cases through built-in `open`, `io.open`, and `os.open`; its 2 tests pass, and the complete 269-test Frontier suite passes with the guard active. A read-only code review found no ordinary test interference. Existing capture files remain unchanged. |
 | Held-source application read quarantine | IMPLEMENTED, LIVE VALIDATION PENDING | Code `d38f517` filters held-venue observation lists/direct reads, source aggregates, relationships/graph edges, review and replay inputs, derived outputs, paired comparisons, and Frontier Arena replays. Code `73e008e` applies pinned-snapshot checks to Arena job summaries, details, logs, submissions, and cancellation; `e7958c1` also filters the research-activity digest; `23f9860` rejects held snapshots before inspect/reconciliation can rewrite a job manifest. Controlled fixtures verify held/missing provenance is hidden or rejected while source/snapshot/result/job-manifest artifacts remain stored. The actual preserved live store was not audited; direct database reads and exports remain outside the API filter. |
 | Production readiness/deployment | DEFERRED | Separate review and authorization required; production eligibility is false. |
 | Positive economic result | NOT ESTABLISHED | No genuine cross-venue equivalent or economically eligible result in captured evidence. |
@@ -4012,3 +4037,44 @@ been rerun for `6bc0351`. At `2026-10-27T21:28:03Z`, external Arena batch PID
 **3727342** held lock inode **6423106** in `D` state; PSI avg10 was 45.93%
 (`some`) / 40.80% (`full`), 9.7 GiB was available and 459 MiB swap was free.
 It was left untouched. No exchange source or protected service was accessed.
+
+### Final Python, Web, build, and browser checkpoint — 2026-10-27 21:36 UTC
+
+Code commit `008106b` adds an explicit integer check for the Coinbase Decimal
+exponent tuple field, removing its Frontier-local strict-mypy diagnostic while
+retaining the existing non-finite and extreme-value rejection. Its parameter
+test covers `NaN`, infinity, and out-of-range positive/negative exponents. The
+focused Coinbase module passes **11/11** in 1.70 seconds pytest time / 2.15
+seconds wall at **74,804 KiB peak RSS**, zero swaps. A strict direct-module
+check with `--follow-imports=silent` passes all seven changed Python source
+files in 1.99 seconds at **407,748 KiB peak RSS**, zero swaps. An earlier
+unfiltered mypy invocation reported 17 diagnostics, including the Coinbase
+typing issue fixed here and transitive pre-existing Veritas/Arena diagnostics;
+that unfiltered invocation was not rerun after the guard.
+
+The complete `tests/frontier` suite passes **269/269** in 42.33 seconds pytest
+time / 43.61 seconds wall at **352,484 KiB peak RSS**, zero swaps. It emits
+only the existing Starlette/httpx TestClient deprecation. The Web unit suite
+passes **40/40** in 14.98 seconds test time / 15.40 seconds wall at **346,668
+KiB peak RSS**, zero swaps. TypeScript typecheck passes in 7.57 seconds at
+**441,532 KiB peak RSS**, zero swaps. Targeted ESLint passes in 1.31 seconds
+at **269,940 KiB peak RSS**; Prettier check passes in 0.91 seconds at
+**174,180 KiB peak RSS**. Ruff check/format and `git diff --check` pass.
+
+The production frontend build completed into
+`/tmp/midas-frontier-build-20261027-2132`; Vite transformed 2,228 modules and
+built in 4.84 seconds (12.74 seconds total wall) at **701,536 KiB peak RSS**,
+zero swaps. The Frontier bundle is 102.97 kB JS / 36.10 kB CSS. The existing
+544.41 kB Chart chunk advisory and the external-output-directory notice remain;
+the repository `dist` was not used. The full browser suite passed **12/12** in
+27.0 seconds Playwright time / 27.49 seconds wall at **209,416 KiB peak RSS**,
+zero swaps, with one worker. It includes all four Frontier cases and both
+bounded Laboratory browser cases. The API used isolated temporary database,
+Arena, and Frontier roots; no exchange probe was issued.
+
+At `2026-10-27T21:36:40Z`, no global Arena lock holder was present. Memory PSI
+avg10 was 0.00% (`some`/`full`), avg60 4.24% / 3.72%, avg300 14.30% / 12.58%;
+9.5 GiB was available and 455 MiB swap was free. Project Frontier remains
+isolated, research-only, undeployed, and **PARTIALLY VERIFIED** because source
+permissions, genuine cross-venue payoff validation, and deployment readiness
+remain unresolved.

@@ -892,3 +892,17 @@ for this change. Web suite, typecheck, build, and browser E2E are also pending
 for the new UI field. At the latest resource sample, external bounded Arena
 batch PID **3727342** held the shared lock and PSI was elevated. The worker was
 left untouched; no source or production service was accessed.
+
+## Frontier full verification checkpoint (`008106b`) — 2026-10-27 21:36 UTC
+
+The latest code adds monotonic per-request timing provenance and a defensive
+Coinbase Decimal exponent guard. The complete Frontier Python suite passes
+**269/269**, Web unit suite **40/40**, TypeScript, targeted ESLint/Prettier,
+Ruff, and strict direct mypy for the changed Python modules. The production
+frontend build passes into `/tmp` and the full browser suite passes **12/12**,
+including both bounded Laboratory cases. Peak RSS was 352,484 KiB for Frontier
+Python, 346,668 KiB for web tests, 441,532 KiB for TypeScript, 701,536 KiB for
+the build, and 209,416 KiB for browser E2E; all reported zero swaps. No
+exchange API was called. Frontier remains research-only, isolated, undeployed, and
+**PARTIALLY VERIFIED** because source permissions, genuine cross-venue payoff
+validation, and production readiness remain unresolved.

@@ -1,6 +1,29 @@
 # Project Frontier Mission Ledger
 
-**Latest code checkpoint (`6bc0351`, 2026-10-27 21:28 UTC):** Read-only
+**Latest verified checkpoint (`008106b`, 2026-10-27 21:36 UTC):** The
+Coinbase Decimal exponent guard removes its Frontier-local strict-mypy error;
+its focused module passes **11/11**. The full Frontier suite passes
+**269/269** (43.61 seconds wall, **352,484 KiB peak RSS**, zero swaps), and
+strict direct mypy with `--follow-imports=silent` passes the seven changed
+Python source files. The Web unit suite passes **40/40**; TypeScript,
+targeted ESLint/Prettier, Ruff, and diff checks pass. The isolated production
+build transforms 2,228 modules and passes in 12.74 seconds wall at **701,536
+KiB peak RSS**, zero swaps. The complete browser suite passes **12/12** in
+27.49 seconds wall at **209,416 KiB peak RSS**, zero swaps, including Frontier
+and both bounded Laboratory cases. Build output is under `/tmp`, and browser
+API/arena/frontier data are temporary. No exchange request or production
+deployment occurred. The prior unfiltered mypy pass attempt reported a
+Coinbase diagnostic fixed in `008106b` plus transitive legacy Veritas/Arena
+diagnostics; that unfiltered invocation was not rerun. Frontier remains
+**PARTIALLY VERIFIED** because exact source permissions, genuine verified
+cross-venue economics, and production readiness are unresolved.
+
+At `2026-10-27T21:36:40Z`, no shared Arena lock was held. PSI avg10 was 0.00%
+(`some`/`full`), avg60 4.24% / 3.72%, avg300 14.30% / 12.58%; 9.5 GiB was
+available and 455 MiB swap was free. No protected service or historic store
+was accessed.
+
+**Monotonic timing implementation checkpoint (`6bc0351`, 2026-10-27 21:28 UTC):** Read-only
 transport now records request elapsed duration using `time.monotonic_ns()`
 after source pacing through complete response-body receipt. The duration is
 preserved in `RawObservation`, normalized `Provenance`, complete HTTP error
@@ -17,7 +40,7 @@ held lock inode **6423106** in `D` state and memory PSI avg10 was 45.93%
 (`some`) / 40.80% (`full`). It was left untouched. Frontier remains isolated,
 research-only, and undeployed.
 
-**Latest Frontier storage checkpoint (code commit `51afe86`, 2026-10-27
+**Observation persistence code checkpoint (`51afe86`, 2026-10-27
 21:23 UTC):** The bounded append-only observation writer now stamps a missing typed
 `Provenance.persisted_at_utc` before serializing a new normalized row. It leaves
 the caller's model untouched, preserves a prior timestamp when copying an
