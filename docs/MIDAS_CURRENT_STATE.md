@@ -1155,3 +1155,14 @@ deployment was accessed. Current Frontier status remains isolated,
 research-only, undeployed, and **PARTIALLY VERIFIED**. See the [mission
 ledger](frontier/FRONTIER_MISSION_LEDGER.md) for exact measurements and
 continuation guidance.
+
+### Arena admission-test follow-up — 2026-10-27 23:55 UTC
+
+After the external Veritas holder exited, the two admission-denied Arena
+supervisor tests passed **2/2** in 4.34 seconds wall at **179,752 KiB peak RSS**
+and zero swaps. Their process launch is fixture-replaced, so no Arena worker
+started. Alongside the earlier combined run, all **360 selected Frontier/Arena
+cases** pass across two invocations; the combined run itself still records two
+environmental denials. The retry began with the global lock free, PSI avg10 at
+0%, and 10 GiB available. The isolated Frontier build and browser check also
+pass for commit `305814b`; no production deployment or source request occurred.

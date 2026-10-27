@@ -4701,10 +4701,22 @@ establishes no genuine multi-venue observation or economic opportunity.
 | Finite collection history and explicit resume API | COMPLETE AND VERIFIED | Fixture-backed; live source capture remains pending and disabled by default. |
 | Policy, config, and capability revalidation | COMPLETE AND VERIFIED | Invalid/held resumes fail before new source requests or pending-capture recovery. |
 | Exchanges history/resume UI | PARTIALLY VERIFIED | Component and isolated browser checks pass; no populated genuine-source history exists. |
-| Selected Frontier/Arena regressions | PARTIALLY VERIFIED | All Frontier tests pass; two Arena job-supervisor cases remain denied by the external shared lock. |
+| Selected Frontier/Arena regressions | PARTIALLY VERIFIED | All Frontier tests passed in the combined run; the two shared-lock-denied Arena supervisor cases passed separately after release. All 360 selected cases pass across two invocations, with no single clean combined run. |
 | Latest production frontend build | COMPLETE AND VERIFIED | Temporary build output only; no deployment. |
 | Genuine cross-venue economics and production transition | DEFERRED | No live cross-venue result established; source policy and separate deployment review remain. |
 
 See the [mission ledger](FRONTIER_MISSION_LEDGER.md) for reproducible commands,
 resource measurements, and the next safe action. Frontier remains isolated,
 research-only, undeployed, and **PARTIALLY VERIFIED**.
+
+### Arena admission-test follow-up — 2026-10-27 23:55 UTC
+
+After the external holder exited, the two supervisor tests denied by the
+earlier shared-lock collision passed **2/2** in a targeted 4.34-second run
+(179,752 KiB peak RSS, zero swaps). Their `subprocess.run` launch is replaced
+by a fixture, so no Arena worker started. The full combined selection was not
+repeated: its other 358 cases had already passed. Thus all 360 selected cases
+have passed across the two invocations, although there is no single clean
+combined-run result. At the retry admission sample the lock was free and PSI
+avg10 was 0%; a later sample was 0% avg10 with 10 GiB available. No production
+or protected service state was touched.

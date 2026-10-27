@@ -3010,6 +3010,24 @@ corepack pnpm --dir apps/web exec vite build --outDir /tmp/midas-frontier-build-
 corepack pnpm --dir apps/web exec playwright test e2e/frontier.spec.ts --grep 'Frontier workspace uses isolated research state and remains responsive' --workers=1
 ```
 
+## Arena admission-test follow-up — 2026-10-27 23:55 UTC
+
+After the external batch exited, the two supervisor tests denied during the
+combined run were rerun alone and passed **2/2** in 3.73 seconds pytest time /
+4.34 seconds wall, **179,752 KiB peak RSS**, zero swaps. The command was:
+
+```bash
+env PYTHONPATH=packages:.:tests /home/charlie/midas/.venv/bin/pytest tests/arena/test_jobs.py::test_supervised_job_runner_imports_the_submitted_checkout tests/arena/test_jobs.py::test_veritas_qualification_supervisor_has_read_only_resource_bounds -q
+```
+
+These tests replace process launch with a fixture, so no Arena worker was
+started. Before the rerun the global lock was free, PSI avg10 was 0%, and 10
+GiB was available. The earlier combined invocation still ended with two
+environmental denials; across the combined run and this targeted rerun, all
+360 selected cases passed. The full combined command was not repeated to avoid
+re-running the already-passed 358 cases. No service or external process was
+modified.
+
 ## Bounded event-time replay checkpoint — 2026-10-27 22:24 UTC
 
 Code commit **`30576f1`** adds `packages/midas/frontier/timeline.py` and
@@ -3100,7 +3118,7 @@ default; this is fixture-backed development verification only.
 | Finite capture start, local run history, and explicit resume | COMPLETE AND VERIFIED | Fixture API/module tests; live source use remains pending and disabled by default. |
 | Adapter-policy and manifest revalidation | COMPLETE AND VERIFIED | Collector and API reject changed/held configurations before additional source requests. |
 | Exchanges-view history and resume | PARTIALLY VERIFIED | Component and isolated browser tests pass; no live capture or populated real-source history was available. |
-| Frontier and selected Arena regressions | PARTIALLY VERIFIED | All Frontier tests pass; two existing supervisor cases remain blocked by the host-wide external lock. |
+| Frontier and selected Arena regressions | PARTIALLY VERIFIED | All Frontier tests passed in the combined run; the two shared-lock-denied Arena supervisor cases passed separately after release. All 360 selected cases pass across two invocations, with no single clean combined run. |
 | Production build and browser smoke | COMPLETE AND VERIFIED | Build and isolated browser case pass for `305814b`; no production deployment. |
 | Cross-venue live relationships/economics and deployment | DEFERRED | No genuine cross-venue observation was established; protected source policy and separate deployment review remain. |
 
