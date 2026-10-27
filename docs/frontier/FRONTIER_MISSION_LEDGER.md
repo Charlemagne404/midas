@@ -2082,13 +2082,20 @@ that no validated loader exists. The source-terms review, operations guide,
 current-state note, and regression now state the same rule. The test configures
 arbitrary references while checking probe rejection and synthetic stored-data
 quarantine. Implementation and regression are committed as `52b6a9e`;
-behavioral test verification remains pending. `git diff --check` passed before
-the commit.
+behavioral verification is complete. After formatting the test file, the
+source-permission module passed **4 tests in 1.77 seconds** at **116,980 KiB
+peak RSS**. The complete Frontier
+Python suite passed **219 tests in 39.47 seconds** at **335,216 KiB peak RSS**,
+with zero swaps. The existing Starlette/httpx TestClient deprecation warning
+remains. Ruff check and format check passed for the changed Python modules;
+`git diff --check` passed. Strict mypy passed for `models.py` and
+`relationships.py` in 2.38 seconds at 133,268 KiB peak RSS. The test file was
+formatter-normalized after the full suite; that was a whitespace-only change.
 
-At `2026-10-27T19:20:27Z`, memory PSI remained elevated: `avg10` 44.56% (`some`)
-/ 40.87% (`full`), `avg60` 47.28% / 43.10%, and `avg300` 42.22% / 38.26%;
-available memory was 9,403 MiB and swap free 468 MiB. No test or build was
-started under that pressure. Next safe action: remeasure host pressure, then
-run the isolated source-permission test module followed by the complete
-Frontier suite only if admission is suitable. No held capture, external source,
-protected service, or production state was accessed during this correction.
+At `2026-10-27T19:23:46Z`, post-suite memory PSI `avg10` was 0.00% (`some` and
+`full`), `avg60` was 8.43% / 7.58%, and `avg300` was 30.50% / 27.57%; available
+memory was 9,526 MiB and swap free was 468 MiB. No held capture or external
+source was read; all source-policy cases used synthetic temporary records, and
+the runtime held-source guard was active. No protected service or production
+state was accessed. The tests establish route/probe behavior, not legal source
+permission or live multi-venue validation.

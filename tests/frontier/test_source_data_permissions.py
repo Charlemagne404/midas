@@ -57,9 +57,7 @@ def test_probe_flags_and_references_do_not_enable_unvalidated_sources(tmp_path):
                 if gate["name"] == "source_data_use_permissions"
             )
             assert permission_gate["state"] == "BLOCKED"
-            assert (
-                "no validated permission/terms-review loader" in permission_gate["detail"]
-            )
+            assert "no validated permission/terms-review loader" in permission_gate["detail"]
 
         for venue in (Venue.KALSHI, Venue.KRAKEN):
             config = app.state.frontier_registry.get(venue).config

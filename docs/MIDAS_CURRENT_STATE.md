@@ -414,9 +414,11 @@ policy hold, existing stored rows remain quarantined, and readiness keeps the
 source-data-permissions gate `BLOCKED`. A reference string alone is not
 permission. The regression and its verification are tracked in the
 [Frontier ledger](frontier/FRONTIER_MISSION_LEDGER.md); implementation is
-committed in `52b6a9e` and behavioral verification remains pending. No source
-request, external message, production change, or historical-data mutation was
-made for this review.
+committed in `52b6a9e`. The focused API module passes **4/4** and the full
+Frontier suite passes **219/219** with the runtime guard active; strict mypy,
+Ruff, formatting, and diff checks pass. The fixture results do not establish
+source permission or live validation. No source request, external message,
+production change, or historical-data mutation was made for this review.
 
 Code commits `d38f517`, `73e008e`, `e7958c1`, and `23f9860` extend the hold to
 Frontier application reads: old Kalshi/Kraken market, book, trade, and

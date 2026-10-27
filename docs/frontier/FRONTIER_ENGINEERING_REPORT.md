@@ -3450,10 +3450,15 @@ readiness remain active, and the readiness detail states that no validated
 permission loader exists. Synthetic API coverage now supplies arbitrary
 references while asserting both probe rejection and quarantine of stored
 fixture evidence. Documentation was corrected in the source review, operations
-guide, and current-state file. The code, test, and documentation are committed
-as `52b6a9e`; behavioral verification remains pending. No held capture was read
-or modified.
-
-At 19:20:27 UTC host memory PSI remained elevated (`avg10` 44.56% some / 40.87%
-full; `avg300` 42.22% / 38.26%). Tests and build remain deferred pending a
-fresh admission check with materially lower pressure.
+guide, and current-state file. Implementation is committed as `52b6a9e`; the
+status update is committed as `205dbff`. The permission module passes **4/4**;
+the full Frontier suite passes **219/219** in 39.47 seconds at **335,216 KiB
+peak RSS**, with zero swaps. Ruff and format checks pass, and strict mypy passes
+for the canonical models and relationship modules. The existing
+Starlette/httpx TestClient deprecation is the only test warning. The focused
+permission module was rerun after the formatter adjustment to the assertion;
+the full suite preceded that whitespace-only change. All
+test data were synthetic, the held-source runtime guard was active, and no
+held capture, source request, protected service, or production state was
+accessed. These results verify software quarantine behavior only; they do not
+establish permission, live source quality, or economic opportunity.
