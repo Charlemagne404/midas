@@ -2347,3 +2347,8 @@ remain absent; the full Python suite, frontend production build, performance
 profile, and live-source checks were not repeated. No held-source capture,
 production service, or exchange endpoint was accessed, and no deployment
 occurred. These checks do not establish simultaneous execution or profitability.
+
+**Next safe action:** extend `/api/frontier/readiness` to report pass, fail, and
+unrecorded timing-audit counts from the latest non-held replay window. Test it
+with pinned fixtures and keep the current source quarantine in place. Do not
+probe sources or inspect quarantined captures.

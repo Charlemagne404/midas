@@ -1362,3 +1362,9 @@ suite, frontend production build, performance, and live-source checks were not
 repeated. Quantity, timing, source-quality, and tick validation improve
 verifier coverage but do not establish synchronized execution or
 profitability; the mission remains incomplete.
+
+**Next safe action:** extend `/api/frontier/readiness` to summarize verified,
+unverified, and unrecorded recomputed timing checks from its latest non-held
+replay window. Cover the summary with pinned fixture records and preserve the
+existing held-source filter; do not probe sources or inspect quarantined
+captures.
