@@ -433,6 +433,24 @@ is retained when the complete body is within the configured response cap; invali
 UTF-8 is base64-encoded while the raw hash remains over the original bytes.
 Oversized or partial response bodies are not stored.
 
+### Coverage and quality analytics
+
+`GET /api/frontier/analytics/coverage` reads saved local evidence and returns
+`network_called: false`. It uses bounded windows of 50 market records, 50 book
+observations, 20 eligible replay runs, and 5,000 candidate records; full stored
+market/instrument identity counts use the store's indexed records. Held source
+venues are excluded. Pricing summaries require verified observation hashes and
+timestamps, a joined market/instrument identity, two-sided uncrossed unflagged
+books, and an exact quote-asset identity. Missing freshness limits and exchange
+timestamps remain explicitly unknown. Candidate rejections count each distinct
+reason once per rejected candidate. Repeated construction metrics require
+independently recomputed positive gross P&L, verified timing, distinct book
+sets, distinct replay times, pinned market-observation IDs, and exact quote
+denominations. These are recorded-sample summaries, not venue-wide prevalence,
+net economics, or executable opportunities. Mission Control loads the Coverage
+& quality tab on demand and displays the sample and interpretation limits
+alongside the metrics.
+
 For focused Frontier verification, use isolated test databases and run:
 
 This linked worktree does not contain a local `.venv`. The current host's

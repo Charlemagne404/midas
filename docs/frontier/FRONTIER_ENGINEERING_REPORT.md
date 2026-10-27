@@ -4188,3 +4188,73 @@ repeated: the complete browser suite already passed 12/12 at the latest
 unchanged UI checkpoint (`008106b`, 21:36 UTC), while the 21:45 and 21:46
 legacy regressions were independently completed afterward. Recheck before any
 future worker-admission attempt.
+
+### Bounded coverage analytics — 2026-10-27 22:13 UTC
+
+Code commit **`4c9a8d8`** adds the no-network endpoint
+`GET /api/frontier/analytics/coverage` and the native Mission Control
+**Coverage & quality** tab. This closes a concrete Frontier intelligence gap:
+the workspace can summarize the locally recorded market mix and inventory,
+book-source quality, denomination-aware spreads and top depth, replay
+classifications/rejection reasons, and independently recomputed timing evidence.
+All values remain explicitly scoped to saved inputs. Follow-up commit
+**`66e89a5`** adds exact market-observation and quote-denomination identity to
+the repeated-construction signature so changes in pinned economic identity
+cannot be counted as one recurring construction.
+
+The code commit changes `apps/api/frontier.py`,
+`packages/midas/frontier/analytics.py`, `apps/web/src/Frontier.tsx`,
+`apps/web/src/Frontier.test.tsx`, `apps/web/e2e/frontier.spec.ts`,
+`tests/frontier/test_analytics.py`, and `tests/frontier/test_api.py`. The
+follow-up code commit changes `packages/midas/frontier/analytics.py` and
+`tests/frontier/test_analytics.py`. The
+documentation checkpoint updates the architecture, development guide, mission
+ledger, this report, and `docs/MIDAS_CURRENT_STATE.md`.
+
+The API caps the recent sample at 50 normalized markets, 50 book observations,
+20 eligible replay runs, and 5,000 candidate records. Full persisted
+market/instrument identity counts are read from the existing indexed store.
+Held venues are filtered from both inventory and replay/sample views. A book is
+eligible for pricing only after receipt/hash/provenance checks, a market and
+instrument join, and exact quantity/quote identity checks; the book must be
+two-sided, uncrossed, and unflagged. Freshness and exchange-clock availability
+are reported separately from structural validity. Quote-identity delimiter
+escaping avoids grouping distinct namespaced assets under one label, and
+conflicting canonical aliases for one venue-native market prevent book joining.
+Spread calculations use `Decimal` and are grouped by venue, market type,
+quantity unit, and quote asset. Candidate rejection reasons count once per
+distinct reason per rejected record. A repeated gross-positive construction
+requires a verified independent audit, recomputed positive worst-case gross
+P&L, verified timing, pinned market-observation IDs and quote denominations,
+distinct book sets, and distinct replay times; the metric does not imply
+net-positive economics, independent opportunity counts, continuous persistence,
+or executable profit. The route performs no source network request and returns
+`network_called: false`.
+
+Verification for this checkpoint:
+
+- `tests/frontier`: **279 passed**, 70.89 seconds wall, **354,788 KiB peak RSS**,
+  zero swaps; only the existing Starlette/httpx deprecation warning.
+- Web unit tests: **40 passed**, 16.10 seconds wall, **333,216 KiB peak RSS**,
+  zero swaps.
+- Coverage browser component behavior is part of those 40 cases. A dedicated
+  Playwright E2E case also passes **1/1**, 6.62 seconds wall, **186,788 KiB peak
+  RSS**, zero swaps, against its isolated temporary API/store. It checks the
+  200 `network_called: false` response and confirms no source-probe request.
+- Strict mypy passes for `packages/midas/frontier/analytics.py` and
+  `apps/api/frontier.py`; Ruff check/format, targeted ESLint, Prettier,
+  TypeScript typecheck, and `git diff --check` pass.
+- The Vite production build transformed 2,228 modules in 5.46 seconds at
+  **667,976 KiB peak RSS**, zero swaps, using
+  `/tmp/midas-frontier-build-20261027-2206`. Frontier emits 112.13 kB JS /
+  36.10 kB CSS. The existing 544.41 kB Chart chunk remains above Vite's 500 kB
+  advisory threshold.
+
+No live exchange request, protected service, held capture, or production store
+was accessed. The changed view's dedicated browser case and all Web unit tests
+passed; the full 12-case repository browser suite was not rerun after this
+checkpoint. The coverage feature is **COMPLETE AND VERIFIED** in local bounded
+tests, while Project Frontier remains **PARTIALLY VERIFIED**, research-only,
+isolated, and undeployed. Kalshi/Kraken permissions, genuine live cross-venue
+payoff validation, executable synchronization/capital assumptions, and
+production eligibility remain unresolved.

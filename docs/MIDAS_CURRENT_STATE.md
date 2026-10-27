@@ -974,3 +974,29 @@ no shared Arena lock holder was listed. Memory PSI avg10 was 0.00% `some` /
 suite already passed 12/12 at the latest unchanged UI checkpoint, and later
 legacy integration/admission checks passed. Recheck resource admission before
 any future worker launch.
+
+## Frontier coverage analytics checkpoint — 2026-10-27 22:13 UTC
+
+Isolated branch `codex/frontier-20261026` adds source-aware recorded coverage
+and quality analytics in code commit `4c9a8d8`. Follow-up `66e89a5` pins
+market-observation IDs and canonical quote denominations in the repeated
+construction signature. The no-network API endpoint
+uses bounded market/book/replay samples, filters held venues, verifies joins
+and observation lineage, and exposes freshness, denomination-aware spread and
+depth, timing, and candidate classification summaries. A new native Frontier
+Coverage & quality tab loads the view on demand. The endpoint does not query an
+exchange or start a collector.
+
+Current bounded results: Frontier Python **279/279**, Web unit suite **40/40**,
+dedicated Coverage-tab browser E2E **1/1**, strict mypy, Ruff, ESLint, Prettier,
+TypeScript, and Vite production build all pass. Peak RSS was 354,788 KiB for
+Frontier Python, 333,216 KiB for Web tests, 186,788 KiB for the browser case,
+and 667,976 KiB for Vite; each job reported zero swaps. No protected service,
+exchange endpoint, held capture, or production store was accessed.
+
+Frontier is still **PARTIALLY VERIFIED**, not deployed, and research-only.
+Coverage results describe bounded stored evidence and do not establish
+venue-wide measurement, synchronized executable quotes, positive net economics,
+or live multi-venue validation. See the [mission ledger](frontier/FRONTIER_MISSION_LEDGER.md)
+and [engineering report](frontier/FRONTIER_ENGINEERING_REPORT.md) for the full
+checkpoint, remaining acceptance gaps, and continuation work.

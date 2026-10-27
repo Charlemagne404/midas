@@ -2696,3 +2696,64 @@ bypassed and no worker or service was touched. The prior browser result remains
 10/12, with both Laboratory tests denied before work launched; dedicated
 Frontier E2E remains 4/4. Resume the two Laboratory cases only after the
 shared admission slot releases and host pressure is acceptable.
+
+## Bounded coverage analytics checkpoint — 2026-10-27 22:13 UTC
+
+Code commit **`4c9a8d8`** adds the local `GET /api/frontier/analytics/coverage`
+endpoint and a native **Coverage & quality** workspace. Commit **`66e89a5`**
+then tightens repeated-candidate identity to include pinned market-observation
+IDs and canonical quote denominations, preventing candidates with changed
+economic identity from being grouped as recurring. The API summarizes at
+most 50 market records, 50 hash-checked book observations, 20 eligible replay
+runs, and 5,000 candidate records. It also reports eligible persisted
+market/instrument identity counts by venue from the store indexes. Held venues
+are filtered. Pricing groups preserve venue, instrument type, quantity unit,
+and exact quote denomination; bad joins, conflicting native-market aliases,
+stale/future timestamps, and delimiter-colliding asset identities fail closed
+or remain explicitly qualified. The UI reports source freshness separately
+from structural book quality, bounded candidate classifications, rejection
+reasons, timing summaries, and gross-only repeated constructions.
+
+Files in `4c9a8d8`: `apps/api/frontier.py`,
+`packages/midas/frontier/analytics.py`, `apps/web/src/Frontier.tsx`,
+`apps/web/src/Frontier.test.tsx`, `apps/web/e2e/frontier.spec.ts`,
+`tests/frontier/test_analytics.py`, and `tests/frontier/test_api.py`.
+Commit `66e89a5` updates `packages/midas/frontier/analytics.py` and adds a
+regression to `tests/frontier/test_analytics.py`.
+
+The final `tests/frontier` suite passes **279/279** in 70.89 seconds wall at
+**354,788 KiB peak RSS**, zero swaps; one existing Starlette/httpx TestClient
+deprecation warning remains. The full Web suite passes **40/40** in 16.10
+seconds wall at **333,216 KiB peak RSS**, zero swaps. Strict mypy passes for the
+analytics module and Frontier API; Ruff check/format, targeted ESLint,
+Prettier, TypeScript typecheck, and `git diff --check` pass. The production
+Vite build transforms 2,228 modules in 5.46 seconds at **667,976 KiB peak RSS**
+and zero swaps, writing to `/tmp/midas-frontier-build-20261027-2206`; the
+Frontier chunk is 112.13 kB JS / 36.10 kB CSS. The pre-existing 544.41 kB Chart
+chunk advisory remains. A dedicated isolated browser E2E passes **1/1** in
+6.62 seconds wall at **186,788 KiB peak RSS**, confirming a 200 no-network API
+response and no source-probe request. The implementation uses only local
+evidence and fixtures; no exchange API, protected recorder, held capture, or
+production service was accessed.
+
+Frontier remains **PARTIALLY VERIFIED** and undeployed. This checkpoint does
+not validate current public market coverage, terms/permission for blocked
+Kalshi or Kraken research, live cross-venue equivalence, synchronized
+execution, positive net economics, or production deployment. The full browser
+suite is not rerun at this checkpoint; the changed Coverage & quality view is
+covered by the 40-case Web suite and isolated 1-case E2E above. Next safe work:
+extend populated-analytics browser coverage if useful, then continue the
+remaining offline acceptance gaps without accessing held sources.
+
+Reproduction commands from `/home/charlie/midas-frontier`:
+
+```bash
+env PYTHONPATH=packages:.:tests /home/charlie/midas/.venv/bin/pytest tests/frontier -q
+corepack pnpm --dir apps/web exec vitest run --maxWorkers=1 --minWorkers=1
+corepack pnpm --dir apps/web run typecheck
+corepack pnpm --dir apps/web exec eslint src/Frontier.tsx src/Frontier.test.tsx
+corepack pnpm --dir apps/web exec prettier --check src/Frontier.tsx src/Frontier.test.tsx
+MYPYPATH=packages /home/charlie/midas/.venv/bin/mypy --strict --follow-imports=silent packages/midas/frontier/analytics.py apps/api/frontier.py
+corepack pnpm --dir apps/web exec vite build --outDir /tmp/midas-frontier-build-20261027-2206
+corepack pnpm --dir apps/web exec playwright test e2e/frontier.spec.ts --grep 'Frontier workspace uses isolated research state and remains responsive' --workers=1
+```

@@ -10,6 +10,7 @@ as mutable Frontier storage.
 | Component | Location | Responsibility |
 | --- | --- | --- |
 | Canonical contracts | `models.py` | Venue, instrument kind, payoff, resolution, fee, quantity, provenance, book, and venue-declared event-group models. |
+| Recorded-sample analytics | `analytics.py` | Bounded market/book/replay coverage, source-quality, pricing, timing, and candidate summaries over hash-checked local evidence. |
 | Adapter protocol and lifecycle | `adapters/base.py` | Capability declarations, local health, response capture, and common read-only adapter contract. |
 | Bounded HTTP transport | `adapters/transport.py` | HTTPS GET only, fixed host allowlist, bounded timeout/retry/rate/response sizes, no redirects or credentials. |
 | Public venue adapters | `adapters/polymarket.py`, `kalshi.py`, `kraken.py`, `coinbase.py` | Source-specific normalization and native metadata preservation. Coinbase Exchange adds a bounded explicit-product spot source with an exact-version data-terms gate. |
@@ -21,8 +22,8 @@ as mutable Frontier storage.
 | Durable evidence | `storage.py` | Append-only, size- and row-bounded SQLite observations, markets, relationship reviews/revisions, runs, and paired comparisons. |
 | Replay | `replay.py` | Stable input ordering, scenario/mapping/proposal-limit-aware replay identities, exact store-record provenance for API-loaded models, deterministic results, and paired assumption comparisons. |
 | Arena paired replay | `packages/midas/arena/frontier_replay.py`, `arena/jobs.py` | Immutable content-addressed input snapshots, a bounded offline paired-replay worker, and hash-verified result artifacts under Arena's existing admission gate. |
-| HTTP API | `apps/api/frontier.py` | Bounded local queries and graph neighborhoods, relationship proposals/reviews, deterministic and paired replay, config-gated market/event-group/MVE/component capture, raw/hash/identity-checked saved Kalshi fee evidence for later replay, fee sensitivities, and exact-run-bound virtual capital carry. |
-| Mission Control workspace | `apps/web/src/Frontier.tsx` | Sources, markets/books/event context, one-page Kalshi MVE discovery and explicit selected-component rule capture, relationship hypotheses, candidates, venue-separated balances and settlement-duration sensitivity, local comparisons, bounded Arena replay history/results, and readiness. |
+| HTTP API | `apps/api/frontier.py` | Bounded local queries and graph neighborhoods, relationship proposals/reviews, deterministic and paired replay, config-gated market/event-group/MVE/component capture, raw/hash/identity-checked saved Kalshi fee evidence for later replay, fee sensitivities, exact-run-bound virtual capital carry, and read-only coverage analytics. |
+| Mission Control workspace | `apps/web/src/Frontier.tsx` | Sources, markets/books/event context, coverage and source-quality analytics, one-page Kalshi MVE discovery and explicit selected-component rule capture, relationship hypotheses, candidates, venue-separated balances and settlement-duration sensitivity, local comparisons, bounded Arena replay history/results, and readiness. |
 
 ## Additional venue selection
 
@@ -776,6 +777,7 @@ sustainable capacity.
 ## API and UI behavior
 
 `GET /api/frontier/overview`, `/sources`, `/markets`, `/books`, `/trades`,
+`/analytics/coverage`,
 `/observations/{id}`, `/relationships`, `/relationships/{id}/reviews`, `/graph`, `/opportunities`, `/runs`, and `/readiness`
 are local evidence reads. `POST /relationships/propose` writes deterministic
 hypotheses; `POST /relationships/{id}/review` records an immutable explicit
@@ -823,6 +825,22 @@ applicable fee prevents a claim that the modeled requirement is fully covered.
 Inputs are not sent to the API or persisted. The view does not
 model real account balances, collateral eligibility, transfer availability,
 settlement duration, or capital at risk between settlements.
+
+`GET /api/frontier/analytics/coverage` is a read-only no-network summary of
+stored research. It considers at most 50 recent market records, 50 book
+observations, 20 eligible replay runs, and 5,000 candidate records; separate
+stored market/instrument identity counts come from indexed inventory. Held
+source venues are filtered before both inventory and samples are summarized.
+Book pricing requires hash-checked receipt lineage, a matching
+market/instrument join, a two-sided uncrossed and unflagged book, and exact
+quote-asset identity. Missing freshness limits stay unknown. Spread and top
+depth are grouped by venue, market type, quantity unit, and denomination.
+Repeated candidate constructions require a verified independent gross result,
+verified timing, pinned market-evidence IDs and quote denominations, distinct
+book sets, and distinct replay times. These counts describe the bounded saved
+sample; they are not venue-wide coverage, independent opportunities, positive
+net economics, or executable profit. The Coverage & quality tab loads on demand
+and shows these interpretation limits.
 
 ## Known scope limits
 
