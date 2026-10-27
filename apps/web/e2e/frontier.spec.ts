@@ -431,6 +431,8 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
         },
         {
           candidate_id: 'cross-venue-capital-fixture',
+          source_run_id: 'a'.repeat(64),
+          source_run_sha256: 'b'.repeat(64),
           family: 'cross_venue_complete_coverage',
           classification: 'INCOMPLETE EVIDENCE',
           hypothetical: true,
@@ -494,6 +496,7 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
   let submittedReview: Record<string, unknown> | undefined;
   const tradePageRequests: Record<string, unknown>[] = [];
   const mvePageRequests: Record<string, unknown>[] = [];
+  const capitalCarryRequests: Record<string, unknown>[] = [];
   await page.route('**/api/frontier/**', async (route) => {
     if (
       route.request().method() === 'GET' &&
@@ -577,6 +580,91 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
           network_calls_bounded_by: 1,
           hypothetical_only: true,
           note: 'One explicit fixture page.',
+        }),
+      });
+    }
+    if (
+      route.request().method() === 'POST' &&
+      route.request().url().endsWith('/opportunities/capital-carry')
+    ) {
+      capitalCarryRequests.push(route.request().postDataJSON() as Record<string, unknown>);
+      expect(route.request().postDataJSON()).toEqual({
+        run_id: 'a'.repeat(64),
+        run_sha256: 'b'.repeat(64),
+        candidate_id: 'cross-venue-capital-fixture',
+        annual_rate_bps_by_venue: { kalshi: '1000', polymarket: '1500' },
+      });
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          model_version: 'frontier-virtual-capital-carry-1',
+          run_id: 'a'.repeat(64),
+          run_sha256: 'b'.repeat(64),
+          candidate_id: 'cross-venue-capital-fixture',
+          candidate_classification: 'INCOMPLETE EVIDENCE',
+          classification_unchanged: true,
+          hypothetical_only: true,
+          capital_currency_identity: USD_IDENTITY,
+          venues: [
+            {
+              venue: 'kalshi',
+              capital: '5.5',
+              annual_rate_bps: '1000',
+              start_at_utc: '2026-10-26T20:00:00Z',
+              capital_released_at_utc: '2026-10-27T20:00:00Z',
+              duration_seconds: '86400',
+              carry_cost: '0.001506849315068493150684931507',
+              settlement_evidence: [
+                {
+                  market_id: 'kalshi:KX-CAPITAL-FIXTURE',
+                  venue: 'kalshi',
+                  observation_id: 'c'.repeat(64),
+                  observation_row_sha256: 'd'.repeat(64),
+                  raw_sha256: 'e'.repeat(64),
+                  resolution_fingerprint: 'kalshi-fixture-settlement',
+                  resolution_evidence_sha256: 'f'.repeat(64),
+                  settles_at_utc: '2026-10-27T20:00:00Z',
+                },
+              ],
+            },
+            {
+              venue: 'polymarket',
+              capital: '3.5',
+              annual_rate_bps: '1500',
+              start_at_utc: '2026-10-26T20:00:00Z',
+              capital_released_at_utc: '2026-10-28T20:00:00Z',
+              duration_seconds: '172800',
+              carry_cost: '0.002876712328767123287671232877',
+              settlement_evidence: [
+                {
+                  market_id: 'polymarket:condition:capital-fixture',
+                  venue: 'polymarket',
+                  observation_id: '1'.repeat(64),
+                  observation_row_sha256: '2'.repeat(64),
+                  raw_sha256: '3'.repeat(64),
+                  resolution_fingerprint: 'polymarket-fixture-settlement',
+                  resolution_evidence_sha256: '4'.repeat(64),
+                  settles_at_utc: '2026-10-28T20:00:00Z',
+                },
+              ],
+            },
+          ],
+          total_carry_cost: '0.004383561643835616438356164384',
+          worst_case_gross_pnl_before_carry: null,
+          worst_case_gross_pnl_after_carry: null,
+          worst_case_net_pnl_before_carry: null,
+          worst_case_net_pnl_after_carry: null,
+          input_sha256: '5'.repeat(64),
+          result_sha256: '6'.repeat(64),
+          audit: {
+            disposition: 'verified',
+            message: 'Independent arithmetic matches the pinned browser fixture.',
+            recomputed_total_carry_cost: '0.004383561643835616438356164384',
+            checks: ['Source and store-row hashes are pinned.'],
+          },
+          assumptions: ['Rates are hypothetical fixture assumptions.'],
+          limitations: ['No exchange fee, financing offer, or execution is established.'],
         }),
       });
     }
@@ -664,6 +752,29 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
   await expect(polymarketCapital.getByRole('status')).toHaveText(
     'Virtual funding shortfall at this venue.',
   );
+  await crossVenueCapital
+    .getByRole('textbox', { name: 'Kalshi annual carry rate in basis points' })
+    .fill('1000');
+  await crossVenueCapital
+    .getByRole('textbox', { name: 'Polymarket annual carry rate in basis points' })
+    .fill('1500');
+  await crossVenueCapital.getByRole('button', { name: 'Evaluate settlement carry' }).click();
+  await expect(
+    crossVenueCapital.getByText('Independent arithmetic matches the pinned browser fixture.'),
+  ).toBeVisible();
+  await expect(crossVenueCapital.getByText('INCOMPLETE EVIDENCE · unchanged')).toBeVisible();
+  await expect(crossVenueCapital.getByText(/Total modeled carry/)).toBeVisible();
+  await expect(crossVenueCapital.locator('.fr-capital-carry-result')).toContainText(
+    'row dddddddddddd…',
+  );
+  expect(capitalCarryRequests).toEqual([
+    {
+      run_id: 'a'.repeat(64),
+      run_sha256: 'b'.repeat(64),
+      candidate_id: 'cross-venue-capital-fixture',
+      annual_rate_bps_by_venue: { kalshi: '1000', polymarket: '1500' },
+    },
+  ]);
   await page.setViewportSize({ width: 390, height: 844 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
   await page.setViewportSize({ width: 1440, height: 1000 });
