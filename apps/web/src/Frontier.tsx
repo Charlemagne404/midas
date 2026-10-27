@@ -106,6 +106,7 @@ type Market = {
     native_event_id: string | null;
     native_market_id: string;
     selected_side: 'yes' | 'no';
+    yes_settlement_value_dollars?: string | null;
   }[];
   quality_flags: string[];
   provenance: { response_received_at_utc: string; raw_sha256: string; observation_id: string };
@@ -2717,6 +2718,12 @@ function MarketDetails({
                   <VenuePill venue={component.venue} />
                   <strong>Selected {component.selected_side.toUpperCase()} side</strong>
                   <small>Event {component.native_event_id ?? 'not provided'}</small>
+                  {component.yes_settlement_value_dollars != null && (
+                    <small>
+                      Kalshi reported YES settlement value: $
+                      {component.yes_settlement_value_dollars}
+                    </small>
+                  )}
                 </span>
                 <code>{component.native_market_id}</code>
                 {component.venue === 'kalshi' && (

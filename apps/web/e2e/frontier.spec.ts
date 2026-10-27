@@ -179,7 +179,7 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
         },
         {
           venue: 'kalshi',
-          adapter_version: 'frontier-kalshi-10',
+          adapter_version: 'frontier-kalshi-11',
           public_probe_enabled: true,
           capabilities: [
             {
@@ -317,7 +317,7 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
               'https://external-api.kalshi.com/trade-api/v2/events/multivariate?tickers=KX-E2E-MVE-EVENT&limit=1&with_nested_markets=true',
             http_status: 200,
             raw_body: '{"events":[{"title":"MVE event with omitted members"}]}',
-            adapter_version: 'frontier-kalshi-10',
+            adapter_version: 'frontier-kalshi-11',
           },
         }),
       });

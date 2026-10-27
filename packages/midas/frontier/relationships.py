@@ -302,15 +302,26 @@ def propose_relationships(
             ):
                 continue
             left, right = sorted((parent.canonical_id, child.canonical_id))
+            component_details: tuple[str, ...] = (
+                f"The parent source metadata lists {component.native_market_id} on the {component.selected_side.upper()} side.",
+                "The recorded child metadata has the exact referenced market ticker; its event ID also agrees when the parent supplied one.",
+                "This source link does not verify the child payoff, combo payout, event logic, or settlement equivalence.",
+            )
+            if component.yes_settlement_value_dollars is not None:
+                component_details += (
+                    "The parent source also reports YES settlement value "
+                    f"{component.yes_settlement_value_dollars}; Frontier preserves it as source metadata and does not infer combo payout from it.",
+                )
             candidates[(left, right, RelationshipType.SOURCE_COMPONENT_REFERENCE)] = (
                 "Source-declared selected-component reference; exact native market ID matches and any supplied event ID agrees",
                 D(1),
-                ("selected_components", "native_market_id", "native_event_id"),
                 (
-                    f"The parent source metadata lists {component.native_market_id} on the {component.selected_side.upper()} side.",
-                    "The recorded child metadata has the exact referenced market ticker; its event ID also agrees when the parent supplied one.",
-                    "This source link does not verify the child payoff, combo payout, event logic, or settlement equivalence.",
+                    "selected_components",
+                    "native_market_id",
+                    "native_event_id",
+                    "yes_settlement_value_dollars",
                 ),
+                component_details,
             )
 
     for (venue, _), identities in sorted(

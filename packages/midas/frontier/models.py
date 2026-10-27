@@ -195,6 +195,7 @@ class SelectedMarketComponent(FrontierModel):
     native_event_id: str | None = Field(default=None, max_length=256)
     native_market_id: str = Field(min_length=1, max_length=256)
     selected_side: Literal["yes", "no"]
+    yes_settlement_value_dollars: Nonnegative | None = None
 
 
 class PayoffSpec(FrontierModel):

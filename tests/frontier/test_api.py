@@ -1333,6 +1333,7 @@ def test_kalshi_mve_components_persist_with_the_captured_market_response(tmp_pat
             "native_event_id": source_row["mve_selected_legs"][0]["event_ticker"],
             "native_market_id": source_row["mve_selected_legs"][0]["market_ticker"],
             "selected_side": source_row["mve_selected_legs"][0]["side"],
+            "yes_settlement_value_dollars": None,
         }
         assert saved_market["payoff"]["verified"] is False
         assert "MVE_PAYOFF_NOT_MODELED" in saved_market["quality_flags"]

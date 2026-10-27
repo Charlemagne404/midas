@@ -140,6 +140,7 @@ def test_selected_component_reference_requires_exact_child_market_and_event():
                     native_event_id=event_id,
                     native_market_id=ticker,
                     selected_side="yes",
+                    yes_settlement_value_dollars=Decimal("0.3750"),
                 ),
             )
         }
@@ -163,6 +164,7 @@ def test_selected_component_reference_requires_exact_child_market_and_event():
     assert set(component_edge.evidence[0].observation_ids) == {"a" * 64, "b" * 64}
     assert "selected-component reference" in component_edge.reason
     assert any("does not verify" in detail for detail in component_edge.evidence[0].details)
+    assert any("0.3750" in detail for detail in component_edge.evidence[0].details)
     economic_result = generate_binary_coverage_candidates(
         parent,
         child,

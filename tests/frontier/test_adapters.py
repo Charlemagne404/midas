@@ -263,6 +263,7 @@ async def test_kalshi_multivariate_event_page_preserves_group_and_market_evidenc
                                 "event_ticker": "KXHOUSE-26",
                                 "market_ticker": "KXHOUSE-26-D",
                                 "side": "yes",
+                                "yes_settlement_value_dollars": "0.3750",
                             },
                             {
                                 "event_ticker": "KXHOUSEMARGIN-26",
@@ -316,6 +317,8 @@ async def test_kalshi_multivariate_event_page_preserves_group_and_market_evidenc
     assert market.native_event_id == group.native_group_id
     assert market.market_kind == MarketKind.CONDITIONAL_EVENT
     assert len(market.selected_components) == 2
+    assert market.selected_components[0].yes_settlement_value_dollars == Decimal("0.3750")
+    assert market.selected_components[1].yes_settlement_value_dollars is None
     assert market.payoff.verified is False
     assert market.provenance.raw_sha256 == group.provenance.raw_sha256 == captures[0].raw_sha256
     assert "MVE_PAYOFF_NOT_MODELED" in market.quality_flags
@@ -726,7 +729,16 @@ async def test_kalshi_live_capture_preserves_multivariate_legs_and_empty_public_
 
 
 @pytest.mark.parametrize(
-    "mutation", ["invalid_side", "nonstring_side", "duplicate_leg", "over_bound"]
+    "mutation",
+    [
+        "invalid_side",
+        "nonstring_side",
+        "invalid_settlement_value",
+        "negative_settlement_value",
+        "excessive_precision",
+        "duplicate_leg",
+        "over_bound",
+    ],
 )
 @pytest.mark.asyncio
 async def test_kalshi_mve_selected_components_reject_malformed_metadata(mutation: str):
@@ -741,6 +753,14 @@ async def test_kalshi_mve_selected_components_reject_malformed_metadata(mutation
         raw_market["mve_selected_legs"][0]["side"] = "long"
     elif mutation == "nonstring_side":
         raw_market["mve_selected_legs"][0]["side"] = []
+    elif mutation == "invalid_settlement_value":
+        raw_market["mve_selected_legs"][0]["yes_settlement_value_dollars"] = "not-a-decimal"
+    elif mutation == "negative_settlement_value":
+        raw_market["mve_selected_legs"][0]["yes_settlement_value_dollars"] = "-0.01"
+    elif mutation == "excessive_precision":
+        raw_market["mve_selected_legs"][0]["yes_settlement_value_dollars"] = (
+            "0." + "0" * 18 + "1"
+        )
     elif mutation == "duplicate_leg":
         raw_market["mve_selected_legs"].append(raw_market["mve_selected_legs"][0].copy())
     else:

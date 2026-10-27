@@ -510,6 +510,7 @@ it('captures Kalshi fee metadata and exposes a separate hypothetical fee sensiti
         native_event_id: 'KX-COMPONENT-EVENT',
         native_market_id: 'KX-COMPONENT-MARKET',
         selected_side: 'yes',
+        yes_settlement_value_dollars: '0.3750',
       },
     ],
     quality_flags: ['FEE_SCHEDULE_UNKNOWN'],
@@ -521,7 +522,7 @@ it('captures Kalshi fee metadata and exposes a separate hypothetical fee sensiti
   };
   const source = {
     venue: 'kalshi',
-    adapter_version: 'frontier-kalshi-10',
+    adapter_version: 'frontier-kalshi-11',
     public_probe_enabled: true,
     capabilities: [
       {
@@ -812,6 +813,7 @@ it('captures Kalshi fee metadata and exposes a separate hypothetical fee sensiti
   ).toBeInTheDocument();
   expect(screen.getByText('KX-COMPONENT-MARKET')).toBeInTheDocument();
   expect(screen.getByText('Selected YES side')).toBeInTheDocument();
+  expect(screen.getByText('Kalshi reported YES settlement value: $0.3750')).toBeInTheDocument();
   expect(
     screen.getByText(/do not verify component rules, combo payout, or resolution equivalence/),
   ).toBeInTheDocument();

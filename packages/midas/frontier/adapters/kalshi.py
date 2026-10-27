@@ -7,6 +7,8 @@ from decimal import Decimal
 from typing import Any, Literal
 from urllib.parse import quote
 
+from pydantic import ValidationError
+
 from midas.frontier.adapters.base import AdapterError, BaseReadOnlyAdapter, build_capabilities
 from midas.frontier.adapters.normalization import (
     lifecycle,
@@ -40,7 +42,7 @@ from midas.frontier.models import (
 )
 
 D = Decimal
-ADAPTER_VERSION = "frontier-kalshi-10"
+ADAPTER_VERSION = "frontier-kalshi-11"
 _TICKER_PATTERN = re.compile(r"[A-Za-z0-9_-]{1,256}\Z")
 BASE = "https://external-api.kalshi.com/trade-api/v2"
 MARKET_DATA_DOC = "https://docs.kalshi.com/getting_started/quick_start_market_data"
@@ -613,15 +615,30 @@ class KalshiAdapter(BaseReadOnlyAdapter):
                     "Kalshi MVE leg identity or selected side is invalid",
                 )
             selected_side: Literal["yes", "no"] = "yes" if side == "yes" else "no"
-            seen.add(market_ticker)
-            components.append(
-                SelectedMarketComponent(
+            raw_yes_settlement_value = leg.get("yes_settlement_value_dollars")
+            yes_settlement_value = parse_decimal(raw_yes_settlement_value)
+            if raw_yes_settlement_value is not None and (
+                yes_settlement_value is None or yes_settlement_value < 0
+            ):
+                raise AdapterError(
+                    "INVALID_MVE_COMPONENT",
+                    "Kalshi MVE leg YES settlement value must be a finite nonnegative decimal",
+                )
+            try:
+                component = SelectedMarketComponent(
                     venue=self.venue,
                     native_event_id=event_ticker,
                     native_market_id=market_ticker,
                     selected_side=selected_side,
+                    yes_settlement_value_dollars=yes_settlement_value,
                 )
-            )
+            except ValidationError as error:
+                raise AdapterError(
+                    "INVALID_MVE_COMPONENT",
+                    "Kalshi MVE leg settlement value exceeds the supported decimal precision",
+                ) from error
+            seen.add(market_ticker)
+            components.append(component)
         return tuple(components)
 
     async def fetch_fee_metadata(self, market: FrontierMarket) -> KalshiFeeMetadata:
