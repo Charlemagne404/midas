@@ -522,3 +522,17 @@ Frontier remains a research-only development branch, incomplete and
 undeployed; this does not provide full-universe coverage or a genuine economic
 result. See the [mission ledger](frontier/FRONTIER_MISSION_LEDGER.md) and
 [engineering report](frontier/FRONTIER_ENGINEERING_REPORT.md).
+
+## Frontier Kalshi schedule clarification — 2026-10-27
+
+Commit `410860a` records an official-document check: the July 7, 2026 Kalshi
+fee schedule labels its non-standard columns Maker Multiplier then Taker
+Multiplier, so the `KXMVE` row means maker 2 / taker 1. This resolves the
+column-order reading only. It does not establish that the row applies to the
+different `KXMVECROSSCATEGORY` series in preserved evidence or settle account
+precision, maker fees, or mixed-order economics. No source request or held-data
+read occurred and no code or tests changed. Frontier remains isolated and
+PARTIALLY VERIFIED; Kalshi/Kraken source permission, live cross-venue
+economics, broader regression, and production deployment remain unresolved.
+See the [Frontier ledger](frontier/FRONTIER_MISSION_LEDGER.md) and
+[engineering report](frontier/FRONTIER_ENGINEERING_REPORT.md).
