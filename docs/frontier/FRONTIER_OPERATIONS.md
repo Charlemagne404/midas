@@ -132,6 +132,12 @@ retains its original kind and hash while its normalized `record_kind` is
 listing capture. Use the returned IDs and hashes as the evidence boundary; do not
 replace missing values with synthetic observations.
 
+`JSON_COMPLEXITY_LIMIT` means the bounded JSON decoder rejected excessive
+nesting or an oversized integer token. The transport makes no retry for this
+response, retains its complete bounded raw bytes as a `source_failure` record,
+and reports the diagnostic observation ID. Inspect the error code and raw-body
+hash; do not treat the failure as an empty market response.
+
 The Polymarket v2 trades route is a single explicit page. Its cursor is bound to
 condition and page size, and each request repeats the bounded source filters.
 There is no automatic continuation or background history crawl. The same
