@@ -20,8 +20,8 @@ as mutable Frontier storage.
 | Durable evidence | `storage.py` | Append-only, size- and row-bounded SQLite observations, markets, relationship reviews/revisions, runs, and paired comparisons. |
 | Replay | `replay.py` | Stable input ordering, scenario/mapping/proposal-limit-aware replay identities, exact store-record provenance for API-loaded models, deterministic results, and paired assumption comparisons. |
 | Arena paired replay | `packages/midas/arena/frontier_replay.py`, `arena/jobs.py` | Immutable content-addressed input snapshots, a bounded offline paired-replay worker, and hash-verified result artifacts under Arena's existing admission gate. |
-| HTTP API | `apps/api/frontier.py` | Bounded local queries and graph neighborhoods, relationship proposals/reviews, deterministic and paired replay, config-gated market/event-group/MVE capture, and hash-bound Kalshi fee sensitivities. |
-| Mission Control workspace | `apps/web/src/Frontier.tsx` | Sources, markets/books/event context, one-page Kalshi MVE discovery, relationship hypotheses, candidates, economic workbench, local comparisons, bounded Arena replay history/results, and readiness. |
+| HTTP API | `apps/api/frontier.py` | Bounded local queries and graph neighborhoods, relationship proposals/reviews, deterministic and paired replay, config-gated market/event-group/MVE/component capture, and hash-bound Kalshi fee sensitivities. |
+| Mission Control workspace | `apps/web/src/Frontier.tsx` | Sources, markets/books/event context, one-page Kalshi MVE discovery and explicit selected-component rule capture, relationship hypotheses, candidates, economic workbench, local comparisons, bounded Arena replay history/results, and readiness. |
 
 ## Adapter capability contract
 
@@ -60,7 +60,7 @@ selection and graph revision identity, so replay and paged reads cannot silently
 retain older child-only metadata.
 
 Kalshi adapter v7 introduced the separate `MULTIVARIATE_EVENT_DISCOVERY`
-capability, retained by adapters v8 and v9. Its local
+capability, retained by adapters v8 through v10. Its local
 `POST /api/frontier/probe/kalshi/multivariate-events` route requires exactly one
 series ticker, collection ticker, or event ticker, a source-enabled
 public-probe configuration, and the adapter capability. A single event ticker
@@ -118,6 +118,31 @@ the artifact but is unreconciled: it does not match the payload now preserved
 there. The temporary harness raised an event-loop cleanup error after the live
 response; no second live request was made. The capture still has zero child
 markets and says nothing about combo payoff or broader event inventory.
+
+Adapter v10 adds `fetch_market_metadata` for exactly one Kalshi market ticker,
+using the documented public Get Market endpoint. The local
+`POST /api/frontier/probe/kalshi/mve-component-market` route accepts a saved
+parent combo ID and one component ticker. Before network access it requires the
+parent to appear in the bounded recorded market window and the exact ticker to
+be among that market's normalized `selected_components`. It then performs one
+GET, validates the returned market ticker and (when the MVE reference includes
+one) event ticker, and appends the full raw response plus normalized child
+market. A mismatched response is retained as a diagnostic source failure; an
+unreferenced ticker causes no request. The new `market_metadata` observation
+kind is included in market queries and in the graph revision, so later graph
+pages detect the new record without a schema migration.
+
+Mission Control exposes this request beside each selected MVE component, gated
+by the Kalshi public-probe setting and metadata capability. It shows the
+captured child's current lifecycle, resolution rules, and evidence identities.
+The operation does not fetch books or prices, authenticate the source rules,
+verify parent combo payoff, or produce a candidate. One live capture for the
+first component of a saved basketball combo returned a closed market with
+primary and secondary rules that contain fair-price fallbacks for inactive or
+postponed games. That conditional resolution language makes a simple one-hot
+binary payoff inference unjustified. The exact raw and temporary-store row
+hashes are in the engineering report and
+`data/frontier/live-probes/2026-10-27-kalshi-mve-component-market-r1.json`.
 
 One preserved public capture demonstrates the boundary. The Polymarket and
 Kalshi event titles and party-outcome wording generated a deterministic
@@ -256,7 +281,8 @@ center, depth, page size, and graph revision; each request recomputes the same
 bounded result window, so no traversal state or database snapshot is persisted.
 Wide BFS layers are split into indexed queries of at most 200 market IDs while
 sharing the 500-row per-request scan budget. The graph revision includes recorded
-`market_listing`, `instrument_metadata`, and `event_market_listing` observations,
+`market_listing`, `instrument_metadata`, `market_metadata`, and
+`event_market_listing` observations,
 relationships, and reviews. The API checks it around each centered page and
 returns 409 when any of those inputs change. Mission Control displays 30 edges
 per page with previous/next controls. The uncentered recent-edge view remains a

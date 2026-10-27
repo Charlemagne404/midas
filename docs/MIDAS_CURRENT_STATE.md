@@ -107,6 +107,16 @@ harness cleanup raised an event-loop error only after response capture and
 store read-back completed; the request was not repeated. This is event lookup,
 not evidence of child contracts, combo payoff, or venue-wide inventory.
 
+The isolated Frontier branch now has adapter v10's one-market Kalshi metadata
+lookup, exposed only for a selected component ticker already referenced by a
+saved MVE market. It validates parent market/event identity and persists
+`market_metadata` rows into market queries and graph revisions. One public
+capture returned the referenced Brandon Miller 2+ assists contract as closed;
+its rules include fair-price fallback cases. Raw and row hashes are preserved
+in `data/frontier/live-probes/2026-10-27-kalshi-mve-component-market-r1.json`.
+This child-level source observation does not verify combo payout or economics,
+and the Frontier branch remains undeployed.
+
 The focused adapter/API regression passed 9 tests at 75,004 KiB peak RSS with
 zero swaps; the focused Mission Control test passed. Frontend typecheck, targeted
 ESLint/Prettier, Frontier Python Ruff/format, and strict mypy passed. Playwright

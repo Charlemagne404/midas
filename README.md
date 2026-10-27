@@ -81,6 +81,14 @@ payoff descriptions. One bounded event-detail follow-up also returned an
 explicit empty top-level `markets` array for that event; adapter v8 can replay it
 as a valid zero-child response without implying venue-wide absence. Adapter v9
 adds the single-event ticker filter; it still does not validate combo payoff.
+Adapter v10 adds a one-ticker public market-detail lookup for a component
+already named by a saved MVE. The Mission Control inspector can capture that
+child's rules through one explicit GET; the route rejects unreferenced tickers,
+checks both market and event identity, and stores the raw plus normalized row.
+One captured player-assists child was already closed and included a fair-price
+fallback for inactive/non-playing or postponed games. This demonstrates why
+native YES/NO labels alone do not establish a simple exhaustive terminal payoff;
+the MVE combo payout remains unverified.
 Review labels and assertion references are not authenticated; replay follows
 only the latest revision. It is not merged into `main` or deployed. Read the [Frontier mission ledger](docs/frontier/FRONTIER_MISSION_LEDGER.md)
 and [current engineering report](docs/frontier/FRONTIER_ENGINEERING_REPORT.md)

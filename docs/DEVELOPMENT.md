@@ -160,6 +160,29 @@ probe harness reported an event-loop cleanup error after capture and read-back;
 it did not repeat the request. See
 `data/frontier/live-probes/2026-10-27-kalshi-mve-ticker-filter-r1.json`.
 
+Adapter v10 adds an explicit `POST
+/api/frontier/probe/kalshi/mve-component-market` operation. It accepts a parent
+canonical market ID and one selected child ticker, and requires that exact
+child/event reference to exist in a saved MVE market before making a request.
+It issues one public GET to Kalshi's [Get Market](https://docs.kalshi.com/api-reference/market/get-market)
+endpoint, checks the returned ticker and event, stores the complete raw response
+and normalized market, and includes new `market_metadata` records in market
+queries and graph revisions. The Mission Control MVE inspector provides the
+explicit capture control. It exposes the child market's current rules and
+lifecycle, but never treats them as proof of the parent combo's payout or
+settlement.
+
+One capture followed the first child reference from the saved October 26 combo.
+The child was closed at capture time and its public rules include fair-price
+fallbacks for inactive/non-playing and postponed games. Raw hash
+`0f1c3cd42cac5202ca5a3012d58cb8d9631bf39cce313c738bb0448140271eda` and
+isolated-store row hash
+`a2e7ae0c08436155a0bdc80e07f16d6b882eaf9706617994be135b668ec5897a` are
+preserved in `data/frontier/live-probes/2026-10-27-kalshi-mve-component-market-r1.json`.
+The capture has no book or price. Its detailed rules strengthen the reason the
+combo cannot be reduced to a verified one-hot payoff; no candidate economics
+were enabled.
+
 For Kalshi multivariate event markets, adapter v4 normalizes up to 64 native
 selected component references (event ticker, market ticker, selected YES/NO
 side) and Mission Control displays them from the saved market observation. This
