@@ -328,3 +328,13 @@ sample about five seconds later showed PSI `avg10` at 10.74% (`some`) / 8.37%
 (`full`). At `13:42:24Z`, PSI `avg10` was 22.14% / 16.01%, `avg300` was
 14.22% / 12.27%, available RAM was 9.1 GB, and free swap was about 553 MiB.
 The production bundle remains unverified; no service or source was contacted.
+
+### Settlement asset identity limitation
+
+`PayoffSpec.settlement_asset` is currently an opaque string; the schema does
+not separately encode a token's network or contract. The Polymarket adapter
+leaves settlement asset absent and its payoff unverified, while relationship
+verification and candidate generation require verified exhaustive payoffs and
+exact denomination agreement. The current adapters therefore fail closed.
+Future token-settled support must use a network/contract-qualified asset
+identity or remain unsupported. No code or source data changed for this review.

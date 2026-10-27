@@ -1038,3 +1038,15 @@ candidate economics. Architecture, current-state, and report text record the
 guard.
 Documentation commit `3b7defba8c953d7eae7b7c2e9eb9ffa2ec49adc5` updates the
 architecture and current handoff for this code checkpoint.
+
+## 2026-10-27 — settlement asset identity review
+
+The canonical `settlement_asset` field is an opaque string with no separate
+network or token-contract identity. The Polymarket adapter leaves it absent and
+does not verify its payout. Cross-venue payoff verification and opportunity
+generation fail closed on missing/unverified payoffs and denomination mismatch,
+so current adapters cannot create a candidate from a shared token ticker. Any
+future token-settled adapter needs a network/contract-qualified identity or must
+remain unsupported. This is a documented model limitation; no code or live
+source data changed. Extend the asset identity model before enabling token-
+settled cross-venue equivalence.

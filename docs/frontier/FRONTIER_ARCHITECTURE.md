@@ -66,7 +66,12 @@ payoff settlement asset, and the market-level settlement asset to agree with
 that payoff. Binary and multi-outcome candidate generation plus the
 independent audit repeat the denomination guard, so a forged verified
 relationship cannot bypass it. No USD-to-USDC conversion or stablecoin/network
-valuation bridge is assumed. Event-group observations participate in
+valuation bridge is assumed. `settlement_asset` is still an opaque string and
+does not encode token network or contract identity. The Polymarket adapter
+leaves its settlement asset absent and its payoff unverified, so current
+cross-venue verification fails closed. A future token-settled adapter must
+provide a network/contract-qualified identity or remain unsupported.
+Event-group observations participate in
 latest-record selection and graph revision identity, so replay and paged reads
 cannot silently retain older child-only metadata.
 

@@ -2022,3 +2022,16 @@ corepack pnpm --dir apps/web typecheck
 Results were 2 passed/20 deselected, 1 passed/34 deselected, 1 passed/7
 skipped, and TypeScript passed. Ruff, ESLint, Prettier, and `git diff --check`
 also passed. No live source call was made.
+
+## Settlement asset identity boundary
+
+The shared payoff model currently stores `settlement_asset` as an opaque
+string, without separate token network or contract fields. The Polymarket
+adapter sets this field to absent and marks its payoff unverified; same-payoff
+verification and candidate generation require verified exhaustive payoffs,
+matching payout/settlement denominations, and agreement with the market-level
+asset. Current adapter paths therefore fail closed, but a ticker-only token
+label is not a sufficient canonical identity for a future verified source.
+Future token-settled adapters must provide a network/contract-qualified asset
+identity or stay unsupported. No code or live source data changed during this
+review; structured token identity and any valuation bridge remain future work.
