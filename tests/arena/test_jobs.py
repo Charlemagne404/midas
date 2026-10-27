@@ -8,7 +8,21 @@ from types import SimpleNamespace
 
 from midas.arena.artifacts import atomic_json
 from midas.arena.datasets import DatasetSpec
-from midas.arena.jobs import JobSpec, create, inspect, run
+from midas.arena.jobs import JobSpec, _worker_process_usage_profile, create, inspect, run
+
+
+def test_worker_process_usage_profile_normalizes_rss_and_clamps_cpu_delta():
+    start = SimpleNamespace(ru_utime=1.0, ru_stime=2.0, ru_maxrss=100)
+    end = SimpleNamespace(ru_utime=1.25, ru_stime=1.5, ru_maxrss=150)
+
+    linux = _worker_process_usage_profile(start, end, platform="linux")
+    assert linux == {
+        "worker_process_user_cpu_seconds": 0.25,
+        "worker_process_system_cpu_seconds": 0.0,
+        "worker_process_peak_rss_bytes": 150 * 1024,
+    }
+    macos = _worker_process_usage_profile(start, end, platform="darwin")
+    assert macos["worker_process_peak_rss_bytes"] == 150
 
 
 def worker(root, identity):
@@ -33,6 +47,9 @@ def test_cancelled_worker_keeps_terminal_state_and_source_snapshot(tmp_path):
     result = worker(tmp_path, job["job_id"])
     assert result["state"] == "CANCELLED"
     assert result["result"] is None
+    assert result["runtime_profile"]["worker_process_user_cpu_seconds"] >= 0
+    assert result["runtime_profile"]["worker_process_system_cpu_seconds"] >= 0
+    assert result["runtime_profile"]["worker_process_peak_rss_bytes"] > 0
     assert worker(tmp_path, job["job_id"]) == result
 
 

@@ -3,6 +3,7 @@
 import fcntl
 import json
 import os
+import resource
 import shutil
 import signal
 import subprocess
@@ -37,6 +38,18 @@ MAX_QUEUE_WAIT_SECONDS = 300
 QUEUE_STATUS_PUBLISH_SECONDS = 30
 MAX_ARENA_ARTIFACT_BYTES = 8 * 1024**3
 MINIMUM_DISK_RESERVE_BYTES = 2 * 1024**3
+
+
+def _worker_process_usage_profile(
+    start: Any, end: Any, *, platform: str | None = None
+) -> dict[str, int | float]:
+    rss_multiplier = 1 if (platform or sys.platform) == "darwin" else 1024
+    return {
+        "worker_process_user_cpu_seconds": max(0.0, end.ru_utime - start.ru_utime),
+        "worker_process_system_cpu_seconds": max(0.0, end.ru_stime - start.ru_stime),
+        # Linux and the BSDs report ru_maxrss in KiB; macOS reports bytes.
+        "worker_process_peak_rss_bytes": int(end.ru_maxrss * rss_multiplier),
+    }
 
 
 class JobSpec(Model):
@@ -359,6 +372,7 @@ def _run(root: Path, identity: str) -> None:
     if record["state"] != "QUEUED":
         return
     spec = JobSpec.model_validate(record["configuration"])
+    process_usage_started = resource.getrusage(resource.RUSAGE_SELF)
     began: float | None = None
     queue_started = time.monotonic()
     queue_wait_seconds = 0.0
@@ -698,6 +712,10 @@ def _run(root: Path, identity: str) -> None:
         except Exception as error:
             record.update(state="FAILED", error=f"{type(error).__name__}: {error}", exit_status=1)
         finally:
+            process_usage_finished = resource.getrusage(resource.RUSAGE_SELF)
+            overhead.update(
+                _worker_process_usage_profile(process_usage_started, process_usage_finished)
+            )
             record.update(
                 runtime_profile=dict(overhead),
                 updated_at=time.time(),

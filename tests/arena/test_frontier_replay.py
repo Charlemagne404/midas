@@ -298,7 +298,14 @@ def test_frontier_replay_catalog_is_bounded_and_filters_other_arena_jobs(tmp_pat
                 "kind": "frontier_replay",
                 "frontier_replay": {"snapshot_id": "a" * 64, "snapshot_sha256": "b" * 64},
             },
-            "state": "QUEUED",
+            "state": "COMPLETED",
+            "elapsed_seconds": 0.1993923489935696,
+            "runtime_profile": {
+                "worker_process_user_cpu_seconds": 0.067554,
+                "worker_process_system_cpu_seconds": 0.010943,
+                "worker_process_peak_rss_bytes": 167288832,
+                "artifact_bytes": 4852907,
+            },
             "progress": {"current": 0, "total": 3},
         },
     )
@@ -315,4 +322,43 @@ def test_frontier_replay_catalog_is_bounded_and_filters_other_arena_jobs(tmp_pat
         payload = response.json()
         assert len(payload["items"]) == 1
         assert payload["items"][0]["snapshot_id"] == "a" * 64
+        assert payload["items"][0]["elapsed_seconds"] == 0.1993923489935696
+        assert payload["items"][0]["runtime_profile"] == {
+            "worker_process_user_cpu_seconds": 0.067554,
+            "worker_process_system_cpu_seconds": 0.010943,
+            "worker_process_peak_rss_bytes": 167288832,
+        }
         assert payload["research_only"] is True
+
+
+def test_frontier_replay_catalog_omits_invalid_worker_measurements(tmp_path):
+    jobs = tmp_path / "jobs"
+    job_dir = jobs / JOB_ID
+    job_dir.mkdir(parents=True)
+    (job_dir / "job.json").write_text(
+        json.dumps(
+            {
+                "job_id": JOB_ID,
+                "configuration": {
+                    "kind": "frontier_replay",
+                    "frontier_replay": {"snapshot_id": "a" * 64, "snapshot_sha256": "b" * 64},
+                },
+                "state": "COMPLETED",
+                "elapsed_seconds": 10**1000,
+                "runtime_profile": {
+                    "worker_process_user_cpu_seconds": True,
+                    "worker_process_system_cpu_seconds": float("nan"),
+                    "worker_process_peak_rss_bytes": 9 * 1024**3,
+                },
+            }
+        ),
+    )
+    app = FastAPI()
+    app.include_router(router(tmp_path))
+
+    with TestClient(app) as client:
+        response = client.get("/api/arena/frontier-replays?limit=10")
+        assert response.status_code == 200, response.text
+        item = response.json()["items"][0]
+        assert item["elapsed_seconds"] is None
+        assert item["runtime_profile"] is None

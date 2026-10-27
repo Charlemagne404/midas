@@ -4,6 +4,7 @@ import asyncio
 import hashlib
 import importlib.util
 import json
+import math
 import re
 import subprocess
 from decimal import Decimal, InvalidOperation
@@ -22,6 +23,8 @@ MAX_VERITAS_LATEST_SUMMARY_BYTES = 2 * 1024**2
 MAX_VERITAS_ANALYSIS_EVENT_BYTES = 2 * 1024**2
 MAX_VERITAS_QUALIFICATION_FINDING_BYTES = 2 * 1024**2
 MAX_FRONTIER_REPLAY_JOB_SCAN = 500
+MAX_ARENA_JOB_ELAPSED_SECONDS = 7_500
+MAX_WORKER_PROCESS_RSS_BYTES = 8 * 1024**3
 
 
 def veritas_repository_root() -> Path:
@@ -1468,17 +1471,42 @@ def router(root: Path, *, veritas_repository: Path | None = None) -> APIRouter:
                 replay_spec = replay_spec if isinstance(replay_spec, dict) else {}
                 result_value = row.get("result")
                 result = result_value if isinstance(result_value, dict) else None
+                runtime_value = row.get("runtime_profile")
+                runtime_profile: dict[str, int | float] = {}
+                if isinstance(runtime_value, dict):
+                    metric_limits = {
+                        "worker_process_user_cpu_seconds": MAX_ARENA_JOB_ELAPSED_SECONDS,
+                        "worker_process_system_cpu_seconds": MAX_ARENA_JOB_ELAPSED_SECONDS,
+                        "worker_process_peak_rss_bytes": MAX_WORKER_PROCESS_RSS_BYTES,
+                    }
+                    for key, maximum in metric_limits.items():
+                        value = runtime_value.get(key)
+                        if (
+                            type(value) in (int, float)
+                            and (not isinstance(value, float) or math.isfinite(value))
+                            and value >= 0
+                            and value <= maximum
+                        ):
+                            runtime_profile[key] = value
+                elapsed = row.get("elapsed_seconds")
                 projected = {
                     "job_id": row.get("job_id"),
                     "state": row.get("state"),
                     "created_at": row.get("created_at"),
                     "updated_at": row.get("updated_at"),
+                    "elapsed_seconds": elapsed
+                    if type(elapsed) in (int, float)
+                    and (not isinstance(elapsed, float) or math.isfinite(elapsed))
+                    and elapsed >= 0
+                    and elapsed <= MAX_ARENA_JOB_ELAPSED_SECONDS
+                    else None,
                     "progress": row.get("progress"),
                     "phase": row.get("phase"),
                     "error": _bounded_string(row.get("error"), 300),
                     "snapshot_id": replay_spec.get("snapshot_id"),
                     "snapshot_sha256": replay_spec.get("snapshot_sha256"),
                     "result": result,
+                    "runtime_profile": runtime_profile or None,
                 }
                 items.append((manifest.stat().st_mtime, projected))
             items.sort(key=lambda item: item[0], reverse=True)

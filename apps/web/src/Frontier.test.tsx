@@ -1281,11 +1281,17 @@ it('submits a bounded Arena replay and displays its integrity-verified compariso
     state: 'COMPLETED',
     created_at: 1_793_049_600,
     updated_at: 1_793_049_601,
+    elapsed_seconds: 0.1993923489935696,
     progress: { done: 3, total: 3 },
     phase: 'publishing-hash-verified-result',
     error: null,
     snapshot_id: snapshotId,
     snapshot_sha256: snapshotSha256,
+    runtime_profile: {
+      worker_process_user_cpu_seconds: 0.067554,
+      worker_process_system_cpu_seconds: 0.010943,
+      worker_process_peak_rss_bytes: 167288832,
+    },
     result: { comparison_id: comparison.comparison_id, frontier_replay_sha256: resultSha256 },
   };
   let submission: Record<string, unknown> | undefined;
@@ -1359,6 +1365,10 @@ it('submits a bounded Arena replay and displays its integrity-verified compariso
   expect(await screen.findByText(/Hash checks passed/)).toBeInTheDocument();
   expect(screen.getByText('0 matched constructions')).toBeInTheDocument();
   expect(screen.getByText(snapshotSha256)).toBeInTheDocument();
+  expect(screen.getByText('Worker process CPU (user / system)')).toBeInTheDocument();
+  expect(screen.getByText('0.068 / 0.011 s')).toBeInTheDocument();
+  expect(screen.getByText(/159\.5/)).toBeInTheDocument();
+  expect(screen.getByText(/do not establish sustained Arena capacity/)).toBeInTheDocument();
   expect(submission?.scenarios).toEqual([
     { name: 'quoted baseline' },
     {

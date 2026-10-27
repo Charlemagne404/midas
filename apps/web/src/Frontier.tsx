@@ -401,11 +401,17 @@ type FrontierArenaReplayJob = {
   state: string;
   created_at: number | null;
   updated_at: number | null;
+  elapsed_seconds: number | null;
   progress: { done?: number; total?: number } | null;
   phase: string | null;
   error: string | null;
   snapshot_id: string | null;
   snapshot_sha256: string | null;
+  runtime_profile: {
+    worker_process_user_cpu_seconds?: number;
+    worker_process_system_cpu_seconds?: number;
+    worker_process_peak_rss_bytes?: number;
+  } | null;
   result: {
     comparison_id?: string;
     frontier_replay_sha256?: string;
@@ -1095,6 +1101,8 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
         progress: FrontierArenaReplayJob['progress'];
         phase?: string | null;
         error?: string | null;
+        elapsed_seconds?: number | null;
+        runtime_profile?: FrontierArenaReplayJob['runtime_profile'];
         result: FrontierArenaReplayJob['result'];
         frontier_snapshot_id: string;
         frontier_snapshot_sha256: string;
@@ -1119,11 +1127,13 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
         state: job.state,
         created_at: job.created_at,
         updated_at: job.updated_at,
+        elapsed_seconds: job.elapsed_seconds ?? null,
         progress: job.progress,
         phase: job.phase ?? null,
         error: job.error ?? null,
         snapshot_id: job.frontier_snapshot_id,
         snapshot_sha256: job.frontier_snapshot_sha256,
+        runtime_profile: job.runtime_profile ?? null,
         result: job.result,
       };
       setSelectedArenaReplayId(job.job_id);
@@ -2256,6 +2266,48 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
                   </div>
                 )}
                 <dl className="fr-arena-job-hashes">
+                  {selectedArenaReplayJob.elapsed_seconds != null && (
+                    <div>
+                      <dt>Worker elapsed time</dt>
+                      <dd>{selectedArenaReplayJob.elapsed_seconds.toFixed(3)} s</dd>
+                    </div>
+                  )}
+                  {selectedArenaReplayJob.runtime_profile && (
+                    <>
+                      {(selectedArenaReplayJob.runtime_profile.worker_process_user_cpu_seconds !=
+                        null ||
+                        selectedArenaReplayJob.runtime_profile.worker_process_system_cpu_seconds !=
+                          null) && (
+                        <div>
+                          <dt>Worker process CPU (user / system)</dt>
+                          <dd>
+                            {selectedArenaReplayJob.runtime_profile.worker_process_user_cpu_seconds?.toFixed(
+                              3,
+                            ) ?? '—'}
+                            {' / '}
+                            {selectedArenaReplayJob.runtime_profile.worker_process_system_cpu_seconds?.toFixed(
+                              3,
+                            ) ?? '—'}{' '}
+                            s
+                          </dd>
+                        </div>
+                      )}
+                      {selectedArenaReplayJob.runtime_profile.worker_process_peak_rss_bytes !=
+                        null && (
+                        <div>
+                          <dt>Worker process peak RSS</dt>
+                          <dd>
+                            {(
+                              selectedArenaReplayJob.runtime_profile.worker_process_peak_rss_bytes /
+                              1024 /
+                              1024
+                            ).toFixed(1)}{' '}
+                            MiB
+                          </dd>
+                        </div>
+                      )}
+                    </>
+                  )}
                   <div>
                     <dt>Input snapshot ID</dt>
                     <dd>{selectedArenaReplayJob.snapshot_id ?? 'Not recorded'}</dd>
@@ -2271,6 +2323,12 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
                     </div>
                   )}
                 </dl>
+                {selectedArenaReplayJob.runtime_profile?.worker_process_peak_rss_bytes != null && (
+                  <p className="fr-arena-replay-note">
+                    These are measurements from one worker process. They do not establish sustained
+                    Arena capacity or host headroom.
+                  </p>
+                )}
                 {selectedArenaReplayJob.state === 'COMPLETED' && arenaReplayResult.isLoading && (
                   <div className="fr-loading">Reading and verifying the completed artifact…</div>
                 )}
