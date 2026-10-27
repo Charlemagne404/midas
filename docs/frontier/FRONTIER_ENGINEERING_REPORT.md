@@ -2809,3 +2809,20 @@ At `2026-10-27T17:40:29Z`, memory PSI `avg10` was 0.00% (`some`) / 0.00%
 (`full`), `avg60` 1.33% / 1.13%, and `avg300` 20.00% / 17.80%.
 `MemAvailable` was 9,866,316 KiB and swap free was 486,152 KiB of 4 GiB.
 Broader Frontier Python verification and the production build remain unrun.
+
+### Full Frontier Python regression — 2026-10-27 17:42 UTC
+
+`PYTHONPATH=packages /usr/bin/time -v /home/charlie/midas/.venv/bin/pytest -q
+tests/frontier` passed **199 tests** in 37.94 seconds of pytest time and 39.01
+seconds wall time. Peak RSS was 329,116 KiB, with zero swaps and zero socket
+messages. One existing Starlette/httpx TestClient deprecation warning remains.
+The suite includes fixture adapter contracts, API routes, logical-implication
+review/replay/audit, persistence, source permission gates, and bounded Arena
+resource-denial behavior. The test fixtures use temporary roots and mocked
+transport; they do not validate live source availability or evidence.
+
+At `2026-10-27T17:42:45Z`, memory PSI was `avg10` 37.14% (`some`) / 33.70%
+(`full`), `avg60` 12.71% / 11.29%, and `avg300` 15.55% / 13.83%.
+`MemAvailable` was 9,482,844 KiB and swap free was 486,228 KiB of 4 GiB. The
+complete repository suite and production frontend build remain unrun; Frontier
+is still undeployed and incomplete.

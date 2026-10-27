@@ -1,6 +1,17 @@
 # Project Frontier Mission Ledger
 
-**Latest checkpoint (2026-10-27 17:40 UTC):** Test commit
+**Latest checkpoint (2026-10-27 17:42 UTC):** The bounded Frontier Python suite
+passed **199 tests** in 37.94 seconds (39.01 seconds wall), at 329,116 KiB
+peak RSS, zero swaps, and zero socket messages. It includes the implication
+relationship review, deterministic candidate replay, independent audit, and
+reverse-endpoint non-identity mapping regression. Only the existing
+Starlette/httpx TestClient deprecation warning remains. Tests used fixture
+transport and temporary roots; no live source was accessed. At 17:42:45 UTC,
+memory PSI `avg10` was 37.14% (`some`) / 33.70% (`full`), `avg60` 12.71% /
+11.29%, and `avg300` 15.55% / 13.83%; 486,228 KiB swap remained free of 4 GiB.
+The complete repository suite and production frontend build remain unrun.
+
+**Previous checkpoint (2026-10-27 17:40 UTC):** Test commit
 `95372c8feb1129609e3e2ed4f20179432ed4e446` covers the reversed-endpoint case
 for a non-identity three-state implication mapping. It verifies canonical
 mapping inversion, correct source-NO/target-YES legs, mapped terminal payouts,
