@@ -46,6 +46,7 @@ type Overview = {
     relationships: number;
     relationship_reviews: number;
     runs: number;
+    comparisons: number;
     markets_by_venue: Record<string, number>;
     instruments_by_venue: Record<string, number>;
     relationships_by_state: Record<string, number>;
@@ -324,6 +325,55 @@ type Run = {
     candidates: Candidate[];
     classification_counts: Record<string, number>;
   };
+};
+type ReplayComparison = {
+  comparison_id: string;
+  evidence_input_sha256: string;
+  as_of_utc: string;
+  result_sha256: string;
+  arms: [
+    {
+      scenario: Record<string, string | number>;
+      run_id: string;
+      result_sha256: string;
+      candidate_count: number;
+      classification_counts: Record<string, number>;
+      audit_disposition_counts: Record<string, number>;
+      positive_gross_count: number;
+      positive_net_count: number;
+      unknown_net_count: number;
+    },
+    {
+      scenario: Record<string, string | number>;
+      run_id: string;
+      result_sha256: string;
+      candidate_count: number;
+      classification_counts: Record<string, number>;
+      audit_disposition_counts: Record<string, number>;
+      positive_gross_count: number;
+      positive_net_count: number;
+      unknown_net_count: number;
+    },
+  ];
+  delta: {
+    baseline_scenario: string;
+    compared_scenario: string;
+    matched_candidate_count: number;
+    unchanged_classification_count: number;
+    changed_classification_count: number;
+    baseline_only_candidate_count: number;
+    compared_only_candidate_count: number;
+    classification_count_delta: Record<string, number>;
+    positive_gross_count_delta: number;
+    positive_net_count_delta: number;
+    unknown_net_count_delta: number;
+  };
+};
+type ReplayComparisonRecord = {
+  comparison_id: string;
+  created_at_utc: string;
+  result_sha256: string;
+  result: ReplayComparison;
 };
 type Readiness = { gates: { name: string; state: string; detail: string }[] };
 type ListResponse<T> = { items: T[]; returned: number; limit: number; offset: number };
@@ -859,6 +909,11 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
     queryFn: () => api<ListResponse<Run>>('/frontier/runs?limit=30'),
     ...options,
   });
+  const comparisons = useQuery({
+    queryKey: ['frontier', 'comparisons'],
+    queryFn: () => api<ListResponse<ReplayComparisonRecord>>('/frontier/comparisons?limit=30'),
+    ...options,
+  });
   const readiness = useQuery({
     queryKey: ['frontier', 'readiness'],
     queryFn: () => api<Readiness>('/frontier/readiness'),
@@ -917,6 +972,28 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
             execution_delay_ms: Number(delay),
             fill_fraction: (Number(fillPercent) / 100).toFixed(4),
             quote_decay_bps_per_second: '15',
+          }),
+        },
+      ),
+    onSuccess: refresh,
+  });
+  const pairedReplay = useMutation({
+    mutationFn: () =>
+      api<{ comparison: ReplayComparison; runs: { run_id: string; result_sha256: string }[] }>(
+        '/frontier/replay/compare',
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            scenarios: [
+              { name: 'quoted baseline' },
+              {
+                name: 'current assumptions',
+                slippage_bps: slippage,
+                execution_delay_ms: Number(delay),
+                fill_fraction: (Number(fillPercent) / 100).toFixed(4),
+                quote_decay_bps_per_second: '15',
+              },
+            ],
           }),
         },
       ),
@@ -1043,6 +1120,7 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
     })
     .slice(0, 30);
   const latestRun = runs.data?.items[0];
+  const latestComparison = comparisons.data?.items[0]?.result;
   const overviewError = overview.error?.message ?? sources.error?.message;
   const summary = overview.data?.summary;
   const marketTotal = Object.values(summary?.markets_by_venue ?? {}).reduce(
@@ -1140,8 +1218,14 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
             <Metric
               title="Replay runs"
               value={count(summary?.runs)}
-              note="Deterministic, pinned inputs and assumptions"
+              note="Each arm stores pinned inputs and assumptions"
               icon={Play}
+            />
+            <Metric
+              title="Paired comparisons"
+              value={count(summary?.comparisons)}
+              note="Same evidence, different bounded assumptions"
+              icon={GitBranch}
             />
           </div>
           <div className="fr-overview-grid">
@@ -1803,6 +1887,28 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
                 evaluations
               </div>
             )}
+            <button
+              className="fr-action fr-run-button"
+              onClick={() => pairedReplay.mutate()}
+              disabled={pairedReplay.isPending}
+            >
+              <GitBranch size={15} />
+              {pairedReplay.isPending
+                ? 'Comparing the same saved evidence…'
+                : 'Compare quoted baseline with current assumptions'}
+            </button>
+            <p className="fr-footnote">
+              The baseline uses displayed quotes with zero delay and full fills. Both arms are
+              hypothetical replays over the same saved evidence; a comparison does not establish
+              execution or profitability.
+            </p>
+            {pairedReplay.isError && <InlineError message={pairedReplay.error.message} />}
+            {pairedReplay.data && (
+              <div className="fr-inline-success">
+                <ShieldCheck size={15} /> Paired comparison saved ·{' '}
+                {shortHash(pairedReplay.data.comparison.comparison_id)}
+              </div>
+            )}
           </section>
           <section className="fr-card">
             <div className="fr-card-head">
@@ -1818,6 +1924,11 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
               <EmptyState
                 title="No persisted run"
                 detail="Replay saves its input digest, adapter and verifier versions, scenario assumptions, and output hash for later reproduction."
+              />
+            )}
+            {(pairedReplay.data?.comparison ?? latestComparison) && (
+              <ReplayComparisonSummary
+                comparison={pairedReplay.data?.comparison ?? latestComparison!}
               />
             )}
             <div className="fr-callout">
@@ -1878,6 +1989,32 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
                 Open Arena <ArrowRight size={14} />
               </button>
             </div>
+          </section>
+          <section className="fr-card fr-comparison-history">
+            <div className="fr-card-head">
+              <div>
+                <span className="fr-kicker">PAIRED REPLAY EVIDENCE</span>
+                <h2>Scenario comparisons</h2>
+              </div>
+              <GitBranch size={17} />
+            </div>
+            {comparisons.isError ? (
+              <EmptyState
+                title="Comparison history unavailable"
+                detail={comparisons.error.message}
+              />
+            ) : comparisons.data?.items.length ? (
+              <div className="fr-run-list">
+                {comparisons.data.items.map((item) => (
+                  <ReplayComparisonSummary key={item.comparison_id} comparison={item.result} />
+                ))}
+              </div>
+            ) : (
+              <EmptyState
+                title="No paired comparisons yet"
+                detail="Compare two assumptions over the same saved markets, books and verified relationships. Each arm is also stored as a reproducible replay."
+              />
+            )}
           </section>
           <section className="fr-card">
             <div className="fr-card-head">
@@ -2604,6 +2741,63 @@ function RunSummary({ run, expanded = false }: { run: Run; expanded?: boolean })
           ))}
         </details>
       )}
+    </article>
+  );
+}
+
+function ReplayComparisonSummary({ comparison }: { comparison: ReplayComparison }) {
+  const [baseline, compared] = comparison.arms;
+  const delta = comparison.delta;
+  const signed = (value: number) => (value > 0 ? `+${value}` : String(value));
+  return (
+    <article className="fr-comparison-summary">
+      <div className="fr-run-top">
+        <div>
+          <StateBadge state="paired hypothetical replay" />
+          <strong>{time(comparison.as_of_utc)}</strong>
+        </div>
+        <code>{shortHash(comparison.comparison_id)}</code>
+      </div>
+      <div className="fr-comparison-arms">
+        {[baseline, compared].map((arm) => (
+          <div key={arm.run_id}>
+            <strong>{String(arm.scenario.name ?? 'scenario')}</strong>
+            <span>{arm.candidate_count} candidates evaluated</span>
+            <span>{arm.positive_gross_count} positive gross worst cases</span>
+            <span>{arm.positive_net_count} positive modeled net worst cases</span>
+            <span>{arm.unknown_net_count} with unknown modeled net</span>
+          </div>
+        ))}
+      </div>
+      <div className="fr-run-stats">
+        <span>{delta.matched_candidate_count} matched constructions</span>
+        <span>{delta.changed_classification_count} changed classifications</span>
+        <span>
+          Modeled net-positive count Δ {signed(delta.positive_net_count_delta)} · unknown net Δ{' '}
+          {signed(delta.unknown_net_count_delta)}
+        </span>
+      </div>
+      <details className="fr-run-details">
+        <summary>Paired evidence · {comparison.comparison_id}</summary>
+        <p>
+          Both arms used input set {comparison.evidence_input_sha256}. Each run stores its own
+          manifest and independent arithmetic audit. Scenario deltas describe modeled replay
+          results; they do not establish fills, access, or profitability.
+        </p>
+        <p>
+          Baseline run {baseline.run_id} · output {baseline.result_sha256}
+        </p>
+        <p>
+          Compared run {compared.run_id} · output {compared.result_sha256}
+        </p>
+        <p>
+          Classification count changes:{' '}
+          {Object.entries(delta.classification_count_delta)
+            .map(([key, value]) => `${label(key)} ${signed(value)}`)
+            .join(' · ') || 'none'}
+        </p>
+        <code>{comparison.result_sha256}</code>
+      </details>
     </article>
   );
 }

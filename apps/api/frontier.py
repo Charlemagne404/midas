@@ -38,7 +38,7 @@ from midas.frontier.relationships import (
     propose_relationships,
     verify_same_payoff,
 )
-from midas.frontier.replay import deterministic_replay
+from midas.frontier.replay import deterministic_replay, paired_deterministic_replay
 from midas.frontier.storage import FrontierStore, FrontierStoreError
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -96,6 +96,17 @@ class KalshiFeeSensitivityRequest(BaseModel):
     def distinct_fee_evidence(self) -> KalshiFeeSensitivityRequest:
         if self.event_observation_id == self.series_observation_id:
             raise ValueError("Event and series evidence must use distinct observations")
+        return self
+
+
+class PairedReplayRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+    scenarios: tuple[ExecutionScenario, ExecutionScenario]
+
+    @model_validator(mode="after")
+    def unique_scenario_names(self) -> PairedReplayRequest:
+        if self.scenarios[0].name == self.scenarios[1].name:
+            raise ValueError("Paired replay scenario names must be unique")
         return self
 
 
@@ -1538,6 +1549,58 @@ def router(store: FrontierStore, registry: Any) -> APIRouter:
     ) -> dict[str, Any]:
         items = store.replays(limit=limit, offset=offset)
         return {"items": items, "returned": len(items), "limit": limit, "offset": offset}
+
+    @api.get("/comparisons")
+    async def comparisons(
+        limit: int = Query(default=50, ge=1, le=100),
+        offset: int = Query(default=0, ge=0, le=100_000),
+    ) -> dict[str, Any]:
+        items = store.comparisons(limit=limit, offset=offset)
+        return {"items": items, "returned": len(items), "limit": limit, "offset": offset}
+
+    @api.get("/comparisons/{comparison_id}")
+    async def comparison(comparison_id: str) -> dict[str, Any]:
+        try:
+            item = store.comparison(comparison_id)
+        except ValueError as error:
+            raise HTTPException(status_code=422, detail=str(error)) from error
+        if item is None:
+            raise HTTPException(status_code=404, detail="Replay comparison was not found")
+        return item
+
+    @api.post("/replay/compare")
+    async def compare_replay(scenarios: PairedReplayRequest) -> dict[str, Any]:
+        market_values = await _load_markets(store, 100)
+        book_rows = store.observations(kind="book_snapshot", limit=200)
+        books = tuple(
+            BookSnapshot.model_validate(item["normalized"])
+            for item in book_rows
+            if isinstance(item.get("normalized"), dict)
+            and "native_instrument_id" in item["normalized"]
+        )
+        relation_rows = store.relationships(state="verified", limit=500, effective_only=True)
+        verified = tuple(
+            Relationship.model_validate(item["relationship"]) for item in relation_rows
+        )
+        try:
+            result, arms = paired_deterministic_replay(
+                market_values,
+                books,
+                verified_relationships=verified,
+                scenarios=scenarios.scenarios,
+                relationship_limit=500,
+                code_version=_code_version(),
+            )
+            store.append_paired_comparison(arms, result)
+        except (FrontierStoreError, ValueError) as error:
+            raise HTTPException(status_code=409, detail=str(error)) from error
+        return {
+            "comparison": result.model_dump(mode="json"),
+            "runs": [{"run_id": item.run_id, "result_sha256": item.result_sha256} for item in arms],
+            "hypothetical_only": True,
+            "network_calls": 0,
+            "note": "Both scenarios use the same bounded, saved market, book, and relationship evidence.",
+        }
 
     @api.post("/replay")
     async def replay(

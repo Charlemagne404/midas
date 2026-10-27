@@ -170,7 +170,7 @@
 }
 .fr-metrics {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 12px;
   margin: 18px 0;
 }
@@ -437,6 +437,51 @@
   gap: 10px;
   padding: 14px 16px;
   border-bottom: 1px solid #252e38;
+}
+.fr-comparison-summary {
+  display: grid;
+  gap: 10px;
+  padding: 14px 16px;
+  border-bottom: 1px solid #252e38;
+  background: linear-gradient(110deg, rgba(117, 105, 74, 0.08), transparent 70%);
+}
+.fr-comparison-summary:last-child {
+  border-bottom: 0;
+}
+.fr-comparison-arms {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.fr-comparison-arms > div {
+  display: grid;
+  gap: 5px;
+  padding: 10px;
+  border: 1px solid #29333d;
+  border-radius: 4px;
+  background: #11161d;
+}
+.fr-comparison-arms strong {
+  color: #c6d0dc;
+  font-size: 10px;
+}
+.fr-comparison-arms span {
+  color: #7f8c9a;
+  font-size: 8px;
+  line-height: 1.4;
+}
+.fr-comparison-summary .fr-run-details {
+  margin: 0;
+}
+.fr-comparison-summary .fr-run-details > p {
+  overflow-wrap: anywhere;
+}
+.fr-comparison-summary .fr-run-details > code {
+  color: #91a7b3;
+  font:
+    8px ui-monospace,
+    monospace;
+  overflow-wrap: anywhere;
 }
 .fr-run-summary:last-child {
   border-bottom: 0;
@@ -1824,6 +1869,9 @@
     grid-template-columns: 1fr;
   }
   .fr-run-hashes {
+    grid-template-columns: 1fr;
+  }
+  .fr-comparison-arms {
     grid-template-columns: 1fr;
   }
   .fr-footer {

@@ -308,7 +308,7 @@ def test_store_schema_two_migrates_additively_to_review_schema(tmp_path):
             connection.execute(
                 "SELECT value FROM frontier_meta WHERE key='schema_version'"
             ).fetchone()[0]
-            == "5"
+            == "6"
         )
         assert (
             connection.execute(
@@ -326,6 +326,12 @@ def test_store_schema_two_migrates_additively_to_review_schema(tmp_path):
             "relationships_left_endpoint_recent",
             "relationships_right_endpoint_recent",
         }
+        assert (
+            connection.execute(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name='research_comparisons'"
+            ).fetchone()
+            is not None
+        )
 
 
 def test_store_schema_four_adds_endpoint_indexes_without_rewriting_records(tmp_path):
@@ -350,7 +356,7 @@ def test_store_schema_four_adds_endpoint_indexes_without_rewriting_records(tmp_p
             connection.execute(
                 "SELECT value FROM frontier_meta WHERE key='schema_version'"
             ).fetchone()[0]
-            == "5"
+            == "6"
         )
         index_names = {
             row[0]
@@ -363,3 +369,36 @@ def test_store_schema_four_adds_endpoint_indexes_without_rewriting_records(tmp_p
             (relationship.relationship_id,),
         ).fetchone()
         assert after == before
+
+
+def test_store_schema_five_adds_append_only_comparison_table(tmp_path):
+    store = FrontierStore(tmp_path / "frontier-v5", max_bytes=2 * 1024 * 1024)
+    store.initialize()
+    with sqlite3.connect(store.path) as connection:
+        connection.execute("DROP TRIGGER research_comparisons_no_update")
+        connection.execute("DROP TRIGGER research_comparisons_no_delete")
+        connection.execute("DROP INDEX research_comparisons_created")
+        connection.execute("DROP TABLE research_comparisons")
+        connection.execute("UPDATE frontier_meta SET value='5' WHERE key='schema_version'")
+
+    store.initialize()
+
+    with sqlite3.connect(store.path) as connection:
+        assert (
+            connection.execute(
+                "SELECT value FROM frontier_meta WHERE key='schema_version'"
+            ).fetchone()[0]
+            == "6"
+        )
+        assert (
+            connection.execute(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name='research_comparisons'"
+            ).fetchone()
+            is not None
+        )
+        triggers = {
+            row[0]
+            for row in connection.execute("SELECT name FROM sqlite_master WHERE type='trigger'")
+        }
+        assert "research_comparisons_no_update" in triggers
+        assert "research_comparisons_no_delete" in triggers

@@ -19,9 +19,9 @@ from midas.frontier.relationships import (
     ReviewDecision,
     VerificationState,
 )
-from midas.frontier.replay import ReplayResult
+from midas.frontier.replay import PairedReplayComparison, ReplayResult
 
-SCHEMA_VERSION = 5
+SCHEMA_VERSION = 6
 MAX_ROW_BYTES = 512 * 1024
 
 
@@ -130,6 +130,14 @@ class FrontierStore:
                 );
                 CREATE INDEX IF NOT EXISTS research_runs_created
                     ON research_runs(created_at_utc DESC, run_id);
+                CREATE TABLE IF NOT EXISTS research_comparisons (
+                    comparison_id TEXT PRIMARY KEY,
+                    created_at_utc TEXT NOT NULL,
+                    result_sha256 TEXT NOT NULL,
+                    result_json TEXT NOT NULL
+                );
+                CREATE INDEX IF NOT EXISTS research_comparisons_created
+                    ON research_comparisons(created_at_utc DESC, comparison_id);
                 CREATE TRIGGER IF NOT EXISTS observations_no_update
                     BEFORE UPDATE ON observations BEGIN SELECT RAISE(ABORT, 'Frontier observations are append-only'); END;
                 CREATE TRIGGER IF NOT EXISTS observations_no_delete
@@ -154,6 +162,10 @@ class FrontierStore:
                     BEFORE UPDATE ON research_runs BEGIN SELECT RAISE(ABORT, 'Frontier runs are append-only'); END;
                 CREATE TRIGGER IF NOT EXISTS research_runs_no_delete
                     BEFORE DELETE ON research_runs BEGIN SELECT RAISE(ABORT, 'Frontier runs are append-only'); END;
+                CREATE TRIGGER IF NOT EXISTS research_comparisons_no_update
+                    BEFORE UPDATE ON research_comparisons BEGIN SELECT RAISE(ABORT, 'Frontier comparisons are append-only'); END;
+                CREATE TRIGGER IF NOT EXISTS research_comparisons_no_delete
+                    BEFORE DELETE ON research_comparisons BEGIN SELECT RAISE(ABORT, 'Frontier comparisons are append-only'); END;
                 """
             )
             current = connection.execute(
@@ -187,6 +199,12 @@ class FrontierStore:
                 )
                 connection.commit()
             elif current[0] == "4":
+                connection.execute(
+                    "UPDATE frontier_meta SET value=? WHERE key='schema_version'",
+                    (str(SCHEMA_VERSION),),
+                )
+                connection.commit()
+            elif current[0] == "5":
                 connection.execute(
                     "UPDATE frontier_meta SET value=? WHERE key='schema_version'",
                     (str(SCHEMA_VERSION),),
@@ -699,6 +717,184 @@ class FrontierStore:
             )
         return result.run_id
 
+    def append_paired_comparison(
+        self,
+        runs: tuple[ReplayResult, ReplayResult],
+        comparison: PairedReplayComparison,
+        *,
+        max_runs: int = 5000,
+        max_comparisons: int = 5000,
+    ) -> str:
+        """Atomically append both replay arms and their paired comparison."""
+        self.initialize()
+        if not 1 <= max_runs <= 100_000 or not 1 <= max_comparisons <= 100_000:
+            raise ValueError("Paired research run budgets are out of range")
+        if tuple(item.run_id for item in runs) != tuple(
+            item.run_id for item in comparison.arms
+        ) or tuple(item.result_sha256 for item in runs) != tuple(
+            item.result_sha256 for item in comparison.arms
+        ):
+            raise FrontierStoreError("Paired comparison does not reference its replay arms")
+        if runs[0].manifest.as_of_utc != runs[1].manifest.as_of_utc:
+            raise FrontierStoreError("Paired replay arms must share a pinned replay time")
+        if any(
+            result.manifest.as_of_utc != comparison.as_of_utc
+            or result.manifest.scenario != arm.scenario
+            for result, arm in zip(runs, comparison.arms, strict=True)
+        ):
+            raise FrontierStoreError(
+                "Paired comparison scenarios and replay time must match their replay arms"
+            )
+        run_rows = []
+        for result in runs:
+            result_json = self._canonical(result)
+            if len(result_json.encode("utf-8")) > MAX_ROW_BYTES:
+                raise FrontierStoreError("Paired replay arm exceeds the 512 KiB record bound")
+            run_rows.append(
+                (
+                    result.run_id,
+                    result.manifest.as_of_utc.astimezone(UTC).isoformat(),
+                    result.result_sha256,
+                    result_json,
+                )
+            )
+        comparison_json = self._canonical(comparison)
+        if len(comparison_json.encode("utf-8")) > MAX_ROW_BYTES:
+            raise FrontierStoreError("Replay comparison exceeds the 512 KiB record bound")
+        created_at = runs[0].manifest.as_of_utc.astimezone(UTC).isoformat()
+        with self._connect() as connection:
+            connection.execute("BEGIN IMMEDIATE")
+            try:
+                run_count = int(
+                    connection.execute("SELECT COUNT(*) FROM research_runs").fetchone()[0]
+                )
+                for row, result in zip(run_rows, runs, strict=True):
+                    existing_run = connection.execute(
+                        "SELECT run_id,created_at_utc,result_sha256,result_json "
+                        "FROM research_runs WHERE run_id=?",
+                        (result.run_id,),
+                    ).fetchone()
+                    if existing_run is not None:
+                        if self._validated_replay_row(existing_run) != result:
+                            raise FrontierStoreError(
+                                "Paired replay identity collision with different output"
+                            )
+                        continue
+                    if run_count >= max_runs:
+                        raise FrontierStoreError("Frontier replay run budget is exhausted")
+                    connection.execute("INSERT INTO research_runs VALUES(?,?,?,?)", row)
+                    run_count += 1
+                for arm in comparison.arms:
+                    stored = connection.execute(
+                        "SELECT run_id,created_at_utc,result_sha256,result_json "
+                        "FROM research_runs WHERE run_id=?",
+                        (arm.run_id,),
+                    ).fetchone()
+                    if stored is None:
+                        raise FrontierStoreError(
+                            "Paired comparison replay evidence is missing or invalid"
+                        )
+                    stored_result = self._validated_replay_row(stored)
+                    if (
+                        stored_result.result_sha256 != arm.result_sha256
+                        or stored_result.manifest.scenario != arm.scenario
+                        or stored_result.manifest.as_of_utc != comparison.as_of_utc
+                    ):
+                        raise FrontierStoreError(
+                            "Paired comparison replay evidence is missing or invalid"
+                        )
+                existing_comparison = connection.execute(
+                    "SELECT comparison_id,created_at_utc,result_sha256,result_json "
+                    "FROM research_comparisons WHERE comparison_id=?",
+                    (comparison.comparison_id,),
+                ).fetchone()
+                if existing_comparison is not None:
+                    if self._validated_comparison_row(existing_comparison) != comparison:
+                        raise FrontierStoreError(
+                            "Replay comparison identity collision with different output"
+                        )
+                    connection.rollback()
+                    return comparison.comparison_id
+                comparison_count = int(
+                    connection.execute("SELECT COUNT(*) FROM research_comparisons").fetchone()[0]
+                )
+                if comparison_count >= max_comparisons:
+                    raise FrontierStoreError("Frontier comparison budget is exhausted")
+                connection.execute(
+                    "INSERT INTO research_comparisons VALUES(?,?,?,?)",
+                    (
+                        comparison.comparison_id,
+                        created_at,
+                        comparison.result_sha256,
+                        comparison_json,
+                    ),
+                )
+                page_count = int(connection.execute("PRAGMA page_count").fetchone()[0])
+                page_size = int(connection.execute("PRAGMA page_size").fetchone()[0])
+                if page_count * page_size > self.max_bytes:
+                    raise FrontierStoreError("Frontier database byte budget would be exceeded")
+                connection.commit()
+            except Exception:
+                connection.rollback()
+                raise
+        return comparison.comparison_id
+
+    @staticmethod
+    def _validated_comparison_row(row: sqlite3.Row) -> PairedReplayComparison:
+        try:
+            result = PairedReplayComparison.model_validate(json.loads(str(row["result_json"])))
+        except (json.JSONDecodeError, ValidationError) as error:
+            raise FrontierStoreError("Stored replay comparison payload is invalid") from error
+        if (
+            result.comparison_id != row["comparison_id"]
+            or result.result_sha256 != row["result_sha256"]
+            or result.as_of_utc.astimezone(UTC).isoformat() != row["created_at_utc"]
+        ):
+            raise FrontierStoreError("Stored replay comparison indexes do not match its payload")
+        return result
+
+    def comparisons(self, *, limit: int = 100, offset: int = 0) -> tuple[dict[str, Any], ...]:
+        if not 1 <= limit <= 200 or not 0 <= offset <= 1_000_000:
+            raise ValueError("Comparison query limit/offset exceeds the bounded range")
+        if not self.path.exists():
+            return ()
+        with self._read_connect() as connection:
+            rows = connection.execute(
+                "SELECT comparison_id,created_at_utc,result_sha256,result_json "
+                "FROM research_comparisons ORDER BY created_at_utc DESC,comparison_id "
+                "LIMIT ? OFFSET ?",
+                (limit, offset),
+            ).fetchall()
+        return tuple(
+            {
+                **dict(row),
+                "result": self._validated_comparison_row(row).model_dump(mode="json"),
+            }
+            for row in rows
+        )
+
+    def comparison(self, comparison_id: str) -> dict[str, Any] | None:
+        if len(comparison_id) != 64 or any(
+            character not in "0123456789abcdef" for character in comparison_id
+        ):
+            raise ValueError("Comparison identity must be a lowercase SHA-256 digest")
+        if not self.path.exists():
+            return None
+        with self._read_connect() as connection:
+            row = connection.execute(
+                "SELECT comparison_id,created_at_utc,result_sha256,result_json "
+                "FROM research_comparisons WHERE comparison_id=?",
+                (comparison_id,),
+            ).fetchone()
+        return (
+            {
+                **dict(row),
+                "result": self._validated_comparison_row(row).model_dump(mode="json"),
+            }
+            if row
+            else None
+        )
+
     def observation(self, observation_id: str) -> dict[str, Any] | None:
         if len(observation_id) != 64 or any(
             character not in "0123456789abcdef" for character in observation_id
@@ -1040,6 +1236,7 @@ class FrontierStore:
                 "relationship_records": 0,
                 "relationship_reviews": 0,
                 "runs": 0,
+                "comparisons": 0,
                 "markets_by_venue": {},
                 "instruments_by_venue": {},
                 "observations_by_venue": {},
@@ -1070,6 +1267,9 @@ class FrontierStore:
                 connection.execute("SELECT COUNT(*) FROM relationship_reviews").fetchone()[0]
             )
             runs = int(connection.execute("SELECT COUNT(*) FROM research_runs").fetchone()[0])
+            comparisons = int(
+                connection.execute("SELECT COUNT(*) FROM research_comparisons").fetchone()[0]
+            )
             obs_groups = connection.execute(
                 "SELECT venue,COUNT(*) AS n FROM observations GROUP BY venue"
             ).fetchall()
@@ -1101,6 +1301,7 @@ class FrontierStore:
             "relationship_records": relationship_records,
             "relationship_reviews": relationship_reviews,
             "runs": runs,
+            "comparisons": comparisons,
             "observations_by_venue": {row["venue"]: row["n"] for row in obs_groups},
             "relationships_by_state": {row["state"]: row["n"] for row in rel_groups},
             "markets_by_venue": {row["venue"]: row["n"] for row in market_groups},

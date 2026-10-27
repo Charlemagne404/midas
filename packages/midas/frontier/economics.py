@@ -55,7 +55,7 @@ class OpportunityClassification(StrEnum):
 class ExecutionScenario(FrontierModel):
     """Explicit virtual assumptions; values do not describe actual execution."""
 
-    name: str = "quoted"
+    name: str = Field(default="quoted", min_length=1, max_length=80)
     slippage_bps: Decimal = Field(
         default=D(0), ge=0, le=5000, max_digits=18, decimal_places=12, allow_inf_nan=False
     )

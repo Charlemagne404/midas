@@ -3,16 +3,17 @@ from __future__ import annotations
 import hashlib
 import sqlite3
 from datetime import timedelta
+from decimal import Decimal
 from pathlib import Path
 
 import pytest
 from midas.frontier.economics import ExecutionScenario
 from midas.frontier.models import RawObservation, Venue
-from midas.frontier.relationships import propose_relationships
-from midas.frontier.replay import deterministic_replay
+from midas.frontier.relationships import propose_relationships, verify_same_payoff
+from midas.frontier.replay import deterministic_replay, paired_deterministic_replay
 from midas.frontier.storage import FrontierStore, FrontierStoreError
 
-from tests.frontier.builders import T0, market
+from tests.frontier.builders import T0, book, market
 
 
 def _raw(venue: Venue, body: str, kind: str = "market_metadata") -> RawObservation:
@@ -27,6 +28,94 @@ def _raw(venue: Venue, body: str, kind: str = "market_metadata") -> RawObservati
         raw_sha256=hashlib.sha256(body.encode()).hexdigest(),
         adapter_version="test-1",
     )
+
+
+def _paired_fixture():
+    left = market(Venue.POLYMARKET, "paired-left")
+    right = market(Venue.KALSHI, "paired-right")
+    relationship = verify_same_payoff(
+        left,
+        right,
+        state_mapping={"yes": "yes", "no": "no"},
+        instrument_mapping={
+            left.instruments[0].native_instrument_id: right.instruments[0].native_instrument_id,
+            left.instruments[1].native_instrument_id: right.instruments[1].native_instrument_id,
+        },
+        external_assertion_id="storage-paired-fixture-assertion",
+        evidence_observation_ids=("storage-source-left", "storage-source-right"),
+        asserted_at_utc=T0,
+    )
+    books = tuple(
+        book(market_value, instrument.native_instrument_id, ask)
+        for market_value, asks in ((left, ("0.40", "0.65")), (right, ("0.55", "0.45")))
+        for instrument, ask in zip(market_value.instruments, asks, strict=True)
+    )
+    return paired_deterministic_replay(
+        (left, right),
+        books,
+        verified_relationships=(relationship,),
+        scenarios=(
+            ExecutionScenario(name="quoted"),
+            ExecutionScenario(name="stressed", slippage_bps=Decimal("3000")),
+        ),
+        as_of_utc=T0,
+        code_version="frontier-storage-paired-fixture-v1",
+    )
+
+
+def test_paired_replay_storage_is_atomic_append_only_and_hash_verified(tmp_path: Path):
+    store = FrontierStore(tmp_path, max_bytes=2 * 1024 * 1024)
+    comparison, runs = _paired_fixture()
+
+    assert store.append_paired_comparison(runs, comparison) == comparison.comparison_id
+    assert store.append_paired_comparison(runs, comparison) == comparison.comparison_id
+    assert store.summary()["runs"] == 2
+    assert store.summary()["comparisons"] == 1
+    loaded = store.comparison(comparison.comparison_id)
+    assert loaded is not None
+    assert loaded["result_sha256"] == comparison.result_sha256
+    assert loaded["result"]["evidence_input_sha256"] == comparison.evidence_input_sha256
+    assert store.comparisons(limit=10)[0]["comparison_id"] == comparison.comparison_id
+
+    with sqlite3.connect(store.path) as connection:
+        with pytest.raises(sqlite3.IntegrityError, match="append-only"):
+            connection.execute(
+                "UPDATE research_comparisons SET result_json='{}' WHERE comparison_id=?",
+                (comparison.comparison_id,),
+            )
+        with pytest.raises(sqlite3.IntegrityError, match="append-only"):
+            connection.execute(
+                "DELETE FROM research_comparisons WHERE comparison_id=?",
+                (comparison.comparison_id,),
+            )
+
+
+def test_paired_replay_storage_rolls_back_both_runs_if_pair_budget_fails(tmp_path: Path):
+    store = FrontierStore(tmp_path, max_bytes=2 * 1024 * 1024)
+    comparison, runs = _paired_fixture()
+
+    with pytest.raises(FrontierStoreError, match="run budget"):
+        store.append_paired_comparison(runs, comparison, max_runs=1)
+
+    assert store.summary()["runs"] == 0
+    assert store.summary()["comparisons"] == 0
+    assert store.replays(limit=10) == ()
+    assert store.comparison(comparison.comparison_id) is None
+
+
+def test_paired_replay_storage_rejects_scenario_to_run_mismatch(tmp_path: Path):
+    store = FrontierStore(tmp_path, max_bytes=2 * 1024 * 1024)
+    comparison, runs = _paired_fixture()
+    altered_first_arm = comparison.arms[0].model_copy(
+        update={"scenario": ExecutionScenario(name="unrelated-assumption")}
+    )
+    altered = comparison.model_copy(update={"arms": (altered_first_arm, comparison.arms[1])})
+
+    with pytest.raises(FrontierStoreError, match="scenarios and replay time"):
+        store.append_paired_comparison(runs, altered)
+
+    assert store.summary()["runs"] == 0
+    assert store.summary()["comparisons"] == 0
 
 
 def test_observations_and_relationships_are_append_only(tmp_path: Path):

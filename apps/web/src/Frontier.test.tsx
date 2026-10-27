@@ -80,6 +80,7 @@ it('renders recorded-evidence empty states and never probes a source automatical
     },
     '/api/frontier/opportunities?limit=100': { items: [], returned: 0, limit: 100, offset: 0 },
     '/api/frontier/runs?limit=30': { items: [], returned: 0, limit: 30, offset: 0 },
+    '/api/frontier/comparisons?limit=30': { items: [], returned: 0, limit: 30, offset: 0 },
     '/api/frontier/readiness': { gates: [] },
   };
   const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -323,6 +324,7 @@ it('captures one explicit Polymarket trade page and follows its bound cursor', a
     },
     '/api/frontier/opportunities?limit=100': { items: [], returned: 0, limit: 100, offset: 0 },
     '/api/frontier/runs?limit=30': { items: [], returned: 0, limit: 30, offset: 0 },
+    '/api/frontier/comparisons?limit=30': { items: [], returned: 0, limit: 30, offset: 0 },
     '/api/frontier/readiness': { gates: [] },
   };
   const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -518,6 +520,7 @@ it('captures Kalshi fee metadata and exposes a separate hypothetical fee sensiti
     },
     '/api/frontier/opportunities?limit=100': { items: [], returned: 0, limit: 100, offset: 0 },
     '/api/frontier/runs?limit=30': { items: [], returned: 0, limit: 30, offset: 0 },
+    '/api/frontier/comparisons?limit=30': { items: [], returned: 0, limit: 30, offset: 0 },
     '/api/frontier/readiness': { gates: [] },
   };
   const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -625,6 +628,151 @@ it('captures Kalshi fee metadata and exposes a separate hypothetical fee sensiti
       series_observation_id: 'series-observation',
       price_usd: '0.50',
       quantity_contracts: '1',
+    },
+  ]);
+});
+
+it('compares baseline and current assumptions over saved evidence and shows paired results', async () => {
+  const comparison = {
+    schema_version: 1,
+    comparator_version: 'frontier-paired-replay-1',
+    comparison_id: 'a'.repeat(64),
+    evidence_input_sha256: 'b'.repeat(64),
+    as_of_utc: '2026-10-26T20:00:00Z',
+    arms: [
+      {
+        scenario: { name: 'quoted baseline' },
+        run_id: 'c'.repeat(64),
+        result_sha256: 'd'.repeat(64),
+        candidate_count: 2,
+        classification_counts: { 'VERIFIED MATHEMATICAL INCONSISTENCY': 2 },
+        audit_disposition_counts: { verified: 2 },
+        positive_gross_count: 2,
+        positive_net_count: 2,
+        unknown_net_count: 0,
+      },
+      {
+        scenario: { name: 'current assumptions' },
+        run_id: 'e'.repeat(64),
+        result_sha256: 'f'.repeat(64),
+        candidate_count: 2,
+        classification_counts: { 'NEGATIVE AFTER MODELED COSTS': 1 },
+        audit_disposition_counts: { verified: 2 },
+        positive_gross_count: 2,
+        positive_net_count: 1,
+        unknown_net_count: 0,
+      },
+    ],
+    delta: {
+      baseline_scenario: 'quoted baseline',
+      compared_scenario: 'current assumptions',
+      matched_candidate_count: 2,
+      unchanged_classification_count: 1,
+      changed_classification_count: 1,
+      baseline_only_candidate_count: 0,
+      compared_only_candidate_count: 0,
+      classification_count_delta: {
+        'NEGATIVE AFTER MODELED COSTS': 1,
+        'VERIFIED MATHEMATICAL INCONSISTENCY': -2,
+      },
+      positive_gross_count_delta: 0,
+      positive_net_count_delta: -1,
+      unknown_net_count_delta: 0,
+    },
+    result_sha256: '1'.repeat(64),
+  };
+  const empty = { items: [], returned: 0, limit: 100, offset: 0 };
+  const responses: Record<string, unknown> = {
+    '/api/frontier/overview': {
+      state: 'AVAILABLE',
+      research_only: true,
+      live_execution: false,
+      summary: {
+        observations: 0,
+        relationships: 0,
+        relationship_reviews: 0,
+        runs: 0,
+        comparisons: 0,
+        markets_by_venue: {},
+        instruments_by_venue: {},
+        relationships_by_state: {},
+        database_bytes: 0,
+        max_bytes: 1_000_000,
+      },
+      sources: [],
+      latest_evidence_at_utc: null,
+      limitations: [],
+    },
+    '/api/frontier/sources': { items: [] },
+    '/api/frontier/markets?limit=100': empty,
+    '/api/frontier/books?limit=100': empty,
+    '/api/frontier/trades?limit=100': { ...empty, pages: [] },
+    '/api/frontier/relationships?limit=200': empty,
+    '/api/frontier/graph?depth=1&limit=100': {
+      nodes: [],
+      edges: [],
+      center_market_id: null,
+      search: null,
+      depth: 1,
+      edge_limit: 100,
+      returned_nodes: 0,
+      returned_edges: 0,
+      truncated_by_edge_limit: false,
+      relationship_scan_limit: 500,
+      relationships_scanned: 0,
+      relationship_scan_may_be_incomplete: false,
+      next_cursor: null,
+      source_market_window_limit: 200,
+    },
+    '/api/frontier/opportunities?limit=100': empty,
+    '/api/frontier/runs?limit=30': empty,
+    '/api/frontier/comparisons?limit=30': empty,
+    '/api/frontier/readiness': { gates: [] },
+  };
+  let comparisonInput: Record<string, unknown> | undefined;
+  const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    const path = String(input);
+    if (path === '/api/frontier/replay/compare' && init?.method === 'POST') {
+      comparisonInput = JSON.parse(String(init.body)) as Record<string, unknown>;
+      return {
+        ok: true,
+        json: async () => ({
+          comparison,
+          runs: [
+            { run_id: comparison.arms[0].run_id, result_sha256: comparison.arms[0].result_sha256 },
+            { run_id: comparison.arms[1].run_id, result_sha256: comparison.arms[1].result_sha256 },
+          ],
+        }),
+      } as Response;
+    }
+    const body = responses[path];
+    if (body === undefined) throw new Error(`Unexpected frontend request: ${path}`);
+    return { ok: true, json: async () => body } as Response;
+  });
+  vi.stubGlobal('fetch', fetchMock);
+  render(
+    <QueryClientProvider
+      client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+    >
+      <Frontier />
+    </QueryClientProvider>,
+  );
+
+  fireEvent.click(screen.getByRole('button', { name: 'Economic workbench' }));
+  fireEvent.click(
+    await screen.findByRole('button', { name: 'Compare quoted baseline with current assumptions' }),
+  );
+
+  expect(await screen.findByText(/Paired comparison saved/)).toBeInTheDocument();
+  expect(screen.getByText('2 matched constructions')).toBeInTheDocument();
+  expect(comparisonInput?.scenarios).toEqual([
+    { name: 'quoted baseline' },
+    {
+      name: 'current assumptions',
+      slippage_bps: '25',
+      execution_delay_ms: 500,
+      fill_fraction: '0.8000',
+      quote_decay_bps_per_second: '15',
     },
   ]);
 });
@@ -760,6 +908,7 @@ it('renders a bounded accessible relationship graph and opens selected evidence'
     },
     '/api/frontier/opportunities?limit=100': { items: [], returned: 0, limit: 100, offset: 0 },
     '/api/frontier/runs?limit=30': { items: [], returned: 0, limit: 30, offset: 0 },
+    '/api/frontier/comparisons?limit=30': { items: [], returned: 0, limit: 30, offset: 0 },
     '/api/frontier/readiness': { gates: [] },
   };
   const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
@@ -935,6 +1084,7 @@ it('records a self-attributed relationship review with both stored market source
     },
     '/api/frontier/opportunities?limit=100': { items: [], returned: 0, limit: 100, offset: 0 },
     '/api/frontier/runs?limit=30': { items: [], returned: 0, limit: 30, offset: 0 },
+    '/api/frontier/comparisons?limit=30': { items: [], returned: 0, limit: 30, offset: 0 },
     '/api/frontier/readiness': { gates: [] },
   };
   const reviewRequest = vi.fn();

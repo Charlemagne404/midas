@@ -254,6 +254,60 @@ def test_relationship_proposals_and_replay_are_durable_empty_research_runs(tmp_p
         asyncio.run(http_client.aclose())
 
 
+def test_paired_replay_persists_both_arms_and_deterministic_comparison(tmp_path):
+    client, registry, http_client, requests, store = _client(tmp_path)
+    body = {
+        "scenarios": [
+            {"name": "quoted-baseline", "slippage_bps": "0", "fill_fraction": "1"},
+            {"name": "stress", "slippage_bps": "100", "fill_fraction": "0.5"},
+        ]
+    }
+    try:
+        response = client.post("/api/frontier/replay/compare", json=body)
+        assert response.status_code == 200, response.text
+        payload = response.json()
+        comparison = payload["comparison"]
+        assert payload["network_calls"] == 0
+        assert payload["hypothetical_only"] is True
+        assert len(payload["runs"]) == 2
+        assert comparison["arms"][0]["scenario"]["name"] == "quoted-baseline"
+        assert comparison["arms"][1]["scenario"]["name"] == "stress"
+        assert comparison["result_sha256"]
+        assert store.summary()["runs"] == 2
+        assert store.summary()["comparisons"] == 1
+        assert client.get("/api/frontier/comparisons").json()["returned"] == 1
+        read_back = client.get(f"/api/frontier/comparisons/{comparison['comparison_id']}")
+        assert read_back.status_code == 200
+        assert read_back.json()["result"]["result_sha256"] == comparison["result_sha256"]
+
+        repeated = client.post("/api/frontier/replay/compare", json=body)
+        assert repeated.status_code == 200
+        assert repeated.json()["comparison"]["comparison_id"] == comparison["comparison_id"]
+        assert store.summary()["runs"] == 2
+        assert store.summary()["comparisons"] == 1
+        assert requests == []
+    finally:
+        client.close()
+        asyncio.run(registry.aclose())
+        asyncio.run(http_client.aclose())
+
+
+def test_paired_replay_rejects_duplicate_scenario_names_at_api_boundary(tmp_path):
+    client, registry, http_client, requests, _ = _client(tmp_path)
+    try:
+        response = client.post(
+            "/api/frontier/replay/compare",
+            json={"scenarios": [{"name": "same"}, {"name": "same", "slippage_bps": "1"}]},
+        )
+        assert response.status_code == 422
+        assert "scenario names must be unique" in response.text
+        assert requests == []
+    finally:
+        client.close()
+        asyncio.run(registry.aclose())
+        asyncio.run(http_client.aclose())
+
+
 def test_raw_observation_route_returns_hash_verified_public_capture(tmp_path):
     client, registry, http_client, requests, store = _client(tmp_path)
     body = '{"public":true,"test_fixture":true}'
@@ -1168,7 +1222,7 @@ def test_replay_api_generates_and_persists_multi_outcome_candidate(tmp_path):
         replay = client.post("/api/frontier/replay", json={})
         assert replay.status_code == 200, replay.text
         result = replay.json()
-        assert result["manifest"]["replay_version"] == "frontier-deterministic-replay-3"
+        assert result["manifest"]["replay_version"] == "frontier-deterministic-replay-4"
         assert len(result["candidates"]) == 1
         candidate = result["candidates"][0]
         assert candidate["family"] == "within_market_multi_outcome_coverage"

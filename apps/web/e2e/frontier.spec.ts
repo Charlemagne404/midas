@@ -17,6 +17,14 @@ test('Frontier workspace uses isolated research state and remains responsive', a
   await expect(page.getByText('SYNTHETIC DATA')).toHaveCount(0);
   expect(probeRequests).toBe(0);
 
+  await page.getByRole('button', { name: 'Economic workbench', exact: true }).click();
+  await page
+    .getByRole('button', { name: 'Compare quoted baseline with current assumptions' })
+    .click();
+  await expect(page.getByText(/Paired comparison saved/)).toBeVisible();
+  await expect(page.getByText('0 matched constructions')).toBeVisible();
+  expect(probeRequests).toBe(0);
+
   await page.getByRole('button', { name: 'Markets', exact: true }).click();
   await expect(page.getByText('No market observations recorded')).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(1440);

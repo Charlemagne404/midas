@@ -398,7 +398,7 @@ def test_verified_multi_outcome_coverage_is_exact_and_stays_hypothetical():
         as_of_utc=T0 + timedelta(milliseconds=100),
         code_version="multi-outcome-fixture-v1",
     )
-    assert replay.manifest.replay_version == "frontier-deterministic-replay-3"
+    assert replay.manifest.replay_version == "frontier-deterministic-replay-4"
     replay_candidate = replay.candidates[0]
     assert replay_candidate.model_copy(update={"independent_audit": None}) == candidate
     assert replay_candidate.independent_audit is not None
@@ -608,6 +608,28 @@ def test_deterministic_replay_is_invariant_to_input_order():
         code_version="fixture-commit-1",
     )
     assert evidence_mapped.candidates == first.candidates
+    assert evidence_mapped.run_id == first.run_id
+    changed_mapping = deterministic_replay(
+        (right, left),
+        tuple(reversed(all_books)),
+        verified_relationships=(relationship,),
+        state_mappings={relationship.relationship_id: {"yes": "no", "no": "yes"}},
+        instrument_mappings={relationship.relationship_id: canonical_instrument_mapping},
+        as_of_utc=T0 + timedelta(milliseconds=100),
+        code_version="fixture-commit-1",
+    )
+    changed_limit = deterministic_replay(
+        (right, left),
+        tuple(reversed(all_books)),
+        relationship_limit=1,
+        **kwargs,
+    )
+    assert changed_mapping.run_id != first.run_id
+    assert changed_mapping.manifest.normalized_input_sha256 != (
+        first.manifest.normalized_input_sha256
+    )
+    assert changed_limit.run_id != first.run_id
+    assert changed_limit.manifest.normalized_input_sha256 != first.manifest.normalized_input_sha256
     assert all(
         item.independent_audit is not None
         and item.independent_audit.disposition.value == "verified"
