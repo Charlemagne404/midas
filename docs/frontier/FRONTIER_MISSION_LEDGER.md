@@ -1337,10 +1337,12 @@ reject a best ask that conflicts with declared instrument tick size; the
 independent audit detects tick-metadata mutations. Quantity-step mutation also
 has a direct adversarial audit regression. Test commit `4fcc628` adds direct
 multi-outcome timing agreement and tampering coverage alongside the cross-venue
-timing cases.
+timing cases. Test commit `34b8b53` confirms that a swapped, still-bijective
+outcome mapping is rejected as incomplete evidence when it conflicts with
+verified instrument payoffs.
 
-Post-commit verification passed **133 tests** across the replay/economics,
-adapter, API, and Kalshi fee-sensitivity selections in 39.13 seconds. Strict
+Post-commit verification passed **134 tests** across the replay/economics,
+adapter, API, and Kalshi fee-sensitivity selections in 30.52 seconds. Strict
 mypy passed for `models.py`, `economics.py`, and `independent_audit.py`; Ruff
 check/format and `git diff --check` passed. One existing Starlette/httpx
 TestClient deprecation warning remains. Verification is fixture-based: live

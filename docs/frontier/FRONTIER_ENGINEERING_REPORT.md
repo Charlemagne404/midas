@@ -2323,10 +2323,11 @@ cross-venue comparison timing-unverified even when the general scenario age
 limit passes. A direct adversarial mutation test confirms the existing quantity
 step verifier rejects an off-step leg. Test commit `4fcc628` adds direct
 multi-outcome timing agreement and tampering cases as well as the cross-venue
-checks.
+checks. Test commit `34b8b53` verifies that a swapped, still-bijective outcome
+mapping is rejected when it conflicts with the verified instrument payoffs.
 
-The post-commit selection passed **133 tests** across replay/economics,
-adapters, API, and Kalshi fee sensitivities in 39.13 seconds. Strict mypy passed
+The post-commit selection passed **134 tests** across replay/economics,
+adapters, API, and Kalshi fee sensitivities in 30.52 seconds. Strict mypy passed
 for the three changed engine modules; Ruff check/format and `git diff --check`
 passed. One existing Starlette/httpx TestClient deprecation warning remains.
 This is controlled fixture validation. Live adapter clock-uncertainty values
