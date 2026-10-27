@@ -783,3 +783,28 @@ web tests, production build, and browser E2E
 remain pending because PSI was 38.72% full at avg10 at `20:38:38Z`, despite
 9.9 GiB available. No live source, protected service, or production deployment
 was used; Frontier remains **PARTIALLY VERIFIED**.
+
+## Frontier frontend and browser verification — 2026-10-27 20:43 UTC
+
+The complete Web unit suite passed **40/40**. The production build passed
+`tsc -b` and Vite in 12.50 seconds wall at **692,056 KiB peak RSS**. Frontier's
+bundle is 102.13 kB JS / 35.87 kB CSS; Vite keeps an advisory warning for the
+existing 544.41 kB Chart chunk. Dedicated Frontier browser E2E passed **4/4**.
+
+The full 12-test browser suite passed **10** and failed **2** Laboratory launch
+cases: the API correctly denied both with `resource_admission_lock_busy` before
+launching workers. At `2026-10-27T20:43:15Z`, the active global-lock holder was
+PID 3681242, `scripts/veritas_gap_detail_v2_batch.py`, using the primary and
+Veritas Arena roots. The lock path is the primary `/home/charlie/midas/data/arena/.global-admission.lock`;
+temporary browser roots do not override it. That pre-existing worker and lock
+were left untouched. The other ten browser cases passed, including all Frontier
+cases. Do not bypass/retry until the shared slot releases.
+
+Full Frontier Python regression remains **254/254**, full Web units **40/40**,
+Workbench tests **8/8**, TypeScript, targeted lint/format, Ruff, core strict
+mypy, build, and Frontier E2E are verified. Full package E2E is partially
+verified due only to the two admission-denied Laboratory tests. At the same
+timestamp, PSI avg10 was 45.75% (`some`) / 41.58% (`full`), avg60 43.43% /
+38.30%, avg300 37.69% / 33.23%; 9.9 GiB was available and 481,192 KiB swap
+free. No external exchange source or production service was touched. Frontier
+remains isolated, undeployed, and **PARTIALLY VERIFIED**.

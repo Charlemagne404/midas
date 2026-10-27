@@ -3322,7 +3322,7 @@ predates the latest stored-row-hash and carry UI changes.
 | Component | Current status | Boundary |
 | --- | --- | --- |
 | Frontier/full web unit suite | COMPLETE AND VERIFIED | 40 tests in seven files pass on the current branch. |
-| Latest production frontend build | IMPLEMENTED, BUILD VALIDATION PENDING | Not run after the latest row-hash and carry UI changes because current host PSI is elevated. |
+| Latest production frontend build | COMPLETE AND VERIFIED | `npm run build` passes on the v13 code and current Workbench; Vite transforms 2,228 modules and emits Frontier at 102.13 kB JS / 35.87 kB CSS. Existing Chart chunk is 544.41 kB and triggers Vite's >500 kB advisory. |
 | Project Frontier overall | PARTIALLY VERIFIED | Live economic validation, source permissions, broad repository regression, and production readiness remain incomplete. |
 
 No exchange request, protected service, or production store was accessed.
@@ -3808,3 +3808,38 @@ The v13 implementation described here was committed as **`e50ba34`** on
 `apps/web/src/Frontier.test.tsx`, `docs/frontier/FRONTIER_ARCHITECTURE.md`, and
 this report. The separately maintained mission ledger and current-state file
 record the post-commit handoff.
+
+### Frontier frontend and browser verification — 2026-10-27 20:43 UTC
+
+The full Web unit suite passed **40/40** tests across seven files in 5.25
+seconds wall at **322,452 KiB peak RSS**. TypeScript, targeted ESLint, and
+Prettier passed. The production build passed `tsc -b` and Vite in 12.50 seconds
+wall at **692,056 KiB peak RSS**; Vite transformed 2,228 modules. Frontier's
+emitted chunk is 102.13 kB JavaScript / 35.87 kB CSS. Vite retains a chunk-size
+advisory for the existing 544.41 kB Chart chunk (threshold 500 kB); the build
+exits successfully.
+
+The dedicated Frontier browser spec passed **4/4** in 11.12 seconds wall at
+**192,508 KiB peak RSS**, using the temporary demo API/database/Arena/Frontier
+roots and a read-only Veritas workspace at this isolated worktree. No source
+probes were sent. The full 12-test browser suite completed **10/12** in 57.66
+seconds wall at **193,596 KiB peak RSS**: every non-Laboratory case passed,
+including all four Frontier cases. Both Laboratory launch cases correctly
+received `resource_admission_lock_busy` and could not observe the expected
+completed fixture campaign.
+
+Read-only inspection found the guard is deliberately host-wide: `global_lock_path`
+uses `/home/charlie/midas/data/arena/.global-admission.lock` even when the test
+API uses temporary Arena and database roots. Its active `flock` owner at
+`2026-10-27T20:43:15Z` was PID **3681242**, running
+`scripts/veritas_gap_detail_v2_batch.py` against the primary and Veritas Arena
+roots. This worker was already running before the E2E suite; it and its lock
+were left untouched. The two refused POSTs started no Laboratory worker. Do
+not bypass or retry these tests until that global admission slot is released.
+
+Verification status update: Python Frontier **254/254**, Web unit **40/40**,
+Workbench **8/8**, build, and Frontier E2E **4/4** are verified. The complete
+browser suite remains **PARTIALLY VERIFIED** because the global resource guard
+prevented two temporary Laboratory launches. Cross-venue live relationship
+validation, source permissions, and production deployment gates remain
+unresolved. No production or exchange service was contacted.

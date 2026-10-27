@@ -2407,6 +2407,22 @@ admission permits, then run the full web suite/build and document actual results
 No live source, held capture, protected service, or production state was
 accessed.
 
+## Post-fix partial-fill regression — 2026-10-27 20:37 UTC
+
+The full `tests/frontier` regression now passes **254/254** in 39.82 seconds
+pytest time / 40.92 seconds wall at **335,988 KiB peak RSS**, with zero exit
+status and only the existing Starlette/httpx TestClient deprecation. This
+includes the corrected invalid-quantity diagnostic, API replay v13, exhaustive
+three-leg fee-grid comparisons, audit tampering, and 16-leg bound. After the
+run, memory PSI avg10 was 34.40% (`some`) / 30.73% (`full`), avg60 22.93% /
+20.56%, avg300 27.50% / 24.76%; 9.9 GiB was available and swap free increased
+from 481,020 KiB to 481,040 KiB. Full web unit suite, production frontend build,
+and browser E2E remain pending; remeasure host admission before starting those
+jobs. The partial-fill grid exposes the actual feasible fractions per leg in
+its API object and an expandable Workbench detail. Core Frontier Ruff, format,
+strict mypy, Web TypeScript, Prettier, and the focused eight-test Frontier
+component suite pass. No deployment or live data was used.
+
 ## v13 partial-fill code commit — 2026-10-27 20:38 UTC
 
 The bounded partial-fill implementation, independent audit, replay/model
@@ -2427,18 +2443,36 @@ are limited to this ledger, `docs/MIDAS_CURRENT_STATE.md`, and the engineering
 report's commit-identity note. No source request, Reality service action, or
 production transition occurred.
 
-## Post-fix partial-fill regression — 2026-10-27 20:37 UTC
+## Web and browser verification; Arena admission blocker — 2026-10-27 20:43 UTC
 
-The full `tests/frontier` regression now passes **254/254** in 39.82 seconds
-pytest time / 40.92 seconds wall at **335,988 KiB peak RSS**, with zero exit
-status and only the existing Starlette/httpx TestClient deprecation. This
-includes the corrected invalid-quantity diagnostic, API replay v13, exhaustive
-three-leg fee-grid comparisons, audit tampering, and 16-leg bound. After the
-run, memory PSI avg10 was 34.40% (`some`) / 30.73% (`full`), avg60 22.93% /
-20.56%, avg300 27.50% / 24.76%; 9.9 GiB was available and swap free increased
-from 481,020 KiB to 481,040 KiB. Full web unit suite, production frontend build,
-and browser E2E remain pending; remeasure host admission before starting those
-jobs. The partial-fill grid exposes the actual feasible fractions per leg in
-its API object and an expandable Workbench detail. Core Frontier Ruff, format,
-strict mypy, Web TypeScript, Prettier, and the focused eight-test Frontier
-component suite pass. No deployment or live data was used.
+The full Web unit suite passed **40/40** across seven files in 5.25 seconds
+wall at **322,452 KiB peak RSS**. `npm run build` passed TypeScript project
+build and Vite in 12.50 seconds wall at **692,056 KiB peak RSS** (2,228 modules).
+The Frontier bundle is 102.13 kB JS / 35.87 kB CSS. Vite reports the existing
+544.41 kB Chart chunk above its 500 kB advisory threshold; the build succeeds.
+
+The dedicated Frontier Playwright spec passed **4/4** in 11.12 seconds wall
+at **192,508 KiB peak RSS**. The full 12-case browser run completed **10/12**
+in 57.66 seconds wall at **193,596 KiB peak RSS**: all Frontier and other
+non-Laboratory cases passed. The two Laboratory browser cases were denied by
+`resource_admission_lock_busy` before any worker was launched. The temporary
+API used isolated demo database, Arena, and Frontier roots; Veritas was
+read-only from the isolated worktree.
+
+The host-wide lock is `/home/charlie/midas/data/arena/.global-admission.lock`;
+its active `flock` was held at `2026-10-27T20:43:15Z` by PID **3681242**,
+running `scripts/veritas_gap_detail_v2_batch.py` with the primary and Veritas
+Arena roots. The worker was already active before the browser run. It and its
+lock were left untouched. Do not bypass the lock or retry Laboratory launches
+until the global slot is released. `ps` after Playwright showed the managed API
+and browser processes had stopped; only the pre-existing batch holder remained.
+
+The v13 code and report changes are committed in `e50ba34`; v13 test-handoff
+documentation is in `05433d2`. This browser/build checkpoint is documentation
+only and remains to be committed. At `2026-10-27T20:43:15Z`, system memory PSI
+avg10 was 45.75% (`some`) / 41.58% (`full`), avg60 43.43% / 38.30%, avg300
+37.69% / 33.23%; 9.9 GiB was available, swap free was 481,192 KiB. No source
+API, protected service, evidence store, or production deployment was accessed.
+Frontier overall remains **PARTIALLY VERIFIED** due to live cross-venue
+validation, permission/deployment gates, and the two lock-blocked Laboratory
+browser cases.
