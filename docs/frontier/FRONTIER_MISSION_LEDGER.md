@@ -34,6 +34,10 @@ run records plus the comparison. The Mission Control workbench can inspect the
 paired comparisons and candidate fill stress. Validation is fixture/local-store
 only; captured markets do not form a verified cross-venue pair or establish fill
 behavior.
+Frontier paired replay is also registered as a bounded Arena job over
+content-addressed local snapshots, with API submission, history/result reads,
+and an explicit Mission Control action. The normal host-wide admission path is
+mandatory; the supervised worker has not been launched.
 Remaining acceptance work is substantial.
 **Branch:** `codex/frontier-20261026`
 **Worktree:** `/home/charlie/midas-frontier`
@@ -96,6 +100,8 @@ Remaining acceptance work is substantial.
 | `127176b` | Added a regression against Kalshi's documented one-fill rounding example and clarified why the adapter still does not advertise a candidate fee schedule. |
 | `1e3d30a` | Added paired deterministic replay, schema-v6 comparison storage, mapping/proposal-limit-aware replay-v4 identities, bounded API/UI, and atomicity, integrity, adversarial, and browser coverage. |
 | `5af50b9` | Added analytic full-or-no-fill stress for supported candidates, an independent audit recomputation, replay-v5 result pinning, Mission Control leg-pattern details, and exhaustive three-leg differential/unknown-fee tests. |
+| `6fa3696` | Integrated content-addressed Frontier paired-replay snapshots with a bounded offline Arena job, result-integrity API, explicit Mission Control submission/history, and fixture/API/UI coverage; no worker was admitted. |
+| `cf6bade` | Added the resource-admission-denial regression proving snapshot retention and no job creation. |
 
 ## Latest checkpoint verification (2026-10-27)
 
@@ -292,6 +298,46 @@ Reproduction commands and environment boundaries are in
 [`docs/DEVELOPMENT.md`](../DEVELOPMENT.md) and
 [`FRONTIER_ARCHITECTURE.md`](FRONTIER_ARCHITECTURE.md).
 
+## Arena replay integration checkpoint (2026-10-27)
+
+- Added the `frontier_replay` Arena job kind using the existing mandatory host-
+  wide admission lock. Snapshots pin normalized inputs, scenarios, timestamps,
+  and code version by content identity. Bounds are 100 markets, 200 books, 500
+  relationships, 8 MiB per snapshot/result, and 128 MiB / 1,000 snapshots.
+- The worker reads only the pinned local snapshot, is restricted to 300 seconds,
+  512 MiB, 50% CPU, nice 15, and idle I/O, and runs with IP address families
+  disabled. The result API requires successful completion and validates the
+  job record, snapshot digest, result digest, and comparison identity.
+- Mission Control exposes explicit submit, bounded history, progress, hashes,
+  and result inspection. Page load does not submit a job. The Frontier readiness
+  gate reports `LIVE_VALIDATION_PENDING` when Arena is configured; resource
+  sustainability remains `NOT_MEASURED`.
+- The broad Arena/Frontier/API regression passed **130 tests** in 49.97 seconds
+  wall, 31.65 seconds user CPU, and 535,504 KiB peak RSS, with zero swaps and
+  zero socket messages. The eight-test Arena replay module passed in 1.81
+  seconds. Afterward, snapshot submission and simulated resource denial passed
+  **2 targeted tests**; denial returns 409, retains the pinned snapshot, makes
+  no source request, and creates no job. One upstream Starlette/httpx test-client
+  deprecation warning remains.
+- Frontend tests passed **39 across 7 files**; TypeScript, ESLint, Prettier, and
+  production build passed. Frontier chunks are 67.75 kB JavaScript and 29.81
+  kB CSS; existing main and Chart chunks still trigger Vite's bundle-size
+  warning. Targeted Frontier Playwright passed **3 cases** in 8.0 seconds with
+  one worker and isolated temporary roots; one confirms no automatic submission.
+- Ruff check/format and strict mypy for the three Frontier/Arena source files
+  passed. Import-following mypy reports 37 issues in eight existing
+  Veritas/Arena/API files and none in the new replay worker or Frontier API. The
+  full repository suite was not run.
+- The systemd worker was not launched. A previous broader E2E run recorded
+  `resource_admission_lock_busy`; the host-wide lock was not bypassed. The
+  supervised runtime and worker resource profile remain unverified. No new
+  source probe, Reality service, campaign, or production service was started.
+
+The code checkpoint is `6fa3696`; the admission-denial regression is `cf6bade`.
+The next safe action is to run one bounded worker only when ordinary host
+admission allows it, then record runtime and completion evidence. Until then,
+the readiness gate stays pending.
+
 ## Completion matrix
 
 | Component | Status | Current evidence / remaining requirement |
@@ -303,11 +349,11 @@ Reproduction commands and environment boundaries are in
 | Relationship matching, immutable review, indexed neighborhoods, and strict payoff verifier | PARTIALLY VERIFIED | Self-attributed review API/UI with stored source refs, append-only revisions, compare-and-set, latest-state replay, query-plan/migration tests, and 1–3 hop left/right indexed scans capped at 500 rows. Centered one-hop keyset pages bind listing/instrument-metadata observation, relationship, and review counts; changed inputs reject stale cursors. A 501-edge fixture verifies the scan cap. No authenticated reviewer/assertion, genuine equivalent pair, or multi-hop pagination. |
 | Economic candidate verifier and independent audit | PARTIALLY VERIFIED | Exact two-venue binary all-long coverage and same-market 3–16-state exhaustive one-hot coverage. Economic model v4 derives the exact adverse full-or-no-fill terminal pattern for up to 16 legs; independent audit v2 rederives it from pinned inputs. A three-leg brute-force fixture agrees, and unknown fees suppress net stress. Fixtures only; no genuine eligible event, independently authenticated market truth, or practical execution proof. |
 | Bounded store and deterministic replay | COMPLETE AND VERIFIED | Schema v6 with additive v2/v3/v4/v5 migrations, immutable replay/comparison records, replay-v5 output includes fill sensitivity and identity includes effective mappings/proposal limit, with tests that later review revokes earlier verified replay input. |
-| Paired scenario comparison | COMPLETE AND VERIFIED | Two named scenarios reuse identical bounded local evidence; evidence/result hashes, transactionally saved run arms/comparison, API/UI, integrity/adversarial tests, and isolated browser coverage pass. No live equivalent market pair or Arena job integration. |
+| Paired scenario comparison | PARTIALLY VERIFIED | Direct local comparison, atomic hash-pinned results, API/UI, and browser tests pass. Content-addressed Arena submission/result flow is implemented and API/UI tested, including simulated resource denial; no worker was admitted and there is no genuine equivalent market pair. |
 | Frontier API and source configuration | COMPLETE AND VERIFIED | Local reads include hash-verified legacy and cursor-page batches. Polymarket and Kalshi page routes are capability/config/recorded-market gated, bounded to one page and retries, and bind cursors to market and size. Polymarket two-page and Kalshi empty-terminal-page persistence/read-back are tested. Kalshi live trade-row mapping remains fixture-only. |
 | Live adapter-to-API listing, book, and trade persistence | PARTIALLY VERIFIED | Three genuine venue captures, Polymarket v2 first/continuation pages with distinct IDs, and one Kalshi empty cursor page have hash-pinned temporary-store evidence. Samples are sequential and do not establish synchronization, depth, complete histories, or execution. |
-| Mission Control Frontier workspace | IMPLEMENTED, LIVE VALIDATION PENDING | Native view includes Polymarket/Kalshi trade-page controls, fee inspection, graph/review, paired-replay workbench, and one-sided fill stress details; unit and targeted E2E cover isolated local data. The workspace is not deployed and no live browser source request was made. |
-| Laboratory/Arena research orchestration | DEFERRED | Navigation links only; no Frontier experiment job type/scheduler. |
+| Mission Control Frontier workspace | IMPLEMENTED, LIVE VALIDATION PENDING | Native view includes Polymarket/Kalshi trade-page controls, fee inspection, graph/review, paired-replay workbench, one-sided fill stress, and Arena job history/result detail; unit and targeted E2E cover isolated local data. It is not deployed; no live browser source request or Arena job submission occurred in E2E. |
+| Laboratory/Arena research orchestration | PARTIALLY VERIFIED | Bounded Frontier Arena job type, snapshot, offline executor, API, and workspace history/result view are implemented and tested. The supervisor was not launched under the host gate; runtime measurement and Laboratory campaign management remain incomplete. |
 | Persistent source collection, streaming and broad historical replay | DEFERRED | No background worker or long-duration campaign. |
 | Cross-venue FX, comprehensive capital and settlement costs | DEFERRED | Unknown costs remain unknown and block decisive net economics. |
 | Production eligibility/deployment | DEFERRED | Separate safety, resource, schema, operations review and authorization required. |
@@ -345,15 +391,17 @@ The highest-value next steps are:
 5. Extend audit mutation/differential fixtures for distinct failure modes, and
    design authenticated review and independent assertion ingestion only after a
    separately reviewed security boundary exists.
-6. Integrate only short, resource-admitted deterministic replay jobs with
-   Laboratory/Arena; do not start an unattended campaign.
+6. Run one short paired-replay job under the existing Arena resource gate only
+   when normal admission allows it; validate supervisor completion and measure
+   runtime. No admission override is permitted. Add Laboratory campaign
+   management only if a concrete need remains.
 
 Do not connect Frontier to Reality’s recorder, enable probes as a default,
 deploy, or alter protected evidence as part of ordinary continuation. The next
-safe work is genuine public multi-outcome term investigation, reconciling
-Kalshi's native fee metadata to a supported fee calculation, stronger
-API-boundary degraded-source tests, and short
-resource-admitted Arena/Laboratory replay integration.
+safe work is an admitted short Arena worker validation when the ordinary gate
+allows it, alongside genuine public multi-outcome term investigation,
+reconciling Kalshi's native fee metadata to a supported fee calculation, and
+stronger API-boundary degraded-source tests.
 
 ## Latest checkpoint identity
 
@@ -381,5 +429,6 @@ current branch checkpoint. The paired replay implementation and tests are
 `1e3d30a13db8588fae5e72a39f56fa7db625479a`. The full-or-no-fill exposure
 implementation and test checkpoint is
 `5af50b9714d571a0c730f15a0e261f2d4ece2b3e`; this report/ledger amendment records
-economic model v4, independent audit v2, replay v5, and verification. No
-deployment or production change was made.
+economic model v4, independent audit v2, replay v5, and verification. The
+bounded Arena paired-replay integration is `6fa3696`, and the admission-denial
+regression is `cf6bade`. No deployment or production change was made.

@@ -19,8 +19,9 @@ as mutable Frontier storage.
 | Independent arithmetic audit | `independent_audit.py` | Separately recomputes supported candidate identities, payoff vectors, pinned quotes/depth, fees, costs, terminal P&L, fill-pattern sensitivity, and classification from replay inputs. |
 | Durable evidence | `storage.py` | Append-only, size- and row-bounded SQLite observations, markets, relationship reviews/revisions, runs, and paired comparisons. |
 | Replay | `replay.py` | Stable input ordering, scenario/mapping/proposal-limit-aware replay identities, deterministic results, and paired assumption comparisons. |
+| Arena paired replay | `packages/midas/arena/frontier_replay.py`, `arena/jobs.py` | Immutable content-addressed input snapshots, a bounded offline paired-replay worker, and hash-verified result artifacts under Arena's existing admission gate. |
 | HTTP API | `apps/api/frontier.py` | Bounded local queries and graph neighborhoods, relationship proposals/reviews, deterministic and paired replay, config-gated public capture, and evidence-bound Kalshi fee sensitivity. |
-| Mission Control workspace | `apps/web/src/Frontier.tsx` | Sources, markets/books, relationship hypotheses, candidates, workbench, replay comparisons, and readiness. |
+| Mission Control workspace | `apps/web/src/Frontier.tsx` | Sources, markets/books, relationship hypotheses, candidates, economic workbench, local comparisons, bounded Arena replay history/results, and readiness. |
 
 ## Adapter capability contract
 
@@ -221,6 +222,25 @@ changes; it is not a score, fills report, or profit estimate. `POST
 /api/frontier/comparisons` and `GET /api/frontier/comparisons/{id}` return
 hash-validated saved comparison records.
 
+`POST /api/frontier/arena-replay` stages an immutable snapshot of at most 100
+markets, 200 books, and 500 effective verified relationships under the configured
+Arena root, pins the two scenarios and current Frontier source version, and then
+submits a `frontier_replay` job through Arena's existing host-wide resource
+admission path. A snapshot is limited to 8 MiB, the snapshot store to 128 MiB and
+1,000 entries, and the result artifact to 8 MiB. The worker is capped at 300
+seconds, 512 MiB, 50% CPU, nice 15, and idle I/O; IP address families are
+disabled and the worker uses only local files. Submission does not probe an
+exchange. `GET /api/arena/frontier-replays` returns a bounded history, and
+`GET /api/arena/jobs/{id}/frontier-replay` exposes only a completed result after
+checking the job's snapshot reference, artifact digest, comparison identity, and
+success state. Mission Control displays progress, input snapshot ID/hash, result
+hash, and the completed comparison. Job admission can be denied by the host
+resource gate; snapshots remain pinned for a safe retry. No Frontier Arena
+worker has been admitted or run against the live host in this development
+checkpoint. Frontier readiness reports `arena_replay_worker` as
+`LIVE_VALIDATION_PENDING` when an Arena root is configured, and `NOT_CONFIGURED`
+otherwise; resource sustainability remains `NOT_MEASURED`.
+
 ## API and UI behavior
 
 `GET /api/frontier/overview`, `/sources`, `/markets`, `/books`, `/trades`,
@@ -263,7 +283,10 @@ There are no persistent source workers, incremental order-book streams, full
 venue-wide universe scans, FX conversion, derivatives, capital transfer model,
 multi-leg solver, automatic semantic certification, authenticated reviewer or
 assertion verification, full-universe graph search, multi-hop graph pagination,
-or production deployment. `/graph` limits source markets to 200, scans at most
+Laboratory campaign integration, or production deployment. The bounded Arena
+job integration exists, but its actual supervisor launch and runtime profile
+remain unverified because the shared host admission gate was not bypassed.
+`/graph` limits source markets to 200, scans at most
 500 relationship rows through endpoint indexes for centered neighborhoods, and
 returns at most 200 edges over 1–3 hops. Centered one-hop queries can continue
 by cursor while the append-only graph revision stays fixed; the uncentered view

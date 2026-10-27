@@ -161,6 +161,21 @@ score the scenarios or establish fills, simultaneous availability, or profit.
 The UI's baseline is the quoted-input assumption and the second arm uses the
 current workbench assumptions; both remain hypothetical.
 
+`POST /api/frontier/arena-replay` packages the latest bounded local market,
+book, and effective verified-relationship records into a content-addressed
+snapshot under `MIDAS_ARENA_ROOT`, then submits the paired replay as an Arena
+`frontier_replay` job. Arena's normal host-wide admission gate remains in force.
+The worker is capped at 300 seconds, 512 MiB, 50% CPU and idle I/O, and has IP
+network families disabled. Snapshots are capped at 8 MiB each, 128 MiB total,
+and 1,000 entries. The result route is available only for a successful completed
+job and checks both snapshot and artifact hashes. Mission Control lists the
+latest bounded job records and polls only while a job is queued or running.
+No worker was started to verify supervisor behavior in this checkpoint because
+the shared resource gate was not bypassed.
+The Frontier readiness panel exposes this as `LIVE_VALIDATION_PENDING` when
+Arena is configured; `resource_sustainability` stays `NOT_MEASURED` until the
+runtime is measured under an admitted bounded job.
+
 Relationship decisions use `POST /api/frontier/relationships/{id}/review`. The
 review form records source market observation IDs and appends a linked revision;
 it cannot bypass the same-payoff verifier. Reviewer labels and external assertion
@@ -213,17 +228,21 @@ at this Frontier checkout. Replace that interpreter path with the interpreter
 for your own locked environment when working elsewhere.
 
 ```bash
-PYTHONPATH=packages:apps/api /home/charlie/midas/.venv/bin/python -m pytest tests/frontier tests/integration/test_adapters.py tests/integration/test_api.py::test_offline_api_workflow_contract_and_persistence -q
-/home/charlie/midas/.venv/bin/ruff check apps/api/frontier.py apps/api/config.py apps/api/main.py packages/midas/frontier tests/frontier tests/integration/test_api.py
-/home/charlie/midas/.venv/bin/ruff format --check apps/api/frontier.py packages/midas/frontier tests/frontier tests/integration/test_api.py
-PYTHONPATH=packages:apps/api /home/charlie/midas/.venv/bin/mypy packages/midas/frontier apps/api/frontier.py
+PYTHONPATH=packages:apps/api /home/charlie/midas/.venv/bin/python -m pytest tests/arena/test_frontier_replay.py tests/arena/test_foundations.py tests/arena/test_arena_api.py tests/frontier tests/integration/test_api.py -q
+/home/charlie/midas/.venv/bin/python -m ruff check apps/api/arena.py apps/api/frontier.py apps/api/main.py packages/midas/arena/frontier_replay.py packages/midas/arena/jobs.py packages/midas/frontier tests/arena/test_frontier_replay.py tests/frontier tests/integration/test_api.py
+/home/charlie/midas/.venv/bin/python -m mypy --follow-imports=silent packages/midas/arena/frontier_replay.py packages/midas/arena/jobs.py apps/api/frontier.py
 corepack pnpm --dir apps/web test
 corepack pnpm --dir apps/web typecheck
+corepack pnpm --dir apps/web lint
+corepack pnpm --dir apps/web format:check
 corepack pnpm --dir apps/web build
+corepack pnpm --dir apps/web exec playwright test e2e/frontier.spec.ts --workers=1
 ```
 
 The Frontier Playwright case sets `MIDAS_FRONTIER_ROOT` under a temporary
-directory. It never enables a source probe. See the
+directory and `MIDAS_ARENA_ROOT` under a sibling temporary root. It never
+enables a source probe and the test does not submit an Arena job. The live Arena
+worker remains unverified until ordinary host admission permits a launch. See the
 [Frontier mission ledger](frontier/FRONTIER_MISSION_LEDGER.md) before extending
 the scope or changing its deployment status.
 

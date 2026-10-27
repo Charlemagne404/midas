@@ -39,6 +39,12 @@ exposure sensitivity over up to 16 legs, with fee-inclusive results omitted if
 any applicable fee is unknown. The Economic Workbench can persist a paired
 comparison of two virtual scenarios over the same saved evidence; it does not
 score assumptions as better or establish executable opportunities.
+The Replay & Readiness workspace can submit an explicit paired replay to the
+existing Arena supervisor from a content-hashed snapshot of local Frontier
+evidence. Arena keeps its host-wide admission gate and applies strict CPU,
+memory, time, disk and network-family bounds; the result is hash-verified.
+Fixture, API, unit and browser tests cover this path. A supervised worker has
+not been launched on the shared host, and no Laboratory campaign was started.
 Polymarket's explicit v2 trade-page path preserves outcome-token identity and
 supports bounded cursor continuation; one first page and one API-route
 continuation have been captured, while no full history walk was attempted.

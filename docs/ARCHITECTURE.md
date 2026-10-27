@@ -129,6 +129,19 @@ candidate and classification/count changes without scoring an assumption as
 better or suggesting an executable fill. SQLite schema v6 stores comparisons
 append-only and retains additive upgrade paths from earlier schemas.
 
+The optional `POST /api/frontier/arena-replay` route stages the same bounded
+evidence as a content-addressed snapshot under the configured Arena root, then
+submits an offline `frontier_replay` job through Arena's existing host-wide
+admission lock and resource gate. The worker is limited to 300 seconds, 512 MiB,
+50% CPU, and idle I/O; IP address families are disabled. Snapshots and completed
+artifacts are size-bounded and checked against their content hashes. The Arena
+API lists recent Frontier replay jobs and exposes a completed result only after
+checking its job configuration, snapshot reference, and result digest. The native
+Frontier replay panel can submit a job explicitly, track it, and inspect its
+comparison. This is a short replay job, not a Laboratory campaign or collector.
+The development checkpoint did not pass the live host admission gate to launch
+an Arena worker.
+
 Polymarket additionally exposes an explicit, one-page-at-a-time v2 public trade
 capture route. Schema-v2 trade records retain condition, token, outcome, and
 transaction identities; an opaque source cursor is wrapped with the requested
