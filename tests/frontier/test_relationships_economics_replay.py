@@ -1182,6 +1182,19 @@ def test_sixteen_outcome_fill_stress_keeps_the_pattern_space_bounded():
     assert candidate.one_sided_fill_sensitivity.pattern_space_size == 65_536
     assert candidate.one_sided_fill_sensitivity.worst_before_fees.pnl_before_fees < 0
 
+    replay = deterministic_replay(
+        (event,),
+        tuple(books.values()),
+        as_of_utc=T0 + timedelta(milliseconds=100),
+        code_version="sixteen-outcome-fill-audit-fixture-v1",
+    )
+    assert len(replay.candidates) == 1
+    audited = replay.candidates[0]
+    assert audited.independent_audit is not None
+    assert audited.independent_audit.disposition.value == "verified"
+    assert audited.one_sided_fill_sensitivity is not None
+    assert audited.one_sided_fill_sensitivity.pattern_space_size == 65_536
+
 
 def test_multi_outcome_decimal_math_preserves_full_bounded_input_precision():
     event = _multi_outcome_market(steps=(None, None, None))
