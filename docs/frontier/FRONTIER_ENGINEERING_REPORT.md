@@ -1444,6 +1444,12 @@ implementation/evidence paths are `packages/midas/frontier/adapters/base.py`,
 The report, mission ledger and developer/current-state handoffs record the
 capture's digest reconciliation and verification boundary.
 
+Documentation checkpoint `98fbf3a` updates `README.md`,
+`data/frontier/live-probes/README.md`, `docs/DEVELOPMENT.md`,
+`docs/MIDAS_CURRENT_STATE.md`, `docs/frontier/FRONTIER_ARCHITECTURE.md`, this
+report, and `docs/frontier/FRONTIER_MISSION_LEDGER.md` with the v9 interface,
+source evidence, hash reconciliation, and measured verification results.
+
 ### Latest MVE verification update (2026-10-27 11:51 UTC)
 
 - `pytest -q tests/frontier/test_adapters.py tests/frontier/test_api.py -k

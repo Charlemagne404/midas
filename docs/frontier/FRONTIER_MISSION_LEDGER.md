@@ -157,6 +157,7 @@ Remaining acceptance work is substantial.
 | `58cb6c7` | Added capability-gated one-page Kalshi multivariate-event discovery, typed group membership state, fail-closed nested metadata validation, API/store persistence, Mission Control capture and raw-evidence inspection, a real omitted-nested-market capture, and adapter/API/UI/browser regressions. |
 | `001b103` | Corrected Kalshi event-detail normalization for a documented top-level empty market array; preserved the one-request source response, original v7 normalization failure, v8 offline replay, and hash-verified replay-store row. |
 | `a40d2ee` | Added adapter v9 single-event `tickers` filtering with returned-event identity checks, Mission Control support, exact saved-response API replay, mismatch rejection, and an offline snapshot-row hash reconciliation. |
+| `98fbf3a` | Updated README, development/current-state, architecture, evidence README, engineering report and mission ledger for the v9 event filter, genuine response, digest reconciliation and current verification. |
 
 ## Kalshi single-event MVE ticker filter checkpoint (2026-10-27)
 
@@ -711,9 +712,8 @@ and browser coverage are `711a563f3b99665e2f635d4c66e286bee93f4d38`. Polymarket
 v2 page support is `67f79cde6b37ac51c226c4338196a1b2482e37aa`; the Mission
 Control continuation is `7c6cc21764d124f61211b79299335d78e8260c69`. The
 capture and documentation checkpoint is
-`e661e06e22b2d29bd68e13dd6e6b423c698fec27`. This ledger amendment is the
-current branch checkpoint. The paired replay implementation and tests are
-`1e3d30a13db8588fae5e72a39f56fa7db625479a`. The full-or-no-fill exposure
+`e661e06e22b2d29bd68e13dd6e6b423c698fec27`; the paired replay implementation
+and tests are `1e3d30a13db8588fae5e72a39f56fa7db625479a`. The full-or-no-fill exposure
 implementation and test checkpoint is
 `5af50b9714d571a0c730f15a0e261f2d4ece2b3e`; this report/ledger amendment records
 economic model v4, independent audit v2, replay v5, and verification. The
@@ -724,3 +724,11 @@ worker CPU/RSS capture and display are in `109df84`, with typed bounds in
 checkpoint is `f5c7129`; this ledger/report update records follow-up readiness,
 resource measurement, and verification. No deployment or production change was
 made.
+
+The current MVE ticker-filter implementation and exact saved-response replay
+are `a40d2ee`; the associated README, architecture, report and ledger
+documentation checkpoint is `98fbf3a`. This latest ledger/report amendment
+records v9 digest reconciliation, the 13-test adapter/API selection, the
+40-test frontend run, current resource measurements, and the remaining
+browser/build boundary. No live request was repeated after that capture; no
+production deployment occurred.
