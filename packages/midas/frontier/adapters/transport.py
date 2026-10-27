@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import json
 import time
+from collections import deque
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from decimal import Decimal
@@ -18,6 +19,8 @@ from midas.frontier.adapters.base import AdapterError, FailedResponseEvidence
 from midas.frontier.models import AdapterConfig
 
 D = Decimal
+REQUEST_COUNT_WINDOW_SECONDS = 60.0
+REQUEST_COUNT_HISTORY_MAX = 301
 
 
 @dataclass(frozen=True)
@@ -54,6 +57,7 @@ class PublicReadTransport:
         self._lock = asyncio.Lock()
         self._last_start = 0.0
         self.request_count = 0
+        self._request_starts_monotonic: deque[float] = deque(maxlen=REQUEST_COUNT_HISTORY_MAX)
 
     async def close(self) -> None:
         if self._owns_client:
@@ -80,8 +84,17 @@ class PublicReadTransport:
             remaining = interval - (time.monotonic() - self._last_start)
             if remaining > 0:
                 await asyncio.sleep(remaining)
-            self._last_start = time.monotonic()
+            request_started = time.monotonic()
+            self._last_start = request_started
             self.request_count += 1
+            self._request_starts_monotonic.append(request_started)
+
+    def requests_in_window(self, window_seconds: float = REQUEST_COUNT_WINDOW_SECONDS) -> int:
+        """Count bounded request starts in the trailing monotonic-time window."""
+        cutoff = time.monotonic() - window_seconds
+        while self._request_starts_monotonic and self._request_starts_monotonic[0] <= cutoff:
+            self._request_starts_monotonic.popleft()
+        return len(self._request_starts_monotonic)
 
     @staticmethod
     def _retry_after(response: httpx.Response) -> float:

@@ -138,10 +138,13 @@ class BaseReadOnlyAdapter:
             last_success_at_utc=self._last_success,
             last_error_code=self._last_error_code,
             last_error=self._last_error,
-            requests_in_window=self.transport.request_count,
+            requests_in_window=self.transport.requests_in_window(),
             supported_capabilities=supported,
             unsupported_capabilities=unsupported,
-            notes=("Health read is local state and makes no network request.",),
+            notes=(
+                "Health read is local state and makes no network request.",
+                "Request count covers the trailing 60 seconds.",
+            ),
         )
 
     def _capture_response(self, response: Any, observation_kind: str) -> RawObservation:

@@ -33,6 +33,25 @@ from midas.frontier.relationships import (
 ROOT = Path(__file__).resolve().parents[2]
 
 
+@pytest.mark.asyncio
+async def test_source_health_request_count_is_a_bounded_rolling_window(monkeypatch):
+    clock = [160.0]
+    monkeypatch.setattr("midas.frontier.adapters.transport.time.monotonic", lambda: clock[0])
+    adapter = PolymarketAdapter(AdapterConfig())
+    try:
+        adapter.transport._request_starts_monotonic.extend((99.999, 100.0, 159.999, 160.0))
+        current = await adapter.health()
+        assert current.requests_in_window == 2
+        assert "trailing 60 seconds" in current.notes[-1]
+
+        clock[0] = 220.0
+        expired = await adapter.health()
+        assert expired.requests_in_window == 0
+        assert len(adapter.transport._request_starts_monotonic) == 0
+    finally:
+        await adapter.aclose()
+
+
 def _captured(path: str) -> str:
     return (ROOT / path).read_text(encoding="utf-8")
 
