@@ -66,8 +66,9 @@ payoff settlement asset, and the market-level settlement asset to agree with
 that payoff. Binary and multi-outcome candidate generation plus the
 independent audit repeat the denomination guard, so a forged verified
 relationship cannot bypass it. No USD-to-USDC conversion or stablecoin/network
-valuation bridge is assumed. `FrontierMarket` and `PayoffSpec` schema v2 add a
-structured `settlement_asset_identity` beside the display denomination string.
+valuation bridge is assumed. `FrontierMarket` and `PayoffSpec` schema v2 added a
+structured `settlement_asset_identity` beside the display denomination string;
+the current `FrontierMarket` schema is v3 after the quote-unit fields were added.
 Fiat identities use a three-letter code; token and other non-fiat identities
 require a network ID and asset reference. Market and payoff identities must
 agree, and cross-venue verification compares the complete identity, so the
@@ -87,6 +88,17 @@ closed; no USD-to-pUSD valuation bridge is enabled.
 Event-group observations participate in
 latest-record selection and graph revision identity, so replay and paged reads
 cannot silently retain older child-only metadata.
+
+Settlement identity also applies to the unit used to quote a contract. The
+instrument, observed book, fee schedule, public trade, candidate leg, and
+candidate capital field retain a canonical denomination beside the display
+code. Supported event arithmetic requires the instrument and book quote
+identities to equal the exact payoff settlement identity; a modeled fee must
+identify that same fee unit. A code such as `USD` is insufficient by itself:
+`fiat:USD` and a network-qualified token whose display code is `USD` remain
+different units. Older rows without these optional identities continue to
+load, but candidate generation and the independent audit treat the missing
+unit evidence as incomplete. Replay v7 pins these identities into its inputs.
 
 Kalshi adapter v7 introduced the separate `MULTIVARIATE_EVENT_DISCOVERY`
 capability, retained by adapters v8 through v11. Its local
@@ -366,8 +378,9 @@ requires a previously verified same-payoff relationship. Same-market
 multi-outcome coverage requires three to sixteen verified exhaustive states,
 verified resolution and settlement, and exactly one unit-payout one-hot
 instrument per state; it buys all states long in one venue and one quantity
-unit. Both check top-ask depth, quantity minimums and steps, quote currency,
-applicable exact Decimal fee formulas, scenario slippage/decay, local receipt
+unit. Both check top-ask depth, quantity minimums and steps, exact quote
+denomination identity on the instrument and book, fee-unit identity, applicable
+exact Decimal fee formulas, scenario slippage/decay, local receipt
 skew, exchange-time skew, and book age. The exact arithmetic uses bounded inputs
 (36 digits, 18 decimal places) and a 128-digit local Decimal context. Explicit
 quantities are rejected if the common displayed depth or modeled fill fraction
@@ -539,9 +552,11 @@ it does not represent source truth or profitability.
 Candidate details also offer a client-only virtual balance comparison for each
 venue's modeled capital requirement. Each nonnegative decimal input remains in
 browser component state and is compared exactly against the requirement in that
-venue's single quote currency. Missing or mixed currency disables comparison;
-an unknown applicable fee prevents a claim that the modeled requirement is
-fully covered. Inputs are not sent to the API or persisted. The view does not
+venue's exact canonical capital denomination. Missing or mixed identity
+disables comparison; balances are keyed separately by venue and denomination,
+so a token with ticker `USD` cannot reuse a fiat `USD` balance. An unknown
+applicable fee prevents a claim that the modeled requirement is fully covered.
+Inputs are not sent to the API or persisted. The view does not
 model real account balances, collateral eligibility, transfer availability,
 settlement duration, or capital at risk between settlements.
 

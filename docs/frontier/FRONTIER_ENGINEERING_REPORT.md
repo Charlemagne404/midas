@@ -415,6 +415,20 @@ Models reject non-finite values and unexpected fields. Venue-native IDs and
 source fields remain available so calculations can be checked against the
 original response.
 
+The market's settlement asset identity now also anchors price denominations.
+`MarketInstrument`, `BookSnapshot`, `FeeSchedule`, `TradeObservation`, candidate
+legs, and candidate capital retain exact identities alongside their display
+currency codes. Binary and multi-outcome economics require exact quote identity
+agreement from payoff to instrument to observed book, and fee arithmetic
+requires the fee unit to match. Candidate capital comparisons use the exact
+settlement identity; the UI separates virtual balances by venue and canonical
+identity. A token whose code is `USD` cannot be added to, compared with, or
+funded from `fiat:USD` without an explicit valuation model. Legacy records that
+lack identity remain readable, but the candidate and audit paths classify them
+as incomplete. FrontierMarket schema v3, BookSnapshot v2, TradeObservation v3,
+OpportunityCandidate v2, economic model v6, independent audit v3, and replay v7
+pin this extension.
+
 ## 6. Relationship graph
 
 `relationships.py` builds a deterministic, bounded index using venue-local native
@@ -1758,8 +1772,10 @@ workbench for comparing a manually entered virtual balance against modeled
 capital by venue. Inputs stay in browser component state and never reach the
 API or persistence. Each venue is compared independently with exact decimal
 arithmetic. A missing/mixed quote currency disables comparison, and unknown
-applicable fees prevent a sufficiency claim. This does not model actual account
-balances, collateral, transfer eligibility, or settlement duration.
+applicable fees prevent a sufficiency claim. The current comparison uses
+canonical capital denomination identities and keeps virtual balances separate
+by venue and exact unit. This does not model actual account balances,
+collateral, transfer eligibility, or settlement duration.
 
 The implementation changed `apps/web/src/Frontier.tsx`,
 `apps/web/src/Frontier.test.tsx`, `apps/web/src/frontier.css`, and
@@ -1949,19 +1965,19 @@ cross-venue economics.
 | --- | --- | --- |
 | Isolated baseline/worktree and preserved unrelated changes | COMPLETE AND VERIFIED | Branch starts at verified V6 commit; original dirty worktrees untouched. |
 | Adapter protocol, capability registry, bounded GET transport | COMPLETE AND VERIFIED | Contract tests, all capability declarations, host/size/rate/redirect bounds; Kalshi MVE discovery is explicitly supported while Polymarket/Kraken remain unsupported. |
-| Kalshi MVE settlement metadata and arithmetic audit | PARTIALLY VERIFIED | Adapter v13 preserves bounded component YES settlement values and optional parent settlement/provisional fields. A saved-evidence-only API/UI audit recomputes the selected component product for up to 64 legs and compares it with the parent value only for complete evidence and explicit finality; audit schema v2 identifies its algorithm and returns the parent lifecycle/provisional flag. Direct official rule/schema links and observation/raw hashes are shown. All settlement arithmetic remains fixture-only; the preserved live child lacks values, no live audit result exists, and the method does not verify outcomes/rules or alter candidate economics. |
+| Kalshi MVE settlement metadata and arithmetic audit | PARTIALLY VERIFIED | Adapter v13 introduced bounded component YES settlement values and optional parent settlement/provisional fields; Kalshi adapter v14 retains that behavior. A saved-evidence-only API/UI audit recomputes the selected component product for up to 64 legs and compares it with the parent value only for complete evidence and explicit finality; audit schema v2 identifies its algorithm and returns the parent lifecycle/provisional flag. Direct official rule/schema links and observation/raw hashes are shown. All settlement arithmetic remains fixture-only; the preserved live child lacks values, no live audit result exists, and the method does not verify outcomes/rules or alter candidate economics. |
 | Polymarket, Kalshi and Kraken Spot adapters | PARTIALLY VERIFIED | Fixture/contract tests and bounded live listing/book/legacy-trade captures are preserved. Polymarket v2 first and continuation pages returned ten rows each. Kalshi has a ticker-filtered cursor-page implementation, fixture-verified row mapping, and a live empty terminal page; live trade-row normalization remains unvalidated. Adapter v4 preserves native MVE selected component IDs/sides; v7 added one-page MVE discovery whose live response omitted nested markets; v8 fixes event-detail parsing of an explicit empty top-level market array; v10 captures a saved-parent-referenced child contract and preserves its native rules. The one captured child is closed and includes fair-price fallback conditions; neither its simple binary payoff nor the parent-combo payout is verified. Account fees and Kraken account fee applicability remain unresolved. API fixtures cover source degradation and recovery; live degraded-source behavior remains unverified. |
-| Canonical market/instrument normalization | PARTIALLY VERIFIED | Three distinct instrument classes are represented; v2 Polymarket trades retain native outcome-token identity; Kalshi MVE component references remain source assertions; `MarketBatch` schema v2 preserves typed `MarketGroup` membership state. The genuine MVE response records member-list state `omitted` and zero child markets. Payoff/settlement semantics remain unverified. |
+| Canonical market/instrument normalization | PARTIALLY VERIFIED | Three distinct instrument classes are represented; FrontierMarket schema v3, BookSnapshot v2 and TradeObservation v3 retain exact quote-denomination identities where a source mapping is established. Instrument, book, fee, trade, candidate-leg and capital units are distinguished from display codes. Legacy rows load with identity absent and remain economically incomplete. V2 Polymarket trades retain native outcome-token identity; Kalshi MVE component references remain source assertions; `MarketBatch` schema v2 preserves typed `MarketGroup` membership state. The genuine MVE response records member-list state `omitted` and zero child markets. Payoff/resolution semantics remain unverified. |
 | Relationship hypotheses, review revisions, indexed neighborhoods, and explicit same-payoff verifier | PARTIALLY VERIFIED | Self-attributed review API/UI, append-only revisions, latest-state replay, tamper/migration checks, left/right endpoint-indexed 1–3 hop scans capped at 500 rows, one-hop keyset pages, and revision-bound multi-hop BFS pages with deterministic recomputation and 201-market chunk coverage. Matcher v5 includes bounded exact-ID MVE selected-component references as HYPOTHESIS edges with both source record IDs; a saved Kalshi parent listing and child detail replay into one such edge. Matcher v4's explicit year-conflict rejection remains. A genuine House-control topic pair remains text-only HYPOTHESIS and fails strict same-payoff verification. Payout currency must match each payoff settlement asset, and the market-level settlement asset must agree; the focused USD/USDC test passes. The focused depth-two browser E2E now passes; reviewer authentication, revision-history drill-down, and full-universe search remain absent. |
-| Opportunity candidate and independent economic checks | PARTIALLY VERIFIED | Two-venue all-long binary and same-market 3–16 state one-hot exhaustive coverage; economic model v5 computes an exact full/no-fill adverse exposure pattern over up to 16 legs, and independent audit v2 recomputes it from pinned inputs. Differential three-leg enumeration, unknown-fee cases, malformed cross-venue leg handling, no-bridge payout/settlement denomination rejection, and same-ticker/different-network asset rejection pass. Cross-venue timing requires matching known timestamp semantics, nonfuture timestamps, and observed skew plus quantified source clock uncertainty within the scenario bound; controlled adversarial cases pass. Current venue adapters omit clock uncertainty, leaving live cross-venue timing unverified. Broader funding/settlement costs and operational feasibility remain incomplete. |
+| Opportunity candidate and independent economic checks | PARTIALLY VERIFIED | Two-venue all-long binary and same-market 3–16 state one-hot exhaustive coverage; economic model v6 computes an exact full/no-fill adverse exposure pattern over up to 16 legs, and independent audit v3 recomputes it from pinned inputs and exact quote, fee and capital denomination identities. Differential three-leg enumeration, unknown-fee cases, malformed cross-venue leg handling, no-bridge payout/settlement denomination rejection, same-ticker/different-network asset rejection, and a token with ticker `USD` versus fiat USD mismatch all fail closed as expected. Cross-venue timing requires matching known timestamp semantics, nonfuture timestamps, and observed skew plus quantified source clock uncertainty within the scenario bound; controlled adversarial cases pass. Current venue adapters omit clock uncertainty, leaving live cross-venue timing unverified. Broader funding/settlement costs and operational feasibility remain incomplete. |
 | Kalshi taker-fee sensitivity | PARTIALLY VERIFIED | Hash-matched public event/series evidence supports one-fill and bounded one-order Decimal sensitivities for two documented quadratic taker fee types, both precision cases, per-fill rounding, order accumulation, and capped rebates. Tests match the official one-fill example and exercise buy/sell arithmetic. The dated official schedule's `KXMVE` multiplier pair is not assumed to apply to captured `KXMVECROSSCATEGORY` metadata. Manual inputs are not live quotes or book-priced; account-specific fees and precision, exact maker/mixed-order applicability, FCM charges, later schedules, and full candidate fee integration remain unresolved. |
-| Append-only evidence store and deterministic replay | COMPLETE AND VERIFIED | Schema v6, additive v2/v3/v4/v5 migration, bounds, hash validation, and immutability. Replay v6 carries exact store record IDs through API-loaded market/book provenance, manifests, candidate legs, and Arena snapshots; direct in-memory replay retains adapter IDs. Replay-v5 economic output includes full/no-fill sensitivity and pins effective mappings/proposal limit. The separate Arena wrapper uses immutable content-addressed snapshots and hash-verified result artifacts; two controlled fixture workers completed and the latest recorded CPU/RSS. |
+| Append-only evidence store and deterministic replay | COMPLETE AND VERIFIED | Storage schema v6, additive v2/v3/v4/v5 migration, bounds, hash validation, and immutability. Replay v7 carries exact store record IDs and the new denomination fields through API-loaded market/book provenance, manifests, candidate legs, and Arena snapshots; direct in-memory replay retains adapter IDs. Replay-v5 economic output includes full/no-fill sensitivity and pins effective mappings/proposal limit. The separate Arena wrapper uses immutable content-addressed snapshots and hash-verified result artifacts; two controlled fixture workers completed and the latest recorded CPU/RSS. |
 | Frontier API and source configuration | COMPLETE AND VERIFIED | Kalshi MVE discovery validates exactly one series/collection/event-ticker filter, capability/config gates, one-page bounds, and raw/normalized lineage; it does not follow the source cursor. Component detail is a separate one-GET capability, bound before the request to a ticker in a saved parent's selected legs and after the response to the saved event identity. Four focused tests now cover raw capture retention after drained Polymarket trade-page and generic market/book/trade lineage mismatches, with no duplicate of an earlier successful listing. |
 | Paired scenario comparison | PARTIALLY VERIFIED | Local deterministic comparison, atomic result persistence, API/UI, and isolated browser tests pass. Two systemd-supervised Arena jobs completed over the same controlled fixture with verified result identities; the latest worker's process CPU and peak RSS are visible in Mission Control. No genuine matched live cross-venue pair or live economic claim exists. |
 | Live market/book/trade and fee metadata through adapters/API | PARTIALLY VERIFIED | Earlier listing/book/trade, event-group, fee-metadata, and trade-page captures are hash-pinned. Kalshi MVE captures include filtered pages whose nested markets were omitted and one detail response with explicit top-level `markets: []`. The new one-request child detail capture matches a selected leg's saved ticker/event identities and has raw/store hashes; its rules expose fair-price fallbacks, but it has no book/price and proves neither child nor combo payoff. No cross-venue timing, combo economics, venue-wide coverage, or execution is established. |
 | Source workers and broad historical data | DEFERRED | No persistent worker or long-duration collection. |
 | Laboratory/Arena research orchestration | PARTIALLY VERIFIED | Arena job kind, content-addressed snapshots, bounded offline execution, API submission/history/result verification, process CPU/RSS capture, and explicit workspace controls are implemented and tested; two fixture jobs passed the host-wide gate and completed under systemd. Laboratory campaign management and resource-sustainability evidence remain incomplete. |
-| Native Mission Control workspace | PARTIALLY VERIFIED | Local API, bounded graph/review UI, Polymarket/Kalshi trade-page and event-group controls, explicit filtered one-page Kalshi MVE capture by series, collection, or one event ticker with returned member-list state, parent-event context, instrument-bound fee sensitivity, selected-leg component-rule and recorded-settlement arithmetic inspection, paired replay, candidate fill stress, venue-separated local virtual balances, and Arena job history/result display. The Frontier component file passes 8 tests after the per-leg currency fix; web typecheck passes, and targeted ESLint/Prettier pass for the test correction. The earlier focused depth-two/capital-fragmentation/mobile browser case predates that correction. Backend payout/settlement denomination guards have focused coverage. A production build after the capital UI change was stopped under rising memory PSI and remains unverified; the workspace is not deployed. |
+| Native Mission Control workspace | PARTIALLY VERIFIED | Local API, bounded graph/review UI, Polymarket/Kalshi trade-page and event-group controls, explicit filtered one-page Kalshi MVE capture by series, collection, or one event ticker with returned member-list state, parent-event context, instrument-bound fee sensitivity, selected-leg component-rule and recorded-settlement arithmetic inspection, paired replay, candidate fill stress, virtual balances keyed by venue and exact denomination identity, and Arena job history/result display. The Frontier component file passes all 8 tests, including token `USD` versus fiat `USD` separation; web typecheck, targeted frontend and browser-test ESLint, and Prettier pass. The focused depth-two/capital-fragmentation/mobile browser case passes with the exact-identity fixture contract. The production build now passes with 676,320 KiB peak RSS and no swap; Vite reports the existing 500 kB chunk-size warning for the index/chart chunks. The workspace is not deployed. |
 | Production readiness/deployment | DEFERRED | Separate review and authorization required; production eligibility is false. |
 | Positive economic result | NOT ESTABLISHED | No genuine cross-venue equivalent or economically eligible result in captured evidence. |
 
@@ -2031,8 +2047,10 @@ and schema v2 adds structured identity fields to `FrontierMarket` and
 requires an explicit network ID and asset reference. The payoff and market
 identities must agree; relationship verification, candidate generation, and
 the independent verifier compare the complete identities. The equivalence
-verifier is v3, the economic model is v5, and adapter versions are Kalshi v13,
-Polymarket v5, and Kraken Spot v2. Historical records without the optional
+verifier is v3, the economic model is v6, the independent audit is v3, replay
+is v7, and adapter versions are Kalshi v14, Polymarket v6, and Kraken Spot v3.
+Market schema v3, book schema v2, trade schema v3, and candidate schema v2 carry
+the exact denomination fields. Historical records without the optional
 identity still load, but fail closed for verified payoff comparison.
 
 Kalshi normalizes supported event settlement as `fiat:USD`. The Polymarket
@@ -2110,3 +2128,72 @@ same-payoff verifier rejects the pair for both denomination and asset
 identity mismatch; no pUSD-to-USD bridge is inferred. The
 relationship/economics/replay module passes 26 tests with this regression.
 Test commit `65a7e8d98f0674cb05d1be025e43e820ed88092c` contains the case.
+
+## Exact quote-denomination identity checkpoint — 2026-10-27
+
+Code commit `03dbc92` closes a remaining unit-aliasing gap. The canonical
+identity now travels with instrument quote currency, public book price
+currency, fee currency, trade quote currency, candidate legs, and candidate
+capital. The binary and multi-outcome evaluators require the quote identity on
+the instrument and its observed book to equal the verified payoff settlement
+identity. Supported fee arithmetic also requires exact fee-unit identity. The
+independent audit separately checks those same fields and reports incomplete
+evidence when an identity is missing. Replay v7 pins the updated model fields
+and economic model v6 into replay inputs; the independent audit is version 3.
+
+The core adversarial fixture gives a network-qualified token the display code
+`USD` while its event payoff declares that token and its instrument/book quote
+fields still identify `fiat:USD`. A payoff relationship can be established from
+the identical event terms, but candidate generation returns incomplete
+evidence before price arithmetic. Additional tests strip candidate leg, capital,
+or book identity and confirm independent audit returns incomplete. The UI
+disables mixed-unit funding comparison and keys virtual balances by both venue
+and canonical denomination, so entering fiat USD cannot satisfy a token-USD
+scenario. Kalshi trade pages now emit trade-observation schema v3 with explicit
+fiat USD identity; trade-batch schema v2 accepts nested trade schemas v2 and v3.
+Legacy rows remain loadable with unknown denomination identity.
+
+The full isolated Python Frontier suite passed **153 tests** in 35.35 seconds
+with one pre-existing Starlette/httpx `TestClient` deprecation warning. The
+Frontier React component file passed **8/8** tests. The focused Playwright
+scenario for bounded graph pagination, venue-separated virtual funding, and
+mobile layout passed **1/1** using an isolated temporary database and fixture
+routes. TypeScript typecheck, targeted ESLint for the UI and E2E file, Prettier,
+Ruff check/format, and `git diff --check` passed. The production web build
+completed in 12.95 seconds at 676,320 KiB peak RSS with zero swaps. Vite reports
+its existing chunk-size warning for the 503.86 kB main and 544.41 kB chart
+chunks. No live source request, production service, database, or historical
+artifact was changed.
+
+This closes denomination identity for the currently supported event candidate
+families; it does not make the mission complete. Cross-venue clock uncertainty,
+verified public equivalence, complete capital/settlement costs, venue access,
+source-worker operation, full-universe research, and positive live economics
+remain unestablished. The full repository suite and full browser suite were not
+run. The Polymarket v2 CLOB host remains live-validation pending. Production
+deployment remains deferred.
+
+Implementation commit `03dbc92` changed
+`packages/midas/frontier/models.py`,
+`packages/midas/frontier/economics.py`,
+`packages/midas/frontier/independent_audit.py`,
+`packages/midas/frontier/replay.py`,
+`packages/midas/frontier/adapters/kalshi.py`,
+`packages/midas/frontier/adapters/kraken.py`,
+`packages/midas/frontier/adapters/polymarket.py`,
+`tests/frontier/builders.py`, `tests/frontier/test_relationships_economics_replay.py`,
+`tests/frontier/test_adapters.py`, `tests/frontier/test_api.py`,
+`apps/web/src/Frontier.tsx`, `apps/web/src/Frontier.test.tsx`, and
+`apps/web/e2e/frontier.spec.ts`.
+
+Reproduction commands:
+
+```text
+PYTHONPATH=packages:. /home/charlie/midas/.venv/bin/pytest -q tests/frontier
+corepack pnpm --dir apps/web exec vitest run src/Frontier.test.tsx --maxWorkers=1 --minWorkers=1
+corepack pnpm --dir apps/web exec playwright test e2e/frontier.spec.ts --grep 'relationship network remains bounded' --workers=1
+corepack pnpm --dir apps/web typecheck
+corepack pnpm --dir apps/web exec eslint src/Frontier.tsx src/Frontier.test.tsx e2e/frontier.spec.ts
+corepack pnpm --dir apps/web exec prettier --check src/Frontier.tsx src/Frontier.test.tsx e2e/frontier.spec.ts
+corepack pnpm --dir apps/web build
+```

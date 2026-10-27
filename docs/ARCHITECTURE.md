@@ -110,6 +110,13 @@ self-attributed review revisions record rejected, ambiguous, or strict-verifier
 decisions; the verifier requires verified resolution and exhaustive payout
 evidence. Reviewer and external assertion references are not authenticated.
 Replay uses only the latest decision and preserves the full review history.
+Canonical denomination identities now flow from instrument quote through public
+book, fee, trade, candidate leg, and modeled capital fields. Candidate economics
+and independent audit require those exact identities to agree with the payoff
+settlement unit; a display ticker alone cannot bridge fiat to a token or one
+token contract to another. Legacy rows without identity remain readable and
+remain economically incomplete. Virtual-funding inputs stay local and are
+separated by venue and exact denomination.
 Polymarket adapter v3 and Kalshi adapter v5 also normalize source event-group
 context through an explicit one-GET `event_market_groups` capability and
 `POST /api/frontier/probe/{venue}/event-markets`. The route binds the returned

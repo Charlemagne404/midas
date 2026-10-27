@@ -30,6 +30,16 @@ availability, fills, legal access, or transferability. Preserve source and
 receipt timestamps, raw hashes, adapter versions, quality flags, and each
 exchange's timestamp semantics when evaluating a candidate.
 
+Keep display currency codes separate from denomination identity. Instruments,
+books, fee schedules, trades and candidate capital expose an exact identity only
+when the source supports one. A ticker match such as `USD` does not establish
+that two values use fiat dollars, the same token, or the same network. Missing
+identities in older stored rows are intentionally left unknown; do not fill them
+from the ticker or update historical records. Candidate evaluation and
+independent audit require the exact quote identity to match the verified payoff
+settlement unit, and require a fee identity before including a fee amount. The
+virtual-funding UI keeps separate balances by venue and canonical denomination.
+
 The source health `requests_in_window` value counts request starts in the
 trailing 60 seconds. Reading health is local and makes no source request.
 Cross-venue `timing_verified` is stricter than receipt-time proximity: the

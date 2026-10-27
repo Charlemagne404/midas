@@ -294,14 +294,19 @@ current workbench assumptions; both remain hypothetical.
 Candidate detail also provides a local virtual-funding comparison. A researcher
 may enter a nonnegative decimal balance separately for each venue. The UI
 compares it exactly with that venue's modeled principal plus known modeled fees;
-balances are never pooled, transferred, sent to an API, or persisted. A missing
-or mixed quote currency disables comparison, and unknown fees leave the fee
-amount unresolved rather than allowing a sufficient-funds claim. These inputs
-do not inspect real accounts, collateral, transfers, or settlement duration.
-Focused coverage checks exact decimal shortfalls, unresolved fees, venue
-fragmentation, and responsive layout. The backend also rejects verified payout
-denominations that differ from the recorded settlement asset unless a valuation
-bridge is implemented; candidate and independent-audit paths repeat the guard.
+balances are never pooled, transferred, sent to an API, or persisted. Comparison
+is keyed by venue and canonical denomination identity, not a currency code.
+Missing or mixed quote identity disables comparison; a token marked `USD` does
+not share a balance with `fiat:USD`. Unknown fees leave the fee amount unresolved
+rather than allowing a sufficient-funds claim. These inputs do not inspect real
+accounts, collateral, transfers, or settlement duration. Focused coverage checks
+exact decimal shortfalls, unresolved fees, venue fragmentation, responsive
+layout, and same-code/different-asset isolation. Older normalized records with
+no denomination identity remain readable but cannot be upgraded by inference
+from their display ticker; candidate generation and independent audit keep them
+incomplete. The backend also rejects verified payout denominations that differ
+from the recorded settlement asset unless a valuation bridge is implemented;
+candidate and independent-audit paths repeat the guard.
 
 Keep Frontier experiments in a temporary store and use the bounded probe gates
 described by the [Frontier operations guide](frontier/FRONTIER_OPERATIONS.md).

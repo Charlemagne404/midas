@@ -371,3 +371,27 @@ integration, or browser E2E was run for the schema checkpoint. The subsequent
 v1-host public snapshot and unresolved v2 hostname attempt are documented in
 the Polymarket route subsection and live-probe manifest. The exact test
 commands and interpretation are recorded in the Frontier engineering report.
+
+## Frontier exact-denomination checkpoint — 2026-10-27
+
+Commit `03dbc92` extends canonical denomination identity from market settlement
+to instrument quote, public book, fee schedule, trade, candidate leg, and modeled
+capital. The binary and multi-outcome evaluators require the instrument and
+book quote units to match the exact settlement identity; the independent audit
+rechecks quote, book, fee, and capital identities. A token whose display code is
+`USD` cannot match `fiat:USD`. Older records still load with identity unknown
+and remain ineligible for supported candidate arithmetic. Mission Control keeps
+virtual balances separate by venue and canonical denomination.
+
+The full Python Frontier suite passed **153 tests** with one existing
+Starlette/httpx deprecation warning. The Frontier component file passed **8/8**;
+TypeScript, targeted ESLint, Prettier, Ruff, and `git diff --check` passed. The
+isolated depth-two graph and venue-fragmented-funding Playwright case passed.
+The production frontend build completed in **13 seconds** at **676,320 KiB peak
+RSS**, with no swaps; Vite retains a chunk-size warning for the main and chart
+bundles. No live exchange request, deployment, production service change, or
+Reality/evidence mutation occurred. The full repository suite, full browser
+suite, and live Polymarket v2 host/settlement validation remain outstanding.
+See the [Frontier ledger](frontier/FRONTIER_MISSION_LEDGER.md) for reproduction
+commands and the [engineering report](frontier/FRONTIER_ENGINEERING_REPORT.md)
+for the current component matrix.
