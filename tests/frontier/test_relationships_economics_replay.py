@@ -7,6 +7,7 @@ import pytest
 from midas.frontier.economics import (
     ExecutionScenario,
     OpportunityClassification,
+    _calculate_fee,
     audit_kalshi_mve_reported_settlement,
     generate_binary_coverage_candidates,
     generate_multi_outcome_coverage_candidate,
@@ -1025,6 +1026,84 @@ def test_kalshi_public_fee_estimate_flows_through_candidate_and_independent_audi
         code_version="kalshi-fee-input-provenance-v1",
     )
     assert replay.manifest.fee_metadata_observation_ids == ("3" * 64, "4" * 64)
+
+
+def test_kalshi_candidate_fee_estimate_requires_quote_bounded_fresh_evidence():
+    _, right, _, _ = _verified_pair()
+    instrument = right.instruments[0]
+    metadata = KalshiFeeMetadata(
+        adapter_version="frontier-kalshi-16",
+        native_market_id=right.native_market_id,
+        native_event_id=right.native_event_id,
+        series_ticker="KX-FEE-SERIES",
+        event_fee_type_override="quadratic",
+        event_fee_multiplier_override=Decimal(1),
+        series_fee_type="quadratic",
+        series_fee_multiplier=Decimal(1),
+        effective_fee_type="quadratic",
+        effective_fee_multiplier=Decimal(1),
+        fee_resolution_state="event_override",
+        event_fee_type_override_field_present=True,
+        event_fee_multiplier_override_field_present=True,
+        event_raw_sha256="1" * 64,
+        series_raw_sha256="2" * 64,
+        event_received_at_utc=T0,
+        series_received_at_utc=T0,
+    )
+    schedule = kalshi_candidate_fee_schedule(
+        right,
+        metadata,
+        event_observation_id="3" * 64,
+        series_observation_id="4" * 64,
+    )
+    assert schedule is not None
+    market_with_schedule = right.model_copy(update={"fees": schedule})
+    arguments = (market_with_schedule, instrument, Decimal(1), Decimal("0.55"), T0)
+
+    assert _calculate_fee(*arguments, analysis_time_utc=T0 + timedelta(milliseconds=1)) == Decimal(
+        "0.02"
+    )
+    assert (
+        _calculate_fee(
+            market_with_schedule.model_copy(
+                update={
+                    "fees": schedule.model_copy(
+                        update={"evidence_observed_at_utc": T0 + timedelta(milliseconds=1)}
+                    )
+                }
+            ),
+            instrument,
+            Decimal(1),
+            Decimal("0.55"),
+            T0,
+            analysis_time_utc=T0 + timedelta(milliseconds=2),
+        )
+        is None
+    )
+    assert (
+        _calculate_fee(
+            market_with_schedule.model_copy(
+                update={
+                    "fees": schedule.model_copy(
+                        update={"evidence_observed_at_utc": T0 - timedelta(days=1, milliseconds=1)}
+                    )
+                }
+            ),
+            instrument,
+            Decimal(1),
+            Decimal("0.55"),
+            T0,
+            analysis_time_utc=T0 + timedelta(milliseconds=1),
+        )
+        is None
+    )
+    assert (
+        _calculate_fee(
+            *arguments,
+            analysis_time_utc=T0 + timedelta(days=1, milliseconds=1),
+        )
+        is None
+    )
 
 
 def test_binary_coverage_requires_open_markets_and_exact_supported_quantity():
