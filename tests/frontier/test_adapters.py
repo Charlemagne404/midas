@@ -110,6 +110,8 @@ async def test_polymarket_v1_capture_normalizes_without_claiming_verified_payout
     assert [item.outcome_id for item in first.instruments] == ["yes", "no"]
     assert first.payoff.verified is False
     assert first.settlement_asset is None
+    assert first.settlement_asset_identity is None
+    assert first.instruments[0].price_currency == "USDC"
     assert first.provenance.raw_sha256
     assert first.fees.status == FeeStatus.VERIFIED
     assert first.fees.rate == Decimal("0.04")
@@ -144,6 +146,110 @@ async def test_polymarket_v1_capture_normalizes_without_claiming_verified_payout
     assert snapshot.venue == Venue.POLYMARKET
     assert snapshot.native_market_id == first.native_market_id
     assert snapshot.provenance.raw_sha256
+
+
+@pytest.mark.asyncio
+async def test_polymarket_v2_position_fixture_uses_versioned_host_and_pusd_identity():
+    # Controlled schema fixture; no live Gamma v2 book was available here.
+    raw_market = json.loads(_captured("tests/fixtures/gamma_live.json"))[0]
+    raw_market["version"] = "v2"
+    raw_market["positionIds"] = ["9001", "9002"]
+    raw_market.pop("clobTokenIds", None)
+    discovery_transport, discovery_requests, discovery_client = _transport(
+        "gamma-api.polymarket.com", {"/markets": json.dumps([raw_market])}
+    )
+    discovery_adapter = PolymarketAdapter(
+        AdapterConfig(
+            enabled=True, live_public_probe_enabled=True, requests_per_second=5, retries=0
+        ),
+        transport=discovery_transport,
+    )
+    try:
+        markets = await discovery_adapter.discover_markets(1)
+    finally:
+        await discovery_client.aclose()
+
+    market = markets[0]
+    assert discovery_requests[0].method == "GET"
+    assert "authorization" not in discovery_requests[0].headers
+    assert [item.native_instrument_id for item in market.instruments] == ["9001", "9002"]
+    assert market.settlement_asset == "PUSD"
+    assert market.settlement_asset_identity is not None
+    assert market.settlement_asset_identity.canonical_id == (
+        "token:PUSD:eip155:137:0xc011a7e12a19f7b1f670d46f03b03f3342e82dfb"
+    )
+    assert market.payoff.settlement_asset_identity == market.settlement_asset_identity
+    assert market.payoff.payout_currency == "PUSD"
+    assert market.payoff.verified is False
+    assert market.instruments[0].price_currency == "PUSD"
+    assert "SETTLEMENT_ASSET_PROTOCOL_MAPPED" in market.quality_flags
+
+    book = {
+        "market": raw_market["conditionId"],
+        "asset_id": "9001",
+        "timestamp": "1793110000000",
+        "hash": "fixture-v2-book",
+        "bids": [{"price": "0.40", "size": "12"}],
+        "asks": [{"price": "0.42", "size": "10"}],
+        "min_order_size": "5",
+        "tick_size": "0.01",
+    }
+    book_transport, book_requests, book_client = _transport(
+        "clob-v2.polymarket.com", {"/book": json.dumps(book)}
+    )
+    book_adapter = PolymarketAdapter(
+        AdapterConfig(
+            enabled=True, live_public_probe_enabled=True, requests_per_second=5, retries=0
+        ),
+        transport=book_transport,
+    )
+    try:
+        snapshot = await book_adapter.fetch_book(market, "9001", depth=10)
+    finally:
+        await book_client.aclose()
+    assert book_requests[0].url.host == "clob-v2.polymarket.com"
+    assert book_requests[0].url.path == "/book"
+    assert book_requests[0].url.params["token_id"] == "9001"
+    assert "authorization" not in book_requests[0].headers
+    assert snapshot.price_unit == "PUSD per outcome share"
+
+
+@pytest.mark.asyncio
+async def test_polymarket_book_rejects_market_schema_provenance_mismatch():
+    raw_market = json.loads(_captured("tests/fixtures/gamma_live.json"))[0]
+    raw_market["version"] = "v2"
+    raw_market["positionIds"] = ["9001", "9002"]
+    raw_market.pop("clobTokenIds", None)
+    market_transport, _, market_client = _transport(
+        "gamma-api.polymarket.com", {"/markets": json.dumps([raw_market])}
+    )
+    market_adapter = PolymarketAdapter(
+        AdapterConfig(
+            enabled=True, live_public_probe_enabled=True, requests_per_second=5, retries=0
+        ),
+        transport=market_transport,
+    )
+    try:
+        market = (await market_adapter.discover_markets(1))[0]
+    finally:
+        await market_client.aclose()
+
+    contradictory = market.model_copy(
+        update={"native_fields": {**market.native_fields, "version": "v1"}}
+    )
+    transport, requests, client = _transport("clob-v2.polymarket.com", {})
+    adapter = PolymarketAdapter(
+        AdapterConfig(
+            enabled=True, live_public_probe_enabled=True, requests_per_second=5, retries=0
+        ),
+        transport=transport,
+    )
+    try:
+        with pytest.raises(AdapterError, match="does not match its source provenance"):
+            await adapter.fetch_book(contradictory, "9001")
+    finally:
+        await client.aclose()
+    assert requests == []
 
 
 @pytest.mark.asyncio

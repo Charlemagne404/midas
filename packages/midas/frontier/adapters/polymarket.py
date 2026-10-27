@@ -35,6 +35,8 @@ from midas.frontier.models import (
     PayoffSpec,
     QuantityUnit,
     ResolutionSpec,
+    SettlementAssetIdentity,
+    SettlementAssetKind,
     StatePayout,
     TradeBatch,
     TradeObservation,
@@ -44,17 +46,37 @@ from midas.frontier.models import (
 from midas.market_data.polymarket import normalize_market
 
 D = Decimal
-ADAPTER_VERSION = "frontier-polymarket-4"
+ADAPTER_VERSION = "frontier-polymarket-5"
 GAMMA = "https://gamma-api.polymarket.com"
 CLOB = "https://clob.polymarket.com"
+CLOB_V2 = "https://clob-v2.polymarket.com"
 DATA = "https://data-api.polymarket.com"
 POLY_FEES_DOC = "https://docs.polymarket.com/trading/fees"
 POLY_DATA_DOC = "https://docs.polymarket.com/developers/CLOB/introduction"
+POLY_PROTOCOL_DOC = "https://github.com/Polymarket/rs-clob-client-v2/blob/main/README.md"
+POLY_V2_ASSETS_DOC = "https://github.com/Polymarket/polymarket-v2-external/blob/main/README.md"
+POLY_V2_PUSD_ADDRESS = "0xC011a7E12a19f7B1f670d46F03B03f3342E82DFB"
+
+
+def _payout_asset_identity(protocol: str) -> SettlementAssetIdentity | None:
+    if protocol != "v2":
+        return None
+    return SettlementAssetIdentity(
+        kind=SettlementAssetKind.TOKEN,
+        code="pUSD",
+        network_id="eip155:137",
+        asset_reference=POLY_V2_PUSD_ADDRESS,
+    )
 
 
 class PolymarketAdapter(BaseReadOnlyAdapter):
     venue = Venue.POLYMARKET
-    allowed_hosts = {"gamma-api.polymarket.com", "clob.polymarket.com", "data-api.polymarket.com"}
+    allowed_hosts = {
+        "gamma-api.polymarket.com",
+        "clob.polymarket.com",
+        "clob-v2.polymarket.com",
+        "data-api.polymarket.com",
+    }
     capabilities = build_capabilities(
         Venue.POLYMARKET,
         ADAPTER_VERSION,
@@ -80,8 +102,8 @@ class PolymarketAdapter(BaseReadOnlyAdapter):
                 "https://docs.polymarket.com/developers/CLOB/introduction",
             ),
             Capability.BOOK_SNAPSHOT: (
-                "Public CLOB REST book snapshots",
-                "https://docs.polymarket.com/developers/CLOB/market-data",
+                "Public CLOB REST snapshots use the host for the source market's v1 or v2 asset schema",
+                POLY_PROTOCOL_DOC,
             ),
             Capability.PUBLIC_TRADES: (
                 "Public Data API trades",
@@ -224,6 +246,9 @@ class PolymarketAdapter(BaseReadOnlyAdapter):
             raise AdapterError(
                 "UNSUPPORTED_MARKET_SCHEMA", "Unknown Polymarket outcome-token schema"
             )
+        payout_asset_identity = _payout_asset_identity(legacy.protocol)
+        quote_currency = payout_asset_identity.code if payout_asset_identity else "USDC"
+        settlement_asset = quote_currency if payout_asset_identity else None
         state_ids: tuple[str, ...]
         if len(legacy.instruments) == 2 and [item.label for item in legacy.instruments] == [
             "Yes",
@@ -248,13 +273,13 @@ class PolymarketAdapter(BaseReadOnlyAdapter):
                     label=instrument.label,
                     outcome_id=state_ids[index],
                     quantity_unit=QuantityUnit.SHARE,
-                    price_currency="USDC",
+                    price_currency=quote_currency,
                     tick_size=tick if tick is not None and tick > 0 else None,
                     minimum_quantity=minimum if minimum is not None and minimum > 0 else None,
                     payouts=payouts,
                 )
             )
-        fee = self._fee(legacy.fee, raw, response)
+        fee = self._fee(legacy.fee, raw, response, fee_currency=quote_currency)
         end_time = parse_time(raw.get("endDateIso") or raw.get("endDate"))
         rules_hash = None
         if legacy.resolution_source or legacy.description:
@@ -294,11 +319,17 @@ class PolymarketAdapter(BaseReadOnlyAdapter):
             instruments=tuple(outcomes),
             payoff=PayoffSpec(
                 state_ids=state_ids,
-                payout_currency="USD",
-                settlement_asset=None,
+                payout_currency=settlement_asset or "USD",
+                settlement_asset=settlement_asset,
+                settlement_asset_identity=payout_asset_identity,
                 exhaustive=False,
                 verified=False,
-                verification_basis="Outcome labels/token IDs are source metadata; CTF payout and collateral attestation is not performed here.",
+                verification_basis=(
+                    "Position-backed v2 settlement asset is mapped from documented Polymarket protocol "
+                    f"metadata ({POLY_PROTOCOL_DOC}; {POLY_V2_ASSETS_DOC}); market-specific payoff remains unverified."
+                    if payout_asset_identity
+                    else "Outcome labels/token IDs are source metadata; CTF payout and collateral attestation is not performed here."
+                ),
             ),
             resolution=ResolutionSpec(
                 primary_rule=legacy.description or None,
@@ -308,13 +339,20 @@ class PolymarketAdapter(BaseReadOnlyAdapter):
                 verified=False,
             ),
             fees=fee,
-            quote_asset="USDC",
+            quote_asset=quote_currency,
+            settlement_asset=settlement_asset,
+            settlement_asset_identity=payout_asset_identity,
             native_fields=native_json(raw),
             quality_flags=tuple(
                 flag
                 for flag, condition in (
                     ("PAYOUT_NOT_ATTESTED", not legacy.payout_verified),
-                    ("SETTLEMENT_ASSET_NOT_ATTESTED", True),
+                    (
+                        "SETTLEMENT_ASSET_PROTOCOL_MAPPED"
+                        if payout_asset_identity
+                        else "SETTLEMENT_ASSET_NOT_ATTESTED",
+                        True,
+                    ),
                     ("RESOLUTION_SEMANTICS_NOT_VERIFIED", not bool(legacy.resolution_source)),
                     ("CROSS_VENUE_EQUIVALENCE_NOT_ASSERTED", True),
                 )
@@ -331,7 +369,13 @@ class PolymarketAdapter(BaseReadOnlyAdapter):
         )
 
     @staticmethod
-    def _fee(fee: LegacyFee, raw: dict[str, Any], response: HTTPObservation) -> FeeSchedule:
+    def _fee(
+        fee: LegacyFee,
+        raw: dict[str, Any],
+        response: HTTPObservation,
+        *,
+        fee_currency: str,
+    ) -> FeeSchedule:
         from midas.frontier.models import sha256_text
 
         if not fee.verified:
@@ -351,7 +395,7 @@ class PolymarketAdapter(BaseReadOnlyAdapter):
             applies_to="taker",
             rate=fee.rate,
             formula="quantity * rate * price * (1 - price); exponent 1",
-            fee_currency="USDC",
+            fee_currency=fee_currency,
             source_url=POLY_FEES_DOC,
             evidence_sha256=sha256_text(evidence),
             effective_at_utc=response.response_received_at_utc,
@@ -375,7 +419,20 @@ class PolymarketAdapter(BaseReadOnlyAdapter):
         )
         if instrument is None:
             raise AdapterError("INSTRUMENT_NOT_FOUND", "Instrument does not belong to this market")
-        response = await self.transport.get_json(f"{CLOB}/book", {"token_id": instrument_id})
+        protocol = market.provenance.source_schema_version
+        if protocol not in {"v1", "v2"} or market.native_fields.get("version") != protocol:
+            raise AdapterError(
+                "UNSUPPORTED_MARKET_SCHEMA",
+                "Market protocol does not match its source provenance",
+            )
+        payout_asset_identity = _payout_asset_identity(protocol)
+        if market.settlement_asset_identity != payout_asset_identity:
+            raise AdapterError(
+                "UNSUPPORTED_SETTLEMENT_ASSET",
+                "Market settlement asset does not match its documented protocol mapping",
+            )
+        clob_base = CLOB_V2 if protocol == "v2" else CLOB
+        response = await self.transport.get_json(f"{clob_base}/book", {"token_id": instrument_id})
         self._capture_response(response, "book_snapshot")
         raw = response.payload
         if not isinstance(raw, dict) or str(raw.get("asset_id")) != instrument_id:
@@ -407,7 +464,7 @@ class PolymarketAdapter(BaseReadOnlyAdapter):
             native_instrument_id=instrument_id,
             asks=asks,
             bids=bids,
-            price_unit="USDC per outcome share",
+            price_unit=f"{market.quote_asset or 'USDC'} per outcome share",
             quantity_unit=instrument.quantity_unit,
             received_at_utc=response.response_received_at_utc,
             exchange_timestamp_utc=timestamp,
