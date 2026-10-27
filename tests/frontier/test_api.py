@@ -355,6 +355,35 @@ def test_arena_replay_stages_a_pinned_snapshot_before_admitted_job_creation(tmp_
         asyncio.run(http_client.aclose())
 
 
+def test_arena_resource_denial_keeps_snapshot_and_creates_no_job(tmp_path, monkeypatch):
+    import midas.arena.jobs as jobs
+    from midas.arena.admission import ResourceAdmissionDenied
+
+    arena_root = tmp_path / "arena"
+    client, registry, http_client, requests, store = _client(tmp_path, arena_root=arena_root)
+
+    def deny_admission(root, spec, *, admission_key):
+        raise ResourceAdmissionDenied(["resource_admission_lock_busy"])
+
+    monkeypatch.setattr(jobs, "create", deny_admission)
+    try:
+        response = client.post(
+            "/api/frontier/arena-replay",
+            json={"scenarios": [{"name": "quoted baseline"}, {"name": "stress"}]},
+        )
+        assert response.status_code == 409
+        assert "resource_admission_lock_busy" in response.json()["detail"]
+        snapshots = list((arena_root / "frontier-replay-snapshots").glob("*.json"))
+        assert len(snapshots) == 1
+        assert not list((arena_root / "jobs").glob("*/job.json"))
+        assert requests == []
+        assert store.summary()["observations"] == 0
+    finally:
+        client.close()
+        asyncio.run(registry.aclose())
+        asyncio.run(http_client.aclose())
+
+
 def test_readiness_separates_arena_configuration_from_worker_runtime_validation(tmp_path):
     unconfigured, registry, http_client, _, _ = _client(tmp_path / "unconfigured")
     try:
