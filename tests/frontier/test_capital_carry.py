@@ -2,8 +2,11 @@ from __future__ import annotations
 
 from datetime import timedelta
 from decimal import Decimal, localcontext
+from fractions import Fraction
 
 import pytest
+from hypothesis import given, settings
+from hypothesis import strategies as st
 from midas.frontier.capital import (
     CapitalCarryRequest,
     CapitalCarrySensitivity,
@@ -164,6 +167,67 @@ def test_capital_carry_fails_closed_on_unverified_settlement_or_missing_venue_ra
             markets_by_id=markets,
             observation_row_hashes={"a" * 64: "3" * 64},
         )
+
+
+@settings(max_examples=32, deadline=None)
+@given(
+    poly_cents=st.integers(min_value=0, max_value=100_000_000),
+    kalshi_cents=st.integers(min_value=0, max_value=100_000_000),
+    poly_rate=st.integers(min_value=0, max_value=999_999),
+    kalshi_rate=st.integers(min_value=0, max_value=999_999),
+    poly_seconds=st.integers(min_value=1, max_value=10_000_000),
+    kalshi_seconds=st.integers(min_value=1, max_value=10_000_000),
+)
+def test_capital_carry_matches_fraction_reference_for_bounded_inputs(
+    poly_cents,
+    kalshi_cents,
+    poly_rate,
+    kalshi_rate,
+    poly_seconds,
+    kalshi_seconds,
+):
+    candidate, markets = candidate_and_markets()
+    capital = {
+        "polymarket": D(poly_cents) / D(100),
+        "kalshi": D(kalshi_cents) / D(100),
+    }
+    rates = {"polymarket": str(poly_rate), "kalshi": str(kalshi_rate)}
+    seconds = {"polymarket": poly_seconds, "kalshi": kalshi_seconds}
+    for market_id, source in tuple(markets.items()):
+        venue = source.venue.value
+        updated = source.model_copy(
+            update={
+                "resolution": source.resolution.model_copy(
+                    update={"settles_at_utc": T0 + timedelta(seconds=seconds[venue])}
+                )
+            }
+        )
+        markets[market_id] = updated
+    candidate = candidate.model_copy(update={"capital_by_venue": capital})
+
+    result = evaluate_capital_carry(
+        candidate,
+        run_id="1" * 64,
+        run_sha256="2" * 64,
+        rates_by_venue=rates,
+        markets_by_id=markets,
+        observation_row_hashes={"a" * 64: "3" * 64, "b" * 64: "4" * 64},
+    )
+
+    with localcontext() as context:
+        context.prec = 96
+        expected_by_venue = {}
+        for venue in capital:
+            exact = (
+                Fraction(capital[venue])
+                * Fraction(int(rates[venue]))
+                * Fraction(seconds[venue], 10_000 * 365 * 24 * 60 * 60)
+            )
+            expected_by_venue[venue] = D(exact.numerator) / D(exact.denominator)
+        expected_total = sum(expected_by_venue.values(), D(0))
+    assert {item.venue: item.carry_cost for item in result.venues} == expected_by_venue
+    assert result.total_carry_cost == expected_total
+    assert result.audit.disposition == "verified"
 
 
 @pytest.mark.parametrize("rate", ["-1", "1e3", "1000000", "0.1234567", 12.5])
