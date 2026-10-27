@@ -1949,11 +1949,11 @@ cross-venue economics.
 | --- | --- | --- |
 | Isolated baseline/worktree and preserved unrelated changes | COMPLETE AND VERIFIED | Branch starts at verified V6 commit; original dirty worktrees untouched. |
 | Adapter protocol, capability registry, bounded GET transport | COMPLETE AND VERIFIED | Contract tests, all capability declarations, host/size/rate/redirect bounds; Kalshi MVE discovery is explicitly supported while Polymarket/Kraken remain unsupported. |
-| Kalshi MVE settlement metadata and arithmetic audit | PARTIALLY VERIFIED | Adapter v12 preserves bounded component YES settlement values and optional parent settlement/provisional fields. A saved-evidence-only API/UI audit recomputes the selected component product for up to 64 legs and compares it with the parent value only for complete, final evidence; direct official rule/schema links and observation/raw hashes are shown. The full 148-test suite predates only the output source-link tuple; the final focused 17 tests and four browser cases include it. All positive and negative settlement arithmetic remains fixture-only; the preserved live child lacks values, no live audit result exists, and the method does not verify outcomes/rules or alter candidate economics. |
+| Kalshi MVE settlement metadata and arithmetic audit | PARTIALLY VERIFIED | Adapter v13 preserves bounded component YES settlement values and optional parent settlement/provisional fields. A saved-evidence-only API/UI audit recomputes the selected component product for up to 64 legs and compares it with the parent value only for complete evidence and explicit finality; audit schema v2 identifies its algorithm and returns the parent lifecycle/provisional flag. Direct official rule/schema links and observation/raw hashes are shown. All settlement arithmetic remains fixture-only; the preserved live child lacks values, no live audit result exists, and the method does not verify outcomes/rules or alter candidate economics. |
 | Polymarket, Kalshi and Kraken Spot adapters | PARTIALLY VERIFIED | Fixture/contract tests and bounded live listing/book/legacy-trade captures are preserved. Polymarket v2 first and continuation pages returned ten rows each. Kalshi has a ticker-filtered cursor-page implementation, fixture-verified row mapping, and a live empty terminal page; live trade-row normalization remains unvalidated. Adapter v4 preserves native MVE selected component IDs/sides; v7 added one-page MVE discovery whose live response omitted nested markets; v8 fixes event-detail parsing of an explicit empty top-level market array; v10 captures a saved-parent-referenced child contract and preserves its native rules. The one captured child is closed and includes fair-price fallback conditions; neither its simple binary payoff nor the parent-combo payout is verified. Account fees and Kraken account fee applicability remain unresolved. API fixtures cover source degradation and recovery; live degraded-source behavior remains unverified. |
 | Canonical market/instrument normalization | PARTIALLY VERIFIED | Three distinct instrument classes are represented; v2 Polymarket trades retain native outcome-token identity; Kalshi MVE component references remain source assertions; `MarketBatch` schema v2 preserves typed `MarketGroup` membership state. The genuine MVE response records member-list state `omitted` and zero child markets. Payoff/settlement semantics remain unverified. |
 | Relationship hypotheses, review revisions, indexed neighborhoods, and explicit same-payoff verifier | PARTIALLY VERIFIED | Self-attributed review API/UI, append-only revisions, latest-state replay, tamper/migration checks, left/right endpoint-indexed 1–3 hop scans capped at 500 rows, one-hop keyset pages, and revision-bound multi-hop BFS pages with deterministic recomputation and 201-market chunk coverage. Matcher v5 includes bounded exact-ID MVE selected-component references as HYPOTHESIS edges with both source record IDs; a saved Kalshi parent listing and child detail replay into one such edge. Matcher v4's explicit year-conflict rejection remains. A genuine House-control topic pair remains text-only HYPOTHESIS and fails strict same-payoff verification. Payout currency must match each payoff settlement asset, and the market-level settlement asset must agree; the focused USD/USDC test passes. The focused depth-two browser E2E now passes; reviewer authentication, revision-history drill-down, and full-universe search remain absent. |
-| Opportunity candidate and independent economic checks | PARTIALLY VERIFIED | Two-venue all-long binary and same-market 3–16 state one-hot exhaustive coverage; economic model v4 computes an exact full/no-fill adverse exposure pattern over up to 16 legs, and independent audit v2 recomputes it from pinned inputs. Differential three-leg enumeration, unknown-fee cases, malformed cross-venue leg handling, and no-bridge payout/settlement denomination rejection pass. Cross-venue timing requires matching known timestamp semantics, nonfuture timestamps, and observed skew plus quantified source clock uncertainty within the scenario bound; controlled adversarial cases pass. Current venue adapters omit clock uncertainty, leaving live cross-venue timing unverified. Broader funding/settlement costs and operational feasibility remain incomplete. |
+| Opportunity candidate and independent economic checks | PARTIALLY VERIFIED | Two-venue all-long binary and same-market 3–16 state one-hot exhaustive coverage; economic model v5 computes an exact full/no-fill adverse exposure pattern over up to 16 legs, and independent audit v2 recomputes it from pinned inputs. Differential three-leg enumeration, unknown-fee cases, malformed cross-venue leg handling, no-bridge payout/settlement denomination rejection, and same-ticker/different-network asset rejection pass. Cross-venue timing requires matching known timestamp semantics, nonfuture timestamps, and observed skew plus quantified source clock uncertainty within the scenario bound; controlled adversarial cases pass. Current venue adapters omit clock uncertainty, leaving live cross-venue timing unverified. Broader funding/settlement costs and operational feasibility remain incomplete. |
 | Kalshi taker-fee sensitivity | PARTIALLY VERIFIED | Hash-matched public event/series evidence supports one-fill and bounded one-order Decimal sensitivities for two documented quadratic taker fee types, both precision cases, per-fill rounding, order accumulation, and capped rebates. Tests match the official one-fill example and exercise buy/sell arithmetic. The dated official schedule's `KXMVE` multiplier pair is not assumed to apply to captured `KXMVECROSSCATEGORY` metadata. Manual inputs are not live quotes or book-priced; account-specific fees and precision, exact maker/mixed-order applicability, FCM charges, later schedules, and full candidate fee integration remain unresolved. |
 | Append-only evidence store and deterministic replay | COMPLETE AND VERIFIED | Schema v6, additive v2/v3/v4/v5 migration, bounds, hash validation, and immutability. Replay v6 carries exact store record IDs through API-loaded market/book provenance, manifests, candidate legs, and Arena snapshots; direct in-memory replay retains adapter IDs. Replay-v5 economic output includes full/no-fill sensitivity and pins effective mappings/proposal limit. The separate Arena wrapper uses immutable content-addressed snapshots and hash-verified result artifacts; two controlled fixture workers completed and the latest recorded CPU/RSS. |
 | Frontier API and source configuration | COMPLETE AND VERIFIED | Kalshi MVE discovery validates exactly one series/collection/event-ticker filter, capability/config gates, one-page bounds, and raw/normalized lineage; it does not follow the source cursor. Component detail is a separate one-GET capability, bound before the request to a ticker in a saved parent's selected legs and after the response to the saved event identity. Four focused tests now cover raw capture retention after drained Polymarket trade-page and generic market/book/trade lineage mismatches, with no duplicate of an earlier successful listing. |
@@ -2023,15 +2023,41 @@ Results were 2 passed/20 deselected, 1 passed/34 deselected, 1 passed/7
 skipped, and TypeScript passed. Ruff, ESLint, Prettier, and `git diff --check`
 also passed. No live source call was made.
 
-## Settlement asset identity boundary
+## Settlement asset identity implementation
 
-The shared payoff model currently stores `settlement_asset` as an opaque
-string, without separate token network or contract fields. The Polymarket
-adapter sets this field to absent and marks its payoff unverified; same-payoff
-verification and candidate generation require verified exhaustive payoffs,
-matching payout/settlement denominations, and agreement with the market-level
-asset. Current adapter paths therefore fail closed, but a ticker-only token
-label is not a sufficient canonical identity for a future verified source.
-Future token-settled adapters must provide a network/contract-qualified asset
-identity or stay unsupported. No code or live source data changed during this
-review; structured token identity and any valuation bridge remain future work.
+The opaque settlement denomination remains for readable price/payout units,
+and schema v2 adds structured identity fields to `FrontierMarket` and
+`PayoffSpec`. Fiat identity uses a three-letter code; token/other identity
+requires an explicit network ID and asset reference. The payoff and market
+identities must agree; relationship verification, candidate generation, and
+the independent verifier compare the complete identities. The equivalence
+verifier is v3, the economic model is v5, and adapter versions are Kalshi v13,
+Polymarket v4, and Kraken Spot v2. Historical records without the optional
+identity still load, but fail closed for verified payoff comparison.
+
+The Polymarket adapter continues to leave settlement identity absent and its
+payoff unverified. Kalshi normalizes supported event settlement as `fiat:USD`.
+Fixtures show identical token tickers rejected when either network or
+contract-reference identity differs, across the relationship verifier and
+independent audit. Legacy schema-v1 market/payoff records still load, but the
+same-payoff verifier rejects them until identity is present. The identity
+itself is not an independent source attestation; source, resolution, capital,
+and valuation evidence remain separate requirements.
+
+Checkpoint verification: the relationship/economics/replay module passed 25
+tests; adapter, storage, and replay-comparison modules passed 60; two targeted
+API tests and two targeted Frontier UI tests passed. The UI typecheck, targeted
+ESLint, Prettier, Ruff, and `git diff --check` passed. These are regression
+checks for this schema change, not a full repository suite, production build,
+browser E2E run, live token integration, or performance benchmark. No live
+source request or service mutation was made.
+
+Reproduction commands:
+
+```text
+/home/charlie/midas/.venv/bin/pytest -q tests/frontier/test_relationships_economics_replay.py
+/home/charlie/midas/.venv/bin/pytest -q tests/frontier/test_adapters.py tests/frontier/test_storage.py tests/frontier/test_replay_comparison.py
+/home/charlie/midas/.venv/bin/pytest -q tests/frontier/test_api.py::test_captured_cross_venue_event_context_creates_reviewable_hypothesis tests/frontier/test_api.py::test_replay_api_generates_and_persists_multi_outcome_candidate
+corepack pnpm --dir apps/web exec vitest run src/Frontier.test.tsx -t 'captures Kalshi fee metadata|renders a bounded accessible relationship graph' --maxWorkers=1 --minWorkers=1
+corepack pnpm --dir apps/web typecheck
+```

@@ -1052,3 +1052,30 @@ source data changed. Extend the asset identity model before enabling token-
 settled cross-venue equivalence.
 Documentation commit `b5fa650368d3f77422bc45025bdee9988b1906a8` records this
 limitation in the architecture and handoff.
+
+## 2026-10-27 — typed settlement asset identity implementation
+
+Implemented schema-v2 `SettlementAssetIdentity` for markets and payoff specs.
+Fiat identities use a three-letter code; non-fiat identities require both a
+network ID and an asset reference. EVM addresses normalize to lowercase and
+validate as 20-byte addresses; other reference formats retain their source
+case. Kalshi event markets map to `fiat:USD`. Polymarket still does not attest
+its settlement asset, and Kraken spot remains contextual rather than an event
+payoff source.
+
+Same-payoff verification, binary and multi-outcome candidate generation, and
+the independent audit now require market/payoff identity agreement. Exact
+identity participates in relationship evidence and stable identity inputs.
+Schema-v1 records remain readable but cannot pass verified payoff comparison
+without an identity. The UI shows the market and payoff identities and
+relationship evidence exposes matcher/verifier versions and evidence details.
+
+Verification: 25 relationship/economics/replay tests, 60 adapter/storage/
+replay-comparison tests, two targeted API tests, and two targeted UI tests
+passed. UI typecheck, Ruff, ESLint, Prettier, and `git diff --check` passed.
+No full repository suite, production build, browser E2E, live token-settlement
+integration, service change, or source request occurred in this checkpoint.
+Token/network fixtures are controlled examples, not live market evidence.
+Implementation commit: `e0529c5` (`Add canonical Frontier settlement asset
+identities`). Architecture, current-state, and engineering-report updates are
+in the documentation checkpoint accompanying this ledger entry.

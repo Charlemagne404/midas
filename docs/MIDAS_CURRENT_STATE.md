@@ -117,7 +117,8 @@ in `data/frontier/live-probes/2026-10-27-kalshi-mve-component-market-r1.json`.
 This child-level source observation does not verify combo payout or economics,
 and the Frontier branch remains undeployed.
 
-The current isolated branch is adapter v12. It retains Kalshi's optional
+The current isolated branch is Kalshi adapter v13, Polymarket adapter v4, and
+Kraken Spot adapter v2. It retains Kalshi's optional
 `yes_settlement_value_dollars` component field and adds a local-only arithmetic
 audit comparing the recorded selected-component product with the parent MVE's
 recorded settlement value. The audit requires complete component values and a
@@ -329,12 +330,21 @@ sample about five seconds later showed PSI `avg10` at 10.74% (`some`) / 8.37%
 14.22% / 12.27%, available RAM was 9.1 GB, and free swap was about 553 MiB.
 The production bundle remains unverified; no service or source was contacted.
 
-### Settlement asset identity limitation
+### Settlement asset identity checkpoint
 
-`PayoffSpec.settlement_asset` is currently an opaque string; the schema does
-not separately encode a token's network or contract. The Polymarket adapter
-leaves settlement asset absent and its payoff unverified, while relationship
-verification and candidate generation require verified exhaustive payoffs and
-exact denomination agreement. The current adapters therefore fail closed.
-Future token-settled support must use a network/contract-qualified asset
-identity or remain unsupported. No code or source data changed for this review.
+`FrontierMarket` and `PayoffSpec` schema v2 now carry a structured
+`settlement_asset_identity`. Non-fiat identities require a network ID and asset
+reference, and relationship verification, opportunity generation, and the
+independent audit require the market and payoff identities to agree exactly.
+The token-ticker fixture verifies for the same identity and is rejected when
+the network differs. Kalshi event contracts normalize to `fiat:USD`.
+Polymarket settlement identity remains absent and its payoff unverified, so
+the schema change creates no live cross-venue economic claim. The identity is
+normalized evidence, not an independent source attestation.
+
+Focused regression verification on this checkpoint passed: 25 relationship,
+economics, and replay tests; 60 adapter, storage, and replay-comparison tests;
+two API tests; two Frontier UI tests; TypeScript typecheck; Ruff; ESLint; and
+Prettier. No full repository suite, production frontend bundle, live token
+integration, or browser E2E was run. The exact commands and interpretation are
+recorded in the Frontier engineering report.

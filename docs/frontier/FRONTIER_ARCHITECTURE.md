@@ -66,11 +66,18 @@ payoff settlement asset, and the market-level settlement asset to agree with
 that payoff. Binary and multi-outcome candidate generation plus the
 independent audit repeat the denomination guard, so a forged verified
 relationship cannot bypass it. No USD-to-USDC conversion or stablecoin/network
-valuation bridge is assumed. `settlement_asset` is still an opaque string and
-does not encode token network or contract identity. The Polymarket adapter
-leaves its settlement asset absent and its payoff unverified, so current
-cross-venue verification fails closed. A future token-settled adapter must
-provide a network/contract-qualified identity or remain unsupported.
+valuation bridge is assumed. `FrontierMarket` and `PayoffSpec` schema v2 add a
+structured `settlement_asset_identity` beside the display denomination string.
+Fiat identities use a three-letter code; token and other non-fiat identities
+require a network ID and asset reference. Market and payoff identities must
+agree, and cross-venue verification compares the complete identity, so the
+same ticker on different networks is not equivalent. This normalized identity
+is not independent source proof. Kalshi currently identifies its event
+settlement as `fiat:USD`; Polymarket still lacks an attested settlement asset
+and verified payoff, so current cross-venue verification continues to fail
+closed. Token-settled opportunities remain unsupported until an adapter
+provides the exact identity from source evidence and all other payoff and
+valuation requirements are met.
 Event-group observations participate in
 latest-record selection and graph revision identity, so replay and paged reads
 cannot silently retain older child-only metadata.
