@@ -1,5 +1,23 @@
 # Project Frontier Mission Ledger
 
+**Latest regression checkpoint (2026-10-27 21:12 UTC):** The full Frontier
+Python suite passes **262/262** in 41.60 seconds (42.81 seconds wall,
+**353,748 KiB peak RSS**, zero swaps). The full web unit suite passes **40/40**
+in 14.86 seconds (15.56 seconds wall, **271,600 KiB peak RSS**, zero swaps,
+one worker). TypeScript typecheck passes in 7.83 seconds at **439,648 KiB peak
+RSS**, zero swaps; targeted ESLint, Ruff check/format, Prettier, and
+`git diff --check` pass. The only warning in the Python suite is the existing
+Starlette/httpx TestClient deprecation. The production build and browser E2E
+suite remain pending.
+
+At `2026-10-27T21:12:52Z`, external `veritas_gap_detail_v2_batch.py` PID
+**3711078** held the shared Arena lock inode **6423106** in `D` state. PSI
+avg10 was 35.46% (`some`) / 31.91% (`full`), avg60 13.64% / 11.93%, avg300
+15.10% / 13.55%; 9 GiB was available and 459 MiB swap was free. It remains
+untouched. Next safe action: wait for resource admission, then run the isolated
+Frontier browser cases and production build before broader repository checks.
+No live source, production service, or historical capture was accessed.
+
 **Latest implementation checkpoint (2026-10-27 21:07 UTC):** Commit `cfda4ad`
 adds the Coinbase Exchange spot adapter, exact terms-version enforcement in
 both API settings and `CoinbaseSpotConfig`, source quarantine integration, and

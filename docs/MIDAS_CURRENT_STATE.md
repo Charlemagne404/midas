@@ -57,6 +57,18 @@ ledger](frontier/FRONTIER_MISSION_LEDGER.md) and [engineering
 report](frontier/FRONTIER_ENGINEERING_REPORT.md) for measured evidence and
 continuation steps.
 
+### Frontier regression update — 2026-10-27 21:12 UTC
+
+The complete Frontier Python suite now passes **262/262**, the web unit suite
+passes **40/40**, TypeScript typecheck passes, and targeted Frontier ESLint
+passes. Ruff check/format, Prettier, and `git diff --check` pass. Peak RSS was
+353,748 KiB for Frontier Python, 271,600 KiB for web tests, and 439,648 KiB for
+typecheck; none of these jobs swapped. The production build and browser E2E
+remain unverified for the Coinbase checkpoint. The shared Arena batch had
+restarted and PSI was elevated at the latest admission check, so those heavier
+jobs were deferred. No exchange request, service action, or historical-store
+access occurred.
+
 Frontier development is active in the isolated worktree
 `/home/charlie/midas-frontier` on branch `codex/frontier-20261026`, based on the
 verified Veritas V6 integration. It is not merged or deployed. The current
