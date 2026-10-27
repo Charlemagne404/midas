@@ -1243,6 +1243,7 @@ def test_candidate_generation_and_independent_audit_enforce_price_ticks():
         as_of_utc=T0 + timedelta(milliseconds=100),
     )
     candidate = next(item for item in candidates if item.legs)
+    assert candidate.model_version == "frontier-economic-verifiers-7"
 
     def with_half_dollar_ticks(market_value):
         instruments = tuple(
