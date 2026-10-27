@@ -1503,6 +1503,27 @@ def test_deterministic_replay_is_invariant_to_input_order():
         "fee disagrees with supported schedule" in reason for reason in fee_leg_audited.reasons
     )
 
+    tampered_capital = dict(original.capital_by_venue)
+    capital_venue = next(iter(tampered_capital))
+    tampered_capital[capital_venue] += Decimal("0.01")
+    capital_audited = independently_audit_candidate(
+        original.model_copy(
+            update={"capital_by_venue": tampered_capital, "independent_audit": None}
+        ),
+        markets={left.canonical_id: left, right.canonical_id: right},
+        books_by_market={left.canonical_id: left_books, right.canonical_id: right_books},
+        relationships={relationship.relationship_id: relationship},
+        state_mappings={
+            relationship.relationship_id: kwargs["state_mappings"][relationship.relationship_id]
+        },
+        instrument_mappings={relationship.relationship_id: canonical_instrument_mapping},
+        scenario=ExecutionScenario(),
+    )
+    assert capital_audited.independent_audit is not None
+    assert capital_audited.independent_audit.disposition.value == "disagreement"
+    assert capital_audited.classification == OpportunityClassification.INCOMPLETE_EVIDENCE
+    assert any("capital by venue differs" in reason for reason in capital_audited.reasons)
+
     assert original.one_sided_fill_sensitivity is not None
     corrupted_outcome = original.one_sided_fill_sensitivity.worst_before_fees.model_copy(
         update={
