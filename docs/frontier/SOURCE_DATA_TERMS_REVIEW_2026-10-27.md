@@ -104,23 +104,24 @@ geographic or account restrictions.
 
 ## Runtime controls
 
-The main API defaults all live probes off. Kalshi live probing now requires
-both the explicit probe switch and a non-empty
-`MIDAS_FRONTIER_KALSHI_RESEARCH_AUTHORIZATION_REF`. Kraken live probing
-requires both its probe switch and a non-empty
-`MIDAS_FRONTIER_KRAKEN_MARKET_DATA_PERMISSION_REF`. These values are pointers
-to a locally reviewed written authorization or terms-review record; the code
-does not inspect or validate the referenced document. A reference by itself is
-not proof that the source permits this use.
+The main API defaults all live probes off. More importantly, there is no
+validated authorization loader for Kalshi or Kraken: both
+`frontier_kalshi_probe_allowed` and `frontier_kraken_probe_allowed` remain
+false regardless of the public-probe flags or configured reference strings.
+The `MIDAS_FRONTIER_KALSHI_RESEARCH_AUTHORIZATION_REF` and
+`MIDAS_FRONTIER_KRAKEN_MARKET_DATA_PERMISSION_REF` settings are descriptive
+only. A reference string is not inspected, authenticated, or treated as proof
+of permission.
 
-When a required reference is absent, `/api/frontier/sources` reports the
-policy block, probe routes return HTTP 409 without making a request, and
-readiness reports `source_data_use_permissions` as `BLOCKED`. The same active
-policy holds historical records from the Frontier application read and replay
-routes described above. Existing source records are not deleted or rewritten.
-The code does not verify the referenced permission document; a future
-authorized use requires a separately recorded review and deliberate operator
-configuration change. Direct database access remains outside the route filter.
+Consequently `/api/frontier/sources` always reports the Kalshi/Kraken policy
+hold, probe routes return HTTP 409 without making a request, and readiness
+reports `source_data_use_permissions` as `BLOCKED`, whether or not a reference
+string is configured. The same unconditional hold quarantines stored records
+from the Frontier application read and replay routes described above. Existing
+source records are not deleted or rewritten. Any future unhold requires a
+validated permission mechanism and an explicit source-use review; setting the
+existing flags or adding a reference is insufficient. Direct database access
+remains outside the route filter.
 
 ## Read-quarantine verification — 2026-10-27
 

@@ -3438,3 +3438,21 @@ files were not changed or opened during this remediation. The older 18:41
 suite did read held capture files through the references present at that time;
 no mutation is known. Source permission, genuine multi-venue economics,
 repository-wide regression and production deployment remain unresolved.
+
+## Permission-reference policy regression — 2026-10-27
+
+A read-only configuration audit found that an arbitrary nonblank permission
+reference cleared the historical-source quarantine even though the reference
+was not validated and live probing remained disabled. This contradicted the
+documented source-use boundary. The configuration now fails closed for Kalshi
+and Kraken regardless of the probe flag or reference value; API quarantine and
+readiness remain active, and the readiness detail states that no validated
+permission loader exists. Synthetic API coverage now supplies arbitrary
+references while asserting both probe rejection and quarantine of stored
+fixture evidence. Documentation was corrected in the source review, operations
+guide, and current-state file. Verification remains pending; no held capture was
+read or modified.
+
+At 19:16:42 UTC host memory PSI was elevated (`avg10` 44.59% some / 40.58% full;
+`avg300` 35.77% / 32.18%). Tests and build were deferred until a fresh admission
+check shows materially lower pressure.

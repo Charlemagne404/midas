@@ -407,14 +407,15 @@ MIDAS authorization have not been established. New Kalshi and Kraken live
 captures remain held. Existing capture files remain preserved unchanged, with
 new research/replay use treated as restricted pending review.
 
-The main API now requires a source-specific permission/review reference in
-addition to each probe flag before enabling Kalshi or Kraken capture. The
-reference is not independently validated; source routes surface the block and
-readiness includes a `BLOCKED` source-data-permissions gate. The focused
-configuration/API tests passed at an earlier checkpoint; the current
-source-data review and [Frontier ledger](frontier/FRONTIER_MISSION_LEDGER.md)
-track follow-up validation. No source request, external message, production
-change, or historical-data mutation was made for this review.
+The API has no validated permission loader for Kalshi or Kraken. Both source
+probe properties therefore remain false even when a probe flag and arbitrary
+reference string are configured. Source routes surface the unconditional
+policy hold, existing stored rows remain quarantined, and readiness keeps the
+source-data-permissions gate `BLOCKED`. A reference string alone is not
+permission. The regression and its verification are tracked in the
+[Frontier ledger](frontier/FRONTIER_MISSION_LEDGER.md). No source request,
+external message, production change, or historical-data mutation was made for
+this review.
 
 Code commits `d38f517`, `73e008e`, `e7958c1`, and `23f9860` extend the hold to
 Frontier application reads: old Kalshi/Kraken market, book, trade, and

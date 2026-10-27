@@ -17,14 +17,16 @@ from apps.api.main import create_app
 from tests.frontier.builders import T0, book, market
 
 
-def test_kalshi_and_kraken_live_capture_require_recorded_permission_references(tmp_path):
+def test_probe_flags_and_references_do_not_enable_unvalidated_sources(tmp_path):
     settings = Settings(
         _env_file=None,
         database_url=f"sqlite+aiosqlite:///{tmp_path / 'midas.db'}",
         frontier_root=tmp_path / "frontier",
         arena_root=tmp_path / "arena",
         frontier_kalshi_public_probe_enabled=True,
+        frontier_kalshi_research_authorization_ref="arbitrary-reference",
         frontier_kraken_public_probe_enabled=True,
+        frontier_kraken_market_data_permission_ref="arbitrary-reference",
     )
     assert settings.frontier_kalshi_probe_allowed is False
     assert settings.frontier_kraken_probe_allowed is False
@@ -41,6 +43,7 @@ def test_kalshi_and_kraken_live_capture_require_recorded_permission_references(t
                 item = source_by_venue[venue.value]
                 assert item["public_probe_enabled"] is False
                 assert item["probe_policy_block_reason"]
+                assert "not independently validated" in item["probe_policy_block_reason"]
                 assert item["probe_policy_block_reason"] in item["health"]["notes"]
                 response = client.post(f"/api/frontier/probe/{venue.value}", json={})
                 assert response.status_code == 409
@@ -54,6 +57,9 @@ def test_kalshi_and_kraken_live_capture_require_recorded_permission_references(t
                 if gate["name"] == "source_data_use_permissions"
             )
             assert permission_gate["state"] == "BLOCKED"
+            assert (
+                "no validated permission/terms-review loader" in permission_gate["detail"]
+            )
 
         for venue in (Venue.KALSHI, Venue.KRAKEN):
             config = app.state.frontier_registry.get(venue).config
@@ -64,7 +70,7 @@ def test_kalshi_and_kraken_live_capture_require_recorded_permission_references(t
         asyncio.run(app.state.frontier_registry.aclose())
 
 
-def test_permission_references_do_not_enable_sources_unless_probe_is_requested():
+def test_permission_references_never_enable_sources_without_a_validator():
     settings = Settings(
         _env_file=None,
         frontier_kalshi_research_authorization_ref="source-approval-record-1",
@@ -80,8 +86,8 @@ def test_permission_references_do_not_enable_sources_unless_probe_is_requested()
         frontier_kraken_public_probe_enabled=True,
         frontier_kraken_market_data_permission_ref="terms-review-record-1",
     )
-    assert requested.frontier_kalshi_probe_allowed is True
-    assert requested.frontier_kraken_probe_allowed is True
+    assert requested.frontier_kalshi_probe_allowed is False
+    assert requested.frontier_kraken_probe_allowed is False
 
 
 def test_whitespace_permission_references_never_unlock_live_probes():
@@ -103,6 +109,8 @@ def test_held_source_observations_relationships_and_replays_are_quarantined(tmp_
         database_url=f"sqlite+aiosqlite:///{tmp_path / 'midas.db'}",
         frontier_root=tmp_path / "frontier",
         arena_root=tmp_path / "arena",
+        frontier_kalshi_research_authorization_ref="arbitrary-reference",
+        frontier_kraken_market_data_permission_ref="arbitrary-reference",
     )
     app = create_app(settings)
     store = app.state.frontier_store

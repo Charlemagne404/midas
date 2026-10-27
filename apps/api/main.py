@@ -34,21 +34,23 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     kalshi_probe_allowed = config.frontier_kalshi_probe_allowed
     kraken_probe_allowed = config.frontier_kraken_probe_allowed
-    kalshi_probe_block_reason = (
-        "Kalshi live API capture is disabled until written authorization for research use and local data retention is recorded."
-        if not (
-            config.frontier_kalshi_research_authorization_ref
-            and config.frontier_kalshi_research_authorization_ref.strip()
+
+    def source_permission_block_reason(venue: str, reference: str | None) -> str:
+        if reference and reference.strip():
+            return (
+                f"{venue} source use remains held because the configured permission reference "
+                "is not independently validated by Frontier."
+            )
+        return (
+            f"{venue} source use remains held because no validated permission record is "
+            "available to Frontier."
         )
-        else None
+
+    kalshi_probe_block_reason = source_permission_block_reason(
+        "Kalshi", config.frontier_kalshi_research_authorization_ref
     )
-    kraken_probe_block_reason = (
-        "Kraken live market-data capture is disabled until the applicable research-use terms are reviewed and any required written permission is recorded."
-        if not (
-            config.frontier_kraken_market_data_permission_ref
-            and config.frontier_kraken_market_data_permission_ref.strip()
-        )
-        else None
+    kraken_probe_block_reason = source_permission_block_reason(
+        "Kraken", config.frontier_kraken_market_data_permission_ref
     )
 
     frontier_registry = AdapterRegistry(

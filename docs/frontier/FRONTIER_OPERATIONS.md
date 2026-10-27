@@ -27,17 +27,19 @@ as part of routine development.
 **Source terms are an additional gate.** Kalshi live capture is blocked until
 written research and local-retention authorization is recorded. Kraken Spot
 capture is blocked until its applicable research-use terms are reviewed and any
-required permission is recorded. For these two sources, the probe flag alone is
-insufficient: also set `MIDAS_FRONTIER_KALSHI_RESEARCH_AUTHORIZATION_REF` or
-`MIDAS_FRONTIER_KRAKEN_MARKET_DATA_PERMISSION_REF` to an internal reference to
-the relevant permission/review record. The application does not validate that
-record; a string reference is not permission. See the
+required permission is recorded. For these two sources, no configuration
+currently enables collection. The application has no validated authorization
+loader, so both probes and all stored Kalshi/Kraken research reads remain
+blocked even when a probe flag and reference are set.
+`MIDAS_FRONTIER_KALSHI_RESEARCH_AUTHORIZATION_REF` and
+`MIDAS_FRONTIER_KRAKEN_MARKET_DATA_PERMISSION_REF` are descriptive only; a
+string reference is not permission. See the
 [source-data terms review](SOURCE_DATA_TERMS_REVIEW_2026-10-27.md). Existing
 Kalshi and Kraken capture artifacts remain preserved, but do not treat them as
 available inputs for new research until the corresponding use review is closed.
-While the permission reference is absent, Frontier application routes also
-quarantine previously stored Kalshi/Kraken observations and derived research
-artifacts: market/book/trade lists, direct observation lookup, relationship
+While the validated permission mechanism is unavailable, Frontier application
+routes also quarantine previously stored Kalshi/Kraken observations and derived
+research artifacts: market/book/trade lists, direct observation lookup, relationship
 lists, graph traversal, candidate/run/comparison views, replay inputs, and
 Arena replay catalog/results, plus generic Arena job overview/detail/log and
 research-activity routes for Frontier replay jobs. Generic submissions reject

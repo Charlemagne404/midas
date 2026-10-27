@@ -2069,3 +2069,25 @@ At `2026-10-27T17:04:54Z`, memory PSI was `avg10` 45.31% (`some`) / 40.92%
 (`full`), `avg60` 44.96% / 40.74%, and `avg300` 39.03% / 35.36%.
 `MemAvailable` was 9,664,080 KiB and swap free was 484,612 KiB of 4 GiB.
 Broad Frontier verification and production build remain deferred.
+
+## 2026-10-27 19:17 UTC — permission-reference fail-closed regression
+
+A read-only audit found that a nonblank Kalshi or Kraken permission-reference
+string could clear the API's held-source reason even though Frontier has no
+authorization validator and probing remained disabled. That could expose
+previously stored evidence through research routes. The settings now keep both
+`frontier_*_probe_allowed` properties false independent of probe flags and
+references; the API always supplies a source-use hold, and readiness explains
+that no validated loader exists. The source-terms review, operations guide,
+current-state note, and regression now state the same rule. The test configures
+arbitrary references while checking probe rejection and synthetic stored-data
+quarantine. The regression and implementation are in the current worktree; test
+and commit verification remain pending.
+
+At `2026-10-27T19:16:42Z`, memory PSI `avg10` was 44.59% (`some`) / 40.58%
+(`full`), with `avg300` 35.77% / 32.18%; available memory was 9,422 MiB and
+swap free 468 MiB. No test or build was started under that pressure. Next safe
+action: remeasure host pressure, then run the isolated source-permission test
+module followed by the complete Frontier suite only if admission is suitable.
+No held capture, external source, protected service, or production state was
+accessed during this correction.

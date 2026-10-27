@@ -3359,7 +3359,9 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
                     )
                     else "NOT_ESTABLISHED",
                     "detail": (
-                        "Live Kalshi and Kraken research capture requires a recorded source permission/terms review reference; this gate does not independently validate any referenced grant."
+                        "Kalshi and Kraken research use remains blocked because Frontier has no "
+                        "validated permission/terms-review loader. A configured reference "
+                        "string is descriptive and does not establish permission."
                     ),
                 },
                 {
