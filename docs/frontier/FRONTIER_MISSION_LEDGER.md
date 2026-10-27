@@ -1,7 +1,7 @@
 # Project Frontier Mission Ledger
 
-**Latest Frontier storage checkpoint (2026-10-27 21:23 UTC):** The bounded
-append-only observation writer now stamps a missing typed
+**Latest Frontier storage checkpoint (code commit `51afe86`, 2026-10-27
+21:23 UTC):** The bounded append-only observation writer now stamps a missing typed
 `Provenance.persisted_at_utc` before serializing a new normalized row. It leaves
 the caller's model untouched, preserves a prior timestamp when copying an
 already persisted capture into a content-addressed snapshot, and compares

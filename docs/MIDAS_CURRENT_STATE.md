@@ -867,7 +867,7 @@ was started and no lock was bypassed. Full browser evidence remains 10/12 with
 those two cases admission-denied; Frontier's dedicated browser suite remains
 4/4. Wait for shared admission and lower host pressure before retry.
 
-## Frontier observation persistence checkpoint — 2026-10-27 21:23 UTC
+## Frontier observation persistence checkpoint (`51afe86`) — 2026-10-27 21:23 UTC
 
 The isolated writer now records missing `Provenance.persisted_at_utc` values
 on new Frontier observations, without mutating adapter models. It preserves an

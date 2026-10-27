@@ -2,15 +2,15 @@
 
 **Report date:** 2026-10-27
 
-**Latest code checkpoint:** `cfda4ad` adds the Coinbase Exchange spot adapter,
-API registration, Mission Control source/graph presentation, and an exact
-Market Data Terms version gate enforced by both API settings and the adapter
-config. The working tree now also fills missing observation persistence times
-without mutating adapter objects and preserves existing times when copying
-content-addressed evidence. The full Frontier Python suite passes 265/265;
-current web unit/typecheck results remain 40/40 and passed respectively from
-the prior checkpoint. Production build and browser regressions remain pending
-safe resource admission. Project Frontier remains incomplete, isolated, and
+**Latest code checkpoint:** `51afe86` adds typed Frontier observation writer
+timestamps, preserves hashes across immutable evidence snapshots, and keeps
+legacy rows readable. The preceding `cfda4ad` adds the Coinbase Exchange spot
+adapter, API registration, Mission Control source/graph presentation, and an
+exact Market Data Terms version gate enforced by both API settings and adapter
+config. The full Frontier Python suite passes 265/265; current web unit and
+typecheck results remain 40/40 and passed, respectively, from the prior
+checkpoint. Production build and browser regressions remain pending safe
+resource admission. Project Frontier remains incomplete, isolated, and
 undeployed.
 
 **Branch:** `codex/frontier-20261026`
