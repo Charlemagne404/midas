@@ -20,7 +20,12 @@ D = Decimal
 STATES = ("a_no_b_no", "a_no_b_yes", "a_yes_b_yes")
 
 
-def _joint_market(venue: Venue, native_id: str, yes_values: tuple[int, ...]) -> FrontierMarket:
+def _joint_market(
+    venue: Venue,
+    native_id: str,
+    yes_values: tuple[int, ...],
+    state_ids: tuple[str, ...] = STATES,
+) -> FrontierMarket:
     base = market(venue, native_id)
     instruments = tuple(
         item.model_copy(
@@ -30,7 +35,7 @@ def _joint_market(venue: Venue, native_id: str, yes_values: tuple[int, ...]) -> 
                         state_id=state,
                         amount=D(value if item.outcome_id == "yes" else 1 - value),
                     )
-                    for state, value in zip(STATES, yes_values, strict=True)
+                    for state, value in zip(state_ids, yes_values, strict=True)
                 )
             }
         )
@@ -40,7 +45,7 @@ def _joint_market(venue: Venue, native_id: str, yes_values: tuple[int, ...]) -> 
         base.model_dump(mode="python")
         | {
             "instruments": instruments,
-            "payoff": base.payoff.model_copy(update={"state_ids": STATES}),
+            "payoff": base.payoff.model_copy(update={"state_ids": state_ids}),
         }
     )
 
@@ -162,6 +167,100 @@ def test_directed_implication_basket_is_capped_and_independently_audited():
     assert disagreed.independent_audit is not None
     assert disagreed.independent_audit.disposition.value == "disagreement"
     assert disagreed.classification == OpportunityClassification.INCOMPLETE_EVIDENCE
+
+
+def test_nonidentity_mapping_and_reversed_endpoint_order_preserve_directed_legs():
+    source_states = ("source-no-a", "source-no-b", "source-yes")
+    target_states = ("target-no", "target-yes-a", "target-yes-b")
+    source = _joint_market(Venue.POLYMARKET, "reversed-source", (0, 0, 1), source_states)
+    target = _joint_market(Venue.KALSHI, "reversed-target", (0, 1, 1), target_states)
+    source_to_target = {
+        source_states[0]: target_states[0],
+        source_states[1]: target_states[2],
+        source_states[2]: target_states[1],
+    }
+    relationship = verify_logical_implication(
+        source,
+        target,
+        implication_from_market_id=source.canonical_id,
+        implication_to_market_id=target.canonical_id,
+        state_mapping=source_to_target,
+        external_assertion_id="fixture-reversed-joint-world-v1",
+        evidence_observation_ids=(
+            source.provenance.observation_id,
+            target.provenance.observation_id,
+        ),
+        asserted_at_utc=T0,
+    )
+    assert relationship.state.value == "verified"
+    assert relationship.left_market_id == target.canonical_id
+    assert relationship.right_market_id == source.canonical_id
+
+    source_no = next(item for item in source.instruments if item.outcome_id == "no")
+    target_yes = next(item for item in target.instruments if item.outcome_id == "yes")
+    source_book = book(source, source_no.native_instrument_id, "0.30").model_copy(
+        update={
+            "provenance": book(
+                source, source_no.native_instrument_id, "0.30"
+            ).provenance.model_copy(update={"clock_uncertainty_ms": D(0)})
+        }
+    )
+    target_book = book(target, target_yes.native_instrument_id, "0.65").model_copy(
+        update={
+            "provenance": book(
+                target, target_yes.native_instrument_id, "0.65"
+            ).provenance.model_copy(update={"clock_uncertainty_ms": D(0)})
+        }
+    )
+    ordered_markets = tuple(sorted((source, target), key=lambda item: item.canonical_id))
+    left, right = ordered_markets
+    stored_mapping = evidence_mapping(relationship, "state_mapping")
+    books_by_market = {
+        source.canonical_id: {source_no.native_instrument_id: source_book},
+        target.canonical_id: {target_yes.native_instrument_id: target_book},
+    }
+    candidate = generate_logical_implication_candidates(
+        left,
+        right,
+        relationship,
+        books_by_market[left.canonical_id],
+        books_by_market[right.canonical_id],
+        state_mapping=stored_mapping,
+        as_of_utc=T0,
+    )[0]
+    assert candidate.classification == OpportunityClassification.CONDITIONAL_ECONOMIC_OPPORTUNITY
+    assert {(leg.market_id, leg.outcome_id) for leg in candidate.legs} == {
+        (source.canonical_id, "no"),
+        (target.canonical_id, "yes"),
+    }
+    assert candidate.outcome_payout_by_state == {
+        target_states[0]: D(10),
+        target_states[1]: D(10),
+        target_states[2]: D(20),
+    }
+
+    audited = independently_audit_candidate(
+        candidate,
+        markets={item.canonical_id: item for item in ordered_markets},
+        books_by_market=books_by_market,
+        relationships={relationship.relationship_id: relationship},
+        state_mappings={relationship.relationship_id: stored_mapping},
+        instrument_mappings={},
+        scenario=ExecutionScenario(),
+    )
+    assert audited.independent_audit is not None
+    assert audited.independent_audit.disposition.value == "verified"
+    replay = deterministic_replay(
+        ordered_markets,
+        (source_book, target_book),
+        verified_relationships=(relationship,),
+        state_mappings={relationship.relationship_id: stored_mapping},
+        as_of_utc=T0,
+        code_version="frontier-implication-reversed-fixture-v1",
+    )
+    assert len(replay.candidates) == 1
+    assert replay.candidates[0].candidate_id == candidate.candidate_id
+    assert replay.candidates[0].outcome_payout_by_state == candidate.outcome_payout_by_state
 
 
 def test_implication_generator_does_not_bridge_settlement_time_differences():
