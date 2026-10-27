@@ -373,11 +373,11 @@ retains both immutable source observation IDs and the selected side. It remains
 a `HYPOTHESIS`: this records what parent metadata asserts and the matching child
 identity, not that their rules, payoffs, logical implications, or settlement are
 equivalent. Economic candidate generators accept only separately verified
-`same_payoff` edges, so source-component references cannot support opportunity
-arithmetic. Missing children, duplicate native identifiers, venue mismatches,
-and event-ID mismatches produce no component edge. These source-reference edges
-are prioritized within the bounded proposal limit so they remain visible when
-text candidates are numerous.
+`same_payoff` or `logical_implication` edges, so source-component references
+cannot support opportunity arithmetic. Missing children, duplicate native
+identifiers, venue mismatches, and event-ID mismatches produce no component
+edge. These source-reference edges are prioritized within the bounded proposal
+limit so they remain visible when text candidates are numerous.
 The API proposal path binds each market to the actual append-only observation
 record from which its selected normalized value was loaded. Persisted graph
 evidence therefore opens the raw and normalized source record directly. Store-
@@ -409,9 +409,19 @@ verifier does not bridge them. A `VERIFIED` result means the source YES payout
 never exceeds the target YES payout over the provided mapping. The semantic
 claim that both mappings describe the same world remains an unauthenticated
 external assertion. It is available through the existing hash-checked
-relationship-review API and append-only store. Mission Control does not yet
-offer controls to create a directed implication, and opportunity generation
-does not consume the edge.
+relationship-review API and append-only store. The bounded logical-implication
+candidate family consumes these edges for two-venue binary markets by buying
+NO(source) and YES(target). Candidate generation and the independent audit
+require complete complementary Boolean payout vectors, a bijection over pinned
+joint states, exact settlement asset identity, and matching market close and
+settlement times that remain in the future at the replay cutoff. The external
+assertion must also be present by that cutoff and cite both pinned market
+observations. The worst mapped payout must cover at least one settlement unit
+in every state. Positive results remain conditional because the semantic state
+assertion is unauthenticated; distinct venue resolution authorities are not
+independently reconciled. Unknown fees remain unknown, and stale or
+insufficiently synchronized books make the candidate incomplete. Mission
+Control does not yet offer controls to create a directed implication.
 
 Every review appends an immutable review record and a relationship revision in
 one transaction. A compare-and-set against the latest review prevents stale
@@ -439,25 +449,32 @@ returns 409 when any of those inputs change. Mission Control displays 30 edges
 per page with previous/next controls. The uncentered recent-edge view remains a
 single bounded read; broad or dense traversals can still be incomplete.
 
-The economic verifier supports two narrow families. Cross-venue binary coverage
-requires a previously verified same-payoff relationship. Same-market
-multi-outcome coverage requires three to sixteen verified exhaustive states,
-verified resolution and settlement, and exactly one unit-payout one-hot
-instrument per state; it buys all states long in one venue and one quantity
-unit. Both check top-ask depth, quantity minimums and steps, exact quote
-denomination identity on the instrument and book, fee-unit identity, applicable
-exact Decimal fee formulas, scenario slippage/decay, local receipt
-skew, exchange-time skew, and book age. The exact arithmetic uses bounded inputs
-(36 digits, 18 decimal places) and a 128-digit local Decimal context. Explicit
-quantities are rejected if the common displayed depth or modeled fill fraction
-cannot support them. A valid verified schedule or supported provenance-bound
-Kalshi estimate can produce modeled net P&L; estimate-based results remain
-conditional. Unknown or expired fees leave net P&L unknown and are excluded,
-rather than zeroed. The graph has a bounded binary implication verifier, but
-no implication-based price-bound or opportunity generator consumes those edges
-yet. Other payoffs and general multi-leg constructions are unsupported. The multi-outcome family has
-fixture verification only; current public observations do not satisfy its
-attestation requirements. Cross-venue `timing_verified` additionally requires
+The economic verifier supports three narrow families. Cross-venue binary
+coverage requires a previously verified same-payoff relationship. The
+logical-implication family evaluates the long-only NO(source) plus YES(target)
+construction over the pinned joint-state mapping and requires its worst
+terminal payout to cover at least one unit. It is limited to two distinct
+venues, verified binary terms, a shared settlement asset and quote currency,
+matching close and settlement times, and complete timestamp evidence; it never
+bridges denomination or timing differences. Any positive result is capped at
+conditional because the external assertion that ties the state spaces to one
+world is self-attributed and unauthenticated. Same-market multi-outcome
+coverage requires three to sixteen verified exhaustive states, verified
+resolution and settlement, and exactly one unit-payout one-hot instrument per
+state; it buys all states long in one venue and one quantity unit. All families
+check top-ask depth, quantity minimums and steps, exact quote denomination
+identity on the instrument and book, fee-unit identity, applicable exact
+Decimal fee formulas, scenario slippage/decay, local receipt skew, exchange-time
+skew, and book age. The exact arithmetic uses bounded inputs (36 digits, 18
+decimal places) and a 128-digit local Decimal context. Explicit quantities are
+rejected if the common displayed depth or modeled fill fraction cannot support
+them. A valid verified schedule or supported provenance-bound Kalshi estimate
+can produce modeled net P&L; estimate-based results remain conditional. Unknown
+or expired fees leave net P&L unknown and are excluded, rather than zeroed.
+Other payoffs and general multi-leg constructions are unsupported. The
+multi-outcome and logical-implication families have fixture verification only;
+current public observations do not satisfy their relationship attestations.
+Cross-venue `timing_verified` additionally requires
 matching known exchange timestamp semantics, no source/receipt/book timestamp
 after the replay time, and observed exchange skew plus both declared clock
 uncertainties within the configured limit. Missing clock uncertainty keeps

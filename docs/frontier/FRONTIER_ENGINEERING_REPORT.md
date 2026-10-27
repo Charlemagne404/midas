@@ -15,7 +15,7 @@ Frontier adds an isolated, research-only market-data foundation for Polymarket,
 Kalshi, and Kraken spot. It has versioned venue-aware contracts, a bounded
 public-GET adapter protocol, capability declarations, normalizers, an append-only
 SQLite evidence store, relationship hypotheses and append-only review revisions,
-an explicit payoff-equivalence check, two narrow Decimal opportunity evaluators,
+an explicit payoff-equivalence check, three narrow Decimal opportunity evaluators,
 deterministic replay, local API routes, and a native Mission Control workspace.
 
 An official source-terms review on 2026-10-27 adds a live-data permission
@@ -61,8 +61,8 @@ the fee metadata observation IDs; Mission Control displays their count. The
 candidate remains conditional or incomplete, and an independent audit repeats
 the estimate from pinned evidence. This is fixture-verified implementation;
 there was no source request or held-data read during this checkpoint.
-Current touched versions are Kalshi adapter v16, economic model v8, independent
-audit v5, and deterministic replay v8.
+Current touched versions are Kalshi adapter v16, economic model v9, independent
+audit v6, and deterministic replay v9.
 Kalshi adapter v7 added a separate one-page multivariate-event lookup filtered
 by exactly one series or collection ticker. A genuine public response returned
 one event and a source cursor, but omitted its nested `markets` field despite
@@ -448,7 +448,7 @@ original response.
 The market's settlement asset identity now also anchors price denominations.
 `MarketInstrument`, `BookSnapshot`, `FeeSchedule`, `TradeObservation`, candidate
 legs, and candidate capital retain exact identities alongside their display
-currency codes. Binary and multi-outcome economics require exact quote identity
+currency codes. Binary, implication, and multi-outcome economics require exact quote identity
 agreement from payoff to instrument to observed book, and fee arithmetic
 requires the fee unit to match. Candidate capital comparisons use the exact
 settlement identity; the UI separates virtual balances by venue and canonical
@@ -456,7 +456,7 @@ identity. A token whose code is `USD` cannot be added to, compared with, or
 funded from `fiat:USD` without an explicit valuation model. Legacy records that
 lack identity remain readable, but the candidate and audit paths classify them
 as incomplete. FrontierMarket schema v3, BookSnapshot v2, TradeObservation v3,
-OpportunityCandidate v2, economic model v7, independent audit v4, and replay v7
+OpportunityCandidate v2, economic model v9, independent audit v6, and replay v9
 pin this extension.
 
 ## 6. Relationship graph
@@ -476,9 +476,9 @@ a `HYPOTHESIS`: this records the source's asserted component link and a matching
 child identity, not equivalent rules, payoffs, logical implications, or
 settlement. Missing children, duplicate native identifiers, venue mismatches,
 and event-ID mismatches produce no edge. These source edges are prioritized
-within the bounded proposal limit. The binary and multi-outcome candidate
-evaluators still require their supported verified constructions; a component
-reference alone returns a price-discrepancy-only classification.
+within the bounded proposal limit. The binary, implication, and multi-outcome
+candidate evaluators still require their supported verified constructions; a
+component reference alone returns a price-discrepancy-only classification.
 
 `verify_same_payoff` is separate. It requires an external assertion ID, source
 observation IDs, verified and exhaustive payout states, a bijection between
@@ -516,51 +516,67 @@ with previous/next controls. Its network renders at most 18 edges and the
 evidence list is capped at 30 per page. Clustering, layout control, and
 full-universe search remain incomplete.
 
-`verify_logical_implication` now checks a directed binary YES implication over
-an explicit bijection between the two markets' joint payoff state spaces. It
+`verify_logical_implication` checks a directed binary YES implication over an
+explicit bijection between the two markets' joint payoff state spaces. It
 requires verified exhaustive payoffs, complete binary YES/NO vectors that are
-exact complements, verified resolutions, two distinct source observation IDs,
-and a nonempty external assertion ID that does not predate the observations.
-It rejects mappings above 1,024 states or 128 characters per state ID.
-Direction and the canonical state mapping are recorded in evidence and
-included in relationship identity. Per-market settlement denominations and
-times are preserved and may differ; the verifier does not bridge them. Its
-verified result proves only the payout-vector implication over the supplied
-mapping; the assertion that these mapped states describe the same world remains
-self-attributed. It is now available through the existing hash-checked review
-API and append-only store. Mission Control does not yet offer controls to
-create a directed implication, and candidate generation does not consume the
-edge.
+exact complements, verified resolutions, the pinned observation for each
+market, and a nonempty external assertion ID that does not predate those
+observations. It rejects mappings above 1,024 states or 128 characters per
+state ID. Direction and the canonical state mapping are recorded in evidence
+and included in relationship identity. Per-market settlement denominations
+and times are preserved and may differ; the relationship verifier does not
+bridge them. Its verified result proves only the payout-vector implication over
+the supplied mapping; the assertion that these mapped states describe the same
+world remains self-attributed. It is available through the existing
+hash-checked review API and append-only store. The economic verifier now
+consumes these edges through a bounded two-venue binary family: it buys
+NO(source) plus YES(target), independently checks every mapped payout, and
+requires identical settlement denomination, close time, and settlement time.
+Positive outcomes remain conditional; Mission Control still has no controls
+for creating a directed implication.
 
 ## 7. Opportunity discovery algorithms
 
-Two bounded candidate families are implemented. Cross-venue complete all-long
-binary coverage still requires a previously verified same-payoff relationship.
-It checks both directions through binary outcome/instrument mappings and
-enumerates the verified states. Within-market multi-outcome coverage buys one
-contract for each of three to sixteen states in one open event market. It
-requires a verified, exhaustive payoff, verified resolution, matching settlement
-asset, and a strict one-to-one mapping between states and unit-payout one-hot
-instruments. All legs use one venue and quantity unit. The evaluator fails closed
-on incomplete or overlapping state vectors, missing books, unsupported fees,
-invalid size steps, insufficient depth, or incompatible timing evidence.
+Three bounded candidate families are implemented. Cross-venue complete all-long
+binary coverage requires a previously verified same-payoff relationship and
+enumerates its mapped states. The new logical-implication family consumes a
+verified directed YES edge over a bijective joint-state map. For A implies B it
+buys NO(A) and YES(B); the reverse edge selects the corresponding reversed
+positions. Its terminal payout must cover at least one settlement unit in every
+mapped state. It requires open binary markets on distinct venues, complete
+complementary 0/1 YES and NO vectors, exact quote and payout denomination
+identity, and matching market close and settlement times. It does not bridge FX,
+asset identity, close-time, or settlement-time differences. Candidate replay
+adds a separate family dispatch, and the independent audit recomputes the
+direction, mapped inequalities, basket payouts, fees, capital and fill-pattern
+exposure without calling the generator arithmetic. The external assertion must
+cite both pinned market records and predate the replay cutoff; both close and
+settlement times must remain in the future. Distinct venue resolution
+authorities and rule fingerprints are not reconciled by this bounded evaluator.
+Positive classifications remain conditional because the external assertion
+tying the joint state spaces to one semantic world is self-attributed and
+unauthenticated. Missing fees are not zeroed; stale or insufficiently
+synchronized books produce incomplete evidence.
 
-The within-market construction has controlled fixtures and deterministic replay
-coverage; no captured public listing had verified payoff and resolution evidence,
-so it has not run against a genuine eligible event. It does not use title
-similarity as a trade relation and does not search unbounded cycles,
-partial-payoff combinations, logical implications, or arbitrary multi-leg
-portfolios.
+Within-market multi-outcome coverage buys one contract for each of three to
+sixteen states in one open event market. It requires a verified, exhaustive
+payoff, verified resolution, matching settlement asset, and a strict one-to-one
+mapping between states and unit-payout one-hot instruments. The evaluator fails
+closed on incomplete or overlapping state vectors, missing books, unsupported
+fees, invalid size steps, insufficient depth, or incompatible timing evidence.
+All generated candidates remain hypothetical and have
+`practical_eligibility=false`.
 
-Replay also returns the bounded set of deterministic relationship proposals, but
-only previously stored verified relationships are applied to payoff arithmetic.
-No public source capture supplied a verified relationship or a verified
-exhaustive multi-outcome event, so the live sample produced no eligible
-opportunity evaluation. Implication bounds, exhaustive multi-leg optimization,
-and spot/derivative hedge models remain deferred. Each generated candidate is
-passed to the separate independent arithmetic audit described below. A regression
-also verifies that non-identity outcome mappings and reversed input ordering
-still produce actual candidates rather than a vacuous empty result.
+The implication construction, like within-market multi-outcome coverage, has
+controlled fixtures and deterministic replay coverage only. No genuine captured
+relationship currently supplies verified semantic equivalence or implication,
+so the live sample produced no eligible evaluation. Replay continues to apply
+only previously stored verified relationship revisions; text matches remain
+hypotheses. Unbounded cycles, partial-payoff combinations, general multi-leg
+optimization, and spot/derivative hedge models remain deferred. Every complete
+candidate passes to the independent audit. Existing regressions cover non-
+identity state mappings, reversed input ordering, unknown fees, stale timing,
+settlement mismatch, tampered payout rejection, and deterministic replay.
 
 ## 8. Independent economic verification
 
@@ -614,6 +630,15 @@ Replay version 5 includes this audit and sensitivity in its deterministic
 result. Readiness aggregates dispositions only across the latest three
 hash-valid runs, and the UI shows the audit state, recomputed cost/fees/net result,
 and shortened input hash.
+
+For logical implications, independent audit v6 separately validates the
+directed endpoints and external-evidence record, reproduces YES(source) <=
+YES(target) for every mapped state, verifies that the candidate selected
+NO(source) and YES(target), and recomputes their combined payoff. Positive
+modeled results cannot be classified as verified mathematical inconsistencies
+because the shared-world semantic assertion is not authenticated. Unknown fees
+remain unknown; stale or timing-incomplete implication books are classified as
+incomplete.
 
 This is an independent implementation of bounded arithmetic over shared,
 normalized and persisted inputs. It is not an independent feed, market-data
@@ -1436,9 +1461,11 @@ gaps are deferred work, not hidden passed checks:
   superseded for that focused case.
 - The only multi-outcome family is a same-market all-long construction over
   verified one-hot exhaustive states; only controlled fixtures have exercised it.
-  A bounded binary payout-vector implication verifier is implemented, but
-  implication-based price bounds and candidate generation plus general multi-leg
-  search are not implemented.
+  The bounded binary implication verifier now feeds a separate long-only
+  implication candidate family and independent audit. It is exercised only by
+  controlled fixtures; semantic equivalence remains unauthenticated, and no
+  genuine captured pair supports an implication result. General multi-leg
+  search remains unimplemented.
 - The independent economic audit rechecks supported arithmetic from the same
   pinned normalized evidence. It cannot authenticate source semantics, reviewer
   identity, external assertions, fee authority, timestamps, or exchange truth;
@@ -1506,6 +1533,10 @@ Priority order:
 
 Implementation and documentation commits on this branch:
 
+- `6706fe1d3194224697b5101a2f92fb6ba914c693` — integrated the verified
+  directed-implication edge into deterministic replay, a conditional
+  NO(source)+YES(target) Decimal opportunity evaluator, and independent audit;
+  added fixture-based generator, replay, API persistence, and tamper checks.
 - `3e85c8d` — compiled complete saved Kalshi event/series fee observations into
   a provenance-bound conditional candidate estimate; added independently
   recomputed fee auditing, replay manifest fee-evidence IDs, held-source
@@ -1888,9 +1919,10 @@ The public event/series pair remains immutable and is used only after raw
 response, endpoint, identity, freshness, and source-hold checks. Fixture
 verification establishes deterministic arithmetic, evidence lineage, and
 independent-audit agreement. It does not establish an account fee, live
-applicability, multi-fill cost, or executable net opportunity. Economic model
-v8, independent audit v5, replay v8, and Kalshi adapter v16 are current in this
-worktree. The implementation is undeployed; source permission remains blocked.
+applicability, multi-fill cost, or executable net opportunity. At this saved-fee
+checkpoint, economic model v8, independent audit v5, replay v8, and Kalshi
+adapter v16 were current in the worktree. The implementation is undeployed;
+source permission remains blocked.
 The full Frontier suite and production build are deferred at the measured
 16:41 UTC host-pressure sample recorded in Section 13.
 
@@ -2097,10 +2129,10 @@ cross-venue economics.
 | Kalshi MVE settlement metadata and arithmetic audit | PARTIALLY VERIFIED | Adapter v13 introduced bounded component YES settlement values and optional parent settlement/provisional fields; Kalshi adapter v15 retains that behavior. A saved-evidence-only API/UI audit recomputes the selected component product for up to 64 legs and compares it with the parent value only for complete evidence and explicit finality; audit schema v2 identifies its algorithm and returns the parent lifecycle/provisional flag. Direct official rule/schema links and observation/raw hashes are shown. All settlement arithmetic remains fixture-only; the preserved live child lacks values, no live audit result exists, and the method does not verify outcomes/rules or alter candidate economics. |
 | Polymarket, Kalshi and Kraken Spot adapters | PARTIALLY VERIFIED | Fixture/contract tests and bounded live listing/book/legacy-trade captures are preserved. Polymarket v2 first and continuation pages returned ten rows each. Kalshi has a ticker-filtered cursor-page implementation, fixture-verified row mapping, and a live empty terminal page; live trade-row normalization remains unvalidated. Adapter v4 preserves native MVE selected component IDs/sides; v7 added one-page MVE discovery whose live response omitted nested markets; v8 fixes event-detail parsing of an explicit empty top-level market array; v10 captures a saved-parent-referenced child contract and preserves its native rules. The one captured child is closed and includes fair-price fallback conditions; neither its simple binary payoff nor the parent-combo payout is verified. Account fees and Kraken account fee applicability remain unresolved. API fixtures cover source degradation and recovery; live degraded-source behavior remains unverified. |
 | Canonical market/instrument normalization | PARTIALLY VERIFIED | Three distinct instrument classes are represented; FrontierMarket schema v3, BookSnapshot v2 and TradeObservation v3 retain exact quote-denomination identities where a source mapping is established. Instrument, book, fee, trade, candidate-leg and capital units are distinguished from display codes. Legacy rows load with identity absent and remain economically incomplete. V2 Polymarket trades retain native outcome-token identity; Kalshi MVE component references remain source assertions; `MarketBatch` schema v2 preserves typed `MarketGroup` membership state. The genuine MVE response records member-list state `omitted` and zero child markets. Payoff/resolution semantics remain unverified. |
-| Relationship hypotheses, review revisions, indexed neighborhoods, and payoff/implication verifiers | PARTIALLY VERIFIED | Self-attributed review API/UI, append-only revisions, latest-state replay, tamper/migration checks, left/right endpoint-indexed 1–3 hop scans capped at 500 rows, one-hop keyset pages, and revision-bound multi-hop BFS pages with deterministic recomputation and 201-market chunk coverage. Matcher v5 includes bounded exact-ID MVE selected-component references as HYPOTHESIS edges with both source record IDs; a saved Kalshi parent listing and child detail replay into one such edge. A bounded directed binary implication verifier checks complete complementary payout vectors over a bijective state mapping (maximum 1,024 states), records each side's settlement asset/time, and requires distinct stored source evidence. It is available through the hash-checked review API and append-only store. It does not authenticate the semantic state mapping, and Mission Control has no directed-review controls; candidate generation does not consume implication edges. Matcher v4's explicit year-conflict rejection remains. A genuine House-control topic pair remains text-only HYPOTHESIS and fails strict same-payoff verification. The focused depth-two browser E2E now passes; reviewer authentication, revision-history drill-down, and full-universe search remain absent. |
-| Opportunity candidate and independent economic checks | PARTIALLY VERIFIED | Two-venue all-long binary and same-market 3–16 state one-hot exhaustive coverage; economic model v8 computes an exact full/no-fill adverse exposure pattern over up to 16 legs, and independent audit v5 recomputes economics and pinned-book timing, freshness, source-quality, clock-uncertainty, and estimated-fee claims. Differential three-leg enumeration and maximum 16-outcome replay/audit agree; fee-total, per-leg-fee, venue-capital, quantity-step, candidate-timing, and tick-metadata mutations are rejected. Candidate generation and audit both reject off-tick best asks; source-specific freshness limits gate cross-venue comparisons. Unknown-fee cases, malformed cross-venue leg handling, no-bridge payout/settlement denomination rejection, same-ticker/different-network asset rejection, and a token with ticker `USD` versus fiat USD mismatch all fail closed as expected. A positive Kalshi estimate remains conditional and cannot yield a verified inconsistency. Current venue adapters omit clock uncertainty, leaving live cross-venue timing unverified. Broader funding/settlement costs and operational feasibility remain incomplete. |
-| Kalshi taker-fee sensitivity and replay estimate | PARTIALLY VERIFIED | Hash-matched event/series evidence supports one-fill and bounded one-order Decimal sensitivities for two documented quadratic taker fee types, both balance-precision cases, per-fill rounding, order accumulation, and capped rebates. Adapter v16 preserves complete override, explicit series inheritance, partial, and unreported states. Saved-evidence replay compiles only complete, identity- and raw-hash-matched supported quadratic fee metadata into a FeeStatus.ESTIMATE; it enforces no-look-ahead and 24-hour quote/replay freshness, models a single fill, and uses `$0.01` non-direct balance alignment as a conservative scenario. The independent audit re-derives that estimate, and Replay v8 pins fee metadata observation IDs separately. Partial/unreported/mismatched/stale evidence remains unknown; the July schedule's `KXMVE` multiplier is not transferred to differently named MVE series. All candidate-fee coverage is fixture-based. Account-specific precision, exact maker/mixed-order applicability, multi-fill rounding/rebates, FCM charges, later schedule changes, and actual net economics remain unresolved. |
-| Append-only evidence store and deterministic replay | COMPLETE AND VERIFIED | Storage schema v6, additive v2/v3/v4/v5 migration, bounds, hash validation, and immutability. Replay v8 carries exact store record IDs, denomination fields, and separate fee metadata observation IDs through API-loaded market/book provenance, manifests, candidate legs, and Arena snapshots; direct in-memory replay retains adapter IDs. Replay-v5 economic output includes full/no-fill sensitivity and pins effective mappings/proposal limit. The separate Arena wrapper uses immutable content-addressed snapshots and hash-verified result artifacts; two controlled fixture workers completed and the latest recorded CPU/RSS. |
+| Relationship hypotheses, review revisions, indexed neighborhoods, and payoff/implication verifiers | PARTIALLY VERIFIED | Self-attributed review API/UI, append-only revisions, latest-state replay, tamper/migration checks, left/right endpoint-indexed 1–3 hop scans capped at 500 rows, one-hop keyset pages, and revision-bound multi-hop BFS pages with deterministic recomputation and 201-market chunk coverage. Matcher v5 includes bounded exact-ID MVE selected-component references as HYPOTHESIS edges with both source record IDs; a saved Kalshi parent listing and child detail replay into one such edge. A bounded directed binary implication verifier checks complete complementary payout vectors over a bijective state mapping (maximum 1,024 states), records each side's settlement asset/time, and requires the pinned observation for both source markets. It is available through the hash-checked review API and append-only store. It does not authenticate the semantic state mapping, and Mission Control has no directed-review controls. The economic engine now consumes these edges only in its conditional long-only implication family. Matcher v4's explicit year-conflict rejection remains. A genuine House-control topic pair remains text-only HYPOTHESIS and fails strict same-payoff verification. The focused depth-two browser E2E now passes; reviewer authentication, revision-history drill-down, and full-universe search remain absent. |
+| Opportunity candidate and independent economic checks | PARTIALLY VERIFIED | Two-venue all-long binary, directed YES implication, and same-market 3–16 state one-hot exhaustive coverage; economic model v9 computes exact full/no-fill exposure over up to 16 legs, and independent audit v6 recomputes payoff direction, economics, and pinned-book timing, freshness, source-quality, clock-uncertainty, and estimated-fee claims. New controlled replay tests verify the directed basket, no settlement-time bridging, unknown-fee handling, stale-book rejection, deterministic replay, and tampered-payout disagreement. Existing differential three-leg enumeration and maximum 16-outcome replay/audit agree; fee-total, per-leg-fee, venue-capital, quantity-step, candidate-timing, and tick-metadata mutations are rejected. Positive implication results remain conditional because semantic mapping evidence is unauthenticated. No genuine implication pair or economically eligible live result is present. Current venue adapters omit clock uncertainty, leaving live cross-venue timing unverified. Broader funding/settlement costs and operational feasibility remain incomplete. |
+| Kalshi taker-fee sensitivity and replay estimate | PARTIALLY VERIFIED | Hash-matched event/series evidence supports one-fill and bounded one-order Decimal sensitivities for two documented quadratic taker fee types, both balance-precision cases, per-fill rounding, order accumulation, and capped rebates. Adapter v16 preserves complete override, explicit series inheritance, partial, and unreported states. Saved-evidence replay compiles only complete, identity- and raw-hash-matched supported quadratic fee metadata into a FeeStatus.ESTIMATE; it enforces no-look-ahead and 24-hour quote/replay freshness, models a single fill, and uses `$0.01` non-direct balance alignment as a conservative scenario. The independent audit re-derives that estimate, and Replay v9 pins fee metadata observation IDs separately. Partial/unreported/mismatched/stale evidence remains unknown; the July schedule's `KXMVE` multiplier is not transferred to differently named MVE series. All candidate-fee coverage is fixture-based. Account-specific precision, exact maker/mixed-order applicability, multi-fill rounding/rebates, FCM charges, later schedule changes, and actual net economics remain unresolved. |
+| Append-only evidence store and deterministic replay | COMPLETE AND VERIFIED | Storage schema v6, additive v2/v3/v4/v5 migration, bounds, hash validation, and immutability. Replay v9 carries exact store record IDs, denomination fields, and separate fee metadata observation IDs through API-loaded market/book provenance, manifests, candidate legs, and Arena snapshots; direct in-memory replay retains adapter IDs. Replay-v5 economic output includes full/no-fill sensitivity and pins effective mappings/proposal limit. The separate Arena wrapper uses immutable content-addressed snapshots and hash-verified result artifacts; two controlled fixture workers completed and the latest recorded CPU/RSS. |
 | Frontier API and source configuration | COMPLETE AND VERIFIED | Kalshi MVE discovery validates exactly one series/collection/event-ticker filter, capability/config gates, one-page bounds, and raw/normalized lineage; it does not follow the source cursor. Component detail is a separate one-GET capability, bound before the request to a ticker in a saved parent's selected legs and after the response to the saved event identity. Saved fee metadata is joined only after hash/path/identity checks, omitted for held venues, and becomes an input only to later replay. Four focused tests cover prior raw capture retention after lineage mismatches; Frontier readiness summarizes candidate timing audits over its latest three non-held replays as within bounds, outside bounds, or unrecorded while retaining the existing source-quality gate state. |
 | Paired scenario comparison | PARTIALLY VERIFIED | Local deterministic comparison, atomic result persistence, API/UI, and isolated browser tests pass. Two systemd-supervised Arena jobs completed over the same controlled fixture with verified result identities; the latest worker's process CPU and peak RSS are visible in Mission Control. No genuine matched live cross-venue pair or live economic claim exists. |
 | Live market/book/trade and fee metadata through adapters/API | PARTIALLY VERIFIED | Earlier listing/book/trade, event-group, fee-metadata, and trade-page captures are hash-pinned. Kalshi MVE captures include filtered pages whose nested markets were omitted and one detail response with explicit top-level `markets: []`. The new one-request child detail capture matches a selected leg's saved ticker/event identities and has raw/store hashes; its rules expose fair-price fallbacks, but it has no book/price and proves neither child nor combo payoff. Fee metadata now has fixture-verified candidate replay integration, but no new public observation, current schedule verification, cross-venue timing, combo economics, venue-wide coverage, or execution was established in this checkpoint. |
@@ -2699,3 +2731,31 @@ At `2026-10-27T17:16:56Z`, memory PSI was `avg10` 41.71% (`some`) / 38.28%
 (`full`), `avg60` 39.03% / 35.22%, and `avg300` 29.23% / 26.23%.
 `MemAvailable` was 9,433,944 KiB and swap free was 485,104 KiB of 4 GiB.
 Broad suite, browser E2E, and production build remain deferred.
+
+### Logical-implication economics and replay — 2026-10-27 17:33 UTC
+
+Code commit `6706fe1d3194224697b5101a2f92fb6ba914c693` adds a distinct
+logical-implication opportunity family. For a verified directed YES edge, it
+evaluates long-only `NO(source) + YES(target)` against the recorded joint-state
+mapping. It requires pinned source observations, an assertion recorded no
+later than the replay cutoff, exact common settlement denomination, matching
+future close/settlement times, complementary binary payouts, and fresh books.
+Fees remain unknown when source evidence is incomplete. Candidate economics and
+the separate audit both cap positive results at conditional because the
+external assertion is self-attributed and unauthenticated. Replay v9 persists
+the candidates and audits through the existing append-only API/store path.
+
+The bounded fixture selection passed **14 tests** in 1.74 seconds, including
+directed-basket arithmetic, independent audit disagreement on tampered payout,
+settlement mismatch, unknown fees, stale books, replay determinism, replay-cutoff
+evidence, and API persistence/read-back. Ruff check, Ruff format check, and
+strict mypy on the four changed production modules passed; `git diff --check`
+passed. One existing Starlette/httpx TestClient deprecation warning remains.
+No live source request or held-data read was made. There is still no genuine
+captured cross-venue logical implication or economically eligible live result.
+
+At `2026-10-27T17:33:19Z`, memory PSI was `avg10` 45.57% (`some`) / 41.61%
+(`full`), `avg60` 45.72% / 41.25%, and `avg300` 36.83% / 33.19%.
+`MemAvailable` was 9,701,564 KiB and swap free was 485,724 KiB of 4 GiB. The
+full Frontier suite, browser E2E, and production build were not run under this
+pressure sample. Frontier remains isolated, undeployed, and incomplete.

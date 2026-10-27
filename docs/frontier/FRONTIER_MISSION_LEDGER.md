@@ -1,6 +1,21 @@
 # Project Frontier Mission Ledger
 
-**Latest checkpoint (2026-10-27):** Code commit `3e85c8d` integrates a
+**Latest checkpoint (2026-10-27 17:33 UTC):** Code commit
+`6706fe1d3194224697b5101a2f92fb6ba914c693` connects verified directed
+logical-implication relationships to a bounded `NO(source) + YES(target)`
+opportunity family, deterministic replay, and independent audit. It requires
+both pinned market observations, assertion evidence no later than the replay
+cutoff, matching denomination/close/settlement terms, complementary binary
+payouts, and fresh books. Positive results remain conditional because the
+semantic assertion is unauthenticated. Fourteen focused fixture/API tests,
+Ruff check/format, and strict mypy on the four changed source modules passed.
+No live source request or held-data read was made, and no genuine cross-venue
+implication opportunity was established. At 17:33:19 UTC, memory PSI `avg10`
+was 45.57% (`some`) / 41.61% (`full`), with 485,724 KiB swap free of 4 GiB;
+the full suite, browser E2E, and production build remain deferred. Frontier is
+still incomplete and undeployed.
+
+**Previous checkpoint (2026-10-27):** Code commit `3e85c8d` integrates a
 provenance-bound, conditional Kalshi one-fill fee estimate into saved-evidence
 replay. Only complete raw/hash/path/identity-matched supported event/series
 metadata no later than the pinned quote and at most 24 hours old at quote and
