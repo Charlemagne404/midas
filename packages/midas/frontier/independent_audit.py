@@ -48,7 +48,7 @@ from midas.frontier.relationships import (
 )
 
 D = Decimal
-_AUDIT_VERSION = "frontier-independent-economic-audit-8"
+_AUDIT_VERSION = "frontier-independent-economic-audit-9"
 _FEE_QUANTUM = D("0.00001")
 _KALSHI_FEE_MAX_EVIDENCE_AGE = timedelta(hours=24)
 
@@ -322,13 +322,26 @@ def _recompute(
             Fraction(leg.quantity) % Fraction(instrument.quantity_step) != 0
         ):
             mismatches.append(f"Leg {leg.instrument_id} violates its quantity step")
-        expected_fee = _independent_fee(
-            market,
-            instrument,
-            leg.quantity,
-            modeled_price,
-            book.received_at_utc,
-            candidate.observed_at_utc,
+        try:
+            execution_time = candidate.observed_at_utc + timedelta(
+                milliseconds=(
+                    scenario.execution_delay_ms
+                    + scenario.additional_execution_delay_ms_by_venue.get(market.venue.value, 0)
+                )
+            )
+        except OverflowError:
+            execution_time = None
+        expected_fee = (
+            _independent_fee(
+                market,
+                instrument,
+                leg.quantity,
+                modeled_price,
+                book.received_at_utc,
+                execution_time,
+            )
+            if execution_time is not None
+            else None
         )
         fee_by_leg[(leg.market_id, leg.instrument_id)] = expected_fee
         if leg.modeled_fee != expected_fee:

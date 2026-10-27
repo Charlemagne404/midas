@@ -1102,6 +1102,79 @@ def test_per_venue_execution_delay_scenarios_reject_invalid_values(payload):
         ExecutionScenario.model_validate(payload)
 
 
+def test_fee_schedule_expiring_before_modeled_execution_stays_unknown_in_candidate_and_audit():
+    left, right, _, instrument_mapping = _verified_pair()
+    as_of = T0 + timedelta(milliseconds=100)
+    expiring_right = right.model_copy(
+        update={
+            "fees": right.fees.model_copy(update={"expires_at_utc": as_of + timedelta(seconds=1)})
+        }
+    )
+    relationship = verify_same_payoff(
+        left,
+        expiring_right,
+        state_mapping={"yes": "yes", "no": "no"},
+        instrument_mapping=instrument_mapping,
+        external_assertion_id="fee-expires-during-venue-delay",
+        evidence_observation_ids=("left", "right"),
+        asserted_at_utc=T0,
+    )
+    left_books, right_books = _books(left, expiring_right)
+    common = {
+        "relationship": relationship,
+        "left_books": left_books,
+        "right_books": right_books,
+        "state_mapping": {"yes": "yes", "no": "no"},
+        "instrument_mapping": instrument_mapping,
+        "as_of_utc": as_of,
+    }
+
+    immediate = next(
+        item
+        for item in generate_binary_coverage_candidates(left, expiring_right, **common)
+        if item.legs and item.worst_case_gross_pnl is not None and item.worst_case_gross_pnl > 0
+    )
+    assert immediate.modeled_fees == 0
+    assert immediate.worst_case_net_pnl is not None
+
+    scenario = ExecutionScenario(
+        execution_delay_ms=500,
+        additional_execution_delay_ms_by_venue={"kalshi": 1500},
+    )
+    delayed = next(
+        item
+        for item in generate_binary_coverage_candidates(
+            left, expiring_right, scenario=scenario, **common
+        )
+        if item.legs and item.worst_case_gross_pnl is not None and item.worst_case_gross_pnl > 0
+    )
+    assert delayed.modeled_fees is None
+    assert delayed.worst_case_net_pnl is None
+    assert delayed.classification == OpportunityClassification.CONDITIONAL_ECONOMIC_OPPORTUNITY
+    assert any("unknown fees are not treated as zero" in item for item in delayed.assumptions)
+
+    canonical_mapping = (
+        instrument_mapping
+        if relationship.left_market_id == left.canonical_id
+        else {right_id: left_id for left_id, right_id in instrument_mapping.items()}
+    )
+    audited = independently_audit_candidate(
+        delayed,
+        markets={left.canonical_id: left, expiring_right.canonical_id: expiring_right},
+        books_by_market={
+            left.canonical_id: left_books,
+            expiring_right.canonical_id: right_books,
+        },
+        relationships={relationship.relationship_id: relationship},
+        state_mappings={relationship.relationship_id: {"yes": "yes", "no": "no"}},
+        instrument_mappings={relationship.relationship_id: canonical_mapping},
+        scenario=scenario,
+    )
+    assert audited.independent_audit is not None
+    assert audited.independent_audit.disposition.value == "verified"
+    assert audited.modeled_fees is None
+
+
 def test_kalshi_public_fee_estimate_flows_through_candidate_and_independent_audit():
     left, right, _, instrument_mapping = _verified_pair()
     left_books, right_books = _books(left, right)
@@ -1565,7 +1638,7 @@ def test_candidate_generation_and_independent_audit_enforce_price_ticks():
         as_of_utc=T0 + timedelta(milliseconds=100),
     )
     candidate = next(item for item in candidates if item.legs)
-    assert candidate.model_version == "frontier-economic-verifiers-11"
+    assert candidate.model_version == "frontier-economic-verifiers-12"
 
     def with_half_dollar_ticks(market_value):
         instruments = tuple(
@@ -1838,7 +1911,7 @@ def test_verified_multi_outcome_coverage_is_exact_and_stays_hypothetical():
         as_of_utc=T0 + timedelta(milliseconds=100),
         code_version="multi-outcome-fixture-v1",
     )
-    assert replay.manifest.replay_version == "frontier-deterministic-replay-11"
+    assert replay.manifest.replay_version == "frontier-deterministic-replay-12"
     replay_candidate = replay.candidates[0]
     assert replay_candidate.model_copy(update={"independent_audit": None}) == candidate
     assert replay_candidate.independent_audit is not None
@@ -2098,7 +2171,7 @@ def test_deterministic_replay_is_invariant_to_input_order():
     }
     first = deterministic_replay((left, right), all_books, **kwargs)
     second = deterministic_replay((right, left), tuple(reversed(all_books)), **kwargs)
-    assert first.manifest.economic_model_version == "frontier-economic-verifiers-11"
+    assert first.manifest.economic_model_version == "frontier-economic-verifiers-12"
     assert first.run_id == second.run_id
     assert first.result_sha256 == second.result_sha256
     assert first.candidates == second.candidates

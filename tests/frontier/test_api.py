@@ -3940,7 +3940,7 @@ def test_replay_api_generates_and_persists_multi_outcome_candidate(tmp_path):
         replay = client.post("/api/frontier/replay", json={})
         assert replay.status_code == 200, replay.text
         result = replay.json()
-        assert result["manifest"]["replay_version"] == "frontier-deterministic-replay-11"
+        assert result["manifest"]["replay_version"] == "frontier-deterministic-replay-12"
         assert len(result["candidates"]) == 1
         candidate = result["candidates"][0]
         assert candidate["family"] == "within_market_multi_outcome_coverage"
@@ -3986,7 +3986,11 @@ def test_replay_api_generates_and_persists_multi_outcome_candidate(tmp_path):
 
         listed = client.get("/api/frontier/opportunities")
         assert listed.status_code == 200
-        listed_candidate = listed.json()["items"][0]
+        listed_candidate = next(
+            item
+            for item in listed.json()["items"]
+            if item["source_run_id"] == delayed_replay["run_id"]
+        )
         assert listed_candidate["candidate_id"] == delayed_candidate["candidate_id"]
         assert listed_candidate["source_run_id"] == delayed_replay["run_id"]
         assert listed_candidate["source_run_sha256"] == delayed_replay["result_sha256"]

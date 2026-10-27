@@ -52,7 +52,7 @@ from midas.frontier.relationships import (
 )
 
 D = Decimal
-ECONOMIC_MODEL_VERSION = "frontier-economic-verifiers-11"
+ECONOMIC_MODEL_VERSION = "frontier-economic-verifiers-12"
 KALSHI_MVE_SETTLEMENT_AUDIT_VERSION = "kalshi-mve-settlement-audit-2"
 _KALSHI_TAKER_FEE_TYPES = frozenset({"quadratic", "quadratic_with_combo_maker_fees"})
 _KALSHI_FEE_SCHEDULE_VERSION = "kalshi-event-taker-2026-07-07-v1"
@@ -1506,14 +1506,21 @@ def generate_multi_outcome_coverage_candidate(
             "Modeled slippage or quote decay exceeds the maximum unit settlement payout.",
         )
 
+    execution_time = _projected_execution_time(as_of, scenario, market.venue)
+    if execution_time is None:
+        timing_reasons.append("Modeled execution time exceeds the supported timestamp range.")
     fees = [
-        _calculate_fee(
-            market,
-            instrument,
-            common_quantity,
-            price,
-            book.received_at_utc,
-            analysis_time_utc=as_of,
+        (
+            _calculate_fee(
+                market,
+                instrument,
+                common_quantity,
+                price,
+                book.received_at_utc,
+                analysis_time_utc=execution_time,
+            )
+            if execution_time is not None
+            else None
         )
         for (instrument, book, _), price in zip(top_asks, effective_asks, strict=True)
     ]
@@ -1571,6 +1578,10 @@ def generate_multi_outcome_coverage_candidate(
     if scenario.additional_execution_delay_ms_by_venue:
         assumptions.append(
             "Venue-specific delay additions scale the virtual quote-decay sensitivity; they do not model leg ordering, actual latency, or fill behavior."
+        )
+    if scenario.execution_delay_ms or scenario.additional_execution_delay_ms_by_venue:
+        assumptions.append(
+            "Fee effective and expiry bounds are checked at the modeled execution time for each venue; future fee stability is not established."
         )
     if scenario.fill_fraction < 1:
         assumptions.append(
@@ -2073,21 +2084,33 @@ def _evaluate_pair(
             candidate_id=identity,
             family=family,
         )
-    left_fee = _calculate_fee(
-        left,
-        left_instrument,
-        common_quantity,
-        l_effective,
-        left_book.received_at_utc,
-        analysis_time_utc=as_of,
+    left_execution_time = _projected_execution_time(as_of, scenario, left.venue)
+    right_execution_time = _projected_execution_time(as_of, scenario, right.venue)
+    if left_execution_time is None or right_execution_time is None:
+        timing_reasons.append("Modeled execution time exceeds the supported timestamp range.")
+    left_fee = (
+        _calculate_fee(
+            left,
+            left_instrument,
+            common_quantity,
+            l_effective,
+            left_book.received_at_utc,
+            analysis_time_utc=left_execution_time,
+        )
+        if left_execution_time is not None
+        else None
     )
-    right_fee = _calculate_fee(
-        right,
-        right_instrument,
-        common_quantity,
-        r_effective,
-        right_book.received_at_utc,
-        analysis_time_utc=as_of,
+    right_fee = (
+        _calculate_fee(
+            right,
+            right_instrument,
+            common_quantity,
+            r_effective,
+            right_book.received_at_utc,
+            analysis_time_utc=right_execution_time,
+        )
+        if right_execution_time is not None
+        else None
     )
     fees_computable = left_fee is not None and right_fee is not None
     fees_authoritative = fees_computable and all(
@@ -2163,6 +2186,10 @@ def _evaluate_pair(
     if scenario.additional_execution_delay_ms_by_venue:
         assumptions.append(
             "Venue-specific delay additions scale the virtual quote-decay sensitivity; they do not model leg ordering, actual latency, or fill behavior."
+        )
+    if scenario.execution_delay_ms or scenario.additional_execution_delay_ms_by_venue:
+        assumptions.append(
+            "Fee effective and expiry bounds are checked at the modeled execution time for each venue; future fee stability is not established."
         )
     if scenario.fill_fraction < 1:
         assumptions.append(
@@ -2457,3 +2484,12 @@ def _epoch_ms(value: datetime) -> int:
 
 def _age_ms(as_of: datetime, value: datetime) -> int:
     return max(0, _epoch_ms(as_of) - _epoch_ms(value))
+
+
+def _projected_execution_time(
+    as_of: datetime, scenario: ExecutionScenario, venue: Venue
+) -> datetime | None:
+    try:
+        return as_of + timedelta(milliseconds=scenario.execution_delay_for_venue(venue))
+    except OverflowError:
+        return None
