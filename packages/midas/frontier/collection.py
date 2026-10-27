@@ -16,6 +16,7 @@ from pydantic import Field, field_validator, model_validator
 
 from midas.frontier.adapters.base import AdapterError, ExchangeAdapter, FailedResponseEvidence
 from midas.frontier.models import (
+    AdapterCapabilities,
     AdapterConfig,
     BookSnapshot,
     Capability,
@@ -39,6 +40,7 @@ MAX_COLLECTION_DIAGNOSTICS = MAX_COLLECTION_MARKET_OBSERVATIONS + MAX_COLLECTION
 MAX_COLLECTION_RUNS = 1000
 MAX_COLLECTION_CHECKPOINTS = 100
 MAX_COLLECTION_CHECKPOINTS_TOTAL = 20_000
+MAX_COLLECTION_RUNS_LIST = 20
 MAX_COLLECTION_HEALTH_EVENTS = 20
 MAX_COLLECTION_JOURNAL_BYTES = 64 * 1024 * 1024
 MAX_COLLECTION_CHECKPOINT_BYTES = 8 * 1024 * 1024
@@ -457,12 +459,95 @@ class CollectionJournal:
         self, evidence_sha256: str
     ) -> tuple[CollectionRunSpec, CollectionCheckpoint, str] | None:
         """Resolve a source-health checkpoint by digest without creating or mutating a journal."""
-        return self.verified_source_health_checkpoints((evidence_sha256,)).get(evidence_sha256)
+        return self.verified_checkpoints((evidence_sha256,)).get(evidence_sha256)
+
+    def latest_run_checkpoints(
+        self,
+        limit: int = MAX_COLLECTION_RUNS_LIST,
+        *,
+        excluded_venues: tuple[Venue, ...] = (),
+    ) -> tuple[tuple[CollectionRunSpec, CollectionCheckpoint, str], ...]:
+        """List latest run checkpoints, validating each selected run without writing."""
+        if not 1 <= limit <= MAX_COLLECTION_RUNS_LIST:
+            raise ValueError(
+                f"Collection run listing limit must be within 1..{MAX_COLLECTION_RUNS_LIST}"
+            )
+        if self.path.is_symlink():
+            raise FrontierStoreError("Collection journal path cannot be a symlink")
+        if not self.path.exists():
+            return ()
+        if self.path.stat().st_size > self.max_bytes:
+            raise FrontierStoreError("Frontier collection journal exceeds its byte budget")
+
+        excluded = set(excluded_venues)
+        checkpoint_digests: list[str] = []
+        connection: sqlite3.Connection | None = None
+        try:
+            connection = sqlite3.connect(self.path.as_uri() + "?mode=ro", uri=True, timeout=0.5)
+            connection.row_factory = sqlite3.Row
+            connection.execute("PRAGMA busy_timeout=500")
+            connection.execute("PRAGMA query_only=ON")
+            meta = connection.execute(
+                "SELECT value FROM collection_meta WHERE key='schema_version'"
+            ).fetchone()
+            if meta is None or str(meta["value"]) != str(COLLECTION_JOURNAL_SCHEMA):
+                raise FrontierStoreError("Unsupported Frontier collection journal schema")
+            rows = connection.execute(
+                "SELECT r.run_id,r.spec_sha256,r.spec_json,c.row_sha256 "
+                "FROM collection_runs AS r LEFT JOIN collection_checkpoints AS c "
+                "ON c.run_id=r.run_id AND c.sequence=(SELECT MAX(latest.sequence) "
+                "FROM collection_checkpoints AS latest WHERE latest.run_id=r.run_id) "
+                "ORDER BY r.rowid DESC LIMIT ?",
+                (MAX_COLLECTION_RUNS + 1,),
+            ).fetchall()
+            if len(rows) > MAX_COLLECTION_RUNS:
+                raise FrontierStoreError("Collection run scan exceeds its row bound")
+            for row in rows:
+                run_id = str(row["run_id"])
+                if not _valid_run_id(run_id):
+                    raise FrontierStoreError("Stored collection run identity is invalid")
+                if row["row_sha256"] is None:
+                    raise FrontierStoreError("Collection run has no durable checkpoint")
+                spec_bytes = str(row["spec_json"]).encode("utf-8")
+                if len(spec_bytes) > MAX_ROW_BYTES:
+                    raise FrontierStoreError("Stored collection run spec exceeds its record bound")
+                if hashlib.sha256(spec_bytes).hexdigest() != row["spec_sha256"]:
+                    raise FrontierStoreError(
+                        "Stored collection run hash does not match its payload"
+                    )
+                try:
+                    spec = CollectionRunSpec.model_validate(json.loads(spec_bytes))
+                except (json.JSONDecodeError, ValueError) as error:
+                    raise FrontierStoreError("Stored collection run spec is invalid") from error
+                if spec.run_id != run_id or str(row["run_id"]) != run_id:
+                    raise FrontierStoreError("Stored collection run identity is inconsistent")
+                if spec.venue not in excluded:
+                    checkpoint_digests.append(str(row["row_sha256"]))
+                    if len(checkpoint_digests) == limit:
+                        break
+        except sqlite3.Error as error:
+            raise FrontierStoreError("Collection journal could not be read safely") from error
+        finally:
+            if connection is not None:
+                connection.close()
+
+        if len(set(checkpoint_digests)) != len(checkpoint_digests):
+            raise FrontierStoreError("Latest collection checkpoint digest is not unique")
+        verified = self.verified_checkpoints(tuple(checkpoint_digests))
+        if set(verified) != set(checkpoint_digests):
+            raise FrontierStoreError("Latest collection checkpoint failed chain verification")
+        return tuple(verified[digest] for digest in checkpoint_digests)
 
     def verified_source_health_checkpoints(
         self, evidence_sha256s: tuple[str, ...]
     ) -> dict[str, tuple[CollectionRunSpec, CollectionCheckpoint, str]]:
-        """Resolve up to 100 health checkpoints with one journal digest scan."""
+        """Compatibility alias for source-health checkpoint lookups."""
+        return self.verified_checkpoints(evidence_sha256s)
+
+    def verified_checkpoints(
+        self, evidence_sha256s: tuple[str, ...]
+    ) -> dict[str, tuple[CollectionRunSpec, CollectionCheckpoint, str]]:
+        """Resolve up to 100 checkpoint digests with complete run-chain validation."""
         unique_digests = tuple(dict.fromkeys(evidence_sha256s))
         if len(unique_digests) > MAX_COLLECTION_CHECKPOINTS:
             raise ValueError("Collection checkpoint lookup exceeds its 100-digest bound")
@@ -733,12 +818,11 @@ class BoundedSourceCollector:
             raise AdapterError("UNSUPPORTED_CAPABILITY", "Source has no market discovery")
         if book_limit and not self.adapter.capabilities.supports(Capability.BOOK_SNAPSHOT):
             raise AdapterError("UNSUPPORTED_CAPABILITY", "Source has no book snapshots")
-        capability_json = _canonical_json(self.adapter.capabilities.model_dump(mode="json"))
         spec = CollectionRunSpec(
             run_id=str(uuid.uuid4()),
             venue=self.adapter.venue,
             adapter_version=self.adapter.capabilities.adapter_version,
-            capability_manifest_sha256=hashlib.sha256(capability_json).hexdigest(),
+            capability_manifest_sha256=capability_manifest_sha256(self.adapter.capabilities),
             adapter_config=config,
             market_limit=market_limit,
             book_limit=book_limit,
@@ -778,12 +862,25 @@ class BoundedSourceCollector:
     def _validate_resume_adapter(self, spec: CollectionRunSpec) -> None:
         if spec.venue != self.adapter.venue:
             raise ValueError("Collection run belongs to another venue")
+        config = self.adapter.config
+        if not config.enabled or not config.live_public_probe_enabled:
+            raise AdapterError(
+                "PUBLIC_PROBE_DISABLED",
+                "Enable this source and its bounded public-probe flag before collection",
+            )
+        if config.probe_policy_block_reason:
+            raise AdapterError("SOURCE_USE_HELD", config.probe_policy_block_reason)
+        if spec.market_limit > config.max_markets_per_call:
+            raise ValueError("Pinned collection market limit exceeds current source configuration")
+        if not self.adapter.capabilities.supports(Capability.MARKET_DISCOVERY):
+            raise AdapterError("UNSUPPORTED_CAPABILITY", "Source has no market discovery")
+        if spec.book_limit and not self.adapter.capabilities.supports(Capability.BOOK_SNAPSHOT):
+            raise AdapterError("UNSUPPORTED_CAPABILITY", "Source has no book snapshots")
         if spec.adapter_version != self.adapter.capabilities.adapter_version:
             raise ValueError("Collection adapter version differs from the pinned run")
         if spec.adapter_config != self.adapter.config:
             raise ValueError("Collection adapter configuration differs from the pinned run")
-        capability_json = _canonical_json(self.adapter.capabilities.model_dump(mode="json"))
-        if hashlib.sha256(capability_json).hexdigest() != spec.capability_manifest_sha256:
+        if capability_manifest_sha256(self.adapter.capabilities) != spec.capability_manifest_sha256:
             raise ValueError("Collection capability manifest differs from the pinned run")
 
     async def _execute(
@@ -1498,6 +1595,11 @@ def _canonical_json(value: Any) -> bytes:
 
 def _hash_json(value: Any) -> str:
     return hashlib.sha256(_canonical_json(value)).hexdigest()
+
+
+def capability_manifest_sha256(capabilities: AdapterCapabilities) -> str:
+    """Return the canonical digest used to pin a collection's adapter contract."""
+    return _hash_json(capabilities.model_dump(mode="json"))
 
 
 def _bounded_failures(

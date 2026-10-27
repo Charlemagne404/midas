@@ -268,6 +268,43 @@ async def test_pending_capture_resumes_with_a_reconstructed_collector(tmp_path):
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("current_config", "expected_code"),
+    [
+        (AdapterConfig(enabled=False, live_public_probe_enabled=False), "PUBLIC_PROBE_DISABLED"),
+        (
+            AdapterConfig(
+                enabled=True,
+                live_public_probe_enabled=True,
+                probe_policy_block_reason="Fixture source-use hold",
+            ),
+            "SOURCE_USE_HELD",
+        ),
+    ],
+)
+async def test_resume_rechecks_probe_policy_before_recovering_pending_source_data(
+    tmp_path, current_config, expected_code
+):
+    store = FailOnceStore(tmp_path / "frontier")
+    adapter = FakeAdapter()
+    collector = BoundedSourceCollector(adapter, store)
+
+    paused = await collector.start(market_limit=1, book_limit=0)
+    assert paused.state == "paused"
+    assert paused.pending_observation_count == 1
+    checkpoint_before = CollectionJournal(store.root).latest_checkpoint(paused.run_id)
+    request_count_before = adapter.transport.request_count
+
+    adapter.config = current_config
+    with pytest.raises(AdapterError) as error:
+        await collector.resume(paused.run_id)
+
+    assert error.value.code == expected_code
+    assert adapter.transport.request_count == request_count_before
+    assert CollectionJournal(store.root).latest_checkpoint(paused.run_id) == checkpoint_before
+
+
+@pytest.mark.asyncio
 async def test_disabled_source_makes_no_adapter_call_and_failures_are_source_local(tmp_path):
     disabled_store = FrontierStore(tmp_path / "disabled")
     disabled_adapter = FakeAdapter(enabled=False)

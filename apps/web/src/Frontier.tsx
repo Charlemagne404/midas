@@ -53,11 +53,36 @@ type FiniteCollectionResponse = {
     source_health: { state: string } | null;
   };
   adapter_request_count: number;
-  adapter_request_upper_bound: number;
+  adapter_request_upper_bound_per_attempt: number;
   research_only: true;
   live_orders: false;
   source_health_scope: 'adapter_local_checkpoint';
   note: string;
+};
+type CollectionRunSummary = {
+  run_id: string;
+  venue: Venue;
+  adapter_version: string;
+  created_at_utc: string;
+  updated_at_utc: string;
+  state: string;
+  checkpoint_sequence: number;
+  checkpoint_sha256: string;
+  market_count: number;
+  book_count: number;
+  failed_book_count: number;
+  request_count: number;
+  failure_count: number;
+  source_health_state: string | null;
+  resumable: boolean;
+  resume_block_reason: string | null;
+};
+type CollectionRunsResponse = {
+  items: CollectionRunSummary[];
+  returned: number;
+  limit: number;
+  network_called: false;
+  research_only: true;
 };
 type Overview = {
   state: string;
@@ -1624,6 +1649,8 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
     marketKey: string;
     cursor: string | null;
   } | null>(null);
+  const [latestCollectionResult, setLatestCollectionResult] =
+    useState<FiniteCollectionResponse | null>(null);
   const [slippage, setSlippage] = useState('25');
   const [delay, setDelay] = useState('500');
   const [additionalVenueDelay, setAdditionalVenueDelay] = useState<Partial<Record<Venue, string>>>(
@@ -1655,6 +1682,12 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
   const sources = useQuery({
     queryKey: ['frontier', 'sources'],
     queryFn: () => api<{ items: Source[] }>('/frontier/sources'),
+    ...options,
+  });
+  const collectionRuns = useQuery({
+    queryKey: ['frontier', 'collection-runs'],
+    queryFn: () => api<CollectionRunsResponse>('/frontier/collection-runs?limit=20'),
+    enabled: section === 'sources',
     ...options,
   });
   const markets = useQuery({
@@ -2023,7 +2056,21 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
           max_wall_seconds: 30,
         }),
       }),
-    onSuccess: refresh,
+    onSuccess: (result) => {
+      setLatestCollectionResult(result);
+      refresh();
+    },
+  });
+  const resumeCollection = useMutation({
+    mutationFn: ({ venue, runId }: { venue: Venue; runId: string }) =>
+      api<FiniteCollectionResponse>(
+        `/frontier/collect/${venue}/${encodeURIComponent(runId)}/resume`,
+        { method: 'POST' },
+      ),
+    onSuccess: (result) => {
+      setLatestCollectionResult(result);
+      refresh();
+    },
   });
   const captureTradePage = useMutation({
     mutationFn: ({
@@ -2745,6 +2792,11 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
           markets={summary?.markets_by_venue ?? {}}
           probe={probe}
           finiteCollection={finiteCollection}
+          collectionRuns={collectionRuns.data}
+          collectionRunsLoading={collectionRuns.isLoading}
+          collectionRunsError={collectionRuns.error?.message}
+          latestCollectionResult={latestCollectionResult}
+          resumeCollection={resumeCollection}
           multivariateProbe={captureKalshiMultivariate}
           loading={sources.isLoading}
           error={sources.error?.message}
@@ -4819,6 +4871,12 @@ function BookSide({ title, levels }: { title: string; levels: Book['asks'] }) {
 type ProbeVariables = { venue: Venue; includeOneBook: boolean };
 type ProbeMutation = UseMutationResult<unknown, Error, ProbeVariables, unknown>;
 type FiniteCollectionMutation = UseMutationResult<FiniteCollectionResponse, Error, Venue, unknown>;
+type ResumeCollectionMutation = UseMutationResult<
+  FiniteCollectionResponse,
+  Error,
+  { venue: Venue; runId: string },
+  unknown
+>;
 type KalshiMultivariateFilter =
   { series_ticker: string } | { collection_ticker: string } | { event_ticker: string };
 type KalshiMultivariateProbe = UseMutationResult<
@@ -4833,6 +4891,11 @@ function SourcesView({
   markets,
   probe,
   finiteCollection,
+  collectionRuns,
+  collectionRunsLoading,
+  collectionRunsError,
+  latestCollectionResult,
+  resumeCollection,
   multivariateProbe,
   loading,
   error,
@@ -4841,6 +4904,11 @@ function SourcesView({
   markets: Record<string, number>;
   probe: ProbeMutation;
   finiteCollection: FiniteCollectionMutation;
+  collectionRuns?: CollectionRunsResponse;
+  collectionRunsLoading: boolean;
+  collectionRunsError?: string;
+  latestCollectionResult: FiniteCollectionResponse | null;
+  resumeCollection: ResumeCollectionMutation;
   multivariateProbe: KalshiMultivariateProbe;
   loading: boolean;
   error?: string;
@@ -4868,7 +4936,7 @@ function SourcesView({
               (item) => item.capability === 'market_discovery' && item.supported,
             );
           const collectionRun =
-            finiteCollection.data?.venue === source.venue ? finiteCollection.data : null;
+            latestCollectionResult?.venue === source.venue ? latestCollectionResult : null;
           return (
             <article className="fr-card fr-venue-card" key={source.venue}>
               <div className="fr-venue-top">
@@ -4985,9 +5053,9 @@ function SourcesView({
                       {count(collectionRun.collection_run.failed_book_count)} failed book(s)
                     </span>
                     <span>
-                      {count(collectionRun.adapter_request_count)} /{' '}
-                      {count(collectionRun.adapter_request_upper_bound)} adapter requests · run{' '}
-                      {shortHash(collectionRun.collection_run.run_id)}
+                      {count(collectionRun.adapter_request_count)} total adapter requests across run
+                      · at most {count(collectionRun.adapter_request_upper_bound_per_attempt)} per
+                      attempt · run {shortHash(collectionRun.collection_run.run_id)}
                     </span>
                     <small>
                       Health is adapter-local checkpoint state; it does not establish continuous
@@ -5000,6 +5068,69 @@ function SourcesView({
                     ))}
                   </div>
                 )}
+              </div>
+              <div className="fr-probe-row fr-collection-history">
+                <strong>Recent finite collection runs</strong>
+                <small>
+                  Read-only list of hash-verified local checkpoints. Resume is a separate explicit
+                  public-data request and requires the source configuration to still match.
+                </small>
+                {collectionRunsLoading ? (
+                  <small>Loading verified collection history…</small>
+                ) : collectionRunsError ? (
+                  <InlineError message={collectionRunsError} />
+                ) : (
+                  (collectionRuns?.items ?? [])
+                    .filter((run) => run.venue === source.venue)
+                    .map((run) => (
+                      <article className="fr-collection-history-item" key={run.run_id}>
+                        <div className="fr-collection-history-head">
+                          <StateBadge state={run.state} />
+                          <span>{time(run.updated_at_utc)}</span>
+                        </div>
+                        <span>
+                          {count(run.market_count)} market(s) · {count(run.book_count)} book(s) ·{' '}
+                          {count(run.failed_book_count)} failed book(s) · {count(run.request_count)}{' '}
+                          recorded adapter request(s)
+                        </span>
+                        <small>
+                          Run {shortHash(run.run_id)} · checkpoint {run.checkpoint_sequence} ·{' '}
+                          {shortHash(run.checkpoint_sha256)} · {run.adapter_version} · health{' '}
+                          {run.source_health_state ?? 'not recorded'} · {run.failure_count}{' '}
+                          failure(s)
+                        </small>
+                        {run.resumable && (
+                          <button
+                            className="fr-inspect-button"
+                            disabled={!collectionAvailable || resumeCollection.isPending}
+                            onClick={() =>
+                              resumeCollection.mutate({ venue: source.venue, runId: run.run_id })
+                            }
+                          >
+                            {resumeCollection.isPending &&
+                            resumeCollection.variables?.runId === run.run_id
+                              ? 'Resuming…'
+                              : `Resume collection run ${shortHash(run.run_id)}`}
+                          </button>
+                        )}
+                        {!run.resumable &&
+                          !['completed', 'partial', 'failed'].includes(run.state) && (
+                            <small>
+                              Resume unavailable:{' '}
+                              {run.resume_block_reason ?? 'current source checks failed.'}
+                            </small>
+                          )}
+                      </article>
+                    ))
+                )}
+                {resumeCollection.isError && resumeCollection.variables?.venue === source.venue && (
+                  <InlineError message={resumeCollection.error.message} />
+                )}
+                {!collectionRunsLoading &&
+                  !collectionRunsError &&
+                  (collectionRuns?.items ?? []).every((run) => run.venue !== source.venue) && (
+                    <small>No verified finite collection runs for this source.</small>
+                  )}
               </div>
               {source.venue === 'kalshi' && (
                 <div className="fr-mve-capture">

@@ -42,7 +42,12 @@ from midas.frontier.analytics import (
     summarize_frontier_coverage,
 )
 from midas.frontier.capital import CapitalCarryRequest, evaluate_capital_carry
-from midas.frontier.collection import BoundedSourceCollector, CollectionJournal
+from midas.frontier.collection import (
+    MAX_COLLECTION_RUNS_LIST,
+    BoundedSourceCollector,
+    CollectionJournal,
+    capability_manifest_sha256,
+)
 from midas.frontier.economics import (
     ExecutionScenario,
     OpportunityCandidate,
@@ -1432,6 +1437,93 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
             "network_called": False,
             "research_only": True,
             "source_health_scope": "adapter_local_checkpoint",
+        }
+
+    @api.get("/collection-runs")
+    async def collection_runs(
+        limit: int = Query(default=20, ge=1, le=MAX_COLLECTION_RUNS_LIST),
+    ) -> dict[str, Any]:
+        """List recent, chain-verified local collection runs without source access."""
+        journal = CollectionJournal(store.root)
+        try:
+            checkpoints = journal.latest_run_checkpoints(
+                limit,
+                excluded_venues=tuple(Venue(venue) for venue in held_venues),
+            )
+        except (FrontierStoreError, OSError, ValueError) as error:
+            raise HTTPException(status_code=409, detail=str(error)) from error
+        items = []
+        for spec, checkpoint, digest in checkpoints:
+            health = checkpoint.source_health
+            try:
+                source_adapter = registry.get(spec.venue)
+            except KeyError:
+                source_adapter = None
+            source_config = getattr(source_adapter, "config", None)
+            terminal = checkpoint.state in {"completed", "partial", "failed"}
+            resume_block_reason = None
+            if terminal:
+                resume_block_reason = "Collection run is terminal."
+            elif source_adapter is None:
+                resume_block_reason = "The pinned source adapter is not registered."
+            elif (
+                source_config is None
+                or not source_config.enabled
+                or not source_config.live_public_probe_enabled
+            ):
+                resume_block_reason = "Public collection is disabled in the current source config."
+            elif source_config.probe_policy_block_reason:
+                resume_block_reason = source_config.probe_policy_block_reason
+            elif spec.market_limit > source_config.max_markets_per_call:
+                resume_block_reason = "Pinned market limit exceeds current source configuration."
+            elif not source_adapter.capabilities.supports(Capability.MARKET_DISCOVERY):
+                resume_block_reason = "Current source capabilities lack market discovery."
+            elif spec.book_limit and not source_adapter.capabilities.supports(
+                Capability.BOOK_SNAPSHOT
+            ):
+                resume_block_reason = "Current source capabilities lack book snapshots."
+            elif (
+                spec.market_limit > 5
+                or spec.book_limit > 2
+                or spec.book_depth > 10
+                or spec.max_evidence_bytes > 4 * 1024 * 1024
+                or spec.max_wall_seconds > 60
+            ):
+                resume_block_reason = "Collection run exceeds the API resume bounds."
+            elif spec.adapter_version != source_adapter.capabilities.adapter_version:
+                resume_block_reason = "Current adapter version differs from the pinned run."
+            elif spec.adapter_config != source_config:
+                resume_block_reason = "Current source config differs from the pinned run."
+            elif capability_manifest_sha256(source_adapter.capabilities) != (
+                spec.capability_manifest_sha256
+            ):
+                resume_block_reason = "Current capability manifest differs from the pinned run."
+            items.append(
+                {
+                    "run_id": spec.run_id,
+                    "venue": spec.venue.value,
+                    "adapter_version": spec.adapter_version,
+                    "created_at_utc": spec.created_at_utc,
+                    "updated_at_utc": checkpoint.updated_at_utc,
+                    "state": checkpoint.state,
+                    "checkpoint_sequence": checkpoint.sequence,
+                    "checkpoint_sha256": digest,
+                    "market_count": len(checkpoint.market_observation_ids),
+                    "book_count": len(checkpoint.book_observation_ids),
+                    "failed_book_count": len(checkpoint.failed_book_task_ids),
+                    "request_count": checkpoint.request_count,
+                    "failure_count": len(checkpoint.failures),
+                    "source_health_state": health.state.value if health is not None else None,
+                    "resumable": resume_block_reason is None,
+                    "resume_block_reason": resume_block_reason,
+                }
+            )
+        return {
+            "items": items,
+            "returned": len(items),
+            "limit": limit,
+            "network_called": False,
+            "research_only": True,
         }
 
     @api.get("/analytics/coverage")
@@ -3969,13 +4061,99 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
             "venue": venue.value,
             "collection_run": result.model_dump(mode="json"),
             "adapter_request_count": result.request_count,
-            "adapter_request_upper_bound": request_bound,
+            "adapter_request_upper_bound_per_attempt": request_bound,
             "research_only": True,
             "live_orders": False,
             "source_health_scope": "adapter_local_checkpoint",
             "note": (
                 "One explicitly requested finite capture. This route starts no background job, "
                 "worker, or continuous collector."
+            ),
+        }
+
+    @api.post("/collect/{venue}/{run_id}/resume")
+    async def resume_source_collection(venue: Venue, run_id: str) -> dict[str, Any]:
+        """Explicitly resume one eligible, checkpointed finite collection run."""
+        reject_held_venue(venue)
+        adapter: ExchangeAdapter = registry.get(venue)
+        config = getattr(adapter, "config", None)
+        if config is None or not config.enabled or not config.live_public_probe_enabled:
+            raise HTTPException(status_code=409, detail=probe_disabled_detail(config))
+        journal = CollectionJournal(store.root)
+        if not journal.path.exists():
+            raise HTTPException(status_code=404, detail="Collection run was not found")
+        try:
+            spec = journal.run_spec(run_id)
+            if spec.venue != venue:
+                raise HTTPException(status_code=404, detail="Collection run was not found")
+            if spec.market_limit > config.max_markets_per_call:
+                raise HTTPException(
+                    status_code=409,
+                    detail="Pinned collection market limit exceeds current source configuration",
+                )
+            if not adapter.capabilities.supports(Capability.MARKET_DISCOVERY):
+                raise HTTPException(
+                    status_code=409,
+                    detail="Current source does not support market discovery",
+                )
+            if spec.book_limit and not adapter.capabilities.supports(Capability.BOOK_SNAPSHOT):
+                raise HTTPException(
+                    status_code=409,
+                    detail="Current source does not support book snapshots",
+                )
+            if (
+                spec.market_limit > 5
+                or spec.book_limit > 2
+                or spec.book_depth > 10
+                or spec.max_evidence_bytes > 4 * 1024 * 1024
+                or spec.max_wall_seconds > 60
+            ):
+                raise HTTPException(
+                    status_code=409,
+                    detail="Collection run exceeds the API resume bounds",
+                )
+            if spec.adapter_version != adapter.capabilities.adapter_version:
+                raise HTTPException(
+                    status_code=409,
+                    detail="Collection adapter version differs from the pinned run",
+                )
+            if capability_manifest_sha256(adapter.capabilities) != (
+                spec.capability_manifest_sha256
+            ):
+                raise HTTPException(
+                    status_code=409,
+                    detail="Collection capability manifest differs from the pinned run",
+                )
+            if spec.adapter_config != config:
+                raise HTTPException(
+                    status_code=409,
+                    detail="Collection source configuration differs from the pinned run",
+                )
+            checkpoint = journal.latest_checkpoint(run_id)
+            if checkpoint.state in {"completed", "partial", "failed"}:
+                result = await BoundedSourceCollector(adapter, store, journal).resume(run_id)
+            else:
+                async with source_locks[venue]:
+                    result = await BoundedSourceCollector(adapter, store, journal).resume(run_id)
+        except KeyError as error:
+            raise HTTPException(status_code=404, detail="Collection run was not found") from error
+        except AdapterError as error:
+            raise HTTPException(status_code=409, detail=str(error)) from error
+        except (FrontierStoreError, OSError, ValueError) as error:
+            raise HTTPException(status_code=409, detail=str(error)) from error
+
+        request_bound = (spec.market_limit + spec.book_limit) * (config.retries + 1)
+        return {
+            "venue": venue.value,
+            "collection_run": result.model_dump(mode="json"),
+            "adapter_request_count": result.request_count,
+            "adapter_request_upper_bound_per_attempt": request_bound,
+            "research_only": True,
+            "live_orders": False,
+            "source_health_scope": "adapter_local_checkpoint",
+            "note": (
+                "One explicit resume attempt. It starts no background job, worker, or continuous "
+                "collector."
             ),
         }
 

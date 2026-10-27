@@ -435,8 +435,13 @@ submits a smaller 3-market/1-book/depth-5, 30-second request. It runs in the
 request lifecycle, shares the source lock with existing probes, and starts no
 Arena job, background worker, timer, or continuous collector. Collection is
 still disabled by default and Kalshi/Kraken/Coinbase policy holds remain
-enforced. Tests use a fixture adapter; no live collection was started. See the
-[operations guide](frontier/FRONTIER_OPERATIONS.md) for the module's larger
+enforced. `GET /api/frontier/collection-runs?limit=20` lists recent
+chain-verified checkpoints without a source request. The Exchanges view exposes
+`POST /api/frontier/collect/{venue}/{run_id}/resume` only for a nonterminal run
+whose source configuration, adapter/capability version, policy, and API bounds
+still match. Resume is a separate operator action; no retry or background work
+is automatic. Tests use fixture adapters; no live collection was started. See
+the [operations guide](frontier/FRONTIER_OPERATIONS.md) for the module's larger
 standalone bounds and the API's smaller request limits.
 
 Exercise the pinned timeline worker and API integration without launching a

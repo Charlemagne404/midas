@@ -87,6 +87,13 @@ it('renders recorded-evidence empty states and never probes a source automatical
       limitations: ['No recorded evidence.'],
     },
     '/api/frontier/sources': { items: [source, enabledSource] },
+    '/api/frontier/collection-runs?limit=20': {
+      items: [],
+      returned: 0,
+      limit: 20,
+      network_called: false,
+      research_only: true,
+    },
     '/api/frontier/markets?limit=100': { items: [], returned: 0, limit: 100, offset: 0 },
     '/api/frontier/books?limit=100': { items: [], returned: 0, limit: 100, offset: 0 },
     '/api/frontier/trades?limit=100': {
@@ -175,8 +182,44 @@ it('renders recorded-evidence empty states and never probes a source automatical
       limitations: ['Counts describe bounded recorded samples, not venue-wide coverage.'],
     },
   };
+  let collectionState = 'paused';
   const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const path = String(input);
+    if (path === '/api/frontier/collection-runs?limit=20') {
+      const items = collectionState
+        ? [
+            {
+              run_id: 'f79d58bb-e799-4718-93f1-a94bb7492f21',
+              venue: 'polymarket',
+              adapter_version: 'frontier-polymarket-v1',
+              created_at_utc: '2026-10-28T00:00:00Z',
+              updated_at_utc: '2026-10-28T00:00:00Z',
+              state: collectionState,
+              checkpoint_sequence: 2,
+              checkpoint_sha256: 'a'.repeat(64),
+              market_count: 1,
+              book_count: 0,
+              failed_book_count: 0,
+              request_count: 1,
+              failure_count: 1,
+              source_health_state: 'degraded',
+              resumable: collectionState === 'paused',
+              resume_block_reason:
+                collectionState === 'paused' ? null : 'Collection run is terminal.',
+            },
+          ]
+        : [];
+      return {
+        ok: true,
+        json: async () => ({
+          items,
+          returned: items.length,
+          limit: 20,
+          network_called: false,
+          research_only: true,
+        }),
+      } as Response;
+    }
     if (path === '/api/frontier/collect/polymarket' && init?.method === 'POST') {
       expect(JSON.parse(String(init.body))).toEqual({
         market_limit: 3,
@@ -190,17 +233,46 @@ it('renders recorded-evidence empty states and never probes a source automatical
           venue: 'polymarket',
           collection_run: {
             run_id: 'f79d58bb-e799-4718-93f1-a94bb7492f21',
+            state: 'paused',
+            market_count: 1,
+            book_count: 0,
+            failed_book_count: 0,
+            request_count: 1,
+            updated_at_utc: '2026-10-28T00:00:00Z',
+            failures: [{ code: 'COLLECTION_WALL_LIMIT', message: 'Fixture pause.' }],
+            source_health: { state: 'degraded' },
+          },
+          adapter_request_count: 1,
+          adapter_request_upper_bound_per_attempt: 8,
+          research_only: true,
+          live_orders: false,
+          source_health_scope: 'adapter_local_checkpoint',
+          note: 'Fixture response only.',
+        }),
+      } as Response;
+    }
+    if (
+      path === '/api/frontier/collect/polymarket/f79d58bb-e799-4718-93f1-a94bb7492f21/resume' &&
+      init?.method === 'POST'
+    ) {
+      collectionState = 'completed';
+      return {
+        ok: true,
+        json: async () => ({
+          venue: 'polymarket',
+          collection_run: {
+            run_id: 'f79d58bb-e799-4718-93f1-a94bb7492f21',
             state: 'completed',
             market_count: 1,
             book_count: 1,
             failed_book_count: 0,
-            request_count: 2,
-            updated_at_utc: '2026-10-28T00:00:00Z',
+            request_count: 3,
+            updated_at_utc: '2026-10-28T00:00:30Z',
             failures: [],
             source_health: { state: 'healthy' },
           },
-          adapter_request_count: 2,
-          adapter_request_upper_bound: 8,
+          adapter_request_count: 3,
+          adapter_request_upper_bound_per_attempt: 8,
           research_only: true,
           live_orders: false,
           source_health_scope: 'adapter_local_checkpoint',
@@ -241,10 +313,21 @@ it('renders recorded-evidence empty states and never probes a source automatical
     .getAllByRole('button', { name: 'Public probe disabled' })
     .forEach((button) => expect(button).toBeDisabled());
   fireEvent.click(screen.getByRole('button', { name: 'Capture finite batch with checkpoints' }));
-  expect(await screen.findByText('Finite capture completed')).toBeInTheDocument();
-  expect(screen.getByText(/1 market\(s\) · 1 book\(s\) · 0 failed book\(s\)/)).toBeInTheDocument();
-  expect(screen.getByText(/2 \/ 8 adapter requests/)).toBeInTheDocument();
+  expect(await screen.findByText('Finite capture paused')).toBeInTheDocument();
+  expect(screen.getAllByText(/1 market\(s\) · 0 book\(s\) · 0 failed book\(s\)/)).toHaveLength(2);
+  expect(
+    screen.getByText(/1 total adapter requests across run · at most 8 per attempt/),
+  ).toBeInTheDocument();
   expect(screen.getByText(/does not establish continuous venue availability/)).toBeInTheDocument();
+  const resumeButton = screen.getByRole('button', {
+    name: /Resume collection run f79d58bb-e79/,
+  });
+  expect(resumeButton).toBeEnabled();
+  fireEvent.click(resumeButton);
+  expect(
+    await screen.findByText(/3 total adapter requests across run · at most 8 per attempt/),
+  ).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: /Resume collection run f79d58bb-e79/ })).toBeNull();
 
   fireEvent.click(screen.getByRole('button', { name: 'Markets' }));
   expect(await screen.findByText('No market observations recorded')).toBeInTheDocument();
@@ -2659,6 +2742,13 @@ it('captures one explicit bounded Kalshi multivariate event page', async () => {
       limitations: ['No recorded evidence.'],
     },
     '/api/frontier/sources': { items: [source] },
+    '/api/frontier/collection-runs?limit=20': {
+      items: [],
+      returned: 0,
+      limit: 20,
+      network_called: false,
+      research_only: true,
+    },
     '/api/frontier/markets?limit=100': { items: [], returned: 0, limit: 100, offset: 0 },
     '/api/frontier/books?limit=100': { items: [], returned: 0, limit: 100, offset: 0 },
     '/api/frontier/trades?limit=100': {

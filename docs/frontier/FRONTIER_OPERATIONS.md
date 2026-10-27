@@ -251,8 +251,15 @@ three markets, one book, depth five, and 30 seconds. The per-source loop is
 sequential and records failures independently. A restart through the module
 resumes from the last append-only checkpoint and revalidates its sequence/hash
 chain and pinned adapter version/config; it does not silently relaunch a
-terminal run. The HTTP route currently starts a new run only; it does not
-expose resume or collection-run history.
+terminal run. `GET /api/frontier/collection-runs?limit=20` lists a bounded set
+of recent runs and verifies each selected checkpoint's complete hash chain.
+The read does not initialize a missing journal or contact a source. The
+Exchanges view offers an explicit `POST
+/api/frontier/collect/{venue}/{run_id}/resume` action for a nonterminal run
+only when current source flags, source-use policy, adapter version, capability
+manifest, and the API's smaller request bounds still match the pinned spec.
+Completed, partial, and failed runs are terminal. A resume is one request-bound
+attempt; it does not start an automatic retry loop.
 
 The collector journal (`frontier-collection.sqlite3`) is separate from the
 Frontier observation database but stored under the selected Frontier root. It

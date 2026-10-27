@@ -740,6 +740,34 @@
   color: #84958e;
   font-size: 8px;
 }
+.fr-collection-history > strong {
+  color: #c7d0dc;
+  font-size: 10px;
+  font-weight: 550;
+}
+.fr-collection-history-item {
+  display: grid;
+  gap: 5px;
+  padding: 9px;
+  border: 1px solid #2d3741;
+  border-radius: 5px;
+  background: #10161d;
+  color: #a6b1bd;
+  font-size: 9px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.fr-collection-history-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: #8290a0;
+}
+.fr-collection-history-item > small {
+  color: #798596;
+  font-size: 8px;
+}
 .fr-mve-capture {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(100px, 0.75fr) minmax(120px, 1fr) auto;

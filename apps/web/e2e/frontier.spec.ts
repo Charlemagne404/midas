@@ -10,8 +10,12 @@ const USD_IDENTITY = {
 
 test('Frontier workspace uses isolated research state and remains responsive', async ({ page }) => {
   let probeRequests = 0;
+  let collectionPosts = 0;
   page.on('request', (request) => {
     if (request.url().includes('/api/frontier/probe/')) probeRequests += 1;
+    if (request.method() === 'POST' && request.url().includes('/api/frontier/collect/')) {
+      collectionPosts += 1;
+    }
   });
   await page.goto('/');
   await page.getByRole('button', { name: 'Frontier', exact: true }).click();
@@ -37,6 +41,20 @@ test('Frontier workspace uses isolated research state and remains responsive', a
   await expect(page.getByRole('heading', { name: 'Recent market mix' })).toBeVisible();
   await expect(page.getByText('No eligible market records')).toBeVisible();
   await expect(page.getByText('No quality-valid book pairs')).toBeVisible();
+  expect(probeRequests).toBe(0);
+
+  const collectionHistoryResponse = page.waitForResponse(
+    (item) =>
+      item.url().includes('/api/frontier/collection-runs') && item.request().method() === 'GET',
+  );
+  await page.getByRole('button', { name: 'Exchanges', exact: true }).click();
+  const history = await collectionHistoryResponse;
+  expect(history.status()).toBe(200);
+  expect((await history.json()).network_called).toBe(false);
+  await expect(
+    page.getByText('No verified finite collection runs for this source.').first(),
+  ).toBeVisible();
+  expect(collectionPosts).toBe(0);
   expect(probeRequests).toBe(0);
 
   await page.getByRole('button', { name: 'Economic workbench', exact: true }).click();
