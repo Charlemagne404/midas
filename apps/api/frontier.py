@@ -242,6 +242,17 @@ class TimelineReplayRequest(BaseModel):
             raise ValueError("Timeline evaluation times must be unique and ordered")
         return normalized
 
+    @model_validator(mode="after")
+    def source_status_observations_are_unique(self) -> TimelineReplayRequest:
+        identities = tuple(
+            (event.venue, event.observed_at_utc) for event in self.source_status_events
+        )
+        if len(identities) != len(set(identities)):
+            raise ValueError(
+                "Timeline source-status events for one venue must have unique observation times"
+            )
+        return self
+
 
 MAX_FRONTIER_READINESS_JOB_SCAN = 100
 MAX_FRONTIER_READINESS_MANIFEST_BYTES = 64 * 1024

@@ -216,6 +216,30 @@ def test_timeline_route_stages_only_pinned_local_inputs_without_source_requests(
         )
         assert reordered_times.status_code == 422
         assert "unique and ordered" in reordered_times.text
+
+        duplicate_source_times = client.post(
+            "/api/frontier/arena-timeline-replay",
+            json={
+                "source_status_events": [
+                    {
+                        "venue": "polymarket",
+                        "observed_at_utc": T0.isoformat(),
+                        "state": "available",
+                        "basis": "scenario",
+                        "reason": "first scenario event",
+                    },
+                    {
+                        "venue": "polymarket",
+                        "observed_at_utc": T0.isoformat(),
+                        "state": "unavailable",
+                        "basis": "scenario",
+                        "reason": "second scenario event",
+                    },
+                ]
+            },
+        )
+        assert duplicate_source_times.status_code == 422
+        assert "unique observation times" in duplicate_source_times.text
         assert store.summary()["observations"] == 2
     finally:
         client.close()

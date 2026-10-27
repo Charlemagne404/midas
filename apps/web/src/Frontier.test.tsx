@@ -2259,8 +2259,24 @@ it('submits a bounded Arena replay and displays its integrity-verified compariso
           last_success_at_utc: '2026-10-27T00:00:00Z',
           source_health_state: 'healthy',
         },
+        {
+          event: {
+            venue: 'polymarket',
+            observed_at_utc: '2026-10-27T00:00:00Z',
+            state: 'unavailable',
+            basis: 'recorded',
+            evidence_observation_id: '8'.repeat(64),
+            reason: 'Verified collector checkpoint reported unavailable source health.',
+          },
+          run_id: '1'.repeat(36),
+          adapter_version: 'fixture-adapter-v1',
+          checkpoint_sequence: 1,
+          checkpoint_updated_at_utc: '2026-10-27T00:00:01Z',
+          last_success_at_utc: null,
+          source_health_state: 'unavailable',
+        },
       ],
-      returned: 1,
+      returned: 2,
       limit: 20,
       network_called: false,
       research_only: true,
@@ -2499,6 +2515,11 @@ it('submits a bounded Arena replay and displays its integrity-verified compariso
   ).toBe(false);
   expect(fetchMock.mock.calls.some(([input]) => String(input).includes('/probe/'))).toBe(false);
   fireEvent.click(recordedHealthCheckbox);
+  expect(
+    screen.getByRole('checkbox', {
+      name: /Include recorded polymarket unavailable health/,
+    }),
+  ).toBeDisabled();
   const freshnessInput = screen.getByLabelText('Maximum book age (milliseconds)');
   const timelineReplayButton = screen.getByRole('button', { name: 'Replay saved timeline' });
   fireEvent.change(freshnessInput, { target: { value: '0' } });

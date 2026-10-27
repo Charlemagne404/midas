@@ -3715,7 +3715,8 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
                 Select verified local collector checkpoints to replay as source-state events. These
                 records describe adapter-local health at one checkpoint; they do not show continuous
                 venue availability or account eligibility. This list reads the local journal only
-                and never starts a collector or contacts a venue.
+                and never starts a collector or contacts a venue. Select at most one event for each
+                venue and check time.
               </p>
               {recordedSourceHealth.isLoading ? (
                 <div className="fr-loading">Reading verified local health checkpoints…</div>
@@ -3731,11 +3732,23 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
                   {recordedSourceHealthItems.map((item) => {
                     const digest = item.event.evidence_observation_id;
                     const checked = selectedSourceHealthDigests.includes(digest);
+                    const conflictsWithSelection = selectedSourceHealthEvents.some(
+                      (selected) =>
+                        selected.venue === item.event.venue &&
+                        selected.observed_at_utc === item.event.observed_at_utc &&
+                        selected.evidence_observation_id !== digest,
+                    );
                     return (
                       <label className="fr-recorded-health-row" key={digest}>
                         <input
                           type="checkbox"
                           checked={checked}
+                          disabled={conflictsWithSelection && !checked}
+                          title={
+                            conflictsWithSelection && !checked
+                              ? 'Another source event for this venue and check time is selected'
+                              : undefined
+                          }
                           onChange={(change) =>
                             setSelectedSourceHealthDigests((current) =>
                               change.target.checked
