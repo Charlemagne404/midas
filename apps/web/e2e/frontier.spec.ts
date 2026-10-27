@@ -594,12 +594,14 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
         run_sha256: 'b'.repeat(64),
         candidate_id: capitalCandidateId,
         annual_rate_bps_by_venue: { kalshi: '1000', polymarket: '1500' },
+        post_settlement_delay_seconds_by_venue: { kalshi: '0', polymarket: '0' },
       });
       return route.fulfill({
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({
-          model_version: 'frontier-virtual-capital-carry-1',
+          schema_version: 2,
+          model_version: 'frontier-virtual-capital-carry-2',
           run_id: 'a'.repeat(64),
           run_sha256: 'b'.repeat(64),
           candidate_id: capitalCandidateId,
@@ -612,6 +614,7 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
               venue: 'kalshi',
               capital: '5.5',
               annual_rate_bps: '1000',
+              post_settlement_delay_seconds: 0,
               start_at_utc: '2026-10-26T20:00:00Z',
               capital_released_at_utc: '2026-10-27T20:00:00Z',
               duration_seconds: '86400',
@@ -633,6 +636,7 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
               venue: 'polymarket',
               capital: '3.5',
               annual_rate_bps: '1500',
+              post_settlement_delay_seconds: 0,
               start_at_utc: '2026-10-26T20:00:00Z',
               capital_released_at_utc: '2026-10-28T20:00:00Z',
               duration_seconds: '172800',
@@ -776,6 +780,7 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
       run_sha256: 'b'.repeat(64),
       candidate_id: capitalCandidateId,
       annual_rate_bps_by_venue: { kalshi: '1000', polymarket: '1500' },
+      post_settlement_delay_seconds_by_venue: { kalshi: '0', polymarket: '0' },
     },
   ]);
   await page.setViewportSize({ width: 390, height: 844 });

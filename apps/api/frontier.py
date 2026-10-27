@@ -3039,6 +3039,9 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
                 run_id=request.run_id,
                 run_sha256=request.run_sha256,
                 rates_by_venue=request.annual_rate_bps_by_venue,
+                post_settlement_delay_seconds_by_venue=(
+                    request.post_settlement_delay_seconds_by_venue
+                ),
                 markets_by_id=markets_by_id,
                 observation_row_hashes=observation_row_hashes,
             )

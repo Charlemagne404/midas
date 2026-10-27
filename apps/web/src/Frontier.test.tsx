@@ -546,7 +546,8 @@ it('renders recorded-evidence empty states and never probes a source automatical
   }
 
   responses['/api/frontier/opportunities/capital-carry'] = {
-    model_version: 'frontier-virtual-capital-carry-1',
+    schema_version: 2,
+    model_version: 'frontier-virtual-capital-carry-2',
     run_id: 'a'.repeat(64),
     run_sha256: 'b'.repeat(64),
     candidate_id: 'multi-outcome-fixture-candidate',
@@ -572,6 +573,7 @@ it('renders recorded-evidence empty states and never probes a source automatical
         venue: 'kalshi',
         capital: '9',
         annual_rate_bps: '1000',
+        post_settlement_delay_seconds: 3600,
         start_at_utc: '2026-10-26T20:00:00Z',
         capital_released_at_utc: '2026-10-27T20:00:00Z',
         duration_seconds: '86400',
@@ -584,7 +586,7 @@ it('renders recorded-evidence empty states and never probes a source automatical
             raw_sha256: 'f'.repeat(64),
             resolution_evidence_sha256: '2'.repeat(64),
             resolution_fingerprint: 'three-way-fixture',
-            settles_at_utc: '2026-10-27T20:00:00Z',
+            settles_at_utc: '2026-10-27T19:00:00Z',
           },
         ],
       },
@@ -604,12 +606,17 @@ it('renders recorded-evidence empty states and never probes a source automatical
     name: 'Kalshi annual carry rate in basis points',
   });
   fireEvent.change(carryRate, { target: { value: '1000' } });
+  const carryReleaseDelay = within(capital).getByRole('textbox', {
+    name: 'Kalshi post-settlement release delay in seconds',
+  });
+  fireEvent.change(carryReleaseDelay, { target: { value: '3600' } });
   fireEvent.click(within(capital).getByRole('button', { name: 'Evaluate settlement carry' }));
   expect(
     await within(capital).findByText('Independent arithmetic matches the pinned fixture.'),
   ).toBeInTheDocument();
   expect(capital).toHaveTextContent('Classification');
   expect(capital).toHaveTextContent('unchanged');
+  expect(capital).toHaveTextContent('3600s additional delay after settlement');
   const carryCall = fetchMock.mock.calls.find(
     ([input]) => String(input) === '/api/frontier/opportunities/capital-carry',
   );
@@ -619,6 +626,7 @@ it('renders recorded-evidence empty states and never probes a source automatical
     run_sha256: 'b'.repeat(64),
     candidate_id: 'multi-outcome-fixture-candidate',
     annual_rate_bps_by_venue: { kalshi: '1000' },
+    post_settlement_delay_seconds_by_venue: { kalshi: '3600' },
   });
   expect(screen.getAllByText('red')).toHaveLength(2);
 

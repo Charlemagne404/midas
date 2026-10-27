@@ -5,7 +5,7 @@ import base64
 import hashlib
 import json
 import sqlite3
-from datetime import UTC, timedelta
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
 
@@ -3977,6 +3977,7 @@ def test_replay_api_generates_and_persists_multi_outcome_candidate(tmp_path):
                 "run_sha256": result["result_sha256"],
                 "candidate_id": candidate["candidate_id"],
                 "annual_rate_bps_by_venue": {"kalshi": "1000"},
+                "post_settlement_delay_seconds_by_venue": {"kalshi": "3600"},
             },
         )
         assert carry.status_code == 200, carry.text
@@ -3985,6 +3986,14 @@ def test_replay_api_generates_and_persists_multi_outcome_candidate(tmp_path):
         assert carry_result["classification_unchanged"] is True
         assert carry_result["candidate_classification"] == candidate["classification"]
         assert carry_result["audit"]["disposition"] == "verified"
+        assert carry_result["schema_version"] == 2
+        assert carry_result["model_version"] == "frontier-virtual-capital-carry-2"
+        assert carry_result["venues"][0]["post_settlement_delay_seconds"] == 3600
+        settlement = datetime.fromisoformat(
+            carry_result["venues"][0]["settlement_evidence"][0]["settles_at_utc"]
+        )
+        released = datetime.fromisoformat(carry_result["venues"][0]["capital_released_at_utc"])
+        assert released == settlement + timedelta(seconds=3600)
         assert (
             carry_result["venues"][0]["settlement_evidence"][0]["observation_id"]
             == (candidate["legs"][0]["market_observation_id"])

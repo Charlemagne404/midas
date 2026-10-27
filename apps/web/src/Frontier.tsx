@@ -486,6 +486,7 @@ type Candidate = {
   evidence_sha256: string;
 };
 type CapitalCarrySensitivity = {
+  schema_version: number;
   model_version: string;
   run_id: string;
   run_sha256: string;
@@ -511,6 +512,7 @@ type CapitalCarrySensitivity = {
     venue: string;
     capital: string;
     annual_rate_bps: string;
+    post_settlement_delay_seconds: number;
     start_at_utc: string;
     capital_released_at_utc: string;
     duration_seconds: string;
@@ -4054,12 +4056,14 @@ function InlineError({ message }: { message: string }) {
 function CandidateCard({ candidate }: { candidate: Candidate }) {
   const [virtualBalances, setVirtualBalances] = useState<Record<string, string>>({});
   const [carryRates, setCarryRates] = useState<Record<string, string>>({});
+  const [carryReleaseDelays, setCarryReleaseDelays] = useState<Record<string, string>>({});
   const carryMutation = useMutation({
     mutationFn: (body: {
       run_id: string;
       run_sha256: string;
       candidate_id: string;
       annual_rate_bps_by_venue: Record<string, string>;
+      post_settlement_delay_seconds_by_venue: Record<string, string>;
     }) =>
       api<CapitalCarrySensitivity>('/frontier/opportunities/capital-carry', {
         method: 'POST',
@@ -4067,11 +4071,18 @@ function CandidateCard({ candidate }: { candidate: Candidate }) {
       }),
   });
   const carryVenues = Object.keys(candidate.capital_by_venue).sort();
-  const carryRatesValid =
+  const carryInputsValid =
     carryVenues.length > 0 &&
     carryVenues.every((venue) => {
-      const value = carryRates[venue] ?? '';
-      return value.length <= 16 && /^(?:0|[1-9][0-9]{0,5})(?:\.[0-9]{1,6})?$/.test(value);
+      const rate = carryRates[venue] ?? '';
+      const delay = carryReleaseDelays[venue] ?? '0';
+      return (
+        rate.length <= 16 &&
+        /^(?:0|[1-9][0-9]{0,5})(?:\.[0-9]{1,6})?$/.test(rate) &&
+        delay.length <= 8 &&
+        /^(?:0|[1-9][0-9]{0,7})$/.test(delay) &&
+        Number(delay) <= 31_536_000
+      );
     });
   const describeFillLeg = (identity: string) => {
     const leg = candidate.legs.find(
@@ -4281,29 +4292,51 @@ function CandidateCard({ candidate }: { candidate: Candidate }) {
           <div className="fr-capital-carry">
             <div>
               <span className="fr-kicker">Settlement duration sensitivity</span>
-              <h4>Virtual annual carry assumptions</h4>
+              <h4>Virtual capital duration assumptions</h4>
             </div>
             <p>
-              Enter a user-supplied annual rate in basis points for each venue. The API uses this
-              candidate’s pinned market observations and source-marked verified settlement metadata,
-              holds all venue capital to that venue’s latest settlement, and independently rechecks
-              the arithmetic. This does not estimate an exchange charge or change the candidate
-              state.
+              Enter a user-supplied annual rate and additional release delay for each venue. The API
+              uses this candidate’s pinned market observations and source-marked verified settlement
+              metadata, then holds venue capital to the latest settlement plus the assumed delay and
+              independently rechecks the arithmetic. Delay is a scenario assumption, not a promise
+              about actual capital availability. This does not estimate an exchange charge or change
+              the candidate state.
             </p>
             {carryVenues.map((venue) => (
-              <label key={`${candidate.candidate_id}-carry-${venue}`}>
-                <span>{venueLabel(venue)} annual carry rate (bps)</span>
-                <input
-                  aria-label={`${venueLabel(venue)} annual carry rate in basis points`}
-                  inputMode="decimal"
-                  maxLength={16}
-                  value={carryRates[venue] ?? ''}
-                  onChange={(event) => {
-                    setCarryRates((current) => ({ ...current, [venue]: event.target.value }));
-                    carryMutation.reset();
-                  }}
-                />
-              </label>
+              <div
+                className="fr-capital-carry-inputs"
+                key={`${candidate.candidate_id}-carry-${venue}`}
+              >
+                <label>
+                  <span>{venueLabel(venue)} annual carry rate (bps)</span>
+                  <input
+                    aria-label={`${venueLabel(venue)} annual carry rate in basis points`}
+                    inputMode="decimal"
+                    maxLength={16}
+                    value={carryRates[venue] ?? ''}
+                    onChange={(event) => {
+                      setCarryRates((current) => ({ ...current, [venue]: event.target.value }));
+                      carryMutation.reset();
+                    }}
+                  />
+                </label>
+                <label>
+                  <span>{venueLabel(venue)} additional post-settlement delay (seconds)</span>
+                  <input
+                    aria-label={`${venueLabel(venue)} post-settlement release delay in seconds`}
+                    inputMode="numeric"
+                    maxLength={8}
+                    value={carryReleaseDelays[venue] ?? '0'}
+                    onChange={(event) => {
+                      setCarryReleaseDelays((current) => ({
+                        ...current,
+                        [venue]: event.target.value,
+                      }));
+                      carryMutation.reset();
+                    }}
+                  />
+                </label>
+              </div>
             ))}
             {!candidate.source_run_id || !candidate.source_run_sha256 ? (
               <small role="status">
@@ -4314,7 +4347,7 @@ function CandidateCard({ candidate }: { candidate: Candidate }) {
               <button
                 className="fr-action"
                 type="button"
-                disabled={!carryRatesValid || carryMutation.isPending}
+                disabled={!carryInputsValid || carryMutation.isPending}
                 onClick={() =>
                   carryMutation.mutate({
                     run_id: candidate.source_run_id!,
@@ -4322,6 +4355,9 @@ function CandidateCard({ candidate }: { candidate: Candidate }) {
                     candidate_id: candidate.candidate_id,
                     annual_rate_bps_by_venue: Object.fromEntries(
                       carryVenues.map((venue) => [venue, carryRates[venue]]),
+                    ),
+                    post_settlement_delay_seconds_by_venue: Object.fromEntries(
+                      carryVenues.map((venue) => [venue, carryReleaseDelays[venue] ?? '0']),
                     ),
                   })
                 }
@@ -4335,7 +4371,10 @@ function CandidateCard({ candidate }: { candidate: Candidate }) {
               carryMutation.data.run_sha256 === candidate.source_run_sha256 &&
               carryMutation.data.candidate_id === candidate.candidate_id &&
               carryMutation.data.venues.every(
-                (item) => item.annual_rate_bps === carryRates[item.venue],
+                (item) =>
+                  item.annual_rate_bps === carryRates[item.venue] &&
+                  item.post_settlement_delay_seconds ===
+                    Number(carryReleaseDelays[item.venue] ?? '0'),
               ) && (
                 <div
                   className="fr-capital-carry-result"
@@ -4375,10 +4414,11 @@ function CandidateCard({ candidate }: { candidate: Candidate }) {
                     <p key={`${candidate.candidate_id}-carry-result-${item.venue}`}>
                       <strong>{venueLabel(item.venue)}</strong>: {money(item.capital)} capital at{' '}
                       {item.annual_rate_bps} bps for approximately{' '}
+                      {item.post_settlement_delay_seconds}s additional delay after settlement and{' '}
                       {(Number(item.duration_seconds) / 86400).toLocaleString(undefined, {
                         maximumFractionDigits: 3,
                       })}{' '}
-                      days; settlement {time(item.capital_released_at_utc)}; carry{' '}
+                      days; capital release {time(item.capital_released_at_utc)}; carry{' '}
                       {money(item.carry_cost)}. Pinned source records:{' '}
                       {item.settlement_evidence
                         .map(

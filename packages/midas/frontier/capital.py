@@ -10,7 +10,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal, InvalidOperation, localcontext
 from fractions import Fraction
 from typing import Any, Literal
@@ -23,8 +23,10 @@ from midas.frontier.models import FrontierMarket, FrontierModel, SettlementAsset
 _D = Decimal
 _YEAR_SECONDS = _D(365 * 24 * 60 * 60)
 _BPS_DENOMINATOR = _D(10_000)
-_MODEL_VERSION = "frontier-virtual-capital-carry-1"
+_MODEL_VERSION = "frontier-virtual-capital-carry-2"
 _RATE_TEXT = re.compile(r"^(?:0|[1-9][0-9]{0,5})(?:\.[0-9]{1,6})?$")
+_RELEASE_DELAY_TEXT = re.compile(r"^(?:0|[1-9][0-9]{0,7})$")
+_MAX_POST_SETTLEMENT_DELAY_SECONDS = 365 * 24 * 60 * 60
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
 
 
@@ -45,13 +47,32 @@ def _bounded_decimal(value: Decimal, name: str) -> Decimal:
     return value
 
 
+def _release_delay_seconds(value: str, venue: str) -> int:
+    if not isinstance(value, str) or len(value) > 8 or not _RELEASE_DELAY_TEXT.fullmatch(value):
+        raise ValueError(f"{venue} release delay must be an unsigned whole number of seconds")
+    seconds = int(value)
+    if seconds > _MAX_POST_SETTLEMENT_DELAY_SECONDS:
+        raise ValueError(f"{venue} release delay exceeds the one-year scenario bound")
+    return seconds
+
+
+def _release_at_utc(settlement: datetime, delay_seconds: int, venue: str) -> datetime:
+    try:
+        return settlement.astimezone(UTC) + timedelta(seconds=delay_seconds)
+    except (OverflowError, OSError, ValueError) as exc:
+        raise ValueError(f"{venue} capital release timestamp exceeds the datetime range") from exc
+
+
 class CapitalCarryRequest(FrontierModel):
-    """A bounded set of user-entered annual funding assumptions, in basis points."""
+    """Bounded user-entered carry rates and per-venue post-settlement delays."""
 
     run_id: str = Field(pattern=_SHA256.pattern)
     run_sha256: str = Field(pattern=_SHA256.pattern)
     candidate_id: str = Field(pattern=_SHA256.pattern)
     annual_rate_bps_by_venue: dict[str, str] = Field(min_length=1, max_length=8)
+    post_settlement_delay_seconds_by_venue: dict[str, str] = Field(
+        default_factory=dict, max_length=8
+    )
 
     @field_validator("annual_rate_bps_by_venue")
     @classmethod
@@ -70,6 +91,17 @@ class CapitalCarryRequest(FrontierModel):
                 raise ValueError("Annual carry rate is not a decimal number") from error
             if not rate.is_finite() or rate < 0:
                 raise ValueError("Annual carry rates must be finite and nonnegative")
+            normalized[venue] = text
+        return normalized
+
+    @field_validator("post_settlement_delay_seconds_by_venue")
+    @classmethod
+    def validate_post_settlement_delays(cls, values: dict[str, str]) -> dict[str, str]:
+        normalized: dict[str, str] = {}
+        for venue, text in values.items():
+            if not re.fullmatch(r"[a-z][a-z0-9_-]{0,79}", venue):
+                raise ValueError("Venue identifiers must be normalized lowercase names")
+            _release_delay_seconds(text, venue)
             normalized[venue] = text
         return normalized
 
@@ -96,6 +128,12 @@ class VenueCapitalCarry(FrontierModel):
     venue: str = Field(min_length=1, max_length=80)
     capital: Decimal = Field(ge=0, allow_inf_nan=False)
     annual_rate_bps: Decimal = Field(ge=0, le=999999.999999, allow_inf_nan=False)
+    post_settlement_delay_seconds: int = Field(
+        default=0,
+        ge=0,
+        le=_MAX_POST_SETTLEMENT_DELAY_SECONDS,
+        strict=True,
+    )
     start_at_utc: datetime
     capital_released_at_utc: datetime
     duration_seconds: Decimal = Field(gt=0, allow_inf_nan=False)
@@ -123,7 +161,7 @@ class VenueCapitalCarry(FrontierModel):
 
 
 class CapitalCarryAudit(FrontierModel):
-    algorithm_version: str = "frontier-independent-capital-carry-audit-1"
+    algorithm_version: str = "frontier-independent-capital-carry-audit-2"
     disposition: Literal["verified", "disagreement"]
     input_sha256: str = Field(pattern=_SHA256.pattern)
     recomputed_total_carry_cost: Decimal | None = Field(default=None, ge=0, allow_inf_nan=False)
@@ -134,7 +172,7 @@ class CapitalCarryAudit(FrontierModel):
 
 
 class CapitalCarrySensitivity(FrontierModel):
-    schema_version: int = 1
+    schema_version: int = 2
     model_version: str = _MODEL_VERSION
     run_id: str = Field(pattern=_SHA256.pattern)
     run_sha256: str = Field(pattern=_SHA256.pattern)
@@ -197,6 +235,7 @@ def _input_payload(
                 "venue": item.venue,
                 "capital": str(item.capital),
                 "annual_rate_bps": str(item.annual_rate_bps),
+                "post_settlement_delay_seconds": item.post_settlement_delay_seconds,
                 "start_at_utc": item.start_at_utc.isoformat(),
                 "capital_released_at_utc": item.capital_released_at_utc.isoformat(),
                 "settlement_evidence": [
@@ -217,6 +256,7 @@ def prepare_capital_carry_inputs(
     candidate: OpportunityCandidate,
     *,
     rates_by_venue: dict[str, str],
+    post_settlement_delay_seconds_by_venue: dict[str, str] | None = None,
     markets_by_id: dict[str, FrontierMarket],
     observation_row_hashes: dict[str, str],
 ) -> tuple[VenueCapitalCarry, ...]:
@@ -252,6 +292,13 @@ def prepare_capital_carry_inputs(
         if not isinstance(rate_text, str) or not _RATE_TEXT.fullmatch(rate_text):
             raise ValueError(f"{venue} annual carry rate is not a bounded decimal string")
         parsed_rates[venue] = _bounded_decimal(_D(rate_text), "Annual carry rate")
+    raw_release_delays = post_settlement_delay_seconds_by_venue or {}
+    if raw_release_delays and set(raw_release_delays) != expected_venues:
+        raise ValueError("A post-settlement release delay is required for every candidate venue")
+    parsed_release_delays = {
+        venue: _release_delay_seconds(raw_release_delays.get(venue, "0"), venue)
+        for venue in expected_venues
+    }
     leg_market_ids = {leg.market_id for leg in candidate.legs}
     if leg_market_ids != set(candidate.market_ids) or set(markets_by_id) != leg_market_ids:
         raise ValueError("Pinned market records do not cover exactly the candidate's position legs")
@@ -324,7 +371,9 @@ def prepare_capital_carry_inputs(
             if not venue_evidence:
                 raise ValueError("Candidate venue has no pinned settlement evidence")
             settles_at = max(item.settles_at_utc for item in venue_evidence)
-            seconds = _duration_seconds(candidate.observed_at_utc, settles_at)
+            release_delay_seconds = parsed_release_delays[venue]
+            released_at = _release_at_utc(settles_at, release_delay_seconds, venue)
+            seconds = _duration_seconds(candidate.observed_at_utc, released_at)
             rate = parsed_rates[venue]
             capital = candidate.capital_by_venue[venue]
             carry = capital * rate * seconds / (_BPS_DENOMINATOR * _YEAR_SECONDS)
@@ -333,8 +382,9 @@ def prepare_capital_carry_inputs(
                     venue=venue,
                     capital=capital,
                     annual_rate_bps=rate,
+                    post_settlement_delay_seconds=release_delay_seconds,
                     start_at_utc=candidate.observed_at_utc,
-                    capital_released_at_utc=settles_at,
+                    capital_released_at_utc=released_at,
                     duration_seconds=seconds,
                     carry_cost=carry,
                     settlement_evidence=venue_evidence,
@@ -349,6 +399,7 @@ def evaluate_capital_carry(
     run_id: str,
     run_sha256: str,
     rates_by_venue: dict[str, str],
+    post_settlement_delay_seconds_by_venue: dict[str, str] | None = None,
     markets_by_id: dict[str, FrontierMarket],
     observation_row_hashes: dict[str, str],
 ) -> CapitalCarrySensitivity:
@@ -359,6 +410,7 @@ def evaluate_capital_carry(
     inputs = prepare_capital_carry_inputs(
         candidate,
         rates_by_venue=rates_by_venue,
+        post_settlement_delay_seconds_by_venue=post_settlement_delay_seconds_by_venue,
         markets_by_id=markets_by_id,
         observation_row_hashes=observation_row_hashes,
     )
@@ -391,7 +443,7 @@ def evaluate_capital_carry(
         expected_net_after=net_after,
     )
     body = {
-        "schema_version": 1,
+        "schema_version": 2,
         "model_version": _MODEL_VERSION,
         "run_id": run_id,
         "run_sha256": run_sha256,
@@ -418,11 +470,13 @@ def evaluate_capital_carry(
             "Simple interest uses an actual-seconds/365-day year without compounding or currency rounding.",
             "The evaluation starts at the recorded candidate observation time, as if venue capital were committed then.",
             "All capital at a venue is conservatively held until the latest verified settlement among its candidate markets.",
+            "A post-settlement release delay is a user-entered virtual scenario, not source-reported capital availability; omitted venue values mean zero additional delay.",
             "Capital remains isolated by venue; this calculation assumes no transfers or shared collateral.",
         ),
         "limitations": (
             "The saved source observation and resolution evidence hashes are recorded, but this arithmetic audit does not authenticate their real-world settlement claim.",
             "This does not model jurisdiction, custody, collateral eligibility, financing availability, transfer, withdrawal, redemption, or execution costs.",
+            "An added release delay is not a prediction of actual redemption, withdrawal, or reuse timing.",
             "Recorded venue capital may exclude unknown fees; carry sensitivity does not establish fee completeness.",
             "A displayed public book and this sensitivity do not establish executable or realized returns.",
             "Existing candidate classification and practical-eligibility state are unchanged.",
@@ -492,7 +546,7 @@ def independently_audit_capital_carry(
                 mismatches.append(
                     f"{item.venue} duration start differs from the candidate observation"
                 )
-            expected_end = max(
+            expected_settlement = max(
                 (
                     market.resolution.settles_at_utc
                     for market in valid_rows
@@ -500,9 +554,28 @@ def independently_audit_capital_carry(
                 ),
                 default=None,
             )
+            delay_seconds = item.post_settlement_delay_seconds
+            if (
+                not isinstance(delay_seconds, int)
+                or isinstance(delay_seconds, bool)
+                or not 0 <= delay_seconds <= _MAX_POST_SETTLEMENT_DELAY_SECONDS
+            ):
+                mismatches.append(f"{item.venue} post-settlement release delay is outside bounds")
+                delay_seconds = 0
+            try:
+                expected_end = (
+                    _release_at_utc(expected_settlement, delay_seconds, item.venue)
+                    if expected_settlement is not None
+                    else None
+                )
+            except ValueError:
+                expected_end = None
+                mismatches.append(
+                    f"{item.venue} capital release timestamp is outside datetime range"
+                )
             if expected_end is None or item.capital_released_at_utc != expected_end:
                 mismatches.append(
-                    f"{item.venue} release time differs from pinned market settlement"
+                    f"{item.venue} release time differs from settlement plus the declared delay"
                 )
             if (
                 set(evidence.market_id for evidence in item.settlement_evidence)
@@ -561,7 +634,9 @@ def independently_audit_capital_carry(
                     != market.resolution.resolution_fingerprint
                     or matched_evidence.resolution_evidence_sha256
                     != market.resolution.evidence_sha256
-                    or matched_evidence.settles_at_utc != market.resolution.settles_at_utc
+                    or market.resolution.settles_at_utc is None
+                    or matched_evidence.settles_at_utc.astimezone(UTC)
+                    != market.resolution.settles_at_utc.astimezone(UTC)
                     or matched_evidence.venue != market.venue.value
                 ):
                     mismatches.append(
@@ -623,6 +698,7 @@ def independently_audit_capital_carry(
         checks=(
             "Candidate venue capital amounts are preserved.",
             "Settlement times and source hashes match the candidate-pinned market observations.",
+            "Post-settlement release-delay assumptions are explicit and included in the hashed inputs.",
             "Actual-seconds/365 simple-interest arithmetic is independently recomputed.",
             "Candidate classification is not included in this calculation and cannot be changed by it.",
         ),
