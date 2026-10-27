@@ -923,8 +923,15 @@ function RelationshipReviewForm({
       const parseMapping = (value: string, title: string) => {
         if (!value.trim()) return {};
         const parsed: unknown = JSON.parse(value);
-        if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed))
-          throw new Error(`${title} must be a JSON object of string identifiers`);
+        if (
+          !parsed ||
+          typeof parsed !== 'object' ||
+          Array.isArray(parsed) ||
+          Object.entries(parsed).some(
+            ([key, target]) => !key.trim() || typeof target !== 'string' || !target.trim(),
+          )
+        )
+          throw new Error(`${title} must be a JSON object with nonblank string identifiers`);
         return parsed as Record<string, string>;
       };
       return api(`/frontier/relationships/${reviewTargetId}/review`, {

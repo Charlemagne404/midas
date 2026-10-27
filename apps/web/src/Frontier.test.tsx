@@ -1670,6 +1670,15 @@ it('records a self-attributed relationship review with both stored market source
     target: { value: 'fixture-assertion-1' },
   });
   fireEvent.change(screen.getByLabelText('Complete state mapping (left to right JSON)'), {
+    target: { value: '{"left-state":1}' },
+  });
+  fireEvent.click(screen.getByRole('button', { name: 'Record immutable review' }));
+  expect(
+    await screen.findByText('State mapping must be a JSON object with nonblank string identifiers'),
+  ).toBeInTheDocument();
+  expect(reviewRequest).toHaveBeenCalledOnce();
+
+  fireEvent.change(screen.getByLabelText('Complete state mapping (left to right JSON)'), {
     target: { value: '{"left-state":"right-state"}' },
   });
   fireEvent.change(screen.getByLabelText('YES implication direction'), {
