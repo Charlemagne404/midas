@@ -255,6 +255,13 @@ def test_graph_revision_tracks_rendered_market_metadata_but_not_books_or_trades(
     assert after_listing[0] == before[0] + 1
 
     store.append_observation(
+        _raw(Venue.KALSHI, '{"market":"selected component rules"}', kind="market_metadata"),
+        market(Venue.KALSHI, "revision-detail"),
+    )
+    after_detail = store.graph_revision()
+    assert after_detail[0] == after_listing[0] + 1
+
+    store.append_observation(
         _raw(Venue.KALSHI, '{"book":"unrelated to graph node metadata"}', kind="public_book"),
         market(Venue.KALSHI, "revision-book"),
     )
@@ -262,7 +269,7 @@ def test_graph_revision_tracks_rendered_market_metadata_but_not_books_or_trades(
         _raw(Venue.KRAKEN, '{"trades":"unrelated to graph node metadata"}', kind="public_trades"),
         market(Venue.KRAKEN, "revision-trades"),
     )
-    assert store.graph_revision() == after_listing
+    assert store.graph_revision() == after_detail
 
 
 def test_dense_relationship_page_scan_has_a_hard_bound(tmp_path: Path):
