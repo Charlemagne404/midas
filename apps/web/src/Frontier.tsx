@@ -39,6 +39,26 @@ type Source = {
     notes: string[];
   };
 };
+type FiniteCollectionResponse = {
+  venue: Venue;
+  collection_run: {
+    run_id: string;
+    state: string;
+    market_count: number;
+    book_count: number;
+    failed_book_count: number;
+    request_count: number;
+    updated_at_utc: string;
+    failures: { code: string; message: string }[];
+    source_health: { state: string } | null;
+  };
+  adapter_request_count: number;
+  adapter_request_upper_bound: number;
+  research_only: true;
+  live_orders: false;
+  source_health_scope: 'adapter_local_checkpoint';
+  note: string;
+};
 type Overview = {
   state: string;
   research_eligible_observations: number;
@@ -1992,6 +2012,19 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
       }),
     onSuccess: refresh,
   });
+  const finiteCollection = useMutation({
+    mutationFn: (venue: Venue) =>
+      api<FiniteCollectionResponse>('/frontier/collect/' + venue, {
+        method: 'POST',
+        body: JSON.stringify({
+          market_limit: 3,
+          book_limit: 1,
+          book_depth: 5,
+          max_wall_seconds: 30,
+        }),
+      }),
+    onSuccess: refresh,
+  });
   const captureTradePage = useMutation({
     mutationFn: ({
       venue,
@@ -2711,6 +2744,7 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
           sources={sources.data?.items ?? []}
           markets={summary?.markets_by_venue ?? {}}
           probe={probe}
+          finiteCollection={finiteCollection}
           multivariateProbe={captureKalshiMultivariate}
           loading={sources.isLoading}
           error={sources.error?.message}
@@ -4784,6 +4818,7 @@ function BookSide({ title, levels }: { title: string; levels: Book['asks'] }) {
 
 type ProbeVariables = { venue: Venue; includeOneBook: boolean };
 type ProbeMutation = UseMutationResult<unknown, Error, ProbeVariables, unknown>;
+type FiniteCollectionMutation = UseMutationResult<FiniteCollectionResponse, Error, Venue, unknown>;
 type KalshiMultivariateFilter =
   { series_ticker: string } | { collection_ticker: string } | { event_ticker: string };
 type KalshiMultivariateProbe = UseMutationResult<
@@ -4797,6 +4832,7 @@ function SourcesView({
   sources,
   markets,
   probe,
+  finiteCollection,
   multivariateProbe,
   loading,
   error,
@@ -4804,6 +4840,7 @@ function SourcesView({
   sources: Source[];
   markets: Record<string, number>;
   probe: ProbeMutation;
+  finiteCollection: FiniteCollectionMutation;
   multivariateProbe: KalshiMultivariateProbe;
   loading: boolean;
   error?: string;
@@ -4824,6 +4861,14 @@ function SourcesView({
         sources.map((source) => {
           const supported = source.capabilities.filter((item) => item.supported);
           const unsupported = source.capabilities.filter((item) => !item.supported);
+          const collectionAvailable =
+            source.public_probe_enabled &&
+            !source.probe_policy_block_reason &&
+            source.capabilities.some(
+              (item) => item.capability === 'market_discovery' && item.supported,
+            );
+          const collectionRun =
+            finiteCollection.data?.venue === source.venue ? finiteCollection.data : null;
           return (
             <article className="fr-card fr-venue-card" key={source.venue}>
               <div className="fr-venue-top">
@@ -4907,6 +4952,54 @@ function SourcesView({
                   Enabled capture requests at most one listing page, one book, and ten recent
                   trades.
                 </small>
+              </div>
+              <div className="fr-probe-row fr-collection-row">
+                <button
+                  className="fr-action"
+                  disabled={!collectionAvailable || finiteCollection.isPending}
+                  onClick={() => finiteCollection.mutate(source.venue)}
+                >
+                  <Database size={14} />
+                  {finiteCollection.isPending && finiteCollection.variables === source.venue
+                    ? 'Saving finite capture…'
+                    : collectionAvailable
+                      ? 'Capture finite batch with checkpoints'
+                      : source.probe_policy_block_reason
+                        ? 'Collection held by source policy'
+                        : 'Finite collection disabled'}
+                </button>
+                <small>
+                  One explicit read-only request: up to 3 markets, 1 book, 5 levels, 4 MiB of
+                  evidence, and 30 seconds. It writes a restart-safe local run journal and starts no
+                  Arena job or background collector. No credentials or orders are used.
+                </small>
+                {finiteCollection.isError && finiteCollection.variables === source.venue && (
+                  <InlineError message={finiteCollection.error.message} />
+                )}
+                {collectionRun && (
+                  <div className="fr-collection-result" role="status">
+                    <strong>Finite capture {label(collectionRun.collection_run.state)}</strong>
+                    <span>
+                      {count(collectionRun.collection_run.market_count)} market(s) ·{' '}
+                      {count(collectionRun.collection_run.book_count)} book(s) ·{' '}
+                      {count(collectionRun.collection_run.failed_book_count)} failed book(s)
+                    </span>
+                    <span>
+                      {count(collectionRun.adapter_request_count)} /{' '}
+                      {count(collectionRun.adapter_request_upper_bound)} adapter requests · run{' '}
+                      {shortHash(collectionRun.collection_run.run_id)}
+                    </span>
+                    <small>
+                      Health is adapter-local checkpoint state; it does not establish continuous
+                      venue availability or account eligibility.
+                    </small>
+                    {collectionRun.collection_run.failures.slice(0, 3).map((failure, index) => (
+                      <small key={`${failure.code}-${index}`}>
+                        {failure.code}: {failure.message}
+                      </small>
+                    ))}
+                  </div>
+                )}
               </div>
               {source.venue === 'kalshi' && (
                 <div className="fr-mve-capture">

@@ -40,6 +40,32 @@ it('renders recorded-evidence empty states and never probes a source automatical
       notes: ['local-only status'],
     },
   };
+  const enabledSource = {
+    venue: 'polymarket',
+    adapter_version: 'frontier-polymarket-v1',
+    public_probe_enabled: true,
+    capabilities: [
+      {
+        capability: 'market_discovery',
+        supported: true,
+        state: 'implemented',
+        reason: 'one bounded public listing request',
+      },
+      {
+        capability: 'book_snapshot',
+        supported: true,
+        state: 'implemented',
+        reason: 'one bounded public book request',
+      },
+    ],
+    health: {
+      state: 'not_probed',
+      last_success_at_utc: null,
+      last_error_code: null,
+      last_error: null,
+      notes: ['local-only status'],
+    },
+  };
   const responses: Record<string, unknown> = {
     '/api/frontier/overview': {
       state: 'EMPTY',
@@ -60,7 +86,7 @@ it('renders recorded-evidence empty states and never probes a source automatical
       latest_evidence_at_utc: null,
       limitations: ['No recorded evidence.'],
     },
-    '/api/frontier/sources': { items: [source] },
+    '/api/frontier/sources': { items: [source, enabledSource] },
     '/api/frontier/markets?limit=100': { items: [], returned: 0, limit: 100, offset: 0 },
     '/api/frontier/books?limit=100': { items: [], returned: 0, limit: 100, offset: 0 },
     '/api/frontier/trades?limit=100': {
@@ -151,6 +177,37 @@ it('renders recorded-evidence empty states and never probes a source automatical
   };
   const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const path = String(input);
+    if (path === '/api/frontier/collect/polymarket' && init?.method === 'POST') {
+      expect(JSON.parse(String(init.body))).toEqual({
+        market_limit: 3,
+        book_limit: 1,
+        book_depth: 5,
+        max_wall_seconds: 30,
+      });
+      return {
+        ok: true,
+        json: async () => ({
+          venue: 'polymarket',
+          collection_run: {
+            run_id: 'f79d58bb-e799-4718-93f1-a94bb7492f21',
+            state: 'completed',
+            market_count: 1,
+            book_count: 1,
+            failed_book_count: 0,
+            request_count: 2,
+            updated_at_utc: '2026-10-28T00:00:00Z',
+            failures: [],
+            source_health: { state: 'healthy' },
+          },
+          adapter_request_count: 2,
+          adapter_request_upper_bound: 8,
+          research_only: true,
+          live_orders: false,
+          source_health_scope: 'adapter_local_checkpoint',
+          note: 'Fixture response only.',
+        }),
+      } as Response;
+    }
     const body = responses[path];
     if (body === undefined) throw new Error(`Unexpected frontend request: ${path}`);
     void init;
@@ -183,6 +240,11 @@ it('renders recorded-evidence empty states and never probes a source automatical
   screen
     .getAllByRole('button', { name: 'Public probe disabled' })
     .forEach((button) => expect(button).toBeDisabled());
+  fireEvent.click(screen.getByRole('button', { name: 'Capture finite batch with checkpoints' }));
+  expect(await screen.findByText('Finite capture completed')).toBeInTheDocument();
+  expect(screen.getByText(/1 market\(s\) · 1 book\(s\) · 0 failed book\(s\)/)).toBeInTheDocument();
+  expect(screen.getByText(/2 \/ 8 adapter requests/)).toBeInTheDocument();
+  expect(screen.getByText(/does not establish continuous venue availability/)).toBeInTheDocument();
 
   fireEvent.click(screen.getByRole('button', { name: 'Markets' }));
   expect(await screen.findByText('No market observations recorded')).toBeInTheDocument();

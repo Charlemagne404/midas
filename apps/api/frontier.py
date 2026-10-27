@@ -42,7 +42,7 @@ from midas.frontier.analytics import (
     summarize_frontier_coverage,
 )
 from midas.frontier.capital import CapitalCarryRequest, evaluate_capital_carry
-from midas.frontier.collection import CollectionJournal
+from midas.frontier.collection import BoundedSourceCollector, CollectionJournal
 from midas.frontier.economics import (
     ExecutionScenario,
     OpportunityCandidate,
@@ -88,6 +88,16 @@ class ProbeRequest(BaseModel):
     include_one_book: bool = False
     include_recent_trades: bool = False
     trade_limit: int = Field(default=10, ge=1, le=10)
+
+
+class FiniteCollectionRequest(BaseModel):
+    """Small operator-triggered collection bounds; no job or background loop is created."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+    market_limit: int = Field(default=3, ge=1, le=5)
+    book_limit: int = Field(default=1, ge=0, le=2)
+    book_depth: int = Field(default=5, ge=1, le=10)
+    max_wall_seconds: int = Field(default=30, ge=1, le=60)
 
 
 class TradePageProbeRequest(BaseModel):
@@ -3909,6 +3919,64 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
                     "detail": "Frontier is not deployed; deployment requires a separate review.",
                 },
             ],
+        }
+
+    @api.post("/collect/{venue}")
+    async def collect_source_finite(
+        venue: Venue, request: FiniteCollectionRequest
+    ) -> dict[str, Any]:
+        """Run one explicitly requested, finite source capture in this API request."""
+        reject_held_venue(venue)
+        adapter: ExchangeAdapter = registry.get(venue)
+        config = getattr(adapter, "config", None)
+        if config is None or not config.enabled or not config.live_public_probe_enabled:
+            raise HTTPException(status_code=409, detail=probe_disabled_detail(config))
+        if request.market_limit > config.max_markets_per_call:
+            raise HTTPException(
+                status_code=422,
+                detail="Requested collection limit exceeds source configuration",
+            )
+        if not adapter.capabilities.supports(Capability.MARKET_DISCOVERY):
+            raise HTTPException(
+                status_code=409,
+                detail="Source does not support public market discovery",
+            )
+        if request.book_limit and not adapter.capabilities.supports(Capability.BOOK_SNAPSHOT):
+            raise HTTPException(
+                status_code=409,
+                detail="Source does not support public order-book snapshots",
+            )
+
+        async with source_locks[venue]:
+            try:
+                result = await BoundedSourceCollector(adapter, store).start(
+                    market_limit=request.market_limit,
+                    book_limit=request.book_limit,
+                    book_depth=request.book_depth,
+                    max_evidence_bytes=4 * 1024 * 1024,
+                    max_wall_seconds=request.max_wall_seconds,
+                )
+            except AdapterError as error:
+                status = 409 if error.code in {"PUBLIC_PROBE_DISABLED", "SOURCE_USE_HELD"} else 422
+                raise HTTPException(status_code=status, detail=str(error)) from error
+            except ValueError as error:
+                raise HTTPException(status_code=422, detail=str(error)) from error
+            except (FrontierStoreError, OSError) as error:
+                raise HTTPException(status_code=409, detail=str(error)) from error
+
+        request_bound = (request.market_limit + request.book_limit) * (config.retries + 1)
+        return {
+            "venue": venue.value,
+            "collection_run": result.model_dump(mode="json"),
+            "adapter_request_count": result.request_count,
+            "adapter_request_upper_bound": request_bound,
+            "research_only": True,
+            "live_orders": False,
+            "source_health_scope": "adapter_local_checkpoint",
+            "note": (
+                "One explicitly requested finite capture. This route starts no background job, "
+                "worker, or continuous collector."
+            ),
         }
 
     @api.post("/probe/{venue}")
