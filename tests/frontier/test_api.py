@@ -2992,6 +2992,24 @@ def test_replay_api_generates_and_persists_multi_outcome_candidate(tmp_path):
         store.append_observation(raw, snapshot)
 
     try:
+        fiat_usd_identity = {
+            "schema_version": 1,
+            "kind": "fiat",
+            "code": "USD",
+            "network_id": None,
+            "asset_reference": None,
+        }
+        market_readback = client.get("/api/frontier/markets", params={"venue": "kalshi"})
+        assert market_readback.status_code == 200
+        api_market = market_readback.json()["items"][0]
+        assert api_market["instruments"][0]["price_currency_identity"] == fiat_usd_identity
+
+        book_readback = client.get("/api/frontier/books", params={"venue": "kalshi"})
+        assert book_readback.status_code == 200
+        api_books = book_readback.json()["items"]
+        assert len(api_books) == len(instruments)
+        assert all(item["price_currency_identity"] == fiat_usd_identity for item in api_books)
+
         replay = client.post("/api/frontier/replay", json={})
         assert replay.status_code == 200, replay.text
         result = replay.json()
@@ -3003,6 +3021,8 @@ def test_replay_api_generates_and_persists_multi_outcome_candidate(tmp_path):
         assert candidate["classification"] == "VERIFIED MATHEMATICAL INCONSISTENCY"
         assert Decimal(candidate["worst_case_gross_pnl"]) == Decimal(1)
         assert candidate["practical_eligibility"] is False
+        assert candidate["capital_currency_identity"] == fiat_usd_identity
+        assert all(leg["quote_currency_identity"] == fiat_usd_identity for leg in candidate["legs"])
         assert candidate["independent_audit"]["disposition"] == "verified"
         assert Decimal(candidate["independent_audit"]["recomputed_gross_cost"]) == Decimal(9)
 
