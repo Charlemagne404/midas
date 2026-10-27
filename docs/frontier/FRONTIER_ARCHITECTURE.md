@@ -296,12 +296,18 @@ component normalization or its payoff limitation.
 ## Source configurations and bounds
 
 The API creates all three adapter manifests, but the source transport is disabled
-unless its specific `MIDAS_FRONTIER_*_PUBLIC_PROBE_ENABLED` setting is true. No
-startup health request is made. A user-triggered discovery capture makes one
-bounded market page and may include one selected book snapshot. An event-group
-capture is a separate one-GET action linked to a previously recorded child
-market. Kalshi MVE discovery makes one filtered GET for one event and requests
-nested markets; source retries remain bounded by the adapter configuration.
+unless its specific `MIDAS_FRONTIER_*_PUBLIC_PROBE_ENABLED` setting is true. In
+addition, Kalshi requires a non-empty
+`MIDAS_FRONTIER_KALSHI_RESEARCH_AUTHORIZATION_REF`, and Kraken requires a
+non-empty `MIDAS_FRONTIER_KRAKEN_MARKET_DATA_PERMISSION_REF`. These references
+record a separately reviewed source permission; Frontier does not validate the
+referenced evidence. The current terms review blocks both live sources while
+fixture development remains enabled. No startup health request is made. A
+user-triggered discovery capture makes one bounded market page and may include
+one selected book snapshot. An event-group capture is a separate one-GET action
+linked to a previously recorded child market. Kalshi MVE discovery makes one
+filtered GET for one event and requests nested markets; source retries remain
+bounded by the adapter configuration.
 Kraken currently uses a configured pair allowlist, not venue-wide
 enumeration. The transport caps each response at 256 KiB, retries
 at most twice, has a 15-second maximum timeout, limits each adapter to 5 requests

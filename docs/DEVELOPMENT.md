@@ -98,11 +98,18 @@ MIDAS_FRONTIER_KRAKEN_PUBLIC_PROBE_ENABLED=true
 ```
 
 Kraken Spot discovery uses the comma-separated configured pair allowlist
-`MIDAS_FRONTIER_KRAKEN_PAIRS` (default `XBTUSD`). These flags permit only bounded
-unauthenticated public GETs. They do not enable account access, order entry, or
-credential handling. A deliberate probe is initiated from Frontier's Exchanges
-view. One probe can capture one bounded listing, optionally one book, and at most
-ten recent public trades for the first discovered market. `GET
+`MIDAS_FRONTIER_KRAKEN_PAIRS` (default `XBTUSD`). The Polymarket switch enables
+only its bounded unauthenticated public GET. Kalshi and Kraken additionally
+require `MIDAS_FRONTIER_KALSHI_RESEARCH_AUTHORIZATION_REF` and
+`MIDAS_FRONTIER_KRAKEN_MARKET_DATA_PERMISSION_REF`, respectively, before the
+main API can enable a live probe. The reference must point to a separately
+reviewed source permission/terms record; Frontier does not validate the record.
+The current review leaves both Kalshi and Kraken live probes blocked. See the
+[source-data terms review](frontier/SOURCE_DATA_TERMS_REVIEW_2026-10-27.md).
+These controls do not enable account access, order entry, or credential
+handling. A deliberate probe is initiated from Frontier's Exchanges view. One
+probe can capture one bounded listing, optionally one book, and at most ten
+recent public trades for the first discovered market. `GET
 /api/frontier/trades` returns stored, hash-verified normalized prints with their
 source-observation IDs and raw hashes. A valid empty response remains an empty
 capture. Polymarket also has an explicit `POST

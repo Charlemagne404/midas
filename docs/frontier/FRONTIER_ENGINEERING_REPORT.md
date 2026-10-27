@@ -18,6 +18,13 @@ SQLite evidence store, relationship hypotheses and append-only review revisions,
 an explicit payoff-equivalence check, two narrow Decimal opportunity evaluators,
 deterministic replay, local API routes, and a native Mission Control workspace.
 
+An official source-terms review on 2026-10-27 adds a live-data permission
+boundary: Kalshi capture is blocked pending written research/retention
+authorization, and Kraken capture is blocked pending review of applicable
+market-data terms and any required permission. Their adapters remain available
+for offline fixtures. Previously captured source artifacts remain preserved,
+but are held from new research/replay use pending review.
+
 The three adapters are implemented and fixture/contract tested. Polymarket also
 has an explicitly triggered, cursor-paginated Data API v2 trade-page path that
 preserves outcome token identity through normalized storage. One genuine v2
@@ -1978,6 +1985,7 @@ cross-venue economics.
 | Source workers and broad historical data | DEFERRED | No persistent worker or long-duration collection. |
 | Laboratory/Arena research orchestration | PARTIALLY VERIFIED | Arena job kind, content-addressed snapshots, bounded offline execution, API submission/history/result verification, process CPU/RSS capture, and explicit workspace controls are implemented and tested; two fixture jobs passed the host-wide gate and completed under systemd. Laboratory campaign management and resource-sustainability evidence remain incomplete. |
 | Native Mission Control workspace | PARTIALLY VERIFIED | Local API, bounded graph/review UI, Polymarket/Kalshi trade-page and event-group controls, explicit filtered one-page Kalshi MVE capture by series, collection, or one event ticker with returned member-list state, parent-event context, instrument-bound fee sensitivity, selected-leg component-rule and recorded-settlement arithmetic inspection, paired replay, candidate fill stress, virtual balances keyed by venue and exact denomination identity, and Arena job history/result display. The Frontier component file passes all 8 tests, including token `USD` versus fiat `USD` separation; web typecheck, targeted frontend and browser-test ESLint, and Prettier pass. The focused depth-two/capital-fragmentation/mobile browser case passes with the exact-identity fixture contract. The production build now passes with 676,320 KiB peak RSS and no swap; Vite reports the existing 500 kB chunk-size warning for the index/chart chunks. The workspace is not deployed. |
+| Source data use/retention permission | BLOCKED | Official Kalshi terms restrict API collection/storage to facilitating a member's own exchange trading absent authorization. Kraken terms require prior permission for some non-personal commercial public market-data uses; Frontier has not classified that use. The main API now requires permission/review references in addition to probe flags. References are not independently verified; no new Kalshi/Kraken live captures or new research use of their stored data pending review. Existing artifacts are preserved unchanged. |
 | Production readiness/deployment | DEFERRED | Separate review and authorization required; production eligibility is false. |
 | Positive economic result | NOT ESTABLISHED | No genuine cross-venue equivalent or economically eligible result in captured evidence. |
 
@@ -2213,3 +2221,39 @@ service, or historical store was changed.
 The current source changes are in `03dbc92` (denomination model and propagation),
 `8a1f41e` and `43b5a08` (API read-back regressions). Documentation checkpoints
 are `48c75fa` and `2dd6b13`, with this update recorded in the mission ledger.
+
+## Source data use permission review — 2026-10-27
+
+The official [Kalshi Developer Agreement v1.1](https://kalshi-public-docs.s3.amazonaws.com/Kalshi-Developer-Agreement.pdf)
+states that API use is limited to facilitating a member's own exchange trading
+and restricts non-trading collection, caching, aggregation, and storage absent
+authorization. The official [Kraken API introduction](https://docs-legacy.kraken.com/api/docs/guides/global-intro/)
+requires prior permission for certain uses, including non-personal commercial
+use of public market data; Kraken's terms vary by region. This project has no
+recorded written Kalshi research/retention authorization, and has not classified
+the applicable Kraken use. This is an operational restriction, not legal advice
+or a finding about prior use.
+
+The application now defaults both sources off and additionally requires
+`MIDAS_FRONTIER_KALSHI_RESEARCH_AUTHORIZATION_REF` or
+`MIDAS_FRONTIER_KRAKEN_MARKET_DATA_PERMISSION_REF`, alongside the existing
+probe flag, before enabling a live request. The reference is not validated by
+the application. Source routes report why a probe is disabled, return HTTP 409
+without a network request, and the readiness API reports a blocked source-use
+gate. Mission Control displays the restriction. Existing capture artifacts
+remain unchanged; new live capture and new research use of their stored data are
+held pending permission/terms review. The runtime gate currently blocks fresh
+network requests but does not filter every existing row from local read, graph,
+or replay APIs; those paths remain an explicit follow-up safety gap. Fixture
+development remains available.
+
+The source gate/configuration/API test file passed **2/2**; the full Frontier
+API module plus that file passed **37 tests** in 20.13 seconds. The Frontier
+component file passed **8/8**, web typecheck, targeted ESLint/Prettier, and
+Python Ruff checks passed. One existing Starlette/httpx TestClient deprecation
+warning remains. A new full-suite run was deferred at memory PSI `avg10` 39.10%
+(`some`) / 35.99% (`full`). No exchange request, account access, external
+message, service change, or evidence mutation was made for this review.
+
+The source terms and operational limits are recorded in
+[`SOURCE_DATA_TERMS_REVIEW_2026-10-27.md`](SOURCE_DATA_TERMS_REVIEW_2026-10-27.md).

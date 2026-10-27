@@ -100,6 +100,9 @@ contracts, and configured Kraken spot pairs into versioned venue-aware models.
 Capabilities and unsupported behavior are declared per adapter. A bounded HTTPS
 GET transport enforces host allowlists, rate, retry, timeout, and response-byte
 limits; all adapters are disabled for network access unless explicitly configured.
+Kalshi and Kraken also require a configured source-terms authorization reference
+before the main API can enable live capture. Their current terms review blocks
+those captures; see the [Frontier source-data terms review](frontier/SOURCE_DATA_TERMS_REVIEW_2026-10-27.md).
 
 The Frontier API writes source responses and normalized batches into its own
 append-only SQLite store. Read routes use read-only SQLite connections. Recorded

@@ -395,3 +395,29 @@ suite, and live Polymarket v2 host/settlement validation remain outstanding.
 See the [Frontier ledger](frontier/FRONTIER_MISSION_LEDGER.md) for reproduction
 commands and the [engineering report](frontier/FRONTIER_ENGINEERING_REPORT.md)
 for the current component matrix.
+
+## Frontier source-data terms hold — 2026-10-27
+
+An official-source terms review found a permission conflict for the Kalshi
+research integration: the published Kalshi Developer Agreement describes API
+use as supporting a member's own exchange trading and restricts collection and
+storage for other purposes absent authorization. Kraken's API guidance
+requires prior permission for some non-personal commercial uses of public
+market data; this worktree has not classified the MIDAS use or recorded such
+permission. New Kalshi and Kraken live captures are therefore held. Existing
+capture files remain preserved unchanged, with new research/replay use treated
+as restricted pending review. Fixture-based development continues.
+
+The main API now requires a source-specific permission/review reference in
+addition to each probe flag before enabling Kalshi or Kraken capture. The
+reference is not independently validated; source routes surface the block and
+readiness includes a `BLOCKED` source-data-permissions gate. The focused
+configuration/API tests pass; see the [source-data terms review](frontier/SOURCE_DATA_TERMS_REVIEW_2026-10-27.md)
+and [Frontier ledger](frontier/FRONTIER_MISSION_LEDGER.md). No source request,
+external message, production change, or historical-data mutation was made for
+this review.
+
+The gate blocks new network capture only. It does not yet filter earlier
+Kalshi/Kraken rows from every local read, graph, or replay API; those paths
+remain under the same operational hold until permission is resolved or a
+separate quarantine change is completed.

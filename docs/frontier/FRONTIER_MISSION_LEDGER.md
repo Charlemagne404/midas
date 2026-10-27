@@ -1,18 +1,20 @@
 # Project Frontier Mission Ledger
 
-**Latest checkpoint (2026-10-27):** Code commit `03dbc92` propagates exact
-denomination identity through quote instruments, books, fees, trades, candidate
-legs, candidate capital, the independent audit, replay, and venue-separated
-virtual funding. It rejects ticker-only unit equality such as token `USD` versus
-`fiat:USD`. The full Python Frontier suite passed 153 tests, all 8 Frontier
-component tests passed, the focused browser scenario passed, and the local
-production build completed. Current versions are FrontierMarket v3,
+**Latest checkpoint (2026-10-27):** Code commit `9d52b23` gates new Kalshi and
+Kraken live probes behind source-specific permission/review references and
+surfaces the block in the source API, readiness, and Mission Control. It does
+not yet quarantine old rows from all local read/replay APIs; operations hold
+those paths pending terms review. Code commit `03dbc92` propagates exact
+denomination identity through quotes, books, fees, trades, candidate legs and
+capital, independent audit, replay, and venue-separated virtual funding. The
+full Python Frontier suite passed 153 tests and the local production build
+completed before this policy change. Current versions are FrontierMarket v3,
 BookSnapshot v2, TradeObservation v3, OpportunityCandidate v2, economic model
 v6, independent audit v3, replay v7, Polymarket adapter v6, Kalshi adapter v14,
-and Kraken Spot adapter v3. The Frontier mission remains incomplete: live
-Polymarket v2 validation, verified public equivalence, broader capital and
-settlement costs, source workers, full-universe research, and deployment gates
-remain open.
+and Kraken Spot adapter v3. The Frontier mission remains incomplete: verified
+public equivalence, broader capital and settlement costs, source workers,
+full-universe research, live source permissions, and deployment gates remain
+open.
 
 **Prior checkpoint summary:** isolated engine/API/UI, immutable relationship
 review, schema-v6 indexed bounded graph neighborhoods with UI scan-quality
@@ -1177,3 +1179,32 @@ with the existing Starlette/httpx `TestClient` deprecation warning. Ruff
 check/format and `git diff --check` passed. This verifies serialization and
 local persistence for these controlled fixtures; it adds no live-source
 evidence. No service, external source, or historical data was changed.
+
+## 2026-10-27 — source terms review and live-probe gate
+
+The official Kalshi Developer Agreement v1.1 restricts API use to a member's
+own trading and restricts other collection/storage; Kraken's official API
+introduction requires prior permission for certain non-personal commercial
+public market-data use. Frontier has no recorded written Kalshi
+research/retention authorization and has not classified its Kraken data-use
+scope. No exchange was contacted and no source request was made for this
+review. See [`SOURCE_DATA_TERMS_REVIEW_2026-10-27.md`](SOURCE_DATA_TERMS_REVIEW_2026-10-27.md)
+for the source links and operational decision.
+
+Code commit `9d52b23` adds `MIDAS_FRONTIER_KALSHI_RESEARCH_AUTHORIZATION_REF` and
+`MIDAS_FRONTIER_KRAKEN_MARKET_DATA_PERMISSION_REF` gates in the main API,
+requires a reference in addition to the existing probe flag, returns the
+policy reason in source inventory and disabled-probe errors, adds a readiness
+gate, and shows the restriction in Mission Control. A reference is not
+independently verified by the application. Existing data is preserved; the
+runtime gate blocks new network probes but does not yet quarantine old source
+rows from every read, graph, and replay endpoint. Treat those operations as
+held pending a permission review or a separate quarantine change.
+
+Verification: the Frontier API module plus source-policy tests passed **37
+tests** in 20.13 seconds, and the updated source-configuration/API contract
+passed **2/2** separately. The Frontier component tests passed **8/8**; TypeScript,
+ESLint, Prettier, Ruff and `git diff --check` passed. The full suite and browser
+E2E were deferred with memory PSI `avg10` at 39.10% (`some`) and 35.99%
+(`full`). No live source call, production service, external message, or
+historical evidence mutation occurred.

@@ -24,6 +24,22 @@ listing/book/trade sample or one separately requested cursor page; it does not
 start a collector or crawl history. Do not enable probes in a production service
 as part of routine development.
 
+**Source terms are an additional gate.** Kalshi live capture is blocked until
+written research and local-retention authorization is recorded. Kraken Spot
+capture is blocked until its applicable research-use terms are reviewed and any
+required permission is recorded. For these two sources, the probe flag alone is
+insufficient: also set `MIDAS_FRONTIER_KALSHI_RESEARCH_AUTHORIZATION_REF` or
+`MIDAS_FRONTIER_KRAKEN_MARKET_DATA_PERMISSION_REF` to an internal reference to
+the relevant permission/review record. The application does not validate that
+record; a string reference is not permission. See the
+[source-data terms review](SOURCE_DATA_TERMS_REVIEW_2026-10-27.md). Existing
+Kalshi and Kraken capture artifacts remain preserved, but do not treat them as
+available inputs for new research until the corresponding use review is closed.
+The application gate prevents new source requests; it does not yet hide all
+previously stored source records from read, graph, or replay routes, so do not
+use those routes with the held sources pending review. Fixture-only development
+remains available.
+
 Cross-venue observations have independent clocks and freshness guarantees.
 Different receipt times or a shared local timestamp do not prove simultaneous
 availability, fills, legal access, or transferability. Preserve source and
