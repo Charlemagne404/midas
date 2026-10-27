@@ -1281,7 +1281,7 @@ def test_kalshi_fee_metadata_partial_failure_preserves_evidence_and_recovers(tmp
         asyncio.run(http_client.aclose())
 
 
-def test_kalshi_mve_components_persist_with_the_captured_market_response(tmp_path):
+def test_kalshi_mve_optional_settlement_value_persists_through_api(tmp_path):
     capture = json.loads(
         (
             Path(__file__).resolve().parents[2]
@@ -1291,7 +1291,12 @@ def test_kalshi_mve_components_persist_with_the_captured_market_response(tmp_pat
     market_body = next(
         item["raw_body_utf8"] for item in capture["records"] if item["source"] == "kalshi_markets"
     )
-    source_row = json.loads(market_body)["markets"][0]
+    fixture_payload = json.loads(market_body)
+    source_row = fixture_payload["markets"][0]
+    # The preserved live response omitted this optional field. This fixture-only
+    # variant exercises its documented schema shape through API/store read-back.
+    source_row["mve_selected_legs"][0]["yes_settlement_value_dollars"] = "0.3750"
+    market_body = json.dumps(fixture_payload)
     requests: list[httpx.Request] = []
 
     def handler(request: httpx.Request) -> httpx.Response:
@@ -1333,7 +1338,7 @@ def test_kalshi_mve_components_persist_with_the_captured_market_response(tmp_pat
             "native_event_id": source_row["mve_selected_legs"][0]["event_ticker"],
             "native_market_id": source_row["mve_selected_legs"][0]["market_ticker"],
             "selected_side": source_row["mve_selected_legs"][0]["side"],
-            "yes_settlement_value_dollars": None,
+            "yes_settlement_value_dollars": "0.3750",
         }
         assert saved_market["payoff"]["verified"] is False
         assert "MVE_PAYOFF_NOT_MODELED" in saved_market["quality_flags"]
