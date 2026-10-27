@@ -4078,3 +4078,18 @@ avg10 was 0.00% (`some`/`full`), avg60 4.24% / 3.72%, avg300 14.30% / 12.58%;
 isolated, research-only, undeployed, and **PARTIALLY VERIFIED** because source
 permissions, genuine cross-venue payoff validation, and deployment readiness
 remain unresolved.
+
+### Legacy integration admission check — 2026-10-27 21:39 UTC
+
+The planned compatibility selection covers `tests/integration/test_adapters.py`,
+`tests/integration/test_api.py`, `tests/integration/test_recording_isolation.py`,
+and `tests/arena/test_frontier_replay.py`. It was not started. At
+`2026-10-27T21:39:36Z`, external batch PID **3745206** was in uninterruptible
+I/O wait and held `/home/charlie/midas/data/arena/.global-admission.lock`;
+memory PSI was **44.57% some / 39.03% full avg10**, with 40.17% / 35.19%
+avg60. The lock probe confirmed the admission slot was occupied. The batch was
+left untouched, and the four-module compatibility selection is deferred until
+the shared lock releases and host pressure settles. This does not change the
+269/269 Frontier, 40/40 Web, or 12/12 browser results above; those results were
+collected in their separately documented admission windows. No service,
+exchange, or protected evidence store was accessed.

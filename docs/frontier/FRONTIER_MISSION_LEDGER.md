@@ -18,6 +18,18 @@ diagnostics; that unfiltered invocation was not rerun. Frontier remains
 **PARTIALLY VERIFIED** because exact source permissions, genuine verified
 cross-venue economics, and production readiness are unresolved.
 
+**Admission/deferred check (`2026-10-27T21:39:36Z`):** The planned legacy
+compatibility selection (`tests/integration/test_adapters.py`,
+`tests/integration/test_api.py`, `tests/integration/test_recording_isolation.py`,
+and `tests/arena/test_frontier_replay.py`) was not run. External batch PID
+**3745206** remained in `D` state while holding the shared
+`/home/charlie/midas/data/arena/.global-admission.lock`; PSI avg10 was 44.57%
+`some` / 39.03% `full`. The worker and lock were left untouched. Recheck the
+host-wide admission lock and memory pressure before running this selection.
+Previously completed 269/269 Frontier, 40/40 Web, and 12/12 browser results
+remain valid as recorded; this deferred legacy selection is not covered by
+those totals.
+
 At `2026-10-27T21:36:40Z`, no shared Arena lock was held. PSI avg10 was 0.00%
 (`some`/`full`), avg60 4.24% / 3.72%, avg300 14.30% / 12.58%; 9.5 GiB was
 available and 455 MiB swap was free. No protected service or historic store

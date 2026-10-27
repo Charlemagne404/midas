@@ -906,3 +906,13 @@ the build, and 209,416 KiB for browser E2E; all reported zero swaps. No
 exchange API was called. Frontier remains research-only, isolated, undeployed, and
 **PARTIALLY VERIFIED** because source permissions, genuine cross-venue payoff
 validation, and production readiness remain unresolved.
+
+## Frontier legacy compatibility selection deferred — 2026-10-27 21:39 UTC
+
+The additional compatibility run across existing adapter, API,
+recording-isolation, and Frontier Arena replay tests was deferred. At
+2026-10-27T21:39:36Z, external batch PID 3745206 held the shared Arena
+admission lock in D state; memory PSI avg10 was 44.57% some / 39.03% full.
+No tests were started, and the worker was left untouched. Recheck lock and
+host pressure before resuming. This does not invalidate the already completed
+Frontier, Web, typecheck, build, or browser results.
