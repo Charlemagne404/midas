@@ -2497,3 +2497,17 @@ opened. The full source rationale and official references are in
 [`SOURCE_DATA_TERMS_REVIEW_2026-10-27.md`](SOURCE_DATA_TERMS_REVIEW_2026-10-27.md).
 This documentation-only checkpoint remains **PARTIALLY VERIFIED**; live
 cross-venue economics and production gates are unresolved.
+
+## Arena admission recheck — 2026-10-27 20:47 UTC
+
+The earlier holder PID 3681242 had exited, but a new bounded
+`veritas_gap_detail_v2_batch.py` process (PID **3690476**) acquired the same
+host-wide lock inode **6423106** at
+`/home/charlie/midas/data/arena/.global-admission.lock`. Memory PSI at the
+recheck was 38.74% (`some`) / 33.82% (`full`) avg10, 11.52% / 10.26% avg60,
+and 20.77% / 18.43% avg300. The protected Reality recorder was also present in
+the process listing. No full-suite browser retry was started; no lock was
+bypassed and no worker or service was touched. The prior browser result remains
+10/12, with both Laboratory tests denied before work launched; dedicated
+Frontier E2E remains 4/4. Resume the two Laboratory cases only after the
+shared admission slot releases and host pressure is acceptable.

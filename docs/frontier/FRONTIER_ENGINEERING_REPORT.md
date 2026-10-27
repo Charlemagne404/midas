@@ -3872,3 +3872,17 @@ This was a documentation-only review of official pages. It made no network
 request to any exchange API, contacted no exchange, and read no held capture.
 No source policy changed. The source-use readiness gate remains blocked for
 Kalshi and Kraken, while Frontier remains **PARTIALLY VERIFIED** overall.
+
+### Arena admission recheck — 2026-10-27 20:47 UTC
+
+Before retrying the two Laboratory browser cases, a read-only host check found
+that the earlier lock holder had exited but a new
+`veritas_gap_detail_v2_batch.py` process (PID **3690476**) had acquired the
+same global lock inode **6423106** at
+`/home/charlie/midas/data/arena/.global-admission.lock`. Memory PSI at the
+recheck was 38.74% (`some`) / 33.82% (`full`) avg10, 11.52% / 10.26% avg60,
+and 20.77% / 18.43% avg300. The protected Reality recorder was present and
+untouched. No Laboratory browser retry, lock bypass, worker launch, or service
+action occurred. Keep the earlier full-browser result at 10/12 (two admission
+denials) and the dedicated Frontier result at 4/4 until the shared slot
+releases and a safe bounded rerun is possible.

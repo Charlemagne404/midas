@@ -820,3 +820,13 @@ systems. The source gates did not change: Kalshi/Kraken live probes and stored
 research remain blocked or quarantined. No API request, exchange contact, held
 capture read, production action, or permission inference was made. See
 [`SOURCE_DATA_TERMS_REVIEW_2026-10-27.md`](frontier/SOURCE_DATA_TERMS_REVIEW_2026-10-27.md).
+
+## Frontier Arena admission recheck — 2026-10-27 20:47 UTC
+
+The host-wide Arena lock was reacquired by a new
+`veritas_gap_detail_v2_batch.py` worker, PID 3690476, on lock inode 6423106.
+PSI avg10 was 38.74% `some` / 33.82% `full`; the protected Reality recorder
+was present and left untouched. No rerun of the two Laboratory browser cases
+was started and no lock was bypassed. Full browser evidence remains 10/12 with
+those two cases admission-denied; Frontier's dedicated browser suite remains
+4/4. Wait for shared admission and lower host pressure before retry.
