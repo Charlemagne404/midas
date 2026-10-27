@@ -73,7 +73,10 @@ multivariate-event lookup, typed `MarketGroup` persistence, and a Mission
 Control filter control. The October 27 public response returned one event and a
 cursor but omitted nested markets; the evidence is replayed as an omitted member
 list, not an empty set. Explicit `null` nested data fails closed. This adds no
-component payout or economic-equivalence claim.
+component payout or economic-equivalence claim. Adapter v8 also handles the
+documented event-detail response shape with a top-level empty market array; the
+preserved same-event response replays as zero children without implying
+venue-wide absence.
 Remaining acceptance work is substantial.
 **Branch:** `codex/frontier-20261026`
 **Worktree:** `/home/charlie/midas-frontier`
@@ -152,6 +155,7 @@ Remaining acceptance work is substantial.
 | `38ad1fa` | Introduced replay v6 and preserves exact store observation record IDs in API-loaded models, replay manifests, candidate evidence, paired replay, and Arena snapshots; added lineage integration regressions. |
 | `5c14049` | Added revision-bound centered two-/three-hop BFS pagination, deterministic 200-ID frontier chunking within the 500-row scan budget, Mission Control continuation controls, cursor/revision tests, and a browser test definition. Browser execution remains pending at the measured host-pressure checkpoint. |
 | `58cb6c7` | Added capability-gated one-page Kalshi multivariate-event discovery, typed group membership state, fail-closed nested metadata validation, API/store persistence, Mission Control capture and raw-evidence inspection, a real omitted-nested-market capture, and adapter/API/UI/browser regressions. |
+| `001b103` | Corrected Kalshi event-detail normalization for a documented top-level empty market array; preserved the one-request source response, original v7 normalization failure, v8 offline replay, and hash-verified replay-store row. |
 
 ## Kalshi multivariate event discovery checkpoint (2026-10-27)
 
@@ -183,6 +187,31 @@ Remaining acceptance work is substantial.
   not run: at 11:51 UTC memory PSI was 32.86% some / 26.88% full (`avg10`), swap
   use was 3.4 GiB, and a separate bounded Veritas process remained active. No
   Frontier job or server was started.
+
+## Kalshi event-detail empty-list parser correction (2026-10-27)
+
+- A separate one-request public GET to the documented event-detail path for
+  `KXMVECROSSCATEGORY-S2026ZZZB25KKPHBN3TFC` returned HTTP 200. The event object
+  omitted its `markets` field while the response's top-level `markets` field
+  was an explicit empty array. The v7 adapter rejected this shape as
+  `INVALID_SCHEMA` and preserved the raw response plus typed failure in an
+  isolated 8 MiB store.
+- Adapter v8 now selects a top-level empty list when the event-level list is
+  absent, while rejecting explicit `null` and non-list values. The exact saved
+  body replays offline to an empty market tuple and a `MarketBatch`; a separate
+  temporary-store row verifies under raw SHA-256
+  `4dff6f7d770dff3a7564b5cf0558ff0c21862977d52a360a93f5b10f436afa83` and replay
+  row SHA-256
+  `c47a0e7827849c886c2c3e290d16035e1a87c26b602d028217c90f9b58c760aa`. The
+  first capture's failure row remains preserved with SHA-256
+  `3cd24ab39df2a766e6118aee59f48e9e8142880ec5d15f77340252981b5f434f`.
+- Adapter/API multivariate cases plus the saved-detail replay passed **10
+  tests**; the focused command measured 1.95 seconds wall and 75,056 KiB peak
+  RSS with zero swaps. Strict mypy and Ruff passed for the changed adapter; the
+  existing Starlette/httpx test-client deprecation warning remains. This source
+  response is one empty event-detail list, not venue-wide market absence or
+  payoff evidence. Full browser E2E and production build remain deferred under
+  the existing host-pressure boundary.
 
 ## Latest checkpoint verification (2026-10-27)
 
@@ -558,16 +587,16 @@ same-input runs do not change the resource sustainability gate.
 | Component | Status | Current evidence / remaining requirement |
 | --- | --- | --- |
 | Verified isolated baseline and worktree | COMPLETE AND VERIFIED | Separate branch from `11d32a0`; unrelated dirty trees preserved. |
-| Adapter protocol, capability inventory, bounded GET transport | COMPLETE AND VERIFIED | Contract tests; all capabilities explicitly declared; Polymarket/Kalshi event groups supported and Kraken explicitly unsupported; no startup request. |
-| Polymarket, Kalshi and Kraken Spot implementations | PARTIALLY VERIFIED | Fixture tests and bounded live listing/book/trade-to-store evidence exist. Polymarket v2 first and continuation pages returned ten rows each. Kalshi cursor pages are implemented and row mapping is fixture-tested; a live page returned zero trades and no cursor, so live row normalization remains pending. Two genuine public event-group responses are hash-pinned and replayed through Polymarket/Kalshi adapters; account fees and Kraken account fee applicability remain unknown. API fixtures cover source degradation and recovery, including a partial two-request Kalshi metadata failure; live degraded-source behavior remains unverified. |
-| Canonical normalization and native evidence | PARTIALLY VERIFIED | Distinct event, conditional event and spot forms; v2 Polymarket trades preserve token and outcome identity, while earlier v1 batches still load with those new fields unknown. October 27 event-group capture also preserves parent-event title and child outcome text; other settlement/payoff semantics remain intentionally unverified. |
+| Adapter protocol, capability inventory, bounded GET transport | COMPLETE AND VERIFIED | Contract tests; all capabilities explicitly declared; Polymarket/Kalshi event groups supported, Kalshi MVE discovery explicitly supported, and Kraken MVE discovery explicitly unsupported; no startup request. |
+| Polymarket, Kalshi and Kraken Spot implementations | PARTIALLY VERIFIED | Fixture tests and bounded live listing/book/trade-to-store evidence exist. Polymarket v2 first and continuation pages returned ten rows each. Kalshi cursor pages are implemented and row mapping is fixture-tested; a live page returned zero trades and no cursor, so live row normalization remains pending. Two genuine public event-group responses are hash-pinned and replayed through Polymarket/Kalshi adapters. Kalshi MVE listing returned one event with nested members omitted; its event-detail response had an explicit top-level empty market list and replays offline under adapter v8. Component rules, combo payoff, account fees and Kraken account fee applicability remain unknown. API fixtures cover source degradation and recovery, including a partial two-request Kalshi metadata failure; live degraded-source behavior remains unverified. |
+| Canonical normalization and native evidence | PARTIALLY VERIFIED | Distinct event, conditional event and spot forms; v2 Polymarket trades preserve token and outcome identity, while earlier v1 batches still load with those new fields unknown. October 27 event-group capture preserves parent-event title and child outcome text. Kalshi `MarketBatch` v2 stores typed MVE groups with `included`, `empty`, or `omitted` member state; detail responses with a documented top-level empty list replay to zero child markets. Other settlement/payoff semantics remain intentionally unverified. |
 | Relationship matching, immutable review, indexed neighborhoods, and strict payoff verifier | PARTIALLY VERIFIED | Self-attributed review API/UI with stored source refs, append-only revisions, compare-and-set, latest-state replay, query-plan/migration tests, and 1–3 hop left/right indexed scans capped at 500 rows. Centered one-hop keyset and two-/three-hop breadth-first pages bind graph inputs and reject stale cursors; deterministic recomputation and 201-market frontier chunking are tested. Matcher v4 rejects contradictory or mismatched explicit years; the genuine House-control pair is still only a text HYPOTHESIS and strict payoff verification rejects same-payoff equivalence. Multi-hop browser E2E, authenticated review, and revision-history drill-down remain pending. |
 | Economic candidate verifier and independent audit | PARTIALLY VERIFIED | Exact two-venue binary all-long coverage and same-market 3–16-state exhaustive one-hot coverage. Economic model v4 derives the exact adverse full-or-no-fill terminal pattern for up to 16 legs; independent audit v2 rederives it from pinned inputs. A three-leg brute-force fixture agrees, and unknown fees suppress net stress. Fixtures only; no genuine eligible event, independently authenticated market truth, or practical execution proof. |
 | Bounded store and deterministic replay | COMPLETE AND VERIFIED | Schema v6 with additive v2/v3/v4/v5 migrations, immutable replay/comparison records, replay-v6 source lineage from store rows through manifests/candidate legs/Arena snapshots, and direct replay retaining adapter IDs. Replay-v5 output includes fill sensitivity and identity includes effective mappings/proposal limit; prior replay results and observations remain unchanged. |
 | Paired scenario comparison | PARTIALLY VERIFIED | Direct local comparison and API/UI/browser tests pass. Two actual systemd-supervised fixture replays completed over the same pinned inputs and their result hashes verify. The latest run measured worker process CPU/RSS and exposes it in Mission Control. No genuine equivalent live market pair exists. |
-| Frontier API and source configuration | COMPLETE AND VERIFIED | Local reads include hash-verified legacy and cursor-page batches. Polymarket and Kalshi page routes are capability/config/recorded-market gated, bounded to one page and retries, and bind cursors to market and size. Polymarket two-page and Kalshi empty-terminal-page persistence/read-back are tested. Kalshi live trade-row mapping remains fixture-only. Event-group routes bind one bounded capture to the recorded child, store parent metadata, and have Polymarket/Kalshi adapter/API coverage. Relationship proposals cite resolvable append-only capture IDs. |
-| Live adapter-to-API listing, book, and trade persistence | PARTIALLY VERIFIED | Three genuine venue captures, Polymarket v2 first/continuation pages with distinct IDs, and one Kalshi empty cursor page have hash-pinned temporary-store evidence. The October 27 event-detail responses are preserved and hash-pinned and pass through adapters, API, store, and relationship proposal under fixture replay. Samples are sequential and do not establish synchronized prices, depth, complete histories, or execution. |
-| Mission Control Frontier workspace | IMPLEMENTED, LIVE VALIDATION PENDING | Native view includes Polymarket/Kalshi trade-page and event-group controls, parent-event context, graph/review, multi-hop paging, paired replay, one-sided fill stress, instrument-bound Kalshi order-fee sensitivity, and Arena job history/result/resource detail. Unit tests, full frontend regression, prior production build, and prior targeted E2E cover isolated local data. The new multi-hop browser path is not run; the fresh build/E2E were deferred under measured memory pressure. It is not deployed; no live browser source request or Arena job submission occurred in E2E. |
+| Frontier API and source configuration | COMPLETE AND VERIFIED | Local reads include hash-verified legacy and cursor-page batches. Polymarket and Kalshi page routes are capability/config/recorded-market gated, bounded to one page and retries, and bind cursors to market and size. Polymarket two-page and Kalshi empty-terminal-page persistence/read-back are tested. Kalshi MVE route validates one series/collection filter, capability/config, one-page URL and raw/normalized lineage; nested-present and saved nested-omitted cases persist through the API/store. It does not follow the cursor. Kalshi live trade-row mapping remains fixture-only. Event-group routes bind one bounded capture to the recorded child and store parent metadata. Relationship proposals cite resolvable append-only capture IDs. |
+| Live adapter, API and store evidence | PARTIALLY VERIFIED | Three venue listing/book/trade captures, Polymarket v2 first/continuation pages with distinct IDs, one Kalshi empty cursor page, two public event-group responses and one Kalshi MVE listing response have hash-pinned evidence. A separate one-GET Kalshi event-detail response is stored as the original v7 normalization failure and replayed under v8 to an explicit empty result with a separate verified row hash. The MVE route itself is API/store fixture-tested against saved raw bytes. Samples are asynchronous and do not establish synchronized prices, depth, complete histories, child MVE contracts, or execution. |
+| Mission Control Frontier workspace | PARTIALLY VERIFIED | Native view includes Polymarket/Kalshi trade-page, event-group and one-page MVE controls; MVE member-list state is visible and its saved raw response opens from immutable evidence storage. Graph/review, multi-hop paging, paired replay, one-sided fill stress, instrument-bound Kalshi order-fee sensitivity, and Arena history/results remain integrated. Focused MVE unit test, frontend typecheck, lint and format pass. A browser scenario is authored and enumerated but not run; production build/E2E remain deferred at measured host pressure. It is not deployed. |
 | Laboratory/Arena research orchestration | PARTIALLY VERIFIED | Bounded Frontier Arena job type, snapshot, offline executor, API, worker CPU/RSS capture, and workspace history/result view are implemented and tested; two fixture jobs passed the host gate and completed under systemd. Resource sustainability and Laboratory campaign management remain incomplete. |
 | Persistent source collection, streaming and broad historical replay | DEFERRED | No background worker or long-duration campaign. |
 | Cross-venue FX, comprehensive capital and settlement costs | DEFERRED | Unknown costs remain unknown and block decisive net economics. |

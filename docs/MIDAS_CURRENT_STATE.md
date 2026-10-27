@@ -87,6 +87,15 @@ requested flag. Its saved replay now represents membership as `omitted`, not as
 an empty list; explicit `null` member data is rejected. This is event discovery
 only and establishes no combo payoff or component equivalence.
 
+A separate one-GET follow-up to Kalshi's public event-detail endpoint returned
+HTTP 200 for the same ticker. The `event` object omitted its nested `markets`
+field while the documented top-level `markets` array was explicitly empty.
+Adapter v7 rejected that shape; adapter v8 now replays it as a valid empty
+event-detail batch. The preserved raw response and separate hash-verified replay
+row are in `data/frontier/live-probes/2026-10-27-kalshi-mve-event-detail-r1.json`.
+This confirms no child markets in those two bounded responses, not venue-wide
+absence or payoff semantics.
+
 The focused adapter/API regression passed 9 tests at 75,004 KiB peak RSS with
 zero swaps; the focused Mission Control test passed. Frontend typecheck, targeted
 ESLint/Prettier, Frontier Python Ruff/format, and strict mypy passed. Playwright

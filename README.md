@@ -74,7 +74,9 @@ captured event is normalized with membership marked `omitted`, not interpreted
 as an empty event. Adapter/API/store/UI fixture tests cover that source response
 shape, and Mission Control can open the saved raw response. Native MVE selected
 legs remain unverified payoff descriptions, and this event had no child markets
-to compare.
+to compare. One bounded event-detail follow-up also returned an explicit empty
+top-level `markets` array for that event; adapter v8 can replay it as a valid
+zero-child response without implying venue-wide absence.
 Review labels and assertion references are not authenticated; replay follows
 only the latest revision. It is not merged into `main` or deployed. Read the [Frontier mission ledger](docs/frontier/FRONTIER_MISSION_LEDGER.md)
 and [current engineering report](docs/frontier/FRONTIER_ENGINEERING_REPORT.md)

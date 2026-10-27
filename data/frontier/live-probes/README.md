@@ -1,10 +1,12 @@
 # Bounded public-source probe captures
 
-These files contain genuine public HTTP responses captured by MIDAS Frontier on
-2026-10-26. Requests were unauthenticated `GET` requests with a short timeout
-and per-response byte cap. No orders, accounts, credentials, wallet calls, or
-mutating methods were used. Raw response bodies are retained so normalization
-can be replayed; each capture contains a SHA-256 over its pre-hash manifest.
+These files contain bounded public HTTP captures made by MIDAS Frontier on
+2026-10-26 and 2026-10-27, plus clearly identified offline fixtures and
+calculations. Live requests were unauthenticated `GET` requests with short
+timeouts and per-response byte caps. No orders, accounts, credentials, wallet
+calls, or mutating methods were used. Raw response bodies are retained so
+normalization can be replayed; each capture contains SHA-256 identities for its
+source body or pre-hash manifest.
 The fee-sensitivity artifact below is a deterministic offline calculation from
 the captured public metadata, not an additional HTTP capture.
 
@@ -20,6 +22,8 @@ the captured public metadata, not an additional HTTP capture.
 | `2026-10-27-kalshi-public-fee-metadata.json` | One public Kalshi listing and the matching event plus series fee metadata; three GETs, one market, child markets excluded from the event response, and hash-verified temporary-store read-back. |
 | `2026-10-27-kalshi-fee-sensitivity.json` | Offline Decimal calculation using that captured event/series metadata and manually supplied one-fill inputs ($0.50, one contract); no quote or execution evidence. |
 | `2026-10-27-kalshi-public-trade-page.json` | One public Kalshi listing and one ticker-filtered cursor-page request through the isolated API; two GETs, zero returned trades, empty continuation cursor, and raw/row hash-verified temporary-store read-back. |
+| `2026-10-27-kalshi-multivariate-page-r1.json` | One filtered public MVE page; HTTP 200 returned one event and a cursor but omitted nested `markets` despite the requested flag. The v6 failure record and raw response are hash-pinned; current adapter replay preserves membership as `omitted`. |
+| `2026-10-27-kalshi-mve-event-detail-r1.json` | One unauthenticated event-detail GET for the same MVE ticker; HTTP 200 omitted `event.markets` but returned explicit top-level `markets: []`. The original v7 normalization failure remains preserved; v8 replay returns a valid zero-child `MarketBatch` with a separate hash-verified temporary-store row. |
 
 The earliest direct source-probe files contain five HTTP 200 responses:
 Kalshi market listing and later book, Kraken pair metadata and depth, and a
@@ -36,6 +40,13 @@ opportunity.
 
 These captures are small, time-specific fixtures, not continuous source
 coverage or evidence of venue-wide market conditions.
+
+The two MVE captures are different endpoint responses to the same native event.
+The multivariate-listing response reports no nested list; the event-detail
+response has an explicit empty top-level list. The second response does not
+recover a child contract. It demonstrates a single empty event-detail response
+and parser replay behavior, not venue-wide absence, combo payoff, or economic
+equivalence. Adapter v8 does not follow the MVE cursor.
 
 The Frontier API listing-only round trip ran at `2026-10-26T20:41:18.904543Z` to
 `20:41:19.624016Z`. It used one listing request per venue with retries disabled

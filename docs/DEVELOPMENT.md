@@ -139,6 +139,11 @@ raw hash, diagnostic row, and bounded store read-back. No nested contract or
 combo payout was established by that response. A missing member field is kept
 as omitted, a present empty array is kept as empty, and explicit `null` is
 rejected. Mission Control displays that state and can open the saved raw response.
+One bounded event-detail follow-up for the same ticker returned HTTP 200 with no
+`event.markets` field and an explicit empty top-level `markets` array. Adapter
+v8 now normalizes this documented response shape as an empty event-detail batch;
+its offline replay and separate temporary-store row hash are recorded in
+`data/frontier/live-probes/2026-10-27-kalshi-mve-event-detail-r1.json`.
 
 For Kalshi multivariate event markets, adapter v4 normalizes up to 64 native
 selected component references (event ticker, market ticker, selected YES/NO

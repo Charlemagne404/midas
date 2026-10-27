@@ -33,7 +33,7 @@ native metadata, source URL, adapter/schema versions, raw-body hash, request and
 receipt times, and source-time semantics. Source quality flags are carried forward
 instead of being replaced with guessed values.
 
-Polymarket adapter v3 and Kalshi adapter v7 declare
+Polymarket adapter v3 and Kalshi adapter v8 declare
 `EVENT_MARKET_GROUPS`. Their `discover_event_markets` operations issue one bounded
 public GET, validate the requested native event identity, bound and de-duplicate
 the child list, retain the source parent title, and keep native outcome wording
@@ -59,7 +59,8 @@ matching timing. Event-group observations participate in latest-record
 selection and graph revision identity, so replay and paged reads cannot silently
 retain older child-only metadata.
 
-Kalshi adapter v7 separately declares `MULTIVARIATE_EVENT_DISCOVERY`. Its local
+Kalshi adapter v7 introduced the separate `MULTIVARIATE_EVENT_DISCOVERY`
+capability, retained by adapter v8. Its local
 `POST /api/frontier/probe/kalshi/multivariate-events` route requires exactly one
 series or collection ticker, a source-enabled public-probe configuration, and
 the adapter capability. Each operation requests one source page (`limit=1`)
@@ -91,6 +92,13 @@ filtered page, displays returned groups and member counts, and exposes the
 raw/normalized observation ID and hash. It sends no request on page load.
 The capture result can expand the immutable response through the local evidence
 API without making another source request.
+
+Adapter v8 also accepts Kalshi's event-detail response when the `event` object
+omits `markets` but the documented top-level `markets` array is explicitly
+empty. A one-GET follow-up for the saved MVE ticker returned HTTP 200 in that
+shape. The saved response replays to zero child markets with its raw and
+normalized store row verified. It does not establish venue-wide absence or a
+child-contract payoff.
 
 One preserved public capture demonstrates the boundary. The Polymarket and
 Kalshi event titles and party-outcome wording generated a deterministic
