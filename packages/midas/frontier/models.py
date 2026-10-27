@@ -85,6 +85,7 @@ class SourceState(StrEnum):
 class Capability(StrEnum):
     MARKET_DISCOVERY = "market_discovery"
     EVENT_MARKET_GROUPS = "event_market_groups"
+    MULTIVARIATE_EVENT_DISCOVERY = "multivariate_event_discovery"
     INSTRUMENT_DISCOVERY = "instrument_discovery"
     MARKET_METADATA = "market_metadata"
     OUTCOME_DEFINITIONS = "outcome_definitions"
@@ -548,15 +549,57 @@ class FrontierMarket(FrontierModel):
         return value
 
 
-class MarketBatch(FrontierModel):
+class MarketGroup(FrontierModel):
+    """Venue-declared event grouping retained separately from payoff equivalence."""
+
     schema_version: int = 1
     venue: Venue
+    group_type: Literal["event", "multivariate_event"]
+    native_group_id: str = Field(min_length=1, max_length=256)
+    title: str = Field(min_length=1, max_length=512)
+    subtitle: str | None = Field(default=None, max_length=512)
+    native_series_id: str | None = Field(default=None, max_length=256)
+    native_collection_id: str | None = Field(default=None, max_length=256)
+    member_native_market_ids: tuple[str, ...] = Field(default=(), max_length=100)
+    member_list_state: Literal["included", "empty", "omitted"] = "omitted"
+    native_fields: dict[str, Any] = Field(default_factory=dict)
+    provenance: Provenance
+
+    @model_validator(mode="after")
+    def unique_members(self) -> MarketGroup:
+        if len(self.member_native_market_ids) != len(set(self.member_native_market_ids)):
+            raise ValueError("Market group contains duplicate native market IDs")
+        if self.member_list_state == "included" and not self.member_native_market_ids:
+            raise ValueError("An included market-member list cannot be empty")
+        if self.member_list_state != "included" and self.member_native_market_ids:
+            raise ValueError("Markets cannot be listed when the member list is absent or empty")
+        return self
+
+    @field_validator("native_fields")
+    @classmethod
+    def bounded_group_fields(cls, value: dict[str, Any]) -> dict[str, Any]:
+        raw = json.dumps(value, sort_keys=True, separators=(",", ":"), default=str)
+        if len(raw.encode("utf-8")) > 262144:
+            raise ValueError("Native market-group metadata exceeds the 256 KiB record bound")
+        return value
+
+
+class MarketBatch(FrontierModel):
+    schema_version: int = 2
+    venue: Venue
     markets: tuple[FrontierMarket, ...]
+    market_groups: tuple[MarketGroup, ...] = Field(default=(), max_length=100)
     cursor: str | None = None
     complete_for_request: bool = False
     note: str = (
         "One bounded discovery response; absence from this page is not proof of venue-wide absence."
     )
+
+    @model_validator(mode="after")
+    def group_venues_match_batch(self) -> MarketBatch:
+        if any(group.venue != self.venue for group in self.market_groups):
+            raise ValueError("Market-group venue must match its batch")
+        return self
 
 
 class BookLevel(FrontierModel):

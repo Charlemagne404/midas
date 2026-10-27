@@ -177,6 +177,26 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
             notes: [],
           },
         },
+        {
+          venue: 'kalshi',
+          adapter_version: 'frontier-kalshi-7',
+          public_probe_enabled: true,
+          capabilities: [
+            {
+              capability: 'multivariate_event_discovery',
+              supported: true,
+              state: 'implemented',
+              reason: 'One bounded MVE page for this browser fixture.',
+            },
+          ],
+          health: {
+            state: 'not_probed',
+            last_success_at_utc: null,
+            last_error_code: null,
+            last_error: null,
+            notes: [],
+          },
+        },
       ],
     },
     '/api/frontier/markets': {
@@ -276,7 +296,67 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
   };
   let submittedReview: Record<string, unknown> | undefined;
   const tradePageRequests: Record<string, unknown>[] = [];
+  const mvePageRequests: Record<string, unknown>[] = [];
   await page.route('**/api/frontier/**', async (route) => {
+    if (
+      route.request().method() === 'GET' &&
+      route
+        .request()
+        .url()
+        .endsWith(`/observations/${'e'.repeat(64)}`)
+    ) {
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          observation_id: 'e'.repeat(64),
+          raw_sha256: 'f'.repeat(64),
+          row_sha256: '1'.repeat(64),
+          raw: {
+            request_url:
+              'https://external-api.kalshi.com/trade-api/v2/events/multivariate?collection_ticker=KX-E2E-COLLECTION&limit=1&with_nested_markets=true',
+            http_status: 200,
+            raw_body: '{"events":[{"title":"MVE event with omitted members"}]}',
+            adapter_version: 'frontier-kalshi-7',
+          },
+        }),
+      });
+    }
+    if (
+      route.request().method() === 'POST' &&
+      route.request().url().endsWith('/probe/kalshi/multivariate-events')
+    ) {
+      mvePageRequests.push(route.request().postDataJSON() as Record<string, unknown>);
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          venue: 'kalshi',
+          filter_type: 'collection_ticker',
+          filter_value: 'KX-E2E-COLLECTION',
+          event_count: 1,
+          market_count: 0,
+          events: [
+            {
+              native_event_id: 'KX-E2E-MVE-EVENT',
+              title: 'MVE event with omitted members',
+              series_ticker: 'KX-E2E-SERIES',
+              collection_ticker: null,
+              market_count: 0,
+              member_list_state: 'omitted',
+            },
+          ],
+          complete_for_request: false,
+          has_more_source_pages: true,
+          observation_id: 'e'.repeat(64),
+          raw_sha256: 'f'.repeat(64),
+          request_count_delta: 1,
+          network_calls_bounded_by: 1,
+          hypothetical_only: true,
+          note: 'One page; nested members were omitted by the source.',
+        }),
+      });
+    }
     if (
       route.request().method() === 'POST' &&
       route.request().url().endsWith('/probe/polymarket/trades')
@@ -416,4 +496,13 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
       cursor: 'e2e-frontier-next',
     },
   ]);
+
+  await page.getByRole('button', { name: 'Exchanges', exact: true }).click();
+  await page.getByLabel('Kalshi multivariate filter type').selectOption('collection_ticker');
+  await page.getByLabel('Kalshi multivariate filter ticker').fill('KX-E2E-COLLECTION');
+  await page.getByRole('button', { name: 'Capture one event page' }).click();
+  await expect(page.getByText(/nested markets omitted by source/)).toBeVisible();
+  await page.getByText('Inspect immutable source response').last().click();
+  await expect(page.getByText(/200 · https:\/\/external-api\.kalshi\.com/)).toBeVisible();
+  expect(mvePageRequests).toEqual([{ collection_ticker: 'KX-E2E-COLLECTION' }]);
 });

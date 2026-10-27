@@ -14,6 +14,7 @@ from midas.frontier.models import (
     Capability,
     CapabilityDeclaration,
     FrontierMarket,
+    MarketBatch,
     RawObservation,
     SourceHealth,
     SourceState,
@@ -71,6 +72,13 @@ class ExchangeAdapter(Protocol):
     async def discover_markets(self, limit: int = 20) -> tuple[FrontierMarket, ...]: ...
 
     async def discover_event_markets(self, native_event_id: str) -> tuple[FrontierMarket, ...]: ...
+
+    async def discover_multivariate_events(
+        self,
+        *,
+        series_ticker: str | None = None,
+        collection_ticker: str | None = None,
+    ) -> MarketBatch: ...
 
     async def fetch_book(
         self, market: FrontierMarket, instrument_id: str, depth: int = 20
@@ -167,6 +175,20 @@ class BaseReadOnlyAdapter:
         raise UnsupportedCapability(
             Capability.EVENT_MARKET_GROUPS,
             f"{self.venue.value} does not implement event-group discovery",
+        )
+
+    async def discover_multivariate_events(
+        self,
+        *,
+        series_ticker: str | None = None,
+        collection_ticker: str | None = None,
+    ) -> MarketBatch:
+        """Fail closed unless a venue implements bounded multivariate-event discovery."""
+        del series_ticker, collection_ticker
+        self._require(Capability.MULTIVARIATE_EVENT_DISCOVERY)
+        raise UnsupportedCapability(
+            Capability.MULTIVARIATE_EVENT_DISCOVERY,
+            f"{self.venue.value} does not implement multivariate-event discovery",
         )
 
     def take_captures(self) -> tuple[RawObservation, ...]:

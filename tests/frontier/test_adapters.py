@@ -235,6 +235,218 @@ async def test_public_event_group_capture_retains_parent_context_and_only_propos
 
 
 @pytest.mark.asyncio
+async def test_kalshi_multivariate_event_page_preserves_group_and_market_evidence():
+    # Bounded schema fixture shaped from Kalshi's documented response; not live evidence.
+    body = {
+        "events": [
+            {
+                "event_ticker": "KXMVESHOUSE-26-MVE",
+                "series_ticker": "KXMVESHOUSE",
+                "collection_ticker": "MVEHOUSE",
+                "sub_title": "Selected combinations",
+                "title": "House control and margin",
+                "mutually_exclusive": True,
+                "collateral_return_type": "scalar",
+                "settlement_sources": [{"name": "Official source", "url": "https://example.test"}],
+                "markets": [
+                    {
+                        "ticker": "KXMVESHOUSE-26-MVE-D-R",
+                        "event_ticker": "KXMVESHOUSE-26-MVE",
+                        "market_type": "binary",
+                        "title": "Democrats win and margin exceeds threshold",
+                        "rules_primary": "Rules for the selected combination.",
+                        "rules_secondary": "See the venue's general resolution terms.",
+                        "mve_collection_ticker": "MVEHOUSE",
+                        "mve_selected_legs": [
+                            {
+                                "event_ticker": "KXHOUSE-26",
+                                "market_ticker": "KXHOUSE-26-D",
+                                "side": "yes",
+                            },
+                            {
+                                "event_ticker": "KXHOUSEMARGIN-26",
+                                "market_ticker": "KXHOUSEMARGIN-26-5",
+                                "side": "yes",
+                            },
+                        ],
+                    }
+                ],
+            }
+        ],
+        "cursor": "next-page-token",
+    }
+    transport, requests, client = _transport(
+        "external-api.kalshi.com", {"/events/multivariate": json.dumps(body)}
+    )
+    adapter = KalshiAdapter(
+        AdapterConfig(
+            enabled=True,
+            live_public_probe_enabled=True,
+            requests_per_second=5,
+            retries=0,
+        ),
+        transport=transport,
+    )
+    try:
+        batch = await adapter.discover_multivariate_events(series_ticker="KXMVESHOUSE")
+        captures = adapter.take_captures()
+    finally:
+        await client.aclose()
+
+    assert adapter.capabilities.supports(Capability.MULTIVARIATE_EVENT_DISCOVERY)
+    assert len(requests) == len(captures) == 1
+    assert requests[0].method == "GET"
+    assert requests[0].url.path.endswith("/events/multivariate")
+    assert requests[0].url.params["series_ticker"] == "KXMVESHOUSE"
+    assert requests[0].url.params["limit"] == "1"
+    assert requests[0].url.params["with_nested_markets"] == "true"
+    assert "authorization" not in requests[0].headers
+    assert batch.complete_for_request is False
+    assert batch.cursor == "next-page-token"
+    assert len(batch.market_groups) == 1
+    group = batch.market_groups[0]
+    assert group.group_type == "multivariate_event"
+    assert group.native_group_id == "KXMVESHOUSE-26-MVE"
+    assert group.native_collection_id == "MVEHOUSE"
+    assert group.native_series_id == "KXMVESHOUSE"
+    assert group.member_native_market_ids == ("KXMVESHOUSE-26-MVE-D-R",)
+    assert group.native_fields["settlement_sources"][0]["name"] == "Official source"
+    market = batch.markets[0]
+    assert market.native_event_id == group.native_group_id
+    assert market.market_kind == MarketKind.CONDITIONAL_EVENT
+    assert len(market.selected_components) == 2
+    assert market.payoff.verified is False
+    assert market.provenance.raw_sha256 == group.provenance.raw_sha256 == captures[0].raw_sha256
+    assert "MVE_PAYOFF_NOT_MODELED" in market.quality_flags
+
+
+@pytest.mark.asyncio
+async def test_kalshi_live_multivariate_capture_records_omitted_nested_market_list():
+    # Genuine saved HTTP 200 response. The source omitted `markets` despite the requested flag.
+    artifact = json.loads(
+        _captured("data/frontier/live-probes/2026-10-27-kalshi-multivariate-page-r1.json")
+    )
+    raw = artifact["raw_observation"]
+    transport, requests, client = _transport(
+        "external-api.kalshi.com",
+        {"/events/multivariate": raw["raw_body"]},
+    )
+    adapter = KalshiAdapter(
+        AdapterConfig(
+            enabled=True,
+            live_public_probe_enabled=True,
+            requests_per_second=5,
+            retries=0,
+        ),
+        transport=transport,
+    )
+    try:
+        batch = await adapter.discover_multivariate_events(
+            collection_ticker=artifact["source_filter"]["collection_ticker"]
+        )
+        captures = adapter.take_captures()
+    finally:
+        await client.aclose()
+
+    assert len(requests) == len(captures) == 1
+    assert captures[0].raw_sha256 == artifact["raw_sha256"]
+    assert requests[0].url.params["with_nested_markets"] == "true"
+    assert requests[0].url.params["limit"] == "1"
+    assert "authorization" not in requests[0].headers
+    assert batch.markets == ()
+    assert len(batch.market_groups) == 1
+    group = batch.market_groups[0]
+    assert group.native_group_id == "KXMVECROSSCATEGORY-S2026ZZZB25KKPHBN3TFC"
+    assert group.member_list_state == "omitted"
+    assert group.member_native_market_ids == ()
+    assert "markets" not in group.native_fields
+    assert "omitted nested markets" in batch.note
+    assert batch.complete_for_request is False
+
+
+@pytest.mark.asyncio
+async def test_kalshi_multivariate_event_rejects_explicit_null_market_list():
+    body = {
+        "events": [
+            {
+                "event_ticker": "KX-MVE-EVENT",
+                "series_ticker": "KX-SERIES",
+                "title": "Combination event",
+                "markets": None,
+            }
+        ],
+        "cursor": "",
+    }
+    transport, _, client = _transport(
+        "external-api.kalshi.com", {"/events/multivariate": json.dumps(body)}
+    )
+    adapter = KalshiAdapter(
+        AdapterConfig(
+            enabled=True,
+            live_public_probe_enabled=True,
+            requests_per_second=5,
+            retries=0,
+        ),
+        transport=transport,
+    )
+    try:
+        with pytest.raises(AdapterError, match="must be an array") as exc_info:
+            await adapter.discover_multivariate_events(collection_ticker="KX-COLLECTION")
+        assert exc_info.value.code == "INVALID_SCHEMA"
+        assert len(adapter.take_captures()) == 1
+    finally:
+        await client.aclose()
+
+
+@pytest.mark.parametrize("mutation", ["event_mismatch", "duplicate_market", "too_many_events"])
+@pytest.mark.asyncio
+async def test_kalshi_multivariate_event_page_rejects_bad_nested_identity(mutation: str):
+    event = {
+        "event_ticker": "KX-MVE-EVENT",
+        "series_ticker": "KX-SERIES",
+        "title": "Combination event",
+        "markets": [
+            {
+                "ticker": "KX-MVE-MARKET",
+                "event_ticker": "KX-MVE-EVENT",
+                "market_type": "binary",
+                "mve_selected_legs": [
+                    {"event_ticker": "KX-BASE-EVENT", "market_ticker": "KX-BASE-MKT", "side": "yes"}
+                ],
+            }
+        ],
+    }
+    events = [event]
+    if mutation == "event_mismatch":
+        events[0]["markets"][0]["event_ticker"] = "KX-OTHER-EVENT"
+    elif mutation == "duplicate_market":
+        events[0]["markets"].append(events[0]["markets"][0].copy())
+    else:
+        events.append(event.copy())
+    transport, _, client = _transport(
+        "external-api.kalshi.com",
+        {"/events/multivariate": json.dumps({"events": events, "cursor": ""})},
+    )
+    adapter = KalshiAdapter(
+        AdapterConfig(
+            enabled=True,
+            live_public_probe_enabled=True,
+            requests_per_second=5,
+            retries=0,
+            max_markets_per_call=1,
+        ),
+        transport=transport,
+    )
+    try:
+        with pytest.raises(AdapterError):
+            await adapter.discover_multivariate_events(collection_ticker="KX-COLLECTION")
+        # Malformed but valid-HTTP source bytes remain available for diagnostic persistence.
+        assert len(adapter.take_captures()) == 1
+    finally:
+        await client.aclose()
+
+
+@pytest.mark.asyncio
 async def test_event_group_probes_reject_oversized_and_mismatched_event_metadata():
     capture = _cross_venue_capture()
     records = {item["source"]: item for item in capture["records"]}

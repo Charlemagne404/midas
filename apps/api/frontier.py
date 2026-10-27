@@ -13,7 +13,7 @@ from decimal import Decimal
 from functools import lru_cache
 from pathlib import Path
 from typing import Any, Literal
-from urllib.parse import urlsplit
+from urllib.parse import parse_qs, urlsplit
 
 from fastapi import APIRouter, HTTPException, Query
 from midas.arena.frontier_replay import (
@@ -104,6 +104,21 @@ class EventMarketsProbeRequest(BaseModel):
     def event_id_is_nonblank(self) -> EventMarketsProbeRequest:
         if self.native_event_id is not None and not self.native_event_id.strip():
             raise ValueError("Native event ID cannot be blank")
+        return self
+
+
+class KalshiMultivariateEventsProbeRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+    series_ticker: str | None = Field(default=None, min_length=1, max_length=256)
+    collection_ticker: str | None = Field(default=None, min_length=1, max_length=256)
+
+    @model_validator(mode="after")
+    def exactly_one_filter(self) -> KalshiMultivariateEventsProbeRequest:
+        filters = (self.series_ticker, self.collection_ticker)
+        if sum(value is not None for value in filters) != 1:
+            raise ValueError("Specify exactly one series_ticker or collection_ticker")
+        if any(value is not None and not value.strip() for value in filters):
+            raise ValueError("Kalshi multivariate filter ticker cannot be blank")
         return self
 
 
@@ -1352,6 +1367,129 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
                     status_code=502,
                     detail={
                         "code": "EVENT_MARKET_PROBE_FAILED",
+                        "message": str(error),
+                        "diagnostic_observation_ids": diagnostic_ids,
+                        "diagnostic_persistence_error": diagnostic_error,
+                    },
+                ) from error
+
+    @api.post("/probe/kalshi/multivariate-events")
+    async def probe_kalshi_multivariate_events(
+        request: KalshiMultivariateEventsProbeRequest,
+    ) -> dict[str, Any]:
+        venue = Venue.KALSHI
+        adapter: ExchangeAdapter = registry.get(venue)
+        if not adapter.capabilities.supports(Capability.MULTIVARIATE_EVENT_DISCOVERY):
+            raise HTTPException(
+                status_code=409, detail="Kalshi multivariate-event discovery is unsupported"
+            )
+        discover = getattr(adapter, "discover_multivariate_events", None)
+        if not callable(discover):
+            raise HTTPException(
+                status_code=409,
+                detail="Advertised Kalshi multivariate-event discovery is unavailable",
+            )
+        config = getattr(adapter, "config", None)
+        if config is None or not config.enabled or not config.live_public_probe_enabled:
+            raise HTTPException(
+                status_code=409,
+                detail="Bounded public probing is disabled in source configuration",
+            )
+
+        async with source_locks[venue]:
+            adapter.take_captures()
+            requests_before = adapter.transport.request_count
+            captures: tuple[RawObservation, ...] = ()
+            try:
+                batch = await discover(
+                    series_ticker=request.series_ticker,
+                    collection_ticker=request.collection_ticker,
+                )
+                captures = adapter.take_captures()
+                if (
+                    len(captures) != 1
+                    or batch.venue != venue
+                    or any(
+                        item.venue != venue or item.provenance.raw_sha256 != captures[0].raw_sha256
+                        for item in batch.markets
+                    )
+                    or any(
+                        item.venue != venue or item.provenance.raw_sha256 != captures[0].raw_sha256
+                        for item in batch.market_groups
+                    )
+                ):
+                    raise AdapterError(
+                        "MVE_CAPTURE_LINEAGE_MISMATCH",
+                        "Normalized Kalshi multivariate data does not match one captured response",
+                    )
+                source_url = urlsplit(captures[0].request_url)
+                source_query = parse_qs(source_url.query, keep_blank_values=True)
+                filter_name = (
+                    "series_ticker" if request.series_ticker is not None else "collection_ticker"
+                )
+                filter_value = request.series_ticker or request.collection_ticker
+                if (
+                    source_url.path != "/trade-api/v2/events/multivariate"
+                    or source_query.get(filter_name) != [filter_value]
+                    or source_query.get("limit") != ["1"]
+                    or source_query.get("with_nested_markets") != ["true"]
+                ):
+                    raise AdapterError(
+                        "MVE_REQUEST_BOUND_MISMATCH",
+                        "Captured Kalshi multivariate request does not match the bounded filter",
+                    )
+
+                observation_id = store.append_observation(captures[0], batch)
+                groups = [
+                    {
+                        "native_event_id": item.native_group_id,
+                        "title": item.title,
+                        "series_ticker": item.native_series_id,
+                        "collection_ticker": item.native_collection_id,
+                        "market_count": len(item.member_native_market_ids),
+                        "member_list_state": item.member_list_state,
+                    }
+                    for item in batch.market_groups
+                ]
+                return {
+                    "venue": venue.value,
+                    "filter_type": filter_name,
+                    "filter_value": filter_value,
+                    "event_count": len(batch.market_groups),
+                    "market_count": len(batch.markets),
+                    "events": groups,
+                    "complete_for_request": batch.complete_for_request,
+                    "has_more_source_pages": batch.cursor is not None,
+                    "observation_id": observation_id,
+                    "raw_sha256": captures[0].raw_sha256,
+                    "request_count_delta": adapter.transport.request_count - requests_before,
+                    "network_calls_bounded_by": config.retries + 1,
+                    "hypothetical_only": True,
+                    "note": batch.note,
+                }
+            except AdapterError as error:
+                diagnostic_ids, diagnostic_error = preserve_failed_captures(
+                    adapter, error.code, str(error), error.response_evidence, captures
+                )
+                adapter.report_failure(error.code, str(error))
+                raise HTTPException(
+                    status_code=502,
+                    detail={
+                        "code": error.code,
+                        "message": str(error),
+                        "diagnostic_observation_ids": diagnostic_ids,
+                        "diagnostic_persistence_error": diagnostic_error,
+                    },
+                ) from error
+            except (ValueError, FrontierStoreError) as error:
+                diagnostic_ids, diagnostic_error = preserve_failed_captures(
+                    adapter, "KALSHI_MVE_PROBE_FAILED", str(error), already_drained=captures
+                )
+                adapter.report_failure("KALSHI_MVE_PROBE_FAILED", str(error))
+                raise HTTPException(
+                    status_code=502,
+                    detail={
+                        "code": "KALSHI_MVE_PROBE_FAILED",
                         "message": str(error),
                         "diagnostic_observation_ids": diagnostic_ids,
                         "diagnostic_persistence_error": diagnostic_error,

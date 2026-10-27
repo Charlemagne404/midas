@@ -24,6 +24,8 @@ from midas.frontier.models import (
     FeeSchedule,
     FrontierMarket,
     KalshiFeeMetadata,
+    MarketBatch,
+    MarketGroup,
     MarketInstrument,
     MarketKind,
     PayoffSpec,
@@ -38,7 +40,7 @@ from midas.frontier.models import (
 )
 
 D = Decimal
-ADAPTER_VERSION = "frontier-kalshi-5"
+ADAPTER_VERSION = "frontier-kalshi-7"
 _TICKER_PATTERN = re.compile(r"[A-Za-z0-9_-]{1,256}\Z")
 BASE = "https://external-api.kalshi.com/trade-api/v2"
 MARKET_DATA_DOC = "https://docs.kalshi.com/getting_started/quick_start_market_data"
@@ -46,6 +48,7 @@ MARKETS_DOC = "https://docs.kalshi.com/api-reference/market/get-markets"
 ORDERBOOK_DOC = "https://docs.kalshi.com/api-reference/market/get-market-orderbook"
 EVENT_DOC = "https://docs.kalshi.com/api-reference/events/get-event"
 SERIES_DOC = "https://docs.kalshi.com/api-reference/market/get-series"
+MULTIVARIATE_EVENTS_DOC = "https://docs.kalshi.com/api-reference/events/get-multivariate-events"
 
 
 class KalshiAdapter(BaseReadOnlyAdapter):
@@ -62,6 +65,10 @@ class KalshiAdapter(BaseReadOnlyAdapter):
             Capability.EVENT_MARKET_GROUPS: (
                 "Bounded public event detail with the venue-provided nested market list",
                 EVENT_DOC,
+            ),
+            Capability.MULTIVARIATE_EVENT_DISCOVERY: (
+                "One public multivariate-event page filtered by series or collection ticker; nested-market omission is explicit",
+                MULTIVARIATE_EVENTS_DOC,
             ),
             Capability.INSTRUMENT_DISCOVERY: (
                 "Binary YES/NO contract identifiers are derived from the native market ticker",
@@ -203,6 +210,199 @@ class KalshiAdapter(BaseReadOnlyAdapter):
             seen.add(record.native_market_id)
             records.append(record)
         return tuple(records)
+
+    async def discover_multivariate_events(
+        self,
+        *,
+        series_ticker: str | None = None,
+        collection_ticker: str | None = None,
+    ) -> MarketBatch:
+        """Capture one filtered MVE page; never follows the source continuation cursor."""
+        self._require(Capability.MULTIVARIATE_EVENT_DISCOVERY)
+        filters = (series_ticker, collection_ticker)
+        if sum(value is not None for value in filters) != 1:
+            raise AdapterError(
+                "INVALID_FILTER", "Specify exactly one Kalshi series or collection ticker"
+            )
+        filter_name = "series_ticker" if series_ticker is not None else "collection_ticker"
+        filter_value = series_ticker if series_ticker is not None else collection_ticker
+        assert filter_value is not None
+        if not isinstance(filter_value, str) or not _TICKER_PATTERN.fullmatch(filter_value):
+            raise AdapterError("INVALID_FILTER", "Kalshi MVE filter ticker is malformed")
+
+        response = await self.transport.get_json(
+            f"{BASE}/events/multivariate",
+            {filter_name: filter_value, "limit": 1, "with_nested_markets": "true"},
+        )
+        self._capture_response(response, "multivariate_event_listing")
+        payload = response.payload
+        if not isinstance(payload, dict) or not isinstance(payload.get("events"), list):
+            raise AdapterError(
+                "INVALID_SCHEMA", "Kalshi multivariate response must contain an events array"
+            )
+        source_cursor = payload.get("cursor")
+        if not isinstance(source_cursor, str) or len(source_cursor) > 4096:
+            raise AdapterError(
+                "INVALID_SCHEMA", "Kalshi multivariate response cursor is missing or oversized"
+            )
+        events = payload["events"]
+        if len(events) > 1:
+            raise AdapterError(
+                "INVALID_PAGINATION", "Kalshi returned more multivariate events than requested"
+            )
+        if not events:
+            return MarketBatch(
+                venue=self.venue,
+                markets=(),
+                market_groups=(),
+                cursor=source_cursor or None,
+                complete_for_request=not bool(source_cursor),
+                note=(
+                    "One bounded Kalshi multivariate-event page returned no events. This is not a "
+                    "venue-wide inventory or proof that no matching event exists."
+                ),
+            )
+
+        event = events[0]
+        if not isinstance(event, dict):
+            raise AdapterError("INVALID_SCHEMA", "Kalshi multivariate event must be an object")
+        event_id = event.get("event_ticker")
+        title = event.get("title")
+        series_id = event.get("series_ticker")
+        if not isinstance(event_id, str) or not _TICKER_PATTERN.fullmatch(event_id):
+            raise AdapterError("INVALID_SCHEMA", "Kalshi multivariate event ticker is invalid")
+        if not isinstance(title, str) or not title.strip() or len(title) > 512:
+            raise AdapterError("INVALID_SCHEMA", "Kalshi multivariate event title is invalid")
+        if not isinstance(series_id, str) or not _TICKER_PATTERN.fullmatch(series_id):
+            raise AdapterError("INVALID_SCHEMA", "Kalshi multivariate series ticker is invalid")
+        if series_ticker is not None and series_id != series_ticker:
+            raise AdapterError(
+                "FILTER_MISMATCH",
+                "Kalshi returned a multivariate event outside the requested series",
+            )
+
+        member_list_state: Literal["included", "empty", "omitted"]
+        if "markets" not in event:
+            raw_markets: list[Any] = []
+            member_list_state = "omitted"
+        else:
+            raw_markets = event["markets"]
+            if not isinstance(raw_markets, list):
+                raise AdapterError(
+                    "INVALID_SCHEMA",
+                    "Kalshi nested multivariate markets must be an array when present",
+                )
+            if len(raw_markets) > min(self.config.max_markets_per_call, 100):
+                raise AdapterError(
+                    "INVALID_SCHEMA",
+                    "Kalshi nested multivariate markets exceed the configured bound",
+                )
+            member_list_state = "included" if raw_markets else "empty"
+        child_collections: set[str] = set()
+        records: list[FrontierMarket] = []
+        seen_tickers: set[str] = set()
+        for raw_market in raw_markets:
+            if not isinstance(raw_market, dict):
+                raise AdapterError(
+                    "INVALID_SCHEMA", "Kalshi multivariate market entry must be an object"
+                )
+            if raw_market.get("event_ticker") != event_id:
+                raise AdapterError(
+                    "EVENT_ID_MISMATCH", "Kalshi multivariate market names another event"
+                )
+            ticker = raw_market.get("ticker")
+            if not isinstance(ticker, str) or not _TICKER_PATTERN.fullmatch(ticker):
+                raise AdapterError("INVALID_MARKET", "Kalshi multivariate market ticker is invalid")
+            if ticker in seen_tickers:
+                raise AdapterError(
+                    "DUPLICATE_MARKET", "Kalshi multivariate event contains a duplicate market"
+                )
+            seen_tickers.add(ticker)
+            collection_id = raw_market.get("mve_collection_ticker")
+            if collection_id is not None:
+                if not isinstance(collection_id, str) or not _TICKER_PATTERN.fullmatch(
+                    collection_id
+                ):
+                    raise AdapterError(
+                        "INVALID_SCHEMA", "Kalshi multivariate collection ticker is invalid"
+                    )
+                child_collections.add(collection_id)
+            records.append(
+                self._normalize_market(
+                    raw_market,
+                    response,
+                    parent_event_id=event_id,
+                    parent_event_title=title,
+                )
+            )
+        if len(child_collections) > 1:
+            raise AdapterError(
+                "EVENT_COLLECTION_MISMATCH",
+                "Kalshi event markets disagree about their multivariate collection",
+            )
+
+        event_collection = event.get("collection_ticker")
+        if event_collection is not None and (
+            not isinstance(event_collection, str) or not _TICKER_PATTERN.fullmatch(event_collection)
+        ):
+            raise AdapterError("INVALID_SCHEMA", "Kalshi event collection ticker is malformed")
+        collection_ids = set(child_collections)
+        if event_collection:
+            collection_ids.add(event_collection)
+        if len(collection_ids) > 1:
+            raise AdapterError(
+                "EVENT_COLLECTION_MISMATCH",
+                "Kalshi event and nested markets disagree about the collection",
+            )
+        collection_id = next(iter(collection_ids), None)
+        if collection_ticker is not None and collection_id not in (None, collection_ticker):
+            raise AdapterError(
+                "FILTER_MISMATCH",
+                "Kalshi returned a multivariate event outside the requested collection",
+            )
+
+        group_fields = {key: value for key, value in event.items() if key != "markets"}
+        group = MarketGroup(
+            venue=self.venue,
+            group_type="multivariate_event",
+            native_group_id=event_id,
+            title=title.strip(),
+            subtitle=(
+                event.get("sub_title")
+                if isinstance(event.get("sub_title"), str) and len(event["sub_title"]) <= 512
+                else None
+            ),
+            native_series_id=series_id,
+            native_collection_id=collection_id,
+            member_native_market_ids=tuple(item.native_market_id for item in records),
+            member_list_state=member_list_state,
+            native_fields=native_json(group_fields),
+            provenance=provenance(
+                self.venue,
+                ADAPTER_VERSION,
+                response,
+                "multivariate_event_metadata",
+                event_id,
+                source_schema_version="Kalshi GET /events/multivariate",
+            ),
+        )
+        return MarketBatch(
+            venue=self.venue,
+            markets=tuple(records),
+            market_groups=(group,),
+            cursor=source_cursor or None,
+            complete_for_request=not bool(source_cursor),
+            note=(
+                "One Kalshi multivariate-event page filtered by the requested series or collection. "
+                "A source continuation cursor is retained but not followed; event grouping and "
+                "selected legs do not verify combo payoff or component settlement equivalence. "
+                + (
+                    "The source omitted nested markets, so only event metadata was normalized."
+                    if member_list_state == "omitted"
+                    else ""
+                )
+            ),
+        )
 
     def _normalize_market(
         self,

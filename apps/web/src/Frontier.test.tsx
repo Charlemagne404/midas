@@ -1519,3 +1519,141 @@ it('submits a bounded Arena replay and displays its integrity-verified compariso
     },
   ]);
 });
+
+it('captures one explicit bounded Kalshi multivariate event page', async () => {
+  const source = {
+    venue: 'kalshi',
+    adapter_version: 'frontier-kalshi-7',
+    public_probe_enabled: true,
+    capabilities: [
+      {
+        capability: 'multivariate_event_discovery',
+        supported: true,
+        state: 'implemented',
+        reason: 'One filtered public event page with nested markets.',
+      },
+    ],
+    health: {
+      state: 'not_probed',
+      last_success_at_utc: null,
+      last_error_code: null,
+      last_error: null,
+      notes: ['local-only status'],
+    },
+  };
+  const responses: Record<string, unknown> = {
+    '/api/frontier/overview': {
+      state: 'EMPTY',
+      research_only: true,
+      live_execution: false,
+      summary: {
+        observations: 0,
+        relationships: 0,
+        relationship_reviews: 0,
+        runs: 0,
+        comparisons: 0,
+        markets_by_venue: {},
+        instruments_by_venue: {},
+        relationships_by_state: {},
+        database_bytes: 0,
+        max_bytes: 67_108_864,
+      },
+      sources: [source],
+      latest_evidence_at_utc: null,
+      limitations: ['No recorded evidence.'],
+    },
+    '/api/frontier/sources': { items: [source] },
+    '/api/frontier/markets?limit=100': { items: [], returned: 0, limit: 100, offset: 0 },
+    '/api/frontier/books?limit=100': { items: [], returned: 0, limit: 100, offset: 0 },
+    '/api/frontier/trades?limit=100': {
+      items: [],
+      pages: [],
+      observation_count: 0,
+      trade_count: 0,
+      limit: 100,
+      offset: 0,
+    },
+    '/api/frontier/relationships?limit=200': { items: [], returned: 0, limit: 200, offset: 0 },
+    '/api/frontier/graph?depth=1&limit=100': {
+      nodes: [],
+      edges: [],
+      center_market_id: null,
+      search: null,
+      depth: 1,
+      edge_limit: 100,
+      returned_nodes: 0,
+      returned_edges: 0,
+      truncated_by_edge_limit: false,
+      relationship_scan_limit: 500,
+      relationships_scanned: 0,
+      relationship_scan_may_be_incomplete: false,
+      next_cursor: null,
+      source_market_window_limit: 200,
+    },
+    '/api/frontier/opportunities?limit=100': { items: [], returned: 0, limit: 100, offset: 0 },
+    '/api/frontier/runs?limit=30': { items: [], returned: 0, limit: 30, offset: 0 },
+    '/api/frontier/comparisons?limit=30': { items: [], returned: 0, limit: 30, offset: 0 },
+    '/api/frontier/readiness': { gates: [] },
+  };
+  const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    const path = String(input);
+    if (path === '/api/frontier/probe/kalshi/multivariate-events' && init?.method === 'POST') {
+      expect(JSON.parse(String(init.body))).toEqual({ collection_ticker: 'MVE-COLLECTION' });
+      return {
+        ok: true,
+        json: async () => ({
+          venue: 'kalshi',
+          filter_type: 'collection_ticker',
+          filter_value: 'MVE-COLLECTION',
+          event_count: 1,
+          market_count: 1,
+          events: [
+            {
+              native_event_id: 'KX-MVE-EVENT',
+              title: 'One selected event',
+              series_ticker: 'KX-SERIES',
+              collection_ticker: 'MVE-COLLECTION',
+              market_count: 1,
+              member_list_state: 'included',
+            },
+          ],
+          complete_for_request: false,
+          has_more_source_pages: true,
+          observation_id: 'a'.repeat(64),
+          raw_sha256: 'b'.repeat(64),
+          request_count_delta: 1,
+          network_calls_bounded_by: 1,
+          hypothetical_only: true,
+          note: 'One page; source cursor retained.',
+        }),
+      } as Response;
+    }
+    const body = responses[path];
+    if (body === undefined) throw new Error(`Unexpected frontend request: ${path}`);
+    return { ok: true, json: async () => body } as Response;
+  });
+  vi.stubGlobal('fetch', fetchMock);
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  render(
+    <QueryClientProvider client={queryClient}>
+      <Frontier />
+    </QueryClientProvider>,
+  );
+
+  await screen.findByText('No replay runs yet');
+  expect(fetchMock.mock.calls.every(([, init]) => init?.method !== 'POST')).toBe(true);
+  fireEvent.click(screen.getByRole('button', { name: 'Exchanges' }));
+  expect(await screen.findByText('Multivariate event discovery')).toBeInTheDocument();
+  fireEvent.change(screen.getByLabelText('Kalshi multivariate filter type'), {
+    target: { value: 'collection_ticker' },
+  });
+  fireEvent.change(screen.getByLabelText('Kalshi multivariate filter ticker'), {
+    target: { value: 'MVE-COLLECTION' },
+  });
+  fireEvent.click(screen.getByRole('button', { name: 'Capture one event page' }));
+  expect(await screen.findByText(/Saved 1 event\(s\) and 1 nested market/)).toBeInTheDocument();
+  expect(screen.getByText(/One selected event · KX-MVE-EVENT/)).toBeInTheDocument();
+  expect(screen.getByText('Inspect immutable source response')).toBeInTheDocument();
+  expect(fetchMock.mock.calls.some(([input]) => String(input).includes('/probe/'))).toBe(true);
+  queryClient.clear();
+});

@@ -188,6 +188,29 @@ type EventMarketsCaptureResult = {
   hypothetical_only: true;
   note: string;
 };
+type KalshiMultivariateCaptureResult = {
+  venue: 'kalshi';
+  filter_type: 'series_ticker' | 'collection_ticker';
+  filter_value: string;
+  event_count: number;
+  market_count: number;
+  events: {
+    native_event_id: string;
+    title: string;
+    series_ticker: string | null;
+    collection_ticker: string | null;
+    market_count: number;
+    member_list_state: 'included' | 'empty' | 'omitted';
+  }[];
+  complete_for_request: boolean;
+  has_more_source_pages: boolean;
+  observation_id: string;
+  raw_sha256: string;
+  request_count_delta: number;
+  network_calls_bounded_by: number;
+  hypothetical_only: true;
+  note: string;
+};
 type KalshiFeeMetadataCaptureResult = {
   market_id: string;
   metadata: {
@@ -1270,6 +1293,14 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
       }),
     onSuccess: refresh,
   });
+  const captureKalshiMultivariate = useMutation({
+    mutationFn: (input: KalshiMultivariateFilter) =>
+      api<KalshiMultivariateCaptureResult>('/frontier/probe/kalshi/multivariate-events', {
+        method: 'POST',
+        body: JSON.stringify(input),
+      }),
+    onSuccess: refresh,
+  });
   const estimateKalshiTakerFee = useMutation({
     mutationFn: (input: {
       marketId: string;
@@ -1545,6 +1576,7 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
           sources={sources.data?.items ?? []}
           markets={summary?.markets_by_venue ?? {}}
           probe={probe}
+          multivariateProbe={captureKalshiMultivariate}
           loading={sources.isLoading}
           error={sources.error?.message}
         />
@@ -3063,20 +3095,33 @@ function BookSide({ title, levels }: { title: string; levels: Book['asks'] }) {
 
 type ProbeVariables = { venue: Venue; includeOneBook: boolean };
 type ProbeMutation = UseMutationResult<unknown, Error, ProbeVariables, unknown>;
+type KalshiMultivariateFilter = { series_ticker: string } | { collection_ticker: string };
+type KalshiMultivariateProbe = UseMutationResult<
+  KalshiMultivariateCaptureResult,
+  Error,
+  KalshiMultivariateFilter,
+  unknown
+>;
 
 function SourcesView({
   sources,
   markets,
   probe,
+  multivariateProbe,
   loading,
   error,
 }: {
   sources: Source[];
   markets: Record<string, number>;
   probe: ProbeMutation;
+  multivariateProbe: KalshiMultivariateProbe;
   loading: boolean;
   error?: string;
 }) {
+  const [multivariateFilterType, setMultivariateFilterType] = useState<
+    'series_ticker' | 'collection_ticker'
+  >('series_ticker');
+  const [multivariateFilterValue, setMultivariateFilterValue] = useState('');
   return (
     <section className="fr-source-cards">
       {loading ? (
@@ -3156,6 +3201,99 @@ function SourcesView({
                   trades.
                 </small>
               </div>
+              {source.venue === 'kalshi' && (
+                <div className="fr-mve-capture">
+                  <div>
+                    <strong>Multivariate event discovery</strong>
+                    <small>
+                      One public page with nested markets. A returned source cursor is saved but
+                      never followed automatically; selected legs do not verify combo payoff.
+                    </small>
+                  </div>
+                  <label>
+                    Filter type
+                    <select
+                      aria-label="Kalshi multivariate filter type"
+                      value={multivariateFilterType}
+                      onChange={(event) =>
+                        setMultivariateFilterType(
+                          event.target.value as 'series_ticker' | 'collection_ticker',
+                        )
+                      }
+                    >
+                      <option value="series_ticker">Series ticker</option>
+                      <option value="collection_ticker">Collection ticker</option>
+                    </select>
+                  </label>
+                  <label>
+                    {multivariateFilterType === 'series_ticker'
+                      ? 'Kalshi series ticker'
+                      : 'Kalshi collection ticker'}
+                    <input
+                      aria-label="Kalshi multivariate filter ticker"
+                      maxLength={256}
+                      value={multivariateFilterValue}
+                      onChange={(event) => setMultivariateFilterValue(event.target.value)}
+                      placeholder={
+                        multivariateFilterType === 'series_ticker'
+                          ? 'Series ticker'
+                          : 'Collection ticker'
+                      }
+                    />
+                  </label>
+                  <button
+                    className="fr-action"
+                    disabled={
+                      !source.public_probe_enabled ||
+                      !source.capabilities.some(
+                        (item) =>
+                          item.capability === 'multivariate_event_discovery' && item.supported,
+                      ) ||
+                      !multivariateFilterValue.trim() ||
+                      multivariateProbe.isPending
+                    }
+                    onClick={() =>
+                      multivariateProbe.mutate(
+                        multivariateFilterType === 'series_ticker'
+                          ? { series_ticker: multivariateFilterValue.trim() }
+                          : { collection_ticker: multivariateFilterValue.trim() },
+                      )
+                    }
+                  >
+                    <Database size={14} />
+                    {multivariateProbe.isPending
+                      ? 'Capturing one event page…'
+                      : source.public_probe_enabled
+                        ? 'Capture one event page'
+                        : 'Public probe disabled'}
+                  </button>
+                  {multivariateProbe.isError && (
+                    <InlineError message={multivariateProbe.error.message} />
+                  )}
+                  {multivariateProbe.isSuccess && (
+                    <div className="fr-mve-result" role="status">
+                      Saved {count(multivariateProbe.data.event_count)} event(s) and{' '}
+                      {count(multivariateProbe.data.market_count)} nested market(s) ·{' '}
+                      {multivariateProbe.data.has_more_source_pages
+                        ? 'another source page is available'
+                        : 'no source continuation reported'}{' '}
+                      · evidence {shortHash(multivariateProbe.data.observation_id)} · raw{' '}
+                      {shortHash(multivariateProbe.data.raw_sha256)}
+                      {multivariateProbe.data.events.map((event) => (
+                        <span key={event.native_event_id}>
+                          {event.title} · {event.native_event_id}
+                          {event.member_list_state === 'omitted'
+                            ? ' · nested markets omitted by source'
+                            : event.member_list_state === 'empty'
+                              ? ' · source returned an empty nested-market list'
+                              : ''}
+                        </span>
+                      ))}
+                      <EvidenceDisclosure observationId={multivariateProbe.data.observation_id} />
+                    </div>
+                  )}
+                </div>
+              )}
             </article>
           );
         })

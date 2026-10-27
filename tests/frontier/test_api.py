@@ -297,6 +297,182 @@ def test_kalshi_event_group_probe_uses_nested_public_event_markets(tmp_path):
         asyncio.run(http_client.aclose())
 
 
+def test_kalshi_multivariate_probe_is_filter_bound_bounded_and_persisted(tmp_path):
+    body = {
+        "events": [
+            {
+                "event_ticker": "KXCOMBO-26-MVE",
+                "series_ticker": "KXCOMBO",
+                "collection_ticker": "COMBO26",
+                "title": "A documented-shape multivariate fixture",
+                "sub_title": "Fixture only",
+                "mutually_exclusive": True,
+                "settlement_sources": [
+                    {"name": "Fixture authority", "url": "https://example.test"}
+                ],
+                "markets": [
+                    {
+                        "ticker": "KXCOMBO-26-MVE-1",
+                        "event_ticker": "KXCOMBO-26-MVE",
+                        "market_type": "binary",
+                        "title": "Selected result combination",
+                        "rules_primary": "Fixture rules only.",
+                        "mve_collection_ticker": "COMBO26",
+                        "mve_selected_legs": [
+                            {
+                                "event_ticker": "KXEVENT-26",
+                                "market_ticker": "KXEVENT-26-A",
+                                "side": "yes",
+                            }
+                        ],
+                    }
+                ],
+            }
+        ],
+        "cursor": "more-results",
+    }
+    requests: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        return httpx.Response(200, text=json.dumps(body), request=request)
+
+    config = AdapterConfig(
+        enabled=True,
+        live_public_probe_enabled=True,
+        requests_per_second=5,
+        retries=0,
+        max_markets_per_call=10,
+    )
+    http_client = httpx.AsyncClient(transport=httpx.MockTransport(handler))
+    kalshi_transport = PublicReadTransport({"external-api.kalshi.com"}, config, client=http_client)
+    disabled = AdapterConfig(enabled=False)
+    registry = AdapterRegistry(
+        (
+            PolymarketAdapter(disabled),
+            KalshiAdapter(config, transport=kalshi_transport),
+            KrakenSpotAdapter(disabled),
+        )
+    )
+    store = FrontierStore(tmp_path / "frontier-kalshi-mve")
+    app = FastAPI()
+    app.include_router(router(store, registry))
+    client = TestClient(app)
+    try:
+        assert (
+            client.post("/api/frontier/probe/kalshi/multivariate-events", json={}).status_code
+            == 422
+        )
+        assert (
+            client.post(
+                "/api/frontier/probe/kalshi/multivariate-events",
+                json={"series_ticker": "KXCOMBO", "collection_ticker": "COMBO26"},
+            ).status_code
+            == 422
+        )
+        assert requests == []
+
+        response = client.post(
+            "/api/frontier/probe/kalshi/multivariate-events",
+            json={"collection_ticker": "COMBO26"},
+        )
+        assert response.status_code == 200, response.text
+        result = response.json()
+        assert result["event_count"] == result["market_count"] == 1
+        assert result["filter_type"] == "collection_ticker"
+        assert result["filter_value"] == "COMBO26"
+        assert result["has_more_source_pages"] is True
+        assert result["complete_for_request"] is False
+        assert result["events"][0]["native_event_id"] == "KXCOMBO-26-MVE"
+        assert result["events"][0]["market_count"] == 1
+        assert len(requests) == 1
+        assert requests[0].method == "GET"
+        assert requests[0].url.params["collection_ticker"] == "COMBO26"
+        assert requests[0].url.params["limit"] == "1"
+        assert requests[0].url.params["with_nested_markets"] == "true"
+        assert "authorization" not in requests[0].headers
+
+        evidence_response = client.get(f"/api/frontier/observations/{result['observation_id']}")
+        assert evidence_response.status_code == 200
+        evidence = evidence_response.json()
+        assert evidence["raw"]["raw_sha256"] == result["raw_sha256"]
+        normalized = evidence["normalized"]
+        assert normalized["market_groups"][0]["native_collection_id"] == "COMBO26"
+        assert normalized["market_groups"][0]["native_fields"]["settlement_sources"]
+        assert (
+            normalized["markets"][0]["selected_components"][0]["native_market_id"] == "KXEVENT-26-A"
+        )
+        assert normalized["markets"][0]["payoff"]["verified"] is False
+    finally:
+        client.close()
+        asyncio.run(registry.aclose())
+        asyncio.run(http_client.aclose())
+
+
+def test_kalshi_multivariate_live_capture_stores_event_when_source_omits_nested_markets(tmp_path):
+    artifact = json.loads(
+        (
+            Path(__file__).resolve().parents[2]
+            / "data/frontier/live-probes/2026-10-27-kalshi-multivariate-page-r1.json"
+        ).read_text(encoding="utf-8")
+    )
+    raw_body = artifact["raw_observation"]["raw_body"]
+    collection_ticker = artifact["source_filter"]["collection_ticker"]
+    requests: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        return httpx.Response(200, content=raw_body.encode("utf-8"), request=request)
+
+    config = AdapterConfig(
+        enabled=True,
+        live_public_probe_enabled=True,
+        requests_per_second=5,
+        retries=0,
+    )
+    http_client = httpx.AsyncClient(transport=httpx.MockTransport(handler))
+    kalshi_transport = PublicReadTransport({"external-api.kalshi.com"}, config, client=http_client)
+    disabled = AdapterConfig(enabled=False)
+    registry = AdapterRegistry(
+        (
+            PolymarketAdapter(disabled),
+            KalshiAdapter(config, transport=kalshi_transport),
+            KrakenSpotAdapter(disabled),
+        )
+    )
+    store = FrontierStore(tmp_path / "frontier-kalshi-mve-source-capture")
+    app = FastAPI()
+    app.include_router(router(store, registry))
+    client = TestClient(app)
+    try:
+        response = client.post(
+            "/api/frontier/probe/kalshi/multivariate-events",
+            json={"collection_ticker": collection_ticker},
+        )
+        assert response.status_code == 200, response.text
+        result = response.json()
+        assert result["event_count"] == 1
+        assert result["market_count"] == 0
+        assert result["events"][0]["member_list_state"] == "omitted"
+        assert result["events"][0]["native_event_id"] == "KXMVECROSSCATEGORY-S2026ZZZB25KKPHBN3TFC"
+        assert result["has_more_source_pages"] is True
+        assert result["raw_sha256"] == artifact["raw_sha256"]
+        assert len(requests) == 1
+        assert requests[0].url.params["with_nested_markets"] == "true"
+        assert "authorization" not in requests[0].headers
+
+        evidence = client.get(f"/api/frontier/observations/{result['observation_id']}").json()
+        assert evidence["raw"]["raw_sha256"] == artifact["raw_sha256"]
+        group = evidence["normalized"]["market_groups"][0]
+        assert group["member_list_state"] == "omitted"
+        assert group["member_native_market_ids"] == []
+        assert evidence["normalized"]["markets"] == []
+    finally:
+        client.close()
+        asyncio.run(registry.aclose())
+        asyncio.run(http_client.aclose())
+
+
 def test_captured_cross_venue_event_context_creates_reviewable_hypothesis(tmp_path):
     capture = json.loads(
         (
