@@ -862,7 +862,7 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
             summary["comparison_count_window_may_be_incomplete"] = len(comparison_window) == 25
         health = await registry.health()
         health_by_venue = {item.venue: item for item in health}
-        latest = store.observations(limit=1, excluded_venues=held_venues)
+        latest = _read_stored_observations(store, limit=1, excluded_venues=held_venues)
         return {
             "schema_version": 1,
             "state": (
@@ -1010,7 +1010,8 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
         offset: int = Query(default=0, ge=0, le=100_000),
     ) -> dict[str, Any]:
         reject_held_venue(venue)
-        stored = store.observations(
+        stored = _read_stored_observations(
+            store,
             venue=venue.value if venue else None,
             kind="book_snapshot",
             excluded_venues=held_venues,
@@ -1046,7 +1047,8 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
     ) -> dict[str, Any]:
         reject_held_venue(venue)
         try:
-            observations = store.observations(
+            observations = _read_stored_observations(
+                store,
                 venue=venue.value if venue else None,
                 kind="public_trades",
                 excluded_venues=held_venues,
@@ -2047,6 +2049,11 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
             item = store.observation(observation_id)
         except ValueError as error:
             raise HTTPException(status_code=422, detail=str(error)) from error
+        except FrontierStoreError as error:
+            raise HTTPException(
+                status_code=409,
+                detail=f"Stored source observation evidence is not readable: {error}",
+            ) from error
         if item is None:
             raise HTTPException(status_code=404, detail="Stored Frontier observation was not found")
         if item["venue"] in held_venues:
@@ -3199,6 +3206,33 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
     return api
 
 
+def _read_stored_observations(
+    store: FrontierStore,
+    *,
+    venue: str | None = None,
+    kind: str | None = None,
+    excluded_venues: tuple[str, ...] = (),
+    limit: int = 100,
+    offset: int = 0,
+) -> tuple[dict[str, Any], ...]:
+    try:
+        return cast(
+            tuple[dict[str, Any], ...],
+            store.observations(
+                venue=venue,
+                kind=kind,
+                excluded_venues=excluded_venues,
+                limit=limit,
+                offset=offset,
+            ),
+        )
+    except FrontierStoreError as error:
+        raise HTTPException(
+            status_code=409,
+            detail=f"Stored source observation evidence is not readable: {error}",
+        ) from error
+
+
 async def _load_market_records(
     store: FrontierStore,
     limit: int,
@@ -3262,8 +3296,8 @@ def _load_book_records(
 ) -> tuple[tuple[BookSnapshot, str], ...]:
     """Load books with the immutable store record ID as their runtime provenance ID."""
     values = []
-    for row in store.observations(
-        kind="book_snapshot", limit=min(200, limit), excluded_venues=excluded_venues
+    for row in _read_stored_observations(
+        store, kind="book_snapshot", limit=min(200, limit), excluded_venues=excluded_venues
     ):
         normalized = row.get("normalized")
         if not isinstance(normalized, dict) or "native_instrument_id" not in normalized:
@@ -3362,7 +3396,8 @@ def _market_observation_rows(
         "event_market_listing",
     ):
         rows.extend(
-            store.observations(
+            _read_stored_observations(
+                store,
                 venue=venue.value if venue else None,
                 kind=kind,
                 excluded_venues=excluded_venues,

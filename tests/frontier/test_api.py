@@ -1900,6 +1900,71 @@ def test_comparison_reads_fail_closed_when_a_pinned_run_is_corrupt(tmp_path):
         asyncio.run(http_client.aclose())
 
 
+def test_source_observation_reads_fail_closed_on_hash_mismatch(tmp_path):
+    from midas.frontier.models import TradeBatch
+
+    client, registry, http_client, _, store = _client(tmp_path, hold_sources=True)
+    observed_market = market(Venue.POLYMARKET, "corrupt-observation")
+    normalized_records = (
+        (
+            "market_listing",
+            MarketBatch(venue=Venue.POLYMARKET, markets=(observed_market,)),
+        ),
+        (
+            "book_snapshot",
+            book(observed_market, observed_market.instruments[0].native_instrument_id, "0.4"),
+        ),
+        ("public_trades", TradeBatch(venue=Venue.POLYMARKET, trades=())),
+    )
+    observation_ids = {}
+    for kind, normalized in normalized_records:
+        body = json.dumps({"fixture": kind})
+        raw = RawObservation(
+            venue=Venue.POLYMARKET,
+            observation_kind=kind,
+            request_url=f"https://fixture.invalid/{kind}",
+            http_status=200,
+            request_started_at_utc=T0,
+            received_at_utc=T0,
+            raw_body=body,
+            raw_sha256=hashlib.sha256(body.encode()).hexdigest(),
+            adapter_version="observation-integrity-fixture-v1",
+        )
+        observation_ids[kind] = store.append_observation(raw, normalized)
+    with sqlite3.connect(store.path) as connection:
+        connection.execute("DROP TRIGGER observations_no_update")
+        for observation_id in observation_ids.values():
+            connection.execute(
+                "UPDATE observations SET normalized_json='{}' WHERE observation_id=?",
+                (observation_id,),
+            )
+    expected_detail = (
+        "Stored source observation evidence is not readable: "
+        "Stored observation row hash does not match its payload"
+    )
+    try:
+        paths = (
+            f"/api/frontier/observations/{observation_ids['market_listing']}",
+            "/api/frontier/markets",
+            "/api/frontier/books",
+            "/api/frontier/trades",
+            "/api/frontier/overview",
+        )
+        for path in paths:
+            response = client.get(path)
+            assert response.status_code == 409, (path, response.text)
+            assert response.json()["detail"] == expected_detail
+        with sqlite3.connect(store.path) as connection:
+            preserved_rows = connection.execute(
+                "SELECT normalized_json FROM observations ORDER BY observation_id"
+            ).fetchall()
+        assert preserved_rows == [("{}",), ("{}",), ("{}",)]
+    finally:
+        client.close()
+        asyncio.run(registry.aclose())
+        asyncio.run(http_client.aclose())
+
+
 def test_readiness_recognizes_only_completed_hash_verified_arena_evidence(tmp_path):
     from midas.arena.artifacts import atomic_json
     from midas.arena.frontier_replay import (
