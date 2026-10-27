@@ -120,10 +120,11 @@ SQL queries omit held observations and related graph edges; direct evidence,
 replay inputs, and derived API results are filtered or rejected. Generic Arena
 job and research-activity summaries, details, and logs also check Frontier
 replay provenance; generic replay submission rejects held snapshots and
-cancellation is blocked before a held job can be changed. Missing replay
-provenance fails closed. Raw append-only evidence remains preserved. Direct
-database inspection and exports
-are outside this route quarantine and remain under the operational hold.
+cancellation is blocked before a held job can be changed. The snapshot check
+runs before job reconciliation so blocked reads do not rewrite held manifests.
+Missing replay provenance fails closed. Raw append-only evidence remains
+preserved. Direct database inspection and exports are outside this route
+quarantine and remain under the operational hold.
 Canonical denomination identities now flow from instrument quote through public
 book, fee, trade, candidate leg, and modeled capital fields. Candidate economics
 and independent audit require those exact identities to agree with the payoff

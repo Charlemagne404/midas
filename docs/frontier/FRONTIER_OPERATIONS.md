@@ -42,12 +42,13 @@ lists, graph traversal, candidate/run/comparison views, replay inputs, and
 Arena replay catalog/results, plus generic Arena job overview/detail/log and
 research-activity routes for Frontier replay jobs. Generic submissions reject
 held snapshots, and cancellation cannot expose a result or mutate a held job.
-Held rows are not deleted or rewritten. The overview's database-size
-measurement includes preserved held evidence while its research counts exclude
-it. Direct database inspection, exports, and other paths outside these APIs
-remain held. Controlled fixture tests verify the application filters; they do
-not validate the terms or
-inspect preserved live captures. Fixture-only development remains available.
+The snapshot check runs before job reconciliation so a blocked read does not
+rewrite the job manifest. Held rows are not deleted or rewritten. The overview's
+database-size measurement includes preserved held evidence while its research
+counts exclude it. Direct database inspection, exports, and other paths outside
+these APIs remain held. Controlled fixture tests verify the application
+filters; they do not validate the terms or inspect preserved live captures.
+Fixture-only development remains available.
 
 Cross-venue observations have independent clocks and freshness guarantees.
 Different receipt times or a shared local timestamp do not prove simultaneous

@@ -112,7 +112,8 @@ stored market, graph, replay, candidate, and comparison reads. Arena replay
 snapshots are checked through the dedicated routes, generic job summary/detail
 and log routes, and research-activity digests. Generic job submission rejects
 held snapshots and cancel actions are rejected before mutating held jobs.
-Missing provenance is rejected.
+Held reads are rejected before Arena job reconciliation, so the held job
+manifest is not rewritten. Missing provenance is rejected.
 This route filter does not cover direct database reads or exports, which remain
 held. A deliberate probe is initiated from Frontier's Exchanges view. One
 probe can capture one bounded listing, optionally one book, and at most ten

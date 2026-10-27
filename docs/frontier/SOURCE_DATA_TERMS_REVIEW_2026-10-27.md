@@ -34,19 +34,21 @@ research/data-retention authorization is recorded in this worktree. Therefore:
 This operational hold does not determine whether the prior captures were
 authorized or require any change to their preservation state.
 
-Commits `d38f517`, `73e008e`, and `e7958c1` add application read quarantine
-while the source-use gate is active. Kalshi observations are excluded from
-market, book, and trade lists; direct observation retrieval returns HTTP 409.
+Commits `d38f517`, `73e008e`, `e7958c1`, and `23f9860` add application read
+quarantine while the source-use gate is active. Kalshi observations are
+excluded from market, book, and trade lists; direct observation retrieval
+returns HTTP 409.
 Relationships that touch a Kalshi endpoint are excluded from lists and graph
-traversal. Reviews, stored
-candidate/run/comparison outputs, and Frontier Arena replay snapshots/results
+traversal. Review routes, stored candidate/run/comparison outputs, and Frontier
+Arena replay snapshots/results
 that trace to Kalshi are held from the corresponding research APIs. Missing
 replay provenance fails closed. Source-level evidence remains append-only and
 unchanged. Generic Arena overview, research-activity, job detail, and log routes
 also check Frontier replay snapshots before exposing job data. Generic replay
 submission rejects held snapshots and cancel requests are blocked before any
-mutation. The overview exposes eligible counts; its database-size value still
-includes preserved held evidence.
+mutation. Held-job checks run before Arena's reconciliation helper so a
+blocked read cannot rewrite a job manifest. The overview exposes eligible
+counts; its database-size value still includes preserved held evidence.
 
 This is application-route quarantine. The project still treats direct database
 inspection, exports, and other paths outside those read APIs as held pending
@@ -65,11 +67,11 @@ held by the user.
 
 Accordingly, new Kraken Spot probes and new research use of captured Kraken
 market data remain held until the applicable terms are reviewed and any
-required permission is recorded. Commits `d38f517`, `73e008e`, and `e7958c1`
-apply the same read filters to Kraken observations and derived artifacts as to
-Kalshi. Direct database inspection, exports, and other paths outside the
-covered read APIs remain held. Offline fixture development may continue. No
-authenticated API key, account access, or trading capability is used.
+required permission is recorded. Commits `d38f517`, `73e008e`, `e7958c1`, and
+`23f9860` apply the same read filters to Kraken observations and derived
+artifacts as to Kalshi. Direct database inspection, exports, and other paths
+outside the covered read APIs remain held. Offline fixture development may
+continue. No authenticated API key, account access, or trading capability is used.
 
 ## Polymarket
 
@@ -106,10 +108,11 @@ Controlled fixtures verified source filtering for overview counts, markets,
 books, trades, direct observation access, relationship lists, depth-one and
 depth-two graph traversal, replay creation, historical run lists, paired
 comparisons, and Arena replay catalog/result routes. The test also verified the
-held observations and Arena artifacts remained present and unchanged. The
-Arena test also covers generic job overview/detail/log routes, research-activity
-digests, generic replay submission, cancellation rejection, and damaged
-provenance. The focused source/storage/Arena/API selection passed **13 tests**;
+held observations, Arena snapshots/results, and job manifest remain unchanged
+during blocked reads. The Arena test also covers generic job overview/detail/log
+routes, research-activity digests, generic replay submission, cancellation
+rejection, and damaged provenance. The focused source/storage/Arena/API
+selection passed **13 tests**;
 the Frontier Mission Control component passed **8/8**, with TypeScript, targeted
 ESLint, Prettier, Ruff, and `git diff --check` passing. The full suite and production
 build were not rerun at this checkpoint. No live request, database mutation,

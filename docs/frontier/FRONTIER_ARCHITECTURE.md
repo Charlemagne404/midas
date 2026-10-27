@@ -324,10 +324,11 @@ their provenance is held or incomplete. Arena's Frontier-specific replay view,
 generic job overview/detail/log routes, and research-activity digest apply the
 same snapshot check.
 Generic replay submission rejects held or unproven snapshots; cancellation of
-a held replay is blocked before mutation. Missing or invalid snapshot
-provenance is hidden. This does not remove or rewrite records, and does not
-cover direct database access or exports; those remain under the operational
-hold.
+a held replay is blocked before mutation. Checks run before job reconciliation
+so blocked reads do not rewrite held job manifests. Missing or invalid
+snapshot provenance is hidden. This does not remove or rewrite records and
+does not cover direct database access or exports; those remain under the
+operational hold.
 
 ## Relationship and economics boundaries
 

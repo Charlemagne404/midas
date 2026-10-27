@@ -1,12 +1,13 @@
 # Project Frontier Mission Ledger
 
-**Latest checkpoint (2026-10-27):** Code commit `e7958c1` also filters held
-Frontier replay jobs from Arena's research-activity digest, extending the
-generic job quarantine in `73e008e` and source read filtering in `d38f517`.
-Held replay summaries, details, logs, submissions, and cancellations are
-filtered or rejected after checking the pinned snapshot. The focused fixture
-selection passes 13 tests and confirms that stored source/replay artifacts
-remain unchanged. The source permission gate from `9d52b23` remains
+**Latest checkpoint (2026-10-27):** Code commit `23f9860` moves the held
+snapshot check ahead of Arena's job inspection/reconciliation, preventing a
+blocked read from rewriting the held job manifest. It extends activity digest
+filtering (`e7958c1`), generic job quarantine (`73e008e`), and source-read
+filtering (`d38f517`). Held replay summaries, details, logs, submissions, and
+cancellations are filtered or rejected. The focused fixture selection passes
+13 tests and verifies source, snapshot, and job manifest bytes remain unchanged.
+The source permission gate from `9d52b23` remains
 BLOCKED; the read quarantine does not resolve source terms. Code commit
 `03dbc92` propagates exact denomination identity through quotes, books, fees,
 trades, candidate legs and capital, independent audit, replay, and
@@ -1245,12 +1246,14 @@ reject them; generic replay submission validates the pinned snapshot before
 enqueue; and cancellation is rejected before the job can be mutated or its
 record returned. The dedicated replay catalog/result routes share the same
 snapshot check. Commit `e7958c1` applies the check to the research-activity
-digest as well. A result artifact marks a job as a Frontier replay, so a
+digest as well. Commit `23f9860` runs the check before Arena's inspection and
+reconciliation helper; the regression verifies the held manifest is unchanged.
+A result artifact marks a job as a Frontier replay, so a
 missing or altered job configuration fails closed. These decisions use
 fixture snapshots and do not inspect the preserved live source database.
 
 Verification: the focused source/storage/Arena/API selection passed **13 tests**
-in 10.56 seconds with the existing Starlette/httpx TestClient deprecation
+in 10.37 seconds with the existing Starlette/httpx TestClient deprecation
 warning. The Arena held-source regression passed separately (**1 passed**).
 Ruff format/check and `git diff --check` passed. The source artifacts and Arena
 snapshot/result fixtures remained unchanged; no service, exchange, or live
