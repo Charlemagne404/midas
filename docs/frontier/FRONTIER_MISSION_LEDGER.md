@@ -1005,3 +1005,14 @@ No live source request, production service, or historical evidence was changed.
 Documentation checkpoint `dc53a8d8fc199e7cc29288e6670d96b0b89f7e2a` records the
 99-test run, UI regression correction, TypeScript verification, and static-check
 boundary in the current-state handoff and engineering report.
+
+## 2026-10-27 13:42 UTC — frontend build retry stopped under rising PSI
+
+Retried `corepack pnpm --dir apps/web build`. TypeScript passed and Vite began
+transforming modules. A sample about five seconds later showed host memory PSI
+`avg10` at 10.74% (`some`) / 8.37% (`full`) and about 8.7 GB available RAM;
+the process was stopped with Ctrl-C (exit 130). At `13:42:24Z`, PSI `avg10`
+was 22.14% / 16.01%, `avg300` 14.22% / 12.27%, available RAM 9.1 GB, and free
+swap about 553 MiB. The production bundle remains unverified. No service,
+source, or historical evidence was changed. The detailed report and current-
+state handoff record these measurements.

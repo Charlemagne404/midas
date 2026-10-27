@@ -1980,3 +1980,15 @@ distinct failure modes. Expand economics only where source evidence supports it.
 Re-run the focused suites before each checkpoint. Do not enable probes by
 default, deploy, modify Reality, or start a long-running campaign as part of
 routine continuation.
+
+## Frontier frontend build resource checkpoint — 2026-10-27 13:42 UTC
+
+The production frontend build was retried with
+`corepack pnpm --dir apps/web build`. TypeScript completed and Vite began
+transforming modules. About five seconds later, host memory PSI `avg10` had
+risen to 10.74% (`some`) / 8.37% (`full`) with about 8.7 GB available RAM.
+The build was stopped with Ctrl-C (exit 130) to avoid adding load. At
+`2026-10-27T13:42:24Z`, PSI `avg10` was 22.14% / 16.01% and `avg300` was
+14.22% / 12.27%; available RAM was 9.1 GB and free swap was about 553 MiB.
+This build is **unverified**; the successful TypeScript phase does not establish
+a production bundle. No service or data source was contacted or changed.

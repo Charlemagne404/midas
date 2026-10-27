@@ -312,3 +312,12 @@ Veritas/Arena modules and reported none in its six explicit Frontier/API
 targets. The complete repository test suite, remaining Frontier/Arena tests,
 and production build remain unverified. The separate Frontier engineering
 report records the exact commands and mypy module names.
+
+### Frontend build retry — 2026-10-27 13:42 UTC
+
+`corepack pnpm --dir apps/web build` completed TypeScript and started Vite
+transformation, then was stopped with Ctrl-C (exit 130) after a follow-up
+sample about five seconds later showed PSI `avg10` at 10.74% (`some`) / 8.37%
+(`full`). At `13:42:24Z`, PSI `avg10` was 22.14% / 16.01%, `avg300` was
+14.22% / 12.27%, available RAM was 9.1 GB, and free swap was about 553 MiB.
+The production bundle remains unverified; no service or source was contacted.
