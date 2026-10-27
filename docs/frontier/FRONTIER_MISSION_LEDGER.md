@@ -68,6 +68,12 @@ and an explicit Mission Control action. Two controlled fixture jobs passed the
 normal host-wide gate and completed under the systemd supervisor. The latest
 job also persisted bounded process CPU/RSS measurements and exposes them in
 Mission Control. No live market relation was in either job.
+The newest Kalshi adapter capability adds an explicitly requested, single-page
+multivariate-event lookup, typed `MarketGroup` persistence, and a Mission
+Control filter control. The October 27 public response returned one event and a
+cursor but omitted nested markets; the evidence is replayed as an omitted member
+list, not an empty set. Explicit `null` nested data fails closed. This adds no
+component payout or economic-equivalence claim.
 Remaining acceptance work is substantial.
 **Branch:** `codex/frontier-20261026`
 **Worktree:** `/home/charlie/midas-frontier`
@@ -145,6 +151,38 @@ Remaining acceptance work is substantial.
 | `29cb909` | Bumped the deterministic relationship matcher to v4 and blocked title/parent-context hypotheses with contradictory within-market or cross-market explicit years. |
 | `38ad1fa` | Introduced replay v6 and preserves exact store observation record IDs in API-loaded models, replay manifests, candidate evidence, paired replay, and Arena snapshots; added lineage integration regressions. |
 | `5c14049` | Added revision-bound centered two-/three-hop BFS pagination, deterministic 200-ID frontier chunking within the 500-row scan budget, Mission Control continuation controls, cursor/revision tests, and a browser test definition. Browser execution remains pending at the measured host-pressure checkpoint. |
+| `58cb6c7` | Added capability-gated one-page Kalshi multivariate-event discovery, typed group membership state, fail-closed nested metadata validation, API/store persistence, Mission Control capture and raw-evidence inspection, a real omitted-nested-market capture, and adapter/API/UI/browser regressions. |
+
+## Kalshi multivariate event discovery checkpoint (2026-10-27)
+
+- Kalshi adapter v7 declares a separately gated `MULTIVARIATE_EVENT_DISCOVERY`
+  capability. One request accepts exactly one series or collection ticker,
+  requests `limit=1` with nested markets, validates event and child IDs, caps
+  nested members, and retains but does not follow the source cursor. A
+  `MarketGroup` records event metadata and distinguishes included, explicit
+  empty, and source-omitted member lists. An explicit `null` is rejected as
+  malformed. The API binds the captured URL/filter and all normalized records
+  to one raw response before append-only persistence.
+- Genuine source outcome: three single-GET probe attempts occurred; two were
+  not preserved because the temporary probe harness failed after response
+  receipt and are excluded from evidence. The retained attempt returned HTTP
+  200, one event plus a nonempty cursor, but no nested `markets` field despite
+  the requested flag. Its original v6 normalization failure is preserved as a
+  typed source-failure record. The same raw body now replays through v7 as one
+  event group with `member_list_state=omitted`, zero child markets, and no
+  payoff/equivalence result. Artifact hashes and the exact limits are listed in
+  the engineering report.
+- The focused Python adapter/API suite passed **9 tests** in 1.61 seconds;
+  `/usr/bin/time -v` measured 2.06 seconds wall, 1.25 seconds user CPU, 75,004
+  KiB peak RSS, zero swaps, and zero socket messages. One existing
+  Starlette/httpx TestClient deprecation warning remains. The focused MVE
+  Mission Control test passed; frontend typecheck, targeted ESLint/Prettier,
+  Ruff/format, strict mypy for four backend modules, `git diff --check`, and
+  Playwright test enumeration passed. The three-case Frontier Playwright file
+  includes the new MVE UI path, but the browser suite and production build were
+  not run: at 11:51 UTC memory PSI was 32.86% some / 26.88% full (`avg10`), swap
+  use was 3.4 GiB, and a separate bounded Veritas process remained active. No
+  Frontier job or server was started.
 
 ## Latest checkpoint verification (2026-10-27)
 

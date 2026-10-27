@@ -78,6 +78,26 @@ swap use was 3.4 GiB, and the active API cgroup was at 527,319,040 of
 1,610,612,736 bytes `MemoryHigh`. No server, production service, or protected
 Reality state was changed.
 
+The latest isolated Frontier checkpoint adds a capability-gated, operator-triggered
+Kalshi multivariate-event lookup. It accepts exactly one series or collection
+ticker, requests one page with nested markets, retains but does not follow the
+source cursor, and persists typed event-group metadata. The genuine October 27
+capture returned one event and a cursor but omitted nested markets despite the
+requested flag. Its saved replay now represents membership as `omitted`, not as
+an empty list; explicit `null` member data is rejected. This is event discovery
+only and establishes no combo payoff or component equivalence.
+
+The focused adapter/API regression passed 9 tests at 75,004 KiB peak RSS with
+zero swaps; the focused Mission Control test passed. Frontend typecheck, targeted
+ESLint/Prettier, Frontier Python Ruff/format, and strict mypy passed. Playwright
+enumerated the three Frontier browser cases, including the new omitted-member
+capture flow, but browser execution and a new production build remain deferred:
+at 11:51 UTC memory PSI was 32.86% some / 26.88% full over 10 seconds, swap use
+was 3.4 GiB, and a separate bounded Veritas batch was active. Available RAM was
+9.4 GiB. Frontier did not start or change that job, any service, or protected
+Reality state. The exact live artifact and source limitations are in the
+Frontier engineering report and mission ledger.
+
 ## Architecture and source layout
 
 MIDAS is a Python modular monolith with a separate React dashboard:

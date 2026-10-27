@@ -125,6 +125,21 @@ Kalshi and then choose a market already present in saved listing evidence. Krake
 does not currently claim cursor-paginated public trades. The protected Reality
 recording and its evidence remain on separate roots.
 
+Kalshi multivariate-event discovery is a separate explicit
+`POST /api/frontier/probe/kalshi/multivariate-events` operation. Supply exactly
+one of `series_ticker` or `collection_ticker`; the adapter requests one page
+with `limit=1` and `with_nested_markets=true`, honors the existing public-probe
+configuration and capability gate, and retains but does not follow a source
+cursor. `MarketBatch` schema v2 stores typed event groups beside normalized
+markets. Each group records whether its member list was included, explicitly
+empty, or omitted by the source. A live HTTP 200 response currently proves the
+event lookup path but omitted `markets`; see
+`data/frontier/live-probes/2026-10-27-kalshi-multivariate-page-r1.json` for its
+raw hash, diagnostic row, and bounded store read-back. No nested contract or
+combo payout was established by that response. A missing member field is kept
+as omitted, a present empty array is kept as empty, and explicit `null` is
+rejected. Mission Control displays that state and can open the saved raw response.
+
 For Kalshi multivariate event markets, adapter v4 normalizes up to 64 native
 selected component references (event ticker, market ticker, selected YES/NO
 side) and Mission Control displays them from the saved market observation. This

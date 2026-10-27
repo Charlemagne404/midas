@@ -65,6 +65,16 @@ public 2026 U.S. House event pair produces a deterministic text hypothesis in
 offline adapter tests, while differing resolution timing and rules fail the
 same-payoff audit. This is metadata-only evidence: no synchronized prices,
 verified cross-venue payoff, or economic opportunity was observed.
+Kalshi's adapter also supports an operator-triggered multivariate-event page
+filtered by exactly one series or collection ticker. It captures one event page
+requesting nested markets, stores typed event-group context and the raw
+response, and retains but never follows a continuation cursor. One live,
+unauthenticated page returned an event but omitted its nested market list; the
+captured event is normalized with membership marked `omitted`, not interpreted
+as an empty event. Adapter/API/store/UI fixture tests cover that source response
+shape, and Mission Control can open the saved raw response. Native MVE selected
+legs remain unverified payoff descriptions, and this event had no child markets
+to compare.
 Review labels and assertion references are not authenticated; replay follows
 only the latest revision. It is not merged into `main` or deployed. Read the [Frontier mission ledger](docs/frontier/FRONTIER_MISSION_LEDGER.md)
 and [current engineering report](docs/frontier/FRONTIER_ENGINEERING_REPORT.md)

@@ -9,7 +9,7 @@ as mutable Frontier storage.
 
 | Component | Location | Responsibility |
 | --- | --- | --- |
-| Canonical contracts | `models.py` | Venue, instrument kind, payoff, resolution, fee, quantity, provenance, and book models. |
+| Canonical contracts | `models.py` | Venue, instrument kind, payoff, resolution, fee, quantity, provenance, book, and venue-declared event-group models. |
 | Adapter protocol and lifecycle | `adapters/base.py` | Capability declarations, local health, response capture, and common read-only adapter contract. |
 | Bounded HTTP transport | `adapters/transport.py` | HTTPS GET only, fixed host allowlist, bounded timeout/retry/rate/response sizes, no redirects or credentials. |
 | Public venue adapters | `adapters/polymarket.py`, `kalshi.py`, `kraken.py` | Source-specific normalization and native metadata preservation. |
@@ -20,8 +20,8 @@ as mutable Frontier storage.
 | Durable evidence | `storage.py` | Append-only, size- and row-bounded SQLite observations, markets, relationship reviews/revisions, runs, and paired comparisons. |
 | Replay | `replay.py` | Stable input ordering, scenario/mapping/proposal-limit-aware replay identities, exact store-record provenance for API-loaded models, deterministic results, and paired assumption comparisons. |
 | Arena paired replay | `packages/midas/arena/frontier_replay.py`, `arena/jobs.py` | Immutable content-addressed input snapshots, a bounded offline paired-replay worker, and hash-verified result artifacts under Arena's existing admission gate. |
-| HTTP API | `apps/api/frontier.py` | Bounded local queries and graph neighborhoods, relationship proposals/reviews, deterministic and paired replay, config-gated market/event-group capture, and hash-bound Kalshi fee sensitivities. |
-| Mission Control workspace | `apps/web/src/Frontier.tsx` | Sources, markets/books/event context, relationship hypotheses, candidates, economic workbench, local comparisons, bounded Arena replay history/results, and readiness. |
+| HTTP API | `apps/api/frontier.py` | Bounded local queries and graph neighborhoods, relationship proposals/reviews, deterministic and paired replay, config-gated market/event-group/MVE capture, and hash-bound Kalshi fee sensitivities. |
+| Mission Control workspace | `apps/web/src/Frontier.tsx` | Sources, markets/books/event context, one-page Kalshi MVE discovery, relationship hypotheses, candidates, economic workbench, local comparisons, bounded Arena replay history/results, and readiness. |
 
 ## Adapter capability contract
 
@@ -33,7 +33,7 @@ native metadata, source URL, adapter/schema versions, raw-body hash, request and
 receipt times, and source-time semantics. Source quality flags are carried forward
 instead of being replaced with guessed values.
 
-Polymarket adapter v3 and Kalshi adapter v5 declare
+Polymarket adapter v3 and Kalshi adapter v7 declare
 `EVENT_MARKET_GROUPS`. Their `discover_event_markets` operations issue one bounded
 public GET, validate the requested native event identity, bound and de-duplicate
 the child list, retain the source parent title, and keep native outcome wording
@@ -58,6 +58,39 @@ exhaustive payoffs, resolution identity, authority, settlement asset, and
 matching timing. Event-group observations participate in latest-record
 selection and graph revision identity, so replay and paged reads cannot silently
 retain older child-only metadata.
+
+Kalshi adapter v7 separately declares `MULTIVARIATE_EVENT_DISCOVERY`. Its local
+`POST /api/frontier/probe/kalshi/multivariate-events` route requires exactly one
+series or collection ticker, a source-enabled public-probe configuration, and
+the adapter capability. Each operation requests one source page (`limit=1`)
+with nested markets, validates event/child identities, caps nested markets at
+the configured source bound, and retains but does not follow Kalshi's cursor.
+The stored `MarketBatch` schema v2 carries typed `MarketGroup` context alongside
+normalized child markets, while the raw response preserves the full source
+payload. A non-empty source cursor marks the request incomplete. Even when no
+cursor remains, completeness applies only to the requested series/collection;
+it is not venue-wide inventory. Empty responses are stored as bounded empty
+batches. `MarketGroup.member_list_state` distinguishes an included member list,
+an explicitly empty list, and a field omitted by the source. The live response
+captured on October 27 returned one event but omitted nested markets despite
+the request flag; Frontier stores its group with zero normalized markets and
+marks membership as omitted. It does not reinterpret omission as an empty
+event; an explicit `null` member field fails closed as malformed. The adapter,
+API persistence, and Mission Control operation are also
+verified with documentation-shaped fixtures. The public endpoint documents series/collection filters,
+nested-market inclusion, and cursor pagination
+([Get Multivariate Events](https://docs.kalshi.com/api-reference/events/get-multivariate-events)).
+
+`MarketGroup` records the native group identifier, title, series/collection
+identity when returned, member-list state, parent source fields, adapter version, and
+capture provenance. Group membership is a source assertion; it does not
+certify logical exhaustiveness, component rules, combo payoff, or resolution
+equivalence. Child MVE contracts remain conditional-event records with
+unverified payout semantics. The Exchanges view lets an operator request one
+filtered page, displays returned groups and member counts, and exposes the
+raw/normalized observation ID and hash. It sends no request on page load.
+The capture result can expand the immutable response through the local evidence
+API without making another source request.
 
 One preserved public capture demonstrates the boundary. The Polymarket and
 Kalshi event titles and party-outcome wording generated a deterministic
@@ -124,9 +157,9 @@ and that each combo settles through its own review
 ([Market FAQs](https://help.kalshi.com/en/articles/13823821-market-faqs)).
 Frontier therefore keeps these instruments conditional and does not feed their
 unverified payout into candidate economics.
-Kalshi adapter v5 adds the separate bounded event-group operation described
-above; the earlier MVE component normalization and its payoff limitation are
-unchanged.
+Kalshi adapter v5 added the separate bounded event-group operation described
+above; adapter v7 adds filtered MVE discovery without changing the earlier
+component normalization or its payoff limitation.
 
 ## Source configurations and bounds
 
@@ -135,7 +168,9 @@ unless its specific `MIDAS_FRONTIER_*_PUBLIC_PROBE_ENABLED` setting is true. No
 startup health request is made. A user-triggered discovery capture makes one
 bounded market page and may include one selected book snapshot. An event-group
 capture is a separate one-GET action linked to a previously recorded child
-market. Kraken currently uses a configured pair allowlist, not venue-wide
+market. Kalshi MVE discovery makes one filtered GET for one event and requests
+nested markets; source retries remain bounded by the adapter configuration.
+Kraken currently uses a configured pair allowlist, not venue-wide
 enumeration. The transport caps each response at 256 KiB, retries
 at most twice, has a 15-second maximum timeout, limits each adapter to 5 requests
 per second, rejects redirects, and rejects hosts outside its venue allowlist.
