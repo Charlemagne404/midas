@@ -574,6 +574,14 @@ def _verify_cross_venue_relationship(
         )
     left = markets[relationship.left_market_id]
     right = markets[relationship.right_market_id]
+    leg_market_ids = tuple(leg.market_id for leg in candidate.legs)
+    if (
+        set(leg_market_ids) != {left.canonical_id, right.canonical_id}
+        or len(set(leg_market_ids)) != 2
+    ):
+        raise _MissingAuditEvidence(
+            "Cross-venue candidate must contain exactly one leg for each selected market."
+        )
     _require_verified_event(left)
     _require_verified_event(right)
     if (

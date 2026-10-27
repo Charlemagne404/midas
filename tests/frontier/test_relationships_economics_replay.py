@@ -745,6 +745,25 @@ def test_deterministic_replay_is_invariant_to_input_order():
     assert stress_audited.independent_audit.disposition.value == "disagreement"
     assert any("one-sided fill sensitivity differs" in reason for reason in stress_audited.reasons)
 
+    duplicate_market_legs = original.model_copy(
+        update={"legs": (original.legs[0], original.legs[0]), "independent_audit": None}
+    )
+    malformed_audited = independently_audit_candidate(
+        duplicate_market_legs,
+        markets={left.canonical_id: left, right.canonical_id: right},
+        books_by_market={left.canonical_id: left_books, right.canonical_id: right_books},
+        relationships={relationship.relationship_id: relationship},
+        state_mappings={
+            relationship.relationship_id: kwargs["state_mappings"][relationship.relationship_id]
+        },
+        instrument_mappings={relationship.relationship_id: canonical_instrument_mapping},
+        scenario=ExecutionScenario(),
+    )
+    assert malformed_audited.independent_audit is not None
+    assert malformed_audited.independent_audit.disposition.value == "incomplete"
+    assert malformed_audited.classification == OpportunityClassification.INCOMPLETE_EVIDENCE
+    assert "exactly one leg for each selected market" in malformed_audited.independent_audit.message
+
 
 def test_canonical_relationship_evidence_replays_different_native_state_labels():
     left = market(Venue.POLYMARKET, "canonical-left")
