@@ -1591,3 +1591,16 @@ At `2026-10-27T17:00:21Z`, memory PSI was `avg10` 39.43% (`some`) / 32.43%
 (`full`), `avg60` 41.16% / 36.61%, and `avg300` 28.33% / 25.60%.
 Available memory was 9,592,368 KiB and swap free was 484,584 KiB of 4 GiB.
 Broad Frontier verification and production build remain deferred.
+
+## 2026-10-27 17:02 UTC — whitespace permission-reference regression
+
+Test commit `fd5711a` verifies that probe flags plus whitespace-only Kalshi
+and Kraken permission references leave both live probes disallowed. The
+settings-only test passed (**1 passed** in 0.95 seconds); Ruff, format check,
+and `git diff --check` passed. It creates no adapter and sends no request. One
+existing Starlette/httpx deprecation warning remains.
+
+At `2026-10-27T17:02:02Z`, memory PSI was `avg10` 45.61% (`some`) / 41.04%
+(`full`), `avg60` 45.59% / 41.05%, and `avg300` 33.78% / 30.52%.
+Available memory was 9,632,428 KiB and swap free was 484,596 KiB of 4 GiB.
+Broad suites and production build remain deferred.

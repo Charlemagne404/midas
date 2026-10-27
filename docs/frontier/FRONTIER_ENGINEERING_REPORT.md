@@ -2619,3 +2619,17 @@ At `2026-10-27T17:00:21Z`, memory PSI was `avg10` 39.43% (`some`) / 32.43%
 (`full`), `avg60` 41.16% / 36.61%, and `avg300` 28.33% / 25.60%.
 `MemAvailable` was 9,592,368 KiB; swap free was 484,584 KiB of 4 GiB. Broad
 Frontier verification and production build remain deferred.
+
+## Blank permission-reference gate regression — 2026-10-27 17:02 UTC
+
+Test commit `fd5711a` adds a settings-only regression that enables the Kalshi
+and Kraken probe flags while supplying whitespace-only permission references;
+both `probe_allowed` results remain false. The focused test passed (**1
+passed** in 0.95 seconds), and Ruff, formatting, and `git diff --check` passed.
+It constructs no adapters and makes no source request. One existing
+Starlette/httpx TestClient deprecation warning remains from module import.
+
+At `2026-10-27T17:02:02Z`, memory PSI was `avg10` 45.61% (`some`) / 41.04%
+(`full`), `avg60` 45.59% / 41.05%, and `avg300` 33.78% / 30.52%.
+`MemAvailable` was 9,632,428 KiB and swap free was 484,596 KiB of 4 GiB.
+Broad suites and production build remain deferred.
