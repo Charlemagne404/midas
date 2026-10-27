@@ -211,6 +211,18 @@ class PublicReadTransport:
                                 response_received_at_utc=received,
                             ),
                         ) from error
+                    except (RecursionError, ValueError) as error:
+                        raise AdapterError(
+                            "JSON_COMPLEXITY_LIMIT",
+                            "Public-source JSON exceeds parser complexity limits",
+                            response_evidence=FailedResponseEvidence(
+                                url=request_url,
+                                status_code=response.status_code,
+                                raw_body=bytes(body),
+                                request_started_at_utc=started,
+                                response_received_at_utc=received,
+                            ),
+                        ) from error
                     return HTTPObservation(
                         url=request_url,
                         status_code=response.status_code,

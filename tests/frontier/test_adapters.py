@@ -85,6 +85,27 @@ def _transport(host: str, bodies: dict[str, str], config: AdapterConfig | None =
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "body",
+    ("[" * 20_000 + "0" + "]" * 20_000, "9" * 5000),
+    ids=("nested-depth", "integer-digits"),
+)
+async def test_transport_classifies_json_complexity_limits_and_preserves_bounded_evidence(body):
+    transport, requests, client = _transport("api.example.test", {"/complex": body})
+    try:
+        with pytest.raises(AdapterError) as error:
+            await transport.get_json("https://api.example.test/complex")
+    finally:
+        await client.aclose()
+
+    assert error.value.code == "JSON_COMPLEXITY_LIMIT"
+    assert error.value.retryable is False
+    assert error.value.response_evidence is not None
+    assert error.value.response_evidence.raw_body == body.encode("utf-8")
+    assert len(requests) == 1
+
+
+@pytest.mark.asyncio
 async def test_polymarket_v1_capture_normalizes_without_claiming_verified_payout():
     markets = _captured("tests/fixtures/gamma_live.json")
     book = _captured("tests/fixtures/book_live.json")

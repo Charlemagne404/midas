@@ -3545,8 +3545,10 @@ async def test_probe_records_schema_failure_and_recovers_source_health(tmp_path)
     gamma_rows = json.loads(
         (Path(__file__).resolve().parents[1] / "fixtures" / "gamma_live.json").read_text()
     )
+    deep_json = "[" * 20_000 + "0" + "]" * 20_000
     responses = (
         httpx.Response(200, text="not-json"),
+        httpx.Response(200, text=deep_json),
         httpx.Response(200, content=b"\xff\x00"),
         httpx.Response(503, json={"error": "maintenance"}),
         httpx.Response(200, json={"unexpected": []}),
@@ -3598,6 +3600,15 @@ async def test_probe_records_schema_failure_and_recovers_source_health(tmp_path)
             assert json_error.status_code == 200
             assert json_error.json()["raw"]["raw_body"] == "not-json"
             assert json_error.json()["normalized"]["failure_stage"] == "transport_response"
+
+            excessive_json = await client.post("/api/frontier/probe/polymarket", json={"limit": 1})
+            assert excessive_json.status_code == 502
+            assert excessive_json.json()["detail"]["code"] == "JSON_COMPLEXITY_LIMIT"
+            complexity_error_id = excessive_json.json()["detail"]["diagnostic_observation_ids"][0]
+            complexity_error = await client.get(f"/api/frontier/observations/{complexity_error_id}")
+            assert complexity_error.status_code == 200
+            assert complexity_error.json()["raw"]["raw_body"] == deep_json
+            assert complexity_error.json()["normalized"]["failure_stage"] == "transport_response"
 
             invalid_encoding = await client.post(
                 "/api/frontier/probe/polymarket", json={"limit": 1}
@@ -3651,12 +3662,12 @@ async def test_probe_records_schema_failure_and_recovers_source_health(tmp_path)
             assert health["polymarket"]["state"] == "healthy"
             assert health["polymarket"]["last_error_code"] is None
             assert len(store.observations(venue="polymarket", kind="market_listing")) == 2
-            assert len(store.observations(venue="polymarket", kind="source_failure")) == 3
+            assert len(store.observations(venue="polymarket", kind="source_failure")) == 4
             recorded_markets = await client.get(
                 "/api/frontier/markets", params={"venue": "polymarket"}
             )
             assert recorded_markets.json()["returned"] == 1
-            assert len(requests) == 5
+            assert len(requests) == 6
             assert all(item.method == "GET" for item in requests)
             assert all("authorization" not in item.headers for item in requests)
     finally:
