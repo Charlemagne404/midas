@@ -434,6 +434,81 @@ it('renders recorded-evidence empty states and never probes a source automatical
   expect(tokenBalance).toHaveValue('');
   expect(tokenBalance).toBeEnabled();
   expect(capital).toHaveTextContent('Enter an isolated virtual balance.');
+  responses['/api/frontier/opportunities/capital-carry'] = {
+    model_version: 'frontier-virtual-capital-carry-1',
+    run_id: 'a'.repeat(64),
+    run_sha256: 'b'.repeat(64),
+    candidate_id: 'multi-outcome-fixture-candidate',
+    candidate_classification: 'VERIFIED MATHEMATICAL INCONSISTENCY',
+    classification_unchanged: true,
+    hypothetical_only: true,
+    capital_currency_identity: tokenUsdIdentity,
+    total_carry_cost: '0.02465753424657534246575342466',
+    worst_case_gross_pnl_before_carry: '1',
+    worst_case_gross_pnl_after_carry: '0.9753424657534246575342465753',
+    worst_case_net_pnl_before_carry: '1',
+    worst_case_net_pnl_after_carry: '0.9753424657534246575342465753',
+    input_sha256: 'c'.repeat(64),
+    result_sha256: 'd'.repeat(64),
+    audit: {
+      disposition: 'verified',
+      message: 'Independent arithmetic matches the pinned fixture.',
+      recomputed_total_carry_cost: '0.02465753424657534246575342466',
+      checks: ['Pinned settlement evidence checked.'],
+    },
+    venues: [
+      {
+        venue: 'kalshi',
+        capital: '9',
+        annual_rate_bps: '1000',
+        start_at_utc: '2026-10-26T20:00:00Z',
+        capital_released_at_utc: '2026-10-27T20:00:00Z',
+        duration_seconds: '86400',
+        carry_cost: '0.02465753424657534246575342466',
+        settlement_evidence: [
+          {
+            market_id: 'kalshi:KX-THREEWAY',
+            observation_id: 'e'.repeat(64),
+            observation_row_sha256: '1'.repeat(64),
+            raw_sha256: 'f'.repeat(64),
+            resolution_evidence_sha256: '2'.repeat(64),
+            resolution_fingerprint: 'three-way-fixture',
+            settles_at_utc: '2026-10-27T20:00:00Z',
+          },
+        ],
+      },
+    ],
+    assumptions: ['Fixture response.'],
+    limitations: ['No execution modeled.'],
+  };
+  queryClient.setQueryData(['frontier', 'opportunities'], {
+    ...withTokenCapital(true),
+    items: withTokenCapital(true).items.map((item) =>
+      item.candidate_id === 'multi-outcome-fixture-candidate'
+        ? { ...item, source_run_id: 'a'.repeat(64), source_run_sha256: 'b'.repeat(64) }
+        : item,
+    ),
+  });
+  const carryRate = await within(capital).findByRole('textbox', {
+    name: 'Kalshi annual carry rate in basis points',
+  });
+  fireEvent.change(carryRate, { target: { value: '1000' } });
+  fireEvent.click(within(capital).getByRole('button', { name: 'Evaluate settlement carry' }));
+  expect(
+    await within(capital).findByText('Independent arithmetic matches the pinned fixture.'),
+  ).toBeInTheDocument();
+  expect(capital).toHaveTextContent('Classification');
+  expect(capital).toHaveTextContent('unchanged');
+  const carryCall = fetchMock.mock.calls.find(
+    ([input]) => String(input) === '/api/frontier/opportunities/capital-carry',
+  );
+  expect(carryCall?.[1]?.method).toBe('POST');
+  expect(JSON.parse(String(carryCall?.[1]?.body))).toEqual({
+    run_id: 'a'.repeat(64),
+    run_sha256: 'b'.repeat(64),
+    candidate_id: 'multi-outcome-fixture-candidate',
+    annual_rate_bps_by_venue: { kalshi: '1000' },
+  });
   expect(screen.getAllByText('red')).toHaveLength(2);
 
   queryClient.setQueryData(['frontier', 'runs'], {

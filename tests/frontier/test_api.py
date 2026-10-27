@@ -3823,7 +3823,45 @@ def test_replay_api_generates_and_persists_multi_outcome_candidate(tmp_path):
 
         listed = client.get("/api/frontier/opportunities")
         assert listed.status_code == 200
-        assert listed.json()["items"][0]["candidate_id"] == candidate["candidate_id"]
+        listed_candidate = listed.json()["items"][0]
+        assert listed_candidate["candidate_id"] == candidate["candidate_id"]
+        assert listed_candidate["source_run_id"] == result["run_id"]
+        assert listed_candidate["source_run_sha256"] == result["result_sha256"]
+        carry = client.post(
+            "/api/frontier/opportunities/capital-carry",
+            json={
+                "run_id": result["run_id"],
+                "run_sha256": result["result_sha256"],
+                "candidate_id": candidate["candidate_id"],
+                "annual_rate_bps_by_venue": {"kalshi": "1000"},
+            },
+        )
+        assert carry.status_code == 200, carry.text
+        carry_result = carry.json()
+        assert carry_result["hypothetical_only"] is True
+        assert carry_result["classification_unchanged"] is True
+        assert carry_result["candidate_classification"] == candidate["classification"]
+        assert carry_result["audit"]["disposition"] == "verified"
+        assert (
+            carry_result["venues"][0]["settlement_evidence"][0]["observation_id"]
+            == (candidate["legs"][0]["market_observation_id"])
+        )
+        pinned_market_observation = store.observation(candidate["legs"][0]["market_observation_id"])
+        assert pinned_market_observation is not None
+        assert (
+            carry_result["venues"][0]["settlement_evidence"][0]["observation_row_sha256"]
+            == pinned_market_observation["row_sha256"]
+        )
+        stale_carry = client.post(
+            "/api/frontier/opportunities/capital-carry",
+            json={
+                "run_id": result["run_id"],
+                "run_sha256": "0" * 64,
+                "candidate_id": candidate["candidate_id"],
+                "annual_rate_bps_by_venue": {"kalshi": "1000"},
+            },
+        )
+        assert stale_carry.status_code == 409
         assert requests == []
     finally:
         client.close()

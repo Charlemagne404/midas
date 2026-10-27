@@ -405,6 +405,8 @@ type GraphResponse = {
 type GraphPoint = { id: string; title: string; venue: string; x: number; y: number };
 type Candidate = {
   candidate_id: string;
+  source_run_id?: string;
+  source_run_sha256?: string;
   family: string;
   classification: string;
   hypothetical: boolean;
@@ -477,6 +479,49 @@ type Candidate = {
   assumptions: string[];
   reasons: string[];
   evidence_sha256: string;
+};
+type CapitalCarrySensitivity = {
+  model_version: string;
+  run_id: string;
+  run_sha256: string;
+  candidate_id: string;
+  candidate_classification: string;
+  classification_unchanged: boolean;
+  hypothetical_only: boolean;
+  capital_currency_identity: SettlementAssetIdentity;
+  total_carry_cost: string;
+  worst_case_gross_pnl_before_carry: string | null;
+  worst_case_gross_pnl_after_carry: string | null;
+  worst_case_net_pnl_before_carry: string | null;
+  worst_case_net_pnl_after_carry: string | null;
+  input_sha256: string;
+  result_sha256: string;
+  audit: {
+    disposition: string;
+    message: string;
+    recomputed_total_carry_cost: string | null;
+    checks: string[];
+  };
+  venues: {
+    venue: string;
+    capital: string;
+    annual_rate_bps: string;
+    start_at_utc: string;
+    capital_released_at_utc: string;
+    duration_seconds: string;
+    carry_cost: string;
+    settlement_evidence: {
+      market_id: string;
+      observation_id: string;
+      observation_row_sha256: string;
+      raw_sha256: string;
+      resolution_evidence_sha256: string;
+      resolution_fingerprint: string;
+      settles_at_utc: string;
+    }[];
+  }[];
+  assumptions: string[];
+  limitations: string[];
 };
 type Run = {
   run_id: string;
@@ -3909,6 +3954,26 @@ function InlineError({ message }: { message: string }) {
 
 function CandidateCard({ candidate }: { candidate: Candidate }) {
   const [virtualBalances, setVirtualBalances] = useState<Record<string, string>>({});
+  const [carryRates, setCarryRates] = useState<Record<string, string>>({});
+  const carryMutation = useMutation({
+    mutationFn: (body: {
+      run_id: string;
+      run_sha256: string;
+      candidate_id: string;
+      annual_rate_bps_by_venue: Record<string, string>;
+    }) =>
+      api<CapitalCarrySensitivity>('/frontier/opportunities/capital-carry', {
+        method: 'POST',
+        body: JSON.stringify(body),
+      }),
+  });
+  const carryVenues = Object.keys(candidate.capital_by_venue).sort();
+  const carryRatesValid =
+    carryVenues.length > 0 &&
+    carryVenues.every((venue) => {
+      const value = carryRates[venue] ?? '';
+      return value.length <= 16 && /^(?:0|[1-9][0-9]{0,5})(?:\.[0-9]{1,6})?$/.test(value);
+    });
   const describeFillLeg = (identity: string) => {
     const leg = candidate.legs.find(
       (item) => `${item.venue}:${item.native_market_id}:${item.instrument_id}` === identity,
@@ -4110,6 +4175,146 @@ function CandidateCard({ candidate }: { candidate: Candidate }) {
           <small>
             Scenario input only. No account, wallet, deposit, transfer, or order interface is used.
           </small>
+          <div className="fr-capital-carry">
+            <div>
+              <span className="fr-kicker">Settlement duration sensitivity</span>
+              <h4>Virtual annual carry assumptions</h4>
+            </div>
+            <p>
+              Enter a user-supplied annual rate in basis points for each venue. The API uses this
+              candidate’s pinned market observations and source-marked verified settlement metadata,
+              holds all venue capital to that venue’s latest settlement, and independently rechecks
+              the arithmetic. This does not estimate an exchange charge or change the candidate
+              state.
+            </p>
+            {carryVenues.map((venue) => (
+              <label key={`${candidate.candidate_id}-carry-${venue}`}>
+                <span>{venueLabel(venue)} annual carry rate (bps)</span>
+                <input
+                  aria-label={`${venueLabel(venue)} annual carry rate in basis points`}
+                  inputMode="decimal"
+                  maxLength={16}
+                  value={carryRates[venue] ?? ''}
+                  onChange={(event) => {
+                    setCarryRates((current) => ({ ...current, [venue]: event.target.value }));
+                    carryMutation.reset();
+                  }}
+                />
+              </label>
+            ))}
+            {!candidate.source_run_id || !candidate.source_run_sha256 ? (
+              <small role="status">
+                This older candidate response does not include a pinned research run identity.
+                Reload the current Frontier API before evaluating carry.
+              </small>
+            ) : (
+              <button
+                className="fr-action"
+                type="button"
+                disabled={!carryRatesValid || carryMutation.isPending}
+                onClick={() =>
+                  carryMutation.mutate({
+                    run_id: candidate.source_run_id!,
+                    run_sha256: candidate.source_run_sha256!,
+                    candidate_id: candidate.candidate_id,
+                    annual_rate_bps_by_venue: Object.fromEntries(
+                      carryVenues.map((venue) => [venue, carryRates[venue]]),
+                    ),
+                  })
+                }
+              >
+                {carryMutation.isPending ? 'Recomputing…' : 'Evaluate settlement carry'}
+              </button>
+            )}
+            {carryMutation.isError && <InlineError message={carryMutation.error.message} />}
+            {carryMutation.data &&
+              carryMutation.data.run_id === candidate.source_run_id &&
+              carryMutation.data.run_sha256 === candidate.source_run_sha256 &&
+              carryMutation.data.candidate_id === candidate.candidate_id &&
+              carryMutation.data.venues.every(
+                (item) => item.annual_rate_bps === carryRates[item.venue],
+              ) && (
+                <div
+                  className="fr-capital-carry-result"
+                  aria-label="Capital carry sensitivity result"
+                >
+                  <div className="fr-candidate-audit-head">
+                    <h5>Hypothetical sensitivity</h5>
+                    <StateBadge state={carryMutation.data.audit.disposition} />
+                  </div>
+                  <p>{carryMutation.data.audit.message}</p>
+                  <dl>
+                    <div>
+                      <dt>Total modeled carry</dt>
+                      <dd title={carryMutation.data.total_carry_cost}>
+                        {money(carryMutation.data.total_carry_cost)}{' '}
+                        {settlementIdentityLabel(carryMutation.data.capital_currency_identity)}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>Worst gross result after carry</dt>
+                      <dd title={carryMutation.data.worst_case_gross_pnl_after_carry ?? undefined}>
+                        {money(carryMutation.data.worst_case_gross_pnl_after_carry)}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>Worst net result after carry</dt>
+                      <dd title={carryMutation.data.worst_case_net_pnl_after_carry ?? undefined}>
+                        {money(carryMutation.data.worst_case_net_pnl_after_carry)}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>Classification</dt>
+                      <dd>{carryMutation.data.candidate_classification} · unchanged</dd>
+                    </div>
+                  </dl>
+                  {carryMutation.data.venues.map((item) => (
+                    <p key={`${candidate.candidate_id}-carry-result-${item.venue}`}>
+                      <strong>{venueLabel(item.venue)}</strong>: {money(item.capital)} capital at{' '}
+                      {item.annual_rate_bps} bps for approximately{' '}
+                      {(Number(item.duration_seconds) / 86400).toLocaleString(undefined, {
+                        maximumFractionDigits: 3,
+                      })}{' '}
+                      days; settlement {time(item.capital_released_at_utc)}; carry{' '}
+                      {money(item.carry_cost)}. Pinned source records:{' '}
+                      {item.settlement_evidence
+                        .map(
+                          (evidence) =>
+                            `${shortHash(evidence.observation_id)} · row ${shortHash(evidence.observation_row_sha256)} · raw ${shortHash(evidence.raw_sha256)} · resolution ${shortHash(evidence.resolution_evidence_sha256)} · fingerprint ${evidence.resolution_fingerprint.slice(0, 28)}`,
+                        )
+                        .join(', ')}
+                      .
+                    </p>
+                  ))}
+                  <small>
+                    Input SHA-256 <code>{shortHash(carryMutation.data.input_sha256)}</code> · result
+                    SHA-256 <code>{shortHash(carryMutation.data.result_sha256)}</code>. Displayed
+                    money values are rounded.
+                  </small>
+                  <details>
+                    <summary>Exact decimal outputs, assumptions, and limitations</summary>
+                    <p>
+                      Total carry: <code>{carryMutation.data.total_carry_cost}</code> · gross after
+                      carry:{' '}
+                      <code>
+                        {carryMutation.data.worst_case_gross_pnl_after_carry ?? 'not established'}
+                      </code>{' '}
+                      · net after carry:{' '}
+                      <code>
+                        {carryMutation.data.worst_case_net_pnl_after_carry ?? 'not established'}
+                      </code>
+                    </p>
+                    <ul>
+                      {[...carryMutation.data.assumptions, ...carryMutation.data.limitations].map(
+                        (item, index) => (
+                          <li key={`${candidate.candidate_id}-carry-note-${index}`}>{item}</li>
+                        ),
+                      )}
+                    </ul>
+                  </details>
+                </div>
+              )}
+          </div>
         </section>
       )}
       {candidate.legs.length > 0 && (

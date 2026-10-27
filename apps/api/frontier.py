@@ -24,8 +24,13 @@ from midas.arena.frontier_replay import (
 )
 from midas.frontier.adapters.base import AdapterError, ExchangeAdapter, FailedResponseEvidence
 from midas.frontier.adapters.kraken import KrakenSpotAdapter
+from midas.frontier.capital import (
+    CapitalCarryRequest,
+    evaluate_capital_carry,
+)
 from midas.frontier.economics import (
     ExecutionScenario,
+    OpportunityCandidate,
     audit_kalshi_mve_reported_settlement,
     estimate_kalshi_taker_fee_sensitivity,
     estimate_kalshi_taker_order_fee_sensitivity,
@@ -2905,9 +2910,16 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
         source_window_limit = min(100, max(20, limit))
         raw_runs = read_stored_replays(source_window_limit)
         runs = replay_rows_without_held_sources(raw_runs)
-        candidates = []
+        candidates: list[dict[str, Any]] = []
         for row in runs:
-            candidates.extend(row["result"].get("candidates", []))
+            candidates.extend(
+                {
+                    **item,
+                    "source_run_id": row["run_id"],
+                    "source_run_sha256": row["result_sha256"],
+                }
+                for item in row["result"].get("candidates", [])
+            )
         if classification:
             candidates = [
                 item for item in candidates if item.get("classification") == classification
@@ -2928,6 +2940,111 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
             "source_window_limit": source_window_limit,
             "source_window_may_be_incomplete": len(raw_runs) == source_window_limit,
         }
+
+    @api.post("/opportunities/capital-carry")
+    async def opportunity_capital_carry(request: CapitalCarryRequest) -> dict[str, Any]:
+        """Calculate a virtual funding-duration sensitivity from one hash-pinned replay."""
+        try:
+            stored_run = store.replay(request.run_id)
+        except (ValueError, FrontierStoreError) as error:
+            raise HTTPException(status_code=409, detail=str(error)) from error
+        if stored_run is None:
+            raise HTTPException(status_code=404, detail="Saved research run was not found")
+        if stored_run.get("result_sha256") != request.run_sha256:
+            raise HTTPException(status_code=409, detail="Saved research run hash has changed")
+        if not replay_rows_without_held_sources((stored_run,)):
+            raise HTTPException(status_code=404, detail="Saved candidate is unavailable")
+        result = stored_run.get("result", {})
+        matching = [
+            OpportunityCandidate.model_validate(item)
+            for item in result.get("candidates", [])
+            if isinstance(item, dict) and item.get("candidate_id") == request.candidate_id
+        ]
+        if len(matching) != 1:
+            raise HTTPException(
+                status_code=404, detail="Candidate was not found uniquely in the saved run"
+            )
+        candidate = matching[0]
+        market_ids_by_observation: dict[str, set[str]] = {}
+        for leg in candidate.legs:
+            market_ids_by_observation.setdefault(leg.market_observation_id, set()).add(
+                leg.market_id
+            )
+        markets_by_id: dict[str, FrontierMarket] = {}
+        observation_row_hashes: dict[str, str] = {}
+        try:
+            for observation_id, expected_market_ids in market_ids_by_observation.items():
+                observation = store.observation(observation_id)
+                if observation is None:
+                    raise HTTPException(
+                        status_code=409, detail="Pinned market observation is unavailable"
+                    )
+                raw = RawObservation.model_validate(observation.get("raw"))
+                if raw.venue.value in held_venues or raw.observation_kind not in {
+                    "market_listing",
+                    "instrument_metadata",
+                    "market_metadata",
+                    "event_market_listing",
+                }:
+                    raise HTTPException(
+                        status_code=404, detail="Pinned market observation is unavailable"
+                    )
+                row_sha256 = observation.get("row_sha256")
+                if not isinstance(row_sha256, str):
+                    raise HTTPException(
+                        status_code=409, detail="Pinned market observation row hash is missing"
+                    )
+                observation_row_hashes[observation_id] = row_sha256
+                normalized = observation.get("normalized")
+                records = normalized.get("markets") if isinstance(normalized, dict) else None
+                if not isinstance(records, list):
+                    records = [normalized] if isinstance(normalized, dict) else []
+                found: set[str] = set()
+                for value in records:
+                    if (
+                        not isinstance(value, dict)
+                        or not isinstance(value.get("canonical_id"), str)
+                        or value.get("canonical_id") not in expected_market_ids
+                    ):
+                        continue
+                    market = FrontierMarket.model_validate(value)
+                    if market.venue != raw.venue or market.provenance.raw_sha256 != raw.raw_sha256:
+                        raise HTTPException(
+                            status_code=409,
+                            detail="Pinned market provenance does not match its source observation",
+                        )
+                    market = market.model_copy(
+                        update={
+                            "provenance": market.provenance.model_copy(
+                                update={"observation_id": observation_id}
+                            )
+                        }
+                    )
+                    markets_by_id[market.canonical_id] = market
+                    found.add(market.canonical_id)
+                if found != expected_market_ids:
+                    raise HTTPException(
+                        status_code=409,
+                        detail="Pinned market observation does not contain the candidate market",
+                    )
+        except HTTPException:
+            raise
+        except (TypeError, ValueError, FrontierStoreError) as error:
+            raise HTTPException(
+                status_code=409, detail=f"Pinned market evidence is invalid: {error}"
+            ) from error
+        try:
+            sensitivity = evaluate_capital_carry(
+                candidate,
+                run_id=request.run_id,
+                run_sha256=request.run_sha256,
+                rates_by_venue=request.annual_rate_bps_by_venue,
+                markets_by_id=markets_by_id,
+                observation_row_hashes=observation_row_hashes,
+            )
+        except ValueError as error:
+            raise HTTPException(status_code=422, detail=str(error)) from error
+        return sensitivity.model_dump(mode="json")
 
     @api.get("/runs")
     async def runs(
