@@ -1,5 +1,66 @@
 # Project Frontier Mission Ledger
 
+## Recorded source-health join and timeline controls — 2026-10-28 00:18 CET
+
+Code commit `ea073c4cdb4a00b70fc609e8806f80a40542cd4c` joins recorded
+source-health events to finite collector checkpoints. The API opens the existing
+collection journal read-only, validates each selected run-spec digest and its
+complete checkpoint chain, and matches the submitted venue, check timestamp,
+health state, canonical reason, and checkpoint row digest. A batched request can
+join up to 100 checkpoint hashes in one bounded journal scan. Held-source health
+is rejected. Unknown health state, bad timestamps, digest substitution, and
+corrupt chains fail closed. No missing journal is created by a lookup.
+
+Timeline snapshot schema 2 pins the verified checkpoint digests; schema 1
+snapshots without recorded health remain readable. Healthy, degraded, and
+explicit unavailable collector states map to replay status. `not_probed` and
+`unsupported` do not imply venue availability. Mission Control now allows an
+explicit maximum book receipt age from 1 to 3,600,000 milliseconds, validates
+the value, and sends it into the pinned replay input.
+
+Follow-up commit `8e79bf1f3bc583aa2329096729c6dd9c624c603d` adds a Mission
+Control callout clarifying that recorded source status is adapter-local
+checkpoint health, not continuous venue availability or account eligibility.
+The associated Web regression asserts the limitation is visible.
+
+### Verification evidence
+
+- Combined Frontier/Arena regression: **350 passed** in 80.52 seconds across
+  `tests/frontier`, paired and event-time Arena replay, job schemas, and Arena
+  API tests. One existing Starlette/httpx `TestClient` deprecation warning.
+- Focused collector/API/Arena timeline set: **21/21** in 6.25 seconds.
+- Web after the source-status callout commit: **40/40**; TypeScript, ESLint,
+  Prettier, and production build passed.
+  The Vite build reports the existing 544.41 kB Chart chunk advisory.
+- Browser: **1/1** isolated Playwright empty/offline case passed in 5.3 seconds
+  against temporary API/store roots; it observed zero source probes and zero
+  replay submissions on page open.
+- Legacy integration/admission regression: **63 passed, 1 skipped** in 29.88
+  seconds after unsetting `MIDAS_TEST_POSTGRES_URL`; the skipped case requires
+  PostgreSQL.
+- Strict mypy passed for `collection.py`, `frontier_timeline.py`, and
+  `apps/api/frontier.py`; Ruff check/format and `git diff --check` passed.
+- Resource sample at `2026-10-27T23:15:35Z`: memory PSI avg10 was 0.00%,
+  10 GiB was available, and 400 MiB swap was free. This point-in-time sample
+  does not establish future Arena admission.
+
+No exchange call, collector, Arena worker, Reality action, production service,
+or historical store was accessed. Files in `ea073c4` are:
+`apps/api/frontier.py`, `apps/web/src/Frontier.tsx`,
+`apps/web/src/Frontier.test.tsx`, `apps/web/src/frontier.css`,
+`packages/midas/frontier/collection.py`,
+`packages/midas/arena/frontier_timeline.py`,
+`tests/frontier/test_collection.py`, `tests/frontier/test_timeline_api.py`, and
+`tests/arena/test_frontier_timeline.py`.
+
+**Next safe work:** provide a bounded read-only catalogue of verified recorded
+health checkpoints to the Frontier research UI, and keep collection out of
+Arena until its network egress restrictions can be made explicit and testable.
+Continue offline adversarial replay and compatibility work. Frontier remains
+**PARTIALLY VERIFIED**, isolated, research-only, unmerged, and undeployed.
+
+---
+
 ## Event-time Arena integration checkpoint — 2026-10-27 22:58 UTC
 
 Code commit `5e04c14b47c9b820946259a8ad1e232b4597190a` wires deterministic

@@ -24,8 +24,8 @@ as mutable Frontier storage.
 | Event-time replay | `timeline.py` | Offline bounded replay over repeated book updates, source-state events, and explicit cutoffs; freshness, outage invalidation, candidate summaries, and timeline hashes. |
 | Finite source collection | `collection.py` | One-source sequential bounded capture with durable restart checkpoints and a separate append-only hash-chained journal; callable only, not an API, scheduled worker, or background service. |
 | Arena replay jobs | `packages/midas/arena/frontier_replay.py`, `frontier_timeline.py`, `arena/jobs.py` | Immutable content-addressed inputs, bounded offline paired and event-time replay workers, hash-verified artifacts, and held-source filtering under Arena's existing admission gate. |
-| HTTP API | `apps/api/frontier.py`, `apps/api/arena.py` | Bounded local queries and graph neighborhoods, relationship proposals/reviews, deterministic and paired replay, config-gated captures, fee/capital sensitivities, coverage analytics, and local-input event-time Arena staging/result routes. |
-| Mission Control workspace | `apps/web/src/Frontier.tsx` | Sources, markets/books/event context, coverage and source-quality analytics, relationship hypotheses, candidates, venue-separated capital assumptions, local comparisons, paired and event-time Arena replay history/results, and readiness. |
+| HTTP API | `apps/api/frontier.py`, `apps/api/arena.py` | Bounded local queries and graph neighborhoods, relationship proposals/reviews, deterministic and paired replay, config-gated captures, fee/capital sensitivities, coverage analytics, verified collection-checkpoint health joins, and local-input event-time Arena staging/result routes. |
+| Mission Control workspace | `apps/web/src/Frontier.tsx` | Sources, markets/books/event context, coverage and source-quality analytics, relationship hypotheses, candidates, venue-separated capital assumptions, local comparisons, paired and event-time Arena replay history/results with a pinned freshness control, and readiness. |
 
 ## Additional venue selection
 
@@ -792,28 +792,39 @@ performs no adapter calls and writes no evidence itself.
 
 `POST /api/frontier/arena-timeline-replay` snapshots at most 100 locally saved
 markets, 200 joined books, 100 effective verified relationships, and 100
-explicit fixture/scenario source-state events. It also pins either ordered UTC
-evaluation times or the engine's deterministic input-time/freshness-boundary
-schedule, maximum book age, scenario, and code version. It makes no adapter
-request. The source-state API currently rejects `basis=recorded`: a SHA-256
-reference alone is not a validated join to a stored source-health observation.
-The immutable snapshot is limited to 32 MiB; its store is limited to 128 MiB
-and 1,000 files. The Arena worker runs the existing deterministic replay and
-independent audit at each frame, under the existing five-minute/512-MiB/half-CPU
-idle-I/O bounds. Its result is capped at 16 MiB and bound to the job's snapshot
-and result hashes. `GET /api/arena/frontier-timelines` lists bounded history,
-and `GET /api/arena/jobs/{id}/frontier-timeline` validates a completed artifact.
+fixture/scenario or recorded source-state events. Recorded status must identify
+a collector-checkpoint row hash. Before staging, the API reads the bounded
+collection journal in read-only mode, validates the run-spec digest and the
+complete per-run checkpoint chain, then requires the requested venue, checked
+time, status, and canonical reason to match the checkpoint health record. Only
+healthy, degraded, and explicitly unavailable states map to replay status;
+not-probed and unsupported states do not imply venue availability. Held-source
+events are rejected. The snapshot pins the joined checkpoint hashes in schema
+version 2; existing schema-1 snapshots without recorded status remain readable.
+
+The request also pins either ordered UTC evaluation times or the engine's
+deterministic input-time/freshness-boundary schedule, maximum book age, scenario,
+and code version. It makes no adapter request. The immutable snapshot is limited
+to 32 MiB; its store is limited to 128 MiB and 1,000 files. The Arena worker runs
+the existing deterministic replay and independent audit at each frame, under
+the existing five-minute/512-MiB/half-CPU idle-I/O bounds. Its result is capped
+at 16 MiB and bound to the job's snapshot and result hashes.
+`GET /api/arena/frontier-timelines` lists bounded history, and
+`GET /api/arena/jobs/{id}/frontier-timeline` validates a completed artifact.
 Held-source filtering applies to the catalog, result route, and the Frontier
 timeline readiness gate.
 
 Mission Control's Replay & Readiness section can explicitly stage this job from
 saved local evidence and inspect per-frame freshness counts, source-state
-labels, candidate summaries, and input/result digests. The control remains
-disabled until recorded markets exist. Scenario and fixture source events are
-distinct from measured source health. The integration and UI are fixture-tested;
-no event-time Arena worker has been launched in this checkpoint, so its
-readiness remains `LIVE_VALIDATION_PENDING` until a future permitted bounded
-local run has a verified artifact and runtime record.
+labels, candidate summaries, and input/result digests. Researchers can set the
+maximum receipt age from 1 to 3,600,000 milliseconds; the control is disabled
+for invalid values or until recorded markets exist. Scenario and fixture source
+events remain distinct from measured source health. The integration and UI are
+fixture-tested; no event-time Arena worker has been launched in this checkpoint,
+so readiness remains `LIVE_VALIDATION_PENDING` until a future permitted bounded
+local run has a verified artifact and runtime record. The UI callout explains
+that recorded source states are adapter-local checkpoint health, not continuous
+venue availability or account eligibility.
 
 The finite collector is deliberately not exposed as a request handler or
 background service. A caller must provide one configured adapter and one
@@ -822,9 +833,12 @@ probe flags, and policy holds. One run is limited to 20 markets, 10 books, 20
 book levels, 16 MiB of evidence, and 300 seconds. Checkpoints are append-only,
 sequence- and previous-hash-linked, and capped separately from observation data.
 The adapter is sequential within a source run, while per-source failures leave
-other tasks eligible to complete. The journal's existence does not constitute a
-collector scheduler, production worker, multi-source campaign, or live
-validation. The collector code is fixture-tested and no source request was made.
+other tasks eligible to complete. The journal supports a bounded read-only
+lookup of up to 100 health-checkpoint digests per timeline request; it validates
+each selected run's full chain and never initializes or creates a missing
+journal. The journal's existence does not constitute a collector scheduler,
+production worker, multi-source campaign, or live validation. The collector
+code is fixture-tested and no source request was made.
 
 ## API and UI behavior
 

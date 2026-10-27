@@ -1,20 +1,21 @@
 # Project Frontier Engineering Report
 
-**Report date:** 2026-10-27
+**Report date:** 2026-10-28
 
-**Latest code checkpoint:** `5e04c14b47c9b820946259a8ad1e232b4597190a` adds
-event-time replay to the bounded Arena job/artifact path, API, readiness gate,
-and Mission Control, following `b6b8a99337b5b08a54b5011eaf72d30949ab0b1b`'s
-finite restartable source-collection module. The selected Frontier/Arena Python
-regression passes 347/347; the Web unit suite passes 40/40; a temporary-root
-browser check passes 1/1; TypeScript, ESLint, Ruff, Prettier, scoped strict
-mypy, and the Vite production build pass. The full-project mypy invocation
-reports 35 errors in eight unrelated legacy Veritas/Arena/API files and none in
-the four changed backend integration files. The existing 544.41 kB Chart chunk
-advisory remains. No exchange request or timeline worker was launched. Recorded
-source-health joins, live cross-venue economic evidence, exact source-use
-permission, and production deployment remain unresolved; Frontier is isolated,
-incomplete, and undeployed.
+**Latest code checkpoint:** `8e79bf1f3bc583aa2329096729c6dd9c624c603d` follows
+`ea073c4cdb4a00b70fc609e8806f80a40542cd4c` to make the adapter-local meaning of
+recorded health explicit in Mission Control. The earlier commit validates
+recorded source-health events against the bounded collector journal, pins
+checkpoint digests in timeline snapshot schema 2, preserves schema-1 snapshot
+reads, and adds the receipt-age control. The combined Frontier/Arena Python
+selection passes 350/350; the Web suite passes 40/40; an isolated browser check
+passes 1/1; and legacy integration/Arena
+admission regressions pass 63 with one PostgreSQL-dependent skip. TypeScript,
+ESLint, Ruff, Prettier, scoped strict mypy, and the production frontend build
+pass. The known 544.41 kB Chart chunk advisory remains. No exchange request or
+Arena worker was launched. Genuine live source permission/evidence and
+production deployment remain unresolved; Frontier is isolated, incomplete, and
+undeployed.
 
 **Branch:** `codex/frontier-20261026`
 
@@ -4406,3 +4407,106 @@ profitability result was established. Next safe implementation steps are to
 validate a local source-health evidence join, continue fixture-backed
 adversarial and resource tests, and determine whether an OS-enforced egress
 boundary is available before registering collection as a networked Arena job.
+
+### Recorded source-health join and pinned freshness control — 2026-10-28 00:18 CET
+
+Code commit `ea073c4cdb4a00b70fc609e8806f80a40542cd4c` completes the local
+recorded source-health join for event-time replay. `CollectionJournal` now has a
+read-only batch resolver for up to 100 checkpoint-row hashes. It does not call
+`initialize`, create a missing journal, or modify collection evidence. The
+resolver enforces the 64 MiB journal budget and bounded checkpoint/run counts,
+checks the collection schema, validates the run-spec hash and model identity,
+and walks the entire selected run's sequence/hash chain before returning any
+health record. The new hash index helps current journals; correctness does not
+depend on that index, so prior collection journals remain queryable within the
+same byte/row bounds.
+
+The timeline API admits a `basis=recorded` event only if its evidence digest
+resolves to a verified checkpoint and its venue, checked time, status, and
+canonical reason match the recorded `SourceHealth`. The API maps only
+`HEALTHY`, `DEGRADED`, and explicitly `UNAVAILABLE`; `NOT_PROBED` and
+`UNSUPPORTED` are not interpreted as venue availability. A `HEALTHY` record
+also needs a nonfuture successful-source timestamp. The event is rejected if
+its venue is held. Unknown digests and field substitutions return 422; corrupt
+journal identity/timing fails closed with 409. Repeated digests in one request
+are rejected. No network activity is part of the join.
+
+The joined value is the collector's adapter-local state at the checkpoint
+check time, derived from that adapter's request history. It is not a continuous
+venue-health feed, account-eligibility check, or reachability guarantee. The
+Mission Control callout states this boundary beside the replay result.
+
+Arena timeline snapshots now use schema version 2, pinning the sorted
+`validated_source_status_checkpoint_sha256s` alongside the event. The model
+requires exact set equality between recorded event references and those pinned
+join identities. Prior schema-1 snapshots without recorded source status remain
+loadable; schema 1 cannot carry recorded events. The API remains the trust
+boundary that verifies the source journal before creating a content-addressed
+snapshot. Arena timeline execution remains network-restricted and consumes the
+already pinned local input.
+
+Mission Control's Replay & Readiness panel now includes a maximum book receipt
+age field. It accepts integers from 1 through 3,600,000 milliseconds, disables
+submission for invalid values, sends the selected value, and displays the
+freshness limit from the returned result. Follow-up commit
+`8e79bf1f3bc583aa2329096729c6dd9c624c603d` adds a visible explanation that
+recorded health reflects adapter-local state at its checkpoint, not continuous
+venue availability, reachability, or account eligibility. No other replay
+assumption is changed by these controls.
+
+#### Verification and evidence
+
+- Combined command over all `tests/frontier`, paired/event-time Frontier Arena,
+  Arena job-schema, and Arena API selections: **350 passed** in 80.52 seconds.
+- Focused `tests/frontier/test_collection.py`, `test_timeline_api.py`, and
+  `tests/arena/test_frontier_timeline.py`: **21 passed** in 6.25 seconds.
+- Web suite after the source-health wording update: **40/40**. TypeScript
+  typecheck, ESLint, Prettier, and production
+  build passed. The build retains the known 544.41 kB Chart chunk advisory.
+- Isolated Playwright case: **1/1** in 5.3 seconds using temporary API, Arena,
+  and database roots. Opening Replay & Readiness issued no source probe and no
+  replay submission. The complete 12-case browser suite was not rerun here.
+- Legacy integration and Arena admission set: **63 passed, 1 skipped** in 29.88
+  seconds with `MIDAS_TEST_POSTGRES_URL` unset; the skip is the PostgreSQL case.
+- Strict mypy passed for `collection.py`, `frontier_timeline.py`, and
+  `apps/api/frontier.py`. Ruff and formatting checks passed. The existing
+  TestClient deprecation warning remains.
+- Host sample at `2026-10-27T23:15:35Z` measured 0.00% memory PSI avg10,
+  10 GiB available memory, and 400 MiB free swap. This is a time-specific sample.
+
+Changed code files are `apps/api/frontier.py`, `apps/web/src/Frontier.tsx`,
+`apps/web/src/Frontier.test.tsx`, `apps/web/src/frontier.css`,
+`packages/midas/frontier/collection.py`,
+`packages/midas/arena/frontier_timeline.py`,
+`tests/frontier/test_collection.py`, `tests/frontier/test_timeline_api.py`, and
+`tests/arena/test_frontier_timeline.py`. Documentation was then updated in
+`docs/DEVELOPMENT.md`, `docs/MIDAS_CURRENT_STATE.md`,
+`docs/frontier/FRONTIER_ARCHITECTURE.md`,
+`docs/frontier/FRONTIER_OPERATIONS.md`,
+`docs/frontier/FRONTIER_MISSION_LEDGER.md`, and this report.
+Commit `8e79bf1` changes `apps/web/src/Frontier.tsx` and
+`apps/web/src/Frontier.test.tsx` to add and verify the adapter-local health
+limitation.
+
+No exchange request, collector, Arena worker, Reality action, production
+service, historical-store read, push, merge, or deployment occurred. No
+cross-venue opportunity or positive economic result was established.
+
+#### Current checkpoint matrix
+
+| Component | Status | Evidence and boundary |
+| --- | --- | --- |
+| Collection-journal health lookup | COMPLETE AND VERIFIED | Read-only bounded batch lookup verifies run spec and complete checkpoint chain; tests cover valid joins, tampering, unknown digest without file creation, and held-source rejection. No genuine source health capture was made. |
+| Recorded event mapping and timeline schema 2 | COMPLETE AND VERIFIED | API field matching, state mapping, health-time consistency, checkpoint hash pinning, and schema-1 compatibility are covered by fixtures. Snapshot attestation identifies an API-verified join; it is not a digital signature. |
+| Timeline freshness control | COMPLETE AND VERIFIED | Unit test sends 5,000 ms, checks 0 disables submission, and checks result rendering; typecheck/build/browser empty-state pass. |
+| Timeline Arena worker and full result browser flow | IMPLEMENTED, LIVE VALIDATION PENDING | Job schema, artifact binding, and fixture execution are tested. No worker was launched and no worker result was rendered in a real browser. |
+| Finite source collector module | PARTIALLY VERIFIED | Restart, cancellation, persistence recovery, and failure cases use fixture adapters. No live capture or collection job/API lifecycle is registered. |
+| Live source permission and multi-venue evidence | BLOCKED | Existing source-use holds remain; there is no live observation or genuine cross-venue relation in this checkpoint. |
+| Production deployment | DEFERRED | The Frontier branch remains isolated and unmerged; no production transition was attempted. |
+
+Project Frontier remains **PARTIALLY VERIFIED**, isolated, research-only, and
+undeployed. Next safe engineering work is a bounded read-only catalogue and UI
+for verified recorded health checkpoints, plus offline adversarial replay cases.
+Do not register a networked collection job until the allowed egress boundary is
+explicit and testable. The source permissions, live multi-venue evidence, and
+deployment gates remain separate.

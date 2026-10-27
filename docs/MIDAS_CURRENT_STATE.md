@@ -31,7 +31,36 @@ Project Atlas remains deferred. Frontier was not yet implemented at this
 2026-10-17 historical snapshot; its later isolated development state is recorded
 in the dated addendum below and in the Frontier engineering report.
 
-## Frontier development addendum — 2026-10-27
+## Frontier development addendum — 2026-10-28
+
+### Recorded health join and timeline freshness control — 2026-10-28 00:18 CET
+
+Frontier branch `codex/frontier-20261026` is at code commit
+`8e79bf1f3bc583aa2329096729c6dd9c624c603d`, following
+`ea073c4cdb4a00b70fc609e8806f80a40542cd4c`. The timeline API now resolves
+recorded source-state events against the finite collector's append-only
+checkpoint journal. It checks the full checkpoint chain and run-spec digest,
+then requires the event venue, health timestamp, mapped state, reason, and
+checkpoint digest to match. Held-source health is rejected. Timeline snapshot
+schema 2 pins the validated checkpoint hashes while schema 1 inputs without
+recorded health remain readable. Mission Control exposes a pinned book-age
+control from 1 to 3,600,000 milliseconds.
+
+The combined Frontier/Arena regression passed **350 tests**; the separate
+collector/timeline-API/Arena timeline selection passed **21/21**. The Web suite
+passed **40/40**, TypeScript, ESLint, Prettier, and production build passed, and
+the isolated Playwright empty/offline scenario passed **1/1**. Legacy integration
+and Arena admission regressions passed **63**, with one PostgreSQL test skipped
+after unsetting `MIDAS_TEST_POSTGRES_URL`. Strict mypy passed the three changed
+backend modules. The existing 544.41 kB Chart chunk advisory remains.
+
+The host sample at `2026-10-27T23:15:35Z` showed 0% memory PSI avg10, 10 GiB
+available memory, and 400 MiB free swap; it is a dated point-in-time sample.
+No exchange request, collector, Arena worker, production service, or historical
+store was accessed. Frontier remains isolated, research-only, undeployed, and
+**PARTIALLY VERIFIED**. No live multi-venue relationship or economically
+eligible opportunity was established. See the [mission ledger](frontier/FRONTIER_MISSION_LEDGER.md)
+and [engineering report](frontier/FRONTIER_ENGINEERING_REPORT.md).
 
 ### Event-time Arena replay and finite collector checkpoint — 2026-10-27 22:58 UTC
 

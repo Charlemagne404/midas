@@ -397,19 +397,25 @@ MYPYPATH=packages /home/charlie/midas/.venv/bin/mypy --strict --follow-imports=s
 timeline as a separate content-addressed `frontier_timeline` Arena job. It
 accepts optional ordered UTC cutoffs, a book freshness limit, a bounded
 execution scenario, and explicitly labelled fixture/scenario source-state
-events. It does not poll adapters. Recorded source-state events are rejected
-until a validated join to stored source-health evidence exists. The input is
-limited to 100 local markets, 200 joined books, and 100 effective verified
+events. Recorded events are admitted only after the API reads the bounded
+collection journal without mutation, validates the run specification and full
+checkpoint chain, and matches the event fields to the stored health record.
+Up to 100 checkpoint digests are joined in one journal scan. The schema-2
+snapshot pins those verified checkpoint hashes; schema-1 snapshots without
+recorded status remain readable. This route does not poll adapters. The input
+is limited to 100 local markets, 200 joined books, and 100 effective verified
 relationships. Arena applies its existing 300-second, 512-MiB, half-CPU,
 idle-I/O admission limits. Results are hash-bound to the job and pinned input;
 the result endpoint and history catalog quarantine held-source inputs.
 
 Mission Control's Replay & Readiness section lists timeline jobs and shows
 verified frame counts, freshness/exclusion counts, candidate classifications,
-and provenance hashes. Its submit control is explicit and disabled when the
-local store has no markets. It does not launch collection automatically. The
-timeline readiness gate remains pending until a bounded local job has actually
-completed with a valid artifact and worker runtime record.
+and provenance hashes. Researchers can set maximum book receipt age in the
+1–3,600,000 ms range; invalid values disable submission. The submit control is
+explicit and disabled when the local store has no markets. It does not launch
+collection automatically. The timeline readiness gate remains pending until a
+bounded local job has actually completed with a valid artifact and worker
+runtime record.
 
 `midas.frontier.collection.BoundedSourceCollector` is a separate finite
 one-source lifecycle with fixture-tested restart checkpoints and an append-only

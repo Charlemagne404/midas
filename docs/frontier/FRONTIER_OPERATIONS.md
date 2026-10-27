@@ -185,15 +185,33 @@ access, or profit. A frame with no explicit source-state event must not be read
 as evidence that the venue was healthy; receipt-time book freshness is reported
 separately.
 
-Request-supplied `basis=recorded` source-health events are rejected. A
-hash-shaped observation reference is not a validated join to a stored
-source-health observation; recorded health requires that join before use.
-`fixture` and `scenario` events are allowed and remain explicitly labelled.
-Arena history, result, and Frontier readiness checks filter snapshots that use
-currently held venues. A completed artifact counts as readiness evidence only
-after its job binding, snapshot/result hashes, and worker runtime record verify.
-No timeline worker was launched for the current implementation checkpoint;
-readiness therefore remains pending.
+Recorded source-health events must name the SHA-256 row digest of a collector
+checkpoint. Before staging, the API opens the existing collection journal in
+read-only mode, validates the run-spec hash and complete per-run checkpoint
+chain, and compares the event's venue, check time, mapped state, and reason with
+the checkpoint. The request cannot choose a different health claim while
+reusing a valid digest. `healthy`, `degraded`, and explicit `unavailable` states
+are mapped; `not_probed` and `unsupported` do not imply availability. Held
+venues are rejected before the journal join. A missing or unknown digest does
+not create a journal and returns an input error; a corrupt journal fails closed.
+The stored state is the collector's adapter-local state at its check time,
+derived from that adapter's request history. It is not a continuous venue
+health feed, a reachability guarantee, or evidence of account eligibility.
+
+Up to 100 digest references are joined in one bounded journal scan; each
+selected run's complete checkpoint chain is then revalidated. The checkpoint
+hashes are pinned in the content-addressed schema-2 timeline snapshot. Existing
+schema-1 snapshots without recorded health remain readable. `fixture` and
+`scenario` events remain explicitly labelled. Arena history, result, and
+Frontier readiness checks filter snapshots that use currently held venues. A
+completed artifact counts as readiness evidence only after its job binding,
+snapshot/result hashes, and worker runtime record verify. No timeline worker
+was launched for the current implementation checkpoint; readiness therefore
+remains pending.
+
+The Replay & Readiness panel exposes a maximum book receipt age from 1 to
+3,600,000 milliseconds. Invalid values disable submission. The selected limit
+is sent to the local-input API and pinned into the replay snapshot.
 
 ## Finite source collection module
 
