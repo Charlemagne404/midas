@@ -95,9 +95,27 @@ stopped under rising memory PSI and remains unverified. Comprehensive capital
 transfer, collateral, FX, and settlement-duration modeling remains incomplete.
 Follow-up review commit `cca4038` closes a partial-currency metadata gap by
 requiring every leg in a venue to declare the same quote currency. Its
-regression test is added but unrun under high host memory pressure; the prior
-8-test/browser results predate this correction. Re-run the focused test and
-typecheck when resource admission allows.
+new UI regression remains pending with the UI typecheck; the earlier
+8-test/browser results predate this correction. The focused backend regression
+was exercised separately below.
+
+The latest economics review closed a unit-valuation gap: a verified payoff is
+now rejected when payout currency and settlement asset differ, or when the
+market-level settlement asset disagrees with its payoff. Binary and
+multi-outcome candidate generation and the independent audit each fail closed
+without a valuation bridge. The USD/USDC regression exercises a rejected
+relationship, a forged-verified-edge attempt, candidate generation, independent
+re-audit, and same-market multi-outcome coverage.
+
+The latest API review also found that the generic source probe and the
+Polymarket v2 page route drained raw captures before lineage checks, then lost
+those captures on mismatch. Both routes now preserve unpersisted captures as
+diagnostics and remove already persisted captures from the pending set, avoiding
+duplicate failure records after a later book/trade error.
+The focused USD/USDC economics selection passed 6 tests; the API capture
+selection passed 4 tests with 31 unrelated API tests deselected. Ruff check and
+formatting passed. Broader suites, the UI typecheck, and the production build
+remain pending while the host memory PSI is high.
 Remaining acceptance work is substantial.
 **Branch:** `codex/frontier-20261026`
 **Worktree:** `/home/charlie/midas-frontier`
@@ -784,13 +802,13 @@ same-input runs do not change the resource sustainability gate.
 | Kalshi MVE settlement metadata and arithmetic audit | PARTIALLY VERIFIED | Adapter v12 preserves bounded component YES settlement values and optional parent settlement/provisional fields. A saved-evidence-only API/UI audit recomputes the selected component product for up to 64 legs and compares it with the parent value only for complete, final evidence; official rule/schema links and observation/raw hashes are shown. The full 148-test suite predates only the output source-link tuple; the final focused 17 tests and four browser cases include it. All positive and negative settlement arithmetic remains fixture-only; the preserved live child lacks values, no live audit result exists, and this method does not verify outcomes/rules or alter candidate economics. |
 | Polymarket, Kalshi and Kraken Spot implementations | PARTIALLY VERIFIED | Fixture tests and bounded live listing/book/trade-to-store evidence exist. Polymarket v2 first and continuation pages returned ten rows each. Kalshi cursor pages are implemented and row mapping is fixture-tested; a live page returned zero trades and no cursor, so live row normalization remains pending. Two genuine public event-group responses are hash-pinned and replayed through Polymarket/Kalshi adapters. Kalshi MVE listing responses omitted nested members; v10 now fetches one child only when selected by saved parent metadata, validates its market/event identity, and persists rules. The sole captured child is closed and includes fair-price fallback language, so child and combo payoffs remain unverified. Account fees and Kraken account fee applicability remain unknown. API fixtures cover source degradation and recovery; live degraded-source behavior remains unverified. |
 | Canonical normalization and native evidence | PARTIALLY VERIFIED | Distinct event, conditional event and spot forms; v2 Polymarket trades preserve token and outcome identity, while earlier v1 batches still load with those new fields unknown. October 27 event-group capture preserves parent-event title and child outcome text. Kalshi `MarketBatch` v2 stores typed MVE groups with `included`, `empty`, or `omitted` member state; detail responses with a documented top-level empty list replay to zero child markets. Other settlement/payoff semantics remain intentionally unverified. |
-| Relationship matching, immutable review, indexed neighborhoods, and strict payoff verifier | PARTIALLY VERIFIED | Self-attributed review API/UI with stored source refs, append-only revisions, compare-and-set, latest-state replay, query-plan/migration tests, and 1–3 hop left/right indexed scans capped at 500 rows. Centered one-hop keyset and two-/three-hop breadth-first pages bind graph inputs and reject stale cursors; deterministic recomputation and 201-market frontier chunking are tested. Matcher v5 emits exact-ID MVE `source_component_reference` hypotheses only with a matching saved child ticker/event and preserves both observation IDs; the recorded parent/child pair replays offline through the current adapter and matcher. Matcher v4 year-conflict checks remain. The genuine House-control pair is text-only and strict payoff verification rejects same-payoff equivalence. A focused depth-two browser test now passes; authenticated review and revision-history drill-down remain pending. |
-| Economic candidate verifier and independent audit | PARTIALLY VERIFIED | Exact two-venue binary all-long coverage and same-market 3–16-state exhaustive one-hot coverage. Economic model v4 derives the exact adverse full-or-no-fill terminal pattern for up to 16 legs; independent audit v2 rederives it from pinned inputs. A three-leg brute-force fixture agrees, and unknown fees suppress net stress. Fixtures only; no genuine eligible event, independently authenticated market truth, or practical execution proof. |
+| Relationship matching, immutable review, indexed neighborhoods, and strict payoff verifier | PARTIALLY VERIFIED | Self-attributed review API/UI with stored source refs, append-only revisions, compare-and-set, latest-state replay, query-plan/migration tests, and 1–3 hop left/right indexed scans capped at 500 rows. Centered one-hop keyset and two-/three-hop breadth-first pages bind graph inputs and reject stale cursors; deterministic recomputation and 201-market frontier chunking are tested. Matcher v5 emits exact-ID MVE `source_component_reference` hypotheses only with a matching saved child ticker/event and preserves both observation IDs; the recorded parent/child pair replays offline through the current adapter and matcher. Matcher v4 year-conflict checks remain. The genuine House-control pair is text-only and strict payoff verification rejects same-payoff equivalence. Per-market payout currency must match its settlement asset, and the market-level settlement asset must match the payoff record; the USD/USDC regression passes. A focused depth-two browser test now passes; authenticated review and revision-history drill-down remain pending. |
+| Economic candidate verifier and independent audit | PARTIALLY VERIFIED | Exact two-venue binary all-long coverage and same-market 3–16-state exhaustive one-hot coverage. Economic model v4 derives the exact adverse full-or-no-fill terminal pattern for up to 16 legs; independent audit v2 rederives it from pinned inputs. A three-leg brute-force fixture agrees, unknown fees suppress net stress, and payout-denomination mismatches without a valuation bridge fail closed in relationship, candidate, multi-outcome, and independent-audit paths. Fixtures only; no genuine eligible event, independently authenticated market truth, or practical execution proof. |
 | Bounded store and deterministic replay | COMPLETE AND VERIFIED | Schema v6 with additive v2/v3/v4/v5 migrations, immutable replay/comparison records, replay-v6 source lineage from store rows through manifests/candidate legs/Arena snapshots, and direct replay retaining adapter IDs. Replay-v5 output includes fill sensitivity and identity includes effective mappings/proposal limit; prior replay results and observations remain unchanged. |
 | Paired scenario comparison | PARTIALLY VERIFIED | Direct local comparison and API/UI/browser tests pass. Two actual systemd-supervised fixture replays completed over the same pinned inputs and their result hashes verify. The latest run measured worker process CPU/RSS and exposes it in Mission Control. No genuine equivalent live market pair exists. |
-| Frontier API and source configuration | COMPLETE AND VERIFIED | Local reads include hash-verified legacy and cursor-page batches. Polymarket and Kalshi page routes are capability/config/recorded-market gated, bounded to one page and retries, and bind cursors to market and size. Kalshi MVE discovery validates exactly one series/collection/event-ticker filter and does not follow its cursor. Component-detail fetches are bound pre-request to saved selected-leg metadata and post-response to saved market/event identity. API tests verify persistence, mismatch diagnostics, and pre-network rejection of an unreferenced ticker. |
+| Frontier API and source configuration | COMPLETE AND VERIFIED | Local reads include hash-verified legacy and cursor-page batches. Polymarket and Kalshi page routes are capability/config/recorded-market gated, bounded to one page and retries, and bind cursors to market and size. Kalshi MVE discovery validates exactly one series/collection/event-ticker filter and does not follow its cursor. Component-detail fetches are bound pre-request to saved selected-leg metadata and post-response to saved market/event identity. Four focused API regressions verify raw market/book/trade capture retention after post-drain lineage failures, preserve a drained Polymarket v2 page, and ensure earlier successful listings are not duplicated. |
 | Live adapter, API and store evidence | PARTIALLY VERIFIED | Three venue listing/book/trade captures, Polymarket v2 first/continuation pages with distinct IDs, a Kalshi empty cursor page, event-group responses and MVE endpoint responses have hash-pinned evidence. A single selected-child market-detail response is also hash/store verified and has matching saved-parent ticker/event IDs; it contains close lifecycle and native fair-price rule text but no price/book. Kalshi trade-row mapping remains fixture-only. Samples are asynchronous and establish no synchronized prices, complete history, child payout, combo payout, or execution. |
-| Mission Control Frontier workspace | PARTIALLY VERIFIED | Native view includes Polymarket/Kalshi trade-page, event-group and one-page MVE controls; MVE can filter by series, collection or event ticker; saved selected-leg rules, recorded settlement arithmetic, official source links and provenance hashes can be inspected. Graph/review, depth-paged traversal, paired replay, one-sided fill stress, instrument-bound Kalshi order-fee sensitivity, Arena history/results, and venue-separated virtual balance comparison are integrated. The original capital UI checkpoint's Frontier component suite passes 8 tests; typecheck, ESLint, Prettier and the focused depth-two/capital-fragmentation/mobile browser case pass. A follow-up currency-completeness fix adds a regression case that is not yet run or typechecked. The production build after the capital UI change was stopped under rising memory PSI and remains pending. It is not deployed. |
+| Mission Control Frontier workspace | PARTIALLY VERIFIED | Native view includes Polymarket/Kalshi trade-page, event-group and one-page MVE controls; MVE can filter by series, collection or event ticker; saved selected-leg rules, recorded settlement arithmetic, official source links and provenance hashes can be inspected. Graph/review, depth-paged traversal, paired replay, one-sided fill stress, instrument-bound Kalshi order-fee sensitivity, Arena history/results, and venue-separated virtual balance comparison are integrated. The original capital UI checkpoint's Frontier component suite passes 8 tests; typecheck, ESLint, Prettier and the focused depth-two/capital-fragmentation/mobile browser case pass. The UI regression for missing quote currency on any leg and its typecheck remain pending. Backend payout/settlement denomination guards have focused regression coverage. The production build after the capital UI change was stopped under rising memory PSI and remains pending. It is not deployed. |
 | Laboratory/Arena research orchestration | PARTIALLY VERIFIED | Bounded Frontier Arena job type, snapshot, offline executor, API, worker CPU/RSS capture, and workspace history/result view are implemented and tested; two fixture jobs passed the host gate and completed under systemd. Resource sustainability and Laboratory campaign management remain incomplete. |
 | Persistent source collection, streaming and broad historical replay | DEFERRED | No background worker or long-duration campaign. |
 | Cross-venue FX, comprehensive capital and settlement costs | DEFERRED | Unknown costs remain unknown and block decisive net economics. |
@@ -838,9 +856,10 @@ The highest-value next steps are:
    The worker now captures and displays process CPU/RSS, but do not make a
    capacity claim from two tiny same-input runs. Add Laboratory campaign
    management only if a concrete need remains.
-7. Run the focused UI test and typecheck for commit `cca4038` when host memory
-   pressure has eased. Its regression case ensures a missing currency on any
-   leg disables that venue's virtual balance comparison.
+7. Run the focused UI test and typecheck for commit `cca4038` after host memory
+   pressure eases. Its regression case ensures missing currency on any leg
+   disables that venue's virtual balance comparison. The backend USD/USDC
+   fail-closed regression has already passed.
 
 Do not connect Frontier to Reality’s recorder, enable probes as a default,
 deploy, or alter protected evidence as part of ordinary continuation. The next
@@ -922,3 +941,32 @@ typecheck remain the next safe verification action after memory pressure eases.
 The full implementation commit is `cca403886c5dd9f026baf97a8337fa68752e57cc`;
 the report, ledger, and current-state follow-up is
 `528aac29f233dcb364ba00849d4eed240bb500d5`.
+
+## 2026-10-27 13:28 UTC — denomination and capture integrity
+
+Code commit `f6cf347899da981093140b0ec44f03816c46e0d5` rejects verified payoff
+currency/settlement mismatches in relationship verification, binary and
+multi-outcome generation, and the independent audit. The focused USD/USDC
+regression passed within a six-test economics selection. The same commit keeps
+drained Polymarket v2 and generic market/book/trade captures available to failure
+diagnostics after lineage rejection; four focused API tests passed and verify
+raw-body hashes plus no duplicate previously stored listing.
+
+Documentation commit `47254341322d7f2d89ce55147c8ac574be2a4b80` updates the
+README, development guide, current-state handoff, Frontier architecture and
+engineering report, and adds the Frontier operations guide. Ruff and
+`git diff --check` passed. No live request, service, or historical store was
+changed. At the latest `13:28:55Z` resource sample, PSI `avg10` was 39.81%
+(`some`) / 34.86% (`full`); no broad suite or build was attempted.
+
+## 2026-10-27 13:33 UTC — bounded source health count
+
+API review found `SourceHealth.requests_in_window` was populated with the
+transport's lifetime request counter. Code commit
+`3f8a5cabfe209d105d0ddde948f9862cf72fb8fb` now reports a trailing 60-second
+count from a bounded monotonic-time history; per-operation deltas continue to
+use the lifetime counter. The focused adapter regression passed **1 test**
+(`41 deselected`), and Ruff check/format passed. The test uses a patched local
+clock and makes no network request. The architecture, operations, development,
+current-state, and engineering-report notes record this metric in the next
+documentation checkpoint.

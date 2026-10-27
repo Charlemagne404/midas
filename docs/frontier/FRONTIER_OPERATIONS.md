@@ -30,6 +30,9 @@ availability, fills, legal access, or transferability. Preserve source and
 receipt timestamps, raw hashes, adapter versions, quality flags, and each
 exchange's timestamp semantics when evaluating a candidate.
 
+The source health `requests_in_window` value counts request starts in the
+trailing 60 seconds. Reading health is local and makes no source request.
+
 ## Inspecting failed captures
 
 When a bounded API request returns a diagnostic observation ID, read it through

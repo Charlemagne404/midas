@@ -307,6 +307,8 @@ Keep Frontier experiments in a temporary store and use the bounded probe gates
 described by the [Frontier operations guide](frontier/FRONTIER_OPERATIONS.md).
 When a probe returns diagnostic observation IDs, inspect the stored raw hash and
 normalized failure record before changing an adapter.
+The displayed source request count is a bounded trailing 60-second local
+counter; the lifetime count is reserved for per-operation request deltas.
 
 `POST /api/frontier/arena-replay` packages the latest bounded local market,
 book, and effective verified-relationship records into a content-addressed

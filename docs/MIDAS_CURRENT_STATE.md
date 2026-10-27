@@ -275,6 +275,12 @@ focused API tests passed, including byte/hash readback from temporary stores.
 Ruff check and formatting passed for the changed code. These checks used
 fixtures and mock HTTP responses, not live exchange calls.
 
+The source health `requests_in_window` field now counts the trailing 60 seconds
+of bounded monotonic-time request history instead of the transport lifetime
+counter. Commit `3f8a5cabfe209d105d0ddde948f9862cf72fb8fb` adds the metric and a
+focused adapter regression; one test passed. This does not change probe rate
+limits or make health reads call a venue.
+
 At the latest resource sample (`13:28:55Z`), host memory PSI was 39.81%
 (`some`) / 34.86% (`full`) over `avg10`, with 9.1 GB available RAM and about
 553 MiB swap free. Broader test suites, the Frontier production build, and the

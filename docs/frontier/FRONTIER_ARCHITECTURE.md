@@ -33,6 +33,12 @@ native metadata, source URL, adapter/schema versions, raw-body hash, request and
 receipt times, and source-time semantics. Source quality flags are carried forward
 instead of being replaced with guessed values.
 
+Adapter health is local state and does not probe the venue. Its
+`requests_in_window` value counts paced HTTP request starts in the trailing 60
+seconds using monotonic time. The transport keeps a bounded history sized for
+its configured maximum request rate; the separate lifetime `request_count` is
+used only for per-operation request deltas.
+
 Polymarket adapter v3 and Kalshi adapter v8 declare
 `EVENT_MARKET_GROUPS`. Their `discover_event_markets` operations issue one bounded
 public GET, validate the requested native event identity, bound and de-duplicate

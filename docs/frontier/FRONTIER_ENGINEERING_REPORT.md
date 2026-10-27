@@ -1817,6 +1817,27 @@ Code checkpoint `f6cf347899da981093140b0ec44f03816c46e0d5` changes
 `packages/midas/frontier/relationships.py`,
 `tests/frontier/test_api.py`, and
 `tests/frontier/test_relationships_economics_replay.py`.
+Follow-up code checkpoint `3f8a5cabfe209d105d0ddde948f9862cf72fb8fb` fixes
+`SourceHealth.requests_in_window`, which previously exposed the lifetime
+request counter under a window label. It now counts request starts over the
+trailing 60 seconds using a bounded monotonic timestamp history; per-operation
+deltas still use the lifetime count. Its focused regression command was
+`/home/charlie/midas/.venv/bin/pytest -q --tb=short tests/frontier/test_adapters.py -k 'source_health_request_count_is_a_bounded_rolling_window'`;
+it reported **1 passed, 41 deselected**. The code changes
+`packages/midas/frontier/adapters/base.py`,
+`packages/midas/frontier/adapters/transport.py`, and
+`tests/frontier/test_adapters.py`.
+Documentation checkpoint `47254341322d7f2d89ce55147c8ac574be2a4b80` updates
+`README.md`, `docs/DEVELOPMENT.md`, `docs/MIDAS_CURRENT_STATE.md`,
+`docs/frontier/FRONTIER_ARCHITECTURE.md`, this report, and adds
+`docs/frontier/FRONTIER_OPERATIONS.md`. The final ledger identity update is
+tracked separately.
+
+The API regression command, from the Frontier worktree, was
+`/home/charlie/midas/.venv/bin/pytest -q --tb=short tests/frontier/test_api.py -k 'preserves_drained_capture_on_lineage_mismatch or cursor_pages_are_bound_and_persisted'`;
+it reported **4 passed, 31 deselected**. The focused economics selection
+reported **6 passed**. Ruff check and formatting passed for all changed Python
+files; no full test suite or new typecheck was run.
 
 Ruff check and formatting passed for the changed Python files. At `13:28:55Z`,
 host memory PSI `avg10` was 39.81% (`some`) / 34.86% (`full`), available memory
