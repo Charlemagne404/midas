@@ -1865,6 +1865,41 @@ def test_comparison_and_relationship_reads_fail_closed_on_corrupt_rows(tmp_path)
         asyncio.run(http_client.aclose())
 
 
+def test_comparison_reads_fail_closed_when_a_pinned_run_is_corrupt(tmp_path):
+    from midas.frontier.economics import ExecutionScenario
+    from midas.frontier.replay import paired_deterministic_replay
+
+    client, registry, http_client, _, store = _client(tmp_path, hold_sources=True)
+    comparison_result, comparison_arms = paired_deterministic_replay(
+        (),
+        (),
+        scenarios=(
+            ExecutionScenario(name="corrupt-dependency-baseline"),
+            ExecutionScenario(name="corrupt-dependency-stress", slippage_bps="5"),
+        ),
+        code_version="frontier-corrupt-dependency-fixture-v1",
+    )
+    store.append_paired_comparison(comparison_arms, comparison_result)
+    with sqlite3.connect(store.path) as connection:
+        connection.execute("DROP TRIGGER research_runs_no_update")
+        connection.execute(
+            "UPDATE research_runs SET result_json='{}' WHERE run_id=?",
+            (comparison_arms[0].run_id,),
+        )
+    try:
+        for path in (
+            "/api/frontier/comparisons",
+            f"/api/frontier/comparisons/{comparison_result.comparison_id}",
+        ):
+            response = client.get(path)
+            assert response.status_code == 409, (path, response.text)
+            assert response.json()["detail"] == "Stored replay payload is invalid"
+    finally:
+        client.close()
+        asyncio.run(registry.aclose())
+        asyncio.run(http_client.aclose())
+
+
 def test_readiness_recognizes_only_completed_hash_verified_arena_evidence(tmp_path):
     from midas.arena.artifacts import atomic_json
     from midas.arena.frontier_replay import (

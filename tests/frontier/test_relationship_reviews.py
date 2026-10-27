@@ -263,6 +263,45 @@ def test_rejection_is_a_separate_self_attributed_immutable_decision(tmp_path):
         _close(client, registry, http_client)
 
 
+def test_relationship_listing_fails_closed_on_a_corrupt_review_record(tmp_path):
+    client, registry, http_client, store = _client(tmp_path)
+    left, right, evidence = _seed_pair(store)
+    try:
+        proposals = client.post("/api/frontier/relationships/propose")
+        candidate = next(
+            item
+            for item in proposals.json()["items"]
+            if {item["left_market_id"], item["right_market_id"]}
+            == {left.canonical_id, right.canonical_id}
+        )
+        reviewed = client.post(
+            f"/api/frontier/relationships/{candidate['relationship_id']}/review",
+            json={
+                "decision": "ambiguous",
+                "reviewer_label": "fixture-reviewer",
+                "reason": "Keep the relationship unresolved in this fixture.",
+                "evidence_observation_ids": evidence,
+            },
+        )
+        assert reviewed.status_code == 200, reviewed.text
+        review_id = reviewed.json()["review"]["review_id"]
+        with sqlite3.connect(store.path) as connection:
+            connection.execute("DROP TRIGGER relationship_reviews_no_update")
+            connection.execute(
+                "UPDATE relationship_reviews SET review_json='{}' WHERE review_id=?",
+                (review_id,),
+            )
+
+        response = client.get("/api/frontier/relationships?limit=100")
+        assert response.status_code == 409
+        assert (
+            response.json()["detail"] == "Stored relationship evidence is not readable: "
+            "Stored relationship review hash does not match its payload"
+        )
+    finally:
+        _close(client, registry, http_client)
+
+
 def test_review_evidence_must_include_stored_records_for_both_markets(tmp_path):
     client, registry, http_client, store = _client(tmp_path)
     left, right, evidence = _seed_pair(store)
