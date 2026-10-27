@@ -12,7 +12,7 @@ from datetime import UTC, datetime
 from decimal import Decimal
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Literal, cast
 from urllib.parse import parse_qs, urlsplit
 
 from fastapi import APIRouter, HTTPException, Query
@@ -2010,7 +2010,7 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
             raise HTTPException(status_code=404, detail="Stored Frontier observation was not found")
         if item["venue"] in held_venues:
             reject_held_venue(Venue(item["venue"]))
-        return item
+        return cast(dict[str, Any], item)
 
     @api.get("/relationships")
     async def relationships(
@@ -2675,7 +2675,7 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
                 status_code=409,
                 detail="Replay comparison depends on source data held from research use",
             )
-        return item
+        return cast(dict[str, Any], item)
 
     @api.post("/replay/compare")
     async def compare_replay(scenarios: PairedReplayRequest) -> dict[str, Any]:
@@ -2808,7 +2808,7 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
             store.append_replay(result)
         except FrontierStoreError as error:
             raise HTTPException(status_code=409, detail=str(error)) from error
-        return result.model_dump(mode="json")
+        return cast(dict[str, Any], result.model_dump(mode="json"))
 
     @api.get("/readiness")
     async def readiness() -> dict[str, Any]:
@@ -2833,6 +2833,11 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
             "incomplete": 0,
             "not_evaluated": 0,
         }
+        timing_counts = {
+            "within_bounds": 0,
+            "outside_bounds": 0,
+            "not_recorded": 0,
+        }
         for run in recent_runs:
             result = run.get("result")
             candidates = result.get("candidates", []) if isinstance(result, dict) else []
@@ -2841,6 +2846,14 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
                 disposition = audit.get("disposition") if isinstance(audit, dict) else None
                 if disposition in audit_counts:
                     audit_counts[disposition] += 1
+                if isinstance(audit, dict):
+                    timing_verified = audit.get("recomputed_timing_verified")
+                    if timing_verified is True:
+                        timing_counts["within_bounds"] += 1
+                    elif timing_verified is False:
+                        timing_counts["outside_bounds"] += 1
+                    else:
+                        timing_counts["not_recorded"] += 1
         audit_count = sum(audit_counts.values())
         audit_state = (
             "DISAGREEMENT"
@@ -2888,7 +2901,14 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
                 {
                     "name": "source_quality",
                     "state": "REVIEW_REQUIRED" if eligible_observation_count else "NOT_ESTABLISHED",
-                    "detail": "Freshness, completeness, source timestamp semantics, and venue limits must be inspected on each observation.",
+                    "detail": (
+                        "Freshness, completeness, source timestamp semantics, and venue limits "
+                        "must be inspected on each observation. In the latest "
+                        f"{len(recent_runs)} replay run(s), pinned-book timing checks were "
+                        f"within bounds for {timing_counts['within_bounds']} candidates, "
+                        f"outside bounds for {timing_counts['outside_bounds']}, and not "
+                        f"recorded for {timing_counts['not_recorded']}."
+                    ),
                 },
                 {
                     "name": "source_data_use_permissions",

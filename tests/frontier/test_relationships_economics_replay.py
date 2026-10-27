@@ -1286,6 +1286,43 @@ def test_candidate_generation_and_independent_audit_enforce_price_ticks():
     assert "violates its instrument tick size" in audited.independent_audit.message.lower()
 
 
+def test_multi_outcome_candidate_and_audit_enforce_price_ticks():
+    event = _multi_outcome_market()
+    books = _multi_outcome_books(event)
+    candidate = generate_multi_outcome_coverage_candidate(
+        event, books, as_of_utc=T0 + timedelta(milliseconds=100)
+    )
+    assert candidate.legs
+
+    tick_event = event.model_copy(
+        update={
+            "instruments": tuple(
+                item.model_copy(update={"tick_size": Decimal("0.25")}) for item in event.instruments
+            )
+        }
+    )
+    tick_books = _multi_outcome_books(tick_event)
+    rejected = generate_multi_outcome_coverage_candidate(
+        tick_event, tick_books, as_of_utc=T0 + timedelta(milliseconds=100)
+    )
+    assert rejected.classification == OpportunityClassification.INCOMPLETE_EVIDENCE
+    assert not rejected.legs
+    assert any("tick-size" in reason for reason in rejected.reasons)
+
+    audited = independently_audit_candidate(
+        candidate.model_copy(update={"independent_audit": None}),
+        markets={tick_event.canonical_id: tick_event},
+        books_by_market={tick_event.canonical_id: tick_books},
+        relationships={},
+        state_mappings={},
+        instrument_mappings={},
+        scenario=ExecutionScenario(),
+    )
+    assert audited.independent_audit is not None
+    assert audited.independent_audit.disposition.value == "disagreement"
+    assert "violates its instrument tick size" in audited.independent_audit.message.lower()
+
+
 def test_slippage_that_exceeds_binary_payout_is_rejected_as_unsupported():
     left, right, relationship, instrument_mapping = _verified_pair()
     left_books, right_books = _books(left, right)

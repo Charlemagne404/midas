@@ -40,6 +40,7 @@ from midas.frontier.relationships import (
     RelationshipType,
     VerificationState,
     propose_relationships,
+    verify_same_payoff,
 )
 from midas.frontier.storage import FrontierStore
 
@@ -1603,6 +1604,82 @@ def test_readiness_separates_arena_configuration_from_worker_runtime_validation(
         assert "no completed Arena replay evidence" in gate["detail"]
     finally:
         configured.close()
+        asyncio.run(registry.aclose())
+        asyncio.run(http_client.aclose())
+
+
+def test_readiness_reports_pinned_candidate_timing_audit_counts(tmp_path):
+    from midas.frontier.economics import ExecutionScenario
+    from midas.frontier.replay import deterministic_replay
+
+    client, registry, http_client, _, store = _client(tmp_path)
+    left = market(Venue.POLYMARKET, "readiness-left")
+    right = market(Venue.KALSHI, "readiness-right")
+    instrument_mapping = {
+        left.instruments[0].native_instrument_id: right.instruments[0].native_instrument_id,
+        left.instruments[1].native_instrument_id: right.instruments[1].native_instrument_id,
+    }
+    relationship = verify_same_payoff(
+        left,
+        right,
+        state_mapping={"yes": "yes", "no": "no"},
+        instrument_mapping=instrument_mapping,
+        external_assertion_id="readiness-timing-fixture",
+        evidence_observation_ids=("readiness-left", "readiness-right"),
+        asserted_at_utc=T0,
+    )
+    left_books = tuple(
+        book(left, item.native_instrument_id, ask)
+        for item, ask in zip(left.instruments, ("0.40", "0.65"), strict=True)
+    )
+    right_books = tuple(
+        book(right, item.native_instrument_id, ask)
+        for item, ask in zip(right.instruments, ("0.55", "0.45"), strict=True)
+    )
+    all_books = left_books + right_books
+    canonical_instrument_mapping = (
+        instrument_mapping
+        if relationship.left_market_id == left.canonical_id
+        else {right_id: left_id for left_id, right_id in instrument_mapping.items()}
+    )
+    replay_kwargs = {
+        "verified_relationships": (relationship,),
+        "state_mappings": {relationship.relationship_id: {"yes": "yes", "no": "no"}},
+        "instrument_mappings": {relationship.relationship_id: canonical_instrument_mapping},
+        "scenario": ExecutionScenario(),
+        "as_of_utc": T0 + timedelta(milliseconds=100),
+    }
+    no_clock_replay = deterministic_replay(
+        (left, right), all_books, code_version="readiness-timing-unverified", **replay_kwargs
+    )
+    store.append_replay(no_clock_replay)
+    quantified_books = tuple(
+        item.model_copy(
+            update={
+                "provenance": item.provenance.model_copy(
+                    update={"clock_uncertainty_ms": Decimal(1)}
+                )
+            }
+        )
+        for item in all_books
+    )
+    bounded_clock_replay = deterministic_replay(
+        (left, right),
+        quantified_books,
+        code_version="readiness-timing-bounded",
+        **replay_kwargs,
+    )
+    store.append_replay(bounded_clock_replay)
+
+    try:
+        response = client.get("/api/frontier/readiness")
+        assert response.status_code == 200
+        gate = next(item for item in response.json()["gates"] if item["name"] == "source_quality")
+        assert "within bounds for" in gate["detail"]
+        assert "outside bounds for" in gate["detail"]
+        assert "not recorded for 0" in gate["detail"]
+    finally:
+        client.close()
         asyncio.run(registry.aclose())
         asyncio.run(http_client.aclose())
 
