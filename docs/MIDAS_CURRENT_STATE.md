@@ -1000,3 +1000,19 @@ venue-wide measurement, synchronized executable quotes, positive net economics,
 or live multi-venue validation. See the [mission ledger](frontier/FRONTIER_MISSION_LEDGER.md)
 and [engineering report](frontier/FRONTIER_ENGINEERING_REPORT.md) for the full
 checkpoint, remaining acceptance gaps, and continuation work.
+
+## Frontier event-time replay checkpoint — 2026-10-27 22:24 UTC
+
+Code commit `30576f1` adds an offline engine in
+`packages/midas/frontier/timeline.py` that replays
+repeated books at bounded UTC cutoffs, records stale/missing/source-interrupted
+legs, prevents use of pre-interruption quotes until a new snapshot is observed,
+and excludes relationship verifications that postdate a frame. Four fixture
+tests cover deterioration, expiry boundaries, source interruption/recovery,
+input-order reproducibility, and future-verification lookahead. The full
+`tests/frontier` suite passes **283/283** in 70.69 seconds wall at **355,720 KiB
+peak RSS**, zero swaps; strict mypy, Ruff, and `git diff --check` pass. The
+focused timeline suite passes **4/4** in 0.69 seconds at **54,864 KiB peak RSS**.
+This is engine-level verification only: the timeline is not yet exposed in the
+API, persisted through Arena, or surfaced in Mission Control. Frontier remains
+research-only, isolated, undeployed, and **PARTIALLY VERIFIED**.

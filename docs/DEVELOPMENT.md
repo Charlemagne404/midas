@@ -381,6 +381,21 @@ bounded local scan. It reports `EVIDENCE_RECORDED` after that check and
 runs do not establish sustainable capacity or replace a representative workload
 profile.
 
+For offline event-time replay over repeated instrument books, use
+`midas.frontier.timeline.deterministic_timeline_replay`. The engine accepts
+explicit fixture/recorded source-state events and bounded UTC evaluation times;
+it expires stale books and invalidates pre-outage quotes until new book evidence
+arrives. It calls the existing deterministic replay and independent audit for
+each frame and hashes the complete input and result. Verify it with:
+
+```bash
+env PYTHONPATH=packages:.:tests /home/charlie/midas/.venv/bin/pytest tests/frontier/test_timeline.py -q
+MYPYPATH=packages /home/charlie/midas/.venv/bin/mypy --strict --follow-imports=silent packages/midas/frontier/timeline.py
+```
+
+This Python API is offline and bounded, but is not yet wired into the Frontier
+HTTP API, persisted Arena jobs, or the Mission Control timeline view.
+
 Relationship decisions use `POST /api/frontier/relationships/{id}/review`. The
 review form records source market observation IDs and appends a linked revision;
 it cannot bypass the same-payoff verifier. Reviewer labels and external assertion

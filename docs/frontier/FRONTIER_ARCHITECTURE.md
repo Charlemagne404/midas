@@ -21,6 +21,7 @@ as mutable Frontier storage.
 | Virtual capital-duration sensitivity | `capital.py` | Recomputes unrounded simple-interest carry from explicit per-venue user assumptions, candidate capital, hash-checked future settlement metadata, and a bounded scenario-only post-settlement release delay; an independent arithmetic pass cannot change candidate classification. |
 | Durable evidence | `storage.py` | Append-only, size- and row-bounded SQLite observations, markets, relationship reviews/revisions, runs, and paired comparisons. |
 | Replay | `replay.py` | Stable input ordering, scenario/mapping/proposal-limit-aware replay identities, exact store-record provenance for API-loaded models, deterministic results, and paired assumption comparisons. |
+| Event-time replay | `timeline.py` | Offline bounded replay over repeated book updates, source-state events, and explicit cutoffs; freshness, outage invalidation, candidate summaries, and timeline hashes. |
 | Arena paired replay | `packages/midas/arena/frontier_replay.py`, `arena/jobs.py` | Immutable content-addressed input snapshots, a bounded offline paired-replay worker, and hash-verified result artifacts under Arena's existing admission gate. |
 | HTTP API | `apps/api/frontier.py` | Bounded local queries and graph neighborhoods, relationship proposals/reviews, deterministic and paired replay, config-gated market/event-group/MVE/component capture, raw/hash/identity-checked saved Kalshi fee evidence for later replay, fee sensitivities, exact-run-bound virtual capital carry, and read-only coverage analytics. |
 | Mission Control workspace | `apps/web/src/Frontier.tsx` | Sources, markets/books/event context, coverage and source-quality analytics, one-page Kalshi MVE discovery and explicit selected-component rule capture, relationship hypotheses, candidates, venue-separated balances and settlement-duration sensitivity, local comparisons, bounded Arena replay history/results, and readiness. |
@@ -774,6 +775,24 @@ process peak RSS when present. Resource sustainability remains `NOT_MEASURED`
 because two bounded executions over the same fixture do not establish
 sustainable capacity.
 
+`timeline.py` adds an offline event-time engine for evidence containing multiple
+observations of one instrument. It accepts at most 100 markets, 200 books, 100
+verified relationships, 100 source-state events, 500 instrument identities, 128
+evaluation frames, 32 MiB of normalized inputs, and a 16 MiB result. Each frame
+uses only market and relationship evidence available by its UTC cutoff and the
+latest book for each instrument that is still within the configured age. A
+degraded or unavailable source excludes its books; after an interruption, a
+newer successful book is required before that venue's quotes can re-enter a
+frame. The engine records `unreported`, `fixture`, `scenario`, or `recorded`
+source-state provenance, book selection/exclusion reasons, candidate
+classification summaries, and deterministic replay/result hashes. It reuses
+`deterministic_replay` and its independent economic audit for every frame. It
+performs no adapter calls and writes no evidence itself.
+
+This is currently an engine-level capability only. It is not yet exposed by the
+Frontier API, persisted as an Arena artifact, or rendered in Mission Control;
+the existing Arena worker still supports cross-sectional paired snapshots.
+
 ## API and UI behavior
 
 `GET /api/frontier/overview`, `/sources`, `/markets`, `/books`, `/trades`,
@@ -848,7 +867,8 @@ There are no persistent source workers, incremental order-book streams, full
 venue-wide universe scans, FX conversion, derivatives, capital transfer model,
 multi-leg solver, automatic semantic certification, authenticated reviewer or
 assertion verification, full-universe graph search,
-Laboratory campaign integration, or production deployment. The bounded Arena
+Laboratory campaign integration, event-time timeline job integration, or
+production deployment. The bounded Arena
 job integration has completed under the systemd supervisor after normal host
 admission. The latest controlled fixture run produced process CPU and peak RSS
 measurements; broader runtime behavior and resource sustainability remain

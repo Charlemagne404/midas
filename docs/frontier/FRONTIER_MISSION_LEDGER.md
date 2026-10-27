@@ -2762,3 +2762,33 @@ MYPYPATH=packages /home/charlie/midas/.venv/bin/mypy --strict --follow-imports=s
 corepack pnpm --dir apps/web exec vite build --outDir /tmp/midas-frontier-build-20261027-2206
 corepack pnpm --dir apps/web exec playwright test e2e/frontier.spec.ts --grep 'Frontier workspace uses isolated research state and remains responsive' --workers=1
 ```
+
+## Bounded event-time replay checkpoint — 2026-10-27 22:24 UTC
+
+Code commit **`30576f1`** adds `packages/midas/frontier/timeline.py` and
+`tests/frontier/test_timeline.py`. The offline event-time engine handles
+repeated book observations per instrument, explicit cutoffs, freshness expiry,
+source degradation/outage/recovery, and relationship evidence timing. It
+reuses existing deterministic replay and independent economic auditing per
+frame. It pins the normalized inputs and each replay frame, reports selected
+observation IDs and exclusion reasons, and rejects pre-interruption books until
+a new post-interruption snapshot arrives. It does not assume executable fills.
+
+The four new tests cover quote deterioration, exact freshness-boundary and
+stale-leg behavior, source interruption and revalidation, reproducibility under
+input reordering, and prevention of future relationship/source-state lookahead.
+Final verification: `tests/frontier` **283/283**, 69.44 seconds pytest time /
+70.69 seconds wall, **355,720 KiB peak RSS**, zero swaps; timeline-only tests
+**4/4**, 0.69 seconds, **54,864 KiB peak RSS**, zero swaps; strict mypy for the
+new module, Ruff check/format, and `git diff --check` pass. The only suite
+warning is the existing Starlette/httpx TestClient deprecation.
+
+Documentation updates are in `docs/frontier/FRONTIER_ARCHITECTURE.md`,
+`docs/frontier/FRONTIER_ENGINEERING_REPORT.md`,
+`docs/DEVELOPMENT.md`, and `docs/MIDAS_CURRENT_STATE.md`. No API, source,
+protected service, held capture, production store, or Arena job was used. The
+engine remains unavailable through the HTTP API, Arena artifact flow, and
+Mission Control; those are outstanding integration tasks. Overall Frontier
+remains **PARTIALLY VERIFIED**, isolated, research-only, and undeployed. Next
+safe engineering work is bounded restart-safe collection and local Arena
+timeline integration, with no persistent worker launch.

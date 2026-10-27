@@ -4263,3 +4263,45 @@ tests, while Project Frontier remains **PARTIALLY VERIFIED**, research-only,
 isolated, and undeployed. Kalshi/Kraken permissions, genuine live cross-venue
 payoff validation, executable synchronization/capital assumptions, and
 production eligibility remain unresolved.
+
+### Event-time replay checkpoint — 2026-10-27 22:24 UTC
+
+Code commit **`30576f1`** adds the offline engine in
+`packages/midas/frontier/timeline.py` and its four fixture cases in
+`tests/frontier/test_timeline.py`. It extends saved-input
+replay from one cross-sectional book set to a bounded sequence of observation
+times. It orders the input deterministically, pins normalized market/book and
+relationship evidence in a manifest, applies only market metadata and verified
+relationships available by each UTC cutoff, and selects the latest book per
+instrument only while it remains within the configured freshness window.
+Degraded/unavailable source events remove that venue's books; a recovery event
+does not revive pre-interruption quotes, so each leg needs a later book
+observation. Missing or expired legs are passed to the existing replay and
+independent arithmetic audit as absent evidence and are reported as incomplete,
+never as held-forward prices.
+
+The result includes per-frame source state, per-instrument observation identity,
+age and inclusion/exclusion reason, candidate classification and economic
+summary, plus the deterministic replay and timeline hashes. Recorded source
+events require a SHA-256-shaped observation reference; the engine does not load
+or authenticate that referenced store row. Fixture and scenario events remain
+explicitly labelled. Inputs are capped at 100 markets, 200 books, 100 verified
+relationships, 100 source events, 500 instruments, and 128 frames; normalized
+input and result bounds are 32 MiB and 16 MiB.
+
+Four fixture cases cover quote deterioration, exact freshness-boundary behavior,
+source outage/recovery invalidation, deterministic input-order independence,
+and exclusion of a relationship verified after an earlier frame. The focused
+timeline tests pass **4/4** in 0.69 seconds, at **54,864 KiB peak RSS** and zero
+swaps. The final complete `tests/frontier` run passes **283/283** in 69.44
+seconds pytest time / 70.69 seconds wall, at **355,720 KiB peak RSS** and zero
+swaps; only the existing Starlette/httpx `TestClient` deprecation warning
+remains. Strict mypy passes for `timeline.py`; Ruff check/format and
+`git diff --check` pass.
+
+This work is currently engine-level only. It is not API-accessible, persisted
+through Arena's job/artifact path, or visible in the dashboard. Cross-sectional
+paired snapshots remain the only Arena replay job. No external API, source
+capture, protected service, campaign, Arena worker, or production store was
+used. Frontier remains **PARTIALLY VERIFIED**, research-only, and undeployed;
+event-time Arena integration is a next engineering task.
