@@ -73,11 +73,17 @@ require a network ID and asset reference. Market and payoff identities must
 agree, and cross-venue verification compares the complete identity, so the
 same ticker on different networks is not equivalent. This normalized identity
 is not independent source proof. Kalshi currently identifies its event
-settlement as `fiat:USD`; Polymarket still lacks an attested settlement asset
-and verified payoff, so current cross-venue verification continues to fail
-closed. Token-settled opportunities remain unsupported until an adapter
-provides the exact identity from source evidence and all other payoff and
-valuation requirements are met.
+settlement as `fiat:USD`. Polymarket Gamma v2 position-backed markets map to the
+documented pUSD contract on Polygon; the adapter routes their books to the
+official SDK's v2 CLOB host. Gamma v1 CTF-token markets retain no canonical
+settlement identity. The pUSD mapping is protocol-level evidence, not a
+market-specific payout attestation, and Polymarket payoff and resolution
+remain unverified. The v2 host path is fixture-tested but live validation is
+pending. The current [Polymarket SDK protocol table](https://github.com/Polymarket/rs-clob-client-v2/blob/main/README.md),
+[Polygon deployment manifest](https://github.com/Polymarket/polymarket-v2-external/blob/main/README.md),
+and [collateral adapter source](https://github.com/Polymarket/ctf-exchange-v2/blob/main/src/adapters/CtfCollateralAdapter.sol)
+are the mapping references. Cross-venue opportunity verification still fails
+closed; no USD-to-pUSD valuation bridge is enabled.
 Event-group observations participate in
 latest-record selection and graph revision identity, so replay and paged reads
 cannot silently retain older child-only metadata.

@@ -1079,3 +1079,35 @@ Token/network fixtures are controlled examples, not live market evidence.
 Implementation commit: `e0529c5` (`Add canonical Frontier settlement asset
 identities`). Architecture, current-state, and engineering-report updates are
 in the documentation checkpoint accompanying this ledger entry.
+
+## 2026-10-27 — Polymarket position-backed book route
+
+Official Polymarket SDK and deployed-contract references distinguish the
+legacy CTF-token route from its position-backed route. Adapter v5 now sends
+Gamma v2 position IDs to `clob-v2.polymarket.com`, normalizes the documented
+Polygon pUSD settlement identity (`eip155:137`, token
+`0xc011a7e12a19f7b1f670d46f03b03f3342e82dfb`), and labels its book unit PUSD.
+It preserves Gamma v1 CTF-token books on the legacy public CLOB host, while
+leaving their canonical settlement identity absent. Both payoff paths remain
+unverified, so these changes do not enable cross-venue candidate verification.
+
+The v2 route is fixture-tested and live validation is pending: one direct
+unauthenticated GET attempt to the official v2 host could not resolve DNS from
+this development environment. A separate one-request v1-host probe on
+2026-10-27 returned HTTP 200 at `14:16:33.559710Z`, with the saved Gamma
+condition and asset IDs matching. Its 2,514-byte body SHA-256 is
+`cecdb8d4f14fa61a7039e1559a52e02c2e7819a0342566f5d07d829841bc9aef`; the raw
+body and parent listing observation reference are preserved in
+`data/frontier/live-probes/2026-10-27-polymarket-clob-v1-book-r1.json`.
+
+The full adapter module passed 44 tests and the full Frontier API module passed
+35 tests with one existing Starlette/httpx deprecation warning. The new v2
+fixtures cover host routing, PUSD identity, unauthenticated GET behavior, and
+market-version/provenance mismatch rejection. No authenticated request,
+service change, or deployment occurred. Official mapping references are the
+[Polymarket SDK protocol table](https://github.com/Polymarket/rs-clob-client-v2/blob/main/README.md),
+[Polygon V2 deployment manifest](https://github.com/Polymarket/polymarket-v2-external/blob/main/README.md),
+and [collateral adapter source](https://github.com/Polymarket/ctf-exchange-v2/blob/main/src/adapters/CtfCollateralAdapter.sol).
+Implementation commit `2c7bacc517e7a273d2a4f6490a01f9174b82fef1`
+(`Route Polymarket position markets through v2 CLOB`) includes adapter v5,
+fixture tests, and the raw v1 book capture.

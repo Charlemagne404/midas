@@ -117,7 +117,7 @@ in `data/frontier/live-probes/2026-10-27-kalshi-mve-component-market-r1.json`.
 This child-level source observation does not verify combo payout or economics,
 and the Frontier branch remains undeployed.
 
-The current isolated branch is Kalshi adapter v13, Polymarket adapter v4, and
+The current isolated branch is Kalshi adapter v13, Polymarket adapter v5, and
 Kraken Spot adapter v2. It retains Kalshi's optional
 `yes_settlement_value_dollars` component field and adds a local-only arithmetic
 audit comparing the recorded selected-component product with the parent MVE's
@@ -138,6 +138,24 @@ Commit `364478853908272f5b860758fa0bb18b52b3efc8` tightens finality handling:
 the local audit now requires explicit `is_provisional=false` and returns the
 versioned algorithm/finality fields in schema v2. Focused unit, API, and UI
 checks pass; live settlement values remain unavailable.
+
+### Polymarket versioned book and settlement mapping
+
+Polymarket adapter v5 routes Gamma `version=v1` CTF-token books to
+`clob.polymarket.com` and `version=v2` position-ID books to the documented
+`clob-v2.polymarket.com` host. For v2 positions, it maps settlement to pUSD on
+Polygon (`eip155:137`, token address
+`0xc011a7e12a19f7b1f670d46f03b03f3342e82dfb`); market payoff and resolution
+remain unverified. V1 market settlement identity remains absent because the
+Gamma asset-ID schema alone does not attest a market's collateral route.
+
+A bounded v1-host live book probe at `2026-10-27T14:16:33.559710Z` returned
+HTTP 200 and is preserved in
+`data/frontier/live-probes/2026-10-27-polymarket-clob-v1-book-r1.json`. The
+earlier direct request to the documented v2 host failed DNS resolution from
+this development environment. The v2 route is therefore fixture-tested and
+live validation remains pending. No order, authenticated call, or service
+change was made.
 
 Verification for this checkpoint: the full Python Frontier/Arena suite passed
 148 tests before only the output's official-source-link field was added; the
@@ -338,13 +356,18 @@ reference, and relationship verification, opportunity generation, and the
 independent audit require the market and payoff identities to agree exactly.
 The token-ticker fixture verifies for the same identity and is rejected when
 the network differs. Kalshi event contracts normalize to `fiat:USD`.
-Polymarket settlement identity remains absent and its payoff unverified, so
-the schema change creates no live cross-venue economic claim. The identity is
-normalized evidence, not an independent source attestation.
+Polymarket Gamma v2 position markets now map to pUSD on Polygon; v1 markets
+remain without a canonical settlement identity. Both Polymarket payoff paths
+remain unverified, so the mapping creates no live cross-venue economic claim.
+The identity is normalized protocol evidence, not an independent market
+payout attestation. V2 book routing is fixture-verified; live host validation
+is pending, while a separate current v1-host book capture is recorded.
 
 Focused regression verification on this checkpoint passed: 25 relationship,
 economics, and replay tests; 60 adapter, storage, and replay-comparison tests;
 two API tests; two Frontier UI tests; TypeScript typecheck; Ruff; ESLint; and
 Prettier. No full repository suite, production frontend bundle, live token
-integration, or browser E2E was run. The exact commands and interpretation are
-recorded in the Frontier engineering report.
+integration, or browser E2E was run for the schema checkpoint. The subsequent
+v1-host public snapshot and unresolved v2 hostname attempt are documented in
+the Polymarket route subsection and live-probe manifest. The exact test
+commands and interpretation are recorded in the Frontier engineering report.

@@ -201,7 +201,7 @@ submission route.
 
 | Venue | Implemented public research | Preserved distinctions and limits | Live evidence |
 | --- | --- | --- | --- |
-| Polymarket | Gamma market discovery; CLOB books; legacy public trades; cursor-paginated Data API v2 trade pages; native token/condition/event IDs; strict market normalization, supported fee-shape handling, and bounded parent-event group capture | Event outcomes are not marked payoff-verified; settlement asset and resolution meaning are not independently attested; no incremental book stream or candle normalization; fee schedules expire after five minutes and unsupported exponents remain unknown; v2 condition history is fixed to three years and page capture uses taker-only trades with a 0.01-share floor | Earlier live API evidence persisted one listing, one book, and ten trades through the older trade path. A direct v2 first page and one continuation through the local API route each returned ten rows and were hash-verified via isolated stores; no third page was requested. A separate one-market listing captured a market-specific `zero_fees` schedule at 20:41:18.972060Z, with `feesEnabled=true`, exponent 1, taker-only, rate 0; normalized status was verified only through 20:46:18.972Z. |
+| Polymarket | Gamma v1 CTF-token and v2 position-ID discovery; v1-host public CLOB books; v2 position books routed to the documented `clob-v2` host; legacy public trades and cursor-paginated Data API v2 pages; native token/condition/event IDs; strict normalization, supported fee-shape handling, and bounded parent-event group capture | V1 settlement identity remains absent. V2 position markets map to the documented Polygon pUSD token identity, but market-specific payout and resolution remain unverified. The v2 book route is fixture-tested only because `clob-v2.polymarket.com` did not resolve from this development host. No incremental book stream or candle normalization; fee schedules expire after five minutes and unsupported exponents remain unknown; v2 condition history is fixed to three years and page capture uses taker-only trades with a 0.01-share floor. | Earlier live API evidence persisted one listing, one book, and ten trades through the older trade path. A direct v2 first page and one continuation through the local API route each returned ten rows and were hash-verified via isolated stores; no third page was requested. A one-market listing captured a market-specific `zero_fees` schedule at 20:41:18.972060Z, with `feesEnabled=true`, exponent 1, taker-only, rate 0; normalized status was verified only through 20:46:18.972Z. The 2026-10-27 v1-host book probe returned HTTP 200, 58 bid levels and 8 ask levels, body SHA `cecdb8d4f14fa61a7039e1559a52e02c2e7819a0342566f5d07d829841bc9aef`; this is one current public snapshot, not V2-host or settlement validation. |
 | Kalshi | Public market listing and ticker-bound detail; binary YES/NO instruments; public book snapshots/trades; ticker-filtered cursor trade pages; event/series fee metadata; one-fill and one-order taker-fee sensitivities; bounded event groups and MVE event discovery; adapter v10 retains v4 normalization of up to 64 native MVE selected component references | MVE selected legs remain conditional source assertions, not verified component rules, combo payoff, or settlement equivalence. Adapter v10 adds a single-market detail GET only for a child ticker referenced by a saved parent MVE; the API checks market and event identity, persists the raw/normalized row, and includes `market_metadata` in market query and graph revisions. Adapter v8 accepts the documented top-level empty event-market array when the event-level field is omitted; v9 adds the single-event `tickers` filter. Asks are derived from complementary YES/NO bids where applicable. Trade pages normalize `yes_price_dollars` as a YES-price reference and preserve `no_price_dollars` and taker fields only in raw evidence; no BUY/SELL aggressor direction is inferred. Fee sensitivity remains manual, not a candidate/account fee schedule; actual account precision, maker/mixed-order behavior, FCM charges, scheduled changes, and full candidate fee applicability remain unresolved. No stream or historical-candle normalization. | Earlier listing/book/trade/event/fee captures remain hash-pinned. The one MVE child capture returned HTTP 200 with raw SHA `0f1c3cd42cac5202ca5a3012d58cb8d9631bf39cce313c738bb0448140271eda` and temporary-store row SHA `a2e7ae0c08436155a0bdc80e07f16d6b882eaf9706617994be135b668ec5897a`. Its source ticker and event matched the saved parent reference; the child was closed and its rules describe fair-price fallbacks. It contains no child book/price, does not establish combo payoff, and does not create cross-venue economics. |
 | Kraken Spot | Configured-pair AssetPairs metadata; public depth, trades and OHLC; pair tick/lot/minimum fields retained | Spot is a base/quote instrument, not an event payoff. Fee tier, account eligibility, custody, and event hedge semantics are unknown. Pair discovery is an explicit allowlist. | Bounded live API capture persisted XBT/USD metadata, depth with 10 asks/10 bids and per-level timestamps, and ten trades. No prediction-contract equivalence was found. |
 
@@ -2032,11 +2032,19 @@ requires an explicit network ID and asset reference. The payoff and market
 identities must agree; relationship verification, candidate generation, and
 the independent verifier compare the complete identities. The equivalence
 verifier is v3, the economic model is v5, and adapter versions are Kalshi v13,
-Polymarket v4, and Kraken Spot v2. Historical records without the optional
+Polymarket v5, and Kraken Spot v2. Historical records without the optional
 identity still load, but fail closed for verified payoff comparison.
 
-The Polymarket adapter continues to leave settlement identity absent and its
-payoff unverified. Kalshi normalizes supported event settlement as `fiat:USD`.
+Kalshi normalizes supported event settlement as `fiat:USD`. The Polymarket
+adapter maps Gamma v2 position-backed markets to the documented pUSD token on
+Polygon (`eip155:137`, `0xc011a7e12a19f7b1f670d46f03b03f3342e82dfb`) and routes
+their public book GETs to `clob-v2.polymarket.com`. Gamma v1 CTF-token markets
+remain without a canonical settlement identity. The v2 mapping comes from the
+source protocol contract and is not an independent market-specific payout
+attestation; both Polymarket payoff and resolution remain unverified. Official
+references are the [Polymarket SDK protocol table](https://github.com/Polymarket/rs-clob-client-v2/blob/main/README.md),
+[Polygon V2 deployment addresses](https://github.com/Polymarket/polymarket-v2-external/blob/main/README.md),
+and the [V2 collateral adapter](https://github.com/Polymarket/ctf-exchange-v2/blob/main/src/adapters/CtfCollateralAdapter.sol).
 Fixtures show identical token tickers rejected when either network or
 contract-reference identity differs, across the relationship verifier and
 independent audit. Legacy schema-v1 market/payoff records still load, but the
@@ -2050,7 +2058,7 @@ API tests and two targeted Frontier UI tests passed. The UI typecheck, targeted
 ESLint, Prettier, Ruff, and `git diff --check` passed. These are regression
 checks for this schema change, not a full repository suite, production build,
 browser E2E run, live token integration, or performance benchmark. No live
-source request or service mutation was made.
+source request or service mutation was made in that checkpoint.
 
 Reproduction commands:
 
@@ -2061,3 +2069,37 @@ Reproduction commands:
 corepack pnpm --dir apps/web exec vitest run src/Frontier.test.tsx -t 'captures Kalshi fee metadata|renders a bounded accessible relationship graph' --maxWorkers=1 --minWorkers=1
 corepack pnpm --dir apps/web typecheck
 ```
+
+## Polymarket versioned CLOB route checkpoint
+
+Polymarket adapter v5 uses the Gamma market `version` field to distinguish
+legacy CTF-token IDs from position-backed v2 IDs. The official [Polymarket SDK
+protocol table](https://github.com/Polymarket/rs-clob-client-v2/blob/main/README.md)
+documents the v2 CLOB host and pUSD collateral for position-backed markets;
+the [Polygon deployment manifest](https://github.com/Polymarket/polymarket-v2-external/blob/main/README.md)
+identifies the pUSD contract, and the [collateral adapter source](https://github.com/Polymarket/ctf-exchange-v2/blob/main/src/adapters/CtfCollateralAdapter.sol)
+shows the pUSD/USDC.e conversion around CTF operations. The adapter maps only
+Gamma v2 position markets to that pUSD identity. It leaves v1 CTF-token
+settlement identity absent because the Gamma identifier schema alone does not
+establish a market's collateral route. Neither payoff nor resolution is
+verified by this mapping.
+
+An unauthenticated GET to the documented v2 host could not resolve DNS from
+this development environment, so the route remains fixture-tested with live
+validation pending. A separate one-request GET against the v1 host returned
+HTTP 200. The market condition and token matched the saved Gamma v1 observation
+(`187d2a3e549953f65838c67e6165a4994e001697cb588a4a121c81647d1a2cef`); the new
+book body is 2,514 bytes with SHA-256
+`cecdb8d4f14fa61a7039e1559a52e02c2e7819a0342566f5d07d829841bc9aef`, exchange
+timestamp `1793110593506`, 58 bid levels, and 8 ask levels. The exact raw
+response is preserved in
+`data/frontier/live-probes/2026-10-27-polymarket-clob-v1-book-r1.json`.
+
+The Polymarket adapter module passed 44 tests; the full Frontier API module
+passed 35 tests with one existing Starlette/httpx deprecation warning. V2
+fixtures exercise host selection, exact pUSD identity, unauthenticated GET
+behavior, and rejection when source version and provenance disagree. No
+authenticated request, order, production service change, or deployment was
+made. This does not establish a real v2 market observation or an economic
+opportunity. Implementation commit `2c7bacc517e7a273d2a4f6490a01f9174b82fef1`
+contains adapter v5, fixture tests, and the raw v1 book capture.
