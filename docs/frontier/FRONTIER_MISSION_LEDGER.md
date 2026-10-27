@@ -1604,3 +1604,17 @@ At `2026-10-27T17:02:02Z`, memory PSI was `avg10` 45.61% (`some`) / 41.04%
 (`full`), `avg60` 45.59% / 41.05%, and `avg300` 33.78% / 30.52%.
 Available memory was 9,632,428 KiB and swap free was 484,596 KiB of 4 GiB.
 Broad suites and production build remain deferred.
+
+## 2026-10-27 17:04 UTC — independent fee-calculator differential
+
+This checkpoint adds a 32-example Hypothesis check across bounded
+prices, quantities, and fee multipliers. The candidate fee calculator, the
+independent auditor, and the non-direct one-fill sensitivity agreed exactly
+for every generated case. The full fee-sensitivity module passed **21 tests**
+in 0.50 seconds. Ruff, format check, and `git diff --check` passed. The test
+uses controlled fixture metadata and makes no source requests.
+
+At `2026-10-27T17:04:54Z`, memory PSI was `avg10` 45.31% (`some`) / 40.92%
+(`full`), `avg60` 44.96% / 40.74%, and `avg300` 39.03% / 35.36%.
+`MemAvailable` was 9,664,080 KiB and swap free was 484,612 KiB of 4 GiB.
+Broad Frontier verification and production build remain deferred.

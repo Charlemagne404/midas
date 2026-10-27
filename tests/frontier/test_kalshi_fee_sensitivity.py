@@ -8,12 +8,15 @@ import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 from midas.frontier.economics import (
+    _calculate_fee,
     estimate_kalshi_taker_fee_sensitivity,
     estimate_kalshi_taker_order_fee_sensitivity,
+    kalshi_candidate_fee_schedule,
 )
-from midas.frontier.models import KalshiFeeMetadata, KalshiFeeOrderFillInput
+from midas.frontier.independent_audit import _independent_fee
+from midas.frontier.models import KalshiFeeMetadata, KalshiFeeOrderFillInput, Venue
 
-from tests.frontier.builders import T0
+from tests.frontier.builders import T0, market
 
 
 def fee_metadata(*, fee_type: str = "quadratic", multiplier: str = "1") -> KalshiFeeMetadata:
@@ -121,6 +124,64 @@ def test_non_direct_rounding_matches_kalshi_documented_fill_example():
     assert result.scenarios[1].balance_rounding_adjustment == Decimal("0.001361")
     assert result.scenarios[1].total_modeled_fee == Decimal("0.005")
     assert result.scenarios[1].total_modeled_debit == Decimal("0.06")
+
+
+@settings(max_examples=32, deadline=None)
+@given(
+    price=st.decimals(min_value=Decimal("0.001"), max_value=Decimal("0.999"), places=3),
+    quantity=st.decimals(min_value=Decimal("0.001"), max_value=Decimal("1000"), places=3),
+    multiplier=st.integers(min_value=0, max_value=5),
+)
+def test_candidate_fee_and_independent_audit_match_public_estimate_sensitivity(
+    price: Decimal, quantity: Decimal, multiplier: int
+):
+    kalshi = market(Venue.KALSHI, "KX-FEE-1")
+    metadata = fee_metadata(multiplier=str(multiplier)).model_copy(
+        update={
+            "native_event_id": kalshi.native_event_id,
+            "event_fee_type_override_field_present": True,
+            "event_fee_multiplier_override_field_present": True,
+        }
+    )
+    schedule = kalshi_candidate_fee_schedule(
+        kalshi,
+        metadata,
+        event_observation_id="c" * 64,
+        series_observation_id="d" * 64,
+    )
+    assert schedule is not None
+    market_with_fee = kalshi.model_copy(update={"fees": schedule})
+    instrument = market_with_fee.instruments[0]
+    observed_at = T0 + timedelta(milliseconds=10)
+    evaluated_at = T0 + timedelta(milliseconds=20)
+
+    candidate_fee = _calculate_fee(
+        market_with_fee,
+        instrument,
+        quantity,
+        price,
+        observed_at,
+        analysis_time_utc=evaluated_at,
+    )
+    audit_fee = _independent_fee(
+        market_with_fee,
+        instrument,
+        quantity,
+        price,
+        observed_at,
+        evaluated_at,
+    )
+    sensitivity = estimate_kalshi_taker_fee_sensitivity(
+        metadata,
+        event_observation_id="c" * 64,
+        series_observation_id="d" * 64,
+        price_usd=price,
+        quantity_contracts=quantity,
+    )
+
+    assert candidate_fee is not None
+    assert audit_fee == candidate_fee
+    assert sensitivity.scenarios[1].total_modeled_fee == candidate_fee
 
 
 def test_order_fee_sensitivity_accumulates_rounding_and_caps_rebates_per_fill():
