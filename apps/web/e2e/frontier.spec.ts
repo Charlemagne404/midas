@@ -314,7 +314,7 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
           row_sha256: '1'.repeat(64),
           raw: {
             request_url:
-              'https://external-api.kalshi.com/trade-api/v2/events/multivariate?collection_ticker=KX-E2E-COLLECTION&limit=1&with_nested_markets=true',
+              'https://external-api.kalshi.com/trade-api/v2/events/multivariate?tickers=KX-E2E-MVE-EVENT&limit=1&with_nested_markets=true',
             http_status: 200,
             raw_body: '{"events":[{"title":"MVE event with omitted members"}]}',
             adapter_version: 'frontier-kalshi-9',
@@ -332,8 +332,8 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
         contentType: 'application/json',
         body: JSON.stringify({
           venue: 'kalshi',
-          filter_type: 'collection_ticker',
-          filter_value: 'KX-E2E-COLLECTION',
+          filter_type: 'tickers',
+          filter_value: 'KX-E2E-MVE-EVENT',
           event_count: 1,
           market_count: 0,
           events: [
@@ -498,11 +498,11 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
   ]);
 
   await page.getByRole('button', { name: 'Exchanges', exact: true }).click();
-  await page.getByLabel('Kalshi multivariate filter type').selectOption('collection_ticker');
-  await page.getByLabel('Kalshi multivariate filter ticker').fill('KX-E2E-COLLECTION');
+  await page.getByLabel('Kalshi multivariate filter type').selectOption('event_ticker');
+  await page.getByLabel('Kalshi multivariate filter ticker').fill('KX-E2E-MVE-EVENT');
   await page.getByRole('button', { name: 'Capture one event page' }).click();
   await expect(page.getByText(/nested markets omitted by source/)).toBeVisible();
   await page.getByText('Inspect immutable source response').last().click();
   await expect(page.getByText(/200 · https:\/\/external-api\.kalshi\.com/)).toBeVisible();
-  expect(mvePageRequests).toEqual([{ collection_ticker: 'KX-E2E-COLLECTION' }]);
+  expect(mvePageRequests).toEqual([{ event_ticker: 'KX-E2E-MVE-EVENT' }]);
 });
