@@ -12,6 +12,7 @@ import json
 import re
 from datetime import UTC, datetime
 from decimal import Decimal, InvalidOperation, localcontext
+from fractions import Fraction
 from typing import Any, Literal
 
 from pydantic import Field, field_validator, model_validator
@@ -520,15 +521,20 @@ def independently_audit_capital_carry(
             if expected_end is None or expected_end <= candidate.observed_at_utc:
                 mismatches.append(f"{item.venue} settlement does not follow candidate observation")
                 continue
-            seconds = _duration_seconds(candidate.observed_at_utc, expected_end)
+            delta = expected_end.astimezone(UTC) - candidate.observed_at_utc.astimezone(UTC)
+            exact_seconds = Fraction(delta.days * 86_400 + delta.seconds, 1) + Fraction(
+                delta.microseconds, 1_000_000
+            )
+            seconds = _D(exact_seconds.numerator) / _D(exact_seconds.denominator)
             if item.duration_seconds != seconds:
                 mismatches.append(f"{item.venue} duration does not match settlement timestamps")
-            carry = (
-                candidate.capital_by_venue.get(item.venue, _D(-1))
-                * item.annual_rate_bps
-                * seconds
-                / (_D(10_000) * _D(365 * 24 * 60 * 60))
+            exact_carry = (
+                Fraction(candidate.capital_by_venue.get(item.venue, _D(-1)))
+                * Fraction(item.annual_rate_bps)
+                * exact_seconds
+                / (10_000 * 365 * 24 * 60 * 60)
             )
+            carry = _D(exact_carry.numerator) / _D(exact_carry.denominator)
             if item.carry_cost != carry:
                 mismatches.append(
                     f"{item.venue} carry arithmetic differs from independent recomputation"

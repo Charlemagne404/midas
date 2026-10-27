@@ -11,6 +11,7 @@ from midas.frontier.capital import (
     CapitalCarryRequest,
     CapitalCarrySensitivity,
     evaluate_capital_carry,
+    independently_audit_capital_carry,
 )
 from midas.frontier.economics import (
     OpportunityCandidate,
@@ -128,6 +129,40 @@ def test_capital_carry_is_deterministic_venue_separated_and_independently_checke
     tampered["total_carry_cost"] = "0"
     with pytest.raises(ValueError, match="result hash"):
         CapitalCarrySensitivity.model_validate(tampered)
+
+
+def test_fraction_audit_rejects_a_tampered_venue_carry_amount():
+    candidate, markets = candidate_and_markets()
+    row_hashes = {"a" * 64: "3" * 64, "b" * 64: "4" * 64}
+    result = evaluate_capital_carry(
+        candidate,
+        run_id="1" * 64,
+        run_sha256="2" * 64,
+        rates_by_venue={"polymarket": "10000", "kalshi": "10000"},
+        markets_by_id=markets,
+        observation_row_hashes=row_hashes,
+    )
+    first, *remaining = result.venues
+    tampered_venues = (
+        first.model_copy(update={"carry_cost": first.carry_cost + D("0.000001")}),
+        *remaining,
+    )
+
+    audit = independently_audit_capital_carry(
+        candidate,
+        run_id=result.run_id,
+        run_sha256=result.run_sha256,
+        venues=tampered_venues,
+        markets_by_id=markets,
+        observation_row_hashes=row_hashes,
+        expected_input_sha256=result.input_sha256,
+        expected_total=result.total_carry_cost,
+        expected_gross_after=result.worst_case_gross_pnl_after_carry,
+        expected_net_after=result.worst_case_net_pnl_after_carry,
+    )
+
+    assert audit.disposition == "disagreement"
+    assert "independent recomputation" in audit.message
 
 
 def test_capital_carry_fails_closed_on_unverified_settlement_or_missing_venue_rate():
