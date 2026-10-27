@@ -1,6 +1,19 @@
 # Project Frontier Mission Ledger
 
-**Latest checkpoint (2026-10-27 18:30 UTC):** Code commit `adf1b15` makes the
+**Latest checkpoint (2026-10-27 18:31 UTC):** Code commit `ceea335` changes
+four legacy sibling-fixture imports to package-qualified `tests.*` paths. This
+preserves test behavior while fixing collection in those files; Ruff passes and
+the four files collect **51 tests**. The whole repository collection has not
+been repeated since this change. The full-scale Reality test still imports a
+`midas.reality.recovery` module absent from the verified baseline. At
+`2026-10-27T18:31:23Z`, PSI remained elevated (`some avg10=44.39%`,
+`full avg10=40.01%`), so broad runtime verification remains deferred.
+
+Next safe actions: recheck pressure before rerunning repository-wide collection
+and tests. Keep the absent Reality recovery dependency explicit; do not copy
+from a different dirty worktree or rewrite its substantive test.
+
+**Previous checkpoint (2026-10-27 18:30 UTC):** Code commit `adf1b15` makes the
 Arena cross-root catalog test independent of actual machine headroom and PSI.
 It still tests real directory/job traversal and asserts the worker-admission
 reason; only host telemetry inputs are fixed, while separate tests cover those

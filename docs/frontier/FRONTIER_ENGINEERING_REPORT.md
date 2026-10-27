@@ -3136,3 +3136,31 @@ pressure.
 
 Files changed: `tests/arena/test_admission.py` in code commit `adf1b15`; this
 report and `FRONTIER_MISSION_LEDGER.md` record the change.
+
+### Legacy test fixture import correction — 2026-10-27 18:31 UTC
+
+Code commit `ceea335` changes the four direct sibling imports in the
+Reality/Veritas test modules from top-level `test_*` names to package-qualified
+`tests.*` imports. The tests have not otherwise changed. Ruff passes, and the
+four affected modules collect **51 tests**. The complete repository collection
+has not been repeated, so only those four modules' collection is verified.
+
+The remaining known collection blocker is
+`tests/test_reality_full_scale_validation.py`: the verified Frontier baseline
+parent `11d32a0693b25c290fd273f23e40cf7b5950d95d` does not include the imported
+`midas.reality.recovery` module. That test also depends on the same missing
+module through its script; its expected code is present only in a separate
+Reality reliability worktree, which was not mixed into this branch.
+
+At `2026-10-27T18:31:23Z`, memory PSI remained high (`some avg10=44.39%`,
+`full avg10=40.01%`); no broad rerun was started. Frontier/web/build/browser
+results remain as recorded above.
+
+| Component | Current status | Boundary |
+| --- | --- | --- |
+| Legacy sibling-fixture imports | COMPLETE AND VERIFIED | Four modules now collect 51 tests through the repository's `tests` package; test behavior is unchanged. |
+| Full repository Python suite | PARTIALLY VERIFIED | 50 tests passed in the prior pressure-limited attempt; full collection/runtime remains pending a lower-pressure window and the absent Reality recovery module. |
+
+Files changed: `tests/test_reality_research_schedule.py`,
+`tests/test_reality_shadow.py`, `tests/test_reality_training.py`, and
+`tests/test_veritas_resumable_shadow_replay.py` in commit `ceea335`.
