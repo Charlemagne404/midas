@@ -900,8 +900,27 @@ def inspect_director(root: Path, identity: str) -> dict[str, Any]:
     return record
 
 
-def router(root: Path, *, veritas_repository: Path | None = None) -> APIRouter:
+def router(
+    root: Path,
+    *,
+    veritas_repository: Path | None = None,
+    frontier_held_venues: tuple[str, ...] = (),
+) -> APIRouter:
     api = APIRouter(prefix="/api/arena", tags=["Arena"])
+    held_market_prefixes = tuple(f"{venue}:" for venue in frontier_held_venues)
+
+    def snapshot_uses_held_source(snapshot: Any) -> bool:
+        if not frontier_held_venues:
+            return False
+        if any(market.venue.value in frontier_held_venues for market in snapshot.markets):
+            return True
+        if any(book.venue.value in frontier_held_venues for book in snapshot.books):
+            return True
+        return any(
+            relationship.left_market_id.startswith(held_market_prefixes)
+            or relationship.right_market_id.startswith(held_market_prefixes)
+            for relationship in snapshot.verified_relationships
+        )
 
     async def call(fn: Any, *args: Any) -> Any:
         try:
@@ -1479,6 +1498,21 @@ def router(root: Path, *, veritas_repository: Path | None = None) -> APIRouter:
                     continue
                 replay_spec = configuration.get("frontier_replay")
                 replay_spec = replay_spec if isinstance(replay_spec, dict) else {}
+                if frontier_held_venues:
+                    try:
+                        from midas.arena.frontier_replay import (
+                            FrontierReplayJobSpec,
+                            load_snapshot,
+                        )
+
+                        snapshot = load_snapshot(
+                            root, FrontierReplayJobSpec.model_validate(replay_spec)
+                        )
+                    except (FileNotFoundError, OSError, ValueError):
+                        # Missing provenance cannot establish that this artifact is clear.
+                        continue
+                    if snapshot_uses_held_source(snapshot):
+                        continue
                 result_value = row.get("result")
                 result = result_value if isinstance(result_value, dict) else None
                 runtime_value = row.get("runtime_profile")
@@ -1540,6 +1574,18 @@ def router(root: Path, *, veritas_repository: Path | None = None) -> APIRouter:
 
             record = inspect(root, identity)
             artifact = verify_frontier_replay_job_result(root, identity, record)
+            if frontier_held_venues:
+                from midas.arena.frontier_replay import FrontierReplayJobSpec, load_snapshot
+
+                configuration = record.get("configuration")
+                spec_value = (
+                    configuration.get("frontier_replay")
+                    if isinstance(configuration, dict)
+                    else None
+                )
+                snapshot = load_snapshot(root, FrontierReplayJobSpec.model_validate(spec_value))
+                if snapshot_uses_held_source(snapshot):
+                    raise ValueError("Frontier replay uses source data held from research use")
             return {
                 "artifact": artifact.model_dump(mode="json"),
                 "research_only": True,

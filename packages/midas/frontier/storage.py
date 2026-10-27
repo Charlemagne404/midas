@@ -548,6 +548,21 @@ class FrontierStore:
             raise FrontierStoreError("Stored relationship hash does not match its payload")
         return Relationship.model_validate(json.loads(payload))
 
+    def relationship_endpoints(self, relationship_id: str) -> tuple[str, str] | None:
+        """Return endpoint identities for source-use gating before loading relationship text."""
+        if len(relationship_id) != 64 or any(
+            character not in "0123456789abcdef" for character in relationship_id
+        ):
+            raise ValueError("Relationship identity must be a lowercase SHA-256 digest")
+        if not self.path.exists():
+            return None
+        with self._read_connect() as connection:
+            row = connection.execute(
+                "SELECT left_market_id,right_market_id FROM relationships WHERE relationship_id=?",
+                (relationship_id,),
+            ).fetchone()
+        return (str(row["left_market_id"]), str(row["right_market_id"])) if row else None
+
     @staticmethod
     def _validated_relationship_row(row: sqlite3.Row) -> Relationship:
         payload = str(row["relationship_json"])
@@ -662,11 +677,14 @@ class FrontierStore:
         *,
         venue: str | None = None,
         kind: str | None = None,
+        excluded_venues: tuple[str, ...] = (),
         limit: int = 100,
         offset: int = 0,
     ) -> tuple[dict[str, Any], ...]:
         if not 1 <= limit <= 200 or not 0 <= offset <= 1_000_000:
             raise ValueError("Observation query limit/offset exceeds the bounded range")
+        if len(excluded_venues) > 16 or any(not item or len(item) > 80 for item in excluded_venues):
+            raise ValueError("Observation venue exclusions are invalid")
         if not self.path.exists():
             return ()
         clauses, params = [], []
@@ -676,6 +694,10 @@ class FrontierStore:
         if kind is not None:
             clauses.append("observation_kind=?")
             params.append(kind)
+        if excluded_venues:
+            placeholders = ",".join("?" for _ in excluded_venues)
+            clauses.append(f"venue NOT IN ({placeholders})")
+            params.extend(excluded_venues)
         where = " WHERE " + " AND ".join(clauses) if clauses else ""
         with self._read_connect() as connection:
             rows = connection.execute(
@@ -912,6 +934,29 @@ class FrontierStore:
             return None
         return self._validated_observation_row(row, include_raw=True)
 
+    def observation_venues(self, observation_ids: tuple[str, ...]) -> dict[str, str]:
+        """Return bounded source-index labels for provenance quarantine checks."""
+        unique_ids = tuple(dict.fromkeys(observation_ids))
+        if len(unique_ids) > 100_000 or any(
+            len(item) != 64 or any(character not in "0123456789abcdef" for character in item)
+            for item in unique_ids
+        ):
+            raise ValueError("Observation venue lookup identities exceed the bounded format")
+        if not self.path.exists() or not unique_ids:
+            return {}
+        result: dict[str, str] = {}
+        with self._read_connect() as connection:
+            for offset in range(0, len(unique_ids), 500):
+                batch = unique_ids[offset : offset + 500]
+                placeholders = ",".join("?" for _ in batch)
+                rows = connection.execute(
+                    "SELECT observation_id,venue FROM observations "
+                    f"WHERE observation_id IN ({placeholders})",
+                    batch,
+                ).fetchall()
+                result.update({str(row["observation_id"]): str(row["venue"]) for row in rows})
+        return result
+
     @staticmethod
     def _validated_observation_row(row: sqlite3.Row, *, include_raw: bool) -> dict[str, Any]:
         raw_json = str(row["raw_json"])
@@ -1004,6 +1049,33 @@ class FrontierStore:
             for row in rows
         )
 
+    def replays_by_ids(self, run_ids: tuple[str, ...]) -> dict[str, dict[str, Any]]:
+        """Load bounded replay rows by identity for dependent-artifact quarantine checks."""
+        unique_ids = tuple(dict.fromkeys(run_ids))
+        if len(unique_ids) > 1000 or any(
+            len(item) != 64 or any(character not in "0123456789abcdef" for character in item)
+            for item in unique_ids
+        ):
+            raise ValueError("Replay lookup identities exceed the bounded format")
+        if not self.path.exists() or not unique_ids:
+            return {}
+        result: dict[str, dict[str, Any]] = {}
+        with self._read_connect() as connection:
+            for offset in range(0, len(unique_ids), 500):
+                batch = unique_ids[offset : offset + 500]
+                placeholders = ",".join("?" for _ in batch)
+                rows = connection.execute(
+                    "SELECT run_id,created_at_utc,result_sha256,result_json FROM research_runs "
+                    f"WHERE run_id IN ({placeholders})",
+                    batch,
+                ).fetchall()
+                for row in rows:
+                    result[str(row["run_id"])] = {
+                        **dict(row),
+                        "result": self._validated_replay_row(row).model_dump(mode="json"),
+                    }
+        return result
+
     def replay(self, run_id: str) -> dict[str, Any] | None:
         if not self.path.exists():
             return None
@@ -1019,12 +1091,20 @@ class FrontierStore:
         )
 
     def relationships(
-        self, *, state: str | None = None, limit: int = 500, effective_only: bool = False
+        self,
+        *,
+        state: str | None = None,
+        limit: int = 500,
+        effective_only: bool = False,
+        excluded_venues: tuple[str, ...] = (),
     ) -> tuple[dict[str, Any], ...]:
         if not 1 <= limit <= 2000:
             raise ValueError("Relationship query limit must be between 1 and 2000")
+        if len(excluded_venues) > 16 or any(not item or len(item) > 80 for item in excluded_venues):
+            raise ValueError("Relationship venue exclusions are invalid")
         if not self.path.exists():
             return ()
+        exclusion_sql, exclusion_params = self._relationship_venue_exclusion(excluded_venues)
         with self._read_connect() as connection:
             if effective_only:
                 review_join = """
@@ -1042,7 +1122,7 @@ class FrontierStore:
                     "OR lr.adjudicated_relationship_id=r.relationship_id"
                 )
                 state_filter = " AND r.state=?" if state is not None else ""
-                params = (state, limit) if state is not None else (limit,)
+                params = ([state] if state is not None else []) + list(exclusion_params) + [limit]
                 rows = connection.execute(
                     f"{review_join} SELECT r.relationship_id,r.left_market_id,r.right_market_id,"
                     "r.state,r.created_at_utc,r.relationship_json,r.row_sha256,"
@@ -1050,23 +1130,25 @@ class FrontierStore:
                     "FROM relationships AS r LEFT JOIN latest_reviews AS lr "
                     "ON lr.relationship_id=COALESCE(r.supersedes_relationship_id,r.relationship_id) "
                     "AND lr.revision_rank=1 WHERE ("
-                    f"{effective_filter}){state_filter} "
+                    f"{effective_filter}){state_filter}{exclusion_sql} "
                     "ORDER BY r.created_at_utc DESC,r.relationship_id LIMIT ?",
-                    params,
+                    tuple(params),
                 ).fetchall()
             elif state is None:
                 rows = connection.execute(
                     "SELECT relationship_id,left_market_id,right_market_id,state,created_at_utc,"
                     "relationship_json,row_sha256,supersedes_relationship_id "
-                    "FROM relationships ORDER BY created_at_utc DESC, relationship_id LIMIT ?",
-                    (limit,),
+                    f"FROM relationships AS r WHERE 1=1{self._relationship_venue_exclusion_sql(excluded_venues)} "
+                    "ORDER BY r.created_at_utc DESC, r.relationship_id LIMIT ?",
+                    (*exclusion_params, limit),
                 ).fetchall()
             else:
                 rows = connection.execute(
                     "SELECT relationship_id,left_market_id,right_market_id,state,created_at_utc,"
                     "relationship_json,row_sha256,supersedes_relationship_id "
-                    "FROM relationships WHERE state=? ORDER BY created_at_utc DESC, relationship_id LIMIT ?",
-                    (state, limit),
+                    f"FROM relationships AS r WHERE r.state=?{self._relationship_venue_exclusion_sql(excluded_venues)} "
+                    "ORDER BY r.created_at_utc DESC, r.relationship_id LIMIT ?",
+                    (state, *exclusion_params, limit),
                 ).fetchall()
         result = []
         for row in rows:
@@ -1104,7 +1186,11 @@ class FrontierStore:
         return tuple(result)
 
     def relationship_neighbors(
-        self, market_ids: tuple[str, ...], *, scan_limit: int = 500
+        self,
+        market_ids: tuple[str, ...],
+        *,
+        scan_limit: int = 500,
+        excluded_venues: tuple[str, ...] = (),
     ) -> tuple[tuple[dict[str, Any], ...], int, bool]:
         """Return effective edges touching a bounded market set via endpoint indexes."""
         if not 1 <= len(market_ids) <= 200 or len(set(market_ids)) != len(market_ids):
@@ -1113,10 +1199,13 @@ class FrontierStore:
             raise ValueError("Relationship neighborhood market IDs are invalid")
         if not 1 <= scan_limit <= 500:
             raise ValueError("Relationship adjacency scan must be between 1 and 500")
+        if len(excluded_venues) > 16 or any(not item or len(item) > 80 for item in excluded_venues):
+            raise ValueError("Relationship venue exclusions are invalid")
         if not self.path.exists():
             return (), 0, False
 
         placeholders = ",".join("?" for _ in market_ids)
+        exclusion_sql, exclusion_params = self._relationship_venue_exclusion(excluded_venues)
         sql = (
             "SELECT r.relationship_id,r.left_market_id,r.right_market_id,r.state,"
             "r.created_at_utc,r.relationship_json,r.row_sha256,r.supersedes_relationship_id "
@@ -1124,11 +1213,13 @@ class FrontierStore:
             "SELECT relationship_id FROM relationships "
             f"WHERE left_market_id IN ({placeholders}) UNION "
             "SELECT relationship_id FROM relationships "
-            f"WHERE right_market_id IN ({placeholders})) "
+            f"WHERE right_market_id IN ({placeholders})){exclusion_sql} "
             "ORDER BY r.created_at_utc DESC,r.relationship_id LIMIT ?"
         )
         with self._read_connect() as connection:
-            rows = connection.execute(sql, (*market_ids, *market_ids, scan_limit + 1)).fetchall()
+            rows = connection.execute(
+                sql, (*market_ids, *market_ids, *exclusion_params, scan_limit + 1)
+            ).fetchall()
         truncated = len(rows) > scan_limit
         scanned = min(len(rows), scan_limit)
         rows = rows[:scan_limit]
@@ -1160,6 +1251,7 @@ class FrontierStore:
         page_size: int = 50,
         scan_limit: int = 500,
         after: tuple[str, str] | None = None,
+        excluded_venues: tuple[str, ...] = (),
     ) -> tuple[tuple[dict[str, Any], ...], int, bool, bool, tuple[str, str] | None]:
         """Read one stable-keyset page of effective edges around one market.
 
@@ -1173,6 +1265,8 @@ class FrontierStore:
             raise ValueError("Relationship page size must be between 1 and 200")
         if not 1 <= scan_limit <= 500:
             raise ValueError("Relationship page scan must be between 1 and 500")
+        if len(excluded_venues) > 16 or any(not item or len(item) > 80 for item in excluded_venues):
+            raise ValueError("Relationship venue exclusions are invalid")
         if after is not None:
             created_at, relationship_id = after
             if not isinstance(created_at, str) or not isinstance(relationship_id, str):
@@ -1198,13 +1292,15 @@ class FrontierStore:
             )
             params += (after[0], after[0], after[1])
         params += (scan_limit + 1,)
+        exclusion_sql, exclusion_params = self._relationship_venue_exclusion(excluded_venues)
+        params = params[:-1] + exclusion_params + (params[-1],)
         sql = (
             "SELECT r.relationship_id,r.left_market_id,r.right_market_id,r.state,"
             "r.created_at_utc,r.relationship_json,r.row_sha256,r.supersedes_relationship_id "
             "FROM relationships AS r WHERE r.relationship_id IN ("
             "SELECT relationship_id FROM relationships WHERE left_market_id=? UNION "
             "SELECT relationship_id FROM relationships WHERE right_market_id=?)"
-            f"{cursor_filter} ORDER BY r.created_at_utc DESC,r.relationship_id LIMIT ?"
+            f"{cursor_filter}{exclusion_sql} ORDER BY r.created_at_utc DESC,r.relationship_id LIMIT ?"
         )
         with self._read_connect() as connection:
             queried = connection.execute(sql, params).fetchall()
@@ -1228,7 +1324,29 @@ class FrontierStore:
             next_after = (str(last_scanned["created_at_utc"]), str(last_scanned["relationship_id"]))
         return tuple(page), scanned, source_rows_truncated, has_more, next_after
 
-    def summary(self) -> dict[str, Any]:
+    @staticmethod
+    def _relationship_venue_exclusion(venues: tuple[str, ...]) -> tuple[str, tuple[Any, ...]]:
+        """Exclude every relationship with an endpoint in a held venue namespace."""
+        if not venues:
+            return "", ()
+        if len(venues) > 16 or any(not item or len(item) > 80 for item in venues):
+            raise ValueError("Relationship venue exclusions are invalid")
+        clauses: list[str] = []
+        params: list[Any] = []
+        for column in ("r.left_market_id", "r.right_market_id"):
+            for venue in venues:
+                prefix = f"{venue}:"
+                clauses.append(f"substr({column},1,?)<>?")
+                params.extend((len(prefix), prefix))
+        return (" AND " + " AND ".join(clauses), tuple(params))
+
+    @classmethod
+    def _relationship_venue_exclusion_sql(cls, venues: tuple[str, ...]) -> str:
+        return cls._relationship_venue_exclusion(venues)[0]
+
+    def summary(self, *, excluded_venues: tuple[str, ...] = ()) -> dict[str, Any]:
+        if len(excluded_venues) > 16 or any(not item or len(item) > 80 for item in excluded_venues):
+            raise ValueError("Summary venue exclusions are invalid")
         if not self.path.exists():
             return {
                 "schema_version": SCHEMA_VERSION,
@@ -1249,6 +1367,16 @@ class FrontierStore:
         if self.path.is_symlink():
             raise FrontierStoreError("Frontier database path cannot be a symlink")
         self._check_existing_size()
+        if excluded_venues:
+            venue_placeholders = ",".join("?" for _ in excluded_venues)
+            observation_exclusion = f" WHERE venue NOT IN ({venue_placeholders})"
+            observation_params: tuple[Any, ...] = excluded_venues
+        else:
+            observation_exclusion = ""
+            observation_params = ()
+        relationship_exclusion, relationship_params = self._relationship_venue_exclusion(
+            excluded_venues
+        )
         with self._read_connect() as connection:
             version = connection.execute(
                 "SELECT value FROM frontier_meta WHERE key='schema_version'"
@@ -1259,20 +1387,33 @@ class FrontierStore:
                     f"Unsupported Frontier store schema {observed}; expected {SCHEMA_VERSION}"
                 )
             observations = int(
-                connection.execute("SELECT COUNT(*) FROM observations").fetchone()[0]
+                connection.execute(
+                    f"SELECT COUNT(*) FROM observations{observation_exclusion}",
+                    observation_params,
+                ).fetchone()[0]
             )
             relationship_records = int(
-                connection.execute("SELECT COUNT(*) FROM relationships").fetchone()[0]
+                connection.execute(
+                    f"SELECT COUNT(*) FROM relationships AS r WHERE 1=1{relationship_exclusion}",
+                    relationship_params,
+                ).fetchone()[0]
             )
             relationship_reviews = int(
-                connection.execute("SELECT COUNT(*) FROM relationship_reviews").fetchone()[0]
+                connection.execute(
+                    "SELECT COUNT(*) FROM relationship_reviews AS rr "
+                    "JOIN relationships AS r ON r.relationship_id=rr.relationship_id "
+                    "WHERE 1=1" + relationship_exclusion,
+                    relationship_params,
+                ).fetchone()[0]
             )
             runs = int(connection.execute("SELECT COUNT(*) FROM research_runs").fetchone()[0])
             comparisons = int(
                 connection.execute("SELECT COUNT(*) FROM research_comparisons").fetchone()[0]
             )
             obs_groups = connection.execute(
-                "SELECT venue,COUNT(*) AS n FROM observations GROUP BY venue"
+                "SELECT venue,COUNT(*) AS n FROM observations"
+                f"{observation_exclusion} GROUP BY venue",
+                observation_params,
             ).fetchall()
             rel_groups = connection.execute(
                 "WITH latest_reviews AS ("
@@ -1284,16 +1425,22 @@ class FrontierStore:
                 "COALESCE(r.supersedes_relationship_id,r.relationship_id) "
                 "AND lr.revision_rank=1 WHERE "
                 "((r.supersedes_relationship_id IS NULL AND lr.relationship_id IS NULL) "
-                "OR lr.adjudicated_relationship_id=r.relationship_id) GROUP BY r.state"
+                "OR lr.adjudicated_relationship_id=r.relationship_id)"
+                f"{relationship_exclusion} GROUP BY r.state",
+                relationship_params,
             ).fetchall()
             relationships = sum(int(row["n"]) for row in rel_groups)
             market_groups = connection.execute(
                 "SELECT venue,COUNT(DISTINCT canonical_market_id) AS n "
-                "FROM market_records GROUP BY venue"
+                "FROM market_records"
+                f"{observation_exclusion} GROUP BY venue",
+                observation_params,
             ).fetchall()
             instrument_groups = connection.execute(
                 "SELECT venue,COUNT(DISTINCT native_instrument_id) AS n "
-                "FROM instrument_records GROUP BY venue"
+                "FROM instrument_records"
+                f"{observation_exclusion} GROUP BY venue",
+                observation_params,
             ).fetchall()
         return {
             "schema_version": SCHEMA_VERSION,

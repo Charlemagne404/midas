@@ -114,9 +114,7 @@ it('renders recorded-evidence empty states and never probes a source automatical
 
   fireEvent.click(screen.getByRole('button', { name: 'Exchanges' }));
   expect(
-    await screen.findByText(
-      'Live Kalshi research capture is blocked until written permission is recorded.',
-    ),
+    await screen.findByText(/Live capture and stored records are held from research use/),
   ).toBeInTheDocument();
   expect(screen.getAllByRole('button', { name: 'Public probe disabled' })).toHaveLength(2);
   screen

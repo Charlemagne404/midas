@@ -40,6 +40,7 @@ type Source = {
 };
 type Overview = {
   state: string;
+  research_eligible_observations: number;
   research_only: boolean;
   live_execution: boolean;
   summary: {
@@ -1515,15 +1516,14 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
   const latestComparison = comparisons.data?.items[0]?.result;
   const overviewError = overview.error?.message ?? sources.error?.message;
   const summary = overview.data?.summary;
-  const marketTotal = Object.values(summary?.markets_by_venue ?? {}).reduce(
-    (sum, value) => sum + value,
+  const marketTotal = markets.data?.items.length ?? 0;
+  const instrumentTotal = (markets.data?.items ?? []).reduce(
+    (sum, item) => sum + item.instruments.length,
     0,
   );
-  const instrumentTotal = Object.values(summary?.instruments_by_venue ?? {}).reduce(
-    (sum, value) => sum + value,
-    0,
-  );
-  const verifiedRelationships = summary?.relationships_by_state?.verified ?? 0;
+  const verifiedRelationships = (graph.data?.edges ?? []).filter(
+    (relationship) => relationship.state === 'verified',
+  ).length;
 
   return (
     <div className="frontier">
@@ -1590,33 +1590,33 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
         <>
           <div className="fr-metrics">
             <Metric
-              title="Recorded markets"
+              title="Markets in view"
               value={count(marketTotal)}
-              note={`${count(instrumentTotal)} canonical instruments`}
+              note={`${count(instrumentTotal)} instruments in this loaded page`}
               icon={Layers3}
             />
             <Metric
-              title="Immutable observations"
-              value={count(summary?.observations)}
-              note={`Store ${summary ? `${money(summary.database_bytes)} / ${money(summary.max_bytes)} bytes` : 'size not measured'}`}
+              title="Research eligible observations"
+              value={count(overview.data?.research_eligible_observations)}
+              note={`Store ${summary ? `${money(summary.database_bytes)} / ${money(summary.max_bytes)} bytes` : 'size not measured'} · inventory includes held captures`}
               icon={Database}
             />
             <Metric
-              title="Verified relationships"
+              title="Verified relationships in view"
               value={count(verifiedRelationships)}
-              note={`${count(summary?.relationships)} effective edges · ${count(summary?.relationship_reviews)} review decisions`}
+              note={`${count(graph.data?.edges.length ?? 0)} eligible edges in this bounded graph page`}
               icon={GitBranch}
             />
             <Metric
               title="Replay runs"
-              value={count(summary?.runs)}
-              note="Each arm stores pinned inputs and assumptions"
+              value={count(runs.data?.items.length ?? 0)}
+              note="Visible runs are filtered by held-source provenance"
               icon={Play}
             />
             <Metric
               title="Paired comparisons"
-              value={count(summary?.comparisons)}
-              note="Same evidence, different bounded assumptions"
+              value={count(comparisons.data?.items.length ?? 0)}
+              note="Visible comparisons use only eligible replay evidence"
               icon={GitBranch}
             />
           </div>
@@ -1638,7 +1638,11 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
                   <SourceRow
                     key={source.venue}
                     source={source}
-                    markets={summary?.markets_by_venue?.[source.venue] ?? 0}
+                    markets={
+                      source.probe_policy_block_reason
+                        ? null
+                        : (summary?.markets_by_venue?.[source.venue] ?? 0)
+                    }
                   />
                 ))
               ) : (
@@ -2654,7 +2658,7 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
   );
 }
 
-function SourceRow({ source, markets }: { source: Source; markets: number }) {
+function SourceRow({ source, markets }: { source: Source; markets: number | null }) {
   const supported = source.capabilities.filter((item) => item.supported).length;
   return (
     <div className="fr-source-row">
@@ -2665,7 +2669,9 @@ function SourceRow({ source, markets }: { source: Source; markets: number }) {
           {source.adapter_version} · {supported}/{source.capabilities.length} capabilities
         </small>
       </div>
-      <span className="fr-market-count">{count(markets)} markets</span>
+      <span className="fr-market-count">
+        {markets === null ? 'Held from research' : `${count(markets)} eligible markets`}
+      </span>
       <StateBadge state={source.health.state} />
     </div>
   );
@@ -3457,7 +3463,10 @@ function SourcesView({
               )}
               <div className="fr-venue-stats">
                 <span>
-                  <strong>{count(markets[source.venue] ?? 0)}</strong> recorded markets
+                  <strong>
+                    {source.probe_policy_block_reason ? 'Held' : count(markets[source.venue] ?? 0)}
+                  </strong>{' '}
+                  {source.probe_policy_block_reason ? 'from research use' : 'eligible markets'}
                 </span>
                 <span>
                   <strong>{supported.length}</strong> supported capabilities
@@ -3501,7 +3510,7 @@ function SourcesView({
                 </button>
                 <small>
                   {source.probe_policy_block_reason
-                    ? 'Live capture is blocked; offline fixture research remains available.'
+                    ? 'Live capture and stored records are held from research use; offline fixtures remain available.'
                     : source.health.last_success_at_utc
                       ? `Last source response ${time(source.health.last_success_at_utc)}`
                       : 'No request is made automatically.'}{' '}

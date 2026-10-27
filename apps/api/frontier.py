@@ -468,6 +468,7 @@ def _bounded_graph_neighbors(
     market_ids: tuple[str, ...],
     *,
     scan_limit: int,
+    excluded_venues: tuple[str, ...] = (),
 ) -> tuple[tuple[dict[str, Any], ...], int, bool]:
     """Read a deterministic bounded adjacency window for an arbitrarily wide BFS layer."""
     ordered_ids = tuple(sorted(set(market_ids)))
@@ -485,7 +486,9 @@ def _bounded_graph_neighbors(
             break
         remaining = scan_limit - scanned
         page, page_scanned, page_truncated = store.relationship_neighbors(
-            ordered_ids[offset : offset + 200], scan_limit=remaining
+            ordered_ids[offset : offset + 200],
+            scan_limit=remaining,
+            excluded_venues=excluded_venues,
         )
         scanned += page_scanned
         truncated |= page_truncated
@@ -582,6 +585,167 @@ def _decode_kalshi_trade_cursor(cursor: str) -> dict[str, Any]:
 def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = None) -> APIRouter:
     api = APIRouter(prefix="/api/frontier", tags=["frontier"])
     source_locks = {venue: asyncio.Lock() for venue in Venue}
+    held_venues = tuple(
+        manifest.venue.value
+        for manifest in registry.capability_manifests()
+        if getattr(
+            getattr(registry.get(manifest.venue), "config", None),
+            "probe_policy_block_reason",
+            None,
+        )
+    )
+    held_market_prefixes = tuple(f"{venue}:" for venue in held_venues)
+
+    def reject_held_venue(venue: Venue | None) -> None:
+        if venue is not None and venue.value in held_venues:
+            reason = getattr(registry.get(venue).config, "probe_policy_block_reason", None)
+            raise HTTPException(
+                status_code=409,
+                detail=reason or f"Research use of stored {venue.value} data is on hold",
+            )
+
+    def market_id_is_held(market_id: str) -> bool:
+        return market_id.startswith(held_market_prefixes)
+
+    def observation_uses_held_source(observation_id: str) -> bool:
+        try:
+            item = store.observation(observation_id)
+        except (FrontierStoreError, ValueError) as error:
+            raise HTTPException(status_code=409, detail=str(error)) from error
+        if item is None:
+            raise HTTPException(
+                status_code=409,
+                detail="Research input references missing stored source evidence; quarantine is fail-closed",
+            )
+        return item["venue"] in held_venues
+
+    def replay_input_observation_ids(result: dict[str, Any]) -> tuple[str, ...]:
+        manifest = result.get("manifest")
+        if not isinstance(manifest, dict):
+            return ()
+        observation_ids = set(manifest.get("market_observation_ids", ()))
+        observation_ids.update(manifest.get("book_observation_ids", ()))
+        return tuple(sorted(str(item) for item in observation_ids))
+
+    def replay_uses_held_sources(
+        result: dict[str, Any], observation_venues: dict[str, str]
+    ) -> bool:
+        manifest = result.get("manifest")
+        if not isinstance(manifest, dict):
+            return True
+        input_ids = replay_input_observation_ids(result)
+        if any(item not in observation_venues for item in input_ids):
+            return True
+        if any(observation_venues[item] in held_venues for item in input_ids):
+            return True
+        for key in ("proposed_relationships", "applied_relationships"):
+            relationships = result.get(key, ())
+            if not isinstance(relationships, (list, tuple)):
+                return True
+            if any(
+                not isinstance(item, dict)
+                or market_id_is_held(str(item.get("left_market_id", "")))
+                or market_id_is_held(str(item.get("right_market_id", "")))
+                for item in relationships
+            ):
+                return True
+        candidates = result.get("candidates", ())
+        if not isinstance(candidates, (list, tuple)):
+            return True
+        for candidate in candidates:
+            if not isinstance(candidate, dict):
+                return True
+            if any(market_id_is_held(str(item)) for item in candidate.get("market_ids", ())):
+                return True
+            if set(candidate.get("venues", ())) & set(held_venues):
+                return True
+            for leg in candidate.get("legs", ()):
+                if not isinstance(leg, dict) or leg.get("venue") in held_venues:
+                    return True
+        return False
+
+    def replay_rows_without_held_sources(
+        rows: tuple[dict[str, Any], ...],
+    ) -> tuple[dict[str, Any], ...]:
+        if not held_venues:
+            return rows
+        observation_ids = tuple(
+            sorted(
+                {
+                    observation_id
+                    for row in rows
+                    for observation_id in replay_input_observation_ids(row.get("result", {}))
+                }
+            )
+        )
+        try:
+            observation_venues = store.observation_venues(observation_ids)
+        except (FrontierStoreError, ValueError) as error:
+            raise HTTPException(status_code=409, detail=str(error)) from error
+        return tuple(
+            row
+            for row in rows
+            if not replay_uses_held_sources(row.get("result", {}), observation_venues)
+        )
+
+    def comparison_run_rows(
+        items: tuple[dict[str, Any], ...],
+    ) -> tuple[dict[str, dict[str, Any]], dict[str, str]]:
+        run_ids = tuple(
+            sorted(
+                {
+                    str(arm.get("run_id", ""))
+                    for item in items
+                    for arm in item.get("result", {}).get("arms", ())
+                    if isinstance(arm, dict)
+                }
+            )
+        )
+        try:
+            runs_by_id = store.replays_by_ids(run_ids)
+            observation_ids = tuple(
+                sorted(
+                    {
+                        observation_id
+                        for row in runs_by_id.values()
+                        for observation_id in replay_input_observation_ids(row.get("result", {}))
+                    }
+                )
+            )
+            observation_venues = store.observation_venues(observation_ids)
+        except (FrontierStoreError, ValueError) as error:
+            raise HTTPException(status_code=409, detail=str(error)) from error
+        return runs_by_id, observation_venues
+
+    def comparison_uses_held_sources(
+        item: dict[str, Any],
+        runs_by_id: dict[str, dict[str, Any]],
+        observation_venues: dict[str, str],
+    ) -> bool:
+        if not held_venues:
+            return False
+        arms = item.get("result", {}).get("arms", ())
+        if not isinstance(arms, (list, tuple)):
+            return True
+        for arm in arms:
+            if not isinstance(arm, dict):
+                return True
+            run = runs_by_id.get(str(arm.get("run_id", "")))
+            if run is None or replay_uses_held_sources(run.get("result", {}), observation_venues):
+                return True
+        return False
+
+    def comparison_rows_without_held_sources(
+        rows: tuple[dict[str, Any], ...],
+    ) -> tuple[dict[str, Any], ...]:
+        if not held_venues:
+            return rows
+        runs_by_id, observation_venues = comparison_run_rows(rows)
+        return tuple(
+            row
+            for row in rows
+            if not comparison_uses_held_sources(row, runs_by_id, observation_venues)
+        )
 
     def probe_disabled_detail(config: Any) -> str:
         return getattr(config, "probe_policy_block_reason", None) or (
@@ -641,13 +805,33 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
 
     @api.get("/overview")
     async def overview() -> dict[str, Any]:
-        summary = store.summary()
+        stored_inventory = store.summary()
+        summary = store.summary(excluded_venues=held_venues)
+        eligible_observation_count = int(summary["observations"])
+        if held_venues:
+            run_window = store.replays(limit=20)
+            comparison_window = store.comparisons(limit=25)
+            eligible_runs = replay_rows_without_held_sources(run_window)
+            eligible_comparisons = comparison_rows_without_held_sources(comparison_window)
+            summary["runs"] = len(eligible_runs)
+            summary["comparisons"] = len(eligible_comparisons)
+            summary["run_count_window"] = 20
+            summary["run_count_window_may_be_incomplete"] = len(run_window) == 20
+            summary["comparison_count_window"] = 25
+            summary["comparison_count_window_may_be_incomplete"] = len(comparison_window) == 25
         health = await registry.health()
         health_by_venue = {item.venue: item for item in health}
-        latest = store.observations(limit=1)
+        latest = store.observations(limit=1, excluded_venues=held_venues)
         return {
             "schema_version": 1,
-            "state": "AVAILABLE" if summary["observations"] else "EMPTY",
+            "state": (
+                "AVAILABLE"
+                if eligible_observation_count
+                else "HELD_ONLY"
+                if stored_inventory["observations"]
+                else "EMPTY"
+            ),
+            "research_eligible_observations": eligible_observation_count,
             "research_only": True,
             "live_execution": False,
             "network_called_by_this_request": False,
@@ -675,6 +859,7 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
             ],
             "limitations": [
                 "Source health is reported separately from the age of recorded evidence.",
+                "Market, book, trade, relationship, and replay read routes omit sources held from research use; the reported database size still includes preserved held evidence.",
                 "Cross-source public snapshots do not establish simultaneous execution.",
                 "No trading credentials, account access, or order submission are available.",
             ],
@@ -714,7 +899,8 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
         limit: int = Query(default=50, ge=1, le=100),
         offset: int = Query(default=0, ge=0, le=100_000),
     ) -> dict[str, Any]:
-        stored = _market_observation_rows(store, 200, venue=venue)
+        reject_held_venue(venue)
+        stored = _market_observation_rows(store, 200, venue=venue, excluded_venues=held_venues)
         indexed: dict[str, tuple[FrontierMarket, str]] = {}
         for observation in stored:
             normalized = observation["normalized"]
@@ -782,9 +968,11 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
         limit: int = Query(default=50, ge=1, le=100),
         offset: int = Query(default=0, ge=0, le=100_000),
     ) -> dict[str, Any]:
+        reject_held_venue(venue)
         stored = store.observations(
             venue=venue.value if venue else None,
             kind="book_snapshot",
+            excluded_venues=held_venues,
             limit=limit,
             offset=offset,
         )
@@ -815,10 +1003,12 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
         limit: int = Query(default=50, ge=1, le=100),
         offset: int = Query(default=0, ge=0, le=100_000),
     ) -> dict[str, Any]:
+        reject_held_venue(venue)
         try:
             observations = store.observations(
                 venue=venue.value if venue else None,
                 kind="public_trades",
+                excluded_venues=held_venues,
                 limit=min(200, limit),
                 offset=offset,
             )
@@ -905,7 +1095,7 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
                 detail=probe_disabled_detail(config),
             )
         try:
-            known_markets = await _load_markets(store, 200)
+            known_markets = await _load_markets(store, 200, excluded_venues=held_venues)
         except (FrontierStoreError, ValueError) as error:
             raise HTTPException(status_code=409, detail=str(error)) from error
         if not any(
@@ -1048,7 +1238,7 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
                 detail=probe_disabled_detail(config),
             )
         try:
-            known_markets = await _load_markets(store, 200)
+            known_markets = await _load_markets(store, 200, excluded_venues=held_venues)
         except (FrontierStoreError, ValueError) as error:
             raise HTTPException(status_code=409, detail=str(error)) from error
         market = next(
@@ -1186,7 +1376,7 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
                 detail=probe_disabled_detail(config),
             )
         try:
-            known_markets = await _load_markets(store, 200)
+            known_markets = await _load_markets(store, 200, excluded_venues=held_venues)
         except (FrontierStoreError, ValueError) as error:
             raise HTTPException(status_code=409, detail=str(error)) from error
         market = next(
@@ -1294,7 +1484,7 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
                 detail=probe_disabled_detail(config),
             )
         try:
-            known_markets = await _load_markets(store, 200)
+            known_markets = await _load_markets(store, 200, excluded_venues=held_venues)
         except (FrontierStoreError, ValueError) as error:
             raise HTTPException(status_code=409, detail=str(error)) from error
         parent = next(
@@ -1430,7 +1620,7 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
                 detail=probe_disabled_detail(config),
             )
         try:
-            known_markets = await _load_markets(store, 200)
+            known_markets = await _load_markets(store, 200, excluded_venues=held_venues)
         except (FrontierStoreError, ValueError) as error:
             raise HTTPException(status_code=409, detail=str(error)) from error
         market = next(
@@ -1690,8 +1880,11 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
         request: KalshiMveSettlementAuditRequest,
     ) -> dict[str, Any]:
         """Audit recorded Kalshi MVE settlement arithmetic without a source request."""
+        reject_held_venue(Venue.KALSHI)
         try:
-            records = await _load_market_records(store, 200, venue=Venue.KALSHI)
+            records = await _load_market_records(
+                store, 200, venue=Venue.KALSHI, excluded_venues=held_venues
+            )
         except (FrontierStoreError, ValueError) as error:
             raise HTTPException(status_code=409, detail=str(error)) from error
         match = next(
@@ -1732,6 +1925,7 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
     async def kalshi_fee_sensitivity(
         request: KalshiFeeSensitivityRequest,
     ) -> dict[str, Any]:
+        reject_held_venue(Venue.KALSHI)
         market, event_metadata = await _load_kalshi_fee_evidence(
             store,
             request.market_id,
@@ -1763,6 +1957,7 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
     async def kalshi_fee_order_sensitivity(
         request: KalshiFeeOrderSensitivityRequest,
     ) -> dict[str, Any]:
+        reject_held_venue(Venue.KALSHI)
         market, event_metadata = await _load_kalshi_fee_evidence(
             store,
             request.market_id,
@@ -1800,12 +1995,21 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
 
     @api.get("/observations/{observation_id}")
     async def observation_evidence(observation_id: str) -> dict[str, Any]:
+        if held_venues:
+            try:
+                source_venue = store.observation_venues((observation_id,)).get(observation_id)
+            except (FrontierStoreError, ValueError) as error:
+                raise HTTPException(status_code=422, detail=str(error)) from error
+            if source_venue in held_venues:
+                reject_held_venue(Venue(source_venue))
         try:
             item = store.observation(observation_id)
         except ValueError as error:
             raise HTTPException(status_code=422, detail=str(error)) from error
         if item is None:
             raise HTTPException(status_code=404, detail="Stored Frontier observation was not found")
+        if item["venue"] in held_venues:
+            reject_held_venue(Venue(item["venue"]))
         return item
 
     @api.get("/relationships")
@@ -1813,7 +2017,12 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
         state: str | None = Query(default=None, max_length=32),
         limit: int = Query(default=100, ge=1, le=500),
     ) -> dict[str, Any]:
-        items = store.relationships(state=state, limit=limit, effective_only=True)
+        items = store.relationships(
+            state=state,
+            limit=limit,
+            effective_only=True,
+            excluded_venues=held_venues,
+        )
         review_targets = tuple(
             dict.fromkeys(
                 item["relationship"].get("supersedes") or item["relationship_id"] for item in items
@@ -1893,7 +2102,7 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
         market_by_id: dict[str, FrontierMarket] = {}
         market_observation_by_id: dict[str, str] = {}
         try:
-            for observation in _market_observation_rows(store, 200):
+            for observation in _market_observation_rows(store, 200, excluded_venues=held_venues):
                 normalized = observation["normalized"]
                 records = (
                     normalized.get("markets", [])
@@ -1948,6 +2157,7 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
                             page_size=limit,
                             scan_limit=scan_limit,
                             after=cursor_value["after"] if cursor_value is not None else None,
+                            excluded_venues=held_venues,
                         )
                     )
                     revision_after = store.graph_revision()
@@ -1987,6 +2197,7 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
                             store,
                             tuple(frontier),
                             scan_limit=scan_remaining,
+                            excluded_venues=held_venues,
                         )
                         relationships_scanned += scanned
                         relationship_scan_may_be_incomplete |= truncated
@@ -2040,6 +2251,7 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
                             store,
                             tuple(frontier),
                             scan_limit=scan_remaining,
+                            excluded_venues=held_venues,
                         )
                     except (FrontierStoreError, ValueError) as error:
                         raise HTTPException(status_code=409, detail=str(error)) from error
@@ -2063,7 +2275,11 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
                     frontier = next_frontier
         elif q is None:
             try:
-                relationship_rows = store.relationships(limit=scan_limit, effective_only=True)
+                relationship_rows = store.relationships(
+                    limit=scan_limit,
+                    effective_only=True,
+                    excluded_venues=held_venues,
+                )
             except FrontierStoreError as error:
                 raise HTTPException(status_code=409, detail=str(error)) from error
             relationships_scanned = len(relationship_rows)
@@ -2137,7 +2353,9 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
         max_pairs: int = Query(default=500, ge=1, le=5000),
         market_limit: int = Query(default=100, ge=1, le=200),
     ) -> dict[str, Any]:
-        market_records = await _load_market_records(store, market_limit)
+        market_records = await _load_market_records(
+            store, market_limit, excluded_venues=held_venues
+        )
         markets_value = tuple(market for market, _ in market_records)
         source_observation_ids = {
             market.canonical_id: observation_id for market, observation_id in market_records
@@ -2168,6 +2386,15 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
         market_limit: int = Query(default=200, ge=1, le=200),
     ) -> dict[str, Any]:
         try:
+            if held_venues:
+                indexed_endpoints = store.relationship_endpoints(relationship_id)
+                if indexed_endpoints is not None and any(
+                    market_id_is_held(item) for item in indexed_endpoints
+                ):
+                    raise HTTPException(
+                        status_code=409,
+                        detail="Relationship uses source data held from research use",
+                    )
             original = store.relationship(relationship_id)
             if original is None:
                 raise HTTPException(status_code=404, detail="Relationship was not found")
@@ -2185,7 +2412,8 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
                 )
 
             markets_by_id = {
-                item.canonical_id: item for item in await _load_markets(store, market_limit)
+                item.canonical_id: item
+                for item in await _load_markets(store, market_limit, excluded_venues=held_venues)
             }
             left = markets_by_id.get(original.left_market_id)
             right = markets_by_id.get(original.right_market_id)
@@ -2204,6 +2432,13 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
                 raise HTTPException(
                     status_code=422,
                     detail="Review must cite stored observations containing both source markets",
+                )
+            if held_venues and any(
+                observation_uses_held_source(item) for item in submitted_evidence
+            ):
+                raise HTTPException(
+                    status_code=409,
+                    detail="Relationship review references source evidence held from research use",
                 )
             for observation_id in request.evidence_observation_ids:
                 evidence_record = store.observation(observation_id)
@@ -2358,7 +2593,9 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
         limit: int = Query(default=100, ge=1, le=200),
         offset: int = Query(default=0, ge=0, le=100_000),
     ) -> dict[str, Any]:
-        runs = store.replays(limit=100)
+        source_window_limit = min(100, max(20, limit))
+        raw_runs = store.replays(limit=source_window_limit)
+        runs = replay_rows_without_held_sources(raw_runs)
         candidates = []
         for row in runs:
             candidates.extend(row["result"].get("candidates", []))
@@ -2378,6 +2615,9 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
             "offset": offset,
             "hypothetical_only": True,
             "source_runs_loaded": len(runs),
+            "held_runs_omitted": len(raw_runs) - len(runs),
+            "source_window_limit": source_window_limit,
+            "source_window_may_be_incomplete": len(raw_runs) == source_window_limit,
         }
 
     @api.get("/runs")
@@ -2385,16 +2625,38 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
         limit: int = Query(default=50, ge=1, le=100),
         offset: int = Query(default=0, ge=0, le=100_000),
     ) -> dict[str, Any]:
-        items = store.replays(limit=limit, offset=offset)
-        return {"items": items, "returned": len(items), "limit": limit, "offset": offset}
+        source_window_limit = min(200, max(50, offset + limit))
+        raw_items = store.replays(limit=source_window_limit)
+        eligible_items = replay_rows_without_held_sources(raw_items)
+        items = eligible_items[offset : offset + limit]
+        return {
+            "items": items,
+            "returned": len(items),
+            "limit": limit,
+            "offset": offset,
+            "held_runs_omitted": len(raw_items) - len(eligible_items),
+            "source_window_limit": source_window_limit,
+            "source_window_may_be_incomplete": len(raw_items) == source_window_limit,
+        }
 
     @api.get("/comparisons")
     async def comparisons(
         limit: int = Query(default=50, ge=1, le=100),
         offset: int = Query(default=0, ge=0, le=100_000),
     ) -> dict[str, Any]:
-        items = store.comparisons(limit=limit, offset=offset)
-        return {"items": items, "returned": len(items), "limit": limit, "offset": offset}
+        source_window_limit = min(200, max(25, offset + limit))
+        raw_items = store.comparisons(limit=source_window_limit)
+        eligible_items = comparison_rows_without_held_sources(raw_items)
+        items = eligible_items[offset : offset + limit]
+        return {
+            "items": items,
+            "returned": len(items),
+            "limit": limit,
+            "offset": offset,
+            "held_comparisons_omitted": len(raw_items) - len(eligible_items),
+            "source_window_limit": source_window_limit,
+            "source_window_may_be_incomplete": len(raw_items) == source_window_limit,
+        }
 
     @api.get("/comparisons/{comparison_id}")
     async def comparison(comparison_id: str) -> dict[str, Any]:
@@ -2404,13 +2666,29 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
             raise HTTPException(status_code=422, detail=str(error)) from error
         if item is None:
             raise HTTPException(status_code=404, detail="Replay comparison was not found")
+        if held_venues:
+            runs_by_id, observation_venues = comparison_run_rows((item,))
+        else:
+            runs_by_id, observation_venues = {}, {}
+        if comparison_uses_held_sources(item, runs_by_id, observation_venues):
+            raise HTTPException(
+                status_code=409,
+                detail="Replay comparison depends on source data held from research use",
+            )
         return item
 
     @api.post("/replay/compare")
     async def compare_replay(scenarios: PairedReplayRequest) -> dict[str, Any]:
-        market_values = await _load_markets(store, 100)
-        books = tuple(book for book, _ in _load_book_records(store, 200))
-        relation_rows = store.relationships(state="verified", limit=500, effective_only=True)
+        market_values = await _load_markets(store, 100, excluded_venues=held_venues)
+        books = tuple(
+            book for book, _ in _load_book_records(store, 200, excluded_venues=held_venues)
+        )
+        relation_rows = store.relationships(
+            state="verified",
+            limit=500,
+            effective_only=True,
+            excluded_venues=held_venues,
+        )
         verified = tuple(
             Relationship.model_validate(item["relationship"]) for item in relation_rows
         )
@@ -2441,9 +2719,16 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
                 status_code=503, detail="Arena replay integration is not configured"
             )
         try:
-            market_values = await _load_markets(store, 100)
-            books = tuple(book for book, _ in _load_book_records(store, 200))
-            relation_rows = store.relationships(state="verified", limit=500, effective_only=True)
+            market_values = await _load_markets(store, 100, excluded_venues=held_venues)
+            books = tuple(
+                book for book, _ in _load_book_records(store, 200, excluded_venues=held_venues)
+            )
+            relation_rows = store.relationships(
+                state="verified",
+                limit=500,
+                effective_only=True,
+                excluded_venues=held_venues,
+            )
             verified = tuple(
                 Relationship.model_validate(item["relationship"]) for item in relation_rows
             )
@@ -2498,10 +2783,15 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
         book_limit: int = Query(default=200, ge=1, le=400),
         relationship_limit: int = Query(default=500, ge=1, le=1000),
     ) -> dict[str, Any]:
-        market_values = await _load_markets(store, market_limit)
-        books = tuple(book for book, _ in _load_book_records(store, book_limit))
+        market_values = await _load_markets(store, market_limit, excluded_venues=held_venues)
+        books = tuple(
+            book for book, _ in _load_book_records(store, book_limit, excluded_venues=held_venues)
+        )
         relation_rows = store.relationships(
-            state="verified", limit=relationship_limit, effective_only=True
+            state="verified",
+            limit=relationship_limit,
+            effective_only=True,
+            excluded_venues=held_venues,
         )
         verified = tuple(
             Relationship.model_validate(item["relationship"]) for item in relation_rows
@@ -2522,18 +2812,27 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
 
     @api.get("/readiness")
     async def readiness() -> dict[str, Any]:
-        summary = store.summary()
+        summary = store.summary(excluded_venues=held_venues)
         arena_replay_state, arena_replay_detail = _arena_replay_readiness(arena_root)
         manifests = registry.capability_manifests()
         all_caps_declared = all(len(item.declarations) > 0 for item in manifests)
-        run_count = summary["runs"]
+        eligible_observation_count = int(summary["observations"])
+        eligible_runs = replay_rows_without_held_sources(store.replays(limit=20))
+        recent_runs = eligible_runs[:3]
+        run_count = len(eligible_runs)
+        eligible_relationships = store.relationships(
+            limit=2000, effective_only=True, excluded_venues=held_venues
+        )
+        eligible_verified_relationship_count = sum(
+            item["relationship"]["state"] == VerificationState.VERIFIED.value
+            for item in eligible_relationships
+        )
         audit_counts = {
             "verified": 0,
             "disagreement": 0,
             "incomplete": 0,
             "not_evaluated": 0,
         }
-        recent_runs = store.replays(limit=3)
         for run in recent_runs:
             result = run.get("result")
             candidates = result.get("candidates", []) if isinstance(result, dict) else []
@@ -2561,15 +2860,17 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
                 },
                 {
                     "name": "instrument_normalization",
-                    "state": "EVIDENCE_RECORDED" if summary["observations"] else "NOT_ESTABLISHED",
-                    "detail": f"{summary['observations']} immutable source observations stored; test-suite correctness is not inferred from runtime inventory.",
+                    "state": "EVIDENCE_RECORDED"
+                    if eligible_observation_count
+                    else "NOT_ESTABLISHED",
+                    "detail": f"{eligible_observation_count} non-held immutable source observations stored. The overview inventory also counts held records; test-suite correctness is not inferred from runtime inventory.",
                 },
                 {
                     "name": "relationship_validity",
                     "state": "EVIDENCE_RECORDED"
-                    if summary["relationships_by_state"].get("verified", 0)
+                    if eligible_verified_relationship_count
                     else "NOT_ESTABLISHED",
-                    "detail": f"{summary['relationships_by_state'].get('verified', 0)} verified relationships; title matches remain hypotheses.",
+                    "detail": f"{eligible_verified_relationship_count} verified relationships in the bounded non-held-source view; title matches remain hypotheses.",
                 },
                 {
                     "name": "independent_economic_verification",
@@ -2586,7 +2887,7 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
                 },
                 {
                     "name": "source_quality",
-                    "state": "REVIEW_REQUIRED" if summary["observations"] else "NOT_ESTABLISHED",
+                    "state": "REVIEW_REQUIRED" if eligible_observation_count else "NOT_ESTABLISHED",
                     "detail": "Freshness, completeness, source timestamp semantics, and venue limits must be inspected on each observation.",
                 },
                 {
@@ -2608,7 +2909,7 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
                 {
                     "name": "deterministic_replay",
                     "state": "EVIDENCE_RECORDED" if run_count else "NOT_RUN",
-                    "detail": f"{run_count} pinned replay outputs stored; determinism is separately tested against exact inputs.",
+                    "detail": f"{run_count} non-held pinned replay outputs in the 20-run source window; determinism is separately tested against exact inputs.",
                 },
                 {
                     "name": "arena_replay_worker",
@@ -2828,9 +3129,15 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
 
 
 async def _load_market_records(
-    store: FrontierStore, limit: int, *, venue: Venue | None = None
+    store: FrontierStore,
+    limit: int,
+    *,
+    venue: Venue | None = None,
+    excluded_venues: tuple[str, ...] = (),
 ) -> tuple[tuple[FrontierMarket, str], ...]:
-    rows = _market_observation_rows(store, min(200, limit), venue=venue)
+    rows = _market_observation_rows(
+        store, min(200, limit), venue=venue, excluded_venues=excluded_venues
+    )
     markets: dict[str, tuple[FrontierMarket, str]] = {}
     for row in rows:
         normalized = row.get("normalized")
@@ -2866,15 +3173,27 @@ async def _load_market_records(
     return tuple(sorted(markets.values(), key=lambda item: item[0].canonical_id))
 
 
-async def _load_markets(store: FrontierStore, limit: int) -> tuple[FrontierMarket, ...]:
+async def _load_markets(
+    store: FrontierStore, limit: int, *, excluded_venues: tuple[str, ...] = ()
+) -> tuple[FrontierMarket, ...]:
     """Load the latest normalized market and retain the established market-only API."""
-    return tuple(market for market, _ in await _load_market_records(store, limit))
+    return tuple(
+        market
+        for market, _ in await _load_market_records(store, limit, excluded_venues=excluded_venues)
+    )
 
 
-def _load_book_records(store: FrontierStore, limit: int) -> tuple[tuple[BookSnapshot, str], ...]:
+def _load_book_records(
+    store: FrontierStore,
+    limit: int,
+    *,
+    excluded_venues: tuple[str, ...] = (),
+) -> tuple[tuple[BookSnapshot, str], ...]:
     """Load books with the immutable store record ID as their runtime provenance ID."""
     values = []
-    for row in store.observations(kind="book_snapshot", limit=min(200, limit)):
+    for row in store.observations(
+        kind="book_snapshot", limit=min(200, limit), excluded_venues=excluded_venues
+    ):
         normalized = row.get("normalized")
         if not isinstance(normalized, dict) or "native_instrument_id" not in normalized:
             continue
@@ -2957,7 +3276,11 @@ async def _load_kalshi_fee_evidence(
 
 
 def _market_observation_rows(
-    store: FrontierStore, limit: int, *, venue: Venue | None = None
+    store: FrontierStore,
+    limit: int,
+    *,
+    venue: Venue | None = None,
+    excluded_venues: tuple[str, ...] = (),
 ) -> list[dict[str, Any]]:
     """Market records can arrive from discovery, pair metadata, detail, or event groups."""
     rows: list[dict[str, Any]] = []
@@ -2971,6 +3294,7 @@ def _market_observation_rows(
             store.observations(
                 venue=venue.value if venue else None,
                 kind=kind,
+                excluded_venues=excluded_venues,
                 limit=limit,
                 offset=0,
             )

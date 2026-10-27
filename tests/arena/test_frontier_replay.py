@@ -362,3 +362,62 @@ def test_frontier_replay_catalog_omits_invalid_worker_measurements(tmp_path):
         item = response.json()["items"][0]
         assert item["elapsed_seconds"] is None
         assert item["runtime_profile"] is None
+
+
+def test_held_source_arena_replays_are_hidden_from_catalog_and_result_routes(tmp_path):
+    held_market = market(Venue.KALSHI, "held-arena-replay")
+    held_snapshot = make_snapshot(
+        code_version="frontier-test-source-sha256:" + "e" * 64,
+        as_of_utc=AS_OF,
+        relationship_limit=500,
+        scenarios=(
+            ExecutionScenario(name="held quoted baseline"),
+            ExecutionScenario(name="held stress", slippage_bps="25"),
+        ),
+        markets=(held_market,),
+        books=(),
+        verified_relationships=(),
+    )
+    checksum = store_snapshot(tmp_path, held_snapshot)
+    spec = FrontierReplayJobSpec(snapshot_id=held_snapshot.snapshot_id, snapshot_sha256=checksum)
+    configuration = JobSpec(
+        kind="frontier_replay",
+        frontier_replay=spec,
+        max_wall_seconds=300,
+        memory_limit_mb=512,
+        cpu_quota_percent=50,
+        nice=15,
+        io_scheduling_class="idle",
+    )
+    job_directory = tmp_path / "jobs" / JOB_ID
+    job_directory.mkdir(parents=True)
+    artifact = execute_frontier_replay_job(tmp_path, JOB_ID, spec, Progress())
+    atomic_json(
+        job_directory / "job.json",
+        {
+            "job_id": JOB_ID,
+            "configuration": configuration.model_dump(mode="json"),
+            "state": "COMPLETED",
+            "exit_status": 0,
+            "result": {
+                "frontier_replay_sha256": artifact.result_sha256,
+                "comparison_id": artifact.comparison.comparison_id,
+                "snapshot_id": artifact.snapshot_id,
+                "artifact": "frontier-replay-result.json",
+            },
+        },
+    )
+    app = FastAPI()
+    app.include_router(router(tmp_path, frontier_held_venues=("kalshi",)))
+
+    with TestClient(app) as client:
+        catalog = client.get("/api/arena/frontier-replays?limit=10")
+        assert catalog.status_code == 200, catalog.text
+        assert catalog.json()["items"] == []
+        detail = client.get(f"/api/arena/jobs/{JOB_ID}/frontier-replay")
+        assert detail.status_code == 409
+        assert "held from research use" in detail.json()["detail"]
+
+    # The Arena snapshot and its result remain present; read quarantine is non-destructive.
+    assert load_snapshot(tmp_path, spec).markets[0].venue == Venue.KALSHI
+    assert read_frontier_replay_artifact(tmp_path, JOB_ID).result_sha256 == artifact.result_sha256

@@ -179,7 +179,20 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     from apps.api.arena import router as arena_router
 
     veritas_workspace = (config.veritas_workspace or Path(__file__).resolve().parents[2]).resolve()
-    app.include_router(arena_router(config.arena_root, veritas_repository=veritas_workspace))
+    app.include_router(
+        arena_router(
+            config.arena_root,
+            veritas_repository=veritas_workspace,
+            frontier_held_venues=tuple(
+                venue
+                for venue, reason in (
+                    ("kalshi", kalshi_probe_block_reason),
+                    ("kraken", kraken_probe_block_reason),
+                )
+                if reason
+            ),
+        )
+    )
     from apps.api.reality import router as reality_router
 
     app.include_router(reality_router(config.reality_workspace.resolve()))
