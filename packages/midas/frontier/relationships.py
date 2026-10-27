@@ -303,12 +303,12 @@ def propose_relationships(
                 continue
             left, right = sorted((parent.canonical_id, child.canonical_id))
             candidates[(left, right, RelationshipType.SOURCE_COMPONENT_REFERENCE)] = (
-                "Source-declared selected-component reference; exact native market and event identifiers match",
+                "Source-declared selected-component reference; exact native market ID matches and any supplied event ID agrees",
                 D(1),
                 ("selected_components", "native_market_id", "native_event_id"),
                 (
                     f"The parent source metadata lists {component.native_market_id} on the {component.selected_side.upper()} side.",
-                    "The recorded child metadata has the exact referenced market ticker and event ID.",
+                    "The recorded child metadata has the exact referenced market ticker; its event ID also agrees when the parent supplied one.",
                     "This source link does not verify the child payoff, combo payout, event logic, or settlement equivalence.",
                 ),
             )
