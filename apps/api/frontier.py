@@ -6,6 +6,7 @@ import asyncio
 import base64
 import hashlib
 import json
+import math
 import re
 from datetime import UTC, datetime
 from decimal import Decimal
@@ -15,7 +16,12 @@ from typing import Any, Literal
 from urllib.parse import urlsplit
 
 from fastapi import APIRouter, HTTPException, Query
-from midas.arena.frontier_replay import FrontierReplayJobSpec, make_snapshot, store_snapshot
+from midas.arena.frontier_replay import (
+    FrontierReplayJobSpec,
+    make_snapshot,
+    store_snapshot,
+    verify_frontier_replay_job_result,
+)
 from midas.frontier.adapters.base import AdapterError, ExchangeAdapter, FailedResponseEvidence
 from midas.frontier.adapters.kraken import KrakenSpotAdapter
 from midas.frontier.economics import ExecutionScenario, estimate_kalshi_taker_fee_sensitivity
@@ -109,6 +115,95 @@ class PairedReplayRequest(BaseModel):
         if self.scenarios[0].name == self.scenarios[1].name:
             raise ValueError("Paired replay scenario names must be unique")
         return self
+
+
+MAX_FRONTIER_READINESS_JOB_SCAN = 100
+MAX_FRONTIER_READINESS_MANIFEST_BYTES = 64 * 1024
+
+
+def _arena_replay_readiness(root: Path | None) -> tuple[str, str]:
+    if root is None:
+        return "NOT_CONFIGURED", "No Arena root is configured for Frontier paired replay jobs."
+    if root.is_symlink():
+        return (
+            "REVIEW_REQUIRED",
+            "The configured Arena root is a symlink; replay evidence was not read.",
+        )
+    jobs_root = root / "jobs"
+    if jobs_root.is_symlink():
+        return "REVIEW_REQUIRED", "The configured Arena jobs directory is a symlink."
+    if not jobs_root.exists():
+        return (
+            "LIVE_VALIDATION_PENDING",
+            "The bounded offline job is registered, but no completed Arena replay evidence exists.",
+        )
+
+    scanned = 0
+    invalid_completed = 0
+    try:
+        for directory in jobs_root.iterdir():
+            if scanned >= MAX_FRONTIER_READINESS_JOB_SCAN:
+                break
+            scanned += 1
+            manifest = directory / "job.json"
+            if (
+                directory.is_symlink()
+                or not directory.is_dir()
+                or manifest.is_symlink()
+                or not manifest.is_file()
+                or manifest.stat().st_size > MAX_FRONTIER_READINESS_MANIFEST_BYTES
+            ):
+                continue
+            try:
+                record = json.loads(manifest.read_bytes())
+            except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+                continue
+            if not isinstance(record, dict):
+                continue
+            configuration = record.get("configuration")
+            if (
+                not isinstance(configuration, dict)
+                or configuration.get("kind") != "frontier_replay"
+                or record.get("state") != "COMPLETED"
+            ):
+                continue
+            runtime_profile = record.get("runtime_profile")
+            elapsed = record.get("elapsed_seconds")
+            started = record.get("started_at")
+            has_runtime_evidence = (
+                isinstance(runtime_profile, dict)
+                and bool(runtime_profile)
+                and isinstance(elapsed, (int, float))
+                and not isinstance(elapsed, bool)
+                and math.isfinite(float(elapsed))
+                and elapsed > 0
+                and isinstance(started, (int, float))
+                and not isinstance(started, bool)
+                and math.isfinite(float(started))
+            )
+            try:
+                if not has_runtime_evidence:
+                    raise ValueError("Completed Arena job has no worker runtime record")
+                artifact = verify_frontier_replay_job_result(root, directory.name, record)
+            except (OSError, ValueError, TypeError, KeyError):
+                invalid_completed += 1
+                continue
+            return (
+                "EVIDENCE_RECORDED",
+                f"Completed Frontier Arena job {artifact.job_id} has a hash-verified result and worker runtime record. This is one execution sample; resource sustainability remains unmeasured.",
+            )
+    except OSError:
+        return "REVIEW_REQUIRED", "The configured Arena job catalog could not be read safely."
+
+    if invalid_completed:
+        return (
+            "REVIEW_REQUIRED",
+            f"Found {invalid_completed} completed Frontier replay record(s) without valid bound result and runtime evidence.",
+        )
+    return (
+        "LIVE_VALIDATION_PENDING",
+        f"The bounded offline job is registered, but no completed Arena replay evidence was found in {scanned} scanned job record(s).",
+    )
 
 
 class RelationshipReviewRequest(BaseModel):
@@ -1704,6 +1799,7 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
     @api.get("/readiness")
     async def readiness() -> dict[str, Any]:
         summary = store.summary()
+        arena_replay_state, arena_replay_detail = _arena_replay_readiness(arena_root)
         manifests = registry.capability_manifests()
         all_caps_declared = all(len(item.declarations) > 0 for item in manifests)
         run_count = summary["runs"]
@@ -1776,15 +1872,8 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
                 },
                 {
                     "name": "arena_replay_worker",
-                    "state": "LIVE_VALIDATION_PENDING"
-                    if arena_root is not None
-                    else "NOT_CONFIGURED",
-                    "detail": (
-                        "The bounded offline job is registered, but supervisor execution has not "
-                        "been validated through an admitted worker."
-                        if arena_root is not None
-                        else "No Arena root is configured for Frontier paired replay jobs."
-                    ),
+                    "state": arena_replay_state,
+                    "detail": arena_replay_detail,
                 },
                 {
                     "name": "resource_sustainability",

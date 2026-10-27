@@ -1505,33 +1505,11 @@ def router(root: Path, *, veritas_repository: Path | None = None) -> APIRouter:
     @api.get("/jobs/{identity}/frontier-replay")
     async def frontier_replay_result(identity: str) -> Any:
         def read() -> Any:
-            from midas.arena.frontier_replay import read_frontier_replay_artifact
+            from midas.arena.frontier_replay import verify_frontier_replay_job_result
             from midas.arena.jobs import inspect
 
             record = inspect(root, identity)
-            configuration = record.get("configuration")
-            result_ref = record.get("result")
-            if (
-                not isinstance(configuration, dict)
-                or configuration.get("kind") != "frontier_replay"
-                or record.get("state") != "COMPLETED"
-                or record.get("exit_status") != 0
-                or not isinstance(result_ref, dict)
-                or result_ref.get("artifact") != "frontier-replay-result.json"
-            ):
-                raise ValueError("Completed Frontier replay result is unavailable")
-            replay_spec = configuration.get("frontier_replay")
-            if not isinstance(replay_spec, dict):
-                raise ValueError("Arena job has no pinned Frontier replay configuration")
-            artifact = read_frontier_replay_artifact(root, identity)
-            if (
-                artifact.snapshot_id != replay_spec.get("snapshot_id")
-                or artifact.snapshot_sha256 != replay_spec.get("snapshot_sha256")
-                or artifact.result_sha256 != result_ref.get("frontier_replay_sha256")
-                or artifact.comparison.comparison_id != result_ref.get("comparison_id")
-                or artifact.snapshot_id != result_ref.get("snapshot_id")
-            ):
-                raise ValueError("Frontier replay result does not match its durable job record")
+            artifact = verify_frontier_replay_job_result(root, identity, record)
             return {
                 "artifact": artifact.model_dump(mode="json"),
                 "research_only": True,

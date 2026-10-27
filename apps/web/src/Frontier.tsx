@@ -479,6 +479,7 @@ function StateBadge({ state }: { state: string }) {
           'INCOMPLETE',
           'NOT_EVALUATED',
           'LIVE_VALIDATION_PENDING',
+          'REVIEW_REQUIRED',
         ].includes(state.toUpperCase())
       ? 'watch'
       : ['FAILED', 'BLOCKED', 'REJECTED', 'DISAGREEMENT'].includes(state.toUpperCase())

@@ -256,3 +256,35 @@ def read_frontier_replay_artifact(root: Path, job_id: str) -> FrontierReplayJobA
     if artifact.job_id != job_id:
         raise ValueError("Frontier Arena replay result belongs to a different job")
     return artifact
+
+
+def verify_frontier_replay_job_result(
+    root: Path, job_id: str, record: dict[str, Any]
+) -> FrontierReplayJobArtifact:
+    """Bind a completed artifact back to its durable Arena job configuration/result."""
+    configuration = record.get("configuration")
+    result_ref = record.get("result")
+    if (
+        record.get("job_id") != job_id
+        or not isinstance(configuration, dict)
+        or configuration.get("kind") != "frontier_replay"
+        or record.get("state") != "COMPLETED"
+        or record.get("exit_status") != 0
+        or not isinstance(result_ref, dict)
+        or result_ref.get("artifact") != "frontier-replay-result.json"
+    ):
+        raise ValueError("Completed Frontier replay result is unavailable")
+    replay_spec_value = configuration.get("frontier_replay")
+    if not isinstance(replay_spec_value, dict):
+        raise ValueError("Arena job has no pinned Frontier replay configuration")
+    replay_spec = FrontierReplayJobSpec.model_validate(replay_spec_value)
+    artifact = read_frontier_replay_artifact(root, job_id)
+    if (
+        artifact.snapshot_id != replay_spec.snapshot_id
+        or artifact.snapshot_sha256 != replay_spec.snapshot_sha256
+        or artifact.result_sha256 != result_ref.get("frontier_replay_sha256")
+        or artifact.comparison.comparison_id != result_ref.get("comparison_id")
+        or artifact.snapshot_id != result_ref.get("snapshot_id")
+    ):
+        raise ValueError("Frontier replay result does not match its durable job record")
+    return artifact

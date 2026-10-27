@@ -406,9 +406,97 @@ def test_readiness_separates_arena_configuration_from_worker_runtime_validation(
             item for item in readiness.json()["gates"] if item["name"] == "arena_replay_worker"
         )
         assert gate["state"] == "LIVE_VALIDATION_PENDING"
-        assert "not been validated through an admitted worker" in gate["detail"]
+        assert "no completed Arena replay evidence" in gate["detail"]
     finally:
         configured.close()
+        asyncio.run(registry.aclose())
+        asyncio.run(http_client.aclose())
+
+
+def test_readiness_recognizes_only_completed_hash_verified_arena_evidence(tmp_path):
+    from midas.arena.artifacts import atomic_json
+    from midas.arena.frontier_replay import (
+        FrontierReplayJobSpec,
+        execute_frontier_replay_job,
+        make_snapshot,
+        store_snapshot,
+    )
+    from midas.arena.jobs import JobSpec
+    from midas.frontier.economics import ExecutionScenario
+
+    class Progress:
+        def phase(self, value):
+            del value
+
+        def __call__(self, current, total):
+            del current, total
+
+    arena_root = tmp_path / "arena"
+    identity = "job-0123456789abcdef01234567"
+    snapshot = make_snapshot(
+        code_version="fixture-readiness-v1",
+        as_of_utc=T0,
+        relationship_limit=500,
+        scenarios=(ExecutionScenario(name="baseline"), ExecutionScenario(name="stress")),
+        markets=(),
+        books=(),
+        verified_relationships=(),
+    )
+    snapshot_sha256 = store_snapshot(arena_root, snapshot)
+    replay_spec = FrontierReplayJobSpec(
+        snapshot_id=snapshot.snapshot_id,
+        snapshot_sha256=snapshot_sha256,
+    )
+    (arena_root / "jobs" / identity).mkdir(parents=True)
+    artifact = execute_frontier_replay_job(
+        arena_root,
+        identity,
+        replay_spec,
+        Progress(),
+    )
+    configuration = JobSpec(
+        kind="frontier_replay",
+        frontier_replay=replay_spec,
+        max_wall_seconds=300,
+        memory_limit_mb=512,
+        cpu_quota_percent=50,
+        nice=15,
+        io_scheduling_class="idle",
+    )
+    job_record = {
+        "job_id": identity,
+        "configuration": configuration.model_dump(mode="json"),
+        "state": "COMPLETED",
+        "exit_status": 0,
+        "started_at": 1_000.0,
+        "elapsed_seconds": 0.25,
+        "runtime_profile": {"memory_peak_bytes": 1024},
+        "result": {
+            "frontier_replay_sha256": artifact.result_sha256,
+            "comparison_id": artifact.comparison.comparison_id,
+            "snapshot_id": artifact.snapshot_id,
+            "artifact": "frontier-replay-result.json",
+        },
+    }
+    atomic_json(arena_root / "jobs" / identity / "job.json", job_record)
+    client, registry, http_client, _, _ = _client(tmp_path, arena_root=arena_root)
+    try:
+        gates = client.get("/api/frontier/readiness").json()["gates"]
+        arena_gate = next(item for item in gates if item["name"] == "arena_replay_worker")
+        resource_gate = next(item for item in gates if item["name"] == "resource_sustainability")
+        assert arena_gate["state"] == "EVIDENCE_RECORDED"
+        assert "hash-verified result" in arena_gate["detail"]
+        assert resource_gate["state"] == "NOT_MEASURED"
+
+        result_path = arena_root / "jobs" / identity / "frontier-replay-result.json"
+        altered_artifact = json.loads(result_path.read_bytes())
+        altered_artifact["result_sha256"] = "0" * 64
+        atomic_json(result_path, altered_artifact)
+        rejected_gates = client.get("/api/frontier/readiness").json()["gates"]
+        rejected = next(item for item in rejected_gates if item["name"] == "arena_replay_worker")
+        assert rejected["state"] == "REVIEW_REQUIRED"
+    finally:
+        client.close()
         asyncio.run(registry.aclose())
         asyncio.run(http_client.aclose())
 
