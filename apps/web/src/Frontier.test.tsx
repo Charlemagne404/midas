@@ -2515,6 +2515,9 @@ it('submits a bounded Arena replay and displays its integrity-verified compariso
     screen.getByText('1 fresh · 0 stale · 0 not yet observed · 0 source-excluded'),
   ).toBeInTheDocument();
   expect(screen.getByText('polymarket: available')).toBeInTheDocument();
+  expect(screen.getByLabelText('Recorded health checkpoint digests')).toHaveTextContent(
+    healthCheckpointSha256,
+  );
   expect(timelineSubmission).toEqual({
     max_book_age_ms: 5000,
     source_status_events: [

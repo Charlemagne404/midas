@@ -3898,11 +3898,32 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
                         {timelineResult.data.artifact.timeline.manifest.relationship_ids.length}
                       </span>
                       <span>
+                        Recorded health checkpoints{' '}
+                        {
+                          timelineResult.data.artifact.timeline.manifest.source_status_sha256s
+                            .length
+                        }
+                      </span>
+                      <span>
                         Freshness limit{' '}
                         {timelineResult.data.artifact.timeline.manifest.max_book_age_ms.toLocaleString()}{' '}
                         ms
                       </span>
                     </div>
+                    {timelineResult.data.artifact.timeline.manifest.source_status_sha256s.length >
+                      0 && (
+                      <div
+                        className="fr-timeline-health-digests"
+                        aria-label="Recorded health checkpoint digests"
+                      >
+                        <strong>Recorded health checkpoint digests</strong>
+                        {timelineResult.data.artifact.timeline.manifest.source_status_sha256s.map(
+                          (digest) => (
+                            <code key={digest}>{digest}</code>
+                          ),
+                        )}
+                      </div>
+                    )}
                     <div className="fr-timeline-frame-list" aria-label="Timeline frame results">
                       {timelineResult.data.artifact.timeline.frames.map((frame) => (
                         <TimelineFrameSummary key={frame.as_of_utc} frame={frame} />

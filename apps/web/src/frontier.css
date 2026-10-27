@@ -2225,6 +2225,24 @@
   color: #8996a7;
   font-size: 9px;
 }
+.fr-timeline-health-digests {
+  display: grid;
+  gap: 4px;
+  margin: 0 15px 12px;
+  padding: 8px 10px;
+  border: 1px solid #293440;
+  border-radius: 4px;
+  background: #0d1319;
+}
+.fr-timeline-health-digests strong {
+  color: #c2d0df;
+  font-size: 8px;
+}
+.fr-timeline-health-digests code {
+  color: #8996a7;
+  font-size: 8px;
+  overflow-wrap: anywhere;
+}
 .fr-timeline-controls {
   display: grid;
   grid-template-columns: minmax(180px, 0.35fr) minmax(120px, 0.2fr) minmax(220px, 1fr);
