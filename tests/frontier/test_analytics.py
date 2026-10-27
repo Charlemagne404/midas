@@ -68,17 +68,29 @@ def _candidate(
             {
                 "venue": "polymarket",
                 "market_id": left.canonical_id,
+                "native_market_id": left.native_market_id,
                 "instrument_id": left.instruments[0].native_instrument_id,
                 "outcome_id": "yes",
                 "quantity": "1",
+                "quote_currency": left.instruments[0].price_currency,
+                "quote_currency_identity": left.instruments[0].price_currency_identity.model_dump(
+                    mode="json"
+                ),
+                "market_observation_id": left.provenance.observation_id,
                 "book_observation_id": book_ids[0],
             },
             {
                 "venue": "kalshi",
                 "market_id": right.canonical_id,
+                "native_market_id": right.native_market_id,
                 "instrument_id": right.instruments[0].native_instrument_id,
                 "outcome_id": "yes",
                 "quantity": "1",
+                "quote_currency": right.instruments[0].price_currency,
+                "quote_currency_identity": right.instruments[0].price_currency_identity.model_dump(
+                    mode="json"
+                ),
+                "market_observation_id": right.provenance.observation_id,
                 "book_observation_id": book_ids[1],
             },
         ],
@@ -218,6 +230,38 @@ def test_recurrence_requires_distinct_books_and_distinct_replay_times():
     assert candidate_metrics["rejection_reasons"] == [
         {"reason": "candidate uses a controlled fixture", "count": 1}
     ]
+
+
+def test_recurrence_does_not_merge_different_quote_denominations():
+    first = _candidate(book_ids=("a" * 64, "b" * 64), observed_at=T0.isoformat())
+    different_denomination = _candidate(
+        book_ids=("c" * 64, "d" * 64),
+        observed_at=(T0 + timedelta(seconds=1)).isoformat(),
+    )
+    different_denomination["legs"][0]["quote_currency"] = "EUR"
+    different_denomination["legs"][0]["quote_currency_identity"] = {
+        "schema_version": 1,
+        "kind": "fiat",
+        "code": "EUR",
+        "network_id": None,
+        "asset_reference": None,
+    }
+    result = summarize_frontier_coverage(
+        market_records=(),
+        book_records=(),
+        replay_rows=(
+            {"run_id": "1", "result": {"candidates": [first]}},
+            {"run_id": "2", "result": {"candidates": [different_denomination]}},
+        ),
+        as_of_utc=T0 + timedelta(seconds=1),
+    )
+
+    assert (
+        result["candidate_research"][
+            "gross_positive_audited_timing_verified_constructions_repeated_across_distinct_books"
+        ]
+        == 0
+    )
 
 
 def test_bad_source_lineage_is_excluded_from_price_metrics():

@@ -6,6 +6,7 @@ venue-wide prevalence, executable liquidity, or independent opportunity counts.
 
 from __future__ import annotations
 
+import json
 from collections import Counter, defaultdict
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -114,13 +115,38 @@ def _candidate_signature(candidate: dict[str, Any]) -> tuple[str, ...] | None:
         fields = (
             leg.get("venue"),
             leg.get("market_id"),
+            leg.get("native_market_id"),
             leg.get("instrument_id"),
             leg.get("outcome_id"),
             leg.get("quantity"),
+            leg.get("market_observation_id"),
         )
         if any(not isinstance(value, (str, int)) or isinstance(value, bool) for value in fields):
             return None
-        normalized_fields = tuple(str(value) for value in fields)
+        quote_currency = leg.get("quote_currency")
+        if quote_currency is not None and not isinstance(quote_currency, str):
+            return None
+        quote_identity = leg.get("quote_currency_identity")
+        if quote_identity is None:
+            quote_identity_text = ""
+        elif isinstance(quote_identity, dict):
+            try:
+                quote_identity_text = json.dumps(
+                    quote_identity,
+                    sort_keys=True,
+                    separators=(",", ":"),
+                    ensure_ascii=True,
+                    allow_nan=False,
+                )
+            except (TypeError, ValueError):
+                return None
+        else:
+            return None
+        normalized_fields = (
+            *tuple(str(value) for value in fields),
+            quote_currency or "",
+            quote_identity_text,
+        )
         if any(len(value) > 512 for value in normalized_fields):
             return None
         leg_signatures.append("\x00".join(normalized_fields))
