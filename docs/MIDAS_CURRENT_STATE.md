@@ -33,6 +33,30 @@ in the dated addendum below and in the Frontier engineering report.
 
 ## Frontier development addendum — 2026-10-27
 
+### Coinbase Exchange Spot update — 2026-10-27 21:07 UTC
+
+The isolated Frontier branch `codex/frontier-20261026` now contains Coinbase
+Exchange spot adapter commit `cfda4ad1beb00f301affe52752e8815b4862f8b5`, with
+validation checkpoint commit `4b20aa9db859842f355c37920505de893732c17a`. The
+adapter supports configured public product metadata, aggregated level-2 books,
+and one bounded trade page. Spot remains contextual evidence, not an event
+contract payoff; account-tier fees, settlement rules, and live cross-venue
+relationships are not established.
+
+Source use is disabled by default. The local adapter and API require an exact
+acknowledgement of Market Data Terms version `2026-08-07`, with a separate
+public-probe setting. This does not validate the applicable organization,
+region, retention, or redistribution scope. No Coinbase API request or capture
+was made. The focused adapter, terms-gate, held-source, and spot-payoff tests
+pass **10/10**; the full Frontier suite, web suite, production build, and
+browser regression for this checkpoint remain pending a safe host admission
+window. At the latest resource check the external bounded Veritas/Arena batch
+held the shared Arena lock and PSI was high; it was left untouched. Frontier
+development remains isolated, incomplete, and undeployed. See the [mission
+ledger](frontier/FRONTIER_MISSION_LEDGER.md) and [engineering
+report](frontier/FRONTIER_ENGINEERING_REPORT.md) for measured evidence and
+continuation steps.
+
 Frontier development is active in the isolated worktree
 `/home/charlie/midas-frontier` on branch `codex/frontier-20261026`, based on the
 verified Veritas V6 integration. It is not merged or deployed. The current
