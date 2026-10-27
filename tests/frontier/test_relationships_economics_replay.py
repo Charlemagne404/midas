@@ -1537,6 +1537,43 @@ def test_multi_outcome_fee_uncertainty_timing_and_step_constraints_fail_closed()
     )
 
 
+def test_independent_audit_recomputes_multi_outcome_timing_claims():
+    event = _multi_outcome_market()
+    books = _multi_outcome_books(event)
+    as_of = T0 + timedelta(milliseconds=100)
+    candidate = generate_multi_outcome_coverage_candidate(event, books, as_of_utc=as_of)
+    assert candidate.timing_verified is True
+    inputs = {
+        "markets": {event.canonical_id: event},
+        "books_by_market": {event.canonical_id: books},
+        "relationships": {},
+        "state_mappings": {},
+        "instrument_mappings": {},
+        "scenario": ExecutionScenario(),
+    }
+    audited = independently_audit_candidate(candidate, **inputs)
+    assert audited.independent_audit is not None
+    assert audited.independent_audit.disposition.value == "verified"
+    assert audited.independent_audit.recomputed_received_skew_ms == 0
+    assert audited.independent_audit.recomputed_exchange_skew_ms == 0
+    assert audited.independent_audit.recomputed_timing_verified is True
+
+    tampered = candidate.model_copy(
+        update={
+            "received_skew_ms": 1,
+            "exchange_skew_ms": 1,
+            "timing_verified": False,
+            "independent_audit": None,
+        }
+    )
+    checked = independently_audit_candidate(tampered, **inputs)
+    assert checked.independent_audit is not None
+    assert checked.independent_audit.disposition.value == "disagreement"
+    assert "receipt skew" in checked.independent_audit.message.lower()
+    assert "exchange timestamp skew" in checked.independent_audit.message.lower()
+    assert "timing verification" in checked.independent_audit.message.lower()
+
+
 def test_deterministic_replay_is_invariant_to_input_order():
     left, right, relationship, instrument_mapping = _verified_pair()
     left_books, right_books = _books(left, right)
