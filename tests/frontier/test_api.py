@@ -356,6 +356,18 @@ def test_saved_kalshi_fee_pair_is_joined_only_when_raw_and_normalized_evidence_m
     assert len(replay_markets) == 1
     assert replay_markets[0].fees == joined.fees
 
+    app = FastAPI()
+    app.include_router(router(store, AdapterRegistry(())))
+    api_client = TestClient(app)
+    try:
+        market_response = api_client.get("/api/frontier/markets?venue=kalshi")
+        assert market_response.status_code == 200
+        market_json = market_response.json()["items"][0]
+        assert market_json["fees"]["status"] == FeeStatus.ESTIMATE.value
+        assert market_json["fees"]["evidence_observation_ids"] == [event_id, series_id]
+    finally:
+        api_client.close()
+
     quarantined = _enrich_markets_with_kalshi_fee_evidence(
         store, ((source_market, market_observation_id),), excluded_venues=("kalshi",)
     )[0][0]
