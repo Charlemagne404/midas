@@ -645,6 +645,82 @@ def test_stale_books_are_not_practically_eligible():
     assert any("freshness" in item for item in positive.reasons)
 
 
+def test_cross_venue_timing_requires_comparable_semantics_and_clock_bounds():
+    left, right, relationship, instrument_mapping = _verified_pair()
+    left_books, right_books = _books(left, right)
+    state_mapping = {"yes": "yes", "no": "no"}
+    as_of = T0 + timedelta(milliseconds=100)
+
+    def positive(left_snapshots, right_snapshots):
+        candidates = generate_binary_coverage_candidates(
+            left,
+            right,
+            relationship,
+            left_snapshots,
+            right_snapshots,
+            state_mapping=state_mapping,
+            instrument_mapping=instrument_mapping,
+            as_of_utc=as_of,
+        )
+        return next(item for item in candidates if item.worst_case_gross_pnl > 0)
+
+    missing_clock = positive(left_books, right_books)
+    assert missing_clock.timing_verified is False
+    assert any("Clock uncertainty is not quantified" in item for item in missing_clock.reasons)
+
+    def with_known_clock_uncertainty(snapshots):
+        return {
+            instrument_id: snapshot.model_copy(
+                update={
+                    "provenance": snapshot.provenance.model_copy(
+                        update={"clock_uncertainty_ms": Decimal(1)}
+                    )
+                }
+            )
+            for instrument_id, snapshot in snapshots.items()
+        }
+
+    known_left = with_known_clock_uncertainty(left_books)
+    known_right = with_known_clock_uncertainty(right_books)
+    comparable = positive(known_left, known_right)
+    assert comparable.timing_verified is True
+
+    mismatched_semantics = {
+        instrument_id: snapshot.model_copy(
+            update={"exchange_timestamp_semantics": "different source timestamp contract"}
+        )
+        for instrument_id, snapshot in known_right.items()
+    }
+    mismatched = positive(known_left, mismatched_semantics)
+    assert mismatched.timing_verified is False
+    assert any("different or unknown" in item for item in mismatched.reasons)
+
+    unknown_semantics = {
+        instrument_id: snapshot.model_copy(update={"exchange_timestamp_semantics": " UNKNOWN "})
+        for instrument_id, snapshot in known_right.items()
+    }
+    unknown = positive(known_left, unknown_semantics)
+    assert unknown.timing_verified is False
+    assert any("different or unknown" in item for item in unknown.reasons)
+
+    future = T0 + timedelta(seconds=1)
+    future_right = {
+        instrument_id: snapshot.model_copy(
+            update={
+                "exchange_timestamp_utc": future,
+                "asks": tuple(
+                    level.model_copy(update={"exchange_timestamp_utc": future})
+                    for level in snapshot.asks
+                ),
+            }
+        )
+        for instrument_id, snapshot in known_right.items()
+    }
+    future_candidate = positive(known_left, future_right)
+    assert future_candidate.timing_verified is False
+    assert any("after the replay analysis time" in item for item in future_candidate.reasons)
+
+
 def test_slippage_that_exceeds_binary_payout_is_rejected_as_unsupported():
     left, right, relationship, instrument_mapping = _verified_pair()
     left_books, right_books = _books(left, right)

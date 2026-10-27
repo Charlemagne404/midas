@@ -1371,6 +1371,41 @@ def _evaluate_pair(
         timing_reasons.append("Both venues do not provide comparable exchange book timestamps.")
     elif exchange_skew > scenario.max_exchange_skew_ms:
         timing_reasons.append("Exchange book timestamps exceed the configured comparison skew.")
+    timestamp_semantics = {
+        left_book.exchange_timestamp_semantics.strip().casefold(),
+        right_book.exchange_timestamp_semantics.strip().casefold(),
+    }
+    if len(timestamp_semantics) != 1 or timestamp_semantics <= {"", "unknown"}:
+        timing_reasons.append(
+            "The venues report different or unknown exchange timestamp semantics."
+        )
+    clock_uncertainties = (
+        left_book.provenance.clock_uncertainty_ms,
+        right_book.provenance.clock_uncertainty_ms,
+    )
+    if any(value is None for value in clock_uncertainties):
+        timing_reasons.append("Clock uncertainty is not quantified for both exchange timestamps.")
+    elif exchange_skew is not None and (
+        D(exchange_skew) + sum((value for value in clock_uncertainties if value is not None), D(0))
+        > scenario.max_exchange_skew_ms
+    ):
+        timing_reasons.append(
+            "Observed timestamp skew plus source clock uncertainty exceeds the configured limit."
+        )
+    if any(
+        timestamp is not None and timestamp > as_of
+        for timestamp in (
+            left_book.received_at_utc,
+            right_book.received_at_utc,
+            left_book.exchange_timestamp_utc,
+            right_book.exchange_timestamp_utc,
+            l_ask.exchange_timestamp_utc,
+            r_ask.exchange_timestamp_utc,
+        )
+    ):
+        timing_reasons.append(
+            "At least one cross-venue timestamp is after the replay analysis time."
+        )
     if left_book.quality_flags or right_book.quality_flags:
         timing_reasons.append("At least one public source marked book quality as degraded.")
     if l_ask.exchange_timestamp_utc is None or r_ask.exchange_timestamp_utc is None:
