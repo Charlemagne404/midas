@@ -1166,3 +1166,15 @@ chunk-size warning remains for the main/chart bundles. No live source, service,
 deployment, or protected data was touched. The full repository suite, full
 browser suite, live Polymarket v2 host, and market-specific token payout remain
 unverified. Project Frontier remains incomplete and undeployed.
+
+## 2026-10-27 — API denomination serialization regression
+
+Commit `8a1f41e` adds a focused end-to-end API assertion to the controlled
+multi-outcome replay fixture. The test reads the saved market and books through
+their public API routes and checks that exact fiat USD identity survives; it
+then checks the same identity on replay candidate legs and capital. The focused
+test passed **1/1** in 1.15 seconds, with the existing Starlette/httpx
+`TestClient` deprecation warning. Ruff check/format and `git diff --check`
+passed. This verifies serialization and local persistence for the controlled
+fixture; it does not add live-source evidence. No service, external source, or
+historical data was changed.
