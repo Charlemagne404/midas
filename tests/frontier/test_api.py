@@ -1691,6 +1691,14 @@ def test_readiness_reports_pinned_candidate_timing_audit_counts(tmp_path):
         audit.pop("recomputed_exchange_skew_ms", None)
         audit.pop("recomputed_timing_verified", None)
     assert legacy_audit_count > 0
+    missing_audit_candidate = legacy["candidates"][0].copy()
+    missing_audit_candidate["candidate_id"] = hashlib.sha256(
+        f"{missing_audit_candidate['candidate_id']}|missing-audit-fixture".encode()
+    ).hexdigest()
+    missing_audit_candidate["independent_audit"] = None
+    legacy["candidates"].append(missing_audit_candidate)
+    missing_audit_classification = missing_audit_candidate["classification"]
+    legacy["classification_counts"][missing_audit_classification] += 1
     legacy_candidate_count = len(legacy["candidates"])
     legacy.pop("result_sha256")
     legacy_digest = hashlib.sha256(FrontierStore._canonical(legacy).encode()).hexdigest()
@@ -1715,6 +1723,13 @@ def test_readiness_reports_pinned_candidate_timing_audit_counts(tmp_path):
         assert "within bounds for" in gate["detail"]
         assert "outside bounds for" in gate["detail"]
         assert f"not recorded for {legacy_candidate_count}." in gate["detail"]
+        audit_gate = next(
+            item
+            for item in response.json()["gates"]
+            if item["name"] == "independent_economic_verification"
+        )
+        assert audit_gate["state"] == "EVIDENCE_RECORDED"
+        assert "1 not-evaluated or missing candidate audit result" in audit_gate["detail"]
     finally:
         client.close()
         asyncio.run(registry.aclose())

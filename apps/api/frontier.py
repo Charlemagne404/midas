@@ -2847,6 +2847,7 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
                 if disposition in audit_counts:
                     audit_counts[disposition] += 1
                 if not isinstance(audit, dict):
+                    audit_counts["not_evaluated"] += 1
                     timing_counts["not_recorded"] += 1
                     continue
                 timing_verified = audit.get("recomputed_timing_verified")
@@ -2856,12 +2857,14 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
                     timing_counts["outside_bounds"] += 1
                 else:
                     timing_counts["not_recorded"] += 1
-        audit_count = sum(audit_counts.values())
+        evaluated_audit_count = sum(
+            audit_counts[item] for item in ("verified", "disagreement", "incomplete")
+        )
         audit_state = (
             "DISAGREEMENT"
             if audit_counts["disagreement"]
             else "EVIDENCE_RECORDED"
-            if audit_count
+            if evaluated_audit_count
             else "NOT_ESTABLISHED"
         )
         return {
@@ -2895,7 +2898,7 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
                         f"{audit_counts['verified']} independently verified, "
                         f"{audit_counts['disagreement']} disagreement, "
                         f"{audit_counts['incomplete']} incomplete, and "
-                        f"{audit_counts['not_evaluated']} not-evaluated candidate audit(s). "
+                        f"{audit_counts['not_evaluated']} not-evaluated or missing candidate audit result(s). "
                         "This checks bounded payoff and cost arithmetic; it does not establish "
                         "source truth, executable fills, or profitability."
                     ),
