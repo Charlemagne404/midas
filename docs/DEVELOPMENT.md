@@ -183,6 +183,14 @@ The capture has no book or price. Its detailed rules strengthen the reason the
 combo cannot be reduced to a verified one-hot payoff; no candidate economics
 were enabled.
 
+Adapter v11 retains Kalshi's optional `yes_settlement_value_dollars` selected-leg
+field as a bounded exact Decimal and shows it in Mission Control. The official
+schema documents the field, but Frontier does not infer a parent MVE payout
+from it. Omission remains unknown, and the saved live child response did not
+contain the field; the value parser and UI are fixture-verified only. Refer to
+Kalshi's [Get Multivariate Events](https://docs.kalshi.com/api-reference/events/get-multivariate-events)
+schema for the source definition.
+
 For Kalshi multivariate event markets, adapter v4 normalizes up to 64 native
 selected component references (event ticker, market ticker, selected YES/NO
 side) and Mission Control displays them from the saved market observation. This

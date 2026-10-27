@@ -60,7 +60,7 @@ selection and graph revision identity, so replay and paged reads cannot silently
 retain older child-only metadata.
 
 Kalshi adapter v7 introduced the separate `MULTIVARIATE_EVENT_DISCOVERY`
-capability, retained by adapters v8 through v10. Its local
+capability, retained by adapters v8 through v11. Its local
 `POST /api/frontier/probe/kalshi/multivariate-events` route requires exactly one
 series ticker, collection ticker, or event ticker, a source-enabled
 public-probe configuration, and the adapter capability. A single event ticker
@@ -143,6 +143,17 @@ postponed games. That conditional resolution language makes a simple one-hot
 binary payoff inference unjustified. The exact raw and temporary-store row
 hashes are in the engineering report and
 `data/frontier/live-probes/2026-10-27-kalshi-mve-component-market-r1.json`.
+
+Kalshi adapter v11 adds optional `yes_settlement_value_dollars` to each typed
+selected component. It parses finite, nonnegative values within the canonical
+Decimal bounds, preserves the value through normalized storage and relationship
+evidence, and displays it under that source field's label. Missing values remain
+unknown. The official [Get Multivariate Events schema](https://docs.kalshi.com/api-reference/events/get-multivariate-events)
+documents the field but does not, by itself, specify the containing MVE's
+payoff calculation. Frontier therefore does not use the value as combo payout
+or establish a component payoff from it. Current value-specific verification
+uses documentation-shaped fixtures; the saved live child capture omitted the
+field.
 
 One preserved public capture demonstrates the boundary. The Polymarket and
 Kalshi event titles and party-outcome wording generated a deterministic

@@ -80,7 +80,11 @@ venue-wide absence. Adapter v10 adds a one-market detail request bound to a
 selected child in saved MVE metadata, checks parent ticker/event identity, and
 persists source rules. A captured closed child includes fair-price fallback
 conditions, so its simple binary payoff and the parent combo payoff remain
-unverified.
+unverified. Adapter v11 also preserves the optional Kalshi
+`yes_settlement_value_dollars` field as a bounded exact Decimal, carries it as
+source evidence, and displays it in Mission Control. The documented field is
+not interpreted as combo payout. The preserved live child capture omitted it,
+so the value path is fixture-only.
 Remaining acceptance work is substantial.
 **Branch:** `codex/frontier-20261026`
 **Worktree:** `/home/charlie/midas-frontier`
@@ -692,12 +696,36 @@ same-input runs do not change the resource sustainability gate.
   modules, Ruff check/format, and `git diff --check` passed. No source GET or
   browser workload was repeated for this offline graph change.
 
+## Kalshi selected-leg settlement-value metadata checkpoint (2026-10-27)
+
+- Commit `7ad28c5` bumps the Kalshi adapter to v11 and adds optional
+  `yes_settlement_value_dollars` to each typed MVE selected component. It is
+  parsed as a finite, nonnegative Decimal within model precision bounds, remains
+  unknown when omitted, is included in relationship evidence, and is shown
+  under the source field's label in the component inspector. Invalid, negative,
+  and over-precision values produce a typed adapter failure.
+- The official [Get Multivariate Events schema](https://docs.kalshi.com/api-reference/events/get-multivariate-events)
+  documents the field but the reviewed schema does not establish that it is the
+  containing MVE's payout. No payout inference was added. The saved child
+  capture does not have this field; current value-specific verification is
+  documentation-shaped fixture coverage only.
+- The focused MVE adapter cases passed **8 tests**. Before adding the
+  excessive-precision regression, the full Frontier/Arena suite passed **140
+  tests**. Strict mypy passed for the four changed Python modules; Ruff,
+  `git diff --check`, TypeScript, ESLint, Prettier, the 40-test frontend suite,
+  and production build passed. Browser E2E and another full Python run were not
+  started under memory PSI of 38.49% `some` / 33.50% `full` (`avg10`) and 3.45
+  GiB swap use. The earlier full run measured 266,896 KiB peak RSS.
+- No source request, production service, or deployment was involved. This is a
+  bounded research change; overall Frontier remains incomplete.
+
 ## Completion matrix
 
 | Component | Status | Current evidence / remaining requirement |
 | --- | --- | --- |
 | Verified isolated baseline and worktree | COMPLETE AND VERIFIED | Separate branch from `11d32a0`; unrelated dirty trees preserved. |
 | Adapter protocol, capability inventory, bounded GET transport | COMPLETE AND VERIFIED | Contract tests; all capabilities explicitly declared; Polymarket/Kalshi event groups supported, Kalshi MVE discovery explicitly supported, and Kraken MVE discovery explicitly unsupported; no startup request. |
+| Kalshi MVE selected-leg settlement-value preservation | PARTIALLY VERIFIED | Adapter v11 preserves the optional documented field as a bounded exact Decimal through model, relationship evidence, and UI. Malformed, negative, and over-precision inputs are rejected. Fixture/schema-shape tests pass; the preserved live child capture omitted this field, and it does not establish combo payout. |
 | Polymarket, Kalshi and Kraken Spot implementations | PARTIALLY VERIFIED | Fixture tests and bounded live listing/book/trade-to-store evidence exist. Polymarket v2 first and continuation pages returned ten rows each. Kalshi cursor pages are implemented and row mapping is fixture-tested; a live page returned zero trades and no cursor, so live row normalization remains pending. Two genuine public event-group responses are hash-pinned and replayed through Polymarket/Kalshi adapters. Kalshi MVE listing responses omitted nested members; v10 now fetches one child only when selected by saved parent metadata, validates its market/event identity, and persists rules. The sole captured child is closed and includes fair-price fallback language, so child and combo payoffs remain unverified. Account fees and Kraken account fee applicability remain unknown. API fixtures cover source degradation and recovery; live degraded-source behavior remains unverified. |
 | Canonical normalization and native evidence | PARTIALLY VERIFIED | Distinct event, conditional event and spot forms; v2 Polymarket trades preserve token and outcome identity, while earlier v1 batches still load with those new fields unknown. October 27 event-group capture preserves parent-event title and child outcome text. Kalshi `MarketBatch` v2 stores typed MVE groups with `included`, `empty`, or `omitted` member state; detail responses with a documented top-level empty list replay to zero child markets. Other settlement/payoff semantics remain intentionally unverified. |
 | Relationship matching, immutable review, indexed neighborhoods, and strict payoff verifier | PARTIALLY VERIFIED | Self-attributed review API/UI with stored source refs, append-only revisions, compare-and-set, latest-state replay, query-plan/migration tests, and 1–3 hop left/right indexed scans capped at 500 rows. Centered one-hop keyset and two-/three-hop breadth-first pages bind graph inputs and reject stale cursors; deterministic recomputation and 201-market frontier chunking are tested. Matcher v5 emits exact-ID MVE `source_component_reference` hypotheses only with a matching saved child ticker/event and preserves both observation IDs; the recorded parent/child pair replays offline through the current adapter and matcher. Matcher v4 year-conflict checks remain. The genuine House-control pair is text-only and strict payoff verification rejects same-payoff equivalence. Multi-hop browser E2E, authenticated review, and revision-history drill-down remain pending. |

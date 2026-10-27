@@ -89,6 +89,13 @@ One captured player-assists child was already closed and included a fair-price
 fallback for inactive/non-playing or postponed games. This demonstrates why
 native YES/NO labels alone do not establish a simple exhaustive terminal payoff;
 the MVE combo payout remains unverified.
+Adapter v11 also preserves Kalshi's optional `yes_settlement_value_dollars`
+component field as an exact Decimal and displays it with its native label. The
+documented schema exposes this value, but does not establish that it is the
+multivariate event's payout. Missing values remain unknown, and the live child
+capture above did not include this field; the new value path is verified with
+documentation-shaped fixtures only. See Kalshi's [Get Multivariate Events
+schema](https://docs.kalshi.com/api-reference/events/get-multivariate-events).
 Review labels and assertion references are not authenticated; replay follows
 only the latest revision. It is not merged into `main` or deployed. Read the [Frontier mission ledger](docs/frontier/FRONTIER_MISSION_LEDGER.md)
 and [current engineering report](docs/frontier/FRONTIER_ENGINEERING_REPORT.md)

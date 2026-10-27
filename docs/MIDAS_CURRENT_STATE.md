@@ -117,6 +117,13 @@ in `data/frontier/live-probes/2026-10-27-kalshi-mve-component-market-r1.json`.
 This child-level source observation does not verify combo payout or economics,
 and the Frontier branch remains undeployed.
 
+The current isolated branch is adapter v11. It retains the optional Kalshi
+`yes_settlement_value_dollars` selected-component field as an exact Decimal and
+shows it in the component inspector. This source field is not treated as combo
+payout; omitted values remain unknown. The existing live child capture omitted
+it, so validation of the field itself is fixture-only against the documented
+schema. No deployment or new public capture was made for this change.
+
 The focused adapter/API regression passed 9 tests at 75,004 KiB peak RSS with
 zero swaps; the focused Mission Control test passed. Frontend typecheck, targeted
 ESLint/Prettier, Frontier Python Ruff/format, and strict mypy passed. Playwright
