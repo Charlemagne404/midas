@@ -8,8 +8,9 @@ import pytest
 from midas.reality.model_training import TrainingSpec, run
 from midas.reality.research_schedule import clear_unpublished, prune_disposable, tick
 from midas.reality.storage import atomic_json, file_hash
-from test_reality_foundry import START, tape
-from test_reality_training import dataset_fixture
+
+from tests.test_reality_foundry import START, tape
+from tests.test_reality_training import dataset_fixture
 
 
 def config(tmp_path):
