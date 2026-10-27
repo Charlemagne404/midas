@@ -3325,6 +3325,33 @@ API or protected service was accessed.
 | UI identity comparison and balance key | IMPLEMENTED, VERIFICATION PENDING | The UI compares identity fields directly, rejects unsupported/malformed values, and uses a structured balance key; focused frontend tests remain pending. |
 | Project Frontier overall | PARTIALLY VERIFIED | Live cross-venue economics, source permission review, production build, and deployment remain incomplete. |
 
+### UI settlement identity comparison hardening — 2026-10-27 18:51 UTC
+
+Code commit `547a37b` hardens Mission Control's virtual-funding comparison.
+It validates that an identity has the exact supported v1 field set, compares
+schema version, kind, code, network, and asset reference field by field, and
+keys stored virtual balances with a JSON tuple of venue plus those identity
+fields. Non-fiat display labels percent-encode colons and percent signs. The
+component regression covers the distinct delimiter-colliding identity pair,
+distinct virtual balances, mismatched capital/leg identities, and unsupported
+schema version.
+
+Prettier and `git diff --check` pass. The focused frontend test and production
+build have not run after this UI patch. At 18:51:18 UTC, PSI was 42.89% some /
+38.45% full over 10 seconds and 35.52% / 32.03% over five minutes; available
+memory was 9.22 GiB and swap free was 473 MiB. The frontend test is part of the
+Frontier component suite; rerun it and the full Frontier suite when admission
+pressure eases. No exchange or protected service was accessed.
+
+| Component | Current status | Boundary |
+| --- | --- | --- |
+| UI settlement identity gate | IMPLEMENTED, TESTING PENDING | Structured identity comparisons and keys are implemented; the new regression has not executed yet. |
+| Collision-free canonical asset key | PARTIALLY VERIFIED | Four focused Python tests pass; complete Frontier suite and strict mypy after the change remain pending. |
+| Project Frontier overall | PARTIALLY VERIFIED | Production build, live cross-venue economic verification, source permission review, and deployment remain incomplete. |
+
+Changed files: `apps/web/src/Frontier.tsx` and `apps/web/src/Frontier.test.tsx`,
+commit `547a37b`.
+
 ### Frontier Python regression and resource measurement — 2026-10-27 18:41 UTC
 
 The complete Frontier Python suite passed: **215 tests in 39.29 seconds**.

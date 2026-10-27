@@ -1,6 +1,21 @@
 # Project Frontier Mission Ledger
 
-**Latest checkpoint (2026-10-27 18:49 UTC):** The backend asset identity key
+**Latest checkpoint (2026-10-27 18:51 UTC):** Commit `547a37b` hardens the
+virtual-funding UI: identity objects are validated against supported schema v1,
+matching compares all five identity fields directly, balance state is keyed by
+a JSON tuple, and non-fiat display labels escape delimiters. Regression
+coverage was added for the colliding identity pair, separate balances,
+mismatched capital/leg units, and unsupported identity version. Prettier and
+`git diff --check` pass; the focused component test and production build have
+not run after this patch. At 2026-10-27T18:51:18Z, PSI was 42.89% some /
+38.45% full over 10 seconds and 35.52% / 32.03% over five minutes; available
+memory was 9.22 GiB and swap free was 473 MiB.
+
+Next safe action: remeasure pressure before the focused UI regression, complete
+Frontier Python suite, or frontend build. Keep live source and production gates
+closed.
+
+**Previous checkpoint (2026-10-27 18:49 UTC):** The backend asset identity key
 now uses a versioned compact JSON tuple, and the same-payoff/logical implication
 verifier versions advance to v4/v2. The schema rejects unsupported identity
 versions. Four focused synthetic tests pass; Ruff, format, and whitespace checks
