@@ -1438,7 +1438,21 @@ it('compares baseline and current assumptions over saved evidence and shows pair
       latest_evidence_at_utc: null,
       limitations: [],
     },
-    '/api/frontier/sources': { items: [] },
+    '/api/frontier/sources': {
+      items: ['polymarket', 'kalshi'].map((venue) => ({
+        venue,
+        adapter_version: 'fixture-adapter',
+        public_probe_enabled: false,
+        capabilities: [],
+        health: {
+          state: 'available',
+          last_success_at_utc: null,
+          last_error_code: null,
+          last_error: null,
+          notes: [],
+        },
+      })),
+    },
     '/api/frontier/markets?limit=100': empty,
     '/api/frontier/books?limit=100': empty,
     '/api/frontier/trades?limit=100': { ...empty, pages: [] },
@@ -1494,6 +1508,10 @@ it('compares baseline and current assumptions over saved evidence and shows pair
   );
 
   fireEvent.click(screen.getByRole('button', { name: 'Economic workbench' }));
+  fireEvent.change(
+    await screen.findByRole('spinbutton', { name: 'Additional execution delay for Kalshi' }),
+    { target: { value: '1500' } },
+  );
   fireEvent.click(
     await screen.findByRole('button', { name: 'Compare quoted baseline with current assumptions' }),
   );
@@ -1506,6 +1524,7 @@ it('compares baseline and current assumptions over saved evidence and shows pair
       name: 'current assumptions',
       slippage_bps: '25',
       execution_delay_ms: 500,
+      additional_execution_delay_ms_by_venue: { kalshi: 1500 },
       fill_fraction: '0.8000',
       quote_decay_bps_per_second: '15',
     },
@@ -2186,6 +2205,7 @@ it('submits a bounded Arena replay and displays its integrity-verified compariso
       name: 'current assumptions',
       slippage_bps: '25',
       execution_delay_ms: 500,
+      additional_execution_delay_ms_by_venue: {},
       fill_fraction: '0.8000',
       quote_decay_bps_per_second: '15',
     },

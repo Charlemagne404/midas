@@ -3940,7 +3940,7 @@ def test_replay_api_generates_and_persists_multi_outcome_candidate(tmp_path):
         replay = client.post("/api/frontier/replay", json={})
         assert replay.status_code == 200, replay.text
         result = replay.json()
-        assert result["manifest"]["replay_version"] == "frontier-deterministic-replay-10"
+        assert result["manifest"]["replay_version"] == "frontier-deterministic-replay-11"
         assert len(result["candidates"]) == 1
         candidate = result["candidates"][0]
         assert candidate["family"] == "within_market_multi_outcome_coverage"
@@ -3953,6 +3953,26 @@ def test_replay_api_generates_and_persists_multi_outcome_candidate(tmp_path):
         assert candidate["independent_audit"]["disposition"] == "verified"
         assert Decimal(candidate["independent_audit"]["recomputed_gross_cost"]) == Decimal(9)
 
+        delayed_replay_response = client.post(
+            "/api/frontier/replay",
+            json={
+                "name": "per-venue-delay-api-fixture",
+                "quote_decay_bps_per_second": "100",
+                "additional_execution_delay_ms_by_venue": {"kalshi": 1500},
+            },
+        )
+        assert delayed_replay_response.status_code == 200, delayed_replay_response.text
+        delayed_replay = delayed_replay_response.json()
+        assert delayed_replay["manifest"]["scenario"]["additional_execution_delay_ms_by_venue"] == {
+            "kalshi": 1500
+        }
+        delayed_candidate = delayed_replay["candidates"][0]
+        delayed_leg = delayed_candidate["legs"][0]
+        assert Decimal(delayed_leg["modeled_buy_price"]) == Decimal(
+            delayed_leg["quoted_ask"]
+        ) * Decimal("1.015")
+        assert delayed_candidate["independent_audit"]["disposition"] == "verified"
+
         readiness = client.get("/api/frontier/readiness")
         assert readiness.status_code == 200
         audit_gate = next(
@@ -3961,15 +3981,15 @@ def test_replay_api_generates_and_persists_multi_outcome_candidate(tmp_path):
             if gate["name"] == "independent_economic_verification"
         )
         assert audit_gate["state"] == "EVIDENCE_RECORDED"
-        assert "1 independently verified" in audit_gate["detail"]
+        assert "2 independently verified" in audit_gate["detail"]
         assert "does not establish" in audit_gate["detail"]
 
         listed = client.get("/api/frontier/opportunities")
         assert listed.status_code == 200
         listed_candidate = listed.json()["items"][0]
-        assert listed_candidate["candidate_id"] == candidate["candidate_id"]
-        assert listed_candidate["source_run_id"] == result["run_id"]
-        assert listed_candidate["source_run_sha256"] == result["result_sha256"]
+        assert listed_candidate["candidate_id"] == delayed_candidate["candidate_id"]
+        assert listed_candidate["source_run_id"] == delayed_replay["run_id"]
+        assert listed_candidate["source_run_sha256"] == delayed_replay["result_sha256"]
         carry = client.post(
             "/api/frontier/opportunities/capital-carry",
             json={

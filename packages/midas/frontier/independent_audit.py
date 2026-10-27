@@ -48,7 +48,7 @@ from midas.frontier.relationships import (
 )
 
 D = Decimal
-_AUDIT_VERSION = "frontier-independent-economic-audit-7"
+_AUDIT_VERSION = "frontier-independent-economic-audit-8"
 _FEE_QUANTUM = D("0.00001")
 _KALSHI_FEE_MAX_EVIDENCE_AGE = timedelta(hours=24)
 
@@ -293,8 +293,12 @@ def _recompute(
             mismatches.append(
                 f"Leg {leg.instrument_id} best ask violates its instrument {constraint_name} constraints"
             )
+        delay_ms = (
+            scenario.execution_delay_ms
+            + scenario.additional_execution_delay_ms_by_venue.get(market.venue.value, 0)
+        )
         added_bps = scenario.slippage_bps + (
-            scenario.quote_decay_bps_per_second * D(scenario.execution_delay_ms) / D(1000)
+            scenario.quote_decay_bps_per_second * D(delay_ms) / D(1000)
         )
         modeled_price = best_ask.price * (D(1) + added_bps / D(10000))
         modeled_price_by_leg[(leg.market_id, leg.instrument_id)] = modeled_price

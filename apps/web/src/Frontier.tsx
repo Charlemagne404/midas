@@ -1395,6 +1395,9 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
   } | null>(null);
   const [slippage, setSlippage] = useState('25');
   const [delay, setDelay] = useState('500');
+  const [additionalVenueDelay, setAdditionalVenueDelay] = useState<Partial<Record<Venue, string>>>(
+    {},
+  );
   const [fillPercent, setFillPercent] = useState('80');
   const [selectedArenaReplayId, setSelectedArenaReplayId] = useState<string | null>(null);
   const queryClient = useQueryClient();
@@ -1565,6 +1568,7 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
             name: 'frontier-ui-sensitivity',
             slippage_bps: slippage,
             execution_delay_ms: Number(delay),
+            additional_execution_delay_ms_by_venue: additionalExecutionDelayPayload,
             fill_fraction: (Number(fillPercent) / 100).toFixed(4),
             quote_decay_bps_per_second: '15',
           }),
@@ -1585,6 +1589,7 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
                 name: 'current assumptions',
                 slippage_bps: slippage,
                 execution_delay_ms: Number(delay),
+                additional_execution_delay_ms_by_venue: additionalExecutionDelayPayload,
                 fill_fraction: (Number(fillPercent) / 100).toFixed(4),
                 quote_decay_bps_per_second: '15',
               },
@@ -1618,6 +1623,7 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
               name: 'current assumptions',
               slippage_bps: slippage,
               execution_delay_ms: Number(delay),
+              additional_execution_delay_ms_by_venue: additionalExecutionDelayPayload,
               fill_fraction: (Number(fillPercent) / 100).toFixed(4),
               quote_decay_bps_per_second: '15',
             },
@@ -1787,6 +1793,24 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
     () => new Map((markets.data?.items ?? []).map((market) => [market.canonical_id, market])),
     [markets.data],
   );
+  const executionVenues = useMemo(
+    () => [...new Set((sources.data?.items ?? []).map((source) => source.venue))].sort(),
+    [sources.data],
+  );
+  const additionalExecutionDelayPayload = useMemo(() => {
+    const payload: Partial<Record<Venue, number>> = {};
+    for (const [venue, value] of Object.entries(additionalVenueDelay)) {
+      const milliseconds = Number(value);
+      if (
+        (venue === 'polymarket' || venue === 'kalshi' || venue === 'kraken') &&
+        Number.isInteger(milliseconds) &&
+        milliseconds > 0
+      ) {
+        payload[venue] = milliseconds;
+      }
+    }
+    return payload;
+  }, [additionalVenueDelay]);
   const graphMarketById = useMemo(() => {
     const result = new Map(marketById);
     for (const node of graph.data?.nodes ?? []) {
@@ -2615,7 +2639,7 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
               />
             </label>
             <label className="fr-field">
-              Execution delay <span>milliseconds</span>
+              Base execution delay <span>milliseconds · all venues</span>
               <input
                 type="number"
                 min="0"
@@ -2625,8 +2649,27 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
                 onChange={(event) => setDelay(event.target.value)}
               />
             </label>
+            {executionVenues.map((venue) => (
+              <label className="fr-field" key={`execution-delay-${venue}`}>
+                Additional delay · {venueLabel(venue)} <span>milliseconds · this venue only</span>
+                <input
+                  type="number"
+                  min="0"
+                  max={Math.max(0, 3_600_000 - (Number(delay) || 0))}
+                  step="100"
+                  aria-label={`Additional execution delay for ${venueLabel(venue)}`}
+                  value={additionalVenueDelay[venue] ?? '0'}
+                  onChange={(event) =>
+                    setAdditionalVenueDelay((current) => ({
+                      ...current,
+                      [venue]: event.target.value,
+                    }))
+                  }
+                />
+              </label>
+            ))}
             <label className="fr-field">
-              Assumed fill fraction <span>percent of requested size</span>
+              Usable top-ask depth <span>percent of displayed depth</span>
               <input
                 type="number"
                 min="1"
@@ -2638,7 +2681,7 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
             <div className="fr-scenario-strip">
               <span>Scenario</span>
               <strong>15 bps/s quote decay</strong>
-              <span>Partial fills modeled</span>
+              <span>Separate full-or-no-fill stress</span>
             </div>
             <button
               className="fr-action fr-run-button"

@@ -13,7 +13,7 @@ from fractions import Fraction
 from functools import wraps
 from typing import Literal
 
-from pydantic import Field, model_validator
+from pydantic import Field, StrictInt, model_validator
 
 from midas.frontier.models import (
     KALSHI_QUADRATIC_TAKER_FORMULA,
@@ -52,7 +52,7 @@ from midas.frontier.relationships import (
 )
 
 D = Decimal
-ECONOMIC_MODEL_VERSION = "frontier-economic-verifiers-10"
+ECONOMIC_MODEL_VERSION = "frontier-economic-verifiers-11"
 KALSHI_MVE_SETTLEMENT_AUDIT_VERSION = "kalshi-mve-settlement-audit-2"
 _KALSHI_TAKER_FEE_TYPES = frozenset({"quadratic", "quadratic_with_combo_maker_fees"})
 _KALSHI_FEE_SCHEDULE_VERSION = "kalshi-event-taker-2026-07-07-v1"
@@ -215,12 +215,33 @@ class ExecutionScenario(FrontierModel):
         default=D(0), ge=0, le=10000, max_digits=18, decimal_places=12, allow_inf_nan=False
     )
     execution_delay_ms: int = Field(default=0, ge=0, le=3_600_000)
+    additional_execution_delay_ms_by_venue: dict[str, StrictInt] = Field(
+        default_factory=dict, max_length=3
+    )
     fill_fraction: Decimal = Field(
         default=D(1), gt=0, le=1, max_digits=18, decimal_places=12, allow_inf_nan=False
     )
     max_received_skew_ms: int = Field(default=1000, ge=0, le=60_000)
     max_exchange_skew_ms: int = Field(default=1000, ge=0, le=60_000)
     max_book_age_ms: int = Field(default=15_000, ge=1, le=3_600_000)
+
+    @model_validator(mode="after")
+    def validate_venue_delays(self) -> ExecutionScenario:
+        supported_venues = {item.value for item in Venue}
+        for venue, additional_delay_ms in self.additional_execution_delay_ms_by_venue.items():
+            if venue not in supported_venues:
+                raise ValueError(f"Unsupported venue in execution delay scenario: {venue}")
+            if additional_delay_ms < 0:
+                raise ValueError("Additional venue execution delays cannot be negative")
+            if self.execution_delay_ms + additional_delay_ms > 3_600_000:
+                raise ValueError("Combined venue execution delay cannot exceed one hour")
+        return self
+
+    def execution_delay_for_venue(self, venue: Venue | str) -> int:
+        venue_key = venue.value if isinstance(venue, Venue) else venue
+        return self.execution_delay_ms + self.additional_execution_delay_ms_by_venue.get(
+            venue_key, 0
+        )
 
 
 class PositionLeg(FrontierModel):
@@ -1476,7 +1497,7 @@ def generate_multi_outcome_coverage_candidate(
     if any(book.quality_flags for _, book, _ in top_asks):
         timing_reasons.append("At least one outcome book is marked with a source-quality issue.")
 
-    delay_seconds = D(scenario.execution_delay_ms) / D(1000)
+    delay_seconds = D(scenario.execution_delay_for_venue(market.venue)) / D(1000)
     added_bps = scenario.slippage_bps + scenario.quote_decay_bps_per_second * delay_seconds
     effective_asks = [ask.price * (D(1) + added_bps / D(10000)) for _, _, ask in top_asks]
     if any(price > 1 for price in effective_asks):
@@ -1540,10 +1561,21 @@ def generate_multi_outcome_coverage_candidate(
         assumptions.append(
             "Kalshi fees use a source-backed one-fill taker estimate at non-direct-member balance precision, the larger of the two documented precision cases; account class, maker fills, multi-fill rounding, FCM charges, and other execution costs remain unresolved."
         )
-    if scenario.slippage_bps or scenario.quote_decay_bps_per_second or scenario.execution_delay_ms:
+    if (
+        scenario.slippage_bps
+        or scenario.quote_decay_bps_per_second
+        or scenario.execution_delay_ms
+        or scenario.additional_execution_delay_ms_by_venue
+    ):
         assumptions.append("Slippage and quote-decay values are user-supplied virtual assumptions.")
+    if scenario.additional_execution_delay_ms_by_venue:
+        assumptions.append(
+            "Venue-specific delay additions scale the virtual quote-decay sensitivity; they do not model leg ordering, actual latency, or fill behavior."
+        )
     if scenario.fill_fraction < 1:
-        assumptions.append("Displayed depth is scaled by a modeled partial-fill fraction.")
+        assumptions.append(
+            "Usable displayed top-ask depth is capped by a user-specified fraction; this size haircut does not simulate per-leg partial fills."
+        )
     if worst_gross is None or worst_gross <= 0:
         classification = (
             OpportunityClassification.NEGATIVE_AFTER_MODELED_COSTS
@@ -2020,10 +2052,16 @@ def _evaluate_pair(
                 candidate_id=identity,
                 family=family,
             )
-    delay_seconds = D(scenario.execution_delay_ms) / D(1000)
-    added_bps = scenario.slippage_bps + scenario.quote_decay_bps_per_second * delay_seconds
-    l_effective = l_ask.price * (D(1) + added_bps / D(10000))
-    r_effective = r_ask.price * (D(1) + added_bps / D(10000))
+    left_delay_seconds = D(scenario.execution_delay_for_venue(left.venue)) / D(1000)
+    right_delay_seconds = D(scenario.execution_delay_for_venue(right.venue)) / D(1000)
+    left_added_bps = (
+        scenario.slippage_bps + scenario.quote_decay_bps_per_second * left_delay_seconds
+    )
+    right_added_bps = (
+        scenario.slippage_bps + scenario.quote_decay_bps_per_second * right_delay_seconds
+    )
+    l_effective = l_ask.price * (D(1) + left_added_bps / D(10000))
+    r_effective = r_ask.price * (D(1) + right_added_bps / D(10000))
     if l_effective > D(1) or r_effective > D(1):
         return _empty_candidate(
             left,
@@ -2115,10 +2153,21 @@ def _evaluate_pair(
         assumptions.append(
             "Kalshi fees use a source-backed one-fill taker estimate at non-direct-member balance precision, the larger of the two documented precision cases; account class, maker fills, multi-fill rounding, FCM charges, and other execution costs remain unresolved."
         )
-    if scenario.slippage_bps or scenario.quote_decay_bps_per_second or scenario.execution_delay_ms:
+    if (
+        scenario.slippage_bps
+        or scenario.quote_decay_bps_per_second
+        or scenario.execution_delay_ms
+        or scenario.additional_execution_delay_ms_by_venue
+    ):
         assumptions.append("Slippage/quote-decay values are user-supplied virtual assumptions.")
+    if scenario.additional_execution_delay_ms_by_venue:
+        assumptions.append(
+            "Venue-specific delay additions scale the virtual quote-decay sensitivity; they do not model leg ordering, actual latency, or fill behavior."
+        )
     if scenario.fill_fraction < 1:
-        assumptions.append("Displayed depth is scaled by a modeled partial-fill fraction.")
+        assumptions.append(
+            "Usable displayed top-ask depth is capped by a user-specified fraction; this size haircut does not simulate per-leg partial fills."
+        )
     if worst_gross is None or worst_gross <= 0:
         classification = (
             OpportunityClassification.NEGATIVE_AFTER_MODELED_COSTS
