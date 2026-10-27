@@ -1480,8 +1480,9 @@ gaps are deferred work, not hidden passed checks:
   live browser-to-source session was run. Fee endpoints,
   live retries/degradation, timeouts, repeated schema variation, and book
   freshness across a time series remain unverified. Deterministic API tests cover
-  complete invalid-JSON, invalid-UTF8, HTTP 503 and 2xx schema-failure evidence,
-  bounded retry attempts, source isolation, health degradation, and recovery.
+  invalid JSON, JSON parser-complexity limits, invalid UTF-8, HTTP 503 and 2xx
+  schema-failure evidence, bounded retry attempts, source isolation, health
+  degradation, and recovery.
   Oversized partial bodies are rejected and not persisted.
 - No verified genuine cross-venue event relationship exists in the sample.
 - Relationship reviews are self-attributed only. Reviewer identities and
@@ -3185,3 +3186,37 @@ avg10=40.44%`, so browser revalidation remains pending.
 | Project Frontier overall | PARTIALLY VERIFIED | Remains isolated and undeployed; broader Python suite, live cross-venue validation, source permission review, and production readiness remain incomplete. |
 
 File changed: `apps/web/e2e/frontier.spec.ts` in commit `9a4ccf4`.
+
+### Bounded JSON parser failure classification — 2026-10-27 18:37 UTC
+
+Code commit `ac5daaf` catches `RecursionError` and integer-token `ValueError`
+from the bounded public JSON decoder. The transport returns
+`JSON_COMPLEXITY_LIMIT`, retains the complete response within the configured
+byte bound as failed-capture evidence, and does not retry the input. The API
+diagnostic path stores the raw body and marks the transport-response failure;
+subsequent valid source data still recovers source health.
+
+Focused transport and API verification passed **3 tests** in 2.16 seconds with
+86,772 KiB peak RSS and zero swaps. Ruff and formatting checks passed; strict
+mypy for the transport module passed. A 1,100-level fixture did not exceed
+CPython's parser limit, so the tested nesting fixture uses 20,000 levels
+(40,001 bytes, below the 65,536-byte test response limit); a 5,000-digit integer
+tests the numeric parser limit. The first assertion run exposed this fixture
+threshold; the adjusted fixtures pass.
+
+At `2026-10-27T18:37:02Z`, host memory PSI remained `some avg10=41.88%` and
+`full avg10=37.24%`. The carry E2E fixture has its API-valid candidate ID but
+has not yet been browser-executed after that correction. Broader repository
+Python verification remains partial due the absent baseline Reality recovery
+module and pressure-sensitive host gate. No exchange request, protected
+service, or production store was used.
+
+| Component | Current status | Boundary |
+| --- | --- | --- |
+| Public JSON parser complexity handling | COMPLETE AND VERIFIED | Deep nesting and oversized integer tokens become non-retryable classified adapter failures with bounded raw evidence; API diagnostic persistence and subsequent source recovery pass. |
+| Carry browser E2E after schema-valid ID change | IMPLEMENTED, BROWSER REVALIDATION PENDING | Static checks and test discovery pass; browser execution of the latest fixture remains pending under elevated PSI. |
+| Project Frontier overall | PARTIALLY VERIFIED | Isolated and undeployed; live semantic/economic cross-venue validation, source permissions, broader regression, and production prerequisites remain incomplete. |
+
+Files changed: `packages/midas/frontier/adapters/transport.py`,
+`tests/frontier/test_adapters.py`, and `tests/frontier/test_api.py` in commit
+`ac5daaf`; this report and `FRONTIER_MISSION_LEDGER.md` record the checkpoint.

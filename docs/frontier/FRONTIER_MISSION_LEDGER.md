@@ -1,6 +1,21 @@
 # Project Frontier Mission Ledger
 
-**Latest checkpoint (2026-10-27 18:32 UTC):** Code commit `9a4ccf4` corrects the
+**Latest checkpoint (2026-10-27 18:37 UTC):** Code commit `ac5daaf` classifies
+JSON parser complexity failures (deep nesting and oversized integer tokens) as
+`JSON_COMPLEXITY_LIMIT`, preserving bounded raw-response evidence without
+retry. The focused transport/API selection passed **3 tests**, including
+source-failure persistence and recovery. Ruff, format, strict mypy for the
+transport module, and `git diff --check` pass. The focused test process peaked
+at 86,772 KiB RSS with zero swaps. At `2026-10-27T18:37:02Z`, host PSI remained
+elevated (`some avg10=41.88%`, `full avg10=37.24%`); broad suites and browser
+revalidation remain deferred. Frontier remains isolated and undeployed.
+
+Next safe actions: rerun the four Frontier E2E tests after host pressure eases
+to verify the latest SHA-256 candidate fixture. Then continue the broader
+Python regression and remaining economics/research gaps without accessing
+restricted sources or protected services.
+
+**Previous checkpoint (2026-10-27 18:32 UTC):** Code commit `9a4ccf4` corrects the
 capital-carry browser fixture to use a 64-character candidate SHA-256 ID, as
 required by `CapitalCarryRequest`. Ruff, Prettier, and Playwright's four-test
 discovery pass. The browser suite passed before this fixture correction, so
