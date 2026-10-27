@@ -1900,8 +1900,9 @@ YES value is the source-reported YES value; a selected NO value is one minus
 that value; the selected values are multiplied and compared with the recorded
 parent value.
 
-The audit compares only complete inputs for a settled parent that is not marked
-provisional. It reports incomplete evidence, non-final source values, an
+The audit compares only complete inputs for a settled parent with an explicit
+`is_provisional=false`; a missing flag is treated as non-final. It reports
+incomplete evidence, non-final source values, an
 unsupported structure, or source-reported product match/mismatch. Mission
 Control displays the per-leg values, product, parent value, missing IDs,
 assumptions, observation ID and raw hash. It links to Kalshi's [combo
@@ -1992,3 +1993,32 @@ The build was stopped with Ctrl-C (exit 130) to avoid adding load. At
 14.22% / 12.27%; available RAM was 9.1 GB and free swap was about 553 MiB.
 This build is **unverified**; the successful TypeScript phase does not establish
 a production bundle. No service or data source was contacted or changed.
+
+## Kalshi settlement finality guard — 2026-10-27
+
+Review found the recorded MVE arithmetic audit accepted a settled parent when
+`is_provisional` was absent. The public Kalshi MVE schema represents this as a
+boolean source field, but the field can be missing in captured data. The audit
+now requires the value to be explicitly `false`; both `true` and `null` classify
+the source values as non-final. The focused unit selection passed **2 tests**
+(`20 deselected`); the API provenance test passed **1 test** (`34 deselected`),
+and the focused UI test passed **1 test** (`7 skipped`). Ruff check/format and
+Prettier passed. Audit schema v2 returns algorithm version
+`kalshi-mve-settlement-audit-2`, parent lifecycle, and the recorded provisional
+flag; Mission Control displays them. The audit remains a comparison of
+source-reported settlement arithmetic only; it does not validate market rules
+or feed candidate economics. Implementation commit:
+`364478853908272f5b860758fa0bb18b52b3efc8`.
+
+Reproduction commands:
+
+```text
+/home/charlie/midas/.venv/bin/pytest -q --tb=short tests/frontier/test_relationships_economics_replay.py -k 'kalshi_mve_reported_settlement_audit_fails_closed or kalshi_mve_reported_settlement_audit_recomputes_yes_no_component_product'
+/home/charlie/midas/.venv/bin/pytest -q --tb=short tests/frontier/test_api.py -k 'kalshi_mve_optional_settlement_value_persists_through_api'
+corepack pnpm --dir apps/web exec vitest run src/Frontier.test.tsx -t 'captures Kalshi fee metadata' --maxWorkers=1 --minWorkers=1
+corepack pnpm --dir apps/web typecheck
+```
+
+Results were 2 passed/20 deselected, 1 passed/34 deselected, 1 passed/7
+skipped, and TypeScript passed. Ruff, ESLint, Prettier, and `git diff --check`
+also passed. No live source call was made.

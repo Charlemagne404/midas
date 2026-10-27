@@ -254,6 +254,11 @@ and that each combo settles through its own review
 ([Market FAQs](https://help.kalshi.com/en/articles/13823821-market-faqs)).
 Frontier therefore keeps these instruments conditional and does not feed their
 unverified payout into candidate economics.
+The recorded settlement arithmetic audit reports a match or mismatch only
+when the parent is settled and explicitly has `is_provisional=false`; a missing
+provisional flag is treated as non-final evidence.
+Audit response schema v2 returns `audit_algorithm_version`, parent lifecycle,
+and the recorded provisional flag for result provenance.
 Kalshi adapter v5 added the separate bounded event-group operation described
 above; adapter v7 adds filtered MVE discovery without changing the earlier
 component normalization or its payoff limitation.

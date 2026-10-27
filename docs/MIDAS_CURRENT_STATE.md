@@ -121,15 +121,22 @@ The current isolated branch is adapter v12. It retains Kalshi's optional
 `yes_settlement_value_dollars` component field and adds a local-only arithmetic
 audit comparing the recorded selected-component product with the parent MVE's
 recorded settlement value. The audit requires complete component values and a
-settled, non-provisional parent; otherwise it reports incomplete, non-final, or
-unsupported evidence. It returns source observation and raw-body hashes and
+settled parent with `is_provisional=false`; an absent flag remains non-final
+evidence. Otherwise it reports incomplete, non-final, or unsupported evidence.
+Audit schema v2 pins algorithm `kalshi-mve-settlement-audit-2` and returns the
+parent lifecycle and recorded provisional flag with source observation and
+raw-body hashes. The dashboard displays these values. The audit
 does not make a source request or generate a candidate. Kalshi's public
 [combo guidance](https://help.kalshi.com/en/articles/13823820-combos),
 [NO scalar rule](https://help.kalshi.com/en/articles/17515177-protected-nfl-player-markets),
 and [MVE API schema](https://docs.kalshi.com/api-reference/events/get-multivariate-events)
 are included in the inspector. Only documentation-shaped fixtures currently
 contain the required parent and component values; no live settlement finding
-is available. Code commit: `8a3e25c`.
+is available. Initial adapter/audit commit: `8a3e25c`.
+Commit `364478853908272f5b860758fa0bb18b52b3efc8` tightens finality handling:
+the local audit now requires explicit `is_provisional=false` and returns the
+versioned algorithm/finality fields in schema v2. Focused unit, API, and UI
+checks pass; live settlement values remain unavailable.
 
 Verification for this checkpoint: the full Python Frontier/Arena suite passed
 148 tests before only the output's official-source-link field was added; the

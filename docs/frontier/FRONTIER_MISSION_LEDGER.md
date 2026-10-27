@@ -1018,3 +1018,21 @@ source, or historical evidence was changed. The detailed report and current-
 state handoff record these measurements.
 Documentation commit `2972eb92a4db0d53727b0d1eccc62b7a519392e7` records this
 resource checkpoint in the engineering report and current-state handoff.
+
+## 2026-10-27 — explicit Kalshi settlement finality
+
+Code review found that the local MVE arithmetic audit treated a missing
+`is_provisional` value as non-provisional when the parent lifecycle was settled.
+The audit now requires an explicit `false`; `true` or absent is classified as
+non-final. The focused unit selection passed **2 tests** (`20 deselected`),
+and Ruff check/format passed. This prevents unknown finality from being
+presented as a source-reported product match/mismatch. Audit response schema v2
+pins algorithm `kalshi-mve-settlement-audit-2` and returns the
+lifecycle/provisional evidence; Mission Control displays it. The focused API
+test passed **1 test** (`34 deselected`), the focused UI test passed **1 test**
+(`7 skipped`), TypeScript passed, and
+Ruff, ESLint, Prettier, and `git diff --check` passed. Implementation commit
+`364478853908272f5b860758fa0bb18b52b3efc8` contains the fix and focused tests.
+This remains a local arithmetic check and does not validate rules, outcomes, or
+candidate economics. Architecture, current-state, and report text record the
+guard.
