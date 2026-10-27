@@ -27,7 +27,35 @@ Recovery refs created during consolidation:
 - `recovery/preconsolidation-veritas-20261017`
 - `recovery/veritas-uncommitted-20261017` (preserved interrupted Veritas changes)
 
-Project Atlas and Frontier are not implemented and are deferred.
+Project Atlas remains deferred. Frontier was not yet implemented at this
+2026-10-17 historical snapshot; its later isolated development state is recorded
+in the dated addendum below and in the Frontier engineering report.
+
+## Frontier development addendum — 2026-10-27
+
+Frontier development is active in the isolated worktree
+`/home/charlie/midas-frontier` on branch `codex/frontier-20261026`, based on the
+verified Veritas V6 integration. It is not merged or deployed. The current
+development checkpoint adds bounded Polymarket and Kalshi event-group capture,
+parent-event/outcome metadata, a conservative text-only relationship hypothesis
+path, and Market Explorer controls. Kraken explicitly leaves event-group
+discovery unsupported.
+
+A preserved two-request public metadata capture identifies Polymarket event
+`32225` and Kalshi event `CONTROLH-2026` as a related 2026 House-control topic.
+The child contracts use different stated resolution schedules and details; the
+relationship remains a hypothesis and the independent same-payoff verifier
+rejects equivalence. No order books, synchronized quotes, or economic result
+were captured. The live payloads and hashes are in
+`data/frontier/live-probes/2026-10-27-public-cross-venue-house-control-r1.json`.
+
+The focused Frontier and Arena replay suite passed 116 tests with a measured
+250,324 KiB peak RSS and no swap. The frontend passed 39 tests, a production
+build, and 11 isolated browser tests. A whole-repository pytest attempt remains
+blocked at collection by legacy Reality/Veritas imports that are unresolved in
+the selected checkout. This addendum updates Frontier development only; the
+production service and protected Reality recorder state below has not been
+remeasured or changed by this work.
 
 ## Architecture and source layout
 
@@ -114,7 +142,7 @@ PYTHONPATH=packages .venv/bin/python -m pytest -q tests/test_veritas_*.py
 
 ## Deferred work and operating limits
 
-The frozen worker's lag and recorder memory growth need a separately versioned operational decision. Preserve the current campaigns, records, and source segments while making that decision. Do not change the frozen campaign configuration or journal. Atlas/Frontier, new market discovery, strategy expansion, training, exploratory experiments, and economic optimization are outside the current maintenance scope.
+The frozen worker's lag and recorder memory growth need a separately versioned operational decision. Preserve the current campaigns, records, and source segments while making that decision. Do not change the frozen campaign configuration or journal. As of the 2026-10-17 operational snapshot, Atlas/Frontier, new market discovery, strategy expansion, training, exploratory experiments, and economic optimization were outside the maintenance scope; Frontier's later isolated development has not changed this production boundary.
 
 
 ## Research Readiness live state — 2026-10-26 06:38 UTC

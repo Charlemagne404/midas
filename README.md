@@ -51,6 +51,12 @@ resource sustainability remains unmeasured. No Laboratory campaign was started.
 Polymarket's explicit v2 trade-page path preserves outcome-token identity and
 supports bounded cursor continuation; one first page and one API-route
 continuation have been captured, while no full history walk was attempted.
+Polymarket and Kalshi also expose capability-gated, one-request event-group
+captures that retain parent event titles and native outcome labels. A preserved
+public 2026 U.S. House event pair produces a deterministic text hypothesis in
+offline adapter tests, while differing resolution timing and rules fail the
+same-payoff audit. This is metadata-only evidence: no synchronized prices,
+verified cross-venue payoff, or economic opportunity was observed.
 Review labels and assertion references are not authenticated; replay follows
 only the latest revision. It is not merged into `main` or deployed. Read the [Frontier mission ledger](docs/frontier/FRONTIER_MISSION_LEDGER.md)
 and [current engineering report](docs/frontier/FRONTIER_ENGINEERING_REPORT.md)

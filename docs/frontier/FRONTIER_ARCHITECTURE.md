@@ -14,14 +14,14 @@ as mutable Frontier storage.
 | Bounded HTTP transport | `adapters/transport.py` | HTTPS GET only, fixed host allowlist, bounded timeout/retry/rate/response sizes, no redirects or credentials. |
 | Public venue adapters | `adapters/polymarket.py`, `kalshi.py`, `kraken.py` | Source-specific normalization and native metadata preservation. |
 | Registry | `registry.py` | Explicit capability inventory; default instances do not probe. |
-| Relationship intelligence | `relationships.py` | Deterministic indexed hypotheses, strict payoff checks, and immutable review contracts. |
+| Relationship intelligence | `relationships.py` | Deterministic indexed title and parent-event/outcome hypotheses, strict payoff checks, and immutable review contracts. |
 | Candidate calculators | `economics.py` | Decimal cross-venue binary and same-market exhaustive multi-outcome all-long checks with fee, depth, freshness, timing, and scenario bounds; exact bounded one-sided fill sensitivity; separate Kalshi one-fill and instrument-bound one-order fee sensitivities. |
 | Independent arithmetic audit | `independent_audit.py` | Separately recomputes supported candidate identities, payoff vectors, pinned quotes/depth, fees, costs, terminal P&L, fill-pattern sensitivity, and classification from replay inputs. |
 | Durable evidence | `storage.py` | Append-only, size- and row-bounded SQLite observations, markets, relationship reviews/revisions, runs, and paired comparisons. |
 | Replay | `replay.py` | Stable input ordering, scenario/mapping/proposal-limit-aware replay identities, deterministic results, and paired assumption comparisons. |
 | Arena paired replay | `packages/midas/arena/frontier_replay.py`, `arena/jobs.py` | Immutable content-addressed input snapshots, a bounded offline paired-replay worker, and hash-verified result artifacts under Arena's existing admission gate. |
-| HTTP API | `apps/api/frontier.py` | Bounded local queries and graph neighborhoods, relationship proposals/reviews, deterministic and paired replay, config-gated public capture, and hash-bound Kalshi fee sensitivities. |
-| Mission Control workspace | `apps/web/src/Frontier.tsx` | Sources, markets/books, relationship hypotheses, candidates, economic workbench, local comparisons, bounded Arena replay history/results, and readiness. |
+| HTTP API | `apps/api/frontier.py` | Bounded local queries and graph neighborhoods, relationship proposals/reviews, deterministic and paired replay, config-gated market/event-group capture, and hash-bound Kalshi fee sensitivities. |
+| Mission Control workspace | `apps/web/src/Frontier.tsx` | Sources, markets/books/event context, relationship hypotheses, candidates, economic workbench, local comparisons, bounded Arena replay history/results, and readiness. |
 
 ## Adapter capability contract
 
@@ -32,6 +32,37 @@ semantics. The shared model retains native market and instrument identifiers,
 native metadata, source URL, adapter/schema versions, raw-body hash, request and
 receipt times, and source-time semantics. Source quality flags are carried forward
 instead of being replaced with guessed values.
+
+Polymarket adapter v3 and Kalshi adapter v5 declare
+`EVENT_MARKET_GROUPS`. Their `discover_event_markets` operations issue one bounded
+public GET, validate the requested native event identity, bound and de-duplicate
+the child list, retain the source parent title, and keep native outcome wording
+where the source provides it. Kraken explicitly leaves this capability
+unsupported. `POST /api/frontier/probe/{venue}/event-markets` is gated by the
+source's public-probe configuration and capability, requires a previously
+recorded market, binds the returned group to that market's native ID, and stores
+the complete raw response beside the normalized `MarketBatch` as
+`event_market_listing`. This response-level completeness says nothing about
+venue-wide coverage.
+
+`FrontierMarket.native_event_title` and `outcome_label` preserve event-group
+context separately from the market question. The relationship matcher may use
+similar parent-event text plus an overlapping market-specific outcome token to
+propose a cross-venue `TEXT_CANDIDATE`. An explicit conflicting event year blocks
+that path. Such edges remain `HYPOTHESIS`; the text procedure does not infer a
+YES/NO mapping or certify settlement equivalence. The independent same-payoff
+verifier still requires verified exhaustive payoffs, resolution identity,
+authority, settlement asset, and matching timing. Event-group observations
+participate in latest-record selection and graph revision identity, so replay
+and paged reads cannot silently retain older child-only metadata.
+
+One preserved public capture demonstrates the boundary. The Polymarket and
+Kalshi event titles and party-outcome wording generated a deterministic
+Democratic-market text hypothesis after adapter normalization. Their market
+descriptions, resolution processes, and stated end times differ; both normalized
+payoff and resolution attestations remain false. The independent verifier
+rejects same-payoff equivalence, and the capture has no order books or prices.
+See the evidence and exact hashes in the [engineering report](FRONTIER_ENGINEERING_REPORT.md).
 
 Kalshi separately advertises `fee_metadata`: a deliberate one-event plus one-series
 read captures the event override fields and series fee type/multiplier. The event
@@ -76,7 +107,7 @@ a multivariate event leg, and a spot pair retain separate instrument kinds and
 payoff constraints. In particular, Kraken spot is contextual asset evidence; it
 cannot become an event-contract payoff through matching text.
 
-Kalshi adapter v4 normalizes the venue's `mve_selected_legs` list into bounded
+Kalshi adapter v4 normalized the venue's `mve_selected_legs` list into bounded
 `selected_components` records carrying the selected event ticker, native market
 ticker, and YES/NO side. It rejects malformed, duplicate, self-referential, and
 over-64 component lists, while retaining the original native fields and response
@@ -90,14 +121,19 @@ and that each combo settles through its own review
 ([Market FAQs](https://help.kalshi.com/en/articles/13823821-market-faqs)).
 Frontier therefore keeps these instruments conditional and does not feed their
 unverified payout into candidate economics.
+Kalshi adapter v5 adds the separate bounded event-group operation described
+above; the earlier MVE component normalization and its payoff limitation are
+unchanged.
 
 ## Source configurations and bounds
 
 The API creates all three adapter manifests, but the source transport is disabled
 unless its specific `MIDAS_FRONTIER_*_PUBLIC_PROBE_ENABLED` setting is true. No
-startup health request is made. A user-triggered capture makes one bounded market
-page, plus at most one selected book snapshot. Kraken currently uses a configured pair allowlist,
-not venue-wide enumeration. The transport caps each response at 256 KiB, retries
+startup health request is made. A user-triggered discovery capture makes one
+bounded market page and may include one selected book snapshot. An event-group
+capture is a separate one-GET action linked to a previously recorded child
+market. Kraken currently uses a configured pair allowlist, not venue-wide
+enumeration. The transport caps each response at 256 KiB, retries
 at most twice, has a 15-second maximum timeout, limits each adapter to 5 requests
 per second, rejects redirects, and rejects hosts outside its venue allowlist.
 The API serializes probes per venue and the store defaults to 64 MiB, 50,000 raw
@@ -105,9 +141,17 @@ observations, 100,000 relationship records, and 512 KiB per stored record.
 
 ## Relationship and economics boundaries
 
-The matcher indexes exact venue-local event IDs and title terms. Cross-venue title
-matches remain hypotheses and preserve evidence terms and source observation IDs.
-They are never promoted automatically. The review API requires stored,
+The matcher indexes exact venue-local event IDs, market title terms, and parent
+event titles paired with market-specific outcome terms. Cross-venue text matches
+remain hypotheses and preserve evidence terms and source observation IDs. An
+explicit disagreement in four-digit event years blocks the parent-context path.
+Text never supplies a YES/NO outcome mapping and is never promoted automatically.
+The API proposal path binds each market to the actual append-only observation
+record from which its selected normalized value was loaded. Persisted graph
+evidence therefore opens the raw and normalized source record directly. Offline
+matcher calls without a store mapping continue to use the deterministic
+adapter-derived observation identity.
+The review API requires stored,
 hash-verified source records for both markets. A verified decision must pass
 `verify_same_payoff`, which requires verified/exhaustive state sets, a bijection
 over outcomes and instruments, matching payout vectors, settlement currency/asset,
@@ -132,8 +176,9 @@ the number scanned and indicates when the scan window may be incomplete. A
 centered one-hop neighborhood supports keyset continuation ordered by
 relationship time and identity. The cursor carries append-only market-observation,
 relationship, and review counts; its market count covers recorded
-`market_listing` and `instrument_metadata` observations used to render graph
-nodes. The API returns 409 if those graph inputs change between pages. Mission
+`market_listing`, `instrument_metadata`, and `event_market_listing` observations
+used to render graph nodes. Latest market metadata is selected by source receipt
+time. The API returns 409 if those graph inputs change between pages. Mission
 Control displays 30 edges per page, with a continuation control. Multi-hop
 traversals and the uncentered overview remain single bounded reads; dense or
 broad queries can still be incomplete.

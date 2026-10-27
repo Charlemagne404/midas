@@ -110,7 +110,18 @@ self-attributed review revisions record rejected, ambiguous, or strict-verifier
 decisions; the verifier requires verified resolution and exhaustive payout
 evidence. Reviewer and external assertion references are not authenticated.
 Replay uses only the latest decision and preserves the full review history.
-Kalshi adapter v4 also normalizes bounded native MVE component market/event IDs
+Polymarket adapter v3 and Kalshi adapter v5 also normalize source event-group
+context through an explicit one-GET `event_market_groups` capability and
+`POST /api/frontier/probe/{venue}/event-markets`. The route binds the returned
+children to a market already in the recorded window and stores the raw event
+response with the normalized group. Parent event titles and native outcome labels
+are preserved separately from market questions. Cross-venue parent-title plus
+outcome-text matches remain hypotheses; they do not infer YES/NO semantics or
+verified payoff equivalence. Kraken explicitly does not support event groups.
+The relationship proposal API binds evidence IDs to the immutable observation
+records that supplied the normalized markets, so those graph evidence links
+resolve to the raw and normalized source captures.
+Kalshi adapter v4/v5 normalizes bounded native MVE component market/event IDs
 and selected YES/NO sides as source-declared structure; combo payout and
 resolution remain unverified and excluded from candidate economics.
 List reads validate raw observation hashes, normalized row hashes, relationship

@@ -149,8 +149,8 @@ submission route.
 
 | Venue | Implemented public research | Preserved distinctions and limits | Live evidence |
 | --- | --- | --- | --- |
-| Polymarket | Gamma market discovery; CLOB books; legacy public trades; cursor-paginated Data API v2 trade pages; native token/condition/event IDs; strict market normalization and supported fee-shape handling | Event outcomes are not marked payoff-verified; settlement asset and resolution meaning are not independently attested; no incremental book stream or candle normalization; fee schedules expire after five minutes and unsupported exponents remain unknown; v2 condition history is fixed to three years and page capture uses taker-only trades with a 0.01-share floor | Earlier live API evidence persisted one listing, one book, and ten trades through the older trade path. A direct v2 first page and one continuation through the local API route each returned ten rows and were hash-verified via isolated stores; no third page was requested. A separate one-market listing captured a market-specific `zero_fees` schedule at 20:41:18.972060Z, with `feesEnabled=true`, exponent 1, taker-only, rate 0; normalized status was verified only through 20:46:18.972Z. |
-| Kalshi | Public market discovery, market metadata, binary YES/NO instruments, public book snapshots/trades, ticker-filtered cursor trade pages, explicit event/series fee metadata, and manual one-fill plus bounded one-order taker-fee sensitivities; adapter v4 also normalizes up to 64 native MVE selected component market/event IDs and YES/NO sides | MVE metadata remains conditional: selected legs expose source-declared composition, not verified component rules, combo payoff, or settlement equivalence. Asks are derived from complementary YES/NO bids where applicable. Trade pages normalize `yes_price_dollars` as a YES-price reference and preserve `no_price_dollars` and taker fields only in raw evidence; no BUY/SELL aggressor direction is inferred. Order-level fee sensitivity binds to one recorded native instrument and implements per-fill rounding accumulation and capped rebates under both documented precision cases. It remains a manual sensitivity, not candidate/account fee costs; actual account precision, maker/mixed-order behavior, FCM charges, scheduled changes, and full candidate fee applicability remain unresolved. No stream or historical-candle normalization. | Earlier bounded API capture persisted one listing, an empty book, and a valid empty trade response. A later one-market public listing plus event and series fee-metadata captures returned HTTP 200, used three GETs total, and passed raw/row hash-verified temporary-store read-back. One later bounded listing-plus-trade-page request pair returned HTTP 200; the page had zero trades and no next cursor, with raw and row hashes verified. A preserved October 26 MVE listing row containing 17 selected components was replayed through adapter v4 offline; the market's primary rules were empty and its secondary text was only a general disclaimer, so no payoff was promoted. The October 26 empty book belongs to a different market than the October 27 fee metadata; no book-priced fee calculation is claimed. |
+| Polymarket | Gamma market discovery; CLOB books; legacy public trades; cursor-paginated Data API v2 trade pages; native token/condition/event IDs; strict market normalization, supported fee-shape handling, and bounded parent-event group capture | Event outcomes are not marked payoff-verified; settlement asset and resolution meaning are not independently attested; no incremental book stream or candle normalization; fee schedules expire after five minutes and unsupported exponents remain unknown; v2 condition history is fixed to three years and page capture uses taker-only trades with a 0.01-share floor | Earlier live API evidence persisted one listing, one book, and ten trades through the older trade path. A direct v2 first page and one continuation through the local API route each returned ten rows and were hash-verified via isolated stores; no third page was requested. A separate one-market listing captured a market-specific `zero_fees` schedule at 20:41:18.972060Z, with `feesEnabled=true`, exponent 1, taker-only, rate 0; normalized status was verified only through 20:46:18.972Z. |
+| Kalshi | Public market discovery, market metadata, binary YES/NO instruments, public book snapshots/trades, ticker-filtered cursor trade pages, explicit event/series fee metadata, and manual one-fill plus bounded one-order taker-fee sensitivities; adapter v5 adds bounded event-group capture while retaining v4 normalization of up to 64 native MVE selected component market/event IDs and YES/NO sides | MVE metadata remains conditional: selected legs expose source-declared composition, not verified component rules, combo payoff, or settlement equivalence. Asks are derived from complementary YES/NO bids where applicable. Trade pages normalize `yes_price_dollars` as a YES-price reference and preserve `no_price_dollars` and taker fields only in raw evidence; no BUY/SELL aggressor direction is inferred. Order-level fee sensitivity binds to one recorded native instrument and implements per-fill rounding accumulation and capped rebates under both documented precision cases. It remains a manual sensitivity, not candidate/account fee costs; actual account precision, maker/mixed-order behavior, FCM charges, scheduled changes, and full candidate fee applicability remain unresolved. No stream or historical-candle normalization. | Earlier bounded API capture persisted one listing, an empty book, and a valid empty trade response. A later one-market public listing plus event and series fee-metadata captures returned HTTP 200, used three GETs total, and passed raw/row hash-verified temporary-store read-back. One later bounded listing-plus-trade-page request pair returned HTTP 200; the page had zero trades and no next cursor, with raw and row hashes verified. A preserved October 26 MVE listing row containing 17 selected components was replayed through adapter v4 offline; the market's primary rules were empty and its secondary text was only a general disclaimer, so no payoff was promoted. The October 26 empty book belongs to a different market than the October 27 fee metadata; no book-priced fee calculation is claimed. |
 | Kraken Spot | Configured-pair AssetPairs metadata; public depth, trades and OHLC; pair tick/lot/minimum fields retained | Spot is a base/quote instrument, not an event payoff. Fee tier, account eligibility, custody, and event hedge semantics are unknown. Pair discovery is an explicit allowlist. | Bounded live API capture persisted XBT/USD metadata, depth with 10 asks/10 bids and per-level timestamps, and ten trades. No prediction-contract equivalence was found. |
 
 Each adapter declares every shared capability as supported or unsupported with a
@@ -283,8 +283,10 @@ The canonical schema retains venue and native market/instrument identity,
 instrument type, base/quote/settlement assets, quantity units, payout state
 vectors, resolution text/authority/timing, lifecycle, constraints, fee status,
 quality flags, source timestamps, raw-response hash, and adapter/schema version.
-Unknown fields with economic consequences remain unknown. Raw native metadata is
-kept alongside normalized values for inspection.
+Parent event titles and source outcome labels are separate optional fields, so
+event-group context does not replace the child market question. Unknown fields
+with economic consequences remain unknown. Raw native metadata is kept alongside
+normalized values for inspection.
 
 The supported structures include binary and multi-outcome event-market records,
 conditional-event records, and Kraken spot pairs. This is a schema and parser
@@ -302,9 +304,11 @@ original response.
 ## 6. Relationship graph
 
 `relationships.py` builds a deterministic, bounded index using venue-local native
-event IDs and cross-venue title tokens. Cross-venue text results are explicitly
-`HYPOTHESIS` edges with evidence terms, source observation IDs, matcher version,
-and stable identities. Similar titles cannot certify same payoff.
+event IDs, cross-venue title tokens, and similar parent-event titles paired with
+market-specific outcome terms. The parent-context path rejects conflicting
+explicit four-digit years. Cross-venue text results are explicitly `HYPOTHESIS`
+edges with evidence terms, source observation IDs, matcher version, and stable
+identities. Similar titles cannot certify same payoff.
 
 `verify_same_payoff` is separate. It requires an external assertion ID, source
 observation IDs, verified and exhaustive payout states, a bijection between
@@ -326,8 +330,9 @@ per request, and loads at most 200 source markets. The response reports the
 number of relationship rows scanned and whether a capped scan may be incomplete.
 Centered one-hop queries support keyset pages ordered by relationship timestamp
 and ID. The opaque continuation cursor binds the center, page size, and append-
-only graph revision counts for recorded `market_listing` and
-`instrument_metadata` observations, relationships, and reviews. The market
+only graph revision counts for recorded `market_listing`,
+`instrument_metadata`, and `event_market_listing` observations, relationships,
+and reviews. The market
 observation count pins the metadata used to render graph nodes; books and trades
 do not change that graph revision. The API checks the revision before and after
 each page read and returns 409 if it changed, so the client restarts rather than
@@ -793,6 +798,70 @@ responses are distinct from the preserved genuine public capture files.
   focused mypy for the audit module, and `git diff --check` passed. One upstream
   Starlette/httpx `TestClient` deprecation warning remains.
 
+### Event-group metadata and cross-venue hypothesis checkpoint (2026-10-27)
+
+- Polymarket adapter v3 and Kalshi adapter v5 now advertise the bounded
+  `EVENT_MARKET_GROUPS` capability. Each implementation makes one fixed-host
+  public GET, validates the returned event identity, bounds and de-duplicates
+  child markets, and preserves parent event title and native child fields. The
+  API route `POST /api/frontier/probe/{venue}/event-markets` is source-config
+  gated, requires a market already in the saved observation window, verifies
+  the event response contains that market, and persists one raw response with
+  a normalized `MarketBatch`. Kraken explicitly declares this capability
+  unsupported. The [Polymarket event documentation](https://docs.polymarket.com/market-data/discover-markets)
+  describes public event retrieval and grouped markets; Kalshi's documented
+  [Get Event](https://docs.kalshi.com/api-reference/events/get-event) and
+  [Get Events](https://docs.kalshi.com/api-reference/events/get-events)
+  schemas expose an event and nested markets.
+- The saved direct public capture contains two sequential HTTP 200 responses:
+  Polymarket event `32225` at
+  `2026-10-27T10:40:22.014124Z`–`10:40:22.055629Z` (50,404 bytes, raw SHA-256
+  `7a4679841943a27efeeeabb77e44b24805e5c4b6533a9e0093633dd89714560e`) and
+  Kalshi event `CONTROLH-2026` at
+  `2026-10-27T10:40:22.056340Z`–`10:40:22.394643Z` (4,036 bytes, raw SHA-256
+  `cce75fcc4d528401ddbfd576a7fafe6c8aed42ccbd4b7cb3d772a98e2157f189`).
+  Envelope SHA-256 is
+  `943761832d6b44616d5abeccd934cf0bb6adb88fbc4fedb0524e1e39b1104400`.
+  Evidence is preserved in
+  [`2026-10-27-public-cross-venue-house-control-r1.json`](../../data/frontier/live-probes/2026-10-27-public-cross-venue-house-control-r1.json).
+- Offline adapter replay normalized nine Polymarket children and two Kalshi
+  children, preserving their event IDs/titles and raw lineage. The title and
+  outcome-context matcher proposed a Democratic House-control
+  `TEXT_CANDIDATE` at `HYPOTHESIS` state. It rejected an outcome-mismatched
+  fixture and a parent title naming 2028 instead of 2026. Independent
+  same-payoff verification rejected the observed pair: Polymarket's child
+  `endDate` is November 4, 2026 and its description allows late caucus
+  attribution through January 4; Kalshi's Democratic contract closes and
+  expires February 1, 2027, with a secondary rule for early media calls or
+  the Speaker's party on that date. These source rules, dates, and authorities
+  are not established as equivalent by text.
+- API fixture tests for both venue routes verify market binding, one-GET bounds,
+  normalized latest-record selection, exact raw hash persistence, and
+  byte-preserving diagnostic capture when a requested market is absent from the
+  event. They do not constitute a live adapter-to-API browser probe. The capture
+  contains no prices or order books, was sequential rather than simultaneous,
+  and supports no discrepancy, verified equivalence, or economic claim.
+- A second integration fixture passed both preserved response bodies through
+  their venue adapters, the event-group API routes, SQLite, and the relationship
+  proposal route. Its single target pair remains `TEXT_CANDIDATE`/`HYPOTHESIS`
+  under matcher v3. Relationship evidence now names the exact stored observation
+  records containing the normalized markets; both IDs were read back and
+  verified. Direct in-memory matcher use retains its deterministic normalized
+  observation IDs. This fixes API evidence traceability without changing
+  economics, market identity, or replay inputs.
+- `tests/frontier` plus `tests/arena/test_frontier_replay.py` passed **118 tests**
+  in 34.97 seconds; `/usr/bin/time -v` measured 35.79 seconds wall, 7.40 seconds user CPU,
+  252,996 KiB peak RSS, zero swaps, and zero socket messages. All frontend tests passed (**39 tests across 7
+  files**); the production build passed with existing 503.86 kB main and 544.41
+  kB chart chunk warnings; **11/11** isolated Playwright tests passed. Ruff
+  check/format and focused import-following mypy passed for the seven changed
+  backend modules. Normal import-following mypy reports 14 existing errors in
+  four unchanged Veritas/Arena files. A repository-wide pytest attempt stopped
+  at collection: one Reality test imports a missing `midas.reality.recovery`
+  module, and four legacy tests import `test_reality_foundry` without the
+  `tests/` directory on the module path. The Frontier/Arena replay suites
+  themselves pass.
+
 ## 13. Performance and resource measurements
 
 The previous focused backend run (54 tests) completed in 10.65 seconds wall time,
@@ -1032,11 +1101,13 @@ Priority order:
 4. Seek real public multi-outcome metadata that meets the strict payoff and
    resolution requirements; broaden accepted payoff families only with
    independently checked evidence.
-5. When normal host admission permits, run one bounded paired-replay Arena job
-   and measure its supervised runtime. The job type, snapshot, API, and UI are
-   implemented; systemd execution remains unvalidated. Add durable Laboratory
-   experiment definitions only if a concrete use case requires them. Do not
-   launch unattended campaigns.
+5. Arena supervisor wiring has completed two bounded controlled-fixture jobs,
+   with result integrity and process CPU/RSS recorded. Resource sustainability
+   remains unmeasured; do not launch another fixture merely to repeat wiring.
+   Design the next bounded job only around a scientific comparison with pinned
+   multi-source inputs and measurable value. Add durable Laboratory experiment
+   definitions only if a concrete use case requires them. Do not launch
+   unattended campaigns.
 6. Only after representative evidence, consider authenticated reviewer identity
    and independent external assertion ingestion; this needs a separately
    designed security boundary.
@@ -1160,6 +1231,23 @@ Implementation and documentation commits on this branch:
   evidence Kalshi one-order taker sensitivity with native-instrument binding,
   exact Decimal fee/rounding outputs, bounded API and Mission Control fill
   editor, and order-level accumulator/rebate regressions.
+- `c59be55` — documented the Kalshi order-fee model's source, account, precision,
+  and candidate-economics limitations.
+- `a087cb2` — added API-boundary tests for partial Kalshi event/series failure,
+  immutable diagnostic evidence, source-health degradation, and recovery.
+- `401ddfa` — recorded the partial-failure recovery evidence and current
+  verification boundary.
+- `b84dac2` — normalized bounded Kalshi MVE selected-component market/event
+  identifiers and YES/NO sides, persisted the response, and surfaced the
+  unverified-combo boundary in Mission Control.
+- `62617bb` — documented the Kalshi MVE component checkpoint and preserved
+  evidence limits.
+- `415f3d4` — made the independent audit classify repeated-market two-leg
+  candidates as incomplete evidence.
+- `928de98` — documented that malformed-leg audit fix and its focused test.
+- `b4cfcbe` — added bounded Polymarket/Kalshi public event-group normalization,
+  captured direct source evidence, parent-context UI, cross-venue hypothesis
+  discovery, and API relationship evidence linked to stored observation IDs.
 
 Principal changed paths:
 
@@ -1193,16 +1281,16 @@ cross-venue economics.
 | Isolated baseline/worktree and preserved unrelated changes | COMPLETE AND VERIFIED | Branch starts at verified V6 commit; original dirty worktrees untouched. |
 | Adapter protocol, capability registry, bounded GET transport | COMPLETE AND VERIFIED | Contract tests, all capability declarations, host/size/rate/redirect bounds. |
 | Polymarket, Kalshi and Kraken Spot adapters | PARTIALLY VERIFIED | Fixture/contract tests and bounded live listing/book/legacy-trade captures are preserved. Polymarket v2 first and continuation pages returned ten rows each. Kalshi has a ticker-filtered cursor-page implementation, fixture-verified row mapping, and a live empty terminal page; live row normalization remains unvalidated. Adapter v4 also normalizes source-declared MVE component IDs/sides from the preserved 17-leg response, but component rules and combo payoff remain unverified. Kalshi event/series parameters and Kraken spot data are captured, while exact Kalshi account fees and Kraken account fee applicability remain unknown. API fixtures cover source degradation and recovery, including a partial two-request Kalshi metadata failure; live degraded-source behavior remains unverified. |
-| Canonical market/instrument normalization | PARTIALLY VERIFIED | Three distinct instrument classes are represented; v2 Polymarket trades retain native outcome-token identity; Kalshi MVE selected component references are preserved as source-declared structure. Live lineage and several payoff/settlement semantics remain unverified. |
-| Relationship hypotheses, review revisions, indexed neighborhoods, and explicit same-payoff verifier | PARTIALLY VERIFIED | Self-attributed review API/UI, append-only revisions, latest-state replay, tamper/migration checks, left/right endpoint-indexed 1–3 hop scans capped at 500 rows, revision-bound centered one-hop keyset pages, stale-cursor rejection, and a 501-edge scan-bound test; no genuine equivalent pair, reviewer authentication, or multi-hop pagination. |
+| Canonical market/instrument normalization | PARTIALLY VERIFIED | Three distinct instrument classes are represented; v2 Polymarket trades retain native outcome-token identity; Kalshi MVE selected component references are preserved as source-declared structure; the October 27 capture preserves native parent-event titles and Polymarket outcome labels. Live lineage and payoff/settlement semantics remain unverified. |
+| Relationship hypotheses, review revisions, indexed neighborhoods, and explicit same-payoff verifier | PARTIALLY VERIFIED | Self-attributed review API/UI, append-only revisions, latest-state replay, tamper/migration checks, left/right endpoint-indexed 1–3 hop scans capped at 500 rows, revision-bound centered one-hop keyset pages, stale-cursor rejection, and a 501-edge scan-bound test; one genuine 2026 House-control event-topic pair yields a text-only HYPOTHESIS whose API evidence links resolve to both saved captures, while the strict payoff verifier rejects equivalence; reviewer authentication and multi-hop pagination remain absent. |
 | Opportunity candidate and independent economic checks | PARTIALLY VERIFIED | Two-venue all-long binary and same-market 3–16 state one-hot exhaustive coverage; economic model v4 computes an exact full/no-fill adverse exposure pattern over up to 16 legs, and independent audit v2 recomputes it from pinned inputs. Differential three-leg enumeration, unknown-fee cases, and malformed cross-venue leg handling pass. Controlled fixtures only; source semantics, account costs, broader funding/settlement costs, and operational feasibility remain incomplete. |
 | Kalshi taker-fee sensitivity | PARTIALLY VERIFIED | Hash-matched public event/series evidence supports one-fill and bounded one-order Decimal sensitivities for two documented quadratic taker fee types, both precision cases, per-fill rounding, order accumulation, and capped rebates. Tests match the official one-fill example and exercise buy/sell arithmetic. Manual inputs are not live quotes or book-priced; account-specific fees and precision, maker/mixed-order behavior, FCM charges, later schedules, and full candidate fee integration remain unresolved. |
 | Append-only evidence store and deterministic replay | COMPLETE AND VERIFIED | Schema v6, additive v2/v3/v4/v5 migration, bounds, hash validation, immutability, replay-v5 output includes full/no-fill sensitivity and identity pins effective mappings and proposal limit. The separate Arena wrapper uses immutable content-addressed snapshots and hash-verified result artifacts; two controlled fixture workers completed and the latest recorded CPU/RSS. |
 | Paired scenario comparison | PARTIALLY VERIFIED | Local deterministic comparison, atomic result persistence, API/UI, and isolated browser tests pass. Two systemd-supervised Arena jobs completed over the same controlled fixture with verified result identities; the latest worker's process CPU and peak RSS are visible in Mission Control. No genuine matched live cross-venue pair or live economic claim exists. |
-| Live market/book/trade and fee metadata through adapters/API | PARTIALLY VERIFIED | One bounded listing, book, and legacy trade response per venue is hash-pinned; Polymarket v2 pages have distinct IDs; a Kalshi event/series fee-metadata read-back and a new cursor-page response are hash-pinned. The cursor page was empty and terminal, so its live row mapping is not established. Samples are not synchronized and do not prove venue-wide coverage, fees, or execution. |
+| Live market/book/trade and fee metadata through adapters/API | PARTIALLY VERIFIED | One bounded listing, book, and legacy trade response per venue is hash-pinned; two sequential October 27 Polymarket/Kalshi event-group responses are preserved and replayed through fixture-backed adapters, API, storage, and relationship proposal tests; edge evidence resolves to both immutable response records. Polymarket v2 pages have distinct IDs; a Kalshi fee-metadata read-back and cursor-page response are hash-pinned. The cursor page was empty and terminal, so its live row mapping is not established. Samples are not synchronized and do not prove venue-wide coverage, fees, or execution. |
 | Source workers and broad historical data | DEFERRED | No persistent worker or long-duration collection. |
 | Laboratory/Arena research orchestration | PARTIALLY VERIFIED | Arena job kind, content-addressed snapshots, bounded offline execution, API submission/history/result verification, process CPU/RSS capture, and explicit workspace controls are implemented and tested; two fixture jobs passed the host-wide gate and completed under systemd. Laboratory campaign management and resource-sustainability evidence remain incomplete. |
-| Native Mission Control workspace | PARTIALLY VERIFIED | Local API, bounded graph/review UI, Polymarket/Kalshi trade-page controls, instrument-bound Kalshi one-order fee sensitivity, saved MVE component detail with payoff limitation, paired-replay workbench, candidate one-sided-fill detail, and Arena job history/result display; frontend tests and isolated Frontier E2E cover local fixture paths. Production deployment/live browser-to-source validation are not done. |
+| Native Mission Control workspace | PARTIALLY VERIFIED | Local API, bounded graph/review UI, Polymarket/Kalshi trade-page and event-group controls, parent-event context, instrument-bound Kalshi one-order fee sensitivity, saved MVE component detail with payoff limitation, paired-replay workbench, candidate one-sided-fill detail, and Arena job history/result display; frontend tests and isolated Frontier E2E cover local fixture paths. Production deployment/live browser-to-source validation are not done. |
 | Production readiness/deployment | DEFERRED | Separate review and authorization required; production eligibility is false. |
 | Positive economic result | NOT ESTABLISHED | No genuine cross-venue equivalent or economically eligible result in captured evidence. |
 

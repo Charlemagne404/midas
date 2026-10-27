@@ -169,6 +169,24 @@ The Kalshi trade-page route follows the same saved-market and source-configurati
 gates, persists one raw and normalized page per click, and returns no next cursor
 when Kalshi's response cursor is empty. It does not start a history crawl.
 
+Polymarket and Kalshi also advertise the capability `event_market_groups`.
+Mission Control's market inspector can call `POST
+/api/frontier/probe/{venue}/event-markets` with a saved canonical `market_id`;
+Polymarket may supply a numeric `native_event_id` when the saved child record
+has no parent identity, while Kalshi uses the recorded event ticker by default.
+The route makes one bounded GET, confirms the response contains the selected
+market, validates and stores the complete raw event response beside a normalized
+`MarketBatch`, and exposes the parent event title and any native outcome label
+in the Market Explorer. This only adds context for hypothesis discovery. The
+matcher requires similar parent titles and a market-specific outcome text
+overlap, and differing explicit years reject the match. It does not infer YES/NO
+semantics or verify payoff and settlement equivalence. Kraken does not advertise
+event-group discovery. Source probing remains explicit and disabled by default.
+The relationship proposal route cites each loaded market's append-only store
+record in edge evidence; this lets the graph evidence IDs resolve through the
+observation API. Direct matcher calls without a store preserve adapter-derived
+observation identities.
+
 The Economic Workbench can compare two named virtual scenarios through
 `POST /api/frontier/replay/compare`. Both arms use the same stored evidence and
 pinned replay time, with an explicit shared-input digest. The API bounds each
