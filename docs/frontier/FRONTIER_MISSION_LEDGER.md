@@ -1,6 +1,21 @@
 # Project Frontier Mission Ledger
 
-**Latest checkpoint (2026-10-27 18:40 UTC):** The four Frontier browser tests
+**Latest checkpoint (2026-10-27 18:41 UTC):** The complete Frontier Python
+suite passes **215 tests in 39.29 seconds**. `/usr/bin/time -v` measured
+335,120 KiB peak RSS and zero swaps. The only warning was the existing
+Starlette/httpx TestClient deprecation. At 2026-10-27T18:41:46Z, PSI 10-second
+averages were 0.00% (some and full) and five-minute averages were 15.37%
+(some) and 13.84% (full); available memory was 9.46 GiB and swap free was
+471 MiB. The full suite covers Frontier only; repository-wide collection and
+the baseline missing Reality recovery dependency remain separate. Frontier
+remains isolated and undeployed.
+
+Next safe action: continue investigating and implementing remaining Frontier
+coverage, then run the bounded isolated regressions that match each change.
+Do not infer production readiness or live cross-venue validation from this
+local suite.
+
+**Previous checkpoint (2026-10-27 18:40 UTC):** The four Frontier browser tests
 pass after the candidate SHA-256 fixture correction, using temporary local
 demo services and no exchange probes. The focused parser selection passes
 three cases, and the API source-failure persistence/recovery test passes.

@@ -3275,3 +3275,26 @@ and 17.60%, available memory was 9.12 GiB, and swap free was 471 MiB.
 
 Files changed in the browser fixture correction: `apps/web/e2e/frontier.spec.ts`
 in commit `9a4ccf4`. No browser test files changed in this revalidation.
+
+### Frontier Python regression and resource measurement — 2026-10-27 18:41 UTC
+
+The complete Frontier Python suite passed: **215 tests in 39.29 seconds**.
+The suite included the parser-depth tests, API diagnostic persistence and
+recovery, adapters, relationship graph, opportunity economics, persistence,
+replay, and API behavior. `/usr/bin/time -v` measured **335,120 KiB peak RSS**
+and **zero swaps**. The only reported warning was the existing
+Starlette/httpx TestClient deprecation notice. At 18:41:46 UTC, host PSI
+10-second averages were 0.00% for both some and full, five-minute averages
+were 15.37% and 13.84%, available memory was 9.46 GiB, and swap free was
+471 MiB.
+
+This is a full Frontier suite result, not a repository-wide MIDAS regression.
+Repository-wide collection previously found the missing baseline
+`midas.reality.recovery` dependency; the branch's full Frontier suite remains
+independently green. No production services or live source APIs were accessed.
+
+| Component | Current status | Boundary |
+| --- | --- | --- |
+| Frontier Python suite | COMPLETE AND VERIFIED | 215 Frontier tests pass; repository-wide collection and the absent baseline Reality recovery module remain separate issues. |
+| Frontier browser spec | COMPLETE AND VERIFIED | Four local-demo browser tests pass; live exchange validation is not implied. |
+| Project Frontier overall | PARTIALLY VERIFIED | Broader repository regression, live economic validation, and production readiness remain incomplete. |
