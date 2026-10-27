@@ -997,6 +997,13 @@ def generate_multi_outcome_coverage_candidate(
                 OpportunityClassification.UNSUPPORTED_ECONOMICS,
                 "An observed ask exceeds the supported unit settlement payout.",
             )
+        if instrument.tick_size is not None and (
+            Fraction(ask.price) % Fraction(instrument.tick_size) != 0
+        ):
+            return empty(
+                OpportunityClassification.INCOMPLETE_EVIDENCE,
+                f"Best ask for outcome {instrument.outcome_id} violates instrument tick-size metadata.",
+            )
         top_asks.append((instrument, book, ask))
 
     max_depth = min(item[2].quantity for item in top_asks)
@@ -1431,6 +1438,21 @@ def _evaluate_pair(
         )
     l_ask = min(left_book.asks, key=lambda level: level.price)
     r_ask = min(right_book.asks, key=lambda level: level.price)
+    if any(
+        instrument.tick_size is not None
+        and Fraction(ask.price) % Fraction(instrument.tick_size) != 0
+        for instrument, ask in ((left_instrument, l_ask), (right_instrument, r_ask))
+    ):
+        return _empty_candidate(
+            left,
+            right,
+            relationship,
+            OpportunityClassification.INCOMPLETE_EVIDENCE,
+            as_of,
+            "A public best ask violates its instrument tick-size metadata.",
+            candidate_id=identity,
+            family=family,
+        )
     l_age = _age_ms(as_of, left_book.received_at_utc)
     r_age = _age_ms(as_of, right_book.received_at_utc)
     received_skew = abs(
@@ -1448,6 +1470,11 @@ def _evaluate_pair(
     timing_reasons = []
     if l_age > scenario.max_book_age_ms or r_age > scenario.max_book_age_ms:
         timing_reasons.append("One or both public books exceed the configured freshness window.")
+    if any(
+        book.freshness_limit_ms is not None and age > book.freshness_limit_ms
+        for book, age in ((left_book, l_age), (right_book, r_age))
+    ):
+        timing_reasons.append("A public book exceeds its source freshness limit.")
     if received_skew > scenario.max_received_skew_ms:
         timing_reasons.append("Local receipt times exceed the configured comparison skew.")
     if exchange_skew is None:

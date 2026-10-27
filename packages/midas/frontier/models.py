@@ -549,8 +549,8 @@ class KalshiFeeOrderSensitivity(FrontierModel):
 class IndependentEconomicAudit(FrontierModel):
     """Recomputed candidate economics from normalized contracts and source books."""
 
-    schema_version: int = 1
-    model_version: str = "frontier-independent-economic-audit-3"
+    schema_version: int = 2
+    model_version: str = "frontier-independent-economic-audit-4"
     disposition: EconomicAuditDisposition
     input_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     checked_market_count: int = Field(ge=0, le=2)
@@ -563,6 +563,9 @@ class IndependentEconomicAudit(FrontierModel):
     recomputed_net_pnl_by_state: dict[str, SignedDecimal] = Field(default_factory=dict)
     recomputed_worst_case_gross_pnl: SignedDecimal | None = None
     recomputed_worst_case_net_pnl: SignedDecimal | None = None
+    recomputed_received_skew_ms: int | None = Field(default=None, ge=0)
+    recomputed_exchange_skew_ms: int | None = Field(default=None, ge=0)
+    recomputed_timing_verified: bool | None = None
     checks: tuple[str, ...] = Field(default=(), max_length=20)
     message: str = Field(max_length=2000)
 

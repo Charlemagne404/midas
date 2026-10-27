@@ -1040,6 +1040,54 @@ def test_cross_venue_timing_requires_comparable_semantics_and_clock_bounds():
     known_right = with_known_clock_uncertainty(right_books)
     comparable = positive(known_left, known_right)
     assert comparable.timing_verified is True
+    canonical_mapping = (
+        instrument_mapping
+        if relationship.left_market_id == left.canonical_id
+        else {right_id: left_id for left_id, right_id in instrument_mapping.items()}
+    )
+    audit_inputs = {
+        "markets": {left.canonical_id: left, right.canonical_id: right},
+        "books_by_market": {
+            left.canonical_id: known_left,
+            right.canonical_id: known_right,
+        },
+        "relationships": {relationship.relationship_id: relationship},
+        "state_mappings": {relationship.relationship_id: {"yes": "yes", "no": "no"}},
+        "instrument_mappings": {relationship.relationship_id: canonical_mapping},
+        "scenario": ExecutionScenario(),
+    }
+    audited_comparable = independently_audit_candidate(comparable, **audit_inputs)
+    assert audited_comparable.independent_audit is not None
+    assert audited_comparable.independent_audit.disposition.value == "verified"
+    assert audited_comparable.independent_audit.recomputed_timing_verified is True
+    assert audited_comparable.independent_audit.recomputed_received_skew_ms == 0
+
+    tampered_timing = comparable.model_copy(
+        update={"timing_verified": False, "received_skew_ms": 7, "independent_audit": None}
+    )
+    audited_tampering = independently_audit_candidate(tampered_timing, **audit_inputs)
+    assert audited_tampering.independent_audit is not None
+    assert audited_tampering.independent_audit.disposition.value == "disagreement"
+    assert "receipt skew" in audited_tampering.independent_audit.message.lower()
+    assert "timing verification" in audited_tampering.independent_audit.message.lower()
+
+    source_limited_left = {
+        instrument_id: snapshot.model_copy(update={"freshness_limit_ms": 1})
+        for instrument_id, snapshot in known_left.items()
+    }
+    limited_candidate = positive(source_limited_left, known_right)
+    assert limited_candidate.timing_verified is False
+    limited_audit_inputs = {
+        **audit_inputs,
+        "books_by_market": {
+            left.canonical_id: source_limited_left,
+            right.canonical_id: known_right,
+        },
+    }
+    audited_limited = independently_audit_candidate(limited_candidate, **limited_audit_inputs)
+    assert audited_limited.independent_audit is not None
+    assert audited_limited.independent_audit.disposition.value == "verified"
+    assert audited_limited.independent_audit.recomputed_timing_verified is False
 
     mismatched_semantics = {
         instrument_id: snapshot.model_copy(
@@ -1075,6 +1123,127 @@ def test_cross_venue_timing_requires_comparable_semantics_and_clock_bounds():
     future_candidate = positive(known_left, future_right)
     assert future_candidate.timing_verified is False
     assert any("after the replay analysis time" in item for item in future_candidate.reasons)
+
+
+def test_independent_audit_rejects_quantity_step_mutation():
+    left, right, _, instrument_mapping = _verified_pair()
+
+    def with_step(market_value):
+        instruments = tuple(
+            item.model_copy(update={"quantity_step": Decimal("0.1")})
+            for item in market_value.instruments
+        )
+        return market_value.model_copy(update={"instruments": instruments})
+
+    stepped_left = with_step(left)
+    stepped_right = with_step(right)
+    relationship = verify_same_payoff(
+        stepped_left,
+        stepped_right,
+        state_mapping={"yes": "yes", "no": "no"},
+        instrument_mapping=instrument_mapping,
+        external_assertion_id="quantity-step-audit-fixture",
+        evidence_observation_ids=("quantity-step-left", "quantity-step-right"),
+        asserted_at_utc=T0,
+    )
+    left_books, right_books = _books(stepped_left, stepped_right)
+    candidate = generate_binary_coverage_candidates(
+        stepped_left,
+        stepped_right,
+        relationship,
+        left_books,
+        right_books,
+        state_mapping={"yes": "yes", "no": "no"},
+        instrument_mapping=instrument_mapping,
+        as_of_utc=T0 + timedelta(milliseconds=100),
+    )[0]
+    invalid_quantity = candidate.model_copy(
+        update={
+            "legs": tuple(
+                leg.model_copy(update={"quantity": Decimal("9.95")}) for leg in candidate.legs
+            ),
+            "independent_audit": None,
+        }
+    )
+    canonical_mapping = (
+        instrument_mapping
+        if relationship.left_market_id == stepped_left.canonical_id
+        else {right_id: left_id for left_id, right_id in instrument_mapping.items()}
+    )
+    audited = independently_audit_candidate(
+        invalid_quantity,
+        markets={
+            stepped_left.canonical_id: stepped_left,
+            stepped_right.canonical_id: stepped_right,
+        },
+        books_by_market={
+            stepped_left.canonical_id: left_books,
+            stepped_right.canonical_id: right_books,
+        },
+        relationships={relationship.relationship_id: relationship},
+        state_mappings={relationship.relationship_id: {"yes": "yes", "no": "no"}},
+        instrument_mappings={relationship.relationship_id: canonical_mapping},
+        scenario=ExecutionScenario(),
+    )
+    assert audited.independent_audit is not None
+    assert audited.independent_audit.disposition.value == "disagreement"
+    assert "violates its quantity step" in audited.independent_audit.message.lower()
+
+
+def test_candidate_generation_and_independent_audit_enforce_price_ticks():
+    left, right, relationship, instrument_mapping = _verified_pair()
+    left_books, right_books = _books(left, right)
+    candidates = generate_binary_coverage_candidates(
+        left,
+        right,
+        relationship,
+        left_books,
+        right_books,
+        state_mapping={"yes": "yes", "no": "no"},
+        instrument_mapping=instrument_mapping,
+        as_of_utc=T0 + timedelta(milliseconds=100),
+    )
+    candidate = next(item for item in candidates if item.legs)
+
+    def with_half_dollar_ticks(market_value):
+        instruments = tuple(
+            item.model_copy(update={"tick_size": Decimal("0.5")})
+            for item in market_value.instruments
+        )
+        return market_value.model_copy(update={"instruments": instruments})
+
+    tick_left = with_half_dollar_ticks(left)
+    tick_right = with_half_dollar_ticks(right)
+    generated = generate_binary_coverage_candidates(
+        tick_left,
+        tick_right,
+        relationship,
+        left_books,
+        right_books,
+        state_mapping={"yes": "yes", "no": "no"},
+        instrument_mapping=instrument_mapping,
+        as_of_utc=T0 + timedelta(milliseconds=100),
+    )
+    assert all(not item.legs for item in generated)
+    assert all(any("tick-size" in reason for reason in item.reasons) for item in generated)
+
+    canonical_mapping = (
+        instrument_mapping
+        if relationship.left_market_id == tick_left.canonical_id
+        else {right_id: left_id for left_id, right_id in instrument_mapping.items()}
+    )
+    audited = independently_audit_candidate(
+        candidate.model_copy(update={"independent_audit": None}),
+        markets={tick_left.canonical_id: tick_left, tick_right.canonical_id: tick_right},
+        books_by_market={tick_left.canonical_id: left_books, tick_right.canonical_id: right_books},
+        relationships={relationship.relationship_id: relationship},
+        state_mappings={relationship.relationship_id: {"yes": "yes", "no": "no"}},
+        instrument_mappings={relationship.relationship_id: canonical_mapping},
+        scenario=ExecutionScenario(),
+    )
+    assert audited.independent_audit is not None
+    assert audited.independent_audit.disposition.value == "disagreement"
+    assert "violates its instrument tick size" in audited.independent_audit.message.lower()
 
 
 def test_slippage_that_exceeds_binary_payout_is_rejected_as_unsupported():

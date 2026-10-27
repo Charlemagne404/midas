@@ -41,7 +41,7 @@ from midas.frontier.relationships import (
 )
 
 D = Decimal
-_AUDIT_VERSION = "frontier-independent-economic-audit-3"
+_AUDIT_VERSION = "frontier-independent-economic-audit-4"
 _FEE_QUANTUM = D("0.00001")
 
 
@@ -130,6 +130,9 @@ def independently_audit_candidate(
         recomputed_net_pnl_by_state=result["net_pnl_by_state"],
         recomputed_worst_case_gross_pnl=result["worst_case_gross_pnl"],
         recomputed_worst_case_net_pnl=result["worst_case_net_pnl"],
+        recomputed_received_skew_ms=result["received_skew_ms"],
+        recomputed_exchange_skew_ms=result["exchange_skew_ms"],
+        recomputed_timing_verified=result["timing_verified"],
         checks=(
             "candidate market and instrument identities",
             "verified payoff and resolution constraints",
@@ -139,6 +142,7 @@ def independently_audit_candidate(
             "basket cost and payoff recomputation for every terminal state",
             "candidate P&L fields and classification",
             "all full-or-none fill patterns and resulting single-leg exposures",
+            "pinned book timing, freshness, source-quality state, and clock uncertainty",
         ),
         message=message,
     )
@@ -257,6 +261,10 @@ def _recompute(
             )
             continue
         best_ask = min(book.asks, key=lambda level: level.price)
+        if instrument.tick_size is not None and (
+            Fraction(best_ask.price) % Fraction(instrument.tick_size) != 0
+        ):
+            mismatches.append(f"Leg {leg.instrument_id} best ask violates its instrument tick size")
         added_bps = scenario.slippage_bps + (
             scenario.quote_decay_bps_per_second * D(scenario.execution_delay_ms) / D(1000)
         )
@@ -289,6 +297,16 @@ def _recompute(
 
     if set(instrument_by_leg) != set(book_by_leg) or set(instrument_by_leg) != set(fee_by_leg):
         raise _MissingAuditEvidence("A candidate leg could not be joined to its contract and book.")
+
+    received_skew, exchange_skew, timing_verified = _independent_timing_summary(
+        candidate, book_by_leg, scenario
+    )
+    if candidate.received_skew_ms != received_skew:
+        mismatches.append("Candidate local receipt skew differs from pinned books")
+    if candidate.exchange_skew_ms != exchange_skew:
+        mismatches.append("Candidate exchange timestamp skew differs from pinned books")
+    if candidate.timing_verified != timing_verified:
+        mismatches.append("Candidate timing verification differs from pinned source evidence")
 
     payouts: dict[str, Decimal] = {}
     payout_by_leg: dict[str, dict[str, Decimal]] = {}
@@ -407,7 +425,103 @@ def _recompute(
         "net_pnl_by_state": net_pnl,
         "worst_case_gross_pnl": worst_gross,
         "worst_case_net_pnl": worst_net,
+        "received_skew_ms": received_skew,
+        "exchange_skew_ms": exchange_skew,
+        "timing_verified": timing_verified,
     }
+
+
+def _independent_timing_summary(
+    candidate: OpportunityCandidate,
+    books_by_leg: dict[tuple[str, str], BookSnapshot],
+    scenario: ExecutionScenario,
+) -> tuple[int, int | None, bool]:
+    """Re-evaluate source timing claims from books without generator helpers."""
+    books = tuple(books_by_leg[(leg.market_id, leg.instrument_id)] for leg in candidate.legs)
+    asks = tuple(min(book.asks, key=lambda level: level.price) for book in books)
+    as_of = candidate.observed_at_utc
+    received_ms = tuple(_independent_epoch_ms(book.received_at_utc) for book in books)
+    received_skew = max(received_ms) - min(received_ms)
+    ages = tuple(max(0, _independent_epoch_ms(as_of) - value) for value in received_ms)
+    exchange_values = tuple(book.exchange_timestamp_utc for book in books)
+    exchange_skew: int | None = None
+    timing_valid = True
+
+    if any(age > scenario.max_book_age_ms for age in ages):
+        timing_valid = False
+    if any(
+        book.freshness_limit_ms is not None and age > book.freshness_limit_ms
+        for book, age in zip(books, ages, strict=True)
+    ):
+        timing_valid = False
+    if any(value > as_of for value in (book.received_at_utc for book in books)):
+        timing_valid = False
+    if received_skew > scenario.max_received_skew_ms:
+        timing_valid = False
+    if any(book.quality_flags for book in books):
+        timing_valid = False
+
+    if candidate.family == OpportunityFamily.CROSS_VENUE_COMPLETE_COVERAGE:
+        if any(value is None for value in exchange_values):
+            timing_valid = False
+        else:
+            exchange_times = tuple(value for value in exchange_values if value is not None)
+            exchange_ms = tuple(_independent_epoch_ms(value) for value in exchange_times)
+            exchange_skew = max(exchange_ms) - min(exchange_ms)
+            if exchange_skew > scenario.max_exchange_skew_ms:
+                timing_valid = False
+        semantics = {book.exchange_timestamp_semantics.strip().casefold() for book in books}
+        if len(semantics) != 1 or semantics <= {"", "unknown"}:
+            timing_valid = False
+        uncertainties = tuple(book.provenance.clock_uncertainty_ms for book in books)
+        if any(value is None for value in uncertainties):
+            timing_valid = False
+        elif exchange_skew is not None and (
+            D(exchange_skew) + sum((value for value in uncertainties if value is not None), D(0))
+            > scenario.max_exchange_skew_ms
+        ):
+            timing_valid = False
+        if any(
+            value is not None and value > as_of
+            for value in (
+                *(book.received_at_utc for book in books),
+                *exchange_values,
+                *(ask.exchange_timestamp_utc for ask in asks),
+            )
+        ):
+            timing_valid = False
+        if any(ask.exchange_timestamp_utc is None for ask in asks):
+            timing_valid = False
+    elif candidate.family == OpportunityFamily.WITHIN_MARKET_MULTI_OUTCOME_COVERAGE:
+        level_values = tuple(ask.exchange_timestamp_utc for ask in asks)
+        if any(value is None for value in (*exchange_values, *level_values)):
+            exchange_skew = None
+            timing_valid = False
+        else:
+            exchange_times = tuple(value for value in exchange_values if value is not None)
+            level_times = tuple(value for value in level_values if value is not None)
+            exchange_ms = tuple(_independent_epoch_ms(value) for value in exchange_times)
+            level_ms = tuple(_independent_epoch_ms(value) for value in level_times)
+            exchange_skew = max(exchange_ms) - min(exchange_ms)
+            level_skew = max(level_ms) - min(level_ms)
+            if (
+                any(value > as_of for value in (*exchange_times, *level_times))
+                or exchange_skew > scenario.max_exchange_skew_ms
+                or level_skew > scenario.max_exchange_skew_ms
+            ):
+                timing_valid = False
+        semantics = {book.exchange_timestamp_semantics for book in books}
+        if len(semantics) != 1 or "unknown" in semantics:
+            timing_valid = False
+    else:
+        raise _MissingAuditEvidence("This candidate family has no independent timing verifier.")
+
+    return received_skew, exchange_skew, timing_valid
+
+
+def _independent_epoch_ms(value: Any) -> int:
+    """Convert an aware timestamp to the generator's millisecond precision."""
+    return int(value.timestamp() * 1000)
 
 
 def _fill_leg_identity(leg: PositionLeg) -> str:
