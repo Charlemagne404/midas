@@ -152,3 +152,10 @@ the complete Frontier Python suite passed 218 tests in 39.36 seconds at
 deprecation warning remains. `git diff --check` passes. Preserved capture
 files were not edited by this cleanup. This suite validates implementation on
 synthetic inputs only; it does not establish live-source behavior or permission.
+
+After that 19:02 validation, an autouse runtime guard was added for Python's
+built-in, `io`, and `os` file-open calls, with a regression that uses only a
+nonexistent path beneath `tmp_path`. The guard change has not been tested yet;
+the 218-test result predates it. Host memory PSI rose again by 19:05 UTC, so
+rerun the guard and Frontier suite only after a fresh resource check admits
+them. The static source scan still finds no held-directory path references.

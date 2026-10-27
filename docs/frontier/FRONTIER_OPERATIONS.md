@@ -55,6 +55,9 @@ guard passes; the modified API/adapter selection passes 24 tests, and the full
 Frontier suite passes 218 tests. These synthetic tests do not establish source
 permission or live-source validation. See the
 [source-data terms review](SOURCE_DATA_TERMS_REVIEW_2026-10-27.md) for details.
+An autouse runtime guard for common file-open calls was added after those test
+runs; it has not been validated yet and requires a safe rerun of its regression
+and the full Frontier suite.
 
 Cross-venue observations have independent clocks and freshness guarantees.
 Different receipt times or a shared local timestamp do not prove simultaneous

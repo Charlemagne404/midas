@@ -1,5 +1,17 @@
 # Project Frontier Mission Ledger
 
+**Latest checkpoint (2026-10-27 19:05 UTC):** After the 19:02 validation,
+added `tests/frontier/conftest.py` with an autouse guard for built-in, `io`,
+and `os.open` access to the held source path, plus a regression that attempts
+read and write only beneath `tmp_path`. No preserved data path was accessed.
+The new runtime guard/test has not been run; the previous 218-test pass
+predates it. A source-text scan still finds no explicit `live-probes` path
+references. At 19:05:42 UTC, PSI was avg10 46.45% (`some`) / 42.53% (`full`),
+avg300 31.13%/28.15%, with 9.2 GiB available and 467 MiB swap free. No further
+test was admitted. Next safe action: remeasure, run the boundary guard first,
+then the full Frontier suite only if short-window PSI permits. Keep overall
+source permission and live-source validation blocked.
+
 **Latest checkpoint (2026-10-27 19:02 UTC):** Commit `5e51a88` removes all
 15 test-source reads from held `data/frontier/live-probes` captures, replaces
 them with synthetic responses/records, and adds a source-path guard. The guard
@@ -20,8 +32,7 @@ passed (714,944 KiB peak RSS, zero swaps). Vite retains the known large index
 and chart chunk warning. The test/browser services used temporary local
 databases and roots; no exchange probe was made. Frontier remains isolated and
 undeployed, with source permission and live cross-venue economics unresolved.
-The UI source/test hardening and this verification record are included in the
-current local checkpoint.
+Commit `3e7d1b9` contains the UI source/test hardening and verification handoff.
 
 **Latest checkpoint (2026-10-27 18:57 UTC):** A source-use boundary audit
 found 15 direct `data/frontier/live-probes` path references in

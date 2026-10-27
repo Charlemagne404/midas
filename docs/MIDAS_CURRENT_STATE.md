@@ -463,6 +463,13 @@ or historical capture modification occurred. The code/docs verification
 checkpoint is in progress on the Frontier branch; source permission, live
 cross-venue economics, deployment, and repository-wide tests remain open.
 
+After this verification, an autouse runtime file-open guard was added to the
+Frontier Python tests, with a temporary-path regression. It has not been run;
+the 218-test result predates that guard. A fresh pressure sample on
+2026-10-27T19:05:42Z showed 46.45%/42.53% `some`/`full` PSI avg10 and 9.2 GiB
+available memory, so no further tests were started. Run the guard test and
+full Frontier suite after a new safe resource check.
+
 ## Frontier Kalshi fee-override checkpoint — 2026-10-27
 
 Kalshi's documented event-fee rule is now represented explicitly. Adapter v15
