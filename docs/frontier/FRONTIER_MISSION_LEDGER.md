@@ -1,5 +1,17 @@
 # Project Frontier Mission Ledger
 
+**Latest verification (2026-10-27 20:04 UTC):** Frontier's Arena replay
+integration suite `tests/arena/test_frontier_replay.py` passes **10/10** in
+1.94 seconds (2.63 seconds wall), at **193,936 KiB peak RSS** with zero swaps.
+The fixture-only cases exercise bounded job snapshots and catalogs, immutable
+artifact hashes/recovery, API result reads, and held-source quarantine under
+temporary roots. The only warning is the existing Starlette/httpx TestClient
+deprecation. At `2026-10-27T20:04:45Z`, host PSI avg10 was 0.22% (`some`) /
+0.20% (`full`), avg60 15.34% / 13.80%, avg300 18.05% / 16.31%; 9.6 GiB was
+available and 468 MiB swap free. No persistent Arena job, source request,
+held-capture read, protected service action, or deployment occurred. This
+adds integration-test evidence only; Frontier remains PARTIALLY VERIFIED.
+
 **Latest checkpoint (2026-10-27 20:02 UTC):** Code commit `29ab175` adds
 per-venue virtual post-settlement release delays to the saved-run-bound capital
 duration sensitivity. Delay accepts bounded whole seconds up to one year,

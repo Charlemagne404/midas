@@ -623,3 +623,15 @@ PSI avg10 was 0.00% (`some`/`full`), avg60 1.19% / 1.09%, avg300 14.11% /
 suite remains unrun. No live-source request, held-capture read, protected
 service action, or deployment occurred. Frontier remains isolated,
 undeployed, research-only, and PARTIALLY VERIFIED.
+
+## Frontier Arena replay regression — 2026-10-27 20:04 UTC
+
+The focused Arena integration suite `tests/arena/test_frontier_replay.py`
+passed **10/10** in 1.94 seconds (2.63 seconds wall) at **193,936 KiB peak
+RSS**, with zero swaps and the existing Starlette/httpx TestClient deprecation
+warning. It uses temporary paths and covers replay snapshot/job contracts,
+artifact integrity, bounded catalog/API reads, and held-source quarantine.
+This supplements the full Frontier Python, web, browser, and build results at
+20:02 UTC. No Arena production job, exchange request, preserved capture, or
+Reality service was accessed. Frontier remains PARTIALLY VERIFIED; the
+repository-wide legacy suite and deployment are not verified.

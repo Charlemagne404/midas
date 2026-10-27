@@ -3620,3 +3620,18 @@ This capital scenario is **COMPLETE AND VERIFIED** in fixture/local testing;
 Frontier overall remains **PARTIALLY VERIFIED** due source permission, live
 cross-venue economic evidence, broader cost assumptions, legacy regression,
 and deployment prerequisites.
+
+### Frontier Arena replay integration verification — 2026-10-27 20:04 UTC
+
+The focused `tests/arena/test_frontier_replay.py` suite passed **10/10** in
+1.94 seconds (2.63 seconds wall) at **193,936 KiB peak RSS**, zero swaps. The
+test module exercises immutable pinned replay snapshots, bounded Arena job
+contracts, artifact integrity and recovery, bounded catalog filtering, API
+result linkage, and held-source read quarantine. It uses temporary fixture
+roots and does not submit or launch a production Arena job. The existing
+Starlette/httpx TestClient deprecation is the only warning. At
+`2026-10-27T20:04:45Z`, host memory PSI avg10 was 0.22% (`some`) / 0.20%
+(`full`), avg60 15.34% / 13.80%, avg300 18.05% / 16.31%; 9.6 GiB was available
+and 468 MiB swap free. No exchange request, held capture, Reality action, or
+deployment occurred. This improves local Arena integration coverage; broader
+legacy regressions and production readiness remain incomplete.
