@@ -1402,12 +1402,16 @@ diagnostic if a replay payload no longer matches its pinned result hash. The
 follow-up `e491f3f` centralizes replay reads and applies the same 409 response
 to `/runs`, `/opportunities`, and held-filtered `/overview`. A synthetic held
 source configuration verifies all four read routes including `/readiness`.
-The focused legacy, unaudited, quarantine, and hash-mismatch regressions passed
-**4 tests** in 2.59 seconds. Strict mypy passed for `apps/api/frontier.py`; Ruff
-check/format and `git diff --check` passed. One existing Starlette/httpx
-TestClient deprecation warning remains. No held capture, live endpoint,
-production database, or service was accessed.
+Commit `d75d1ee` extends the same integrity response to comparison list/detail,
+overview, and relationship reads, including the readiness relationship gate.
+Corrupt comparison and relationship rows remain in the temporary database and
+all affected routes fail closed. The focused legacy, unaudited, quarantine,
+replay/comparison hash, and relationship hash regressions passed **5 tests** in
+2.61 seconds. Strict mypy passed for `apps/api/frontier.py`; Ruff check/format
+and `git diff --check` passed. One existing Starlette/httpx TestClient
+deprecation warning remains. No held capture, live endpoint, production
+database, or service was accessed.
 
-**Next safe action:** extend the explicit integrity response to paired
-comparison and relationship reads. Test corrupted fixture rows through their
-API routes while preserving the immutable database rows.
+**Next safe action:** audit persisted relationship-review and replay-comparison
+dependency reads for the same hash-validation boundary, and add temporary
+corruption fixtures where a route can otherwise return partial evidence.

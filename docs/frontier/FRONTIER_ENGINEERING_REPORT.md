@@ -2393,17 +2393,20 @@ integrity detail when a replay payload no longer matches its pinned result
 hash. Follow-up commit `e491f3f` centralizes reads of replay rows and applies
 the same 409 response to `/runs`, `/opportunities`, and held-filtered
 `/overview`. A synthetic source hold verifies that all four routes, including
-`/readiness`, reject the corrupted row consistently. The legacy, unaudited,
-quarantine, and hash-mismatch API regressions passed **4 tests** in 2.59
-seconds. Strict mypy for the API route, Ruff, formatting, and
-`git diff --check` passed. One existing Starlette/httpx TestClient deprecation
-warning remains.
+`/readiness`, reject the corrupted row consistently. Commit `d75d1ee` applies
+the same integrity response to comparison list/detail, held overview, and
+relationship reads. Corrupt fixture rows remain in the temporary database;
+the route returns an explicit 409 instead of partial evidence. The focused
+legacy, unaudited, quarantine, replay/comparison hash, and relationship hash
+regressions passed **5 tests** in 2.61 seconds. Strict mypy for the API route,
+Ruff, formatting, and `git diff --check` passed. One existing Starlette/httpx
+TestClient deprecation warning remains.
 
 These checks establish backward-compatible local replay reading and API-level
 source quarantine behavior on synthetic fixtures only. They do not validate
 held source records, live source quality, or economic performance. No held
 capture, production database, live endpoint, service, or deployment was used.
 
-**Next safe action:** extend explicit integrity failures to paired comparison
-and relationship reads. Preserve corrupted rows in the temporary test
-database and verify that APIs fail closed without returning partial evidence.
+**Next safe action:** audit persisted relationship-review and replay-comparison
+dependency reads for the same hash-validation boundary. Add temporary
+corruption fixtures where a route could otherwise return partial evidence.
