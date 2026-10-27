@@ -1,5 +1,27 @@
 # Project Frontier Mission Ledger
 
+**Latest checkpoint (2026-10-27 18:57 UTC):** A source-use boundary audit
+found 15 direct `data/frontier/live-probes` path references in
+`tests/frontier/test_adapters.py` and `tests/frontier/test_api.py`. The
+18:41 UTC full Frontier suite executed those cases and read the preserved
+artifacts; this corrects the earlier statement that these tests used only
+controlled fixtures. No test writes to those files were found, and no capture
+mutation is known. All 15 references have now been converted to synthetic
+local inputs. A `rg` scan over `tests`, `packages`, and `apps` finds no
+`live-probes` path; a permanent static Python-test guard is added. Neither
+capture data nor bytes were opened by this audit, and the existing capture
+files remain untouched. Source terms review, engineering report, operations,
+and current-state docs record the correction and current official terms. The
+static guard and changed functional tests remain unrun because PSI and swap use
+are elevated. Do not rerun until a fresh resource check admits bounded tests.
+
+At 2026-10-27T18:57:27Z, host memory PSI was some/full avg10 17.36%/15.65%,
+avg60 38.95%/34.76%, avg300 41.14%/36.90%; 9.4 GiB was available but swap
+free remained 472 MiB. No test/build was started. Frontier remains
+isolated and undeployed; Kalshi and Kraken live probes and held-data reads stay
+blocked. Next safe action: remeasure pressure and run the static boundary test
+plus affected adapter/API cases only after the host is admitted.
+
 **Latest checkpoint (2026-10-27 18:51 UTC):** Commit `547a37b` hardens the
 virtual-funding UI: identity objects are validated against supported schema v1,
 matching compares all five identity fields directly, balance state is keyed by

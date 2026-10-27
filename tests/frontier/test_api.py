@@ -55,6 +55,80 @@ from apps.api.frontier import (
 from tests.frontier.builders import T0, book, market
 
 
+def _synthetic_polymarket_event_market(
+    market_id: str,
+    *,
+    question: str,
+    outcome_label: str,
+) -> dict[str, object]:
+    numeric_id = int(market_id)
+    return {
+        "id": market_id,
+        "question": question,
+        "version": "v2",
+        "outcomes": ["Yes", "No"],
+        "positionIds": [str(numeric_id * 2), str(numeric_id * 2 + 1)],
+        "active": True,
+        "closed": False,
+        "acceptingOrders": True,
+        "conditionId": f"0x{numeric_id:064x}",
+        "groupItemTitle": outcome_label,
+    }
+
+
+def _synthetic_polymarket_event_body(
+    event_id: str,
+    title: str,
+    markets: list[dict[str, object]],
+) -> str:
+    return json.dumps(
+        {"id": event_id, "title": title, "markets": markets},
+        separators=(",", ":"),
+    )
+
+
+def _synthetic_kalshi_event_body(
+    event_ticker: str,
+    title: str,
+    markets: list[dict[str, object]],
+) -> str:
+    return json.dumps(
+        {
+            "event": {
+                "event_ticker": event_ticker,
+                "title": title,
+                "markets": markets,
+            }
+        },
+        separators=(",", ":"),
+    )
+
+
+def _synthetic_kalshi_mve_page(
+    *,
+    event_ticker: str,
+    series_ticker: str,
+    collection_ticker: str,
+    title: str,
+    cursor: str,
+) -> str:
+    # `markets` is deliberately omitted to exercise degraded member-list provenance.
+    return json.dumps(
+        {
+            "events": [
+                {
+                    "event_ticker": event_ticker,
+                    "series_ticker": series_ticker,
+                    "collection_ticker": collection_ticker,
+                    "title": title,
+                }
+            ],
+            "cursor": cursor,
+        },
+        separators=(",", ":"),
+    )
+
+
 def test_kalshi_mve_component_probe_is_bound_to_recorded_parent_and_persists_metadata(
     tmp_path,
 ):
@@ -556,15 +630,25 @@ def test_disabled_public_probe_fails_closed_without_egress(tmp_path):
         asyncio.run(http_client.aclose())
 
 
-def test_event_group_probe_persists_parent_context_and_binds_to_recorded_market(tmp_path):
-    capture = json.loads(
-        (
-            Path(__file__).resolve().parents[2]
-            / "data/frontier/live-probes/2026-10-27-public-cross-venue-house-control-r1.json"
-        ).read_text(encoding="utf-8")
+def test_synthetic_event_group_probe_persists_parent_context_and_binds_to_recorded_market(
+    tmp_path,
+):
+    # This in-memory response exercises the event API path; it is not exchange evidence.
+    event_title = "Synthetic 2026 House-control event"
+    body = _synthetic_polymarket_event_body(
+        "32225",
+        event_title,
+        [
+            _synthetic_polymarket_event_market(
+                str(562802 + index),
+                question=f"Synthetic House outcome {index}",
+                outcome_label=(
+                    "Democratic Party" if index == 0 else f"Synthetic outcome {index}"
+                ),
+            )
+            for index in range(9)
+        ],
     )
-    source_event = next(item for item in capture["records"] if item["source"] == "polymarket_event")
-    body = source_event["raw_body_utf8"]
     requests: list[httpx.Request] = []
 
     def handler(request: httpx.Request) -> httpx.Response:
@@ -616,10 +700,10 @@ def test_event_group_probe_persists_parent_context_and_binds_to_recorded_market(
         )
         assert response.status_code == 200, response.text
         payload = response.json()
-        assert payload["event_title"] == "Which party will win the House in 2026?"
+        assert payload["event_title"] == event_title
         assert payload["market_count"] == 9
         assert payload["network_calls_bounded_by"] == 1
-        assert payload["raw_sha256"] == source_event["raw_sha256"]
+        assert payload["raw_sha256"] == hashlib.sha256(body.encode("utf-8")).hexdigest()
         stored = store.observation(payload["observation_id"])
         assert stored is not None
         assert stored["raw"]["raw_body"] == body
@@ -650,15 +734,27 @@ def test_event_group_probe_persists_parent_context_and_binds_to_recorded_market(
         asyncio.run(http_client.aclose())
 
 
-def test_kalshi_event_group_probe_uses_nested_public_event_markets(tmp_path):
-    capture = json.loads(
-        (
-            Path(__file__).resolve().parents[2]
-            / "data/frontier/live-probes/2026-10-27-public-cross-venue-house-control-r1.json"
-        ).read_text(encoding="utf-8")
+def test_synthetic_kalshi_event_group_probe_uses_nested_public_event_markets(tmp_path):
+    # Controlled nested event data verifies API binding and storage only.
+    event_title = "Synthetic U.S. House control event"
+    body = _synthetic_kalshi_event_body(
+        "CONTROLH-2026",
+        event_title,
+        [
+            {
+                "ticker": "CONTROLH-2026-D",
+                "event_ticker": "CONTROLH-2026",
+                "market_type": "binary",
+                "title": "Democratic Party wins synthetic House control",
+            },
+            {
+                "ticker": "CONTROLH-2026-R",
+                "event_ticker": "CONTROLH-2026",
+                "market_type": "binary",
+                "title": "Republican Party wins synthetic House control",
+            },
+        ],
     )
-    source_event = next(item for item in capture["records"] if item["source"] == "kalshi_event")
-    body = source_event["raw_body_utf8"]
     requests: list[httpx.Request] = []
 
     def handler(request: httpx.Request) -> httpx.Response:
@@ -705,9 +801,9 @@ def test_kalshi_event_group_probe_uses_nested_public_event_markets(tmp_path):
         assert response.status_code == 200, response.text
         payload = response.json()
         assert payload["native_event_id"] == "CONTROLH-2026"
-        assert payload["event_title"] == "Which party will win the U.S. House?"
+        assert payload["event_title"] == event_title
         assert payload["market_count"] == 2
-        assert payload["raw_sha256"] == source_event["raw_sha256"]
+        assert payload["raw_sha256"] == hashlib.sha256(body.encode("utf-8")).hexdigest()
         assert len(requests) == 1
         assert requests[0].method == "GET"
         assert requests[0].url.params["with_nested_markets"] == "true"
@@ -854,15 +950,16 @@ def test_kalshi_multivariate_probe_is_filter_bound_bounded_and_persisted(tmp_pat
         asyncio.run(http_client.aclose())
 
 
-def test_kalshi_multivariate_live_capture_stores_event_when_source_omits_nested_markets(tmp_path):
-    artifact = json.loads(
-        (
-            Path(__file__).resolve().parents[2]
-            / "data/frontier/live-probes/2026-10-27-kalshi-multivariate-page-r1.json"
-        ).read_text(encoding="utf-8")
+def test_synthetic_kalshi_mve_page_stores_event_when_nested_markets_are_omitted(tmp_path):
+    collection_ticker = "MVE-SYNTHETIC-26"
+    event_ticker = "KXMVESYNTHETIC-26"
+    raw_body = _synthetic_kalshi_mve_page(
+        event_ticker=event_ticker,
+        series_ticker="KXMVESYNTHETIC",
+        collection_ticker=collection_ticker,
+        title="Synthetic multivariate event with omitted members",
+        cursor="synthetic-next-page",
     )
-    raw_body = artifact["raw_observation"]["raw_body"]
-    collection_ticker = artifact["source_filter"]["collection_ticker"]
     requests: list[httpx.Request] = []
 
     def handler(request: httpx.Request) -> httpx.Response:
@@ -899,15 +996,16 @@ def test_kalshi_multivariate_live_capture_stores_event_when_source_omits_nested_
         assert result["event_count"] == 1
         assert result["market_count"] == 0
         assert result["events"][0]["member_list_state"] == "omitted"
-        assert result["events"][0]["native_event_id"] == "KXMVECROSSCATEGORY-S2026ZZZB25KKPHBN3TFC"
+        assert result["events"][0]["native_event_id"] == event_ticker
         assert result["has_more_source_pages"] is True
-        assert result["raw_sha256"] == artifact["raw_sha256"]
+        expected_raw_sha256 = hashlib.sha256(raw_body.encode("utf-8")).hexdigest()
+        assert result["raw_sha256"] == expected_raw_sha256
         assert len(requests) == 1
         assert requests[0].url.params["with_nested_markets"] == "true"
         assert "authorization" not in requests[0].headers
 
         evidence = client.get(f"/api/frontier/observations/{result['observation_id']}").json()
-        assert evidence["raw"]["raw_sha256"] == artifact["raw_sha256"]
+        assert evidence["raw"]["raw_sha256"] == expected_raw_sha256
         group = evidence["normalized"]["market_groups"][0]
         assert group["member_list_state"] == "omitted"
         assert group["member_native_market_ids"] == []
@@ -918,16 +1016,16 @@ def test_kalshi_multivariate_live_capture_stores_event_when_source_omits_nested_
         asyncio.run(http_client.aclose())
 
 
-def test_kalshi_multivariate_ticker_filter_replays_preserved_public_capture(tmp_path):
-    artifact = json.loads(
-        (
-            Path(__file__).resolve().parents[2]
-            / "data/frontier/live-probes/2026-10-27-kalshi-mve-ticker-filter-r1.json"
-        ).read_text(encoding="utf-8")
+def test_synthetic_kalshi_mve_ticker_filter_replays_persisted_response(tmp_path):
+    # Synthetic response data exercises filtering, API persistence, and deterministic read-back.
+    event_ticker = "KXMVESYNTHETIC-26-A"
+    raw_body = _synthetic_kalshi_mve_page(
+        event_ticker=event_ticker,
+        series_ticker="KXMVESYNTHETIC",
+        collection_ticker="MVE-SYNTHETIC-26",
+        title="Synthetic event for the ticker-filter replay test",
+        cursor="",
     )
-    raw_body = artifact["raw_observation"]["raw_body"]
-    event_ticker = artifact["source_filter"]["event_ticker"]
-    assert hashlib.sha256(raw_body.encode("utf-8")).hexdigest() == artifact["raw_sha256"]
     requests: list[httpx.Request] = []
 
     def handler(request: httpx.Request) -> httpx.Response:
@@ -967,7 +1065,8 @@ def test_kalshi_multivariate_ticker_filter_replays_preserved_public_capture(tmp_
         assert result["market_count"] == 0
         assert result["has_more_source_pages"] is False
         assert result["complete_for_request"] is True
-        assert result["raw_sha256"] == artifact["raw_sha256"]
+        expected_raw_sha256 = hashlib.sha256(raw_body.encode("utf-8")).hexdigest()
+        assert result["raw_sha256"] == expected_raw_sha256
         assert len(requests) == 1
         assert requests[0].method == "GET"
         assert requests[0].url.params["tickers"] == event_ticker
@@ -978,7 +1077,7 @@ def test_kalshi_multivariate_ticker_filter_replays_preserved_public_capture(tmp_
         evidence_response = client.get(f"/api/frontier/observations/{result['observation_id']}")
         assert evidence_response.status_code == 200
         evidence = evidence_response.json()
-        assert evidence["raw"]["raw_sha256"] == artifact["raw_sha256"]
+        assert evidence["raw"]["raw_sha256"] == expected_raw_sha256
         assert len(evidence["row_sha256"]) == 64
 
         def canonical(value):
@@ -991,30 +1090,57 @@ def test_kalshi_multivariate_ticker_filter_replays_preserved_public_capture(tmp_
         assert evidence["normalized"]["market_groups"][0]["member_list_state"] == "omitted"
         assert evidence["normalized"]["markets"] == []
 
-        captured_raw = RawObservation.model_validate(artifact["raw_observation"])
-        captured_normalized = MarketBatch.model_validate(artifact["normalized_observation"])
+        synthetic_raw = RawObservation.model_validate(evidence["raw"])
+        synthetic_normalized = MarketBatch.model_validate(evidence["normalized"])
         snapshot_store = FrontierStore(tmp_path / "frontier-kalshi-mve-ticker-snapshot")
-        snapshot_id = snapshot_store.append_observation(captured_raw, captured_normalized)
+        snapshot_id = snapshot_store.append_observation(synthetic_raw, synthetic_normalized)
         snapshot_readback = snapshot_store.observation(snapshot_id)
         assert snapshot_readback is not None
-        assert snapshot_readback["row_sha256"] == artifact["offline_snapshot_row_sha256"]
+        assert snapshot_readback["row_sha256"] == evidence["row_sha256"]
     finally:
         client.close()
         asyncio.run(registry.aclose())
         asyncio.run(http_client.aclose())
 
 
-def test_captured_cross_venue_event_context_creates_reviewable_hypothesis(tmp_path):
-    capture = json.loads(
-        (
-            Path(__file__).resolve().parents[2]
-            / "data/frontier/live-probes/2026-10-27-public-cross-venue-house-control-r1.json"
-        ).read_text(encoding="utf-8")
-    )
-    source_records = {item["source"]: item for item in capture["records"]}
+def test_synthetic_cross_venue_event_context_creates_reviewable_hypothesis(tmp_path):
+    # In-memory event payloads exercise matching and replay; they are not source observations.
+    event_title = "Synthetic House control contest 2026"
     bodies = {
-        Venue.POLYMARKET: source_records["polymarket_event"]["raw_body_utf8"],
-        Venue.KALSHI: source_records["kalshi_event"]["raw_body_utf8"],
+        Venue.POLYMARKET: _synthetic_polymarket_event_body(
+            "32225",
+            event_title,
+            [
+                _synthetic_polymarket_event_market(
+                    "562802",
+                    question="Will the Democratic Party control the House?",
+                    outcome_label="Democratic Party",
+                ),
+                _synthetic_polymarket_event_market(
+                    "562803",
+                    question="Will the Republican Party control the House?",
+                    outcome_label="Republican Party",
+                ),
+            ],
+        ),
+        Venue.KALSHI: _synthetic_kalshi_event_body(
+            "CONTROLH-2026",
+            event_title,
+            [
+                {
+                    "ticker": "CONTROLH-2026-D",
+                    "event_ticker": "CONTROLH-2026",
+                    "market_type": "binary",
+                    "title": "Will the Democratic Party control the House?",
+                },
+                {
+                    "ticker": "CONTROLH-2026-R",
+                    "event_ticker": "CONTROLH-2026",
+                    "market_type": "binary",
+                    "title": "Will the Republican Party control the House?",
+                },
+            ],
+        ),
     }
     requests: list[httpx.Request] = []
 
@@ -1055,7 +1181,7 @@ def test_captured_cross_venue_event_context_creates_reviewable_hypothesis(tmp_pa
             update={"native_event_id": native_event_id}
         )
         raw_body = json.dumps(
-            {"recorded_market_seed": seed_market.canonical_id}, separators=(",", ":")
+            {"synthetic_market_seed": seed_market.canonical_id}, separators=(",", ":")
         )
         raw = RawObservation(
             venue=venue,
@@ -1137,7 +1263,7 @@ def test_captured_cross_venue_event_context_creates_reviewable_hypothesis(tmp_pa
             polymarket_market.instruments[0].native_instrument_id,
             "0.45",
         )
-        book_body = '{"captured_fixture":"event-replay-source-link"}'
+        book_body = '{"synthetic_fixture":"event-replay-source-link"}'
         book_raw = RawObservation(
             venue=Venue.POLYMARKET,
             observation_kind="book_snapshot",
@@ -1548,27 +1674,35 @@ def test_kalshi_fee_metadata_partial_failure_preserves_evidence_and_recovers(tmp
         asyncio.run(http_client.aclose())
 
 
-def test_kalshi_mve_optional_settlement_value_persists_through_api(tmp_path):
-    capture = json.loads(
-        (
-            Path(__file__).resolve().parents[2]
-            / "data/frontier/live-probes/2026-10-26-public-source-probe-r2.json"
-        ).read_text()
-    )
-    market_body = next(
-        item["raw_body_utf8"] for item in capture["records"] if item["source"] == "kalshi_markets"
-    )
-    fixture_payload = json.loads(market_body)
-    source_row = fixture_payload["markets"][0]
-    # The preserved live response omitted these fields. This fixture-only variant
-    # exercises their documented schema shape through API/store read-back.
-    for component in source_row["mve_selected_legs"]:
-        component["yes_settlement_value_dollars"] = "1.0000"
-    source_row["mve_selected_legs"][0]["yes_settlement_value_dollars"] = "0.3750"
-    source_row["settlement_value_dollars"] = "0.3750"
-    source_row["status"] = "settled"
-    source_row["is_provisional"] = False
-    market_body = json.dumps(fixture_payload)
+def test_synthetic_kalshi_mve_optional_settlement_value_persists_through_api(tmp_path):
+    # These controlled values exercise API/store/audit behavior; they are not source evidence.
+    source_row = {
+        "ticker": "KXMVESYNTHETIC-26-COMBO",
+        "event_ticker": "KXMVESYNTHETIC-26",
+        "market_type": "binary",
+        "title": "Synthetic selected outcome combination",
+        "rules_primary": "Synthetic settlement rule for API persistence coverage.",
+        "notional_value_dollars": "1.00",
+        "mve_collection_ticker": "MVE-SYNTHETIC-26",
+        "mve_selected_legs": [
+            {
+                "event_ticker": "KXMVESYNTHETIC-26-A",
+                "market_ticker": "KXMVESYNTHETIC-26-A-YES",
+                "side": "yes",
+                "yes_settlement_value_dollars": "0.3750",
+            },
+            {
+                "event_ticker": "KXMVESYNTHETIC-26-B",
+                "market_ticker": "KXMVESYNTHETIC-26-B-YES",
+                "side": "yes",
+                "yes_settlement_value_dollars": "1.0000",
+            },
+        ],
+        "settlement_value_dollars": "0.3750",
+        "status": "settled",
+        "is_provisional": False,
+    }
+    market_body = json.dumps({"markets": [source_row]}, separators=(",", ":"))
     requests: list[httpx.Request] = []
 
     def handler(request: httpx.Request) -> httpx.Response:

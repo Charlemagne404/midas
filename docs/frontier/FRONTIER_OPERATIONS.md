@@ -46,9 +46,14 @@ The snapshot check runs before job reconciliation so a blocked read does not
 rewrite the job manifest. Held rows are not deleted or rewritten. The overview's
 database-size measurement includes preserved held evidence while its research
 counts exclude it. Direct database inspection, exports, and other paths outside
-these APIs remain held. Controlled fixture tests verify the application
-filters; they do not validate the terms or inspect preserved live captures.
-Fixture-only development remains available.
+these APIs remain held. Controlled fixtures verify the application filters;
+they do not validate the terms. A test-source audit found direct references to
+preserved captures in two Frontier test modules, and the 18:41 UTC full suite
+read those files. The 15 references have been replaced by synthetic inputs,
+and a source-text scan now finds no held-directory references. A static guard
+was added but not yet executed because host PSI and swap use remain elevated;
+the modified tests also await a resource-admitted run. See the
+[source-data terms review](SOURCE_DATA_TERMS_REVIEW_2026-10-27.md) for details.
 
 Cross-venue observations have independent clocks and freshness guarantees.
 Different receipt times or a shared local timestamp do not prove simultaneous

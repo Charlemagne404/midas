@@ -17,7 +17,6 @@ from midas.frontier.models import (
     Capability,
     FeeSchedule,
     FeeStatus,
-    FrontierMarket,
     MarketKind,
     SourceState,
     TradeBatch,
@@ -56,10 +55,88 @@ def _captured(path: str) -> str:
     return (ROOT / path).read_text(encoding="utf-8")
 
 
-def _cross_venue_capture() -> dict:
-    return json.loads(
-        _captured("data/frontier/live-probes/2026-10-27-public-cross-venue-house-control-r1.json")
-    )
+def _synthetic_polymarket_event() -> dict:
+    event_title = "Which party will win the House in 2026?"
+    markets = []
+    for index in range(9):
+        market_id = "562802" if index == 0 else f"56280{index + 2}"
+        outcome = "Democratic Party" if index == 0 else f"Synthetic Party {index}"
+        markets.append(
+            {
+                "id": market_id,
+                "question": f"{outcome} wins the House",
+                "conditionId": f"0x{index + 1:064x}",
+                "version": "v1",
+                "outcomes": ["Yes", "No"],
+                "clobTokenIds": [f"{index + 1}01", f"{index + 1}02"],
+                "groupItemTitle": outcome,
+                "active": True,
+                "closed": False,
+                "acceptingOrders": True,
+                "description": "Synthetic event-group test rule.",
+            }
+        )
+    return {"id": "32225", "title": event_title, "markets": markets}
+
+
+def _synthetic_kalshi_event() -> dict:
+    return {
+        "event": {
+            "event_ticker": "CONTROLH-2026",
+            "series_ticker": "CONTROLH",
+            "title": "Which party will win the U.S. House?",
+            "markets": [
+                {
+                    "ticker": "CONTROLH-2026-D",
+                    "event_ticker": "CONTROLH-2026",
+                    "market_type": "binary",
+                    "title": "Will Democrats win the House?",
+                    "yes_sub_title": "Democratic Party",
+                    "no_sub_title": "Republican Party",
+                    "rules_primary": "Synthetic election test rule.",
+                },
+                {
+                    "ticker": "CONTROLH-2026-R",
+                    "event_ticker": "CONTROLH-2026",
+                    "market_type": "binary",
+                    "title": "Will Republicans win the House?",
+                    "yes_sub_title": "Republican Party",
+                    "no_sub_title": "Democratic Party",
+                    "rules_primary": "Synthetic election test rule.",
+                },
+            ],
+        }
+    }
+
+
+def _synthetic_kalshi_mve_market(
+    *,
+    ticker: str = "KX-MVE-MARKET",
+    event_ticker: str = "KX-MVE-EVENT",
+    selected_legs: list[dict] | None = None,
+) -> dict:
+    return {
+        "ticker": ticker,
+        "event_ticker": event_ticker,
+        "market_type": "binary",
+        "title": "Synthetic selected combination",
+        "mve_collection_ticker": "KX-MVE-COLLECTION",
+        "mve_selected_legs": selected_legs
+        if selected_legs is not None
+        else [
+            {
+                "event_ticker": "KX-BASE-EVENT-A",
+                "market_ticker": "KX-BASE-MARKET-A",
+                "side": "yes",
+                "yes_settlement_value_dollars": "0.3750",
+            },
+            {
+                "event_ticker": "KX-BASE-EVENT-B",
+                "market_ticker": "KX-BASE-MARKET-B",
+                "side": "yes",
+            },
+        ],
+    }
 
 
 def _transport(host: str, bodies: dict[str, str], config: AdapterConfig | None = None):
@@ -313,17 +390,15 @@ async def test_polymarket_unknown_fee_exponent_is_not_promoted_to_verified():
 
 
 @pytest.mark.asyncio
-async def test_public_event_group_capture_retains_parent_context_and_only_proposes_hypothesis():
-    capture = _cross_venue_capture()
-    records = {item["source"]: item for item in capture["records"]}
-    poly_record = records["polymarket_event"]
-    kalshi_record = records["kalshi_event"]
+async def test_synthetic_event_groups_retain_parent_context_and_only_propose_hypotheses():
+    poly_body = _synthetic_polymarket_event()
+    kalshi_body = _synthetic_kalshi_event()
     poly_transport, poly_requests, poly_client = _transport(
-        "gamma-api.polymarket.com", {"/events/32225": poly_record["raw_body_utf8"]}
+        "gamma-api.polymarket.com", {"/events/32225": json.dumps(poly_body)}
     )
     kalshi_transport, kalshi_requests, kalshi_client = _transport(
         "external-api.kalshi.com",
-        {"/events/CONTROLH-2026": kalshi_record["raw_body_utf8"]},
+        {"/events/CONTROLH-2026": json.dumps(kalshi_body)},
     )
     config = AdapterConfig(
         enabled=True, live_public_probe_enabled=True, requests_per_second=5, retries=0
@@ -346,8 +421,8 @@ async def test_public_event_group_capture_retains_parent_context_and_only_propos
     assert poly_yes.outcome_label == "Democratic Party"
     assert kalshi_yes.native_event_id == "CONTROLH-2026"
     assert kalshi_yes.native_event_title == "Which party will win the U.S. House?"
-    assert poly_yes.provenance.raw_sha256 == poly_record["raw_sha256"]
-    assert kalshi_yes.provenance.raw_sha256 == kalshi_record["raw_sha256"]
+    assert len(poly_yes.provenance.raw_sha256) == 64
+    assert len(kalshi_yes.provenance.raw_sha256) == 64
     assert polymarket.capabilities.supports(Capability.EVENT_MARKET_GROUPS)
     assert kalshi.capabilities.supports(Capability.EVENT_MARKET_GROUPS)
     assert not KrakenSpotAdapter().capabilities.supports(Capability.EVENT_MARKET_GROUPS)
@@ -488,20 +563,31 @@ async def test_kalshi_multivariate_event_page_preserves_group_and_market_evidenc
 
 
 @pytest.mark.asyncio
-async def test_saved_public_kalshi_mve_parent_and_child_form_only_a_source_reference():
-    # Replay a genuine saved parent response through the current adapter and link
-    # it to the separately preserved child detail record without a source request.
-    parent_capture = json.loads(
-        _captured("data/frontier/live-probes/2026-10-27-kalshi-public-fee-metadata.json")
+async def test_synthetic_kalshi_mve_parent_and_child_form_only_a_source_reference():
+    parent_raw = _synthetic_kalshi_mve_market(
+        ticker="KX-MVE-PARENT",
+        event_ticker="KX-MVE-PARENT-EVENT",
+        selected_legs=[
+            {
+                "event_ticker": "KX-BASE-EVENT",
+                "market_ticker": "KX-BASE-CHILD",
+                "side": "yes",
+                "yes_settlement_value_dollars": "0.5",
+            }
+        ],
     )
-    parent_record = next(
-        record
-        for record in parent_capture["records"]
-        if record["observation_kind"] == "market_listing"
-    )
-    parent_raw = parent_record["raw"]
+    child_raw = {
+        "ticker": "KX-BASE-CHILD",
+        "event_ticker": "KX-BASE-EVENT",
+        "market_type": "binary",
+        "title": "Synthetic base event child",
+    }
     transport, requests, client = _transport(
-        "external-api.kalshi.com", {"/markets": parent_raw["raw_body"]}
+        "external-api.kalshi.com",
+        {
+            "/markets": json.dumps({"markets": [parent_raw]}),
+            "/markets/KX-BASE-CHILD": json.dumps({"market": child_raw}),
+        },
     )
     adapter = KalshiAdapter(
         AdapterConfig(
@@ -514,20 +600,16 @@ async def test_saved_public_kalshi_mve_parent_and_child_form_only_a_source_refer
     )
     try:
         parent_markets = await adapter.discover_markets(1)
+        child = await adapter.fetch_market_metadata("KX-BASE-CHILD")
     finally:
         await client.aclose()
-    assert len(requests) == 1
-    assert requests[0].method == "GET"
-    assert "authorization" not in requests[0].headers
-    assert parent_markets[0].provenance.raw_sha256 == parent_record["raw_sha256"]
-
-    child_capture = json.loads(
-        _captured("data/frontier/live-probes/2026-10-27-kalshi-mve-component-market-r1.json")
-    )
-    child_record = child_capture["stored_observation"]
-    child = FrontierMarket.model_validate(child_record["normalized"])
+    assert len(requests) == 2
+    assert all(request.method == "GET" for request in requests)
+    assert all("authorization" not in request.headers for request in requests)
+    assert len(parent_markets[0].provenance.raw_sha256) == 64
+    assert len(child.provenance.raw_sha256) == 64
     parent = parent_markets[0]
-    assert parent.native_market_id == child_capture["parent_reference"]["parent_native_market_id"]
+    assert parent.native_market_id == "KX-MVE-PARENT"
     component = next(
         item
         for item in parent.selected_components
@@ -540,8 +622,8 @@ async def test_saved_public_kalshi_mve_parent_and_child_form_only_a_source_refer
         (child, parent),
         max_pairs=20,
         source_observation_ids={
-            parent.canonical_id: parent_record["observation_id"],
-            child.canonical_id: child_record["observation_id"],
+            parent.canonical_id: parent.provenance.observation_id,
+            child.canonical_id: child.provenance.observation_id,
         },
     )
     component_edge = next(
@@ -551,22 +633,31 @@ async def test_saved_public_kalshi_mve_parent_and_child_form_only_a_source_refer
     )
     assert component_edge.state == VerificationState.HYPOTHESIS
     assert set(component_edge.evidence[0].observation_ids) == {
-        parent_record["observation_id"],
-        child_record["observation_id"],
+        parent.provenance.observation_id,
+        child.provenance.observation_id,
     }
     assert any("does not verify" in detail for detail in component_edge.evidence[0].details)
 
 
 @pytest.mark.asyncio
-async def test_kalshi_live_multivariate_capture_records_omitted_nested_market_list():
-    # Genuine saved HTTP 200 response. The source omitted `markets` despite the requested flag.
-    artifact = json.loads(
-        _captured("data/frontier/live-probes/2026-10-27-kalshi-multivariate-page-r1.json")
-    )
-    raw = artifact["raw_observation"]
+async def test_kalshi_synthetic_multivariate_page_records_omitted_nested_market_list():
+    # Synthetic response exercises the omitted-list state without live-source evidence.
+    event_ticker = "KXMVECROSSCATEGORY-S2026ZZZB25KKPHBN3TFC"
+    collection_ticker = "KX-CROSS-CATEGORY"
+    body = {
+        "events": [
+            {
+                "event_ticker": event_ticker,
+                "series_ticker": "KXMVECROSSCATEGORY",
+                "collection_ticker": collection_ticker,
+                "title": "Synthetic cross-category event",
+            }
+        ],
+        "cursor": "next-synthetic-page",
+    }
     transport, requests, client = _transport(
         "external-api.kalshi.com",
-        {"/events/multivariate": raw["raw_body"]},
+        {"/events/multivariate": json.dumps(body)},
     )
     adapter = KalshiAdapter(
         AdapterConfig(
@@ -579,26 +670,27 @@ async def test_kalshi_live_multivariate_capture_records_omitted_nested_market_li
     )
     try:
         batch = await adapter.discover_multivariate_events(
-            collection_ticker=artifact["source_filter"]["collection_ticker"]
+            collection_ticker=collection_ticker
         )
         captures = adapter.take_captures()
     finally:
         await client.aclose()
 
     assert len(requests) == len(captures) == 1
-    assert captures[0].raw_sha256 == artifact["raw_sha256"]
+    assert len(captures[0].raw_sha256) == 64
     assert requests[0].url.params["with_nested_markets"] == "true"
     assert requests[0].url.params["limit"] == "1"
     assert "authorization" not in requests[0].headers
     assert batch.markets == ()
     assert len(batch.market_groups) == 1
     group = batch.market_groups[0]
-    assert group.native_group_id == "KXMVECROSSCATEGORY-S2026ZZZB25KKPHBN3TFC"
+    assert group.native_group_id == event_ticker
     assert group.member_list_state == "omitted"
     assert group.member_native_market_ids == ()
     assert "markets" not in group.native_fields
     assert "omitted nested markets" in batch.note
     assert batch.complete_for_request is False
+    assert captures[0].raw_sha256 == group.provenance.raw_sha256
 
 
 @pytest.mark.asyncio
@@ -712,16 +804,19 @@ async def test_kalshi_multivariate_event_rejects_explicit_null_market_list():
 
 
 @pytest.mark.asyncio
-async def test_kalshi_event_detail_replays_saved_empty_top_level_market_list():
-    # Genuine saved HTTP 200 response; the top-level market list is explicitly empty.
-    artifact = json.loads(
-        _captured("data/frontier/live-probes/2026-10-27-kalshi-mve-event-detail-r1.json")
-    )
-    raw = artifact["raw_observation"]
-    event_ticker = artifact["event_ticker"]
+async def test_kalshi_synthetic_event_detail_preserves_empty_nested_market_list():
+    event_ticker = "KX-MVE-EVENT"
+    body = {
+        "event": {
+            "event_ticker": event_ticker,
+            "series_ticker": "KX-MVE-SERIES",
+            "title": "Synthetic event with no children",
+            "markets": [],
+        }
+    }
     transport, requests, client = _transport(
         "external-api.kalshi.com",
-        {f"/events/{event_ticker}": raw["raw_body"]},
+        {f"/events/{event_ticker}": json.dumps(body)},
     )
     adapter = KalshiAdapter(
         AdapterConfig(
@@ -740,8 +835,8 @@ async def test_kalshi_event_detail_replays_saved_empty_top_level_market_list():
 
     assert markets == ()
     assert len(requests) == len(captures) == 1
-    assert captures[0].raw_sha256 == artifact["raw_sha256"]
-    assert captures[0].request_url == raw["request_url"]
+    assert len(captures[0].raw_sha256) == 64
+    assert requests[0].url.path.endswith(f"/events/{event_ticker}")
     assert "authorization" not in requests[0].headers
 
 
@@ -794,10 +889,8 @@ async def test_kalshi_multivariate_event_page_rejects_bad_nested_identity(mutati
 
 
 @pytest.mark.asyncio
-async def test_event_group_probes_reject_oversized_and_mismatched_event_metadata():
-    capture = _cross_venue_capture()
-    records = {item["source"]: item for item in capture["records"]}
-    poly_body = json.loads(records["polymarket_event"]["raw_body_utf8"])
+async def test_synthetic_event_group_probes_reject_oversized_and_mismatched_metadata():
+    poly_body = _synthetic_polymarket_event()
     transport, _, client = _transport(
         "gamma-api.polymarket.com",
         {"/events/32225": json.dumps(poly_body)},
@@ -843,18 +936,33 @@ async def test_event_group_probes_reject_oversized_and_mismatched_event_metadata
 
 
 @pytest.mark.asyncio
-async def test_kalshi_live_capture_preserves_multivariate_legs_and_empty_public_book():
-    capture = json.loads(
-        _captured("data/frontier/live-probes/2026-10-26-public-source-probe-r2.json")
-    )
-    markets = next(
-        item["raw_body_utf8"] for item in capture["records"] if item["source"] == "kalshi_markets"
-    )
-    orderbook = next(
-        item["raw_body_utf8"] for item in capture["records"] if item["source"] == "kalshi_orderbook"
-    )
+async def test_kalshi_synthetic_capture_preserves_multivariate_legs_and_empty_book():
+    # Synthetic source-shaped market and book exercise normalization and empty-depth handling.
+    market_body = {
+        "markets": [
+            _synthetic_kalshi_mve_market(
+                ticker="KX-MVE-D-R",
+                event_ticker="KX-MVE-2026",
+                selected_legs=[
+                    {
+                        "event_ticker": "KXHOUSE-26",
+                        "market_ticker": "KXHOUSE-26-D",
+                        "side": "yes",
+                        "yes_settlement_value_dollars": "0.3750",
+                    },
+                    {
+                        "event_ticker": "KXHOUSEMARGIN-26",
+                        "market_ticker": "KXHOUSEMARGIN-26-5",
+                        "side": "yes",
+                    },
+                ],
+            )
+        ]
+    }
+    empty_orderbook = {"orderbook_fp": {"yes_dollars": [], "no_dollars": []}}
     transport, requests, client = _transport(
-        "external-api.kalshi.com", {"/markets": markets, "/orderbook": orderbook}
+        "external-api.kalshi.com",
+        {"/markets": json.dumps(market_body), "/orderbook": json.dumps(empty_orderbook)},
     )
     adapter = KalshiAdapter(
         AdapterConfig(
@@ -917,13 +1025,7 @@ async def test_kalshi_live_capture_preserves_multivariate_legs_and_empty_public_
 )
 @pytest.mark.asyncio
 async def test_kalshi_mve_selected_components_reject_malformed_metadata(mutation: str):
-    capture = json.loads(
-        _captured("data/frontier/live-probes/2026-10-26-public-source-probe-r2.json")
-    )
-    market_body = next(
-        item["raw_body_utf8"] for item in capture["records"] if item["source"] == "kalshi_markets"
-    )
-    raw_market = json.loads(market_body)["markets"][0]
+    raw_market = _synthetic_kalshi_mve_market()
     if mutation == "invalid_side":
         raw_market["mve_selected_legs"][0]["side"] = "long"
     elif mutation == "nonstring_side":
@@ -975,13 +1077,7 @@ async def test_kalshi_mve_selected_components_reject_malformed_metadata(mutation
 async def test_kalshi_reported_settlement_fields_reject_invalid_values(
     field: str, value: str, expected_code: str
 ):
-    capture = json.loads(
-        _captured("data/frontier/live-probes/2026-10-26-public-source-probe-r2.json")
-    )
-    market_body = next(
-        item["raw_body_utf8"] for item in capture["records"] if item["source"] == "kalshi_markets"
-    )
-    raw_market = json.loads(market_body)["markets"][0]
+    raw_market = _synthetic_kalshi_mve_market()
     raw_market[field] = value
     transport, _, client = _transport(
         "external-api.kalshi.com", {"/markets": json.dumps({"markets": [raw_market]})}
@@ -1001,18 +1097,35 @@ async def test_kalshi_reported_settlement_fields_reject_invalid_values(
 
 
 @pytest.mark.asyncio
-async def test_kraken_pair_and_book_preserve_spot_units_and_level_times():
-    capture = json.loads(_captured("data/frontier/live-probes/2026-10-26-public-source-probe.json"))
-    asset_pairs = next(
-        item["raw_body_utf8"]
-        for item in capture["records"]
-        if item["source"] == "kraken_asset_pairs"
-    )
-    depth = next(
-        item["raw_body_utf8"] for item in capture["records"] if item["source"] == "kraken_orderbook"
-    )
+async def test_kraken_synthetic_pair_and_book_preserve_spot_units_and_level_times():
+    asset_pairs = {
+        "error": [],
+        "result": {
+            "XXBTZUSD": {
+                "altname": "XBTUSD",
+                "wsname": "XBT/USD",
+                "base": "XXBT",
+                "quote": "ZUSD",
+                "pair_decimals": 1,
+                "lot_decimals": 8,
+                "ordermin": "0.0001",
+                "costmin": "0.5",
+                "status": "online",
+            }
+        },
+    }
+    depth = {
+        "error": [],
+        "result": {
+            "XXBTZUSD": {
+                "asks": [["60000.0", "1.0", "1793110000"]],
+                "bids": [["59990.0", "2.0", "1793110001"]],
+            }
+        },
+    }
     transport, requests, client = _transport(
-        "api.kraken.com", {"/AssetPairs": asset_pairs, "/Depth": depth}
+        "api.kraken.com",
+        {"/AssetPairs": json.dumps(asset_pairs), "/Depth": json.dumps(depth)},
     )
     adapter = KrakenSpotAdapter(
         KrakenSpotConfig(

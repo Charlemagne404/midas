@@ -398,24 +398,23 @@ for the current component matrix.
 
 ## Frontier source-data terms hold — 2026-10-27
 
-An official-source terms review found a permission conflict for the Kalshi
-research integration: the published Kalshi Developer Agreement describes API
-use as supporting a member's own exchange trading and restricts collection and
-storage for other purposes absent authorization. Kraken's API guidance
-requires prior permission for some non-personal commercial uses of public
-market data; this worktree has not classified the MIDAS use or recorded such
-permission. New Kalshi and Kraken live captures are therefore held. Existing
-capture files remain preserved unchanged, with new research/replay use treated
-as restricted pending review. Fixture-based development continues.
+An official-source terms review found that the Kalshi Developer Agreement and
+[Data Terms](https://kalshi-public-docs.s3.amazonaws.com/kalshi-data-terms-of-service.pdf)
+restrict the relevant API/data use outside the stated member-trading purposes.
+Kraken's [EEA Terms effective 26 February 2026](https://assets-cms.kraken.com/files/51n36hrp/facade/e7cb2e6758f56b3eaa044d4b0b8097f2d1252a63.pdf)
+restrict use and extraction of pricing data; the applicable regional terms and
+MIDAS authorization have not been established. New Kalshi and Kraken live
+captures remain held. Existing capture files remain preserved unchanged, with
+new research/replay use treated as restricted pending review.
 
 The main API now requires a source-specific permission/review reference in
 addition to each probe flag before enabling Kalshi or Kraken capture. The
 reference is not independently validated; source routes surface the block and
 readiness includes a `BLOCKED` source-data-permissions gate. The focused
-configuration/API tests pass; see the [source-data terms review](frontier/SOURCE_DATA_TERMS_REVIEW_2026-10-27.md)
-and [Frontier ledger](frontier/FRONTIER_MISSION_LEDGER.md). No source request,
-external message, production change, or historical-data mutation was made for
-this review.
+configuration/API tests passed at an earlier checkpoint; the current
+source-data review and [Frontier ledger](frontier/FRONTIER_MISSION_LEDGER.md)
+track follow-up validation. No source request, external message, production
+change, or historical-data mutation was made for this review.
 
 Code commits `d38f517`, `73e008e`, `e7958c1`, and `23f9860` extend the hold to
 Frontier application reads: old Kalshi/Kraken market, book, trade, and
@@ -428,8 +427,15 @@ Controlled fixtures verify those filters while confirming old records remain
 stored. Arena checks held snapshots before its reconciliation path, preserving
 the job manifest during blocked reads.
 Direct database inspection, exports, and other paths outside those APIs remain
-held pending the source review. The integration test does not inspect actual
-preserved source captures. See the [read-quarantine section](frontier/SOURCE_DATA_TERMS_REVIEW_2026-10-27.md#read-quarantine-verification--2026-10-27)
+held pending the source review. A later test-source audit found 15 direct
+capture-path references in two Frontier test modules; the 18:41 UTC full
+Frontier suite executed those cases and read the referenced preserved files.
+No test writes to those files were identified, and no mutation is known. All
+15 references are now replaced by synthetic inputs; a `rg` scan over
+`tests`, `packages`, and `apps` finds no `live-probes` path. A static source
+guard has been added, but neither it nor the changed functional tests has run
+since conversion because host PSI and swap use remain high. See the
+[source-data terms review](frontier/SOURCE_DATA_TERMS_REVIEW_2026-10-27.md)
 and [Frontier ledger](frontier/FRONTIER_MISSION_LEDGER.md).
 
 ## Frontier Kalshi fee-override checkpoint — 2026-10-27

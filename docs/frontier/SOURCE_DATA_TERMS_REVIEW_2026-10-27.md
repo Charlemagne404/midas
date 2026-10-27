@@ -6,18 +6,20 @@ This is an operational source-terms review for the local, research-only
 Frontier development branch. It is not legal advice or a conclusion about any
 person's prior conduct. The scope is public market-data API access, local
 retention, and research use. No exchange was contacted, no permission was
-requested, and no source request was made for this review.
+requested, and no source request was made for this review. The official
+materials below were reviewed as of 2026-10-27; regional applicability and any
+permission held outside this worktree remain unverified.
 
 ## Kalshi
 
 The official [Kalshi Developer Agreement v1.1](https://kalshi-public-docs.s3.amazonaws.com/Kalshi-Developer-Agreement.pdf)
-defines itself as applying to any user of Kalshi's API. It says API use is
-limited to facilitating a member's own trading and that other uses are
-disallowed. Section 3.1 prohibits collecting, caching, aggregating, or storing
-API data except to facilitate the user's own Kalshi trading; it also restricts
-sharing, and section 4.1 requires exchange membership. The official public API
-docs expose unauthenticated GET endpoints, but they do not state that those
-endpoints are exempt from the agreement.
+defines itself as applying to API users and limits API use to facilitating a
+member's own trading. It restricts collecting, caching, aggregating, storing,
+and sharing API data outside that purpose. The separate [Kalshi Data Terms of
+Use](https://kalshi-public-docs.s3.amazonaws.com/kalshi-data-terms-of-service.pdf)
+also governs access to and use of Kalshi market data. The API documentation's
+unauthenticated GET examples do not state that public endpoints are exempt
+from these terms.
 
 Frontier's independent research, aggregation, append-only evidence store, and
 cross-venue analysis do not match that stated own-trading purpose. No written
@@ -52,18 +54,36 @@ counts; its database-size value still includes preserved held evidence.
 
 This is application-route quarantine. The project still treats direct database
 inspection, exports, and other paths outside those read APIs as held pending
-permission review. The integration tests use controlled local fixtures; they
-do not inspect or alter the preserved live captures.
+permission review.
+
+**Correction — offline test fixture boundary:** the earlier statement that
+integration tests used only controlled fixtures was inaccurate. A path-text-only
+audit of test source on 2026-10-27 found 15 direct references across
+`tests/frontier/test_adapters.py` and `tests/frontier/test_api.py` to files in
+`data/frontier/live-probes/`. Several cases parsed Kalshi artifacts; some
+referenced mixed-source captures. The full Frontier test run recorded at 18:41
+UTC executed these test cases and therefore read the referenced files. This
+audit did not open any capture. No test writes to the capture directory were
+identified, and no capture mutation is known. These offline reads violated the
+intended held-source boundary even though they made no new source request.
+
+The affected tests are being converted to explicitly synthetic local fixtures.
+Keep every existing file under `data/frontier/live-probes/` unchanged. Until
+conversion and a no-reference check are recorded, do not run tests that open
+held-source captures. Future fixture-only tests must not read that directory.
+Passing a synthetic parser test demonstrates behavior on its fixture only; it
+does not establish live-source validation.
 
 ## Kraken Spot
 
 Kraken's official [API introduction](https://docs-legacy.kraken.com/api/docs/guides/global-intro/)
-says API use is subject to Kraken's terms and that prior permission is required
-for certain uses, including non-personal commercial use of data from public
-endpoints. Kraken's [Terms of Service index](https://www.kraken.com/legal) says
-regional terms differ. This review does not determine whether Frontier's
-internal MIDAS use is personal, commercial, or covered by a permission already
-held by the user.
+says API use is subject to Kraken's terms. Kraken's [EEA Terms of Service,
+effective 26 February 2026](https://assets-cms.kraken.com/files/51n36hrp/facade/e7cb2e6758f56b3eaa044d4b0b8097f2d1252a63.pdf),
+classify pricing data as Kraken content, limit use to approved purposes, and
+restrict automated extraction and third-party applications without written
+consent. Kraken's [terms index](https://www.kraken.com/legal) notes regional
+differences. The applicable regional terms and whether Frontier's internal
+MIDAS use is authorized have not been established.
 
 Accordingly, new Kraken Spot probes and new research use of captured Kraken
 market data remain held until the applicable terms are reviewed and any
@@ -118,3 +138,17 @@ Frontier Mission Control component passed **8/8**, with TypeScript, targeted
 ESLint, Prettier, Ruff, and `git diff --check` passing. The full suite and
 production build were not rerun at this checkpoint. No live request, database mutation,
 service action, or deployment occurred.
+
+## Controlled test-fixture remediation — 2026-10-27
+
+All 15 discovered test-source path references have been replaced with
+explicitly synthetic inline response bodies or normalized fixture records in
+the two affected modules. A source-text scan over `tests`, `packages`, and
+`apps` now finds no `data/frontier/live-probes` or `live-probes` references.
+A new static test guards Python test sources against reintroducing that path.
+`git diff --check` passes. The static test itself and the affected functional
+tests have not run yet because host memory PSI and swap use remain elevated.
+Preserved capture files were not edited by this cleanup. After resource
+admission, run the static guard and affected tests; keep any broader suite
+result separate from live-source validation. Synthetic fixtures demonstrate
+parser/API behavior only and are not source observations.
