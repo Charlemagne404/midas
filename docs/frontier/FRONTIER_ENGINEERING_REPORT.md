@@ -2,16 +2,18 @@
 
 **Report date:** 2026-10-27
 
-**Latest code checkpoint:** `51afe86` adds typed Frontier observation writer
-timestamps, preserves hashes across immutable evidence snapshots, and keeps
-legacy rows readable. The preceding `cfda4ad` adds the Coinbase Exchange spot
-adapter, API registration, Mission Control source/graph presentation, and an
-exact Market Data Terms version gate enforced by both API settings and adapter
-config. The full Frontier Python suite passes 265/265; current web unit and
-typecheck results remain 40/40 and passed, respectively, from the prior
-checkpoint. Production build and browser regressions remain pending safe
-resource admission. Project Frontier remains incomplete, isolated, and
-undeployed.
+**Latest code checkpoint:** `6bc0351` adds per-request monotonic elapsed time
+to successful and complete-error response evidence, normalized provenance,
+and the Mission Control evidence disclosure. Its focused Python selection
+passes 86/86 and the targeted UI test passes 1/1. The complete Frontier Python
+suite passed 265/265 on predecessor `51afe86`; it has not been rerun after
+`6bc0351`. The 40/40 Web suite and TypeScript typecheck are also prior
+checkpoint results and have not been rerun after the new evidence display. The
+preceding `51afe86` adds typed writer timestamps, content-addressed snapshot
+preservation, and legacy-row compatibility. `cfda4ad` adds the Coinbase
+Exchange spot adapter and exact terms-version gate. Production build and
+browser E2E remain pending safe resource admission. Project Frontier remains
+incomplete, isolated, and undeployed.
 
 **Branch:** `codex/frontier-20261026`
 
@@ -3985,3 +3987,28 @@ an external batch acquired the shared lock during the run; it completed without
 swap and the batch was not touched. No source, production service, Reality
 process, or historical store was accessed. Production build and browser E2E
 remain pending another safe admission window.
+
+### Monotonic request-duration provenance — 2026-10-27 21:28 UTC
+
+Code commit `6bc0351` records bounded `request_elapsed_monotonic_ns` values in
+the read-only HTTP transport, raw observations, typed provenance, complete HTTP
+failure captures, and the evidence disclosure. The clock starts after source
+rate pacing and stops after the complete body arrives, before JSON decoding.
+Only elapsed duration is stored; monotonic clock origins are not compared across
+venues or processes. Failures without complete response evidence leave the
+field unknown. Storage compares typed raw models on duplicate inserts so older
+raw rows that predate this optional property remain idempotent. The row
+persistence hash and observation identity rules remain unchanged.
+
+The focused adapters/storage/Coinbase/API selection passed **86/86** in 13.52
+seconds pytest time / 14.00 seconds wall at **88,376 KiB peak RSS**, with zero
+swaps. It covers success, complete-response failure, raw/provenance propagation,
+snapshot hash preservation, and legacy rows missing both the monotonic duration
+and persisted timestamp. The targeted Mission Control test passed **1/1**
+(seven other cases in that file skipped by selection) in 1.78 seconds at
+**208,356 KiB peak RSS**, zero swaps. Ruff check/format and diff checks pass.
+The full Python suite, Web suite, typechecks, build, and browser E2E have not
+been rerun for `6bc0351`. At `2026-10-27T21:28:03Z`, external Arena batch PID
+**3727342** held lock inode **6423106** in `D` state; PSI avg10 was 45.93%
+(`some`) / 40.80% (`full`), 9.7 GiB was available and 459 MiB swap was free.
+It was left untouched. No exchange source or protected service was accessed.

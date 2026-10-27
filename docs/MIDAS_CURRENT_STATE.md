@@ -880,3 +880,15 @@ precheck; that worker and its lock were left untouched. Production build and
 browser E2E for the Coinbase/storage checkpoint remain pending a safe host
 window. Frontier remains research-only, isolated, undeployed, and
 **PARTIALLY VERIFIED**.
+
+## Frontier monotonic request provenance checkpoint (`6bc0351`) — 2026-10-27 21:28 UTC
+
+Frontier records read-only HTTP request/body elapsed duration from a local
+monotonic clock, carries it into raw observations and normalized provenance,
+and shows it in the source-evidence disclosure. The focused Python selection
+passes **86/86** and the targeted UI test passes **1/1**. The full Frontier
+suite result **265/265** is from predecessor `51afe86`; it has not been rerun
+for this change. Web suite, typecheck, build, and browser E2E are also pending
+for the new UI field. At the latest resource sample, external bounded Arena
+batch PID **3727342** held the shared lock and PSI was elevated. The worker was
+left untouched; no source or production service was accessed.

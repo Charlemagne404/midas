@@ -1,5 +1,22 @@
 # Project Frontier Mission Ledger
 
+**Latest code checkpoint (`6bc0351`, 2026-10-27 21:28 UTC):** Read-only
+transport now records request elapsed duration using `time.monotonic_ns()`
+after source pacing through complete response-body receipt. The duration is
+preserved in `RawObservation`, normalized `Provenance`, complete HTTP error
+captures, and the stored-evidence disclosure. It is explicitly a per-request
+duration, not a clock value comparable across venues/processes; failures without
+complete response evidence leave it unknown. The focused adapters/storage/
+Coinbase/API selection passes **86/86** (14.00 seconds wall, **88,376 KiB peak
+RSS**, zero swaps); targeted UI test passes **1/1** (1.78 seconds, **208,356 KiB
+peak RSS**, zero swaps). Ruff check/format and diff checks pass. The full
+Frontier suite passed **265/265** on `51afe86`, not yet rerun on `6bc0351`; Web
+suite/typecheck, production build, and browser E2E for the new UI disclosure
+remain pending. At `2026-10-27T21:28:03Z`, external Arena batch PID **3727342**
+held lock inode **6423106** in `D` state and memory PSI avg10 was 45.93%
+(`some`) / 40.80% (`full`). It was left untouched. Frontier remains isolated,
+research-only, and undeployed.
+
 **Latest Frontier storage checkpoint (code commit `51afe86`, 2026-10-27
 21:23 UTC):** The bounded append-only observation writer now stamps a missing typed
 `Provenance.persisted_at_utc` before serializing a new normalized row. It leaves
