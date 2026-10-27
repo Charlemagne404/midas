@@ -1,6 +1,18 @@
 # Project Frontier Mission Ledger
 
-**Latest checkpoint (2026-10-27 18:31 UTC):** Code commit `ceea335` changes
+**Latest checkpoint (2026-10-27 18:32 UTC):** Code commit `9a4ccf4` corrects the
+capital-carry browser fixture to use a 64-character candidate SHA-256 ID, as
+required by `CapitalCarryRequest`. Ruff, Prettier, and Playwright's four-test
+discovery pass. The browser suite passed before this fixture correction, so
+the Frontier E2E file must be rerun before claiming its latest version passes.
+At the latest resource sample (`2026-10-27T18:32:26Z`), PSI was `some
+avg10=44.47%` / `full avg10=40.44%`; browser execution remains deferred.
+
+Next safe actions: after measured pressure eases, rerun all four Frontier E2E
+tests, then continue the incomplete broader Python regression and remaining
+engineering gaps.
+
+**Previous checkpoint (2026-10-27 18:31 UTC):** Code commit `ceea335` changes
 four legacy sibling-fixture imports to package-qualified `tests.*` paths. This
 preserves test behavior while fixing collection in those files; Ruff passes and
 the four files collect **51 tests**. The whole repository collection has not

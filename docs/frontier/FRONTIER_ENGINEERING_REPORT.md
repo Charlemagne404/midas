@@ -3164,3 +3164,24 @@ results remain as recorded above.
 Files changed: `tests/test_reality_research_schedule.py`,
 `tests/test_reality_shadow.py`, `tests/test_reality_training.py`, and
 `tests/test_veritas_resumable_shadow_replay.py` in commit `ceea335`.
+
+### Carry E2E request identity correction — 2026-10-27 18:32 UTC
+
+Code commit `9a4ccf4` replaces the carry browser fixture's descriptive candidate
+string with a 64-character lowercase hexadecimal ID. `CapitalCarryRequest`
+requires that SHA-256-shaped identity, and the saved candidate used by the
+API integration test has the same format. This closes a fixture/schema mismatch
+without changing the API contract.
+
+Targeted ESLint and Prettier checks pass, and Playwright discovers all four
+Frontier browser tests. The full 12-test suite passed before this fixture-only
+change; the updated Frontier browser test has not yet been executed. The latest
+pressure reading at `2026-10-27T18:32:26Z` was `some avg10=44.47%` and `full
+avg10=40.44%`, so browser revalidation remains pending.
+
+| Component | Current status | Boundary |
+| --- | --- | --- |
+| Capital carry browser request identity | IMPLEMENTED, BROWSER REVALIDATION PENDING | Fixture now sends schema-valid SHA-256 candidate identity; current test discovery/static checks pass, browser execution after the correction is pending. |
+| Project Frontier overall | PARTIALLY VERIFIED | Remains isolated and undeployed; broader Python suite, live cross-venue validation, source permission review, and production readiness remain incomplete. |
+
+File changed: `apps/web/e2e/frontier.spec.ts` in commit `9a4ccf4`.
