@@ -235,14 +235,17 @@ exchange. `GET /api/arena/frontier-replays` returns a bounded history, and
 checking the job's snapshot reference, artifact digest, comparison identity, and
 success state. Mission Control displays progress, input snapshot ID/hash, result
 hash, and the completed comparison. Job admission can be denied by the host
-resource gate; snapshots remain pinned for a safe retry. No Frontier Arena
-worker has been admitted or run against the live host in this development
-checkpoint. Frontier readiness reports `NOT_CONFIGURED` without an Arena root,
+resource gate; snapshots remain pinned for a safe retry. Two controlled fixture
+jobs have completed through systemd after ordinary host admission; this validates
+supervisor and artifact wiring but not live market data. Frontier readiness
+reports `NOT_CONFIGURED` without an Arena root,
 `LIVE_VALIDATION_PENDING` until its bounded local scan finds a completed
 hash-verified job plus runtime record, `EVIDENCE_RECORDED` after that check, and
 `REVIEW_REQUIRED` if a completed record has invalid result/runtime evidence.
-Resource sustainability remains `NOT_MEASURED` because one bounded execution
-does not establish sustainable capacity.
+Mission Control exposes bounded worker elapsed time, process CPU deltas, and
+process peak RSS when present. Resource sustainability remains `NOT_MEASURED`
+because two bounded executions over the same fixture do not establish
+sustainable capacity.
 
 ## API and UI behavior
 
@@ -287,8 +290,10 @@ venue-wide universe scans, FX conversion, derivatives, capital transfer model,
 multi-leg solver, automatic semantic certification, authenticated reviewer or
 assertion verification, full-universe graph search, multi-hop graph pagination,
 Laboratory campaign integration, or production deployment. The bounded Arena
-job integration exists, but its actual supervisor launch and runtime profile
-remain unverified because the shared host admission gate was not bypassed.
+job integration has completed under the systemd supervisor after normal host
+admission. The latest controlled fixture run produced process CPU and peak RSS
+measurements; broader runtime behavior and resource sustainability remain
+unverified.
 `/graph` limits source markets to 200, scans at most
 500 relationship rows through endpoint indexes for centered neighborhoods, and
 returns at most 200 edges over 1–3 hops. Centered one-hop queries can continue

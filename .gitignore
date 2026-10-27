@@ -36,6 +36,8 @@ data/laboratory-milestone3/
 data/laboratory-final/
 data/arena/
 data/arena-cold/
+# Bounded worktree-local Frontier Arena validation artifacts; summaries live in docs.
+data/frontier-arena-validation-*/
 data/exports/
 data/backups/
 data/runtime/

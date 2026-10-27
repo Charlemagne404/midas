@@ -43,8 +43,11 @@ The Replay & Readiness workspace can submit an explicit paired replay to the
 existing Arena supervisor from a content-hashed snapshot of local Frontier
 evidence. Arena keeps its host-wide admission gate and applies strict CPU,
 memory, time, disk and network-family bounds; the result is hash-verified.
-Fixture, API, unit and browser tests cover this path. A supervised worker has
-not been launched on the shared host, and no Laboratory campaign was started.
+Fixture, API, unit and browser tests cover this path. Two systemd-supervised
+workers completed over the same controlled fixture after normal host admission;
+this does not validate live market data. The durable job record captures process
+CPU and peak RSS, and Mission Control displays those sample measurements;
+resource sustainability remains unmeasured. No Laboratory campaign was started.
 Polymarket's explicit v2 trade-page path preserves outcome-token identity and
 supports bounded cursor continuation; one first page and one API-route
 continuation have been captured, while no full history walk was attempted.

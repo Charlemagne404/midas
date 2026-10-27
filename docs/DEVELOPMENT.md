@@ -170,14 +170,16 @@ network families disabled. Snapshots are capped at 8 MiB each, 128 MiB total,
 and 1,000 entries. The result route is available only for a successful completed
 job and checks both snapshot and artifact hashes. Mission Control lists the
 latest bounded job records and polls only while a job is queued or running.
-No worker was started to verify supervisor behavior in this checkpoint because
-the shared resource gate was not bypassed.
+Two controlled fixture workers completed under systemd after passing the normal
+host-wide admission gate. The latest durable profile records process CPU deltas
+and peak RSS; Mission Control displays these measurements for inspection.
 The Frontier readiness panel reports `LIVE_VALIDATION_PENDING` until it finds
 a completed, hash-verified Arena result with a worker runtime record in its
 bounded local scan. It reports `EVIDENCE_RECORDED` after that check and
 `REVIEW_REQUIRED` for a completed record with invalid result/runtime evidence.
-`resource_sustainability` remains `NOT_MEASURED`; one bounded worker sample does
-not establish sustainable capacity.
+`resource_sustainability` remains `NOT_MEASURED`; two short, identical fixture
+runs do not establish sustainable capacity or replace a representative workload
+profile.
 
 Relationship decisions use `POST /api/frontier/relationships/{id}/review`. The
 review form records source market observation IDs and appends a linked revision;
@@ -245,7 +247,10 @@ corepack pnpm --dir apps/web exec playwright test e2e/frontier.spec.ts --workers
 The Frontier Playwright case sets `MIDAS_FRONTIER_ROOT` under a temporary
 directory and `MIDAS_ARENA_ROOT` under a sibling temporary root. It never
 enables a source probe and the test does not submit an Arena job. The live Arena
-worker remains unverified until ordinary host admission permits a launch. See the
+worker path has completed over a controlled fixture after normal admission.
+The job ran in an isolated worktree Arena root; its measured process CPU and
+peak RSS are a single small-job sample, so resource sustainability remains
+unmeasured. See the
 [Frontier mission ledger](frontier/FRONTIER_MISSION_LEDGER.md) before extending
 the scope or changing its deployment status.
 
