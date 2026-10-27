@@ -1087,12 +1087,16 @@ def router(
             (root / "jobs").glob("*/job.json"), key=lambda p: p.stat().st_mtime, reverse=True
         )[:100]
         for file in files:
+            job_record = json.loads(file.read_text())
+            try:
+                reject_held_frontier_replay(job_record)
+            except ValueError:
+                # Check before inspect(), which may reconcile and rewrite a stale job manifest.
+                continue
             if all(dependencies.values()):
                 from midas.arena.jobs import inspect
 
                 job_record = inspect(root, file.parent.name)
-            else:
-                job_record = json.loads(file.read_text())
             try:
                 reject_held_frontier_replay(job_record)
             except ValueError:
@@ -1612,6 +1616,8 @@ def router(
     @api.get("/jobs/{identity}")
     async def job(identity: str) -> Any:
         def inspect() -> Any:
+            record = json.loads((path("jobs", identity) / "job.json").read_text())
+            reject_held_frontier_replay(record)
             from midas.arena.jobs import inspect
 
             record = inspect(root, identity)
@@ -1626,6 +1632,8 @@ def router(
             from midas.arena.frontier_replay import verify_frontier_replay_job_result
             from midas.arena.jobs import inspect
 
+            record = json.loads((path("jobs", identity) / "job.json").read_text())
+            reject_held_frontier_replay(record)
             record = inspect(root, identity)
             reject_held_frontier_replay(record)
             artifact = verify_frontier_replay_job_result(root, identity, record)

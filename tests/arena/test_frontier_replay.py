@@ -364,7 +364,11 @@ def test_frontier_replay_catalog_omits_invalid_worker_measurements(tmp_path):
         assert item["runtime_profile"] is None
 
 
-def test_held_source_arena_replays_are_hidden_from_catalog_and_result_routes(tmp_path):
+def test_held_source_arena_replays_are_hidden_from_catalog_and_result_routes(tmp_path, monkeypatch):
+    def forbidden_inspect(*args, **kwargs):
+        pytest.fail("Held Frontier replay reached Arena inspect before quarantine")
+
+    monkeypatch.setattr("midas.arena.jobs.inspect", forbidden_inspect)
     held_market = market(Venue.KALSHI, "held-arena-replay")
     held_snapshot = make_snapshot(
         code_version="frontier-test-source-sha256:" + "e" * 64,
@@ -407,6 +411,7 @@ def test_held_source_arena_replays_are_hidden_from_catalog_and_result_routes(tmp
             },
         },
     )
+    job_manifest_bytes = (job_directory / "job.json").read_bytes()
     app = FastAPI()
     app.include_router(router(tmp_path, frontier_held_venues=("kalshi",)))
 
@@ -439,6 +444,7 @@ def test_held_source_arena_replays_are_hidden_from_catalog_and_result_routes(tmp
         activity = client.get("/api/arena/research-activity")
         assert activity.status_code == 200, activity.text
         assert all(item["job_id"] != JOB_ID for item in activity.json()["jobs"])
+        assert (job_directory / "job.json").read_bytes() == job_manifest_bytes
 
         tampered_record = json.loads((job_directory / "job.json").read_text())
         tampered_record["configuration"] = {"kind": "dataset"}
