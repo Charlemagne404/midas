@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import timedelta
+from datetime import datetime, timedelta
 from decimal import Decimal, localcontext
 from fractions import Fraction
 
@@ -163,6 +163,73 @@ def test_fraction_audit_rejects_a_tampered_venue_carry_amount():
 
     assert audit.disposition == "disagreement"
     assert "independent recomputation" in audit.message
+
+
+def test_independent_carry_audit_rejects_unverified_settlement_metadata():
+    candidate, markets = candidate_and_markets()
+    row_hashes = {"a" * 64: "3" * 64, "b" * 64: "4" * 64}
+    result = evaluate_capital_carry(
+        candidate,
+        run_id="1" * 64,
+        run_sha256="2" * 64,
+        rates_by_venue={"polymarket": "10000", "kalshi": "10000"},
+        markets_by_id=markets,
+        observation_row_hashes=row_hashes,
+    )
+    market_id = candidate.market_ids[0]
+    settlement_unverified = dict(markets)
+    market = markets[market_id]
+    settlement_unverified[market_id] = market.model_copy(
+        update={"resolution": market.resolution.model_copy(update={"verified": False})}
+    )
+
+    audit = independently_audit_capital_carry(
+        candidate,
+        run_id=result.run_id,
+        run_sha256=result.run_sha256,
+        venues=result.venues,
+        markets_by_id=settlement_unverified,
+        observation_row_hashes=row_hashes,
+        expected_input_sha256=result.input_sha256,
+        expected_total=result.total_carry_cost,
+        expected_gross_after=result.worst_case_gross_pnl_after_carry,
+        expected_net_after=result.worst_case_net_pnl_after_carry,
+    )
+
+    assert audit.disposition == "disagreement"
+    assert "not verified and hash identified" in audit.message
+
+
+def test_independent_carry_audit_rejects_naive_candidate_timestamp_without_raising():
+    candidate, markets = candidate_and_markets()
+    row_hashes = {"a" * 64: "3" * 64, "b" * 64: "4" * 64}
+    result = evaluate_capital_carry(
+        candidate,
+        run_id="1" * 64,
+        run_sha256="2" * 64,
+        rates_by_venue={"polymarket": "10000", "kalshi": "10000"},
+        markets_by_id=markets,
+        observation_row_hashes=row_hashes,
+    )
+    naive_candidate = candidate.model_copy(
+        update={"observed_at_utc": datetime(2026, 10, 26, 20, 0)}
+    )
+
+    audit = independently_audit_capital_carry(
+        naive_candidate,
+        run_id=result.run_id,
+        run_sha256=result.run_sha256,
+        venues=result.venues,
+        markets_by_id=markets,
+        observation_row_hashes=row_hashes,
+        expected_input_sha256=result.input_sha256,
+        expected_total=result.total_carry_cost,
+        expected_gross_after=result.worst_case_gross_pnl_after_carry,
+        expected_net_after=result.worst_case_net_pnl_after_carry,
+    )
+
+    assert audit.disposition == "disagreement"
+    assert "not timezone-aware" in audit.message
 
 
 def test_capital_carry_fails_closed_on_unverified_settlement_or_missing_venue_rate():

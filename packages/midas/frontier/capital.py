@@ -447,6 +447,12 @@ def independently_audit_capital_carry(
 ) -> CapitalCarryAudit:
     """Independent reconstruction from the candidate, settlement records, and user assumptions."""
     mismatches: list[str] = []
+    candidate_time_aware = (
+        candidate.observed_at_utc.tzinfo is not None
+        and candidate.observed_at_utc.utcoffset() is not None
+    )
+    if not candidate_time_aware:
+        mismatches.append("Candidate observation timestamp is not timezone-aware")
     evidence_by_market: dict[str, MarketSettlementEvidence] = {}
     for item in venues:
         for evidence in item.settlement_evidence:
@@ -504,6 +510,49 @@ def independently_audit_capital_carry(
             ):
                 mismatches.append(f"{item.venue} source markets differ from candidate legs")
             for market in valid_rows:
+                matching_legs = [
+                    leg for leg in candidate.legs if leg.market_id == market.canonical_id
+                ]
+                resolution = market.resolution
+                if not matching_legs or any(
+                    leg.native_market_id != market.native_market_id
+                    or leg.venue != market.venue.value
+                    or leg.market_observation_id != market.provenance.observation_id
+                    for leg in matching_legs
+                ):
+                    mismatches.append(
+                        f"{market.canonical_id} identity differs from candidate position legs"
+                    )
+                if (
+                    market.venue.value != item.venue
+                    or market.canonical_id not in candidate.market_ids
+                    or not market.has_consistent_settlement_asset_identity()
+                    or market.payoff.settlement_asset_identity
+                    != candidate.capital_currency_identity
+                ):
+                    mismatches.append(
+                        f"{market.canonical_id} settlement denomination or venue is inconsistent"
+                    )
+                if not (
+                    resolution.verified
+                    and resolution.primary_rule
+                    and resolution.primary_rule.strip()
+                    and resolution.authority
+                    and resolution.authority.strip()
+                    and resolution.evidence_sha256 is not None
+                    and _SHA256.fullmatch(resolution.evidence_sha256)
+                    and resolution.resolution_fingerprint is not None
+                    and resolution.resolution_fingerprint.strip()
+                    and resolution.settles_at_utc is not None
+                    and resolution.settles_at_utc.tzinfo is not None
+                    and resolution.settles_at_utc.utcoffset() is not None
+                    and candidate_time_aware
+                    and resolution.settles_at_utc > candidate.observed_at_utc
+                    and _SHA256.fullmatch(market.provenance.raw_sha256)
+                ):
+                    mismatches.append(
+                        f"{market.canonical_id} settlement metadata is not verified and hash identified"
+                    )
                 matched_evidence = evidence_by_market.get(market.canonical_id)
                 if matched_evidence is None or (
                     matched_evidence.observation_id != market.provenance.observation_id
@@ -518,6 +567,8 @@ def independently_audit_capital_carry(
                     mismatches.append(
                         f"{market.canonical_id} settlement provenance differs from pinned source"
                     )
+            if not candidate_time_aware:
+                continue
             if expected_end is None or expected_end <= candidate.observed_at_utc:
                 mismatches.append(f"{item.venue} settlement does not follow candidate observation")
                 continue
