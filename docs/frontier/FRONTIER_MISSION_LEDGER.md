@@ -1,19 +1,45 @@
 # Project Frontier Mission Ledger
 
-**Latest checkpoint (2026-10-27 18:37 UTC):** Code commit `ac5daaf` classifies
-JSON parser complexity failures (deep nesting and oversized integer tokens) as
-`JSON_COMPLEXITY_LIMIT`, preserving bounded raw-response evidence without
-retry. The focused transport/API selection passed **3 tests**, including
-source-failure persistence and recovery. Ruff, format, strict mypy for the
-transport module, and `git diff --check` pass. The focused test process peaked
-at 86,772 KiB RSS with zero swaps. At `2026-10-27T18:37:02Z`, host PSI remained
-elevated (`some avg10=41.88%`, `full avg10=37.24%`); broad suites and browser
-revalidation remain deferred. Frontier remains isolated and undeployed.
+**Latest checkpoint (2026-10-27 18:40 UTC):** The four Frontier browser tests
+pass after the candidate SHA-256 fixture correction, using temporary local
+demo services and no exchange probes. The focused parser selection passes
+three cases, and the API source-failure persistence/recovery test passes.
+Ruff, format, strict transport mypy, and whitespace checks pass. The API test
+emitted the existing Starlette/httpx deprecation warning. At
+2026-10-27T18:40:37Z, PSI 10-second averages were 0.00% (some and full) and
+five-minute averages were 19.56% (some) and 17.60% (full); available memory was
+9.12 GiB and swap free was 471 MiB. Frontier remains isolated and undeployed.
 
-Next safe actions: rerun the four Frontier E2E tests after host pressure eases
-to verify the latest SHA-256 candidate fixture. Then continue the broader
-Python regression and remaining economics/research gaps without accessing
-restricted sources or protected services.
+Next safe action: continue the broader Python regression and remaining
+economics/research gaps. Recheck resource admission before any broad or
+browser-heavy run; do not access restricted sources or protected services.
+
+**Previous checkpoint (2026-10-27 18:39 UTC):** The public transport now checks
+JSON nesting before decoding and classifies more than 64 nested containers as
+`JSON_COMPLEXITY_LIMIT`. Delimiters inside escaped JSON strings are ignored,
+and oversized integer tokens remain covered by the parser fallback. Three
+focused adapter cases and the API diagnostic persistence/recovery test pass.
+Ruff, format, strict mypy for the transport module, and `git diff --check`
+pass. The API test emitted the existing Starlette/httpx deprecation warning.
+At `2026-10-27T18:39:43Z`, PSI was `some avg10=0.00%` and
+`full avg10=0.00%`, with elevated five-minute averages (some 23.54%,
+full 21.19%); available memory was 9.47 GiB and swap free was 471 MiB.
+No broad suite had been started in this checkpoint. Frontier remained isolated
+and undeployed.
+
+The four Frontier browser tests were run at the following checkpoint after
+short-window host PSI had fallen to zero.
+
+**Previous checkpoint (2026-10-27 18:37 UTC):** Code commit `ac5daaf`
+classified JSON parser complexity failures (deep nesting and oversized
+integer tokens) as `JSON_COMPLEXITY_LIMIT`, preserving bounded raw-response
+evidence without retry. The focused transport/API selection passed **3 tests**,
+including source-failure persistence and recovery. Ruff, format, strict mypy
+for the transport module, and `git diff --check` passed. The focused test
+process peaked at 86,772 KiB RSS with zero swaps. At
+`2026-10-27T18:37:02Z`, host PSI was elevated (some avg10=41.88%,
+full avg10=37.24%); broad suites and browser revalidation were deferred.
+Frontier remains isolated and undeployed.
 
 **Previous checkpoint (2026-10-27 18:32 UTC):** Code commit `9a4ccf4` corrects the
 capital-carry browser fixture to use a 64-character candidate SHA-256 ID, as

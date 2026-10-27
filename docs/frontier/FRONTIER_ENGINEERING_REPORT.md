@@ -3220,3 +3220,58 @@ service, or production store was used.
 Files changed: `packages/midas/frontier/adapters/transport.py`,
 `tests/frontier/test_adapters.py`, and `tests/frontier/test_api.py` in commit
 `ac5daaf`; this report and `FRONTIER_MISSION_LEDGER.md` record the checkpoint.
+
+### Pre-decode JSON nesting bound — 2026-10-27 18:39 UTC
+
+The prior decoder exception handling did not bound nesting at a predictable
+depth: CPython accepted deeply nested arrays beyond the original fixture's
+1,100 levels, while recursive normalization after parsing could still exceed
+downstream limits. The public transport now scans the bounded UTF-8 response
+before decoding and rejects more than 64 nested JSON containers as
+`JSON_COMPLEXITY_LIMIT`. The scanner tracks string and escape state, so
+brackets inside JSON text do not count toward nesting. The parser's existing
+`RecursionError` and numeric-token `ValueError` handling remains as a fallback.
+
+Verification passed: the three focused adapter cases cover deep nesting,
+oversized integer tokens, and 100 bracket levels inside an escaped JSON string;
+the API diagnostic persistence/recovery test passed separately. Ruff,
+formatting, strict mypy for the transport, and `git diff --check` pass. The API
+test emitted the existing Starlette/httpx deprecation warning. Current live
+source validation, broader regression, and production readiness are unrelated
+and remain outstanding; Frontier is still isolated and undeployed.
+
+| Component | Current status | Boundary |
+| --- | --- | --- |
+| Public JSON parser nesting bound | COMPLETE AND VERIFIED | More than 64 containers fail before object construction; string content is ignored; raw diagnostic evidence and API recovery pass. |
+| Carry browser E2E after candidate ID fixture change | IMPLEMENTED, BROWSER REVALIDATION PENDING | The separate carry fixture still needs a browser run after its schema correction. |
+| Project Frontier overall | PARTIALLY VERIFIED | Cross-venue live semantic/economic validation, broad regression, and production prerequisites remain incomplete. |
+
+Files changed: `packages/midas/frontier/adapters/transport.py`,
+`tests/frontier/test_adapters.py`, and the Frontier architecture and operations
+documentation. This report records the continuing hardening after commit
+`ac5daaf`.
+
+### Frontier browser revalidation — 2026-10-27 18:40 UTC
+
+After the capital-carry browser fixture was corrected to use a schema-valid
+candidate hash in commit `9a4ccf4`, the complete Frontier browser spec passed
+**4 of 4 tests** in 10.5 seconds with one worker. It used the Playwright
+configuration's temporary demo database, local API/UI servers, and bounded
+Frontier root; the Kalshi arithmetic test explicitly remained fixture-only.
+The UI suite did not probe an exchange or launch research work.
+
+The same checkpoint re-ran the focused transport cases (**3 passed**) and the
+API failure-diagnostic persistence/recovery case (**1 passed**), plus Ruff,
+format, strict transport mypy, and whitespace checks. The API test emitted the
+existing Starlette/httpx deprecation warning. At 18:40:37 UTC, PSI 10-second
+averages were 0.00% for both some and full, five-minute averages were 19.56%
+and 17.60%, available memory was 9.12 GiB, and swap free was 471 MiB.
+
+| Component | Current status | Boundary |
+| --- | --- | --- |
+| Frontier browser spec after candidate identity correction | COMPLETE AND VERIFIED | Four isolated local-demo browser tests pass; this does not establish production deployment or live exchange behavior. |
+| Public JSON parser nesting bound | COMPLETE AND VERIFIED | Focused parser and API diagnostic tests pass with pre-decode 64-level bound and escaped-string coverage. |
+| Project Frontier overall | PARTIALLY VERIFIED | Broader repository regression, live economic validation, and production readiness remain incomplete. |
+
+Files changed in the browser fixture correction: `apps/web/e2e/frontier.spec.ts`
+in commit `9a4ccf4`. No browser test files changed in this revalidation.

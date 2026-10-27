@@ -21,6 +21,32 @@ from midas.frontier.models import AdapterConfig
 D = Decimal
 REQUEST_COUNT_WINDOW_SECONDS = 60.0
 REQUEST_COUNT_HISTORY_MAX = 301
+MAX_JSON_NESTING_DEPTH = 64
+
+
+def _exceeds_json_nesting_depth(raw: str, maximum: int = MAX_JSON_NESTING_DEPTH) -> bool:
+    """Bound container nesting before decoding into recursive Python objects."""
+    depth = 0
+    in_string = False
+    escaped = False
+    for character in raw:
+        if in_string:
+            if escaped:
+                escaped = False
+            elif character == "\\":
+                escaped = True
+            elif character == '"':
+                in_string = False
+            continue
+        if character == '"':
+            in_string = True
+        elif character in "[{":
+            depth += 1
+            if depth > maximum:
+                return True
+        elif character in "]}":
+            depth -= 1
+    return False
 
 
 @dataclass(frozen=True)
@@ -197,6 +223,18 @@ class PublicReadTransport:
                                 response_received_at_utc=received,
                             ),
                         ) from error
+                    if _exceeds_json_nesting_depth(raw):
+                        raise AdapterError(
+                            "JSON_COMPLEXITY_LIMIT",
+                            "Public-source JSON exceeds the configured nesting-depth limit",
+                            response_evidence=FailedResponseEvidence(
+                                url=request_url,
+                                status_code=response.status_code,
+                                raw_body=bytes(body),
+                                request_started_at_utc=started,
+                                response_received_at_utc=received,
+                            ),
+                        )
                     try:
                         payload = json.loads(raw, parse_float=D)
                     except json.JSONDecodeError as error:

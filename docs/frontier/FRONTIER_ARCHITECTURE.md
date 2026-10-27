@@ -594,13 +594,14 @@ probe batch fails, the API stores the raw response with a versioned
 normal market/book readers ignore that diagnostic record, while the normal
 hash-verified observation route can retrieve it. Invalid JSON fails inside the
 transport before normalization, but complete bounded invalid-JSON and non-2xx
-response bodies are retained as source-failure observations. JSON parser limits
-such as excessive nesting or integer-token length return the non-retryable
-`JSON_COMPLEXITY_LIMIT` error and retain the bounded response body as the same
-kind of diagnostic. Invalid UTF-8 is stored losslessly as base64 with the hash
-computed over original bytes. Oversized or partial bodies are rejected without
-persistence. A later successful probe clears the adapter's degraded health
-state.
+response bodies are retained as source-failure observations. JSON nesting is
+bounded to 64 container levels before decoding; excessive nesting or
+integer-token length returns the non-retryable `JSON_COMPLEXITY_LIMIT` error
+and retains the bounded response body as the same kind of diagnostic.
+Delimiters inside JSON strings do not count toward this depth. Invalid UTF-8 is
+stored losslessly as base64 with the hash computed over original bytes.
+Oversized or partial bodies are rejected without persistence. A later
+successful probe clears the adapter's degraded health state.
 
 Replay reads only stored inputs, sorts records by canonical IDs, pins source
 observation IDs, effective state/instrument mappings, relationship IDs, proposal

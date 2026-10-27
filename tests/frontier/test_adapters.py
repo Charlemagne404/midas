@@ -106,6 +106,19 @@ async def test_transport_classifies_json_complexity_limits_and_preserves_bounded
 
 
 @pytest.mark.asyncio
+async def test_transport_ignores_bracket_characters_inside_json_strings():
+    value = '"' + "[" * 100 + "]" * 100 + '"'
+    body = json.dumps(value)
+    transport, _, client = _transport("api.example.test", {"/text": body})
+    try:
+        observation = await transport.get_json("https://api.example.test/text")
+    finally:
+        await client.aclose()
+
+    assert observation.payload == value
+
+
+@pytest.mark.asyncio
 async def test_polymarket_v1_capture_normalizes_without_claiming_verified_payout():
     markets = _captured("tests/fixtures/gamma_live.json")
     book = _captured("tests/fixtures/book_live.json")
