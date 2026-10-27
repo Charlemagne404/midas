@@ -399,7 +399,7 @@ it('renders recorded-evidence empty states and never probes a source automatical
     network_id: 'eip155:137',
     asset_reference: `0x${'cafe'.repeat(10)}`,
   } as const;
-  const tokenIdentityLabel = 'token:USD:eip155:137:' + tokenUsdIdentity.asset_reference;
+  const tokenIdentityLabel = 'token:USD:eip155%3A137:' + tokenUsdIdentity.asset_reference;
   const withTokenCapital = (includeMatchingLegUnits: boolean) => ({
     ...recordedCandidates!,
     items: recordedCandidates!.items.map((item) =>
@@ -434,6 +434,98 @@ it('renders recorded-evidence empty states and never probes a source automatical
   expect(tokenBalance).toHaveValue('');
   expect(tokenBalance).toBeEnabled();
   expect(capital).toHaveTextContent('Enter an isolated virtual balance.');
+
+  const boundaryIdentity = {
+    schema_version: 1,
+    kind: 'token',
+    code: 'USD',
+    network_id: 'net:alpha',
+    asset_reference: 'asset:beta',
+  } as const;
+  const collidingDelimiterIdentity = {
+    schema_version: 1,
+    kind: 'token',
+    code: 'USD',
+    network_id: 'net:alpha:asset',
+    asset_reference: 'beta',
+  } as const;
+  const percentIdentity = {
+    ...boundaryIdentity,
+    network_id: 'net%alpha',
+    asset_reference: 'asset%beta',
+  } as const;
+  const withIdentities = (capitalIdentity: object, legIdentity: object) => ({
+    ...recordedCandidates!,
+    items: recordedCandidates!.items.map((item) =>
+      item.candidate_id === 'multi-outcome-fixture-candidate'
+        ? {
+            ...item,
+            capital_currency_identity: capitalIdentity,
+            legs: item.legs.map((leg) => ({
+              ...leg,
+              quote_currency_identity: legIdentity,
+            })),
+          }
+        : item,
+    ),
+  });
+  queryClient.setQueryData(
+    ['frontier', 'opportunities'],
+    withIdentities(percentIdentity, percentIdentity),
+  );
+  const percentBalance = await within(capital).findByRole('textbox', {
+    name: 'Virtual balance allocated to Kalshi USD (token:USD:net%25alpha:asset%25beta)',
+  });
+  expect(percentBalance).toBeEnabled();
+
+  queryClient.setQueryData(
+    ['frontier', 'opportunities'],
+    withIdentities(boundaryIdentity, boundaryIdentity),
+  );
+  const boundaryBalance = await within(capital).findByRole('textbox', {
+    name: 'Virtual balance allocated to Kalshi USD (token:USD:net%3Aalpha:asset%3Abeta)',
+  });
+  expect(boundaryBalance).toBeEnabled();
+  fireEvent.change(boundaryBalance, { target: { value: '7' } });
+  queryClient.setQueryData(
+    ['frontier', 'opportunities'],
+    withIdentities(collidingDelimiterIdentity, collidingDelimiterIdentity),
+  );
+  const distinctBoundaryBalance = await within(capital).findByRole('textbox', {
+    name: 'Virtual balance allocated to Kalshi USD (token:USD:net%3Aalpha%3Aasset:beta)',
+  });
+  expect(distinctBoundaryBalance).toHaveValue('');
+  queryClient.setQueryData(
+    ['frontier', 'opportunities'],
+    withIdentities(boundaryIdentity, collidingDelimiterIdentity),
+  );
+  await waitFor(() =>
+    expect(capital).toHaveTextContent(
+      'Currency identity is missing or mixed; comparison unavailable.',
+    ),
+  );
+  expect(
+    within(capital).getByRole('textbox', {
+      name: 'Virtual balance allocated to Kalshi unknown currency',
+    }),
+  ).toBeDisabled();
+
+  const unsupportedIdentity = { ...boundaryIdentity, schema_version: 2 } as const;
+  queryClient.setQueryData(
+    ['frontier', 'opportunities'],
+    withIdentities(unsupportedIdentity, unsupportedIdentity),
+  );
+  await waitFor(() =>
+    expect(capital).toHaveTextContent(
+      'Currency identity is missing or mixed; comparison unavailable.',
+    ),
+  );
+  expect(
+    within(capital).getByRole('textbox', {
+      name: 'Virtual balance allocated to Kalshi unknown currency',
+    }),
+  ).toBeDisabled();
+
   responses['/api/frontier/opportunities/capital-carry'] = {
     model_version: 'frontier-virtual-capital-carry-1',
     run_id: 'a'.repeat(64),

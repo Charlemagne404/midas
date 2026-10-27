@@ -698,10 +698,88 @@ const compareExactMoney = (left: ExactMoney, right: ExactMoney) => {
 const time = (value: string | null | undefined) =>
   value ? new Date(value).toLocaleString() : 'Not recorded';
 const shortHash = (value: string | undefined) => (value ? `${value.slice(0, 12)}…` : '—');
+type SettlementIdentityTuple = readonly [
+  number,
+  SettlementAssetIdentity['kind'],
+  string,
+  string | null,
+  string | null,
+];
+const settlementIdentityTuple = (value: unknown): SettlementIdentityTuple | null => {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return null;
+  const identity = value as Record<string, unknown>;
+  const expectedFields = ['schema_version', 'kind', 'code', 'network_id', 'asset_reference'];
+  if (
+    Object.keys(identity).length !== expectedFields.length ||
+    expectedFields.some((field) => !Object.prototype.hasOwnProperty.call(identity, field)) ||
+    Object.keys(identity).some((field) => !expectedFields.includes(field))
+  ) {
+    return null;
+  }
+  const { schema_version, kind, code, network_id, asset_reference } = identity;
+  if (
+    schema_version !== 1 ||
+    (kind !== 'fiat' && kind !== 'token' && kind !== 'other') ||
+    typeof code !== 'string' ||
+    !/^[A-Z0-9]{2,16}$/.test(code)
+  ) {
+    return null;
+  }
+  if (kind === 'fiat') {
+    if (!/^[A-Z]{3}$/.test(code) || network_id !== null || asset_reference !== null) {
+      return null;
+    }
+  } else {
+    if (
+      typeof network_id !== 'string' ||
+      !network_id ||
+      network_id.trim() !== network_id ||
+      /\s/.test(network_id) ||
+      network_id !== network_id.toLowerCase() ||
+      typeof asset_reference !== 'string' ||
+      !asset_reference ||
+      asset_reference.trim() !== asset_reference ||
+      /\s/.test(asset_reference) ||
+      /[^\x00-\x7F]/.test(asset_reference)
+    ) {
+      return null;
+    }
+    try {
+      encodeURIComponent(network_id);
+      encodeURIComponent(asset_reference);
+    } catch {
+      return null;
+    }
+  }
+  return [
+    schema_version,
+    kind,
+    code,
+    network_id as string | null,
+    asset_reference as string | null,
+  ];
+};
+const sameSettlementIdentity = (left: unknown, right: unknown) => {
+  const leftFields = settlementIdentityTuple(left);
+  const rightFields = settlementIdentityTuple(right);
+  return Boolean(
+    leftFields &&
+    rightFields &&
+    leftFields[0] === rightFields[0] &&
+    leftFields[1] === rightFields[1] &&
+    leftFields[2] === rightFields[2] &&
+    leftFields[3] === rightFields[3] &&
+    leftFields[4] === rightFields[4],
+  );
+};
 const settlementIdentityLabel = (identity: SettlementAssetIdentity | null | undefined) => {
   if (!identity) return 'Identity not established';
-  if (identity.kind === 'fiat') return `fiat:${identity.code}`;
-  return `${identity.kind}:${identity.code}:${identity.network_id ?? 'network unknown'}:${identity.asset_reference ?? 'reference unknown'}`;
+  const fields = settlementIdentityTuple(identity);
+  if (!fields) return 'Identity unsupported or malformed';
+  const [, kind, code, networkId, assetReference] = fields;
+  if (kind === 'fiat') return `fiat:${code}`;
+  if (networkId === null || assetReference === null) return 'Identity unsupported or malformed';
+  return `${kind}:${code}:${encodeURIComponent(networkId)}:${encodeURIComponent(assetReference)}`;
 };
 const venueLabel = (value: string) =>
   ({ polymarket: 'Polymarket', kalshi: 'Kalshi', kraken: 'Kraken Spot' })[value] ?? value;
@@ -4101,25 +4179,32 @@ function CandidateCard({ candidate }: { candidate: Candidate }) {
               .map(([venue, requirement]) => {
                 const legs = candidate.legs.filter((leg) => leg.venue === venue);
                 const capitalIdentity = candidate.capital_currency_identity;
-                const capitalIdentityKey = capitalIdentity
+                const capitalIdentityFields = settlementIdentityTuple(capitalIdentity);
+                const capitalIdentityLabel = capitalIdentityFields
                   ? settlementIdentityLabel(capitalIdentity)
                   : null;
                 const exactLegUnits = Boolean(
-                  capitalIdentity &&
+                  capitalIdentityFields &&
                   legs.length > 0 &&
                   legs.every(
                     (leg) =>
-                      leg.quote_currency === capitalIdentity.code &&
-                      leg.quote_currency_identity &&
-                      settlementIdentityLabel(leg.quote_currency_identity) === capitalIdentityKey,
+                      leg.quote_currency === capitalIdentityFields[2] &&
+                      sameSettlementIdentity(leg.quote_currency_identity, capitalIdentity),
                   ),
                 );
-                const currencyComplete = Boolean(capitalIdentityKey && exactLegUnits);
+                const currencyComplete = Boolean(capitalIdentityFields && exactLegUnits);
                 const currency =
-                  currencyComplete && capitalIdentity
-                    ? `${capitalIdentity.code} (${capitalIdentityKey})`
+                  currencyComplete && capitalIdentityFields && capitalIdentityLabel
+                    ? `${capitalIdentityFields[2]} (${capitalIdentityLabel})`
                     : null;
-                const balanceKey = `${venue}:${capitalIdentityKey ?? 'identity-unavailable'}`;
+                const balanceKey = JSON.stringify([
+                  venue,
+                  capitalIdentityFields?.[0] ?? null,
+                  capitalIdentityFields?.[1] ?? null,
+                  capitalIdentityFields?.[2] ?? null,
+                  capitalIdentityFields?.[3] ?? null,
+                  capitalIdentityFields?.[4] ?? null,
+                ]);
                 const feesUnknown = legs.some((leg) => leg.modeled_fee == null);
                 const budgetText = virtualBalances[balanceKey] ?? '';
                 const budget = budgetText ? parseExactMoney(budgetText) : null;
@@ -4138,10 +4223,7 @@ function CandidateCard({ candidate }: { candidate: Candidate }) {
                             ? 'Recorded principal is covered; unresolved fees remain.'
                             : 'Modeled requirement covered at this venue.';
                 return (
-                  <div
-                    className="fr-capital-row"
-                    key={`${candidate.candidate_id}-${venue}-${capitalIdentityKey ?? 'unknown'}`}
-                  >
+                  <div className="fr-capital-row" key={`${candidate.candidate_id}-${balanceKey}`}>
                     <div>
                       <strong>{venueLabel(venue)}</strong>
                       <span>
