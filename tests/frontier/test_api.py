@@ -365,6 +365,19 @@ def test_saved_kalshi_fee_pair_is_joined_only_when_raw_and_normalized_evidence_m
         market_json = market_response.json()["items"][0]
         assert market_json["fees"]["status"] == FeeStatus.ESTIMATE.value
         assert market_json["fees"]["evidence_observation_ids"] == [event_id, series_id]
+
+        replay_response = api_client.post("/api/frontier/replay", json={})
+        assert replay_response.status_code == 200, replay_response.text
+        replay_payload = replay_response.json()
+        expected_fee_evidence_ids = sorted((event_id, series_id))
+        assert replay_payload["manifest"]["fee_metadata_observation_ids"] == (
+            expected_fee_evidence_ids
+        )
+        persisted_replay = store.replay(replay_payload["run_id"])
+        assert persisted_replay is not None
+        assert persisted_replay["result"]["manifest"]["fee_metadata_observation_ids"] == (
+            expected_fee_evidence_ids
+        )
     finally:
         api_client.close()
 
