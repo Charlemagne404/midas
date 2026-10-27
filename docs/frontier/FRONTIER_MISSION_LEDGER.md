@@ -1,6 +1,21 @@
 # Project Frontier Mission Ledger
 
-**Latest checkpoint (2026-10-27 18:41 UTC):** The complete Frontier Python
+**Latest checkpoint (2026-10-27 18:43 UTC):** The full web unit suite passes
+**40 tests across 7 files** in 5.00 seconds, including all eight Frontier
+component tests. The four Frontier browser tests passed at the preceding
+18:40 UTC checkpoint. No frontend files changed during these checks. At
+2026-10-27T18:43:32Z, host PSI rose to 36.01% some / 28.91% full over 10
+seconds and 20.59% / 18.43% over five minutes; available memory was 8.81 GiB
+and swap free 473 MiB. The production build was deferred because its prior
+peak was about 676 MiB and current pressure is elevated. The latest build
+after row-hash and carry UI changes remains unverified. No exchange request or
+protected service was used.
+
+Next safe action: wait for and remeasure resource headroom before attempting the
+latest production build, then continue remaining implementation and scientific
+acceptance gaps.
+
+**Previous checkpoint (2026-10-27 18:41 UTC):** The complete Frontier Python
 suite passes **215 tests in 39.29 seconds**. `/usr/bin/time -v` measured
 335,120 KiB peak RSS and zero swaps. The only warning was the existing
 Starlette/httpx TestClient deprecation. At 2026-10-27T18:41:46Z, PSI 10-second

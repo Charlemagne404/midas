@@ -3276,6 +3276,28 @@ and 17.60%, available memory was 9.12 GiB, and swap free was 471 MiB.
 Files changed in the browser fixture correction: `apps/web/e2e/frontier.spec.ts`
 in commit `9a4ccf4`. No browser test files changed in this revalidation.
 
+### Frontier web unit regression — 2026-10-27 18:43 UTC
+
+The full web unit suite passed with `corepack pnpm test`: **40 tests across
+7 files** in 5.00 seconds, including all eight Frontier component tests. The
+Frontier browser spec also remains green at four of four tests from the
+18:40 UTC checkpoint. No frontend source changed during this verification.
+
+The production build was not started. At 18:43:32 UTC, host memory PSI had
+risen to 36.01% some / 28.91% full over 10 seconds and 20.59% / 18.43% over
+five minutes; available memory was 8.81 GiB but swap free was 473 MiB. The
+recent build's measured peak is approximately 676 MiB, so defer it until a
+fresh admission sample shows the host has recovered. The prior build result
+predates the latest stored-row-hash and carry UI changes.
+
+| Component | Current status | Boundary |
+| --- | --- | --- |
+| Frontier/full web unit suite | COMPLETE AND VERIFIED | 40 tests in seven files pass on the current branch. |
+| Latest production frontend build | IMPLEMENTED, BUILD VALIDATION PENDING | Not run after the latest row-hash and carry UI changes because current host PSI is elevated. |
+| Project Frontier overall | PARTIALLY VERIFIED | Live economic validation, source permissions, broad repository regression, and production readiness remain incomplete. |
+
+No exchange request, protected service, or production store was accessed.
+
 ### Frontier Python regression and resource measurement — 2026-10-27 18:41 UTC
 
 The complete Frontier Python suite passed: **215 tests in 39.29 seconds**.
