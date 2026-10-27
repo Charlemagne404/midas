@@ -301,6 +301,30 @@ held the shared Arena admission lock. PSI avg10 was 39.31% (`some`) / 34.14%
 (`full`), avg60 42.01% / 36.47%, and avg300 33.22% / 28.94%. No test was
 started and the external worker remained untouched.
 
+### Legacy integration and Arena replay compatibility closure — 2026-10-27 21:45 UTC
+
+After the batch exited and PSI avg10 settled, the compatibility selection
+passed on the current Frontier worktree with the package path explicitly set
+to `packages:.`. An import-path check resolved `midas` to
+`/home/charlie/midas-frontier/packages/midas/__init__.py`. The exact command
+was:
+
+```text
+PYTHONPATH=packages:. /usr/bin/time -v /home/charlie/midas/.venv/bin/pytest tests/integration/test_adapters.py tests/integration/test_api.py tests/integration/test_recording_isolation.py tests/arena/test_frontier_replay.py -q
+```
+
+All **28 tests passed** in 5.96 seconds pytest time / 7.32 seconds wall, at
+**282,584 KiB peak RSS**, with zero test-process swaps. The sole warning is the
+existing Starlette/httpx `TestClient` deprecation. The selected tests use
+repository fixtures, mock transports, temporary recording/database roots, and
+direct deterministic Arena replay; they did not submit any exchange request
+or start a supervised research job. Immediately after the run, no shared Arena
+lock holder was present, memory PSI avg10 was 0.01% (`some`) / 0.00% (`full`),
+9.9 GiB was available, and 455 MiB swap was free. The earlier
+`2026-10-27T21:39:36Z` deferral is resolved for these four modules; the broader
+repository suite still has separately documented collection and host-gate
+limitations.
+
 Each adapter declares every shared capability as supported or unsupported with a
 reason. Kalshi documents unauthenticated public market-data access and its
 binary order book returns YES/NO bids, with complementary prices used to infer
@@ -4120,3 +4144,26 @@ the shared lock releases and host pressure settles. This does not change the
 269/269 Frontier, 40/40 Web, or 12/12 browser results above; those results were
 collected in their separately documented admission windows. No service,
 exchange, or protected evidence store was accessed.
+
+### Legacy integration and Arena admission regression — 2026-10-27 21:46 UTC
+
+The entire `tests/integration` directory passed **55 tests**, with one
+PostgreSQL runtime test skipped because `MIDAS_TEST_POSTGRES_URL` was
+intentionally unset. It ran with `PYTHONPATH=packages:.:tests`, ensuring local
+package and sibling-test imports resolve from this worktree, and took 28.53
+seconds pytest time / 29.82 seconds wall at **210,816 KiB peak RSS**, zero
+swaps. The existing Starlette/httpx `TestClient` deprecation is the only
+warning. The integration tests use temporary SQLite roots, local fixtures,
+and mock transports; no exchange API or configured PostgreSQL service was
+used.
+
+`tests/arena/test_admission.py` then passed **8/8** in 1.41 seconds pytest
+time / 2.04 seconds wall at **178,692 KiB peak RSS**, zero swaps. This
+includes `test_resource_snapshot_detects_workers_across_arena_roots`, whose
+purpose-specific resource snapshot is now isolated from live host pressure;
+the separate threshold tests use controlled snapshots. No worker or systemd
+job was started. At `2026-10-27T21:46:43Z`, shared Arena admission was free,
+PSI avg10 was 0.00% (`some`/`full`), 9.9 GiB was available, and 455 MiB swap
+was free. The earlier repository-wide 50-test interruption is now partially
+revalidated across all integrations plus the bounded Arena admission module;
+unrelated repository collection/runtime limits remain open.

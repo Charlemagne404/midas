@@ -1,5 +1,29 @@
 # Project Frontier Mission Ledger
 
+**Legacy integration and admission-gate regressions (`2026-10-27T21:46:43Z`):**
+All `tests/integration` pass **55/55**, with one PostgreSQL test skipped after
+explicitly unsetting `MIDAS_TEST_POSTGRES_URL`; the run used
+`PYTHONPATH=packages:.:tests`, 29.82 seconds wall, **210,816 KiB peak RSS**,
+zero swaps. `tests/arena/test_admission.py` passes **8/8** in 2.04 seconds wall,
+**178,692 KiB peak RSS**, zero swaps. The former cross-root resource-snapshot
+assertion now passes with its resource inputs isolated; no supervised job was
+started. Only the existing TestClient deprecation warning was emitted. The
+post-run lock was free, PSI avg10 0.00% `some`/`full`, and 9.9 GiB was
+available. Repository-wide collection/runtime limitations outside these
+bounded selections remain.
+
+**Legacy compatibility closure (`2026-10-27T21:45:17Z`):** The deferred
+four-module selection passed **28/28** against this worktree. The test process
+used `PYTHONPATH=packages:.`; an explicit import check resolved
+`midas` to `/home/charlie/midas-frontier/packages/midas/__init__.py`. The
+adapter, API, recording-isolation, and Frontier Arena replay tests took 5.96
+seconds pytest time / 7.32 seconds wall, peak RSS **282,584 KiB**, zero swaps;
+only the existing Starlette/httpx `TestClient` deprecation warning remains.
+Immediately afterward the Arena lock was free and PSI avg10 was 0.01% `some`
+/ 0.00% `full`, with 9.9 GiB available. This closes the four-module test
+deferral recorded at 21:39; it does not close the separately documented
+repository-wide Python collection/runtime limitations.
+
 **Additional venue screen (`2026-10-27T21:42:51Z`):** Official documentation was reviewed
 for Manifold Markets and Betfair. Manifold's current market currency is mana,
 which its FAQ describes as non-redeemable, and its 2025 announcement ended the

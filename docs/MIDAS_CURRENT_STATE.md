@@ -931,3 +931,29 @@ The sourced decision is in
 At 2026-10-27T21:42:51Z, the deferred legacy tests remained unstarted because
 PID 3745206 held the shared Arena lock in D state and PSI avg10 remained
 39.31% some / 34.14% full. Recheck admission before running them.
+
+## Frontier legacy compatibility tests complete — 2026-10-27 21:45 UTC
+
+After the external batch exited and memory PSI settled, the selected legacy
+adapter/API/recording-isolation and Frontier Arena replay modules passed
+**28/28**. The run explicitly used `PYTHONPATH=packages:.`; the resolved
+`midas` import was the Frontier worktree at
+`/home/charlie/midas-frontier/packages/midas/__init__.py`. It took 7.32
+seconds wall, peak RSS 282,584 KiB, zero swaps; only the existing
+Starlette/httpx TestClient deprecation warning remains. Immediately after the
+run, the shared lock was free and PSI avg10 was 0.01% some / 0.00% full.
+This closes that bounded compatibility check. The separate repository-wide
+Python run remains partial due the previously recorded collection/runtime
+issues.
+
+## Frontier integration and admission regression checkpoint — 2026-10-27 21:46 UTC
+
+The complete `tests/integration` directory passed **55 tests**, with the
+PostgreSQL runtime test skipped because its URL was explicitly unset. The
+local package and test paths were supplied via `PYTHONPATH=packages:.:tests`.
+The run took 29.82 seconds wall, peak RSS 210,816 KiB, zero swaps. The
+Starlette/httpx TestClient deprecation is the only warning. Arena admission
+regressions then passed **8/8** in 2.04 seconds wall, peak RSS 178,692 KiB,
+zero swaps. The post-run lock was free and PSI avg10 was 0.00% some / 0.00%
+full. These are bounded legacy integration/admission results, not a clean
+repository-wide suite; unrelated collection/runtime gaps remain documented.
