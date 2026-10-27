@@ -967,9 +967,9 @@ transport's lifetime request counter. Code commit
 count from a bounded monotonic-time history; per-operation deltas continue to
 use the lifetime counter. The focused adapter regression passed **1 test**
 (`41 deselected`), and Ruff check/format passed. The test uses a patched local
-clock and makes no network request. The architecture, operations, development,
-current-state, and engineering-report notes record this metric in the next
-documentation checkpoint.
+clock and makes no network request. Documentation checkpoint
+`a69d81c8fadb4d7833ff912ad169211afa767f10` records the request-window metric in
+the architecture, operations, development, current-state, and report notes.
 
 ## 2026-10-27 13:35 UTC — cross-venue timestamp gate
 
@@ -983,4 +983,4 @@ adversarial regression, including unknown timestamp semantics, passed **1 test**
 supply clock uncertainty, so recorded cross-venue candidate timing remains
 unverified. No live data, service, or historical evidence was changed.
 Architecture, operations, current-state, and report notes record the boundary
-in this documentation checkpoint.
+in documentation checkpoint `a69d81c8fadb4d7833ff912ad169211afa767f10`.
