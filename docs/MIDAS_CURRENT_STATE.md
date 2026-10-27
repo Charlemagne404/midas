@@ -679,3 +679,26 @@ avg10 was 0.12% (`some`) / 0.11% (`full`), avg60 12.97% / 11.97%, avg300
 15.92% / 14.55%; 9.6 GiB was available and swap free was 468 MiB. This is a
 bounded Laboratory compatibility check, not a full Laboratory or repository
 regression.
+
+## Frontier per-venue execution-delay sensitivity — 2026-10-27 20:16 UTC
+
+Code commit `9da08fd` adds optional venue-specific delay additions to the
+bounded virtual replay scenario. The shared base delay plus each venue addition
+is capped at one hour. Cross-venue binary and same-market multi-outcome pricing
+apply quote decay using the relevant venue delay, and independent audit v8
+recomputes it. Replay v11 and economic model v11 pin the scenario input. The
+Workbench exposes per-source inputs for direct, paired, and Arena replay. Its
+quantity control now says usable top-ask depth: it is a size haircut, not a
+partial-fill simulation. Delay remains user-supplied and does not model actual
+execution order, venue latency, or fills.
+
+Focused Python tests passed **8/8**, with a separate API replay check **1/1**;
+the focused Workbench test passed **1/1**. TypeScript, ESLint/Prettier, Ruff,
+strict core Frontier mypy, and diff checks passed. Full Frontier tests and the
+production build remain pending because at `2026-10-27T20:16:17Z` PSI avg10 was
+44.92% (`some`) / 40.76% (`full`), 9.5 GiB was available, and 469 MiB swap was
+free. API-inclusive strict mypy is also pending: the unrestricted run reached
+pre-existing imported Veritas type errors and the filtered run was interrupted
+under host pressure. No live source, protected service, held capture, or
+production state was accessed. Frontier remains isolated, undeployed, and
+PARTIALLY VERIFIED.

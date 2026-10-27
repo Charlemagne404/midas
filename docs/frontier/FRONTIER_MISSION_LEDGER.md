@@ -1361,7 +1361,7 @@ same-input runs do not change the resource sustainability gate.
 | Polymarket, Kalshi and Kraken Spot implementations | PARTIALLY VERIFIED | Fixture tests and bounded live listing/book/trade-to-store evidence exist. Current adapter versions are Polymarket v6, Kalshi v17, and Kraken Spot v3. Polymarket v2 first and continuation pages returned ten rows each. Kalshi cursor pages are implemented and row mapping is fixture-tested; a live page returned zero trades and no cursor, so live row normalization remains pending. Two genuine public event-group responses are hash-pinned and replayed through Polymarket/Kalshi adapters. Kalshi MVE listing responses omitted nested members; v10 captured a saved-parent-selected child and preserved its rules. The sole captured child is closed and includes fair-price fallback language, so child and combo payoffs remain unverified. Account fees and Kraken account fee applicability remain unknown. API fixtures cover source degradation and recovery; live degraded-source behavior remains unverified. |
 | Canonical normalization and native evidence | PARTIALLY VERIFIED | Distinct event, conditional event and spot forms; FrontierMarket v4, BookSnapshot v2 and TradeObservation v3 preserve canonical denomination identities where supported; Kalshi `price_ranges` are normalized as bounded exact-Decimal intervals while raw native values remain auditable. Candidate generation and independent audit reject out-of-range, off-step, empty-declaration, and boundary quotes; endpoints are conservative because the official schema does not specify inclusion. Kalshi paginated batches retain schema v2 with nested trade schema v3. Quote, fee, trade, capital, and display codes are separate fields. Legacy v1/v2 rows without identity still load but remain unknown and economically incomplete. V2 Polymarket trades preserve token and outcome identity. October 27 event-group capture preserves parent-event title and child outcome text. Kalshi `MarketBatch` v2 stores typed MVE groups with `included`, `empty`, or `omitted` member state; detail responses with a documented top-level empty list replay to zero child markets. Other settlement/payoff semantics remain intentionally unverified. |
 | Relationship matching, immutable review, indexed neighborhoods, and strict payoff verifier | PARTIALLY VERIFIED | Self-attributed review API/UI with stored source refs, append-only revisions, compare-and-set, latest-state replay, query-plan/migration tests, and 1–3 hop left/right indexed scans capped at 500 rows. Centered one-hop keyset and two-/three-hop breadth-first pages bind graph inputs and reject stale cursors; deterministic recomputation and 201-market frontier chunking are tested. Matcher v5 emits exact-ID MVE `source_component_reference` hypotheses only with a matching saved child ticker/event and preserves both observation IDs; the recorded parent/child pair replays offline through the current adapter and matcher. Matcher v4 year-conflict checks remain. The genuine House-control pair is text-only and strict payoff verification rejects same-payoff equivalence. Per-market payout currency must match its settlement asset, and the market-level settlement asset must match the payoff record; the USD/USDC regression passes. A focused depth-two browser test now passes; authenticated review and revision-history drill-down remain pending. |
-| Economic candidate verifier and independent audit | PARTIALLY VERIFIED | Exact two-venue binary all-long coverage and same-market 3–16-state exhaustive one-hot coverage. Economic model v10 derives the exact adverse full-or-no-fill terminal pattern for up to 16 legs and validates reported constant ticks plus Kalshi price ranges; independent audit v7 rederives payoff/cost, quote constraints, pinned-book timing and source-quality claims, and the Kalshi one-fill estimate independently. Fixture cases verify the `$0.01` scenario, 24-hour freshness, no-look-ahead, conditional classification, and replay fee-evidence IDs. Three-leg brute-force and maximum 16-outcome replay/audit fixtures agree over a 65,536-pattern bound. Unknown fees suppress net stress; mismatches and unsupported fees fail closed. Current adapter clock-uncertainty estimates are absent, no genuine eligible event is established, and there is no independently authenticated market truth or practical execution proof. |
+| Economic candidate verifier and independent audit | PARTIALLY VERIFIED | Exact two-venue binary all-long coverage and same-market 3–16-state exhaustive one-hot coverage. Economic model v11 derives the exact adverse full-or-no-fill terminal pattern for up to 16 legs, validates reported constant ticks and Kalshi price ranges, and reprices venue-specific quote-decay delays; independent audit v8 rederives payoff/cost, quote constraints, per-venue delay, pinned-book timing and source-quality claims, and the Kalshi one-fill estimate independently. Fixture cases verify the `$0.01` scenario, 24-hour freshness, no-look-ahead, conditional classification, replay fee-evidence IDs, and delay tampering. Three-leg brute-force and maximum 16-outcome replay/audit fixtures agree over a 65,536-pattern bound. Unknown fees suppress net stress; mismatches and unsupported fees fail closed. Delay additions are virtual sensitivity assumptions, not measured latency or modeled sequencing. Current adapter clock-uncertainty estimates are absent, no genuine eligible event is established, and there is no independently authenticated market truth or practical execution proof. |
 | Kalshi candidate-fee estimate | PARTIALLY VERIFIED | Commit `3e85c8d` joins only complete raw/hash/path/identity-checked event/series metadata and requires metadata no later than quote time and at most 24 hours old at quote/replay. A supported one-fill formula uses conservative non-direct `$0.01` debit alignment; estimates cannot yield a verified mathematical inconsistency. Independent arithmetic and manifest fee-observation IDs pass fixture/API/replay checks. Account applicability, balance class, maker/mixed/multi-fill and FCM charges, later changes, live validation and source permission remain unresolved. |
 | Bounded store and deterministic replay | COMPLETE AND VERIFIED | Storage schema v6 with additive v2/v3/v4/v5 migrations, immutable replay/comparison records, replay-v8 source lineage, denomination identities, and separate fee metadata observation IDs through manifests/candidate legs/Arena snapshots; direct replay retains adapter IDs. Test commit `f35677d` verifies a saved schema-v1 manifest lacking the new field remains readable and its JSON/hash is preserved. The 19-test storage/replay-comparison selection passed before that follow-up, and the changed legacy case passed separately. Replay-v5 output includes fill sensitivity and identity includes effective mappings/proposal limit; prior replay results and observations remain unchanged. |
 | Paired scenario comparison | PARTIALLY VERIFIED | Direct local comparison and API/UI/browser tests pass. Two actual systemd-supervised fixture replays completed over the same pinned inputs and their result hashes verify. The latest run measured worker process CPU/RSS and exposes it in Mission Control. No genuine equivalent live market pair exists. |
@@ -2290,3 +2290,44 @@ Reality action, or deployment occurred. The repository-wide legacy suite was
 not run. Source-use permission, live cross-venue equivalence/economics, and
 broader funding/settlement costs remain open; Frontier is still PARTIALLY
 VERIFIED.
+
+## Per-venue quote-decay replay sensitivity — 2026-10-27 20:16 UTC
+
+Code commit `9da08fd` extends `ExecutionScenario` with a shared base execution
+delay and optional additional delay by supported venue. Each value is a strict
+whole number of milliseconds; no more than the three supported venue keys are
+accepted; base plus venue addition cannot exceed one hour. Cross-venue binary
+and same-market multi-outcome candidates apply the venue-specific effective
+delay when evaluating the user-supplied quote-decay assumption. Independent
+audit v8 rederives the leg price from the pinned market venue. Scenario payloads
+remain included in candidate identity and replay input hashes; replay v11 and
+economic model v11 pin the behavior.
+
+The Workbench now exposes a delay addition for each configured source and
+sends it to direct, paired, and Arena replays. The displayed-depth setting is
+now correctly described as a top-ask size haircut. It does not model partial
+leg fills. Per-venue delay is only a virtual quote-decay sensitivity; no actual
+latency, execution ordering, or fill response is claimed. Full-or-no-fill
+stress remains the separately modeled adverse leg test.
+
+Verification: a focused Python selection passed **8/8** (80 deselected) in
+1.32 seconds pytest time / 1.77 seconds wall at **86,172 KiB peak RSS**, zero
+swaps and zero socket messages. It covers the venue-specific price math,
+independent audit agreement and tamper rejection, invalid inputs, replay hash
+pinning, and API scenario persistence. The isolated API replay test passed
+**1/1** in 0.94 seconds pytest time / 1.38 seconds wall at **77,348 KiB peak
+RSS**, zero swaps, with the existing Starlette/httpx deprecation. The focused
+Workbench test passed **1/1** (seven deselected). TypeScript, targeted
+ESLint/Prettier, Ruff check/format, strict mypy on the four Frontier domain
+modules with imported diagnostics suppressed, and `git diff --check` passed.
+
+An unrestricted API-inclusive mypy attempt reported imported, pre-existing
+type errors in `packages/midas/veritas/independent_economics.py` at lines 46,
+296, and 407. A second filtered API-inclusive invocation was interrupted after
+15 seconds without output under elevated memory pressure; API-inclusive strict
+typing remains unverified. At `2026-10-27T20:16:17Z`, PSI avg10 was 44.92%
+(`some`) / 40.76% (`full`), 9.5 GiB was available, and 469 MiB swap remained
+free. The full Frontier regression and production frontend build were not
+rerun; the prior build predates this UI revision. No live source, held capture,
+Reality service, or production state was accessed. Commit `9da08fd` contains
+the code and tests. Frontier remains **PARTIALLY VERIFIED** and undeployed.
