@@ -635,3 +635,18 @@ This supplements the full Frontier Python, web, browser, and build results at
 20:02 UTC. No Arena production job, exchange request, preserved capture, or
 Reality service was accessed. Frontier remains PARTIALLY VERIFIED; the
 repository-wide legacy suite and deployment are not verified.
+
+## Legacy API integration compatibility — 2026-10-27 20:05 UTC
+
+The isolated `tests/integration/test_api.py` module passed **5/5** in 3.99
+seconds (5.01 seconds wall) at **154,664 KiB peak RSS**, with zero swaps. Its
+demo workflow forbids construction of the public client and uses temporary
+databases/workspaces; the Arena qualification route is mocked. It verifies
+existing demo API, health/readiness, Frontier empty/no-probe responses,
+Veritas/Reality configured-workspace routes, and persistence failure gates.
+The only warning is the existing Starlette/httpx TestClient deprecation. At
+`2026-10-27T20:05:24Z`, admission PSI avg10 was 0.00% (`some`/`full`), avg60
+8.15% / 7.33%, avg300 15.84% / 14.31%; 9.6 GiB was available and 468 MiB swap
+free. This is a narrow compatibility slice; the repository-wide legacy suite
+remains unrun. No public source, historical store, protected service state, or
+production deployment was accessed.

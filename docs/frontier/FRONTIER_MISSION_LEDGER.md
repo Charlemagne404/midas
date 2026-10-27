@@ -1,5 +1,17 @@
 # Project Frontier Mission Ledger
 
+**Latest legacy compatibility check (2026-10-27 20:05 UTC):** The safe
+`tests/integration/test_api.py` slice passes **5/5** in 3.99 seconds (5.01
+seconds wall) at **154,664 KiB peak RSS**, zero swaps. The demo workflow
+forbids constructing a public client and uses temporary databases/workspaces;
+the Arena qualification route is mocked. It covers legacy API health,
+readiness, persistence gates, configured Veritas/Reality workspace routes,
+plus Frontier's no-probe view. Only the existing Starlette/httpx TestClient
+deprecation warning remains. At `2026-10-27T20:05:24Z`, admission PSI avg10 was
+0.00% (`some`/`full`), avg60 8.15% / 7.33%, avg300 15.84% / 14.31%; 9.6 GiB
+was available and 468 MiB swap free. No live source, protected service state,
+or historical store was accessed. The full repository suite remains unrun.
+
 **Latest verification (2026-10-27 20:04 UTC):** Frontier's Arena replay
 integration suite `tests/arena/test_frontier_replay.py` passes **10/10** in
 1.94 seconds (2.63 seconds wall), at **193,936 KiB peak RSS** with zero swaps.

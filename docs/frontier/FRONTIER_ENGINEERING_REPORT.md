@@ -3635,3 +3635,19 @@ Starlette/httpx TestClient deprecation is the only warning. At
 and 468 MiB swap free. No exchange request, held capture, Reality action, or
 deployment occurred. This improves local Arena integration coverage; broader
 legacy regressions and production readiness remain incomplete.
+
+### Legacy API integration compatibility — 2026-10-27 20:05 UTC
+
+The isolated `tests/integration/test_api.py` module passed **5/5** in 3.99
+seconds (5.01 seconds wall) at **154,664 KiB peak RSS**, with zero swaps. The
+demo workflow forbids construction of the public client and uses temporary
+databases/workspaces; the Arena qualification route is mocked. Coverage
+includes health/readiness, Frontier empty/no-probe behavior, existing
+Veritas/Reality configured-workspace routes, and persistence failure gates.
+The only warning is the existing Starlette/httpx TestClient deprecation. At
+`2026-10-27T20:05:24Z`, admission PSI avg10 was 0.00% (`some`/`full`), avg60
+8.15% / 7.33%, avg300 15.84% / 14.31%; 9.6 GiB was available and 468 MiB swap
+free. This is a bounded compatibility slice, not the full repository suite.
+No public source, historical store, protected service state, or production
+deployment was accessed. The full legacy suite and deployment remain
+unverified.
