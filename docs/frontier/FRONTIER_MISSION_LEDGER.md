@@ -3152,6 +3152,7 @@ Run the focused, low-resource collection checks first:
 ```bash
 env PYTHONPATH=packages:.:tests /home/charlie/midas/.venv/bin/pytest tests/frontier/test_collection.py tests/frontier/test_collection_api.py -q
 corepack pnpm --dir apps/web exec vitest run src/Frontier.test.tsx --maxWorkers=1 --minWorkers=1
+corepack pnpm --dir apps/web exec vitest run --maxWorkers=1 --minWorkers=1
 ```
 
 The broader regression selection used for this checkpoint was:
@@ -3167,4 +3168,5 @@ is free. The build and isolated browser commands were:
 ```bash
 corepack pnpm --dir apps/web exec vite build --outDir /tmp/midas-frontier-build-20261028-0049
 corepack pnpm --dir apps/web exec playwright test e2e/frontier.spec.ts --grep 'Frontier workspace uses isolated research state and remains responsive' --workers=1
+corepack pnpm --dir apps/web exec playwright test e2e/frontier.spec.ts --workers=1
 ```
