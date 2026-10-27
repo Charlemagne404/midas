@@ -1050,3 +1050,5 @@ future token-settled adapter needs a network/contract-qualified identity or must
 remain unsupported. This is a documented model limitation; no code or live
 source data changed. Extend the asset identity model before enabling token-
 settled cross-venue equivalence.
+Documentation commit `b5fa650368d3f77422bc45025bdee9988b1906a8` records this
+limitation in the architecture and handoff.
