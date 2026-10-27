@@ -2204,7 +2204,19 @@ it('submits a bounded Arena replay and displays its integrity-verified compariso
       limitations: [],
     },
     '/api/frontier/sources': { items: [] },
-    '/api/frontier/markets?limit=100': empty,
+    '/api/frontier/markets?limit=100': {
+      items: [
+        {
+          venue: 'polymarket',
+          native_market_id: 'timeline-fixture',
+          native_fields: { conditionId: 'timeline-fixture' },
+          instruments: [],
+        },
+      ],
+      returned: 1,
+      limit: 100,
+      offset: 0,
+    },
     '/api/frontier/books?limit=100': empty,
     '/api/frontier/trades?limit=100': { ...empty, pages: [] },
     '/api/frontier/relationships?limit=200': empty,
@@ -2248,8 +2260,105 @@ it('submits a bounded Arena replay and displays its integrity-verified compariso
     result: { comparison_id: comparison.comparison_id, frontier_replay_sha256: resultSha256 },
   };
   let submission: Record<string, unknown> | undefined;
+  let timelineSubmission: Record<string, unknown> | undefined;
   const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const path = String(input);
+    if (path === '/api/arena/frontier-timelines?limit=20') {
+      return {
+        ok: true,
+        json: async () => ({
+          items: timelineSubmission
+            ? [
+                {
+                  job_id: jobId,
+                  state: 'COMPLETED',
+                  created_at: jobSummary.created_at,
+                  updated_at: jobSummary.updated_at,
+                  elapsed_seconds: 0.1,
+                  progress: { done: 3, total: 3 },
+                  phase: 'publishing-hash-verified-timeline',
+                  error: null,
+                  snapshot_id: snapshotId,
+                  snapshot_sha256: snapshotSha256,
+                  runtime_profile: null,
+                  result: { timeline_id: '4'.repeat(64), frontier_timeline_sha256: '5'.repeat(64) },
+                },
+              ]
+            : [],
+          limit: 20,
+          scanned: timelineSubmission ? 1 : 0,
+          scan_bound: 500,
+          scan_may_be_incomplete: false,
+          research_only: true,
+        }),
+      } as Response;
+    }
+    if (path === '/api/frontier/arena-timeline-replay' && init?.method === 'POST') {
+      timelineSubmission = JSON.parse(String(init.body)) as Record<string, unknown>;
+      return {
+        ok: true,
+        json: async () => ({
+          job_id: jobId,
+          state: 'COMPLETED',
+          created_at: jobSummary.created_at,
+          updated_at: jobSummary.updated_at,
+          elapsed_seconds: 0.1,
+          progress: { done: 3, total: 3 },
+          phase: 'publishing-hash-verified-timeline',
+          error: null,
+          result: { timeline_id: '4'.repeat(64), frontier_timeline_sha256: '5'.repeat(64) },
+          frontier_snapshot_id: snapshotId,
+          frontier_snapshot_sha256: snapshotSha256,
+          timeline_frame_policy: 'input_event_times_and_book_freshness_boundaries',
+        }),
+      } as Response;
+    }
+    if (path === `/api/arena/jobs/${jobId}/frontier-timeline`) {
+      return {
+        ok: true,
+        json: async () => ({
+          artifact: {
+            snapshot_id: snapshotId,
+            snapshot_sha256: snapshotSha256,
+            result_sha256: '5'.repeat(64),
+            timeline: {
+              timeline_id: '4'.repeat(64),
+              result_sha256: '6'.repeat(64),
+              manifest: {
+                code_version: 'frontier-fixture',
+                input_sha256: '7'.repeat(64),
+                market_observation_ids: ['market-fixture'],
+                book_observation_ids: ['book-fixture'],
+                relationship_ids: [],
+                source_status_sha256s: [],
+                evaluation_times_utc: ['2026-10-27T00:00:00Z'],
+                max_book_age_ms: 15_000,
+              },
+              frames: [
+                {
+                  as_of_utc: '2026-10-27T00:00:00Z',
+                  replay_run_id: '8'.repeat(64),
+                  replay_result_sha256: '9'.repeat(64),
+                  fresh_book_count: 1,
+                  included_book_count: 1,
+                  stale_book_count: 0,
+                  not_yet_observed_count: 0,
+                  excluded_source_book_count: 0,
+                  source_states: [],
+                  candidate_count: 0,
+                  classification_counts: {},
+                  candidates: [],
+                },
+              ],
+            },
+          },
+          research_only: true,
+          orders_submitted: false,
+          authenticated_requests: false,
+          integrity_verified: true,
+        }),
+      } as Response;
+    }
     if (path === '/api/arena/frontier-replays?limit=20') {
       return {
         ok: true,
@@ -2333,6 +2442,15 @@ it('submits a bounded Arena replay and displays its integrity-verified compariso
       quote_decay_bps_per_second: '15',
     },
   ]);
+
+  expect(await screen.findByText('No event-time replay jobs')).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Replay saved timeline' }));
+  expect(await screen.findByText(/1 event-time frames are pinned/)).toBeInTheDocument();
+  expect(
+    screen.getByText('1 fresh · 0 stale · 0 not yet observed · 0 source-excluded'),
+  ).toBeInTheDocument();
+  expect(screen.getByText(/No explicit source-state event was pinned/)).toBeInTheDocument();
+  expect(timelineSubmission).toEqual({ max_book_age_ms: 15_000 });
 });
 
 it('captures one explicit bounded Kalshi multivariate event page', async () => {

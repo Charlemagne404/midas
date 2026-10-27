@@ -736,6 +736,77 @@ type FrontierArenaReplayResult = {
   authenticated_requests: false;
   integrity_verified: true;
 };
+type FrontierTimelineFrame = {
+  as_of_utc: string;
+  replay_run_id: string;
+  replay_result_sha256: string;
+  fresh_book_count: number;
+  included_book_count: number;
+  stale_book_count: number;
+  not_yet_observed_count: number;
+  excluded_source_book_count: number;
+  source_states: { venue: string; state: string; basis: string | null; reason: string | null }[];
+  candidate_count: number;
+  classification_counts: Record<string, number>;
+  candidates: {
+    candidate_id: string;
+    family: string;
+    classification: string;
+    audit_disposition: string | null;
+    worst_case_gross_pnl: string | null;
+    worst_case_net_pnl: string | null;
+    timing_verified: boolean;
+    evidence_sha256: string;
+  }[];
+};
+type FrontierTimelineJob = {
+  job_id: string;
+  state: string;
+  created_at: number | null;
+  updated_at: number | null;
+  elapsed_seconds: number | null;
+  progress: { done?: number; total?: number } | null;
+  phase: string | null;
+  error: string | null;
+  snapshot_id: string | null;
+  snapshot_sha256: string | null;
+  runtime_profile: FrontierArenaReplayJob['runtime_profile'];
+  result: { timeline_id?: string; frontier_timeline_sha256?: string } | null;
+};
+type FrontierTimelineJobs = {
+  items: FrontierTimelineJob[];
+  limit: number;
+  scanned: number;
+  scan_bound: number;
+  scan_may_be_incomplete: boolean;
+  research_only: true;
+};
+type FrontierTimelineResult = {
+  artifact: {
+    snapshot_id: string;
+    snapshot_sha256: string;
+    result_sha256: string;
+    timeline: {
+      timeline_id: string;
+      result_sha256: string;
+      manifest: {
+        code_version: string;
+        input_sha256: string;
+        market_observation_ids: string[];
+        book_observation_ids: string[];
+        relationship_ids: string[];
+        source_status_sha256s: string[];
+        evaluation_times_utc: string[];
+        max_book_age_ms: number;
+      };
+      frames: FrontierTimelineFrame[];
+    };
+  };
+  research_only: true;
+  orders_submitted: false;
+  authenticated_requests: false;
+  integrity_verified: true;
+};
 type Readiness = { gates: { name: string; state: string; detail: string }[] };
 type ListResponse<T> = { items: T[]; returned: number; limit: number; offset: number };
 type ObservationEvidence = {
@@ -1515,6 +1586,7 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
   );
   const [fillPercent, setFillPercent] = useState('80');
   const [selectedArenaReplayId, setSelectedArenaReplayId] = useState<string | null>(null);
+  const [selectedTimelineJobId, setSelectedTimelineJobId] = useState<string | null>(null);
   const queryClient = useQueryClient();
   const options = { staleTime: 10_000, retry: 1 };
   const resetGraphPagination = () => {
@@ -1619,6 +1691,29 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
         `/arena/jobs/${encodeURIComponent(selectedArenaReplayJob!.job_id)}/frontier-replay`,
       ),
     enabled: section === 'replay' && selectedArenaReplayJob?.state === 'COMPLETED',
+    retry: false,
+  });
+  const timelineJobs = useQuery({
+    queryKey: ['frontier', 'arena-timeline-jobs'],
+    queryFn: () => api<FrontierTimelineJobs>('/arena/frontier-timelines?limit=20'),
+    enabled: section === 'replay',
+    refetchInterval: (query) =>
+      query.state.data?.items.some((job) => ['QUEUED', 'RUNNING'].includes(job.state))
+        ? 2000
+        : false,
+  });
+  const listedTimelineJobs = timelineJobs.data?.items ?? [];
+  const selectedTimelineJob =
+    listedTimelineJobs.find((job) => job.job_id === selectedTimelineJobId) ??
+    listedTimelineJobs[0] ??
+    null;
+  const timelineResult = useQuery({
+    queryKey: ['frontier', 'arena-timeline-result', selectedTimelineJob?.job_id],
+    queryFn: () =>
+      api<FrontierTimelineResult>(
+        `/arena/jobs/${encodeURIComponent(selectedTimelineJob!.job_id)}/frontier-timeline`,
+      ),
+    enabled: section === 'replay' && selectedTimelineJob?.state === 'COMPLETED',
     retry: false,
   });
 
@@ -1782,6 +1877,59 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
         }),
       );
       void queryClient.invalidateQueries({ queryKey: ['frontier', 'arena-replay-jobs'] });
+    },
+  });
+  const timelineReplay = useMutation({
+    mutationFn: () =>
+      api<{
+        job_id: string;
+        state: string;
+        created_at: number | null;
+        updated_at: number | null;
+        elapsed_seconds?: number | null;
+        progress: FrontierTimelineJob['progress'];
+        phase?: string | null;
+        error?: string | null;
+        runtime_profile?: FrontierTimelineJob['runtime_profile'];
+        result: FrontierTimelineJob['result'];
+        frontier_snapshot_id: string;
+        frontier_snapshot_sha256: string;
+        timeline_frame_policy: string;
+      }>('/frontier/arena-timeline-replay', {
+        method: 'POST',
+        body: JSON.stringify({ max_book_age_ms: 15_000 }),
+      }),
+    onSuccess: (job) => {
+      const summary: FrontierTimelineJob = {
+        job_id: job.job_id,
+        state: job.state,
+        created_at: job.created_at,
+        updated_at: job.updated_at,
+        elapsed_seconds: job.elapsed_seconds ?? null,
+        progress: job.progress,
+        phase: job.phase ?? null,
+        error: job.error ?? null,
+        snapshot_id: job.frontier_snapshot_id,
+        snapshot_sha256: job.frontier_snapshot_sha256,
+        runtime_profile: job.runtime_profile ?? null,
+        result: job.result,
+      };
+      setSelectedTimelineJobId(job.job_id);
+      queryClient.setQueryData<FrontierTimelineJobs>(
+        ['frontier', 'arena-timeline-jobs'],
+        (current) => ({
+          items: [
+            summary,
+            ...(current?.items ?? []).filter((item) => item.job_id !== job.job_id),
+          ].slice(0, 20),
+          limit: current?.limit ?? 20,
+          scanned: current?.scanned ?? 0,
+          scan_bound: current?.scan_bound ?? 500,
+          scan_may_be_incomplete: current?.scan_may_be_incomplete ?? false,
+          research_only: true,
+        }),
+      );
+      void queryClient.invalidateQueries({ queryKey: ['frontier', 'arena-timeline-jobs'] });
     },
   });
   const probe = useMutation({
@@ -3459,6 +3607,182 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
                     <ReplayComparisonSummary
                       comparison={arenaReplayResult.data.artifact.comparison}
                     />
+                  </>
+                )}
+              </article>
+            )}
+          </section>
+          <section className="fr-card fr-arena-replay-card fr-arena-timeline-card">
+            <div className="fr-card-head">
+              <div>
+                <span className="fr-kicker">EVENT-TIME EVIDENCE</span>
+                <h2>Timeline replay</h2>
+              </div>
+              <button
+                className="fr-action"
+                onClick={() => timelineReplay.mutate()}
+                disabled={timelineReplay.isPending || !markets.data?.items.length}
+                title={
+                  markets.data?.items.length
+                    ? 'Stage saved local observations as a bounded Arena job'
+                    : 'Recorded markets are required before replay'
+                }
+              >
+                <Play size={14} />
+                {timelineReplay.isPending ? 'Submitting…' : 'Replay saved timeline'}
+              </button>
+            </div>
+            <p className="fr-arena-replay-intro">
+              Re-evaluates saved books at their event times and freshness boundaries. The input is
+              pinned locally; no exchange requests or collector start. Each completed result reports
+              fresh, stale, not-yet-observed, and source-excluded books per frame.
+            </p>
+            <div className="fr-callout">
+              <ShieldCheck size={16} />
+              <span>
+                This is deterministic hypothetical research. A fresh book in a replay frame does not
+                establish simultaneous executable quotes, fills, venue access, or profitability.
+                Worker admission remains subject to Arena’s host resource gate.
+              </span>
+            </div>
+            {timelineReplay.isError && <InlineError message={timelineReplay.error.message} />}
+            {timelineJobs.isLoading ? (
+              <div className="fr-loading">Loading event-time replay history…</div>
+            ) : timelineJobs.isError ? (
+              <EmptyState
+                title="Timeline replay history unavailable"
+                detail={timelineJobs.error.message}
+              />
+            ) : listedTimelineJobs.length === 0 ? (
+              <EmptyState
+                title="No event-time replay jobs"
+                detail={
+                  markets.data?.items.length
+                    ? 'Replay submission is explicit and uses only saved evidence. The timeline job is bounded to five minutes, 512 MiB, half a CPU, and idle I/O.'
+                    : 'Record market and book observations before staging a timeline. No public feed is started from this screen.'
+                }
+              />
+            ) : (
+              <div className="fr-arena-job-list" aria-label="Frontier timeline replay jobs">
+                {listedTimelineJobs.map((job) => (
+                  <button
+                    key={job.job_id}
+                    className={`fr-arena-job-row${job.job_id === selectedTimelineJob?.job_id ? ' selected' : ''}`}
+                    aria-pressed={job.job_id === selectedTimelineJob?.job_id}
+                    onClick={() => setSelectedTimelineJobId(job.job_id)}
+                  >
+                    <span>
+                      <code>{shortHash(job.job_id)}</code>
+                      <small>
+                        {job.created_at == null
+                          ? 'Time not recorded'
+                          : new Date(job.created_at * 1000).toLocaleString()}
+                      </small>
+                    </span>
+                    <StateBadge state={job.state} />
+                  </button>
+                ))}
+              </div>
+            )}
+            {timelineJobs.data?.scan_may_be_incomplete && (
+              <p className="fr-arena-replay-note">
+                Timeline history is limited to a bounded scan of {timelineJobs.data.scan_bound}{' '}
+                Arena records; older entries may be omitted.
+              </p>
+            )}
+            {selectedTimelineJob && (
+              <article className="fr-arena-job-detail" aria-label="Selected timeline replay">
+                <div className="fr-arena-job-detail-head">
+                  <div>
+                    <span className="fr-kicker">SELECTED EVENT-TIME JOB</span>
+                    <code>{selectedTimelineJob.job_id}</code>
+                  </div>
+                  <StateBadge state={selectedTimelineJob.state} />
+                </div>
+                {['QUEUED', 'RUNNING'].includes(selectedTimelineJob.state) && (
+                  <p>
+                    {selectedTimelineJob.phase
+                      ? label(selectedTimelineJob.phase)
+                      : 'Waiting for the Arena worker lease'}
+                    {selectedTimelineJob.progress &&
+                      ` · ${selectedTimelineJob.progress.done ?? 0} / ${selectedTimelineJob.progress.total ?? 0} steps`}
+                  </p>
+                )}
+                {selectedTimelineJob.error && (
+                  <div className="fr-alert" role="status">
+                    <AlertTriangle size={16} />
+                    <div>
+                      <strong>Timeline replay did not complete</strong>
+                      <span>{selectedTimelineJob.error}</span>
+                    </div>
+                  </div>
+                )}
+                <dl className="fr-arena-job-hashes">
+                  {selectedTimelineJob.elapsed_seconds != null && (
+                    <div>
+                      <dt>Worker elapsed time</dt>
+                      <dd>{selectedTimelineJob.elapsed_seconds.toFixed(3)} s</dd>
+                    </div>
+                  )}
+                  <div>
+                    <dt>Input snapshot SHA-256</dt>
+                    <dd>{selectedTimelineJob.snapshot_sha256 ?? 'Not recorded'}</dd>
+                  </div>
+                  {selectedTimelineJob.result?.frontier_timeline_sha256 && (
+                    <div>
+                      <dt>Result SHA-256</dt>
+                      <dd>{selectedTimelineJob.result.frontier_timeline_sha256}</dd>
+                    </div>
+                  )}
+                  {selectedTimelineJob.result?.timeline_id && (
+                    <div>
+                      <dt>Timeline identity</dt>
+                      <dd>{selectedTimelineJob.result.timeline_id}</dd>
+                    </div>
+                  )}
+                </dl>
+                {selectedTimelineJob.state === 'COMPLETED' && timelineResult.isLoading && (
+                  <div className="fr-loading">Reading and verifying the completed timeline…</div>
+                )}
+                {timelineResult.isError && <InlineError message={timelineResult.error.message} />}
+                {timelineResult.data?.integrity_verified && (
+                  <>
+                    <p className="fr-arena-replay-note">
+                      Hash checks passed. {timelineResult.data.artifact.timeline.frames.length}{' '}
+                      event-time frames are pinned to observation receipts, freshness policy, and
+                      the stored input digest. Results remain hypothetical.
+                    </p>
+                    <div className="fr-timeline-provenance">
+                      <span>
+                        Markets{' '}
+                        {
+                          timelineResult.data.artifact.timeline.manifest.market_observation_ids
+                            .length
+                        }
+                      </span>
+                      <span>
+                        Books{' '}
+                        {timelineResult.data.artifact.timeline.manifest.book_observation_ids.length}
+                      </span>
+                      <span>
+                        Verified relationships{' '}
+                        {timelineResult.data.artifact.timeline.manifest.relationship_ids.length}
+                      </span>
+                      <span>
+                        Freshness limit{' '}
+                        {timelineResult.data.artifact.timeline.manifest.max_book_age_ms.toLocaleString()}{' '}
+                        ms
+                      </span>
+                    </div>
+                    <div className="fr-timeline-frame-list" aria-label="Timeline frame results">
+                      {timelineResult.data.artifact.timeline.frames.map((frame) => (
+                        <TimelineFrameSummary key={frame.as_of_utc} frame={frame} />
+                      ))}
+                    </div>
+                    <p className="fr-arena-replay-note">
+                      Input {timelineResult.data.artifact.timeline.manifest.input_sha256} · timeline{' '}
+                      {timelineResult.data.artifact.timeline.timeline_id}
+                    </p>
                   </>
                 )}
               </article>
@@ -5328,5 +5652,72 @@ function ReplayComparisonSummary({ comparison }: { comparison: ReplayComparison 
         <code>{comparison.result_sha256}</code>
       </details>
     </article>
+  );
+}
+
+function TimelineFrameSummary({ frame }: { frame: FrontierTimelineFrame }) {
+  const classifications = Object.entries(frame.classification_counts)
+    .map(([key, value]) => `${label(key)}: ${value}`)
+    .join(' · ');
+  return (
+    <details className="fr-timeline-frame">
+      <summary>
+        <span>{time(frame.as_of_utc)}</span>
+        <span>
+          {frame.fresh_book_count} fresh · {frame.stale_book_count} stale ·{' '}
+          {frame.not_yet_observed_count} not yet observed · {frame.excluded_source_book_count}{' '}
+          source-excluded
+        </span>
+        <span>{frame.candidate_count} hypothetical candidates</span>
+      </summary>
+      <div className="fr-timeline-frame-content">
+        <div className="fr-timeline-provenance">
+          <span>{frame.included_book_count} books passed freshness and source checks</span>
+          <span>Run {shortHash(frame.replay_run_id)}</span>
+          <span>Output {shortHash(frame.replay_result_sha256)}</span>
+        </div>
+        <p>Classifications: {classifications || 'none'}</p>
+        {frame.source_states.length ? (
+          <ul className="fr-timeline-source-states">
+            {frame.source_states.map((source, index) => (
+              <li key={`${source.venue}-${index}`}>
+                <strong>
+                  {label(source.venue)}: {label(source.state)}
+                </strong>
+                <span>{source.basis ? ` · ${label(source.basis)} status` : ''}</span>
+                {source.reason && <span> · {source.reason}</span>}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="fr-timeline-no-source-state">
+            No explicit source-state event was pinned. This absence does not certify source health;
+            book receipt time and freshness are evaluated separately.
+          </p>
+        )}
+        {frame.candidates.length > 0 && (
+          <div className="fr-timeline-candidates">
+            {frame.candidates.slice(0, 8).map((candidate) => (
+              <div className="fr-timeline-candidate" key={candidate.candidate_id}>
+                <div>
+                  <strong>{label(candidate.classification)}</strong>
+                  <span>
+                    {label(candidate.family)} ·{' '}
+                    {candidate.timing_verified ? 'timing verified' : 'timing not verified'}
+                  </span>
+                </div>
+                <span>
+                  Modeled worst-case net: {candidate.worst_case_net_pnl ?? 'not established'}
+                </span>
+                <code>{candidate.evidence_sha256}</code>
+              </div>
+            ))}
+            {frame.candidates.length > 8 && (
+              <p>Showing 8 of {frame.candidates.length} bounded candidate summaries.</p>
+            )}
+          </div>
+        )}
+      </div>
+    </details>
   );
 }

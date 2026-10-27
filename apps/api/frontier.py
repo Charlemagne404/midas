@@ -22,6 +22,15 @@ from midas.arena.frontier_replay import (
     store_snapshot,
     verify_frontier_replay_job_result,
 )
+from midas.arena.frontier_timeline import (
+    FrontierTimelineJobSpec,
+)
+from midas.arena.frontier_timeline import (
+    make_snapshot as make_timeline_snapshot,
+)
+from midas.arena.frontier_timeline import (
+    store_snapshot as store_timeline_snapshot,
+)
 from midas.frontier.adapters.base import AdapterError, ExchangeAdapter, FailedResponseEvidence
 from midas.frontier.adapters.coinbase import CoinbaseSpotAdapter
 from midas.frontier.adapters.kraken import KrakenSpotAdapter
@@ -66,7 +75,8 @@ from midas.frontier.relationships import (
 )
 from midas.frontier.replay import deterministic_replay, paired_deterministic_replay
 from midas.frontier.storage import FrontierStore, FrontierStoreError
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from midas.frontier.timeline import MAX_TIMELINE_FRAMES, TimelineSourceStatusEvent
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 class ProbeRequest(BaseModel):
@@ -203,6 +213,42 @@ class PairedReplayRequest(BaseModel):
         return self
 
 
+class TimelineReplayRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+    evaluation_times_utc: tuple[datetime, ...] | None = Field(
+        default=None, max_length=MAX_TIMELINE_FRAMES
+    )
+    source_status_events: tuple[TimelineSourceStatusEvent, ...] = Field(default=(), max_length=100)
+    max_book_age_ms: int = Field(default=15_000, ge=1, le=3_600_000)
+    scenario: ExecutionScenario = Field(default_factory=ExecutionScenario)
+    relationship_limit: int = Field(default=100, ge=1, le=100)
+
+    @field_validator("evaluation_times_utc")
+    @classmethod
+    def evaluation_times_are_ordered_utc(
+        cls, values: tuple[datetime, ...] | None
+    ) -> tuple[datetime, ...] | None:
+        if values is None:
+            return None
+        if not values:
+            raise ValueError("Explicit timeline evaluation times cannot be empty")
+        if any(value.tzinfo is None or value.utcoffset() is None for value in values):
+            raise ValueError("Timeline evaluation times must include a timezone")
+        normalized = tuple(value.astimezone(UTC) for value in values)
+        if tuple(sorted(set(normalized))) != normalized:
+            raise ValueError("Timeline evaluation times must be unique and ordered")
+        return normalized
+
+    @model_validator(mode="after")
+    def recorded_source_status_requires_capture_support(self) -> TimelineReplayRequest:
+        if any(event.basis == "recorded" for event in self.source_status_events):
+            raise ValueError(
+                "Recorded source-state events are not available from the pinned store; "
+                "use explicitly labelled fixture or scenario events"
+            )
+        return self
+
+
 MAX_FRONTIER_READINESS_JOB_SCAN = 100
 MAX_FRONTIER_READINESS_MANIFEST_BYTES = 64 * 1024
 
@@ -289,6 +335,125 @@ def _arena_replay_readiness(root: Path | None) -> tuple[str, str]:
     return (
         "LIVE_VALIDATION_PENDING",
         f"The bounded offline job is registered, but no completed Arena replay evidence was found in {scanned} scanned job record(s).",
+    )
+
+
+def _arena_timeline_readiness(
+    root: Path | None, held_venues: tuple[str, ...] = ()
+) -> tuple[str, str]:
+    if root is None:
+        return "NOT_CONFIGURED", "No Arena root is configured for Frontier event-time replay jobs."
+    if root.is_symlink():
+        return (
+            "REVIEW_REQUIRED",
+            "The configured Arena root is a symlink; timeline evidence was not read.",
+        )
+    jobs_root = root / "jobs"
+    if jobs_root.is_symlink():
+        return "REVIEW_REQUIRED", "The configured Arena jobs directory is a symlink."
+    if not jobs_root.exists():
+        return (
+            "LIVE_VALIDATION_PENDING",
+            "The bounded offline timeline job is registered, but no completed timeline evidence exists.",
+        )
+
+    scanned = 0
+    invalid_completed = 0
+    try:
+        for directory in jobs_root.iterdir():
+            if scanned >= MAX_FRONTIER_READINESS_JOB_SCAN:
+                break
+            scanned += 1
+            manifest = directory / "job.json"
+            if (
+                directory.is_symlink()
+                or not directory.is_dir()
+                or manifest.is_symlink()
+                or not manifest.is_file()
+                or manifest.stat().st_size > MAX_FRONTIER_READINESS_MANIFEST_BYTES
+            ):
+                continue
+            try:
+                record = json.loads(manifest.read_bytes())
+            except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+                continue
+            if not isinstance(record, dict):
+                continue
+            configuration = record.get("configuration")
+            if (
+                not isinstance(configuration, dict)
+                or configuration.get("kind") != "frontier_timeline"
+                or record.get("state") != "COMPLETED"
+            ):
+                continue
+            if held_venues:
+                try:
+                    from midas.arena.frontier_timeline import (
+                        FrontierTimelineJobSpec,
+                    )
+                    from midas.arena.frontier_timeline import (
+                        load_snapshot as load_timeline_snapshot,
+                    )
+
+                    snapshot_value = configuration.get("frontier_timeline")
+                    snapshot = load_timeline_snapshot(
+                        root, FrontierTimelineJobSpec.model_validate(snapshot_value)
+                    )
+                except (OSError, ValueError, TypeError):
+                    invalid_completed += 1
+                    continue
+                held_prefixes = tuple(f"{venue}:" for venue in held_venues)
+                if (
+                    any(item.venue.value in held_venues for item in snapshot.markets)
+                    or any(item.venue.value in held_venues for item in snapshot.books)
+                    or any(
+                        item.left_market_id.startswith(held_prefixes)
+                        or item.right_market_id.startswith(held_prefixes)
+                        for item in snapshot.verified_relationships
+                    )
+                    or any(
+                        item.venue.value in held_venues for item in snapshot.source_status_events
+                    )
+                ):
+                    continue
+            runtime_profile = record.get("runtime_profile")
+            elapsed = record.get("elapsed_seconds")
+            started = record.get("started_at")
+            has_runtime = (
+                isinstance(runtime_profile, dict)
+                and bool(runtime_profile)
+                and isinstance(elapsed, (int, float))
+                and not isinstance(elapsed, bool)
+                and math.isfinite(float(elapsed))
+                and elapsed > 0
+                and isinstance(started, (int, float))
+                and not isinstance(started, bool)
+                and math.isfinite(float(started))
+            )
+            try:
+                if not has_runtime:
+                    raise ValueError("Completed Arena timeline job has no worker runtime record")
+                from midas.arena.frontier_timeline import verify_frontier_timeline_job_result
+
+                artifact = verify_frontier_timeline_job_result(root, directory.name, record)
+            except (OSError, ValueError, TypeError, KeyError):
+                invalid_completed += 1
+                continue
+            return (
+                "EVIDENCE_RECORDED",
+                f"Completed Frontier timeline job {artifact.job_id} has a hash-verified result and worker runtime record. This is one execution sample; resource sustainability remains unmeasured.",
+            )
+    except OSError:
+        return "REVIEW_REQUIRED", "The configured Arena job catalog could not be read safely."
+
+    if invalid_completed:
+        return (
+            "REVIEW_REQUIRED",
+            f"Found {invalid_completed} completed Frontier timeline record(s) without valid bound result and runtime evidence.",
+        )
+    return (
+        "LIVE_VALIDATION_PENDING",
+        f"The bounded offline timeline job is registered, but no completed evidence was found in {scanned} scanned job record(s).",
     )
 
 
@@ -3287,6 +3452,91 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
             "research_only": True,
         }
 
+    @api.post("/arena-timeline-replay", status_code=201)
+    async def create_arena_timeline_replay(
+        request: TimelineReplayRequest,
+    ) -> dict[str, Any]:
+        if arena_root is None:
+            raise HTTPException(
+                status_code=503, detail="Arena timeline replay integration is not configured"
+            )
+        try:
+            market_values = await _load_markets(store, 100, excluded_venues=held_venues)
+            market_keys = {(item.venue, item.native_market_id) for item in market_values}
+            instrument_keys = {
+                (market.venue, market.native_market_id, instrument.native_instrument_id)
+                for market in market_values
+                for instrument in market.instruments
+            }
+            book_values = tuple(
+                book
+                for book, _ in _load_book_records(store, 200, excluded_venues=held_venues)
+                if (book.venue, book.native_market_id) in market_keys
+                and (book.venue, book.native_market_id, book.native_instrument_id)
+                in instrument_keys
+            )
+            canonical_market_ids = {item.canonical_id for item in market_values}
+            relationship_rows = read_stored_relationships(
+                state="verified",
+                limit=100,
+                effective_only=True,
+                excluded_venues=held_venues,
+            )
+            verified = tuple(
+                relationship
+                for relationship in (
+                    Relationship.model_validate(item["relationship"]) for item in relationship_rows
+                )
+                if relationship.left_market_id in canonical_market_ids
+                and relationship.right_market_id in canonical_market_ids
+            )
+            snapshot = make_timeline_snapshot(
+                code_version=_code_version(),
+                markets=market_values,
+                books=book_values,
+                verified_relationships=verified,
+                source_status_events=request.source_status_events,
+                evaluation_times_utc=request.evaluation_times_utc,
+                max_book_age_ms=request.max_book_age_ms,
+                scenario=request.scenario,
+                relationship_limit=request.relationship_limit,
+            )
+            snapshot_sha256 = store_timeline_snapshot(arena_root, snapshot)
+            from midas.arena.jobs import JobSpec, create
+
+            spec = JobSpec(
+                kind="frontier_timeline",
+                frontier_timeline=FrontierTimelineJobSpec(
+                    snapshot_id=snapshot.snapshot_id,
+                    snapshot_sha256=snapshot_sha256,
+                ),
+                max_wall_seconds=300,
+                memory_limit_mb=512,
+                cpu_quota_percent=50,
+                nice=15,
+                io_scheduling_class="idle",
+            )
+            job = await asyncio.to_thread(
+                create,
+                arena_root,
+                spec,
+                admission_key=f"frontier-timeline-v1-{snapshot.snapshot_id}",
+            )
+        except (FrontierStoreError, OSError, ValueError) as error:
+            raise HTTPException(status_code=409, detail=str(error)) from error
+        return {
+            **job,
+            "frontier_snapshot_id": snapshot.snapshot_id,
+            "frontier_snapshot_sha256": snapshot_sha256,
+            "network_calls": 0,
+            "research_only": True,
+            "timeline_frame_policy": (
+                "explicitly_pinned_times"
+                if snapshot.evaluation_times_utc is not None
+                else "input_event_times_and_book_freshness_boundaries"
+            ),
+        }
+
     @api.post("/replay")
     async def replay(
         scenario: ExecutionScenario,
@@ -3325,6 +3575,9 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
     async def readiness() -> dict[str, Any]:
         summary = store.summary(excluded_venues=held_venues)
         arena_replay_state, arena_replay_detail = _arena_replay_readiness(arena_root)
+        arena_timeline_state, arena_timeline_detail = _arena_timeline_readiness(
+            arena_root, held_venues
+        )
         manifests = registry.capability_manifests()
         all_caps_declared = all(len(item.declarations) > 0 for item in manifests)
         eligible_observation_count = int(summary["observations"])
@@ -3456,6 +3709,11 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
                     "name": "arena_replay_worker",
                     "state": arena_replay_state,
                     "detail": arena_replay_detail,
+                },
+                {
+                    "name": "arena_event_time_replay_worker",
+                    "state": arena_timeline_state,
+                    "detail": arena_timeline_detail,
                 },
                 {
                     "name": "resource_sustainability",

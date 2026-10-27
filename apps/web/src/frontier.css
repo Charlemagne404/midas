@@ -2217,6 +2217,91 @@
     monospace;
   overflow-wrap: anywhere;
 }
+.fr-timeline-provenance {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px 16px;
+  padding: 0 15px 12px;
+  color: #8996a7;
+  font-size: 9px;
+}
+.fr-timeline-frame-list {
+  display: grid;
+  gap: 7px;
+  padding: 0 15px 14px;
+}
+.fr-timeline-frame {
+  border: 1px solid #293440;
+  border-radius: 7px;
+  background: #11171e;
+}
+.fr-timeline-frame > summary {
+  display: grid;
+  grid-template-columns: minmax(150px, 0.8fr) minmax(260px, 1.6fr) minmax(130px, 0.7fr);
+  align-items: center;
+  gap: 8px 14px;
+  padding: 11px 12px;
+  color: #c1cbd7;
+  cursor: pointer;
+  font-size: 9px;
+  list-style-position: inside;
+}
+.fr-timeline-frame > summary span:last-child {
+  color: #91bca6;
+}
+.fr-timeline-frame-content {
+  padding: 0 12px 12px;
+  color: #9ba8b8;
+  font-size: 9px;
+  line-height: 1.55;
+}
+.fr-timeline-frame-content > .fr-timeline-provenance {
+  padding: 5px 0 3px;
+}
+.fr-timeline-frame-content > p {
+  margin: 8px 0;
+}
+.fr-timeline-no-source-state {
+  color: #8996a7;
+}
+.fr-timeline-source-states {
+  display: grid;
+  gap: 4px;
+  padding-left: 16px;
+}
+.fr-timeline-source-states strong {
+  color: #d1d9e2;
+}
+.fr-timeline-candidates {
+  display: grid;
+  gap: 6px;
+  margin-top: 10px;
+}
+.fr-timeline-candidate {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(160px, 0.7fr) minmax(180px, 1fr);
+  gap: 8px 12px;
+  align-items: center;
+  padding: 8px;
+  border: 1px solid #26313b;
+  border-radius: 5px;
+  background: #151c24;
+}
+.fr-timeline-candidate > div {
+  display: grid;
+  gap: 3px;
+}
+.fr-timeline-candidate strong {
+  color: #d1d9e2;
+}
+.fr-timeline-candidate span {
+  color: #8996a7;
+}
+.fr-timeline-candidate code {
+  overflow-wrap: anywhere;
+  color: #8fa6bd;
+  font-size: 8px;
+}
 .fr-research-links {
   display: flex;
   align-items: center;
@@ -2332,6 +2417,10 @@
   }
   .fr-filter-row select {
     min-height: 33px;
+  }
+  .fr-timeline-frame > summary,
+  .fr-timeline-candidate {
+    grid-template-columns: 1fr;
   }
   .fr-network-shell {
     margin: 8px;

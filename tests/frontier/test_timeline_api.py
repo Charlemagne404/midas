@@ -1,0 +1,147 @@
+from __future__ import annotations
+
+import asyncio
+import hashlib
+from datetime import timedelta
+
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
+from midas.arena.frontier_timeline import FrontierTimelineSnapshot
+from midas.frontier.adapters import KalshiAdapter, KrakenSpotAdapter, PolymarketAdapter
+from midas.frontier.models import AdapterConfig, MarketBatch, RawObservation, Venue
+from midas.frontier.registry import AdapterRegistry
+from midas.frontier.storage import FrontierStore
+
+from apps.api.frontier import router
+from tests.frontier.builders import T0, book, market
+
+
+def test_timeline_route_stages_only_pinned_local_inputs_without_source_requests(
+    tmp_path, monkeypatch
+):
+    import midas.arena.jobs as jobs
+
+    arena_root = tmp_path / "arena"
+    store = FrontierStore(tmp_path / "frontier")
+    source_market = market(Venue.POLYMARKET, "timeline-api-fixture")
+    market_body = '{"fixture":"timeline-api-market"}'
+    market_raw = RawObservation(
+        venue=Venue.POLYMARKET,
+        observation_kind="market_listing",
+        request_url="https://gamma-api.polymarket.com/markets",
+        http_status=200,
+        request_started_at_utc=T0,
+        received_at_utc=T0,
+        raw_body=market_body,
+        raw_sha256=hashlib.sha256(market_body.encode()).hexdigest(),
+        adapter_version="fixture-adapter-v1",
+    )
+    market_provenance = source_market.provenance.model_copy(
+        update={"raw_sha256": market_raw.raw_sha256, "observation_id": "fixture-market"}
+    )
+    source_market = source_market.model_copy(update={"provenance": market_provenance})
+    market_observation_id = store.append_observation(
+        market_raw, MarketBatch(venue=Venue.POLYMARKET, markets=(source_market,))
+    )
+
+    source_book = book(source_market, source_market.instruments[0].native_instrument_id, "0.42")
+    book_body = '{"fixture":"timeline-api-book"}'
+    book_raw = RawObservation(
+        venue=Venue.POLYMARKET,
+        observation_kind="book_snapshot",
+        request_url="https://clob.polymarket.com/book",
+        http_status=200,
+        request_started_at_utc=T0,
+        received_at_utc=T0,
+        raw_body=book_body,
+        raw_sha256=hashlib.sha256(book_body.encode()).hexdigest(),
+        adapter_version="fixture-adapter-v1",
+    )
+    source_book = source_book.model_copy(
+        update={
+            "provenance": source_book.provenance.model_copy(
+                update={"raw_sha256": book_raw.raw_sha256, "observation_id": "fixture-book"}
+            )
+        }
+    )
+    book_observation_id = store.append_observation(book_raw, source_book)
+
+    disabled = AdapterConfig(enabled=False, live_public_probe_enabled=False)
+    registry = AdapterRegistry(
+        (PolymarketAdapter(disabled), KalshiAdapter(disabled), KrakenSpotAdapter(disabled))
+    )
+    captured: dict[str, object] = {}
+
+    def create(root, spec, *, admission_key):
+        captured.update(root=root, spec=spec, admission_key=admission_key)
+        return {"job_id": "job-0123456789abcdef01234567", "state": "QUEUED"}
+
+    monkeypatch.setattr(jobs, "create", create)
+    app = FastAPI()
+    app.include_router(router(store, registry, arena_root=arena_root))
+    client = TestClient(app)
+    try:
+        response = client.post(
+            "/api/frontier/arena-timeline-replay",
+            json={
+                "evaluation_times_utc": [
+                    T0.isoformat(),
+                    (T0 + timedelta(seconds=20)).isoformat(),
+                ],
+                "max_book_age_ms": 10_000,
+                "scenario": {"name": "API timeline fixture"},
+            },
+        )
+        assert response.status_code == 201, response.text
+        payload = response.json()
+        pinned_path = (
+            arena_root / "frontier-timeline-snapshots" / f"{payload['frontier_snapshot_id']}.json"
+        )
+        pinned = FrontierTimelineSnapshot.model_validate_json(pinned_path.read_bytes())
+        assert pinned.markets[0].provenance.observation_id == market_observation_id
+        assert pinned.books[0].provenance.observation_id == book_observation_id
+        assert captured["root"] == arena_root
+        spec = captured["spec"]
+        assert spec.kind == "frontier_timeline"
+        assert spec.frontier_timeline.snapshot_id == pinned.snapshot_id
+        assert spec.memory_limit_mb == 512
+        assert spec.cpu_quota_percent == 50
+        assert spec.nice == 15
+        assert spec.io_scheduling_class == "idle"
+        assert captured["admission_key"].endswith(pinned.snapshot_id)
+        assert payload["network_calls"] == 0
+        assert payload["research_only"] is True
+
+        recorded_state = client.post(
+            "/api/frontier/arena-timeline-replay",
+            json={
+                "source_status_events": [
+                    {
+                        "venue": "polymarket",
+                        "observed_at_utc": T0.isoformat(),
+                        "state": "unavailable",
+                        "basis": "recorded",
+                        "evidence_observation_id": "a" * 64,
+                        "reason": "unverified user supplied event",
+                    }
+                ]
+            },
+        )
+        assert recorded_state.status_code == 422
+        assert "not available from the pinned store" in recorded_state.text
+
+        reordered_times = client.post(
+            "/api/frontier/arena-timeline-replay",
+            json={
+                "evaluation_times_utc": [
+                    (T0 + timedelta(seconds=20)).isoformat(),
+                    T0.isoformat(),
+                ]
+            },
+        )
+        assert reordered_times.status_code == 422
+        assert "unique and ordered" in reordered_times.text
+        assert store.summary()["observations"] == 2
+    finally:
+        client.close()
+        asyncio.run(registry.aclose())

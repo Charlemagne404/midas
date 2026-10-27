@@ -21,6 +21,7 @@ from midas.arena.datasets import DatasetSpec, research_hash
 from midas.arena.director import DirectorSpec
 from midas.arena.evolution import SweepSpec
 from midas.arena.frontier_replay import FrontierReplayJobSpec
+from midas.arena.frontier_timeline import FrontierTimelineJobSpec
 from midas.arena.migrations import MigrationSpec
 from midas.arena.observations import ObservationSpec
 from midas.arena.policy_search import PolicySearchSpec
@@ -72,6 +73,7 @@ class JobSpec(Model):
         "plan",
         "veritas_qualification",
         "frontier_replay",
+        "frontier_timeline",
     ]
     dataset: DatasetSpec | None = None
     training: TrainingSpec | None = None
@@ -90,6 +92,7 @@ class JobSpec(Model):
     policy_search: PolicySearchSpec | None = None
     veritas_qualification: VeritasQualificationSpec | None = None
     frontier_replay: FrontierReplayJobSpec | None = None
+    frontier_timeline: FrontierTimelineJobSpec | None = None
     max_wall_seconds: int = Field(default=1800, ge=10, le=7200)
     memory_limit_mb: int = Field(default=3072, ge=128, le=3072)
     cpu_quota_percent: int = Field(default=100, ge=1, le=100)
@@ -110,6 +113,7 @@ class JobSpec(Model):
             "plan": "plan_id",
             "veritas_qualification": "veritas_qualification",
             "frontier_replay": "frontier_replay",
+            "frontier_timeline": "frontier_timeline",
             "evaluation": "model_id",
             "diagnostics": "model_id",
             "rl": "rl",
@@ -136,10 +140,11 @@ class JobSpec(Model):
             "policy_search",
             "veritas_qualification",
             "frontier_replay",
+            "frontier_timeline",
         ):
             if (getattr(self, field) is not None) != (field == required):
                 raise ValueError(f"{self.kind} job requires only {required}")
-        if self.kind == "frontier_replay" and (
+        if self.kind in {"frontier_replay", "frontier_timeline"} and (
             self.max_wall_seconds > 300
             or self.memory_limit_mb > 512
             or self.cpu_quota_percent > 50
@@ -147,7 +152,7 @@ class JobSpec(Model):
             or self.io_scheduling_class != "idle"
         ):
             raise ValueError(
-                "Frontier replay jobs are limited to 300 seconds, 512 MiB, half a CPU, nice 15, and idle I/O"
+                "Frontier replay and timeline jobs are limited to 300 seconds, 512 MiB, half a CPU, nice 15, and idle I/O"
             )
         return self
 
@@ -244,7 +249,11 @@ def _create(
     identity = "job-" + uuid.uuid4().hex[:24]
     directory = artifact_path(root, "jobs", identity)
     veritas_read_only = spec.kind == "veritas_qualification"
-    network_restricted = spec.kind in {"veritas_qualification", "frontier_replay"}
+    network_restricted = spec.kind in {
+        "veritas_qualification",
+        "frontier_replay",
+        "frontier_timeline",
+    }
     memory_limit_mb = 512 if veritas_read_only else spec.memory_limit_mb
     # Global admission permits one worker. Respect its declared <= one-core
     # budget: a hidden 10% qualification cap stretched CPU work across ten
@@ -620,6 +629,19 @@ def _run(root: Path, identity: str) -> None:
                     "comparison_id": artifact.comparison.comparison_id,
                     "snapshot_id": artifact.snapshot_id,
                     "artifact": "frontier-replay-result.json",
+                }
+            elif spec.kind == "frontier_timeline":
+                from midas.arena.frontier_timeline import execute_frontier_timeline_job
+
+                assert spec.frontier_timeline is not None
+                timeline_artifact = execute_frontier_timeline_job(
+                    root, identity, spec.frontier_timeline, progress
+                )
+                record["result"] = {
+                    "frontier_timeline_sha256": timeline_artifact.result_sha256,
+                    "timeline_id": timeline_artifact.timeline.timeline_id,
+                    "snapshot_id": timeline_artifact.snapshot_id,
+                    "artifact": "frontier-timeline-result.json",
                 }
             elif spec.kind == "supervised":
                 from midas.arena.supervised import train
