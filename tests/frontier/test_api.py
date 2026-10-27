@@ -593,6 +593,7 @@ def test_empty_overview_reports_capabilities_without_network_or_db_creation(tmp_
     try:
         overview = client.get("/api/frontier/overview")
         sources = client.get("/api/frontier/sources")
+        coverage = client.get("/api/frontier/analytics/coverage")
         assert overview.status_code == 200
         assert overview.json()["state"] == "EMPTY"
         assert overview.json()["research_only"] is True
@@ -604,9 +605,124 @@ def test_empty_overview_reports_capabilities_without_network_or_db_creation(tmp_
             "kraken",
         }
         assert sources.json()["network_called"] is False
+        assert coverage.status_code == 200, coverage.text
+        assert coverage.json()["network_called"] is False
+        assert coverage.json()["samples"]["distinct_markets"] == 0
+        assert coverage.json()["samples"]["market_record_limit"] == 50
+        assert coverage.json()["samples"]["book_observation_records"] == 0
+        assert coverage.json()["market_mix"] == []
+        assert coverage.json()["pricing"] == []
         assert client.get("/api/frontier/observations/invalid").status_code == 422
         assert client.get(f"/api/frontier/observations/{'a' * 64}").status_code == 404
         assert not (tmp_path / "frontier" / "frontier.sqlite3").exists()
+        assert requests == []
+    finally:
+        client.close()
+        asyncio.run(registry.aclose())
+        asyncio.run(http_client.aclose())
+
+
+def test_coverage_analytics_omits_held_source_market_records(tmp_path):
+    client, registry, http_client, requests, store = _client(tmp_path, hold_sources=True)
+    polymarket = market(Venue.POLYMARKET, "coverage-eligible")
+    kalshi = market(Venue.KALSHI, "coverage-held")
+    for market_value in (polymarket, kalshi):
+        body = json.dumps({"fixture_market": market_value.native_market_id})
+        store.append_observation(
+            RawObservation(
+                venue=market_value.venue,
+                observation_kind="market_listing",
+                request_url=f"https://example.test/{market_value.native_market_id}",
+                http_status=200,
+                request_started_at_utc=T0,
+                received_at_utc=T0,
+                raw_body=body,
+                raw_sha256=hashlib.sha256(body.encode()).hexdigest(),
+                adapter_version="coverage-fixture-v1",
+            ),
+            MarketBatch(venue=market_value.venue, markets=(market_value,)),
+        )
+    try:
+        response = client.get("/api/frontier/analytics/coverage")
+        assert response.status_code == 200, response.text
+        payload = response.json()
+        assert payload["samples"]["distinct_markets"] == 1
+        assert {item["venue"] for item in payload["market_mix"]} == {"polymarket"}
+        assert payload["stored_market_counts_by_venue"] == [
+            {"venue": "coinbase_exchange", "market_count": 0, "instrument_count": 0},
+            {"venue": "kalshi", "market_count": 0, "instrument_count": 0},
+            {"venue": "kraken", "market_count": 0, "instrument_count": 0},
+            {"venue": "polymarket", "market_count": 1, "instrument_count": 2},
+        ]
+        kalshi_quality = next(
+            item for item in payload["source_quality"] if item["venue"] == "kalshi"
+        )
+        assert kalshi_quality["latest_instrument_books"] == 0
+        assert requests == []
+    finally:
+        client.close()
+        asyncio.run(registry.aclose())
+        asyncio.run(http_client.aclose())
+
+
+def test_coverage_analytics_summarizes_a_saved_joined_book(tmp_path):
+    client, registry, http_client, requests, store = _client(tmp_path)
+    source_market = market(Venue.POLYMARKET, "coverage-saved-book")
+    market_body = '{"fixture":"coverage-saved-market"}'
+    store.append_observation(
+        RawObservation(
+            venue=Venue.POLYMARKET,
+            observation_kind="market_listing",
+            request_url="https://gamma-api.polymarket.com/markets",
+            http_status=200,
+            request_started_at_utc=T0,
+            received_at_utc=T0,
+            raw_body=market_body,
+            raw_sha256=hashlib.sha256(market_body.encode()).hexdigest(),
+            adapter_version="coverage-fixture-v1",
+        ),
+        MarketBatch(venue=Venue.POLYMARKET, markets=(source_market,)),
+    )
+    source_book = book(
+        source_market,
+        source_market.instruments[0].native_instrument_id,
+        "0.51",
+    )
+    book_body = '{"fixture":"coverage-saved-book"}'
+    book_raw_sha256 = hashlib.sha256(book_body.encode()).hexdigest()
+    normalized_book = source_book.model_copy(
+        update={
+            "provenance": source_book.provenance.model_copy(update={"raw_sha256": book_raw_sha256})
+        }
+    )
+    store.append_observation(
+        RawObservation(
+            venue=Venue.POLYMARKET,
+            observation_kind="book_snapshot",
+            request_url="https://clob.polymarket.com/book",
+            http_status=200,
+            request_started_at_utc=T0,
+            received_at_utc=T0,
+            raw_body=book_body,
+            raw_sha256=book_raw_sha256,
+            adapter_version="coverage-fixture-v1",
+        ),
+        normalized_book,
+    )
+    try:
+        response = client.get("/api/frontier/analytics/coverage")
+        assert response.status_code == 200, response.text
+        payload = response.json()
+        source = next(item for item in payload["source_quality"] if item["venue"] == "polymarket")
+        assert source["latest_instrument_books"] == 1
+        assert source["quality_valid_pricing_books"] == 1
+        assert len(payload["pricing"]) == 1
+        assert payload["pricing"][0]["quote_asset_identity"] == "fiat:USD::"
+        assert payload["stored_market_counts_by_venue"][-1] == {
+            "venue": "polymarket",
+            "market_count": 1,
+            "instrument_count": 2,
+        }
         assert requests == []
     finally:
         client.close()

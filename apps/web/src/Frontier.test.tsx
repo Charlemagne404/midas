@@ -92,6 +92,62 @@ it('renders recorded-evidence empty states and never probes a source automatical
     '/api/frontier/runs?limit=30': { items: [], returned: 0, limit: 30, offset: 0 },
     '/api/frontier/comparisons?limit=30': { items: [], returned: 0, limit: 30, offset: 0 },
     '/api/frontier/readiness': { gates: [] },
+    '/api/frontier/analytics/coverage': {
+      schema_version: 1,
+      as_of_utc: '2026-10-27T21:00:00Z',
+      scope: 'Latest bounded hash-checked stored market, book, and eligible replay samples.',
+      samples: {
+        distinct_markets: 0,
+        market_records: 0,
+        book_observation_records: 0,
+        invalid_normalized_book_records: 0,
+        unique_instrument_books: 0,
+        eligible_replay_runs: 0,
+        candidate_records: 0,
+        candidate_scan_truncated: false,
+        market_record_limit: 50,
+        book_record_limit: 50,
+        replay_run_limit: 20,
+        candidate_record_limit: 5000,
+      },
+      market_mix: [],
+      stored_market_counts_by_venue: [],
+      source_quality: ['polymarket', 'kalshi', 'kraken', 'coinbase_exchange'].map((venue) => ({
+        venue,
+        latest_instrument_books: 0,
+        quality_valid_pricing_books: 0,
+        two_sided_books: 0,
+        one_sided_or_empty_books: 0,
+        crossed_books: 0,
+        flagged_books: 0,
+        unflagged_books: 0,
+        unjoined_or_provenance_mismatch_records: 0,
+        with_exchange_timestamp: 0,
+        with_clock_uncertainty: 0,
+        with_declared_freshness_limit: 0,
+        without_declared_freshness_limit: 0,
+        within_declared_freshness_limit: 0,
+        stale_by_declared_freshness_limit: 0,
+        future_received_timestamp: 0,
+        median_receipt_age_ms: null,
+        p90_receipt_age_ms: null,
+      })),
+      pricing: [],
+      candidate_research: {
+        counts_by_classification: {},
+        independently_audited_candidates: 0,
+        audited_timing_verified_candidates: 0,
+        median_audited_received_skew_ms: null,
+        p90_audited_received_skew_ms: null,
+        median_audited_exchange_skew_ms: null,
+        p90_audited_exchange_skew_ms: null,
+        gross_positive_audited_timing_verified_constructions_repeated_across_distinct_books: 0,
+        gross_positive_candidate_construction_signatures: 0,
+        rejection_reasons: [],
+      },
+      network_called: false,
+      limitations: ['Counts describe bounded recorded samples, not venue-wide coverage.'],
+    },
   };
   const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const path = String(input);
@@ -111,6 +167,11 @@ it('renders recorded-evidence empty states and never probes a source automatical
   expect(await screen.findByText('No replay runs yet')).toBeInTheDocument();
   expect(screen.getByText(/Latest evidence/)).toBeInTheDocument();
   expect(fetchMock.mock.calls.every(([, init]) => init?.method !== 'POST')).toBe(true);
+  fireEvent.click(screen.getByRole('button', { name: 'Coverage & quality' }));
+  expect(await screen.findByRole('heading', { name: 'Recent market mix' })).toBeInTheDocument();
+  expect(screen.getByText('No eligible market records')).toBeInTheDocument();
+  expect(screen.getByText('No quality-valid book pairs')).toBeInTheDocument();
+  expect(screen.getByText(/not venue-wide coverage/)).toBeInTheDocument();
 
   fireEvent.click(screen.getByRole('button', { name: 'Exchanges' }));
   expect(

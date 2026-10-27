@@ -25,10 +25,14 @@ from midas.arena.frontier_replay import (
 from midas.frontier.adapters.base import AdapterError, ExchangeAdapter, FailedResponseEvidence
 from midas.frontier.adapters.coinbase import CoinbaseSpotAdapter
 from midas.frontier.adapters.kraken import KrakenSpotAdapter
-from midas.frontier.capital import (
-    CapitalCarryRequest,
-    evaluate_capital_carry,
+from midas.frontier.analytics import (
+    BOOK_SAMPLE_LIMIT,
+    MARKET_SAMPLE_LIMIT,
+    REPLAY_SAMPLE_LIMIT,
+    StoredBookEvidence,
+    summarize_frontier_coverage,
 )
+from midas.frontier.capital import CapitalCarryRequest, evaluate_capital_carry
 from midas.frontier.economics import (
     ExecutionScenario,
     OpportunityCandidate,
@@ -1083,6 +1087,75 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
             ],
             "network_called": False,
         }
+
+    @api.get("/analytics/coverage")
+    async def coverage_analytics() -> dict[str, Any]:
+        """Summarize recent eligible evidence without probing any source."""
+        try:
+            market_records = await _load_market_records(
+                store,
+                MARKET_SAMPLE_LIMIT,
+                excluded_venues=held_venues,
+                include_fee_evidence=False,
+            )
+            book_rows = _read_stored_observations(
+                store,
+                kind="book_snapshot",
+                excluded_venues=held_venues,
+                limit=BOOK_SAMPLE_LIMIT,
+            )
+            inventory = store.summary(excluded_venues=held_venues)
+        except (FrontierStoreError, ValueError) as error:
+            raise HTTPException(
+                status_code=409,
+                detail=f"Stored Frontier coverage evidence is not readable: {error}",
+            ) from error
+
+        book_records: list[StoredBookEvidence] = []
+        invalid_book_record_count = 0
+        for row in book_rows:
+            normalized = row.get("normalized")
+            if not isinstance(normalized, dict):
+                invalid_book_record_count += 1
+                continue
+            try:
+                book = BookSnapshot.model_validate(normalized)
+                received_at = datetime.fromisoformat(str(row["received_at_utc"]))
+                book_records.append(
+                    StoredBookEvidence(
+                        venue=str(row["venue"]),
+                        raw_sha256=str(row["raw_sha256"]),
+                        received_at_utc=received_at,
+                        book=book,
+                    )
+                )
+            except (KeyError, TypeError, ValueError):
+                invalid_book_record_count += 1
+
+        replay_rows = replay_rows_without_held_sources(read_stored_replays(REPLAY_SAMPLE_LIMIT))
+        stored_market_counts_by_venue = tuple(
+            (
+                venue,
+                int(inventory["markets_by_venue"].get(venue, 0)),
+                int(inventory["instruments_by_venue"].get(venue, 0)),
+            )
+            for venue in sorted(
+                {item.value for item in Venue}
+                | set(inventory["markets_by_venue"])
+                | set(inventory["instruments_by_venue"])
+            )
+        )
+        try:
+            return summarize_frontier_coverage(
+                market_records=market_records,
+                book_records=tuple(book_records),
+                replay_rows=replay_rows,
+                as_of_utc=datetime.now(UTC),
+                invalid_book_record_count=invalid_book_record_count,
+                stored_market_counts_by_venue=stored_market_counts_by_venue,
+            )
+        except ValueError as error:
+            raise HTTPException(status_code=409, detail=str(error)) from error
 
     @api.get("/markets")
     async def markets(
@@ -3628,6 +3701,7 @@ async def _load_market_records(
     *,
     venue: Venue | None = None,
     excluded_venues: tuple[str, ...] = (),
+    include_fee_evidence: bool = True,
 ) -> tuple[tuple[FrontierMarket, str], ...]:
     rows = _market_observation_rows(
         store, min(200, limit), venue=venue, excluded_venues=excluded_venues
@@ -3665,6 +3739,8 @@ async def _load_market_records(
         if len(markets) >= limit:
             break
     records = tuple(sorted(markets.values(), key=lambda item: item[0].canonical_id))
+    if not include_fee_evidence:
+        return records
     return _enrich_markets_with_kalshi_fee_evidence(store, records, excluded_venues=excluded_venues)
 
 

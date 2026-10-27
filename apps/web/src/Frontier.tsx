@@ -5,6 +5,7 @@ import {
   Activity,
   AlertTriangle,
   ArrowRight,
+  BarChart3,
   Beaker,
   BookOpenCheck,
   Boxes,
@@ -57,6 +58,81 @@ type Overview = {
   };
   sources: Source[];
   latest_evidence_at_utc: string | null;
+  limitations: string[];
+};
+type CoverageAnalytics = {
+  as_of_utc: string;
+  scope: string;
+  samples: {
+    distinct_markets: number;
+    market_records: number;
+    book_observation_records: number;
+    invalid_normalized_book_records: number;
+    unique_instrument_books: number;
+    eligible_replay_runs: number;
+    candidate_records: number;
+    candidate_scan_truncated: boolean;
+    market_record_limit: number;
+    book_record_limit: number;
+    replay_run_limit: number;
+    candidate_record_limit: number;
+  };
+  market_mix: {
+    venue: Venue;
+    market_kind: string;
+    market_count: number;
+    instrument_count: number;
+    event_count: number;
+  }[];
+  stored_market_counts_by_venue: {
+    venue: Venue;
+    market_count: number;
+    instrument_count: number;
+  }[];
+  source_quality: {
+    venue: Venue;
+    latest_instrument_books: number;
+    quality_valid_pricing_books: number;
+    two_sided_books: number;
+    one_sided_or_empty_books: number;
+    crossed_books: number;
+    flagged_books: number;
+    unflagged_books: number;
+    unjoined_or_provenance_mismatch_records: number;
+    with_exchange_timestamp: number;
+    with_clock_uncertainty: number;
+    with_declared_freshness_limit: number;
+    without_declared_freshness_limit: number;
+    within_declared_freshness_limit: number;
+    stale_by_declared_freshness_limit: number;
+    future_received_timestamp: number;
+    median_receipt_age_ms: string | null;
+    p90_receipt_age_ms: string | null;
+  }[];
+  pricing: {
+    venue: Venue;
+    market_kind: string;
+    quantity_unit: string;
+    quote_asset_identity: string;
+    instrument_count: number;
+    median_relative_spread_bps: string | null;
+    p90_relative_spread_bps: string | null;
+    median_best_bid_depth: string | null;
+    median_best_ask_depth: string | null;
+  }[];
+  candidate_research: {
+    counts_by_classification: Record<string, number>;
+    independently_audited_candidates: number;
+    audited_timing_verified_candidates: number;
+    median_audited_received_skew_ms: string | null;
+    p90_audited_received_skew_ms: string | null;
+    median_audited_exchange_skew_ms: string | null;
+    p90_audited_exchange_skew_ms: string | null;
+    gross_positive_audited_timing_verified_constructions_repeated_across_distinct_books: number;
+    gross_positive_candidate_construction_signatures: number;
+    rejection_reasons: { reason: string; count: number }[];
+  };
+  network_called: false;
   limitations: string[];
 };
 type SettlementAssetIdentity = {
@@ -677,10 +753,18 @@ type ObservationEvidence = {
   };
 };
 type Section =
-  'overview' | 'sources' | 'markets' | 'relationships' | 'opportunities' | 'workbench' | 'replay';
+  | 'overview'
+  | 'coverage'
+  | 'sources'
+  | 'markets'
+  | 'relationships'
+  | 'opportunities'
+  | 'workbench'
+  | 'replay';
 
 const sections: { id: Section; label: string; icon: typeof Globe2 }[] = [
   { id: 'overview', label: 'Overview', icon: Activity },
+  { id: 'coverage', label: 'Coverage & quality', icon: BarChart3 },
   { id: 'sources', label: 'Exchanges', icon: Globe2 },
   { id: 'markets', label: 'Markets', icon: Layers3 },
   { id: 'relationships', label: 'Relationship graph', icon: GitBranch },
@@ -1443,6 +1527,12 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
     queryFn: () => api<Overview>('/frontier/overview'),
     ...options,
   });
+  const coverageAnalytics = useQuery({
+    queryKey: ['frontier', 'coverage-analytics'],
+    queryFn: () => api<CoverageAnalytics>('/frontier/analytics/coverage'),
+    enabled: section === 'coverage',
+    ...options,
+  });
   const sources = useQuery({
     queryKey: ['frontier', 'sources'],
     queryFn: () => api<{ items: Source[] }>('/frontier/sources'),
@@ -2083,6 +2173,341 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
               />
             )}
           </section>
+        </>
+      )}
+
+      {section === 'coverage' && (
+        <>
+          {coverageAnalytics.isLoading ? (
+            <div className="fr-card fr-loading" role="status">
+              Summarizing bounded local evidence…
+            </div>
+          ) : coverageAnalytics.isError ? (
+            <section className="fr-card">
+              <EmptyState
+                title="Coverage analysis unavailable"
+                detail={coverageAnalytics.error.message}
+              />
+            </section>
+          ) : coverageAnalytics.data ? (
+            <>
+              <div className="fr-metrics">
+                <Metric
+                  title="Distinct recorded markets"
+                  value={count(coverageAnalytics.data.samples.distinct_markets)}
+                  note={`Up to ${count(coverageAnalytics.data.samples.market_record_limit)} recent market records`}
+                  icon={Layers3}
+                />
+                <Metric
+                  title="Structurally valid recorded books"
+                  value={count(
+                    coverageAnalytics.data.source_quality.reduce(
+                      (sum, source) => sum + source.quality_valid_pricing_books,
+                      0,
+                    ),
+                  )}
+                  note="Latest joined two-sided, uncrossed, unflagged books with exact quote identity; freshness is reported separately"
+                  icon={Radio}
+                />
+                <Metric
+                  title="Independent timing audits"
+                  value={count(
+                    coverageAnalytics.data.candidate_research.independently_audited_candidates,
+                  )}
+                  note={`${count(coverageAnalytics.data.candidate_research.audited_timing_verified_candidates)} pass the pinned timing gate`}
+                  icon={ShieldCheck}
+                />
+                <Metric
+                  title="Repeated gross-positive constructions"
+                  value={count(
+                    coverageAnalytics.data.candidate_research
+                      .gross_positive_audited_timing_verified_constructions_repeated_across_distinct_books,
+                  )}
+                  note="Verified candidate signatures across distinct books and replay times; net economics not implied"
+                  icon={Activity}
+                />
+              </div>
+              <p className="fr-footnote">
+                {coverageAnalytics.data.scope} As of {time(coverageAnalytics.data.as_of_utc)}.
+                Candidate records come from at most{' '}
+                {count(coverageAnalytics.data.samples.replay_run_limit)} eligible saved runs.
+              </p>
+
+              <div className="fr-overview-grid">
+                <section className="fr-card">
+                  <div className="fr-card-head">
+                    <div>
+                      <span className="fr-kicker">RECORDED UNIVERSE</span>
+                      <h2>Recent market mix</h2>
+                    </div>
+                    <Layers3 size={17} />
+                  </div>
+                  {coverageAnalytics.data.market_mix.length ? (
+                    <div className="fr-table-wrap">
+                      <table className="fr-table">
+                        <thead>
+                          <tr>
+                            <th>Venue</th>
+                            <th>Instrument type</th>
+                            <th>Markets</th>
+                            <th>Instruments</th>
+                            <th>Events</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {coverageAnalytics.data.market_mix.map((item) => (
+                            <tr key={`${item.venue}:${item.market_kind}`}>
+                              <td>{label(item.venue)}</td>
+                              <td>{label(item.market_kind)}</td>
+                              <td>{count(item.market_count)}</td>
+                              <td>{count(item.instrument_count)}</td>
+                              <td>{count(item.event_count)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <EmptyState
+                      title="No eligible market records"
+                      detail="The bounded recent market sample has no stored, research-eligible records."
+                    />
+                  )}
+                  <h3>Eligible stored inventory by venue</h3>
+                  {coverageAnalytics.data.stored_market_counts_by_venue.length ? (
+                    <div className="fr-table-wrap">
+                      <table className="fr-table">
+                        <thead>
+                          <tr>
+                            <th>Venue</th>
+                            <th>Stored markets</th>
+                            <th>Stored instruments</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {coverageAnalytics.data.stored_market_counts_by_venue.map((item) => (
+                            <tr key={item.venue}>
+                              <td>{label(item.venue)}</td>
+                              <td>{count(item.market_count)}</td>
+                              <td>{count(item.instrument_count)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <p className="fr-footnote">No eligible market identities are stored.</p>
+                  )}
+                </section>
+
+                <section className="fr-card">
+                  <div className="fr-card-head">
+                    <div>
+                      <span className="fr-kicker">SOURCE QUALITY</span>
+                      <h2>Latest instrument books</h2>
+                    </div>
+                    <Radio size={17} />
+                  </div>
+                  <div className="fr-table-wrap">
+                    <table className="fr-table">
+                      <thead>
+                        <tr>
+                          <th>Venue</th>
+                          <th>Sample</th>
+                          <th>Price-valid</th>
+                          <th>Flagged / crossed</th>
+                          <th>Unjoined / bad lineage</th>
+                          <th>Future time</th>
+                          <th>Exchange time</th>
+                          <th>Clock bounds</th>
+                          <th>Freshness rule</th>
+                          <th>Median age</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {coverageAnalytics.data.source_quality.map((source) => (
+                          <tr key={source.venue}>
+                            <td>{label(source.venue)}</td>
+                            <td>{count(source.latest_instrument_books)}</td>
+                            <td>{count(source.quality_valid_pricing_books)}</td>
+                            <td>
+                              {count(source.flagged_books)} / {count(source.crossed_books)}
+                            </td>
+                            <td>{count(source.unjoined_or_provenance_mismatch_records)}</td>
+                            <td>{count(source.future_received_timestamp)}</td>
+                            <td>{count(source.with_exchange_timestamp)}</td>
+                            <td>{count(source.with_clock_uncertainty)}</td>
+                            <td>
+                              {count(source.within_declared_freshness_limit)} in /{' '}
+                              {count(source.stale_by_declared_freshness_limit)} stale /{' '}
+                              {count(source.without_declared_freshness_limit)} unknown
+                            </td>
+                            <td>
+                              {source.median_receipt_age_ms == null
+                                ? '—'
+                                : `${money(source.median_receipt_age_ms)} ms`}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  {coverageAnalytics.data.samples.invalid_normalized_book_records > 0 && (
+                    <p className="fr-footnote">
+                      {count(coverageAnalytics.data.samples.invalid_normalized_book_records)} stored
+                      book records could not be normalized for this summary.
+                    </p>
+                  )}
+                </section>
+
+                <section className="fr-card">
+                  <div className="fr-card-head">
+                    <div>
+                      <span className="fr-kicker">RECORDED QUOTES</span>
+                      <h2>Spread and top depth</h2>
+                    </div>
+                    <BarChart3 size={17} />
+                  </div>
+                  {coverageAnalytics.data.pricing.length ? (
+                    <div className="fr-table-wrap">
+                      <table className="fr-table">
+                        <thead>
+                          <tr>
+                            <th>Venue / type</th>
+                            <th>Denomination</th>
+                            <th>Quantity unit</th>
+                            <th>Books</th>
+                            <th>Median / p90 spread (bps)</th>
+                            <th>Median bid / ask depth</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {coverageAnalytics.data.pricing.map((item) => (
+                            <tr
+                              key={`${item.venue}:${item.market_kind}:${item.quantity_unit}:${item.quote_asset_identity}`}
+                            >
+                              <td>
+                                {label(item.venue)} · {label(item.market_kind)}
+                              </td>
+                              <td>
+                                <code>{item.quote_asset_identity}</code>
+                              </td>
+                              <td>{label(item.quantity_unit)}</td>
+                              <td>{count(item.instrument_count)}</td>
+                              <td>
+                                {money(item.median_relative_spread_bps)} /{' '}
+                                {money(item.p90_relative_spread_bps)}
+                              </td>
+                              <td>
+                                {money(item.median_best_bid_depth)} /{' '}
+                                {money(item.median_best_ask_depth)}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <EmptyState
+                      title="No quality-valid book pairs"
+                      detail="Spread summaries require joined market instruments and matching quote-asset identities."
+                    />
+                  )}
+                </section>
+
+                <section className="fr-card">
+                  <div className="fr-card-head">
+                    <div>
+                      <span className="fr-kicker">CANDIDATE REVIEW</span>
+                      <h2>Replay classifications and rejection reasons</h2>
+                    </div>
+                    <GitBranch size={17} />
+                  </div>
+                  {Object.keys(coverageAnalytics.data.candidate_research.counts_by_classification)
+                    .length ? (
+                    <div className="fr-table-wrap">
+                      <table className="fr-table">
+                        <thead>
+                          <tr>
+                            <th>Classification</th>
+                            <th>Replay candidate records</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {Object.entries(
+                            coverageAnalytics.data.candidate_research.counts_by_classification,
+                          ).map(([classification, value]) => (
+                            <tr key={classification}>
+                              <td>{label(classification)}</td>
+                              <td>{count(value)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <EmptyState
+                      title="No candidate records in the replay window"
+                      detail="No count is inferred from absent or unavailable replay evidence."
+                    />
+                  )}
+                  <h3>Most frequent rejection reasons</h3>
+                  {coverageAnalytics.data.candidate_research.rejection_reasons.length ? (
+                    <ul className="fr-limitations">
+                      {coverageAnalytics.data.candidate_research.rejection_reasons.map((item) => (
+                        <li key={item.reason}>
+                          <span>{item.reason}</span> <strong>{count(item.count)}</strong>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="fr-footnote">No candidate rejection reasons were recorded.</p>
+                  )}
+                  <p className="fr-footnote">
+                    Audited receipt skew median / p90:{' '}
+                    {money(
+                      coverageAnalytics.data.candidate_research.median_audited_received_skew_ms,
+                    )}{' '}
+                    /{' '}
+                    {money(coverageAnalytics.data.candidate_research.p90_audited_received_skew_ms)}{' '}
+                    ms · exchange timestamp skew median / p90:{' '}
+                    {money(
+                      coverageAnalytics.data.candidate_research.median_audited_exchange_skew_ms,
+                    )}{' '}
+                    /{' '}
+                    {money(coverageAnalytics.data.candidate_research.p90_audited_exchange_skew_ms)}{' '}
+                    ms
+                  </p>
+                </section>
+              </div>
+              {coverageAnalytics.data.samples.candidate_scan_truncated && (
+                <div className="fr-alert" role="status">
+                  Candidate analytics stopped at its bounded record limit; counts are incomplete.
+                </div>
+              )}
+              <section className="fr-card">
+                <div className="fr-card-head">
+                  <div>
+                    <span className="fr-kicker">INTERPRETATION</span>
+                    <h2>Sample limits and scientific boundaries</h2>
+                  </div>
+                  <ShieldCheck size={17} />
+                </div>
+                <ul className="fr-limitations">
+                  {coverageAnalytics.data.limitations.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </section>
+            </>
+          ) : (
+            <section className="fr-card">
+              <EmptyState
+                title="Coverage analysis unavailable"
+                detail="No coverage analytics response was returned."
+              />
+            </section>
+          )}
         </>
       )}
 
