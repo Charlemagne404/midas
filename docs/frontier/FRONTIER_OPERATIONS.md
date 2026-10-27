@@ -35,10 +35,19 @@ record; a string reference is not permission. See the
 [source-data terms review](SOURCE_DATA_TERMS_REVIEW_2026-10-27.md). Existing
 Kalshi and Kraken capture artifacts remain preserved, but do not treat them as
 available inputs for new research until the corresponding use review is closed.
-The application gate prevents new source requests; it does not yet hide all
-previously stored source records from read, graph, or replay routes, so do not
-use those routes with the held sources pending review. Fixture-only development
-remains available.
+While the permission reference is absent, Frontier application routes also
+quarantine previously stored Kalshi/Kraken observations and derived research
+artifacts: market/book/trade lists, direct observation lookup, relationship
+lists, graph traversal, candidate/run/comparison views, replay inputs, and
+Arena replay catalog/results, plus generic Arena job overview/detail/log and
+research-activity routes for Frontier replay jobs. Generic submissions reject
+held snapshots, and cancellation cannot expose a result or mutate a held job.
+Held rows are not deleted or rewritten. The overview's database-size
+measurement includes preserved held evidence while its research counts exclude
+it. Direct database inspection, exports, and other paths outside these APIs
+remain held. Controlled fixture tests verify the application filters; they do
+not validate the terms or
+inspect preserved live captures. Fixture-only development remains available.
 
 Cross-venue observations have independent clocks and freshness guarantees.
 Different receipt times or a shared local timestamp do not prove simultaneous

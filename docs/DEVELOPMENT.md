@@ -107,7 +107,14 @@ reviewed source permission/terms record; Frontier does not validate the record.
 The current review leaves both Kalshi and Kraken live probes blocked. See the
 [source-data terms review](frontier/SOURCE_DATA_TERMS_REVIEW_2026-10-27.md).
 These controls do not enable account access, order entry, or credential
-handling. A deliberate probe is initiated from Frontier's Exchanges view. One
+handling. While the reference is absent, the API also filters held venues from
+stored market, graph, replay, candidate, and comparison reads. Arena replay
+snapshots are checked through the dedicated routes, generic job summary/detail
+and log routes, and research-activity digests. Generic job submission rejects
+held snapshots and cancel actions are rejected before mutating held jobs.
+Missing provenance is rejected.
+This route filter does not cover direct database reads or exports, which remain
+held. A deliberate probe is initiated from Frontier's Exchanges view. One
 probe can capture one bounded listing, optionally one book, and at most ten
 recent public trades for the first discovered market. `GET
 /api/frontier/trades` returns stored, hash-verified normalized prints with their

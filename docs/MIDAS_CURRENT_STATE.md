@@ -417,7 +417,17 @@ and [Frontier ledger](frontier/FRONTIER_MISSION_LEDGER.md). No source request,
 external message, production change, or historical-data mutation was made for
 this review.
 
-The gate blocks new network capture only. It does not yet filter earlier
-Kalshi/Kraken rows from every local read, graph, or replay API; those paths
-remain under the same operational hold until permission is resolved or a
-separate quarantine change is completed.
+Code commits `d38f517`, `73e008e`, and `e7958c1` extend the hold to Frontier
+application reads: old Kalshi/Kraken market, book, trade, and observation
+routes are filtered; relationships and graph edges touching those venues are
+excluded; stored
+runs/comparisons and Arena replay artifacts with held-source provenance are
+quarantined; new replay inputs omit the held observations; and generic Arena
+job views, research-activity digests, replay submission, and cancellation
+enforce the same snapshot check.
+Controlled fixtures verify those filters while confirming old records remain
+stored.
+Direct database inspection, exports, and other paths outside those APIs remain
+held pending the source review. The integration test does not inspect actual
+preserved source captures. See the [read-quarantine section](frontier/SOURCE_DATA_TERMS_REVIEW_2026-10-27.md#read-quarantine-verification--2026-10-27)
+and [Frontier ledger](frontier/FRONTIER_MISSION_LEDGER.md).

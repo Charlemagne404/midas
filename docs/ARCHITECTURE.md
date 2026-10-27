@@ -113,6 +113,17 @@ self-attributed review revisions record rejected, ambiguous, or strict-verifier
 decisions; the verifier requires verified resolution and exhaustive payout
 evidence. Reviewer and external assertion references are not authenticated.
 Replay uses only the latest decision and preserves the full review history.
+
+When a venue's source-use policy is blocked, Frontier derives a held-source set
+from adapter configuration and applies it at the application read boundary.
+SQL queries omit held observations and related graph edges; direct evidence,
+replay inputs, and derived API results are filtered or rejected. Generic Arena
+job and research-activity summaries, details, and logs also check Frontier
+replay provenance; generic replay submission rejects held snapshots and
+cancellation is blocked before a held job can be changed. Missing replay
+provenance fails closed. Raw append-only evidence remains preserved. Direct
+database inspection and exports
+are outside this route quarantine and remain under the operational hold.
 Canonical denomination identities now flow from instrument quote through public
 book, fee, trade, candidate leg, and modeled capital fields. Candidate economics
 and independent audit require those exact identities to agree with the payoff

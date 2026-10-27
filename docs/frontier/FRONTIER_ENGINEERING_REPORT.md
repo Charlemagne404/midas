@@ -22,8 +22,10 @@ An official source-terms review on 2026-10-27 adds a live-data permission
 boundary: Kalshi capture is blocked pending written research/retention
 authorization, and Kraken capture is blocked pending review of applicable
 market-data terms and any required permission. Their adapters remain available
-for offline fixtures. Previously captured source artifacts remain preserved,
-but are held from new research/replay use pending review.
+for offline fixtures. Previously captured source artifacts remain preserved
+and are quarantined from Frontier application reads, graphs, candidate/replay
+views, and Arena replay result APIs while the hold is active. Direct database
+inspection and exports remain within the operational hold.
 
 The three adapters are implemented and fixture/contract tested. Polymarket also
 has an explicitly triggered, cursor-paginated Data API v2 trade-page path that
@@ -1986,6 +1988,7 @@ cross-venue economics.
 | Laboratory/Arena research orchestration | PARTIALLY VERIFIED | Arena job kind, content-addressed snapshots, bounded offline execution, API submission/history/result verification, process CPU/RSS capture, and explicit workspace controls are implemented and tested; two fixture jobs passed the host-wide gate and completed under systemd. Laboratory campaign management and resource-sustainability evidence remain incomplete. |
 | Native Mission Control workspace | PARTIALLY VERIFIED | Local API, bounded graph/review UI, Polymarket/Kalshi trade-page and event-group controls, explicit filtered one-page Kalshi MVE capture by series, collection, or one event ticker with returned member-list state, parent-event context, instrument-bound fee sensitivity, selected-leg component-rule and recorded-settlement arithmetic inspection, paired replay, candidate fill stress, virtual balances keyed by venue and exact denomination identity, and Arena job history/result display. The Frontier component file passes all 8 tests, including token `USD` versus fiat `USD` separation; web typecheck, targeted frontend and browser-test ESLint, and Prettier pass. The focused depth-two/capital-fragmentation/mobile browser case passes with the exact-identity fixture contract. The production build now passes with 676,320 KiB peak RSS and no swap; Vite reports the existing 500 kB chunk-size warning for the index/chart chunks. The workspace is not deployed. |
 | Source data use/retention permission | BLOCKED | Official Kalshi terms restrict API collection/storage to facilitating a member's own exchange trading absent authorization. Kraken terms require prior permission for some non-personal commercial public market-data uses; Frontier has not classified that use. The main API now requires permission/review references in addition to probe flags. References are not independently verified; no new Kalshi/Kraken live captures or new research use of their stored data pending review. Existing artifacts are preserved unchanged. |
+| Held-source application read quarantine | IMPLEMENTED, LIVE VALIDATION PENDING | Code `d38f517` filters held-venue observation lists/direct reads, source aggregates, relationships/graph edges, review and replay inputs, derived outputs, paired comparisons, and Frontier Arena replays. Code `73e008e` applies pinned-snapshot checks to Arena job summaries, details, logs, submissions, and cancellation; `e7958c1` also filters the research-activity digest. Controlled fixtures verify held/missing provenance is hidden or rejected while raw source/snapshot/result artifacts remain stored. The actual preserved live store was not audited; direct database reads and exports remain outside the API filter. |
 | Production readiness/deployment | DEFERRED | Separate review and authorization required; production eligibility is false. |
 | Positive economic result | NOT ESTABLISHED | No genuine cross-venue equivalent or economically eligible result in captured evidence. |
 
@@ -2240,20 +2243,25 @@ The application now defaults both sources off and additionally requires
 probe flag, before enabling a live request. The reference is not validated by
 the application. Source routes report why a probe is disabled, return HTTP 409
 without a network request, and the readiness API reports a blocked source-use
-gate. Mission Control displays the restriction. Existing capture artifacts
-remain unchanged; new live capture and new research use of their stored data are
-held pending permission/terms review. The runtime gate currently blocks fresh
-network requests but does not filter every existing row from local read, graph,
-or replay APIs; those paths remain an explicit follow-up safety gap. Fixture
-development remains available.
+gate. Mission Control displays the restriction. Commits `d38f517`, `73e008e`, and
+`e7958c1` filter held-source observations before market/book/trade lists, direct
+evidence reads, relationship and graph queries, saved-input replay,
+candidate/run/comparison views, and Frontier Arena replay endpoints. Generic
+Arena job summaries/details/logs and research-activity digests reject held
+snapshots; generic replay submission checks the snapshot before enqueue, and
+cancellation is rejected before mutation. Overview aggregates omit held-source
+coverage while database size continues to account for preserved evidence. The
+filter operates at the application API boundary; direct database inspection
+and exports remain held.
+Fixture development remains available.
 
-The source gate/configuration/API test file passed **2/2**; the full Frontier
-API module plus that file passed **37 tests** in 20.13 seconds. The Frontier
-component file passed **8/8**, web typecheck, targeted ESLint/Prettier, and
-Python Ruff checks passed. One existing Starlette/httpx TestClient deprecation
-warning remains. A new full-suite run was deferred at memory PSI `avg10` 39.10%
-(`some`) / 35.99% (`full`). No exchange request, account access, external
-message, service change, or evidence mutation was made for this review.
+The source/storage/Arena/API selection passed **13 tests** in 10.56 seconds; the
+Frontier component suite passed **8/8**. TypeScript, targeted ESLint, Prettier,
+Ruff, and `git diff --check` passed. One existing Starlette/httpx TestClient
+deprecation warning remains. The full suite and frontend production build were
+not rerun at this checkpoint. These are fixture-based route checks, not a read
+audit of the actual preserved data store. No exchange request, account access,
+external message, service change, deployment, or evidence mutation was made.
 
 The source terms and operational limits are recorded in
 [`SOURCE_DATA_TERMS_REVIEW_2026-10-27.md`](SOURCE_DATA_TERMS_REVIEW_2026-10-27.md).

@@ -1,14 +1,18 @@
 # Project Frontier Mission Ledger
 
-**Latest checkpoint (2026-10-27):** Code commit `9d52b23` gates new Kalshi and
-Kraken live probes behind source-specific permission/review references and
-surfaces the block in the source API, readiness, and Mission Control. It does
-not yet quarantine old rows from all local read/replay APIs; operations hold
-those paths pending terms review. Code commit `03dbc92` propagates exact
-denomination identity through quotes, books, fees, trades, candidate legs and
-capital, independent audit, replay, and venue-separated virtual funding. The
-full Python Frontier suite passed 153 tests and the local production build
-completed before this policy change. Current versions are FrontierMarket v3,
+**Latest checkpoint (2026-10-27):** Code commit `e7958c1` also filters held
+Frontier replay jobs from Arena's research-activity digest, extending the
+generic job quarantine in `73e008e` and source read filtering in `d38f517`.
+Held replay summaries, details, logs, submissions, and cancellations are
+filtered or rejected after checking the pinned snapshot. The focused fixture
+selection passes 13 tests and confirms that stored source/replay artifacts
+remain unchanged. The source permission gate from `9d52b23` remains
+BLOCKED; the read quarantine does not resolve source terms. Code commit
+`03dbc92` propagates exact denomination identity through quotes, books, fees,
+trades, candidate legs and capital, independent audit, replay, and
+venue-separated virtual funding. The full Python Frontier suite passed 153
+tests and the local production build completed before this policy change.
+Current versions are FrontierMarket v3,
 BookSnapshot v2, TradeObservation v3, OpportunityCandidate v2, economic model
 v6, independent audit v3, replay v7, Polymarket adapter v6, Kalshi adapter v14,
 and Kraken Spot adapter v3. The Frontier mission remains incomplete: verified
@@ -1196,10 +1200,9 @@ Code commit `9d52b23` adds `MIDAS_FRONTIER_KALSHI_RESEARCH_AUTHORIZATION_REF` an
 requires a reference in addition to the existing probe flag, returns the
 policy reason in source inventory and disabled-probe errors, adds a readiness
 gate, and shows the restriction in Mission Control. A reference is not
-independently verified by the application. Existing data is preserved; the
-runtime gate blocks new network probes but does not yet quarantine old source
-rows from every read, graph, and replay endpoint. Treat those operations as
-held pending a permission review or a separate quarantine change.
+independently verified by the application. At this initial gate checkpoint,
+stored-source reads were not yet quarantined; that gap is superseded by the
+following `d38f517` checkpoint. Existing data remains preserved.
 
 Verification: the Frontier API module plus source-policy tests passed **37
 tests** in 20.13 seconds, and the updated source-configuration/API contract
@@ -1208,3 +1211,49 @@ ESLint, Prettier, Ruff and `git diff --check` passed. The full suite and browser
 E2E were deferred with memory PSI `avg10` at 39.10% (`some`) and 35.99%
 (`full`). No live source call, production service, external message, or
 historical evidence mutation occurred.
+
+## 2026-10-27 — held-source read quarantine
+
+Code commit `d38f517` applies the active Kalshi/Kraken source-use hold to stored
+research reads. SQL-level source exclusions cover market, book, and trade
+observations, summary aggregates, relationship lists, and indexed graph
+neighborhoods. Direct observation and relationship-review reads reject held
+records. Replay generation uses only non-held observations and relationships;
+old candidate/run/comparison outputs are omitted when provenance or legs trace
+to a held venue, with missing provenance failing closed. Main wires the same
+venue hold into Arena; its Frontier replay catalog hides held snapshots and the
+result route returns HTTP 409. The raw append-only evidence and pinned Arena
+files remain unchanged. Direct database inspection and exports remain outside
+the application route filter and are still operationally held.
+
+Verification: the focused source/storage/Arena/API selection passed **13
+tests** in 9.71 seconds with the existing Starlette/httpx TestClient warning.
+The Frontier component suite passed **8/8**; TypeScript, targeted ESLint,
+Prettier, Ruff and `git diff --check` passed. The full suite and production
+build were not rerun. The integration evidence is fixture-only; it does not
+audit the preserved live store or settle data-use terms. No live request,
+external service, production configuration, or historical evidence was
+modified. Source permission remains BLOCKED, deployment remains DEFERRED, and
+Project Frontier remains incomplete.
+
+## 2026-10-27 — generic Arena quarantine coverage
+
+Code commit `73e008e` extends the `d38f517` read quarantine to generic Arena
+surfaces that could otherwise disclose or reuse Frontier replay results. The
+Arena overview omits held or unproven replay jobs; generic detail and log routes
+reject them; generic replay submission validates the pinned snapshot before
+enqueue; and cancellation is rejected before the job can be mutated or its
+record returned. The dedicated replay catalog/result routes share the same
+snapshot check. Commit `e7958c1` applies the check to the research-activity
+digest as well. A result artifact marks a job as a Frontier replay, so a
+missing or altered job configuration fails closed. These decisions use
+fixture snapshots and do not inspect the preserved live source database.
+
+Verification: the focused source/storage/Arena/API selection passed **13 tests**
+in 10.56 seconds with the existing Starlette/httpx TestClient deprecation
+warning. The Arena held-source regression passed separately (**1 passed**).
+Ruff format/check and `git diff --check` passed. The source artifacts and Arena
+snapshot/result fixtures remained unchanged; no service, exchange, or live
+database was accessed. Source terms remain BLOCKED, direct database reads and
+exports remain held, production deployment remains DEFERRED, and the mission
+is incomplete.

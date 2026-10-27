@@ -315,6 +315,20 @@ per second, rejects redirects, and rejects hosts outside its venue allowlist.
 The API serializes probes per venue and the store defaults to 64 MiB, 50,000 raw
 observations, 100,000 relationship records, and 512 KiB per stored record.
 
+When the terms gate blocks a venue, read APIs also quarantine that venue's
+stored observations and derived research. SQL-level exclusions cover source
+aggregates, market/book/trade rows, relationships, and bounded graph neighbors.
+Direct evidence and review routes reject held records; replay inputs exclude
+them, while historical Frontier results and paired comparisons are hidden when
+their provenance is held or incomplete. Arena's Frontier-specific replay view,
+generic job overview/detail/log routes, and research-activity digest apply the
+same snapshot check.
+Generic replay submission rejects held or unproven snapshots; cancellation of
+a held replay is blocked before mutation. Missing or invalid snapshot
+provenance is hidden. This does not remove or rewrite records, and does not
+cover direct database access or exports; those remain under the operational
+hold.
+
 ## Relationship and economics boundaries
 
 The matcher indexes exact venue-local event IDs, market title terms, and parent
