@@ -1361,7 +1361,7 @@ same-input runs do not change the resource sustainability gate.
 | Polymarket, Kalshi and Kraken Spot implementations | PARTIALLY VERIFIED | Fixture tests and bounded live listing/book/trade-to-store evidence exist. Current adapter versions are Polymarket v6, Kalshi v17, and Kraken Spot v3. Polymarket v2 first and continuation pages returned ten rows each. Kalshi cursor pages are implemented and row mapping is fixture-tested; a live page returned zero trades and no cursor, so live row normalization remains pending. Two genuine public event-group responses are hash-pinned and replayed through Polymarket/Kalshi adapters. Kalshi MVE listing responses omitted nested members; v10 captured a saved-parent-selected child and preserved its rules. The sole captured child is closed and includes fair-price fallback language, so child and combo payoffs remain unverified. Account fees and Kraken account fee applicability remain unknown. API fixtures cover source degradation and recovery; live degraded-source behavior remains unverified. |
 | Canonical normalization and native evidence | PARTIALLY VERIFIED | Distinct event, conditional event and spot forms; FrontierMarket v4, BookSnapshot v2 and TradeObservation v3 preserve canonical denomination identities where supported; Kalshi `price_ranges` are normalized as bounded exact-Decimal intervals while raw native values remain auditable. Candidate generation and independent audit reject out-of-range, off-step, empty-declaration, and boundary quotes; endpoints are conservative because the official schema does not specify inclusion. Kalshi paginated batches retain schema v2 with nested trade schema v3. Quote, fee, trade, capital, and display codes are separate fields. Legacy v1/v2 rows without identity still load but remain unknown and economically incomplete. V2 Polymarket trades preserve token and outcome identity. October 27 event-group capture preserves parent-event title and child outcome text. Kalshi `MarketBatch` v2 stores typed MVE groups with `included`, `empty`, or `omitted` member state; detail responses with a documented top-level empty list replay to zero child markets. Other settlement/payoff semantics remain intentionally unverified. |
 | Relationship matching, immutable review, indexed neighborhoods, and strict payoff verifier | PARTIALLY VERIFIED | Self-attributed review API/UI with stored source refs, append-only revisions, compare-and-set, latest-state replay, query-plan/migration tests, and 1–3 hop left/right indexed scans capped at 500 rows. Centered one-hop keyset and two-/three-hop breadth-first pages bind graph inputs and reject stale cursors; deterministic recomputation and 201-market frontier chunking are tested. Matcher v5 emits exact-ID MVE `source_component_reference` hypotheses only with a matching saved child ticker/event and preserves both observation IDs; the recorded parent/child pair replays offline through the current adapter and matcher. Matcher v4 year-conflict checks remain. The genuine House-control pair is text-only and strict payoff verification rejects same-payoff equivalence. Per-market payout currency must match its settlement asset, and the market-level settlement asset must match the payoff record; the USD/USDC regression passes. A focused depth-two browser test now passes; authenticated review and revision-history drill-down remain pending. |
-| Economic candidate verifier and independent audit | PARTIALLY VERIFIED | Exact two-venue binary all-long coverage and same-market 3–16-state exhaustive one-hot coverage. Economic model v12 derives the exact adverse full-or-no-fill terminal pattern for up to 16 legs, validates reported constant ticks and Kalshi price ranges, reprices venue-specific quote-decay delays, and evaluates fee applicability at each modeled execution time; independent audit v9 rederives payoff/cost, quote constraints, per-venue delay, fee expiration, pinned-book timing and source-quality claims, and the Kalshi one-fill estimate independently. Fixture cases verify the `$0.01` scenario, 24-hour freshness, no-look-ahead, conditional classification, replay fee-evidence IDs, delay tampering, and a fee schedule expiring between analysis and modeled execution. Three-leg brute-force and maximum 16-outcome replay/audit fixtures agree over a 65,536-pattern bound. Unknown fees suppress net stress; mismatches and unsupported fees fail closed. Delay additions are virtual sensitivity assumptions, not measured latency or modeled sequencing. Current adapter clock-uncertainty estimates are absent, no genuine eligible event is established, and there is no independently authenticated market truth or practical execution proof. |
+| Economic candidate verifier and independent audit | PARTIALLY VERIFIED | Exact two-venue binary all-long coverage and same-market 3–16-state exhaustive one-hot coverage. Economic model v13 derives exact full/no-fill stress and bounded 0/25/50/75/100% per-leg partial-fill-grid stress for up to 16 legs, omitting intermediate quantities that violate instrument steps and recalculating supported fees at each modeled aggregate quantity. Independent audit v10 rederives both sensitivities, payout/cost, quote constraints, per-venue delay, fee expiry, pinned-book timing, source quality, and the Kalshi fee estimate. Fixture differentials enumerate all 125 combinations for three legs; a rounded Kalshi fee fixture confirms fees are recalculated rather than linearly scaled. The 16-leg full/no-fill bound remains 65,536 patterns; the partial-fill grid uses separable per-state minimization instead of expanding the Cartesian product. Unknown fees suppress net sensitivity; invalid quantities and audit tampering fail closed. Grid results do not estimate fill probabilities, continuous intermediate quantities, multiple-fill rounding, price paths, or hedge/unwind behavior. Timing and delay remain virtual sensitivity assumptions, not measured execution. Current adapter clock-uncertainty estimates are absent, no genuine eligible event is established, and there is no practical execution proof. |
 | Kalshi candidate-fee estimate | PARTIALLY VERIFIED | Commit `3e85c8d` joins only complete raw/hash/path/identity-checked event/series metadata and requires metadata no later than quote time and at most 24 hours old at quote/replay. A supported one-fill formula uses conservative non-direct `$0.01` debit alignment; estimates cannot yield a verified mathematical inconsistency. Independent arithmetic and manifest fee-observation IDs pass fixture/API/replay checks. Account applicability, balance class, maker/mixed/multi-fill and FCM charges, later changes, live validation and source permission remain unresolved. |
 | Bounded store and deterministic replay | COMPLETE AND VERIFIED | Storage schema v6 with additive v2/v3/v4/v5 migrations, immutable replay/comparison records, replay-v8 source lineage, denomination identities, and separate fee metadata observation IDs through manifests/candidate legs/Arena snapshots; direct replay retains adapter IDs. Test commit `f35677d` verifies a saved schema-v1 manifest lacking the new field remains readable and its JSON/hash is preserved. The 19-test storage/replay-comparison selection passed before that follow-up, and the changed legacy case passed separately. Replay-v5 output includes fill sensitivity and identity includes effective mappings/proposal limit; prior replay results and observations remain unchanged. |
 | Paired scenario comparison | PARTIALLY VERIFIED | Direct local comparison and API/UI/browser tests pass. Two actual systemd-supervised fixture replays completed over the same pinned inputs and their result hashes verify. The latest run measured worker process CPU/RSS and exposes it in Mission Control. No genuine equivalent live market pair exists. |
@@ -2370,3 +2370,75 @@ was 51.94% (`some`) / 47.60% (`full`), avg60 43.30% / 39.55%, and avg300
 31.50% / 28.41%; 9.6 GiB was available and 469 MiB swap remained free. The
 production frontend build and post-UI-change browser suite remain pending until
 host PSI eases. The worktree is clean at `ed92557` atop `ad811a4`.
+
+## Bounded partial-fill grid implementation — 2026-10-27 20:34 UTC
+
+Uncommitted code now adds a five-point per-leg partial-fill sensitivity to every
+supported opportunity candidate. Quantity-step-invalid interior points are
+omitted. The worst combination per terminal state is computed separably, so a
+16-leg candidate does not expand a `5^16` Cartesian product. Supported fees are
+recalculated for each modeled aggregate quantity at each venue's projected
+execution time; any unresolved fee suppresses after-fee sensitivity. The
+independent audit separately derives feasible fractions, fee amounts, and worst
+results. Replay v13, economic model v13, and audit v10 pin the candidate change.
+Mission Control displays the sampled grid, worst gross/net outcomes, and fill
+quantities while identifying the output as a bounded sensitivity.
+
+The focused economics selection passed **6/6** (41 deselected), including
+exhaustive three-leg grid differentials, quantity-step filtering, unknown-fee
+handling, a fee-rounding case where partial fees are not a linear share of the
+full-order fee, and independent audit validation. A partial-result tampering
+case also passed **1/1**. The Workbench component suite passed **8/8**;
+TypeScript, ESLint, Prettier, Ruff, core Frontier strict mypy, and diff checks
+passed. The first full Frontier run after adding the model reported 252 passed
+and one failed: a mutated off-step candidate caused the independent audit to
+return incomplete rather than the expected disagreement. The audit diagnostic
+path is corrected and its focused test now passes, but a complete post-fix
+Frontier run remains pending.
+
+At `2026-10-27T20:34:20Z`, memory PSI avg10 was 42.59% (`some`) / 38.56%
+(`full`), avg60 39.05% / 35.13%, and avg300 27.72% / 24.95%; 9.9 GiB was
+available and 469 MiB swap remained free. No full regression, frontend build,
+or browser suite was started during that pressure sample. The worktree has
+uncommitted changes in the Frontier economic model, independent audit, replay
+version, focused API/economics tests, Workbench, and the architecture/report
+matrix. Next safe action: remeasure PSI, run the complete Frontier suite when
+admission permits, then run the full web suite/build and document actual results.
+No live source, held capture, protected service, or production state was
+accessed.
+
+## v13 partial-fill code commit — 2026-10-27 20:38 UTC
+
+The bounded partial-fill implementation, independent audit, replay/model
+version updates, focused API/economics tests, Workbench presentation, and
+architecture/report changes are committed as **`e50ba34`** (`Add independently
+audited partial-fill grid sensitivity`). The code commit contains ten files;
+the ledger and current-state checkpoint are being updated separately. The
+full Frontier test result remains **254/254** (40.92 seconds wall, 335,988 KiB
+peak RSS). Core Ruff/format/strict mypy, the eight-case Workbench component
+suite, TypeScript, targeted ESLint/Prettier, and diff checks are green.
+
+At `2026-10-27T20:38:38Z`, memory PSI avg10 was 43.32% (`some`) / 38.72%
+(`full`), avg60 35.73% / 31.92%, avg300 30.48% / 27.39%; 9.9 GiB was
+available and 481,060 KiB swap remained free. This is not adequate evidence to
+admit the larger frontend build or browser process pair yet. Full web tests,
+production build, and Frontier E2E are still pending. Worktree modifications
+are limited to this ledger, `docs/MIDAS_CURRENT_STATE.md`, and the engineering
+report's commit-identity note. No source request, Reality service action, or
+production transition occurred.
+
+## Post-fix partial-fill regression — 2026-10-27 20:37 UTC
+
+The full `tests/frontier` regression now passes **254/254** in 39.82 seconds
+pytest time / 40.92 seconds wall at **335,988 KiB peak RSS**, with zero exit
+status and only the existing Starlette/httpx TestClient deprecation. This
+includes the corrected invalid-quantity diagnostic, API replay v13, exhaustive
+three-leg fee-grid comparisons, audit tampering, and 16-leg bound. After the
+run, memory PSI avg10 was 34.40% (`some`) / 30.73% (`full`), avg60 22.93% /
+20.56%, avg300 27.50% / 24.76%; 9.9 GiB was available and swap free increased
+from 481,020 KiB to 481,040 KiB. Full web unit suite, production frontend build,
+and browser E2E remain pending; remeasure host admission before starting those
+jobs. The partial-fill grid exposes the actual feasible fractions per leg in
+its API object and an expandable Workbench detail. Core Frontier Ruff, format,
+strict mypy, Web TypeScript, Prettier, and the focused eight-test Frontier
+component suite pass. No deployment or live data was used.

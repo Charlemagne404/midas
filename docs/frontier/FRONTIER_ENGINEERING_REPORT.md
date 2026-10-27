@@ -3799,3 +3799,12 @@ pending until host pressure permits. At `2026-10-27T20:37:47Z`, PSI avg10 was
 34.40% (`some`) / 30.73% (`full`), with 9.9 GiB available and 481,040 KiB swap
 free. No live data or protected service was touched. This is an isolated local
 implementation; Frontier remains undeployed and **PARTIALLY VERIFIED**.
+
+The v13 implementation described here was committed as **`e50ba34`** on
+`codex/frontier-20261026`. That commit changed `packages/midas/frontier/economics.py`,
+`packages/midas/frontier/independent_audit.py`, `packages/midas/frontier/models.py`,
+`packages/midas/frontier/replay.py`, `tests/frontier/test_relationships_economics_replay.py`,
+`tests/frontier/test_api.py`, `apps/web/src/Frontier.tsx`,
+`apps/web/src/Frontier.test.tsx`, `docs/frontier/FRONTIER_ARCHITECTURE.md`, and
+this report. The separately maintained mission ledger and current-state file
+record the post-commit handoff.

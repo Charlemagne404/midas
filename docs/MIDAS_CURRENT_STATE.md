@@ -722,3 +722,64 @@ checks passed at the previous checkpoint. API-inclusive strict mypy remains
 unverified. No live source, protected service, or historical capture was
 accessed. Frontier remains research-only, isolated, undeployed, and PARTIALLY
 VERIFIED.
+
+## Frontier bounded partial-fill sensitivity — 2026-10-27 20:36 UTC
+
+The isolated worktree now contains an uncommitted five-point partial-fill grid
+for supported research candidates. It filters intermediate ratios by venue
+quantity step, recomputes supported fees at each aggregate partial quantity,
+and independently verifies the worst grid result. Replay is v13, the economic
+model is v13, and the independent audit is v10. The Workbench displays the
+sampled gross/net result and per-leg quantities. These are bounded sensitivities
+only; no fill probability, continuous quantity range, multiple-fill rounding,
+price path, hedge, or unwind is modeled.
+
+Focused economics tests passed **6/6**, including exhaustive three-leg grid
+enumeration, fee rounding, quantity-step filtering, and unknown-fee behavior;
+the audit-tampering test passed **1/1**. Workbench component tests passed **8/8**;
+TypeScript, targeted ESLint/Prettier, Ruff, and strict mypy on the four core
+Frontier modules passed. A first full run had 252 passing tests and one failing
+quantity-mutation diagnostic; the audit was corrected and its focused test now
+passes. The complete post-fix regression and full frontend build/browser suite
+remain pending. At `2026-10-27T20:36:01Z`, memory PSI avg10 was 50.50% (`some`)
+and 46.53% (`full`), with 9.9 GiB available and 469 MiB swap free. No build or
+full-suite run was started at that pressure sample. The code and updated
+architecture/report matrix are uncommitted in `codex/frontier-20261026`.
+Production services, source data, protected recordings, and deployment remain
+untouched. Frontier remains **PARTIALLY VERIFIED**.
+
+## Frontier v13 post-fix regression — 2026-10-27 20:37 UTC
+
+The full Frontier Python suite passed **254/254** in 39.82 seconds pytest time
+/ 40.92 seconds wall at **335,988 KiB peak RSS**; the only warning was the
+existing Starlette/httpx TestClient deprecation. This covers the new bounded
+partial-fill grid, a nonlinearly rounded Kalshi fee fixture, quantity-step
+filtering, unknown-fee handling, independent audit tampering, and API replay
+version 13. The API model exposes the exact feasible fill fractions per leg,
+and the Workbench can expand those per-leg grids. The grid still has no fill
+probabilities, continuous intermediate points, multiple-fill rounding, quote
+paths, or hedge/unwind model.
+
+The eight-case Workbench component suite, TypeScript, targeted ESLint/Prettier,
+Ruff, strict mypy on four core Frontier modules, and `git diff --check` passed.
+At `2026-10-27T20:37:47Z`, PSI avg10 was 34.40% (`some`) / 30.73% (`full`),
+avg60 22.93% / 20.56%, avg300 27.50% / 24.76%; 9.9 GiB was available and swap
+free was 481,040 KiB. The full web suite, production frontend build, and
+post-change browser E2E remain pending after the next host admission check.
+No live source, protected service, recording, or deployment was used. Code and
+docs remain uncommitted in the isolated Frontier worktree; overall status is
+**PARTIALLY VERIFIED**.
+
+## Frontier v13 code commit — 2026-10-27 20:38 UTC
+
+The implementation is committed on `codex/frontier-20261026` as **`e50ba34`**
+(`Add independently audited partial-fill grid sensitivity`). It includes the
+economic model, independent audit, replay/model version bumps, Python/API tests,
+Workbench rendering and tests, and Frontier architecture/report updates. The
+latest full Frontier regression remains **254/254**. The focused component
+suite and static checks pass. The ledger, engineering report, and this
+current-state file have documentation-only changes after that commit. Full
+web tests, production build, and browser E2E
+remain pending because PSI was 38.72% full at avg10 at `20:38:38Z`, despite
+9.9 GiB available. No live source, protected service, or production deployment
+was used; Frontier remains **PARTIALLY VERIFIED**.
