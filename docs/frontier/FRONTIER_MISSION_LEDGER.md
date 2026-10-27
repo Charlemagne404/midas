@@ -1,5 +1,12 @@
 # Project Frontier Mission Ledger
 
+**Admission recheck (2026-10-27 21:14:30 UTC):** The same external
+`veritas_gap_detail_v2_batch.py` worker PID **3711078** still held lock inode
+**6423106** in `D` state after 2:11 elapsed. PSI had risen to 47.63% (`some`) /
+40.92% (`full`) avg10, 40.75% / 36.55% avg60, and 24.14% / 21.74% avg300.
+About 10 GiB remained available and 459 MiB swap was free. No build or browser
+test was launched; the worker and lock remain untouched.
+
 **Latest regression checkpoint (2026-10-27 21:12 UTC):** The full Frontier
 Python suite passes **262/262** in 41.60 seconds (42.81 seconds wall,
 **353,748 KiB peak RSS**, zero swaps). The full web unit suite passes **40/40**
