@@ -1160,3 +1160,84 @@ async def test_kalshi_trade_page_rejects_other_ticker_and_nonadvancing_cursor_af
         await client.aclose()
     assert len(captures) == 1
     assert captures[0].raw_body == body
+
+
+@pytest.mark.asyncio
+async def test_kalshi_single_market_metadata_lookup_is_ticker_bound_and_read_only():
+    ticker = "KXNBAAST-26OCT26WASCHA-CHABMILLER24-2"
+    body = json.dumps(
+        {
+            "market": {
+                "ticker": ticker,
+                "event_ticker": "KXNBAAST-26OCT26WASCHA",
+                "market_type": "binary",
+                "status": "active",
+                "title": "Brandon Miller 2+ assists",
+                "yes_sub_title": "2 or more",
+                "no_sub_title": "1 or fewer",
+                "rules_primary": "The player records two or more assists.",
+                "rules_secondary": "Official box score determines the result.",
+                "notional_value_dollars": "1.00",
+                "updated_time": "2026-10-27T12:00:00Z",
+            }
+        }
+    )
+    transport, requests, client = _transport(
+        "external-api.kalshi.com", {f"/markets/{ticker}": body}
+    )
+    adapter = KalshiAdapter(
+        AdapterConfig(
+            enabled=True, live_public_probe_enabled=True, requests_per_second=5, retries=0
+        ),
+        transport=transport,
+    )
+    try:
+        normalized = await adapter.fetch_market_metadata(ticker)
+        captures = adapter.take_captures()
+    finally:
+        await client.aclose()
+
+    assert normalized.native_market_id == ticker
+    assert normalized.native_event_id == "KXNBAAST-26OCT26WASCHA"
+    assert normalized.resolution.primary_rule == "The player records two or more assists."
+    assert normalized.resolution.evidence_sha256 is not None
+    assert normalized.resolution.verified is False
+    assert normalized.payoff.verified is False
+    assert len(captures) == 1 and captures[0].raw_body == body
+    assert captures[0].observation_kind == "market_metadata"
+    assert len(requests) == 1
+    assert requests[0].method == "GET"
+    assert requests[0].url.path == f"/trade-api/v2/markets/{ticker}"
+    assert "authorization" not in requests[0].headers
+
+
+@pytest.mark.asyncio
+async def test_kalshi_single_market_metadata_lookup_rejects_response_ticker_mismatch():
+    requested = "KXNBAAST-26OCT26WASCHA-CHABMILLER24-2"
+    response_ticker = "KXOTHER"
+    body = json.dumps(
+        {
+            "market": {
+                "ticker": response_ticker,
+                "event_ticker": "KXNBAAST-26OCT26WASCHA",
+                "market_type": "binary",
+                "title": "Wrong market",
+                "rules_primary": "Different event.",
+            }
+        }
+    )
+    transport, _, client = _transport("external-api.kalshi.com", {f"/markets/{requested}": body})
+    adapter = KalshiAdapter(
+        AdapterConfig(
+            enabled=True, live_public_probe_enabled=True, requests_per_second=5, retries=0
+        ),
+        transport=transport,
+    )
+    try:
+        with pytest.raises(AdapterError, match="does not match the requested ticker"):
+            await adapter.fetch_market_metadata(requested)
+        captures = adapter.take_captures()
+    finally:
+        await client.aclose()
+    assert len(captures) == 1
+    assert captures[0].raw_body == body

@@ -1147,7 +1147,7 @@ class FrontierStore:
             row = connection.execute(
                 "SELECT (SELECT COUNT(*) FROM observations "
                 "WHERE observation_kind IN ('market_listing','instrument_metadata',"
-                "'event_market_listing')) AS markets,"
+                "'market_metadata','event_market_listing')) AS markets,"
                 "(SELECT COUNT(*) FROM relationships) AS relationships,"
                 "(SELECT COUNT(*) FROM relationship_reviews) AS reviews"
             ).fetchone()

@@ -107,6 +107,12 @@ class EventMarketsProbeRequest(BaseModel):
         return self
 
 
+class KalshiMveComponentProbeRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+    parent_market_id: str = Field(min_length=1, max_length=256)
+    component_market_id: str = Field(min_length=1, max_length=256, pattern=r"^[A-Za-z0-9_-]+$")
+
+
 class KalshiMultivariateEventsProbeRequest(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
     series_ticker: str | None = Field(
@@ -1229,6 +1235,142 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
                     status_code=502,
                     detail={
                         "code": "KALSHI_FEE_METADATA_FAILED",
+                        "message": str(error),
+                        "diagnostic_observation_ids": diagnostic_ids,
+                        "diagnostic_persistence_error": diagnostic_error,
+                    },
+                ) from error
+
+    @api.post("/probe/kalshi/mve-component-market")
+    async def probe_kalshi_mve_component_market(
+        request: KalshiMveComponentProbeRequest,
+    ) -> dict[str, Any]:
+        """Capture one referenced child contract from a recorded Kalshi combo."""
+        venue = Venue.KALSHI
+        adapter: ExchangeAdapter = registry.get(venue)
+        if not adapter.capabilities.supports(Capability.MARKET_METADATA):
+            raise HTTPException(status_code=409, detail="Kalshi market metadata is unsupported")
+        fetch_market = getattr(adapter, "fetch_market_metadata", None)
+        if not callable(fetch_market):
+            raise HTTPException(
+                status_code=409,
+                detail="Advertised Kalshi single-market metadata lookup is unavailable",
+            )
+        config = getattr(adapter, "config", None)
+        if config is None or not config.enabled or not config.live_public_probe_enabled:
+            raise HTTPException(
+                status_code=409,
+                detail="Bounded public probing is disabled in source configuration",
+            )
+        try:
+            known_markets = await _load_markets(store, 200)
+        except (FrontierStoreError, ValueError) as error:
+            raise HTTPException(status_code=409, detail=str(error)) from error
+        parent = next(
+            (
+                item
+                for item in known_markets
+                if item.venue == venue and item.canonical_id == request.parent_market_id
+            ),
+            None,
+        )
+        if parent is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Parent combo must be present in the bounded recorded market window",
+            )
+        component = next(
+            (
+                item
+                for item in parent.selected_components
+                if item.native_market_id == request.component_market_id
+            ),
+            None,
+        )
+        if component is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Component ticker must be referenced by the recorded parent combo",
+            )
+
+        async with source_locks[venue]:
+            adapter.take_captures()
+            requests_before = adapter.transport.request_count
+            captures: tuple[RawObservation, ...] = ()
+            try:
+                market = await fetch_market(request.component_market_id)
+                captures = adapter.take_captures()
+                if (
+                    len(captures) != 1
+                    or market.venue != venue
+                    or market.native_market_id != request.component_market_id
+                    or market.provenance.raw_sha256 != captures[0].raw_sha256
+                    or (
+                        component.native_event_id is not None
+                        and market.native_event_id != component.native_event_id
+                    )
+                ):
+                    raise AdapterError(
+                        "MVE_COMPONENT_CAPTURE_MISMATCH",
+                        "Fetched component does not match the exact saved parent reference",
+                    )
+                parsed_url = urlsplit(captures[0].request_url)
+                expected_path = f"/trade-api/v2/markets/{request.component_market_id}"
+                if parsed_url.path != expected_path or parsed_url.query:
+                    raise AdapterError(
+                        "MVE_COMPONENT_REQUEST_MISMATCH",
+                        "Captured request does not match the one-ticker public market lookup",
+                    )
+                observation_id = store.append_observation(captures[0], market)
+                stored_market = market.model_copy(
+                    update={
+                        "provenance": market.provenance.model_copy(
+                            update={"observation_id": observation_id}
+                        )
+                    }
+                )
+                return {
+                    "parent_market_id": parent.canonical_id,
+                    "component_market_id": market.native_market_id,
+                    "market": stored_market.model_dump(mode="json"),
+                    "observation_id": observation_id,
+                    "raw_sha256": captures[0].raw_sha256,
+                    "request_count_delta": adapter.transport.request_count - requests_before,
+                    "network_calls_bounded_by": config.retries + 1,
+                    "combo_payoff_verified": False,
+                    "hypothetical_only": True,
+                    "note": (
+                        "One explicit public GET for a component already named by the saved combo. "
+                        "The child rules and settlement metadata are preserved; this does not "
+                        "verify the combo payoff, event logic, or an opportunity."
+                    ),
+                }
+            except AdapterError as error:
+                diagnostic_ids, diagnostic_error = preserve_failed_captures(
+                    adapter, error.code, str(error), error.response_evidence, captures
+                )
+                adapter.report_failure(error.code, str(error))
+                raise HTTPException(
+                    status_code=502,
+                    detail={
+                        "code": error.code,
+                        "message": str(error),
+                        "diagnostic_observation_ids": diagnostic_ids,
+                        "diagnostic_persistence_error": diagnostic_error,
+                    },
+                ) from error
+            except (ValueError, FrontierStoreError) as error:
+                diagnostic_ids, diagnostic_error = preserve_failed_captures(
+                    adapter,
+                    "MVE_COMPONENT_CAPTURE_FAILED",
+                    str(error),
+                    already_drained=captures,
+                )
+                adapter.report_failure("MVE_COMPONENT_CAPTURE_FAILED", str(error))
+                raise HTTPException(
+                    status_code=502,
+                    detail={
+                        "code": "MVE_COMPONENT_CAPTURE_FAILED",
                         "message": str(error),
                         "diagnostic_observation_ids": diagnostic_ids,
                         "diagnostic_persistence_error": diagnostic_error,
@@ -2700,9 +2842,14 @@ async def _load_kalshi_fee_evidence(
 def _market_observation_rows(
     store: FrontierStore, limit: int, *, venue: Venue | None = None
 ) -> list[dict[str, Any]]:
-    """Market records can arrive from discovery, pair metadata, or event groups."""
+    """Market records can arrive from discovery, pair metadata, detail, or event groups."""
     rows: list[dict[str, Any]] = []
-    for kind in ("market_listing", "instrument_metadata", "event_market_listing"):
+    for kind in (
+        "market_listing",
+        "instrument_metadata",
+        "market_metadata",
+        "event_market_listing",
+    ):
         rows.extend(
             store.observations(
                 venue=venue.value if venue else None,

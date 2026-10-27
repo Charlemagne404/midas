@@ -229,6 +229,18 @@ type KalshiFeeMetadataCaptureResult = {
   fee_cost_modeled: false;
   note: string;
 };
+type KalshiMveComponentMarketCaptureResult = {
+  parent_market_id: string;
+  component_market_id: string;
+  market: Market;
+  observation_id: string;
+  raw_sha256: string;
+  request_count_delta: number;
+  network_calls_bounded_by: number;
+  combo_payoff_verified: false;
+  hypothetical_only: true;
+  note: string;
+};
 type KalshiFeeScenarioFill = {
   instrumentId: string;
   side: 'buy' | 'sell';
@@ -1106,6 +1118,14 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
         (capability) => capability.capability === 'fee_metadata' && capability.supported,
       ),
   );
+  const kalshiMarketMetadataProbeEnabled = (sources.data?.items ?? []).some(
+    (source) =>
+      source.venue === 'kalshi' &&
+      source.public_probe_enabled &&
+      source.capabilities.some(
+        (capability) => capability.capability === 'market_metadata' && capability.supported,
+      ),
+  );
   const eventMarketGroupsProbeEnabledFor = (venue: Venue) =>
     (sources.data?.items ?? []).some(
       (source) =>
@@ -1298,6 +1318,23 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
       api<KalshiMultivariateCaptureResult>('/frontier/probe/kalshi/multivariate-events', {
         method: 'POST',
         body: JSON.stringify(input),
+      }),
+    onSuccess: refresh,
+  });
+  const captureKalshiMveComponentMarket = useMutation({
+    mutationFn: ({
+      parentMarketId,
+      componentMarketId,
+    }: {
+      parentMarketId: string;
+      componentMarketId: string;
+    }) =>
+      api<KalshiMveComponentMarketCaptureResult>('/frontier/probe/kalshi/mve-component-market', {
+        method: 'POST',
+        body: JSON.stringify({
+          parent_market_id: parentMarketId,
+          component_market_id: componentMarketId,
+        }),
       }),
     onSuccess: refresh,
   });
@@ -1671,6 +1708,8 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
               booksLoading={books.isLoading}
               eventMarketsProbe={captureEventMarketGroup}
               eventMarketsProbeEnabled={eventMarketGroupsProbeEnabledFor(selectedMarket.venue)}
+              mveComponentProbe={captureKalshiMveComponentMarket}
+              mveComponentProbeEnabled={kalshiMarketMetadataProbeEnabled}
               feeMetadataProbe={captureKalshiFeeMetadata}
               feeMetadataProbeEnabled={kalshiFeeMetadataProbeEnabled}
               feeSensitivity={estimateKalshiTakerFee}
@@ -2528,6 +2567,8 @@ function MarketDetails({
   booksLoading,
   eventMarketsProbe,
   eventMarketsProbeEnabled,
+  mveComponentProbe,
+  mveComponentProbeEnabled,
   feeMetadataProbe,
   feeMetadataProbeEnabled,
   feeSensitivity,
@@ -2542,6 +2583,13 @@ function MarketDetails({
     unknown
   >;
   eventMarketsProbeEnabled: boolean;
+  mveComponentProbe: UseMutationResult<
+    KalshiMveComponentMarketCaptureResult,
+    Error,
+    { parentMarketId: string; componentMarketId: string },
+    unknown
+  >;
+  mveComponentProbeEnabled: boolean;
   feeMetadataProbe: UseMutationResult<
     KalshiFeeMetadataCaptureResult,
     Error,
@@ -2584,6 +2632,11 @@ function MarketDetails({
   const capturedEventMarkets =
     eventMarketsProbe.isSuccess && eventMarketsProbe.variables?.marketId === market.canonical_id
       ? eventMarketsProbe.data
+      : null;
+  const capturedMveComponent =
+    mveComponentProbe.isSuccess &&
+    mveComponentProbe.variables?.parentMarketId === market.canonical_id
+      ? mveComponentProbe.data
       : null;
   return (
     <section className="fr-market-detail" aria-label="Market and book details">
@@ -2666,9 +2719,49 @@ function MarketDetails({
                   <small>Event {component.native_event_id ?? 'not provided'}</small>
                 </span>
                 <code>{component.native_market_id}</code>
+                {component.venue === 'kalshi' && (
+                  <button
+                    className="fr-inspect-button"
+                    disabled={!mveComponentProbeEnabled || mveComponentProbe.isPending}
+                    onClick={() =>
+                      mveComponentProbe.mutate({
+                        parentMarketId: market.canonical_id,
+                        componentMarketId: component.native_market_id,
+                      })
+                    }
+                  >
+                    {mveComponentProbe.isPending &&
+                    mveComponentProbe.variables?.componentMarketId === component.native_market_id
+                      ? 'Capturing…'
+                      : mveComponentProbeEnabled
+                        ? 'Capture component rules'
+                        : 'Public probe disabled'}
+                  </button>
+                )}
+                {capturedMveComponent?.component_market_id === component.native_market_id && (
+                  <div className="fr-component-capture" role="status">
+                    <strong>{capturedMveComponent.market.title}</strong>
+                    <span>
+                      Primary rule:{' '}
+                      {capturedMveComponent.market.resolution.primary_rule ?? 'Not provided'}
+                    </span>
+                    <span>
+                      Secondary rule:{' '}
+                      {capturedMveComponent.market.resolution.secondary_rule ?? 'Not provided'}
+                    </span>
+                    <small>
+                      Saved {shortHash(capturedMveComponent.observation_id)} · raw{' '}
+                      {shortHash(capturedMveComponent.raw_sha256)} · payoff remains unverified
+                    </small>
+                  </div>
+                )}
               </li>
             ))}
           </ul>
+          {mveComponentProbe.isError &&
+            mveComponentProbe.variables?.parentMarketId === market.canonical_id && (
+              <InlineError message={mveComponentProbe.error.message} />
+            )}
         </div>
       ) : null}
       {market.venue !== 'kraken' && (

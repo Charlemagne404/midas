@@ -521,7 +521,7 @@ it('captures Kalshi fee metadata and exposes a separate hypothetical fee sensiti
   };
   const source = {
     venue: 'kalshi',
-    adapter_version: 'frontier-kalshi-5',
+    adapter_version: 'frontier-kalshi-10',
     public_probe_enabled: true,
     capabilities: [
       {
@@ -536,6 +536,12 @@ it('captures Kalshi fee metadata and exposes a separate hypothetical fee sensiti
         state: 'implemented',
         reason: 'One bounded public event detail request',
       },
+      {
+        capability: 'market_metadata',
+        supported: true,
+        state: 'implemented',
+        reason: 'One ticker-bound public market detail request',
+      },
     ],
     health: {
       state: 'not_probed',
@@ -547,6 +553,7 @@ it('captures Kalshi fee metadata and exposes a separate hypothetical fee sensiti
   };
   const requestBodies: Record<string, unknown>[] = [];
   const eventGroupBodies: Record<string, unknown>[] = [];
+  const componentMarketBodies: Record<string, unknown>[] = [];
   const sensitivityBodies: Record<string, unknown>[] = [];
   const responses: Record<string, unknown> = {
     '/api/frontier/overview': {
@@ -619,6 +626,34 @@ it('captures Kalshi fee metadata and exposes a separate hypothetical fee sensiti
           network_calls_bounded_by: 1,
           hypothetical_only: true,
           note: 'Event context only; no payoff equivalence verified.',
+        }),
+      } as Response;
+    }
+    if (path === '/api/frontier/probe/kalshi/mve-component-market' && init?.method === 'POST') {
+      componentMarketBodies.push(JSON.parse(String(init.body)) as Record<string, unknown>);
+      return {
+        ok: true,
+        json: async () => ({
+          parent_market_id: market.canonical_id,
+          component_market_id: 'KX-COMPONENT-MARKET',
+          market: {
+            ...market,
+            canonical_id: 'kalshi:KX-COMPONENT-MARKET',
+            native_market_id: 'KX-COMPONENT-MARKET',
+            title: 'Component two assists or more',
+            resolution: {
+              ...market.resolution,
+              primary_rule: 'The player records two or more assists.',
+              secondary_rule: 'The official box score is the source.',
+            },
+          },
+          observation_id: 'component-observation',
+          raw_sha256: 'e'.repeat(64),
+          request_count_delta: 1,
+          network_calls_bounded_by: 1,
+          combo_payoff_verified: false,
+          hypothetical_only: true,
+          note: 'Component metadata only; combo payoff is not verified.',
         }),
       } as Response;
     }
@@ -780,6 +815,16 @@ it('captures Kalshi fee metadata and exposes a separate hypothetical fee sensiti
   expect(
     screen.getByText(/do not verify component rules, combo payout, or resolution equivalence/),
   ).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Capture component rules' }));
+  expect(
+    await screen.findByText('Primary rule: The player records two or more assists.'),
+  ).toBeInTheDocument();
+  expect(componentMarketBodies).toEqual([
+    {
+      parent_market_id: market.canonical_id,
+      component_market_id: 'KX-COMPONENT-MARKET',
+    },
+  ]);
   expect(await screen.findByText('Capture fee metadata')).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Capture fee metadata' }));
   expect(await screen.findByText(/quadratic · multiplier 1/)).toBeInTheDocument();

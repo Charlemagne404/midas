@@ -25,6 +25,7 @@ from midas.frontier.models import (
     PayoffSpec,
     QuantityUnit,
     RawObservation,
+    SelectedMarketComponent,
     StatePayout,
     TradeBatch,
     TradeObservation,
@@ -42,6 +43,145 @@ from midas.frontier.storage import FrontierStore
 
 from apps.api.frontier import router
 from tests.frontier.builders import T0, book, market
+
+
+def test_kalshi_mve_component_probe_is_bound_to_recorded_parent_and_persists_metadata(
+    tmp_path,
+):
+    component_ticker = "KXNBAAST-26OCT26WASCHA-CHABMILLER24-2"
+    component_event = "KXNBAAST-26OCT26WASCHA"
+    parent = market(Venue.KALSHI, "KX-MVE-PARENT").model_copy(
+        update={
+            "market_kind": MarketKind.CONDITIONAL_EVENT,
+            "selected_components": (
+                SelectedMarketComponent(
+                    venue=Venue.KALSHI,
+                    native_event_id=component_event,
+                    native_market_id=component_ticker,
+                    selected_side="yes",
+                ),
+            ),
+        }
+    )
+    response_body = [
+        json.dumps(
+            {
+                "market": {
+                    "ticker": component_ticker,
+                    "event_ticker": component_event,
+                    "market_type": "binary",
+                    "status": "active",
+                    "title": "Brandon Miller 2+ assists",
+                    "rules_primary": "The player records two or more assists.",
+                    "rules_secondary": "The official box score is the source.",
+                    "notional_value_dollars": "1.00",
+                    "updated_time": "2026-10-27T12:00:00Z",
+                }
+            }
+        )
+    ]
+    requests: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        return httpx.Response(200, text=response_body[0], request=request)
+
+    config = AdapterConfig(
+        enabled=True, live_public_probe_enabled=True, requests_per_second=5, retries=0
+    )
+    http_client = httpx.AsyncClient(transport=httpx.MockTransport(handler))
+    transport = PublicReadTransport({"external-api.kalshi.com"}, config, client=http_client)
+    registry = AdapterRegistry((KalshiAdapter(config, transport=transport),))
+    store = FrontierStore(tmp_path / "frontier-component-market")
+    raw_parent = json.dumps({"recorded_fixture": "parent MVE metadata"})
+    store.append_observation(
+        RawObservation(
+            venue=Venue.KALSHI,
+            observation_kind="market_listing",
+            request_url="https://external-api.kalshi.com/trade-api/v2/markets?limit=1",
+            http_status=200,
+            request_started_at_utc=T0,
+            received_at_utc=T0,
+            raw_body=raw_parent,
+            raw_sha256=hashlib.sha256(raw_parent.encode()).hexdigest(),
+            adapter_version="test-parent-seed-v1",
+        ),
+        parent,
+    )
+    app = FastAPI()
+    app.include_router(router(store, registry))
+    client = TestClient(app)
+    try:
+        unreferenced = client.post(
+            "/api/frontier/probe/kalshi/mve-component-market",
+            json={
+                "parent_market_id": parent.canonical_id,
+                "component_market_id": "KX-NOT-A-SAVED-LEG",
+            },
+        )
+        assert unreferenced.status_code == 404
+        assert requests == []
+
+        response = client.post(
+            "/api/frontier/probe/kalshi/mve-component-market",
+            json={
+                "parent_market_id": parent.canonical_id,
+                "component_market_id": component_ticker,
+            },
+        )
+        assert response.status_code == 200, response.text
+        result = response.json()
+        assert result["parent_market_id"] == parent.canonical_id
+        assert result["component_market_id"] == component_ticker
+        assert result["combo_payoff_verified"] is False
+        assert result["hypothetical_only"] is True
+        assert result["request_count_delta"] == 1
+        assert result["network_calls_bounded_by"] == 1
+        assert result["market"]["resolution"]["primary_rule"] == (
+            "The player records two or more assists."
+        )
+        assert result["market"]["resolution"]["verified"] is False
+        assert result["market"]["provenance"]["observation_id"] == result["observation_id"]
+        assert requests[0].url.path == f"/trade-api/v2/markets/{component_ticker}"
+        assert requests[0].method == "GET"
+        assert "authorization" not in requests[0].headers
+        saved = store.observation(result["observation_id"])
+        assert saved is not None
+        assert saved["raw_sha256"] == result["raw_sha256"]
+        assert saved["normalized"]["native_market_id"] == component_ticker
+
+        listed = client.get("/api/frontier/markets?venue=kalshi&limit=100")
+        assert listed.status_code == 200
+        assert any(item["native_market_id"] == component_ticker for item in listed.json()["items"])
+
+        response_body[0] = json.dumps(
+            {
+                "market": {
+                    "ticker": component_ticker,
+                    "event_ticker": "KX-DIFFERENT-EVENT",
+                    "market_type": "binary",
+                    "title": "Mismatched child event",
+                }
+            }
+        )
+        mismatched = client.post(
+            "/api/frontier/probe/kalshi/mve-component-market",
+            json={
+                "parent_market_id": parent.canonical_id,
+                "component_market_id": component_ticker,
+            },
+        )
+        assert mismatched.status_code == 502
+        assert mismatched.json()["detail"]["code"] == "MVE_COMPONENT_CAPTURE_MISMATCH"
+        diagnostic = store.observation(mismatched.json()["detail"]["diagnostic_observation_ids"][0])
+        assert diagnostic is not None
+        assert diagnostic["raw"]["observation_kind"] == "market_metadata"
+        assert diagnostic["normalized"]["failure_stage"] == "probe_batch"
+        assert diagnostic["raw_sha256"] == hashlib.sha256(response_body[0].encode()).hexdigest()
+    finally:
+        client.close()
+        asyncio.run(registry.aclose())
+        asyncio.run(http_client.aclose())
 
 
 def _client(tmp_path, *, arena_root=None):

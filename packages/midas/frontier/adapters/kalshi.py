@@ -40,7 +40,7 @@ from midas.frontier.models import (
 )
 
 D = Decimal
-ADAPTER_VERSION = "frontier-kalshi-9"
+ADAPTER_VERSION = "frontier-kalshi-10"
 _TICKER_PATTERN = re.compile(r"[A-Za-z0-9_-]{1,256}\Z")
 BASE = "https://external-api.kalshi.com/trade-api/v2"
 MARKET_DATA_DOC = "https://docs.kalshi.com/getting_started/quick_start_market_data"
@@ -75,8 +75,8 @@ class KalshiAdapter(BaseReadOnlyAdapter):
                 MARKETS_DOC,
             ),
             Capability.MARKET_METADATA: (
-                "Native market fields and raw settlement rules are retained",
-                MARKETS_DOC,
+                "One public ticker-bound market lookup or a bounded listing; native rules remain unverified",
+                "https://docs.kalshi.com/api-reference/market/get-market",
             ),
             Capability.OUTCOME_DEFINITIONS: (
                 "YES/NO identities and MVE selected component market/side identifiers are normalized; combo payoff remains unverified",
@@ -215,6 +215,28 @@ class KalshiAdapter(BaseReadOnlyAdapter):
             seen.add(record.native_market_id)
             records.append(record)
         return tuple(records)
+
+    async def fetch_market_metadata(self, native_market_id: str) -> FrontierMarket:
+        """Capture one public market's metadata by its exact native ticker."""
+        self._require(Capability.MARKET_METADATA)
+        if not isinstance(native_market_id, str) or not _TICKER_PATTERN.fullmatch(native_market_id):
+            raise AdapterError("INVALID_MARKET_ID", "Kalshi market ticker is invalid")
+        response = await self.transport.get_json(
+            f"{BASE}/markets/{quote(native_market_id, safe='')}"
+        )
+        self._capture_response(response, "market_metadata")
+        if not isinstance(response.payload, dict) or not isinstance(
+            response.payload.get("market"), dict
+        ):
+            raise AdapterError(
+                "INVALID_SCHEMA", "Kalshi market response must contain a market object"
+            )
+        raw_market = response.payload["market"]
+        if raw_market.get("ticker") != native_market_id:
+            raise AdapterError(
+                "MARKET_ID_MISMATCH", "Kalshi market response does not match the requested ticker"
+            )
+        return self._normalize_market(raw_market, response)
 
     async def discover_multivariate_events(
         self,

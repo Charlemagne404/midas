@@ -1011,6 +1011,27 @@
   font-size: 8px;
   overflow-wrap: anywhere;
 }
+.fr-component-capture {
+  display: grid;
+  flex-basis: 100%;
+  gap: 4px;
+  padding: 7px;
+  border-left: 2px solid #4c9b84;
+  background: #111a1b;
+}
+.fr-component-capture strong {
+  color: #d0ded9;
+  font-size: 8px;
+}
+.fr-component-capture span {
+  color: #a9b6b8;
+  font-size: 8px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+.fr-component-capture small {
+  color: #8ba39c;
+}
 .fr-market-facts small {
   color: #788597;
   font-size: 8px;
