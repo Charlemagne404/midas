@@ -298,6 +298,25 @@ it('renders recorded-evidence empty states and never probes a source automatical
   await waitFor(() =>
     expect(capital).toHaveTextContent('Recorded principal is covered; unresolved fees remain.'),
   );
+  queryClient.setQueryData(['frontier', 'opportunities'], {
+    ...recordedCandidates!,
+    items: recordedCandidates!.items.map((item) =>
+      item.candidate_id === 'multi-outcome-fixture-candidate'
+        ? {
+            ...item,
+            legs: item.legs.map((leg, index) =>
+              index === 1 ? { ...leg, quote_currency: null } : leg,
+            ),
+          }
+        : item,
+    ),
+  });
+  await waitFor(() =>
+    expect(capital).toHaveTextContent('Currency is missing or mixed; comparison unavailable.'),
+  );
+  expect(
+    capital.getByRole('textbox', { name: 'Virtual balance allocated to Kalshi' }),
+  ).toBeDisabled();
   expect(screen.getAllByText('red')).toHaveLength(2);
 });
 

@@ -3686,7 +3686,10 @@ function CandidateCard({ candidate }: { candidate: Candidate }) {
                     .map((leg) => leg.quote_currency)
                     .filter((currency): currency is string => !!currency),
                 );
-                const currency = currencies.size === 1 ? [...currencies][0] : null;
+                const currencyComplete =
+                  legs.length > 0 && legs.every((leg) => Boolean(leg.quote_currency));
+                const currency =
+                  currencyComplete && currencies.size === 1 ? [...currencies][0] : null;
                 const feesUnknown = legs.some((leg) => leg.modeled_fee == null);
                 const budgetText = virtualBalances[venue] ?? '';
                 const budget = budgetText ? parseExactMoney(budgetText) : null;
