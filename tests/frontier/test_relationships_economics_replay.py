@@ -84,6 +84,45 @@ def _market_with_token_settlement_identity(market_value, identity):
     )
 
 
+def test_nominal_usd_does_not_bridge_fiat_usd_to_pusd_settlement():
+    polymarket_market, kalshi_market, _, instrument_mapping = _verified_pair()
+    pusd_identity = SettlementAssetIdentity(
+        kind=SettlementAssetKind.TOKEN,
+        code="PUSD",
+        network_id="eip155:137",
+        asset_reference="0xC011a7E12a19f7B1f670d46F03B03f3342E82DFB",
+    )
+    pusd_payoff = polymarket_market.payoff.model_copy(
+        update={
+            "payout_currency": "USD",
+            "settlement_asset": "PUSD",
+            "settlement_asset_identity": pusd_identity,
+        }
+    )
+    pusd_market = polymarket_market.model_copy(
+        update={
+            "payoff": pusd_payoff,
+            "settlement_asset": "PUSD",
+            "settlement_asset_identity": pusd_identity,
+        }
+    )
+
+    result = verify_same_payoff(
+        pusd_market,
+        kalshi_market,
+        state_mapping={"yes": "yes", "no": "no"},
+        instrument_mapping=instrument_mapping,
+        external_assertion_id="nominal-usd-is-not-pusd-identity",
+        evidence_observation_ids=("polymarket-position-fixture", "kalshi-fixture"),
+        asserted_at_utc=T0,
+    )
+
+    assert pusd_market.payoff.payout_currency == kalshi_market.payoff.payout_currency == "USD"
+    assert result.state == VerificationState.REJECTED
+    assert "settlement assets differ" in result.reason.lower()
+    assert "canonical settlement asset identities are absent or differ" in result.reason.lower()
+
+
 def test_token_settlement_identity_requires_network_and_reference():
     with pytest.raises(ValidationError, match="require network and asset reference"):
         SettlementAssetIdentity(kind=SettlementAssetKind.TOKEN, code="USDC")
