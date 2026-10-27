@@ -167,3 +167,48 @@ over `tests`, `packages`, and `apps` finds no `live-probes` path. The guard is
 test-only defense for common Python file-open APIs; the source-use restriction
 remains the governing boundary. Existing captures remain untouched, and
 synthetic tests do not establish live-source validation or permission.
+
+## Official documentation refresh — 2026-10-27 20:45 UTC
+
+This was a read-only review of official web documentation; no exchange API was
+queried, no exchange was contacted, and no historical capture was opened. It is
+an operational hold decision, not legal advice or an interpretation of any
+person's contractual status.
+
+- **Kalshi:** The current linked [Developer Agreement v1.1](https://kalshi-public-docs.s3.amazonaws.com/Kalshi-Developer-Agreement.pdf)
+  continues to limit API use to facilitating a member's own trading, and
+  restricts collection, caching, aggregation, and storage for other purposes
+  absent authorization. The [Data Terms of Use](https://kalshi-public-docs.s3.amazonaws.com/kalshi-data-terms-of-service.pdf)
+  separately limit website data to personal, non-commercial use, expressly
+  exclude software development and archived/cached datasets from that allowance,
+  and require prior written authorization for listed extraction and derivative
+  uses. The public GET examples in API documentation do not resolve those
+  conditions for Frontier's systematic research and retention. The Kalshi hold
+  remains in force.
+- **Kraken:** The current [legal index](https://www.kraken.com/legal) lists
+  different terms by residence. The [Global Terms](https://www.kraken.com/legal/global-terms)
+  are marked last updated 19 October 2026; they limit use of “Our Content” to
+  the user's own benefit, require prior permission for other purposes, and
+  restrict extraction, automation, and third-party applications interacting
+  with that content without written consent. The current [EEA Terms](https://www.kraken.com/legal/eea-terms)
+  expressly include pricing data in “Our Content,” limit it to approved
+  purposes, and include similar restrictions. Kraken's [API Center](https://docs-legacy.kraken.com/api/docs/guides/global-intro/)
+  describes public Spot REST/WebSocket market-data interfaces, but the material
+  reviewed does not settle the exact permission, retention, and research scope
+  for Frontier's public-API use or identify the user's applicable regional
+  terms. Keep probes and stored Kraken research held until that scope and any
+  required permission are validated.
+- **Polymarket:** The [Polymarket Institute research guide](https://institute.polymarket.com/data),
+  dated 24 July 2026, continues to describe open exchange APIs as accessible
+  to students, researchers, and learners. It distinguishes the decentralized
+  platform from the US-only platform and says they have separate APIs and
+  separately managed data. This supports the existing global-platform research
+  source classification only; it does not authorize restricted-location access
+  or make the two platforms interchangeable.
+
+This refresh changes no probe flags or source policy. Existing Kalshi and
+Kraken captures remain unchanged and quarantined; synthetic offline fixtures
+remain the only permitted adapter-validation input in this worktree. A future
+change requires a validated source-use decision for the exact data, activity,
+retention, region, and intended distribution, not a configuration reference
+string alone.

@@ -2476,3 +2476,24 @@ API, protected service, evidence store, or production deployment was accessed.
 Frontier overall remains **PARTIALLY VERIFIED** due to live cross-venue
 validation, permission/deployment gates, and the two lock-blocked Laboratory
 browser cases.
+
+## Official source terms refresh — 2026-10-27 20:45 UTC
+
+Read-only official documentation review confirmed the existing source boundary.
+Kalshi's Developer Agreement v1.1 still limits API use to a member's own
+trading; its separate Data Terms restrict collection, systematic extraction,
+and software development use without prior written authorization. Kraken's
+current regional terms still require approved purposes or prior permission for
+other uses of content, and the EEA terms explicitly identify pricing data as
+content. The API Center lists public data endpoints but the reviewed material
+does not settle Frontier's exact research/retention rights or the user's
+applicable regional agreement. Polymarket Institute's July 24 research guide
+still describes open APIs for researchers and separates the decentralized and
+US-only systems and their data.
+
+Kalshi/Kraken probes and stored research remain blocked/quarantined; no source
+policy changed. No exchange API was queried, exchange contacted, or held capture
+opened. The full source rationale and official references are in
+[`SOURCE_DATA_TERMS_REVIEW_2026-10-27.md`](SOURCE_DATA_TERMS_REVIEW_2026-10-27.md).
+This documentation-only checkpoint remains **PARTIALLY VERIFIED**; live
+cross-venue economics and production gates are unresolved.

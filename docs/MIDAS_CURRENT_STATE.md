@@ -808,3 +808,15 @@ timestamp, PSI avg10 was 45.75% (`some`) / 41.58% (`full`), avg60 43.43% /
 38.30%, avg300 37.69% / 33.23%; 9.9 GiB was available and 481,192 KiB swap
 free. No external exchange source or production service was touched. Frontier
 remains isolated, undeployed, and **PARTIALLY VERIFIED**.
+
+## Frontier source terms recheck — 2026-10-27 20:45 UTC
+
+An official-documents-only review reconfirmed the Kalshi data-use restrictions
+and current Kraken regional content terms. Kraken's API Center documents public
+Spot market-data endpoints, but the reviewed terms do not resolve this
+research/retention use or the applicable regional agreement. Polymarket
+Institute's current research guide distinguishes its global and US-only data
+systems. The source gates did not change: Kalshi/Kraken live probes and stored
+research remain blocked or quarantined. No API request, exchange contact, held
+capture read, production action, or permission inference was made. See
+[`SOURCE_DATA_TERMS_REVIEW_2026-10-27.md`](frontier/SOURCE_DATA_TERMS_REVIEW_2026-10-27.md).

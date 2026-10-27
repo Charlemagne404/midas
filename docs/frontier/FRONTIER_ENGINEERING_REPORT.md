@@ -2469,12 +2469,13 @@ are `48c75fa` and `2dd6b13`, with this update recorded in the mission ledger.
 The official [Kalshi Developer Agreement v1.1](https://kalshi-public-docs.s3.amazonaws.com/Kalshi-Developer-Agreement.pdf)
 states that API use is limited to facilitating a member's own exchange trading
 and restricts non-trading collection, caching, aggregation, and storage absent
-authorization. The official [Kraken API introduction](https://docs-legacy.kraken.com/api/docs/guides/global-intro/)
-requires prior permission for certain uses, including non-personal commercial
-use of public market data; Kraken's terms vary by region. This project has no
-recorded written Kalshi research/retention authorization, and has not classified
-the applicable Kraken use. This is an operational restriction, not legal advice
-or a finding about prior use.
+authorization. The [Kraken API Center](https://docs-legacy.kraken.com/api/docs/guides/global-intro/)
+describes public market-data interfaces, but does not itself settle permission
+for Frontier's research and retention use. Kraken terms vary by region. This
+project has no recorded written Kalshi research/retention authorization, and
+has not classified the applicable Kraken use. This is an operational
+restriction, not legal advice or a finding about prior use. See the official
+terms refresh recorded below.
 
 The application now defaults both sources off and additionally requires
 `MIDAS_FRONTIER_KALSHI_RESEARCH_AUTHORIZATION_REF` or
@@ -3843,3 +3844,31 @@ browser suite remains **PARTIALLY VERIFIED** because the global resource guard
 prevented two temporary Laboratory launches. Cross-venue live relationship
 validation, source permissions, and production deployment gates remain
 unresolved. No production or exchange service was contacted.
+
+### Official source terms refresh — 2026-10-27 20:45 UTC
+
+The current Kalshi [Developer Agreement v1.1](https://kalshi-public-docs.s3.amazonaws.com/Kalshi-Developer-Agreement.pdf)
+and [Data Terms of Use](https://kalshi-public-docs.s3.amazonaws.com/kalshi-data-terms-of-service.pdf)
+were rechecked. They maintain the restrictive use boundaries summarized above;
+the public GET interface examples do not establish a research/retention
+exception. Keep the Kalshi source gate blocked.
+
+Kraken's current [legal index](https://www.kraken.com/legal) directs users to
+region-specific terms. Its [Global Terms](https://www.kraken.com/legal/global-terms)
+are marked last updated 19 October 2026; the current [EEA Terms](https://www.kraken.com/legal/eea-terms)
+explicitly include pricing data in “Our Content” and require approved purposes
+or prior permission for other use. The [API Center](https://docs-legacy.kraken.com/api/docs/guides/global-intro/)
+lists public Spot REST/WebSocket market-data interfaces but does not resolve
+their application to this research workflow, retention, or the user's
+applicable regional agreement. Preserve the hold pending exact-use review.
+
+The [Polymarket Institute research guide](https://institute.polymarket.com/data),
+dated 24 July 2026, continues to describe open APIs as research-accessible and
+distinguishes the decentralized and US-only platforms as separately managed
+data/API systems. It does not grant restricted-location access or establish
+interchangeability between those systems.
+
+This was a documentation-only review of official pages. It made no network
+request to any exchange API, contacted no exchange, and read no held capture.
+No source policy changed. The source-use readiness gate remains blocked for
+Kalshi and Kraken, while Frontier remains **PARTIALLY VERIFIED** overall.
