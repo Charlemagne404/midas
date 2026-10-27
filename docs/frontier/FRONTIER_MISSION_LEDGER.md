@@ -1,6 +1,21 @@
 # Project Frontier Mission Ledger
 
-**Latest checkpoint (2026-10-27 17:33 UTC):** Code commit
+**Latest checkpoint (2026-10-27 17:38 UTC):** UI commit
+`ce14e87f4d494d8a0fe5a041d4fb65fd1feab8fb` adds a native Mission Control
+review form for directed YES implications, including direction selection and
+left-to-right joint-state mapping. The form only enables this claim when the
+loaded markets have verified exhaustive binary payoffs, verified resolution,
+one YES/NO instrument each, bounded state IDs, and both pinned source records;
+the API verifier remains authoritative. The assertion ID is labeled as a
+reference and reviewer identity remains self-attributed. The frontend unit
+suite passed **40 tests**; the targeted browser test passed **1** with local
+fixture routes and temporary storage. TypeScript, ESLint, Prettier, and
+`git diff --check` passed. No source requests were made. At 17:38:29 UTC, PSI
+`avg10` was 0.00% (`some`) / 0.00% (`full`), while `avg300` remained 30.21% /
+26.89%; the production build and full Frontier Python suite remain deferred.
+Frontier is still undeployed and incomplete.
+
+**Previous checkpoint (2026-10-27 17:33 UTC):** Code commit
 `6706fe1d3194224697b5101a2f92fb6ba914c693` connects verified directed
 logical-implication relationships to a bounded `NO(source) + YES(target)`
 opportunity family, deterministic replay, and independent audit. It requires

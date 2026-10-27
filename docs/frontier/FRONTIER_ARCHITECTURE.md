@@ -421,7 +421,12 @@ in every state. Positive results remain conditional because the semantic state
 assertion is unauthenticated; distinct venue resolution authorities are not
 independently reconciled. Unknown fees remain unknown, and stale or
 insufficiently synchronized books make the candidate incomplete. Mission
-Control does not yet offer controls to create a directed implication.
+Control now offers a self-attributed review form for this claim, with an explicit
+YES direction and left-to-right state mapping. The form exposes the option only
+when both stored markets advertise exhaustive verified binary payoffs,
+verified resolution, and one YES/NO instrument each; the API verifier remains
+authoritative and checks the submitted records. The assertion remains a
+reference only, and reviewer identity is not authenticated.
 
 Every review appends an immutable review record and a relationship revision in
 one transaction. A compare-and-set against the latest review prevents stale
