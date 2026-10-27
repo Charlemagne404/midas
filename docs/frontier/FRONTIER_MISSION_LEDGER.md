@@ -1576,3 +1576,18 @@ At `2026-10-27T16:58:07Z`, memory PSI rose to `avg10` 50.81% (`some`) /
 large tests or build were started. Reconsider broad validation only after a
 later low-pressure admission measurement. No source, service, or production
 state was accessed.
+
+## 2026-10-27 17:00 UTC — property-based fee-order invariants
+
+Test commit `1144283` checks 24 generated order cases per run across one-to-32
+fills, buy/sell sides, varied contract prices/quantities, and multipliers 0/1/3.
+For each documented balance precision it verifies nonnegative fill fees, rebate
+bounds, exact aggregation, and that signed revenue minus net fee equals the
+recorded balance change at fill and order levels. The complete fee-sensitivity
+module passed **20 tests** in 0.43 seconds. Ruff, format check, and
+`git diff --check` passed. Generated fixtures exercise only the Decimal model.
+
+At `2026-10-27T17:00:21Z`, memory PSI was `avg10` 39.43% (`some`) / 32.43%
+(`full`), `avg60` 41.16% / 36.61%, and `avg300` 28.33% / 25.60%.
+Available memory was 9,592,368 KiB and swap free was 484,584 KiB of 4 GiB.
+Broad Frontier verification and production build remain deferred.

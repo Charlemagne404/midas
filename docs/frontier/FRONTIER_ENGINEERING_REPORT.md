@@ -2603,3 +2603,19 @@ Available memory was 9,620,440 KiB, but only 484,556 KiB of 4 GiB swap was
 free. No further test, build, source request, service action, or production
 change was made after this sample. Broad verification remains deferred pending
 a later low-pressure admission check.
+
+## Property-based fee-order invariants — 2026-10-27 17:00 UTC
+
+Test commit `1144283` adds a bounded Hypothesis check over 24 generated orders
+per run: one to 32 fills, buy or sell side, varied prices/quantities, and fee
+multipliers 0, 1, or 3. For direct and non-direct precision, it checks
+nonnegative fill fees, rebate bounds, exact fee totals, and conservation of
+signed revenue through per-fill and order balance changes. The full fee
+sensitivity module passed **20 tests** in 0.43 seconds; Ruff, formatting, and
+`git diff --check` passed. The property test exercises only the local Decimal
+model and generated values.
+
+At `2026-10-27T17:00:21Z`, memory PSI was `avg10` 39.43% (`some`) / 32.43%
+(`full`), `avg60` 41.16% / 36.61%, and `avg300` 28.33% / 25.60%.
+`MemAvailable` was 9,592,368 KiB; swap free was 484,584 KiB of 4 GiB. Broad
+Frontier verification and production build remain deferred.
