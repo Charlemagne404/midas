@@ -1,6 +1,24 @@
 # Project Frontier Mission Ledger
 
-**Latest checkpoint (2026-10-27 18:20 UTC):** Code commit `b112a6c` adds a
+**Latest checkpoint (2026-10-27 18:21 UTC):** Code commit `6fe0192` changes the
+decisive capital-carry audit to reconstruct elapsed seconds and carry as exact
+`Fraction` values, then round only when exposing the Decimal result. The
+production sensitivity remains Decimal-based; the verifier no longer shares
+its arithmetic path. A tampered per-venue carry test confirms the audit reports
+disagreement. The focused capital-carry module passed **9 tests**; Ruff check,
+Ruff format check, strict mypy for `capital.py`, and `git diff --check` passed.
+At `2026-10-27T18:21:36Z`, memory PSI was `some avg10=41.79%` /
+`full avg10=37.24%`, with `MemAvailable` 9,661,452 KiB and swap free 482,512
+KiB. Browser execution, post-row-hash full suites, and the production build
+remain pending. Frontier remains isolated, incomplete, and undeployed.
+
+Next safe actions: after measured pressure materially eases, run the targeted
+fixture browser test, post-row-hash full Python/web suites, and production
+build; record resource usage. Continue the deferred capital/settlement and
+research-infrastructure gaps without using restricted venue data or touching
+protected services.
+
+**Previous checkpoint (2026-10-27 18:20 UTC):** Code commit `b112a6c` adds a
 bounded Hypothesis differential check for venue-separated virtual carry. Across
 32 generated inputs, the Decimal calculator agrees with a separate exact
 `Fraction` reference for each venue and total, while the independent audit

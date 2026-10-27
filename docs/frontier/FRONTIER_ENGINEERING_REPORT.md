@@ -2988,3 +2988,33 @@ or production deployment.
 Files changed: `tests/frontier/test_capital_carry.py` and
 `apps/web/e2e/frontier.spec.ts` in the code commits above; this report and
 `FRONTIER_MISSION_LEDGER.md` record the checkpoint.
+
+### Exact-rational carry audit — 2026-10-27 18:21 UTC
+
+Code commit `6fe0192` makes the capital-carry verifier arithmetically distinct
+from the production sensitivity path. The sensitivity computes with bounded
+Decimal arithmetic; the verifier independently reconstructs elapsed seconds
+from the UTC datetime delta and calculates venue carry as an exact `Fraction`,
+converting to Decimal only for comparison and output. The regression test
+mutates one venue's carry amount and confirms the audit reports disagreement.
+
+`pytest -q tests/frontier/test_capital_carry.py` passed **9 tests**. Ruff check,
+Ruff format check, strict mypy for `capital.py`, and `git diff --check` passed.
+This strengthens arithmetic independence; both paths still consume the same
+hash-pinned candidate and settlement metadata and therefore do not authenticate
+external financing or settlement claims.
+
+At `2026-10-27T18:21:36Z`, memory PSI was `some avg10=41.79%` and `full
+avg10=37.24%`, with `MemAvailable=9,661,452 KiB` and `SwapFree=482,512 KiB`.
+The fixture browser scenario remains unexecuted, as do post-row-hash full suites
+and the production build. No exchange request, held-source read, protected
+service, or production deployment was used.
+
+| Component | Current status | Boundary |
+| --- | --- | --- |
+| Capital carry independent arithmetic | COMPLETE AND VERIFIED | Decimal model and exact-rational verifier are different arithmetic paths; generated differential cases and a tampering rejection test pass. Source settlement authenticity and financing availability remain unverified. |
+| Project Frontier overall | PARTIALLY VERIFIED | Isolated and undeployed; browser E2E, broad final regression/build, live relationship evidence, source permission review, and production gates remain incomplete. |
+
+Files changed: `packages/midas/frontier/capital.py` and
+`tests/frontier/test_capital_carry.py` in code commit `6fe0192`; this report
+and `FRONTIER_MISSION_LEDGER.md` record the verification.
