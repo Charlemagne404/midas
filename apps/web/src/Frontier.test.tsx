@@ -532,11 +532,25 @@ it('captures Kalshi fee metadata and exposes a separate hypothetical fee sensiti
     base_asset: null,
     quote_asset: null,
     settlement_asset: 'USD',
+    settlement_asset_identity: {
+      schema_version: 1,
+      kind: 'fiat',
+      code: 'USD',
+      network_id: null,
+      asset_reference: null,
+    },
     reported_settlement_value_dollars: '0.3750',
     settlement_is_provisional: false,
     payoff: {
       state_ids: ['yes', 'no'],
       payout_currency: 'USD',
+      settlement_asset_identity: {
+        schema_version: 1,
+        kind: 'fiat',
+        code: 'USD',
+        network_id: null,
+        asset_reference: null,
+      },
       exhaustive: false,
       verified: false,
       verification_basis: 'fixture is not payoff verified',
@@ -901,6 +915,8 @@ it('captures Kalshi fee metadata and exposes a separate hypothetical fee sensiti
 
   fireEvent.click(await screen.findByRole('button', { name: 'Markets' }));
   fireEvent.click(await screen.findByRole('button', { name: 'Inspect' }));
+  expect(screen.getByText('Market identity: fiat:USD')).toBeInTheDocument();
+  expect(screen.getByText('Payoff identity: fiat:USD')).toBeInTheDocument();
   expect(await screen.findByText('Public event context')).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Capture event context' }));
   expect(
@@ -1191,6 +1207,8 @@ it('renders a bounded accessible relationship graph and opens selected evidence'
     evidence: [
       {
         method: 'deterministic-indexed-metadata-v1',
+        matcher_version: 'frontier-relationship-matcher-5',
+        verifier_version: null,
         observation_ids: ['p-obs', 'k-obs'],
         source_fields: ['title'],
         details: ['shared_terms=mayor,election'],
@@ -1327,6 +1345,8 @@ it('renders a bounded accessible relationship graph and opens selected evidence'
   expect(
     await screen.findByText(/Shared title terms; rules and resolution dates/, { selector: 'p' }),
   ).toBeInTheDocument();
+  expect(screen.getByText(/matcher frontier-relationship-matcher-5/)).toBeInTheDocument();
+  expect(screen.getByText('shared_terms=mayor,election')).toBeInTheDocument();
 });
 
 it('records a self-attributed relationship review with both stored market sources', async () => {

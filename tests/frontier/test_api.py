@@ -26,6 +26,8 @@ from midas.frontier.models import (
     QuantityUnit,
     RawObservation,
     SelectedMarketComponent,
+    SettlementAssetIdentity,
+    SettlementAssetKind,
     StatePayout,
     TradeBatch,
     TradeObservation,
@@ -2904,6 +2906,9 @@ def test_replay_api_generates_and_persists_multi_outcome_candidate(tmp_path):
             state_ids=states,
             payout_currency="USD",
             settlement_asset="USD",
+            settlement_asset_identity=SettlementAssetIdentity(
+                kind=SettlementAssetKind.FIAT, code="USD"
+            ),
             exhaustive=True,
             verified=True,
             verification_basis="controlled exact outcome fixture",

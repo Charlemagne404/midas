@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { UseMutationResult } from '@tanstack/react-query';
 import {
@@ -57,6 +57,13 @@ type Overview = {
   latest_evidence_at_utc: string | null;
   limitations: string[];
 };
+type SettlementAssetIdentity = {
+  schema_version: number;
+  kind: 'fiat' | 'token' | 'other';
+  code: string;
+  network_id: string | null;
+  asset_reference: string | null;
+};
 type Market = {
   canonical_id: string;
   source_observation_record_id: string;
@@ -72,11 +79,13 @@ type Market = {
   base_asset: string | null;
   quote_asset: string | null;
   settlement_asset: string | null;
+  settlement_asset_identity?: SettlementAssetIdentity | null;
   reported_settlement_value_dollars?: string | null;
   settlement_is_provisional?: boolean | null;
   payoff: {
     state_ids: string[];
     payout_currency: string | null;
+    settlement_asset_identity?: SettlementAssetIdentity | null;
     exhaustive: boolean;
     verified: boolean;
     verification_basis: string;
@@ -335,6 +344,8 @@ type Relationship = {
   } | null;
   evidence: {
     method: string;
+    matcher_version?: string;
+    verifier_version?: string | null;
     observation_ids: string[];
     source_fields: string[];
     details: string[];
@@ -607,6 +618,11 @@ const compareExactMoney = (left: ExactMoney, right: ExactMoney) => {
 const time = (value: string | null | undefined) =>
   value ? new Date(value).toLocaleString() : 'Not recorded';
 const shortHash = (value: string | undefined) => (value ? `${value.slice(0, 12)}…` : '—');
+const settlementIdentityLabel = (identity: SettlementAssetIdentity | null | undefined) => {
+  if (!identity) return 'Identity not established';
+  if (identity.kind === 'fiat') return `fiat:${identity.code}`;
+  return `${identity.kind}:${identity.code}:${identity.network_id ?? 'network unknown'}:${identity.asset_reference ?? 'reference unknown'}`;
+};
 const venueLabel = (value: string) =>
   ({ polymarket: 'Polymarket', kalshi: 'Kalshi', kraken: 'Kraken Spot' })[value] ?? value;
 
@@ -2075,11 +2091,22 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
                           <summary>Evidence</summary>
                           <p>{relationship.reason}</p>
                           {relationship.evidence.map((evidence, index) => (
-                            <small key={`${relationship.relationship_id}-${index}`}>
-                              {evidence.method} · fields:{' '}
-                              {evidence.source_fields.join(', ') || 'none'} · observations:{' '}
-                              {evidence.observation_ids.map(shortHash).join(', ') || 'none'}
-                            </small>
+                            <Fragment key={`${relationship.relationship_id}-${index}`}>
+                              <small>
+                                {evidence.method} ·{' '}
+                                {evidence.verifier_version
+                                  ? `verifier ${evidence.verifier_version}`
+                                  : `matcher ${evidence.matcher_version ?? 'unknown'}`}{' '}
+                                · fields: {evidence.source_fields.join(', ') || 'none'} ·
+                                observations:{' '}
+                                {evidence.observation_ids.map(shortHash).join(', ') || 'none'}
+                              </small>
+                              {evidence.details.map((detail) => (
+                                <small key={`${relationship.relationship_id}-${index}-${detail}`}>
+                                  {detail}
+                                </small>
+                              ))}
+                            </Fragment>
                           ))}
                         </details>
                       </div>
@@ -2763,6 +2790,12 @@ function MarketDetails({
         <div>
           <span>Settlement asset</span>
           <strong>{market.settlement_asset ?? market.quote_asset ?? 'Not established'}</strong>
+          <small>
+            Market identity: {settlementIdentityLabel(market.settlement_asset_identity)}
+          </small>
+          <small>
+            Payoff identity: {settlementIdentityLabel(market.payoff.settlement_asset_identity)}
+          </small>
         </div>
         <div>
           <span>Resolution authority</span>

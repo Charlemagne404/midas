@@ -17,6 +17,7 @@ from midas.frontier.models import FrontierMarket, FrontierModel, MarketKind, Ven
 
 D = Decimal
 MATCHER_VERSION = "frontier-relationship-matcher-5"
+SAME_PAYOFF_VERIFIER_VERSION = "frontier-equivalence-verifier-3"
 DEFAULT_MINIMUM_JACCARD = D("0.45")
 _STOP_WORDS = {
     "a",
@@ -131,6 +132,7 @@ class RelationshipReview(FrontierModel):
 class RelationshipEvidence(FrontierModel):
     method: str
     matcher_version: str = MATCHER_VERSION
+    verifier_version: str | None = None
     observation_ids: tuple[str, ...] = ()
     source_fields: tuple[str, ...] = ()
     details: tuple[str, ...] = ()
@@ -516,6 +518,8 @@ def verify_same_payoff(
     for name, market in (("left", left), ("right", right)):
         if not market.payoff.verified or not market.payoff.exhaustive:
             checks.append(f"{name} payoff is not verified and exhaustive")
+        if not market.has_consistent_settlement_asset_identity():
+            checks.append(f"{name} canonical settlement asset identity is missing or inconsistent")
         if market.payoff.payout_currency != market.payoff.settlement_asset:
             checks.append(
                 f"{name} payout currency differs from its settlement asset; no valuation bridge is modeled"
@@ -530,6 +534,12 @@ def verify_same_payoff(
         checks.append("Payout currencies differ")
     if left.payoff.settlement_asset != right.payoff.settlement_asset:
         checks.append("Settlement assets differ")
+    if (
+        left.payoff.settlement_asset_identity is None
+        or right.payoff.settlement_asset_identity is None
+        or left.payoff.settlement_asset_identity != right.payoff.settlement_asset_identity
+    ):
+        checks.append("Canonical settlement asset identities are absent or differ")
     if left.resolution.resolution_fingerprint != right.resolution.resolution_fingerprint:
         checks.append("Verified resolution fingerprints differ")
     if (left.resolution.authority or "").strip().casefold() != (
@@ -576,6 +586,13 @@ def verify_same_payoff(
     else:
         canonical_state_mapping = {value: key for key, value in state_mapping.items()}
         canonical_instrument_mapping = {value: key for key, value in instrument_mapping.items()}
+    market_by_id = {left.canonical_id: left, right.canonical_id: right}
+    canonical_asset_identities: dict[str, str] = {}
+    for market_id in (a, b):
+        identity = market_by_id[market_id].payoff.settlement_asset_identity
+        canonical_asset_identities[market_id] = (
+            identity.canonical_id if identity is not None else "missing"
+        )
     assertion_evidence = tuple(sorted(set(evidence_observation_ids)))
     assertion_time = asserted_at_utc or max(
         left.provenance.response_received_at_utc,
@@ -585,8 +602,9 @@ def verify_same_payoff(
         raise ValueError("Assertion time must include a timezone")
     assertion_time = assertion_time.astimezone(UTC)
     verifier_version = (
-        f"frontier-equivalence-verifier-2|{external_assertion_id}|{assertion_time.isoformat()}|"
-        f"{json_compact(canonical_state_mapping)}|{json_compact(canonical_instrument_mapping)}"
+        f"{SAME_PAYOFF_VERIFIER_VERSION}|{external_assertion_id}|{assertion_time.isoformat()}|"
+        f"{json_compact(canonical_state_mapping)}|{json_compact(canonical_instrument_mapping)}|"
+        f"{json_compact(canonical_asset_identities)}"
     )
     _, relationship_id = _identity(
         a,
@@ -610,12 +628,19 @@ def verify_same_payoff(
         ),
         evidence=(
             RelationshipEvidence(
-                method="independent-payoff-equivalence-v1",
-                source_fields=("payoff", "resolution", "outcome_mapping"),
+                method="independent-payoff-equivalence-v2",
+                verifier_version=SAME_PAYOFF_VERIFIER_VERSION,
+                source_fields=(
+                    "payoff",
+                    "resolution",
+                    "outcome_mapping",
+                    "settlement_asset_identity",
+                ),
                 observation_ids=assertion_evidence,
                 details=(
                     "state_mapping=" + json_compact(canonical_state_mapping),
                     "instrument_mapping=" + json_compact(canonical_instrument_mapping),
+                    "settlement_asset_identities=" + json_compact(canonical_asset_identities),
                 ),
                 external_assertion_id=external_assertion_id,
                 created_at_utc=assertion_time,

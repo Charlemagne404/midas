@@ -505,6 +505,7 @@ def _verify_multi_outcome_market(
         or not market.payoff.verified
         or not market.resolution.verified
         or market.settlement_asset != market.payoff.settlement_asset
+        or not market.has_consistent_settlement_asset_identity()
         or not 3 <= len(state_ids) <= 16
         or len(market.instruments) != len(state_ids)
         or len(candidate.legs) != len(state_ids)
@@ -594,6 +595,9 @@ def _verify_cross_venue_relationship(
         or right.lifecycle != Lifecycle.OPEN
         or left.payoff.payout_currency != right.payoff.payout_currency
         or left.payoff.settlement_asset != right.payoff.settlement_asset
+        or not left.has_consistent_settlement_asset_identity()
+        or not right.has_consistent_settlement_asset_identity()
+        or left.payoff.settlement_asset_identity != right.payoff.settlement_asset_identity
         or (left.resolution.resolution_fingerprint or "")
         != (right.resolution.resolution_fingerprint or "")
         or (left.resolution.authority or "").strip().casefold()
@@ -671,6 +675,7 @@ def _require_verified_event(market: FrontierMarket) -> None:
         or market.lifecycle != Lifecycle.OPEN
         or market.payoff.payout_currency != market.payoff.settlement_asset
         or market.settlement_asset != market.payoff.settlement_asset
+        or not market.has_consistent_settlement_asset_identity()
     ):
         raise _MissingAuditEvidence(
             "Event payoff, resolution, payout denomination, or settlement evidence is incomplete."

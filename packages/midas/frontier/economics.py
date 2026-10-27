@@ -40,7 +40,7 @@ from midas.frontier.models import (
 from midas.frontier.relationships import Relationship, VerificationState
 
 D = Decimal
-ECONOMIC_MODEL_VERSION = "frontier-economic-verifiers-4"
+ECONOMIC_MODEL_VERSION = "frontier-economic-verifiers-5"
 KALSHI_MVE_SETTLEMENT_AUDIT_VERSION = "kalshi-mve-settlement-audit-2"
 _KALSHI_TAKER_FEE_TYPES = frozenset({"quadratic", "quadratic_with_combo_maker_fees"})
 _KALSHI_COMBO_SETTLEMENT_SOURCES = (
@@ -703,6 +703,9 @@ def generate_binary_coverage_candidates(
     if (
         left.payoff.payout_currency != right.payoff.payout_currency
         or left.payoff.settlement_asset != right.payoff.settlement_asset
+        or not left.has_consistent_settlement_asset_identity()
+        or not right.has_consistent_settlement_asset_identity()
+        or left.payoff.settlement_asset_identity != right.payoff.settlement_asset_identity
     ):
         return (
             _empty_candidate(
@@ -711,12 +714,13 @@ def generate_binary_coverage_candidates(
                 relationship,
                 OpportunityClassification.INCOMPLETE_EVIDENCE,
                 as_of,
-                "Settlement currency or asset differs; no conversion model is enabled.",
+                "Settlement currency or canonical asset identity differs or is incomplete; no valuation bridge is modeled.",
             ),
         )
     if any(
         market.payoff.payout_currency != market.payoff.settlement_asset
         or market.settlement_asset != market.payoff.settlement_asset
+        or not market.has_consistent_settlement_asset_identity()
         for market in (left, right)
     ):
         return (
@@ -863,6 +867,7 @@ def generate_multi_outcome_coverage_candidate(
         or not market.payoff.exhaustive
         or not market.resolution.verified
         or market.settlement_asset != market.payoff.settlement_asset
+        or not market.has_consistent_settlement_asset_identity()
     ):
         return empty(
             OpportunityClassification.INCOMPLETE_EVIDENCE,

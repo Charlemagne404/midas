@@ -34,6 +34,8 @@ from midas.frontier.models import (
     QuantityUnit,
     ResolutionSpec,
     SelectedMarketComponent,
+    SettlementAssetIdentity,
+    SettlementAssetKind,
     StatePayout,
     TradeBatch,
     TradeObservation,
@@ -42,7 +44,7 @@ from midas.frontier.models import (
 )
 
 D = Decimal
-ADAPTER_VERSION = "frontier-kalshi-12"
+ADAPTER_VERSION = "frontier-kalshi-13"
 _TICKER_PATTERN = re.compile(r"[A-Za-z0-9_-]{1,256}\Z")
 BASE = "https://external-api.kalshi.com/trade-api/v2"
 MARKET_DATA_DOC = "https://docs.kalshi.com/getting_started/quick_start_market_data"
@@ -489,6 +491,9 @@ class KalshiAdapter(BaseReadOnlyAdapter):
         states = (
             ("yes", "no") if kind in {MarketKind.BINARY_EVENT, MarketKind.CONDITIONAL_EVENT} else ()
         )
+        settlement_identity = (
+            SettlementAssetIdentity(kind=SettlementAssetKind.FIAT, code="USD") if states else None
+        )
         outcomes: tuple[MarketInstrument, ...] = ()
         if states:
             yes_label = str(raw.get("yes_sub_title") or "YES")
@@ -543,6 +548,7 @@ class KalshiAdapter(BaseReadOnlyAdapter):
                 state_ids=states,
                 payout_currency="USD" if states else None,
                 settlement_asset="USD" if states else None,
+                settlement_asset_identity=settlement_identity,
                 exhaustive=False,
                 verified=False,
                 verification_basis=(
@@ -567,6 +573,7 @@ class KalshiAdapter(BaseReadOnlyAdapter):
                 )
             ),
             settlement_asset="USD" if states else None,
+            settlement_asset_identity=settlement_identity,
             reported_settlement_value_dollars=reported_settlement_value,
             settlement_is_provisional=raw_provisional,
             native_fields=native_json(raw),

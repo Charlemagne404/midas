@@ -735,6 +735,9 @@ async def test_kalshi_live_capture_preserves_multivariate_legs_and_empty_public_
     )
     assert market.selected_components[0].selected_side == "yes"
     assert market.payoff.verified is False
+    assert market.settlement_asset_identity is not None
+    assert market.settlement_asset_identity.canonical_id == "fiat:USD"
+    assert market.payoff.settlement_asset_identity == market.settlement_asset_identity
     assert "MVE_PAYOFF_NOT_MODELED" in market.quality_flags
     assert "MVE_SELECTED_COMPONENTS_MISSING" not in market.quality_flags
     assert not book.asks and not book.bids

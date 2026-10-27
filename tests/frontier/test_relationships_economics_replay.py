@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import timedelta
 from decimal import Decimal
 
+import pytest
 from midas.frontier.economics import (
     ExecutionScenario,
     OpportunityClassification,
@@ -22,6 +23,8 @@ from midas.frontier.models import (
     PayoffSpec,
     QuantityUnit,
     SelectedMarketComponent,
+    SettlementAssetIdentity,
+    SettlementAssetKind,
     SettlementAuditState,
     StatePayout,
     Venue,
@@ -35,6 +38,7 @@ from midas.frontier.relationships import (
     verify_same_payoff,
 )
 from midas.frontier.replay import deterministic_replay
+from pydantic import ValidationError
 
 from tests.frontier.builders import T0, book, market
 
@@ -56,6 +60,168 @@ def _verified_pair():
         asserted_at_utc=T0,
     )
     return left, right, relationship, instrument_mapping
+
+
+def _market_with_token_settlement_identity(market_value, identity):
+    instruments = tuple(
+        item.model_copy(update={"price_currency": identity.code})
+        for item in market_value.instruments
+    )
+    payoff = market_value.payoff.model_copy(
+        update={
+            "payout_currency": identity.code,
+            "settlement_asset": identity.code,
+            "settlement_asset_identity": identity,
+        }
+    )
+    return market_value.model_copy(
+        update={
+            "instruments": instruments,
+            "payoff": payoff,
+            "settlement_asset": identity.code,
+            "settlement_asset_identity": identity,
+        }
+    )
+
+
+def test_token_settlement_identity_requires_network_and_reference():
+    with pytest.raises(ValidationError, match="require network and asset reference"):
+        SettlementAssetIdentity(kind=SettlementAssetKind.TOKEN, code="USDC")
+
+
+def test_legacy_market_without_asset_identity_loads_but_cannot_verify():
+    left_data = market(Venue.POLYMARKET, "legacy-left").model_dump(mode="python")
+    right_data = market(Venue.KALSHI, "legacy-right").model_dump(mode="python")
+    for data in (left_data, right_data):
+        data["schema_version"] = 1
+        data.pop("settlement_asset_identity")
+        data["payoff"]["schema_version"] = 1
+        data["payoff"].pop("settlement_asset_identity")
+
+    left = FrontierMarket.model_validate(left_data)
+    right = FrontierMarket.model_validate(right_data)
+    result = verify_same_payoff(
+        left,
+        right,
+        state_mapping={"yes": "yes", "no": "no"},
+        instrument_mapping={
+            left.instruments[0].native_instrument_id: right.instruments[0].native_instrument_id,
+            left.instruments[1].native_instrument_id: right.instruments[1].native_instrument_id,
+        },
+        external_assertion_id="legacy-market-identity-check",
+        evidence_observation_ids=("legacy-left", "legacy-right"),
+        asserted_at_utc=T0,
+    )
+
+    assert left.schema_version == right.schema_version == 1
+    assert left.payoff.schema_version == right.payoff.schema_version == 1
+    assert result.state == VerificationState.REJECTED
+    assert "canonical settlement asset identity" in result.reason.lower()
+
+
+def test_same_ticker_on_different_networks_cannot_verify_same_payoff():
+    left, right, _, instrument_mapping = _verified_pair()
+    polygon_usdc = SettlementAssetIdentity(
+        kind=SettlementAssetKind.TOKEN,
+        code="USDC",
+        network_id="EIP155:137",
+        asset_reference="0x" + "AbCd" * 10,
+    )
+    base_usdc = SettlementAssetIdentity(
+        kind=SettlementAssetKind.TOKEN,
+        code="USDC",
+        network_id="eip155:8453",
+        asset_reference="0x" + "abcd" * 10,
+    )
+    polygon_imitation = SettlementAssetIdentity(
+        kind=SettlementAssetKind.TOKEN,
+        code="USDC",
+        network_id="eip155:137",
+        asset_reference="0x" + "1234" * 10,
+    )
+    assert polygon_usdc.network_id == "eip155:137"
+    assert polygon_usdc.canonical_id != base_usdc.canonical_id
+    assert polygon_usdc.canonical_id != polygon_imitation.canonical_id
+
+    same_asset_relationship = verify_same_payoff(
+        _market_with_token_settlement_identity(left, polygon_usdc),
+        _market_with_token_settlement_identity(right, polygon_usdc),
+        state_mapping={"yes": "yes", "no": "no"},
+        instrument_mapping=instrument_mapping,
+        external_assertion_id="fixture-token-identity-review",
+        evidence_observation_ids=("source-left", "source-right"),
+        asserted_at_utc=T0,
+    )
+    cross_network_relationship = verify_same_payoff(
+        _market_with_token_settlement_identity(left, polygon_usdc),
+        _market_with_token_settlement_identity(right, base_usdc),
+        state_mapping={"yes": "yes", "no": "no"},
+        instrument_mapping=instrument_mapping,
+        external_assertion_id="fixture-token-identity-review",
+        evidence_observation_ids=("source-left", "source-right"),
+        asserted_at_utc=T0,
+    )
+    cross_contract_relationship = verify_same_payoff(
+        _market_with_token_settlement_identity(left, polygon_usdc),
+        _market_with_token_settlement_identity(right, polygon_imitation),
+        state_mapping={"yes": "yes", "no": "no"},
+        instrument_mapping=instrument_mapping,
+        external_assertion_id="fixture-token-identity-review",
+        evidence_observation_ids=("source-left", "source-right"),
+        asserted_at_utc=T0,
+    )
+
+    assert same_asset_relationship.state == VerificationState.VERIFIED
+    assert same_asset_relationship.evidence[0].verifier_version == "frontier-equivalence-verifier-3"
+    assert any(
+        "settlement_asset_identities={" in detail
+        for detail in same_asset_relationship.evidence[0].details
+    )
+    assert cross_network_relationship.state == VerificationState.REJECTED
+    assert "canonical settlement asset identities are absent or differ" in (
+        cross_network_relationship.reason.lower()
+    )
+    assert cross_contract_relationship.state == VerificationState.REJECTED
+    assert "canonical settlement asset identities are absent or differ" in (
+        cross_contract_relationship.reason.lower()
+    )
+    assert same_asset_relationship.relationship_id != cross_network_relationship.relationship_id
+    assert same_asset_relationship.relationship_id != cross_contract_relationship.relationship_id
+
+    same_left = _market_with_token_settlement_identity(left, polygon_usdc)
+    same_right = _market_with_token_settlement_identity(right, polygon_usdc)
+    left_books, right_books = _books(same_left, same_right)
+    state_mapping = {"yes": "yes", "no": "no"}
+    candidate = generate_binary_coverage_candidates(
+        same_left,
+        same_right,
+        same_asset_relationship,
+        left_books,
+        right_books,
+        state_mapping=state_mapping,
+        instrument_mapping=instrument_mapping,
+        as_of_utc=T0 + timedelta(milliseconds=100),
+    )[0]
+    for mismatched_identity in (base_usdc, polygon_imitation):
+        audit = independently_audit_candidate(
+            candidate.model_copy(update={"independent_audit": None}),
+            markets={
+                same_left.canonical_id: same_left,
+                same_right.canonical_id: _market_with_token_settlement_identity(
+                    right, mismatched_identity
+                ),
+            },
+            books_by_market={
+                same_left.canonical_id: left_books,
+                same_right.canonical_id: right_books,
+            },
+            relationships={same_asset_relationship.relationship_id: same_asset_relationship},
+            state_mappings={same_asset_relationship.relationship_id: state_mapping},
+            instrument_mappings={same_asset_relationship.relationship_id: instrument_mapping},
+            scenario=ExecutionScenario(),
+        )
+        assert audit.independent_audit is not None
+        assert audit.independent_audit.disposition.value == "incomplete"
 
 
 def _kalshi_mve_for_settlement_audit(
@@ -231,6 +397,7 @@ def _multi_outcome_market(*, state_count: int = 3, steps: tuple[str | None, ...]
             state_ids=states,
             payout_currency="USD",
             settlement_asset="USD",
+            settlement_asset_identity=base.payoff.settlement_asset_identity,
             exhaustive=True,
             verified=True,
             verification_basis="controlled exact one-hot fixture",
@@ -468,6 +635,7 @@ def test_spot_market_cannot_be_verified_as_prediction_contract():
         base_asset="XBT",
         quote_asset="USD",
         settlement_asset=None,
+        settlement_asset_identity=None,
     )
     left = FrontierMarket.model_validate(data)
     right = market(Venue.KALSHI, "event")

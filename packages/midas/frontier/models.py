@@ -6,6 +6,7 @@ import base64
 import binascii
 import hashlib
 import json
+import re
 from datetime import UTC, datetime
 from decimal import Decimal
 from enum import StrEnum
@@ -61,6 +62,12 @@ class QuantityUnit(StrEnum):
     BASE_ASSET = "base_asset"
     LOT = "lot"
     UNKNOWN = "unknown"
+
+
+class SettlementAssetKind(StrEnum):
+    FIAT = "fiat"
+    TOKEN = "token"
+    OTHER = "other"
 
 
 class FeeStatus(StrEnum):
@@ -209,11 +216,72 @@ class SelectedMarketComponent(FrontierModel):
     yes_settlement_value_dollars: SettlementScalar | None = None
 
 
-class PayoffSpec(FrontierModel):
+class SettlementAssetIdentity(FrontierModel):
+    """Canonical identity for a payout asset, distinct from its display ticker."""
+
     schema_version: int = 1
+    kind: SettlementAssetKind
+    code: str = Field(min_length=2, max_length=16)
+    network_id: str | None = Field(default=None, min_length=1, max_length=128)
+    asset_reference: str | None = Field(default=None, min_length=1, max_length=256)
+
+    @field_validator("code")
+    @classmethod
+    def normalize_asset_code(cls, value: str) -> str:
+        normalized = value.strip().upper()
+        if not normalized.isascii() or not normalized.isalnum():
+            raise ValueError("Settlement asset code must be ASCII alphanumeric")
+        return normalized
+
+    @field_validator("network_id")
+    @classmethod
+    def normalize_network_id(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        normalized = value.strip().lower()
+        if not normalized or any(character.isspace() for character in normalized):
+            raise ValueError("Settlement network identity is invalid")
+        return normalized
+
+    @field_validator("asset_reference")
+    @classmethod
+    def normalize_asset_reference(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        normalized = value.strip()
+        if not normalized.isascii() or any(character.isspace() for character in normalized):
+            raise ValueError("Settlement asset reference is invalid")
+        if normalized.lower().startswith("0x"):
+            if not re.fullmatch(r"0x[0-9a-fA-F]{40}", normalized):
+                raise ValueError("EVM settlement asset references must be 20-byte addresses")
+            normalized = normalized.lower()
+        return normalized
+
+    @model_validator(mode="after")
+    def require_namespaced_non_fiat_assets(self) -> SettlementAssetIdentity:
+        if self.kind == SettlementAssetKind.FIAT:
+            if len(self.code) != 3 or not self.code.isalpha():
+                raise ValueError("Fiat settlement assets require a three-letter currency code")
+            if self.network_id is not None or self.asset_reference is not None:
+                raise ValueError("Fiat settlement identity cannot include a network or reference")
+        elif self.network_id is None or self.asset_reference is None:
+            raise ValueError("Non-fiat settlement assets require network and asset reference")
+        return self
+
+    @property
+    def canonical_id(self) -> str:
+        if self.kind == SettlementAssetKind.FIAT:
+            return f"fiat:{self.code}"
+        assert self.network_id is not None and self.asset_reference is not None
+        return f"{self.kind.value}:{self.code}:{self.network_id}:{self.asset_reference}"
+
+
+class PayoffSpec(FrontierModel):
+    schema_version: int = 2
     state_ids: tuple[str, ...] = ()
     payout_currency: str | None = None
     settlement_asset: str | None = None
+    settlement_asset_identity: SettlementAssetIdentity | None = None
     exhaustive: bool = False
     verified: bool = False
     verification_basis: str = "Not established"
@@ -226,6 +294,11 @@ class PayoffSpec(FrontierModel):
             raise ValueError("A verified payoff requires states, currency, and settlement asset")
         if len(set(self.state_ids)) != len(self.state_ids):
             raise ValueError("Duplicate payoff state")
+        if (
+            self.settlement_asset_identity is not None
+            and self.settlement_asset_identity.code != self.settlement_asset
+        ):
+            raise ValueError("Payoff settlement asset code differs from its canonical identity")
         return self
 
 
@@ -502,7 +575,7 @@ class Provenance(FrontierModel):
 
 
 class FrontierMarket(FrontierModel):
-    schema_version: int = 1
+    schema_version: int = 2
     venue: Venue
     canonical_id: str
     native_market_id: str
@@ -521,6 +594,7 @@ class FrontierMarket(FrontierModel):
     base_asset: str | None = None
     quote_asset: str | None = None
     settlement_asset: str | None = None
+    settlement_asset_identity: SettlementAssetIdentity | None = None
     reported_settlement_value_dollars: SettlementScalar | None = None
     settlement_is_provisional: StrictBool | None = None
     native_fields: dict[str, Any] = Field(default_factory=dict)
@@ -547,12 +621,35 @@ class FrontierMarket(FrontierModel):
                 raise ValueError(
                     "Spot pairs require base/quote assets and cannot claim event payoffs"
                 )
+        if (
+            self.settlement_asset_identity is not None
+            and self.settlement_asset_identity.code != self.settlement_asset
+        ):
+            raise ValueError("Market settlement asset code differs from its canonical identity")
+        if (
+            self.settlement_asset_identity is not None
+            and self.payoff.settlement_asset_identity is not None
+            and self.settlement_asset_identity != self.payoff.settlement_asset_identity
+        ):
+            raise ValueError("Market and payoff settlement asset identities disagree")
         if self.payoff.verified:
             state_ids = set(self.payoff.state_ids)
             for outcome in self.instruments:
                 if {payout.state_id for payout in outcome.payouts} != state_ids:
                     raise ValueError("Verified payoff must define every state for every outcome")
         return self
+
+    def has_consistent_settlement_asset_identity(self) -> bool:
+        """Whether the market and payoff identify the same exact settlement asset."""
+        identity = self.settlement_asset_identity
+        payoff_identity = self.payoff.settlement_asset_identity
+        return (
+            identity is not None
+            and payoff_identity is not None
+            and identity == payoff_identity
+            and identity.code == self.settlement_asset
+            and identity.code == self.payoff.settlement_asset
+        )
 
     @field_validator("native_fields")
     @classmethod

@@ -16,12 +16,15 @@ from midas.frontier.models import (
     Provenance,
     QuantityUnit,
     ResolutionSpec,
+    SettlementAssetIdentity,
+    SettlementAssetKind,
     StatePayout,
     Venue,
 )
 
 D = Decimal
 T0 = datetime(2026, 10, 26, 20, 0, tzinfo=UTC)
+USD_SETTLEMENT_IDENTITY = SettlementAssetIdentity(kind=SettlementAssetKind.FIAT, code="USD")
 
 
 def market(
@@ -65,6 +68,7 @@ def market(
             state_ids=("yes", "no"),
             payout_currency="USD",
             settlement_asset="USD",
+            settlement_asset_identity=USD_SETTLEMENT_IDENTITY,
             exhaustive=True,
             verified=True,
             verification_basis="controlled-test-fixture",
@@ -89,6 +93,7 @@ def market(
             evidence_sha256="b" * 64,
         ),
         settlement_asset="USD",
+        settlement_asset_identity=USD_SETTLEMENT_IDENTITY,
         native_fields={"fixture": "explicit controlled test data"},
         provenance=Provenance(
             source_url="https://example.test/market",
