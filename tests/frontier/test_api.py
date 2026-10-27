@@ -366,6 +366,95 @@ def test_saved_kalshi_fee_pair_is_joined_only_when_raw_and_normalized_evidence_m
         assert market_json["fees"]["status"] == FeeStatus.ESTIMATE.value
         assert market_json["fees"]["evidence_observation_ids"] == [event_id, series_id]
 
+        polymarket_market = market(Venue.POLYMARKET, "PM-FRONTIER-FEE-REFERENCE")
+        polymarket_body = '{"fixture":"cross-venue-fee-reference"}'
+        polymarket_raw = RawObservation(
+            venue=Venue.POLYMARKET,
+            observation_kind="market_listing",
+            request_url="https://fixture.example/polymarket/market",
+            http_status=200,
+            request_started_at_utc=T0,
+            received_at_utc=T0,
+            raw_body=polymarket_body,
+            raw_sha256=hashlib.sha256(polymarket_body.encode()).hexdigest(),
+            adapter_version="fixture-cross-venue-fee-replay-v1",
+        )
+        polymarket_observation_id = store.append_observation(polymarket_raw, polymarket_market)
+        instrument_mapping = {
+            polymarket_market.instruments[0].native_instrument_id: source_market.instruments[
+                0
+            ].native_instrument_id,
+            polymarket_market.instruments[1].native_instrument_id: source_market.instruments[
+                1
+            ].native_instrument_id,
+        }
+        relationship = verify_same_payoff(
+            polymarket_market,
+            source_market,
+            state_mapping={"yes": "yes", "no": "no"},
+            instrument_mapping=instrument_mapping,
+            external_assertion_id="controlled-fee-replay-fixture-v1",
+            evidence_observation_ids=(polymarket_observation_id, market_observation_id),
+            asserted_at_utc=T0,
+        )
+        assert relationship.state == VerificationState.VERIFIED
+        store.append_relationship(relationship)
+
+        quote_time = T0 + timedelta(minutes=1)
+        book_index = 0
+        for market_value, ask_prices in (
+            (polymarket_market, ("0.40", "0.65")),
+            (source_market, ("0.55", "0.45")),
+        ):
+            for instrument, ask_price in zip(market_value.instruments, ask_prices, strict=True):
+                raw_body = json.dumps(
+                    {
+                        "fixture": "cross-venue-fee-replay",
+                        "instrument_id": instrument.native_instrument_id,
+                        "ask": ask_price,
+                    },
+                    separators=(",", ":"),
+                )
+                raw = RawObservation(
+                    venue=market_value.venue,
+                    observation_kind="book_snapshot",
+                    request_url=f"https://fixture.example/book/{book_index}",
+                    http_status=200,
+                    request_started_at_utc=quote_time,
+                    received_at_utc=quote_time,
+                    raw_body=raw_body,
+                    raw_sha256=hashlib.sha256(raw_body.encode()).hexdigest(),
+                    adapter_version="fixture-cross-venue-fee-replay-v1",
+                )
+                snapshot = book(market_value, instrument.native_instrument_id, ask_price)
+                snapshot = snapshot.model_copy(
+                    update={
+                        "received_at_utc": quote_time,
+                        "exchange_timestamp_utc": quote_time,
+                        "asks": tuple(
+                            level.model_copy(update={"exchange_timestamp_utc": quote_time})
+                            for level in snapshot.asks
+                        ),
+                        "bids": tuple(
+                            level.model_copy(update={"exchange_timestamp_utc": quote_time})
+                            for level in snapshot.bids
+                        ),
+                        "provenance": snapshot.provenance.model_copy(
+                            update={
+                                "source_url": raw.request_url,
+                                "adapter_version": raw.adapter_version,
+                                "request_started_at_utc": raw.request_started_at_utc,
+                                "response_received_at_utc": raw.received_at_utc,
+                                "processed_at_utc": raw.received_at_utc,
+                                "exchange_timestamp_utc": quote_time,
+                                "raw_sha256": raw.raw_sha256,
+                            }
+                        ),
+                    }
+                )
+                store.append_observation(raw, snapshot)
+                book_index += 1
+
         replay_response = api_client.post("/api/frontier/replay", json={})
         assert replay_response.status_code == 200, replay_response.text
         replay_payload = replay_response.json()
@@ -378,6 +467,17 @@ def test_saved_kalshi_fee_pair_is_joined_only_when_raw_and_normalized_evidence_m
         assert persisted_replay["result"]["manifest"]["fee_metadata_observation_ids"] == (
             expected_fee_evidence_ids
         )
+        candidate = next(
+            item
+            for item in replay_payload["candidates"]
+            if item["relationship_id"] == relationship.relationship_id
+            and Decimal(item["worst_case_gross_pnl"]) == Decimal("1.50")
+        )
+        assert candidate["classification"] == "CONDITIONAL ECONOMIC OPPORTUNITY"
+        assert Decimal(candidate["modeled_fees"]) == Decimal("0.18")
+        assert Decimal(candidate["worst_case_net_pnl"]) == Decimal("1.32")
+        assert candidate["independent_audit"]["disposition"] == "verified"
+        assert candidate["practical_eligibility"] is False
     finally:
         api_client.close()
 
