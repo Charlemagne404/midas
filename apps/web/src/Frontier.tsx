@@ -3673,7 +3673,9 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
               <span>
                 This is deterministic hypothetical research. A fresh book in a replay frame does not
                 establish simultaneous executable quotes, fills, venue access, or profitability.
-                Worker admission remains subject to Arena’s host resource gate.
+                Recorded source states replay adapter-local checkpoint health; they do not establish
+                continuous venue availability or account eligibility. Worker admission remains
+                subject to Arena’s host resource gate.
               </span>
             </div>
             {timelineReplay.isError && <InlineError message={timelineReplay.error.message} />}

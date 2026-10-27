@@ -2454,6 +2454,9 @@ it('submits a bounded Arena replay and displays its integrity-verified compariso
   expect(await screen.findByText(/1 event-time frames are pinned/)).toBeInTheDocument();
   expect(screen.getByText('Freshness limit 5,000 ms')).toBeInTheDocument();
   expect(
+    screen.getByText(/Recorded source states replay adapter-local checkpoint health/),
+  ).toBeInTheDocument();
+  expect(
     screen.getByText('1 fresh · 0 stale · 0 not yet observed · 0 source-excluded'),
   ).toBeInTheDocument();
   expect(screen.getByText(/No explicit source-state event was pinned/)).toBeInTheDocument();
