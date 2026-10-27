@@ -566,3 +566,11 @@ PARTIALLY VERIFIED, and undeployed; live source permission, price-range
 semantics, multi-venue economic validation, and deployment remain open.
 The implementation is in commit `47f399d`; commit `52abaad` adds adversarial
 parser fixtures and the expanded verification checkpoint.
+The complete Kalshi/Polymarket/Kraken adapter test module passed **60 tests**
+in 2.65 seconds at **60,504 KiB peak RSS** with zero swaps; this is not a full
+Frontier regression. At `2026-10-27T19:45:58Z`, memory PSI `avg10` was 47.18%
+`some` / 41.86% `full`, with 9.3 GiB available and 468 MiB swap free.
+Next safe work is an offline review of incomplete cross-venue capital and
+settlement costs, leaving unsupported FX/transfer costs unknown. Recheck host
+pressure before the broader suite; keep source permission and deployment gates
+unchanged.

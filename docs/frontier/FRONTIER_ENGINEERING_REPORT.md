@@ -3531,3 +3531,12 @@ Frontier suite and production build remain deferred. No source request, held
 data read, protected service action, or deployment occurred.
 Code commit `47f399d` implements the typed range model and enforcement;
 `52abaad` adds the adversarial parser cases and updates the checkpoint evidence.
+The complete adapter test module passed **60 tests** in 2.65 seconds at
+**60,504 KiB peak RSS**, with zero swaps. At `2026-10-27T19:45:58Z`, host memory
+PSI `avg10` was 47.18% `some` / 41.86% `full`; 9.3 GiB was available and 468
+MiB swap was free. The broader Frontier suite and production build remain
+deferred.
+Next safe work is an offline review of the incomplete cross-venue capital and
+settlement model. Unknown FX and transfer costs should remain unknown; recheck
+host pressure before the broader suite, and retain the source-use and deployment
+holds.

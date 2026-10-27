@@ -2171,3 +2171,11 @@ permission, cross-venue economics, and deployment remain unresolved; Frontier
 remains isolated and PARTIALLY VERIFIED.
 Code commit `47f399d` implements the typed range model and checks; test/documentation
 commit `52abaad` adds the malformed-input matrix and records the expanded run.
+The full adapter module then passed **60 tests** in 2.65 seconds at **60,504
+KiB peak RSS**, with zero swaps. At `2026-10-27T19:45:58Z`, host memory PSI
+`avg10` was 47.18% (`some`) / 41.86% (`full`), with 9.3 GiB available and 468
+MiB swap free. This adapter-module pass is not a full Frontier regression.
+Next safe action: continue offline work on unresolved cross-venue capital and
+settlement costs, keeping unsupported transfer/FX costs unknown. Recheck host
+pressure before attempting the broader Frontier suite; keep the source-use hold,
+protected services, and production deployment boundary unchanged.

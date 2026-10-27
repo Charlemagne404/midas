@@ -100,7 +100,8 @@ independent audit repeat the denomination guard, so a forged verified
 relationship cannot bypass it. No USD-to-USDC conversion or stablecoin/network
 valuation bridge is assumed. `FrontierMarket` and `PayoffSpec` schema v2 added a
 structured `settlement_asset_identity` beside the display denomination string;
-the current `FrontierMarket` schema is v3 after the quote-unit fields were added.
+FrontierMarket schema v3 added quote-unit fields, and schema v4 adds bounded
+price-increment ranges.
 Fiat identities use a three-letter code; token and other non-fiat identities
 require a network ID and asset reference. Market and payoff identities must
 agree, and cross-venue verification compares the complete identity, so the
@@ -124,7 +125,8 @@ cannot silently retain older child-only metadata.
 `FrontierMarket` schema v4 adds typed `MarketInstrument.price_increment_ranges`
 for the Kalshi `price_ranges` fields exposed by the [public market schema](https://docs.kalshi.com/api-reference/market/get-market).
 Each start, end, and step is parsed as a bounded exact Decimal while the raw
-native object remains available for audit. The shared Decimal contract limits
+native object remains available for audit; the documented response represents
+each value as a string. The shared Decimal contract limits
 these values to 18 decimal places, rejecting extreme scientific-notation
 exponents before rational price checks. Missing ranges remain `null`, and an
 explicitly empty array remains empty; neither is replaced with a guessed tick.
