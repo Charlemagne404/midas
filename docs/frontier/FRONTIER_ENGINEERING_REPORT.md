@@ -1450,6 +1450,11 @@ Documentation checkpoint `98fbf3a` updates `README.md`,
 report, and `docs/frontier/FRONTIER_MISSION_LEDGER.md` with the v9 interface,
 source evidence, hash reconciliation, and measured verification results.
 
+Commit `4193ddb` updates `apps/web/e2e/frontier.spec.ts` so the existing
+browser flow submits and displays the single-event ticker filter. Formatting
+and lint pass; Playwright enumerates all three Frontier cases, but the browser
+itself was not launched under the latest host-pressure sample.
+
 ### Latest MVE verification update (2026-10-27 11:51 UTC)
 
 - `pytest -q tests/frontier/test_adapters.py tests/frontier/test_api.py -k
@@ -1498,7 +1503,7 @@ source evidence, hash reconciliation, and measured verification results.
   They provide no child market, price, combo payoff, settlement equivalence,
   synchronized quote, or venue-wide absence result.
 
-### Adapter v9 single-event MVE filter (2026-10-27 12:09 UTC)
+### Adapter v9 single-event MVE filter (2026-10-27 12:15 UTC)
 
 - Kalshi adapter v9, API, and Mission Control now accept exactly one
   `event_ticker` in addition to the existing series or collection filter. The
@@ -1533,10 +1538,14 @@ source evidence, hash reconciliation, and measured verification results.
   there are no reported errors in the three changed modules. `git diff --check`
   passes. Browser E2E and production build remain deferred under the measured
   host pressure.
-- A host sample during this checkpoint showed 9.6 GiB available RAM, 3.4 GiB
-  swap in use, and memory PSI `avg60` of 25.85% (`some`) / 22.72% (`full`),
-  despite lower `avg10` values. No browser or build process was started; the
-  focused Python verification itself used zero swap.
+- The existing Playwright scenario now selects `event_ticker`, asserts the
+  request payload and displays the returned event. `playwright test --list`
+  enumerates three Frontier browser cases; none was executed. The E2E spec's
+  formatting and ESLint pass.
+- At 12:15 UTC the host had 9.3 GiB available RAM and 3.4 GiB swap in use;
+  memory PSI `avg10` was 35.86% (`some`) / 31.43% (`full`), with `avg60` at
+  36.47% / 31.90%. No browser or build process was started; the focused Python
+  verification itself used zero swap.
 - Reconciliation found that the artifact's initially reported row digest did
   not match its preserved raw and normalized objects. That earlier digest is
   retained and explicitly labeled unreconciled. The exact included snapshot

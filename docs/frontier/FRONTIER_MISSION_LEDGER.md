@@ -158,6 +158,7 @@ Remaining acceptance work is substantial.
 | `001b103` | Corrected Kalshi event-detail normalization for a documented top-level empty market array; preserved the one-request source response, original v7 normalization failure, v8 offline replay, and hash-verified replay-store row. |
 | `a40d2ee` | Added adapter v9 single-event `tickers` filtering with returned-event identity checks, Mission Control support, exact saved-response API replay, mismatch rejection, and an offline snapshot-row hash reconciliation. |
 | `98fbf3a` | Updated README, development/current-state, architecture, evidence README, engineering report and mission ledger for the v9 event filter, genuine response, digest reconciliation and current verification. |
+| `4193ddb` | Updated the existing Frontier Playwright scenario to use the single-event `event_ticker` filter, assert its request payload, and inspect the returned event. Formatting/lint and test enumeration pass; the browser was not run at host pressure. |
 
 ## Kalshi single-event MVE ticker filter checkpoint (2026-10-27)
 
@@ -727,8 +728,10 @@ made.
 
 The current MVE ticker-filter implementation and exact saved-response replay
 are `a40d2ee`; the associated README, architecture, report and ledger
-documentation checkpoint is `98fbf3a`. This latest ledger/report amendment
-records v9 digest reconciliation, the 13-test adapter/API selection, the
-40-test frontend run, current resource measurements, and the remaining
-browser/build boundary. No live request was repeated after that capture; no
-production deployment occurred.
+documentation checkpoint is `98fbf3a`. The Playwright ticker-filter update is
+`4193ddb`. This latest ledger/report amendment records v9 digest reconciliation,
+the 13-test adapter/API selection, the 40-test frontend run, current resource
+measurements, and the remaining browser/build boundary. At 12:15 UTC, memory
+PSI `avg10` was 35.86% (`some`) / 31.43% (`full`), so the browser and build
+remain unrun. No live request was repeated after the capture; no production
+deployment occurred.
