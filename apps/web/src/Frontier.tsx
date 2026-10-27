@@ -375,6 +375,7 @@ type Candidate = {
     quoted_ask: string;
     modeled_buy_price: string;
     modeled_fee: string | null;
+    quote_currency?: string | null;
     displayed_depth: string;
     book_observation_id: string;
   }[];
@@ -569,6 +570,36 @@ const money = (value: string | number | null | undefined) =>
   value == null
     ? 'Not established'
     : Number(value).toLocaleString(undefined, { maximumFractionDigits: 4 });
+type ExactMoney = { coefficient: bigint; scale: number };
+const parseExactMoney = (value: string): ExactMoney | null => {
+  const trimmed = value.trim();
+  if (trimmed.length === 0 || trimmed.length > 110) return null;
+  const match = /^(\d{1,36})(?:\.(\d{1,36}))?(?:[eE]([+-]?\d{1,2}))?$/.exec(trimmed);
+  if (!match) return null;
+  const whole = match[1];
+  const fraction = match[2] ?? '';
+  const exponent = match[3] ? Number(match[3]) : 0;
+  if (whole.length + fraction.length > 72 || Math.abs(exponent) > 36) return null;
+  let coefficient = BigInt(`${whole}${fraction}`);
+  let scale = fraction.length - exponent;
+  if (scale < 0) {
+    if (whole.length + fraction.length - scale > 72) return null;
+    coefficient *= 10n ** BigInt(-scale);
+    return { coefficient, scale: 0 };
+  }
+  while (scale > 0 && coefficient % 10n === 0n) {
+    coefficient /= 10n;
+    scale -= 1;
+  }
+  if (scale > 36) return null;
+  return { coefficient, scale };
+};
+const compareExactMoney = (left: ExactMoney, right: ExactMoney) => {
+  const scale = Math.max(left.scale, right.scale);
+  const leftScaled = left.coefficient * 10n ** BigInt(scale - left.scale);
+  const rightScaled = right.coefficient * 10n ** BigInt(scale - right.scale);
+  return leftScaled === rightScaled ? 0 : leftScaled < rightScaled ? -1 : 1;
+};
 const time = (value: string | null | undefined) =>
   value ? new Date(value).toLocaleString() : 'Not recorded';
 const shortHash = (value: string | undefined) => (value ? `${value.slice(0, 12)}…` : '—');
@@ -3549,6 +3580,7 @@ function InlineError({ message }: { message: string }) {
 }
 
 function CandidateCard({ candidate }: { candidate: Candidate }) {
+  const [virtualBalances, setVirtualBalances] = useState<Record<string, string>>({});
   const describeFillLeg = (identity: string) => {
     const leg = candidate.legs.find(
       (item) => `${item.venue}:${item.native_market_id}:${item.instrument_id}` === identity,
@@ -3629,6 +3661,86 @@ function CandidateCard({ candidate }: { candidate: Candidate }) {
           </>
         )}
       </section>
+      {Object.keys(candidate.capital_by_venue).length > 0 && (
+        <section
+          className="fr-candidate-fill-stress fr-capital-allocation"
+          aria-label="Venue-separated virtual funding"
+        >
+          <div>
+            <span className="fr-kicker">Economic workbench · local scenario</span>
+            <h4>Venue-separated virtual funding</h4>
+          </div>
+          <p>
+            Requirements cover the full modeled basket at modeled buy prices. Each exchange has a
+            separate virtual balance; surplus at one venue is not pooled or transferred to another.
+            Unknown fees are excluded from the displayed requirement and prevent a sufficiency
+            claim.
+          </p>
+          <div className="fr-capital-rows">
+            {Object.entries(candidate.capital_by_venue)
+              .sort(([left], [right]) => left.localeCompare(right))
+              .map(([venue, requirement]) => {
+                const legs = candidate.legs.filter((leg) => leg.venue === venue);
+                const currencies = new Set(
+                  legs
+                    .map((leg) => leg.quote_currency)
+                    .filter((currency): currency is string => !!currency),
+                );
+                const currency = currencies.size === 1 ? [...currencies][0] : null;
+                const feesUnknown = legs.some((leg) => leg.modeled_fee == null);
+                const budgetText = virtualBalances[venue] ?? '';
+                const budget = budgetText ? parseExactMoney(budgetText) : null;
+                const required = parseExactMoney(requirement);
+                const state = !currency
+                  ? 'Currency is missing or mixed; comparison unavailable.'
+                  : !required
+                    ? 'Recorded requirement exceeds the exact comparison bound.'
+                    : !budgetText
+                      ? 'Enter an isolated virtual balance.'
+                      : !budget
+                        ? 'Enter a nonnegative amount using at most 36 decimal places.'
+                        : compareExactMoney(budget, required) < 0
+                          ? 'Virtual funding shortfall at this venue.'
+                          : feesUnknown
+                            ? 'Recorded principal is covered; unresolved fees remain.'
+                            : 'Modeled requirement covered at this venue.';
+                return (
+                  <div className="fr-capital-row" key={`${candidate.candidate_id}-${venue}`}>
+                    <div>
+                      <strong>{venueLabel(venue)}</strong>
+                      <span>
+                        Modeled requirement: {requirement} {currency ?? 'currency unresolved'}
+                        {feesUnknown
+                          ? ' · unresolved fees excluded'
+                          : ' · known modeled fees included'}
+                      </span>
+                    </div>
+                    <label>
+                      <span>Virtual balance ({currency ?? 'unavailable'})</span>
+                      <input
+                        aria-label={`Virtual balance allocated to ${venueLabel(venue)}`}
+                        inputMode="decimal"
+                        maxLength={110}
+                        disabled={!currency}
+                        value={budgetText}
+                        onChange={(event) =>
+                          setVirtualBalances((current) => ({
+                            ...current,
+                            [venue]: event.target.value,
+                          }))
+                        }
+                      />
+                    </label>
+                    <small role="status">{state}</small>
+                  </div>
+                );
+              })}
+          </div>
+          <small>
+            Scenario input only. No account, wallet, deposit, transfer, or order interface is used.
+          </small>
+        </section>
+      )}
       {candidate.legs.length > 0 && (
         <div className="fr-table-wrap">
           <table className="fr-table">

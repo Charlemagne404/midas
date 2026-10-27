@@ -381,6 +381,7 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
               quoted_ask: '0.20',
               modeled_buy_price: '0.20',
               modeled_fee: '0',
+              quote_currency: 'USD',
               displayed_depth: '10',
               book_observation_id: 'fixture-red-book',
             },
@@ -414,8 +415,59 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
           assumptions: ['Fixture only; not a market finding.'],
           evidence_sha256: 'c'.repeat(64),
         },
+        {
+          candidate_id: 'cross-venue-capital-fixture',
+          family: 'cross_venue_complete_coverage',
+          classification: 'INCOMPLETE EVIDENCE',
+          hypothetical: true,
+          practical_eligibility: false,
+          venues: ['kalshi', 'polymarket'],
+          legs: [
+            {
+              venue: 'kalshi',
+              native_market_id: 'KX-CAPITAL-FIXTURE',
+              instrument_id: 'KX-CAPITAL-FIXTURE:NO',
+              outcome_id: 'no',
+              quantity: '10',
+              quoted_ask: '0.55',
+              modeled_buy_price: '0.55',
+              modeled_fee: '0',
+              quote_currency: 'USD',
+              displayed_depth: '10',
+              book_observation_id: 'fixture-kalshi-book',
+            },
+            {
+              venue: 'polymarket',
+              native_market_id: 'condition:capital-fixture',
+              instrument_id: 'token-yes',
+              outcome_id: 'yes',
+              quantity: '10',
+              quoted_ask: '0.35',
+              modeled_buy_price: '0.35',
+              modeled_fee: '0',
+              quote_currency: 'USD',
+              displayed_depth: '10',
+              book_observation_id: 'fixture-polymarket-book',
+            },
+          ],
+          gross_cost: '9',
+          modeled_fees: '0',
+          modeled_net_cost: '9',
+          outcome_payout_by_state: {},
+          gross_pnl_by_state: {},
+          net_pnl_by_state: {},
+          worst_case_gross_pnl: null,
+          worst_case_net_pnl: null,
+          capital_by_venue: { kalshi: '5.5', polymarket: '3.5' },
+          received_skew_ms: 10,
+          exchange_skew_ms: 5,
+          timing_verified: false,
+          reasons: ['Fixture for isolated virtual capital allocations.'],
+          assumptions: ['Fixture only; not a market finding.'],
+          evidence_sha256: 'e'.repeat(64),
+        },
       ],
-      returned: 1,
+      returned: 2,
       limit: 100,
       offset: 0,
     },
@@ -550,12 +602,51 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
   await page.goto('/');
   await page.getByRole('button', { name: 'Frontier', exact: true }).click();
   await page.getByRole('button', { name: 'Candidates', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Terminal-state payoff analysis' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Independent arithmetic audit' })).toBeVisible();
+  const multiOutcomeCandidate = page.locator('.fr-candidate').filter({ hasText: 'KX-THREEWAY' });
+  await expect(
+    multiOutcomeCandidate.getByRole('heading', { name: 'Terminal-state payoff analysis' }),
+  ).toBeVisible();
+  await expect(
+    multiOutcomeCandidate.getByRole('heading', { name: 'Independent arithmetic audit' }),
+  ).toBeVisible();
   await expect(
     page.getByText('Independent arithmetic agrees for every terminal state.'),
   ).toBeVisible();
   await expect(page.getByText('Modeled payout')).toBeVisible();
+  const capital = multiOutcomeCandidate.getByRole('region', {
+    name: 'Venue-separated virtual funding',
+  });
+  await expect(capital.getByText(/Modeled requirement: 9 USD/)).toBeVisible();
+  const virtualBalance = capital.getByRole('textbox', {
+    name: 'Virtual balance allocated to Kalshi',
+  });
+  await virtualBalance.fill('8.999999999999999999');
+  await expect(capital.getByRole('status')).toHaveText('Virtual funding shortfall at this venue.');
+  await virtualBalance.fill('9.000000000000000000');
+  await expect(capital.getByRole('status')).toHaveText(
+    'Modeled requirement covered at this venue.',
+  );
+  const crossVenueCapital = page
+    .locator('.fr-candidate')
+    .filter({ hasText: 'KX-CAPITAL-FIXTURE' })
+    .getByRole('region', { name: 'Venue-separated virtual funding' });
+  await expect(crossVenueCapital.locator('.fr-capital-row')).toHaveCount(2);
+  const kalshiCapital = crossVenueCapital.locator('.fr-capital-row').filter({ hasText: 'Kalshi' });
+  const polymarketCapital = crossVenueCapital
+    .locator('.fr-capital-row')
+    .filter({ hasText: 'Polymarket' });
+  await kalshiCapital
+    .getByRole('textbox', { name: 'Virtual balance allocated to Kalshi' })
+    .fill('10');
+  await polymarketCapital
+    .getByRole('textbox', { name: 'Virtual balance allocated to Polymarket' })
+    .fill('0');
+  await expect(kalshiCapital.getByRole('status')).toHaveText(
+    'Modeled requirement covered at this venue.',
+  );
+  await expect(polymarketCapital.getByRole('status')).toHaveText(
+    'Virtual funding shortfall at this venue.',
+  );
   await page.setViewportSize({ width: 390, height: 844 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
   await page.setViewportSize({ width: 1440, height: 1000 });

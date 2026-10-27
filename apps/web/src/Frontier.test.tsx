@@ -152,6 +152,7 @@ it('renders recorded-evidence empty states and never probes a source automatical
             quoted_ask: '0.20',
             modeled_buy_price: '0.20',
             modeled_fee: '0',
+            quote_currency: 'USD',
             displayed_depth: '10',
             book_observation_id: 'kalshi-red-book',
           },
@@ -164,6 +165,7 @@ it('renders recorded-evidence empty states and never probes a source automatical
             quoted_ask: '0.30',
             modeled_buy_price: '0.30',
             modeled_fee: '0',
+            quote_currency: 'USD',
             displayed_depth: '10',
             book_observation_id: 'kalshi-green-book',
           },
@@ -176,6 +178,7 @@ it('renders recorded-evidence empty states and never probes a source automatical
             quoted_ask: '0.40',
             modeled_buy_price: '0.40',
             modeled_fee: '0',
+            quote_currency: 'USD',
             displayed_depth: '10',
             book_observation_id: 'kalshi-blue-book',
           },
@@ -257,6 +260,44 @@ it('renders recorded-evidence empty states and never probes a source automatical
   ).toBeInTheDocument();
   expect(screen.getByText('Recomputed basket cost')).toBeInTheDocument();
   expect(screen.getByText('Gross basket cost')).toBeInTheDocument();
+  const capital = screen.getByRole('region', { name: 'Venue-separated virtual funding' });
+  expect(capital).toHaveTextContent('Modeled requirement: 9 USD');
+  expect(capital).toHaveTextContent('separate virtual balance');
+  const virtualBalance = screen.getByRole('textbox', {
+    name: 'Virtual balance allocated to Kalshi',
+  });
+  fireEvent.change(virtualBalance, { target: { value: '8.999999999999999999' } });
+  expect(capital).toHaveTextContent('Virtual funding shortfall at this venue.');
+  fireEvent.change(virtualBalance, { target: { value: '9.000000000000000000' } });
+  expect(capital).toHaveTextContent('Modeled requirement covered at this venue.');
+  expect(capital).toHaveTextContent('No account, wallet, deposit, transfer, or order interface');
+  const recordedCandidates = queryClient.getQueryData<{
+    items: Array<{
+      candidate_id: string;
+      modeled_fees: string | null;
+      modeled_net_cost: string | null;
+      capital_by_venue: Record<string, string>;
+      legs: Array<{ modeled_fee: string | null }>;
+    }>;
+  }>(['frontier', 'opportunities']);
+  expect(recordedCandidates).toBeDefined();
+  queryClient.setQueryData(['frontier', 'opportunities'], {
+    ...recordedCandidates!,
+    items: recordedCandidates!.items.map((item) =>
+      item.candidate_id === 'multi-outcome-fixture-candidate'
+        ? {
+            ...item,
+            modeled_fees: null,
+            modeled_net_cost: null,
+            capital_by_venue: { kalshi: '9.0E+0' },
+            legs: item.legs.map((leg) => ({ ...leg, modeled_fee: null })),
+          }
+        : item,
+    ),
+  });
+  await waitFor(() =>
+    expect(capital).toHaveTextContent('Recorded principal is covered; unresolved fees remain.'),
+  );
   expect(screen.getAllByText('red')).toHaveLength(2);
 });
 

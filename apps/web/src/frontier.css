@@ -1783,6 +1783,63 @@
   font-size: 8px;
   font-weight: 550;
 }
+.fr-capital-rows {
+  display: grid;
+  gap: 8px;
+}
+.fr-capital-row {
+  display: grid;
+  grid-template-columns: minmax(150px, 1fr) minmax(170px, 0.8fr) minmax(180px, 1fr);
+  align-items: center;
+  gap: 10px;
+  padding: 9px;
+  border: 1px solid #27323d;
+  border-radius: 5px;
+  background: #10171e;
+}
+.fr-capital-row > div,
+.fr-capital-row label {
+  display: grid;
+  gap: 4px;
+}
+.fr-capital-row strong {
+  color: #c4cedb;
+  font-size: 9px;
+  font-weight: 550;
+}
+.fr-capital-row span,
+.fr-capital-row small,
+.fr-capital-row label > span {
+  color: #8391a2;
+  font-size: 8px;
+  line-height: 1.45;
+}
+.fr-capital-row input {
+  width: 100%;
+  min-height: 30px;
+  padding: 5px 8px;
+  border: 1px solid #334151;
+  border-radius: 4px;
+  background: #0b1117;
+  color: #d7e0ea;
+  font: inherit;
+}
+.fr-capital-row input:focus-visible {
+  outline: 2px solid #58b8a6;
+  outline-offset: 2px;
+}
+.fr-capital-row input:disabled {
+  opacity: 0.55;
+}
+.fr-capital-row > small {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 650px) {
+  .fr-capital-row {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+}
 .fr-candidate-states {
   display: grid;
   gap: 8px;
