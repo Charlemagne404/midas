@@ -57,6 +57,15 @@ the selected checkout. This addendum updates Frontier development only; the
 production service and protected Reality recorder state below has not been
 remeasured or changed by this work.
 
+The 2026-10-27 replay v6 development checkpoint now carries exact saved market
+and book observation record IDs through API-loaded model provenance, replay
+manifests, candidate legs, and content-addressed Arena snapshots. The focused
+Frontier/Arena regression suite passed 118 tests at 254,696 KiB peak RSS with
+zero swap. This is isolated code and fixture/local-store verification; it did
+not change the database schema, production services, or protected Reality
+state. See the dated Frontier mission ledger for the complete command and
+resource measurements.
+
 ## Architecture and source layout
 
 MIDAS is a Python modular monolith with a separate React dashboard:

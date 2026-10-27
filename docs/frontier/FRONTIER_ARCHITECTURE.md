@@ -18,7 +18,7 @@ as mutable Frontier storage.
 | Candidate calculators | `economics.py` | Decimal cross-venue binary and same-market exhaustive multi-outcome all-long checks with fee, depth, freshness, timing, and scenario bounds; exact bounded one-sided fill sensitivity; separate Kalshi one-fill and instrument-bound one-order fee sensitivities. |
 | Independent arithmetic audit | `independent_audit.py` | Separately recomputes supported candidate identities, payoff vectors, pinned quotes/depth, fees, costs, terminal P&L, fill-pattern sensitivity, and classification from replay inputs. |
 | Durable evidence | `storage.py` | Append-only, size- and row-bounded SQLite observations, markets, relationship reviews/revisions, runs, and paired comparisons. |
-| Replay | `replay.py` | Stable input ordering, scenario/mapping/proposal-limit-aware replay identities, deterministic results, and paired assumption comparisons. |
+| Replay | `replay.py` | Stable input ordering, scenario/mapping/proposal-limit-aware replay identities, exact store-record provenance for API-loaded models, deterministic results, and paired assumption comparisons. |
 | Arena paired replay | `packages/midas/arena/frontier_replay.py`, `arena/jobs.py` | Immutable content-addressed input snapshots, a bounded offline paired-replay worker, and hash-verified result artifacts under Arena's existing admission gate. |
 | HTTP API | `apps/api/frontier.py` | Bounded local queries and graph neighborhoods, relationship proposals/reviews, deterministic and paired replay, config-gated market/event-group capture, and hash-bound Kalshi fee sensitivities. |
 | Mission Control workspace | `apps/web/src/Frontier.tsx` | Sources, markets/books/event context, relationship hypotheses, candidates, economic workbench, local comparisons, bounded Arena replay history/results, and readiness. |
@@ -151,9 +151,13 @@ explicit disagreement in four-digit event years blocks the parent-context path.
 Text never supplies a YES/NO outcome mapping and is never promoted automatically.
 The API proposal path binds each market to the actual append-only observation
 record from which its selected normalized value was loaded. Persisted graph
-evidence therefore opens the raw and normalized source record directly. Offline
-matcher calls without a store mapping continue to use the deterministic
-adapter-derived observation identity.
+evidence therefore opens the raw and normalized source record directly. Store-
+backed API reads also overlay exact immutable record IDs onto market and book
+model provenance before replay. Replay v6 pins these IDs into manifests, input
+hashes, and candidate-leg evidence, so each source reference opens the saved
+record through the observation API. Offline matcher or replay calls without a
+store mapping continue to use deterministic adapter-derived identities. No
+stored row is rewritten and no schema migration is needed.
 The review API requires stored,
 hash-verified source records for both markets. A verified decision must pass
 `verify_same_payoff`, which requires verified/exhaustive state sets, a bijection

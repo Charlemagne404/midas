@@ -67,6 +67,19 @@ classification/count deltas without assigning an improvement score. The
 workbench exposes the result, but no genuine live cross-venue pair exists in the
 captured evidence and paired fixture outputs are not market findings.
 
+Replay v6 overlays the immutable SQLite observation record ID onto market and
+book provenance whenever the API loads those models for research. Replay
+manifests, candidate legs, and Arena snapshots now point to records that can be
+resolved through the observation API. Direct in-memory adapter replay keeps its
+deterministic adapter-derived identities. The replay version pins this input
+identity change; the schema and previously stored evidence rows are unchanged.
+The focused integration tests carry saved public Polymarket and Kalshi event
+responses through adapters, API, storage, relationship proposal, deterministic
+replay, and paired replay, and verify exact record references. A controlled
+book row separately verifies API readback, replay-manifest provenance, and the
+content-addressed Arena snapshot. This establishes record lineage in fixture
+and local-store research, not live cross-venue equivalence or economics.
+
 Economic model v4 adds an exact one-sided full-or-no-fill terminal sensitivity
 for the supported binary and multi-outcome constructions. The candidate and the
 separate audit identify the worst adverse leg pattern across all `2^n` patterns
@@ -473,6 +486,16 @@ transaction; all three records are hash-validated and protected by append-only
 triggers. The store has no compaction/retention worker; once the cap is
 reached, writes fail closed and require an explicitly reviewed storage policy.
 
+For store-backed API replay, Frontier now overlays the selected immutable
+observation row ID onto the normalized market or book model's provenance before
+passing it to replay. The run manifest and candidate legs therefore refer to
+the exact source record ID that `/api/frontier/observations/{id}` can resolve.
+Replay v6 pins this provenance behavior into normalized-input identity. Direct
+in-memory adapter replays keep their deterministic adapter-derived IDs. The
+change does not update historical observation rows or require a schema
+migration; tests cover API reads, event relationship evidence, single and paired
+replay, and Arena snapshot staging.
+
 Polymarket v2 trade pages are each stored as one raw observation plus one
 `TradeBatch` schema-v2 record. The record retains the source cursor and next
 cursor, condition ID, page limit, and exact `has_more` state; every normalized
@@ -675,6 +698,15 @@ Verification on this branch:
 - The latest replay/API regression passed **29 tests** in 12.08 seconds across `tests/arena/test_frontier_replay.py` and `tests/frontier/test_api.py`, including rejection of malformed and out-of-bound worker measurements. The updated Mission Control Frontier component passed **7 tests**, including CPU/RSS display and the capacity-limit note. The production frontend build passed; the Frontier chunk is 68.90 kB JavaScript and 29.81 kB CSS. The existing 503.86 kB main and 544.41 kB Chart chunks still trigger Vite's bundle-size warning. TypeScript, ESLint, Prettier, and Ruff passed. At this checkpoint, `jobs.py` passed mypy and `apps/api/arena.py` had three existing typing errors; later commit `2628792` fixed the optional unit-ID and sorted-path typing, and focused mypy now passes for those API/job sources.
 - The targeted Frontier browser suite passed **3 tests** in 8.5 seconds with one worker. It verifies workspace responsiveness, that Arena history does not start work on page load, and bounded/mobile graph behavior. An isolated ASGI API read of the persisted worker returned the three allowlisted metrics, and the result route returned HTTP 200 with `integrity_verified=true`; no production API process was started.
 - Ruff check and format passed for all changed Python files. Mypy passed in strict mode for the Frontier replay job module, Arena job schema, and Frontier API (3 source files). A broader import-following mypy run reports 37 errors in 8 existing Veritas/Arena/API files, including unrelated legacy errors in `apps/api/arena.py`; it reported no errors in the Frontier replay job or `apps/api/frontier.py`. `git diff --check` passed.
+- Replay v6 source-record lineage regression: `tests/frontier` plus
+  `tests/arena/test_frontier_replay.py` passed **118 tests** in 24.05 seconds;
+  `/usr/bin/time -v` measured 24.89 seconds wall, 7.48 seconds user CPU,
+  0.76 seconds system CPU, 254,696 KiB peak RSS, zero swaps, and zero socket
+  messages. Ruff check/format passed on the four changed Python files, and
+  focused mypy passed on four API/replay/Arena source modules. The tests verify
+  store-row IDs in API market/book reads, event relationship evidence, replay
+  manifests, paired replay, and Arena snapshots. One upstream
+  Starlette/httpx `TestClient` deprecation warning remains.
 - Two systemd-supervised Frontier fixture jobs completed after the ordinary host-wide Arena gate admitted them. Their paired results verify against the same pinned snapshot. The latest manifest now records process CPU/RSS, and Mission Control exposes the allowlisted measurements with a capacity-limit note. These fixture jobs do not validate a live relationship or economic opportunity; resource sustainability remains `NOT_MEASURED`.
 - After the 130-test regression, two targeted API cases passed for snapshot staging and simulated admission denial. The denial returned HTTP 409, preserved the content-addressed snapshot, issued no source request, and created no job.
 
@@ -922,6 +954,11 @@ peaked at 247,084 KiB RSS over 21.77 seconds wall time. Its production frontend
 build peaked at 658,824 KiB RSS over 12.51 seconds wall time. Both had zero swaps
 and zero socket messages. These are isolated development-process measurements
 and do not qualify production resource sustainability.
+
+The 118-test replay-v6 lineage regression used 24.89 seconds wall time,
+8.24 seconds total user-plus-system CPU, and peaked at 254,696 KiB RSS. It
+recorded zero swaps and zero socket messages. This is one bounded local test
+measurement; it is not a production capacity or deployment qualification.
 
 ## 14. Actual scientific findings
 
@@ -1257,6 +1294,10 @@ Implementation and documentation commits on this branch:
 - `29cb909` — bumped the relationship matcher to v4 and rejects text candidates
   when explicit years conflict across a parent title and child title or between
   venues, with regression coverage for a generic parent title.
+- `38ad1fa` — introduced replay v6 and overlays exact store observation record
+  IDs into API-loaded market/book provenance so manifests, candidate evidence,
+  paired replay, and Arena snapshots retain resolvable source lineage; added
+  end-to-end API/store/replay regressions.
 
 Principal changed paths:
 
@@ -1294,7 +1335,7 @@ cross-venue economics.
 | Relationship hypotheses, review revisions, indexed neighborhoods, and explicit same-payoff verifier | PARTIALLY VERIFIED | Self-attributed review API/UI, append-only revisions, latest-state replay, tamper/migration checks, left/right endpoint-indexed 1–3 hop scans capped at 500 rows, revision-bound centered one-hop keyset pages, stale-cursor rejection, and a 501-edge scan-bound test; matcher v4 blocks explicit parent/child year contradictions and cross-venue mismatches in both text paths. One genuine 2026 House-control event-topic pair yields a text-only HYPOTHESIS whose API evidence links resolve to both saved captures, while strict payoff verification rejects equivalence; reviewer authentication and multi-hop pagination remain absent. |
 | Opportunity candidate and independent economic checks | PARTIALLY VERIFIED | Two-venue all-long binary and same-market 3–16 state one-hot exhaustive coverage; economic model v4 computes an exact full/no-fill adverse exposure pattern over up to 16 legs, and independent audit v2 recomputes it from pinned inputs. Differential three-leg enumeration, unknown-fee cases, and malformed cross-venue leg handling pass. Controlled fixtures only; source semantics, account costs, broader funding/settlement costs, and operational feasibility remain incomplete. |
 | Kalshi taker-fee sensitivity | PARTIALLY VERIFIED | Hash-matched public event/series evidence supports one-fill and bounded one-order Decimal sensitivities for two documented quadratic taker fee types, both precision cases, per-fill rounding, order accumulation, and capped rebates. Tests match the official one-fill example and exercise buy/sell arithmetic. Manual inputs are not live quotes or book-priced; account-specific fees and precision, maker/mixed-order behavior, FCM charges, later schedules, and full candidate fee integration remain unresolved. |
-| Append-only evidence store and deterministic replay | COMPLETE AND VERIFIED | Schema v6, additive v2/v3/v4/v5 migration, bounds, hash validation, immutability, replay-v5 output includes full/no-fill sensitivity and identity pins effective mappings and proposal limit. The separate Arena wrapper uses immutable content-addressed snapshots and hash-verified result artifacts; two controlled fixture workers completed and the latest recorded CPU/RSS. |
+| Append-only evidence store and deterministic replay | COMPLETE AND VERIFIED | Schema v6, additive v2/v3/v4/v5 migration, bounds, hash validation, and immutability. Replay v6 carries exact store record IDs through API-loaded market/book provenance, manifests, candidate legs, and Arena snapshots; direct in-memory replay retains adapter IDs. Replay-v5 economic output includes full/no-fill sensitivity and pins effective mappings/proposal limit. The separate Arena wrapper uses immutable content-addressed snapshots and hash-verified result artifacts; two controlled fixture workers completed and the latest recorded CPU/RSS. |
 | Paired scenario comparison | PARTIALLY VERIFIED | Local deterministic comparison, atomic result persistence, API/UI, and isolated browser tests pass. Two systemd-supervised Arena jobs completed over the same controlled fixture with verified result identities; the latest worker's process CPU and peak RSS are visible in Mission Control. No genuine matched live cross-venue pair or live economic claim exists. |
 | Live market/book/trade and fee metadata through adapters/API | PARTIALLY VERIFIED | One bounded listing, book, and legacy trade response per venue is hash-pinned; two sequential October 27 Polymarket/Kalshi event-group responses are preserved and replayed through fixture-backed adapters, API, storage, and relationship proposal tests; edge evidence resolves to both immutable response records. Polymarket v2 pages have distinct IDs; a Kalshi fee-metadata read-back and cursor-page response are hash-pinned. The cursor page was empty and terminal, so its live row mapping is not established. Samples are not synchronized and do not prove venue-wide coverage, fees, or execution. |
 | Source workers and broad historical data | DEFERRED | No persistent worker or long-duration collection. |

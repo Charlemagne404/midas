@@ -5,7 +5,11 @@ indexed bounded graph neighborhoods with UI scan-quality status, hash-verified
 public book/trade capture, exact fixture-verified multi-outcome coverage, and a
 separate candidate arithmetic audit. The newest economic-model v4 checkpoint
 adds exact bounded full-or-no-fill stress across up to 16 legs; independent audit
-v2 recomputes the sensitivity, and replay v5 pins it into run output. The
+v2 recomputes the sensitivity, and replay v5 pins it into run output. Replay v6
+now overlays exact immutable store record IDs into store-backed market/book
+provenance, manifests, candidate legs, and Arena snapshots; direct in-memory
+replay retains adapter-derived IDs. This lineage change needs no schema
+migration. The
 supported Polymarket fee shape now has
 nonzero-fixture and live zero-fee evidence coverage; timeout and truncated-stream
 failure tests pass. Centered one-hop graph neighborhoods now support append-only
@@ -137,9 +141,20 @@ Remaining acceptance work is substantial.
 | `b4cfcbe` | Added bounded public event-group normalization for Polymarket/Kalshi, preserved a direct cross-venue event capture, exposed group context in Mission Control, and linked API relationship evidence to exact stored observation records. |
 | `b640bd2` | Updated architecture, development, current-state, and engineering handoffs for the captured event-group evidence, API traceability, and current verification. |
 | `29cb909` | Bumped the deterministic relationship matcher to v4 and blocked title/parent-context hypotheses with contradictory within-market or cross-market explicit years. |
+| `38ad1fa` | Introduced replay v6 and preserves exact store observation record IDs in API-loaded models, replay manifests, candidate evidence, paired replay, and Arena snapshots; added lineage integration regressions. |
 
 ## Latest checkpoint verification (2026-10-27)
 
+- Store-record lineage and replay-v6 integration: `tests/frontier` plus
+  `tests/arena/test_frontier_replay.py` passed **118 tests** in 24.05 seconds;
+  `/usr/bin/time -v` measured 24.89 seconds wall, 7.48 seconds user CPU,
+  0.76 seconds system CPU, 254,696 KiB peak RSS, zero swaps, and zero socket
+  messages. API-loaded Polymarket/Kalshi event rows retain exact store IDs
+  through relationship evidence, manifests, direct and paired replay; a
+  controlled saved book is also traceable through `/books`, replay, and its
+  content-addressed Arena snapshot. Repeated replay output is deterministic.
+  Existing schema and saved observations are unchanged. Ruff check/format and
+  focused mypy passed. One upstream Starlette/httpx deprecation warning remains.
 - Cross-venue event-group and evidence-link integration: `tests/frontier` plus
   `tests/arena/test_frontier_replay.py` passed **118 tests** in 34.97 seconds;
   `/usr/bin/time -v` measured 35.79 seconds wall, 7.40 seconds user CPU,
@@ -494,7 +509,7 @@ same-input runs do not change the resource sustainability gate.
 | Canonical normalization and native evidence | PARTIALLY VERIFIED | Distinct event, conditional event and spot forms; v2 Polymarket trades preserve token and outcome identity, while earlier v1 batches still load with those new fields unknown. October 27 event-group capture also preserves parent-event title and child outcome text; other settlement/payoff semantics remain intentionally unverified. |
 | Relationship matching, immutable review, indexed neighborhoods, and strict payoff verifier | PARTIALLY VERIFIED | Self-attributed review API/UI with stored source refs, append-only revisions, compare-and-set, latest-state replay, query-plan/migration tests, and 1–3 hop left/right indexed scans capped at 500 rows. Centered one-hop keyset pages bind listing/instrument-metadata observation, relationship, and review counts; changed inputs reject stale cursors. A 501-edge fixture verifies the scan cap. Matcher v4 rejects contradictory or mismatched explicit parent/child years in both text paths; one genuine 2026 House-control pair yields a text-only HYPOTHESIS whose API evidence IDs resolve to both saved event captures, while strict payoff verification rejects same-payoff equivalence. No authenticated reviewer/assertion or multi-hop pagination. |
 | Economic candidate verifier and independent audit | PARTIALLY VERIFIED | Exact two-venue binary all-long coverage and same-market 3–16-state exhaustive one-hot coverage. Economic model v4 derives the exact adverse full-or-no-fill terminal pattern for up to 16 legs; independent audit v2 rederives it from pinned inputs. A three-leg brute-force fixture agrees, and unknown fees suppress net stress. Fixtures only; no genuine eligible event, independently authenticated market truth, or practical execution proof. |
-| Bounded store and deterministic replay | COMPLETE AND VERIFIED | Schema v6 with additive v2/v3/v4/v5 migrations, immutable replay/comparison records, replay-v5 output includes fill sensitivity and identity includes effective mappings/proposal limit, with tests that later review revokes earlier verified replay input. |
+| Bounded store and deterministic replay | COMPLETE AND VERIFIED | Schema v6 with additive v2/v3/v4/v5 migrations, immutable replay/comparison records, replay-v6 source lineage from store rows through manifests/candidate legs/Arena snapshots, and direct replay retaining adapter IDs. Replay-v5 output includes fill sensitivity and identity includes effective mappings/proposal limit; prior replay results and observations remain unchanged. |
 | Paired scenario comparison | PARTIALLY VERIFIED | Direct local comparison and API/UI/browser tests pass. Two actual systemd-supervised fixture replays completed over the same pinned inputs and their result hashes verify. The latest run measured worker process CPU/RSS and exposes it in Mission Control. No genuine equivalent live market pair exists. |
 | Frontier API and source configuration | COMPLETE AND VERIFIED | Local reads include hash-verified legacy and cursor-page batches. Polymarket and Kalshi page routes are capability/config/recorded-market gated, bounded to one page and retries, and bind cursors to market and size. Polymarket two-page and Kalshi empty-terminal-page persistence/read-back are tested. Kalshi live trade-row mapping remains fixture-only. Event-group routes bind one bounded capture to the recorded child, store parent metadata, and have Polymarket/Kalshi adapter/API coverage. Relationship proposals cite resolvable append-only capture IDs. |
 | Live adapter-to-API listing, book, and trade persistence | PARTIALLY VERIFIED | Three genuine venue captures, Polymarket v2 first/continuation pages with distinct IDs, and one Kalshi empty cursor page have hash-pinned temporary-store evidence. The October 27 event-detail responses are preserved and hash-pinned and pass through adapters, API, store, and relationship proposal under fixture replay. Samples are sequential and do not establish synchronized prices, depth, complete histories, or execution. |

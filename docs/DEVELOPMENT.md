@@ -186,8 +186,12 @@ equivalence. Kraken does not advertise event-group discovery. Source probing
 remains explicit and disabled by default.
 The relationship proposal route cites each loaded market's append-only store
 record in edge evidence; this lets the graph evidence IDs resolve through the
-observation API. Direct matcher calls without a store preserve adapter-derived
-observation identities.
+observation API. For store-backed reads, the API also overlays the selected
+market and book record IDs onto model provenance. Replay manifests, candidate
+legs, and Arena snapshots then retain those resolvable IDs. Direct adapter or
+matcher calls without a store preserve deterministic adapter-derived
+observation identities. Replay v6 pins this lineage behavior in its versioned
+input identity; the storage schema and existing observation rows are unchanged.
 
 The Economic Workbench can compare two named virtual scenarios through
 `POST /api/frontier/replay/compare`. Both arms use the same stored evidence and
