@@ -48,13 +48,16 @@ venue-wide coverage.
 `FrontierMarket.native_event_title` and `outcome_label` preserve event-group
 context separately from the market question. The relationship matcher may use
 similar parent-event text plus an overlapping market-specific outcome token to
-propose a cross-venue `TEXT_CANDIDATE`. An explicit conflicting event year blocks
-that path. Such edges remain `HYPOTHESIS`; the text procedure does not infer a
-YES/NO mapping or certify settlement equivalence. The independent same-payoff
-verifier still requires verified exhaustive payoffs, resolution identity,
-authority, settlement asset, and matching timing. Event-group observations
-participate in latest-record selection and graph revision identity, so replay
-and paged reads cannot silently retain older child-only metadata.
+propose a cross-venue `TEXT_CANDIDATE`. It checks explicit years in both the
+parent title and child market title; a contradiction within a venue or mismatch
+across venues blocks both title and parent-context matching. When the parent
+omits the year, the child title can supply it. Such edges remain `HYPOTHESIS`;
+the text procedure does not infer a YES/NO mapping or certify settlement
+equivalence. The independent same-payoff verifier still requires verified
+exhaustive payoffs, resolution identity, authority, settlement asset, and
+matching timing. Event-group observations participate in latest-record
+selection and graph revision identity, so replay and paged reads cannot silently
+retain older child-only metadata.
 
 One preserved public capture demonstrates the boundary. The Polymarket and
 Kalshi event titles and party-outcome wording generated a deterministic

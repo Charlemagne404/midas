@@ -179,9 +179,11 @@ market, validates and stores the complete raw event response beside a normalized
 `MarketBatch`, and exposes the parent event title and any native outcome label
 in the Market Explorer. This only adds context for hypothesis discovery. The
 matcher requires similar parent titles and a market-specific outcome text
-overlap, and differing explicit years reject the match. It does not infer YES/NO
-semantics or verify payoff and settlement equivalence. Kraken does not advertise
-event-group discovery. Source probing remains explicit and disabled by default.
+overlap. It checks explicit years in both parent and child titles; within-source
+contradictions and cross-source mismatches block both title and parent-context
+paths. It does not infer YES/NO semantics or verify payoff and settlement
+equivalence. Kraken does not advertise event-group discovery. Source probing
+remains explicit and disabled by default.
 The relationship proposal route cites each loaded market's append-only store
 record in edge evidence; this lets the graph evidence IDs resolve through the
 observation API. Direct matcher calls without a store preserve adapter-derived

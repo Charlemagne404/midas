@@ -844,15 +844,18 @@ responses are distinct from the preserved genuine public capture files.
 - A second integration fixture passed both preserved response bodies through
   their venue adapters, the event-group API routes, SQLite, and the relationship
   proposal route. Its single target pair remains `TEXT_CANDIDATE`/`HYPOTHESIS`
-  under matcher v3. Relationship evidence now names the exact stored observation
-  records containing the normalized markets; both IDs were read back and
-  verified. Direct in-memory matcher use retains its deterministic normalized
-  observation IDs. This fixes API evidence traceability without changing
-  economics, market identity, or replay inputs.
+  under matcher v4. It also rejects a child-title year mismatch when the parent
+  title omits a year, and rejects a contradiction between a source's parent and
+  child years. Relationship evidence names the exact stored observation records
+  containing normalized markets; both cross-venue IDs were read back and
+  verified. Direct in-memory matcher use retains deterministic normalized
+  observation IDs. This changes hypothesis filtering and evidence references,
+  not payoff verification, market identity, or economics.
 - `tests/frontier` plus `tests/arena/test_frontier_replay.py` passed **118 tests**
-  in 34.97 seconds; `/usr/bin/time -v` measured 35.79 seconds wall, 7.40 seconds user CPU,
-  252,996 KiB peak RSS, zero swaps, and zero socket messages. All frontend tests passed (**39 tests across 7
-  files**); the production build passed with existing 503.86 kB main and 544.41
+  in 22.95 seconds; `/usr/bin/time -v` measured 23.77 seconds wall, 7.38 seconds
+  user CPU, 254,240 KiB peak RSS, zero swaps, and zero socket messages. All
+  frontend tests passed (**39 tests across 7 files**); the production build
+  passed with existing 503.86 kB main and 544.41
   kB chart chunk warnings; **11/11** isolated Playwright tests passed. Ruff
   check/format and focused import-following mypy passed for the seven changed
   backend modules. Normal import-following mypy reports 14 existing errors in
@@ -1248,6 +1251,12 @@ Implementation and documentation commits on this branch:
 - `b4cfcbe` — added bounded Polymarket/Kalshi public event-group normalization,
   captured direct source evidence, parent-context UI, cross-venue hypothesis
   discovery, and API relationship evidence linked to stored observation IDs.
+- `b640bd2` — documented event-group capture provenance, the relationship
+  evidence-link behavior, updated source limitations, and current focused
+  verification.
+- `29cb909` — bumped the relationship matcher to v4 and rejects text candidates
+  when explicit years conflict across a parent title and child title or between
+  venues, with regression coverage for a generic parent title.
 
 Principal changed paths:
 
@@ -1282,7 +1291,7 @@ cross-venue economics.
 | Adapter protocol, capability registry, bounded GET transport | COMPLETE AND VERIFIED | Contract tests, all capability declarations, host/size/rate/redirect bounds. |
 | Polymarket, Kalshi and Kraken Spot adapters | PARTIALLY VERIFIED | Fixture/contract tests and bounded live listing/book/legacy-trade captures are preserved. Polymarket v2 first and continuation pages returned ten rows each. Kalshi has a ticker-filtered cursor-page implementation, fixture-verified row mapping, and a live empty terminal page; live row normalization remains unvalidated. Adapter v4 also normalizes source-declared MVE component IDs/sides from the preserved 17-leg response, but component rules and combo payoff remain unverified. Kalshi event/series parameters and Kraken spot data are captured, while exact Kalshi account fees and Kraken account fee applicability remain unknown. API fixtures cover source degradation and recovery, including a partial two-request Kalshi metadata failure; live degraded-source behavior remains unverified. |
 | Canonical market/instrument normalization | PARTIALLY VERIFIED | Three distinct instrument classes are represented; v2 Polymarket trades retain native outcome-token identity; Kalshi MVE selected component references are preserved as source-declared structure; the October 27 capture preserves native parent-event titles and Polymarket outcome labels. Live lineage and payoff/settlement semantics remain unverified. |
-| Relationship hypotheses, review revisions, indexed neighborhoods, and explicit same-payoff verifier | PARTIALLY VERIFIED | Self-attributed review API/UI, append-only revisions, latest-state replay, tamper/migration checks, left/right endpoint-indexed 1–3 hop scans capped at 500 rows, revision-bound centered one-hop keyset pages, stale-cursor rejection, and a 501-edge scan-bound test; one genuine 2026 House-control event-topic pair yields a text-only HYPOTHESIS whose API evidence links resolve to both saved captures, while the strict payoff verifier rejects equivalence; reviewer authentication and multi-hop pagination remain absent. |
+| Relationship hypotheses, review revisions, indexed neighborhoods, and explicit same-payoff verifier | PARTIALLY VERIFIED | Self-attributed review API/UI, append-only revisions, latest-state replay, tamper/migration checks, left/right endpoint-indexed 1–3 hop scans capped at 500 rows, revision-bound centered one-hop keyset pages, stale-cursor rejection, and a 501-edge scan-bound test; matcher v4 blocks explicit parent/child year contradictions and cross-venue mismatches in both text paths. One genuine 2026 House-control event-topic pair yields a text-only HYPOTHESIS whose API evidence links resolve to both saved captures, while strict payoff verification rejects equivalence; reviewer authentication and multi-hop pagination remain absent. |
 | Opportunity candidate and independent economic checks | PARTIALLY VERIFIED | Two-venue all-long binary and same-market 3–16 state one-hot exhaustive coverage; economic model v4 computes an exact full/no-fill adverse exposure pattern over up to 16 legs, and independent audit v2 recomputes it from pinned inputs. Differential three-leg enumeration, unknown-fee cases, and malformed cross-venue leg handling pass. Controlled fixtures only; source semantics, account costs, broader funding/settlement costs, and operational feasibility remain incomplete. |
 | Kalshi taker-fee sensitivity | PARTIALLY VERIFIED | Hash-matched public event/series evidence supports one-fill and bounded one-order Decimal sensitivities for two documented quadratic taker fee types, both precision cases, per-fill rounding, order accumulation, and capped rebates. Tests match the official one-fill example and exercise buy/sell arithmetic. Manual inputs are not live quotes or book-priced; account-specific fees and precision, maker/mixed-order behavior, FCM charges, later schedules, and full candidate fee integration remain unresolved. |
 | Append-only evidence store and deterministic replay | COMPLETE AND VERIFIED | Schema v6, additive v2/v3/v4/v5 migration, bounds, hash validation, immutability, replay-v5 output includes full/no-fill sensitivity and identity pins effective mappings and proposal limit. The separate Arena wrapper uses immutable content-addressed snapshots and hash-verified result artifacts; two controlled fixture workers completed and the latest recorded CPU/RSS. |
