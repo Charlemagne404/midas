@@ -229,6 +229,18 @@ def test_held_source_observations_relationships_and_replays_are_quarantined(tmp_
             assert comparisons.status_code == 200
             assert comparisons.json()["items"] == []
             assert comparisons.json()["held_comparisons_omitted"] == 1
+
+            readiness = client.get("/api/frontier/readiness")
+            assert readiness.status_code == 200
+            gates = {item["name"]: item for item in readiness.json()["gates"]}
+            assert gates["deterministic_replay"]["state"] == "NOT_RUN"
+            assert "0 non-held pinned replay outputs" in gates["deterministic_replay"]["detail"]
+            assert (
+                "Latest 0 hash-validated replay run(s)"
+                in gates["independent_economic_verification"]["detail"]
+            )
+            assert "within bounds for 0 candidates" in gates["source_quality"]["detail"]
+
             replay = client.post("/api/frontier/replay", json={"name": "allowed fixture replay"})
             assert replay.status_code == 200, replay.text
             assert replay.json()["manifest"]["market_observation_ids"] == [available_market_id]

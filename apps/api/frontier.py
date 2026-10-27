@@ -2846,14 +2846,16 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
                 disposition = audit.get("disposition") if isinstance(audit, dict) else None
                 if disposition in audit_counts:
                     audit_counts[disposition] += 1
-                if isinstance(audit, dict):
-                    timing_verified = audit.get("recomputed_timing_verified")
-                    if timing_verified is True:
-                        timing_counts["within_bounds"] += 1
-                    elif timing_verified is False:
-                        timing_counts["outside_bounds"] += 1
-                    else:
-                        timing_counts["not_recorded"] += 1
+                if not isinstance(audit, dict):
+                    timing_counts["not_recorded"] += 1
+                    continue
+                timing_verified = audit.get("recomputed_timing_verified")
+                if timing_verified is True:
+                    timing_counts["within_bounds"] += 1
+                elif timing_verified is False:
+                    timing_counts["outside_bounds"] += 1
+                else:
+                    timing_counts["not_recorded"] += 1
         audit_count = sum(audit_counts.values())
         audit_state = (
             "DISAGREEMENT"

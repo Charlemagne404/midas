@@ -4,7 +4,8 @@ import asyncio
 import base64
 import hashlib
 import json
-from datetime import timedelta
+import sqlite3
+from datetime import UTC, timedelta
 from decimal import Decimal
 from pathlib import Path
 
@@ -1671,13 +1672,49 @@ def test_readiness_reports_pinned_candidate_timing_audit_counts(tmp_path):
     )
     store.append_replay(bounded_clock_replay)
 
+    legacy = bounded_clock_replay.model_dump(mode="json")
+    legacy["manifest"]["economic_model_version"] = "frontier-economic-verifiers-6"
+    legacy_run_id = hashlib.sha256(
+        FrontierStore._canonical(legacy["manifest"]).encode()
+    ).hexdigest()
+    legacy["run_id"] = legacy_run_id
+    legacy_audit_count = 0
+    for candidate in legacy["candidates"]:
+        candidate["model_version"] = "frontier-economic-verifiers-6"
+        audit = candidate.get("independent_audit")
+        if not isinstance(audit, dict):
+            continue
+        legacy_audit_count += 1
+        audit["schema_version"] = 1
+        audit["model_version"] = "frontier-independent-economic-audit-3"
+        audit.pop("recomputed_received_skew_ms", None)
+        audit.pop("recomputed_exchange_skew_ms", None)
+        audit.pop("recomputed_timing_verified", None)
+    assert legacy_audit_count > 0
+    legacy_candidate_count = len(legacy["candidates"])
+    legacy.pop("result_sha256")
+    legacy_digest = hashlib.sha256(FrontierStore._canonical(legacy).encode()).hexdigest()
+    legacy["result_sha256"] = legacy_digest
+    legacy_json = FrontierStore._canonical(legacy)
+    store.initialize()
+    with sqlite3.connect(store.path) as connection:
+        connection.execute(
+            "INSERT INTO research_runs VALUES(?,?,?,?)",
+            (
+                legacy_run_id,
+                bounded_clock_replay.manifest.as_of_utc.astimezone(UTC).isoformat(),
+                legacy_digest,
+                legacy_json,
+            ),
+        )
+
     try:
         response = client.get("/api/frontier/readiness")
         assert response.status_code == 200
         gate = next(item for item in response.json()["gates"] if item["name"] == "source_quality")
         assert "within bounds for" in gate["detail"]
         assert "outside bounds for" in gate["detail"]
-        assert "not recorded for 0" in gate["detail"]
+        assert f"not recorded for {legacy_candidate_count}." in gate["detail"]
     finally:
         client.close()
         asyncio.run(registry.aclose())
