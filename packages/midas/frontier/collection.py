@@ -614,8 +614,8 @@ class CollectionJournal:
                 raise FrontierStoreError("Unsupported Frontier collection journal schema")
 
             # The journal is capped at 20,000 checkpoints and 64 MiB. Stream newest
-            # checkpoints first so each run contributes only its latest non-null health
-            # observation; parsing remains bounded even when progress checkpoints omit it.
+            # checkpoints first so each run contributes only its latest timestamped
+            # health observation; parsing remains bounded when progress records omit it.
             rows = connection.execute(
                 "SELECT run_id,sequence,checkpoint_json,row_sha256 "
                 "FROM collection_checkpoints ORDER BY run_id,sequence DESC"
@@ -638,10 +638,10 @@ class CollectionJournal:
                 if checkpoint.run_id != run_id or checkpoint.sequence != int(row["sequence"]):
                     raise FrontierStoreError("Collection checkpoint identity is inconsistent")
                 health = checkpoint.source_health
-                if health is None:
+                if health is None or health.checked_at_utc is None:
                     continue
                 latest_health_runs.add(run_id)
-                if health.checked_at_utc is None or health.state not in {
+                if health.state not in {
                     SourceState.HEALTHY,
                     SourceState.DEGRADED,
                     SourceState.UNAVAILABLE,

@@ -394,6 +394,18 @@ def test_latest_source_health_checkpoints_are_bounded_read_only_and_use_latest_h
             ),
         )
     )
+    journal.append_checkpoint(
+        CollectionCheckpoint(
+            run_id=run_spec.run_id,
+            sequence=3,
+            updated_at_utc=T0 + timedelta(seconds=5),
+            state="completed",
+            source_health=SourceHealth(
+                venue=Venue.POLYMARKET,
+                state=SourceState.NOT_PROBED,
+            ),
+        )
+    )
 
     selected = journal.latest_source_health_checkpoints()
     assert len(selected) == 1
