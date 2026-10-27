@@ -166,6 +166,9 @@ Remaining acceptance work is substantial.
 | `47664ad` | Documented the unresolved distinction between Kalshi's dated `KXMVE` fee-schedule row and the captured `KXMVECROSSCATEGORY` event/series metadata; no economics changed. |
 | `3164d6f` | Added Kalshi adapter v10 market detail for a saved-parent-selected MVE child, persisted raw/normalized evidence, and exposed component-rule inspection in Mission Control. A one-request capture, API mismatch/unreferenced-ticker tests, and UI coverage are included. |
 | `ee28bab` | Added a storage regression proving captured `market_metadata` changes the graph revision while book/trade observations do not. |
+| `043da75` | Documented the Kalshi adapter v10 capture operation, hash-pinned public evidence, limitations, and focused verification. |
+| `756ff89` | Added matcher v5 source-component reference hypotheses, exact child ticker/event validation, two-source-record provenance, deterministic prioritization, API/UI-graph response coverage, economic non-equivalence rejection, and an offline replay using the preserved Kalshi parent and child captures. |
+| `74d9a76` | Clarified that exact event-ID matching is required only when the selected-component source metadata supplies an event ID. |
 
 ## Kalshi single-event MVE ticker filter checkpoint (2026-10-27)
 
@@ -666,6 +669,29 @@ same-input runs do not change the resource sustainability gate.
 - No persistent service, source worker, Reality process, or long-running
   campaign was started. This remains development-branch work, not deployed.
 
+## Recorded MVE component relationship checkpoint (2026-10-27)
+
+- Relationship matcher v5 adds `source_component_reference`. It emits only when
+  a same-venue child is in the bounded recorded market window, its native market
+  ticker exactly matches a parent's selected-component reference, and the
+  referenced event ID matches when present. The edge preserves both source
+  observation IDs and selected side, remains `HYPOTHESIS`, and says explicitly
+  that payoff and settlement equivalence are not established. Source edges are
+  prioritized within the bounded proposal limit.
+- The Polymarket/Kalshi economic generators still accept only supported
+  verified payoff constructions; a source-component edge produces
+  `PRICE DISCREPANCY ONLY` if passed to binary candidate evaluation.
+- An offline replay of the saved Kalshi MVE parent listing and the separately
+  captured first child detail passed through the current adapter/matcher and
+  produced one exact source-component hypothesis carrying both preserved
+  observation IDs. This is a same-venue source linkage, not an equivalent
+  cross-venue contract or arbitrage finding.
+- Verification after matcher v5: full Frontier/Arena replay suite **137
+  passed** in 30.04 seconds; relationship/API modules **49 passed**; the
+  saved-source replay test **1 passed**. Strict mypy for the changed matcher/API
+  modules, Ruff check/format, and `git diff --check` passed. No source GET or
+  browser workload was repeated for this offline graph change.
+
 ## Completion matrix
 
 | Component | Status | Current evidence / remaining requirement |
@@ -674,7 +700,7 @@ same-input runs do not change the resource sustainability gate.
 | Adapter protocol, capability inventory, bounded GET transport | COMPLETE AND VERIFIED | Contract tests; all capabilities explicitly declared; Polymarket/Kalshi event groups supported, Kalshi MVE discovery explicitly supported, and Kraken MVE discovery explicitly unsupported; no startup request. |
 | Polymarket, Kalshi and Kraken Spot implementations | PARTIALLY VERIFIED | Fixture tests and bounded live listing/book/trade-to-store evidence exist. Polymarket v2 first and continuation pages returned ten rows each. Kalshi cursor pages are implemented and row mapping is fixture-tested; a live page returned zero trades and no cursor, so live row normalization remains pending. Two genuine public event-group responses are hash-pinned and replayed through Polymarket/Kalshi adapters. Kalshi MVE listing responses omitted nested members; v10 now fetches one child only when selected by saved parent metadata, validates its market/event identity, and persists rules. The sole captured child is closed and includes fair-price fallback language, so child and combo payoffs remain unverified. Account fees and Kraken account fee applicability remain unknown. API fixtures cover source degradation and recovery; live degraded-source behavior remains unverified. |
 | Canonical normalization and native evidence | PARTIALLY VERIFIED | Distinct event, conditional event and spot forms; v2 Polymarket trades preserve token and outcome identity, while earlier v1 batches still load with those new fields unknown. October 27 event-group capture preserves parent-event title and child outcome text. Kalshi `MarketBatch` v2 stores typed MVE groups with `included`, `empty`, or `omitted` member state; detail responses with a documented top-level empty list replay to zero child markets. Other settlement/payoff semantics remain intentionally unverified. |
-| Relationship matching, immutable review, indexed neighborhoods, and strict payoff verifier | PARTIALLY VERIFIED | Self-attributed review API/UI with stored source refs, append-only revisions, compare-and-set, latest-state replay, query-plan/migration tests, and 1–3 hop left/right indexed scans capped at 500 rows. Centered one-hop keyset and two-/three-hop breadth-first pages bind graph inputs and reject stale cursors; deterministic recomputation and 201-market frontier chunking are tested. Matcher v4 rejects contradictory or mismatched explicit years; the genuine House-control pair is still only a text HYPOTHESIS and strict payoff verification rejects same-payoff equivalence. Multi-hop browser E2E, authenticated review, and revision-history drill-down remain pending. |
+| Relationship matching, immutable review, indexed neighborhoods, and strict payoff verifier | PARTIALLY VERIFIED | Self-attributed review API/UI with stored source refs, append-only revisions, compare-and-set, latest-state replay, query-plan/migration tests, and 1–3 hop left/right indexed scans capped at 500 rows. Centered one-hop keyset and two-/three-hop breadth-first pages bind graph inputs and reject stale cursors; deterministic recomputation and 201-market frontier chunking are tested. Matcher v5 emits exact-ID MVE `source_component_reference` hypotheses only with a matching saved child ticker/event and preserves both observation IDs; the recorded parent/child pair replays offline through the current adapter and matcher. Matcher v4 year-conflict checks remain. The genuine House-control pair is text-only and strict payoff verification rejects same-payoff equivalence. Multi-hop browser E2E, authenticated review, and revision-history drill-down remain pending. |
 | Economic candidate verifier and independent audit | PARTIALLY VERIFIED | Exact two-venue binary all-long coverage and same-market 3–16-state exhaustive one-hot coverage. Economic model v4 derives the exact adverse full-or-no-fill terminal pattern for up to 16 legs; independent audit v2 rederives it from pinned inputs. A three-leg brute-force fixture agrees, and unknown fees suppress net stress. Fixtures only; no genuine eligible event, independently authenticated market truth, or practical execution proof. |
 | Bounded store and deterministic replay | COMPLETE AND VERIFIED | Schema v6 with additive v2/v3/v4/v5 migrations, immutable replay/comparison records, replay-v6 source lineage from store rows through manifests/candidate legs/Arena snapshots, and direct replay retaining adapter IDs. Replay-v5 output includes fill sensitivity and identity includes effective mappings/proposal limit; prior replay results and observations remain unchanged. |
 | Paired scenario comparison | PARTIALLY VERIFIED | Direct local comparison and API/UI/browser tests pass. Two actual systemd-supervised fixture replays completed over the same pinned inputs and their result hashes verify. The latest run measured worker process CPU/RSS and exposes it in Mission Control. No genuine equivalent live market pair exists. |

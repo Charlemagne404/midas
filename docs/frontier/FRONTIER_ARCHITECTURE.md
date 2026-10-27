@@ -14,7 +14,7 @@ as mutable Frontier storage.
 | Bounded HTTP transport | `adapters/transport.py` | HTTPS GET only, fixed host allowlist, bounded timeout/retry/rate/response sizes, no redirects or credentials. |
 | Public venue adapters | `adapters/polymarket.py`, `kalshi.py`, `kraken.py` | Source-specific normalization and native metadata preservation. |
 | Registry | `registry.py` | Explicit capability inventory; default instances do not probe. |
-| Relationship intelligence | `relationships.py` | Deterministic indexed title and parent-event/outcome hypotheses, strict payoff checks, and immutable review contracts. |
+| Relationship intelligence | `relationships.py` | Deterministic indexed title and parent-event/outcome hypotheses, source-selected component references, strict payoff checks, and immutable review contracts. |
 | Candidate calculators | `economics.py` | Decimal cross-venue binary and same-market exhaustive multi-outcome all-long checks with fee, depth, freshness, timing, and scenario bounds; exact bounded one-sided fill sensitivity; separate Kalshi one-fill and instrument-bound one-order fee sensitivities. |
 | Independent arithmetic audit | `independent_audit.py` | Separately recomputes supported candidate identities, payoff vectors, pinned quotes/depth, fees, costs, terminal P&L, fill-pattern sensitivity, and classification from replay inputs. |
 | Durable evidence | `storage.py` | Append-only, size- and row-bounded SQLite observations, markets, relationship reviews/revisions, runs, and paired comparisons. |
@@ -243,6 +243,18 @@ event titles paired with market-specific outcome terms. Cross-venue text matches
 remain hypotheses and preserve evidence terms and source observation IDs. An
 explicit disagreement in four-digit event years blocks the parent-context path.
 Text never supplies a YES/NO outcome mapping and is never promoted automatically.
+Matcher v5 also proposes a `source_component_reference` edge when a recorded
+parent's native selected-component list names a child market and the recorded
+child has the exact same venue/ticker and, when supplied, event ID. The edge
+retains both immutable source observation IDs and the selected side. It remains
+a `HYPOTHESIS`: this records what parent metadata asserts and the matching child
+identity, not that their rules, payoffs, logical implications, or settlement are
+equivalent. Economic candidate generators accept only separately verified
+`same_payoff` edges, so source-component references cannot support opportunity
+arithmetic. Missing children, duplicate native identifiers, venue mismatches,
+and event-ID mismatches produce no component edge. These source-reference edges
+are prioritized within the bounded proposal limit so they remain visible when
+text candidates are numerous.
 The API proposal path binds each market to the actual append-only observation
 record from which its selected normalized value was loaded. Persisted graph
 evidence therefore opens the raw and normalized source record directly. Store-

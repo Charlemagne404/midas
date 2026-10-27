@@ -56,6 +56,10 @@ combo, with a closed lifecycle and rules that include fair-price fallback
 conditions for inactive/non-playing and postponed events. The child has no
 captured book or price, and neither its standalone payoff nor the parent combo
 payoff is verified.
+Relationship matcher v5 adds an explicit `source_component_reference` edge
+when the saved parent names that child and a separately captured child record
+matches its native ticker and event ID. It stays a hypothesis and cannot support
+economic calculations.
 Bounded live round trips through each adapter and
 the Frontier probe API persisted one
 listing per venue, then one listing plus at most one book per venue, and most
@@ -407,6 +411,18 @@ market-specific outcome terms. The parent-context path rejects conflicting
 explicit four-digit years. Cross-venue text results are explicitly `HYPOTHESIS`
 edges with evidence terms, source observation IDs, matcher version, and stable
 identities. Similar titles cannot certify same payoff.
+
+Matcher v5 also proposes a `source_component_reference` edge when a recorded
+parent's native selected-component list names a child market and the recorded
+child has the exact same venue/ticker and, when supplied, event ID. The edge
+retains both immutable source observation IDs and the selected side. It remains
+a `HYPOTHESIS`: this records the source's asserted component link and a matching
+child identity, not equivalent rules, payoffs, logical implications, or
+settlement. Missing children, duplicate native identifiers, venue mismatches,
+and event-ID mismatches produce no edge. These source edges are prioritized
+within the bounded proposal limit. The binary and multi-outcome candidate
+evaluators still require their supported verified constructions; a component
+reference alone returns a price-discrepancy-only classification.
 
 `verify_same_payoff` is separate. It requires an external assertion ID, source
 observation IDs, verified and exhaustive payout states, a bijection between
@@ -1025,6 +1041,18 @@ responses are distinct from the preserved genuine public capture files.
   A follow-on storage regression passed (**1 test**, 0.53 seconds), proving a
   saved component `market_metadata` record advances the graph revision while
   book/trade records do not.
+- After matcher v5 added source-component references, the full
+  `tests/frontier` plus `tests/arena/test_frontier_replay.py` regression passed
+  **137 tests** in 30.04 seconds. `/usr/bin/time -v` measured 30.85 seconds wall,
+  8.89 seconds user CPU, 264,844 KiB peak RSS, zero swaps, and zero socket
+  messages. The existing Starlette/httpx TestClient deprecation warning remains.
+  The relationship/API modules also passed a 49-test focused run. A fixture
+  test then replayed the captured MVE parent listing through the current Kalshi
+  adapter, joined it to the separately captured child detail, and produced one
+  source-component hypothesis with both stored observation IDs; that test
+  passed independently. Strict mypy for the changed relationship/API modules
+  and Ruff check/format passed. This is deterministic replay of saved public
+  responses, not a fresh cross-venue or economic observation.
 
 ## 13. Performance and resource measurements
 
@@ -1630,6 +1658,23 @@ native-series mapping gap. No fee logic or candidate economics changed.
   applicability, account balance precision, any mapping between these native
   identifiers, and upcoming schedule changes remain open research requirements.
 
+### Kalshi selected-component graph extension (2026-10-27)
+
+Commit `3164d6f` adds Kalshi adapter v10's parent-bound single-child market
+detail operation, API validation/persistence, Mission Control rule inspection,
+fixture regressions, and one genuine child response capture. Commit `ee28bab`
+tests that `market_metadata` advances the bounded graph revision. Documentation
+checkpoint `043da75` records the v10 behavior and hash-pinned capture.
+
+Commit `756ff89` bumps the deterministic relationship matcher to v5 and adds
+same-venue `source_component_reference` hypotheses when the saved parent and
+recorded child IDs align. The edge retains both store observation IDs, stays a
+hypothesis, and cannot support payoff arithmetic. It is verified against the
+saved public Kalshi parent listing and captured child detail in offline replay.
+Commit `74d9a76` clarifies that matching an event ID is conditional on the
+selected-component record providing one. The full Frontier/Arena regression
+passed 137 tests after matcher v5; the saved-source replay passed separately.
+
 ## 20. Final status and continuation instructions
 
 Frontier’s isolated engine/API/UI foundation is **implemented and boundedly
@@ -1643,7 +1688,7 @@ cross-venue economics.
 | Adapter protocol, capability registry, bounded GET transport | COMPLETE AND VERIFIED | Contract tests, all capability declarations, host/size/rate/redirect bounds; Kalshi MVE discovery is explicitly supported while Polymarket/Kraken remain unsupported. |
 | Polymarket, Kalshi and Kraken Spot adapters | PARTIALLY VERIFIED | Fixture/contract tests and bounded live listing/book/legacy-trade captures are preserved. Polymarket v2 first and continuation pages returned ten rows each. Kalshi has a ticker-filtered cursor-page implementation, fixture-verified row mapping, and a live empty terminal page; live trade-row normalization remains unvalidated. Adapter v4 preserves native MVE selected component IDs/sides; v7 added one-page MVE discovery whose live response omitted nested markets; v8 fixes event-detail parsing of an explicit empty top-level market array; v10 captures a saved-parent-referenced child contract and preserves its native rules. The one captured child is closed and includes fair-price fallback conditions; neither its simple binary payoff nor the parent-combo payout is verified. Account fees and Kraken account fee applicability remain unresolved. API fixtures cover source degradation and recovery; live degraded-source behavior remains unverified. |
 | Canonical market/instrument normalization | PARTIALLY VERIFIED | Three distinct instrument classes are represented; v2 Polymarket trades retain native outcome-token identity; Kalshi MVE component references remain source assertions; `MarketBatch` schema v2 preserves typed `MarketGroup` membership state. The genuine MVE response records member-list state `omitted` and zero child markets. Payoff/settlement semantics remain unverified. |
-| Relationship hypotheses, review revisions, indexed neighborhoods, and explicit same-payoff verifier | PARTIALLY VERIFIED | Self-attributed review API/UI, append-only revisions, latest-state replay, tamper/migration checks, left/right endpoint-indexed 1–3 hop scans capped at 500 rows, one-hop keyset pages, and revision-bound multi-hop BFS pages with deterministic recomputation and 201-market chunk coverage; matcher v4 blocks explicit parent/child year contradictions. A genuine House-control topic pair remains text-only HYPOTHESIS and fails strict same-payoff verification. Multi-hop browser E2E is pending; reviewer authentication, revision-history drill-down, and full-universe search remain absent. |
+| Relationship hypotheses, review revisions, indexed neighborhoods, and explicit same-payoff verifier | PARTIALLY VERIFIED | Self-attributed review API/UI, append-only revisions, latest-state replay, tamper/migration checks, left/right endpoint-indexed 1–3 hop scans capped at 500 rows, one-hop keyset pages, and revision-bound multi-hop BFS pages with deterministic recomputation and 201-market chunk coverage. Matcher v5 includes bounded exact-ID MVE selected-component references as HYPOTHESIS edges with both source record IDs; a saved Kalshi parent listing and child detail replay into one such edge. Matcher v4's explicit year-conflict rejection remains. A genuine House-control topic pair remains text-only HYPOTHESIS and fails strict same-payoff verification. Multi-hop browser E2E is pending; reviewer authentication, revision-history drill-down, and full-universe search remain absent. |
 | Opportunity candidate and independent economic checks | PARTIALLY VERIFIED | Two-venue all-long binary and same-market 3–16 state one-hot exhaustive coverage; economic model v4 computes an exact full/no-fill adverse exposure pattern over up to 16 legs, and independent audit v2 recomputes it from pinned inputs. Differential three-leg enumeration, unknown-fee cases, and malformed cross-venue leg handling pass. Controlled fixtures only; source semantics, account costs, broader funding/settlement costs, and operational feasibility remain incomplete. |
 | Kalshi taker-fee sensitivity | PARTIALLY VERIFIED | Hash-matched public event/series evidence supports one-fill and bounded one-order Decimal sensitivities for two documented quadratic taker fee types, both precision cases, per-fill rounding, order accumulation, and capped rebates. Tests match the official one-fill example and exercise buy/sell arithmetic. The dated official schedule's `KXMVE` multiplier pair is not assumed to apply to captured `KXMVECROSSCATEGORY` metadata. Manual inputs are not live quotes or book-priced; account-specific fees and precision, exact maker/mixed-order applicability, FCM charges, later schedules, and full candidate fee integration remain unresolved. |
 | Append-only evidence store and deterministic replay | COMPLETE AND VERIFIED | Schema v6, additive v2/v3/v4/v5 migration, bounds, hash validation, and immutability. Replay v6 carries exact store record IDs through API-loaded market/book provenance, manifests, candidate legs, and Arena snapshots; direct in-memory replay retains adapter IDs. Replay-v5 economic output includes full/no-fill sensitivity and pins effective mappings/proposal limit. The separate Arena wrapper uses immutable content-addressed snapshots and hash-verified result artifacts; two controlled fixture workers completed and the latest recorded CPU/RSS. |
