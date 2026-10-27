@@ -151,6 +151,7 @@ class AdapterConfig(FrontierModel):
 
     enabled: bool = False
     live_public_probe_enabled: bool = False
+    probe_policy_block_reason: str | None = Field(default=None, max_length=512)
     timeout_seconds: Annotated[float, Field(ge=0.5, le=15)] = 5.0
     requests_per_second: Annotated[float, Field(gt=0, le=5)] = 1.0
     max_response_bytes: Annotated[int, Field(ge=1024, le=262144)] = 262144

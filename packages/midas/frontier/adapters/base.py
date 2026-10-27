@@ -144,6 +144,11 @@ class BaseReadOnlyAdapter:
             notes=(
                 "Health read is local state and makes no network request.",
                 "Request count covers the trailing 60 seconds.",
+                *(
+                    (self.config.probe_policy_block_reason,)
+                    if self.config.probe_policy_block_reason is not None
+                    else ()
+                ),
             ),
         )
 

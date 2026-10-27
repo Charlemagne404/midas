@@ -19,9 +19,11 @@ afterEach(() => {
 
 it('renders recorded-evidence empty states and never probes a source automatically', async () => {
   const source = {
-    venue: 'polymarket',
+    venue: 'kalshi',
     adapter_version: 'frontier-polymarket-1',
     public_probe_enabled: false,
+    probe_policy_block_reason:
+      'Live Kalshi research capture is blocked until written permission is recorded.',
     capabilities: [
       {
         capability: 'market_discovery',
@@ -109,6 +111,17 @@ it('renders recorded-evidence empty states and never probes a source automatical
   expect(await screen.findByText('No replay runs yet')).toBeInTheDocument();
   expect(screen.getByText(/Latest evidence/)).toBeInTheDocument();
   expect(fetchMock.mock.calls.every(([, init]) => init?.method !== 'POST')).toBe(true);
+
+  fireEvent.click(screen.getByRole('button', { name: 'Exchanges' }));
+  expect(
+    await screen.findByText(
+      'Live Kalshi research capture is blocked until written permission is recorded.',
+    ),
+  ).toBeInTheDocument();
+  expect(screen.getAllByRole('button', { name: 'Public probe disabled' })).toHaveLength(2);
+  screen
+    .getAllByRole('button', { name: 'Public probe disabled' })
+    .forEach((button) => expect(button).toBeDisabled());
 
   fireEvent.click(screen.getByRole('button', { name: 'Markets' }));
   expect(await screen.findByText('No market observations recorded')).toBeInTheDocument();

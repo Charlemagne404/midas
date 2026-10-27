@@ -583,6 +583,11 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
     api = APIRouter(prefix="/api/frontier", tags=["frontier"])
     source_locks = {venue: asyncio.Lock() for venue in Venue}
 
+    def probe_disabled_detail(config: Any) -> str:
+        return getattr(config, "probe_policy_block_reason", None) or (
+            "Bounded public probing is disabled in source configuration"
+        )
+
     def preserve_failed_captures(
         adapter: ExchangeAdapter,
         code: str,
@@ -660,6 +665,11 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
                         registry.get(manifest.venue).config.enabled
                         and registry.get(manifest.venue).config.live_public_probe_enabled
                     ),
+                    "probe_policy_block_reason": getattr(
+                        registry.get(manifest.venue).config,
+                        "probe_policy_block_reason",
+                        None,
+                    ),
                 }
                 for manifest in registry.capability_manifests()
             ],
@@ -685,6 +695,11 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
                         getattr(registry.get(manifest.venue), "config", None)
                         and registry.get(manifest.venue).config.enabled
                         and registry.get(manifest.venue).config.live_public_probe_enabled
+                    ),
+                    "probe_policy_block_reason": getattr(
+                        getattr(registry.get(manifest.venue), "config", None),
+                        "probe_policy_block_reason",
+                        None,
                     ),
                 }
                 for manifest in registry.capability_manifests()
@@ -887,7 +902,7 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
         if config is None or not config.enabled or not config.live_public_probe_enabled:
             raise HTTPException(
                 status_code=409,
-                detail="Bounded public probing is disabled in source configuration",
+                detail=probe_disabled_detail(config),
             )
         try:
             known_markets = await _load_markets(store, 200)
@@ -1030,7 +1045,7 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
         if config is None or not config.enabled or not config.live_public_probe_enabled:
             raise HTTPException(
                 status_code=409,
-                detail="Bounded public probing is disabled in source configuration",
+                detail=probe_disabled_detail(config),
             )
         try:
             known_markets = await _load_markets(store, 200)
@@ -1168,7 +1183,7 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
         if config is None or not config.enabled or not config.live_public_probe_enabled:
             raise HTTPException(
                 status_code=409,
-                detail="Bounded public probing is disabled in source configuration",
+                detail=probe_disabled_detail(config),
             )
         try:
             known_markets = await _load_markets(store, 200)
@@ -1276,7 +1291,7 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
         if config is None or not config.enabled or not config.live_public_probe_enabled:
             raise HTTPException(
                 status_code=409,
-                detail="Bounded public probing is disabled in source configuration",
+                detail=probe_disabled_detail(config),
             )
         try:
             known_markets = await _load_markets(store, 200)
@@ -1412,7 +1427,7 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
         if config is None or not config.enabled or not config.live_public_probe_enabled:
             raise HTTPException(
                 status_code=409,
-                detail="Bounded public probing is disabled in source configuration",
+                detail=probe_disabled_detail(config),
             )
         try:
             known_markets = await _load_markets(store, 200)
@@ -1560,7 +1575,7 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
         if config is None or not config.enabled or not config.live_public_probe_enabled:
             raise HTTPException(
                 status_code=409,
-                detail="Bounded public probing is disabled in source configuration",
+                detail=probe_disabled_detail(config),
             )
 
         async with source_locks[venue]:
@@ -2575,6 +2590,22 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
                     "detail": "Freshness, completeness, source timestamp semantics, and venue limits must be inspected on each observation.",
                 },
                 {
+                    "name": "source_data_use_permissions",
+                    "state": "BLOCKED"
+                    if any(
+                        getattr(
+                            getattr(registry.get(venue), "config", None),
+                            "probe_policy_block_reason",
+                            None,
+                        )
+                        for venue in (Venue.KALSHI, Venue.KRAKEN)
+                    )
+                    else "NOT_ESTABLISHED",
+                    "detail": (
+                        "Live Kalshi and Kraken research capture requires a recorded source permission/terms review reference; this gate does not independently validate any referenced grant."
+                    ),
+                },
+                {
                     "name": "deterministic_replay",
                     "state": "EVIDENCE_RECORDED" if run_count else "NOT_RUN",
                     "detail": f"{run_count} pinned replay outputs stored; determinism is separately tested against exact inputs.",
@@ -2602,9 +2633,7 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
         adapter: ExchangeAdapter = registry.get(venue)
         config = getattr(adapter, "config", None)
         if config is None or not config.enabled or not config.live_public_probe_enabled:
-            raise HTTPException(
-                status_code=409, detail="Bounded public probing is disabled in source configuration"
-            )
+            raise HTTPException(status_code=409, detail=probe_disabled_detail(config))
         if request.limit > config.max_markets_per_call:
             raise HTTPException(
                 status_code=422, detail="Requested discovery limit exceeds source configuration"

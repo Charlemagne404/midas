@@ -35,5 +35,23 @@ class Settings(BaseSettings):
     )
     frontier_polymarket_public_probe_enabled: bool = False
     frontier_kalshi_public_probe_enabled: bool = False
+    frontier_kalshi_research_authorization_ref: str | None = Field(default=None, max_length=300)
     frontier_kraken_public_probe_enabled: bool = False
+    frontier_kraken_market_data_permission_ref: str | None = Field(default=None, max_length=300)
     frontier_kraken_pairs: str = "XBTUSD"
+
+    @property
+    def frontier_kalshi_probe_allowed(self) -> bool:
+        return bool(
+            self.frontier_kalshi_public_probe_enabled
+            and self.frontier_kalshi_research_authorization_ref
+            and self.frontier_kalshi_research_authorization_ref.strip()
+        )
+
+    @property
+    def frontier_kraken_probe_allowed(self) -> bool:
+        return bool(
+            self.frontier_kraken_public_probe_enabled
+            and self.frontier_kraken_market_data_permission_ref
+            and self.frontier_kraken_market_data_permission_ref.strip()
+        )

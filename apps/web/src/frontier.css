@@ -679,6 +679,23 @@
 .fr-source-error svg {
   flex: 0 0 auto;
 }
+.fr-source-policy-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  margin-top: 10px;
+  padding: 8px 9px;
+  border: 1px solid #56452d;
+  border-radius: 5px;
+  background: #1c1812;
+  color: #dfbd79;
+  font-size: 9px;
+  line-height: 1.5;
+}
+.fr-source-policy-warning svg {
+  flex: 0 0 auto;
+  margin-top: 1px;
+}
 .fr-probe-row {
   display: grid;
   gap: 8px;

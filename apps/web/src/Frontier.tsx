@@ -28,6 +28,7 @@ type Source = {
   venue: Venue;
   adapter_version: string;
   public_probe_enabled: boolean;
+  probe_policy_block_reason?: string | null;
   capabilities: { capability: string; supported: boolean; state: string; reason: string }[];
   health: {
     state: string;
@@ -3448,6 +3449,12 @@ function SourcesView({
                     ? 'Public event metadata and order books are retained with native rules and multivariate-event markers.'
                     : 'The existing Polymarket schema is adapted while preserving its legacy source identifiers and fee validation.'}
               </p>
+              {source.probe_policy_block_reason && (
+                <div className="fr-source-policy-warning" role="note">
+                  <AlertTriangle size={14} />
+                  <span>{source.probe_policy_block_reason}</span>
+                </div>
+              )}
               <div className="fr-venue-stats">
                 <span>
                   <strong>{count(markets[source.venue] ?? 0)}</strong> recorded markets
@@ -3493,9 +3500,11 @@ function SourcesView({
                       : 'Public probe disabled'}
                 </button>
                 <small>
-                  {source.health.last_success_at_utc
-                    ? `Last source response ${time(source.health.last_success_at_utc)}`
-                    : 'No request is made automatically.'}{' '}
+                  {source.probe_policy_block_reason
+                    ? 'Live capture is blocked; offline fixture research remains available.'
+                    : source.health.last_success_at_utc
+                      ? `Last source response ${time(source.health.last_success_at_utc)}`
+                      : 'No request is made automatically.'}{' '}
                   Enabled capture requests at most one listing page, one book, and ten recent
                   trades.
                 </small>
