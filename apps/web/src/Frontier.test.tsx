@@ -435,6 +435,36 @@ it('renders recorded-evidence empty states and never probes a source automatical
   expect(tokenBalance).toBeEnabled();
   expect(capital).toHaveTextContent('Enter an isolated virtual balance.');
   expect(screen.getAllByText('red')).toHaveLength(2);
+
+  queryClient.setQueryData(['frontier', 'runs'], {
+    items: [
+      {
+        run_id: 'saved-fee-evidence-replay',
+        created_at_utc: '2026-10-27T17:00:00Z',
+        result_sha256: 'd'.repeat(64),
+        result: {
+          manifest: {
+            replay_version: 'frontier-deterministic-replay-8',
+            code_version: 'frontier-test',
+            normalized_input_sha256: 'e'.repeat(64),
+            market_observation_ids: ['f'.repeat(64)],
+            fee_metadata_observation_ids: ['1'.repeat(64), '2'.repeat(64)],
+            book_observation_ids: [],
+            relationship_ids: [],
+            as_of_utc: '2026-10-27T17:00:00Z',
+            scenario: {},
+          },
+          candidates: [],
+          classification_counts: {},
+        },
+      },
+    ],
+    returned: 1,
+    limit: 30,
+    offset: 0,
+  });
+  fireEvent.click(screen.getByRole('button', { name: 'Replay & readiness' }));
+  expect(await screen.findByText('2 fee metadata observations')).toBeInTheDocument();
 });
 
 it('captures one explicit Polymarket trade page and follows its bound cursor', async () => {

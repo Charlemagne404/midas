@@ -44,7 +44,7 @@ from midas.frontier.models import (
 )
 
 D = Decimal
-ADAPTER_VERSION = "frontier-kalshi-15"
+ADAPTER_VERSION = "frontier-kalshi-16"
 _TICKER_PATTERN = re.compile(r"[A-Za-z0-9_-]{1,256}\Z")
 BASE = "https://external-api.kalshi.com/trade-api/v2"
 MARKET_DATA_DOC = "https://docs.kalshi.com/getting_started/quick_start_market_data"
@@ -122,6 +122,10 @@ class KalshiAdapter(BaseReadOnlyAdapter):
                 "Public event overrides and series fee type/multiplier are normalized with explicit override completeness; exact account fees remain unresolved",
                 "https://docs.kalshi.com/api-reference/events/get-event-fee-changes",
             ),
+            Capability.FEE_SCHEDULE: (
+                "Saved event and series fee evidence supports a conservative one-fill taker estimate in candidate replay; account precision, maker applicability, multi-fill rounding, and FCM charges remain unresolved",
+                "https://kalshi.com/docs/kalshi-fee-schedule.pdf",
+            ),
         },
         {
             Capability.BOOK_UPDATES: (
@@ -131,10 +135,6 @@ class KalshiAdapter(BaseReadOnlyAdapter):
             Capability.HISTORICAL_CANDLES: (
                 "Historical candles are not normalized by adapter v1",
                 None,
-            ),
-            Capability.FEE_SCHEDULE: (
-                "One-fill taker sensitivity exists, but no account-specific fee schedule is promoted into candidate economics; maker applicability, multi-fill rebates, and account precision remain unresolved",
-                "https://help.kalshi.com/en/articles/13823805-fees",
             ),
         },
     )

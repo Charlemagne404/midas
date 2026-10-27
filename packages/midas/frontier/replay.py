@@ -25,18 +25,19 @@ from midas.frontier.relationships import (
     propose_relationships,
 )
 
-REPLAY_VERSION = "frontier-deterministic-replay-7"
+REPLAY_VERSION = "frontier-deterministic-replay-8"
 PAIRED_COMPARISON_VERSION = "frontier-paired-replay-1"
 
 
 class ReplayManifest(FrontierModel):
-    schema_version: int = 1
+    schema_version: int = 2
     replay_version: str = REPLAY_VERSION
     matcher_version: str = MATCHER_VERSION
     economic_model_version: str = ECONOMIC_MODEL_VERSION
     code_version: str
     normalized_input_sha256: str
     market_observation_ids: tuple[str, ...]
+    fee_metadata_observation_ids: tuple[str, ...] = ()
     book_observation_ids: tuple[str, ...]
     relationship_ids: tuple[str, ...]
     as_of_utc: datetime
@@ -290,6 +291,15 @@ def deterministic_replay(
         normalized_input_sha256=normalized_input_sha256,
         market_observation_ids=tuple(
             sorted({item.provenance.observation_id for item in ordered_markets})
+        ),
+        fee_metadata_observation_ids=tuple(
+            sorted(
+                {
+                    observation_id
+                    for item in ordered_markets
+                    for observation_id in item.fees.evidence_observation_ids
+                }
+            )
         ),
         book_observation_ids=tuple(
             sorted({item.provenance.observation_id for item in ordered_books})

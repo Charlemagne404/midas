@@ -474,6 +474,7 @@ type Run = {
       code_version: string;
       normalized_input_sha256: string;
       market_observation_ids: string[];
+      fee_metadata_observation_ids?: string[];
       book_observation_ids: string[];
       relationship_ids: string[];
       as_of_utc: string;
@@ -4067,6 +4068,7 @@ function RunSummary({ run, expanded = false }: { run: Run; expanded?: boolean })
       </div>
       <div className="fr-run-stats">
         <span>{manifest.market_observation_ids.length} market observations</span>
+        <span>{manifest.fee_metadata_observation_ids?.length ?? 0} fee metadata observations</span>
         <span>{manifest.book_observation_ids.length} book observations</span>
         <span>{manifest.relationship_ids.length} verified relationships</span>
         <span>{runCandidates.length} evaluated candidates</span>

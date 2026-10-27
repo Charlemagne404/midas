@@ -6,7 +6,7 @@ import hashlib
 import json
 import math
 from collections.abc import Callable
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from decimal import ROUND_CEILING, ROUND_FLOOR, ROUND_HALF_UP, Decimal, localcontext
 from enum import StrEnum
 from fractions import Fraction
@@ -16,7 +16,9 @@ from typing import Literal
 from pydantic import Field, model_validator
 
 from midas.frontier.models import (
+    KALSHI_QUADRATIC_TAKER_FORMULA,
     BookSnapshot,
+    FeeSchedule,
     FeeStatus,
     FrontierMarket,
     FrontierModel,
@@ -41,9 +43,12 @@ from midas.frontier.models import (
 from midas.frontier.relationships import Relationship, VerificationState
 
 D = Decimal
-ECONOMIC_MODEL_VERSION = "frontier-economic-verifiers-7"
+ECONOMIC_MODEL_VERSION = "frontier-economic-verifiers-8"
 KALSHI_MVE_SETTLEMENT_AUDIT_VERSION = "kalshi-mve-settlement-audit-2"
 _KALSHI_TAKER_FEE_TYPES = frozenset({"quadratic", "quadratic_with_combo_maker_fees"})
+_KALSHI_FEE_SCHEDULE_VERSION = "kalshi-event-taker-2026-07-07-v1"
+_KALSHI_FEE_SCHEDULE_URL = "https://kalshi.com/docs/kalshi-fee-schedule.pdf"
+_KALSHI_FEE_MAX_EVIDENCE_AGE_MS = 86_400_000
 _KALSHI_COMBO_SETTLEMENT_SOURCES = (
     "https://help.kalshi.com/en/articles/13823820-combos",
     "https://help.kalshi.com/en/articles/17515177-protected-nfl-player-markets",
@@ -403,6 +408,97 @@ def _high_precision_decimal_context[**P, R](function: Callable[P, R]) -> Callabl
             return function(*args, **kwargs)
 
     return evaluate
+
+
+def kalshi_candidate_fee_schedule(
+    market: FrontierMarket,
+    metadata: KalshiFeeMetadata,
+    *,
+    event_observation_id: str,
+    series_observation_id: str,
+) -> FeeSchedule | None:
+    """Build a provenance-bound, conservative candidate fee estimate from public evidence.
+
+    Account balance precision is not observable from the public event and series data,
+    so this remains FeeStatus.ESTIMATE and uses the larger of the two documented
+    precision cases during candidate evaluation.
+    """
+    resolution_is_consistent = (
+        metadata.fee_resolution_state == "event_override"
+        and metadata.event_fee_type_override_field_present
+        and metadata.event_fee_multiplier_override_field_present
+        and metadata.event_fee_type_override is not None
+        and metadata.event_fee_multiplier_override is not None
+        and metadata.effective_fee_type == metadata.event_fee_type_override
+        and metadata.effective_fee_multiplier == metadata.event_fee_multiplier_override
+    ) or (
+        metadata.fee_resolution_state == "series_inherited"
+        and metadata.event_fee_type_override_field_present
+        and metadata.event_fee_multiplier_override_field_present
+        and metadata.event_fee_type_override is None
+        and metadata.event_fee_multiplier_override is None
+        and metadata.effective_fee_type == metadata.series_fee_type
+        and metadata.effective_fee_multiplier == metadata.series_fee_multiplier
+    )
+    if (
+        market.venue != Venue.KALSHI
+        or metadata.native_market_id != market.native_market_id
+        or metadata.native_event_id != market.native_event_id
+        or not resolution_is_consistent
+        or metadata.effective_fee_type not in _KALSHI_TAKER_FEE_TYPES
+        or not metadata.effective_fee_multiplier.is_finite()
+        or len(event_observation_id) != 64
+        or len(series_observation_id) != 64
+        or event_observation_id == series_observation_id
+        or market.payoff.settlement_asset != "USD"
+        or market.payoff.settlement_asset_identity is None
+        or market.payoff.settlement_asset_identity.code != "USD"
+    ):
+        return None
+    observation_ids = (event_observation_id, series_observation_id)
+    if any(
+        any(character not in "0123456789abcdef" for character in item) for item in observation_ids
+    ):
+        return None
+    identity = {
+        "version": _KALSHI_FEE_SCHEDULE_VERSION,
+        "formula": KALSHI_QUADRATIC_TAKER_FORMULA,
+        "market_id": metadata.native_market_id,
+        "event_id": metadata.native_event_id,
+        "series_ticker": metadata.series_ticker,
+        "fee_type": metadata.effective_fee_type,
+        "fee_multiplier": str(metadata.effective_fee_multiplier),
+        "event_raw_sha256": metadata.event_raw_sha256,
+        "series_raw_sha256": metadata.series_raw_sha256,
+        "event_observation_id": event_observation_id,
+        "series_observation_id": series_observation_id,
+        "formula_source_url": _KALSHI_FEE_SCHEDULE_URL,
+        "rounding_source_url": "https://docs.kalshi.com/getting_started/fee_rounding",
+    }
+    evidence_sha256 = hashlib.sha256(
+        json.dumps(identity, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+    return FeeSchedule(
+        status=FeeStatus.ESTIMATE,
+        version=_KALSHI_FEE_SCHEDULE_VERSION,
+        applies_to="taker",
+        rate=D("0.07"),
+        fee_multiplier=metadata.effective_fee_multiplier,
+        formula=KALSHI_QUADRATIC_TAKER_FORMULA,
+        fee_currency="USD",
+        fee_currency_identity=market.payoff.settlement_asset_identity,
+        source_url=_KALSHI_FEE_SCHEDULE_URL,
+        evidence_sha256=evidence_sha256,
+        evidence_observation_ids=observation_ids,
+        evidence_observed_at_utc=max(
+            metadata.event_received_at_utc, metadata.series_received_at_utc
+        ),
+        note=(
+            "Public quadratic taker formula and market multiplier are source-backed; account "
+            "precision, maker applicability, FCM charges, and multi-fill realization remain "
+            "unresolved. Candidate calculations use the non-direct one-fill precision case."
+        ),
+    )
 
 
 @_high_precision_decimal_context
@@ -1116,11 +1212,21 @@ def generate_multi_outcome_coverage_candidate(
         )
 
     fees = [
-        _calculate_fee(market, instrument, common_quantity, price, as_of)
-        for (instrument, _, _), price in zip(top_asks, effective_asks, strict=True)
+        _calculate_fee(
+            market,
+            instrument,
+            common_quantity,
+            price,
+            book.received_at_utc,
+            analysis_time_utc=as_of,
+        )
+        for (instrument, book, _), price in zip(top_asks, effective_asks, strict=True)
     ]
-    fees_known = all(value is not None for value in fees)
-    total_fees = sum((value for value in fees if value is not None), D(0)) if fees_known else None
+    fees_computable = all(value is not None for value in fees)
+    fees_authoritative = fees_computable and market.fees.status == FeeStatus.VERIFIED
+    total_fees = (
+        sum((value for value in fees if value is not None), D(0)) if fees_computable else None
+    )
     gross_cost = common_quantity * sum((ask.price for _, _, ask in top_asks), D(0))
     modeled_cost = common_quantity * sum(effective_asks, D(0))
     if total_fees is not None:
@@ -1138,7 +1244,9 @@ def generate_multi_outcome_coverage_candidate(
     }
     gross_by_state = {state: payout - gross_cost for state, payout in payouts.items()}
     net_by_state = (
-        {state: payout - modeled_cost for state, payout in payouts.items()} if fees_known else {}
+        {state: payout - modeled_cost for state, payout in payouts.items()}
+        if fees_computable
+        else {}
     )
     worst_gross = min(gross_by_state.values()) if gross_by_state else None
     worst_net = min(net_by_state.values()) if net_by_state else None
@@ -1150,9 +1258,13 @@ def generate_multi_outcome_coverage_candidate(
         "No cross-venue equivalence, shared collateral, or transfer assumption is used.",
         "Practical execution eligibility is not established from public market-data snapshots.",
     ]
-    if not fees_known:
+    if not fees_computable:
         assumptions.append(
             "The venue fee schedule is incomplete or expired; unknown fees are not treated as zero."
+        )
+    elif not fees_authoritative:
+        assumptions.append(
+            "Kalshi fees use a source-backed one-fill taker estimate at non-direct-member balance precision, the larger of the two documented precision cases; account class, maker fills, multi-fill rounding, FCM charges, and other execution costs remain unresolved."
         )
     if scenario.slippage_bps or scenario.quote_decay_bps_per_second or scenario.execution_delay_ms:
         assumptions.append("Slippage and quote-decay values are user-supplied virtual assumptions.")
@@ -1161,16 +1273,25 @@ def generate_multi_outcome_coverage_candidate(
     if worst_gross is None or worst_gross <= 0:
         classification = (
             OpportunityClassification.NEGATIVE_AFTER_MODELED_COSTS
-            if fees_known
+            if fees_authoritative
             else OpportunityClassification.INCOMPLETE_EVIDENCE
         )
         reasons.append(
             "The exhaustive outcome set does not have a positive gross payoff over quoted cost."
         )
-    elif not fees_known:
+    elif not fees_computable:
         classification = OpportunityClassification.CONDITIONAL_ECONOMIC_OPPORTUNITY
         reasons.append(
             "Gross outcome coverage is positive, but the applicable fee schedule is incomplete."
+        )
+    elif not fees_authoritative:
+        classification = (
+            OpportunityClassification.CONDITIONAL_ECONOMIC_OPPORTUNITY
+            if worst_net is not None and worst_net > 0
+            else OpportunityClassification.INCOMPLETE_EVIDENCE
+        )
+        reasons.append(
+            "Candidate net values use a conservative public-fee estimate; account-specific costs are not verified."
         )
     elif worst_net is None or worst_net <= 0:
         classification = OpportunityClassification.NEGATIVE_AFTER_MODELED_COSTS
@@ -1232,14 +1353,14 @@ def generate_multi_outcome_coverage_candidate(
         outcome_payout_by_state=payouts,
         gross_cost=gross_cost,
         modeled_fees=total_fees,
-        modeled_net_cost=modeled_cost if fees_known else None,
+        modeled_net_cost=modeled_cost if fees_computable else None,
         gross_pnl_by_state=gross_by_state,
         net_pnl_by_state=net_by_state,
         worst_case_gross_pnl=worst_gross,
         worst_case_net_pnl=worst_net,
         capital_by_venue={
             market.venue.value: modeled_cost
-            if fees_known
+            if fees_computable
             else common_quantity * sum(effective_asks, D(0))
         },
         capital_currency_identity=market.payoff.settlement_asset_identity,
@@ -1635,9 +1756,26 @@ def _evaluate_pair(
             candidate_id=identity,
             family=family,
         )
-    left_fee = _calculate_fee(left, left_instrument, common_quantity, l_effective, as_of)
-    right_fee = _calculate_fee(right, right_instrument, common_quantity, r_effective, as_of)
-    fees_known = left_fee is not None and right_fee is not None
+    left_fee = _calculate_fee(
+        left,
+        left_instrument,
+        common_quantity,
+        l_effective,
+        left_book.received_at_utc,
+        analysis_time_utc=as_of,
+    )
+    right_fee = _calculate_fee(
+        right,
+        right_instrument,
+        common_quantity,
+        r_effective,
+        right_book.received_at_utc,
+        analysis_time_utc=as_of,
+    )
+    fees_computable = left_fee is not None and right_fee is not None
+    fees_authoritative = fees_computable and all(
+        market.fees.status == FeeStatus.VERIFIED for market in (left, right)
+    )
     modeled_fee_sum = (
         left_fee + right_fee if left_fee is not None and right_fee is not None else None
     )
@@ -1664,7 +1802,9 @@ def _evaluate_pair(
         payout[state] = common_quantity * (left_pay.get(state, D(-1)) + right_pay[right_state])
     gross_by_state = {state: amount - gross_cost for state, amount in payout.items()}
     net_by_state = (
-        {state: amount - modeled_cost for state, amount in payout.items()} if fees_known else {}
+        {state: amount - modeled_cost for state, amount in payout.items()}
+        if fees_computable
+        else {}
     )
     worst_gross = min(gross_by_state.values()) if gross_by_state else None
     worst_net = min(net_by_state.values()) if net_by_state else None
@@ -1677,7 +1817,7 @@ def _evaluate_pair(
     reasons.append(
         "Practical execution eligibility is not established from public market-data snapshots."
     )
-    if not fees_known:
+    if not fees_computable:
         unknown_fee_venues = tuple(
             market.venue.value
             for market, fee in ((left, left_fee), (right, right_fee))
@@ -1688,6 +1828,10 @@ def _evaluate_pair(
             + ", ".join(sorted(unknown_fee_venues))
             + "; unknown fees are not treated as zero."
         )
+    elif not fees_authoritative:
+        assumptions.append(
+            "Kalshi fees use a source-backed one-fill taker estimate at non-direct-member balance precision, the larger of the two documented precision cases; account class, maker fills, multi-fill rounding, FCM charges, and other execution costs remain unresolved."
+        )
     if scenario.slippage_bps or scenario.quote_decay_bps_per_second or scenario.execution_delay_ms:
         assumptions.append("Slippage/quote-decay values are user-supplied virtual assumptions.")
     if scenario.fill_fraction < 1:
@@ -1695,18 +1839,27 @@ def _evaluate_pair(
     if worst_gross is None or worst_gross <= 0:
         classification = (
             OpportunityClassification.NEGATIVE_AFTER_MODELED_COSTS
-            if fees_known
+            if fees_authoritative
             else OpportunityClassification.INCOMPLETE_EVIDENCE
         )
         reasons.append("The worst-case gross terminal payoff does not exceed gross quoted cost.")
-    elif fees_known and worst_net is not None and worst_net <= 0:
-        classification = OpportunityClassification.NEGATIVE_AFTER_MODELED_COSTS
-        reasons.append("The verified fee model eliminates the gross mathematical discrepancy.")
-    elif not fees_known:
+    elif not fees_computable:
         classification = OpportunityClassification.CONDITIONAL_ECONOMIC_OPPORTUNITY
         reasons.append(
             "Gross outcome coverage is positive, but at least one applicable fee schedule is unknown."
         )
+    elif not fees_authoritative:
+        classification = (
+            OpportunityClassification.CONDITIONAL_ECONOMIC_OPPORTUNITY
+            if worst_net is not None and worst_net > 0
+            else OpportunityClassification.INCOMPLETE_EVIDENCE
+        )
+        reasons.append(
+            "Candidate net values use a conservative public-fee estimate; account-specific costs are not verified."
+        )
+    elif worst_net is not None and worst_net <= 0:
+        classification = OpportunityClassification.NEGATIVE_AFTER_MODELED_COSTS
+        reasons.append("The verified fee model eliminates the gross mathematical discrepancy.")
     else:
         classification = OpportunityClassification.VERIFIED_MATHEMATICAL_INCONSISTENCY
         reasons.append(
@@ -1778,7 +1931,7 @@ def _evaluate_pair(
         outcome_payout_by_state=payout,
         gross_cost=gross_cost,
         modeled_fees=fees_total,
-        modeled_net_cost=modeled_cost if fees_known else None,
+        modeled_net_cost=modeled_cost if fees_computable else None,
         gross_pnl_by_state=gross_by_state,
         net_pnl_by_state=net_by_state,
         worst_case_gross_pnl=worst_gross,
@@ -1804,15 +1957,56 @@ def _calculate_fee(
     quantity: Decimal,
     price: Decimal,
     as_of_utc: datetime,
+    *,
+    analysis_time_utc: datetime | None = None,
 ) -> Decimal | None:
     schedule = market.fees
+    analysis_time = analysis_time_utc or as_of_utc
+    if schedule.status == FeeStatus.ESTIMATE:
+        if (
+            schedule.formula != KALSHI_QUADRATIC_TAKER_FORMULA
+            or market.venue != Venue.KALSHI
+            or market.market_kind not in {MarketKind.BINARY_EVENT, MarketKind.MULTI_OUTCOME_EVENT}
+            or schedule.applies_to != "taker"
+            or schedule.rate != D("0.07")
+            or schedule.fee_multiplier is None
+            or schedule.fixed_fee not in (None, D(0))
+            or schedule.fee_currency != instrument.price_currency
+            or schedule.fee_currency_identity is None
+            or schedule.fee_currency_identity != instrument.price_currency_identity
+            or schedule.evidence_observed_at_utc is None
+            or len(schedule.evidence_observation_ids) != 2
+            or schedule.evidence_observed_at_utc > as_of_utc
+            or analysis_time < as_of_utc
+            or (schedule.effective_at_utc is not None and schedule.effective_at_utc > analysis_time)
+            or (schedule.expires_at_utc is not None and schedule.expires_at_utc <= analysis_time)
+        ):
+            return None
+        if as_of_utc - schedule.evidence_observed_at_utc > timedelta(
+            milliseconds=_KALSHI_FEE_MAX_EVIDENCE_AGE_MS
+        ):
+            return None
+        if analysis_time - schedule.evidence_observed_at_utc > timedelta(
+            milliseconds=_KALSHI_FEE_MAX_EVIDENCE_AGE_MS
+        ):
+            return None
+        if not (D(0) < price <= D(1)) or quantity <= 0:
+            return None
+        position_cost = quantity * price
+        model_fee = schedule.rate * schedule.fee_multiplier * quantity * price * (D(1) - price)
+        trade_fee = model_fee.quantize(D("0.000001"), rounding=ROUND_CEILING)
+        balance_quantum = D("0.01")
+        rounded_debit = ((position_cost + trade_fee) / balance_quantum).to_integral_value(
+            rounding=ROUND_CEILING
+        ) * balance_quantum
+        return rounded_debit - position_cost
     if (
         schedule.status != FeeStatus.VERIFIED
         or schedule.applies_to != "taker"
         or schedule.rate is None
         or schedule.fixed_fee not in (None, D(0))
-        or (schedule.effective_at_utc is not None and schedule.effective_at_utc > as_of_utc)
-        or (schedule.expires_at_utc is not None and schedule.expires_at_utc <= as_of_utc)
+        or (schedule.effective_at_utc is not None and schedule.effective_at_utc > analysis_time)
+        or (schedule.expires_at_utc is not None and schedule.expires_at_utc <= analysis_time)
     ):
         return None
     if (

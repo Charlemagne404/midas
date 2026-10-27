@@ -9,7 +9,8 @@ from __future__ import annotations
 
 import hashlib
 import json
-from decimal import ROUND_HALF_UP, Decimal, localcontext
+from datetime import datetime, timedelta
+from decimal import ROUND_CEILING, ROUND_HALF_UP, Decimal, localcontext
 from fractions import Fraction
 from typing import Any
 
@@ -23,6 +24,7 @@ from midas.frontier.economics import (
     PositionLeg,
 )
 from midas.frontier.models import (
+    KALSHI_QUADRATIC_TAKER_FORMULA,
     BookSnapshot,
     EconomicAuditDisposition,
     FeeStatus,
@@ -32,6 +34,7 @@ from midas.frontier.models import (
     MarketInstrument,
     MarketKind,
     QuantityUnit,
+    Venue,
 )
 from midas.frontier.relationships import (
     Relationship,
@@ -41,8 +44,9 @@ from midas.frontier.relationships import (
 )
 
 D = Decimal
-_AUDIT_VERSION = "frontier-independent-economic-audit-4"
+_AUDIT_VERSION = "frontier-independent-economic-audit-5"
 _FEE_QUANTUM = D("0.00001")
+_KALSHI_FEE_MAX_EVIDENCE_AGE = timedelta(hours=24)
 
 
 def independently_audit_candidate(
@@ -114,7 +118,7 @@ def independently_audit_candidate(
     message = (
         "; ".join(mismatches)
         if mismatches
-        else "Independent payoff, quote, fee, cost, and terminal-result calculations agree."
+        else "Independent payoff, quote, fee, cost, and terminal-result calculations agree with pinned inputs and the declared fee model."
     )
     audit = IndependentEconomicAudit(
         model_version=_AUDIT_VERSION,
@@ -138,7 +142,7 @@ def independently_audit_candidate(
             "verified payoff and resolution constraints",
             "relationship mapping or exhaustive state coverage",
             "pinned best-ask price, depth, and modeled purchase price",
-            "applicable venue fee schedule and fee amount",
+            "fee evidence applicability, freshness, and amount under the pinned venue fee model",
             "basket cost and payoff recomputation for every terminal state",
             "candidate P&L fields and classification",
             "all full-or-none fill patterns and resulting single-leg exposures",
@@ -290,7 +294,14 @@ def _recompute(
             Fraction(leg.quantity) % Fraction(instrument.quantity_step) != 0
         ):
             mismatches.append(f"Leg {leg.instrument_id} violates its quantity step")
-        expected_fee = _independent_fee(market, instrument, leg.quantity, modeled_price, candidate)
+        expected_fee = _independent_fee(
+            market,
+            instrument,
+            leg.quantity,
+            modeled_price,
+            book.received_at_utc,
+            candidate.observed_at_utc,
+        )
         fee_by_leg[(leg.market_id, leg.instrument_id)] = expected_fee
         if leg.modeled_fee != expected_fee:
             mismatches.append(f"Leg {leg.instrument_id} fee disagrees with supported schedule")
@@ -350,10 +361,13 @@ def _recompute(
 
     gross_cost = sum((leg.quantity * leg.quoted_ask for leg in candidate.legs), D(0))
     modeled_principal = sum((leg.quantity * leg.modeled_buy_price for leg in candidate.legs), D(0))
-    fees_known = all(value is not None for value in fee_by_leg.values())
+    fees_computable = all(value is not None for value in fee_by_leg.values())
+    fees_authoritative = fees_computable and all(
+        selected_markets[leg.market_id].fees.status == FeeStatus.VERIFIED for leg in candidate.legs
+    )
     modeled_fees = (
         sum((value for value in fee_by_leg.values() if value is not None), D(0))
-        if fees_known
+        if fees_computable
         else None
     )
     modeled_net_cost = modeled_principal + modeled_fees if modeled_fees is not None else None
@@ -365,7 +379,9 @@ def _recompute(
     )
     worst_gross = min(gross_pnl.values()) if gross_pnl else None
     worst_net = min(net_pnl.values()) if net_pnl else None
-    expected_classification = _classification(worst_gross, worst_net, fees_known)
+    expected_classification = _classification(
+        worst_gross, worst_net, fees_computable, fees_authoritative
+    )
     capital_by_venue: dict[str, Decimal] = {}
     for leg in candidate.legs:
         capital_by_venue[leg.venue] = capital_by_venue.get(leg.venue, D(0)) + (
@@ -838,9 +854,49 @@ def _independent_fee(
     instrument: MarketInstrument,
     quantity: Decimal,
     price: Decimal,
-    candidate: OpportunityCandidate,
+    observation_time_utc: datetime,
+    evaluation_time_utc: datetime,
 ) -> Decimal | None:
     schedule = market.fees
+    if schedule.status == FeeStatus.ESTIMATE:
+        if (
+            schedule.formula != KALSHI_QUADRATIC_TAKER_FORMULA
+            or market.venue != Venue.KALSHI
+            or market.market_kind not in {MarketKind.BINARY_EVENT, MarketKind.MULTI_OUTCOME_EVENT}
+            or schedule.applies_to != "taker"
+            or schedule.rate != D("0.07")
+            or schedule.fee_multiplier is None
+            or schedule.fixed_fee not in (None, D(0))
+            or schedule.fee_currency != instrument.price_currency
+            or schedule.fee_currency_identity != instrument.price_currency_identity
+            or schedule.evidence_observed_at_utc is None
+            or len(schedule.evidence_observation_ids) != 2
+            or schedule.evidence_observed_at_utc > observation_time_utc
+            or observation_time_utc - schedule.evidence_observed_at_utc
+            > _KALSHI_FEE_MAX_EVIDENCE_AGE
+            or evaluation_time_utc < observation_time_utc
+            or evaluation_time_utc - schedule.evidence_observed_at_utc
+            > _KALSHI_FEE_MAX_EVIDENCE_AGE
+            or (
+                schedule.effective_at_utc is not None
+                and schedule.effective_at_utc > evaluation_time_utc
+            )
+            or (
+                schedule.expires_at_utc is not None
+                and schedule.expires_at_utc <= evaluation_time_utc
+            )
+            or not D(0) < price <= D(1)
+            or quantity <= 0
+        ):
+            return None
+        position_cost = quantity * price
+        trade_fee = (
+            schedule.rate * schedule.fee_multiplier * quantity * price * (D(1) - price)
+        ).quantize(D("0.000001"), rounding=ROUND_CEILING)
+        debit = ((position_cost + trade_fee) / D("0.01")).to_integral_value(
+            rounding=ROUND_CEILING
+        ) * D("0.01")
+        return debit - position_cost
     if (
         schedule.status != FeeStatus.VERIFIED
         or schedule.applies_to != "taker"
@@ -851,12 +907,9 @@ def _independent_fee(
         or schedule.fee_currency_identity != instrument.price_currency_identity
         or (
             schedule.effective_at_utc is not None
-            and schedule.effective_at_utc > candidate.observed_at_utc
+            and schedule.effective_at_utc > evaluation_time_utc
         )
-        or (
-            schedule.expires_at_utc is not None
-            and schedule.expires_at_utc <= candidate.observed_at_utc
-        )
+        or (schedule.expires_at_utc is not None and schedule.expires_at_utc <= evaluation_time_utc)
     ):
         return None
     if schedule.rate == 0:
@@ -869,16 +922,25 @@ def _independent_fee(
 
 
 def _classification(
-    worst_gross: Decimal | None, worst_net: Decimal | None, fees_known: bool
+    worst_gross: Decimal | None,
+    worst_net: Decimal | None,
+    fees_computable: bool,
+    fees_authoritative: bool,
 ) -> OpportunityClassification:
     if worst_gross is None or worst_gross <= 0:
         return (
             OpportunityClassification.NEGATIVE_AFTER_MODELED_COSTS
-            if fees_known
+            if fees_authoritative
             else OpportunityClassification.INCOMPLETE_EVIDENCE
         )
-    if not fees_known:
+    if not fees_computable:
         return OpportunityClassification.CONDITIONAL_ECONOMIC_OPPORTUNITY
+    if not fees_authoritative:
+        return (
+            OpportunityClassification.CONDITIONAL_ECONOMIC_OPPORTUNITY
+            if worst_net is not None and worst_net > 0
+            else OpportunityClassification.INCOMPLETE_EVIDENCE
+        )
     if worst_net is None or worst_net <= 0:
         return OpportunityClassification.NEGATIVE_AFTER_MODELED_COSTS
     return OpportunityClassification.VERIFIED_MATHEMATICAL_INCONSISTENCY

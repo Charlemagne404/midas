@@ -10,13 +10,16 @@ from midas.frontier.economics import (
     audit_kalshi_mve_reported_settlement,
     generate_binary_coverage_candidates,
     generate_multi_outcome_coverage_candidate,
+    kalshi_candidate_fee_schedule,
 )
 from midas.frontier.independent_audit import independently_audit_candidate
 from midas.frontier.models import (
     BookLevel,
     BookSnapshot,
     FeeSchedule,
+    FeeStatus,
     FrontierMarket,
+    KalshiFeeMetadata,
     Lifecycle,
     MarketInstrument,
     MarketKind,
@@ -941,6 +944,89 @@ def test_exact_binary_outcome_construction_and_fee_classification():
     assert expired_fee_positive.worst_case_net_pnl is None
 
 
+def test_kalshi_public_fee_estimate_flows_through_candidate_and_independent_audit():
+    left, right, _, instrument_mapping = _verified_pair()
+    left_books, right_books = _books(left, right)
+    metadata = KalshiFeeMetadata(
+        adapter_version="frontier-kalshi-16",
+        native_market_id=right.native_market_id,
+        native_event_id=right.native_event_id,
+        series_ticker="KX-FEE-SERIES",
+        event_fee_type_override="quadratic",
+        event_fee_multiplier_override=Decimal(1),
+        series_fee_type="quadratic",
+        series_fee_multiplier=Decimal(1),
+        effective_fee_type="quadratic",
+        effective_fee_multiplier=Decimal(1),
+        fee_resolution_state="event_override",
+        event_fee_type_override_field_present=True,
+        event_fee_multiplier_override_field_present=True,
+        event_raw_sha256="1" * 64,
+        series_raw_sha256="2" * 64,
+        event_received_at_utc=T0,
+        series_received_at_utc=T0,
+    )
+    schedule = kalshi_candidate_fee_schedule(
+        right,
+        metadata,
+        event_observation_id="3" * 64,
+        series_observation_id="4" * 64,
+    )
+    assert schedule is not None
+    assert schedule.status == FeeStatus.ESTIMATE
+    right = right.model_copy(update={"fees": schedule})
+    relation = verify_same_payoff(
+        left,
+        right,
+        state_mapping={"yes": "yes", "no": "no"},
+        instrument_mapping=instrument_mapping,
+        external_assertion_id="public-fee-candidate-integration",
+        evidence_observation_ids=("poly-market", "kalshi-market"),
+        asserted_at_utc=T0,
+    )
+    candidates = generate_binary_coverage_candidates(
+        left,
+        right,
+        relation,
+        left_books,
+        right_books,
+        state_mapping={"yes": "yes", "no": "no"},
+        instrument_mapping=instrument_mapping,
+        as_of_utc=T0 + timedelta(milliseconds=100),
+    )
+    candidate = next(item for item in candidates if item.worst_case_gross_pnl == Decimal("1.50"))
+    assert candidate.classification == OpportunityClassification.CONDITIONAL_ECONOMIC_OPPORTUNITY
+    assert candidate.modeled_fees == Decimal("0.18")
+    assert candidate.worst_case_net_pnl == Decimal("1.32")
+    assert any("account class" in item for item in candidate.assumptions)
+
+    canonical_mapping = (
+        instrument_mapping
+        if relation.left_market_id == left.canonical_id
+        else {right_id: left_id for left_id, right_id in instrument_mapping.items()}
+    )
+    audited = independently_audit_candidate(
+        candidate,
+        markets={left.canonical_id: left, right.canonical_id: right},
+        books_by_market={left.canonical_id: left_books, right.canonical_id: right_books},
+        relationships={relation.relationship_id: relation},
+        state_mappings={relation.relationship_id: {"yes": "yes", "no": "no"}},
+        instrument_mappings={relation.relationship_id: canonical_mapping},
+        scenario=ExecutionScenario(),
+    )
+    assert audited.independent_audit is not None
+    assert audited.independent_audit.disposition.value == "verified"
+    assert audited.classification == OpportunityClassification.CONDITIONAL_ECONOMIC_OPPORTUNITY
+
+    replay = deterministic_replay(
+        (right,),
+        (),
+        as_of_utc=T0 + timedelta(milliseconds=100),
+        code_version="kalshi-fee-input-provenance-v1",
+    )
+    assert replay.manifest.fee_metadata_observation_ids == ("3" * 64, "4" * 64)
+
+
 def test_binary_coverage_requires_open_markets_and_exact_supported_quantity():
     left, right, relationship, instrument_mapping = _verified_pair()
     left_books, right_books = _books(left, right)
@@ -1243,7 +1329,7 @@ def test_candidate_generation_and_independent_audit_enforce_price_ticks():
         as_of_utc=T0 + timedelta(milliseconds=100),
     )
     candidate = next(item for item in candidates if item.legs)
-    assert candidate.model_version == "frontier-economic-verifiers-7"
+    assert candidate.model_version == "frontier-economic-verifiers-8"
 
     def with_half_dollar_ticks(market_value):
         instruments = tuple(
@@ -1410,7 +1496,7 @@ def test_verified_multi_outcome_coverage_is_exact_and_stays_hypothetical():
         as_of_utc=T0 + timedelta(milliseconds=100),
         code_version="multi-outcome-fixture-v1",
     )
-    assert replay.manifest.replay_version == "frontier-deterministic-replay-7"
+    assert replay.manifest.replay_version == "frontier-deterministic-replay-8"
     replay_candidate = replay.candidates[0]
     assert replay_candidate.model_copy(update={"independent_audit": None}) == candidate
     assert replay_candidate.independent_audit is not None
@@ -1670,7 +1756,7 @@ def test_deterministic_replay_is_invariant_to_input_order():
     }
     first = deterministic_replay((left, right), all_books, **kwargs)
     second = deterministic_replay((right, left), tuple(reversed(all_books)), **kwargs)
-    assert first.manifest.economic_model_version == "frontier-economic-verifiers-7"
+    assert first.manifest.economic_model_version == "frontier-economic-verifiers-8"
     assert first.run_id == second.run_id
     assert first.result_sha256 == second.result_sha256
     assert first.candidates == second.candidates

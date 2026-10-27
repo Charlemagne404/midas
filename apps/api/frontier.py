@@ -12,7 +12,7 @@ from datetime import UTC, datetime
 from decimal import Decimal
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Literal, cast
+from typing import Any, Literal
 from urllib.parse import parse_qs, urlsplit
 
 from fastapi import APIRouter, HTTPException, Query
@@ -29,6 +29,7 @@ from midas.frontier.economics import (
     audit_kalshi_mve_reported_settlement,
     estimate_kalshi_taker_fee_sensitivity,
     estimate_kalshi_taker_order_fee_sensitivity,
+    kalshi_candidate_fee_schedule,
 )
 from midas.frontier.models import (
     BookSnapshot,
@@ -624,6 +625,7 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
         if not isinstance(manifest, dict):
             return ()
         observation_ids = set(manifest.get("market_observation_ids", ()))
+        observation_ids.update(manifest.get("fee_metadata_observation_ids", ()))
         observation_ids.update(manifest.get("book_observation_ids", ()))
         return tuple(sorted(str(item) for item in observation_ids))
 
@@ -690,7 +692,7 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
 
     def read_stored_replays(limit: int) -> tuple[dict[str, Any], ...]:
         try:
-            return cast(tuple[dict[str, Any], ...], store.replays(limit=limit))
+            return store.replays(limit=limit)
         except FrontierStoreError as error:
             raise HTTPException(
                 status_code=409,
@@ -699,7 +701,7 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
 
     def read_stored_comparisons(limit: int) -> tuple[dict[str, Any], ...]:
         try:
-            return cast(tuple[dict[str, Any], ...], store.comparisons(limit=limit))
+            return store.comparisons(limit=limit)
         except FrontierStoreError as error:
             raise HTTPException(
                 status_code=409,
@@ -714,14 +716,11 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
         excluded_venues: tuple[str, ...] = (),
     ) -> tuple[dict[str, Any], ...]:
         try:
-            return cast(
-                tuple[dict[str, Any], ...],
-                store.relationships(
-                    state=state,
-                    limit=limit,
-                    effective_only=effective_only,
-                    excluded_venues=excluded_venues,
-                ),
+            return store.relationships(
+                state=state,
+                limit=limit,
+                effective_only=effective_only,
+                excluded_venues=excluded_venues,
             )
         except FrontierStoreError as error:
             raise HTTPException(
@@ -977,6 +976,11 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
                 item[0].title.casefold(),
                 item[0].native_market_id,
             ),
+        )
+        values = list(
+            _enrich_markets_with_kalshi_fee_evidence(
+                store, tuple(values), excluded_venues=held_venues
+            )
         )
         if q:
             needle = q.casefold()
@@ -1470,10 +1474,11 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
                     "network_calls_bounded_by": 2 * (config.retries + 1),
                     "fee_cost_modeled": False,
                     "note": (
-                        "One explicit read-only event plus series metadata probe. This capture "
-                        "calculates no fee; a separate local workbench request can evaluate a "
-                        "one-fill sensitivity from the saved evidence. Account-specific costs "
-                        "remain unresolved and do not become zero in candidate economics."
+                        "One explicit read-only event plus series metadata probe. A later saved-"
+                        "evidence replay can attach a source-backed conservative one-fill taker "
+                        "estimate when the event override and formula are supported and the "
+                        "metadata is fresh at the quote time. This remains conditional; account "
+                        "precision, FCM charges, and multi-fill costs remain unresolved."
                     ),
                 }
             except AdapterError as error:
@@ -2043,7 +2048,7 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
                 source_venue = store.observation_venues((observation_id,)).get(observation_id)
             except (FrontierStoreError, ValueError) as error:
                 raise HTTPException(status_code=422, detail=str(error)) from error
-            if source_venue in held_venues:
+            if source_venue is not None and source_venue in held_venues:
                 reject_held_venue(Venue(source_venue))
         try:
             item = store.observation(observation_id)
@@ -2058,7 +2063,7 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
             raise HTTPException(status_code=404, detail="Stored Frontier observation was not found")
         if item["venue"] in held_venues:
             reject_held_venue(Venue(item["venue"]))
-        return cast(dict[str, Any], item)
+        return item
 
     @api.get("/relationships")
     async def relationships(
@@ -2728,7 +2733,7 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
                 status_code=409,
                 detail="Replay comparison depends on source data held from research use",
             )
-        return cast(dict[str, Any], item)
+        return item
 
     @api.post("/replay/compare")
     async def compare_replay(scenarios: PairedReplayRequest) -> dict[str, Any]:
@@ -2861,7 +2866,7 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
             store.append_replay(result)
         except FrontierStoreError as error:
             raise HTTPException(status_code=409, detail=str(error)) from error
-        return cast(dict[str, Any], result.model_dump(mode="json"))
+        return result.model_dump(mode="json")
 
     @api.get("/readiness")
     async def readiness() -> dict[str, Any]:
@@ -3216,15 +3221,12 @@ def _read_stored_observations(
     offset: int = 0,
 ) -> tuple[dict[str, Any], ...]:
     try:
-        return cast(
-            tuple[dict[str, Any], ...],
-            store.observations(
-                venue=venue,
-                kind=kind,
-                excluded_venues=excluded_venues,
-                limit=limit,
-                offset=offset,
-            ),
+        return store.observations(
+            venue=venue,
+            kind=kind,
+            excluded_venues=excluded_venues,
+            limit=limit,
+            offset=offset,
         )
     except FrontierStoreError as error:
         raise HTTPException(
@@ -3275,7 +3277,199 @@ async def _load_market_records(
                     break
         if len(markets) >= limit:
             break
-    return tuple(sorted(markets.values(), key=lambda item: item[0].canonical_id))
+    records = tuple(sorted(markets.values(), key=lambda item: item[0].canonical_id))
+    return _enrich_markets_with_kalshi_fee_evidence(store, records, excluded_venues=excluded_venues)
+
+
+def _enrich_markets_with_kalshi_fee_evidence(
+    store: FrontierStore,
+    market_records: tuple[tuple[FrontierMarket, str], ...],
+    *,
+    excluded_venues: tuple[str, ...] = (),
+) -> tuple[tuple[FrontierMarket, str], ...]:
+    """Join only complete, hash-linked saved Kalshi fee pairs into replay markets."""
+    if "kalshi" in excluded_venues or not any(
+        market.venue == Venue.KALSHI for market, _ in market_records
+    ):
+        return market_records
+    event_rows = _read_stored_observations(
+        store,
+        venue=Venue.KALSHI.value,
+        kind="event_fee_metadata",
+        limit=200,
+        excluded_venues=excluded_venues,
+    )
+    series_rows = _read_stored_observations(
+        store,
+        venue=Venue.KALSHI.value,
+        kind="series_fee_metadata",
+        limit=200,
+        excluded_venues=excluded_venues,
+    )
+    normalized_events: list[tuple[dict[str, Any], KalshiFeeMetadata]] = []
+    normalized_series: list[tuple[dict[str, Any], KalshiFeeMetadata]] = []
+    for row in event_rows:
+        normalized = row.get("normalized")
+        if not isinstance(normalized, dict):
+            continue
+        try:
+            metadata = KalshiFeeMetadata.model_validate(normalized)
+        except ValueError:
+            continue
+        if row.get("raw_sha256") == metadata.event_raw_sha256:
+            normalized_events.append((row, metadata))
+    for row in series_rows:
+        normalized = row.get("normalized")
+        if not isinstance(normalized, dict):
+            continue
+        try:
+            metadata = KalshiFeeMetadata.model_validate(normalized)
+        except ValueError:
+            continue
+        if row.get("raw_sha256") == metadata.series_raw_sha256:
+            normalized_series.append((row, metadata))
+    series_index: dict[tuple[str, str, str], list[tuple[dict[str, Any], KalshiFeeMetadata]]] = {}
+    for row, metadata in normalized_series:
+        key = (
+            metadata.native_market_id,
+            metadata.event_raw_sha256,
+            metadata.series_raw_sha256,
+        )
+        series_index.setdefault(key, []).append((row, metadata))
+
+    enriched: list[tuple[FrontierMarket, str]] = []
+    for market, market_observation_id in market_records:
+        if market.venue != Venue.KALSHI:
+            enriched.append((market, market_observation_id))
+            continue
+        pairs: list[tuple[datetime, str, str, KalshiFeeMetadata]] = []
+        for event_row, event_metadata in normalized_events:
+            if (
+                event_metadata.native_market_id != market.native_market_id
+                or event_metadata.native_event_id != market.native_event_id
+                or event_row.get("received_at_utc")
+                != event_metadata.event_received_at_utc.isoformat()
+            ):
+                continue
+            series_key = (
+                event_metadata.native_market_id,
+                event_metadata.event_raw_sha256,
+                event_metadata.series_raw_sha256,
+            )
+            for series_row, series_metadata in series_index.get(series_key, ()):
+                if (
+                    event_metadata != series_metadata
+                    or series_row.get("received_at_utc")
+                    != series_metadata.series_received_at_utc.isoformat()
+                ):
+                    continue
+                event_id = str(event_row.get("observation_id", ""))
+                series_id = str(series_row.get("observation_id", ""))
+                try:
+                    event_record = store.observation(event_id)
+                    series_record = store.observation(series_id)
+                    event_raw = RawObservation.model_validate(
+                        event_record.get("raw") if event_record is not None else None
+                    )
+                    series_raw = RawObservation.model_validate(
+                        series_record.get("raw") if series_record is not None else None
+                    )
+                except (TypeError, ValueError, FrontierStoreError):
+                    continue
+                if not _kalshi_fee_capture_matches_metadata(
+                    event_raw, event_metadata, kind="event"
+                ) or not _kalshi_fee_capture_matches_metadata(
+                    series_raw, event_metadata, kind="series"
+                ):
+                    continue
+                pairs.append(
+                    (
+                        max(
+                            event_metadata.event_received_at_utc,
+                            event_metadata.series_received_at_utc,
+                        ),
+                        event_id,
+                        series_id,
+                        event_metadata,
+                    )
+                )
+        if pairs:
+            _, event_id, series_id, metadata = max(pairs, key=lambda item: item[:3])
+            schedule = kalshi_candidate_fee_schedule(
+                market,
+                metadata,
+                event_observation_id=event_id,
+                series_observation_id=series_id,
+            )
+            if schedule is not None:
+                market = market.model_copy(update={"fees": schedule})
+        enriched.append((market, market_observation_id))
+    return tuple(enriched)
+
+
+def _kalshi_fee_capture_matches_metadata(
+    raw: RawObservation,
+    metadata: KalshiFeeMetadata,
+    *,
+    kind: Literal["event", "series"],
+) -> bool:
+    if raw.venue != Venue.KALSHI or raw.raw_body_encoding != "utf8":
+        return False
+    url = urlsplit(raw.request_url)
+    expected_kind = f"{kind}_fee_metadata"
+    expected_path = (
+        f"/trade-api/v2/events/{metadata.native_event_id}"
+        if kind == "event"
+        else f"/trade-api/v2/series/{metadata.series_ticker}"
+    )
+    if (
+        raw.observation_kind != expected_kind
+        or url.scheme != "https"
+        or url.netloc != "external-api.kalshi.com"
+        or url.path != expected_path
+        or raw.received_at_utc
+        != (metadata.event_received_at_utc if kind == "event" else metadata.series_received_at_utc)
+        or raw.raw_sha256
+        != (metadata.event_raw_sha256 if kind == "event" else metadata.series_raw_sha256)
+    ):
+        return False
+    try:
+        payload = json.loads(raw.raw_body)
+    except (json.JSONDecodeError, TypeError):
+        return False
+    if not isinstance(payload, dict):
+        return False
+    native = payload.get(kind)
+    if not isinstance(native, dict):
+        return False
+    try:
+        if kind == "event":
+            event_type = native.get("fee_type_override")
+            event_multiplier_value = native.get("fee_multiplier_override")
+            event_multiplier = (
+                Decimal(str(event_multiplier_value)) if event_multiplier_value is not None else None
+            )
+            return (
+                native.get("event_ticker") == metadata.native_event_id
+                and native.get("series_ticker") == metadata.series_ticker
+                and ("fee_type_override" in native)
+                == metadata.event_fee_type_override_field_present
+                and ("fee_multiplier_override" in native)
+                == metadata.event_fee_multiplier_override_field_present
+                and event_type == metadata.event_fee_type_override
+                and event_multiplier == metadata.event_fee_multiplier_override
+            )
+        series_multiplier_value = native.get("fee_multiplier")
+        series_multiplier = (
+            Decimal(str(series_multiplier_value)) if series_multiplier_value is not None else None
+        )
+        return (
+            native.get("ticker") == metadata.series_ticker
+            and native.get("fee_type") == metadata.series_fee_type
+            and series_multiplier == metadata.series_fee_multiplier
+        )
+    except (ArithmeticError, TypeError, ValueError):
+        return False
 
 
 async def _load_markets(

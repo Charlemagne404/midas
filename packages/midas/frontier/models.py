@@ -77,6 +77,9 @@ class FeeStatus(StrEnum):
     ESTIMATE = "estimate"
 
 
+KALSHI_QUADRATIC_TAKER_FORMULA = "kalshi_quadratic_taker_microdollar_v1"
+
+
 class EconomicAuditDisposition(StrEnum):
     VERIFIED = "verified"
     DISAGREEMENT = "disagreement"
@@ -337,11 +340,14 @@ class FeeSchedule(FrontierModel):
     applies_to: str | None = None
     fixed_fee: Nonnegative | None = None
     rate: FeeRate | None = None
+    fee_multiplier: Nonnegative | None = None
     formula: str | None = None
     fee_currency: str | None = None
     fee_currency_identity: SettlementAssetIdentity | None = None
     source_url: str | None = None
     evidence_sha256: str | None = None
+    evidence_observation_ids: tuple[str, ...] = ()
+    evidence_observed_at_utc: datetime | None = None
     effective_at_utc: datetime | None = None
     expires_at_utc: datetime | None = None
     note: str = "No verified instrument-specific schedule"
@@ -350,11 +356,38 @@ class FeeSchedule(FrontierModel):
     def verified_schedule_has_evidence(self) -> FeeSchedule:
         if self.status == FeeStatus.VERIFIED and not (self.source_url and self.evidence_sha256):
             raise ValueError("Verified fee schedule requires source and evidence hash")
+        if len(set(self.evidence_observation_ids)) != len(self.evidence_observation_ids):
+            raise ValueError("Fee evidence observation identities must be unique")
+        if any(
+            len(item) != 64 or any(character not in "0123456789abcdef" for character in item)
+            for item in self.evidence_observation_ids
+        ):
+            raise ValueError("Fee evidence observation identities must be SHA-256 digests")
+        if self.formula == KALSHI_QUADRATIC_TAKER_FORMULA and (
+            self.status != FeeStatus.ESTIMATE
+            or self.applies_to != "taker"
+            or self.rate != D("0.07")
+            or self.fee_multiplier is None
+            or self.fee_currency != "USD"
+            or self.fee_currency_identity is None
+            or self.source_url is None
+            or self.evidence_sha256 is None
+            or len(self.evidence_observation_ids) != 2
+            or self.evidence_observed_at_utc is None
+        ):
+            raise ValueError("Kalshi fee estimate requires complete public formula provenance")
         if self.fee_currency_identity is not None and (
             self.fee_currency_identity.code != self.fee_currency
         ):
             raise ValueError("Fee currency code differs from its canonical identity")
         return self
+
+    @field_validator("evidence_observed_at_utc")
+    @classmethod
+    def fee_evidence_time_is_utc(cls, value: datetime | None) -> datetime | None:
+        if value is not None and (value.tzinfo is None or value.utcoffset() is None):
+            raise ValueError("Fee evidence time must include a timezone")
+        return value.astimezone(UTC) if value is not None else None
 
 
 class KalshiFeeMetadata(FrontierModel):

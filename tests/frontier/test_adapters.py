@@ -1019,9 +1019,9 @@ def test_source_configs_and_capability_manifests_fail_closed():
         for item in KalshiAdapter.capabilities.declarations
         if item.capability == Capability.FEE_SCHEDULE
     )
-    assert not kalshi_fee_declaration.supported
-    assert "One-fill taker sensitivity exists" in kalshi_fee_declaration.reason
-    assert "candidate economics" in kalshi_fee_declaration.reason
+    assert kalshi_fee_declaration.supported
+    assert "conservative one-fill taker estimate" in kalshi_fee_declaration.reason
+    assert "FCM charges remain unresolved" in kalshi_fee_declaration.reason
 
 
 @pytest.mark.asyncio

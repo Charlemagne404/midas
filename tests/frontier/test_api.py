@@ -18,7 +18,9 @@ from midas.frontier.adapters.transport import PublicReadTransport
 from midas.frontier.models import (
     AdapterConfig,
     FeeSchedule,
+    FeeStatus,
     FrontierMarket,
+    KalshiFeeMetadata,
     Lifecycle,
     MarketBatch,
     MarketInstrument,
@@ -45,7 +47,11 @@ from midas.frontier.relationships import (
 )
 from midas.frontier.storage import FrontierStore
 
-from apps.api.frontier import router
+from apps.api.frontier import (
+    _enrich_markets_with_kalshi_fee_evidence,
+    _load_markets,
+    router,
+)
 from tests.frontier.builders import T0, book, market
 
 
@@ -256,6 +262,130 @@ def _graph_fixture_edge(left: FrontierMarket, right: FrontierMarket) -> Relation
             ),
         ),
     )
+
+
+def test_saved_kalshi_fee_pair_is_joined_only_when_raw_and_normalized_evidence_match(tmp_path):
+    store = FrontierStore(tmp_path / "fee-evidence-join")
+    source_market = market(Venue.KALSHI, "KX-FRONTIER-FEE-JOIN")
+    market_body = "{}"
+    market_raw = RawObservation(
+        venue=Venue.KALSHI,
+        observation_kind="market_listing",
+        request_url="https://external-api.kalshi.com/trade-api/v2/markets?limit=1",
+        http_status=200,
+        request_started_at_utc=T0,
+        received_at_utc=T0,
+        raw_body=market_body,
+        raw_sha256=hashlib.sha256(market_body.encode()).hexdigest(),
+        adapter_version="fixture-kalshi-v1",
+    )
+    market_observation_id = store.append_observation(market_raw, source_market)
+    event_body = json.dumps(
+        {
+            "event": {
+                "event_ticker": source_market.native_event_id,
+                "series_ticker": "KX-FRONTIER-FEE-SERIES",
+                "fee_type_override": "quadratic",
+                "fee_multiplier_override": 1,
+            }
+        }
+    )
+    series_body = json.dumps(
+        {
+            "series": {
+                "ticker": "KX-FRONTIER-FEE-SERIES",
+                "fee_type": "quadratic",
+                "fee_multiplier": 1,
+            }
+        }
+    )
+    event_raw = RawObservation(
+        venue=Venue.KALSHI,
+        observation_kind="event_fee_metadata",
+        request_url=(
+            "https://external-api.kalshi.com/trade-api/v2/events/"
+            f"{source_market.native_event_id}?exclude_markets=true"
+        ),
+        http_status=200,
+        request_started_at_utc=T0,
+        received_at_utc=T0,
+        raw_body=event_body,
+        raw_sha256=hashlib.sha256(event_body.encode()).hexdigest(),
+        adapter_version="fixture-kalshi-v1",
+    )
+    series_raw = RawObservation(
+        venue=Venue.KALSHI,
+        observation_kind="series_fee_metadata",
+        request_url="https://external-api.kalshi.com/trade-api/v2/series/KX-FRONTIER-FEE-SERIES",
+        http_status=200,
+        request_started_at_utc=T0,
+        received_at_utc=T0,
+        raw_body=series_body,
+        raw_sha256=hashlib.sha256(series_body.encode()).hexdigest(),
+        adapter_version="fixture-kalshi-v1",
+    )
+    metadata = KalshiFeeMetadata(
+        adapter_version="fixture-kalshi-v1",
+        native_market_id=source_market.native_market_id,
+        native_event_id=source_market.native_event_id,
+        series_ticker="KX-FRONTIER-FEE-SERIES",
+        event_fee_type_override="quadratic",
+        event_fee_multiplier_override=Decimal(1),
+        series_fee_type="quadratic",
+        series_fee_multiplier=Decimal(1),
+        effective_fee_type="quadratic",
+        effective_fee_multiplier=Decimal(1),
+        fee_resolution_state="event_override",
+        event_fee_type_override_field_present=True,
+        event_fee_multiplier_override_field_present=True,
+        event_raw_sha256=event_raw.raw_sha256,
+        series_raw_sha256=series_raw.raw_sha256,
+        event_received_at_utc=T0,
+        series_received_at_utc=T0,
+    )
+    event_id = store.append_observation(event_raw, metadata)
+    series_id = store.append_observation(series_raw, metadata)
+
+    joined = _enrich_markets_with_kalshi_fee_evidence(
+        store, ((source_market, market_observation_id),)
+    )[0][0]
+    assert joined.fees.status == FeeStatus.ESTIMATE
+    assert joined.fees.evidence_observation_ids == (event_id, series_id)
+    assert joined.fees.evidence_observed_at_utc == T0
+    replay_markets = asyncio.run(_load_markets(store, 10))
+    assert len(replay_markets) == 1
+    assert replay_markets[0].fees == joined.fees
+
+    quarantined = _enrich_markets_with_kalshi_fee_evidence(
+        store, ((source_market, market_observation_id),), excluded_venues=("kalshi",)
+    )[0][0]
+    assert quarantined.fees.status == FeeStatus.VERIFIED
+
+    corrupted_body = json.dumps(
+        {
+            "event": {
+                "event_ticker": "KX-OTHER",
+                "series_ticker": "KX-FRONTIER-FEE-SERIES",
+                "fee_type_override": "quadratic",
+                "fee_multiplier_override": 1,
+            }
+        }
+    )
+    corrupted_raw = event_raw.model_copy(
+        update={
+            "raw_body": corrupted_body,
+            "raw_sha256": hashlib.sha256(corrupted_body.encode()).hexdigest(),
+        }
+    )
+    corrupted_metadata = metadata.model_copy(update={"event_raw_sha256": corrupted_raw.raw_sha256})
+    corrupted_store = FrontierStore(tmp_path / "fee-evidence-bad-source")
+    corrupted_market_id = corrupted_store.append_observation(market_raw, source_market)
+    corrupted_store.append_observation(corrupted_raw, corrupted_metadata)
+    corrupted_store.append_observation(series_raw, corrupted_metadata)
+    rejected = _enrich_markets_with_kalshi_fee_evidence(
+        corrupted_store, ((source_market, corrupted_market_id),)
+    )[0][0]
+    assert rejected.fees.status == FeeStatus.VERIFIED
 
 
 def test_empty_overview_reports_capabilities_without_network_or_db_creation(tmp_path):
@@ -1802,6 +1932,74 @@ def test_readiness_fails_closed_when_a_stored_replay_hash_does_not_match(tmp_pat
             response = client.get(path)
             assert response.status_code == 409, (path, response.text)
             assert response.json()["detail"] == expected_detail
+    finally:
+        client.close()
+        asyncio.run(registry.aclose())
+        asyncio.run(http_client.aclose())
+
+
+def test_replay_with_held_fee_metadata_is_quarantined_and_preserved(tmp_path):
+    from midas.frontier.replay import deterministic_replay
+
+    client, registry, http_client, _, store = _client(tmp_path, hold_sources=True)
+    fee_body = "{}"
+    fee_raw = RawObservation(
+        venue=Venue.KALSHI,
+        observation_kind="event_fee_metadata",
+        request_url="https://external-api.kalshi.com/trade-api/v2/events/KX-HELD-FEE",
+        http_status=200,
+        request_started_at_utc=T0,
+        received_at_utc=T0,
+        raw_body=fee_body,
+        raw_sha256=hashlib.sha256(fee_body.encode()).hexdigest(),
+        adapter_version="held-fee-fixture-v1",
+    )
+    fee_observation_id = store.append_observation(
+        fee_raw, TradeBatch(venue=Venue.KALSHI, trades=())
+    )
+    poly_market = market(Venue.POLYMARKET, "held-fee-reference")
+    poly_market = poly_market.model_copy(
+        update={
+            "fees": poly_market.fees.model_copy(
+                update={"evidence_observation_ids": (fee_observation_id,)}
+            )
+        }
+    )
+    market_body = "{}"
+    market_raw = RawObservation(
+        venue=Venue.POLYMARKET,
+        observation_kind="market_listing",
+        request_url="https://fixture.invalid/market_listing",
+        http_status=200,
+        request_started_at_utc=T0,
+        received_at_utc=T0,
+        raw_body=market_body,
+        raw_sha256=hashlib.sha256(market_body.encode()).hexdigest(),
+        adapter_version="held-fee-fixture-v1",
+    )
+    market_observation_id = store.append_observation(market_raw, poly_market)
+    poly_market = poly_market.model_copy(
+        update={
+            "provenance": poly_market.provenance.model_copy(
+                update={"observation_id": market_observation_id}
+            )
+        }
+    )
+    replay = deterministic_replay(
+        (poly_market,),
+        (),
+        as_of_utc=T0,
+        code_version="held-fee-quarantine-v1",
+    )
+    assert replay.manifest.fee_metadata_observation_ids == (fee_observation_id,)
+    store.append_replay(replay)
+    try:
+        response = client.get("/api/frontier/runs")
+        assert response.status_code == 200
+        assert response.json()["returned"] == 0
+        assert response.json()["held_runs_omitted"] == 1
+        assert store.observation(fee_observation_id) is not None
+        assert store.summary()["runs"] == 1
     finally:
         client.close()
         asyncio.run(registry.aclose())
@@ -3381,7 +3579,7 @@ def test_replay_api_generates_and_persists_multi_outcome_candidate(tmp_path):
         replay = client.post("/api/frontier/replay", json={})
         assert replay.status_code == 200, replay.text
         result = replay.json()
-        assert result["manifest"]["replay_version"] == "frontier-deterministic-replay-7"
+        assert result["manifest"]["replay_version"] == "frontier-deterministic-replay-8"
         assert len(result["candidates"]) == 1
         candidate = result["candidates"][0]
         assert candidate["family"] == "within_market_multi_outcome_coverage"
