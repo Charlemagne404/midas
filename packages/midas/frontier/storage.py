@@ -437,11 +437,14 @@ class FrontierStore:
                     raise FrontierStoreError(
                         "Only an original relationship hypothesis can be reviewed"
                     )
-                expected_type = (
-                    RelationshipType.SAME_PAYOFF
-                    if review.decision == ReviewDecision.VERIFIED
-                    else parent_value.relationship_type
-                )
+                if review.decision == ReviewDecision.VERIFIED:
+                    valid_review_types = {
+                        RelationshipType.SAME_PAYOFF,
+                        RelationshipType.LOGICAL_IMPLICATION,
+                    }
+                    type_is_valid = adjudicated.relationship_type in valid_review_types
+                else:
+                    type_is_valid = adjudicated.relationship_type == parent_value.relationship_type
                 linked_evidence = {
                     observation_id
                     for evidence in adjudicated.evidence
@@ -450,7 +453,7 @@ class FrontierStore:
                 if (
                     (adjudicated.left_market_id, adjudicated.right_market_id)
                     != (parent_value.left_market_id, parent_value.right_market_id)
-                    or adjudicated.relationship_type != expected_type
+                    or not type_is_valid
                     or not set(review.evidence_observation_ids).issubset(linked_evidence)
                 ):
                     raise FrontierStoreError(

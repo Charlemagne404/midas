@@ -397,6 +397,22 @@ authenticate the identity or fetch/verify the assertion. The verifier evaluates
 stored fields; it does not prove those fields are true beyond their source
 provenance.
 
+`verify_logical_implication` separately checks a directed binary YES implication
+over an explicit bijection between two joint state spaces. It requires complete
+verified payout vectors, binary complementary YES/NO settlements, verified
+resolutions, two distinct source observation IDs, and a nonempty external
+assertion ID that does not predate the source observations. Work is capped at
+1,024 states and 128 characters per state ID; direction is included in the
+relationship identity and recorded in evidence. Per-market settlement
+denominations and times are preserved in the evidence and may differ; the
+verifier does not bridge them. A `VERIFIED` result means the source YES payout
+never exceeds the target YES payout over the provided mapping. The semantic
+claim that both mappings describe the same world remains an unauthenticated
+external assertion. It is available through the existing hash-checked
+relationship-review API and append-only store. Mission Control does not yet
+offer controls to create a directed implication, and opportunity generation
+does not consume the edge.
+
 Every review appends an immutable review record and a relationship revision in
 one transaction. A compare-and-set against the latest review prevents stale
 updates. API listings show only effective revisions, while the original and all
@@ -437,8 +453,9 @@ quantities are rejected if the common displayed depth or modeled fill fraction
 cannot support them. A valid verified schedule or supported provenance-bound
 Kalshi estimate can produce modeled net P&L; estimate-based results remain
 conditional. Unknown or expired fees leave net P&L unknown and are excluded,
-rather than zeroed. Other payoffs, implication constraints, and
-general multi-leg constructions are unsupported. The multi-outcome family has
+rather than zeroed. The graph has a bounded binary implication verifier, but
+no implication-based price-bound or opportunity generator consumes those edges
+yet. Other payoffs and general multi-leg constructions are unsupported. The multi-outcome family has
 fixture verification only; current public observations do not satisfy its
 attestation requirements. Cross-venue `timing_verified` additionally requires
 matching known exchange timestamp semantics, no source/receipt/book timestamp

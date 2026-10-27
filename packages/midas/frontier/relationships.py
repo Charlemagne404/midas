@@ -13,11 +13,19 @@ from enum import StrEnum
 
 from pydantic import Field, field_validator, model_validator
 
-from midas.frontier.models import FrontierMarket, FrontierModel, MarketKind, Venue
+from midas.frontier.models import (
+    FrontierMarket,
+    FrontierModel,
+    MarketKind,
+    Venue,
+)
 
 D = Decimal
 MATCHER_VERSION = "frontier-relationship-matcher-5"
 SAME_PAYOFF_VERIFIER_VERSION = "frontier-equivalence-verifier-3"
+LOGICAL_IMPLICATION_VERIFIER_VERSION = "frontier-logical-implication-verifier-1"
+MAX_LOGICAL_IMPLICATION_STATES = 1024
+MAX_LOGICAL_STATE_ID_CHARS = 128
 DEFAULT_MINIMUM_JACCARD = D("0.45")
 _STOP_WORDS = {
     "a",
@@ -641,6 +649,226 @@ def verify_same_payoff(
                     "state_mapping=" + json_compact(canonical_state_mapping),
                     "instrument_mapping=" + json_compact(canonical_instrument_mapping),
                     "settlement_asset_identities=" + json_compact(canonical_asset_identities),
+                ),
+                external_assertion_id=external_assertion_id,
+                created_at_utc=assertion_time,
+            ),
+        ),
+    )
+
+
+def verify_logical_implication(
+    left: FrontierMarket,
+    right: FrontierMarket,
+    *,
+    implication_from_market_id: str,
+    implication_to_market_id: str,
+    state_mapping: dict[str, str],
+    external_assertion_id: str,
+    evidence_observation_ids: tuple[str, ...],
+    asserted_at_utc: datetime | None = None,
+) -> Relationship:
+    """Check a directed implication over an explicitly mapped joint state space.
+
+    The payout vectors establish the bounded arithmetic claim. The supplied
+    assertion and source identities remain necessary to support the semantic
+    claim that the mapped state spaces describe the same world.
+    """
+    if not external_assertion_id.strip():
+        raise ValueError("A logical implication assertion identity is required")
+    if left.canonical_id == right.canonical_id:
+        raise ValueError("Logical implication requires two distinct markets")
+    if len(external_assertion_id) > 120:
+        raise ValueError("Logical implication assertion identity exceeds 120 characters")
+    if len(evidence_observation_ids) > 10 or any(
+        len(item) > 256 for item in evidence_observation_ids
+    ):
+        raise ValueError("Logical implication source evidence exceeds its bounded identity limit")
+    checks: list[str] = []
+    markets = {left.canonical_id: left, right.canonical_id: right}
+    if implication_from_market_id not in markets or implication_to_market_id not in markets:
+        checks.append("Implication direction must name both supplied markets")
+    elif implication_from_market_id == implication_to_market_id:
+        checks.append("Implication direction must connect distinct markets")
+    if len(set(evidence_observation_ids)) < 2 or any(
+        not item.strip() for item in evidence_observation_ids
+    ):
+        checks.append("Distinct source observation identities for both markets are required")
+    if any(market.market_kind != MarketKind.BINARY_EVENT for market in markets.values()):
+        checks.append("Only binary event contracts are supported")
+
+    for name, market_value in (("left", left), ("right", right)):
+        if not market_value.payoff.verified or not market_value.payoff.exhaustive:
+            checks.append(f"{name} payoff is not verified and exhaustive")
+        if (
+            not market_value.resolution.verified
+            or not market_value.resolution.resolution_fingerprint
+        ):
+            checks.append(f"{name} resolution is not verified or fingerprinted")
+        if market_value.resolution.evidence_sha256 is None:
+            checks.append(f"{name} resolution evidence hash is absent")
+
+    source_market = markets.get(implication_from_market_id)
+    target_market = markets.get(implication_to_market_id)
+    state_bound_exceeded = (
+        len(state_mapping) > MAX_LOGICAL_IMPLICATION_STATES
+        or any(
+            len(market_value.payoff.state_ids) > MAX_LOGICAL_IMPLICATION_STATES
+            for market_value in (left, right)
+        )
+        or any(
+            len(state_id) > MAX_LOGICAL_STATE_ID_CHARS
+            for state_id in (
+                *state_mapping.keys(),
+                *state_mapping.values(),
+                *left.payoff.state_ids,
+                *right.payoff.state_ids,
+            )
+        )
+    )
+    if state_bound_exceeded:
+        checks.append(
+            "Joint state mapping exceeds the verification bounds of "
+            f"{MAX_LOGICAL_IMPLICATION_STATES} states and {MAX_LOGICAL_STATE_ID_CHARS} characters per state ID"
+        )
+    if source_market is None or target_market is None:
+        source_states: set[str] = set()
+        target_states: set[str] = set()
+    elif state_bound_exceeded:
+        source_states = set()
+        target_states = set()
+    else:
+        source_states = set(source_market.payoff.state_ids)
+        target_states = set(target_market.payoff.state_ids)
+    if set(state_mapping) != source_states or set(state_mapping.values()) != target_states:
+        checks.append("State mapping is not a bijection over both exhaustive state sets")
+
+    def binary_outcome_payouts(
+        market_value: FrontierMarket, name: str
+    ) -> dict[str, dict[str, Decimal]]:
+        instruments = {item.outcome_id: item for item in market_value.instruments}
+        if len(market_value.instruments) != 2 or set(instruments) != {"yes", "no"}:
+            checks.append(f"{name} market does not define exactly one YES and one NO instrument")
+            return {}
+        payouts_by_outcome: dict[str, dict[str, Decimal]] = {}
+        expected_states = set(market_value.payoff.state_ids)
+        for outcome in ("yes", "no"):
+            instrument = instruments[outcome]
+            payout_values = {payout.state_id: payout.amount for payout in instrument.payouts}
+            if (
+                len(payout_values) != len(instrument.payouts)
+                or set(payout_values) != expected_states
+            ):
+                checks.append(
+                    f"{name} {outcome.upper()} instrument lacks a unique payout for every state"
+                )
+                return {}
+            if any(value not in (D(0), D(1)) for value in payout_values.values()):
+                checks.append(f"{name} {outcome.upper()} payout is not binary")
+                return {}
+            payouts_by_outcome[outcome] = payout_values
+        if any(
+            payouts_by_outcome["yes"][state] + payouts_by_outcome["no"][state] != D(1)
+            for state in expected_states
+        ):
+            checks.append(f"{name} YES and NO payout vectors are not complementary")
+        return payouts_by_outcome
+
+    source_payouts = (
+        (binary_outcome_payouts(source_market, "implication source") if source_market else {})
+        if not state_bound_exceeded
+        else {}
+    )
+    target_payouts = (
+        (binary_outcome_payouts(target_market, "implication target") if target_market else {})
+        if not state_bound_exceeded
+        else {}
+    )
+    if (
+        source_market is not None
+        and target_market is not None
+        and set(state_mapping) == source_states
+        and set(state_mapping.values()) == target_states
+        and "yes" in source_payouts
+        and "yes" in target_payouts
+        and any(
+            source_payouts["yes"][source_state] > target_payouts["yes"][target_state]
+            for source_state, target_state in state_mapping.items()
+        )
+    ):
+        checks.append("Source YES payout does not imply target YES in every mapped state")
+
+    a, b = sorted((left.canonical_id, right.canonical_id))
+    if state_bound_exceeded:
+        canonical_state_mapping = {}
+    elif implication_from_market_id == a and implication_to_market_id == b:
+        canonical_state_mapping = state_mapping
+    elif implication_from_market_id == b and implication_to_market_id == a:
+        canonical_state_mapping = {value: key for key, value in state_mapping.items()}
+    else:
+        canonical_state_mapping = {}
+    assertion_evidence = tuple(sorted(set(evidence_observation_ids)))
+    assertion_time = asserted_at_utc or max(
+        left.provenance.response_received_at_utc,
+        right.provenance.response_received_at_utc,
+    )
+    if assertion_time.tzinfo is None or assertion_time.utcoffset() is None:
+        raise ValueError("Assertion time must include a timezone")
+    assertion_time = assertion_time.astimezone(UTC)
+    if assertion_time < max(
+        left.provenance.response_received_at_utc,
+        right.provenance.response_received_at_utc,
+    ):
+        checks.append("External assertion predates one or more source observations")
+    settlement_metadata = {
+        market_id: (
+            f"{market_value.payoff.settlement_asset_identity.canonical_id if market_value.payoff.settlement_asset_identity else 'unknown-asset'}|"
+            f"{market_value.resolution.settles_at_utc.isoformat() if market_value.resolution.settles_at_utc else 'unknown-time'}"
+        )
+        for market_id, market_value in sorted(markets.items())
+    }
+    identity_version = (
+        f"{LOGICAL_IMPLICATION_VERIFIER_VERSION}|{external_assertion_id}|"
+        f"{assertion_time.isoformat()}|{implication_from_market_id}|"
+        f"{implication_to_market_id}|{json_compact(canonical_state_mapping)}|"
+        f"{json_compact(settlement_metadata)}"
+    )
+    _, relationship_id = _identity(
+        a,
+        b,
+        RelationshipType.LOGICAL_IMPLICATION,
+        identity_version,
+        (*assertion_evidence, external_assertion_id),
+    )
+    verified = not checks
+    return Relationship(
+        relationship_id=relationship_id,
+        left_market_id=a,
+        right_market_id=b,
+        relationship_type=RelationshipType.LOGICAL_IMPLICATION,
+        state=VerificationState.VERIFIED if verified else VerificationState.REJECTED,
+        confidence=D(1) if verified else D(0),
+        reason=(
+            "Directed YES implication holds across every mapped binary payout state; semantic mapping remains externally asserted and settlement differences are not economically bridged"
+            if verified
+            else "; ".join(checks)
+        ),
+        evidence=(
+            RelationshipEvidence(
+                method="explicit-joint-state-payout-implication-v1",
+                verifier_version=LOGICAL_IMPLICATION_VERIFIER_VERSION,
+                source_fields=(
+                    "payoff",
+                    "resolution",
+                    "joint_state_mapping",
+                    "yes_no_payout_vectors",
+                ),
+                observation_ids=assertion_evidence,
+                details=(
+                    f"implication_from_market_id={implication_from_market_id}",
+                    f"implication_to_market_id={implication_to_market_id}",
+                    "state_mapping=" + json_compact(canonical_state_mapping),
+                    "settlement_units_and_times=" + json_compact(settlement_metadata),
                 ),
                 external_assertion_id=external_assertion_id,
                 created_at_utc=assertion_time,

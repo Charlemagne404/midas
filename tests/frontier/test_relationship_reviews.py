@@ -12,12 +12,13 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from midas.frontier.adapters import KalshiAdapter, KrakenSpotAdapter, PolymarketAdapter
 from midas.frontier.adapters.transport import PublicReadTransport
-from midas.frontier.models import AdapterConfig, RawObservation, Venue
+from midas.frontier.models import AdapterConfig, FrontierMarket, RawObservation, StatePayout, Venue
 from midas.frontier.registry import AdapterRegistry
-from midas.frontier.relationships import propose_relationships
+from midas.frontier.relationships import ReviewDecision, propose_relationships
 from midas.frontier.storage import FrontierStore
+from pydantic import ValidationError
 
-from apps.api.frontier import router
+from apps.api.frontier import RelationshipReviewRequest, router
 from tests.frontier.builders import T0, market
 
 
@@ -68,10 +69,64 @@ def _seed_pair(store: FrontierStore):
     return left, right, (left_evidence, right_evidence)
 
 
+def _joint_state_market(value: FrontierMarket, yes_values: tuple[int, ...]) -> FrontierMarket:
+    states = ("a_no_b_no", "a_no_b_yes", "a_yes_b_yes")
+    state_payouts = tuple(zip(states, yes_values, strict=True))
+    instruments = tuple(
+        item.model_copy(
+            update={
+                "payouts": tuple(
+                    StatePayout(
+                        state_id=state,
+                        amount=(yes_value if item.outcome_id == "yes" else 1 - yes_value),
+                    )
+                    for state, yes_value in state_payouts
+                )
+            }
+        )
+        for item in value.instruments
+    )
+    payoff = value.payoff.model_copy(update={"state_ids": states})
+    return FrontierMarket.model_validate(
+        value.model_dump(mode="python") | {"instruments": instruments, "payoff": payoff}
+    )
+
+
+def _seed_logical_implication_pair(store: FrontierStore):
+    left = _joint_state_market(market(Venue.POLYMARKET, "implication-left"), (0, 0, 1))
+    right = _joint_state_market(market(Venue.KALSHI, "implication-right"), (0, 1, 1))
+    _left_body, left_raw = _body(Venue.POLYMARKET, "implication-left")
+    _right_body, right_raw = _body(Venue.KALSHI, "implication-right")
+    left_evidence = store.append_observation(left_raw, left)
+    right_evidence = store.append_observation(right_raw, right)
+    return left, right, (left_evidence, right_evidence)
+
+
 def _close(client, registry, http_client):
     client.close()
     asyncio.run(registry.aclose())
     asyncio.run(http_client.aclose())
+
+
+def test_nonverified_implication_review_keeps_optional_direction_and_evidence_validation():
+    request = RelationshipReviewRequest(
+        decision=ReviewDecision.REJECTED,
+        relationship_type="logical_implication",
+        reviewer_label="researcher-1",
+        reason="The proposed implication is not supported.",
+        evidence_observation_ids=("a" * 64, "b" * 64),
+    )
+    assert request.implication_from_market_id is None
+    assert request.implication_to_market_id is None
+
+    with pytest.raises(ValidationError, match="unique"):
+        RelationshipReviewRequest(
+            decision=ReviewDecision.REJECTED,
+            relationship_type="logical_implication",
+            reviewer_label="researcher-1",
+            reason="The proposed implication is not supported.",
+            evidence_observation_ids=("a" * 64, "a" * 64),
+        )
 
 
 def test_explicit_review_verifies_only_with_complete_stored_payoff_evidence(tmp_path):
@@ -148,6 +203,94 @@ def test_explicit_review_verifies_only_with_complete_stored_payoff_evidence(tmp_
                     "DELETE FROM relationship_reviews WHERE review_id=?",
                     (result["review"]["review_id"],),
                 )
+    finally:
+        _close(client, registry, http_client)
+
+
+def test_logical_implication_review_persists_directed_edge_with_stored_provenance(tmp_path):
+    client, registry, http_client, store = _client(tmp_path)
+    left, right, evidence = _seed_logical_implication_pair(store)
+    try:
+        proposals = client.post("/api/frontier/relationships/propose")
+        candidate = next(
+            item
+            for item in proposals.json()["items"]
+            if {item["left_market_id"], item["right_market_id"]}
+            == {left.canonical_id, right.canonical_id}
+        )
+        response = client.post(
+            f"/api/frontier/relationships/{candidate['relationship_id']}/review",
+            json={
+                "decision": "verified",
+                "relationship_type": "logical_implication",
+                "reviewer_label": "researcher-1",
+                "reason": "Checked the explicit joint-state payout vectors.",
+                "evidence_observation_ids": evidence,
+                "external_assertion_id": "joint-state-assertion-1",
+                "implication_from_market_id": left.canonical_id,
+                "implication_to_market_id": right.canonical_id,
+                "state_mapping": {
+                    "a_no_b_no": "a_no_b_no",
+                    "a_no_b_yes": "a_no_b_yes",
+                    "a_yes_b_yes": "a_yes_b_yes",
+                },
+            },
+        )
+        assert response.status_code == 200, response.text
+        result = response.json()
+        relation = result["relationship"]
+        assert relation["relationship_type"] == "logical_implication"
+        assert relation["state"] == "verified"
+        assert result["reviewer_identity_authenticated"] is False
+        assert result["external_assertion_authenticated"] is False
+        assert (
+            f"implication_from_market_id={left.canonical_id}" in relation["evidence"][0]["details"]
+        )
+        assert (
+            f"implication_to_market_id={right.canonical_id}" in relation["evidence"][0]["details"]
+        )
+        assert store.relationship(relation["relationship_id"]) is not None
+        effective = store.relationships(state="verified", effective_only=True)
+        assert len(effective) == 1
+        assert effective[0]["relationship"]["relationship_type"] == "logical_implication"
+        assert effective[0]["relationship"]["supersedes"] == candidate["relationship_id"]
+    finally:
+        _close(client, registry, http_client)
+
+
+def test_logical_implication_review_rejects_false_direction_without_persisting(tmp_path):
+    client, registry, http_client, store = _client(tmp_path)
+    left, right, evidence = _seed_logical_implication_pair(store)
+    try:
+        proposals = client.post("/api/frontier/relationships/propose")
+        candidate = next(
+            item
+            for item in proposals.json()["items"]
+            if {item["left_market_id"], item["right_market_id"]}
+            == {left.canonical_id, right.canonical_id}
+        )
+        response = client.post(
+            f"/api/frontier/relationships/{candidate['relationship_id']}/review",
+            json={
+                "decision": "verified",
+                "relationship_type": "logical_implication",
+                "reviewer_label": "researcher-1",
+                "reason": "An incorrect direction must not be recorded.",
+                "evidence_observation_ids": evidence,
+                "external_assertion_id": "joint-state-assertion-2",
+                "implication_from_market_id": right.canonical_id,
+                "implication_to_market_id": left.canonical_id,
+                "state_mapping": {
+                    "a_no_b_no": "a_no_b_no",
+                    "a_no_b_yes": "a_no_b_yes",
+                    "a_yes_b_yes": "a_yes_b_yes",
+                },
+            },
+        )
+        assert response.status_code == 422
+        assert "does not imply" in response.json()["detail"]["reason"]
+        assert store.latest_relationship_review(candidate["relationship_id"]) is None
+        assert store.relationships(state="verified", effective_only=True) == ()
     finally:
         _close(client, registry, http_client)
 

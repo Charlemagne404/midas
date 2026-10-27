@@ -51,6 +51,7 @@ from midas.frontier.relationships import (
     ReviewDecision,
     VerificationState,
     propose_relationships,
+    verify_logical_implication,
     verify_same_payoff,
 )
 from midas.frontier.replay import deterministic_replay, paired_deterministic_replay
@@ -284,24 +285,55 @@ def _arena_replay_readiness(root: Path | None) -> tuple[str, str]:
 class RelationshipReviewRequest(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
     decision: ReviewDecision
+    relationship_type: Literal["same_payoff", "logical_implication"] = "same_payoff"
     reviewer_label: str = Field(min_length=1, max_length=80)
     reason: str = Field(min_length=5, max_length=1000)
     evidence_observation_ids: tuple[str, ...] = Field(min_length=1, max_length=10)
     external_assertion_id: str | None = Field(default=None, max_length=120)
     state_mapping: dict[str, str] = Field(default_factory=dict)
     instrument_mapping: dict[str, str] = Field(default_factory=dict)
+    implication_from_market_id: str | None = Field(default=None, max_length=256)
+    implication_to_market_id: str | None = Field(default=None, max_length=256)
     expected_latest_review_id: str | None = None
 
     @model_validator(mode="after")
     def bounded_mappings_and_evidence(self) -> RelationshipReviewRequest:
         if not self.reviewer_label.strip() or not self.reason.strip():
             raise ValueError("Reviewer label and reason cannot be blank")
-        for mapping in (self.state_mapping, self.instrument_mapping):
-            if len(mapping) > 20 or any(
-                not key or len(key) > 120 or not target or len(target) > 120
-                for key, target in mapping.items()
+        if self.decision != ReviewDecision.VERIFIED:
+            if len(self.state_mapping) > 1024 or any(
+                not key or len(key) > 128 or not target or len(target) > 128
+                for key, target in self.state_mapping.items()
             ):
-                raise ValueError("Relationship mappings are limited to 20 bounded identifiers")
+                raise ValueError("Relationship state mapping exceeds its bounded input limit")
+            if len(self.instrument_mapping) > 20 or any(
+                not key or len(key) > 120 or not target or len(target) > 120
+                for key, target in self.instrument_mapping.items()
+            ):
+                raise ValueError("Relationship instrument mapping exceeds its bounded input limit")
+        elif self.relationship_type == "same_payoff":
+            for mapping in (self.state_mapping, self.instrument_mapping):
+                if len(mapping) > 20 or any(
+                    not key or len(key) > 120 or not target or len(target) > 120
+                    for key, target in mapping.items()
+                ):
+                    raise ValueError("Same-payoff mappings are limited to 20 bounded identifiers")
+            if self.implication_from_market_id or self.implication_to_market_id:
+                raise ValueError("Same-payoff review cannot declare an implication direction")
+        else:
+            if len(self.state_mapping) > 1024 or any(
+                not key or len(key) > 128 or not target or len(target) > 128
+                for key, target in self.state_mapping.items()
+            ):
+                raise ValueError("Implication mappings exceed their bounded state limits")
+            if self.instrument_mapping:
+                raise ValueError("Logical-implication reviews do not use instrument mappings")
+            if (
+                not self.implication_from_market_id
+                or not self.implication_to_market_id
+                or self.implication_from_market_id == self.implication_to_market_id
+            ):
+                raise ValueError("Logical-implication review requires a directed pair of markets")
         if len(set(self.evidence_observation_ids)) != len(self.evidence_observation_ids):
             raise ValueError("Relationship review evidence IDs must be unique")
         if self.expected_latest_review_id is not None and (
@@ -2533,25 +2565,46 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
                         status_code=422,
                         detail="Verified reviews require an external assertion identity",
                     )
-                if not request.state_mapping or not request.instrument_mapping:
-                    raise HTTPException(
-                        status_code=422,
-                        detail="Verified reviews require complete state and instrument mappings",
+                if request.relationship_type == "same_payoff":
+                    if not request.state_mapping or not request.instrument_mapping:
+                        raise HTTPException(
+                            status_code=422,
+                            detail="Verified same-payoff reviews require complete state and instrument mappings",
+                        )
+                    adjudicated = verify_same_payoff(
+                        left,
+                        right,
+                        state_mapping=request.state_mapping,
+                        instrument_mapping=request.instrument_mapping,
+                        external_assertion_id=request.external_assertion_id,
+                        evidence_observation_ids=request.evidence_observation_ids,
+                        asserted_at_utc=created_at,
                     )
-                adjudicated = verify_same_payoff(
-                    left,
-                    right,
-                    state_mapping=request.state_mapping,
-                    instrument_mapping=request.instrument_mapping,
-                    external_assertion_id=request.external_assertion_id,
-                    evidence_observation_ids=request.evidence_observation_ids,
-                    asserted_at_utc=created_at,
-                )
+                else:
+                    if not request.state_mapping:
+                        raise HTTPException(
+                            status_code=422,
+                            detail="Verified logical-implication reviews require a complete joint-state mapping",
+                        )
+                    adjudicated = verify_logical_implication(
+                        left,
+                        right,
+                        implication_from_market_id=request.implication_from_market_id or "",
+                        implication_to_market_id=request.implication_to_market_id or "",
+                        state_mapping=request.state_mapping,
+                        external_assertion_id=request.external_assertion_id,
+                        evidence_observation_ids=request.evidence_observation_ids,
+                        asserted_at_utc=created_at,
+                    )
                 if adjudicated.state != VerificationState.VERIFIED:
                     raise HTTPException(
                         status_code=422,
                         detail={
-                            "message": "Independent payoff verifier rejected the review",
+                            "message": (
+                                "Independent payoff verifier rejected the review"
+                                if request.relationship_type == "same_payoff"
+                                else "Independent logical-implication verifier rejected the review"
+                            ),
                             "reason": adjudicated.reason,
                         },
                     )

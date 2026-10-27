@@ -1592,6 +1592,36 @@ At `2026-10-27T17:00:21Z`, memory PSI was `avg10` 39.43% (`some`) / 32.43%
 Available memory was 9,592,368 KiB and swap free was 484,584 KiB of 4 GiB.
 Broad Frontier verification and production build remain deferred.
 
+## 2026-10-27 17:15 UTC — directed logical-implication review integration
+
+Added `verify_logical_implication` and four controlled tests. It requires an
+explicit bijection of joint state IDs, verified exhaustive binary payoffs,
+complete complementary 0/1 YES and NO vectors, verified resolutions, source
+observation IDs, and an external assertion. It bounds the state space at 1,024
+entries and includes direction plus per-market settlement units/times in the
+relationship identity and evidence. A verified result establishes payout-vector
+implication only; it neither authenticates the semantic mapping nor bridges
+settlement differences. The existing relationship-review API now accepts this
+review type using hash-checked stored source evidence, and the append-only store
+accepts the directed edge only when it preserves the reviewed endpoint pair
+and evidence. Mission Control has no directed-review controls and the
+opportunity engine does not yet consume these edges.
+
+Nine new tests, including all 64 pairs of three-state YES payout vectors, and
+the relationship/economics and review API modules passed **52 tests** in 4.02
+seconds. One existing Starlette/httpx deprecation warning remains. All three
+changed Python modules pass `mypy --strict --follow-imports=silent`; an
+unrestricted strict run reports 14 errors in imported Veritas/Arena modules,
+none in changed files. Ruff, format check, and `git diff --check` passed. No
+external source or held data was read. Inputs require distinct source IDs,
+bounded assertion/evidence identifiers, and an assertion time no earlier than
+the source observations.
+
+At `2026-10-27T17:16:56Z`, memory PSI was `avg10` 41.71% (`some`) / 38.28%
+(`full`), `avg60` 39.03% / 35.22%, and `avg300` 29.23% / 26.23%.
+`MemAvailable` was 9,433,944 KiB; swap free was 485,104 KiB of 4 GiB.
+Broad Frontier verification and production build remain deferred.
+
 ## 2026-10-27 17:02 UTC — whitespace permission-reference regression
 
 Test commit `fd5711a` verifies that probe flags plus whitespace-only Kalshi
