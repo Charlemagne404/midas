@@ -16,7 +16,7 @@ from pydantic import Field, field_validator, model_validator
 from midas.frontier.models import FrontierMarket, FrontierModel, MarketKind, Venue
 
 D = Decimal
-MATCHER_VERSION = "frontier-relationship-matcher-4"
+MATCHER_VERSION = "frontier-relationship-matcher-5"
 DEFAULT_MINIMUM_JACCARD = D("0.45")
 _STOP_WORDS = {
     "a",
@@ -62,6 +62,7 @@ _TEXT_ALIASES = {
 
 
 class RelationshipType(StrEnum):
+    SOURCE_COMPONENT_REFERENCE = "source_component_reference"
     SAME_EVENT = "same_event"
     SAME_PAYOFF = "same_payoff"
     COMPLEMENTARY = "complementary_outcomes"
@@ -230,9 +231,11 @@ def propose_relationships(
     minimum_jaccard: Decimal = DEFAULT_MINIMUM_JACCARD,
     source_observation_ids: Mapping[str, str] | None = None,
 ) -> tuple[Relationship, ...]:
-    """Produce reviewable candidates using indexed native event IDs and title terms.
+    """Produce bounded source-reference and text-based relationship proposals.
 
-    Text features only create HYPOTHESIS edges. They can never mark economic equivalence.
+    Every result remains a HYPOTHESIS. Exact source-selected component references
+    describe a native metadata link only; they never imply payoff equivalence.
+    Text features cannot mark economic equivalence.
     """
     if not 1 <= max_pairs <= 20_000:
         raise ValueError("Relationship pair bound must be within 1..20000")
@@ -267,6 +270,49 @@ def propose_relationships(
     candidates: dict[
         tuple[str, str, RelationshipType], tuple[str, Decimal, tuple[str, ...], tuple[str, ...]]
     ] = {}
+
+    # A combo's selected-leg list is an explicit source assertion, but its payout
+    # logic may be more complex than those listed legs. Link it only when the
+    # exact native child record is also present and its event identity agrees.
+    native_index: dict[tuple[Venue, str], list[FrontierMarket]] = defaultdict(list)
+    for market in sorted(markets, key=lambda item: item.canonical_id):
+        native_index[(market.venue, market.native_market_id)].append(market)
+    for parent in sorted(markets, key=lambda item: item.canonical_id):
+        for component in sorted(
+            set(parent.selected_components),
+            key=lambda item: (
+                item.venue.value,
+                item.native_market_id,
+                item.native_event_id or "",
+                item.selected_side,
+            ),
+        ):
+            if len(candidates) >= max_pairs:
+                break
+            if component.venue != parent.venue:
+                continue
+            matches = native_index.get((component.venue, component.native_market_id), [])
+            if len(matches) != 1:
+                continue
+            child = matches[0]
+            if child.canonical_id == parent.canonical_id:
+                continue
+            if component.native_event_id is not None and (
+                child.native_event_id != component.native_event_id
+            ):
+                continue
+            left, right = sorted((parent.canonical_id, child.canonical_id))
+            candidates[(left, right, RelationshipType.SOURCE_COMPONENT_REFERENCE)] = (
+                "Source-declared selected-component reference; exact native market and event identifiers match",
+                D(1),
+                ("selected_components", "native_market_id", "native_event_id"),
+                (
+                    f"The parent source metadata lists {component.native_market_id} on the {component.selected_side.upper()} side.",
+                    "The recorded child metadata has the exact referenced market ticker and event ID.",
+                    "This source link does not verify the child payoff, combo payout, event logic, or settlement equivalence.",
+                ),
+            )
+
     for (venue, _), identities in sorted(
         exact_events.items(), key=lambda item: (item[0][0].value, item[0][1])
     ):
@@ -389,9 +435,14 @@ def propose_relationships(
             break
 
     output = []
-    for (left, right, rel_type), (reason, score, fields, details) in sorted(
-        candidates.items(), key=lambda item: item[0]
-    )[:max_pairs]:
+    ordered_candidates = sorted(
+        candidates.items(),
+        key=lambda item: (
+            item[0][2] != RelationshipType.SOURCE_COMPONENT_REFERENCE,
+            item[0],
+        ),
+    )
+    for (left, right, rel_type), (reason, score, fields, details) in ordered_candidates[:max_pairs]:
         observation_ids = tuple(
             sorted(
                 {
@@ -412,7 +463,11 @@ def propose_relationships(
                 reason=reason,
                 evidence=(
                     RelationshipEvidence(
-                        method="deterministic-indexed-metadata-v2",
+                        method=(
+                            "source-selected-component-identifiers-v1"
+                            if rel_type == RelationshipType.SOURCE_COMPONENT_REFERENCE
+                            else "deterministic-indexed-metadata-v3"
+                        ),
                         observation_ids=observation_ids,
                         source_fields=fields,
                         details=details,

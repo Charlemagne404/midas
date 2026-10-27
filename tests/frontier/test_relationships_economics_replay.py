@@ -20,6 +20,7 @@ from midas.frontier.models import (
     MarketKind,
     PayoffSpec,
     QuantityUnit,
+    SelectedMarketComponent,
     StatePayout,
     Venue,
 )
@@ -126,6 +127,67 @@ def test_text_matching_only_proposes_hypotheses():
     assert all(item.state == VerificationState.HYPOTHESIS for item in text_edges)
     assert all(item.relationship_type != RelationshipType.SAME_PAYOFF for item in proposals)
     assert proposals == propose_relationships((left, right), max_pairs=20)
+
+
+def test_selected_component_reference_requires_exact_child_market_and_event():
+    ticker = "KX-NATIVE-CHILD"
+    event_id = "KX-NATIVE-EVENT"
+    parent = market(Venue.KALSHI, "KX-NATIVE-PARENT").model_copy(
+        update={
+            "selected_components": (
+                SelectedMarketComponent(
+                    venue=Venue.KALSHI,
+                    native_event_id=event_id,
+                    native_market_id=ticker,
+                    selected_side="yes",
+                ),
+            )
+        }
+    )
+    child = market(Venue.KALSHI, ticker).model_copy(update={"native_event_id": event_id})
+    evidence_ids = {
+        parent.canonical_id: "a" * 64,
+        child.canonical_id: "b" * 64,
+    }
+
+    proposals = propose_relationships(
+        (child, parent), max_pairs=20, source_observation_ids=evidence_ids
+    )
+    component_edge = next(
+        item
+        for item in proposals
+        if item.relationship_type == RelationshipType.SOURCE_COMPONENT_REFERENCE
+    )
+    assert component_edge.state == VerificationState.HYPOTHESIS
+    assert component_edge.confidence == Decimal(1)
+    assert set(component_edge.evidence[0].observation_ids) == {"a" * 64, "b" * 64}
+    assert "selected-component reference" in component_edge.reason
+    assert any("does not verify" in detail for detail in component_edge.evidence[0].details)
+    economic_result = generate_binary_coverage_candidates(
+        parent,
+        child,
+        component_edge,
+        {},
+        {},
+        state_mapping={},
+        instrument_mapping={},
+        as_of_utc=T0,
+    )
+    assert economic_result[0].classification == OpportunityClassification.PRICE_DISCREPANCY_ONLY
+    assert proposals == propose_relationships(
+        (parent, child), max_pairs=20, source_observation_ids=evidence_ids
+    )
+
+    wrong_event = child.model_copy(update={"native_event_id": "KX-OTHER-EVENT"})
+    wrong_event_proposals = propose_relationships((parent, wrong_event), max_pairs=20)
+    assert all(
+        item.relationship_type != RelationshipType.SOURCE_COMPONENT_REFERENCE
+        for item in wrong_event_proposals
+    )
+    assert all(
+        item.relationship_type != RelationshipType.SOURCE_COMPONENT_REFERENCE
+        for item in propose_relationships((parent,), max_pairs=20)
+    )
 
 
 def test_payoff_verification_rejects_authority_and_settlement_mismatch():

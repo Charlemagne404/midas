@@ -94,7 +94,7 @@ def test_kalshi_mve_component_probe_is_bound_to_recorded_parent_and_persists_met
     registry = AdapterRegistry((KalshiAdapter(config, transport=transport),))
     store = FrontierStore(tmp_path / "frontier-component-market")
     raw_parent = json.dumps({"recorded_fixture": "parent MVE metadata"})
-    store.append_observation(
+    parent_observation_id = store.append_observation(
         RawObservation(
             venue=Venue.KALSHI,
             observation_kind="market_listing",
@@ -149,6 +149,24 @@ def test_kalshi_mve_component_probe_is_bound_to_recorded_parent_and_persists_met
         assert saved is not None
         assert saved["raw_sha256"] == result["raw_sha256"]
         assert saved["normalized"]["native_market_id"] == component_ticker
+
+        relationships = client.post("/api/frontier/relationships/propose")
+        assert relationships.status_code == 200, relationships.text
+        relationship_payload = relationships.json()
+        assert relationship_payload["matcher_version"] == "frontier-relationship-matcher-5"
+        component_edge = next(
+            item
+            for item in relationship_payload["items"]
+            if item["relationship_type"] == "source_component_reference"
+        )
+        assert component_edge["state"] == "hypothesis"
+        assert set(component_edge["evidence"][0]["observation_ids"]) == {
+            parent_observation_id,
+            result["observation_id"],
+        }
+        assert any(
+            "does not verify" in detail for detail in component_edge["evidence"][0]["details"]
+        )
 
         listed = client.get("/api/frontier/markets?venue=kalshi&limit=100")
         assert listed.status_code == 200
@@ -809,7 +827,7 @@ def test_captured_cross_venue_event_context_creates_reviewable_hypothesis(tmp_pa
         response = client.post("/api/frontier/relationships/propose?market_limit=200&max_pairs=500")
         assert response.status_code == 200, response.text
         payload = response.json()
-        assert payload["matcher_version"] == "frontier-relationship-matcher-4"
+        assert payload["matcher_version"] == "frontier-relationship-matcher-5"
         target_ids = {"polymarket:562802", "kalshi:CONTROLH-2026-D"}
         relationship = next(
             item

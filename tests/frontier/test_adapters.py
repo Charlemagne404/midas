@@ -17,6 +17,7 @@ from midas.frontier.models import (
     Capability,
     FeeSchedule,
     FeeStatus,
+    FrontierMarket,
     MarketKind,
     SourceState,
     TradeBatch,
@@ -318,6 +319,76 @@ async def test_kalshi_multivariate_event_page_preserves_group_and_market_evidenc
     assert market.payoff.verified is False
     assert market.provenance.raw_sha256 == group.provenance.raw_sha256 == captures[0].raw_sha256
     assert "MVE_PAYOFF_NOT_MODELED" in market.quality_flags
+
+
+@pytest.mark.asyncio
+async def test_saved_public_kalshi_mve_parent_and_child_form_only_a_source_reference():
+    # Replay a genuine saved parent response through the current adapter and link
+    # it to the separately preserved child detail record without a source request.
+    parent_capture = json.loads(
+        _captured("data/frontier/live-probes/2026-10-27-kalshi-public-fee-metadata.json")
+    )
+    parent_record = next(
+        record
+        for record in parent_capture["records"]
+        if record["observation_kind"] == "market_listing"
+    )
+    parent_raw = parent_record["raw"]
+    transport, requests, client = _transport(
+        "external-api.kalshi.com", {"/markets": parent_raw["raw_body"]}
+    )
+    adapter = KalshiAdapter(
+        AdapterConfig(
+            enabled=True,
+            live_public_probe_enabled=True,
+            requests_per_second=5,
+            retries=0,
+        ),
+        transport=transport,
+    )
+    try:
+        parent_markets = await adapter.discover_markets(1)
+    finally:
+        await client.aclose()
+    assert len(requests) == 1
+    assert requests[0].method == "GET"
+    assert "authorization" not in requests[0].headers
+    assert parent_markets[0].provenance.raw_sha256 == parent_record["raw_sha256"]
+
+    child_capture = json.loads(
+        _captured("data/frontier/live-probes/2026-10-27-kalshi-mve-component-market-r1.json")
+    )
+    child_record = child_capture["stored_observation"]
+    child = FrontierMarket.model_validate(child_record["normalized"])
+    parent = parent_markets[0]
+    assert parent.native_market_id == child_capture["parent_reference"]["parent_native_market_id"]
+    component = next(
+        item
+        for item in parent.selected_components
+        if item.native_market_id == child.native_market_id
+    )
+    assert component.native_event_id == child.native_event_id
+    assert component.selected_side == "yes"
+
+    proposals = propose_relationships(
+        (child, parent),
+        max_pairs=20,
+        source_observation_ids={
+            parent.canonical_id: parent_record["observation_id"],
+            child.canonical_id: child_record["observation_id"],
+        },
+    )
+    component_edge = next(
+        item
+        for item in proposals
+        if item.relationship_type == RelationshipType.SOURCE_COMPONENT_REFERENCE
+    )
+    assert component_edge.state == VerificationState.HYPOTHESIS
+    assert set(component_edge.evidence[0].observation_ids) == {
+        parent_record["observation_id"],
+        child_record["observation_id"],
+    }
+    assert any("does not verify" in detail for detail in component_edge.evidence[0].details)
 
 
 @pytest.mark.asyncio
