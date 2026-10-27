@@ -1405,13 +1405,15 @@ source configuration verifies all four read routes including `/readiness`.
 Commit `d75d1ee` extends the same integrity response to comparison list/detail,
 overview, and relationship reads, including the readiness relationship gate.
 Corrupt comparison and relationship rows remain in the temporary database and
-all affected routes fail closed. The focused legacy, unaudited, quarantine,
-replay/comparison hash, and relationship hash regressions passed **5 tests** in
-2.61 seconds. Strict mypy passed for `apps/api/frontier.py`; Ruff check/format
-and `git diff --check` passed. One existing Starlette/httpx TestClient
-deprecation warning remains. No held capture, live endpoint, production
-database, or service was accessed.
+all affected routes fail closed. Test commit `050d798` also confirms that a
+comparison with a corrupt pinned replay and a relationship with a corrupt
+review record fail closed through their read APIs. The focused legacy,
+unaudited, quarantine, replay/comparison hash, relationship hash, pinned-run,
+and review-record regressions passed **7 tests** in 3.40 seconds. Strict mypy
+passed for `apps/api/frontier.py`; Ruff check/format and `git diff --check`
+passed. One existing Starlette/httpx TestClient deprecation warning remains.
+No held capture, live endpoint, production database, or service was accessed.
 
-**Next safe action:** audit persisted relationship-review and replay-comparison
-dependency reads for the same hash-validation boundary, and add temporary
-corruption fixtures where a route can otherwise return partial evidence.
+**Next safe action:** review source-observation read routes for the same
+explicit integrity response. Use a temporary corrupted observation fixture and
+preserve its row after the API rejects it.
