@@ -3018,3 +3018,26 @@ service, or production deployment was used.
 Files changed: `packages/midas/frontier/capital.py` and
 `tests/frontier/test_capital_carry.py` in code commit `6fe0192`; this report
 and `FRONTIER_MISSION_LEDGER.md` record the verification.
+
+### Subsecond carry differential extension — 2026-10-27 18:22 UTC
+
+Code commit `abb512f` extends the 32 bounded Hypothesis examples so Polymarket
+and Kalshi settlement timestamps independently include random microseconds as
+well as whole seconds. The separate `Fraction` reference now exercises the
+audit's exact conversion of `timedelta` microseconds while still varying venue
+capital and annual rates. The focused carry module passes **9 tests**; Ruff
+check, formatting check, and `git diff --check` pass.
+
+At `2026-10-27T18:22:13Z`, host memory PSI was `some avg10=45.68%` and `full
+avg10=41.43%`, with `MemAvailable=9,823,344 KiB` and `SwapFree=482,520 KiB`.
+The fixture browser path, post-row-hash full suites, and production build remain
+unexecuted under this pressure. No live source, protected service, or
+production deployment was used.
+
+| Component | Current status | Boundary |
+| --- | --- | --- |
+| Capital carry subsecond differential | COMPLETE AND VERIFIED | Bounded generated cases compare Decimal model outputs to exact rational references with separate venue microsecond settlement offsets. This verifies arithmetic only, not timing truth or financing availability. |
+| Project Frontier overall | PARTIALLY VERIFIED | Fixture browser execution, broad final regression/build, live cross-venue semantic evidence, source permission review, and production readiness remain incomplete. |
+
+Files changed: `tests/frontier/test_capital_carry.py` in code commit
+`abb512f`; this report and `FRONTIER_MISSION_LEDGER.md` record the update.

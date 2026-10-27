@@ -1,6 +1,21 @@
 # Project Frontier Mission Ledger
 
-**Latest checkpoint (2026-10-27 18:21 UTC):** Code commit `6fe0192` changes the
+**Latest checkpoint (2026-10-27 18:22 UTC):** Code commit `abb512f` extends the
+32-example Decimal-vs-Fraction property test with independent random
+microsecond offsets for each venue settlement. This exercises the exact
+subsecond conversion in the audit while retaining separately varying capital,
+rate, and venue duration inputs. The focused capital-carry module passed **9
+tests**; Ruff and formatting checks pass. At `2026-10-27T18:22:13Z`, PSI rose
+to `some avg10=45.68%` / `full avg10=41.43%`, with `MemAvailable` 9,823,344
+KiB and swap free 482,520 KiB. Browser execution, post-row-hash full suites,
+and the production build remain deferred. Frontier remains isolated,
+incomplete, and undeployed.
+
+Next safe actions: continue code/documentation work that needs no heavy browser
+or build process. Recheck actual pressure before focused browser E2E and broad
+verification; keep venue permission gates and protected services untouched.
+
+**Previous checkpoint (2026-10-27 18:21 UTC):** Code commit `6fe0192` changes the
 decisive capital-carry audit to reconstruct elapsed seconds and carry as exact
 `Fraction` values, then round only when exposing the Decimal result. The
 production sensitivity remains Decimal-based; the verifier no longer shares
