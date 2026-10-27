@@ -467,6 +467,7 @@ def test_saved_kalshi_fee_pair_is_joined_only_when_raw_and_normalized_evidence_m
         assert persisted_replay["result"]["manifest"]["fee_metadata_observation_ids"] == (
             expected_fee_evidence_ids
         )
+        assert persisted_replay["result"]["candidates"] == replay_payload["candidates"]
         candidate = next(
             item
             for item in replay_payload["candidates"]
