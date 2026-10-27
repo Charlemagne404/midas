@@ -291,6 +291,16 @@ score the scenarios or establish fills, simultaneous availability, or profit.
 The UI's baseline is the quoted-input assumption and the second arm uses the
 current workbench assumptions; both remain hypothetical.
 
+Candidate detail also provides a local virtual-funding comparison. A researcher
+may enter a nonnegative decimal balance separately for each venue. The UI
+compares it exactly with that venue's modeled principal plus known modeled fees;
+balances are never pooled, transferred, sent to an API, or persisted. A missing
+or mixed quote currency disables comparison, and unknown fees leave the fee
+amount unresolved rather than allowing a sufficient-funds claim. These inputs
+do not inspect real accounts, collateral, transfers, or settlement duration.
+Focused coverage checks exact decimal shortfalls, unresolved fees, venue
+fragmentation, and responsive layout.
+
 `POST /api/frontier/arena-replay` packages the latest bounded local market,
 book, and effective verified-relationship records into a content-addressed
 snapshot under `MIDAS_ARENA_ROOT`, then submits the paired replay as an Arena

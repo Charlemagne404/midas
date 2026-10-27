@@ -491,6 +491,14 @@ visible. Candidate details show the separate audit disposition, recomputed cost,
 fees, worst-state net result, and shortened evidence hash. Readiness summarizes
 audit dispositions over at most the most recent three hash-validated replay runs;
 it does not represent source truth or profitability.
+Candidate details also offer a client-only virtual balance comparison for each
+venue's modeled capital requirement. Each nonnegative decimal input remains in
+browser component state and is compared exactly against the requirement in that
+venue's single quote currency. Missing or mixed currency disables comparison;
+an unknown applicable fee prevents a claim that the modeled requirement is
+fully covered. Inputs are not sent to the API or persisted. The view does not
+model real account balances, collateral eligibility, transfer availability,
+settlement duration, or capital at risk between settlements.
 
 ## Known scope limits
 

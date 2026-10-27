@@ -47,6 +47,11 @@ exposure sensitivity over up to 16 legs, with fee-inclusive results omitted if
 any applicable fee is unknown. The Economic Workbench can persist a paired
 comparison of two virtual scenarios over the same saved evidence; it does not
 score assumptions as better or establish executable opportunities.
+Candidate detail also allows a researcher to enter a browser-local virtual
+balance for each venue and compare it with that venue's modeled capital
+requirement. Balances remain separate, are compared with exact decimal
+arithmetic, and are never pooled or transferred. Unknown fees remain unresolved
+and prevent a funding-sufficiency claim; no real account or balance is read.
 The Replay & Readiness workspace can submit an explicit paired replay to the
 existing Arena supervisor from a content-hashed snapshot of local Frontier
 evidence. Arena keeps its host-wide admission gate and applies strict CPU,

@@ -515,6 +515,15 @@ a decisive net calculation. A missing/stale book, unsupported
 payoff, incomplete equivalence, or currency mismatch fails closed into a
 non-positive or incomplete classification.
 
+Candidate detail now exposes the existing `capital_by_venue` estimate through
+a client-only virtual balance comparison. Each venue is checked independently
+using exact decimal arithmetic; balances are neither pooled nor transferred.
+Requirements use modeled buy prices plus known fees. When an applicable fee is
+unknown, the UI reports principal coverage but leaves fee sufficiency
+unresolved. Missing or mixed quote currencies disable the comparison. This is a
+display-level scenario aid and does not add account, collateral, transfer, FX,
+or settlement-duration modeling.
+
 The multi-outcome evaluator proves only the exhaustive sum of accepted one-hot
 state payoffs and only for a same-market, all-long construction. It uses an exact
 common quantity step and treats an explicit requested quantity as exact; it
@@ -754,8 +763,10 @@ request, and 1–3 hops; centered one-hop traversal uses left/right endpoint
 indexes and keyset cursors, while two-/three-hop traversal uses revision-bound
 breadth-first pages. The visual network caps at 18 edges. Reviewer
 authentication, external assertion retrieval, clustering, and experiment
-result drill-downs remain incomplete. Multi-hop browser E2E remains pending
-under the dated memory-pressure admission decision.
+result drill-downs remain incomplete. A focused browser test now verifies a
+revision-pinned depth-two graph page, venue-separated virtual balances, and
+mobile overflow behavior. Earlier dated statements that this browser path was
+pending are superseded by this checkpoint.
 The Replay & Readiness section also includes a content-hashed Arena job list and
 detail view. It labels the limits and offline worker boundary and shows the
 hash-verified completed paired comparison. Job history is a 500-record bounded
@@ -763,7 +774,10 @@ scan and can report when it may be incomplete.
 Candidate detail shows the independent audit disposition,
 recomputed economics, and pinned-input hash. Readiness summarizes audit
 dispositions from the most recent three hash-valid runs and explicitly says that
-arithmetic agreement does not establish profitability or execution.
+arithmetic agreement does not establish profitability or execution. Candidate
+detail also compares local virtual balances with per-venue modeled requirements;
+this comparison is not persisted and cannot establish that capital is actually
+available.
 
 ## 12. Testing and reproducibility
 
@@ -1305,8 +1319,9 @@ gaps are deferred work, not hidden passed checks:
   revision-pinned result window. A 201-market frontier fixture verifies bounded
   query chunking. Uncentered search remains a single bounded read; full-universe
   search/clustering, relationship revision-history drill-down, and authenticated
-  review remain unimplemented. Browser verification of multi-hop paging remains
-  pending due the dated host memory-pressure admission decision above.
+  review remain unimplemented. A later focused browser test now verifies a
+  revision-pinned depth-two page; the earlier memory-pressure deferral is
+  superseded for that focused case.
 - The only multi-outcome family is a same-market all-long construction over
   verified one-hot exhaustive states; only controlled fixtures have exercised it.
   Logical implication bounds and general multi-leg search are not implemented.
@@ -1736,6 +1751,29 @@ passed 137 tests after matcher v5; the saved-source replay passed separately.
 
 ## 20. Final status and continuation instructions
 
+### Venue-separated virtual capital comparison (2026-10-27)
+
+Code commit `9d7b599516ca70895525c701543c507054bcfbe6` adds a candidate-detail
+workbench for comparing a manually entered virtual balance against modeled
+capital by venue. Inputs stay in browser component state and never reach the
+API or persistence. Each venue is compared independently with exact decimal
+arithmetic. A missing/mixed quote currency disables comparison, and unknown
+applicable fees prevent a sufficiency claim. This does not model actual account
+balances, collateral, transfer eligibility, or settlement duration.
+
+The implementation changed `apps/web/src/Frontier.tsx`,
+`apps/web/src/Frontier.test.tsx`, `apps/web/src/frontier.css`, and
+`apps/web/e2e/frontier.spec.ts`. The Frontier component test file passed **8
+tests**; frontend typecheck, ESLint, and Prettier passed. One focused Playwright
+case passed and covers depth-two graph pagination, venue-fragmented funding,
+and mobile overflow. A production build was attempted after the code change,
+then stopped before completion as host memory PSI rose. At the final sample
+(`2026-10-27T13:13:42Z`), PSI `avg10` was 38.92% (`some`) / 33.95% (`full`),
+available RAM was 9.3 GB, and swap use was 3.5 GiB. The latest change therefore
+does not have a verified production build; the earlier v12 build is not evidence
+for this UI revision. No source request, service, production configuration, or
+historical artifact was changed.
+
 ### Kalshi MVE reported settlement arithmetic (2026-10-27 13:01 UTC)
 
 Code commit `8a3e25c` bumps the Kalshi adapter to v12 and adds a local,
@@ -1800,7 +1838,7 @@ cross-venue economics.
 | Kalshi MVE settlement metadata and arithmetic audit | PARTIALLY VERIFIED | Adapter v12 preserves bounded component YES settlement values and optional parent settlement/provisional fields. A saved-evidence-only API/UI audit recomputes the selected component product for up to 64 legs and compares it with the parent value only for complete, final evidence; direct official rule/schema links and observation/raw hashes are shown. The full 148-test suite predates only the output source-link tuple; the final focused 17 tests and four browser cases include it. All positive and negative settlement arithmetic remains fixture-only; the preserved live child lacks values, no live audit result exists, and the method does not verify outcomes/rules or alter candidate economics. |
 | Polymarket, Kalshi and Kraken Spot adapters | PARTIALLY VERIFIED | Fixture/contract tests and bounded live listing/book/legacy-trade captures are preserved. Polymarket v2 first and continuation pages returned ten rows each. Kalshi has a ticker-filtered cursor-page implementation, fixture-verified row mapping, and a live empty terminal page; live trade-row normalization remains unvalidated. Adapter v4 preserves native MVE selected component IDs/sides; v7 added one-page MVE discovery whose live response omitted nested markets; v8 fixes event-detail parsing of an explicit empty top-level market array; v10 captures a saved-parent-referenced child contract and preserves its native rules. The one captured child is closed and includes fair-price fallback conditions; neither its simple binary payoff nor the parent-combo payout is verified. Account fees and Kraken account fee applicability remain unresolved. API fixtures cover source degradation and recovery; live degraded-source behavior remains unverified. |
 | Canonical market/instrument normalization | PARTIALLY VERIFIED | Three distinct instrument classes are represented; v2 Polymarket trades retain native outcome-token identity; Kalshi MVE component references remain source assertions; `MarketBatch` schema v2 preserves typed `MarketGroup` membership state. The genuine MVE response records member-list state `omitted` and zero child markets. Payoff/settlement semantics remain unverified. |
-| Relationship hypotheses, review revisions, indexed neighborhoods, and explicit same-payoff verifier | PARTIALLY VERIFIED | Self-attributed review API/UI, append-only revisions, latest-state replay, tamper/migration checks, left/right endpoint-indexed 1–3 hop scans capped at 500 rows, one-hop keyset pages, and revision-bound multi-hop BFS pages with deterministic recomputation and 201-market chunk coverage. Matcher v5 includes bounded exact-ID MVE selected-component references as HYPOTHESIS edges with both source record IDs; a saved Kalshi parent listing and child detail replay into one such edge. Matcher v4's explicit year-conflict rejection remains. A genuine House-control topic pair remains text-only HYPOTHESIS and fails strict same-payoff verification. Multi-hop browser E2E is pending; reviewer authentication, revision-history drill-down, and full-universe search remain absent. |
+| Relationship hypotheses, review revisions, indexed neighborhoods, and explicit same-payoff verifier | PARTIALLY VERIFIED | Self-attributed review API/UI, append-only revisions, latest-state replay, tamper/migration checks, left/right endpoint-indexed 1–3 hop scans capped at 500 rows, one-hop keyset pages, and revision-bound multi-hop BFS pages with deterministic recomputation and 201-market chunk coverage. Matcher v5 includes bounded exact-ID MVE selected-component references as HYPOTHESIS edges with both source record IDs; a saved Kalshi parent listing and child detail replay into one such edge. Matcher v4's explicit year-conflict rejection remains. A genuine House-control topic pair remains text-only HYPOTHESIS and fails strict same-payoff verification. The focused depth-two browser E2E now passes; reviewer authentication, revision-history drill-down, and full-universe search remain absent. |
 | Opportunity candidate and independent economic checks | PARTIALLY VERIFIED | Two-venue all-long binary and same-market 3–16 state one-hot exhaustive coverage; economic model v4 computes an exact full/no-fill adverse exposure pattern over up to 16 legs, and independent audit v2 recomputes it from pinned inputs. Differential three-leg enumeration, unknown-fee cases, and malformed cross-venue leg handling pass. Controlled fixtures only; source semantics, account costs, broader funding/settlement costs, and operational feasibility remain incomplete. |
 | Kalshi taker-fee sensitivity | PARTIALLY VERIFIED | Hash-matched public event/series evidence supports one-fill and bounded one-order Decimal sensitivities for two documented quadratic taker fee types, both precision cases, per-fill rounding, order accumulation, and capped rebates. Tests match the official one-fill example and exercise buy/sell arithmetic. The dated official schedule's `KXMVE` multiplier pair is not assumed to apply to captured `KXMVECROSSCATEGORY` metadata. Manual inputs are not live quotes or book-priced; account-specific fees and precision, exact maker/mixed-order applicability, FCM charges, later schedules, and full candidate fee integration remain unresolved. |
 | Append-only evidence store and deterministic replay | COMPLETE AND VERIFIED | Schema v6, additive v2/v3/v4/v5 migration, bounds, hash validation, and immutability. Replay v6 carries exact store record IDs through API-loaded market/book provenance, manifests, candidate legs, and Arena snapshots; direct in-memory replay retains adapter IDs. Replay-v5 economic output includes full/no-fill sensitivity and pins effective mappings/proposal limit. The separate Arena wrapper uses immutable content-addressed snapshots and hash-verified result artifacts; two controlled fixture workers completed and the latest recorded CPU/RSS. |
@@ -1809,7 +1847,7 @@ cross-venue economics.
 | Live market/book/trade and fee metadata through adapters/API | PARTIALLY VERIFIED | Earlier listing/book/trade, event-group, fee-metadata, and trade-page captures are hash-pinned. Kalshi MVE captures include filtered pages whose nested markets were omitted and one detail response with explicit top-level `markets: []`. The new one-request child detail capture matches a selected leg's saved ticker/event identities and has raw/store hashes; its rules expose fair-price fallbacks, but it has no book/price and proves neither child nor combo payoff. No cross-venue timing, combo economics, venue-wide coverage, or execution is established. |
 | Source workers and broad historical data | DEFERRED | No persistent worker or long-duration collection. |
 | Laboratory/Arena research orchestration | PARTIALLY VERIFIED | Arena job kind, content-addressed snapshots, bounded offline execution, API submission/history/result verification, process CPU/RSS capture, and explicit workspace controls are implemented and tested; two fixture jobs passed the host-wide gate and completed under systemd. Laboratory campaign management and resource-sustainability evidence remain incomplete. |
-| Native Mission Control workspace | PARTIALLY VERIFIED | Local API, bounded graph/review UI, Polymarket/Kalshi trade-page and event-group controls, explicit filtered one-page Kalshi MVE capture by series, collection, or one event ticker with returned member-list state, parent-event context, instrument-bound fee sensitivity, selected-leg component-rule and recorded-settlement arithmetic inspection, paired replay, candidate fill stress, and Arena job history/result display. The latest frontend suite/typecheck/lint/format and four isolated Frontier Playwright cases pass; production build passes with existing large-chunk warnings. The workspace is not deployed. |
+| Native Mission Control workspace | PARTIALLY VERIFIED | Local API, bounded graph/review UI, Polymarket/Kalshi trade-page and event-group controls, explicit filtered one-page Kalshi MVE capture by series, collection, or one event ticker with returned member-list state, parent-event context, instrument-bound fee sensitivity, selected-leg component-rule and recorded-settlement arithmetic inspection, paired replay, candidate fill stress, venue-separated local virtual balances, and Arena job history/result display. The latest Frontier component suite passes 8 tests; typecheck, ESLint, Prettier, and the focused depth-two/capital-fragmentation/mobile browser case pass. A production build after the capital UI change was stopped under rising memory PSI and remains unverified; the workspace is not deployed. |
 | Production readiness/deployment | DEFERRED | Separate review and authorization required; production eligibility is false. |
 | Positive economic result | NOT ESTABLISHED | No genuine cross-venue equivalent or economically eligible result in captured evidence. |
 
@@ -1820,9 +1858,9 @@ and host conditions are characterized beyond one short fixture. Live
 degraded-source behavior remains unverified; do not intentionally degrade a
 live source. Continue by searching for public multi-outcome metadata that meets
 the strict payoff and resolution evidence requirements, reconciling Kalshi's
-public event/series parameters with a defensible candidate fee schedule, and
-running the new multi-hop browser E2E after memory pressure eases. Scale beyond
-the graph's current bounds only if representative data and measured resource
+public event/series parameters with a defensible candidate fee schedule. The
+focused depth-two browser E2E now passes. Scale beyond the graph's current
+bounds only if representative data and measured resource
 use justify it. Add durable Laboratory experiment management only if needed
 beyond the tested Arena job wrapper. Add adversarial audit mutations only for
 distinct failure modes. Expand economics only where source evidence supports it.

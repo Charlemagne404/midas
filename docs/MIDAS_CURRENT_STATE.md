@@ -239,3 +239,20 @@ The latest V6 summary (06:30:54Z) is `CATCHING_UP` at 80/532 snapshots, with 452
 Reality's atomic status receipt at 06:36:18Z reports `RECORDING_UNSEQUENCED`, ordinal 5,189,775, 16/16 fresh books, sequence verification false, 18,720 local gap markers, and no `current_error`. Its generic `ConnectionClosedOK` field has no timestamp. The active collector still uses 24 GiB / 90-day settings and reports 9,186,445,262 bytes stored. Finalized-source analysis last covered 32,213/32,213 catalog segments through ordinal 5,183,587 at 06:10:53Z; the current ordinal is 6,188 records beyond it. The latest archive provenance inventory remains invalid, with 1,138 extra names and 58 `.copying` files.
 
 At 06:35:10Z, API memory charge was 1,609,183,232/1,610,612,736 bytes (1.36 MiB headroom), with 8 new `MemoryHigh` events over 565.771 seconds and no `max` or OOM event. Reality had 272,220,160 bytes below `MemoryHigh`; host available memory was 8.64 GB. Research admission remains blocked. The latest capacity forecast is still from 06:11Z; the staged 112 GiB / 120-day plan remains pending restart. A fresh 519-snapshot offline replay output has a complete receipt but its old verifier omitted copy-checkpoint reconciliation; this output was preserved. The reconciliation defect is fixed on the isolated Veritas integration branch and tested, but that fix has not been deployed. See [engineering mission Section 19](reliability/MIDAS_ENGINEERING_MISSION_2026-10-26.md) and `docs/VERITAS_OPERATIONS.md` for receipt hashes and remaining gates.
+
+## Frontier development checkpoint — 2026-10-27
+
+On isolated branch `codex/frontier-20261026`, commit
+`9d7b599516ca70895525c701543c507054bcfbe6` adds a candidate-detail virtual
+funding comparison. Manually entered balances stay in browser state, are
+compared with exact decimal arithmetic separately per venue, and are never
+pooled or sent to an API. Unknown venue fees remain unresolved. The Frontier
+component tests passed 8/8, the focused depth-two/capital-fragmentation/mobile
+Playwright case passed, and frontend typecheck, ESLint, and Prettier passed.
+The production build after this UI change was stopped before completion as
+memory PSI rose; it remains unverified. The latest sampled PSI (`13:13:42Z`)
+was 38.92% (`some`) / 33.95% (`full`), with 9.3 GB available RAM and 3.5 GiB
+swap used. No source, service, production configuration, or Reality evidence was
+changed. This development checkpoint does not update or measure the operational
+Reality/Veritas state above. See the [Frontier mission ledger](frontier/FRONTIER_MISSION_LEDGER.md)
+and [engineering report](frontier/FRONTIER_ENGINEERING_REPORT.md).
