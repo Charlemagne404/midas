@@ -1808,6 +1808,63 @@ def test_readiness_fails_closed_when_a_stored_replay_hash_does_not_match(tmp_pat
         asyncio.run(http_client.aclose())
 
 
+def test_comparison_and_relationship_reads_fail_closed_on_corrupt_rows(tmp_path):
+    from midas.frontier.economics import ExecutionScenario
+    from midas.frontier.replay import paired_deterministic_replay
+
+    client, registry, http_client, _, store = _client(tmp_path, hold_sources=True)
+    left = market(Venue.POLYMARKET, "corrupt-relationship-left")
+    right = market(Venue.POLYMARKET, "corrupt-relationship-right")
+    relationship = _graph_fixture_edge(left, right)
+    store.append_relationship(relationship)
+    comparison_result, comparison_arms = paired_deterministic_replay(
+        (),
+        (),
+        scenarios=(
+            ExecutionScenario(name="corrupt-comparison-baseline"),
+            ExecutionScenario(name="corrupt-comparison-stress", slippage_bps="5"),
+        ),
+        code_version="frontier-corrupt-read-fixture-v1",
+    )
+    store.append_paired_comparison(comparison_arms, comparison_result)
+    with sqlite3.connect(store.path) as connection:
+        connection.execute("DROP TRIGGER relationships_no_update")
+        connection.execute("DROP TRIGGER research_comparisons_no_update")
+        connection.execute(
+            "UPDATE relationships SET relationship_json='{}' WHERE relationship_id=?",
+            (relationship.relationship_id,),
+        )
+        connection.execute(
+            "UPDATE research_comparisons SET result_json='{}' WHERE comparison_id=?",
+            (comparison_result.comparison_id,),
+        )
+    expected_relationship_detail = (
+        "Stored relationship evidence is not readable: "
+        "Stored relationship hash does not match its payload"
+    )
+    expected_comparison_detail = (
+        "Stored replay comparison evidence is not readable: "
+        "Stored replay comparison payload is invalid"
+    )
+    try:
+        for path in ("/api/frontier/relationships", "/api/frontier/readiness"):
+            response = client.get(path)
+            assert response.status_code == 409, (path, response.text)
+            assert response.json()["detail"] == expected_relationship_detail
+        for path in (
+            "/api/frontier/comparisons",
+            f"/api/frontier/comparisons/{comparison_result.comparison_id}",
+            "/api/frontier/overview",
+        ):
+            response = client.get(path)
+            assert response.status_code == 409, (path, response.text)
+            assert response.json()["detail"] == expected_comparison_detail
+    finally:
+        client.close()
+        asyncio.run(registry.aclose())
+        asyncio.run(http_client.aclose())
+
+
 def test_readiness_recognizes_only_completed_hash_verified_arena_evidence(tmp_path):
     from midas.arena.artifacts import atomic_json
     from midas.arena.frontier_replay import (

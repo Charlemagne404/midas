@@ -697,6 +697,38 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
                 detail=f"Stored replay evidence is not readable: {error}",
             ) from error
 
+    def read_stored_comparisons(limit: int) -> tuple[dict[str, Any], ...]:
+        try:
+            return cast(tuple[dict[str, Any], ...], store.comparisons(limit=limit))
+        except FrontierStoreError as error:
+            raise HTTPException(
+                status_code=409,
+                detail=f"Stored replay comparison evidence is not readable: {error}",
+            ) from error
+
+    def read_stored_relationships(
+        *,
+        state: str | None = None,
+        limit: int = 500,
+        effective_only: bool = False,
+        excluded_venues: tuple[str, ...] = (),
+    ) -> tuple[dict[str, Any], ...]:
+        try:
+            return cast(
+                tuple[dict[str, Any], ...],
+                store.relationships(
+                    state=state,
+                    limit=limit,
+                    effective_only=effective_only,
+                    excluded_venues=excluded_venues,
+                ),
+            )
+        except FrontierStoreError as error:
+            raise HTTPException(
+                status_code=409,
+                detail=f"Stored relationship evidence is not readable: {error}",
+            ) from error
+
     def comparison_run_rows(
         items: tuple[dict[str, Any], ...],
     ) -> tuple[dict[str, dict[str, Any]], dict[str, str]]:
@@ -819,7 +851,7 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
         eligible_observation_count = int(summary["observations"])
         if held_venues:
             run_window = read_stored_replays(20)
-            comparison_window = store.comparisons(limit=25)
+            comparison_window = read_stored_comparisons(25)
             eligible_runs = replay_rows_without_held_sources(run_window)
             eligible_comparisons = comparison_rows_without_held_sources(comparison_window)
             summary["runs"] = len(eligible_runs)
@@ -2026,7 +2058,7 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
         state: str | None = Query(default=None, max_length=32),
         limit: int = Query(default=100, ge=1, le=500),
     ) -> dict[str, Any]:
-        items = store.relationships(
+        items = read_stored_relationships(
             state=state,
             limit=limit,
             effective_only=True,
@@ -2654,7 +2686,7 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
         offset: int = Query(default=0, ge=0, le=100_000),
     ) -> dict[str, Any]:
         source_window_limit = min(200, max(25, offset + limit))
-        raw_items = store.comparisons(limit=source_window_limit)
+        raw_items = read_stored_comparisons(source_window_limit)
         eligible_items = comparison_rows_without_held_sources(raw_items)
         items = eligible_items[offset : offset + limit]
         return {
@@ -2673,6 +2705,11 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
             item = store.comparison(comparison_id)
         except ValueError as error:
             raise HTTPException(status_code=422, detail=str(error)) from error
+        except FrontierStoreError as error:
+            raise HTTPException(
+                status_code=409,
+                detail=f"Stored replay comparison evidence is not readable: {error}",
+            ) from error
         if item is None:
             raise HTTPException(status_code=404, detail="Replay comparison was not found")
         if held_venues:
@@ -2692,7 +2729,7 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
         books = tuple(
             book for book, _ in _load_book_records(store, 200, excluded_venues=held_venues)
         )
-        relation_rows = store.relationships(
+        relation_rows = read_stored_relationships(
             state="verified",
             limit=500,
             effective_only=True,
@@ -2732,7 +2769,7 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
             books = tuple(
                 book for book, _ in _load_book_records(store, 200, excluded_venues=held_venues)
             )
-            relation_rows = store.relationships(
+            relation_rows = read_stored_relationships(
                 state="verified",
                 limit=500,
                 effective_only=True,
@@ -2796,7 +2833,7 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
         books = tuple(
             book for book, _ in _load_book_records(store, book_limit, excluded_venues=held_venues)
         )
-        relation_rows = store.relationships(
+        relation_rows = read_stored_relationships(
             state="verified",
             limit=relationship_limit,
             effective_only=True,
@@ -2829,7 +2866,7 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
         eligible_runs = replay_rows_without_held_sources(read_stored_replays(20))
         recent_runs = eligible_runs[:3]
         run_count = len(eligible_runs)
-        eligible_relationships = store.relationships(
+        eligible_relationships = read_stored_relationships(
             limit=2000, effective_only=True, excluded_venues=held_venues
         )
         eligible_verified_relationship_count = sum(
