@@ -4728,3 +4728,12 @@ seconds reported by Vitest / 15.97 seconds wall at **300,960 KiB peak RSS**,
 zero swaps. It includes Frontier, Arena, Readiness, Mission Control, Reality,
 Veritas, and Laboratory component suites. This is component-level verification;
 browser coverage remains the isolated Frontier case recorded above.
+
+### Full Frontier browser regression — 2026-10-27 23:57 UTC
+
+The complete Frontier Playwright spec passes **4/4** in 11.5 seconds reported
+/ 12.05 seconds wall at **192,280 KiB peak RSS**, zero swaps. It validates the
+local Exchanges history request without collection/source POSTs, no automatic
+Arena job submission, fixture-only settlement inspection, and responsive
+bounded graph interaction. The API ran with isolated test roots; no exchange
+endpoint was called.

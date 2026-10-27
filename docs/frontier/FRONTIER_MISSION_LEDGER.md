@@ -3018,6 +3018,16 @@ This includes all Frontier components and checks unrelated Mission Control
 views for UI regressions. No API server or exchange source was contacted by
 this unit-test invocation.
 
+### Full Frontier browser regression — 2026-10-27 23:57 UTC
+
+The full `e2e/frontier.spec.ts` passes **4/4** with one worker in 11.5 seconds
+reported / 12.05 seconds wall, **192,280 KiB peak RSS**, zero swaps. It covers
+responsive isolated workspace behavior, read-only/no-launch replay history,
+fixture-only Kalshi settlement arithmetic, and bounded responsive graph
+exploration. The first case also confirms that loading Exchanges history
+submits no collection or source-probe POST. Playwright used its isolated test
+API/database/Arena roots; no live exchange endpoint was called.
+
 ## Arena admission-test follow-up — 2026-10-27 23:55 UTC
 
 After the external batch exited, the two supervisor tests denied during the

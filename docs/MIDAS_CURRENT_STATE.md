@@ -1172,3 +1172,11 @@ pass for commit `305814b`; no production deployment or source request occurred.
 The full web unit suite passes **40/40 across seven files** in 15.55 seconds
 reported / 15.97 seconds wall at **300,960 KiB peak RSS**, zero swaps. This
 includes the Frontier component suite and the other Mission Control views.
+
+### Full Frontier browser regression — 2026-10-27 23:57 UTC
+
+The Frontier Playwright spec passes **4/4** in 11.5 seconds reported / 12.05
+seconds wall at **192,280 KiB peak RSS**, zero swaps. It verifies Exchanges
+history loads without collection/source POSTs, replay history submits no job,
+fixture-only settlement review, and responsive bounded graph exploration.
+The run used temporary API/data roots and did not call an exchange endpoint.
