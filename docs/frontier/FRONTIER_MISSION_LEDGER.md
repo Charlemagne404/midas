@@ -1,5 +1,23 @@
 # Project Frontier Mission Ledger
 
+**Latest checkpoint (2026-10-27 19:11 UTC):** The runtime held-source guard
+is now hardened and verified. Commit `df30fa7` resolves symlink paths before
+checking, handles relative `dir_fd` paths through `/proc/self/fd`, removes the
+raw opener escape hatch, and tests read/write blocking against `tmp_path`
+including symlink traversal with `..`. The guard tests pass **2/2**; Ruff and
+format checks pass. A read-only reviewer confirmed the two path bypasses were
+closed and found no ordinary Frontier-test interference. Commit `2aef789`
+introduced the initial autouse wrappers. The full Frontier
+suite passes **219 tests in 39.83 seconds**, **335,396 KiB peak RSS**, zero
+swaps, with only the existing Starlette/httpx deprecation warning. Source-text
+scans over `tests`, `packages`, and `apps` find no `live-probes` references.
+No preserved capture was opened or changed during this cleanup; the historical
+18:41 run did read the former test inputs, with no mutation known. At
+19:11:39 UTC, host PSI avg10 was 0.00% (`some`/`full`), avg300 20.47%/18.55%;
+9.1 GiB was available and 467 MiB swap free. Kalshi/Kraken permission, live
+cross-venue economics, repository-wide regression, and production deployment
+remain open.
+
 **Latest checkpoint (2026-10-27 19:05 UTC):** After the 19:02 validation,
 added `tests/frontier/conftest.py` with an autouse guard for built-in, `io`,
 and `os.open` access to the held source path, plus a regression that attempts

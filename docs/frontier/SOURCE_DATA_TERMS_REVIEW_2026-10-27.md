@@ -153,9 +153,16 @@ deprecation warning remains. `git diff --check` passes. Preserved capture
 files were not edited by this cleanup. This suite validates implementation on
 synthetic inputs only; it does not establish live-source behavior or permission.
 
-After that 19:02 validation, an autouse runtime guard was added for Python's
-built-in, `io`, and `os` file-open calls, with a regression that uses only a
-nonexistent path beneath `tmp_path`. The guard change has not been tested yet;
-the 218-test result predates it. Host memory PSI rose again by 19:05 UTC, so
-rerun the guard and Frontier suite only after a fresh resource check admits
-them. The static source scan still finds no held-directory path references.
+After the 19:02 validation, an autouse runtime guard was added for Python's
+built-in, `io`, and `os` file-open calls. A read-only review found and closed
+symlink-plus-`..` traversal and relative-`dir_fd` bypasses; the raw opener is
+kept inside the fixture closure. Commit `df30fa7` adds those corrections and
+temporary-path regressions. The guard passes **2/2** cases, covering Path,
+built-in `open`, `os.open`, file and directory symlinks, symlink-plus-`..`, and
+relative `dir_fd` access. Ruff and formatting pass. The complete Frontier suite
+passes **219 tests in 39.83 seconds** at **335,396 KiB peak RSS**, with zero
+swaps and the existing Starlette/httpx TestClient deprecation warning. A scan
+over `tests`, `packages`, and `apps` finds no `live-probes` path. The guard is
+test-only defense for common Python file-open APIs; the source-use restriction
+remains the governing boundary. Existing captures remain untouched, and
+synthetic tests do not establish live-source validation or permission.

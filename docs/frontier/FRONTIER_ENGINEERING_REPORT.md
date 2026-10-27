@@ -35,13 +35,14 @@ No test writes to the capture directory were identified, and no capture
 mutation is known. All 15 path references have now been replaced with synthetic
 inline inputs. A path-text scan over `tests`, `packages`, and `apps` finds no
 remaining `live-probes` reference. A static Python-test guard passes, the
-changed adapter/API selections pass, and the full Frontier suite passes **218
+changed adapter/API selections pass, and the full Frontier suite passes **219
 tests** after conversion. The earlier 18:41 suite remains evidence of code
 behavior on held inputs, but must not be cited as fixture-only held-source
 validation. See the updated [source-data terms review](SOURCE_DATA_TERMS_REVIEW_2026-10-27.md).
-An autouse runtime guard for common file-open calls was added after the 19:02
-suite; that guard and its temporary-path regression remain unverified until a
-resource-admitted rerun.
+An autouse runtime guard for common file-open calls was added and verified in
+the subsequent 219-test run. A temporary-path regression covers path strings,
+symlink traversal with `..`, and `dir_fd` access; no preserved capture was
+opened.
 
 The three adapters are implemented and fixture/contract tested. Polymarket also
 has an explicitly triggered, cursor-paginated Data API v2 trade-page path that
@@ -2214,7 +2215,7 @@ cross-venue economics.
 | Laboratory/Arena research orchestration | PARTIALLY VERIFIED | Arena job kind, content-addressed snapshots, bounded offline execution, API submission/history/result verification, process CPU/RSS capture, and explicit workspace controls are implemented and tested; two fixture jobs passed the host-wide gate and completed under systemd. Laboratory campaign management and resource-sustainability evidence remain incomplete. |
 | Native Mission Control workspace | PARTIALLY VERIFIED | Local API, bounded graph/review UI with on-demand revision history and paginated 200-market-capped text search, Polymarket/Kalshi trade-page and event-group controls, explicit filtered one-page Kalshi MVE capture by series, collection, or one event ticker with returned member-list state, parent-event context, instrument-bound fee sensitivity, selected-leg component-rule and recorded-settlement arithmetic inspection, paired replay, candidate fill stress, virtual balances keyed by venue and exact denomination identity, and Arena job history/result display. After exact identity validation/key hardening, the Frontier component file passes 8/8 and the full web suite 40/40; typecheck, targeted ESLint, and Prettier pass. The isolated Frontier browser spec passes 4/4, including the no-probe and bounded mobile graph cases. The post-change production build passes at 714,944 KiB peak RSS with no swaps; Vite retains the existing large index/chart chunk warning. The workspace is not deployed. |
 | Source data use/retention permission | BLOCKED | Kalshi Developer Agreement and Data Terms restrict the relevant API/data uses; the applicable regional Kraken terms and Frontier authorization remain unverified. The main API requires permission/review references in addition to probe flags, but references are not independently validated. No new Kalshi/Kraken live captures or new research use of their stored data pending review; existing artifacts are preserved unchanged. The 18:41 full-suite run read files later identified as held captures; no mutation is known. |
-| Offline test-source separation from held captures | PARTIALLY VERIFIED | All 15 discovered references were replaced by synthetic inputs. A scan over `tests`, `packages`, and `apps` returns no `live-probes` references; before a later guard addition, the static boundary test passed, the converted adapter/API selection passed 24 tests, and the complete Frontier suite passed 218 tests. An autouse runtime file-open guard and temporary-path regression were then added to `tests/frontier/conftest.py` and `test_held_capture_source_boundary.py`; they have not run yet. Existing capture files remain unchanged. |
+| Offline test-source separation from held captures | COMPLETE AND VERIFIED | All 15 discovered references were replaced by synthetic inputs. A scan over `tests`, `packages`, and `apps` returns no `live-probes` references. The runtime guard blocks direct path, symlink, symlink-plus-`..`, and relative `dir_fd` file-open cases through built-in `open`, `io.open`, and `os.open`; its 2 tests pass, and the complete 219-test Frontier suite passes with the guard active. A read-only code review found no ordinary test interference. Existing capture files remain unchanged. |
 | Held-source application read quarantine | IMPLEMENTED, LIVE VALIDATION PENDING | Code `d38f517` filters held-venue observation lists/direct reads, source aggregates, relationships/graph edges, review and replay inputs, derived outputs, paired comparisons, and Frontier Arena replays. Code `73e008e` applies pinned-snapshot checks to Arena job summaries, details, logs, submissions, and cancellation; `e7958c1` also filters the research-activity digest; `23f9860` rejects held snapshots before inspect/reconciliation can rewrite a job manifest. Controlled fixtures verify held/missing provenance is hidden or rejected while source/snapshot/result/job-manifest artifacts remain stored. The actual preserved live store was not audited; direct database reads and exports remain outside the API filter. |
 | Production readiness/deployment | DEFERRED | Separate review and authorization required; production eligibility is false. |
 | Positive economic result | NOT ESTABLISHED | No genuine cross-venue equivalent or economically eligible result in captured evidence. |
@@ -3421,3 +3422,19 @@ post-change production build passed at **714,944 KiB peak RSS**, no swaps, in
 No production deployment or protected service action occurred. Source
 permission, genuine cross-venue economic verification, repository-wide
 regression, and deployment remain open.
+
+### Held-source test guard closure — 2026-10-27 19:11 UTC
+
+Commit `5e51a88` replaces held-capture test reads with synthetic inputs;
+`2aef789` adds the first runtime guard; and `df30fa7` closes its direct,
+symlink, symlink/`..`, and `dir_fd` cases. `test_held_capture_source_boundary.py` passes **2/2**; the
+converted adapter/API selection passes **24**; the full Frontier Python suite
+passes **219** in **39.83 seconds** with **335,396 KiB peak RSS** and zero
+swaps. Ruff and format checks pass for the guard. The existing
+Starlette/httpx TestClient deprecation is the only Python-suite warning. A
+read-only peer review found no ordinary test interference. Source-text scans
+show no `live-probes` path in `tests`, `packages`, or `apps`; preserved source
+files were not changed or opened during this remediation. The older 18:41
+suite did read held capture files through the references present at that time;
+no mutation is known. Source permission, genuine multi-venue economics,
+repository-wide regression and production deployment remain unresolved.

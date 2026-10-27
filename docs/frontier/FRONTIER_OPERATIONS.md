@@ -50,14 +50,14 @@ these APIs remain held. Controlled fixtures verify the application filters;
 they do not validate the terms. A test-source audit found direct references to
 preserved captures in two Frontier test modules, and the 18:41 UTC full suite
 read those files. The 15 references have been replaced by synthetic inputs,
-and a source-text scan now finds no held-directory references. The static
-guard passes; the modified API/adapter selection passes 24 tests, and the full
-Frontier suite passes 218 tests. These synthetic tests do not establish source
-permission or live-source validation. See the
+and a source-text scan now finds no held-directory references. The modified
+adapter/API selection passes 24 tests; the complete Frontier suite passes
+**219 tests** with the runtime guard active. The guard's temporary-path tests
+pass **2/2**, covering direct paths, symlink traversal including `..`, and
+relative `dir_fd` opens through common Python file-open APIs. These synthetic
+tests do not establish source permission or live-source validation. Preserved
+source files were not used or changed. See the
 [source-data terms review](SOURCE_DATA_TERMS_REVIEW_2026-10-27.md) for details.
-An autouse runtime guard for common file-open calls was added after those test
-runs; it has not been validated yet and requires a safe rerun of its regression
-and the full Frontier suite.
 
 Cross-venue observations have independent clocks and freshness guarantees.
 Different receipt times or a shared local timestamp do not prove simultaneous

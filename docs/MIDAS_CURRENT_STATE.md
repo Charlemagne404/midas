@@ -434,7 +434,7 @@ No test writes to those files were identified, and no mutation is known. All
 15 references are now replaced by synthetic inputs; a `rg` scan over
 `tests`, `packages`, and `apps` finds no `live-probes` path. The static source
 guard passes, the converted adapter/API selection passes 24 tests, and the
-full Frontier suite passes 218 tests in 39.36 seconds at 333,988 KiB peak RSS
+full Frontier suite passes 219 tests in 39.83 seconds at 335,396 KiB peak RSS
 with zero swaps. The existing Starlette/httpx deprecation warning remains.
 These fixtures establish code behavior only; source permission and live
 validation remain blocked. See the
@@ -463,12 +463,14 @@ or historical capture modification occurred. The code/docs verification
 checkpoint is in progress on the Frontier branch; source permission, live
 cross-venue economics, deployment, and repository-wide tests remain open.
 
-After this verification, an autouse runtime file-open guard was added to the
-Frontier Python tests, with a temporary-path regression. It has not been run;
-the 218-test result predates that guard. A fresh pressure sample on
-2026-10-27T19:05:42Z showed 46.45%/42.53% `some`/`full` PSI avg10 and 9.2 GiB
-available memory, so no further tests were started. Run the guard test and
-full Frontier suite after a new safe resource check.
+After the earlier 218-test run, an autouse runtime file-open guard was added,
+reviewed, and hardened against symlink/`..` traversal and relative `dir_fd`
+opens in commit `df30fa7`. Its temporary-path cases pass **2/2**. The full
+Frontier suite now passes **219 tests in 39.83 seconds**, with **335,396 KiB
+peak RSS** and zero swaps; Ruff and format checks pass for the guard. The only
+warning is the existing Starlette/httpx TestClient deprecation. No held source
+file was opened by the new tests or changed in this work. The source permission
+hold and live economic validation remain unresolved.
 
 ## Frontier Kalshi fee-override checkpoint — 2026-10-27
 
