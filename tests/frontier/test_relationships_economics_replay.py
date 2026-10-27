@@ -1439,6 +1439,57 @@ def test_deterministic_replay_is_invariant_to_input_order():
     assert any("gross basket cost differs" in reason for reason in independently_checked.reasons)
 
     original = first.candidates[0]
+    assert original.modeled_fees is not None
+    tampered_fee_total = original.model_copy(
+        update={
+            "modeled_fees": original.modeled_fees + Decimal("0.01"),
+            "independent_audit": None,
+        }
+    )
+    fee_total_audited = independently_audit_candidate(
+        tampered_fee_total,
+        markets={left.canonical_id: left, right.canonical_id: right},
+        books_by_market={left.canonical_id: left_books, right.canonical_id: right_books},
+        relationships={relationship.relationship_id: relationship},
+        state_mappings={
+            relationship.relationship_id: kwargs["state_mappings"][relationship.relationship_id]
+        },
+        instrument_mappings={relationship.relationship_id: canonical_instrument_mapping},
+        scenario=ExecutionScenario(),
+    )
+    assert fee_total_audited.independent_audit is not None
+    assert fee_total_audited.independent_audit.disposition.value == "disagreement"
+    assert fee_total_audited.classification == OpportunityClassification.INCOMPLETE_EVIDENCE
+    assert any("modeled fee total differs" in reason for reason in fee_total_audited.reasons)
+
+    original_fee_leg = original.legs[0]
+    assert original_fee_leg.modeled_fee is not None
+    tampered_fee_leg = original_fee_leg.model_copy(
+        update={"modeled_fee": original_fee_leg.modeled_fee + Decimal("0.01")}
+    )
+    fee_leg_audited = independently_audit_candidate(
+        original.model_copy(
+            update={
+                "legs": (tampered_fee_leg, *original.legs[1:]),
+                "independent_audit": None,
+            }
+        ),
+        markets={left.canonical_id: left, right.canonical_id: right},
+        books_by_market={left.canonical_id: left_books, right.canonical_id: right_books},
+        relationships={relationship.relationship_id: relationship},
+        state_mappings={
+            relationship.relationship_id: kwargs["state_mappings"][relationship.relationship_id]
+        },
+        instrument_mappings={relationship.relationship_id: canonical_instrument_mapping},
+        scenario=ExecutionScenario(),
+    )
+    assert fee_leg_audited.independent_audit is not None
+    assert fee_leg_audited.independent_audit.disposition.value == "disagreement"
+    assert fee_leg_audited.classification == OpportunityClassification.INCOMPLETE_EVIDENCE
+    assert any(
+        "fee disagrees with supported schedule" in reason for reason in fee_leg_audited.reasons
+    )
+
     assert original.one_sided_fill_sensitivity is not None
     corrupted_outcome = original.one_sided_fill_sensitivity.worst_before_fees.model_copy(
         update={
