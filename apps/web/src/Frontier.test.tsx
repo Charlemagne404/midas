@@ -290,6 +290,45 @@ it('renders recorded-evidence empty states and never probes a source automatical
     '5 ms',
   );
   expect(screen.getByText('Independent timing gate').parentElement).toHaveTextContent('Pass');
+  const candidateCache = queryClient.getQueryData<{
+    items: Array<
+      Record<string, unknown> & {
+        candidate_id: string;
+        independent_audit: Record<string, unknown> | null;
+      }
+    >;
+  }>(['frontier', 'opportunities']);
+  expect(candidateCache).toBeDefined();
+  queryClient.setQueryData(['frontier', 'opportunities'], {
+    ...candidateCache!,
+    items: candidateCache!.items.map((item) => {
+      if (item.candidate_id !== 'multi-outcome-fixture-candidate' || !item.independent_audit) {
+        return item;
+      }
+      const legacyAudit = Object.fromEntries(
+        Object.entries(item.independent_audit).filter(
+          ([key]) =>
+            ![
+              'recomputed_received_skew_ms',
+              'recomputed_exchange_skew_ms',
+              'recomputed_timing_verified',
+            ].includes(key),
+        ),
+      );
+      return { ...item, independent_audit: legacyAudit };
+    }),
+  });
+  await waitFor(() =>
+    expect(screen.getByText('Recomputed receipt skew').parentElement).toHaveTextContent(
+      'Not recorded',
+    ),
+  );
+  expect(screen.getByText('Recomputed exchange timestamp skew').parentElement).toHaveTextContent(
+    'Not recorded',
+  );
+  expect(screen.getByText('Independent timing gate').parentElement).toHaveTextContent(
+    'Not recorded',
+  );
   expect(screen.getByText('Gross basket cost')).toBeInTheDocument();
   const capital = screen.getByRole('region', { name: 'Venue-separated virtual funding' });
   expect(capital).toHaveTextContent('Modeled requirement: 9 USD (fiat:USD)');
