@@ -358,10 +358,15 @@ def test_replay_list_detects_offline_payload_tampering(tmp_path: Path):
         store.replays(limit=10)
 
 
-def test_legacy_replay_audit_schema_remains_hash_verified_and_readable(tmp_path: Path):
+def test_legacy_replay_manifest_and_audit_schemas_remain_hash_verified_and_readable(
+    tmp_path: Path,
+):
     store = FrontierStore(tmp_path, max_bytes=2 * 1024 * 1024)
     _, runs = _paired_fixture()
     legacy = runs[0].model_dump(mode="json")
+    legacy["manifest"]["schema_version"] = 1
+    legacy["manifest"]["replay_version"] = "frontier-deterministic-replay-7"
+    legacy["manifest"].pop("fee_metadata_observation_ids")
     legacy["manifest"]["economic_model_version"] = "frontier-economic-verifiers-6"
     legacy_run_id = hashlib.sha256(
         FrontierStore._canonical(legacy["manifest"]).encode()
@@ -399,6 +404,8 @@ def test_legacy_replay_audit_schema_remains_hash_verified_and_readable(tmp_path:
     assert legacy_row["result"]["manifest"]["economic_model_version"] == (
         "frontier-economic-verifiers-6"
     )
+    assert legacy_row["result"]["manifest"]["schema_version"] == 1
+    assert legacy_row["result"]["manifest"]["fee_metadata_observation_ids"] == []
     loaded_audits = [
         item["independent_audit"]
         for item in legacy_row["result"]["candidates"]
