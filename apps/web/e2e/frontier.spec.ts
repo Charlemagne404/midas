@@ -726,9 +726,11 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
     name: 'Virtual balance allocated to Kalshi USD (fiat:USD)',
   });
   await virtualBalance.fill('8.999999999999999999');
-  await expect(capital.getByRole('status')).toHaveText('Virtual funding shortfall at this venue.');
+  await expect(capital.locator('.fr-capital-row').getByRole('status')).toHaveText(
+    'Virtual funding shortfall at this venue.',
+  );
   await virtualBalance.fill('9.000000000000000000');
-  await expect(capital.getByRole('status')).toHaveText(
+  await expect(capital.locator('.fr-capital-row').getByRole('status')).toHaveText(
     'Modeled requirement covered at this venue.',
   );
   const crossVenueCapital = page
