@@ -3039,3 +3039,72 @@ Mission Control; those are outstanding integration tasks. Overall Frontier
 remains **PARTIALLY VERIFIED**, isolated, research-only, and undeployed. Next
 safe engineering work is bounded restart-safe collection and local Arena
 timeline integration, with no persistent worker launch.
+
+## Finite collection history and explicit resume — 2026-10-27 23:53 UTC
+
+Code commit **`305814b`** closes the HTTP recovery gap for the finite capture
+path. `GET /api/frontier/collection-runs?limit=20` performs a bounded,
+read-only scan, returns recent local checkpoints only after validating each
+selected run's complete hash chain, filters held venues, and does not create a
+missing journal or contact a source. The Exchanges view shows checkpoint
+identity, state, counts, source-local health, and the reason a run cannot be
+resumed.
+
+`POST /api/frontier/collect/{venue}/{run_id}/resume` is an explicit operator
+action for a single nonterminal run. The route and collector recheck source
+enablement, policy holds, pinned source config, adapter version and capability
+manifest, required capabilities, source market limit, and the API's smaller
+resume bounds before source requests or pending-capture recovery. Terminal
+runs return their existing result without another request. There is no retry
+loop, worker, timer, or automatic resume. Request counts are labeled as total
+over the run, while the returned request ceiling is explicitly per attempt.
+
+#### Verification
+
+- `tests/frontier/test_collection.py` and
+  `tests/frontier/test_collection_api.py`: **20/20 passed** in 6.15 seconds
+  pytest time / 6.71 seconds wall, **87,036 KiB peak RSS**, zero swaps. This
+  includes pause/resume, empty non-mutating history, terminal idempotence,
+  held/disabled resume rejection before requests, and changed capability
+  manifest rejection.
+- `apps/web/src/Frontier.test.tsx`: **8/8 passed** in 4.08 seconds wall,
+  **217,316 KiB peak RSS**, zero swaps. The fixture flow shows a paused run,
+  invokes resume only after a click, and removes the resume action when the
+  run is terminal.
+- Isolated Frontier Playwright case: **1/1 passed** in 6.29 seconds wall,
+  **186,140 KiB peak RSS**, zero swaps. Exchanges history made a local GET
+  reporting `network_called=false`; no collection or source-probe POST was
+  submitted automatically.
+- TypeScript, strict scoped mypy for `collection.py` and `frontier.py`, Ruff
+  check/format, ESLint, Prettier, and `git diff --check` pass. Production Vite
+  build passes in 4.93 seconds at **690,080 KiB peak RSS**, zero swaps, with
+  build output written to `/tmp/midas-frontier-build-20261028-0049`. The
+  pre-existing 544.41 kB Chart chunk advisory remains.
+- Combined Frontier and selected Arena replay/timeline/job/API regressions:
+  **358 passed, 2 failed** in 84.16 seconds, **369,092 KiB peak RSS**, zero
+  swaps. All `tests/frontier` tests passed. The two failures are existing
+  Arena supervisor tests rejected by `resource_admission_lock_busy`; the
+  shared lock was acquired during the run by existing Veritas batch PID
+  **3939942** in `D` state. It was not touched. At the 23:53 UTC recheck it
+  still held `/home/charlie/midas/data/arena/.global-admission.lock`; memory
+  PSI avg10 was **49.25% some / 42.91% full**, with **9.7 GiB available** and
+  **3.7 GiB swap in use**. Do not retry the admission-dependent cases while
+  this state persists.
+
+No live source request, protected recorder action, held capture read, Arena
+worker launch, or production change occurred. Collection remains disabled by
+default; this is fixture-backed development verification only.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Finite capture start, local run history, and explicit resume | COMPLETE AND VERIFIED | Fixture API/module tests; live source use remains pending and disabled by default. |
+| Adapter-policy and manifest revalidation | COMPLETE AND VERIFIED | Collector and API reject changed/held configurations before additional source requests. |
+| Exchanges-view history and resume | PARTIALLY VERIFIED | Component and isolated browser tests pass; no live capture or populated real-source history was available. |
+| Frontier and selected Arena regressions | PARTIALLY VERIFIED | All Frontier tests pass; two existing supervisor cases remain blocked by the host-wide external lock. |
+| Production build and browser smoke | COMPLETE AND VERIFIED | Build and isolated browser case pass for `305814b`; no production deployment. |
+| Cross-venue live relationships/economics and deployment | DEFERRED | No genuine cross-venue observation was established; protected source policy and separate deployment review remain. |
+
+Frontier remains isolated, research-only, undeployed, and **PARTIALLY VERIFIED**.
+Next safe work is offline acceptance and documentation; avoid further
+admission-dependent jobs until the Veritas batch releases the shared lock and
+fresh resource measurements support another bounded run.

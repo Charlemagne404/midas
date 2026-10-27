@@ -4661,3 +4661,50 @@ two blocked tests and latest-revision build/browser checks. Continue with
 offline collection history/recovery integration or fixture-backed acceptance;
 do not start unattended collection or contact a venue merely to populate test
 data.
+
+## Finite collection history and resume follow-up — 2026-10-27 23:53 UTC
+
+Code commit `305814b` adds operator recovery for finite collection. The API
+lists at most 20 recent run checkpoints from the separate collection journal,
+verifies selected run hash chains, filters held venues, and reads without
+creating a missing journal or contacting a source. The Exchanges workspace
+shows run state, checkpoint digest, counts, health scope, and resume
+eligibility.
+
+Resume requires an explicit request. Both the API and collector revalidate
+source enablement, public-probe configuration, policy holds, pinned source
+configuration, adapter version and capability manifest, required
+capabilities, market limits, and request bounds before additional source
+work. Terminal runs return their stored result without requests. No automatic
+resume, background worker, or retry loop was added. Request accounting
+distinguishes total requests over the run from the ceiling for one attempt.
+
+The focused collection module/API tests pass **20/20** (6.15 seconds pytest
+time, 87,036 KiB peak RSS, zero swaps); the Frontier component suite passes
+**8/8**, the isolated browser smoke passes **1/1**, and TypeScript, strict
+scoped mypy, Ruff, ESLint, Prettier, and the production Vite build pass. The
+build used `/tmp/midas-frontier-build-20261028-0049`, reached 690,080 KiB peak
+RSS with zero swaps, and retains the existing 544.41 kB Chart chunk advisory.
+The combined Frontier and selected Arena regression passes **358** cases but
+has **two existing Arena supervisor test failures** because a Veritas batch
+held the shared resource admission lock; all Frontier tests passed in that
+run. PID 3939942 was in `D` state at the 23:53 UTC recheck and was left
+untouched. PSI avg10 had risen to 49.25% `some` / 42.91% `full`; no retry was
+started.
+
+No exchange API, held source capture, protected Reality service, Arena worker,
+or production deployment was used. This fixture and isolated-browser evidence
+establishes no genuine multi-venue observation or economic opportunity.
+
+| Component | Status | Boundary |
+| --- | --- | --- |
+| Finite collection history and explicit resume API | COMPLETE AND VERIFIED | Fixture-backed; live source capture remains pending and disabled by default. |
+| Policy, config, and capability revalidation | COMPLETE AND VERIFIED | Invalid/held resumes fail before new source requests or pending-capture recovery. |
+| Exchanges history/resume UI | PARTIALLY VERIFIED | Component and isolated browser checks pass; no populated genuine-source history exists. |
+| Selected Frontier/Arena regressions | PARTIALLY VERIFIED | All Frontier tests pass; two Arena job-supervisor cases remain denied by the external shared lock. |
+| Latest production frontend build | COMPLETE AND VERIFIED | Temporary build output only; no deployment. |
+| Genuine cross-venue economics and production transition | DEFERRED | No live cross-venue result established; source policy and separate deployment review remain. |
+
+See the [mission ledger](FRONTIER_MISSION_LEDGER.md) for reproducible commands,
+resource measurements, and the next safe action. Frontier remains isolated,
+research-only, undeployed, and **PARTIALLY VERIFIED**.

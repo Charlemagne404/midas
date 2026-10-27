@@ -1129,3 +1129,29 @@ configuration remains disabled by default and existing source-use holds remain
 in force. The endpoint/UI integration is fixture-verified; live collection and
 the populated browser flow remain pending. Frontier is isolated,
 research-only, **PARTIALLY VERIFIED**, and undeployed.
+
+## Frontier collection recovery — 2026-10-27 23:53 UTC
+
+Commit `305814b` adds a bounded read-only history endpoint and explicit
+resume action for finite source-collection checkpoints. API and collector
+revalidate source-use policy, enabled/public-probe configuration, adapter and
+capability manifests, current source limits, and request bounds before
+resuming. The Exchanges workspace exposes recent verified checkpoints and a
+resume button only for eligible nonterminal runs; no automatic retries or
+background collection were added.
+
+The focused collection tests pass **20/20**, Frontier UI tests **8/8**, and an
+isolated browser smoke **1/1**. TypeScript, scoped strict mypy, Ruff,
+ESLint/Prettier, and the Vite production build pass. All `tests/frontier`
+cases passed in a broader selected regression (**358 passed, 2 failed**); the
+two failures are Arena supervisor tests denied by a new external Veritas
+batch holding the shared resource lock. At the 23:53 UTC sample that batch
+(PID 3939942, `D` state) remained the lock holder; PSI avg10 was 49.25% `some`
+and 42.91% `full`, with 9.7 GiB available and 3.7 GiB swap in use. No retry
+was attempted.
+
+No source API, held capture, Reality service, Arena worker, or production
+deployment was accessed. Current Frontier status remains isolated,
+research-only, undeployed, and **PARTIALLY VERIFIED**. See the [mission
+ledger](frontier/FRONTIER_MISSION_LEDGER.md) for exact measurements and
+continuation guidance.
