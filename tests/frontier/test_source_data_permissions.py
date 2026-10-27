@@ -7,7 +7,17 @@ import json
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from midas.frontier.economics import ExecutionScenario
-from midas.frontier.models import MarketBatch, RawObservation, TradeBatch, Venue
+from midas.frontier.models import (
+    FrontierMarket,
+    MarketBatch,
+    MarketInstrument,
+    MarketKind,
+    PayoffSpec,
+    QuantityUnit,
+    RawObservation,
+    TradeBatch,
+    Venue,
+)
 from midas.frontier.relationships import propose_relationships
 from midas.frontier.replay import deterministic_replay, paired_deterministic_replay
 
@@ -101,6 +111,93 @@ def test_whitespace_permission_references_never_unlock_live_probes():
     assert settings.frontier_kraken_probe_allowed is False
 
 
+def test_coinbase_terms_revision_requires_exact_opt_in_and_separate_probe_flag(tmp_path):
+    from apps.api.config import COINBASE_MARKET_DATA_TERMS_VERSION
+
+    default = Settings(
+        _env_file=None,
+        database_url=f"sqlite+aiosqlite:///{tmp_path / 'midas.db'}",
+        frontier_root=tmp_path / "frontier",
+        arena_root=tmp_path / "arena",
+        frontier_coinbase_public_probe_enabled=True,
+        frontier_coinbase_market_data_terms_version_acknowledged=None,
+    )
+    assert default.frontier_coinbase_terms_acknowledged is False
+    app = create_app(default)
+    try:
+        api = FastAPI()
+        api.include_router(frontier_router(app.state.frontier_store, app.state.frontier_registry))
+        with TestClient(api) as client:
+            items = {
+                item["venue"]: item for item in client.get("/api/frontier/sources").json()["items"]
+            }
+            source = items[Venue.COINBASE_EXCHANGE.value]
+            assert source["public_probe_enabled"] is False
+            assert "acknowledges" in source["probe_policy_block_reason"]
+            response = client.post("/api/frontier/probe/coinbase_exchange", json={})
+            assert response.status_code == 409
+            assert response.json()["detail"] == source["probe_policy_block_reason"]
+            assert (
+                app.state.frontier_registry.get(Venue.COINBASE_EXCHANGE).transport.request_count
+                == 0
+            )
+    finally:
+        asyncio.run(app.state.frontier_registry.aclose())
+
+    arbitrary = Settings(
+        _env_file=None,
+        frontier_coinbase_market_data_terms_version_acknowledged="2026-08-06",
+        frontier_coinbase_public_probe_enabled=True,
+    )
+    assert arbitrary.frontier_coinbase_terms_acknowledged is False
+    whitespace_acknowledgement = Settings(
+        _env_file=None,
+        frontier_coinbase_market_data_terms_version_acknowledged=(
+            f" {COINBASE_MARKET_DATA_TERMS_VERSION} "
+        ),
+        frontier_coinbase_public_probe_enabled=True,
+    )
+    assert whitespace_acknowledgement.frontier_coinbase_terms_acknowledged is False
+
+    acknowledged_but_probe_disabled = Settings(
+        _env_file=None,
+        frontier_coinbase_public_probe_enabled=False,
+        frontier_coinbase_market_data_terms_version_acknowledged=COINBASE_MARKET_DATA_TERMS_VERSION,
+    )
+    assert acknowledged_but_probe_disabled.frontier_coinbase_terms_acknowledged is True
+    acknowledged_app = create_app(acknowledged_but_probe_disabled)
+    try:
+        config = acknowledged_app.state.frontier_registry.get(Venue.COINBASE_EXCHANGE).config
+        assert config.probe_policy_block_reason is None
+        assert config.market_data_terms_version_acknowledged == COINBASE_MARKET_DATA_TERMS_VERSION
+        assert config.enabled is False
+        assert config.live_public_probe_enabled is False
+        assert (
+            acknowledged_app.state.frontier_registry.get(
+                Venue.COINBASE_EXCHANGE
+            ).transport.request_count
+            == 0
+        )
+    finally:
+        asyncio.run(acknowledged_app.state.frontier_registry.aclose())
+
+    explicitly_enabled = Settings(
+        _env_file=None,
+        frontier_coinbase_market_data_terms_version_acknowledged=COINBASE_MARKET_DATA_TERMS_VERSION,
+        frontier_coinbase_public_probe_enabled=True,
+    )
+    assert explicitly_enabled.frontier_coinbase_terms_acknowledged is True
+    opted_in_app = create_app(explicitly_enabled)
+    try:
+        adapter = opted_in_app.state.frontier_registry.get(Venue.COINBASE_EXCHANGE)
+        assert adapter.config.enabled is True
+        assert adapter.config.live_public_probe_enabled is True
+        assert adapter.config.probe_policy_block_reason is None
+        assert adapter.transport.request_count == 0
+    finally:
+        asyncio.run(opted_in_app.state.frontier_registry.aclose())
+
+
 def test_held_source_observations_relationships_and_replays_are_quarantined(tmp_path):
     settings = Settings(
         _env_file=None,
@@ -109,14 +206,33 @@ def test_held_source_observations_relationships_and_replays_are_quarantined(tmp_
         arena_root=tmp_path / "arena",
         frontier_kalshi_research_authorization_ref="arbitrary-reference",
         frontier_kraken_market_data_permission_ref="arbitrary-reference",
+        frontier_coinbase_market_data_terms_version_acknowledged=None,
     )
     app = create_app(settings)
     store = app.state.frontier_store
     held = market(Venue.KALSHI, "held-fixture")
+    coinbase_data = market(Venue.COINBASE_EXCHANGE, "BTC-USD").model_dump()
+    coinbase_data.update(
+        market_kind=MarketKind.SPOT_PAIR,
+        instruments=(
+            MarketInstrument(
+                native_instrument_id="BTC-USD",
+                label="BTC/USD",
+                quantity_unit=QuantityUnit.BASE_ASSET,
+                price_currency="USD",
+            ),
+        ),
+        payoff=PayoffSpec(verification_basis="spot is not a finite event payout"),
+        base_asset="BTC",
+        quote_asset="USD",
+        settlement_asset=None,
+        settlement_asset_identity=None,
+    )
+    coinbase_held = FrontierMarket.model_validate(coinbase_data)
     available = market(Venue.POLYMARKET, "available-fixture")
     saved: dict[Venue, tuple[object, str, str]] = {}
 
-    for value in (held, available):
+    for value in (held, coinbase_held, available):
         market_body = json.dumps({"fixture": "old market source evidence", "venue": value.venue})
         market_id = store.append_observation(
             RawObservation(
@@ -168,6 +284,7 @@ def test_held_source_observations_relationships_and_replays_are_quarantined(tmp_
         saved[value.venue] = (actual_market, market_id, saved_book_id)
 
     (held_market, held_market_id, _) = saved[Venue.KALSHI]
+    (_, coinbase_market_id, _) = saved[Venue.COINBASE_EXCHANGE]
     (available_market, available_market_id, _) = saved[Venue.POLYMARKET]
     relationship = propose_relationships(
         (held_market, available_market),
@@ -214,6 +331,7 @@ def test_held_source_observations_relationships_and_replays_are_quarantined(tmp_
             assert listed_markets.status_code == 200
             assert [item["venue"] for item in listed_markets.json()["items"]] == ["polymarket"]
             assert client.get("/api/frontier/markets?venue=kalshi").status_code == 409
+            assert client.get("/api/frontier/markets?venue=coinbase_exchange").status_code == 409
 
             listed_books = client.get("/api/frontier/books")
             assert listed_books.status_code == 200
@@ -225,6 +343,7 @@ def test_held_source_observations_relationships_and_replays_are_quarantined(tmp_
             assert listed_trades.json()["items"] == []
 
             assert client.get(f"/api/frontier/observations/{held_market_id}").status_code == 409
+            assert client.get(f"/api/frontier/observations/{coinbase_market_id}").status_code == 409
             assert client.get("/api/frontier/relationships").json()["items"] == []
             held_history = client.get(
                 f"/api/frontier/relationships/{relationship.relationship_id}/reviews"

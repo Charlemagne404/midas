@@ -347,6 +347,17 @@
   border-color: #58462c;
   background: #282116;
 }
+.fr-venue-pill.coinbase_exchange i {
+  color: #79aef7;
+  border-color: #304e79;
+  background: #182438;
+}
+.fr-source-terms-note {
+  display: block;
+  margin-top: 7px;
+  color: #9ba8b7;
+  line-height: 1.5;
+}
 .fr-trade-capture {
   display: grid;
   grid-template-columns: minmax(130px, 0.55fr) minmax(220px, 1.45fr) auto;
@@ -1393,7 +1404,7 @@
 .fr-network-svg {
   display: block;
   width: 100%;
-  min-width: 780px;
+  min-width: 960px;
 }
 .fr-network-column {
   fill: #697789;
@@ -1453,6 +1464,9 @@
 }
 .fr-network-node.kraken circle {
   fill: #d5ad63;
+}
+.fr-network-node.coinbase_exchange circle {
+  fill: #79aef7;
 }
 .fr-network-venue {
   fill: #758295;

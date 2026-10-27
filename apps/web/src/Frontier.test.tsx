@@ -19,11 +19,11 @@ afterEach(() => {
 
 it('renders recorded-evidence empty states and never probes a source automatically', async () => {
   const source = {
-    venue: 'kalshi',
-    adapter_version: 'frontier-polymarket-1',
+    venue: 'coinbase_exchange',
+    adapter_version: 'frontier-coinbase-exchange-spot-1',
     public_probe_enabled: false,
     probe_policy_block_reason:
-      'Live Kalshi research capture is blocked until written permission is recorded.',
+      'Coinbase Exchange source use remains held until the operator acknowledges the reviewed Market Data Terms version None.',
     capabilities: [
       {
         capability: 'market_discovery',
@@ -116,7 +116,9 @@ it('renders recorded-evidence empty states and never probes a source automatical
   expect(
     await screen.findByText(/Live capture and stored records are held from research use/),
   ).toBeInTheDocument();
-  expect(screen.getAllByRole('button', { name: 'Public probe disabled' })).toHaveLength(2);
+  expect(screen.getByRole('heading', { name: 'Coinbase Exchange Spot' })).toBeInTheDocument();
+  expect(screen.getByText(/Market Data Terms version 2026-08-07/)).toBeInTheDocument();
+  expect(screen.getAllByRole('button', { name: 'Public probe disabled' })).toHaveLength(1);
   screen
     .getAllByRole('button', { name: 'Public probe disabled' })
     .forEach((button) => expect(button).toBeDisabled());

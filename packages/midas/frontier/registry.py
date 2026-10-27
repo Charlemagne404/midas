@@ -4,7 +4,12 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 
-from midas.frontier.adapters import KalshiAdapter, KrakenSpotAdapter, PolymarketAdapter
+from midas.frontier.adapters import (
+    CoinbaseSpotAdapter,
+    KalshiAdapter,
+    KrakenSpotAdapter,
+    PolymarketAdapter,
+)
 from midas.frontier.adapters.base import ExchangeAdapter
 from midas.frontier.models import AdapterCapabilities, SourceHealth, Venue
 
@@ -40,4 +45,6 @@ class AdapterRegistry:
 
 def default_registry() -> AdapterRegistry:
     """Return all implemented adapters disabled by default; no startup probe occurs."""
-    return AdapterRegistry((PolymarketAdapter(), KalshiAdapter(), KrakenSpotAdapter()))
+    return AdapterRegistry(
+        (PolymarketAdapter(), KalshiAdapter(), KrakenSpotAdapter(), CoinbaseSpotAdapter())
+    )

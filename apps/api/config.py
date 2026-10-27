@@ -2,6 +2,7 @@ from decimal import Decimal
 from pathlib import Path
 from typing import Literal
 
+from midas.frontier.models import COINBASE_MARKET_DATA_TERMS_VERSION
 from midas.paper.broker import AccountConfig
 from midas.risk.engine import Limits
 from pydantic import Field
@@ -39,6 +40,11 @@ class Settings(BaseSettings):
     frontier_kraken_public_probe_enabled: bool = False
     frontier_kraken_market_data_permission_ref: str | None = Field(default=None, max_length=300)
     frontier_kraken_pairs: str = "XBTUSD"
+    frontier_coinbase_public_probe_enabled: bool = False
+    frontier_coinbase_market_data_terms_version_acknowledged: str | None = Field(
+        default=None, max_length=32
+    )
+    frontier_coinbase_products: str = "BTC-USD"
 
     @property
     def frontier_kalshi_probe_allowed(self) -> bool:
@@ -49,3 +55,12 @@ class Settings(BaseSettings):
     def frontier_kraken_probe_allowed(self) -> bool:
         """References are descriptive; no validated Kraken permission loader exists yet."""
         return False
+
+    @property
+    def frontier_coinbase_terms_acknowledged(self) -> bool:
+        """Require a deliberate acknowledgement of the reviewed exact terms revision."""
+        return (
+            self.frontier_coinbase_market_data_terms_version_acknowledged is not None
+            and self.frontier_coinbase_market_data_terms_version_acknowledged
+            == COINBASE_MARKET_DATA_TERMS_VERSION
+        )

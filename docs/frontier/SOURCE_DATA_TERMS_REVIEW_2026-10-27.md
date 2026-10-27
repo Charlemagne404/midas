@@ -93,6 +93,38 @@ artifacts as to Kalshi. Direct database inspection, exports, and other paths
 outside the covered read APIs remain held. Offline fixture development may
 continue. No authenticated API key, account access, or trading capability is used.
 
+## Coinbase Exchange Spot
+
+Coinbase's official [Exchange API overview](https://docs.cdp.coinbase.com/exchange/introduction/welcome)
+documents public Market Data endpoints separately from authenticated account
+and trading operations. The [product](https://docs.cdp.coinbase.com/api-reference/exchange-api/rest-api/products/get-single-product),
+[level-2 order book](https://docs.cdp.coinbase.com/api-reference/exchange-api/rest-api/products/get-product-book),
+and [trade](https://docs.cdp.coinbase.com/api-reference/exchange-api/rest-api/products/get-product-trades)
+references describe the read paths used by the offline-fixture adapter. The
+documented REST IP limit is 10 requests/second with a burst allowance of 15;
+Frontier's adapter transport is configured to a lower local maximum and does
+not paginate automatically.
+
+The separate official [Market Data Terms](https://www.coinbase.com/legal/market_data)
+were marked last updated 7 August 2026 when reviewed on 27 October 2026. They
+provide a limited research-use license but also impose organization,
+redistribution, derived-data, and other use restrictions. Their application to
+this user's organization, jurisdiction, dashboard display, retained records,
+and planned research distribution has not been independently resolved. The
+technical fact that an endpoint is public does not waive those terms.
+
+The Coinbase adapter is implemented against synthetic local responses and has
+not queried Coinbase. By default it is held from Frontier research, replay, and
+capture. An exact acknowledged version setting is required to lift the data-use
+hold, and a separate public-probe flag is required for any network request.
+The exact-version field records an operator's configuration acknowledgement;
+the adapter config also fails closed if its generic hold reason is cleared
+without that exact version. This is not an independent legal or
+regional-eligibility validator. No data has been acquired or stored by this
+integration. Spot observations, if separately authorized, remain contextual
+evidence and cannot be treated as prediction contract payoff or direct
+arbitrage.
+
 ## Polymarket
 
 Polymarket Institute's official [research data guide](https://institute.polymarket.com/data)
@@ -122,6 +154,17 @@ source records are not deleted or rewritten. Any future unhold requires a
 validated permission mechanism and an explicit source-use review; setting the
 existing flags or adding a reference is insufficient. Direct database access
 remains outside the route filter.
+
+Coinbase differs in that its source-specific gate can be opened only when the
+operator sets `MIDAS_FRONTIER_COINBASE_MARKET_DATA_TERMS_VERSION_ACKNOWLEDGED`
+to exactly `2026-08-07`. `MIDAS_FRONTIER_COINBASE_PUBLIC_PROBE_ENABLED` is a
+separate network switch. With the terms version absent, stale, or arbitrary,
+the source is held and its observations/derived evidence are quarantined by the
+same application route filters; a probe is rejected before any request. This
+local setting does not validate that the terms permit a particular
+organization, region, retention practice, or display. Re-review the linked
+terms before enabling. At this review date no Coinbase request or live capture
+was made.
 
 ## Read-quarantine verification — 2026-10-27
 

@@ -12,7 +12,7 @@ from midas.analytics.research import feasibility
 from midas.simulation.scenarios import SCENARIOS, catalog
 from pydantic import BaseModel, ConfigDict, Field
 
-from apps.api.config import Settings
+from apps.api.config import COINBASE_MARKET_DATA_TERMS_VERSION, Settings
 from apps.api.service import Service
 
 structlog.configure(
@@ -26,7 +26,13 @@ structlog.configure(
 def create_app(settings: Settings | None = None) -> FastAPI:
     config = settings or Settings()
     service = Service(config)
-    from midas.frontier.adapters import KalshiAdapter, KrakenSpotAdapter, PolymarketAdapter
+    from midas.frontier.adapters import (
+        CoinbaseSpotAdapter,
+        KalshiAdapter,
+        KrakenSpotAdapter,
+        PolymarketAdapter,
+    )
+    from midas.frontier.adapters.coinbase import CoinbaseSpotConfig
     from midas.frontier.adapters.kraken import KrakenSpotConfig
     from midas.frontier.models import AdapterConfig
     from midas.frontier.registry import AdapterRegistry
@@ -34,6 +40,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     kalshi_probe_allowed = config.frontier_kalshi_probe_allowed
     kraken_probe_allowed = config.frontier_kraken_probe_allowed
+    coinbase_terms_acknowledged = config.frontier_coinbase_terms_acknowledged
 
     def source_permission_block_reason(venue: str, reference: str | None) -> str:
         if reference and reference.strip():
@@ -51,6 +58,15 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
     kraken_probe_block_reason = source_permission_block_reason(
         "Kraken", config.frontier_kraken_market_data_permission_ref
+    )
+    coinbase_probe_block_reason = (
+        None
+        if coinbase_terms_acknowledged
+        else (
+            "Coinbase Exchange source use remains held until the operator acknowledges "
+            f"the reviewed Market Data Terms version {COINBASE_MARKET_DATA_TERMS_VERSION}; "
+            "the configured version does not match and no Coinbase requests have been made."
+        )
     )
 
     frontier_registry = AdapterRegistry(
@@ -74,6 +90,23 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                     live_public_probe_enabled=kraken_probe_allowed,
                     probe_policy_block_reason=kraken_probe_block_reason,
                     pairs=tuple(config.frontier_kraken_pairs.split(",")),
+                )
+            ),
+            CoinbaseSpotAdapter(
+                CoinbaseSpotConfig(
+                    enabled=(
+                        coinbase_terms_acknowledged
+                        and config.frontier_coinbase_public_probe_enabled
+                    ),
+                    live_public_probe_enabled=(
+                        coinbase_terms_acknowledged
+                        and config.frontier_coinbase_public_probe_enabled
+                    ),
+                    probe_policy_block_reason=coinbase_probe_block_reason,
+                    market_data_terms_version_acknowledged=(
+                        config.frontier_coinbase_market_data_terms_version_acknowledged
+                    ),
+                    products=tuple(config.frontier_coinbase_products.split(",")),
                 )
             ),
         )
@@ -190,6 +223,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 for venue, reason in (
                     ("kalshi", kalshi_probe_block_reason),
                     ("kraken", kraken_probe_block_reason),
+                    ("coinbase_exchange", coinbase_probe_block_reason),
                 )
                 if reason
             ),

@@ -95,6 +95,7 @@ only the intended venue with one of:
 MIDAS_FRONTIER_POLYMARKET_PUBLIC_PROBE_ENABLED=true
 MIDAS_FRONTIER_KALSHI_PUBLIC_PROBE_ENABLED=true
 MIDAS_FRONTIER_KRAKEN_PUBLIC_PROBE_ENABLED=true
+MIDAS_FRONTIER_COINBASE_PUBLIC_PROBE_ENABLED=true
 ```
 
 Kraken Spot discovery uses the comma-separated configured pair allowlist
@@ -106,6 +107,17 @@ main API can enable a live probe. The reference must point to a separately
 reviewed source permission/terms record; Frontier does not validate the record.
 The current review leaves both Kalshi and Kraken live probes blocked. See the
 [source-data terms review](frontier/SOURCE_DATA_TERMS_REVIEW_2026-10-27.md).
+Coinbase Exchange uses an explicit product allowlist in
+`MIDAS_FRONTIER_COINBASE_PRODUCTS` (default `BTC-USD`). Its Market Data Terms
+must be acknowledged by setting
+`MIDAS_FRONTIER_COINBASE_MARKET_DATA_TERMS_VERSION_ACKNOWLEDGED=2026-08-07`;
+that exact-version acknowledgement and the probe flag are separate controls.
+The version gate does not validate organization, regional, retention, or
+redistribution scope. Coinbase spot remains contextual evidence, never an
+event-contract payoff, and no Coinbase source request was made during the
+current implementation checkpoint. The source-specific adapter config also
+rejects clearing the terms hold without the exact version. Re-review the terms
+before enabling the network switch.
 These controls do not enable account access, order entry, or credential
 handling. While the reference is absent, the API also filters held venues from
 stored market, graph, replay, candidate, and comparison reads. Arena replay

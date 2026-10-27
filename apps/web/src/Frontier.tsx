@@ -23,7 +23,7 @@ import {
 import { api } from './api';
 import './frontier.css';
 
-type Venue = 'polymarket' | 'kalshi' | 'kraken';
+type Venue = 'polymarket' | 'kalshi' | 'kraken' | 'coinbase_exchange';
 type Source = {
   venue: Venue;
   adapter_version: string;
@@ -809,7 +809,12 @@ const settlementIdentityLabel = (identity: SettlementAssetIdentity | null | unde
   return `${kind}:${code}:${encodeURIComponent(networkId)}:${encodeURIComponent(assetReference)}`;
 };
 const venueLabel = (value: string) =>
-  ({ polymarket: 'Polymarket', kalshi: 'Kalshi', kraken: 'Kraken Spot' })[value] ?? value;
+  ({
+    polymarket: 'Polymarket',
+    kalshi: 'Kalshi',
+    kraken: 'Kraken Spot',
+    coinbase_exchange: 'Coinbase Exchange Spot',
+  })[value] ?? value;
 
 function StateBadge({ state }: { state: string }) {
   const tone = ['HEALTHY', 'PASS', 'VERIFIED'].includes(state.toUpperCase())
@@ -875,7 +880,7 @@ function RelationshipGraph({
   onSelect: (relationshipId: string) => void;
 }) {
   const graph = useMemo(() => {
-    const venueOrder = ['polymarket', 'kalshi', 'kraken', 'unknown'];
+    const venueOrder = ['polymarket', 'kalshi', 'kraken', 'coinbase_exchange', 'unknown'];
     const ids = new Set(
       relationships.flatMap((edge) => [edge.left_market_id, edge.right_market_id]),
     );
@@ -887,10 +892,11 @@ function RelationshipGraph({
       groups.set(venue, group);
     }
     const centers: Record<string, number> = {
-      polymarket: 170,
-      kalshi: 500,
-      kraken: 830,
-      unknown: 500,
+      polymarket: 150,
+      kalshi: 450,
+      kraken: 750,
+      coinbase_exchange: 1050,
+      unknown: 600,
     };
     const nodes = new Map<string, GraphPoint>();
     let maxRows = 0;
@@ -925,6 +931,7 @@ function RelationshipGraph({
       polymarket: 'POLYMARKET',
       kalshi: 'KALSHI',
       kraken: 'KRAKEN SPOT',
+      coinbase_exchange: 'COINBASE SPOT',
       unknown: 'NOT IN LOADED WINDOW',
     })[venue] ?? venue.toUpperCase();
 
@@ -942,15 +949,16 @@ function RelationshipGraph({
       <div className="fr-network-scroll">
         <svg
           className="fr-network-svg"
-          viewBox={`0 0 1000 ${graph.height}`}
+          viewBox={`0 0 1200 ${graph.height}`}
           height={graph.height}
           role="group"
           aria-label={`Relationship network showing ${relationships.length} bounded market relationships`}
         >
           {[
-            ['polymarket', 170],
-            ['kalshi', 500],
-            ['kraken', 830],
+            ['polymarket', 150],
+            ['kalshi', 450],
+            ['kraken', 750],
+            ['coinbase_exchange', 1050],
           ].map(([venue, x]) => (
             <text
               key={String(venue)}
@@ -1688,7 +1696,7 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
       api('/frontier/probe/' + venue, {
         method: 'POST',
         body: JSON.stringify({
-          limit: venue === 'kraken' ? 1 : 10,
+          limit: venue === 'kraken' || venue === 'coinbase_exchange' ? 1 : 10,
           include_one_book: includeOneBook,
           include_recent_trades: true,
           trade_limit: 10,
@@ -1822,7 +1830,10 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
     for (const [venue, value] of Object.entries(additionalVenueDelay)) {
       const milliseconds = Number(value);
       if (
-        (venue === 'polymarket' || venue === 'kalshi' || venue === 'kraken') &&
+        (venue === 'polymarket' ||
+          venue === 'kalshi' ||
+          venue === 'kraken' ||
+          venue === 'coinbase_exchange') &&
         Number.isInteger(milliseconds) &&
         milliseconds > 0
       ) {
@@ -3382,7 +3393,7 @@ function MarketDetails({
             )}
         </div>
       ) : null}
-      {market.venue !== 'kraken' && (
+      {market.market_kind !== 'spot_pair' && (
         <div className="fr-fee-metadata-panel">
           <div>
             <strong>Public event context</strong>
@@ -3897,11 +3908,17 @@ function SourcesView({
               <h2>{venueLabel(source.venue)}</h2>
               <code>{source.adapter_version}</code>
               <p className="fr-copy">
-                {source.venue === 'kraken'
+                {source.venue === 'kraken' || source.venue === 'coinbase_exchange'
                   ? 'Spot instruments provide context for event research. A spot price is not a prediction-contract payoff.'
                   : source.venue === 'kalshi'
                     ? 'Public event metadata and order books are retained with native rules and multivariate-event markers.'
                     : 'The existing Polymarket schema is adapted while preserving its legacy source identifiers and fee validation.'}
+                {source.venue === 'coinbase_exchange' && (
+                  <small className="fr-source-terms-note">
+                    Data use is gated by acknowledgement of Market Data Terms version 2026-08-07;
+                    maker-side trade fields are not interpreted as aggressor-side.
+                  </small>
+                )}
               </p>
               {source.probe_policy_block_reason && (
                 <div className="fr-source-policy-warning" role="note">
@@ -4076,7 +4093,14 @@ function SourcesView({
 }
 
 function VenuePill({ venue }: { venue: string }) {
-  const icon = venue === 'kraken' ? 'K' : venue === 'kalshi' ? 'Ka' : 'P';
+  const icon =
+    venue === 'coinbase_exchange'
+      ? 'C'
+      : venue === 'kraken'
+        ? 'K'
+        : venue === 'kalshi'
+          ? 'Ka'
+          : 'P';
   return (
     <span className={`fr-venue-pill ${venue}`}>
       <i>{icon}</i>

@@ -12,7 +12,7 @@ as mutable Frontier storage.
 | Canonical contracts | `models.py` | Venue, instrument kind, payoff, resolution, fee, quantity, provenance, book, and venue-declared event-group models. |
 | Adapter protocol and lifecycle | `adapters/base.py` | Capability declarations, local health, response capture, and common read-only adapter contract. |
 | Bounded HTTP transport | `adapters/transport.py` | HTTPS GET only, fixed host allowlist, bounded timeout/retry/rate/response sizes, no redirects or credentials. |
-| Public venue adapters | `adapters/polymarket.py`, `kalshi.py`, `kraken.py` | Source-specific normalization and native metadata preservation. |
+| Public venue adapters | `adapters/polymarket.py`, `kalshi.py`, `kraken.py`, `coinbase.py` | Source-specific normalization and native metadata preservation. Coinbase Exchange adds a bounded explicit-product spot source with an exact-version data-terms gate. |
 | Registry | `registry.py` | Explicit capability inventory; default instances do not probe. |
 | Relationship intelligence | `relationships.py` | Deterministic indexed title and parent-event/outcome hypotheses, source-selected component references, strict payoff checks, and immutable review contracts. |
 | Candidate calculators | `economics.py` | Decimal cross-venue binary and same-market exhaustive multi-outcome all-long checks with fee, depth, freshness, timing, and scenario bounds; provenance-bound conditional Kalshi one-fill estimate; exact bounded one-sided fill sensitivity; separate instrument-bound Kalshi one-fill and one-order fee sensitivities. |
@@ -74,6 +74,40 @@ Adapter health is local state and does not probe the venue. Its
 seconds using monotonic time. The transport keeps a bounded history sized for
 its configured maximum request rate; the separate lifetime `request_count` is
 used only for per-operation request deltas.
+
+## Coinbase Exchange Spot adapter
+
+`CoinbaseSpotAdapter` supports configured product metadata, one aggregated
+level-2 book, and one public trade page. It accepts one to twenty validated
+`BASE-QUOTE` product IDs; it never enumerates the product catalog or follows
+trade cursors. REST calls are HTTPS GET only, use the fixed
+`api.exchange.coinbase.com` host, and inherit Frontier's bounded response,
+retry, timeout, and pacing limits. The level-2 endpoint returns the full
+aggregated book; the adapter parses only the requested top 1–20 levels after
+the transport's 256 KiB response bound. Coinbase's response `sequence`,
+`auction_mode`, and native trade `side` remain in the pinned raw response.
+Because the documented trade `side` describes the maker order, normalized
+`aggressor_side` stays unknown. Auction books are marked indicative. Product
+increments and minimums use exact Decimal; account-tier fees stay unknown.
+
+Products normalize to `spot_pair` with base-asset quantities and a quote-currency
+identity when the quote is a known fiat code. They have no event outcomes,
+verified payout, or settlement rule. Coinbase spot prices cannot qualify as
+event arbitrage through the payoff verifiers.
+
+Coinbase's official [Market Data Terms](https://www.coinbase.com/legal/market_data)
+were reviewed as updated 2026-08-07. The terms limit use and redistribution;
+the applicable user/organization, region, and intended research/distribution
+scope are not machine-validated by Frontier. Coinbase use is therefore held
+unless `MIDAS_FRONTIER_COINBASE_MARKET_DATA_TERMS_VERSION_ACKNOWLEDGED` exactly
+matches `2026-08-07`; an independent
+`MIDAS_FRONTIER_COINBASE_PUBLIC_PROBE_ENABLED=true` is also required to make
+source requests. Both default off. The version string is an explicit operator
+acknowledgement for this local gate, not legal advice or a general permission
+grant. `CoinbaseSpotConfig` enforces the same exact-version check, so a direct
+adapter caller cannot clear the default hold by setting the generic policy
+reason to null. Re-review current terms before any future use. The adapter is
+registered but does not probe at application startup.
 
 Polymarket adapter v3 and Kalshi adapter v8 declare
 `EVENT_MARKET_GROUPS`. Their `discover_event_markets` operations issue one bounded
@@ -358,8 +392,8 @@ does not infer a normalized BUY/SELL aggressor direction from
 
 The common model is not the lowest common denominator. A binary event contract,
 a multivariate event leg, and a spot pair retain separate instrument kinds and
-payoff constraints. In particular, Kraken spot is contextual asset evidence; it
-cannot become an event-contract payoff through matching text.
+payoff constraints. Kraken and Coinbase spot are contextual asset evidence;
+neither can become an event-contract payoff through matching text.
 
 Kalshi adapter v4 normalized the venue's `mve_selected_legs` list into bounded
 `selected_components` records carrying the selected event ticker, native market
@@ -386,7 +420,7 @@ component normalization or its payoff limitation.
 
 ## Source configurations and bounds
 
-The API creates all three adapter manifests, but the source transport is disabled
+The API creates all four adapter manifests, but the source transport is disabled
 unless its specific `MIDAS_FRONTIER_*_PUBLIC_PROBE_ENABLED` setting is true. In
 addition, Kalshi requires a non-empty
 `MIDAS_FRONTIER_KALSHI_RESEARCH_AUTHORIZATION_REF`, and Kraken requires a
@@ -399,8 +433,10 @@ one selected book snapshot. An event-group capture is a separate one-GET action
 linked to a previously recorded child market. Kalshi MVE discovery makes one
 filtered GET for one event and requests nested markets; source retries remain
 bounded by the adapter configuration.
-Kraken currently uses a configured pair allowlist, not venue-wide
-enumeration. The transport caps each response at 256 KiB, retries
+Kraken currently uses a configured pair allowlist, not venue-wide enumeration.
+Coinbase uses a configured product allowlist, not venue-wide enumeration; its
+source-use gate additionally requires exact-version operator acknowledgement,
+and the public-probe flag is separate. The transport caps each response at 256 KiB, retries
 at most twice, has a 15-second maximum timeout, limits each adapter to 5 requests
 per second, rejects redirects, and rejects hosts outside its venue allowlist.
 The API serializes probes per venue and the store defaults to 64 MiB, 50,000 raw

@@ -146,6 +146,8 @@ class PublicReadTransport:
         max_retries: int | None = None,
     ) -> HTTPObservation:
         self._validate_url(url)
+        if self.config.probe_policy_block_reason is not None:
+            raise AdapterError("SOURCE_USE_HELD", self.config.probe_policy_block_reason)
         if not self.config.enabled or not self.config.live_public_probe_enabled:
             raise AdapterError(
                 "PUBLIC_PROBE_DISABLED",

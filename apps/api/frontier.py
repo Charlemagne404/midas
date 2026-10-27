@@ -23,6 +23,7 @@ from midas.arena.frontier_replay import (
     verify_frontier_replay_job_result,
 )
 from midas.frontier.adapters.base import AdapterError, ExchangeAdapter, FailedResponseEvidence
+from midas.frontier.adapters.coinbase import CoinbaseSpotAdapter
 from midas.frontier.adapters.kraken import KrakenSpotAdapter
 from midas.frontier.capital import (
     CapitalCarryRequest,
@@ -3358,13 +3359,16 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
                             "probe_policy_block_reason",
                             None,
                         )
-                        for venue in (Venue.KALSHI, Venue.KRAKEN)
+                        for venue in (Venue.KALSHI, Venue.KRAKEN, Venue.COINBASE_EXCHANGE)
+                        if venue in {manifest.venue for manifest in registry.capability_manifests()}
                     )
                     else "NOT_ESTABLISHED",
                     "detail": (
                         "Kalshi and Kraken research use remains blocked because Frontier has no "
                         "validated permission/terms-review loader. A configured reference "
-                        "string is descriptive and does not establish permission."
+                        "string is descriptive and does not establish permission. Coinbase "
+                        "Exchange stored/live research use additionally requires an exact current "
+                        "Market Data Terms acknowledgement; spot prices remain contextual evidence."
                     ),
                 },
                 {
@@ -3526,6 +3530,8 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
                 maximum_discovery_requests = (
                     min(request.limit, len(adapter.kraken_config.pairs))
                     if isinstance(adapter, KrakenSpotAdapter)
+                    else min(request.limit, len(adapter.coinbase_config.products))
+                    if isinstance(adapter, CoinbaseSpotAdapter)
                     else 1
                 )
                 maximum_http_calls = (

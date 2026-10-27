@@ -892,21 +892,24 @@ def test_payout_currency_must_match_settlement_asset_without_valuation_bridge():
     assert "no valuation bridge is modeled" in multi_candidate.reasons[0]
 
 
-def test_spot_market_cannot_be_verified_as_prediction_contract():
-    template = market(Venue.KRAKEN, "XBTUSD")
+@pytest.mark.parametrize("venue", (Venue.KRAKEN, Venue.COINBASE_EXCHANGE))
+def test_spot_market_cannot_be_verified_as_prediction_contract(venue):
+    pair = "XBTUSD" if venue == Venue.KRAKEN else "BTC-USD"
+    base_asset = "XBT" if venue == Venue.KRAKEN else "BTC"
+    template = market(venue, pair)
     data = template.model_dump()
     data.update(
         market_kind=MarketKind.SPOT_PAIR,
         instruments=(
             MarketInstrument(
-                native_instrument_id="XXBTZUSD",
-                label="XBT/USD",
+                native_instrument_id=pair,
+                label=f"{base_asset}/USD",
                 quantity_unit=QuantityUnit.BASE_ASSET,
                 price_currency="USD",
             ),
         ),
         payoff=PayoffSpec(verification_basis="spot is not a finite outcome contract"),
-        base_asset="XBT",
+        base_asset=base_asset,
         quote_asset="USD",
         settlement_asset=None,
         settlement_asset_identity=None,

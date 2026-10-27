@@ -15,6 +15,7 @@ from typing import Annotated, Any, Literal
 from pydantic import BaseModel, ConfigDict, Field, StrictBool, field_validator, model_validator
 
 D = Decimal
+COINBASE_MARKET_DATA_TERMS_VERSION = "2026-08-07"
 Nonnegative = Annotated[Decimal, Field(ge=0, max_digits=36, decimal_places=18, allow_inf_nan=False)]
 ExactNonnegative = Annotated[Decimal, Field(ge=0, allow_inf_nan=False)]
 SettlementScalar = Annotated[
@@ -35,6 +36,7 @@ class Venue(StrEnum):
     POLYMARKET = "polymarket"
     KALSHI = "kalshi"
     KRAKEN = "kraken"
+    COINBASE_EXCHANGE = "coinbase_exchange"
 
 
 class MarketKind(StrEnum):

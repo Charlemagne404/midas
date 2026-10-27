@@ -61,6 +61,19 @@ tests do not establish source permission or live-source validation. Preserved
 source files were not used or changed. See the
 [source-data terms review](SOURCE_DATA_TERMS_REVIEW_2026-10-27.md) for details.
 
+Coinbase Exchange Spot has a separate explicit product allowlist
+(`MIDAS_FRONTIER_COINBASE_PRODUCTS`, default `BTC-USD`). Its source-use gate is
+held unless the operator acknowledges the reviewed Market Data Terms version
+exactly with `MIDAS_FRONTIER_COINBASE_MARKET_DATA_TERMS_VERSION_ACKNOWLEDGED=2026-08-07`;
+network capture also requires
+`MIDAS_FRONTIER_COINBASE_PUBLIC_PROBE_ENABLED=true`. These are configuration
+controls, not a legal or regional-eligibility validator. With no exact-version
+acknowledgement, Frontier rejects Coinbase probes before network access and
+quarantines Coinbase source records from application research/replay routes.
+The adapter configuration itself also rejects attempts to clear this hold
+without the exact acknowledged version.
+Coinbase fixture tests do not establish live validation or permission.
+
 Cross-venue observations have independent clocks and freshness guarantees.
 Different receipt times or a shared local timestamp do not prove simultaneous
 availability, fills, legal access, or transferability. Preserve source and
