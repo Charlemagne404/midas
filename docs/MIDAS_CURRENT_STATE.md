@@ -262,3 +262,24 @@ leg is missing a quote currency. Its regression case is committed but was not
 run because memory PSI remained high at 13:18 UTC; the earlier component and
 browser results predate this fix. The focused component test and typecheck
 remain pending a safer host sample.
+
+## Frontier economics and API provenance checkpoint — 2026-10-27 13:28 UTC
+
+The isolated Frontier branch adds a fail-closed USD/USDC denomination guard to
+same-payoff verification, binary and multi-outcome candidate generation, and
+the independent economic audit. A focused six-test regression group passed.
+The Polymarket v2 trade-page and generic market/book/trade probe now preserve
+raw response captures drained before lineage checks; already persisted earlier
+captures are removed from the pending failure set to avoid duplicates. Four
+focused API tests passed, including byte/hash readback from temporary stores.
+Ruff check and formatting passed for the changed code. These checks used
+fixtures and mock HTTP responses, not live exchange calls.
+
+At the latest resource sample (`13:28:55Z`), host memory PSI was 39.81%
+(`some`) / 34.86% (`full`) over `avg10`, with 9.1 GB available RAM and about
+553 MiB swap free. Broader test suites, the Frontier production build, and the
+UI typecheck were not run. The earlier interrupted production build remains
+unverified; no production service or historical evidence changed. See the
+[Frontier ledger](frontier/FRONTIER_MISSION_LEDGER.md),
+[engineering report](frontier/FRONTIER_ENGINEERING_REPORT.md), and
+[operations guide](frontier/FRONTIER_OPERATIONS.md).

@@ -299,7 +299,14 @@ or mixed quote currency disables comparison, and unknown fees leave the fee
 amount unresolved rather than allowing a sufficient-funds claim. These inputs
 do not inspect real accounts, collateral, transfers, or settlement duration.
 Focused coverage checks exact decimal shortfalls, unresolved fees, venue
-fragmentation, and responsive layout.
+fragmentation, and responsive layout. The backend also rejects verified payout
+denominations that differ from the recorded settlement asset unless a valuation
+bridge is implemented; candidate and independent-audit paths repeat the guard.
+
+Keep Frontier experiments in a temporary store and use the bounded probe gates
+described by the [Frontier operations guide](frontier/FRONTIER_OPERATIONS.md).
+When a probe returns diagnostic observation IDs, inspect the stored raw hash and
+normalized failure record before changing an adapter.
 
 `POST /api/frontier/arena-replay` packages the latest bounded local market,
 book, and effective verified-relationship records into a content-addressed

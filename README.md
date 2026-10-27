@@ -229,7 +229,9 @@ The bounded capture can record one listing, one book, and up to ten public
 trades for one selected market; all remain timestamped, source-attributed
 research observations.
 Source contracts, replay behavior, limits, and known gaps are documented in the
-[Frontier architecture](docs/frontier/FRONTIER_ARCHITECTURE.md).
+[Frontier architecture](docs/frontier/FRONTIER_ARCHITECTURE.md). Bounded capture,
+diagnostic-observation, resource, and deployment boundaries are in the
+[Frontier operations guide](docs/frontier/FRONTIER_OPERATIONS.md).
 
 For persistent local services, interrupted campaign recovery, and remote MacBook access, see
 [recovery and service operations](docs/RELIABILITY_OPERATIONS.md).

@@ -55,9 +55,14 @@ omits the year, the child title can supply it. Such edges remain `HYPOTHESIS`;
 the text procedure does not infer a YES/NO mapping or certify settlement
 equivalence. The independent same-payoff verifier still requires verified
 exhaustive payoffs, resolution identity, authority, settlement asset, and
-matching timing. Event-group observations participate in latest-record
-selection and graph revision identity, so replay and paged reads cannot silently
-retain older child-only metadata.
+matching timing. It also requires each verified payout currency to equal its
+payoff settlement asset, and the market-level settlement asset to agree with
+that payoff. Binary and multi-outcome candidate generation plus the
+independent audit repeat the denomination guard, so a forged verified
+relationship cannot bypass it. No USD-to-USDC conversion or stablecoin/network
+valuation bridge is assumed. Event-group observations participate in
+latest-record selection and graph revision identity, so replay and paged reads
+cannot silently retain older child-only metadata.
 
 Kalshi adapter v7 introduced the separate `MULTIVARIATE_EVENT_DISCOVERY`
 capability, retained by adapters v8 through v11. Its local
@@ -481,8 +486,13 @@ available as auditable source evidence. Kalshi uses a separate
 remain included under the source default. Kraken does not advertise cursor-page
 trades. The UI displays recorded trades as public
 prints, not as available depth or executable prices. Probe errors include diagnostic
-observation IDs when a captured response can be preserved. The Frontier page does not inherit the
-single-venue synthetic/demo banner. It shows source health separately from
+observation IDs when a captured response can be preserved. The generic market,
+book and trade probe and the Polymarket v2 page route keep drained captures
+pending until their normalized records are stored; lineage failures persist the
+raw response with a failure record instead of discarding it. Earlier successful
+captures are removed from the pending set so a later leg failure does not
+duplicate them. The Frontier page does not inherit the single-venue
+synthetic/demo banner. It shows source health separately from
 captured evidence age, renders an interactive three-column SVG network for at
 most 18 effective edges and a searchable evidence list capped at 30, supports
 self-attributed reject/ambiguous/strict-verification reviews, exposes native
