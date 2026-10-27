@@ -22,12 +22,24 @@ from midas.frontier.models import (
     TradeBatch,
     Venue,
 )
+from midas.frontier.relationships import (
+    RelationshipType,
+    VerificationState,
+    propose_relationships,
+    verify_same_payoff,
+)
 
 ROOT = Path(__file__).resolve().parents[2]
 
 
 def _captured(path: str) -> str:
     return (ROOT / path).read_text(encoding="utf-8")
+
+
+def _cross_venue_capture() -> dict:
+    return json.loads(
+        _captured("data/frontier/live-probes/2026-10-27-public-cross-venue-house-control-r1.json")
+    )
 
 
 def _transport(host: str, bodies: dict[str, str], config: AdapterConfig | None = None):
@@ -134,6 +146,137 @@ async def test_polymarket_unknown_fee_exponent_is_not_promoted_to_verified():
         await client.aclose()
     assert markets[0].fees.status == FeeStatus.UNKNOWN
     assert markets[0].fees.rate is None
+
+
+@pytest.mark.asyncio
+async def test_public_event_group_capture_retains_parent_context_and_only_proposes_hypothesis():
+    capture = _cross_venue_capture()
+    records = {item["source"]: item for item in capture["records"]}
+    poly_record = records["polymarket_event"]
+    kalshi_record = records["kalshi_event"]
+    poly_transport, poly_requests, poly_client = _transport(
+        "gamma-api.polymarket.com", {"/events/32225": poly_record["raw_body_utf8"]}
+    )
+    kalshi_transport, kalshi_requests, kalshi_client = _transport(
+        "external-api.kalshi.com",
+        {"/events/CONTROLH-2026": kalshi_record["raw_body_utf8"]},
+    )
+    config = AdapterConfig(
+        enabled=True, live_public_probe_enabled=True, requests_per_second=5, retries=0
+    )
+    polymarket = PolymarketAdapter(config, transport=poly_transport)
+    kalshi = KalshiAdapter(config, transport=kalshi_transport)
+    try:
+        poly_markets = await polymarket.discover_event_markets("32225")
+        kalshi_markets = await kalshi.discover_event_markets("CONTROLH-2026")
+    finally:
+        await poly_client.aclose()
+        await kalshi_client.aclose()
+
+    poly_yes = next(item for item in poly_markets if item.native_market_id == "562802")
+    kalshi_yes = next(item for item in kalshi_markets if item.native_market_id == "CONTROLH-2026-D")
+    assert len(poly_markets) == 9
+    assert len(kalshi_markets) == 2
+    assert poly_yes.native_event_id == "32225"
+    assert poly_yes.native_event_title == "Which party will win the House in 2026?"
+    assert poly_yes.outcome_label == "Democratic Party"
+    assert kalshi_yes.native_event_id == "CONTROLH-2026"
+    assert kalshi_yes.native_event_title == "Which party will win the U.S. House?"
+    assert poly_yes.provenance.raw_sha256 == poly_record["raw_sha256"]
+    assert kalshi_yes.provenance.raw_sha256 == kalshi_record["raw_sha256"]
+    assert polymarket.capabilities.supports(Capability.EVENT_MARKET_GROUPS)
+    assert kalshi.capabilities.supports(Capability.EVENT_MARKET_GROUPS)
+    assert not KrakenSpotAdapter().capabilities.supports(Capability.EVENT_MARKET_GROUPS)
+    assert all(request.method == "GET" for request in (*poly_requests, *kalshi_requests))
+    assert all(
+        "authorization" not in request.headers for request in (*poly_requests, *kalshi_requests)
+    )
+    assert len(poly_requests) == len(kalshi_requests) == 1
+
+    proposals = propose_relationships((poly_yes, kalshi_yes), max_pairs=20)
+    candidate = next(
+        item for item in proposals if item.relationship_type == RelationshipType.TEXT_CANDIDATE
+    )
+    assert candidate.state == VerificationState.HYPOTHESIS
+    assert "shared_outcome_terms=democrat" in candidate.evidence[0].details
+    assert poly_yes.payoff.verified is False and kalshi_yes.payoff.verified is False
+    assert poly_yes.resolution.verified is False and kalshi_yes.resolution.verified is False
+    unrelated_outcome = kalshi_yes.model_copy(update={"outcome_label": "Republican Party"})
+    assert propose_relationships((poly_yes, unrelated_outcome), max_pairs=20) == ()
+    different_year = kalshi_yes.model_copy(
+        update={"native_event_title": "Which party will win the U.S. House in 2028?"}
+    )
+    assert propose_relationships((poly_yes, different_year), max_pairs=20) == ()
+
+    audit = verify_same_payoff(
+        poly_yes,
+        kalshi_yes,
+        state_mapping={"yes": "yes", "no": "no"},
+        instrument_mapping={
+            poly_yes.instruments[0].native_instrument_id: kalshi_yes.instruments[
+                0
+            ].native_instrument_id,
+            poly_yes.instruments[1].native_instrument_id: kalshi_yes.instruments[
+                1
+            ].native_instrument_id,
+        },
+        external_assertion_id="test-no-independent-equivalence-attestation",
+        evidence_observation_ids=(
+            poly_yes.provenance.observation_id,
+            kalshi_yes.provenance.observation_id,
+        ),
+    )
+    assert audit.state == VerificationState.REJECTED
+    assert audit.relationship_type == RelationshipType.SAME_PAYOFF
+
+
+@pytest.mark.asyncio
+async def test_event_group_probes_reject_oversized_and_mismatched_event_metadata():
+    capture = _cross_venue_capture()
+    records = {item["source"]: item for item in capture["records"]}
+    poly_body = json.loads(records["polymarket_event"]["raw_body_utf8"])
+    transport, _, client = _transport(
+        "gamma-api.polymarket.com",
+        {"/events/32225": json.dumps(poly_body)},
+        AdapterConfig(
+            enabled=True,
+            live_public_probe_enabled=True,
+            requests_per_second=5,
+            retries=0,
+            max_markets_per_call=8,
+        ),
+    )
+    adapter = PolymarketAdapter(
+        AdapterConfig(
+            enabled=True,
+            live_public_probe_enabled=True,
+            requests_per_second=5,
+            retries=0,
+            max_markets_per_call=8,
+        ),
+        transport=transport,
+    )
+    try:
+        with pytest.raises(AdapterError, match="within the configured bound"):
+            await adapter.discover_event_markets("32225")
+    finally:
+        await client.aclose()
+
+    mismatch_transport, _, mismatch_client = _transport(
+        "gamma-api.polymarket.com",
+        {"/events/32225": json.dumps({**poly_body, "id": "32226"})},
+    )
+    mismatch_adapter = PolymarketAdapter(
+        AdapterConfig(
+            enabled=True, live_public_probe_enabled=True, requests_per_second=5, retries=0
+        ),
+        transport=mismatch_transport,
+    )
+    try:
+        with pytest.raises(AdapterError, match="does not match request"):
+            await mismatch_adapter.discover_event_markets("32225")
+    finally:
+        await mismatch_client.aclose()
 
 
 @pytest.mark.asyncio

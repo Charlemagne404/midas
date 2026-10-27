@@ -1146,7 +1146,8 @@ class FrontierStore:
         with self._read_connect() as connection:
             row = connection.execute(
                 "SELECT (SELECT COUNT(*) FROM observations "
-                "WHERE observation_kind IN ('market_listing','instrument_metadata')) AS markets,"
+                "WHERE observation_kind IN ('market_listing','instrument_metadata',"
+                "'event_market_listing')) AS markets,"
                 "(SELECT COUNT(*) FROM relationships) AS relationships,"
                 "(SELECT COUNT(*) FROM relationship_reviews) AS reviews"
             ).fetchone()

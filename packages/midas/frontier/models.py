@@ -84,6 +84,7 @@ class SourceState(StrEnum):
 
 class Capability(StrEnum):
     MARKET_DISCOVERY = "market_discovery"
+    EVENT_MARKET_GROUPS = "event_market_groups"
     INSTRUMENT_DISCOVERY = "instrument_discovery"
     MARKET_METADATA = "market_metadata"
     OUTCOME_DEFINITIONS = "outcome_definitions"
@@ -493,6 +494,8 @@ class FrontierMarket(FrontierModel):
     canonical_id: str
     native_market_id: str
     native_event_id: str | None = None
+    native_event_title: str | None = Field(default=None, max_length=512)
+    outcome_label: str | None = Field(default=None, max_length=512)
     title: str
     description: str = ""
     market_kind: MarketKind

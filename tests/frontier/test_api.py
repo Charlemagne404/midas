@@ -103,6 +103,290 @@ def test_disabled_public_probe_fails_closed_without_egress(tmp_path):
         asyncio.run(http_client.aclose())
 
 
+def test_event_group_probe_persists_parent_context_and_binds_to_recorded_market(tmp_path):
+    capture = json.loads(
+        (
+            Path(__file__).resolve().parents[2]
+            / "data/frontier/live-probes/2026-10-27-public-cross-venue-house-control-r1.json"
+        ).read_text(encoding="utf-8")
+    )
+    source_event = next(item for item in capture["records"] if item["source"] == "polymarket_event")
+    body = source_event["raw_body_utf8"]
+    requests: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        return httpx.Response(200, content=body, request=request)
+
+    config = AdapterConfig(
+        enabled=True,
+        live_public_probe_enabled=True,
+        requests_per_second=5,
+        retries=0,
+        max_markets_per_call=20,
+    )
+    http_client = httpx.AsyncClient(transport=httpx.MockTransport(handler))
+    transport = PublicReadTransport({"gamma-api.polymarket.com"}, config, client=http_client)
+    registry = AdapterRegistry(
+        (
+            PolymarketAdapter(config, transport=transport),
+            KalshiAdapter(AdapterConfig(enabled=False)),
+            KrakenSpotAdapter(AdapterConfig(enabled=False)),
+        )
+    )
+    store = FrontierStore(tmp_path / "frontier")
+    for native_id in ("562802", "missing-target"):
+        seed = market(Venue.POLYMARKET, native_id).model_copy(
+            update={"native_event_id": f"market:{native_id}"}
+        )
+        seed_body = json.dumps({"fixture_market": native_id}, separators=(",", ":"))
+        raw = RawObservation(
+            venue=Venue.POLYMARKET,
+            observation_kind="market_listing",
+            request_url="https://gamma-api.polymarket.com/markets",
+            http_status=200,
+            request_started_at_utc=T0,
+            received_at_utc=T0 + timedelta(seconds=1 if native_id == "562802" else 2),
+            raw_body=seed_body,
+            raw_sha256=hashlib.sha256(seed_body.encode()).hexdigest(),
+            adapter_version="test-seed-v1",
+        )
+        store.append_observation(raw, MarketBatch(venue=Venue.POLYMARKET, markets=(seed,)))
+
+    app = FastAPI()
+    app.include_router(router(store, registry))
+    client = TestClient(app)
+    try:
+        response = client.post(
+            "/api/frontier/probe/polymarket/event-markets",
+            json={"market_id": "polymarket:562802", "native_event_id": "32225"},
+        )
+        assert response.status_code == 200, response.text
+        payload = response.json()
+        assert payload["event_title"] == "Which party will win the House in 2026?"
+        assert payload["market_count"] == 9
+        assert payload["network_calls_bounded_by"] == 1
+        assert payload["raw_sha256"] == source_event["raw_sha256"]
+        stored = store.observation(payload["observation_id"])
+        assert stored is not None
+        assert stored["raw"]["raw_body"] == body
+        assert stored["normalized"]["markets"][0]["native_event_title"] == payload["event_title"]
+        listed = client.get("/api/frontier/markets?venue=polymarket&q=562802").json()["items"]
+        assert listed[0]["native_event_id"] == "32225"
+        assert listed[0]["native_event_title"] == payload["event_title"]
+
+        unbound = client.post(
+            "/api/frontier/probe/polymarket/event-markets",
+            json={"market_id": "polymarket:missing-target", "native_event_id": "32225"},
+        )
+        assert unbound.status_code == 502
+        assert unbound.json()["detail"]["code"] == "EVENT_MARKET_BINDING_FAILED"
+        diagnostic_ids = unbound.json()["detail"]["diagnostic_observation_ids"]
+        assert len(diagnostic_ids) == 1
+        diagnostic = store.observation(diagnostic_ids[0])
+        assert diagnostic is not None
+        assert diagnostic["raw"]["raw_body"] == body
+        assert len(requests) == 2
+        assert all(item.method == "GET" for item in requests)
+        assert all("authorization" not in item.headers for item in requests)
+    finally:
+        client.close()
+        asyncio.run(registry.aclose())
+        asyncio.run(http_client.aclose())
+
+
+def test_kalshi_event_group_probe_uses_nested_public_event_markets(tmp_path):
+    capture = json.loads(
+        (
+            Path(__file__).resolve().parents[2]
+            / "data/frontier/live-probes/2026-10-27-public-cross-venue-house-control-r1.json"
+        ).read_text(encoding="utf-8")
+    )
+    source_event = next(item for item in capture["records"] if item["source"] == "kalshi_event")
+    body = source_event["raw_body_utf8"]
+    requests: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        return httpx.Response(200, content=body, request=request)
+
+    config = AdapterConfig(
+        enabled=True, live_public_probe_enabled=True, requests_per_second=5, retries=0
+    )
+    http_client = httpx.AsyncClient(transport=httpx.MockTransport(handler))
+    transport = PublicReadTransport({"external-api.kalshi.com"}, config, client=http_client)
+    registry = AdapterRegistry(
+        (
+            PolymarketAdapter(AdapterConfig(enabled=False)),
+            KalshiAdapter(config, transport=transport),
+            KrakenSpotAdapter(AdapterConfig(enabled=False)),
+        )
+    )
+    store = FrontierStore(tmp_path / "frontier-kalshi")
+    seed = market(Venue.KALSHI, "CONTROLH-2026-D").model_copy(
+        update={"native_event_id": "CONTROLH-2026"}
+    )
+    seed_body = '{"fixture_market":"CONTROLH-2026-D"}'
+    raw = RawObservation(
+        venue=Venue.KALSHI,
+        observation_kind="market_listing",
+        request_url="https://external-api.kalshi.com/trade-api/v2/markets",
+        http_status=200,
+        request_started_at_utc=T0,
+        received_at_utc=T0,
+        raw_body=seed_body,
+        raw_sha256=hashlib.sha256(seed_body.encode()).hexdigest(),
+        adapter_version="test-seed-v1",
+    )
+    store.append_observation(raw, MarketBatch(venue=Venue.KALSHI, markets=(seed,)))
+    app = FastAPI()
+    app.include_router(router(store, registry))
+    client = TestClient(app)
+    try:
+        response = client.post(
+            "/api/frontier/probe/kalshi/event-markets",
+            json={"market_id": seed.canonical_id},
+        )
+        assert response.status_code == 200, response.text
+        payload = response.json()
+        assert payload["native_event_id"] == "CONTROLH-2026"
+        assert payload["event_title"] == "Which party will win the U.S. House?"
+        assert payload["market_count"] == 2
+        assert payload["raw_sha256"] == source_event["raw_sha256"]
+        assert len(requests) == 1
+        assert requests[0].method == "GET"
+        assert requests[0].url.params["with_nested_markets"] == "true"
+        assert "authorization" not in requests[0].headers
+        listed = client.get("/api/frontier/markets?venue=kalshi&q=CONTROLH-2026-D").json()["items"]
+        assert listed[0]["native_event_title"] == payload["event_title"]
+    finally:
+        client.close()
+        asyncio.run(registry.aclose())
+        asyncio.run(http_client.aclose())
+
+
+def test_captured_cross_venue_event_context_creates_reviewable_hypothesis(tmp_path):
+    capture = json.loads(
+        (
+            Path(__file__).resolve().parents[2]
+            / "data/frontier/live-probes/2026-10-27-public-cross-venue-house-control-r1.json"
+        ).read_text(encoding="utf-8")
+    )
+    source_records = {item["source"]: item for item in capture["records"]}
+    bodies = {
+        Venue.POLYMARKET: source_records["polymarket_event"]["raw_body_utf8"],
+        Venue.KALSHI: source_records["kalshi_event"]["raw_body_utf8"],
+    }
+    requests: list[httpx.Request] = []
+
+    def make_handler(venue: Venue):
+        def handler(request: httpx.Request) -> httpx.Response:
+            requests.append(request)
+            return httpx.Response(200, content=bodies[venue], request=request)
+
+        return handler
+
+    config = AdapterConfig(
+        enabled=True,
+        live_public_probe_enabled=True,
+        requests_per_second=5,
+        retries=0,
+        max_markets_per_call=20,
+    )
+    poly_client = httpx.AsyncClient(transport=httpx.MockTransport(make_handler(Venue.POLYMARKET)))
+    kalshi_client = httpx.AsyncClient(transport=httpx.MockTransport(make_handler(Venue.KALSHI)))
+    poly_transport = PublicReadTransport({"gamma-api.polymarket.com"}, config, client=poly_client)
+    kalshi_transport = PublicReadTransport(
+        {"external-api.kalshi.com"}, config, client=kalshi_client
+    )
+    registry = AdapterRegistry(
+        (
+            PolymarketAdapter(config, transport=poly_transport),
+            KalshiAdapter(config, transport=kalshi_transport),
+            KrakenSpotAdapter(AdapterConfig(enabled=False)),
+        )
+    )
+    store = FrontierStore(tmp_path / "cross-venue-events")
+    seeds = (
+        (Venue.POLYMARKET, "562802", "market:562802", "32225"),
+        (Venue.KALSHI, "CONTROLH-2026-D", "CONTROLH-2026", None),
+    )
+    for venue, native_market_id, native_event_id, _ in seeds:
+        seed_market = market(venue, native_market_id).model_copy(
+            update={"native_event_id": native_event_id}
+        )
+        raw_body = json.dumps(
+            {"recorded_market_seed": seed_market.canonical_id}, separators=(",", ":")
+        )
+        raw = RawObservation(
+            venue=venue,
+            observation_kind="market_listing",
+            request_url=(
+                "https://gamma-api.polymarket.com/markets"
+                if venue == Venue.POLYMARKET
+                else "https://external-api.kalshi.com/trade-api/v2/markets"
+            ),
+            http_status=200,
+            request_started_at_utc=T0,
+            received_at_utc=T0,
+            raw_body=raw_body,
+            raw_sha256=hashlib.sha256(raw_body.encode()).hexdigest(),
+            adapter_version="test-seed-v1",
+        )
+        store.append_observation(raw, MarketBatch(venue=venue, markets=(seed_market,)))
+
+    app = FastAPI()
+    app.include_router(router(store, registry))
+    client = TestClient(app)
+    try:
+        for venue, native_market_id, _, event_id in seeds:
+            request_payload = {"market_id": f"{venue.value}:{native_market_id}"}
+            if event_id is not None:
+                request_payload["native_event_id"] = event_id
+            response = client.post(
+                f"/api/frontier/probe/{venue.value}/event-markets", json=request_payload
+            )
+            assert response.status_code == 200, response.text
+
+        response = client.post("/api/frontier/relationships/propose?market_limit=200&max_pairs=500")
+        assert response.status_code == 200, response.text
+        payload = response.json()
+        assert payload["matcher_version"] == "frontier-relationship-matcher-3"
+        target_ids = {"polymarket:562802", "kalshi:CONTROLH-2026-D"}
+        relationship = next(
+            item
+            for item in payload["items"]
+            if {item["left_market_id"], item["right_market_id"]} == target_ids
+        )
+        assert relationship["state"] == "hypothesis"
+        assert relationship["relationship_type"] == "text_candidate"
+        assert "parent-event context" in relationship["reason"]
+        assert "native_event_title" in relationship["evidence"][0]["source_fields"]
+        evidence_ids = relationship["evidence"][0]["observation_ids"]
+        assert len(evidence_ids) == 2
+        for evidence_id in evidence_ids:
+            evidence = store.observation(evidence_id)
+            assert evidence is not None
+            assert evidence["normalized"]["markets"]
+        persisted = store.relationship(relationship["relationship_id"])
+        assert persisted is not None
+        assert persisted.state.value == "hypothesis"
+        same_event = next(
+            item for item in payload["items"] if item["relationship_type"] == "same_event"
+        )
+        assert len(same_event["evidence"][0]["observation_ids"]) == 1
+        same_event_record = store.observation(same_event["evidence"][0]["observation_ids"][0])
+        assert same_event_record is not None
+        assert len(requests) == 2
+        assert all(request.method == "GET" for request in requests)
+        assert all("authorization" not in request.headers for request in requests)
+    finally:
+        client.close()
+        asyncio.run(registry.aclose())
+        asyncio.run(poly_client.aclose())
+        asyncio.run(kalshi_client.aclose())
+
+
 def test_kalshi_fee_metadata_probe_persists_event_and_series_evidence(tmp_path):
     requests: list[httpx.Request] = []
     source_market = market(Venue.KALSHI, "KX-FEE-API").model_copy(

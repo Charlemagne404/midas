@@ -61,6 +61,9 @@ type Market = {
   canonical_id: string;
   source_observation_record_id: string;
   native_market_id: string;
+  native_event_id: string | null;
+  native_event_title: string | null;
+  outcome_label: string | null;
   venue: Venue;
   title: string;
   market_kind: string;
@@ -167,6 +170,19 @@ type TradePageCaptureResult = {
   has_more: boolean;
   next_cursor: string | null;
   source_state: string;
+  request_count_delta: number;
+  network_calls_bounded_by: number;
+  hypothetical_only: true;
+  note: string;
+};
+type EventMarketsCaptureResult = {
+  venue: Venue;
+  market_id: string;
+  native_event_id: string;
+  event_title: string;
+  market_count: number;
+  observation_id: string;
+  raw_sha256: string;
   request_count_delta: number;
   network_calls_bounded_by: number;
   hypothetical_only: true;
@@ -1067,6 +1083,15 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
         (capability) => capability.capability === 'fee_metadata' && capability.supported,
       ),
   );
+  const eventMarketGroupsProbeEnabledFor = (venue: Venue) =>
+    (sources.data?.items ?? []).some(
+      (source) =>
+        source.venue === venue &&
+        source.public_probe_enabled &&
+        source.capabilities.some(
+          (capability) => capability.capability === 'event_market_groups' && capability.supported,
+        ),
+    );
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: ['frontier'] });
   const propose = useMutation({
@@ -1226,6 +1251,22 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
       api<KalshiFeeMetadataCaptureResult>('/frontier/probe/kalshi/fee-metadata', {
         method: 'POST',
         body: JSON.stringify({ market_id: marketId }),
+      }),
+    onSuccess: refresh,
+  });
+  const captureEventMarketGroup = useMutation({
+    mutationFn: ({
+      marketId,
+      venue,
+      nativeEventId,
+    }: {
+      marketId: string;
+      venue: Venue;
+      nativeEventId: string;
+    }) =>
+      api<EventMarketsCaptureResult>(`/frontier/probe/${venue}/event-markets`, {
+        method: 'POST',
+        body: JSON.stringify({ market_id: marketId, native_event_id: nativeEventId }),
       }),
     onSuccess: refresh,
   });
@@ -1596,6 +1637,8 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
               market={selectedMarket}
               books={selectedBooks}
               booksLoading={books.isLoading}
+              eventMarketsProbe={captureEventMarketGroup}
+              eventMarketsProbeEnabled={eventMarketGroupsProbeEnabledFor(selectedMarket.venue)}
               feeMetadataProbe={captureKalshiFeeMetadata}
               feeMetadataProbeEnabled={kalshiFeeMetadataProbeEnabled}
               feeSensitivity={estimateKalshiTakerFee}
@@ -2447,6 +2490,8 @@ function MarketDetails({
   market,
   books,
   booksLoading,
+  eventMarketsProbe,
+  eventMarketsProbeEnabled,
   feeMetadataProbe,
   feeMetadataProbeEnabled,
   feeSensitivity,
@@ -2454,6 +2499,13 @@ function MarketDetails({
   market: Market;
   books: Book[];
   booksLoading: boolean;
+  eventMarketsProbe: UseMutationResult<
+    EventMarketsCaptureResult,
+    Error,
+    { marketId: string; venue: Venue; nativeEventId: string },
+    unknown
+  >;
+  eventMarketsProbeEnabled: boolean;
   feeMetadataProbe: UseMutationResult<
     KalshiFeeMetadataCaptureResult,
     Error,
@@ -2478,6 +2530,9 @@ function MarketDetails({
     unknown
   >;
 }) {
+  const [nativeEventId, setNativeEventId] = useState(
+    market.native_event_id?.startsWith('market:') ? '' : (market.native_event_id ?? ''),
+  );
   const [feeFills, setFeeFills] = useState<KalshiFeeScenarioFill[]>([
     {
       instrumentId: market.instruments[0]?.native_instrument_id ?? '',
@@ -2490,6 +2545,10 @@ function MarketDetails({
     feeMetadataProbe.isSuccess && feeMetadataProbe.variables?.marketId === market.canonical_id
       ? feeMetadataProbe.data
       : null;
+  const capturedEventMarkets =
+    eventMarketsProbe.isSuccess && eventMarketsProbe.variables?.marketId === market.canonical_id
+      ? eventMarketsProbe.data
+      : null;
   return (
     <section className="fr-market-detail" aria-label="Market and book details">
       <div className="fr-market-detail-head">
@@ -2501,6 +2560,14 @@ function MarketDetails({
         <VenuePill venue={market.venue} />
       </div>
       <div className="fr-market-facts">
+        <div>
+          <span>Parent event</span>
+          <strong>{market.native_event_title ?? 'Not recorded'}</strong>
+          <small>
+            {market.native_event_id ?? 'No native event ID'}
+            {market.outcome_label ? ` · outcome ${market.outcome_label}` : ''}
+          </small>
+        </div>
         <div>
           <span>Instrument type</span>
           <strong>{label(market.market_kind)}</strong>
@@ -2568,6 +2635,61 @@ function MarketDetails({
           </ul>
         </div>
       ) : null}
+      {market.venue !== 'kraken' && (
+        <div className="fr-fee-metadata-panel">
+          <div>
+            <strong>Public event context</strong>
+            <small>
+              Captures one event and its bounded market group, linked to this recorded market. It
+              can propose text relationships but cannot verify equivalent outcomes or settlement.
+            </small>
+          </div>
+          <div className="fr-event-group-controls">
+            <label htmlFor={`event-id-${market.canonical_id}`}>Native event ID</label>
+            <input
+              id={`event-id-${market.canonical_id}`}
+              value={nativeEventId}
+              maxLength={256}
+              onChange={(event) => setNativeEventId(event.target.value)}
+              placeholder={
+                market.venue === 'polymarket' ? 'Gamma numeric event ID' : 'Kalshi event ticker'
+              }
+            />
+            <button
+              className="fr-inspect-button"
+              disabled={
+                !eventMarketsProbeEnabled || eventMarketsProbe.isPending || !nativeEventId.trim()
+              }
+              onClick={() =>
+                eventMarketsProbe.mutate({
+                  marketId: market.canonical_id,
+                  venue: market.venue,
+                  nativeEventId: nativeEventId.trim(),
+                })
+              }
+            >
+              {eventMarketsProbe.isPending &&
+              eventMarketsProbe.variables?.marketId === market.canonical_id
+                ? 'Capturing…'
+                : eventMarketsProbeEnabled
+                  ? 'Capture event context'
+                  : 'Public probe disabled'}
+            </button>
+          </div>
+          {eventMarketsProbe.isError && <InlineError message={eventMarketsProbe.error.message} />}
+          {capturedEventMarkets && (
+            <div className="fr-fee-metadata-result" role="status">
+              <strong>{capturedEventMarkets.event_title}</strong>
+              <small>
+                {capturedEventMarkets.market_count} markets · saved observation{' '}
+                {capturedEventMarkets.observation_id}
+              </small>
+              <small>{capturedEventMarkets.note}</small>
+              <small>Raw SHA-256 {capturedEventMarkets.raw_sha256}</small>
+            </div>
+          )}
+        </div>
+      )}
       {market.venue === 'kalshi' && (
         <div className="fr-fee-metadata-panel">
           <div>

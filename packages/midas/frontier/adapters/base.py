@@ -70,6 +70,8 @@ class ExchangeAdapter(Protocol):
 
     async def discover_markets(self, limit: int = 20) -> tuple[FrontierMarket, ...]: ...
 
+    async def discover_event_markets(self, native_event_id: str) -> tuple[FrontierMarket, ...]: ...
+
     async def fetch_book(
         self, market: FrontierMarket, instrument_id: str, depth: int = 20
     ) -> BookSnapshot: ...
@@ -158,6 +160,14 @@ class BaseReadOnlyAdapter:
         self._last_error_code = None
         self._last_error = None
         return capture
+
+    async def discover_event_markets(self, native_event_id: str) -> tuple[FrontierMarket, ...]:
+        """Fail closed unless a venue implements bounded event-group discovery."""
+        self._require(Capability.EVENT_MARKET_GROUPS)
+        raise UnsupportedCapability(
+            Capability.EVENT_MARKET_GROUPS,
+            f"{self.venue.value} does not implement event-group discovery",
+        )
 
     def take_captures(self) -> tuple[RawObservation, ...]:
         captures = tuple(self._captures)

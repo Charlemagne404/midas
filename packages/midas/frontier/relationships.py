@@ -6,6 +6,7 @@ import hashlib
 import re
 import unicodedata
 from collections import defaultdict
+from collections.abc import Mapping
 from datetime import UTC, datetime
 from decimal import Decimal
 from enum import StrEnum
@@ -15,7 +16,7 @@ from pydantic import Field, field_validator, model_validator
 from midas.frontier.models import FrontierMarket, FrontierModel, MarketKind, Venue
 
 D = Decimal
-MATCHER_VERSION = "frontier-relationship-matcher-2"
+MATCHER_VERSION = "frontier-relationship-matcher-3"
 DEFAULT_MINIMUM_JACCARD = D("0.45")
 _STOP_WORDS = {
     "a",
@@ -40,6 +41,23 @@ _STOP_WORDS = {
     "which",
     "yes",
     "no",
+}
+_EVENT_CONTEXT_STOP_WORDS = {
+    "control",
+    "election",
+    "elections",
+    "midterm",
+    "party",
+    "united",
+    "states",
+    "u",
+    "us",
+    "win",
+}
+_TEXT_ALIASES = {
+    "democratic": "democrat",
+    "democrats": "democrat",
+    "republicans": "republican",
 }
 
 
@@ -154,6 +172,28 @@ def title_tokens(value: str) -> frozenset[str]:
     )
 
 
+def _event_context_tokens(value: str) -> frozenset[str]:
+    return frozenset(_TEXT_ALIASES.get(token, token) for token in title_tokens(value))
+
+
+def _event_context_years(value: str) -> frozenset[str]:
+    return frozenset(re.findall(r"\b(?:19|20)\d{2}\b", normalize_title(value)))
+
+
+def _outcome_context_tokens(market: FrontierMarket) -> frozenset[str]:
+    if market.outcome_label:
+        values = title_tokens(market.outcome_label)
+    else:
+        title = _event_context_tokens(market.title)
+        event = _event_context_tokens(market.native_event_title or "")
+        values = title - event
+    return frozenset(
+        _TEXT_ALIASES.get(token, token)
+        for token in values
+        if token not in _EVENT_CONTEXT_STOP_WORDS
+    )
+
+
 def _identity(
     left: str,
     right: str,
@@ -171,6 +211,7 @@ def propose_relationships(
     *,
     max_pairs: int = 1000,
     minimum_jaccard: Decimal = DEFAULT_MINIMUM_JACCARD,
+    source_observation_ids: Mapping[str, str] | None = None,
 ) -> tuple[Relationship, ...]:
     """Produce reviewable candidates using indexed native event IDs and title terms.
 
@@ -183,6 +224,14 @@ def propose_relationships(
     by_id = {market.canonical_id: market for market in markets}
     if len(by_id) != len(markets):
         raise ValueError("Duplicate canonical market identity")
+    evidence_ids = source_observation_ids or {}
+    for market_id in by_id:
+        observation_id = evidence_ids.get(market_id)
+        if observation_id is not None and (
+            len(observation_id) != 64
+            or any(character not in "0123456789abcdef" for character in observation_id)
+        ):
+            raise ValueError("Source observation IDs must be lowercase SHA-256 hex digests")
     created_at = max(
         (market.provenance.response_received_at_utc for market in markets),
         default=datetime(1970, 1, 1, tzinfo=UTC),
@@ -258,16 +307,82 @@ def propose_relationships(
         if len(compared) > comparison_budget:
             break
 
+    # Event context supplies a second, still-hypothetical cross-venue route.
+    # It requires both a similar parent event title and a market-specific outcome term.
+    event_index: dict[str, list[str]] = defaultdict(list)
+    event_tokens: dict[str, frozenset[str]] = {}
+    outcome_tokens: dict[str, frozenset[str]] = {}
+    for market in sorted(markets, key=lambda item: item.canonical_id):
+        if not market.native_event_title:
+            continue
+        tokens = _event_context_tokens(market.native_event_title)
+        if len(tokens) < 2:
+            continue
+        event_tokens[market.canonical_id] = tokens
+        outcome_tokens[market.canonical_id] = _outcome_context_tokens(market)
+        for token in sorted(tokens):
+            event_index[token].append(market.canonical_id)
+
+    event_pairs: set[tuple[str, str]] = set()
+    event_comparison_budget = min(20_000, max_pairs * 20)
+    for token in sorted(event_index):
+        if len(candidates) >= max_pairs:
+            break
+        identities = event_index[token]
+        for i, first in enumerate(identities):
+            for second in identities[i + 1 :]:
+                if len(candidates) >= max_pairs:
+                    break
+                pair = (first, second) if first < second else (second, first)
+                if pair in event_pairs:
+                    continue
+                event_pairs.add(pair)
+                if len(event_pairs) > event_comparison_budget:
+                    break
+                left_market, right_market = by_id[pair[0]], by_id[pair[1]]
+                if left_market.venue == right_market.venue:
+                    continue
+                left_events, right_events = event_tokens[pair[0]], event_tokens[pair[1]]
+                shared_events = left_events & right_events
+                event_union = left_events | right_events
+                event_score = D(len(shared_events)) / D(len(event_union))
+                left_years = _event_context_years(left_market.native_event_title or "")
+                right_years = _event_context_years(right_market.native_event_title or "")
+                shared_outcomes = outcome_tokens[pair[0]] & outcome_tokens[pair[1]]
+                if (
+                    len(shared_events) < 2
+                    or event_score < D("0.4")
+                    or (left_years and right_years and not left_years & right_years)
+                    or not shared_outcomes
+                ):
+                    continue
+                candidates[(pair[0], pair[1], RelationshipType.TEXT_CANDIDATE)] = (
+                    "Shared parent-event context and market-specific outcome text; source rules, timing, and payoff equivalence require review",
+                    event_score,
+                    ("native_event_title", "outcome_label", "title"),
+                    (
+                        "shared_event_terms=" + ",".join(sorted(shared_events)),
+                        "shared_outcome_terms=" + ",".join(sorted(shared_outcomes)),
+                        "This text match is a hypothesis only; no outcome mapping or payoff equivalence is asserted.",
+                    ),
+                )
+                if len(candidates) >= max_pairs:
+                    break
+            if len(candidates) >= max_pairs or len(event_pairs) > event_comparison_budget:
+                break
+        if len(candidates) >= max_pairs or len(event_pairs) > event_comparison_budget:
+            break
+
     output = []
     for (left, right, rel_type), (reason, score, fields, details) in sorted(
         candidates.items(), key=lambda item: item[0]
     )[:max_pairs]:
         observation_ids = tuple(
             sorted(
-                (
-                    by_id[left].provenance.observation_id,
-                    by_id[right].provenance.observation_id,
-                )
+                {
+                    evidence_ids.get(left, by_id[left].provenance.observation_id),
+                    evidence_ids.get(right, by_id[right].provenance.observation_id),
+                }
             )
         )
         _, relationship_id = _identity(left, right, rel_type, MATCHER_VERSION, observation_ids)
@@ -282,7 +397,7 @@ def propose_relationships(
                 reason=reason,
                 evidence=(
                     RelationshipEvidence(
-                        method="deterministic-indexed-metadata-v1",
+                        method="deterministic-indexed-metadata-v2",
                         observation_ids=observation_ids,
                         source_fields=fields,
                         details=details,

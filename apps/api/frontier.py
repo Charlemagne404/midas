@@ -42,6 +42,7 @@ from midas.frontier.models import (
     Venue,
 )
 from midas.frontier.relationships import (
+    MATCHER_VERSION,
     Relationship,
     RelationshipEvidence,
     RelationshipReview,
@@ -92,6 +93,18 @@ class KalshiTradePageProbeRequest(BaseModel):
 class FeeMetadataProbeRequest(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
     market_id: str = Field(min_length=1, max_length=256)
+
+
+class EventMarketsProbeRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+    market_id: str = Field(min_length=1, max_length=256)
+    native_event_id: str | None = Field(default=None, min_length=1, max_length=256)
+
+    @model_validator(mode="after")
+    def event_id_is_nonblank(self) -> EventMarketsProbeRequest:
+        if self.native_event_id is not None and not self.native_event_id.strip():
+            raise ValueError("Native event ID cannot be blank")
+        return self
 
 
 class KalshiFeeSensitivityRequest(BaseModel):
@@ -554,10 +567,16 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
                 continue
             for record in records:
                 market = FrontierMarket.model_validate(record)
-                indexed.setdefault(
-                    market.canonical_id,
-                    (market, str(observation["observation_id"])),
-                )
+                previous = indexed.get(market.canonical_id)
+                observation_id = str(observation["observation_id"])
+                if previous is None or (
+                    market.provenance.response_received_at_utc,
+                    observation_id,
+                ) > (
+                    previous[0].provenance.response_received_at_utc,
+                    previous[1],
+                ):
+                    indexed[market.canonical_id] = (market, observation_id)
         values = sorted(
             indexed.values(),
             key=lambda item: (
@@ -1068,6 +1087,153 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
                     },
                 ) from error
 
+    @api.post("/probe/{venue}/event-markets")
+    async def probe_event_markets(
+        venue: Venue, request: EventMarketsProbeRequest
+    ) -> dict[str, Any]:
+        adapter: ExchangeAdapter = registry.get(venue)
+        if not adapter.capabilities.supports(Capability.EVENT_MARKET_GROUPS):
+            raise HTTPException(
+                status_code=409, detail=f"{venue.value} event market groups are unsupported"
+            )
+        fetch_event_markets = getattr(adapter, "discover_event_markets", None)
+        if not callable(fetch_event_markets):
+            raise HTTPException(
+                status_code=409,
+                detail="Advertised event market group operation is unavailable",
+            )
+        config = getattr(adapter, "config", None)
+        if config is None or not config.enabled or not config.live_public_probe_enabled:
+            raise HTTPException(
+                status_code=409,
+                detail="Bounded public probing is disabled in source configuration",
+            )
+        try:
+            known_markets = await _load_markets(store, 200)
+        except (FrontierStoreError, ValueError) as error:
+            raise HTTPException(status_code=409, detail=str(error)) from error
+        market = next(
+            (
+                item
+                for item in known_markets
+                if item.venue == venue and item.canonical_id == request.market_id
+            ),
+            None,
+        )
+        if market is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Event metadata can only be fetched for a market in the recorded listing window",
+            )
+        stored_event_id = market.native_event_id
+        supplied_event_id = request.native_event_id
+        if (
+            supplied_event_id is not None
+            and stored_event_id is not None
+            and not (venue == Venue.POLYMARKET and stored_event_id.startswith("market:"))
+            and supplied_event_id != stored_event_id
+        ):
+            raise HTTPException(
+                status_code=409,
+                detail="Requested event ID conflicts with the recorded market metadata",
+            )
+        native_event_id = supplied_event_id or stored_event_id
+        if native_event_id is None or (
+            venue == Venue.POLYMARKET and native_event_id.startswith("market:")
+        ):
+            raise HTTPException(
+                status_code=422,
+                detail="A native event ID is required; the recorded market has no event-group identity",
+            )
+
+        async with source_locks[venue]:
+            adapter.take_captures()
+            requests_before = adapter.transport.request_count
+            captures: tuple[RawObservation, ...] = ()
+            try:
+                event_markets = await fetch_event_markets(native_event_id)
+                captures = adapter.take_captures()
+                if (
+                    len(captures) != 1
+                    or not event_markets
+                    or any(
+                        item.venue != venue
+                        or item.native_event_id != native_event_id
+                        or item.provenance.raw_sha256 != captures[0].raw_sha256
+                        for item in event_markets
+                    )
+                    or len({item.native_event_title for item in event_markets}) != 1
+                    or not event_markets[0].native_event_title
+                ):
+                    raise AdapterError(
+                        "EVENT_CAPTURE_LINEAGE_MISMATCH",
+                        "Normalized event markets do not match one captured event response",
+                    )
+                if not any(
+                    item.native_market_id == market.native_market_id for item in event_markets
+                ):
+                    raise AdapterError(
+                        "EVENT_MARKET_BINDING_FAILED",
+                        "The requested event response does not contain the recorded market",
+                    )
+                batch = MarketBatch(
+                    venue=venue,
+                    markets=event_markets,
+                    complete_for_request=True,
+                    note=(
+                        "One bounded public event-detail response. Completeness applies only to this "
+                        "source response; it is not a venue-wide market inventory."
+                    ),
+                )
+                observation_id = store.append_observation(captures[0], batch)
+                return {
+                    "venue": venue.value,
+                    "market_id": market.canonical_id,
+                    "native_event_id": native_event_id,
+                    "event_title": next(
+                        item.native_event_title for item in event_markets if item.native_event_title
+                    ),
+                    "market_count": len(event_markets),
+                    "observation_id": observation_id,
+                    "raw_sha256": captures[0].raw_sha256,
+                    "request_count_delta": adapter.transport.request_count - requests_before,
+                    "network_calls_bounded_by": config.retries + 1,
+                    "hypothetical_only": True,
+                    "note": (
+                        "Read-only event context capture linked to the requested recorded market. "
+                        "Shared event context is a relationship hypothesis and does not attest "
+                        "same payoff, executable pricing, or settlement equivalence."
+                    ),
+                }
+            except AdapterError as error:
+                diagnostic_ids, diagnostic_error = preserve_failed_captures(
+                    adapter, error.code, str(error), error.response_evidence, captures
+                )
+                adapter.report_failure(error.code, str(error))
+                raise HTTPException(
+                    status_code=502,
+                    detail={
+                        "code": error.code,
+                        "message": str(error),
+                        "diagnostic_observation_ids": diagnostic_ids,
+                        "diagnostic_persistence_error": diagnostic_error,
+                    },
+                ) from error
+            except (ValueError, FrontierStoreError) as error:
+                diagnostic_ids, diagnostic_error = preserve_failed_captures(
+                    adapter, "EVENT_MARKET_PROBE_FAILED", str(error), already_drained=captures
+                )
+                adapter.report_failure("EVENT_MARKET_PROBE_FAILED", str(error))
+                raise HTTPException(
+                    status_code=502,
+                    detail={
+                        "code": "EVENT_MARKET_PROBE_FAILED",
+                        "message": str(error),
+                        "diagnostic_observation_ids": diagnostic_ids,
+                        "diagnostic_persistence_error": diagnostic_error,
+                    },
+                ) from error
+
     @api.post("/economics/kalshi-fee-sensitivity")
     async def kalshi_fee_sensitivity(
         request: KalshiFeeSensitivityRequest,
@@ -1415,8 +1581,16 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
         max_pairs: int = Query(default=500, ge=1, le=5000),
         market_limit: int = Query(default=100, ge=1, le=200),
     ) -> dict[str, Any]:
-        markets_value = await _load_markets(store, market_limit)
-        proposals = propose_relationships(markets_value, max_pairs=max_pairs)
+        market_records = await _load_market_records(store, market_limit)
+        markets_value = tuple(market for market, _ in market_records)
+        source_observation_ids = {
+            market.canonical_id: observation_id for market, observation_id in market_records
+        }
+        proposals = propose_relationships(
+            markets_value,
+            max_pairs=max_pairs,
+            source_observation_ids=source_observation_ids,
+        )
         try:
             for relationship in proposals:
                 store.append_relationship(relationship)
@@ -1426,7 +1600,7 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
             "proposed": len(proposals),
             "persisted": len(proposals),
             "verified": 0,
-            "matcher_version": "frontier-relationship-matcher-2",
+            "matcher_version": MATCHER_VERSION,
             "note": "Every result is a hypothesis until independently verified.",
             "items": [item.model_dump(mode="json") for item in proposals[:100]],
         }
@@ -2072,9 +2246,11 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
     return api
 
 
-async def _load_markets(store: FrontierStore, limit: int) -> tuple[FrontierMarket, ...]:
+async def _load_market_records(
+    store: FrontierStore, limit: int
+) -> tuple[tuple[FrontierMarket, str], ...]:
     rows = _market_observation_rows(store, min(200, limit))
-    markets: dict[str, FrontierMarket] = {}
+    markets: dict[str, tuple[FrontierMarket, str]] = {}
     for row in rows:
         normalized = row.get("normalized")
         if not isinstance(normalized, dict):
@@ -2085,12 +2261,26 @@ async def _load_markets(store: FrontierStore, limit: int) -> tuple[FrontierMarke
         for value in values:
             if isinstance(value, dict) and "canonical_id" in value:
                 market = FrontierMarket.model_validate(value)
-                markets.setdefault(market.canonical_id, market)
+                observation_id = str(row["observation_id"])
+                previous = markets.get(market.canonical_id)
+                if previous is None or (
+                    market.provenance.response_received_at_utc,
+                    observation_id,
+                ) > (
+                    previous[0].provenance.response_received_at_utc,
+                    previous[1],
+                ):
+                    markets[market.canonical_id] = (market, observation_id)
                 if len(markets) >= limit:
                     break
         if len(markets) >= limit:
             break
-    return tuple(sorted(markets.values(), key=lambda item: item.canonical_id))
+    return tuple(sorted(markets.values(), key=lambda item: item[0].canonical_id))
+
+
+async def _load_markets(store: FrontierStore, limit: int) -> tuple[FrontierMarket, ...]:
+    """Load the latest normalized market and retain the established market-only API."""
+    return tuple(market for market, _ in await _load_market_records(store, limit))
 
 
 async def _load_kalshi_fee_evidence(
@@ -2163,9 +2353,9 @@ async def _load_kalshi_fee_evidence(
 def _market_observation_rows(
     store: FrontierStore, limit: int, *, venue: Venue | None = None
 ) -> list[dict[str, Any]]:
-    """Market discovery can arrive as instrument metadata for pair-based venues."""
+    """Market records can arrive from discovery, pair metadata, or event groups."""
     rows: list[dict[str, Any]] = []
-    for kind in ("market_listing", "instrument_metadata"):
+    for kind in ("market_listing", "instrument_metadata", "event_market_listing"):
         rows.extend(
             store.observations(
                 venue=venue.value if venue else None,
@@ -2174,7 +2364,11 @@ def _market_observation_rows(
                 offset=0,
             )
         )
-    return rows
+    return sorted(
+        rows,
+        key=lambda row: (row["received_at_utc"], row["observation_id"]),
+        reverse=True,
+    )[:limit]
 
 
 @lru_cache(maxsize=1)

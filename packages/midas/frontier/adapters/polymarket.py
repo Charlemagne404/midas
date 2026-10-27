@@ -44,7 +44,7 @@ from midas.frontier.models import (
 from midas.market_data.polymarket import normalize_market
 
 D = Decimal
-ADAPTER_VERSION = "frontier-polymarket-2"
+ADAPTER_VERSION = "frontier-polymarket-3"
 GAMMA = "https://gamma-api.polymarket.com"
 CLOB = "https://clob.polymarket.com"
 DATA = "https://data-api.polymarket.com"
@@ -62,6 +62,10 @@ class PolymarketAdapter(BaseReadOnlyAdapter):
             Capability.MARKET_DISCOVERY: (
                 "Active markets via public Gamma REST API",
                 "https://docs.polymarket.com/developers/gamma-markets-api/overview",
+            ),
+            Capability.EVENT_MARKET_GROUPS: (
+                "Bounded public Gamma event detail with its child markets and parent title",
+                "https://docs.polymarket.com/market-data/discover-markets",
             ),
             Capability.INSTRUMENT_DISCOVERY: (
                 "Outcome token identifiers via Gamma v1/v2 fields",
@@ -153,7 +157,51 @@ class PolymarketAdapter(BaseReadOnlyAdapter):
             records.append(self._normalize_market(raw, response))
         return tuple(records)
 
-    def _normalize_market(self, raw: dict[str, Any], response: HTTPObservation) -> FrontierMarket:
+    async def discover_event_markets(self, native_event_id: str) -> tuple[FrontierMarket, ...]:
+        self._require(Capability.EVENT_MARKET_GROUPS)
+        if not re.fullmatch(r"[0-9]{1,20}", native_event_id):
+            raise AdapterError("INVALID_EVENT_ID", "Polymarket event ID must be numeric")
+        response = await self.transport.get_json(f"{GAMMA}/events/{native_event_id}")
+        self._capture_response(response, "event_market_listing")
+        payload = response.payload
+        if not isinstance(payload, dict):
+            raise AdapterError("INVALID_SCHEMA", "Gamma event response must be an object")
+        event_id = payload.get("id")
+        event_title = payload.get("title")
+        children = payload.get("markets")
+        if str(event_id) != native_event_id:
+            raise AdapterError("EVENT_ID_MISMATCH", "Gamma event response does not match request")
+        if not isinstance(event_title, str) or not event_title.strip() or len(event_title) > 512:
+            raise AdapterError("INVALID_SCHEMA", "Gamma event title is missing or oversized")
+        if not isinstance(children, list) or len(children) > self.config.max_markets_per_call:
+            raise AdapterError(
+                "INVALID_SCHEMA", "Gamma event markets must be an array within the configured bound"
+            )
+        records: list[FrontierMarket] = []
+        seen: set[str] = set()
+        for raw in children:
+            if not isinstance(raw, dict):
+                raise AdapterError("INVALID_SCHEMA", "Gamma event market entry must be an object")
+            record = self._normalize_market(
+                raw,
+                response,
+                parent_event_id=native_event_id,
+                parent_event_title=event_title,
+            )
+            if record.native_market_id in seen:
+                raise AdapterError("DUPLICATE_MARKET", "Gamma event contains a duplicate market ID")
+            seen.add(record.native_market_id)
+            records.append(record)
+        return tuple(records)
+
+    def _normalize_market(
+        self,
+        raw: dict[str, Any],
+        response: HTTPObservation,
+        *,
+        parent_event_id: str | None = None,
+        parent_event_title: str | None = None,
+    ) -> FrontierMarket:
         try:
             legacy: LegacyMarket = normalize_market(raw)
         except (KeyError, TypeError, ValueError) as error:
@@ -213,11 +261,28 @@ class PolymarketAdapter(BaseReadOnlyAdapter):
             from midas.frontier.models import sha256_text
 
             rules_hash = sha256_text(f"{legacy.resolution_source}\n{legacy.description}")
+        event_rows = raw.get("events")
+        nested_event = (
+            event_rows[0]
+            if isinstance(event_rows, list)
+            and len(event_rows) == 1
+            and isinstance(event_rows[0], dict)
+            else {}
+        )
+        event_id = parent_event_id or legacy.event_id
+        event_title = parent_event_title or (
+            nested_event.get("title") if isinstance(nested_event.get("title"), str) else None
+        )
+        outcome_label = raw.get("groupItemTitle")
+        if not isinstance(outcome_label, str) or len(outcome_label) > 512:
+            outcome_label = None
         return FrontierMarket(
             venue=self.venue,
             canonical_id=stable_market_id(self.venue, legacy.id),
             native_market_id=legacy.id,
-            native_event_id=legacy.event_id,
+            native_event_id=event_id,
+            native_event_title=event_title,
+            outcome_label=outcome_label,
             title=legacy.question,
             description=legacy.description,
             market_kind=kind,

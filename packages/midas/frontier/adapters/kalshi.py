@@ -38,7 +38,7 @@ from midas.frontier.models import (
 )
 
 D = Decimal
-ADAPTER_VERSION = "frontier-kalshi-4"
+ADAPTER_VERSION = "frontier-kalshi-5"
 _TICKER_PATTERN = re.compile(r"[A-Za-z0-9_-]{1,256}\Z")
 BASE = "https://external-api.kalshi.com/trade-api/v2"
 MARKET_DATA_DOC = "https://docs.kalshi.com/getting_started/quick_start_market_data"
@@ -58,6 +58,10 @@ class KalshiAdapter(BaseReadOnlyAdapter):
             Capability.MARKET_DISCOVERY: (
                 "Public cursor-based market listing; this adapter reads one bounded page",
                 MARKETS_DOC,
+            ),
+            Capability.EVENT_MARKET_GROUPS: (
+                "Bounded public event detail with the venue-provided nested market list",
+                EVENT_DOC,
             ),
             Capability.INSTRUMENT_DISCOVERY: (
                 "Binary YES/NO contract identifiers are derived from the native market ticker",
@@ -148,7 +152,66 @@ class KalshiAdapter(BaseReadOnlyAdapter):
             result.append(self._normalize_market(raw, response))
         return tuple(result)
 
-    def _normalize_market(self, raw: dict[str, Any], response: HTTPObservation) -> FrontierMarket:
+    async def discover_event_markets(self, native_event_id: str) -> tuple[FrontierMarket, ...]:
+        self._require(Capability.EVENT_MARKET_GROUPS)
+        if not isinstance(native_event_id, str) or not _TICKER_PATTERN.fullmatch(native_event_id):
+            raise AdapterError("INVALID_EVENT_ID", "Kalshi event ticker is invalid")
+        response = await self.transport.get_json(
+            f"{BASE}/events/{quote(native_event_id, safe='')}", {"with_nested_markets": "true"}
+        )
+        self._capture_response(response, "event_market_listing")
+        payload = response.payload
+        if not isinstance(payload, dict) or not isinstance(payload.get("event"), dict):
+            raise AdapterError(
+                "INVALID_SCHEMA", "Kalshi event response must contain an event object"
+            )
+        event = payload["event"]
+        if event.get("event_ticker") != native_event_id:
+            raise AdapterError("EVENT_ID_MISMATCH", "Kalshi event response does not match request")
+        event_title = event.get("title")
+        if not isinstance(event_title, str) or not event_title.strip() or len(event_title) > 512:
+            raise AdapterError("INVALID_SCHEMA", "Kalshi event title is missing or oversized")
+        children = event.get("markets")
+        top_level_children = payload.get("markets")
+        if isinstance(top_level_children, list) and top_level_children:
+            if isinstance(children, list) and children:
+                raise AdapterError("INVALID_SCHEMA", "Kalshi event returned two market arrays")
+            children = top_level_children
+        if not isinstance(children, list) or len(children) > self.config.max_markets_per_call:
+            raise AdapterError(
+                "INVALID_SCHEMA",
+                "Kalshi event markets must be an array within the configured bound",
+            )
+        records: list[FrontierMarket] = []
+        seen: set[str] = set()
+        for raw in children:
+            if not isinstance(raw, dict):
+                raise AdapterError("INVALID_SCHEMA", "Kalshi event market entry must be an object")
+            source_event_id = raw.get("event_ticker")
+            if source_event_id is not None and source_event_id != native_event_id:
+                raise AdapterError("EVENT_ID_MISMATCH", "Kalshi child market names another event")
+            record = self._normalize_market(
+                raw,
+                response,
+                parent_event_id=native_event_id,
+                parent_event_title=event_title,
+            )
+            if record.native_market_id in seen:
+                raise AdapterError(
+                    "DUPLICATE_MARKET", "Kalshi event contains a duplicate market ticker"
+                )
+            seen.add(record.native_market_id)
+            records.append(record)
+        return tuple(records)
+
+    def _normalize_market(
+        self,
+        raw: dict[str, Any],
+        response: HTTPObservation,
+        *,
+        parent_event_id: str | None = None,
+        parent_event_title: str | None = None,
+    ) -> FrontierMarket:
         ticker = raw.get("ticker")
         if not isinstance(ticker, str) or not ticker or len(ticker) > 256:
             raise AdapterError("INVALID_MARKET", "Kalshi market ticker is missing or oversized")
@@ -208,7 +271,8 @@ class KalshiAdapter(BaseReadOnlyAdapter):
             venue=self.venue,
             canonical_id=stable_market_id(self.venue, ticker),
             native_market_id=ticker,
-            native_event_id=str(raw.get("event_ticker") or "") or None,
+            native_event_id=parent_event_id or (str(raw.get("event_ticker") or "") or None),
+            native_event_title=parent_event_title,
             title=str(raw.get("title") or ticker),
             description=str(raw.get("subtitle") or ""),
             market_kind=kind,

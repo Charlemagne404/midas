@@ -461,6 +461,9 @@ it('captures Kalshi fee metadata and exposes a separate hypothetical fee sensiti
     canonical_id: 'kalshi:KX-FEE-1',
     source_observation_record_id: 'market-observation',
     native_market_id: 'KX-FEE-1',
+    native_event_id: 'KX-FEE-1-EVENT',
+    native_event_title: 'Example public event',
+    outcome_label: 'Democratic Party',
     venue: 'kalshi',
     title: 'Recorded Kalshi fee fixture',
     market_kind: 'binary_event',
@@ -518,7 +521,7 @@ it('captures Kalshi fee metadata and exposes a separate hypothetical fee sensiti
   };
   const source = {
     venue: 'kalshi',
-    adapter_version: 'frontier-kalshi-4',
+    adapter_version: 'frontier-kalshi-5',
     public_probe_enabled: true,
     capabilities: [
       {
@@ -526,6 +529,12 @@ it('captures Kalshi fee metadata and exposes a separate hypothetical fee sensiti
         supported: true,
         state: 'implemented',
         reason: 'Native fee metadata, not account fee costs',
+      },
+      {
+        capability: 'event_market_groups',
+        supported: true,
+        state: 'implemented',
+        reason: 'One bounded public event detail request',
       },
     ],
     health: {
@@ -537,6 +546,7 @@ it('captures Kalshi fee metadata and exposes a separate hypothetical fee sensiti
     },
   };
   const requestBodies: Record<string, unknown>[] = [];
+  const eventGroupBodies: Record<string, unknown>[] = [];
   const sensitivityBodies: Record<string, unknown>[] = [];
   const responses: Record<string, unknown> = {
     '/api/frontier/overview': {
@@ -593,6 +603,25 @@ it('captures Kalshi fee metadata and exposes a separate hypothetical fee sensiti
   };
   const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const path = String(input);
+    if (path === '/api/frontier/probe/kalshi/event-markets' && init?.method === 'POST') {
+      eventGroupBodies.push(JSON.parse(String(init.body)) as Record<string, unknown>);
+      return {
+        ok: true,
+        json: async () => ({
+          venue: 'kalshi',
+          market_id: market.canonical_id,
+          native_event_id: 'KX-FEE-1-EVENT',
+          event_title: 'Example public event',
+          market_count: 2,
+          observation_id: 'event-group-observation',
+          raw_sha256: 'd'.repeat(64),
+          request_count_delta: 1,
+          network_calls_bounded_by: 1,
+          hypothetical_only: true,
+          note: 'Event context only; no payoff equivalence verified.',
+        }),
+      } as Response;
+    }
     if (path === '/api/frontier/probe/kalshi/fee-metadata' && init?.method === 'POST') {
       requestBodies.push(JSON.parse(String(init.body)) as Record<string, unknown>);
       return {
@@ -735,6 +764,14 @@ it('captures Kalshi fee metadata and exposes a separate hypothetical fee sensiti
 
   fireEvent.click(await screen.findByRole('button', { name: 'Markets' }));
   fireEvent.click(await screen.findByRole('button', { name: 'Inspect' }));
+  expect(await screen.findByText('Public event context')).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Capture event context' }));
+  expect(
+    await screen.findByText('2 markets · saved observation event-group-observation'),
+  ).toBeInTheDocument();
+  expect(eventGroupBodies).toEqual([
+    { market_id: market.canonical_id, native_event_id: 'KX-FEE-1-EVENT' },
+  ]);
   expect(
     await screen.findByText('Selected components from public MVE metadata'),
   ).toBeInTheDocument();
