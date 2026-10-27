@@ -203,14 +203,18 @@ and series fee parameters. The normalized metadata records whether the event
 override pair is complete, explicitly cleared, partial, or unreported. The
 standalone sensitivity refuses the last two states, following Kalshi's
 [event fee-change documentation](https://docs.kalshi.com/api-reference/events/get-event-fee-changes).
-This is inspection evidence only: Frontier leaves the
-canonical market fee schedule unknown because account precision, maker/mixed-order
-behavior, FCM charges, scheduled changes, and full candidate fee applicability
-remain unresolved. Local manual one-fill and bounded one-order sensitivities now
-apply the documented quadratic taker formula, per-fill rounding, and order-level
-rounding/rebate rules for both published balance-precision cases. They remain
-separate from candidate economics and require a recorded native instrument; manual
-prices are not represented as public quotes or captured fills.
+Capture itself remains metadata-only. On a later saved-evidence replay, Frontier
+may join a complete raw/hash/path/identity-matched event/series pair into a
+provenance-bound `FeeStatus.ESTIMATE` for supported quadratic taker fees. The
+metadata must not postdate the pinned quote and must be no more than 24 hours old
+at quote and replay time. The candidate model uses one fill and conservative
+`$0.01` non-direct-member balance alignment; estimates remain conditional or
+incomplete. Replay manifest v2 pins the fee-evidence observation IDs. Account
+precision, maker/mixed-order behavior, FCM charges, schedule changes, and
+executable cost remain unresolved. Local manual one-fill and bounded one-order
+sensitivities still use explicit manual prices and quantities, apply the
+documented quadratic taker formula and rounding rules, and remain separate from
+candidate replay. Those inputs are not public quotes or captured fills.
 When a bounded probe receives a decoded 2xx response that fails normalization,
 the raw body and typed source-failure diagnostic are stored and the API returns
 the observation ID. Complete within-cap invalid JSON and non-2xx bodies are also

@@ -242,8 +242,21 @@ canonical `market_id`. The route requires the source's public-probe setting and
 the market must be in the bounded saved listing window. It makes one event GET
 with `exclude_markets=true` and one series GET, then stores both raw responses
 with the normalized event overrides and series fee type/multiplier. This
-evidence-only capture does not set the market's `FeeSchedule` or change candidate
-economics. A separate local
+capture makes no immediate fee calculation. On a later saved-evidence replay,
+the API may join a complete event/series pair into a provenance-bound
+`FeeStatus.ESTIMATE` for a supported quadratic taker schedule. It verifies
+native market/event/series identity, parsed source fields, endpoint paths, raw
+hashes, and timestamps. The metadata must be no later than the pinned book quote
+and no more than 24 hours old at quote and replay time. Partial, unreported,
+mismatched, stale, unsupported, and held-source evidence remains unknown. The
+candidate uses one fill at its modeled buy price, derived from the pinned ask
+and any selected scenario, plus conservative `$0.01` non-direct-member balance
+alignment; the classification remains conditional or incomplete. Replay
+manifest v2 separately pins fee-metadata observation IDs and run history
+displays their count. This does not establish the account's fee
+class, maker or multi-fill costs, FCM charges, or executable net economics.
+
+A separate local
 `POST /api/frontier/economics/kalshi-fee-sensitivity` accepts the recorded
 `market_id`, paired event and series `observation_id`s, and manual
 `price_usd`/`quantity_contracts`. It makes no source request; it checks the
@@ -251,8 +264,8 @@ stored source kind, host, market identity, timestamps, normalized metadata and
 raw hashes before computing a one-fill taker sensitivity. Supported quadratic
 fee types use the dated July 7, 2026 public formula, with direct and non-direct
 balance-precision scenarios. The response is hashed and hypothetical, not an
-account quotation, not a quote from a saved public book, and not applied to
-candidate net economics. Unsupported fee types, malformed inputs and mismatched
+account quotation, not a quote from a saved public book, and not the candidate
+fee calculation. Unsupported fee types, malformed inputs and mismatched
 evidence fail closed. Fee sensitivity also requires an explicitly complete
 event override pair or an explicitly null/null pair that clears the override;
 missing or partial event fields make the sensitivity unresolved. This follows

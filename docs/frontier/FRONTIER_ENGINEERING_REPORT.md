@@ -38,16 +38,31 @@ Kalshi now has a separate ticker-filtered, cursor-paginated public trade-page
 operation, bounded to one saved market and at most 100 rows. A genuine API round
 trip captured an empty Kalshi page with an empty continuation cursor; fixture
 tests cover trade-row normalization and cursor errors.
-Saved Kalshi event and series metadata can also drive a bounded, local fee
-sensitivity for one hypothetical taker fill. It supports two documented
-quadratic fee types, shows direct and non-direct balance-precision cases, and
-does not modify candidate economics. The input price and quantity are manual
-scenario assumptions, not observed quotes or account-specific costs.
+Saved Kalshi event and series metadata drives a bounded standalone fee
+sensitivity for one hypothetical taker fill and, on later replay, a separate
+provenance-bound candidate fee estimate when complete supported evidence passes
+the quote-time, freshness, raw-hash, and identity gates. The standalone
+sensitivity supports two documented quadratic fee types and shows direct and
+non-direct balance-precision cases. Candidate replay models one fill under a
+conservative non-direct precision assumption; it does not establish an account
+fee quote. Manual sensitivity price and quantity remain scenario assumptions,
+not observed quotes or captured fills.
 Kalshi's event fee-change API documentation now informs an explicit override
 resolution state. The fee workbench rejects sensitivities when event override
 fields are missing or partial, and accepts only a complete pair or a
 documented null/null clear. This is fixture-verified; no new source capture or
 research over held Kalshi data was performed.
+The current replay path can compile a saved, hash-checked event/series pair into
+a provenance-bound estimated Kalshi taker fee for supported quadratic schedules.
+The estimate is limited to one fill, uses source metadata no later than the
+book quote and at most 24 hours old, and applies the documented non-direct
+balance precision as a conservative scenario. Replay schema v2 separately pins
+the fee metadata observation IDs; Mission Control displays their count. The
+candidate remains conditional or incomplete, and an independent audit repeats
+the estimate from pinned evidence. This is fixture-verified implementation;
+there was no source request or held-data read during this checkpoint.
+Current touched versions are Kalshi adapter v16, economic model v8, independent
+audit v5, and deterministic replay v8.
 Kalshi adapter v7 added a separate one-page multivariate-event lookup filtered
 by exactly one series or collection ticker. A genuine public response returned
 one event and a source cursor, but omitted its nested `markets` field despite
@@ -216,7 +231,7 @@ submission route.
 | Venue | Implemented public research | Preserved distinctions and limits | Live evidence |
 | --- | --- | --- | --- |
 | Polymarket | Gamma v1 CTF-token and v2 position-ID discovery; v1-host public CLOB books; v2 position books routed to the documented `clob-v2` host; legacy public trades and cursor-paginated Data API v2 pages; native token/condition/event IDs; strict normalization, supported fee-shape handling, and bounded parent-event group capture | V1 settlement identity remains absent. V2 position markets map to the documented Polygon pUSD token identity, but market-specific payout and resolution remain unverified. The v2 book route is fixture-tested only because `clob-v2.polymarket.com` did not resolve from this development host. No incremental book stream or candle normalization; fee schedules expire after five minutes and unsupported exponents remain unknown; v2 condition history is fixed to three years and page capture uses taker-only trades with a 0.01-share floor. | Earlier live API evidence persisted one listing, one book, and ten trades through the older trade path. A direct v2 first page and one continuation through the local API route each returned ten rows and were hash-verified via isolated stores; no third page was requested. A one-market listing captured a market-specific `zero_fees` schedule at 20:41:18.972060Z, with `feesEnabled=true`, exponent 1, taker-only, rate 0; normalized status was verified only through 20:46:18.972Z. The 2026-10-27 v1-host book probe returned HTTP 200, 58 bid levels and 8 ask levels, body SHA `cecdb8d4f14fa61a7039e1559a52e02c2e7819a0342566f5d07d829841bc9aef`; this is one current public snapshot, not V2-host or settlement validation. |
-| Kalshi | Public market listing and ticker-bound detail; binary YES/NO instruments; public book snapshots/trades; ticker-filtered cursor trade pages; event/series fee metadata; one-fill and one-order taker-fee sensitivities; bounded event groups and MVE event discovery; adapter v10 retains v4 normalization of up to 64 native MVE selected component references | MVE selected legs remain conditional source assertions, not verified component rules, combo payoff, or settlement equivalence. Adapter v10 adds a single-market detail GET only for a child ticker referenced by a saved parent MVE; the API checks market and event identity, persists the raw/normalized row, and includes `market_metadata` in market query and graph revisions. Adapter v8 accepts the documented top-level empty event-market array when the event-level field is omitted; v9 adds the single-event `tickers` filter. Asks are derived from complementary YES/NO bids where applicable. Trade pages normalize `yes_price_dollars` as a YES-price reference and preserve `no_price_dollars` and taker fields only in raw evidence; no BUY/SELL aggressor direction is inferred. Fee sensitivity remains manual, not a candidate/account fee schedule; actual account precision, maker/mixed-order behavior, FCM charges, scheduled changes, and full candidate fee applicability remain unresolved. No stream or historical-candle normalization. | Earlier listing/book/trade/event/fee captures remain hash-pinned. The one MVE child capture returned HTTP 200 with raw SHA `0f1c3cd42cac5202ca5a3012d58cb8d9631bf39cce313c738bb0448140271eda` and temporary-store row SHA `a2e7ae0c08436155a0bdc80e07f16d6b882eaf9706617994be135b668ec5897a`. Its source ticker and event matched the saved parent reference; the child was closed and its rules describe fair-price fallbacks. It contains no child book/price, does not establish combo payoff, and does not create cross-venue economics. |
+| Kalshi | Public market listing and ticker-bound detail; binary YES/NO instruments; public book snapshots/trades; ticker-filtered cursor trade pages; event/series fee metadata; one-fill and one-order taker-fee sensitivities; bounded event groups and MVE event discovery; adapter v16 retains v4 normalization of up to 64 native MVE selected component references | MVE selected legs remain conditional source assertions, not verified component rules, combo payoff, or settlement equivalence. Adapter v10 adds a single-market detail GET only for a child ticker referenced by a saved parent MVE; the API checks market and event identity, persists the raw/normalized row, and includes `market_metadata` in market query and graph revisions. Adapter v8 accepts the documented top-level empty event-market array when the event-level field is omitted; v9 adds the single-event `tickers` filter. Asks are derived from complementary YES/NO bids where applicable. Trade pages normalize `yes_price_dollars` as a YES-price reference and preserve `no_price_dollars` and taker fields only in raw evidence; no BUY/SELL aggressor direction is inferred. Complete saved event/series fee evidence can now inform a separate conditional one-fill candidate estimate in replay. Actual account precision, maker/mixed-order behavior, FCM charges, schedule changes, and exact account applicability remain unresolved. No stream or historical-candle normalization. | Earlier listing/book/trade/event/fee captures remain hash-pinned. The one MVE child capture returned HTTP 200 with raw SHA `0f1c3cd42cac5202ca5a3012d58cb8d9631bf39cce313c738bb0448140271eda` and temporary-store row SHA `a2e7ae0c08436155a0bdc80e07f16d6b882eaf9706617994be135b668ec5897a`. Its source ticker and event matched the saved parent reference; the child was closed and its rules describe fair-price fallbacks. It contains no child book/price, does not establish combo payoff, and does not create cross-venue economics. |
 | Kraken Spot | Configured-pair AssetPairs metadata; public depth, trades and OHLC; pair tick/lot/minimum fields retained | Spot is a base/quote instrument, not an event payoff. Fee tier, account eligibility, custody, and event hedge semantics are unknown. Pair discovery is an explicit allowlist. | Bounded live API capture persisted XBT/USD metadata, depth with 10 asks/10 bids and per-level timestamps, and ten trades. No prediction-contract equivalence was found. |
 
 Each adapter declares every shared capability as supported or unsupported with a
@@ -388,14 +403,15 @@ hash-verified. The second page advertised another cursor; no third page or full
 history walk was requested. Earlier ten-trade samples used the legacy public
 trades path.
 
-Kalshi's event/series fee metadata is captured and linked to raw responses, but
-the exact fee schedule, fee-change timing, maker/taker applicability, and
-account-specific rounding/rebates are not reconciled into an executable cost;
-its fee therefore remains unknown. Kraken's public pair data does not establish
-the account's current fee tier. Its trade-volume
-endpoint is authenticated, which Frontier does not call ([Kraken Get Trade
-Volume](https://docs.kraken.com/api-reference/account-data/get-trade-volume)).
-No fee is guessed for either source.
+Kalshi's event/series fee metadata is captured and linked to raw responses.
+Complete supported metadata can inform the replay's explicitly estimated
+one-fill taker cost, but account-specific schedule applicability, fee-change
+timing, balance precision, maker/mixed-order charges, FCM charges, and
+multi-fill rounding/rebates remain unresolved. The estimate is not an executable
+account cost. Kraken's public pair data does not establish the account's current
+fee tier. Its trade-volume endpoint is authenticated, which Frontier does not
+call ([Kraken Get Trade Volume](https://docs.kraken.com/api-reference/account-data/get-trade-volume)).
+No fee is guessed for Kraken.
 
 The transport allows only HTTPS GET to an adapter’s host list, rejects redirects,
 uses bounded timeouts/retries/rate, and caps response bytes. The default per
@@ -537,7 +553,8 @@ terminal payout by state; per-venue gross capital, fee amounts, modeled net cost
 gross/net result; quantity step/minimum and displayed top-ask depth; quote
 currency and settlement compatibility; receipt and exchange timestamp skew;
 book age; and scenario slippage, delay-based quote decay, and fill fraction.
-Per-venue capital reports principal and any verified fee; when a fee is unknown,
+Per-venue capital reports principal and a computed fee when its supported fee
+model is current; estimate-based fees remain conditional. When a fee is unknown,
 the missing amount is called out and never treated as zero. Unknown fees prevent
 a decisive net calculation. A missing/stale book, unsupported
 payoff, incomplete equivalence, or currency mismatch fails closed into a
@@ -546,9 +563,10 @@ non-positive or incomplete classification.
 Candidate detail now exposes the existing `capital_by_venue` estimate through
 a client-only virtual balance comparison. Each venue is checked independently
 using exact decimal arithmetic; balances are neither pooled nor transferred.
-Requirements use modeled buy prices plus known fees. When an applicable fee is
-unknown, the UI reports principal coverage but leaves fee sufficiency
-unresolved. Missing or mixed quote currencies disable the comparison. This is a
+Requirements use modeled buy prices plus computed fees, including a clearly
+assumption-labeled fee estimate when present. When an applicable fee is unknown,
+the UI reports principal coverage but leaves fee sufficiency unresolved.
+Missing or mixed quote currencies disable the comparison. This is a
 display-level scenario aid and does not add account, collateral, transfer, FX,
 or settlement-duration modeling.
 
@@ -1142,6 +1160,34 @@ responses are distinct from the preserved genuine public capture files.
   and Ruff check/format passed. This is deterministic replay of saved public
   responses, not a fresh cross-venue or economic observation.
 
+### Saved Kalshi candidate-fee estimate checkpoint — 2026-10-27 16:41 UTC
+
+Code commit `3e85c8d` adds a replay-only candidate fee estimate from a complete,
+hash/path/identity-checked saved event/series pair. It requires supported
+quadratic taker metadata, evidence no later than the pinned book quote and at
+most 24 hours old at both quote and replay evaluation. It calculates one fill
+with the conservative `$0.01` non-direct-member debit-alignment scenario. The
+independent audit re-derives this fee, estimated-fee candidates cannot be
+classified as verified mathematical inconsistencies, and replay manifest v2
+pins the fee metadata observation IDs separately. Mission Control shows that
+count in run history. Partial, unreported, mismatched, unsupported, held, stale,
+and otherwise missing fee evidence remains unknown.
+
+Follow-up test commit `90bd11e` adds explicit future-at-quote, stale-at-quote,
+and stale-at-replay rejection cases for estimated fees.
+API test commit `ad1415b` verifies the saved fee status and both observation IDs
+are returned from the bounded Markets endpoint.
+Focused verification after the implementation passed **35** economics/replay
+tests, **3** saved-evidence/API fee and quarantine tests, **19** storage and
+replay-comparison tests, **2** adapter capability/metadata tests, and **1**
+Mission Control fixture test (**60 passed** total). Strict mypy passed for the
+six changed Python source modules; Ruff check/format, TypeScript typecheck,
+targeted ESLint/Prettier, and `git diff --check` passed. One existing
+Starlette/httpx TestClient deprecation warning appeared in the API selection.
+The full Frontier suite and production frontend build were not run under the
+current host-pressure sample. No public source request, held-data read,
+service, production configuration, or historical artifact was used or changed.
+
 ## 13. Performance and resource measurements
 
 The previous focused backend run (54 tests) completed in 10.65 seconds wall time,
@@ -1213,6 +1259,14 @@ use; memory PSI `avg10` was 35.78% (`some`) and 32.22% (`full`). The active
 no swap. Because browser/build workloads would add processes during elevated
 memory pressure, they were not started. This is a dated admission decision, not
 a deployment-readiness measurement.
+
+At `2026-10-27T16:41:19Z`, before deciding whether to run the full Frontier
+suite or another production frontend build, memory PSI `avg10` was 0% for
+`some` and `full`, while `avg300` was 17.36% and 15.70%. Available memory was
+9,809,116 KiB (about 9.35 GiB); only 484,228 KiB (about 473 MiB) of the 4 GiB
+swap device was free. The targeted selections above were kept short; the full
+suite and build were deferred. This is a host admission observation, not an
+application service measurement or deployment-readiness result.
 
 ## 14. Actual scientific findings
 
@@ -1314,13 +1368,15 @@ cost-adjusted discrepancies and executable opportunities are therefore
 unestablished.
 The saved Kalshi fee-metadata pair supports a standalone one-fill sensitivity
 and a bounded manual one-order sensitivity under the July 7, 2026 public
-quadratic taker formula and both documented balance-precision cases. The order
-model handles per-fill rounding, accumulated order rounding, and capped rebates
-for up to 32 fills of one recorded instrument and side. It is not an account fee
-quote or book-priced result; maker/mixed-order fills, FCM charges, actual account
-precision, later schedule changes, and candidate fee integration remain
-unresolved. It does not enter the candidate's canonical `FeeSchedule`, and
-unknown cost treatment in candidate economics is preserved.
+quadratic taker formula and both documented balance-precision cases. Replay now
+can compile complete hash-matched event/series evidence into an estimated
+candidate fee and the independent audit re-derives it. The candidate estimate
+models one fill, checks metadata freshness against quote and replay times, and
+uses a conservative `$0.01` non-direct balance-alignment scenario. It is not an
+account fee quote or book-priced result. Maker/mixed-order fills, FCM charges,
+actual account precision, multi-fill realization and rebates, later schedule
+changes, and other execution costs remain unresolved. Candidate estimates are
+conditional or incomplete and do not verify economic eligibility.
 
 ## 16. Unresolved defects and blockers
 
@@ -1357,8 +1413,9 @@ gaps are deferred work, not hidden passed checks:
   pinned normalized evidence. It cannot authenticate source semantics, reviewer
   identity, external assertions, fee authority, timestamps, or exchange truth;
   it is not a second independent market-data source.
-- No account-independent fee resolution, FX, cross-venue capital transfer,
-  settlement risk, or partial-leg exposure model exists.
+- No account-specific fee quote, FX, cross-venue capital transfer, settlement
+  risk, or partial-leg exposure model exists. The Kalshi replay estimate is
+  one-fill and conditional, and does not resolve account applicability.
 - No continuous source worker, incremental book stream, gap reconstruction, or
   source-specific long-horizon quality study exists.
 - A bounded Frontier paired-replay job is now registered with Arena and exposed
@@ -1394,10 +1451,11 @@ Priority order:
    pressure permits. Extend beyond the current 200-market/500-row bounds or add
    clustering only after representative data and resource measurements justify
    the added scope.
-3. Extend Kalshi fee evidence only when public metadata establishes the market's
-   applicable formula and precision model beyond the current bounded taker
-   sensitivity. Keep Kraken account fee tier unknown without authenticated
-   data; no candidate may use unknown or expired fees as zero.
+3. The Kalshi saved-evidence replay estimate now covers one supported quadratic
+   taker fill. Extend it only when permitted public evidence and an independently
+   checked model establish further fee timing, precision, maker/mixed-fill, or
+   multi-fill behavior. Keep Kraken account fee tier unknown without
+   authenticated data; no candidate may use unknown or expired fees as zero.
 4. Seek real public multi-outcome metadata that meets the strict payoff and
    resolution requirements; broaden accepted payoff families only with
    independently checked evidence.
@@ -1418,6 +1476,16 @@ Priority order:
 
 Implementation and documentation commits on this branch:
 
+- `3e85c8d` — compiled complete saved Kalshi event/series fee observations into
+  a provenance-bound conditional candidate estimate; added independently
+  recomputed fee auditing, replay manifest fee-evidence IDs, held-source
+  quarantine coverage, and a run-history evidence count in Mission Control.
+- `90bd11e` — tested that estimated fees reject evidence received after the
+  pinned quote, older than 24 hours at quote time, or more than 24 hours old at
+  replay evaluation.
+- `ad1415b` — extended the saved event/series evidence fixture through the
+  `/api/frontier/markets` response and asserted the estimate and both
+  provenance IDs are surfaced.
 - `0f8e1d6` — exchange-independent contracts, transport, Polymarket/Kalshi/
   Kraken adapters, relationships, Decimal economics, bounded storage/replay,
   tests, and public capture evidence.
@@ -1779,6 +1847,20 @@ passed 137 tests after matcher v5; the saved-source replay passed separately.
 
 ## 20. Final status and continuation instructions
 
+### Saved fee-evidence replay checkpoint — 2026-10-27
+
+Commits `3e85c8d`, `90bd11e`, and `ad1415b` implement the source-backed replay
+estimate and test its quote/replay freshness boundaries and Markets API output.
+The public event/series pair remains immutable and is used only after raw
+response, endpoint, identity, freshness, and source-hold checks. Fixture
+verification establishes deterministic arithmetic, evidence lineage, and
+independent-audit agreement. It does not establish an account fee, live
+applicability, multi-fill cost, or executable net opportunity. Economic model
+v8, independent audit v5, replay v8, and Kalshi adapter v16 are current in this
+worktree. The implementation is undeployed; source permission remains blocked.
+The full Frontier suite and production build are deferred at the measured
+16:41 UTC host-pressure sample recorded in Section 13.
+
 ### Venue-separated virtual capital comparison (2026-10-27)
 
 Code commit `9d7b599516ca70895525c701543c507054bcfbe6` adds a candidate-detail
@@ -1983,15 +2065,15 @@ cross-venue economics.
 | Polymarket, Kalshi and Kraken Spot adapters | PARTIALLY VERIFIED | Fixture/contract tests and bounded live listing/book/legacy-trade captures are preserved. Polymarket v2 first and continuation pages returned ten rows each. Kalshi has a ticker-filtered cursor-page implementation, fixture-verified row mapping, and a live empty terminal page; live trade-row normalization remains unvalidated. Adapter v4 preserves native MVE selected component IDs/sides; v7 added one-page MVE discovery whose live response omitted nested markets; v8 fixes event-detail parsing of an explicit empty top-level market array; v10 captures a saved-parent-referenced child contract and preserves its native rules. The one captured child is closed and includes fair-price fallback conditions; neither its simple binary payoff nor the parent-combo payout is verified. Account fees and Kraken account fee applicability remain unresolved. API fixtures cover source degradation and recovery; live degraded-source behavior remains unverified. |
 | Canonical market/instrument normalization | PARTIALLY VERIFIED | Three distinct instrument classes are represented; FrontierMarket schema v3, BookSnapshot v2 and TradeObservation v3 retain exact quote-denomination identities where a source mapping is established. Instrument, book, fee, trade, candidate-leg and capital units are distinguished from display codes. Legacy rows load with identity absent and remain economically incomplete. V2 Polymarket trades retain native outcome-token identity; Kalshi MVE component references remain source assertions; `MarketBatch` schema v2 preserves typed `MarketGroup` membership state. The genuine MVE response records member-list state `omitted` and zero child markets. Payoff/resolution semantics remain unverified. |
 | Relationship hypotheses, review revisions, indexed neighborhoods, and explicit same-payoff verifier | PARTIALLY VERIFIED | Self-attributed review API/UI, append-only revisions, latest-state replay, tamper/migration checks, left/right endpoint-indexed 1–3 hop scans capped at 500 rows, one-hop keyset pages, and revision-bound multi-hop BFS pages with deterministic recomputation and 201-market chunk coverage. Matcher v5 includes bounded exact-ID MVE selected-component references as HYPOTHESIS edges with both source record IDs; a saved Kalshi parent listing and child detail replay into one such edge. Matcher v4's explicit year-conflict rejection remains. A genuine House-control topic pair remains text-only HYPOTHESIS and fails strict same-payoff verification. Payout currency must match each payoff settlement asset, and the market-level settlement asset must agree; the focused USD/USDC test passes. The focused depth-two browser E2E now passes; reviewer authentication, revision-history drill-down, and full-universe search remain absent. |
-| Opportunity candidate and independent economic checks | PARTIALLY VERIFIED | Two-venue all-long binary and same-market 3–16 state one-hot exhaustive coverage; economic model v7 computes an exact full/no-fill adverse exposure pattern over up to 16 legs, and independent audit v4 recomputes economics and pinned-book timing, freshness, source-quality, and clock-uncertainty claims. Differential three-leg enumeration and maximum 16-outcome replay/audit agree; fee-total, per-leg-fee, venue-capital, quantity-step, candidate-timing, and tick-metadata mutations are rejected. Candidate generation and audit both reject off-tick best asks; source-specific freshness limits gate cross-venue comparisons. Unknown-fee cases, malformed cross-venue leg handling, no-bridge payout/settlement denomination rejection, same-ticker/different-network asset rejection, and a token with ticker `USD` versus fiat USD mismatch all fail closed as expected. Current venue adapters omit clock uncertainty, leaving live cross-venue timing unverified. Broader funding/settlement costs and operational feasibility remain incomplete. |
-| Kalshi taker-fee sensitivity | PARTIALLY VERIFIED | Hash-matched public event/series evidence supports one-fill and bounded one-order Decimal sensitivities for two documented quadratic taker fee types, both precision cases, per-fill rounding, order accumulation, and capped rebates. The v15 fee metadata schema distinguishes a complete event override, explicit series inheritance, partial override, and unreported override fields. Both sensitivity calculations reject partial/unreported states; tests cover these states against Kalshi's event-fee documentation. The dated official schedule's `KXMVE` multiplier pair is not assumed to apply to separately named MVE series. Manual inputs are not live quotes or book-priced; account-specific fees and precision, exact maker/mixed-order applicability, FCM charges, later schedules, and full candidate fee integration remain unresolved. |
-| Append-only evidence store and deterministic replay | COMPLETE AND VERIFIED | Storage schema v6, additive v2/v3/v4/v5 migration, bounds, hash validation, and immutability. Replay v7 carries exact store record IDs and the new denomination fields through API-loaded market/book provenance, manifests, candidate legs, and Arena snapshots; direct in-memory replay retains adapter IDs. Replay-v5 economic output includes full/no-fill sensitivity and pins effective mappings/proposal limit. The separate Arena wrapper uses immutable content-addressed snapshots and hash-verified result artifacts; two controlled fixture workers completed and the latest recorded CPU/RSS. |
-| Frontier API and source configuration | COMPLETE AND VERIFIED | Kalshi MVE discovery validates exactly one series/collection/event-ticker filter, capability/config gates, one-page bounds, and raw/normalized lineage; it does not follow the source cursor. Component detail is a separate one-GET capability, bound before the request to a ticker in a saved parent's selected legs and after the response to the saved event identity. Four focused tests now cover raw capture retention after drained Polymarket trade-page and generic market/book/trade lineage mismatches, with no duplicate of an earlier successful listing. Frontier readiness summarizes candidate timing audits over its latest three non-held replays as within bounds, outside bounds, or unrecorded while retaining the existing source-quality gate state. |
+| Opportunity candidate and independent economic checks | PARTIALLY VERIFIED | Two-venue all-long binary and same-market 3–16 state one-hot exhaustive coverage; economic model v8 computes an exact full/no-fill adverse exposure pattern over up to 16 legs, and independent audit v5 recomputes economics and pinned-book timing, freshness, source-quality, clock-uncertainty, and estimated-fee claims. Differential three-leg enumeration and maximum 16-outcome replay/audit agree; fee-total, per-leg-fee, venue-capital, quantity-step, candidate-timing, and tick-metadata mutations are rejected. Candidate generation and audit both reject off-tick best asks; source-specific freshness limits gate cross-venue comparisons. Unknown-fee cases, malformed cross-venue leg handling, no-bridge payout/settlement denomination rejection, same-ticker/different-network asset rejection, and a token with ticker `USD` versus fiat USD mismatch all fail closed as expected. A positive Kalshi estimate remains conditional and cannot yield a verified inconsistency. Current venue adapters omit clock uncertainty, leaving live cross-venue timing unverified. Broader funding/settlement costs and operational feasibility remain incomplete. |
+| Kalshi taker-fee sensitivity and replay estimate | PARTIALLY VERIFIED | Hash-matched event/series evidence supports one-fill and bounded one-order Decimal sensitivities for two documented quadratic taker fee types, both balance-precision cases, per-fill rounding, order accumulation, and capped rebates. Adapter v16 preserves complete override, explicit series inheritance, partial, and unreported states. Saved-evidence replay compiles only complete, identity- and raw-hash-matched supported quadratic fee metadata into a FeeStatus.ESTIMATE; it enforces no-look-ahead and 24-hour quote/replay freshness, models a single fill, and uses `$0.01` non-direct balance alignment as a conservative scenario. The independent audit re-derives that estimate, and Replay v8 pins fee metadata observation IDs separately. Partial/unreported/mismatched/stale evidence remains unknown; the July schedule's `KXMVE` multiplier is not transferred to differently named MVE series. All candidate-fee coverage is fixture-based. Account-specific precision, exact maker/mixed-order applicability, multi-fill rounding/rebates, FCM charges, later schedule changes, and actual net economics remain unresolved. |
+| Append-only evidence store and deterministic replay | COMPLETE AND VERIFIED | Storage schema v6, additive v2/v3/v4/v5 migration, bounds, hash validation, and immutability. Replay v8 carries exact store record IDs, denomination fields, and separate fee metadata observation IDs through API-loaded market/book provenance, manifests, candidate legs, and Arena snapshots; direct in-memory replay retains adapter IDs. Replay-v5 economic output includes full/no-fill sensitivity and pins effective mappings/proposal limit. The separate Arena wrapper uses immutable content-addressed snapshots and hash-verified result artifacts; two controlled fixture workers completed and the latest recorded CPU/RSS. |
+| Frontier API and source configuration | COMPLETE AND VERIFIED | Kalshi MVE discovery validates exactly one series/collection/event-ticker filter, capability/config gates, one-page bounds, and raw/normalized lineage; it does not follow the source cursor. Component detail is a separate one-GET capability, bound before the request to a ticker in a saved parent's selected legs and after the response to the saved event identity. Saved fee metadata is joined only after hash/path/identity checks, omitted for held venues, and becomes an input only to later replay. Four focused tests cover prior raw capture retention after lineage mismatches; Frontier readiness summarizes candidate timing audits over its latest three non-held replays as within bounds, outside bounds, or unrecorded while retaining the existing source-quality gate state. |
 | Paired scenario comparison | PARTIALLY VERIFIED | Local deterministic comparison, atomic result persistence, API/UI, and isolated browser tests pass. Two systemd-supervised Arena jobs completed over the same controlled fixture with verified result identities; the latest worker's process CPU and peak RSS are visible in Mission Control. No genuine matched live cross-venue pair or live economic claim exists. |
-| Live market/book/trade and fee metadata through adapters/API | PARTIALLY VERIFIED | Earlier listing/book/trade, event-group, fee-metadata, and trade-page captures are hash-pinned. Kalshi MVE captures include filtered pages whose nested markets were omitted and one detail response with explicit top-level `markets: []`. The new one-request child detail capture matches a selected leg's saved ticker/event identities and has raw/store hashes; its rules expose fair-price fallbacks, but it has no book/price and proves neither child nor combo payoff. No cross-venue timing, combo economics, venue-wide coverage, or execution is established. |
+| Live market/book/trade and fee metadata through adapters/API | PARTIALLY VERIFIED | Earlier listing/book/trade, event-group, fee-metadata, and trade-page captures are hash-pinned. Kalshi MVE captures include filtered pages whose nested markets were omitted and one detail response with explicit top-level `markets: []`. The new one-request child detail capture matches a selected leg's saved ticker/event identities and has raw/store hashes; its rules expose fair-price fallbacks, but it has no book/price and proves neither child nor combo payoff. Fee metadata now has fixture-verified candidate replay integration, but no new public observation, current schedule verification, cross-venue timing, combo economics, venue-wide coverage, or execution was established in this checkpoint. |
 | Source workers and broad historical data | DEFERRED | No persistent worker or long-duration collection. |
 | Laboratory/Arena research orchestration | PARTIALLY VERIFIED | Arena job kind, content-addressed snapshots, bounded offline execution, API submission/history/result verification, process CPU/RSS capture, and explicit workspace controls are implemented and tested; two fixture jobs passed the host-wide gate and completed under systemd. Laboratory campaign management and resource-sustainability evidence remain incomplete. |
-| Native Mission Control workspace | PARTIALLY VERIFIED | Local API, bounded graph/review UI, Polymarket/Kalshi trade-page and event-group controls, explicit filtered one-page Kalshi MVE capture by series, collection, or one event ticker with returned member-list state, parent-event context, instrument-bound fee sensitivity, selected-leg component-rule and recorded-settlement arithmetic inspection, paired replay, candidate fill stress, virtual balances keyed by venue and exact denomination identity, and Arena job history/result display. The candidate audit panel displays independently recomputed receipt and exchange timestamp skew plus the audit timing gate; legacy audit rows show missing values as not recorded. The Frontier component file passes all 8 tests and the full web suite passes 40 tests, including token `USD` versus fiat `USD` separation; web typecheck, targeted frontend ESLint, and Prettier pass. The focused depth-two/capital-fragmentation/mobile browser case passes with the exact-identity fixture contract. The production build previously passed with 676,320 KiB peak RSS and no swap; Vite reports the existing 500 kB chunk-size warning for the index/chart chunks. The workspace is not deployed. |
+| Native Mission Control workspace | PARTIALLY VERIFIED | Local API, bounded graph/review UI, Polymarket/Kalshi trade-page and event-group controls, explicit filtered one-page Kalshi MVE capture by series, collection, or one event ticker with returned member-list state, parent-event context, instrument-bound fee sensitivity, selected-leg component-rule and recorded-settlement arithmetic inspection, paired replay, candidate fill stress, virtual balances keyed by venue and exact denomination identity, and Arena job history/result display. Replay history now displays the count of pinned fee metadata observations; its fixture test passes. The candidate audit panel displays independently recomputed receipt and exchange timestamp skew plus the audit timing gate; legacy audit rows show missing values as not recorded. The Frontier component file passes all 8 tests and the full web suite passes 40 tests, including token `USD` versus fiat `USD` separation; web typecheck, targeted frontend ESLint, and Prettier pass. The focused depth-two/capital-fragmentation/mobile browser case passes with the exact-identity fixture contract. The production build previously passed with 676,320 KiB peak RSS and no swap; Vite reports the existing 500 kB chunk-size warning for the index/chart chunks. The workspace is not deployed. |
 | Source data use/retention permission | BLOCKED | Official Kalshi terms restrict API collection/storage to facilitating a member's own exchange trading absent authorization. Kraken terms require prior permission for some non-personal commercial public market-data uses; Frontier has not classified that use. The main API now requires permission/review references in addition to probe flags. References are not independently verified; no new Kalshi/Kraken live captures or new research use of their stored data pending review. Existing artifacts are preserved unchanged. |
 | Held-source application read quarantine | IMPLEMENTED, LIVE VALIDATION PENDING | Code `d38f517` filters held-venue observation lists/direct reads, source aggregates, relationships/graph edges, review and replay inputs, derived outputs, paired comparisons, and Frontier Arena replays. Code `73e008e` applies pinned-snapshot checks to Arena job summaries, details, logs, submissions, and cancellation; `e7958c1` also filters the research-activity digest; `23f9860` rejects held snapshots before inspect/reconciliation can rewrite a job manifest. Controlled fixtures verify held/missing provenance is hidden or rejected while source/snapshot/result/job-manifest artifacts remain stored. The actual preserved live store was not audited; direct database reads and exports remain outside the API filter. |
 | Production readiness/deployment | DEFERRED | Separate review and authorization required; production eligibility is false. |

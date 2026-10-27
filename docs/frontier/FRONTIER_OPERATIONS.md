@@ -66,6 +66,25 @@ independent audit require the exact quote identity to match the verified payoff
 settlement unit, and require a fee identity before including a fee amount. The
 virtual-funding UI keeps separate balances by venue and canonical denomination.
 
+## Saved Kalshi fee evidence
+
+The event/series fee-metadata probe is a source capture, not an immediate fee
+calculation. After capture, a saved-evidence replay can derive a conditional
+one-fill taker estimate only when the event override is complete or explicitly
+cleared to inherit the series, the event and series rows match their raw
+responses and recorded market, and the fee type is supported. The metadata must
+predate the pinned book quote and be no more than 24 hours old at quote and
+replay time. Replay manifests pin the event and series observation IDs, and the
+run history displays their count.
+
+The estimate applies the public quadratic formula and a conservative `$0.01`
+non-direct-member balance-alignment scenario for one fill. It does not identify
+the user's account class or establish maker/multi-fill/FCM costs. Such candidates
+remain conditional or incomplete. Missing, partial, stale, mismatched, or
+unsupported fee evidence stays unknown. The source-terms permission gate still
+applies: no probe or new use of held Kalshi evidence is enabled by this feature,
+and held rows remain filtered from Frontier API research reads.
+
 The source health `requests_in_window` value counts request starts in the
 trailing 60 seconds. Reading health is local and makes no source request.
 Cross-venue `timing_verified` is stricter than receipt-time proximity: the

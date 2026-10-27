@@ -15,12 +15,12 @@ as mutable Frontier storage.
 | Public venue adapters | `adapters/polymarket.py`, `kalshi.py`, `kraken.py` | Source-specific normalization and native metadata preservation. |
 | Registry | `registry.py` | Explicit capability inventory; default instances do not probe. |
 | Relationship intelligence | `relationships.py` | Deterministic indexed title and parent-event/outcome hypotheses, source-selected component references, strict payoff checks, and immutable review contracts. |
-| Candidate calculators | `economics.py` | Decimal cross-venue binary and same-market exhaustive multi-outcome all-long checks with fee, depth, freshness, timing, and scenario bounds; exact bounded one-sided fill sensitivity; separate Kalshi one-fill and instrument-bound one-order fee sensitivities. |
+| Candidate calculators | `economics.py` | Decimal cross-venue binary and same-market exhaustive multi-outcome all-long checks with fee, depth, freshness, timing, and scenario bounds; provenance-bound conditional Kalshi one-fill estimate; exact bounded one-sided fill sensitivity; separate instrument-bound Kalshi one-fill and one-order fee sensitivities. |
 | Independent arithmetic audit | `independent_audit.py` | Separately recomputes supported candidate identities, payoff vectors, pinned quotes/depth, fees, costs, terminal P&L, fill-pattern sensitivity, and classification from replay inputs. |
 | Durable evidence | `storage.py` | Append-only, size- and row-bounded SQLite observations, markets, relationship reviews/revisions, runs, and paired comparisons. |
 | Replay | `replay.py` | Stable input ordering, scenario/mapping/proposal-limit-aware replay identities, exact store-record provenance for API-loaded models, deterministic results, and paired assumption comparisons. |
 | Arena paired replay | `packages/midas/arena/frontier_replay.py`, `arena/jobs.py` | Immutable content-addressed input snapshots, a bounded offline paired-replay worker, and hash-verified result artifacts under Arena's existing admission gate. |
-| HTTP API | `apps/api/frontier.py` | Bounded local queries and graph neighborhoods, relationship proposals/reviews, deterministic and paired replay, config-gated market/event-group/MVE/component capture, and hash-bound Kalshi fee sensitivities. |
+| HTTP API | `apps/api/frontier.py` | Bounded local queries and graph neighborhoods, relationship proposals/reviews, deterministic and paired replay, config-gated market/event-group/MVE/component capture, raw/hash/identity-checked saved Kalshi fee evidence for later replay, and hash-bound fee sensitivities. |
 | Mission Control workspace | `apps/web/src/Frontier.tsx` | Sources, markets/books/event context, one-page Kalshi MVE discovery and explicit selected-component rule capture, relationship hypotheses, candidates, economic workbench, local comparisons, bounded Arena replay history/results, and readiness. |
 
 ## Adapter capability contract
@@ -220,18 +220,37 @@ payoff and resolution attestations remain false. The independent verifier
 rejects same-payoff equivalence, and the capture has no order books or prices.
 See the evidence and exact hashes in the [engineering report](FRONTIER_ENGINEERING_REPORT.md).
 
-Kalshi separately advertises `fee_metadata`: a deliberate one-event plus one-series
-read captures the event override fields and series fee type/multiplier. The event
-request excludes child markets to keep this metadata call bounded. This capability
-does not populate `FeeSchedule`; native parameters remain stored with both raw
-response hashes while candidate net economics remains unresolved. The fee metadata
-schema preserves whether both event override fields were supplied and records one
-of four states: a complete event override, explicit series inheritance from a
-null/null override pair, a partial override, or unreported override fields.
-Kalshi's [event fee-change API](https://docs.kalshi.com/api-reference/events/get-event-fee-changes)
-documents that event fees layer over the parent series and that a null/null pair
-clears the override. The standalone fee sensitivities reject partial or unreported
-states; no candidate fee schedule is inferred from them.
+Kalshi `fee_metadata` remains a deliberate bounded event-plus-series capture: the
+event request excludes child markets, and both native responses are stored as
+separate immutable observations. The metadata schema records whether the event
+override is complete, explicitly inherits from a null/null pair, partial, or
+unreported. Kalshi's [event fee-change API](https://docs.kalshi.com/api-reference/events/get-event-fee-changes)
+documents event-over-series precedence and the null/null clear behavior.
+
+On a later saved-evidence replay, the API may compile complete event/series
+observations into a provenance-bound `FeeStatus.ESTIMATE` for a supported
+quadratic taker fee. The join checks native market/event/series identity, raw
+body hashes, official endpoint paths, parsed source fields, and observation
+times. Partial/unreported overrides, unsupported fee types, mismatches, held
+sources, and absent evidence remain unknown. This replay path uses Kalshi's
+[July 7, 2026 public fee schedule](https://kalshi.com/docs/kalshi-fee-schedule.pdf)
+formula `ceil_to_microdollar(0.07 * M * C * P * (1-P))` and its
+[fee-rounding documentation](https://docs.kalshi.com/getting_started/fee_rounding).
+Fee evidence must be no later than the book quote and no more than 24 hours old
+at both quote and replay evaluation; no later evidence is backdated into a
+candidate. For one candidate fill, the estimate then applies `$0.01` non-direct
+balance-debit alignment, the larger of the two documented balance quanta. It is
+a declared conservative scenario, not proof of account class or a final fee.
+
+An estimated fee can produce a conditional or incomplete candidate, never a
+verified mathematical inconsistency. Maker or mixed fills, multi-fill order
+rounding/rebates, FCM charges, account-specific precision, fee-schedule changes,
+and other execution costs remain unresolved. Replay manifest schema v2 pins the
+event and series fee observation IDs separately from market and book IDs. The
+Mission Control run summary displays their count. The independent audit
+recomputes the estimate from the pinned fee model and evidence, but this only
+establishes internal arithmetic agreement, not account applicability or an
+executable opportunity.
 
 The local `POST /api/frontier/economics/kalshi-fee-sensitivity` endpoint retains
 the saved-evidence-bound one-fill calculation. The
@@ -246,9 +265,11 @@ return scenarios for the documented balance quanta: `$0.0001` for a direct membe
 and `$0.01` for a non-direct member. Metadata IDs, raw hashes, received times,
 model version, assumptions, per-fill outputs, and a calculation digest accompany
 the order result. Inputs are manual and are not public quotes or captured fills.
-These are standalone sensitivities, not account quotes and not inputs to candidate
-net economics; actual account precision, maker/mixed-order behavior, FCM charges,
-and later schedule changes remain unresolved.
+These remain standalone sensitivities, not account quotes. Candidate replay now
+uses a separate one-fill estimate when its stricter evidence rules pass; the
+manual one-order calculation does not become the candidate fee calculation.
+Actual account precision, maker/mixed-order behavior, FCM charges, multi-fill
+rounding and rebates, and later schedule changes remain unresolved.
 
 An offline one-fill derivation from the saved October 27 metadata capture produced a `$0.0175`
 direct-member and `$0.02` non-direct-member fee scenario for one contract at a
@@ -413,8 +434,10 @@ exact Decimal fee formulas, scenario slippage/decay, local receipt
 skew, exchange-time skew, and book age. The exact arithmetic uses bounded inputs
 (36 digits, 18 decimal places) and a 128-digit local Decimal context. Explicit
 quantities are rejected if the common displayed depth or modeled fill fraction
-cannot support them. Unknown or expired fees leave net P&L unknown and are
-excluded, rather than zeroed. Other payoffs, implication constraints, and
+cannot support them. A valid verified schedule or supported provenance-bound
+Kalshi estimate can produce modeled net P&L; estimate-based results remain
+conditional. Unknown or expired fees leave net P&L unknown and are excluded,
+rather than zeroed. Other payoffs, implication constraints, and
 general multi-leg constructions are unsupported. The multi-outcome family has
 fixture verification only; current public observations do not satisfy its
 attestation requirements. Cross-venue `timing_verified` additionally requires
@@ -448,10 +471,11 @@ receipt. One October 26 public market listing verified a zero-rate schedule;
 that observation is not generalized to other markets. Kalshi fee applicability
 has an explicit public metadata resolver. Separate evidence-bound one-fill and
 one-order quadratic taker sensitivities cover two documented fee types, with
-order-level rounding accumulation and capped rebates. They do not convert to an
-account fee or feed candidate economics. Kraken's public pair feed
-does not expose an account's applied tier; Frontier does not call the authenticated
-account-volume API. Unknown venue costs remain unknown.
+order-level rounding accumulation and capped rebates. A later replay may derive
+a conditional one-fill estimate from complete, hash-linked event/series rows;
+account precision and non-taker costs remain unknown. Kraken's public pair feed
+does not expose an account's applied tier; Frontier does not call the
+authenticated account-volume API. Unknown venue costs remain unknown.
 
 Replay then runs a separate arithmetic implementation that does not call the
 candidate calculator's arithmetic helpers. It records `verified`, `disagreement`,
