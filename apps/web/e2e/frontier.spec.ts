@@ -191,6 +191,7 @@ test('inspects fixture-only Kalshi settlement arithmetic without probing an exch
 test('relationship network remains bounded, selectable, and scroll-contained on mobile', async ({
   page,
 }) => {
+  const capitalCandidateId = '8'.repeat(64);
   const graphQueries: string[] = [];
   const marketRecord = (venue: 'polymarket' | 'kalshi', nativeId: string, title: string) => ({
     canonical_id: `${venue}:${nativeId}`,
@@ -430,7 +431,7 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
           evidence_sha256: 'c'.repeat(64),
         },
         {
-          candidate_id: 'cross-venue-capital-fixture',
+          candidate_id: capitalCandidateId,
           source_run_id: 'a'.repeat(64),
           source_run_sha256: 'b'.repeat(64),
           family: 'cross_venue_complete_coverage',
@@ -591,7 +592,7 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
       expect(route.request().postDataJSON()).toEqual({
         run_id: 'a'.repeat(64),
         run_sha256: 'b'.repeat(64),
-        candidate_id: 'cross-venue-capital-fixture',
+        candidate_id: capitalCandidateId,
         annual_rate_bps_by_venue: { kalshi: '1000', polymarket: '1500' },
       });
       return route.fulfill({
@@ -601,7 +602,7 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
           model_version: 'frontier-virtual-capital-carry-1',
           run_id: 'a'.repeat(64),
           run_sha256: 'b'.repeat(64),
-          candidate_id: 'cross-venue-capital-fixture',
+          candidate_id: capitalCandidateId,
           candidate_classification: 'INCOMPLETE EVIDENCE',
           classification_unchanged: true,
           hypothetical_only: true,
@@ -773,7 +774,7 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
     {
       run_id: 'a'.repeat(64),
       run_sha256: 'b'.repeat(64),
-      candidate_id: 'cross-venue-capital-fixture',
+      candidate_id: capitalCandidateId,
       annual_rate_bps_by_venue: { kalshi: '1000', polymarket: '1500' },
     },
   ]);
