@@ -1,6 +1,16 @@
 # Project Frontier Mission Ledger
 
-**Latest checkpoint (2026-10-27 17:42 UTC):** The bounded Frontier Python suite
+**Latest checkpoint (2026-10-27 17:44 UTC):** UI commit
+`0b293915511aa08f008b5b12241ad1238ab8c96a` validates mapping JSON before
+submission, rejecting blank keys/values and non-string values. The focused
+review component test passes with an assertion that malformed input sends no
+request; TypeScript, ESLint, and Prettier checks pass. Direct request-model
+validation also rejects numeric mapping targets. The full frontend 40-test run
+predates this small guard; the focused test was rerun after it. At 17:44:28 UTC,
+PSI `avg10` was 45.36% (`some`) / 40.48% (`full`), with 486,248 KiB swap free of
+4 GiB. No source or held data was accessed.
+
+**Previous checkpoint (2026-10-27 17:42 UTC):** The bounded Frontier Python suite
 passed **199 tests** in 37.94 seconds (39.01 seconds wall), at 329,116 KiB
 peak RSS, zero swaps, and zero socket messages. It includes the implication
 relationship review, deterministic candidate replay, independent audit, and

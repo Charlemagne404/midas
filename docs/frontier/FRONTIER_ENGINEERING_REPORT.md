@@ -1533,6 +1533,9 @@ Priority order:
 
 Implementation and documentation commits on this branch:
 
+- `0b293915511aa08f008b5b12241ad1238ab8c96a` — reject blank or non-string
+  relationship mapping entries in the browser before submission and cover the
+  no-request error path.
 - `95372c8feb1129609e3e2ed4f20179432ed4e446` — added fixture coverage for a
   non-identity joint-state mapping with the implication source on the
   canonical right endpoint; checked candidate legs, payout states, independent
@@ -2826,3 +2829,21 @@ At `2026-10-27T17:42:45Z`, memory PSI was `avg10` 37.14% (`some`) / 33.70%
 `MemAvailable` was 9,482,844 KiB and swap free was 486,228 KiB of 4 GiB. The
 complete repository suite and production frontend build remain unrun; Frontier
 is still undeployed and incomplete.
+
+### Relationship mapping input guard — 2026-10-27 17:44 UTC
+
+UI commit `0b293915511aa08f008b5b12241ad1238ab8c96a` rejects blank keys,
+blank values, and non-string JSON values in a state or instrument mapping
+before constructing the API request. The focused relationship-review component
+test passed after adding a numeric-value rejection assertion; no review request
+was sent for the malformed mapping. TypeScript typecheck, targeted ESLint, and
+Prettier checks passed. A direct Pydantic request-model check also rejected a
+numeric mapping target as `string_type`; the backend schema was unchanged.
+The earlier full frontend run passed 40 tests before this narrow guard, and the
+targeted test was rerun after it. The full Python suite result above is
+unaffected. No source request or held-data read occurred.
+
+At `2026-10-27T17:44:28Z`, memory PSI `avg10` was 45.36% (`some`) / 40.48%
+(`full`), `avg60` 37.67% / 33.08%, and `avg300` 23.98% / 21.20%.
+`MemAvailable` was 9,631,192 KiB and swap free was 486,248 KiB of 4 GiB. The
+production frontend build remains deferred.
