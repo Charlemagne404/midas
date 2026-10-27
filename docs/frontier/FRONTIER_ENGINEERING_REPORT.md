@@ -1234,6 +1234,28 @@ The full Frontier suite and production frontend build were not run under the
 current host-pressure sample. No public source request, held-data read,
 service, production configuration, or historical artifact was used or changed.
 
+### Relationship review history checkpoint — 2026-10-27 17:52 UTC
+
+The append-only review store now has a hash-checked newest-first history query,
+and `GET /api/frontier/relationships/{id}/reviews` returns keyset pages of at
+most 50 records. Its cursor is bound to the relationship identity, UTC review
+timestamp, and review ID. The route rejects held-source relationships before
+returning their review history. Mission Control fetches pages only when the
+review history panel is opened and provides a load-older control; self-attributed
+labels and assertion references remain explicit.
+
+The relationship-review API test module passed **13 tests**, including two-page
+history ordering, malformed and oversized cursor rejection, and corrupt-record
+hash rejection. The source-quarantine integration test passed **1 test** and
+confirms the history route returns 409 for a held-source relationship. The
+Frontier component suite passed **8 tests**, including history rendering;
+TypeScript typecheck, ESLint, Prettier, Ruff check/format, and `git diff --check`
+passed. The targeted strict mypy command reported 14 existing errors in four
+imported Veritas/Arena files and none in the two selected source files. The
+production build and browser E2E were deferred at a 17:52 UTC memory PSI sample
+of 45.66% `some` / 41.31% `full`, with 474 MiB swap free. No source or held-data
+read, service change, or deployment occurred.
+
 ## 13. Performance and resource measurements
 
 The previous focused backend run (54 tests) completed in 10.65 seconds wall time,
@@ -1454,11 +1476,12 @@ gaps are deferred work, not hidden passed checks:
   request. One-hop paging uses a timestamp/ID keyset; two- and three-hop pages
   preserve deterministic breadth-first ordering by recomputing the same
   revision-pinned result window. A 201-market frontier fixture verifies bounded
-  query chunking. Uncentered search remains a single bounded read; full-universe
-  search/clustering, relationship revision-history drill-down, and authenticated
-  review remain unimplemented. A later focused browser test now verifies a
-  revision-pinned depth-two page; the earlier memory-pressure deferral is
-  superseded for that focused case.
+  query chunking. Relationship review history is now available through bounded
+  hash-checked keyset pages and on-demand Mission Control drill-down; held-source
+  edges remain rejected. Uncentered search remains a single bounded read;
+  full-universe search/clustering and authenticated review remain unimplemented.
+  A later focused browser test now verifies a revision-pinned depth-two page;
+  the earlier memory-pressure deferral is superseded for that focused case.
 - The only multi-outcome family is a same-market all-long construction over
   verified one-hot exhaustive states; only controlled fixtures have exercised it.
   The bounded binary implication verifier now feeds a separate long-only
@@ -1533,6 +1556,9 @@ Priority order:
 
 Implementation and documentation commits on this branch:
 
+- `d0b7f0f` — added bounded, hash-checked relationship review history with
+  relationship-bound keyset cursors, held-source rejection, on-demand
+  Mission Control pagination, and API/UI/quarantine regressions.
 - `0b293915511aa08f008b5b12241ad1238ab8c96a` — reject blank or non-string
   relationship mapping entries in the browser before submission and cover the
   no-request error path.
@@ -2139,7 +2165,7 @@ cross-venue economics.
 | Kalshi MVE settlement metadata and arithmetic audit | PARTIALLY VERIFIED | Adapter v13 introduced bounded component YES settlement values and optional parent settlement/provisional fields; Kalshi adapter v15 retains that behavior. A saved-evidence-only API/UI audit recomputes the selected component product for up to 64 legs and compares it with the parent value only for complete evidence and explicit finality; audit schema v2 identifies its algorithm and returns the parent lifecycle/provisional flag. Direct official rule/schema links and observation/raw hashes are shown. All settlement arithmetic remains fixture-only; the preserved live child lacks values, no live audit result exists, and the method does not verify outcomes/rules or alter candidate economics. |
 | Polymarket, Kalshi and Kraken Spot adapters | PARTIALLY VERIFIED | Fixture/contract tests and bounded live listing/book/legacy-trade captures are preserved. Polymarket v2 first and continuation pages returned ten rows each. Kalshi has a ticker-filtered cursor-page implementation, fixture-verified row mapping, and a live empty terminal page; live trade-row normalization remains unvalidated. Adapter v4 preserves native MVE selected component IDs/sides; v7 added one-page MVE discovery whose live response omitted nested markets; v8 fixes event-detail parsing of an explicit empty top-level market array; v10 captures a saved-parent-referenced child contract and preserves its native rules. The one captured child is closed and includes fair-price fallback conditions; neither its simple binary payoff nor the parent-combo payout is verified. Account fees and Kraken account fee applicability remain unresolved. API fixtures cover source degradation and recovery; live degraded-source behavior remains unverified. |
 | Canonical market/instrument normalization | PARTIALLY VERIFIED | Three distinct instrument classes are represented; FrontierMarket schema v3, BookSnapshot v2 and TradeObservation v3 retain exact quote-denomination identities where a source mapping is established. Instrument, book, fee, trade, candidate-leg and capital units are distinguished from display codes. Legacy rows load with identity absent and remain economically incomplete. V2 Polymarket trades retain native outcome-token identity; Kalshi MVE component references remain source assertions; `MarketBatch` schema v2 preserves typed `MarketGroup` membership state. The genuine MVE response records member-list state `omitted` and zero child markets. Payoff/resolution semantics remain unverified. |
-| Relationship hypotheses, review revisions, indexed neighborhoods, and payoff/implication verifiers | PARTIALLY VERIFIED | Self-attributed review API/UI, append-only revisions, latest-state replay, tamper/migration checks, left/right endpoint-indexed 1–3 hop scans capped at 500 rows, one-hop keyset pages, and revision-bound multi-hop BFS pages with deterministic recomputation and 201-market chunk coverage. Matcher v5 includes bounded exact-ID MVE selected-component references as HYPOTHESIS edges with both source record IDs; a saved Kalshi parent listing and child detail replay into one such edge. A bounded directed binary implication verifier checks complete complementary payout vectors over a bijective state mapping (maximum 1,024 states), records each side's settlement asset/time, and requires the pinned observation for both source markets. It is available through the hash-checked review API and append-only store. Mission Control now offers a reviewer form that selects the YES direction and left-to-right state mapping, gated on verified exhaustive binary payoff, resolution, YES/NO instruments, and pinned market records. The API verifier remains authoritative, and the semantic state mapping plus reviewer identity are not authenticated. The economic engine consumes these edges only in its conditional long-only implication family. Matcher v4's explicit year-conflict rejection remains. A genuine House-control topic pair remains text-only HYPOTHESIS and fails strict same-payoff verification. Reviewer authentication, revision-history drill-down, and full-universe search remain absent. |
+| Relationship hypotheses, review revisions, indexed neighborhoods, and payoff/implication verifiers | PARTIALLY VERIFIED | Self-attributed review API/UI, append-only revisions, latest-state replay, tamper/migration checks, left/right endpoint-indexed 1–3 hop scans capped at 500 rows, one-hop keyset pages, and revision-bound multi-hop BFS pages with deterministic recomputation and 201-market chunk coverage. Matcher v5 includes bounded exact-ID MVE selected-component references as HYPOTHESIS edges with both source record IDs; a saved Kalshi parent listing and child detail replay into one such edge. A bounded directed binary implication verifier checks complete complementary payout vectors over a bijective state mapping (maximum 1,024 states), records each side's settlement asset/time, and requires the pinned observation for both source markets. Review history now has a hash-checked API endpoint with bounded keyset pagination and on-demand Mission Control drill-down; the held-source route rejection and two-page history are fixture tested. Mission Control review controls select the YES direction and left-to-right state mapping, gated on verified exhaustive binary payoff, resolution, YES/NO instruments, and pinned market records. The API verifier remains authoritative, and the semantic state mapping plus reviewer identity are not authenticated. The economic engine consumes verified edges only in its conditional long-only implication family. Matcher v4's explicit year-conflict rejection remains. A genuine House-control topic pair remains text-only HYPOTHESIS and fails strict same-payoff verification. Reviewer authentication and full-universe search remain absent. |
 | Opportunity candidate and independent economic checks | PARTIALLY VERIFIED | Two-venue all-long binary, directed YES implication, and same-market 3–16 state one-hot exhaustive coverage; economic model v9 computes exact full/no-fill exposure over up to 16 legs, and independent audit v6 recomputes payoff direction, economics, and pinned-book timing, freshness, source-quality, clock-uncertainty, and estimated-fee claims. New controlled replay tests verify the directed basket, no settlement-time bridging, unknown-fee handling, stale-book rejection, deterministic replay, and tampered-payout disagreement. Existing differential three-leg enumeration and maximum 16-outcome replay/audit agree; fee-total, per-leg-fee, venue-capital, quantity-step, candidate-timing, and tick-metadata mutations are rejected. Positive implication results remain conditional because semantic mapping evidence is unauthenticated. No genuine implication pair or economically eligible live result is present. Current venue adapters omit clock uncertainty, leaving live cross-venue timing unverified. Broader funding/settlement costs and operational feasibility remain incomplete. |
 | Kalshi taker-fee sensitivity and replay estimate | PARTIALLY VERIFIED | Hash-matched event/series evidence supports one-fill and bounded one-order Decimal sensitivities for two documented quadratic taker fee types, both balance-precision cases, per-fill rounding, order accumulation, and capped rebates. Adapter v16 preserves complete override, explicit series inheritance, partial, and unreported states. Saved-evidence replay compiles only complete, identity- and raw-hash-matched supported quadratic fee metadata into a FeeStatus.ESTIMATE; it enforces no-look-ahead and 24-hour quote/replay freshness, models a single fill, and uses `$0.01` non-direct balance alignment as a conservative scenario. The independent audit re-derives that estimate, and Replay v9 pins fee metadata observation IDs separately. Partial/unreported/mismatched/stale evidence remains unknown; the July schedule's `KXMVE` multiplier is not transferred to differently named MVE series. All candidate-fee coverage is fixture-based. Account-specific precision, exact maker/mixed-order applicability, multi-fill rounding/rebates, FCM charges, later schedule changes, and actual net economics remain unresolved. |
 | Append-only evidence store and deterministic replay | COMPLETE AND VERIFIED | Storage schema v6, additive v2/v3/v4/v5 migration, bounds, hash validation, and immutability. Replay v9 carries exact store record IDs, denomination fields, and separate fee metadata observation IDs through API-loaded market/book provenance, manifests, candidate legs, and Arena snapshots; direct in-memory replay retains adapter IDs. Replay-v5 economic output includes full/no-fill sensitivity and pins effective mappings/proposal limit. The separate Arena wrapper uses immutable content-addressed snapshots and hash-verified result artifacts; two controlled fixture workers completed and the latest recorded CPU/RSS. |

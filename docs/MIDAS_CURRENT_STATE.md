@@ -446,3 +446,19 @@ The canonical candidate fee schedule remains unknown, and source
 permission/deployment gates remain blocked/deferred. See the [Frontier engineering report](frontier/FRONTIER_ENGINEERING_REPORT.md)
 and [mission ledger](frontier/FRONTIER_MISSION_LEDGER.md) for exact tests and
 limitations.
+
+## Frontier relationship-review history checkpoint — 2026-10-27
+
+The isolated Frontier branch now exposes immutable relationship review history
+through hash-checked keyset pages, with a bounded on-demand review panel in
+Mission Control. The endpoint rejects relationships involving held sources,
+and controlled fixtures cover pagination, corrupt-record rejection, and the
+quarantine boundary. Reviewer labels and assertion IDs remain self-attributed;
+they are not authenticated. The 13-test review API module, held-source
+quarantine integration test, and 8-test Frontier UI component suite pass;
+frontend typecheck, ESLint, Prettier, and Python Ruff checks also pass. No
+public source request, held-data read, production service change, or deployment
+occurred. A fresh production build and browser E2E were deferred at the host
+memory-pressure sample. Frontier remains isolated, incomplete, and undeployed;
+see the [Frontier mission ledger](frontier/FRONTIER_MISSION_LEDGER.md) and
+[engineering report](frontier/FRONTIER_ENGINEERING_REPORT.md).

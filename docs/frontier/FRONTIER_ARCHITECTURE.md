@@ -435,6 +435,15 @@ prior decisions remain stored. Replay uses only the latest decision, so a later
 reject or ambiguous review removes an old verified revision from candidate
 inputs without deleting history.
 
+`GET /api/frontier/relationships/{id}/reviews` exposes the append-only review
+lineage in newest-first pages of at most 50 records. A bounded keyset cursor is
+bound to the relationship, timestamp, and review identity, so newly appended
+reviews do not shift older pages. Each page rechecks record hashes and indexed
+fields. The route rejects relationships that touch a source held from research
+use before returning review evidence. Mission Control fetches this history only
+when the user opens it, and labels reviewer names and assertion IDs as
+self-attributed references.
+
 Centered graph reads use separate left- and right-endpoint indexes, so a market
 neighborhood is selected by its incident edges instead of scanning the global
 recent-relationship window. The API bounds each traversal to 200 recorded
@@ -604,7 +613,7 @@ sustainable capacity.
 ## API and UI behavior
 
 `GET /api/frontier/overview`, `/sources`, `/markets`, `/books`, `/trades`,
-`/observations/{id}`, `/relationships`, `/graph`, `/opportunities`, `/runs`, and `/readiness`
+`/observations/{id}`, `/relationships`, `/relationships/{id}/reviews`, `/graph`, `/opportunities`, `/runs`, and `/readiness`
 are local evidence reads. `POST /relationships/propose` writes deterministic
 hypotheses; `POST /relationships/{id}/review` records an immutable explicit
 decision; `POST /replay` writes a deterministic replay result; `POST /probe/{venue}`

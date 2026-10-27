@@ -1,5 +1,20 @@
 # Project Frontier Mission Ledger
 
+**Latest checkpoint (2026-10-27 17:52 UTC):** Code commit `d0b7f0f` adds
+bounded, hash-checked relationship review-history storage/API pages and an
+on-demand Mission Control history panel. Keyset cursors are relationship-bound;
+held-source relationships return 409. The review API module passed **13 tests**,
+the held-source quarantine integration test passed **1 test**, and the Frontier
+component suite passed **8 tests**. TypeScript typecheck, targeted ESLint,
+Prettier, Ruff check/format, and `git diff --check` passed. Strict mypy reported
+14 existing errors in four imported Veritas/Arena files and none in the two
+selected source files. A production build and browser E2E were deferred at the
+17:52 UTC resource sample: memory PSI `avg10` was 45.66% (`some`) / 41.31%
+(`full`), with 474 MiB swap free. No source or held-data read, service change,
+or deployment occurred. Frontier remains incomplete and undeployed; full
+universe graph search, authenticated review, a fresh production build, and
+browser validation remain open.
+
 **Latest checkpoint (2026-10-27 17:44 UTC):** UI commit
 `0b293915511aa08f008b5b12241ad1238ab8c96a` validates mapping JSON before
 submission, rejecting blank keys/values and non-string values. The focused
