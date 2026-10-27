@@ -3010,6 +3010,14 @@ corepack pnpm --dir apps/web exec vite build --outDir /tmp/midas-frontier-build-
 corepack pnpm --dir apps/web exec playwright test e2e/frontier.spec.ts --grep 'Frontier workspace uses isolated research state and remains responsive' --workers=1
 ```
 
+### Full web regression — 2026-10-27 23:56 UTC
+
+The full web unit suite passes **40/40 across seven files** in 15.55 seconds
+reported / 15.97 seconds wall at **300,960 KiB peak RSS**, with zero swaps.
+This includes all Frontier components and checks unrelated Mission Control
+views for UI regressions. No API server or exchange source was contacted by
+this unit-test invocation.
+
 ## Arena admission-test follow-up — 2026-10-27 23:55 UTC
 
 After the external batch exited, the two supervisor tests denied during the

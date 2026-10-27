@@ -4720,3 +4720,11 @@ have passed across the two invocations, although there is no single clean
 combined-run result. At the retry admission sample the lock was free and PSI
 avg10 was 0%; a later sample was 0% avg10 with 10 GiB available. No production
 or protected service state was touched.
+
+### Full web regression — 2026-10-27 23:56 UTC
+
+The complete web unit suite passes **40/40 across seven files** in 15.55
+seconds reported by Vitest / 15.97 seconds wall at **300,960 KiB peak RSS**,
+zero swaps. It includes Frontier, Arena, Readiness, Mission Control, Reality,
+Veritas, and Laboratory component suites. This is component-level verification;
+browser coverage remains the isolated Frontier case recorded above.

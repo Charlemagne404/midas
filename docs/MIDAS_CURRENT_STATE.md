@@ -1166,3 +1166,9 @@ cases** pass across two invocations; the combined run itself still records two
 environmental denials. The retry began with the global lock free, PSI avg10 at
 0%, and 10 GiB available. The isolated Frontier build and browser check also
 pass for commit `305814b`; no production deployment or source request occurred.
+
+### Full web regression — 2026-10-27 23:56 UTC
+
+The full web unit suite passes **40/40 across seven files** in 15.55 seconds
+reported / 15.97 seconds wall at **300,960 KiB peak RSS**, zero swaps. This
+includes the Frontier component suite and the other Mission Control views.
