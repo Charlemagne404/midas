@@ -2817,7 +2817,13 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
         manifests = registry.capability_manifests()
         all_caps_declared = all(len(item.declarations) > 0 for item in manifests)
         eligible_observation_count = int(summary["observations"])
-        eligible_runs = replay_rows_without_held_sources(store.replays(limit=20))
+        try:
+            eligible_runs = replay_rows_without_held_sources(store.replays(limit=20))
+        except FrontierStoreError as error:
+            raise HTTPException(
+                status_code=409,
+                detail=f"Stored replay evidence is not readable: {error}",
+            ) from error
         recent_runs = eligible_runs[:3]
         run_count = len(eligible_runs)
         eligible_relationships = store.relationships(

@@ -1763,6 +1763,39 @@ def test_readiness_does_not_establish_economics_without_candidate_audits(tmp_pat
         asyncio.run(http_client.aclose())
 
 
+def test_readiness_fails_closed_when_a_stored_replay_hash_does_not_match(tmp_path):
+    from midas.frontier.economics import ExecutionScenario
+    from midas.frontier.replay import deterministic_replay
+
+    client, registry, http_client, _, store = _client(tmp_path)
+    replay = deterministic_replay(
+        (market(Venue.POLYMARKET, "readiness-corrupt"),),
+        (),
+        scenario=ExecutionScenario(name="readiness-corrupt"),
+    )
+    store.append_replay(replay)
+    tampered = replay.model_dump(mode="json")
+    tampered["classification_counts"] = {"tampered": 1}
+    tampered_json = FrontierStore._canonical(tampered)
+    with sqlite3.connect(store.path) as connection:
+        connection.execute("DROP TRIGGER research_runs_no_update")
+        connection.execute(
+            "UPDATE research_runs SET result_json=? WHERE run_id=?",
+            (tampered_json, replay.run_id),
+        )
+    try:
+        response = client.get("/api/frontier/readiness")
+        assert response.status_code == 409
+        assert response.json()["detail"] == (
+            "Stored replay evidence is not readable: "
+            "Stored replay result hash does not match its payload"
+        )
+    finally:
+        client.close()
+        asyncio.run(registry.aclose())
+        asyncio.run(http_client.aclose())
+
+
 def test_readiness_recognizes_only_completed_hash_verified_arena_evidence(tmp_path):
     from midas.arena.artifacts import atomic_json
     from midas.arena.frontier_replay import (
