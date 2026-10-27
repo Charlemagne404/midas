@@ -2594,3 +2594,12 @@ After the focused run, at `2026-10-27T16:57:34Z`, memory PSI was `avg10`
 16.32% / 14.79%. `MemAvailable` was 9,614,412 KiB and swap free was 484,552
 KiB of 4 GiB. Broad Python/browser suites and the production build remain
 deferred.
+
+## Host-pressure admission recheck — 2026-10-27 16:58 UTC
+
+At `2026-10-27T16:58:07Z`, memory PSI had risen to `avg10` 50.81% (`some`) /
+46.34% (`full`), `avg60` 29.18% / 26.77%, and `avg300` 19.83% / 18.02%.
+Available memory was 9,620,440 KiB, but only 484,556 KiB of 4 GiB swap was
+free. No further test, build, source request, service action, or production
+change was made after this sample. Broad verification remains deferred pending
+a later low-pressure admission check.

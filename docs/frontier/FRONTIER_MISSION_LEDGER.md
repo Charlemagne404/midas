@@ -1567,3 +1567,12 @@ After the test, at `2026-10-27T16:57:34Z`, memory PSI measured `avg10` 39.35%
 (`some`) / 35.94% (`full`), `avg60` 14.33% / 13.19%, and `avg300` 16.32% /
 14.79%. Available memory was 9,614,412 KiB and swap free was 484,552 KiB of
 4 GiB. Broad suites and production build remain deferred.
+
+## 2026-10-27 16:58 UTC — host-pressure recheck
+
+At `2026-10-27T16:58:07Z`, memory PSI rose to `avg10` 50.81% (`some`) /
+46.34% (`full`), `avg60` 29.18% / 26.77%, and `avg300` 19.83% / 18.02%.
+`MemAvailable` was 9,620,440 KiB and swap free was 484,556 KiB of 4 GiB. No
+large tests or build were started. Reconsider broad validation only after a
+later low-pressure admission measurement. No source, service, or production
+state was accessed.
