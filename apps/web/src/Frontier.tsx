@@ -98,6 +98,12 @@ type Market = {
   };
   native_fields: Record<string, unknown>;
   instruments: { native_instrument_id: string; label: string; outcome_id: string | null }[];
+  selected_components?: {
+    venue: Venue;
+    native_event_id: string | null;
+    native_market_id: string;
+    selected_side: 'yes' | 'no';
+  }[];
   quality_flags: string[];
   provenance: { response_received_at_utc: string; raw_sha256: string; observation_id: string };
 };
@@ -2539,6 +2545,29 @@ function MarketDetails({
           </strong>
         </div>
       </div>
+      {market.selected_components?.length ? (
+        <div className="fr-market-components" aria-label="Selected source components">
+          <div>
+            <strong>Selected components from public MVE metadata</strong>
+            <small>
+              These native market and side identifiers describe the selected combo inputs. They do
+              not verify component rules, combo payout, or resolution equivalence.
+            </small>
+          </div>
+          <ul>
+            {market.selected_components.map((component) => (
+              <li key={`${component.venue}:${component.native_market_id}`}>
+                <span>
+                  <VenuePill venue={component.venue} />
+                  <strong>Selected {component.selected_side.toUpperCase()} side</strong>
+                  <small>Event {component.native_event_id ?? 'not provided'}</small>
+                </span>
+                <code>{component.native_market_id}</code>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
       {market.venue === 'kalshi' && (
         <div className="fr-fee-metadata-panel">
           <div>

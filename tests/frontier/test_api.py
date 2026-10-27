@@ -438,6 +438,78 @@ def test_kalshi_fee_metadata_partial_failure_preserves_evidence_and_recovers(tmp
         asyncio.run(http_client.aclose())
 
 
+def test_kalshi_mve_components_persist_with_the_captured_market_response(tmp_path):
+    capture = json.loads(
+        (
+            Path(__file__).resolve().parents[2]
+            / "data/frontier/live-probes/2026-10-26-public-source-probe-r2.json"
+        ).read_text()
+    )
+    market_body = next(
+        item["raw_body_utf8"] for item in capture["records"] if item["source"] == "kalshi_markets"
+    )
+    source_row = json.loads(market_body)["markets"][0]
+    requests: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        return httpx.Response(200, text=market_body, request=request)
+
+    config = AdapterConfig(
+        enabled=True,
+        live_public_probe_enabled=True,
+        requests_per_second=5,
+        max_response_bytes=65536,
+        max_markets_per_call=1,
+        retries=0,
+    )
+    http_client = httpx.AsyncClient(transport=httpx.MockTransport(handler))
+    transport = PublicReadTransport({"external-api.kalshi.com"}, config, client=http_client)
+    registry = AdapterRegistry((KalshiAdapter(config, transport=transport),))
+    store = FrontierStore(tmp_path / "frontier")
+    app = FastAPI()
+    app.include_router(router(store, registry))
+    client = TestClient(app)
+    try:
+        response = client.post("/api/frontier/probe/kalshi", json={"limit": 1})
+        assert response.status_code == 200, response.text
+        result = response.json()
+        assert result["market_count"] == 1
+        assert len(result["observation_ids"]) == 1
+        assert requests[0].method == "GET"
+        assert requests[0].url.params["limit"] == "1"
+        assert "authorization" not in requests[0].headers
+
+        market_response = client.get("/api/frontier/markets", params={"venue": "kalshi"})
+        assert market_response.status_code == 200
+        saved_market = market_response.json()["items"][0]
+        assert saved_market["native_market_id"] == source_row["ticker"]
+        assert len(saved_market["selected_components"]) == len(source_row["mve_selected_legs"])
+        assert saved_market["selected_components"][0] == {
+            "venue": "kalshi",
+            "native_event_id": source_row["mve_selected_legs"][0]["event_ticker"],
+            "native_market_id": source_row["mve_selected_legs"][0]["market_ticker"],
+            "selected_side": source_row["mve_selected_legs"][0]["side"],
+        }
+        assert saved_market["payoff"]["verified"] is False
+        assert "MVE_PAYOFF_NOT_MODELED" in saved_market["quality_flags"]
+
+        observation = client.get(
+            f"/api/frontier/observations/{result['observation_ids'][0]}"
+        ).json()
+        assert observation["raw"]["raw_body"] == market_body
+        assert observation["raw_sha256"] == hashlib.sha256(market_body.encode()).hexdigest()
+        assert (
+            observation["normalized"]["markets"][0]["selected_components"]
+            == saved_market["selected_components"]
+        )
+        assert len(requests) == 1
+    finally:
+        client.close()
+        asyncio.run(registry.aclose())
+        asyncio.run(http_client.aclose())
+
+
 def test_relationship_proposals_and_replay_are_durable_empty_research_runs(tmp_path):
     client, registry, http_client, requests, _ = _client(tmp_path)
     try:

@@ -95,6 +95,17 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
     },
     native_fields: venue === 'polymarket' ? { conditionId: `0x${'a'.repeat(64)}` } : {},
     instruments: [],
+    selected_components:
+      venue === 'kalshi'
+        ? [
+            {
+              venue: 'kalshi',
+              native_event_id: 'KX-E2E-COMPONENT-EVENT',
+              native_market_id: 'KX-E2E-COMPONENT-MARKET',
+              selected_side: 'no',
+            },
+          ]
+        : [],
     quality_flags: ['E2E_FIXTURE_ONLY'],
     provenance: {
       response_received_at_utc: '2026-10-26T20:00:00Z',
@@ -375,6 +386,13 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
 
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.getByRole('button', { name: 'Markets', exact: true }).click();
+  await page.getByRole('button', { name: 'Inspect' }).last().click();
+  await expect(page.getByText('Selected components from public MVE metadata')).toBeVisible();
+  await expect(page.getByText('KX-E2E-COMPONENT-MARKET')).toBeVisible();
+  await expect(page.getByText('Selected NO side')).toBeVisible();
+  await expect(
+    page.getByText(/do not verify component rules, combo payout, or resolution equivalence/),
+  ).toBeVisible();
   await page.getByLabel('Recorded trade market').selectOption(`0x${'a'.repeat(64)}`);
   await page.getByRole('button', { name: 'Capture first page' }).click();
   await expect(page.getByRole('button', { name: 'Capture next page' })).toBeVisible();

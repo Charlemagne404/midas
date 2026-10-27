@@ -893,6 +893,60 @@
   font-weight: 520;
   overflow-wrap: anywhere;
 }
+.fr-market-components {
+  display: grid;
+  gap: 9px;
+  padding: 12px;
+  border-bottom: 1px solid #26303a;
+  background: #10151b;
+}
+.fr-market-components > div {
+  display: grid;
+  gap: 5px;
+}
+.fr-market-components > div > strong {
+  color: #c7d3df;
+  font-size: 9px;
+}
+.fr-market-components small {
+  color: #8995a5;
+  font-size: 8px;
+  line-height: 1.5;
+}
+.fr-market-components ul {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 5px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.fr-market-components li {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+  padding: 7px;
+  border: 1px solid #28333e;
+  background: #0c1116;
+}
+.fr-market-components li > span {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+}
+.fr-market-components li > span > strong {
+  color: #b7c3cf;
+  font-size: 8px;
+}
+.fr-market-components code {
+  min-width: 0;
+  color: #8ca0b5;
+  font-size: 8px;
+  overflow-wrap: anywhere;
+}
 .fr-market-facts small {
   color: #788597;
   font-size: 8px;
@@ -2034,6 +2088,9 @@
   .fr-market-detail-head,
   .fr-instrument-head {
     flex-direction: column;
+  }
+  .fr-market-components ul {
+    grid-template-columns: 1fr;
   }
   .fr-instrument-head code {
     text-align: left;

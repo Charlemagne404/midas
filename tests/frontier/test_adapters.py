@@ -165,8 +165,16 @@ async def test_kalshi_live_capture_preserves_multivariate_legs_and_empty_public_
         await client.aclose()
     assert market.market_kind == MarketKind.CONDITIONAL_EVENT
     assert market.native_fields["mve_selected_legs"]
+    assert len(market.selected_components) == len(market.native_fields["mve_selected_legs"])
+    assert market.selected_components[0].venue == Venue.KALSHI
+    assert (
+        market.selected_components[0].native_market_id
+        == market.native_fields["mve_selected_legs"][0]["market_ticker"]
+    )
+    assert market.selected_components[0].selected_side == "yes"
     assert market.payoff.verified is False
     assert "MVE_PAYOFF_NOT_MODELED" in market.quality_flags
+    assert "MVE_SELECTED_COMPONENTS_MISSING" not in market.quality_flags
     assert not book.asks and not book.bids
     assert "EMPTY_BOOK" in book.quality_flags
     assert "NO_EXCHANGE_SNAPSHOT_TIMESTAMP" in book.quality_flags
@@ -175,6 +183,49 @@ async def test_kalshi_live_capture_preserves_multivariate_legs_and_empty_public_
     assert health.state == SourceState.HEALTHY
     assert adapter.capabilities.supports(Capability.BOOK_SNAPSHOT)
     assert not adapter.capabilities.supports(Capability.BOOK_UPDATES)
+
+
+@pytest.mark.parametrize(
+    "mutation", ["invalid_side", "nonstring_side", "duplicate_leg", "over_bound"]
+)
+@pytest.mark.asyncio
+async def test_kalshi_mve_selected_components_reject_malformed_metadata(mutation: str):
+    capture = json.loads(
+        _captured("data/frontier/live-probes/2026-10-26-public-source-probe-r2.json")
+    )
+    market_body = next(
+        item["raw_body_utf8"] for item in capture["records"] if item["source"] == "kalshi_markets"
+    )
+    raw_market = json.loads(market_body)["markets"][0]
+    if mutation == "invalid_side":
+        raw_market["mve_selected_legs"][0]["side"] = "long"
+    elif mutation == "nonstring_side":
+        raw_market["mve_selected_legs"][0]["side"] = []
+    elif mutation == "duplicate_leg":
+        raw_market["mve_selected_legs"].append(raw_market["mve_selected_legs"][0].copy())
+    else:
+        raw_market["mve_selected_legs"] = [
+            {
+                "event_ticker": f"KXEVENT-{index}",
+                "market_ticker": f"KXMARKET-{index}",
+                "side": "yes",
+            }
+            for index in range(65)
+        ]
+    transport, _, client = _transport(
+        "external-api.kalshi.com", {"/markets": json.dumps({"markets": [raw_market]})}
+    )
+    adapter = KalshiAdapter(
+        AdapterConfig(
+            enabled=True, live_public_probe_enabled=True, requests_per_second=5, retries=0
+        ),
+        transport=transport,
+    )
+    try:
+        with pytest.raises(AdapterError, match="Kalshi MVE"):
+            await adapter.discover_markets(1)
+    finally:
+        await client.aclose()
 
 
 @pytest.mark.asyncio

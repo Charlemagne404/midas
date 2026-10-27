@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 from decimal import Decimal
-from typing import Any
+from typing import Any, Literal
 from urllib.parse import quote
 
 from midas.frontier.adapters.base import AdapterError, BaseReadOnlyAdapter, build_capabilities
@@ -29,6 +29,7 @@ from midas.frontier.models import (
     PayoffSpec,
     QuantityUnit,
     ResolutionSpec,
+    SelectedMarketComponent,
     StatePayout,
     TradeBatch,
     TradeObservation,
@@ -37,7 +38,7 @@ from midas.frontier.models import (
 )
 
 D = Decimal
-ADAPTER_VERSION = "frontier-kalshi-3"
+ADAPTER_VERSION = "frontier-kalshi-4"
 _TICKER_PATTERN = re.compile(r"[A-Za-z0-9_-]{1,256}\Z")
 BASE = "https://external-api.kalshi.com/trade-api/v2"
 MARKET_DATA_DOC = "https://docs.kalshi.com/getting_started/quick_start_market_data"
@@ -67,8 +68,8 @@ class KalshiAdapter(BaseReadOnlyAdapter):
                 MARKETS_DOC,
             ),
             Capability.OUTCOME_DEFINITIONS: (
-                "YES/NO titles and source payout metadata are retained; MVE legs remain opaque",
-                MARKET_DATA_DOC,
+                "YES/NO identities and MVE selected component market/side identifiers are normalized; combo payoff remains unverified",
+                "https://docs.kalshi.com/api-reference/events/get-multivariate-events",
             ),
             Capability.BOOK_SNAPSHOT: (
                 "Public REST endpoint returns YES and NO bids; asks are derived using the documented binary complement",
@@ -153,6 +154,7 @@ class KalshiAdapter(BaseReadOnlyAdapter):
             raise AdapterError("INVALID_MARKET", "Kalshi market ticker is missing or oversized")
         native_type = str(raw.get("market_type") or "unknown").lower()
         is_mve = bool(raw.get("mve_collection_ticker") or raw.get("mve_selected_legs"))
+        selected_components = self._selected_components(raw, ticker)
         kind = (
             MarketKind.CONDITIONAL_EVENT
             if is_mve
@@ -214,6 +216,7 @@ class KalshiAdapter(BaseReadOnlyAdapter):
                 raw.get("status"), closed=raw.get("status") in {"closed", "settled"}
             ),
             instruments=outcomes,
+            selected_components=selected_components,
             payoff=PayoffSpec(
                 state_ids=states,
                 payout_currency="USD" if states else None,
@@ -247,6 +250,7 @@ class KalshiAdapter(BaseReadOnlyAdapter):
                 flag
                 for flag, condition in (
                     ("MVE_PAYOFF_NOT_MODELED", is_mve),
+                    ("MVE_SELECTED_COMPONENTS_MISSING", is_mve and not selected_components),
                     ("RULES_PRIMARY_MISSING", not bool(primary_rule)),
                     ("FEE_SCHEDULE_UNKNOWN", True),
                     ("PAYOFF_NOT_VERIFIED", True),
@@ -265,6 +269,56 @@ class KalshiAdapter(BaseReadOnlyAdapter):
                 exchange_timestamp_semantics="updated_time is metadata update time",
             ),
         )
+
+    def _selected_components(
+        self, raw: dict[str, Any], containing_market_id: str
+    ) -> tuple[SelectedMarketComponent, ...]:
+        if "mve_selected_legs" not in raw:
+            return ()
+        source_legs = raw["mve_selected_legs"]
+        if not isinstance(source_legs, list) or len(source_legs) > 64:
+            raise AdapterError(
+                "INVALID_MVE_COMPONENTS",
+                "Kalshi MVE selected legs must be an array of at most 64 entries",
+            )
+        components: list[SelectedMarketComponent] = []
+        seen: set[str] = set()
+        for leg in source_legs:
+            if not isinstance(leg, dict):
+                raise AdapterError("INVALID_MVE_COMPONENT", "Kalshi MVE leg must be an object")
+            market_ticker = leg.get("market_ticker")
+            event_ticker = leg.get("event_ticker")
+            side = leg.get("side")
+            if (
+                not isinstance(market_ticker, str)
+                or not _TICKER_PATTERN.fullmatch(market_ticker)
+                or market_ticker == containing_market_id
+                or (
+                    event_ticker is not None
+                    and (
+                        not isinstance(event_ticker, str)
+                        or not _TICKER_PATTERN.fullmatch(event_ticker)
+                    )
+                )
+                or not isinstance(side, str)
+                or side not in {"yes", "no"}
+                or market_ticker in seen
+            ):
+                raise AdapterError(
+                    "INVALID_MVE_COMPONENT",
+                    "Kalshi MVE leg identity or selected side is invalid",
+                )
+            selected_side: Literal["yes", "no"] = "yes" if side == "yes" else "no"
+            seen.add(market_ticker)
+            components.append(
+                SelectedMarketComponent(
+                    venue=self.venue,
+                    native_event_id=event_ticker,
+                    native_market_id=market_ticker,
+                    selected_side=selected_side,
+                )
+            )
+        return tuple(components)
 
     async def fetch_fee_metadata(self, market: FrontierMarket) -> KalshiFeeMetadata:
         """Capture public event/series fee parameters without asserting account-level fees."""

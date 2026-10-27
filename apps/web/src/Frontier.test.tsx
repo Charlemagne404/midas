@@ -327,7 +327,7 @@ it('captures one explicit Polymarket trade page and follows its bound cursor', a
         },
         {
           venue: 'kalshi',
-          adapter_version: 'frontier-kalshi-3',
+          adapter_version: 'frontier-kalshi-4',
           public_probe_enabled: true,
           capabilities: [
             {
@@ -501,6 +501,14 @@ it('captures Kalshi fee metadata and exposes a separate hypothetical fee sensiti
       { native_instrument_id: 'KX-FEE-1:YES', label: 'Yes', outcome_id: 'yes' },
       { native_instrument_id: 'KX-FEE-1:NO', label: 'No', outcome_id: 'no' },
     ],
+    selected_components: [
+      {
+        venue: 'kalshi',
+        native_event_id: 'KX-COMPONENT-EVENT',
+        native_market_id: 'KX-COMPONENT-MARKET',
+        selected_side: 'yes',
+      },
+    ],
     quality_flags: ['FEE_SCHEDULE_UNKNOWN'],
     provenance: {
       response_received_at_utc: '2026-10-26T20:00:00Z',
@@ -510,7 +518,7 @@ it('captures Kalshi fee metadata and exposes a separate hypothetical fee sensiti
   };
   const source = {
     venue: 'kalshi',
-    adapter_version: 'frontier-kalshi-2',
+    adapter_version: 'frontier-kalshi-4',
     public_probe_enabled: true,
     capabilities: [
       {
@@ -727,6 +735,14 @@ it('captures Kalshi fee metadata and exposes a separate hypothetical fee sensiti
 
   fireEvent.click(await screen.findByRole('button', { name: 'Markets' }));
   fireEvent.click(await screen.findByRole('button', { name: 'Inspect' }));
+  expect(
+    await screen.findByText('Selected components from public MVE metadata'),
+  ).toBeInTheDocument();
+  expect(screen.getByText('KX-COMPONENT-MARKET')).toBeInTheDocument();
+  expect(screen.getByText('Selected YES side')).toBeInTheDocument();
+  expect(
+    screen.getByText(/do not verify component rules, combo payout, or resolution equivalence/),
+  ).toBeInTheDocument();
   expect(await screen.findByText('Capture fee metadata')).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Capture fee metadata' }));
   expect(await screen.findByText(/quadratic · multiplier 1/)).toBeInTheDocument();

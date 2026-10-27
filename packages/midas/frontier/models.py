@@ -186,6 +186,15 @@ class MarketInstrument(FrontierModel):
         return value
 
 
+class SelectedMarketComponent(FrontierModel):
+    """Native selected contract leg; it does not assert the containing market payoff."""
+
+    venue: Venue
+    native_event_id: str | None = Field(default=None, max_length=256)
+    native_market_id: str = Field(min_length=1, max_length=256)
+    selected_side: Literal["yes", "no"]
+
+
 class PayoffSpec(FrontierModel):
     schema_version: int = 1
     state_ids: tuple[str, ...] = ()
@@ -489,6 +498,7 @@ class FrontierMarket(FrontierModel):
     market_kind: MarketKind
     lifecycle: Lifecycle = Lifecycle.UNKNOWN
     instruments: tuple[MarketInstrument, ...] = ()
+    selected_components: tuple[SelectedMarketComponent, ...] = Field(default=(), max_length=64)
     payoff: PayoffSpec = PayoffSpec()
     resolution: ResolutionSpec = ResolutionSpec()
     fees: FeeSchedule = FeeSchedule()
@@ -506,6 +516,14 @@ class FrontierMarket(FrontierModel):
         ids = [item.native_instrument_id for item in self.instruments]
         if len(ids) != len(set(ids)):
             raise ValueError("Duplicate native instrument identifier")
+        component_ids = [(item.venue, item.native_market_id) for item in self.selected_components]
+        if len(component_ids) != len(set(component_ids)):
+            raise ValueError("Duplicate selected native market component")
+        if any(
+            item.venue == self.venue and item.native_market_id == self.native_market_id
+            for item in self.selected_components
+        ):
+            raise ValueError("A market cannot list itself as a selected component")
         if self.market_kind == MarketKind.SPOT_PAIR:
             if not self.base_asset or not self.quote_asset or self.payoff.state_ids:
                 raise ValueError(
