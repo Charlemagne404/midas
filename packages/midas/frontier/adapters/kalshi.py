@@ -40,7 +40,7 @@ from midas.frontier.models import (
 )
 
 D = Decimal
-ADAPTER_VERSION = "frontier-kalshi-7"
+ADAPTER_VERSION = "frontier-kalshi-8"
 _TICKER_PATTERN = re.compile(r"[A-Za-z0-9_-]{1,256}\Z")
 BASE = "https://external-api.kalshi.com/trade-api/v2"
 MARKET_DATA_DOC = "https://docs.kalshi.com/getting_started/quick_start_market_data"
@@ -179,11 +179,16 @@ class KalshiAdapter(BaseReadOnlyAdapter):
         if not isinstance(event_title, str) or not event_title.strip() or len(event_title) > 512:
             raise AdapterError("INVALID_SCHEMA", "Kalshi event title is missing or oversized")
         children = event.get("markets")
+        if "markets" in event and not isinstance(children, list):
+            raise AdapterError("INVALID_SCHEMA", "Kalshi event markets must be an array")
         top_level_children = payload.get("markets")
-        if isinstance(top_level_children, list) and top_level_children:
-            if isinstance(children, list) and children:
+        if "markets" in payload and not isinstance(top_level_children, list):
+            raise AdapterError("INVALID_SCHEMA", "Kalshi top-level event markets must be an array")
+        if isinstance(top_level_children, list):
+            if isinstance(children, list) and children and top_level_children:
                 raise AdapterError("INVALID_SCHEMA", "Kalshi event returned two market arrays")
-            children = top_level_children
+            if children is None or (not children and top_level_children):
+                children = top_level_children
         if not isinstance(children, list) or len(children) > self.config.max_markets_per_call:
             raise AdapterError(
                 "INVALID_SCHEMA",

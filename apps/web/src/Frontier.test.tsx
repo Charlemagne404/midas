@@ -1523,7 +1523,7 @@ it('submits a bounded Arena replay and displays its integrity-verified compariso
 it('captures one explicit bounded Kalshi multivariate event page', async () => {
   const source = {
     venue: 'kalshi',
-    adapter_version: 'frontier-kalshi-7',
+    adapter_version: 'frontier-kalshi-8',
     public_probe_enabled: true,
     capabilities: [
       {

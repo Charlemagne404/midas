@@ -398,6 +398,40 @@ async def test_kalshi_multivariate_event_rejects_explicit_null_market_list():
         await client.aclose()
 
 
+@pytest.mark.asyncio
+async def test_kalshi_event_detail_replays_saved_empty_top_level_market_list():
+    # Genuine saved HTTP 200 response; the top-level market list is explicitly empty.
+    artifact = json.loads(
+        _captured("data/frontier/live-probes/2026-10-27-kalshi-mve-event-detail-r1.json")
+    )
+    raw = artifact["raw_observation"]
+    event_ticker = artifact["event_ticker"]
+    transport, requests, client = _transport(
+        "external-api.kalshi.com",
+        {f"/events/{event_ticker}": raw["raw_body"]},
+    )
+    adapter = KalshiAdapter(
+        AdapterConfig(
+            enabled=True,
+            live_public_probe_enabled=True,
+            requests_per_second=5,
+            retries=0,
+        ),
+        transport=transport,
+    )
+    try:
+        markets = await adapter.discover_event_markets(event_ticker)
+        captures = adapter.take_captures()
+    finally:
+        await client.aclose()
+
+    assert markets == ()
+    assert len(requests) == len(captures) == 1
+    assert captures[0].raw_sha256 == artifact["raw_sha256"]
+    assert captures[0].request_url == raw["request_url"]
+    assert "authorization" not in requests[0].headers
+
+
 @pytest.mark.parametrize("mutation", ["event_mismatch", "duplicate_market", "too_many_events"])
 @pytest.mark.asyncio
 async def test_kalshi_multivariate_event_page_rejects_bad_nested_identity(mutation: str):
