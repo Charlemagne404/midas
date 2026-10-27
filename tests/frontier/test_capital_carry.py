@@ -212,6 +212,8 @@ def test_capital_carry_fails_closed_on_unverified_settlement_or_missing_venue_ra
     kalshi_rate=st.integers(min_value=0, max_value=999_999),
     poly_seconds=st.integers(min_value=1, max_value=10_000_000),
     kalshi_seconds=st.integers(min_value=1, max_value=10_000_000),
+    poly_microseconds=st.integers(min_value=0, max_value=999_999),
+    kalshi_microseconds=st.integers(min_value=0, max_value=999_999),
 )
 def test_capital_carry_matches_fraction_reference_for_bounded_inputs(
     poly_cents,
@@ -220,6 +222,8 @@ def test_capital_carry_matches_fraction_reference_for_bounded_inputs(
     kalshi_rate,
     poly_seconds,
     kalshi_seconds,
+    poly_microseconds,
+    kalshi_microseconds,
 ):
     candidate, markets = candidate_and_markets()
     capital = {
@@ -228,12 +232,16 @@ def test_capital_carry_matches_fraction_reference_for_bounded_inputs(
     }
     rates = {"polymarket": str(poly_rate), "kalshi": str(kalshi_rate)}
     seconds = {"polymarket": poly_seconds, "kalshi": kalshi_seconds}
+    microseconds = {"polymarket": poly_microseconds, "kalshi": kalshi_microseconds}
     for market_id, source in tuple(markets.items()):
         venue = source.venue.value
         updated = source.model_copy(
             update={
                 "resolution": source.resolution.model_copy(
-                    update={"settles_at_utc": T0 + timedelta(seconds=seconds[venue])}
+                    update={
+                        "settles_at_utc": T0
+                        + timedelta(seconds=seconds[venue], microseconds=microseconds[venue])
+                    }
                 )
             }
         )
@@ -256,7 +264,8 @@ def test_capital_carry_matches_fraction_reference_for_bounded_inputs(
             exact = (
                 Fraction(capital[venue])
                 * Fraction(int(rates[venue]))
-                * Fraction(seconds[venue], 10_000 * 365 * 24 * 60 * 60)
+                * (Fraction(seconds[venue], 1) + Fraction(microseconds[venue], 1_000_000))
+                / (10_000 * 365 * 24 * 60 * 60)
             )
             expected_by_venue[venue] = D(exact.numerator) / D(exact.denominator)
         expected_total = sum(expected_by_venue.values(), D(0))
