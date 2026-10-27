@@ -2,6 +2,11 @@
 
 **Report date:** 2026-10-27
 
+**Latest code checkpoint:** `29ab175` adds a bounded per-venue virtual
+post-settlement release-delay scenario. Targeted and full Frontier verification
+is recorded in the final dated addendum and mission ledger. Project Frontier
+remains incomplete, isolated, and undeployed.
+
 **Branch:** `codex/frontier-20261026`
 
 **Worktree:** `/home/charlie/midas-frontier`
@@ -3572,3 +3577,46 @@ capture reads, Reality actions, or deployments occurred. The repository-wide
 legacy test suite remains unrun. Frontier is still PARTIALLY VERIFIED because
 source-use permission, live cross-venue equivalence/economics, and broader
 funding/settlement costs remain unresolved.
+
+### Virtual post-settlement release delay — 2026-10-27 20:02 UTC
+
+Code commit `29ab175` extends the saved-run-bound virtual capital-duration
+sensitivity with an optional whole-second release delay per venue, bounded to
+31,536,000 seconds. Omitted values mean zero; a supplied map must cover all
+candidate venues. This user-entered scenario is not a source-reported promise
+of redemption, withdrawal, or capital availability. The delay is included in
+the canonical input digest. The independent Fraction-based audit recomputes
+release time, elapsed duration, carry, and adjusted P&L. Settlement instants
+are converted to UTC before adding elapsed seconds, including across
+daylight-saving transitions; out-of-range timestamps fail closed. The API and
+Mission Control expose this assumption without adding source requests, account
+paths, or saved artifacts.
+
+Tests cover positive-delay arithmetic, zero defaults, incomplete and malformed
+inputs, audit tampering, generated Fraction differentials, a daylight-saving
+transition, and datetime overflow. The capital-carry module passed **27/27**
+(and was rerun **27/27** after Ruff formatting). The saved-run API integration
+passed **1 test** (43 deselected). The complete Frontier Python suite passed
+**246/246** in 39.38 seconds (40.49 seconds wall) at **336,116 KiB peak RSS**,
+zero swaps; its only warning was the existing Starlette/httpx TestClient
+deprecation. The complete web suite passed **40/40 across seven files** in
+5.25 seconds wall at **259,924 KiB peak RSS**, zero swaps. The isolated Frontier
+Playwright suite passed **4/4** in 10.2 seconds (10.81 seconds wall) at
+**190,776 KiB peak RSS**, zero swaps. It used temporary local API/database/
+Arena/Frontier roots and made no exchange requests.
+
+TypeScript production compilation passed. Targeted ESLint and Prettier, Ruff
+check/format, strict mypy for `capital.py` and the Frontier API, and
+`git diff --check` passed. The production build at
+`/tmp/midas-frontier-web-build-20261027-2001` transformed 2,228 modules; Vite
+took 4.65 seconds and the full build took 12.28 seconds wall at **700,060 KiB
+peak RSS**, with zero swaps. The repository `dist` was not modified. Existing
+warnings remain for the >500 kB index/Chart chunks and an external output
+directory. At `2026-10-27T20:02:00Z`, memory PSI avg10 was 0.00% (`some`/`full`),
+avg60 1.19% / 1.09%, avg300 14.11% / 12.77%; 9.5 GiB was available and 468
+MiB swap free. No live source, held capture, Reality service, or production
+deployment was accessed. The repository-wide legacy suite remains unrun.
+This capital scenario is **COMPLETE AND VERIFIED** in fixture/local testing;
+Frontier overall remains **PARTIALLY VERIFIED** due source permission, live
+cross-venue economic evidence, broader cost assumptions, legacy regression,
+and deployment prerequisites.

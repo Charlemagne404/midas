@@ -1,5 +1,33 @@
 # Project Frontier Mission Ledger
 
+**Latest checkpoint (2026-10-27 20:02 UTC):** Code commit `29ab175` adds
+per-venue virtual post-settlement release delays to the saved-run-bound capital
+duration sensitivity. Delay accepts bounded whole seconds up to one year,
+defaults to zero, must cover every venue when supplied, and is included in the
+input digest. The independent Fraction audit recomputes release time, elapsed
+duration, carry, and adjusted P&L. Settlement instants are normalized to UTC
+before delay arithmetic; unrepresentable timestamps fail closed. The API
+forwards the input and Mission Control renders it as a scenario assumption.
+The model/API/UI changes are covered by **27/27** capital-carry tests, the
+saved-run API integration (**1 passed, 43 deselected**), the full Frontier
+Python suite (**246/246**), the full web suite (**40/40 across seven files**),
+and the isolated Frontier Playwright suite (**4/4**). The post-format capital
+module rerun also passed **27/27**. TypeScript build/typecheck, targeted ESLint,
+Prettier, Ruff check/format, strict mypy for `capital.py` and the Frontier API,
+and `git diff --check` pass. The production build in
+`/tmp/midas-frontier-web-build-20261027-2001` compiled 2,228 modules in 4.65
+seconds Vite time (12.28 seconds wall) at 700,060 KiB peak RSS with zero swaps;
+the repository `dist` was untouched. The existing large index/Chart chunk
+warning and external-output-directory warning remain. At
+`2026-10-27T20:02:00Z`, host memory PSI avg10 was 0.00% (`some`/`full`), avg60
+1.19% / 1.09%, avg300 14.11% / 12.77%; 9.5 GiB was available and 468 MiB swap
+free. The Frontier suite emitted its existing Starlette/httpx deprecation
+warning. The repository-wide legacy suite remains unrun. No live source
+request, held-capture read, Reality action, or deployment occurred. Frontier
+remains isolated, research-only, PARTIALLY VERIFIED, and undeployed. Next safe
+work: review remaining economic cost/settlement limits; continue only with
+fresh resource admission before broad regressions or new builds.
+
 **Latest checkpoint (2026-10-27 19:11 UTC):** The runtime held-source guard
 is now hardened and verified. Commit `df30fa7` resolves symlink paths before
 checking, handles relative `dir_fd` paths through `/proc/self/fd`, removes the

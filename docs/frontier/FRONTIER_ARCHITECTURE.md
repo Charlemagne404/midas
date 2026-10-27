@@ -17,7 +17,7 @@ as mutable Frontier storage.
 | Relationship intelligence | `relationships.py` | Deterministic indexed title and parent-event/outcome hypotheses, source-selected component references, strict payoff checks, and immutable review contracts. |
 | Candidate calculators | `economics.py` | Decimal cross-venue binary and same-market exhaustive multi-outcome all-long checks with fee, depth, freshness, timing, and scenario bounds; provenance-bound conditional Kalshi one-fill estimate; exact bounded one-sided fill sensitivity; separate instrument-bound Kalshi one-fill and one-order fee sensitivities. |
 | Independent arithmetic audit | `independent_audit.py` | Separately recomputes supported candidate identities, payoff vectors, pinned quotes/depth, fees, costs, terminal P&L, fill-pattern sensitivity, and classification from replay inputs. |
-| Virtual capital-duration sensitivity | `capital.py` | Recomputes unrounded simple-interest carry from explicit per-venue user assumptions, candidate capital, and hash-checked future settlement metadata pinned to each leg; an independent arithmetic pass cannot change candidate classification. |
+| Virtual capital-duration sensitivity | `capital.py` | Recomputes unrounded simple-interest carry from explicit per-venue user assumptions, candidate capital, hash-checked future settlement metadata, and a bounded scenario-only post-settlement release delay; an independent arithmetic pass cannot change candidate classification. |
 | Durable evidence | `storage.py` | Append-only, size- and row-bounded SQLite observations, markets, relationship reviews/revisions, runs, and paired comparisons. |
 | Replay | `replay.py` | Stable input ordering, scenario/mapping/proposal-limit-aware replay identities, exact store-record provenance for API-loaded models, deterministic results, and paired assumption comparisons. |
 | Arena paired replay | `packages/midas/arena/frontier_replay.py`, `arena/jobs.py` | Immutable content-addressed input snapshots, a bounded offline paired-replay worker, and hash-verified result artifacts under Arena's existing admission gate. |
@@ -37,7 +37,11 @@ or invalid input is rejected.
 
 For each venue it applies simple interest to the candidate's recorded venue
 capital from the candidate observation time through the latest settlement among
-that venue's candidate markets. The basis is actual seconds divided by 365 days,
+that venue's candidate markets plus the user-entered additional release delay.
+Delay defaults to zero, must be a whole number of seconds, and is bounded to one
+year per venue. It is included in the hashed input and independently checked.
+This is a scenario assumption, not a source claim or a prediction of redemption,
+withdrawal, or reuse timing. The basis is actual seconds divided by 365 days,
 without compounding or currency rounding. That full-venue-through-latest rule
 is conservative when legs have different release times. It is a user-assumption
 sensitivity, not a sourced financing rate, fee schedule, capital-access claim,
@@ -47,7 +51,7 @@ practical-eligibility state unchanged.
 
 The response pins candidate/replay hashes, observation IDs and validated
 normalized-store-row hashes, raw observation hashes,
-resolution evidence hashes/fingerprints, per-venue rate/capital/time inputs,
+resolution evidence hashes/fingerprints, per-venue rate/capital/delay/time inputs,
 and exact decimal outputs. A separate arithmetic pass checks source-record
 identity and recomputes duration, carry, and adjusted gross/net result. This
 arithmetic check does not authenticate source truth or settlement, and the

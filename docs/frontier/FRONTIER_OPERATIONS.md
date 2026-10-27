@@ -79,8 +79,9 @@ virtual-funding UI keeps separate balances by venue and canonical denomination.
 
 ## Virtual settlement-duration sensitivity
 
-Candidate cards can submit a user-entered annual carry rate (basis points) for
-each venue to `POST /api/frontier/opportunities/capital-carry`. The request must
+Candidate cards can submit a user-entered annual carry rate (basis points) and
+an optional post-settlement release delay (whole seconds) for each venue to
+`POST /api/frontier/opportunities/capital-carry`. The request must
 name the candidate's saved run and exact result hash. The API loads that run and
 the market observations pinned on its candidate legs, verifies store integrity
 and source/market/venue identity, then requires verified, hash-identified future
@@ -92,8 +93,11 @@ quarantine.
 The calculation uses simple interest at the supplied rate, actual duration in
 seconds divided by a 365-day year, and no compounding or currency rounding. It
 starts at the saved candidate observation time and holds all capital for a
-venue until the latest settlement among that venue's candidate markets. This
-conservative duration may overstate individual-leg holding time. It is not an
+venue until the latest settlement among that venue's candidate markets plus the
+entered delay. Delay defaults to zero, must cover every venue if supplied, and
+is bounded to 31,536,000 seconds. It is hashed and independently checked, but
+is only a virtual scenario input; it does not predict redemption, withdrawal,
+or reuse timing. This conservative duration may overstate individual-leg holding time. It is not an
 exchange fee or a financing offer. Unknown fees can remain excluded from the
 candidate's capital amount. The response retains exact decimal values, both
 run/candidate hashes, per-market observation IDs, validated normalized-store-row

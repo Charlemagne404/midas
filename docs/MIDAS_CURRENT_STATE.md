@@ -596,3 +596,30 @@ was 0.00% `some` / 0.00% `full`; available memory was 9.1 GiB and swap free
 468 MiB. The repository-wide MIDAS suite remains unrun. No external source
 probe, held-capture read, Reality action, or deployment occurred. Frontier stays
 isolated, research-only, PARTIALLY VERIFIED, and undeployed.
+
+## Frontier virtual capital release-delay scenario — 2026-10-27 20:02 UTC
+
+Code commit `29ab175` adds an optional post-settlement release delay for each
+venue in the virtual capital-duration workbench. Delay is a whole-second
+scenario input, bounded to one year, defaults to zero, and is included in the
+input digest. The independent verifier recomputes release time, duration,
+carry, and adjusted P&L from the pinned replay inputs. UTC normalization
+handles daylight-saving transitions and timestamps that overflow fail closed.
+The interface labels the delay as a scenario assumption, not actual redemption
+or capital availability.
+
+Verification passed: the capital-carry module **27/27** (including a post-format
+rerun), saved-run API integration **1 passed**, full Frontier Python suite
+**246/246**, full web suite **40/40**, and isolated Frontier browser suite
+**4/4**. TypeScript, targeted ESLint/Prettier, Ruff check/format, strict mypy
+for the capital model and Frontier API, and `git diff --check` passed. The
+production build compiled 2,228 modules in 12.28 seconds wall at 700,060 KiB
+peak RSS with zero swaps, using `/tmp/midas-frontier-web-build-20261027-2001`;
+the repository `dist` was untouched. Existing large index/Chart chunk and
+external-output-directory warnings remain. The Frontier Python suite has the
+existing Starlette/httpx deprecation warning. At `2026-10-27T20:02:00Z`, memory
+PSI avg10 was 0.00% (`some`/`full`), avg60 1.19% / 1.09%, avg300 14.11% /
+12.77%; 9.5 GiB was available and 468 MiB swap free. The legacy repository
+suite remains unrun. No live-source request, held-capture read, protected
+service action, or deployment occurred. Frontier remains isolated,
+undeployed, research-only, and PARTIALLY VERIFIED.
