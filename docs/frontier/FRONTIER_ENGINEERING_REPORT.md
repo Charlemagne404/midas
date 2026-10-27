@@ -2530,3 +2530,21 @@ started.
 **Next safe action:** remeasure PSI after host memory pressure subsides and
 only then reconsider the full `tests/frontier` suite. Use temporary test data
 roots and classify any interrupted run as incomplete.
+
+## Fee evidence through API replay — 2026-10-27 16:52 UTC
+
+Test commit `65a4f4e` extends the saved Kalshi fee-pair fixture through
+`POST /api/frontier/replay`. It checks that both source observation IDs appear
+in the returned manifest and remain present in the persisted replay result.
+The focused test passed (**1 passed** in 1.36 seconds); Ruff, formatting, and
+`git diff --check` passed. One existing Starlette/httpx TestClient deprecation
+warning remains. The fixture uses a temporary database and an empty adapter
+registry; it performs no source request. It verifies provenance persistence,
+not a live market or a candidate result.
+
+At `2026-10-27T16:52:41Z`, memory PSI was `avg10` 1.41% (`some`) / 1.26%
+(`full`), `avg60` 24.80% / 22.29%, and `avg300` 35.23% / 31.79%.
+`MemAvailable` was 9,835,924 KiB, with 484,420 KiB of 4 GiB swap free. CPU
+`avg10` PSI was 2.64% (`some`) / 0.00% (`full`); I/O `avg10` was 1.53% /
+1.49%. The full Frontier suite, production build, and browser E2E remain
+deferred. No source, held data, service, or production setting was accessed.

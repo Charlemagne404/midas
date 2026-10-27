@@ -1514,3 +1514,21 @@ At `2026-10-27T16:49:36Z`, host memory PSI measured `avg10` 40.64% (`some`) /
 Available memory was 9,581,096 KiB, with 484,348 KiB of 4 GiB swap free. The
 full Frontier suite and production build remain deferred. No source request,
 held data read, service, production setting, or historical store was accessed.
+
+## 2026-10-27 16:52 UTC — replay API fee-provenance check
+
+Test commit `65a4f4e` extends the saved Kalshi event/series fee fixture to call
+the local replay API. The result manifest contains both fee metadata
+observation IDs, and the stored replay retains the same IDs. The focused API
+test passed (**1 passed** in 1.36 seconds); Ruff, format check, and
+`git diff --check` passed. One existing Starlette/httpx deprecation warning
+remains. This temporary-database fixture has an empty adapter registry and
+does not call a source. It verifies the evidence-to-manifest path only; it does
+not establish live fees or create a candidate.
+
+At `2026-10-27T16:52:41Z`, memory PSI was `avg10` 1.41% (`some`) / 1.26%
+(`full`), `avg60` 24.80% / 22.29%, and `avg300` 35.23% / 31.79%.
+`MemAvailable` was 9,835,924 KiB; swap free was 484,420 KiB of 4 GiB. CPU
+`avg10` was 2.64% (`some`) / 0.00% (`full`); I/O `avg10` was 1.53% / 1.49%.
+The full Frontier suite, production build, and browser E2E remain deferred.
+No source, held data, service, or production setting was accessed.
