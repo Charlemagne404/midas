@@ -2177,8 +2177,39 @@ KiB peak RSS**, with zero swaps. At `2026-10-27T19:45:58Z`, host memory PSI
 `avg10` was 47.18% (`some`) / 41.86% (`full`), with 9.3 GiB available and 468
 MiB swap free. This adapter-module pass is not a full Frontier regression.
 Next safe action: continue offline work on unresolved cross-venue capital and
-settlement costs, keeping unsupported transfer/FX costs unknown. Recheck host
-pressure before attempting the broader Frontier suite; keep the source-use hold,
-protected services, and production deployment boundary unchanged.
+settlement costs, keeping unsupported transfer/FX costs unknown. The full
+Frontier Python, web, and isolated browser suites have now run; keep the
+source-use hold, protected services, and production deployment boundary unchanged.
 At `2026-10-27T19:46:50Z`, the full Frontier UI component file also passed
 **8/8** in 3.31 seconds under the same bounded resource sample.
+
+## 2026-10-27 19:50 UTC — consolidated Frontier regression and build
+
+After PSI eased, `pytest tests/frontier -q` passed **230/230** in 39.45 seconds
+(40.56 seconds wall) at **335,348 KiB peak RSS**, with zero swaps and one
+existing Starlette/httpx deprecation warning. The full web unit suite passed
+**40/40 across seven files** (4.85 seconds Vitest, 5.36 seconds wall) at
+**298,344 KiB peak RSS**, with zero swaps. The isolated Frontier browser spec
+passed **4/4** with one worker in 9.7 seconds (10.29 seconds wall) at **190,708
+KiB peak RSS**, with zero swaps. Its four cases checked no source probes,
+read-only Arena history, fixture-only Kalshi settlement arithmetic, and a
+bounded mobile graph. Playwright used temporary API databases, Arena/Frontier
+roots, and a temporary test-output directory; its local servers stopped at
+completion.
+
+The production build passed via
+`npm run build -- --outDir /tmp/midas-frontier-web-build-20261027-1949`:
+TypeScript succeeded and Vite built 2,228 modules in 4.69 seconds (12.21
+seconds wall) at **706,308 KiB peak RSS**, with zero swaps. The repository's
+existing `dist` was not written. Vite retains its >500 kB main/Chart chunk
+warning and noted that external output directories are not emptied by default.
+The web typecheck, targeted ESLint/Prettier, Ruff, strict mypy on five changed
+production modules, and `git diff --check` passed.
+
+At `2026-10-27T19:50:15Z`, memory PSI `avg10` was 0.00% `some` / 0.00% `full`,
+`avg60` 2.36% / 2.11%, and `avg300` 22.62% / 20.32%; 9.1 GiB was available and
+468 MiB of 4 GiB swap was free. No external source probe, held-capture read,
+Reality action, or deployment occurred. The repository-wide legacy suite was
+not run. Source-use permission, live cross-venue equivalence/economics, and
+broader funding/settlement costs remain open; Frontier is still PARTIALLY
+VERIFIED.

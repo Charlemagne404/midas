@@ -2219,9 +2219,9 @@ cross-venue economics.
 | Live market/book/trade and fee metadata through adapters/API | PARTIALLY VERIFIED | Earlier listing/book/trade, event-group, fee-metadata, and trade-page captures are hash-pinned. Kalshi MVE captures include filtered pages whose nested markets were omitted and one detail response with explicit top-level `markets: []`. The new one-request child detail capture matches a selected leg's saved ticker/event identities and has raw/store hashes; its rules expose fair-price fallbacks, but it has no book/price and proves neither child nor combo payoff. Fee metadata now has fixture-verified candidate replay integration, but no new public observation, current schedule verification, cross-venue timing, combo economics, venue-wide coverage, or execution was established in this checkpoint. |
 | Source workers and broad historical data | DEFERRED | No persistent worker or long-duration collection. |
 | Laboratory/Arena research orchestration | PARTIALLY VERIFIED | Arena job kind, content-addressed snapshots, bounded offline execution, API submission/history/result verification, process CPU/RSS capture, and explicit workspace controls are implemented and tested; two fixture jobs passed the host-wide gate and completed under systemd. Laboratory campaign management and resource-sustainability evidence remain incomplete. |
-| Native Mission Control workspace | PARTIALLY VERIFIED | Local API, bounded graph/review UI with on-demand revision history and paginated 200-market-capped text search, Polymarket/Kalshi trade-page and event-group controls, explicit filtered one-page Kalshi MVE capture by series, collection, or one event ticker with returned member-list state, parent-event context, instrument-bound fee sensitivity, selected-leg component-rule and recorded-settlement arithmetic inspection, paired replay, candidate fill stress, virtual balances keyed by venue and exact denomination identity, and Arena job history/result display. After exact identity validation/key hardening, the Frontier component file passes 8/8 and the full web suite 40/40; typecheck, targeted ESLint, and Prettier pass. The isolated Frontier browser spec passes 4/4, including the no-probe and bounded mobile graph cases. The post-change production build passes at 714,944 KiB peak RSS with no swaps; Vite retains the existing large index/chart chunk warning. The workspace is not deployed. |
+| Native Mission Control workspace | PARTIALLY VERIFIED | Local API, bounded graph/review UI with on-demand revision history and paginated 200-market-capped text search, Polymarket/Kalshi trade-page and event-group controls, explicit filtered one-page Kalshi MVE capture by series, collection, or one event ticker with returned member-list state, parent-event context, instrument-bound fee sensitivity, selected-leg component-rule and recorded-settlement arithmetic inspection, paired replay, candidate fill stress, virtual balances keyed by venue and exact denomination identity, and Arena job history/result display. The Frontier component file passes 8/8 and the full web suite 40/40; typecheck, targeted ESLint, and Prettier pass. The isolated Frontier browser spec passes 4/4, including the no-probe and bounded mobile graph cases. The latest full Frontier Python suite passes 230/230; the production build to a temporary output directory passes at 706,308 KiB peak RSS with zero swaps. Vite retains existing main/Chart chunk-size warnings. The workspace is not deployed. |
 | Source data use/retention permission | BLOCKED | Kalshi Developer Agreement and Data Terms restrict the relevant API/data uses; the applicable regional Kraken terms and Frontier authorization remain unverified. The main API requires permission/review references in addition to probe flags, but references are not independently validated. No new Kalshi/Kraken live captures or new research use of their stored data pending review; existing artifacts are preserved unchanged. The 18:41 full-suite run read files later identified as held captures; no mutation is known. |
-| Offline test-source separation from held captures | COMPLETE AND VERIFIED | All 15 discovered references were replaced by synthetic inputs. A scan over `tests`, `packages`, and `apps` returns no `live-probes` references. The runtime guard blocks direct path, symlink, symlink-plus-`..`, and relative `dir_fd` file-open cases through built-in `open`, `io.open`, and `os.open`; its 2 tests pass, and the complete 219-test Frontier suite passes with the guard active. A read-only code review found no ordinary test interference. Existing capture files remain unchanged. |
+| Offline test-source separation from held captures | COMPLETE AND VERIFIED | All 15 discovered references were replaced by synthetic inputs. A scan over `tests`, `packages`, and `apps` returns no `live-probes` references. The runtime guard blocks direct path, symlink, symlink-plus-`..`, and relative `dir_fd` file-open cases through built-in `open`, `io.open`, and `os.open`; its 2 tests pass, and the latest complete 230-test Frontier suite passes with the guard active. A read-only code review found no ordinary test interference. Existing capture files remain unchanged. |
 | Held-source application read quarantine | IMPLEMENTED, LIVE VALIDATION PENDING | Code `d38f517` filters held-venue observation lists/direct reads, source aggregates, relationships/graph edges, review and replay inputs, derived outputs, paired comparisons, and Frontier Arena replays. Code `73e008e` applies pinned-snapshot checks to Arena job summaries, details, logs, submissions, and cancellation; `e7958c1` also filters the research-activity digest; `23f9860` rejects held snapshots before inspect/reconciliation can rewrite a job manifest. Controlled fixtures verify held/missing provenance is hidden or rejected while source/snapshot/result/job-manifest artifacts remain stored. The actual preserved live store was not audited; direct database reads and exports remain outside the API filter. |
 | Production readiness/deployment | DEFERRED | Separate review and authorization required; production eligibility is false. |
 | Positive economic result | NOT ESTABLISHED | No genuine cross-venue equivalent or economically eligible result in captured evidence. |
@@ -3537,7 +3537,38 @@ PSI `avg10` was 47.18% `some` / 41.86% `full`; 9.3 GiB was available and 468
 MiB swap was free. At `2026-10-27T19:46:50Z`, the full Frontier UI component
 test file passed **8/8** in 3.31 seconds. The broader Frontier suite and
 production build remain deferred.
-Next safe work is an offline review of the incomplete cross-venue capital and
-settlement model. Unknown FX and transfer costs should remain unknown; recheck
-host pressure before the broader suite, and retain the source-use and deployment
-holds.
+Next safe work is an offline review of incomplete cross-venue capital and
+settlement costs. The full Frontier Python, web, and isolated browser suites
+have now run; keep FX and transfer costs unknown absent evidence, and retain the
+source-use and deployment holds.
+
+### Consolidated Frontier regression and build — 2026-10-27 19:50 UTC
+
+After memory PSI eased, the complete Frontier Python suite passed **230/230**
+in 39.45 seconds (40.56 seconds wall) at **335,348 KiB peak RSS**, with zero
+swaps and one existing Starlette/httpx deprecation warning. The full web unit
+suite passed **40/40 across seven files** (4.85 seconds reported by Vitest,
+5.36 seconds wall) at **298,344 KiB peak RSS**, with zero swaps. The complete
+Frontier browser spec passed **4/4** with one worker in 9.7 seconds (10.29
+seconds wall) at **190,708 KiB peak RSS**, with zero swaps. Playwright used its
+temporary SQLite, Arena, and Frontier roots plus a temporary output directory;
+the four cases verify the no-probe view, no-launch Arena history, fixture-only
+Kalshi settlement review, and bounded mobile graph. The test servers stopped at
+completion.
+
+`npm run build -- --outDir /tmp/midas-frontier-web-build-20261027-1949` passed
+TypeScript and Vite production compilation (2,228 modules; 4.69 seconds Vite,
+12.21 seconds wall) at **706,308 KiB peak RSS**, with zero swaps. The unique
+temporary output directory kept the repository's existing `dist` untouched.
+Vite emitted its existing warning for the >500 kB main and Chart chunks, plus
+the expected warning that an external `outDir` is not emptied automatically.
+`npm run typecheck -- --pretty false`, targeted ESLint and Prettier, Ruff,
+strict mypy on five changed production modules, and `git diff --check` passed.
+
+At `2026-10-27T19:50:15Z`, memory PSI `avg10` was 0.00% (`some`) / 0.00%
+(`full`), `avg60` 2.36% / 2.11%, and `avg300` 22.62% / 20.32%; 9.1 GiB was
+available and 468 MiB of 4 GiB swap was free. No external source probes, held
+capture reads, Reality actions, or deployments occurred. The repository-wide
+legacy test suite remains unrun. Frontier is still PARTIALLY VERIFIED because
+source-use permission, live cross-venue equivalence/economics, and broader
+funding/settlement costs remain unresolved.

@@ -576,3 +576,23 @@ Next safe work is an offline review of incomplete cross-venue capital and
 settlement costs, leaving unsupported FX/transfer costs unknown. Recheck host
 pressure before the broader suite; keep source permission and deployment gates
 unchanged.
+
+## Frontier regression and build checkpoint — 2026-10-27 19:50 UTC
+
+After PSI eased, the complete Frontier Python suite passed **230/230** in
+39.45 seconds at **335,348 KiB peak RSS**; the full web suite passed **40/40**
+across seven files at **298,344 KiB peak RSS**. Both completed with zero swaps.
+The isolated Frontier browser spec passed **4/4** in 9.7 seconds, one worker,
+at **190,708 KiB peak RSS** with zero swaps. Playwright used temporary API,
+SQLite, Arena, Frontier, and test-output paths; all local test servers stopped.
+
+The production build passed to
+`/tmp/midas-frontier-web-build-20261027-1949`, compiling 2,228 modules in 4.69
+seconds Vite time (12.21 seconds wall) at **706,308 KiB peak RSS** with zero
+swaps. The existing Vite main/Chart chunk-size warning remains. TypeScript,
+targeted ESLint and Prettier, Ruff, strict mypy for five changed production
+modules, and `git diff --check` passed. At `2026-10-27T19:50:15Z`, PSI `avg10`
+was 0.00% `some` / 0.00% `full`; available memory was 9.1 GiB and swap free
+468 MiB. The repository-wide MIDAS suite remains unrun. No external source
+probe, held-capture read, Reality action, or deployment occurred. Frontier stays
+isolated, research-only, PARTIALLY VERIFIED, and undeployed.
