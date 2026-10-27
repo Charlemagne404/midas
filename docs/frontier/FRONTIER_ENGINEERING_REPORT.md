@@ -3462,3 +3462,27 @@ test data were synthetic, the held-source runtime guard was active, and no
 held capture, source request, protected service, or production state was
 accessed. These results verify software quarantine behavior only; they do not
 establish permission, live source quality, or economic opportunity.
+
+## Official Kalshi multiplier-column clarification — 2026-10-27 19:28 UTC
+
+The [official July 7, 2026 fee schedule](https://kalshi.com/docs/kalshi-fee-schedule.pdf)
+labels the non-standard fee-table columns Maker Multiplier then Taker
+Multiplier. Its `KXMVE` row's `2 1` is therefore maker 2 / taker 1. The
+[Get Series API schema](https://docs.kalshi.com/api-reference/market/get-series)
+exposes the series `fee_type` and `fee_multiplier`, while the [event fee-change
+schema](https://docs.kalshi.com/api-reference/events/get-event-fee-changes)
+describes overrides on the parent series. This clarifies the public schedule's
+column ordering only: it does not establish that the `KXMVE` row applies to
+the differently named `KXMVECROSSCATEGORY` series in held evidence. Account
+precision and maker/mixed-order applicability remain unresolved. The existing
+fixture test covers the taker sensitivity path for
+`quadratic_with_combo_maker_fees` at multiplier 1; this is implementation
+coverage, not confirmation of a live fee schedule. No code or tests changed,
+and no API request, held-capture read, or production action occurred.
+
+At `2026-10-27T19:28:52Z`, memory PSI `avg10` was 46.02% (`some`) / 39.98%
+(`full`), `avg60` 35.04% / 31.47%, and `avg300` 22.52% / 20.34%; available
+memory was 9.3 GiB and swap free was 468 MiB of 4 GiB. This documentation-only
+checkpoint did not run tests. Frontier remains PARTIALLY VERIFIED; permission,
+live cross-venue economics, broad repository regression, and deployment remain
+open.

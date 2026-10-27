@@ -1322,14 +1322,17 @@ The highest-value next steps are:
    revision-bound deterministic window. The focused depth-two browser E2E now
    passes; broaden to full-universe search or clustering only after
    representative data and resource measurements justify it.
-3. Reconcile Kalshi's captured event/series parameters with the effective
-   published maker/taker schedule and account rounding model. The July 7, 2026
-   schedule lists `KXMVE` maker/taker multipliers 2/1, while the captured
-   `KXMVECROSSCATEGORY` event/series endpoint reports
-   `quadratic_with_combo_maker_fees` with multiplier 1. These identifiers are
-   not treated as equivalent; exact maker-fee applicability remains open. Keep
-   Kraken account fee tier unknown without authenticated account data, and keep
-   fee expiry enforced before any decisive net classification.
+3. Keep Kalshi fee applicability unresolved until source use is authorized and
+   supported evidence is available. The July 7, 2026 schedule labels its
+   columns Maker Multiplier then Taker Multiplier, so its `KXMVE` row is maker
+   2 / taker 1. This clarifies the row reading only: the captured
+   `KXMVECROSSCATEGORY` series is a different identifier, and the published
+   row does not establish its maker fee. The API schema documents series
+   `fee_type`/`fee_multiplier` and event fee overrides, but current market
+   applicability, account rounding class, and maker/mixed-order costs remain
+   unresolved. Keep Kraken's account fee tier unknown without authenticated
+   account data, and keep fee expiry enforced before any decisive net
+   classification.
 4. Seek genuine public multi-outcome metadata that satisfies the strict verified
    payoff and resolution requirements; do not relax the evaluator to fit current
    captures.
@@ -2101,3 +2104,30 @@ source was read; all source-policy cases used synthetic temporary records, and
 the runtime held-source guard was active. No protected service or production
 state was accessed. The tests establish route/probe behavior, not legal source
 permission or live multi-venue validation.
+
+## 2026-10-27 19:28 UTC — official Kalshi multiplier-column clarification
+
+Read the current official July 7, 2026 fee schedule and API documentation. The
+schedule labels the table columns Maker Multiplier and Taker Multiplier, in
+that order; the `KXMVE` row's `2 1` therefore means maker 2 / taker 1. The
+series API schema exposes `fee_type` and `fee_multiplier`, and the event fee
+changes API describes event overrides layered on the parent series. This
+resolves a table-reading ambiguity only. It does not show that the `KXMVE` row
+applies to the differently named captured `KXMVECROSSCATEGORY` series, nor
+does it establish account-specific precision or maker/mixed-order costs. The
+current estimator remains a taker sensitivity; its existing controlled test
+covers the `quadratic_with_combo_maker_fees` type with multiplier 1. No code or
+tests changed. No API request, held-capture read, source-probe enablement, or
+production action occurred.
+
+Sources: [official July 2026 fee schedule](https://kalshi.com/docs/kalshi-fee-schedule.pdf),
+[Get Series schema](https://docs.kalshi.com/api-reference/market/get-series),
+[Get Event Fee Changes](https://docs.kalshi.com/api-reference/events/get-event-fee-changes),
+and [fee-rounding guide](https://docs.kalshi.com/getting_started/fee_rounding).
+
+At `2026-10-27T19:28:52Z`, memory PSI `avg10` was 46.02% (`some`) / 39.98%
+(`full`), `avg60` 35.04% / 31.47%, and `avg300` 22.52% / 20.34%. Available
+memory was 9.3 GiB and swap free was 468 MiB of 4 GiB. Only documentation was
+changed, so no tests were run; `git diff --check` is the planned verification.
+Source permission, specific market fee applicability, genuine cross-venue
+economics, broader regression, and production deployment remain unresolved.
