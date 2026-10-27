@@ -1,5 +1,18 @@
 # Project Frontier Mission Ledger
 
+**Latest legacy regressions (2026-10-27 20:06 UTC):** Existing Polymarket
+adapter tests `tests/integration/test_adapters.py` pass **9/9** in 0.71 seconds
+(1.21 seconds wall), at **88,872 KiB peak RSS**, zero swaps. They use recorded
+repository fixtures and `httpx.MockTransport`; no live request is possible in
+these cases. Recording-path regressions `tests/integration/test_recording_isolation.py`
+pass **4/4** in 0.49 seconds (0.93 seconds wall), at **77,800 KiB peak RSS**,
+zero swaps. All writes are under `tmp_path`; the production-default test only
+asserts the established path. At `2026-10-27T20:06:31Z`, PSI avg10 was 0.00%
+(`some`/`full`), avg60 2.62% / 2.36%, avg300 12.54% / 11.33%; 9.6 GiB was
+available and swap free was 468 MiB. No protected recorder, historical store,
+public source, or deployment was accessed. These narrow suites strengthen
+legacy coverage; the repository-wide suite remains unrun.
+
 **Latest legacy compatibility check (2026-10-27 20:05 UTC):** The safe
 `tests/integration/test_api.py` slice passes **5/5** in 3.99 seconds (5.01
 seconds wall) at **154,664 KiB peak RSS**, zero swaps. The demo workflow

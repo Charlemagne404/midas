@@ -650,3 +650,18 @@ The only warning is the existing Starlette/httpx TestClient deprecation. At
 free. This is a narrow compatibility slice; the repository-wide legacy suite
 remains unrun. No public source, historical store, protected service state, or
 production deployment was accessed.
+
+## Legacy Polymarket and recording compatibility — 2026-10-27 20:06 UTC
+
+`tests/integration/test_adapters.py` passed **9/9** in 0.71 seconds (1.21
+seconds wall) at **88,872 KiB peak RSS**, with zero swaps. It uses checked-in
+recorded market fixtures and `httpx.MockTransport`; no public request occurs.
+`tests/integration/test_recording_isolation.py` passed **4/4** in 0.49 seconds
+(0.93 seconds wall) at **77,800 KiB peak RSS**, with zero swaps. Its writes stay
+under `tmp_path`; its production-default case only asserts path compatibility.
+Together these preserve the existing Polymarket adapter contract and ensure a
+temporary database maps to an isolated recording root. At
+`2026-10-27T20:06:31Z`, memory PSI avg10 was 0.00% (`some`/`full`), avg60 2.62%
+/ 2.36%, avg300 12.54% / 11.33%; 9.6 GiB was available and 468 MiB swap free.
+No protected recorder, historical store, public source, or deployment was
+accessed. The repository-wide suite remains unrun.

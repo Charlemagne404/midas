@@ -3651,3 +3651,19 @@ free. This is a bounded compatibility slice, not the full repository suite.
 No public source, historical store, protected service state, or production
 deployment was accessed. The full legacy suite and deployment remain
 unverified.
+
+### Legacy Polymarket and recording-path regression — 2026-10-27 20:06 UTC
+
+Existing Polymarket adapter tests in `tests/integration/test_adapters.py`
+passed **9/9** in 0.71 seconds (1.21 seconds wall) at **88,872 KiB peak RSS**,
+zero swaps. The tests use repository fixture files and `httpx.MockTransport`;
+no live request is enabled. `tests/integration/test_recording_isolation.py`
+passed **4/4** in 0.49 seconds (0.93 seconds wall) at **77,800 KiB peak RSS**,
+zero swaps. Its temporary-database writes stay under `tmp_path`; the production
+default case asserts the legacy recording path without writing there. At
+`2026-10-27T20:06:31Z`, host memory PSI avg10 was 0.00% (`some`/`full`), avg60
+2.62% / 2.36%, avg300 12.54% / 11.33%; 9.6 GiB was available and 468 MiB swap
+free. These regressions add confidence in existing Polymarket ingestion and
+recording isolation, but do not constitute the repository-wide legacy suite.
+No protected recorder, historical store, public source, or production
+deployment was accessed.
