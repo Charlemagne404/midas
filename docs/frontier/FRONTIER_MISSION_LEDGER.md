@@ -845,7 +845,7 @@ same-input runs do not change the resource sustainability gate.
 | Paired scenario comparison | PARTIALLY VERIFIED | Direct local comparison and API/UI/browser tests pass. Two actual systemd-supervised fixture replays completed over the same pinned inputs and their result hashes verify. The latest run measured worker process CPU/RSS and exposes it in Mission Control. No genuine equivalent live market pair exists. |
 | Frontier API and source configuration | COMPLETE AND VERIFIED | Local reads include hash-verified legacy and cursor-page batches. Polymarket and Kalshi page routes are capability/config/recorded-market gated, bounded to one page and retries, and bind cursors to market and size. Kalshi MVE discovery validates exactly one series/collection/event-ticker filter and does not follow its cursor. Component-detail fetches are bound pre-request to saved selected-leg metadata and post-response to saved market/event identity. Four focused API regressions verify raw market/book/trade capture retention after post-drain lineage failures, preserve a drained Polymarket v2 page, and ensure earlier successful listings are not duplicated. |
 | Live adapter, API and store evidence | PARTIALLY VERIFIED | Three venue listing/book/trade captures, Polymarket v2 first/continuation pages with distinct IDs, a Kalshi empty cursor page, event-group responses and MVE endpoint responses have hash-pinned evidence. A single selected-child market-detail response is also hash/store verified and has matching saved-parent ticker/event IDs; it contains close lifecycle and native fair-price rule text but no price/book. Kalshi trade-row mapping remains fixture-only. Samples are asynchronous and establish no synchronized prices, complete history, child payout, combo payout, or execution. |
-| Mission Control Frontier workspace | PARTIALLY VERIFIED | Native view includes Polymarket/Kalshi trade-page, event-group and one-page MVE controls; MVE can filter by series, collection or event ticker; saved selected-leg rules, recorded settlement arithmetic, official source links and provenance hashes can be inspected. Graph/review, depth-paged traversal, paired replay, one-sided fill stress, instrument-bound Kalshi order-fee sensitivity, Arena history/results, and virtual balances keyed by venue and canonical denomination are integrated. The Frontier component file passes 8/8 tests, including token USD/fiat USD separation. TypeScript, targeted ESLint, Prettier, and the depth-two/capital-fragmentation/mobile Playwright case pass. The production build passed at 676,320 KiB peak RSS with zero swaps and the existing large-chunk warning. It is not deployed. |
+| Mission Control Frontier workspace | PARTIALLY VERIFIED | Native view includes Polymarket/Kalshi trade-page, event-group and one-page MVE controls; MVE can filter by series, collection or event ticker; saved selected-leg rules, recorded settlement arithmetic, official source links and provenance hashes can be inspected. Graph/review, depth-paged traversal, paired replay, one-sided fill stress, instrument-bound Kalshi order-fee sensitivity, Arena history/results, and virtual balances keyed by venue and canonical denomination are integrated. The candidate audit panel now exposes independently recomputed receipt skew, exchange timestamp skew, and the timing gate while marking older missing fields as not recorded. The Frontier component file passes 8/8 tests and the full web suite passes 40/40. TypeScript, targeted ESLint, and Prettier pass; the depth-two/capital-fragmentation/mobile Playwright case remains prior evidence. The production build passed at 676,320 KiB peak RSS with zero swaps and the existing large-chunk warning. It is not deployed. |
 | Laboratory/Arena research orchestration | PARTIALLY VERIFIED | Bounded Frontier Arena job type, snapshot, offline executor, API, worker CPU/RSS capture, and workspace history/result view are implemented and tested; two fixture jobs passed the host gate and completed under systemd. Resource sustainability and Laboratory campaign management remain incomplete. |
 | Persistent source collection, streaming and broad historical replay | DEFERRED | No background worker or long-duration campaign. |
 | Cross-venue FX, comprehensive capital and settlement costs | DEFERRED | Unknown costs remain unknown and block decisive net economics. |
@@ -1343,16 +1343,20 @@ verified instrument payoffs. Commit `5cb5747` advances the candidate economic
 model to v7 because the freshness and tick checks affect candidate eligibility
 and replay identities; test commit `fcf3b31` pins v7 in the replay manifest.
 
+Code commit `89526f3` exposes the recomputed audit timing values and gate in the
+Opportunity Explorer, with a distinct not-recorded state for older records.
+The full frontend suite passed **40 tests**; TypeScript, targeted ESLint, and
+Prettier passed. The production build was not repeated.
+
 Post-commit verification passed **134 tests** across the replay/economics,
 adapter, API, and Kalshi fee-sensitivity selections in 21.88 seconds. The
 replay-manifest assertion also passed in its focused deterministic-replay test.
-Strict
-mypy passed for `models.py`, `economics.py`, and `independent_audit.py`; Ruff
-check/format and `git diff --check` passed. One existing Starlette/httpx
+Strict mypy passed for `models.py`, `economics.py`, and `independent_audit.py`;
+Ruff check/format and `git diff --check` passed. One existing Starlette/httpx
 TestClient deprecation warning remains. Verification is fixture-based: live
 adapter clock-uncertainty values are still absent, held-source captures were
-not read, and no production request or deployment was made. Full-suite,
-frontend, performance, and live-source checks were not repeated. Quantity,
-timing, source-quality, and tick validation improve verifier coverage but do
-not establish synchronized execution or profitability; the mission remains
-incomplete.
+not read, and no production request or deployment was made. The full Python
+suite, frontend production build, performance, and live-source checks were not
+repeated. Quantity, timing, source-quality, and tick validation improve
+verifier coverage but do not establish synchronized execution or
+profitability; the mission remains incomplete.

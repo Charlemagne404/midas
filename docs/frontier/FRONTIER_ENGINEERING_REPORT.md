@@ -1991,7 +1991,7 @@ cross-venue economics.
 | Live market/book/trade and fee metadata through adapters/API | PARTIALLY VERIFIED | Earlier listing/book/trade, event-group, fee-metadata, and trade-page captures are hash-pinned. Kalshi MVE captures include filtered pages whose nested markets were omitted and one detail response with explicit top-level `markets: []`. The new one-request child detail capture matches a selected leg's saved ticker/event identities and has raw/store hashes; its rules expose fair-price fallbacks, but it has no book/price and proves neither child nor combo payoff. No cross-venue timing, combo economics, venue-wide coverage, or execution is established. |
 | Source workers and broad historical data | DEFERRED | No persistent worker or long-duration collection. |
 | Laboratory/Arena research orchestration | PARTIALLY VERIFIED | Arena job kind, content-addressed snapshots, bounded offline execution, API submission/history/result verification, process CPU/RSS capture, and explicit workspace controls are implemented and tested; two fixture jobs passed the host-wide gate and completed under systemd. Laboratory campaign management and resource-sustainability evidence remain incomplete. |
-| Native Mission Control workspace | PARTIALLY VERIFIED | Local API, bounded graph/review UI, Polymarket/Kalshi trade-page and event-group controls, explicit filtered one-page Kalshi MVE capture by series, collection, or one event ticker with returned member-list state, parent-event context, instrument-bound fee sensitivity, selected-leg component-rule and recorded-settlement arithmetic inspection, paired replay, candidate fill stress, virtual balances keyed by venue and exact denomination identity, and Arena job history/result display. The Frontier component file passes all 8 tests, including token `USD` versus fiat `USD` separation; web typecheck, targeted frontend and browser-test ESLint, and Prettier pass. The focused depth-two/capital-fragmentation/mobile browser case passes with the exact-identity fixture contract. The production build now passes with 676,320 KiB peak RSS and no swap; Vite reports the existing 500 kB chunk-size warning for the index/chart chunks. The workspace is not deployed. |
+| Native Mission Control workspace | PARTIALLY VERIFIED | Local API, bounded graph/review UI, Polymarket/Kalshi trade-page and event-group controls, explicit filtered one-page Kalshi MVE capture by series, collection, or one event ticker with returned member-list state, parent-event context, instrument-bound fee sensitivity, selected-leg component-rule and recorded-settlement arithmetic inspection, paired replay, candidate fill stress, virtual balances keyed by venue and exact denomination identity, and Arena job history/result display. The candidate audit panel displays independently recomputed receipt and exchange timestamp skew plus the audit timing gate; legacy audit rows show missing values as not recorded. The Frontier component file passes all 8 tests and the full web suite passes 40 tests, including token `USD` versus fiat `USD` separation; web typecheck, targeted frontend ESLint, and Prettier pass. The focused depth-two/capital-fragmentation/mobile browser case passes with the exact-identity fixture contract. The production build previously passed with 676,320 KiB peak RSS and no swap; Vite reports the existing 500 kB chunk-size warning for the index/chart chunks. The workspace is not deployed. |
 | Source data use/retention permission | BLOCKED | Official Kalshi terms restrict API collection/storage to facilitating a member's own exchange trading absent authorization. Kraken terms require prior permission for some non-personal commercial public market-data uses; Frontier has not classified that use. The main API now requires permission/review references in addition to probe flags. References are not independently verified; no new Kalshi/Kraken live captures or new research use of their stored data pending review. Existing artifacts are preserved unchanged. |
 | Held-source application read quarantine | IMPLEMENTED, LIVE VALIDATION PENDING | Code `d38f517` filters held-venue observation lists/direct reads, source aggregates, relationships/graph edges, review and replay inputs, derived outputs, paired comparisons, and Frontier Arena replays. Code `73e008e` applies pinned-snapshot checks to Arena job summaries, details, logs, submissions, and cancellation; `e7958c1` also filters the research-activity digest; `23f9860` rejects held snapshots before inspect/reconciliation can rewrite a job manifest. Controlled fixtures verify held/missing provenance is hidden or rejected while source/snapshot/result/job-manifest artifacts remain stored. The actual preserved live store was not audited; direct database reads and exports remain outside the API filter. |
 | Production readiness/deployment | DEFERRED | Separate review and authorization required; production eligibility is false. |
@@ -2329,13 +2329,20 @@ Commit `5cb5747` advances the candidate economic model to v7 because the
 freshness and tick checks affect candidate eligibility and replay identities;
 test commit `fcf3b31` pins v7 in the replay manifest.
 
+UI commit `89526f3` carries the independently recomputed timing values into the
+Opportunity Explorer audit panel: receipt skew, exchange timestamp skew, and
+the independent timing gate. Older audit records with no recomputed fields show
+“Not recorded.” The complete frontend suite passed **40 tests**; TypeScript,
+targeted ESLint, and Prettier passed. The frontend production build was not
+repeated.
+
 The post-commit selection passed **134 tests** across replay/economics,
 adapters, API, and Kalshi fee sensitivities in 21.88 seconds. The replay-manifest
 assertion also passed in its focused deterministic-replay test. Strict mypy passed
 for the three changed engine modules; Ruff check/format and `git diff --check`
 passed. One existing Starlette/httpx TestClient deprecation warning remains.
 This is controlled fixture validation. Live adapter clock-uncertainty values
-remain absent; the full suite, frontend build, performance profile, and live
-source checks were not repeated. No held-source capture, production service, or
-exchange endpoint was accessed, and no deployment occurred. These checks do
-not establish simultaneous execution or profitability.
+remain absent; the full Python suite, frontend production build, performance
+profile, and live-source checks were not repeated. No held-source capture,
+production service, or exchange endpoint was accessed, and no deployment
+occurred. These checks do not establish simultaneous execution or profitability.
