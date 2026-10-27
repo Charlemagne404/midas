@@ -1553,3 +1553,17 @@ At `2026-10-27T16:56:38Z`, memory PSI was `avg10` 0.00% (`some`) / 0.00%
 (`full`), `avg60` 0.48% / 0.43%, and `avg300` 15.66% / 14.13%.
 `MemAvailable` was 9,836,380 KiB; swap free was 484,544 KiB of 4 GiB. The
 broad Frontier suite, browser E2E, and production build remain deferred.
+
+## 2026-10-27 16:57 UTC — persisted candidate readback
+
+Test commit `b01e757` verifies that the stored replay's candidate list matches
+the local API response, preserving its conditional classification and
+independent audit alongside the fee-evidence manifest IDs. The focused API
+test passed (**1 passed** in 1.39 seconds); Ruff and format check passed. One
+existing Starlette/httpx warning remains. The fixture is controlled and made
+no source requests.
+
+After the test, at `2026-10-27T16:57:34Z`, memory PSI measured `avg10` 39.35%
+(`some`) / 35.94% (`full`), `avg60` 14.33% / 13.19%, and `avg300` 16.32% /
+14.79%. Available memory was 9,614,412 KiB and swap free was 484,552 KiB of
+4 GiB. Broad suites and production build remain deferred.

@@ -2580,3 +2580,17 @@ At `2026-10-27T16:56:38Z`, memory PSI was `avg10` 0.00% (`some`) / 0.00%
 (`full`), `avg60` 0.48% / 0.43%, and `avg300` 15.66% / 14.13%.
 `MemAvailable` was 9,836,380 KiB, with 484,544 KiB of 4 GiB swap free. Broad
 suite, browser E2E, and production build remain deferred.
+
+## Persisted candidate readback check — 2026-10-27 16:57 UTC
+
+Test commit `b01e757` asserts that the saved replay's complete candidate list
+matches the response from the replay API, in addition to retaining both fee
+evidence IDs. The focused API test passed (**1 passed** in 1.39 seconds);
+Ruff and formatting passed, with one existing Starlette/httpx deprecation
+warning. This remains controlled fixture evidence only.
+
+After the focused run, at `2026-10-27T16:57:34Z`, memory PSI was `avg10`
+39.35% (`some`) / 35.94% (`full`), `avg60` 14.33% / 13.19%, and `avg300`
+16.32% / 14.79%. `MemAvailable` was 9,614,412 KiB and swap free was 484,552
+KiB of 4 GiB. Broad Python/browser suites and the production build remain
+deferred.
