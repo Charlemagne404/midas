@@ -1,5 +1,33 @@
 # Project Frontier Mission Ledger
 
+**Latest implementation checkpoint (2026-10-27 21:07 UTC):** Commit `cfda4ad`
+adds the Coinbase Exchange spot adapter, exact terms-version enforcement in
+both API settings and `CoinbaseSpotConfig`, source quarantine integration, and
+Mission Control presentation. The adapter is limited to configured public
+product metadata, aggregated L2 snapshots, and one bounded public trade page;
+spot remains contextual evidence with no event payoff, account fee, or
+settlement claim. Coinbase live access remains unused because organization,
+regional, retention, and redistribution scope are unresolved. No exchange
+request or held historical capture was made.
+
+The focused adapter, API terms gate, held-source quarantine, and spot-payoff
+selection passed **10/10** in 3.19 seconds (3.90 seconds wall), at **131,064 KiB
+peak RSS** and zero swaps. The existing Starlette/httpx TestClient deprecation
+warning remains. Ruff check/format, Prettier, and `git diff --check` pass. These
+tests use local mock transports and temporary stores; they do not establish
+live Coinbase validation or permission. The full Frontier suite, full web
+suite, production build, and browser regression remain pending for this code
+checkpoint.
+
+At `2026-10-27T21:07:37Z`, the external
+`veritas_gap_detail_v2_batch.py` worker PID **3706995** held global Arena lock
+inode **6423106** in `D` state. PSI avg10 was 30.67% (`some`) / 27.75% (`full`),
+avg60 10.73% / 9.72%, avg300 19.99% / 17.95%; 9 GiB was available and 459
+MiB swap was free. It was left untouched. Next safe action: wait for the shared
+admission lock to release and PSI to settle, then run bounded Frontier and web
+regressions for `cfda4ad` before continuing broader mission work. Frontier
+remains incomplete, research-only, isolated, and undeployed.
+
 **Latest Laboratory compatibility check (2026-10-27 20:09 UTC):** The existing
 `test_laboratory_api_contract_and_reproduction` passed **1 test** (two module
 tests deselected) in 2.50 seconds (3.15 seconds wall), at **124,540 KiB peak

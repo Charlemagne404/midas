@@ -2,10 +2,13 @@
 
 **Report date:** 2026-10-27
 
-**Latest code checkpoint:** `29ab175` adds a bounded per-venue virtual
-post-settlement release-delay scenario. Targeted and full Frontier verification
-is recorded in the final dated addendum and mission ledger. Project Frontier
-remains incomplete, isolated, and undeployed.
+**Latest code checkpoint:** `cfda4ad` adds the Coinbase Exchange spot adapter,
+API registration, Mission Control source/graph presentation, and an exact
+Market Data Terms version gate enforced by both API settings and the adapter
+config. The focused Coinbase/source-quarantine tests pass 10/10. Full Frontier,
+web-suite, and browser regressions for this checkpoint remain pending safe
+resource admission. Project Frontier remains incomplete, isolated, and
+undeployed.
 
 **Branch:** `codex/frontier-20261026`
 
@@ -3892,3 +3895,40 @@ untouched. No Laboratory browser retry, lock bypass, worker launch, or service
 action occurred. Keep the earlier full-browser result at 10/12 (two admission
 denials) and the dedicated Frontier result at 4/4 until the shared slot
 releases and a safe bounded rerun is possible.
+
+### Coinbase Exchange Spot adapter — 2026-10-27 21:07 UTC
+
+Commit `cfda4ad1beb00f301affe52752e8815b4862f8b5` adds a read-only Coinbase
+Exchange spot adapter for an explicit one-to-twenty product allowlist. It
+normalizes product metadata, exact increments/minimums, bounded aggregated L2
+books, and one public trade page while preserving native response hashes,
+timestamps, sequence and auction state. Coinbase maker-side trade fields are
+not mislabeled as aggressor side. Spot payoffs, account-tier fees, settlement
+rules, and event outcomes remain unsupported; spot prices are contextual and
+cannot qualify as event-contract arbitrage.
+
+The API requires the exact reviewed terms version `2026-08-07` and a separate
+public-probe setting. `CoinbaseSpotConfig` itself refuses a null generic hold
+without the exact version. This local acknowledgement does not independently
+establish legal, regional, retention, or redistribution eligibility. The
+adapter is fixture-validated only; no Coinbase request or live observation was
+made.
+
+The focused Coinbase adapter, API terms gate, held-source quarantine, and spot
+payoff rejection selection passed **10/10** in 3.19 seconds (3.90 seconds wall,
+**131,064 KiB peak RSS**, zero swaps). It emitted only the existing
+Starlette/httpx TestClient deprecation warning. `ruff check`, `ruff format
+--check`, Prettier, and `git diff --check` passed. The exact-version gate test
+covers a missing acknowledgement, a stale version, whitespace variation, an
+exact version with probe disabled, and explicit network enablement without
+making a request. A direct adapter-config attempt to clear the hold without
+acknowledgement is rejected.
+
+At `2026-10-27T21:07:37Z`, a fresh host check found the external
+`veritas_gap_detail_v2_batch.py` worker (PID **3706995**) holding the existing
+global Arena lock inode **6423106**, with the process in `D` state. Memory PSI
+was 30.67% (`some`) / 27.75% (`full`) avg10, 10.73% / 9.72% avg60, and 19.99%
+/ 17.95% avg300; 9 GiB was available and 459 MiB swap was free. That worker and
+lock were left untouched. The full Frontier suite, web suite, production build,
+and browser regression have not been rerun for this commit. Frontier remains
+partially verified, research-only, isolated, and undeployed.
