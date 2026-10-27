@@ -1571,6 +1571,40 @@
   color: #a3adba;
   line-height: 1.5;
 }
+.fr-review-archive {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid #27313b;
+  border-radius: 6px;
+  background: #10161d;
+}
+.fr-review-archive > small,
+.fr-review-record small {
+  color: #8491a1;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.fr-review-record {
+  display: grid;
+  gap: 5px;
+  padding-top: 8px;
+  border-top: 1px solid #27313b;
+}
+.fr-review-record > div {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 9px;
+  color: #a3adba;
+  font-size: 8px;
+}
+.fr-review-record p {
+  margin: 0;
+  color: #a3adba;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
 .fr-review-form {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

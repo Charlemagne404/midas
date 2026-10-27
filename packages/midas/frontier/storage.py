@@ -603,6 +603,82 @@ class FrontierStore:
     def latest_relationship_review(self, relationship_id: str) -> RelationshipReview | None:
         return self.latest_relationship_reviews((relationship_id,)).get(relationship_id)
 
+    def relationship_review_history(
+        self,
+        relationship_id: str,
+        *,
+        limit: int = 20,
+        after: tuple[str, str] | None = None,
+    ) -> tuple[tuple[RelationshipReview, ...], int, bool]:
+        """Return a bounded, hash-checked review page in stable newest-first order."""
+        if len(relationship_id) != 64 or any(
+            character not in "0123456789abcdef" for character in relationship_id
+        ):
+            raise ValueError("Relationship identity must be a lowercase SHA-256 digest")
+        if not 1 <= limit <= 50:
+            raise ValueError("Relationship review history limit must be between 1 and 50")
+        if after is not None:
+            created_at, review_id = after
+            if not isinstance(created_at, str) or len(created_at) > 64:
+                raise ValueError("Relationship review cursor timestamp is invalid")
+            try:
+                timestamp = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
+            except ValueError as error:
+                raise ValueError("Relationship review cursor timestamp is invalid") from error
+            if timestamp.tzinfo is None or timestamp.utcoffset() != UTC.utcoffset(timestamp):
+                raise ValueError("Relationship review cursor timestamp must be UTC")
+            after = (timestamp.astimezone(UTC).isoformat(), after[1])
+            if len(review_id) != 64 or any(
+                character not in "0123456789abcdef" for character in review_id
+            ):
+                raise ValueError("Relationship review cursor identity is invalid")
+        if not self.path.exists():
+            return (), 0, False
+
+        clauses = ["relationship_id=?"]
+        params: list[Any] = [relationship_id]
+        if after is not None:
+            clauses.append("(created_at_utc < ? OR (created_at_utc = ? AND review_id < ?))")
+            params.extend((after[0], after[0], after[1]))
+        where = " AND ".join(clauses)
+        with self._read_connect() as connection:
+            total = int(
+                connection.execute(
+                    "SELECT COUNT(*) FROM relationship_reviews WHERE relationship_id=?",
+                    (relationship_id,),
+                ).fetchone()[0]
+            )
+            rows = connection.execute(
+                "SELECT review_id,decision,created_at_utc,review_json,row_sha256,"
+                "adjudicated_relationship_id FROM relationship_reviews WHERE "
+                f"{where} ORDER BY created_at_utc DESC,review_id DESC LIMIT ?",
+                (*params, limit + 1),
+            ).fetchall()
+        has_more = len(rows) > limit
+        result: list[RelationshipReview] = []
+        for row in rows[:limit]:
+            payload = str(row["review_json"])
+            if len(payload.encode("utf-8")) > MAX_ROW_BYTES:
+                raise FrontierStoreError("Stored relationship review exceeds its record bound")
+            if hashlib.sha256(payload.encode("utf-8")).hexdigest() != row["row_sha256"]:
+                raise FrontierStoreError(
+                    "Stored relationship review hash does not match its payload"
+                )
+            try:
+                review = RelationshipReview.model_validate(json.loads(payload))
+            except (json.JSONDecodeError, ValidationError) as error:
+                raise FrontierStoreError("Stored relationship review payload is invalid") from error
+            if (
+                review.review_id != row["review_id"]
+                or review.relationship_id != relationship_id
+                or review.decision.value != row["decision"]
+                or review.adjudicated_relationship_id != row["adjudicated_relationship_id"]
+                or review.created_at_utc.isoformat() != row["created_at_utc"]
+            ):
+                raise FrontierStoreError("Relationship review index does not match its payload")
+            result.append(review)
+        return tuple(result), total, has_more
+
     def latest_relationship_reviews(
         self, relationship_ids: tuple[str, ...] | list[str]
     ) -> dict[str, RelationshipReview]:

@@ -1,5 +1,5 @@
 import { Fragment, useMemo, useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { UseMutationResult } from '@tanstack/react-query';
 import {
   Activity,
@@ -349,14 +349,7 @@ type Relationship = {
   reason: string;
   supersedes?: string | null;
   review_target_relationship_id: string;
-  latest_review: {
-    review_id: string;
-    decision: string;
-    reviewer_label: string;
-    reason: string;
-    evidence_observation_ids: string[];
-    created_at_utc: string;
-  } | null;
+  latest_review: RelationshipReviewRecord | null;
   evidence: {
     method: string;
     matcher_version?: string;
@@ -365,6 +358,27 @@ type Relationship = {
     source_fields: string[];
     details: string[];
   }[];
+};
+type RelationshipReviewRecord = {
+  review_id: string;
+  relationship_id: string;
+  adjudicated_relationship_id: string;
+  decision: string;
+  reviewer_label: string;
+  reason: string;
+  evidence_observation_ids: string[];
+  external_assertion_id: string | null;
+  supersedes_review_id: string | null;
+  created_at_utc: string;
+};
+type RelationshipReviewHistoryPage = {
+  items: RelationshipReviewRecord[];
+  total: number;
+  limit: number;
+  has_more: boolean;
+  next_cursor: string | null;
+  reviewer_identity_authenticated: false;
+  external_assertions_authenticated: false;
 };
 type GraphNode = {
   market_id: string;
@@ -878,6 +892,7 @@ function RelationshipReviewForm({
   right?: Market;
 }) {
   const [open, setOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const [decision, setDecision] = useState<'rejected' | 'ambiguous' | 'verified'>('ambiguous');
   const [relationshipType, setRelationshipType] = useState<'same_payoff' | 'logical_implication'>(
     relationship.relationship_type === 'logical_implication'
@@ -893,6 +908,18 @@ function RelationshipReviewForm({
   const [stateMapping, setStateMapping] = useState('');
   const [instrumentMapping, setInstrumentMapping] = useState('');
   const queryClient = useQueryClient();
+  const reviewHistory = useInfiniteQuery({
+    queryKey: ['frontier', 'relationship-review-history', reviewTargetId],
+    initialPageParam: null as string | null,
+    queryFn: ({ pageParam }) =>
+      api<RelationshipReviewHistoryPage>(
+        `/frontier/relationships/${reviewTargetId}/reviews?limit=20${
+          pageParam ? `&cursor=${encodeURIComponent(pageParam)}` : ''
+        }`,
+      ),
+    getNextPageParam: (page) => page.next_cursor ?? undefined,
+    enabled: historyOpen,
+  });
   const evidenceIds = [
     ...new Set(
       [left?.source_observation_record_id, right?.source_observation_record_id].filter(
@@ -973,14 +1000,75 @@ function RelationshipReviewForm({
   return (
     <div className="fr-review-wrap">
       {relationship.latest_review && (
-        <div className="fr-review-history">
-          <StateBadge state={relationship.latest_review.decision} />
-          <span>
-            Reviewed by self-attributed label “{relationship.latest_review.reviewer_label}” ·{' '}
-            {time(relationship.latest_review.created_at_utc)}
-          </span>
-          <p>{relationship.latest_review.reason}</p>
-        </div>
+        <>
+          <div className="fr-review-history">
+            <StateBadge state={relationship.latest_review.decision} />
+            <span>
+              Reviewed by self-attributed label “{relationship.latest_review.reviewer_label}” ·{' '}
+              {time(relationship.latest_review.created_at_utc)}
+            </span>
+            <p>{relationship.latest_review.reason}</p>
+          </div>
+          <button
+            className="fr-inspect-button"
+            type="button"
+            aria-expanded={historyOpen}
+            onClick={() => setHistoryOpen((value) => !value)}
+          >
+            {historyOpen ? 'Hide review history' : 'View review history'}
+          </button>
+          {historyOpen && (
+            <section className="fr-review-archive" aria-label="Relationship review history">
+              {reviewHistory.isPending && <p>Loading stored review history…</p>}
+              {reviewHistory.isError && (
+                <p role="alert">Could not load review history: {reviewHistory.error.message}</p>
+              )}
+              {reviewHistory.data && (
+                <>
+                  <small>
+                    {reviewHistory.data.pages[0]?.total ?? 0} append-only review record(s). Reviewer
+                    labels and assertion IDs are references, not authenticated identities.
+                  </small>
+                  {reviewHistory.data.pages
+                    .flatMap((page) => page.items)
+                    .map((item) => (
+                      <article className="fr-review-record" key={item.review_id}>
+                        <div>
+                          <StateBadge state={item.decision} />
+                          <span>
+                            Self-attributed label “{item.reviewer_label}” ·{' '}
+                            {time(item.created_at_utc)}
+                          </span>
+                        </div>
+                        <p>{item.reason}</p>
+                        <small>
+                          Evidence:{' '}
+                          {item.evidence_observation_ids.map(shortHash).join(', ') || 'none'}
+                          {' · '}assertion reference: {item.external_assertion_id ?? 'none'}
+                          {' · '}record: {shortHash(item.review_id)}
+                        </small>
+                        {item.supersedes_review_id && (
+                          <small>Supersedes review {shortHash(item.supersedes_review_id)}</small>
+                        )}
+                      </article>
+                    ))}
+                  {reviewHistory.hasNextPage && (
+                    <button
+                      className="fr-inspect-button"
+                      type="button"
+                      disabled={reviewHistory.isFetchingNextPage}
+                      onClick={() => void reviewHistory.fetchNextPage()}
+                    >
+                      {reviewHistory.isFetchingNextPage
+                        ? 'Loading older reviews…'
+                        : 'Load older reviews'}
+                    </button>
+                  )}
+                </>
+              )}
+            </section>
+          )}
+        </>
       )}
       <button
         className="fr-inspect-button"

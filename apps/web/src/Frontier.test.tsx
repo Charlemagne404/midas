@@ -1626,11 +1626,44 @@ it('records a self-attributed relationship review with both stored market source
     '/api/frontier/readiness': { gates: [] },
   };
   const reviewRequest = vi.fn();
+  const recordedReviews: Record<string, unknown>[] = [];
   const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const path = String(input);
     if (path.endsWith('/relationships/' + 'c'.repeat(64) + '/review')) {
-      reviewRequest(JSON.parse(String(init?.body)));
-      return { ok: true, json: async () => ({ review: {}, relationship: {} }) } as Response;
+      const request = JSON.parse(String(init?.body));
+      reviewRequest(request);
+      const reviewRecord = {
+        review_id: String(recordedReviews.length + 1).padStart(64, 'd'),
+        relationship_id: 'c'.repeat(64),
+        adjudicated_relationship_id: String(recordedReviews.length + 1).padStart(64, 'e'),
+        decision: request.decision,
+        reviewer_label: request.reviewer_label,
+        reason: request.reason,
+        evidence_observation_ids: request.evidence_observation_ids,
+        external_assertion_id: request.external_assertion_id ?? null,
+        supersedes_review_id: recordedReviews.at(-1)?.review_id ?? null,
+        created_at_utc: new Date(Date.now() + recordedReviews.length * 1000).toISOString(),
+      };
+      recordedReviews.push(reviewRecord);
+      Object.assign(relationship, { latest_review: reviewRecord, state: request.decision });
+      return {
+        ok: true,
+        json: async () => ({ review: reviewRecord, relationship }),
+      } as Response;
+    }
+    if (path.includes('/relationships/' + 'c'.repeat(64) + '/reviews?limit=20')) {
+      return {
+        ok: true,
+        json: async () => ({
+          items: [...recordedReviews].reverse(),
+          total: recordedReviews.length,
+          limit: 20,
+          has_more: false,
+          next_cursor: null,
+          reviewer_identity_authenticated: false,
+          external_assertions_authenticated: false,
+        }),
+      } as Response;
     }
     const body = responses[path];
     if (body === undefined) throw new Error(`Unexpected frontend request: ${path}`);
@@ -1645,7 +1678,7 @@ it('records a self-attributed relationship review with both stored market source
   );
 
   fireEvent.click(await screen.findByRole('button', { name: 'Relationship graph' }));
-  fireEvent.click(screen.getByRole('button', { name: 'Review hypothesis' }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Review hypothesis' }));
   fireEvent.change(screen.getByLabelText('Reviewer label'), { target: { value: 'reviewer-1' } });
   fireEvent.change(screen.getByLabelText('Review reason'), {
     target: { value: 'Rules remain incomplete for equivalence.' },
@@ -1661,7 +1694,10 @@ it('records a self-attributed relationship review with both stored market source
     expected_latest_review_id: null,
   });
 
-  fireEvent.click(screen.getByRole('button', { name: 'Review hypothesis' }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Append review' }));
+  fireEvent.change(screen.getByLabelText('Review reason'), {
+    target: { value: 'The source fields do not fully establish equivalence.' },
+  });
   fireEvent.change(screen.getByLabelText('Decision'), { target: { value: 'verified' } });
   fireEvent.change(screen.getByLabelText('Relationship claim'), {
     target: { value: 'logical_implication' },
@@ -1697,6 +1733,17 @@ it('records a self-attributed relationship review with both stored market source
     implication_from_market_id: 'kalshi:event-1',
     implication_to_market_id: 'polymarket:event-1',
   });
+
+  fireEvent.click(await screen.findByRole('button', { name: 'View review history' }));
+  expect(
+    await screen.findByText(
+      '2 append-only review record(s). Reviewer labels and assertion IDs are references, not authenticated identities.',
+    ),
+  ).toBeInTheDocument();
+  expect(screen.getAllByText('The source fields do not fully establish equivalence.')).toHaveLength(
+    2,
+  );
+  expect(screen.getByText('Rules remain incomplete for equivalence.')).toBeInTheDocument();
 });
 
 it('submits a bounded Arena replay and displays its integrity-verified comparison', async () => {

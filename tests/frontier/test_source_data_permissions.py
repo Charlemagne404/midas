@@ -220,6 +220,11 @@ def test_held_source_observations_relationships_and_replays_are_quarantined(tmp_
 
             assert client.get(f"/api/frontier/observations/{held_market_id}").status_code == 409
             assert client.get("/api/frontier/relationships").json()["items"] == []
+            held_history = client.get(
+                f"/api/frontier/relationships/{relationship.relationship_id}/reviews"
+            )
+            assert held_history.status_code == 409
+            assert "held from research use" in held_history.json()["detail"]
             graph = client.get(
                 "/api/frontier/graph",
                 params={"center_market_id": available_market.canonical_id},

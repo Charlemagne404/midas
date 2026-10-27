@@ -285,6 +285,71 @@ def test_explicit_review_verifies_only_with_complete_stored_payoff_evidence(tmp_
         _close(client, registry, http_client)
 
 
+def test_relationship_review_history_is_bounded_hash_checked_and_keyset_paged(tmp_path):
+    client, registry, http_client, store = _client(tmp_path)
+    _left, _right, evidence = _seed_pair(store)
+    try:
+        proposed = client.post("/api/frontier/relationships/propose")
+        candidate = proposed.json()["items"][0]
+        review_path = f"/api/frontier/relationships/{candidate['relationship_id']}/review"
+        first = client.post(
+            review_path,
+            json={
+                "decision": "ambiguous",
+                "reviewer_label": "researcher-1",
+                "reason": "The source fields do not fully establish equivalence.",
+                "evidence_observation_ids": evidence,
+            },
+        )
+        assert first.status_code == 200, first.text
+        second = client.post(
+            review_path,
+            json={
+                "decision": "rejected",
+                "reviewer_label": "researcher-2",
+                "reason": "The settlement conditions differ in the recorded evidence.",
+                "evidence_observation_ids": evidence,
+                "expected_latest_review_id": first.json()["review"]["review_id"],
+            },
+        )
+        assert second.status_code == 200, second.text
+
+        first_page = client.get(
+            f"/api/frontier/relationships/{candidate['relationship_id']}/reviews?limit=1"
+        )
+        assert first_page.status_code == 200, first_page.text
+        page = first_page.json()
+        assert page["total"] == 2
+        assert len(page["items"]) == 1
+        assert page["has_more"] is True
+        assert page["next_cursor"]
+        assert page["reviewer_identity_authenticated"] is False
+
+        second_page = client.get(
+            f"/api/frontier/relationships/{candidate['relationship_id']}/reviews",
+            params={"limit": 1, "cursor": page["next_cursor"]},
+        )
+        assert second_page.status_code == 200, second_page.text
+        older = second_page.json()
+        assert older["total"] == 2
+        assert older["has_more"] is False
+        assert older["next_cursor"] is None
+        assert older["items"][0]["review_id"] != page["items"][0]["review_id"]
+        assert page["items"][0]["supersedes_review_id"] == older["items"][0]["review_id"]
+
+        mismatched = client.get(
+            f"/api/frontier/relationships/{candidate['relationship_id']}/reviews",
+            params={"cursor": page["next_cursor"][:-2] + "aa"},
+        )
+        assert mismatched.status_code == 422
+        oversized = client.get(
+            f"/api/frontier/relationships/{candidate['relationship_id']}/reviews?limit=51"
+        )
+        assert oversized.status_code == 422
+    finally:
+        _close(client, registry, http_client)
+
+
 def test_logical_implication_review_persists_directed_edge_with_stored_provenance(tmp_path):
     client, registry, http_client, store = _client(tmp_path)
     left, right, evidence = _seed_logical_implication_pair(store)
@@ -573,6 +638,11 @@ def test_relationship_listing_fails_closed_on_a_corrupt_review_record(tmp_path):
         assert (
             response.json()["detail"] == "Stored relationship evidence is not readable: "
             "Stored relationship review hash does not match its payload"
+        )
+        history = client.get(f"/api/frontier/relationships/{candidate['relationship_id']}/reviews")
+        assert history.status_code == 409
+        assert (
+            history.json()["detail"] == "Stored relationship review hash does not match its payload"
         )
     finally:
         _close(client, registry, http_client)

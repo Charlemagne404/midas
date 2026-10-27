@@ -425,6 +425,53 @@ def _decode_graph_cursor(cursor: str) -> dict[str, Any]:
     }
 
 
+def _encode_relationship_review_cursor(relationship_id: str, after: tuple[str, str]) -> str:
+    value = {
+        "v": 1,
+        "relationship_id": relationship_id,
+        "after_created_at_utc": after[0],
+        "after_review_id": after[1],
+    }
+    raw = json.dumps(value, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return base64.urlsafe_b64encode(raw).decode("ascii").rstrip("=")
+
+
+def _decode_relationship_review_cursor(cursor: str, relationship_id: str) -> tuple[str, str]:
+    if not cursor or len(cursor) > 1024:
+        raise ValueError("Relationship review cursor is empty or exceeds its bound")
+    padded = cursor + "=" * (-len(cursor) % 4)
+    try:
+        decoded = base64.b64decode(padded, altchars=b"-_", validate=True)
+        value = json.loads(decoded)
+    except (ValueError, UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise ValueError("Relationship review cursor is not valid base64 JSON") from error
+    if (
+        not isinstance(value, dict)
+        or set(value) != {"v", "relationship_id", "after_created_at_utc", "after_review_id"}
+        or type(value.get("v")) is not int
+        or value["v"] != 1
+        or value.get("relationship_id") != relationship_id
+    ):
+        raise ValueError("Relationship review cursor does not match this relationship")
+    created_at = value["after_created_at_utc"]
+    review_id = value["after_review_id"]
+    if not isinstance(created_at, str) or len(created_at) > 64:
+        raise ValueError("Relationship review cursor timestamp is invalid")
+    try:
+        timestamp = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
+    except ValueError as error:
+        raise ValueError("Relationship review cursor timestamp is invalid") from error
+    if timestamp.tzinfo is None or timestamp.utcoffset() != UTC.utcoffset(timestamp):
+        raise ValueError("Relationship review cursor timestamp must be UTC")
+    if (
+        not isinstance(review_id, str)
+        or len(review_id) != 64
+        or any(character not in "0123456789abcdef" for character in review_id)
+    ):
+        raise ValueError("Relationship review cursor identity is invalid")
+    return timestamp.astimezone(UTC).isoformat(), review_id
+
+
 def _encode_multihop_graph_cursor(
     center_market_id: str,
     depth: int,
@@ -2135,6 +2182,65 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
             ],
             "returned": len(items),
             "limit": limit,
+        }
+
+    @api.get("/relationships/{relationship_id}/reviews")
+    async def relationship_review_history(
+        relationship_id: str,
+        limit: int = Query(default=20, ge=1, le=50),
+        cursor: str | None = Query(default=None, max_length=1024),
+    ) -> dict[str, Any]:
+        try:
+            indexed_endpoints = store.relationship_endpoints(relationship_id)
+            if (
+                held_venues
+                and indexed_endpoints is not None
+                and any(market_id_is_held(item) for item in indexed_endpoints)
+            ):
+                raise HTTPException(
+                    status_code=409,
+                    detail="Relationship uses source data held from research use",
+                )
+            relationship = store.relationship(relationship_id)
+            if relationship is None:
+                raise HTTPException(status_code=404, detail="Relationship was not found")
+            if held_venues and any(
+                market_id_is_held(item)
+                for item in (relationship.left_market_id, relationship.right_market_id)
+            ):
+                raise HTTPException(
+                    status_code=409,
+                    detail="Relationship uses source data held from research use",
+                )
+            after = (
+                _decode_relationship_review_cursor(cursor, relationship_id)
+                if cursor is not None
+                else None
+            )
+            items, total, has_more = store.relationship_review_history(
+                relationship_id,
+                limit=limit,
+                after=after,
+            )
+        except ValueError as error:
+            raise HTTPException(status_code=422, detail=str(error)) from error
+        except FrontierStoreError as error:
+            raise HTTPException(status_code=409, detail=str(error)) from error
+
+        next_cursor = None
+        if has_more and items:
+            last = items[-1]
+            next_cursor = _encode_relationship_review_cursor(
+                relationship_id, (last.created_at_utc.isoformat(), last.review_id)
+            )
+        return {
+            "items": [item.model_dump(mode="json") for item in items],
+            "total": total,
+            "limit": limit,
+            "has_more": has_more,
+            "next_cursor": next_cursor,
+            "reviewer_identity_authenticated": False,
+            "external_assertions_authenticated": False,
         }
 
     @api.get("/graph")
