@@ -2362,3 +2362,11 @@ API-inclusive strict mypy remains unverified, with its imported Veritas errors
 and interrupted filtered attempt recorded above. No live source, held capture,
 Reality service, or production action occurred. `ad811a4` contains the code and
 tests; Frontier remains isolated, undeployed, and **PARTIALLY VERIFIED**.
+
+## Frontend build admission recheck — 2026-10-27 20:24 UTC
+
+No new test or build was started. At `2026-10-27T20:24:20Z`, memory PSI avg10
+was 51.94% (`some`) / 47.60% (`full`), avg60 43.30% / 39.55%, and avg300
+31.50% / 28.41%; 9.6 GiB was available and 469 MiB swap remained free. The
+production frontend build and post-UI-change browser suite remain pending until
+host PSI eases. The worktree is clean at `ed92557` atop `ad811a4`.
