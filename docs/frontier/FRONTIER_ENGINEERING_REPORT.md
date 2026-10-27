@@ -2362,7 +2362,45 @@ mutation. Ruff check/format and strict mypy for the API module passed. The full
 Python suite, production build, performance profile, and live-source checks were
 not repeated. No source capture, service, or external endpoint was accessed.
 
-**Next safe action:** add fixture coverage for legacy audit records with missing
-timing fields and confirm the readiness summary still excludes quarantined
-Kalshi/Kraken replays. Keep the test inputs synthetic and leave source
-permission gates unchanged.
+The legacy-audit and held-source readiness checks proposed above were completed
+in the checkpoint below using a temporary synthetic database and fixture-only
+observations.
+
+## Legacy replay compatibility and readiness coverage — 2026-10-27
+
+Storage commit `6b08efe` keeps historical replay evidence readable when a
+current model adds optional timing fields. The reader validates the stored
+digest against the original JSON payload and the normalized current-model
+payload, accepting either exact representation while still rejecting changed
+payloads. It does not rewrite the historical JSON or hash. A synthetic audit-v3
+row regression verifies that compatibility path; the storage module passed
+**15 tests**, strict mypy, Ruff, formatting, and `git diff --check`.
+
+Readiness commit `0b341c4` reports replay candidates whose old audit schema has
+no recomputed timing verdict as “not recorded”; candidates missing the audit
+object are also included in that timing count. Follow-up commit `e9d0ff1` counts
+missing audit objects as not evaluated and leaves the independent verification
+gate `NOT_ESTABLISHED` when no evaluated audit exists. Test commit `2c7763d`
+checks that state for a replay window containing only an unaudited candidate.
+The API fixture inserts a hash-validated v3 audit replay into a temporary store
+and checks the readiness summary alongside within-bounds and outside-bounds
+current records. A separate quarantine regression verifies that held Kalshi
+runs are excluded from readiness totals even though their immutable rows
+remain preserved.
+
+Commit `163ab79` makes readiness return HTTP 409 with a concise storage
+integrity detail when a replay payload no longer matches its pinned result
+hash. The legacy, unaudited, quarantine, and hash-mismatch API regressions
+passed **4 tests** in 2.26 seconds. Strict mypy for the API route, Ruff,
+formatting, and `git diff --check` passed. One existing Starlette/httpx
+TestClient deprecation warning remains.
+
+These checks establish backward-compatible local replay reading and API-level
+source quarantine behavior on synthetic fixtures only. They do not validate
+held source records, live source quality, or economic performance. No held
+capture, production database, live endpoint, service, or deployment was used.
+
+**Next safe action:** apply the same explicit replay-integrity response to the
+`/runs` and `/opportunities` readers and held-filtered `/overview`. Preserve
+the immutable corrupted row in the test database and verify the response with
+a temporary fixture only.

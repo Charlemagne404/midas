@@ -1372,7 +1372,40 @@ mypy, Ruff, and the API test file pass; after moving the fixture into its own
 test, the two readiness tests passed (**2 passed**). The relationship/economics
 module passed **33 tests**, including the new multi-outcome off-tick regression.
 
-**Next safe action:** test how the readiness summary handles older audit records
-with absent recomputed timing fields and confirm quarantined Kalshi/Kraken runs
-remain excluded. Use synthetic fixtures only; keep source permission gates and
-held captures untouched.
+The suggested legacy-audit and held-replay readiness checks were completed in
+the checkpoint below using synthetic rows and preserved fixture-only
+observations.
+
+## 2026-10-27 — legacy replay hashes and readiness coverage
+
+Storage commit `6b08efe` preserves hash validation for pre-v4 audit replay rows:
+the reader accepts a matching digest over either the original serialized
+payload or its normalized current-model representation. This handles newly
+defaulted optional timing fields without rewriting the stored row, while
+retaining tamper rejection. Its synthetic v3 replay regression confirms the
+stored JSON and digest remain unchanged. All **15 storage tests** passed;
+strict mypy, Ruff, formatting, and `git diff --check` passed.
+
+Readiness commit `0b341c4` counts legacy audits without recomputed timing fields
+as “not recorded,” and also counts a candidate with no audit object in that
+timing bucket. Follow-up commit `e9d0ff1` also counts missing audit objects as
+not-evaluated, and leaves the gate `NOT_ESTABLISHED` when there are no evaluated
+audits. Test commit `2c7763d` covers a replay window containing only an
+unaudited candidate. A v3 audit replay inserted into a temporary test database
+is reported through readiness without losing its original hash. The
+held-source fixture checks readiness as well as the replay list: three
+quarantined Kalshi runs contribute zero non-held replay outputs and zero timing
+counts.
+
+Commit `163ab79` makes readiness return HTTP 409 with a storage-integrity
+diagnostic if a replay payload no longer matches its pinned result hash. The
+focused legacy, unaudited, quarantine, and hash-mismatch API regressions passed
+**4 tests** in 2.26 seconds. Strict mypy passed for `apps/api/frontier.py`; Ruff
+check/format and `git diff --check` passed. One existing Starlette/httpx
+TestClient deprecation warning remains. No held capture, live endpoint,
+production database, or service was accessed.
+
+**Next safe action:** use the same explicit integrity response for `/runs`,
+`/opportunities`, and held-filtered `/overview` when a replay row fails hash
+validation. Keep the immutable replay record in place and exercise the behavior
+with a temporary corrupted fixture only.
