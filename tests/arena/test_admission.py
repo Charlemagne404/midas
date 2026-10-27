@@ -1,4 +1,5 @@
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 from midas.arena import admission
@@ -30,6 +31,24 @@ def test_resource_snapshot_detects_workers_across_arena_roots(tmp_path, monkeypa
         {"job_id": "job-active", "state": "RUNNING"},
     )
     monkeypatch.setattr(admission, "_arena_roots", lambda _root: [primary, veritas])
+    # Isolate this catalog test from live host pressure; the gate's resource
+    # thresholds are covered by the controlled snapshots below.
+    monkeypatch.setattr(admission, "_available_memory_bytes", lambda _path: 8 * 1024**3)
+    monkeypatch.setattr(
+        admission.shutil,
+        "disk_usage",
+        lambda _path: SimpleNamespace(free=20 * 1024**3),
+    )
+    monkeypatch.setattr(
+        admission,
+        "_pressure_avg10",
+        lambda kind, _root: {"some": 0.0, "full": 0.0} if kind == "memory" else {"some": 0.0},
+    )
+    monkeypatch.setattr(
+        admission,
+        "cpu_capacity_snapshot",
+        lambda: {"available_cpu_count": 6, "host_load_avg1": 1.0},
+    )
     snapshot = admission.resource_snapshot(primary)
     assert snapshot["active_job_ids"] == ["veritas:job-active"]
     assert admission.resource_gate(snapshot)["reasons"] == ["arena_worker_active"]
