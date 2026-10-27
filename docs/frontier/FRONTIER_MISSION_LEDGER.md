@@ -3108,3 +3108,27 @@ Frontier remains isolated, research-only, undeployed, and **PARTIALLY VERIFIED**
 Next safe work is offline acceptance and documentation; avoid further
 admission-dependent jobs until the Veritas batch releases the shared lock and
 fresh resource measurements support another bounded run.
+
+#### Reproduction commands
+
+Run the focused, low-resource collection checks first:
+
+```bash
+env PYTHONPATH=packages:.:tests /home/charlie/midas/.venv/bin/pytest tests/frontier/test_collection.py tests/frontier/test_collection_api.py -q
+corepack pnpm --dir apps/web exec vitest run src/Frontier.test.tsx --maxWorkers=1 --minWorkers=1
+```
+
+The broader regression selection used for this checkpoint was:
+
+```bash
+env PYTHONPATH=packages:.:tests /home/charlie/midas/.venv/bin/pytest tests/frontier tests/arena/test_frontier_replay.py tests/arena/test_frontier_timeline.py tests/arena/test_jobs.py tests/arena/test_arena_api.py -q
+```
+
+Before repeating any test that stages Arena work, remeasure memory pressure
+and verify the host-wide `/home/charlie/midas/data/arena/.global-admission.lock`
+is free. The build and isolated browser commands were:
+
+```bash
+corepack pnpm --dir apps/web exec vite build --outDir /tmp/midas-frontier-build-20261028-0049
+corepack pnpm --dir apps/web exec playwright test e2e/frontier.spec.ts --grep 'Frontier workspace uses isolated research state and remains responsive' --workers=1
+```
