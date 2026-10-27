@@ -253,7 +253,13 @@ fee types use the dated July 7, 2026 public formula, with direct and non-direct
 balance-precision scenarios. The response is hashed and hypothetical, not an
 account quotation, not a quote from a saved public book, and not applied to
 candidate net economics. Unsupported fee types, malformed inputs and mismatched
-evidence fail closed. Multi-fill rounding accumulation, rebates, FCM charges and
+evidence fail closed. Fee sensitivity also requires an explicitly complete
+event override pair or an explicitly null/null pair that clears the override;
+missing or partial event fields make the sensitivity unresolved. This follows
+Kalshi's documented rule that event fees override the parent series and that a
+null/null pair clears that override
+([event fee-change API](https://docs.kalshi.com/api-reference/events/get-event-fee-changes)).
+Multi-fill rounding accumulation, rebates, FCM charges and
 later fee schedule changes remain outside the one-fill model. The separate
 `POST /api/frontier/economics/kalshi-fee-order-sensitivity` route accepts 1–32
 manual fills, each carrying its native instrument ID, and requires all fills to

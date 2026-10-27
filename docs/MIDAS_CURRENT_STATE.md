@@ -431,3 +431,18 @@ Direct database inspection, exports, and other paths outside those APIs remain
 held pending the source review. The integration test does not inspect actual
 preserved source captures. See the [read-quarantine section](frontier/SOURCE_DATA_TERMS_REVIEW_2026-10-27.md#read-quarantine-verification--2026-10-27)
 and [Frontier ledger](frontier/FRONTIER_MISSION_LEDGER.md).
+
+## Frontier Kalshi fee-override checkpoint — 2026-10-27
+
+Kalshi's documented event-fee rule is now represented explicitly. Adapter v15
+records a complete event override, an explicitly cleared override that inherits
+series terms, a partial override, or unreported override fields. The local
+one-fill and one-order fee sensitivities now reject partial and unreported
+states. Mission Control displays the fee-resolution state next to the native
+parameters. This uses official documentation and bounded fixtures only; no new
+exchange request or read of held Kalshi capture data was made. Schema-v1 fee
+metadata remains readable and is treated as unresolved for sensitivity work.
+The canonical candidate fee schedule remains unknown, and source
+permission/deployment gates remain blocked/deferred. See the [Frontier engineering report](frontier/FRONTIER_ENGINEERING_REPORT.md)
+and [mission ledger](frontier/FRONTIER_MISSION_LEDGER.md) for exact tests and
+limitations.

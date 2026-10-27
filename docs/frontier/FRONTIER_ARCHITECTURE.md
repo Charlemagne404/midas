@@ -224,14 +224,22 @@ Kalshi separately advertises `fee_metadata`: a deliberate one-event plus one-ser
 read captures the event override fields and series fee type/multiplier. The event
 request excludes child markets to keep this metadata call bounded. This capability
 does not populate `FeeSchedule`; native parameters remain stored with both raw
-response hashes while candidate net economics remains unresolved.
+response hashes while candidate net economics remains unresolved. The fee metadata
+schema preserves whether both event override fields were supplied and records one
+of four states: a complete event override, explicit series inheritance from a
+null/null override pair, a partial override, or unreported override fields.
+Kalshi's [event fee-change API](https://docs.kalshi.com/api-reference/events/get-event-fee-changes)
+documents that event fees layer over the parent series and that a null/null pair
+clears the override. The standalone fee sensitivities reject partial or unreported
+states; no candidate fee schedule is inferred from them.
 
 The local `POST /api/frontier/economics/kalshi-fee-sensitivity` endpoint retains
 the saved-evidence-bound one-fill calculation. The
 `POST /api/frontier/economics/kalshi-fee-order-sensitivity` endpoint accepts one
 to 32 manual fills for one recorded native instrument and one buy/sell direction.
 Both use only stored event/series evidence, support documented quadratic taker
-fee types, and fail closed for unsupported types. The order calculation applies
+fee types, and fail closed for unsupported types or incomplete event override
+evidence. The order calculation applies
 per-fill microdollar trade-fee rounding, signed balance-grid alignment, an
 order-level rounding accumulator, and capped precision-aligned rebates. Both
 return scenarios for the documented balance quanta: `$0.0001` for a direct member

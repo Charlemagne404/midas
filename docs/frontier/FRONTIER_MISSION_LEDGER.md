@@ -1,6 +1,15 @@
 # Project Frontier Mission Ledger
 
-**Latest checkpoint (2026-10-27):** Commits `79eefef`, `82d7e47`, and
+**Latest checkpoint (2026-10-27):** Code commit `e950b9c` makes Kalshi fee
+sensitivities fail closed when event override fields are partial or unreported.
+The adapter records complete override, explicit series inheritance, partial,
+and unreported states; Mission Control displays the state. The focused Python
+selection passed 28 tests, including schema-v1 metadata compatibility. The
+Frontier fee UI test, frontend typecheck, Ruff, strict mypy for three engine
+modules, targeted ESLint, and Prettier all passed.
+No live source request or held-data read was made. Documentation review and
+remaining limits are recorded at the end of this ledger. The previous
+checkpoint commits `79eefef`, `82d7e47`, and
 `287da15` add independent-audit mutation checks for fee totals, per-leg fees,
 and venue capital, plus independent replay verification at the 16-outcome
 bound. The audit/replay module passes 28 tests. Code commit `23f9860` also moves
@@ -17,8 +26,9 @@ venue-separated virtual funding. The full Python Frontier suite passed 153
 tests and the local production build completed before this policy change.
 Current versions are FrontierMarket v3,
 BookSnapshot v2, TradeObservation v3, OpportunityCandidate v2, economic model
-v6, independent audit v3, replay v7, Polymarket adapter v6, Kalshi adapter v14,
-and Kraken Spot adapter v3. The Frontier mission remains incomplete: verified
+v6, independent audit v3, replay v7, Polymarket adapter v6, Kalshi adapter v15,
+Kalshi fee metadata schema v2, Kalshi fee-sensitivity schemas v2, and Kraken
+Spot adapter v3. The Frontier mission remains incomplete: verified
 public equivalence, broader capital and settlement costs, source workers,
 full-universe research, live source permissions, and deployment gates remain
 open.
@@ -231,6 +241,7 @@ Remaining acceptance work is substantial.
 | `756ff89` | Added matcher v5 source-component reference hypotheses, exact child ticker/event validation, two-source-record provenance, deterministic prioritization, API/UI-graph response coverage, economic non-equivalence rejection, and an offline replay using the preserved Kalshi parent and child captures. |
 | `74d9a76` | Clarified that exact event-ID matching is required only when the selected-component source metadata supplies an event ID. |
 | `8a3e25c` | Bumped the Kalshi adapter to v12; added bounded parent and selected-leg settlement values, a saved-evidence-only arithmetic audit, API/Mission Control inspection with official rule/schema links, and fixture/API/UI/browser regressions. The result checks source-reported arithmetic only and does not alter candidate economics. |
+| `e950b9c` | Bumped the Kalshi adapter to v15; added fee-override resolution states, blocked sensitivities for partial/unreported overrides, kept schema-v1 metadata readable but unresolved, surfaced state in Mission Control, and added adapter/API/economics/UI regressions. No candidate economics changed. |
 
 ## Kalshi single-event MVE ticker filter checkpoint (2026-10-27)
 
@@ -825,8 +836,8 @@ same-input runs do not change the resource sustainability gate.
 | --- | --- | --- |
 | Verified isolated baseline and worktree | COMPLETE AND VERIFIED | Separate branch from `11d32a0`; unrelated dirty trees preserved. |
 | Adapter protocol, capability inventory, bounded GET transport | COMPLETE AND VERIFIED | Contract tests; all capabilities explicitly declared; Polymarket/Kalshi event groups supported, Kalshi MVE discovery explicitly supported, and Kraken MVE discovery explicitly unsupported; no startup request. |
-| Kalshi MVE settlement metadata and arithmetic audit | PARTIALLY VERIFIED | Adapter v12 introduced bounded component YES settlement values and optional parent settlement/provisional fields; current Kalshi adapter v14 retains the behavior. A saved-evidence-only API/UI audit recomputes the selected component product for up to 64 legs and compares it with the parent value only for complete, final evidence; official rule/schema links and observation/raw hashes are shown. The full 148-test suite predates only the output source-link tuple; the final focused 17 tests and four browser cases include it. All positive and negative settlement arithmetic remains fixture-only; the preserved live child lacks values, no live audit result exists, and this method does not verify outcomes/rules or alter candidate economics. |
-| Polymarket, Kalshi and Kraken Spot implementations | PARTIALLY VERIFIED | Fixture tests and bounded live listing/book/trade-to-store evidence exist. Current adapter versions are Polymarket v6, Kalshi v14, and Kraken Spot v3. Polymarket v2 first and continuation pages returned ten rows each. Kalshi cursor pages are implemented and row mapping is fixture-tested; a live page returned zero trades and no cursor, so live row normalization remains pending. Two genuine public event-group responses are hash-pinned and replayed through Polymarket/Kalshi adapters. Kalshi MVE listing responses omitted nested members; v10 captured a saved-parent-selected child and preserved its rules. The sole captured child is closed and includes fair-price fallback language, so child and combo payoffs remain unverified. Account fees and Kraken account fee applicability remain unknown. API fixtures cover source degradation and recovery; live degraded-source behavior remains unverified. |
+| Kalshi MVE settlement metadata and arithmetic audit | PARTIALLY VERIFIED | Adapter v12 introduced bounded component YES settlement values and optional parent settlement/provisional fields; current Kalshi adapter v15 retains the behavior. A saved-evidence-only API/UI audit recomputes the selected component product for up to 64 legs and compares it with the parent value only for complete, final evidence; official rule/schema links and observation/raw hashes are shown. The full 148-test suite predates only the output source-link tuple; the final focused 17 tests and four browser cases include it. All positive and negative settlement arithmetic remains fixture-only; the preserved live child lacks values, no live audit result exists, and this method does not verify outcomes/rules or alter candidate economics. |
+| Polymarket, Kalshi and Kraken Spot implementations | PARTIALLY VERIFIED | Fixture tests and bounded live listing/book/trade-to-store evidence exist. Current adapter versions are Polymarket v6, Kalshi v15, and Kraken Spot v3. Polymarket v2 first and continuation pages returned ten rows each. Kalshi cursor pages are implemented and row mapping is fixture-tested; a live page returned zero trades and no cursor, so live row normalization remains pending. Two genuine public event-group responses are hash-pinned and replayed through Polymarket/Kalshi adapters. Kalshi MVE listing responses omitted nested members; v10 captured a saved-parent-selected child and preserved its rules. The sole captured child is closed and includes fair-price fallback language, so child and combo payoffs remain unverified. Account fees and Kraken account fee applicability remain unknown. API fixtures cover source degradation and recovery; live degraded-source behavior remains unverified. |
 | Canonical normalization and native evidence | PARTIALLY VERIFIED | Distinct event, conditional event and spot forms; FrontierMarket v3, BookSnapshot v2 and TradeObservation v3 preserve canonical denomination identities where supported; Kalshi paginated batches retain schema v2 with nested trade schema v3. Quote, fee, trade, capital, and display codes are separate fields. Legacy v1/v2 rows without identity still load but remain unknown and economically incomplete. V2 Polymarket trades preserve token and outcome identity. October 27 event-group capture preserves parent-event title and child outcome text. Kalshi `MarketBatch` v2 stores typed MVE groups with `included`, `empty`, or `omitted` member state; detail responses with a documented top-level empty list replay to zero child markets. Other settlement/payoff semantics remain intentionally unverified. |
 | Relationship matching, immutable review, indexed neighborhoods, and strict payoff verifier | PARTIALLY VERIFIED | Self-attributed review API/UI with stored source refs, append-only revisions, compare-and-set, latest-state replay, query-plan/migration tests, and 1–3 hop left/right indexed scans capped at 500 rows. Centered one-hop keyset and two-/three-hop breadth-first pages bind graph inputs and reject stale cursors; deterministic recomputation and 201-market frontier chunking are tested. Matcher v5 emits exact-ID MVE `source_component_reference` hypotheses only with a matching saved child ticker/event and preserves both observation IDs; the recorded parent/child pair replays offline through the current adapter and matcher. Matcher v4 year-conflict checks remain. The genuine House-control pair is text-only and strict payoff verification rejects same-payoff equivalence. Per-market payout currency must match its settlement asset, and the market-level settlement asset must match the payoff record; the USD/USDC regression passes. A focused depth-two browser test now passes; authenticated review and revision-history drill-down remain pending. |
 | Economic candidate verifier and independent audit | PARTIALLY VERIFIED | Exact two-venue binary all-long coverage and same-market 3–16-state exhaustive one-hot coverage. Economic model v6 derives the exact adverse full-or-no-fill terminal pattern for up to 16 legs; independent audit v3 rederives it from pinned inputs and exact quote, fee, and capital identities. Three-leg brute-force and maximum 16-outcome replay/audit fixtures agree over a 65,536-pattern bound. Mutations to aggregate/per-leg fees and per-venue capital are rejected as disagreements. Unknown fees suppress net stress, and payout/quote-denomination mismatches without a valuation bridge fail closed in relationship, candidate, multi-outcome, and independent-audit paths. Adversarial token `USD` versus fiat `USD`, missing leg/capital/book identities, and token-network mismatches pass. Cross-venue timing checks matching known timestamp semantics, replay-time bounds, and observed skew plus both clock-uncertainty estimates; all pass/fail cases are fixture-tested. Current adapter clock-uncertainty estimates are absent, so live timing remains unverified. No genuine eligible event, independently authenticated market truth, or practical execution proof is established. |
@@ -1283,3 +1294,33 @@ No source request, database, service, or protected research artifact was used.
 Additional quantity, timing, and state-mapping mutations remain useful follow-up
 work; the economic verifier remains fixture-validated and the mission remains
 incomplete.
+
+## 2026-10-27 — Kalshi event-fee override completeness
+
+Official [Kalshi event-fee documentation](https://docs.kalshi.com/api-reference/events/get-event-fee-changes)
+states that event fees override the parent series and that a null/null event
+override clears that override. The current [fee schedule](https://kalshi.com/fee-schedule)
+shows standard combo terms but also distinguishes non-standard series; it does
+not establish series-specific maker applicability from the standard row alone.
+The MVE schema lists event override fields without documenting precedence there.
+No stored Kalshi capture was read for this review, because those source records
+remain under the terms hold.
+
+Code commit `e950b9c` bumps the Kalshi adapter to v15 and `KalshiFeeMetadata` to
+schema v2. The metadata distinguishes complete event override, explicit
+null/null series inheritance, partial override, and unreported override fields.
+The one-fill and one-order Decimal sensitivities now require either the complete
+override pair or explicit clearing; legacy schema-v1 metadata remains readable,
+defaults to `override_unreported`, and is rejected as unresolved. Output schemas
+and calculation model versions are v2, and Mission Control displays the
+fee-resolution state. Candidate `FeeSchedule` and
+candidate economics remain unchanged.
+
+Verification: the focused Python selection passed **28 tests** in 3.49 seconds
+with one existing Starlette/httpx deprecation warning. Strict mypy passed for
+the three changed engine modules; Ruff check/format passed for six Python files.
+The focused Frontier component test passed (**1 passed, 7 skipped**), TypeScript
+typecheck passed, and targeted ESLint/Prettier passed. `git diff --check` passed.
+These are fixture and local-code results, not a live fee validation. Series maker
+applicability, account precision, FCM charges, future schedules, candidate fee
+integration, source permission, and deployment remain unresolved or blocked.

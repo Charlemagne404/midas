@@ -199,7 +199,11 @@ or execution. Kalshi and Kraken do not advertise this page capability.
 Kalshi exposes a separate fee-metadata capture for one already-recorded market.
 It makes one public event request with child markets excluded and one public
 series request, then stores both raw responses against the native event override
-and series fee parameters. This is inspection evidence only: Frontier leaves the
+and series fee parameters. The normalized metadata records whether the event
+override pair is complete, explicitly cleared, partial, or unreported. The
+standalone sensitivity refuses the last two states, following Kalshi's
+[event fee-change documentation](https://docs.kalshi.com/api-reference/events/get-event-fee-changes).
+This is inspection evidence only: Frontier leaves the
 canonical market fee schedule unknown because account precision, maker/mixed-order
 behavior, FCM charges, scheduled changes, and full candidate fee applicability
 remain unresolved. Local manual one-fill and bounded one-order sensitivities now
