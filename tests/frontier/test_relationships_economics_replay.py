@@ -270,6 +270,64 @@ def test_token_settlement_identity_requires_network_and_reference():
         SettlementAssetIdentity(kind=SettlementAssetKind.TOKEN, code="USDC")
 
 
+def test_settlement_asset_canonical_ids_distinguish_delimiter_collisions():
+    first_identity = SettlementAssetIdentity(
+        kind=SettlementAssetKind.TOKEN,
+        code="USD",
+        network_id="net:alpha",
+        asset_reference="asset:beta",
+    )
+    second_identity = SettlementAssetIdentity(
+        kind=SettlementAssetKind.TOKEN,
+        code="USD",
+        network_id="net:alpha:asset",
+        asset_reference="beta",
+    )
+    assert first_identity != second_identity
+    assert first_identity.canonical_id != second_identity.canonical_id
+
+    with pytest.raises(ValidationError):
+        SettlementAssetIdentity(
+            schema_version=2,
+            kind=SettlementAssetKind.TOKEN,
+            code="USD",
+            network_id="net:alpha",
+            asset_reference="asset:beta",
+        )
+
+
+def test_same_payoff_relationship_ids_include_unambiguous_asset_identity():
+    left, right, _, instrument_mapping = _verified_pair()
+    first_identity = SettlementAssetIdentity(
+        kind=SettlementAssetKind.TOKEN,
+        code="USD",
+        network_id="net:alpha",
+        asset_reference="asset:beta",
+    )
+    second_identity = SettlementAssetIdentity(
+        kind=SettlementAssetKind.TOKEN,
+        code="USD",
+        network_id="net:alpha:asset",
+        asset_reference="beta",
+    )
+
+    def verify(identity):
+        return verify_same_payoff(
+            _market_with_token_settlement_identity(left, identity),
+            _market_with_token_settlement_identity(right, identity),
+            state_mapping={"yes": "yes", "no": "no"},
+            instrument_mapping=instrument_mapping,
+            external_assertion_id="same-assertion-for-collision-check",
+            evidence_observation_ids=("source-left", "source-right"),
+            asserted_at_utc=T0,
+        )
+
+    first = verify(first_identity)
+    second = verify(second_identity)
+    assert first.state == second.state == VerificationState.VERIFIED
+    assert first.relationship_id != second.relationship_id
+
+
 def test_legacy_market_without_asset_identity_loads_but_cannot_verify():
     left_data = market(Venue.POLYMARKET, "legacy-left").model_dump(mode="python")
     right_data = market(Venue.KALSHI, "legacy-right").model_dump(mode="python")
@@ -353,7 +411,7 @@ def test_same_ticker_on_different_networks_cannot_verify_same_payoff():
     )
 
     assert same_asset_relationship.state == VerificationState.VERIFIED
-    assert same_asset_relationship.evidence[0].verifier_version == "frontier-equivalence-verifier-3"
+    assert same_asset_relationship.evidence[0].verifier_version == "frontier-equivalence-verifier-4"
     assert any(
         "settlement_asset_identities={" in detail
         for detail in same_asset_relationship.evidence[0].details

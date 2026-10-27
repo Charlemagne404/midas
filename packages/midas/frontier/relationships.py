@@ -22,8 +22,8 @@ from midas.frontier.models import (
 
 D = Decimal
 MATCHER_VERSION = "frontier-relationship-matcher-5"
-SAME_PAYOFF_VERIFIER_VERSION = "frontier-equivalence-verifier-3"
-LOGICAL_IMPLICATION_VERIFIER_VERSION = "frontier-logical-implication-verifier-1"
+SAME_PAYOFF_VERIFIER_VERSION = "frontier-equivalence-verifier-4"
+LOGICAL_IMPLICATION_VERIFIER_VERSION = "frontier-logical-implication-verifier-2"
 MAX_LOGICAL_IMPLICATION_STATES = 1024
 MAX_LOGICAL_STATE_ID_CHARS = 128
 DEFAULT_MINIMUM_JACCARD = D("0.45")

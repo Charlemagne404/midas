@@ -211,7 +211,8 @@ async def test_polymarket_v2_position_fixture_uses_versioned_host_and_pusd_ident
     assert market.settlement_asset == "PUSD"
     assert market.settlement_asset_identity is not None
     assert market.settlement_asset_identity.canonical_id == (
-        "token:PUSD:eip155:137:0xc011a7e12a19f7b1f670d46f03b03f3342e82dfb"
+        'settlement-asset-v2:[1,"token","PUSD","eip155:137",'
+        '"0xc011a7e12a19f7b1f670d46f03b03f3342e82dfb"]'
     )
     assert market.payoff.settlement_asset_identity == market.settlement_asset_identity
     assert market.payoff.payout_currency == "PUSD"
@@ -879,7 +880,10 @@ async def test_kalshi_live_capture_preserves_multivariate_legs_and_empty_public_
     assert market.selected_components[0].selected_side == "yes"
     assert market.payoff.verified is False
     assert market.settlement_asset_identity is not None
-    assert market.settlement_asset_identity.canonical_id == "fiat:USD"
+    assert (
+        market.settlement_asset_identity.canonical_id
+        == 'settlement-asset-v2:[1,"fiat","USD",null,null]'
+    )
     assert market.payoff.settlement_asset_identity == market.settlement_asset_identity
     assert all(
         item.price_currency_identity == market.settlement_asset_identity

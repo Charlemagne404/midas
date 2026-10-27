@@ -1,6 +1,20 @@
 # Project Frontier Mission Ledger
 
-**Latest checkpoint (2026-10-27 18:43 UTC):** The full web unit suite passes
+**Latest checkpoint (2026-10-27 18:49 UTC):** The backend asset identity key
+now uses a versioned compact JSON tuple, and the same-payoff/logical implication
+verifier versions advance to v4/v2. The schema rejects unsupported identity
+versions. Four focused synthetic tests pass; Ruff, format, and whitespace checks
+pass. The complete Frontier suite and strict mypy were not rerun after this
+change. At 2026-10-27T18:49:39Z, host PSI was 46.81% some / 42.40% full over
+10 seconds and 31.84% / 28.83% over five minutes; available memory was 9.22 GiB
+and swap free was 473 MiB. No source request or protected service was used.
+
+The UI field-comparison/key hardening is implemented and Prettier-checked;
+its focused component test and the full Frontier suite remain pending.
+Remeasure host headroom before running them; defer the production build while
+short-window PSI remains high.
+
+**Previous checkpoint (2026-10-27 18:43 UTC):** The full web unit suite passes
 **40 tests across 7 files** in 5.00 seconds, including all eight Frontier
 component tests. The four Frontier browser tests passed at the preceding
 18:40 UTC checkpoint. No frontend files changed during these checks. At

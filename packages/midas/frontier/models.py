@@ -232,7 +232,7 @@ class SelectedMarketComponent(FrontierModel):
 class SettlementAssetIdentity(FrontierModel):
     """Canonical identity for a denomination unit, distinct from its display ticker."""
 
-    schema_version: int = 1
+    schema_version: Literal[1] = 1
     kind: SettlementAssetKind
     code: str = Field(min_length=2, max_length=16)
     network_id: str | None = Field(default=None, min_length=1, max_length=128)
@@ -283,10 +283,19 @@ class SettlementAssetIdentity(FrontierModel):
 
     @property
     def canonical_id(self) -> str:
-        if self.kind == SettlementAssetKind.FIAT:
-            return f"fiat:{self.code}"
-        assert self.network_id is not None and self.asset_reference is not None
-        return f"{self.kind.value}:{self.code}:{self.network_id}:{self.asset_reference}"
+        """Versioned, collision-free encoding used in deterministic evidence identities."""
+        components = json.dumps(
+            [
+                self.schema_version,
+                self.kind.value,
+                self.code,
+                self.network_id,
+                self.asset_reference,
+            ],
+            ensure_ascii=True,
+            separators=(",", ":"),
+        )
+        return f"settlement-asset-v2:{components}"
 
 
 class PayoffSpec(FrontierModel):

@@ -3298,6 +3298,33 @@ predates the latest stored-row-hash and carry UI changes.
 
 No exchange request, protected service, or production store was accessed.
 
+### Collision-free settlement asset keys — 2026-10-27 18:49 UTC
+
+The prior separator-joined token identity could collide when colons appeared
+inside both the network and asset-reference fields. For example, two distinct
+valid tuples—net:alpha / asset:beta and net:alpha:asset / beta—produced the
+same canonical string. `SettlementAssetIdentity.canonical_id` now emits a
+versioned, compact JSON tuple prefixed `settlement-asset-v2`; the identity
+model accepts only its implemented schema version 1. Same-payoff verifier v4
+and logical-implication verifier v2 pin the new key encoding into relationship
+identities. Existing persisted relationship evidence is not rewritten.
+
+Four focused synthetic tests pass (**4 passed**): the delimiter-collision
+pair produces distinct keys and same-payoff relationship IDs, unsupported
+identity schema versions reject, same-ticker cross-network behavior remains
+rejected, and logical implication still reports both settlement units.
+Ruff, formatting, and `git diff --check` pass. Strict mypy and the complete
+Frontier suite have not been rerun after this change; host PSI at 18:49:39 UTC
+was 46.81% some / 42.40% full over 10 seconds and 31.84% / 28.83% over five
+minutes. Available memory was 9.22 GiB and swap free was 473 MiB. No source
+API or protected service was accessed.
+
+| Component | Current status | Boundary |
+| --- | --- | --- |
+| Backend settlement identity key and verifier versions | PARTIALLY VERIFIED | Collision behavior and focused relationship tests pass; full Frontier regression and strict mypy remain pending. |
+| UI identity comparison and balance key | IMPLEMENTED, VERIFICATION PENDING | The UI compares identity fields directly, rejects unsupported/malformed values, and uses a structured balance key; focused frontend tests remain pending. |
+| Project Frontier overall | PARTIALLY VERIFIED | Live cross-venue economics, source permission review, production build, and deployment remain incomplete. |
+
 ### Frontier Python regression and resource measurement — 2026-10-27 18:41 UTC
 
 The complete Frontier Python suite passed: **215 tests in 39.29 seconds**.

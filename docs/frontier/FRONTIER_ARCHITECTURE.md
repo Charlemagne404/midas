@@ -131,6 +131,13 @@ identify that same fee unit. A code such as `USD` is insufficient by itself:
 different units. Older rows without these optional identities continue to
 load, but candidate generation and the independent audit treat the missing
 unit evidence as incomplete. Replay v7 pins these identities into its inputs.
+The identity schema currently accepts version 1 only. Deterministic asset keys
+use the versioned `settlement-asset-v2` prefix plus a compact JSON tuple of
+schema version, kind, code, network, and reference; the fields cannot collide
+when a component contains punctuation such as a colon. Human-readable UI labels
+are separate from these keys. Same-payoff and logical-implication verifier
+versions advance when the key encoding changes, while stored historical
+relationship rows remain untouched.
 
 Kalshi adapter v7 introduced the separate `MULTIVARIATE_EVENT_DISCOVERY`
 capability, retained by adapters v8 through v11. Its local

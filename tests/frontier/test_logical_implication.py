@@ -147,8 +147,9 @@ def test_preserves_settlement_time_differences_but_rejects_noncomplementary_payo
     )
     assert source.canonical_id in settlement_evidence
     assert time_and_unit_different.canonical_id in settlement_evidence
-    assert "fiat:USD" in settlement_evidence
-    assert "token:PUSD:eip155:137" in settlement_evidence
+    assert "settlement-asset-v2:" in settlement_evidence
+    assert "fiat" in settlement_evidence
+    assert "PUSD" in settlement_evidence
     assert "2026-10-26T22:00:01" in settlement_evidence
 
     bad_target = FrontierMarket.model_validate(
