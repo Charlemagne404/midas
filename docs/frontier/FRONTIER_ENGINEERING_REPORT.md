@@ -274,6 +274,33 @@ submission route.
 | Kraken Spot | Configured-pair AssetPairs metadata; public depth, trades and OHLC; pair tick/lot/minimum fields retained | Spot is a base/quote instrument, not an event payoff. Fee tier, account eligibility, custody, and event hedge semantics are unknown. Pair discovery is an explicit allowlist. | Bounded live API capture persisted XBT/USD metadata, depth with 10 asks/10 bids and per-level timestamps, and ten trades. No prediction-contract equivalence was found; new capture and research remain held. |
 | Coinbase Exchange Spot | Explicit allowlisted product metadata, aggregated L2 snapshots, and one bounded trade page; public source `sequence`, `time`, `auction_mode`, maker-side, increments, and minimums remain raw-evidence linked | Spot context only; no event payout, candles, incremental book, verified fee schedule, settlement rule, or account eligibility. Product catalog is not enumerated. Coinbase Market Data Terms restrict use; an exact reviewed-version acknowledgement and independent probe flag are required. | **No Coinbase request made.** Synthetic fixture contract tests only; live validation is pending because the terms/organization/region/display scope is not independently resolved. |
 
+### Additional venue screen and admission recheck — 2026-10-27 21:42 UTC
+
+Manifold Markets was evaluated as a possible additional public source. Its
+documented public API supports unauthenticated reads, but Manifold's official
+February 2025 announcement ended its sweepstakes markets; current FAQ says
+mana cannot be converted to cash. That makes current market prices useful only
+as a possible forecast/sentiment reference, not an economic payoff or
+opportunity leg. The site's prize drawings are separate from market
+contracts. A forecast-only adapter is not added because it would need a
+separate non-economic instrument type and a focused research need.
+
+Betfair Exchange was evaluated as a potential event-market venue. Its official
+API requires account application keys; the delayed key is for development and
+returns production data delayed by 1–180 seconds, while documented live
+read-only access is not permitted. Commercial use requires approval. Frontier
+does not create accounts or credentials, so a Betfair integration is deferred
+until an independently authorized data-access path exists. No Manifold or
+Betfair API request, account action, or historical-data access occurred. The
+source screen and references are recorded in
+[`ADDITIONAL_VENUE_SCREEN_2026-10-27.md`](ADDITIONAL_VENUE_SCREEN_2026-10-27.md).
+
+At `2026-10-27T21:42:51Z`, the deferred legacy compatibility selection was
+still not admitted: external batch PID **3745206** remained in `D` state and
+held the shared Arena admission lock. PSI avg10 was 39.31% (`some`) / 34.14%
+(`full`), avg60 42.01% / 36.47%, and avg300 33.22% / 28.94%. No test was
+started and the external worker remained untouched.
+
 Each adapter declares every shared capability as supported or unsupported with a
 reason. Kalshi documents unauthenticated public market-data access and its
 binary order book returns YES/NO bids, with complementary prices used to infer

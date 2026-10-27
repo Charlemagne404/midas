@@ -916,3 +916,18 @@ admission lock in D state; memory PSI avg10 was 44.57% some / 39.03% full.
 No tests were started, and the worker was left untouched. Recheck lock and
 host pressure before resuming. This does not invalidate the already completed
 Frontier, Web, typecheck, build, or browser results.
+
+## Frontier additional venue screen — 2026-10-27 21:42 UTC
+
+Official Manifold and Betfair documentation was evaluated for a useful
+additional source. Manifold's current core market currency is non-redeemable
+mana and its sweepstakes markets ended in 2025, so it was not added as an
+economic venue. Betfair requires an account application key; delayed data is
+1–180 seconds, live read-only access is not permitted, and commercial use
+requires approval. Neither API was queried and no credentials were requested.
+The sourced decision is in
+`docs/frontier/ADDITIONAL_VENUE_SCREEN_2026-10-27.md`.
+
+At 2026-10-27T21:42:51Z, the deferred legacy tests remained unstarted because
+PID 3745206 held the shared Arena lock in D state and PSI avg10 remained
+39.31% some / 34.14% full. Recheck admission before running them.

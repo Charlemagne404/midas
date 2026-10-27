@@ -1,5 +1,19 @@
 # Project Frontier Mission Ledger
 
+**Additional venue screen (`2026-10-27T21:42:51Z`):** Official documentation was reviewed
+for Manifold Markets and Betfair. Manifold's current market currency is mana,
+which its FAQ describes as non-redeemable, and its 2025 announcement ended the
+cash sweepstakes markets. It remains a possible forecast-only reference, not
+an economic opportunity leg. Betfair requires a per-account application key;
+its delayed data is 1–180 seconds and live read-only access is not permitted,
+while commercial usage requires approval. Neither source was queried and no
+credentials or account access were requested. Decision and references:
+`docs/frontier/ADDITIONAL_VENUE_SCREEN_2026-10-27.md`.
+At the same sample, external batch PID **3745206** remained in `D` state with
+the shared Arena admission lock held; PSI avg10 was 39.31% `some` / 34.14%
+`full`. The compatibility tests remain deferred; no worker or lock was
+interfered with.
+
 **Latest verified checkpoint (`008106b`, 2026-10-27 21:36 UTC):** The
 Coinbase Decimal exponent guard removes its Frontier-local strict-mypy error;
 its focused module passes **11/11**. The full Frontier suite passes

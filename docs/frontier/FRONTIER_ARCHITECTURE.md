@@ -24,6 +24,18 @@ as mutable Frontier storage.
 | HTTP API | `apps/api/frontier.py` | Bounded local queries and graph neighborhoods, relationship proposals/reviews, deterministic and paired replay, config-gated market/event-group/MVE/component capture, raw/hash/identity-checked saved Kalshi fee evidence for later replay, fee sensitivities, and exact-run-bound virtual capital carry. |
 | Mission Control workspace | `apps/web/src/Frontier.tsx` | Sources, markets/books/event context, one-page Kalshi MVE discovery and explicit selected-component rule capture, relationship hypotheses, candidates, venue-separated balances and settlement-duration sensitivity, local comparisons, bounded Arena replay history/results, and readiness. |
 
+## Additional venue selection
+
+The current adapter set is limited to the four sources in the capability
+matrix. The dated [additional venue screen](ADDITIONAL_VENUE_SCREEN_2026-10-27.md)
+declines a Manifold economic adapter because the current market currency is
+non-redeemable mana and its sweepstakes markets ended in 2025. It may be
+revisited only as a clearly non-economic forecast source. Betfair is deferred
+because documented data access requires an account application key, live
+read-only access is not permitted, and commercial usage requires approval.
+This avoids treating play-money probabilities or delayed account-keyed data
+as directly comparable live quotes.
+
 ## Virtual capital-duration sensitivity
 
 `POST /api/frontier/opportunities/capital-carry` accepts a saved run ID and
