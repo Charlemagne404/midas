@@ -922,6 +922,38 @@ def router(
             for relationship in snapshot.verified_relationships
         )
 
+    def reject_held_frontier_replay(record: Any) -> None:
+        if not frontier_held_venues:
+            return
+        configuration = record.get("configuration") if isinstance(record, dict) else None
+        configuration_is_frontier = (
+            isinstance(configuration, dict) and configuration.get("kind") == "frontier_replay"
+        )
+        job_id = record.get("job_id") if isinstance(record, dict) else None
+        result_path = (
+            root / "jobs" / job_id / "frontier-replay-result.json"
+            if isinstance(job_id, str) and re.fullmatch(r"job-[a-f0-9]{24}", job_id)
+            else None
+        )
+        result_marks_frontier = result_path is not None and (
+            result_path.is_file() or result_path.is_symlink()
+        )
+        if not configuration_is_frontier and not result_marks_frontier:
+            return
+        if not configuration_is_frontier:
+            raise ValueError("Frontier replay job has no verifiable source snapshot configuration")
+        from midas.arena.frontier_replay import FrontierReplayJobSpec, load_snapshot
+
+        spec_value = configuration.get("frontier_replay")
+        try:
+            snapshot = load_snapshot(root, FrontierReplayJobSpec.model_validate(spec_value))
+        except (FileNotFoundError, OSError, ValueError, KeyError) as error:
+            raise ValueError(
+                "Cannot establish that Frontier replay artifact is clear of held source data"
+            ) from error
+        if snapshot_uses_held_source(snapshot):
+            raise ValueError("Frontier replay uses source data held from research use")
+
     async def call(fn: Any, *args: Any) -> Any:
         try:
             return await asyncio.to_thread(fn, *args)
@@ -1039,9 +1071,15 @@ def router(
             if all(dependencies.values()):
                 from midas.arena.jobs import inspect
 
-                jobs.append(inspect(root, file.parent.name))
+                job_record = inspect(root, file.parent.name)
             else:
-                jobs.append(json.loads(file.read_text()))
+                job_record = json.loads(file.read_text())
+            try:
+                reject_held_frontier_replay(job_record)
+            except ValueError:
+                # The overview can expose job results; held or unproven inputs stay hidden.
+                continue
+            jobs.append(job_record)
         memory = {}
         recorded_sources = []
         from midas.laboratory.datasets import load_dataset, validate
@@ -1453,7 +1491,9 @@ def router(
         def create() -> Any:
             from midas.arena.jobs import JobSpec, create
 
-            return create(root, JobSpec.model_validate(body.configuration))
+            specification = JobSpec.model_validate(body.configuration)
+            reject_held_frontier_replay({"configuration": specification.model_dump(mode="json")})
+            return create(root, specification)
 
         return await call(create)
 
@@ -1500,18 +1540,9 @@ def router(
                 replay_spec = replay_spec if isinstance(replay_spec, dict) else {}
                 if frontier_held_venues:
                     try:
-                        from midas.arena.frontier_replay import (
-                            FrontierReplayJobSpec,
-                            load_snapshot,
-                        )
-
-                        snapshot = load_snapshot(
-                            root, FrontierReplayJobSpec.model_validate(replay_spec)
-                        )
-                    except (FileNotFoundError, OSError, ValueError):
+                        reject_held_frontier_replay(row)
+                    except ValueError:
                         # Missing provenance cannot establish that this artifact is clear.
-                        continue
-                    if snapshot_uses_held_source(snapshot):
                         continue
                 result_value = row.get("result")
                 result = result_value if isinstance(result_value, dict) else None
@@ -1562,7 +1593,9 @@ def router(
         def inspect() -> Any:
             from midas.arena.jobs import inspect
 
-            return inspect(root, identity)
+            record = inspect(root, identity)
+            reject_held_frontier_replay(record)
+            return record
 
         return await call(inspect)
 
@@ -1573,19 +1606,8 @@ def router(
             from midas.arena.jobs import inspect
 
             record = inspect(root, identity)
+            reject_held_frontier_replay(record)
             artifact = verify_frontier_replay_job_result(root, identity, record)
-            if frontier_held_venues:
-                from midas.arena.frontier_replay import FrontierReplayJobSpec, load_snapshot
-
-                configuration = record.get("configuration")
-                spec_value = (
-                    configuration.get("frontier_replay")
-                    if isinstance(configuration, dict)
-                    else None
-                )
-                snapshot = load_snapshot(root, FrontierReplayJobSpec.model_validate(spec_value))
-                if snapshot_uses_held_source(snapshot):
-                    raise ValueError("Frontier replay uses source data held from research use")
             return {
                 "artifact": artifact.model_dump(mode="json"),
                 "research_only": True,
@@ -1601,6 +1623,8 @@ def router(
         def cancel() -> Any:
             from midas.arena.jobs import cancel
 
+            record = json.loads((path("jobs", identity) / "job.json").read_text())
+            reject_held_frontier_replay(record)
             return cancel(root, identity)
 
         return await call(cancel)
@@ -1611,6 +1635,7 @@ def router(
             import subprocess
 
             record = json.loads((path("jobs", identity) / "job.json").read_text())
+            reject_held_frontier_replay(record)
             result = subprocess.run(
                 [
                     "journalctl",

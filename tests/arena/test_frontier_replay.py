@@ -417,6 +417,25 @@ def test_held_source_arena_replays_are_hidden_from_catalog_and_result_routes(tmp
         detail = client.get(f"/api/arena/jobs/{JOB_ID}/frontier-replay")
         assert detail.status_code == 409
         assert "held from research use" in detail.json()["detail"]
+        generic_detail = client.get(f"/api/arena/jobs/{JOB_ID}")
+        assert generic_detail.status_code == 409
+        assert "held from research use" in generic_detail.json()["detail"]
+        generic_logs = client.get(f"/api/arena/jobs/{JOB_ID}/logs")
+        assert generic_logs.status_code == 409
+        assert "held from research use" in generic_logs.json()["detail"]
+        generic_replay = client.post(
+            "/api/arena/jobs",
+            json={"configuration": configuration.model_dump(mode="json")},
+        )
+        assert generic_replay.status_code == 409
+        assert "held from research use" in generic_replay.json()["detail"]
+        cancel = client.post(f"/api/arena/jobs/{JOB_ID}/cancel")
+        assert cancel.status_code == 409
+        assert "held from research use" in cancel.json()["detail"]
+        assert not (job_directory / "cancel").exists()
+        overview = client.get("/api/arena")
+        assert overview.status_code == 200, overview.text
+        assert all(item["job_id"] != JOB_ID for item in overview.json()["jobs"])
 
     # The Arena snapshot and its result remain present; read quarantine is non-destructive.
     assert load_snapshot(tmp_path, spec).markets[0].venue == Venue.KALSHI
