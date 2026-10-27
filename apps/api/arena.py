@@ -27,6 +27,56 @@ MAX_ARENA_JOB_ELAPSED_SECONDS = 7_500
 MAX_WORKER_PROCESS_RSS_BYTES = 8 * 1024**3
 
 
+def _snapshot_uses_held_source(snapshot: Any, frontier_held_venues: tuple[str, ...]) -> bool:
+    if not frontier_held_venues:
+        return False
+    held_market_prefixes = tuple(f"{venue}:" for venue in frontier_held_venues)
+    return (
+        any(market.venue.value in frontier_held_venues for market in snapshot.markets)
+        or any(book.venue.value in frontier_held_venues for book in snapshot.books)
+        or any(
+            relationship.left_market_id.startswith(held_market_prefixes)
+            or relationship.right_market_id.startswith(held_market_prefixes)
+            for relationship in snapshot.verified_relationships
+        )
+    )
+
+
+def _reject_held_frontier_replay(
+    root: Path, frontier_held_venues: tuple[str, ...], record: Any
+) -> None:
+    if not frontier_held_venues:
+        return
+    configuration = record.get("configuration") if isinstance(record, dict) else None
+    configuration_is_frontier = (
+        isinstance(configuration, dict) and configuration.get("kind") == "frontier_replay"
+    )
+    job_id = record.get("job_id") if isinstance(record, dict) else None
+    result_path = (
+        root / "jobs" / job_id / "frontier-replay-result.json"
+        if isinstance(job_id, str) and re.fullmatch(r"job-[a-f0-9]{24}", job_id)
+        else None
+    )
+    result_marks_frontier = result_path is not None and (
+        result_path.is_file() or result_path.is_symlink()
+    )
+    if not configuration_is_frontier and not result_marks_frontier:
+        return
+    if not configuration_is_frontier:
+        raise ValueError("Frontier replay job has no verifiable source snapshot configuration")
+    from midas.arena.frontier_replay import FrontierReplayJobSpec, load_snapshot
+
+    spec_value = configuration.get("frontier_replay")
+    try:
+        snapshot = load_snapshot(root, FrontierReplayJobSpec.model_validate(spec_value))
+    except (FileNotFoundError, OSError, ValueError, KeyError) as error:
+        raise ValueError(
+            "Cannot establish that Frontier replay artifact is clear of held source data"
+        ) from error
+    if _snapshot_uses_held_source(snapshot, frontier_held_venues):
+        raise ValueError("Frontier replay uses source data held from research use")
+
+
 def veritas_repository_root() -> Path:
     return Path(__file__).resolve().parents[2]
 
@@ -579,7 +629,7 @@ def _project_director_record(
     return {**row, **_director_runtime_state(root, row, owner_jobs, supervisors)}
 
 
-def research_activity(root: Path) -> dict[str, Any]:
+def research_activity(root: Path, *, frontier_held_venues: tuple[str, ...] = ()) -> dict[str, Any]:
     """Return a small read-only summary of Arena's durable research activity."""
     invalid_records = 0
 
@@ -614,6 +664,15 @@ def research_activity(root: Path) -> dict[str, Any]:
         return values
 
     director_owner_jobs = records("jobs", "job.json", MAX_DIRECTOR_OWNER_JOBS_READ)
+    if frontier_held_venues:
+        eligible_jobs = []
+        for row in director_owner_jobs:
+            try:
+                _reject_held_frontier_replay(root, frontier_held_venues, row)
+            except ValueError:
+                continue
+            eligible_jobs.append(row)
+        director_owner_jobs = eligible_jobs
     jobs = director_owner_jobs[:25]
     latest_veritas_qualification = _latest_veritas_qualification_distribution(root, jobs)
     directors = records("directors", "manifest.json", 10)
@@ -907,52 +966,12 @@ def router(
     frontier_held_venues: tuple[str, ...] = (),
 ) -> APIRouter:
     api = APIRouter(prefix="/api/arena", tags=["Arena"])
-    held_market_prefixes = tuple(f"{venue}:" for venue in frontier_held_venues)
 
     def snapshot_uses_held_source(snapshot: Any) -> bool:
-        if not frontier_held_venues:
-            return False
-        if any(market.venue.value in frontier_held_venues for market in snapshot.markets):
-            return True
-        if any(book.venue.value in frontier_held_venues for book in snapshot.books):
-            return True
-        return any(
-            relationship.left_market_id.startswith(held_market_prefixes)
-            or relationship.right_market_id.startswith(held_market_prefixes)
-            for relationship in snapshot.verified_relationships
-        )
+        return _snapshot_uses_held_source(snapshot, frontier_held_venues)
 
     def reject_held_frontier_replay(record: Any) -> None:
-        if not frontier_held_venues:
-            return
-        configuration = record.get("configuration") if isinstance(record, dict) else None
-        configuration_is_frontier = (
-            isinstance(configuration, dict) and configuration.get("kind") == "frontier_replay"
-        )
-        job_id = record.get("job_id") if isinstance(record, dict) else None
-        result_path = (
-            root / "jobs" / job_id / "frontier-replay-result.json"
-            if isinstance(job_id, str) and re.fullmatch(r"job-[a-f0-9]{24}", job_id)
-            else None
-        )
-        result_marks_frontier = result_path is not None and (
-            result_path.is_file() or result_path.is_symlink()
-        )
-        if not configuration_is_frontier and not result_marks_frontier:
-            return
-        if not configuration_is_frontier:
-            raise ValueError("Frontier replay job has no verifiable source snapshot configuration")
-        from midas.arena.frontier_replay import FrontierReplayJobSpec, load_snapshot
-
-        spec_value = configuration.get("frontier_replay")
-        try:
-            snapshot = load_snapshot(root, FrontierReplayJobSpec.model_validate(spec_value))
-        except (FileNotFoundError, OSError, ValueError, KeyError) as error:
-            raise ValueError(
-                "Cannot establish that Frontier replay artifact is clear of held source data"
-            ) from error
-        if snapshot_uses_held_source(snapshot):
-            raise ValueError("Frontier replay uses source data held from research use")
+        _reject_held_frontier_replay(root, frontier_held_venues, record)
 
     async def call(fn: Any, *args: Any) -> Any:
         try:
@@ -1143,7 +1162,9 @@ def router(
 
     @api.get("/research-activity")
     async def get_research_activity() -> Any:
-        return await call(research_activity, root)
+        return await call(
+            lambda: research_activity(root, frontier_held_venues=frontier_held_venues)
+        )
 
     @api.get("/datasets/{identity}")
     async def dataset(identity: str) -> Any:

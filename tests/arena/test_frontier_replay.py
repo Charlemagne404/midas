@@ -436,6 +436,16 @@ def test_held_source_arena_replays_are_hidden_from_catalog_and_result_routes(tmp
         overview = client.get("/api/arena")
         assert overview.status_code == 200, overview.text
         assert all(item["job_id"] != JOB_ID for item in overview.json()["jobs"])
+        activity = client.get("/api/arena/research-activity")
+        assert activity.status_code == 200, activity.text
+        assert all(item["job_id"] != JOB_ID for item in activity.json()["jobs"])
+
+        tampered_record = json.loads((job_directory / "job.json").read_text())
+        tampered_record["configuration"] = {"kind": "dataset"}
+        atomic_json(job_directory / "job.json", tampered_record)
+        invalid_provenance = client.get(f"/api/arena/jobs/{JOB_ID}")
+        assert invalid_provenance.status_code == 409
+        assert "no verifiable source snapshot" in invalid_provenance.json()["detail"]
 
     # The Arena snapshot and its result remain present; read quarantine is non-destructive.
     assert load_snapshot(tmp_path, spec).markets[0].venue == Venue.KALSHI
