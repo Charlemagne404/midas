@@ -7,6 +7,14 @@ roots and was left untouched. No Frontier tests or builds ran after this
 process appeared. Recheck pressure and the shared Arena admission lock before
 starting additional resource-consuming verification.
 
+**Resource admission released (`2026-10-27T21:49:51Z`):** PID 3762324 had
+exited; no shared Arena admission lock holder was listed. Memory PSI avg10 was
+0.00% `some` / `full`, with 9.9 GiB available and 455 MiB swap free. No
+browser rerun was needed: the full 12/12 suite had already passed at the latest
+unchanged UI checkpoint (`008106b`, 21:36 UTC). The subsequent 21:45 and 21:46
+legacy regression selections also passed. Admission is a point-in-time signal;
+recheck before any worker launch.
+
 **Legacy integration and admission-gate regressions (`2026-10-27T21:46:43Z`):**
 All `tests/integration` pass **55/55**, with one PostgreSQL test skipped after
 explicitly unsetting `MIDAS_TEST_POSTGRES_URL`; the run used

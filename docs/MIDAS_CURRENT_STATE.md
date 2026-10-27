@@ -965,3 +965,12 @@ blocked in `D` state at `mem_cgroup_handle_over_high`; memory PSI avg10 was
 47.93% `some` / 41.46% `full`. It was left untouched. No Frontier tests or
 builds were started after it appeared. Wait for pressure to settle and verify
 the shared Arena admission lock before further resource-consuming checks.
+
+## Frontier resource gate cleared — 2026-10-27 21:49 UTC
+
+At `2026-10-27T21:49:51Z`, external Veritas batch PID 3762324 had exited and
+no shared Arena lock holder was listed. Memory PSI avg10 was 0.00% `some` /
+`full`; available memory was 9.9 GiB and 455 MiB swap was free. The browser
+suite already passed 12/12 at the latest unchanged UI checkpoint, and later
+legacy integration/admission checks passed. Recheck resource admission before
+any future worker launch.

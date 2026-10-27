@@ -4178,3 +4178,13 @@ The process was left untouched. No Frontier tests or builds were started
 after it appeared; the passing bounded test results above remain valid. The
 shared admission lock should be checked again before further resource-consuming
 verification.
+
+### Resource admission released — 2026-10-27 21:49 UTC
+
+At `2026-10-27T21:49:51Z`, PID **3762324** had exited and no holder of the
+shared Arena admission lock was listed. Memory PSI avg10 was 0.00% (`some` and
+`full`); available memory was 9.9 GiB and 455 MiB swap was free. No test was
+repeated: the complete browser suite already passed 12/12 at the latest
+unchanged UI checkpoint (`008106b`, 21:36 UTC), while the 21:45 and 21:46
+legacy regressions were independently completed afterward. Recheck before any
+future worker-admission attempt.
