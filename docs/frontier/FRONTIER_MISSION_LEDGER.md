@@ -885,3 +885,12 @@ document's `KXMVE` maker/taker multipliers are not directly attributable to the
 different captured series ticker. No fee model or candidate economics was
 changed; this unresolved mapping is now explicit in the engineering report and
 architecture handoff.
+
+The Kalshi MVE reported-settlement arithmetic implementation is
+`8a3e25cc1866644a49369e6797f8833aed36cb24`; the README, development,
+current-state, architecture, report, and ledger documentation checkpoint is
+`021399060de04589f1db49c4cb3cbbed4a55cb8e`. The audit remains fixture-verified
+only. The full 148-test Frontier/Arena run predates the output source-link field;
+the final focused 17-test Python selection and four Frontier browser cases
+include it. See the 13:01 UTC checkpoint above for resource and validation
+boundaries. No live settlement observation or production action occurred.
