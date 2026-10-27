@@ -69,6 +69,19 @@ native metadata, source URL, adapter/schema versions, raw-body hash, request and
 receipt times, and source-time semantics. Source quality flags are carried forward
 instead of being replaced with guessed values.
 
+Observation persistence copies the normalized model and stamps each missing
+typed `Provenance.persisted_at_utc` with the Frontier writer's UTC time
+immediately before serialization and the atomic SQLite insert. This records
+the writer's pre-insert timestamp; it is not a commit/fsync completion time and
+does not reduce source-clock uncertainty. The caller's model is not mutated.
+Already-stamped normalized captures keep their original timestamp when copied
+into an isolated content-addressed snapshot. On an idempotent retry, storage
+validates the original raw and normalized row hashes, compares normalized
+content with only the typed persistence timestamp cleared, and returns the
+original observation without changing its timestamp or row hash. Older rows
+whose optional persistence field is absent or null remain readable as
+historical evidence.
+
 Adapter health is local state and does not probe the venue. Its
 `requests_in_window` value counts paced HTTP request starts in the trailing 60
 seconds using monotonic time. The transport keeps a bounded history sized for

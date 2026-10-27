@@ -80,6 +80,16 @@ availability, fills, legal access, or transferability. Preserve source and
 receipt timestamps, raw hashes, adapter versions, quality flags, and each
 exchange's timestamp semantics when evaluating a candidate.
 
+On first persistence, the store fills a missing typed
+`provenance.persisted_at_utc` in the normalized observation copy. It records
+the Frontier writer's UTC time immediately before serialization and the
+atomic SQLite insert; it is not a commit/fsync completion timestamp and does
+not certify source-clock accuracy. The store does not mutate the adapter's
+in-memory model. Already-stamped captures retain their timestamp when copied
+to an isolated snapshot, keeping the immutable row hash stable. Re-appending an
+identical capture keeps its first timestamp and row hash. Legacy observations
+with this optional value absent remain readable and are not rewritten.
+
 Keep display currency codes separate from denomination identity. Instruments,
 books, fee schedules, trades and candidate capital expose an exact identity only
 when the source supports one. A ticker match such as `USD` does not establish

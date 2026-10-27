@@ -1,14 +1,15 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import sqlite3
-from datetime import timedelta
+from datetime import datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
 
 import pytest
 from midas.frontier.economics import ExecutionScenario
-from midas.frontier.models import RawObservation, Venue
+from midas.frontier.models import MarketBatch, MarketGroup, RawObservation, Venue
 from midas.frontier.relationships import propose_relationships, verify_same_payoff
 from midas.frontier.replay import deterministic_replay, paired_deterministic_replay
 from midas.frontier.storage import FrontierStore, FrontierStoreError
@@ -129,6 +130,17 @@ def test_observations_and_relationships_are_append_only(tmp_path: Path):
     assert evidence is not None
     assert evidence["raw"]["raw_body"] == '{"public":true}'
     assert evidence["raw_sha256"] == hashlib.sha256(b'{"public":true}').hexdigest()
+    persisted_at = datetime.fromisoformat(evidence["normalized"]["provenance"]["persisted_at_utc"])
+    assert persisted_at.tzinfo is not None and persisted_at.utcoffset() == timedelta(0)
+    assert persisted_at >= _raw(Venue.POLYMARKET, '{"public":true}').received_at_utc
+    assert left.provenance.persisted_at_utc is None
+    # A retry retains the first immutable writer timestamp instead of changing the row hash.
+    assert (
+        datetime.fromisoformat(
+            store.observation(first)["normalized"]["provenance"]["persisted_at_utc"]
+        )
+        == persisted_at
+    )
     relationships = propose_relationships((left, right), max_pairs=10)
     assert relationships
     identity = store.append_relationship(relationships[0])
@@ -141,6 +153,71 @@ def test_observations_and_relationships_are_append_only(tmp_path: Path):
             )
         with pytest.raises(sqlite3.IntegrityError, match="append-only"):
             connection.execute("DELETE FROM relationships WHERE relationship_id=?", (identity,))
+
+
+def test_observation_persistence_stamps_nested_market_and_group_provenance(tmp_path: Path):
+    store = FrontierStore(tmp_path, max_bytes=2 * 1024 * 1024)
+    source_market = market(Venue.POLYMARKET, "nested-market")
+    group = MarketGroup(
+        venue=Venue.POLYMARKET,
+        group_type="event",
+        native_group_id="nested-event",
+        title="Nested event fixture",
+        member_native_market_ids=(source_market.native_market_id,),
+        member_list_state="included",
+        provenance=source_market.provenance,
+    )
+    batch = MarketBatch(
+        venue=Venue.POLYMARKET,
+        markets=(source_market,),
+        market_groups=(group,),
+    )
+
+    observation_id = store.append_observation(
+        _raw(Venue.POLYMARKET, '{"markets":[],"events":[]}', "event_market_listing"),
+        batch,
+    )
+    evidence = store.observation(observation_id)
+    assert evidence is not None
+    normalized = evidence["normalized"]
+    market_persisted_at = normalized["markets"][0]["provenance"]["persisted_at_utc"]
+    group_persisted_at = normalized["market_groups"][0]["provenance"]["persisted_at_utc"]
+    assert market_persisted_at is not None
+    assert group_persisted_at == market_persisted_at
+    assert source_market.provenance.persisted_at_utc is None
+    assert group.provenance.persisted_at_utc is None
+
+
+def test_legacy_observation_without_persistence_time_remains_readable_and_idempotent(
+    tmp_path: Path,
+):
+    store = FrontierStore(tmp_path, max_bytes=2 * 1024 * 1024)
+    raw = _raw(Venue.POLYMARKET, '{"legacy":true}')
+    normalized = market(Venue.POLYMARKET, "legacy-market")
+    observation_id = store.append_observation(raw, normalized)
+
+    with sqlite3.connect(store.path) as connection:
+        row = connection.execute(
+            "SELECT raw_json,normalized_json FROM observations WHERE observation_id=?",
+            (observation_id,),
+        ).fetchone()
+        legacy_normalized = json.loads(row[1])
+        legacy_normalized["provenance"].pop("persisted_at_utc", None)
+        legacy_normalized_json = store._canonical(legacy_normalized)
+        legacy_row_hash = hashlib.sha256(
+            (row[0] + "\n" + legacy_normalized_json).encode("utf-8")
+        ).hexdigest()
+        connection.execute("DROP TRIGGER observations_no_update")
+        connection.execute(
+            "UPDATE observations SET normalized_json=?,row_sha256=? WHERE observation_id=?",
+            (legacy_normalized_json, legacy_row_hash, observation_id),
+        )
+
+    evidence = store.observation(observation_id)
+    assert evidence is not None
+    assert "persisted_at_utc" not in evidence["normalized"]["provenance"]
+    assert store.append_observation(raw, normalized) == observation_id
+    assert "persisted_at_utc" not in store.observation(observation_id)["normalized"]["provenance"]
 
 
 def test_observation_budget_is_enforced_without_overwriting(tmp_path: Path):

@@ -866,3 +866,17 @@ was present and left untouched. No rerun of the two Laboratory browser cases
 was started and no lock was bypassed. Full browser evidence remains 10/12 with
 those two cases admission-denied; Frontier's dedicated browser suite remains
 4/4. Wait for shared admission and lower host pressure before retry.
+
+## Frontier observation persistence checkpoint — 2026-10-27 21:23 UTC
+
+The isolated writer now records missing `Provenance.persisted_at_utc` values
+on new Frontier observations, without mutating adapter models. It preserves an
+existing stamp when copying saved evidence into a content-addressed snapshot;
+legacy rows without the optional field remain readable. Focused storage,
+Coinbase, and snapshot-copy tests pass **25/25**. The full Frontier Python suite
+passes **265/265** at **352,164 KiB peak RSS**, zero swaps. The test process
+overlapped with a newly started external Arena batch after the admission
+precheck; that worker and its lock were left untouched. Production build and
+browser E2E for the Coinbase/storage checkpoint remain pending a safe host
+window. Frontier remains research-only, isolated, undeployed, and
+**PARTIALLY VERIFIED**.

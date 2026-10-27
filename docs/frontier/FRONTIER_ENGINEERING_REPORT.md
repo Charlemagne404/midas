@@ -5,10 +5,13 @@
 **Latest code checkpoint:** `cfda4ad` adds the Coinbase Exchange spot adapter,
 API registration, Mission Control source/graph presentation, and an exact
 Market Data Terms version gate enforced by both API settings and the adapter
-config. The full Frontier Python suite passes 262/262, the web suite passes
-40/40, TypeScript typecheck passes, and targeted ESLint passes. Production build
-and browser regressions remain pending safe resource admission. Project
-Frontier remains incomplete, isolated, and undeployed.
+config. The working tree now also fills missing observation persistence times
+without mutating adapter objects and preserves existing times when copying
+content-addressed evidence. The full Frontier Python suite passes 265/265;
+current web unit/typecheck results remain 40/40 and passed respectively from
+the prior checkpoint. Production build and browser regressions remain pending
+safe resource admission. Project Frontier remains incomplete, isolated, and
+undeployed.
 
 **Branch:** `codex/frontier-20261026`
 
@@ -3954,3 +3957,31 @@ lock inode **6423106** in `D` state. PSI avg10 was 35.46% (`some`) / 31.91%
 (`full`), avg60 13.64% / 11.93%, avg300 15.10% / 13.55%; about 9 GiB was
 available and 459 MiB swap was free. The worker and lock were left untouched;
 no production service, exchange, or historical capture was accessed.
+
+### Observation persistence timestamp — 2026-10-27 21:23 UTC
+
+The Frontier observation writer now stamps missing typed
+`Provenance.persisted_at_utc` values into a copied normalized model before
+serialization and the atomic SQLite insert. The timestamp is the writer's
+pre-insert UTC time; it is not a commit/fsync completion time or an estimate of
+source clock uncertainty. Adapter models are not mutated. Previously stamped
+capture models keep their original timestamp when copied to a content-addressed
+snapshot, preserving the exact row hash. Retry comparison clears only the
+typed persistence field, validates the stored row hash, and leaves the stored
+timestamp untouched. Historical rows with the optional value absent remain
+readable and can be retried idempotently.
+
+The focused storage, Coinbase, and snapshot-copy selection passed **25/25** in
+9.60 seconds (10.04 seconds wall), at **81,880 KiB peak RSS**, zero swaps. It
+covers first-insert stamping, immutability of the caller's model, retry
+stability, nested market/group provenance, legacy-row compatibility, and the
+Coinbase missing source-time case. The complete Frontier suite passed
+**265/265** in 42.04 seconds pytest time / 43.28 seconds wall, at **352,164 KiB
+peak RSS**, zero test-process swaps. One initial full run caught a copied-row
+hash mismatch; preserving an already stamped timestamp fixed it, and both the
+focused snapshot regression and final full run pass. Ruff check/format and
+`git diff --check` pass. The suite run began while no Arena lock was held, but
+an external batch acquired the shared lock during the run; it completed without
+swap and the batch was not touched. No source, production service, Reality
+process, or historical store was accessed. Production build and browser E2E
+remain pending another safe admission window.

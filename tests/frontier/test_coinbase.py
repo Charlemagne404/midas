@@ -134,6 +134,33 @@ async def test_coinbase_product_book_and_trades_preserve_native_semantics_offlin
     assert requests[2].url.params["limit"] == "10"
 
 
+@pytest.mark.asyncio
+async def test_coinbase_incomplete_book_timing_stays_unverified():
+    product_path = "/products/BTC-USD"
+    adapter, _, client = _adapter(
+        {
+            product_path: _product(),
+            f"{product_path}/book": {
+                "sequence": "918273",
+                "time": "not-a-timestamp",
+                "bids": [["67000.10", "0.25", 3]],
+                "asks": [["67000.20", "0.15", 2]],
+            },
+        }
+    )
+    try:
+        (market,) = await adapter.discover_markets(limit=1)
+        book = await adapter.fetch_book(market, "BTC-USD", depth=1)
+    finally:
+        await client.aclose()
+
+    assert book.exchange_timestamp_utc is None
+    assert book.provenance.clock_uncertainty_ms is None
+    assert "SOURCE_BOOK_TIME_MISSING" in book.quality_flags
+    assert "SOURCE_BOOK_SEQUENCE_MISSING_OR_INVALID" in book.quality_flags
+    assert "AUCTION_STATE_MISSING" in book.quality_flags
+
+
 def test_coinbase_config_and_capability_manifest_are_explicit_and_bounded():
     config = CoinbaseSpotConfig(products=("BTC-USD", "ETH-EUR"))
     assert config.products == ("BTC-USD", "ETH-EUR")

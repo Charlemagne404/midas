@@ -11,7 +11,13 @@ from typing import Any
 
 from pydantic import ValidationError
 
-from midas.frontier.models import FrontierMarket, FrontierModel, MarketBatch, RawObservation
+from midas.frontier.models import (
+    FrontierMarket,
+    FrontierModel,
+    MarketBatch,
+    Provenance,
+    RawObservation,
+)
 from midas.frontier.relationships import (
     Relationship,
     RelationshipReview,
@@ -250,6 +256,25 @@ class FrontierStore:
             value = value.model_dump(mode="json")
         return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
 
+    @staticmethod
+    def _with_persisted_at(value: Any, persisted_at_utc: datetime | None) -> Any:
+        """Copy typed provenance, clearing it for comparisons or stamping missing writer time."""
+        if isinstance(value, Provenance):
+            if persisted_at_utc is not None and value.persisted_at_utc is not None:
+                return value
+            return value.model_copy(update={"persisted_at_utc": persisted_at_utc})
+        if isinstance(value, FrontierModel):
+            updates = {
+                name: FrontierStore._with_persisted_at(getattr(value, name), persisted_at_utc)
+                for name in type(value).model_fields
+            }
+            return value.model_copy(update=updates)
+        if isinstance(value, tuple):
+            return tuple(FrontierStore._with_persisted_at(item, persisted_at_utc) for item in value)
+        if isinstance(value, list):
+            return [FrontierStore._with_persisted_at(item, persisted_at_utc) for item in value]
+        return value
+
     def _budgeted_insert(
         self,
         connection: sqlite3.Connection,
@@ -278,10 +303,10 @@ class FrontierStore:
         normalized: FrontierModel,
     ) -> str:
         self.initialize()
-        normalized_json = self._canonical(normalized)
+        normalized_without_persisted_time = self._with_persisted_at(normalized, None)
+        normalized_content_json = self._canonical(normalized_without_persisted_time)
         raw_json = self._canonical(raw)
-        row_payload = raw_json + "\n" + normalized_json
-        if len(row_payload.encode("utf-8")) > MAX_ROW_BYTES:
+        if len((raw_json + "\n" + normalized_content_json).encode("utf-8")) > MAX_ROW_BYTES:
             raise FrontierStoreError("Observation exceeds the 512 KiB record bound")
         observation_id = hashlib.sha256(
             "|".join(
@@ -295,7 +320,6 @@ class FrontierStore:
                 )
             ).encode()
         ).hexdigest()
-        row_hash = hashlib.sha256(row_payload.encode("utf-8")).hexdigest()
         observation_time = raw.received_at_utc.astimezone(UTC).isoformat()
         markets = (
             (normalized,)
@@ -320,10 +344,27 @@ class FrontierStore:
         )
         with self._connect() as connection:
             existing = connection.execute(
-                "SELECT row_sha256 FROM observations WHERE observation_id=?", (observation_id,)
+                "SELECT observation_id,venue,observation_kind,received_at_utc,raw_sha256,"
+                "raw_json,normalized_json,row_sha256 FROM observations WHERE observation_id=?",
+                (observation_id,),
             ).fetchone()
             if existing is not None:
-                if existing["row_sha256"] != row_hash:
+                self._validated_observation_row(existing, include_raw=False)
+                try:
+                    existing_normalized = type(normalized).model_validate(
+                        json.loads(str(existing["normalized_json"]))
+                    )
+                except (json.JSONDecodeError, ValidationError) as error:
+                    raise FrontierStoreError(
+                        "Stored normalized observation payload is invalid"
+                    ) from error
+                existing_content_json = self._canonical(
+                    self._with_persisted_at(existing_normalized, None)
+                )
+                if (
+                    str(existing["raw_json"]) != raw_json
+                    or existing_content_json != normalized_content_json
+                ):
                     raise FrontierStoreError(
                         "Observation identity collision with different content"
                     )
@@ -331,6 +372,16 @@ class FrontierStore:
             count = int(connection.execute("SELECT COUNT(*) FROM observations").fetchone()[0])
             if count >= self.max_observations:
                 raise FrontierStoreError("Frontier observation count budget is exhausted")
+            # Stamp only missing provenance. A previously persisted normalized capture
+            # copied into a content-addressed snapshot keeps its original writer time.
+            # The value is captured immediately before serializing and beginning the
+            # atomic SQLite insert; it is not an fsync-completion or source-clock claim.
+            stored_normalized = self._with_persisted_at(normalized, datetime.now(UTC))
+            normalized_json = self._canonical(stored_normalized)
+            row_payload = raw_json + "\n" + normalized_json
+            if len(row_payload.encode("utf-8")) > MAX_ROW_BYTES:
+                raise FrontierStoreError("Observation exceeds the 512 KiB record bound")
+            row_hash = hashlib.sha256(row_payload.encode("utf-8")).hexdigest()
             self._budgeted_insert(
                 connection,
                 "INSERT INTO observations VALUES(?,?,?,?,?,?,?,?)",

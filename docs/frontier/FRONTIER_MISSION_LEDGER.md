@@ -1,5 +1,32 @@
 # Project Frontier Mission Ledger
 
+**Latest Frontier storage checkpoint (2026-10-27 21:23 UTC):** The bounded
+append-only observation writer now stamps a missing typed
+`Provenance.persisted_at_utc` before serializing a new normalized row. It leaves
+the caller's model untouched, preserves a prior timestamp when copying an
+already persisted capture into a content-addressed snapshot, and compares
+idempotent retries with only the typed persistence time cleared. Legacy rows
+without the optional field remain readable and idempotent. An initial broad
+run exposed a snapshot row-hash regression; the copy-preservation behavior was
+corrected, then focused storage/Coinbase/snapshot tests passed **25/25** and the
+complete Frontier suite passed **265/265** in 42.04 seconds pytest time / 43.28
+seconds wall at **352,164 KiB peak RSS**, zero swaps. The existing
+Starlette/httpx TestClient deprecation is the only warning. The suite's broad
+run overlapped with a newly started external Arena batch after the admission
+precheck; it still completed with no test-process swap. Do not start another
+broad or frontend build/browser job while that batch holds the shared lock.
+Ruff check/format and `git diff --check` pass. The Coinbase missing-book-time
+regression is included; no exchange was queried. Production build and browser
+E2E remain pending, and Frontier remains isolated, research-only, and
+undeployed.
+
+At `2026-10-27T21:23:04Z`, the external bounded
+`veritas_gap_detail_v2_batch.py` PID **3719559** held shared Arena lock inode
+**6423106** in `D` state. PSI avg10 was 40.12% (`some`) / 35.81% (`full`),
+avg60 18.55% / 16.35%, avg300 16.59% / 14.89%; 9 GiB was available and 459 MiB
+swap was free. The process and lock were left untouched. No Reality service,
+source API, production service, or historical evidence was changed.
+
 **Admission recheck (2026-10-27 21:14:30 UTC):** The same external
 `veritas_gap_detail_v2_batch.py` worker PID **3711078** still held lock inode
 **6423106** in `D` state after 2:11 elapsed. PSI had risen to 47.63% (`some`) /
