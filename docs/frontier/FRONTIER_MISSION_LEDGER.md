@@ -1,6 +1,24 @@
 # Project Frontier Mission Ledger
 
-**Latest checkpoint (2026-10-27 18:26 UTC):** Code commit `80162fe` scopes the
+**Latest checkpoint (2026-10-27 18:28 UTC):** The repository-wide Python suite
+remains incomplete. Plain `pytest -q` stopped in collection with five errors:
+four sibling test imports need `tests/` on `PYTHONPATH`, and
+`tests/test_reality_full_scale_validation.py` imports
+`midas.reality.recovery`, which is absent from this Frontier/V6 baseline and
+from current `main`. With `PYTHONPATH=tests` and only that incompatible file
+excluded, 50 tests passed before the live resource-gate test correctly found
+`host_memory_pressure` in addition to its fixture worker blocker. I interrupted
+the run at that point. At `2026-10-27T18:28:25Z`, PSI was `some avg10=34.98%` /
+`full avg10=30.76%`, with `MemAvailable` 9,528,840 KiB and swap free 482,740
+KiB. No tests were changed to suppress the result; the already completed
+Frontier/web/build/browser verification remains green.
+
+Next safe actions: wait for host pressure to materially ease, then rerun the
+suite with `PYTHONPATH=tests` while reporting the unavailable Reality recovery
+module separately. Preserve the verified V6 baseline, protected Reality code,
+and unrelated dirty worktrees.
+
+**Previous checkpoint (2026-10-27 18:26 UTC):** Code commit `80162fe` scopes the
 funding E2E balance assertion to its venue row after the full Frontier spec
 revealed two `status` elements in the panel. The isolated rerun passes, and the
 full browser suite passes **12 tests**. The full Frontier Python suite passes

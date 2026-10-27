@@ -3078,3 +3078,36 @@ settlement prerequisites and rejects invalid candidate timestamps;
 `80162fe` repairs the Frontier E2E locator. Full-suite verification also covers
 earlier carry commits `6fe0192` and `abb512f`. No protected service, held-source
 store, exchange API, or production deployment was used.
+
+### Repository-wide Python regression attempt — 2026-10-27 18:28 UTC
+
+The default repository invocation, `/home/charlie/midas/.venv/bin/pytest -q`,
+failed during collection before running tests. Four tests use sibling imports
+such as `from test_reality_foundry import ...` while `tests/` is a package and
+is not on the configured Python path. A fifth collection error is
+`tests/test_reality_full_scale_validation.py` importing
+`midas.reality.recovery`, which is absent from the selected Frontier baseline
+(whose verified source parent is `11d32a0693b25c290fd273f23e40cf7b5950d95d`) and
+from current `main`. I did not copy code from another dirty worktree or change
+Reality to satisfy this stale test dependency.
+
+I retried with `PYTHONPATH=tests` and excluded only that uncollectable
+full-scale file. **50 tests passed** before the suite reached
+`tests/arena/test_admission.py::test_resource_snapshot_detects_workers_across_arena_roots`.
+That test expected only its synthetic Arena worker reason, while the actual
+host gate correctly reported an additional `host_memory_pressure` reason. At
+`2026-10-27T18:28:25Z`, host PSI was `some avg10=34.98%` / `full avg10=30.76%`.
+I interrupted the broader run rather than suppressing that live resource
+signal. The attempt peaked at **521,880 KiB** RSS and used no swap; tests after
+the interruption remain unverified. This does not invalidate the separately
+completed 212-test Frontier suite, 40-test web suite, 12 browser tests, or
+production build.
+
+| Component | Current status | Boundary |
+| --- | --- | --- |
+| Frontier, web, and browser regression | COMPLETE AND VERIFIED | 212 Frontier Python tests, 40 web tests, 12 repository browser tests, and the production build pass. |
+| Broader legacy Python regression | PARTIALLY VERIFIED | 50 tests passed before a live host-pressure gate assertion; remainder was interrupted. Default collection also has four sibling-import errors and one absent Reality recovery dependency. No test behavior was weakened. |
+| Project Frontier overall | PARTIALLY VERIFIED | Development remains isolated and undeployed; source/semantic validation, broader legacy verification, and production transition prerequisites remain unresolved. |
+
+No additional source file changed for this test attempt. This remains an
+environment- and baseline-limited verification result, not a code pass.
