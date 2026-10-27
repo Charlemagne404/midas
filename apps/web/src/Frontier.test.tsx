@@ -1,5 +1,5 @@
 import { afterEach, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Frontier } from './Frontier';
 
@@ -315,7 +315,7 @@ it('renders recorded-evidence empty states and never probes a source automatical
     expect(capital).toHaveTextContent('Currency is missing or mixed; comparison unavailable.'),
   );
   expect(
-    capital.getByRole('textbox', { name: 'Virtual balance allocated to Kalshi' }),
+    within(capital).getByRole('textbox', { name: 'Virtual balance allocated to Kalshi' }),
   ).toBeDisabled();
   expect(screen.getAllByText('red')).toHaveLength(2);
 });
