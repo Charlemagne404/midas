@@ -356,3 +356,59 @@ def test_replay_list_detects_offline_payload_tampering(tmp_path: Path):
         )
     with pytest.raises(FrontierStoreError, match="replay payload"):
         store.replays(limit=10)
+
+
+def test_legacy_replay_audit_schema_remains_hash_verified_and_readable(tmp_path: Path):
+    store = FrontierStore(tmp_path, max_bytes=2 * 1024 * 1024)
+    _, runs = _paired_fixture()
+    legacy = runs[0].model_dump(mode="json")
+    legacy["manifest"]["economic_model_version"] = "frontier-economic-verifiers-6"
+    legacy_run_id = hashlib.sha256(
+        FrontierStore._canonical(legacy["manifest"]).encode()
+    ).hexdigest()
+    legacy["run_id"] = legacy_run_id
+    audit_count = 0
+    for candidate in legacy["candidates"]:
+        candidate["model_version"] = "frontier-economic-verifiers-6"
+        audit = candidate.get("independent_audit")
+        if not isinstance(audit, dict):
+            continue
+        audit_count += 1
+        audit["schema_version"] = 1
+        audit["model_version"] = "frontier-independent-economic-audit-3"
+        audit.pop("recomputed_received_skew_ms", None)
+        audit.pop("recomputed_exchange_skew_ms", None)
+        audit.pop("recomputed_timing_verified", None)
+    assert audit_count > 0
+    legacy.pop("result_sha256")
+    legacy_digest = hashlib.sha256(FrontierStore._canonical(legacy).encode()).hexdigest()
+    legacy["result_sha256"] = legacy_digest
+    legacy_json = FrontierStore._canonical(legacy)
+    created_at = runs[0].manifest.as_of_utc.isoformat()
+
+    store.initialize()
+    with sqlite3.connect(store.path) as connection:
+        connection.execute(
+            "INSERT INTO research_runs VALUES(?,?,?,?)",
+            (legacy_run_id, created_at, legacy_digest, legacy_json),
+        )
+
+    loaded = store.replays(limit=10)
+    legacy_row = next(item for item in loaded if item["run_id"] == legacy_run_id)
+    assert legacy_row["result_sha256"] == legacy_digest
+    assert legacy_row["result"]["manifest"]["economic_model_version"] == (
+        "frontier-economic-verifiers-6"
+    )
+    loaded_audits = [
+        item["independent_audit"]
+        for item in legacy_row["result"]["candidates"]
+        if isinstance(item.get("independent_audit"), dict)
+    ]
+    assert loaded_audits
+    assert all(item["schema_version"] == 1 for item in loaded_audits)
+    assert all(item["recomputed_timing_verified"] is None for item in loaded_audits)
+    with sqlite3.connect(store.path) as connection:
+        preserved_json = connection.execute(
+            "SELECT result_json FROM research_runs WHERE run_id=?", (legacy_run_id,)
+        ).fetchone()[0]
+    assert preserved_json == legacy_json

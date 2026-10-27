@@ -1007,8 +1007,18 @@ class FrontierStore:
     @staticmethod
     def _validated_replay_row(row: sqlite3.Row) -> ReplayResult:
         try:
-            result = ReplayResult.model_validate(json.loads(str(row["result_json"])))
+            raw_result = json.loads(str(row["result_json"]))
         except (json.JSONDecodeError, ValidationError) as error:
+            raise FrontierStoreError("Stored replay payload is invalid") from error
+        if not isinstance(raw_result, dict):
+            raise FrontierStoreError("Stored replay payload is invalid")
+        raw_output = {key: value for key, value in raw_result.items() if key != "result_sha256"}
+        raw_digest = hashlib.sha256(
+            FrontierStore._canonical(raw_output).encode("utf-8")
+        ).hexdigest()
+        try:
+            result = ReplayResult.model_validate(raw_result)
+        except ValidationError as error:
             raise FrontierStoreError("Stored replay payload is invalid") from error
         if (
             result.run_id != row["run_id"]
@@ -1029,7 +1039,8 @@ class FrontierStore:
             "classification_counts": result.classification_counts,
         }
         canonical = json.dumps(output, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
-        if hashlib.sha256(canonical.encode("utf-8")).hexdigest() != result.result_sha256:
+        normalized_digest = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+        if result.result_sha256 not in {raw_digest, normalized_digest}:
             raise FrontierStoreError("Stored replay result hash does not match its payload")
         return result
 
