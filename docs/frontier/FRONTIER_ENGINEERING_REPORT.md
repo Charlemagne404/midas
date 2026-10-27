@@ -3500,7 +3500,7 @@ MiB of 4 GiB. `git diff --check` passed. Frontier remains PARTIALLY VERIFIED;
 permission, live cross-venue economics, broad repository regression, and
 deployment remain open.
 
-### Kalshi price-range constraints — 2026-10-27 19:42 UTC
+### Kalshi price-range constraints — 2026-10-27 19:44 UTC
 
 The [official Kalshi Get Market schema](https://docs.kalshi.com/api-reference/market/get-market)
 exposes `price_ranges` entries with `start`, `end`, and `step`. Frontier
@@ -3515,15 +3515,17 @@ as the step-grid anchor, inferred from the schema shape. Endpoint inclusivity
 is unspecified and boundary quotes therefore fail closed. This is fixture
 verification, not live source validation.
 
-The focused Python selection passed **10 tests, 126 deselected** in 1.12 seconds
-at **79,056 KiB peak RSS**, with zero swaps and one existing
+The focused Python selection passed **17 tests, 126 deselected** in 1.17 seconds
+at **78,936 KiB peak RSS**, with zero swaps and one existing
 Starlette/httpx deprecation warning. It covered adapter parsing/malformed
 metadata, candidate and independent-audit quote checks, deterministic replay,
-and replay API output, including rejection of an extreme `1e-999999999` step.
+and replay API output. Adversarial fixtures reject an extreme `1e-999999999`
+step, non-array or oversized lists, out-of-domain and overlapping ranges,
+missing fields, numeric rather than string values, and overlong decimals.
 The Kalshi fee-metadata UI scenario passed **1/1**
 (7 skipped). TypeScript typecheck, targeted ESLint and Prettier, Ruff, strict
 mypy on the five changed production modules, and `git diff --check` passed.
-The `19:42 UTC` memory sample was 42.82% `some` / 38.07% `full` at `avg10`,
+The `19:44:20 UTC` memory sample was 46.09% `some` / 41.22% `full` at `avg10`,
 with 9.3 GiB available memory and 468 MiB swap free. The broad
 Frontier suite and production build remain deferred. No source request, held
 data read, protected service action, or deployment occurred.

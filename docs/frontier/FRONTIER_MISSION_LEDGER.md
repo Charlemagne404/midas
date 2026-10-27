@@ -2140,7 +2140,7 @@ documentation. Source permission, specific market fee applicability, genuine
 cross-venue economics, broader regression, and production deployment remain
 unresolved.
 
-## 2026-10-27 19:42 UTC — Kalshi price-range constraints
+## 2026-10-27 19:44 UTC — Kalshi price-range constraints
 
 The [official Kalshi Get Market schema](https://docs.kalshi.com/api-reference/market/get-market)
 exposes `price_ranges` entries with `start`, `end`, and `step`. Frontier now
@@ -2157,13 +2157,15 @@ fail closed. No source request or held-capture read occurred.
 
 Economic model v10, independent audit v7, and deterministic replay v10 pin the
 new constraint behavior. The selected adapter/economics/replay/API tests passed
-**10 passed, 126 deselected** in 1.12 seconds at **79,056 KiB peak RSS** with
-zero swaps (one existing Starlette/httpx deprecation warning). One fixture
-rejects an extreme `1e-999999999` step before any rational conversion. The focused
-Kalshi-fee-metadata UI test passed **1/1** (7 skipped). TypeScript typecheck,
+**17 passed, 126 deselected** in 1.17 seconds at **78,936 KiB peak RSS** with
+zero swaps (one existing Starlette/httpx deprecation warning). Adversarial
+fixtures reject an extreme `1e-999999999` step before rational conversion,
+non-array and oversized range lists, out-of-domain and overlapping ranges,
+missing fields, non-string numeric fields, and overlong decimal strings. The
+focused Kalshi-fee-metadata UI test passed **1/1** (7 skipped). TypeScript typecheck,
 targeted ESLint/Prettier, Ruff, strict mypy on five changed production modules,
-and `git diff --check` passed. At `2026-10-27T19:42:55Z`, host memory PSI
-`avg10` was 42.82% (`some`) / 38.07% (`full`), with 9.3 GiB available memory
+and `git diff --check` passed. At `2026-10-27T19:44:20Z`, host memory PSI
+`avg10` was 46.09% (`some`) / 41.22% (`full`), with 9.3 GiB available memory
 and 468 MiB swap free. No broad suite or production build was run. Live range semantics, source
 permission, cross-venue economics, and deployment remain unresolved; Frontier
 remains isolated and PARTIALLY VERIFIED.

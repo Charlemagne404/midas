@@ -540,7 +540,7 @@ unresolved.
 See the [Frontier ledger](frontier/FRONTIER_MISSION_LEDGER.md) and
 [engineering report](frontier/FRONTIER_ENGINEERING_REPORT.md).
 
-## Frontier Kalshi price-range checkpoint — 2026-10-27 19:42 UTC
+## Frontier Kalshi price-range checkpoint — 2026-10-27 19:44 UTC
 
 The isolated Frontier branch now normalizes Kalshi `price_ranges` as exact
 decimals in FrontierMarket schema v4 and Kalshi adapter v17. The new instrument
@@ -553,12 +553,14 @@ official schema's `start`/`end`/`step` shape. Because endpoint inclusivity is
 undocumented, prices at range boundaries fail closed. This is fixture-verified
 behavior only; no live request or held-data read occurred.
 
-The focused Python adapter/economics/replay/API selection passed **10 tests**
-with one existing deprecation warning at **79,056 KiB peak RSS** and zero swaps.
+The focused Python adapter/economics/replay/API selection passed **17 tests**
+with one existing deprecation warning at **78,936 KiB peak RSS** and zero swaps.
 The targeted Frontier UI scenario passed **1/1**; TypeScript, targeted ESLint,
 Prettier, Ruff, strict mypy on five production modules, and `git diff --check`
-passed. At `2026-10-27T19:42:55Z`, memory PSI `avg10` was 42.82% `some` /
-38.07% `full`, with 9.3 GiB available and 468 MiB swap free. The broad suite and
+passed. Parser regressions reject non-arrays, oversized and overlapping
+ranges, out-of-domain values, missing/numeric fields, overlong decimals, and an
+extreme exponent. At `2026-10-27T19:44:20Z`, memory PSI `avg10` was 46.09% `some` /
+41.22% `full`, with 9.3 GiB available and 468 MiB swap free. The broad suite and
 production build were deferred. Frontier remains isolated, research-only,
 PARTIALLY VERIFIED, and undeployed; live source permission, price-range
 semantics, multi-venue economic validation, and deployment remain open.

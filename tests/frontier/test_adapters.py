@@ -1731,6 +1731,60 @@ async def test_kalshi_market_rejects_malformed_price_increment_ranges(step):
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "price_ranges",
+    (
+        None,
+        [{"start": "0.10", "end": "0.20", "step": "0.01"}] * 33,
+        [{"start": "0.10", "end": "1.01", "step": "0.01"}],
+        [
+            {"start": "0.10", "end": "0.60", "step": "0.01"},
+            {"start": "0.50", "end": "0.80", "step": "0.01"},
+        ],
+        [{"start": "0.10", "end": "0.20"}],
+        [{"start": 0.1, "end": "0.20", "step": "0.01"}],
+        [{"start": "0" * 65, "end": "0.20", "step": "0.01"}],
+    ),
+    ids=(
+        "non-array",
+        "too-many",
+        "outside-binary-domain",
+        "overlapping",
+        "missing-field",
+        "numeric-value",
+        "oversized-decimal",
+    ),
+)
+async def test_kalshi_market_rejects_unsafe_price_increment_range_collections(price_ranges):
+    ticker = "KX-UNSAFE-PRICE-RANGES"
+    body = json.dumps(
+        {
+            "market": {
+                "ticker": ticker,
+                "market_type": "binary",
+                "price_ranges": price_ranges,
+            }
+        }
+    )
+    transport, requests, client = _transport(
+        "external-api.kalshi.com", {f"/markets/{ticker}": body}
+    )
+    adapter = KalshiAdapter(
+        AdapterConfig(
+            enabled=True, live_public_probe_enabled=True, requests_per_second=5, retries=0
+        ),
+        transport=transport,
+    )
+    try:
+        with pytest.raises(AdapterError) as error:
+            await adapter.fetch_market_metadata(ticker)
+    finally:
+        await client.aclose()
+    assert error.value.code == "INVALID_PRICE_RANGES"
+    assert len(requests) == 1 and requests[0].method == "GET"
+
+
+@pytest.mark.asyncio
 async def test_kalshi_single_market_metadata_lookup_rejects_response_ticker_mismatch():
     requested = "KXNBAAST-26OCT26WASCHA-CHABMILLER24-2"
     response_ticker = "KXOTHER"
