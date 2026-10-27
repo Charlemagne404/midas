@@ -2256,7 +2256,8 @@ filter operates at the application API boundary; direct database inspection
 and exports remain held.
 Fixture development remains available.
 
-The source/storage/Arena/API selection passed **13 tests** in 10.37 seconds; the
+The source/storage/Arena/API selection passed **13 tests** in 10.37 seconds;
+the Arena replay/API modules passed **30 tests** in 4.66 seconds. The
 Frontier component suite passed **8/8**. TypeScript, targeted ESLint, Prettier,
 Ruff, and `git diff --check` passed. One existing Starlette/httpx TestClient
 deprecation warning remains. The full suite and frontend production build were

@@ -112,8 +112,9 @@ held observations, Arena snapshots/results, and job manifest remain unchanged
 during blocked reads. The Arena test also covers generic job overview/detail/log
 routes, research-activity digests, generic replay submission, cancellation
 rejection, and damaged provenance. The focused source/storage/Arena/API
-selection passed **13 tests**;
-the Frontier Mission Control component passed **8/8**, with TypeScript, targeted
-ESLint, Prettier, Ruff, and `git diff --check` passing. The full suite and production
-build were not rerun at this checkpoint. No live request, database mutation,
+selection passed **13 tests**; the Arena replay/API modules passed **30 tests**
+in 4.66 seconds with the existing Starlette/httpx deprecation warning. The
+Frontier Mission Control component passed **8/8**, with TypeScript, targeted
+ESLint, Prettier, Ruff, and `git diff --check` passing. The full suite and
+production build were not rerun at this checkpoint. No live request, database mutation,
 service action, or deployment occurred.

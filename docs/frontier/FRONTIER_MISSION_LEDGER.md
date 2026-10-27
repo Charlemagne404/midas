@@ -1254,8 +1254,9 @@ fixture snapshots and do not inspect the preserved live source database.
 
 Verification: the focused source/storage/Arena/API selection passed **13 tests**
 in 10.37 seconds with the existing Starlette/httpx TestClient deprecation
-warning. The Arena held-source regression passed separately (**1 passed**).
-Ruff format/check and `git diff --check` passed. The source artifacts and Arena
+warning. Both Arena replay and API modules passed **30 tests** in 4.66 seconds;
+the held-source regression also passed separately (**1 passed**). Ruff
+format/check and `git diff --check` passed. The source artifacts and Arena
 snapshot/result fixtures remained unchanged; no service, exchange, or live
 database was accessed. Source terms remain BLOCKED, direct database reads and
 exports remain held, production deployment remains DEFERRED, and the mission
