@@ -576,6 +576,13 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
                     previous[0].provenance.response_received_at_utc,
                     previous[1],
                 ):
+                    market = market.model_copy(
+                        update={
+                            "provenance": market.provenance.model_copy(
+                                update={"observation_id": observation_id}
+                            )
+                        }
+                    )
                     indexed[market.canonical_id] = (market, observation_id)
         values = sorted(
             indexed.values(),
@@ -626,10 +633,19 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
         for observation in stored:
             normalized = observation["normalized"]
             if isinstance(normalized, dict) and "native_instrument_id" in normalized:
+                book = BookSnapshot.model_validate(normalized)
+                observation_id = str(observation["observation_id"])
+                book = book.model_copy(
+                    update={
+                        "provenance": book.provenance.model_copy(
+                            update={"observation_id": observation_id}
+                        )
+                    }
+                )
                 items.append(
                     {
-                        **BookSnapshot.model_validate(normalized).model_dump(mode="json"),
-                        "source_observation_record_id": observation["observation_id"],
+                        **book.model_dump(mode="json"),
+                        "source_observation_record_id": observation_id,
                     }
                 )
         return {"items": items, "limit": limit, "offset": offset, "returned": len(items)}
@@ -1853,13 +1869,7 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
     @api.post("/replay/compare")
     async def compare_replay(scenarios: PairedReplayRequest) -> dict[str, Any]:
         market_values = await _load_markets(store, 100)
-        book_rows = store.observations(kind="book_snapshot", limit=200)
-        books = tuple(
-            BookSnapshot.model_validate(item["normalized"])
-            for item in book_rows
-            if isinstance(item.get("normalized"), dict)
-            and "native_instrument_id" in item["normalized"]
-        )
+        books = tuple(book for book, _ in _load_book_records(store, 200))
         relation_rows = store.relationships(state="verified", limit=500, effective_only=True)
         verified = tuple(
             Relationship.model_validate(item["relationship"]) for item in relation_rows
@@ -1892,13 +1902,7 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
             )
         try:
             market_values = await _load_markets(store, 100)
-            book_rows = store.observations(kind="book_snapshot", limit=200)
-            books = tuple(
-                BookSnapshot.model_validate(item["normalized"])
-                for item in book_rows
-                if isinstance(item.get("normalized"), dict)
-                and "native_instrument_id" in item["normalized"]
-            )
+            books = tuple(book for book, _ in _load_book_records(store, 200))
             relation_rows = store.relationships(state="verified", limit=500, effective_only=True)
             verified = tuple(
                 Relationship.model_validate(item["relationship"]) for item in relation_rows
@@ -1955,13 +1959,7 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
         relationship_limit: int = Query(default=500, ge=1, le=1000),
     ) -> dict[str, Any]:
         market_values = await _load_markets(store, market_limit)
-        book_rows = store.observations(kind="book_snapshot", limit=min(200, book_limit))
-        books = tuple(
-            BookSnapshot.model_validate(item["normalized"])
-            for item in book_rows
-            if isinstance(item.get("normalized"), dict)
-            and "native_instrument_id" in item["normalized"]
-        )
+        books = tuple(book for book, _ in _load_book_records(store, book_limit))
         relation_rows = store.relationships(
             state="verified", limit=relationship_limit, effective_only=True
         )
@@ -2262,6 +2260,13 @@ async def _load_market_records(
             if isinstance(value, dict) and "canonical_id" in value:
                 market = FrontierMarket.model_validate(value)
                 observation_id = str(row["observation_id"])
+                market = market.model_copy(
+                    update={
+                        "provenance": market.provenance.model_copy(
+                            update={"observation_id": observation_id}
+                        )
+                    }
+                )
                 previous = markets.get(market.canonical_id)
                 if previous is None or (
                     market.provenance.response_received_at_utc,
@@ -2281,6 +2286,24 @@ async def _load_market_records(
 async def _load_markets(store: FrontierStore, limit: int) -> tuple[FrontierMarket, ...]:
     """Load the latest normalized market and retain the established market-only API."""
     return tuple(market for market, _ in await _load_market_records(store, limit))
+
+
+def _load_book_records(store: FrontierStore, limit: int) -> tuple[tuple[BookSnapshot, str], ...]:
+    """Load books with the immutable store record ID as their runtime provenance ID."""
+    values = []
+    for row in store.observations(kind="book_snapshot", limit=min(200, limit)):
+        normalized = row.get("normalized")
+        if not isinstance(normalized, dict) or "native_instrument_id" not in normalized:
+            continue
+        book = BookSnapshot.model_validate(normalized)
+        observation_id = str(row["observation_id"])
+        book = book.model_copy(
+            update={
+                "provenance": book.provenance.model_copy(update={"observation_id": observation_id})
+            }
+        )
+        values.append((book, observation_id))
+    return tuple(values)
 
 
 async def _load_kalshi_fee_evidence(

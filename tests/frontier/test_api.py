@@ -174,6 +174,8 @@ def test_event_group_probe_persists_parent_context_and_binds_to_recorded_market(
         listed = client.get("/api/frontier/markets?venue=polymarket&q=562802").json()["items"]
         assert listed[0]["native_event_id"] == "32225"
         assert listed[0]["native_event_title"] == payload["event_title"]
+        assert listed[0]["provenance"]["observation_id"] == payload["observation_id"]
+        assert listed[0]["source_observation_record_id"] == payload["observation_id"]
 
         unbound = client.post(
             "/api/frontier/probe/polymarket/event-markets",
@@ -339,6 +341,7 @@ def test_captured_cross_venue_event_context_creates_reviewable_hypothesis(tmp_pa
     app.include_router(router(store, registry))
     client = TestClient(app)
     try:
+        event_observation_ids: set[str] = set()
         for venue, native_market_id, _, event_id in seeds:
             request_payload = {"market_id": f"{venue.value}:{native_market_id}"}
             if event_id is not None:
@@ -347,6 +350,7 @@ def test_captured_cross_venue_event_context_creates_reviewable_hypothesis(tmp_pa
                 f"/api/frontier/probe/{venue.value}/event-markets", json=request_payload
             )
             assert response.status_code == 200, response.text
+            event_observation_ids.add(response.json()["observation_id"])
 
         response = client.post("/api/frontier/relationships/propose?market_limit=200&max_pairs=500")
         assert response.status_code == 200, response.text
@@ -377,6 +381,89 @@ def test_captured_cross_venue_event_context_creates_reviewable_hypothesis(tmp_pa
         assert len(same_event["evidence"][0]["observation_ids"]) == 1
         same_event_record = store.observation(same_event["evidence"][0]["observation_ids"][0])
         assert same_event_record is not None
+        polymarket_event_record_id = next(
+            item
+            for item in event_observation_ids
+            if store.observation(item)["raw"]["venue"] == Venue.POLYMARKET.value
+        )
+        polymarket_event_record = store.observation(polymarket_event_record_id)
+        assert polymarket_event_record is not None
+        polymarket_market = FrontierMarket.model_validate(
+            next(
+                item
+                for item in polymarket_event_record["normalized"]["markets"]
+                if item["native_market_id"] == "562802"
+            )
+        )
+        public_book = book(
+            polymarket_market,
+            polymarket_market.instruments[0].native_instrument_id,
+            "0.45",
+        )
+        book_body = '{"captured_fixture":"event-replay-source-link"}'
+        book_raw = RawObservation(
+            venue=Venue.POLYMARKET,
+            observation_kind="book_snapshot",
+            request_url=(
+                "https://clob.polymarket.com/book?token_id="
+                f"{polymarket_market.instruments[0].native_instrument_id}"
+            ),
+            http_status=200,
+            request_started_at_utc=T0,
+            received_at_utc=T0,
+            raw_body=book_body,
+            raw_sha256=hashlib.sha256(book_body.encode()).hexdigest(),
+            adapter_version="test-seed-v1",
+        )
+        book_record_id = store.append_observation(book_raw, public_book)
+        saved_books = client.get("/api/frontier/books?venue=polymarket").json()["items"]
+        assert len(saved_books) == 1
+        assert saved_books[0]["provenance"]["observation_id"] == book_record_id
+        assert saved_books[0]["source_observation_record_id"] == book_record_id
+        replay_response = client.post("/api/frontier/replay", json={})
+        assert replay_response.status_code == 200, replay_response.text
+        replay_result = replay_response.json()
+        assert event_observation_ids == set(replay_result["manifest"]["market_observation_ids"])
+        assert replay_result["manifest"]["book_observation_ids"] == [book_record_id]
+        replay_candidate = next(
+            item
+            for item in replay_result["proposed_relationships"]
+            if {item["left_market_id"], item["right_market_id"]} == target_ids
+        )
+        assert replay_candidate["state"] == "hypothesis"
+        for evidence_id in replay_candidate["evidence"][0]["observation_ids"]:
+            assert store.observation(evidence_id) is not None
+        replay_again = client.post("/api/frontier/replay", json={})
+        assert replay_again.status_code == 200, replay_again.text
+        assert replay_again.json()["run_id"] == replay_result["run_id"]
+        assert client.get("/api/frontier/runs").json()["returned"] == 1
+        comparison_response = client.post(
+            "/api/frontier/replay/compare",
+            json={
+                "scenarios": [
+                    {"name": "public-metadata-baseline"},
+                    {"name": "public-metadata-stress", "execution_delay_ms": 1000},
+                ]
+            },
+        )
+        assert comparison_response.status_code == 200, comparison_response.text
+        comparison = comparison_response.json()
+        for run in comparison["runs"]:
+            paired_run = store.replay(run["run_id"])
+            assert paired_run is not None
+            result = paired_run["result"]
+            assert set(result["manifest"]["market_observation_ids"]) == event_observation_ids
+            assert result["manifest"]["book_observation_ids"] == [book_record_id]
+            target_edge = next(
+                item
+                for item in result["proposed_relationships"]
+                if {item["left_market_id"], item["right_market_id"]} == target_ids
+            )
+            assert all(
+                store.observation(item) is not None
+                for item in target_edge["evidence"][0]["observation_ids"]
+            )
+        assert client.get("/api/frontier/runs").json()["returned"] == 3
         assert len(requests) == 2
         assert all(request.method == "GET" for request in requests)
         assert all("authorization" not in request.headers for request in requests)
@@ -878,6 +965,42 @@ def test_arena_replay_stages_a_pinned_snapshot_before_admitted_job_creation(tmp_
 
     arena_root = tmp_path / "arena"
     client, registry, http_client, requests, store = _client(tmp_path, arena_root=arena_root)
+    source_market = market(Venue.KALSHI, "arena-source-record-link")
+    market_body = '{"fixture":"arena-source-record-link"}'
+    market_record_id = store.append_observation(
+        RawObservation(
+            venue=Venue.KALSHI,
+            observation_kind="market_listing",
+            request_url="https://external-api.kalshi.com/trade-api/v2/markets",
+            http_status=200,
+            request_started_at_utc=T0,
+            received_at_utc=T0,
+            raw_body=market_body,
+            raw_sha256=hashlib.sha256(market_body.encode()).hexdigest(),
+            adapter_version="test-seed-v1",
+        ),
+        MarketBatch(venue=Venue.KALSHI, markets=(source_market,)),
+    )
+    source_book = book(
+        source_market,
+        source_market.instruments[0].native_instrument_id,
+        "0.4",
+    )
+    book_body = '{"fixture":"arena-book-record-link"}'
+    book_record_id = store.append_observation(
+        RawObservation(
+            venue=Venue.KALSHI,
+            observation_kind="book_snapshot",
+            request_url="https://external-api.kalshi.com/trade-api/v2/markets/arena-source/orderbook",
+            http_status=200,
+            request_started_at_utc=T0,
+            received_at_utc=T0,
+            raw_body=book_body,
+            raw_sha256=hashlib.sha256(book_body.encode()).hexdigest(),
+            adapter_version="test-seed-v1",
+        ),
+        source_book,
+    )
     captured = {}
 
     def create(root, spec, *, admission_key):
@@ -902,6 +1025,8 @@ def test_arena_replay_stages_a_pinned_snapshot_before_admitted_job_creation(tmp_
             arena_root / "frontier-replay-snapshots" / f"{payload['frontier_snapshot_id']}.json"
         )
         pinned = FrontierReplaySnapshot.model_validate_json(snapshot_path.read_bytes())
+        assert pinned.markets[0].provenance.observation_id == market_record_id
+        assert pinned.books[0].provenance.observation_id == book_record_id
         assert captured["root"] == arena_root
         assert captured["spec"].kind == "frontier_replay"
         assert captured["spec"].frontier_replay.snapshot_id == pinned.snapshot_id
@@ -912,7 +1037,7 @@ def test_arena_replay_stages_a_pinned_snapshot_before_admitted_job_creation(tmp_
         assert payload["network_calls"] == 0
         assert payload["research_only"] is True
         assert requests == []
-        assert store.summary()["observations"] == 0
+        assert store.summary()["observations"] == 2
     finally:
         client.close()
         asyncio.run(registry.aclose())
@@ -1979,7 +2104,7 @@ def test_replay_api_generates_and_persists_multi_outcome_candidate(tmp_path):
         replay = client.post("/api/frontier/replay", json={})
         assert replay.status_code == 200, replay.text
         result = replay.json()
-        assert result["manifest"]["replay_version"] == "frontier-deterministic-replay-5"
+        assert result["manifest"]["replay_version"] == "frontier-deterministic-replay-6"
         assert len(result["candidates"]) == 1
         candidate = result["candidates"][0]
         assert candidate["family"] == "within_market_multi_outcome_coverage"
