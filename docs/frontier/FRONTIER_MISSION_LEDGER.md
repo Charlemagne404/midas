@@ -2162,11 +2162,12 @@ zero swaps (one existing Starlette/httpx deprecation warning). Adversarial
 fixtures reject an extreme `1e-999999999` step before rational conversion,
 non-array and oversized range lists, out-of-domain and overlapping ranges,
 missing fields, non-string numeric fields, and overlong decimal strings. The
-focused Kalshi-fee-metadata UI test passed **1/1** (7 skipped). TypeScript typecheck,
-targeted ESLint/Prettier, Ruff, strict mypy on five changed production modules,
-and `git diff --check` passed. At `2026-10-27T19:44:20Z`, host memory PSI
-`avg10` was 46.09% (`some`) / 41.22% (`full`), with 9.3 GiB available memory
-and 468 MiB swap free. No broad suite or production build was run. Live range semantics, source
+full Frontier component test file passed **8/8** in 3.31 seconds, including
+range and quantity-constraint display. TypeScript typecheck, targeted
+ESLint/Prettier, Ruff, strict mypy on five changed production modules, and
+`git diff --check` passed. At `2026-10-27T19:46:50Z`, host memory PSI `avg10`
+was 41.09% (`some`) / 36.23% (`full`), with 9.2 GiB available and 468 MiB swap
+free. No broad suite or production build was run. Live range semantics, source
 permission, cross-venue economics, and deployment remain unresolved; Frontier
 remains isolated and PARTIALLY VERIFIED.
 Code commit `47f399d` implements the typed range model and checks; test/documentation
@@ -2179,3 +2180,5 @@ Next safe action: continue offline work on unresolved cross-venue capital and
 settlement costs, keeping unsupported transfer/FX costs unknown. Recheck host
 pressure before attempting the broader Frontier suite; keep the source-use hold,
 protected services, and production deployment boundary unchanged.
+At `2026-10-27T19:46:50Z`, the full Frontier UI component file also passed
+**8/8** in 3.31 seconds under the same bounded resource sample.

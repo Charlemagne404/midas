@@ -555,12 +555,13 @@ behavior only; no live request or held-data read occurred.
 
 The focused Python adapter/economics/replay/API selection passed **17 tests**
 with one existing deprecation warning at **78,936 KiB peak RSS** and zero swaps.
-The targeted Frontier UI scenario passed **1/1**; TypeScript, targeted ESLint,
-Prettier, Ruff, strict mypy on five production modules, and `git diff --check`
-passed. Parser regressions reject non-arrays, oversized and overlapping
+The full Frontier UI component file passed **8/8** in 3.31 seconds, including
+the new constraint display. TypeScript, targeted ESLint, Prettier, Ruff, strict
+mypy on five production modules, and `git diff --check` passed. Parser
+regressions reject non-arrays, oversized and overlapping
 ranges, out-of-domain values, missing/numeric fields, overlong decimals, and an
-extreme exponent. At `2026-10-27T19:44:20Z`, memory PSI `avg10` was 46.09% `some` /
-41.22% `full`, with 9.3 GiB available and 468 MiB swap free. The broad suite and
+extreme exponent. At `2026-10-27T19:46:50Z`, memory PSI `avg10` was 41.09% `some` /
+36.23% `full`, with 9.2 GiB available and 468 MiB swap free. The broad suite and
 production build were deferred. Frontier remains isolated, research-only,
 PARTIALLY VERIFIED, and undeployed; live source permission, price-range
 semantics, multi-venue economic validation, and deployment remain open.
@@ -570,6 +571,7 @@ The complete Kalshi/Polymarket/Kraken adapter test module passed **60 tests**
 in 2.65 seconds at **60,504 KiB peak RSS** with zero swaps; this is not a full
 Frontier regression. At `2026-10-27T19:45:58Z`, memory PSI `avg10` was 47.18%
 `some` / 41.86% `full`, with 9.3 GiB available and 468 MiB swap free.
+The full Frontier UI component file also passed **8/8** in 3.31 seconds.
 Next safe work is an offline review of incomplete cross-venue capital and
 settlement costs, leaving unsupported FX/transfer costs unknown. Recheck host
 pressure before the broader suite; keep source permission and deployment gates

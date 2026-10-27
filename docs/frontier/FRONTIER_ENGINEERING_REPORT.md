@@ -3522,11 +3522,11 @@ metadata, candidate and independent-audit quote checks, deterministic replay,
 and replay API output. Adversarial fixtures reject an extreme `1e-999999999`
 step, non-array or oversized lists, out-of-domain and overlapping ranges,
 missing fields, numeric rather than string values, and overlong decimals.
-The Kalshi fee-metadata UI scenario passed **1/1**
-(7 skipped). TypeScript typecheck, targeted ESLint and Prettier, Ruff, strict
-mypy on the five changed production modules, and `git diff --check` passed.
-The `19:44:20 UTC` memory sample was 46.09% `some` / 41.22% `full` at `avg10`,
-with 9.3 GiB available memory and 468 MiB swap free. The broad
+The full Frontier component file passed **8/8** in 3.31 seconds, including the
+new constraint display. TypeScript typecheck, targeted ESLint and Prettier,
+Ruff, strict mypy on the five changed production modules, and `git diff --check`
+passed. At `2026-10-27T19:46:50Z`, host memory PSI `avg10` was 41.09% `some` /
+36.23% `full`, with 9.2 GiB available memory and 468 MiB swap free. The broad
 Frontier suite and production build remain deferred. No source request, held
 data read, protected service action, or deployment occurred.
 Code commit `47f399d` implements the typed range model and enforcement;
@@ -3534,8 +3534,9 @@ Code commit `47f399d` implements the typed range model and enforcement;
 The complete adapter test module passed **60 tests** in 2.65 seconds at
 **60,504 KiB peak RSS**, with zero swaps. At `2026-10-27T19:45:58Z`, host memory
 PSI `avg10` was 47.18% `some` / 41.86% `full`; 9.3 GiB was available and 468
-MiB swap was free. The broader Frontier suite and production build remain
-deferred.
+MiB swap was free. At `2026-10-27T19:46:50Z`, the full Frontier UI component
+test file passed **8/8** in 3.31 seconds. The broader Frontier suite and
+production build remain deferred.
 Next safe work is an offline review of the incomplete cross-venue capital and
 settlement model. Unknown FX and transfer costs should remain unknown; recheck
 host pressure before the broader suite, and retain the source-use and deployment
