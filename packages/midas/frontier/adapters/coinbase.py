@@ -449,6 +449,8 @@ def _positive_decimal(value: Any) -> D | None:
     if result is None or result <= 0:
         return None
     parts = result.as_tuple()
+    if not isinstance(parts.exponent, int):
+        return None
     if len(parts.digits) > 36 or parts.exponent < -18 or abs(result.adjusted()) > 18:
         return None
     return result

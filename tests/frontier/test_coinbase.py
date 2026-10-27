@@ -12,6 +12,7 @@ from midas.frontier.adapters.coinbase import (
     ADAPTER_VERSION,
     CoinbaseSpotAdapter,
     CoinbaseSpotConfig,
+    _positive_decimal,
 )
 from midas.frontier.adapters.transport import PublicReadTransport
 from midas.frontier.models import (
@@ -70,6 +71,11 @@ def _product() -> dict[str, object]:
         "post_only": False,
         "cancel_only": False,
     }
+
+
+@pytest.mark.parametrize("value", ("NaN", "Infinity", "1e19", "1e-19"))
+def test_coinbase_product_decimal_guard_rejects_nonfinite_and_extreme_values(value):
+    assert _positive_decimal(value) is None
 
 
 @pytest.mark.asyncio
