@@ -1,6 +1,28 @@
 # Project Frontier Mission Ledger
 
-**Latest checkpoint (2026-10-27 18:15 UTC):** Code commit `e9da21a` adds a
+**Latest checkpoint (2026-10-27 18:20 UTC):** Code commit `b112a6c` adds a
+bounded Hypothesis differential check for venue-separated virtual carry. Across
+32 generated inputs, the Decimal calculator agrees with a separate exact
+`Fraction` reference for each venue and total, while the independent audit
+remains verified. `pytest -q tests/frontier/test_capital_carry.py` passed **8
+tests**. Commit `1b5fc82` adds a fixture-intercepted browser scenario that pins
+the saved-run request, venue rates, classification, independent-audit text,
+and source-row hash shown in the carry result. ESLint and Prettier pass, and
+Playwright discovers all **4** Frontier E2E tests. The browser was not launched:
+at `2026-10-27T18:20:14Z`, memory PSI was `avg10=45.75%` (`some`) /
+`41.08%` (`full`), `MemAvailable` 9,691,132 KiB, and swap free 482,504 KiB.
+Browser execution and a post-row-hash full suite/build remain pending under
+this pressure. No venue request, held-source read, protected service, or
+production deployment occurred. Frontier remains isolated, incomplete, and
+undeployed.
+
+Next safe actions: wait for a materially lower pressure sample before running
+the focused Frontier browser E2E; then run post-row-hash Python/web suites and
+the production build, recording each resource measurement. Continue remaining
+economics/research work independently of venue permission review. Keep source
+terms, Reality, production services, and existing research evidence unchanged.
+
+**Previous checkpoint (2026-10-27 18:15 UTC):** Code commit `e9da21a` adds a
 saved-run-bound virtual capital-duration sensitivity. Candidates expose their
 run ID/hash; the on-demand API validates held-source state and each leg's pinned
 market/store-row/raw hashes, then requires source-marked verified future
@@ -22,10 +44,10 @@ live/held source, protected service, or production deployment was used. Frontier
 remains isolated, incomplete, and undeployed.
 
 Next safe actions: after current PSI settles, rerun the full Frontier and web
-suites plus production build against the final row-hash response; add one
-fixture-intercepted browser E2E for user-entered rates and the saved-run route;
-then continue the remaining economic gaps from the report. Keep source terms,
-Reality, production services, and existing research evidence unchanged.
+suites plus production build against the final row-hash response; browser
+coverage and the Hypothesis differential check are tracked in the later
+checkpoint. Keep source terms, Reality, production services, and existing
+research evidence unchanged.
 
 **Previous checkpoint (2026-10-27 17:58 UTC):** Code commit `047298b` adds
 deterministic pagination for uncentered relationship text search. Its keyset

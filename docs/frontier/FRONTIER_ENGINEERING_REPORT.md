@@ -2953,3 +2953,38 @@ Files changed for this checkpoint: `packages/midas/frontier/capital.py`,
 code commit `e9da21abcacb397d0962eb8507e46f52f4daa8d5`; this report,
 `FRONTIER_ARCHITECTURE.md`, `FRONTIER_OPERATIONS.md`, and the mission ledger
 record the documentation update.
+
+### Carry differential and browser scenario checkpoint — 2026-10-27 18:20 UTC
+
+Code commit `b112a6ce28f606c1316916d1725a2512afe980de` adds a bounded
+Hypothesis differential test over 32 generated combinations of venue capital,
+annual basis-point rates, and separate settlement durations. The production
+Decimal result is compared with a separately constructed exact `Fraction`
+reference per venue and for the aggregate. All **8 tests** in
+`tests/frontier/test_capital_carry.py` pass, including the generated examples.
+
+Code commit `1b5fc82d3e17237e16ac846d7bdac7987edaf12a` adds a local browser
+scenario intercepted entirely by explicit test fixtures. It submits the
+saved run ID/hash, candidate ID, and per-venue rates; checks the independent
+audit display and unchanged candidate classification; and checks the exact
+source-row hash is visible in the result. ESLint and Prettier pass, and
+Playwright lists all four tests in `apps/web/e2e/frontier.spec.ts`. The browser
+was not launched, so this is authored and statically checked E2E coverage, not
+a passed browser test.
+
+At `2026-10-27T18:20:14Z`, host memory PSI measured `some avg10=45.75%` and
+`full avg10=41.08%`, with `MemAvailable=9,691,132 KiB` and `SwapFree=482,504
+KiB`. The focused browser run, full post-row-hash Python/web suites, and
+post-row-hash production build remain pending until pressure materially eases.
+This checkpoint used no exchange request, held-source read, protected service,
+or production deployment.
+
+| Component | Current status | Boundary |
+| --- | --- | --- |
+| Capital carry exact-reference differential | COMPLETE AND VERIFIED | 32 bounded Hypothesis examples compare Decimal venue/aggregate results with a Fraction reference; this verifies calculator arithmetic over the generated domain, not financing terms or executable economics. |
+| Capital carry browser E2E | IMPLEMENTED, LIVE VALIDATION PENDING | Fixture route and UI assertions are authored, linted/formatted, and discovered by Playwright; no browser execution has occurred. |
+| Project Frontier overall | PARTIALLY VERIFIED | Still isolated, unmerged, undeployed, and incomplete; live semantic/economic cross-venue validation, source permission review, and production readiness remain unresolved. |
+
+Files changed: `tests/frontier/test_capital_carry.py` and
+`apps/web/e2e/frontier.spec.ts` in the code commits above; this report and
+`FRONTIER_MISSION_LEDGER.md` record the checkpoint.
