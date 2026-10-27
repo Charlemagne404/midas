@@ -2103,3 +2103,10 @@ authenticated request, order, production service change, or deployment was
 made. This does not establish a real v2 market observation or an economic
 opportunity. Implementation commit `2c7bacc517e7a273d2a4f6490a01f9174b82fef1`
 contains adapter v5, fixture tests, and the raw v1 book capture.
+
+An additional adversarial verifier test holds nominal payout currency at
+`USD` while changing one leg's exact settlement identity to Polygon pUSD. The
+same-payoff verifier rejects the pair for both denomination and asset
+identity mismatch; no pUSD-to-USD bridge is inferred. The
+relationship/economics/replay module passes 26 tests with this regression.
+Test commit `65a7e8d98f0674cb05d1be025e43e820ed88092c` contains the case.

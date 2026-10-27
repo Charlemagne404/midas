@@ -1108,6 +1108,13 @@ service change, or deployment occurred. Official mapping references are the
 [Polymarket SDK protocol table](https://github.com/Polymarket/rs-clob-client-v2/blob/main/README.md),
 [Polygon V2 deployment manifest](https://github.com/Polymarket/polymarket-v2-external/blob/main/README.md),
 and [collateral adapter source](https://github.com/Polymarket/ctf-exchange-v2/blob/main/src/adapters/CtfCollateralAdapter.sol).
+
+The relationship/economics/replay module now passes 26 tests, including an
+adversarial construction with equal nominal `USD` payout strings but a
+Polygon pUSD settlement identity. Same-payoff verification rejects it on
+both settlement denomination and exact asset identity, so the one-to-one
+backing assumption does not become an implicit valuation bridge. Regression
+test commit `65a7e8d98f0674cb05d1be025e43e820ed88092c` pins this boundary.
 Implementation commit `2c7bacc517e7a273d2a4f6490a01f9174b82fef1`
 (`Route Polymarket position markets through v2 CLOB`) includes adapter v5,
 fixture tests, and the raw v1 book capture.
