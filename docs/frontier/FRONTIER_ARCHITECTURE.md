@@ -460,8 +460,14 @@ sharing the 500-row per-request scan budget. The graph revision includes recorde
 `event_market_listing` observations,
 relationships, and reviews. The API checks it around each centered page and
 returns 409 when any of those inputs change. Mission Control displays 30 edges
-per page with previous/next controls. The uncentered recent-edge view remains a
-single bounded read; broad or dense traversals can still be incomplete.
+per page with previous/next controls. Uncentered text search can page through a
+deterministic breadth-first result window. Its cursor binds the normalized
+query, depth, page size, and graph revision; each continuation recomputes the
+same bounded search and rejects a changed graph. Search seeds are drawn from at
+most 200 recorded market records, and traversal reads at most 500 relationship
+rows. Mission Control reports these bounds. This is not a full-universe search;
+the unfiltered recent-edge view remains a single bounded read, and broad or
+dense traversals can still be incomplete.
 
 The economic verifier supports three narrow families. Cross-venue binary
 coverage requires a previously verified same-payoff relationship. The

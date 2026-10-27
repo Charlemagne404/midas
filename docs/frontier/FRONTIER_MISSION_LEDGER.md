@@ -1,5 +1,20 @@
 # Project Frontier Mission Ledger
 
+**Latest checkpoint (2026-10-27 17:58 UTC):** Code commit `047298b` adds
+deterministic pagination for uncentered relationship text search. Its keyset
+cursor binds the normalized query, depth, page size, and append-only graph
+revision; the UI now searches recorded market titles/IDs, loads more matches,
+and states the coverage limit. The implementation still searches at most the
+200-record market window and scans at most 500 relationship rows. The Frontier
+API module passed **44 tests**; the depth-two search pagination case passed
+again after its fixture was extended to include a second-hop edge. The Frontier
+component suite passed **8 tests**, including query submission, pagination, and
+coverage text. TypeScript typecheck, targeted ESLint/Prettier, Ruff check/format,
+and `git diff --check` passed. At 17:58 UTC, PSI `avg10` was 32.30% (`some`) /
+25.89% (`full`), and 475 MiB swap was free. Production build and browser E2E
+remain deferred. No source or held data was accessed. Full-universe search and
+clustering remain open; Frontier is incomplete and undeployed.
+
 **Latest checkpoint (2026-10-27 17:52 UTC):** Code commit `d0b7f0f` adds
 bounded, hash-checked relationship review-history storage/API pages and an
 on-demand Mission Control history panel. Keyset cursors are relationship-bound;

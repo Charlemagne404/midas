@@ -462,3 +462,19 @@ occurred. A fresh production build and browser E2E were deferred at the host
 memory-pressure sample. Frontier remains isolated, incomplete, and undeployed;
 see the [Frontier mission ledger](frontier/FRONTIER_MISSION_LEDGER.md) and
 [engineering report](frontier/FRONTIER_ENGINEERING_REPORT.md).
+
+## Frontier bounded graph text search — 2026-10-27
+
+The relationship explorer now submits text searches to the local API and pages
+through a deterministic breadth-first result window. Its cursor pins the query,
+depth, page size, and graph revision; stale cursors are rejected. Search remains
+limited to at most 200 recorded market records and 500 relationship rows, and
+Mission Control labels that scope. The Frontier API module passed **44 tests**;
+the final depth-two search pagination regression also passed independently.
+The Frontier UI component passed **8 tests**, including search and page
+navigation; TypeScript typecheck, ESLint, Prettier, and Ruff checks passed.
+The production build and browser E2E were deferred at the host PSI sample.
+Frontier remains a research-only development branch, incomplete and
+undeployed; this does not provide full-universe coverage or a genuine economic
+result. See the [mission ledger](frontier/FRONTIER_MISSION_LEDGER.md) and
+[engineering report](frontier/FRONTIER_ENGINEERING_REPORT.md).
