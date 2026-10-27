@@ -567,27 +567,35 @@ public snapshots do not prove fills, queue priority, venue access, simultaneous
 execution, capital transfer, or settlement. Opportunity classifications describe
 the mathematical and modeled evidence only.
 
-Economic model version 4 adds a full-or-no-fill exposure sensitivity to each
-supported candidate with one to sixteen legs. For each terminal state it
-calculates each leg's payoff less its modeled acquisition cost and selects the
-negative contributions; this gives the exact worst P&L across every one of the
-`2^n` full/no-fill leg patterns without materializing the pattern set. It reports
-pre-fee P&L and reports an after-fee result only when every leg has a modeled fee.
-The saved pattern identifies filled and unfilled legs, with stable identities.
-This is a terminal stress bound, not a probability, partial-fill model,
-post-fill hedge, unwind, quote-recovery estimate, or prediction of execution.
-Independent audit version 2 derives the leg payoff vectors and adverse patterns
-again from the pinned market and book inputs using separate calculation code.
+Economic model version 13 emits both a full-or-no-fill exposure sensitivity
+and a bounded partial-fill grid for supported candidates with one to sixteen
+legs. The full/no-fill calculation finds the exact adverse result across all
+`2^n` patterns without materializing them. The partial-fill calculation samples
+each leg independently at 0%, 25%, 50%, 75%, and 100% of modeled size, omitting
+intermediate points that violate that instrument's quantity step. For each
+terminal state, separability lets it select each leg's worst grid point in
+`O(states × legs × grid points)` work rather than enumerating the Cartesian
+product. It recalculates a source-supported fee at each nonzero aggregate
+quantity. After-fee results stay unknown when any required fee is unknown.
+Independent audit version 10 derives the quantity grid and fee amounts again
+from pinned market, book, scenario, and fee evidence using separate code.
 
-Replay version 12 pins an optional per-venue delay addition alongside the
-shared base execution delay. The quote-decay sensitivity uses the resulting
-venue-specific delay when repricing each leg, and the independent audit derives
+The partial-fill output is exact only over the declared grid. Each leg's
+quantity is treated as one aggregate fill at its modeled best-ask purchase
+price; the model does not estimate fill likelihood, queue position, continuous
+fractions between grid points, multiple-fill rounding, price paths, deeper
+book execution, post-fill hedge, or unwind recovery. Neither sensitivity is
+an execution claim.
+
+Replay version 13 pins the candidate sensitivities alongside an optional
+per-venue delay addition and the shared base execution delay. Quote decay uses
+the venue-specific delay to reprice each leg, and the independent audit derives
 that price again from the candidate leg's venue. Delay values are bounded whole
 milliseconds, the venue keys must be supported, and base plus venue addition is
 capped at one hour. These are user-entered sensitivity inputs; they do not
-assert an actual venue latency, order sequence, or fill response. `fill_fraction`
-only caps usable displayed top-ask depth. It is not a model of per-leg partial
-fills; unresolved partial-fill recovery remains outside the execution model.
+assert an actual venue latency, order sequence, or fill response.
+`fill_fraction` only caps usable displayed top-ask depth; partial-fill behavior
+is handled only by the bounded grid described above.
 Fee effective/expiry bounds and the age of provenance-bound fee estimates are
 also checked at each leg's modeled venue execution time. If the pinned fee
 evidence expires before that time, its fee remains unknown. This does not

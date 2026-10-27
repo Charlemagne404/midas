@@ -21,6 +21,9 @@ from midas.frontier.economics import (
     OpportunityCandidate,
     OpportunityClassification,
     OpportunityFamily,
+    PartialFillGridOutcome,
+    PartialFillGridSensitivity,
+    PartialFillLeg,
     PositionLeg,
 )
 from midas.frontier.models import (
@@ -48,9 +51,10 @@ from midas.frontier.relationships import (
 )
 
 D = Decimal
-_AUDIT_VERSION = "frontier-independent-economic-audit-9"
+_AUDIT_VERSION = "frontier-independent-economic-audit-10"
 _FEE_QUANTUM = D("0.00001")
 _KALSHI_FEE_MAX_EVIDENCE_AGE = timedelta(hours=24)
+_AUDIT_PARTIAL_FILL_FRACTIONS = (D(0), D("0.25"), D("0.5"), D("0.75"), D(1))
 
 
 def independently_audit_candidate(
@@ -150,6 +154,7 @@ def independently_audit_candidate(
             "basket cost and payoff recomputation for every terminal state",
             "candidate P&L fields and classification",
             "all full-or-none fill patterns and resulting single-leg exposures",
+            "independent bounded partial-fill grid, quantity-step feasibility, and per-quantity fees",
             "pinned book timing, freshness, source-quality state, and clock uncertainty",
         ),
         message=message,
@@ -453,6 +458,14 @@ def _recompute(
     ):
         mismatches.append("Candidate capital denomination identity differs from verified payoffs")
     expected_fill_sensitivity = _independent_fill_pattern_sensitivity(candidate.legs, payout_by_leg)
+    expected_partial_fill_sensitivity = _independent_partial_fill_grid_sensitivity(
+        candidate,
+        payout_by_leg,
+        selected_markets,
+        instrument_by_leg,
+        book_by_leg,
+        scenario,
+    )
 
     comparisons = (
         (candidate.outcome_payout_by_state, payouts, "state payout vector differs"),
@@ -463,6 +476,11 @@ def _recompute(
             candidate.one_sided_fill_sensitivity,
             expected_fill_sensitivity,
             "one-sided fill sensitivity differs",
+        ),
+        (
+            candidate.partial_fill_grid_sensitivity,
+            expected_partial_fill_sensitivity,
+            "partial-fill grid sensitivity differs",
         ),
     )
     for observed_map, recomputed_map, label in comparisons:
@@ -691,6 +709,169 @@ def _independent_fill_pattern_sensitivity(
             "Each leg is modeled as a full fill or no fill at its scenario purchase price; the exact worst case across all 2^n patterns is solved without assigning probabilities.",
             "No post-fill hedge, unwind, incremental partial quantity, or price recovery is modeled.",
             "The result is a terminal exposure sensitivity, not an order-fill prediction or execution claim.",
+        ),
+    )
+
+
+def _independent_partial_fill_grid_sensitivity(
+    candidate: OpportunityCandidate,
+    payout_by_leg: dict[str, dict[str, Decimal]],
+    markets: dict[str, FrontierMarket],
+    instruments: dict[tuple[str, str], MarketInstrument],
+    books: dict[tuple[str, str], BookSnapshot],
+    scenario: ExecutionScenario,
+) -> PartialFillGridSensitivity:
+    """Independently recompute a per-leg exact-on-grid partial-fill bound."""
+    legs = tuple(sorted(candidate.legs, key=_fill_leg_identity))
+    leg_ids = tuple(_fill_leg_identity(leg) for leg in legs)
+    if not 1 <= len(legs) <= 16 or len(set(leg_ids)) != len(leg_ids):
+        raise _MissingAuditEvidence("Partial-fill audit requires one to sixteen unique legs.")
+    if set(leg_ids) != set(payout_by_leg):
+        raise _MissingAuditEvidence("Partial-fill audit payoffs do not match candidate legs.")
+    terminal_states = tuple(sorted(payout_by_leg[leg_ids[0]]))
+    if not terminal_states or any(
+        tuple(sorted(payout_by_leg[key])) != terminal_states for key in leg_ids
+    ):
+        raise _MissingAuditEvidence("Partial-fill audit requires a common terminal-state set.")
+
+    fractions_by_leg: dict[str, tuple[Decimal, ...]] = {}
+    fee_grid: dict[str, dict[Decimal, Decimal | None]] = {}
+    for leg, leg_id in zip(legs, leg_ids, strict=True):
+        market = markets.get(leg.market_id)
+        instrument = instruments.get((leg.market_id, leg.instrument_id))
+        book = books.get((leg.market_id, leg.instrument_id))
+        if market is None or instrument is None or book is None:
+            raise _MissingAuditEvidence(
+                f"Partial-fill audit inputs are incomplete for {leg.instrument_id}."
+            )
+        valid_fractions = tuple(
+            fraction
+            for fraction in _AUDIT_PARTIAL_FILL_FRACTIONS
+            if instrument.quantity_step is None
+            or (Fraction(leg.quantity) * Fraction(fraction)) % Fraction(instrument.quantity_step)
+            == 0
+        )
+        if valid_fractions[0] != 0:
+            raise _MissingAuditEvidence("Partial-fill audit grid lost the zero-fill point.")
+        if valid_fractions[-1] != 1:
+            # Keep an invalid full quantity in the diagnostic recomputation;
+            # _recompute has already recorded its step mismatch as a disagreement.
+            valid_fractions = (*valid_fractions, D(1))
+        fractions_by_leg[leg_id] = valid_fractions
+        try:
+            execution_time = candidate.observed_at_utc + timedelta(
+                milliseconds=scenario.execution_delay_for_venue(market.venue)
+            )
+        except OverflowError:
+            execution_time = None
+        fee_grid[leg_id] = {}
+        for fraction in valid_fractions:
+            if fraction == 0:
+                fee_grid[leg_id][fraction] = D(0)
+            elif execution_time is None:
+                fee_grid[leg_id][fraction] = None
+            else:
+                fee_grid[leg_id][fraction] = _independent_fee(
+                    market,
+                    instrument,
+                    leg.quantity * fraction,
+                    leg.modeled_buy_price,
+                    book.received_at_utc,
+                    execution_time,
+                )
+
+    fees_complete = all(
+        amount is not None for values in fee_grid.values() for amount in values.values()
+    )
+    worst_gross: tuple[Decimal, str, tuple[Decimal, ...]] | None = None
+    worst_net: tuple[Decimal, str, tuple[Decimal, ...], Decimal] | None = None
+    for state_id in terminal_states:
+        gross_legs: list[tuple[Decimal, Decimal]] = []
+        net_legs: list[tuple[Decimal, Decimal, Decimal]] = []
+        for leg, leg_id in zip(legs, leg_ids, strict=True):
+            unit_result = payout_by_leg[leg_id][state_id] - (leg.quantity * leg.modeled_buy_price)
+            gross_legs.append(
+                min((unit_result * fraction, fraction) for fraction in fractions_by_leg[leg_id])
+            )
+            if fees_complete:
+                net_legs.append(
+                    min(
+                        (
+                            unit_result * fraction - (fee_grid[leg_id][fraction] or D(0)),
+                            fraction,
+                            fee_grid[leg_id][fraction] or D(0),
+                        )
+                        for fraction in fractions_by_leg[leg_id]
+                    )
+                )
+        gross_value = sum((part[0] for part in gross_legs), D(0))
+        gross_fractions = tuple(part[1] for part in gross_legs)
+        gross_result = (gross_value, state_id, gross_fractions)
+        if worst_gross is None or gross_result < worst_gross:
+            worst_gross = gross_result
+        if fees_complete:
+            net_value = sum((part[0] for part in net_legs), D(0))
+            net_fractions = tuple(part[1] for part in net_legs)
+            net_fee_sum = sum((part[2] for part in net_legs), D(0))
+            net_result = (net_value, state_id, net_fractions, net_fee_sum)
+            if worst_net is None or net_result < worst_net:
+                worst_net = net_result
+    if worst_gross is None:
+        raise _MissingAuditEvidence("No partial-fill terminal states were evaluated.")
+
+    def outcome(
+        state_id: str,
+        fractions: tuple[Decimal, ...],
+        gross_pnl: Decimal,
+        net_pnl: Decimal | None,
+    ) -> PartialFillGridOutcome:
+        return PartialFillGridOutcome(
+            terminal_state_id=state_id,
+            leg_fills=tuple(
+                PartialFillLeg(
+                    leg_id=leg_id,
+                    fill_fraction=fraction,
+                    filled_quantity=leg.quantity * fraction,
+                )
+                for leg, leg_id, fraction in zip(legs, leg_ids, fractions, strict=True)
+            ),
+            pnl_before_fees=gross_pnl,
+            pnl_after_fees=net_pnl,
+        )
+
+    gross_state, gross_fractions = worst_gross[1], worst_gross[2]
+    gross_pnl = sum(
+        (
+            (payout_by_leg[leg_id][gross_state] - leg.quantity * leg.modeled_buy_price) * fraction
+            for leg, leg_id, fraction in zip(legs, leg_ids, gross_fractions, strict=True)
+        ),
+        D(0),
+    )
+    worst_before = outcome(gross_state, gross_fractions, gross_pnl, None)
+    worst_after = None
+    if worst_net is not None:
+        _, net_state, net_fractions, _ = worst_net
+        net_gross_pnl = sum(
+            (
+                (payout_by_leg[leg_id][net_state] - leg.quantity * leg.modeled_buy_price) * fraction
+                for leg, leg_id, fraction in zip(legs, leg_ids, net_fractions, strict=True)
+            ),
+            D(0),
+        )
+        worst_after = outcome(net_state, net_fractions, net_gross_pnl, worst_net[0])
+
+    return PartialFillGridSensitivity(
+        leg_count=len(legs),
+        fill_fraction_grid=_AUDIT_PARTIAL_FILL_FRACTIONS,
+        feasible_fill_fractions_by_leg={leg_id: fractions_by_leg[leg_id] for leg_id in leg_ids},
+        fees_complete=fees_complete,
+        worst_before_fees=worst_before,
+        worst_after_fees=worst_after,
+        assumptions=(
+            "Each leg independently takes one feasible fraction from the declared five-point grid; the worst terminal state and fill combination is selected without assigning probabilities.",
+            "Intermediate fractions that violate a declared quantity step are omitted; zero and the modeled full quantity are always included.",
+            "Each selected partial quantity is priced at the modeled best-ask purchase price and charged as one aggregate fill under the pinned fee formula; multiple-fill rounding is not modeled.",
+            "This bounded sensitivity does not model fill likelihood, queue position, price paths, deeper-book execution, hedge or unwind behavior, or continuous fractions between grid points.",
         ),
     )
 

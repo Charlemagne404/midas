@@ -462,6 +462,26 @@ type Candidate = {
     } | null;
     assumptions: string[];
   } | null;
+  partial_fill_grid_sensitivity?: {
+    model_version: string;
+    leg_count: number;
+    fill_fraction_grid: string[];
+    feasible_fill_fractions_by_leg: Record<string, string[]>;
+    fees_complete: boolean;
+    worst_before_fees: {
+      terminal_state_id: string;
+      leg_fills: { leg_id: string; fill_fraction: string; filled_quantity: string }[];
+      pnl_before_fees: string;
+      pnl_after_fees: string | null;
+    };
+    worst_after_fees: {
+      terminal_state_id: string;
+      leg_fills: { leg_id: string; fill_fraction: string; filled_quantity: string }[];
+      pnl_before_fees: string;
+      pnl_after_fees: string | null;
+    } | null;
+    assumptions: string[];
+  } | null;
   received_skew_ms: number | null;
   exchange_skew_ms: number | null;
   timing_verified: boolean;
@@ -4137,6 +4157,15 @@ function CandidateCard({ candidate }: { candidate: Candidate }) {
   };
   const fillPatternList = (identities: string[]) =>
     identities.length > 0 ? identities.map(describeFillLeg).join(', ') : 'None';
+  const describePartialFillOutcome = (
+    outcome: NonNullable<Candidate['partial_fill_grid_sensitivity']>['worst_before_fees'],
+  ) =>
+    outcome.leg_fills
+      .map((fill) => {
+        const percent = Math.round(Number(fill.fill_fraction) * 100);
+        return `${describeFillLeg(fill.leg_id)}: ${percent}% (${fill.filled_quantity})`;
+      })
+      .join('; ');
   return (
     <article className="fr-candidate">
       <div className="fr-candidate-head">
@@ -4611,6 +4640,83 @@ function CandidateCard({ candidate }: { candidate: Candidate }) {
             )}
           </div>
           {candidate.one_sided_fill_sensitivity.assumptions.map((assumption) => (
+            <small key={assumption}>{assumption}</small>
+          ))}
+        </section>
+      )}
+      {candidate.partial_fill_grid_sensitivity && (
+        <section className="fr-candidate-fill-stress" aria-label="Partial-fill grid sensitivity">
+          <div>
+            <span className="fr-kicker">Execution uncertainty</span>
+            <h4>Bounded partial-fill grid</h4>
+          </div>
+          <p>
+            Each leg is evaluated independently at the quantity-step-feasible points from{' '}
+            {candidate.partial_fill_grid_sensitivity.fill_fraction_grid
+              .map((fraction) => `${Math.round(Number(fraction) * 100)}%`)
+              .join(', ')}{' '}
+            of modeled size. Fees are recomputed for each aggregate partial quantity. The grid does
+            not model fill probabilities or fractions between its points.
+          </p>
+          <div className="fr-fill-stress-values">
+            <span>
+              Worst sampled result before fees
+              <strong>
+                {money(candidate.partial_fill_grid_sensitivity.worst_before_fees.pnl_before_fees)}
+              </strong>
+              <small>
+                State:{' '}
+                {label(candidate.partial_fill_grid_sensitivity.worst_before_fees.terminal_state_id)}
+              </small>
+            </span>
+            <span>
+              Worst sampled result after fees
+              <strong>
+                {candidate.partial_fill_grid_sensitivity.worst_after_fees
+                  ? money(candidate.partial_fill_grid_sensitivity.worst_after_fees.pnl_after_fees)
+                  : 'Unknown'}
+              </strong>
+              <small>
+                {candidate.partial_fill_grid_sensitivity.worst_after_fees
+                  ? `State: ${label(candidate.partial_fill_grid_sensitivity.worst_after_fees.terminal_state_id)}`
+                  : 'At least one feasible partial quantity has an unresolved fee.'}
+              </small>
+            </span>
+          </div>
+          <div className="fr-fill-stress-patterns">
+            <p>
+              <strong>Before-fee quantities</strong>
+              <span>
+                {describePartialFillOutcome(
+                  candidate.partial_fill_grid_sensitivity.worst_before_fees,
+                )}
+              </span>
+            </p>
+            {candidate.partial_fill_grid_sensitivity.worst_after_fees && (
+              <p>
+                <strong>After-fee quantities</strong>
+                <span>
+                  {describePartialFillOutcome(
+                    candidate.partial_fill_grid_sensitivity.worst_after_fees,
+                  )}
+                </span>
+              </p>
+            )}
+          </div>
+          <details>
+            <summary>Quantity-step-feasible grid points by leg</summary>
+            <ul>
+              {Object.entries(
+                candidate.partial_fill_grid_sensitivity.feasible_fill_fractions_by_leg,
+              ).map(([legId, fractions]) => (
+                <li key={legId}>
+                  {describeFillLeg(legId)}:{' '}
+                  {fractions.map((fraction) => `${Math.round(Number(fraction) * 100)}%`).join(', ')}
+                </li>
+              ))}
+            </ul>
+          </details>
+          {candidate.partial_fill_grid_sensitivity.assumptions.map((assumption) => (
             <small key={assumption}>{assumption}</small>
           ))}
         </section>

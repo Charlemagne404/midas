@@ -242,6 +242,62 @@ it('renders recorded-evidence empty states and never probes a source automatical
           },
           assumptions: ['Pattern comparison only; not an execution forecast.'],
         },
+        partial_fill_grid_sensitivity: {
+          model_version: 'frontier-partial-fill-grid-1',
+          leg_count: 3,
+          fill_fraction_grid: ['0', '0.25', '0.5', '0.75', '1'],
+          feasible_fill_fractions_by_leg: {
+            'kalshi:KX-THREEWAY:KX-THREEWAY:RED': ['0', '0.25', '0.5', '0.75', '1'],
+            'kalshi:KX-THREEWAY:KX-THREEWAY:GREEN': ['0', '0.25', '0.5', '0.75', '1'],
+            'kalshi:KX-THREEWAY:KX-THREEWAY:BLUE': ['0', '0.25', '0.5', '0.75', '1'],
+          },
+          fees_complete: true,
+          worst_before_fees: {
+            terminal_state_id: 'red',
+            leg_fills: [
+              {
+                leg_id: 'kalshi:KX-THREEWAY:KX-THREEWAY:RED',
+                fill_fraction: '0',
+                filled_quantity: '0',
+              },
+              {
+                leg_id: 'kalshi:KX-THREEWAY:KX-THREEWAY:GREEN',
+                fill_fraction: '0.25',
+                filled_quantity: '2.5',
+              },
+              {
+                leg_id: 'kalshi:KX-THREEWAY:KX-THREEWAY:BLUE',
+                fill_fraction: '0.5',
+                filled_quantity: '5',
+              },
+            ],
+            pnl_before_fees: '-3',
+            pnl_after_fees: null,
+          },
+          worst_after_fees: {
+            terminal_state_id: 'red',
+            leg_fills: [
+              {
+                leg_id: 'kalshi:KX-THREEWAY:KX-THREEWAY:RED',
+                fill_fraction: '0',
+                filled_quantity: '0',
+              },
+              {
+                leg_id: 'kalshi:KX-THREEWAY:KX-THREEWAY:GREEN',
+                fill_fraction: '0.25',
+                filled_quantity: '2.5',
+              },
+              {
+                leg_id: 'kalshi:KX-THREEWAY:KX-THREEWAY:BLUE',
+                fill_fraction: '0.5',
+                filled_quantity: '5',
+              },
+            ],
+            pnl_before_fees: '-3',
+            pnl_after_fees: '-3.01',
+          },
+          assumptions: ['Fixture partial-fill grid; no fill probability.'],
+        },
         received_skew_ms: 12,
         exchange_skew_ms: 5,
         timing_verified: true,
@@ -276,11 +332,15 @@ it('renders recorded-evidence empty states and never probes a source automatical
   ).toBeInTheDocument();
   expect(screen.getByRole('heading', { name: 'Independent arithmetic audit' })).toBeInTheDocument();
   expect(screen.getByRole('heading', { name: 'One-sided fill stress' })).toBeInTheDocument();
+  expect(screen.getByRole('heading', { name: 'Bounded partial-fill grid' })).toBeInTheDocument();
   expect(screen.getByText(/Exact worst case over 8 full-or-none leg patterns/)).toBeInTheDocument();
   const fillStress = screen.getByRole('region', { name: 'One-sided fill stress' });
   expect(fillStress.textContent).toContain(
     'Filled: Kalshi · green (KX-THREEWAY), Kalshi · blue (KX-THREEWAY)',
   );
+  const partialFillStress = screen.getByRole('region', { name: 'Partial-fill grid sensitivity' });
+  expect(partialFillStress.textContent).toContain('green (KX-THREEWAY): 25% (2.5)');
+  expect(partialFillStress.textContent).toContain('Worst sampled result after fees');
   expect(
     screen.getByText('Independent arithmetic agrees for every terminal state.'),
   ).toBeInTheDocument();

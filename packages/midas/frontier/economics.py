@@ -52,7 +52,8 @@ from midas.frontier.relationships import (
 )
 
 D = Decimal
-ECONOMIC_MODEL_VERSION = "frontier-economic-verifiers-12"
+ECONOMIC_MODEL_VERSION = "frontier-economic-verifiers-13"
+PARTIAL_FILL_FRACTIONS = (D(0), D("0.25"), D("0.5"), D("0.75"), D(1))
 KALSHI_MVE_SETTLEMENT_AUDIT_VERSION = "kalshi-mve-settlement-audit-2"
 _KALSHI_TAKER_FEE_TYPES = frozenset({"quadratic", "quadratic_with_combo_maker_fees"})
 _KALSHI_FEE_SCHEDULE_VERSION = "kalshi-event-taker-2026-07-07-v1"
@@ -307,6 +308,78 @@ class OneSidedFillSensitivity(FrontierModel):
         return self
 
 
+class PartialFillLeg(FrontierModel):
+    leg_id: str = Field(min_length=1, max_length=1024)
+    fill_fraction: Decimal = Field(ge=0, le=1, allow_inf_nan=False)
+    filled_quantity: Decimal = Field(ge=0, allow_inf_nan=False)
+
+
+class PartialFillGridOutcome(FrontierModel):
+    terminal_state_id: str = Field(min_length=1, max_length=256)
+    leg_fills: tuple[PartialFillLeg, ...] = Field(min_length=1, max_length=16)
+    pnl_before_fees: Decimal = Field(allow_inf_nan=False)
+    pnl_after_fees: Decimal | None = Field(default=None, allow_inf_nan=False)
+
+    @model_validator(mode="after")
+    def unique_legs(self) -> PartialFillGridOutcome:
+        if len({fill.leg_id for fill in self.leg_fills}) != len(self.leg_fills):
+            raise ValueError("Partial-fill outcome leg identities must be unique")
+        return self
+
+
+class PartialFillGridSensitivity(FrontierModel):
+    model_version: str = "frontier-partial-fill-grid-1"
+    leg_count: int = Field(ge=1, le=16)
+    fill_fraction_grid: tuple[Decimal, ...] = Field(min_length=2, max_length=9)
+    feasible_fill_fractions_by_leg: dict[str, tuple[Decimal, ...]] = Field(
+        min_length=1, max_length=16
+    )
+    fees_complete: bool
+    worst_before_fees: PartialFillGridOutcome
+    worst_after_fees: PartialFillGridOutcome | None = None
+    assumptions: tuple[str, ...] = ()
+
+    @model_validator(mode="after")
+    def grid_and_result_shapes_match(self) -> PartialFillGridSensitivity:
+        fractions = self.fill_fraction_grid
+        if (
+            fractions[0] != 0
+            or fractions[-1] != 1
+            or tuple(sorted(set(fractions))) != fractions
+            or any(value < 0 or value > 1 for value in fractions)
+        ):
+            raise ValueError(
+                "Partial-fill fractions must be a strictly increasing grid from zero to one"
+            )
+        if len(self.feasible_fill_fractions_by_leg) != self.leg_count:
+            raise ValueError("Partial-fill feasible grids must cover every candidate leg")
+        for feasible in self.feasible_fill_fractions_by_leg.values():
+            if (
+                not feasible
+                or feasible[0] != 0
+                or feasible[-1] != 1
+                or tuple(sorted(set(feasible))) != feasible
+                or any(value not in fractions for value in feasible)
+            ):
+                raise ValueError("Each leg requires an ordered feasible subset of the fill grid")
+        if self.fees_complete != (self.worst_after_fees is not None):
+            raise ValueError("After-fee partial-fill sensitivity must match fee completeness")
+        for outcome in (self.worst_before_fees, self.worst_after_fees):
+            if outcome is None:
+                continue
+            if len(outcome.leg_fills) != self.leg_count:
+                raise ValueError("Partial-fill outcome leg count differs from the candidate")
+            for fill in outcome.leg_fills:
+                if fill.leg_id not in self.feasible_fill_fractions_by_leg:
+                    raise ValueError("Partial-fill outcome references an unknown candidate leg")
+                if fill.fill_fraction not in self.feasible_fill_fractions_by_leg[fill.leg_id]:
+                    raise ValueError("Partial-fill outcome uses a point excluded for its leg")
+        if self.fees_complete and self.worst_after_fees is not None:
+            if self.worst_after_fees.pnl_after_fees is None:
+                raise ValueError("Complete-fee partial-fill result must include net P&L")
+        return self
+
+
 class OpportunityCandidate(FrontierModel):
     schema_version: int = 2
     candidate_id: str
@@ -319,6 +392,7 @@ class OpportunityCandidate(FrontierModel):
     relationship_id: str | None = None
     legs: tuple[PositionLeg, ...] = ()
     one_sided_fill_sensitivity: OneSidedFillSensitivity | None = None
+    partial_fill_grid_sensitivity: PartialFillGridSensitivity | None = None
     independent_audit: IndependentEconomicAudit | None = None
     outcome_payout_by_state: dict[str, Decimal] = Field(default_factory=dict)
     gross_cost: Decimal | None = None
@@ -442,6 +516,161 @@ def _full_or_none_fill_sensitivity(
             "Each leg is modeled as a full fill or no fill at its scenario purchase price; the exact worst case across all 2^n patterns is solved without assigning probabilities.",
             "No post-fill hedge, unwind, incremental partial quantity, or price recovery is modeled.",
             "The result is a terminal exposure sensitivity, not an order-fill prediction or execution claim.",
+        ),
+    )
+
+
+def _partial_fill_grid_sensitivity(
+    legs: tuple[PositionLeg, ...],
+    payout_by_leg: dict[str, dict[str, Decimal]],
+    *,
+    fractions_by_leg: dict[str, tuple[Decimal, ...]],
+    fees_by_leg_fraction: dict[str, dict[Decimal, Decimal | None]],
+) -> PartialFillGridSensitivity:
+    """Find worst independently chosen per-leg fractions on a bounded grid."""
+    if not 1 <= len(legs) <= 16:
+        raise ValueError("Partial-fill grid sensitivity supports one to sixteen candidate legs")
+    ordered_legs = tuple(sorted(legs, key=_fill_pattern_leg_id))
+    leg_ids = tuple(_fill_pattern_leg_id(leg) for leg in ordered_legs)
+    if (
+        len(set(leg_ids)) != len(leg_ids)
+        or set(leg_ids) != set(payout_by_leg)
+        or set(leg_ids) != set(fractions_by_leg)
+        or set(leg_ids) != set(fees_by_leg_fraction)
+    ):
+        raise ValueError("Partial-fill payoff and fee vectors must uniquely match candidate legs")
+    states = tuple(sorted(set.intersection(*(set(payout_by_leg[key]) for key in leg_ids))))
+    if not states or any(set(payout_by_leg[key]) != set(states) for key in leg_ids):
+        raise ValueError("Partial-fill payoff vectors must share at least one terminal state")
+    for leg_id in leg_ids:
+        fractions = fractions_by_leg[leg_id]
+        if (
+            not fractions
+            or fractions[0] != 0
+            or fractions[-1] != 1
+            or tuple(sorted(set(fractions))) != fractions
+            or any(value not in PARTIAL_FILL_FRACTIONS for value in fractions)
+            or set(fees_by_leg_fraction[leg_id]) != set(fractions)
+        ):
+            raise ValueError(
+                "Each partial-fill leg requires an ordered feasible subset of the grid"
+            )
+
+    fees_complete = all(
+        fee is not None for leg_id in leg_ids for fee in fees_by_leg_fraction[leg_id].values()
+    )
+    before_ranked: tuple[Decimal, str, tuple[Decimal, ...]] | None = None
+    after_ranked: tuple[Decimal, str, tuple[Decimal, ...], Decimal] | None = None
+    for state in states:
+        before_parts: list[tuple[Decimal, Decimal]] = []
+        after_parts: list[tuple[Decimal, Decimal, Decimal]] = []
+        for leg_id, leg in zip(leg_ids, ordered_legs, strict=True):
+            unit_pnl = payout_by_leg[leg_id][state] - leg.quantity * leg.modeled_buy_price
+            before_parts.append(
+                min(
+                    (
+                        unit_pnl * fraction,
+                        fraction,
+                    )
+                    for fraction in fractions_by_leg[leg_id]
+                )
+            )
+            if fees_complete:
+                after_parts.append(
+                    min(
+                        (
+                            unit_pnl * fraction - (fees_by_leg_fraction[leg_id][fraction] or D(0)),
+                            fraction,
+                            fees_by_leg_fraction[leg_id][fraction] or D(0),
+                        )
+                        for fraction in fractions_by_leg[leg_id]
+                    )
+                )
+        before_pnl = sum((item[0] for item in before_parts), D(0))
+        before_fractions = tuple(item[1] for item in before_parts)
+        before_key = (before_pnl, state, before_fractions)
+        if before_ranked is None or before_key < before_ranked:
+            before_ranked = before_key
+        if fees_complete:
+            after_pnl = sum((item[0] for item in after_parts), D(0))
+            after_fractions = tuple(item[1] for item in after_parts)
+            after_fees = sum((item[2] for item in after_parts), D(0))
+            after_key = (after_pnl, state, after_fractions, after_fees)
+            if after_ranked is None or after_key < after_ranked:
+                after_ranked = after_key
+    if before_ranked is None:
+        raise ValueError("No terminal state was evaluated for the partial-fill grid")
+
+    def make_outcome(
+        state: str,
+        selected: tuple[Decimal, ...],
+        *,
+        before_fees: Decimal,
+        after_fees: Decimal | None,
+    ) -> PartialFillGridOutcome:
+        return PartialFillGridOutcome(
+            terminal_state_id=state,
+            leg_fills=tuple(
+                PartialFillLeg(
+                    leg_id=leg_id,
+                    fill_fraction=fraction,
+                    filled_quantity=leg.quantity * fraction,
+                )
+                for leg_id, leg, fraction in zip(leg_ids, ordered_legs, selected, strict=True)
+            ),
+            pnl_before_fees=before_fees,
+            pnl_after_fees=after_fees,
+        )
+
+    before_state = before_ranked[1]
+    before_fractions = before_ranked[2]
+    before_gross = sum(
+        (
+            (payout_by_leg[leg_id][before_state] - leg.quantity * leg.modeled_buy_price) * fraction
+            for leg_id, leg, fraction in zip(leg_ids, ordered_legs, before_fractions, strict=True)
+        ),
+        D(0),
+    )
+    before_outcome = make_outcome(
+        before_state,
+        before_fractions,
+        before_fees=before_gross,
+        after_fees=None,
+    )
+    after_outcome: PartialFillGridOutcome | None = None
+    if after_ranked is not None:
+        _, after_state, after_fractions, after_fee_total = after_ranked
+        after_gross = sum(
+            (
+                (payout_by_leg[leg_id][after_state] - leg.quantity * leg.modeled_buy_price)
+                * fraction
+                for leg_id, leg, fraction in zip(
+                    leg_ids, ordered_legs, after_fractions, strict=True
+                )
+            ),
+            D(0),
+        )
+        after_outcome = make_outcome(
+            after_state,
+            after_fractions,
+            before_fees=after_gross,
+            after_fees=after_ranked[0],
+        )
+        if after_fee_total < 0:
+            raise ValueError("Partial-fill fee sum cannot be negative")
+
+    return PartialFillGridSensitivity(
+        leg_count=len(ordered_legs),
+        fill_fraction_grid=PARTIAL_FILL_FRACTIONS,
+        feasible_fill_fractions_by_leg={leg_id: fractions_by_leg[leg_id] for leg_id in leg_ids},
+        fees_complete=fees_complete,
+        worst_before_fees=before_outcome,
+        worst_after_fees=after_outcome,
+        assumptions=(
+            "Each leg independently takes one feasible fraction from the declared five-point grid; the worst terminal state and fill combination is selected without assigning probabilities.",
+            "Intermediate fractions that violate a declared quantity step are omitted; zero and the modeled full quantity are always included.",
+            "Each selected partial quantity is priced at the modeled best-ask purchase price and charged as one aggregate fill under the pinned fee formula; multiple-fill rounding is not modeled.",
+            "This bounded sensitivity does not model fill likelihood, queue position, price paths, deeper-book execution, hedge or unwind behavior, or continuous fractions between grid points.",
         ),
     )
 
@@ -1641,20 +1870,35 @@ def generate_multi_outcome_coverage_candidate(
         )
     )
     instrument_by_id = {item.native_instrument_id: item for item, _, _ in top_asks}
-    one_sided_fill = _full_or_none_fill_sensitivity(
+    payout_by_leg = {
+        _fill_pattern_leg_id(leg): {
+            state: leg.quantity
+            * next(
+                payout.amount
+                for payout in instrument_by_id[leg.instrument_id].payouts
+                if payout.state_id == state
+            )
+            for state in states
+        }
+        for leg in legs
+    }
+    one_sided_fill = _full_or_none_fill_sensitivity(legs, payout_by_leg)
+    partial_fill_grid = _candidate_partial_fill_grid_sensitivity(
         legs,
-        {
-            _fill_pattern_leg_id(leg): {
-                state: leg.quantity
-                * next(
-                    payout.amount
-                    for payout in instrument_by_id[leg.instrument_id].payouts
-                    if payout.state_id == state
-                )
-                for state in states
-            }
+        payout_by_leg,
+        markets_by_leg={_fill_pattern_leg_id(leg): market for leg in legs},
+        instruments_by_leg={
+            _fill_pattern_leg_id(leg): instrument_by_id[leg.instrument_id] for leg in legs
+        },
+        books_by_leg={
+            _fill_pattern_leg_id(leg): next(
+                book
+                for instrument, book, _ in top_asks
+                if instrument.native_instrument_id == leg.instrument_id
+            )
             for leg in legs
         },
+        execution_times_by_leg={_fill_pattern_leg_id(leg): execution_time for leg in legs},
     )
     evidence_sha256 = _multi_candidate_hash(market, books, legs, scenario)
     return OpportunityCandidate(
@@ -1667,6 +1911,7 @@ def generate_multi_outcome_coverage_candidate(
         relationship_id=None,
         legs=legs,
         one_sided_fill_sensitivity=one_sided_fill,
+        partial_fill_grid_sensitivity=partial_fill_grid,
         outcome_payout_by_state=payouts,
         gross_cost=gross_cost,
         modeled_fees=total_fees,
@@ -2282,16 +2527,35 @@ def _evaluate_pair(
         book_observation_id=right_book.provenance.observation_id,
         market_observation_id=right.provenance.observation_id,
     )
-    one_sided_fill = _full_or_none_fill_sensitivity(
-        (leg_left, leg_right),
-        {
-            _fill_pattern_leg_id(leg_left): {
-                state: common_quantity * left_pay[state] for state in left.payoff.state_ids
-            },
-            _fill_pattern_leg_id(leg_right): {
-                state: common_quantity * right_pay[state_mapping[state]]
-                for state in left.payoff.state_ids
-            },
+    payout_by_leg = {
+        _fill_pattern_leg_id(leg_left): {
+            state: common_quantity * left_pay[state] for state in left.payoff.state_ids
+        },
+        _fill_pattern_leg_id(leg_right): {
+            state: common_quantity * right_pay[state_mapping[state]]
+            for state in left.payoff.state_ids
+        },
+    }
+    candidate_legs = (leg_left, leg_right)
+    one_sided_fill = _full_or_none_fill_sensitivity(candidate_legs, payout_by_leg)
+    partial_fill_grid = _candidate_partial_fill_grid_sensitivity(
+        candidate_legs,
+        payout_by_leg,
+        markets_by_leg={
+            _fill_pattern_leg_id(leg_left): left,
+            _fill_pattern_leg_id(leg_right): right,
+        },
+        instruments_by_leg={
+            _fill_pattern_leg_id(leg_left): left_instrument,
+            _fill_pattern_leg_id(leg_right): right_instrument,
+        },
+        books_by_leg={
+            _fill_pattern_leg_id(leg_left): left_book,
+            _fill_pattern_leg_id(leg_right): right_book,
+        },
+        execution_times_by_leg={
+            _fill_pattern_leg_id(leg_left): left_execution_time,
+            _fill_pattern_leg_id(leg_right): right_execution_time,
         },
     )
     return OpportunityCandidate(
@@ -2304,6 +2568,7 @@ def _evaluate_pair(
         relationship_id=relationship.relationship_id,
         legs=(leg_left, leg_right),
         one_sided_fill_sensitivity=one_sided_fill,
+        partial_fill_grid_sensitivity=partial_fill_grid,
         outcome_payout_by_state=payout,
         gross_cost=gross_cost,
         modeled_fees=fees_total,
@@ -2398,6 +2663,69 @@ def _calculate_fee(
     if schedule.rate == 0 and schedule.fixed_fee in (None, D(0)):
         return D(0)
     return None
+
+
+def _candidate_partial_fill_grid_sensitivity(
+    legs: tuple[PositionLeg, ...],
+    payout_by_leg: dict[str, dict[str, Decimal]],
+    *,
+    markets_by_leg: dict[str, FrontierMarket],
+    instruments_by_leg: dict[str, MarketInstrument],
+    books_by_leg: dict[str, BookSnapshot],
+    execution_times_by_leg: dict[str, datetime | None],
+) -> PartialFillGridSensitivity:
+    leg_ids = {_fill_pattern_leg_id(leg) for leg in legs}
+    if any(
+        set(values) != leg_ids
+        for values in (
+            markets_by_leg,
+            instruments_by_leg,
+            books_by_leg,
+            execution_times_by_leg,
+        )
+    ):
+        raise ValueError("Partial-fill source evidence must uniquely match candidate legs")
+    fractions_by_leg: dict[str, tuple[Decimal, ...]] = {}
+    fees_by_leg_fraction: dict[str, dict[Decimal, Decimal | None]] = {}
+    for leg in legs:
+        leg_id = _fill_pattern_leg_id(leg)
+        instrument = instruments_by_leg[leg_id]
+        fractions = tuple(
+            fraction
+            for fraction in PARTIAL_FILL_FRACTIONS
+            if instrument.quantity_step is None
+            or (Fraction(leg.quantity) * Fraction(fraction)) % Fraction(instrument.quantity_step)
+            == 0
+        )
+        if fractions[0] != 0 or fractions[-1] != 1:
+            raise ValueError("Partial-fill grid must retain zero and full modeled quantity")
+        fractions_by_leg[leg_id] = fractions
+        market = markets_by_leg[leg_id]
+        book = books_by_leg[leg_id]
+        execution_time = execution_times_by_leg[leg_id]
+        fees_by_leg_fraction[leg_id] = {
+            fraction: (
+                D(0)
+                if fraction == 0
+                else _calculate_fee(
+                    market,
+                    instrument,
+                    leg.quantity * fraction,
+                    leg.modeled_buy_price,
+                    book.received_at_utc,
+                    analysis_time_utc=execution_time,
+                )
+                if execution_time is not None
+                else None
+            )
+            for fraction in fractions
+        }
+    return _partial_fill_grid_sensitivity(
+        legs,
+        payout_by_leg,
+        fractions_by_leg=fractions_by_leg,
+        fees_by_leg_fraction=fees_by_leg_fraction,
+    )
 
 
 def _empty_candidate(

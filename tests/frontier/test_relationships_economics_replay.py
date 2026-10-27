@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import timedelta
 from decimal import Decimal
+from itertools import product
 
 import pytest
 from midas.frontier.economics import (
@@ -657,6 +658,36 @@ def _multi_outcome_books(market_value, asks=None):
     }
 
 
+def _kalshi_rounded_fee_market(market_value):
+    metadata = KalshiFeeMetadata(
+        adapter_version="frontier-kalshi-fee-grid-fixture-v1",
+        native_market_id=market_value.native_market_id,
+        native_event_id=market_value.native_event_id,
+        series_ticker="KX-PARTIAL-FILL-GRID",
+        event_fee_type_override="quadratic",
+        event_fee_multiplier_override=Decimal(1),
+        series_fee_type="quadratic",
+        series_fee_multiplier=Decimal(1),
+        effective_fee_type="quadratic",
+        effective_fee_multiplier=Decimal(1),
+        fee_resolution_state="event_override",
+        event_fee_type_override_field_present=True,
+        event_fee_multiplier_override_field_present=True,
+        event_raw_sha256="1" * 64,
+        series_raw_sha256="2" * 64,
+        event_received_at_utc=T0,
+        series_received_at_utc=T0,
+    )
+    schedule = kalshi_candidate_fee_schedule(
+        market_value,
+        metadata,
+        event_observation_id="3" * 64,
+        series_observation_id="4" * 64,
+    )
+    assert schedule is not None
+    return market_value.model_copy(update={"fees": schedule})
+
+
 def test_text_matching_only_proposes_hypotheses():
     left = market(Venue.POLYMARKET, "left", title="Who wins the Chicago mayor election in 2026?")
     right = market(Venue.KALSHI, "right", title="Who wins the Chicago mayor election in 2026?")
@@ -962,6 +993,9 @@ def test_exact_binary_outcome_construction_and_fee_classification():
     assert conditional.one_sided_fill_sensitivity is not None
     assert conditional.one_sided_fill_sensitivity.fees_complete is False
     assert conditional.one_sided_fill_sensitivity.worst_after_fees is None
+    assert conditional.partial_fill_grid_sensitivity is not None
+    assert conditional.partial_fill_grid_sensitivity.fees_complete is False
+    assert conditional.partial_fill_grid_sensitivity.worst_after_fees is None
     assert any(
         "unknown fees are not treated as zero" in assumption
         for assumption in conditional.assumptions
@@ -1581,7 +1615,9 @@ def test_independent_audit_rejects_quantity_step_mutation():
         scenario=ExecutionScenario(),
     )
     assert audited.independent_audit is not None
-    assert audited.independent_audit.disposition.value == "disagreement"
+    assert audited.independent_audit.disposition.value == "disagreement", (
+        audited.independent_audit.message
+    )
     assert "violates its quantity step" in audited.independent_audit.message.lower()
 
 
@@ -1638,7 +1674,7 @@ def test_candidate_generation_and_independent_audit_enforce_price_ticks():
         as_of_utc=T0 + timedelta(milliseconds=100),
     )
     candidate = next(item for item in candidates if item.legs)
-    assert candidate.model_version == "frontier-economic-verifiers-12"
+    assert candidate.model_version == "frontier-economic-verifiers-13"
 
     def with_half_dollar_ticks(market_value):
         instruments = tuple(
@@ -1872,6 +1908,56 @@ def test_verified_multi_outcome_coverage_is_exact_and_stays_hypothetical():
     assert candidate.one_sided_fill_sensitivity.pattern_space_size == 8
     assert candidate.one_sided_fill_sensitivity.worst_before_fees.pnl_before_fees == Decimal(-7)
     assert len(candidate.one_sided_fill_sensitivity.worst_before_fees.filled_leg_ids) == 2
+    partial = candidate.partial_fill_grid_sensitivity
+    assert partial is not None
+    assert partial.fees_complete is True
+    assert partial.fill_fraction_grid == (
+        Decimal(0),
+        Decimal("0.25"),
+        Decimal("0.5"),
+        Decimal("0.75"),
+        Decimal(1),
+    )
+    assert all(
+        fractions == partial.fill_fraction_grid
+        for fractions in partial.feasible_fill_fractions_by_leg.values()
+    )
+    partial_before: list[Decimal] = []
+    partial_after: list[Decimal] = []
+    for fractions in product(partial.fill_fraction_grid, repeat=len(candidate.legs)):
+        for state_id in event.payoff.state_ids:
+            before = Decimal(0)
+            after = Decimal(0)
+            for leg, fraction in zip(candidate.legs, fractions, strict=True):
+                instrument = next(
+                    item
+                    for item in event.instruments
+                    if item.native_instrument_id == leg.instrument_id
+                )
+                payout = next(
+                    item.amount for item in instrument.payouts if item.state_id == state_id
+                )
+                filled_quantity = leg.quantity * fraction
+                fee = (
+                    Decimal(0)
+                    if fraction == 0
+                    else _calculate_fee(
+                        event,
+                        instrument,
+                        filled_quantity,
+                        leg.modeled_buy_price,
+                        outcome_books[leg.instrument_id].received_at_utc,
+                        analysis_time_utc=T0 + timedelta(milliseconds=100),
+                    )
+                )
+                before += filled_quantity * (payout - leg.modeled_buy_price)
+                assert fee is not None
+                after += filled_quantity * (payout - leg.modeled_buy_price) - fee
+            partial_before.append(before)
+            partial_after.append(after)
+    assert min(partial_before) == partial.worst_before_fees.pnl_before_fees
+    assert partial.worst_after_fees is not None
+    assert min(partial_after) == partial.worst_after_fees.pnl_after_fees
     enumerated_before: list[Decimal] = []
     enumerated_after: list[Decimal] = []
     for pattern in range(candidate.one_sided_fill_sensitivity.pattern_space_size):
@@ -1911,12 +1997,110 @@ def test_verified_multi_outcome_coverage_is_exact_and_stays_hypothetical():
         as_of_utc=T0 + timedelta(milliseconds=100),
         code_version="multi-outcome-fixture-v1",
     )
-    assert replay.manifest.replay_version == "frontier-deterministic-replay-12"
+    assert replay.manifest.replay_version == "frontier-deterministic-replay-13"
     replay_candidate = replay.candidates[0]
     assert replay_candidate.model_copy(update={"independent_audit": None}) == candidate
     assert replay_candidate.independent_audit is not None
     assert replay_candidate.independent_audit.disposition.value == "verified"
     assert replay_candidate.independent_audit.recomputed_gross_cost == Decimal(9)
+
+
+def test_partial_fill_grid_omits_fractions_that_break_quantity_steps():
+    event = _multi_outcome_market(steps=("1", "1", "1"))
+    outcome_books = _multi_outcome_books(event)
+    replay = deterministic_replay(
+        (event,),
+        tuple(outcome_books.values()),
+        as_of_utc=T0 + timedelta(milliseconds=100),
+        code_version="partial-fill-quantity-step-v1",
+    )
+
+    candidate = replay.candidates[0]
+    sensitivity = candidate.partial_fill_grid_sensitivity
+    assert sensitivity is not None
+    assert all(
+        fractions == (Decimal(0), Decimal("0.5"), Decimal(1))
+        for fractions in sensitivity.feasible_fill_fractions_by_leg.values()
+    )
+    assert sensitivity.worst_after_fees is not None
+    assert candidate.independent_audit is not None
+    assert candidate.independent_audit.disposition.value == "verified"
+
+
+def test_partial_fill_grid_recomputes_each_rounded_fee_quantity():
+    event = _kalshi_rounded_fee_market(_multi_outcome_market(steps=("0.1", "0.1", "0.1")))
+    outcome_books = _multi_outcome_books(event, asks=("0.21", "0.31", "0.41"))
+    replay = deterministic_replay(
+        (event,),
+        tuple(outcome_books.values()),
+        as_of_utc=T0 + timedelta(milliseconds=100),
+        code_version="partial-fill-rounded-fees-v1",
+    )
+    candidate = replay.candidates[0]
+    sensitivity = candidate.partial_fill_grid_sensitivity
+    assert sensitivity is not None and sensitivity.fees_complete is True
+    assert sensitivity.worst_after_fees is not None
+    assert candidate.independent_audit is not None
+    assert candidate.independent_audit.disposition.value == "verified"
+
+    instrument = event.instruments[0]
+    full_fee = _calculate_fee(
+        event,
+        instrument,
+        Decimal(10),
+        Decimal("0.21"),
+        T0,
+        analysis_time_utc=T0 + timedelta(milliseconds=100),
+    )
+    quarter_fee = _calculate_fee(
+        event,
+        instrument,
+        Decimal("2.5"),
+        Decimal("0.21"),
+        T0,
+        analysis_time_utc=T0 + timedelta(milliseconds=100),
+    )
+    assert full_fee is not None and quarter_fee is not None
+    assert quarter_fee != full_fee * Decimal("0.25")
+    before_values: list[Decimal] = []
+    after_values: list[Decimal] = []
+    fractions = sensitivity.fill_fraction_grid
+    for fill_fractions in product(fractions, repeat=len(candidate.legs)):
+        for state_id in event.payoff.state_ids:
+            gross_pnl = Decimal(0)
+            net_pnl = Decimal(0)
+            for leg, fraction in zip(candidate.legs, fill_fractions, strict=True):
+                leg_instrument = next(
+                    item
+                    for item in event.instruments
+                    if item.native_instrument_id == leg.instrument_id
+                )
+                unit_payout = next(
+                    payout.amount
+                    for payout in leg_instrument.payouts
+                    if payout.state_id == state_id
+                )
+                filled_quantity = leg.quantity * fraction
+                modeled_fee = (
+                    Decimal(0)
+                    if fraction == 0
+                    else _calculate_fee(
+                        event,
+                        leg_instrument,
+                        filled_quantity,
+                        leg.modeled_buy_price,
+                        outcome_books[leg.instrument_id].received_at_utc,
+                        analysis_time_utc=T0 + timedelta(milliseconds=100),
+                    )
+                )
+                assert modeled_fee is not None
+                leg_gross = filled_quantity * (unit_payout - leg.modeled_buy_price)
+                gross_pnl += leg_gross
+                net_pnl += leg_gross - modeled_fee
+            before_values.append(gross_pnl)
+            after_values.append(net_pnl)
+    assert min(before_values) == sensitivity.worst_before_fees.pnl_before_fees
+    assert min(after_values) == sensitivity.worst_after_fees.pnl_after_fees
 
 
 def test_sixteen_outcome_fill_stress_keeps_the_pattern_space_bounded():
@@ -2171,7 +2355,7 @@ def test_deterministic_replay_is_invariant_to_input_order():
     }
     first = deterministic_replay((left, right), all_books, **kwargs)
     second = deterministic_replay((right, left), tuple(reversed(all_books)), **kwargs)
-    assert first.manifest.economic_model_version == "frontier-economic-verifiers-12"
+    assert first.manifest.economic_model_version == "frontier-economic-verifiers-13"
     assert first.run_id == second.run_id
     assert first.result_sha256 == second.result_sha256
     assert first.candidates == second.candidates
@@ -2336,6 +2520,41 @@ def test_deterministic_replay_is_invariant_to_input_order():
     assert stress_audited.independent_audit is not None
     assert stress_audited.independent_audit.disposition.value == "disagreement"
     assert any("one-sided fill sensitivity differs" in reason for reason in stress_audited.reasons)
+
+    assert original.partial_fill_grid_sensitivity is not None
+    partial_outcome = original.partial_fill_grid_sensitivity.worst_before_fees.model_copy(
+        update={
+            "pnl_before_fees": (
+                original.partial_fill_grid_sensitivity.worst_before_fees.pnl_before_fees
+                + Decimal(1)
+            )
+        }
+    )
+    partial_sensitivity = original.partial_fill_grid_sensitivity.model_copy(
+        update={"worst_before_fees": partial_outcome}
+    )
+    partial_candidate = original.model_copy(
+        update={
+            "partial_fill_grid_sensitivity": partial_sensitivity,
+            "independent_audit": None,
+        }
+    )
+    partial_audited = independently_audit_candidate(
+        partial_candidate,
+        markets={left.canonical_id: left, right.canonical_id: right},
+        books_by_market={left.canonical_id: left_books, right.canonical_id: right_books},
+        relationships={relationship.relationship_id: relationship},
+        state_mappings={
+            relationship.relationship_id: kwargs["state_mappings"][relationship.relationship_id]
+        },
+        instrument_mappings={relationship.relationship_id: canonical_instrument_mapping},
+        scenario=ExecutionScenario(),
+    )
+    assert partial_audited.independent_audit is not None
+    assert partial_audited.independent_audit.disposition.value == "disagreement"
+    assert any(
+        "partial-fill grid sensitivity differs" in reason for reason in partial_audited.reasons
+    )
 
     duplicate_market_legs = original.model_copy(
         update={"legs": (original.legs[0], original.legs[0]), "independent_audit": None}
