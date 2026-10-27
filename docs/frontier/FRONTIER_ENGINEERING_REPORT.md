@@ -2,17 +2,19 @@
 
 **Report date:** 2026-10-27
 
-**Latest code checkpoint:** `008106b` hardens Coinbase Decimal exponent
-validation. It builds on `6bc0351`'s per-request monotonic elapsed provenance
-and Mission Control disclosure and `51afe86`'s append-only writer timestamps.
-The full Frontier suite passes 269/269, Web unit suite 40/40, TypeScript
-typecheck, targeted ESLint/Prettier, a production frontend build, and the full
-12/12 browser suite. Strict direct mypy passes the seven changed Python source
-modules with imported legacy modules silent; an earlier full import-following
-check reported transitive Veritas/Arena diagnostics and has not been rerun
-after the Coinbase guard. No Coinbase live data was requested. Exact source
-permission and cross-venue live economic verification remain unresolved;
-Frontier is isolated, incomplete, and undeployed.
+**Latest code checkpoint:** `5e04c14b47c9b820946259a8ad1e232b4597190a` adds
+event-time replay to the bounded Arena job/artifact path, API, readiness gate,
+and Mission Control, following `b6b8a99337b5b08a54b5011eaf72d30949ab0b1b`'s
+finite restartable source-collection module. The selected Frontier/Arena Python
+regression passes 347/347; the Web unit suite passes 40/40; a temporary-root
+browser check passes 1/1; TypeScript, ESLint, Ruff, Prettier, scoped strict
+mypy, and the Vite production build pass. The full-project mypy invocation
+reports 35 errors in eight unrelated legacy Veritas/Arena/API files and none in
+the four changed backend integration files. The existing 544.41 kB Chart chunk
+advisory remains. No exchange request or timeline worker was launched. Recorded
+source-health joins, live cross-venue economic evidence, exact source-use
+permission, and production deployment remain unresolved; Frontier is isolated,
+incomplete, and undeployed.
 
 **Branch:** `codex/frontier-20261026`
 
@@ -4299,9 +4301,108 @@ swaps; only the existing Starlette/httpx `TestClient` deprecation warning
 remains. Strict mypy passes for `timeline.py`; Ruff check/format and
 `git diff --check` pass.
 
-This work is currently engine-level only. It is not API-accessible, persisted
-through Arena's job/artifact path, or visible in the dashboard. Cross-sectional
-paired snapshots remain the only Arena replay job. No external API, source
-capture, protected service, campaign, Arena worker, or production store was
-used. Frontier remains **PARTIALLY VERIFIED**, research-only, and undeployed;
-event-time Arena integration is a next engineering task.
+At this earlier engine-only checkpoint, the timeline was not API-accessible,
+persisted through Arena's job/artifact path, or visible in the dashboard.
+Cross-sectional paired snapshots were the only Arena replay job. No external
+API, source capture, protected service, campaign, Arena worker, or production
+store was used. Frontier remained **PARTIALLY VERIFIED**, research-only, and
+undeployed. The follow-up integration is documented in the later checkpoint
+below.
+
+### Event-time Arena integration and finite collector — 2026-10-27 22:58 UTC
+
+Code commit `5e04c14b47c9b820946259a8ad1e232b4597190a` integrates the event-time
+engine with Arena's existing bounded job protocol. The job references an
+immutable snapshot whose identity hashes saved markets, joined books, verified
+relationships, source scenario events, either explicit cutoffs or a deterministic
+derived cutoff policy, freshness limit, scenario, and code version. `JobSpec`
+constrains this kind to at most 300 seconds, 512 MiB, 50% CPU, nice 15, and idle
+I/O; the worker kind is network restricted. The result artifact contains the
+timeline's per-frame replay references and hashes and is independently
+revalidated against the durable Arena job record. The snapshot store is bounded
+to 128 MiB and 1,000 files; individual normalized inputs are limited to 32 MiB
+and the result to 16 MiB.
+
+`POST /api/frontier/arena-timeline-replay` packages only local stored evidence,
+reports `network_calls: 0`, and submits through Arena's ordinary admission gate.
+The bounded job/result catalog and result routes verify pinned identity and
+quarantine held-source inputs. The Frontier readiness gate accepts only a
+completed artifact with the matching snapshot and result hashes plus a worker
+runtime record. No Arena timeline job was submitted or launched for this
+checkpoint, so readiness remains `LIVE_VALIDATION_PENDING`.
+
+The request explicitly rejects `basis=recorded` source-status events. Although
+the event-time engine validates a hash-shaped reference, the application does
+not yet join it to a validated, hash-checked stored source-health row. Fixture
+and scenario events are accepted as such and remain labelled; the UI does not
+present these as measured source status.
+
+The new Replay & Readiness panel shows bounded timeline job history and, for a
+verified result, each frame's freshness and source-exclusion counts, source
+status basis, candidate classifications, and evidence digests. The explicit
+submission control is disabled until saved markets exist. It also explains that
+the output does not establish simultaneous executable books, fills, venue
+access, or profit.
+
+Preceding this, commit `b6b8a99337b5b08a54b5011eaf72d30949ab0b1b` adds
+`midas.frontier.collection.BoundedSourceCollector`. It is a sequential finite
+per-source lifecycle with append-only restart checkpoints linked by row hashes
+in a separate bounded SQLite journal. Limits are 20 markets, 10 book tasks, 20
+levels, 16 MiB captured evidence, and 300 seconds per run. Start and resume
+revalidate the source's configured adapter version/capabilities; start checks
+the live public-probe flag and policy hold. It is not yet registered as an API
+operation, Arena job, systemd service, or timer. Its fixtures use a fake adapter;
+no collector or source request was launched.
+
+#### Verification and reproducibility
+
+- Combined Frontier/Arena regression command: **347 passed** in 130.66 seconds.
+  This includes all `tests/frontier` cases, paired and event-time Arena artifact
+  tests, job-schema checks, and Arena API regressions. Only the existing
+  Starlette/httpx `TestClient` deprecation warning remains.
+- Web unit suite: **40/40**. TypeScript typecheck, ESLint, Prettier, Ruff
+  check/format, `git diff --check`, scoped strict mypy for the four changed
+  backend modules, and the Vite production build pass.
+- Isolated Playwright scenario: **1/1**. It started the demo API using
+  temporary database, Frontier, and Arena roots, opened the Replay & Readiness
+  view, and observed zero public-probe requests and zero paired/timeline job
+  submissions. The saved-market prerequisite leaves timeline submission
+  disabled.
+- Repository-wide mypy reports **35 existing errors across eight unrelated
+  Veritas/Arena/API files**; scoped strict mypy reported no error in the changed
+  timeline, job, or API modules.
+- The Vite output includes the existing 544.41 kB Chart chunk advisory. No
+  representative browser/memory profile or production build deployment was
+  attempted.
+
+The changed files in `5e04c14` are `apps/api/arena.py`,
+`apps/api/frontier.py`, `apps/web/e2e/frontier.spec.ts`,
+`apps/web/src/Frontier.test.tsx`, `apps/web/src/Frontier.tsx`,
+`apps/web/src/frontier.css`, `packages/midas/arena/jobs.py`,
+`packages/midas/arena/frontier_timeline.py`,
+`tests/arena/test_frontier_timeline.py`, and
+`tests/frontier/test_timeline_api.py`. Commit `b6b8a99` changes
+`packages/midas/frontier/collection.py` and `tests/frontier/test_collection.py`.
+The current follow-up docs update `FRONTIER_ARCHITECTURE.md`,
+`FRONTIER_OPERATIONS.md`, `FRONTIER_MISSION_LEDGER.md`,
+`FRONTIER_ENGINEERING_REPORT.md`, `docs/DEVELOPMENT.md`, and
+`docs/MIDAS_CURRENT_STATE.md`.
+
+#### Current checkpoint matrix
+
+| Component | Status | Evidence and boundary |
+| --- | --- | --- |
+| Event-time replay algorithm and per-frame independent audit | COMPLETE AND VERIFIED | Deterministic fixture suite covers freshness boundaries, outage invalidation, lookahead rejection, and canonical replay hashes; no live cross-venue timeline was observed. |
+| Event-time Arena snapshot, worker dispatch, artifact integrity, API result reads | IMPLEMENTED, LIVE VALIDATION PENDING | Job spec, executor, artifact hashes, API input pinning, history/result, held-source filtering, and readiness behavior are tested with temporary fixture roots; no Arena worker was launched for this checkpoint. |
+| Event-time Mission Control view | IMPLEMENTED, LIVE VALIDATION PENDING | Web fixture test covers successful frame display; isolated browser test covers empty/offline state and proves opening the view submits no job or source request; no actual worker result was rendered in a browser. |
+| Finite source collector module | PARTIALLY VERIFIED | Restart, cancellation, persistence recovery, and source-specific errors use fake adapters. No API/Arena registration, service, real adapter call, or live validation is present. |
+| Recorded source-health event join | DEFERRED | Request payloads reject `basis=recorded`; an authenticated-by-hash join to validated local source-health evidence is required before accepting it. |
+| Source permissions and live multi-venue validation | BLOCKED | No new live source request occurred; configured source-use restrictions still govern live validation. |
+| Production deployment | DEFERRED | Frontier remains isolated and unmerged; deployment is outside this development checkpoint. |
+
+Project Frontier remains **PARTIALLY VERIFIED**, isolated, research-only,
+unmerged, and undeployed. No economically eligible live opportunity or positive
+profitability result was established. Next safe implementation steps are to
+validate a local source-health evidence join, continue fixture-backed
+adversarial and resource tests, and determine whether an OS-enforced egress
+boundary is available before registering collection as a networked Arena job.

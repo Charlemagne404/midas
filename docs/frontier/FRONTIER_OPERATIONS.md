@@ -166,6 +166,60 @@ adapters do not yet provide clock-uncertainty estimates, so inspect that field
 and the timing reasons instead of treating a positive recorded-value
 calculation as a simultaneous quote.
 
+## Event-time Arena replay
+
+`POST /api/frontier/arena-timeline-replay` uses only the bounded local Frontier
+market, book, and effective verified-relationship records. It stages a
+content-addressed immutable snapshot, then requests a `frontier_timeline` job
+under Arena's normal global admission gate. Each worker is capped at 300
+seconds, 512 MiB, 50% CPU, nice 15, and idle I/O; this job kind is network
+restricted. The API response reports `network_calls: 0`. It does not start a
+collector or query a source.
+
+The saved timeline UI remains read-only until the researcher explicitly submits
+the job. Replay is disabled until at least one saved market is available. The
+result page shows per-frame book freshness/exclusion counts, source-state
+labels, candidate classifications, and hash identities. These are hypothetical
+research outputs and do not demonstrate simultaneous quotes, fills, venue
+access, or profit. A frame with no explicit source-state event must not be read
+as evidence that the venue was healthy; receipt-time book freshness is reported
+separately.
+
+Request-supplied `basis=recorded` source-health events are rejected. A
+hash-shaped observation reference is not a validated join to a stored
+source-health observation; recorded health requires that join before use.
+`fixture` and `scenario` events are allowed and remain explicitly labelled.
+Arena history, result, and Frontier readiness checks filter snapshots that use
+currently held venues. A completed artifact counts as readiness evidence only
+after its job binding, snapshot/result hashes, and worker runtime record verify.
+No timeline worker was launched for the current implementation checkpoint;
+readiness therefore remains pending.
+
+## Finite source collection module
+
+`midas.frontier.collection.BoundedSourceCollector` implements one finite,
+sequential source run with append-only checkpoints. It is currently a Python
+module, not an API route, Arena job, systemd unit, timer, or background service.
+Registering it in code does not start collection. Its tests inject fixture
+adapters and make no source calls.
+
+Before `start`, configure exactly one adapter and a temporary or approved
+Frontier store. `start` verifies adapter enablement, the source public-probe
+flag, policy hold, declared discovery/book capabilities, and request limits.
+Each run allows at most 20 markets, 10 book tasks, depth 20, 16 MiB of captured
+evidence, and five minutes wall time. The per-source loop is sequential and
+records failures independently. A restart resumes from the last append-only
+checkpoint and revalidates its sequence/hash chain and pinned adapter version
+and config; it does not silently relaunch a terminal run.
+
+The collector journal (`frontier-collection.sqlite3`) is separate from the
+Frontier observation database but stored under the selected Frontier root. It
+is capped at 64 MiB, 1,000 runs, 100 checkpoints per run, and 20,000 total
+checkpoints. Keep its store away from Reality, Veritas, frozen campaigns, and
+other historical evidence. This checkpoint includes fixture-only collection
+tests; neither this module nor a source request was enabled or launched in a
+service.
+
 ## Inspecting failed captures
 
 When a bounded API request returns a diagnostic observation ID, read it through

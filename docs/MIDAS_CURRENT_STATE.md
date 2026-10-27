@@ -33,6 +33,36 @@ in the dated addendum below and in the Frontier engineering report.
 
 ## Frontier development addendum — 2026-10-27
 
+### Event-time Arena replay and finite collector checkpoint — 2026-10-27 22:58 UTC
+
+The isolated Frontier branch contains collector commit
+`b6b8a99337b5b08a54b5011eaf72d30949ab0b1b` and event-time Arena integration
+commit `5e04c14b47c9b820946259a8ad1e232b4597190a`. The collector is a finite
+one-source Python module with restartable append-only checkpoints; it is not an
+API, Arena job, timer, or background service. Event-time replay is exposed as
+an explicit, local-input-only Arena job with content-addressed snapshots,
+hash-verified results, held-source filtering, a readiness gate, and a Frontier
+Mission Control view.
+
+Verification at this checkpoint: the Frontier/Arena Python regression command
+passed **347 tests**; the web suite passed **40/40**; the isolated browser
+scenario passed **1/1** and observed no collector probe or timeline submission
+from opening Replay & Readiness. Scoped strict mypy passed four changed backend
+modules, TypeScript, ESLint, Ruff and Prettier passed, and the Vite production
+build passed. The build retains the existing 544.41 kB Chart chunk advisory.
+The repository-wide mypy run still reports 35 errors in unrelated Veritas/Arena
+modules. No exchange request or Arena worker was launched; no production
+service or historical store was accessed. Recorded source-status events remain
+unsupported until a validated evidence-store join exists, and timeline
+readiness remains pending a completed bounded job with runtime evidence.
+
+Frontier remains isolated, research-only, undeployed, and **PARTIALLY VERIFIED**.
+No positive cross-venue economic result was established. See the
+[mission ledger](frontier/FRONTIER_MISSION_LEDGER.md),
+[architecture](frontier/FRONTIER_ARCHITECTURE.md),
+[operations guide](frontier/FRONTIER_OPERATIONS.md), and
+[engineering report](frontier/FRONTIER_ENGINEERING_REPORT.md).
+
 ### Coinbase Exchange Spot update — 2026-10-27 21:07 UTC
 
 The isolated Frontier branch `codex/frontier-20261026` now contains Coinbase

@@ -22,9 +22,10 @@ as mutable Frontier storage.
 | Durable evidence | `storage.py` | Append-only, size- and row-bounded SQLite observations, markets, relationship reviews/revisions, runs, and paired comparisons. |
 | Replay | `replay.py` | Stable input ordering, scenario/mapping/proposal-limit-aware replay identities, exact store-record provenance for API-loaded models, deterministic results, and paired assumption comparisons. |
 | Event-time replay | `timeline.py` | Offline bounded replay over repeated book updates, source-state events, and explicit cutoffs; freshness, outage invalidation, candidate summaries, and timeline hashes. |
-| Arena paired replay | `packages/midas/arena/frontier_replay.py`, `arena/jobs.py` | Immutable content-addressed input snapshots, a bounded offline paired-replay worker, and hash-verified result artifacts under Arena's existing admission gate. |
-| HTTP API | `apps/api/frontier.py` | Bounded local queries and graph neighborhoods, relationship proposals/reviews, deterministic and paired replay, config-gated market/event-group/MVE/component capture, raw/hash/identity-checked saved Kalshi fee evidence for later replay, fee sensitivities, exact-run-bound virtual capital carry, and read-only coverage analytics. |
-| Mission Control workspace | `apps/web/src/Frontier.tsx` | Sources, markets/books/event context, coverage and source-quality analytics, one-page Kalshi MVE discovery and explicit selected-component rule capture, relationship hypotheses, candidates, venue-separated balances and settlement-duration sensitivity, local comparisons, bounded Arena replay history/results, and readiness. |
+| Finite source collection | `collection.py` | One-source sequential bounded capture with durable restart checkpoints and a separate append-only hash-chained journal; callable only, not an API, scheduled worker, or background service. |
+| Arena replay jobs | `packages/midas/arena/frontier_replay.py`, `frontier_timeline.py`, `arena/jobs.py` | Immutable content-addressed inputs, bounded offline paired and event-time replay workers, hash-verified artifacts, and held-source filtering under Arena's existing admission gate. |
+| HTTP API | `apps/api/frontier.py`, `apps/api/arena.py` | Bounded local queries and graph neighborhoods, relationship proposals/reviews, deterministic and paired replay, config-gated captures, fee/capital sensitivities, coverage analytics, and local-input event-time Arena staging/result routes. |
+| Mission Control workspace | `apps/web/src/Frontier.tsx` | Sources, markets/books/event context, coverage and source-quality analytics, relationship hypotheses, candidates, venue-separated capital assumptions, local comparisons, paired and event-time Arena replay history/results, and readiness. |
 
 ## Additional venue selection
 
@@ -789,9 +790,41 @@ classification summaries, and deterministic replay/result hashes. It reuses
 `deterministic_replay` and its independent economic audit for every frame. It
 performs no adapter calls and writes no evidence itself.
 
-This is currently an engine-level capability only. It is not yet exposed by the
-Frontier API, persisted as an Arena artifact, or rendered in Mission Control;
-the existing Arena worker still supports cross-sectional paired snapshots.
+`POST /api/frontier/arena-timeline-replay` snapshots at most 100 locally saved
+markets, 200 joined books, 100 effective verified relationships, and 100
+explicit fixture/scenario source-state events. It also pins either ordered UTC
+evaluation times or the engine's deterministic input-time/freshness-boundary
+schedule, maximum book age, scenario, and code version. It makes no adapter
+request. The source-state API currently rejects `basis=recorded`: a SHA-256
+reference alone is not a validated join to a stored source-health observation.
+The immutable snapshot is limited to 32 MiB; its store is limited to 128 MiB
+and 1,000 files. The Arena worker runs the existing deterministic replay and
+independent audit at each frame, under the existing five-minute/512-MiB/half-CPU
+idle-I/O bounds. Its result is capped at 16 MiB and bound to the job's snapshot
+and result hashes. `GET /api/arena/frontier-timelines` lists bounded history,
+and `GET /api/arena/jobs/{id}/frontier-timeline` validates a completed artifact.
+Held-source filtering applies to the catalog, result route, and the Frontier
+timeline readiness gate.
+
+Mission Control's Replay & Readiness section can explicitly stage this job from
+saved local evidence and inspect per-frame freshness counts, source-state
+labels, candidate summaries, and input/result digests. The control remains
+disabled until recorded markets exist. Scenario and fixture source events are
+distinct from measured source health. The integration and UI are fixture-tested;
+no event-time Arena worker has been launched in this checkpoint, so its
+readiness remains `LIVE_VALIDATION_PENDING` until a future permitted bounded
+local run has a verified artifact and runtime record.
+
+The finite collector is deliberately not exposed as a request handler or
+background service. A caller must provide one configured adapter and one
+Frontier store to `BoundedSourceCollector`; start rechecks source capability,
+probe flags, and policy holds. One run is limited to 20 markets, 10 books, 20
+book levels, 16 MiB of evidence, and 300 seconds. Checkpoints are append-only,
+sequence- and previous-hash-linked, and capped separately from observation data.
+The adapter is sequential within a source run, while per-source failures leave
+other tasks eligible to complete. The journal's existence does not constitute a
+collector scheduler, production worker, multi-source campaign, or live
+validation. The collector code is fixture-tested and no source request was made.
 
 ## API and UI behavior
 

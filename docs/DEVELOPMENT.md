@@ -393,8 +393,38 @@ env PYTHONPATH=packages:.:tests /home/charlie/midas/.venv/bin/pytest tests/front
 MYPYPATH=packages /home/charlie/midas/.venv/bin/mypy --strict --follow-imports=silent packages/midas/frontier/timeline.py
 ```
 
-This Python API is offline and bounded, but is not yet wired into the Frontier
-HTTP API, persisted Arena jobs, or the Mission Control timeline view.
+`POST /api/frontier/arena-timeline-replay` stages the bounded saved-input
+timeline as a separate content-addressed `frontier_timeline` Arena job. It
+accepts optional ordered UTC cutoffs, a book freshness limit, a bounded
+execution scenario, and explicitly labelled fixture/scenario source-state
+events. It does not poll adapters. Recorded source-state events are rejected
+until a validated join to stored source-health evidence exists. The input is
+limited to 100 local markets, 200 joined books, and 100 effective verified
+relationships. Arena applies its existing 300-second, 512-MiB, half-CPU,
+idle-I/O admission limits. Results are hash-bound to the job and pinned input;
+the result endpoint and history catalog quarantine held-source inputs.
+
+Mission Control's Replay & Readiness section lists timeline jobs and shows
+verified frame counts, freshness/exclusion counts, candidate classifications,
+and provenance hashes. Its submit control is explicit and disabled when the
+local store has no markets. It does not launch collection automatically. The
+timeline readiness gate remains pending until a bounded local job has actually
+completed with a valid artifact and worker runtime record.
+
+`midas.frontier.collection.BoundedSourceCollector` is a separate finite
+one-source lifecycle with fixture-tested restart checkpoints and an append-only
+hash-chained SQLite journal. It is not exposed through the API, Arena, or a
+service. A caller must explicitly instantiate it with an adapter and store;
+its start path rechecks configured probe flags and source policy holds. Use only
+temporary or approved Frontier roots, and see the [operations guide](frontier/FRONTIER_OPERATIONS.md)
+for its bounds and limitations. No live collection was started.
+
+Exercise the pinned timeline worker and API integration without launching a
+worker process:
+
+```bash
+PYTHONPATH=packages:.:tests /home/charlie/midas/.venv/bin/pytest tests/arena/test_frontier_timeline.py tests/frontier/test_timeline_api.py -q
+```
 
 Relationship decisions use `POST /api/frontier/relationships/{id}/review`. The
 review form records source market observation IDs and appends a linked revision;

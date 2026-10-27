@@ -1,5 +1,70 @@
 # Project Frontier Mission Ledger
 
+## Event-time Arena integration checkpoint — 2026-10-27 22:58 UTC
+
+Code commit `5e04c14b47c9b820946259a8ad1e232b4597190a` wires deterministic
+event-time replay into Arena's existing bounded, offline job path. A
+content-addressed snapshot pins saved markets/books/verified relationships,
+scenario, cutoff policy, freshness bound, and implementation version. The
+worker writes a hash-checked per-frame artifact. API catalog/result routes and
+Frontier readiness verify job binding, artifact hashes, runtime metadata, and
+held-source quarantine. Mission Control lists event-time jobs and renders frame
+freshness/exclusion counts, candidate classifications, source-state labels,
+and evidence hashes. No worker was launched; readiness therefore stays
+`LIVE_VALIDATION_PENDING`.
+
+The prior code commit `b6b8a99337b5b08a54b5011eaf72d30949ab0b1b` adds a finite
+per-source collection module with append-only restart checkpoints. It is not
+registered as an API operation, Arena job, or service; tests use fixture
+adapters only. Both checkpoints reject held-source use and maintain explicit
+limits. Timeline request data cannot claim `basis=recorded` source health yet:
+a validated store join is still required.
+
+### Verification evidence
+
+- Python: **347 passed** across `tests/frontier`, Frontier paired/timeline Arena
+  artifacts, Arena job-schema tests, and Arena API regressions. Runtime was
+  130.66 seconds. The only warning was the existing Starlette/httpx
+  `TestClient` deprecation.
+- Web: **40/40** unit tests; TypeScript typecheck, ESLint, and production Vite
+  build passed. The existing 544.41 kB Chart chunk advisory remains.
+- Browser: **1/1** isolated Playwright scenario passed against a temporary demo
+  API/database. Opening Replay & Readiness issued zero source probes and zero
+  timeline job submissions; the timeline replay action remained disabled with
+  no saved markets.
+- Scoped strict mypy passed for `frontier_timeline.py`, `jobs.py`,
+  `apps/api/frontier.py`, and `apps/api/arena.py`. Repository-wide mypy still
+  reports **35 errors in 8 unrelated legacy Veritas/Arena/API files**; it
+  reports none in these changed Frontier integration files.
+- Ruff check/format, Prettier, and `git diff --check` passed.
+- Post-run host sample (`2026-10-27T22:58:15Z`): PSI avg10 was 0.00% `some`
+  and `full`; 10 GiB available memory and 429 MiB free swap. This is a dated
+  host observation, not a future admission grant.
+
+No live exchange request, collector, Arena worker, Reality action, production
+service change, historical-store read, push, merge, or deployment occurred.
+The local Playwright API server used temporary test roots and shut down at test
+completion.
+
+Files in `5e04c14`:
+`apps/api/arena.py`, `apps/api/frontier.py`,
+`apps/web/e2e/frontier.spec.ts`, `apps/web/src/Frontier.test.tsx`,
+`apps/web/src/Frontier.tsx`, `apps/web/src/frontier.css`,
+`packages/midas/arena/jobs.py`,
+`packages/midas/arena/frontier_timeline.py`,
+`tests/arena/test_frontier_timeline.py`, and
+`tests/frontier/test_timeline_api.py`.
+
+**Next safe work:** add an explicit bounded source-collection Arena job around
+`BoundedSourceCollector`, with no live worker launch, and add a validated local
+store join for recorded source-health events. Keep source permission checks at
+the final request boundary, preserve per-source isolation, and continue other
+fixture-backed research work if these integrations uncover a permission or
+infrastructure blocker. Frontier remains **PARTIALLY VERIFIED**, isolated,
+research-only, and undeployed.
+
+---
+
 **Current resource gate (`2026-10-27T21:48:09Z`):** External Veritas batch PID
 **3762324** remains in `D` state at `mem_cgroup_handle_over_high`; PSI avg10 is
 **47.93% some / 41.46% full**. It is using the existing Veritas and Arena
