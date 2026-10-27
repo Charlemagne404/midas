@@ -52,7 +52,7 @@ from midas.frontier.relationships import (
 )
 
 D = Decimal
-ECONOMIC_MODEL_VERSION = "frontier-economic-verifiers-9"
+ECONOMIC_MODEL_VERSION = "frontier-economic-verifiers-10"
 KALSHI_MVE_SETTLEMENT_AUDIT_VERSION = "kalshi-mve-settlement-audit-2"
 _KALSHI_TAKER_FEE_TYPES = frozenset({"quadratic", "quadratic_with_combo_maker_fees"})
 _KALSHI_FEE_SCHEDULE_VERSION = "kalshi-event-taker-2026-07-07-v1"
@@ -77,6 +77,21 @@ def _price_denomination_matches(
         and instrument.price_currency_identity == identity
         and book.price_currency == instrument.price_currency
         and book.price_currency_identity == identity
+    )
+
+
+def _price_matches_instrument_constraints(instrument: MarketInstrument, price: Decimal) -> bool:
+    if instrument.tick_size is not None and Fraction(price) % Fraction(instrument.tick_size) != 0:
+        return False
+    if instrument.price_increment_ranges is None:
+        return True
+    if not instrument.price_increment_ranges:
+        return False
+    exact_price = Fraction(price)
+    return any(
+        price_range.start < price < price_range.end
+        and (exact_price - Fraction(price_range.start)) % Fraction(price_range.step) == 0
+        for price_range in instrument.price_increment_ranges
     )
 
 
@@ -1353,12 +1368,11 @@ def generate_multi_outcome_coverage_candidate(
                 OpportunityClassification.UNSUPPORTED_ECONOMICS,
                 "An observed ask exceeds the supported unit settlement payout.",
             )
-        if instrument.tick_size is not None and (
-            Fraction(ask.price) % Fraction(instrument.tick_size) != 0
-        ):
+        if not _price_matches_instrument_constraints(instrument, ask.price):
+            constraint_name = "tick-size" if instrument.tick_size is not None else "price-range"
             return empty(
                 OpportunityClassification.INCOMPLETE_EVIDENCE,
-                f"Best ask for outcome {instrument.outcome_id} violates instrument tick-size metadata.",
+                f"Best ask for outcome {instrument.outcome_id} violates instrument {constraint_name} metadata.",
             )
         top_asks.append((instrument, book, ask))
 
@@ -1822,18 +1836,20 @@ def _evaluate_pair(
         )
     l_ask = min(left_book.asks, key=lambda level: level.price)
     r_ask = min(right_book.asks, key=lambda level: level.price)
-    if any(
-        instrument.tick_size is not None
-        and Fraction(ask.price) % Fraction(instrument.tick_size) != 0
+    tick_violations = tuple(
+        instrument
         for instrument, ask in ((left_instrument, l_ask), (right_instrument, r_ask))
-    ):
+        if not _price_matches_instrument_constraints(instrument, ask.price)
+    )
+    if tick_violations:
+        constraint_name = "tick-size" if tick_violations[0].tick_size is not None else "price-range"
         return _empty_candidate(
             left,
             right,
             relationship,
             OpportunityClassification.INCOMPLETE_EVIDENCE,
             as_of,
-            "A public best ask violates its instrument tick-size metadata.",
+            f"A public best ask violates its instrument {constraint_name} metadata.",
             candidate_id=identity,
             family=family,
         )

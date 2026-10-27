@@ -25,6 +25,7 @@ from midas.frontier.models import (
     MarketInstrument,
     MarketKind,
     PayoffSpec,
+    PriceIncrementRange,
     QuantityUnit,
     SelectedMarketComponent,
     SettlementAssetIdentity,
@@ -1466,7 +1467,7 @@ def test_candidate_generation_and_independent_audit_enforce_price_ticks():
         as_of_utc=T0 + timedelta(milliseconds=100),
     )
     candidate = next(item for item in candidates if item.legs)
-    assert candidate.model_version == "frontier-economic-verifiers-9"
+    assert candidate.model_version == "frontier-economic-verifiers-10"
 
     def with_half_dollar_ticks(market_value):
         instruments = tuple(
@@ -1507,6 +1508,112 @@ def test_candidate_generation_and_independent_audit_enforce_price_ticks():
     assert audited.independent_audit is not None
     assert audited.independent_audit.disposition.value == "disagreement"
     assert "violates its instrument tick size" in audited.independent_audit.message.lower()
+
+    off_step_range = PriceIncrementRange(
+        start=Decimal("0.35"), end=Decimal("0.45"), step=Decimal("0.02")
+    )
+    range_left = left.model_copy(
+        update={
+            "instruments": tuple(
+                item.model_copy(update={"price_increment_ranges": (off_step_range,)})
+                for item in left.instruments
+            )
+        }
+    )
+    ranged_candidates = generate_binary_coverage_candidates(
+        range_left,
+        right,
+        relationship,
+        left_books,
+        right_books,
+        state_mapping={"yes": "yes", "no": "no"},
+        instrument_mapping=instrument_mapping,
+        as_of_utc=T0 + timedelta(milliseconds=100),
+    )
+    assert all(not item.legs for item in ranged_candidates)
+    assert all(
+        any("price-range" in reason for reason in item.reasons) for item in ranged_candidates
+    )
+
+    ranged_audit = independently_audit_candidate(
+        candidate.model_copy(update={"independent_audit": None}),
+        markets={range_left.canonical_id: range_left, right.canonical_id: right},
+        books_by_market={range_left.canonical_id: left_books, right.canonical_id: right_books},
+        relationships={relationship.relationship_id: relationship},
+        state_mappings={relationship.relationship_id: {"yes": "yes", "no": "no"}},
+        instrument_mappings={relationship.relationship_id: canonical_mapping},
+        scenario=ExecutionScenario(),
+    )
+    assert ranged_audit.independent_audit is not None
+    assert ranged_audit.independent_audit.disposition.value == "disagreement"
+    assert "price range constraints" in ranged_audit.independent_audit.message.lower()
+
+    empty_range_left = left.model_copy(
+        update={
+            "instruments": tuple(
+                item.model_copy(update={"price_increment_ranges": ()}) for item in left.instruments
+            )
+        }
+    )
+    empty_range_candidates = generate_binary_coverage_candidates(
+        empty_range_left,
+        right,
+        relationship,
+        left_books,
+        right_books,
+        state_mapping={"yes": "yes", "no": "no"},
+        instrument_mapping=instrument_mapping,
+        as_of_utc=T0 + timedelta(milliseconds=100),
+    )
+    assert all(not item.legs for item in empty_range_candidates)
+    assert all(
+        any("price-range" in reason for reason in item.reasons) for item in empty_range_candidates
+    )
+
+
+@pytest.mark.parametrize(
+    "range_bounds",
+    (
+        (("0.40", "0.45", "0.01"), ("0.65", "0.70", "0.01")),
+        (("0.60", "0.70", "0.01"), ("0.10", "0.20", "0.01")),
+    ),
+    ids=("range-boundary", "outside-ranges"),
+)
+def test_kalshi_price_range_boundaries_and_outside_quotes_fail_closed(range_bounds):
+    left, right, relationship, instrument_mapping = _verified_pair()
+    left_books, right_books = _books(left, right)
+    constrained_left = left.model_copy(
+        update={
+            "instruments": tuple(
+                instrument.model_copy(
+                    update={
+                        "price_increment_ranges": (
+                            PriceIncrementRange(
+                                start=Decimal(start), end=Decimal(end), step=Decimal(step)
+                            ),
+                        )
+                    }
+                )
+                for instrument, (start, end, step) in zip(
+                    left.instruments, range_bounds, strict=True
+                )
+            )
+        }
+    )
+
+    candidates = generate_binary_coverage_candidates(
+        constrained_left,
+        right,
+        relationship,
+        left_books,
+        right_books,
+        state_mapping={"yes": "yes", "no": "no"},
+        instrument_mapping=instrument_mapping,
+        as_of_utc=T0 + timedelta(milliseconds=100),
+    )
+
+    assert all(not item.legs for item in candidates)
+    assert all(any("price-range" in reason for reason in item.reasons) for item in candidates)
 
 
 def test_multi_outcome_candidate_and_audit_enforce_price_ticks():
@@ -1633,7 +1740,7 @@ def test_verified_multi_outcome_coverage_is_exact_and_stays_hypothetical():
         as_of_utc=T0 + timedelta(milliseconds=100),
         code_version="multi-outcome-fixture-v1",
     )
-    assert replay.manifest.replay_version == "frontier-deterministic-replay-9"
+    assert replay.manifest.replay_version == "frontier-deterministic-replay-10"
     replay_candidate = replay.candidates[0]
     assert replay_candidate.model_copy(update={"independent_audit": None}) == candidate
     assert replay_candidate.independent_audit is not None
@@ -1893,7 +2000,7 @@ def test_deterministic_replay_is_invariant_to_input_order():
     }
     first = deterministic_replay((left, right), all_books, **kwargs)
     second = deterministic_replay((right, left), tuple(reversed(all_books)), **kwargs)
-    assert first.manifest.economic_model_version == "frontier-economic-verifiers-9"
+    assert first.manifest.economic_model_version == "frontier-economic-verifiers-10"
     assert first.run_id == second.run_id
     assert first.result_sha256 == second.result_sha256
     assert first.candidates == second.candidates

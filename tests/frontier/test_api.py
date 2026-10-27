@@ -642,9 +642,7 @@ def test_synthetic_event_group_probe_persists_parent_context_and_binds_to_record
             _synthetic_polymarket_event_market(
                 str(562802 + index),
                 question=f"Synthetic House outcome {index}",
-                outcome_label=(
-                    "Democratic Party" if index == 0 else f"Synthetic outcome {index}"
-                ),
+                outcome_label=("Democratic Party" if index == 0 else f"Synthetic outcome {index}"),
             )
             for index in range(9)
         ],
@@ -3942,7 +3940,7 @@ def test_replay_api_generates_and_persists_multi_outcome_candidate(tmp_path):
         replay = client.post("/api/frontier/replay", json={})
         assert replay.status_code == 200, replay.text
         result = replay.json()
-        assert result["manifest"]["replay_version"] == "frontier-deterministic-replay-9"
+        assert result["manifest"]["replay_version"] == "frontier-deterministic-replay-10"
         assert len(result["candidates"]) == 1
         candidate = result["candidates"][0]
         assert candidate["family"] == "within_market_multi_outcome_coverage"

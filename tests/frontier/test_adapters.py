@@ -669,9 +669,7 @@ async def test_kalshi_synthetic_multivariate_page_records_omitted_nested_market_
         transport=transport,
     )
     try:
-        batch = await adapter.discover_multivariate_events(
-            collection_ticker=collection_ticker
-        )
+        batch = await adapter.discover_multivariate_events(collection_ticker=collection_ticker)
         captures = adapter.take_captures()
     finally:
         await client.aclose()
@@ -1653,6 +1651,10 @@ async def test_kalshi_single_market_metadata_lookup_is_ticker_bound_and_read_onl
                 "rules_secondary": "Official box score determines the result.",
                 "notional_value_dollars": "1.00",
                 "updated_time": "2026-10-27T12:00:00Z",
+                "price_ranges": [
+                    {"start": "0.50", "end": "0.99", "step": "0.001"},
+                    {"start": "0.01", "end": "0.49", "step": "0.01"},
+                ],
             }
         }
     )
@@ -1677,12 +1679,55 @@ async def test_kalshi_single_market_metadata_lookup_is_ticker_bound_and_read_onl
     assert normalized.resolution.evidence_sha256 is not None
     assert normalized.resolution.verified is False
     assert normalized.payoff.verified is False
+    assert normalized.schema_version == 4
+    assert [
+        (item.start, item.end, item.step)
+        for item in normalized.instruments[0].price_increment_ranges
+    ] == [
+        (Decimal("0.01"), Decimal("0.49"), Decimal("0.01")),
+        (Decimal("0.50"), Decimal("0.99"), Decimal("0.001")),
+    ]
+    assert normalized.native_fields["price_ranges"][0]["start"] == "0.50"
     assert len(captures) == 1 and captures[0].raw_body == body
     assert captures[0].observation_kind == "market_metadata"
     assert len(requests) == 1
     assert requests[0].method == "GET"
     assert requests[0].url.path == f"/trade-api/v2/markets/{ticker}"
     assert "authorization" not in requests[0].headers
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "step",
+    ("0", "1e-999999999"),
+)
+async def test_kalshi_market_rejects_malformed_price_increment_ranges(step):
+    ticker = "KX-INVALID-PRICE-RANGE"
+    body = json.dumps(
+        {
+            "market": {
+                "ticker": ticker,
+                "market_type": "binary",
+                "price_ranges": [{"start": "0.10", "end": "0.20", "step": step}],
+            }
+        }
+    )
+    transport, requests, client = _transport(
+        "external-api.kalshi.com", {f"/markets/{ticker}": body}
+    )
+    adapter = KalshiAdapter(
+        AdapterConfig(
+            enabled=True, live_public_probe_enabled=True, requests_per_second=5, retries=0
+        ),
+        transport=transport,
+    )
+    try:
+        with pytest.raises(AdapterError) as error:
+            await adapter.fetch_market_metadata(ticker)
+    finally:
+        await client.aclose()
+    assert error.value.code == "INVALID_PRICE_RANGES"
+    assert len(requests) == 1 and requests[0].method == "GET"
 
 
 @pytest.mark.asyncio

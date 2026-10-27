@@ -31,6 +31,7 @@ from midas.frontier.models import (
     MarketInstrument,
     MarketKind,
     PayoffSpec,
+    PriceIncrementRange,
     QuantityUnit,
     ResolutionSpec,
     SelectedMarketComponent,
@@ -44,7 +45,7 @@ from midas.frontier.models import (
 )
 
 D = Decimal
-ADAPTER_VERSION = "frontier-kalshi-16"
+ADAPTER_VERSION = "frontier-kalshi-17"
 _TICKER_PATTERN = re.compile(r"[A-Za-z0-9_-]{1,256}\Z")
 BASE = "https://external-api.kalshi.com/trade-api/v2"
 MARKET_DATA_DOC = "https://docs.kalshi.com/getting_started/quick_start_market_data"
@@ -53,6 +54,50 @@ ORDERBOOK_DOC = "https://docs.kalshi.com/api-reference/market/get-market-orderbo
 EVENT_DOC = "https://docs.kalshi.com/api-reference/events/get-event"
 SERIES_DOC = "https://docs.kalshi.com/api-reference/market/get-series"
 MULTIVARIATE_EVENTS_DOC = "https://docs.kalshi.com/api-reference/events/get-multivariate-events"
+
+
+def _price_increment_ranges(raw: dict[str, Any]) -> tuple[PriceIncrementRange, ...] | None:
+    if "price_ranges" not in raw:
+        return None
+    source_ranges = raw["price_ranges"]
+    if not isinstance(source_ranges, list) or len(source_ranges) > 32:
+        raise AdapterError(
+            "INVALID_PRICE_RANGES", "Kalshi price_ranges must be an array of at most 32 entries"
+        )
+
+    normalized: list[PriceIncrementRange] = []
+    for item in source_ranges:
+        if not isinstance(item, dict):
+            raise AdapterError("INVALID_PRICE_RANGES", "Kalshi price range must be an object")
+        values: dict[str, Decimal] = {}
+        for field in ("start", "end", "step"):
+            value = item.get(field)
+            if not isinstance(value, str) or len(value) > 64:
+                raise AdapterError(
+                    "INVALID_PRICE_RANGES",
+                    f"Kalshi price range {field} must be a bounded decimal string",
+                )
+            parsed = parse_decimal(value)
+            if parsed is None:
+                raise AdapterError(
+                    "INVALID_PRICE_RANGES", f"Kalshi price range {field} is not finite"
+                )
+            values[field] = parsed
+        start, end, step = values["start"], values["end"], values["step"]
+        if start < 0 or end > 1 or end <= start or step <= 0:
+            raise AdapterError(
+                "INVALID_PRICE_RANGES",
+                "Kalshi binary price ranges require 0 <= start < end <= 1 and a positive step",
+            )
+        try:
+            normalized.append(PriceIncrementRange(start=start, end=end, step=step))
+        except ValueError as error:
+            raise AdapterError("INVALID_PRICE_RANGES", str(error)) from error
+
+    normalized.sort(key=lambda item: item.start)
+    if any(right.start < left.end for left, right in zip(normalized, normalized[1:], strict=False)):
+        raise AdapterError("INVALID_PRICE_RANGES", "Kalshi price ranges overlap")
+    return tuple(normalized)
 
 
 class KalshiAdapter(BaseReadOnlyAdapter):
@@ -99,7 +144,7 @@ class KalshiAdapter(BaseReadOnlyAdapter):
                 "https://docs.kalshi.com/api-reference/market/get-trades",
             ),
             Capability.TICK_CONSTRAINTS: (
-                "Native piecewise price ranges and price-level structure are retained; a single tick may not apply",
+                "Native piecewise price ranges are exact-decimal normalized; candidate checks conservatively reject range boundaries because schema endpoint semantics are unspecified",
                 MARKETS_DOC,
             ),
             Capability.QUANTITY_CONSTRAINTS: (
@@ -485,6 +530,7 @@ class KalshiAdapter(BaseReadOnlyAdapter):
             if native_type == "binary"
             else MarketKind.UNKNOWN
         )
+        price_increment_ranges = _price_increment_ranges(raw)
 
         notional = parse_decimal(raw.get("notional_value_dollars"))
         payout_value = notional if notional is not None and notional > 0 else D(1)
@@ -506,6 +552,7 @@ class KalshiAdapter(BaseReadOnlyAdapter):
                     quantity_unit=QuantityUnit.CONTRACT,
                     price_currency="USD",
                     price_currency_identity=settlement_identity,
+                    price_increment_ranges=price_increment_ranges,
                     payouts=(
                         StatePayout(state_id="yes", amount=payout_value),
                         StatePayout(state_id="no", amount=D(0)),
@@ -518,6 +565,7 @@ class KalshiAdapter(BaseReadOnlyAdapter):
                     quantity_unit=QuantityUnit.CONTRACT,
                     price_currency="USD",
                     price_currency_identity=settlement_identity,
+                    price_increment_ranges=price_increment_ranges,
                     payouts=(
                         StatePayout(state_id="yes", amount=D(0)),
                         StatePayout(state_id="no", amount=payout_value),

@@ -121,6 +121,22 @@ Event-group observations participate in
 latest-record selection and graph revision identity, so replay and paged reads
 cannot silently retain older child-only metadata.
 
+`FrontierMarket` schema v4 adds typed `MarketInstrument.price_increment_ranges`
+for the Kalshi `price_ranges` fields exposed by the [public market schema](https://docs.kalshi.com/api-reference/market/get-market).
+Each start, end, and step is parsed as a bounded exact Decimal while the raw
+native object remains available for audit. The shared Decimal contract limits
+these values to 18 decimal places, rejecting extreme scientific-notation
+exponents before rational price checks. Missing ranges remain `null`, and an
+explicitly empty array remains empty; neither is replaced with a guessed tick.
+Candidate generation and the independent audit enforce any reported
+constant tick and, when price ranges are present, require a quote strictly
+inside a range and aligned to its step. The validator uses `start` as the step
+grid anchor; this is an inference from the documented `start`/`end`/`step`
+shape, not an explicit API guarantee. The schema does not state whether range
+boundaries are inclusive, so boundary quotes fail closed. This validates the
+bounded structure against the documented response shape; fixture tests do not
+establish live price-range semantics.
+
 Settlement identity also applies to the unit used to quote a contract. The
 instrument, observed book, fee schedule, public trade, candidate leg, and
 candidate capital field retain a canonical denomination beside the display

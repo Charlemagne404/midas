@@ -120,6 +120,11 @@ type Market = {
     outcome_id: string | null;
     price_currency?: string | null;
     price_currency_identity?: SettlementAssetIdentity | null;
+    tick_size?: string | null;
+    price_increment_ranges?: { start: string; end: string; step: string }[] | null;
+    quantity_step?: string | null;
+    minimum_quantity?: string | null;
+    minimum_notional?: string | null;
   }[];
   selected_components?: {
     venue: Venue;
@@ -3668,6 +3673,22 @@ function MarketDetails({
               <small>
                 Quote unit: {instrument.price_currency ?? 'Unknown'} ·{' '}
                 {settlementIdentityLabel(instrument.price_currency_identity)}
+              </small>
+              <small>
+                Price increments:{' '}
+                {instrument.price_increment_ranges?.length
+                  ? `${instrument.price_increment_ranges
+                      .map((range) => `${range.start}–${range.end} by ${range.step}`)
+                      .join('; ')} · range boundaries are not treated as validated ticks`
+                  : instrument.price_increment_ranges !== undefined &&
+                      instrument.price_increment_ranges !== null
+                    ? 'No ranges reported; price constraints unresolved'
+                    : instrument.tick_size
+                      ? `tick ${instrument.tick_size}`
+                      : 'Not reported'}
+                {' · '}Quantity step: {instrument.quantity_step ?? 'not reported'} · minimum:{' '}
+                {instrument.minimum_quantity ?? 'not reported'} · minimum notional:{' '}
+                {instrument.minimum_notional ?? 'not reported'}
               </small>
               {booksLoading ? (
                 <small>Loading stored public book snapshots…</small>

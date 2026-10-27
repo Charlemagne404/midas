@@ -910,8 +910,24 @@ it('captures Kalshi fee metadata and exposes a separate hypothetical fee sensiti
     },
     native_fields: {},
     instruments: [
-      { native_instrument_id: 'KX-FEE-1:YES', label: 'Yes', outcome_id: 'yes' },
-      { native_instrument_id: 'KX-FEE-1:NO', label: 'No', outcome_id: 'no' },
+      {
+        native_instrument_id: 'KX-FEE-1:YES',
+        label: 'Yes',
+        outcome_id: 'yes',
+        price_increment_ranges: [
+          { start: '0.01', end: '0.49', step: '0.01' },
+          { start: '0.50', end: '0.99', step: '0.001' },
+        ],
+        quantity_step: '0.1',
+        minimum_quantity: '0.2',
+        minimum_notional: '5',
+      },
+      {
+        native_instrument_id: 'KX-FEE-1:NO',
+        label: 'No',
+        outcome_id: 'no',
+        tick_size: '0.01',
+      },
     ],
     selected_components: [
       {
@@ -1252,6 +1268,14 @@ it('captures Kalshi fee metadata and exposes a separate hypothetical fee sensiti
   fireEvent.click(await screen.findByRole('button', { name: 'Inspect' }));
   expect(screen.getByText('Market identity: fiat:USD')).toBeInTheDocument();
   expect(screen.getByText('Payoff identity: fiat:USD')).toBeInTheDocument();
+  expect(
+    await screen.findByText(
+      /0\.01–0\.49 by 0\.01; 0\.50–0\.99 by 0\.001 · range boundaries are not treated as validated ticks/,
+    ),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByText(/Quantity step: 0\.1 · minimum: 0\.2 · minimum notional: 5/),
+  ).toBeInTheDocument();
   expect(await screen.findByText('Public event context')).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Capture event context' }));
   expect(

@@ -187,6 +187,20 @@ class StatePayout(FrontierModel):
     amount: Nonnegative
 
 
+class PriceIncrementRange(FrontierModel):
+    """Source-native price interval with exact Decimal step metadata."""
+
+    start: Nonnegative
+    end: Positive
+    step: Positive
+
+    @model_validator(mode="after")
+    def interval_is_ordered(self) -> PriceIncrementRange:
+        if self.end <= self.start:
+            raise ValueError("Price increment range end must exceed its start")
+        return self
+
+
 class MarketInstrument(FrontierModel):
     native_instrument_id: str
     label: str
@@ -195,6 +209,9 @@ class MarketInstrument(FrontierModel):
     price_currency: str | None = None
     price_currency_identity: SettlementAssetIdentity | None = None
     tick_size: Positive | None = None
+    price_increment_ranges: tuple[PriceIncrementRange, ...] | None = Field(
+        default=None, max_length=32
+    )
     quantity_step: Positive | None = None
     minimum_quantity: Positive | None = None
     minimum_notional: Positive | None = None
@@ -211,11 +228,17 @@ class MarketInstrument(FrontierModel):
         return value
 
     @model_validator(mode="after")
-    def quote_identity_matches_code(self) -> MarketInstrument:
+    def quote_identity_and_constraints_are_valid(self) -> MarketInstrument:
         if self.price_currency_identity is not None and (
             self.price_currency_identity.code != self.price_currency
         ):
             raise ValueError("Instrument quote currency code differs from its canonical identity")
+        previous_end: Decimal | None = None
+        if self.price_increment_ranges is not None:
+            for price_range in self.price_increment_ranges:
+                if previous_end is not None and price_range.start < previous_end:
+                    raise ValueError("Price increment ranges must be ordered and non-overlapping")
+                previous_end = price_range.end
         return self
 
 
@@ -641,7 +664,7 @@ class Provenance(FrontierModel):
 
 
 class FrontierMarket(FrontierModel):
-    schema_version: int = 3
+    schema_version: int = 4
     venue: Venue
     canonical_id: str
     native_market_id: str
@@ -666,6 +689,13 @@ class FrontierMarket(FrontierModel):
     native_fields: dict[str, Any] = Field(default_factory=dict)
     quality_flags: tuple[str, ...] = ()
     provenance: Provenance
+
+    @field_validator("schema_version")
+    @classmethod
+    def supported_market_schema_version(cls, value: int) -> int:
+        if value not in {1, 2, 3, 4}:
+            raise ValueError("Unsupported Frontier market schema version")
+        return value
 
     @model_validator(mode="after")
     def consistent_structure(self) -> FrontierMarket:

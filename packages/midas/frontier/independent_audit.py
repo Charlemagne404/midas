@@ -48,7 +48,7 @@ from midas.frontier.relationships import (
 )
 
 D = Decimal
-_AUDIT_VERSION = "frontier-independent-economic-audit-6"
+_AUDIT_VERSION = "frontier-independent-economic-audit-7"
 _FEE_QUANTUM = D("0.00001")
 _KALSHI_FEE_MAX_EVIDENCE_AGE = timedelta(hours=24)
 
@@ -277,10 +277,22 @@ def _recompute(
             )
             continue
         best_ask = min(book.asks, key=lambda level: level.price)
-        if instrument.tick_size is not None and (
-            Fraction(best_ask.price) % Fraction(instrument.tick_size) != 0
-        ):
-            mismatches.append(f"Leg {leg.instrument_id} best ask violates its instrument tick size")
+        valid_price = instrument.tick_size is None or (
+            Fraction(best_ask.price) % Fraction(instrument.tick_size) == 0
+        )
+        if instrument.price_increment_ranges is not None:
+            valid_price = valid_price and any(
+                price_range.start < best_ask.price < price_range.end
+                and (Fraction(best_ask.price) - Fraction(price_range.start))
+                % Fraction(price_range.step)
+                == 0
+                for price_range in instrument.price_increment_ranges
+            )
+        if not valid_price:
+            constraint_name = "tick size" if instrument.tick_size is not None else "price range"
+            mismatches.append(
+                f"Leg {leg.instrument_id} best ask violates its instrument {constraint_name} constraints"
+            )
         added_bps = scenario.slippage_bps + (
             scenario.quote_decay_bps_per_second * D(scenario.execution_delay_ms) / D(1000)
         )
