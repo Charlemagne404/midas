@@ -510,9 +510,12 @@ the manifest's pinned snapshot and result digests. Mission Control now submits
 only on explicit click, polls while jobs are active, and displays the job state,
 snapshot ID/hash, result hash, and paired comparison. Rejected host admission is
 shown as an error; the snapshot remains available for an idempotent retry.
-The Research Readiness panel reports the worker as `LIVE_VALIDATION_PENDING`
-when an Arena root is configured and `NOT_CONFIGURED` otherwise; the separate
-resource sustainability gate remains `NOT_MEASURED`.
+The Research Readiness panel reports `NOT_CONFIGURED` without an Arena root,
+`LIVE_VALIDATION_PENDING` until a bounded local scan finds a completed
+hash-verified result with a runtime record, `EVIDENCE_RECORDED` after that
+check, and `REVIEW_REQUIRED` if completed result/runtime evidence is invalid.
+The separate resource sustainability gate remains `NOT_MEASURED` because one
+worker run is not a capacity study.
 
 Local testing covers schema and resource caps, content-addressed snapshot
 idempotence and tampering, safe path rejection, artifact integrity, result to
@@ -601,8 +604,9 @@ Verification on this branch:
 - A broader single-worker Playwright attempt ran all 10 browser cases: **8 passed and 2 Laboratory launch checks were blocked** by the host-wide Arena admission lock (`resource_admission_lock_busy`). Failure context confirms no experiment was admitted or launched. The lock was not bypassed; Laboratory execution remains unverified under the active host gate. The complete repository Python suite was not run.
 - The one-sided-fill differential fixture exhaustively enumerates all eight full/no-fill patterns for three legs and matches the analytic minimum terminal P&L. A 16-leg fixture validates the bounded 65,536-pattern state-space declaration with analytic evaluation; it is not a production throughput benchmark.
 - Arena paired-replay checkpoint: **130 passed** across Frontier, the new bounded Arena worker/API tests, Arena job-schema foundations, and offline API persistence. Pytest took 47.97 seconds; `/usr/bin/time -v` measured 49.97 seconds wall, 31.65 seconds user CPU, 535,504 KiB peak RSS (about 523 MiB), zero swaps, and zero socket messages. The 8-test isolated Arena replay module completed in 1.81 seconds. One upstream Starlette/httpx `TestClient` deprecation warning remains.
-- Frontend after Arena job submission, history, result verification, and readiness-gate UI: **39 passed across 7 files**. TypeScript typecheck, ESLint, and Prettier passed. Production build passed; Frontier chunks are 67.75 kB JavaScript and 29.81 kB CSS. Existing 503.86 kB main and 544.41 kB Chart chunks still trigger Vite's size warning.
-- Targeted Frontier Playwright: **3 passed** in 8.0 seconds with one worker and isolated temporary API/Arena/store roots. The new case opened Arena history and confirmed no replay submission occurs on page load. No source probe or Arena worker was launched.
+- Frontend after Arena job submission, history, result verification, and readiness-gate UI: **39 passed across 7 files**. TypeScript typecheck, ESLint, and Prettier passed. Production build passed; Frontier chunks are 67.76 kB JavaScript and 29.81 kB CSS. Existing 503.86 kB main and 544.41 kB Chart chunks still trigger Vite's size warning.
+- Targeted Frontier Playwright: **3 passed** in 7.5 seconds with one worker and isolated temporary API/Arena/store roots. The new case opened Arena history and confirmed no replay submission occurs on page load. No source probe or Arena worker was launched.
+- After the readiness transition was implemented, the complete Frontier API test module passed **20 tests** in 8.24 seconds. A fixture completed job with a hash-valid result and runtime record produces `EVIDENCE_RECORDED`; a corrupt result produces `REVIEW_REQUIRED`; `resource_sustainability` stays `NOT_MEASURED`. The readiness scan is capped at 100 job entries and 64 KiB per manifest. This is fixture validation, not a live worker run.
 - Ruff check and format passed for all changed Python files. Mypy passed in strict mode for the Frontier replay job module, Arena job schema, and Frontier API (3 source files). A broader import-following mypy run reports 37 errors in 8 existing Veritas/Arena/API files, including unrelated legacy errors in `apps/api/arena.py`; it reported no errors in the Frontier replay job or `apps/api/frontier.py`. `git diff --check` passed.
 - A systemd-supervised Frontier job was deliberately not launched: the ordinary host-wide Arena admission gate remains mandatory and the previous E2E evidence recorded `resource_admission_lock_busy`. Snapshot staging, API configuration, pure offline execution, result integrity, UI polling/result display, and normal-gate submission wiring are tested; live supervisor execution and measured worker runtime remain pending.
 - After the 130-test regression, two targeted API cases passed for snapshot staging and simulated admission denial. The denial returned HTTP 409, preserved the content-addressed snapshot, issued no source request, and created no job.
@@ -652,9 +656,10 @@ admission headroom or service capacity.
 The broader Arena/Frontier regression completed in 49.97 seconds wall time and
 31.65 seconds user CPU, with 535,504 KiB (about 523 MiB) process peak RSS, zero
 swaps, and zero socket messages. It was run serially; no worker was scheduled.
-Frontend unit tests took 4.93 seconds total and the three targeted Frontier
-browser cases took 8.0 seconds with one worker. The built Frontier chunks grew
-to 67.75 kB JavaScript and 29.81 kB CSS with the job-history and result panel.
+The follow-up Frontier API module took 8.24 seconds. Frontend unit tests took
+4.95 seconds total and the three targeted Frontier browser cases took 7.5
+seconds with one worker. The built Frontier chunks are 67.76 kB JavaScript and
+29.81 kB CSS with the job-history, result, and readiness state panel.
 These local process measurements do not establish that the production API or
 host currently has headroom for an Arena worker.
 
@@ -946,6 +951,11 @@ Implementation and documentation commits on this branch:
   coverage. Worker runtime was not validated under host admission.
 - `cf6bade452e5cc6fe821c7280adfca97aa563396` — verified that resource-admission
   denial preserves the pinned snapshot and creates no job.
+- `f5c7129ef14741b9a5027a9cf22111e13daf6276` — documented the Arena replay
+  integration, caps, validation, and outstanding supervisor-runtime limit.
+- `886e1300c535339ca614fcbbe04b3e6984dbee93` — made the readiness gate inspect
+  bounded completed-job evidence and runtime fields, separated it from resource
+  sustainability, and added valid/corrupt fixture transitions.
 
 Principal changed paths:
 

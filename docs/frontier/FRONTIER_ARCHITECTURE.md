@@ -237,9 +237,12 @@ success state. Mission Control displays progress, input snapshot ID/hash, result
 hash, and the completed comparison. Job admission can be denied by the host
 resource gate; snapshots remain pinned for a safe retry. No Frontier Arena
 worker has been admitted or run against the live host in this development
-checkpoint. Frontier readiness reports `arena_replay_worker` as
-`LIVE_VALIDATION_PENDING` when an Arena root is configured, and `NOT_CONFIGURED`
-otherwise; resource sustainability remains `NOT_MEASURED`.
+checkpoint. Frontier readiness reports `NOT_CONFIGURED` without an Arena root,
+`LIVE_VALIDATION_PENDING` until its bounded local scan finds a completed
+hash-verified job plus runtime record, `EVIDENCE_RECORDED` after that check, and
+`REVIEW_REQUIRED` if a completed record has invalid result/runtime evidence.
+Resource sustainability remains `NOT_MEASURED` because one bounded execution
+does not establish sustainable capacity.
 
 ## API and UI behavior
 

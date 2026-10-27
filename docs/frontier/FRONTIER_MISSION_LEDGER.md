@@ -102,6 +102,7 @@ Remaining acceptance work is substantial.
 | `5af50b9` | Added analytic full-or-no-fill stress for supported candidates, an independent audit recomputation, replay-v5 result pinning, Mission Control leg-pattern details, and exhaustive three-leg differential/unknown-fee tests. |
 | `6fa3696` | Integrated content-addressed Frontier paired-replay snapshots with a bounded offline Arena job, result-integrity API, explicit Mission Control submission/history, and fixture/API/UI coverage; no worker was admitted. |
 | `cf6bade` | Added the resource-admission-denial regression proving snapshot retention and no job creation. |
+| `886e130` | Made Arena replay readiness evidence-driven, validated completed artifact/runtime linkage with a bounded scan, and tested valid and corrupt result states. |
 
 ## Latest checkpoint verification (2026-10-27)
 
@@ -309,9 +310,11 @@ Reproduction commands and environment boundaries are in
   disabled. The result API requires successful completion and validates the
   job record, snapshot digest, result digest, and comparison identity.
 - Mission Control exposes explicit submit, bounded history, progress, hashes,
-  and result inspection. Page load does not submit a job. The Frontier readiness
-  gate reports `LIVE_VALIDATION_PENDING` when Arena is configured; resource
-  sustainability remains `NOT_MEASURED`.
+  and result inspection. Page load does not submit a job. Readiness is
+  `LIVE_VALIDATION_PENDING` until a bounded scan finds a completed, hash-verified
+  result and runtime record; it then reports `EVIDENCE_RECORDED`, or
+  `REVIEW_REQUIRED` for invalid completion evidence. Resource sustainability
+  remains `NOT_MEASURED` after one sample.
 - The broad Arena/Frontier/API regression passed **130 tests** in 49.97 seconds
   wall, 31.65 seconds user CPU, and 535,504 KiB peak RSS, with zero swaps and
   zero socket messages. The eight-test Arena replay module passed in 1.81
@@ -319,10 +322,15 @@ Reproduction commands and environment boundaries are in
   **2 targeted tests**; denial returns 409, retains the pinned snapshot, makes
   no source request, and creates no job. One upstream Starlette/httpx test-client
   deprecation warning remains.
+- The subsequent Frontier API module passed **20 tests** in 8.24 seconds. A
+  completed fixture job with valid result/runtime evidence moves readiness to
+  `EVIDENCE_RECORDED`; a corrupt result produces `REVIEW_REQUIRED`. The scan is
+  capped at 100 job entries and 64 KiB per manifest; resource sustainability
+  remains `NOT_MEASURED`.
 - Frontend tests passed **39 across 7 files**; TypeScript, ESLint, Prettier, and
-  production build passed. Frontier chunks are 67.75 kB JavaScript and 29.81
+  production build passed. Frontier chunks are 67.76 kB JavaScript and 29.81
   kB CSS; existing main and Chart chunks still trigger Vite's bundle-size
-  warning. Targeted Frontier Playwright passed **3 cases** in 8.0 seconds with
+  warning. Targeted Frontier Playwright passed **3 cases** in 7.5 seconds with
   one worker and isolated temporary roots; one confirms no automatic submission.
 - Ruff check/format and strict mypy for the three Frontier/Arena source files
   passed. Import-following mypy reports 37 issues in eight existing
@@ -333,7 +341,9 @@ Reproduction commands and environment boundaries are in
   supervised runtime and worker resource profile remain unverified. No new
   source probe, Reality service, campaign, or production service was started.
 
-The code checkpoint is `6fa3696`; the admission-denial regression is `cf6bade`.
+The Arena job integration is `6fa3696`, the admission-denial regression is
+`cf6bade`, and the readiness-state update is `886e130`. The integration report
+and architecture handoff were documented in `f5c7129`.
 The next safe action is to run one bounded worker only when ordinary host
 admission allows it, then record runtime and completion evidence. Until then,
 the readiness gate stays pending.
@@ -431,4 +441,7 @@ implementation and test checkpoint is
 `5af50b9714d571a0c730f15a0e261f2d4ece2b3e`; this report/ledger amendment records
 economic model v4, independent audit v2, replay v5, and verification. The
 bounded Arena paired-replay integration is `6fa3696`, and the admission-denial
-regression is `cf6bade`. No deployment or production change was made.
+regression is `cf6bade`. The readiness state is evidence-driven in `886e130`.
+The first Arena report/docs checkpoint is `f5c7129`; this ledger/report update
+records follow-up readiness semantics and verification. No deployment or
+production change was made.

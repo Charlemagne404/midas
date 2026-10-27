@@ -172,9 +172,12 @@ job and checks both snapshot and artifact hashes. Mission Control lists the
 latest bounded job records and polls only while a job is queued or running.
 No worker was started to verify supervisor behavior in this checkpoint because
 the shared resource gate was not bypassed.
-The Frontier readiness panel exposes this as `LIVE_VALIDATION_PENDING` when
-Arena is configured; `resource_sustainability` stays `NOT_MEASURED` until the
-runtime is measured under an admitted bounded job.
+The Frontier readiness panel reports `LIVE_VALIDATION_PENDING` until it finds
+a completed, hash-verified Arena result with a worker runtime record in its
+bounded local scan. It reports `EVIDENCE_RECORDED` after that check and
+`REVIEW_REQUIRED` for a completed record with invalid result/runtime evidence.
+`resource_sustainability` remains `NOT_MEASURED`; one bounded worker sample does
+not establish sustainable capacity.
 
 Relationship decisions use `POST /api/frontier/relationships/{id}/review`. The
 review form records source market observation IDs and appends a linked revision;
