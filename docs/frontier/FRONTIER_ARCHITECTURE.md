@@ -155,6 +155,13 @@ manually supplied `$0.50`. Its input and output hashes are preserved in
 `data/frontier/live-probes/2026-10-27-kalshi-fee-sensitivity.json`; it is not live
 price evidence. The formula uses Kalshi's [July 7, 2026 event fee schedule](https://kalshi.com/docs/kalshi-fee-schedule.pdf)
 and [fee rounding documentation](https://docs.kalshi.com/getting_started/fee_rounding).
+That schedule's `KXMVE` row lists maker multiplier 2 and taker multiplier 1.
+The separately captured `KXMVECROSSCATEGORY` series is not that ticker: its
+event/series endpoint evidence reports `quadratic_with_combo_maker_fees` and
+multiplier 1, with no event override. Frontier does not transfer the `KXMVE`
+maker multiplier to a differently named series. The calculator remains
+taker-only, and exact maker-fee applicability for this captured MVE series is
+unresolved.
 
 Kalshi also advertises cursor-paginated public trades. Frontier exposes one
 operator-triggered ticker-filtered page at a time, caps it at 100 rows even though

@@ -208,6 +208,14 @@ rounding model depends on member balance precision and per-order accumulation;
 therefore the canonical `FeeSchedule` remains unknown and no fee is calculated
 from these parameters ([Kalshi Fees](https://help.kalshi.com/en/articles/13823805-fees),
 [Fee Rounding](https://docs.kalshi.com/getting_started/fee_rounding)).
+The official July 7, 2026 fee-schedule PDF lists the distinct `KXMVE` row with
+maker multiplier 2 and taker multiplier 1. The captured source series is
+`KXMVECROSSCATEGORY`, whose event/series API evidence instead reports
+`quadratic_with_combo_maker_fees` and multiplier 1, with no event override.
+Frontier does not assume these different series identifiers are interchangeable
+or apply the `KXMVE` maker multiplier to this evidence. The current sensitivity
+remains taker-only; maker-fee mapping to the exact native series is unresolved
+([July 7, 2026 Fee Schedule](https://kalshi.com/docs/kalshi-fee-schedule.pdf)).
 
 Kalshi's documented
 [`GET /trade-api/v2/events/multivariate`](https://docs.kalshi.com/api-reference/events/get-multivariate-events)
@@ -1556,6 +1564,24 @@ itself was not launched under the latest host-pressure sample.
   event filter. It does not reveal the child markets, validate combo payoff,
   establish settlement equivalence, or demonstrate any economic opportunity.
 
+### Kalshi fee-schedule applicability review (2026-10-27 12:17 UTC)
+
+- The official Kalshi Help Center fee page links the July 7, 2026 fee-schedule
+  PDF. That document lists the generic taker formula and a separate `KXMVE`
+  schedule row with maker multiplier 2 and taker multiplier 1. This is a
+  dated source document, not proof that every multivariate series inherits
+  those terms ([Fees](https://help.kalshi.com/en/articles/13823805-fees),
+  [Fee Schedule for July 2026](https://kalshi.com/docs/kalshi-fee-schedule.pdf)).
+- The preserved October 27 event/series metadata capture is for
+  `KXMVECROSSCATEGORY`, not `KXMVE`. Its series endpoint reports
+  `quadratic_with_combo_maker_fees` and multiplier 1, with no event override.
+  The ticker difference is unresolved evidence, so Frontier does not transfer
+  the `KXMVE` maker multiplier to that series or infer a maker charge from the
+  taker-only sensitivity.
+- No code, fee schedule, or candidate economics changed. Maker/mixed-order
+  applicability, account balance precision, any mapping between these native
+  identifiers, and upcoming schedule changes remain open research requirements.
+
 ## 20. Final status and continuation instructions
 
 Frontier’s isolated engine/API/UI foundation is **implemented and boundedly
@@ -1571,7 +1597,7 @@ cross-venue economics.
 | Canonical market/instrument normalization | PARTIALLY VERIFIED | Three distinct instrument classes are represented; v2 Polymarket trades retain native outcome-token identity; Kalshi MVE component references remain source assertions; `MarketBatch` schema v2 preserves typed `MarketGroup` membership state. The genuine MVE response records member-list state `omitted` and zero child markets. Payoff/settlement semantics remain unverified. |
 | Relationship hypotheses, review revisions, indexed neighborhoods, and explicit same-payoff verifier | PARTIALLY VERIFIED | Self-attributed review API/UI, append-only revisions, latest-state replay, tamper/migration checks, left/right endpoint-indexed 1–3 hop scans capped at 500 rows, one-hop keyset pages, and revision-bound multi-hop BFS pages with deterministic recomputation and 201-market chunk coverage; matcher v4 blocks explicit parent/child year contradictions. A genuine House-control topic pair remains text-only HYPOTHESIS and fails strict same-payoff verification. Multi-hop browser E2E is pending; reviewer authentication, revision-history drill-down, and full-universe search remain absent. |
 | Opportunity candidate and independent economic checks | PARTIALLY VERIFIED | Two-venue all-long binary and same-market 3–16 state one-hot exhaustive coverage; economic model v4 computes an exact full/no-fill adverse exposure pattern over up to 16 legs, and independent audit v2 recomputes it from pinned inputs. Differential three-leg enumeration, unknown-fee cases, and malformed cross-venue leg handling pass. Controlled fixtures only; source semantics, account costs, broader funding/settlement costs, and operational feasibility remain incomplete. |
-| Kalshi taker-fee sensitivity | PARTIALLY VERIFIED | Hash-matched public event/series evidence supports one-fill and bounded one-order Decimal sensitivities for two documented quadratic taker fee types, both precision cases, per-fill rounding, order accumulation, and capped rebates. Tests match the official one-fill example and exercise buy/sell arithmetic. Manual inputs are not live quotes or book-priced; account-specific fees and precision, maker/mixed-order behavior, FCM charges, later schedules, and full candidate fee integration remain unresolved. |
+| Kalshi taker-fee sensitivity | PARTIALLY VERIFIED | Hash-matched public event/series evidence supports one-fill and bounded one-order Decimal sensitivities for two documented quadratic taker fee types, both precision cases, per-fill rounding, order accumulation, and capped rebates. Tests match the official one-fill example and exercise buy/sell arithmetic. The dated official schedule's `KXMVE` multiplier pair is not assumed to apply to captured `KXMVECROSSCATEGORY` metadata. Manual inputs are not live quotes or book-priced; account-specific fees and precision, exact maker/mixed-order applicability, FCM charges, later schedules, and full candidate fee integration remain unresolved. |
 | Append-only evidence store and deterministic replay | COMPLETE AND VERIFIED | Schema v6, additive v2/v3/v4/v5 migration, bounds, hash validation, and immutability. Replay v6 carries exact store record IDs through API-loaded market/book provenance, manifests, candidate legs, and Arena snapshots; direct in-memory replay retains adapter IDs. Replay-v5 economic output includes full/no-fill sensitivity and pins effective mappings/proposal limit. The separate Arena wrapper uses immutable content-addressed snapshots and hash-verified result artifacts; two controlled fixture workers completed and the latest recorded CPU/RSS. |
 | Frontier API and source configuration | COMPLETE AND VERIFIED | New Kalshi MVE route validates exactly one series/collection/event-ticker filter, capability/config gates, one-page request bounds, captured request parameters, and raw/normalized lineage; fixture and exact saved-live-response API/store tests cover nested-present and nested-omitted cases. The route does not follow the source cursor. |
 | Paired scenario comparison | PARTIALLY VERIFIED | Local deterministic comparison, atomic result persistence, API/UI, and isolated browser tests pass. Two systemd-supervised Arena jobs completed over the same controlled fixture with verified result identities; the latest worker's process CPU and peak RSS are visible in Mission Control. No genuine matched live cross-venue pair or live economic claim exists. |

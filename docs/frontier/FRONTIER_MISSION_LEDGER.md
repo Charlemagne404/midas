@@ -671,9 +671,13 @@ The highest-value next steps are:
    after memory pressure eases; broaden to full-universe search or clustering
    only after representative data and resource measurements justify it.
 3. Reconcile Kalshi's captured event/series parameters with the effective
-   published maker/taker schedule and account rounding model. Keep Kraken
-   account fee tier unknown without authenticated account data, and keep fee
-   expiry enforced before any decisive net classification.
+   published maker/taker schedule and account rounding model. The July 7, 2026
+   schedule lists `KXMVE` maker/taker multipliers 2/1, while the captured
+   `KXMVECROSSCATEGORY` event/series endpoint reports
+   `quadratic_with_combo_maker_fees` with multiplier 1. These identifiers are
+   not treated as equivalent; exact maker-fee applicability remains open. Keep
+   Kraken account fee tier unknown without authenticated account data, and keep
+   fee expiry enforced before any decisive net classification.
 4. Seek genuine public multi-outcome metadata that satisfies the strict verified
    payoff and resolution requirements; do not relax the evaluator to fit current
    captures.
@@ -735,3 +739,10 @@ measurements, and the remaining browser/build boundary. At 12:15 UTC, memory
 PSI `avg10` was 35.86% (`some`) / 31.43% (`full`), so the browser and build
 remain unrun. No live request was repeated after the capture; no production
 deployment occurred.
+
+The 2026-10-27 12:17 UTC fee-source review checked the official July 7 schedule
+against the saved `KXMVECROSSCATEGORY` event/series metadata. It found that the
+document's `KXMVE` maker/taker multipliers are not directly attributable to the
+different captured series ticker. No fee model or candidate economics was
+changed; this unresolved mapping is now explicit in the engineering report and
+architecture handoff.
