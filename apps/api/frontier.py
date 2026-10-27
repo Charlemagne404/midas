@@ -356,6 +356,114 @@ def _decode_graph_cursor(cursor: str) -> dict[str, Any]:
     }
 
 
+def _encode_multihop_graph_cursor(
+    center_market_id: str,
+    depth: int,
+    edge_limit: int,
+    graph_revision: tuple[int, int, int],
+    after_index: int,
+) -> str:
+    value = {
+        "v": 2,
+        "center_market_id": center_market_id,
+        "depth": depth,
+        "edge_limit": edge_limit,
+        "graph_revision": list(graph_revision),
+        "after_index": after_index,
+    }
+    raw = json.dumps(value, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return base64.urlsafe_b64encode(raw).decode("ascii").rstrip("=")
+
+
+def _decode_multihop_graph_cursor(cursor: str) -> dict[str, Any]:
+    if not cursor or len(cursor) > 2048:
+        raise ValueError("Graph cursor is empty or exceeds its bound")
+    padded = cursor + "=" * (-len(cursor) % 4)
+    try:
+        decoded = base64.b64decode(padded, altchars=b"-_", validate=True)
+        value = json.loads(decoded)
+    except (ValueError, UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise ValueError("Graph cursor is not valid base64 JSON") from error
+    expected = {
+        "v",
+        "center_market_id",
+        "depth",
+        "edge_limit",
+        "graph_revision",
+        "after_index",
+    }
+    if (
+        not isinstance(value, dict)
+        or set(value) != expected
+        or type(value.get("v")) is not int
+        or value["v"] != 2
+    ):
+        raise ValueError("Graph cursor has an unsupported shape or version")
+    center = value["center_market_id"]
+    depth = value["depth"]
+    limit = value["edge_limit"]
+    revision = value["graph_revision"]
+    after_index = value["after_index"]
+    if not isinstance(center, str) or not 1 <= len(center) <= 256:
+        raise ValueError("Graph cursor center identity is invalid")
+    if type(depth) is not int or not 2 <= depth <= 3:
+        raise ValueError("Graph cursor traversal depth is invalid")
+    if type(limit) is not int or not 1 <= limit <= 200:
+        raise ValueError("Graph cursor edge limit is invalid")
+    if (
+        not isinstance(revision, list)
+        or len(revision) != 3
+        or any(type(item) is not int or item < 0 for item in revision)
+    ):
+        raise ValueError("Graph cursor revision is invalid")
+    if type(after_index) is not int or not 1 <= after_index <= 500:
+        raise ValueError("Graph cursor continuation index is invalid")
+    return {
+        "center_market_id": center,
+        "depth": depth,
+        "edge_limit": limit,
+        "graph_revision": tuple(revision),
+        "after_index": after_index,
+    }
+
+
+def _bounded_graph_neighbors(
+    store: FrontierStore,
+    market_ids: tuple[str, ...],
+    *,
+    scan_limit: int,
+) -> tuple[tuple[dict[str, Any], ...], int, bool]:
+    """Read a deterministic bounded adjacency window for an arbitrarily wide BFS layer."""
+    ordered_ids = tuple(sorted(set(market_ids)))
+    if not ordered_ids or len(ordered_ids) > 1000:
+        raise ValueError("Graph frontier must contain between 1 and 1000 unique markets")
+    if not 1 <= scan_limit <= 500:
+        raise ValueError("Graph adjacency scan must be between 1 and 500")
+
+    rows_by_id: dict[str, dict[str, Any]] = {}
+    scanned = 0
+    truncated = False
+    for offset in range(0, len(ordered_ids), 200):
+        if scanned >= scan_limit:
+            truncated = True
+            break
+        remaining = scan_limit - scanned
+        page, page_scanned, page_truncated = store.relationship_neighbors(
+            ordered_ids[offset : offset + 200], scan_limit=remaining
+        )
+        scanned += page_scanned
+        truncated |= page_truncated
+        for item in page:
+            rows_by_id.setdefault(str(item["relationship_id"]), item)
+        if page_truncated:
+            break
+
+    ordered_rows = list(rows_by_id.values())
+    ordered_rows.sort(key=lambda item: str(item["relationship_id"]))
+    ordered_rows.sort(key=lambda item: str(item["created_at_utc"]), reverse=True)
+    return tuple(ordered_rows), scanned, truncated
+
+
 def _encode_trade_cursor(condition_id: str, limit: int, source_cursor: str) -> str:
     value = {
         "v": 1,
@@ -1379,24 +1487,38 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
             )
         if q is not None and not q.strip():
             raise HTTPException(status_code=422, detail="Graph search text cannot be blank")
-        if cursor is not None and (center_market_id is None or depth != 1):
+        if cursor is not None and center_market_id is None:
             raise HTTPException(
                 status_code=422,
-                detail="Graph cursors require one centered, one-hop neighborhood",
+                detail="Graph cursors require a centered neighborhood",
             )
         cursor_value = None
         if cursor is not None:
             try:
-                cursor_value = _decode_graph_cursor(cursor)
+                cursor_value = (
+                    _decode_graph_cursor(cursor)
+                    if depth == 1
+                    else _decode_multihop_graph_cursor(cursor)
+                )
             except ValueError as error:
                 raise HTTPException(status_code=422, detail=str(error)) from error
             if (
                 cursor_value["center_market_id"] != center_market_id
                 or cursor_value["edge_limit"] != limit
+                or (depth > 1 and cursor_value["depth"] != depth)
             ):
                 raise HTTPException(
                     status_code=422, detail="Graph cursor does not match this query"
                 )
+        try:
+            graph_revision_before = store.graph_revision()
+        except FrontierStoreError as error:
+            raise HTTPException(status_code=409, detail=str(error)) from error
+        if cursor_value is not None and cursor_value["graph_revision"] != graph_revision_before:
+            raise HTTPException(
+                status_code=409,
+                detail="Graph changed while paging; restart the neighborhood query",
+            )
 
         market_by_id: dict[str, FrontierMarket] = {}
         market_observation_by_id: dict[str, str] = {}
@@ -1449,15 +1571,7 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
         if seeds:
             if center_market_id is not None and depth == 1:
                 try:
-                    revision_before = store.graph_revision()
-                    if (
-                        cursor_value is not None
-                        and cursor_value["graph_revision"] != revision_before
-                    ):
-                        raise HTTPException(
-                            status_code=409,
-                            detail="Graph changed while paging; restart the neighborhood query",
-                        )
+                    revision_before = graph_revision_before
                     page, scanned, scan_truncated, has_more, after = (
                         store.relationship_neighbor_page(
                             center_market_id,
@@ -1489,6 +1603,60 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
                     next_cursor = _encode_graph_cursor(
                         center_market_id, limit, revision_before, after
                     )
+            elif center_market_id is not None:
+                try:
+                    revision_before = graph_revision_before
+                    frontier = set(seeds)
+                    visited = set(seeds)
+                    for _ in range(depth):
+                        scan_remaining = scan_limit - relationships_scanned
+                        if scan_remaining <= 0:
+                            relationship_scan_may_be_incomplete = True
+                            break
+                        relationship_rows, scanned, truncated = _bounded_graph_neighbors(
+                            store,
+                            tuple(frontier),
+                            scan_limit=scan_remaining,
+                        )
+                        relationships_scanned += scanned
+                        relationship_scan_may_be_incomplete |= truncated
+                        centered_next_frontier: set[str] = set()
+                        for item in relationship_rows:
+                            relationship = Relationship.model_validate(item["relationship"])
+                            endpoints = {relationship.left_market_id, relationship.right_market_id}
+                            if not endpoints.intersection(frontier):
+                                continue
+                            selected.setdefault(item["relationship_id"], item)
+                            centered_next_frontier.update(endpoints - visited)
+                        if not centered_next_frontier:
+                            break
+                        visited.update(centered_next_frontier)
+                        frontier = centered_next_frontier
+                    revision_after = store.graph_revision()
+                    if revision_after != revision_before:
+                        raise HTTPException(
+                            status_code=409,
+                            detail="Graph changed while paging; restart the neighborhood query",
+                        )
+                except HTTPException:
+                    raise
+                except (FrontierStoreError, ValueError) as error:
+                    raise HTTPException(status_code=409, detail=str(error)) from error
+
+                page_offset = cursor_value["after_index"] if cursor_value is not None else 0
+                traversal_edges = list(selected.values())
+                page_edges = traversal_edges[page_offset : page_offset + limit]
+                has_more = page_offset + len(page_edges) < len(traversal_edges)
+                selected = {item["relationship_id"]: item for item in page_edges}
+                truncated_by_edge_limit = has_more
+                if has_more:
+                    next_cursor = _encode_multihop_graph_cursor(
+                        center_market_id,
+                        depth,
+                        limit,
+                        revision_before,
+                        page_offset + len(page_edges),
+                    )
             else:
                 frontier = set(seeds)
                 visited = set(seeds)
@@ -1498,8 +1666,10 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
                         relationship_scan_may_be_incomplete = True
                         break
                     try:
-                        relationship_rows, scanned, truncated = store.relationship_neighbors(
-                            tuple(sorted(frontier)), scan_limit=scan_remaining
+                        relationship_rows, scanned, truncated = _bounded_graph_neighbors(
+                            store,
+                            tuple(frontier),
+                            scan_limit=scan_remaining,
                         )
                     except (FrontierStoreError, ValueError) as error:
                         raise HTTPException(status_code=409, detail=str(error)) from error

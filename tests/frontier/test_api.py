@@ -31,7 +31,13 @@ from midas.frontier.models import (
     Venue,
 )
 from midas.frontier.registry import AdapterRegistry
-from midas.frontier.relationships import propose_relationships
+from midas.frontier.relationships import (
+    Relationship,
+    RelationshipEvidence,
+    RelationshipType,
+    VerificationState,
+    propose_relationships,
+)
 from midas.frontier.storage import FrontierStore
 
 from apps.api.frontier import router
@@ -59,6 +65,30 @@ def _client(tmp_path, *, arena_root=None):
     app = FastAPI()
     app.include_router(router(store, registry, arena_root=arena_root))
     return TestClient(app), registry, client, requests, store
+
+
+def _graph_fixture_edge(left: FrontierMarket, right: FrontierMarket) -> Relationship:
+    left_id, right_id = sorted((left.canonical_id, right.canonical_id))
+    relationship_id = hashlib.sha256(
+        f"frontier-graph-page-fixture-v1|{left_id}|{right_id}".encode()
+    ).hexdigest()
+    return Relationship(
+        relationship_id=relationship_id,
+        left_market_id=left_id,
+        right_market_id=right_id,
+        relationship_type=RelationshipType.TEXT_CANDIDATE,
+        state=VerificationState.HYPOTHESIS,
+        confidence=Decimal("0.75"),
+        reason="Controlled graph traversal fixture; not a market equivalence claim.",
+        evidence=(
+            RelationshipEvidence(
+                method="controlled_graph_fixture",
+                source_fields=("fixture_topology",),
+                details=("Constructed only to verify bounded graph traversal.",),
+                created_at_utc=T0,
+            ),
+        ),
+    )
 
 
 def test_empty_overview_reports_capabilities_without_network_or_db_creation(tmp_path):
@@ -1397,6 +1427,206 @@ def test_graph_page_cursor_rejects_a_changed_append_only_graph(tmp_path):
         )
         assert stale_page.status_code == 409
         assert "Graph changed" in stale_page.json()["detail"]
+        assert requests == []
+    finally:
+        client.close()
+        asyncio.run(registry.aclose())
+        asyncio.run(http_client.aclose())
+
+
+def test_multihop_graph_cursor_paginates_in_deterministic_breadth_first_order(tmp_path):
+    client, registry, http_client, requests, store = _client(tmp_path)
+    center, first_a, first_b, second_a, second_b = (
+        market(Venue.POLYMARKET, "bfs-center"),
+        market(Venue.POLYMARKET, "bfs-a"),
+        market(Venue.POLYMARKET, "bfs-b"),
+        market(Venue.POLYMARKET, "bfs-c"),
+        market(Venue.POLYMARKET, "bfs-d"),
+    )
+    markets = (center, first_a, first_b, second_a, second_b)
+    market_body = '{"fixture":"bounded-breadth-first-graph"}'
+    store.append_observation(
+        RawObservation(
+            venue=Venue.POLYMARKET,
+            observation_kind="market_listing",
+            request_url="https://public.example.test/frontier/bfs-markets",
+            http_status=200,
+            request_started_at_utc=T0,
+            received_at_utc=T0,
+            raw_body=market_body,
+            raw_sha256=hashlib.sha256(market_body.encode()).hexdigest(),
+            adapter_version="graph-bfs-fixture-v1",
+        ),
+        MarketBatch(venue=Venue.POLYMARKET, markets=markets),
+    )
+    edges = (
+        _graph_fixture_edge(center, first_a),
+        _graph_fixture_edge(center, first_b),
+        _graph_fixture_edge(first_a, second_a),
+        _graph_fixture_edge(first_b, second_b),
+    )
+    for edge in edges:
+        store.append_relationship(edge)
+
+    params = {"center_market_id": center.canonical_id, "depth": 2, "limit": 2}
+    try:
+        first = client.get("/api/frontier/graph", params=params)
+        assert first.status_code == 200, first.text
+        first_payload = first.json()
+        assert first_payload["returned_edges"] == 2
+        assert first_payload["truncated_by_edge_limit"] is True
+        assert first_payload["relationship_scan_may_be_incomplete"] is False
+        assert first_payload["relationships_scanned"] == 6
+        first_pairs = {
+            frozenset((item["left_market_id"], item["right_market_id"]))
+            for item in first_payload["edges"]
+        }
+        assert first_pairs == {
+            frozenset((center.canonical_id, first_a.canonical_id)),
+            frozenset((center.canonical_id, first_b.canonical_id)),
+        }
+        assert first_payload["next_cursor"]
+        first_repeat = client.get("/api/frontier/graph", params=params)
+        assert first_repeat.status_code == 200, first_repeat.text
+        assert first_repeat.json()["edges"] == first_payload["edges"]
+        assert first_repeat.json()["next_cursor"] == first_payload["next_cursor"]
+
+        second = client.get(
+            "/api/frontier/graph",
+            params={**params, "cursor": first_payload["next_cursor"]},
+        )
+        assert second.status_code == 200, second.text
+        second_payload = second.json()
+        second_pairs = {
+            frozenset((item["left_market_id"], item["right_market_id"]))
+            for item in second_payload["edges"]
+        }
+        assert second_pairs == {
+            frozenset((first_a.canonical_id, second_a.canonical_id)),
+            frozenset((first_b.canonical_id, second_b.canonical_id)),
+        }
+        assert second_payload["next_cursor"] is None
+        assert first_payload["edges"] + second_payload["edges"] == sorted(
+            first_payload["edges"] + second_payload["edges"],
+            key=lambda item: (
+                0
+                if center.canonical_id in (item["left_market_id"], item["right_market_id"])
+                else 1,
+                item["relationship_id"],
+            ),
+        )
+        assert requests == []
+    finally:
+        client.close()
+        asyncio.run(registry.aclose())
+        asyncio.run(http_client.aclose())
+
+
+def test_multihop_graph_cursor_binds_depth_and_rejects_stale_revision(tmp_path):
+    client, registry, http_client, requests, store = _client(tmp_path)
+    center, neighbor_a, neighbor_b, leaf = (
+        market(Venue.POLYMARKET, "bfs-stale-center"),
+        market(Venue.KALSHI, "bfs-stale-a"),
+        market(Venue.KRAKEN, "bfs-stale-b"),
+        market(Venue.POLYMARKET, "bfs-stale-leaf"),
+    )
+    markets = (center, neighbor_a, neighbor_b, leaf)
+    market_body = '{"fixture":"bounded-breadth-first-stale-cursor"}'
+    store.append_observation(
+        RawObservation(
+            venue=Venue.POLYMARKET,
+            observation_kind="market_listing",
+            request_url="https://public.example.test/frontier/bfs-stale-markets",
+            http_status=200,
+            request_started_at_utc=T0,
+            received_at_utc=T0,
+            raw_body=market_body,
+            raw_sha256=hashlib.sha256(market_body.encode()).hexdigest(),
+            adapter_version="graph-bfs-fixture-v1",
+        ),
+        MarketBatch(venue=Venue.POLYMARKET, markets=markets),
+    )
+    for left, right in ((center, neighbor_a), (center, neighbor_b), (neighbor_a, leaf)):
+        store.append_relationship(_graph_fixture_edge(left, right))
+
+    params = {"center_market_id": center.canonical_id, "depth": 2, "limit": 1}
+    try:
+        first = client.get("/api/frontier/graph", params=params)
+        assert first.status_code == 200, first.text
+        cursor = first.json()["next_cursor"]
+        assert cursor
+
+        wrong_depth = client.get(
+            "/api/frontier/graph",
+            params={**params, "depth": 3, "cursor": cursor},
+        )
+        assert wrong_depth.status_code == 422
+        wrong_page_size = client.get(
+            "/api/frontier/graph",
+            params={**params, "limit": 2, "cursor": cursor},
+        )
+        assert wrong_page_size.status_code == 422
+        wrong_center = client.get(
+            "/api/frontier/graph",
+            params={**params, "center_market_id": neighbor_a.canonical_id, "cursor": cursor},
+        )
+        assert wrong_center.status_code == 422
+
+        store.append_relationship(_graph_fixture_edge(neighbor_b, leaf))
+        stale = client.get("/api/frontier/graph", params={**params, "cursor": cursor})
+        assert stale.status_code == 409
+        assert "Graph changed" in stale.json()["detail"]
+        assert requests == []
+    finally:
+        client.close()
+        asyncio.run(registry.aclose())
+        asyncio.run(http_client.aclose())
+
+
+def test_multihop_graph_chunks_frontiers_above_storage_query_bound(tmp_path):
+    client, registry, http_client, requests, store = _client(tmp_path)
+    center = market(Venue.POLYMARKET, "wide-bfs-center")
+    neighbors = tuple(market(Venue.POLYMARKET, f"wide-bfs-{index:03d}") for index in range(201))
+    for index, item in enumerate((*neighbors, center)):
+        received_at = T0 + timedelta(seconds=index)
+        market_body = json.dumps(
+            {"fixture": "bounded-wide-breadth-first-graph", "id": item.canonical_id}
+        )
+        store.append_observation(
+            RawObservation(
+                venue=Venue.POLYMARKET,
+                observation_kind="market_listing",
+                request_url="https://public.example.test/frontier/wide-bfs-markets",
+                http_status=200,
+                request_started_at_utc=received_at,
+                received_at_utc=received_at,
+                raw_body=market_body,
+                raw_sha256=hashlib.sha256(market_body.encode()).hexdigest(),
+                adapter_version="graph-bfs-fixture-v1",
+            ),
+            item,
+        )
+    edges = tuple(_graph_fixture_edge(center, neighbor) for neighbor in neighbors)
+    for edge in edges:
+        store.append_relationship(edge)
+
+    params = {"center_market_id": center.canonical_id, "depth": 2, "limit": 100}
+    try:
+        page_ids: list[str] = []
+        cursor = None
+        for expected_count in (100, 100, 1):
+            page_params = {**params, **({"cursor": cursor} if cursor else {})}
+            response = client.get("/api/frontier/graph", params=page_params)
+            assert response.status_code == 200, response.text
+            payload = response.json()
+            assert payload["returned_edges"] == expected_count
+            assert payload["relationships_scanned"] == 402
+            assert payload["relationship_scan_may_be_incomplete"] is False
+            page_ids.extend(item["relationship_id"] for item in payload["edges"])
+            cursor = payload["next_cursor"]
+        assert cursor is None
+        assert page_ids == sorted(item.relationship_id for item in edges)
+        assert len(set(page_ids)) == 201
         assert requests == []
     finally:
         client.close()

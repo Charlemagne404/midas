@@ -1136,15 +1136,24 @@ it('renders a bounded accessible relationship graph and opens selected evidence'
   fireEvent.change(screen.getByLabelText('Relationship graph center market'), {
     target: { value: 'polymarket:event-1' },
   });
+  fireEvent.change(screen.getByLabelText('Relationship graph depth'), {
+    target: { value: '2' },
+  });
   await vi.waitFor(() =>
     expect(
-      fetchMock.mock.calls.some(([input]) => String(input).includes('center_market_id=')),
+      fetchMock.mock.calls.some(
+        ([input]) =>
+          String(input).includes('center_market_id=') && String(input).includes('depth=2'),
+      ),
     ).toBe(true),
   );
   fireEvent.click(await screen.findByRole('button', { name: 'Load more neighbors' }));
   expect(await screen.findByText('Neighborhood page 2')).toBeInTheDocument();
   expect(
-    fetchMock.mock.calls.some(([input]) => String(input).includes('cursor=cursor-page-2')),
+    fetchMock.mock.calls.some(
+      ([input]) =>
+        String(input).includes('cursor=cursor-page-2') && String(input).includes('depth=2'),
+    ),
   ).toBe(true);
   fireEvent.click(screen.getByRole('button', { name: 'Previous page' }));
   const edge = await screen.findByRole('button', { name: /text candidate hypothesis/i });

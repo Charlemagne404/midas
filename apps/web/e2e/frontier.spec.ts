@@ -55,6 +55,7 @@ test('Arena replay history loads without submitting or launching work', async ({
 test('relationship network remains bounded, selectable, and scroll-contained on mobile', async ({
   page,
 }) => {
+  const graphQueries: string[] = [];
   const marketRecord = (venue: 'polymarket' | 'kalshi', nativeId: string, title: string) => ({
     canonical_id: `${venue}:${nativeId}`,
     source_observation_record_id: venue === 'polymarket' ? 'a'.repeat(64) : 'b'.repeat(64),
@@ -312,6 +313,9 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
     }
     const requestUrl = new URL(route.request().url());
     const path = requestUrl.pathname;
+    if (path === '/api/frontier/graph') {
+      graphQueries.push(requestUrl.searchParams.toString());
+    }
     const fixture =
       path === '/api/frontier/graph'
         ? {
@@ -350,9 +354,15 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
   await page.getByRole('button', { name: 'Relationship graph', exact: true }).click();
 
   await page.getByLabel('Relationship graph center market').selectOption('polymarket:election-1');
+  await page.getByLabel('Relationship graph depth').selectOption('2');
   await expect(page.getByRole('group', { name: /Relationship network showing 1/ })).toBeVisible();
   await page.getByRole('button', { name: 'Load more neighbors' }).click();
   await expect(page.getByText('Neighborhood page 2')).toBeVisible();
+  await expect
+    .poll(() =>
+      graphQueries.some((query) => query.includes('depth=2') && query.includes('cursor=')),
+    )
+    .toBe(true);
   await page.getByRole('button', { name: 'Previous page' }).click();
   const edge = page.getByRole('button', { name: /text candidate hypothesis/i });
   await edge.click();

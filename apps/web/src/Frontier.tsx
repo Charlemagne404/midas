@@ -987,7 +987,7 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
     ...options,
   });
   const graphCursor = graphPageCursors[graphPageIndex] ?? null;
-  const graphPageSize = graphCenterMarketId && graphDepth === 1 ? 30 : 100;
+  const graphPageSize = graphCenterMarketId ? 30 : 100;
   const graph = useQuery({
     queryKey: [
       'frontier',
@@ -1980,14 +1980,18 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
               {graph.data.relationship_scan_may_be_incomplete
                 ? graph.data.next_cursor && graphCenterMarketId && graphDepth === 1
                   ? `This page reached its ${graph.data.relationship_scan_limit}-row scan bound. Continue with the next page; graph changes invalidate the cursor.`
-                  : `This query considered ${graph.data.relationships_scanned} relationship rows, reaching its ${graph.data.relationship_scan_limit}-row scan bound; additional neighbors may be omitted.`
+                  : graph.data.next_cursor && graphCenterMarketId && graphDepth > 1
+                    ? `This breadth-first traversal reached its ${graph.data.relationship_scan_limit}-row scan bound. Continue through the captured result window; additional neighbors may still be omitted.`
+                    : `This query considered ${graph.data.relationships_scanned} relationship rows, reaching its ${graph.data.relationship_scan_limit}-row scan bound; additional neighbors may be omitted.`
                 : graph.data.next_cursor && graphCenterMarketId && graphDepth === 1
                   ? `This page returned ${graph.data.returned_edges} edges. More neighbors are available through keyset pages; graph changes make the cursor stale.`
-                  : `This view is capped at ${graph.data.edge_limit} edges after considering ${graph.data.relationships_scanned} relationship rows.`}{' '}
+                  : graph.data.next_cursor && graphCenterMarketId && graphDepth > 1
+                    ? `This page returned ${graph.data.returned_edges} edges in breadth-first order. Continue through the bounded traversal; graph changes make the cursor stale.`
+                    : `This view is capped at ${graph.data.edge_limit} edges after considering ${graph.data.relationships_scanned} relationship rows.`}{' '}
               {!graphCenterMarketId && 'Choose a center market to inspect a smaller neighborhood.'}
             </div>
           )}
-          {graph.data && graphCenterMarketId && graphDepth === 1 && (
+          {graph.data && graphCenterMarketId && (
             <div className="fr-graph-pagination" role="group" aria-label="Relationship pages">
               <button
                 className="fr-action"
