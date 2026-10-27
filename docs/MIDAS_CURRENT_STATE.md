@@ -702,3 +702,23 @@ pre-existing imported Veritas type errors and the filtered run was interrupted
 under host pressure. No live source, protected service, held capture, or
 production state was accessed. Frontier remains isolated, undeployed, and
 PARTIALLY VERIFIED.
+
+## Fee evidence at modeled execution time — 2026-10-27 20:22 UTC
+
+Code commit `ad811a4` checks each leg's fee evidence at replay time plus the
+scenario's shared and venue-specific delay. If a pinned schedule expires
+before modeled use, the fee and net result remain unknown. The independent
+audit recomputes the projected fee-applicability time. Economic model v12,
+audit v9, and replay v12 pin this correction; it does not predict future fee
+changes.
+
+The fee-expiry and delay selection passed **6/6**, API replay passed **1/1**,
+and the complete Frontier Python suite passed **252/252** with zero swaps.
+Ruff and strict core Frontier mypy passed. At `2026-10-27T20:22:35Z` after the
+full suite, PSI avg10 was 25.66% (`some`) / 22.83% (`full`); 9.5 GiB was
+available and 469 MiB swap was free. The production frontend build remains
+pending after the UI change; the focused UI test and TypeScript/lint/format
+checks passed at the previous checkpoint. API-inclusive strict mypy remains
+unverified. No live source, protected service, or historical capture was
+accessed. Frontier remains research-only, isolated, undeployed, and PARTIALLY
+VERIFIED.

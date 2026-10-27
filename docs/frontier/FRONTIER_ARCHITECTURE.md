@@ -579,7 +579,7 @@ post-fill hedge, unwind, quote-recovery estimate, or prediction of execution.
 Independent audit version 2 derives the leg payoff vectors and adverse patterns
 again from the pinned market and book inputs using separate calculation code.
 
-Replay version 11 pins an optional per-venue delay addition alongside the
+Replay version 12 pins an optional per-venue delay addition alongside the
 shared base execution delay. The quote-decay sensitivity uses the resulting
 venue-specific delay when repricing each leg, and the independent audit derives
 that price again from the candidate leg's venue. Delay values are bounded whole
@@ -588,6 +588,10 @@ capped at one hour. These are user-entered sensitivity inputs; they do not
 assert an actual venue latency, order sequence, or fill response. `fill_fraction`
 only caps usable displayed top-ask depth. It is not a model of per-leg partial
 fills; unresolved partial-fill recovery remains outside the execution model.
+Fee effective/expiry bounds and the age of provenance-bound fee estimates are
+also checked at each leg's modeled venue execution time. If the pinned fee
+evidence expires before that time, its fee remains unknown. This does not
+predict future fee changes or certify a future venue schedule.
 
 Fee evidence is source-specific and time-bounded. Polymarket schedules are
 accepted only for an explicit enabled schedule with rate, taker-only scope, and
