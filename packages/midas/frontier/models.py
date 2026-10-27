@@ -189,6 +189,7 @@ class MarketInstrument(FrontierModel):
     outcome_id: str | None = None
     quantity_unit: QuantityUnit = QuantityUnit.UNKNOWN
     price_currency: str | None = None
+    price_currency_identity: SettlementAssetIdentity | None = None
     tick_size: Positive | None = None
     quantity_step: Positive | None = None
     minimum_quantity: Positive | None = None
@@ -205,6 +206,14 @@ class MarketInstrument(FrontierModel):
             raise ValueError("Invalid currency or settlement asset identifier")
         return value
 
+    @model_validator(mode="after")
+    def quote_identity_matches_code(self) -> MarketInstrument:
+        if self.price_currency_identity is not None and (
+            self.price_currency_identity.code != self.price_currency
+        ):
+            raise ValueError("Instrument quote currency code differs from its canonical identity")
+        return self
+
 
 class SelectedMarketComponent(FrontierModel):
     """Native selected contract leg; it does not assert the containing market payoff."""
@@ -217,7 +226,7 @@ class SelectedMarketComponent(FrontierModel):
 
 
 class SettlementAssetIdentity(FrontierModel):
-    """Canonical identity for a payout asset, distinct from its display ticker."""
+    """Canonical identity for a denomination unit, distinct from its display ticker."""
 
     schema_version: int = 1
     kind: SettlementAssetKind
@@ -329,6 +338,7 @@ class FeeSchedule(FrontierModel):
     rate: FeeRate | None = None
     formula: str | None = None
     fee_currency: str | None = None
+    fee_currency_identity: SettlementAssetIdentity | None = None
     source_url: str | None = None
     evidence_sha256: str | None = None
     effective_at_utc: datetime | None = None
@@ -339,6 +349,10 @@ class FeeSchedule(FrontierModel):
     def verified_schedule_has_evidence(self) -> FeeSchedule:
         if self.status == FeeStatus.VERIFIED and not (self.source_url and self.evidence_sha256):
             raise ValueError("Verified fee schedule requires source and evidence hash")
+        if self.fee_currency_identity is not None and (
+            self.fee_currency_identity.code != self.fee_currency
+        ):
+            raise ValueError("Fee currency code differs from its canonical identity")
         return self
 
 
@@ -529,7 +543,7 @@ class IndependentEconomicAudit(FrontierModel):
     """Recomputed candidate economics from normalized contracts and source books."""
 
     schema_version: int = 1
-    model_version: str = "frontier-independent-economic-audit-2"
+    model_version: str = "frontier-independent-economic-audit-3"
     disposition: EconomicAuditDisposition
     input_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     checked_market_count: int = Field(ge=0, le=2)
@@ -575,7 +589,7 @@ class Provenance(FrontierModel):
 
 
 class FrontierMarket(FrontierModel):
-    schema_version: int = 2
+    schema_version: int = 3
     venue: Venue
     canonical_id: str
     native_market_id: str
@@ -754,13 +768,15 @@ class BookLevel(FrontierModel):
 
 
 class BookSnapshot(FrontierModel):
-    schema_version: int = 1
+    schema_version: int = 2
     venue: Venue
     native_market_id: str
     native_instrument_id: str
     asks: tuple[BookLevel, ...] = ()
     bids: tuple[BookLevel, ...] = ()
     price_unit: str
+    price_currency: str | None = None
+    price_currency_identity: SettlementAssetIdentity | None = None
     quantity_unit: QuantityUnit
     received_at_utc: datetime
     exchange_timestamp_utc: datetime | None = None
@@ -784,6 +800,14 @@ class BookSnapshot(FrontierModel):
                 raise ValueError("Duplicate book price level")
         return self
 
+    @model_validator(mode="after")
+    def quote_identity_matches_code(self) -> BookSnapshot:
+        if self.price_currency_identity is not None and (
+            self.price_currency_identity.code != self.price_currency
+        ):
+            raise ValueError("Book quote currency code differs from its canonical identity")
+        return self
+
     @property
     def crossed(self) -> bool:
         return bool(
@@ -804,6 +828,7 @@ class TradeObservation(FrontierModel):
     price: Nonnegative
     quantity: Positive
     quote_currency: str | None = None
+    quote_currency_identity: SettlementAssetIdentity | None = None
     aggressor_side: str | None = None
     exchange_timestamp_utc: datetime | None = None
     received_at_utc: datetime
@@ -818,10 +843,14 @@ class TradeObservation(FrontierModel):
 
     @model_validator(mode="after")
     def trade_schema_is_supported(self) -> TradeObservation:
-        if self.schema_version not in {1, 2}:
+        if self.schema_version not in {1, 2, 3}:
             raise ValueError("Unsupported trade-observation schema version")
-        if self.schema_version == 2 and self.native_instrument_id is None:
-            raise ValueError("Trade-observation schema v2 requires a native instrument identity")
+        if self.schema_version >= 2 and self.native_instrument_id is None:
+            raise ValueError("Trade-observation schemas v2+ require a native instrument identity")
+        if self.quote_currency_identity is not None and (
+            self.quote_currency_identity.code != self.quote_currency
+        ):
+            raise ValueError("Trade quote currency differs from its canonical identity")
         return self
 
 
@@ -843,8 +872,8 @@ class TradeBatch(FrontierModel):
             raise ValueError("Unsupported trade-batch schema version")
         if any(trade.venue != self.venue for trade in self.trades):
             raise ValueError("Trade batch entries must belong to the declared venue")
-        if self.schema_version == 2 and any(trade.schema_version != 2 for trade in self.trades):
-            raise ValueError("Paginated trade-batch entries must use trade-observation schema v2")
+        if self.schema_version == 2 and any(trade.schema_version < 2 for trade in self.trades):
+            raise ValueError("Paginated trade-batch entries require trade-observation schema v2+")
         if self.requested_market_id is not None and any(
             trade.native_market_id != self.requested_market_id for trade in self.trades
         ):

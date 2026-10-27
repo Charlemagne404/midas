@@ -112,6 +112,7 @@ async def test_polymarket_v1_capture_normalizes_without_claiming_verified_payout
     assert first.settlement_asset is None
     assert first.settlement_asset_identity is None
     assert first.instruments[0].price_currency == "USDC"
+    assert first.instruments[0].price_currency_identity is None
     assert first.provenance.raw_sha256
     assert first.fees.status == FeeStatus.VERIFIED
     assert first.fees.rate == Decimal("0.04")
@@ -182,6 +183,7 @@ async def test_polymarket_v2_position_fixture_uses_versioned_host_and_pusd_ident
     assert market.payoff.payout_currency == "PUSD"
     assert market.payoff.verified is False
     assert market.instruments[0].price_currency == "PUSD"
+    assert market.instruments[0].price_currency_identity == market.settlement_asset_identity
     assert "SETTLEMENT_ASSET_PROTOCOL_MAPPED" in market.quality_flags
 
     book = {
@@ -212,6 +214,7 @@ async def test_polymarket_v2_position_fixture_uses_versioned_host_and_pusd_ident
     assert book_requests[0].url.params["token_id"] == "9001"
     assert "authorization" not in book_requests[0].headers
     assert snapshot.price_unit == "PUSD per outcome share"
+    assert snapshot.price_currency_identity == market.settlement_asset_identity
 
 
 @pytest.mark.asyncio
@@ -844,9 +847,14 @@ async def test_kalshi_live_capture_preserves_multivariate_legs_and_empty_public_
     assert market.settlement_asset_identity is not None
     assert market.settlement_asset_identity.canonical_id == "fiat:USD"
     assert market.payoff.settlement_asset_identity == market.settlement_asset_identity
+    assert all(
+        item.price_currency_identity == market.settlement_asset_identity
+        for item in market.instruments
+    )
     assert "MVE_PAYOFF_NOT_MODELED" in market.quality_flags
     assert "MVE_SELECTED_COMPONENTS_MISSING" not in market.quality_flags
     assert not book.asks and not book.bids
+    assert book.price_currency_identity == market.settlement_asset_identity
     assert "EMPTY_BOOK" in book.quality_flags
     assert "NO_EXCHANGE_SNAPSHOT_TIMESTAMP" in book.quality_flags
     assert all(request.method == "GET" for request in requests)
@@ -1365,11 +1373,16 @@ async def test_kalshi_trade_page_normalizes_one_cursor_page_without_inventing_ag
     assert batch.source_next_cursor == "opaque:kalshi-next"
     assert batch.has_more is True
     trade = batch.trades[0]
+    assert trade.schema_version == 3
     assert trade.native_market_id == ticker
     assert trade.native_instrument_id == f"{ticker}:YES"
     assert trade.outcome_label == "YES price reference"
     assert trade.price == Decimal("0.5700")
     assert trade.quantity == Decimal("3.50")
+    assert trade.quote_currency == "USD"
+    assert trade.quote_currency_identity is not None
+    assert trade.quote_currency_identity.kind.value == "fiat"
+    assert trade.quote_currency_identity.code == "USD"
     assert trade.aggressor_side is None
     assert trade.exchange_timestamp_utc.isoformat() == "2026-10-27T12:34:56+00:00"
     assert len(captures) == 1 and captures[0].raw_body == body

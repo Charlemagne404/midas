@@ -46,7 +46,7 @@ from midas.frontier.models import (
 from midas.market_data.polymarket import normalize_market
 
 D = Decimal
-ADAPTER_VERSION = "frontier-polymarket-5"
+ADAPTER_VERSION = "frontier-polymarket-6"
 GAMMA = "https://gamma-api.polymarket.com"
 CLOB = "https://clob.polymarket.com"
 CLOB_V2 = "https://clob-v2.polymarket.com"
@@ -274,12 +274,19 @@ class PolymarketAdapter(BaseReadOnlyAdapter):
                     outcome_id=state_ids[index],
                     quantity_unit=QuantityUnit.SHARE,
                     price_currency=quote_currency,
+                    price_currency_identity=payout_asset_identity,
                     tick_size=tick if tick is not None and tick > 0 else None,
                     minimum_quantity=minimum if minimum is not None and minimum > 0 else None,
                     payouts=payouts,
                 )
             )
-        fee = self._fee(legacy.fee, raw, response, fee_currency=quote_currency)
+        fee = self._fee(
+            legacy.fee,
+            raw,
+            response,
+            fee_currency=quote_currency,
+            fee_currency_identity=payout_asset_identity,
+        )
         end_time = parse_time(raw.get("endDateIso") or raw.get("endDate"))
         rules_hash = None
         if legacy.resolution_source or legacy.description:
@@ -375,6 +382,7 @@ class PolymarketAdapter(BaseReadOnlyAdapter):
         response: HTTPObservation,
         *,
         fee_currency: str,
+        fee_currency_identity: SettlementAssetIdentity | None,
     ) -> FeeSchedule:
         from midas.frontier.models import sha256_text
 
@@ -396,6 +404,7 @@ class PolymarketAdapter(BaseReadOnlyAdapter):
             rate=fee.rate,
             formula="quantity * rate * price * (1 - price); exponent 1",
             fee_currency=fee_currency,
+            fee_currency_identity=fee_currency_identity,
             source_url=POLY_FEES_DOC,
             evidence_sha256=sha256_text(evidence),
             effective_at_utc=response.response_received_at_utc,
@@ -465,6 +474,8 @@ class PolymarketAdapter(BaseReadOnlyAdapter):
             asks=asks,
             bids=bids,
             price_unit=f"{market.quote_asset or 'USDC'} per outcome share",
+            price_currency=market.quote_asset,
+            price_currency_identity=market.settlement_asset_identity,
             quantity_unit=instrument.quantity_unit,
             received_at_utc=response.response_received_at_utc,
             exchange_timestamp_utc=timestamp,

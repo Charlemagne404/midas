@@ -3,6 +3,14 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-li
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Frontier } from './Frontier';
 
+const USD_IDENTITY = {
+  schema_version: 1,
+  kind: 'fiat',
+  code: 'USD',
+  network_id: null,
+  asset_reference: null,
+} as const;
+
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
@@ -131,7 +139,7 @@ it('renders recorded-evidence empty states and never probes a source automatical
     offset: 0,
   });
   expect(await screen.findByText('condition:trade-fixture')).toBeInTheDocument();
-  expect(screen.getByText('0.51 USD')).toBeInTheDocument();
+  expect(screen.getByText(/0\.51 USD · denomination identity unknown/)).toBeInTheDocument();
 
   queryClient.setQueryData(['frontier', 'opportunities'], {
     items: [
@@ -153,6 +161,7 @@ it('renders recorded-evidence empty states and never probes a source automatical
             modeled_buy_price: '0.20',
             modeled_fee: '0',
             quote_currency: 'USD',
+            quote_currency_identity: USD_IDENTITY,
             displayed_depth: '10',
             book_observation_id: 'kalshi-red-book',
           },
@@ -166,6 +175,7 @@ it('renders recorded-evidence empty states and never probes a source automatical
             modeled_buy_price: '0.30',
             modeled_fee: '0',
             quote_currency: 'USD',
+            quote_currency_identity: USD_IDENTITY,
             displayed_depth: '10',
             book_observation_id: 'kalshi-green-book',
           },
@@ -179,6 +189,7 @@ it('renders recorded-evidence empty states and never probes a source automatical
             modeled_buy_price: '0.40',
             modeled_fee: '0',
             quote_currency: 'USD',
+            quote_currency_identity: USD_IDENTITY,
             displayed_depth: '10',
             book_observation_id: 'kalshi-blue-book',
           },
@@ -192,6 +203,7 @@ it('renders recorded-evidence empty states and never probes a source automatical
         worst_case_gross_pnl: '1',
         worst_case_net_pnl: '1',
         capital_by_venue: { kalshi: '9' },
+        capital_currency_identity: USD_IDENTITY,
         one_sided_fill_sensitivity: {
           model_version: 'frontier-full-or-none-fill-patterns-1',
           leg_count: 3,
@@ -261,10 +273,10 @@ it('renders recorded-evidence empty states and never probes a source automatical
   expect(screen.getByText('Recomputed basket cost')).toBeInTheDocument();
   expect(screen.getByText('Gross basket cost')).toBeInTheDocument();
   const capital = screen.getByRole('region', { name: 'Venue-separated virtual funding' });
-  expect(capital).toHaveTextContent('Modeled requirement: 9 USD');
+  expect(capital).toHaveTextContent('Modeled requirement: 9 USD (fiat:USD)');
   expect(capital).toHaveTextContent('separate virtual balance');
   const virtualBalance = screen.getByRole('textbox', {
-    name: 'Virtual balance allocated to Kalshi',
+    name: 'Virtual balance allocated to Kalshi USD (fiat:USD)',
   });
   fireEvent.change(virtualBalance, { target: { value: '8.999999999999999999' } });
   expect(capital).toHaveTextContent('Virtual funding shortfall at this venue.');
@@ -312,11 +324,58 @@ it('renders recorded-evidence empty states and never probes a source automatical
     ),
   });
   await waitFor(() =>
-    expect(capital).toHaveTextContent('Currency is missing or mixed; comparison unavailable.'),
+    expect(capital).toHaveTextContent(
+      'Currency identity is missing or mixed; comparison unavailable.',
+    ),
   );
   expect(
-    within(capital).getByRole('textbox', { name: 'Virtual balance allocated to Kalshi' }),
+    within(capital).getByRole('textbox', {
+      name: 'Virtual balance allocated to Kalshi unknown currency',
+    }),
   ).toBeDisabled();
+
+  const tokenUsdIdentity = {
+    schema_version: 1,
+    kind: 'token',
+    code: 'USD',
+    network_id: 'eip155:137',
+    asset_reference: `0x${'cafe'.repeat(10)}`,
+  } as const;
+  const tokenIdentityLabel = 'token:USD:eip155:137:' + tokenUsdIdentity.asset_reference;
+  const withTokenCapital = (includeMatchingLegUnits: boolean) => ({
+    ...recordedCandidates!,
+    items: recordedCandidates!.items.map((item) =>
+      item.candidate_id === 'multi-outcome-fixture-candidate'
+        ? {
+            ...item,
+            capital_currency_identity: tokenUsdIdentity,
+            legs: item.legs.map((leg) => ({
+              ...leg,
+              quote_currency_identity: includeMatchingLegUnits ? tokenUsdIdentity : USD_IDENTITY,
+            })),
+          }
+        : item,
+    ),
+  });
+  queryClient.setQueryData(['frontier', 'opportunities'], withTokenCapital(false));
+  await waitFor(() =>
+    expect(capital).toHaveTextContent(
+      'Currency identity is missing or mixed; comparison unavailable.',
+    ),
+  );
+  expect(
+    within(capital).getByRole('textbox', {
+      name: 'Virtual balance allocated to Kalshi unknown currency',
+    }),
+  ).toBeDisabled();
+
+  queryClient.setQueryData(['frontier', 'opportunities'], withTokenCapital(true));
+  const tokenBalance = await within(capital).findByRole('textbox', {
+    name: `Virtual balance allocated to Kalshi USD (${tokenIdentityLabel})`,
+  });
+  expect(tokenBalance).toHaveValue('');
+  expect(tokenBalance).toBeEnabled();
+  expect(capital).toHaveTextContent('Enter an isolated virtual balance.');
   expect(screen.getAllByText('red')).toHaveLength(2);
 });
 

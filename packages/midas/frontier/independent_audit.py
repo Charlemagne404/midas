@@ -41,7 +41,7 @@ from midas.frontier.relationships import (
 )
 
 D = Decimal
-_AUDIT_VERSION = "frontier-independent-economic-audit-2"
+_AUDIT_VERSION = "frontier-independent-economic-audit-3"
 _FEE_QUANTUM = D("0.00001")
 
 
@@ -220,23 +220,35 @@ def _recompute(
             mismatches.append(f"Leg {leg.instrument_id} is absent from its market contract")
             continue
         instrument_by_leg[(leg.market_id, leg.instrument_id)] = instrument
+        if instrument.price_currency_identity is None or leg.quote_currency_identity is None:
+            raise _MissingAuditEvidence(
+                f"Exact quote denomination identity is missing for {leg.instrument_id}."
+            )
         if (
             leg.venue != market.venue.value
             or leg.native_market_id != market.native_market_id
             or leg.outcome_id != instrument.outcome_id
             or leg.market_observation_id != market.provenance.observation_id
             or leg.quote_currency != instrument.price_currency
+            or leg.quote_currency_identity != instrument.price_currency_identity
         ):
             mismatches.append(f"Leg {leg.instrument_id} identity differs from normalized contract")
         book = books_by_market.get(leg.market_id, {}).get(leg.instrument_id)
         if book is None:
             raise _MissingAuditEvidence(f"Pinned book for leg {leg.instrument_id} is missing.")
         book_by_leg[(leg.market_id, leg.instrument_id)] = book
+        if book.price_currency_identity is None:
+            raise _MissingAuditEvidence(
+                f"Exact book quote denomination identity is missing for {leg.instrument_id}."
+            )
         if (
             book.venue != market.venue
             or book.native_market_id != market.native_market_id
             or book.native_instrument_id != leg.instrument_id
             or book.quantity_unit != instrument.quantity_unit
+            or book.price_currency != instrument.price_currency
+            or book.price_currency_identity != instrument.price_currency_identity
+            or instrument.price_currency_identity != market.payoff.settlement_asset_identity
             or book.crossed
             or not book.asks
         ):
@@ -342,6 +354,18 @@ def _recompute(
             leg.quantity * leg.modeled_buy_price
             + (fee_by_leg[(leg.market_id, leg.instrument_id)] or D(0))
         )
+    capital_identities = {
+        market.payoff.settlement_asset_identity for market in selected_markets.values()
+    }
+    if candidate.capital_currency_identity is None or None in capital_identities:
+        raise _MissingAuditEvidence(
+            "Exact capital denomination identity is missing from the candidate or verified payoff."
+        )
+    if (
+        len(capital_identities) != 1
+        or candidate.capital_currency_identity not in capital_identities
+    ):
+        mismatches.append("Candidate capital denomination identity differs from verified payoffs")
     expected_fill_sensitivity = _independent_fill_pattern_sensitivity(candidate.legs, payout_by_leg)
 
     comparisons = (
@@ -506,6 +530,7 @@ def _verify_multi_outcome_market(
         or not market.resolution.verified
         or market.settlement_asset != market.payoff.settlement_asset
         or not market.has_consistent_settlement_asset_identity()
+        or market.payoff.payout_currency != market.payoff.settlement_asset
         or not 3 <= len(state_ids) <= 16
         or len(market.instruments) != len(state_ids)
         or len(candidate.legs) != len(state_ids)
@@ -526,6 +551,10 @@ def _verify_multi_outcome_market(
             raise _MissingAuditEvidence("Multi-outcome instrument quantity unit is unknown.")
         if instrument.price_currency != market.payoff.payout_currency:
             raise _MissingAuditEvidence("Instrument quote and payout currencies differ.")
+        if instrument.price_currency_identity != market.payoff.settlement_asset_identity:
+            raise _MissingAuditEvidence(
+                "Instrument quote denomination identity differs from the verified settlement asset."
+            )
         if len(instrument.payouts) != len(state_ids):
             raise _MissingAuditEvidence("Instrument payoff vector is incomplete.")
         payout = {item.state_id: item.amount for item in instrument.payouts}
@@ -621,6 +650,7 @@ def _verify_cross_venue_relationship(
     right_instruments = {item.native_instrument_id: item for item in right.instruments}
     if any(
         item.price_currency != market.payoff.payout_currency
+        or item.price_currency_identity != market.payoff.settlement_asset_identity
         for market in (left, right)
         for item in market.instruments
     ):
@@ -703,6 +733,8 @@ def _independent_fee(
         or schedule.rate is None
         or schedule.fixed_fee not in (None, D(0))
         or schedule.fee_currency != instrument.price_currency
+        or schedule.fee_currency_identity is None
+        or schedule.fee_currency_identity != instrument.price_currency_identity
         or (
             schedule.effective_at_utc is not None
             and schedule.effective_at_utc > candidate.observed_at_utc

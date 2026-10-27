@@ -47,6 +47,7 @@ def market(
                 outcome_id="yes",
                 quantity_unit=units,
                 price_currency="USD",
+                price_currency_identity=USD_SETTLEMENT_IDENTITY,
                 payouts=(
                     StatePayout(state_id="yes", amount=D(1)),
                     StatePayout(state_id="no", amount=D(0)),
@@ -58,6 +59,7 @@ def market(
                 outcome_id="no",
                 quantity_unit=units,
                 price_currency="USD",
+                price_currency_identity=USD_SETTLEMENT_IDENTITY,
                 payouts=(
                     StatePayout(state_id="yes", amount=D(0)),
                     StatePayout(state_id="no", amount=D(1)),
@@ -89,6 +91,7 @@ def market(
             rate=D(0),
             formula="quantity * rate * price * (1 - price); exponent 1",
             fee_currency="USD",
+            fee_currency_identity=USD_SETTLEMENT_IDENTITY,
             source_url="https://example.test/fee-evidence",
             evidence_sha256="b" * 64,
         ),
@@ -108,6 +111,9 @@ def market(
 
 
 def book(market_value: FrontierMarket, instrument_id: str, ask: str) -> BookSnapshot:
+    instrument = next(
+        item for item in market_value.instruments if item.native_instrument_id == instrument_id
+    )
     return BookSnapshot(
         venue=market_value.venue,
         native_market_id=market_value.native_market_id,
@@ -118,8 +124,10 @@ def book(market_value: FrontierMarket, instrument_id: str, ask: str) -> BookSnap
                 price=max(D(0), D(ask) - D("0.01")), quantity=D(10), exchange_timestamp_utc=T0
             ),
         ),
-        price_unit="USD per contract",
-        quantity_unit=market_value.instruments[0].quantity_unit,
+        price_unit=f"{instrument.price_currency or 'Unknown'} per {instrument.quantity_unit.value}",
+        price_currency=instrument.price_currency,
+        price_currency_identity=instrument.price_currency_identity,
+        quantity_unit=instrument.quantity_unit,
         received_at_utc=T0,
         exchange_timestamp_utc=T0,
         exchange_timestamp_semantics="controlled test fixture",

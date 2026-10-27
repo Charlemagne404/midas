@@ -2891,6 +2891,9 @@ def test_replay_api_generates_and_persists_multi_outcome_candidate(tmp_path):
             outcome_id=state,
             quantity_unit=QuantityUnit.CONTRACT,
             price_currency="USD",
+            price_currency_identity=SettlementAssetIdentity(
+                kind=SettlementAssetKind.FIAT, code="USD"
+            ),
             payouts=tuple(
                 StatePayout(state_id=state_id, amount="1" if state_id == state else "0")
                 for state_id in states
@@ -2992,7 +2995,7 @@ def test_replay_api_generates_and_persists_multi_outcome_candidate(tmp_path):
         replay = client.post("/api/frontier/replay", json={})
         assert replay.status_code == 200, replay.text
         result = replay.json()
-        assert result["manifest"]["replay_version"] == "frontier-deterministic-replay-6"
+        assert result["manifest"]["replay_version"] == "frontier-deterministic-replay-7"
         assert len(result["candidates"]) == 1
         candidate = result["candidates"][0]
         assert candidate["family"] == "within_market_multi_outcome_coverage"

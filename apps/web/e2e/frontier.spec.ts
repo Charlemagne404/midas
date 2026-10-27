@@ -1,5 +1,13 @@
 import { expect, test } from '@playwright/test';
 
+const USD_IDENTITY = {
+  schema_version: 1,
+  kind: 'fiat',
+  code: 'USD',
+  network_id: null,
+  asset_reference: null,
+} as const;
+
 test('Frontier workspace uses isolated research state and remains responsive', async ({ page }) => {
   let probeRequests = 0;
   page.on('request', (request) => {
@@ -382,6 +390,7 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
               modeled_buy_price: '0.20',
               modeled_fee: '0',
               quote_currency: 'USD',
+              quote_currency_identity: USD_IDENTITY,
               displayed_depth: '10',
               book_observation_id: 'fixture-red-book',
             },
@@ -395,6 +404,7 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
           worst_case_gross_pnl: '1',
           worst_case_net_pnl: '1',
           capital_by_venue: { kalshi: '9' },
+          capital_currency_identity: USD_IDENTITY,
           received_skew_ms: 10,
           exchange_skew_ms: 5,
           timing_verified: true,
@@ -433,6 +443,7 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
               modeled_buy_price: '0.55',
               modeled_fee: '0',
               quote_currency: 'USD',
+              quote_currency_identity: USD_IDENTITY,
               displayed_depth: '10',
               book_observation_id: 'fixture-kalshi-book',
             },
@@ -446,6 +457,7 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
               modeled_buy_price: '0.35',
               modeled_fee: '0',
               quote_currency: 'USD',
+              quote_currency_identity: USD_IDENTITY,
               displayed_depth: '10',
               book_observation_id: 'fixture-polymarket-book',
             },
@@ -459,6 +471,7 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
           worst_case_gross_pnl: null,
           worst_case_net_pnl: null,
           capital_by_venue: { kalshi: '5.5', polymarket: '3.5' },
+          capital_currency_identity: USD_IDENTITY,
           received_skew_ms: 10,
           exchange_skew_ms: 5,
           timing_verified: false,
@@ -618,7 +631,7 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
   });
   await expect(capital.getByText(/Modeled requirement: 9 USD/)).toBeVisible();
   const virtualBalance = capital.getByRole('textbox', {
-    name: 'Virtual balance allocated to Kalshi',
+    name: 'Virtual balance allocated to Kalshi USD (fiat:USD)',
   });
   await virtualBalance.fill('8.999999999999999999');
   await expect(capital.getByRole('status')).toHaveText('Virtual funding shortfall at this venue.');
@@ -636,10 +649,10 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
     .locator('.fr-capital-row')
     .filter({ hasText: 'Polymarket' });
   await kalshiCapital
-    .getByRole('textbox', { name: 'Virtual balance allocated to Kalshi' })
+    .getByRole('textbox', { name: 'Virtual balance allocated to Kalshi USD (fiat:USD)' })
     .fill('10');
   await polymarketCapital
-    .getByRole('textbox', { name: 'Virtual balance allocated to Polymarket' })
+    .getByRole('textbox', { name: 'Virtual balance allocated to Polymarket USD (fiat:USD)' })
     .fill('0');
   await expect(kalshiCapital.getByRole('status')).toHaveText(
     'Modeled requirement covered at this venue.',

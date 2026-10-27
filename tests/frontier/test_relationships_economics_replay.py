@@ -64,7 +64,12 @@ def _verified_pair():
 
 def _market_with_token_settlement_identity(market_value, identity):
     instruments = tuple(
-        item.model_copy(update={"price_currency": identity.code})
+        item.model_copy(
+            update={
+                "price_currency": identity.code,
+                "price_currency_identity": identity,
+            }
+        )
         for item in market_value.instruments
     )
     payoff = market_value.payoff.model_copy(
@@ -79,6 +84,23 @@ def _market_with_token_settlement_identity(market_value, identity):
             "instruments": instruments,
             "payoff": payoff,
             "settlement_asset": identity.code,
+            "settlement_asset_identity": identity,
+        }
+    )
+
+
+def _market_with_token_usd_settlement_keep_fiat_quotes(market_value, identity):
+    payoff = market_value.payoff.model_copy(
+        update={
+            "payout_currency": "USD",
+            "settlement_asset": "USD",
+            "settlement_asset_identity": identity,
+        }
+    )
+    return market_value.model_copy(
+        update={
+            "payoff": payoff,
+            "settlement_asset": "USD",
             "settlement_asset_identity": identity,
         }
     )
@@ -121,6 +143,122 @@ def test_nominal_usd_does_not_bridge_fiat_usd_to_pusd_settlement():
     assert result.state == VerificationState.REJECTED
     assert "settlement assets differ" in result.reason.lower()
     assert "canonical settlement asset identities are absent or differ" in result.reason.lower()
+
+
+def test_token_ticker_usd_does_not_match_fiat_usd_quote_books():
+    left, right, _, instrument_mapping = _verified_pair()
+    token_usd = SettlementAssetIdentity(
+        kind=SettlementAssetKind.TOKEN,
+        code="USD",
+        network_id="eip155:137",
+        asset_reference="0x" + "cafe" * 10,
+    )
+    token_left = _market_with_token_usd_settlement_keep_fiat_quotes(left, token_usd)
+    token_right = _market_with_token_usd_settlement_keep_fiat_quotes(right, token_usd)
+    relationship = verify_same_payoff(
+        token_left,
+        token_right,
+        state_mapping={"yes": "yes", "no": "no"},
+        instrument_mapping=instrument_mapping,
+        external_assertion_id="same-ticker-token-is-not-fiat",
+        evidence_observation_ids=("token-left", "token-right"),
+        asserted_at_utc=T0,
+    )
+    assert relationship.state == VerificationState.VERIFIED
+
+    left_books, right_books = _books(token_left, token_right)
+    candidates = generate_binary_coverage_candidates(
+        token_left,
+        token_right,
+        relationship,
+        left_books,
+        right_books,
+        state_mapping={"yes": "yes", "no": "no"},
+        instrument_mapping=instrument_mapping,
+        as_of_utc=T0 + timedelta(milliseconds=100),
+    )
+
+    assert candidates
+    assert all(
+        candidate.classification == OpportunityClassification.INCOMPLETE_EVIDENCE
+        and not candidate.legs
+        and any("exact verified settlement identity" in reason for reason in candidate.reasons)
+        for candidate in candidates
+    )
+
+
+def test_independent_audit_requires_exact_quote_and_capital_identities():
+    left, right, relationship, instrument_mapping = _verified_pair()
+    left_books, right_books = _books(left, right)
+    candidate = generate_binary_coverage_candidates(
+        left,
+        right,
+        relationship,
+        left_books,
+        right_books,
+        state_mapping={"yes": "yes", "no": "no"},
+        instrument_mapping=instrument_mapping,
+        as_of_utc=T0 + timedelta(milliseconds=100),
+    )[0]
+    canonical_instrument_mapping = (
+        instrument_mapping
+        if relationship.left_market_id == left.canonical_id
+        else {right_id: left_id for left_id, right_id in instrument_mapping.items()}
+    )
+    unidentified_candidates = (
+        candidate.model_copy(
+            update={
+                "legs": tuple(
+                    leg.model_copy(update={"quote_currency_identity": None})
+                    for leg in candidate.legs
+                ),
+                "independent_audit": None,
+            }
+        ),
+        candidate.model_copy(update={"capital_currency_identity": None, "independent_audit": None}),
+    )
+    for unidentified in unidentified_candidates:
+        audited = independently_audit_candidate(
+            unidentified,
+            markets={left.canonical_id: left, right.canonical_id: right},
+            books_by_market={left.canonical_id: left_books, right.canonical_id: right_books},
+            relationships={relationship.relationship_id: relationship},
+            state_mappings={relationship.relationship_id: {"yes": "yes", "no": "no"}},
+            instrument_mappings={relationship.relationship_id: canonical_instrument_mapping},
+            scenario=ExecutionScenario(),
+        )
+
+        assert audited.independent_audit is not None
+        assert audited.independent_audit.disposition.value == "incomplete"
+        assert audited.classification == OpportunityClassification.INCOMPLETE_EVIDENCE
+        assert "identity is missing" in audited.independent_audit.message.lower()
+
+    first_instrument_id = candidate.legs[0].instrument_id
+    unknown_left_books = left_books.copy()
+    unknown_right_books = right_books.copy()
+    source_books = (
+        unknown_left_books if first_instrument_id in unknown_left_books else unknown_right_books
+    )
+    source_books[first_instrument_id] = source_books[first_instrument_id].model_copy(
+        update={"price_currency_identity": None}
+    )
+    audited_book = independently_audit_candidate(
+        candidate.model_copy(update={"independent_audit": None}),
+        markets={left.canonical_id: left, right.canonical_id: right},
+        books_by_market={
+            left.canonical_id: unknown_left_books,
+            right.canonical_id: unknown_right_books,
+        },
+        relationships={relationship.relationship_id: relationship},
+        state_mappings={relationship.relationship_id: {"yes": "yes", "no": "no"}},
+        instrument_mappings={relationship.relationship_id: canonical_instrument_mapping},
+        scenario=ExecutionScenario(),
+    )
+    assert audited_book.independent_audit is not None
+    assert audited_book.independent_audit.disposition.value == "incomplete"
+    assert "book quote denomination identity is missing" in (
+        audited_book.independent_audit.message.lower()
+    )
 
 
 def test_token_settlement_identity_requires_network_and_reference():
@@ -418,6 +556,9 @@ def _multi_outcome_market(*, state_count: int = 3, steps: tuple[str | None, ...]
             outcome_id=state,
             quantity_unit=QuantityUnit.CONTRACT,
             price_currency="USD",
+            price_currency_identity=SettlementAssetIdentity(
+                kind=SettlementAssetKind.FIAT, code="USD"
+            ),
             quantity_step=Decimal(step_values[index]) if step_values[index] is not None else None,
             minimum_quantity=Decimal("0.1"),
             payouts=tuple(
@@ -1023,7 +1164,7 @@ def test_verified_multi_outcome_coverage_is_exact_and_stays_hypothetical():
         as_of_utc=T0 + timedelta(milliseconds=100),
         code_version="multi-outcome-fixture-v1",
     )
-    assert replay.manifest.replay_version == "frontier-deterministic-replay-6"
+    assert replay.manifest.replay_version == "frontier-deterministic-replay-7"
     replay_candidate = replay.candidates[0]
     assert replay_candidate.model_copy(update={"independent_audit": None}) == candidate
     assert replay_candidate.independent_audit is not None

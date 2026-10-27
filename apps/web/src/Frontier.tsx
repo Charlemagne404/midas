@@ -107,11 +107,18 @@ type Market = {
     rate: string | null;
     formula: string | null;
     fee_currency: string | null;
+    fee_currency_identity?: SettlementAssetIdentity | null;
     source_url: string | null;
     note: string;
   };
   native_fields: Record<string, unknown>;
-  instruments: { native_instrument_id: string; label: string; outcome_id: string | null }[];
+  instruments: {
+    native_instrument_id: string;
+    label: string;
+    outcome_id: string | null;
+    price_currency?: string | null;
+    price_currency_identity?: SettlementAssetIdentity | null;
+  }[];
   selected_components?: {
     venue: Venue;
     native_event_id: string | null;
@@ -155,6 +162,8 @@ type Book = {
   asks: { price: string; quantity: string; exchange_timestamp_utc: string | null }[];
   bids: { price: string; quantity: string; exchange_timestamp_utc: string | null }[];
   price_unit: string;
+  price_currency?: string | null;
+  price_currency_identity?: SettlementAssetIdentity | null;
   quantity_unit: string;
   received_at_utc: string;
   exchange_timestamp_utc: string | null;
@@ -172,6 +181,7 @@ type Trade = {
   price: string;
   quantity: string;
   quote_currency: string | null;
+  quote_currency_identity?: SettlementAssetIdentity | null;
   aggressor_side: string | null;
   exchange_timestamp_utc: string | null;
   received_at_utc: string;
@@ -391,6 +401,7 @@ type Candidate = {
     modeled_buy_price: string;
     modeled_fee: string | null;
     quote_currency?: string | null;
+    quote_currency_identity?: SettlementAssetIdentity | null;
     displayed_depth: string;
     book_observation_id: string;
   }[];
@@ -403,6 +414,7 @@ type Candidate = {
   worst_case_gross_pnl: string | null;
   worst_case_net_pnl: string | null;
   capital_by_venue: Record<string, string>;
+  capital_currency_identity?: SettlementAssetIdentity | null;
   one_sided_fill_sensitivity?: {
     model_version: string;
     leg_count: number;
@@ -1925,6 +1937,9 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
                         </td>
                         <td>
                           {money(trade.price)} {trade.quote_currency ?? ''}
+                          {trade.quote_currency_identity
+                            ? ` · ${settlementIdentityLabel(trade.quote_currency_identity)}`
+                            : ' · denomination identity unknown'}
                         </td>
                         <td>{money(trade.quantity)}</td>
                         <td>{label(trade.aggressor_side ?? 'unknown')}</td>
@@ -2785,6 +2800,10 @@ function MarketDetails({
             {label(market.fees.status)}
             {market.fees.rate ? ` · rate ${market.fees.rate}` : ''}
           </strong>
+          <small>
+            Fee unit: {market.fees.fee_currency ?? 'Unknown'} ·{' '}
+            {settlementIdentityLabel(market.fees.fee_currency_identity)}
+          </small>
           <small>{market.fees.note}</small>
         </div>
         <div>
@@ -3277,12 +3296,19 @@ function MarketDetails({
                 </span>
                 <code>{instrument.native_instrument_id}</code>
               </div>
+              <small>
+                Quote unit: {instrument.price_currency ?? 'Unknown'} ·{' '}
+                {settlementIdentityLabel(instrument.price_currency_identity)}
+              </small>
               {booksLoading ? (
                 <small>Loading stored public book snapshots…</small>
               ) : book ? (
                 <>
                   <div className="fr-book-meta">
                     <span>{book.price_unit}</span>
+                    <span>
+                      Quote identity: {settlementIdentityLabel(book.price_currency_identity)}
+                    </span>
                     <span>{book.quantity_unit}</span>
                     <span>received {time(book.received_at_utc)}</span>
                     <StateBadge state={book.quality_flags.length ? 'degraded' : 'recorded'} />
@@ -3725,21 +3751,32 @@ function CandidateCard({ candidate }: { candidate: Candidate }) {
               .sort(([left], [right]) => left.localeCompare(right))
               .map(([venue, requirement]) => {
                 const legs = candidate.legs.filter((leg) => leg.venue === venue);
-                const currencies = new Set(
-                  legs
-                    .map((leg) => leg.quote_currency)
-                    .filter((currency): currency is string => !!currency),
+                const capitalIdentity = candidate.capital_currency_identity;
+                const capitalIdentityKey = capitalIdentity
+                  ? settlementIdentityLabel(capitalIdentity)
+                  : null;
+                const exactLegUnits = Boolean(
+                  capitalIdentity &&
+                  legs.length > 0 &&
+                  legs.every(
+                    (leg) =>
+                      leg.quote_currency === capitalIdentity.code &&
+                      leg.quote_currency_identity &&
+                      settlementIdentityLabel(leg.quote_currency_identity) === capitalIdentityKey,
+                  ),
                 );
-                const currencyComplete =
-                  legs.length > 0 && legs.every((leg) => Boolean(leg.quote_currency));
+                const currencyComplete = Boolean(capitalIdentityKey && exactLegUnits);
                 const currency =
-                  currencyComplete && currencies.size === 1 ? [...currencies][0] : null;
+                  currencyComplete && capitalIdentity
+                    ? `${capitalIdentity.code} (${capitalIdentityKey})`
+                    : null;
+                const balanceKey = `${venue}:${capitalIdentityKey ?? 'identity-unavailable'}`;
                 const feesUnknown = legs.some((leg) => leg.modeled_fee == null);
-                const budgetText = virtualBalances[venue] ?? '';
+                const budgetText = virtualBalances[balanceKey] ?? '';
                 const budget = budgetText ? parseExactMoney(budgetText) : null;
                 const required = parseExactMoney(requirement);
                 const state = !currency
-                  ? 'Currency is missing or mixed; comparison unavailable.'
+                  ? 'Currency identity is missing or mixed; comparison unavailable.'
                   : !required
                     ? 'Recorded requirement exceeds the exact comparison bound.'
                     : !budgetText
@@ -3752,7 +3789,10 @@ function CandidateCard({ candidate }: { candidate: Candidate }) {
                             ? 'Recorded principal is covered; unresolved fees remain.'
                             : 'Modeled requirement covered at this venue.';
                 return (
-                  <div className="fr-capital-row" key={`${candidate.candidate_id}-${venue}`}>
+                  <div
+                    className="fr-capital-row"
+                    key={`${candidate.candidate_id}-${venue}-${capitalIdentityKey ?? 'unknown'}`}
+                  >
                     <div>
                       <strong>{venueLabel(venue)}</strong>
                       <span>
@@ -3765,7 +3805,7 @@ function CandidateCard({ candidate }: { candidate: Candidate }) {
                     <label>
                       <span>Virtual balance ({currency ?? 'unavailable'})</span>
                       <input
-                        aria-label={`Virtual balance allocated to ${venueLabel(venue)}`}
+                        aria-label={`Virtual balance allocated to ${venueLabel(venue)} ${currency ?? 'unknown currency'}`}
                         inputMode="decimal"
                         maxLength={110}
                         disabled={!currency}
@@ -3773,7 +3813,7 @@ function CandidateCard({ candidate }: { candidate: Candidate }) {
                         onChange={(event) =>
                           setVirtualBalances((current) => ({
                             ...current,
-                            [venue]: event.target.value,
+                            [balanceKey]: event.target.value,
                           }))
                         }
                       />
@@ -3813,6 +3853,10 @@ function CandidateCard({ candidate }: { candidate: Candidate }) {
                   <td>{money(leg.quoted_ask)}</td>
                   <td>
                     {money(leg.modeled_buy_price)} · fee {money(leg.modeled_fee)}
+                    <small>
+                      {leg.quote_currency ?? 'Unknown'} ·{' '}
+                      {settlementIdentityLabel(leg.quote_currency_identity)}
+                    </small>
                   </td>
                   <td>{leg.displayed_depth}</td>
                 </tr>

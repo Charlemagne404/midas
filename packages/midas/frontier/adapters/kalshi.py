@@ -44,7 +44,7 @@ from midas.frontier.models import (
 )
 
 D = Decimal
-ADAPTER_VERSION = "frontier-kalshi-13"
+ADAPTER_VERSION = "frontier-kalshi-14"
 _TICKER_PATTERN = re.compile(r"[A-Za-z0-9_-]{1,256}\Z")
 BASE = "https://external-api.kalshi.com/trade-api/v2"
 MARKET_DATA_DOC = "https://docs.kalshi.com/getting_started/quick_start_market_data"
@@ -505,6 +505,7 @@ class KalshiAdapter(BaseReadOnlyAdapter):
                     outcome_id="yes",
                     quantity_unit=QuantityUnit.CONTRACT,
                     price_currency="USD",
+                    price_currency_identity=settlement_identity,
                     payouts=(
                         StatePayout(state_id="yes", amount=payout_value),
                         StatePayout(state_id="no", amount=D(0)),
@@ -516,6 +517,7 @@ class KalshiAdapter(BaseReadOnlyAdapter):
                     outcome_id="no",
                     quantity_unit=QuantityUnit.CONTRACT,
                     price_currency="USD",
+                    price_currency_identity=settlement_identity,
                     payouts=(
                         StatePayout(state_id="yes", amount=D(0)),
                         StatePayout(state_id="no", amount=payout_value),
@@ -783,6 +785,8 @@ class KalshiAdapter(BaseReadOnlyAdapter):
             asks=asks,
             bids=tuple(sorted(bids, key=lambda level: level.price, reverse=True)),
             price_unit="USD per binary contract",
+            price_currency="USD",
+            price_currency_identity=market.settlement_asset_identity,
             quantity_unit=QuantityUnit.CONTRACT,
             received_at_utc=response.response_received_at_utc,
             exchange_timestamp_semantics="REST response has no unified exchange book timestamp",
@@ -837,12 +841,19 @@ class KalshiAdapter(BaseReadOnlyAdapter):
                 raise AdapterError("INVALID_TRADE", "Kalshi trade has invalid price or quantity")
             result.append(
                 TradeObservation(
+                    schema_version=3,
                     venue=self.venue,
                     native_market_id=native_market_id,
                     native_trade_id=str(raw.get("trade_id") or "") or None,
+                    native_instrument_id=f"{native_market_id}:YES",
+                    outcome_label="YES price reference",
+                    outcome_index=0,
                     price=price,
                     quantity=quantity,
                     quote_currency="USD",
+                    quote_currency_identity=SettlementAssetIdentity(
+                        kind=SettlementAssetKind.FIAT, code="USD"
+                    ),
                     aggressor_side=str(raw.get("taker_outcome_side") or "unknown"),
                     exchange_timestamp_utc=timestamp,
                     received_at_utc=response.response_received_at_utc,
@@ -933,7 +944,7 @@ class KalshiAdapter(BaseReadOnlyAdapter):
                 raise AdapterError("INVALID_TRADE", "Kalshi trade fields failed validation")
             trades.append(
                 TradeObservation(
-                    schema_version=2,
+                    schema_version=3,
                     venue=self.venue,
                     native_market_id=native_market_id,
                     native_trade_id=trade_id,
@@ -943,6 +954,9 @@ class KalshiAdapter(BaseReadOnlyAdapter):
                     price=yes_price,
                     quantity=quantity,
                     quote_currency="USD",
+                    quote_currency_identity=SettlementAssetIdentity(
+                        kind=SettlementAssetKind.FIAT, code="USD"
+                    ),
                     # Kalshi's taker_outcome_side identifies the outcome side; it is not
                     # documented as a normalized BUY/SELL aggressor direction.
                     aggressor_side=None,

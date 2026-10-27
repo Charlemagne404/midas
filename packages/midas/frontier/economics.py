@@ -34,13 +34,14 @@ from midas.frontier.models import (
     MarketInstrument,
     MarketKind,
     QuantityUnit,
+    SettlementAssetIdentity,
     SettlementAuditState,
     Venue,
 )
 from midas.frontier.relationships import Relationship, VerificationState
 
 D = Decimal
-ECONOMIC_MODEL_VERSION = "frontier-economic-verifiers-5"
+ECONOMIC_MODEL_VERSION = "frontier-economic-verifiers-6"
 KALSHI_MVE_SETTLEMENT_AUDIT_VERSION = "kalshi-mve-settlement-audit-2"
 _KALSHI_TAKER_FEE_TYPES = frozenset({"quadratic", "quadratic_with_combo_maker_fees"})
 _KALSHI_COMBO_SETTLEMENT_SOURCES = (
@@ -48,6 +49,21 @@ _KALSHI_COMBO_SETTLEMENT_SOURCES = (
     "https://help.kalshi.com/en/articles/17515177-protected-nfl-player-markets",
     "https://docs.kalshi.com/api-reference/events/get-multivariate-events",
 )
+
+
+def _price_denomination_matches(
+    market: FrontierMarket, instrument: MarketInstrument, book: BookSnapshot
+) -> bool:
+    """Require exact quote-unit identity from payoff through the observed book."""
+    identity = market.payoff.settlement_asset_identity
+    return (
+        identity is not None
+        and market.has_consistent_settlement_asset_identity()
+        and instrument.price_currency == market.payoff.payout_currency == identity.code
+        and instrument.price_currency_identity == identity
+        and book.price_currency == instrument.price_currency
+        and book.price_currency_identity == identity
+    )
 
 
 def audit_kalshi_mve_reported_settlement(market: FrontierMarket) -> KalshiMveSettlementAudit:
@@ -187,10 +203,19 @@ class PositionLeg(FrontierModel):
     quoted_ask: Decimal = Field(ge=0, allow_inf_nan=False)
     modeled_buy_price: Decimal = Field(ge=0, allow_inf_nan=False)
     quote_currency: str | None = None
+    quote_currency_identity: SettlementAssetIdentity | None = None
     displayed_depth: Decimal = Field(gt=0, allow_inf_nan=False)
     modeled_fee: Decimal | None = Field(default=None, ge=0, allow_inf_nan=False)
     book_observation_id: str
     market_observation_id: str
+
+    @model_validator(mode="after")
+    def quote_identity_matches_code(self) -> PositionLeg:
+        if self.quote_currency_identity is not None and (
+            self.quote_currency_identity.code != self.quote_currency
+        ):
+            raise ValueError("Leg quote currency differs from its canonical identity")
+        return self
 
 
 class OneSidedFillOutcome(FrontierModel):
@@ -232,7 +257,7 @@ class OneSidedFillSensitivity(FrontierModel):
 
 
 class OpportunityCandidate(FrontierModel):
-    schema_version: int = 1
+    schema_version: int = 2
     candidate_id: str
     family: OpportunityFamily
     classification: OpportunityClassification
@@ -253,6 +278,7 @@ class OpportunityCandidate(FrontierModel):
     worst_case_gross_pnl: Decimal | None = None
     worst_case_net_pnl: Decimal | None = None
     capital_by_venue: dict[str, Decimal] = Field(default_factory=dict)
+    capital_currency_identity: SettlementAssetIdentity | None = None
     received_skew_ms: int | None = None
     exchange_skew_ms: int | None = None
     timing_verified: bool = False
@@ -261,6 +287,14 @@ class OpportunityCandidate(FrontierModel):
     assumptions: tuple[str, ...] = ()
     reasons: tuple[str, ...] = ()
     evidence_sha256: str
+
+    @model_validator(mode="after")
+    def capital_identity_matches_legs(self) -> OpportunityCandidate:
+        if self.capital_currency_identity is not None and any(
+            leg.quote_currency_identity != self.capital_currency_identity for leg in self.legs
+        ):
+            raise ValueError("Candidate capital denomination differs from a leg quote identity")
+        return self
 
 
 class _LegBuildError(ValueError):
@@ -891,6 +925,15 @@ def generate_multi_outcome_coverage_candidate(
             "Every outcome must use the same trading quantity unit.",
         )
 
+    if any(
+        instrument.price_currency_identity != market.payoff.settlement_asset_identity
+        for instrument in instruments
+    ):
+        return empty(
+            OpportunityClassification.INCOMPLETE_EVIDENCE,
+            "Outcome quote denomination lacks the exact verified payoff asset identity.",
+        )
+
     for instrument in instruments:
         if (
             instrument.quantity_unit == QuantityUnit.UNKNOWN
@@ -924,6 +967,7 @@ def generate_multi_outcome_coverage_candidate(
             or book.native_market_id != market.native_market_id
             or book.native_instrument_id != instrument.native_instrument_id
             or book.quantity_unit != instrument.quantity_unit
+            or not _price_denomination_matches(market, instrument, book)
             or book.crossed
             or not book.asks
         ):
@@ -1125,6 +1169,7 @@ def generate_multi_outcome_coverage_candidate(
             quoted_ask=ask.price,
             modeled_buy_price=effective,
             quote_currency=instrument.price_currency,
+            quote_currency_identity=instrument.price_currency_identity,
             displayed_depth=ask.quantity,
             modeled_fee=fee,
             book_observation_id=book.provenance.observation_id,
@@ -1174,6 +1219,7 @@ def generate_multi_outcome_coverage_candidate(
             if fees_known
             else common_quantity * sum(effective_asks, D(0))
         },
+        capital_currency_identity=market.payoff.settlement_asset_identity,
         received_skew_ms=received_skew,
         exchange_skew_ms=exchange_skew,
         timing_verified=not timing_reasons,
@@ -1354,6 +1400,19 @@ def _evaluate_pair(
             candidate_id=identity,
             family=family,
         )
+    if not _price_denomination_matches(left, left_instrument, left_book) or not (
+        _price_denomination_matches(right, right_instrument, right_book)
+    ):
+        return _empty_candidate(
+            left,
+            right,
+            relationship,
+            OpportunityClassification.INCOMPLETE_EVIDENCE,
+            as_of,
+            "Instrument and book quote units do not carry the exact verified settlement identity.",
+            candidate_id=identity,
+            family=family,
+        )
     l_ask = min(left_book.asks, key=lambda level: level.price)
     r_ask = min(right_book.asks, key=lambda level: level.price)
     l_age = _age_ms(as_of, left_book.received_at_utc)
@@ -1440,6 +1499,26 @@ def _evaluate_pair(
             OpportunityClassification.INCOMPLETE_EVIDENCE,
             as_of,
             "Quote currency and verified settlement currency do not match.",
+            candidate_id=identity,
+            family=family,
+        )
+    settlement_identity = left.payoff.settlement_asset_identity
+    quote_identities = {
+        left_instrument.price_currency_identity,
+        right_instrument.price_currency_identity,
+    }
+    if (
+        settlement_identity is None
+        or settlement_identity != right.payoff.settlement_asset_identity
+        or quote_identities != {settlement_identity}
+    ):
+        return _empty_candidate(
+            left,
+            right,
+            relationship,
+            OpportunityClassification.INCOMPLETE_EVIDENCE,
+            as_of,
+            "Quote denomination identity is absent or differs from the exact payoff settlement asset.",
             candidate_id=identity,
             family=family,
         )
@@ -1609,6 +1688,7 @@ def _evaluate_pair(
         quoted_ask=l_ask.price,
         modeled_buy_price=l_effective,
         quote_currency=currency,
+        quote_currency_identity=left_instrument.price_currency_identity,
         displayed_depth=l_ask.quantity,
         modeled_fee=left_fee,
         book_observation_id=left_book.provenance.observation_id,
@@ -1624,6 +1704,7 @@ def _evaluate_pair(
         quoted_ask=r_ask.price,
         modeled_buy_price=r_effective,
         quote_currency=currency,
+        quote_currency_identity=right_instrument.price_currency_identity,
         displayed_depth=r_ask.quantity,
         modeled_fee=right_fee,
         book_observation_id=right_book.provenance.observation_id,
@@ -1663,6 +1744,7 @@ def _evaluate_pair(
             left.venue.value: common_quantity * l_effective + (left_fee or D(0)),
             right.venue.value: common_quantity * r_effective + (right_fee or D(0)),
         },
+        capital_currency_identity=left.payoff.settlement_asset_identity,
         received_skew_ms=received_skew,
         exchange_skew_ms=exchange_skew,
         timing_verified=timing_verified,
@@ -1690,7 +1772,11 @@ def _calculate_fee(
         or (schedule.expires_at_utc is not None and schedule.expires_at_utc <= as_of_utc)
     ):
         return None
-    if schedule.fee_currency != instrument.price_currency:
+    if (
+        schedule.fee_currency != instrument.price_currency
+        or schedule.fee_currency_identity is None
+        or schedule.fee_currency_identity != instrument.price_currency_identity
+    ):
         return None
     if schedule.formula == "quantity * rate * price * (1 - price); exponent 1":
         return (quantity * schedule.rate * price * (D(1) - price)).quantize(

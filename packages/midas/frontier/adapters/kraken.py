@@ -31,15 +31,24 @@ from midas.frontier.models import (
     MarketKind,
     PayoffSpec,
     QuantityUnit,
+    SettlementAssetIdentity,
+    SettlementAssetKind,
     TradeObservation,
     Venue,
     stable_market_id,
 )
 
 D = Decimal
-ADAPTER_VERSION = "frontier-kraken-spot-2"
+ADAPTER_VERSION = "frontier-kraken-spot-3"
 BASE = "https://api.kraken.com/0/public"
 ORDERBOOK_DOC = "https://docs.kraken.com/api-reference/market-data/get-order-book"
+_KNOWN_FIAT_QUOTES = frozenset({"USD", "EUR", "GBP", "CAD", "AUD", "CHF", "JPY"})
+
+
+def _quote_unit_identity(code: str) -> SettlementAssetIdentity | None:
+    if code in _KNOWN_FIAT_QUOTES:
+        return SettlementAssetIdentity(kind=SettlementAssetKind.FIAT, code=code)
+    return None
 
 
 class KrakenSpotConfig(AdapterConfig):
@@ -192,11 +201,13 @@ class KrakenSpotAdapter(BaseReadOnlyAdapter):
             native_id,
             source_schema_version="AssetPairs",
         )
+        quote_identity = _quote_unit_identity(quote_asset)
         instrument = MarketInstrument(
             native_instrument_id=native_id,
             label=wsname or str(raw.get("altname") or native_id),
             quantity_unit=QuantityUnit.BASE_ASSET,
             price_currency=quote_asset,
+            price_currency_identity=quote_identity,
             tick_size=tick_size if tick_size is not None and tick_size > 0 else None,
             quantity_step=lot_step if lot_step is not None and lot_step > 0 else None,
             minimum_quantity=minimum_quantity
@@ -270,6 +281,10 @@ class KrakenSpotAdapter(BaseReadOnlyAdapter):
             flags.append("LEVEL_TIMESTAMP_MISSING")
         base = market.base_asset or "base"
         quote_asset = market.quote_asset or "quote"
+        instrument = next(
+            (item for item in market.instruments if item.native_instrument_id == instrument_id),
+            None,
+        )
         return BookSnapshot(
             venue=self.venue,
             native_market_id=market.native_market_id,
@@ -277,6 +292,10 @@ class KrakenSpotAdapter(BaseReadOnlyAdapter):
             asks=asks,
             bids=bids,
             price_unit=f"{quote_asset} per {base}",
+            price_currency=instrument.price_currency if instrument is not None else quote_asset,
+            price_currency_identity=(
+                instrument.price_currency_identity if instrument is not None else None
+            ),
             quantity_unit=QuantityUnit.BASE_ASSET,
             received_at_utc=response.response_received_at_utc,
             exchange_timestamp_semantics="Each level has an independent last-update time; no unified book snapshot time is asserted",
