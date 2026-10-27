@@ -1036,3 +1036,5 @@ Ruff, ESLint, Prettier, and `git diff --check` passed. Implementation commit
 This remains a local arithmetic check and does not validate rules, outcomes, or
 candidate economics. Architecture, current-state, and report text record the
 guard.
+Documentation commit `3b7defba8c953d7eae7b7c2e9eb9ffa2ec49adc5` updates the
+architecture and current handoff for this code checkpoint.
