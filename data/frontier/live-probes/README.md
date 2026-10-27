@@ -24,6 +24,7 @@ the captured public metadata, not an additional HTTP capture.
 | `2026-10-27-kalshi-public-trade-page.json` | One public Kalshi listing and one ticker-filtered cursor-page request through the isolated API; two GETs, zero returned trades, empty continuation cursor, and raw/row hash-verified temporary-store read-back. |
 | `2026-10-27-kalshi-multivariate-page-r1.json` | One filtered public MVE page; HTTP 200 returned one event and a cursor but omitted nested `markets` despite the requested flag. The v6 failure record and raw response are hash-pinned; current adapter replay preserves membership as `omitted`. |
 | `2026-10-27-kalshi-mve-event-detail-r1.json` | One unauthenticated event-detail GET for the same MVE ticker; HTTP 200 omitted `event.markets` but returned explicit top-level `markets: []`. The original v7 normalization failure remains preserved; v8 replay returns a valid zero-child `MarketBatch` with a separate hash-verified temporary-store row. |
+| `2026-10-27-kalshi-mve-ticker-filter-r1.json` | One unauthenticated GET using the documented single-event `tickers` filter; HTTP 200 returned the matching event, no cursor, and omitted nested markets. Raw SHA `3e2372de6143c0c8f37b3e77265a210596bf3c414fa33d19ee4028b1d2d3a7bb` and a reproducibly verified offline snapshot row SHA `e6dcb76b2e18316866c078fd4778c2dff93891132e8b92104e3385c08d1271bd` are recorded. The original capture-time row digest `cea5ea38a3ffad129fa2baedf3520b9bae71e8d4919521e140f46467baf57d50` is preserved as unreconciled because it does not match the payload included in the artifact. Harness cleanup failed after the live capture; no request was repeated. |
 
 The earliest direct source-probe files contain five HTTP 200 responses:
 Kalshi market listing and later book, Kraken pair metadata and depth, and a
@@ -41,12 +42,19 @@ opportunity.
 These captures are small, time-specific fixtures, not continuous source
 coverage or evidence of venue-wide market conditions.
 
-The two MVE captures are different endpoint responses to the same native event.
+The first two MVE captures are different endpoint responses to the same native
+event.
 The multivariate-listing response reports no nested list; the event-detail
 response has an explicit empty top-level list. The second response does not
 recover a child contract. It demonstrates a single empty event-detail response
 and parser replay behavior, not venue-wide absence, combo payoff, or economic
-equivalence. Adapter v8 does not follow the MVE cursor.
+equivalence. A third capture uses the single-event `tickers` filter supported by
+adapter v9. The adapter does not follow the MVE cursor; this response had no
+cursor but still omitted child markets, so it establishes no component payoff
+or settlement semantics. The
+artifact preserves a freshly replayed normalized snapshot whose row digest is
+reproducible from its raw and normalized payloads; its original capture-time
+row digest is separately retained as unreconciled.
 
 The Frontier API listing-only round trip ran at `2026-10-26T20:41:18.904543Z` to
 `20:41:19.624016Z`. It used one listing request per venue with retries disabled

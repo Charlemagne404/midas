@@ -44,6 +44,10 @@ normalized child markets; omission is not treated as an empty market group.
 Adapter v8 also corrects event-detail normalization for a documented top-level
 empty `markets` array. Neither response supplies child contracts or combo
 payoff semantics.
+Adapter v9 adds a bounded filter for one event ticker using Kalshi's documented
+`tickers` parameter and validates the returned event identity. Its saved public
+capture also omitted nested markets, this time with no cursor; it verifies the
+single-event lookup path, not child-contract coverage or economics.
 Bounded live round trips through each adapter and
 the Frontier probe API persisted one
 listing per venue, then one listing plus at most one book per venue, and most
@@ -174,7 +178,7 @@ submission route.
 | Venue | Implemented public research | Preserved distinctions and limits | Live evidence |
 | --- | --- | --- | --- |
 | Polymarket | Gamma market discovery; CLOB books; legacy public trades; cursor-paginated Data API v2 trade pages; native token/condition/event IDs; strict market normalization, supported fee-shape handling, and bounded parent-event group capture | Event outcomes are not marked payoff-verified; settlement asset and resolution meaning are not independently attested; no incremental book stream or candle normalization; fee schedules expire after five minutes and unsupported exponents remain unknown; v2 condition history is fixed to three years and page capture uses taker-only trades with a 0.01-share floor | Earlier live API evidence persisted one listing, one book, and ten trades through the older trade path. A direct v2 first page and one continuation through the local API route each returned ten rows and were hash-verified via isolated stores; no third page was requested. A separate one-market listing captured a market-specific `zero_fees` schedule at 20:41:18.972060Z, with `feesEnabled=true`, exponent 1, taker-only, rate 0; normalized status was verified only through 20:46:18.972Z. |
-| Kalshi | Public market discovery, market metadata, binary YES/NO instruments, public book snapshots/trades, ticker-filtered cursor trade pages, event/series fee metadata, one-fill and one-order taker-fee sensitivities, bounded event groups, and one-page MVE event discovery; current adapter v8 retains v4 normalization of up to 64 native MVE selected component references | MVE selected legs remain conditional source assertions, not verified component rules, combo payoff, or settlement equivalence. Event discovery requests nested markets but records an omitted member list if the source does not return it. Adapter v8 accepts the documented top-level empty event-market array when the event-level field is omitted. Asks are derived from complementary YES/NO bids where applicable. Trade pages normalize `yes_price_dollars` as a YES-price reference and preserve `no_price_dollars` and taker fields only in raw evidence; no BUY/SELL aggressor direction is inferred. Fee sensitivity remains manual, not a candidate/account fee schedule; actual account precision, maker/mixed-order behavior, FCM charges, scheduled changes, and full candidate fee applicability remain unresolved. No stream or historical-candle normalization. | Prior public captures include a listing, empty book/trades, fee metadata, and an empty terminal trade page with hash-verified isolated-store reads. An October 26 listing row with 17 selected components was replayed offline; its primary rules were empty and secondary text was a disclaimer. On October 27, one MVE endpoint request returned one event plus a cursor but omitted nested `markets`; normalized child count is zero and membership state is `omitted`. A separate one-GET event-detail response returned HTTP 200, omitted `event.markets`, and included top-level `markets: []`. Adapter v7 rejected the latter as invalid schema; v8 replays the exact body to zero child markets, with raw and replay row hashes preserved. No cursor was followed, no child contract was captured, and no MVE payoff or cross-venue economics is established. |
+| Kalshi | Public market discovery, market metadata, binary YES/NO instruments, public book snapshots/trades, ticker-filtered cursor trade pages, event/series fee metadata, one-fill and one-order taker-fee sensitivities, bounded event groups, and one-page MVE event discovery; current adapter v9 retains v4 normalization of up to 64 native MVE selected component references | MVE selected legs remain conditional source assertions, not verified component rules, combo payoff, or settlement equivalence. Event discovery requests nested markets but records an omitted member list if the source does not return it. Adapter v8 accepts the documented top-level empty event-market array when the event-level field is omitted; v9 additionally filters by one event ticker using the documented `tickers` parameter and checks event identity. Asks are derived from complementary YES/NO bids where applicable. Trade pages normalize `yes_price_dollars` as a YES-price reference and preserve `no_price_dollars` and taker fields only in raw evidence; no BUY/SELL aggressor direction is inferred. Fee sensitivity remains manual, not a candidate/account fee schedule; actual account precision, maker/mixed-order behavior, FCM charges, scheduled changes, and full candidate fee applicability remain unresolved. No stream or historical-candle normalization. | Prior public captures include a listing, empty book/trades, fee metadata, and an empty terminal trade page with hash-verified isolated-store reads. An October 26 listing row with 17 selected components was replayed offline; its primary rules were empty and secondary text was a disclaimer. On October 27, one MVE endpoint request returned one event plus a cursor but omitted nested `markets`; normalized child count is zero and membership state is `omitted`. A separate one-GET event-detail response returned HTTP 200, omitted `event.markets`, and included top-level `markets: []`. Adapter v7 rejected the latter as invalid schema; v8 replays the exact body to zero child markets, with raw and replay row hashes preserved. A v9 one-ticker response returned one matching event, no cursor and no nested `markets`; API replay stores `omitted`. The probe harness raised an event-loop cleanup error after the stored row was read back; the request was not repeated. No child contract was captured, and no MVE payoff or cross-venue economics is established. |
 | Kraken Spot | Configured-pair AssetPairs metadata; public depth, trades and OHLC; pair tick/lot/minimum fields retained | Spot is a base/quote instrument, not an event payoff. Fee tier, account eligibility, custody, and event hedge semantics are unknown. Pair discovery is an explicit allowlist. | Bounded live API capture persisted XBT/USD metadata, depth with 10 asks/10 bids and per-level timestamps, and ten trades. No prediction-contract equivalence was found. |
 
 Each adapter declares every shared capability as supported or unsupported with a
@@ -1428,6 +1432,18 @@ bounded follow-up GET and adds an exact saved-response replay regression. The
 raw observation, original v7 failure record, and separately normalized v8 store
 read-back remain in the versioned probe artifact.
 
+Commit `a40d2ee` adds Kalshi adapter v9's single-event MVE `tickers` filter,
+response identity validation, Mission Control support, mismatch and exact
+saved-response tests, and the preserved public capture. Its exact changed
+implementation/evidence paths are `packages/midas/frontier/adapters/base.py`,
+`packages/midas/frontier/adapters/kalshi.py`, `apps/api/frontier.py`,
+`apps/web/src/Frontier.tsx`, `apps/web/src/Frontier.test.tsx`,
+`apps/web/e2e/frontier.spec.ts`, `tests/frontier/test_adapters.py`,
+`tests/frontier/test_api.py`, and
+`data/frontier/live-probes/2026-10-27-kalshi-mve-ticker-filter-r1.json`.
+The report, mission ledger and developer/current-state handoffs record the
+capture's digest reconciliation and verification boundary.
+
 ### Latest MVE verification update (2026-10-27 11:51 UTC)
 
 - `pytest -q tests/frontier/test_adapters.py tests/frontier/test_api.py -k
@@ -1476,6 +1492,55 @@ read-back remain in the versioned probe artifact.
   They provide no child market, price, combo payoff, settlement equivalence,
   synchronized quote, or venue-wide absence result.
 
+### Adapter v9 single-event MVE filter (2026-10-27 12:09 UTC)
+
+- Kalshi adapter v9, API, and Mission Control now accept exactly one
+  `event_ticker` in addition to the existing series or collection filter. The
+  ticker is sent as the documented `tickers` query parameter, and a response
+  that does not contain the requested event is rejected. This remains one
+  bounded page; no cursor continuation or multi-event ticker list is allowed.
+- One genuine unauthenticated GET through the isolated API returned HTTP 200
+  for `KXMVECROSSCATEGORY-S2026ZZZB25KKPHBN3TFC`. The response contained one
+  matching event, no cursor, and omitted nested `markets`; Frontier retained
+  `member_list_state=omitted` and zero child markets. Raw body SHA-256:
+  `3e2372de6143c0c8f37b3e77265a210596bf3c414fa33d19ee4028b1d2d3a7bb`;
+  the preserved raw/normalized snapshot replayed into a fresh temporary store
+  has row SHA-256
+  `e6dcb76b2e18316866c078fd4778c2dff93891132e8b92104e3385c08d1271bd`. The
+  capture-time digest `cea5ea38a3ffad129fa2baedf3520b9bae71e8d4919521e140f46467baf57d50`
+  is retained but marked unreconciled because it does not match the payload
+  included in the artifact. The reproducible hash and request bounds are in
+  `data/frontier/live-probes/2026-10-27-kalshi-mve-ticker-filter-r1.json`.
+- After capture and verified store read-back, the temporary probe harness
+  raised `RuntimeError: Event loop is closed during AsyncClient cleanup after
+  TestClient shutdown`. The capture records that cleanup error; the single
+  source request was not repeated. The artifact is replayed offline by an API
+  regression using the exact saved response bytes.
+- The focused adapter/API selection passed **13 tests, 49 deselected** in 2.03
+  seconds; `/usr/bin/time -v` measured 2.49 seconds wall, 1.36 seconds user
+  CPU, 78,360 KiB peak RSS, and zero swaps. One existing Starlette/httpx
+  TestClient deprecation warning remains. The frontend Vitest run passed **40
+  tests across 7 files**; TypeScript typecheck, targeted ESLint/Prettier,
+  Python Ruff/format, and strict mypy for the three changed Python modules with
+  imported-module diagnostics suppressed all passed. The unfiltered strict
+  mypy command reports 14 errors in four unchanged Veritas/Arena modules;
+  there are no reported errors in the three changed modules. `git diff --check`
+  passes. Browser E2E and production build remain deferred under the measured
+  host pressure.
+- A host sample during this checkpoint showed 9.6 GiB available RAM, 3.4 GiB
+  swap in use, and memory PSI `avg60` of 25.85% (`some`) / 22.72% (`full`),
+  despite lower `avg10` values. No browser or build process was started; the
+  focused Python verification itself used zero swap.
+- Reconciliation found that the artifact's initially reported row digest did
+  not match its preserved raw and normalized objects. That earlier digest is
+  retained and explicitly labeled unreconciled. The exact included snapshot
+  now has a separately computed row hash and a fresh temporary-store read-back;
+  the API regression also recomputes its row hash from the returned persisted
+  payload. The raw source-body digest itself matched throughout.
+- This adds evidence that the public endpoint honors the documented single
+  event filter. It does not reveal the child markets, validate combo payoff,
+  establish settlement equivalence, or demonstrate any economic opportunity.
+
 ## 20. Final status and continuation instructions
 
 Frontier’s isolated engine/API/UI foundation is **implemented and boundedly
@@ -1493,12 +1558,12 @@ cross-venue economics.
 | Opportunity candidate and independent economic checks | PARTIALLY VERIFIED | Two-venue all-long binary and same-market 3–16 state one-hot exhaustive coverage; economic model v4 computes an exact full/no-fill adverse exposure pattern over up to 16 legs, and independent audit v2 recomputes it from pinned inputs. Differential three-leg enumeration, unknown-fee cases, and malformed cross-venue leg handling pass. Controlled fixtures only; source semantics, account costs, broader funding/settlement costs, and operational feasibility remain incomplete. |
 | Kalshi taker-fee sensitivity | PARTIALLY VERIFIED | Hash-matched public event/series evidence supports one-fill and bounded one-order Decimal sensitivities for two documented quadratic taker fee types, both precision cases, per-fill rounding, order accumulation, and capped rebates. Tests match the official one-fill example and exercise buy/sell arithmetic. Manual inputs are not live quotes or book-priced; account-specific fees and precision, maker/mixed-order behavior, FCM charges, later schedules, and full candidate fee integration remain unresolved. |
 | Append-only evidence store and deterministic replay | COMPLETE AND VERIFIED | Schema v6, additive v2/v3/v4/v5 migration, bounds, hash validation, and immutability. Replay v6 carries exact store record IDs through API-loaded market/book provenance, manifests, candidate legs, and Arena snapshots; direct in-memory replay retains adapter IDs. Replay-v5 economic output includes full/no-fill sensitivity and pins effective mappings/proposal limit. The separate Arena wrapper uses immutable content-addressed snapshots and hash-verified result artifacts; two controlled fixture workers completed and the latest recorded CPU/RSS. |
-| Frontier API and source configuration | COMPLETE AND VERIFIED | New Kalshi MVE route validates exactly one series/collection filter, capability/config gates, one-page request bounds, captured request parameters, and raw/normalized lineage; fixture and saved-live-response API/store tests cover nested-present and nested-omitted cases. The route does not follow the source cursor. |
+| Frontier API and source configuration | COMPLETE AND VERIFIED | New Kalshi MVE route validates exactly one series/collection/event-ticker filter, capability/config gates, one-page request bounds, captured request parameters, and raw/normalized lineage; fixture and exact saved-live-response API/store tests cover nested-present and nested-omitted cases. The route does not follow the source cursor. |
 | Paired scenario comparison | PARTIALLY VERIFIED | Local deterministic comparison, atomic result persistence, API/UI, and isolated browser tests pass. Two systemd-supervised Arena jobs completed over the same controlled fixture with verified result identities; the latest worker's process CPU and peak RSS are visible in Mission Control. No genuine matched live cross-venue pair or live economic claim exists. |
-| Live market/book/trade and fee metadata through adapters/API | PARTIALLY VERIFIED | Earlier listing/book/trade, event-group, fee-metadata, and trade-page captures are hash-pinned. A live Kalshi MVE request returned one event and cursor but omitted nested markets; the final response's raw and temporary-store row hashes verify, and its saved body is replayed offline through adapter/API tests. Two earlier harness attempts were not preserved and are excluded from evidence. No cross-venue timing, combo payoff, venue-wide coverage, fees, or execution is established. |
+| Live market/book/trade and fee metadata through adapters/API | PARTIALLY VERIFIED | Earlier listing/book/trade, event-group, fee-metadata, and trade-page captures are hash-pinned. Kalshi MVE captures include one filtered page with omitted nested markets and cursor, one event-detail response with explicit top-level `markets: []`, and one ticker-filtered event response with omitted nested markets and no cursor. The last response and isolated temporary-store row are hash-pinned and replayed offline through the API; cleanup errored after capture/read-back and the live GET was not repeated. Earlier harness attempts are excluded. No cross-venue timing, combo payoff, venue-wide coverage, fees, or execution is established. |
 | Source workers and broad historical data | DEFERRED | No persistent worker or long-duration collection. |
 | Laboratory/Arena research orchestration | PARTIALLY VERIFIED | Arena job kind, content-addressed snapshots, bounded offline execution, API submission/history/result verification, process CPU/RSS capture, and explicit workspace controls are implemented and tested; two fixture jobs passed the host-wide gate and completed under systemd. Laboratory campaign management and resource-sustainability evidence remain incomplete. |
-| Native Mission Control workspace | PARTIALLY VERIFIED | Local API, bounded graph/review UI, Polymarket/Kalshi trade-page and event-group controls, explicit filtered one-page Kalshi MVE capture with returned member-list state, parent-event context, instrument-bound fee sensitivity, saved MVE component detail, paired replay, candidate fill stress, and Arena job history/result display. The focused MVE unit test, frontend typecheck, lint, and format pass. A fixture-backed browser scenario is authored and enumerated but was not executed; the workspace is not deployed. |
+| Native Mission Control workspace | PARTIALLY VERIFIED | Local API, bounded graph/review UI, Polymarket/Kalshi trade-page and event-group controls, explicit filtered one-page Kalshi MVE capture by series, collection, or one event ticker with returned member-list state, parent-event context, instrument-bound fee sensitivity, saved MVE component detail, paired replay, candidate fill stress, and Arena job history/result display. The focused MVE UI unit test, frontend typecheck, lint, and format pass. A fixture-backed browser scenario is authored and enumerated but was not executed; the workspace is not deployed. |
 | Production readiness/deployment | DEFERRED | Separate review and authorization required; production eligibility is false. |
 | Positive economic result | NOT ESTABLISHED | No genuine cross-venue equivalent or economically eligible result in captured evidence. |
 

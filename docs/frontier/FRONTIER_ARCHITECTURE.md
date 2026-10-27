@@ -60,16 +60,19 @@ selection and graph revision identity, so replay and paged reads cannot silently
 retain older child-only metadata.
 
 Kalshi adapter v7 introduced the separate `MULTIVARIATE_EVENT_DISCOVERY`
-capability, retained by adapter v8. Its local
+capability, retained by adapters v8 and v9. Its local
 `POST /api/frontier/probe/kalshi/multivariate-events` route requires exactly one
-series or collection ticker, a source-enabled public-probe configuration, and
-the adapter capability. Each operation requests one source page (`limit=1`)
+series ticker, collection ticker, or event ticker, a source-enabled
+public-probe configuration, and the adapter capability. A single event ticker
+maps to Kalshi's documented `tickers` query parameter, and the response is
+checked against that requested event ID. Each operation requests one source
+page (`limit=1`)
 with nested markets, validates event/child identities, caps nested markets at
 the configured source bound, and retains but does not follow Kalshi's cursor.
 The stored `MarketBatch` schema v2 carries typed `MarketGroup` context alongside
 normalized child markets, while the raw response preserves the full source
 payload. A non-empty source cursor marks the request incomplete. Even when no
-cursor remains, completeness applies only to the requested series/collection;
+cursor remains, completeness applies only to the requested filter;
 it is not venue-wide inventory. Empty responses are stored as bounded empty
 batches. `MarketGroup.member_list_state` distinguishes an included member list,
 an explicitly empty list, and a field omitted by the source. The live response
@@ -78,8 +81,9 @@ the request flag; Frontier stores its group with zero normalized markets and
 marks membership as omitted. It does not reinterpret omission as an empty
 event; an explicit `null` member field fails closed as malformed. The adapter,
 API persistence, and Mission Control operation are also
-verified with documentation-shaped fixtures. The public endpoint documents series/collection filters,
-nested-market inclusion, and cursor pagination
+verified with documentation-shaped fixtures. The public endpoint documents
+series/collection filters, single-event tickers, nested-market inclusion, and
+cursor pagination
 ([Get Multivariate Events](https://docs.kalshi.com/api-reference/events/get-multivariate-events)).
 
 `MarketGroup` records the native group identifier, title, series/collection
@@ -99,6 +103,21 @@ empty. A one-GET follow-up for the saved MVE ticker returned HTTP 200 in that
 shape. The saved response replays to zero child markets with its raw and
 normalized store row verified. It does not establish venue-wide absence or a
 child-contract payoff.
+
+Adapter v9 adds a single-event ticker filter to the local route. A preserved
+public request to `/events/multivariate?tickers=...&limit=1&with_nested_markets=true`
+returned one matching event with no cursor and again omitted nested markets.
+The raw response SHA-256 is
+`3e2372de6143c0c8f37b3e77265a210596bf3c414fa33d19ee4028b1d2d3a7bb`; replaying
+the preserved raw/normalized snapshot into a fresh temporary store verifies row
+SHA-256
+`e6dcb76b2e18316866c078fd4778c2dff93891132e8b92104e3385c08d1271bd`. The
+original capture-time digest
+`cea5ea38a3ffad129fa2baedf3520b9bae71e8d4919521e140f46467baf57d50` is kept in
+the artifact but is unreconciled: it does not match the payload now preserved
+there. The temporary harness raised an event-loop cleanup error after the live
+response; no second live request was made. The capture still has zero child
+markets and says nothing about combo payoff or broader event inventory.
 
 One preserved public capture demonstrates the boundary. The Polymarket and
 Kalshi event titles and party-outcome wording generated a deterministic

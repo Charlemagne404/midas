@@ -96,6 +96,17 @@ row are in `data/frontier/live-probes/2026-10-27-kalshi-mve-event-detail-r1.json
 This confirms no child markets in those two bounded responses, not venue-wide
 absence or payoff semantics.
 
+Adapter v9 extends the explicit MVE probe filter to one event ticker, mapped to
+the documented `tickers` query parameter and checked against the returned event
+ID. A preserved single-request capture returned one event, no cursor, and no
+nested-market field. Exact raw-response replay through the local API stores the
+event with membership state `omitted`; the raw body and isolated store-row hash
+are recorded in
+`data/frontier/live-probes/2026-10-27-kalshi-mve-ticker-filter-r1.json`. The
+harness cleanup raised an event-loop error only after response capture and
+store read-back completed; the request was not repeated. This is event lookup,
+not evidence of child contracts, combo payoff, or venue-wide inventory.
+
 The focused adapter/API regression passed 9 tests at 75,004 KiB peak RSS with
 zero swaps; the focused Mission Control test passed. Frontend typecheck, targeted
 ESLint/Prettier, Frontier Python Ruff/format, and strict mypy passed. Playwright

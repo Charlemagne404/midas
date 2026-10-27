@@ -66,17 +66,21 @@ offline adapter tests, while differing resolution timing and rules fail the
 same-payoff audit. This is metadata-only evidence: no synchronized prices,
 verified cross-venue payoff, or economic opportunity was observed.
 Kalshi's adapter also supports an operator-triggered multivariate-event page
-filtered by exactly one series or collection ticker. It captures one event page
+filtered by exactly one series, collection, or event ticker. A ticker maps to
+Kalshi's documented `tickers` query parameter. It captures one event page
 requesting nested markets, stores typed event-group context and the raw
 response, and retains but never follows a continuation cursor. One live,
 unauthenticated page returned an event but omitted its nested market list; the
 captured event is normalized with membership marked `omitted`, not interpreted
-as an empty event. Adapter/API/store/UI fixture tests cover that source response
-shape, and Mission Control can open the saved raw response. Native MVE selected
-legs remain unverified payoff descriptions, and this event had no child markets
-to compare. One bounded event-detail follow-up also returned an explicit empty
-top-level `markets` array for that event; adapter v8 can replay it as a valid
-zero-child response without implying venue-wide absence.
+as an empty event. A second ticker-filtered capture returned one event with no
+cursor and again omitted nested markets. Its raw body and temporary-store
+read-back are preserved; its harness raised an event-loop cleanup error only
+after both verifications, and the request was not repeated. Adapter/API/store/UI
+tests replay the exact response. Native MVE selected legs remain unverified
+payoff descriptions. One bounded event-detail follow-up also returned an
+explicit empty top-level `markets` array for that event; adapter v8 can replay it
+as a valid zero-child response without implying venue-wide absence. Adapter v9
+adds the single-event ticker filter; it still does not validate combo payoff.
 Review labels and assertion references are not authenticated; replay follows
 only the latest revision. It is not merged into `main` or deployed. Read the [Frontier mission ledger](docs/frontier/FRONTIER_MISSION_LEDGER.md)
 and [current engineering report](docs/frontier/FRONTIER_ENGINEERING_REPORT.md)

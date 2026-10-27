@@ -127,10 +127,11 @@ recording and its evidence remain on separate roots.
 
 Kalshi multivariate-event discovery is a separate explicit
 `POST /api/frontier/probe/kalshi/multivariate-events` operation. Supply exactly
-one of `series_ticker` or `collection_ticker`; the adapter requests one page
-with `limit=1` and `with_nested_markets=true`, honors the existing public-probe
-configuration and capability gate, and retains but does not follow a source
-cursor. `MarketBatch` schema v2 stores typed event groups beside normalized
+one of `series_ticker`, `collection_ticker`, or `event_ticker`; an event ticker
+maps to Kalshi's documented `tickers` query parameter. The adapter requests one
+page with `limit=1` and `with_nested_markets=true`, honors the existing
+public-probe configuration and capability gate, and retains but does not follow
+a source cursor. `MarketBatch` schema v2 stores typed event groups beside normalized
 markets. Each group records whether its member list was included, explicitly
 empty, or omitted by the source. A live HTTP 200 response currently proves the
 event lookup path but omitted `markets`; see
@@ -144,6 +145,20 @@ One bounded event-detail follow-up for the same ticker returned HTTP 200 with no
 v8 now normalizes this documented response shape as an empty event-detail batch;
 its offline replay and separate temporary-store row hash are recorded in
 `data/frontier/live-probes/2026-10-27-kalshi-mve-event-detail-r1.json`.
+Adapter v9 adds the one-event ticker filter and validates that the returned
+event matches the requested ticker. Its preserved HTTP 200 response again
+omitted nested markets and had no cursor; offline API replay stores the event
+with membership `omitted`. The capture's raw SHA-256 is
+`3e2372de6143c0c8f37b3e77265a210596bf3c414fa33d19ee4028b1d2d3a7bb`, and its
+offline snapshot replay row SHA-256 is
+`e6dcb76b2e18316866c078fd4778c2dff93891132e8b92104e3385c08d1271bd`, verified
+from the preserved raw/normalized payload and a fresh temporary-store read.
+The original capture-time digest
+`cea5ea38a3ffad129fa2baedf3520b9bae71e8d4919521e140f46467baf57d50` is retained
+but marked unreconciled because it does not match the artifact payload. The
+probe harness reported an event-loop cleanup error after capture and read-back;
+it did not repeat the request. See
+`data/frontier/live-probes/2026-10-27-kalshi-mve-ticker-filter-r1.json`.
 
 For Kalshi multivariate event markets, adapter v4 normalizes up to 64 native
 selected component references (event ticker, market ticker, selected YES/NO
