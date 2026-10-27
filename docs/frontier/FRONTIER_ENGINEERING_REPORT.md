@@ -694,6 +694,25 @@ responses are distinct from the preserved genuine public capture files.
   these tests and sensitivities do not validate live fills, candidate fee
   integration, or profitability.
 
+### Kalshi multi-request failure and recovery checkpoint (2026-10-27)
+
+- Added an API-boundary regression for the metadata flow's two-request shape:
+  the public event request succeeds, then the series request returns HTTP 503.
+  The test confirms that both the successful event bytes and failed series bytes
+  are persisted with verified hashes and failure-stage labels.
+- The same fixture confirms Kalshi health changes to degraded with the transport
+  error, a subsequent successful event/series call clears the error and restores
+  healthy state, and previously persisted diagnostic rows remain byte-for-byte
+  unchanged after recovery.
+- The bounded sequence contains four mock-transport GETs, with no Authorization
+  header. This is fixture-only API recovery coverage; no live source was
+  intentionally degraded, and live degraded-source recovery remains unverified.
+- The complete Frontier backend suite passed **99 tests** in 33.92 seconds
+  pytest time. `/usr/bin/time -v` measured 34.73 seconds wall, 6.54 seconds user
+  CPU, 248,244 KiB peak RSS, zero swaps, and zero socket messages. Ruff check,
+  Ruff format check, `git diff --check`, and a post-format targeted test rerun
+  passed. One upstream Starlette/httpx `TestClient` deprecation warning remains.
+
 ## 13. Performance and resource measurements
 
 The previous focused backend run (54 tests) completed in 10.65 seconds wall time,
@@ -1087,7 +1106,7 @@ cross-venue economics.
 | --- | --- | --- |
 | Isolated baseline/worktree and preserved unrelated changes | COMPLETE AND VERIFIED | Branch starts at verified V6 commit; original dirty worktrees untouched. |
 | Adapter protocol, capability registry, bounded GET transport | COMPLETE AND VERIFIED | Contract tests, all capability declarations, host/size/rate/redirect bounds. |
-| Polymarket, Kalshi and Kraken Spot adapters | PARTIALLY VERIFIED | Fixture/contract tests and bounded live listing/book/legacy-trade captures are preserved. Polymarket v2 first and continuation pages returned ten rows each. Kalshi has a ticker-filtered cursor-page implementation, fixture-verified row mapping, and a live empty terminal page; live row normalization remains unvalidated. Kalshi event/series parameters and Kraken spot data are captured, while exact Kalshi account fees and Kraken account fee applicability remain unknown. Live degraded-source behavior remains unverified. |
+| Polymarket, Kalshi and Kraken Spot adapters | PARTIALLY VERIFIED | Fixture/contract tests and bounded live listing/book/legacy-trade captures are preserved. Polymarket v2 first and continuation pages returned ten rows each. Kalshi has a ticker-filtered cursor-page implementation, fixture-verified row mapping, and a live empty terminal page; live row normalization remains unvalidated. Kalshi event/series parameters and Kraken spot data are captured, while exact Kalshi account fees and Kraken account fee applicability remain unknown. API fixtures cover source degradation and recovery, including a partial two-request Kalshi metadata failure; live degraded-source behavior remains unverified. |
 | Canonical market/instrument normalization | PARTIALLY VERIFIED | Three distinct instrument classes are represented; v2 Polymarket trades retain native outcome-token identity. Live lineage and several payoff/settlement semantics remain unverified. |
 | Relationship hypotheses, review revisions, indexed neighborhoods, and explicit same-payoff verifier | PARTIALLY VERIFIED | Self-attributed review API/UI, append-only revisions, latest-state replay, tamper/migration checks, left/right endpoint-indexed 1–3 hop scans capped at 500 rows, revision-bound centered one-hop keyset pages, stale-cursor rejection, and a 501-edge scan-bound test; no genuine equivalent pair, reviewer authentication, or multi-hop pagination. |
 | Opportunity candidate and independent economic checks | PARTIALLY VERIFIED | Two-venue all-long binary and same-market 3–16 state one-hot exhaustive coverage; economic model v4 computes an exact full/no-fill adverse exposure pattern over up to 16 legs, and independent audit v2 recomputes it from pinned inputs. Differential three-leg enumeration and unknown-fee cases pass. Controlled fixtures only; source semantics, account costs, broader funding/settlement costs, and operational feasibility remain incomplete. |
@@ -1104,17 +1123,15 @@ cross-venue economics.
 To continue safely, use this worktree and branch. Preserve both completed
 fixture jobs as supervisor-path evidence; do not infer source or economic
 validity from them. Keep resource sustainability unmeasured until the workload
-and host conditions are characterized beyond one short fixture. Then broaden
-API-boundary degraded-source behavior;
-determine whether public
-Kalshi market metadata is sufficient to extend fee sensitivity into a defensible
-candidate fee schedule; search for public multi-outcome metadata that meets the
-strict payoff and resolution evidence requirements without loosening
-attestation; extend bounded graph paging to multi-hop only if traversal order can
-remain reproducible. Add durable Laboratory experiment management only if
-needed beyond the tested Arena job wrapper. Add
-adversarial mutations and differential audit fixtures only where they test a
-distinct failure mode. Expand economics only where source evidence supports it.
-Re-run the focused suites before each checkpoint. Do not enable probes by default,
-deploy, modify Reality, or start a long-running campaign as part of routine
-continuation.
+and host conditions are characterized beyond one short fixture. Live
+degraded-source behavior remains unverified; do not intentionally degrade a
+live source. Continue by searching for public multi-outcome metadata that meets
+the strict payoff and resolution evidence requirements, reconciling Kalshi's
+public event/series parameters with a defensible candidate fee schedule, and
+extending bounded graph paging only if breadth-first traversal order remains
+reproducible. Add durable Laboratory experiment management only if needed
+beyond the tested Arena job wrapper. Add adversarial audit mutations only for
+distinct failure modes. Expand economics only where source evidence supports it.
+Re-run the focused suites before each checkpoint. Do not enable probes by
+default, deploy, modify Reality, or start a long-running campaign as part of
+routine continuation.

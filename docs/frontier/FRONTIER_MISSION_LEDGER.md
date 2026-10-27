@@ -112,10 +112,11 @@ Remaining acceptance work is substantial.
 | `fba28df` | Made the API measurement projection type-safe without exposing malformed, non-finite, or out-of-range values. |
 | `2628792` | Fixed optional systemd unit-ID and sorted-path type narrowing in the Arena API; focused API/job mypy now passes. |
 | `c9e3be6` | Added saved-evidence-bound, native-instrument-bound Kalshi one-order taker fee sensitivity with order-level rounding/rebates, exact Decimal outputs, API validation, and a Mission Control fill editor. |
+| `a087cb2` | Added API-boundary coverage for partial Kalshi event/series failure, raw evidence immutability, degraded health, and subsequent recovery. |
 
 ## Latest checkpoint verification (2026-10-27)
 
-- Kalshi order-fee sensitivity: **98 passed** across the complete `tests/frontier` suite in 32.93 seconds pytest time; `/usr/bin/time -v` measured 33.73 seconds wall, 6.38 seconds user CPU, 248,112 KiB peak RSS, zero swaps, and zero socket messages. Fee fixtures reproduce the official one-fill rounding example and an order-level accumulator/rebate case, check buy/sell balance arithmetic, preserve all supported 12-decimal price/quantity inputs, bind fills to one recorded native instrument, and reject mixed instruments/sides and out-of-bound orders. One upstream Starlette/httpx deprecation warning remains.
+- Kalshi metadata partial-failure regression: **99 passed** across the complete `tests/frontier` suite in 33.92 seconds pytest time; `/usr/bin/time -v` measured 34.73 seconds wall, 6.54 seconds user CPU, 248,244 KiB peak RSS, zero swaps, and zero socket messages. The API fixture returns an event response followed by HTTP 503 for its series response, verifies both hash-preserved diagnostic records and their immutability after recovery, observes Kalshi health degrade and recover, and checks the four bounded requests are unauthenticated GETs. A post-format targeted rerun passed in 1.79 seconds. Ruff check/format and `git diff --check` passed. One upstream Starlette/httpx deprecation warning remains. This is fixture evidence; live degraded-source behavior is still unverified.
 - Frontend: **39 passed across 7 files**. TypeScript, ESLint, and Prettier passed. The production build passed with a 71.13 kB Frontier JavaScript chunk and 30.28 kB Frontier CSS; the existing 503.86 kB main and 544.41 kB Chart chunks still trigger Vite's warning. `/usr/bin/time -v` measured 5.66 seconds wall and 577,964 KiB peak RSS, with zero swaps and zero socket messages.
 - Targeted Frontier Playwright: **3 passed** in 8.0 seconds with one worker and isolated temporary API/database/Arena/Frontier roots. The suite made no source-probe request and launched no Arena work. The new multi-fill fee form is covered by the component test; Playwright exercised the existing responsive workspace, replay history, and bounded relationship graph.
 - Ruff check/format, focused import-following mypy for `apps/api/frontier.py`, `packages/midas/frontier/economics.py`, and `packages/midas/frontier/models.py`, and `git diff --check` passed. The full repository Python suite was not run.
@@ -417,7 +418,7 @@ same-input runs do not change the resource sustainability gate.
 | --- | --- | --- |
 | Verified isolated baseline and worktree | COMPLETE AND VERIFIED | Separate branch from `11d32a0`; unrelated dirty trees preserved. |
 | Adapter protocol, capability inventory, bounded GET transport | COMPLETE AND VERIFIED | Contract tests; all capabilities explicitly declared; no startup request. |
-| Polymarket, Kalshi and Kraken Spot implementations | PARTIALLY VERIFIED | Fixture tests and bounded live listing/book/trade-to-store evidence exist. Polymarket v2 first and continuation pages returned ten rows each. Kalshi cursor pages are implemented and row mapping is fixture-tested; a live page returned zero trades and no cursor, so live row normalization remains pending. Kalshi account fees and Kraken account fee applicability remain unknown; live degraded-source behavior remains unverified. |
+| Polymarket, Kalshi and Kraken Spot implementations | PARTIALLY VERIFIED | Fixture tests and bounded live listing/book/trade-to-store evidence exist. Polymarket v2 first and continuation pages returned ten rows each. Kalshi cursor pages are implemented and row mapping is fixture-tested; a live page returned zero trades and no cursor, so live row normalization remains pending. Kalshi account fees and Kraken account fee applicability remain unknown. API fixtures cover source degradation and recovery, including a partial two-request Kalshi metadata failure; live degraded-source behavior remains unverified. |
 | Canonical normalization and native evidence | PARTIALLY VERIFIED | Distinct event, conditional event and spot forms; v2 Polymarket trades preserve token and outcome identity, while earlier v1 batches still load with those new fields unknown. Other settlement/payoff semantics remain intentionally unverified. |
 | Relationship matching, immutable review, indexed neighborhoods, and strict payoff verifier | PARTIALLY VERIFIED | Self-attributed review API/UI with stored source refs, append-only revisions, compare-and-set, latest-state replay, query-plan/migration tests, and 1–3 hop left/right indexed scans capped at 500 rows. Centered one-hop keyset pages bind listing/instrument-metadata observation, relationship, and review counts; changed inputs reject stale cursors. A 501-edge fixture verifies the scan cap. No authenticated reviewer/assertion, genuine equivalent pair, or multi-hop pagination. |
 | Economic candidate verifier and independent audit | PARTIALLY VERIFIED | Exact two-venue binary all-long coverage and same-market 3–16-state exhaustive one-hot coverage. Economic model v4 derives the exact adverse full-or-no-fill terminal pattern for up to 16 legs; independent audit v2 rederives it from pinned inputs. A three-leg brute-force fixture agrees, and unknown fees suppress net stress. Fixtures only; no genuine eligible event, independently authenticated market truth, or practical execution proof. |
@@ -443,14 +444,14 @@ the same normalized evidence and cannot authenticate source truth. Review labels
 and external assertion IDs are self-attributed and not authenticated or fetched.
 The highest-value next steps are:
 
-1. Expand API-boundary degraded-source and recovery validation if a distinct
-   useful failure condition can be established safely. Polymarket first and
-   continuation pages and one Kalshi empty terminal page are captured; do not
-   request more pages merely to increase counts. A live Kalshi trade row is not
-   yet available in captured evidence. Live degraded-source recovery remains
-   unverified. Mock tests cover bounded timeout retries, oversized-response
-   rejection, truncated-stream evidence rejection, and retry-after/HTTP failure
-   capture; no live source is intentionally degraded.
+1. Live degraded-source behavior remains unverified. API fixtures now cover
+   single-response failures and a partial two-request Kalshi metadata failure;
+   no live source is intentionally degraded. Polymarket first and continuation
+   pages and one Kalshi empty terminal page are captured; do not request more
+   pages merely to increase counts. A live Kalshi trade row is not yet available
+   in captured evidence. Mock tests cover bounded timeout retries,
+   oversized-response rejection, truncated-stream evidence rejection, and
+   retry-after/HTTP failure capture.
 2. Extend revision-bound pagination to multi-hop traversal only if a bounded
    cursor can preserve breadth-first semantics; full-universe search and
    clustering need representative data and a resource measurement first.
@@ -473,7 +474,8 @@ Do not connect Frontier to Reality’s recorder, enable probes as a default,
 deploy, or alter protected evidence as part of ordinary continuation. The next
 safe work is genuine public multi-outcome term investigation, alongside
 reconciling Kalshi's native fee metadata to a supported fee calculation and
-stronger API-boundary degraded-source tests.
+finding distinct source-quality gaps that can be verified without intentionally
+disrupting live sources.
 
 ## Latest checkpoint identity
 
