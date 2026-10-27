@@ -1016,3 +1016,5 @@ was 22.14% / 16.01%, `avg300` 14.22% / 12.27%, available RAM 9.1 GB, and free
 swap about 553 MiB. The production bundle remains unverified. No service,
 source, or historical evidence was changed. The detailed report and current-
 state handoff record these measurements.
+Documentation commit `2972eb92a4db0d53727b0d1eccc62b7a519392e7` records this
+resource checkpoint in the engineering report and current-state handoff.
