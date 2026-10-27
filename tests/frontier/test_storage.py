@@ -201,16 +201,20 @@ def test_legacy_observation_without_persistence_time_remains_readable_and_idempo
             "SELECT raw_json,normalized_json FROM observations WHERE observation_id=?",
             (observation_id,),
         ).fetchone()
+        legacy_raw = json.loads(row[0])
+        legacy_raw.pop("request_elapsed_monotonic_ns", None)
+        legacy_raw_json = store._canonical(legacy_raw)
         legacy_normalized = json.loads(row[1])
         legacy_normalized["provenance"].pop("persisted_at_utc", None)
         legacy_normalized_json = store._canonical(legacy_normalized)
         legacy_row_hash = hashlib.sha256(
-            (row[0] + "\n" + legacy_normalized_json).encode("utf-8")
+            (legacy_raw_json + "\n" + legacy_normalized_json).encode("utf-8")
         ).hexdigest()
         connection.execute("DROP TRIGGER observations_no_update")
         connection.execute(
-            "UPDATE observations SET normalized_json=?,row_sha256=? WHERE observation_id=?",
-            (legacy_normalized_json, legacy_row_hash, observation_id),
+            "UPDATE observations SET raw_json=?,normalized_json=?,row_sha256=? "
+            "WHERE observation_id=?",
+            (legacy_raw_json, legacy_normalized_json, legacy_row_hash, observation_id),
         )
 
     evidence = store.observation(observation_id)

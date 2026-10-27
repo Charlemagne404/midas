@@ -116,16 +116,24 @@ async def test_coinbase_product_book_and_trades_preserve_native_semantics_offlin
     assert market.fees.status.value == "unknown"
     assert market.native_fields["auction_mode"] is False
     assert market.provenance.adapter_version == ADAPTER_VERSION
+    assert market.provenance.request_elapsed_monotonic_ns is not None
 
     assert book.asks[0].price == Decimal("67000.20")
     assert book.bids[0].price == Decimal("67000.10")
+    assert book.provenance.request_elapsed_monotonic_ns == (
+        captures[1].request_elapsed_monotonic_ns
+    )
     assert book.exchange_timestamp_utc is not None
     assert "cross-venue execution timestamp" in book.exchange_timestamp_semantics
     assert len(trades) == 1
     assert trades[0].native_trade_id == "42"
     assert trades[0].aggressor_side is None
     assert trades[0].quote_currency == "USD"
+    assert trades[0].provenance.request_elapsed_monotonic_ns == (
+        captures[2].request_elapsed_monotonic_ns
+    )
     assert len(captures) == 3
+    assert all(capture.request_elapsed_monotonic_ns is not None for capture in captures)
     assert '"sequence":918273' in captures[1].raw_body
     assert '"side":"sell"' in captures[2].raw_body
     assert [request.method for request in requests] == ["GET", "GET", "GET"]

@@ -179,6 +179,7 @@ async def test_transport_classifies_json_complexity_limits_and_preserves_bounded
     assert error.value.retryable is False
     assert error.value.response_evidence is not None
     assert error.value.response_evidence.raw_body == body.encode("utf-8")
+    assert error.value.response_evidence.request_elapsed_monotonic_ns >= 0
     assert len(requests) == 1
 
 
@@ -193,6 +194,7 @@ async def test_transport_ignores_bracket_characters_inside_json_strings():
         await client.aclose()
 
     assert observation.payload == value
+    assert observation.request_elapsed_monotonic_ns >= 0
 
 
 @pytest.mark.asyncio

@@ -35,6 +35,7 @@ class FailedResponseEvidence:
     raw_body: bytes
     request_started_at_utc: datetime
     response_received_at_utc: datetime
+    request_elapsed_monotonic_ns: int
 
 
 class AdapterError(RuntimeError):
@@ -167,6 +168,7 @@ class BaseReadOnlyAdapter:
             http_status=response.status_code,
             request_started_at_utc=response.request_started_at_utc,
             received_at_utc=response.response_received_at_utc,
+            request_elapsed_monotonic_ns=response.request_elapsed_monotonic_ns,
             raw_body=response.raw_body,
             raw_sha256=sha256(raw).hexdigest(),
             adapter_version=self.capabilities.adapter_version,

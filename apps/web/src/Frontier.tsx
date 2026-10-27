@@ -669,6 +669,9 @@ type ObservationEvidence = {
   raw: {
     request_url: string;
     http_status: number;
+    request_started_at_utc?: string;
+    received_at_utc?: string;
+    request_elapsed_monotonic_ns?: number | null;
     raw_body: string;
     adapter_version: string;
   };
@@ -3830,6 +3833,16 @@ function EvidenceDisclosure({ observationId }: { observationId: string }) {
           <div className="fr-evidence-body">
             <span>
               {evidence.data.raw.http_status} · {evidence.data.raw.request_url}
+            </span>
+            <span>
+              Request start {time(evidence.data.raw.request_started_at_utc)} · response received{' '}
+              {time(evidence.data.raw.received_at_utc)}
+            </span>
+            <span>
+              HTTP request/body elapsed (monotonic):{' '}
+              {evidence.data.raw.request_elapsed_monotonic_ns == null
+                ? 'Not recorded'
+                : `${(evidence.data.raw.request_elapsed_monotonic_ns / 1_000_000).toFixed(3)} ms`}
             </span>
             <span>Capture row SHA-256 · {evidence.data.row_sha256}</span>
             <pre>{evidence.data.raw.raw_body}</pre>

@@ -17,6 +17,7 @@ from pydantic import BaseModel, ConfigDict, Field, StrictBool, field_validator, 
 D = Decimal
 COINBASE_MARKET_DATA_TERMS_VERSION = "2026-08-07"
 Nonnegative = Annotated[Decimal, Field(ge=0, max_digits=36, decimal_places=18, allow_inf_nan=False)]
+MonotonicElapsedNs = Annotated[int, Field(strict=True, ge=0, le=9_223_372_036_854_775_807)]
 ExactNonnegative = Annotated[Decimal, Field(ge=0, allow_inf_nan=False)]
 SettlementScalar = Annotated[
     Decimal, Field(ge=0, le=1, max_digits=36, decimal_places=18, allow_inf_nan=False)
@@ -643,6 +644,7 @@ class Provenance(FrontierModel):
     source_schema_version: str | None = None
     request_started_at_utc: datetime
     response_received_at_utc: datetime
+    request_elapsed_monotonic_ns: MonotonicElapsedNs | None = None
     processed_at_utc: datetime
     persisted_at_utc: datetime | None = None
     exchange_timestamp_utc: datetime | None = None
@@ -1025,6 +1027,7 @@ class RawObservation(FrontierModel):
     http_status: int
     request_started_at_utc: datetime
     received_at_utc: datetime
+    request_elapsed_monotonic_ns: MonotonicElapsedNs | None = None
     raw_body: str
     raw_body_encoding: Literal["utf8", "base64"] = "utf8"
     raw_sha256: str

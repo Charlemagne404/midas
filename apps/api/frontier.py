@@ -969,6 +969,9 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
                         http_status=response_evidence.status_code,
                         request_started_at_utc=response_evidence.request_started_at_utc,
                         received_at_utc=response_evidence.response_received_at_utc,
+                        request_elapsed_monotonic_ns=(
+                            response_evidence.request_elapsed_monotonic_ns
+                        ),
                         raw_body=body,
                         raw_body_encoding=body_encoding,
                         raw_sha256=hashlib.sha256(response_evidence.raw_body).hexdigest(),

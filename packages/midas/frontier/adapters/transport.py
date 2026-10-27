@@ -56,6 +56,7 @@ class HTTPObservation:
     raw_body: str
     request_started_at_utc: datetime
     response_received_at_utc: datetime
+    request_elapsed_monotonic_ns: int
     payload: Any
 
 
@@ -156,6 +157,7 @@ class PublicReadTransport:
         retries = self.config.retries if max_retries is None else min(max_retries, 2)
         for attempt in range(retries + 1):
             await self._pace()
+            started_monotonic_ns = time.monotonic_ns()
             started = datetime.now(UTC)
             try:
                 async with self.client.stream("GET", url, params=params) as response:
@@ -182,6 +184,7 @@ class PublicReadTransport:
                             raise AdapterError(
                                 "RESPONSE_TOO_LARGE", "Response exceeds configured byte bound"
                             )
+                    request_elapsed_monotonic_ns = time.monotonic_ns() - started_monotonic_ns
                     received = datetime.now(UTC)
                     if response.status_code == 429 or response.status_code >= 500:
                         if attempt < retries:
@@ -197,6 +200,7 @@ class PublicReadTransport:
                                 raw_body=bytes(body),
                                 request_started_at_utc=started,
                                 response_received_at_utc=received,
+                                request_elapsed_monotonic_ns=request_elapsed_monotonic_ns,
                             ),
                         )
                     if not 200 <= response.status_code < 300:
@@ -209,6 +213,7 @@ class PublicReadTransport:
                                 raw_body=bytes(body),
                                 request_started_at_utc=started,
                                 response_received_at_utc=received,
+                                request_elapsed_monotonic_ns=request_elapsed_monotonic_ns,
                             ),
                         )
                     try:
@@ -223,6 +228,7 @@ class PublicReadTransport:
                                 raw_body=bytes(body),
                                 request_started_at_utc=started,
                                 response_received_at_utc=received,
+                                request_elapsed_monotonic_ns=request_elapsed_monotonic_ns,
                             ),
                         ) from error
                     if _exceeds_json_nesting_depth(raw):
@@ -235,6 +241,7 @@ class PublicReadTransport:
                                 raw_body=bytes(body),
                                 request_started_at_utc=started,
                                 response_received_at_utc=received,
+                                request_elapsed_monotonic_ns=request_elapsed_monotonic_ns,
                             ),
                         )
                     try:
@@ -249,6 +256,7 @@ class PublicReadTransport:
                                 raw_body=bytes(body),
                                 request_started_at_utc=started,
                                 response_received_at_utc=received,
+                                request_elapsed_monotonic_ns=request_elapsed_monotonic_ns,
                             ),
                         ) from error
                     except (RecursionError, ValueError) as error:
@@ -261,6 +269,7 @@ class PublicReadTransport:
                                 raw_body=bytes(body),
                                 request_started_at_utc=started,
                                 response_received_at_utc=received,
+                                request_elapsed_monotonic_ns=request_elapsed_monotonic_ns,
                             ),
                         ) from error
                     return HTTPObservation(
@@ -269,6 +278,7 @@ class PublicReadTransport:
                         raw_body=raw,
                         request_started_at_utc=started,
                         response_received_at_utc=received,
+                        request_elapsed_monotonic_ns=request_elapsed_monotonic_ns,
                         payload=payload,
                     )
             except AdapterError:

@@ -82,6 +82,14 @@ original observation without changing its timestamp or row hash. Older rows
 whose optional persistence field is absent or null remain readable as
 historical evidence.
 
+The bounded HTTP transport also records `request_elapsed_monotonic_ns` from
+after per-source pacing until the complete response body has arrived. It is
+copied into raw response evidence and normalized provenance and shown in the
+stored-evidence disclosure. This monotonic duration can measure one request's
+transport/body time; it has no shared clock origin and cannot synchronize
+separate venues or processes. HTTP failures with a complete response body keep
+the duration, while failures without response evidence leave it unknown.
+
 Adapter health is local state and does not probe the venue. Its
 `requests_in_window` value counts paced HTTP request starts in the trailing 60
 seconds using monotonic time. The transport keeps a bounded history sized for

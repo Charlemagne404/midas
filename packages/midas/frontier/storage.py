@@ -351,6 +351,9 @@ class FrontierStore:
             if existing is not None:
                 self._validated_observation_row(existing, include_raw=False)
                 try:
+                    existing_raw = RawObservation.model_validate(
+                        json.loads(str(existing["raw_json"]))
+                    )
                     existing_normalized = type(normalized).model_validate(
                         json.loads(str(existing["normalized_json"]))
                     )
@@ -362,7 +365,7 @@ class FrontierStore:
                     self._with_persisted_at(existing_normalized, None)
                 )
                 if (
-                    str(existing["raw_json"]) != raw_json
+                    self._canonical(existing_raw) != raw_json
                     or existing_content_json != normalized_content_json
                 ):
                     raise FrontierStoreError(

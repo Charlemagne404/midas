@@ -3731,6 +3731,7 @@ async def test_probe_records_schema_failure_and_recovers_source_health(tmp_path)
             json_error = await client.get(f"/api/frontier/observations/{json_error_id}")
             assert json_error.status_code == 200
             assert json_error.json()["raw"]["raw_body"] == "not-json"
+            assert json_error.json()["raw"]["request_elapsed_monotonic_ns"] is not None
             assert json_error.json()["normalized"]["failure_stage"] == "transport_response"
 
             excessive_json = await client.post("/api/frontier/probe/polymarket", json={"limit": 1})

@@ -2382,6 +2382,29 @@ it('captures one explicit bounded Kalshi multivariate event page', async () => {
         }),
       } as Response;
     }
+    if (path === `/api/frontier/observations/${'a'.repeat(64)}`) {
+      return {
+        ok: true,
+        json: async () => ({
+          observation_id: 'a'.repeat(64),
+          venue: 'kalshi',
+          observation_kind: 'multivariate_event_listing',
+          received_at_utc: '2026-10-27T20:00:00Z',
+          raw_sha256: 'b'.repeat(64),
+          row_sha256: 'c'.repeat(64),
+          raw: {
+            request_url: 'https://public.example.test/events',
+            http_status: 200,
+            request_started_at_utc: '2026-10-27T19:59:59.990Z',
+            received_at_utc: '2026-10-27T20:00:00Z',
+            request_elapsed_monotonic_ns: 9_123_456,
+            raw_body: '{}',
+            adapter_version: 'fixture-v1',
+          },
+          normalized: {},
+        }),
+      } as Response;
+    }
     const body = responses[path];
     if (body === undefined) throw new Error(`Unexpected frontend request: ${path}`);
     return { ok: true, json: async () => body } as Response;
@@ -2408,6 +2431,10 @@ it('captures one explicit bounded Kalshi multivariate event page', async () => {
   expect(await screen.findByText(/Saved 1 event\(s\) and 1 nested market/)).toBeInTheDocument();
   expect(screen.getByText(/One selected event · KX-MVE-EVENT/)).toBeInTheDocument();
   expect(screen.getByText('Inspect immutable source response')).toBeInTheDocument();
+  fireEvent.click(screen.getByText('Inspect immutable source response'));
+  expect(
+    await screen.findByText(/HTTP request\/body elapsed \(monotonic\): 9\.123 ms/),
+  ).toBeInTheDocument();
   expect(fetchMock.mock.calls.some(([input]) => String(input).includes('/probe/'))).toBe(true);
   queryClient.clear();
 });

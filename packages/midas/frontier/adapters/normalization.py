@@ -95,6 +95,7 @@ def provenance(
         source_schema_version=source_schema_version,
         request_started_at_utc=response.request_started_at_utc,
         response_received_at_utc=response.response_received_at_utc,
+        request_elapsed_monotonic_ns=response.request_elapsed_monotonic_ns,
         processed_at_utc=datetime.now(UTC),
         exchange_timestamp_utc=exchange_timestamp,
         exchange_timestamp_semantics=exchange_timestamp_semantics,

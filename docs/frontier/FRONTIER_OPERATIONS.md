@@ -90,6 +90,13 @@ to an isolated snapshot, keeping the immutable row hash stable. Re-appending an
 identical capture keeps its first timestamp and row hash. Legacy observations
 with this optional value absent remain readable and are not rewritten.
 
+For new transport responses, `request_elapsed_monotonic_ns` measures from the
+request start after source pacing until the full response body is received.
+Inspect it as a per-request duration in the evidence disclosure; it is not a
+cross-source timestamp or a clock-synchronization estimate. Complete HTTP
+error responses retain this duration. Timeouts or connection failures without
+a response body leave it unavailable.
+
 Keep display currency codes separate from denomination identity. Instruments,
 books, fee schedules, trades and candidate capital expose an exact identity only
 when the source supports one. A ticker match such as `USD` does not establish
