@@ -3450,9 +3450,10 @@ readiness remain active, and the readiness detail states that no validated
 permission loader exists. Synthetic API coverage now supplies arbitrary
 references while asserting both probe rejection and quarantine of stored
 fixture evidence. Documentation was corrected in the source review, operations
-guide, and current-state file. Verification remains pending; no held capture was
-read or modified.
+guide, and current-state file. The code, test, and documentation are committed
+as `52b6a9e`; behavioral verification remains pending. No held capture was read
+or modified.
 
-At 19:16:42 UTC host memory PSI was elevated (`avg10` 44.59% some / 40.58% full;
-`avg300` 35.77% / 32.18%). Tests and build were deferred until a fresh admission
-check shows materially lower pressure.
+At 19:20:27 UTC host memory PSI remained elevated (`avg10` 44.56% some / 40.87%
+full; `avg300` 42.22% / 38.26%). Tests and build remain deferred pending a
+fresh admission check with materially lower pressure.

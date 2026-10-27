@@ -2081,13 +2081,14 @@ references; the API always supplies a source-use hold, and readiness explains
 that no validated loader exists. The source-terms review, operations guide,
 current-state note, and regression now state the same rule. The test configures
 arbitrary references while checking probe rejection and synthetic stored-data
-quarantine. The regression and implementation are in the current worktree; test
-and commit verification remain pending.
+quarantine. Implementation and regression are committed as `52b6a9e`;
+behavioral test verification remains pending. `git diff --check` passed before
+the commit.
 
-At `2026-10-27T19:16:42Z`, memory PSI `avg10` was 44.59% (`some`) / 40.58%
-(`full`), with `avg300` 35.77% / 32.18%; available memory was 9,422 MiB and
-swap free 468 MiB. No test or build was started under that pressure. Next safe
-action: remeasure host pressure, then run the isolated source-permission test
-module followed by the complete Frontier suite only if admission is suitable.
-No held capture, external source, protected service, or production state was
-accessed during this correction.
+At `2026-10-27T19:20:27Z`, memory PSI remained elevated: `avg10` 44.56% (`some`)
+/ 40.87% (`full`), `avg60` 47.28% / 43.10%, and `avg300` 42.22% / 38.26%;
+available memory was 9,403 MiB and swap free 468 MiB. No test or build was
+started under that pressure. Next safe action: remeasure host pressure, then
+run the isolated source-permission test module followed by the complete
+Frontier suite only if admission is suitable. No held capture, external source,
+protected service, or production state was accessed during this correction.
