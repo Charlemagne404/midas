@@ -1423,6 +1423,17 @@ seconds. Strict mypy passed for the API route; Ruff check/format and
 `git diff --check` passed. One upstream Starlette/httpx deprecation warning
 remains. No production or held-source records were read.
 
-**Next safe action:** remeasure local cgroup headroom and PSI, then run the
-complete `tests/frontier` suite only if current resource admission gates allow
-it. Keep test data roots temporary and report an incomplete run as incomplete.
+## 2026-10-27 16:20 UTC — full Frontier suite deferred under host pressure
+
+At `2026-10-27T16:20:34Z`, host memory PSI was `avg10` 49.81% (`some`) and
+45.22% (`full`), with `avg60` 46.14% / 41.60%. Host RAM showed 9.1 GiB
+available and swap showed 3.5 GiB of 4.0 GiB in use. CPU PSI `avg10` was 1.42%
+and I/O PSI `avg10` was 0.17%. The current shell cgroup reported 2.05 GB usage
+with no `memory.high` or `memory.max` bound; that does not override the host
+pressure signal. The broad `tests/frontier` suite was not started. The eight
+targeted integrity/readiness tests above remain the current verification for
+this change set; this is not a full Frontier-suite pass.
+
+**Next safe action:** remeasure PSI after host memory pressure subsides and
+only then reconsider the full `tests/frontier` suite. Keep test roots
+temporary; classify any interrupted run as incomplete.

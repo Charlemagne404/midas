@@ -2418,7 +2418,18 @@ quarantine, replay, comparison, review, and observation regressions passed
 and `git diff --check` passed. One Starlette/httpx TestClient deprecation
 warning remains. No production or held-source records were read.
 
-**Next safe action:** remeasure local cgroup headroom and PSI, then run the
-complete `tests/frontier` suite only if the current resource admission gates
-allow it. Use temporary test data roots and leave any interrupted run
-classified as incomplete.
+## Resource admission checkpoint — 2026-10-27 16:20 UTC
+
+At `2026-10-27T16:20:34Z`, host memory PSI measured `avg10` 49.81% (`some`)
+and 45.22% (`full`), with `avg60` at 46.14% / 41.60%. Available host RAM was
+9.1 GiB; swap usage was 3.5 GiB of 4.0 GiB. CPU PSI `avg10` was 1.42%, and
+I/O PSI `avg10` was 0.17%. The command's cgroup showed 2.05 GB current usage
+and no `memory.high` or `memory.max` bound, which does not establish host
+headroom. I did not start the full `tests/frontier` suite under this sample.
+The eight targeted integrity/readiness tests remain the current verification;
+they are not a full Frontier-suite pass. No service or research job was
+started.
+
+**Next safe action:** remeasure PSI after host memory pressure subsides and
+only then reconsider the full `tests/frontier` suite. Use temporary test data
+roots and classify any interrupted run as incomplete.
