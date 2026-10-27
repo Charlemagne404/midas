@@ -206,7 +206,7 @@ def test_kalshi_mve_component_probe_is_bound_to_recorded_parent_and_persists_met
         asyncio.run(http_client.aclose())
 
 
-def _client(tmp_path, *, arena_root=None):
+def _client(tmp_path, *, arena_root=None, hold_sources=False):
     requests: list[httpx.Request] = []
 
     def handler(request: httpx.Request) -> httpx.Response:
@@ -215,12 +215,17 @@ def _client(tmp_path, *, arena_root=None):
 
     client = httpx.AsyncClient(transport=httpx.MockTransport(handler))
     disabled = AdapterConfig(enabled=False, live_public_probe_enabled=False)
+    held = AdapterConfig(
+        enabled=False,
+        live_public_probe_enabled=False,
+        probe_policy_block_reason="Fixture source-use hold",
+    )
     poly_transport = PublicReadTransport({"gamma-api.polymarket.com"}, disabled, client=client)
     registry = AdapterRegistry(
         (
             PolymarketAdapter(disabled, transport=poly_transport),
-            KalshiAdapter(disabled),
-            KrakenSpotAdapter(disabled),
+            KalshiAdapter(held if hold_sources else disabled),
+            KrakenSpotAdapter(held if hold_sources else disabled),
         )
     )
     store = FrontierStore(tmp_path / "frontier")
@@ -1767,7 +1772,7 @@ def test_readiness_fails_closed_when_a_stored_replay_hash_does_not_match(tmp_pat
     from midas.frontier.economics import ExecutionScenario
     from midas.frontier.replay import deterministic_replay
 
-    client, registry, http_client, _, store = _client(tmp_path)
+    client, registry, http_client, _, store = _client(tmp_path, hold_sources=True)
     replay = deterministic_replay(
         (market(Venue.POLYMARKET, "readiness-corrupt"),),
         (),
@@ -1784,12 +1789,19 @@ def test_readiness_fails_closed_when_a_stored_replay_hash_does_not_match(tmp_pat
             (tampered_json, replay.run_id),
         )
     try:
-        response = client.get("/api/frontier/readiness")
-        assert response.status_code == 409
-        assert response.json()["detail"] == (
+        expected_detail = (
             "Stored replay evidence is not readable: "
             "Stored replay result hash does not match its payload"
         )
+        for path in (
+            "/api/frontier/readiness",
+            "/api/frontier/runs",
+            "/api/frontier/opportunities",
+            "/api/frontier/overview",
+        ):
+            response = client.get(path)
+            assert response.status_code == 409, (path, response.text)
+            assert response.json()["detail"] == expected_detail
     finally:
         client.close()
         asyncio.run(registry.aclose())

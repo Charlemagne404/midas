@@ -688,6 +688,15 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
             if not replay_uses_held_sources(row.get("result", {}), observation_venues)
         )
 
+    def read_stored_replays(limit: int) -> tuple[dict[str, Any], ...]:
+        try:
+            return cast(tuple[dict[str, Any], ...], store.replays(limit=limit))
+        except FrontierStoreError as error:
+            raise HTTPException(
+                status_code=409,
+                detail=f"Stored replay evidence is not readable: {error}",
+            ) from error
+
     def comparison_run_rows(
         items: tuple[dict[str, Any], ...],
     ) -> tuple[dict[str, dict[str, Any]], dict[str, str]]:
@@ -809,7 +818,7 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
         summary = store.summary(excluded_venues=held_venues)
         eligible_observation_count = int(summary["observations"])
         if held_venues:
-            run_window = store.replays(limit=20)
+            run_window = read_stored_replays(20)
             comparison_window = store.comparisons(limit=25)
             eligible_runs = replay_rows_without_held_sources(run_window)
             eligible_comparisons = comparison_rows_without_held_sources(comparison_window)
@@ -2594,7 +2603,7 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
         offset: int = Query(default=0, ge=0, le=100_000),
     ) -> dict[str, Any]:
         source_window_limit = min(100, max(20, limit))
-        raw_runs = store.replays(limit=source_window_limit)
+        raw_runs = read_stored_replays(source_window_limit)
         runs = replay_rows_without_held_sources(raw_runs)
         candidates = []
         for row in runs:
@@ -2626,7 +2635,7 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
         offset: int = Query(default=0, ge=0, le=100_000),
     ) -> dict[str, Any]:
         source_window_limit = min(200, max(50, offset + limit))
-        raw_items = store.replays(limit=source_window_limit)
+        raw_items = read_stored_replays(source_window_limit)
         eligible_items = replay_rows_without_held_sources(raw_items)
         items = eligible_items[offset : offset + limit]
         return {
@@ -2817,13 +2826,7 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
         manifests = registry.capability_manifests()
         all_caps_declared = all(len(item.declarations) > 0 for item in manifests)
         eligible_observation_count = int(summary["observations"])
-        try:
-            eligible_runs = replay_rows_without_held_sources(store.replays(limit=20))
-        except FrontierStoreError as error:
-            raise HTTPException(
-                status_code=409,
-                detail=f"Stored replay evidence is not readable: {error}",
-            ) from error
+        eligible_runs = replay_rows_without_held_sources(read_stored_replays(20))
         recent_runs = eligible_runs[:3]
         run_count = len(eligible_runs)
         eligible_relationships = store.relationships(
