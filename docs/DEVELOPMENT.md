@@ -236,10 +236,18 @@ v6 adds an append-only paired-comparison table without rewriting earlier records
 The relationship graph route accepts an optional `center_market_id`, a `depth`
 from 1 to 3, and an edge `limit` up to 200. It loads at most 200 recorded
 markets. Centered traversal uses indexed left/right adjacency and scans at most
-500 relationship rows per request; the response includes the row count and marks
-when the scan may be incomplete. The uncentered view remains a bounded recent-edge
-query. List reads recheck stored observation, relationship, review-lineage,
-replay, and comparison hashes before research use.
+500 relationship rows per request; a wide breadth-first layer is split into
+queries of at most 200 market IDs. The response includes scanned-row counts and
+marks when the result may be incomplete. Centered one-hop cursors use stable
+timestamp/relationship-ID keyset pages. Centered two- and three-hop cursors pin
+the center, depth, page size, and append-only graph revision, then deterministically
+recompute the same bounded breadth-first window for each page. Cursor use after
+any market-metadata, relationship, or review append returns HTTP 409. The
+multi-hop continuation only pages through the same 500-row result window; if a
+scan cap truncated the traversal, the incomplete flag remains visible after the
+last available page. The uncentered view remains a bounded recent-edge query
+without cursor pagination. List reads recheck stored observation, relationship,
+review-lineage, replay, and comparison hashes before research use.
 
 Deterministic replay currently evaluates verified cross-venue binary coverage
 and an all-long, same-market construction for three to sixteen verified

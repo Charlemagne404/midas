@@ -39,6 +39,9 @@ provenance IDs with the exact immutable market/book observation record IDs, so
 manifests and candidate legs link to resolvable saved evidence. Direct
 adapter/in-memory replay retains adapter-derived IDs. This changes replay
 identity without rewriting stored observations or adding a database migration.
+The centered relationship explorer pages one-hop keysets and two-/three-hop
+breadth-first results against the same bounded graph revision; it rejects stale
+continuations instead of mixing graph states.
 Supported candidates include an exact full-or-no-fill
 exposure sensitivity over up to 16 legs, with fee-inclusive results omitted if
 any applicable fee is unknown. The Economic Workbench can persist a paired

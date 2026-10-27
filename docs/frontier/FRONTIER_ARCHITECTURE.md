@@ -177,18 +177,21 @@ inputs without deleting history.
 
 Centered graph reads use separate left- and right-endpoint indexes, so a market
 neighborhood is selected by its incident edges instead of scanning the global
-recent-relationship window. The API still bounds each traversal to 200 recorded
-markets, three hops, and 500 candidate relationship rows per request; it returns
-the number scanned and indicates when the scan window may be incomplete. A
-centered one-hop neighborhood supports keyset continuation ordered by
-relationship time and identity. The cursor carries append-only market-observation,
-relationship, and review counts; its market count covers recorded
-`market_listing`, `instrument_metadata`, and `event_market_listing` observations
-used to render graph nodes. Latest market metadata is selected by source receipt
-time. The API returns 409 if those graph inputs change between pages. Mission
-Control displays 30 edges per page, with a continuation control. Multi-hop
-traversals and the uncentered overview remain single bounded reads; dense or
-broad queries can still be incomplete.
+recent-relationship window. The API bounds each traversal to 200 recorded
+markets, three hops, 500 candidate relationship rows, and 200 returned edges per
+page. It returns the number scanned and indicates when the result may be
+incomplete. A centered one-hop neighborhood uses keyset continuation ordered by
+relationship time and identity. Centered two- and three-hop neighborhoods now
+also page in deterministic breadth-first order. Their small cursor pins the
+center, depth, page size, and graph revision; each request recomputes the same
+bounded result window, so no traversal state or database snapshot is persisted.
+Wide BFS layers are split into indexed queries of at most 200 market IDs while
+sharing the 500-row per-request scan budget. The graph revision includes recorded
+`market_listing`, `instrument_metadata`, and `event_market_listing` observations,
+relationships, and reviews. The API checks it around each centered page and
+returns 409 when any of those inputs change. Mission Control displays 30 edges
+per page with previous/next controls. The uncentered recent-edge view remains a
+single bounded read; broad or dense traversals can still be incomplete.
 
 The economic verifier supports two narrow families. Cross-venue binary coverage
 requires a previously verified same-payoff relationship. Same-market
@@ -360,7 +363,7 @@ it does not represent source truth or profitability.
 There are no persistent source workers, incremental order-book streams, full
 venue-wide universe scans, FX conversion, derivatives, capital transfer model,
 multi-leg solver, automatic semantic certification, authenticated reviewer or
-assertion verification, full-universe graph search, multi-hop graph pagination,
+assertion verification, full-universe graph search,
 Laboratory campaign integration, or production deployment. The bounded Arena
 job integration has completed under the systemd supervisor after normal host
 admission. The latest controlled fixture run produced process CPU and peak RSS
@@ -368,10 +371,11 @@ measurements; broader runtime behavior and resource sustainability remain
 unverified.
 `/graph` limits source markets to 200, scans at most
 500 relationship rows through endpoint indexes for centered neighborhoods, and
-returns at most 200 edges over 1–3 hops. Centered one-hop queries can continue
-by cursor while the append-only graph revision stays fixed; the uncentered view
-remains a bounded recent-edge window. The current replay/candidate set is small
-and bounded. See
+returns at most 200 edges per page over 1–3 hops. Centered one-hop queries use
+keyset cursors; two- and three-hop queries page through deterministic
+breadth-first result windows. All cursors bind the append-only graph revision.
+The uncentered view remains a bounded recent-edge window. The current
+replay/candidate set is small and bounded. See
 the [engineering report](FRONTIER_ENGINEERING_REPORT.md) and
 [mission ledger](FRONTIER_MISSION_LEDGER.md) for acceptance status and continuation
 steps.

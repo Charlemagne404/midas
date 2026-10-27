@@ -130,6 +130,11 @@ before graph or replay processing. `GET /api/frontier/graph` offers one-to-three
 hop neighborhoods from a recorded market, capped at 200 source markets and 500
 scanned effective edges; this remains a bounded recent-window traversal rather
 than a large-universe graph index.
+Centered one-hop graph reads use relationship keysets; two- and three-hop reads
+use deterministic breadth-first result pages. Cursors bind the center, depth,
+page size, and append-only graph revision. Each request recomputes the bounded
+window, scans at most 500 relationship rows, chunks wide frontiers into queries
+of at most 200 markets, and returns 409 if graph inputs changed.
 
 Replay v5 added effective outcome/instrument mappings, the proposal limit, and
 full-or-no-fill exposure sensitivity to the replay input identity and supported

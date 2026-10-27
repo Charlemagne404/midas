@@ -66,6 +66,18 @@ not change the database schema, production services, or protected Reality
 state. See the dated Frontier mission ledger for the complete command and
 resource measurements.
 
+The latest isolated Frontier checkpoint adds revision-bound pagination for
+centered two- and three-hop graph traversals. Pages preserve deterministic
+breadth-first order, and wide layers are split into indexed queries while the
+500-row request scan cap remains in force. The full Frontier/Arena regression
+suite passed 121 tests (259,044 KiB peak RSS); the frontend passed 39 tests,
+typecheck, lint, and formatting. Playwright enumerated 11 tests, but browser E2E
+and a fresh production build were deferred at the 2026-10-27 11:28:57 UTC
+resource sample: memory PSI `avg10` was 35.78% (`some`) and 32.22% (`full`),
+swap use was 3.4 GiB, and the active API cgroup was at 527,319,040 of
+1,610,612,736 bytes `MemoryHigh`. No server, production service, or protected
+Reality state was changed.
+
 ## Architecture and source layout
 
 MIDAS is a Python modular monolith with a separate React dashboard:

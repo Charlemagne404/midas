@@ -342,21 +342,22 @@ indexes. It returns at most 200 edges, considers at most 500 relationship rows
 per request, and loads at most 200 source markets. The response reports the
 number of relationship rows scanned and whether a capped scan may be incomplete.
 Centered one-hop queries support keyset pages ordered by relationship timestamp
-and ID. The opaque continuation cursor binds the center, page size, and append-
-only graph revision counts for recorded `market_listing`,
-`instrument_metadata`, and `event_market_listing` observations, relationships,
-and reviews. The market
-observation count pins the metadata used to render graph nodes; books and trades
-do not change that graph revision. The API checks the revision before and after
-each page read and returns 409 if it changed, so the client restarts rather than
-silently mixing graph states. Each page reads at most 500 source relationship
-rows; the UI returns 30 visible edges per page and provides previous/next
-controls. Deeper one-to-three-hop traversals
-remain a single bounded query and report when their scan may be incomplete.
-Without a center the route returns a bounded recent edge window. The UI renders
-at most 18 network edges and retains an evidence list capped at 30 per page.
-Clustering, layout control, full-universe search, and multi-hop pagination remain
-incomplete.
+and ID. Centered two- and three-hop queries now also paginate a deterministic
+breadth-first result window. The v2 cursor binds the center, depth, page size,
+and append-only graph revision, and carries only a bounded edge offset. Each
+continuation recomputes the same traversal from the pinned local graph inputs;
+there is no persisted traversal session. The API checks graph revision before
+loading node metadata and after the page query, returning 409 if market,
+relationship, or review rows were appended. Each request scans at most 500
+relationship rows and returns at most 200 edges. A BFS layer wider than 200
+market IDs is split into deterministic indexed chunks while consuming the same
+aggregate scan budget. When that budget truncates a traversal, the response
+keeps the incomplete flag even if the researcher reaches the end of its
+available result pages. The uncentered recent-edge view is still a bounded
+single read without continuation. Mission Control displays 30 edges per page,
+with previous/next controls. Its network renders at most 18 edges and the
+evidence list is capped at 30 per page. Clustering, layout control, and
+full-universe search remain incomplete.
 
 ## 7. Opportunity discovery algorithms
 
@@ -637,9 +638,11 @@ hashes and request bound.
 The API
 graph query is bounded to 200 source markets, 500 scanned relationship rows per
 request, and 1–3 hops; centered one-hop traversal uses left/right endpoint
-indexes and revision-bound cursors, and the visual network caps at 18 edges.
-Reviewer authentication, external assertion retrieval, multi-hop
-pagination/clustering, and experiment result drill-downs remain incomplete.
+indexes and keyset cursors, while two-/three-hop traversal uses revision-bound
+breadth-first pages. The visual network caps at 18 edges. Reviewer
+authentication, external assertion retrieval, clustering, and experiment
+result drill-downs remain incomplete. Multi-hop browser E2E remains pending
+under the dated memory-pressure admission decision.
 The Replay & Readiness section also includes a content-hashed Arena job list and
 detail view. It labels the limits and offline worker boundary and shows the
 hash-verified completed paired comparison. Job history is a 500-record bounded
@@ -707,6 +710,16 @@ Verification on this branch:
   store-row IDs in API market/book reads, event relationship evidence, replay
   manifests, paired replay, and Arena snapshots. One upstream
   Starlette/httpx `TestClient` deprecation warning remains.
+- Centered multi-hop graph pagination: the complete `tests/frontier` plus
+  `tests/arena/test_frontier_replay.py` suite passed **121 tests** in 27.54
+  seconds; `/usr/bin/time -v` measured 28.35 seconds wall, 8.36 seconds user
+  CPU, 0.94 seconds system CPU, 259,044 KiB peak RSS, zero swaps, and zero
+  socket messages. Tests verify breadth-first edge order across pages,
+  repeat-page determinism, depth/page-size/center binding, stale-revision
+  rejection, and 201-market frontier chunking. The frontend passed **39 tests**,
+  TypeScript, ESLint, and Prettier. The updated E2E spec was enumerated by
+  Playwright but not run in a browser. A production frontend build and E2E run
+  were deferred at the measured host-pressure sample recorded below.
 - Two systemd-supervised Frontier fixture jobs completed after the ordinary host-wide Arena gate admitted them. Their paired results verify against the same pinned snapshot. The latest manifest now records process CPU/RSS, and Mission Control exposes the allowlisted measurements with a capacity-limit note. These fixture jobs do not validate a live relationship or economic opportunity; resource sustainability remains `NOT_MEASURED`.
 - After the 130-test regression, two targeted API cases passed for snapshot staging and simulated admission denial. The denial returned HTTP 409, preserved the content-addressed snapshot, issued no source request, and created no job.
 
@@ -960,6 +973,15 @@ The 118-test replay-v6 lineage regression used 24.89 seconds wall time,
 recorded zero swaps and zero socket messages. This is one bounded local test
 measurement; it is not a production capacity or deployment qualification.
 
+At `2026-10-27T11:28:57Z`, before considering a browser-server run or production
+frontend build, the host reported 9.8 GiB available memory and 3.4 GiB swap in
+use; memory PSI `avg10` was 35.78% (`some`) and 32.22% (`full`). The active
+`midas-api.service` cgroup used 527,319,040 bytes against a 1,610,612,736-byte
+`MemoryHigh`. The 121-test Python run itself stayed at 259,044 KiB RSS and used
+no swap. Because browser/build workloads would add processes during elevated
+memory pressure, they were not started. This is a dated admission decision, not
+a deployment-readiness measurement.
+
 ## 14. Actual scientific findings
 
 The original captures contain five public HTTP 200 responses: Kalshi market
@@ -1086,12 +1108,15 @@ gaps are deferred work, not hidden passed checks:
 - Relationship reviews are self-attributed only. Reviewer identities and
   external assertion IDs are not authenticated or retrieved, so the workflow
   cannot establish independent source truth beyond the persisted market fields.
-- Centered graph neighborhoods now use left/right endpoint indexes, bounded to
-  500 relationship rows per request and a 200-market recorded window. Centered
-  one-hop browsing has keyset continuation tied to append-only graph counts and
-  rejects stale cursors. Uncentered and multi-hop queries remain bounded single
-  reads; full-universe search, multi-hop pagination/clustering, relationship
-  revision-history drill-down, and authenticated review remain unimplemented.
+- Centered graph neighborhoods use left/right endpoint indexes, a 200-market
+  recorded window, three-hop limit, and 500 scanned relationship rows per
+  request. One-hop paging uses a timestamp/ID keyset; two- and three-hop pages
+  preserve deterministic breadth-first ordering by recomputing the same
+  revision-pinned result window. A 201-market frontier fixture verifies bounded
+  query chunking. Uncentered search remains a single bounded read; full-universe
+  search/clustering, relationship revision-history drill-down, and authenticated
+  review remain unimplemented. Browser verification of multi-hop paging remains
+  pending due the dated host memory-pressure admission decision above.
 - The only multi-outcome family is a same-market all-long construction over
   verified one-hot exhaustive states; only controlled fixtures have exercised it.
   Logical implication bounds and general multi-leg search are not implemented.
@@ -1131,9 +1156,11 @@ Priority order:
    direct first page and one API-route continuation now have live, hash-pinned
    evidence; do not continue fetching pages just to grow the sample. Broaden
    degraded-source evidence only through a short bounded probe.
-2. Extend revision-bound pagination to multi-hop graph traversal only if a
-   bounded cursor can preserve breadth-first ordering; add full-universe search
-   and clustering only after representative data and measurements exist.
+2. The centered multi-hop API/UI path is revision-bound and has deterministic
+   BFS fixture coverage. Run its targeted browser E2E when measured host memory
+   pressure permits. Extend beyond the current 200-market/500-row bounds or add
+   clustering only after representative data and resource measurements justify
+   the added scope.
 3. Extend Kalshi fee evidence only when public metadata establishes the market's
    applicable formula and precision model beyond the current bounded taker
    sensitivity. Keep Kraken account fee tier unknown without authenticated
@@ -1298,6 +1325,11 @@ Implementation and documentation commits on this branch:
   IDs into API-loaded market/book provenance so manifests, candidate evidence,
   paired replay, and Arena snapshots retain resolvable source lineage; added
   end-to-end API/store/replay regressions.
+- `5c14049` — added revision-bound breadth-first pagination for centered
+  two-/three-hop graph queries, deterministic chunking for wide BFS layers,
+  Mission Control continuation controls, cursor/revision/API tests, and a
+  multi-hop browser test definition. The browser test was not run at this
+  checkpoint because of the dated host-pressure admission decision.
 
 Principal changed paths:
 
@@ -1332,7 +1364,7 @@ cross-venue economics.
 | Adapter protocol, capability registry, bounded GET transport | COMPLETE AND VERIFIED | Contract tests, all capability declarations, host/size/rate/redirect bounds. |
 | Polymarket, Kalshi and Kraken Spot adapters | PARTIALLY VERIFIED | Fixture/contract tests and bounded live listing/book/legacy-trade captures are preserved. Polymarket v2 first and continuation pages returned ten rows each. Kalshi has a ticker-filtered cursor-page implementation, fixture-verified row mapping, and a live empty terminal page; live row normalization remains unvalidated. Adapter v4 also normalizes source-declared MVE component IDs/sides from the preserved 17-leg response, but component rules and combo payoff remain unverified. Kalshi event/series parameters and Kraken spot data are captured, while exact Kalshi account fees and Kraken account fee applicability remain unknown. API fixtures cover source degradation and recovery, including a partial two-request Kalshi metadata failure; live degraded-source behavior remains unverified. |
 | Canonical market/instrument normalization | PARTIALLY VERIFIED | Three distinct instrument classes are represented; v2 Polymarket trades retain native outcome-token identity; Kalshi MVE selected component references are preserved as source-declared structure; the October 27 capture preserves native parent-event titles and Polymarket outcome labels. Live lineage and payoff/settlement semantics remain unverified. |
-| Relationship hypotheses, review revisions, indexed neighborhoods, and explicit same-payoff verifier | PARTIALLY VERIFIED | Self-attributed review API/UI, append-only revisions, latest-state replay, tamper/migration checks, left/right endpoint-indexed 1–3 hop scans capped at 500 rows, revision-bound centered one-hop keyset pages, stale-cursor rejection, and a 501-edge scan-bound test; matcher v4 blocks explicit parent/child year contradictions and cross-venue mismatches in both text paths. One genuine 2026 House-control event-topic pair yields a text-only HYPOTHESIS whose API evidence links resolve to both saved captures, while strict payoff verification rejects equivalence; reviewer authentication and multi-hop pagination remain absent. |
+| Relationship hypotheses, review revisions, indexed neighborhoods, and explicit same-payoff verifier | PARTIALLY VERIFIED | Self-attributed review API/UI, append-only revisions, latest-state replay, tamper/migration checks, left/right endpoint-indexed 1–3 hop scans capped at 500 rows, one-hop keyset pages, and revision-bound multi-hop BFS pages with deterministic recomputation and 201-market chunk coverage; matcher v4 blocks explicit parent/child year contradictions. A genuine House-control topic pair remains text-only HYPOTHESIS and fails strict same-payoff verification. Multi-hop browser E2E is pending; reviewer authentication, revision-history drill-down, and full-universe search remain absent. |
 | Opportunity candidate and independent economic checks | PARTIALLY VERIFIED | Two-venue all-long binary and same-market 3–16 state one-hot exhaustive coverage; economic model v4 computes an exact full/no-fill adverse exposure pattern over up to 16 legs, and independent audit v2 recomputes it from pinned inputs. Differential three-leg enumeration, unknown-fee cases, and malformed cross-venue leg handling pass. Controlled fixtures only; source semantics, account costs, broader funding/settlement costs, and operational feasibility remain incomplete. |
 | Kalshi taker-fee sensitivity | PARTIALLY VERIFIED | Hash-matched public event/series evidence supports one-fill and bounded one-order Decimal sensitivities for two documented quadratic taker fee types, both precision cases, per-fill rounding, order accumulation, and capped rebates. Tests match the official one-fill example and exercise buy/sell arithmetic. Manual inputs are not live quotes or book-priced; account-specific fees and precision, maker/mixed-order behavior, FCM charges, later schedules, and full candidate fee integration remain unresolved. |
 | Append-only evidence store and deterministic replay | COMPLETE AND VERIFIED | Schema v6, additive v2/v3/v4/v5 migration, bounds, hash validation, and immutability. Replay v6 carries exact store record IDs through API-loaded market/book provenance, manifests, candidate legs, and Arena snapshots; direct in-memory replay retains adapter IDs. Replay-v5 economic output includes full/no-fill sensitivity and pins effective mappings/proposal limit. The separate Arena wrapper uses immutable content-addressed snapshots and hash-verified result artifacts; two controlled fixture workers completed and the latest recorded CPU/RSS. |
@@ -1352,8 +1384,9 @@ degraded-source behavior remains unverified; do not intentionally degrade a
 live source. Continue by searching for public multi-outcome metadata that meets
 the strict payoff and resolution evidence requirements, reconciling Kalshi's
 public event/series parameters with a defensible candidate fee schedule, and
-extending bounded graph paging only if breadth-first traversal order remains
-reproducible. Add durable Laboratory experiment management only if needed
+running the new multi-hop browser E2E after memory pressure eases. Scale beyond
+the graph's current bounds only if representative data and measured resource
+use justify it. Add durable Laboratory experiment management only if needed
 beyond the tested Arena job wrapper. Add adversarial audit mutations only for
 distinct failure modes. Expand economics only where source evidence supports it.
 Re-run the focused suites before each checkpoint. Do not enable probes by
