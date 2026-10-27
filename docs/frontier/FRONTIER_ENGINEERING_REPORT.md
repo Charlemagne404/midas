@@ -150,7 +150,7 @@ submission route.
 | Venue | Implemented public research | Preserved distinctions and limits | Live evidence |
 | --- | --- | --- | --- |
 | Polymarket | Gamma market discovery; CLOB books; legacy public trades; cursor-paginated Data API v2 trade pages; native token/condition/event IDs; strict market normalization and supported fee-shape handling | Event outcomes are not marked payoff-verified; settlement asset and resolution meaning are not independently attested; no incremental book stream or candle normalization; fee schedules expire after five minutes and unsupported exponents remain unknown; v2 condition history is fixed to three years and page capture uses taker-only trades with a 0.01-share floor | Earlier live API evidence persisted one listing, one book, and ten trades through the older trade path. A direct v2 first page and one continuation through the local API route each returned ten rows and were hash-verified via isolated stores; no third page was requested. A separate one-market listing captured a market-specific `zero_fees` schedule at 20:41:18.972060Z, with `feesEnabled=true`, exponent 1, taker-only, rate 0; normalized status was verified only through 20:46:18.972Z. |
-| Kalshi | Public market discovery, market metadata, binary YES/NO instruments, public book snapshots/trades, ticker-filtered cursor trade pages, explicit event/series fee metadata, and a standalone one-fill taker-fee sensitivity; retains native rules, status, timestamps and market fields | MVE metadata is classified as conditional; asks derived from complementary YES/NO bids where applicable. Trade pages normalize `yes_price_dollars` as a YES-price reference and preserve `no_price_dollars` and taker fields only in raw evidence; no BUY/SELL aggressor direction is inferred. The fee sensitivity is not converted to candidate/account fee costs; fee applicability, maker path, scheduled changes, account class and multi-fill accumulation remain unresolved. No stream or historical-candle normalization. | Earlier bounded API capture persisted one listing, an empty book, and a valid empty trade response. A later one-market public listing plus event and series fee-metadata captures returned HTTP 200, used three GETs total, and passed raw/row hash-verified temporary-store read-back. One later bounded listing-plus-trade-page request pair returned HTTP 200; the page had zero trades and no next cursor, with raw and row hashes verified. |
+| Kalshi | Public market discovery, market metadata, binary YES/NO instruments, public book snapshots/trades, ticker-filtered cursor trade pages, explicit event/series fee metadata, and manual one-fill plus bounded one-order taker-fee sensitivities; retains native rules, status, timestamps and market fields | MVE metadata is classified as conditional; asks derived from complementary YES/NO bids where applicable. Trade pages normalize `yes_price_dollars` as a YES-price reference and preserve `no_price_dollars` and taker fields only in raw evidence; no BUY/SELL aggressor direction is inferred. Order-level fee sensitivity binds to one recorded native instrument and implements per-fill rounding accumulation and capped rebates under both documented precision cases. It remains a manual sensitivity, not candidate/account fee costs; actual account precision, maker/mixed-order behavior, FCM charges, scheduled changes, and full candidate fee applicability remain unresolved. No stream or historical-candle normalization. | Earlier bounded API capture persisted one listing, an empty book, and a valid empty trade response. A later one-market public listing plus event and series fee-metadata captures returned HTTP 200, used three GETs total, and passed raw/row hash-verified temporary-store read-back. One later bounded listing-plus-trade-page request pair returned HTTP 200; the page had zero trades and no next cursor, with raw and row hashes verified. The October 26 empty book belongs to a different market than the October 27 fee metadata; no book-priced fee calculation is claimed. |
 | Kraken Spot | Configured-pair AssetPairs metadata; public depth, trades and OHLC; pair tick/lot/minimum fields retained | Spot is a base/quote instrument, not an event payoff. Fee tier, account eligibility, custody, and event hedge semantics are unknown. Pair discovery is an explicit allowlist. | Bounded live API capture persisted XBT/USD metadata, depth with 10 asks/10 bids and per-level timestamps, and ten trades. No prediction-contract equivalence was found. |
 
 Each adapter declares every shared capability as supported or unsupported with a
@@ -640,7 +640,7 @@ Verification on this branch:
 - Frontend after Arena job submission, history, result verification, and readiness-gate UI: **39 passed across 7 files**. TypeScript typecheck, ESLint, and Prettier passed. Production build passed; Frontier chunks are 67.76 kB JavaScript and 29.81 kB CSS. Existing 503.86 kB main and 544.41 kB Chart chunks still trigger Vite's size warning.
 - Targeted Frontier Playwright: **3 passed** in 7.5 seconds with one worker and isolated temporary API/Arena/store roots. The new case opened Arena history and confirmed no replay submission occurs on page load. No source probe or Arena worker was launched.
 - After the readiness transition was implemented, the complete Frontier API test module passed **20 tests** in 8.24 seconds. A fixture completed job with a hash-valid result and runtime record produces `EVIDENCE_RECORDED`; a corrupt result produces `REVIEW_REQUIRED`; `resource_sustainability` stays `NOT_MEASURED`. The readiness scan is capped at 100 job entries and 64 KiB per manifest. This unit-test result is separate from the later supervised fixture run documented above.
-- The latest replay/API regression passed **29 tests** in 12.08 seconds across `tests/arena/test_frontier_replay.py` and `tests/frontier/test_api.py`, including rejection of malformed and out-of-bound worker measurements. The updated Mission Control Frontier component passed **7 tests**, including CPU/RSS display and the capacity-limit note. The production frontend build passed; the Frontier chunk is 68.90 kB JavaScript and 29.81 kB CSS. The existing 503.86 kB main and 544.41 kB Chart chunks still trigger Vite's bundle-size warning. TypeScript, ESLint, Prettier, and Ruff passed. `jobs.py` passed mypy; checking `apps/api/arena.py` still reports three pre-existing errors in unchanged API code, outside the added projection helper.
+- The latest replay/API regression passed **29 tests** in 12.08 seconds across `tests/arena/test_frontier_replay.py` and `tests/frontier/test_api.py`, including rejection of malformed and out-of-bound worker measurements. The updated Mission Control Frontier component passed **7 tests**, including CPU/RSS display and the capacity-limit note. The production frontend build passed; the Frontier chunk is 68.90 kB JavaScript and 29.81 kB CSS. The existing 503.86 kB main and 544.41 kB Chart chunks still trigger Vite's bundle-size warning. TypeScript, ESLint, Prettier, and Ruff passed. At this checkpoint, `jobs.py` passed mypy and `apps/api/arena.py` had three existing typing errors; later commit `2628792` fixed the optional unit-ID and sorted-path typing, and focused mypy now passes for those API/job sources.
 - The targeted Frontier browser suite passed **3 tests** in 8.5 seconds with one worker. It verifies workspace responsiveness, that Arena history does not start work on page load, and bounded/mobile graph behavior. An isolated ASGI API read of the persisted worker returned the three allowlisted metrics, and the result route returned HTTP 200 with `integrity_verified=true`; no production API process was started.
 - Ruff check and format passed for all changed Python files. Mypy passed in strict mode for the Frontier replay job module, Arena job schema, and Frontier API (3 source files). A broader import-following mypy run reports 37 errors in 8 existing Veritas/Arena/API files, including unrelated legacy errors in `apps/api/arena.py`; it reported no errors in the Frontier replay job or `apps/api/frontier.py`. `git diff --check` passed.
 - Two systemd-supervised Frontier fixture jobs completed after the ordinary host-wide Arena gate admitted them. Their paired results verify against the same pinned snapshot. The latest manifest now records process CPU/RSS, and Mission Control exposes the allowlisted measurements with a capacity-limit note. These fixture jobs do not validate a live relationship or economic opportunity; resource sustainability remains `NOT_MEASURED`.
@@ -649,6 +649,50 @@ Verification on this branch:
 Backend tests emitted one upstream Starlette/httpx TestClient deprecation
 warning. No tests modified legacy expectations to make them pass. Fixture network
 responses are distinct from the preserved genuine public capture files.
+
+### Kalshi order-fee rounding checkpoint (2026-10-27)
+
+- The new local `/api/frontier/economics/kalshi-fee-order-sensitivity` endpoint
+  accepts 1–32 manual fills for a single market, native instrument, and buy/sell
+  direction. It requires the event/series metadata pair to be present in the
+  append-only store, hash-matched to its raw captures, tied to the requested
+  recorded market, and the fill instrument to exist in that market's recorded
+  instrument list.
+- Decimal arithmetic applies the documented quadratic taker formula to each
+  fill, rounds trade fees to `$0.000001`, floors each signed balance change to
+  the selected precision grid, accumulates rounding across one order, and emits
+  rebates in precision increments capped so no fill fee is negative. Output
+  includes per-fill trade/rounding/rebate values, carry balance, order totals,
+  both documented precision cases, source observation IDs and raw hashes, and a
+  deterministic input digest. Mixed instruments, mixed order sides, unsupported
+  fee types, and over-bound order size fail closed.
+- The Mission Control market inspector now accepts and displays a bounded
+  fill sequence, records the native instrument on each fill, reports both
+  precision scenarios and per-fill fee components, and labels all inputs as
+  manual hypothetical scenarios. The existing one-fill route remains available
+  for compatibility; neither endpoint modifies candidate net economics.
+- Tests reproduce the official one-fill rounding example and an order-level
+  accumulator/rebate case, including the balance identity for both buys and
+  sells. A regression preserves the full supported 12-decimal price/quantity
+  precision in both fee sensitivities. The complete Frontier backend suite
+  passed **98 tests** in 32.93 seconds pytest time; `/usr/bin/time -v` measured
+  33.73 seconds wall, 6.38 seconds user CPU, 248,112 KiB peak RSS, zero swaps,
+  and no socket traffic. One upstream Starlette/httpx deprecation warning remains.
+- Frontend regression passed **39 tests across 7 files**; TypeScript, ESLint,
+  and Prettier passed. Production build passed; the Frontier JavaScript and CSS
+  chunks are 71.13 kB and 30.28 kB. Existing main and Chart chunks continue to
+  exceed Vite's 500 kB warning threshold. Build time was 5.66 seconds, peak RSS
+  577,964 KiB, with zero swaps and no socket traffic.
+- Targeted Frontier Playwright passed **3 tests** in 8.0 seconds with one worker,
+  isolated temporary API/database/Arena/Frontier roots, no public-source probe,
+  and no Arena launch. Component tests cover the new fill editor; E2E covers the
+  responsive workspace, replay history, and bounded relationship graph.
+- Ruff, focused mypy across the three changed Frontier/API modules, and
+  `git diff --check` passed. The complete repository Python suite was not run.
+- The saved Kalshi fee and order-book captures do not refer to the same native
+  market, and the captured book is empty. Order inputs therefore remain manual;
+  these tests and sensitivities do not validate live fills, candidate fee
+  integration, or profitability.
 
 ## 13. Performance and resource measurements
 
@@ -800,12 +844,15 @@ jurisdiction, custody, and settlement access are unmodeled. Public depth is a
 time-stamped displayed snapshot, not a fill guarantee. In this evidence set,
 cost-adjusted discrepancies and executable opportunities are therefore
 unestablished.
-The saved Kalshi fee-metadata pair supports only a standalone one-fill
-sensitivity under the July 7, 2026 public quadratic taker formula and displayed
-balance-precision cases. It is not an account fee quote, does not model
-multi-fill accumulation, rebates, FCM charges, or later schedule changes, and
-does not enter the candidate's canonical `FeeSchedule`; unknown cost treatment
-in candidate economics is preserved.
+The saved Kalshi fee-metadata pair supports a standalone one-fill sensitivity
+and a bounded manual one-order sensitivity under the July 7, 2026 public
+quadratic taker formula and both documented balance-precision cases. The order
+model handles per-fill rounding, accumulated order rounding, and capped rebates
+for up to 32 fills of one recorded instrument and side. It is not an account fee
+quote or book-priced result; maker/mixed-order fills, FCM charges, actual account
+precision, later schedule changes, and candidate fee integration remain
+unresolved. It does not enter the candidate's canonical `FeeSchedule`, and
+unknown cost treatment in candidate economics is preserved.
 
 ## 16. Unresolved defects and blockers
 
@@ -1000,8 +1047,14 @@ Implementation and documentation commits on this branch:
   through job history, and displayed them in Mission Control with an explicit
   capacity limitation.
 - `fba28dfee450f6d6fb1605f836408bccaada5158` — moved the API's finite,
-  nonnegative, range-bounded numeric checks into a typed helper; the same three
-  existing unrelated API typing errors remain.
+  nonnegative, range-bounded numeric checks into a typed helper.
+- `26287927bdda8c51a47ab4cf3e77321c2d305301` — fixed optional systemd unit-ID
+  narrowing and sorted-path typing in the Arena API. Focused import-following
+  mypy now passes for the Arena API and job module; 20 Arena API tests pass.
+- `c9e3be6990fab75c50df845d355dfac164d179b0` — added hash-matched, persisted-
+  evidence Kalshi one-order taker sensitivity with native-instrument binding,
+  exact Decimal fee/rounding outputs, bounded API and Mission Control fill
+  editor, and order-level accumulator/rebate regressions.
 
 Principal changed paths:
 
@@ -1038,13 +1091,13 @@ cross-venue economics.
 | Canonical market/instrument normalization | PARTIALLY VERIFIED | Three distinct instrument classes are represented; v2 Polymarket trades retain native outcome-token identity. Live lineage and several payoff/settlement semantics remain unverified. |
 | Relationship hypotheses, review revisions, indexed neighborhoods, and explicit same-payoff verifier | PARTIALLY VERIFIED | Self-attributed review API/UI, append-only revisions, latest-state replay, tamper/migration checks, left/right endpoint-indexed 1–3 hop scans capped at 500 rows, revision-bound centered one-hop keyset pages, stale-cursor rejection, and a 501-edge scan-bound test; no genuine equivalent pair, reviewer authentication, or multi-hop pagination. |
 | Opportunity candidate and independent economic checks | PARTIALLY VERIFIED | Two-venue all-long binary and same-market 3–16 state one-hot exhaustive coverage; economic model v4 computes an exact full/no-fill adverse exposure pattern over up to 16 legs, and independent audit v2 recomputes it from pinned inputs. Differential three-leg enumeration and unknown-fee cases pass. Controlled fixtures only; source semantics, account costs, broader funding/settlement costs, and operational feasibility remain incomplete. |
-| Kalshi taker-fee sensitivity | PARTIALLY VERIFIED | Saved, hash-matched public event/series fee evidence supports a local one-fill calculation for two documented quadratic fee types, with Decimal and rounding tests. Manual inputs are not live quotes; account-specific, multi-fill and full candidate fee integration remain unresolved. |
+| Kalshi taker-fee sensitivity | PARTIALLY VERIFIED | Hash-matched public event/series evidence supports one-fill and bounded one-order Decimal sensitivities for two documented quadratic taker fee types, both precision cases, per-fill rounding, order accumulation, and capped rebates. Tests match the official one-fill example and exercise buy/sell arithmetic. Manual inputs are not live quotes or book-priced; account-specific fees and precision, maker/mixed-order behavior, FCM charges, later schedules, and full candidate fee integration remain unresolved. |
 | Append-only evidence store and deterministic replay | COMPLETE AND VERIFIED | Schema v6, additive v2/v3/v4/v5 migration, bounds, hash validation, immutability, replay-v5 output includes full/no-fill sensitivity and identity pins effective mappings and proposal limit. The separate Arena wrapper uses immutable content-addressed snapshots and hash-verified result artifacts; two controlled fixture workers completed and the latest recorded CPU/RSS. |
 | Paired scenario comparison | PARTIALLY VERIFIED | Local deterministic comparison, atomic result persistence, API/UI, and isolated browser tests pass. Two systemd-supervised Arena jobs completed over the same controlled fixture with verified result identities; the latest worker's process CPU and peak RSS are visible in Mission Control. No genuine matched live cross-venue pair or live economic claim exists. |
 | Live market/book/trade and fee metadata through adapters/API | PARTIALLY VERIFIED | One bounded listing, book, and legacy trade response per venue is hash-pinned; Polymarket v2 pages have distinct IDs; a Kalshi event/series fee-metadata read-back and a new cursor-page response are hash-pinned. The cursor page was empty and terminal, so its live row mapping is not established. Samples are not synchronized and do not prove venue-wide coverage, fees, or execution. |
 | Source workers and broad historical data | DEFERRED | No persistent worker or long-duration collection. |
 | Laboratory/Arena research orchestration | PARTIALLY VERIFIED | Arena job kind, content-addressed snapshots, bounded offline execution, API submission/history/result verification, process CPU/RSS capture, and explicit workspace controls are implemented and tested; two fixture jobs passed the host-wide gate and completed under systemd. Laboratory campaign management and resource-sustainability evidence remain incomplete. |
-| Native Mission Control workspace | PARTIALLY VERIFIED | Local API, bounded graph/review UI, Polymarket/Kalshi trade-page controls, Kalshi fee inspection, paired-replay workbench, candidate one-sided-fill detail, and Arena job history/result display; unit tests and isolated Frontier E2E cover local fixture paths. No job was submitted by E2E, and production deployment/live browser-to-source validation are not done. |
+| Native Mission Control workspace | PARTIALLY VERIFIED | Local API, bounded graph/review UI, Polymarket/Kalshi trade-page controls, instrument-bound Kalshi one-order fee sensitivity, paired-replay workbench, candidate one-sided-fill detail, and Arena job history/result display; frontend tests and isolated Frontier E2E cover local fixture paths. Production deployment/live browser-to-source validation are not done. |
 | Production readiness/deployment | DEFERRED | Separate review and authorization required; production eligibility is false. |
 | Positive economic result | NOT ESTABLISHED | No genuine cross-venue equivalent or economically eligible result in captured evidence. |
 

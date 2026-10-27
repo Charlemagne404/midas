@@ -22,11 +22,14 @@ canonical fee cost remains unknown and unused by economics.
 Kalshi also now has a one-page ticker-filtered public trade operation with a
 cursor bound to the saved ticker and page size. Its live API page was HTTP 200,
 empty, and terminal; trade-row normalization remains fixture-verified only.
-The saved Kalshi event/series fee evidence can now drive a local, one-fill
-quadratic taker-fee sensitivity for two documented fee types and two balance
-precision cases. Manual price/size inputs are not quotes; the calculator does
-not change the unknown canonical fee schedule or candidate economics. An offline
-derived example is hash-pinned. Replay v5 includes the one-sided-fill sensitivity
+The saved Kalshi event/series fee evidence drives local one-fill and bounded
+one-order quadratic taker-fee sensitivities for two documented fee types and
+both balance-precision cases. The order calculation accepts up to 32 manual fills
+for one recorded native instrument and one buy/sell side, and models the
+documented per-fill fee rounding, order accumulator, and capped rebates. Manual
+price/size inputs are not quotes; the calculator does not change the unknown
+canonical fee schedule or candidate economics. An offline derived one-fill
+example is hash-pinned. Replay v5 includes the one-sided-fill sensitivity
 and retains effective state/instrument mappings and proposal limits in each
 replay identity. A bounded paired replay compares two named scenarios over
 identical saved inputs, with an evidence digest and atomic persistence of two
@@ -107,9 +110,16 @@ Remaining acceptance work is substantial.
 | `886e130` | Made Arena replay readiness evidence-driven, validated completed artifact/runtime linkage with a bounded scan, and tested valid and corrupt result states. |
 | `109df84` | Added bounded worker CPU/RSS capture, safe API projection, and Mission Control display; verified with two supervised fixture replays. |
 | `fba28df` | Made the API measurement projection type-safe without exposing malformed, non-finite, or out-of-range values. |
+| `2628792` | Fixed optional systemd unit-ID and sorted-path type narrowing in the Arena API; focused API/job mypy now passes. |
+| `c9e3be6` | Added saved-evidence-bound, native-instrument-bound Kalshi one-order taker fee sensitivity with order-level rounding/rebates, exact Decimal outputs, API validation, and a Mission Control fill editor. |
 
 ## Latest checkpoint verification (2026-10-27)
 
+- Kalshi order-fee sensitivity: **98 passed** across the complete `tests/frontier` suite in 32.93 seconds pytest time; `/usr/bin/time -v` measured 33.73 seconds wall, 6.38 seconds user CPU, 248,112 KiB peak RSS, zero swaps, and zero socket messages. Fee fixtures reproduce the official one-fill rounding example and an order-level accumulator/rebate case, check buy/sell balance arithmetic, preserve all supported 12-decimal price/quantity inputs, bind fills to one recorded native instrument, and reject mixed instruments/sides and out-of-bound orders. One upstream Starlette/httpx deprecation warning remains.
+- Frontend: **39 passed across 7 files**. TypeScript, ESLint, and Prettier passed. The production build passed with a 71.13 kB Frontier JavaScript chunk and 30.28 kB Frontier CSS; the existing 503.86 kB main and 544.41 kB Chart chunks still trigger Vite's warning. `/usr/bin/time -v` measured 5.66 seconds wall and 577,964 KiB peak RSS, with zero swaps and zero socket messages.
+- Targeted Frontier Playwright: **3 passed** in 8.0 seconds with one worker and isolated temporary API/database/Arena/Frontier roots. The suite made no source-probe request and launched no Arena work. The new multi-fill fee form is covered by the component test; Playwright exercised the existing responsive workspace, replay history, and bounded relationship graph.
+- Ruff check/format, focused import-following mypy for `apps/api/frontier.py`, `packages/midas/frontier/economics.py`, and `packages/midas/frontier/models.py`, and `git diff --check` passed. The full repository Python suite was not run.
+- The October 26 Kalshi book capture is empty and names a different market from the October 27 fee-metadata capture. Therefore the multi-fill calculation is intentionally manual and was not represented as a book-priced or live fee result; account balance precision, maker/mixed-fill charges, FCM charges, later schedule changes, and candidate fee integration remain unresolved.
 - One-sided fill stress and replay-v5 backend regression: **97 passed** across
   `tests/frontier`, adapter contract integration, and the offline API workflow.
   Pytest took 20.53 seconds; `/usr/bin/time -v` measured 21.36 seconds wall,
@@ -380,13 +390,14 @@ Reproduction commands and environment boundaries are in
   Frontier browser suite passed **3 tests** in 8.5 seconds using one worker.
 - Worker-profile regression coverage confirms Linux/macOS RSS unit conversion,
   nonnegative CPU deltas, safe filtering of malformed/out-of-range API values,
-  and rendering with an explicit sustainability limit. `jobs.py` passes mypy;
-  checking `apps/api/arena.py` still reports three existing unrelated typing
-  errors in unchanged API code.
-- Ruff check/format and strict mypy for the three Frontier/Arena source files
-  passed. Import-following mypy reports 37 issues in eight existing
-  Veritas/Arena/API files and none in the new replay worker or Frontier API. The
-  full repository suite was not run.
+  and rendering with an explicit sustainability limit. `jobs.py` passed mypy at
+  this checkpoint; the API typing follow-up is recorded below.
+- At that earlier worker-profile checkpoint, checking `apps/api/arena.py`
+  reported three pre-existing type errors. Commit `2628792` subsequently fixed
+  the optional unit-ID and sorted-path typing; focused mypy now passes for the
+  API and Arena job modules. The broader import-following run still reports 37
+  issues across eight existing Veritas/Arena/API files. The full repository
+  suite was not run.
 - A previous broader E2E run recorded `resource_admission_lock_busy`; that lock
   was not bypassed. The later worker was admitted only after a read-only
   preflight and normal gate check. Its controlled fixture validates supervisor
@@ -414,7 +425,7 @@ same-input runs do not change the resource sustainability gate.
 | Paired scenario comparison | PARTIALLY VERIFIED | Direct local comparison and API/UI/browser tests pass. Two actual systemd-supervised fixture replays completed over the same pinned inputs and their result hashes verify. The latest run measured worker process CPU/RSS and exposes it in Mission Control. No genuine equivalent live market pair exists. |
 | Frontier API and source configuration | COMPLETE AND VERIFIED | Local reads include hash-verified legacy and cursor-page batches. Polymarket and Kalshi page routes are capability/config/recorded-market gated, bounded to one page and retries, and bind cursors to market and size. Polymarket two-page and Kalshi empty-terminal-page persistence/read-back are tested. Kalshi live trade-row mapping remains fixture-only. |
 | Live adapter-to-API listing, book, and trade persistence | PARTIALLY VERIFIED | Three genuine venue captures, Polymarket v2 first/continuation pages with distinct IDs, and one Kalshi empty cursor page have hash-pinned temporary-store evidence. Samples are sequential and do not establish synchronization, depth, complete histories, or execution. |
-| Mission Control Frontier workspace | IMPLEMENTED, LIVE VALIDATION PENDING | Native view includes Polymarket/Kalshi trade-page controls, fee inspection, graph/review, paired-replay workbench, one-sided fill stress, and Arena job history/result/resource detail; unit and targeted E2E cover isolated local data. It is not deployed; no live browser source request or Arena job submission occurred in E2E. |
+| Mission Control Frontier workspace | IMPLEMENTED, LIVE VALIDATION PENDING | Native view includes Polymarket/Kalshi trade-page controls, graph/review, paired replay, one-sided fill stress, instrument-bound Kalshi order-fee sensitivity, and Arena job history/result/resource detail. Unit tests, full frontend regression, production build, and targeted E2E cover isolated local data. It is not deployed; no live browser source request or Arena job submission occurred in E2E. |
 | Laboratory/Arena research orchestration | PARTIALLY VERIFIED | Bounded Frontier Arena job type, snapshot, offline executor, API, worker CPU/RSS capture, and workspace history/result view are implemented and tested; two fixture jobs passed the host gate and completed under systemd. Resource sustainability and Laboratory campaign management remain incomplete. |
 | Persistent source collection, streaming and broad historical replay | DEFERRED | No background worker or long-duration campaign. |
 | Cross-venue FX, comprehensive capital and settlement costs | DEFERRED | Unknown costs remain unknown and block decisive net economics. |

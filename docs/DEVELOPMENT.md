@@ -143,7 +143,17 @@ balance-precision scenarios. The response is hashed and hypothetical, not an
 account quotation, not a quote from a saved public book, and not applied to
 candidate net economics. Unsupported fee types, malformed inputs and mismatched
 evidence fail closed. Multi-fill rounding accumulation, rebates, FCM charges and
-later fee schedule changes remain outside this model.
+later fee schedule changes remain outside the one-fill model. The separate
+`POST /api/frontier/economics/kalshi-fee-order-sensitivity` route accepts 1–32
+manual fills, each carrying its native instrument ID, and requires all fills to
+use the same instrument and buy/sell side. It verifies that instrument against
+the recorded market and then models per-fill microdollar rounding, order-level
+rounding accumulation, and capped rebates under both balance-precision cases.
+The order response includes per-fill and aggregate totals with a deterministic
+digest. Inputs remain manual, hypothetical, and outside candidate economics;
+account precision, maker/mixed orders, FCM charges, and later schedule changes
+remain unknown. Neither fee sensitivity binds manual prices to an empty or
+different-market public book.
 The Kalshi trade-page route follows the same saved-market and source-configuration
 gates, persists one raw and normalized page per click, and returns no next cursor
 when Kalshi's response cursor is empty. It does not start a history crawl.

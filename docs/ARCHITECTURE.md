@@ -154,8 +154,13 @@ Kalshi exposes a separate fee-metadata capture for one already-recorded market.
 It makes one public event request with child markets excluded and one public
 series request, then stores both raw responses against the native event override
 and series fee parameters. This is inspection evidence only: Frontier leaves the
-market fee schedule unknown until maker/taker rules, fee changes, and account
-rounding are modeled.
+canonical market fee schedule unknown because account precision, maker/mixed-order
+behavior, FCM charges, scheduled changes, and full candidate fee applicability
+remain unresolved. Local manual one-fill and bounded one-order sensitivities now
+apply the documented quadratic taker formula, per-fill rounding, and order-level
+rounding/rebate rules for both published balance-precision cases. They remain
+separate from candidate economics and require a recorded native instrument; manual
+prices are not represented as public quotes or captured fills.
 When a bounded probe receives a decoded 2xx response that fails normalization,
 the raw body and typed source-failure diagnostic are stored and the API returns
 the observation ID. Complete within-cap invalid JSON and non-2xx bodies are also

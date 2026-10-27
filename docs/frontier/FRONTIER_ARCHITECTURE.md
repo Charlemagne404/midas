@@ -15,12 +15,12 @@ as mutable Frontier storage.
 | Public venue adapters | `adapters/polymarket.py`, `kalshi.py`, `kraken.py` | Source-specific normalization and native metadata preservation. |
 | Registry | `registry.py` | Explicit capability inventory; default instances do not probe. |
 | Relationship intelligence | `relationships.py` | Deterministic indexed hypotheses, strict payoff checks, and immutable review contracts. |
-| Candidate calculators | `economics.py` | Decimal cross-venue binary and same-market exhaustive multi-outcome all-long checks with fee, depth, freshness, timing, and scenario bounds; exact bounded one-sided fill sensitivity; separate Kalshi one-fill fee sensitivity. |
+| Candidate calculators | `economics.py` | Decimal cross-venue binary and same-market exhaustive multi-outcome all-long checks with fee, depth, freshness, timing, and scenario bounds; exact bounded one-sided fill sensitivity; separate Kalshi one-fill and instrument-bound one-order fee sensitivities. |
 | Independent arithmetic audit | `independent_audit.py` | Separately recomputes supported candidate identities, payoff vectors, pinned quotes/depth, fees, costs, terminal P&L, fill-pattern sensitivity, and classification from replay inputs. |
 | Durable evidence | `storage.py` | Append-only, size- and row-bounded SQLite observations, markets, relationship reviews/revisions, runs, and paired comparisons. |
 | Replay | `replay.py` | Stable input ordering, scenario/mapping/proposal-limit-aware replay identities, deterministic results, and paired assumption comparisons. |
 | Arena paired replay | `packages/midas/arena/frontier_replay.py`, `arena/jobs.py` | Immutable content-addressed input snapshots, a bounded offline paired-replay worker, and hash-verified result artifacts under Arena's existing admission gate. |
-| HTTP API | `apps/api/frontier.py` | Bounded local queries and graph neighborhoods, relationship proposals/reviews, deterministic and paired replay, config-gated public capture, and evidence-bound Kalshi fee sensitivity. |
+| HTTP API | `apps/api/frontier.py` | Bounded local queries and graph neighborhoods, relationship proposals/reviews, deterministic and paired replay, config-gated public capture, and hash-bound Kalshi fee sensitivities. |
 | Mission Control workspace | `apps/web/src/Frontier.tsx` | Sources, markets/books, relationship hypotheses, candidates, economic workbench, local comparisons, bounded Arena replay history/results, and readiness. |
 
 ## Adapter capability contract
@@ -39,19 +39,23 @@ request excludes child markets to keep this metadata call bounded. This capabili
 does not populate `FeeSchedule`; native parameters remain stored with both raw
 response hashes while candidate net economics remains unresolved.
 
-The local `POST /api/frontier/economics/kalshi-fee-sensitivity` workbench calculation
-uses only saved event/series evidence and manual price/quantity scenario inputs. It
-supports the documented quadratic taker formula for `quadratic` and the captured
-`quadratic_with_combo_maker_fees` type, and fails closed for other fee types. It
-calculates a one-fill model fee rounded to a microdollar, then displays total debit
-and fee under both documented balance quanta: `$0.0001` for a direct member and
-`$0.01` for a non-direct member. Metadata IDs, raw hashes, received times, model
-version, assumptions and a calculation digest accompany the result. This is a
-standalone sensitivity, not an account quote and not an input to candidate net
-economics; it omits multi-fill accumulation, rebates, FCM charges and later schedule
-changes. The manually entered price is not represented as a public quote.
+The local `POST /api/frontier/economics/kalshi-fee-sensitivity` endpoint retains
+the saved-evidence-bound one-fill calculation. The
+`POST /api/frontier/economics/kalshi-fee-order-sensitivity` endpoint accepts one
+to 32 manual fills for one recorded native instrument and one buy/sell direction.
+Both use only stored event/series evidence, support documented quadratic taker
+fee types, and fail closed for unsupported types. The order calculation applies
+per-fill microdollar trade-fee rounding, signed balance-grid alignment, an
+order-level rounding accumulator, and capped precision-aligned rebates. Both
+return scenarios for the documented balance quanta: `$0.0001` for a direct member
+and `$0.01` for a non-direct member. Metadata IDs, raw hashes, received times,
+model version, assumptions, per-fill outputs, and a calculation digest accompany
+the order result. Inputs are manual and are not public quotes or captured fills.
+These are standalone sensitivities, not account quotes and not inputs to candidate
+net economics; actual account precision, maker/mixed-order behavior, FCM charges,
+and later schedule changes remain unresolved.
 
-An offline derivation from the saved October 27 metadata capture produced a `$0.0175`
+An offline one-fill derivation from the saved October 27 metadata capture produced a `$0.0175`
 direct-member and `$0.02` non-direct-member fee scenario for one contract at a
 manually supplied `$0.50`. Its input and output hashes are preserved in
 `data/frontier/live-probes/2026-10-27-kalshi-fee-sensitivity.json`; it is not live
@@ -156,9 +160,10 @@ exponent 1; explicit disabled fees map to zero, while other shapes remain
 unknown. The normalized fee fields are hashed and expire five minutes after
 receipt. One October 26 public market listing verified a zero-rate schedule;
 that observation is not generalized to other markets. Kalshi fee applicability
-has an explicit public metadata resolver. A separate, evidence-bound one-fill
-quadratic taker sensitivity exists for two documented fee types, but it does not
-convert to an account fee or feed candidate economics. Kraken's public pair feed
+has an explicit public metadata resolver. Separate evidence-bound one-fill and
+one-order quadratic taker sensitivities cover two documented fee types, with
+order-level rounding accumulation and capped rebates. They do not convert to an
+account fee or feed candidate economics. Kraken's public pair feed
 does not expose an account's applied tier; Frontier does not call the authenticated
 account-volume API. Unknown venue costs remain unknown.
 
