@@ -26,6 +26,7 @@ def fee_metadata(*, fee_type: str = "quadratic", multiplier: str = "1") -> Kalsh
         series_fee_multiplier=Decimal(multiplier),
         effective_fee_type=fee_type,
         effective_fee_multiplier=Decimal(multiplier),
+        fee_resolution_state="series_inherited",
         event_fee_type_override_field_present=False,
         event_fee_multiplier_override_field_present=False,
         event_raw_sha256="a" * 64,
@@ -60,6 +61,8 @@ def test_taker_fee_sensitivity_preserves_public_override_and_account_precision_c
     }
     result = estimate_kalshi_taker_fee_sensitivity(metadata, **inputs)
 
+    assert result.schema_version == 2
+    assert result.model_version.endswith("-v2")
     assert result.effective_fee_multiplier == Decimal(3)
     assert result.position_cost_usd == Decimal("0.5")
     assert [item.account_precision_class for item in result.scenarios] == [
@@ -127,6 +130,8 @@ def test_order_fee_sensitivity_accumulates_rounding_and_caps_rebates_per_fill():
         order_fills=fills,
     )
 
+    assert result.schema_version == 2
+    assert result.model_version.endswith("-v2")
     direct, non_direct = result.scenarios
     assert [fill.rounding_fee_usd for fill in non_direct.fills] == [
         Decimal("0.006052"),
@@ -249,6 +254,46 @@ def test_supported_quadratic_maker_variants_keep_taker_formula(fee_type: str):
 
     assert result.effective_fee_type == fee_type
     assert result.scenarios[0].trade_fee_rounded_to_microdollar == Decimal("0.0175")
+
+
+@pytest.mark.parametrize(
+    "fee_resolution_state",
+    ("partial_override", "override_unreported"),
+)
+def test_taker_sensitivities_reject_incomplete_event_fee_resolution(fee_resolution_state: str):
+    metadata = fee_metadata().model_copy(update={"fee_resolution_state": fee_resolution_state})
+    evidence = {"event_observation_id": "c" * 64, "series_observation_id": "d" * 64}
+    with pytest.raises(ValueError, match="override is partial or unreported"):
+        estimate_kalshi_taker_fee_sensitivity(
+            metadata,
+            **evidence,
+            price_usd=Decimal("0.5"),
+            quantity_contracts=Decimal("1"),
+        )
+    with pytest.raises(ValueError, match="override is partial or unreported"):
+        estimate_kalshi_taker_order_fee_sensitivity(
+            metadata,
+            **evidence,
+            order_fills=(order_fill(),),
+        )
+
+
+def test_legacy_fee_metadata_defaults_to_unreported_and_cannot_be_estimated():
+    stored = fee_metadata().model_dump(mode="json")
+    stored["schema_version"] = 1
+    stored.pop("fee_resolution_state")
+    legacy = KalshiFeeMetadata.model_validate(stored)
+
+    assert legacy.schema_version == 1
+    assert legacy.fee_resolution_state == "override_unreported"
+    with pytest.raises(ValueError, match="override is partial or unreported"):
+        estimate_kalshi_taker_fee_sensitivity(
+            legacy,
+            event_observation_id="c" * 64,
+            series_observation_id="d" * 64,
+            price_usd=Decimal("0.5"),
+            quantity_contracts=Decimal("1"),
+        )
 
 
 @pytest.mark.parametrize(

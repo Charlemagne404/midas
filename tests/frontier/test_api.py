@@ -1020,6 +1020,7 @@ def test_kalshi_fee_metadata_probe_persists_event_and_series_evidence(tmp_path):
         assert result["metadata"]["effective_fee_type"] == "quadratic"
         assert result["metadata"]["series_fee_multiplier"] == "1"
         assert result["metadata"]["effective_fee_multiplier"] == "3"
+        assert result["metadata"]["fee_resolution_state"] == "event_override"
         assert result["metadata"]["economics_state"] == "unresolved"
         assert result["fee_cost_modeled"] is False
         assert result["request_count_delta"] == 2
@@ -1054,6 +1055,7 @@ def test_kalshi_fee_metadata_probe_persists_event_and_series_evidence(tmp_path):
         assert sensitivity_result["hypothetical_only"] is True
         assert sensitivity_result["candidate_net_economics_modified"] is False
         assert sensitivity_result["estimate"]["effective_fee_multiplier"] == "3"
+        assert sensitivity_result["estimate"]["fee_resolution_state"] == "event_override"
         assert [
             row["total_modeled_fee"] for row in sensitivity_result["estimate"]["scenarios"]
         ] == ["0.0525", "0.06"]

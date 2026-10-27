@@ -857,6 +857,7 @@ it('captures Kalshi fee metadata and exposes a separate hypothetical fee sensiti
             series_fee_multiplier: '1',
             effective_fee_type: 'quadratic',
             effective_fee_multiplier: '1',
+            fee_resolution_state: 'series_inherited',
             economics_state: 'unresolved',
             limitations: ['Account rounding remains unknown.'],
           },
@@ -880,10 +881,11 @@ it('captures Kalshi fee metadata and exposes a separate hypothetical fee sensiti
           candidate_net_economics_modified: false,
           note: 'Local one-order sensitivity only.',
           estimate: {
-            model_version: 'kalshi-event-taker-order-fee-sensitivity-2026-07-07-v1',
+            model_version: 'kalshi-event-taker-order-fee-sensitivity-2026-07-07-v2',
             series_ticker: 'KX-FEE-SERIES',
             effective_fee_type: 'quadratic',
             effective_fee_multiplier: '1',
+            fee_resolution_state: 'series_inherited',
             order_fills: [
               {
                 native_instrument_id: 'KX-FEE-1:YES',

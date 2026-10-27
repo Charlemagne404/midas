@@ -360,7 +360,7 @@ class FeeSchedule(FrontierModel):
 class KalshiFeeMetadata(FrontierModel):
     """Public native Kalshi fee parameters; deliberately not an account fee quote."""
 
-    schema_version: Literal[1] = 1
+    schema_version: Literal[1, 2] = 2
     adapter_version: str
     native_market_id: str = Field(min_length=1, max_length=256)
     native_event_id: str = Field(min_length=1, max_length=256)
@@ -371,6 +371,9 @@ class KalshiFeeMetadata(FrontierModel):
     series_fee_multiplier: Nonnegative
     effective_fee_type: str = Field(min_length=1, max_length=80)
     effective_fee_multiplier: Nonnegative
+    fee_resolution_state: Literal[
+        "event_override", "series_inherited", "partial_override", "override_unreported"
+    ] = "override_unreported"
     event_fee_type_override_field_present: bool
     event_fee_multiplier_override_field_present: bool
     event_raw_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
@@ -382,6 +385,7 @@ class KalshiFeeMetadata(FrontierModel):
     economics_state: Literal["unresolved"] = "unresolved"
     limitations: tuple[str, ...] = (
         "A bounded manual one-order quadratic taker-fee sensitivity is implemented; unsupported fee types fail closed and candidate costs remain unresolved.",
+        "Fee sensitivity requires both event override fields to be complete or explicitly cleared; missing or partial override metadata is unresolved.",
         "Maker fees and schedule changes outside the dated public formula are not modeled.",
         "Account balance precision is not identified; both documented balance precision cases are shown.",
         "Maker/taker mixed orders, account-specific adjustments, and FCM-specific charges remain unresolved.",
@@ -408,13 +412,14 @@ class KalshiFeeRoundingScenario(FrontierModel):
 class KalshiTakerFeeSensitivity(FrontierModel):
     """One-fill public-schedule sensitivity; not a user-account fee quotation."""
 
-    schema_version: Literal[1] = 1
-    model_version: str = "kalshi-event-taker-fee-sensitivity-2026-07-07-v1"
+    schema_version: Literal[2] = 2
+    model_version: str = "kalshi-event-taker-fee-sensitivity-2026-07-07-v2"
     native_market_id: str = Field(min_length=1, max_length=256)
     native_event_id: str = Field(min_length=1, max_length=256)
     series_ticker: str = Field(min_length=1, max_length=256)
     effective_fee_type: str = Field(min_length=1, max_length=80)
     effective_fee_multiplier: Nonnegative
+    fee_resolution_state: Literal["event_override", "series_inherited"]
     input_observation_ids: tuple[str, str]
     input_raw_sha256: tuple[str, str]
     input_received_at_utc: tuple[datetime, datetime]
@@ -498,13 +503,14 @@ class KalshiFeeOrderPrecisionScenario(FrontierModel):
 class KalshiFeeOrderSensitivity(FrontierModel):
     """One-order, multi-fill taker sensitivity; not an account fee quotation."""
 
-    schema_version: Literal[1] = 1
-    model_version: str = "kalshi-event-taker-order-fee-sensitivity-2026-07-07-v1"
+    schema_version: Literal[2] = 2
+    model_version: str = "kalshi-event-taker-order-fee-sensitivity-2026-07-07-v2"
     native_market_id: str = Field(min_length=1, max_length=256)
     native_event_id: str = Field(min_length=1, max_length=256)
     series_ticker: str = Field(min_length=1, max_length=256)
     effective_fee_type: str = Field(min_length=1, max_length=80)
     effective_fee_multiplier: Nonnegative
+    fee_resolution_state: Literal["event_override", "series_inherited"]
     input_observation_ids: tuple[str, str]
     input_raw_sha256: tuple[str, str]
     input_received_at_utc: tuple[datetime, datetime]

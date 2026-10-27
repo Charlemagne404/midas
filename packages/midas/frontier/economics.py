@@ -419,6 +419,13 @@ def estimate_kalshi_taker_fee_sensitivity(
     The returned values are sensitivities from a dated public fee schedule, not an
     account fee quote. They exclude multi-fill order accumulation and any FCM fee.
     """
+    if (
+        metadata.fee_resolution_state != "event_override"
+        and metadata.fee_resolution_state != "series_inherited"
+    ):
+        raise ValueError(
+            "Kalshi event fee override is partial or unreported; fee sensitivity is unresolved"
+        )
     if metadata.effective_fee_type not in _KALSHI_TAKER_FEE_TYPES:
         raise ValueError("Only documented quadratic Kalshi event taker fees are supported")
     if not D(0) < price_usd < D(1):
@@ -463,7 +470,7 @@ def estimate_kalshi_taker_fee_sensitivity(
             )
         )
     input_doc = {
-        "model_version": "kalshi-event-taker-fee-sensitivity-2026-07-07-v1",
+        "model_version": "kalshi-event-taker-fee-sensitivity-2026-07-07-v2",
         "metadata": metadata.model_dump(mode="json"),
         "event_observation_id": event_observation_id,
         "series_observation_id": series_observation_id,
@@ -479,6 +486,7 @@ def estimate_kalshi_taker_fee_sensitivity(
         series_ticker=metadata.series_ticker,
         effective_fee_type=metadata.effective_fee_type,
         effective_fee_multiplier=metadata.effective_fee_multiplier,
+        fee_resolution_state=metadata.fee_resolution_state,
         input_observation_ids=(event_observation_id, series_observation_id),
         input_raw_sha256=(metadata.event_raw_sha256, metadata.series_raw_sha256),
         input_received_at_utc=(metadata.event_received_at_utc, metadata.series_received_at_utc),
@@ -507,6 +515,13 @@ def estimate_kalshi_taker_order_fee_sensitivity(
     order_fills: tuple[KalshiFeeOrderFillInput, ...],
 ) -> KalshiFeeOrderSensitivity:
     """Apply documented per-fill rounding and order-level rebates to one hypothetical order."""
+    if (
+        metadata.fee_resolution_state != "event_override"
+        and metadata.fee_resolution_state != "series_inherited"
+    ):
+        raise ValueError(
+            "Kalshi event fee override is partial or unreported; fee sensitivity is unresolved"
+        )
     if metadata.effective_fee_type not in _KALSHI_TAKER_FEE_TYPES:
         raise ValueError("Only documented quadratic Kalshi event taker fees are supported")
     if not order_fills or len(order_fills) > 32:
@@ -612,7 +627,7 @@ def estimate_kalshi_taker_order_fee_sensitivity(
         )
 
     input_doc = {
-        "model_version": "kalshi-event-taker-order-fee-sensitivity-2026-07-07-v1",
+        "model_version": "kalshi-event-taker-order-fee-sensitivity-2026-07-07-v2",
         "metadata": metadata.model_dump(mode="json"),
         "event_observation_id": event_observation_id,
         "series_observation_id": series_observation_id,
@@ -627,6 +642,7 @@ def estimate_kalshi_taker_order_fee_sensitivity(
         series_ticker=metadata.series_ticker,
         effective_fee_type=metadata.effective_fee_type,
         effective_fee_multiplier=metadata.effective_fee_multiplier,
+        fee_resolution_state=metadata.fee_resolution_state,
         input_observation_ids=(event_observation_id, series_observation_id),
         input_raw_sha256=(metadata.event_raw_sha256, metadata.series_raw_sha256),
         input_received_at_utc=(metadata.event_received_at_utc, metadata.series_received_at_utc),

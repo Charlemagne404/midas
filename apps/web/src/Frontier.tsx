@@ -270,6 +270,8 @@ type KalshiFeeMetadataCaptureResult = {
     series_fee_multiplier: string;
     effective_fee_type: string;
     effective_fee_multiplier: string;
+    fee_resolution_state:
+      'event_override' | 'series_inherited' | 'partial_override' | 'override_unreported';
     economics_state: 'unresolved';
     limitations: string[];
   };
@@ -303,6 +305,7 @@ type KalshiFeeOrderSensitivityResponse = {
     series_ticker: string;
     effective_fee_type: string;
     effective_fee_multiplier: string;
+    fee_resolution_state: 'event_override' | 'series_inherited';
     input_received_at_utc: [string, string];
     order_fills: {
       native_instrument_id: string;
@@ -2752,6 +2755,9 @@ function MarketDetails({
     feeMetadataProbe.isSuccess && feeMetadataProbe.variables?.marketId === market.canonical_id
       ? feeMetadataProbe.data
       : null;
+  const feeMetadataResolved =
+    capturedFeeMetadata?.metadata.fee_resolution_state === 'event_override' ||
+    capturedFeeMetadata?.metadata.fee_resolution_state === 'series_inherited';
   const capturedEventMarkets =
     eventMarketsProbe.isSuccess && eventMarketsProbe.variables?.marketId === market.canonical_id
       ? eventMarketsProbe.data
@@ -3054,6 +3060,10 @@ function MarketDetails({
                   {feeMetadataProbe.data.metadata.effective_fee_multiplier}
                 </strong>
                 <small>
+                  Override status:{' '}
+                  {feeMetadataProbe.data.metadata.fee_resolution_state.replaceAll('_', ' ')}
+                </small>
+                <small>
                   Series {feeMetadataProbe.data.metadata.series_ticker} · not added to candidate
                   economics · {feeMetadataProbe.data.observation_ids.length} immutable evidence
                   records
@@ -3079,6 +3089,12 @@ function MarketDetails({
                     One-order taker scenario. Fill inputs are manual, share one buy or sell side,
                     and are not read from the stored order book.
                   </small>
+                  {!feeMetadataResolved && (
+                    <small className="fr-fee-sensitivity-guidance">
+                      Fee sensitivity is unavailable until both event override fields are complete
+                      or explicitly cleared.
+                    </small>
+                  )}
                   {feeFills.map((fill, index) => (
                     <div className="fr-fee-order-fill" key={index}>
                       <strong>Fill {index + 1}</strong>
@@ -3201,6 +3217,7 @@ function MarketDetails({
                       className="fr-inspect-button"
                       disabled={
                         !capturedFeeMetadata ||
+                        !feeMetadataResolved ||
                         feeSensitivity.isPending ||
                         !market.instruments.some(
                           (instrument) =>
@@ -3225,7 +3242,11 @@ function MarketDetails({
                         });
                       }}
                     >
-                      {feeSensitivity.isPending ? 'Calculating…' : 'Calculate order fee'}
+                      {feeSensitivity.isPending
+                        ? 'Calculating…'
+                        : feeMetadataResolved
+                          ? 'Calculate order fee'
+                          : 'Fee override unresolved'}
                     </button>
                   </div>
                 </div>
@@ -3244,6 +3265,10 @@ function MarketDetails({
                         Fee metadata received: event{' '}
                         {time(feeSensitivity.data.estimate.input_received_at_utc[0])} · series{' '}
                         {time(feeSensitivity.data.estimate.input_received_at_utc[1])}
+                      </small>
+                      <small>
+                        Override status:{' '}
+                        {feeSensitivity.data.estimate.fee_resolution_state.replaceAll('_', ' ')}
                       </small>
                       {feeSensitivity.data.estimate.scenarios.map((scenario) => (
                         <div

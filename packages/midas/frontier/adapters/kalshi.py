@@ -44,7 +44,7 @@ from midas.frontier.models import (
 )
 
 D = Decimal
-ADAPTER_VERSION = "frontier-kalshi-14"
+ADAPTER_VERSION = "frontier-kalshi-15"
 _TICKER_PATTERN = re.compile(r"[A-Za-z0-9_-]{1,256}\Z")
 BASE = "https://external-api.kalshi.com/trade-api/v2"
 MARKET_DATA_DOC = "https://docs.kalshi.com/getting_started/quick_start_market_data"
@@ -119,8 +119,8 @@ class KalshiAdapter(BaseReadOnlyAdapter):
                 None,
             ),
             Capability.FEE_METADATA: (
-                "Public event overrides and series fee type/multiplier are normalized and captured; exact account fees remain unresolved",
-                EVENT_DOC,
+                "Public event overrides and series fee type/multiplier are normalized with explicit override completeness; exact account fees remain unresolved",
+                "https://docs.kalshi.com/api-reference/events/get-event-fee-changes",
             ),
         },
         {
@@ -694,6 +694,24 @@ class KalshiAdapter(BaseReadOnlyAdapter):
 
         event_fee_type = _optional_bounded_text(event, "fee_type_override", max_length=80)
         event_multiplier = _optional_multiplier(event, "fee_multiplier_override")
+        type_override_present = "fee_type_override" in event
+        multiplier_override_present = "fee_multiplier_override" in event
+        fee_resolution_state: Literal[
+            "event_override", "series_inherited", "partial_override", "override_unreported"
+        ]
+        if event_fee_type is not None and event_multiplier is not None:
+            fee_resolution_state = "event_override"
+        elif (
+            type_override_present
+            and multiplier_override_present
+            and event_fee_type is None
+            and event_multiplier is None
+        ):
+            fee_resolution_state = "series_inherited"
+        elif event_fee_type is not None or event_multiplier is not None:
+            fee_resolution_state = "partial_override"
+        else:
+            fee_resolution_state = "override_unreported"
         series_response = await self.transport.get_json(
             f"{BASE}/series/{quote(series_ticker, safe='')}"
         )
@@ -720,8 +738,9 @@ class KalshiAdapter(BaseReadOnlyAdapter):
             effective_fee_multiplier=(
                 event_multiplier if event_multiplier is not None else series_multiplier
             ),
-            event_fee_type_override_field_present="fee_type_override" in event,
-            event_fee_multiplier_override_field_present="fee_multiplier_override" in event,
+            fee_resolution_state=fee_resolution_state,
+            event_fee_type_override_field_present=type_override_present,
+            event_fee_multiplier_override_field_present=multiplier_override_present,
             event_raw_sha256=event_capture.raw_sha256,
             series_raw_sha256=series_capture.raw_sha256,
             event_received_at_utc=event_capture.received_at_utc,

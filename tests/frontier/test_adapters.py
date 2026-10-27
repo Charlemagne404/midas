@@ -1072,10 +1072,12 @@ async def test_kalshi_fee_metadata_applies_public_event_overrides_but_stays_non_
     assert evidence.series_fee_multiplier == Decimal(1)
     assert evidence.event_fee_multiplier_override == Decimal(2)
     assert evidence.effective_fee_multiplier == Decimal(2)
+    assert evidence.fee_resolution_state == "event_override"
     assert evidence.event_raw_sha256 == captures[0].raw_sha256
     assert evidence.series_raw_sha256 == captures[1].raw_sha256
     assert evidence.economics_state == "unresolved"
-    assert len(evidence.limitations) == 4
+    assert len(evidence.limitations) == 5
+    assert any("both event override fields" in item for item in evidence.limitations)
     assert any("unsupported fee types fail closed" in item for item in evidence.limitations)
     assert any("manual one-order" in item for item in evidence.limitations)
     assert any("Maker/taker mixed orders" in item for item in evidence.limitations)
@@ -1132,6 +1134,7 @@ async def test_kalshi_fee_metadata_inherits_series_and_rejects_bad_source_identi
     assert evidence.event_fee_multiplier_override is None
     assert evidence.effective_fee_type == "quadratic"
     assert evidence.effective_fee_multiplier == Decimal(0)
+    assert evidence.fee_resolution_state == "series_inherited"
     assert evidence.event_fee_type_override_field_present is True
     assert evidence.event_fee_multiplier_override_field_present is True
 
@@ -1162,6 +1165,56 @@ async def test_kalshi_fee_metadata_inherits_series_and_rejects_bad_source_identi
         assert len(wrong_identity_adapter.take_captures()) == 2
     finally:
         await wrong_client.aclose()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("override_fields", "expected_state"),
+    [
+        ({}, "override_unreported"),
+        ({"fee_type_override": "quadratic"}, "partial_override"),
+        ({"fee_multiplier_override": 2}, "partial_override"),
+        ({"fee_type_override": "quadratic", "fee_multiplier_override": None}, "partial_override"),
+    ],
+)
+async def test_kalshi_fee_metadata_marks_incomplete_event_override(
+    override_fields: dict[str, object], expected_state: str
+):
+    from tests.frontier.builders import market as market_fixture
+
+    source_market = market_fixture(Venue.KALSHI, "KX-FRONTIER-FEE-UNCLEAR")
+    event = {
+        "event_ticker": source_market.native_event_id,
+        "series_ticker": "KX-FRONTIER-SERIES",
+        **override_fields,
+    }
+    transport, _, client = _transport(
+        "external-api.kalshi.com",
+        {
+            f"/events/{source_market.native_event_id}": json.dumps({"event": event}),
+            "/series/KX-FRONTIER-SERIES": json.dumps(
+                {
+                    "series": {
+                        "ticker": "KX-FRONTIER-SERIES",
+                        "fee_type": "quadratic",
+                        "fee_multiplier": 1,
+                    }
+                }
+            ),
+        },
+    )
+    adapter = KalshiAdapter(
+        AdapterConfig(
+            enabled=True, live_public_probe_enabled=True, requests_per_second=5, retries=0
+        ),
+        transport=transport,
+    )
+    try:
+        metadata = await adapter.fetch_fee_metadata(source_market)
+        assert metadata.fee_resolution_state == expected_state
+        assert len(adapter.take_captures()) == 2
+    finally:
+        await client.aclose()
 
 
 @pytest.mark.asyncio
