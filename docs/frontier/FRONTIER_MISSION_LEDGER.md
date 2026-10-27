@@ -43,6 +43,9 @@ market inspector displays these identifiers with the explicit unresolved
 payoff/rules boundary. A preserved 17-component MVE listing was replayed
 offline through the API and store. Its primary rules were empty and secondary
 text was only a general disclaimer, so its combo economics remain unsupported.
+The independent cross-venue audit now classifies malformed two-leg candidates
+that repeat one market as incomplete evidence instead of raising an uncaught
+exception.
 Frontier paired replay is also registered as a bounded Arena job over
 content-addressed local snapshots, with API submission, history/result reads,
 and an explicit Mission Control action. Two controlled fixture jobs passed the
@@ -120,9 +123,19 @@ Remaining acceptance work is substantial.
 | `c9e3be6` | Added saved-evidence-bound, native-instrument-bound Kalshi one-order taker fee sensitivity with order-level rounding/rebates, exact Decimal outputs, API validation, and a Mission Control fill editor. |
 | `a087cb2` | Added API-boundary coverage for partial Kalshi event/series failure, raw evidence immutability, degraded health, and subsequent recovery. |
 | `b84dac2` | Normalized bounded Kalshi MVE selected component identifiers and sides, persisted the captured response through the API/store path, displayed components in Mission Control, and added malformed-input, persistence, component, and browser regressions. |
+| `415f3d4` | Made the independent cross-venue audit fail closed when a two-leg candidate does not contain one leg per selected market; added a malformed-candidate regression. |
 
 ## Latest checkpoint verification (2026-10-27)
 
+- Independent-audit malformed-leg regression: the complete `tests/frontier`
+  suite passed **104 tests** in 20.89 seconds pytest time; `/usr/bin/time -v`
+  measured 21.70 seconds wall, 6.52 seconds user CPU, 247,952 KiB peak RSS,
+  zero swaps, and zero socket messages. A duplicate-market-leg candidate now
+  returns an `INCOMPLETE` audit and `INCOMPLETE EVIDENCE` classification rather
+  than escaping as `StopIteration`. The focused regression passed after Ruff
+  formatting in 0.28 seconds. Ruff check/format, focused mypy for the audit
+  module, and `git diff --check` passed. One upstream Starlette/httpx
+  deprecation warning remains.
 - Kalshi MVE component normalization: the full `tests/frontier` suite passed
   **104 tests** in 20.96 seconds pytest time; `/usr/bin/time -v` measured 21.77
   seconds wall, 6.60 seconds user CPU, 247,084 KiB peak RSS, zero swaps, and
