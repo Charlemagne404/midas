@@ -57,7 +57,7 @@ to pass with an empty candidate list. This is independent arithmetic over shared
 normalized evidence; it does not independently validate exchange truth, source
 timing, external resolution documents, or real execution.
 
-Replay v4 also includes effective relationship mappings and the relationship
+Replay v5 retains effective relationship mappings and the relationship
 proposal limit in each normalized-input digest. A bounded paired-replay path runs
 two named scenarios over the same saved markets, books, verified relationships,
 effective mappings, code version, and UTC time; its shared evidence digest omits
@@ -66,6 +66,16 @@ atomically. The comparison reports matched construction counts and modeled
 classification/count deltas without assigning an improvement score. The
 workbench exposes the result, but no genuine live cross-venue pair exists in the
 captured evidence and paired fixture outputs are not market findings.
+
+Economic model v4 adds an exact one-sided full-or-no-fill terminal sensitivity
+for the supported binary and multi-outcome constructions. The candidate and the
+separate audit identify the worst adverse leg pattern across all `2^n` patterns
+for up to 16 legs. This assumes each leg either fills fully or not at all at its
+modeled price; it does not estimate fill probabilities, partial fills, hedging,
+or unwind recovery. Unknown applicable fees leave the after-fee sensitivity
+unknown. Replay v5 pins this added candidate output. A fixture differential
+check exhaustively enumerates all eight patterns for a three-leg case and agrees
+with the analytic result; it does not provide live market or execution evidence.
 
 The bounded probe API now preserves a successful HTTP response whose JSON shape
 fails adapter normalization as an append-only source-failure observation. Its
@@ -366,7 +376,11 @@ The audit records a disposition (`verified`, `disagreement`, `incomplete`, or
 `not_evaluated`), checked market/leg counts, recomputed values, and a versioned
 input SHA-256. Missing decisive evidence yields `INCOMPLETE`; calculation
 disagreement preserves recomputed figures and downgrades the candidate to
-`INCOMPLETE_EVIDENCE`. Replay version 4 includes this audit in its deterministic
+`INCOMPLETE_EVIDENCE`. Independent audit version 2 independently reconstructs
+each leg's payoff and full-or-no-fill exposure vectors, recomputes the worst
+pre-fee and fee-inclusive stress cases, and compares identities, partitions,
+and P&L against the candidate. Unknown fees prevent a fee-inclusive result.
+Replay version 5 includes this audit and sensitivity in its deterministic
 result. Readiness aggregates dispositions only across the latest three
 hash-valid runs, and the UI shows the audit state, recomputed cost/fees/net result,
 and shortened input hash.
@@ -381,7 +395,10 @@ market semantics or of a realizable opportunity.
 The primary candidate calculator is a bounded model, not an execution simulator.
 It does not model FX, account-specific fees, queue priority, custody, cross-venue
 funding or transfers, venue access, partial multi-leg recovery, or settlement
-failure probabilities. Scenario outcomes are virtual assumptions. Every candidate has
+failure probabilities. The full-or-no-fill stress assumes fixed modeled leg
+prices, independent per-leg fill/no-fill choices, and terminal settlement under
+the verified state model; it does not model probabilities, partial quantities,
+or post-fill actions. Scenario outcomes are virtual assumptions. Every candidate has
 `hypothetical=true` and `practical_eligibility=false`; a public quote comparison
 is never called executable profit.
 
@@ -414,9 +431,10 @@ hash. Oversized or partial response bodies are not stored. Replay consumes only
 stored data, fixes source observation IDs,
 relationships, assumptions and time, sorts inputs deterministically, and pins a
 hash of normalized inputs and the Frontier backend source set. No adapter is
-called from replay. Replay version 4 includes each candidate's independent audit
-disposition and its input hash, plus effective state/instrument mappings and the
-relationship proposal limit in normalized-input identity. Paired replay is
+called from replay. Replay version 5 includes each candidate's independent
+audit disposition and input hash, one-sided fill sensitivity, plus effective
+state/instrument mappings and the relationship proposal limit in normalized-
+input identity. Paired replay is
 limited to 100 markets, 200 books, 500 verified relationships, and 500 proposed
 relationships. It persists two replay records and one comparison in one SQLite
 transaction; all three records are hash-validated and protected by append-only
@@ -547,6 +565,10 @@ Verification on this branch:
 - Targeted Frontier Playwright: **2 passed** in 6.3 seconds, one worker, using isolated temporary API/storage roots and no live probe. A subsequent full 10-case run had two Laboratory failures: Arena admission returned `host_memory_pressure`, then an experiment-report wait timed out after the denied launch. No experiment started and no resource gate was bypassed; full E2E verification remains incomplete.
 - Paired-replay checkpoint: the focused command across `tests/frontier`, adapter contracts, and the offline API workflow passed **96 tests**. Pytest took 20.28 seconds; `/usr/bin/time -v` measured 21.07 seconds wall, 5.38 seconds user CPU, 154,656 KiB peak RSS, zero swaps, and zero socket messages. Ruff check/format, mypy across 16 Frontier/API source files, and `git diff --check` passed. One upstream Starlette/httpx deprecation warning remains; the complete repository Python suite was not run.
 - Frontend paired-comparison checkpoint: **38 tests passed across 7 files**; typecheck, ESLint, and Prettier checks passed. Production build passed; Frontier's lazy chunk is 60.41 kB JavaScript and 27.64 kB CSS. The pre-existing 503.86 kB main and 544.41 kB Chart chunks still trigger Vite's size warning. Targeted Frontier Playwright passed **2 cases** in 7.1 seconds using one worker, an isolated temporary store, and zero source-probe requests. It verifies paired comparison save/read through the local research API and responsive layout, not live market matching.
+- Latest one-sided-fill regression: **97 passed** across `tests/frontier`, adapter contracts, and the offline API workflow in 20.53 seconds pytest time. `/usr/bin/time -v` measured 21.36 seconds wall, 5.69 seconds user CPU, 155,636 KiB peak RSS, zero swaps, and zero socket messages. Ruff check/format, mypy across 16 Frontier/API sources, and `git diff --check` passed. One upstream Starlette/httpx deprecation warning remains.
+- Latest frontend regression: **38 passed across 7 files**; TypeScript typecheck, ESLint, and Prettier passed. Production build passed; Frontier's lazy chunk is 62.62 kB JavaScript and 28.46 kB CSS. The existing 503.86 kB main and 544.41 kB Chart chunks still trigger Vite's size warning. Targeted Frontier Playwright passed **2 cases** in 7.3 seconds with one worker, isolated temporary API/store roots, and no source-probe requests.
+- A broader single-worker Playwright attempt ran all 10 browser cases: **8 passed and 2 Laboratory launch checks were blocked** by the host-wide Arena admission lock (`resource_admission_lock_busy`). Failure context confirms no experiment was admitted or launched. The lock was not bypassed; Laboratory execution remains unverified under the active host gate. The complete repository Python suite was not run.
+- The one-sided-fill differential fixture exhaustively enumerates all eight full/no-fill patterns for three legs and matches the analytic minimum terminal P&L. A 16-leg fixture validates the bounded 65,536-pattern state-space declaration with analytic evaluation; it is not a production throughput benchmark.
 
 Backend tests emitted one upstream Starlette/httpx TestClient deprecation
 warning. No tests modified legacy expectations to make them pass. Fixture network
@@ -582,7 +604,11 @@ production capacity guarantee.
 
 The paired-replay focused regression completed in 21.07 seconds wall time and
 peaked at 154,656 KiB RSS (about 151 MiB), with zero swaps and zero socket
-messages. Targeted Frontier Playwright completed in 7.1 seconds with one worker.
+messages. The one-sided-fill focused regression completed in 21.36 seconds wall
+time and peaked at 155,636 KiB RSS (about 152 MiB), with zero swaps and zero
+socket messages. Targeted Frontier Playwright completed in 7.3 seconds with one
+worker. These are isolated verification measurements, not host capacity
+measurements.
 These remain bounded local development measurements and do not establish host
 admission headroom or service capacity.
 
@@ -858,6 +884,10 @@ Implementation and documentation commits on this branch:
   over identical local evidence, atomic persistence for both arms and the
   comparison, comparison API/workbench, replay-v4 mapping/proposal-limit input
   hashing, and adversarial storage/identity/UI coverage.
+- `5af50b9714d571a0c730f15a0e261f2d4ece2b3e` — added exact one-sided
+  full-or-no-fill sensitivity, independent audit version 2, economic model
+  version 4, replay version 5, responsive candidate stress details, and
+  exhaustive small-case differential and unknown-fee coverage.
 
 Principal changed paths:
 
@@ -891,14 +921,14 @@ cross-venue economics.
 | Polymarket, Kalshi and Kraken Spot adapters | PARTIALLY VERIFIED | Fixture/contract tests and bounded live listing/book/legacy-trade captures are preserved. Polymarket v2 first and continuation pages returned ten rows each. Kalshi has a ticker-filtered cursor-page implementation, fixture-verified row mapping, and a live empty terminal page; live row normalization remains unvalidated. Kalshi event/series parameters and Kraken spot data are captured, while exact Kalshi account fees and Kraken account fee applicability remain unknown. Live degraded-source behavior remains unverified. |
 | Canonical market/instrument normalization | PARTIALLY VERIFIED | Three distinct instrument classes are represented; v2 Polymarket trades retain native outcome-token identity. Live lineage and several payoff/settlement semantics remain unverified. |
 | Relationship hypotheses, review revisions, indexed neighborhoods, and explicit same-payoff verifier | PARTIALLY VERIFIED | Self-attributed review API/UI, append-only revisions, latest-state replay, tamper/migration checks, left/right endpoint-indexed 1–3 hop scans capped at 500 rows, revision-bound centered one-hop keyset pages, stale-cursor rejection, and a 501-edge scan-bound test; no genuine equivalent pair, reviewer authentication, or multi-hop pagination. |
-| Opportunity candidate and independent economic checks | PARTIALLY VERIFIED | Two-venue all-long binary and same-market 3–16 state one-hot exhaustive coverage, with a separate pinned-input arithmetic audit; controlled fixtures only, with source semantics, fees, broader costs and operational feasibility incomplete. |
+| Opportunity candidate and independent economic checks | PARTIALLY VERIFIED | Two-venue all-long binary and same-market 3–16 state one-hot exhaustive coverage; economic model v4 computes an exact full/no-fill adverse exposure pattern over up to 16 legs, and independent audit v2 recomputes it from pinned inputs. Differential three-leg enumeration and unknown-fee cases pass. Controlled fixtures only; source semantics, account costs, broader funding/settlement costs, and operational feasibility remain incomplete. |
 | Kalshi taker-fee sensitivity | PARTIALLY VERIFIED | Saved, hash-matched public event/series fee evidence supports a local one-fill calculation for two documented quadratic fee types, with Decimal and rounding tests. Manual inputs are not live quotes; account-specific, multi-fill and full candidate fee integration remain unresolved. |
-| Append-only evidence store and deterministic replay | COMPLETE AND VERIFIED | Schema v6, additive v2/v3/v4/v5 migration, bounds, hash validation, immutability, replay-v4 identity includes effective mappings and proposal limit, and tests; not integrated as an Arena campaign. |
+| Append-only evidence store and deterministic replay | COMPLETE AND VERIFIED | Schema v6, additive v2/v3/v4/v5 migration, bounds, hash validation, immutability, replay-v5 output includes full/no-fill sensitivity and identity pins effective mappings and proposal limit; not integrated as an Arena campaign. |
 | Paired scenario comparison | COMPLETE AND VERIFIED | Two scenarios reuse identical bounded saved inputs; evidence/input/results are hashed, the two runs and comparison save atomically, API/UI and isolated browser tests pass. Fixture-driven only; no genuine matched live cross-venue pair or Arena job integration. |
 | Live market/book/trade and fee metadata through adapters/API | PARTIALLY VERIFIED | One bounded listing, book, and legacy trade response per venue is hash-pinned; Polymarket v2 pages have distinct IDs; a Kalshi event/series fee-metadata read-back and a new cursor-page response are hash-pinned. The cursor page was empty and terminal, so its live row mapping is not established. Samples are not synchronized and do not prove venue-wide coverage, fees, or execution. |
 | Source workers and broad historical data | DEFERRED | No persistent worker or long-duration collection. |
 | Laboratory/Arena research orchestration | DEFERRED | Workspace navigation and deterministic Frontier replay only. |
-| Native Mission Control workspace | PARTIALLY VERIFIED | Local API, bounded graph/review UI, Polymarket/Kalshi trade-page controls, Kalshi fee inspection, and paired-replay workbench; unit tests and isolated Frontier E2E cover fixture/local-store paths. Production deployment and live browser-to-source validation are not done. |
+| Native Mission Control workspace | PARTIALLY VERIFIED | Local API, bounded graph/review UI, Polymarket/Kalshi trade-page controls, Kalshi fee inspection, paired-replay workbench, and candidate one-sided-fill detail; unit tests and isolated Frontier E2E cover fixture/local-store paths. Production deployment and live browser-to-source validation are not done. |
 | Production readiness/deployment | DEFERRED | Separate review and authorization required; production eligibility is false. |
 | Positive economic result | NOT ESTABLISHED | No genuine cross-venue equivalent or economically eligible result in captured evidence. |
 

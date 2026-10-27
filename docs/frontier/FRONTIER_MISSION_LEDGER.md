@@ -3,8 +3,10 @@
 **Current stage:** isolated engine/API/UI, immutable relationship review, schema-v6
 indexed bounded graph neighborhoods with UI scan-quality status, hash-verified
 public book/trade capture, exact fixture-verified multi-outcome coverage, and a
-separate candidate arithmetic audit; plus captured-response failure diagnostics
-and degraded-source recovery. The supported Polymarket fee shape now has
+separate candidate arithmetic audit. The newest economic-model v4 checkpoint
+adds exact bounded full-or-no-fill stress across up to 16 legs; independent audit
+v2 recomputes the sensitivity, and replay v5 pins it into run output. The
+supported Polymarket fee shape now has
 nonzero-fixture and live zero-fee evidence coverage; timeout and truncated-stream
 failure tests pass. Centered one-hop graph neighborhoods now support append-only
 revision-bound keyset pagination with stale-cursor rejection. Polymarket v2
@@ -24,12 +26,14 @@ The saved Kalshi event/series fee evidence can now drive a local, one-fill
 quadratic taker-fee sensitivity for two documented fee types and two balance
 precision cases. Manual price/size inputs are not quotes; the calculator does
 not change the unknown canonical fee schedule or candidate economics. An offline
-derived example is hash-pinned. Replay v4 now pins effective state/instrument
-mappings and proposal limits into each replay identity. A bounded paired replay
-compares two named scenarios over identical saved inputs, with an evidence digest
-and atomic persistence of two run records plus the comparison. The Mission
-Control workbench can save and inspect these comparisons. This is fixture/local
-store validation; the captured markets do not form a verified cross-venue pair.
+derived example is hash-pinned. Replay v5 includes the one-sided-fill sensitivity
+and retains effective state/instrument mappings and proposal limits in each
+replay identity. A bounded paired replay compares two named scenarios over
+identical saved inputs, with an evidence digest and atomic persistence of two
+run records plus the comparison. The Mission Control workbench can inspect the
+paired comparisons and candidate fill stress. Validation is fixture/local-store
+only; captured markets do not form a verified cross-venue pair or establish fill
+behavior.
 Remaining acceptance work is substantial.
 **Branch:** `codex/frontier-20261026`
 **Worktree:** `/home/charlie/midas-frontier`
@@ -91,27 +95,38 @@ Remaining acceptance work is substantial.
 | `225dc8d` | Added a saved-evidence-bound Kalshi one-fill fee sensitivity API and UI, Decimal calculation tests, an offline derived artifact, and API/UI regressions. Candidate economics remains unchanged. |
 | `127176b` | Added a regression against Kalshi's documented one-fill rounding example and clarified why the adapter still does not advertise a candidate fee schedule. |
 | `1e3d30a` | Added paired deterministic replay, schema-v6 comparison storage, mapping/proposal-limit-aware replay-v4 identities, bounded API/UI, and atomicity, integrity, adversarial, and browser coverage. |
+| `5af50b9` | Added analytic full-or-no-fill stress for supported candidates, an independent audit recomputation, replay-v5 result pinning, Mission Control leg-pattern details, and exhaustive three-leg differential/unknown-fee tests. |
 
 ## Latest checkpoint verification (2026-10-27)
 
-- Paired replay and replay-v4 checkpoint: **96 passed** across `tests/frontier`,
-  adapter contract integration, and the offline API workflow in 20.28 seconds
-  pytest time. `/usr/bin/time -v` measured 21.07 seconds wall, 5.38 seconds user
-  CPU, 154,656 KiB peak RSS, zero swaps, and zero socket messages. Ruff check and
-  format, mypy for 16 Frontier/API sources, and `git diff --check` passed. One
-  upstream Starlette/httpx deprecation warning remains.
-- Frontend comparison checkpoint: **38 passed across 7 files**; typecheck,
-  ESLint, Prettier, and production build passed. Frontier's lazy chunk is
-  60.41 kB JS and 27.64 kB CSS; the existing main and Chart chunks still trigger
-  Vite's size warning.
-- Frontier Playwright: **2 passed** in 7.1 seconds with one worker, isolated
-  temporary API/store roots, and zero source-probe requests. Includes saving a
-  paired comparison through the local API; does not validate a live market pair.
-- Replay v4 now includes effective relationship mappings and proposal limit in
-  the normalized input digest; adversarial tests show either change alters the
-  run identity. The comparison's persisted arms must match stored scenario and
-  replay-time values. No source probe, Reality service, Arena/Laboratory job,
-  or production service was started for this checkpoint.
+- One-sided fill stress and replay-v5 backend regression: **97 passed** across
+  `tests/frontier`, adapter contract integration, and the offline API workflow.
+  Pytest took 20.53 seconds; `/usr/bin/time -v` measured 21.36 seconds wall,
+  5.69 seconds user CPU, 155,636 KiB peak RSS, zero swaps, and zero socket
+  messages. Ruff check/format, mypy for 16 Frontier/API sources, and
+  `git diff --check` passed. One upstream Starlette/httpx deprecation warning
+  remains.
+- Frontend regression: **38 passed across 7 files**; typecheck, ESLint,
+  Prettier, and production build passed. Frontier's lazy chunk is 62.62 kB JS
+  and 28.46 kB CSS; the existing main and Chart chunks still trigger Vite's
+  size warning.
+- Targeted Frontier Playwright: **2 passed** in 7.3 seconds with one worker,
+  isolated temporary API/store roots, and no source-probe requests. It covers
+  the responsive graph and saved-evidence workspace; it does not validate a live
+  market pair or fill behavior.
+- A broader single-worker E2E attempt ran ten cases: **8 passed and 2
+  Laboratory launch checks were denied** by the host-wide Arena admission lock
+  (`resource_admission_lock_busy`). The error context confirms no experiment was
+  admitted or launched. The shared lock was not bypassed; Laboratory execution
+  remains unverified under this host gate.
+- A three-leg fixture independently exhaustively enumerates all eight
+  full-or-no-fill patterns and matches the analytic minimum terminal P&L. The
+  16-leg fixture validates the bounded pattern-space declaration of 65,536
+  without enumerating all pattern/state pairs. This is not live execution
+  evidence or a production throughput benchmark.
+- No source probe, Reality service, Frontier background worker, or production
+  service was started for this checkpoint. The complete repository Python suite
+  was not run.
 
 - Focused Python regression: **86 passed**, 18.05 seconds pytest time; 18.90
   seconds wall, 5.16 seconds user CPU, 151,728 KiB peak RSS, zero swaps and
@@ -286,12 +301,12 @@ Reproduction commands and environment boundaries are in
 | Polymarket, Kalshi and Kraken Spot implementations | PARTIALLY VERIFIED | Fixture tests and bounded live listing/book/trade-to-store evidence exist. Polymarket v2 first and continuation pages returned ten rows each. Kalshi cursor pages are implemented and row mapping is fixture-tested; a live page returned zero trades and no cursor, so live row normalization remains pending. Kalshi account fees and Kraken account fee applicability remain unknown; live degraded-source behavior remains unverified. |
 | Canonical normalization and native evidence | PARTIALLY VERIFIED | Distinct event, conditional event and spot forms; v2 Polymarket trades preserve token and outcome identity, while earlier v1 batches still load with those new fields unknown. Other settlement/payoff semantics remain intentionally unverified. |
 | Relationship matching, immutable review, indexed neighborhoods, and strict payoff verifier | PARTIALLY VERIFIED | Self-attributed review API/UI with stored source refs, append-only revisions, compare-and-set, latest-state replay, query-plan/migration tests, and 1–3 hop left/right indexed scans capped at 500 rows. Centered one-hop keyset pages bind listing/instrument-metadata observation, relationship, and review counts; changed inputs reject stale cursors. A 501-edge fixture verifies the scan cap. No authenticated reviewer/assertion, genuine equivalent pair, or multi-hop pagination. |
-| Economic candidate verifier and independent audit | PARTIALLY VERIFIED | Exact two-venue binary all-long coverage and same-market 3–16-state exhaustive one-hot coverage. A separate Decimal implementation recomputes supported candidate arithmetic from hash-pinned normalized inputs; controlled fixtures only, no genuine eligible event, independently authenticated market truth, or practical execution proof. |
-| Bounded store and deterministic replay | COMPLETE AND VERIFIED | Schema v6 with additive v2/v3/v4/v5 migrations, immutable replay/comparison records, replay-v4 identity includes effective mappings and proposal limit, and tests that later review revokes earlier verified replay input. |
+| Economic candidate verifier and independent audit | PARTIALLY VERIFIED | Exact two-venue binary all-long coverage and same-market 3–16-state exhaustive one-hot coverage. Economic model v4 derives the exact adverse full-or-no-fill terminal pattern for up to 16 legs; independent audit v2 rederives it from pinned inputs. A three-leg brute-force fixture agrees, and unknown fees suppress net stress. Fixtures only; no genuine eligible event, independently authenticated market truth, or practical execution proof. |
+| Bounded store and deterministic replay | COMPLETE AND VERIFIED | Schema v6 with additive v2/v3/v4/v5 migrations, immutable replay/comparison records, replay-v5 output includes fill sensitivity and identity includes effective mappings/proposal limit, with tests that later review revokes earlier verified replay input. |
 | Paired scenario comparison | COMPLETE AND VERIFIED | Two named scenarios reuse identical bounded local evidence; evidence/result hashes, transactionally saved run arms/comparison, API/UI, integrity/adversarial tests, and isolated browser coverage pass. No live equivalent market pair or Arena job integration. |
 | Frontier API and source configuration | COMPLETE AND VERIFIED | Local reads include hash-verified legacy and cursor-page batches. Polymarket and Kalshi page routes are capability/config/recorded-market gated, bounded to one page and retries, and bind cursors to market and size. Polymarket two-page and Kalshi empty-terminal-page persistence/read-back are tested. Kalshi live trade-row mapping remains fixture-only. |
 | Live adapter-to-API listing, book, and trade persistence | PARTIALLY VERIFIED | Three genuine venue captures, Polymarket v2 first/continuation pages with distinct IDs, and one Kalshi empty cursor page have hash-pinned temporary-store evidence. Samples are sequential and do not establish synchronization, depth, complete histories, or execution. |
-| Mission Control Frontier workspace | IMPLEMENTED, LIVE VALIDATION PENDING | Native view includes Polymarket/Kalshi trade-page controls, fee inspection, graph/review, and paired-replay workbench; unit/E2E cover isolated local data. The workspace is not deployed and no live browser source request was made. |
+| Mission Control Frontier workspace | IMPLEMENTED, LIVE VALIDATION PENDING | Native view includes Polymarket/Kalshi trade-page controls, fee inspection, graph/review, paired-replay workbench, and one-sided fill stress details; unit and targeted E2E cover isolated local data. The workspace is not deployed and no live browser source request was made. |
 | Laboratory/Arena research orchestration | DEFERRED | Navigation links only; no Frontier experiment job type/scheduler. |
 | Persistent source collection, streaming and broad historical replay | DEFERRED | No background worker or long-duration campaign. |
 | Cross-venue FX, comprehensive capital and settlement costs | DEFERRED | Unknown costs remain unknown and block decisive net economics. |
@@ -363,5 +378,8 @@ Control continuation is `7c6cc21764d124f61211b79299335d78e8260c69`. The
 capture and documentation checkpoint is
 `e661e06e22b2d29bd68e13dd6e6b423c698fec27`. This ledger amendment is the
 current branch checkpoint. The paired replay implementation and tests are
-`1e3d30a13db8588fae5e72a39f56fa7db625479a`; this report/ledger amendment records
-its v6/v4 contracts and verification. No deployment or production change was made.
+`1e3d30a13db8588fae5e72a39f56fa7db625479a`. The full-or-no-fill exposure
+implementation and test checkpoint is
+`5af50b9714d571a0c730f15a0e261f2d4ece2b3e`; this report/ledger amendment records
+economic model v4, independent audit v2, replay v5, and verification. No
+deployment or production change was made.

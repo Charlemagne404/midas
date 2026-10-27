@@ -117,8 +117,9 @@ hop neighborhoods from a recorded market, capped at 200 source markets and 500
 scanned effective edges; this remains a bounded recent-window traversal rather
 than a large-universe graph index.
 
-Replay v4 also hashes effective outcome/instrument mappings and the proposal
-limit into the replay input identity. A local paired-replay route evaluates two
+Replay v5 retains effective outcome/instrument mappings and the proposal limit
+in the replay input identity and includes exact full-or-no-fill exposure
+sensitivity for supported candidates. A local paired-replay route evaluates two
 named scenarios over one pinned set of stored markets, books, verified
 relationships, mappings, code version, and replay time. Its API bound is 100
 markets, 200 books, 500 verified relationships, and 500 proposals; it makes no

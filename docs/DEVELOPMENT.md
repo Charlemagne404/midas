@@ -183,7 +183,12 @@ verified; it does not evaluate captured listings without verified payoff and
 resolution evidence. Both paths are hypothetical research only and always leave
 practical execution eligibility false.
 
-Replay version 4 attaches a separately coded arithmetic audit to each candidate.
+Replay version 5 attaches a separately coded arithmetic audit and a full-or-no-fill
+exposure sensitivity to each supported candidate. The sensitivity analytically
+finds the exact adverse pattern across up to 16 legs; it does not model partial
+fills, pattern probabilities, hedging, or unwind recovery. The fee-inclusive
+stress result remains unknown when any candidate leg lacks an applicable fee.
+Economic model version 4 and independent audit version 2 record this behavior.
 It re-derives the supported payoff, pinned quote/depth, applicable fee, modeled
 cost, and terminal result from stored inputs. Its normalized-input digest also
 includes effective relationship mappings and the proposal limit, so those

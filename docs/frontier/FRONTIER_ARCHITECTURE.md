@@ -15,8 +15,8 @@ as mutable Frontier storage.
 | Public venue adapters | `adapters/polymarket.py`, `kalshi.py`, `kraken.py` | Source-specific normalization and native metadata preservation. |
 | Registry | `registry.py` | Explicit capability inventory; default instances do not probe. |
 | Relationship intelligence | `relationships.py` | Deterministic indexed hypotheses, strict payoff checks, and immutable review contracts. |
-| Candidate calculators | `economics.py` | Decimal cross-venue binary and same-market exhaustive multi-outcome all-long checks with fee, depth, freshness, timing, and scenario bounds; separate Kalshi one-fill fee sensitivity. |
-| Independent arithmetic audit | `independent_audit.py` | Separately recomputes supported candidate identities, payoff vectors, pinned quotes/depth, fees, costs, terminal P&L, and classification from replay inputs. |
+| Candidate calculators | `economics.py` | Decimal cross-venue binary and same-market exhaustive multi-outcome all-long checks with fee, depth, freshness, timing, and scenario bounds; exact bounded one-sided fill sensitivity; separate Kalshi one-fill fee sensitivity. |
+| Independent arithmetic audit | `independent_audit.py` | Separately recomputes supported candidate identities, payoff vectors, pinned quotes/depth, fees, costs, terminal P&L, fill-pattern sensitivity, and classification from replay inputs. |
 | Durable evidence | `storage.py` | Append-only, size- and row-bounded SQLite observations, markets, relationship reviews/revisions, runs, and paired comparisons. |
 | Replay | `replay.py` | Stable input ordering, scenario/mapping/proposal-limit-aware replay identities, deterministic results, and paired assumption comparisons. |
 | HTTP API | `apps/api/frontier.py` | Bounded local queries and graph neighborhoods, relationship proposals/reviews, deterministic and paired replay, config-gated public capture, and evidence-bound Kalshi fee sensitivity. |
@@ -137,6 +137,18 @@ public snapshots do not prove fills, queue priority, venue access, simultaneous
 execution, capital transfer, or settlement. Opportunity classifications describe
 the mathematical and modeled evidence only.
 
+Economic model version 4 adds a full-or-no-fill exposure sensitivity to each
+supported candidate with one to sixteen legs. For each terminal state it
+calculates each leg's payoff less its modeled acquisition cost and selects the
+negative contributions; this gives the exact worst P&L across every one of the
+`2^n` full/no-fill leg patterns without materializing the pattern set. It reports
+pre-fee P&L and reports an after-fee result only when every leg has a modeled fee.
+The saved pattern identifies filled and unfilled legs, with stable identities.
+This is a terminal stress bound, not a probability, partial-fill model,
+post-fill hedge, unwind, quote-recovery estimate, or prediction of execution.
+Independent audit version 2 derives the leg payoff vectors and adverse patterns
+again from the pinned market and book inputs using separate calculation code.
+
 Fee evidence is source-specific and time-bounded. Polymarket schedules are
 accepted only for an explicit enabled schedule with rate, taker-only scope, and
 exponent 1; explicit disabled fees map to zero, while other shapes remain
@@ -189,9 +201,10 @@ Replay reads only stored inputs, sorts records by canonical IDs, pins source
 observation IDs, effective state/instrument mappings, relationship IDs, proposal
 limit, scenario assumptions, and a SHA-256 over the backend Frontier source set.
 Re-running the same recorded inputs, implementation, and assumptions yields the
-same result identity. Replay version 4 includes the independent per-candidate
-arithmetic audit and hashes effective mappings and the relationship-proposal
-limit into its normalized-input digest. Replay time defaults to the latest
+same result identity. Replay version 5 includes the independent per-candidate
+arithmetic audit, exact full-or-no-fill candidate sensitivity, and hashes
+effective mappings and the relationship-proposal limit into its normalized-input
+digest. Replay time defaults to the latest
 selected source receipt time; empty input uses a fixed epoch. No network adapter
 is called from replay.
 

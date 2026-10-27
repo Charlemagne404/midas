@@ -33,10 +33,12 @@ coverage and fixture-tested exhaustive multi-outcome coverage, and a native
 Frontier workspace. Replay candidates also carry a separate arithmetic audit
 over pinned normalized inputs; this checks calculations, not external market
 truth, synchronized quotes, fills, or profitability.
-Replay v4 also pins effective relationship mappings and proposal limits into
-each run identity. The Economic Workbench can persist a paired comparison of two
-virtual scenarios over the same saved evidence; it does not score assumptions as
-better or establish executable opportunities.
+Replay v5 also pins effective relationship mappings and proposal limits into
+each run identity. Supported candidates include an exact full-or-no-fill
+exposure sensitivity over up to 16 legs, with fee-inclusive results omitted if
+any applicable fee is unknown. The Economic Workbench can persist a paired
+comparison of two virtual scenarios over the same saved evidence; it does not
+score assumptions as better or establish executable opportunities.
 Polymarket's explicit v2 trade-page path preserves outcome-token identity and
 supports bounded cursor continuation; one first page and one API-route
 continuation have been captured, while no full history walk was attempted.
