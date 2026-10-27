@@ -213,6 +213,23 @@ The Replay & Readiness panel exposes a maximum book receipt age from 1 to
 3,600,000 milliseconds. Invalid values disable submission. The selected limit
 is sent to the local-input API and pinned into the replay snapshot.
 
+The panel also reads `GET /api/frontier/collection-health-events?limit=20` when
+opened. This is a local, read-only journal lookup: a missing journal stays
+missing, held venues are omitted, and each returned checkpoint's full run chain
+is verified. Only the latest timestamped health observation per collection run
+is listed. Timestamp-less `not_probed` health has no replay event and leaves the
+last timestamped observation visible; timestamped unsupported states do not
+revive an older availability claim. Each item shows its venue, state, check
+time, adapter version, checkpoint sequence, last success, and digest. All items
+start unchecked. Selecting one includes its hash-bound `basis=recorded` event
+in the next explicit timeline submission. The API reports `network_called: false`;
+no collector is started and no exchange is contacted.
+
+Only one source-status event per venue and check timestamp can be submitted.
+The API rejects duplicates before staging a job because the event-time engine
+cannot resolve two status claims at the same instant. In the UI, selecting one
+of two same-time checkpoints disables the other until the first is deselected.
+
 ## Finite source collection module
 
 `midas.frontier.collection.BoundedSourceCollector` implements one finite,

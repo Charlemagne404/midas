@@ -1,5 +1,69 @@
 # Project Frontier Mission Ledger
 
+## Verified recorded-health catalog and replay provenance — 2026-10-28 00:31 CET
+
+Code commits `31f62db`, `1779e89`, `9a3eced`, and `8f9b9b8` add a bounded
+local catalog for recent collector-health evidence, explicit replay selection,
+artifact digest display, and early rejection of ambiguous same-time source
+events. `CollectionJournal.latest_source_health_checkpoints` reads the journal
+without mutation, leaves a missing journal missing, filters held venues, selects
+at most 20 latest timestamped health observations, and revalidates each selected
+run's complete checkpoint chain. Its scan is bounded by the journal's 20,000
+checkpoint and 64 MiB limits. Timestamp-less `not_probed` does not create an
+event or hide the latest timestamped record; a timestamped unsupported state
+suppresses an older availability claim.
+
+`GET /api/frontier/collection-health-events` returns adapter-local status,
+timestamps, adapter version, checkpoint sequence, last-success time, and the
+verified row digest with `network_called: false`. The UI loads the catalog only
+in Replay & Readiness. Items start unchecked; selected events enter the next
+explicit replay request, and completed timeline details render the digests
+pinned in the result manifest. The API rejects duplicate source-status times
+for one venue before it creates an Arena job, and the UI disables a second
+selection with the same venue/time. The copy explains that checkpoint health is
+not continuous venue availability or account eligibility.
+
+### Verification and limits
+
+- Combined Frontier/Arena regression: **354 passed** in 83.42 seconds; peak RSS
+  **363,776 KiB**, zero swaps. One existing Starlette/httpx `TestClient`
+  deprecation warning.
+- Focused journal and timeline API suite: **18 passed** in 7.37 seconds; the
+  timestamp-less-state and chain-corruption follow-up cases passed **2/2** in
+  0.56 seconds. The API duplicate-time guard passed its targeted test.
+- Frontier UI component file: **8/8 passed** after same-time selection guard;
+  the replay artifact case asserts the recorded checkpoint digest is visible.
+- Isolated Playwright replay-history case: **1/1 passed** in 5.0 seconds after
+  the shared lock released. It uses temporary API/store roots and confirmed the
+  empty local state, no source probe, and no replay submission on page open.
+- TypeScript passed in 7.92 seconds at **448,228 KiB** peak RSS. The production
+  Vite build passed in 5.10 seconds at **647,020 KiB**, zero swaps. Frontier
+  output is 124.32 kB JS / 39.65 kB CSS; the existing 544.41 kB Chart chunk
+  warning remains. Scoped strict mypy passed for four Frontier/Arena source
+  files; Ruff check/format, ESLint, Prettier, and `git diff --check` passed.
+- At the first browser admission check, shared Arena lock inode **6423106** was
+  held by PID **3885836**, PSI avg10 was 29.42% `some` / 22.00% `full`, and
+  3.7 GiB swap was in use. The browser/build were deferred then, and run after
+  the lock released, avg10 fell to 0%, and 10 GiB was available.
+
+No adapter was probed, no collector or Arena worker was launched, no held-source
+record was exposed, and no protected service or production store was touched.
+No genuine public health sample or cross-venue economic result was established.
+
+| Component | Status | Evidence and boundary |
+| --- | --- | --- |
+| Local recorded-health catalog | COMPLETE AND VERIFIED | Bounded read-only scan, latest timestamped observation, held filtering, and full-chain verification have fixture coverage; no genuine live capture was made. |
+| Replay health selection and pinned-digest display | PARTIALLY VERIFIED | Explicit selection and manifest digest rendering pass component tests; the empty/offline browser case passes, but no journal-backed live health event was available in the browser. |
+| Duplicate same-time source events | COMPLETE AND VERIFIED | API rejects same-venue/same-time duplicates before job staging; UI disables the second selected option; API and component tests pass. |
+| Timeline Arena worker and populated result browser flow | IMPLEMENTED, LIVE VALIDATION PENDING | Job, artifact, and populated result are fixture tested; no new Arena worker was launched. |
+| Live source permission and multi-venue evidence | BLOCKED | Existing source-use holds remain; this catalog is not a capture path. |
+| Production deployment | DEFERRED | Branch remains isolated and unmerged. |
+
+Frontier remains **PARTIALLY VERIFIED**, research-only, isolated, and
+undeployed. Continue the remaining offline acceptance work. Do not add network
+egress to the Arena worker or register an unattended collector to populate this
+list.
+
 ## Recorded source-health join and timeline controls — 2026-10-28 00:18 CET
 
 Code commit `ea073c4cdb4a00b70fc609e8806f80a40542cd4c` joins recorded

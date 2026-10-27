@@ -417,6 +417,15 @@ collection automatically. The timeline readiness gate remains pending until a
 bounded local job has actually completed with a valid artifact and worker
 runtime record.
 
+The same panel can list at most 20 recent timestamped health records through
+`GET /api/frontier/collection-health-events`. That endpoint reads the local
+collector journal in read-only mode, filters held sources, and revalidates each
+returned run's checkpoint chain. Events are unchecked by default and only
+selected events enter an explicit replay request. This evidence is
+adapter-local checkpoint health, not continuous venue availability or account
+eligibility. The catalog makes no source request and leaves a missing journal
+uncreated.
+
 `midas.frontier.collection.BoundedSourceCollector` is a separate finite
 one-source lifecycle with fixture-tested restart checkpoints and an append-only
 hash-chained SQLite journal. It is not exposed through the API, Arena, or a

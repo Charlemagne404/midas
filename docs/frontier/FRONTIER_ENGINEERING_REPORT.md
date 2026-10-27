@@ -4506,7 +4506,92 @@ cross-venue opportunity or positive economic result was established.
 
 Project Frontier remains **PARTIALLY VERIFIED**, isolated, research-only, and
 undeployed. Next safe engineering work is a bounded read-only catalogue and UI
-for verified recorded health checkpoints, plus offline adversarial replay cases.
-Do not register a networked collection job until the allowed egress boundary is
-explicit and testable. The source permissions, live multi-venue evidence, and
-deployment gates remain separate.
+for verified recorded health checkpoints, plus offline adversarial replay cases;
+the following checkpoint completes the catalog and UI portion. Do not register
+a networked collection job until the allowed egress boundary is explicit and
+testable. The source permissions, live multi-venue evidence, and deployment
+gates remain separate.
+
+### Verified recorded-health catalog and replay provenance — 2026-10-27 23:31 UTC
+
+Code commits **`31f62db`**, **`1779e89`**, **`9a3eced`**, and **`8f9b9b8`** add
+a local read-only catalog of collector health evidence, explicit replay event
+selection, visibility of manifest-pinned checkpoint hashes, and early
+rejection of same-venue/same-time status duplicates.
+
+`CollectionJournal.latest_source_health_checkpoints` does not call
+`initialize`, create a missing journal, or write to collection evidence. It
+streams the bounded journal (maximum 20,000 checkpoints and 64 MiB) and selects
+at most 20 latest timestamped health observations, one per run. Each selected
+run's spec hash and venue are checked, then the existing batch resolver
+revalidates the complete checkpoint sequence and hash chain. Held venues are
+filtered before the response. Timestamp-less `NOT_PROBED` does not represent a
+new replay event and does not shadow the last timestamped health record. A
+timestamped state that cannot map to availability shadows older status for that
+run.
+
+`GET /api/frontier/collection-health-events?limit=20` returns the recorded
+event plus run, adapter version, checkpoint sequence, health state, last-success
+time, and row digest. The response reports `network_called: false` and
+`source_health_scope: adapter_local_checkpoint`. Before staging a timeline, the
+API requires event venue/state/time/reason/digest to match the verified
+checkpoint and rejects two events for the same venue at one timestamp. Mission
+Control queries the catalog only while Replay & Readiness is open. All events
+start unchecked, and selecting one disables another event for the same
+venue/check-time. The result detail shows the checkpoint hashes pinned into the
+manifest. UI text distinguishes adapter-local checkpoint health from
+continuous venue availability and account eligibility.
+
+#### Verification and resource decision
+
+- Combined `tests/frontier` plus paired/timeline Arena replay, job, and API
+  selection: **354 passed** in 83.42 seconds; peak RSS **363,776 KiB**, zero
+  swaps. The existing Starlette/httpx TestClient deprecation warning remains.
+- Collector and timeline API focused set: **18 passed** in 7.37 seconds; the
+  follow-up timestamp-less-state and chain-integrity cases passed **2/2** in
+  0.56 seconds. Duplicate same-venue/time request rejection passed in its
+  focused API case.
+- `apps/web/src/Frontier.test.tsx`: **8 passed**. It verifies opt-in selection,
+  same-time exclusion, and rendering the result manifest digest.
+- Isolated Playwright Replay & Readiness case: **1/1 passed** in 5.0 seconds
+  using temporary API/store roots. It observes the empty verified-health state
+  with no source probe and no replay submission on page open.
+- TypeScript passed in 7.92 seconds at **448,228 KiB** peak RSS. The production
+  Vite build passed in 5.10 seconds at **647,020 KiB** peak RSS, zero swaps.
+  Frontier output is 124.32 kB JS / 39.65 kB CSS; the existing 544.41 kB Chart
+  chunk warning remains. Strict scoped mypy passed for the collection, timeline,
+  Arena timeline, and API modules. Ruff, ESLint, Prettier, and `git diff --check`
+  passed.
+- Initial browser admission check found shared Arena lock inode **6423106** held
+  by PID **3885836** with PSI avg10 29.42% `some` / 22.00% `full` and 3.7 GiB
+  swap in use. The browser run and build were deferred until the lock released;
+  they then ran after avg10 fell to 0% and 10 GiB was available.
+
+No exchange API, collector, Arena worker, protected recorder, held capture, or
+production store was accessed. The catalog contains no genuine current source
+health sample and this increment established no cross-venue price relation or
+economic result.
+
+Code files in `31f62db` are `packages/midas/frontier/collection.py`,
+`apps/api/frontier.py`, `tests/frontier/test_collection.py`,
+`tests/frontier/test_timeline_api.py`, `apps/web/src/Frontier.tsx`,
+`apps/web/src/Frontier.test.tsx`, `apps/web/src/frontier.css`, and
+`apps/web/e2e/frontier.spec.ts`. Commit `1779e89` changes timestamp-less health
+semantics. Commit `9a3eced` displays manifest-pinned digests. Commit `8f9b9b8`
+adds duplicate-time API and UI safeguards. Documentation is in the following
+checkpoint commit.
+
+#### Updated completion matrix
+
+| Component | Status | Evidence and boundary |
+| --- | --- | --- |
+| Local recorded-health catalog | COMPLETE AND VERIFIED | Bounded read-only scan, latest timestamped observation, held filtering, and full-chain verification have fixture coverage; no live source event exists. |
+| Replay health event selection and digest display | PARTIALLY VERIFIED | Component suite and empty-state Playwright pass. No journal-backed live health event was available in a browser. |
+| Duplicate same-time source events | COMPLETE AND VERIFIED | API rejects same-venue/same-time duplicates before job staging; UI disables a second selection; focused API and UI cases pass. |
+| Timeline worker and populated result browser flow | IMPLEMENTED, LIVE VALIDATION PENDING | Job/artifact fixture paths are covered. No new Arena worker was launched. |
+| Live source permissions and multi-venue evidence | BLOCKED | Existing source-use holds remain; the catalog is not a capture path. |
+| Production deployment | DEFERRED | No merge, push, or deployment occurred. |
+
+Frontier remains **PARTIALLY VERIFIED**, isolated, research-only, and
+undeployed. Continue the remaining offline acceptance work. Do not open Arena
+network egress or register an unattended collector to populate this catalog.

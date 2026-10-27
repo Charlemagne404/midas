@@ -1075,3 +1075,26 @@ focused timeline suite passes **4/4** in 0.69 seconds at **54,864 KiB peak RSS**
 This is engine-level verification only: the timeline is not yet exposed in the
 API, persisted through Arena, or surfaced in Mission Control. Frontier remains
 research-only, isolated, undeployed, and **PARTIALLY VERIFIED**.
+
+## Frontier recorded-health catalog — 2026-10-27 23:31 UTC
+
+Commits `31f62db`, `1779e89`, `9a3eced`, and `8f9b9b8` add a local read-only
+catalog of verified collector health checkpoints, explicit replay selection,
+artifact digest display, and rejection of ambiguous same-time source events.
+The catalog is bounded to 20 events, filters held sources, validates each
+selected journal chain, and does not create a missing journal or contact a
+venue. Timestamp-less `not_probed` does not become a replay event. The UI
+leaves all events unchecked and disables a second selected event for the same
+venue/check time. It identifies the adapter-local health scope.
+
+The combined Frontier/Arena regression passes **354/354** in 83.42 seconds at
+**363,776 KiB peak RSS**, zero swaps. Frontier UI component tests pass **8/8**;
+the isolated Replay & Readiness Playwright check passes **1/1** and verifies
+the empty catalog with no source probe or job submission. TypeScript, strict
+scoped mypy, Ruff, ESLint, and Prettier pass. The Vite production build passes
+in 5.10 seconds at **647,020 KiB** peak RSS, zero swaps; the existing 544.41 kB
+Chart chunk warning remains. No public source observation or cross-venue
+economic result was established. Frontier remains isolated, research-only,
+undeployed, and **PARTIALLY VERIFIED**. See the [mission ledger](frontier/FRONTIER_MISSION_LEDGER.md)
+and [engineering report](frontier/FRONTIER_ENGINEERING_REPORT.md) for the
+remaining offline gaps and source/deployment boundaries.

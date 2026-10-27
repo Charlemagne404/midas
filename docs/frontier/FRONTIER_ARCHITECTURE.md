@@ -24,8 +24,8 @@ as mutable Frontier storage.
 | Event-time replay | `timeline.py` | Offline bounded replay over repeated book updates, source-state events, and explicit cutoffs; freshness, outage invalidation, candidate summaries, and timeline hashes. |
 | Finite source collection | `collection.py` | One-source sequential bounded capture with durable restart checkpoints and a separate append-only hash-chained journal; callable only, not an API, scheduled worker, or background service. |
 | Arena replay jobs | `packages/midas/arena/frontier_replay.py`, `frontier_timeline.py`, `arena/jobs.py` | Immutable content-addressed inputs, bounded offline paired and event-time replay workers, hash-verified artifacts, and held-source filtering under Arena's existing admission gate. |
-| HTTP API | `apps/api/frontier.py`, `apps/api/arena.py` | Bounded local queries and graph neighborhoods, relationship proposals/reviews, deterministic and paired replay, config-gated captures, fee/capital sensitivities, coverage analytics, verified collection-checkpoint health joins, and local-input event-time Arena staging/result routes. |
-| Mission Control workspace | `apps/web/src/Frontier.tsx` | Sources, markets/books/event context, coverage and source-quality analytics, relationship hypotheses, candidates, venue-separated capital assumptions, local comparisons, paired and event-time Arena replay history/results with a pinned freshness control, and readiness. |
+| HTTP API | `apps/api/frontier.py`, `apps/api/arena.py` | Bounded local queries and graph neighborhoods, relationship proposals/reviews, deterministic and paired replay, config-gated captures, fee/capital sensitivities, coverage analytics, a verified local collection-health catalog and checkpoint joins, and local-input event-time Arena staging/result routes. |
+| Mission Control workspace | `apps/web/src/Frontier.tsx` | Sources, markets/books/event context, coverage and source-quality analytics, relationship hypotheses, candidates, venue-separated capital assumptions, local comparisons, paired and event-time Arena replay history/results with pinned freshness and explicit recorded-health selection, and readiness. |
 
 ## Additional venue selection
 
@@ -801,6 +801,23 @@ healthy, degraded, and explicitly unavailable states map to replay status;
 not-probed and unsupported states do not imply venue availability. Held-source
 events are rejected. The snapshot pins the joined checkpoint hashes in schema
 version 2; existing schema-1 snapshots without recorded status remain readable.
+
+`GET /api/frontier/collection-health-events` lists at most 20 recent,
+timestamped source-health observations from the local collector journal. The
+lookup is read-only, does not create a missing journal, filters held venues,
+and validates each returned run's complete checkpoint chain. A timestamp-less
+`not_probed` state is not an event and does not replace the latest timestamped
+observation; a timestamped state that cannot map to availability does suppress
+an older availability claim for that run. The response labels health as
+adapter-local and reports `network_called: false`. Replay & Readiness fetches
+this catalog only when opened. Every event starts unchecked; only an explicit
+selection is submitted as recorded source-state evidence.
+
+The request model rejects duplicate source-status timestamps for the same
+venue before creating an Arena job, matching the deterministic timeline
+engine's ambiguity rule. The UI disables another event with a venue/check-time
+pair already selected; researchers can choose either checkpoint when separate
+runs recorded the same timestamp.
 
 The request also pins either ordered UTC evaluation times or the engine's
 deterministic input-time/freshness-boundary schedule, maximum book age, scenario,
