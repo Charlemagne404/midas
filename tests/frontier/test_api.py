@@ -298,6 +298,146 @@ def test_kalshi_fee_metadata_probe_persists_event_and_series_evidence(tmp_path):
         asyncio.run(http_client.aclose())
 
 
+def test_kalshi_fee_metadata_partial_failure_preserves_evidence_and_recovers(tmp_path):
+    source_market = market(Venue.KALSHI, "KX-FEE-RECOVERY").model_copy(
+        update={"fees": FeeSchedule(note="Kalshi account fees unresolved")}
+    )
+    event_body = json.dumps(
+        {
+            "event": {
+                "event_ticker": source_market.native_event_id,
+                "series_ticker": "KX-FEE-RECOVERY-SERIES",
+                "fee_type_override": "quadratic",
+            }
+        }
+    )
+    series_body = json.dumps(
+        {
+            "series": {
+                "ticker": "KX-FEE-RECOVERY-SERIES",
+                "fee_type": "quadratic",
+                "fee_multiplier": 1,
+            }
+        }
+    )
+    requests: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        if request.url.path.endswith(f"/events/{source_market.native_event_id}"):
+            return httpx.Response(200, text=event_body, request=request)
+        if request.url.path.endswith("/series/KX-FEE-RECOVERY-SERIES"):
+            if len(requests) == 2:
+                return httpx.Response(503, text='{"error":"temporary outage"}', request=request)
+            return httpx.Response(200, text=series_body, request=request)
+        return httpx.Response(404, text="{}", request=request)
+
+    config = AdapterConfig(
+        enabled=True,
+        live_public_probe_enabled=True,
+        requests_per_second=5,
+        retries=0,
+    )
+    http_client = httpx.AsyncClient(transport=httpx.MockTransport(handler))
+    transport = PublicReadTransport({"external-api.kalshi.com"}, config, client=http_client)
+    registry = AdapterRegistry((KalshiAdapter(config, transport=transport),))
+    store = FrontierStore(tmp_path / "frontier")
+    listing_body = '{"test_fixture":"recorded market metadata"}'
+    store.append_observation(
+        RawObservation(
+            venue=Venue.KALSHI,
+            observation_kind="market_listing",
+            request_url="https://external-api.kalshi.com/trade-api/v2/markets?limit=1",
+            http_status=200,
+            request_started_at_utc=T0,
+            received_at_utc=T0 + timedelta(milliseconds=12),
+            raw_body=listing_body,
+            raw_sha256=hashlib.sha256(listing_body.encode()).hexdigest(),
+            adapter_version="frontier-kalshi-test-v1",
+        ),
+        source_market,
+    )
+    app = FastAPI()
+    app.include_router(router(store, registry))
+    client = TestClient(app)
+    try:
+        failed = client.post(
+            "/api/frontier/probe/kalshi/fee-metadata",
+            json={"market_id": source_market.canonical_id},
+        )
+        assert failed.status_code == 502
+        detail = failed.json()["detail"]
+        assert detail["code"] == "SOURCE_TEMPORARY_FAILURE"
+        assert len(detail["diagnostic_observation_ids"]) == 2
+
+        preserved = [
+            client.get(f"/api/frontier/observations/{item}").json()
+            for item in detail["diagnostic_observation_ids"]
+        ]
+        successful_event = next(
+            item for item in preserved if item["raw"]["observation_kind"] == "event_fee_metadata"
+        )
+        failed_series = next(
+            item for item in preserved if item["raw"]["observation_kind"] == "source_failure"
+        )
+        assert successful_event["raw"]["raw_body"] == event_body
+        assert successful_event["raw"]["http_status"] == 200
+        assert successful_event["raw_sha256"] == hashlib.sha256(event_body.encode()).hexdigest()
+        assert successful_event["normalized"]["failure_stage"] == "probe_batch"
+        assert successful_event["normalized"]["error_code"] == "SOURCE_TEMPORARY_FAILURE"
+        assert failed_series["raw"]["raw_body"] == '{"error":"temporary outage"}'
+        assert failed_series["raw"]["http_status"] == 503
+        assert (
+            failed_series["raw_sha256"]
+            == hashlib.sha256(b'{"error":"temporary outage"}').hexdigest()
+        )
+        assert failed_series["normalized"]["failure_stage"] == "transport_response"
+
+        degraded = client.get("/api/frontier/sources").json()
+        kalshi_health = next(
+            item["health"] for item in degraded["items"] if item["venue"] == "kalshi"
+        )
+        assert kalshi_health["state"] == "degraded"
+        assert kalshi_health["last_error_code"] == "SOURCE_TEMPORARY_FAILURE"
+
+        recovered = client.post(
+            "/api/frontier/probe/kalshi/fee-metadata",
+            json={"market_id": source_market.canonical_id},
+        )
+        assert recovered.status_code == 200, recovered.text
+        recovered_result = recovered.json()
+        assert recovered_result["request_count_delta"] == 2
+        assert recovered_result["metadata"]["effective_fee_type"] == "quadratic"
+        assert len(recovered_result["observation_ids"]) == 2
+        after_recovery = [
+            client.get(f"/api/frontier/observations/{item}").json()
+            for item in detail["diagnostic_observation_ids"]
+        ]
+        assert after_recovery == preserved
+        healthy = client.get("/api/frontier/sources").json()
+        kalshi_health = next(
+            item["health"] for item in healthy["items"] if item["venue"] == "kalshi"
+        )
+        assert kalshi_health["state"] == "healthy"
+        assert kalshi_health["last_error_code"] is None
+
+        for observation_id, expected_hash in zip(
+            recovered_result["observation_ids"],
+            recovered_result["raw_sha256"].values(),
+            strict=True,
+        ):
+            saved = client.get(f"/api/frontier/observations/{observation_id}").json()
+            assert saved["raw_sha256"] == expected_hash
+            assert saved["normalized"]["native_market_id"] == source_market.native_market_id
+        assert len(requests) == 4
+        assert all(request.method == "GET" for request in requests)
+        assert all("authorization" not in request.headers for request in requests)
+    finally:
+        client.close()
+        asyncio.run(registry.aclose())
+        asyncio.run(http_client.aclose())
+
+
 def test_relationship_proposals_and_replay_are_durable_empty_research_runs(tmp_path):
     client, registry, http_client, requests, _ = _client(tmp_path)
     try:
