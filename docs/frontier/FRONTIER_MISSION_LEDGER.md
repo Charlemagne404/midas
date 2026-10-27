@@ -37,6 +37,12 @@ run records plus the comparison. The Mission Control workbench can inspect the
 paired comparisons and candidate fill stress. Validation is fixture/local-store
 only; captured markets do not form a verified cross-venue pair or establish fill
 behavior.
+Kalshi adapter v4 now preserves typed, bounded MVE selected components
+(native event/market identifiers and YES/NO side) from the source response; the
+market inspector displays these identifiers with the explicit unresolved
+payoff/rules boundary. A preserved 17-component MVE listing was replayed
+offline through the API and store. Its primary rules were empty and secondary
+text was only a general disclaimer, so its combo economics remain unsupported.
 Frontier paired replay is also registered as a bounded Arena job over
 content-addressed local snapshots, with API submission, history/result reads,
 and an explicit Mission Control action. Two controlled fixture jobs passed the
@@ -113,9 +119,32 @@ Remaining acceptance work is substantial.
 | `2628792` | Fixed optional systemd unit-ID and sorted-path type narrowing in the Arena API; focused API/job mypy now passes. |
 | `c9e3be6` | Added saved-evidence-bound, native-instrument-bound Kalshi one-order taker fee sensitivity with order-level rounding/rebates, exact Decimal outputs, API validation, and a Mission Control fill editor. |
 | `a087cb2` | Added API-boundary coverage for partial Kalshi event/series failure, raw evidence immutability, degraded health, and subsequent recovery. |
+| `b84dac2` | Normalized bounded Kalshi MVE selected component identifiers and sides, persisted the captured response through the API/store path, displayed components in Mission Control, and added malformed-input, persistence, component, and browser regressions. |
 
 ## Latest checkpoint verification (2026-10-27)
 
+- Kalshi MVE component normalization: the full `tests/frontier` suite passed
+  **104 tests** in 20.96 seconds pytest time; `/usr/bin/time -v` measured 21.77
+  seconds wall, 6.60 seconds user CPU, 247,084 KiB peak RSS, zero swaps, and
+  zero socket messages. Fixture cases reject malformed sides, duplicate
+  components, and over-bound lists. An isolated local API/store replay of the
+  preserved October 26 public response verified the raw body/hash and all 17
+  normalized component records. This used MockTransport over the saved bytes;
+  no live request was made. One upstream Starlette/httpx deprecation warning
+  remains.
+- Frontend: **39 passed across 7 files**; TypeScript, ESLint, and Prettier
+  passed. The production build passed with a 71.91 kB Frontier JavaScript chunk
+  and 31.14 kB Frontier CSS; the existing 503.86 kB main and 544.41 kB Chart
+  chunks still trigger Vite's warning. `/usr/bin/time -v` measured 12.51 seconds
+  wall, 19.85 seconds user CPU, and 658,824 KiB peak RSS, with zero swaps and
+  zero socket messages.
+- Targeted Frontier Playwright: **3 passed** in 7.7 seconds with one worker and
+  isolated temporary API/database/Arena/Frontier roots. The MVE market-detail
+  fixture displays component IDs, side, and the unverified-payoff notice. No
+  source probe or Arena job was launched.
+- Ruff check/format, focused mypy for the Kalshi adapter and Frontier models,
+  and `git diff --check` passed. No live MVE observation or payoff validation
+  was performed; the preserved capture is dated structure evidence only.
 - Kalshi metadata partial-failure regression: **99 passed** across the complete `tests/frontier` suite in 33.92 seconds pytest time; `/usr/bin/time -v` measured 34.73 seconds wall, 6.54 seconds user CPU, 248,244 KiB peak RSS, zero swaps, and zero socket messages. The API fixture returns an event response followed by HTTP 503 for its series response, verifies both hash-preserved diagnostic records and their immutability after recovery, observes Kalshi health degrade and recover, and checks the four bounded requests are unauthenticated GETs. A post-format targeted rerun passed in 1.79 seconds. Ruff check/format and `git diff --check` passed. One upstream Starlette/httpx deprecation warning remains. This is fixture evidence; live degraded-source behavior is still unverified.
 - Frontend: **39 passed across 7 files**. TypeScript, ESLint, and Prettier passed. The production build passed with a 71.13 kB Frontier JavaScript chunk and 30.28 kB Frontier CSS; the existing 503.86 kB main and 544.41 kB Chart chunks still trigger Vite's warning. `/usr/bin/time -v` measured 5.66 seconds wall and 577,964 KiB peak RSS, with zero swaps and zero socket messages.
 - Targeted Frontier Playwright: **3 passed** in 8.0 seconds with one worker and isolated temporary API/database/Arena/Frontier roots. The suite made no source-probe request and launched no Arena work. The new multi-fill fee form is covered by the component test; Playwright exercised the existing responsive workspace, replay history, and bounded relationship graph.

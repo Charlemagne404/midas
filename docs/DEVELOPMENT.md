@@ -125,6 +125,17 @@ Kalshi and then choose a market already present in saved listing evidence. Krake
 does not currently claim cursor-paginated public trades. The protected Reality
 recording and its evidence remain on separate roots.
 
+For Kalshi multivariate event markets, adapter v4 normalizes up to 64 native
+selected component references (event ticker, market ticker, selected YES/NO
+side) and Mission Control displays them from the saved market observation. This
+is source-declared composition metadata, not verified component rules or payoff
+semantics. Kalshi's documentation describes combo payout as the product of
+component position values and says combos settle as their own reviewed markets;
+Frontier keeps these markets conditional and excludes their unverified payout
+from candidate economics. Older saved MVE rows retain their raw native fields
+but do not gain normalized component entries until a new bounded listing is
+captured.
+
 For a recorded Kalshi market, the Exchange Explorer can explicitly capture
 public fee metadata with `POST /api/frontier/probe/kalshi/fee-metadata` and its
 canonical `market_id`. The route requires the source's public-probe setting and

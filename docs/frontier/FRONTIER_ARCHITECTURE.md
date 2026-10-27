@@ -76,6 +76,21 @@ a multivariate event leg, and a spot pair retain separate instrument kinds and
 payoff constraints. In particular, Kraken spot is contextual asset evidence; it
 cannot become an event-contract payoff through matching text.
 
+Kalshi adapter v4 normalizes the venue's `mve_selected_legs` list into bounded
+`selected_components` records carrying the selected event ticker, native market
+ticker, and YES/NO side. It rejects malformed, duplicate, self-referential, and
+over-64 component lists, while retaining the original native fields and response
+hash. Mission Control shows those source-declared components with an explicit
+unverified-payoff notice. Component membership does not certify the individual
+rules, combo settlement, or economic equivalence. Kalshi's public MVE schema
+documents these selected market/side fields
+([Get Multivariate Events](https://docs.kalshi.com/api-reference/events/get-multivariate-events));
+its help center says combo payouts are the product of component position values
+and that each combo settles through its own review
+([Market FAQs](https://help.kalshi.com/en/articles/13823821-market-faqs)).
+Frontier therefore keeps these instruments conditional and does not feed their
+unverified payout into candidate economics.
+
 ## Source configurations and bounds
 
 The API creates all three adapter manifests, but the source transport is disabled

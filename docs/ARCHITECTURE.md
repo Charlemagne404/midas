@@ -110,6 +110,9 @@ self-attributed review revisions record rejected, ambiguous, or strict-verifier
 decisions; the verifier requires verified resolution and exhaustive payout
 evidence. Reviewer and external assertion references are not authenticated.
 Replay uses only the latest decision and preserves the full review history.
+Kalshi adapter v4 also normalizes bounded native MVE component market/event IDs
+and selected YES/NO sides as source-declared structure; combo payout and
+resolution remain unverified and excluded from candidate economics.
 List reads validate raw observation hashes, normalized row hashes, relationship
 payload/index hashes, latest review-to-revision links, and replay output digests
 before graph or replay processing. `GET /api/frontier/graph` offers one-to-three
