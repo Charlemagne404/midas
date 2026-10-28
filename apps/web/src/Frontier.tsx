@@ -334,6 +334,9 @@ type Trade = {
   quote_currency: string | null;
   quote_currency_identity?: SettlementAssetIdentity | null;
   aggressor_side: string | null;
+  is_block_trade?: boolean | null;
+  taker_outcome_side?: 'yes' | 'no' | null;
+  taker_book_side?: 'bid' | 'ask' | null;
   exchange_timestamp_utc: string | null;
   received_at_utc: string;
   source_observation_record_id: string;
@@ -3710,7 +3713,8 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
                       <th>Outcome instrument</th>
                       <th>Price</th>
                       <th>Quantity</th>
-                      <th>Side</th>
+                      <th>Taker / aggressor</th>
+                      <th>Trade type</th>
                       <th>Exchange time</th>
                       <th>Received</th>
                       <th>Evidence</th>
@@ -3741,7 +3745,22 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
                             : ' · denomination identity unknown'}
                         </td>
                         <td>{money(trade.quantity)}</td>
-                        <td>{label(trade.aggressor_side ?? 'unknown')}</td>
+                        <td>
+                          {trade.taker_outcome_side
+                            ? `Taker ${label(trade.taker_outcome_side)}${
+                                trade.taker_book_side
+                                  ? ` · ${label(trade.taker_book_side)} book`
+                                  : ''
+                              }`
+                            : label(trade.aggressor_side ?? 'unknown')}
+                        </td>
+                        <td>
+                          {trade.is_block_trade == null
+                            ? 'Not reported'
+                            : trade.is_block_trade
+                              ? 'Block trade'
+                              : 'Non-block trade'}
+                        </td>
                         <td>
                           {trade.exchange_timestamp_utc
                             ? time(trade.exchange_timestamp_utc)

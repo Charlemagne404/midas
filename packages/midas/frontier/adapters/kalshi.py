@@ -45,7 +45,7 @@ from midas.frontier.models import (
 )
 
 D = Decimal
-ADAPTER_VERSION = "frontier-kalshi-18"
+ADAPTER_VERSION = "frontier-kalshi-19"
 _TICKER_PATTERN = re.compile(r"[A-Za-z0-9_-]{1,256}\Z")
 BASE = "https://external-api.kalshi.com/trade-api/v2"
 MARKET_DATA_DOC = "https://docs.kalshi.com/getting_started/quick_start_market_data"
@@ -98,6 +98,35 @@ def _price_increment_ranges(raw: dict[str, Any]) -> tuple[PriceIncrementRange, .
     if any(right.start < left.end for left, right in zip(normalized, normalized[1:], strict=False)):
         raise AdapterError("INVALID_PRICE_RANGES", "Kalshi price ranges overlap")
     return tuple(normalized)
+
+
+def _native_trade_flags(raw: dict[str, Any]) -> tuple[bool | None, str | None, str | None]:
+    """Retain Kalshi's block and taker-side labels without coercing missing values."""
+    is_block_trade = raw.get("is_block_trade")
+    if is_block_trade is not None and type(is_block_trade) is not bool:
+        raise AdapterError(
+            "INVALID_TRADE", "Kalshi is_block_trade must be a boolean when supplied"
+        )
+
+    taker_outcome_side = raw.get("taker_outcome_side")
+    if taker_outcome_side is not None:
+        if not isinstance(taker_outcome_side, str) or taker_outcome_side.casefold() not in {
+            "yes",
+            "no",
+        }:
+            raise AdapterError("INVALID_TRADE", "Kalshi taker_outcome_side is invalid")
+        taker_outcome_side = taker_outcome_side.casefold()
+
+    taker_book_side = raw.get("taker_book_side")
+    if taker_book_side is not None:
+        if not isinstance(taker_book_side, str) or taker_book_side.casefold() not in {
+            "bid",
+            "ask",
+        }:
+            raise AdapterError("INVALID_TRADE", "Kalshi taker_book_side is invalid")
+        taker_book_side = taker_book_side.casefold()
+
+    return is_block_trade, taker_outcome_side, taker_book_side
 
 
 class KalshiAdapter(BaseReadOnlyAdapter):
@@ -903,6 +932,9 @@ class KalshiAdapter(BaseReadOnlyAdapter):
             )
         result = []
         for raw in payload["trades"][:limit]:
+            if not isinstance(raw, dict):
+                raise AdapterError("INVALID_TRADE", "Kalshi trade entry must be an object")
+            is_block_trade, taker_outcome_side, taker_book_side = _native_trade_flags(raw)
             price = parse_decimal(raw.get("yes_price_dollars"))
             quantity = parse_decimal(raw.get("count_fp"))
             timestamp = parse_time(raw.get("created_time"))
@@ -910,7 +942,7 @@ class KalshiAdapter(BaseReadOnlyAdapter):
                 raise AdapterError("INVALID_TRADE", "Kalshi trade has invalid price or quantity")
             result.append(
                 TradeObservation(
-                    schema_version=3,
+                    schema_version=4,
                     venue=self.venue,
                     native_market_id=native_market_id,
                     native_trade_id=str(raw.get("trade_id") or "") or None,
@@ -923,7 +955,10 @@ class KalshiAdapter(BaseReadOnlyAdapter):
                     quote_currency_identity=SettlementAssetIdentity(
                         kind=SettlementAssetKind.FIAT, code="USD"
                     ),
-                    aggressor_side=str(raw.get("taker_outcome_side") or "unknown"),
+                    aggressor_side=None,
+                    is_block_trade=is_block_trade,
+                    taker_outcome_side=taker_outcome_side,
+                    taker_book_side=taker_book_side,
                     exchange_timestamp_utc=timestamp,
                     received_at_utc=response.response_received_at_utc,
                     provenance=provenance(
@@ -1011,9 +1046,10 @@ class KalshiAdapter(BaseReadOnlyAdapter):
                 or timestamp is None
             ):
                 raise AdapterError("INVALID_TRADE", "Kalshi trade fields failed validation")
+            is_block_trade, taker_outcome_side, taker_book_side = _native_trade_flags(raw)
             trades.append(
                 TradeObservation(
-                    schema_version=3,
+                    schema_version=4,
                     venue=self.venue,
                     native_market_id=native_market_id,
                     native_trade_id=trade_id,
@@ -1026,9 +1062,10 @@ class KalshiAdapter(BaseReadOnlyAdapter):
                     quote_currency_identity=SettlementAssetIdentity(
                         kind=SettlementAssetKind.FIAT, code="USD"
                     ),
-                    # Kalshi's taker_outcome_side identifies the outcome side; it is not
-                    # documented as a normalized BUY/SELL aggressor direction.
                     aggressor_side=None,
+                    is_block_trade=is_block_trade,
+                    taker_outcome_side=taker_outcome_side,
+                    taker_book_side=taker_book_side,
                     exchange_timestamp_utc=timestamp,
                     received_at_utc=response.response_received_at_utc,
                     provenance=provenance(

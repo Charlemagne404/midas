@@ -427,16 +427,19 @@ it('renders recorded-evidence empty states and never probes a source automatical
   queryClient.setQueryData(['frontier', 'trades'], {
     items: [
       {
-        venue: 'polymarket',
-        native_market_id: 'condition:trade-fixture',
-        native_trade_id: 'trade-fixture',
-        native_instrument_id: null,
-        outcome_label: null,
+        venue: 'kalshi',
+        native_market_id: 'KX-FRONTIER-TRADE',
+        native_trade_id: 'kalshi-trade-fixture',
+        native_instrument_id: 'KX-FRONTIER-TRADE:YES',
+        outcome_label: 'YES price reference',
         outcome_index: null,
         price: '0.51',
         quantity: '3',
         quote_currency: 'USD',
-        aggressor_side: 'BUY',
+        aggressor_side: null,
+        is_block_trade: true,
+        taker_outcome_side: 'no',
+        taker_book_side: 'bid',
         exchange_timestamp_utc: null,
         received_at_utc: '2026-10-26T21:25:20.750899Z',
         source_observation_record_id: 'a'.repeat(64),
@@ -449,8 +452,10 @@ it('renders recorded-evidence empty states and never probes a source automatical
     limit: 100,
     offset: 0,
   });
-  expect(await screen.findByText('condition:trade-fixture')).toBeInTheDocument();
+  expect(await screen.findByText('KX-FRONTIER-TRADE')).toBeInTheDocument();
   expect(screen.getByText(/0\.51 USD · denomination identity unknown/)).toBeInTheDocument();
+  expect(screen.getByText('Taker no · bid book')).toBeInTheDocument();
+  expect(screen.getByText('Block trade')).toBeInTheDocument();
 
   queryClient.setQueryData(['frontier', 'opportunities'], {
     items: [

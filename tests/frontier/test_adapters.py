@@ -1808,7 +1808,10 @@ async def test_polymarket_v2_trade_page_rejects_inconsistent_cursors_after_captu
 
 
 @pytest.mark.asyncio
-async def test_kalshi_trade_page_normalizes_one_cursor_page_without_inventing_aggressor_side():
+@pytest.mark.parametrize("is_block_trade", [False, True, None])
+async def test_kalshi_trade_page_preserves_source_trade_flags_without_inventing_aggressor_side(
+    is_block_trade,
+):
     ticker = "KXFRONTIER-EVENT-YES"
     body = json.dumps(
         {
@@ -1822,7 +1825,11 @@ async def test_kalshi_trade_page_normalizes_one_cursor_page_without_inventing_ag
                     "taker_outcome_side": "yes",
                     "taker_book_side": "bid",
                     "created_time": "2026-10-27T12:34:56Z",
-                    "is_block_trade": False,
+                    **(
+                        {"is_block_trade": is_block_trade}
+                        if is_block_trade is not None
+                        else {}
+                    ),
                     "taker_side": "yes",
                 }
             ],
@@ -1850,7 +1857,7 @@ async def test_kalshi_trade_page_normalizes_one_cursor_page_without_inventing_ag
     assert batch.source_next_cursor == "opaque:kalshi-next"
     assert batch.has_more is True
     trade = batch.trades[0]
-    assert trade.schema_version == 3
+    assert trade.schema_version == 4
     assert trade.native_market_id == ticker
     assert trade.native_instrument_id == f"{ticker}:YES"
     assert trade.outcome_label == "YES price reference"
@@ -1861,11 +1868,57 @@ async def test_kalshi_trade_page_normalizes_one_cursor_page_without_inventing_ag
     assert trade.quote_currency_identity.kind.value == "fiat"
     assert trade.quote_currency_identity.code == "USD"
     assert trade.aggressor_side is None
+    assert trade.is_block_trade is is_block_trade
+    assert trade.taker_outcome_side == "yes"
+    assert trade.taker_book_side == "bid"
     assert trade.exchange_timestamp_utc.isoformat() == "2026-10-27T12:34:56+00:00"
     assert len(captures) == 1 and captures[0].raw_body == body
     assert len(requests) == 1
     assert requests[0].url.path == "/trade-api/v2/markets/trades"
     assert dict(requests[0].url.params) == {"ticker": ticker, "limit": "1"}
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("is_block_trade", "false"),
+        ("is_block_trade", 1),
+        ("taker_outcome_side", "neither"),
+        ("taker_book_side", "hold"),
+    ],
+)
+async def test_kalshi_trade_page_rejects_malformed_native_trade_flags(field, value):
+    ticker = "KXFRONTIER-EVENT-YES"
+    trade = {
+        "trade_id": "kalshi-trade-invalid-flag",
+        "ticker": ticker,
+        "count_fp": "1",
+        "yes_price_dollars": "0.57",
+        "created_time": "2026-10-27T12:34:56Z",
+        "is_block_trade": False,
+        "taker_outcome_side": "yes",
+        "taker_book_side": "bid",
+    }
+    trade[field] = value
+    body = json.dumps({"trades": [trade], "cursor": ""})
+    transport, _, client = _transport("external-api.kalshi.com", {"/markets/trades": body})
+    adapter = KalshiAdapter(
+        AdapterConfig(
+            enabled=True, live_public_probe_enabled=True, requests_per_second=5, retries=0
+        ),
+        transport=transport,
+    )
+    try:
+        with pytest.raises(
+            AdapterError, match="is_block_trade|taker_outcome_side|taker_book_side"
+        ):
+            await adapter.fetch_trade_page(ticker, limit=1)
+        captures = adapter.take_captures()
+    finally:
+        await client.aclose()
+    assert len(captures) == 1
+    assert captures[0].raw_body == body
     assert "authorization" not in requests[0].headers
 
 

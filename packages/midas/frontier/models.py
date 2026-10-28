@@ -1150,6 +1150,8 @@ class BookSnapshot(FrontierModel):
 
 
 class TradeObservation(FrontierModel):
+    """Normalized print with bounded native execution flags when a venue supplies them."""
+
     schema_version: int = 1
     venue: Venue
     native_market_id: str
@@ -1162,6 +1164,9 @@ class TradeObservation(FrontierModel):
     quote_currency: str | None = None
     quote_currency_identity: SettlementAssetIdentity | None = None
     aggressor_side: str | None = None
+    is_block_trade: StrictBool | None = None
+    taker_outcome_side: Literal["yes", "no"] | None = None
+    taker_book_side: Literal["bid", "ask"] | None = None
     exchange_timestamp_utc: datetime | None = None
     received_at_utc: datetime
     provenance: Provenance
@@ -1175,10 +1180,20 @@ class TradeObservation(FrontierModel):
 
     @model_validator(mode="after")
     def trade_schema_is_supported(self) -> TradeObservation:
-        if self.schema_version not in {1, 2, 3}:
+        if self.schema_version not in {1, 2, 3, 4}:
             raise ValueError("Unsupported trade-observation schema version")
         if self.schema_version >= 2 and self.native_instrument_id is None:
             raise ValueError("Trade-observation schemas v2+ require a native instrument identity")
+        if self.schema_version < 4 and any(
+            value is not None
+            for value in (self.is_block_trade, self.taker_outcome_side, self.taker_book_side)
+        ):
+            raise ValueError("Native trade execution flags require trade-observation schema v4")
+        if self.venue != Venue.KALSHI and any(
+            value is not None
+            for value in (self.is_block_trade, self.taker_outcome_side, self.taker_book_side)
+        ):
+            raise ValueError("Kalshi native trade flags cannot be assigned to another venue")
         if self.quote_currency_identity is not None and (
             self.quote_currency_identity.code != self.quote_currency
         ):

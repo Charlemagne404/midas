@@ -4234,7 +4234,9 @@ async def test_kalshi_public_trade_pages_are_ticker_bound_and_replayable(tmp_pat
         "notional_value_dollars": "1.00",
     }
 
-    def trade_row(trade_id: str, *, timestamp: str) -> dict[str, str | bool]:
+    def trade_row(
+        trade_id: str, *, timestamp: str, is_block_trade: bool
+    ) -> dict[str, str | bool]:
         return {
             "trade_id": trade_id,
             "ticker": ticker,
@@ -4244,15 +4246,23 @@ async def test_kalshi_public_trade_pages_are_ticker_bound_and_replayable(tmp_pat
             "taker_outcome_side": "yes",
             "taker_book_side": "bid",
             "created_time": timestamp,
-            "is_block_trade": False,
+            "is_block_trade": is_block_trade,
         }
 
     page1 = {
-        "trades": [trade_row("kalshi-page-1", timestamp="2026-10-27T12:34:56Z")],
+        "trades": [
+            trade_row(
+                "kalshi-page-1", timestamp="2026-10-27T12:34:56Z", is_block_trade=True
+            )
+        ],
         "cursor": "opaque:kalshi-page-2",
     }
     page2 = {
-        "trades": [trade_row("kalshi-page-2", timestamp="2026-10-27T12:34:57Z")],
+        "trades": [
+            trade_row(
+                "kalshi-page-2", timestamp="2026-10-27T12:34:57Z", is_block_trade=False
+            )
+        ],
         "cursor": "",
     }
     requests: list[httpx.Request] = []
@@ -4361,6 +4371,12 @@ async def test_kalshi_public_trade_pages_are_ticker_bound_and_replayable(tmp_pat
                 "kalshi-page-2",
             }
             assert all(item["aggressor_side"] is None for item in result["items"])
+            trade_types = {
+                item["native_trade_id"]: item["is_block_trade"] for item in result["items"]
+            }
+            assert trade_types == {"kalshi-page-1": True, "kalshi-page-2": False}
+            assert all(item["taker_outcome_side"] == "yes" for item in result["items"])
+            assert all(item["taker_book_side"] == "bid" for item in result["items"])
             stored_page = store.observation(first_payload["observation_id"])
             assert stored_page is not None
             assert json.loads(stored_page["raw"]["raw_body"]) == page1

@@ -10973,3 +10973,26 @@ documentation-only review: it made no venue requests and does not establish
 current reachability, source permission, or live adapter validation. The
 existing source-use holds and disabled-by-default adapter config remain in
 force.
+
+## Kalshi trade classification normalization — 2026-10-28 17:43 UTC
+
+The official Kalshi trade response includes `is_block_trade`,
+`taker_outcome_side`, and `taker_book_side`. The prior normalizer preserved the
+raw response but omitted these values from normalized trade records; its table
+therefore could not show whether a print was a block trade. The v4
+`TradeObservation` now keeps those fields, the Kalshi adapter uses version
+`frontier-kalshi-19`, and the UI labels block status while leaving missing
+classification as “Not reported.” The normalized taker labels remain distinct
+from the general aggressor-side field.
+
+Tests now cover true, false, and missing block flags, malformed values, API
+storage/readback, and the UI display. They are **pending execution**. The
+17:43:55Z host sample showed memory PSI avg10 50.51%, avg60 36.98%, avg300
+15.94% (`full` 45.14%, 32.70%, 14.12%) with `MemAvailable` 9,887,764 KiB and
+Reality at 1,155,682,304 / 1,207,959,552 bytes. No tests were started at that
+sample; implementation verification remains partial.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Kalshi block/taker metadata preservation | PARTIALLY VERIFIED | Versioned fields and UI are implemented; focused adapter, API, and web tests remain pending due host pressure. |
+| Live Kalshi collection | IMPLEMENTED, LIVE VALIDATION PENDING | The documented API shape is mapped; no live request or source-use validation was performed. |

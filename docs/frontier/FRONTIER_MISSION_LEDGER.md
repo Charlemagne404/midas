@@ -10044,3 +10044,34 @@ was no exchange request and no live adapter verification.
 The previously measured host pressure and protected-service readings still
 control the next test decision; no resource-bearing check was run during this
 documentation review.
+
+## Kalshi trade classification preservation — 2026-10-28 17:43 UTC
+
+The current Kalshi trade documentation exposes `is_block_trade` alongside
+`taker_outcome_side` and `taker_book_side`. The existing adapter retained these
+fields only inside immutable raw responses, leaving normalized research rows
+and the trade table unable to distinguish block from non-block prints. Frontier
+now has a v4 trade-observation shape for these bounded native flags; missing
+source values remain null, malformed values fail closed, and the Kalshi adapter
+version is bumped to `frontier-kalshi-19`. The trade table shows the block
+classification and the source taker labels. No exchange request was made.
+
+Adapter tests now cover true, false, missing, and malformed source flags. The
+API persistence test covers both block classifications, and the web unit
+fixture checks the UI labels. These tests have **not been run yet**. At
+17:43:55Z memory PSI avg10 was 50.51%, avg60 36.98%, and avg300 15.94% (`full`
+45.14%, 32.70%, 14.12%). `MemAvailable` was 9,887,764 KiB. Reality and API
+remained active at 1,155,682,304 / 1,207,959,552 and 1,133,170,688 /
+1,610,612,736 bytes. This sample is not suitable for the backend or web test
+batch, so code and test changes remain unverified and will be checkpointed as
+such.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Kalshi trade metadata normalization | PARTIALLY VERIFIED | v4 fields, strict parsing, and adapter version update are implemented; adapter/API tests are authored but not yet run. |
+| Kalshi trade classification UI | PARTIALLY VERIFIED | UI labels source taker fields and block status; unit test is authored but not yet run. |
+| Frontier overall | PARTIALLY VERIFIED | Cross-venue live science, broad regression, resource endurance, protected recovery, and deployment remain open. |
+
+**Next safe action:** remeasure resource pressure and run only the focused
+adapter/API and web tests when the host gate permits; then record exact results
+before treating this change as verified.
