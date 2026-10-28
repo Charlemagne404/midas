@@ -3136,6 +3136,64 @@ def test_source_observation_reads_fail_closed_on_hash_mismatch(tmp_path):
         asyncio.run(http_client.aclose())
 
 
+def test_hash_valid_but_invalid_book_schema_returns_conflict(tmp_path):
+    client, registry, http_client, requests, store = _client(tmp_path)
+    observed_market = market(Venue.POLYMARKET, "invalid-stored-book-schema")
+    instrument = observed_market.instruments[0]
+    snapshot = book(observed_market, instrument.native_instrument_id, "0.40")
+    raw_body = '{"fixture":"hash-valid-invalid-book-schema"}'
+    raw = RawObservation(
+        venue=Venue.POLYMARKET,
+        observation_kind="book_snapshot",
+        request_url="https://fixture.invalid/book",
+        http_status=200,
+        request_started_at_utc=T0,
+        received_at_utc=T0,
+        raw_body=raw_body,
+        raw_sha256=hashlib.sha256(raw_body.encode()).hexdigest(),
+        adapter_version="invalid-book-schema-fixture-v1",
+    )
+    observation_id = store.append_observation(raw, snapshot)
+
+    with sqlite3.connect(store.path) as connection:
+        connection.execute("DROP TRIGGER observations_no_update")
+        row = connection.execute(
+            "SELECT raw_json,normalized_json FROM observations WHERE observation_id=?",
+            (observation_id,),
+        ).fetchone()
+        normalized = json.loads(row[1])
+        normalized["exchange_timestamp_utc"] = (T0 + timedelta(seconds=1)).isoformat()
+        normalized_json = json.dumps(
+            normalized, sort_keys=True, separators=(",", ":"), ensure_ascii=False
+        )
+        row_sha256 = hashlib.sha256(f"{row[0]}\n{normalized_json}".encode()).hexdigest()
+        connection.execute(
+            "UPDATE observations SET normalized_json=?,row_sha256=? WHERE observation_id=?",
+            (normalized_json, row_sha256, observation_id),
+        )
+
+    try:
+        for response in (
+            client.get("/api/frontier/books"),
+            client.post("/api/frontier/replay", json={}),
+        ):
+            assert response.status_code == 409, response.text
+            assert response.json()["detail"] == (
+                "Stored book snapshot violates its normalized schema"
+            )
+        assert requests == []
+        stored = store.observation(observation_id)
+        assert stored is not None
+        assert (
+            stored["normalized"]["exchange_timestamp_utc"]
+            == (T0 + timedelta(seconds=1)).isoformat()
+        )
+    finally:
+        client.close()
+        asyncio.run(registry.aclose())
+        asyncio.run(http_client.aclose())
+
+
 def test_readiness_recognizes_only_completed_hash_verified_arena_evidence(tmp_path):
     from midas.arena.artifacts import atomic_json
     from midas.arena.frontier_replay import (

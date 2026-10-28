@@ -116,7 +116,14 @@ from midas.frontier.relationships import (
 from midas.frontier.replay import deterministic_replay, paired_deterministic_replay
 from midas.frontier.storage import FrontierStore, FrontierStoreError
 from midas.frontier.timeline import MAX_TIMELINE_FRAMES, TimelineSourceStatusEvent
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    ValidationError,
+    field_validator,
+    model_validator,
+)
 
 
 class ProbeRequest(BaseModel):
@@ -1911,7 +1918,7 @@ def router(
         for observation in stored:
             normalized = observation["normalized"]
             if isinstance(normalized, dict) and "native_instrument_id" in normalized:
-                book = BookSnapshot.model_validate(normalized)
+                book = _validate_stored_book(normalized)
                 observation_id = str(observation["observation_id"])
                 book = book.model_copy(
                     update={
@@ -5607,7 +5614,7 @@ def _load_book_records(
         normalized = row.get("normalized")
         if not isinstance(normalized, dict) or "native_instrument_id" not in normalized:
             continue
-        book = BookSnapshot.model_validate(normalized)
+        book = _validate_stored_book(normalized)
         observation_id = str(row["observation_id"])
         book = book.model_copy(
             update={
@@ -5616,6 +5623,16 @@ def _load_book_records(
         )
         values.append((book, observation_id))
     return tuple(values)
+
+
+def _validate_stored_book(normalized: dict[str, Any]) -> BookSnapshot:
+    try:
+        return BookSnapshot.model_validate(normalized)
+    except ValidationError as error:
+        raise HTTPException(
+            status_code=409,
+            detail="Stored book snapshot violates its normalized schema",
+        ) from error
 
 
 async def _load_kalshi_fee_evidence(
