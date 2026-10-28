@@ -1268,6 +1268,9 @@ def test_polymarket_market_metadata_probe_is_bound_and_does_not_replace_listing(
     target = next(item for item in markets if item.native_market_id == native_market_id)
     app = FastAPI()
     app.include_router(router(store, registry))
+    operation = app.openapi()["paths"]["/api/frontier/probe/{venue}/market-metadata"]["post"]
+    assert "saved listing" in operation["description"]
+    assert "event membership" in operation["description"]
     client = TestClient(app)
     try:
         unbound = client.post(

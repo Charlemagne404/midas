@@ -612,6 +612,33 @@ unmeasured. See the
 [Frontier mission ledger](frontier/FRONTIER_MISSION_LEDGER.md) before extending
 the scope or changing its deployment status.
 
+### Frontier verification checkpoint — 2026-10-28 04:07 UTC
+
+The active isolated worktree is `/home/charlie/midas-frontier` on
+`codex/frontier-20261026`; code commit `fb6d800` fixes Polymarket event
+identity. Frontier emits a native event ID only when one explicit numeric
+Gamma event record or a validated parent-event response supplies it. The
+legacy `market:<id>` fallback is not a venue event ID and is no longer emitted
+by Frontier. Historical observations are immutable, so older normalized rows
+can still contain that former local fallback; use their raw payload and
+observation version when interpreting them.
+
+Verification for this checkpoint: `tests/frontier` passed **352/352**;
+Mission Control web tests passed **40/40**; `e2e/frontier.spec.ts` passed
+**6/6** with temporary loopback services; strict mypy passed for the API,
+models, adapter base, Polymarket, and Kalshi modules. TypeScript and Vite
+production build passed with output under `/tmp`, preserving the existing web
+`dist`. The known **544.41 kB** Chart chunk and external output-directory
+advisories remain. The generated OpenAPI description for the bounded detail
+route documents its saved-listing binding and non-inference limits; its focused
+API schema test passes. Reproducible details are in the [Frontier mission ledger](frontier/FRONTIER_MISSION_LEDGER.md)
+and [engineering report](frontier/FRONTIER_ENGINEERING_REPORT.md).
+
+The public-source boundary is unchanged: one bounded Polymarket metadata read
+was recorded, but it did not establish event membership, complete outcomes,
+payoff, settlement, or cross-venue equivalence. Kalshi, Kraken, and Coinbase
+source-use holds remain. Frontier is research-only, isolated, and undeployed.
+
 ## Keep worktrees and runtime data separate
 
 Read [MIDAS_CURRENT_STATE.md](MIDAS_CURRENT_STATE.md) before changing an

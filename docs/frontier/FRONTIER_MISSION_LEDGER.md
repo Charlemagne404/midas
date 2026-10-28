@@ -4575,3 +4575,15 @@ evidence mutation, merge, push, or deployment occurred.
 | Production web build | COMPLETE AND VERIFIED | TypeScript and Vite succeed to a temporary output directory; the existing Chart chunk advisory remains. |
 | Live cross-venue payoff equivalence | BLOCKED | Source-use holds prevent a genuine second-venue probe; no live opportunity or profitability is claimed. |
 | Production deployment | DEFERRED | Branch remains isolated and undeployed. |
+
+### Metadata API description — 2026-10-28 04:09 UTC
+
+The market-metadata endpoint's FastAPI description now states that the native
+ID is bound to the saved listing before egress, the detail is stored
+separately, and event membership, exhaustive outcomes, payoff, settlement,
+current quotes, and opportunities are not inferred. `FRONTIER_OPERATIONS.md`
+and `docs/DEVELOPMENT.md` describe the same boundary. The focused OpenAPI
+contract assertion passes **1/1** in
+`tests/frontier/test_api.py::test_polymarket_market_metadata_probe_is_bound_and_does_not_replace_listing`.
+This is API documentation only; it makes no source request and changes no
+runtime decision path.

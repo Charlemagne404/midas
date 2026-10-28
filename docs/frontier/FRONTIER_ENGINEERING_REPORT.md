@@ -100,6 +100,9 @@ remain: the Chart chunk is 544.41 kB, and Vite notes that the temporary output
 directory is outside the project root and will not be emptied automatically.
 Ruff check/format and `git diff --check` pass. The full web suite remains
 40/40 and Frontier browser suite 6/6 from the 03:57 checkpoint above.
+The generated OpenAPI description for the metadata route now states its
+saved-listing binding and evidence limits; the focused API schema regression
+passes **1/1**. No public request was made for this documentation update.
 
 At `2026-10-28T04:06:58Z`, memory PSI avg10 was **0.08% some / 0.08% full**,
 about **10 GiB** was available, and the shared Arena lock had no listed holder.

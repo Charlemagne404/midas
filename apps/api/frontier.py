@@ -2313,7 +2313,13 @@ def router(
     async def probe_market_metadata(
         venue: Venue, request: MarketMetadataProbeRequest
     ) -> dict[str, Any]:
-        """Capture exact public metadata for a market already present in the bounded catalogue."""
+        """Capture one bounded public detail response for a recorded market.
+
+        The native market ID is bound to the saved listing before egress. The
+        result is stored separately with a link to that listing; it does not
+        replace catalogue context or establish event membership, exhaustive
+        outcomes, payoff, settlement, a current quote, or an opportunity.
+        """
         reject_held_venue(venue)
         adapter = registered_source_adapter(venue)
         if not adapter.capabilities.supports(Capability.MARKET_METADATA):

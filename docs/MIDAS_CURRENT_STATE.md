@@ -33,6 +33,36 @@ in the dated addendum below and in the Frontier engineering report.
 
 ## Frontier development addendum — 2026-10-28
 
+### Latest isolated Frontier checkpoint — 2026-10-28 04:07 UTC
+
+Frontier remains on `/home/charlie/midas-frontier`, branch
+`codex/frontier-20261026`, separate from the `main` services and protected
+Reality worktree. Code commit `fb6d800` now leaves Polymarket event identity
+unknown when Gamma detail omits an explicit event; the original legacy
+normalizer remains unchanged for other MIDAS callers, and historical capture
+rows are not rewritten.
+
+The full Frontier Python regression passes **352/352**, the full Mission
+Control web unit suite **40/40**, and Frontier browser E2E **6/6** against
+temporary local services and data. Strict typing for the API and affected
+adapter models passes, and TypeScript plus the production Vite build completes
+to a temporary directory. The existing Chart chunk advisory remains. The
+bounded detail route's generated OpenAPI description now records its listing
+binding and evidence limits. One
+bounded Polymarket Gamma detail request was captured and hash-checked, but it
+does not establish event membership, exhaustive outcomes, payoff, settlement,
+or an opportunity. No Kalshi, Kraken, or Coinbase live request was made under
+their current source-use holds.
+
+At the post-build sample `2026-10-28T04:06:58Z`, memory PSI avg10 was 0.08%
+some/full with about 10 GiB available and no shared Arena lock holder. No
+protected service, production configuration, historical evidence, or Reality
+recording was changed. Frontier is **PARTIALLY VERIFIED**, research-only,
+isolated, unmerged, and undeployed. See the [Frontier mission ledger](frontier/FRONTIER_MISSION_LEDGER.md),
+[engineering report](frontier/FRONTIER_ENGINEERING_REPORT.md), and
+[source terms review](frontier/SOURCE_DATA_TERMS_REVIEW_2026-10-27.md) for the
+exact measurements and blocker ledger.
+
 ### Hypothetical replay P&L disclosure — 2026-10-28 02:57 UTC
 
 Frontier code commit `3af51c0589c9550ff5bbf9333e24a818e75041c0` labels the

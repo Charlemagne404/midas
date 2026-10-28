@@ -36,6 +36,13 @@ route rejects them before network access. This is still a deliberate public
 source request and remains subject to the source's use gate and operator
 configuration.
 
+For Polymarket, `native_event_id` is populated only from one explicit numeric
+Gamma `events` entry or from a validated parent-event response. A detail object
+without event metadata has no native event ID in Frontier; the legacy MIDAS
+`market:<id>` placeholder is not event evidence. Existing stored observations
+retain their original normalized representation and must not be silently
+rewritten during this correction.
+
 **Source terms are an additional gate.** Kalshi live capture is blocked until
 written research and local-retention authorization is recorded. Kraken Spot
 capture is blocked until its applicable research-use terms are reviewed and any
