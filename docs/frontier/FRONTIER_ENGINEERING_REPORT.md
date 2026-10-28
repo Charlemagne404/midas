@@ -2,6 +2,30 @@
 
 **Report date:** 2026-10-28
 
+## Arena relationship fixture repair — 2026-10-28 12:52 UTC
+
+The Arena discovery fixtures used placeholder source observation IDs. The
+independent same-payoff verifier requires both supplied markets' provenance
+observation IDs to appear in the assertion evidence, so it correctly marked
+the relationship rejected and the snapshot validator refused to accept it.
+The fixture now cites those exact pinned IDs; no verifier or production code
+changed.
+
+The bounded run of `tests/arena/test_frontier_discovery.py`,
+`tests/arena/test_frontier_timeline.py`, and
+`tests/frontier/test_discovery_comparison.py` passed **15/15** in 5.88 seconds
+(6.59 seconds wall), at 198,600 KiB peak RSS, zero swaps, and zero socket
+messages. Generated test artifacts stayed under
+`/tmp/midas-frontier-arena-20261028T1252Z`. The run emitted one existing
+Starlette/httpx `TestClient` deprecation warning. This verifies deterministic
+fixture behavior, not live cross-venue equivalence or production readiness.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Arena Frontier discovery and timeline regressions | COMPLETE AND VERIFIED | 14/14 pass after correcting pinned fixture evidence. |
+| Frontier discovery-scope comparison | COMPLETE AND VERIFIED | 1/1 fixture-based deterministic test passes. |
+| Frontier overall | PARTIALLY VERIFIED | Genuine cross-venue public evidence, protected recovery, broader source validation, and deployment remain open. |
+
 ## Broader isolated browser regression — 2026-10-28 12:48 UTC
 
 The one-worker non-Veritas Playwright suite passes **16 tests**, with two

@@ -59,7 +59,10 @@ def discovery_snapshot(as_of_utc: datetime = AS_OF):
             left.instruments[1].native_instrument_id: right.instruments[1].native_instrument_id,
         },
         external_assertion_id="fixture-arena-discovery-map",
-        evidence_observation_ids=("polymarket-observation", "kalshi-observation"),
+        evidence_observation_ids=(
+            left.provenance.observation_id,
+            right.provenance.observation_id,
+        ),
         asserted_at_utc=T0,
     )
     return make_snapshot(

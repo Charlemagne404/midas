@@ -33,6 +33,17 @@ in the dated addendum below and in the Frontier engineering report.
 
 ## Frontier development addendum — 2026-10-28
 
+### Latest isolated Frontier checkpoint — 2026-10-28 12:52 UTC
+
+The Arena discovery fixture now cites the exact source observation IDs pinned
+to both market records. The strict same-payoff verifier had correctly rejected
+the former placeholder IDs; no production verifier behavior changed. Arena
+discovery, Arena timeline, and Frontier discovery-scope comparison regressions
+pass **15/15**. The bounded run took 5.88 seconds, peaked at 198,600 KiB RSS,
+and used no swap or socket traffic. Frontier remains **PARTIALLY VERIFIED**,
+research-only, isolated, and undeployed; live cross-venue evidence and
+production readiness remain open.
+
 ### Latest isolated Frontier checkpoint — 2026-10-28 12:48 UTC
 
 The broader one-worker non-Veritas browser suite passes **16 tests**; the two

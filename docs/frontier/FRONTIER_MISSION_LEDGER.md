@@ -1,5 +1,30 @@
 # Project Frontier Mission Ledger
 
+## Arena relationship fixture repair — 2026-10-28 12:52 UTC
+
+Four Arena discovery regressions rejected their synthetic cross-venue
+relationship because the fixture supplied placeholder observation IDs instead
+of the exact observation IDs pinned in its Polymarket and Kalshi market
+provenance. The independent payoff verifier correctly rejected that evidence.
+The fixture now cites the pinned IDs; no verifier or production behavior was
+changed.
+
+The Arena discovery and timeline modules plus the Frontier discovery-scope
+comparison passed **15/15** in 5.88 seconds (6.59 seconds wall), with 198,600
+KiB peak RSS, zero swaps, and zero socket messages. All generated artifacts
+were rooted under `/tmp/midas-frontier-arena-20261028T1252Z`. The pre-run
+memory PSI avg10 was 0.00%, and about 10.3 GiB was available. One existing
+Starlette/httpx `TestClient` deprecation warning remains.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Arena Frontier discovery and timeline regressions | COMPLETE AND VERIFIED | 14/14 pass with pinned fixture evidence. |
+| Frontier discovery-scope comparison | COMPLETE AND VERIFIED | 1/1 deterministic comparison test passes. |
+| Frontier overall | PARTIALLY VERIFIED | Genuine cross-venue public evidence, protected recovery, broader source validation, and deployment remain open. |
+
+Next safe action: continue with an isolated acceptance gap. Keep public-source
+use, held-capture, and production boundaries unchanged.
+
 ## Broader isolated browser regression — 2026-10-28 12:48 UTC
 
 The one-worker Playwright run across the non-Veritas browser suite completed
