@@ -1460,3 +1460,15 @@ Frontier remains **PARTIALLY VERIFIED**, isolated, research-only, undeployed,
 and not production-ready. See the [engineering report](frontier/FRONTIER_ENGINEERING_REPORT.md)
 and [mission ledger](frontier/FRONTIER_MISSION_LEDGER.md) for exact evidence and
 continuation steps.
+
+### Discovery-snapshot latest-book correction — 2026-10-28 02:45 UTC
+
+Commit `3f084a99732b0cb610bafe18aacaf13fb54a92c2` ensures the discovery-scope
+Arena snapshot contains one latest locally received book per instrument when
+the observation store holds repeated snapshots. The pinned book retains its
+immutable observation ID. The Frontier API module passes **53/53**; focused
+scope/Arena tests pass **4/4**; no source probe or worker was run. Peak RSS was
+284,280 KiB for the API module and 194,060 KiB for the focused comparison set,
+with zero swaps. This fixes snapshot construction but does not establish quote
+freshness, cross-venue synchronization, supervisor execution, or profitability.
+Project Frontier remains **PARTIALLY VERIFIED**.

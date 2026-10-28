@@ -2,6 +2,26 @@
 
 **Report date:** 2026-10-28
 
+**Latest API snapshot correction — 2026-10-28 02:45 UTC:** Code commit
+`3f084a99732b0cb610bafe18aacaf13fb54a92c2` fixes discovery-scope staging when
+the local store contains repeated snapshots for one instrument. The bounded
+store query is newest-first by local receipt time; staging now keeps exactly
+one newest book per `(venue, market, instrument)` identity, preserves that
+observation ID, and sorts the resulting inputs deterministically. Previously,
+repeated books could be passed into a snapshot whose schema correctly rejects
+duplicate instrument rows, causing a valid local research request to fail.
+
+The regression test stores two different books for one instrument and verifies
+that the latest local receipt and its record ID are pinned. `tests/frontier/test_api.py`
+passes **53/53** (26.37 seconds pytest time, 27.35 seconds process wall,
+284,280 KiB peak RSS, zero swaps and socket messages). The exact discovery
+staging test passes **1/1** (3.17 seconds wall, 202,204 KiB peak RSS), and the
+scope/math plus Arena-artifact selection passes **4/4** (2.43 seconds wall,
+194,060 KiB peak RSS). Ruff, formatting, Python compilation, and diff checks
+pass. No source request or Arena worker ran. This is a focused API correction;
+the full suite, strict mypy, supervisor execution, live data, and production
+status remain as recorded below.
+
 **Current implementation checkpoint — 2026-10-28 02:40 UTC:** Code commit
 `d59c4a8e66af7d525e65b70d90c268d3eaa92cfe` adds bounded discovery-scope
 comparison through Arena. The same pinned local evidence and deterministic

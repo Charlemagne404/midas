@@ -431,3 +431,10 @@ hash-verified result at
 the saved snapshot available for a later explicit retry; do not bypass the
 shared lock or resource gate. No discovery-scope worker has yet completed
 through the Arena supervisor in this checkpoint.
+
+The staging query examines at most 200 recent saved book observations and keeps
+the newest locally received book for each pinned instrument. The resulting
+snapshot retains that record's observation ID. This is a deterministic store
+selection rule; use each book's receipt/exchange timestamps and quality fields
+when interpreting age, and do not describe separate venue observations as
+simultaneous quotes.

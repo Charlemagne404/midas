@@ -3857,3 +3857,33 @@ No source endpoint, protected Reality service, preserved capture, production dat
 | Strict typing / resource sustainability | PARTIALLY VERIFIED | Local mypy findings were fixed, but the scoped retry stopped during high PSI; no sustained worker profile exists. |
 | Genuine cross-venue public finding / deployment | DEFERRED | Source-use restrictions, external semantic evidence, synchronized pricing, supervisor admission, and production gates remain unresolved. |
 | Project Frontier overall | PARTIALLY VERIFIED | This offline discovery comparison extends the existing system but does not close the mission's live evidence or deployment criteria. |
+
+### Latest-book selection for discovery snapshots — 2026-10-28 02:45 UTC
+
+Code commit `3f084a99732b0cb610bafe18aacaf13fb54a92c2` fixes a duplicate-book
+staging defect. `_load_book_records` returns the bounded observations in
+newest-first local-receipt order; the discovery-scope route now selects one
+book per `(venue, native_market_id, native_instrument_id)`, retaining the most
+recent record and its immutable observation ID. Result ordering is deterministic.
+
+The expanded staging API test stores two book observations for the same
+instrument and proves that the newer quote and observation ID enter the pinned
+snapshot. `tests/frontier/test_api.py` passes **53/53** in 26.37 seconds pytest
+time / 27.35 seconds process wall, **284,280 KiB peak RSS**, zero swaps, and zero
+socket messages. The focused scope comparison and Arena-artifact tests pass
+**4/4** in 2.43 seconds at **194,060 KiB peak RSS**. Ruff check/format, Python
+compilation, and `git diff --check` pass. The test uses only a temporary SQLite
+store and monkeypatched job creation; no source request or Arena worker runs.
+
+At `2026-10-28T02:45:28Z`, host memory PSI was avg10 **0.00% some / 0.00% full**
+and avg60 **3.64% some / 3.30% full**, with about **10 GiB** available and
+**332 MiB** swap free. No Arena lock holder was present at that sample. This is
+a dated local observation, not a sustained resource admission. Strict mypy was
+not rerun, the new discovery job has not completed through the Arena supervisor,
+and live or production validation remains out of scope for this checkpoint.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Discovery snapshot book selection | COMPLETE AND VERIFIED | Repeated observations collapse to the most recently received local snapshot per instrument with its exact observation ID; API, full API module, and direct scope/Arena tests pass. This does not establish exchange-time synchronization or freshness. |
+| Arena discovery supervisor and sustained resources | PARTIALLY VERIFIED | Artifact execution and job schema are fixture-tested; actual supervisor admission and representative runtime are pending. |
+| Project Frontier overall | PARTIALLY VERIFIED | The snapshot correction improves local replay integrity; source permission, cross-venue validation, broad science acceptance, and deployment remain open. |

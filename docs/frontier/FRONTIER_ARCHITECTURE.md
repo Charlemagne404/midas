@@ -931,6 +931,15 @@ existing held-source quarantine. Fixture tests execute the artifact code
 directly and exercise the API/UI path; no worker of this job kind has completed
 through the Arena supervisor yet.
 
+Before staging, the API scans at most the latest 200 saved book observations
+and joins them to the selected market/instrument set. Since this is an
+observation log rather than a one-row-per-instrument table, repeated snapshots
+are collapsed by `(venue, native_market_id, native_instrument_id)` in the
+store's newest-first local receipt order. The chosen book's immutable
+observation ID remains in the content-addressed input. This avoids duplicate
+instrument rows and makes the selection reproducible; it does not claim
+exchange-time synchronization or prove the selected book is fresh.
+
 The finite collector is deliberately not exposed as a request handler or
 background service. A caller must provide one configured adapter and one
 Frontier store to `BoundedSourceCollector`; start rechecks source capability,
