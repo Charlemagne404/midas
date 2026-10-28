@@ -2946,3 +2946,13 @@ Frontier/Arena suite was held after a fresh sample showed I/O PSI avg10 at
 **1.27% some / 1.24% full**. No source, capture, protected store, collector,
 or production service was accessed. Frontier remains research-only and
 **PARTIALLY VERIFIED**.
+
+### Frontier missing-review-store guard — 2026-10-28 13:46 UTC
+
+Commit `ccc44ce` prevents a relationship review for an absent target from
+initializing a Frontier SQLite store. Its no-root-creation regression is added
+but not run; strict mypy/Ruff and the updated storage module are pending a fresh
+resource sample. At `13:46:08Z`, memory PSI avg10 was **35.83% some / 28.31%
+full**, CPU PSI **29.19%**, and I/O PSI **0.09% some / 0.08% full**. No source,
+capture, protected store, collector, or production service was accessed.
+Frontier remains research-only and **PARTIALLY VERIFIED**.

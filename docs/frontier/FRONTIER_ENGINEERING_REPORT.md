@@ -9589,3 +9589,15 @@ evidence was accessed.
 | Frontier overall | PARTIALLY VERIFIED | Source-use permissions, held-capture validation, genuine cross-venue equivalence, production recovery, and deployment remain open. |
 
 **Implementation commit:** `2d8e9fb` (`fix(frontier): clear unaudited economics without legs`).
+
+## Missing relationship-review store guard — 2026-10-28 13:46 UTC
+
+Commit `ccc44ce` makes `append_relationship_review` reject a missing target
+before creating the SQLite database or its root directory. A focused regression
+asserts both paths remain absent. The regression and post-change storage module
+have not run, and strict mypy/Ruff have not been rerun: the `13:46:08Z` sample
+showed memory PSI avg10 at **35.83% some / 28.31% full**, CPU PSI at **29.19%**,
+and I/O PSI at **0.09% some / 0.08% full**, despite about 9 GiB available.
+Validation remains pending a fresh resource-admission sample. No source,
+capture, collector, protected store, or production service was accessed.
+Frontier remains **PARTIALLY VERIFIED**.

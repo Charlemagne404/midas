@@ -1,5 +1,32 @@
 # Project Frontier Mission Ledger
 
+## Missing relationship-review store no longer initializes — 2026-10-28 13:46 UTC
+
+**Implementation commit:** `ccc44ce` (`fix(frontier): avoid initializing for missing review targets`).
+
+`FrontierStore.append_relationship_review` requires an existing hypothesis.
+When the database path does not exist, it now returns the same target-not-found
+error before initializing SQLite or creating the store root. A regression
+constructs a valid review and adjudicated relationship and asserts that both
+the database and root remain absent.
+
+The regression and post-change storage module were **not run**, and strict
+mypy/Ruff were not rerun, because at `2026-10-28T13:46:08Z` host memory PSI
+avg10 was **35.83% some / 28.31% full**. CPU PSI was 29.19%, I/O PSI 0.09%
+some / 0.08% full, and about 9 GiB was available. No source, capture,
+collector, protected store, or production service was accessed. This commit
+has a pending focused regression and static check.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Absent-store relationship-review guard | IMPLEMENTED, VALIDATION PENDING | Code and a no-root-creation regression are committed; neither test nor static checks ran under high memory PSI. |
+| FrontierStore module after this change | PARTIALLY VERIFIED | Prior 28/28 result predates `ccc44ce`; rerun the exact storage module after resource admission. |
+| Frontier project acceptance | PARTIALLY VERIFIED | Source-use permissions, held-capture validation, live cross-venue evidence, broad regression, production recovery, and deployment remain open. |
+
+**Next safe action:** wait for fresh memory PSI below the test-admission gate,
+then run the focused missing-store case, strict mypy, and storage module. Keep
+the public-probe directory untouched.
+
 ## Independent audit clears economics without position legs — 2026-10-28 13:42 UTC
 
 **Implementation commit:** `2d8e9fb` (`fix(frontier): clear unaudited economics without legs`).
