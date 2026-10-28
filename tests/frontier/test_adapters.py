@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from datetime import timedelta
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
 
@@ -447,6 +447,128 @@ async def test_polymarket_unknown_fee_exponent_is_not_promoted_to_verified():
         await client.aclose()
     assert markets[0].fees.status == FeeStatus.UNKNOWN
     assert markets[0].fees.rate is None
+
+
+@pytest.mark.asyncio
+async def test_polymarket_price_history_preserves_points_without_candle_inference():
+    end_ts = int(datetime.now(UTC).timestamp()) - 60
+    start_ts = end_ts - 7 * 24 * 60 * 60
+    body = json.dumps(
+        {
+            "history": [
+                {"t": start_ts + 60.0, "p": "0.425000000000000001"},
+                {"t": start_ts + 86_400, "p": "0.51"},
+            ]
+        }
+    )
+    transport, requests, client = _transport("clob.polymarket.com", {"/prices-history": body})
+    adapter = PolymarketAdapter(
+        AdapterConfig(
+            enabled=True, live_public_probe_enabled=True, requests_per_second=5, retries=0
+        ),
+        transport=transport,
+    )
+    try:
+        series = await adapter.fetch_price_history(
+            "123456789",
+            interval="1d",
+            fidelity_minutes=60,
+            start_ts=start_ts,
+            end_ts=end_ts,
+        )
+    finally:
+        await client.aclose()
+
+    assert adapter.capabilities.supports(Capability.PRICE_HISTORY)
+    assert not adapter.capabilities.supports(Capability.HISTORICAL_CANDLES)
+    assert series.native_instrument_id == "123456789"
+    assert [point.price for point in series.points] == [
+        Decimal("0.425000000000000001"),
+        Decimal("0.51"),
+    ]
+    assert series.points[0].timestamp_utc == datetime.fromtimestamp(start_ts + 60, UTC)
+    assert series.source_price_semantics == "source_reported_price_sample"
+    assert "OHLC and volume are not supplied or inferred" in series.source_limit_note
+    assert len(requests) == 1
+    assert requests[0].method == "GET"
+    assert requests[0].url.path == "/prices-history"
+    assert dict(requests[0].url.params) == {
+        "market": "123456789",
+        "interval": "1d",
+        "fidelity": "60",
+        "startTs": str(start_ts),
+        "endTs": str(end_ts),
+    }
+    assert "authorization" not in requests[0].headers
+
+
+@pytest.mark.asyncio
+async def test_polymarket_price_history_replays_a_genuine_recorded_public_response():
+    metadata = json.loads(
+        _captured("tests/fixtures/polymarket_price_history_live_20261028.meta.json")
+    )
+    body = _captured("tests/fixtures/polymarket_price_history_live_20261028.json")
+    transport, requests, client = _transport("clob.polymarket.com", {"/prices-history": body})
+    adapter = PolymarketAdapter(
+        AdapterConfig(
+            enabled=True, live_public_probe_enabled=True, requests_per_second=5, retries=0
+        ),
+        transport=transport,
+    )
+    try:
+        query = metadata["query"]
+        series = await adapter.fetch_price_history(
+            metadata["native_instrument_id"],
+            interval=query["interval"],
+            fidelity_minutes=query["fidelity"],
+            start_ts=query["startTs"],
+            end_ts=query["endTs"],
+        )
+    finally:
+        await client.aclose()
+
+    assert metadata["capture_kind"] == "genuine_public_source_response"
+    assert metadata["content_matches_initial_capture"] is True
+    assert metadata["raw_sha256"] == series.provenance.raw_sha256
+    assert metadata["point_count"] == len(series.points) == 79
+    assert metadata["response_bytes"] == len(body.encode("utf-8"))
+    assert series.native_instrument_id == metadata["native_instrument_id"]
+    assert series.points[0].timestamp_utc == datetime.fromtimestamp(1785283236, UTC)
+    assert series.points[-1].timestamp_utc == datetime.fromtimestamp(1785564025, UTC)
+    assert all(request.method == "GET" for request in requests)
+    assert len(requests) == 1
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "history",
+    [
+        [{"t": 20, "p": "0.5"}, {"t": 10, "p": "0.4"}],
+        [{"t": 10, "p": "1.01"}],
+        [{"t": True, "p": "0.4"}],
+    ],
+)
+async def test_polymarket_price_history_rejects_unordered_invalid_samples(history):
+    transport, _, client = _transport(
+        "clob.polymarket.com", {"/prices-history": json.dumps({"history": history})}
+    )
+    adapter = PolymarketAdapter(
+        AdapterConfig(
+            enabled=True, live_public_probe_enabled=True, requests_per_second=5, retries=0
+        ),
+        transport=transport,
+    )
+    try:
+        with pytest.raises(AdapterError, match="timestamps must be ordered"):
+            await adapter.fetch_price_history(
+                "123",
+                interval="1d",
+                fidelity_minutes=60,
+                start_ts=1,
+                end_ts=30,
+            )
+    finally:
+        await client.aclose()
 
 
 @pytest.mark.asyncio

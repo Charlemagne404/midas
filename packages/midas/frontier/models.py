@@ -123,6 +123,7 @@ class Capability(StrEnum):
     BOOK_UPDATES = "book_updates"
     PUBLIC_TRADES = "public_trades"
     PAGINATED_PUBLIC_TRADES = "paginated_public_trades"
+    PRICE_HISTORY = "price_history"
     HISTORICAL_CANDLES = "historical_candles"
     FEE_METADATA = "fee_metadata"
     FEE_SCHEDULE = "fee_schedule"
@@ -1130,6 +1131,53 @@ class CandleSeries(FrontierModel):
     candles: tuple[HistoricalCandle, ...]
     source_limit_note: str
     provenance: Provenance
+
+
+class HistoricalPricePoint(FrontierModel):
+    """A source-reported price sample; it is not a quote or an OHLC candle."""
+
+    timestamp_utc: datetime
+    price: SettlementScalar
+
+    @field_validator("timestamp_utc")
+    @classmethod
+    def price_time_is_utc(cls, value: datetime) -> datetime:
+        if value.tzinfo is None or value.utcoffset() is None:
+            raise ValueError("Price-history time must include a timezone")
+        if value.microsecond:
+            raise ValueError("Price-history timestamps must have whole-second precision")
+        return value.astimezone(UTC)
+
+
+class PriceHistorySeries(FrontierModel):
+    schema_version: int = 1
+    venue: Venue
+    native_instrument_id: str = Field(min_length=1, max_length=256)
+    interval: Literal["1d", "1w"]
+    fidelity_minutes: Annotated[int, Field(strict=True, ge=1, le=1440)]
+    requested_start_ts: Annotated[int, Field(strict=True, ge=0)]
+    requested_end_ts: Annotated[int, Field(strict=True, ge=1)]
+    bound_market_observation_id: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
+    points: tuple[HistoricalPricePoint, ...] = Field(max_length=1500)
+    source_price_semantics: Literal["source_reported_price_sample"] = "source_reported_price_sample"
+    source_limit_note: str
+    provenance: Provenance
+
+    @model_validator(mode="after")
+    def price_history_is_bounded_and_ordered(self) -> PriceHistorySeries:
+        if self.requested_end_ts <= self.requested_start_ts:
+            raise ValueError("Price-history end time must follow its start time")
+        if self.requested_end_ts - self.requested_start_ts > 7 * 24 * 60 * 60:
+            raise ValueError("Price-history request cannot exceed 7 days")
+        timestamps = tuple(int(point.timestamp_utc.timestamp()) for point in self.points)
+        if any(
+            timestamp < self.requested_start_ts or timestamp > self.requested_end_ts
+            for timestamp in timestamps
+        ):
+            raise ValueError("Price-history points must fall within the requested time range")
+        if tuple(sorted(set(timestamps))) != timestamps:
+            raise ValueError("Price-history points must be strictly time-ordered and unique")
+        return self
 
 
 class RawObservation(FrontierModel):

@@ -15,6 +15,7 @@ from midas.frontier.models import (
     CapabilityDeclaration,
     FrontierMarket,
     MarketBatch,
+    PriceHistorySeries,
     RawObservation,
     SourceHealth,
     SourceState,
@@ -119,6 +120,21 @@ class SingleMarketMetadataAdapter(Protocol):
     async def fetch_market_metadata(self, native_market_id: str) -> FrontierMarket: ...
 
     def market_metadata_request_url(self, native_market_id: str) -> str: ...
+
+
+@runtime_checkable
+class PriceHistoryAdapter(Protocol):
+    """Optional extension for source-specific historical price samples."""
+
+    async def fetch_price_history(
+        self,
+        native_instrument_id: str,
+        *,
+        interval: Literal["1d", "1w"],
+        fidelity_minutes: int,
+        start_ts: int,
+        end_ts: int,
+    ) -> PriceHistorySeries: ...
 
 
 class BaseReadOnlyAdapter:

@@ -1,6 +1,6 @@
 """Public read-only venue adapters."""
 
-from midas.frontier.adapters.base import ExchangeAdapter
+from midas.frontier.adapters.base import ExchangeAdapter, PriceHistoryAdapter
 from midas.frontier.adapters.coinbase import CoinbaseSpotAdapter, CoinbaseSpotConfig
 from midas.frontier.adapters.kalshi import KalshiAdapter
 from midas.frontier.adapters.kraken import KrakenSpotAdapter
@@ -13,4 +13,5 @@ __all__ = [
     "KalshiAdapter",
     "KrakenSpotAdapter",
     "PolymarketAdapter",
+    "PriceHistoryAdapter",
 ]

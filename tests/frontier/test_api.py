@@ -3236,6 +3236,126 @@ def test_raw_observation_route_returns_hash_verified_public_capture(tmp_path):
         asyncio.run(http_client.aclose())
 
 
+def test_polymarket_price_history_probe_is_bound_and_replayable(tmp_path):
+    requests: list[httpx.Request] = []
+    end_ts = int(datetime.now(UTC).timestamp()) - 60
+    start_ts = end_ts - 7 * 24 * 60 * 60
+    sample_ts = start_ts + 86_400
+    history_body = json.dumps({"history": [{"t": sample_ts, "p": "0.42"}]})
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        return httpx.Response(200, text=history_body, request=request)
+
+    http_client = httpx.AsyncClient(transport=httpx.MockTransport(handler))
+    config = AdapterConfig(
+        enabled=True, live_public_probe_enabled=True, requests_per_second=5, retries=0
+    )
+    adapter = PolymarketAdapter(
+        config,
+        transport=PublicReadTransport({"clob.polymarket.com"}, config, client=http_client),
+    )
+    registry = AdapterRegistry((adapter,))
+    store = FrontierStore(tmp_path / "frontier")
+    source_market = market(Venue.POLYMARKET, "PM-HISTORY")
+    source_market = source_market.model_copy(
+        update={
+            "instruments": (
+                source_market.instruments[0].model_copy(
+                    update={"native_instrument_id": "123456789"}
+                ),
+                source_market.instruments[1].model_copy(
+                    update={"native_instrument_id": "987654321"}
+                ),
+            )
+        }
+    )
+    listing_body = '{"recorded_fixture":"polymarket market listing"}'
+    listing_raw = RawObservation(
+        venue=Venue.POLYMARKET,
+        observation_kind="market_listing",
+        request_url="https://gamma-api.polymarket.com/markets?limit=1",
+        http_status=200,
+        request_started_at_utc=T0,
+        received_at_utc=T0,
+        raw_body=listing_body,
+        raw_sha256=hashlib.sha256(listing_body.encode()).hexdigest(),
+        adapter_version="fixture-polymarket-listing-v1",
+    )
+    listing_id = store.append_observation(
+        listing_raw, MarketBatch(venue=Venue.POLYMARKET, markets=(source_market,))
+    )
+    app = FastAPI()
+    app.include_router(router(store, registry))
+    client = TestClient(app)
+    try:
+        response = client.post(
+            "/api/frontier/probe/polymarket/price-history",
+            json={
+                "native_instrument_id": "123456789",
+                "interval": "1d",
+                "fidelity_minutes": 60,
+                "start_ts": start_ts,
+                "end_ts": end_ts,
+            },
+        )
+        assert response.status_code == 200, response.text
+        result = response.json()
+        assert result["bound_market_id"] == source_market.canonical_id
+        assert result["bound_market_observation_id"] == listing_id
+        assert result["series"]["bound_market_observation_id"] == listing_id
+        assert result["point_count"] == 1
+        assert result["series"]["source_price_semantics"] == "source_reported_price_sample"
+        assert result["request_count_delta"] == 1
+        assert result["network_calls_bounded_by"] == 1
+        assert "OHLC candles" in result["note"]
+        assert len(requests) == 1
+        assert requests[0].method == "GET"
+        assert requests[0].url.path == "/prices-history"
+        assert requests[0].url.params["market"] == "123456789"
+        assert "authorization" not in requests[0].headers
+
+        stored = store.observation(result["observation_id"])
+        assert stored is not None
+        assert stored["raw_sha256"] == result["raw_sha256"]
+        assert stored["raw"]["observation_kind"] == "historical_price_points"
+
+        recorded = client.get(
+            "/api/frontier/price-history",
+            params={"venue": "polymarket", "native_instrument_id": "123456789"},
+        )
+        assert recorded.status_code == 200
+        assert recorded.json()["returned"] == 1
+        assert recorded.json()["items"][0]["observation_id"] == result["observation_id"]
+        assert recorded.json()["items"][0]["series"]["points"][0]["price"] == "0.42"
+
+        unknown = client.post(
+            "/api/frontier/probe/polymarket/price-history",
+            json={
+                "native_instrument_id": "555",
+                "start_ts": start_ts,
+                "end_ts": end_ts,
+            },
+        )
+        assert unknown.status_code == 404
+        assert len(requests) == 1
+
+        oversized = client.post(
+            "/api/frontier/probe/polymarket/price-history",
+            json={
+                "native_instrument_id": "123456789",
+                "start_ts": end_ts - 8 * 24 * 60 * 60,
+                "end_ts": end_ts,
+            },
+        )
+        assert oversized.status_code == 422
+        assert len(requests) == 1
+    finally:
+        client.close()
+        asyncio.run(registry.aclose())
+        asyncio.run(http_client.aclose())
+
+
 def test_kraken_instrument_metadata_is_visible_as_a_market(tmp_path):
     client, registry, http_client, requests, store = _client(tmp_path)
     seed = market(Venue.KRAKEN, "XBTUSD")

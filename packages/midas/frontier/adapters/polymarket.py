@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from datetime import UTC, datetime
 from decimal import Decimal
-from typing import Any
+from typing import Any, Literal
 
 from midas.core.models import Fee as LegacyFee
 from midas.core.models import Market as LegacyMarket
@@ -30,9 +30,11 @@ from midas.frontier.models import (
     FeeSchedule,
     FeeStatus,
     FrontierMarket,
+    HistoricalPricePoint,
     MarketInstrument,
     MarketKind,
     PayoffSpec,
+    PriceHistorySeries,
     QuantityUnit,
     ResolutionSpec,
     SettlementAssetIdentity,
@@ -46,13 +48,14 @@ from midas.frontier.models import (
 from midas.market_data.polymarket import normalize_market
 
 D = Decimal
-ADAPTER_VERSION = "frontier-polymarket-6"
+ADAPTER_VERSION = "frontier-polymarket-7"
 GAMMA = "https://gamma-api.polymarket.com"
 CLOB = "https://clob.polymarket.com"
 CLOB_V2 = "https://clob-v2.polymarket.com"
 DATA = "https://data-api.polymarket.com"
 POLY_FEES_DOC = "https://docs.polymarket.com/trading/fees"
 POLY_DATA_DOC = "https://docs.polymarket.com/developers/CLOB/introduction"
+POLY_PRICE_HISTORY_DOC = "https://docs.polymarket.com/api-reference/markets/get-prices-history"
 POLY_PROTOCOL_DOC = "https://github.com/Polymarket/rs-clob-client-v2/blob/main/README.md"
 POLY_V2_ASSETS_DOC = "https://github.com/Polymarket/polymarket-v2-external/blob/main/README.md"
 POLY_V2_PUSD_ADDRESS = "0xC011a7E12a19f7B1f670d46F03B03f3342E82DFB"
@@ -113,6 +116,10 @@ class PolymarketAdapter(BaseReadOnlyAdapter):
                 "Public condition-filtered Data API v2 trades with opaque keyset cursors; each page is one bounded GET",
                 "https://data-api.polymarket.com/v2/docs",
             ),
+            Capability.PRICE_HISTORY: (
+                "One explicit public CLOB token price series over at most 7 days, limited to 1d/1w and 1500 points; no OHLC or volume is inferred",
+                POLY_PRICE_HISTORY_DOC,
+            ),
             Capability.FEE_SCHEDULE: (
                 "Market fee metadata is accepted only through the existing strict exponent-one validator",
                 POLY_FEES_DOC,
@@ -144,8 +151,8 @@ class PolymarketAdapter(BaseReadOnlyAdapter):
                 None,
             ),
             Capability.HISTORICAL_CANDLES: (
-                "Historical price series are not normalized in adapter v1",
-                POLY_DATA_DOC,
+                "The public CLOB response contains price points and does not provide OHLC candle fields",
+                POLY_PRICE_HISTORY_DOC,
             ),
         },
     )
@@ -711,6 +718,128 @@ class PolymarketAdapter(BaseReadOnlyAdapter):
             source_cursor=cursor,
             source_next_cursor=next_cursor,
             has_more=has_more,
+        )
+
+    async def fetch_price_history(
+        self,
+        native_instrument_id: str,
+        *,
+        interval: Literal["1d", "1w"],
+        fidelity_minutes: int,
+        start_ts: int,
+        end_ts: int,
+    ) -> PriceHistorySeries:
+        """Fetch one time-bounded source price series for a saved outcome token."""
+        self._require(Capability.PRICE_HISTORY)
+        if not re.fullmatch(r"[0-9]{1,256}", native_instrument_id):
+            raise AdapterError("INVALID_INSTRUMENT_ID", "Polymarket token ID must be numeric")
+        if interval not in {"1d", "1w"}:
+            raise AdapterError(
+                "INVALID_INTERVAL", "Price history supports bounded 1d or 1w intervals"
+            )
+        if type(fidelity_minutes) is not int or not 1 <= fidelity_minutes <= 1440:
+            raise AdapterError(
+                "INVALID_FIDELITY", "Fidelity must be an integer from 1 to 1440 minutes"
+            )
+        if (
+            type(start_ts) is not int
+            or type(end_ts) is not int
+            or start_ts < 0
+            or end_ts <= start_ts
+            or end_ts - start_ts > 7 * 24 * 60 * 60
+            or end_ts > int(datetime.now(UTC).timestamp())
+        ):
+            raise AdapterError(
+                "INVALID_TIME_RANGE", "Price-history range must be past and at most 7 days"
+            )
+
+        response = await self.transport.get_json(
+            f"{CLOB}/prices-history",
+            {
+                "market": native_instrument_id,
+                "interval": interval,
+                "fidelity": fidelity_minutes,
+                "startTs": start_ts,
+                "endTs": end_ts,
+            },
+        )
+        self._capture_response(response, "historical_price_points")
+        payload = response.payload
+        rows = payload.get("history") if isinstance(payload, dict) else None
+        if not isinstance(rows, list) or len(rows) > 1500:
+            raise AdapterError(
+                "INVALID_PRICE_HISTORY",
+                "CLOB price-history response is malformed or exceeds 1500 points",
+            )
+
+        points: list[HistoricalPricePoint] = []
+        previous_timestamp = -1
+        for row in rows:
+            if not isinstance(row, dict):
+                raise AdapterError(
+                    "INVALID_PRICE_HISTORY", "CLOB price-history point must be an object"
+                )
+            timestamp_raw = row.get("t")
+            timestamp = (
+                timestamp_raw
+                if type(timestamp_raw) is int
+                else int(timestamp_raw)
+                if isinstance(timestamp_raw, Decimal)
+                and timestamp_raw.is_finite()
+                and timestamp_raw == timestamp_raw.to_integral_value()
+                else None
+            )
+            price = parse_decimal(row.get("p"))
+            if (
+                timestamp is None
+                or timestamp < start_ts
+                or timestamp > end_ts
+                or timestamp <= previous_timestamp
+                or price is None
+                or not D(0) <= price <= D(1)
+            ):
+                raise AdapterError(
+                    "INVALID_PRICE_HISTORY",
+                    "CLOB price-history timestamps must be ordered within range and prices within [0, 1]",
+                )
+            try:
+                timestamp_utc = datetime.fromtimestamp(timestamp, UTC)
+            except (OverflowError, OSError, ValueError) as error:
+                raise AdapterError(
+                    "INVALID_PRICE_HISTORY", "CLOB history timestamp is invalid"
+                ) from error
+            try:
+                points.append(HistoricalPricePoint(timestamp_utc=timestamp_utc, price=price))
+            except ValueError as error:
+                raise AdapterError(
+                    "INVALID_PRICE_HISTORY", "CLOB price sample failed exact Decimal validation"
+                ) from error
+            previous_timestamp = timestamp
+
+        return PriceHistorySeries(
+            venue=self.venue,
+            native_instrument_id=native_instrument_id,
+            interval=interval,
+            fidelity_minutes=fidelity_minutes,
+            requested_start_ts=start_ts,
+            requested_end_ts=end_ts,
+            points=tuple(points),
+            source_limit_note=(
+                f"One explicit time-bounded CLOB response, capped at 1500 points and by the "
+                f"configured {self.config.max_response_bytes}-byte response limit. Samples are source-reported prices, not "
+                "executable quotes; OHLC and volume are not supplied or inferred. A 7-day request "
+                "is the current research bound after this source returned HTTP 400 for 30-day "
+                "and 36-day windows; the published API reference does not specify a maximum range."
+            ),
+            provenance=provenance(
+                self.venue,
+                ADAPTER_VERSION,
+                response,
+                "historical_price_points",
+                f"{native_instrument_id}:{interval}:{fidelity_minutes}:{start_ts}:{end_ts}",
+                source_schema_version="CLOB GET /prices-history",
+                exchange_timestamp_semantics="CLOB historical sample timestamp in Unix seconds",
+            ),
         )
 
 

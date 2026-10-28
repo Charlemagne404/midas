@@ -351,6 +351,46 @@ type TradePageCaptureResult = {
   hypothetical_only: true;
   note: string;
 };
+type PriceHistoryPoint = { timestamp_utc: string; price: string };
+type PriceHistorySeries = {
+  venue: Venue;
+  native_instrument_id: string;
+  interval: '1d' | '1w';
+  fidelity_minutes: number;
+  requested_start_ts: number;
+  requested_end_ts: number;
+  bound_market_observation_id: string | null;
+  points: PriceHistoryPoint[];
+  source_price_semantics: 'source_reported_price_sample';
+  source_limit_note: string;
+  provenance: { observation_id: string; raw_sha256: string };
+};
+type PriceHistoryResponse = {
+  items: {
+    series: PriceHistorySeries;
+    observation_id: string;
+    raw_sha256: string;
+    received_at_utc: string;
+  }[];
+  venue: Venue;
+  native_instrument_id: string | null;
+  returned: number;
+};
+type PriceHistoryCaptureResult = {
+  venue: Venue;
+  native_instrument_id: string;
+  bound_market_id: string;
+  bound_market_observation_id: string;
+  series: PriceHistorySeries;
+  point_count: number;
+  observation_id: string;
+  raw_sha256: string;
+  source_state: string;
+  request_count_delta: number;
+  network_calls_bounded_by: number;
+  hypothetical_only: true;
+  note: string;
+};
 type MarketMetadataCaptureResult = {
   venue: 'polymarket' | 'kalshi';
   market_id: string;
@@ -2179,6 +2219,14 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
           (capability) => capability.capability === 'market_metadata' && capability.supported,
         ),
     );
+  const polymarketPriceHistoryProbeEnabled = (sources.data?.items ?? []).some(
+    (source) =>
+      source.venue === 'polymarket' &&
+      source.public_probe_enabled &&
+      source.capabilities.some(
+        (capability) => capability.capability === 'price_history' && capability.supported,
+      ),
+  );
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: ['frontier'] });
   const jointStateReplay = useMutation({
@@ -2553,6 +2601,26 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
       api<MarketMetadataCaptureResult>(`/frontier/probe/${venue}/market-metadata`, {
         method: 'POST',
         body: JSON.stringify({ market_id: marketId }),
+      }),
+    onSuccess: refresh,
+  });
+  const capturePolymarketPriceHistory = useMutation({
+    mutationFn: (input: {
+      nativeInstrumentId: string;
+      interval: '1d' | '1w';
+      fidelityMinutes: number;
+      startTs: number;
+      endTs: number;
+    }) =>
+      api<PriceHistoryCaptureResult>('/frontier/probe/polymarket/price-history', {
+        method: 'POST',
+        body: JSON.stringify({
+          native_instrument_id: input.nativeInstrumentId,
+          interval: input.interval,
+          fidelity_minutes: input.fidelityMinutes,
+          start_ts: input.startTs,
+          end_ts: input.endTs,
+        }),
       }),
     onSuccess: refresh,
   });
@@ -3326,6 +3394,8 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
               booksLoading={books.isLoading}
               marketMetadataProbe={captureMarketMetadata}
               marketMetadataProbeEnabled={marketMetadataProbeEnabledFor(selectedMarket.venue)}
+              priceHistoryProbe={capturePolymarketPriceHistory}
+              priceHistoryProbeEnabled={polymarketPriceHistoryProbeEnabled}
               eventMarketsProbe={captureEventMarketGroup}
               eventMarketsProbeEnabled={eventMarketGroupsProbeEnabledFor(selectedMarket.venue)}
               mveComponentProbe={captureKalshiMveComponentMarket}
@@ -4848,12 +4918,223 @@ function SourceRow({ source, markets }: { source: Source; markets: number | null
   );
 }
 
+function PolymarketPriceHistoryPanel({
+  market,
+  probe,
+  probeEnabled,
+}: {
+  market: Market;
+  probe: UseMutationResult<
+    PriceHistoryCaptureResult,
+    Error,
+    {
+      nativeInstrumentId: string;
+      interval: '1d' | '1w';
+      fidelityMinutes: number;
+      startTs: number;
+      endTs: number;
+    },
+    unknown
+  >;
+  probeEnabled: boolean;
+}) {
+  const [instrumentId, setInstrumentId] = useState(
+    market.instruments[0]?.native_instrument_id ?? '',
+  );
+  const [interval, setInterval] = useState<'1d' | '1w'>('1d');
+  const [days, setDays] = useState('7');
+  const storedHistory = useQuery({
+    queryKey: ['frontier', 'price-history', instrumentId],
+    queryFn: () =>
+      api<PriceHistoryResponse>(
+        `/frontier/price-history?venue=polymarket&native_instrument_id=${encodeURIComponent(instrumentId)}&limit=1`,
+      ),
+    enabled: Boolean(instrumentId),
+  });
+  const isCurrentProbe =
+    probe.isSuccess &&
+    probe.variables?.nativeInstrumentId === instrumentId &&
+    probe.variables.interval === interval;
+  const series = isCurrentProbe
+    ? probe.data.series
+    : (storedHistory.data?.items[0]?.series ?? null);
+  const observationId = isCurrentProbe
+    ? probe.data.observation_id
+    : (storedHistory.data?.items[0]?.observation_id ?? null);
+  const rawSha256 = isCurrentProbe
+    ? probe.data.raw_sha256
+    : (storedHistory.data?.items[0]?.raw_sha256 ?? null);
+  const endTs = Math.floor(Date.now() / 1000) - 60;
+  const startTs = endTs - Number(days) * 24 * 60 * 60;
+  const points = series?.points ?? [];
+  const rangeSeconds = Math.max(
+    1,
+    (series?.requested_end_ts ?? endTs) - (series?.requested_start_ts ?? startTs),
+  );
+  const lastPoints = points.slice(-8);
+
+  return (
+    <section className="fr-price-history-panel" aria-label="Polymarket historical price samples">
+      <div className="fr-price-history-heading">
+        <div>
+          <span className="fr-kicker">SOURCE REPORTED SERIES</span>
+          <h4>Historical price points</h4>
+          <p>
+            One explicit CLOB request for this recorded outcome token. Samples are not executable
+            quotes; the source does not supply OHLC or volume here.
+          </p>
+        </div>
+        <span className="fr-count">{points.length} points</span>
+      </div>
+      <div className="fr-price-history-controls">
+        <label>
+          Outcome token
+          <select
+            aria-label="Historical price outcome token"
+            value={instrumentId}
+            onChange={(event) => setInstrumentId(event.target.value)}
+          >
+            {market.instruments.map((instrument) => (
+              <option key={instrument.native_instrument_id} value={instrument.native_instrument_id}>
+                {instrument.label} · {instrument.native_instrument_id}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          CLOB interval
+          <select
+            aria-label="Historical price interval"
+            value={interval}
+            onChange={(event) => setInterval(event.target.value as '1d' | '1w')}
+          >
+            <option value="1d">1d</option>
+            <option value="1w">1w</option>
+          </select>
+        </label>
+        <label>
+          Lookback
+          <select
+            aria-label="Historical price lookback"
+            value={days}
+            onChange={(event) => setDays(event.target.value)}
+          >
+            <option value="1">1 day</option>
+            <option value="3">3 days</option>
+            <option value="7">7 days</option>
+          </select>
+        </label>
+        <button
+          className="fr-inspect-button"
+          disabled={!instrumentId || !probeEnabled || probe.isPending}
+          onClick={() =>
+            probe.mutate({
+              nativeInstrumentId: instrumentId,
+              interval,
+              fidelityMinutes: 60,
+              startTs,
+              endTs,
+            })
+          }
+        >
+          {probe.isPending
+            ? 'Capturing…'
+            : probeEnabled
+              ? 'Capture one series'
+              : 'Public probe disabled'}
+        </button>
+      </div>
+      <p className="fr-price-history-note">
+        {probeEnabled
+          ? 'Capture runs only after this button is pressed. Each request is capped at 7 days and 1500 returned points.'
+          : 'Historical price capture is disabled by the Polymarket source configuration.'}{' '}
+        Stored series below are read from Frontier’s local evidence store; page load does not
+        contact Polymarket.
+      </p>
+      {probe.isError && probe.variables?.nativeInstrumentId === instrumentId && (
+        <ProbeFailureEvidence error={probe.error} />
+      )}
+      {storedHistory.isLoading ? (
+        <div className="fr-loading">Loading saved price history…</div>
+      ) : storedHistory.isError ? (
+        <EmptyState title="Saved history query failed" detail={storedHistory.error.message} />
+      ) : points.length ? (
+        <div className="fr-price-history-result" role="status">
+          <figure>
+            <svg
+              viewBox="0 0 600 170"
+              role="img"
+              aria-label={`${points.length} source-reported price samples for ${instrumentId}; vertical scale is 0 to 1`}
+              preserveAspectRatio="none"
+            >
+              <line x1="12" y1="10" x2="12" y2="154" />
+              <line x1="12" y1="154" x2="588" y2="154" />
+              {points.map((point) => {
+                const timestamp = Math.floor(Date.parse(point.timestamp_utc) / 1000);
+                const x =
+                  12 + ((timestamp - (series?.requested_start_ts ?? startTs)) / rangeSeconds) * 576;
+                const y = 154 - Number(point.price) * 144;
+                return (
+                  <circle key={`${point.timestamp_utc}:${point.price}`} cx={x} cy={y} r="2.5">
+                    <title>
+                      {time(point.timestamp_utc)} · source price {point.price}
+                    </title>
+                  </circle>
+                );
+              })}
+            </svg>
+            <figcaption>
+              Each dot is one returned sample. The horizontal axis spans the requested time window;
+              the vertical axis is the reported price from 0 to 1. No line is interpolated between
+              observations.
+            </figcaption>
+          </figure>
+          <div className="fr-price-history-meta">
+            <span>
+              CLOB interval {series?.interval} · fidelity {series?.fidelity_minutes} min
+            </span>
+            <span>Evidence {observationId ? shortHash(observationId) : 'unavailable'}</span>
+            {rawSha256 && <span>Raw SHA-256 {shortHash(rawSha256)}</span>}
+            {observationId && <EvidenceDisclosure observationId={observationId} />}
+          </div>
+          <div className="fr-table-wrap">
+            <table className="fr-table">
+              <thead>
+                <tr>
+                  <th>Sample time</th>
+                  <th>Source reported price</th>
+                </tr>
+              </thead>
+              <tbody>
+                {lastPoints.map((point) => (
+                  <tr key={`${point.timestamp_utc}:${point.price}`}>
+                    <td>{time(point.timestamp_utc)}</td>
+                    <td>{point.price}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <small>{series?.source_limit_note}</small>
+        </div>
+      ) : (
+        <EmptyState
+          title="No saved price history for this outcome token"
+          detail="Capture one bounded series to persist its native response and normalized samples."
+        />
+      )}
+    </section>
+  );
+}
+
 function MarketDetails({
   market,
   books,
   booksLoading,
   marketMetadataProbe,
   marketMetadataProbeEnabled,
+  priceHistoryProbe,
+  priceHistoryProbeEnabled,
   eventMarketsProbe,
   eventMarketsProbeEnabled,
   mveComponentProbe,
@@ -4873,6 +5154,19 @@ function MarketDetails({
     unknown
   >;
   marketMetadataProbeEnabled: boolean;
+  priceHistoryProbe: UseMutationResult<
+    PriceHistoryCaptureResult,
+    Error,
+    {
+      nativeInstrumentId: string;
+      interval: '1d' | '1w';
+      fidelityMinutes: number;
+      startTs: number;
+      endTs: number;
+    },
+    unknown
+  >;
+  priceHistoryProbeEnabled: boolean;
   eventMarketsProbe: UseMutationResult<
     EventMarketsCaptureResult,
     Error,
@@ -5021,6 +5315,13 @@ function MarketDetails({
           </strong>
         </div>
       </div>
+      {market.venue === 'polymarket' && (
+        <PolymarketPriceHistoryPanel
+          market={market}
+          probe={priceHistoryProbe}
+          probeEnabled={priceHistoryProbeEnabled}
+        />
+      )}
       {(market.venue === 'polymarket' || market.venue === 'kalshi') && (
         <div className="fr-fee-metadata-panel">
           <div>

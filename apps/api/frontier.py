@@ -44,6 +44,7 @@ from midas.frontier.adapters.base import (
     AdapterError,
     ExchangeAdapter,
     FailedResponseEvidence,
+    PriceHistoryAdapter,
     RejectedResponseEvidence,
     SingleMarketMetadataAdapter,
 )
@@ -84,6 +85,7 @@ from midas.frontier.models import (
     KalshiFeeOrderFillInput,
     MarketBatch,
     MarketMetadataEvidence,
+    PriceHistorySeries,
     RawObservation,
     ResponseRejectionMetadata,
     SourceFailureRecord,
@@ -138,6 +140,26 @@ class TradePageProbeRequest(BaseModel):
     def cursor_is_nonblank(self) -> TradePageProbeRequest:
         if self.cursor is not None and not self.cursor.strip():
             raise ValueError("Trade page cursor cannot be blank")
+        return self
+
+
+class PolymarketPriceHistoryProbeRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+    native_instrument_id: str = Field(pattern=r"^[0-9]{1,256}$")
+    interval: Literal["1d", "1w"] = "1d"
+    fidelity_minutes: int = Field(default=60, strict=True, ge=1, le=1440)
+    start_ts: int = Field(strict=True, ge=0)
+    end_ts: int = Field(strict=True, ge=1)
+
+    @model_validator(mode="after")
+    def bounded_past_range(self) -> PolymarketPriceHistoryProbeRequest:
+        now_ts = int(datetime.now(UTC).timestamp())
+        if self.end_ts <= self.start_ts:
+            raise ValueError("Price-history end timestamp must follow its start timestamp")
+        if self.end_ts - self.start_ts > 7 * 24 * 60 * 60:
+            raise ValueError("Price-history requests are bounded to 7 days")
+        if self.end_ts > now_ts:
+            raise ValueError("Price-history end timestamp cannot be in the future")
         return self
 
 
@@ -1907,6 +1929,62 @@ def router(
             "offset": offset,
         }
 
+    @api.get("/price-history")
+    async def price_history(
+        venue: Venue = Venue.POLYMARKET,
+        native_instrument_id: str | None = Query(default=None, min_length=1, max_length=256),
+        limit: int = Query(default=5, ge=1, le=20),
+        offset: int = Query(default=0, ge=0, le=100_000),
+    ) -> dict[str, Any]:
+        reject_held_venue(venue)
+        scan_limit = 100 if native_instrument_id is not None else limit
+        scan_offset = 0 if native_instrument_id is not None else offset
+        try:
+            observations = _read_stored_observations(
+                store,
+                venue=venue.value,
+                kind="historical_price_points",
+                excluded_venues=held_venues,
+                limit=scan_limit,
+                offset=scan_offset,
+            )
+            items: list[dict[str, Any]] = []
+            for observation in observations:
+                normalized = observation["normalized"]
+                if not isinstance(normalized, dict) or "points" not in normalized:
+                    continue
+                series = PriceHistorySeries.model_validate(normalized)
+                if (
+                    native_instrument_id is not None
+                    and series.native_instrument_id != native_instrument_id
+                ):
+                    continue
+                items.append(
+                    {
+                        "series": series.model_dump(mode="json"),
+                        "observation_id": observation["observation_id"],
+                        "raw_sha256": observation["raw_sha256"],
+                        "received_at_utc": observation["received_at_utc"],
+                    }
+                )
+            if native_instrument_id is not None:
+                items = items[offset : offset + limit]
+        except (FrontierStoreError, ValueError) as error:
+            raise HTTPException(status_code=409, detail=str(error)) from error
+        return {
+            "items": items,
+            "venue": venue.value,
+            "native_instrument_id": native_instrument_id,
+            "limit": limit,
+            "offset": offset,
+            "returned": len(items),
+            "scan_bound": scan_limit,
+            "scan_may_be_incomplete": (
+                native_instrument_id is not None and len(observations) == scan_limit
+            ),
+            "source_state": "recorded observations only",
+        }
+
     @api.post("/probe/polymarket/trades")
     async def probe_polymarket_trade_page(
         request: TradePageProbeRequest,
@@ -2046,6 +2124,139 @@ def router(
                     status_code=502,
                     detail={
                         "code": "FRONTIER_TRADE_PAGE_FAILED",
+                        "message": str(error),
+                        "diagnostic_observation_ids": diagnostic_ids,
+                        "diagnostic_persistence_error": diagnostic_error,
+                    },
+                ) from error
+
+    @api.post("/probe/polymarket/price-history")
+    async def probe_polymarket_price_history(
+        request: PolymarketPriceHistoryProbeRequest,
+    ) -> dict[str, Any]:
+        """Capture one explicit time-bounded source price series for a saved token."""
+        venue = Venue.POLYMARKET
+        adapter = registered_source_adapter(venue)
+        if not adapter.capabilities.supports(Capability.PRICE_HISTORY):
+            raise HTTPException(status_code=409, detail="Polymarket price history is unsupported")
+        if not isinstance(adapter, PriceHistoryAdapter):
+            raise HTTPException(
+                status_code=409,
+                detail="Advertised Polymarket price-history operation is unavailable",
+            )
+        config = getattr(adapter, "config", None)
+        if config is None or not config.enabled or not config.live_public_probe_enabled:
+            raise HTTPException(status_code=409, detail=probe_disabled_detail(config))
+        try:
+            known_markets = await _load_markets(store, 200, excluded_venues=held_venues)
+        except (FrontierStoreError, ValueError) as error:
+            raise HTTPException(status_code=409, detail=str(error)) from error
+        recorded_market = next(
+            (
+                item
+                for item in known_markets
+                if item.venue == venue
+                and any(
+                    instrument.native_instrument_id == request.native_instrument_id
+                    for instrument in item.instruments
+                )
+            ),
+            None,
+        )
+        if recorded_market is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Price history can only be fetched for an outcome token in the recorded market window",
+            )
+        bound_market_observation_id = recorded_market.provenance.observation_id
+        if bound_market_observation_id is None:
+            raise HTTPException(
+                status_code=409,
+                detail="Recorded market has no immutable source-observation binding",
+            )
+
+        async with source_locks[venue]:
+            adapter.take_captures()
+            requests_before = adapter.transport.request_count
+            captures: tuple[RawObservation, ...] = ()
+            try:
+                series = await adapter.fetch_price_history(
+                    request.native_instrument_id,
+                    interval=request.interval,
+                    fidelity_minutes=request.fidelity_minutes,
+                    start_ts=request.start_ts,
+                    end_ts=request.end_ts,
+                )
+                captures = adapter.take_captures()
+                if (
+                    len(captures) != 1
+                    or not isinstance(series, PriceHistorySeries)
+                    or series.venue != venue
+                    or series.native_instrument_id != request.native_instrument_id
+                    or series.interval != request.interval
+                    or series.fidelity_minutes != request.fidelity_minutes
+                    or series.requested_start_ts != request.start_ts
+                    or series.requested_end_ts != request.end_ts
+                    or series.provenance.raw_sha256 != captures[0].raw_sha256
+                ):
+                    raise AdapterError(
+                        "PRICE_HISTORY_CAPTURE_MISMATCH",
+                        "Normalized price history does not match the requested token and raw response",
+                    )
+                series = series.model_copy(
+                    update={"bound_market_observation_id": bound_market_observation_id}
+                )
+                capture = captures[0]
+                observation_id = store.append_observation(capture, series)
+                return {
+                    "venue": venue.value,
+                    "native_instrument_id": request.native_instrument_id,
+                    "bound_market_id": recorded_market.canonical_id,
+                    "bound_market_observation_id": bound_market_observation_id,
+                    "series": series.model_dump(mode="json"),
+                    "point_count": len(series.points),
+                    "observation_id": observation_id,
+                    "raw_sha256": capture.raw_sha256,
+                    "source_state": (await adapter.health()).state.value,
+                    "request_count_delta": adapter.transport.request_count - requests_before,
+                    "network_calls_bounded_by": config.retries + 1,
+                    "hypothetical_only": True,
+                    "note": (
+                        "These are source-reported historical price samples. They do not provide "
+                        "executable quotes, OHLC candles, volume, or evidence of simultaneous availability."
+                    ),
+                }
+            except AdapterError as error:
+                diagnostic_ids, diagnostic_error = preserve_failed_captures(
+                    adapter,
+                    error.code,
+                    str(error),
+                    error.response_evidence,
+                    already_drained=captures,
+                    response_diagnostic=error.response_diagnostic,
+                )
+                adapter.report_failure(error.code, str(error))
+                raise HTTPException(
+                    status_code=502,
+                    detail={
+                        "code": error.code,
+                        "message": str(error),
+                        "diagnostic_observation_ids": diagnostic_ids,
+                        "diagnostic_persistence_error": diagnostic_error,
+                    },
+                ) from error
+            except (ValueError, FrontierStoreError) as error:
+                diagnostic_ids, diagnostic_error = preserve_failed_captures(
+                    adapter,
+                    "FRONTIER_PRICE_HISTORY_FAILED",
+                    str(error),
+                    already_drained=captures,
+                )
+                adapter.report_failure("FRONTIER_PRICE_HISTORY_FAILED", str(error))
+                raise HTTPException(
+                    status_code=502,
+                    detail={
+                        "code": "FRONTIER_PRICE_HISTORY_FAILED",
                         "message": str(error),
                         "diagnostic_observation_ids": diagnostic_ids,
                         "diagnostic_persistence_error": diagnostic_error,

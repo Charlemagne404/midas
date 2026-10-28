@@ -1310,17 +1310,63 @@ it('renders recorded-evidence empty states and never probes a source automatical
 it('captures one explicit Polymarket trade page and follows its bound cursor', async () => {
   const conditionId = `0x${'a'.repeat(64)}`;
   const requests: Record<string, unknown>[] = [];
+  const priceHistoryRequests: Record<string, unknown>[] = [];
+  let savedPriceHistory: Record<string, unknown> | null = null;
   const market = {
     canonical_id: 'polymarket:trade-condition',
+    source_observation_record_id: 'market-observation',
     native_market_id: conditionId,
+    native_event_id: null,
+    native_event_title: null,
+    outcome_label: null,
     native_fields: { conditionId },
     venue: 'polymarket',
     title: 'Recorded condition for page capture',
     market_kind: 'conditional_event',
     lifecycle: 'settled',
-    instruments: [],
+    description: '',
+    base_asset: null,
+    quote_asset: 'USDC',
+    settlement_asset: 'USDC',
+    settlement_asset_identity: null,
+    payoff: {
+      state_ids: ['yes', 'no'],
+      payout_currency: 'USDC',
+      exhaustive: false,
+      verified: false,
+      verification_basis: 'fixture only',
+    },
+    resolution: {
+      primary_rule: null,
+      secondary_rule: null,
+      authority: null,
+      closes_at_utc: null,
+      settles_at_utc: null,
+      evidence_sha256: null,
+      resolution_fingerprint: null,
+      verified: false,
+    },
+    fees: {
+      status: 'unknown',
+      version: null,
+      applies_to: null,
+      rate: null,
+      formula: null,
+      fee_currency: null,
+      source_url: null,
+      note: 'Fixture fee is unknown.',
+    },
+    instruments: [
+      { native_instrument_id: '123456789', label: 'Yes', outcome_id: 'yes' },
+      { native_instrument_id: '987654321', label: 'No', outcome_id: 'no' },
+    ],
+    selected_components: [],
     quality_flags: [],
-    provenance: { response_received_at_utc: '2026-10-26T20:00:00Z' },
+    provenance: {
+      response_received_at_utc: '2026-10-26T20:00:00Z',
+      raw_sha256: 'a'.repeat(64),
+      observation_id: 'market-observation',
+    },
   };
   const kalshiMarket = {
     ...market,
@@ -1362,6 +1408,12 @@ it('captures one explicit Polymarket trade page and follows its bound cursor', a
               supported: true,
               state: 'implemented',
               reason: 'explicit test fixture',
+            },
+            {
+              capability: 'price_history',
+              supported: true,
+              state: 'implemented',
+              reason: 'bounded source-reported price samples',
             },
           ],
           health: {
@@ -1433,6 +1485,58 @@ it('captures one explicit Polymarket trade page and follows its bound cursor', a
   };
   const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const path = String(input);
+    if (path.startsWith('/api/frontier/price-history?')) {
+      return {
+        ok: true,
+        json: async () => ({
+          items: savedPriceHistory ? [savedPriceHistory] : [],
+          venue: 'polymarket',
+          native_instrument_id: '123456789',
+          returned: savedPriceHistory ? 1 : 0,
+        }),
+      } as Response;
+    }
+    if (path === '/api/frontier/probe/polymarket/price-history' && init?.method === 'POST') {
+      const body = JSON.parse(String(init.body)) as Record<string, unknown>;
+      priceHistoryRequests.push(body);
+      const series = {
+        venue: 'polymarket',
+        native_instrument_id: body.native_instrument_id,
+        interval: body.interval,
+        fidelity_minutes: body.fidelity_minutes,
+        requested_start_ts: body.start_ts,
+        requested_end_ts: body.end_ts,
+        bound_market_observation_id: 'market-observation',
+        points: [{ timestamp_utc: '2026-10-27T00:00:00Z', price: '0.42' }],
+        source_price_semantics: 'source_reported_price_sample',
+        source_limit_note: 'Fixture source price point. OHLC and volume are not inferred.',
+        provenance: { observation_id: 'history-provenance', raw_sha256: 'b'.repeat(64) },
+      };
+      savedPriceHistory = {
+        series,
+        observation_id: 'history-observation',
+        raw_sha256: 'b'.repeat(64),
+        received_at_utc: '2026-10-27T00:01:00Z',
+      };
+      return {
+        ok: true,
+        json: async () => ({
+          venue: 'polymarket',
+          native_instrument_id: '123456789',
+          bound_market_id: market.canonical_id,
+          bound_market_observation_id: 'market-observation',
+          series,
+          point_count: 1,
+          observation_id: 'history-observation',
+          raw_sha256: 'b'.repeat(64),
+          source_state: 'healthy',
+          request_count_delta: 1,
+          network_calls_bounded_by: 1,
+          hypothetical_only: true,
+          note: 'Source-reported sample fixture only.',
+        }),
+      } as Response;
+    }
     if (
       (path === '/api/frontier/probe/polymarket/trades' ||
         path === '/api/frontier/probe/kalshi/trades') &&
@@ -1481,6 +1585,19 @@ it('captures one explicit Polymarket trade page and follows its bound cursor', a
   fireEvent.click(screen.getByRole('button', { name: 'Markets' }));
   const tradeMarketPicker = await screen.findByRole('combobox', {
     name: 'Recorded trade market',
+  });
+  const inspectButtons = await screen.findAllByRole('button', { name: 'Inspect' });
+  fireEvent.click(inspectButtons[0]!);
+  expect(
+    await screen.findByRole('heading', { name: 'Historical price points' }),
+  ).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Capture one series' }));
+  expect(await screen.findByText('0.42')).toBeInTheDocument();
+  expect(priceHistoryRequests).toHaveLength(1);
+  expect(priceHistoryRequests[0]).toMatchObject({
+    native_instrument_id: '123456789',
+    interval: '1d',
+    fidelity_minutes: 60,
   });
   fireEvent.change(tradeMarketPicker, { target: { value: conditionId } });
   fireEvent.click(screen.getByRole('button', { name: 'Capture first page' }));
