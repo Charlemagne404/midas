@@ -280,3 +280,25 @@ def test_collection_run_history_filters_a_source_that_is_now_held(tmp_path):
         assert adapter.transport.request_count == 0
     finally:
         client.close()
+
+
+def test_collection_start_and_resume_report_an_unregistered_source(tmp_path):
+    store = FrontierStore(tmp_path / "frontier")
+    app = FastAPI()
+    app.include_router(router(store, AdapterRegistry(())))
+    client = TestClient(app)
+    run_id = "196bf42b-6483-49df-8f2c-844a5875c17f"
+    try:
+        start = client.post(
+            "/api/frontier/collect/polymarket",
+            json={"market_limit": 1},
+        )
+        resume = client.post(f"/api/frontier/collect/polymarket/{run_id}/resume")
+        for response in (start, resume):
+            assert response.status_code == 409, response.text
+            assert response.json()["detail"] == (
+                "The polymarket source adapter is not registered."
+            )
+        assert not CollectionJournal(store.root).path.exists()
+    finally:
+        client.close()

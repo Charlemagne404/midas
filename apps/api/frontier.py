@@ -1043,6 +1043,15 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
                 detail=reason or f"Research use of stored {venue.value} data is on hold",
             )
 
+    def registered_source_adapter(venue: Venue) -> ExchangeAdapter:
+        try:
+            return registry.get(venue)
+        except KeyError as error:
+            raise HTTPException(
+                status_code=409,
+                detail=f"The {venue.value} source adapter is not registered.",
+            ) from error
+
     def market_id_is_held(market_id: str) -> bool:
         return market_id.startswith(held_market_prefixes)
 
@@ -4019,7 +4028,7 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
     ) -> dict[str, Any]:
         """Run one explicitly requested, finite source capture in this API request."""
         reject_held_venue(venue)
-        adapter: ExchangeAdapter = registry.get(venue)
+        adapter = registered_source_adapter(venue)
         config = getattr(adapter, "config", None)
         if config is None or not config.enabled or not config.live_public_probe_enabled:
             raise HTTPException(status_code=409, detail=probe_disabled_detail(config))
@@ -4075,7 +4084,7 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
     async def resume_source_collection(venue: Venue, run_id: str) -> dict[str, Any]:
         """Explicitly resume one eligible, checkpointed finite collection run."""
         reject_held_venue(venue)
-        adapter: ExchangeAdapter = registry.get(venue)
+        adapter = registered_source_adapter(venue)
         config = getattr(adapter, "config", None)
         if config is None or not config.enabled or not config.live_public_probe_enabled:
             raise HTTPException(status_code=409, detail=probe_disabled_detail(config))
