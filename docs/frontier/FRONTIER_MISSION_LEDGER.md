@@ -6603,3 +6603,20 @@ Starlette/httpx `TestClient` deprecation warning.
 
 **Next safe action:** continue source-independent review; run further test
 slices only after a fresh low-I/O sample.
+
+## Held-capture test guard — 2026-10-28 08:13 UTC
+
+An offline regression was attempted to replay an existing public-source capture
+through Polymarket and Kalshi adapters and feed the normalized markets to the
+relationship proposer. `tests/frontier/conftest.py` denied the test's read of
+`data/frontier/live-probes` with `PermissionError: Frontier tests may not access
+held source captures`. The single test exited 1 before reading the artifact or
+making any request. Its temporary test file was removed; the held capture was
+not copied or repackaged to bypass the guard.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Recorded live-capture relationship regression | BLOCKED | The test harness protects held source captures from test access. |
+| Synthetic cross-venue hypothesis coverage | COMPLETE AND VERIFIED | Existing fixture test verifies event-context text proposals remain HYPOTHESIS and unverified payoffs stay unverified. |
+| Genuine cross-venue economic equivalence | BLOCKED | No new source-use permission or held-capture exception was available in this workstream. |
+| Frontier project overall | PARTIALLY VERIFIED | Continue independent work; do not route around the capture guard. |

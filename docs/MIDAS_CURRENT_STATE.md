@@ -1988,3 +1988,13 @@ swap. The tests used temporary or mocked state. The API case emitted the
 existing Starlette/httpx deprecation warning. The full suite remains partial
 after 193/378 cases passed before I/O pressure forced a stop. Frontier remains
 **PARTIALLY VERIFIED**.
+
+### Held-capture test guard — 2026-10-28 08:13 UTC
+
+An attempted offline adapter-to-relationship test was denied by
+`tests/frontier/conftest.py` with `PermissionError: Frontier tests may not
+access held source captures` before reading the protected file. The test was
+removed; no copy or fixture conversion was made. Existing synthetic event
+group tests remain valid, but live cross-venue relationship evidence and
+economic equivalence remain open. No network, service, worker, or protected
+store was accessed. Frontier remains **PARTIALLY VERIFIED**.

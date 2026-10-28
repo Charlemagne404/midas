@@ -7832,3 +7832,20 @@ Starlette/httpx `TestClient` deprecation warning.
 | Nested historical price-point validation | COMPLETE AND VERIFIED | `PriceHistorySeries` reparses nested model payloads; historical replay, adapter, and targeted API tests pass. |
 | Full single-process Frontier suite | PARTIALLY VERIFIED | 193/378 cases passed before a measured I/O-pressure stop; 185 cases remain unrun. |
 | Frontier overall acceptance | PARTIALLY VERIFIED | This guard does not close live cross-venue, source-policy, broad resource/recovery, or deployment gates. |
+
+## Held-capture test guard — 2026-10-28 08:13 UTC
+
+I attempted an offline adapter-to-relationship regression using an existing
+capture under `data/frontier/live-probes`. The test harness intercepted the
+read in `tests/frontier/conftest.py` and raised
+`PermissionError: Frontier tests may not access held source captures` before
+the artifact was read. The one-case run therefore exited 1; this was a policy
+guard, not an adapter or relationship assertion failure. No network request,
+service, worker, or protected store was accessed. I removed the temporary test
+and did not copy or repackage the capture to work around the guard.
+
+The repository retains synthetic event-group coverage that checks the
+relationship proposer emits only a `TEXT_CANDIDATE` hypothesis and leaves both
+payoff and resolution unverified. That does not establish a relationship from
+the held public capture or a verified cross-venue economic match. Source-use
+authorization and the full suite remain separate open gates.
