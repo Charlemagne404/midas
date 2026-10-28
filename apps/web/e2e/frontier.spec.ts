@@ -119,6 +119,238 @@ test('Arena replay history loads without submitting or launching work', async ({
   expect(sourceProbeRequests).toBe(0);
 });
 
+test('saved Arena discovery artifact exposes scoped candidate evidence', async ({ page }) => {
+  const jobId = `job-${'a'.repeat(24)}`;
+  const candidateId = 'f'.repeat(64);
+  const replayIds = ['1', '2', '3', '4'].map((value) => value.repeat(64));
+  const comparison = {
+    comparison_id: '9'.repeat(64),
+    normalized_input_sha256: 'a'.repeat(64),
+    result_sha256: 'b'.repeat(64),
+    code_version: 'frontier-e2e-fixture-v1',
+    as_of_utc: '2026-10-27T00:00:00Z',
+    arms: [
+      {
+        scope: 'polymarket_only',
+        venues: ['polymarket'],
+        replay_run_ids: [replayIds[0]],
+        market_count: 1,
+        instrument_count: 2,
+        book_count: 2,
+        observed_instrument_count: 2,
+        relationship_count: 0,
+        candidates: [],
+        family_counts: {},
+        classification_counts: {},
+        audit_disposition_counts: {},
+      },
+      {
+        scope: 'venue_local',
+        venues: ['kalshi', 'polymarket'],
+        replay_run_ids: [replayIds[1], replayIds[2]],
+        market_count: 2,
+        instrument_count: 4,
+        book_count: 4,
+        observed_instrument_count: 4,
+        relationship_count: 0,
+        candidates: [],
+        family_counts: {},
+        classification_counts: {},
+        audit_disposition_counts: {},
+      },
+      {
+        scope: 'cross_venue',
+        venues: ['kalshi', 'polymarket'],
+        replay_run_ids: [replayIds[3]],
+        market_count: 2,
+        instrument_count: 4,
+        book_count: 4,
+        observed_instrument_count: 4,
+        relationship_count: 1,
+        candidates: [
+          {
+            candidate_id: candidateId,
+            family: 'cross_venue_complete_coverage',
+            classification: 'CONDITIONAL ECONOMIC OPPORTUNITY',
+            audit_disposition: 'verified',
+            market_ids: ['kalshi:scope-event', 'polymarket:scope-event'],
+            participating_venues: ['kalshi', 'polymarket'],
+            leg_count: 2,
+            worst_case_gross_pnl: '0.049999999999999998',
+            worst_case_net_pnl: '0.049699999999999998',
+          },
+        ],
+        family_counts: { cross_venue_complete_coverage: 1 },
+        classification_counts: { 'CONDITIONAL ECONOMIC OPPORTUNITY': 1 },
+        audit_disposition_counts: { verified: 1 },
+      },
+    ],
+    deltas: [
+      {
+        baseline: 'polymarket_only',
+        compared: 'venue_local',
+        matched_candidate_count: 0,
+        unchanged_classification_count: 0,
+        changed_classification_count: 0,
+        baseline_only_candidate_count: 0,
+        compared_only_candidate_count: 0,
+        classification_count_delta: {},
+      },
+      {
+        baseline: 'venue_local',
+        compared: 'cross_venue',
+        matched_candidate_count: 0,
+        unchanged_classification_count: 0,
+        changed_classification_count: 0,
+        baseline_only_candidate_count: 0,
+        compared_only_candidate_count: 1,
+        classification_count_delta: { 'CONDITIONAL ECONOMIC OPPORTUNITY': 1 },
+      },
+      {
+        baseline: 'polymarket_only',
+        compared: 'cross_venue',
+        matched_candidate_count: 0,
+        unchanged_classification_count: 0,
+        changed_classification_count: 0,
+        baseline_only_candidate_count: 0,
+        compared_only_candidate_count: 1,
+        classification_count_delta: { 'CONDITIONAL ECONOMIC OPPORTUNITY': 1 },
+      },
+    ],
+  };
+  await page.route('**/api/arena/frontier-discovery-comparisons*', async (route) => {
+    await route.fulfill({
+      json: {
+        items: [
+          {
+            job_id: jobId,
+            state: 'COMPLETED',
+            created_at: 1_793_049_600,
+            updated_at: 1_793_049_601,
+            elapsed_seconds: 0.17,
+            progress: { done: 3, total: 3 },
+            phase: 'publishing-hash-verified-discovery-result',
+            error: null,
+            snapshot_id: 'c'.repeat(64),
+            snapshot_sha256: 'c'.repeat(64),
+            runtime_profile: null,
+            result: {
+              comparison_id: comparison.comparison_id,
+              frontier_discovery_sha256: comparison.result_sha256,
+            },
+          },
+        ],
+        limit: 20,
+        scanned: 1,
+        scan_bound: 500,
+        scan_may_be_incomplete: false,
+        research_only: true,
+      },
+    });
+  });
+  await page.route(`**/api/arena/jobs/${jobId}/frontier-discovery`, async (route) => {
+    await route.fulfill({
+      json: {
+        artifact: {
+          comparison,
+          replays: replayIds.map((runId, index) => ({
+            run_id: runId,
+            candidates:
+              index === 3
+                ? [
+                    {
+                      candidate_id: candidateId,
+                      family: 'cross_venue_complete_coverage',
+                      classification: 'CONDITIONAL ECONOMIC OPPORTUNITY',
+                      venues: ['kalshi', 'polymarket'],
+                      legs: [
+                        {
+                          venue: 'kalshi',
+                          native_market_id: 'scope-event',
+                          instrument_id: 'KX-SCOPE-YES',
+                          outcome_id: 'yes',
+                          quantity_unit: 'contracts',
+                          quantity: '1',
+                          quoted_ask: '0.450000000000000001',
+                          modeled_buy_price: '0.450000000000000001',
+                          modeled_fee: '0',
+                          quote_currency: 'USD',
+                          quote_currency_identity: USD_IDENTITY,
+                          displayed_depth: '10',
+                          book_observation_id: '1'.repeat(64),
+                        },
+                        {
+                          venue: 'polymarket',
+                          native_market_id: 'scope-event-complement',
+                          instrument_id: 'PM-SCOPE-NO',
+                          outcome_id: 'no',
+                          quantity_unit: 'shares',
+                          quantity: '1',
+                          quoted_ask: '0.500000000000000001',
+                          modeled_buy_price: '0.500000000000000001',
+                          modeled_fee: '0.0003',
+                          quote_currency: 'USD',
+                          quote_currency_identity: USD_IDENTITY,
+                          displayed_depth: '20',
+                          book_observation_id: '4'.repeat(64),
+                        },
+                      ],
+                      gross_cost: '0.950000000000000002',
+                      modeled_fees: '0.0003',
+                      modeled_net_cost: '0.950300000000000002',
+                      outcome_payout_by_state: { yes: '1', no: '1' },
+                      gross_pnl_by_state: {
+                        yes: '0.049999999999999998',
+                        no: '0.049999999999999998',
+                      },
+                      net_pnl_by_state: {
+                        yes: '0.049699999999999998',
+                        no: '0.049699999999999998',
+                      },
+                      worst_case_gross_pnl: '0.049999999999999998',
+                      worst_case_net_pnl: '0.049699999999999998',
+                      capital_currency_identity: USD_IDENTITY,
+                      practical_eligibility: false,
+                      received_skew_ms: null,
+                      exchange_skew_ms: null,
+                      timing_verified: false,
+                      independent_audit: {
+                        disposition: 'verified',
+                        input_sha256: '2'.repeat(64),
+                        checks: ['Arithmetic independently recomputed.'],
+                        message: 'This fixture verifies arithmetic only.',
+                      },
+                      assumptions: ['Explicit E2E fixture; not observed exchange evidence.'],
+                      reasons: ['External mapping and execution remain conditional.'],
+                      evidence_sha256: '3'.repeat(64),
+                    },
+                  ]
+                : [],
+          })),
+          snapshot_id: 'c'.repeat(64),
+          snapshot_sha256: 'c'.repeat(64),
+          result_sha256: comparison.result_sha256,
+        },
+        research_only: true,
+        orders_submitted: false,
+        authenticated_requests: false,
+        integrity_verified: true,
+      },
+    });
+  });
+
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Frontier', exact: true }).click();
+  await page.getByRole('button', { name: 'Replay & readiness', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Inspect modeled constructions' })).toBeVisible();
+  await page.getByText(/Inspect candidate/).click();
+  await expect(page.getByText('Terminal outcomes under the pinned payoff model')).toBeVisible();
+  await expect(page.getByText('0.450000000000000001 USD').first()).toBeVisible();
+  await page.getByText(/Independent audit, assumptions, and evidence hashes/).click();
+  await expect(page.getByText('Arithmetic independently recomputed.')).toBeVisible();
+  await expect(page.getByText(/not observed exchange evidence/)).toBeVisible();
+});
+
 test('joint-state replay submits an explicit fixture map without probing a venue', async ({
   page,
 }) => {

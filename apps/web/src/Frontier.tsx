@@ -894,6 +894,53 @@ type DiscoveryScopeComparison = {
     classification_count_delta: Record<string, number>;
   }[];
 };
+type DiscoveryCandidateEvidence = {
+  candidate_id: string;
+  family: string;
+  classification: string;
+  venues: string[];
+  legs: {
+    venue: string;
+    native_market_id: string;
+    instrument_id: string;
+    outcome_id: string;
+    quantity_unit?: string | null;
+    quantity: string;
+    quoted_ask: string;
+    modeled_buy_price: string;
+    modeled_fee: string | null;
+    quote_currency?: string | null;
+    quote_currency_identity?: SettlementAssetIdentity | null;
+    displayed_depth: string;
+    book_observation_id: string;
+  }[];
+  gross_cost: string | null;
+  modeled_fees: string | null;
+  modeled_net_cost: string | null;
+  outcome_payout_by_state: Record<string, string>;
+  gross_pnl_by_state: Record<string, string>;
+  net_pnl_by_state: Record<string, string>;
+  worst_case_gross_pnl: string | null;
+  worst_case_net_pnl: string | null;
+  capital_currency_identity?: SettlementAssetIdentity | null;
+  practical_eligibility: boolean;
+  received_skew_ms: number | null;
+  exchange_skew_ms: number | null;
+  timing_verified: boolean;
+  independent_audit: {
+    disposition: string;
+    input_sha256: string;
+    checks: string[];
+    message: string;
+  } | null;
+  assumptions: string[];
+  reasons: string[];
+  evidence_sha256: string;
+};
+type FrontierDiscoveryReplayEvidence = {
+  run_id: string;
+  candidates: DiscoveryCandidateEvidence[];
+};
 type FrontierArenaDiscoveryJob = {
   job_id: string;
   state: string;
@@ -919,6 +966,7 @@ type FrontierArenaDiscoveryJobs = {
 type FrontierArenaDiscoveryResult = {
   artifact: {
     comparison: DiscoveryScopeComparison;
+    replays: FrontierDiscoveryReplayEvidence[];
     snapshot_id: string;
     snapshot_sha256: string;
     result_sha256: string;
@@ -1067,6 +1115,13 @@ const money = (value: string | number | null | undefined) =>
   value == null
     ? 'Not established'
     : Number(value).toLocaleString(undefined, { maximumFractionDigits: 4 });
+const exactMoney = (value: string | null | undefined) => {
+  if (value == null) return 'Not established';
+  const match = /^([+-]?)(\d+)(\.\d+)?$/.exec(value);
+  if (!match) return value;
+  const [, sign, whole, fraction = ''] = match;
+  return `${sign}${whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}${fraction}`;
+};
 type ExactMoney = { coefficient: bigint; scale: number };
 const parseExactMoney = (value: string): ExactMoney | null => {
   const trimmed = value.trim();
@@ -4388,6 +4443,7 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
                 {arenaDiscoveryResult.data?.integrity_verified && (
                   <DiscoveryScopeComparisonSummary
                     comparison={arenaDiscoveryResult.data.artifact.comparison}
+                    replays={arenaDiscoveryResult.data.artifact.replays}
                   />
                 )}
               </article>
@@ -7212,8 +7268,15 @@ function ReplayComparisonSummary({ comparison }: { comparison: ReplayComparison 
   );
 }
 
-function DiscoveryScopeComparisonSummary({ comparison }: { comparison: DiscoveryScopeComparison }) {
+function DiscoveryScopeComparisonSummary({
+  comparison,
+  replays,
+}: {
+  comparison: DiscoveryScopeComparison;
+  replays: FrontierDiscoveryReplayEvidence[];
+}) {
   const signed = (value: number) => (value > 0 ? `+${value}` : String(value));
+  const replaysById = new Map(replays.map((replay) => [replay.run_id, replay] as const));
   return (
     <div className="fr-discovery-scope-result">
       <div className="fr-arena-replay-note">
@@ -7275,6 +7338,56 @@ function DiscoveryScopeComparisonSummary({ comparison }: { comparison: Discovery
           </div>
         ))}
       </div>
+      <section
+        className="fr-discovery-candidate-inspection"
+        aria-label="Candidate inspection by scope"
+      >
+        <div>
+          <span className="fr-kicker">CANDIDATE EVIDENCE</span>
+          <h3>Inspect modeled constructions</h3>
+        </div>
+        {comparison.arms.map((arm) => (
+          <section className="fr-discovery-candidate-scope" key={`${arm.scope}-candidate-details`}>
+            <h4>
+              {label(arm.scope)} <span>{arm.candidates.length} candidate(s)</span>
+            </h4>
+            {arm.candidates.length === 0 ? (
+              <p className="fr-arena-replay-note">
+                This scope produced no candidate constructions.
+              </p>
+            ) : (
+              <div className="fr-discovery-candidate-list">
+                {arm.candidates.slice(0, 50).map((summary) => {
+                  const candidate = arm.replay_run_ids
+                    .flatMap((runId) => replaysById.get(runId)?.candidates ?? [])
+                    .find(
+                      (item) =>
+                        item.candidate_id === summary.candidate_id &&
+                        item.family === summary.family &&
+                        item.classification === summary.classification &&
+                        item.independent_audit?.disposition === summary.audit_disposition &&
+                        item.worst_case_gross_pnl === summary.worst_case_gross_pnl &&
+                        item.worst_case_net_pnl === summary.worst_case_net_pnl,
+                    );
+                  return candidate ? (
+                    <DiscoveryCandidateDetails candidate={candidate} key={candidate.candidate_id} />
+                  ) : (
+                    <p className="fr-alert" key={summary.candidate_id}>
+                      Candidate detail is missing from the integrity-verified replay artifact.
+                    </p>
+                  );
+                })}
+                {arm.candidates.length > 50 && (
+                  <p className="fr-arena-replay-note">
+                    Showing the first 50 candidate details in deterministic identity order;{' '}
+                    {arm.candidates.length - 50} more are present in the verified artifact.
+                  </p>
+                )}
+              </div>
+            )}
+          </section>
+        ))}
+      </section>
       <details className="fr-run-details">
         <summary>Comparison provenance · {comparison.comparison_id}</summary>
         <p>Input SHA-256: {comparison.normalized_input_sha256}</p>
@@ -7297,6 +7410,158 @@ function DiscoveryScopeComparisonSummary({ comparison }: { comparison: Discovery
         opportunity prevalence, authenticate external market mappings, or imply executable profit.
       </p>
     </div>
+  );
+}
+
+function DiscoveryCandidateDetails({ candidate }: { candidate: DiscoveryCandidateEvidence }) {
+  const stateIds = [
+    ...new Set(
+      Object.keys(candidate.outcome_payout_by_state).concat(
+        Object.keys(candidate.gross_pnl_by_state),
+        Object.keys(candidate.net_pnl_by_state),
+      ),
+    ),
+  ].sort();
+  return (
+    <details className="fr-discovery-candidate">
+      <summary>
+        <span>
+          Inspect candidate {shortHash(candidate.candidate_id)} · {label(candidate.family)}
+        </span>
+        <small>
+          {label(candidate.classification)} · {candidate.legs.length} leg(s) ·{' '}
+          {candidate.venues.map(venueLabel).join(' + ') || 'venue evidence incomplete'}
+        </small>
+      </summary>
+      <div className="fr-discovery-candidate-detail">
+        <dl className="fr-discovery-candidate-metrics">
+          <div>
+            <dt>Gross basket cost</dt>
+            <dd>{exactMoney(candidate.gross_cost)}</dd>
+          </div>
+          <div>
+            <dt>Modeled fees</dt>
+            <dd>{exactMoney(candidate.modeled_fees)}</dd>
+          </div>
+          <div>
+            <dt>Modeled net cost</dt>
+            <dd>{exactMoney(candidate.modeled_net_cost)}</dd>
+          </div>
+          <div>
+            <dt>Worst gross result</dt>
+            <dd>{exactMoney(candidate.worst_case_gross_pnl)}</dd>
+          </div>
+          <div>
+            <dt>Worst net result</dt>
+            <dd>{exactMoney(candidate.worst_case_net_pnl)}</dd>
+          </div>
+          <div>
+            <dt>Modeled settlement identity</dt>
+            <dd>{settlementIdentityLabel(candidate.capital_currency_identity)}</dd>
+          </div>
+          <div>
+            <dt>Practical eligibility</dt>
+            <dd>{candidate.practical_eligibility ? 'Established' : 'Not established'}</dd>
+          </div>
+          <div>
+            <dt>Timing verified</dt>
+            <dd>{candidate.timing_verified ? 'Yes' : 'No'}</dd>
+          </div>
+        </dl>
+        <div className="fr-table-wrap">
+          <table className="fr-table">
+            <thead>
+              <tr>
+                <th>Venue / native market</th>
+                <th>Instrument / outcome</th>
+                <th>Native quantity</th>
+                <th>Observed ask</th>
+                <th>Modeled price and fee</th>
+                <th>Displayed depth</th>
+                <th>Book evidence</th>
+              </tr>
+            </thead>
+            <tbody>
+              {candidate.legs.map((leg) => (
+                <tr key={`${candidate.candidate_id}-${leg.venue}-${leg.instrument_id}`}>
+                  <td>
+                    <VenuePill venue={leg.venue} />
+                    <code>{leg.native_market_id}</code>
+                  </td>
+                  <td>
+                    <code>{leg.instrument_id}</code>
+                    <small>{label(leg.outcome_id)}</small>
+                  </td>
+                  <td>
+                    {leg.quantity} {leg.quantity_unit ? label(leg.quantity_unit) : '(unit unknown)'}
+                  </td>
+                  <td>
+                    {exactMoney(leg.quoted_ask)} {leg.quote_currency ?? ''}
+                    <small>{settlementIdentityLabel(leg.quote_currency_identity)}</small>
+                  </td>
+                  <td>
+                    {exactMoney(leg.modeled_buy_price)} {leg.quote_currency ?? ''}
+                    <small>Fee {exactMoney(leg.modeled_fee)}</small>
+                  </td>
+                  <td>{leg.displayed_depth}</td>
+                  <td>
+                    <code>{shortHash(leg.book_observation_id)}</code>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <h5>Terminal outcomes under the pinned payoff model</h5>
+        <div className="fr-discovery-outcome-list">
+          {stateIds.map((state) => (
+            <div key={`${candidate.candidate_id}-${state}`}>
+              <strong>{label(state)}</strong>
+              <span>Payout {exactMoney(candidate.outcome_payout_by_state[state])}</span>
+              <span>Gross {exactMoney(candidate.gross_pnl_by_state[state])}</span>
+              <span>Net {exactMoney(candidate.net_pnl_by_state[state])}</span>
+            </div>
+          ))}
+        </div>
+        <p className="fr-arena-replay-note">
+          Receipt skew{' '}
+          {candidate.received_skew_ms == null
+            ? 'unknown'
+            : `${count(candidate.received_skew_ms)} ms`}
+          {' · '}exchange-time skew{' '}
+          {candidate.exchange_skew_ms == null
+            ? 'unknown'
+            : `${count(candidate.exchange_skew_ms)} ms`}
+          {' · '}practical execution remains unestablished unless independently evidenced.
+        </p>
+        <details className="fr-run-details">
+          <summary>Independent audit, assumptions, and evidence hashes</summary>
+          <p>
+            Audit {candidate.independent_audit?.disposition ?? 'not recorded'} · input{' '}
+            {candidate.independent_audit
+              ? shortHash(candidate.independent_audit.input_sha256)
+              : 'unknown'}
+          </p>
+          <p>
+            {candidate.independent_audit?.message ?? 'No independent audit message is available.'}
+          </p>
+          <p>Candidate evidence SHA-256: {candidate.evidence_sha256}</p>
+          {candidate.independent_audit?.checks.length ? (
+            <ul>
+              {candidate.independent_audit.checks.map((check, index) => (
+                <li key={`${candidate.candidate_id}-audit-${index}`}>{check}</li>
+              ))}
+            </ul>
+          ) : null}
+          <h5>Assumptions and limitations</h5>
+          <ul>
+            {[...candidate.assumptions, ...candidate.reasons].map((item, index) => (
+              <li key={`${candidate.candidate_id}-assumption-${index}`}>{item}</li>
+            ))}
+          </ul>
+        </details>
+      </div>
+    </details>
   );
 }
 

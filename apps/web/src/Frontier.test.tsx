@@ -2761,9 +2761,9 @@ it('submits bounded Arena replay and discovery comparisons with verified results
             audit_disposition: 'verified',
             market_ids: ['kalshi:scope-event', 'polymarket:scope-event'],
             participating_venues: ['kalshi', 'polymarket'],
-            leg_count: 4,
-            worst_case_gross_pnl: '1',
-            worst_case_net_pnl: null,
+            leg_count: 2,
+            worst_case_gross_pnl: '0.049999999999999998',
+            worst_case_net_pnl: '0.049699999999999998',
           },
         ],
         family_counts: { cross_venue_complete_coverage: 1 },
@@ -3112,6 +3112,97 @@ it('submits bounded Arena replay and discovery comparisons with verified results
         json: async () => ({
           artifact: {
             comparison: discoveryComparison,
+            replays: [
+              {
+                run_id: 'e'.repeat(64),
+                candidates: [
+                  {
+                    candidate_id: 'f'.repeat(64),
+                    family: 'cross_venue_complete_coverage',
+                    classification: 'CONDITIONAL ECONOMIC OPPORTUNITY',
+                    venues: ['kalshi', 'polymarket'],
+                    legs: [
+                      {
+                        venue: 'kalshi',
+                        native_market_id: 'scope-event',
+                        instrument_id: 'KX-SCOPE-YES',
+                        outcome_id: 'yes',
+                        quantity_unit: 'contracts',
+                        quantity: '1',
+                        quoted_ask: '0.450000000000000001',
+                        modeled_buy_price: '0.450000000000000001',
+                        modeled_fee: '0',
+                        quote_currency: 'USD',
+                        quote_currency_identity: {
+                          schema_version: 1,
+                          kind: 'fiat',
+                          code: 'USD',
+                          network_id: null,
+                          asset_reference: null,
+                        },
+                        displayed_depth: '10',
+                        book_observation_id: '1'.repeat(64),
+                      },
+                      {
+                        venue: 'polymarket',
+                        native_market_id: 'scope-event-complement',
+                        instrument_id: 'PM-SCOPE-NO',
+                        outcome_id: 'no',
+                        quantity_unit: 'shares',
+                        quantity: '1',
+                        quoted_ask: '0.500000000000000001',
+                        modeled_buy_price: '0.500000000000000001',
+                        modeled_fee: '0.0003',
+                        quote_currency: 'USD',
+                        quote_currency_identity: {
+                          schema_version: 1,
+                          kind: 'fiat',
+                          code: 'USD',
+                          network_id: null,
+                          asset_reference: null,
+                        },
+                        displayed_depth: '20',
+                        book_observation_id: '4'.repeat(64),
+                      },
+                    ],
+                    gross_cost: '0.950000000000000002',
+                    modeled_fees: '0.0003',
+                    modeled_net_cost: '0.950300000000000002',
+                    outcome_payout_by_state: { yes: '1', no: '1' },
+                    gross_pnl_by_state: {
+                      yes: '0.049999999999999998',
+                      no: '0.049999999999999998',
+                    },
+                    net_pnl_by_state: {
+                      yes: '0.049699999999999998',
+                      no: '0.049699999999999998',
+                    },
+                    worst_case_gross_pnl: '0.049999999999999998',
+                    worst_case_net_pnl: '0.049699999999999998',
+                    capital_currency_identity: {
+                      schema_version: 1,
+                      kind: 'fiat',
+                      code: 'USD',
+                      network_id: null,
+                      asset_reference: null,
+                    },
+                    practical_eligibility: false,
+                    received_skew_ms: null,
+                    exchange_skew_ms: null,
+                    timing_verified: false,
+                    independent_audit: {
+                      disposition: 'verified',
+                      input_sha256: '2'.repeat(64),
+                      checks: ['Arithmetic independently recomputed.'],
+                      message: 'The stored construction passed the independent arithmetic audit.',
+                    },
+                    assumptions: ['Explicit hypothetical fixture.'],
+                    reasons: ['External mapping remains conditional.'],
+                    evidence_sha256: '3'.repeat(64),
+                  },
+                ],
+              },
+            ],
             snapshot_id: discoverySnapshotId,
             snapshot_sha256: discoverySnapshotSha256,
             result_sha256: discoveryResultSha256,
@@ -3199,6 +3290,15 @@ it('submits bounded Arena replay and discovery comparisons with verified results
   expect(screen.getAllByText('4 saved books')).toHaveLength(2);
   expect(screen.getAllByText(/1 added/)).toHaveLength(2);
   expect(screen.getByText(/Counts describe this saved evidence window only/)).toBeInTheDocument();
+  fireEvent.click(screen.getByText(/Inspect candidate/));
+  expect(
+    await screen.findByText('Terminal outcomes under the pinned payoff model'),
+  ).toBeInTheDocument();
+  fireEvent.click(screen.getByText(/Independent audit, assumptions, and evidence hashes/));
+  expect(screen.getByText('Arithmetic independently recomputed.')).toBeInTheDocument();
+  expect(screen.getByText(/Book evidence/)).toBeInTheDocument();
+  expect(screen.getAllByText('0.450000000000000001 USD')).toHaveLength(2);
+  expect(screen.getAllByText(/Net 0\.049699999999999998/)).toHaveLength(2);
   expect(discoverySubmission).toEqual({
     relationship_limit: 500,
     scenario: { name: 'quoted baseline' },

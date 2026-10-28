@@ -2501,6 +2501,113 @@
 .fr-discovery-scope-result > .fr-arena-replay-note:last-child {
   margin-top: 8px;
 }
+.fr-discovery-candidate-inspection {
+  display: grid;
+  gap: 10px;
+  margin: 16px 15px 12px;
+}
+.fr-discovery-candidate-inspection h3,
+.fr-discovery-candidate-scope h4,
+.fr-discovery-candidate-detail h5 {
+  margin: 0;
+  color: #d3dce7;
+  font-size: 11px;
+}
+.fr-discovery-candidate-scope {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid #252e38;
+  border-radius: 7px;
+  background: #141a21;
+}
+.fr-discovery-candidate-scope h4 {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  text-transform: capitalize;
+}
+.fr-discovery-candidate-scope h4 span {
+  color: #7f8b9a;
+  font-size: 9px;
+  font-weight: 400;
+  text-transform: none;
+}
+.fr-discovery-candidate-list {
+  display: grid;
+  gap: 6px;
+  max-height: 720px;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.fr-discovery-candidate {
+  min-width: 0;
+  border: 1px solid #2a3440;
+  border-radius: 6px;
+  background: #10161c;
+}
+.fr-discovery-candidate > summary {
+  display: grid;
+  gap: 5px;
+  padding: 9px 10px;
+  color: #cbd5e0;
+  cursor: pointer;
+  font-size: 9px;
+  line-height: 1.5;
+  list-style-position: inside;
+}
+.fr-discovery-candidate > summary small {
+  color: #8290a0;
+  font-size: 8px;
+}
+.fr-discovery-candidate-detail {
+  display: grid;
+  gap: 10px;
+  padding: 0 10px 10px;
+  overflow-x: auto;
+}
+.fr-discovery-candidate-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(110px, 1fr));
+  gap: 6px;
+  margin: 0;
+}
+.fr-discovery-candidate-metrics > div {
+  min-width: 0;
+  padding: 7px;
+  border: 1px solid #252e38;
+  border-radius: 5px;
+}
+.fr-discovery-candidate-metrics dt {
+  color: #7f8b9a;
+  font-size: 8px;
+}
+.fr-discovery-candidate-metrics dd {
+  margin: 4px 0 0;
+  color: #d3dce7;
+  font-size: 9px;
+  overflow-wrap: anywhere;
+}
+.fr-discovery-outcome-list {
+  display: grid;
+  gap: 4px;
+}
+.fr-discovery-outcome-list > div {
+  display: grid;
+  grid-template-columns: minmax(100px, 1.2fr) repeat(3, minmax(80px, 1fr));
+  gap: 8px;
+  padding: 6px 8px;
+  border: 1px solid #252e38;
+  border-radius: 4px;
+  color: #aeb9c6;
+  font-size: 8px;
+}
+.fr-discovery-outcome-list strong {
+  color: #d3dce7;
+}
+.fr-discovery-candidate-detail > .fr-run-details {
+  margin: 0;
+}
 .fr-arena-replay-intro,
 .fr-arena-replay-note {
   margin: 0 15px 12px;
@@ -2899,6 +3006,12 @@
   }
   .fr-discovery-scope-deltas {
     grid-template-columns: 1fr;
+  }
+  .fr-discovery-candidate-metrics {
+    grid-template-columns: repeat(2, minmax(110px, 1fr));
+  }
+  .fr-discovery-outcome-list > div {
+    grid-template-columns: repeat(2, minmax(90px, 1fr));
   }
   .fr-source-cards {
     grid-template-columns: 1fr;
