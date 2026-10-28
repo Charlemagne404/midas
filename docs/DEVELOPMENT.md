@@ -149,10 +149,12 @@ observation IDs and performs a deterministic descriptive replay without
 network access or candidate generation. `GET /api/frontier/price-history/replays`
 and its run-ID detail route read saved replay artifacts. The Market detail
 panel exposes an explicit “Replay saved series” action after a capture is
-stored. The Replay & readiness workspace lists the latest 20 saved Polymarket
-captures and replay artifacts, allows selection of up to eight saved captures,
-and exposes each artifact's input/result hashes, source observation IDs, raw
-hashes, instrument IDs, market binding, request interval, and sample summaries.
+stored. The Replay & readiness workspace pages through locally saved Polymarket
+captures and replay artifacts in 20-row increments, starting with the newest
+page. The user can select up to eight captures from the current page; changing
+pages clears that selection. The inspector exposes each artifact's input/result
+hashes, source observation IDs, raw hashes, instrument IDs, market binding,
+request interval, and sample summaries.
 Replays preserve each series' raw hash and store observation ID, point count,
 sampled price bounds, point-time span, and largest adjacent returned-sample
 gap. These are summaries of returned samples; no expected sampling cadence or

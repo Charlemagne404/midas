@@ -7232,3 +7232,63 @@ Changed files in `ce8d7dd`: `apps/web/src/Frontier.tsx`,
 checkpoint. **Next safe action:** add bounded offset paging to the two local
 saved-evidence lists, retaining held-source filtering and the eight-series
 limit.
+
+## Bounded paging for saved price-history evidence — 2026-10-28 06:53 UTC
+
+Code commit `797e00a` adds `has_more` to the two history list APIs using one
+extra read row, while returning no more than the caller's requested page. The
+source-history response retains a 20-row maximum and a 100,000 maximum offset.
+The replay list retains a 100-row maximum and the same offset bound. For replay
+artifacts, the API determines whether another stored page exists before source
+eligibility filtering; it then filters held or missing evidence on only the
+visible page and reports the held count for that page. Offsets still advance
+through all stored runs, so a held artifact does not hide eligible later
+results.
+
+Mission Control now pages both saved capture and replay lists in 20-row
+increments. Page controls show current page and result count. The source
+selection applies only to its current page and resets when navigating; no more
+than eight IDs can enter a replay. Replay page navigation clears the selected
+ID and loads the first visible artifact detail for the new page. All paging is
+over local evidence and triggers no venue request.
+
+Verification:
+
+- `tests/frontier/test_api.py`: **56 passed** in 29.57 seconds; added assertions
+  verify `has_more` on first and final capture/replay pages using a temporary
+  store and MockTransport.
+- `tests/frontier/test_source_data_permissions.py`: **5 passed** in 3.51
+  seconds; existing Starlette/httpx deprecation warning remains.
+- `corepack pnpm test`: **41 passed** across seven files, including selection
+  clearing on source-page changes and the 8-item cap.
+- `corepack pnpm exec playwright test e2e/frontier.spec.ts`: **7 passed**;
+  fixture-backed capture/replay remains explicit, and the inspector fits a
+  390 px viewport without horizontal overflow.
+- `corepack pnpm build`: TypeScript and production build pass, with 2,228
+  modules transformed. Frontier output is 182.67 kB. Existing main and Chart
+  chunk warnings remain at 504.00 kB and 544.41 kB.
+- ESLint, Prettier, Ruff check/format, and `git diff --check` pass.
+
+Strict mypy on `apps/api/frontier.py` reports 15 `no-any-return` errors on
+unchanged lines of that module; none points to the pagination change. There
+was no measured resource profile. API tests use temporary stores and mock
+transports, and the browser test intercepts history routes with fixtures. This
+does not establish a populated service-store UI result or live source
+validation. No deployment or production migration was performed.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Bounded lookahead and source-history paging | COMPLETE AND VERIFIED | API tests cover exact next/final-page signals and offsets. |
+| Replay paging with held-source filtering | COMPLETE AND VERIFIED | Held omission is page-scoped and eligible later rows remain reachable. |
+| Mission Control capture/replay pagination | COMPLETE AND VERIFIED | Component and browser suites pass; source selection clears on page change. |
+| Populated-store UI/API browser integration | PARTIALLY VERIFIED | API persistence tests use temporary stores, while browser history calls are fixture-intercepted. |
+| Multi-venue price-history sources | BLOCKED | Kalshi, Kraken, and Coinbase remain held; no unsupported series are surfaced. |
+| Production migration/deployment | DEFERRED | No service configuration or production store changed. |
+
+Changed files in `797e00a`: `apps/api/frontier.py`,
+`apps/web/src/Frontier.tsx`, `apps/web/src/Frontier.test.tsx`,
+`apps/web/src/frontier.css`, `apps/web/e2e/frontier.spec.ts`, and
+`tests/frontier/test_api.py`. Operations, architecture, development, ledger,
+and report docs were updated separately. **Next safe action:** seed a dedicated
+temporary Frontier store with explicit fixture captures/replays and drive the
+browser inspector against the local API without contacting a venue.

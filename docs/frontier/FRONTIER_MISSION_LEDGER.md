@@ -5906,3 +5906,65 @@ Polymarket historical-price source only.
 lists, preserving the eight-input cap and showing page/truncation state. Keep
 the reads local and held-source aware. Do not probe held venues or migrate a
 service database.
+
+## Bounded paging for saved price-history evidence — 2026-10-28 06:53 UTC
+
+**Stage:** E/F (local replay evidence access).
+**Code commit:** `797e00a` on `codex/frontier-20261026`.
+
+Both saved history APIs now return exact `has_more` state using a one-row
+lookahead while keeping their response page bounded. `GET /price-history`
+continues to return at most 20 rows, accepts offsets up to 100,000, and reports
+the 20-row response bound separately from the lookahead. `GET
+/price-history/replays` pages stored artifacts similarly, with its API limit
+still capped at 100. The replay route applies the offset to stored rows before
+held-source filtering; it counts omitted held rows only in the displayed page.
+Thus held records cannot be returned, and they do not make `has_more` falsely
+stop before later eligible records.
+
+The Mission Control inspector now has Previous/Next navigation for both
+capture and replay lists, 20 records per page. It clears selected capture IDs
+when moving source pages and preserves the backend eight-series replay cap.
+Moving replay pages resets artifact selection to the first available row on the
+new page. Page counts and held-row omission counts remain visible.
+
+Verification:
+
+- `/home/charlie/midas/.venv/bin/python -m pytest -q tests/frontier/test_api.py`:
+  **56 passed** in 29.57 seconds. The price-history API test now covers first
+and final capture/replay pages with `limit=1`, including both `has_more`
+transitions.
+- `/home/charlie/midas/.venv/bin/python -m pytest -q tests/frontier/test_source_data_permissions.py`:
+  **5 passed** in 3.51 seconds; the existing Starlette/httpx deprecation
+  warning remains.
+- `corepack pnpm test`: **41 passed** across seven frontend test files. The
+  Frontier test verifies 20-row navigation, clearing selection, and the
+  eight-selected/ninth-disabled limit.
+- `corepack pnpm exec playwright test e2e/frontier.spec.ts`: **7 passed** on
+  isolated local services; the captured-series flow and 390 px responsive
+  check remain green.
+- `corepack pnpm build`: TypeScript and production build pass; Vite transforms
+  2,228 modules. Frontier bundle is 182.67 kB; existing main/Chart advisories
+  are 504.00 kB and 544.41 kB.
+- ESLint, Prettier check, Ruff check/format, and `git diff --check` pass.
+
+A strict mypy run of `apps/api/frontier.py` reported 15 `no-any-return`
+diagnostics on unchanged lines elsewhere in the route module; none point to
+the new paging code. No resource profile was captured. API tests use mock
+transports and temporary stores; browser history routes use explicit fixture
+intercepts. No live venue request, service-store migration, deployment, or
+economic evaluation occurred.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| `has_more` lookahead for source history | COMPLETE AND VERIFIED | API test covers nonfinal and final pages at a one-row page size. |
+| `has_more` with held replay filtering | COMPLETE AND VERIFIED | Page slicing precedes held filtering; omitted count is page-scoped. Source permission suite passes. |
+| Mission Control paging controls | COMPLETE AND VERIFIED | Component test pages source captures and clears page-local selections; browser suite is responsive. |
+| Populated-store UI/API end-to-end | PARTIALLY VERIFIED | API persistence and page behavior use temporary stores; browser UI uses fixture-intercepted history responses. |
+| Multi-venue saved price-history paging | BLOCKED | Other source-use holds remain in force; only Polymarket history is selectable. |
+| Production migration/deployment | DEFERRED | No service database or configuration was changed. |
+
+**Next safe action:** add a bounded browser integration that seeds a dedicated
+temporary Frontier store with fixture-backed saved captures and replay rows,
+then drives the inspector against the actual local API routes. Keep all data in
+the isolated test store and do not probe or migrate any protected service.

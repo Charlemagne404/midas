@@ -174,12 +174,16 @@ Mission Control quality view labels the gap as observed and explains that these
 metrics do not establish source completeness or cross-venue simultaneity. The
 Market detail panel offers an explicit replay action for the selected saved
 series and displays the resulting run/input hashes and sample summary. The
-Replay & readiness workspace reads the latest 20 saved Polymarket history
-captures and replay artifacts, supports a bounded selection of up to eight
-inputs, and requests each selected artifact through the saved detail route. It
-shows the source observation and raw hashes, native instrument, bound market
-observation, request range, and returned-point summaries. Both views use local
-evidence only and start no source request automatically.
+Replay & readiness workspace pages through saved Polymarket history captures
+and replay artifacts in 20-row increments, starting at the newest page. The
+source selector admits up to eight inputs from the current page and clears its
+selection when the page changes. The API uses a bounded one-row lookahead to
+return an exact `has_more` flag; replay pagination counts held-source
+omissions only in the displayed page while preserving offset order. Selected
+artifacts load through the hash-validating detail route and show source
+observation and raw hashes, native instrument, bound market observation,
+request range, and returned-point summaries. Both views use local evidence only
+and start no source request automatically.
 
 `FrontierMarket.native_event_id` is populated only from an explicit source event
 record or a parent-event response. The legacy Polymarket parser's local
