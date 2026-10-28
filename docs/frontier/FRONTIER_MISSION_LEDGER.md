@@ -1,5 +1,85 @@
 # Project Frontier Mission Ledger
 
+## Current host state — 2026-10-29 00:25 CET
+
+The 00:16 capacity check timed out at 60 seconds without a logged OOM. Its
+peak memory was unavailable, and the saved capacity report remains at the
+23:46 timestamp. Isolated Reality commits
+`8b2131faf40ddd06c8dff155169bddec7048c807` and
+`9868dac2bdc762a5f6c29cbeeda88a13fed8075e` bound inventory scans and skip
+walks for invalid provenance, reporting unknown bytes/headroom. Their
+fixtures are untested and the code is undeployed.
+
+At 00:22, host available memory was about 10 GiB, swap remained 3.1/4 GiB,
+and PSI avg10 was 0% with avg300 at 2.16% `some` / 1.75% `full`. API and
+Reality remain close to `MemoryHigh`; Reality status is still stale at
+23:43:01 with `DEGRADED_SOURCE_TIMING`. At 00:25 PSI avg300 fell to 1.04%
+`some` / 0.84% `full`, with about 10 GiB available. No OOM kill appeared
+since 23:43:24; the capacity timer remains active for 00:46 after the prior
+timeout.
+Keep runtime tests, replay, probes, and research batches paused. The
+five-minute gap-detail timer remains disabled; do not restore it before
+admission and host recovery review.
+
+## Capacity monitor timeout and isolated bounds candidate — 2026-10-29 00:18 CET
+
+The capacity timer fired at 00:16:04. Its service hit the pre-existing
+60-second start timeout at 00:17:04 and was terminated with SIGTERM after
+6.39 CPU seconds. The 128 MiB high / 192 MiB max / zero-swap limits were in
+force; no kernel OOM or OOMd kill was recorded, but the service peak was not
+retained. The last `capacity.json` remains from 23:46. Host PSI avg10 was
+0.01% at the next sample, with avg60 still around 6%; available memory was
+9.9 GiB. The PSI interval does not attribute pressure to this process.
+
+Static source review found the invalid-provenance path materialized all
+archive directory entries into a dictionary, making memory proportional to
+directory size. An isolated, untested Reality candidate at
+`/home/charlie/midas-reality-capacity-scan-frontier-20261029`, commit
+`8b2131faf40ddd06c8dff155169bddec7048c807`, streams and caps the scan at
+65,536 entries, then marks capacity unknown instead of using a partial count.
+Follow-up commit `9868dac2bdc762a5f6c29cbeeda88a13fed8075e` skips inventory
+walks when manifest provenance is invalid. The 23:46 capacity artifact
+records 18,695 archive segments, 5,393,427,930 bytes, and `INVALID_MANIFEST`;
+the manifest is 7,406,466 bytes. No test was run. The candidate is not
+deployed and does not change the protected Reality checkout, service,
+archive, or manifest. The capacity timer remains enabled; no manual rerun
+was started.
+
+## Host follow-up sample — 2026-10-29 00:13 CET
+
+Host PSI remains near zero and available memory is 9.9 GiB, but the active
+user-manager cgroup currently charges 11.17 GB memory and 1.89 GB swap with
+no cgroup cap. The largest observed child is the Terminal app slice at about
+5.0 GiB, mostly file-backed charge; this does not establish it as the cause
+of earlier OOMd pressure. API and Reality remain active and near their
+`MemoryHigh` thresholds. The unprivileged `oomctl` view has no monitored
+groups despite the user manager's configured kill policy; effective current
+monitor registration remains uncertain.
+
+The auxiliary five-minute gap-detail timer remains disabled. The bounded
+capacity check is scheduled for 00:16 and was not manually launched. No jobs
+were queued in the user manager. Keep tests, replay, source probes, and
+additional research jobs paused pending the scheduled result and fresh
+Reality capture status.
+
+## User-cgroup-aware research admission — 2026-10-29 00:10 CET
+
+Static review found that worker admission checked only host PSI, while the
+incident's systemd-oomd trigger measured pressure in `user@1000.service`.
+Added bounded cgroup-v2 membership resolution and `memory.pressure` parsing
+for the enclosing `user@UID.service`, with finite 0–100 validation and
+fail-closed handling for missing or malformed telemetry. Arena worker launch,
+finite schedule admission, Laboratory admission, and the Frontier gap-replay
+source now reject user-slice memory PSI above the existing 10% `some` / 1%
+`full` limits.
+
+Fixture cases cover cgroup path resolution, user pressure rejection,
+unavailable metric denial, and non-finite PSI; the Laboratory denial fixture
+now uses a deterministic snapshot. `git diff --check` is the only current
+verification. Tests remain paused under the host gate. No worker, timer,
+service, or source request was started. The isolated gap-replay runtime copy
+was not changed or deployed; its timer remains disabled.
+
 ## Host incident follow-up and FX model review — 2026-10-29 00:05 CET
 
 The latest read-only diagnosis confirms `systemd-oomd` kills the user manager's

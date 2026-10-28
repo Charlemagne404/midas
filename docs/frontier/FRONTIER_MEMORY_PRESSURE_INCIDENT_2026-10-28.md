@@ -2,11 +2,11 @@
 
 **Incident date:** 2026-10-28 (CET)
 
-**Checkpoint captured:** 2026-10-29 00:05 CET
+**Checkpoint captured:** 2026-10-29 00:25 CET
 
 **Scope:** Host reliability interruption during Project Frontier
 
-**Frontier branch:** `codex/frontier-20261026`, implementation checkpoint `69fa099aac808443d780d01130eb0ec10bcd09df`
+**Frontier branch:** `codex/frontier-20261026`, implementation checkpoint `35cc132bcdc681ec48b79bb07d5e46f9a3f40e5c`
 
 ## Executive summary
 
@@ -31,8 +31,9 @@ Two narrowly scoped containment changes are in effect:
   not part of live Reality collection.
 - The Reality capacity monitor has `MemoryHigh=128M`, `MemoryMax=192M`, and
   `MemorySwapMax=0` in a reversible persistent user-unit drop-in. Its previous
-  128 MiB hard cap caused seven kernel memcg OOM kills. The 00:16 CET scheduled
-  run remains the first validation of the revised limits.
+  128 MiB hard cap caused seven kernel memcg OOM kills. The 00:16 scheduled
+  run avoided an OOM but hit the existing 60-second timeout, so revised-limit
+  validation remains incomplete and `capacity.json` is stale.
 
 Reality was killed by systemd-oomd and automatically restarted. Its restart
 path fully replays and verifies the recording before resuming collection. At
@@ -44,8 +45,9 @@ No operator restart or protected service configuration change was made.
 **The host is not yet safe for Frontier tests or research batches.** Continue
 only static/documentation work until Reality has demonstrably resumed capture,
 service headroom recovers, and memory pressure remains low across multiple
-scheduled-job cycles. The 22-minute quiet interval after the last OOMd kill is
-too short to claim recovery.
+scheduled-job cycles. No new kill was observed through 00:22, about 39 minutes
+after the last kill, but host PSI avg300 remains elevated and API and Reality
+are still close to their `MemoryHigh` thresholds.
 
 ## Observed impact and timeline
 
@@ -84,6 +86,104 @@ remained inactive and the effective limits read back as 128M/192M/0 swap. No
 service was restarted or manually run. Its next scheduled run is about 00:16
 CET. API and Reality remain within roughly 2.4 MiB of their `MemoryHigh`
 limits. Continue to defer Frontier runtime work.
+
+At 00:12:15 CET, the host remained at 9.9 GiB available and 3.1/4 GiB swap
+used. Host PSI was `some` 0.00% avg10 / 0.02% avg300 and `full` 0.00% avg10 /
+0.01% avg300. No new OOMd kill appeared after 23:43:24 CET through this
+sample (about 29 minutes). API was active at 1,604,202,496 / 1,610,612,736
+bytes `MemoryHigh` (about 6.1 MiB headroom); Reality was active at
+1,207,795,712 / 1,207,959,552 bytes (about 160 KiB headroom). Reality's
+restarted PID had `read_bytes=4,066,516,992`; there is still no verified fresh
+status or capture.
+
+The systemd-oomd daemon is active, and `user@1000.service` remains active with
+`ManagedOOMMemoryPressure=kill` and its configured 50% threshold. The user
+cgroup's `memory.pressure` file is readable and near zero. However, `oomctl
+dump` listed no monitored cgroups at 00:12, although its 00:03 sample listed
+`user@1000.service`. The reason is unresolved; the report does not treat the
+unit property alone as proof that oomd is currently monitoring that cgroup.
+No oomd configuration or service action was taken.
+
+The capacity timer is still active/waiting for 00:16:04 CET; the service has
+not been run manually and the new persistent limit has not yet been tested.
+The gap-detail timer remains inactive and disabled.
+
+At 00:13:25 CET, a bounded read-only sample still showed 9.9 GiB available,
+3.1/4 GiB host swap used, and host PSI at 0.00% avg10 for both `some` and
+`full` (avg300 also rounded to 0.00%). The active `user@1000.service` has no
+memory or swap cap and currently charges 11.17 GB memory and 1.89 GB swap;
+its systemd properties still select `ManagedOOMMemoryPressure=kill`, while
+the prior kill journal records the 50%/20s trigger. The unprivileged `oomctl
+dump` still lists no monitored groups and reports a zero-byte system context,
+so current monitor registration is not independently verified by that query.
+
+The largest current user child slice was `app-org.gnome.Terminal.slice` at
+about 5.0 GiB. Its cgroup reported about 3.8 GiB file cache, 0.72 GiB anon,
+and 0.47 GiB kernel memory (with shmem reported as a file subcategory). No
+single process RSS in the sampled process list approached the slice total.
+This is a current charge snapshot, not proof that the Terminal slice caused
+the earlier pressure episodes. API and Reality remain active but within
+about 1.6 MiB and 0.2 MiB of their respective `MemoryHigh` limits. No new
+OOM kill appeared through 00:13:25 CET, about 30 minutes after the last one.
+
+The next Veritas research-director timer is at 00:15:04, the capacity timer at
+00:16:04, the observation pilot at 00:30, and source analysis at 00:40:40.
+The inspection found no queued user-manager jobs. The 30-minute research
+timers remain enabled because no evidence ties their bounded successful runs
+to the previous kills; avoid launching any additional research work during
+this observation window.
+
+The scheduled capacity service did start at 00:16:04 but failed at 00:17:04
+with `Result=timeout`: the existing `TimeoutStartSec=60` sent SIGTERM. It used
+6.39 seconds of CPU over the minute. The effective `MemoryHigh=128M`,
+`MemoryMax=192M`, and `MemorySwapMax=0` were in force. No kernel OOM or OOMd
+kill was logged; user-manager `oom`/`oom_kill` counters remained 19/15 from
+the 00:13 sample. systemd did not retain a service `MemoryPeak` after failure,
+so the revised memory bound is not yet validated. `capacity.json` remains
+unchanged with mtime 23:46:11 CET. The 60-second timeout itself is configured
+in the existing service unit and was not changed.
+
+At about 00:18 CET, host PSI was `some` 0.01% avg10 / 6.09% avg60 / 4.74%
+avg300 and `full` 0.01% / 5.06% / 3.86%; available memory remained 9.9 GiB.
+User-manager PSI was similarly 0.01% avg10, with avg60 near 6% and avg300
+near 4%. These averages reflect a recent interval and do not identify the
+capacity process as their cause. The archive mount is currently local ext4
+(`/dev/sda4`); the process's low CPU time and timeout establish a long wait,
+but the specific I/O or memory wait remains unknown.
+
+Source inspection found a plausible memory-scalability defect in the
+capacity path: when archive provenance is invalid, it discarded the catalog
+and built an in-memory dictionary of every archive directory entry before
+statting them. The inventory size and killed-run peak were not captured, so
+this is a demonstrated unbounded code path and a plausible contributor, not
+a proven attribution for the historical OOMs. An isolated candidate at
+`/home/charlie/midas-reality-capacity-scan-frontier-20261029`, commit
+`8b2131faf40ddd06c8dff155169bddec7048c807`, streams inventory entries and
+stops after 65,536 entries. Follow-up commit
+`9868dac2bdc762a5f6c29cbeeda88a13fed8075e` skips the directory walk entirely
+when manifest provenance is invalid, reporting unknown archive bytes and
+headroom. The saved 23:46 report records `INVALID_MANIFEST`, 18,695 catalog
+segments, and 5,393,427,930 archive bytes; the manifest itself is 7,406,466
+bytes. The two fixtures were not run. The candidate is not deployed into
+`/home/charlie/midas-reality`; no archive or Reality service was modified.
+
+At 00:22 CET, host PSI had fallen to 0.00% avg10 / 2.16% avg300 `some` and
+0.00% / 1.75% `full`; `MemAvailable` was about 10 GiB and swap remained
+3.1/4 GiB. API was active at 1,607,528,448 / 1,610,612,736 bytes `MemoryHigh`
+(about 2.9 MiB headroom); Reality was active at 1,207,767,040 /
+1,207,959,552 bytes (about 0.18 MiB headroom). The actual collector root is
+`/home/charlie/midas-reality/data/recordings/reality`; its `status.json` still
+has mtime 23:43:01 CET and state `DEGRADED_SOURCE_TIMING`. Manifest/capture
+freshness and recovery therefore remain unverified. No new OOM kill appeared
+through this sample.
+
+At 00:25 CET, `MemAvailable` was about 10 GiB, swap remained 3.1/4 GiB, and
+host PSI was 0.00% avg10 / 1.04% avg300 `some` and 0.00% / 0.84% `full`. No
+OOMd or kernel OOM entry appeared after 23:43:24. API and Reality remained
+active; their last measured cgroup usage at 00:22 was still within 2.9 MiB
+and 0.18 MiB of `MemoryHigh`. Reality `status.json` remained stale at 23:43:01
+with `DEGRADED_SOURCE_TIMING`. The capacity timer remains active, next due
+00:46; no manual run was started.
 
 ### systemd-oomd kills
 
@@ -183,6 +283,25 @@ limit for those kills.
    These facts show that the collector had not yet demonstrated resumed live
    capture; they do not prove why the prior system-wide pressure began.
 
+### Plausible capacity-monitor contributors (causal link unverified)
+
+The 23:46 saved capacity report showed the archive as `INVALID_MANIFEST`, with
+18,695 catalog segments and 5,393,427,930 reported archive bytes; its
+manifest file was 7,406,466 bytes. In the protected source, the capacity path
+loads all raw segment sidecars through `manifest(root)`. When archive
+provenance is invalid, the older `archive_capacity` path also materialized
+every directory entry in a dictionary and statted the inventory. These are
+workloads whose memory and I/O grow with recording/archive size. The 00:16
+run consumed 6.39 CPU seconds before waiting until the existing 60-second
+timeout, consistent with an I/O-bound scan but not proof of it. The old OOM
+records do not contain a per-run peak or allocation trace, so the precise
+reason the process exceeded 128 MiB remains unproven.
+
+The isolated source candidate bounds valid inventory walks and skips the
+directory walk when provenance is invalid, returning unknown bytes/headroom.
+Its fixtures remain unrun, and it is not deployed. It does not repair or
+reclassify the existing archive.
+
 ### Not established
 
 - No individual workload was proven to be the sole or dominant source of the
@@ -197,6 +316,9 @@ limit for those kills.
   `schedules: []`; the evidence does not show it as a material load source.
 - The archive’s `INVALID_MANIFEST`, segment inventory, and provenance warnings
   are separate integrity findings. No manifest or recording data was edited.
+- The timing of the original 128 MiB capacity cap, user-manager oomd policy,
+  and research timer installations relative to the first incidents has not
+  been reconstructed; no configuration-change correlation is claimed.
 - The state after the 23:43 Reality restart is not proven to meet the latest
   collection boundary. The report does not claim recovery or data continuity.
 
@@ -232,8 +354,9 @@ At 00:05 CET, the same values were made persistent in
 `~/.config/systemd/user/midas-reality-capacity.service.d/90-frontier-memory-bound.conf`.
 The effective properties read back successfully after user-manager reload;
 the service was inactive, so no running job or live collector was restarted.
-The 00:16 timer run is still pending; no execution under the revised limit is
-claimed.
+The scheduled 00:16 run was terminated at 00:17 by the existing 60-second
+start timeout. No kernel OOM was logged, but systemd did not retain its peak
+memory, so the revised limit is not validated.
 
 Rollback the effective memory properties:
 
@@ -245,8 +368,8 @@ systemctl --user set-property --runtime midas-reality-capacity.service \
 ```
 
 The override is scoped to this short monitor. It does not relax limits on
-Reality, API, or any other unit. Its next timer run at approximately 00:16 CET
-is still required to validate runtime behavior under the new bound.
+Reality, API, or any other unit. The next scheduled run is 00:46 CET; it must
+complete before runtime behavior under the new bound can be validated.
 
 ## Services and other infrastructure
 
@@ -259,9 +382,9 @@ is still required to validate runtime behavior under the new bound.
 - `midas-reality.service`: active at 23:54 CET, PID 1235804, automatically
   restarted after the 23:43:09 oomd kill; its full-replay recovery and live
   capture remain unverified. Its `MemoryHigh` headroom was under 1 MiB.
-- `midas-reality-capacity.service`: last completed successfully at 23:46:11,
-  before the runtime limit adjustment; next scheduled run is the validation
-  point.
+- `midas-reality-capacity.service`: its 00:16 scheduled run was terminated by
+  the pre-existing 60-second timeout at 00:17:04. No kernel OOM was logged;
+  `capacity.json` remains at its 23:46:11 mtime and the next timer is 00:46.
 - `midas-veritas-gap-detail-v2.service`: most recent oneshot ended with
   `oom-kill`; its timer is now stopped.
 - Continental user services `continental-cloud-tailnet.service` and
@@ -282,8 +405,9 @@ Read-only validation after the containment actions confirmed:
   remains 23:42:14 CET. Restore with `systemctl --user enable --now
   midas-veritas-gap-detail-v2.timer` after admission review.
 - Capacity monitor effective properties read back as `128M` high, `192M` max,
-  and swap max `0`, backed by the persistent `90-frontier-memory-bound.conf`;
-  the next scheduled execution is pending.
+  and swap max `0`, backed by the persistent `90-frontier-memory-bound.conf`.
+  Its 00:16 run timed out after 60 seconds without a kernel OOM; peak memory
+  was unavailable and the updated limits are not validated.
 - At 23:51:44 host PSI avg10 was 0%, avg300 was 3.82%; there were no new oomd
   kill entries after 23:43:24 through that sample. The quiet interval was only
   about eight minutes total and about five minutes after stopping the timer.
@@ -325,6 +449,12 @@ establish durable host recovery. A safe Frontier testing gate requires all of:
 5. The gap-detail timer remains disabled until replay scheduling and aggregate
    memory admission are reviewed; restarting it is available through the
    rollback command above.
+
+Frontier's isolated source commit `35cc132` adds the user-manager cgroup PSI
+to Arena, schedule, Laboratory, and gap-replay admission. Fixture
+coverage was added but not run, and the change is not deployed. It is not
+counted as current host protection; no worker or service was started for this
+change.
 
 Until then, Frontier may continue static/documentation work only. Do not run
 tests, replays, live probes, or batch research. Continue to preserve the

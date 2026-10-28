@@ -2,7 +2,7 @@
 
 **Report date:** 2026-10-29
 
-## Current completion matrix — 2026-10-29 00:05 CET
+## Current completion matrix — 2026-10-29 00:25 CET
 
 This is a current evidence classification, not a final completion claim. The
 dated implementation records below remain the detailed evidence; the
@@ -18,7 +18,9 @@ current host gate.
 | Cross-venue costs, FX, capital, and execution uncertainty | PARTIALLY VERIFIED | Virtual models preserve unknown cost and applicability states; account-specific fees, jurisdiction, transfers, and execution remain unresolved. |
 | Collection, provenance, durable storage, and replay | IMPLEMENTED, LIVE VALIDATION PENDING | Fixture and captured Polymarket evidence paths exist; multi-venue live collection is held, and protected Reality recovery is currently unverified. |
 | Read-only source network and trading boundary | COMPLETE AND VERIFIED | Only `PublicReadTransport` issues source HTTP requests; it is anonymous HTTPS GET-only, host-allowlisted, redirect-disabled, and bounded. Adapter boundary fixtures cover disabled probes, credential/mutating clients, cookies, redirects, oversized payloads, and JSON complexity. No exchange order/account path was found in the reviewed Frontier code. |
-| Laboratory/Arena comparisons and bounded orchestration | PARTIALLY VERIFIED | Selected deterministic comparisons exist; full regression and endurance evidence remain incomplete. |
+| Laboratory/Arena comparisons and bounded orchestration | PARTIALLY VERIFIED | Selected deterministic comparisons exist; Arena admission now also gates on user-manager cgroup PSI associated with the configured oomd policy, but its regression is pending and full endurance evidence remains incomplete. |
+| User-cgroup-aware workload admission | IMPLEMENTED, VALIDATION PENDING | Central Arena, finite schedules, Laboratory, and the gap-replay source now require bounded `user@UID.service` memory PSI; live deployment remains unchanged. |
+| Reality capacity inventory bounds | IMPLEMENTED, VALIDATION PENDING | Isolated commits `8b2131f` and `9868dac` stream/cap valid inventory scans and skip walks for invalid provenance, reporting unknown headroom; fixtures are unrun and code is not installed. |
 | Native Frontier dashboard | PARTIALLY VERIFIED | The workspace and focused UI checks exist; the latest graph-layout assertion and full browser acceptance remain unverified. |
 | Broad regressions, resource endurance, and performance acceptance | DEFERRED | Held during the host memory incident; no stress run is authorized by this report. |
 | Live multi-venue source authorization and findings | BLOCKED | Kalshi, Kraken, and Coinbase retained research remain held; the worktree Polymarket probe flag is off. |
@@ -86,6 +88,54 @@ virtual; it does not alter the candidate classification or pool venue
 balances. Static review found no trust-boundary or calculation defect. The FX
 fixture suite was not run under the host admission hold, and no network request
 or currency conversion source was used.
+
+## User-cgroup-aware research admission — 2026-10-29 00:10 CET
+
+The incident review found that shared Arena admission checked host PSI while
+systemd-oomd's recorded kill decision used the enclosing user manager's cgroup
+PSI. The host metric can therefore understate pressure in the exact slice
+where MIDAS API, Reality, terminals, and research workers run. Arena
+admission now resolves the current process's `user@UID.service` from cgroup v2
+membership and reads its bounded `memory.pressure` `some`/`full` avg10 values.
+It applies the existing 10%/1% thresholds, rejects malformed or non-finite
+percentages, and fails closed if the monitored cgroup metric is unavailable.
+Finite schedules, Laboratory, and the Frontier gap-replay source use the same
+signal and `user_memory_pressure` reason.
+
+Fixture coverage was added for cgroup resolution, pressure rejection,
+unavailable telemetry, and non-finite values. No tests or workers were run
+under the incident gate. The installed gap-replay runtime snapshot was not
+modified; its timer remains disabled. The source change is not deployed, and a
+future service refresh must include the matching shared Arena package before
+that timer is considered for restoration.
+
+At 00:13 CET the current host sample still showed low PSI and 9.9 GiB
+available, but the user manager carried 11.17 GB memory and 1.89 GB swap.
+`app-org.gnome.Terminal.slice` was the largest current user child at about
+5.0 GiB, mostly file-backed charge; this single sample does not attribute the
+earlier OOMd episodes. API and Reality remain close to `MemoryHigh`, and the
+unprivileged `oomctl dump` does not expose monitored groups, so keep Frontier
+runtime validation held pending fresh Reality capture and sustained resource
+headroom.
+
+The 00:16 scheduled capacity check then hit the service's existing 60-second
+start timeout and left the prior `capacity.json` unchanged. The process was
+terminated by systemd, with no kernel OOM/OOMd kill recorded; service peak
+memory was unavailable after exit. An isolated Reality source candidate now
+bounds the directory scan used when provenance is invalid, but it is
+unverified and undeployed. Keep Frontier runtime admission held.
+
+At 00:22 CET, available memory was about 10 GiB and PSI avg10 was 0%, while
+avg300 remained 2.16% `some` / 1.75% `full`. Reality and API were active but
+within about 0.18 MiB and 2.9 MiB of `MemoryHigh`; Reality status remained
+stale at 23:43:01 with `DEGRADED_SOURCE_TIMING`. No new OOM kill appeared.
+Runtime tests and research remain held pending verified capture recovery and
+sustained headroom.
+
+At 00:25, host PSI avg10 remained 0% and avg300 had fallen to 1.04% `some` /
+0.84% `full`; available memory was about 10 GiB. No OOM event appeared since
+23:43:24. The Reality capacity timer remains scheduled for 00:46 after its
+00:16 run timed out; the revised memory limit has not been validated.
 
 ## Host memory-pressure incident and Frontier admission — 2026-10-28 22:56 UTC
 
