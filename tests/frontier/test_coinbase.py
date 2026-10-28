@@ -320,28 +320,8 @@ async def test_coinbase_transport_config_cannot_override_source_use_hold():
         await client.aclose()
 
 
-def test_coinbase_probe_api_persists_one_bounded_market_book_and_trade_capture(tmp_path):
-    product_path = "/products/BTC-USD"
-    responses = {
-        product_path: _product(),
-        f"{product_path}/book": {
-            "sequence": 9,
-            "time": "2026-10-27T19:30:00.123Z",
-            "auction_mode": False,
-            "bids": [["67000.10", "0.25", 3]],
-            "asks": [["67000.20", "0.15", 2]],
-        },
-        f"{product_path}/trades": [
-            {
-                "time": "2026-10-27T19:29:59.500Z",
-                "trade_id": 42,
-                "price": "67000.20",
-                "size": "0.002",
-                "side": "sell",
-            }
-        ],
-    }
-    adapter, requests, http_client = _adapter(responses)
+def test_coinbase_probe_api_rejects_held_source_before_transport(tmp_path):
+    adapter = CoinbaseSpotAdapter(CoinbaseSpotConfig(enabled=True, live_public_probe_enabled=True))
     registry = AdapterRegistry((adapter,))
     store = FrontierStore(tmp_path / "frontier")
     app = FastAPI()
@@ -357,34 +337,8 @@ def test_coinbase_probe_api_persists_one_bounded_market_book_and_trade_capture(t
                     "trade_limit": 10,
                 },
             )
-            assert response.status_code == 200, response.text
-            result = response.json()
-            assert result["venue"] == Venue.COINBASE_EXCHANGE.value
-            assert result["market_count"] == 1
-            assert result["book_snapshots_stored"] == 1
-            assert result["trade_capture_state"] == "captured"
-            assert result["trade_observations_stored"] == 1
-            assert result["request_count_delta"] == 3
-            assert result["network_calls_bounded_by"] == 3
-            assert len(result["observation_ids"]) == 1
-            assert (
-                client.get("/api/frontier/markets?venue=coinbase_exchange").json()["items"][0][
-                    "market_kind"
-                ]
-                == "spot_pair"
-            )
-            assert (
-                client.get("/api/frontier/books?venue=coinbase_exchange").json()["items"][0][
-                    "venue"
-                ]
-                == "coinbase_exchange"
-            )
-            trade_response = client.get("/api/frontier/trades?venue=coinbase_exchange")
-            assert trade_response.status_code == 200
-            assert trade_response.json()["trade_count"] == 1
+            assert response.status_code == 409
+            assert "source use remains held" in response.json()["detail"]
+            assert adapter.transport.request_count == 0
     finally:
         asyncio.run(registry.aclose())
-        asyncio.run(http_client.aclose())
-
-    assert [request.method for request in requests] == ["GET", "GET", "GET"]
-    assert all("authorization" not in request.headers for request in requests)

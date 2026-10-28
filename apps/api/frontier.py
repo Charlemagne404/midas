@@ -1358,6 +1358,14 @@ def router(
             "Bounded public probing is disabled in source configuration"
         )
 
+    def probe_config_rejected(config: Any) -> bool:
+        return (
+            config is None
+            or not config.enabled
+            or not config.live_public_probe_enabled
+            or getattr(config, "probe_policy_block_reason", None) is not None
+        )
+
     def preserve_failed_captures(
         adapter: ExchangeAdapter,
         code: str,
@@ -2221,7 +2229,7 @@ def router(
                 status_code=409, detail="The advertised paginated-trade operation is unavailable"
             )
         config = getattr(adapter, "config", None)
-        if config is None or not config.enabled or not config.live_public_probe_enabled:
+        if probe_config_rejected(config):
             raise HTTPException(
                 status_code=409,
                 detail=probe_disabled_detail(config),
@@ -2364,7 +2372,7 @@ def router(
                 detail="Advertised Polymarket price-history operation is unavailable",
             )
         config = getattr(adapter, "config", None)
-        if config is None or not config.enabled or not config.live_public_probe_enabled:
+        if probe_config_rejected(config):
             raise HTTPException(status_code=409, detail=probe_disabled_detail(config))
         try:
             known_markets = await _load_markets(store, 200, excluded_venues=held_venues)
@@ -2498,7 +2506,7 @@ def router(
                 status_code=409, detail="Kalshi trade page operation is unavailable"
             )
         config = getattr(adapter, "config", None)
-        if config is None or not config.enabled or not config.live_public_probe_enabled:
+        if probe_config_rejected(config):
             raise HTTPException(
                 status_code=409,
                 detail=probe_disabled_detail(config),
@@ -2641,7 +2649,7 @@ def router(
                 status_code=409, detail="Advertised Kalshi fee metadata operation is unavailable"
             )
         config = getattr(adapter, "config", None)
-        if config is None or not config.enabled or not config.live_public_probe_enabled:
+        if probe_config_rejected(config):
             raise HTTPException(
                 status_code=409,
                 detail=probe_disabled_detail(config),
@@ -2762,7 +2770,7 @@ def router(
                 detail="Advertised exact single-market metadata lookup is unavailable",
             )
         config = getattr(adapter, "config", None)
-        if config is None or not config.enabled or not config.live_public_probe_enabled:
+        if probe_config_rejected(config):
             raise HTTPException(status_code=409, detail=probe_disabled_detail(config))
 
         try:
@@ -2911,7 +2919,7 @@ def router(
                 detail="Advertised Kalshi single-market metadata lookup is unavailable",
             )
         config = getattr(adapter, "config", None)
-        if config is None or not config.enabled or not config.live_public_probe_enabled:
+        if probe_config_rejected(config):
             raise HTTPException(
                 status_code=409,
                 detail=probe_disabled_detail(config),
@@ -3052,7 +3060,7 @@ def router(
                 detail="Advertised event market group operation is unavailable",
             )
         config = getattr(adapter, "config", None)
-        if config is None or not config.enabled or not config.live_public_probe_enabled:
+        if probe_config_rejected(config):
             raise HTTPException(
                 status_code=409,
                 detail=probe_disabled_detail(config),
@@ -3205,7 +3213,7 @@ def router(
                 detail="Advertised Kalshi multivariate-event discovery is unavailable",
             )
         config = getattr(adapter, "config", None)
-        if config is None or not config.enabled or not config.live_public_probe_enabled:
+        if probe_config_rejected(config):
             raise HTTPException(
                 status_code=409,
                 detail=probe_disabled_detail(config),
@@ -4985,7 +4993,7 @@ def router(
         reject_held_venue(venue)
         adapter = registered_source_adapter(venue)
         config = getattr(adapter, "config", None)
-        if config is None or not config.enabled or not config.live_public_probe_enabled:
+        if probe_config_rejected(config):
             raise HTTPException(status_code=409, detail=probe_disabled_detail(config))
         if request.market_limit > config.max_markets_per_call:
             raise HTTPException(
@@ -5041,7 +5049,7 @@ def router(
         reject_held_venue(venue)
         adapter = registered_source_adapter(venue)
         config = getattr(adapter, "config", None)
-        if config is None or not config.enabled or not config.live_public_probe_enabled:
+        if probe_config_rejected(config):
             raise HTTPException(status_code=409, detail=probe_disabled_detail(config))
         journal = CollectionJournal(store.root)
         if not journal.path.exists():
@@ -5125,7 +5133,7 @@ def router(
     async def probe(venue: Venue, request: ProbeRequest) -> dict[str, Any]:
         adapter = registered_source_adapter(venue)
         config = getattr(adapter, "config", None)
-        if config is None or not config.enabled or not config.live_public_probe_enabled:
+        if probe_config_rejected(config):
             raise HTTPException(status_code=409, detail=probe_disabled_detail(config))
         if request.limit > config.max_markets_per_call:
             raise HTTPException(
