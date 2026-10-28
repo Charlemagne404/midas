@@ -304,10 +304,13 @@ class PublicReadTransport:
                                 )
                         except ValueError:
                             declared_content_length = None
-                    if 200 <= response.status_code < 300 and content_encoding not in {
-                        "",
-                        "identity",
-                    }:
+                    unsupported_success_encoding = (
+                        200 <= response.status_code < 300
+                        and content_encoding not in {"", "identity"}
+                    )
+                    if unsupported_success_encoding and response.is_stream_consumed:
+                        # A prebuffered HTTPX fixture may expose decoded content;
+                        # do not mistake it for raw source evidence.
                         raise AdapterError(
                             "UNSUPPORTED_CONTENT_ENCODING",
                             "Public-source response must use identity content encoding",
@@ -358,6 +361,19 @@ class PublicReadTransport:
                         raise AdapterError(
                             "SOURCE_HTTP_ERROR",
                             f"Public source returned HTTP {response.status_code}",
+                            response_evidence=FailedResponseEvidence(
+                                url=request_url,
+                                status_code=response.status_code,
+                                raw_body=bytes(body),
+                                request_started_at_utc=started,
+                                response_received_at_utc=received,
+                                request_elapsed_monotonic_ns=request_elapsed_monotonic_ns,
+                            ),
+                        )
+                    if unsupported_success_encoding:
+                        raise AdapterError(
+                            "UNSUPPORTED_CONTENT_ENCODING",
+                            "Public-source response must use identity content encoding",
                             response_evidence=FailedResponseEvidence(
                                 url=request_url,
                                 status_code=response.status_code,

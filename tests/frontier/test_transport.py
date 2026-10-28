@@ -162,6 +162,8 @@ async def test_transport_requests_identity_and_rejects_compressed_responses():
         with pytest.raises(AdapterError) as error:
             await transport.get_json("https://example.com/markets")
         assert error.value.code == "UNSUPPORTED_CONTENT_ENCODING"
+        assert error.value.response_evidence is not None
+        assert error.value.response_evidence.raw_body == compressed
         assert len(requests) == 1
         assert requests[0].headers["accept-encoding"] == "identity"
     finally:
