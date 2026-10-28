@@ -1,5 +1,33 @@
 # Project Frontier Mission Ledger
 
+## Frontier Arena replay integration verification — 2026-10-28 14:00 UTC
+
+At code commit `76d388b`, the targeted Arena integration modules passed
+**28/28** in 3.86 seconds (4.58 seconds wall), at 200,752 KiB peak RSS, zero
+swaps, filesystem input, or socket messages, and 384 filesystem output blocks.
+The run used `/dev/shm/midas-frontier-arena-snapshots-20261028T1400Z`; one
+existing Starlette/httpx `TestClient` deprecation warning remains. Coverage
+included Frontier replay, event-time timeline, and discovery snapshots,
+content-addressed integrity, held-source filtering, completed-job result
+binding, and the discovery worker-process boundary. One test launched a
+bounded fixture-only child process, which exited within the test; no
+persistent Arena job, service, source request, or collector was started.
+
+At `14:00:17Z` before the run, memory and I/O PSI avg10 were **0.00%**, about
+**10 GiB** was available, and 3.5 GiB of swap was occupied. At `14:00:40Z`
+afterward, memory and I/O PSI avg10 remained **0.00%**. CPU PSI avg10 was
+44.38% before and 38.33% after. No production Arena root or service was used.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Frontier Arena replay, timeline, and discovery integration | COMPLETE AND VERIFIED | Three targeted modules pass 28/28, including snapshot tamper/path checks, result binding, held-source filtering, and a bounded fixture subprocess. |
+| Full legacy Arena suite | DEFERRED | The full Arena suite was not run; Frontier-scoped tests cover the changed integration paths. |
+| Frontier project acceptance | PARTIALLY VERIFIED | Source-use permission, genuine cross-venue evidence, broader MIDAS regression, production recovery, and deployment remain open. |
+
+**Next safe action:** record this Arena evidence and continue the acceptance
+matrix without running long campaigns or a broad resource-intensive Arena
+suite. Keep all tests fixture/local and preserve the source-use holds.
+
 ## Frontier dashboard and browser acceptance — 2026-10-28 13:59 UTC
 
 **Verified source commit:** `76d388b`; documentation checkpoint follows at

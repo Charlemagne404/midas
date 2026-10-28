@@ -2992,3 +2992,14 @@ run wrote fixture-only history and one Arena artifact in `/tmp`. Memory PSI
 avg10 remained at 0%; I/O PSI post-run was 0.08% some / 0.04% full. Live source
 authorization, cross-venue evidence, production recovery, and deployment remain
 open. Frontier remains research-only and **PARTIALLY VERIFIED**.
+
+### Frontier Arena integration verification — 2026-10-28 14:00 UTC
+
+The Frontier-specific Arena replay, timeline, and discovery tests pass
+**28/28** in 3.86 seconds (4.58 seconds wall), at 200,752 KiB peak RSS and
+zero swaps or socket traffic. They cover hash-pinned snapshots, held-source
+filtering, result binding, and one bounded fixture worker subprocess. No
+persistent Arena job or production root was used. Memory and I/O PSI avg10
+were 0% before and after. The broad legacy Arena suite remains deferred; live
+cross-venue permission/evidence and production recovery/deployment remain open.
+Frontier remains research-only and **PARTIALLY VERIFIED**.

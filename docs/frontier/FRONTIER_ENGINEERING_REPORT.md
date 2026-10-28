@@ -9712,3 +9712,35 @@ capture, protected store, or production service was accessed. The untracked
 This closes the bounded Frontier dashboard verification, not the whole mission.
 Source-use permission, genuine cross-venue evidence, broader Arena/production
 readiness, and deployment remain unresolved; Frontier is **PARTIALLY VERIFIED**.
+
+## Frontier Arena replay integration verification — 2026-10-28 14:00 UTC
+
+The Frontier-specific Arena modules passed **28/28** tests in 3.86 seconds
+(4.58 seconds wall), with **200,752 KiB** peak RSS, zero swaps, zero filesystem
+input, zero socket messages, and 384 filesystem output blocks. They used
+`/dev/shm/midas-frontier-arena-snapshots-20261028T1400Z`. One existing
+Starlette/httpx `TestClient` deprecation warning remains.
+
+Coverage included replay, event-time timeline, and discovery snapshot
+serialization and loading; nested model and path validation; content hashes;
+held-source catalog/result filtering; completed-job/artifact binding; and
+network-restricted worker command assertions. The discovery test ran one
+bounded fixture-only child process that exited within the test. No persistent
+Arena job, long campaign, production Arena root, live source, collector, or
+service was started or accessed.
+
+At `14:00:17Z` before the test, memory and I/O PSI avg10 were **0.00%**, with
+about **10 GiB** available (3.5 GiB swap was occupied). At `14:00:40Z` after
+the test, memory and I/O PSI avg10 remained **0.00%**. CPU PSI avg10 was
+44.38% before and 38.33% after. The full legacy Arena suite and broader MIDAS
+regression were not run.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Frontier Arena replay/timeline/discovery integration | COMPLETE AND VERIFIED | Three targeted modules pass 28/28 against the integrated local APIs and bounded fixture worker. |
+| Full legacy Arena/MIDAS regression | DEFERRED | No claim of full Arena or repository-wide regression is made. |
+| Production Arena deployment | DEFERRED | Only test-owned temporary roots were used; production remains untouched. |
+
+Frontier remains **PARTIALLY VERIFIED**: source-use authorization, genuine
+cross-venue evidence, production recovery, and deployment still need separate
+closure.
