@@ -4145,6 +4145,66 @@ def test_replay_api_generates_and_persists_multi_outcome_candidate(tmp_path):
             carry_result["venues"][0]["settlement_evidence"][0]["observation_row_sha256"]
             == pinned_market_observation["row_sha256"]
         )
+        funding = client.post(
+            "/api/frontier/opportunities/funding-currency-sensitivity",
+            json={
+                "run_id": result["run_id"],
+                "run_sha256": result["result_sha256"],
+                "candidate_id": candidate["candidate_id"],
+                "venues": [
+                    {
+                        "venue": "kalshi",
+                        "funding_currency_identity": {
+                            "schema_version": 1,
+                            "kind": "fiat",
+                            "code": "EUR",
+                            "network_id": None,
+                            "asset_reference": None,
+                        },
+                        "balance_amount": "20",
+                        "target_units_per_funding_unit": "1.1",
+                        "conversion_fee_bps": "25",
+                    }
+                ],
+            },
+        )
+        assert funding.status_code == 200, funding.text
+        funding_result = funding.json()
+        assert funding_result["hypothetical_only"] is True
+        assert funding_result["classification_unchanged"] is True
+        assert funding_result["practical_eligibility_unchanged"] is True
+        assert funding_result["candidate_economics_unchanged"] is True
+        assert funding_result["candidate_practical_eligibility"] is False
+        assert funding_result["candidate_classification"] == candidate["classification"]
+        assert funding_result["audit"]["disposition"] == "verified"
+        assert funding_result["target_currency_identity"]["code"] == "USD"
+        assert funding_result["venues"][0]["funding_currency_identity"]["code"] == "EUR"
+        assert funding_result["venues"][0]["target_units_per_funding_unit"] == "1.1"
+        assert funding_result["venues"][0]["model_requirement_covered"] is True
+        stale_funding = client.post(
+            "/api/frontier/opportunities/funding-currency-sensitivity",
+            json={
+                "run_id": result["run_id"],
+                "run_sha256": "0" * 64,
+                "candidate_id": candidate["candidate_id"],
+                "venues": [
+                    {
+                        "venue": "kalshi",
+                        "funding_currency_identity": {
+                            "schema_version": 1,
+                            "kind": "fiat",
+                            "code": "EUR",
+                            "network_id": None,
+                            "asset_reference": None,
+                        },
+                        "balance_amount": "20",
+                        "target_units_per_funding_unit": "1.1",
+                        "conversion_fee_bps": "25",
+                    }
+                ],
+            },
+        )
+        assert stale_funding.status_code == 409
         stale_carry = client.post(
             "/api/frontier/opportunities/capital-carry",
             json={

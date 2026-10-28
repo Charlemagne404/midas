@@ -671,6 +671,42 @@ type CapitalCarrySensitivity = {
   assumptions: string[];
   limitations: string[];
 };
+type FundingCurrencySensitivity = {
+  schema_version: number;
+  model_version: string;
+  run_id: string;
+  run_sha256: string;
+  candidate_id: string;
+  candidate_evidence_sha256: string;
+  candidate_classification: string;
+  candidate_practical_eligibility: boolean;
+  classification_unchanged: boolean;
+  practical_eligibility_unchanged: boolean;
+  candidate_economics_unchanged: boolean;
+  hypothetical_only: boolean;
+  target_currency_identity: SettlementAssetIdentity;
+  unresolved_candidate_fee_leg_count: number;
+  total_conversion_fee_target: string;
+  input_sha256: string;
+  result_sha256: string;
+  audit: { disposition: string; message: string; checks: string[] };
+  venues: {
+    venue: string;
+    required_capital_target: string;
+    funding_currency_identity: SettlementAssetIdentity;
+    balance_amount: string;
+    target_units_per_funding_unit: string;
+    conversion_fee_bps: string;
+    required_funding_amount: string;
+    available_capital_target_after_fee: string;
+    conversion_fee_target_amount: string;
+    shortfall_target: string;
+    shortfall_funding: string;
+    model_requirement_covered: boolean;
+  }[];
+  assumptions: string[];
+  limitations: string[];
+};
 type Run = {
   run_id: string;
   created_at_utc: string;
@@ -5293,6 +5329,15 @@ function CandidateCard({ candidate }: { candidate: Candidate }) {
   const [virtualBalances, setVirtualBalances] = useState<Record<string, string>>({});
   const [carryRates, setCarryRates] = useState<Record<string, string>>({});
   const [carryReleaseDelays, setCarryReleaseDelays] = useState<Record<string, string>>({});
+  const [fundingKinds, setFundingKinds] = useState<Record<string, SettlementAssetIdentity['kind']>>(
+    {},
+  );
+  const [fundingCodes, setFundingCodes] = useState<Record<string, string>>({});
+  const [fundingNetworks, setFundingNetworks] = useState<Record<string, string>>({});
+  const [fundingAssetReferences, setFundingAssetReferences] = useState<Record<string, string>>({});
+  const [fundingBalances, setFundingBalances] = useState<Record<string, string>>({});
+  const [fundingRates, setFundingRates] = useState<Record<string, string>>({});
+  const [fundingFees, setFundingFees] = useState<Record<string, string>>({});
   const carryMutation = useMutation({
     mutationFn: (body: {
       run_id: string;
@@ -5307,6 +5352,79 @@ function CandidateCard({ candidate }: { candidate: Candidate }) {
       }),
   });
   const carryVenues = Object.keys(candidate.capital_by_venue).sort();
+  const fundingCurrencyMutation = useMutation({
+    mutationFn: (body: {
+      run_id: string;
+      run_sha256: string;
+      candidate_id: string;
+      venues: {
+        venue: string;
+        funding_currency_identity: SettlementAssetIdentity;
+        balance_amount: string;
+        target_units_per_funding_unit: string;
+        conversion_fee_bps: string;
+      }[];
+    }) =>
+      api<FundingCurrencySensitivity>('/frontier/opportunities/funding-currency-sensitivity', {
+        method: 'POST',
+        body: JSON.stringify(body),
+      }),
+  });
+  const fundingIdentityFor = (venue: string): SettlementAssetIdentity | null => {
+    const target = candidate.capital_currency_identity;
+    if (!target) return null;
+    const kind = fundingKinds[venue] ?? target.kind;
+    return {
+      schema_version: 1,
+      kind,
+      code: (fundingCodes[venue] ?? target.code).trim().toUpperCase(),
+      network_id:
+        kind === 'fiat' ? null : (fundingNetworks[venue] ?? target.network_id ?? '').trim(),
+      asset_reference:
+        kind === 'fiat'
+          ? null
+          : (fundingAssetReferences[venue] ?? target.asset_reference ?? '').trim(),
+    };
+  };
+  const fundingIdentityMatches = (
+    left: SettlementAssetIdentity | null | undefined,
+    right: SettlementAssetIdentity | null | undefined,
+  ) => Boolean(left && right && sameSettlementIdentity(left, right));
+  const fundingInputsValid =
+    carryVenues.length > 0 &&
+    carryVenues.every((venue) => {
+      const identity = fundingIdentityFor(venue);
+      const target = candidate.capital_currency_identity;
+      const sameIdentity = fundingIdentityMatches(identity, target);
+      const balance = fundingBalances[venue] ?? '';
+      const rate = fundingRates[venue] ?? (sameIdentity ? '1' : '');
+      const fee = fundingFees[venue] ?? (sameIdentity ? '0' : '');
+      const validCode =
+        identity?.kind === 'fiat'
+          ? /^[A-Z]{3}$/.test(identity.code)
+          : /^[A-Z0-9]{2,16}$/.test(identity?.code ?? '');
+      const validNamespace =
+        identity?.kind === 'fiat' ||
+        Boolean(
+          identity?.network_id &&
+          identity.asset_reference &&
+          !/\s/.test(identity.network_id) &&
+          !/\s/.test(identity.asset_reference),
+        );
+      const validBalance = Boolean(
+        /^(?:0|[1-9][0-9]{0,35})(?:\.[0-9]{1,36})?$/.test(balance) && parseExactMoney(balance),
+      );
+      const validRate = /^(?:0|[1-9][0-9]{0,8})(?:\.[0-9]{1,12})?$/.test(rate) && Number(rate) > 0;
+      const validFee = /^(?:0|[1-9][0-9]{0,4})(?:\.[0-9]{1,6})?$/.test(fee) && Number(fee) < 10000;
+      return Boolean(
+        target &&
+        identity &&
+        validCode &&
+        validNamespace &&
+        validBalance &&
+        (sameIdentity || (validRate && validFee)),
+      );
+    });
   const carryInputsValid =
     carryVenues.length > 0 &&
     carryVenues.every((venue) => {
@@ -5702,6 +5820,246 @@ function CandidateCard({ candidate }: { candidate: Candidate }) {
                   </details>
                 </div>
               )}
+          </div>
+          <div className="fr-fx-sensitivity">
+            <div>
+              <span className="fr-kicker">Funding denomination · virtual assumptions</span>
+              <h4>Venue-local funding currency sensitivity</h4>
+            </div>
+            <p>
+              Compare each isolated virtual balance with the candidate’s required settlement asset.
+              Enter an explicit rate in <strong>target units per one funding unit</strong> and a
+              conversion fee. No rate is fetched or inferred, and this funding view does not change
+              the candidate classification or P&amp;L.
+            </p>
+            {carryVenues.map((venue) => {
+              const identity = fundingIdentityFor(venue);
+              const target = candidate.capital_currency_identity ?? null;
+              const sameIdentity = fundingIdentityMatches(identity, target);
+              const kind = identity?.kind ?? 'fiat';
+              return (
+                <div className="fr-fx-funding-row" key={`${candidate.candidate_id}-fx-${venue}`}>
+                  <strong>{venueLabel(venue)}</strong>
+                  <label>
+                    <span>Funding asset kind</span>
+                    <select
+                      aria-label={`${venueLabel(venue)} funding asset kind`}
+                      value={kind}
+                      onChange={(event) => {
+                        setFundingKinds((current) => ({
+                          ...current,
+                          [venue]: event.target.value as SettlementAssetIdentity['kind'],
+                        }));
+                        fundingCurrencyMutation.reset();
+                      }}
+                    >
+                      <option value="fiat">Fiat currency</option>
+                      <option value="token">Network-specific token</option>
+                      <option value="other">Other namespaced asset</option>
+                    </select>
+                  </label>
+                  <label>
+                    <span>Funding asset code</span>
+                    <input
+                      aria-label={`${venueLabel(venue)} funding asset code`}
+                      maxLength={16}
+                      value={identity?.code ?? ''}
+                      onChange={(event) => {
+                        setFundingCodes((current) => ({ ...current, [venue]: event.target.value }));
+                        fundingCurrencyMutation.reset();
+                      }}
+                    />
+                  </label>
+                  {kind !== 'fiat' && (
+                    <>
+                      <label>
+                        <span>Network identifier</span>
+                        <input
+                          aria-label={`${venueLabel(venue)} funding asset network identifier`}
+                          maxLength={128}
+                          value={identity?.network_id ?? ''}
+                          onChange={(event) => {
+                            setFundingNetworks((current) => ({
+                              ...current,
+                              [venue]: event.target.value,
+                            }));
+                            fundingCurrencyMutation.reset();
+                          }}
+                        />
+                      </label>
+                      <label>
+                        <span>Asset reference</span>
+                        <input
+                          aria-label={`${venueLabel(venue)} funding asset reference`}
+                          maxLength={256}
+                          value={identity?.asset_reference ?? ''}
+                          onChange={(event) => {
+                            setFundingAssetReferences((current) => ({
+                              ...current,
+                              [venue]: event.target.value,
+                            }));
+                            fundingCurrencyMutation.reset();
+                          }}
+                        />
+                      </label>
+                    </>
+                  )}
+                  <label>
+                    <span>Virtual balance ({settlementIdentityLabel(identity)})</span>
+                    <input
+                      aria-label={`${venueLabel(venue)} funding currency virtual balance`}
+                      inputMode="decimal"
+                      maxLength={110}
+                      value={fundingBalances[venue] ?? ''}
+                      onChange={(event) => {
+                        setFundingBalances((current) => ({
+                          ...current,
+                          [venue]: event.target.value,
+                        }));
+                        fundingCurrencyMutation.reset();
+                      }}
+                    />
+                  </label>
+                  <label>
+                    <span>Target units per funding unit</span>
+                    <input
+                      aria-label={`${venueLabel(venue)} target units per funding unit`}
+                      inputMode="decimal"
+                      maxLength={24}
+                      disabled={sameIdentity}
+                      value={sameIdentity ? '1' : (fundingRates[venue] ?? '')}
+                      onChange={(event) => {
+                        setFundingRates((current) => ({ ...current, [venue]: event.target.value }));
+                        fundingCurrencyMutation.reset();
+                      }}
+                    />
+                  </label>
+                  <label>
+                    <span>Conversion fee (bps of target)</span>
+                    <input
+                      aria-label={`${venueLabel(venue)} conversion fee in basis points`}
+                      inputMode="decimal"
+                      maxLength={16}
+                      disabled={sameIdentity}
+                      value={sameIdentity ? '0' : (fundingFees[venue] ?? '')}
+                      onChange={(event) => {
+                        setFundingFees((current) => ({ ...current, [venue]: event.target.value }));
+                        fundingCurrencyMutation.reset();
+                      }}
+                    />
+                  </label>
+                  <small>
+                    Required candidate capital: {candidate.capital_by_venue[venue]}{' '}
+                    {settlementIdentityLabel(target)}. Balances at other venues cannot cover this
+                    requirement.
+                  </small>
+                </div>
+              );
+            })}
+            {!candidate.source_run_id || !candidate.source_run_sha256 ? (
+              <small role="status">
+                This candidate does not include a pinned saved run identity. Reload current Frontier
+                data before evaluating funding assumptions.
+              </small>
+            ) : (
+              <button
+                className="fr-action"
+                type="button"
+                disabled={!fundingInputsValid || fundingCurrencyMutation.isPending}
+                onClick={() =>
+                  fundingCurrencyMutation.mutate({
+                    run_id: candidate.source_run_id!,
+                    run_sha256: candidate.source_run_sha256!,
+                    candidate_id: candidate.candidate_id,
+                    venues: carryVenues.map((venue) => {
+                      const identity = fundingIdentityFor(venue)!;
+                      const sameIdentity = fundingIdentityMatches(
+                        identity,
+                        candidate.capital_currency_identity ?? null,
+                      );
+                      return {
+                        venue,
+                        funding_currency_identity: identity,
+                        balance_amount: fundingBalances[venue],
+                        target_units_per_funding_unit: sameIdentity
+                          ? '1'
+                          : (fundingRates[venue] ?? ''),
+                        conversion_fee_bps: sameIdentity ? '0' : (fundingFees[venue] ?? ''),
+                      };
+                    }),
+                  })
+                }
+              >
+                {fundingCurrencyMutation.isPending
+                  ? 'Recomputing…'
+                  : 'Evaluate virtual funding sensitivity'}
+              </button>
+            )}
+            {fundingCurrencyMutation.isError && (
+              <InlineError message={fundingCurrencyMutation.error.message} />
+            )}
+            {fundingCurrencyMutation.data && (
+              <div className="fr-capital-carry-result" aria-label="Virtual funding currency result">
+                <div className="fr-candidate-audit-head">
+                  <h5>Hypothetical funding sensitivity</h5>
+                  <StateBadge state={fundingCurrencyMutation.data.audit.disposition} />
+                </div>
+                <p>{fundingCurrencyMutation.data.audit.message}</p>
+                <p>
+                  Target:{' '}
+                  {settlementIdentityLabel(fundingCurrencyMutation.data.target_currency_identity)}
+                  {' · '}candidate state {fundingCurrencyMutation.data.candidate_classification} ·
+                  classification unchanged · practical eligibility{' '}
+                  {fundingCurrencyMutation.data.candidate_practical_eligibility
+                    ? 'established'
+                    : 'not established'}{' '}
+                  (unchanged) · candidate economics unchanged.
+                </p>
+                {fundingCurrencyMutation.data.venues.map((item) => (
+                  <div
+                    className="fr-fx-result-row"
+                    key={`${candidate.candidate_id}-fx-result-${item.venue}`}
+                  >
+                    <strong>{venueLabel(item.venue)}</strong>
+                    <span>
+                      {item.model_requirement_covered
+                        ? fundingCurrencyMutation.data.unresolved_candidate_fee_leg_count > 0
+                          ? 'Recorded model requirement covered; unresolved fees remain.'
+                          : 'Recorded model requirement covered under this assumption.'
+                        : 'Virtual funding shortfall under this assumption.'}
+                    </span>
+                    <small>
+                      Need <code>{item.required_funding_amount}</code>{' '}
+                      {settlementIdentityLabel(item.funding_currency_identity)} from a balance of{' '}
+                      <code>{item.balance_amount}</code>; target value after fee{' '}
+                      <code>{item.available_capital_target_after_fee}</code>; target shortfall{' '}
+                      <code>{item.shortfall_target}</code>; modeled conversion fee{' '}
+                      <code>{item.conversion_fee_target_amount}</code>{' '}
+                      {settlementIdentityLabel(
+                        fundingCurrencyMutation.data.target_currency_identity,
+                      )}
+                      .
+                    </small>
+                  </div>
+                ))}
+                <small>
+                  Input SHA-256 <code>{shortHash(fundingCurrencyMutation.data.input_sha256)}</code>{' '}
+                  · result SHA-256{' '}
+                  <code>{shortHash(fundingCurrencyMutation.data.result_sha256)}</code>.
+                </small>
+                <details>
+                  <summary>Funding assumptions and limitations</summary>
+                  <ul>
+                    {[
+                      ...fundingCurrencyMutation.data.assumptions,
+                      ...fundingCurrencyMutation.data.limitations,
+                    ].map((item, index) => (
+                      <li key={`${candidate.candidate_id}-fx-note-${index}`}>{item}</li>
+                    ))}
+                  </ul>
+                </details>
+              </div>
+            )}
           </div>
         </section>
       )}

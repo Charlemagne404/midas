@@ -866,7 +866,14 @@ it('renders recorded-evidence empty states and never probes a source automatical
     ...withTokenCapital(true),
     items: withTokenCapital(true).items.map((item) =>
       item.candidate_id === 'multi-outcome-fixture-candidate'
-        ? { ...item, source_run_id: 'a'.repeat(64), source_run_sha256: 'b'.repeat(64) }
+        ? {
+            ...item,
+            source_run_id: 'a'.repeat(64),
+            source_run_sha256: 'b'.repeat(64),
+            modeled_fees: null,
+            modeled_net_cost: null,
+            legs: item.legs.map((leg) => ({ ...leg, modeled_fee: null })),
+          }
         : item,
     ),
   });
@@ -895,6 +902,112 @@ it('renders recorded-evidence empty states and never probes a source automatical
     candidate_id: 'multi-outcome-fixture-candidate',
     annual_rate_bps_by_venue: { kalshi: '1000' },
     post_settlement_delay_seconds_by_venue: { kalshi: '3600' },
+  });
+  const eurIdentity = {
+    schema_version: 1,
+    kind: 'fiat',
+    code: 'EUR',
+    network_id: null,
+    asset_reference: null,
+  } as const;
+  responses['/api/frontier/opportunities/funding-currency-sensitivity'] = {
+    schema_version: 1,
+    model_version: 'frontier-virtual-funding-currency-1',
+    run_id: 'a'.repeat(64),
+    run_sha256: 'b'.repeat(64),
+    candidate_id: 'multi-outcome-fixture-candidate',
+    candidate_evidence_sha256: 'c'.repeat(64),
+    candidate_classification: 'VERIFIED MATHEMATICAL INCONSISTENCY',
+    candidate_practical_eligibility: false,
+    classification_unchanged: true,
+    practical_eligibility_unchanged: true,
+    candidate_economics_unchanged: true,
+    hypothetical_only: true,
+    target_currency_identity: tokenUsdIdentity,
+    unresolved_candidate_fee_leg_count: 3,
+    total_conversion_fee_target: '0.02255639097744360902255639098',
+    input_sha256: 'e'.repeat(64),
+    result_sha256: 'f'.repeat(64),
+    audit: {
+      disposition: 'verified',
+      message: 'Independent rational arithmetic matches every explicit funding assumption.',
+      checks: ['Full identities and venue isolation checked.'],
+    },
+    venues: [
+      {
+        venue: 'kalshi',
+        required_capital_target: '9',
+        funding_currency_identity: eurIdentity,
+        balance_amount: '10',
+        target_units_per_funding_unit: '1.1',
+        conversion_fee_bps: '25',
+        required_funding_amount: '8.20200501253132832',
+        available_capital_target_after_fee: '10.9725',
+        conversion_fee_target_amount: '0.02255639097744360902255639098',
+        shortfall_target: '0',
+        shortfall_funding: '0',
+        model_requirement_covered: true,
+      },
+    ],
+    assumptions: ['Rates and balances are user assumptions.'],
+    limitations: ['No conversion is performed.'],
+  };
+  const fxPanel = screen.getByRole('region', { name: 'Venue-separated virtual funding' });
+  fireEvent.change(within(fxPanel).getByLabelText('Kalshi funding asset kind'), {
+    target: { value: 'fiat' },
+  });
+  fireEvent.change(within(fxPanel).getByLabelText('Kalshi funding asset code'), {
+    target: { value: 'EUR' },
+  });
+  expect(within(fxPanel).getByLabelText('Kalshi target units per funding unit')).toHaveValue('');
+  expect(within(fxPanel).getByLabelText('Kalshi conversion fee in basis points')).toHaveValue('');
+  fireEvent.change(within(fxPanel).getByLabelText('Kalshi funding currency virtual balance'), {
+    target: { value: '10' },
+  });
+  fireEvent.change(within(fxPanel).getByLabelText('Kalshi target units per funding unit'), {
+    target: { value: '1.1' },
+  });
+  fireEvent.change(within(fxPanel).getByLabelText('Kalshi conversion fee in basis points'), {
+    target: { value: '25' },
+  });
+  fireEvent.change(within(fxPanel).getByLabelText('Kalshi funding currency virtual balance'), {
+    target: { value: '1e-1' },
+  });
+  expect(
+    within(fxPanel).getByRole('button', { name: 'Evaluate virtual funding sensitivity' }),
+  ).toBeDisabled();
+  fireEvent.change(within(fxPanel).getByLabelText('Kalshi funding currency virtual balance'), {
+    target: { value: '10' },
+  });
+  fireEvent.click(
+    within(fxPanel).getByRole('button', { name: 'Evaluate virtual funding sensitivity' }),
+  );
+  expect(
+    await within(fxPanel).findByText(
+      'Independent rational arithmetic matches every explicit funding assumption.',
+    ),
+  ).toBeInTheDocument();
+  expect(fxPanel).toHaveTextContent(
+    /candidate state VERIFIED MATHEMATICAL INCONSISTENCY · classification unchanged · practical eligibility not established \(unchanged\) · candidate economics unchanged/,
+  );
+  expect(fxPanel).toHaveTextContent('unresolved fees remain');
+  const fundingCall = fetchMock.mock.calls.find(
+    ([input]) => String(input) === '/api/frontier/opportunities/funding-currency-sensitivity',
+  );
+  expect(fundingCall?.[1]?.method).toBe('POST');
+  expect(JSON.parse(String(fundingCall?.[1]?.body))).toEqual({
+    run_id: 'a'.repeat(64),
+    run_sha256: 'b'.repeat(64),
+    candidate_id: 'multi-outcome-fixture-candidate',
+    venues: [
+      {
+        venue: 'kalshi',
+        funding_currency_identity: eurIdentity,
+        balance_amount: '10',
+        target_units_per_funding_unit: '1.1',
+        conversion_fee_bps: '25',
+      },
+    ],
   });
   expect(screen.getAllByText('red')).toHaveLength(2);
 

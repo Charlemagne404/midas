@@ -56,6 +56,10 @@ from midas.frontier.economics import (
     estimate_kalshi_taker_order_fee_sensitivity,
     kalshi_candidate_fee_schedule,
 )
+from midas.frontier.fx import (
+    FundingCurrencySensitivityRequest,
+    evaluate_funding_currency_sensitivity,
+)
 from midas.frontier.models import (
     BookSnapshot,
     Capability,
@@ -3568,6 +3572,43 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
                 ),
                 markets_by_id=markets_by_id,
                 observation_row_hashes=observation_row_hashes,
+            )
+        except ValueError as error:
+            raise HTTPException(status_code=422, detail=str(error)) from error
+        return sensitivity.model_dump(mode="json")
+
+    @api.post("/opportunities/funding-currency-sensitivity")
+    async def opportunity_funding_currency_sensitivity(
+        request: FundingCurrencySensitivityRequest,
+    ) -> dict[str, Any]:
+        """Compare venue-local virtual balances under explicit, non-classifying FX assumptions."""
+        try:
+            stored_run = store.replay(request.run_id)
+        except (ValueError, FrontierStoreError) as error:
+            raise HTTPException(status_code=409, detail=str(error)) from error
+        if stored_run is None:
+            raise HTTPException(status_code=404, detail="Saved research run was not found")
+        if stored_run.get("result_sha256") != request.run_sha256:
+            raise HTTPException(status_code=409, detail="Saved research run hash has changed")
+        if not replay_rows_without_held_sources((stored_run,)):
+            raise HTTPException(status_code=404, detail="Saved candidate is unavailable")
+        result = stored_run.get("result", {})
+        matching = [
+            OpportunityCandidate.model_validate(item)
+            for item in result.get("candidates", [])
+            if isinstance(item, dict) and item.get("candidate_id") == request.candidate_id
+        ]
+        if len(matching) != 1:
+            raise HTTPException(
+                status_code=404, detail="Candidate was not found uniquely in the saved run"
+            )
+        candidate = matching[0]
+        try:
+            sensitivity = evaluate_funding_currency_sensitivity(
+                candidate,
+                run_id=request.run_id,
+                run_sha256=request.run_sha256,
+                assumptions=request.venues,
             )
         except ValueError as error:
             raise HTTPException(status_code=422, detail=str(error)) from error
