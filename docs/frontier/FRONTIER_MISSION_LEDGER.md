@@ -4585,5 +4585,6 @@ current quotes, and opportunities are not inferred. `FRONTIER_OPERATIONS.md`
 and `docs/DEVELOPMENT.md` describe the same boundary. The focused OpenAPI
 contract assertion passes **1/1** in
 `tests/frontier/test_api.py::test_polymarket_market_metadata_probe_is_bound_and_does_not_replace_listing`.
-This is API documentation only; it makes no source request and changes no
-runtime decision path.
+Commit `1da2b11` records the API description and companion documentation. This
+is API documentation only; it makes no source request and changes no runtime
+decision path.

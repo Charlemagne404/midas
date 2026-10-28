@@ -64,7 +64,7 @@ resource admission; no host process was touched.
 | Multi-venue economic validation | BLOCKED | Other source-use holds remain in effect; no verified live cross-venue payoff is claimed. Fixture-only economic checks do not establish live equivalence. |
 | Production deployment | DEFERRED | Frontier remains isolated on its development branch; no production transition was attempted. |
 
-## Polymarket event identity and verification closeout — 2026-10-28 04:07 UTC
+## Polymarket event identity, API docs, and verification closeout — 2026-10-28 04:09 UTC
 
 Commit `fb6d800` corrects Frontier's Polymarket normalization. The legacy MIDAS
 normalizer still supplies `market:<id>` for older callers, but Frontier now
@@ -102,7 +102,9 @@ Ruff check/format and `git diff --check` pass. The full web suite remains
 40/40 and Frontier browser suite 6/6 from the 03:57 checkpoint above.
 The generated OpenAPI description for the metadata route now states its
 saved-listing binding and evidence limits; the focused API schema regression
-passes **1/1**. No public request was made for this documentation update.
+passes **1/1**. Commit `1da2b11` records that API description, its assertion,
+and the matching operations, development, and current-state documentation. No
+public request was made for this documentation update.
 
 At `2026-10-28T04:06:58Z`, memory PSI avg10 was **0.08% some / 0.08% full**,
 about **10 GiB** was available, and the shared Arena lock had no listed holder.
