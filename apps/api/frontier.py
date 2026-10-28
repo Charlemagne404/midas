@@ -1358,13 +1358,18 @@ def router(
             "Bounded public probing is disabled in source configuration"
         )
 
-    def probe_config_rejected(config: Any) -> bool:
-        return (
-            config is None
-            or not config.enabled
-            or not config.live_public_probe_enabled
-            or getattr(config, "probe_policy_block_reason", None) is not None
+    def probe_config_allowed(config: Any) -> bool:
+        return bool(
+            config is not None
+            and config.enabled
+            and config.live_public_probe_enabled
+            and getattr(config, "probe_policy_block_reason", None) is None
         )
+
+    def require_probe_config(config: Any) -> Any:
+        if not probe_config_allowed(config):
+            raise HTTPException(status_code=409, detail=probe_disabled_detail(config))
+        return config
 
     def preserve_failed_captures(
         adapter: ExchangeAdapter,
@@ -1493,7 +1498,7 @@ def router(
                         item.model_dump(mode="json") for item in manifest.declarations
                     ],
                     "health": health_by_venue[manifest.venue].model_dump(mode="json"),
-                    "public_probe_enabled": not probe_config_rejected(
+                    "public_probe_enabled": probe_config_allowed(
                         registry.get(manifest.venue).config
                     ),
                     "probe_policy_block_reason": getattr(
@@ -1523,7 +1528,7 @@ def router(
                         item.model_dump(mode="json") for item in manifest.declarations
                     ],
                     "health": (await registry.get(manifest.venue).health()).model_dump(mode="json"),
-                    "public_probe_enabled": not probe_config_rejected(
+                    "public_probe_enabled": probe_config_allowed(
                         getattr(registry.get(manifest.venue), "config", None)
                     ),
                     "probe_policy_block_reason": getattr(
@@ -2226,11 +2231,7 @@ def router(
                 status_code=409, detail="The advertised paginated-trade operation is unavailable"
             )
         config = getattr(adapter, "config", None)
-        if probe_config_rejected(config):
-            raise HTTPException(
-                status_code=409,
-                detail=probe_disabled_detail(config),
-            )
+        config = require_probe_config(config)
         try:
             known_markets = await _load_markets(store, 200, excluded_venues=held_venues)
         except (FrontierStoreError, ValueError) as error:
@@ -2369,8 +2370,7 @@ def router(
                 detail="Advertised Polymarket price-history operation is unavailable",
             )
         config = getattr(adapter, "config", None)
-        if probe_config_rejected(config):
-            raise HTTPException(status_code=409, detail=probe_disabled_detail(config))
+        config = require_probe_config(config)
         try:
             known_markets = await _load_markets(store, 200, excluded_venues=held_venues)
         except (FrontierStoreError, ValueError) as error:
@@ -2503,11 +2503,7 @@ def router(
                 status_code=409, detail="Kalshi trade page operation is unavailable"
             )
         config = getattr(adapter, "config", None)
-        if probe_config_rejected(config):
-            raise HTTPException(
-                status_code=409,
-                detail=probe_disabled_detail(config),
-            )
+        config = require_probe_config(config)
         try:
             known_markets = await _load_markets(store, 200, excluded_venues=held_venues)
         except (FrontierStoreError, ValueError) as error:
@@ -2646,11 +2642,7 @@ def router(
                 status_code=409, detail="Advertised Kalshi fee metadata operation is unavailable"
             )
         config = getattr(adapter, "config", None)
-        if probe_config_rejected(config):
-            raise HTTPException(
-                status_code=409,
-                detail=probe_disabled_detail(config),
-            )
+        config = require_probe_config(config)
         try:
             known_markets = await _load_markets(store, 200, excluded_venues=held_venues)
         except (FrontierStoreError, ValueError) as error:
@@ -2767,8 +2759,7 @@ def router(
                 detail="Advertised exact single-market metadata lookup is unavailable",
             )
         config = getattr(adapter, "config", None)
-        if probe_config_rejected(config):
-            raise HTTPException(status_code=409, detail=probe_disabled_detail(config))
+        config = require_probe_config(config)
 
         try:
             known_markets = await _load_markets(store, 200, excluded_venues=held_venues)
@@ -2916,11 +2907,7 @@ def router(
                 detail="Advertised Kalshi single-market metadata lookup is unavailable",
             )
         config = getattr(adapter, "config", None)
-        if probe_config_rejected(config):
-            raise HTTPException(
-                status_code=409,
-                detail=probe_disabled_detail(config),
-            )
+        config = require_probe_config(config)
         try:
             known_markets = await _load_markets(store, 200, excluded_venues=held_venues)
         except (FrontierStoreError, ValueError) as error:
@@ -3057,11 +3044,7 @@ def router(
                 detail="Advertised event market group operation is unavailable",
             )
         config = getattr(adapter, "config", None)
-        if probe_config_rejected(config):
-            raise HTTPException(
-                status_code=409,
-                detail=probe_disabled_detail(config),
-            )
+        config = require_probe_config(config)
         try:
             known_markets = await _load_markets(store, 200, excluded_venues=held_venues)
         except (FrontierStoreError, ValueError) as error:
@@ -3210,11 +3193,7 @@ def router(
                 detail="Advertised Kalshi multivariate-event discovery is unavailable",
             )
         config = getattr(adapter, "config", None)
-        if probe_config_rejected(config):
-            raise HTTPException(
-                status_code=409,
-                detail=probe_disabled_detail(config),
-            )
+        config = require_probe_config(config)
 
         async with source_locks[venue]:
             adapter.take_captures()
@@ -4990,8 +4969,7 @@ def router(
         reject_held_venue(venue)
         adapter = registered_source_adapter(venue)
         config = getattr(adapter, "config", None)
-        if probe_config_rejected(config):
-            raise HTTPException(status_code=409, detail=probe_disabled_detail(config))
+        config = require_probe_config(config)
         if request.market_limit > config.max_markets_per_call:
             raise HTTPException(
                 status_code=422,
@@ -5046,8 +5024,7 @@ def router(
         reject_held_venue(venue)
         adapter = registered_source_adapter(venue)
         config = getattr(adapter, "config", None)
-        if probe_config_rejected(config):
-            raise HTTPException(status_code=409, detail=probe_disabled_detail(config))
+        config = require_probe_config(config)
         journal = CollectionJournal(store.root)
         if not journal.path.exists():
             raise HTTPException(status_code=404, detail="Collection run was not found")
@@ -5130,8 +5107,7 @@ def router(
     async def probe(venue: Venue, request: ProbeRequest) -> dict[str, Any]:
         adapter = registered_source_adapter(venue)
         config = getattr(adapter, "config", None)
-        if probe_config_rejected(config):
-            raise HTTPException(status_code=409, detail=probe_disabled_detail(config))
+        config = require_probe_config(config)
         if request.limit > config.max_markets_per_call:
             raise HTTPException(
                 status_code=422, detail="Requested discovery limit exceeds source configuration"

@@ -4,11 +4,12 @@ import asyncio
 import hashlib
 import json
 import sqlite3
-from datetime import timedelta
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from multiprocessing import get_context
 from multiprocessing.connection import Connection
 from pathlib import Path
+from uuid import uuid4
 
 import pytest
 from midas.frontier.adapters.base import (
@@ -24,6 +25,7 @@ from midas.frontier.collection import (
     CollectionJournal,
     CollectionRunSpec,
     CollectionSourceBusy,
+    capability_manifest_sha256,
 )
 from midas.frontier.models import (
     COINBASE_MARKET_DATA_TERMS_VERSION,
@@ -459,19 +461,31 @@ async def test_kraken_pair_config_survives_journal_and_restart_and_mismatch_fail
 
 
 @pytest.mark.asyncio
-async def test_coinbase_product_and_terms_ack_config_survive_restart_and_are_pinned(tmp_path):
+async def test_coinbase_product_and_terms_ack_config_persist_while_source_is_held(tmp_path):
     config = CoinbaseSpotConfig(
         enabled=True,
         live_public_probe_enabled=True,
-        probe_policy_block_reason=None,
         market_data_terms_version_acknowledged=COINBASE_MARKET_DATA_TERMS_VERSION,
         products=("BTC-USD", "ETH-USD"),
     )
-    root, original_adapter, paused, journal = await _pause_configured_collection(
-        tmp_path, Venue.COINBASE_EXCHANGE, config
+    adapter = FakeAdapter(venue=Venue.COINBASE_EXCHANGE, config=config)
+    spec = CollectionRunSpec(
+        run_id=str(uuid4()),
+        venue=Venue.COINBASE_EXCHANGE,
+        adapter_version=adapter.capabilities.adapter_version,
+        capability_manifest_sha256=capability_manifest_sha256(adapter.capabilities),
+        adapter_config=config,
+        market_limit=1,
+        book_limit=0,
+        book_depth=1,
+        max_evidence_bytes=1024 * 1024,
+        max_wall_seconds=30,
+        created_at_utc=datetime.now(UTC),
     )
+    journal = CollectionJournal(tmp_path / "frontier")
+    journal.create_run(spec)
 
-    restored_spec = journal.run_spec(paused.run_id)
+    restored_spec = journal.run_spec(spec.run_id)
     assert restored_spec.adapter_config_type == "coinbase_spot"
     assert type(restored_spec.adapter_config) is CoinbaseSpotConfig
     assert restored_spec.adapter_config.products == ("BTC-USD", "ETH-USD")
@@ -479,38 +493,26 @@ async def test_coinbase_product_and_terms_ack_config_survive_restart_and_are_pin
         restored_spec.adapter_config.market_data_terms_version_acknowledged
         == COINBASE_MARKET_DATA_TERMS_VERSION
     )
-    listed_spec = journal.latest_run_checkpoints()[0][0]
-    assert type(listed_spec.adapter_config) is CoinbaseSpotConfig
-    assert listed_spec.adapter_config == config
+    assert restored_spec.adapter_config.probe_policy_block_reason is not None
+    assert restored_spec.adapter_config == config
 
     changed_products = config.model_copy(update={"products": ("ETH-USD",)})
-    changed_product_adapter = FakeAdapter(venue=Venue.COINBASE_EXCHANGE, config=changed_products)
-    with pytest.raises(ValueError, match="configuration differs"):
-        await BoundedSourceCollector(changed_product_adapter, FrontierStore(root), journal).resume(
-            paused.run_id
-        )
-    assert changed_product_adapter.discovery_calls == 0
-    assert changed_product_adapter.transport.request_count == 0
+    assert changed_products.has_valid_structure
+    assert changed_products != restored_spec.adapter_config
 
     changed_ack = config.model_copy(
         update={"market_data_terms_version_acknowledged": "fixture-other-terms"}
     )
-    changed_ack_adapter = FakeAdapter(venue=Venue.COINBASE_EXCHANGE, config=changed_ack)
-    with pytest.raises(ValueError, match="configuration differs"):
-        await BoundedSourceCollector(changed_ack_adapter, FrontierStore(root), journal).resume(
-            paused.run_id
-        )
-    assert changed_ack_adapter.discovery_calls == 0
-    assert changed_ack_adapter.transport.request_count == 0
+    assert changed_ack.has_valid_structure
+    assert changed_ack != restored_spec.adapter_config
 
-    restarted_adapter = FakeAdapter(venue=Venue.COINBASE_EXCHANGE, config=config)
-    resumed = await BoundedSourceCollector(restarted_adapter, FrontierStore(root), journal).resume(
-        paused.run_id
-    )
-    assert resumed.state == "completed"
-    assert restarted_adapter.discovery_calls == 0
-    assert restarted_adapter.transport.request_count == 0
-    assert original_adapter.discovery_calls == 1
+    with pytest.raises(AdapterError) as error:
+        await BoundedSourceCollector(adapter, FrontierStore(tmp_path / "collector")).start(
+            market_limit=1, book_limit=0
+        )
+    assert error.value.code == "SOURCE_USE_HELD"
+    assert adapter.discovery_calls == 0
+    assert adapter.transport.request_count == 0
 
 
 def test_legacy_collection_spec_without_a_config_tag_remains_readable():

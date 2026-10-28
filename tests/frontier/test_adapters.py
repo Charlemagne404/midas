@@ -1088,20 +1088,19 @@ async def test_kalshi_multivariate_event_page_rejects_bad_nested_identity(mutati
         events[0]["markets"].append(events[0]["markets"][0].copy())
     else:
         events.append(event.copy())
+    config = AdapterConfig(
+        enabled=True,
+        live_public_probe_enabled=True,
+        requests_per_second=5,
+        retries=0,
+        max_markets_per_call=1,
+    )
     transport, _, client = _transport(
         "external-api.kalshi.com",
         {"/events/multivariate": json.dumps({"events": events, "cursor": ""})},
+        config,
     )
-    adapter = KalshiAdapter(
-        AdapterConfig(
-            enabled=True,
-            live_public_probe_enabled=True,
-            requests_per_second=5,
-            retries=0,
-            max_markets_per_call=1,
-        ),
-        transport=transport,
-    )
+    adapter = KalshiAdapter(config, transport=transport)
     try:
         with pytest.raises(AdapterError):
             await adapter.discover_multivariate_events(collection_ticker="KX-COLLECTION")
