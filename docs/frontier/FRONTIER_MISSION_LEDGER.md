@@ -6298,3 +6298,38 @@ full Frontier suite after the change.
 **Next safe action:** continue source-independent audit of timestamp and
 provenance contracts across replay inputs, then update this ledger with targeted
 verification. Preserve source-use holds and production isolation.
+
+## Fee and raw observation timestamps — 2026-10-28 07:39 UTC
+
+**Stage:** D/E (economic input validation and evidence provenance).
+**Code commit:** `a7df7e9` on `codex/frontier-20261026`.
+
+The follow-up review found that `FeeSchedule.effective_at_utc` and
+`expires_at_utc` could be naive, even though candidate economics compares them
+with aware replay times. `RawObservation.request_started_at_utc` and
+`received_at_utc` also lacked timezone validation. These fields now reject
+naive values and normalize aware offsets to UTC, matching the existing fee
+evidence and normalized provenance contracts. Tests cover both timestamps on
+raw records and all three fee-schedule timestamps.
+
+Verification: the economics/replay and storage modules passed **73/73**.
+Strict mypy passed for `packages/midas/frontier/models.py` and
+`packages/midas/frontier/economics.py`. Ruff check and format check passed for
+the changed source modules and tests.
+
+The post-run sample at `2026-10-28T07:39:41Z` measured memory PSI avg10
+**0.00% some/full** and I/O PSI avg10 **2.52% some / 1.96% full**; about
+**10 GiB** was available and no process held the shared Arena lock. The rest of
+the Frontier suite was deferred because I/O pressure exceeded the recorded 1%
+admission threshold. No worker or protected store was touched.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Fee schedule time validation | COMPLETE AND VERIFIED | Evidence, effective, and expiry times require timezone-aware input and normalize to UTC. |
+| Raw observation request/receipt time validation | COMPLETE AND VERIFIED | Naive times are rejected; aware offsets normalize to UTC; storage tests pass. |
+| Broader Frontier regression after provenance changes | PARTIALLY VERIFIED | 73 affected module tests pass; remaining modules wait for lower I/O pressure. |
+| Project Frontier overall | PARTIALLY VERIFIED | Genuine second-venue evidence, broad science/resource gates, and deployment remain outstanding. |
+
+**Next safe action:** after I/O pressure falls, run the remaining adapter/API
+and Frontier regression slices affected by the shared model change. Continue
+source-independent code review while resource admission is closed.

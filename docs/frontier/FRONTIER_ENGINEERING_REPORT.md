@@ -7565,3 +7565,32 @@ was accessed. Broader post-change regression is still pending.
 | Candidate timestamp validation | COMPLETE AND VERIFIED | Naive values are rejected and aware offsets normalize to UTC; 50 economics/replay tests pass. |
 | Full Frontier regression after this fix | PARTIALLY VERIFIED | The affected module passes; the complete suite has not been rerun after this narrow change. |
 | Project Frontier overall | PARTIALLY VERIFIED | Live cross-venue equivalence, held-source permissions, broader production gates, and deployment remain incomplete. |
+
+## Fee and raw-observation time validation — 2026-10-28 07:39 UTC
+
+The timestamp audit then found two fee applicability fields and two raw
+observation fields that still accepted naive datetimes. Fee evaluation compares
+`effective_at_utc` and `expires_at_utc` with aware replay times; naive input
+could raise during candidate generation or independent audit. Raw request and
+receipt times are part of content-addressed source evidence, so accepting an
+implicit host-local timezone would make their temporal meaning ambiguous.
+
+Commit `a7df7e9` validates all three `FeeSchedule` timestamps (evidence,
+effective, and expiry) and both `RawObservation` timestamps (request start and
+response receipt). Naive timestamps are rejected, and aware offsets normalize
+to UTC. The affected economics/replay and storage modules pass **73/73**.
+Strict mypy passes for the two changed model/economics modules; Ruff check and
+format check pass for the changed source and tests.
+
+At `2026-10-28T07:39:41Z`, memory PSI avg10 was **0.00% some/full**, I/O PSI
+avg10 was **2.52% some / 1.96% full**, approximately **10 GiB** was available,
+and the shared Arena lock was free. The broader test slice was deferred because
+I/O pressure was above the repository's 1% admission threshold. No production
+service, protected store, worker, or source was accessed.
+
+| Component | Status | Current evidence and remaining boundary |
+| --- | --- | --- |
+| Fee schedule applicability timestamps | COMPLETE AND VERIFIED | Naive evidence/effective/expiry times reject; aware times normalize to UTC. |
+| Raw response timestamp contract | COMPLETE AND VERIFIED | Request and receipt times reject naive values and normalize aware offsets. |
+| Broader regression after model changes | PARTIALLY VERIFIED | 73 affected tests pass; adapter/API and remaining Frontier modules are pending lower I/O pressure. |
+| Project Frontier overall | PARTIALLY VERIFIED | Live cross-venue science, source permissions, full resource/recovery evidence, and deployment remain open. |

@@ -1866,3 +1866,14 @@ PSI avg10 was 0.00%, I/O PSI avg10 was **0.01% some / 0.00% full**, about
 source or protected store was accessed. Full Frontier regression after the
 timestamp change remains pending; overall Frontier is still research-only and
 **PARTIALLY VERIFIED**.
+
+### Fee and raw observation time validation — 2026-10-28 07:39 UTC
+
+Commit `a7df7e9` extends timezone validation to fee evidence/effective/expiry
+times and raw observation request/receipt times. Naive values are rejected and
+aware offsets normalize to UTC. The affected economics/replay and storage
+modules pass **73/73**; strict mypy and Ruff checks pass. At 07:39:41 UTC memory
+PSI avg10 was 0%, while I/O PSI was **2.52% some / 1.96% full**, so the
+remaining Frontier regression was deferred. The shared Arena lock was free;
+no production service, source, or protected store was touched. Overall Frontier
+remains isolated, research-only, and **PARTIALLY VERIFIED**.
