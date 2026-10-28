@@ -5468,3 +5468,21 @@ PSI is below 1%.
 | Replay comparison and timeline API modules | COMPLETE AND VERIFIED | Both complete modules pass 8/8 in an isolated temporary directory. |
 | Serial Frontier regression coverage | PARTIALLY VERIFIED | 231 tests pass across seven bounded invocations; four modules remain unrun as complete modules. |
 | Additional resource-bearing tests | DEFERRED | Post-run I/O PSI exceeded the admission threshold. |
+
+## Relationship review module verification — 2026-10-28 05:29 UTC
+
+`tests/frontier/test_relationship_reviews.py` passed **13/13** in 4.72 seconds
+pytest time (5.22 seconds wall) at 104,492 KiB peak RSS. It used
+`/tmp/frontier-relationship-reviews-20261028`, with zero swaps and socket
+messages; the existing Starlette/httpx TestClient deprecation warning appeared.
+
+The post-run sample measured memory PSI avg10 **0.02% some / 0.01% full** and
+I/O PSI **2.85% some / 2.10% full**. No Frontier test or shared Arena
+admission lock holder was active. Defer further tests until I/O `some` PSI is
+below 1%.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Relationship review module | COMPLETE AND VERIFIED | All 13 tests pass in isolation. |
+| Serial Frontier regression coverage | PARTIALLY VERIFIED | 244 tests pass across eight bounded invocations; three modules remain unrun as complete modules. |
+| Additional resource-bearing tests | DEFERRED | Post-run I/O PSI exceeded the admission threshold. |

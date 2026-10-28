@@ -6853,3 +6853,27 @@ passes.
 | Serial Frontier regression coverage | PARTIALLY VERIFIED | 231 passed across seven invocations; four modules remain. |
 | Full Frontier regression | PARTIALLY VERIFIED | Two monolithic attempts were interrupted; no full-suite pass is claimed. |
 | Additional resource-bearing checks | DEFERRED | Post-run I/O PSI exceeded the admission threshold. |
+
+## Relationship review module verification — 2026-10-28 05:29 UTC
+
+The complete `test_relationship_reviews.py` module passed **13/13** in 4.72
+seconds pytest time (5.22 seconds wall) at 104,492 KiB peak RSS. It ran with
+`/tmp/frontier-relationship-reviews-20261028`, zero swaps, and zero socket
+messages. The existing Starlette/httpx TestClient deprecation warning
+appeared.
+
+The immediate post-run sample showed memory PSI avg10 **0.02% some / 0.01%
+full** and I/O PSI **2.85% some / 2.10% full**. No Frontier test or shared
+Arena admission lock holder remained active. Further tests are deferred until
+I/O `some` PSI falls below 1%. Serial regression coverage now totals **244
+passed cases across eight bounded invocations**. Three complete modules
+remain: `test_api.py`, `test_relationships_economics_replay.py`, and
+`test_joint_state.py`. No full-suite pass is claimed; both monolithic attempts
+were interrupted.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Relationship review module | COMPLETE AND VERIFIED | All 13 tests pass in an isolated temporary directory. |
+| Serial Frontier regression coverage | PARTIALLY VERIFIED | 244 passed across eight invocations; three modules remain. |
+| Full Frontier regression | PARTIALLY VERIFIED | Two monolithic attempts were interrupted; no full-suite pass is claimed. |
+| Additional resource-bearing checks | DEFERRED | Post-run I/O PSI exceeded the admission threshold. |
