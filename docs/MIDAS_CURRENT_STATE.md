@@ -1730,3 +1730,14 @@ apps, without opening held data. At 04:19:47 UTC memory PSI avg10 was
 This closes those specific checks. Broader suite work remains subject to a
 fresh resource gate; Frontier remains research-only, undeployed, and
 **PARTIALLY VERIFIED**.
+
+### Held-source boundary regression — 2026-10-28 04:20 UTC
+
+`tests/frontier/test_held_capture_source_boundary.py` passed **2/2**. It
+confirmed no current Python test references the held capture directory and
+that direct, symlink, traversal, and `dir_fd` access attempts are denied under
+a temporary directory. Peak RSS was 43,732 KiB; there were zero swaps or
+socket messages. No preserved capture was opened. At 04:20:34 UTC memory PSI
+avg10 was 0.00% some/full, avg60 4.36%/3.95%, avg300 11.19%/10.07%, I/O PSI
+avg10 0.87%/0.69%, and the shared Arena lock was free. This strengthens the
+offline source boundary evidence but does not release any source-use hold.

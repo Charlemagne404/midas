@@ -6196,3 +6196,19 @@ recording contracts, not the full MIDAS suite or sustained resource admission.
 | Protected-service paper-state mutation guard | COMPLETE AND VERIFIED | Focused mock-backed test proves the service guard rejects API and Reality materialization; no actual service interaction occurred. |
 | Held-capture path references in source/test trees | COMPLETE AND VERIFIED | No direct `live-probes` path references found in tests, packages, or apps; no held data was opened. |
 | Project Frontier overall | PARTIALLY VERIFIED | Live cross-venue validation, complete repository acceptance, and deployment remain incomplete. |
+
+### Held-source boundary regression — 2026-10-28 04:20 UTC
+
+`tests/frontier/test_held_capture_source_boundary.py` passed **2/2** in 0.16
+seconds pytest time (0.46 seconds process wall), at **43,732 KiB peak RSS**,
+with zero swaps and zero socket messages. It scans current Python test files
+for held-capture path references and exercises read, write, open, `os.open`,
+symlink, traversal, and `dir_fd` protections only under a temporary directory.
+No preserved capture was opened. The post-run sample at
+`2026-10-28T04:20:34Z` showed memory PSI avg10 **0.00% some / 0.00% full**,
+avg60 **4.36% / 3.95%**, avg300 **11.19% / 10.07%**, I/O PSI avg10
+**0.87% / 0.69%**, about **10 GiB** available, and no shared Arena lock holder.
+
+| Component | Status | Current evidence and remaining boundary |
+| --- | --- | --- |
+| Held-source capture guard | COMPLETE AND VERIFIED | Current test-tree scan and temporary-path denial cases pass; no held data was accessed. |

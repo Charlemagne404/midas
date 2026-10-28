@@ -4769,3 +4769,22 @@ suite during elevated longer-window pressure.
 | Bounded legacy storage and recording compatibility | COMPLETE AND VERIFIED | Seven temporary-root/path-contract tests pass with low peak RSS and no swap or network traffic. |
 | Guard against paper-state materialization on protected services | COMPLETE AND VERIFIED | Focused test confirms API and Reality service guards fail closed; actual services were not contacted or modified. |
 | Current source-tree held-capture path references | COMPLETE AND VERIFIED | Static audit found no references under tests/packages/apps; this does not authorize direct database access or held-source use. |
+
+### Held-source boundary regression — 2026-10-28 04:20 UTC
+
+`tests/frontier/test_held_capture_source_boundary.py` passed **2/2** in 0.16
+seconds pytest time (0.46 seconds process wall), with **43,732 KiB peak RSS**,
+zero swaps, and zero socket messages. The source audit test scans Python test
+files for held-capture path references; the runtime test exercises reads,
+writes, `open`, `os.open`, file/directory symlinks, traversal, and `dir_fd`
+against an absent path under `tmp_path`. It opens no preserved source capture.
+
+At `2026-10-28T04:20:34Z`, memory PSI avg10 was **0.00% some / 0.00% full**,
+avg60 **4.36% / 3.95%**, avg300 **11.19% / 10.07%**; I/O PSI avg10 was
+**0.87% / 0.69%**. About **10 GiB** was available and the shared Arena lock
+was free. This verifies the held-capture guard against the current test tree;
+it does not authorize use of held records or paths outside these guard rails.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Held-source path guard and test-source isolation | COMPLETE AND VERIFIED | Current Python tests contain no held-capture path reference; direct and symlink path operations are denied on a temporary fixture. |
