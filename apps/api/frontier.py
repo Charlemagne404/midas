@@ -74,6 +74,7 @@ from midas.frontier.models import (
     TradeBatch,
     Venue,
 )
+from midas.frontier.registry import AdapterRegistry
 from midas.frontier.relationships import (
     MATCHER_VERSION,
     Relationship,
@@ -1025,7 +1026,9 @@ def _decode_kalshi_trade_cursor(cursor: str) -> dict[str, Any]:
     return value
 
 
-def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = None) -> APIRouter:
+def router(
+    store: FrontierStore, registry: AdapterRegistry, *, arena_root: Path | None = None
+) -> APIRouter:
     api = APIRouter(prefix="/api/frontier", tags=["frontier"])
     source_locks = {venue: asyncio.Lock() for venue in Venue}
     held_venues = tuple(
