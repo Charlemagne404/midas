@@ -5223,3 +5223,36 @@ lock. Defer additional resource-bearing checks until a fresh admission sample.
 | Collection wall-time enforcement | COMPLETE AND VERIFIED | The initial health probe is bounded; the 23-test collection module passes. |
 | Strict mypy after `6c5c329` | PARTIALLY VERIFIED | Last strict result was on preceding collector commit `8fb4c0d`; post-refinement check remains. |
 | Broader Frontier/MIDAS and browser regression | PARTIALLY VERIFIED | Full suites have not been rerun after latest collector commits. |
+
+## Collection API lease-conflict regression — 2026-10-28 05:12 UTC
+
+Test commit `be73099` adds an API-level busy-lease check. With the
+process-shared Polymarket lease held, `POST /api/frontier/collect/polymarket`
+returns **409**, makes no adapter discovery request, and leaves the run catalog
+empty. The route already maps `FrontierStoreError` to 409; this fixture proves
+the behavior end to end through FastAPI/TestClient.
+
+```bash
+/home/charlie/midas/.venv/bin/ruff check tests/frontier/test_collection_api.py
+# All checks passed
+/home/charlie/midas/.venv/bin/ruff format --check tests/frontier/test_collection_api.py
+# 1 file already formatted
+nice -n 10 /usr/bin/time -v env PYTHONPATH=packages:. \
+  /home/charlie/midas/.venv/bin/python -m pytest -q \
+  --basetemp=/tmp/midas-frontier-collection-api-regression-20261028T0512Z \
+  tests/frontier/test_collection_api.py
+# 8 passed in 2.35s; 88,252 KiB peak RSS; zero swaps or socket messages
+```
+
+One existing Starlette deprecation warning notes that `httpx` with
+`TestClient` is deprecated. This did not fail the tests and no external
+network request occurred. At approximately `2026-10-28T05:11Z`, memory PSI
+avg10 was **0.00% some / 0.00% full**, I/O PSI avg10 was **2.36% some / 1.92%
+full**, and no process held the shared Arena lock. Strict mypy after the
+health-timeout refinement and broader tests remain pending.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Collection API conflict handling | COMPLETE AND VERIFIED | Busy cross-process lease maps to 409 with no run insertion or source request; all 8 collection API tests pass. |
+| Post-refinement strict typing | PARTIALLY VERIFIED | The previous strict mypy run was on `8fb4c0d`; rerun after `6c5c329`. |
+| Full Frontier/MIDAS and browser regression | PARTIALLY VERIFIED | The collection (23/23) and collection API (8/8) modules pass; broad regression remains. |
