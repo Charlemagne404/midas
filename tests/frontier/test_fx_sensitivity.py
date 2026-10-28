@@ -253,6 +253,32 @@ def test_candidate_venue_set_must_match_assumption_set_exactly():
         )
 
 
+def test_oversized_external_and_candidate_amounts_fail_before_arithmetic():
+    with pytest.raises(ValueError, match="bounded nonnegative decimal"):
+        VenueFundingAssumption(
+            venue="kalshi",
+            funding_currency_identity=TOKEN_A,
+            balance_amount="9" * 37,
+            target_units_per_funding_unit="1",
+            conversion_fee_bps="0",
+        )
+    candidate = candidate_fixture().model_copy(
+        update={
+            "capital_by_venue": {
+                "polymarket": D("1e70"),
+                "kalshi": D("0.4"),
+            }
+        }
+    )
+    with pytest.raises(ValueError, match="exact arithmetic bound"):
+        evaluate_funding_currency_sensitivity(
+            candidate,
+            run_id=RUN_ID,
+            run_sha256=RUN_HASH,
+            assumptions=assumptions(),
+        )
+
+
 def test_rational_audit_rejects_tampered_conversion_result():
     candidate = candidate_fixture()
     inputs = assumptions()
