@@ -168,11 +168,16 @@ Kalshi exposes a separate explicit
 native ticker), `limit` (at most 100), and an optional returned cursor. Each
 cursor is bound to its ticker and page size; one request captures one page and
 Kalshi's block trades remain included by default. The normalization treats
-`yes_price_dollars` as a YES-price reference and does not infer a BUY/SELL side
-from `taker_outcome_side`. The UI lets a researcher select either Polymarket or
-Kalshi and then choose a market already present in saved listing evidence. Kraken
-does not currently claim cursor-paginated public trades. The protected Reality
-recording and its evidence remain on separate roots.
+`yes_price_dollars` as a YES-price reference and emits trade-observation schema
+v4 with nullable `is_block_trade`, `taker_outcome_side`, and `taker_book_side`
+fields. The UI shows missing classifications as not reported. The adapter does
+not infer a normalized BUY/SELL side from these source labels. The API example's
+`taker_side` value remains available in raw evidence but is uninterpreted because
+the official response documentation does not define its meaning. The UI lets a
+researcher select either Polymarket or Kalshi and then choose a market already
+present in saved listing evidence. Kraken does not currently claim
+cursor-paginated public trades. The protected Reality recording and its evidence
+remain on separate roots.
 
 Kalshi multivariate-event discovery is a separate explicit
 `POST /api/frontier/probe/kalshi/multivariate-events` operation. Supply exactly

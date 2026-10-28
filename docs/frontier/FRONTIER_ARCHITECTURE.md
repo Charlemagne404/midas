@@ -611,10 +611,13 @@ Kalshi also advertises cursor-paginated public trades. Frontier exposes one
 operator-triggered ticker-filtered page at a time, caps it at 100 rows even though
 the venue documents a larger limit, binds the local cursor to the recorded ticker
 and page size, and stops when the source returns an empty cursor. Native
-`yes_price_dollars` is represented as a YES-price reference; raw
-`no_price_dollars` and taker fields remain in the auditable response. The adapter
-does not infer a normalized BUY/SELL aggressor direction from
-`taker_outcome_side`.
+`yes_price_dollars` is represented as a YES-price reference. Trade-observation
+schema v4 retains nullable `is_block_trade`, `taker_outcome_side`, and
+`taker_book_side` labels, and the UI displays unknown classifications as not
+reported. Raw `no_price_dollars` and `taker_side` remain in the auditable
+response; the official example does not define `taker_side` semantics, so the
+adapter leaves it uninterpreted. These native labels do not become a normalized
+BUY/SELL aggressor direction.
 
 The common model is not the lowest common denominator. A binary event contract,
 a multivariate event leg, and a spot pair retain separate instrument kinds and
