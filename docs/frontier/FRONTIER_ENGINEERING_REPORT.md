@@ -1,8 +1,8 @@
 # Project Frontier Engineering Report
 
-**Report date:** 2026-10-28
+**Report date:** 2026-10-29
 
-## Current completion matrix — 2026-10-29 00:00 CET
+## Current completion matrix — 2026-10-29 00:05 CET
 
 This is a current evidence classification, not a final completion claim. The
 dated implementation records below remain the detailed evidence; the
@@ -45,6 +45,47 @@ transport now clamps the retry count to zero, preserving one initial attempt;
 a fixture regression asserts one request and a classified timeout. The new
 fixture was added but not run because the host incident gate remains in force.
 `git diff --check` passes. Verification of this change is pending.
+
+## Host incident follow-up — 2026-10-29 00:05 CET
+
+Read-only inspection found that systemd-oomd monitors the user manager with
+`ManagedOOMMemoryPressure=kill` at 50% for 20 seconds. The journal records ten
+kills above that threshold while reclaim was active; victims were API (three),
+Reality (two), finalized-gap replay (four), and one Terminal scope. This proves
+the aggregate trigger and victim set, but not one initiating workload. API and
+Reality cgroup memory remains mostly file cache (1.48 GiB and 1.07 GiB), with
+about 129 MiB anonymous memory apiece. The Reality restart process had read
+3.06 GB by 00:05; its latest known status timestamp remained pre-restart at
+23:43:01. Collection recovery is still unverified.
+
+Containment is now durable across a user-manager restart: the auxiliary
+five-minute gap-detail timer is disabled, and
+`~/.config/systemd/user/midas-reality-capacity.service.d/90-frontier-memory-bound.conf`
+persists `MemoryHigh=128M`, `MemoryMax=192M`, and `MemorySwapMax=0` for the
+short capacity monitor. Effective properties were read back after
+`systemctl --user daemon-reload`; no service was restarted or manually run.
+The next scheduled capacity run at about 00:16 CET remains pending.
+
+At 00:03 CET host PSI was 0.00% avg10 and at most 0.32% avg300; available
+memory was 9.9 GiB and swap remained 3.1/4 GiB. No new OOMd kill appeared
+through 00:05:31, about 22 minutes after the last kill. API and Reality were
+still within about 2.4 MiB of `MemoryHigh`. Keep Frontier runtime work paused;
+this short quiet interval is not a recovery claim. Rollback details and the
+full incident evidence are in the
+[incident report](FRONTIER_MEMORY_PRESSURE_INCIDENT_2026-10-28.md).
+
+## Virtual funding sensitivity static review — 2026-10-29 00:05 CET
+
+The funding-sensitivity API replays the hash-validated saved run, verifies the
+requested result hash and unique candidate, rejects held source evidence, then
+recomputes sensitivity rather than loading a persisted scenario. The separate
+P&L scenario requires a verified candidate audit, matching candidate/audited
+terminal P&L, fully modeled leg fees, and sufficient venue-local balances. FX
+conversion is recomputed with rational arithmetic and remains explicitly
+virtual; it does not alter the candidate classification or pool venue
+balances. Static review found no trust-boundary or calculation defect. The FX
+fixture suite was not run under the host admission hold, and no network request
+or currency conversion source was used.
 
 ## Host memory-pressure incident and Frontier admission — 2026-10-28 22:56 UTC
 

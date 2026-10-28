@@ -1,5 +1,34 @@
 # Project Frontier Mission Ledger
 
+## Host incident follow-up and FX model review — 2026-10-29 00:05 CET
+
+The latest read-only diagnosis confirms `systemd-oomd` kills the user manager's
+largest eligible service when aggregate user-session PSI exceeds its 50%
+threshold for 20 seconds during reclaim. Ten kills are accounted for: API
+(three), Reality (two), gap-detail replay (four), and one Terminal scope. No
+single initiating workload is established. API and Reality cgroup charges are
+mostly file cache; their leaf OOM counters are zero. Host PSI is currently
+low, but swap remains 3.1/4 GiB, and both services are within about 2.4 MiB of
+`MemoryHigh`.
+
+The five-minute auxiliary gap-detail timer is now disabled across manager
+restarts. The capacity monitor's `128M` high / `192M` max / zero-swap bound is
+persisted in
+`~/.config/systemd/user/midas-reality-capacity.service.d/90-frontier-memory-bound.conf`.
+The unit manager reloaded definitions without restarting services; effective
+settings read back. No run under the revised limit has occurred yet; its
+approximately 00:16 CET timer trigger is the next validation point. Rollback
+commands are in the incident report. Reality recovery remains unverified
+because the latest known status is stale while its restarted process continues
+reading the recording. Keep tests, replay, and probes paused.
+
+Static review of funding-currency sensitivity found the API reads a hash-
+validated saved run, selects one unique candidate, rejects held evidence, and
+recomputes a virtual scenario. A verified P&L scenario requires candidate audit
+agreement, known leg fees, and sufficient isolated balances; the independent
+conversion check uses rational arithmetic. No code change was indicated. The
+fixture suite was not run during the host admission hold.
+
 ## Host memory pressure and OOM incident — 2026-10-28 22:54 UTC
 
 Incident report: [FRONTIER_MEMORY_PRESSURE_INCIDENT_2026-10-28.md](FRONTIER_MEMORY_PRESSURE_INCIDENT_2026-10-28.md).

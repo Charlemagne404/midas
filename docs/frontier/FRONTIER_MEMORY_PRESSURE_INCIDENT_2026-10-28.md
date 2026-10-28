@@ -2,11 +2,11 @@
 
 **Incident date:** 2026-10-28 (CET)
 
-**Checkpoint captured:** 2026-10-28 23:55 CET
+**Checkpoint captured:** 2026-10-29 00:05 CET
 
 **Scope:** Host reliability interruption during Project Frontier
 
-**Frontier branch:** `codex/frontier-20261026`, checkpoint `53c21a316cfc2fea0a15a1cfa5c7ae03f34a76cb`
+**Frontier branch:** `codex/frontier-20261026`, implementation checkpoint `69fa099aac808443d780d01130eb0ec10bcd09df`
 
 ## Executive summary
 
@@ -26,13 +26,13 @@ cache). Process RSS alone therefore understated the cgroup budget in use.
 
 Two narrowly scoped containment changes are in effect:
 
-- The five-minute Veritas gap-detail timer is stopped. Inspection confirmed
+- The five-minute Veritas gap-detail timer is disabled and stopped. Inspection confirmed
   that it only replays finalized segments, has no reverse dependents, and is
   not part of live Reality collection.
-- The Reality capacity monitor has runtime-only `MemoryHigh=128M`,
-  `MemoryMax=192M`, and `MemorySwapMax=0`. Its previous 128 MiB hard cap caused
-  seven kernel memcg OOM kills. The adjustment is bounded and reversible; its
-  next scheduled run has not yet validated the new limit.
+- The Reality capacity monitor has `MemoryHigh=128M`, `MemoryMax=192M`, and
+  `MemorySwapMax=0` in a reversible persistent user-unit drop-in. Its previous
+  128 MiB hard cap caused seven kernel memcg OOM kills. The 00:16 CET scheduled
+  run remains the first validation of the revised limits.
 
 Reality was killed by systemd-oomd and automatically restarted. Its restart
 path fully replays and verifies the recording before resuming collection. At
@@ -44,10 +44,46 @@ No operator restart or protected service configuration change was made.
 **The host is not yet safe for Frontier tests or research batches.** Continue
 only static/documentation work until Reality has demonstrably resumed capture,
 service headroom recovers, and memory pressure remains low across multiple
-scheduled-job cycles. The eight-minute quiet interval after the last OOMd kill
-is too short to claim recovery.
+scheduled-job cycles. The 22-minute quiet interval after the last OOMd kill is
+too short to claim recovery.
 
 ## Observed impact and timeline
+
+### Post-containment sample — 2026-10-29 00:05 CET
+
+At 00:03:14 CET, `free` reported 15 GiB total, 5.6 GiB used, 9.9 GiB
+available, and 3.1/4 GiB swap used. Host PSI was `some` 0.00% avg10 / 0.32%
+avg300 and `full` 0.00% avg10 / 0.27% avg300. `oomctl dump` showed the
+monitored `user@1000.service` at 10.3 GiB with 0.33% avg300 memory pressure.
+No new systemd-oomd kill appeared after 23:43:24 CET through 00:05:31 CET.
+This is about 22 minutes of quiet after the last kill, not durable recovery.
+
+The effective user-manager policy is `ManagedOOMMemoryPressure=kill` with a
+50% per-user PSI threshold. `oomctl` reports a 20-second pressure duration;
+the system oomd defaults are 60% and 20 seconds, with a 90% swap-used limit.
+Host swap use is below that swap limit. The ten incident journal entries each
+name the user-manager pressure threshold and active reclaim as the kill
+trigger. Victims were API (three), Reality (two), gap-detail replay (four),
+and one GNOME Terminal scope. This identifies the aggregate trigger and
+victims, not the sole initiating workload.
+
+At 00:03, API cgroup memory was about 1.61 GB, comprising 1.48 GB file cache
+and 129 MB anonymous memory; Reality was about 1.21 GB, comprising 1.07 GB
+file cache and 129 MB anonymous memory. Their `memory.events` showed repeated
+`high` events (11,558 API; 4,232 Reality) and no leaf `oom` or `oom_kill`
+events. Thus `MemoryHigh` reclaim is active, but cgroup totals are not
+equivalent to resident process RSS. The restarted Reality process had
+`/proc/1235804/io` `read_bytes=3,061,915,648` at 00:05:31; the latest known
+status sample at 00:01 still showed the pre-restart 23:43:01 timestamp. Full
+replay and renewed capture remain unverified.
+
+At 00:05 CET, the gap-detail timer was disabled and read back as
+`inactive/dead`; its service was not running. The capacity monitor's
+persistent drop-in was loaded by `systemctl --user daemon-reload`; the service
+remained inactive and the effective limits read back as 128M/192M/0 swap. No
+service was restarted or manually run. Its next scheduled run is about 00:16
+CET. API and Reality remain within roughly 2.4 MiB of their `MemoryHigh`
+limits. Continue to defer Frontier runtime work.
 
 ### systemd-oomd kills
 
@@ -173,33 +209,37 @@ Inspection confirmed the timer was scheduled every five minutes
 that replays finalized Reality segments into Veritas gap-detail/Arena outputs.
 The unit did not collect live market data. Reverse dependency inspection found
 no other units requiring the timer. The timer was stopped through the user
-systemd manager and was inactive by 23:49 CET. It remains enabled, so the
-temporary stop ends if the user manager is restarted or the timer is explicitly
-started.
+systemd manager and inactive by 23:49 CET, then disabled at 00:05 CET so it
+stays stopped across a user-manager restart. It remains a reversible user-level
+unit change.
 
 Rollback / resume:
 
 ```sh
-systemctl --user start midas-veritas-gap-detail-v2.timer
+systemctl --user enable --now midas-veritas-gap-detail-v2.timer
 ```
 
 No replay service was manually started and no Arena or Veritas evidence was
 modified.
 
-### Bounded the Reality capacity monitor at runtime
+### Bounded the Reality capacity monitor with a reversible override
 
 The unit runs about every 30 minutes, is a `Type=oneshot`, has a 60-second
 timeout, and writes only the capacity report. Before this incident change it
 had `MemoryMax=128M`, no explicit `MemoryHigh`, and unlimited swap. A runtime
-override now sets `MemoryHigh=128M`, `MemoryMax=192M`, and `MemorySwapMax=0`.
-The effective properties were read back successfully; the service was
-inactive, so no running job or live collector was restarted. The underlying
-unit file under `~/.config/systemd/user/` was not edited. systemd stored the
-override under `/run/user/1000/systemd/user.control/`, so it is runtime-only.
+override set `MemoryHigh=128M`, `MemoryMax=192M`, and `MemorySwapMax=0`.
+At 00:05 CET, the same values were made persistent in
+`~/.config/systemd/user/midas-reality-capacity.service.d/90-frontier-memory-bound.conf`.
+The effective properties read back successfully after user-manager reload;
+the service was inactive, so no running job or live collector was restarted.
+The 00:16 timer run is still pending; no execution under the revised limit is
+claimed.
 
 Rollback the effective memory properties:
 
 ```sh
+rm ~/.config/systemd/user/midas-reality-capacity.service.d/90-frontier-memory-bound.conf
+systemctl --user daemon-reload
 systemctl --user set-property --runtime midas-reality-capacity.service \
   MemoryHigh=infinity MemoryMax=128M MemorySwapMax=infinity
 ```
@@ -238,10 +278,12 @@ is still required to validate runtime behavior under the new bound.
 
 Read-only validation after the containment actions confirmed:
 
-- The gap-detail timer was `inactive/dead` and still `enabled`; its last
-  trigger remained 23:42:14 CET.
+- The gap-detail timer is `inactive/dead` and `disabled`; its last trigger
+  remains 23:42:14 CET. Restore with `systemctl --user enable --now
+  midas-veritas-gap-detail-v2.timer` after admission review.
 - Capacity monitor effective properties read back as `128M` high, `192M` max,
-  and swap max `0`; no follow-up execution has occurred yet.
+  and swap max `0`, backed by the persistent `90-frontier-memory-bound.conf`;
+  the next scheduled execution is pending.
 - At 23:51:44 host PSI avg10 was 0%, avg300 was 3.82%; there were no new oomd
   kill entries after 23:43:24 through that sample. The quiet interval was only
   about eight minutes total and about five minutes after stopping the timer.
@@ -279,8 +321,8 @@ establish durable host recovery. A safe Frontier testing gate requires all of:
    multiple scheduled job cycles.
 3. No new systemd-oomd or kernel memcg OOM events during that observation
    window.
-4. The capacity timer completes its next bounded run under the runtime cap.
-5. The gap-detail timer remains stopped until replay scheduling and aggregate
+4. The capacity timer completes its next bounded run under the persistent cap.
+5. The gap-detail timer remains disabled until replay scheduling and aggregate
    memory admission are reviewed; restarting it is available through the
    rollback command above.
 
