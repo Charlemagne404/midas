@@ -512,3 +512,20 @@ holds remain appropriate for this engineering worktree. No configuration flag
 or descriptive reference string should be treated as permission. Continue
 fixture-only development until scope-specific authorization and validated
 runtime gates are established.
+
+## Polymarket geographic scope check — 2026-10-28 20:42 UTC
+
+The current official [Geographic Restrictions](https://help.polymarket.com/en/articles/13364163-geographic-restrictions)
+page (dated 14 August 2026) lists blocked countries and subregions; Sweden is
+not in the displayed list. The same page says its restrictions are based on
+location and expressly prohibits VPNs or similar tools to bypass them. The
+research guide separately distinguishes Polymarket International from the
+US-only product.
+
+The user is traveling, and the physical location of the machine making any
+future request has not been verified. A Europe/Stockholm timezone or an
+unverified location estimate is not sufficient evidence of current physical
+eligibility. No Polymarket API request was made in this review. Keep any new
+probe deferred until the request's physical operating region can be established
+without a proxy, VPN, or other circumvention. This is an operational access
+boundary, not a legal eligibility determination.

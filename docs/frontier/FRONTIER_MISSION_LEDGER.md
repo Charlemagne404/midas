@@ -10869,3 +10869,20 @@ only untracked path and was preserved without access or mutation.
 **Next safe action:** continue source-independent, bounded implementation and
 verification. Do not access the held probe path, call held source APIs, or run
 broad suites without a fresh admission sample showing sustained headroom.
+
+## Polymarket geographic access boundary — 2026-10-28 20:42 UTC
+
+The current official restriction page does not list Sweden among the blocked
+countries/regions, but it makes eligibility location-dependent and prohibits
+VPN or proxy circumvention. The user is traveling; the physical location of
+the host at a future probe is not established by its Europe/Stockholm timezone.
+No source API call was made. The existing Polymarket research integration
+remains implemented, but new live validation is pending verified physical
+eligibility. This does not change the separate Kalshi/Kraken/Coinbase terms
+holds.
+
+| Requirement | Status | Evidence and boundary |
+| --- | --- | --- |
+| Polymarket research API contract | IMPLEMENTED, LIVE VALIDATION PENDING | Official research documentation supports research access; current physical eligibility remains unverified. |
+| Geographic restriction handling | PARTIALLY VERIFIED | Official list and no-bypass rule reviewed; no proxy/VPN or endpoint probe used. |
+| Genuine multi-venue validation | BLOCKED | Additional venue terms remain restrictive and the user's current location is unverified. |

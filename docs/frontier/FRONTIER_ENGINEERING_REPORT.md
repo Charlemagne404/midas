@@ -11730,3 +11730,19 @@ reconfigured, or deployed. The last resource sample at `2026-10-28T20:34:48Z`
 showed Reality only 479,232 bytes below `MemoryHigh`, so the broad Frontier,
 Arena, and legacy suites remain deferred. Continue with source-independent,
 bounded work and update this matrix when evidence changes.
+
+## Polymarket geographic access boundary — 2026-10-28 20:42 UTC
+
+The official Polymarket restriction page lists restricted countries and
+regions and does not list Sweden. It also makes restrictions location-dependent
+and prohibits VPN/proxy circumvention. Because the user is traveling, the
+physical location of the host for any future request is not established by the
+configured Europe/Stockholm timezone. No API request was made. Polymarket
+research-source validation therefore remains pending verified physical
+eligibility; this does not alter the other venues' terms holds.
+
+| Requirement | Status | Evidence and boundary |
+| --- | --- | --- |
+| Polymarket research use | IMPLEMENTED, LIVE VALIDATION PENDING | Official research guide is available; physical eligibility at request time remains unknown. |
+| Geographic restriction compliance | PARTIALLY VERIFIED | Official list reviewed; no endpoint request or circumvention occurred. |
+| Frontier overall | PARTIALLY VERIFIED | Cross-venue live evidence, exact-tree broad regression, endurance, protected recovery, and deployment remain open. |
