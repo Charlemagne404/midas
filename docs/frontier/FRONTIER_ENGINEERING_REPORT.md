@@ -10201,7 +10201,13 @@ This change is implemented but not yet validated. At 15:47:55Z memory PSI
 avg10 measured 45.32% some / 40.12% full and I/O PSI 0.61% some / 0.60% full;
 9.5 GiB was available, with 3.7 GiB of 4 GiB swap in use. The focused
 transport test and Ruff checks are deferred until a fresh resource sample
-meets the local admission gate.
+meets the local admission gate. Implementation commits are eab4a0b, 634ee5f,
+and 1938dc4.
+
+At 15:52:21Z memory PSI avg10 remained 37.47% some / 23.71% full and avg60
+was 36.41% some / 24.95% full. I/O PSI avg10 was 0.09% some / 0.06% full,
+available memory was 9.7 GiB, and 3.8 GiB of 4 GiB swap was occupied. No
+validation process was started under that pressure sample.
 
 | Component | Status | Evidence and remaining boundary |
 | --- | --- | --- |

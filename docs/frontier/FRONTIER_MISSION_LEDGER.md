@@ -16,7 +16,13 @@ The new transport tests and Ruff checks have not run. At 15:47:55Z host memory
 PSI avg10 was 45.32% some / 40.12% full, I/O PSI was 0.61% some / 0.60% full,
 9.5 GiB was available, and 3.7 GiB of 4 GiB swap was occupied. A separate
 Veritas gap-detail batch was visible; no source, capture, or service was
-changed. This parser change remains implemented with validation pending.
+changed. Implementation commits are eab4a0b, 634ee5f, and 1938dc4.
+
+The repeat sample at 15:52:21Z still exceeded the memory gate: avg10 was
+37.47% some / 23.71% full and avg60 was 36.41% some / 24.95% full. I/O avg10
+was 0.09% some / 0.06% full, 9.7 GiB was available, and 3.8 GiB of 4 GiB swap
+was occupied. No test or Ruff process was started. The parser and proxy
+changes remain implemented with validation pending.
 
 | Component | Status | Evidence and remaining boundary |
 | --- | --- | --- |
