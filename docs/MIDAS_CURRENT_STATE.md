@@ -33,6 +33,23 @@ in the dated addendum below and in the Frontier engineering report.
 
 ## Frontier development addendum — 2026-10-28
 
+### Varied subset shapes and frontend regression — 2026-10-28 01:27 UTC
+
+Benchmark commit `8f2d22fa7bc37ac806d070403d122d941dc226a8` measures four
+synthetic workload shapes. A 3-instrument/3-state case returned its one valid
+basket in a **0.000928 second median**. At the 12-instrument/16-state ceiling,
+the 11-basket case took **0.091870 seconds median**, the zero-basket case
+**0.072525 seconds**, and the dense 4,095-basket case returned the 32-result
+cap in **0.343868 seconds**. All cases and the reproduction command are in the
+latest mission-ledger checkpoint; they do not represent exchange workloads.
+
+After the payoff-basket UI change, the complete web unit suite passed **40/40**
+and the isolated Frontier Playwright spec passed **4/4**. Peak RSS was 310,652
+KiB and 192,060 KiB respectively; neither run swapped. Mission Control is
+verified on the current frontend revision, but Frontier remains undeployed and
+overall status is **PARTIALLY VERIFIED**. General multi-market joint-state
+composition and its independent audit remain open.
+
 ### Bounded payoff-basket ceiling benchmark — 2026-10-28 01:22 UTC
 
 Harness commits `447c85a` and `c1c58ad` add and clarify a reproducible

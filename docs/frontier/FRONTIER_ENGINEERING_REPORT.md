@@ -5022,7 +5022,7 @@ During the check at `2026-10-28T00:31:15Z`, memory PSI avg10 was **24.98% some
 gap-detail batch PID **3975405** was active. It was not touched. The strict API
 typing caveat remains unresolved; retry when shared-host pressure subsides.
 
-## Current mission acceptance matrix — 2026-10-28 01:20 UTC
+## Current mission acceptance matrix — 2026-10-28 01:27 UTC
 
 This matrix assesses the user-requested Frontier stages and scientific
 acceptance against current branch evidence, not intent or planned work.
@@ -5037,9 +5037,9 @@ acceptance against current branch evidence, not intent or planned work.
 | Venue costs, capital, and currency assumptions | PARTIALLY VERIFIED | Public fee metadata, bounded fee/carry sensitivities, partial-fill stress, venue-separated virtual balances, and a separate conversion-adjusted terminal-P&L scenario exist. The P&L scenario requires verified candidate/funding audits, complete candidate leg fees, and sufficient per-venue balances; it never mutates candidate economics. Account-specific fees, sourced FX, cross-venue transfer/custody, settlement risk, and conversion availability remain unknown. |
 | Isolated collection, provenance, durable storage, and deterministic replay | PARTIALLY VERIFIED | Finite restartable collection, append-only hash-chained checkpoints, a read-only keyset-paginated run catalog across the 1,000-run journal bound, bounded storage, event-time replay, source-health evidence, and replay provenance are implemented and tested offline. No continuous market-data stream, full source-history backfill, or long-horizon source-quality study is established. |
 | Laboratory/Arena research integration | PARTIALLY VERIFIED | Bounded replay jobs, paired comparisons, integrity-checked results, and fixture/UI paths exist. No durable Laboratory experiment manager, long-duration campaign, or production worker is authorized or verified. |
-| Native Frontier Mission Control interface | PARTIALLY VERIFIED | The prior revision passed the full web unit suite (40/40) and Frontier browser spec (4/4) against isolated services. After `d162594`, the focused family-label test passed 1/1; full web and browser suites were not rerun. Funding responses are fixture-intercepted in browser, while the saved-run API separately verifies the candidate scenario. Live source data is unavailable under current holds. No production deployment occurred. |
-| Scientific acceptance: normalization, rejection, controlled discrepancy, independent arithmetic, missing/stale/asynchronous evidence, and deterministic replay | PARTIALLY VERIFIED | After commit `d162594`, the complete serial Frontier suite passed 332 tests, including exact three-leg basket generation, replay, API persistence/listing, independent recomputation, non-coverage rejection, and audit rejection of a truncated basket. The focused Mission Control family-label test passed 1/1. Evidence does not establish a genuine cross-venue relationship, synchronized executable quotes, or positive economics. |
-| Resource sustainability under bounded development workloads | PARTIALLY VERIFIED | The 332-test serial Frontier suite measured 369,040 KiB peak RSS. A separate maximum-bound synthetic basket run returned 32 candidates from 4,095 qualifying subsets at 49,792 KiB peak RSS, with 0.344171 seconds median / 0.355593 seconds maximum per call. These are short local measurements; representative market distributions, sustained collection, concurrent workloads, production admission, and broad latency/CPU behavior remain unmeasured. |
+| Native Frontier Mission Control interface | IMPLEMENTED, DEPLOYMENT PENDING | The complete web unit suite passes 40/40 and the Frontier browser spec 4/4 after the payoff-basket change, using isolated demo services and temporary SQLite/Arena/Frontier roots. No live source data was used; no production deployment occurred. |
+| Scientific acceptance: normalization, rejection, controlled discrepancy, independent arithmetic, missing/stale/asynchronous evidence, and deterministic replay | PARTIALLY VERIFIED | The serial Frontier suite passes 332 tests, including exact three-leg basket generation/replay, API persistence/listing, independent recomputation, non-coverage rejection, and truncated-basket audit rejection. Current web unit/browser checks also pass 40/40 and 4/4. Evidence does not establish a genuine cross-venue relationship, synchronized executable quotes, or positive economics. |
+| Resource sustainability under bounded development workloads | PARTIALLY VERIFIED | The 332-test serial Frontier suite measured 369,040 KiB peak RSS; web unit tests measured 310,652 KiB and Frontier Playwright measured 192,060 KiB. Four synthetic basket shapes covered 7 or 4,095 enumerated subsets and 0, 1, 11, or 4,095 qualifying combinations; the dense case returned 32 at 0.343868 seconds median / 0.355242 seconds maximum. These are short local measurements; representative public workloads, sustained collection, concurrency, production admission, and broad latency/CPU behavior remain unmeasured. |
 | Read-only research boundary and source-use gates | COMPLETE AND VERIFIED | No trading/authenticated exchange path is provided; source-policy tests ensure held venues return 409 without requests and held evidence stays quarantined. This does not grant permission to use a held source. |
 | Required architecture, operations, current-state, report, and continuation documentation | COMPLETE AND VERIFIED | The engineering report, architecture, operations guidance, current-state note, and append-only mission ledger record implementation, evidence, blockers, and continuation actions. |
 | Production deployment | DEFERRED | Requires separate source permission, resource/storage/recovery review, full deployment-scope regression, monitoring/rollback preparation, and explicit authorization. |
@@ -5373,3 +5373,39 @@ make every subset qualify. The measurement is specific to this host and run;
 it does not establish latency or memory under a live feed, mixed market sizes,
 concurrency, sustained collection, or production limits. Broader multi-market
 search remains unsupported.
+
+## Varied payoff-basket and current frontend verification — 2026-10-28 01:27 UTC
+
+Benchmark harness commit `8f2d22fa7bc37ac806d070403d122d941dc226a8` extends
+the synthetic search benchmark to four declared shapes. Each run has one warm-up
+and five timed iterations. The observed medians and maximums were:
+
+| Fixture | Instruments / states | Enumerated subsets | Qualifying / returned | Median / maximum |
+| --- | ---: | ---: | ---: | ---: |
+| Single basket | 3 / 3 | 7 | 1 / 1 | 0.000928 / 0.000991 sec |
+| Eleven baskets | 12 / 16 | 4,095 | 11 / 11 | 0.091870 / 0.099176 sec |
+| No basket | 12 / 16 | 4,095 | 0 / 0 | 0.072525 / 0.074176 sec |
+| Dense ceiling | 12 / 16 | 4,095 | 4,095 / 32 | 0.343868 / 0.355242 sec |
+
+The fixtures use explicit synthetic payout vectors. `single-basket` is the
+three overlapping-vector construction; `eleven-baskets` uses eleven claims
+covering one state plus one complementary claim; `no-basket` repeats one
+single-state claim; and `dense-ceiling` uses all-state claims. The complete
+four-case process took **3.37 seconds wall**, reached **50,640 KiB peak RSS**,
+used 99% CPU, and incurred zero swaps, major faults, or socket messages. This
+isolates enumeration and bounded candidate construction; it is not a
+representative venue workload. Reproduce with the benchmark command above.
+
+The full web unit suite passed **40/40** in **5.99 seconds wall**, with
+**310,652 KiB peak RSS**. The Frontier Playwright spec passed **4/4** in
+**12.60 seconds wall**, with **192,060 KiB peak RSS** and zero swaps. Playwright
+started only loopback demo services using temporary storage. A pre-run host
+sample showed 10,778,132,480 bytes available, memory PSI `avg10=0.00`, and
+3,949,416,448 bytes of swap in use; neither measured test process swapped.
+The user-slice cgroup had no configured memory high/max value. These short runs
+do not establish sustained or concurrent service capacity.
+
+Project Frontier remains **PARTIALLY VERIFIED**. In particular, general
+multi-market joint-state composition and corresponding independent audit are
+not implemented; current cross-market families remain pairwise, and their
+semantic evidence and current source-use holds constrain live validation.

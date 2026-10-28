@@ -1,5 +1,53 @@
 # Project Frontier Mission Ledger
 
+## Varied payoff-basket workloads and frontend regression — 2026-10-28 01:27 UTC
+
+Benchmark commit `8f2d22fa7bc37ac806d070403d122d941dc226a8` measures four
+controlled payout shapes. Each measurement uses one warm-up and five timed
+calls; the harness checks that the generator returns the expected count.
+
+| Fixture | Instruments / states | Enumerated subsets | Qualifying / returned | Median / maximum |
+| --- | ---: | ---: | ---: | ---: |
+| Single basket | 3 / 3 | 7 | 1 / 1 | 0.000928 / 0.000991 sec |
+| Eleven baskets | 12 / 16 | 4,095 | 11 / 11 | 0.091870 / 0.099176 sec |
+| No basket | 12 / 16 | 4,095 | 0 / 0 | 0.072525 / 0.074176 sec |
+| Dense ceiling | 12 / 16 | 4,095 | 4,095 / 32 | 0.343868 / 0.355242 sec |
+
+The four-case process took **3.37 seconds wall** at **50,640 KiB peak RSS**,
+with 99% CPU, zero swaps, zero major faults, and zero socket messages. The
+payout vectors are explicitly synthetic. These measurements show this code
+path's short local cost, not public-market latency or representative workload
+performance.
+
+Current frontend regression after commit `d162594`: the full web unit suite
+passed **40/40** in 5.99 seconds wall (**310,652 KiB peak RSS**); isolated
+Frontier Playwright passed **4/4** in 12.60 seconds wall (**192,060 KiB peak
+RSS**, zero swaps). Playwright used loopback demo services and temporary
+SQLite/Arena/Frontier directories. Before the run, memory PSI `avg10` was
+0.00%, 10,778,132,480 bytes were available, and swap use was 3,949,416,448
+bytes. The user-slice cgroup had no memory high/max setting; the short test
+runs did not swap. This does not establish sustained or concurrent capacity.
+
+Reproduction commands:
+
+```bash
+PYTHONPATH=packages:. /usr/bin/time -v /home/charlie/midas/.venv/bin/python tests/frontier/benchmark_payoff_basket_search.py
+corepack pnpm --dir apps/web test
+corepack pnpm --dir apps/web exec playwright test e2e/frontier.spec.ts --workers=1
+```
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Varied bounded basket benchmark | COMPLETE AND VERIFIED | Four fixture shapes, expected result counts, five iterations after warm-up, and host resource measurements are reproducible. This is synthetic code-path evidence only. |
+| Mission Control unit and browser regression | COMPLETE AND VERIFIED | Full web unit suite 40/40 and Frontier Playwright spec 4/4 pass on the current frontend. The services are local demo instances, not deployed services. |
+| General multi-market joint-state composition | DEFERRED | Current cross-market candidates use pairwise mappings. A bounded shared joint-state representation and independent multi-market payoff audit are still required. |
+| Project Frontier overall | PARTIALLY VERIFIED | Live source-use holds, genuine cross-venue relationship validation, general multi-market composition, long-horizon source-quality evidence, and deployment remain open. |
+
+**Next safe action:** design and implement a separately versioned, bounded
+joint-state input and independent payoff audit for multi-market portfolios.
+Keep asserted semantic maps conditional, pin their evidence in replay, and do
+not claim cross-market proof from local labels.
+
 ## Bounded payoff-basket ceiling benchmark — 2026-10-28 01:22 UTC
 
 Harness commit `447c85a` adds
