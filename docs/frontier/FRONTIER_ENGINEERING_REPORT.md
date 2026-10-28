@@ -2,7 +2,7 @@
 
 **Report date:** 2026-10-28
 
-## Current status — 2026-10-28 08:34 UTC
+## Current status — 2026-10-28 08:36 UTC
 
 Frontier is isolated at `/home/charlie/midas-frontier` on
 `codex/frontier-20261026`. It descends from verified Veritas V6 integration
@@ -27,7 +27,8 @@ Current bounded verification:
 - The updated frontend passes **47/47** unit tests, TypeScript, full-project
   ESLint and Prettier, production build, **17** default Playwright cases with
   two expected seeded-only skips, and the separate **2/2** seeded Frontier/Arena
-  cases using disposable local services and stores. The full default browser
+  cases using disposable local services and stores; the seeded cases were
+  rerun after the chart changes. The full default browser
   suite was rerun after the chart lifecycle and fallback changes against the
   latest code. The build emitted a 368.81 kB entry, 182.75 kB Frontier chunk,
   and a 544.51 kB Chart/ECharts chunk.

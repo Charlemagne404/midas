@@ -1,5 +1,32 @@
 # Project Frontier Mission Ledger
 
+## Seeded Frontier/Arena browser integration after chart changes — 2026-10-28 08:37 UTC
+
+After commits `6c13b47` and `c04f699`, the opt-in seeded browser suite passes
+**2/2**. It traverses saved Frontier history pages and deterministic replay
+through the local API, then loads a fixture-only Arena discovery artifact from
+Arena storage into Laboratory. The seeder created 21 fixture captures and one
+fixture job under the isolated `/tmp/midas-browser-*` root. No exchange
+request, production service, or protected store was used.
+
+```bash
+cd apps/web
+MIDAS_SEED_FRONTIER_E2E=1 ./node_modules/.bin/playwright test e2e/frontier.seeded.spec.ts
+# 2 passed in 8.0s using local demo services and disposable state
+```
+
+After the run, at `2026-10-28T08:36:51Z`, memory PSI avg10 was 0%, I/O PSI
+avg10 was 0.62% some / 0.54% full, and about 10 GiB was available. The
+temporary test servers had stopped. This complements the default 17-pass,
+2-seeded-skip browser run; it is fixture integration evidence, not live-market
+validation.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Seeded Frontier history/replay and Arena-to-Laboratory flow | COMPLETE AND VERIFIED | Two browser cases pass through disposable local API/storage; all market records are explicit fixtures. |
+| Live cross-venue validation | BLOCKED | Existing source-use holds remain; fixture integration is not live-source evidence. |
+| Frontier project overall | PARTIALLY VERIFIED | Full MIDAS regression, production recovery, source permission, and deployment remain open. |
+
 ## Full browser regression after chart lifecycle update — 2026-10-28 08:34 UTC
 
 After commits `6c13b47` and `c04f699`, the default Playwright browser suite

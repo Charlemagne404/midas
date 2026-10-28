@@ -33,6 +33,21 @@ in the dated addendum below and in the Frontier engineering report.
 
 ## Frontier development addendum — 2026-10-28
 
+### Latest isolated Frontier checkpoint — 2026-10-28 08:37 UTC
+
+The seeded browser integration was rerun after the latest chart changes and
+passes **2/2**: saved Frontier history/replay through the local API, and a
+fixture Arena discovery artifact through storage into Laboratory. The runner
+created 21 labeled fixture captures and one fixture-only Arena job in an
+isolated temporary root. The full default suite remains **17 passed, 2
+expected seeded-only skips**; web unit tests pass **47/47**, with full-project
+lint, formatting, TypeScript, and build already passing. No live source,
+production service, or protected store was accessed.
+
+The Frontier Python suite remains **379/379**. Cross-venue source permission,
+full MIDAS regression, production recovery, and deployment remain open. Frontier
+is **PARTIALLY VERIFIED**, research-only, isolated, unmerged, and undeployed.
+
 ### Latest isolated Frontier checkpoint — 2026-10-28 08:34 UTC
 
 The complete default browser suite was rerun against the latest chart
