@@ -8798,3 +8798,50 @@ and broader Frontier suite were not rerun.
 **Next safe action:** continue bounded source-independent code review; sample
 host pressure again before any broader test run. Keep
 `data/frontier-public-probes/` untouched.
+
+## Arena admission regression and current completion matrix — 2026-10-28 14:05 UTC
+
+`tests/arena/test_admission.py` passed **11/11** in 1.38 seconds of pytest
+time (1.99 seconds process wall), with **180,884 KiB** peak RSS, zero swaps,
+zero filesystem input, 376 filesystem-output blocks, and no socket traffic.
+The test root was `/dev/shm/midas-frontier-arena-admission-20261028T1404Z`.
+The tests use isolated temporary roots and monkeypatched admission conditions;
+they do not create a production Arena job or bypass the shared admission gate.
+
+At `14:04:10Z` before the run, memory and I/O PSI avg10 were at or below
+**0.01%**, with about **10 GiB** available. At `14:04:17Z` after the run,
+memory and I/O PSI avg10 were **0.00%**. CPU PSI avg10 was **42.02%** after
+the run. The prior generic `tests/arena/test_jobs.py` run had raised I/O PSI to
+4.58% some / 3.59% full; this admission test was run only after fresh samples
+showed the I/O avg10 below the documented 1% gate. No follow-on broad suite
+was started. No live source, held capture, protected store, production Arena
+root, service, collector, or persistent job was accessed.
+
+The report matrix dated 10:35 UTC below is historical. The updated matrix in
+`FRONTIER_ENGINEERING_REPORT.md` at this checkpoint is the current acceptance
+summary.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Adapter framework and offline contracts | COMPLETE AND VERIFIED | Shared capability declarations, source configuration, parsers, and fixture contract tests pass. Secondary-venue live use remains separately gated. |
+| Polymarket public adapter | PARTIALLY VERIFIED | A bounded genuine public observation was previously validated; it does not prove broad feed quality, simultaneous availability, or executable economics. |
+| Kalshi, Kraken, and Coinbase adapters | IMPLEMENTED, LIVE VALIDATION PENDING | Read-only adapter behavior is fixture-tested; current source-use permission gates keep live probes and held evidence quarantined. |
+| Canonical instruments and payoff semantics | PARTIALLY VERIFIED | Versioned models and bounded payoff checks pass; live cross-venue settlement equivalence is not established. |
+| Relationship graph and economic equivalence | PARTIALLY VERIFIED | Deterministic hypothesis, evidence review, and verification paths are fixture-tested; no permitted genuine cross-venue equivalence is verified. |
+| Opportunity discovery and independent audit | PARTIALLY VERIFIED | Supported fixture cases independently recompute outcomes and costs; no live cross-venue candidate or positive eligibility is demonstrated. |
+| Cross-venue economics and capital constraints | PARTIALLY VERIFIED | Fees, FX assumptions, timing, partial fills, and venue-specific virtual capital are modeled in fixtures; account-specific costs, access, settlement, and execution remain unresolved. |
+| Provenance, storage, and replay | PARTIALLY VERIFIED | Bounded immutable observations and deterministic replay have regression coverage; sustained multi-source quality and history are unmeasured. |
+| Frontier Laboratory/Arena integration | PARTIALLY VERIFIED | Frontier replay/timeline/discovery modules pass 28/28; generic Arena job-supervision tests pass 16/16 and admission tests pass 11/11. Full legacy Arena regression, endurance, and production-worker readiness remain deferred. |
+| Native Frontier workspace | COMPLETE AND VERIFIED | Frontend tests, typecheck, lint/format, production build, and 9 isolated browser cases pass; no browser fixture is represented as live cross-venue evidence. |
+| Source-aware analytics and readiness | PARTIALLY VERIFIED | Summaries and gates are implemented and fixture-tested; the captured sample cannot support venue-wide coverage or opportunity-prevalence conclusions. |
+| Research-only boundary | COMPLETE AND VERIFIED | No authenticated trading, wallet, funding, or order-submission path was introduced; bounded tests and API checks remain isolated. |
+| Full Frontier Python suite | COMPLETE AND VERIFIED | 452/452 passed on the storage/audit code checkpoint; subsequent Arena changes have targeted 28/28 coverage. |
+| Broader MIDAS regression | DEFERRED | The complete legacy repository suite was not run; do not infer broad compatibility from targeted checks. |
+| Genuine live cross-venue relationship/economics | BLOCKED | Current source-use gates and held-capture protections prevent the required independent second-venue evidence. |
+| Resource sustainability and production recovery | PARTIALLY VERIFIED | Bounded process profiles are recorded. No endurance campaign or current-boundary production recovery proof exists. |
+| Production deployment | DEFERRED | Frontier remains isolated, unmerged, and undeployed; separate recovery, source-policy, and deployment gates remain open. |
+| Project Frontier overall | PARTIALLY VERIFIED | The research foundation and fixture acceptance are substantial; live cross-venue science, broad legacy regression, endurance, production recovery, and deployment remain outstanding. |
+
+**Next safe action:** continue source-independent review and implementation;
+obtain a fresh pressure sample before another resource-bearing verification
+slice. Keep the held `data/frontier-public-probes/` path untouched.

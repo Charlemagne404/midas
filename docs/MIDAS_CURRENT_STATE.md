@@ -3012,3 +3012,20 @@ worker processes exited. Memory PSI remained 0%, but post-run I/O PSI rose to
 4.58% some / 3.59% full, so further resource-bearing checks are deferred until
 a fresh sample is below 1%. No production Arena job or service was used.
 Frontier remains research-only and **PARTIALLY VERIFIED**.
+
+### Arena admission regression and current Frontier status — 2026-10-28 14:05 UTC
+
+`tests/arena/test_admission.py` passes **11/11** in 1.99 seconds wall time,
+at 180,884 KiB peak RSS, zero swaps, zero filesystem input, and no socket
+traffic. The suite used a temporary `/dev/shm` root and monkeypatched
+admission state. Pre-run memory and I/O PSI avg10 were at or below 0.01%;
+post-run both were 0.00%. No production job or service was used. This adds to
+the Frontier Arena 28/28 integration and generic Arena job 16/16 evidence; it
+does not establish full legacy Arena regression or endurance readiness.
+
+The current engineering report matrix supersedes its earlier 10:35 UTC
+snapshot. Frontier remains **PARTIALLY VERIFIED**, research-only, isolated,
+unmerged, and undeployed. Current source-use gates and held-capture protections
+leave genuine live cross-venue validation blocked. Broader MIDAS regression,
+resource sustainability, production recovery, and deployment remain open. The
+held `data/frontier-public-probes/` path remains untouched.
