@@ -10601,3 +10601,27 @@ available. No live source request or protected-service operation occurred.
 | Live cross-venue validation | PARTIALLY VERIFIED | Fixture-backed relationships and economics are covered; live-source evidence remains unavailable under current source-use holds. |
 | Resource sustainability and production readiness | PARTIALLY VERIFIED | Short suites pass; endurance, protected recovery, and deployment remain open. |
 | Frontier overall | PARTIALLY VERIFIED | Live cross-venue science, broad legacy regression, production recovery, and deployment remain open. |
+
+## Strict repository typing and integrated regression — 2026-10-28 17:03 UTC
+
+The repository CI command `mypy packages/midas apps/api` now succeeds with no
+issues across 181 source files. Its initial 34 errors were in five Veritas
+modules and two Arena modules. Commit `e3a2bd2` narrows parsed numeric and JSON
+shapes, rejects non-object reusable-sweep manifests, and returns a strictly
+boolean Arena readiness result. No trading or source-access path changed.
+
+The seven directly affected Veritas/Arena test modules pass **80/80** in 7.83
+seconds. After those changes, the full `tests/frontier` suite passes **498/498**
+in 30.08 seconds. Each run has one existing Starlette/httpx TestClient
+deprecation warning. Ruff and format checks pass. The post-run sample at
+17:03:06Z showed CPU PSI avg10 31.12%, memory PSI avg10 0%, I/O PSI avg10
+0.18%, and 9.7 GiB available. Both test batches used `/dev/shm`; no live source
+request or protected-service action occurred.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Full CI strict type check | COMPLETE AND VERIFIED | `mypy packages/midas apps/api`: no issues in 181 source files. |
+| Direct Veritas/Arena regression slice | COMPLETE AND VERIFIED | 80/80 cases pass across seven modules. |
+| Full Frontier regression after integration edits | COMPLETE AND VERIFIED | 498/498 pass on the current code tree. |
+| Live cross-venue science | PARTIALLY VERIFIED | Fixture-backed matching/economics pass; held-source permission and live equivalence remain unresolved. |
+| Frontier overall | PARTIALLY VERIFIED | Broad legacy regression, resource endurance, protected recovery, and deployment remain open. |

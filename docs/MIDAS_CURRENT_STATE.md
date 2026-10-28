@@ -3245,6 +3245,18 @@ accessed. At 16:50:58Z CPU PSI avg10 was 37.09%, memory and I/O PSI avg10 were
 **PARTIALLY VERIFIED**; live cross-venue science, full regression, protected
 recovery, and deployment remain open.
 
+## Frontier CI typing and integrated regression — 2026-10-28 17:03 UTC
+
+The strict repository type check now succeeds across 181 source files after
+`e3a2bd2` fixed 34 Veritas/Arena typing errors. Seven directly affected test
+modules pass 80/80; the full `tests/frontier` suite passes 498/498 on the
+integrated tree. Each run reports one existing Starlette/httpx warning. Ruff
+and format checks pass. At 17:03:06Z CPU PSI avg10 was 31.12%, memory PSI
+avg10 0%, I/O PSI avg10 0.18%, and 9.7 GiB was available. Runs used `/dev/shm`;
+no source API request or protected-service action occurred. Live cross-venue
+validation, broad legacy Arena regression, endurance, protected recovery, and
+deployment remain open.
+
 ## Current Frontier Python suite — 2026-10-28 16:53 UTC
 
 The complete `tests/frontier` suite passes **497/497** on the current code

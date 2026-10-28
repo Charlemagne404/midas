@@ -1,5 +1,32 @@
 # Project Frontier Mission Ledger
 
+## Strict research-stack typing and Frontier integration reverified — 2026-10-28 17:03 UTC
+
+The repository CI command `mypy packages/midas apps/api` initially reported 34
+errors across Veritas and Arena. Commit `e3a2bd2` adds explicit JSON and
+numeric-type narrowing, a reusable-sweep manifest object check, and a strict
+boolean resource result. The exact CI type-check now passes across **181
+source files**. Ruff and formatting checks pass for the eight touched files.
+
+The seven directly affected Veritas/Arena regression modules pass **80/80** in
+7.83 seconds with one existing Starlette/httpx deprecation warning. The full
+`tests/frontier` suite also passes **498/498** on the integrated tree in 30.08
+seconds, with the same warning. Both runs used dedicated `/dev/shm` temporary
+roots. At 17:03:06Z CPU PSI avg10 was 31.12% / avg60 35.45%, memory PSI was
+0%, I/O PSI avg10 was 0.18%, and 9.7 GiB was available. No source API request
+or protected-service action was made; `data/frontier-public-probes/` remains
+untouched.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Repository strict type check | COMPLETE AND VERIFIED | CI command passes on 181 source files after fixing 34 errors in seven Veritas/Arena modules. |
+| Veritas/Arena type-fix regression slice | COMPLETE AND VERIFIED | Seven relevant modules pass 80/80. |
+| Frontier Python suite after integration fixes | COMPLETE AND VERIFIED | 498/498 on the current code tree. |
+| Frontier overall | PARTIALLY VERIFIED | Live multi-venue evidence, broad legacy Arena regression, resource endurance, protected recovery, and production deployment remain open. |
+
+**Next safe action:** continue the source-independent acceptance audit; keep
+live source holds and protected services unchanged.
+
 ## Raw capture body bounded before decoding — 2026-10-28 16:55 UTC
 
 `RawObservation` previously encoded UTF-8 text or decoded base64 before checking
