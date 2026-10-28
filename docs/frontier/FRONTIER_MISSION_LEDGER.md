@@ -1,5 +1,66 @@
 # Project Frontier Mission Ledger
 
+## Bounded live Polymarket adapter evidence and fixture isolation — 2026-10-28 08:57 UTC
+
+The Polymarket adapter was exercised against the public Gamma and CLOB APIs
+under the source-use review recorded in
+[`SOURCE_DATA_TERMS_REVIEW_2026-10-27.md`](SOURCE_DATA_TERMS_REVIEW_2026-10-27.md).
+The official [Polymarket Institute research data guide](https://institute.polymarket.com/data)
+describes the public APIs for research. One finite collector run used a limit
+of one market, no book in that run, 5-second timeout, 262,144-byte response
+bound, and zero retries. It made exactly one Gamma HTTPS GET and completed.
+A second explicit read-only adapter call made exactly one CLOB HTTPS GET for
+the Yes outcome's public book. No account or order functionality was used.
+
+The isolated evidence root is
+`data/frontier-public-probes/polymarket-bounded-20261028T0852-r2Z/`; it contains
+the run journal, append-only SQLite evidence store, and `capture-manifest.json`
+(SHA256 `2e1574b5a42499ba8efe3ac9033de9e6c4e1a3a1a6d381955ce57e9815938e79`).
+At `08:57Z`, the `frontier.sqlite3` and `frontier-collection.sqlite3` files
+hashed to `e9efca9b1658a29cf768222883f9eda0d466e011622b36b0e38efecd846a2052`
+and `8b21af2bae0af48a66d52e76aeb228606a530ffc1e83725ab0d7c808cfa0773d`.
+The completed collector run ID is
+`e8d1373f-7df1-4ac4-8d30-8f4a50b57858`. The raw and normalized listing row
+and separate book row were re-read through `FrontierStore`, their stored
+identities and row hashes were validated, and `MarketBatch`, `FrontierMarket`,
+`BookSnapshot`, and `RawObservation` were reparsed. The listing contains one
+open binary market (`2589810`, event `606422`) with Yes/No instruments. Its
+payoff and resolution remain unverified. The sampled Yes book has five asks,
+no bids, and a best ask of `0.995`. The source timestamp
+`08:52:33.893Z` precedes local receipt `08:53:07.296333Z` by 33,403.333 ms by
+recorded wall clocks; clock synchronization, source freshness, simultaneity,
+and executability are not established. This is single-venue observation
+evidence only, with no candidate or cross-venue relationship claim.
+
+The read-only Frontier API was then pointed at this capture store in-process.
+`GET /api/frontier/markets?venue=polymarket&limit=5` and
+`GET /api/frontier/books?venue=polymarket&limit=5` each returned HTTP 200 with
+one item, the matching native market ID, exact observation IDs, and the
+recorded-only source-state disclosure. Probe flags were disabled in that API
+registry; these reads made no source request or store mutation.
+
+To preserve strict separation of source observations and synthetic fixtures,
+the Python test I/O guard now protects both `data/frontier/live-probes` and
+`data/frontier-public-probes` (code commit `429f690`). The static test-source scan and runtime tests
+for both roots, including symlink, `..`, and `dir_fd` cases, pass **3/3**.
+Ruff, Ruff formatting, and `git diff --check` pass. The full Frontier suite
+was not rerun after this isolated guard change; the previous exact-tree result
+was 386/386. At `2026-10-28T08:55:21Z`, memory PSI avg10 was 0%; I/O PSI avg10
+was 0.71% some / 0.58% full during the focused check. At `08:57:53Z`, memory
+PSI avg10 was **50.11% some / 43.78% full** and I/O PSI avg10 was **1.09% some
+/ 0.80% full**. No cause is attributed; further resource-bearing checks wait
+for a new sample below the documented gate. No production service, protected
+store, or other venue was touched. Overall Frontier remains **PARTIALLY
+VERIFIED**.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Polymarket Gamma listing adapter | PARTIALLY VERIFIED | One bounded public GET produced a normalized, persisted market and a validated raw/row lineage; a local API read returned it with its observation ID. This is a single response, not broad live conformance. |
+| Polymarket CLOB book adapter | PARTIALLY VERIFIED | One genuine book response was captured and returned through the local API; the only displayed side was five asks and clock synchronization remains unverified. |
+| Live cross-venue relationship/economics | BLOCKED | Other venue source-use holds remain; no equivalence or candidate is claimed. |
+| Test/source-data separation | COMPLETE AND VERIFIED | The test path guard protects both capture roots; 3/3 focused tests pass. |
+| Frontier project overall | PARTIALLY VERIFIED | Full MIDAS regression, source permissions for other venues, production recovery, and deployment remain open. |
+
 ## Collection config, FX integrity, and timeline time evidence — 2026-10-28 08:47 UTC
 
 Commits `668a243`, `006fa38`, and `5fd3158` close three bounded research gaps.

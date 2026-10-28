@@ -2,7 +2,7 @@
 
 **Report date:** 2026-10-28
 
-## Current status — 2026-10-28 08:47 UTC
+## Current status — 2026-10-28 08:57 UTC
 
 Frontier is isolated at `/home/charlie/midas-frontier` on
 `codex/frontier-20261026`. It descends from verified Veritas V6 integration
@@ -14,6 +14,20 @@ Recent Python verification commits `006fa38`, `5fd3158`, and `668a243` close
 an FX result-integrity gap, pin receipt-time replay evidence, and preserve
 venue-specific collector configuration across restart. `7f7cd6d` records
 strict-format/type cleanup for those changes.
+
+At `2026-10-28T08:52:24Z` and `08:53:07Z`, one finite, unauthenticated
+Polymarket Gamma listing request and one explicit CLOB book GET were captured
+to a new isolated local store. The stored responses and normalized records
+validate against their raw and row hashes. The one open binary market's payoff
+and resolution remain unverified; the sampled Yes book has five asks, no bids,
+and a source timestamp 33.403 seconds before local receipt by direct wall-clock
+comparison. This is live single-venue adapter evidence, not a cross-venue
+relationship, simultaneous quote, or opportunity. The Polymarket Institute's
+[public research data guide](https://institute.polymarket.com/data) describes
+these public market APIs for research use. The local read-only
+`/api/frontier/markets` and `/api/frontier/books` routes returned the saved
+market and book with their observation IDs intact; the API disclosed the data
+as recorded observations only.
 Existing implementation includes Polymarket, Kalshi, Kraken Spot, and Coinbase
 public read adapters; canonical instrument and payoff models; reviewable
 relationship evidence; bounded candidate discovery and independent economics;
@@ -48,7 +62,13 @@ Current bounded verification:
   documented in `FRONTIER_OPERATIONS.md`.
 - A later `2026-10-28T08:47:41Z` sample showed memory PSI avg10 at **49.58%
   some / 45.01% full**, with about 10 GiB available. The cause was not
-  attributed to Frontier; no further broad test or build was started.
+  attributed to Frontier; no further broad test or build was started. The
+  latest targeted capture-guard test passed 3/3. A host sample at
+  `08:55:21Z` showed memory PSI avg10 at 0%, I/O PSI avg10 at 0.71% some /
+  0.58% full. At `08:57:53Z`, memory PSI
+  avg10 was **50.11% some / 43.78% full** and I/O PSI avg10 was **1.09% some /
+  0.80% full**. No cause is attributed and further tests/builds are deferred
+  until a new admission sample clears the documented gate.
 
 The complete MIDAS repository regression remains unverified. The current tree
 has `packages/midas/arena/recovery.py` but lacks
@@ -68,6 +88,56 @@ quality, production resource/recovery, and deployment gates remain open.
 
 Frontier remains **PARTIALLY VERIFIED**, research-only, isolated, unmerged, and
 undeployed. No protected service or historical evidence was changed.
+
+## Bounded live Polymarket adapter validation — 2026-10-28 08:57 UTC
+
+One explicitly enabled finite collection request used the existing read-only
+Polymarket adapter with `market_limit=1`, `book_limit=0`, a 5-second request
+timeout, a 262,144-byte response cap, zero retries, and a one-request
+configuration. It completed in one Gamma GET and persisted one market listing
+to the fresh local store
+`data/frontier-public-probes/polymarket-bounded-20261028T0852-r2Z/`. A second
+explicit adapter call made one unauthenticated CLOB GET for the first outcome
+token's book. No account, wallet, order-entry, proxy, or production service was
+used. Both source responses were HTTP 200 from allowlisted HTTPS hosts.
+
+The listing reported one open binary market, native market ID `2589810`, event
+ID `606422`, and Yes/No outcome instruments. Frontier leaves both payoff and
+resolution unverified. The separate Yes-token book (`1701037799…25586`)
+contained five ask levels and no bid levels; its best observed ask was `0.995`.
+The source-reported book timestamp was `2026-10-28T08:52:33.893Z`; local
+receipt was `2026-10-28T08:53:07.296333Z`. The **33,403.333 ms** difference is
+only a comparison of the recorded clocks. It does not establish clock
+synchronization, source freshness limits, simultaneous availability, fills,
+or executability.
+
+The manifest and SQLite evidence are local and untracked. The manifest SHA256
+is `2e1574b5a42499ba8efe3ac9033de9e6c4e1a3a1a6d381955ce57e9815938e79`. The
+SQLite database and collector-journal hashes at `08:57Z` are
+`e9efca9b1658a29cf768222883f9eda0d466e011622b36b0e38efecd846a2052` and
+`8b21af2bae0af48a66d52e76aeb228606a530ffc1e83725ab0d7c808cfa0773d`. The
+listing observation ID is
+`530a6f50dd9826fa200a2dc7fe8a60de3d59b0b465297bd5bb9c7c6f4274ec44` and its
+raw/row hashes are `90d3ae42ed62b003a3fc143a79af43251e5aafb0197eaa37c65d38b1cc1c55ca`
+and `0f967db5763776a08281013a541f5fc433dd9fbc011ed406357fa5fe722c9b82`.
+The book observation ID is
+`4bb731fd70467c6e8f4ebf33c994243ecb2a02f2701d8ba4e493aae729b0a6b5` and its
+raw/row hashes are `e7dcb616e5a8f6b19c45010b222c36e889244a9f4da254030040f51f5469df91`
+and `aa6e39508c70cf5ca995271f39aa3b9aff9f8d77e5a8aaf1a902ae90bc94dd68`.
+The one-market collector run is `e8d1373f-7df1-4ac4-8d30-8f4a50b57858`.
+Read-only local API requests returned HTTP 200 for one market and one book,
+preserved both observation IDs, and made no additional exchange request.
+
+To keep this genuine data separate from synthetic regression inputs,
+`tests/frontier/conftest.py` now blocks Python file reads and writes under both
+the held legacy capture root and the new `data/frontier-public-probes` root.
+Code commit `429f690` expands the runtime and static path guards for both roots.
+The static test-source scan and runtime path, symlink, `..`, and `dir_fd`
+checks pass **3/3**. Ruff, formatting, and `git diff --check` pass. The capture
+is not a fixture and no cross-venue inference was attempted. The project
+remains **PARTIALLY VERIFIED**; source-use holds for Kalshi, Kraken, and
+Coinbase, the full MIDAS regression gap, production recovery, and deployment
+remain open.
 
 ## Collector configuration, FX audit, and timeline timestamp integrity — 2026-10-28 08:47 UTC
 

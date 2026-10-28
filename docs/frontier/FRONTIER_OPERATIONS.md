@@ -43,6 +43,18 @@ without event metadata has no native event ID in Frontier; the legacy MIDAS
 retain their original normalized representation and must not be silently
 rewritten during this correction.
 
+The 2026-10-28 bounded Polymarket validation is preserved separately at
+`data/frontier-public-probes/polymarket-bounded-20261028T0852-r2Z/`. It contains
+one completed one-market Gamma run, one explicit CLOB book observation, the
+append-only store, and a hash-bearing `capture-manifest.json`. This is genuine
+source evidence, not synthetic test data. Python Frontier tests now deny file
+access beneath this root as well as beneath the legacy held-capture root; do
+not add the capture to test fixtures or copy it into a synthetic dataset. The
+manifest records that the market payoff/resolution remain unverified and that
+the book had no bids and a 33.4-second source-timestamp-to-receipt difference
+by direct comparison of unsynchronized clocks. This bounded observation does
+not establish venue-wide coverage, cross-venue equivalence, or executability.
+
 **Source terms are an additional gate.** Kalshi live capture is blocked until
 written research and local-retention authorization is recorded. Kraken Spot
 capture is blocked until its applicable research-use terms are reviewed and any

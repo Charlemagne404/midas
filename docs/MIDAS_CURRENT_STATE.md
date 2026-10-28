@@ -33,6 +33,32 @@ in the dated addendum below and in the Frontier engineering report.
 
 ## Frontier development addendum — 2026-10-28
 
+### Latest isolated Frontier checkpoint — 2026-10-28 08:57 UTC
+
+One explicitly bounded, unauthenticated Polymarket Gamma listing request and
+one CLOB book GET completed against allowlisted public HTTPS hosts. The single
+open binary market is preserved with its raw response, normalized record,
+collection journal, row hashes, and a hash-bearing manifest under the isolated
+Frontier worktree's `data/frontier-public-probes/` directory. Its payoff and
+resolution remain unverified. The Yes book has five asks, no bids, and a source
+timestamp 33.4 seconds before local receipt by direct clock comparison; this
+does not establish synchronized clocks or executability. No other venue was
+accessed, and no cross-venue relationship or opportunity is claimed. The
+local read-only Frontier markets/books API returned the two saved rows with
+observation IDs intact and labeled them as recorded evidence only.
+
+Commit `429f690` extends the Frontier Python test guard so automated tests
+cannot read or write either live-capture root; its focused suite passes **3/3**. The complete
+Frontier Python suite was not rerun after this test-only guard change; its
+previous verified checkpoint was 386/386. At `08:55:21Z`, memory PSI avg10 was
+0% and I/O PSI avg10 was 0.71% some / 0.58% full. Live source holds for
+Kalshi/Kraken/Coinbase, broader MIDAS regression, production recovery, and
+deployment remain open. Frontier remains isolated, research-only, and
+**PARTIALLY VERIFIED**. At `08:57:53Z`, memory PSI avg10 was 50.11% some /
+43.78% full and I/O PSI avg10 was 1.09% some / 0.80% full. No cause is
+attributed; further resource-bearing checks wait for a fresh sample under the
+documented gate.
+
 ### Latest isolated Frontier checkpoint — 2026-10-28 08:47 UTC
 
 The full Frontier Python suite now passes **386/386** after the collection,
