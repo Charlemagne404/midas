@@ -5195,3 +5195,31 @@ admitted sample. Recheck before broader regression or browser tests.
 | Full Frontier/MIDAS regression after `8fb4c0d` | PARTIALLY VERIFIED | Collection module passes 21/21; broader suites were not rerun. |
 | Strict typing and web runtime after `8fb4c0d` | PARTIALLY VERIFIED | Strict mypy passes for the collection module; web/API typing and browser runtime remain outstanding. |
 | Project Frontier overall | PARTIALLY VERIFIED | Live cross-venue economic evidence, broad regression, source authorization, and deployment gates remain open. |
+
+## Initial health probe bounded by collection wall time — 2026-10-28 05:09 UTC
+
+Code commit `6c5c329` moves the first adapter health probe inside the finite
+collection timeout. Setup now persists a `created` checkpoint without awaiting
+health; the first health observation occurs under the run timeout. A stalled
+health call becomes a durable paused run with `COLLECTION_WALL_LIMIT`, and
+discovery is not requested. This closes the gap where a health coroutine could
+hold the per-venue collector lease beyond `max_wall_seconds`.
+
+The updated collection module passes **23/23** in 7.28 seconds pytest time
+(7.67 seconds wall, 68,316 KiB peak RSS, zero swaps and socket messages). Ruff
+check/format and `git diff --check` passed. A stalled-health adapter test
+confirms the request count remains zero and the run can be loaded from its
+durable paused checkpoint. Existing process-lease, venue-independence,
+symlink, and cancellation coverage also passes.
+
+Strict mypy passed on `8fb4c0d` before this small refinement. A post-`6c5c329`
+rerun and API/browser/full-suite verification remain pending. At approximately
+`2026-10-28T05:09Z`, memory PSI avg10 was **0.09% some / 0.08% full**, I/O PSI
+avg10 was **3.50% some / 3.12% full**, and no process held the shared Arena
+lock. Defer additional resource-bearing checks until a fresh admission sample.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Collection wall-time enforcement | COMPLETE AND VERIFIED | The initial health probe is bounded; the 23-test collection module passes. |
+| Strict mypy after `6c5c329` | PARTIALLY VERIFIED | Last strict result was on preceding collector commit `8fb4c0d`; post-refinement check remains. |
+| Broader Frontier/MIDAS and browser regression | PARTIALLY VERIFIED | Full suites have not been rerun after latest collector commits. |

@@ -2,11 +2,12 @@
 
 **Report date:** 2026-10-28
 
-## Current status — 2026-10-28 05:06 UTC
+## Current status — 2026-10-28 05:09 UTC
 
 The isolated development branch is `codex/frontier-20261026`; the latest code
-checkpoint is `8fb4c0d` (`fix(frontier): serialize source collection across
-processes`), following `bffa163` (`fix(arena): honor configured global
+checkpoint is `6c5c329` (`fix(frontier): enforce collection wall limit from
+health`), following `8fb4c0d` (`fix(frontier): serialize source collection
+across processes`) and `bffa163` (`fix(arena): honor configured global
 admission root`). The major Frontier implementation snapshot is commit
 `2064671`; these incremental fixes make the shared Arena lock follow configured
 test roots and prevent competing API processes from collecting the same venue
@@ -56,14 +57,15 @@ opportunity is established. Full repository regression and production
 transition remain open; deployment requires a separate authorized readiness
 review.
 
-The latest collection-only regression passes **21/21** after the new source
-lease change. Strict `mypy --strict` also passes for
-`packages/midas/frontier/collection.py`. Neither result is a rerun of the full
-Frontier or MIDAS suites; web/API typing, browser verification, and broader
-regression after this change remain pending. At approximately
-`2026-10-28T05:06Z`, memory PSI avg10 was **0.01% some / 0.01% full** and I/O
-PSI avg10 was **0.99% some / 0.96% full**; the shared Arena lock was not held.
-No broad test or browser run started at that marginally admitted sample.
+The latest collection-only regression passes **23/23**, including process
+lease and wall-time-bound checks. Strict `mypy --strict` passed for the
+collector at `8fb4c0d`, before the small health-timeout refinement in
+`6c5c329`; a post-refinement typecheck is pending. Neither result is a rerun
+of the full Frontier or MIDAS suites. Web/API typing, browser verification,
+and broader regression remain pending. At approximately
+`2026-10-28T05:09Z`, memory PSI avg10 was **0.09% some / 0.08% full** and I/O
+PSI avg10 was **3.50% some / 3.12% full**; no process held the shared Arena
+lock. No additional resource-bearing checks started at that sample.
 
 ## Bounded metadata and initial resource checkpoint — 2026-10-28 03:59 UTC
 
@@ -6569,3 +6571,32 @@ typing and the broader suites remain pending.
 | Full Frontier and MIDAS regression after this change | PARTIALLY VERIFIED | Only the complete collection module was rerun; the full suites remain outstanding. |
 | Strict typing and browser/runtime integration after this change | PARTIALLY VERIFIED | Strict mypy passes for the collection module; web/API typing and browser runtime remain unverified. |
 | Live cross-venue economics and deployment | BLOCKED / DEFERRED | Existing source-use restrictions and production readiness boundaries remain unchanged. |
+
+## Collection wall time includes the initial health check — 2026-10-28 05:09 UTC
+
+Code commit `6c5c329` removes the initial source health await from run setup.
+The durable `created` checkpoint is now written first, and the first health
+probe runs inside the configured finite collection timeout. A stalled health
+probe therefore produces a durable `paused` checkpoint with
+`COLLECTION_WALL_LIMIT`, before any discovery request. This also ensures a
+stalled adapter cannot retain the new per-venue process lease indefinitely.
+
+The expanded `tests/frontier/test_collection.py` module passed **23/23** in
+7.28 seconds pytest time (**7.67 seconds wall**) at **68,316 KiB peak RSS**,
+zero swaps, and zero socket messages. It includes the health-stall wall-limit
+case, forked competing-collector case, symlink rejection, and source-lease
+release checks. Ruff check, Ruff format, and `git diff --check` passed before
+the test run. Strict mypy passed on `8fb4c0d`; the post-`6c5c329` rerun remains
+pending. No exchange request or protected-service operation occurred.
+
+At approximately `2026-10-28T05:09Z`, memory PSI avg10 was **0.09% some / 0.08%
+full** and I/O PSI avg10 was **3.50% some / 3.12% full**. No process held the
+shared Arena lock. Defer further resource-bearing verification until a fresh
+admission sample.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Finite collection wall-time enforcement | COMPLETE AND VERIFIED | An indefinitely stalled initial health call is checkpointed as paused at the configured wall limit, with no discovery request; all 23 collection tests pass. |
+| Collection module typecheck after `6c5c329` | PARTIALLY VERIFIED | Strict mypy passed immediately before this small refinement; rerun after the latest commit. |
+| Full Frontier/MIDAS and browser regression after latest collector changes | PARTIALLY VERIFIED | Only the 23-test collection module is current; full regression remains outstanding. |
+| Live cross-venue economics and deployment | BLOCKED / DEFERRED | Source-use and production readiness boundaries remain unchanged. |
