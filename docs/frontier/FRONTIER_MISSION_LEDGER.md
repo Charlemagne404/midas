@@ -1,5 +1,41 @@
 # Project Frontier Mission Ledger
 
+## Bounded payoff-basket ceiling benchmark — 2026-10-28 01:22 UTC
+
+Harness commit `447c85a` adds
+`tests/frontier/benchmark_payoff_basket_search.py`; follow-up `c1c58ad` makes
+its synthetic all-state labels and verification basis explicit. The controlled
+16-state, 12-instrument fixture makes all **4,095** non-empty subsets qualify
+for a constant positive payout, then requests the maximum of 32 ranked
+results. The fixture deliberately maximizes subset enumeration; it is not a
+market-like payoff distribution or economic evidence.
+
+Five measured calls after a warm-up returned 32 candidates each, with a
+**0.344171 second median** and **0.355593 second maximum**. Including import,
+setup, warm-up, and five measured calls, `/usr/bin/time -v` reported **2.37
+seconds wall**, **49,792 KiB peak RSS**, 100% CPU, zero swaps, zero socket
+messages, and zero major page faults. The standalone harness and Ruff
+check/format passed. No exchange, network, store, or production data was used.
+
+Reproduce from the repository root:
+
+```bash
+PYTHONPATH=packages:. /usr/bin/time -v /home/charlie/midas/.venv/bin/python tests/frontier/benchmark_payoff_basket_search.py
+```
+
+This establishes one short synthetic upper-bound measurement on this host. It
+does not establish representative workload behavior, concurrency, sustained
+resource use, or production admission.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Maximum-bound payoff-basket enumeration | PARTIALLY VERIFIED | 4,095 qualifying subsets and 32 returned results completed in a 0.344171 second median call; the uniform synthetic payoff fixture is not representative. |
+| Project Frontier overall | PARTIALLY VERIFIED | This improves bounded performance evidence but does not close live cross-venue, general multi-market, source-quality, or deployment gaps. |
+
+**Next safe action:** continue offline acceptance against more varied synthetic
+market sizes and payoff shapes, keeping these measurements separate from
+public-source performance claims.
+
 ## Bounded event payoff baskets — 2026-10-28 01:20 UTC
 
 Code commit `d16259422902bc4acd75cb45e0ced6eb8e186904` adds a bounded

@@ -5039,7 +5039,7 @@ acceptance against current branch evidence, not intent or planned work.
 | Laboratory/Arena research integration | PARTIALLY VERIFIED | Bounded replay jobs, paired comparisons, integrity-checked results, and fixture/UI paths exist. No durable Laboratory experiment manager, long-duration campaign, or production worker is authorized or verified. |
 | Native Frontier Mission Control interface | PARTIALLY VERIFIED | The prior revision passed the full web unit suite (40/40) and Frontier browser spec (4/4) against isolated services. After `d162594`, the focused family-label test passed 1/1; full web and browser suites were not rerun. Funding responses are fixture-intercepted in browser, while the saved-run API separately verifies the candidate scenario. Live source data is unavailable under current holds. No production deployment occurred. |
 | Scientific acceptance: normalization, rejection, controlled discrepancy, independent arithmetic, missing/stale/asynchronous evidence, and deterministic replay | PARTIALLY VERIFIED | After commit `d162594`, the complete serial Frontier suite passed 332 tests, including exact three-leg basket generation, replay, API persistence/listing, independent recomputation, non-coverage rejection, and audit rejection of a truncated basket. The focused Mission Control family-label test passed 1/1. Evidence does not establish a genuine cross-venue relationship, synchronized executable quotes, or positive economics. |
-| Resource sustainability under bounded development workloads | PARTIALLY VERIFIED | The 332-test serial Frontier suite measured 369,040 KiB peak RSS, zero swaps, zero socket messages, and zero major page faults. This is one short local run; sustained collection, concurrent workloads, production resource admission, and broader latency/CPU behavior remain unmeasured. |
+| Resource sustainability under bounded development workloads | PARTIALLY VERIFIED | The 332-test serial Frontier suite measured 369,040 KiB peak RSS. A separate maximum-bound synthetic basket run returned 32 candidates from 4,095 qualifying subsets at 49,792 KiB peak RSS, with 0.344171 seconds median / 0.355593 seconds maximum per call. These are short local measurements; representative market distributions, sustained collection, concurrent workloads, production admission, and broad latency/CPU behavior remain unmeasured. |
 | Read-only research boundary and source-use gates | COMPLETE AND VERIFIED | No trading/authenticated exchange path is provided; source-policy tests ensure held venues return 409 without requests and held evidence stays quarantined. This does not grant permission to use a held source. |
 | Required architecture, operations, current-state, report, and continuation documentation | COMPLETE AND VERIFIED | The engineering report, architecture, operations guidance, current-state note, and append-only mission ledger record implementation, evidence, blockers, and continuation actions. |
 | Production deployment | DEFERRED | Requires separate source permission, resource/storage/recovery review, full deployment-scope regression, monitoring/rollback preparation, and explicit authorization. |
@@ -5319,9 +5319,10 @@ CPU use. One existing Starlette/httpx deprecation warning remains. Strict mypy
 passed for `economics.py`, `independent_audit.py`, `models.py`, and `replay.py`;
 scoped Ruff check/format and `git diff --check` passed. The focused Mission
 Control test passed **1/1** for the new candidate-family label, and the API
-fixture verifies persistence/listing without adapter requests. No new
-subset-search benchmark was captured. The fixture and bounded input ceiling
-establish algorithm behavior, not representative workload performance.
+fixture verifies persistence/listing without adapter requests. The separate
+maximum-bound synthetic subset benchmark is recorded below; its deliberately
+uniform payoff vectors do not establish representative market-workload
+performance.
 
 Reproduction commands:
 
@@ -5340,3 +5341,35 @@ PYTHONPATH=packages /home/charlie/midas/.venv/bin/python -m pytest -q tests/fron
 Continue offline acceptance. Keep held sources unchanged, preserve the
 research-only boundary, and treat the synthetic gross result as a unit test
 only.
+
+## Bounded payoff-basket ceiling benchmark — 2026-10-28 01:22 UTC
+
+Benchmark harness commit `447c85a` adds
+`tests/frontier/benchmark_payoff_basket_search.py`; `c1c58ad` makes the
+synthetic all-state labels and verification basis explicit. It creates a
+controlled 16-state market with twelve instruments, each paying one unit in
+every state, and one displayed ask per leg. Thus all **4,095** non-empty subsets satisfy the
+constant-payout property, forcing the enumerator to traverse its maximum subset
+count. It asks for the configured maximum of 32 ranked candidates and confirms
+32 results on warm-up and on each measured iteration.
+
+Command:
+
+```bash
+PYTHONPATH=packages:. /usr/bin/time -v /home/charlie/midas/.venv/bin/python tests/frontier/benchmark_payoff_basket_search.py
+```
+
+On this host, the five measured calls after warm-up took **0.344171 seconds
+median** and **0.355593 seconds maximum**. The complete process, including
+setup, warm-up, and all measured calls, took **2.37 seconds wall** and reached
+**49,792 KiB peak RSS**. It used 100% CPU, with zero swaps, socket messages, or
+major page faults. The benchmark and Ruff check/format passed. It used only
+controlled fixtures: no network, exchange, store, or production data was
+accessed.
+
+This is a synthetic enumeration ceiling, not a typical or representative
+market distribution: its identical all-state payoff vectors are designed to
+make every subset qualify. The measurement is specific to this host and run;
+it does not establish latency or memory under a live feed, mixed market sizes,
+concurrency, sustained collection, or production limits. Broader multi-market
+search remains unsupported.

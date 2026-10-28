@@ -33,6 +33,19 @@ in the dated addendum below and in the Frontier engineering report.
 
 ## Frontier development addendum — 2026-10-28
 
+### Bounded payoff-basket ceiling benchmark — 2026-10-28 01:22 UTC
+
+Harness commits `447c85a` and `c1c58ad` add and clarify a reproducible
+synthetic benchmark for the configured search ceiling: twelve instruments,
+sixteen states, all 4,095 non-empty subsets qualifying, and 32 returned
+candidates. Five measured calls after a warm-up had **0.344171 seconds
+median** and **0.355593 seconds maximum**; the whole process used **49,792 KiB
+peak RSS** and 2.37 seconds wall time. Inputs explicitly identify synthetic
+all-state claims that pay one unit in every state to maximize the number of
+qualifying subsets. This bounds the implemented search cost on one host; it is
+not a representative market workload or an economic finding.
+The script is [benchmark_payoff_basket_search.py](/home/charlie/midas-frontier/tests/frontier/benchmark_payoff_basket_search.py).
+
 ### Bounded event payoff-basket research — 2026-10-28 01:20 UTC
 
 Commit `d16259422902bc4acd75cb45e0ced6eb8e186904` adds bounded search for
