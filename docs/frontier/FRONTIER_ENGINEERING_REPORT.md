@@ -9460,4 +9460,4 @@ unavailable.
 | Kalshi, Kraken, and Coinbase source use | BLOCKED | Existing code gates and quarantines remain active; no permission was inferred from public endpoints or config values. |
 | Genuine cross-venue equivalence | BLOCKED | No permitted live evidence establishes an equivalent multi-venue payoff. |
 
-**Documentation commit:** pending.
+**Documentation commit:** `c9388b2`.

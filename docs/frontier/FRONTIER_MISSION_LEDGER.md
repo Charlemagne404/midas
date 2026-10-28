@@ -16,7 +16,7 @@ lifted.
 No API request, exchange contact, or capture read occurred. The untracked
 `data/frontier-public-probes/` directory remains untouched. This work was
 documentation-only; implementation validation remains at the two focused
-collector tests recorded below. **Documentation commit:** pending.
+collector tests recorded below. **Documentation commit:** `c9388b2`.
 
 **Next safe action:** continue source-independent implementation review; do not
 enable a held source without a validated permission and scope review.
