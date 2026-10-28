@@ -10782,3 +10782,35 @@ changed.
 **Next safe action:** continue source-independent work that does not require
 large host load or public-source access. Keep the protected services and held
 probe artifact untouched.
+
+## Official source-use terms refresh — 2026-10-28 20:37 UTC
+
+A read-only refresh of the linked official terms and research documentation
+confirms the existing source holds. Kalshi's current Developer Agreement
+limits API use to a member's own trading and its Data Terms restrict software,
+collection/retention, and AI-related uses absent written authorization.
+Kraken's current API guide requires prior permission for certain uses,
+including non-personal commercial use of public market data; the reviewed EEA
+terms also restrict extraction and automated applications, while the applicable
+regional terms remain unknown. Coinbase's current Market Data Terms allow a
+limited personal/entity research purpose but restrict external display or
+redistribution, end-user applications, and AI/ML development or validation
+without written consent. Polymarket's current researcher guide still describes
+open APIs for research and distinguishes the global and US-only services.
+
+No exchange endpoint was queried, no exchange was contacted, and no retained
+capture was opened. This is an operational engineering boundary, not legal
+advice. The existing Kalshi/Kraken/Coinbase gates remain in force; the
+Polymarket guide does not resolve regional eligibility or every data-use
+restriction.
+
+| Requirement | Status | Evidence and boundary |
+| --- | --- | --- |
+| Official source terms checked for current scope | COMPLETE AND VERIFIED WITHIN REVIEW SCOPE | Official agreements/guides were refreshed; no API access or historical-data access occurred. |
+| Kalshi, Kraken, Coinbase live research use | BLOCKED | Current terms do not establish permission for Frontier's research, automated analysis, retention, and display scope. |
+| Polymarket research data | IMPLEMENTED, LIVE VALIDATION PENDING | Research-facing guide supports the global API purpose; user-specific eligibility and broader terms remain outside this review. |
+| Frontier overall | PARTIALLY VERIFIED | Source policy/retention, broad regressions, endurance, protected recovery, and deployment remain unresolved. |
+
+**Next safe action:** keep the venue-specific holds, proceed with synthetic
+fixtures and source-independent research, and require validated
+scope-specific permission before any new capture.

@@ -11553,6 +11553,36 @@ legacy MIDAS suite. Both services remained active and untouched.
 | Live cross-venue research | BLOCKED | No new venue calls were made; source-use and retention boundaries remain. |
 | Frontier overall | PARTIALLY VERIFIED | Cross-venue live science, broad regression, endurance, protected recovery, and deployment remain incomplete. |
 
+## Official source-use terms refresh — 2026-10-28 20:37 UTC
+
+Read-only review of the current linked official materials reconfirmed the
+source-use boundaries documented in
+`SOURCE_DATA_TERMS_REVIEW_2026-10-27.md`. Kalshi's Developer Agreement still
+limits API use to facilitating the member's own trading, while its Data Terms
+restrict software development, collection/retention, and AI-related uses
+without written authorization. Kraken's API guide requires prior permission
+for certain uses, including non-personal commercial use of public market data;
+the reviewed EEA terms also restrict extraction and automated applications,
+but the applicable regional terms remain unresolved. Coinbase's terms provide
+a limited personal/entity research license but restrict outside-organization
+display or redistribution, end-user applications, and AI/ML development or
+validation absent written consent. Polymarket's research guide continues to
+describe open research APIs and distinguishes the global and US-only services.
+
+No exchange API was queried, no exchange was contacted, and no retained source
+capture was opened. This is an operational gate, not legal advice or an
+individual eligibility decision. Keep Kalshi, Kraken, and Coinbase held until
+research, retention, automation, and display scope is covered by validated
+permission. Polymarket's research guide does not establish user-specific
+regional eligibility or permission to use unrelated service data.
+
+| Requirement | Status | Evidence and boundary |
+| --- | --- | --- |
+| Current official source-use review | COMPLETE AND VERIFIED WITHIN REVIEW SCOPE | Official terms/API guide and researcher guide refreshed without using venue endpoints or stored captures. |
+| Live Kalshi/Kraken/Coinbase collection | BLOCKED | Current review does not establish scope-specific permission for the Frontier research and retention plan. |
+| Polymarket research integration | IMPLEMENTED, LIVE VALIDATION PENDING | Public research guide supports the documented global API use; individual eligibility remains unverified. |
+| Frontier overall | PARTIALLY VERIFIED | Cross-venue live science, broad regressions, endurance, protected recovery, and deployment remain incomplete. |
+
 ## Coinbase book depth type validation — 2026-10-28 20:33 UTC
 
 Commit `46cd7ad` advances Coinbase Spot to

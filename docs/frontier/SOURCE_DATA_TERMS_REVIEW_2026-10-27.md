@@ -467,3 +467,48 @@ focused source-permissions regression passes 5/5; no Coinbase request or
 historical source capture was accessed during this correction. This change is
 an operational enforcement correction, not a new legal or terms
 interpretation. Kalshi and Kraken remain held under their existing controls.
+
+## Official terms refresh — 2026-10-28 20:37 UTC
+
+This was a read-only refresh of the linked official materials. No exchange API
+was queried, no exchange was contacted, and no retained capture was opened.
+This remains an operational engineering hold, not legal advice or a decision
+about anyone's contractual status.
+
+- **Kalshi:** The current linked [Developer Agreement v1.1](https://kalshi-public-docs.s3.amazonaws.com/Kalshi-Developer-Agreement.pdf)
+  still says API use is limited to facilitating a member's own trading and
+  restricts collecting, caching, aggregating, or storing API data for other
+  purposes absent written authorization. The current [Data Terms of Use](https://kalshi-public-docs.s3.amazonaws.com/kalshi-data-terms-of-service.pdf)
+  separately constrain collection and use; they address software development,
+  cached datasets, and AI/ML uses. Frontier's research and retained-evidence
+  use still does not fit the API agreement's stated purpose, and no research
+  or retention authorization is recorded. Keep live probes and new research
+  use of retained Kalshi data held.
+- **Kraken:** The current official [API introduction](https://docs-legacy.kraken.com/api/docs/guides/global-intro/)
+  says API use is subject to Kraken's terms and that prior permission is
+  required for certain uses, including non-personal commercial use of public
+  endpoint data such as market data. The linked [EEA Terms of Service](https://assets-cms.kraken.com/files/51n36hrp/facade/e7cb2e6758f56b3eaa044d4b0b8097f2d1252a63.pdf),
+  effective 26 February 2026, identify pricing data as Kraken content and
+  restrict extraction, automation, and third-party applications without
+  consent. The EEA terms apply only if the user is in the EEA; applicable
+  regional terms and permission for this research purpose remain unresolved.
+  Keep probes and new research use of retained Kraken data held.
+- **Coinbase Exchange:** The current [Market Data Terms](https://www.coinbase.com/legal/market_data)
+  remain dated 7 August 2026. They grant a limited personal/entity research
+  license, while restricting outside-organization display or redistribution,
+  end-user applications, and use to develop or improve AI/ML or other
+  automated systems absent express written consent. Applicability to MIDAS's
+  organization, intended research, retention, internal display, and any
+  automated analysis remains unresolved. Keep the source gate active.
+- **Polymarket:** The current [Institute research guide](https://institute.polymarket.com/data)
+  continues to describe open APIs for research. It distinguishes the global
+  decentralized service from the US-only exchange and its separate data/API
+  environment. This supports research access to the documented global source
+  but does not establish regional eligibility for a particular user or
+  authorize unrelated service data or redistribution.
+
+The refresh confirms that the existing Kalshi, Kraken, and Coinbase source
+holds remain appropriate for this engineering worktree. No configuration flag
+or descriptive reference string should be treated as permission. Continue
+fixture-only development until scope-specific authorization and validated
+runtime gates are established.
