@@ -170,6 +170,7 @@ test('Laboratory inspects a saved Frontier discovery artifact without launching 
   await page.getByRole('button', { name: /job-frontier-saved/ }).click();
   await expect(page.getByText('INTEGRITY VERIFIED')).toBeVisible();
   await expect(page.getByText('3 paired discovery scopes')).toBeVisible();
+  await page.getByText('Reproducibility identities and execution limits').click();
   await expect(page.getByText('frontier-e2e-fixture · frontier-replay-e2e-fixture')).toBeVisible();
   await expect(page.getByText('No orders were submitted, and no authenticated requests were made.'))
     .toBeVisible();

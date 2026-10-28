@@ -193,6 +193,7 @@ it('Laboratory reviews a selected, integrity-verified Frontier Arena artifact', 
   fireEvent.click(screen.getByRole('button', { name: /job-older/ }));
   expect(await screen.findByText('INTEGRITY VERIFIED')).toBeInTheDocument();
   expect(screen.getByText('3 paired discovery scopes')).toBeInTheDocument();
+  fireEvent.click(screen.getByText('Reproducibility identities and execution limits'));
   expect(
     screen.getByText('frontier-test-version · frontier-replay-test-version'),
   ).toBeInTheDocument();
