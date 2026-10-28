@@ -4042,3 +4042,87 @@ root write, protected service, or persistent unit was used.
 | Worker resource sustainability | PARTIALLY VERIFIED | Systemd resource properties and one process/cgroup usage sample were captured. The high-water figures differ, and sustained, concurrent, and production behavior remain unmeasured. |
 | Genuine cross-venue public finding and deployment | DEFERRED | Source-use holds, semantic equivalence, synchronized pricing, venue funding/settlement, and production readiness remain unresolved. |
 | Project Frontier overall | PARTIALLY VERIFIED | One supervisor/cgroup gap is closed for bounded fixture execution; source permission, live evidence, broad scientific acceptance, and deployment remain incomplete. |
+
+### Frontier and Arena regression rerun — 2026-10-28 03:08 UTC
+
+With a fresh preflight admission snapshot reporting no active Arena jobs and a
+ready gate, the serial regression was rerun:
+
+```bash
+/usr/bin/time -v env PYTHONPATH=packages:. /home/charlie/midas/.venv/bin/python -m pytest -q \
+  tests/frontier \
+  tests/arena/test_frontier_discovery.py \
+  tests/arena/test_frontier_replay.py \
+  tests/arena/test_frontier_timeline.py \
+  tests/arena/test_jobs.py
+```
+
+Result: **380 passed, 3 failed** in 88.11 seconds pytest time / 89.51 seconds
+process wall, **377,184 KiB maximum RSS**, zero swaps, zero socket messages,
+and one existing Starlette/httpx `TestClient` deprecation warning. The failures
+were:
+
+- `test_timeline_job_budget_is_small_offline_and_network_restricted_by_kind`
+  expected the old resource-limit message, while `JobSpec` now correctly names
+  the added discovery job type.
+- `test_supervised_job_runner_imports_the_submitted_checkout` and
+  `test_veritas_qualification_supervisor_has_read_only_resource_bounds` were
+  denied by `resource_admission_lock_busy` before their mocked supervisor
+  launch could run. Read-only `fuser` confirmed external Veritas batch PID
+  **4112565** held `/home/charlie/midas/data/arena/.global-admission.lock`.
+  The batch was left untouched.
+
+The test-only correction updates the stale message expectation and gives those
+two command-assembly tests a local no-op admission context; the host-wide
+admission behavior remains covered by its separate tests and the real bounded
+systemd discovery run above. Targeted rerun remains pending because the
+external lock holder is active and the after-suite host sample at
+`2026-10-28T03:08:37Z` measured memory PSI avg10 **36.19% some / 30.12% full**,
+about **9.6 GiB** available, **332 MiB** swap free, and I/O PSI avg10 **3.98%
+some / 3.70% full**. Ruff and `git diff --check` pass for the current test edit;
+no test has run after that edit. No source endpoint, held capture, external
+batch, protected service, or production Arena artifact was touched.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Frontier plus selected Arena regression | PARTIALLY VERIFIED | 380/383 passed on the pre-correction test source. One stale error-message assertion is updated; two command tests now isolate admission from host state. Rerun is pending external lock release and a fresh pressure check. |
+| External Arena admission lock | BLOCKED FOR TEST ADMISSION | Veritas batch PID 4112565 holds the shared lock; do not interrupt it or run more admission-dependent tests until it releases. |
+| Project Frontier overall | PARTIALLY VERIFIED | Source permissions, live cross-venue evidence, broad mission criteria, and deployment remain unresolved. |
+
+### Combined Frontier and Arena regression closed — 2026-10-28 03:12 UTC
+
+After PID 4112565 exited and a fresh resource snapshot reported an empty Arena
+job list and a ready gate, the corrected combined selection passed:
+
+```bash
+/usr/bin/time -v env PYTHONPATH=packages:. /home/charlie/midas/.venv/bin/python -m pytest -q \
+  tests/frontier \
+  tests/arena/test_frontier_discovery.py \
+  tests/arena/test_frontier_replay.py \
+  tests/arena/test_frontier_timeline.py \
+  tests/arena/test_jobs.py
+```
+
+Result: **383 passed** in 90.26 seconds pytest time / 91.74 seconds process
+wall, **377,372 KiB maximum RSS**, zero swaps, and zero socket messages. The
+existing Starlette/httpx `TestClient` deprecation warning remains. This covers
+Frontier and the selected Arena modules, not the full MIDAS Python repository.
+Ruff check/format and `git diff --check` pass for the two corrected test
+modules. No source access, capture read, production Arena-root write, or
+protected service action occurred.
+
+The scoped strict mypy check for
+`packages/midas/frontier/discovery_comparison.py` was not launched. The fresh
+768-MiB resource gate denied it with `host_memory_pressure`. At
+`2026-10-28T03:12:36Z`, memory PSI avg10 was **34.89% some / 32.22% full**,
+with about **9.9 GiB** available and **332 MiB** swap free. Read-only `fuser`
+identified a new external Veritas gap-detail batch, PID **4117533**, holding
+the shared Arena admission lock. It was left untouched. Defer further
+resource-bearing work until that lock releases and the pressure gate admits it.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Frontier plus selected Arena regression | COMPLETE AND VERIFIED | The corrected serial selection passes 383/383 at 377,372 KiB peak RSS with zero swaps or socket messages. It is not the full repository suite. |
+| Discovery-comparison strict typing | PARTIALLY VERIFIED | Local issues were corrected earlier; final scoped mypy is still pending because the actual resource gate denied work. |
+| Current host admission | BLOCKED FOR MORE RESOURCE WORK | Memory PSI is high and external Veritas PID 4117533 owns the shared lock. Preserve it and wait for fresh admission. |
+| Project Frontier overall | PARTIALLY VERIFIED | Source permission, live cross-venue evidence, wider repository verification, sustained operations, and deployment remain unresolved. |

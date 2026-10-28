@@ -1535,3 +1535,31 @@ memory PSI avg10 was 49.40% some / 41.21% full; wait for a fresh admission
 check before another heavy workload.
 Frontier remains isolated, research-only, undeployed, and **PARTIALLY
 VERIFIED**.
+
+### Frontier/Arena regression checkpoint — 2026-10-28 03:08 UTC
+
+The serial Frontier plus selected Arena suite passed **380/383** in 89.51
+seconds wall at **377,184 KiB peak RSS**, with zero swaps or socket messages.
+One failure was a stale assertion for an expanded resource-limit message; two
+command-assembly tests were denied by the shared admission lock, which was held
+by external Veritas batch PID 4112565. That batch was left untouched. The test
+expectation is updated and the two command tests now isolate launch-command
+checks from host admission, but the corrections are not yet tested. The
+03:08:37 UTC sample measured memory PSI avg10 36.19% some / 30.12% full; wait
+for that process to release the lock and remeasure before more admission-bound
+tests. Current evidence and exact commands are in the
+[engineering report](frontier/FRONTIER_ENGINEERING_REPORT.md) and
+[mission ledger](frontier/FRONTIER_MISSION_LEDGER.md).
+
+### Combined Frontier/Arena regression verified — 2026-10-28 03:12 UTC
+
+The corrected serial Frontier plus selected Arena regression now passes
+**383/383** in 91.74 seconds wall at **377,372 KiB peak RSS**, with zero swaps
+or socket messages. The stale resource-limit message assertion and two
+host-lock-dependent command tests were corrected; Ruff and formatting also
+pass. This is not a full MIDAS repository run. A scoped strict mypy check for
+the discovery comparison module was deferred when a fresh resource gate denied
+it for `host_memory_pressure`. At 03:12:36 UTC memory PSI avg10 was 34.89% some
+/ 32.22% full and external Veritas batch PID 4117533 held the shared Arena
+lock. It was left untouched. Frontier remains isolated, research-only,
+undeployed, and **PARTIALLY VERIFIED**.

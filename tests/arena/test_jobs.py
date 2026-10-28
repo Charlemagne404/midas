@@ -3,9 +3,11 @@ import json
 import os
 import subprocess
 import sys
+from contextlib import nullcontext
 from pathlib import Path
 from types import SimpleNamespace
 
+from midas.arena import admission
 from midas.arena.artifacts import atomic_json
 from midas.arena.datasets import DatasetSpec
 from midas.arena.jobs import JobSpec, _worker_process_usage_profile, create, inspect, run
@@ -366,6 +368,8 @@ def test_supervised_job_runner_imports_the_submitted_checkout(tmp_path, monkeypa
         return SimpleNamespace(returncode=0, stdout="", stderr="")
 
     monkeypatch.setattr(subprocess, "run", launch)
+    # Keep command assembly deterministic; host admission is tested separately.
+    monkeypatch.setattr(admission, "admission_slot", lambda *_args, **_kwargs: nullcontext())
     job = create(tmp_path, JobSpec(kind="dataset", dataset=DatasetSpec(episodes=30)))
 
     repository = Path(__file__).resolve().parents[2]
@@ -387,6 +391,8 @@ def test_veritas_qualification_supervisor_has_read_only_resource_bounds(tmp_path
         return SimpleNamespace(returncode=0, stdout="", stderr="")
 
     monkeypatch.setattr(subprocess, "run", launch)
+    # Keep command assembly deterministic; host admission is tested separately.
+    monkeypatch.setattr(admission, "admission_slot", lambda *_args, **_kwargs: nullcontext())
     job = create(
         tmp_path,
         JobSpec(

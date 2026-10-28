@@ -152,7 +152,7 @@ def test_timeline_job_budget_is_small_offline_and_network_restricted_by_kind():
         {"nice": 14},
         {"io_scheduling_class": "best-effort"},
     ):
-        with pytest.raises(ValueError, match="Frontier replay and timeline jobs"):
+        with pytest.raises(ValueError, match="Frontier replay, timeline, and discovery jobs"):
             JobSpec(
                 kind="frontier_timeline",
                 frontier_timeline=spec,

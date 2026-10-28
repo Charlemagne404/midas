@@ -2,6 +2,45 @@
 
 **Report date:** 2026-10-28
 
+**Corrected combined Frontier/Arena verification — 2026-10-28 03:12 UTC:**
+After synchronizing the stale timeline message expectation and isolating two
+launch-command unit tests from the host-wide admission lock, the serial
+Frontier plus selected Arena regression passes **383/383**. Pytest took 90.26
+seconds; process wall time was 91.74 seconds, maximum RSS **377,372 KiB**, zero
+swaps, and zero socket messages. The existing Starlette/httpx TestClient
+deprecation warning remains. Ruff check/format and `git diff --check` pass.
+This selection is not the full MIDAS Python repository suite.
+
+The scoped strict mypy check for
+`packages/midas/frontier/discovery_comparison.py` was not started because the
+768-MiB resource gate denied it. At `2026-10-28T03:12:36Z`, memory PSI avg10
+was **34.89% some / 32.22% full**; external Veritas batch PID **4117533** held
+the shared Arena admission lock. It was not touched. No additional
+resource-bearing validation should run until a fresh gate admits it.
+
+**Frontier/Arena regression rerun — 2026-10-28 03:08 UTC:** With an admitted
+preflight snapshot, the serial selection
+`tests/frontier` plus `test_frontier_discovery.py`, `test_frontier_replay.py`,
+`test_frontier_timeline.py`, and `test_jobs.py` completed **380 passed / 3
+failed** in 88.11 seconds pytest time / 89.51 seconds process wall. Peak RSS was
+**377,184 KiB**, with zero swaps and socket messages; one existing
+Starlette/httpx TestClient deprecation warning remains. One failure was a
+stale timeline test expectation for the error wording after Frontier discovery
+was added to the same resource ceiling. Two command-assembly tests were denied
+before mocked launch because external Veritas batch PID **4112565** acquired
+the shared `/home/charlie/midas/data/arena/.global-admission.lock` during the
+suite. Read-only `fuser` confirmed the holder; it was left untouched. The two
+command tests now locally stub admission, and the timeline assertion now
+matches the current message. These test-only corrections have not yet been
+rerun. Ruff and `git diff --check` pass.
+
+At `2026-10-28T03:08:37Z`, after the suite, memory PSI avg10 was **36.19% some
+/ 30.12% full**, I/O PSI avg10 was **3.98% some / 3.70% full**, about **9.6
+GiB** was available, and **332 MiB** of swap was free. Wait for the external
+lock to release and recheck pressure before further admission-dependent
+verification. No source, held capture, external process, protected service,
+or production Arena artifact was modified.
+
 **Latest bounded Arena discovery execution — 2026-10-28:** One
 synthetic `frontier_discovery` job passed the real host-wide admission gate and
 ran through `midas.arena.jobs` in an actual transient user systemd unit. The
@@ -5231,7 +5270,7 @@ During the check at `2026-10-28T00:31:15Z`, memory PSI avg10 was **24.98% some
 gap-detail batch PID **3975405** was active. It was not touched. The strict API
 typing caveat remains unresolved; retry when shared-host pressure subsides.
 
-## Current mission acceptance matrix — 2026-10-28 03:03 UTC
+## Current mission acceptance matrix — 2026-10-28 03:13 UTC
 
 This matrix assesses the user-requested Frontier stages and scientific
 acceptance against current branch evidence, not intent or planned work.
@@ -5245,10 +5284,10 @@ acceptance against current branch evidence, not intent or planned work.
 | Opportunity families and independent economic verification | PARTIALLY VERIFIED | Binary coverage, bounded one-hot coverage, directed implication, within-market constant-payout subsets, and multi-market joint-state baskets have independent arithmetic checks. The new joint-state path accepts two to four stored open markets, up to twelve instruments, and a content-hashed external assertion of two to sixty-four shared states; it searches at most 4,095 subsets. Focused replay/API and independent-audit fixtures pass. The audit proves arithmetic only over the asserted map; it cannot authenticate the event composition or establish the map's semantics. No live positive or economically eligible opportunity is established. |
 | Venue costs, capital, and currency assumptions | PARTIALLY VERIFIED | Public fee metadata, bounded fee/carry sensitivities, partial-fill stress, venue-separated virtual balances, and a separate conversion-adjusted terminal-P&L scenario exist. The P&L scenario requires verified candidate/funding audits, complete candidate leg fees, and sufficient per-venue balances; it never mutates candidate economics. Account-specific fees, sourced FX, cross-venue transfer/custody, settlement risk, and conversion availability remain unknown. |
 | Isolated collection, provenance, durable storage, and deterministic replay | PARTIALLY VERIFIED | Finite restartable collection, append-only hash-chained checkpoints, a read-only keyset-paginated run catalog across the 1,000-run journal bound, bounded storage, event-time replay, source-health evidence, and replay provenance are implemented and tested offline. No continuous market-data stream, full source-history backfill, or long-horizon source-quality study is established. |
-| Laboratory/Arena research integration | PARTIALLY VERIFIED | Bounded replay jobs, paired comparisons, content-addressed discovery artifacts, and integrity-checked APIs exist. In addition to the child-process fixture test, one synthetic discovery job passed real host-wide admission and completed in an actual transient user systemd unit under `MemoryMax=512M`, `MemorySwapMax=0`, `CPUQuota=50%`, and AF_UNIX-only networking; its artifact passed hash verification. This is one short fixture run, not sustained, concurrent, or production service validation. No long-duration campaign or production worker is authorized. |
+| Laboratory/Arena research integration | PARTIALLY VERIFIED | Bounded replay jobs, paired comparisons, content-addressed discovery artifacts, and integrity-checked APIs exist. One synthetic discovery job passed real host-wide admission and completed in an actual transient user systemd unit under `MemoryMax=512M`, `MemorySwapMax=0`, `CPUQuota=50%`, and AF_UNIX-only networking; its artifact passed hash verification. The corrected serial Frontier/selected-Arena regression passes 383/383, including command-assembly checks isolated from host lock state. This is one short supervised fixture run and a bounded regression, not sustained, concurrent, or production service validation. No long-duration campaign or production worker is authorized. |
 | Native Frontier Mission Control interface | IMPLEMENTED, DEPLOYMENT PENDING | The full web suite last passed 40/40; the current candidate-detail UI also passes its focused component test, fixture browser flow, TypeScript, and Vite production build. The detail view preserves decimal strings, matches candidates to their scope summaries, caps display at 50 per scope, and labels terminal P&L as hypothetical without fills or realized profit. Browser artifact data is intercepted fixture content on loopback demo services. The build retains the existing 544.41 kB Chart chunk advisory. No live source data or production deployment occurred. |
-| Scientific acceptance: normalization, rejection, controlled discrepancy, independent arithmetic, missing/stale/asynchronous evidence, and deterministic replay | PARTIALLY VERIFIED | The full Frontier regression previously passed 343 tests, including 48 seeded differential cases against an independent exhaustive oracle. The latest 21-test Arena job/discovery selection passes, including actual child-process dispatch and artifact verification. The web suite passes 40/40 on the candidate-inspection checkpoint; the latest disclaimer adjustment passes its focused component and browser tests and production build. Evidence still does not establish a genuine cross-venue relationship, authenticated state composition, synchronized executable quotes, or positive economics. |
-| Resource sustainability under bounded development workloads | PARTIALLY VERIFIED | The full Frontier Python suite previously reached 366,360 KiB peak RSS; the Vite build previously reached 713,040 KiB; and the latest test selection reached 193,632 KiB peak RSS, all with zero swaps. One real systemd discovery unit recorded MemoryMax 512 MiB, swap max zero, 50% CPU quota, cgroup MemoryPeak 117,252,096 bytes, and worker process peak RSS 170,110,976 bytes; those high-water measurements differ and are not reconciled. The synthetic 12-instrument/64-state search evaluated 4,095 subsets; three one-candidate runs measured 0.101767 seconds median / 0.104521 seconds maximum at 70,576 KiB peak RSS, with an eight-candidate run at 0.174308 seconds / 71,460 KiB. Sustained collection, concurrency, and broad latency/CPU behavior remain unmeasured. At 03:03:40 UTC after the run, memory PSI avg10 was 49.40% some / 41.21% full; defer further heavy checks and remeasure admission. |
+| Scientific acceptance: normalization, rejection, controlled discrepancy, independent arithmetic, missing/stale/asynchronous evidence, and deterministic replay | PARTIALLY VERIFIED | The corrected serial Frontier/selected-Arena regression passes 383/383, including 48 seeded differential cases against an independent exhaustive oracle. The web suite passes 40/40 on the candidate-inspection checkpoint; the latest disclaimer adjustment passes its focused component and browser tests and production build. Evidence still does not establish a genuine cross-venue relationship, authenticated state composition, synchronized executable quotes, or positive economics. |
+| Resource sustainability under bounded development workloads | PARTIALLY VERIFIED | The full Frontier Python suite previously reached 366,360 KiB peak RSS; the Vite build previously reached 713,040 KiB; and the corrected combined regression reached 377,372 KiB peak RSS with zero swaps and socket messages. One real systemd discovery unit recorded MemoryMax 512 MiB, swap max zero, 50% CPU quota, cgroup MemoryPeak 117,252,096 bytes, and worker process peak RSS 170,110,976 bytes; those high-water measurements differ and are not reconciled. The synthetic 12-instrument/64-state search evaluated 4,095 subsets; three one-candidate runs measured 0.101767 seconds median / 0.104521 seconds maximum at 70,576 KiB peak RSS, with an eight-candidate run at 0.174308 seconds / 71,460 KiB. Sustained collection, concurrency, and broad latency/CPU behavior remain unmeasured. At 03:12:36 UTC after the regression, memory PSI avg10 was 34.89% some / 32.22% full; defer further resource-bearing checks until external admission releases and a fresh gate passes. |
 | Read-only research boundary and source-use gates | COMPLETE AND VERIFIED | No trading/authenticated exchange path is provided; source-policy tests ensure held venues return 409 without requests and held evidence stays quarantined. This does not grant permission to use a held source. |
 | Required architecture, operations, current-state, report, and continuation documentation | COMPLETE AND VERIFIED | The engineering report, architecture, operations guidance, current-state note, source terms review, and append-only mission ledger record implementation, evidence, blockers, and continuation actions. |
 | Production deployment | DEFERRED | Requires separate source permission, resource/storage/recovery review, full deployment-scope regression, monitoring/rollback preparation, and explicit authorization. |
