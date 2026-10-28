@@ -32,6 +32,7 @@ from midas.frontier.models import (
     EconomicAuditDisposition,
     FeeStatus,
     FrontierMarket,
+    FrontierModel,
     IndependentEconomicAudit,
     JointStateMap,
     Lifecycle,
@@ -52,7 +53,7 @@ from midas.frontier.relationships import (
 )
 
 D = Decimal
-_AUDIT_VERSION = "frontier-independent-economic-audit-12"
+_AUDIT_VERSION = "frontier-independent-economic-audit-13"
 _FEE_QUANTUM = D("0.00001")
 _KALSHI_FEE_MAX_EVIDENCE_AGE = timedelta(hours=24)
 _AUDIT_PARTIAL_FILL_FRACTIONS = (D(0), D("0.25"), D("0.5"), D("0.75"), D(1))
@@ -178,6 +179,25 @@ class _MissingAuditEvidence(ValueError):
     pass
 
 
+def _require_aware_timestamps(value: Any, label: str) -> None:
+    """Reject naive times even when an upstream model was copied without validation."""
+    if isinstance(value, datetime):
+        if value.tzinfo is None or value.utcoffset() is None:
+            raise _MissingAuditEvidence(f"{label} contains a timestamp that is not timezone-aware.")
+        return
+    if isinstance(value, FrontierModel):
+        for field_name in type(value).model_fields:
+            _require_aware_timestamps(getattr(value, field_name), f"{label}.{field_name}")
+        return
+    if isinstance(value, dict):
+        for key in sorted(value, key=str):
+            _require_aware_timestamps(value[key], f"{label}[{key!r}]")
+        return
+    if isinstance(value, (tuple, list)):
+        for index, item in enumerate(value):
+            _require_aware_timestamps(item, f"{label}[{index}]")
+
+
 def _recompute(
     candidate: OpportunityCandidate,
     *,
@@ -189,6 +209,25 @@ def _recompute(
     scenario: ExecutionScenario,
     joint_state_mappings: dict[str, JointStateMap],
 ) -> dict[str, Any]:
+    _require_aware_timestamps(candidate, "candidate")
+    _require_aware_timestamps(scenario, "execution scenario")
+    for market_id in candidate.market_ids:
+        market = markets.get(market_id)
+        if market is not None:
+            _require_aware_timestamps(market, f"market {market_id}")
+    for leg in candidate.legs:
+        book = books_by_market.get(leg.market_id, {}).get(leg.instrument_id)
+        if book is not None:
+            _require_aware_timestamps(book, f"book {leg.market_id}/{leg.instrument_id}")
+    if candidate.relationship_id is not None:
+        relationship = relationships.get(candidate.relationship_id)
+        if relationship is not None:
+            _require_aware_timestamps(relationship, "relationship")
+    if candidate.joint_state_mapping_id is not None:
+        joint_state_mapping = joint_state_mappings.get(candidate.joint_state_mapping_id)
+        if joint_state_mapping is not None:
+            _require_aware_timestamps(joint_state_mapping, "joint-state mapping")
+
     mismatches: list[str] = []
     resolved = {market_id: markets.get(market_id) for market_id in candidate.market_ids}
     if any(market is None for market in resolved.values()):
@@ -670,6 +709,8 @@ def _independent_timing_summary(
 
 def _independent_epoch_ms(value: Any) -> int:
     """Convert an aware timestamp to the generator's millisecond precision."""
+    if not isinstance(value, datetime) or value.tzinfo is None or value.utcoffset() is None:
+        raise _MissingAuditEvidence("A timestamp in pinned timing evidence is not timezone-aware.")
     return int(value.timestamp() * 1000)
 
 

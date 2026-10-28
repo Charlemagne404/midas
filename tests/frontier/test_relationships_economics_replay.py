@@ -1594,6 +1594,83 @@ def test_cross_venue_timing_requires_comparable_semantics_and_clock_bounds():
     assert any("after the replay analysis time" in item for item in future_candidate.reasons)
 
 
+def test_independent_audit_rejects_naive_book_time_from_a_reconstructed_model():
+    left, right, relationship, instrument_mapping = _verified_pair()
+    left_books, right_books = _books(left, right)
+    state_mapping = {"yes": "yes", "no": "no"}
+    as_of = T0 + timedelta(milliseconds=100)
+
+    def with_known_clock_uncertainty(snapshots):
+        return {
+            instrument_id: snapshot.model_copy(
+                update={
+                    "provenance": snapshot.provenance.model_copy(
+                        update={"clock_uncertainty_ms": Decimal(1)}
+                    )
+                }
+            )
+            for instrument_id, snapshot in snapshots.items()
+        }
+
+    known_left = with_known_clock_uncertainty(left_books)
+    known_right = with_known_clock_uncertainty(right_books)
+    candidates = generate_binary_coverage_candidates(
+        left,
+        right,
+        relationship,
+        known_left,
+        known_right,
+        state_mapping=state_mapping,
+        instrument_mapping=instrument_mapping,
+        as_of_utc=as_of,
+    )
+    candidate = next(item for item in candidates if item.worst_case_gross_pnl > 0)
+    canonical_mapping = (
+        instrument_mapping
+        if relationship.left_market_id == left.canonical_id
+        else {right_id: left_id for left_id, right_id in instrument_mapping.items()}
+    )
+    naive_candidate = candidate.model_copy(
+        update={"observed_at_utc": candidate.observed_at_utc.replace(tzinfo=None)}
+    )
+    candidate_audit = independently_audit_candidate(
+        naive_candidate,
+        markets={left.canonical_id: left, right.canonical_id: right},
+        books_by_market={left.canonical_id: known_left, right.canonical_id: known_right},
+        relationships={relationship.relationship_id: relationship},
+        state_mappings={relationship.relationship_id: state_mapping},
+        instrument_mappings={relationship.relationship_id: canonical_mapping},
+        scenario=ExecutionScenario(),
+    )
+    assert candidate_audit.independent_audit is not None
+    assert candidate_audit.independent_audit.disposition.value == "incomplete"
+    assert "not timezone-aware" in candidate_audit.independent_audit.message
+
+    left_leg = next(leg for leg in candidate.legs if leg.market_id == left.canonical_id)
+    selected_instrument = left_leg.instrument_id
+    selected_book = known_left[selected_instrument]
+    naive_book = selected_book.model_copy(
+        update={"received_at_utc": selected_book.received_at_utc.replace(tzinfo=None)}
+    )
+    audit = independently_audit_candidate(
+        candidate,
+        markets={left.canonical_id: left, right.canonical_id: right},
+        books_by_market={
+            left.canonical_id: {**known_left, selected_instrument: naive_book},
+            right.canonical_id: known_right,
+        },
+        relationships={relationship.relationship_id: relationship},
+        state_mappings={relationship.relationship_id: state_mapping},
+        instrument_mappings={relationship.relationship_id: canonical_mapping},
+        scenario=ExecutionScenario(),
+    )
+
+    assert audit.independent_audit is not None
+    assert audit.independent_audit.disposition.value == "incomplete"
+    assert "not timezone-aware" in audit.independent_audit.message
+    assert audit.independent_audit.model_version == "frontier-independent-economic-audit-13"
+
+
 def test_independent_audit_rejects_quantity_step_mutation():
     left, right, _, instrument_mapping = _verified_pair()
 
