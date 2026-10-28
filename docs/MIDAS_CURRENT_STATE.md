@@ -33,6 +33,26 @@ in the dated addendum below and in the Frontier engineering report.
 
 ## Frontier development addendum — 2026-10-28
 
+### Latest isolated Frontier checkpoint — 2026-10-28 10:59 UTC
+
+Commit `63c2d74` rejects duplicate relationship IDs before deterministic
+replay candidate generation; a fixture had previously produced two rows with
+one candidate identity. Commit `0dbea9c` rejects duplicate JSON object keys at
+any depth as `DUPLICATE_JSON_KEY`, retaining bounded raw-response evidence and
+preventing ambiguous fields from reaching normalization. Focused regressions
+passed **1/1** and **2/2**; full `tests/frontier` passes **403/403** in 30.92
+seconds wall time, with **376,780 KiB** peak RSS and zero test-process swaps.
+Ruff, formatting, strict mypy, and `git diff --check` pass. One existing
+Starlette/httpx deprecation warning remains.
+
+At `10:58:31Z`, memory and I/O PSI avg10 were 0%, about 10 GiB was available,
+and host swap was already 3.5/4 GiB occupied. At `10:59:07Z`, PSI remained
+0%, about 10 GiB was available, and the test process used no swaps. No live
+source or protected capture was accessed; the saved public capture remains
+untouched. Live multi-venue evidence, broader MIDAS regression, production
+recovery, and deployment remain open. Frontier remains **PARTIALLY VERIFIED**,
+research-only, and undeployed.
+
 ### Latest isolated Frontier checkpoint — 2026-10-28 10:56 UTC
 
 Commit `3097082` closes a logical-implication verifier gap reproduced with

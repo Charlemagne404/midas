@@ -2,6 +2,51 @@
 
 **Report date:** 2026-10-28
 
+## Current status — 2026-10-28 10:59 UTC
+
+This entry supersedes the 10:56 UTC checkpoint below. Frontier remains
+isolated at `/home/charlie/midas-frontier` on `codex/frontier-20261026`. Code
+commit `63c2d74` rejects duplicate replay relationships; `0dbea9c` is the
+latest code commit and rejects duplicate JSON object keys in source responses.
+
+A controlled replay that supplied the same relationship twice previously
+returned two candidates with one distinct candidate ID. Replay now rejects
+duplicate relationship identities before candidate generation. A bounded
+`httpx.MockTransport` reproduction showed standard JSON decoding silently
+kept the last duplicate field value. `PublicReadTransport` now rejects
+duplicate keys at every object depth as `DUPLICATE_JSON_KEY` and preserves the
+complete bounded response body in failure evidence, preventing ambiguous data
+from reaching normalization.
+
+The focused replay regression passed **1/1** and duplicate-key parser cases
+passed **2/2**. Full `tests/frontier` passes **403/403** in 29.47 seconds
+(30.92 seconds wall time); `/usr/bin/time -v` measured **376,780 KiB** peak
+RSS, zero process swaps, zero filesystem input, and 376 output blocks. The
+existing Starlette/httpx `TestClient` deprecation warning remains. Ruff
+check/format, strict mypy for the changed production modules, and
+`git diff --check` pass. The run used tmpfs at
+`/dev/shm/midas-frontier-duplicate-inputs-20261028T1058Z`.
+
+At the pre-run sample (`10:58:31Z`), memory and I/O PSI avg10 were 0%, about
+10 GiB was available, and host swap remained 3.5/4 GiB occupied. At
+`10:59:07Z`, PSI avg10 remained 0%, about 10 GiB was available, and the test
+process reported zero swaps. No live source, protected capture, production
+service, or Arena job was used. The preserved public capture remains
+unmodified. Frontier remains **PARTIALLY VERIFIED**; live multi-venue evidence,
+broader MIDAS regression, production recovery, and deployment remain open.
+
+### Latest acceptance delta
+
+| Requirement | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Duplicate relationship replay inputs | COMPLETE AND VERIFIED | Replay rejects duplicate IDs; controlled reproduction previously emitted duplicate candidate identities. |
+| Ambiguous duplicate-key source JSON | COMPLETE AND VERIFIED | Parser rejects top-level and nested duplicate keys and retains raw bounded response evidence. |
+| Full Frontier Python regression | COMPLETE AND VERIFIED | 403/403 pass on the exact code tree; one existing deprecation warning remains. |
+| Live cross-venue equivalence and economics | BLOCKED | No authorized genuine multi-venue evidence is available for this checkpoint. |
+| Broader MIDAS regression | PARTIALLY VERIFIED | Not run on this branch; Reality recovery dependency and incompatible Reality lineages remain unresolved. |
+| Production recovery and deployment | DEFERRED | The research worktree remains isolated, unmerged, and undeployed. |
+| Frontier overall | PARTIALLY VERIFIED | Live science, broader regression, and production readiness remain open. |
+
 ## Current status — 2026-10-28 10:56 UTC
 
 This entry supersedes the 10:52 UTC checkpoint below. Frontier remains

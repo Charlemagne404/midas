@@ -650,6 +650,10 @@ source-use gate additionally requires exact-version operator acknowledgement,
 and the public-probe flag is separate. The transport caps each response at 256 KiB, retries
 at most twice, has a 15-second maximum timeout, limits each adapter to 5 requests
 per second, rejects redirects, and rejects hosts outside its venue allowlist.
+JSON decoding rejects duplicate object keys at every nesting depth rather
+than applying last-key-wins normalization. It returns a non-retryable
+`DUPLICATE_JSON_KEY` error and retains the bounded raw response as failure
+evidence.
 The API serializes probes per venue and the store defaults to 64 MiB, 50,000 raw
 observations, 100,000 relationship records, and 512 KiB per stored record.
 
@@ -944,6 +948,11 @@ enforce row and database byte budgets before committing. Repeated captures remai
 distinct because their request and receipt timestamps form part of the evidence
 identity.
 
+Deterministic replay rejects duplicate market and relationship identities
+before indexing relationships, constructing candidates, or computing
+classification totals. This prevents duplicate edges from generating repeated
+candidate rows with the same candidate identity.
+
 When an HTTP 2xx JSON body is captured but cannot be normalized or the bounded
 probe batch fails, the API stores the raw response with a versioned
 `SourceFailureRecord` and returns its observation ID in the error details. The
@@ -956,6 +965,8 @@ integer-token length returns the non-retryable `JSON_COMPLEXITY_LIMIT` error
 and retains the bounded response body as the same kind of diagnostic.
 Delimiters inside JSON strings do not count toward this depth. Invalid UTF-8 is
 stored losslessly as base64 with the hash computed over original bytes.
+Duplicate-key JSON failures retain the complete bounded body and are excluded
+from normalized market, book, and trade records.
 For a response rejected by the 256 KiB size bound, the API and finite
 collector persist a metadata-only `source_failure` record: schema-v2 raw
 observations mark `raw_body_state=not_captured_after_size_limit`, store an

@@ -1,5 +1,39 @@
 # Project Frontier Mission Ledger
 
+## Replay identity and source JSON ambiguity — 2026-10-28 10:59 UTC
+
+Code commit `63c2d74` rejects repeated relationship IDs in deterministic
+replay. A controlled fixture had previously produced two candidate rows with
+the same candidate ID when the same relationship was supplied twice. The
+replay boundary now fails before generating or auditing candidates.
+
+Code commit `0dbea9c` makes the bounded HTTP JSON parser reject duplicate
+object keys at any nesting depth with `DUPLICATE_JSON_KEY`. The error retains
+the bounded raw response bytes and is not retried. A `MockTransport` fixture
+confirmed Python's prior decoder silently kept the last duplicate field value;
+no public source was queried. Focused replay and JSON regressions passed
+**1/1** and **2/2**. Full `tests/frontier` passed **403/403** in 29.47 seconds
+(30.92 seconds wall time), using
+`/dev/shm/midas-frontier-duplicate-inputs-20261028T1058Z`. Peak RSS was
+**376,780 KiB**, process swaps **0**, filesystem input **0**, and output 376
+blocks. Ruff, format, strict mypy for changed production modules, and
+`git diff --check` passed. One existing Starlette/httpx deprecation warning
+remains.
+
+At `10:58:31Z`, memory and I/O PSI avg10 were 0%, about 10 GiB was available,
+and host swap was already 3.5/4 GiB used. At `10:59:07Z`, PSI remained 0%,
+about 10 GiB was available, and the test process reported zero swaps. No live
+source, protected capture, production service, or Arena job was used. Frontier
+remains **PARTIALLY VERIFIED**.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Replay relationship identity | COMPLETE AND VERIFIED | Duplicate relationship IDs now fail before candidate generation. |
+| Public JSON parsing | COMPLETE AND VERIFIED | Duplicate object keys at any depth are rejected with raw bounded evidence retained. |
+| Full Frontier Python suite | COMPLETE AND VERIFIED | 403/403 pass on the exact code tree; one existing deprecation warning remains. |
+| Live cross-venue matching and economics | BLOCKED | Authorized genuine multi-venue evidence remains unavailable. |
+| Frontier project overall | PARTIALLY VERIFIED | Broader MIDAS regression, live science, production recovery, and deployment remain open. |
+
 ## Logical implication rejects copied malformed markets — 2026-10-28 10:56 UTC
 
 Code commit `3097082` closes a remaining model-copy validation gap. A

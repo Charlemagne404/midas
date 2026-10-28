@@ -54,6 +54,10 @@ listing/book/trade sample or one separately requested cursor page; it does not
 start a collector or crawl history. Do not enable probes in a production service
 as part of routine development.
 
+The transport rejects duplicate JSON object keys at every nesting depth with a
+non-retryable `DUPLICATE_JSON_KEY` error. The bounded raw response is retained
+as failure evidence and is not normalized into market, book, or trade rows.
+
 For one saved Polymarket or Kalshi market, Mission Control's **Capture market
 detail** action calls `POST /api/frontier/probe/{venue}/market-metadata`. The
 route requires an exact native-ID lookup extension, derives the native ID from
