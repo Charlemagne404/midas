@@ -119,6 +119,11 @@ class FakeAdapter:
         provenance = value.provenance.model_copy(
             update={
                 "raw_sha256": self.market_capture.raw_sha256,
+                "source_url": self.market_capture.request_url,
+                "adapter_version": self.market_capture.adapter_version,
+                "request_started_at_utc": self.market_capture.request_started_at_utc,
+                "response_received_at_utc": self.market_capture.received_at_utc,
+                "request_elapsed_monotonic_ns": self.market_capture.request_elapsed_monotonic_ns,
                 "observation_id": "fixture-market",
             }
         )
@@ -134,7 +139,15 @@ class FakeAdapter:
         self.pending_captures.append(capture)
         value = book(market_value, instrument_id, "0.40")
         provenance = value.provenance.model_copy(
-            update={"raw_sha256": capture.raw_sha256, "observation_id": capture.raw_sha256}
+            update={
+                "raw_sha256": capture.raw_sha256,
+                "source_url": capture.request_url,
+                "adapter_version": capture.adapter_version,
+                "request_started_at_utc": capture.request_started_at_utc,
+                "response_received_at_utc": capture.received_at_utc,
+                "request_elapsed_monotonic_ns": capture.request_elapsed_monotonic_ns,
+                "observation_id": capture.raw_sha256,
+            }
         )
         return value.model_copy(update={"provenance": provenance})
 
@@ -187,6 +200,33 @@ class WrongLineageAdapter(FakeAdapter):
                 update={"provenance": item.provenance.model_copy(update={"raw_sha256": "0" * 64})}
             )
             for item in markets
+        )
+
+
+class WrongCaptureMetadataAdapter(FakeAdapter):
+    async def discover_markets(self, limit: int = 20):
+        markets = await super().discover_markets(limit)
+        return tuple(
+            item.model_copy(
+                update={
+                    "provenance": item.provenance.model_copy(
+                        update={"source_url": "https://fixture.example/different-request"}
+                    )
+                }
+            )
+            for item in markets
+        )
+
+
+class WrongBookCaptureMetadataAdapter(FakeAdapter):
+    async def fetch_book(self, market_value, instrument_id: str, depth: int = 20):
+        value = await super().fetch_book(market_value, instrument_id, depth)
+        return value.model_copy(
+            update={
+                "provenance": value.provenance.model_copy(
+                    update={"source_url": "https://fixture.example/different-book-request"}
+                )
+            }
         )
 
 
@@ -1004,6 +1044,35 @@ async def test_market_lineage_failure_keeps_the_raw_capture_as_diagnostic(tmp_pa
     row = store.observation(result.diagnostic_observation_ids[0])
     assert row is not None
     assert row["raw"]["raw_sha256"] == adapter.market_capture.raw_sha256
+    assert row["normalized"]["error_code"] == "CAPTURE_LINEAGE_MISMATCH"
+
+
+@pytest.mark.asyncio
+async def test_market_capture_requires_exact_request_provenance(tmp_path):
+    store = FrontierStore(tmp_path / "frontier")
+    adapter = WrongCaptureMetadataAdapter()
+    result = await BoundedSourceCollector(adapter, store).start(market_limit=1, book_limit=0)
+
+    assert result.state == "failed"
+    assert result.failures[0].code == "CAPTURE_LINEAGE_MISMATCH"
+    assert len(result.diagnostic_observation_ids) == 1
+    row = store.observation(result.diagnostic_observation_ids[0])
+    assert row is not None
+    assert row["raw"]["request_url"] == adapter.market_capture.request_url
+    assert row["normalized"]["error_code"] == "CAPTURE_LINEAGE_MISMATCH"
+
+
+@pytest.mark.asyncio
+async def test_book_capture_requires_exact_request_provenance(tmp_path):
+    store = FrontierStore(tmp_path / "frontier")
+    adapter = WrongBookCaptureMetadataAdapter()
+    result = await BoundedSourceCollector(adapter, store).start(market_limit=1, book_limit=1)
+
+    assert result.state == "partial"
+    assert result.failures[-1].code == "CAPTURE_LINEAGE_MISMATCH"
+    assert len(result.diagnostic_observation_ids) == 1
+    row = store.observation(result.diagnostic_observation_ids[0])
+    assert row is not None
     assert row["normalized"]["error_code"] == "CAPTURE_LINEAGE_MISMATCH"
 
 

@@ -35,6 +35,7 @@ from midas.frontier.models import (
     FrontierMarket,
     FrontierModel,
     MarketBatch,
+    Provenance,
     RawObservation,
     ResponseRejectionMetadata,
     SourceFailureRecord,
@@ -45,7 +46,7 @@ from midas.frontier.models import (
 from midas.frontier.storage import MAX_ROW_BYTES, FrontierStore, FrontierStoreError
 
 COLLECTION_JOURNAL_SCHEMA = 1
-COLLECTION_RUN_VERSION = "frontier-finite-collection-2"
+COLLECTION_RUN_VERSION = "frontier-finite-collection-3"
 MAX_COLLECTION_MARKETS = 20
 MAX_COLLECTION_MARKET_OBSERVATIONS = 32
 MAX_COLLECTION_BOOKS = 10
@@ -181,14 +182,13 @@ class PendingCollectionObservation(FrontierModel):
             if self.normalized.venue != self.raw.venue:
                 raise ValueError("Pending market batch and raw capture venues differ")
             if any(
-                item.provenance.raw_sha256 != self.raw.raw_sha256
+                not _capture_matches_provenance(self.raw, item.provenance)
                 for item in self.normalized.markets
             ):
                 raise ValueError("Pending market provenance does not match its raw capture")
         elif isinstance(self.normalized, BookSnapshot):
-            if (
-                self.normalized.venue != self.raw.venue
-                or self.normalized.provenance.raw_sha256 != self.raw.raw_sha256
+            if self.normalized.venue != self.raw.venue or not _capture_matches_provenance(
+                self.raw, self.normalized.provenance
             ):
                 raise ValueError("Pending book provenance does not match its raw capture")
         return self
@@ -1261,11 +1261,21 @@ class BoundedSourceCollector:
                     raise AdapterError(
                         "VENUE_MISMATCH", "Adapter returned a market for another venue"
                     )
-                capture_hashes = {item.raw_sha256 for item in captures}
-                if any(item.provenance.raw_sha256 not in capture_hashes for item in markets):
+                if any(item.adapter_version != spec.adapter_version for item in captures):
                     raise AdapterError(
                         "CAPTURE_LINEAGE_MISMATCH",
-                        "Normalized market evidence has no matching raw response capture",
+                        "Discovery capture adapter version differs from the pinned source",
+                    )
+                if any(
+                    not any(
+                        _capture_matches_provenance(capture, market.provenance)
+                        for capture in captures
+                    )
+                    for market in markets
+                ):
+                    raise AdapterError(
+                        "CAPTURE_LINEAGE_MISMATCH",
+                        "Normalized market evidence does not match a raw response capture",
                     )
                 pending = self._market_pending(spec, markets, captures)
                 current = self._append(
@@ -1365,7 +1375,8 @@ class BoundedSourceCollector:
                 captures = self.adapter.take_captures()
                 if (
                     len(captures) != 1
-                    or value.provenance.raw_sha256 != captures[0].raw_sha256
+                    or captures[0].adapter_version != spec.adapter_version
+                    or not _capture_matches_provenance(captures[0], value.provenance)
                     or value.venue != spec.venue
                     or value.native_market_id != task.native_market_id
                     or value.native_instrument_id != task.native_instrument_id
@@ -1444,7 +1455,7 @@ class BoundedSourceCollector:
         pending: list[PendingCollectionObservation] = []
         for capture in captures:
             matched = tuple(
-                item for item in markets if item.provenance.raw_sha256 == capture.raw_sha256
+                item for item in markets if _capture_matches_provenance(capture, item.provenance)
             )
             batch = MarketBatch(venue=spec.venue, markets=matched)
             pending.append(PendingCollectionObservation(raw=capture, normalized=batch))
@@ -1920,6 +1931,18 @@ def _hash_json(value: Any) -> str:
 def capability_manifest_sha256(capabilities: AdapterCapabilities) -> str:
     """Return the canonical digest used to pin a collection's adapter contract."""
     return _hash_json(capabilities.model_dump(mode="json"))
+
+
+def _capture_matches_provenance(raw: RawObservation, provenance: Provenance) -> bool:
+    """Bind normalized evidence to the exact captured response, not only its body hash."""
+    return (
+        provenance.raw_sha256 == raw.raw_sha256
+        and provenance.source_url == raw.request_url
+        and provenance.adapter_version == raw.adapter_version
+        and provenance.request_started_at_utc == raw.request_started_at_utc
+        and provenance.response_received_at_utc == raw.received_at_utc
+        and provenance.request_elapsed_monotonic_ns == raw.request_elapsed_monotonic_ns
+    )
 
 
 def _bounded_failures(
