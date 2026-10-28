@@ -1,0 +1,25 @@
+{
+  "database": "research-store/frontier.sqlite3",
+  "instrument_count": 2,
+  "normalized_market_ids": [
+    "polymarket:2589810"
+  ],
+  "observation_kind": "market_listing",
+  "persisted_at_utc": "2026-10-28T17:07:11.231703+00:00",
+  "raw_sha256": "1f00dfadcf90bc5845bddf2065b242c1fbdd7b7a03b425c75b19d752c656ad14",
+  "received_at_utc": "2026-10-28T17:04:45.011118+00:00",
+  "recovery": "FrontierStore.observation with row and body hash validation; Pydantic model reconstruction",
+  "replay_candidate_count": 0,
+  "replay_market_observation_ids": [
+    "90e019e6751d2be81fed5d9eeec1d92eb703b4ee822596d833268f369096e559"
+  ],
+  "replay_relationship_count": 0,
+  "replay_reproducibility": "Two independent runs over recovered stored input produced identical run_id and result_sha256; stored result reloaded with hash validation",
+  "replay_result_sha256": "89cce280acb0a1e7615965108f15ea5cc2b622df0fc8c56ef6ad35a525f63fab",
+  "replay_run_id": "b4b0d76bc912b596ceeb21cfb15a687134a34d9c8f9fe702e31d5f966a2cef6a",
+  "schema_version": 1,
+  "source_recorded_observation_id": "2f22072dcb104f39469e447e7ee9cba117d514e86d738bd6f518d00c91a310ba",
+  "store_observation_id": "90e019e6751d2be81fed5d9eeec1d92eb703b4ee822596d833268f369096e559",
+  "store_row_sha256": "70d9396eb804982a26191521fc3dd28c73e299587407cf242c823c708f54be78",
+  "venue": "polymarket"
+}

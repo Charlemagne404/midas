@@ -3277,3 +3277,27 @@ warning. Pytest state was under `/dev/shm`. At 16:55:30Z memory PSI avg10 was
 available. No live source request or protected-service operation occurred.
 Broad legacy Arena regression, live cross-venue science, endurance, protected
 recovery, and deployment remain open.
+## Frontier live Polymarket adapter observation — 2026-10-28 17:04 UTC
+
+One unauthenticated, one-market Gamma listing request through the Frontier
+Polymarket adapter returned HTTP 200. The raw observation and normalized
+market batch are preserved in
+`data/frontier-live-evidence-polymarket-20261028T170445Z/`; local model
+reconstruction and SHA-256 checks pass. The result is one open binary market
+with two instruments and explicit unverified-payout, settlement-asset, and
+cross-venue-equivalence quality flags. No book, trade, or economic conclusion
+was derived. Kalshi, Kraken, and Coinbase source-use holds remain active;
+Reality and API services were not modified or restarted.
+
+## Frontier live observation storage and replay — 2026-10-28 17:07 UTC
+
+The same one-market capture now round-trips through a new isolated
+`FrontierStore` database (155,648 bytes; 4 MiB budget). Its raw and row hashes
+validate, and typed market and raw models reconstruct. Two deterministic
+replays over the recovered stored row produce the same run ID and result hash;
+the replay itself reloads through the hash-validating store path. It has zero
+relationship proposals and candidates because the input has one metadata-only
+market and no book. No cross-venue conclusion is claimed. At 17:07:40Z CPU PSI
+avg10 was 41.15%; protected Reality was within about 216 KiB of its soft memory
+boundary, so broad legacy regression remains deferred. Both protected
+services were active and unchanged.

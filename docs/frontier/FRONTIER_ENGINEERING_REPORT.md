@@ -10625,3 +10625,70 @@ request or protected-service action occurred.
 | Full Frontier regression after integration edits | COMPLETE AND VERIFIED | 498/498 pass on the current code tree. |
 | Live cross-venue science | PARTIALLY VERIFIED | Fixture-backed matching/economics pass; held-source permission and live equivalence remain unresolved. |
 | Frontier overall | PARTIALLY VERIFIED | Broad legacy regression, resource endurance, protected recovery, and deployment remain open. |
+## Bounded live Polymarket metadata observation — 2026-10-28 17:04 UTC
+
+The [official Polymarket Institute guide](https://institute.polymarket.com/data)
+describes open public APIs for research, identifies Gamma as the market and
+event discovery interface, and treats the decentralized and US exchanges as
+separate data sources. On code commit `e3a2bd2`, one unauthenticated
+`PolymarketAdapter.discover_markets(limit=1)` call to the decentralized
+Gamma `/markets` endpoint returned HTTP 200. The temporary read-only config
+bounded the call to one market, 256 KiB, eight seconds, and zero retries.
+
+The persisted observation is
+`data/frontier-live-evidence-polymarket-20261028T170445Z/`. It contains the
+raw `RawObservation`, normalized `MarketBatch`, and a manifest. Local replay
+reconstructs both models and verifies the raw-response, raw-record, and
+normalized-batch hashes. The response body was 7,757 bytes; the normalized
+batch was 14,431 bytes. The one open binary market (`2589810`) includes two
+outcome instruments and explicit `PAYOUT_NOT_ATTESTED`,
+`SETTLEMENT_ASSET_NOT_ATTESTED`, and `CROSS_VENUE_EQUIVALENCE_NOT_ASSERTED`
+flags. No order book, trade, or fee schedule was requested.
+
+This is live single-venue metadata validation, not evidence of a
+cross-venue relationship, simultaneous pricing, or an economic opportunity.
+Kalshi, Kraken, and Coinbase source-use holds remain in force; all production
+and protected-service states remain unchanged.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Polymarket public metadata adapter | COMPLETE AND VERIFIED | One bounded Gamma GET; response and normalized artifacts reconstruct and hash-check. |
+| Polymarket payoff/book economics | PARTIALLY VERIFIED | The observation lacks attested payout, settlement asset, and book depth. |
+| Genuine live cross-venue relationship | BLOCKED | Other candidate source use remains held; no equivalent live pair is available. |
+| Frontier overall | PARTIALLY VERIFIED | Cross-venue evidence, broad legacy regression, resource endurance, protected recovery, and deployment remain open. |
+
+## Durable storage and deterministic replay of a live Polymarket capture — 2026-10-28 17:07 UTC
+
+The preserved 17:04 raw response and normalized one-market batch were appended
+to a new, isolated `FrontierStore` under the capture directory. Its SQLite
+database is 155,648 bytes with a 4 MiB configured cap and a four-row budget.
+The validated read path reconstructed `RawObservation` and `MarketBatch`,
+checked the raw SHA-256 and append-only row hash, and retained the canonical
+market `polymarket:2589810` with both instruments. The store observation ID is
+`90e019e6751d2be81fed5d9eeec1d92eb703b4ee822596d833268f369096e559`; its row
+hash is `70d9396eb804982a26191521fc3dd28c73e299587407cf242c823c708f54be78`.
+
+Two deterministic replays over the recovered market used the stored
+observation identity, the source receive time as `as_of_utc`, code version
+`e3a2bd2`, no books, and a ten-proposal bound. Both returned run ID
+`b4b0d76bc912b596ceeb21cfb15a687134a34d9c8f9fe702e31d5f966a2cef6a` and result
+hash `89cce280acb0a1e7615965108f15ea5cc2b622df0fc8c56ef6ad35a525f63fab`.
+The replay was appended and recovered from the same isolated store with its
+hash validation. It yielded zero proposed relationships and zero candidates;
+one metadata-only market does not support further economic conclusions. The
+machine-readable receipt is in
+`data/frontier-live-evidence-polymarket-20261028T170445Z/store_replay_receipt.json`.
+
+This adds genuine single-source durability and replay evidence. It does not
+close the live cross-venue, book economics, or opportunity acceptance criteria.
+At 17:07:40Z CPU PSI avg10 was 41.15%. The protected Reality service remained
+active at 1,207,738,368 of 1,207,959,552 bytes (`MemoryCurrent` of
+`MemoryHigh`); the API remained active at 1,186,410,496 of 1,610,612,736
+bytes. I deferred the broad legacy regression under this measured pressure.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Live Polymarket observation persisted and recovered | COMPLETE AND VERIFIED | Isolated FrontierStore round-trip validates raw and row hashes and reconstructs the normalized batch. |
+| Deterministic replay over recovered genuine input | COMPLETE AND VERIFIED | Two runs share exact run/result hashes; persisted result reloads and verifies. Zero candidates are expected for one market without books. |
+| Live multi-venue relationship and economics | BLOCKED | Held-source policy remains active and this capture is single-venue metadata only. |
+| Frontier overall | PARTIALLY VERIFIED | Broad regression, cross-venue science, resource endurance, protected recovery, and deployment remain open. |

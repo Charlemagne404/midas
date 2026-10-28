@@ -1,5 +1,77 @@
 # Project Frontier Mission Ledger
 
+## Durable live observation storage and replay — 2026-10-28 17:07 UTC
+
+Using only the preserved 17:04 Polymarket capture, I appended one normalized
+market batch to an isolated `FrontierStore` at
+`data/frontier-live-evidence-polymarket-20261028T170445Z/research-store/`.
+The 155,648-byte SQLite database is bounded to 4 MiB and four observation and
+relationship rows. `FrontierStore.observation` verified the raw body hash,
+stored row hash, native market identity, and typed raw/normalized model
+reconstruction. Store observation ID:
+`90e019e6751d2be81fed5d9eeec1d92eb703b4ee822596d833268f369096e559`;
+row hash: `70d9396eb804982a26191521fc3dd28c73e299587407cf242c823c708f54be78`.
+
+Two independent deterministic replay calls used that recovered market, its
+stored observation ID, the pinned source receive time, code `e3a2bd2`, a
+no-book scenario, and a ten-proposal bound. Both produced run
+`b4b0d76bc912b596ceeb21cfb15a687134a34d9c8f9fe702e31d5f966a2cef6a` and result
+SHA-256 `89cce280acb0a1e7615965108f15ea5cc2b622df0fc8c56ef6ad35a525f63fab`.
+The replay was appended and loaded again through the store's hash-validating
+reader. It produced zero relationships and zero candidates, as expected from
+one market with no book. The replay receipt is
+`data/frontier-live-evidence-polymarket-20261028T170445Z/store_replay_receipt.json`.
+
+This verifies live single-source persistence and deterministic replay only; it
+does not provide cross-venue matching, book economics, or opportunity
+evidence. At 17:07:40Z CPU PSI avg10 was 41.15%. Reality was at
+1,207,738,368 / 1,207,959,552 bytes (`MemoryCurrent` / `MemoryHigh`), about
+216 KiB of soft-limit headroom; the API was at 1,186,410,496 / 1,610,612,736
+bytes. No broad regression run was admitted. Both services remained active,
+and neither was changed.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Durable storage of genuine public metadata | COMPLETE AND VERIFIED | Isolated append/recovery path validates body and row hashes and reconstructs both models. |
+| Deterministic replay of recovered live input | COMPLETE AND VERIFIED | Two runs and a persisted/reloaded replay share exact run and result hashes; zero candidates is the honest one-market result. |
+| Live cross-venue matching and economics | BLOCKED | Other source-use holds remain; this capture has no book or equivalent second market. |
+
+**Next safe action:** continue source-independent acceptance work; defer broad
+regression while CPU contention remains high and Reality is near its
+`MemoryHigh` boundary.
+
+## Bounded live Polymarket adapter validation — 2026-10-28 17:04 UTC
+
+After checking the [official Polymarket Institute data guide](https://institute.polymarket.com/data),
+which documents research-facing public APIs and distinguishes decentralized
+Polymarket from Polymarket US, I ran one unauthenticated Gamma market-listing
+GET through `PolymarketAdapter.discover_markets(limit=1)`. The ephemeral
+configuration allowed one market, capped the response at 256 KiB, set an
+8-second timeout, and disabled retries. The endpoint returned HTTP 200 and one
+normalized open binary market (`2589810`, two outcome instruments) at
+2026-10-28T17:04:45.011118Z.
+
+The preserved artifact is
+`data/frontier-live-evidence-polymarket-20261028T170445Z/`. Its raw response,
+normalized `MarketBatch`, and manifest reconstruct successfully; all three
+record hashes verify. Raw body size is 7,757 bytes and normalized batch size is
+14,431 bytes. The market carries `PAYOUT_NOT_ATTESTED`,
+`SETTLEMENT_ASSET_NOT_ATTESTED`, and `CROSS_VENUE_EQUIVALENCE_NOT_ASSERTED`.
+No book or trade was requested, and no economic or cross-venue claim follows
+from this one-market metadata observation. Existing untracked
+`data/frontier-public-probes/` was not touched. No service, key, account, or
+trading route was used.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Polymarket live public metadata adapter | COMPLETE AND VERIFIED | One bounded Gamma listing request returned HTTP 200; raw and normalized artifacts revalidate and hash-check. |
+| Live order-book/economic validation | PARTIALLY VERIFIED | No book was requested; fee, payout, timing, and execution evidence were not established. |
+| Genuine cross-venue relationship | BLOCKED | Kalshi, Kraken, and Coinbase remain held under the source-use review; no cross-venue equivalence is claimed. |
+
+**Next safe action:** retain the capture as one observation and continue
+source-independent acceptance work; do not lift held-source gates based on
+public endpoint availability.
+
 ## Strict research-stack typing and Frontier integration reverified — 2026-10-28 17:03 UTC
 
 The repository CI command `mypy packages/midas apps/api` initially reported 34
