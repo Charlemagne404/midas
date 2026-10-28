@@ -2,20 +2,25 @@
 
 **Report date:** 2026-10-28
 
-**Latest code checkpoint:** `cf67b2b` exposes finite source collection through
-an explicit, configuration-gated API request and Exchanges-view action. The
-route shares per-source probe locks, uses the hash-chained checkpointed
-collector, and applies smaller bounds than the standalone collector. Fixture
-API and UI tests, TypeScript, strict scoped mypy, Ruff, and Prettier pass. The
-combined Frontier/Arena selection produced 354 passes and two existing Arena
-supervisor failures because a running external Veritas batch held the shared
-resource-admission lock. Production build and browser tests were deferred under
-the resulting host pressure. Earlier documented checkpoints include the
-recorded-health catalog, hash-bound timeline source state, and production build
-results for earlier revisions. No exchange request or Arena worker was
-launched. Live collection, collection-run history/resume routes, source
-permissions, cross-venue evidence, and deployment remain unresolved; Frontier
-is isolated, incomplete, and undeployed.
+**Latest code checkpoint:** `87c67b23fbda1624a6b36273b63cd94427113b4c`
+adds oversized-input regression coverage to the virtual funding-currency
+sensitivity introduced in `530c9aa8b3fb2b4ee006c35c2494bccdb0b7cae8`. The API
+and Mission Control workspace accept explicit namespaced
+funding identities, per-venue balances, target-per-funding rates, and conversion
+fees; a rational-arithmetic audit independently checks the Decimal outputs.
+The sensitivity does not alter candidate economics or eligibility, perform a
+conversion, or persist assumptions. The focused Python selection passed
+**40/40**, the Frontier web file passed **8/8**, TypeScript and Vite production
+build passed, and scoped Ruff, Prettier, ESLint, and mypy checks passed. The
+build emits a Vite advisory for the 544.41 kB Chart chunk. Strict mypy on the
+new FX module passes; checking the full API module required suppressing its
+pre-existing `no-any-return` finding in the adapter registry. The full Frontier
+suite and Playwright browser check were not rerun while an external Veritas
+batch was active and memory PSI remained elevated. No exchange request, Arena
+worker, protected service, production store, or deployment was used. Live FX
+data, cross-venue funding availability, source permissions, broader regression,
+and deployment remain unresolved; Frontier is isolated, incomplete, and
+undeployed.
 
 **Branch:** `codex/frontier-20261026`
 
@@ -4856,3 +4861,86 @@ for all analyses. The existing source holds and quarantine remain unchanged.
 No exchange API, stored capture, or configuration was accessed or changed.
 See the [source-data terms review](SOURCE_DATA_TERMS_REVIEW_2026-10-27.md) for
 links and operational detail.
+
+### Virtual funding-currency sensitivity — 2026-10-28 00:22 UTC
+
+Code commit `530c9aa8b3fb2b4ee006c35c2494bccdb0b7cae8` adds the separate
+`packages/midas/frontier/fx.py` scenario engine and
+`POST /api/frontier/opportunities/funding-currency-sensitivity`. The route
+reloads a saved replay by run ID and result hash, applies held-source filtering,
+and requires exactly one assumption for every venue in the selected candidate.
+It performs no source request, store mutation, account lookup, or Arena
+submission. User assumptions include each full settlement-asset identity, a
+nonnegative venue-local balance, a positive rate in target settlement units per
+funding unit, and a conversion fee below 10,000 bps.
+
+For target capital `S`, rate `r`, fee `f` bps, and balance `B`, required funding
+is `S / (r * (1 - f/10000))`; target value available after fees is
+`B * r * (1 - f/10000)`; and the modeled fee is `S * f / (10000 - f)` in
+target units. Exact identity permits only the canonical rate 1 and fee 0.
+Fiat and network-specific token identities remain distinct even when tickers
+match. The UI starts rate and fee inputs blank when identities differ. Each
+venue stays isolated. The response carries deterministic input/result hashes,
+an independent Fraction audit, uncovered virtual funding per venue, and the
+count of candidate legs whose fees remain unknown. Candidate classification,
+practical eligibility, and P&L are unchanged. The modeled conversion fee is not
+subtracted from candidate P&L.
+
+Implementation files in commit `530c9aa8b3fb2b4ee006c35c2494bccdb0b7cae8`:
+`packages/midas/frontier/fx.py`, `apps/api/frontier.py`,
+`apps/web/src/Frontier.tsx`, `apps/web/src/frontier.css`,
+`apps/web/src/Frontier.test.tsx`, `tests/frontier/test_api.py`, and
+`tests/frontier/test_fx_sensitivity.py`. Test-only commit
+`87c67b23fbda1624a6b36273b63cd94427113b4c` extends the FX unit file with
+oversized-input rejection cases. The documentation checkpoint changes
+`docs/DEVELOPMENT.md`, `docs/MIDAS_CURRENT_STATE.md`,
+`docs/frontier/FRONTIER_ARCHITECTURE.md`,
+`docs/frontier/FRONTIER_OPERATIONS.md`,
+`docs/frontier/FRONTIER_ENGINEERING_REPORT.md`, and
+`docs/frontier/FRONTIER_MISSION_LEDGER.md`.
+
+Two verification defects were found and fixed before the checkpoint. The first
+test run caught the independent fee total using Python's default 28-digit
+Decimal context; the audit now sums at the model's 96-digit context. Thirty
+bounded generated combinations of rates, fees, and balances then exposed a
+last-digit shortfall disagreement at a recurring-division boundary. The rational
+audit now mirrors the explicit 96-digit rounding point for that derived amount
+while deciding coverage from exact rational inputs. Before the size-bound
+follow-up, the focused Python selection passed **39 tests** in 1.63 seconds. The
+final focused selection passed **40 tests** in 1.26 seconds, including capital
+carry regression, saved-run API integration and FX API hash rejection, plus the
+new 30-example generated audit property, and oversized balance/candidate amount
+rejection. Test follow-up commit `87c67b23fbda1624a6b36273b63cd94427113b4c`
+adds the size-bound regression. The existing Starlette/httpx
+TestClient deprecation warning remains.
+
+The focused Mission Control test file passed **8/8** in 4.23 seconds. It checks
+asset-identity input, requires a user-entered rate and fee for a different
+identity, rejects exponent-form balance text before submission, confirms the
+saved-run request body, shows unresolved candidate fees, and keeps economics
+unchanged. TypeScript and the Vite production build passed. The build reports a
+544.41 kB Chart chunk advisory; the new Frontier chunk is 135.35 kB. Targeted
+ESLint, Prettier, Ruff, Ruff formatting, `git diff --check`, strict mypy for
+`fx.py`, and strict API-module mypy with the existing `no-any-return` check
+suppressed all pass. Unsuppressed strict API-module mypy still reports that
+pre-existing adapter-lookup return at `apps/api/frontier.py:1052`; the new
+funding route has no additional typing error.
+
+No Playwright run, full Frontier suite, CPU/memory profile, public FX source, or
+live cross-venue relationship was produced for this checkpoint. At
+`2026-10-28T00:20:21Z`, memory PSI avg10 was **45.09% some / 39.20% full**,
+available memory was **10,087 MiB**, and swap use was **3,768 MiB** while the
+external Veritas gap-detail batch PID **3960724** remained active. That batch
+was not interrupted. No Reality process, protected service, source capture,
+Arena worker, production store, or deployment was touched.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Virtual funding-currency model and independent audit | COMPLETE AND VERIFIED | Offline API/unit fixtures cover namespaced identities, deterministic hashes, venue isolation, bounds, tampering, exact coverage, and 30 generated Decimal/Fraction cases. No conversion availability or FX observation is established. |
+| Saved-run funding API | COMPLETE AND VERIFIED | Run/result hash binding, held-source filter, exact candidate/venue matching, classification/eligibility/P&L invariance, and stale-hash rejection pass a fixture-backed API test. |
+| Mission Control funding workbench | PARTIALLY VERIFIED | Component test, typecheck, lint, and production build pass. No Playwright browser check was admitted under the current host pressure. |
+| Live FX and cross-venue funding/transfer evidence | DEFERRED | No FX source or account/transfer path is integrated; all rates and balances are user assumptions. |
+| Project Frontier overall | PARTIALLY VERIFIED | Live multi-venue validation, full regression, browser acceptance, resource sustainability, and production deployment remain incomplete. |
+
+Continue with bounded offline acceptance. Do not promote user-entered conversion
+scenarios to sourced exchange economics or executable capital availability.

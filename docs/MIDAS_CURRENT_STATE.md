@@ -33,6 +33,32 @@ in the dated addendum below and in the Frontier engineering report.
 
 ## Frontier development addendum — 2026-10-28
 
+### Virtual funding-currency sensitivity — 2026-10-28 00:22 UTC
+
+Frontier branch `codex/frontier-20261026` is at test-hardening commit
+`87c67b23fbda1624a6b36273b63cd94427113b4c`, following implementation commit
+`530c9aa8b3fb2b4ee006c35c2494bccdb0b7cae8`. The implementation adds a hash-pinned,
+on-demand virtual funding-currency sensitivity to candidate details. Each venue
+requires an explicit namespaced funding identity, balance, target-units per
+funding-unit rate, and conversion fee. Different identities do not inherit
+parity; their rate and fee inputs start blank. The separate Fraction audit and
+the route leave candidate P&L, classification, and practical eligibility
+unchanged. This is not a live FX source or transfer model.
+
+The focused Python selection passed **40/40** and the Frontier Web test file
+passed **8/8**. TypeScript, production build, targeted lint/formatting, and strict
+mypy for the new FX module passed. The API file's broader strict-mypy run still
+has its existing `no-any-return` adapter lookup finding; suppressing that code
+produces no other API-module error. The production build reports a 544.41 kB
+Chart chunk advisory. The full Frontier suite and Playwright browser test remain
+unrun under elevated shared host pressure while an external Veritas batch was
+active. No exchange request, Reality process, Arena worker, production store,
+or deployment was used. Frontier remains isolated, research-only, undeployed,
+and **PARTIALLY VERIFIED**. There is no new evidence of live FX availability,
+cross-venue economic relationships, or profitable opportunities. See the
+[mission ledger](frontier/FRONTIER_MISSION_LEDGER.md) and
+[engineering report](frontier/FRONTIER_ENGINEERING_REPORT.md).
+
 ### Recorded health join and timeline freshness control — 2026-10-28 00:18 CET
 
 Frontier branch `codex/frontier-20261026` is at code commit

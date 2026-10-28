@@ -19,13 +19,14 @@ as mutable Frontier storage.
 | Candidate calculators | `economics.py` | Decimal cross-venue binary and same-market exhaustive multi-outcome all-long checks with fee, depth, freshness, timing, and scenario bounds; provenance-bound conditional Kalshi one-fill estimate; exact bounded one-sided fill sensitivity; separate instrument-bound Kalshi one-fill and one-order fee sensitivities. |
 | Independent arithmetic audit | `independent_audit.py` | Separately recomputes supported candidate identities, payoff vectors, pinned quotes/depth, fees, costs, terminal P&L, fill-pattern sensitivity, and classification from replay inputs. |
 | Virtual capital-duration sensitivity | `capital.py` | Recomputes unrounded simple-interest carry from explicit per-venue user assumptions, candidate capital, hash-checked future settlement metadata, and a bounded scenario-only post-settlement release delay; an independent arithmetic pass cannot change candidate classification. |
+| Virtual funding-currency sensitivity | `fx.py` | Compares venue-isolated hypothetical balances with candidate capital under explicit namespaced asset identities, user-entered conversion rates and fees, and a Fraction-based audit; it does not source rates or change candidate economics. |
 | Durable evidence | `storage.py` | Append-only, size- and row-bounded SQLite observations, markets, relationship reviews/revisions, runs, and paired comparisons. |
 | Replay | `replay.py` | Stable input ordering, scenario/mapping/proposal-limit-aware replay identities, exact store-record provenance for API-loaded models, deterministic results, and paired assumption comparisons. |
 | Event-time replay | `timeline.py` | Offline bounded replay over repeated book updates, source-state events, and explicit cutoffs; freshness, outage invalidation, candidate summaries, and timeline hashes. |
 | Finite source collection | `collection.py`, `apps/api/frontier.py` | One-source sequential bounded capture with durable restart checkpoints and an append-only hash-chained journal; explicit start/resume routes and a read-only recent-run catalog, with source policy/capability gates, per-source lock, and no job or background service. |
 | Arena replay jobs | `packages/midas/arena/frontier_replay.py`, `frontier_timeline.py`, `arena/jobs.py` | Immutable content-addressed inputs, bounded offline paired and event-time replay workers, hash-verified artifacts, and held-source filtering under Arena's existing admission gate. |
-| HTTP API | `apps/api/frontier.py`, `apps/api/arena.py` | Bounded local queries and graph neighborhoods, relationship proposals/reviews, deterministic and paired replay, config-gated captures, fee/capital sensitivities, coverage analytics, a verified local collection-health catalog and checkpoint joins, and local-input event-time Arena staging/result routes. |
-| Mission Control workspace | `apps/web/src/Frontier.tsx` | Sources, explicit finite checkpointed capture, markets/books/event context, coverage and source-quality analytics, relationship hypotheses, candidates, venue-separated capital assumptions, local comparisons, paired and event-time Arena replay history/results with pinned freshness and explicit recorded-health selection, and readiness. |
+| HTTP API | `apps/api/frontier.py`, `apps/api/arena.py` | Bounded local queries and graph neighborhoods, relationship proposals/reviews, deterministic and paired replay, config-gated captures, fee/capital/funding-currency sensitivities, coverage analytics, a verified local collection-health catalog and checkpoint joins, and local-input event-time Arena staging/result routes. |
+| Mission Control workspace | `apps/web/src/Frontier.tsx` | Sources, explicit finite checkpointed capture, markets/books/event context, coverage and source-quality analytics, relationship hypotheses, candidates, venue-separated capital assumptions and funding-currency sensitivity, local comparisons, paired and event-time Arena replay history/results with pinned freshness and explicit recorded-health selection, and readiness. |
 
 ## Additional venue selection
 
@@ -73,6 +74,38 @@ arithmetic check does not authenticate source truth or settlement, and the
 transient result is reproducible from the same saved run and rate inputs rather
 than persisted as a new artifact. Held-source quarantine is applied before the
 market inputs are loaded.
+
+## Virtual funding-currency sensitivity
+
+`POST /api/frontier/opportunities/funding-currency-sensitivity` accepts a saved
+run ID/result hash, candidate ID, and one explicit virtual funding assumption
+for each candidate venue. Each assumption contains a full settlement-asset
+identity, balance amount, target-asset units per funding-asset unit, and a
+conversion fee in basis points. The route reloads only the hash-pinned saved
+candidate, applies the existing held-source filter, and makes no exchange
+request or database write. It needs no wallet, account, or balance connection.
+
+For venue requirement `S`, explicit rate `r`, fee `f` basis points, and funding
+balance `B`, the scenario computes required funding as
+`S / (r * (1 - f/10000))`, target value available after the fee as
+`B * r * (1 - f/10000)`, and conversion fee in target units as
+`S * f / (10000 - f)`. Rates must be positive, fees below 10000 bps, and
+balances nonnegative. When full asset identities are identical, only rate 1
+and fee 0 are accepted. Similar display codes or network-specific token
+tickers do not establish identity or parity. Different identities require an
+explicit user conversion assumption; in Mission Control, rate and fee fields
+remain blank until supplied.
+
+Venue capital remains isolated, and the response reports per-venue funding
+requirements, converted value, conversion fees, and shortfalls. A separate
+Fraction-based audit checks the Decimal results; input and result digests bind
+the candidate, saved run, identities, and assumptions. It is a non-classifying
+funding view: conversion fees are not subtracted from candidate P&L, and
+candidate classification and practical eligibility are unchanged. Unresolved
+candidate fee legs are counted and remain unresolved. The feature does not
+verify convertibility, access, legality, custody, transfer timing, collateral,
+FX price availability, or execution. No sourced or live FX conversion is
+implemented.
 
 ## Adapter capability contract
 
@@ -914,6 +947,16 @@ Inputs are not sent to the API or persisted. The view does not
 model real account balances, collateral eligibility, transfer availability,
 settlement duration, or capital at risk between settlements.
 
+The separate virtual funding-currency sensitivity is an on-demand saved-run
+API calculation. It accepts one explicit namespaced funding identity, balance,
+target-per-funding-unit rate, and fee for each venue at
+`POST /api/frontier/opportunities/funding-currency-sensitivity`. It reports
+venue-local conversion fee, available target value, and shortfall under those
+assumptions. Unlike the client-only same-denomination balance comparison, the
+request is sent to the local Frontier API; it is still not persisted or sent to
+an exchange. The independent Fraction audit and exact behavioral limits are
+specified under [Virtual funding-currency sensitivity](#virtual-funding-currency-sensitivity).
+
 `GET /api/frontier/analytics/coverage` is a read-only no-network summary of
 stored research. It considers at most 50 recent market records, 50 book
 observations, 20 eligible replay runs, and 5,000 candidate records; separate
@@ -933,7 +976,7 @@ and shows these interpretation limits.
 ## Known scope limits
 
 There are no persistent source workers, incremental order-book streams, full
-venue-wide universe scans, FX conversion, derivatives, capital transfer model,
+venue-wide universe scans, sourced/live FX conversion, derivatives, capital transfer model,
 multi-leg solver, automatic semantic certification, authenticated reviewer or
 assertion verification, full-universe graph search,
 Laboratory campaign integration, event-time timeline job integration, or

@@ -143,6 +143,34 @@ candidate classification or practical eligibility; it does not establish
 settlement truth, financing availability, legal access, transferability,
 collateral eligibility, or executable returns.
 
+## Virtual funding-currency sensitivity
+
+Candidate cards can call
+`POST /api/frontier/opportunities/funding-currency-sensitivity` with the exact
+saved run ID/result hash, candidate ID, and one virtual funding assumption per
+candidate venue. Each assumption specifies a full namespaced funding-asset
+identity, nonnegative balance, an explicit rate oriented as candidate target
+asset units per one funding-asset unit, and a conversion fee in basis points.
+The API reads the hash-pinned replay candidate, applies the existing held-source
+filter, and makes no market request or database write.
+
+For target capital `S`, rate `r`, and fee `f` basis points, it calculates
+required funding as `S / (r * (1 - f/10000))`, balance value after fees as
+`B * r * (1 - f/10000)`, and the fee in target units as
+`S * f / (10000 - f)`. The same-identity case requires rate 1 and fee 0.
+Distinct assets, including same-ticker tokens on different networks, receive no
+parity assumption. The UI leaves different-identity rate and fee fields blank;
+both must be entered before submission. Values are not rounded. Decimal
+results are checked by an independent Fraction calculation and bound to input
+and result hashes.
+
+This feature compares venue-local balances independently. It does not pool
+capital, perform or verify conversion, subtract fees from candidate P&L, or
+change classification or practical eligibility. The response counts candidate
+legs with unresolved modeled fees. It does not establish a conversion market,
+transfer path, legal access, custody, collateral, FX timing, or executable
+availability. Do not describe a covered virtual balance as funded or tradable.
+
 ## Saved Kalshi fee evidence
 
 The event/series fee-metadata probe is a source capture, not an immediate fee

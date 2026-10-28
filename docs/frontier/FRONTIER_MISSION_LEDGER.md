@@ -3255,3 +3255,57 @@ existing terms-version gate stays in force. No configuration or code changed,
 and no exchange endpoint or stored capture was accessed. Full sources and
 scope notes are in
 [the source-data terms review](SOURCE_DATA_TERMS_REVIEW_2026-10-27.md).
+
+### Virtual funding-currency sensitivity — 2026-10-28 00:22 UTC
+
+Code commit `530c9aa8b3fb2b4ee006c35c2494bccdb0b7cae8` adds a non-classifying
+virtual funding-currency sensitivity for saved candidates. The new pure model,
+saved-run API route, and Mission Control workbench accept a distinct full asset
+identity, virtual balance, explicit target-units-per-funding-unit rate, and
+conversion fee for each candidate venue. No rate is retrieved or inferred; UI
+rate/fee fields are blank for different identities. Venue balances remain
+separate. An independent Fraction pass checks Decimal calculations, with
+input/result hashes bound to the saved candidate. Candidate classification,
+practical eligibility, and P&L stay unchanged; unresolved candidate fee legs
+remain labelled.
+
+Before the size-bound follow-up, the focused Python selection passed **39/39**
+in 1.63 seconds: FX sensitivity,
+capital-carry regression, and the saved-run API integration. It includes 30
+bounded generated rate/fee/balance cases, different namespaced asset identities,
+invalid assumptions, tamper detection, no implicit same-identity conversion,
+and stale saved-run hash rejection. The `Frontier.test.tsx` selection passed
+**8/8** in 4.23 seconds. TypeScript and the Vite production build passed;
+ESLint, Prettier, Ruff, formatting, `git diff --check`, and strict mypy for the
+new FX module passed. The Vite build emitted the 544.41 kB Chart-chunk advisory.
+Unsuppressed strict mypy on the API module still reports its existing
+`no-any-return` at the adapter lookup (`apps/api/frontier.py:1052`); suppressing
+that existing code while checking the module finds no other errors.
+
+The first arithmetic test found a 28-digit default-context sum in the
+independent fee audit, which was corrected. The 30-example generated test then
+found a last-digit shortfall disagreement at 96-digit division; the independent
+audit now reproduces that rounding point while checking coverage exactly. No
+Playwright run, full Frontier suite, performance profile, FX source, genuine
+cross-venue relationship, or live conversion was established.
+
+At `2026-10-28T00:20:21Z`, memory PSI avg10 was **45.09% some / 39.20% full**,
+MemAvailable was **10,087 MiB**, and swap use was **3,768 MiB**. An external
+Veritas gap-detail batch, PID **3960724**, remained active; it was left
+untouched. No exchange request, source capture, Reality process, protected
+service, Arena worker, production store, or deployment was used.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Virtual funding-currency model and API | COMPLETE AND VERIFIED | Offline exact-identity, hashing, bounds, venue isolation, generated arithmetic, tamper, and stale-run checks pass. This does not establish an available conversion market. |
+| Mission Control funding workbench | PARTIALLY VERIFIED | Component, type, lint, and production build pass; browser automation remains pending resource admission. |
+| Live FX and capital transfer | DEFERRED | No source rates, custody, jurisdiction, transfer, collateral, or executable funding evidence is connected. |
+| Project Frontier overall | PARTIALLY VERIFIED | Live cross-venue validation, broad regression, browser acceptance, resource sustainability, and deployment remain incomplete. |
+
+Test follow-up commit `87c67b23fbda1624a6b36273b63cd94427113b4c` adds fail-closed
+checks for oversized external balance strings and candidate capital magnitude.
+The focused Python selection now passes **40/40** in 1.26 seconds. The initial
+implementation commit is `530c9aa8b3fb2b4ee006c35c2494bccdb0b7cae8`.
+
+Continue with bounded offline acceptance; do not treat the explicit FX scenario
+as sourced or executable economics.
