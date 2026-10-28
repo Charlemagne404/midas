@@ -1767,9 +1767,9 @@ it('replays multiple saved price-history series and inspects persisted source li
     raw_sha256: secondRawHash,
     received_at_utc: '2026-10-28T00:02:00Z',
   };
-  const additionalCaptures = Array.from({ length: 7 }, (_, index) => {
-    const observationId = String(index + 1).repeat(64);
-    const rawSha256 = String(index + 2).repeat(64);
+  const additionalCaptures = Array.from({ length: 18 }, (_, index) => {
+    const observationId = `${index.toString(16).padStart(2, '0')}${'1'.repeat(62)}`;
+    const rawSha256 = `${index.toString(16).padStart(2, '0')}${'2'.repeat(62)}`;
     const nativeInstrumentId = `token-asset-${index + 3}`;
     return {
       series: {
@@ -1782,6 +1782,16 @@ it('replays multiple saved price-history series and inspects persisted source li
       received_at_utc: '2026-10-28T00:03:00Z',
     };
   });
+  const olderCapture = {
+    ...secondCapture,
+    series: {
+      ...secondCapture.series,
+      native_instrument_id: 'token-older-page',
+      provenance: { observation_id: '0'.repeat(64), raw_sha256: '9'.repeat(64) },
+    },
+    observation_id: '0'.repeat(64),
+    raw_sha256: '9'.repeat(64),
+  };
   const oldReplay = makeReplay(
     oldRunId,
     [firstObservationId],
@@ -1878,17 +1888,21 @@ it('replays multiple saved price-history series and inspects persisted source li
   };
   const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const path = String(input);
-    if (path === '/api/frontier/price-history?venue=polymarket&limit=20&offset=0') {
+    if (path.startsWith('/api/frontier/price-history?venue=polymarket&limit=20&offset=')) {
+      const offset = Number(new URLSearchParams(path.split('?')[1]).get('offset'));
+      const items =
+        offset === 0 ? [firstCapture, secondCapture, ...additionalCaptures] : [olderCapture];
       return {
         ok: true,
         json: async () => ({
-          items: [firstCapture, secondCapture, ...additionalCaptures],
+          items,
           venue: 'polymarket',
           native_instrument_id: null,
-          returned: 9,
+          returned: items.length,
           limit: 20,
-          offset: 0,
+          offset,
           scan_bound: 20,
+          has_more: offset === 0,
           scan_may_be_incomplete: false,
           source_state: 'recorded observations only',
         }),
@@ -1903,6 +1917,7 @@ it('replays multiple saved price-history series and inspects persisted source li
           limit: 20,
           offset: 0,
           held_replays_omitted: 0,
+          has_more: false,
           scan_may_be_incomplete: false,
           source_state: 'saved deterministic local replay results only',
           network_called: false,
@@ -1954,13 +1969,17 @@ it('replays multiple saved price-history series and inspects persisted source li
   expect(fetchMock.mock.calls.every(([, init]) => init?.method !== 'POST')).toBe(true);
 
   for (let index = 1; index <= 8; index += 1) {
-    fireEvent.click(screen.getByRole('checkbox', { name: new RegExp(`token-asset-${index}`) }));
+    fireEvent.click(
+      screen.getByRole('checkbox', { name: new RegExp(`token-asset-${index} · 1d`) }),
+    );
   }
-  expect(screen.getByRole('checkbox', { name: /token-asset-9/ })).toBeDisabled();
+  expect(screen.getByRole('checkbox', { name: /token-asset-9 · 1d/ })).toBeDisabled();
   for (let index = 3; index <= 8; index += 1) {
-    fireEvent.click(screen.getByRole('checkbox', { name: new RegExp(`token-asset-${index}`) }));
+    fireEvent.click(
+      screen.getByRole('checkbox', { name: new RegExp(`token-asset-${index} · 1d`) }),
+    );
   }
-  expect(screen.getByRole('checkbox', { name: /token-asset-9/ })).toBeEnabled();
+  expect(screen.getByRole('checkbox', { name: /token-asset-9 · 1d/ })).toBeEnabled();
   fireEvent.click(screen.getByRole('button', { name: 'Replay 2 selected series' }));
 
   await waitFor(() => expect(replayRequests).toHaveLength(1));
@@ -1971,6 +1990,11 @@ it('replays multiple saved price-history series and inspects persisted source li
   expect(await screen.findByText(secondRawHash)).toBeInTheDocument();
   expect(screen.getByText('candidate generation not performed')).toBeInTheDocument();
   expect(screen.getAllByText(/do not establish missing-data rates/).length).toBeGreaterThan(0);
+
+  const sourcePages = screen.getByLabelText('Saved source capture pages');
+  fireEvent.click(within(sourcePages).getByRole('button', { name: 'Next' }));
+  expect(await screen.findByRole('checkbox', { name: /token-older-page/ })).toBeInTheDocument();
+  expect(screen.getByText('0 / 8 selected')).toBeInTheDocument();
 });
 
 it('captures Kalshi fee metadata and exposes a separate hypothetical fee sensitivity', async () => {

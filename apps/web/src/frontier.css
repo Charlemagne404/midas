@@ -2923,6 +2923,26 @@
 .fr-history-replay-layout .fr-run-button {
   margin: 10px 0 0;
 }
+.fr-history-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 8px;
+}
+.fr-history-pagination > span {
+  color: #8190a1;
+  font-size: 8px;
+}
+.fr-history-pagination > div {
+  display: flex;
+  gap: 6px;
+}
+.fr-history-pagination .fr-action {
+  min-height: 27px;
+  padding: 5px 8px;
+  font-size: 8px;
+}
 .fr-history-replay-list {
   max-height: 200px;
 }

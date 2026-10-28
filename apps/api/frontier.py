@@ -1988,7 +1988,7 @@ def router(
         offset: int = Query(default=0, ge=0, le=100_000),
     ) -> dict[str, Any]:
         reject_held_venue(venue)
-        scan_limit = 100 if native_instrument_id is not None else limit
+        scan_limit = 100 if native_instrument_id is not None else limit + 1
         scan_offset = 0 if native_instrument_id is not None else offset
         try:
             observations = _read_stored_observations(
@@ -2019,7 +2019,11 @@ def router(
                     }
                 )
             if native_instrument_id is not None:
-                items = items[offset : offset + limit]
+                items = items[offset : offset + limit + 1]
+            has_more = len(items) > limit
+            items = items[:limit]
+            if native_instrument_id is None:
+                has_more = len(observations) > limit
         except (FrontierStoreError, ValueError) as error:
             raise HTTPException(status_code=409, detail=str(error)) from error
         return {
@@ -2029,7 +2033,8 @@ def router(
             "limit": limit,
             "offset": offset,
             "returned": len(items),
-            "scan_bound": scan_limit,
+            "has_more": has_more,
+            "scan_bound": 100 if native_instrument_id is not None else limit,
             "scan_may_be_incomplete": (
                 native_instrument_id is not None and len(observations) == scan_limit
             ),
@@ -2071,17 +2076,20 @@ def router(
         offset: int = Query(default=0, ge=0, le=100_000),
     ) -> dict[str, Any]:
         try:
-            rows = store.price_history_replays(limit=limit, offset=offset)
-            eligible = eligible_price_history_replay_rows(rows)
+            rows = store.price_history_replays(limit=limit + 1, offset=offset)
+            has_more = len(rows) > limit
+            page_rows = rows[:limit]
+            eligible = eligible_price_history_replay_rows(page_rows)
         except (FrontierStoreError, ValueError) as error:
             raise HTTPException(status_code=409, detail=str(error)) from error
         return {
             "items": [row["result"] for row in eligible],
             "returned": len(eligible),
-            "held_replays_omitted": len(rows) - len(eligible),
+            "held_replays_omitted": len(page_rows) - len(eligible),
             "limit": limit,
             "offset": offset,
-            "scan_may_be_incomplete": len(rows) == limit,
+            "has_more": has_more,
+            "scan_may_be_incomplete": has_more,
             "source_state": "saved deterministic local replay results only",
             "network_called": False,
         }

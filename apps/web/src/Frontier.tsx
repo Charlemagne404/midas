@@ -400,6 +400,7 @@ type PriceHistoryResponse = {
   offset?: number;
   scan_bound?: number;
   scan_may_be_incomplete?: boolean;
+  has_more?: boolean;
   source_state?: string;
 };
 type PriceHistoryCaptureResult = {
@@ -457,6 +458,7 @@ type PriceHistoryReplayListResponse = {
   limit: number;
   offset: number;
   held_replays_omitted: number;
+  has_more: boolean;
   scan_may_be_incomplete: boolean;
   source_state: string;
   network_called: false;
@@ -2001,6 +2003,8 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
   const [selectedPriceHistoryObservationIds, setSelectedPriceHistoryObservationIds] = useState<
     string[]
   >([]);
+  const [priceHistorySourceOffset, setPriceHistorySourceOffset] = useState(0);
+  const [priceHistoryReplayOffset, setPriceHistoryReplayOffset] = useState(0);
   const [selectedArenaDiscoveryId, setSelectedArenaDiscoveryId] = useState<string | null>(null);
   const [selectedTimelineJobId, setSelectedTimelineJobId] = useState<string | null>(null);
   const [timelineMaxBookAgeMs, setTimelineMaxBookAgeMs] = useState('15000');
@@ -2153,16 +2157,20 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
     ...options,
   });
   const savedPriceHistorySources = useQuery({
-    queryKey: ['frontier', 'saved-price-history-sources'],
+    queryKey: ['frontier', 'saved-price-history-sources', priceHistorySourceOffset],
     queryFn: () =>
-      api<PriceHistoryResponse>('/frontier/price-history?venue=polymarket&limit=20&offset=0'),
+      api<PriceHistoryResponse>(
+        `/frontier/price-history?venue=polymarket&limit=20&offset=${priceHistorySourceOffset}`,
+      ),
     enabled: section === 'replay',
     ...options,
   });
   const savedPriceHistoryReplays = useQuery({
-    queryKey: ['frontier', 'saved-price-history-replays'],
+    queryKey: ['frontier', 'saved-price-history-replays', priceHistoryReplayOffset],
     queryFn: () =>
-      api<PriceHistoryReplayListResponse>('/frontier/price-history/replays?limit=20&offset=0'),
+      api<PriceHistoryReplayListResponse>(
+        `/frontier/price-history/replays?limit=20&offset=${priceHistoryReplayOffset}`,
+      ),
     enabled: section === 'replay',
     ...options,
   });
@@ -2346,6 +2354,7 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
       }),
     onSuccess: (result) => {
       setSelectedPriceHistoryReplayId(result.run_id);
+      setPriceHistoryReplayOffset(0);
       queryClient.setQueryData(['frontier', 'price-history-replay-detail', result.run_id], result);
       void queryClient.invalidateQueries({ queryKey: ['frontier', 'saved-price-history-replays'] });
     },
@@ -4213,7 +4222,8 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
             <p className="fr-history-replay-intro">
               Select up to eight locally stored Polymarket price-history captures. Replay reads
               immutable records only; it makes no exchange request, generates no opportunity, and
-              does not treat historical samples as executable quotes.
+              does not treat historical samples as executable quotes. Selection applies to the
+              current page.
             </p>
             <div className="fr-history-replay-layout">
               <section aria-label="Saved price-history replay inputs">
@@ -4279,6 +4289,36 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
                     saved captures; older records may be omitted.
                   </p>
                 )}
+                <nav className="fr-history-pagination" aria-label="Saved source capture pages">
+                  <span>
+                    Page {Math.floor(priceHistorySourceOffset / 20) + 1} ·{' '}
+                    {savedPriceHistorySources.data?.returned ?? 0} captures
+                  </span>
+                  <div>
+                    <button
+                      className="fr-action"
+                      type="button"
+                      disabled={priceHistorySourceOffset === 0}
+                      onClick={() => {
+                        setSelectedPriceHistoryObservationIds([]);
+                        setPriceHistorySourceOffset((offset) => Math.max(0, offset - 20));
+                      }}
+                    >
+                      Previous
+                    </button>
+                    <button
+                      className="fr-action"
+                      type="button"
+                      disabled={!savedPriceHistorySources.data?.has_more}
+                      onClick={() => {
+                        setSelectedPriceHistoryObservationIds([]);
+                        setPriceHistorySourceOffset((offset) => offset + 20);
+                      }}
+                    >
+                      Next
+                    </button>
+                  </div>
+                </nav>
                 <button
                   className="fr-action fr-run-button"
                   onClick={() =>
@@ -4302,7 +4342,7 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
               <section aria-label="Saved price-history replay results">
                 <div className="fr-subsection-head">
                   <h3>Saved replay artifacts</h3>
-                  <span>latest 20</span>
+                  <span>20 per page</span>
                 </div>
                 {savedPriceHistoryReplays.isLoading ? (
                   <div className="fr-loading">Loading saved source-sample replays…</div>
@@ -4348,6 +4388,36 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
                     omitted from this page.
                   </p>
                 ) : null}
+                <nav className="fr-history-pagination" aria-label="Saved replay artifact pages">
+                  <span>
+                    Page {Math.floor(priceHistoryReplayOffset / 20) + 1} ·{' '}
+                    {savedPriceHistoryReplays.data?.returned ?? 0} artifacts
+                  </span>
+                  <div>
+                    <button
+                      className="fr-action"
+                      type="button"
+                      disabled={priceHistoryReplayOffset === 0}
+                      onClick={() => {
+                        setSelectedPriceHistoryReplayId(null);
+                        setPriceHistoryReplayOffset((offset) => Math.max(0, offset - 20));
+                      }}
+                    >
+                      Previous
+                    </button>
+                    <button
+                      className="fr-action"
+                      type="button"
+                      disabled={!savedPriceHistoryReplays.data?.has_more}
+                      onClick={() => {
+                        setSelectedPriceHistoryReplayId(null);
+                        setPriceHistoryReplayOffset((offset) => offset + 20);
+                      }}
+                    >
+                      Next
+                    </button>
+                  </div>
+                </nav>
               </section>
             </div>
             {selectedPriceHistoryReplay && (

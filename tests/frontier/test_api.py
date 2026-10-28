@@ -3326,6 +3326,7 @@ def test_polymarket_price_history_probe_is_bound_and_replayable(tmp_path):
         )
         assert recorded.status_code == 200
         assert recorded.json()["returned"] == 1
+        assert recorded.json()["has_more"] is False
         assert recorded.json()["items"][0]["observation_id"] == result["observation_id"]
         assert recorded.json()["items"][0]["series"]["points"][0]["price"] == "0.42"
 
@@ -3364,6 +3365,7 @@ def test_polymarket_price_history_probe_is_bound_and_replayable(tmp_path):
         replay_list = client.get("/api/frontier/price-history/replays")
         assert replay_list.status_code == 200
         assert [item["run_id"] for item in replay_list.json()["items"]] == [replay_result["run_id"]]
+        assert replay_list.json()["has_more"] is False
         replay_saved = client.get(f"/api/frontier/price-history/replays/{replay_result['run_id']}")
         assert replay_saved.status_code == 200
         assert replay_saved.json()["result_sha256"] == replay_result["result_sha256"]
@@ -3390,6 +3392,53 @@ def test_polymarket_price_history_probe_is_bound_and_replayable(tmp_path):
         )
         assert oversized.status_code == 422
         assert len(requests) == 1
+
+        second_capture = client.post(
+            "/api/frontier/probe/polymarket/price-history",
+            json={
+                "native_instrument_id": "987654321",
+                "start_ts": start_ts,
+                "end_ts": end_ts,
+            },
+        )
+        assert second_capture.status_code == 200
+        assert len(requests) == 2
+        first_capture_page = client.get(
+            "/api/frontier/price-history",
+            params={"venue": "polymarket", "limit": 1, "offset": 0},
+        )
+        second_capture_page = client.get(
+            "/api/frontier/price-history",
+            params={"venue": "polymarket", "limit": 1, "offset": 1},
+        )
+        assert first_capture_page.status_code == second_capture_page.status_code == 200
+        assert first_capture_page.json()["returned"] == 1
+        assert first_capture_page.json()["has_more"] is True
+        assert second_capture_page.json()["returned"] == 1
+        assert second_capture_page.json()["has_more"] is False
+        capture_ids = {
+            first_capture_page.json()["items"][0]["observation_id"],
+            second_capture_page.json()["items"][0]["observation_id"],
+        }
+        assert len(capture_ids) == 2
+
+        multi_series_replay = client.post(
+            "/api/frontier/price-history/replay",
+            json={"observation_ids": sorted(capture_ids)},
+        )
+        assert multi_series_replay.status_code == 200, multi_series_replay.text
+        first_replay_page = client.get(
+            "/api/frontier/price-history/replays", params={"limit": 1, "offset": 0}
+        )
+        second_replay_page = client.get(
+            "/api/frontier/price-history/replays", params={"limit": 1, "offset": 1}
+        )
+        assert first_replay_page.status_code == second_replay_page.status_code == 200
+        assert first_replay_page.json()["returned"] == 1
+        assert first_replay_page.json()["has_more"] is True
+        assert first_replay_page.json()["held_replays_omitted"] == 0
+        assert second_replay_page.json()["returned"] == 1
+        assert second_replay_page.json()["has_more"] is False
     finally:
         client.close()
         asyncio.run(registry.aclose())
