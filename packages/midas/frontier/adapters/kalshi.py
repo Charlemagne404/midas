@@ -45,7 +45,7 @@ from midas.frontier.models import (
 )
 
 D = Decimal
-ADAPTER_VERSION = "frontier-kalshi-19"
+ADAPTER_VERSION = "frontier-kalshi-20"
 _TICKER_PATTERN = re.compile(r"[A-Za-z0-9_-]{1,256}\Z")
 BASE = "https://external-api.kalshi.com/trade-api/v2"
 MARKET_DATA_DOC = "https://docs.kalshi.com/getting_started/quick_start_market_data"
@@ -919,6 +919,12 @@ class KalshiAdapter(BaseReadOnlyAdapter):
         self._require(Capability.PUBLIC_TRADES)
         if not 1 <= limit <= 1000:
             raise AdapterError("INVALID_LIMIT", "Trade limit must be between 1 and 1000")
+        if (
+            not isinstance(native_market_id, str)
+            or not _TICKER_PATTERN.fullmatch(native_market_id)
+            or len(native_market_id) > 251
+        ):
+            raise AdapterError("INVALID_MARKET_ID", "Kalshi trade ticker is invalid")
         response = await self.transport.get_json(
             f"{BASE}/markets/trades", {"ticker": native_market_id, "limit": limit}
         )
@@ -932,18 +938,34 @@ class KalshiAdapter(BaseReadOnlyAdapter):
         for raw in payload["trades"][:limit]:
             if not isinstance(raw, dict):
                 raise AdapterError("INVALID_TRADE", "Kalshi trade entry must be an object")
+            ticker = raw.get("ticker")
+            trade_id = raw.get("trade_id")
+            if ticker != native_market_id:
+                raise AdapterError(
+                    "TRADE_MARKET_MISMATCH", "Kalshi returned a trade for another market ticker"
+                )
+            if not isinstance(trade_id, str) or not trade_id.strip() or len(trade_id) > 256:
+                raise AdapterError("INVALID_TRADE", "Kalshi trade ID is invalid")
             is_block_trade, taker_outcome_side, taker_book_side = _native_trade_flags(raw)
             price = parse_decimal(raw.get("yes_price_dollars"))
             quantity = parse_decimal(raw.get("count_fp"))
             timestamp = parse_time(raw.get("created_time"))
-            if price is None or quantity is None or quantity <= 0:
-                raise AdapterError("INVALID_TRADE", "Kalshi trade has invalid price or quantity")
+            if (
+                price is None
+                or not D(0) <= price <= D(1)
+                or quantity is None
+                or quantity <= 0
+                or timestamp is None
+            ):
+                raise AdapterError(
+                    "INVALID_TRADE", "Kalshi trade has invalid price, quantity, or timestamp"
+                )
             result.append(
                 TradeObservation(
                     schema_version=4,
                     venue=self.venue,
                     native_market_id=native_market_id,
-                    native_trade_id=str(raw.get("trade_id") or "") or None,
+                    native_trade_id=trade_id,
                     native_instrument_id=f"{native_market_id}:YES",
                     outcome_label="YES price reference",
                     outcome_index=0,
@@ -964,7 +986,7 @@ class KalshiAdapter(BaseReadOnlyAdapter):
                         ADAPTER_VERSION,
                         response,
                         "public_trade",
-                        str(raw.get("trade_id") or raw.get("created_time") or native_market_id),
+                        trade_id,
                         source_schema_version="public-trades",
                         exchange_timestamp=timestamp,
                         exchange_timestamp_semantics="Kalshi created_time",

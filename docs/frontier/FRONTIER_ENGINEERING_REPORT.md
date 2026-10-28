@@ -11068,3 +11068,32 @@ The architecture and development guides were then synchronized with
 Kalshi `TradeObservation` schema v4: three nullable native trade flags are
 normalized, while the example-only `taker_side` value remains raw and
 uninterpreted.
+
+## Kalshi one-shot trade validation hardening — 2026-10-28 19:40 UTC
+
+A source-path audit found that Kalshi's older `fetch_trades` collection method
+did not validate each returned ticker, unlike the newer cursor-paged method. It
+also accepted non-binary prices and absent timestamps/trade IDs. Adapter v20
+now validates the requested ticker before the request and rejects mismatched
+row tickers, missing or invalid trade IDs, prices outside `[0, 1]`, and missing
+timestamps. It keeps the raw response for rejected rows and applies the same v4
+trade flags to valid rows. No source request was made.
+
+The full Kalshi-adapter test file passes **90/90** in 2.58 seconds at 60,576
+KiB peak RSS. Six cases cover valid one-shot normalization and mismatched or
+malformed rows; all use mocked HTTP. Ruff and formatting checks pass. This
+adapter file was rerun after the v20 change, but the full 505-case Frontier
+suite was run immediately before it and has not been rerun afterward.
+
+At 19:40:36 UTC, memory PSI was avg10/avg60 0.00% and I/O PSI was at most
+0.03% avg10 / 0.03% avg60. `MemAvailable` was 9,996,416 KiB. Reality remained
+active at 1,207,558,144 / 1,207,959,552 bytes (about 392 KiB below
+`MemoryHigh`); API remained active at 1,535,356,928 / 1,610,612,736 bytes.
+No further broad test was started at this sample.
+
+| Requirement | Status | Current evidence and boundary |
+| --- | --- | --- |
+| Kalshi public trade adapter, one-shot and paginated parsing | COMPLETE AND VERIFIED | Current adapter test file passes 90/90; ticker, IDs, binary price, timestamps, block flags, and raw evidence are covered with fixtures. Live collection remains held. |
+| Full current-tree Frontier Python suite | PARTIALLY VERIFIED | 505/505 passed before the v20 one-shot parser hardening; after that change the complete adapter file passes 90/90. |
+| Genuine Kalshi cross-venue observation | BLOCKED | Source-use policy remains in force; fixtures and documentation are not live-market evidence. |
+| Frontier project overall | PARTIALLY VERIFIED | Production recovery, broad legacy regression, live cross-venue science, endurance, and deployment remain open. |

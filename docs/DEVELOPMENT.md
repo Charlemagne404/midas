@@ -175,7 +175,9 @@ not infer a normalized BUY/SELL side from these source labels. The API example's
 `taker_side` value remains available in raw evidence but is uninterpreted because
 the official response documentation does not define its meaning. The UI lets a
 researcher select either Polymarket or Kalshi and then choose a market already
-present in saved listing evidence. Kraken does not currently claim
+present in saved listing evidence. Kalshi adapter v20 also validates the
+requested ticker, required trade ID and timestamp, and `[0, 1]` price range in
+the older one-shot collection path. Kraken does not currently claim
 cursor-paginated public trades. The protected Reality recording and its evidence
 remain on separate roots.
 

@@ -10170,3 +10170,32 @@ example has no published semantics. The adapter still does not derive a common
 aggressor direction from these venue-specific labels. This is a documentation
 sync only; the current-tree 505-case Frontier suite and UI checks above cover
 the corresponding implementation. No public source or protected data was read.
+
+## Kalshi one-shot trade validation hardening — 2026-10-28 19:40 UTC
+
+A static review found that `fetch_trades` did not bind each Kalshi result to the
+requested ticker, though the paginated method already did. It also accepted
+out-of-range binary prices and missing trade IDs or timestamps. Adapter v20
+checks the input ticker before network setup and rejects all of those malformed
+rows while retaining the raw response. The six valid/invalid fixture cases and
+the full adapter test file pass: **90/90**, 2.58 seconds pytest time, 60,576
+KiB peak RSS, zero swaps, and zero socket messages. Ruff and formatting checks
+pass. No public request was made.
+
+The 505-case Frontier suite passed before this small parser hardening; it has
+not been rerun afterward. At 19:40:36 UTC, memory PSI avg10 and avg60 were
+0.00%; I/O PSI avg10/avg60 were at most 0.03%. `MemAvailable` was 9,996,416
+KiB. Reality remained active at 1,207,558,144 / 1,207,959,552 bytes, about 392
+KiB below `MemoryHigh`; API remained active at 1,535,356,928 / 1,610,612,736
+bytes. A broader suite was not started.
+
+| Requirement | Status | Evidence and boundary |
+| --- | --- | --- |
+| Kalshi one-shot and paginated public-trade parsing | COMPLETE AND VERIFIED | Current adapter suite is 90/90, including source identity and binary-price validation. Live requests remain held. |
+| Full current-tree Frontier Python suite | PARTIALLY VERIFIED | 505/505 preceded adapter v20; the full adapter file passed after the change. |
+| Live multi-venue Kalshi research | BLOCKED | Current source-use hold remains; no fixture result is reported as live. |
+| Project Frontier overall | PARTIALLY VERIFIED | Broad legacy regression, live cross-venue science, endurance, protected recovery, and deployment remain incomplete. |
+
+**Next safe action:** keep source-use and service boundaries unchanged. Continue
+read-only review; remeasure Reality headroom before another resource-bearing
+run.

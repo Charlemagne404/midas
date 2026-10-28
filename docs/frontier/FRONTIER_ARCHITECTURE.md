@@ -617,7 +617,9 @@ schema v4 retains nullable `is_block_trade`, `taker_outcome_side`, and
 reported. Raw `no_price_dollars` and `taker_side` remain in the auditable
 response; the official example does not define `taker_side` semantics, so the
 adapter leaves it uninterpreted. These native labels do not become a normalized
-BUY/SELL aggressor direction.
+BUY/SELL aggressor direction. Adapter v20 applies the same ticker binding,
+required trade-ID and timestamp checks, and `[0, 1]` price bound to the older
+one-shot collection method before attributing a row to the requested market.
 
 The common model is not the lowest common denominator. A binary event contract,
 a multivariate event leg, and a spot pair retain separate instrument kinds and

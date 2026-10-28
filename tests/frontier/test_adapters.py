@@ -1808,6 +1808,95 @@ async def test_polymarket_v2_trade_page_rejects_inconsistent_cursors_after_captu
 
 
 @pytest.mark.asyncio
+async def test_kalshi_unpaginated_trade_rows_are_bound_to_requested_ticker():
+    ticker = "KXFRONTIER-EVENT-YES"
+    trade = {
+        "trade_id": "kalshi-trade-single-page",
+        "ticker": ticker,
+        "count_fp": "3.50",
+        "yes_price_dollars": "0.5700",
+        "no_price_dollars": "0.4200",
+        "taker_outcome_side": "yes",
+        "taker_book_side": "bid",
+        "created_time": "2026-10-27T12:34:56Z",
+        "is_block_trade": False,
+        "taker_side": "yes",
+    }
+    body = json.dumps({"trades": [trade], "cursor": ""})
+    transport, requests, client = _transport("external-api.kalshi.com", {"/markets/trades": body})
+    adapter = KalshiAdapter(
+        AdapterConfig(
+            enabled=True, live_public_probe_enabled=True, requests_per_second=5, retries=0
+        ),
+        transport=transport,
+    )
+    try:
+        trades = await adapter.fetch_trades(ticker, limit=1)
+        captures = adapter.take_captures()
+    finally:
+        await client.aclose()
+
+    assert len(trades) == 1
+    normalized = trades[0]
+    assert normalized.schema_version == 4
+    assert normalized.native_market_id == ticker
+    assert normalized.native_trade_id == trade["trade_id"]
+    assert normalized.price == Decimal("0.5700")
+    assert normalized.quantity == Decimal("3.50")
+    assert normalized.exchange_timestamp_utc.isoformat() == "2026-10-27T12:34:56+00:00"
+    assert normalized.aggressor_side is None
+    assert normalized.is_block_trade is False
+    assert normalized.taker_outcome_side == "yes"
+    assert normalized.taker_book_side == "bid"
+    assert normalized.provenance.adapter_version == "frontier-kalshi-20"
+    assert len(captures) == 1 and captures[0].raw_body == body
+    assert len(requests) == 1
+    assert dict(requests[0].url.params) == {"ticker": ticker, "limit": "1"}
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("field", "value", "error"),
+    [
+        ("ticker", "KXOTHER", "ticker"),
+        ("ticker", None, "ticker"),
+        ("trade_id", " ", "trade ID"),
+        ("yes_price_dollars", "1.01", "price"),
+        ("created_time", "not-a-time", "timestamp"),
+    ],
+)
+async def test_kalshi_unpaginated_trades_reject_mismatched_or_invalid_rows(field, value, error):
+    ticker = "KXFRONTIER-EVENT-YES"
+    trade = {
+        "trade_id": "kalshi-trade-invalid-row",
+        "ticker": ticker,
+        "count_fp": "1.00",
+        "yes_price_dollars": "0.57",
+        "created_time": "2026-10-27T12:34:56Z",
+    }
+    trade[field] = value
+    body = json.dumps({"trades": [trade], "cursor": ""})
+    transport, requests, client = _transport("external-api.kalshi.com", {"/markets/trades": body})
+    adapter = KalshiAdapter(
+        AdapterConfig(
+            enabled=True, live_public_probe_enabled=True, requests_per_second=5, retries=0
+        ),
+        transport=transport,
+    )
+    try:
+        with pytest.raises(AdapterError, match=error):
+            await adapter.fetch_trades(ticker, limit=1)
+        captures = adapter.take_captures()
+    finally:
+        await client.aclose()
+
+    assert len(captures) == 1 and captures[0].raw_body == body
+    assert len(requests) == 1
+    assert requests[0].method == "GET"
+    assert "authorization" not in requests[0].headers
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize("is_block_trade", [False, True, None])
 async def test_kalshi_trade_page_preserves_source_trade_flags_without_inventing_aggressor_side(
     is_block_trade,
