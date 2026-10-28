@@ -344,7 +344,6 @@ class FrontierStore:
     ) -> str:
         raw = self._revalidate_input(raw, "Raw observation")
         normalized = self._revalidate_input(normalized, "Normalized observation")
-        self.initialize()
         normalized_without_persisted_time = self._with_persisted_at(normalized, None)
         normalized_content_json = self._canonical(normalized_without_persisted_time)
         raw_json = self._canonical(raw)
@@ -363,6 +362,15 @@ class FrontierStore:
             ).encode()
         ).hexdigest()
         observation_time = raw.received_at_utc.astimezone(UTC).isoformat()
+        # Preflight the final persisted representation too, so an over-budget row
+        # cannot create or migrate the database before it is rejected. This time
+        # records the persistence attempt, not commit or fsync completion.
+        stored_normalized = self._with_persisted_at(normalized, datetime.now(UTC))
+        normalized_json = self._canonical(stored_normalized)
+        row_payload = raw_json + "\n" + normalized_json
+        if len(row_payload.encode("utf-8")) > MAX_ROW_BYTES:
+            raise FrontierStoreError("Observation exceeds the 512 KiB record bound")
+        row_hash = hashlib.sha256(row_payload.encode("utf-8")).hexdigest()
         markets = (
             (normalized,)
             if isinstance(normalized, FrontierMarket)
@@ -384,6 +392,7 @@ class FrontierStore:
         ) + tuple(
             ("INSERT INTO instrument_records VALUES(?,?,?,?)", row) for row in instrument_rows
         )
+        self.initialize()
         with self._connect() as connection:
             existing = connection.execute(
                 "SELECT observation_id,venue,observation_kind,received_at_utc,raw_sha256,"
@@ -417,16 +426,6 @@ class FrontierStore:
             count = int(connection.execute("SELECT COUNT(*) FROM observations").fetchone()[0])
             if count >= self.max_observations:
                 raise FrontierStoreError("Frontier observation count budget is exhausted")
-            # Stamp only missing provenance. A previously persisted normalized capture
-            # copied into a content-addressed snapshot keeps its original writer time.
-            # The value is captured immediately before serializing and beginning the
-            # atomic SQLite insert; it is not an fsync-completion or source-clock claim.
-            stored_normalized = self._with_persisted_at(normalized, datetime.now(UTC))
-            normalized_json = self._canonical(stored_normalized)
-            row_payload = raw_json + "\n" + normalized_json
-            if len(row_payload.encode("utf-8")) > MAX_ROW_BYTES:
-                raise FrontierStoreError("Observation exceeds the 512 KiB record bound")
-            row_hash = hashlib.sha256(row_payload.encode("utf-8")).hexdigest()
             self._budgeted_insert(
                 connection,
                 "INSERT INTO observations VALUES(?,?,?,?,?,?,?,?)",
@@ -446,7 +445,6 @@ class FrontierStore:
 
     def append_relationship(self, relationship: Relationship) -> str:
         relationship = self._revalidate_input(relationship, "Relationship")
-        self.initialize()
         relationship_json = self._canonical(relationship)
         if len(relationship_json.encode("utf-8")) > MAX_ROW_BYTES:
             raise FrontierStoreError("Relationship exceeds the 512 KiB record bound")
@@ -459,6 +457,7 @@ class FrontierStore:
             .astimezone(UTC)
             .isoformat()
         )
+        self.initialize()
         with self._connect() as connection:
             existing = connection.execute(
                 "SELECT row_sha256 FROM relationships WHERE relationship_id=?",
@@ -499,7 +498,6 @@ class FrontierStore:
         """Append a review and its derived relationship state in one transaction."""
         review = self._revalidate_input(review, "Relationship review")
         adjudicated = self._revalidate_input(adjudicated, "Adjudicated relationship")
-        self.initialize()
         if (
             adjudicated.supersedes != review.relationship_id
             or adjudicated.relationship_id != review.adjudicated_relationship_id
@@ -517,6 +515,7 @@ class FrontierStore:
         review_hash = hashlib.sha256(review_json.encode("utf-8")).hexdigest()
         relationship_hash = hashlib.sha256(relationship_json.encode("utf-8")).hexdigest()
         created = review.created_at_utc.astimezone(UTC).isoformat()
+        self.initialize()
         with self._connect() as connection:
             connection.execute("BEGIN IMMEDIATE")
             try:
@@ -888,12 +887,12 @@ class FrontierStore:
 
     def append_replay(self, result: ReplayResult, *, max_runs: int = 5000) -> str:
         result = self._revalidate_replay_input(result)
-        self.initialize()
         if not 1 <= max_runs <= 100_000:
             raise ValueError("Replay run budget must be within 1..100000")
         result_json = self._canonical(result)
         if len(result_json.encode("utf-8")) > MAX_ROW_BYTES:
             raise FrontierStoreError("Replay result exceeds the 512 KiB record bound")
+        self.initialize()
         with self._connect() as connection:
             existing = connection.execute(
                 "SELECT run_id,created_at_utc,result_sha256,result_json FROM research_runs WHERE run_id=?",
@@ -925,12 +924,12 @@ class FrontierStore:
         max_runs: int = 5000,
     ) -> str:
         result = self._revalidate_input(result, "Price-history replay")
-        self.initialize()
         if not 1 <= max_runs <= 100_000:
             raise ValueError("Price-history replay run budget must be within 1..100000")
         result_json = self._canonical(result)
         if len(result_json.encode("utf-8")) > MAX_ROW_BYTES:
             raise FrontierStoreError("Price-history replay exceeds the 512 KiB record bound")
+        self.initialize()
         with self._connect() as connection:
             existing = connection.execute(
                 "SELECT run_id,created_at_utc,result_sha256,result_json "
@@ -974,7 +973,6 @@ class FrontierStore:
             self._revalidate_replay_input(runs[1]),
         )
         comparison = self._revalidate_input(comparison, "Replay comparison")
-        self.initialize()
         if not 1 <= max_runs <= 100_000 or not 1 <= max_comparisons <= 100_000:
             raise ValueError("Paired research run budgets are out of range")
         if tuple(item.run_id for item in runs) != tuple(
@@ -1010,6 +1008,7 @@ class FrontierStore:
         if len(comparison_json.encode("utf-8")) > MAX_ROW_BYTES:
             raise FrontierStoreError("Replay comparison exceeds the 512 KiB record bound")
         created_at = runs[0].manifest.as_of_utc.astimezone(UTC).isoformat()
+        self.initialize()
         with self._connect() as connection:
             connection.execute("BEGIN IMMEDIATE")
             try:

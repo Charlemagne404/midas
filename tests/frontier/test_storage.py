@@ -16,9 +16,9 @@ from midas.frontier.models import (
     SourceFailureRecord,
     Venue,
 )
-from midas.frontier.relationships import propose_relationships, verify_same_payoff
+from midas.frontier.relationships import Relationship, propose_relationships, verify_same_payoff
 from midas.frontier.replay import deterministic_replay, paired_deterministic_replay
-from midas.frontier.storage import FrontierStore, FrontierStoreError
+from midas.frontier.storage import MAX_ROW_BYTES, FrontierStore, FrontierStoreError
 from pydantic import ValidationError
 
 from tests.frontier.builders import T0, book, market
@@ -157,8 +157,17 @@ def test_paired_replay_storage_rejects_scenario_to_run_mismatch(tmp_path: Path):
     ):
         store.append_paired_comparison(runs, altered)
 
-    assert store.summary()["runs"] == 0
-    assert store.summary()["comparisons"] == 0
+    assert not store.path.exists()
+
+
+def test_append_replay_rejects_invalid_budget_before_initialization(tmp_path: Path):
+    store = FrontierStore(tmp_path / "invalid-replay-budget-store")
+    _comparison, runs = _paired_fixture()
+
+    with pytest.raises(ValueError, match="run budget"):
+        store.append_replay(runs[0], max_runs=0)
+
+    assert not store.path.exists()
 
 
 def test_append_replay_revalidates_copied_result_hash_before_initialization(tmp_path: Path):
@@ -200,6 +209,24 @@ def test_append_relationship_revalidates_copied_model_before_initialization(tmp_
     assert not store.path.exists()
 
 
+def test_append_relationship_rejects_oversized_payload_before_initialization(tmp_path: Path):
+    store = FrontierStore(tmp_path / "oversized-relationship-store")
+    left, right = (
+        market(Venue.POLYMARKET, "oversized-left"),
+        market(Venue.KALSHI, "oversized-right"),
+    )
+    relationship = propose_relationships((left, right), max_pairs=1)[0]
+    payload = relationship.model_dump(mode="python")
+    payload["evidence"][0]["details"] = ("x" * MAX_ROW_BYTES,)
+    oversized = Relationship.model_validate(payload)
+    assert len(store._canonical(oversized).encode("utf-8")) > MAX_ROW_BYTES
+
+    with pytest.raises(FrontierStoreError, match="512 KiB record bound"):
+        store.append_relationship(oversized)
+
+    assert not store.path.exists()
+
+
 @pytest.mark.parametrize("corruption", ("raw", "normalized"))
 def test_append_observation_revalidates_copied_model_inputs(tmp_path: Path, corruption: str):
     store = FrontierStore(tmp_path / "invalid-observation-store")
@@ -212,6 +239,20 @@ def test_append_observation_revalidates_copied_model_inputs(tmp_path: Path, corr
         normalized = normalized.model_copy(update={"payoff": payoff})
 
     with pytest.raises(FrontierStoreError, match="canonical model validation"):
+        store.append_observation(raw, normalized)
+
+    assert not store.path.exists()
+
+
+def test_append_observation_rejects_combined_oversized_row_before_initialization(tmp_path: Path):
+    store = FrontierStore(tmp_path / "oversized-observation-store")
+    raw = _raw(Venue.POLYMARKET, "r" * 262144)
+    normalized = market(Venue.POLYMARKET, "oversized-normalized")
+    payload = normalized.model_dump(mode="python")
+    payload["native_fields"] = {"x": "n" * (262144 - 8)}
+    normalized = type(normalized).model_validate(payload)
+
+    with pytest.raises(FrontierStoreError, match="512 KiB record bound"):
         store.append_observation(raw, normalized)
 
     assert not store.path.exists()
