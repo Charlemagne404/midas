@@ -8978,3 +8978,29 @@ No live source or protected store was accessed. This is storage-module evidence,
 not a complete Frontier regression. Stop resource-bearing checks until a fresh
 I/O sample is below 1%; continue static, source-independent review. Frontier
 remains **PARTIALLY VERIFIED**.
+
+## Current Frontier Python suite — 2026-10-28 14:31 UTC
+
+**Code revision tested:** `d3e30a0`.
+
+The full `tests/frontier` suite passed **465/465** in 29.51 seconds pytest
+time (30.97 seconds process wall time), at 381,916 KiB peak RSS. It ran with
+`--basetemp=/dev/shm/midas-frontier-full-20261028T143105Z`, zero swaps,
+filesystem input, or socket messages, and 432 filesystem output blocks. One
+existing Starlette/httpx warning remains.
+
+At `14:31:05Z`, CPU PSI avg10 was 44.60%, memory PSI 0.00%, and I/O PSI 0.01%
+some / 0.00% full. At `14:31:45Z`, CPU PSI was 38.39%, memory PSI 0.00%, and
+I/O PSI 0.06% some / 0.00% full. The tmpfs run directory occupies 19 MiB.
+No live source, protected service, or protected store was used. This closes
+the Frontier Python suite on current code, not the full MIDAS/browser/Arena
+regression or overall project acceptance.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Full Frontier Python suite | COMPLETE AND VERIFIED | 465/465 pass on `d3e30a0`; one existing deprecation warning. |
+| Broader MIDAS/browser/Arena regression | PARTIALLY VERIFIED | Separate current-code suites remain outstanding. |
+| Project Frontier overall | PARTIALLY VERIFIED | Live cross-venue validation, broad regression, resource sustainability, production recovery, and deployment remain open. |
+
+**Next safe action:** take a fresh resource sample before any additional test
+run; continue independent source-policy and UI review in the meantime.

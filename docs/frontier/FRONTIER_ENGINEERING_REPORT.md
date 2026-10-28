@@ -9946,3 +9946,28 @@ resource-bearing check until a fresh I/O admission sample is below 1%.
 No live source or protected store was accessed. This verifies the storage
 module only; the complete Frontier suite remains unrun and status is
 **PARTIALLY VERIFIED**.
+
+## Current Frontier Python suite — 2026-10-28 14:31 UTC
+
+**Code revision tested:** `d3e30a0` (`docs(frontier): record storage identity regression`); the documentation-only commit does not change tested code.
+
+The full `tests/frontier` suite passed **465/465** in 29.51 seconds pytest
+time (30.97 seconds process wall time), at **381,916 KiB** peak RSS. The run
+used `--basetemp=/dev/shm/midas-frontier-full-20261028T143105Z`, with zero
+swaps, filesystem input, and socket messages, and 432 filesystem output
+blocks. One existing Starlette/httpx `TestClient` deprecation warning remains.
+
+Before the run at `14:31:05Z`, CPU PSI avg10 was **44.60%**, memory PSI was
+**0.00%**, and I/O PSI was **0.01% some / 0.00% full**. Afterward at
+`14:31:45Z`, CPU PSI was **38.39%**, memory PSI **0.00%**, and I/O PSI
+**0.06% some / 0.00% full**. The temporary run directory occupies 19 MiB in
+tmpfs. No source, production service, protected store, or held evidence was
+accessed. This closes current-branch Frontier Python suite verification; it
+does not establish full MIDAS, browser, Arena, live-source, or deployment
+acceptance.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Full Frontier Python suite on current code | COMPLETE AND VERIFIED | 465/465 pass on `d3e30a0`, with tmpfs-backed pytest state and measured resource profile. |
+| Broader MIDAS, browser, and Arena regression | PARTIALLY VERIFIED | Separate full suites and current browser/Arena acceptance remain outstanding. |
+| Frontier project overall | PARTIALLY VERIFIED | Genuine permitted cross-venue evidence, broader regression, resource sustainability, production recovery, and deployment remain open. |
