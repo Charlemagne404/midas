@@ -5660,3 +5660,39 @@ baseline; copying only `recovery.py` would not test compatible source.
 | Frontier/V6 baseline identity | COMPLETE AND VERIFIED | Ancestry and merge-base were checked from the current Git graph. |
 | Full MIDAS repository regression | PARTIALLY VERIFIED | Collection is blocked by the missing Reality recovery module; full-suite execution is not claimed. |
 | Cross-lineage Reality recovery integration | DEFERRED | Dependency code differs materially and was not merged into the isolated Frontier branch. |
+
+## Coinbase scope gate correction — 2026-10-28 05:54 UTC
+
+The terms review already documented that an exact Coinbase Market Data Terms
+version acknowledgment does not resolve the applicable organization, region,
+retention, derived-data, display, or automated-system scope. The API
+configuration nevertheless combined that acknowledgment and the public-probe
+flag as sufficient to enable a source request. Commit `8748a53`
+(`fix(frontier): keep Coinbase behind scope permission gate`) removes that
+inconsistency: the API keeps Coinbase disabled and held until a validated
+permission and intended-scope review loader exists. The exact-version field is
+retained as an acknowledgment record, not authorization. Held Coinbase
+observations remain quarantined even when both settings are supplied.
+
+Verification used only synthetic local fixtures:
+
+- `pytest -q tests/frontier/test_source_data_permissions.py`: **5 passed** in
+  2.65 seconds; 141,712 KiB peak RSS; zero swaps or socket messages. The
+  matched-version-plus-probe case returns HTTP 409 with zero transport requests
+  and confirms held stored evidence remains hidden.
+- `corepack pnpm exec vitest run src/Frontier.test.tsx`: **8 passed**; the
+  source warning text and existing Frontier research interactions render.
+- Strict mypy passed for **26 source files** across the Frontier package and
+  API config/startup/routes. Ruff, Python format check, full web Prettier check,
+  and `git diff --check` pass.
+
+No Coinbase request, source artifact access, service action, or deployment
+occurred. Kalshi and Kraken remain held by the same lack of validated
+permission. Live cross-venue equivalence and economics therefore remain
+unverified.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Coinbase API source-use gate | COMPLETE AND VERIFIED | Exact terms acknowledgment plus probe flag still returns HTTP 409 before transport; source records remain quarantined. |
+| Coinbase intended-scope permission | BLOCKED | Applicable organization, jurisdiction, retention, derived-data, and display scope has no validated permission record or loader. |
+| Live multi-venue relationship | BLOCKED | Other venues remain held; no genuine equivalent cross-venue exposure is established. |

@@ -2,14 +2,15 @@
 
 **Report date:** 2026-10-28
 
-## Current status — 2026-10-28 05:46 UTC
+## Current status — 2026-10-28 05:54 UTC
 
 Frontier is isolated at `/home/charlie/midas-frontier` on
 `codex/frontier-20261026`. Frontier descends from the verified V6 integration
 commit `11d32a0` (`codex/veritas-v6-integration-20261026`); its merge base with
-current `main` is `55601b9`. The latest
-implementation commit remains `6c5c329` for finite collection wall-time
-enforcement, following `8fb4c0d` for process-shared per-venue collection
+current `main` is `55601b9`. The latest implementation commit is `8748a53`,
+which keeps Coinbase held until a validated permission and intended-scope
+review mechanism exists. The preceding collection safeguards are `6c5c329`
+for finite wall-time enforcement and `8fb4c0d` for process-shared per-venue
 leases. The implementation includes Polymarket, Kalshi, Kraken Spot, and
 Coinbase read-only adapters; canonical instruments and payoff models;
 reviewable relationship evidence; binary, implication, within-market basket,
@@ -23,10 +24,14 @@ Current offline verification is strong and bounded:
   (**358 cases**). Both one-process `pytest tests/frontier` attempts were
   interrupted after 108 and 113 cases under measured host pressure; no
   one-process full-suite pass is claimed.
-- Strict mypy passes for all 23 Frontier package source files, and for those
-  files plus `apps/api/frontier.py` (**24 files**). Ruff check passes for the
-  Frontier package, Frontier API route, and Frontier tests; Ruff format check
-  reports all 51 files formatted.
+- The latest source-permissions regression passes **5/5**, including a matched
+  Coinbase terms acknowledgment plus probe flag: the API returns HTTP 409 with
+  zero requests, and held Coinbase records remain quarantined. The focused
+  Frontier web component suite passes **8/8**.
+- Strict mypy passes for the Frontier package and API configuration, startup,
+  and route integration (**26 files**). Ruff passes on the changed Python
+  files, and Python formatting, full web Prettier checking, and `git diff
+  --check` pass.
 - The production TypeScript/Vite build, all **40** web unit tests, all **6**
   Frontier Playwright cases, ESLint, and Prettier pass. Playwright used
   temporary databases and local demo services; no exchange probe or order was
@@ -47,10 +52,10 @@ recording, and service-boundary regressions passed in earlier bounded runs,
 but they do not substitute for the full MIDAS suite.
 
 Frontier remains **PARTIALLY VERIFIED**, research-only, isolated, and
-undeployed. The source-terms review keeps Kalshi and Kraken live use held, with
-Coinbase held pending scope review. The single bounded Polymarket detail
-capture does not establish its event membership, payoff equivalence, or an
-equivalent cross-venue contract. No genuine cross-venue relationship,
+undeployed. Kalshi, Kraken, and Coinbase remain held from live probes and
+application research/replay routes. Coinbase's exact terms acknowledgment and
+probe flag no longer lift that hold. Bounded Polymarket captures still do not
+establish an equivalent cross-venue contract. No genuine cross-venue relationship,
 economically eligible opportunity, or realizable profit is claimed. Continuous
 source quality, production resource sustainability, and the production
 transition remain open; no protected service or historical evidence was

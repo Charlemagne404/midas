@@ -450,3 +450,20 @@ cleanup defect; no request was repeated. A future harness should close the
 adapter on the request's ASGI event loop before this probe is considered a
 clean end-to-end process run. This record makes no legal or jurisdictional
 determination and does not change any source-use hold.
+
+## Runtime permission-gate correction — 2026-10-28 05:54 UTC
+
+An implementation review found that the API's Coinbase source gate contradicted
+the terms conclusion above: matching the terms-version acknowledgment and
+setting the public-probe flag enabled requests, even though the intended scope
+and any required permission were unresolved. Commit `8748a53` makes the
+application gate fail closed for Coinbase until a validated permission and
+intended-scope review loader exists. A terms-version acknowledgment remains a
+configuration record only; held Coinbase observations stay quarantined.
+
+Fixture verification confirms that the exact version plus probe flag returns
+HTTP 409 with zero transport requests and does not expose held records. The
+focused source-permissions regression passes 5/5; no Coinbase request or
+historical source capture was accessed during this correction. This change is
+an operational enforcement correction, not a new legal or terms
+interpretation. Kalshi and Kraken remain held under their existing controls.
