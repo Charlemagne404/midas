@@ -2874,3 +2874,20 @@ about 10 GiB was available. A read-only scan found legacy tests that reference
 servers. Review their data roots before a broad invocation. The exact Frontier
 suite remains **420/420** and strict mypy passes as recorded above; broader
 MIDAS/browser checks and production eligibility remain **PARTIALLY VERIFIED**.
+
+### Frontier collection journal boundaries — 2026-10-28 13:24 UTC
+
+On isolated branch `codex/frontier-20261026`, commits `3153148` and `f440fa2`
+move collection-run/checkpoint validation ahead of SQLite initialization and
+make run/checkpoint lookups use bounded read-only SQLite connections. Focused
+invalid-write and missing/incomplete-read regressions pass **1/1 each**; strict
+mypy for `packages/midas/frontier/collection.py`, Ruff check/format, and
+`git diff --check` pass. Each targeted process peaked near **62 MiB RSS**, with
+zero swaps, filesystem input, or socket traffic.
+
+The full collection module and broader suites were not rerun after these narrow
+changes. At `2026-10-28T13:24:39Z`, memory PSI avg10 was **0.00%**, I/O PSI was
+**0.00%**, about **10.4 GiB** was available, and host CPU PSI avg10 was
+**47.65%**. The untracked `data/frontier-public-probes/` directory remains
+untouched. No collector, source, protected store, or production service was
+accessed. Frontier remains research-only and **PARTIALLY VERIFIED**.
