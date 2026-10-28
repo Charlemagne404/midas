@@ -214,10 +214,13 @@ terminal-state sensitivity as funded, tradable, or realized profit.
 ## Development test execution
 
 The older 219- and 379-test Frontier counts elsewhere in this document are
-earlier checkpoints. On 2026-10-28 at 08:46 UTC, the full `tests/frontier` suite
-passed **386/386** in one process. The tmpfs run took 29.38 seconds of pytest
-time and 30.82 seconds wall time, peaked at 378,704 KiB RSS, used no swap, and
-recorded zero filesystem input. It emitted the existing Starlette/httpx
+earlier checkpoints. On 2026-10-28 at 09:01 UTC, the full `tests/frontier` suite
+passed **387/387** in one process after the test I/O guard was extended to the
+separate genuine Polymarket capture root. Pytest time was 29.38 seconds. The
+prior 08:46 run took 29.38 seconds of pytest time and 30.82 seconds wall time,
+peaked at 378,704 KiB RSS, used no swap, and recorded zero filesystem input;
+those measurements were not collected for the 09:01 run. The 09:01 run emitted
+the existing Starlette/httpx
 `TestClient` deprecation warning. After a formatting/type-only cleanup, the
 57 affected collection/API, FX, and timeline cases passed again; strict mypy,
 Ruff check/format, and `git diff --check` passed. The tests are fixture-backed

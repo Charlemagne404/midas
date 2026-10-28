@@ -2,7 +2,7 @@
 
 **Report date:** 2026-10-28
 
-## Current status — 2026-10-28 08:57 UTC
+## Current status — 2026-10-28 09:03 UTC
 
 Frontier is isolated at `/home/charlie/midas-frontier` on
 `codex/frontier-20261026`. It descends from verified Veritas V6 integration
@@ -36,13 +36,11 @@ Mission Control workspace.
 
 Current bounded verification:
 
-- The full `tests/frontier` suite passes **386/386** in one process on the
-  tree with all three research fixes. The tmpfs run took 29.38 seconds of
-  pytest time, peaked at 378,704 KiB RSS, used no swap, and recorded zero
-  filesystem input. A later formatting/type-ignore-only cleanup was followed by
-  **57/57** focused collection, FX, and timeline tests and strict mypy for the
-  changed collection and FX modules. One existing Starlette/httpx `TestClient`
-  deprecation warning remains.
+- The full `tests/frontier` suite passes **387/387** in one process on the
+  tree with the live-capture I/O guard. The tmpfs run took 29.38 seconds of
+  pytest time. Peak RSS, swap, and filesystem input were not measured for this
+  run; the earlier 386-test run's resource figures remain historical. One
+  existing Starlette/httpx `TestClient` deprecation warning remains.
 - The updated frontend passes **47/47** unit tests, TypeScript, full-project
   ESLint and Prettier, production build, **17** default Playwright cases with
   two expected seeded-only skips, and the separate **2/2** seeded Frontier/Arena
@@ -60,15 +58,13 @@ Current bounded verification:
   pass for the changed Python files. Earlier scoped strict mypy covered the
   Frontier package/API integration. The tmpfs test command and pressure gate are
   documented in `FRONTIER_OPERATIONS.md`.
-- A later `2026-10-28T08:47:41Z` sample showed memory PSI avg10 at **49.58%
-  some / 45.01% full**, with about 10 GiB available. The cause was not
-  attributed to Frontier; no further broad test or build was started. The
-  latest targeted capture-guard test passed 3/3. A host sample at
-  `08:55:21Z` showed memory PSI avg10 at 0%, I/O PSI avg10 at 0.71% some /
-  0.58% full. At `08:57:53Z`, memory PSI
-  avg10 was **50.11% some / 43.78% full** and I/O PSI avg10 was **1.09% some /
-  0.80% full**. No cause is attributed and further tests/builds are deferred
-  until a new admission sample clears the documented gate.
+- The full suite's sampled PSI stayed below the 1% admission gate through
+  `09:01:26Z` (memory avg10 0%; I/O avg10 0.32% some / 0.19% full). At
+  `09:02:39Z`, memory PSI rose to **54.19% some / 48.45% full**; the cause is
+  unknown and is not attributed to Frontier. At `09:03:33Z`, memory PSI avg10
+  was 0.93% some / 0.79% full and I/O PSI avg10 was 0.79% some / 0.75% full.
+  No further resource-bearing work has started; take another admission sample
+  before the next broad test or build.
 
 The complete MIDAS repository regression remains unverified. The current tree
 has `packages/midas/arena/recovery.py` but lacks
@@ -88,6 +84,23 @@ quality, production resource/recovery, and deployment gates remain open.
 
 Frontier remains **PARTIALLY VERIFIED**, research-only, isolated, unmerged, and
 undeployed. No protected service or historical evidence was changed.
+
+## Full Frontier regression after capture isolation — 2026-10-28 09:03 UTC
+
+After commit `429f690` added the Python test I/O guard for the genuine public
+capture root, the complete `tests/frontier` suite passed **387/387** in one
+process. Pytest time was 29.38 seconds. Temporary test state was placed at
+`/dev/shm/midas-frontier-regression-20261028T0901Z`. No live source, protected
+store, production service, or Arena job was accessed. The existing
+Starlette/httpx `TestClient` deprecation warning remains. Resource measurements
+for peak RSS, swaps, and filesystem input were not collected for this run.
+
+Sampled memory and I/O PSI remained below the documented 1% avg10 gate through
+`09:01:26Z`. A later `09:02:39Z` sample showed memory PSI avg10 at 54.19% some /
+48.45% full; its cause is unknown. At `09:03:33Z`, memory avg10 was 0.93% some /
+0.79% full and I/O avg10 was 0.79% some / 0.75% full. The latest sample is
+below the gate, but another fresh sample is required before additional broad
+work. Frontier remains **PARTIALLY VERIFIED**.
 
 ## Bounded live Polymarket adapter validation — 2026-10-28 08:57 UTC
 

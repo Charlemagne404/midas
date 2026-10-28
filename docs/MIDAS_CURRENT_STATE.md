@@ -33,7 +33,23 @@ in the dated addendum below and in the Frontier engineering report.
 
 ## Frontier development addendum — 2026-10-28
 
-### Latest isolated Frontier checkpoint — 2026-10-28 08:57 UTC
+### Latest isolated Frontier checkpoint — 2026-10-28 09:03 UTC
+
+After capture-root isolation commit `429f690`, the complete `tests/frontier`
+suite passed **387/387** in one process in 29.38 seconds pytest time. The run
+used `/dev/shm/midas-frontier-regression-20261028T0901Z`; peak RSS, swaps, and
+filesystem input were not measured. The existing Starlette/httpx deprecation
+warning remains. It used fixtures and temporary state only and accessed no
+live source, production service, protected store, or Arena job.
+
+PSI samples through `09:01:26Z` were below the 1% avg10 gate. Memory PSI rose
+to 54.19% some / 48.45% full at `09:02:39Z`, with cause unknown. At `09:03:33Z`,
+memory PSI avg10 was 0.93% some / 0.79% full and I/O PSI avg10 was 0.79% some /
+0.75% full. Recheck before the next broad test/build. Live cross-venue
+validation, full MIDAS regression, production recovery, and deployment remain
+open. Frontier remains research-only, isolated, and **PARTIALLY VERIFIED**.
+
+### Isolated Frontier live capture — 2026-10-28 08:57 UTC
 
 One explicitly bounded, unauthenticated Polymarket Gamma listing request and
 one CLOB book GET completed against allowlisted public HTTPS hosts. The single
@@ -48,16 +64,13 @@ local read-only Frontier markets/books API returned the two saved rows with
 observation IDs intact and labeled them as recorded evidence only.
 
 Commit `429f690` extends the Frontier Python test guard so automated tests
-cannot read or write either live-capture root; its focused suite passes **3/3**. The complete
-Frontier Python suite was not rerun after this test-only guard change; its
-previous verified checkpoint was 386/386. At `08:55:21Z`, memory PSI avg10 was
-0% and I/O PSI avg10 was 0.71% some / 0.58% full. Live source holds for
-Kalshi/Kraken/Coinbase, broader MIDAS regression, production recovery, and
-deployment remain open. Frontier remains isolated, research-only, and
-**PARTIALLY VERIFIED**. At `08:57:53Z`, memory PSI avg10 was 50.11% some /
-43.78% full and I/O PSI avg10 was 1.09% some / 0.80% full. No cause is
-attributed; further resource-bearing checks wait for a fresh sample under the
-documented gate.
+cannot read or write either live-capture root; its focused suite passes **3/3**.
+Live source holds for Kalshi/Kraken/Coinbase, broader MIDAS regression,
+production recovery, and deployment remain open. Frontier remains isolated,
+research-only, and **PARTIALLY VERIFIED**. At `08:57:53Z`, memory PSI avg10 was
+50.11% some / 43.78% full and I/O PSI avg10 was 1.09% some / 0.80% full. No
+cause is attributed; further resource-bearing checks wait for a fresh sample
+under the documented gate.
 
 ### Latest isolated Frontier checkpoint — 2026-10-28 08:47 UTC
 

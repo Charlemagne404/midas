@@ -1,5 +1,22 @@
 # Project Frontier Mission Ledger
 
+## Full Frontier regression after capture isolation — 2026-10-28 09:02 UTC
+
+After commit `429f690` added the test I/O guard for the separate public
+Polymarket capture root, the complete `tests/frontier` suite passed **387/387**
+in one process (29.38 seconds pytest time). Its tmpfs directory was
+`/dev/shm/midas-frontier-regression-20261028T0901Z`. Peak RSS, swaps, and
+filesystem input were not measured on this run. The existing
+Starlette/httpx `TestClient` deprecation warning remains. Tests used fixtures
+and temporary state; no source, production service, protected store, or Arena
+job was accessed.
+
+PSI samples stayed below the documented 1% avg10 gate through `09:01:26Z`.
+Memory PSI later reached 54.19% some / 48.45% full at `09:02:39Z` for an unknown
+host cause. At `09:03:33Z`, memory avg10 was 0.93% some / 0.79% full and I/O
+avg10 was 0.79% some / 0.75% full. No follow-up resource-bearing operation has
+started. Frontier remains **PARTIALLY VERIFIED**.
+
 ## Bounded live Polymarket adapter evidence and fixture isolation — 2026-10-28 08:57 UTC
 
 The Polymarket adapter was exercised against the public Gamma and CLOB APIs
