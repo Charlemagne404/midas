@@ -2,6 +2,37 @@
 
 **Report date:** 2026-10-28
 
+**Current implementation checkpoint — 2026-10-28 02:40 UTC:** Code commit
+`d59c4a8e66af7d525e65b70d90c268d3eaa92cfe` adds bounded discovery-scope
+comparison through Arena. The same pinned local evidence and deterministic
+replay implementation are evaluated under Polymarket-only, venue-local, and
+cross-venue universe scopes. Coverage and candidate deltas are persisted in a
+content-addressed snapshot and hash-checked result artifact; Mission Control
+can submit, inspect, and compare those results. The endpoint makes no source
+request. It compares input coverage under one algorithm, not independent
+algorithm versions, and it cannot estimate venue-wide prevalence or certify
+unreviewed mappings.
+
+The complete web unit suite passes **40/40**. TypeScript, ESLint, Prettier,
+Ruff, Python compilation, and the production Vite build pass; the build keeps
+the existing **544.41 kB** chart-chunk advisory. A targeted Playwright history
+test passes **1/1** against isolated temporary API, database, and Arena roots;
+it verifies the new history view without submitting work or probing a venue.
+The full Frontier plus related Arena selection completed **375 passed / 6
+failed** in 79.10 seconds. All six failures were in existing general Arena job
+supervision tests: a contemporaneous read-only check found the shared host
+admission lock held by an active Veritas gap-detail batch (PID 4086834); four
+test records remained queued and two submissions reported the lock busy. The
+batch was left untouched. A follow-up mypy run was stopped after a fresh host
+sample showed memory PSI avg10 at **30.44% some / 27.78% full**, with 331 MiB
+swap free; strict typing for this checkpoint is therefore incomplete.
+
+Direct Arena artifact execution, snapshot recovery, hash validation, caps,
+scope math, the Frontier API staging boundary, and the UI submission/result
+rendering are fixture-tested. An actual Arena supervisor job for the new kind,
+resource sustainability, genuine cross-venue mapping, live source validation,
+and deployment remain unverified. Project Frontier is **PARTIALLY VERIFIED**.
+
 **Latest implementation checkpoint — 2026-10-28 02:16 UTC:** Feature commit
 `4bd3b7f2636d5cd8d069fb2e2b2e97188ad68247` adds bounded conditional
 multi-market joint-state basket replay, an independently recomputed payoff

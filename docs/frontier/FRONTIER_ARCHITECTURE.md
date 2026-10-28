@@ -909,6 +909,28 @@ local run has a verified artifact and runtime record. The UI callout explains
 that recorded source states are adapter-local checkpoint health, not continuous
 venue availability or account eligibility.
 
+`discovery_comparison.py` compares three discovery-universe scopes over the
+same pinned saved evidence: Polymarket-only, each venue independently, and all
+venues together. Every arm calls the same deterministic replay and independent
+economic audit; this measures coverage under the current engine, not a
+comparison between independent algorithms. Candidate identity, classifications,
+family counts, audit dispositions, source observation IDs, and pairwise deltas
+are included in the versioned result. Cross-venue candidates require existing
+verified relationships and mappings; text similarity or a user assertion alone
+does not certify equivalence.
+
+`POST /api/frontier/arena-discovery-comparison` stages up to 100 stored markets,
+200 joined books, and 500 verified relationships into a content-addressed Arena
+snapshot. The snapshot is capped at 8 MiB; its store is capped at 128 MiB and
+1,000 files. Results are capped at 32 MiB and six unique replay artifacts, with
+at most 20,000 candidate summaries per scope. The new `frontier_discovery` job
+uses Arena's existing 300-second, 512-MiB, 50%-CPU, nice-15, idle-I/O and
+host-admission limits. It performs no network requests. The history and result
+routes verify the durable job configuration and artifact hashes and apply the
+existing held-source quarantine. Fixture tests execute the artifact code
+directly and exercise the API/UI path; no worker of this job kind has completed
+through the Arena supervisor yet.
+
 The finite collector is deliberately not exposed as a request handler or
 background service. A caller must provide one configured adapter and one
 Frontier store to `BoundedSourceCollector`; start rechecks source capability,
@@ -1020,12 +1042,11 @@ venue-wide universe scans, sourced/live FX conversion, derivatives,
 capital transfer model, a general cross-market solver beyond the bounded
 explicit joint-state family, broad multi-leg search, automatic semantic
 certification, authenticated reviewer or assertion verification, full-universe
-graph search, Laboratory campaign integration, event-time timeline job
-integration, or production deployment. The bounded Arena
-job integration has completed under the systemd supervisor after normal host
-admission. The latest controlled fixture run produced process CPU and peak RSS
-measurements; broader runtime behavior and resource sustainability remain
-unverified.
+graph search, Laboratory campaign integration, or production deployment. The
+bounded replay and timeline Arena integrations have completed under the
+supervisor after normal host admission. The new discovery-scope job's artifact
+and API paths are fixture-tested, but its supervisor path and resource
+sustainability remain unverified.
 `/graph` limits source markets to 200, scans at most
 500 relationship rows through endpoint indexes for centered neighborhoods, and
 returns at most 200 edges per page over 1–3 hops. Centered one-hop queries use

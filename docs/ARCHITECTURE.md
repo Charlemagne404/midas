@@ -188,6 +188,15 @@ comparison. This is a short replay job, not a Laboratory campaign or collector.
 The development checkpoint did not pass the live host admission gate to launch
 an Arena worker.
 
+The `frontier_discovery` Arena job compares Polymarket-only, per-venue, and
+cross-venue discovery scopes over one hash-pinned local evidence snapshot. It
+uses the same deterministic replay implementation for every scope, so its
+results describe observed evidence coverage and candidate deltas rather than
+algorithm superiority or venue-wide prevalence. Its API staging route makes no
+source request; Arena's shared host admission gate and held-source checks still
+apply. The Frontier-specific architecture and operations guides document its
+artifact bounds and current verification state.
+
 Polymarket additionally exposes an explicit, one-page-at-a-time v2 public trade
 capture route. Schema-v2 trade records retain condition, token, outcome, and
 transaction identities; an opaque source cursor is wrapped with the requested

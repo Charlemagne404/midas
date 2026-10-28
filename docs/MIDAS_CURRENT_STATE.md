@@ -1434,3 +1434,29 @@ Commit `86b79fe10b6aed82dabbe3e40ea01e08923ad744` adds a fixture-backed browser 
 ### Frontier API registry typing — 2026-10-28 00:35 UTC
 
 Commit `480ba629171c855086cd375a34e688bbc72fdbcb` types the Frontier API router against `AdapterRegistry`, removing its `Any` return diagnostic. Strict mypy passes for the API module; a no-network API overview test passes **1/1**. Ruff and formatting pass. The earlier 322/40/12 suite results are unchanged; they were not rerun after this annotation-only change. Frontier remains research-only, undeployed, and **PARTIALLY VERIFIED**.
+
+### Frontier discovery-scope Arena comparison — 2026-10-28 02:40 UTC
+
+Code commit `d59c4a8e66af7d525e65b70d90c268d3eaa92cfe` adds a saved-evidence
+comparison of Polymarket-only, per-venue, and cross-venue discovery scopes,
+including a hash-pinned Arena artifact API and a native Mission Control view.
+The same deterministic calculators run in every arm; this measures coverage
+differences in one bounded evidence window, not independent algorithm
+performance or exchange-wide opportunity prevalence. Source probes remain
+explicit and are not triggered by this flow.
+
+The web unit suite passes **40/40**, TypeScript, ESLint, Prettier, Ruff,
+Python compilation, and the Vite production build pass, and one isolated
+Playwright history test passes **1/1**. The broader Frontier/related-Arena
+selection has **375 passes and six existing Arena job-supervision failures**:
+the shared admission lock was held by an active Veritas batch, so worker cases
+remained queued or were rejected before launch. That batch was left untouched.
+The follow-up mypy check was stopped during memory PSI at 30.44% `some` / 27.78%
+`full` avg10 and 331 MiB swap free. The new comparison module's two initial
+local mypy findings were fixed, but full strict typing for this checkpoint is
+unverified. No exchange request or supervised discovery worker was run.
+
+Frontier remains **PARTIALLY VERIFIED**, isolated, research-only, undeployed,
+and not production-ready. See the [engineering report](frontier/FRONTIER_ENGINEERING_REPORT.md)
+and [mission ledger](frontier/FRONTIER_MISSION_LEDGER.md) for exact evidence and
+continuation steps.

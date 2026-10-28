@@ -400,3 +400,34 @@ campaign mutation, and changes to historical evidence are outside this routine
 workflow and require a separate decision. The current mission ledger and
 engineering report distinguish fixture verification, live public observations,
 and deployment status.
+
+## Discovery-scope Arena comparison
+
+The Replay & Readiness view can submit
+`POST /api/frontier/arena-discovery-comparison`. It reads only the selected
+Frontier store's latest bounded records, includes only joined books and
+effective verified relationships, writes a content-addressed snapshot under the
+configured Arena root, and submits a `frontier_discovery` job through normal
+host-wide Arena admission. It makes no exchange request and does not start a
+collector. Held-source rows are filtered before the snapshot is created.
+
+The worker compares Polymarket-only discovery, venue-local discovery (one
+replay per observed venue), and cross-venue discovery over the same evidence,
+scenario, UTC time, and deterministic replay version. Venue-local counts pool
+the per-venue outputs. This is a discovery-coverage comparison under one
+implementation; it is not an algorithm-version comparison or an estimate of
+exchange-wide opportunity prevalence. Cross-venue candidates require saved
+verified relationships. The output does not authenticate their external
+assertions or establish simultaneous quotes, fills, legal access, or profit.
+
+Bounds are 100 markets, 200 books, 500 verified relationships, an 8 MiB
+snapshot, 128 MiB/1,000 snapshots in the snapshot store, 32 MiB per result, six
+unique replay artifacts, and 20,000 candidate summaries per scope. Arena also
+applies the existing 300-second, 512-MiB, half-CPU, nice-15, idle-I/O and
+host-resource gate. Inspect recent jobs at
+`GET /api/arena/frontier-discovery-comparisons?limit=20`; fetch a completed,
+hash-verified result at
+`GET /api/arena/jobs/{identity}/frontier-discovery`. A denied admission leaves
+the saved snapshot available for a later explicit retry; do not bypass the
+shared lock or resource gate. No discovery-scope worker has yet completed
+through the Arena supervisor in this checkpoint.

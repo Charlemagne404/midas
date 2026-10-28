@@ -439,6 +439,32 @@ adapter-local checkpoint health, not continuous venue availability or account
 eligibility. The catalog makes no source request and leaves a missing journal
 uncreated.
 
+### Compare discovery scopes in Arena
+
+`POST /api/frontier/arena-discovery-comparison` pins local markets, joined
+books, and effective verified relationships into a content-addressed
+`frontier_discovery` Arena input. The worker runs one deterministic engine in
+three scopes: Polymarket-only, venue-local, and cross-venue. Its results include
+source/instrument coverage, candidate classifications, and pairwise deltas.
+This is a coverage comparison over the same saved evidence, not a comparison of
+independent algorithms or evidence of venue-wide prevalence. The endpoint makes
+no public request, and the job uses normal Arena admission and the existing
+300-second/512-MiB/half-CPU/idle-I/O bounds.
+
+To verify the implementation, use the focused offline tests and the isolated
+history-view browser test:
+
+```bash
+PYTHONPATH=packages /home/charlie/midas/.venv/bin/python -m pytest tests/frontier/test_discovery_comparison.py tests/arena/test_frontier_discovery.py tests/frontier/test_api.py::test_arena_discovery_comparison_stages_only_local_inputs_and_never_probes -q
+corepack pnpm --dir apps/web exec vitest run src/Frontier.test.tsx -t 'submits bounded Arena replay and discovery comparisons with verified results'
+corepack pnpm --dir apps/web exec playwright test e2e/frontier.spec.ts -g 'Arena replay history loads without submitting or launching work' --workers=1
+```
+
+The direct artifact executor, hash verification, and API/UI fixture path are
+covered. A successful supervised job remains pending until the host-wide Arena
+lock and resource gate admit it; keep the gate intact and defer worker tests
+while another Arena job holds that lock.
+
 `midas.frontier.collection.BoundedSourceCollector` has an explicit finite
 `POST /api/frontier/collect/{venue}` entry point in the Exchanges view. The API
 rechecks the enabled public-probe flag, source-use hold, declared capabilities,

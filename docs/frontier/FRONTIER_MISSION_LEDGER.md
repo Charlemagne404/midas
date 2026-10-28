@@ -3817,3 +3817,43 @@ The external Veritas batch was no longer present and a fresh resource sample sho
 Strict mypy passed for `apps/api/frontier.py` with no issues in 27.22 seconds, **717,964 KiB peak RSS**, zero swaps and zero socket messages. Ruff and format checks passed. The isolated API overview test passed **1/1** in 0.70 seconds, **77,492 KiB peak RSS**, zero swaps/socket messages; one existing Starlette/httpx deprecation warning remains. The full 322-test Frontier, 40-test web, and 12-test browser suites are from the prior code checkpoint and were not rerun after this type-only change. The earlier 00:31 mypy attempt was stopped during high pressure and yielded no result; this successful retry supersedes it. No external batch or protected service was touched.
 
 Frontier remains **PARTIALLY VERIFIED**. Continue offline implementation and acceptance; do not access currently held source data or deploy.
+
+### Discovery-scope comparison and Arena artifact path — 2026-10-28 02:40 UTC
+
+Code commit `d59c4a8e66af7d525e65b70d90c268d3eaa92cfe` adds a deterministic
+comparison across Polymarket-only, venue-local, and cross-venue discovery
+scopes. It uses the same saved markets/books, replay implementation, scenario,
+and pinned UTC time. It reports instrument/book coverage, verified relationship
+counts, candidates, classifications, audit dispositions, and pairwise deltas.
+It does not compare independent algorithm versions, infer venue-wide prevalence,
+or certify a relationship beyond the existing strict evidence checks.
+
+The `frontier_discovery` Arena job persists an 8 MiB-bounded content-addressed
+input, applies the normal host resource gate and 300-second/512-MiB/50%-CPU
+limits, writes a result capped at 32 MiB, and binds the result to its durable
+job record. The Frontier API stages only locally saved evidence and reports
+`network_calls: 0`; the UI exposes bounded history and integrity-verified
+results. Held-source filtering is applied to input staging, job history, and
+result access.
+
+Verification at this checkpoint:
+
+- `tests/frontier/test_discovery_comparison.py`, `tests/arena/test_frontier_discovery.py`, and the new staging API test passed in the full selection.
+- The full web unit suite passed **40/40**; TypeScript, ESLint, Prettier, Ruff, Python compilation, and `git diff --check` passed.
+- The production build succeeded; the existing **544.41 kB** chart chunk advisory remains.
+- The isolated Replay & Readiness history browser test passed **1/1**. It verified empty history and no automatic job submission or source probe.
+- `tests/frontier` plus the related Arena discovery/replay/timeline/job selection completed **375 passed / 6 failed** in **79.10 seconds**. The six failures were in generic existing job-supervision cases, not the new discovery tests. A contemporaneous lock inspection found PID **4086834** (`scripts/veritas_gap_detail_v2_batch.py`) holding the shared Arena admission lock. Four temporary test jobs remained queued; two create attempts reported `resource_admission_lock_busy`. No Arena worker launched from those tests; the active batch was not interrupted.
+- Strict mypy initially found two local typing issues in `discovery_comparison.py`; both were corrected. The same invocation also reported 15 diagnostics in existing Veritas/Arena dependencies. A post-fix scoped rerun was stopped without a result after PSI avg10 measured **30.44% some / 27.78% full**, with **331 MiB** swap free. Strict typing for this checkpoint remains unverified.
+
+No source endpoint, protected Reality service, preserved capture, production database, or deployment was accessed. A direct fixture call validates discovery artifact generation, hashing, snapshot reconstruction, and tamper detection, but no `frontier_discovery` job has completed through the Arena supervisor. Resource sustainability, live source validation, verified public cross-venue equivalence, and production remain open. Continue only after a fresh host admission check; do not bypass the global lock or resource gate.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Discovery-scope deterministic comparison | COMPLETE AND VERIFIED | Fixture tests verify same-engine scope comparison, coverage counts, candidate summaries, deltas, and deterministic hashes. This is not independent-algorithm evaluation or venue-wide prevalence. |
+| Snapshot and result integrity | COMPLETE AND VERIFIED | Direct worker-function fixture verifies content addressing, hash-checked readback, job binding, limits, and tamper rejection. Supervisor execution is pending. |
+| API staging and held-source boundary | COMPLETE AND VERIFIED | Isolated API test proves local saved inputs are bounded and no probe is called; existing held-source checks are reused for history/result access. |
+| Mission Control discovery comparison | PARTIALLY VERIFIED | 40/40 unit tests, TypeScript, lint, production build, and 1/1 isolated history E2E pass; full submission flow is fixture-tested in the unit test. |
+| General Arena job-supervision regression | PARTIALLY VERIFIED | Six tests could not acquire the shared host lock during an active external Veritas batch; no worker was launched. |
+| Strict typing / resource sustainability | PARTIALLY VERIFIED | Local mypy findings were fixed, but the scoped retry stopped during high PSI; no sustained worker profile exists. |
+| Genuine cross-venue public finding / deployment | DEFERRED | Source-use restrictions, external semantic evidence, synchronized pricing, supervisor admission, and production gates remain unresolved. |
+| Project Frontier overall | PARTIALLY VERIFIED | This offline discovery comparison extends the existing system but does not close the mission's live evidence or deployment criteria. |
