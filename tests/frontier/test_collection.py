@@ -165,6 +165,12 @@ class BlockingAdapter(FakeAdapter):
         return await super().discover_markets(limit)
 
 
+class StalledHealthAdapter(FakeAdapter):
+    async def health(self) -> SourceHealth:
+        await asyncio.Event().wait()
+        raise AssertionError("stalled adapter health unexpectedly returned")
+
+
 class WrongLineageAdapter(FakeAdapter):
     async def discover_markets(self, limit: int = 20):
         markets = await super().discover_markets(limit)
@@ -231,6 +237,41 @@ def test_collection_source_lease_excludes_another_process(tmp_path):
         assert worker.exitcode == 0
 
     receiver.close()
+
+
+def test_collection_source_lease_rejects_a_symlink(tmp_path):
+    root = tmp_path / "frontier"
+    journal = CollectionJournal(root)
+    journal.initialize()
+    target = tmp_path / "external-lock-target"
+    target.write_text("untouched")
+    lock_path = root / ".frontier-collection-polymarket.lock"
+    lock_path.symlink_to(target)
+
+    with pytest.raises(FrontierStoreError, match="unavailable or unsafe"):
+        with journal.source_lease(Venue.POLYMARKET):
+            pass
+
+    assert target.read_text() == "untouched"
+
+
+@pytest.mark.asyncio
+async def test_initial_source_health_is_inside_the_finite_wall_time_budget(tmp_path):
+    store = FrontierStore(tmp_path / "frontier")
+    adapter = StalledHealthAdapter()
+
+    result = await BoundedSourceCollector(adapter, store).start(
+        market_limit=1,
+        book_limit=0,
+        max_wall_seconds=1,
+    )
+
+    assert result.state == "paused"
+    assert result.failures[-1].code == "COLLECTION_WALL_LIMIT"
+    assert result.source_health is None
+    assert adapter.discovery_calls == 0
+    latest = CollectionJournal(store.root).latest_checkpoint(result.run_id)
+    assert latest.state == "paused"
 
 
 @pytest.mark.asyncio

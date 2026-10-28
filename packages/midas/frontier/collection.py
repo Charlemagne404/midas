@@ -944,7 +944,6 @@ class BoundedSourceCollector:
                     spec,
                     None,
                     state="created",
-                    source_health=await self._health(),
                 )
                 self.journal.append_checkpoint(checkpoint)
                 return await self._execute_locked(spec, checkpoint)
