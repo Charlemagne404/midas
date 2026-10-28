@@ -11210,3 +11210,121 @@ memory was 9,742,044 kB and swap free was 50,884 kB. No service was modified.
 
 Next safe action: review adapter pagination/reconnect fixtures, keeping live
 collection disabled, then re-measure before broader regression.
+
+## Trade pagination and checkpoint replay — 2026-10-28 21:39 UTC
+
+The source/API review found venue cursor pagination already bounded by market
+and fixed page size; stored page evidence replays from local state. Existing
+tests rejected inconsistent/repeated cursors and page-size changes, but no
+direct test exercised the adapter's over-limit response guard at that point.
+The collector checkpoint test resumes without repeating discovery. This does
+not cover continuous streaming/reconnect because these are REST page adapters.
+
+The focused regression passes **8/8** in 3.68 seconds with 1 GiB address-space
+and 60-second CPU-time limits and reduced priority. One existing
+Starlette/httpx TestClient deprecation warning remains. Fixture responses only;
+no exchange endpoint was queried and no code change was necessary.
+
+At `2026-10-28T21:39:17Z`, Reality was 53,260,288 bytes below its
+1,207,959,552-byte `MemoryHigh`; API was 4,403,200 bytes below its
+1,610,612,736-byte boundary. Both services were active, memory PSI was 0%,
+available memory was 9,721,020 kB and swap free was 51,132 kB. Services were
+not modified.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Bounded trade pagination | PARTIALLY VERIFIED | Polymarket/Kalshi page cursors and replay are exercised; direct over-limit response tests follow in the 21:43 checkpoint. |
+| Restartable collector checkpoint | COMPLETE AND VERIFIED WITH FIXTURES | Resume does not repeat market discovery. |
+| Continuous streaming reconnect | DEFERRED | Not part of the bounded REST adapter contract. |
+| Project Frontier overall | PARTIALLY VERIFIED | Live data, broad regression, endurance, protected recovery, and deployment remain open. |
+
+Next safe action: inspect source fee applicability and independent fee math.
+
+## Fee evidence applicability audit — 2026-10-28 21:39 UTC
+
+The adapter code and fixtures preserve unknown fee applicability. Polymarket
+rejects unsupported/expired schedules from verified status. Kalshi records
+public event and series parameters with validated identities and override
+state, while its `FeeSchedule` remains unknown and metadata economics remain
+unresolved. Kraken and Coinbase spot products do not infer account-tier fees.
+No implementation change was needed.
+
+Focused fee metadata fixtures pass **8/8** in 1.78 seconds under a 1 GiB
+address-space and 60-second CPU-time limit with reduced priority. They cover
+unsupported Polymarket exponents, Kalshi overrides and inheritance, incomplete
+overrides, invalid identities, and unsafe series path rejection. All responses
+are injected fixtures; no venue request was made.
+
+At `2026-10-28T21:40:01Z`, Reality and API were active. Reality was 253,952
+bytes below its 1,207,959,552-byte `MemoryHigh`; API was 4,091,904 bytes below
+its 1,610,612,736-byte boundary. Memory PSI was 0%; available memory was
+9,726,956 kB and swap free was 51,144 kB. No protected service changed.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Polymarket source fee schedule parsing | COMPLETE AND VERIFIED WITH FIXTURES | Supported formulas carry source/hash evidence; unsupported or expired schedules remain unknown. |
+| Kalshi event/series fee evidence | COMPLETE AND VERIFIED WITH FIXTURES | Native identities and override states are validated; account-level applicability remains unresolved. |
+| Spot account fee applicability | PARTIALLY VERIFIED | Kraken/Coinbase account-tier fee schedules remain unknown. |
+| Wider independent economics regression | PARTIALLY VERIFIED | Not rerun at the current Reality `MemoryHigh` margin. |
+| Project Frontier overall | PARTIALLY VERIFIED | Live science, broad regression, endurance, recovery, and deployment remain open. |
+
+Next safe action: inspect the independent fee differential and rounding cases;
+use focused fixture tests only after a fresh resource read.
+
+## Independent fee differential checks — 2026-10-28 21:40 UTC
+
+After a fresh headroom read, focused independent economic tests pass **3/3** in
+0.34 seconds with a 1 GiB address-space limit, 60-second CPU-time limit, and
+reduced priority. The cases verify a source-backed Kalshi estimate through
+candidate and independent audit, and preserve unresolved net economics when a
+fee is unknown for binary and logical-implication constructions. Fixtures only;
+no venue or account was accessed.
+
+At `2026-10-28T21:40:36Z`, Reality was 97,681,408 bytes below its
+1,207,959,552-byte `MemoryHigh`; API was 3,805,184 bytes below its
+1,610,612,736-byte boundary. Both services were active and memory PSI was 0%.
+Host available memory was 9,532,680 kB and swap free was 51,148 kB. No service
+changed. Broad regressions remain deferred.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Independent fee candidate calculation | COMPLETE AND VERIFIED WITH FIXTURES | The modeled estimate is independently reproduced in a controlled example. |
+| Unknown fee classification | COMPLETE AND VERIFIED WITH FIXTURES | Net result remains unresolved; unknown fees are not treated as zero. |
+| Wider economics regression | PARTIALLY VERIFIED | Three focused tests pass; the full suite was not run. |
+| Project Frontier overall | PARTIALLY VERIFIED | Live research, broad regression, endurance, recovery, and deployment remain open. |
+
+Next safe action: continue fixture-level source and verifier review; defer broad
+regression until protected-service headroom is suitable or an isolated host is
+available.
+
+## Trade page-size guard fixtures — 2026-10-28 21:43 UTC
+
+Commit `3f07f81` adds `tests/frontier/test_trade_page_bounds.py` with Polymarket
+v2 and Kalshi fixtures that return two rows for a requested size of one. Both
+tests require the adapter to reject the response while retaining its raw capture
+and sending only an unauthenticated GET. No adapter behavior changed.
+
+The new module passes Ruff, format, and strict mypy. It and the existing
+invalid/non-advancing cursor cases pass **7/7** in 0.37 seconds under a 1 GiB
+address-space limit, 60-second CPU-time limit, and reduced priority. The initial
+run failed on an incomplete Kalshi fixture path; correcting it to the full
+`/trade-api/v2/markets/trades` path produced the passing run. Fixtures only.
+
+A strict mypy scan of the established `test_adapters.py` module is not clean due
+to its many existing untyped test definitions and generic types; the new
+standalone test module is strict-clean.
+
+At `2026-10-28T21:43:49Z`, Reality was 51,519,488 bytes below its
+1,207,959,552-byte `MemoryHigh`; API was 4,370,432 bytes below its
+1,610,612,736-byte boundary. Both services were active and memory PSI was 0%.
+No service changed.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Oversized trade-page rejection | COMPLETE AND VERIFIED WITH FIXTURES | Direct Polymarket v2 and Kalshi tests verify bounded rows and raw capture retention. |
+| Existing cursor and checkpoint behavior | COMPLETE AND VERIFIED WITH FIXTURES | Focused invalid-cursor, two-page replay, and collector resume tests pass. |
+| Broad regression | PARTIALLY VERIFIED | Full suites remain deferred under protected-service headroom constraints. |
+| Project Frontier overall | PARTIALLY VERIFIED | Live data, broad acceptance, endurance, recovery, and deployment remain open. |
+
+Next safe action: review independent relationship and opportunity verification;
+defer broad regressions until protected headroom is suitable.

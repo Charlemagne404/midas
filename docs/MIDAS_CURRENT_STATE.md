@@ -3622,3 +3622,68 @@ Reality used 1,207,574,528 / 1,207,959,552 bytes at `MemoryHigh`; API used
 9,742,044 kB, and `SwapFree` was 50,884 kB. No protected service was restarted
 or reconfigured. Source-use and physical-location holds remain, so no live
 collection occurred. Broader regressions and deployment remain deferred.
+
+## Project Frontier pagination replay checkpoint — 2026-10-28 21:39 UTC
+
+The focused pagination/replay regression passes **8/8** in 3.68 seconds under a
+1 GiB address-space limit, 60-second CPU-time limit, and reduced priority. It
+covers Polymarket and Kalshi cursor-page identity and replay, adapter rejection
+of invalid/non-advancing cursors, and a collector resume that avoids repeating
+discovery. A later follow-up adds direct oversized-page cases below.
+REST pagination is covered; continuous-feed reconnect behavior is not claimed.
+One existing Starlette/httpx test-client deprecation warning remains. No venue
+endpoint was queried.
+
+At `2026-10-28T21:39:17Z`, both protected services were active. Reality used
+1,154,699,264 / 1,207,959,552 bytes at `MemoryHigh`; API used 1,606,209,536 /
+1,610,612,736 bytes. Memory PSI was 0%, `MemAvailable` was 9,721,020 kB, and
+`SwapFree` was 51,132 kB. No service changed.
+
+## Project Frontier fee evidence checkpoint — 2026-10-28 21:40 UTC
+
+The adapter fee audit found no need for a code change. Polymarket only promotes
+supported, unexpired schedule formulas with source/hash evidence. Kalshi retains
+public event/series fee parameters and override state separately from the
+account-applicable `FeeSchedule`, which stays unknown. Kraken and Coinbase
+spot do not infer an account fee tier. The focused fee metadata fixture tests
+pass **8/8** in 1.78 seconds; no venue endpoint was queried.
+
+At `2026-10-28T21:40:01Z`, both protected services were active. Reality used
+1,207,705,600 / 1,207,959,552 bytes at `MemoryHigh`; API used 1,606,520,832 /
+1,610,612,736 bytes. Memory PSI was 0%, `MemAvailable` was 9,726,956 kB, and
+`SwapFree` was 51,144 kB. The Reality margin was only 253,952 bytes. No broad
+suite was started at this sample. Live data validation and deployment remain
+blocked/deferred; Frontier is still research-only and isolated.
+
+## Project Frontier independent fee checks — 2026-10-28 21:40 UTC
+
+Three focused fee-economics tests pass **3/3** in 0.34 seconds after a fresh
+resource read. They cover the Kalshi source-backed estimate through the
+independent audit and show that binary and logical-implication candidates leave
+net economics unresolved when fees are unknown. These are fixture results; no
+market endpoint or account was accessed. The wider economics and Frontier
+suites were not run.
+
+At `2026-10-28T21:40:36Z`, Reality and API were active. Reality used
+1,110,278,144 / 1,207,959,552 bytes at `MemoryHigh`; API used 1,606,807,552 /
+1,610,612,736 bytes. Memory PSI was 0%, `MemAvailable` was 9,532,680 kB, and
+`SwapFree` was 51,148 kB. No protected process or configuration changed.
+Broad regression remains deferred because API `MemoryHigh` headroom was only
+3,805,184 bytes.
+
+## Project Frontier oversized-page fixture checkpoint — 2026-10-28 21:43 UTC
+
+Commit `3f07f81` adds two isolated tests. They verify that Polymarket v2 and
+Kalshi reject a public trade response with two rows when the requested limit
+is one, while preserving exact response captures and using unauthenticated GET
+requests. The new test module passes Ruff, formatting, and strict mypy. The two
+new tests plus five existing cursor cases pass **7/7** in 0.37 seconds under a
+1 GiB address-space limit, 60-second CPU-time limit, and reduced priority. The initial
+run had an incorrect fixture route; after using Kalshi's full API path, the
+focused run passed. No live source request occurred.
+
+At `2026-10-28T21:43:49Z`, Reality and API were active. Reality used
+1,156,440,064 / 1,207,959,552 bytes at `MemoryHigh`; API used 1,606,242,304 /
+1,610,612,736 bytes. Memory PSI was 0%, `MemAvailable` was 9,666,780 kB, and
+`SwapFree` was 51,200 kB. No service or configuration changed. Broad regression
+and deployment remain deferred.
