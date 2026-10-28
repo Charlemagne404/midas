@@ -273,6 +273,12 @@ async def test_initial_source_health_is_inside_the_finite_wall_time_budget(tmp_p
     latest = CollectionJournal(store.root).latest_checkpoint(result.run_id)
     assert latest.state == "paused"
 
+    recovered = await BoundedSourceCollector(FakeAdapter(), store).start(
+        market_limit=1,
+        book_limit=0,
+    )
+    assert recovered.state == "completed"
+
 
 @pytest.mark.asyncio
 async def test_competing_collector_start_is_rejected_before_creating_an_orphan_run(tmp_path):
