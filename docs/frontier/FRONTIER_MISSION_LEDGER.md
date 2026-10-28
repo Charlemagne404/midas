@@ -8945,3 +8945,23 @@ unrun on the current branch; project status stays **PARTIALLY VERIFIED**.
 
 **Next safe action:** take a fresh resource sample before another test slice;
 continue with bounded source-independent review while CPU PSI remains elevated.
+
+## Persisted instrument identity — 2026-10-28 14:27 UTC
+
+**Test commit:** `6ecb7c9` (`test(frontier): verify instrument IDs persist`).
+
+Added storage assertions for canonical instrument IDs in both single-market
+and market-batch observations after durable append/readback. The focused
+storage selection passed **2/2** (28 deselected), in 1.75 seconds wall time
+at 58,636 KiB peak RSS, zero swaps, filesystem input, and socket messages.
+Ruff check and format passed for the changed test file.
+
+CPU PSI avg10 moved from 42.59% to 39.61%; memory PSI stayed at 0.00%. I/O PSI
+rose from 0.18% some / 0.00% full to 0.70% some / 0.54% full, below the 1%
+admission boundary. No source or protected service was accessed. The full
+Frontier suite remains unrun on current code; status remains **PARTIALLY
+VERIFIED**.
+
+**Next safe action:** take a fresh resource sample before further tests; keep
+working on bounded source-independent acceptance gaps while live source and
+production validation remain gated.

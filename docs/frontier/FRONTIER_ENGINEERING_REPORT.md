@@ -9916,3 +9916,20 @@ CPU PSI avg10 was **46.66%** before the selection and **43.48%** afterward;
 memory PSI stayed at **0.00%**, and I/O PSI was **0.03% some / 0.00% full**
 afterward. No source, production service, or protected store was accessed.
 Frontier remains research-only and **PARTIALLY VERIFIED**.
+
+## Persisted instrument identity — 2026-10-28 14:27 UTC
+
+**Test commit:** `6ecb7c9` (`test(frontier): verify instrument IDs persist`).
+
+Storage regression coverage now verifies that instrument canonical IDs survive
+append and readback for both a single `FrontierMarket` observation and a
+`MarketBatch` observation. The selected storage tests passed **2/2** (28
+deselected) in 1.75 seconds wall time at **58,636 KiB** peak RSS, with zero
+swaps, filesystem input, or socket messages. Ruff check and format passed for
+the changed test file.
+
+CPU PSI avg10 was **42.59%** before and **39.61%** after. Memory PSI stayed
+**0.00%**; I/O PSI increased from **0.18% some / 0.00% full** to **0.70% some
+/ 0.54% full**, still below the 1% gate. No live source or protected service
+was accessed. The full Frontier suite was not rerun; overall status remains
+**PARTIALLY VERIFIED**.

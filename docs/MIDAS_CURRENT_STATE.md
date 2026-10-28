@@ -3060,3 +3060,8 @@ schemas v1–v4. The focused identity/adapter/Coinbase slice passes 92/92; Ruff
 passes. The full Frontier suite was not rerun. CPU PSI avg10 remained above
 43%, so broad verification stays deferred; overall Frontier status remains
 **PARTIALLY VERIFIED**.
+
+Commit `6ecb7c9` adds storage checks confirming instrument IDs survive durable
+readback for single-market and batch observations (2/2 focused tests pass).
+The full Frontier suite remains unrerun; no live source or protected service
+was accessed. Overall Frontier status remains **PARTIALLY VERIFIED**.
