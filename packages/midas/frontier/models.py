@@ -512,11 +512,11 @@ class FeeSchedule(FrontierModel):
             raise ValueError("Fee currency code differs from its canonical identity")
         return self
 
-    @field_validator("evidence_observed_at_utc")
+    @field_validator("evidence_observed_at_utc", "effective_at_utc", "expires_at_utc")
     @classmethod
-    def fee_evidence_time_is_utc(cls, value: datetime | None) -> datetime | None:
+    def fee_schedule_times_are_utc(cls, value: datetime | None) -> datetime | None:
         if value is not None and (value.tzinfo is None or value.utcoffset() is None):
-            raise ValueError("Fee evidence time must include a timezone")
+            raise ValueError("Fee schedule times must include a timezone")
         return value.astimezone(UTC) if value is not None else None
 
 
@@ -1194,6 +1194,13 @@ class RawObservation(FrontierModel):
     raw_body_state: Literal["complete", "not_captured_after_size_limit"] = "complete"
     raw_sha256: str
     adapter_version: str
+
+    @field_validator("request_started_at_utc", "received_at_utc")
+    @classmethod
+    def raw_observation_times_are_utc(cls, value: datetime) -> datetime:
+        if value.tzinfo is None or value.utcoffset() is None:
+            raise ValueError("Raw-observation timestamps must include a timezone")
+        return value.astimezone(UTC)
 
     @model_validator(mode="after")
     def valid_hash_and_size(self) -> RawObservation:

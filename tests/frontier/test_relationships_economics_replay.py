@@ -73,6 +73,19 @@ def test_candidate_observation_time_must_be_aware_and_is_normalized_to_utc():
     assert candidate.observed_at_utc == datetime(2026, 10, 28, 10, 0, tzinfo=UTC)
 
 
+@pytest.mark.parametrize(
+    "field", ("evidence_observed_at_utc", "effective_at_utc", "expires_at_utc")
+)
+def test_fee_schedule_times_must_be_aware_and_are_normalized_to_utc(field: str):
+    with pytest.raises(ValidationError, match="must include a timezone"):
+        FeeSchedule(**{field: datetime(2026, 10, 28, 12, 0)})
+
+    local_time = datetime(2026, 10, 28, 12, 0, tzinfo=timezone(timedelta(hours=2)))
+    schedule = FeeSchedule(**{field: local_time})
+
+    assert getattr(schedule, field) == datetime(2026, 10, 28, 10, 0, tzinfo=UTC)
+
+
 def _verified_pair():
     left = market(Venue.POLYMARKET, "market-left")
     right = market(Venue.KALSHI, "market-right")

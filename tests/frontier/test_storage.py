@@ -3,7 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import sqlite3
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta, timezone
 from decimal import Decimal
 from pathlib import Path
 
@@ -19,6 +19,7 @@ from midas.frontier.models import (
 from midas.frontier.relationships import propose_relationships, verify_same_payoff
 from midas.frontier.replay import deterministic_replay, paired_deterministic_replay
 from midas.frontier.storage import FrontierStore, FrontierStoreError
+from pydantic import ValidationError
 
 from tests.frontier.builders import T0, book, market
 
@@ -53,6 +54,19 @@ def test_raw_and_source_failure_schema_v1_records_remain_readable():
     )
     assert legacy_failure.schema_version == 1
     assert legacy_failure.response_rejection is None
+
+
+@pytest.mark.parametrize("field", ("request_started_at_utc", "received_at_utc"))
+def test_raw_observation_times_require_timezone_and_normalize_to_utc(field: str):
+    payload = _raw(Venue.POLYMARKET, "timestamp fixture").model_dump(mode="python")
+    payload[field] = datetime(2026, 10, 28, 12, 0)
+    with pytest.raises(ValidationError, match="must include a timezone"):
+        RawObservation.model_validate(payload)
+
+    payload[field] = datetime(2026, 10, 28, 12, 0, tzinfo=timezone(timedelta(hours=2)))
+    observation = RawObservation.model_validate(payload)
+
+    assert getattr(observation, field) == datetime(2026, 10, 28, 10, 0, tzinfo=UTC)
 
 
 def _paired_fixture():
