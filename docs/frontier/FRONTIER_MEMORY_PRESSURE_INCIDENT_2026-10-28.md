@@ -2,7 +2,7 @@
 
 **Incident date:** 2026-10-28 (CET)
 
-**Checkpoint captured:** 2026-10-29 00:31 CET
+**Checkpoint captured:** 2026-10-29 00:50 CET
 
 **Scope:** Host reliability interruption during Project Frontier
 
@@ -10,12 +10,12 @@
 
 ## Executive summary
 
-Repeated systemd-oomd kills were caused by sustained memory pressure in the
-whole `user@1000.service` hierarchy: the journal says pressure exceeded the
-configured 50% threshold for more than 20 seconds while reclaim was active.
-The hierarchy has no `MemoryHigh`, `MemoryMax`, or `MemorySwapMax` ceiling. Its
-observed peak was about 13.0 GiB on a host with 15.5 GiB physical memory. The
-evidence supports aggregate host memory/reclaim pressure, but does not identify
+Repeated systemd-oomd kills followed sustained memory pressure in the whole
+`user@1000.service` hierarchy: the journal says pressure exceeded 50% for more
+than 20 seconds while reclaim was active. The hierarchy has no `MemoryHigh`,
+`MemoryMax`, or `MemorySwapMax` ceiling. Its observed peak was about 13.0 GiB
+on a host with 15.5 GiB physical memory. This establishes hierarchical
+reclaim pressure, not global physical-memory exhaustion, and does not identify
 one workload as the sole cause.
 
 The host had 9.9 GiB `MemAvailable` and low current PSI by the final sample,
@@ -29,25 +29,29 @@ Two narrowly scoped containment changes are in effect:
 - The five-minute Veritas gap-detail timer is disabled and stopped. Inspection confirmed
   that it only replays finalized segments, has no reverse dependents, and is
   not part of live Reality collection.
-- The Reality capacity monitor has `MemoryHigh=128M`, `MemoryMax=192M`, and
+- The Reality capacity monitor has `MemoryHigh=160M`, `MemoryMax=192M`, and
   `MemorySwapMax=0` in a reversible persistent user-unit drop-in. Its previous
-  128 MiB hard cap caused seven kernel memcg OOM kills. The 00:16 scheduled
-  run avoided an OOM but hit the existing 60-second timeout, so revised-limit
-  validation remains incomplete and `capacity.json` is stale.
+  128 MiB hard cap caused seven kernel memcg OOM kills. The 00:46 scheduled
+  run completed in 33.3 seconds at a 137.4 MiB peak, but the old 128 MiB soft
+  limit caused measurable reclaim PSI. The new 160 MiB soft limit is pending
+  its next scheduled validation at 01:16; `capacity.json` is fresh but still
+  flags invalid archive provenance and stale collector status.
 
 Reality was killed by systemd-oomd and automatically restarted. Its restart
 path fully replays and verifies the recording before resuming collection. At
-23:54 CET it remained active but had not written a fresh status since before
-the restart and was within 0.8 MiB of `MemoryHigh`. Thus the service process is
-alive, but collector recovery and current-boundary capture are not verified.
-No operator restart or protected service configuration change was made.
+00:50 CET it remained active but had not written a fresh status since before
+the restart; its process had read about 9.72 GB during cold replay and its
+cgroup was within 0.2 MiB of `MemoryHigh`. Thus the service process is alive,
+but collector recovery and current-boundary capture are not verified. No
+operator restart or protected Reality configuration change was made.
 
 **The host is not yet safe for Frontier tests or research batches.** Continue
 only static/documentation work until Reality has demonstrably resumed capture,
 service headroom recovers, and memory pressure remains low across multiple
-scheduled-job cycles. No new kill was observed through 00:30, about 47 minutes
-after the last kill. Current PSI is low, but Reality status is stale, API and
-Reality remain near `MemoryHigh`, and the revised capacity limit is unvalidated.
+scheduled-job cycles. No new oomd or kernel OOM kill was observed through
+00:50, about 67 minutes after the last kill. PSI has fallen again after the
+capacity run, but API and Reality remain near `MemoryHigh`, Reality status is
+stale, and the revised 160 MiB soft threshold awaits its next scheduled run.
 
 ## Observed impact and timeline
 
@@ -294,10 +298,14 @@ limit for those kills.
 1. **The immediate systemd-oomd trigger was user-session memory pressure with
    reclaim.** The journal gives the measured parent PSI, 50% limit, 20-second
    duration, and reclaim condition for each victim.
+   A retrospective journal count from 16:00 through 23:44 CET found 28
+   victim events: 16 gap-detail replay, 5 Reality, 4 API, and 3 GNOME
+   Terminal scopes. This count describes victims, not initiators.
 2. **The user hierarchy was not constrained by a cgroup hard memory ceiling.**
    Its effective memory and swap limits and those of its inspected ancestors
-   were unlimited. The peak and swap measurements indicate the host’s physical
-   memory/reclaim budget was tight at incident peaks.
+   were unlimited. The observed 3.1/4 GiB host swap use is evidence of prior
+   swap activity, but available post-incident RAM and absent contemporaneous
+   peak measurements do not establish global exhaustion.
 3. **The capacity monitor’s 128 MiB hard cap caused its repeated local OOMs.**
    Kernel records show the service cgroup as the memcg OOM domain and process
    RSS at or over the cap.
@@ -333,8 +341,13 @@ reason the process exceeded 128 MiB remains unproven.
 
 The isolated source candidate bounds valid inventory walks and skips the
 directory walk when provenance is invalid, returning unknown bytes/headroom.
-Its fixtures remain unrun, and it is not deployed. It does not repair or
-reclassify the existing archive.
+Static review found that the size check followed by `Path.read_text()` still
+left a file-growth race. Isolated candidate commit
+`d8629e4b63c8b8ef68e27294fb3599423a694b76` now opens a regular manifest
+without following symlinks, checks the opened descriptor, and reads at most
+4 MiB plus one byte. A fixture simulates a stale path-level size. All
+candidate fixtures remain unrun, and the branch is not deployed. It does not
+repair or reclassify the existing archive.
 
 ### Not established
 

@@ -49,6 +49,12 @@ review only while pressure averages recover; use the 01:16 run to validate
 the 160 MiB soft threshold. Preserve the dirty probe-evidence directory and
 do not touch Reality capture or archive provenance.
 
+Static review also found a path-stat/read race in the isolated Reality
+capacity candidate. Commit `d8629e4b63c8b8ef68e27294fb3599423a694b76` uses a
+no-follow regular-file descriptor and a `4 MiB + 1 byte` read bound. Its new
+fixture and all earlier candidate fixtures remain unrun; no candidate code
+is deployed.
+
 ## Current host state — 2026-10-29 00:40 CET
 
 The scheduled capacity timer is enabled and next due at 00:46:04 CET. Its
