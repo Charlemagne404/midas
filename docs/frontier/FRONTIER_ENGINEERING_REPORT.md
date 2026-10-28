@@ -2,12 +2,13 @@
 
 **Report date:** 2026-10-28
 
-## Current status — 2026-10-28 05:12 UTC
+## Current status — 2026-10-28 05:14 UTC
 
-The isolated development branch is `codex/frontier-20261026`; the latest code
-latest implementation checkpoint is `6c5c329` (`fix(frontier): enforce
-collection wall limit from health`), and the latest API regression checkpoint
-is `be73099` (`test(frontier): cover busy collection API lease`), following
+The isolated development branch is `codex/frontier-20261026`; the latest
+implementation checkpoint is `6c5c329` (`fix(frontier): enforce
+collection wall limit from health`), and the latest test checkpoint is
+`f502977` (`test(frontier): verify lease released after wall timeout`), following
+`be73099` (`test(frontier): cover busy collection API lease`),
 `8fb4c0d` (`fix(frontier): serialize source collection across processes`) and
 `bffa163` (`fix(arena): honor configured global admission root`). The major
 Frontier implementation snapshot is commit
@@ -59,16 +60,16 @@ opportunity is established. Full repository regression and production
 transition remain open; deployment requires a separate authorized readiness
 review.
 
-The latest collection module passes **23/23** and the collection API module
-passes **8/8**, including a busy-lease response that creates no run and makes
-no discovery request. Strict `mypy --strict` passed for the collector at
-`8fb4c0d`, before the health-timeout refinement in `6c5c329`; a post-refinement
-typecheck is pending. Neither test result is a rerun of the full Frontier or
-MIDAS suites. Web/API typing, browser verification, and broader regression
-remain pending. At approximately `2026-10-28T05:11Z`, memory PSI avg10 was
-**0.00% some / 0.00% full** and I/O PSI avg10 was **2.36% some / 1.92% full**;
-no process held the shared Arena lock. No further resource-bearing check
-started at that sample.
+The latest collection module passes **23/23**, including successful source
+lease reacquisition after a stalled health check, and the collection API module
+passes **8/8**, including a busy-lease response with no run or discovery
+request. Strict `mypy --strict` passed for the collector at `8fb4c0d`, before
+the health-timeout refinement in `6c5c329`; a post-refinement typecheck is
+pending. Neither test result is a rerun of the full Frontier or MIDAS suites.
+Web/API typing, browser verification, and broader regression remain pending.
+At approximately `2026-10-28T05:14Z`, memory PSI avg10 was **0.05% some / 0.05%
+full** and I/O PSI avg10 was **6.98% some / 6.73% full**; no process held the
+shared Arena lock. No further resource-bearing check started at that sample.
 
 ## Bounded metadata and initial resource checkpoint — 2026-10-28 03:59 UTC
 
@@ -6626,3 +6627,30 @@ pending until a fresh admission sample.
 | Collection API lease-conflict behavior | COMPLETE AND VERIFIED | Eight API module tests pass; busy lease returns 409 without a run record or discovery request. |
 | Strict mypy after `6c5c329` | PARTIALLY VERIFIED | Previous strict mypy result is from `8fb4c0d`; post-refinement rerun remains. |
 | Full Frontier/MIDAS and browser regression | PARTIALLY VERIFIED | Collection and collection API modules pass; broader suites have not been rerun. |
+
+## Timeout releases source ownership — 2026-10-28 05:14 UTC
+
+Test commit `f502977` strengthens the stalled-health regression: after the
+first finite collection reaches `COLLECTION_WALL_LIMIT` and persists `paused`,
+a second run for the same venue starts and completes. This proves the
+per-venue file lease is released on timeout, rather than only on cancellation
+or normal completion.
+
+The complete collection module passes **23/23** after this assertion in 7.56
+seconds pytest time (**7.92 seconds wall**) at **69,780 KiB peak RSS**, with
+zero swaps and socket messages. This includes lease release after timeout,
+forked-process exclusion, symlink rejection, and the health-stall no-discovery
+check. The collection API module remains **8/8** from the immediately
+preceding run. No external network request or protected service action
+occurred.
+
+After this test, at approximately `2026-10-28T05:14Z`, I/O PSI avg10 rose to
+**6.98% some / 6.73% full**; memory PSI avg10 was **0.05% some / 0.05% full**.
+No process held the shared Arena lock. Post-refinement mypy, browser checks,
+and broader suites remain deferred pending a fresh resource sample.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Lease release after wall timeout | COMPLETE AND VERIFIED | The stalled-health run pauses at the wall limit and a subsequent same-venue run completes; the 23-test collection module passes. |
+| Collection API endpoint integration | COMPLETE AND VERIFIED | The API module passes 8/8, including HTTP 409 on a busy lease. |
+| Post-refinement strict typing and broad regression | PARTIALLY VERIFIED | Latest mypy remains pending; full Frontier/MIDAS and browser suites remain outstanding. |

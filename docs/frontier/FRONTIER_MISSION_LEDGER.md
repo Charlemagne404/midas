@@ -5256,3 +5256,35 @@ health-timeout refinement and broader tests remain pending.
 | Collection API conflict handling | COMPLETE AND VERIFIED | Busy cross-process lease maps to 409 with no run insertion or source request; all 8 collection API tests pass. |
 | Post-refinement strict typing | PARTIALLY VERIFIED | The previous strict mypy run was on `8fb4c0d`; rerun after `6c5c329`. |
 | Full Frontier/MIDAS and browser regression | PARTIALLY VERIFIED | The collection (23/23) and collection API (8/8) modules pass; broad regression remains. |
+
+## Lease release after timeout — 2026-10-28 05:14 UTC
+
+Test commit `f502977` extends the stalled-health test to start a second
+same-venue collection after the first run is paused at `COLLECTION_WALL_LIMIT`.
+The second run completes, confirming the process-shared lease is released on
+timeout.
+
+```bash
+nice -n 10 /usr/bin/time -v env PYTHONPATH=packages:. \
+  /home/charlie/midas/.venv/bin/python -m pytest -q \
+  --basetemp=/tmp/midas-frontier-collection-release-regression-20261028T0515Z \
+  tests/frontier/test_collection.py
+# 23 passed in 7.56s; 69,780 KiB peak RSS; zero swaps or socket messages
+```
+
+The same test module checks forked-process lease exclusion, per-venue
+independence, symlink rejection, and no discovery on a health timeout. The
+collection API module passes 8/8, including 409 on a busy lease; one existing
+Starlette/httpx TestClient deprecation warning remains. No source request or
+protected-service operation occurred.
+
+At approximately `2026-10-28T05:14Z`, memory PSI avg10 was **0.05% some / 0.05%
+full**, I/O PSI avg10 was **6.98% some / 6.73% full**, and no process held the
+shared Arena lock. Defer post-refinement mypy, browser checks, and broader
+regression until the I/O gate clears.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Lease release after wall timeout | COMPLETE AND VERIFIED | A second same-venue run completes after the first health probe times out; all 23 collection tests pass. |
+| Collection API conflict handling | COMPLETE AND VERIFIED | All 8 API tests pass, including HTTP 409 without a run or discovery request. |
+| Post-refinement typing and broader regression | PARTIALLY VERIFIED | Mypy after `6c5c329` and the full Frontier/MIDAS/browser suites remain pending. |
