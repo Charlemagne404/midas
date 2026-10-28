@@ -449,6 +449,75 @@ def test_collection_api_quarantines_held_runs_and_blocks_start_and_resume(tmp_pa
         asyncio.run(http_client.aclose())
 
 
+def test_collection_api_rejects_corrupt_checkpoint_without_source_access(tmp_path):
+    from midas.frontier.collection import capability_manifest_sha256
+
+    from tests.frontier.test_collection import (
+        CollectionCheckpoint,
+        CollectionJournal,
+        CollectionRunSpec,
+        FakeAdapter,
+    )
+
+    adapter = FakeAdapter()
+    registry = AdapterRegistry((adapter,))
+    store = FrontierStore(tmp_path / "frontier")
+    app = FastAPI()
+    app.include_router(router(store, registry))
+    client = TestClient(app)
+    run_id = "22222222-2222-4222-8222-222222222222"
+    journal = CollectionJournal(store.root)
+    spec = CollectionRunSpec(
+        run_id=run_id,
+        venue=Venue.POLYMARKET,
+        adapter_version=adapter.capabilities.adapter_version,
+        capability_manifest_sha256=capability_manifest_sha256(adapter.capabilities),
+        adapter_config=adapter.config,
+        market_limit=1,
+        book_limit=0,
+        book_depth=5,
+        max_evidence_bytes=4 * 1024 * 1024,
+        max_wall_seconds=30,
+        created_at_utc=T0,
+    )
+    checkpoint = CollectionCheckpoint(
+        run_id=run_id,
+        sequence=0,
+        updated_at_utc=T0,
+        state="paused",
+    )
+    journal.create_run(spec)
+    journal.append_checkpoint(checkpoint)
+    tampered = checkpoint.model_copy(update={"request_count": 1}).model_dump_json()
+    with sqlite3.connect(journal.path) as connection:
+        connection.execute("DROP TRIGGER collection_checkpoints_no_update")
+        connection.execute(
+            "UPDATE collection_checkpoints SET checkpoint_json = ? WHERE run_id = ?",
+            (tampered, run_id),
+        )
+        connection.execute(
+            """
+            CREATE TRIGGER collection_checkpoints_no_update
+            BEFORE UPDATE ON collection_checkpoints
+            BEGIN SELECT RAISE(ABORT, 'Collection checkpoints are append-only'); END;
+            """
+        )
+
+    try:
+        history = client.get("/api/frontier/collection-runs?limit=1")
+        assert history.status_code == 409
+        assert "integrity check failed" in history.json()["detail"]
+
+        resume = client.post(f"/api/frontier/collect/polymarket/{run_id}/resume")
+        assert resume.status_code == 409
+        assert "integrity check failed" in resume.json()["detail"]
+        assert adapter.transport.request_count == 0
+        assert adapter.discovery_calls == 0
+    finally:
+        client.close()
+        asyncio.run(registry.aclose())
+
+
 def _graph_fixture_edge(left: FrontierMarket, right: FrontierMarket) -> Relationship:
     left_id, right_id = sorted((left.canonical_id, right.canonical_id))
     relationship_id = hashlib.sha256(
