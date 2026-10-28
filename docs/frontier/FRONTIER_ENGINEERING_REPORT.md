@@ -2,6 +2,37 @@
 
 **Report date:** 2026-10-28
 
+## Host memory-pressure incident and Frontier admission — 2026-10-28 22:56 UTC
+
+The host experienced eight systemd-oomd kills between 23:23 and 23:43 CET.
+The journal attributes them to user-session memory pressure above 50% for
+more than 20 seconds with reclaim; the exact initiating workload mix remains
+unproven. The user hierarchy has no memory or swap ceiling. Large current file
+cache charges exist in Terminal, API, and Reality cgroups, so process RSS does
+not reflect total cgroup memory use.
+
+Two reversible containment changes are recorded: the auxiliary five-minute
+Veritas gap-detail replay timer is stopped, and the short Reality capacity
+monitor has runtime-only limits of `MemoryHigh=128M`, `MemoryMax=192M`, and
+`MemorySwapMax=0`. The capacity monitor's next scheduled run remains pending.
+Detailed evidence and rollback commands are in
+[the memory-pressure incident report](FRONTIER_MEMORY_PRESSURE_INCIDENT_2026-10-28.md).
+
+At 23:56 CET, host memory PSI was 0% avg10 / 1.35% avg300 `some`; available
+memory was 9.9 GiB and swap use remained 3.1/4 GiB. No newer OOM entries had
+appeared after 23:43:24. Reality (PID 1235804) and API (PID 1218662) were both
+active but remained within 0.21 MiB and 5.05 MiB of `MemoryHigh`, respectively.
+Reality's status file still had its 23:43:01 timestamp after the automatic
+restart, and startup replays the full recording before activating collection.
+Its resumed live capture is not verified; the archive manifest warnings also
+remain untouched.
+
+**Frontier admission remains static-only.** No tests, replay, source probes,
+or research batches ran during the incident. Defer compute work until Reality
+publishes fresh post-restart capture, both protected services regain
+meaningful headroom, and PSI stays low across multiple timer cycles. This
+brief quiet interval is not a resolution claim.
+
 ## Resource recheck after graph-layout change — 2026-10-28 22:42 UTC
 
 At 22:42:57Z, memory PSI had risen to 52.42% `some` / 45.66% `full` avg10
