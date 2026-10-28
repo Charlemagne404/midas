@@ -71,6 +71,25 @@ about 12 minutes after the last logged kill and at least six minutes after the
 gap timer stop; it is not a durable recovery signal. The Frontier test and
 research admission hold remains in effect.
 
+### Extended recovery check — 2026-10-28 22:57 UTC
+
+The three-hour oomd journal query also found two earlier pressure kills at
+21:51:21 (`midas-reality.service`, 54.27%) and 21:51:37 (`midas-api.service`,
+50.01%), bringing the observed total to ten across 21:51–23:43 CET. At
+23:57:49, no newer kills were present; host PSI was 0% avg10 / 1.06% `some`
+and 0.91% `full` avg300. Reality remained active at 1,207,611,392 /
+1,207,959,552 bytes `MemoryHigh` and its status remained stale from 23:43:01.
+Its restarted process had read 2.08 GB of the 12.13 GB recorded store before
+replay completion. API was active with 5.46 MiB `MemoryHigh` headroom. The
+capacity timer remained active for its next scheduled bounded run; the gap
+timer remained inactive and enabled. No test or source request was run.
+
+The current acceptance matrix was added at the top of
+`FRONTIER_ENGINEERING_REPORT.md`. Frontier remains **PARTIALLY VERIFIED**;
+source-independent static work continues, while test/replay admission remains
+closed pending Reality capture recovery and meaningful protected-service
+headroom.
+
 ## Resource recheck after graph-layout change — 2026-10-28 22:42 UTC
 
 A fresh admission sample at 22:42:57Z showed memory PSI had risen to 52.42%

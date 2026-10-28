@@ -2,9 +2,31 @@
 
 **Report date:** 2026-10-28
 
+## Current completion matrix — 2026-10-28 23:57 CET
+
+This is a current evidence classification, not a final completion claim. The
+dated implementation records below remain the detailed evidence; the
+[incident report](FRONTIER_MEMORY_PRESSURE_INCIDENT_2026-10-28.md) records the
+current host gate.
+
+| Component | Status | Current evidence and boundary |
+| --- | --- | --- |
+| Exchange-independent adapter core and Polymarket/Kalshi/Kraken/Coinbase adapters | IMPLEMENTED, LIVE VALIDATION PENDING | Fixture contracts cover four adapters; no current multi-venue public capture is claimed. Source-use holds remain. |
+| Canonical instruments and supported payoff semantics | PARTIALLY VERIFIED | Supported structures have model and invariant tests; this does not claim universal instrument support. |
+| Relationship graph, evidence binding, and review | PARTIALLY VERIFIED | Deterministic fixture relationships and pinned evidence are covered; a live cross-venue economic equivalence is not established. |
+| Candidate discovery and independent economic verification | PARTIALLY VERIFIED | Bounded mathematical fixtures and independent audits pass selected checks; no live eligible opportunity is demonstrated. |
+| Cross-venue costs, FX, capital, and execution uncertainty | PARTIALLY VERIFIED | Virtual models preserve unknown cost and applicability states; account-specific fees, jurisdiction, transfers, and execution remain unresolved. |
+| Collection, provenance, durable storage, and replay | IMPLEMENTED, LIVE VALIDATION PENDING | Fixture and captured Polymarket evidence paths exist; multi-venue live collection is held, and protected Reality recovery is currently unverified. |
+| Laboratory/Arena comparisons and bounded orchestration | PARTIALLY VERIFIED | Selected deterministic comparisons exist; full regression and endurance evidence remain incomplete. |
+| Native Frontier dashboard | PARTIALLY VERIFIED | The workspace and focused UI checks exist; the latest graph-layout assertion and full browser acceptance remain unverified. |
+| Broad regressions, resource endurance, and performance acceptance | DEFERRED | Held during the host memory incident; no stress run is authorized by this report. |
+| Live multi-venue source authorization and findings | BLOCKED | Kalshi, Kraken, and Coinbase retained research remain held; the worktree Polymarket probe flag is off. |
+| Production integration/deployment | DEFERRED | Frontier remains isolated; no protected service transition occurred. |
+| Project Frontier overall | PARTIALLY VERIFIED | The engine is substantial, but live cross-venue science, broad verification, recovery, endurance, and deployment gates remain open. |
+
 ## Host memory-pressure incident and Frontier admission — 2026-10-28 22:56 UTC
 
-The host experienced eight systemd-oomd kills between 23:23 and 23:43 CET.
+The host experienced ten systemd-oomd kills between 21:51 and 23:43 CET.
 The journal attributes them to user-session memory pressure above 50% for
 more than 20 seconds with reclaim; the exact initiating workload mix remains
 unproven. The user hierarchy has no memory or swap ceiling. Large current file
@@ -18,14 +40,14 @@ monitor has runtime-only limits of `MemoryHigh=128M`, `MemoryMax=192M`, and
 Detailed evidence and rollback commands are in
 [the memory-pressure incident report](FRONTIER_MEMORY_PRESSURE_INCIDENT_2026-10-28.md).
 
-At 23:56 CET, host memory PSI was 0% avg10 / 1.35% avg300 `some`; available
+At 23:57 CET, host memory PSI was 0% avg10 / 1.06% avg300 `some`; available
 memory was 9.9 GiB and swap use remained 3.1/4 GiB. No newer OOM entries had
 appeared after 23:43:24. Reality (PID 1235804) and API (PID 1218662) were both
-active but remained within 0.21 MiB and 5.05 MiB of `MemoryHigh`, respectively.
+active but remained within 0.33 MiB and 5.46 MiB of `MemoryHigh`, respectively.
 Reality's status file still had its 23:43:01 timestamp after the automatic
-restart, and startup replays the full recording before activating collection.
-Its resumed live capture is not verified; the archive manifest warnings also
-remain untouched.
+restart. The process had read 2.08 GB of its 12.13 GB recorded store; startup
+replays the full recording before activating collection. Its resumed live
+capture is not verified, and the archive manifest warnings remain untouched.
 
 **Frontier admission remains static-only.** No tests, replay, source probes,
 or research batches ran during the incident. Defer compute work until Reality

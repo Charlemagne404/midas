@@ -51,11 +51,14 @@ is too short to claim recovery.
 
 ### systemd-oomd kills
 
-All eight entries explicitly cite user-session memory pressure greater than
-50% for over 20 seconds with reclaim activity:
+The journal contains ten kills from 21:51 through 23:43 CET. All explicitly
+cite user-session memory pressure greater than 50% for over 20 seconds with
+reclaim activity:
 
 | CET | Killed unit/scope | User-session pressure |
 | --- | --- | ---: |
+| 21:51:21 | `midas-reality.service` | 54.27% |
+| 21:51:37 | `midas-api.service` | 50.01% |
 | 23:23:00 | `midas-api.service` | 57.60% |
 | 23:23:16 | `midas-veritas-gap-detail-v2.service` | 52.03% |
 | 23:28:28 | `midas-veritas-gap-detail-v2.service` | 63.62% |
@@ -251,6 +254,15 @@ Read-only validation after the containment actions confirmed:
   status timestamp remained 23:43:01 CET. The quiet period was about 12
   minutes after the last kill and at least six minutes after the gap timer
   stop, still too short to establish durable recovery.
+- A 23:57:49 recheck showed no new oomd kills, host PSI `some` 0.00% avg10 /
+  1.06% avg300 and `full` 0.00% avg10 / 0.91% avg300; user-session PSI
+  avg300 was 1.59% / 1.47%. Host swap remained 3.1/4 GiB used. API was
+  1,604,886,528 / 1,610,612,736 bytes at `MemoryHigh`; Reality was
+  1,207,611,392 / 1,207,959,552 bytes. Reality status was still unchanged
+  since 23:43:01. Its restarted PID had read 2.08 GB from storage by this
+  sample while `storage_bytes` in the pre-kill status was 12.13 GB. This
+  confirms replay work continues, but does not establish its completion time
+  or resumed capture.
 - API, Reality, Continental, Echo, RustDesk, and the SSH socket were observed
   active as described above. Reality’s fresh capture was not verified.
 - No stress test, service restart, cache drop, broad test suite, public source
