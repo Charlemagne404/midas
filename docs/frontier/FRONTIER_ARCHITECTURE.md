@@ -46,9 +46,12 @@ deriving tick and quantity steps; it rejects booleans, fractions, numeric
 strings, and out-of-range precision instead of coercing source metadata.
 
 The shared transport requests identity content encoding and rejects any other
-encoding on successful responses before body decoding. Production response
-streams are read as raw bytes against the configured byte cap; HTTP error bodies
-are also retained within that cap and keep their existing retry classification.
+encoding on successful responses without decoding it. Production streams are
+captured as raw bytes within the configured cap and retained as failure evidence
+when their encoding is unsupported; oversized bodies receive bounded rejection
+diagnostics. HTTP error bodies also retain raw bytes and keep their retry
+classification. Prebuffered encoded fixtures are rejected before HTTPX exposes
+decoded content.
 
 ### Dashboard loading
 

@@ -11352,3 +11352,37 @@ predates this change.
 | Full current-tree Frontier and legacy suites | PARTIALLY VERIFIED | The 505-case Frontier pass predates current adapter versions and transport; broader legacy regression remains unrun. |
 | Live multi-venue validation | BLOCKED | Source-use/retention holds remain; no live collection or cross-venue observation is claimed. |
 | Frontier overall | PARTIALLY VERIFIED | Scientific coverage, broad regression, endurance, protected recovery, and deployment remain incomplete. |
+
+## Bounded encoded-response evidence follow-up — 2026-10-28 20:08 UTC
+
+Commit `cdee9cee690b3e3982ffc16aa2abcaeebf8f40c4` improves the unsupported
+content-encoding path while preserving the raw-byte limit. For a live,
+streaming 2xx response, Frontier reads raw wire chunks only up to the existing
+cap, then rejects non-identity encoding without asking HTTPX to decode it. If
+the complete body fits the cap, its compressed bytes are stored in
+`FailedResponseEvidence`; an oversized body gets bounded rejection diagnostics.
+If an isolated `MockTransport` fixture has already buffered the response, the
+adapter rejects an encoded 2xx response before accessing the decoded-content
+property. The gzip test uses a 229-byte payload that expands to 200,000 bytes
+against a 1,024-byte cap and verifies exact compressed-byte evidence.
+
+The transport contract module passes **19/19** in 2.28 seconds pytest time
+(2.64 seconds wall), with 58,928 KiB peak RSS, zero swaps, and no socket
+messages. The full adapter fixture module passes **134/134** against this final
+transport in 2.88 seconds pytest time (3.27 seconds wall), with 61,028 KiB peak
+RSS, zero swaps, and no socket messages. Ruff and strict targeted mypy pass.
+No source requests or held data artifacts were accessed.
+
+The pre-test admission sample at `2026-10-28T20:07:38Z` measured memory PSI
+avg10/avg60 0%, I/O PSI `some` avg10/avg60 0%/0.04% and `full` 0%,
+`MemAvailable` 9,979,384 KiB, and `SwapFree` 47,968 KiB. Reality was
+1,207,795,712 / 1,207,959,552 bytes, 163,840 bytes below `MemoryHigh`; API was
+1,552,601,088 / 1,610,612,736 bytes. No broad suite was started.
+
+| Requirement | Status | Evidence and boundary |
+| --- | --- | --- |
+| Encoded response cap and evidence | COMPLETE AND VERIFIED | Fixture tests validate raw bounded capture and reject an encoded expansion without decompression. |
+| Current adapter fixture modules | COMPLETE AND VERIFIED | The 134-case adapter module passes against current adapter identifiers and final transport behavior. |
+| Full Frontier and legacy regression | PARTIALLY VERIFIED | The prior 505-case suite predates current versions; broad legacy regression remains unrun. |
+| Live multi-venue science | BLOCKED | Source-use and retention gates remain unresolved; no cross-venue live observation is claimed. |
+| Frontier overall | PARTIALLY VERIFIED | Broad regression, live market evidence, endurance, protected recovery, and deployment remain open. |

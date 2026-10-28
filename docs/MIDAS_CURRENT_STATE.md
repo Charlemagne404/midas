@@ -3536,3 +3536,22 @@ KiB and `SwapFree` was 44,056 KiB. Reality was at 1,207,709,696 /
 1,207,959,552 bytes (249,856 bytes below `MemoryHigh`); API was at
 1,551,216,640 / 1,610,612,736 bytes. No broad Frontier or legacy suite was
 started; the 505-case Frontier pass predates the latest adapter versions.
+
+## Encoded-response evidence follow-up — 2026-10-28 20:08 UTC
+
+Frontier commit `cdee9cee690b3e3982ffc16aa2abcaeebf8f40c4` now retains bounded
+raw bytes from in-cap streaming encoded 2xx responses in failure evidence, then
+rejects them without decompression; oversized bodies receive bounded
+diagnostics. Prebuffered encoded fixtures are rejected before reading decoded
+content. The transport module passes 19/19 in 2.28
+seconds pytest time (2.64 seconds wall; 58,928 KiB peak RSS), and the complete
+adapter fixture module passes 134/134 in 2.88 seconds pytest time (3.27 seconds
+wall; 61,028 KiB peak RSS). Both runs had zero swaps and socket messages. Ruff
+check/format and strict targeted mypy pass; no source request or held artifact
+access occurred.
+
+At the pre-run sample `2026-10-28T20:07:38Z`, memory PSI avg10/avg60 was 0%;
+I/O PSI `some` avg10/avg60 was 0%/0.04%, `full` was 0%. `MemAvailable` was
+9,979,384 KiB and `SwapFree` was 47,968 KiB. Reality was at 1,207,795,712 /
+1,207,959,552 bytes (163,840 bytes below `MemoryHigh`); API was at
+1,552,601,088 / 1,610,612,736 bytes. No broad suite was run.

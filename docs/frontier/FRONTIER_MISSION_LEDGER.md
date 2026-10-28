@@ -10451,3 +10451,39 @@ transport changes.
 **Next safe action:** continue source-independent review. Keep source-use holds
 and defer full regressions until Reality maintains a sustained margin below
 `MemoryHigh`.
+
+## Bounded encoded-response evidence follow-up — 2026-10-28 20:08 UTC
+
+Commit `cdee9cee690b3e3982ffc16aa2abcaeebf8f40c4` refines the encoded-response
+path. A successful response with a non-identity encoding is streamed as raw
+bytes under the existing size cap and rejected without decompression. If the
+entire body fits the cap, its compressed bytes are retained in failure evidence;
+an oversized body instead receives bounded rejection diagnostics. The
+prebuffered `MockTransport` fixture case rejects before accessing HTTPX's
+decoded content. The adversarial gzip fixture expands to 200,000 bytes but
+remains below the configured 1,024-byte cap on the wire; the adapter classifies
+the encoding and retains the exact compressed bytes.
+
+The current transport contract module passes **19/19** in 2.28 seconds pytest
+time (2.64 seconds wall), at 58,928 KiB peak RSS, zero swaps, and zero socket
+messages. The complete adapter fixture module passes **134/134** against this
+final transport in 2.88 seconds pytest time (3.27 seconds wall), at 61,028 KiB
+peak RSS, zero swaps, and zero socket messages. Ruff check/format and strict
+targeted mypy pass. No source requests or held artifact access occurred.
+
+The pre-run admission sample at `2026-10-28T20:07:38Z` had memory PSI
+avg10/avg60 0%; I/O PSI `some` avg10/avg60 0%/0.04% and `full` 0%.
+`MemAvailable` was 9,979,384 KiB and `SwapFree` 47,968 KiB. Reality was
+1,207,795,712 / 1,207,959,552 bytes (163,840 bytes below `MemoryHigh`); API
+was 1,552,601,088 / 1,610,612,736 bytes. No broad suite was started.
+
+| Requirement | Status | Current evidence and boundary |
+| --- | --- | --- |
+| Encoded successful response handling | COMPLETE AND VERIFIED | The 19 transport cases verify bounded raw failure evidence and no decompression for an expansion case. |
+| Current adapter fixture contracts | COMPLETE AND VERIFIED | All 134 adapter fixture cases pass against the final transport and adapter versions. |
+| Full Frontier and legacy regression suites | PARTIALLY VERIFIED | No post-change 505-case Frontier run or broad legacy regression is claimed. |
+| Live cross-venue evidence | BLOCKED | Source use/retention authorization remains unresolved; no public source was contacted. |
+
+**Next safe action:** continue source-independent review. Retain existing
+source-use holds and defer full regression while Reality remains near
+`MemoryHigh`.

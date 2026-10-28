@@ -205,10 +205,13 @@ than being coerced. The protected Reality recording and its evidence remain on
 separate roots.
 
 The shared `PublicReadTransport` requests `Accept-Encoding: identity` and
-rejects encoded 2xx responses before reading or decoding them. It streams raw
-response bytes through the configured size bound, so transparent gzip, deflate,
-Brotli, or Zstandard expansion cannot exceed the cap before validation. Bounded
-error bodies retain raw bytes for diagnostics and preserve retry behavior.
+reads production response streams as raw bytes through the configured size
+bound. Encoded 2xx responses that fit the cap are retained as raw failure
+evidence and rejected without decompression, so gzip, deflate, Brotli, or
+Zstandard expansion cannot exceed the cap before validation. Oversized bodies
+produce bounded rejection diagnostics. A prebuffered encoded test response is
+rejected before its decoded-content accessor is used. Bounded HTTP error bodies
+retain raw bytes for diagnostics and preserve retry behavior.
 
 Kalshi multivariate-event discovery is a separate explicit
 `POST /api/frontier/probe/kalshi/multivariate-events` operation. Supply exactly
