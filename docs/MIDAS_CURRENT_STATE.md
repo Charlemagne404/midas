@@ -3462,3 +3462,38 @@ At `2026-10-28T19:52:10Z`, memory PSI avg10/avg60 was 0%; I/O PSI avg10/avg60
 was 0.12%/0.05%. `MemAvailable` was 9,934,004 KiB. Reality was active at
 1,208,176,640 / 1,207,959,552 bytes (about 212 KiB over `MemoryHigh`); API was
 active at 1,543,274,496 / 1,610,612,736 bytes. No broad test run was started.
+
+## Coinbase trade adapter checkpoint — 2026-10-28 19:53 UTC
+
+Frontier commit `fe37b971848441f81cc5fc5f64d4cd594bf025a3` advances the
+Coinbase Exchange Spot adapter to version 3. It validates exact bounded page
+size, int32 native trade IDs, the documented `buy`/`sell` maker side, positive
+price/size, and timestamps; it leaves maker side unset as normalized
+aggressor direction. The Coinbase fixture module passes 23/23 in 0.83 seconds
+pytest time (1.30 seconds wall), with 77,172 KiB peak RSS, zero swaps and no
+sockets. Ruff and targeted mypy pass. The existing TestClient deprecation is
+the only warning. Tests are fixture-only; the Coinbase terms/use hold remains
+and no public request was made.
+
+At `2026-10-28T19:53:53Z`, memory and I/O PSI avg10/avg60 were 0%;
+`MemAvailable` was 9,900,104 KiB. Reality was active at 1,207,808,000 /
+1,207,959,552 bytes (151,552 bytes below `MemoryHigh`); API was at
+1,542,787,072 / 1,610,612,736 bytes. No broad suite was run; the 505-case
+Frontier suite predates the latest adapter versions.
+
+## Kraken OHLC parser checkpoint — 2026-10-28 19:55 UTC
+
+Frontier commit `adda6fcee9f81d16a71b99e9a5175f176e468f71` advances Kraken
+Spot to version 7. OHLC rows must have exactly eight source fields and now
+validate timestamp, nonnegative numeric values, OHLC range consistency, and
+integer nonnegative trade counts. Malformed rows return a classified adapter
+error while retaining raw capture. All Kraken-specific cases pass 25/25 in
+1.03 seconds pytest time (1.41 seconds wall), at 65,896 KiB peak RSS, zero
+swaps and no sockets. Ruff and targeted mypy pass. This is fixture-only; no
+Kraken source request or held artifact read occurred. The full adapter file's
+115-case pass and the full Frontier suite predate v7.
+
+At `2026-10-28T19:55:46Z`, memory PSI avg10/avg60 was 0%; I/O PSI `some`
+avg10/avg60 was 0.05%/0.04%. `MemAvailable` was 9,902,860 KiB. Reality was
+1,207,746,560 / 1,207,959,552 bytes (212,992 bytes below `MemoryHigh`); API
+was 1,550,843,904 / 1,610,612,736 bytes. No broad suite was run.

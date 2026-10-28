@@ -10310,3 +10310,67 @@ suite was started.
 
 **Next safe action:** continue source-independent audit and defer further test
 loads until Reality has a sustained margin below `MemoryHigh`.
+
+## Coinbase public-trade contract validation — 2026-10-28 19:53 UTC
+
+Commit `fe37b971848441f81cc5fc5f64d4cd594bf025a3` advances Coinbase Exchange
+Spot to `frontier-coinbase-exchange-spot-3`. `fetch_trades` now rejects boolean
+or out-of-range page limits and any response larger than the requested page.
+It validates Coinbase's documented int32 `trade_id`, required `buy`/`sell`
+maker side, positive price/size, and timestamp. It emits schema-v2 trades with
+the native product ID; maker side remains only in raw evidence and is not
+misrepresented as aggressor direction.
+
+The full Coinbase fixture module passes **23/23** in 0.83 seconds pytest time
+(1.30 seconds wall), with 77,172 KiB peak RSS, zero swaps, and zero socket
+messages. Ruff check/format and targeted mypy pass. The only warning is the
+existing Starlette/httpx `TestClient` deprecation. Tests use a local mock
+transport; no Coinbase request or held capture was read. The explicit terms
+version acknowledgement does not remove the Coinbase source-use hold.
+
+At `2026-10-28T19:53:53Z`, memory PSI avg10/avg60 and I/O PSI avg10/avg60 were
+0%. `MemAvailable` was 9,900,104 KiB and `SwapFree` 43,848 KiB. Reality was
+1,207,808,000 / 1,207,959,552 bytes (151,552 bytes below `MemoryHigh`); API was
+1,542,787,072 / 1,610,612,736 bytes. No broad suite was started. The prior
+505-case Frontier suite predates Kalshi v20, Kraken v6, Polymarket v9, and
+Coinbase v3.
+
+| Requirement | Status | Current evidence and boundary |
+| --- | --- | --- |
+| Coinbase trade-page contract and maker-side semantics | COMPLETE AND VERIFIED | The fixture module passes 23/23; int32 identity, maker-side enum, timestamps, positive amounts, page bounds, and no aggressor inference are checked. |
+| Live Coinbase market-data use | BLOCKED | Current legal/terms and intended-scope hold remains; no public request was made. |
+| Full current-tree Frontier Python suite | PARTIALLY VERIFIED | The previous 505-case pass predates the latest adapter versions; no current full-suite pass is claimed. |
+| Project Frontier overall | PARTIALLY VERIFIED | Current cross-venue science, broad regression, endurance, protected recovery, and deployment remain incomplete. |
+
+**Next safe action:** continue offline adapter/API review and retain the
+Coinbase source-use gate. Do not schedule a broad suite near Reality's soft
+memory boundary.
+
+## Kraken OHLC tuple validation — 2026-10-28 19:55 UTC
+
+Commit `adda6fcee9f81d16a71b99e9a5175f176e468f71` advances Kraken Spot to
+`frontier-kraken-spot-7`. Its OHLC parser now requires exactly eight native
+tuple fields, a valid timestamp, nonnegative OHLC/VWAP/volume values, consistent
+high/low/open/close bounds, and an actual nonnegative integer trade count.
+Malformed rows return the adapter's `INVALID_CANDLES` error while the raw
+response remains captured. The prior exact-pair-key check remains in place.
+
+All Kraken-specific adapter cases pass **25/25** in 1.03 seconds pytest time
+(1.41 seconds wall), with 65,896 KiB peak RSS, zero swaps, and zero socket
+messages. Ruff check/format and targeted mypy pass. These are mock fixtures;
+no Kraken source request or held capture was read. The full adapter file's
+115-case pass predates this v7 change, and the 505-case Frontier suite predates
+Kalshi v20, Kraken v7, Polymarket v9, and Coinbase v3.
+
+At `2026-10-28T19:55:46Z`, memory PSI avg10/avg60 was 0%; I/O PSI `some`
+avg10/avg60 was 0.05%/0.04% and `full` was 0%. `MemAvailable` was 9,902,860
+KiB. Reality was active at 1,207,746,560 / 1,207,959,552 bytes (212,992 bytes
+below `MemoryHigh`); API was at 1,550,843,904 / 1,610,612,736 bytes. No broad
+suite was started.
+
+| Requirement | Status | Current evidence and boundary |
+| --- | --- | --- |
+| Kraken OHLC source tuple validation | COMPLETE AND VERIFIED | 25 Kraken adapter tests pass, including valid eight-field normalization, malformed tuple/value rejection, and exact pair key binding. Fixture-only. |
+| Current full adapter and Frontier suites | PARTIALLY VERIFIED | Full adapter 115/115 predates Kraken v7; the 505-case suite predates the latest adapter versions. |
+| Live Kraken data use | BLOCKED | Research/retention authorization remains unresolved; no source request was made. |
+| Project Frontier overall | PARTIALLY VERIFIED | Cross-venue science, broad regression, endurance, protected recovery, and deployment remain incomplete. |

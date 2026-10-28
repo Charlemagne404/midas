@@ -11209,3 +11209,67 @@ No further broad test was started at this sample.
 | Full current-tree Frontier Python suite | PARTIALLY VERIFIED | 505/505 passed before the v20 one-shot parser hardening; after that change the complete adapter file passes 90/90. |
 | Genuine Kalshi cross-venue observation | BLOCKED | Source-use policy remains in force; fixtures and documentation are not live-market evidence. |
 | Frontier project overall | PARTIALLY VERIFIED | Production recovery, broad legacy regression, live cross-venue science, endurance, and deployment remain open. |
+
+## Coinbase trade-page normalization audit — 2026-10-28 19:53 UTC
+
+Commit `fe37b971848441f81cc5fc5f64d4cd594bf025a3` advances Coinbase Exchange
+Spot to adapter v3. The trade reader now rejects booleans for the page limit,
+responses larger than the requested page, string/boolean/negative/oversized
+trade IDs, missing or unsupported maker-side values, and missing timestamps.
+It emits `TradeObservation` schema v2 with the product identity. Coinbase's
+official [Get product trades](https://docs.cdp.coinbase.com/api-reference/exchange-api/rest-api/products/get-product-trades)
+reference specifies a required int32 trade ID and `buy`/`sell` side; its side
+description says this is the maker order side. Frontier keeps that value in raw
+evidence and leaves normalized `aggressor_side` unset. Price and size remain
+exact Decimal inputs and must be positive.
+
+The complete Coinbase fixture module passes **23/23** in 0.83 seconds pytest
+time (1.30 seconds wall), with 77,172 KiB peak RSS, zero swaps, and zero socket
+messages. Ruff check/format and targeted mypy pass. The only warning is the
+existing Starlette/httpx `TestClient` deprecation. The test transport is local;
+there was no live Coinbase request or held source artifact access. Current
+terms and intended-scope checks still block Coinbase data use.
+
+The full 505-case Frontier suite predates Kalshi v20, Kraken v6, Polymarket v9,
+and Coinbase v3. At `2026-10-28T19:53:53Z`, Reality was 151,552 bytes below
+`MemoryHigh`; memory and I/O PSI avg10/avg60 were 0%. No broader suite was
+started.
+
+| Requirement | Status | Evidence and boundary |
+| --- | --- | --- |
+| Coinbase trade-page parser contract | COMPLETE AND VERIFIED | Fixture module passes 23/23 for the official int32 ID, maker-side enum, page limit, required timestamp, and positive amounts. |
+| Live Coinbase adapter validation | BLOCKED | Source-use terms and intended scope remain unresolved; no request was made. |
+| Full post-hardening Frontier suite | PARTIALLY VERIFIED | The prior 505-case pass predates current adapter versions. |
+| Frontier overall | PARTIALLY VERIFIED | Broad regression, genuine live cross-venue science, endurance, protected recovery, and deployment remain open. |
+
+## Kraken OHLC row parser audit — 2026-10-28 19:55 UTC
+
+Commit `adda6fcee9f81d16a71b99e9a5175f176e468f71` advances Kraken Spot to
+`frontier-kraken-spot-7`. The REST OHLC parser requires exactly the eight
+documented tuple values, parses the timestamp, validates finite nonnegative
+prices/VWAP/volume, checks that open and close lie within low/high, and accepts
+only a nonnegative JSON integer for trade count. Invalid input is classified
+as `INVALID_CANDLES` before constructing the typed series; the bounded raw
+response remains captured. The earlier exact native pair key check is also
+required.
+
+All Kraken-named adapter tests pass **25/25** in 1.03 seconds pytest time
+(1.41 seconds wall), at 65,896 KiB peak RSS, zero swaps, and no socket
+messages. Ruff check/format and targeted mypy pass. The tests use local mock
+responses; there was no live request or held data access. The official
+[Kraken Get OHLC Data](https://docs.kraken.com/api-reference/market-data/get-ohlc-data)
+page shows an eight-value candle array and states that the latest candle may
+be incomplete; Frontier continues to disclose that condition in the series
+limit note.
+
+The complete adapter file's 115-case pass predates this v7 change. The full
+505-case Frontier suite predates Kalshi v20, Kraken v7, Polymarket v9, and
+Coinbase v3. At `2026-10-28T19:55:46Z`, Reality had only 212,992 bytes below
+`MemoryHigh`; memory PSI avg10/avg60 was 0%. No broad suite was started.
+
+| Requirement | Status | Evidence and boundary |
+| --- | --- | --- |
+| Kraken OHLC parser contract | COMPLETE AND VERIFIED | 25 Kraken-specific fixture tests pass, covering exact eight-field rows, timestamps, nonnegative amounts, OHLC consistency, counts, and native-key binding. |
+| Full current-tree adapter/Frontier suites | PARTIALLY VERIFIED | Earlier full passes predate v7 and the latest other adapter versions. |
+| Live Kraken OHLC validation | BLOCKED | Source-use/retention scope remains unresolved; no request was made. |
+| Frontier overall | PARTIALLY VERIFIED | Broad regression, live cross-venue evidence, endurance, protected recovery, and deployment remain open. |
