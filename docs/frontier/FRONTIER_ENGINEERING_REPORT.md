@@ -7697,3 +7697,37 @@ source, production service, worker, or protected store.
 | Independent audit timestamp validation | COMPLETE AND VERIFIED | Candidate and pinned-book naive-time regressions return incomplete; final API module and static checks pass. |
 | Exact-commit economics/storage module rerun | PARTIALLY VERIFIED | 74 cases passed after recursive preflight; the final runtime type guard still needs that bounded rerun. |
 | Frontier project acceptance | PARTIALLY VERIFIED | This integrity fix does not establish live economic equivalence, unrestricted source permission, production recovery, or deployment eligibility. |
+
+## Price-history replay input revalidation — 2026-10-28 08:02 UTC
+
+Commit `dd4882d` makes the descriptive price-history replay validate every
+bounded capture again from `model_dump(mode="python")` before it sorts,
+compares, hashes, or converts timestamps to epoch seconds. This specifically
+closes a nested `model_copy(update=...)` path that could place a naive point in
+an otherwise validated `PriceHistoryReplayInput`. The normalized replay
+identity advances to `frontier-price-history-replay-2`; persisted store schema
+and historical rows remain unchanged.
+
+Verification on the final code:
+
+- `tests/frontier/test_historical_replay.py`: **5/5 passed**, including the
+  nested naive-time regression, deterministic ordering, immutable persistence,
+  and schema-six migration.
+- The fixture-backed Polymarket price-history API probe/replay case: **1/1
+  passed** with its transport mocked.
+- Ruff, Ruff format, strict mypy for `historical_replay.py`, and
+  `git diff --check`: passed.
+- The API test emitted the existing Starlette/httpx `TestClient` deprecation
+  warning.
+
+At `2026-10-28T08:01:50Z`, memory PSI avg10 was **0.00% some/full** and I/O PSI
+avg10 was **1.09% some / 0.68% full**, with approximately **10 GiB** available.
+Because I/O `some` was slightly above the 1% gate, no additional suite was
+started from this checkpoint. No live source, worker, protected store, or
+production service was accessed.
+
+| Component | Status | Current evidence and remaining boundary |
+| --- | --- | --- |
+| Reconstructed price-history input handling | COMPLETE AND VERIFIED | Nested naive points are rejected by model revalidation before replay arithmetic and hashing. |
+| Price-history replay/API integration | COMPLETE AND VERIFIED | Five replay tests and one mocked API replay case pass; new outputs are version 2. |
+| Frontier project acceptance | PARTIALLY VERIFIED | Live equivalent-market evidence, held-source approvals, broad resource/recovery, and deployment remain outstanding. |

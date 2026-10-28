@@ -6447,3 +6447,40 @@ store, or production service was accessed.
 **Next safe action:** when a fresh host sample admits work, rerun the economics
 and storage modules against the exact final commit; continue source-independent
 review without source requests or production changes while admission is closed.
+
+## Descriptive history replay revalidation — 2026-10-28 08:02 UTC
+
+**Stage:** E (bounded historical replay and deterministic evidence).
+**Code commit:** `dd4882d` on `codex/frontier-20261026`.
+
+The historical price-point model rejects naive timestamps during ordinary
+validation, but `model_copy(update=...)` could bypass that validation for a
+nested point. `deterministic_price_history_replay` now reconstructs each bounded
+`PriceHistoryReplayInput` from its serialized model payload before sorting,
+hashing, comparing point times, or calling `.timestamp()`. This revalidates the
+outer capture, series, provenance, and every point. The replay identity version
+advances from v1 to v2; store schema and historical rows are unchanged.
+
+The price-history replay module passed **5/5**, covering deterministic ordering,
+capture and size bounds, the new nested naive-time regression, append-only
+storage, and schema-6 migration. The fixture-backed price-history API probe and
+replay test passed **1/1** after the change. Ruff, Ruff format, strict mypy for
+`historical_replay.py`, and `git diff --check` passed. The API test emitted the
+existing Starlette/httpx `TestClient` deprecation warning; its source transport
+was mocked.
+
+At `2026-10-28T08:01:50Z`, memory PSI avg10 was **0.00% some/full**, I/O PSI
+avg10 was **1.09% some / 0.68% full**, and about **10 GiB** was available. The
+shared-host I/O some average was slightly above the 1% test gate, so additional
+tests remain deferred pending a fresh admitted sample. No public source,
+protected store, worker, or production service was accessed.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Historical point-time validation before replay | COMPLETE AND VERIFIED | Nested naive points reject through model revalidation; 5 replay tests and the API route test pass. |
+| Historical replay versioning | COMPLETE AND VERIFIED | New inputs carry replay v2; immutable store schema and old records were not changed. |
+| Frontier overall | PARTIALLY VERIFIED | This descriptive replay guard does not close live cross-venue, source-policy, production-recovery, or deployment gates. |
+
+**Next safe action:** after a fresh low-I/O sample, rerun the exact-commit
+economics/storage slices left pending above; keep source requests and protected
+production changes held.

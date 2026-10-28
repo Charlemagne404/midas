@@ -1921,3 +1921,18 @@ Afterward, at 07:57:51 UTC, memory PSI avg10 was 0%, I/O PSI was **7.28% some /
 5.30% full**, and about **10 GiB** remained available. The broader post-commit
 economics/storage rerun is deferred. No source, production service, worker, or
 protected store was accessed. Frontier remains **PARTIALLY VERIFIED**.
+
+### Price-history replay timestamp revalidation — 2026-10-28 08:02 UTC
+
+Commit `dd4882d` revalidates each serialized bounded price-history capture
+before deterministic replay. That closes a nested-model-copy path where a
+naive historical point could reach `.timestamp()` and be interpreted in the
+host timezone. New outputs identify the behavior as replay v2. The history
+replay module passes **5/5**, including the new nested timestamp rejection,
+append-only storage, and schema migration cases; its API probe/replay test
+passes **1/1**. Ruff, Ruff format, strict mypy for `historical_replay.py`, and
+`git diff --check` pass. At 08:01:50 UTC, memory PSI avg10 was 0%, I/O PSI
+avg10 was **1.09% some / 0.68% full**, and about **10 GiB** was available. The
+route test used a mocked source transport. No source, protected store, worker,
+or production service was accessed. Frontier remains research-only and
+**PARTIALLY VERIFIED**.

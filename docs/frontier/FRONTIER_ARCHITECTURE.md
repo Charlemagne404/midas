@@ -172,10 +172,13 @@ normalized inputs with its replay and backend-code versions, and produces one
 append-only result keyed by that pinned input manifest. It reports returned
 point count, sampled Decimal minimum and maximum, first/last point timestamps,
 span, maximum adjacent returned-point gap, and point timestamps later than
-local receipt. It does not create order quotes, fill assumptions, opportunity
-candidates, or economic claims. A large adjacent gap is descriptive; it does
-not estimate missing points because the source has not established a complete
-sampling cadence.
+local receipt. Replay v2 revalidates each bounded capture and its nested series
+from the serialized model payload before hashing or epoch conversion. This
+prevents a reconstructed model copy that bypassed field validation from making
+naive points depend on the host timezone. It does not create order quotes, fill
+assumptions, opportunity candidates, or economic claims. A large adjacent gap
+is descriptive; it does not estimate missing points because the source has not
+established a complete sampling cadence.
 
 These artifacts use a separate `price_history_replays` table with immutable
 update/delete triggers. Store schema 7 creates it and upgrades a schema 6 store
