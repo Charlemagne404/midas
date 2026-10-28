@@ -7807,8 +7807,8 @@ job was started. The suite uses local fixtures and temporary test state.
 
 ## Nested price-history point revalidation — 2026-10-28 08:09 UTC
 
-Commit `2e73476` closes a nested-instance validation gap in the canonical
-`PriceHistorySeries` model. Pydantic's default nested-instance behavior could
+Commits `2e73476` and `aa88b03` close and type-check a nested-instance
+validation fix in the canonical `PriceHistorySeries` model. Pydantic's default nested-instance behavior could
 skip validation for a previously constructed `HistoricalPricePoint`, including
 an instance changed with `model_copy(update=...)`. The series validator then
 used `.timestamp()` for range checks, so a copied naive timestamp could be
@@ -7818,8 +7818,8 @@ A field pre-validator now serializes nested point instances to Python payloads
 before normal nested parsing. Existing UTC and `SettlementScalar` bounds are
 therefore rerun before the series order/range checks. The historical replay
 module passes **6/6**, the adapter module passes **68/68**, and the targeted
-history-probe/replay API case passes **1/1**. Ruff check, Ruff format, and
-`git diff --check` pass. The six-case module completed in **1.81 seconds**,
+history-probe/replay API case passes **1/1**. Strict configured mypy passes for
+`models.py`. Ruff check, Ruff format, and `git diff --check` pass. The six-case module completed in **1.81 seconds**,
 maximum RSS **57,708 KiB**, with zero process swaps. At
 `2026-10-28T08:11:12Z`, memory PSI avg10 was **0.00%**, I/O PSI avg10 was
 **0.90% some / 0.74% full**, and approximately **10 GiB** was available. Tests

@@ -6574,7 +6574,8 @@ test or replay workloads while shared I/O remains above the admission gate.
 ## Nested price-history point revalidation — 2026-10-28 08:09 UTC
 
 **Stage:** E/G (canonical model validation and timestamp integrity).
-**Code commit:** `2e73476` on `codex/frontier-20261026`.
+**Code commits:** `2e73476` (validator and regression) and `aa88b03` (test
+return annotation) on `codex/frontier-20261026`.
 
 Source review found that Pydantic does not revalidate an already-instantiated
 nested model by default. A `HistoricalPricePoint.model_copy(update=...)` with a
@@ -6587,8 +6588,9 @@ run again before series checks.
 The historical-replay module passes **6/6**, including regressions for both a
 naive copied timestamp and a copied out-of-range price. The adapter module
 passes **68/68**, and the targeted history-probe/replay API case passes **1/1**.
-Ruff check, Ruff format, and `git diff --check` pass. The six-case history
-module completed in 1.81 seconds with **57,708 KiB** maximum RSS and zero swaps.
+Ruff check, Ruff format, and `git diff --check` pass. Configured strict mypy
+passes for `packages/midas/frontier/models.py`. The six-case history module
+completed in 1.81 seconds with **57,708 KiB** maximum RSS and zero swaps.
 At `2026-10-28T08:11:12Z`, memory PSI avg10 was **0.00%**, I/O PSI avg10 was
 **0.90% some / 0.74% full**, and about **10 GiB** was available. All tests used
 temporary or mocked state and accessed no live source, worker, protected store,

@@ -1976,12 +1976,13 @@ test or replay work waits for a fresh admitted sample.
 
 ### Nested price-history point revalidation — 2026-10-28 08:09 UTC
 
-Commit `2e73476` closes a nested-instance validation gap in `PriceHistorySeries`:
-copied point models are reparsed before timestamp range checks, so a naive
+Commits `2e73476` and `aa88b03` close and type-check a nested-instance
+validation gap in `PriceHistorySeries`: copied point models are reparsed before timestamp range checks, so a naive
 timestamp or invalid price cannot bypass `HistoricalPricePoint` validators.
 The historical-replay module passes **6/6**, the adapter module passes **68/68**,
-and the targeted history-probe/replay API case passes **1/1**. Ruff check, Ruff
-format, and `git diff --check` pass. At 08:11:12 UTC, memory PSI avg10 was 0%,
+and the targeted history-probe/replay API case passes **1/1**. Strict configured
+mypy passes for `models.py`; Ruff check, Ruff format, and `git diff --check`
+pass. At 08:11:12 UTC, memory PSI avg10 was 0%,
 I/O PSI avg10 was **0.90% some / 0.74% full**, and about 10 GiB was available.
 The history module took 1.81 seconds, peaked at 57,708 KiB RSS, and used no
 swap. The tests used temporary or mocked state. The API case emitted the
