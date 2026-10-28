@@ -2,6 +2,30 @@
 
 **Report date:** 2026-10-28
 
+## Atomic collection startup persistence — 2026-10-28 12:16 UTC
+
+Commit `36546cd` fixes a crash window in finite collection startup. The run
+specification and initial `created` checkpoint now commit in one SQLite
+transaction. A failure to append the checkpoint rolls back the run record, and
+no source request starts before that transaction commits. The regression
+injects a temporary database trigger failure and checks that neither row
+remains; the success-path collection test checks that sequence zero is
+`created`.
+
+Ruff check, Ruff format check, and `git diff --check` pass. Runtime tests and
+strict typing are pending. At `12:16:41Z`, memory PSI avg10 was **25.94% some /
+18.04% full**, I/O PSI was **4.83% some / 3.18% full**, about **10 GiB** was
+available, and host swap was **3.5/4 GiB** used. No test, source request,
+service action, or protected-store operation ran under this sample. The
+untracked public-capture directory remains untouched.
+
+| Requirement | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Atomic collection run/checkpoint creation | IMPLEMENTED, VALIDATION PENDING | `36546cd`; rollback and success-path regressions are added but not yet run. |
+| Exact current Frontier suite | PARTIALLY VERIFIED | The 420/420 result at 11:55 UTC predates later collection and fixture changes; rerun after resource admission. |
+| Strict mypy on collection startup | DEFERRED | Run on the exact current tree after the host gate clears. |
+| Frontier overall | PARTIALLY VERIFIED | Genuine cross-venue research evidence, full legacy/browser acceptance, production recovery, and deployment remain open. |
+
 ## Broader MIDAS verification gate — 2026-10-28 11:57 UTC
 
 The exact Frontier suite and strict mypy are verified as recorded below. A

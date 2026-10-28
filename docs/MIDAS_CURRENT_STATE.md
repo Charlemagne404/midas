@@ -33,6 +33,21 @@ in the dated addendum below and in the Frontier engineering report.
 
 ## Frontier development addendum — 2026-10-28
 
+### Latest isolated Frontier checkpoint — 2026-10-28 12:16 UTC
+
+Commit `36546cd` makes creation of a finite collection run and its initial
+checkpoint atomic. A failed checkpoint insert rolls back the run record, and
+source requests begin only after both rows commit. The trigger-based rollback
+regression and successful initial-state assertion are implemented. Ruff and
+format checks pass; runtime tests and strict typing are pending.
+
+At 12:16:41Z memory PSI avg10 was 25.94% some / 18.04% full and I/O PSI was
+4.83% some / 3.18% full. About 10 GiB was available, with 3.5/4 GiB swap in
+use. No tests were launched under that pressure. The 420/420 Frontier result
+predates the latest code and fixture changes. The untracked public-capture
+directory remains untouched. Frontier remains **PARTIALLY VERIFIED**,
+research-only, and undeployed.
+
 ### Latest isolated Frontier checkpoint — 2026-10-28 12:12 UTC
 
 Test commit cd248ce corrects the research-schedule fixture to patch the same
