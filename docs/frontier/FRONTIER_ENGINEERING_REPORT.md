@@ -11482,12 +11482,13 @@ metadata, and the instrument IDs against the native v1 `clobTokenIds` or v2
 transport.
 
 The combined `test_adapters.py -k 'kalshi or polymarket'` selection passes
-**104 tests** with 61 deselected in 2.64 seconds pytest time (3.04 seconds
-wall). Maximum RSS was 66,956 KiB, with zero swaps and zero socket messages.
+**105 tests** with 61 deselected in 2.64 seconds pytest time (3.03 seconds
+wall). Maximum RSS was 67,372 KiB, with zero swaps and zero socket messages.
 The selection includes 8 Kalshi market-corruption cases, 3 invalid-depth
-cases, and 12 Polymarket market-corruption cases. Ruff check/format and strict
-mypy pass for the changed modules. The run used fixture-only `MockTransport`
-responses; it is not live exchange validation.
+cases, 12 Polymarket market-corruption variants, and a v2 `positionIds`
+mismatch rejection. Ruff check/format and strict mypy pass for the changed
+modules. The run used fixture-only `MockTransport` responses; it is not live
+exchange validation.
 
 No current full backend regression was run. The latest protected-service
 sample recorded for this checkpoint is `2026-10-28T20:25:57Z`: Reality was

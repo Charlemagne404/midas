@@ -10671,13 +10671,14 @@ the native market ID, condition ID, protocol, quote/settlement identities,
 outcome order, and instrument IDs to the retained v1 `clobTokenIds` or v2
 `positionIds` list.
 
-The adapter fixture selection passes **104 tests**, with 61 deselected, in
-2.64 seconds pytest time (3.04 seconds wall), at 66,956 KiB maximum RSS, zero
+The adapter fixture selection passes **105 tests**, with 61 deselected, in
+2.64 seconds pytest time (3.03 seconds wall), at 67,372 KiB maximum RSS, zero
 swaps, and zero socket messages. It includes 8 corrupt Kalshi-market cases,
-3 invalid Kalshi depth cases, and 12 corrupt Polymarket-market cases. Ruff
-check and formatting pass; strict mypy reports no issues in both adapters.
-All source responses came from local `MockTransport` fixtures. No public
-exchange request was made.
+3 invalid Kalshi depth cases, 12 Polymarket market-corruption variants, and
+one additional v2 `positionIds` mismatch rejection. Ruff check and formatting
+pass; strict mypy reports no issues in both adapters. All source responses
+came from local `MockTransport` fixtures. No public exchange request was
+made.
 
 The latest protected-service sample for this checkpoint remains the prior
 dated reading at `2026-10-28T20:25:57Z`: Reality was 65,536 bytes below
@@ -10687,7 +10688,7 @@ broad backend regression.
 
 | Requirement | Status | Evidence and boundary |
 | --- | --- | --- |
-| Kalshi and Polymarket book input binding | COMPLETE AND VERIFIED | Native outcome and contract metadata corruption is rejected before book I/O; 104 focused fixtures pass. |
+| Kalshi and Polymarket book input binding | COMPLETE AND VERIFIED | Native outcome and contract metadata corruption is rejected before book I/O; 105 focused fixtures pass. |
 | Kalshi and Polymarket live book validation | BLOCKED | Source-use/retention scope remains unresolved; MockTransport fixtures do not establish live behavior. |
 | Current full Frontier/legacy regression | PARTIALLY VERIFIED | The focused adapter selection passes; broad regressions remain deferred under the protected-service resource gate. |
 | Project Frontier overall | PARTIALLY VERIFIED | Live cross-venue evidence, broad regression, endurance, protected recovery, and deployment remain incomplete. |
