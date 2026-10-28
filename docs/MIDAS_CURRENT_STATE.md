@@ -33,6 +33,23 @@ in the dated addendum below and in the Frontier engineering report.
 
 ## Frontier development addendum — 2026-10-28
 
+### Latest isolated Frontier checkpoint — 2026-10-28 08:34 UTC
+
+The complete default browser suite was rerun against the latest chart
+implementation and observer-fallback test: **17 passed, 2 expected seeded-only
+skips**. The complete web unit suite passes **47/47**; full-project ESLint,
+Prettier, TypeScript, and production build pass. Playwright used only isolated
+loopback demo services and temporary state; it left no test server listening.
+The existing seeded Frontier/Arena browser run remains **2/2**.
+
+The latest production Chart chunk is **544.51 kB** minified (**186.79 kB gzip**)
+and remains deferred until its viewport region approaches view. This changes
+load timing and reuses mounted chart instances; it does not reduce total bundle
+size. Frontier's Python suite remains **379/379**. Live source validation,
+full MIDAS regression, production recovery, and deployment remain open.
+Frontier is **PARTIALLY VERIFIED** and remains isolated, research-only,
+unmerged, and undeployed.
+
 ### Latest isolated Frontier checkpoint — 2026-10-28 08:32 UTC
 
 Test commit `c04f699` adds the missing-browser-capability check for deferred

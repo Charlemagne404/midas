@@ -1,5 +1,26 @@
 # Project Frontier Mission Ledger
 
+## Full browser regression after chart lifecycle update — 2026-10-28 08:34 UTC
+
+After commits `6c13b47` and `c04f699`, the default Playwright browser suite
+passes **17/17 executed tests**, with its two seeded-only cases skipped as
+expected. It was run with one worker against the configured temporary root,
+disposable local demo API, and Vite server. The tests covered deferred-load
+network timing, Mission Control chart rendering, Arena, Reality, Frontier,
+Laboratory, Readiness, Paper, and Veritas flows. No source probe, production
+service, or protected store was used; no test server remained listening.
+
+The complete web unit suite is **47/47**; full-project ESLint and Prettier,
+TypeScript, and the production build pass. The latest build retains the 544.51
+kB minified Chart chunk (186.79 kB gzip); this work defers its request until
+needed and reuses the mounted instance without reducing total bundle size.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Full default browser suite at latest chart code | COMPLETE AND VERIFIED | 17 tests pass; two opt-in seeded cases skip as expected. |
+| Full frontend unit suite | COMPLETE AND VERIFIED | 47 tests pass across nine files. |
+| Frontier project overall | PARTIALLY VERIFIED | Live source, full MIDAS regression, production recovery, and deployment remain open. |
+
 ## Deferred chart observer fallback — 2026-10-28 08:32 UTC
 
 Test commit `c04f699` covers `DeferredChart` in both environments: the module

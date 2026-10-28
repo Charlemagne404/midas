@@ -2,7 +2,7 @@
 
 **Report date:** 2026-10-28
 
-## Current status — 2026-10-28 08:32 UTC
+## Current status — 2026-10-28 08:34 UTC
 
 Frontier is isolated at `/home/charlie/midas-frontier` on
 `codex/frontier-20261026`. It descends from verified Veritas V6 integration
@@ -24,13 +24,13 @@ Current bounded verification:
   12.91% some / 10.15% full; the successful tmpfs run used a fresh host sample
   and recorded zero filesystem input. One existing Starlette/httpx `TestClient`
   deprecation warning remains.
-- The updated frontend passes **47/47** unit tests, TypeScript, ESLint,
-  Prettier, production build, **17** default Playwright cases with two expected
-  seeded-only skips, and the separate **2/2** seeded Frontier/Arena cases using
-  disposable local services and stores. After the subsequent chart lifecycle
-  update, targeted browser smoke and deferred-load cases pass **2/2**. The
-  latest build emitted a 368.81 kB entry, 182.75 kB Frontier chunk, and a
-  544.51 kB Chart/ECharts chunk.
+- The updated frontend passes **47/47** unit tests, TypeScript, full-project
+  ESLint and Prettier, production build, **17** default Playwright cases with
+  two expected seeded-only skips, and the separate **2/2** seeded Frontier/Arena
+  cases using disposable local services and stores. The full default browser
+  suite was rerun after the chart lifecycle and fallback changes against the
+  latest code. The build emitted a 368.81 kB entry, 182.75 kB Frontier chunk,
+  and a 544.51 kB Chart/ECharts chunk.
 - The new viewport-loading browser check observes no Chart module request while
   the chart is below the viewport, then one request after scrolling it into
   view. This defers transfer and parsing; it does not reduce the 544.51 kB
@@ -75,9 +75,9 @@ unit suite passes **47/47** in nine files, including viewport observer and
 no-observer fallback behavior. The production build passes
 TypeScript and Vite (2,230 modules; entry 368.81 kB, Frontier 182.75 kB, Chart
 544.51 kB / 186.79 kB gzip). The post-change Playwright chart smoke and deferred
-loading tests pass **2/2**. The full default browser suite at the immediately
-preceding viewport-loading checkpoint was **17 passed, 2 expected seeded-only
-skips**. ESLint, Prettier, and `git diff --check` pass.
+loading tests pass **2/2**. A follow-up full Playwright run against the latest
+code passes **17 tests with two expected seeded-only skips**. Full-project
+ESLint, Prettier, and `git diff --check` pass.
 
 At `2026-10-28T08:31:18Z`, memory PSI avg10 was 0%, I/O PSI avg10 was
 0.35% some / 0.02% full, and about 10 GiB was available. Tests use disposable
