@@ -33,6 +33,21 @@ in the dated addendum below and in the Frontier engineering report.
 
 ## Frontier development addendum — 2026-10-28
 
+### Latest isolated Frontier checkpoint — 2026-10-28 08:32 UTC
+
+Test commit `c04f699` adds the missing-browser-capability check for deferred
+charts. `DeferredChart` now has passing coverage for both delayed loading with
+`IntersectionObserver` and immediate loading when the API is unavailable. The
+full web unit suite passes **47/47** across nine files. The production build
+and chart-specific browser checks remain passing from the latest code change;
+the full default browser run at the prior viewport-loading checkpoint passed
+17 cases with two expected seeded-only skips.
+
+Frontier Python remains 379/379. Cross-venue live validation, held-source
+permissions, full MIDAS regression, production recovery, and deployment remain
+open. Project status is **PARTIALLY VERIFIED**; no source, protected service,
+or historical evidence was changed.
+
 ### Latest isolated Frontier checkpoint — 2026-10-28 08:31 UTC
 
 Code commit `6c13b47` updates ECharts options on the mounted chart instance

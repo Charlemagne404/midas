@@ -1,5 +1,19 @@
 # Project Frontier Mission Ledger
 
+## Deferred chart observer fallback — 2026-10-28 08:32 UTC
+
+Test commit `c04f699` covers `DeferredChart` in both environments: the module
+load waits for the reserved area to approach the viewport when
+`IntersectionObserver` exists, and starts immediately when that browser API is
+unavailable. The focused test passes **2/2**; the complete web unit suite passes
+**47/47** across nine files. This verifies the existing fallback contract and
+adds no runtime behavior.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Deferred chart browser-capability fallback | COMPLETE AND VERIFIED | Focused test and full 47-test web suite pass. |
+| Frontier project overall | PARTIALLY VERIFIED | Live source, full MIDAS regression, production recovery, and deployment gates remain open. |
+
 ## Chart instance reuse on data refresh — 2026-10-28 08:31 UTC
 
 Code commit `6c13b47` makes the ECharts instance in `Chart.tsx` live for the

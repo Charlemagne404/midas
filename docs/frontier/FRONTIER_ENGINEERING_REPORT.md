@@ -2,13 +2,14 @@
 
 **Report date:** 2026-10-28
 
-## Current status — 2026-10-28 08:31 UTC
+## Current status — 2026-10-28 08:32 UTC
 
 Frontier is isolated at `/home/charlie/midas-frontier` on
 `codex/frontier-20261026`. It descends from verified Veritas V6 integration
 commit `11d32a0` and retains merge base `55601b9` with `main`. Feature commits
 `c4adac6` and `6c13b47` defer the shared Chart payload until it approaches the
-viewport and reuse each mounted ECharts instance when its options refresh.
+viewport and reuse each mounted ECharts instance when its options refresh;
+test commit `c04f699` covers fallback when `IntersectionObserver` is absent.
 Existing implementation includes Polymarket, Kalshi, Kraken Spot, and Coinbase
 public read adapters; canonical instrument and payoff models; reviewable
 relationship evidence; bounded candidate discovery and independent economics;
@@ -23,7 +24,7 @@ Current bounded verification:
   12.91% some / 10.15% full; the successful tmpfs run used a fresh host sample
   and recorded zero filesystem input. One existing Starlette/httpx `TestClient`
   deprecation warning remains.
-- The updated frontend passes **46/46** unit tests, TypeScript, ESLint,
+- The updated frontend passes **47/47** unit tests, TypeScript, ESLint,
   Prettier, production build, **17** default Playwright cases with two expected
   seeded-only skips, and the separate **2/2** seeded Frontier/Arena cases using
   disposable local services and stores. After the subsequent chart lifecycle
@@ -70,7 +71,8 @@ linger after an option change.
 
 `Chart.test.tsx` verifies that an option update calls `setOption` on the same
 single instance and that disposal happens on unmount. The complete frontend
-unit suite passes **46/46** in nine files. The production build passes
+unit suite passes **47/47** in nine files, including viewport observer and
+no-observer fallback behavior. The production build passes
 TypeScript and Vite (2,230 modules; entry 368.81 kB, Frontier 182.75 kB, Chart
 544.51 kB / 186.79 kB gzip). The post-change Playwright chart smoke and deferred
 loading tests pass **2/2**. The full default browser suite at the immediately
