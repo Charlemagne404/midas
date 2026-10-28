@@ -155,7 +155,9 @@ This confirms the event-ID correction against the exact genuine captured body
 without rewriting history. It does not establish parent-event membership,
 exhaustive outcomes, payoff, settlement, venue equivalence, or an opportunity.
 The capture remains in ignored local storage and is not included in version
-control.
+control. The legacy Polymarket normalizer's local fallback remains compatible:
+`tests/integration/test_adapters.py::test_legacy_polymarket_event_id_fallback_remains_compatible`
+passes **1/1** (53,712 KiB peak RSS, zero swaps or socket messages).
 
 **Corrected combined Frontier/Arena verification — 2026-10-28 03:12 UTC:**
 After synchronizing the stale timeline message expectation and isolating two

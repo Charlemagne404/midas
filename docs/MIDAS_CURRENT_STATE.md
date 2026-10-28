@@ -54,6 +54,8 @@ request was captured and hash-checked, but it
 does not establish event membership, exhaustive outcomes, payoff, settlement,
 or an opportunity. No Kalshi, Kraken, or Coinbase live request was made under
 their current source-use holds.
+The focused legacy integration regression confirms other MIDAS callers retain
+their existing local `market:<id>` fallback behavior.
 
 At the post-build sample `2026-10-28T04:06:58Z`, memory PSI avg10 was 0.08%
 some/full with about 10 GiB available and no shared Arena lock holder. No

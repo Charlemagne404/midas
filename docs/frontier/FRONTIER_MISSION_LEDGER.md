@@ -4641,6 +4641,30 @@ was available, and no Arena lock holder was listed.
 | --- | --- | --- |
 | Corrected adapter replay of live captured body | COMPLETE AND VERIFIED | Exact stored response hash and title reproduced; event ID now remains unknown; read-only DB integrity and row count unchanged; no public network access. |
 
+### Legacy Polymarket adapter compatibility — 2026-10-28 04:14 UTC
+
+The shared `midas.market_data.polymarket.normalize_market` function remains
+unchanged, including its local `market:<id>` fallback used by existing
+callers. A focused regression removes the optional Gamma `events` field from
+the recorded fixture and confirms this legacy `Market.event_id` still equals
+`market:<native-market-id>`:
+
+```bash
+/usr/bin/time -v env PYTHONPATH=packages:. \
+  /home/charlie/midas/.venv/bin/python -m pytest -q \
+  tests/integration/test_adapters.py::test_legacy_polymarket_event_id_fallback_remains_compatible
+# 1 passed in 0.26s; 53,712 KiB peak RSS; zero swaps and socket messages
+```
+
+This isolates the Frontier change from the shared legacy normalizer; it does
+not constitute a full Reality/Veritas repository regression. Ruff check and
+format pass for the changed integration test. No live request or protected
+service was used.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Legacy Polymarket event-ID fallback | COMPLETE AND VERIFIED | Shared normalizer remains unchanged and focused integration regression passes; broader repository tests remain outside this check. |
+
 ### Resource gate recheck — 2026-10-28 04:12 UTC
 
 At `2026-10-28T04:12:29Z`, memory PSI had risen again: avg10 **38.86% some /
