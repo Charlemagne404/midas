@@ -404,7 +404,7 @@ export function App() {
               <ExperimentPanel />
             </>
           )}
-          {page === 'Laboratory' && <Laboratory />}
+          {page === 'Laboratory' && <Laboratory onNavigate={setPage} />}
           {page === 'Analytics' && <AnalyticsPage data={analytics.data} />}
           {page === 'Arena' && <Arena />}
           {page === 'Reality' && <Reality />}
