@@ -2,6 +2,32 @@
 
 **Report date:** 2026-10-28
 
+## Unknown endpoint venue labeling — 2026-10-28 22:41 UTC
+
+Static review found that the relationship list displayed Polymarket for an
+unloaded left endpoint and Kalshi for an unloaded right endpoint. Those
+defaults could make absent market metadata appear to establish venue identity.
+The list now uses a neutral unknown venue pill, `?` marker, and “Not in loaded
+window” label. The focused UI test starts with one endpoint absent from the
+bounded market response and asserts that both the venue and native market ID
+remain explicitly unavailable.
+
+The first targeted UI attempt failed its new assertion after a post-load query
+cache mutation intended to remove the right market. The test now models the
+incomplete source window from the initial response; the focused rerun passes
+**1/1** with eight unrelated tests skipped. Vitest duration was 1.97 seconds;
+the bounded command elapsed 2.46 seconds and peaked at 239,380 KiB RSS.
+`git diff --check` passes. This does not verify a browser E2E or the whole
+frontend suite.
+
+At 22:41:21Z, API and Reality remained active. API was 1,605,885,952 /
+1,610,612,736 bytes (4,726,784 bytes below `MemoryHigh`); Reality was
+574,107,648 / 1,207,959,552 bytes. Memory PSI was 0% avg10, with 17.26%
+`some` / 14.63% `full` avg300. Host memory available was 10,371,432 KiB and
+swap free was 959,024 KiB. The sustained PSI average remains an admission
+constraint for broader test runs. No service operation or source request
+occurred.
+
 ## Bounded adapter fixture regression — 2026-10-28 22:32 UTC
 
 Six selected offline adapter checks passed in **1.13 seconds**: Polymarket V1

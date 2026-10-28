@@ -2858,11 +2858,8 @@ it('renders a bounded accessible relationship graph and opens selected evidence'
     },
     '/api/frontier/sources': { items: [] },
     '/api/frontier/markets?limit=100': {
-      items: [
-        marketRecord('polymarket', 'event-1', 'Who wins the mayoral election?'),
-        marketRecord('kalshi', 'event-1', 'Who wins the mayoral election?'),
-      ],
-      returned: 2,
+      items: [marketRecord('polymarket', 'event-1', 'Who wins the mayoral election?')],
+      returned: 1,
       limit: 100,
       offset: 0,
     },
@@ -2932,6 +2929,8 @@ it('renders a bounded accessible relationship graph and opens selected evidence'
   expect(
     await screen.findByRole('group', { name: /Relationship network showing 1/ }),
   ).toBeInTheDocument();
+  expect(await screen.findByText('Not in loaded window')).toBeInTheDocument();
+  expect(screen.getByText('market not in loaded window')).toBeInTheDocument();
   expect(
     await screen.findByText(
       /considered 500 relationship rows.*additional neighbors may be omitted/,

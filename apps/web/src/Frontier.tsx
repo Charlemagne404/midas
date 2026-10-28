@@ -1414,6 +1414,7 @@ const venueLabel = (value: string) =>
     kalshi: 'Kalshi',
     kraken: 'Kraken Spot',
     coinbase_exchange: 'Coinbase Exchange Spot',
+    unknown: 'Not in loaded window',
   })[value] ?? value;
 
 function StateBadge({ state }: { state: string }) {
@@ -4003,7 +4004,7 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
                   return (
                     <article className="fr-edge" key={relationship.relationship_id}>
                       <div className="fr-node">
-                        <VenuePill venue={left?.venue ?? 'polymarket'} />
+                        <VenuePill venue={left?.venue ?? 'unknown'} />
                         <strong>{left?.title ?? relationship.left_market_id}</strong>
                         <code>{left?.native_market_id ?? 'market not in loaded window'}</code>
                       </div>
@@ -4015,7 +4016,7 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
                         <i />
                       </div>
                       <div className="fr-node">
-                        <VenuePill venue={right?.venue ?? 'kalshi'} />
+                        <VenuePill venue={right?.venue ?? 'unknown'} />
                         <strong>{right?.title ?? relationship.right_market_id}</strong>
                         <code>{right?.native_market_id ?? 'market not in loaded window'}</code>
                       </div>
@@ -7233,6 +7234,12 @@ function SourcesView({
 }
 
 function VenuePill({ venue }: { venue: string }) {
+  const knownVenue =
+    venue === 'polymarket' ||
+    venue === 'kalshi' ||
+    venue === 'kraken' ||
+    venue === 'coinbase_exchange';
+  const venueClass = knownVenue ? venue : 'unknown';
   const icon =
     venue === 'coinbase_exchange'
       ? 'C'
@@ -7240,9 +7247,11 @@ function VenuePill({ venue }: { venue: string }) {
         ? 'K'
         : venue === 'kalshi'
           ? 'Ka'
-          : 'P';
+          : venue === 'polymarket'
+            ? 'P'
+            : '?';
   return (
-    <span className={`fr-venue-pill ${venue}`}>
+    <span className={`fr-venue-pill ${venueClass}`}>
       <i>{icon}</i>
       {venueLabel(venue)}
     </span>

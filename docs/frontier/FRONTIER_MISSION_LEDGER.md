@@ -1,5 +1,38 @@
 # Project Frontier Mission Ledger
 
+## Unknown endpoint venue labeling — 2026-10-28 22:41 UTC
+
+Static UI/API review found that the relationship list assigned default
+Polymarket and Kalshi venue pills when an edge endpoint's market record was
+outside the bounded market window. That presented missing metadata as a known
+venue. Both fallbacks now render `Not in loaded window` with a `?` marker and
+a neutral CSS class. The relationship graph test now begins with only the left
+market loaded while retaining the two-ended edge, then checks the unknown
+venue and missing native-market labels.
+
+The first targeted UI run failed its new assertion after a post-load query
+cache mutation intended to remove the right market. I revised the fixture to
+represent an incomplete loaded window in the initial API response; the focused
+rerun passed **1/1** (eight unrelated tests skipped) in 2.46 seconds, with
+239,380 KiB peak RSS. `git diff --check` passes. This verifies the bounded
+relationship UI state, not a browser E2E or the full frontend suite.
+
+At 22:41:21Z, both protected services remained active: API PID 1218662 at
+1,605,885,952 / 1,610,612,736 bytes (4,726,784 bytes below `MemoryHigh`), and
+Reality PID 1049184 at 574,107,648 / 1,207,959,552 bytes. Memory PSI was 0%
+avg10, 2.59% `some` / 2.21% `full` avg60, and 17.26% / 14.63% avg300. Host
+memory available was 10,371,432 KiB with 959,024 KiB swap free. No service or
+source action occurred. Keep broader verification deferred while the longer
+PSI averages remain elevated.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Missing-market relationship display | COMPLETE AND VERIFIED WITHIN TESTED SCOPE | Unknown venue identity now remains explicit in the bounded graph list; the focused component test passes. |
+| Full frontend regression and browser E2E | PARTIALLY VERIFIED | Neither ran in this checkpoint. Current PSI avg300 is elevated, so resource admission needs a later sample. |
+
+**Next safe action:** continue static source-independent audit and take a new
+resource sample before starting a wider UI or legacy regression.
+
 ## Bounded adapter fixture regression — 2026-10-28 22:32 UTC
 
 Six selected offline adapter checks passed in **1.13 seconds**: Polymarket V1
