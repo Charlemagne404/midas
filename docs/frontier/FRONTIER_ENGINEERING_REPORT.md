@@ -2,7 +2,7 @@
 
 **Report date:** 2026-10-28
 
-## Current status — 2026-10-28 05:20 UTC
+## Current status — 2026-10-28 05:23 UTC
 
 The isolated development branch is `codex/frontier-20261026`; the latest
 implementation checkpoint is `6c5c329` (`fix(frontier): enforce
@@ -60,16 +60,17 @@ opportunity is established. Full repository regression and production
 transition remain open; deployment requires a separate authorized readiness
 review.
 
-The collector and collection API regressions pass **31/31** together, and
+The collector/API pair, adapter contracts, small analytics/relation modules,
+and economics/capital modules pass **198 tests** across bounded invocations;
 strict mypy passes on the latest collector code. Two subsequent full
 `pytest tests/frontier` attempts were interrupted: one after **108 passed** as
 an external Veritas batch drove pressure high, and a retry after **113 passed**
 when the suite itself drove I/O PSI above the gate. Both exited 2 with
 `KeyboardInterrupt`; neither is a suite pass. Web/API typing, browser
 verification, and broader regression remain pending. At approximately
-`2026-10-28T05:20Z`, memory PSI avg10 was **0.00% some / 0.00% full** and I/O
-PSI avg10 was **1.65% some / 1.59% full**; no process held the shared Arena
-lock. Further tests remain deferred at this sample.
+`2026-10-28T05:23Z`, memory PSI avg10 was **31.74% some / 28.60% full** and
+I/O PSI avg10 was **0.39% some / 0.38% full**; no process held the shared
+Arena lock. Further tests remain deferred at this sample.
 
 ## Bounded metadata and initial resource checkpoint — 2026-10-28 03:59 UTC
 
@@ -6744,3 +6745,39 @@ smaller serial file groups after short-window PSI clears the gate.
 | Monolithic Frontier Python regression | PARTIALLY VERIFIED | Two attempts stopped at 108 and 113 completed cases; both exited 2 and neither is a suite pass. |
 | Changed collection and collection API modules | COMPLETE AND VERIFIED | The focused pair passes 31/31 in one invocation, with strict mypy for the changed collection module. |
 | Remaining Frontier regressions | PARTIALLY VERIFIED | Split into smaller serial groups after host admission; no browser/build run yet. |
+
+## Bounded serial Frontier regression slices — 2026-10-28 05:23 UTC
+
+To reduce the I/O footprint after the monolithic attempts, four focused
+invocations passed **198 tests** across the changed collector/API, adapter,
+analytics/timeline/transport/logical-relation, and economics/capital/fee/spot
+modules:
+
+| Module group | Result | Peak RSS | Boundary |
+| --- | --- | --- | --- |
+| `test_collection.py`, `test_collection_api.py` | 31 passed in 9.40s | 91,868 KiB | Busy lease API conflict, wall-time timeout/release, cross-process leases, and collection persistence. |
+| `test_adapters.py` | 62 passed in 2.51s | 59,976 KiB | Adapter contracts and synthetic response fixtures. |
+| `test_analytics.py`, `test_discovery_comparison.py`, `test_timeline.py`, `test_logical_implication.py`, `test_transport.py` | 25 passed in 2.31s | 59,444 KiB | Local analytical, timing, relationship, and transport behavior. |
+| `test_fx_sensitivity.py`, `test_capital_carry.py`, `test_kalshi_fee_sensitivity.py`, `test_coinbase.py`, `test_logical_implication_economics.py` | 80 passed in 2.26s | 81,928 KiB | Fixture-only economics, fee, currency, and spot-context checks. |
+
+All four test processes used isolated `/tmp` basetemp directories, zero swaps,
+and zero socket messages. The API-containing groups emitted the existing
+Starlette/httpx TestClient deprecation warning. A scan found no
+`live-probes` references in the Frontier tests, package, or API module. Strict
+mypy separately passes for `packages/midas/frontier/collection.py` after the
+latest collector implementation.
+
+At `2026-10-28T05:23Z`, memory PSI avg10 was **31.74% some / 28.60% full**,
+I/O PSI avg10 was **0.39% some / 0.38% full**, and no Arena lock holder was
+present. Defer more resource-bearing tests at this sample. Unrun as complete
+modules are `test_api.py`, `test_relationships_economics_replay.py`,
+`test_relationship_reviews.py`, `test_joint_state.py`, `test_storage.py`,
+`test_replay_comparison.py`, `test_timeline_api.py`,
+`test_source_data_permissions.py`, and `test_held_capture_source_boundary.py`.
+No full Frontier/MIDAS pass or browser/build verification is claimed.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Four serial test slices | COMPLETE AND VERIFIED | 198 passing tests across bounded modules; no external network, swap, or socket traffic. |
+| Full Frontier Python regression | PARTIALLY VERIFIED | Two monolithic attempts interrupted; nine test modules remain unrun as complete modules. |
+| Resource admission | DEFERRED | Memory PSI remained high at the latest sample despite no active Arena lock holder. |

@@ -5372,3 +5372,36 @@ another monolithic attempt.
 | Full Frontier suite | PARTIALLY VERIFIED | Two monolithic attempts stopped after 108 and 113 passing cases; neither completed. |
 | Focused collector/API regressions | COMPLETE AND VERIFIED | 31/31 combined; strict mypy passes on the collector. |
 | Remaining Python/browser regression | PARTIALLY VERIFIED | Split into resource-aware serial groups after the PSI gate clears. |
+
+## Bounded serial Frontier regression slices — 2026-10-28 05:23 UTC
+
+Four bounded pytest invocations passed **198 tests** total after the collector
+change:
+
+| Modules | Tests | Runtime | Peak RSS |
+| --- | --- | --- | --- |
+| Collection + collection API | 31 | 9.40s | 91,868 KiB |
+| Adapters | 62 | 2.51s | 59,976 KiB |
+| Analytics, discovery comparison, timeline, logical implication, transport | 25 | 2.31s | 59,444 KiB |
+| FX, capital, Kalshi fee, Coinbase, logical-implication economics | 80 | 2.26s | 81,928 KiB |
+
+Each used a separate `/tmp` basetemp, zero swaps, and zero socket messages.
+The API-containing runs showed the existing Starlette/httpx TestClient
+deprecation warning. A source scan found no `live-probes` path references in
+the Frontier tests/package/API. Strict mypy passes for the changed collection
+module.
+
+At `2026-10-28T05:23Z`, memory PSI avg10 was **31.74% some / 28.60% full**,
+I/O PSI avg10 was **0.39% some / 0.38% full**, and the shared Arena lock was
+not held. Defer further tests due to memory pressure. The full suite remains
+incomplete; complete module runs still outstanding are `test_api.py`,
+`test_relationships_economics_replay.py`, `test_relationship_reviews.py`,
+`test_joint_state.py`, `test_storage.py`, `test_replay_comparison.py`,
+`test_timeline_api.py`, `test_source_data_permissions.py`, and
+`test_held_capture_source_boundary.py`.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Bounded serial regression slices | COMPLETE AND VERIFIED | 198 tests pass across four invocations after the collector changes. |
+| Full Frontier/MIDAS suite | PARTIALLY VERIFIED | Two monolithic attempts interrupted; nine modules remain for serial coverage. |
+| Browser/build and production deployment | PARTIALLY VERIFIED / DEFERRED | Earlier UI checks pass; no rerun after latest backend work; deployment remains separate. |
