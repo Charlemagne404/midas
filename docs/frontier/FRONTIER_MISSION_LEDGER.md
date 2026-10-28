@@ -1,5 +1,22 @@
 # Project Frontier Mission Ledger
 
+## Fee rounding and provenance review — 2026-10-28 10:30 UTC
+
+Reviewed the bounded Kalshi fee estimate and its independent calculation. The
+candidate schedule remains `ESTIMATE`, binds event and series evidence, and
+keeps direct-member and non-direct-member precision cases separate because
+account balance precision is not available from public metadata. The fee
+rounding test uses source-rule fixtures; it does not establish that the rule
+applies to a particular account or that current live source use is permitted.
+
+`tests/frontier/test_kalshi_fee_sensitivity.py` passed **21/21** in 0.52
+seconds using `/dev/shm/midas-frontier-fees-20261028T1030Z`; property-based
+cases compare candidate fees to the independent audit and rounding scenarios.
+No source request or code change was made. At `10:29:58Z`, memory PSI avg10
+was 0% and I/O PSI avg10 was 0.02% some / 0% full. Account-specific fees,
+source authorization, and verified payoff evidence remain unresolved.
+Frontier remains **PARTIALLY VERIFIED**.
+
 ## Offline FX and venue-capital invariant review — 2026-10-28 10:28 UTC
 
 Reviewed `packages/midas/frontier/fx.py` and `capital.py` without changing

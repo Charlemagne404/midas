@@ -264,6 +264,13 @@ FX/capital-carry verification passed `test_fx_sensitivity.py` and
 `/dev/shm/midas-frontier-fx-capital-20261028T1027Z`. It used fixtures and did
 not read the preserved public capture or any protected service state.
 
+The bounded fixture-backed fee review then passed
+`tests/frontier/test_kalshi_fee_sensitivity.py` (21 tests, 0.52 seconds) with
+temporary state at `/dev/shm/midas-frontier-fees-20261028T1030Z`. It made no
+network request. At `10:29:58Z`, memory PSI avg10 was 0%; I/O PSI avg10 was
+0.02% some / 0% full. Keep account-specific fee authority and live source use
+classified as unverified.
+
 For a broad suite run, first sample `/proc/pressure/memory` and
 `/proc/pressure/io`; defer when memory or I/O PSI avg10 is at or above 1%.
 The successful run placed pytest temporary files on tmpfs, reducing block I/O:

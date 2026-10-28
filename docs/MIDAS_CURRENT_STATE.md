@@ -33,6 +33,16 @@ in the dated addendum below and in the Frontier engineering report.
 
 ## Frontier development addendum — 2026-10-28
 
+### Latest isolated Frontier checkpoint — 2026-10-28 10:30 UTC
+
+The fixture-backed Kalshi fee-sensitivity module passed **21/21**, including
+property-based fee and independent-audit comparisons. The model continues to
+classify the public-derived schedule as an estimate and separates account
+precision cases. No live fee request or code change was made; account-specific
+applicability remains unknown. Memory PSI avg10 was 0% and I/O PSI avg10 was
+0.02% some / 0% full at `10:29:58Z`. Source authorization, genuine cross-venue
+economics, and production gates remain open; Frontier is **PARTIALLY VERIFIED**.
+
 ### Latest isolated Frontier checkpoint — 2026-10-28 10:28 UTC
 
 The offline FX and venue-capital review found no code defect. The focused
