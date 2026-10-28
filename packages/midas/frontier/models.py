@@ -1163,6 +1163,19 @@ class PriceHistorySeries(FrontierModel):
     source_limit_note: str
     provenance: Provenance
 
+    @field_validator("points", mode="before")
+    @classmethod
+    def revalidate_point_instances(cls, value: Any) -> Any:
+        """Do not trust already-instantiated nested models to have run validators."""
+        if isinstance(value, (tuple, list)):
+            return tuple(
+                point.model_dump(mode="python")
+                if isinstance(point, HistoricalPricePoint)
+                else point
+                for point in value
+            )
+        return value
+
     @model_validator(mode="after")
     def price_history_is_bounded_and_ordered(self) -> PriceHistorySeries:
         if self.requested_end_ts <= self.requested_start_ts:

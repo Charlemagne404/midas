@@ -118,6 +118,25 @@ def test_price_history_replay_revalidates_reconstructed_nested_timestamps():
         )
 
 
+def test_price_history_series_revalidates_nested_point_models():
+    evidence = _evidence(5)
+    series_payload = evidence.series.model_dump(mode="python")
+    naive_point = evidence.series.points[0].model_copy(
+        update={"timestamp_utc": datetime(2026, 10, 26, 20, 0)}
+    )
+
+    with pytest.raises(ValidationError, match="Price-history time must include a timezone"):
+        PriceHistorySeries.model_validate(
+            {**series_payload, "points": (naive_point, *evidence.series.points[1:])}
+        )
+
+    out_of_range_point = evidence.series.points[0].model_copy(update={"price": Decimal("1.1")})
+    with pytest.raises(ValidationError):
+        PriceHistorySeries.model_validate(
+            {**series_payload, "points": (out_of_range_point, *evidence.series.points[1:])}
+        )
+
+
 def test_price_history_replay_store_is_append_only_and_hash_checked(tmp_path):
     evidence = _evidence(3)
     result = deterministic_price_history_replay(
