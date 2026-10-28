@@ -309,6 +309,15 @@ class FrontierStore:
         raw: RawObservation,
         normalized: FrontierModel,
     ) -> str:
+        try:
+            raw = RawObservation.model_validate(raw.model_dump(mode="python", warnings=False))
+            normalized = type(normalized).model_validate(
+                normalized.model_dump(mode="python", warnings=False)
+            )
+        except (AttributeError, TypeError, ValueError) as error:
+            raise FrontierStoreError(
+                "Observation input fails canonical model validation"
+            ) from error
         self.initialize()
         normalized_without_persisted_time = self._with_persisted_at(normalized, None)
         normalized_content_json = self._canonical(normalized_without_persisted_time)

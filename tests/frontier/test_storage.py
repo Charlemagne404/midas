@@ -157,6 +157,23 @@ def test_paired_replay_storage_rejects_scenario_to_run_mismatch(tmp_path: Path):
     assert store.summary()["comparisons"] == 0
 
 
+@pytest.mark.parametrize("corruption", ("raw", "normalized"))
+def test_append_observation_revalidates_copied_model_inputs(tmp_path: Path, corruption: str):
+    store = FrontierStore(tmp_path / "invalid-observation-store")
+    raw = _raw(Venue.POLYMARKET, '{"copied":true}')
+    normalized = market(Venue.POLYMARKET, f"copied-{corruption}")
+    if corruption == "raw":
+        raw = raw.model_copy(update={"raw_sha256": "0" * 64})
+    else:
+        payoff = normalized.payoff.model_copy(update={"state_ids": ()})
+        normalized = normalized.model_copy(update={"payoff": payoff})
+
+    with pytest.raises(FrontierStoreError, match="canonical model validation"):
+        store.append_observation(raw, normalized)
+
+    assert not store.path.exists()
+
+
 def test_observations_and_relationships_are_append_only(tmp_path: Path):
     store = FrontierStore(tmp_path, max_bytes=2 * 1024 * 1024)
     left, right = market(Venue.POLYMARKET, "left"), market(Venue.KALSHI, "right")

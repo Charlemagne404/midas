@@ -2,6 +2,25 @@
 
 **Report date:** 2026-10-28
 
+## Observation write-boundary revalidation — 2026-10-28
+
+The append-only evidence store serialized already-instantiated raw and
+normalized models without re-running model validation. A `model_copy(update=...)`
+could bypass Pydantic checks and persist a malformed observation. The store
+now round-trips each input through `model_dump(mode="python")` and
+`model_validate` before creating the database or writing any rows. The storage
+regression verifies that both a copied raw record with a mismatched body hash
+and a copied market with invalid payoff structure fail before database creation.
+
+`tests/frontier/test_storage.py` passed **22/22** in 16.83 seconds, at 68,252
+KiB peak RSS, with zero swaps, filesystem input, and socket messages. Strict
+mypy passes for `storage.py`; Ruff and whitespace checks pass. Output stayed
+under `/tmp/midas-frontier-storage-input-validation-20261028`. The Frontier
+and Arena suite had passed **463/463** before this change, but exact-tree broad
+regression is pending. At the post-run sample memory PSI avg10 was 0.00%, I/O
+PSI was 7.44% some / 5.56% full, and about 10 GiB was available. Additional
+tests are held until I/O avg10 falls below the 1% admission gate.
+
 ## Empty payoff-state rejection in relationship verifiers — 2026-10-28
 
 An offline audit found that malformed copied market records with no payoff

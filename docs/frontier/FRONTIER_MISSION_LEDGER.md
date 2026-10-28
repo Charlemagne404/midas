@@ -1,5 +1,33 @@
 # Project Frontier Mission Ledger
 
+## Observation write-boundary revalidation — 2026-10-28
+
+The provenance-write audit found that `FrontierStore.append_observation`
+serialized typed models as-is. A previously constructed `RawObservation` or
+normalized model changed through `model_copy(update=...)` could therefore be
+stored without re-running its validators. The store now reparses both inputs
+from their Python-mode payloads before it initializes the database or inserts
+anything, and converts validation failures into `FrontierStoreError`.
+
+The storage regression covers a copied raw record with a mismatched body hash
+and a copied market with an invalid verified payoff; both fail before the
+database path is created. `tests/frontier/test_storage.py` passes **22/22** in
+16.83 seconds, at 68,252 KiB peak RSS with zero swaps, filesystem input, and
+socket messages. Strict mypy passes for `storage.py`; Ruff check/format and
+`git diff --check` pass. The focused output used
+`/tmp/midas-frontier-storage-input-validation-20261028`.
+
+The full Frontier plus Arena suite passed 463/463 immediately before this
+write-boundary change, so the exact current tree still needs broader regression.
+After the focused storage run, memory PSI avg10 was 0.00%, but I/O PSI was
+7.44% some / 5.56% full with about 10 GiB available. Hold further test runs
+until a fresh sample is below the 1% admission threshold. No live source,
+protected store, production service, or historical research artifact was
+accessed.
+
+**Next safe action:** after the I/O gate clears, run the Frontier suite on the
+exact tree, then continue source-independent provenance and replay review.
+
 ## Empty payoff-state rejection in relationship verifiers — 2026-10-28
 
 The verifier audit found a second vacuous-proof path. A malformed in-memory

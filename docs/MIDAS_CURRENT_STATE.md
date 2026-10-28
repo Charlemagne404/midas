@@ -54,6 +54,17 @@ follow-up found no further empty-state acceptance in the bounded multi-outcome
 and joint-state audits or the verified relationship-review API path; no new
 runtime test was run during the post-suite I/O pressure hold.
 
+### Latest isolated Frontier checkpoint — 2026-10-28 13:11 UTC
+
+The Frontier evidence store now reparses raw and normalized observation input
+before database initialization, closing a copied-model validation bypass at
+the write boundary. The storage suite passes **22/22** and strict mypy passes
+for the store module. The full Frontier/Arena suite passed **463/463** before
+this latest change. Post-storage-test memory PSI avg10 was 0.00%, but I/O PSI
+was 7.44% some / 5.56% full; exact-tree broad regression is pending until I/O
+falls below the 1% admission gate. Frontier remains **PARTIALLY VERIFIED**,
+research-only, isolated, and undeployed.
+
 ### Latest isolated Frontier checkpoint — 2026-10-28 13:00 UTC
 
 An offline verifier audit reproduced a vacuous proof: two binary markets with
