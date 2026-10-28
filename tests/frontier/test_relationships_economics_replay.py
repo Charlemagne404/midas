@@ -2507,6 +2507,43 @@ def test_cross_venue_candidate_rejects_mapping_override_from_verified_edge():
     assert "differs from verified relationship evidence" in candidates[0].reasons[0]
 
 
+def test_deterministic_replay_rejects_same_payoff_mapping_override():
+    left, right, relationship, instrument_mapping = _verified_pair()
+    left_yes = next(item for item in left.instruments if item.outcome_id == "yes")
+    left_no = next(item for item in left.instruments if item.outcome_id == "no")
+    right_yes_id = instrument_mapping[left_yes.native_instrument_id]
+    right_no_id = instrument_mapping[left_no.native_instrument_id]
+    overridden_instrument_mapping = {
+        left_yes.native_instrument_id: right_no_id,
+        left_no.native_instrument_id: right_yes_id,
+    }
+    canonical_instrument_mapping = (
+        overridden_instrument_mapping
+        if relationship.left_market_id == left.canonical_id
+        else {value: key for key, value in overridden_instrument_mapping.items()}
+    )
+    left_books, right_books = _books(left, right)
+
+    replay = deterministic_replay(
+        (left, right),
+        (*left_books.values(), *right_books.values()),
+        verified_relationships=(relationship,),
+        state_mappings={relationship.relationship_id: {"yes": "no", "no": "yes"}},
+        instrument_mappings={relationship.relationship_id: canonical_instrument_mapping},
+        as_of_utc=T0 + timedelta(milliseconds=100),
+        code_version="same-payoff-mapping-evidence-guard-v1",
+    )
+    candidate = next(
+        item for item in replay.candidates if item.relationship_id == relationship.relationship_id
+    )
+
+    assert candidate.classification == OpportunityClassification.INVALID_RELATIONSHIP
+    assert not candidate.legs
+    assert replay.manifest.normalized_input_sha256
+    assert candidate.independent_audit is not None
+    assert candidate.independent_audit.disposition == EconomicAuditDisposition.NOT_EVALUATED
+
+
 def test_cross_venue_independent_audit_rejects_mapping_override_from_verified_edge():
     left, right, relationship, instrument_mapping = _verified_pair()
     left_yes = next(item for item in left.instruments if item.outcome_id == "yes")
