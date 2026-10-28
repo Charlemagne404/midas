@@ -1,5 +1,26 @@
 # Project Frontier Mission Ledger
 
+## Collector journal reads remain read-only — 2026-10-28 13:23 UTC
+
+Follow-up review found `run_spec()` and `checkpoints()` routed reads through
+`initialize()`. That created a new SQLite journal for missing-run reads and
+could add schema objects to an incomplete database. They now use a size-bounded,
+schema-checked SQLite `mode=ro` connection; missing run/checkpoint lookups keep
+their prior not-found semantics without creating a root or repairing a file.
+
+The targeted absent/incomplete-journal regression passes **1/1** in 0.45
+seconds, with **62,440 KiB** peak RSS, zero swaps, filesystem input, or socket
+messages. Strict mypy for `collection.py`, Ruff check/format, and
+`git diff --check` pass. At `2026-10-28T13:23:32Z`, memory PSI avg10 was 0.00%,
+I/O PSI was 0.05% some / 0.01% full, and 10.4 GiB was available. CPU PSI
+avg10 was 42.26%; broader tests remain deferred. No source, collector,
+protected store, or production service was accessed.
+
+**Implementation commit:** `f440fa2` (`fix(frontier): keep collection journal reads read-only`).
+
+**Next safe action:** continue source-independent review; wait for a fresh
+resource sample before broader regression workloads.
+
 ## Collection journal input checks before initialization — 2026-10-28 13:21 UTC
 
 The source-independent persistence review found that `CollectionJournal`'s run,

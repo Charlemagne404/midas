@@ -9405,3 +9405,29 @@ production service was accessed.
 | Frontier project acceptance | PARTIALLY VERIFIED | Genuine live cross-venue equivalence, held-source permissions, production recovery, broad resource qualification, and deployment remain open. |
 
 **Implementation commit:** `3153148` (`fix(frontier): validate collection writes before initialization`).
+
+## Read-only collection journal lookup — 2026-10-28 13:23 UTC
+
+The source-independent read-path review found `run_spec()` and `checkpoints()`
+called the schema initializer. A GET-like lookup could therefore create an
+empty journal or silently add schema to an incomplete database. Both methods
+now use a bounded, schema-checked SQLite `mode=ro` connection. Missing journals
+return the existing not-found/empty results without filesystem mutation;
+incomplete or unsupported journals fail closed without repair.
+
+The focused regression passes **1/1** in 0.45 seconds; peak RSS was **62,440
+KiB**, with zero swaps, filesystem input, or socket messages. Strict mypy on
+`collection.py`, Ruff check/format, and `git diff --check` pass. At
+`2026-10-28T13:23:32Z`, memory PSI avg10 was **0.00%**, I/O PSI was **0.05%
+some / 0.01% full**, and approximately **10.4 GiB** was available. Host CPU PSI
+avg10 was **42.26%**, so the whole collection module and broader suites were
+deferred. No source, collector, protected store, or production service was
+accessed.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Collection run/checkpoint reads | COMPLETE AND VERIFIED | Missing and incomplete journal paths remain unchanged; one targeted regression, mypy, and lint/format pass. |
+| Full collection module after journal changes | PARTIALLY VERIFIED | Only focused regressions were rerun while host CPU PSI remained elevated. |
+| Frontier project acceptance | PARTIALLY VERIFIED | Genuine cross-venue evidence, held-source permission, broad resource qualification, production recovery, and deployment remain open. |
+
+**Implementation commit:** `f440fa2` (`fix(frontier): keep collection journal reads read-only`).
