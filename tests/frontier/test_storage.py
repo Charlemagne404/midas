@@ -235,8 +235,7 @@ def test_append_relationship_rejects_oversized_payload_before_initialization(tmp
     assert not store.path.exists()
 
 
-def test_append_relationship_review_for_missing_store_does_not_initialize(tmp_path: Path):
-    store = FrontierStore(tmp_path / "missing-review-store")
+def _relationship_review_fixture() -> tuple[RelationshipReview, Relationship]:
     left, right = (
         market(Venue.POLYMARKET, "missing-review-left"),
         market(Venue.KALSHI, "missing-review-right"),
@@ -268,12 +267,31 @@ def test_append_relationship_review_for_missing_store_does_not_initialize(tmp_pa
         evidence_observation_ids=("c" * 64,),
         created_at_utc=T0,
     )
+    return review, adjudicated
+
+
+def test_append_relationship_review_for_missing_store_does_not_initialize(tmp_path: Path):
+    store = FrontierStore(tmp_path / "missing-review-store")
+    review, adjudicated = _relationship_review_fixture()
 
     with pytest.raises(FrontierStoreError, match="review target was not found"):
         store.append_relationship_review(review, adjudicated)
 
     assert not store.path.exists()
     assert not store.root.exists()
+
+
+def test_append_relationship_review_does_not_initialize_existing_empty_store(tmp_path: Path):
+    store = FrontierStore(tmp_path / "empty-review-store")
+    store.root.mkdir()
+    store.path.touch()
+    original_bytes = store.path.read_bytes()
+    review, adjudicated = _relationship_review_fixture()
+
+    with pytest.raises(FrontierStoreError, match="review target was not found"):
+        store.append_relationship_review(review, adjudicated)
+
+    assert store.path.read_bytes() == original_bytes
 
 
 @pytest.mark.parametrize("corruption", ("raw", "normalized"))

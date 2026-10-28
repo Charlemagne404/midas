@@ -254,6 +254,29 @@ class FrontierStore:
         connection.execute("PRAGMA query_only=ON")
         return connection
 
+    def _relationship_exists_readonly(self, relationship_id: str) -> bool:
+        """Check review targets without creating or migrating a database."""
+        if not self.path.exists():
+            return False
+        try:
+            with self._read_connect() as connection:
+                table = connection.execute(
+                    "SELECT 1 FROM sqlite_master WHERE type='table' AND name='relationships'"
+                ).fetchone()
+                if table is None:
+                    return False
+                return (
+                    connection.execute(
+                        "SELECT 1 FROM relationships WHERE relationship_id=? LIMIT 1",
+                        (relationship_id,),
+                    ).fetchone()
+                    is not None
+                )
+        except sqlite3.Error as error:
+            if not self.path.exists():
+                return False
+            raise FrontierStoreError("Unable to inspect relationship review target") from error
+
     def _check_existing_size(self) -> None:
         if self.path.exists() and self.path.stat().st_size > self.max_bytes:
             raise FrontierStoreError("Frontier database already exceeds its configured byte budget")
@@ -515,7 +538,7 @@ class FrontierStore:
         review_hash = hashlib.sha256(review_json.encode("utf-8")).hexdigest()
         relationship_hash = hashlib.sha256(relationship_json.encode("utf-8")).hexdigest()
         created = review.created_at_utc.astimezone(UTC).isoformat()
-        if not self.path.exists():
+        if not self._relationship_exists_readonly(review.relationship_id):
             raise FrontierStoreError("Relationship review target was not found")
         self.initialize()
         with self._connect() as connection:
