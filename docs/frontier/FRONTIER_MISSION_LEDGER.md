@@ -29,9 +29,22 @@ memory PSI avg10 was 0.00%, I/O PSI was 0.03% some / 0.00% full, and about
 was 5.37% some / 4.16% full with about 10 GiB available, so additional tests
 are held until a fresh sample falls below the 1% admission threshold.
 
-**Next safe action:** continue the read-only audit while I/O pressure settles;
-run more tests only after a fresh sample is below the admission gate. Source-use
-holds, held-capture preservation, and production boundaries remain unchanged.
+**Implementation commit:** `eb53842` (`fix(frontier): reject vacuous payoff state proofs`).
+
+The read-only follow-up checked the remaining bounded economic verifier
+families, the independent logical-implication and same-payoff candidate audits,
+and the stored relationship-review route. Multi-outcome and joint-state audits
+already require nonempty bounded state sets; the API review route validates
+hash-checked stored market observations and calls the versioned direct verifier
+before it can persist a verified revision. It is the only production caller of
+`append_relationship_review`. No additional empty-state acceptance path was
+found in these inspected code paths. This was source inspection, not a new
+runtime test.
+
+**Next safe action:** continue source-independent review of replay and
+provenance write boundaries while I/O pressure settles; run more tests only
+after a fresh sample falls below the admission gate. Source-use holds,
+held-capture preservation, and production boundaries remain unchanged.
 
 ## Same-payoff verifier empty-instrument rejection — 2026-10-28
 

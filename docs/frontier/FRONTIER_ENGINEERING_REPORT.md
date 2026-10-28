@@ -26,7 +26,11 @@ deprecation warning. Test artifacts stayed under
 I/O PSI was 0.03% some / 0.00% full, and about 10 GiB was available. Immediately
 afterward memory PSI remained 0.00%, while I/O rose to 5.37% some / 4.16%
 full; further tests are held until a fresh sample falls below the 1% gate.
-This correction provides no new live cross-venue equivalence evidence.
+This correction provides no new live cross-venue equivalence evidence. The
+implementation is committed as `eb53842`. A read-only follow-up found no
+additional empty-state acceptance in the bounded multi-outcome and joint-state
+audits or the verified relationship-review API path; no runtime test was run
+during the post-suite I/O pressure hold.
 
 ## Same-payoff verifier empty-instrument rejection — 2026-10-28
 

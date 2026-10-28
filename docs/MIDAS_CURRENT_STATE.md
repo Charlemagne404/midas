@@ -33,7 +33,7 @@ in the dated addendum below and in the Frontier engineering report.
 
 ## Frontier development addendum — 2026-10-28
 
-### Latest isolated Frontier checkpoint — 2026-10-28 13:07 UTC
+### Latest isolated Frontier checkpoint — 2026-10-28 13:09 UTC
 
 The relationship audit found that copied models with empty payout-state sets
 could make both same-payoff and logical-implication proofs pass over empty
@@ -49,7 +49,10 @@ messages. One existing Starlette/httpx deprecation warning remains. Post-run
 memory PSI avg10 was 0.00%, I/O PSI was 5.37% some / 4.16% full, and about
 10 GiB was available; further tests are held until I/O pressure falls below the
 1% gate. Frontier remains **PARTIALLY VERIFIED**, isolated, research-only, and
-undeployed.
+undeployed. The verifier correction is committed as `eb53842`. A read-only
+follow-up found no further empty-state acceptance in the bounded multi-outcome
+and joint-state audits or the verified relationship-review API path; no new
+runtime test was run during the post-suite I/O pressure hold.
 
 ### Latest isolated Frontier checkpoint — 2026-10-28 13:00 UTC
 
