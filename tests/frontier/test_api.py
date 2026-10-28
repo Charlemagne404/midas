@@ -1238,7 +1238,9 @@ def test_synthetic_event_group_probe_persists_parent_context_and_binds_to_record
 def test_polymarket_market_metadata_probe_is_bound_and_does_not_replace_listing(tmp_path):
     body = Path("tests/fixtures/gamma_live.json").read_text(encoding="utf-8")
     listed_payload = json.loads(body)
-    detail_body = json.dumps(listed_payload[0], separators=(",", ":"))
+    detail_market = dict(listed_payload[0])
+    detail_market.pop("events", None)
+    detail_body = json.dumps(detail_market, separators=(",", ":"))
     native_market_id = str(listed_payload[0]["id"])
     requests: list[httpx.Request] = []
 
@@ -1302,11 +1304,13 @@ def test_polymarket_market_metadata_probe_is_bound_and_does_not_replace_listing(
         assert evidence["normalized"]["source_observation_kind"] == "market_metadata"
         assert evidence["normalized"]["bound_market_observation_id"] == listing_observation_id
         assert evidence["normalized"]["market"]["native_market_id"] == native_market_id
+        assert evidence["normalized"]["market"]["native_event_id"] is None
         catalogue = client.get("/api/frontier/markets?venue=polymarket").json()["items"]
         stored_target = next(
             item for item in catalogue if item["canonical_id"] == target.canonical_id
         )
         assert stored_target["source_observation_record_id"] == listing_observation_id
+        assert stored_target["native_event_id"] == target.native_event_id
     finally:
         client.close()
         asyncio.run(registry.aclose())

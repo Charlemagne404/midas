@@ -220,6 +220,7 @@ async def test_polymarket_v1_capture_normalizes_without_claiming_verified_payout
     assert first.venue == Venue.POLYMARKET
     assert first.market_kind == MarketKind.BINARY_EVENT
     assert first.native_market_id == "559651"
+    assert first.native_event_id == "30828"
     assert [item.outcome_id for item in first.instruments] == ["yes", "no"]
     assert first.payoff.verified is False
     assert first.settlement_asset is None
@@ -266,7 +267,9 @@ async def test_polymarket_v1_capture_normalizes_without_claiming_verified_payout
 async def test_polymarket_single_market_metadata_captures_exact_native_id():
     listed = json.loads(_captured("tests/fixtures/gamma_live.json"))
     native_id = listed[0]["id"]
-    body = json.dumps(listed[0], separators=(",", ":"))
+    detail_market = dict(listed[0])
+    detail_market.pop("events", None)
+    body = json.dumps(detail_market, separators=(",", ":"))
     transport, requests, client = _transport(
         "gamma-api.polymarket.com", {f"/markets/{native_id}": body}
     )
@@ -284,6 +287,7 @@ async def test_polymarket_single_market_metadata_captures_exact_native_id():
 
     assert result.native_market_id == native_id
     assert result.canonical_id == f"polymarket:{native_id}"
+    assert result.native_event_id is None
     assert len(captures) == 1
     assert captures[0].observation_kind == "market_metadata"
     assert captures[0].raw_body == body

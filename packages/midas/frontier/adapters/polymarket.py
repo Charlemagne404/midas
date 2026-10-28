@@ -322,7 +322,19 @@ class PolymarketAdapter(BaseReadOnlyAdapter):
             and isinstance(event_rows[0], dict)
             else {}
         )
-        event_id = parent_event_id or legacy.event_id
+        source_event_id = nested_event.get("id")
+        event_id: str | None
+        if parent_event_id is not None:
+            event_id = parent_event_id
+        elif isinstance(source_event_id, (str, int)) and not isinstance(source_event_id, bool):
+            candidate_event_id = str(source_event_id)
+            event_id = (
+                candidate_event_id if re.fullmatch(r"[0-9]{1,20}", candidate_event_id) else None
+            )
+        else:
+            # The legacy Polymarket normalizer uses `market:<id>` when Gamma
+            # omits event membership. That local fallback is not a native ID.
+            event_id = None
         event_title = parent_event_title or (
             nested_event.get("title") if isinstance(nested_event.get("title"), str) else None
         )
