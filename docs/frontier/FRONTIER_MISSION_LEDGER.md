@@ -10005,7 +10005,25 @@ production capacity.
 | Full browser and legacy regression | PARTIALLY VERIFIED | This bounded case passes; broad regression remains subject to fresh resource admission. |
 | Frontier overall | PARTIALLY VERIFIED | Live cross-venue science, broad regression, resource endurance, protected recovery, and deployment remain open. |
 
-**Next safe action:** commit this isolated browser acceptance coverage and
-continue source-independent review. Take a fresh pressure sample before another
-resource-bearing test batch; keep the prior full-Arena interruption classified
-as partial.
+The captured-browser acceptance change is committed as `bd2ba79`.
+
+**Next safe action:** continue source-independent review and remeasure pressure
+before another resource-bearing test batch; keep the prior full-Arena
+interruption classified as partial.
+
+## Post-browser resource gate — 2026-10-28 17:39 UTC
+
+After the bounded browser case and read-only code review, a fresh sample at
+17:39:12Z showed memory PSI avg10 0.03%, avg60 8.11%, avg300 9.39% (`full`
+0.03%, 7.31%, 8.47%). `MemAvailable` was 10,404,700 KiB. The user-level
+Reality and API services remained active; Reality was at 1,154,252,800 /
+1,207,959,552 bytes and API at 1,131,630,592 / 1,610,612,736 bytes. The
+temporary E2E servers had exited. The trailing PSI and Reality's narrow
+headroom do not justify a typecheck build or wider test batch at this sample.
+No further resource-bearing checks were started.
+
+The adapter review found no defect requiring a code change: networking remains
+disabled by default, source-use holds are enforced before public reads, and
+relationship proposals remain hypotheses. These are source observations, not
+new test evidence. The next engineering step is to remeasure pressure before a
+web typecheck and any additional bounded regression cases.
