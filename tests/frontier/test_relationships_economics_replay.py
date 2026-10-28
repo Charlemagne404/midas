@@ -2408,6 +2408,74 @@ def test_binary_coverage_requires_open_markets_and_exact_supported_quantity():
     )
 
 
+@pytest.mark.parametrize("constrained_side", ("left", "right"))
+def test_cross_venue_binary_coverage_rejects_legs_below_minimum_notional(constrained_side):
+    left, right, relationship, instrument_mapping = _verified_pair()
+    left_yes_id = next(
+        item.native_instrument_id for item in left.instruments if item.outcome_id == "yes"
+    )
+    left_no_id = next(
+        item.native_instrument_id for item in left.instruments if item.outcome_id == "no"
+    )
+    right_complement_id = instrument_mapping[left_no_id]
+    left_books, right_books = _books(left, right)
+    baseline = generate_binary_coverage_candidates(
+        left,
+        right,
+        relationship,
+        left_books,
+        right_books,
+        state_mapping={"yes": "yes", "no": "no"},
+        instrument_mapping=instrument_mapping,
+        as_of_utc=T0 + timedelta(milliseconds=100),
+    )
+    target_id = next(
+        item.candidate_id
+        for item in baseline
+        if {leg.instrument_id for leg in item.legs} == {left_yes_id, right_complement_id}
+    )
+
+    if constrained_side == "left":
+        left = left.model_copy(
+            update={
+                "instruments": tuple(
+                    item.model_copy(update={"minimum_notional": Decimal("5")})
+                    if item.native_instrument_id == left_yes_id
+                    else item
+                    for item in left.instruments
+                )
+            }
+        )
+    else:
+        right = right.model_copy(
+            update={
+                "instruments": tuple(
+                    item.model_copy(update={"minimum_notional": Decimal("5")})
+                    if item.native_instrument_id == right_complement_id
+                    else item
+                    for item in right.instruments
+                )
+            }
+        )
+    left_books, right_books = _books(left, right)
+
+    candidates = generate_binary_coverage_candidates(
+        left,
+        right,
+        relationship,
+        left_books,
+        right_books,
+        state_mapping={"yes": "yes", "no": "no"},
+        instrument_mapping=instrument_mapping,
+        as_of_utc=T0 + timedelta(milliseconds=100),
+    )
+    candidate = next(item for item in candidates if item.candidate_id == target_id)
+
+    assert candidate.classification == OpportunityClassification.INCOMPLETE_EVIDENCE
+    assert not candidate.legs
+    assert any("minimum notional" in reason for reason in candidate.reasons)
+
+
 def test_stale_books_are_not_practically_eligible():
     left, right, relationship, instrument_mapping = _verified_pair()
     left_books, right_books = _books(left, right)

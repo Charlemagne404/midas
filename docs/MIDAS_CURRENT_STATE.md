@@ -3732,3 +3732,19 @@ At `2026-10-28T21:49:16Z`, Reality and API were active. Reality used
 1,610,612,736 bytes. Memory PSI was 0%, `MemAvailable` was 9,658,460 kB, and
 `SwapFree` was 51,276 kB. No service changed. Live equivalence, broad testing,
 endurance, and deployment remain open.
+
+## Project Frontier cross-venue minimum-notional guard — 2026-10-28 21:52 UTC
+
+Fixed a mismatch between cross-venue candidate generation and the independent
+audit. The generator now rejects a leg whose displayed top-ask notional is
+below its declared venue minimum before it emits a position. Two parameterized
+fixture cases covering either venue leg pass; Ruff, format, and strict mypy for
+the production module pass. No external source data was queried and no
+protected service changed.
+
+At `2026-10-28T21:52:47Z`, API was active at 1,606,479,872 / 1,610,612,736
+bytes; Reality was active at 1,140,871,168 / 1,207,959,552 bytes. Memory PSI
+was 0%, available memory 9,639,216 kB, and swap free 52,592 kB. Broad regression
+remains deferred due narrow API `MemoryHigh` headroom. Frontier overall remains
+partially verified; live sources, broad acceptance, endurance, recovery, and
+deployment are unresolved.

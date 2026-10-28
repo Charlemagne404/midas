@@ -11409,3 +11409,28 @@ Available memory was 9,658,460 kB; swap free was 51,276 kB. No service changed.
 
 Next safe action: continue static review of cross-venue candidate classification
 and evidence reuse; remeasure before any next test slice.
+
+## Cross-venue minimum-notional guard — 2026-10-28 21:52 UTC
+
+Static review found and fixed a generator/auditor mismatch: candidate
+generation now rejects a selected leg when top-ask notional is below that
+instrument's declared minimum, matching the independent audit. A two-sided
+fixture regression passes **2/2** in 0.63 seconds under 1 GiB address-space
+and 60-second CPU limits with reduced priority. Ruff, format, and strict mypy
+for the changed production module pass. Initial fixture mapping and ask
+binding mistakes were corrected before the final pass.
+
+At `2026-10-28T21:52:47Z`, API was 4,132,864 bytes below `MemoryHigh`; Reality
+was 67,088,384 bytes below. Both were active and memory PSI was 0%. Available
+memory was 9,639,216 kB and swap free was 52,592 kB. No service changed. No
+exchange endpoint or external evidence was accessed.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Minimum-notional candidate guard | COMPLETE AND VERIFIED WITH FIXTURES | Left and right venue legs are covered. |
+| Independent audit | COMPLETE AND VERIFIED WITH FIXTURES | Independent calculation remains as a second validation. |
+| Live validation and broad regression | PARTIALLY VERIFIED | Live source and wider suite remain open. |
+| Project Frontier overall | PARTIALLY VERIFIED | Endurance, recovery, and deployment remain open. |
+
+Next safe action: continue focused static review; defer broad regression under
+the current API memory margin.

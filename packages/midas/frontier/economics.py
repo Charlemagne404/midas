@@ -2577,7 +2577,10 @@ def _evaluate_pair(
             candidate_id=identity,
             family=family,
         )
-    for market, instrument in ((left, left_instrument), (right, right_instrument)):
+    for market, instrument, ask in (
+        (left, left_instrument, l_ask),
+        (right, right_instrument, r_ask),
+    ):
         if (
             instrument.minimum_quantity is not None
             and common_quantity < instrument.minimum_quantity
@@ -2600,6 +2603,20 @@ def _evaluate_pair(
                 OpportunityClassification.INCOMPLETE_EVIDENCE,
                 as_of,
                 f"Requested quantity violates {market.venue.value} quantity step.",
+                candidate_id=identity,
+                family=family,
+            )
+        if (
+            instrument.minimum_notional is not None
+            and common_quantity * ask.price < instrument.minimum_notional
+        ):
+            return _empty_candidate(
+                left,
+                right,
+                relationship,
+                OpportunityClassification.INCOMPLETE_EVIDENCE,
+                as_of,
+                f"Requested notional is below {market.venue.value} minimum notional.",
                 candidate_id=identity,
                 family=family,
             )

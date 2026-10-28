@@ -12328,3 +12328,37 @@ was 51,276 kB. No protected service changed.
 Next safe action: continue static review of cross-venue candidate
 classification and evidence reuse; only run another bounded fixture after a
 fresh protected-resource sample.
+
+## Cross-venue minimum-notional guard — 2026-10-28 21:52 UTC
+
+Static comparison found that the independent audit enforced each selected
+instrument's minimum notional, while `_evaluate_pair` only checked minimum
+quantity and quantity step. This could allow the candidate generator to emit
+a position that the independent audit then rejected. The generator now checks
+`common_quantity * best_ask` against each leg's minimum notional and returns an
+empty `INCOMPLETE_EVIDENCE` candidate before computing economics.
+
+The regression fixture covers the constraint on both the left and right venue
+legs. Both cases pass (**2/2**, 0.63 seconds) under a 1 GiB address-space cap,
+60-second CPU-time cap, and reduced priority. Ruff check and format pass, as
+does strict mypy for `economics.py`. The first test draft mapped the left YES
+outcome to the same right outcome rather than its complement; the fixture was
+corrected. The first implementation run also exposed an unbound best-ask
+variable in the new check; that was fixed before the passing run.
+
+At `2026-10-28T21:52:47Z`, API was active at 1,606,479,872 / 1,610,612,736
+bytes `MemoryHigh` (4,132,864 bytes below); Reality was active at
+1,140,871,168 / 1,207,959,552 bytes (67,088,384 bytes below). Memory PSI
+avg10/avg60/avg300 was 0%; `MemAvailable` was 9,639,216 kB and `SwapFree` was
+52,592 kB. No service changed. Fixture tests only; no exchange endpoint was
+queried and no external source data was captured.
+
+| Requirement | Status | Evidence and boundary |
+| --- | --- | --- |
+| Cross-venue minimum-notional generation guard | COMPLETE AND VERIFIED WITH FIXTURES | Both venue-leg constraints reject before position construction. |
+| Independent minimum-notional calculation | COMPLETE AND VERIFIED WITH FIXTURES | Existing independent audit check remains the second calculation. |
+| Live source validation and full regression | PARTIALLY VERIFIED | No live public observations or broad regression in this checkpoint. |
+| Project Frontier overall | PARTIALLY VERIFIED | Live research, broad regression, endurance, recovery, and deployment remain open. |
+
+Next safe action: continue static review of source-bound economic constraints;
+keep broad regression deferred while API `MemoryHigh` headroom remains narrow.
