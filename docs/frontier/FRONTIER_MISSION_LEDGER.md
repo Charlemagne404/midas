@@ -1,5 +1,35 @@
 # Project Frontier Mission Ledger
 
+## Pin implication acceptance in economic model identity — 2026-10-28 11:02 UTC
+
+Code commit `ff522e9` advances `ECONOMIC_MODEL_VERSION` from
+`frontier-economic-verifiers-15` to `frontier-economic-verifiers-16` to bind
+logical-implication verifier v3 acceptance into candidate and replay
+identities. Its new regression supplies a prior v2 implication edge and
+confirms replay leaves it `INCOMPLETE_EVIDENCE` with no position until it is
+re-reviewed. The stored edge remains readable and unchanged.
+
+`tests/frontier/test_logical_implication_economics.py` passed **7/7**. Full
+`tests/frontier` passed **404/404** in 29.74 seconds (31.22 seconds wall time)
+using `/dev/shm/midas-frontier-final-review-20261028T1101Z`. Peak RSS was
+**385,644 KiB**, process swaps **0**, filesystem input **0**, and output 1,176
+blocks. Ruff, format, strict mypy across six changed production modules, and
+`git diff --check` passed. One existing Starlette/httpx deprecation warning
+remains.
+
+At `11:01:11Z`, memory and I/O PSI avg10 were 0%, about 10 GiB was available,
+and host swap was already 3.5/4 GiB used. At `11:01:46Z`, memory PSI remained
+0%, I/O PSI was 0.01% some / 0% full, about 10 GiB was available, and the test
+process reported no swaps. No live source, protected capture, production
+service, or Arena job was used. Frontier remains **PARTIALLY VERIFIED**.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Logical implication evidence migration | COMPLETE AND VERIFIED | Economic model v16 requires verifier v3; v2 evidence cannot generate a new eligible position. |
+| Full Frontier Python suite | COMPLETE AND VERIFIED | 404/404 pass on the exact code commit; one existing deprecation warning remains. |
+| Live cross-venue matching and economics | BLOCKED | Authorized genuine multi-venue evidence remains unavailable. |
+| Frontier project overall | PARTIALLY VERIFIED | Broader MIDAS regression, live science, production recovery, and deployment remain open. |
+
 ## Replay identity and source JSON ambiguity — 2026-10-28 10:59 UTC
 
 Code commit `63c2d74` rejects repeated relationship IDs in deterministic

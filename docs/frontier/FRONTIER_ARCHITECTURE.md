@@ -739,6 +739,11 @@ with duplicate payoff-state identifiers or native instrument identities and
 requires unique YES/NO outcome identities. Independent audit v16 accepts only
 current v3 implication evidence; version-2 evidence remains available for
 inspection but cannot validate new candidate research.
+The current candidate/replay economic model is
+`frontier-economic-verifiers-16`, which pins that verifier acceptance rule in
+candidate and replay identities. Replays using v2 implication evidence produce
+incomplete evidence with no constructed position until the relationship is
+reviewed under v3.
 
 `verify_logical_implication` separately checks a directed binary YES implication
 over an explicit bijection between two joint state spaces. It requires complete

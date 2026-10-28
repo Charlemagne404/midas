@@ -33,6 +33,26 @@ in the dated addendum below and in the Frontier engineering report.
 
 ## Frontier development addendum — 2026-10-28
 
+### Latest isolated Frontier checkpoint — 2026-10-28 11:02 UTC
+
+Commit `ff522e9` advances the economic model to v16 so candidate and replay
+identities pin logical-implication verifier v3 acceptance. A regression
+confirms prior v2 implication evidence remains readable but yields incomplete
+evidence with no position until re-reviewed. The focused economics suite
+passes **7/7**; full `tests/frontier` passes **404/404** in 31.22 seconds wall
+time, with **385,644 KiB** peak RSS and zero test-process swaps. Ruff,
+formatting, strict mypy across six changed production modules, and
+`git diff --check` pass. One existing Starlette/httpx deprecation warning
+remains.
+
+At `11:01:11Z`, memory and I/O PSI avg10 were 0%, about 10 GiB was available,
+and host swap was already 3.5/4 GiB occupied. At `11:01:46Z`, memory PSI was
+0%, I/O PSI was 0.01% some / 0% full, about 10 GiB was available, and the test
+process used no swaps. No live source or protected capture was accessed. Live
+multi-venue validation, broader MIDAS regression, production recovery, and
+deployment remain open. Frontier remains **PARTIALLY VERIFIED**, research-only,
+and undeployed.
+
 ### Latest isolated Frontier checkpoint — 2026-10-28 10:59 UTC
 
 Commit `63c2d74` rejects duplicate relationship IDs before deterministic

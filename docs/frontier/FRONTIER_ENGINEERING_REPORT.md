@@ -2,6 +2,48 @@
 
 **Report date:** 2026-10-28
 
+## Current status — 2026-10-28 11:02 UTC
+
+This entry supersedes the 10:59 UTC checkpoint below. Frontier remains
+isolated at `/home/charlie/midas-frontier` on `codex/frontier-20261026`; code
+commit `ff522e9` is the latest implementation checkpoint.
+
+The logical-implication version gate now has a matching economic-model
+version. Commit `ff522e9` advances the candidate and replay model from v15 to
+v16 and adds a regression showing that a stored v2 implication edge remains
+readable but yields incomplete evidence until it is re-reviewed under
+verifier v3. This makes the changed acceptance rule explicit in candidate and
+replay identities.
+
+The focused logical-implication economics suite passes **7/7**. Full
+`tests/frontier` passes **404/404** in 29.74 seconds (31.22 seconds wall time);
+`/usr/bin/time -v` measured **385,644 KiB** peak RSS, zero process swaps, zero
+filesystem input, and 1,176 output blocks. One existing Starlette/httpx
+`TestClient` deprecation warning remains. Ruff check/format, strict mypy for
+six changed production modules, and `git diff --check` pass. The run used
+tmpfs at `/dev/shm/midas-frontier-final-review-20261028T1101Z`.
+
+At the pre-run sample (`11:01:11Z`), memory PSI avg10 was 0%, I/O PSI avg10
+was 0%, and about 10 GiB was available; host swap remained 3.5/4 GiB occupied.
+At `11:01:46Z`, memory PSI avg10 was 0%, I/O PSI avg10 was 0.01% some / 0%
+full, about 10 GiB was available, and the test process reported zero swaps.
+No live source, protected capture, production service, or Arena job was used.
+The public Polymarket capture remains untouched. Frontier remains
+**PARTIALLY VERIFIED**; genuine multi-venue validation, broader MIDAS
+regression, production recovery, and deployment remain open.
+
+### Latest acceptance delta
+
+| Requirement | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Logical implication version and replay identity | COMPLETE AND VERIFIED | Economic model v16 pins current implication verifier v3; old v2 evidence remains incomplete until re-reviewed. |
+| Full Frontier Python regression | COMPLETE AND VERIFIED | 404/404 pass on the exact code commit; one existing deprecation warning remains. |
+| Source parsing and replay input integrity | COMPLETE AND VERIFIED | Duplicate JSON keys and duplicate relationship IDs are rejected with bounded evidence/identity rules. |
+| Live cross-venue equivalence and economics | BLOCKED | No authorized genuine multi-venue evidence is available for this checkpoint. |
+| Broader MIDAS regression | PARTIALLY VERIFIED | Not run on this branch; Reality recovery dependency and incompatible Reality lineages remain unresolved. |
+| Production recovery and deployment | DEFERRED | The research worktree remains isolated, unmerged, and undeployed. |
+| Frontier overall | PARTIALLY VERIFIED | Live science, broader regression, and production readiness remain open. |
+
 ## Current status — 2026-10-28 10:59 UTC
 
 This entry supersedes the 10:56 UTC checkpoint below. Frontier remains
