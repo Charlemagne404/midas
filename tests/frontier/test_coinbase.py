@@ -192,6 +192,55 @@ async def test_coinbase_product_book_and_trades_preserve_native_semantics_offlin
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "corruption",
+    (
+        "missing_instrument",
+        "duplicate_instrument",
+        "wrong_canonical_id",
+        "wrong_base_asset",
+        "wrong_quote_asset",
+        "wrong_instrument_quote",
+        "wrong_quantity_unit",
+    ),
+)
+async def test_coinbase_book_binds_market_identity_before_request(corruption: str):
+    adapter, requests, client = _adapter({"/products/BTC-USD": _product()})
+    try:
+        (market,) = await adapter.discover_markets(limit=1)
+        adapter.take_captures()
+        instrument = market.instruments[0]
+        if corruption == "missing_instrument":
+            forged_market = market.model_copy(update={"instruments": ()})
+        elif corruption == "duplicate_instrument":
+            forged_market = market.model_copy(update={"instruments": (instrument, instrument)})
+        elif corruption == "wrong_canonical_id":
+            forged_market = market.model_copy(update={"canonical_id": "coinbase_exchange:ETH-EUR"})
+        elif corruption == "wrong_base_asset":
+            forged_market = market.model_copy(update={"base_asset": "ETH"})
+        elif corruption == "wrong_quote_asset":
+            forged_market = market.model_copy(update={"quote_asset": "EUR"})
+        elif corruption == "wrong_instrument_quote":
+            forged_instrument = instrument.model_copy(update={"price_currency": "EUR"})
+            forged_market = market.model_copy(update={"instruments": (forged_instrument,)})
+        else:
+            forged_instrument = instrument.model_copy(
+                update={"quantity_unit": QuantityUnit.UNKNOWN}
+            )
+            forged_market = market.model_copy(update={"instruments": (forged_instrument,)})
+
+        with pytest.raises(AdapterError) as error:
+            await adapter.fetch_book(forged_market, "BTC-USD", depth=1)
+
+        assert error.value.code == "INVALID_INSTRUMENT"
+        assert len(requests) == 1
+        assert requests[0].url.path == "/products/BTC-USD"
+        assert adapter.take_captures() == ()
+    finally:
+        await client.aclose()
+
+
+@pytest.mark.asyncio
 async def test_coinbase_incomplete_book_timing_stays_unverified():
     product_path = "/products/BTC-USD"
     adapter, _, client = _adapter(

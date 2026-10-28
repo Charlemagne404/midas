@@ -37,7 +37,7 @@ from midas.frontier.models import (
 )
 
 D = Decimal
-ADAPTER_VERSION = "frontier-coinbase-exchange-spot-4"
+ADAPTER_VERSION = "frontier-coinbase-exchange-spot-5"
 BASE = "https://api.exchange.coinbase.com"
 PRODUCTS_DOC = (
     "https://docs.cdp.coinbase.com/api-reference/exchange-api/rest-api/products/get-single-product"
@@ -313,6 +313,32 @@ class CoinbaseSpotAdapter(BaseReadOnlyAdapter):
             raise AdapterError(
                 "INSTRUMENT_NOT_FOUND", "Product does not belong to the configured market"
             )
+        if not market.has_valid_structure:
+            raise AdapterError(
+                "INVALID_INSTRUMENT", "Coinbase market fails structural revalidation"
+            )
+        base_asset, quote_asset = instrument_id.split("-", 1)
+        if (
+            market.canonical_id != stable_market_id(self.venue, instrument_id)
+            or market.base_asset != base_asset
+            or market.quote_asset != quote_asset
+            or len(market.instruments) != 1
+        ):
+            raise AdapterError(
+                "INVALID_INSTRUMENT",
+                "Coinbase market identity does not match its configured product",
+            )
+        instrument = market.instruments[0]
+        if (
+            instrument.native_instrument_id != instrument_id
+            or instrument.quantity_unit != QuantityUnit.BASE_ASSET
+            or instrument.price_currency != quote_asset
+            or instrument.price_currency_identity != _quote_identity(quote_asset)
+        ):
+            raise AdapterError(
+                "INVALID_INSTRUMENT",
+                "Coinbase product instrument does not match its base/quote identity",
+            )
         response = await self.transport.get_json(
             f"{BASE}/products/{instrument_id}/book", {"level": 2}
         )
@@ -340,9 +366,6 @@ class CoinbaseSpotAdapter(BaseReadOnlyAdapter):
             flags.append("AUCTION_STATE_MISSING")
         if raw.get("auction_mode") is True:
             flags.append("AUCTION_MODE_INDICATIVE")
-        instrument = market.instruments[0]
-        base_asset = market.base_asset or "base"
-        quote_asset = market.quote_asset or "quote"
         return BookSnapshot(
             venue=self.venue,
             native_market_id=market.native_market_id,
