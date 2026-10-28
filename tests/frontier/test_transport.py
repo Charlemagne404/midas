@@ -8,6 +8,18 @@ from midas.frontier.models import AdapterConfig
 
 
 @pytest.mark.asyncio
+async def test_default_public_transport_ignores_environment_proxy_settings(monkeypatch):
+    monkeypatch.setenv("HTTP_PROXY", "http://proxy.invalid:8080")
+    monkeypatch.setenv("HTTPS_PROXY", "http://proxy.invalid:8080")
+    monkeypatch.setenv("ALL_PROXY", "http://proxy.invalid:8080")
+    transport = PublicReadTransport({"example.com"}, AdapterConfig())
+    try:
+        assert transport.client.trust_env is False
+    finally:
+        await transport.close()
+
+
+@pytest.mark.asyncio
 async def test_network_is_disabled_without_explicit_public_probe_configuration():
     calls = 0
 

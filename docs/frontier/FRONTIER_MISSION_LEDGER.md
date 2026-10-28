@@ -8,7 +8,9 @@ Infinity, although those tokens are not valid JSON. Frontier classifies them
 as INVALID_JSON and retains the bounded raw response evidence. Decimal parser
 arithmetic errors now share the existing JSON_COMPLEXITY_LIMIT path. Added
 four fixture cases for nonstandard constants and a 5,000-digit decimal
-exponent case for the parser-limit path.
+exponent case for the parser-limit path. The owned HTTPX client now uses
+trust_env=False so HTTP_PROXY, HTTPS_PROXY, and ALL_PROXY cannot reroute its
+public reads; a local configuration test covers this setting.
 
 The new transport tests and Ruff checks have not run. At 15:47:55Z host memory
 PSI avg10 was 45.32% some / 40.12% full, I/O PSI was 0.61% some / 0.60% full,
@@ -19,6 +21,7 @@ changed. This parser change remains implemented with validation pending.
 | Component | Status | Evidence and remaining boundary |
 | --- | --- | --- |
 | Nonstandard JSON numeric-token rejection | IMPLEMENTED, VALIDATION PENDING | Transport and four mock-response cases are changed; run the focused adapter test after resource admission. |
+| Default transport environment-proxy handling | IMPLEMENTED, VALIDATION PENDING | The owned client disables environment proxy discovery; a local configuration regression is added. |
 | Current Frontier Python suite | PARTIALLY VERIFIED | The prior 465/465 result predates this transport change and does not verify current HEAD. |
 | Live source and protected data | UNCHANGED | No adapter request or source capture was made; existing source-use holds remain active. |
 | Frontier project acceptance | PARTIALLY VERIFIED | Live cross-venue science, broad regression, endurance, protected recovery, and deployment remain open. |

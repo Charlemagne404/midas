@@ -111,6 +111,7 @@ class PublicReadTransport:
                     "User-Agent": "MIDAS-Frontier/0.1 (public read-only research)",
                 },
                 limits=httpx.Limits(max_connections=4, max_keepalive_connections=2),
+                trust_env=False,
             )
         )
         self._lock = asyncio.Lock()
