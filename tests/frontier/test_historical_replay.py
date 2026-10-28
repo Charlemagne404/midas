@@ -9,6 +9,7 @@ import pytest
 from midas.frontier.historical_replay import (
     MAX_PRICE_HISTORY_REPLAY_SERIES,
     PriceHistoryReplayInput,
+    PriceHistoryReplayManifest,
     deterministic_price_history_replay,
 )
 from midas.frontier.models import HistoricalPricePoint, PriceHistorySeries, Venue
@@ -101,6 +102,19 @@ def test_price_history_replay_rejects_capture_mismatch_duplicate_and_unbounded_i
     too_many = tuple(_evidence(index) for index in range(1, MAX_PRICE_HISTORY_REPLAY_SERIES + 2))
     with pytest.raises(ValueError, match="requires 1..8 captures"):
         deterministic_price_history_replay(too_many, code_version="frontier-test-history-v1")
+
+
+@pytest.mark.parametrize("observation_id", ("x" * 65, "A" * 64, "g" * 64))
+def test_price_history_manifest_rejects_unbounded_or_non_sha256_observation_ids(
+    observation_id,
+):
+    with pytest.raises(ValidationError, match="observation IDs must be lowercase SHA-256"):
+        PriceHistoryReplayManifest(
+            code_version="frontier-test-history-v1",
+            input_sha256="a" * 64,
+            observation_ids=(observation_id,),
+            as_of_utc=T0,
+        )
 
 
 def test_price_history_replay_revalidates_reconstructed_nested_timestamps():

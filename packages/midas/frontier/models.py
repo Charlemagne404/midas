@@ -433,13 +433,13 @@ class JointStateMapDefinition(FrontierModel):
                 raise ValueError(
                     f"Joint-state projection for {market_id} must map every state to a bounded local state"
                 )
-        if len(set(self.evidence_observation_ids)) != len(self.evidence_observation_ids):
-            raise ValueError("Joint-state evidence observation IDs must be unique")
         for observation_id in self.evidence_observation_ids:
             if len(observation_id) != 64 or any(
                 character not in "0123456789abcdef" for character in observation_id
             ):
                 raise ValueError("Joint-state evidence IDs must be lowercase SHA-256 digests")
+        if len(set(self.evidence_observation_ids)) != len(self.evidence_observation_ids):
+            raise ValueError("Joint-state evidence observation IDs must be unique")
         return self
 
 
@@ -524,7 +524,7 @@ class FeeSchedule(FrontierModel):
     fee_currency_identity: SettlementAssetIdentity | None = None
     source_url: str | None = None
     evidence_sha256: str | None = None
-    evidence_observation_ids: tuple[str, ...] = ()
+    evidence_observation_ids: tuple[str, ...] = Field(default=(), max_length=64)
     evidence_observed_at_utc: datetime | None = None
     effective_at_utc: datetime | None = None
     expires_at_utc: datetime | None = None
@@ -534,13 +534,13 @@ class FeeSchedule(FrontierModel):
     def verified_schedule_has_evidence(self) -> FeeSchedule:
         if self.status == FeeStatus.VERIFIED and not (self.source_url and self.evidence_sha256):
             raise ValueError("Verified fee schedule requires source and evidence hash")
-        if len(set(self.evidence_observation_ids)) != len(self.evidence_observation_ids):
-            raise ValueError("Fee evidence observation identities must be unique")
         if any(
             len(item) != 64 or any(character not in "0123456789abcdef" for character in item)
             for item in self.evidence_observation_ids
         ):
             raise ValueError("Fee evidence observation identities must be SHA-256 digests")
+        if len(set(self.evidence_observation_ids)) != len(self.evidence_observation_ids):
+            raise ValueError("Fee evidence observation identities must be unique")
         if self.formula == KALSHI_QUADRATIC_TAKER_FORMULA and (
             self.status != FeeStatus.ESTIMATE
             or self.applies_to != "taker"

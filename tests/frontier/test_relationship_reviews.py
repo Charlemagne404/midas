@@ -15,7 +15,7 @@ from midas.frontier.adapters import KalshiAdapter, KrakenSpotAdapter, Polymarket
 from midas.frontier.adapters.transport import PublicReadTransport
 from midas.frontier.models import AdapterConfig, FrontierMarket, RawObservation, StatePayout, Venue
 from midas.frontier.registry import AdapterRegistry
-from midas.frontier.relationships import ReviewDecision, propose_relationships
+from midas.frontier.relationships import RelationshipReview, ReviewDecision, propose_relationships
 from midas.frontier.storage import SCHEMA_VERSION, FrontierStore
 from pydantic import ValidationError
 
@@ -215,6 +215,21 @@ def test_relationship_review_rejects_unbounded_or_non_sha256_evidence_ids(eviden
             reviewer_label="researcher-1",
             reason="The evidence identity must be a source digest.",
             evidence_observation_ids=(evidence_id,),
+        )
+
+
+@pytest.mark.parametrize("evidence_id", ("x" * 65, "A" * 64, "g" * 64))
+def test_review_record_rejects_unbounded_or_non_sha256_evidence_ids(evidence_id):
+    with pytest.raises(ValidationError, match="evidence must use lowercase SHA-256 IDs"):
+        RelationshipReview(
+            review_id="1" * 64,
+            relationship_id="2" * 64,
+            adjudicated_relationship_id="3" * 64,
+            decision=ReviewDecision.AMBIGUOUS,
+            reviewer_label="researcher-1",
+            reason="The evidence identity must be a source digest.",
+            evidence_observation_ids=(evidence_id,),
+            created_at_utc=T0,
         )
 
 

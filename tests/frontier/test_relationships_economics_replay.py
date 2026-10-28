@@ -153,6 +153,12 @@ def test_fee_schedule_times_must_be_aware_and_are_normalized_to_utc(field: str):
     assert getattr(schedule, field) == datetime(2026, 10, 28, 10, 0, tzinfo=UTC)
 
 
+@pytest.mark.parametrize("evidence_id", ("x" * 65, "A" * 64, "g" * 64))
+def test_fee_schedule_rejects_unbounded_or_non_sha256_evidence_ids(evidence_id):
+    with pytest.raises(ValidationError, match="evidence observation identities must be SHA-256"):
+        FeeSchedule(evidence_observation_ids=(evidence_id,))
+
+
 def _verified_pair():
     left = market(Venue.POLYMARKET, "market-left")
     right = market(Venue.KALSHI, "market-right")
@@ -225,6 +231,22 @@ def test_same_payoff_verifier_rejects_malformed_model_copy(corruption, reason):
 
     assert result.state == VerificationState.REJECTED
     assert reason in result.reason.lower()
+
+
+def test_same_payoff_verifier_rejects_oversized_observation_identity_inputs():
+    left, right, _relationship, instrument_mapping = _verified_pair()
+    result = verify_same_payoff(
+        left,
+        right,
+        state_mapping={"yes": "yes", "no": "no"},
+        instrument_mapping=instrument_mapping,
+        external_assertion_id="bounded-observation-evidence",
+        evidence_observation_ids=(left.provenance.observation_id, "x" * 257),
+        asserted_at_utc=T0,
+    )
+
+    assert result.state == VerificationState.REJECTED
+    assert "exceed the bounded evidence limit" in result.reason.lower()
 
 
 @pytest.mark.parametrize("empty_side", ("left", "right", "both"))

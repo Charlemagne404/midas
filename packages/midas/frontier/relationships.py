@@ -121,13 +121,13 @@ class RelationshipReview(FrontierModel):
 
     @model_validator(mode="after")
     def valid_review_evidence(self) -> RelationshipReview:
-        if len(set(self.evidence_observation_ids)) != len(self.evidence_observation_ids):
-            raise ValueError("Relationship review evidence IDs must be unique")
         for observation_id in self.evidence_observation_ids:
             if len(observation_id) != 64 or any(
                 character not in "0123456789abcdef" for character in observation_id
             ):
                 raise ValueError("Relationship review evidence must use lowercase SHA-256 IDs")
+        if len(set(self.evidence_observation_ids)) != len(self.evidence_observation_ids):
+            raise ValueError("Relationship review evidence IDs must be unique")
         if self.decision == ReviewDecision.VERIFIED and not self.external_assertion_id:
             raise ValueError("A verified relationship review requires an external assertion ID")
         for digest in (self.review_id, self.adjudicated_relationship_id):
@@ -519,7 +519,12 @@ def verify_same_payoff(
     if not external_assertion_id.strip() or len(external_assertion_id) > 120:
         raise ValueError("A bounded verification assertion identity is required")
     checks: list[str] = []
-    if not evidence_observation_ids:
+    evidence_ids_bounded = len(evidence_observation_ids) <= 10 and all(
+        isinstance(item, str) and len(item) <= 256 for item in evidence_observation_ids
+    )
+    if not evidence_ids_bounded:
+        checks.append("Source observation identities exceed the bounded evidence limit")
+    elif not evidence_observation_ids:
         checks.append("Source observation identities are required")
     elif (
         len(evidence_observation_ids) < 2
@@ -527,7 +532,7 @@ def verify_same_payoff(
         or any(not observation_id.strip() for observation_id in evidence_observation_ids)
     ):
         checks.append("Source evidence must contain two to ten nonempty observation identities")
-    if len(set(evidence_observation_ids)) != len(evidence_observation_ids):
+    if evidence_ids_bounded and len(set(evidence_observation_ids)) != len(evidence_observation_ids):
         checks.append("Source observation identities must be unique")
     required_observations = {
         left.provenance.observation_id,
@@ -535,7 +540,7 @@ def verify_same_payoff(
     }
     if len(required_observations) != 2:
         checks.append("Each supplied market must have a distinct pinned observation identity")
-    if not required_observations.issubset(set(evidence_observation_ids)):
+    if evidence_ids_bounded and not required_observations.issubset(set(evidence_observation_ids)):
         checks.append("Evidence must cite the pinned observation for each supplied market")
     if left.canonical_id == right.canonical_id:
         checks.append("Markets must have distinct canonical identities")
@@ -649,7 +654,9 @@ def verify_same_payoff(
         canonical_asset_identities[market_id] = (
             identity.canonical_id if identity is not None else "missing"
         )
-    assertion_evidence = tuple(sorted(set(evidence_observation_ids)))
+    assertion_evidence = (
+        tuple(sorted(set(evidence_observation_ids))) if evidence_ids_bounded else ()
+    )
     assertion_time = asserted_at_utc or max(
         left.provenance.response_received_at_utc,
         right.provenance.response_received_at_utc,
@@ -733,25 +740,27 @@ def verify_logical_implication(
         raise ValueError("Logical implication requires two distinct markets")
     if len(external_assertion_id) > 120:
         raise ValueError("Logical implication assertion identity exceeds 120 characters")
-    if len(evidence_observation_ids) > 10 or any(
-        len(item) > 256 for item in evidence_observation_ids
-    ):
-        raise ValueError("Logical implication source evidence exceeds its bounded identity limit")
+    evidence_ids_bounded = len(evidence_observation_ids) <= 10 and all(
+        isinstance(item, str) and len(item) <= 256 for item in evidence_observation_ids
+    )
     checks: list[str] = []
+    if not evidence_ids_bounded:
+        checks.append("Logical implication source evidence exceeds its bounded identity limit")
     markets = {left.canonical_id: left, right.canonical_id: right}
     if implication_from_market_id not in markets or implication_to_market_id not in markets:
         checks.append("Implication direction must name both supplied markets")
     elif implication_from_market_id == implication_to_market_id:
         checks.append("Implication direction must connect distinct markets")
-    if len(set(evidence_observation_ids)) < 2 or any(
-        not item.strip() for item in evidence_observation_ids
-    ):
-        checks.append("Distinct source observation identities for both markets are required")
+    if evidence_ids_bounded:
+        if len(set(evidence_observation_ids)) < 2 or any(
+            not item.strip() for item in evidence_observation_ids
+        ):
+            checks.append("Distinct source observation identities for both markets are required")
     required_observations = {
         left.provenance.observation_id,
         right.provenance.observation_id,
     }
-    if not required_observations.issubset(set(evidence_observation_ids)):
+    if evidence_ids_bounded and not required_observations.issubset(set(evidence_observation_ids)):
         checks.append("Evidence must cite the pinned observation for each supplied market")
     if any(market.market_kind != MarketKind.BINARY_EVENT for market in markets.values()):
         checks.append("Only binary event contracts are supported")
@@ -878,7 +887,9 @@ def verify_logical_implication(
         canonical_state_mapping = {value: key for key, value in state_mapping.items()}
     else:
         canonical_state_mapping = {}
-    assertion_evidence = tuple(sorted(set(evidence_observation_ids)))
+    assertion_evidence = (
+        tuple(sorted(set(evidence_observation_ids))) if evidence_ids_bounded else ()
+    )
     assertion_time = asserted_at_utc or max(
         left.provenance.response_received_at_utc,
         right.provenance.response_received_at_utc,

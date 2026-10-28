@@ -15,6 +15,7 @@ from midas.frontier.joint_economics import generate_joint_state_basket_candidate
 from midas.frontier.models import (
     FrontierMarket,
     JointStateMap,
+    JointStateMapDefinition,
     MarketKind,
     QuantityUnit,
     StatePayout,
@@ -63,6 +64,15 @@ def test_joint_state_map_rejects_changed_payload_with_stale_identity():
 
     with pytest.raises(ValidationError, match="identity does not match"):
         JointStateMap.model_validate(altered)
+
+
+@pytest.mark.parametrize("evidence_id", ("x" * 65, "A" * 64, "g" * 64))
+def test_joint_state_map_rejects_unbounded_or_non_sha256_evidence_ids(evidence_id):
+    payload = _mapping_payload()
+    payload["evidence_observation_ids"] = (evidence_id, "b" * 64)
+
+    with pytest.raises(ValidationError, match="evidence IDs must be lowercase SHA-256"):
+        JointStateMapDefinition.model_validate(payload)
 
 
 def test_joint_state_map_requires_complete_bounded_projections_and_evidence():

@@ -127,6 +127,12 @@ class PriceHistoryReplayManifest(FrontierModel):
 
     @model_validator(mode="after")
     def observations_are_unique(self) -> PriceHistoryReplayManifest:
+        if any(
+            len(observation_id) != 64
+            or any(character not in "0123456789abcdef" for character in observation_id)
+            for observation_id in self.observation_ids
+        ):
+            raise ValueError("Price-history replay observation IDs must be lowercase SHA-256 IDs")
         if len(set(self.observation_ids)) != len(self.observation_ids):
             raise ValueError("Price-history replay observation IDs must be unique")
         return self

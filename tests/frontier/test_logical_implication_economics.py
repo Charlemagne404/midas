@@ -93,6 +93,23 @@ def _fixture():
     return source, target, relationship, ordered_markets, by_market, (source_book, target_book)
 
 
+def test_logical_implication_verifier_rejects_oversized_observation_identity_inputs():
+    source, target, _relationship, *_ = _fixture()
+    rejected = verify_logical_implication(
+        source,
+        target,
+        implication_from_market_id=source.canonical_id,
+        implication_to_market_id=target.canonical_id,
+        state_mapping=dict(zip(STATES, STATES, strict=True)),
+        external_assertion_id="bounded-observation-evidence",
+        evidence_observation_ids=(source.provenance.observation_id, "x" * 257),
+        asserted_at_utc=T0,
+    )
+
+    assert rejected.state.value == "rejected"
+    assert "exceeds its bounded identity limit" in rejected.reason.lower()
+
+
 def test_directed_implication_basket_is_capped_and_independently_audited():
     source, target, relationship, ordered_markets, by_market, books = _fixture()
     left, right = ordered_markets
