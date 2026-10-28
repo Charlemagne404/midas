@@ -3843,3 +3843,20 @@ At `2026-10-28T22:14:18Z`, API was at 1,606,524,928 / 1,610,612,736 bytes and
 Reality at 1,207,844,864 / 1,207,959,552 bytes. Memory PSI was 0%, available
 memory 10,075,068 kB, and swap free 954,736 kB. Broad tests remain deferred
 under narrow service headroom.
+
+## Project Frontier held relationship summary counts — 2026-10-28 22:18 UTC
+
+Overview and readiness relationship counts now apply the evidence-level held
+source filter used by relationship, graph, and replay reads. Missing,
+malformed, empty, or held relationship observation IDs are excluded from
+record, review, and effective-state totals. The held-source fixture confirms
+the count is zero when its relationship is hidden from list and graph APIs.
+The implementation uses SQLite JSON functions; tested with SQLite 3.45.1.
+Fixture API cases pass 14/14, selected storage/review cases 29/29, and the
+focused replay/economics module 105/105. Maximum-store performance is not
+measured. Frontier remains partially verified.
+
+At `2026-10-28T22:17:56Z`, API was at 1,606,975,488 / 1,610,612,736
+bytes and Reality at 1,206,743,040 / 1,207,959,552 bytes. Memory PSI was 0%,
+available memory 10,082,484 kB, and swap free 954,744 kB. Broad tests remain
+deferred under narrow protected-service headroom.

@@ -3135,6 +3135,9 @@ def test_held_relationship_evidence_is_quarantined_from_graph_and_replay(tmp_pat
         asserted_at_utc=T0,
     )
     store.append_relationship(relationship)
+    held_summary = store.summary(excluded_venues=("kalshi", "kraken"))
+    assert held_summary["relationship_records"] == 0
+    assert held_summary["relationships_by_state"] == {}
     replay = deterministic_replay(
         (left, right),
         (),

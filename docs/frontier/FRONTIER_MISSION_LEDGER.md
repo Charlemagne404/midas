@@ -11628,3 +11628,36 @@ public capture, or protected service was accessed or changed. The untracked
 Next safe action: continue read-only review of remaining summary and
 candidate-to-run source paths; defer broad work while Reality remains close to
 its soft memory boundary.
+
+## Aggregate relationship hold accounting — 2026-10-28 22:18 UTC
+
+Overview and readiness summaries previously filtered relationship totals only
+by held venue prefixes in market IDs, while detail and graph paths also checked
+relationship evidence observations. `FrontierStore.summary` now applies the
+same evidence rule to relationship-record, review, and effective-state
+counts. Rows with malformed/empty evidence or missing/held observation
+references are excluded. The rule uses SQLite JSON functions; the current
+Python test environment reports SQLite **3.45.1**.
+
+The held-relationship API fixture now asserts that source-filtered summary
+counts drop the same relationship omitted from list and graph reads. The
+expanded API replay/relationship selection passes **14/14**; selected storage
+and relationship-review cases pass **29/29**; the focused core suite remains
+**105/105**. Strict mypy passed for storage, API, and replay modules; Ruff and
+format checks pass for all changed Python files. These are bounded fixture
+checks. Maximum-store summary latency and memory remain unmeasured.
+
+At `2026-10-28T22:17:56Z`, API `MemoryHigh` headroom was 3,637,248 bytes and
+Reality headroom was 1,216,512 bytes. Memory PSI was 0%; available memory was
+10,082,484 kB and swap free was 954,744 kB. No source or protected service
+was accessed or changed.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Held relationship summary counts | COMPLETE AND VERIFIED WITH FIXTURES | Record, review, and effective-state summaries exclude malformed, missing, or held relationship evidence IDs. |
+| Summary resource behavior | PARTIALLY VERIFIED | Fixture query is quick; behavior at the 512 MiB store budget is not benchmarked. |
+| Project Frontier overall | PARTIALLY VERIFIED | Live cross-venue science, broad regression, endurance, protected recovery, and deployment remain open. |
+
+Next safe action: inspect remaining candidate detail provenance and bound the
+summary query cost against a small synthetic store; keep production evidence
+and protected services untouched.

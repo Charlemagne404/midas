@@ -1659,6 +1659,32 @@ class FrontierStore:
     def _relationship_venue_exclusion_sql(cls, venues: tuple[str, ...]) -> str:
         return cls._relationship_venue_exclusion(venues)[0]
 
+    @staticmethod
+    def _relationship_evidence_venue_exclusion(
+        venues: tuple[str, ...],
+    ) -> tuple[str, tuple[Any, ...]]:
+        """Exclude relationships whose cited observations are held or unavailable."""
+        if not venues:
+            return "", ()
+        if len(venues) > 16 or any(not item or len(item) > 80 for item in venues):
+            raise ValueError("Relationship venue exclusions are invalid")
+        placeholders = ",".join("?" for _ in venues)
+        return (
+            " AND CASE WHEN json_valid(r.relationship_json) THEN CASE "
+            "WHEN json_type(r.relationship_json,'$.evidence')='array' "
+            "AND json_array_length(r.relationship_json,'$.evidence')>0 THEN NOT EXISTS ("
+            "SELECT 1 FROM json_each(r.relationship_json,'$.evidence') AS evidence "
+            "WHERE CASE WHEN evidence.type='object' THEN CASE "
+            "WHEN json_type(evidence.value,'$.observation_ids')='array' "
+            "AND json_array_length(evidence.value,'$.observation_ids')>0 THEN EXISTS ("
+            "SELECT 1 FROM json_each(evidence.value,'$.observation_ids') AS source_id "
+            "LEFT JOIN observations AS source_observation "
+            "ON source_observation.observation_id=source_id.value "
+            f"WHERE source_observation.observation_id IS NULL OR source_observation.venue IN ({placeholders})"
+            ") ELSE 1 END ELSE 1 END=1) ELSE 0 END ELSE 0 END=1",
+            tuple(venues),
+        )
+
     def summary(self, *, excluded_venues: tuple[str, ...] = ()) -> dict[str, Any]:
         if len(excluded_venues) > 16 or any(not item or len(item) > 80 for item in excluded_venues):
             raise ValueError("Summary venue exclusions are invalid")
@@ -1692,6 +1718,11 @@ class FrontierStore:
         relationship_exclusion, relationship_params = self._relationship_venue_exclusion(
             excluded_venues
         )
+        evidence_exclusion, evidence_params = self._relationship_evidence_venue_exclusion(
+            excluded_venues
+        )
+        summary_relationship_exclusion = relationship_exclusion + evidence_exclusion
+        summary_relationship_params = relationship_params + evidence_params
         with self._read_connect() as connection:
             version = connection.execute(
                 "SELECT value FROM frontier_meta WHERE key='schema_version'"
@@ -1709,16 +1740,17 @@ class FrontierStore:
             )
             relationship_records = int(
                 connection.execute(
-                    f"SELECT COUNT(*) FROM relationships AS r WHERE 1=1{relationship_exclusion}",
-                    relationship_params,
+                    "SELECT COUNT(*) FROM relationships AS r WHERE 1=1"
+                    f"{summary_relationship_exclusion}",
+                    summary_relationship_params,
                 ).fetchone()[0]
             )
             relationship_reviews = int(
                 connection.execute(
                     "SELECT COUNT(*) FROM relationship_reviews AS rr "
                     "JOIN relationships AS r ON r.relationship_id=rr.relationship_id "
-                    "WHERE 1=1" + relationship_exclusion,
-                    relationship_params,
+                    "WHERE 1=1" + summary_relationship_exclusion,
+                    summary_relationship_params,
                 ).fetchone()[0]
             )
             runs = int(connection.execute("SELECT COUNT(*) FROM research_runs").fetchone()[0])
@@ -1741,8 +1773,8 @@ class FrontierStore:
                 "AND lr.revision_rank=1 WHERE "
                 "((r.supersedes_relationship_id IS NULL AND lr.relationship_id IS NULL) "
                 "OR lr.adjudicated_relationship_id=r.relationship_id)"
-                f"{relationship_exclusion} GROUP BY r.state",
-                relationship_params,
+                f"{summary_relationship_exclusion} GROUP BY r.state",
+                summary_relationship_params,
             ).fetchall()
             relationships = sum(int(row["n"]) for row in rel_groups)
             market_groups = connection.execute(

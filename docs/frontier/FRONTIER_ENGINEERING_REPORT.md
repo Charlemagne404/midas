@@ -12595,3 +12595,39 @@ untouched.
 
 Next safe action: inspect remaining summary and candidate detail source paths;
 defer broad suites while Reality remains near `MemoryHigh`.
+
+## Evidence-filtered relationship summary counts — 2026-10-28 22:18 UTC
+
+The held-source review found that overview and readiness summaries called
+`FrontierStore.summary(excluded_venues=...)`, whose relationship totals only
+filtered endpoint market namespaces. The row-level API filter now also checks
+all evidence references, so the overview could count a relationship hidden
+from relationship and graph reads. Summary queries now apply the same
+evidence rule to relationship-record, review, and effective-state counts.
+Invalid/empty evidence, missing observation records, and held source venues
+are excluded. The predicate uses SQLite JSON functions; the development
+environment has SQLite 3.45.1.
+
+The fixture API test verifies a relationship with two non-held endpoints and
+one held evidence observation is absent from list and graph responses, cannot
+be selected by normal replay, is omitted from a prior run, and contributes no
+source-filtered relationship count. The final API selection passes **14/14**;
+the selected storage and relationship-review cases pass **29/29**; the
+focused relationship/economics/replay module passes **105/105**. Strict mypy
+passes for storage, API, and replay; Ruff check and format pass for changed
+Python files. The fixture query is quick, but no maximum-store performance
+measurement was made.
+
+At `2026-10-28T22:17:56Z`, API `MemoryHigh` headroom was 3,637,248 bytes and
+Reality headroom was 1,216,512 bytes. Memory PSI was 0%; available memory was
+10,082,484 kB and swap free was 954,744 kB. No source or protected service was
+accessed or changed.
+
+| Requirement | Status | Evidence and boundary |
+| --- | --- | --- |
+| Evidence-filtered relationship totals | COMPLETE AND VERIFIED WITH FIXTURES | Record, review, and effective-state summaries omit malformed, empty, missing, or held evidence references. |
+| Summary resource behavior | PARTIALLY VERIFIED | Fixture query passes; maximum-store latency and memory are not measured. |
+| Overall Frontier acceptance | PARTIALLY VERIFIED | Live cross-venue science, broad regression, endurance, protected recovery, and deployment remain open. |
+
+Next safe action: inspect remaining candidate detail provenance and measure a
+small synthetic summary store within the resource caps.
