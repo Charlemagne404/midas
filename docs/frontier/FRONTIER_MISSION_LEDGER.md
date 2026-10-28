@@ -6266,3 +6266,35 @@ deployment, or order was involved.
 **Next safe action:** continue the source-independent scientific acceptance
 matrix, including economic and replay verifier review; retain the existing
 source-use holds and production isolation.
+
+## Candidate observation timestamp validation — 2026-10-28 07:37 UTC
+
+**Stage:** D (independent economics), source-independent timing integrity.
+**Code commit:** `92ab4e8` on `codex/frontier-20261026`.
+
+Review found `OpportunityCandidate.observed_at_utc` lacked the aware-time
+validation used by Frontier's other evidence timestamps. A naive value can
+reach timing verification, where Python's `datetime.timestamp()` interprets it
+in the host local timezone. Candidate timestamps now reject naive datetimes
+and normalize aware offsets to UTC before storage or audit.
+
+Regression coverage verifies both rejection and offset normalization. The
+complete `tests/frontier/test_relationships_economics_replay.py` module passed
+**50/50**. Strict mypy passed for `packages/midas/frontier/economics.py`; Ruff
+check and Ruff format check pass for both changed Python files. No production,
+service, source, or protected data store was accessed.
+
+At `2026-10-28T07:37:17Z`, memory PSI avg10 was **0.00% some/full**, I/O PSI
+avg10 was **0.01% some / 0.00% full**, about **10 GiB** was available, and the
+shared Arena lock was free. This bounded module test does not re-establish the
+full Frontier suite after the change.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Candidate observation timestamp contract | COMPLETE AND VERIFIED | Naive candidate time is rejected; an aware +02:00 timestamp normalizes to UTC; 50 module tests pass. |
+| Full Frontier scientific regression after timestamp change | PARTIALLY VERIFIED | The affected economics/replay module passes; remaining modules were not rerun at this checkpoint. |
+| Project Frontier overall | PARTIALLY VERIFIED | Live cross-venue match, held-source access, broad resource/recovery, and deployment gates remain open. |
+
+**Next safe action:** continue source-independent audit of timestamp and
+provenance contracts across replay inputs, then update this ledger with targeted
+verification. Preserve source-use holds and production isolation.

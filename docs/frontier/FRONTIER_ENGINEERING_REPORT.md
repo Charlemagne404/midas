@@ -7540,3 +7540,28 @@ production service was accessed.
 | Entry JavaScript bundle | COMPLETE AND VERIFIED | 367.85 kB, down about 28% from the prior 511.30 kB measurement. |
 | Chart/ECharts bundle | PARTIALLY VERIFIED | Build passes; its 544.41 kB warning remains, and Mission Control loads it for its initial chart. |
 | Frontier overall | PARTIALLY VERIFIED | Genuine live cross-venue equivalence/economics and deployment prerequisites remain open. |
+
+## Candidate observation timestamp contract — 2026-10-28 07:37 UTC
+
+The scientific code review found that `OpportunityCandidate.observed_at_utc`
+accepted a naive datetime even though normalized evidence times elsewhere
+require timezone information. Independent timing code converts candidate time
+to epoch milliseconds; Python interprets a naive value in the host's local
+timezone. This could shift the audit's freshness calculation by the host UTC
+offset for malformed or legacy candidate data.
+
+Commit `92ab4e8` adds a model validator that rejects a missing timezone and
+normalizes aware timestamps to UTC. Its regression test checks both behaviors.
+The full affected module `tests/frontier/test_relationships_economics_replay.py`
+passes **50/50**. Strict mypy passes for `packages/midas/frontier/economics.py`;
+Ruff check and format checks pass for the changed source and test files. At
+`2026-10-28T07:37:17Z`, memory PSI avg10 was 0.00%, I/O PSI avg10 was **0.01%
+some / 0.00% full**, approximately **10 GiB** was available, and the shared
+Arena lock was unheld. No live source, protected store, or production service
+was accessed. Broader post-change regression is still pending.
+
+| Component | Status | Current evidence and remaining boundary |
+| --- | --- | --- |
+| Candidate timestamp validation | COMPLETE AND VERIFIED | Naive values are rejected and aware offsets normalize to UTC; 50 economics/replay tests pass. |
+| Full Frontier regression after this fix | PARTIALLY VERIFIED | The affected module passes; the complete suite has not been rerun after this narrow change. |
+| Project Frontier overall | PARTIALLY VERIFIED | Live cross-venue equivalence, held-source permissions, broader production gates, and deployment remain incomplete. |

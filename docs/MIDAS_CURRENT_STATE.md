@@ -1852,3 +1852,17 @@ accessed. At 07:35:37 UTC memory PSI avg10 was **0.00% some/full**, I/O PSI
 avg10 was **0.44% some / 0.28% full**, about **10 GiB** was available, and the
 shared Arena lock was free. Frontier remains isolated,
 research-only, **PARTIALLY VERIFIED**, and undeployed.
+
+### Frontier verification follow-up — 2026-10-28 07:37 UTC
+
+After commit `87a6a3c`, both opt-in seeded browser scenarios passed **2/2**,
+including the populated Arena discovery artifact rendered through lazy-loaded
+Laboratory. Commit `92ab4e8` then tightened the candidate time contract: naive
+observation timestamps now fail validation and aware offsets normalize to UTC.
+The affected economics/replay module passed **50/50**; strict mypy and Ruff
+checks passed for the changed Python code and tests. At 07:37:17 UTC, memory
+PSI avg10 was 0.00%, I/O PSI avg10 was **0.01% some / 0.00% full**, about
+**10 GiB** was available, and the shared Arena lock was unheld. No exchange
+source or protected store was accessed. Full Frontier regression after the
+timestamp change remains pending; overall Frontier is still research-only and
+**PARTIALLY VERIFIED**.
