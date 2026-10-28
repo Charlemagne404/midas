@@ -8830,12 +8830,12 @@ summary.
 | Relationship graph and economic equivalence | PARTIALLY VERIFIED | Deterministic hypothesis, evidence review, and verification paths are fixture-tested; no permitted genuine cross-venue equivalence is verified. |
 | Opportunity discovery and independent audit | PARTIALLY VERIFIED | Supported fixture cases independently recompute outcomes and costs; no live cross-venue candidate or positive eligibility is demonstrated. |
 | Cross-venue economics and capital constraints | PARTIALLY VERIFIED | Fees, FX assumptions, timing, partial fills, and venue-specific virtual capital are modeled in fixtures; account-specific costs, access, settlement, and execution remain unresolved. |
-| Provenance, storage, and replay | PARTIALLY VERIFIED | Bounded immutable observations and deterministic replay have regression coverage; sustained multi-source quality and history are unmeasured. |
+| Provenance, storage, and replay | PARTIALLY VERIFIED | Bounded immutable observations and deterministic replay have regression coverage; direct proposal/replay inputs now cap at 200 markets, 400 books, 1,000 relationships, and 1,000 proposals. Sustained multi-source quality and history are unmeasured. |
 | Frontier Laboratory/Arena integration | PARTIALLY VERIFIED | Frontier replay/timeline/discovery modules pass 28/28; generic Arena job-supervision tests pass 16/16 and admission tests pass 11/11. Full legacy Arena regression, endurance, and production-worker readiness remain deferred. |
 | Native Frontier workspace | COMPLETE AND VERIFIED | Frontend tests, typecheck, lint/format, production build, and 9 isolated browser cases pass; no browser fixture is represented as live cross-venue evidence. |
 | Source-aware analytics and readiness | PARTIALLY VERIFIED | Summaries and gates are implemented and fixture-tested; the captured sample cannot support venue-wide coverage or opportunity-prevalence conclusions. |
 | Research-only boundary | COMPLETE AND VERIFIED | No authenticated trading, wallet, funding, or order-submission path was introduced; bounded tests and API checks remain isolated. |
-| Full Frontier Python suite | COMPLETE AND VERIFIED | 452/452 passed on the storage/audit code checkpoint; subsequent Arena changes have targeted 28/28 coverage. |
+| Full Frontier Python suite | PARTIALLY VERIFIED | The full suite passed 452/452 on the storage/audit checkpoint; subsequent Arena and replay-bound changes have focused coverage, but the full suite has not been rerun on the current code. |
 | Broader MIDAS regression | DEFERRED | The complete legacy repository suite was not run; do not infer broad compatibility from targeted checks. |
 | Genuine live cross-venue relationship/economics | BLOCKED | Current source-use gates and held-capture protections prevent the required independent second-venue evidence. |
 | Resource sustainability and production recovery | PARTIALLY VERIFIED | Bounded process profiles are recorded. No endurance campaign or current-boundary production recovery proof exists. |
@@ -8845,3 +8845,46 @@ summary.
 **Next safe action:** continue source-independent review and implementation;
 obtain a fresh pressure sample before another resource-bearing verification
 slice. Keep the held `data/frontier-public-probes/` path untouched.
+
+## Direct replay resource bounds — 2026-10-28 14:10 UTC
+
+**Implementation commit:** `f1d04bf` (`fix(frontier): bound direct replay inputs`).
+
+The replay API already restricted its ordinary window, but the public
+`deterministic_replay` and `propose_relationships` functions did not enforce
+those limits for direct callers. The relationship proposer now rejects more
+than 200 markets before building its indexes. Deterministic replay rejects
+more than 200 markets, 400 books, or 1,000 verified relationships before
+structural validation or sorting, and restricts its proposal limit to
+1..1,000. These are the existing API maxima; results inside those bounds are
+unchanged. Paired replay retains its stricter existing 100-market/200-book/
+500-edge limit.
+
+Five new adversarial tests cover the oversized boundaries. The complete
+relationship/economics/replay module passed **88/88** in 1.04 seconds wall
+time at 56,248 KiB peak RSS. Replay-comparison, timeline, and discovery-
+comparison modules passed **11/11** in 0.84 seconds at 56,064 KiB. The API
+replay selection passed **12/12** (44 deselected) in 4.80 seconds at 231,308
+KiB; one existing Starlette/httpx TestClient deprecation warning remains. All
+three runs used isolated `/dev/shm` roots, zero swaps, zero filesystem input,
+and no socket traffic. Strict mypy passed on both changed implementation
+modules; Ruff check, Ruff format check, and `git diff --check` passed.
+
+The full `tests/frontier` suite was not rerun after this change. The most
+recent suite-wide result remains **452/452** on the earlier storage/audit
+checkpoint; the current code has **111/111** focused passing tests across the
+affected replay and caller modules. At `14:09:48Z`, memory and I/O PSI avg10
+were 0.00%; at `14:10:23Z` they were 0.03% some / 0.00% full for memory and
+0.03% some / 0.00% full for I/O. CPU PSI avg10 was 46.38% before and 37.77%
+after the checks. No live source, held capture, production service, or
+protected store was accessed; `data/frontier-public-probes/` remains untouched.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Core relationship and replay input bounds | COMPLETE AND VERIFIED | Oversized direct inputs fail before structural validation, indexing, or sorting; fixture module and all direct caller slices pass. |
+| Full Frontier suite on current code | PARTIALLY VERIFIED | 111 focused tests cover the changed code and callers; the complete suite has not been rerun on `f1d04bf`. |
+| Frontier project overall | PARTIALLY VERIFIED | Live cross-venue evidence, broad regressions, sustained resource evidence, production recovery, and deployment remain open. |
+
+**Next safe action:** retain the resource gate and continue with a separate
+bounded source-independent acceptance item; do not present this targeted
+regression as a full-suite rerun.

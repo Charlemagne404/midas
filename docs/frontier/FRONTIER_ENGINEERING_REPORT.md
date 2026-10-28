@@ -9793,12 +9793,12 @@ documentation-only updates in the current change. The working branch remains
 | Relationship discovery, graph, and persistence | PARTIALLY VERIFIED | Deterministic proposals, explicit hypothesis/verification states, evidence-backed review, bounded graph access, and persistence have fixture coverage. No permitted genuine cross-venue economic equivalence is verified. |
 | Opportunity generation and independent verification | PARTIALLY VERIFIED | Supported binary, outcome-coverage, implication, basket, and joint-state cases have independent arithmetic and adversarial fixture coverage. No live cross-venue candidate or positive eligible opportunity is demonstrated. |
 | Cross-venue costs, capital, and execution uncertainty | PARTIALLY VERIFIED | Fee, FX, timing, partial-fill, and venue-separated virtual-capital models are tested with fixtures. Account-specific fees, jurisdiction, settlement, transfer, custody, and executable availability remain unresolved. |
-| Multi-source capture, storage, provenance, and replay | PARTIALLY VERIFIED | Bounded restartable collection, immutable hash-linked observations, source-quality metadata, and deterministic replay are tested. Sustained feeds and broad historical quality are not measured. |
+| Multi-source capture, storage, provenance, and replay | PARTIALLY VERIFIED | Bounded restartable collection, immutable hash-linked observations, source-quality metadata, and deterministic replay are tested. Direct library inputs now cap at 200 markets, 400 books, 1,000 relationships, and 1,000 proposals; sustained feeds and broad historical quality are not measured. |
 | Frontier Laboratory/Arena integration | PARTIALLY VERIFIED | Frontier replay/timeline/discovery tests pass **28/28**; generic Arena job-supervision tests pass **16/16**; isolated admission tests pass **11/11**. Full legacy Arena regression, endurance, and production-worker readiness remain deferred. |
 | Frontier overview and research workspace | COMPLETE AND VERIFIED | Vitest **47/47**, TypeScript, ESLint, Prettier, production build, and isolated browser suites **7/7 + 2/2** pass. The build retains a non-fatal 544.51 kB Chart chunk advisory. UI fixture evidence is labeled as fixture evidence. |
 | Analytics and Frontier readiness | PARTIALLY VERIFIED | Source-aware coverage, quality, timing, rejection summaries, and readiness gates are implemented and fixture-tested. Available observations do not support venue-wide prevalence or coverage claims. |
 | Research-only security boundary | COMPLETE AND VERIFIED | No authenticated trading, order submission, wallet, deposit, or withdrawal path was introduced; bounded test workers remain isolated and network-restricted where required. |
-| Full Frontier Python suite | COMPLETE AND VERIFIED | `tests/frontier` passes **452/452** on the storage/audit checkpoint; subsequent Arena snapshot and integration changes have focused passing coverage. |
+| Full Frontier Python suite | PARTIALLY VERIFIED | `tests/frontier` passed **452/452** on the storage/audit checkpoint; subsequent Arena and replay-bound changes have focused coverage, but the full suite has not been rerun on current code. |
 | Broader MIDAS and full legacy Arena regression | DEFERRED | No repository-wide suite result is claimed. Full legacy Arena and broad MIDAS verification remain outstanding. |
 | Resource sustainability and production recovery | PARTIALLY VERIFIED | Bounded RSS, swap, PSI, and I/O observations are recorded for selected tests. No long-running campaign or current-boundary production recovery proof exists. |
 | Genuine live cross-venue relationship and economics | BLOCKED | Current source-use gates and held-capture protections prevent the independent additional-venue evidence required for this claim. No synthetic fixture is presented as live. |
@@ -9820,3 +9820,41 @@ The immediately preceding generic `tests/arena/test_jobs.py` run had caused
 I/O PSI to rise to **4.58% some / 3.59% full**. Work resumed only after a fresh
 sample was below the 1% I/O gate. This targeted admission run does not close
 the broader legacy Arena regression or demonstrate resource sustainability.
+
+## Direct replay resource bounds — 2026-10-28 14:10 UTC
+
+**Implementation commit:** `f1d04bf` (`fix(frontier): bound direct replay inputs`).
+
+The replay API already restricted its ordinary window, but direct callers of
+`deterministic_replay` and `propose_relationships` had no matching core bounds.
+The proposer now rejects more than 200 markets before building its indexes.
+Replay rejects more than 200 markets, 400 books, or 1,000 verified
+relationships before structural validation or sorting, and restricts
+relationship proposals to 1..1,000. These limits match the ordinary API
+maxima. Results inside those bounds are unchanged; paired replay retains its
+stricter 100-market, 200-book, and 500-edge limits.
+
+Five new adversarial tests cover oversized inputs. The full
+relationship/economics/replay module passed **88/88** in 1.04 seconds wall
+time at 56,248 KiB peak RSS. Replay-comparison, timeline, and discovery-
+comparison modules passed **11/11** in 0.84 seconds at 56,064 KiB. API replay
+tests passed **12/12** (44 deselected) in 4.80 seconds at 231,308 KiB; one
+existing Starlette/httpx TestClient deprecation warning remains. All runs used
+isolated `/dev/shm` roots, zero swaps, zero filesystem input, and no socket
+traffic. Strict mypy passed on both changed implementation modules; Ruff check,
+Ruff format check, and `git diff --check` passed.
+
+The complete `tests/frontier` suite was not rerun after this change. Its latest
+suite-wide result remains **452/452** on the earlier storage/audit checkpoint;
+the current implementation has **111/111** focused passing tests across the
+affected replay and caller modules. At `14:09:48Z`, memory and I/O PSI avg10
+were 0.00%; at `14:10:23Z` memory and I/O were each 0.03% some / 0.00% full.
+CPU PSI avg10 was 46.38% before and 37.77% after. No live source, held
+capture, production service, or protected store was accessed; the held
+`data/frontier-public-probes/` directory remains untouched.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Core relationship and replay input bounds | COMPLETE AND VERIFIED | Oversized direct inputs fail before structural validation, indexing, or sorting; affected module and caller slices pass. |
+| Full Frontier suite on current code | PARTIALLY VERIFIED | 111 focused tests cover the change and direct consumers; the complete suite has not been rerun on `f1d04bf`. |
+| Project Frontier overall | PARTIALLY VERIFIED | Live cross-venue evidence, broad regressions, sustained resource evidence, production recovery, and deployment remain open. |

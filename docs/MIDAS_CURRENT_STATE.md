@@ -3029,3 +3029,16 @@ unmerged, and undeployed. Current source-use gates and held-capture protections
 leave genuine live cross-venue validation blocked. Broader MIDAS regression,
 resource sustainability, production recovery, and deployment remain open. The
 held `data/frontier-public-probes/` path remains untouched.
+
+### Direct replay bounds — 2026-10-28 14:10 UTC
+
+Commit `f1d04bf` adds library-level limits matching the bounded replay API:
+200 markets, 400 books, 1,000 verified relationships, and at most 1,000
+relationship proposals. Relationship proposal itself rejects more than 200
+markets before indexing. Targeted coverage passes **111/111** across the
+relationship/economics/replay module, replay consumers, and API replay tests;
+strict mypy and Ruff checks pass. The complete Frontier suite is not rerun on
+this code, so its 452/452 result remains tied to the earlier storage/audit
+checkpoint. Memory and I/O PSI stayed below 0.03% avg10; CPU PSI remained high
+but fell during the short checks. Frontier remains research-only and
+**PARTIALLY VERIFIED**.
