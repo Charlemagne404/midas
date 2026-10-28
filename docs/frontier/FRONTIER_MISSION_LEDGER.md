@@ -1,5 +1,30 @@
 # Project Frontier Mission Ledger
 
+## Broader MIDAS regression admission — 2026-10-28 11:57 UTC
+
+The exact Frontier suite and strict-mypy slice are complete as recorded in the
+11:55 entry. I did not start the full repository suite. At `11:57:28Z`, memory
+PSI avg10 was **39.00% some / 35.46% full**, I/O PSI **0.93% some / 0.93%
+full**, and about **10 GiB** was available. This exceeds the memory admission
+gate.
+
+A read-only scan found legacy tests that reference the hard-coded
+`/home/charlie/midas/data/laboratory-final` path and tests that start
+subprocesses or local servers. Before any broad legacy run, review those tests
+for operational data writes and redirect their roots to an isolated temporary
+directory where supported. No tests, source probes, or service operations were
+performed for this check.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Frontier suite and source-use guards | COMPLETE AND VERIFIED | Exact 420/420 suite and strict-mypy evidence in the preceding entry. |
+| Full MIDAS legacy suite | DEFERRED | Host memory PSI exceeds 1%; test data-root isolation is not yet verified. |
+| Frontier overall | PARTIALLY VERIFIED | Browser/legacy acceptance, genuine cross-venue evidence, and deployment remain open. |
+
+**Next safe action:** after a fresh memory and I/O PSI sample below 1%, review
+the identified legacy test roots, then run only the isolated broad tests that
+cannot alter preserved Reality, Veritas, Arena, or Laboratory data.
+
 ## Exact-tree probe hold and suite verification — 2026-10-28 11:55 UTC
 
 Strict mypy passes for the final source-hold path in `apps/api/frontier.py`,

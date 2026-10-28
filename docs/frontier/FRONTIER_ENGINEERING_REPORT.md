@@ -2,6 +2,23 @@
 
 **Report date:** 2026-10-28
 
+## Broader MIDAS verification gate — 2026-10-28 11:57 UTC
+
+The exact Frontier suite and strict mypy are verified as recorded below. A
+repository-wide MIDAS regression was not started: at `11:57:28Z`, memory PSI
+avg10 was **39.00% some / 35.46% full**, I/O PSI was **0.93% some / 0.93%
+full**, and about **10 GiB** was available. A read-only test-source scan also
+found legacy tests that reference `/home/charlie/midas/data/laboratory-final`
+and tests that launch subprocesses or local servers. Review those test roots
+before a broad invocation so it cannot touch preserved operational data. No
+legacy test, protected service, or research artifact was touched.
+
+| Requirement | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Frontier Python suite | COMPLETE AND VERIFIED | 420/420 on current tree, with measured bounded resource use. |
+| Repository-wide MIDAS regression | DEFERRED | Current host memory PSI exceeds 1%; test roots and subprocess cases need a bounded isolation review. |
+| Frontier overall | PARTIALLY VERIFIED | Browser/legacy checks, live cross-venue evidence, and deployment remain open. |
+
 ## Current status — 2026-10-28 11:55 UTC
 
 Strict mypy passes on the current API guard, base adapter, and Coinbase adapter:
@@ -8897,6 +8914,7 @@ store, or Arena job was accessed or started.
 | `9577355` | `docs/MIDAS_CURRENT_STATE.md`; `docs/frontier/FRONTIER_ENGINEERING_REPORT.md`; `docs/frontier/FRONTIER_MISSION_LEDGER.md` | Record API source-use hold preflight and its regression evidence. |
 | `afde92c` | `docs/frontier/FRONTIER_ENGINEERING_REPORT.md`; `docs/frontier/FRONTIER_MISSION_LEDGER.md`; `docs/MIDAS_CURRENT_STATE.md` | Record resource-gated Coinbase policy regression status. |
 | `fbb46e4` | `docs/MIDAS_CURRENT_STATE.md`; `docs/frontier/FRONTIER_ENGINEERING_REPORT.md`; `docs/frontier/FRONTIER_MISSION_LEDGER.md` | Record the 11:53 status, full-suite result before the type-narrowing refactor, and PSI hold. |
+| `597d9ff` | `docs/MIDAS_CURRENT_STATE.md`; `docs/frontier/FRONTIER_ENGINEERING_REPORT.md`; `docs/frontier/FRONTIER_MISSION_LEDGER.md` | Record strict-mypy success and exact-tree 420/420 verification. |
 
 The temporary `tests/frontier/test_recorded_cross_venue_relationship.py` was
 removed after the test guard denied held-capture access; it is not part of the

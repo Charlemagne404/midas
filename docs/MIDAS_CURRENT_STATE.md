@@ -2597,3 +2597,13 @@ probe routes reject a held source before transport work, and the source
 listing reports effective probe status. Live cross-venue evidence, broader
 MIDAS/browser acceptance, and deployment remain open; Frontier is **PARTIALLY
 VERIFIED** overall.
+
+### Broad MIDAS test admission — 2026-10-28 11:57 UTC
+
+No repository-wide test run was started. At `11:57:28Z`, memory PSI avg10
+was **39.00% some / 35.46% full**, I/O PSI **0.93% some / 0.93% full**, and
+about 10 GiB was available. A read-only scan found legacy tests that reference
+`/home/charlie/midas/data/laboratory-final` and launch subprocesses or local
+servers. Review their data roots before a broad invocation. The exact Frontier
+suite remains **420/420** and strict mypy passes as recorded above; broader
+MIDAS/browser checks and production eligibility remain **PARTIALLY VERIFIED**.
