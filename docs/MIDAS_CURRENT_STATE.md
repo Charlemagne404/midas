@@ -3065,3 +3065,8 @@ Commit `6ecb7c9` adds storage checks confirming instrument IDs survive durable
 readback for single-market and batch observations (2/2 focused tests pass).
 The full Frontier suite remains unrerun; no live source or protected service
 was accessed. Overall Frontier status remains **PARTIALLY VERIFIED**.
+
+The full storage module passes 30/30, including canonical-ID persistence for
+single-market and batch observations. Its temporary-file run raised I/O PSI
+avg10 to 9.54% some / 7.20% full; further tests are deferred until a fresh
+sample is below 1%. No protected store was accessed.

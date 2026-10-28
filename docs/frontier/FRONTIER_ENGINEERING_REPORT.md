@@ -9933,3 +9933,16 @@ CPU PSI avg10 was **42.59%** before and **39.61%** after. Memory PSI stayed
 / 0.54% full**, still below the 1% gate. No live source or protected service
 was accessed. The full Frontier suite was not rerun; overall status remains
 **PARTIALLY VERIFIED**.
+
+### Storage module regression — 2026-10-28 14:28 UTC
+
+After the focused persistence cases, the complete `tests/frontier/test_storage.py`
+module passed **30/30** in 16.72 seconds wall time at **71,876 KiB** peak RSS,
+with zero swaps, filesystem input, or socket messages. Pytest reported 16.36
+seconds. The isolated temporary-file run wrote 100,472 filesystem blocks.
+Before the run, I/O PSI avg10 was 0.00% some / 0.00% full; afterward it rose to
+**9.54% some / 7.20% full**. Memory PSI remained 0.00%. Do not start another
+resource-bearing check until a fresh I/O admission sample is below 1%.
+No live source or protected store was accessed. This verifies the storage
+module only; the complete Frontier suite remains unrun and status is
+**PARTIALLY VERIFIED**.

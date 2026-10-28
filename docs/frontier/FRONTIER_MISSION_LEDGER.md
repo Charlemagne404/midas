@@ -8965,3 +8965,16 @@ VERIFIED**.
 **Next safe action:** take a fresh resource sample before further tests; keep
 working on bounded source-independent acceptance gaps while live source and
 production validation remain gated.
+
+### Storage module regression — 2026-10-28 14:28 UTC
+
+The complete `tests/frontier/test_storage.py` module passes **30/30** in
+16.72 seconds wall time at 71,876 KiB peak RSS, zero swaps, filesystem input,
+and socket messages. The isolated temporary-file run wrote 100,472 filesystem
+blocks. I/O PSI avg10 rose from 0.00% some / 0.00% full before the run to
+9.54% some / 7.20% full afterward; memory PSI remained 0.00%.
+
+No live source or protected store was accessed. This is storage-module evidence,
+not a complete Frontier regression. Stop resource-bearing checks until a fresh
+I/O sample is below 1%; continue static, source-independent review. Frontier
+remains **PARTIALLY VERIFIED**.
