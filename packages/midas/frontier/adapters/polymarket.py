@@ -94,8 +94,8 @@ class PolymarketAdapter(BaseReadOnlyAdapter):
                 "https://docs.polymarket.com/developers/CLOB/introduction",
             ),
             Capability.MARKET_METADATA: (
-                "Native market and condition metadata are retained",
-                "https://docs.polymarket.com/developers/gamma-markets-api/overview",
+                "Native market and condition metadata plus exact known-ID Gamma detail lookup are retained",
+                "https://docs.polymarket.com/market-data/discover-markets",
             ),
             Capability.OUTCOME_DEFINITIONS: (
                 "Outcome labels and token IDs are exposed; payout attestation remains separate",
@@ -178,6 +178,27 @@ class PolymarketAdapter(BaseReadOnlyAdapter):
                 raise AdapterError("INVALID_SCHEMA", "Gamma market entry must be an object")
             records.append(self._normalize_market(raw, response))
         return tuple(records)
+
+    def market_metadata_request_url(self, native_market_id: str) -> str:
+        """Return the exact public single-market URL for a validated Gamma ID."""
+        if not isinstance(native_market_id, str) or not re.fullmatch(
+            r"[0-9]{1,20}", native_market_id
+        ):
+            raise AdapterError("INVALID_MARKET_ID", "Polymarket market ID must be numeric")
+        return f"{GAMMA}/markets/{native_market_id}"
+
+    async def fetch_market_metadata(self, native_market_id: str) -> FrontierMarket:
+        """Fetch one known Gamma market by its native ID without expanding its event."""
+        self._require(Capability.MARKET_METADATA)
+        request_url = self.market_metadata_request_url(native_market_id)
+        response = await self.transport.get_json(request_url)
+        self._capture_response(response, "market_metadata")
+        payload = response.payload
+        if not isinstance(payload, dict):
+            raise AdapterError("INVALID_SCHEMA", "Gamma market detail response must be an object")
+        if str(payload.get("id")) != native_market_id:
+            raise AdapterError("MARKET_ID_MISMATCH", "Gamma market detail does not match request")
+        return self._normalize_market(payload, response)
 
     async def discover_event_markets(self, native_event_id: str) -> tuple[FrontierMarket, ...]:
         self._require(Capability.EVENT_MARKET_GROUPS)

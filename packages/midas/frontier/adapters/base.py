@@ -112,6 +112,15 @@ class ExchangeAdapter(Protocol):
     def report_failure(self, code: str, message: str) -> None: ...
 
 
+@runtime_checkable
+class SingleMarketMetadataAdapter(Protocol):
+    """Optional extension for capability-specific exact native-ID detail lookups."""
+
+    async def fetch_market_metadata(self, native_market_id: str) -> FrontierMarket: ...
+
+    def market_metadata_request_url(self, native_market_id: str) -> str: ...
+
+
 class BaseReadOnlyAdapter:
     """Common disabled-by-default lifecycle for public GET-only adapters."""
 

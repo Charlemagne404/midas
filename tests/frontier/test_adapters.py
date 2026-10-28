@@ -263,6 +263,60 @@ async def test_polymarket_v1_capture_normalizes_without_claiming_verified_payout
 
 
 @pytest.mark.asyncio
+async def test_polymarket_single_market_metadata_captures_exact_native_id():
+    listed = json.loads(_captured("tests/fixtures/gamma_live.json"))
+    native_id = listed[0]["id"]
+    body = json.dumps(listed[0], separators=(",", ":"))
+    transport, requests, client = _transport(
+        "gamma-api.polymarket.com", {f"/markets/{native_id}": body}
+    )
+    adapter = PolymarketAdapter(
+        AdapterConfig(
+            enabled=True, live_public_probe_enabled=True, requests_per_second=5, retries=0
+        ),
+        transport=transport,
+    )
+    try:
+        result = await adapter.fetch_market_metadata(native_id)
+        captures = adapter.take_captures()
+    finally:
+        await client.aclose()
+
+    assert result.native_market_id == native_id
+    assert result.canonical_id == f"polymarket:{native_id}"
+    assert len(captures) == 1
+    assert captures[0].observation_kind == "market_metadata"
+    assert captures[0].raw_body == body
+    assert captures[0].raw_sha256 == result.provenance.raw_sha256
+    assert requests[0].method == "GET"
+    assert requests[0].url.path == f"/markets/{native_id}"
+    assert requests[0].url.query == b""
+    assert "authorization" not in requests[0].headers
+
+
+@pytest.mark.asyncio
+async def test_polymarket_single_market_metadata_rejects_invalid_or_mismatched_ids():
+    body = json.dumps({"id": "559650"})
+    transport, requests, client = _transport("gamma-api.polymarket.com", {"/markets/559651": body})
+    adapter = PolymarketAdapter(
+        AdapterConfig(
+            enabled=True, live_public_probe_enabled=True, requests_per_second=5, retries=0
+        ),
+        transport=transport,
+    )
+    try:
+        with pytest.raises(AdapterError, match="numeric"):
+            await adapter.fetch_market_metadata("../559651")
+        with pytest.raises(AdapterError) as error:
+            await adapter.fetch_market_metadata("559651")
+    finally:
+        await client.aclose()
+
+    assert error.value.code == "MARKET_ID_MISMATCH"
+    assert len(requests) == 1
+
+
+@pytest.mark.asyncio
 async def test_polymarket_v2_position_fixture_uses_versioned_host_and_pusd_identity():
     # Controlled schema fixture; no live Gamma v2 book was available here.
     raw_market = json.loads(_captured("tests/fixtures/gamma_live.json"))[0]

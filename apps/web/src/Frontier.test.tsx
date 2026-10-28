@@ -1633,6 +1633,7 @@ it('captures Kalshi fee metadata and exposes a separate hypothetical fee sensiti
   };
   const requestBodies: Record<string, unknown>[] = [];
   const eventGroupBodies: Record<string, unknown>[] = [];
+  const marketMetadataBodies: Record<string, unknown>[] = [];
   const componentMarketBodies: Record<string, unknown>[] = [];
   const sensitivityBodies: Record<string, unknown>[] = [];
   const settlementAuditBodies: Record<string, unknown>[] = [];
@@ -1691,6 +1692,32 @@ it('captures Kalshi fee metadata and exposes a separate hypothetical fee sensiti
   };
   const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const path = String(input);
+    if (path === '/api/frontier/probe/kalshi/market-metadata' && init?.method === 'POST') {
+      marketMetadataBodies.push(JSON.parse(String(init.body)) as Record<string, unknown>);
+      return {
+        ok: true,
+        json: async () => ({
+          venue: 'kalshi',
+          market_id: market.canonical_id,
+          bound_market_observation_id: 'market-observation',
+          market: {
+            ...market,
+            resolution: {
+              ...market.resolution,
+              primary_rule: 'Captured source detail rule.',
+              authority: 'Example public resolution authority',
+            },
+          },
+          observation_id: 'metadata-observation-id',
+          raw_sha256: 'f'.repeat(64),
+          request_count_delta: 1,
+          network_calls_bounded_by: 1,
+          catalogue_market_replaced: false,
+          hypothetical_only: true,
+          note: 'One detail response linked to the recorded source row.',
+        }),
+      } as Response;
+    }
     if (path === '/api/frontier/probe/kalshi/event-markets' && init?.method === 'POST') {
       eventGroupBodies.push(JSON.parse(String(init.body)) as Record<string, unknown>);
       return {
@@ -1931,6 +1958,9 @@ it('captures Kalshi fee metadata and exposes a separate hypothetical fee sensiti
     screen.getByText(/Quantity step: 0\.1 · minimum: 0\.2 · minimum notional: 5/),
   ).toBeInTheDocument();
   expect(await screen.findByText('Public event context')).toBeInTheDocument();
+  fireEvent.click(await screen.findByRole('button', { name: 'Capture market detail' }));
+  expect(await screen.findByText('Captured source detail rule.')).toBeInTheDocument();
+  expect(marketMetadataBodies).toEqual([{ market_id: market.canonical_id }]);
   fireEvent.click(screen.getByRole('button', { name: 'Capture event context' }));
   expect(
     await screen.findByText('2 markets · saved observation event-group-observation'),

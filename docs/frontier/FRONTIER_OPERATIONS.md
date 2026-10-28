@@ -24,6 +24,18 @@ listing/book/trade sample or one separately requested cursor page; it does not
 start a collector or crawl history. Do not enable probes in a production service
 as part of routine development.
 
+For one saved Polymarket or Kalshi market, Mission Control's **Capture market
+detail** action calls `POST /api/frontier/probe/{venue}/market-metadata`. The
+route requires an exact native-ID lookup extension, derives the native ID from
+the bounded saved market window, and verifies that the capture used the
+adapter-declared HTTPS URL for that ID. The saved `market_metadata_evidence`
+envelope links the detail response to the original listing observation; it does
+not replace the catalogue row or imply event membership, exhaustive outcomes,
+or verified payoff. Kraken and Coinbase have no single-ID detail lookup and the
+route rejects them before network access. This is still a deliberate public
+source request and remains subject to the source's use gate and operator
+configuration.
+
 **Source terms are an additional gate.** Kalshi live capture is blocked until
 written research and local-retention authorization is recorded. Kraken Spot
 capture is blocked until its applicable research-use terms are reviewed and any

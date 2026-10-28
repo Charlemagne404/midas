@@ -366,6 +366,29 @@ binary payoff inference unjustified. The exact raw and temporary-store row
 hashes are in the engineering report and
 `data/frontier/live-probes/2026-10-27-kalshi-mve-component-market-r1.json`.
 
+Polymarket and Kalshi implement the optional `SingleMarketMetadataAdapter`
+extension: each validates a native identifier, constructs its exact public
+detail URL, and normalizes one returned market. The shared
+`POST /api/frontier/probe/{venue}/market-metadata` route requires that
+extension, a source-configured public probe, and a canonical market already
+present in the bounded recorded window. It binds to the market's saved
+observation ID before egress, then requires one raw response, the same venue
+and canonical/native market IDs, and an exact match to the adapter-provided
+HTTPS request URL. The adapter supplies venue URL semantics; the route remains
+venue-neutral.
+
+The route stores a versioned `MarketMetadataEvidence` envelope under the
+`market_metadata_evidence` observation kind. The envelope links the returned
+detail to its original listing observation, and its raw body/hash remain
+available through the normal observation API. This envelope is deliberately
+not a catalogue row: a detail lookup cannot silently replace the market's
+listing or event-group context. A direct market detail also does not establish
+event membership, outcome-set exhaustiveness, payoff validity, current book
+state, or economic equivalence. Kraken and Coinbase expose market metadata
+fields within supported discovery paths but do not currently implement this
+single-ID lookup extension, so the generic route returns unsupported before
+network access for those venues.
+
 Kalshi adapter v11 adds optional `yes_settlement_value_dollars` to each typed
 selected component. It parses finite, nonnegative values within the canonical
 Decimal bounds, preserves the value through normalized storage and relationship

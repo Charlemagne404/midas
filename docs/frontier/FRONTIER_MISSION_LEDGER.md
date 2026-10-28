@@ -4323,3 +4323,97 @@ pending a later fresh admission check.
 | --- | --- | --- |
 | Probe failure evidence UI | COMPLETE AND VERIFIED | Focused fixture passes 1/1; web typecheck, targeted ESLint, and Prettier check pass. |
 | Full web regression, browser E2E, and production build after this change | PARTIALLY VERIFIED | Not started because a fresh resource gate denied the full web suite under high memory PSI and an external Veritas lock. |
+
+### Capability-specific single-market metadata capture — 2026-10-28 03:51 UTC
+
+Polymarket now implements direct Gamma detail lookup for one previously
+recorded native market ID. The shared adapter package exposes an optional
+`SingleMarketMetadataAdapter` extension that returns its exact request URL and
+normalizes one response; Polymarket and Kalshi implement it. The API route
+`POST /api/frontier/probe/{venue}/market-metadata` requires the extension, a
+source-configured public probe, and a canonical market in the bounded saved
+market window. It binds the request to that market's immutable listing
+observation before egress, enforces an HTTPS URL declared by the adapter, and
+checks response venue, canonical/native identities, raw capture count, and raw
+hash lineage.
+
+The detail result is stored as a versioned `MarketMetadataEvidence` envelope
+under `market_metadata_evidence`. It links the new response to the original
+listing record and is intentionally excluded from the catalogue index, so a
+single detail response cannot silently replace saved listing or event-group
+context. Kraken and Coinbase do not implement the exact-ID extension and are
+rejected before network access. Mission Control exposes the capture for
+Polymarket and Kalshi when their source configuration and capability permit;
+the inspector shows the saved link, detail rules, raw hash, and evidence
+disclosure. Event membership, outcome-set exhaustiveness, payoff verification,
+and current price are not inferred.
+
+No live source request was made for this change. The adapter/API/UI tests use
+existing recorded fixtures and isolated MockTransport responses. One initial
+focused test run exposed a test-edit boundary error that had moved pre-existing
+Polymarket book assertions into a new test; the assertions were restored to
+their original test and the focused rerun passed.
+
+Verification:
+
+```bash
+/usr/bin/time -v env PYTHONPATH=packages:. \
+  /home/charlie/midas/.venv/bin/python -m pytest -q tests/frontier
+# 352 passed in 55.97s; 376,672 KiB peak RSS; zero swaps and socket messages
+
+cd apps/web
+corepack pnpm exec vitest run src/Frontier.test.tsx
+# 8 passed in 5.20s test time / 5.89s process wall; 238,112 KiB peak RSS
+corepack pnpm typecheck
+corepack pnpm exec eslint src/Frontier.tsx src/Frontier.test.tsx
+corepack pnpm exec prettier --check src/Frontier.tsx src/Frontier.test.tsx
+
+cd /home/charlie/midas-frontier
+/usr/bin/time -v env PYTHONPATH=packages:. \
+  /home/charlie/midas/.venv/bin/python -m mypy apps/api/frontier.py \
+  packages/midas/frontier/models.py packages/midas/frontier/adapters/base.py \
+  packages/midas/frontier/adapters/polymarket.py \
+  packages/midas/frontier/adapters/kalshi.py
+# Success: no issues found in 5 source files
+/home/charlie/midas/.venv/bin/ruff check apps/api/frontier.py \
+  packages/midas/frontier/models.py packages/midas/frontier/adapters/base.py \
+  packages/midas/frontier/adapters/polymarket.py \
+  packages/midas/frontier/adapters/kalshi.py tests/frontier/test_api.py \
+  tests/frontier/test_adapters.py
+/home/charlie/midas/.venv/bin/ruff format --check apps/api/frontier.py \
+  packages/midas/frontier/models.py packages/midas/frontier/adapters/base.py \
+  packages/midas/frontier/adapters/polymarket.py \
+  packages/midas/frontier/adapters/kalshi.py tests/frontier/test_api.py \
+  tests/frontier/test_adapters.py
+```
+
+The full Frontier suite emitted the existing Starlette/httpx TestClient
+deprecation warning. Web typecheck, targeted lint, formatting, and the full
+Frontier component test file passed; the production web build and browser E2E
+were not run after this slice. The host sample after tests at
+`2026-10-28T03:51:06Z` showed memory PSI avg10 `0.00%` some / `0.00%` full,
+I/O PSI `2.51%` some / `2.35%` full, about `10.2 GiB` available memory, and
+about `333 MiB` free swap. The shared Arena admission lock had no listed
+holder. This point sample is not a resource-sustainability claim.
+
+After the full Frontier run, the evidence envelope schema was narrowed to the
+single supported version, Gamma ID validation was made robust to non-string
+runtime inputs, and adapter-declared metadata URLs were also checked for URL
+user-info. The focused adapter/API regression was rerun after those final guards:
+**4 passed** in 1.78 seconds, 87,136 KiB peak RSS, zero swaps, and zero socket
+messages. Strict mypy for the same five production modules again reported no
+issues; Ruff check/format and `git diff --check` passed.
+
+At `2026-10-28T03:52:14Z`, the fresh resource sample remained low (memory PSI
+avg10 `0.00%` some/full, I/O PSI `0.72%` some / `0.61%` full, about `9.8 GiB`
+available). Read-only `fuser`/`ps` showed external Veritas batch PID `4149818`
+in `D` state holding the shared Arena admission lock. It was left untouched;
+the full web suite and production web build were deferred while that job holds
+the lock.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Polymarket single-ID adapter extension | COMPLETE AND VERIFIED | Exact numeric ID validation, one public GET contract, response binding, and normalizer coverage pass with fixture tests. |
+| Polymarket/Kalshi shared API metadata capture | COMPLETE AND VERIFIED | 352-test Frontier suite; both venue routes are exercised with mocked public responses, exact URL and immutable listing linkage. No live request in this slice. |
+| Mission Control market detail control | COMPLETE AND VERIFIED | Frontier component suite passes 8/8; capability/config gates and evidence disclosure are fixture-backed. |
+| Full web suite, browser E2E, and production build after this slice | PARTIALLY VERIFIED | Typecheck, targeted ESLint/Prettier, and all Frontier component tests pass; broad web suite, browser E2E, and build remain pending. |

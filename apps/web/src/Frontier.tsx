@@ -351,6 +351,19 @@ type TradePageCaptureResult = {
   hypothetical_only: true;
   note: string;
 };
+type MarketMetadataCaptureResult = {
+  venue: 'polymarket' | 'kalshi';
+  market_id: string;
+  bound_market_observation_id: string;
+  market: Market;
+  observation_id: string;
+  raw_sha256: string;
+  request_count_delta: number;
+  network_calls_bounded_by: number;
+  catalogue_market_replaced: false;
+  hypothetical_only: true;
+  note: string;
+};
 type EventMarketsCaptureResult = {
   venue: Venue;
   market_id: string;
@@ -2156,6 +2169,16 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
           (capability) => capability.capability === 'event_market_groups' && capability.supported,
         ),
     );
+  const marketMetadataProbeEnabledFor = (venue: Venue) =>
+    (venue === 'polymarket' || venue === 'kalshi') &&
+    (sources.data?.items ?? []).some(
+      (source) =>
+        source.venue === venue &&
+        source.public_probe_enabled &&
+        source.capabilities.some(
+          (capability) => capability.capability === 'market_metadata' && capability.supported,
+        ),
+    );
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: ['frontier'] });
   const jointStateReplay = useMutation({
@@ -2522,6 +2545,14 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
       api<EventMarketsCaptureResult>(`/frontier/probe/${venue}/event-markets`, {
         method: 'POST',
         body: JSON.stringify({ market_id: marketId, native_event_id: nativeEventId }),
+      }),
+    onSuccess: refresh,
+  });
+  const captureMarketMetadata = useMutation({
+    mutationFn: ({ marketId, venue }: { marketId: string; venue: 'polymarket' | 'kalshi' }) =>
+      api<MarketMetadataCaptureResult>(`/frontier/probe/${venue}/market-metadata`, {
+        method: 'POST',
+        body: JSON.stringify({ market_id: marketId }),
       }),
     onSuccess: refresh,
   });
@@ -3293,6 +3324,8 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
               market={selectedMarket}
               books={selectedBooks}
               booksLoading={books.isLoading}
+              marketMetadataProbe={captureMarketMetadata}
+              marketMetadataProbeEnabled={marketMetadataProbeEnabledFor(selectedMarket.venue)}
               eventMarketsProbe={captureEventMarketGroup}
               eventMarketsProbeEnabled={eventMarketGroupsProbeEnabledFor(selectedMarket.venue)}
               mveComponentProbe={captureKalshiMveComponentMarket}
@@ -4819,6 +4852,8 @@ function MarketDetails({
   market,
   books,
   booksLoading,
+  marketMetadataProbe,
+  marketMetadataProbeEnabled,
   eventMarketsProbe,
   eventMarketsProbeEnabled,
   mveComponentProbe,
@@ -4831,6 +4866,13 @@ function MarketDetails({
   market: Market;
   books: Book[];
   booksLoading: boolean;
+  marketMetadataProbe: UseMutationResult<
+    MarketMetadataCaptureResult,
+    Error,
+    { marketId: string; venue: 'polymarket' | 'kalshi' },
+    unknown
+  >;
+  marketMetadataProbeEnabled: boolean;
   eventMarketsProbe: UseMutationResult<
     EventMarketsCaptureResult,
     Error,
@@ -4896,6 +4938,10 @@ function MarketDetails({
   const capturedEventMarkets =
     eventMarketsProbe.isSuccess && eventMarketsProbe.variables?.marketId === market.canonical_id
       ? eventMarketsProbe.data
+      : null;
+  const capturedMarketMetadata =
+    marketMetadataProbe.isSuccess && marketMetadataProbe.variables?.marketId === market.canonical_id
+      ? marketMetadataProbe.data
       : null;
   const capturedMveComponent =
     mveComponentProbe.isSuccess &&
@@ -4975,6 +5021,61 @@ function MarketDetails({
           </strong>
         </div>
       </div>
+      {(market.venue === 'polymarket' || market.venue === 'kalshi') && (
+        <div className="fr-fee-metadata-panel">
+          <div>
+            <strong>
+              Single-market {market.venue === 'polymarket' ? 'Gamma' : 'Kalshi'} detail
+            </strong>
+            <small>
+              Fetches this saved native market ID directly. It supplements the listing evidence and
+              does not enumerate the event or verify outcome completeness.
+            </small>
+          </div>
+          <button
+            className="fr-inspect-button"
+            disabled={!marketMetadataProbeEnabled || marketMetadataProbe.isPending}
+            onClick={() =>
+              marketMetadataProbe.mutate({
+                marketId: market.canonical_id,
+                venue: market.venue as 'polymarket' | 'kalshi',
+              })
+            }
+          >
+            {marketMetadataProbe.isPending &&
+            marketMetadataProbe.variables?.marketId === market.canonical_id
+              ? 'Capturing…'
+              : marketMetadataProbeEnabled
+                ? 'Capture market detail'
+                : 'Public probe disabled'}
+          </button>
+          {marketMetadataProbe.isError &&
+            marketMetadataProbe.variables?.marketId === market.canonical_id && (
+              <ProbeFailureEvidence error={marketMetadataProbe.error} />
+            )}
+          {capturedMarketMetadata && (
+            <div className="fr-fee-metadata-result" role="status">
+              <strong>{capturedMarketMetadata.market.title}</strong>
+              <small>
+                Detail observation {shortHash(capturedMarketMetadata.observation_id)} · linked
+                listing {shortHash(capturedMarketMetadata.bound_market_observation_id)}
+              </small>
+              <small>
+                Resolution source:{' '}
+                {capturedMarketMetadata.market.resolution.authority ?? 'Not provided'}
+              </small>
+              <small>
+                {capturedMarketMetadata.market.resolution.primary_rule ??
+                  capturedMarketMetadata.market.description ??
+                  'No rule text in the detail response.'}
+              </small>
+              <small>{capturedMarketMetadata.note}</small>
+              <small>Raw SHA-256 {capturedMarketMetadata.raw_sha256}</small>
+              <EvidenceDisclosure observationId={capturedMarketMetadata.observation_id} />
+            </div>
+          )}
+        </div>
+      )}
       {market.selected_components?.length ? (
         <div className="fr-market-components" aria-label="Selected source components">
           <div>

@@ -854,6 +854,25 @@ class FrontierMarket(FrontierModel):
         return value
 
 
+class MarketMetadataEvidence(FrontierModel):
+    """One market-detail capture bound to an existing recorded catalogue row."""
+
+    schema_version: Literal[1] = 1
+    venue: Venue
+    requested_market_id: str = Field(min_length=1, max_length=256)
+    bound_market_observation_id: str = Field(pattern=r"^[0-9a-f]{64}$")
+    source_observation_kind: Literal["market_metadata"] = "market_metadata"
+    market: FrontierMarket
+
+    @model_validator(mode="after")
+    def detail_matches_recorded_identity(self) -> MarketMetadataEvidence:
+        if self.market.venue != self.venue:
+            raise ValueError("Market metadata venue differs from its evidence envelope")
+        if self.market.canonical_id != self.requested_market_id:
+            raise ValueError("Market metadata does not match the requested recorded market")
+        return self
+
+
 class KalshiMveComponentSettlementValue(FrontierModel):
     native_market_id: str = Field(min_length=1, max_length=256)
     selected_side: Literal["yes", "no"]

@@ -236,6 +236,20 @@ def test_kalshi_mve_component_probe_is_bound_to_recorded_parent_and_persists_met
         assert saved["raw_sha256"] == result["raw_sha256"]
         assert saved["normalized"]["native_market_id"] == component_ticker
 
+        detail_response = client.post(
+            "/api/frontier/probe/kalshi/market-metadata",
+            json={"market_id": f"kalshi:{component_ticker}"},
+        )
+        assert detail_response.status_code == 200, detail_response.text
+        detail_result = detail_response.json()
+        assert detail_result["bound_market_observation_id"] == result["observation_id"]
+        assert detail_result["catalogue_market_replaced"] is False
+        assert requests[1].url.path == f"/trade-api/v2/markets/{component_ticker}"
+        detail_evidence = store.observation(detail_result["observation_id"])
+        assert detail_evidence is not None
+        assert detail_evidence["raw"]["observation_kind"] == "market_metadata_evidence"
+        assert detail_evidence["normalized"]["market"]["native_market_id"] == component_ticker
+
         relationships = client.post("/api/frontier/relationships/propose")
         assert relationships.status_code == 200, relationships.text
         relationship_payload = relationships.json()
@@ -1215,6 +1229,84 @@ def test_synthetic_event_group_probe_persists_parent_context_and_binds_to_record
         assert len(requests) == 2
         assert all(item.method == "GET" for item in requests)
         assert all("authorization" not in item.headers for item in requests)
+    finally:
+        client.close()
+        asyncio.run(registry.aclose())
+        asyncio.run(http_client.aclose())
+
+
+def test_polymarket_market_metadata_probe_is_bound_and_does_not_replace_listing(tmp_path):
+    body = Path("tests/fixtures/gamma_live.json").read_text(encoding="utf-8")
+    listed_payload = json.loads(body)
+    detail_body = json.dumps(listed_payload[0], separators=(",", ":"))
+    native_market_id = str(listed_payload[0]["id"])
+    requests: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        content = body if request.url.path == "/markets" else detail_body
+        return httpx.Response(200, content=content, request=request)
+
+    config = AdapterConfig(
+        enabled=True,
+        live_public_probe_enabled=True,
+        requests_per_second=5,
+        retries=0,
+        max_markets_per_call=20,
+    )
+    http_client = httpx.AsyncClient(transport=httpx.MockTransport(handler))
+    transport = PublicReadTransport({"gamma-api.polymarket.com"}, config, client=http_client)
+    adapter = PolymarketAdapter(config, transport=transport)
+    disabled = AdapterConfig(enabled=False, live_public_probe_enabled=False)
+    registry = AdapterRegistry((adapter, KalshiAdapter(disabled), KrakenSpotAdapter(disabled)))
+    markets = asyncio.run(adapter.discover_markets(3))
+    listing_capture = adapter.take_captures()[0]
+    store = FrontierStore(tmp_path / "frontier")
+    store.append_observation(listing_capture, MarketBatch(venue=Venue.POLYMARKET, markets=markets))
+    target = next(item for item in markets if item.native_market_id == native_market_id)
+    app = FastAPI()
+    app.include_router(router(store, registry))
+    client = TestClient(app)
+    try:
+        unbound = client.post(
+            "/api/frontier/probe/polymarket/market-metadata",
+            json={"market_id": "polymarket:not-recorded"},
+        )
+        assert unbound.status_code == 404
+        assert adapter.transport.request_count == 1
+
+        response = client.post(
+            "/api/frontier/probe/polymarket/market-metadata",
+            json={"market_id": target.canonical_id},
+        )
+        assert response.status_code == 200, response.text
+        payload = response.json()
+        listing_observation_id = store.observations(kind="market_listing", limit=1)[0][
+            "observation_id"
+        ]
+        assert payload["market_id"] == target.canonical_id
+        assert payload["bound_market_observation_id"] == listing_observation_id
+        assert payload["request_count_delta"] == 1
+        assert payload["network_calls_bounded_by"] == 1
+        assert payload["catalogue_market_replaced"] is False
+        assert payload["hypothetical_only"] is True
+        assert len(requests) == 2
+        assert requests[1].method == "GET"
+        assert requests[1].url.path == f"/markets/{native_market_id}"
+        assert requests[1].url.query == b""
+        assert "authorization" not in requests[1].headers
+
+        evidence = store.observation(payload["observation_id"])
+        assert evidence is not None
+        assert evidence["raw"]["observation_kind"] == "market_metadata_evidence"
+        assert evidence["normalized"]["source_observation_kind"] == "market_metadata"
+        assert evidence["normalized"]["bound_market_observation_id"] == listing_observation_id
+        assert evidence["normalized"]["market"]["native_market_id"] == native_market_id
+        catalogue = client.get("/api/frontier/markets?venue=polymarket").json()["items"]
+        stored_target = next(
+            item for item in catalogue if item["canonical_id"] == target.canonical_id
+        )
+        assert stored_target["source_observation_record_id"] == listing_observation_id
     finally:
         client.close()
         asyncio.run(registry.aclose())

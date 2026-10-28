@@ -265,14 +265,16 @@ class KalshiAdapter(BaseReadOnlyAdapter):
             records.append(record)
         return tuple(records)
 
+    def market_metadata_request_url(self, native_market_id: str) -> str:
+        """Return the exact public single-market URL for a validated Kalshi ticker."""
+        if not isinstance(native_market_id, str) or not _TICKER_PATTERN.fullmatch(native_market_id):
+            raise AdapterError("INVALID_MARKET_ID", "Kalshi market ticker is invalid")
+        return f"{BASE}/markets/{quote(native_market_id, safe='')}"
+
     async def fetch_market_metadata(self, native_market_id: str) -> FrontierMarket:
         """Capture one public market's metadata by its exact native ticker."""
         self._require(Capability.MARKET_METADATA)
-        if not isinstance(native_market_id, str) or not _TICKER_PATTERN.fullmatch(native_market_id):
-            raise AdapterError("INVALID_MARKET_ID", "Kalshi market ticker is invalid")
-        response = await self.transport.get_json(
-            f"{BASE}/markets/{quote(native_market_id, safe='')}"
-        )
+        response = await self.transport.get_json(self.market_metadata_request_url(native_market_id))
         self._capture_response(response, "market_metadata")
         if not isinstance(response.payload, dict) or not isinstance(
             response.payload.get("market"), dict

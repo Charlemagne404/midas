@@ -45,6 +45,7 @@ from midas.frontier.adapters.base import (
     ExchangeAdapter,
     FailedResponseEvidence,
     RejectedResponseEvidence,
+    SingleMarketMetadataAdapter,
 )
 from midas.frontier.adapters.coinbase import CoinbaseSpotAdapter
 from midas.frontier.adapters.kraken import KrakenSpotAdapter
@@ -82,6 +83,7 @@ from midas.frontier.models import (
     KalshiFeeMetadata,
     KalshiFeeOrderFillInput,
     MarketBatch,
+    MarketMetadataEvidence,
     RawObservation,
     ResponseRejectionMetadata,
     SourceFailureRecord,
@@ -167,6 +169,11 @@ class EventMarketsProbeRequest(BaseModel):
         if self.native_event_id is not None and not self.native_event_id.strip():
             raise ValueError("Native event ID cannot be blank")
         return self
+
+
+class MarketMetadataProbeRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+    market_id: str = Field(min_length=1, max_length=256)
 
 
 class KalshiMveComponentProbeRequest(BaseModel):
@@ -2296,6 +2303,156 @@ def router(
                     status_code=502,
                     detail={
                         "code": "KALSHI_FEE_METADATA_FAILED",
+                        "message": str(error),
+                        "diagnostic_observation_ids": diagnostic_ids,
+                        "diagnostic_persistence_error": diagnostic_error,
+                    },
+                ) from error
+
+    @api.post("/probe/{venue}/market-metadata")
+    async def probe_market_metadata(
+        venue: Venue, request: MarketMetadataProbeRequest
+    ) -> dict[str, Any]:
+        """Capture exact public metadata for a market already present in the bounded catalogue."""
+        reject_held_venue(venue)
+        adapter = registered_source_adapter(venue)
+        if not adapter.capabilities.supports(Capability.MARKET_METADATA):
+            raise HTTPException(
+                status_code=409, detail=f"{venue.value} market metadata is unsupported"
+            )
+        if not isinstance(adapter, SingleMarketMetadataAdapter):
+            raise HTTPException(
+                status_code=409,
+                detail="Advertised exact single-market metadata lookup is unavailable",
+            )
+        config = getattr(adapter, "config", None)
+        if config is None or not config.enabled or not config.live_public_probe_enabled:
+            raise HTTPException(status_code=409, detail=probe_disabled_detail(config))
+
+        try:
+            known_markets = await _load_markets(store, 200, excluded_venues=held_venues)
+        except (FrontierStoreError, ValueError) as error:
+            raise HTTPException(status_code=409, detail=str(error)) from error
+        recorded_market = next(
+            (
+                item
+                for item in known_markets
+                if item.venue == venue and item.canonical_id == request.market_id
+            ),
+            None,
+        )
+        if recorded_market is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Market metadata can only be fetched for a market in the bounded recorded window",
+            )
+        bound_observation_id = recorded_market.provenance.observation_id
+        if bound_observation_id is None:
+            raise HTTPException(
+                status_code=409,
+                detail="Recorded market has no immutable source-observation binding",
+            )
+        try:
+            expected_request_url = adapter.market_metadata_request_url(
+                recorded_market.native_market_id
+            )
+            expected_url = urlsplit(expected_request_url)
+            if (
+                expected_url.scheme != "https"
+                or not expected_url.hostname
+                or expected_url.username is not None
+                or expected_url.password is not None
+                or expected_url.port is not None
+                or expected_url.query
+                or expected_url.fragment
+            ):
+                raise ValueError("Adapter metadata URL is not a plain HTTPS endpoint")
+        except (AdapterError, ValueError) as error:
+            raise HTTPException(status_code=409, detail=str(error)) from error
+
+        async with source_locks[venue]:
+            adapter.take_captures()
+            requests_before = adapter.transport.request_count
+            captures: tuple[RawObservation, ...] = ()
+            try:
+                market = await adapter.fetch_market_metadata(recorded_market.native_market_id)
+                captures = adapter.take_captures()
+                if (
+                    len(captures) != 1
+                    or captures[0].venue != venue
+                    or captures[0].observation_kind != "market_metadata"
+                    or market.venue != venue
+                    or market.canonical_id != recorded_market.canonical_id
+                    or market.native_market_id != recorded_market.native_market_id
+                    or market.provenance.raw_sha256 != captures[0].raw_sha256
+                ):
+                    raise AdapterError(
+                        "MARKET_METADATA_CAPTURE_MISMATCH",
+                        "Market detail does not match the exact recorded market and one raw capture",
+                    )
+                if captures[0].request_url != expected_request_url:
+                    raise AdapterError(
+                        "MARKET_METADATA_REQUEST_MISMATCH",
+                        "Captured request is not the exact allowlisted single-market public lookup",
+                    )
+                evidence = MarketMetadataEvidence(
+                    venue=venue,
+                    requested_market_id=recorded_market.canonical_id,
+                    bound_market_observation_id=bound_observation_id,
+                    market=market,
+                )
+                linked_capture = captures[0].model_copy(
+                    update={"observation_kind": "market_metadata_evidence"}
+                )
+                observation_id = store.append_observation(linked_capture, evidence)
+                return {
+                    "venue": venue.value,
+                    "market_id": recorded_market.canonical_id,
+                    "bound_market_observation_id": bound_observation_id,
+                    "market": market.model_dump(mode="json"),
+                    "observation_id": observation_id,
+                    "raw_sha256": captures[0].raw_sha256,
+                    "request_count_delta": adapter.transport.request_count - requests_before,
+                    "network_calls_bounded_by": config.retries + 1,
+                    "catalogue_market_replaced": False,
+                    "hypothetical_only": True,
+                    "note": (
+                        "One exact public detail response linked to the pre-existing market "
+                        "observation. It does not establish event membership, outcome-set "
+                        "exhaustiveness, payoff validity, or an executable quote."
+                    ),
+                }
+            except AdapterError as error:
+                diagnostic_ids, diagnostic_error = preserve_failed_captures(
+                    adapter,
+                    error.code,
+                    str(error),
+                    error.response_evidence,
+                    captures,
+                    response_diagnostic=error.response_diagnostic,
+                )
+                adapter.report_failure(error.code, str(error))
+                raise HTTPException(
+                    status_code=502,
+                    detail={
+                        "code": error.code,
+                        "message": str(error),
+                        "diagnostic_observation_ids": diagnostic_ids,
+                        "diagnostic_persistence_error": diagnostic_error,
+                    },
+                ) from error
+            except (ValueError, FrontierStoreError) as error:
+                diagnostic_ids, diagnostic_error = preserve_failed_captures(
+                    adapter,
+                    "MARKET_METADATA_CAPTURE_FAILED",
+                    str(error),
+                    already_drained=captures,
+                )
+                adapter.report_failure("MARKET_METADATA_CAPTURE_FAILED", str(error))
+                raise HTTPException(
+                    status_code=502,
+                    detail={
+                        "code": "MARKET_METADATA_CAPTURE_FAILED",
                         "message": str(error),
                         "diagnostic_observation_ids": diagnostic_ids,
                         "diagnostic_persistence_error": diagnostic_error,
