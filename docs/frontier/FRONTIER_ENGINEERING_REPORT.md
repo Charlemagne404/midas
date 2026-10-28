@@ -11503,6 +11503,33 @@ and the held `data/frontier-public-probes/` path was not read or modified.
 | Current broad Frontier/legacy regression | PARTIALLY VERIFIED | Focused adapter tests pass; the broad suite remains deferred under volatile protected-service memory headroom. |
 | Frontier overall | PARTIALLY VERIFIED | Live cross-venue science, full regression, endurance, protected recovery, and deployment remain incomplete. |
 
+## Coinbase book depth type validation — 2026-10-28 20:33 UTC
+
+Commit `46cd7ad` advances Coinbase Spot to
+`frontier-coinbase-exchange-spot-6` and rejects boolean, floating-point, and
+string book-depth values before transport. Valid depth remains an integer
+from 1 through 20.
+
+The focused Coinbase fixture module passes **33/33** in 0.85 seconds pytest
+time (1.33 seconds wall), with 76,904 KiB maximum RSS, zero swaps, and zero
+socket messages. Three invalid-depth cases verify that no book request is
+issued. Ruff check/format and strict mypy pass. The one warning is the
+existing Starlette/httpx `TestClient` deprecation. No Coinbase network request
+was made.
+
+This is bounded adapter-contract evidence, not source validation. The latest
+protected-service memory sample recorded for this mission remains
+`2026-10-28T20:25:57Z`, when Reality was 65,536 bytes below `MemoryHigh`.
+Broader regressions remain deferred; the focused suite ran under a transient
+1 GiB cgroup cap with no swaps.
+
+| Requirement | Status | Evidence and boundary |
+| --- | --- | --- |
+| Coinbase book-depth input validation | COMPLETE AND VERIFIED | Invalid depth types reject before I/O; all 33 focused fixture tests pass. |
+| Coinbase live behavior | BLOCKED | No public source request was made; source-use/retention review remains unresolved. |
+| Current full Frontier regression | PARTIALLY VERIFIED | Focused adapter tests pass; full regression remains deferred by the resource gate. |
+| Frontier overall | PARTIALLY VERIFIED | Live cross-venue science, broad regression, endurance, protected recovery, and deployment remain incomplete. |
+
 ## Coinbase book input binding — 2026-10-28 20:23 UTC
 
 Commit `c3bcb131ca57e2ca610dcda720b58cd293846039` advances the Coinbase Spot

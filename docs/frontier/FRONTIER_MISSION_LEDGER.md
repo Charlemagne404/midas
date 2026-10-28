@@ -10696,3 +10696,28 @@ broad backend regression.
 verification. Keep the held public-probe artifact untouched, and defer broad
 regressions until resource headroom is sustained and source-use gates are
 separately resolved.
+
+## Coinbase book depth type validation — 2026-10-28 20:33 UTC
+
+Commit `46cd7ad` advances the Coinbase Spot adapter to
+`frontier-coinbase-exchange-spot-6`. `fetch_book` now rejects boolean,
+floating-point, and string depth values before any book request, while
+retaining the documented integer range of 1 through 20.
+
+The Coinbase fixture module passes **33/33** in 0.85 seconds pytest time
+(1.33 seconds wall), at 76,904 KiB maximum RSS, with zero swaps and zero
+socket messages. The three new invalid-type cases confirm no book request is
+made. Ruff check/format and strict mypy pass. The only warning is the existing
+Starlette/httpx `TestClient` deprecation. All data remains fixture-only; no
+Coinbase source request occurred.
+
+| Requirement | Status | Evidence and boundary |
+| --- | --- | --- |
+| Coinbase book depth validation | COMPLETE AND VERIFIED | Three non-integer depth values reject before book I/O; all 33 focused fixtures pass. |
+| Coinbase live validation | BLOCKED | The source-use/retention gate remains unresolved; fixture validation is not live evidence. |
+| Current broad Frontier/legacy regression | PARTIALLY VERIFIED | Focused Coinbase, Kalshi, and Polymarket adapter cases pass; broad regression remains deferred under protected-service resource constraints. |
+| Project Frontier overall | PARTIALLY VERIFIED | Live cross-venue validation, broad regression, endurance, protected recovery, and deployment remain open. |
+
+**Next safe action:** continue bounded source-independent adapter review and
+targeted verification; do not start public probes or broad suites under the
+current evidence and resource gates.
