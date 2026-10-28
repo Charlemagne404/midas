@@ -2,6 +2,26 @@
 
 **Report date:** 2026-10-28
 
+## Saved live-evidence API regression — 2026-10-28 17:25 UTC
+
+Commit `5dcd369` adds
+`tests/frontier/test_captured_public_evidence_api.py`, which copies the
+committed genuine Polymarket capture database into pytest's temporary
+directory and verifies the Mission Control read API against it. The focused
+test passes **1/1 in 0.80 seconds**. It checks three stored observations, all
+five native market IDs, the one captured book, all ten `hypothesis` edges, a
+four-edge centered neighborhood, and the event observation's raw and SQLite
+row hashes. The overview confirms the read routes made no network request and
+markets are labeled `recorded observations only`. Ruff, format, `py_compile`,
+and diff checks pass. The existing Starlette/httpx TestClient deprecation
+warning remains.
+
+At 17:25:29Z, memory PSI was 0.00% avg10 / 8.70% avg60 / 16.75% avg300
+(`full`: 0.00% / 7.75% / 14.81%), with 10,414,440 KiB available and 2,112 KiB
+swap free. Both protected systemd units were still `inactive/dead`; no action
+was taken. This short run does not clear the admission gate for a broad Arena
+regression. The 17:23 service-state discrepancy remains unexplained.
+
 ## Live evidence API exposure and host recheck — 2026-10-28 17:23 UTC
 
 A bounded local API smoke used a temporary copy of the committed 270,336-byte

@@ -1,5 +1,31 @@
 # Project Frontier Mission Ledger
 
+## Saved public-capture API regression — 2026-10-28 17:25 UTC
+
+Commit `5dcd369` adds a repeatable pytest case that copies the genuine captured
+Polymarket store to a temporary root and reads it through the Frontier API.
+The focused run passes **1/1 in 0.80 seconds**. It confirms five native market
+IDs, one book, ten `hypothesis` relationships, a four-edge centered graph,
+three overview observations, and intact observation/raw/row hashes. The API
+reports recorded-only evidence and makes no network call. Ruff, format,
+`py_compile`, and `git diff --check` pass; the pre-existing
+Starlette/httpx TestClient deprecation warning remains.
+
+At 17:25:29Z, memory PSI was 0% avg10 / 8.70% avg60 / 16.75% avg300, with
+10,414,440 KiB available and 2,112 KiB swap free. Both protected services
+remained `inactive/dead` in read-only systemd output; no service operation was
+performed and no cause is known. This one short test does not establish
+sustained memory recovery.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Committed live-capture API integration | COMPLETE AND VERIFIED WITHIN TESTED SCOPE | Repeatable local regression confirms the saved markets, book, graph hypotheses, and pinned raw evidence are exposed without network access. Browser E2E against this capture is not run. |
+| Broad Arena resource admission | PARTIALLY VERIFIED | Memory PSI avg10 is now 0%, but avg60/avg300 remain elevated and swap is nearly full; defer a full retry until sustained readings are clear. |
+| Protected services | PARTIALLY VERIFIED | Two consecutive read-only checks show Reality and API inactive; no cause or intended state is known, and no intervention was made. |
+
+**Next safe action:** continue bounded source-independent review; sample
+resources again before considering any broad regression run.
+
 ## Live evidence API exposure and host recheck — 2026-10-28 17:23 UTC
 
 A bounded local API smoke mounted the Frontier read router around a temporary

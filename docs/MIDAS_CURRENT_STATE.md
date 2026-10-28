@@ -33,7 +33,22 @@ in the dated addendum below and in the Frontier engineering report.
 
 ## Frontier development addendum — 2026-10-28
 
-### Latest isolated Frontier checkpoint — 2026-10-28 17:23 UTC
+### Latest isolated Frontier checkpoint — 2026-10-28 17:25 UTC
+
+Commit `5dcd369` adds a reproducible local regression over a temporary copy of
+the saved public Polymarket database. The focused test passes 1/1 in 0.80
+seconds and checks five markets, one book, ten hypothesis edges, a four-edge
+graph neighborhood, offline read routes, and the source raw/row hashes. Ruff,
+format, syntax, and diff checks pass; the existing Starlette/httpx TestClient
+deprecation warning remains.
+
+At 17:25:29Z, memory PSI was 0% avg10 / 8.70% avg60 / 16.75% avg300, with
+about 9.9 GiB available and 2,112 KiB swap free. Both protected units remained
+`inactive/dead`, unchanged from the 17:23 sample. No service operation was
+performed; the reason for their inactive state is unknown. This brief test does
+not clear the broad regression admission gate.
+
+### Prior isolated Frontier checkpoint — 2026-10-28 17:23 UTC
 
 A local read-only API smoke against a temporary copy of the captured Polymarket
 store returned all five event markets, the one saved book, ten `hypothesis`
