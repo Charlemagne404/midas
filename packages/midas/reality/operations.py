@@ -316,13 +316,20 @@ def archive_capacity(
         except (OSError, ValueError, TypeError):
             manifest_provenance_valid = False
     catalog = manifest_value.get("segments")
-    used, archive_inventory_valid = _archive_directory_usage(
-        destination,
-        catalog if manifest_provenance_valid and isinstance(catalog, list) else None,
-    )
-    inventory_scan_limited = used is None
-    if inventory_scan_limited:
-        alerts.append("ARCHIVE_INVENTORY_SCAN_LIMIT")
+    if manifest_provenance_valid is False:
+        # An invalid archive manifest is not a safe inventory index; do not
+        # replace it with an unbounded filesystem walk on every timer run.
+        used, archive_inventory_valid = None, False
+        inventory_scan_limited = False
+        alerts.append("ARCHIVE_INVENTORY_UNVERIFIED")
+    else:
+        used, archive_inventory_valid = _archive_directory_usage(
+            destination,
+            catalog if isinstance(catalog, list) else None,
+        )
+        inventory_scan_limited = used is None
+        if inventory_scan_limited:
+            alerts.append("ARCHIVE_INVENTORY_SCAN_LIMIT")
     if manifest_provenance_valid and not archive_inventory_valid:
         manifest_provenance_valid = False
         alerts.append("ARCHIVE_SEGMENT_INVENTORY_INVALID")
