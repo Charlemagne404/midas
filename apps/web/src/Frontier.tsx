@@ -687,6 +687,27 @@ type FundingCurrencySensitivity = {
   target_currency_identity: SettlementAssetIdentity;
   unresolved_candidate_fee_leg_count: number;
   total_conversion_fee_target: string;
+  pnl_scenario: {
+    status: string;
+    reason: string | null;
+    funding_input_sha256: string;
+    target_currency_identity: SettlementAssetIdentity;
+    modeled_conversion_fee_target: string;
+    candidate_net_pnl_by_state: Record<string, string>;
+    net_pnl_after_conversion_by_state: Record<string, string>;
+    worst_case_net_pnl_after_conversion: string | null;
+    all_outcomes_positive_after_conversion: boolean | null;
+    audit: {
+      algorithm_version: string;
+      disposition: string;
+      input_sha256: string;
+      candidate_audit_input_sha256: string | null;
+      recomputed_net_pnl_after_conversion_by_state: Record<string, string>;
+      recomputed_worst_case_net_pnl_after_conversion: string | null;
+      checks: string[];
+      message: string;
+    };
+  };
   input_sha256: string;
   result_sha256: string;
   audit: { disposition: string; message: string; checks: string[] };
@@ -6042,6 +6063,67 @@ function CandidateCard({ candidate }: { candidate: Candidate }) {
                     </small>
                   </div>
                 ))}
+                <section
+                  className="fr-candidate-audit"
+                  aria-label="Conversion-adjusted outcome P&L scenario"
+                >
+                  <div className="fr-candidate-audit-head">
+                    <h5>Outcome P&amp;L after modeled conversion costs</h5>
+                    <StateBadge state={fundingCurrencyMutation.data.pnl_scenario.status} />
+                  </div>
+                  <p>{fundingCurrencyMutation.data.pnl_scenario.audit.message}</p>
+                  {fundingCurrencyMutation.data.pnl_scenario.status === 'verified' ? (
+                    <>
+                      <p>
+                        Separate hypothetical sensitivity in{' '}
+                        {settlementIdentityLabel(
+                          fundingCurrencyMutation.data.pnl_scenario.target_currency_identity,
+                        )}
+                        . The saved candidate economics and classification remain unchanged.
+                      </p>
+                      {Object.entries(
+                        fundingCurrencyMutation.data.pnl_scenario.net_pnl_after_conversion_by_state,
+                      ).map(([state, pnl]) => (
+                        <div
+                          className="fr-fx-result-row"
+                          key={`${candidate.candidate_id}-fx-pnl-${state}`}
+                        >
+                          <strong>{state}</strong>
+                          <small>
+                            Candidate audited net P&amp;L{' '}
+                            <code>
+                              {
+                                fundingCurrencyMutation.data.pnl_scenario
+                                  .candidate_net_pnl_by_state[state]
+                              }
+                            </code>{' '}
+                            · after modeled conversion fee <code>{pnl}</code>
+                          </small>
+                        </div>
+                      ))}
+                      <p>
+                        Worst terminal-state result after the modeled conversion fee:{' '}
+                        <code>
+                          {
+                            fundingCurrencyMutation.data.pnl_scenario
+                              .worst_case_net_pnl_after_conversion
+                          }
+                        </code>
+                        {' · '}all outcomes positive under these assumptions:{' '}
+                        {fundingCurrencyMutation.data.pnl_scenario
+                          .all_outcomes_positive_after_conversion
+                          ? 'yes'
+                          : 'no'}
+                        .
+                      </p>
+                    </>
+                  ) : (
+                    <p>
+                      Outcome P&amp;L is unavailable:{' '}
+                      {fundingCurrencyMutation.data.pnl_scenario.reason}
+                    </p>
+                  )}
+                </section>
                 <small>
                   Input SHA-256 <code>{shortHash(fundingCurrencyMutation.data.input_sha256)}</code>{' '}
                   · result SHA-256{' '}

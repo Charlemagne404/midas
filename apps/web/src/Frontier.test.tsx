@@ -911,8 +911,8 @@ it('renders recorded-evidence empty states and never probes a source automatical
     asset_reference: null,
   } as const;
   responses['/api/frontier/opportunities/funding-currency-sensitivity'] = {
-    schema_version: 1,
-    model_version: 'frontier-virtual-funding-currency-1',
+    schema_version: 2,
+    model_version: 'frontier-virtual-funding-currency-2',
     run_id: 'a'.repeat(64),
     run_sha256: 'b'.repeat(64),
     candidate_id: 'multi-outcome-fixture-candidate',
@@ -926,6 +926,27 @@ it('renders recorded-evidence empty states and never probes a source automatical
     target_currency_identity: tokenUsdIdentity,
     unresolved_candidate_fee_leg_count: 3,
     total_conversion_fee_target: '0.02255639097744360902255639098',
+    pnl_scenario: {
+      status: 'unavailable',
+      reason: 'The saved candidate has no verified independent economic audit.',
+      funding_input_sha256: 'e'.repeat(64),
+      target_currency_identity: tokenUsdIdentity,
+      modeled_conversion_fee_target: '0.02255639097744360902255639098',
+      candidate_net_pnl_by_state: {},
+      net_pnl_after_conversion_by_state: {},
+      worst_case_net_pnl_after_conversion: null,
+      all_outcomes_positive_after_conversion: null,
+      audit: {
+        algorithm_version: 'frontier-independent-funding-pnl-audit-1',
+        disposition: 'unavailable',
+        input_sha256: 'e'.repeat(64),
+        candidate_audit_input_sha256: null,
+        recomputed_net_pnl_after_conversion_by_state: {},
+        recomputed_worst_case_net_pnl_after_conversion: null,
+        checks: [],
+        message: 'The saved candidate has no verified independent economic audit.',
+      },
+    },
     input_sha256: 'e'.repeat(64),
     result_sha256: 'f'.repeat(64),
     audit: {
@@ -991,6 +1012,55 @@ it('renders recorded-evidence empty states and never probes a source automatical
     /candidate state VERIFIED MATHEMATICAL INCONSISTENCY · classification unchanged · practical eligibility not established \(unchanged\) · candidate economics unchanged/,
   );
   expect(fxPanel).toHaveTextContent('unresolved fees remain');
+  expect(
+    within(fxPanel).getByRole('region', { name: 'Conversion-adjusted outcome P&L scenario' }),
+  ).toHaveTextContent('Outcome P&L is unavailable');
+  const priorFundingResponse = responses[
+    '/api/frontier/opportunities/funding-currency-sensitivity'
+  ] as Record<string, unknown>;
+  const adjustedStates = {
+    blue: '-0.12255639097744360902255639098',
+    red: '0.17744360902255639097744360902',
+  };
+  responses['/api/frontier/opportunities/funding-currency-sensitivity'] = {
+    ...priorFundingResponse,
+    unresolved_candidate_fee_leg_count: 0,
+    pnl_scenario: {
+      status: 'verified',
+      reason: null,
+      funding_input_sha256: 'e'.repeat(64),
+      target_currency_identity: tokenUsdIdentity,
+      modeled_conversion_fee_target: '0.02255639097744360902255639098',
+      candidate_net_pnl_by_state: { blue: '-0.1', red: '0.2' },
+      net_pnl_after_conversion_by_state: adjustedStates,
+      worst_case_net_pnl_after_conversion: adjustedStates.blue,
+      all_outcomes_positive_after_conversion: false,
+      audit: {
+        algorithm_version: 'frontier-independent-funding-pnl-audit-1',
+        disposition: 'verified',
+        input_sha256: 'e'.repeat(64),
+        candidate_audit_input_sha256: '9'.repeat(64),
+        recomputed_net_pnl_after_conversion_by_state: adjustedStates,
+        recomputed_worst_case_net_pnl_after_conversion: adjustedStates.blue,
+        checks: ['The fixture state values match their independent audit.'],
+        message: 'Independent fixture audit verifies the adjusted terminal-state P&L.',
+      },
+    },
+  };
+  fireEvent.click(
+    within(fxPanel).getByRole('button', { name: 'Evaluate virtual funding sensitivity' }),
+  );
+  const conversionPnlPanel = within(fxPanel).getByRole('region', {
+    name: 'Conversion-adjusted outcome P&L scenario',
+  });
+  expect(
+    await within(conversionPnlPanel).findByText(
+      'Independent fixture audit verifies the adjusted terminal-state P&L.',
+    ),
+  ).toBeInTheDocument();
+  expect(conversionPnlPanel).toHaveTextContent('blue');
+  expect(conversionPnlPanel).toHaveTextContent('0.17744360902255639097744360902');
+  expect(conversionPnlPanel).toHaveTextContent('all outcomes positive under these assumptions: no');
   const fundingCall = fetchMock.mock.calls.find(
     ([input]) => String(input) === '/api/frontier/opportunities/funding-currency-sensitivity',
   );
@@ -1009,7 +1079,7 @@ it('renders recorded-evidence empty states and never probes a source automatical
       },
     ],
   });
-  expect(screen.getAllByText('red')).toHaveLength(2);
+  expect(screen.getAllByText('red')).toHaveLength(3);
 
   queryClient.setQueryData(['frontier', 'runs'], {
     items: [

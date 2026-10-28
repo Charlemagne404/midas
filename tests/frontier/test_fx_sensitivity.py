@@ -20,6 +20,8 @@ from midas.frontier.fx import (
     independently_audit_funding_currency,
 )
 from midas.frontier.models import (
+    EconomicAuditDisposition,
+    IndependentEconomicAudit,
     SettlementAssetIdentity,
     SettlementAssetKind,
     Venue,
@@ -121,6 +123,33 @@ def assumptions(*, token: SettlementAssetIdentity = TOKEN_A):
     )
 
 
+def independently_audited_candidate_fixture():
+    candidate = candidate_fixture()
+    candidate_data = candidate.model_dump(mode="python")
+    candidate_data["legs"] = tuple(
+        leg.model_copy(update={"modeled_fee": D(0)}) for leg in candidate.legs
+    )
+    terminal_pnl = {"no": D("0.2"), "yes": D("0.2")}
+    candidate_data.update(
+        {
+            "modeled_fees": D(0),
+            "modeled_net_cost": D("0.8"),
+            "net_pnl_by_state": terminal_pnl,
+            "worst_case_net_pnl": D("0.2"),
+            "independent_audit": IndependentEconomicAudit(
+                disposition=EconomicAuditDisposition.VERIFIED,
+                input_sha256="9" * 64,
+                checked_market_count=2,
+                checked_leg_count=2,
+                recomputed_net_pnl_by_state=terminal_pnl,
+                recomputed_worst_case_net_pnl=D("0.2"),
+                message="Fixture economics independently audited.",
+            ),
+        }
+    )
+    return OpportunityCandidate.model_validate(candidate_data)
+
+
 def test_funding_currency_sensitivity_is_deterministic_and_keeps_venue_balances_separate():
     candidate = candidate_fixture()
     before = candidate.model_dump(mode="json")
@@ -144,6 +173,8 @@ def test_funding_currency_sensitivity_is_deterministic_and_keeps_venue_balances_
     assert result.candidate_classification == candidate.classification.value
     assert result.unresolved_candidate_fee_leg_count == 1
     assert result.target_currency_identity == USD_SETTLEMENT_IDENTITY
+    assert result.pnl_scenario.status == "unavailable"
+    assert "verified independent economic audit" in result.pnl_scenario.reason
     rows = {item.venue: item for item in result.venues}
     assert rows["kalshi"].funding_currency_identity == TOKEN_A
     assert rows["polymarket"].funding_currency_identity == USD_SETTLEMENT_IDENTITY
@@ -153,6 +184,86 @@ def test_funding_currency_sensitivity_is_deterministic_and_keeps_venue_balances_
     assert rows["kalshi"].required_capital_target == D("0.4")
     assert result.total_conversion_fee_target == rows["kalshi"].conversion_fee_target_amount
     assert candidate.model_dump(mode="json") == before
+
+
+def test_verified_funding_scenario_subtracts_conversion_fee_from_every_terminal_state():
+    candidate = independently_audited_candidate_fixture()
+    before = candidate.model_dump(mode="json")
+    result = evaluate_funding_currency_sensitivity(
+        candidate,
+        run_id=RUN_ID,
+        run_sha256=RUN_HASH,
+        assumptions=assumptions(),
+    )
+    scenario = result.pnl_scenario
+    assert result.audit.disposition == "verified"
+    assert scenario.status == "verified", scenario.audit.message
+    assert scenario.audit.disposition == "verified"
+    assert scenario.audit.candidate_audit_input_sha256 == candidate.independent_audit.input_sha256
+    assert scenario.funding_input_sha256 == result.input_sha256
+    assert scenario.modeled_conversion_fee_target == result.total_conversion_fee_target
+    assert (
+        scenario.candidate_net_pnl_by_state
+        == candidate.independent_audit.recomputed_net_pnl_by_state
+    )
+    with localcontext() as context:
+        context.prec = 96
+        expected_after_conversion = {
+            state: pnl - result.total_conversion_fee_target
+            for state, pnl in candidate.net_pnl_by_state.items()
+        }
+    assert scenario.net_pnl_after_conversion_by_state == expected_after_conversion
+    assert scenario.worst_case_net_pnl_after_conversion == min(
+        scenario.net_pnl_after_conversion_by_state.values()
+    )
+    assert scenario.all_outcomes_positive_after_conversion is True
+    assert candidate.model_dump(mode="json") == before
+
+
+def test_funding_pnl_scenario_is_unavailable_for_incomplete_candidate_fees_or_virtual_balance():
+    candidate = independently_audited_candidate_fixture()
+    candidate_data = candidate.model_dump(mode="python")
+    candidate_data["legs"] = (
+        candidate.legs[0],
+        candidate.legs[1].model_copy(update={"modeled_fee": None}),
+    )
+    incomplete_fees = OpportunityCandidate.model_validate(candidate_data)
+    missing_fee_result = evaluate_funding_currency_sensitivity(
+        incomplete_fees,
+        run_id=RUN_ID,
+        run_sha256=RUN_HASH,
+        assumptions=assumptions(),
+    )
+    assert missing_fee_result.pnl_scenario.status == "unavailable"
+    assert "unresolved modeled fees" in missing_fee_result.pnl_scenario.reason
+
+    limited = assumptions()
+    short_balance = limited[0].model_copy(update={"balance_amount": "0.1"})
+    short_result = evaluate_funding_currency_sensitivity(
+        candidate,
+        run_id=RUN_ID,
+        run_sha256=RUN_HASH,
+        assumptions=(short_balance, limited[1]),
+    )
+    assert short_result.audit.disposition == "verified"
+    assert short_result.pnl_scenario.status == "unavailable"
+    assert "do not cover" in short_result.pnl_scenario.reason
+
+
+def test_funding_pnl_scenario_rejects_candidate_pnl_that_disagrees_with_its_audit():
+    candidate = independently_audited_candidate_fixture()
+    candidate_data = candidate.model_dump(mode="python")
+    candidate_data["net_pnl_by_state"] = {"no": D("0.3"), "yes": D("0.2")}
+    inconsistent = OpportunityCandidate.model_validate(candidate_data)
+    result = evaluate_funding_currency_sensitivity(
+        inconsistent,
+        run_id=RUN_ID,
+        run_sha256=RUN_HASH,
+        assumptions=assumptions(),
+    )
+    assert result.audit.disposition == "verified"
+    assert result.pnl_scenario.status == "disagreement"
+    assert "does not match" in result.pnl_scenario.reason
 
 
 def test_fee_and_rate_orientation_are_explicit_and_independently_recomputed_as_fractions():

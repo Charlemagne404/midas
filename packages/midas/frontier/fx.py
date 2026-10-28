@@ -16,11 +16,15 @@ from typing import Any, Literal
 from pydantic import Field, field_validator, model_validator
 
 from midas.frontier.economics import OpportunityCandidate
-from midas.frontier.models import FrontierModel, SettlementAssetIdentity
+from midas.frontier.models import (
+    EconomicAuditDisposition,
+    FrontierModel,
+    SettlementAssetIdentity,
+)
 
 _D = Decimal
 _BPS = _D(10_000)
-_VERSION = "frontier-virtual-funding-currency-1"
+_VERSION = "frontier-virtual-funding-currency-2"
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
 _VENUE = re.compile(r"^[a-z][a-z0-9_-]{0,79}$")
 _AMOUNT = re.compile(r"^(?:0|[1-9][0-9]{0,35})(?:\.[0-9]{1,36})?$")
@@ -209,8 +213,81 @@ class FundingCurrencyAudit(FrontierModel):
     message: str
 
 
+class FundingCurrencyScenarioAudit(FrontierModel):
+    algorithm_version: str = "frontier-independent-funding-pnl-audit-1"
+    disposition: Literal["verified", "unavailable", "disagreement"]
+    input_sha256: str = Field(pattern=_SHA256.pattern)
+    candidate_audit_input_sha256: str | None = Field(default=None, pattern=_SHA256.pattern)
+    recomputed_net_pnl_after_conversion_by_state: dict[str, Decimal] = Field(
+        default_factory=dict, max_length=16
+    )
+    recomputed_worst_case_net_pnl_after_conversion: Decimal | None = None
+    checks: tuple[str, ...] = ()
+    message: str
+
+
+class FundingCurrencyPnlScenario(FrontierModel):
+    """A separate outcome-level P&L sensitivity; never changes the saved candidate."""
+
+    status: Literal["verified", "unavailable", "disagreement"]
+    reason: str | None = None
+    funding_input_sha256: str = Field(pattern=_SHA256.pattern)
+    target_currency_identity: SettlementAssetIdentity
+    modeled_conversion_fee_target: Decimal = Field(ge=0, allow_inf_nan=False)
+    candidate_net_pnl_by_state: dict[str, Decimal] = Field(default_factory=dict, max_length=16)
+    net_pnl_after_conversion_by_state: dict[str, Decimal] = Field(
+        default_factory=dict, max_length=16
+    )
+    worst_case_net_pnl_after_conversion: Decimal | None = None
+    all_outcomes_positive_after_conversion: bool | None = None
+    audit: FundingCurrencyScenarioAudit
+
+    @model_validator(mode="after")
+    def scenario_shape_matches_audit(self) -> FundingCurrencyPnlScenario:
+        if self.audit.disposition != self.status:
+            raise ValueError("Funding P&L scenario state differs from its independent audit")
+        if self.audit.input_sha256 != self.funding_input_sha256:
+            raise ValueError("Funding P&L scenario audit is not bound to the funding input")
+        if self.status == "verified":
+            if (
+                self.reason is not None
+                or not self.candidate_net_pnl_by_state
+                or self.audit.candidate_audit_input_sha256 is None
+            ):
+                raise ValueError("Verified funding P&L scenarios require audited state P&L")
+            if set(self.candidate_net_pnl_by_state) != set(self.net_pnl_after_conversion_by_state):
+                raise ValueError("Funding P&L scenario states do not match the candidate states")
+            if (
+                self.net_pnl_after_conversion_by_state
+                != self.audit.recomputed_net_pnl_after_conversion_by_state
+            ):
+                raise ValueError("Funding P&L values differ from the independent audit")
+            worst = min(self.net_pnl_after_conversion_by_state.values())
+            if self.worst_case_net_pnl_after_conversion != worst:
+                raise ValueError("Funding P&L worst case does not match its terminal states")
+            if self.audit.recomputed_worst_case_net_pnl_after_conversion != worst:
+                raise ValueError(
+                    "Audited funding P&L worst case does not match its terminal states"
+                )
+            if self.all_outcomes_positive_after_conversion != all(
+                value > 0 for value in self.net_pnl_after_conversion_by_state.values()
+            ):
+                raise ValueError("Funding P&L positivity flag does not match terminal states")
+        elif (
+            self.reason is None
+            or self.candidate_net_pnl_by_state
+            or self.net_pnl_after_conversion_by_state
+            or self.worst_case_net_pnl_after_conversion is not None
+            or self.all_outcomes_positive_after_conversion is not None
+            or self.audit.recomputed_net_pnl_after_conversion_by_state
+            or self.audit.recomputed_worst_case_net_pnl_after_conversion is not None
+        ):
+            raise ValueError("Unavailable or disputed funding P&L cannot expose a verified result")
+        return self
+
+
 class FundingCurrencySensitivity(FrontierModel):
-    schema_version: int = 1
+    schema_version: int = 2
     model_version: str = _VERSION
     run_id: str = Field(pattern=_SHA256.pattern)
     run_sha256: str = Field(pattern=_SHA256.pattern)
@@ -226,6 +303,7 @@ class FundingCurrencySensitivity(FrontierModel):
     unresolved_candidate_fee_leg_count: int = Field(ge=0, le=16)
     venues: tuple[VenueFundingResult, ...] = Field(min_length=1, max_length=8)
     total_conversion_fee_target: Decimal = Field(ge=0, allow_inf_nan=False)
+    pnl_scenario: FundingCurrencyPnlScenario
     input_sha256: str = Field(pattern=_SHA256.pattern)
     result_sha256: str = Field(pattern=_SHA256.pattern)
     audit: FundingCurrencyAudit
@@ -243,6 +321,10 @@ class FundingCurrencySensitivity(FrontierModel):
             raise ValueError("Funding sensitivity cannot change candidate economics or eligibility")
         if self.audit.input_sha256 != self.input_sha256:
             raise ValueError("Independent funding audit is bound to different inputs")
+        if self.pnl_scenario.funding_input_sha256 != self.input_sha256:
+            raise ValueError("Funding P&L scenario is bound to different funding inputs")
+        if self.pnl_scenario.target_currency_identity != self.target_currency_identity:
+            raise ValueError("Funding P&L scenario uses a different target denomination")
         if len({item.venue for item in self.venues}) != len(self.venues):
             raise ValueError("Funding sensitivity venue entries must be unique")
         expected_hash = _digest(self.model_dump(mode="json", exclude={"result_sha256"}))
@@ -269,6 +351,22 @@ def _input_payload(
         "candidate_evidence_sha256": candidate.evidence_sha256,
         "candidate_classification": candidate.classification.value,
         "candidate_practical_eligibility": candidate.practical_eligibility,
+        "candidate_independent_audit_disposition": (
+            candidate.independent_audit.disposition.value
+            if candidate.independent_audit is not None
+            else None
+        ),
+        "candidate_independent_audit_input_sha256": (
+            candidate.independent_audit.input_sha256
+            if candidate.independent_audit is not None
+            else None
+        ),
+        "candidate_net_pnl_by_state": {
+            state: str(pnl) for state, pnl in sorted(candidate.net_pnl_by_state.items())
+        },
+        "candidate_modeled_fees_by_leg": [
+            None if leg.modeled_fee is None else str(leg.modeled_fee) for leg in candidate.legs
+        ],
         "target_currency_identity": target_identity.model_dump(mode="json"),
         "candidate_capital_by_venue": {
             venue: str(amount) for venue, amount in sorted(candidate.capital_by_venue.items())
@@ -380,6 +478,238 @@ def independently_audit_funding_currency(
     )
 
 
+def _scenario_blocker(
+    candidate: OpportunityCandidate,
+    venue_results: tuple[VenueFundingResult, ...],
+) -> tuple[Literal["unavailable", "disagreement"], str] | None:
+    audit = candidate.independent_audit
+    if audit is None or audit.disposition != EconomicAuditDisposition.VERIFIED:
+        return (
+            "unavailable",
+            "The saved candidate has no verified independent economic audit.",
+        )
+    audited_pnl = audit.recomputed_net_pnl_by_state
+    try:
+        for value in audited_pnl.values():
+            _bounded_candidate_amount(value)
+    except ValueError:
+        return (
+            "disagreement",
+            "Saved candidate terminal-state P&L exceeds the bounded sensitivity arithmetic.",
+        )
+    if (
+        not audited_pnl
+        or len(audited_pnl) > 16
+        or not candidate.legs
+        or candidate.net_pnl_by_state != audited_pnl
+        or audit.checked_leg_count != len(candidate.legs)
+    ):
+        return (
+            "disagreement",
+            "Saved candidate P&L does not match the independently audited terminal-state P&L.",
+        )
+    expected_worst = min(audited_pnl.values())
+    if (
+        candidate.worst_case_net_pnl != expected_worst
+        or audit.recomputed_worst_case_net_pnl != expected_worst
+    ):
+        return (
+            "disagreement",
+            "Saved candidate worst-case P&L does not match its independently audited states.",
+        )
+    unresolved_fees = sum(leg.modeled_fee is None for leg in candidate.legs)
+    if unresolved_fees:
+        return (
+            "unavailable",
+            f"The saved candidate has {unresolved_fees} leg(s) with unresolved modeled fees.",
+        )
+    if any(not item.model_requirement_covered for item in venue_results):
+        return (
+            "unavailable",
+            "One or more venue-local virtual balances do not cover the candidate capital requirement.",
+        )
+    return None
+
+
+def independently_audit_funding_pnl_scenario(
+    candidate: OpportunityCandidate,
+    *,
+    assumptions: tuple[VenueFundingAssumption, ...],
+    funding_audit: FundingCurrencyAudit,
+    reported_conversion_fee_target: Decimal,
+    reported_net_pnl_after_conversion_by_state: dict[str, Decimal],
+    funding_input_sha256: str,
+) -> FundingCurrencyScenarioAudit:
+    """Recompute the conversion charge and every terminal P&L using rational inputs."""
+    candidate_audit = candidate.independent_audit
+    candidate_audit_hash = candidate_audit.input_sha256 if candidate_audit else None
+    if (
+        funding_audit.disposition != "verified"
+        or funding_audit.input_sha256 != funding_input_sha256
+    ):
+        return FundingCurrencyScenarioAudit(
+            disposition="disagreement",
+            input_sha256=funding_input_sha256,
+            candidate_audit_input_sha256=candidate_audit_hash,
+            message="The venue funding conversion audit did not verify; adjusted P&L is withheld.",
+        )
+    try:
+        recomputed_by_venue = _venue_values(candidate, assumptions)
+        recomputed_venues = tuple(
+            recomputed_by_venue[venue] for venue in sorted(recomputed_by_venue)
+        )
+    except ValueError as error:
+        return FundingCurrencyScenarioAudit(
+            disposition="disagreement",
+            input_sha256=funding_input_sha256,
+            candidate_audit_input_sha256=candidate_audit_hash,
+            message=f"Independent funding inputs could not be reproduced: {error}",
+        )
+    blocker = _scenario_blocker(candidate, recomputed_venues)
+    if blocker is not None:
+        disposition, reason = blocker
+        return FundingCurrencyScenarioAudit(
+            disposition=disposition,
+            input_sha256=funding_input_sha256,
+            candidate_audit_input_sha256=candidate_audit_hash,
+            message=reason,
+        )
+    # The independent audit binds the candidate's verified terminal P&L to the
+    # same venue-local funding assumptions and checks every conversion charge.
+    assert candidate_audit is not None
+
+    fee_parts: list[Decimal] = []
+    mismatches: list[str] = []
+    try:
+        for assumption in sorted(assumptions, key=lambda item: item.venue):
+            target = Fraction(
+                _bounded_candidate_amount(candidate.capital_by_venue[assumption.venue])
+            )
+            fee_bps = Fraction(_D(assumption.conversion_fee_bps))
+            fee_fraction = fee_bps / 10_000
+            fee_parts.append(_decimal_from_fraction(target * fee_fraction / (1 - fee_fraction)))
+    except (KeyError, ValueError, ZeroDivisionError) as error:
+        return FundingCurrencyScenarioAudit(
+            disposition="disagreement",
+            input_sha256=funding_input_sha256,
+            candidate_audit_input_sha256=candidate_audit_hash,
+            message=f"Independent conversion-fee validation failed: {error}",
+        )
+    with localcontext() as context:
+        context.prec = 96
+        exact_fee_total = sum(fee_parts, _D(0))
+        if exact_fee_total != reported_conversion_fee_target:
+            mismatches.append("Conversion fee differs from exact rational recomputation")
+        recomputed_states = {
+            state: _decimal_from_fraction(Fraction(pnl) - Fraction(exact_fee_total))
+            for state, pnl in sorted(candidate_audit.recomputed_net_pnl_by_state.items())
+        }
+    if recomputed_states != reported_net_pnl_after_conversion_by_state:
+        mismatches.append("Terminal-state P&L differs from independent rational recomputation")
+    if mismatches:
+        return FundingCurrencyScenarioAudit(
+            disposition="disagreement",
+            input_sha256=funding_input_sha256,
+            candidate_audit_input_sha256=candidate_audit_hash,
+            message="; ".join(mismatches),
+        )
+    worst = min(recomputed_states.values())
+    return FundingCurrencyScenarioAudit(
+        disposition="verified",
+        input_sha256=funding_input_sha256,
+        candidate_audit_input_sha256=candidate_audit_hash,
+        recomputed_net_pnl_after_conversion_by_state=recomputed_states,
+        recomputed_worst_case_net_pnl_after_conversion=worst,
+        checks=(
+            "The candidate terminal-state P&L is bound to its verified independent economic audit.",
+            "All candidate leg fees are known and all venue-local virtual balances cover recorded capital requirements.",
+            "Conversion charges are recomputed from exact rational fee-basis-point and capital inputs.",
+            "The same modeled conversion charge is subtracted from every terminal-state result.",
+        ),
+        message="Independent rational arithmetic reproduces the conversion-adjusted terminal-state P&L.",
+    )
+
+
+def _funding_pnl_scenario(
+    candidate: OpportunityCandidate,
+    *,
+    assumptions: tuple[VenueFundingAssumption, ...],
+    venue_results: tuple[VenueFundingResult, ...],
+    target_identity: SettlementAssetIdentity,
+    total_conversion_fee_target: Decimal,
+    funding_input_sha256: str,
+    funding_audit: FundingCurrencyAudit,
+) -> FundingCurrencyPnlScenario:
+    candidate_audit_hash = (
+        candidate.independent_audit.input_sha256
+        if candidate.independent_audit is not None
+        else None
+    )
+    blocker = _scenario_blocker(candidate, venue_results)
+    if blocker is None and (
+        funding_audit.disposition != "verified"
+        or funding_audit.input_sha256 != funding_input_sha256
+    ):
+        blocker = (
+            "disagreement",
+            "The venue funding conversion audit did not verify; adjusted P&L is withheld.",
+        )
+    if blocker is not None:
+        status, reason = blocker
+        audit = FundingCurrencyScenarioAudit(
+            input_sha256=funding_input_sha256,
+            candidate_audit_input_sha256=candidate_audit_hash,
+            disposition=status,
+            message=reason,
+        )
+        return FundingCurrencyPnlScenario(
+            status=status,
+            reason=reason,
+            funding_input_sha256=funding_input_sha256,
+            target_currency_identity=target_identity,
+            modeled_conversion_fee_target=total_conversion_fee_target,
+            audit=audit,
+        )
+
+    assert candidate.independent_audit is not None
+    base_pnl = candidate.independent_audit.recomputed_net_pnl_by_state
+    with localcontext() as context:
+        context.prec = 96
+        reported_net_pnl = {
+            state: pnl - total_conversion_fee_target for state, pnl in sorted(base_pnl.items())
+        }
+    audit = independently_audit_funding_pnl_scenario(
+        candidate,
+        assumptions=assumptions,
+        funding_audit=funding_audit,
+        reported_conversion_fee_target=total_conversion_fee_target,
+        reported_net_pnl_after_conversion_by_state=reported_net_pnl,
+        funding_input_sha256=funding_input_sha256,
+    )
+    if audit.disposition != "verified":
+        reason = audit.message
+        return FundingCurrencyPnlScenario(
+            status=audit.disposition,
+            reason=reason,
+            funding_input_sha256=funding_input_sha256,
+            target_currency_identity=target_identity,
+            modeled_conversion_fee_target=total_conversion_fee_target,
+            audit=audit,
+        )
+    worst = min(reported_net_pnl.values())
+    return FundingCurrencyPnlScenario(
+        status="verified",
+        funding_input_sha256=funding_input_sha256,
+        target_currency_identity=target_identity,
+        modeled_conversion_fee_target=total_conversion_fee_target,
+        candidate_net_pnl_by_state=base_pnl,
+        net_pnl_after_conversion_by_state=reported_net_pnl,
+        worst_case_net_pnl_after_conversion=worst,
+        all_outcomes_positive_after_conversion=all(pnl > 0 for pnl in reported_net_pnl.values()),
+        audit=audit,
+    )
+
+
 def evaluate_funding_currency_sensitivity(
     candidate: OpportunityCandidate,
     *,
@@ -415,8 +745,17 @@ def evaluate_funding_currency_sensitivity(
         expected_input_sha256=input_sha256,
         expected_total_fee=total_fee,
     )
+    pnl_scenario = _funding_pnl_scenario(
+        candidate,
+        assumptions=assumptions,
+        venue_results=ordered_results,
+        target_identity=target_identity,
+        total_conversion_fee_target=total_fee,
+        funding_input_sha256=input_sha256,
+        funding_audit=audit,
+    )
     body = {
-        "schema_version": 1,
+        "schema_version": 2,
         "model_version": _VERSION,
         "run_id": run_id,
         "run_sha256": run_sha256,
@@ -434,6 +773,7 @@ def evaluate_funding_currency_sensitivity(
         ),
         "venues": [item.model_dump(mode="json") for item in ordered_results],
         "total_conversion_fee_target": str(total_fee),
+        "pnl_scenario": pnl_scenario.model_dump(mode="json"),
         "input_sha256": input_sha256,
         "audit": audit.model_dump(mode="json"),
         "assumptions": (
@@ -441,13 +781,15 @@ def evaluate_funding_currency_sensitivity(
             "Rate orientation is candidate settlement-asset units received per one funding-asset unit before the stated conversion fee.",
             "Conversion fee is charged against gross converted target currency; no compounding, rounding, or minimum conversion amount is modeled.",
             "Balances remain isolated by venue and are not pooled or transferred.",
-            "The result reports funding coverage and modeled conversion cost without changing candidate classification or candidate P&L.",
+            "When independent candidate economics, complete candidate fees, and venue-local funding are verified, the separate outcome-level scenario deducts modeled conversion costs while leaving the saved candidate classification and economics unchanged.",
         ),
         "limitations": (
             "Different asset identities, including fiat and network-specific tokens with the same ticker, are never treated as 1:1 unless the user explicitly supplies a conversion assumption.",
             "No source evidence establishes that conversion or transfer is available, lawful, timely, or executable at the assumed rate.",
             "Custody, jurisdiction, venue-specific collateral eligibility, FX spread, transfer rails, settlement delay, and FX movement are unresolved.",
             "Candidate capital amounts may exclude fees that the source model could not establish; this sensitivity does not make an incomplete requirement complete.",
+            "The outcome-level P&L scenario is unavailable if candidate economics or leg fees are incomplete, if its independent audit disagrees, or if any venue balance is insufficient.",
+            "Conversion-adjusted hypothetical P&L does not establish that conversion is available or that any venue quote can be executed.",
             "This virtual funding calculation is not an order, account, wallet, deposit, withdrawal, or trading interface.",
         ),
     }

@@ -4177,10 +4177,26 @@ def test_replay_api_generates_and_persists_multi_outcome_candidate(tmp_path):
         assert funding_result["candidate_practical_eligibility"] is False
         assert funding_result["candidate_classification"] == candidate["classification"]
         assert funding_result["audit"]["disposition"] == "verified"
+        assert funding_result["schema_version"] == 2
+        assert funding_result["model_version"] == "frontier-virtual-funding-currency-2"
         assert funding_result["target_currency_identity"]["code"] == "USD"
         assert funding_result["venues"][0]["funding_currency_identity"]["code"] == "EUR"
         assert funding_result["venues"][0]["target_units_per_funding_unit"] == "1.1"
         assert funding_result["venues"][0]["model_requirement_covered"] is True
+        pnl_scenario = funding_result["pnl_scenario"]
+        assert pnl_scenario["status"] == "verified", pnl_scenario["reason"]
+        assert pnl_scenario["audit"]["disposition"] == "verified"
+        assert pnl_scenario["funding_input_sha256"] == funding_result["input_sha256"]
+        assert (
+            pnl_scenario["candidate_net_pnl_by_state"]
+            == candidate["independent_audit"]["recomputed_net_pnl_by_state"]
+        )
+        assert set(pnl_scenario["net_pnl_after_conversion_by_state"]) == set(
+            candidate["net_pnl_by_state"]
+        )
+        assert Decimal(pnl_scenario["worst_case_net_pnl_after_conversion"]) == min(
+            Decimal(value) for value in pnl_scenario["net_pnl_after_conversion_by_state"].values()
+        )
         stale_funding = client.post(
             "/api/frontier/opportunities/funding-currency-sensitivity",
             json={

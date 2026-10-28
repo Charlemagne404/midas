@@ -759,8 +759,8 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({
-          schema_version: 1,
-          model_version: 'frontier-virtual-funding-currency-1',
+          schema_version: 2,
+          model_version: 'frontier-virtual-funding-currency-2',
           run_id: 'a'.repeat(64),
           run_sha256: 'b'.repeat(64),
           candidate_id: capitalCandidateId,
@@ -813,6 +813,28 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
           ],
           total_conversion_fee_target:
             '0.013784461152882205513784461152882205513784461152882205513784461152882205513784461152882205513784461153',
+          pnl_scenario: {
+            status: 'unavailable',
+            reason: 'The saved candidate has no verified independent economic audit.',
+            funding_input_sha256: 'f'.repeat(64),
+            target_currency_identity: USD_IDENTITY,
+            modeled_conversion_fee_target:
+              '0.013784461152882205513784461152882205513784461152882205513784461152882205513784461152882205513784461153',
+            candidate_net_pnl_by_state: {},
+            net_pnl_after_conversion_by_state: {},
+            worst_case_net_pnl_after_conversion: null,
+            all_outcomes_positive_after_conversion: null,
+            audit: {
+              algorithm_version: 'frontier-independent-funding-pnl-audit-1',
+              disposition: 'unavailable',
+              input_sha256: 'f'.repeat(64),
+              candidate_audit_input_sha256: null,
+              recomputed_net_pnl_after_conversion_by_state: {},
+              recomputed_worst_case_net_pnl_after_conversion: null,
+              checks: [],
+              message: 'The saved candidate has no verified independent economic audit.',
+            },
+          },
           input_sha256: 'f'.repeat(64),
           result_sha256: '1'.repeat(64),
           audit: {
@@ -972,6 +994,9 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
     fundingCurrency.getByText('INCOMPLETE EVIDENCE · classification unchanged'),
   ).toBeVisible();
   await expect(fundingCurrency.getByText(/unresolved fees remain/)).toHaveCount(2);
+  await expect(
+    fundingCurrency.getByRole('region', { name: 'Conversion-adjusted outcome P&L scenario' }),
+  ).toContainText('Outcome P&L is unavailable');
   expect(fundingCurrencyRequests).toHaveLength(1);
   await page.setViewportSize({ width: 390, height: 844 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
