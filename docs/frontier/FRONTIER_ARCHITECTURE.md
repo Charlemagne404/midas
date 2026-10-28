@@ -710,7 +710,7 @@ Same-payoff equivalence is versioned as `frontier-equivalence-verifier-6`.
 Verification requires two distinct pinned market observation identities,
 between two and ten unique nonempty evidence IDs, and an external assertion
 time no earlier than either captured market record. The independent arithmetic
-audit is version `frontier-independent-economic-audit-15`; it accepts exactly
+audit is version `frontier-independent-economic-audit-16`; it accepts exactly
 one current-version equivalence evidence record only when that record cites
 both markets and falls no later than the candidate's replay cutoff. A review
 created after that cutoff cannot validate an earlier candidate. Older verifier
@@ -728,6 +728,13 @@ the same payoff-state and instrument-ID uniqueness, scans payout rows across
 every instrument (including unselected legs), and requires unique cross-venue
 outcome IDs. Pre-v6 relationship records remain readable but are incomplete for
 new cross-venue candidate audits.
+
+Logical implication uses the separate
+`frontier-logical-implication-verifier-3` version. It rejects copied markets
+with duplicate payoff-state identifiers or native instrument identities and
+requires unique YES/NO outcome identities. Independent audit v16 accepts only
+current v3 implication evidence; version-2 evidence remains available for
+inspection but cannot validate new candidate research.
 
 `verify_logical_implication` separately checks a directed binary YES implication
 over an explicit bijection between two joint state spaces. It requires complete

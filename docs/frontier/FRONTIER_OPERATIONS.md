@@ -24,7 +24,7 @@ cannot validate a historical candidate.
 
 Previously saved pre-v6 same-payoff relationships remain readable and
 append-only, but the current independent audit
-(`frontier-independent-economic-audit-15`) classifies a candidate using one as
+(`frontier-independent-economic-audit-16`) classifies a candidate using one as
 `INCOMPLETE_EVIDENCE`. Re-review the original hypothesis against the current
 stored market records to produce a version-6 relationship before using it in a
 new audited replay. The verifier and audit also recheck uniqueness of payoff
@@ -34,6 +34,14 @@ against in-memory `model_copy(update=...)` objects that bypass ordinary model
 validation. The reviewer label and assertion ID remain self-attributed; this
 workflow does not authenticate them or establish legal or semantic equivalence.
 The audit does not rewrite or delete stored relationships or reviews.
+
+Logical-implication reviews use
+`frontier-logical-implication-verifier-3` and the independent audit is now
+`frontier-independent-economic-audit-16`. The verifier rejects duplicate
+payoff states and native instrument identities even when they arrive inside a
+prebuilt model object. Version-2 logical-implication records remain readable,
+but they do not validate a new candidate until the relationship is reviewed
+under v3.
 
 ## Public source captures
 

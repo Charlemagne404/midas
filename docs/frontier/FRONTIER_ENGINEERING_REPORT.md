@@ -2,6 +2,51 @@
 
 **Report date:** 2026-10-28
 
+## Current status — 2026-10-28 10:56 UTC
+
+This entry supersedes the 10:52 UTC checkpoint below. Frontier remains
+isolated at `/home/charlie/midas-frontier` on `codex/frontier-20261026`; code
+commit `3097082` is the latest implementation checkpoint.
+
+A read-only follow-on audit found that `verify_logical_implication` could mark
+a copied market VERIFIED when its payoff state list or native instrument IDs
+contained duplicates. The independent audit already rejected those malformed
+markets, but relationship state itself was too permissive. Logical verifier v3
+now rejects duplicate payoff states and native instrument identities, and
+explicitly checks outcome identity uniqueness. Independent audit v16 requires
+current v3 evidence; older v2 relationships stay readable but cannot support
+a newly audited logical-implication candidate without review.
+
+The malformed-market regression passed in the focused relationship and
+implication suites (**70/70**). Full `tests/frontier` passes **400/400** in
+29.65 seconds (31.11 seconds wall time); `/usr/bin/time -v` measured **378,052
+KiB** peak RSS, zero process swaps, zero filesystem input, and 384 output
+blocks. One existing Starlette/httpx `TestClient` deprecation warning remains.
+Ruff check/format, strict mypy for the three changed production modules, and
+`git diff --check` pass. The suite used tmpfs at
+`/dev/shm/midas-frontier-logical-bypass-20261028T1055Z`.
+
+At the pre-run sample (`10:55:13Z`), memory PSI avg10 was 0%, I/O PSI avg10 was
+0.01%, and about 10 GiB was available; the host already showed 3.5 GiB of 4
+GiB swap occupied. At `10:55:57Z`, both PSI avg10 readings were 0%, about 10
+GiB remained available, and the test process reported zero swaps. No live
+source, protected capture, production service, or Arena job was used. External
+semantic assertions remain self-attributed; live multi-venue evidence,
+broader MIDAS regression, production recovery, and deployment remain open.
+Frontier remains **PARTIALLY VERIFIED**.
+
+### Latest acceptance delta
+
+| Requirement | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Malformed payoff and implication market rejection | COMPLETE AND VERIFIED | Same-payoff v6 and logical implication v3 reject copied duplicate states/identities; independent audit v16 requires current evidence. |
+| Full Frontier Python regression | COMPLETE AND VERIFIED | 400/400 pass on the exact implementation commit; one existing deprecation warning remains. |
+| Cross-venue semantic assertion | PARTIALLY VERIFIED | Reviewer identity and assertion authenticity remain unresolved. |
+| Live cross-venue equivalence and economics | BLOCKED | No authorized genuine multi-venue evidence is available for this checkpoint. |
+| Broader MIDAS regression | PARTIALLY VERIFIED | Not run on this branch; Reality recovery dependency and incompatible Reality lineages remain unresolved. |
+| Production recovery and deployment | DEFERRED | The research worktree remains isolated, unmerged, and undeployed. |
+| Frontier overall | PARTIALLY VERIFIED | Live science, broader regression, and production readiness remain open. |
+
 ## Current status — 2026-10-28 10:52 UTC
 
 This entry supersedes the 10:46 UTC checkpoint below. Frontier remains

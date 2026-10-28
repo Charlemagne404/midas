@@ -33,6 +33,28 @@ in the dated addendum below and in the Frontier engineering report.
 
 ## Frontier development addendum — 2026-10-28
 
+### Latest isolated Frontier checkpoint — 2026-10-28 10:56 UTC
+
+Commit `3097082` closes a logical-implication verifier gap reproduced with
+direct Pydantic `model_copy(update=...)`: duplicate payoff states or native
+instrument IDs could produce a VERIFIED relationship. Logical verifier v3
+rejects those markets and requires unique outcome identities; independent
+audit v16 requires current v3 evidence. Old v2 relationships remain readable
+but do not validate new audited candidates. The focused implication and
+relationship suites pass **70/70**; full `tests/frontier` passes **400/400** in
+31.11 seconds wall time, with **378,052 KiB** peak RSS and zero test-process
+swaps. Ruff, formatting, strict mypy, and `git diff --check` pass. One existing
+Starlette/httpx deprecation warning remains.
+
+At `10:55:13Z`, memory PSI avg10 was 0%, I/O PSI avg10 was 0.01%, and about 10
+GiB was available; the host already had 3.5/4 GiB swap occupied. At
+`10:55:57Z`, both PSI readings were 0%, about 10 GiB was available, and the
+test process had used no swaps. No live source, protected capture, service, or
+Arena job was used. Semantic assertions remain self-attributed; live
+cross-venue evidence, broader MIDAS regression, production recovery, and
+deployment remain open. Frontier remains **PARTIALLY VERIFIED**, research-only,
+and undeployed.
+
 ### Latest isolated Frontier checkpoint — 2026-10-28 10:52 UTC
 
 Commit `3dc3721` closes malformed in-memory market-object cases where direct

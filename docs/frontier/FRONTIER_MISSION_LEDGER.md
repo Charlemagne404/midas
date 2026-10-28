@@ -1,5 +1,39 @@
 # Project Frontier Mission Ledger
 
+## Logical implication rejects copied malformed markets — 2026-10-28 10:56 UTC
+
+Code commit `3097082` closes a remaining model-copy validation gap. A
+controlled read-only reproduction showed `verify_logical_implication` could
+return VERIFIED for a market whose copied payoff state list or native
+instrument IDs contained duplicates. Independent audit v15 already returned
+incomplete for such candidate inputs, but the relationship graph should not
+have assigned verified status. Logical implication verifier v3 checks unique
+payoff states, native instrument identities, and outcome identities. The
+independent audit is v16 and only accepts current v3 evidence. Old v2 records
+remain readable but need re-review to support a new audited candidate.
+
+The focused implication and relationship suites passed **70/70**. Full
+`tests/frontier` passed **400/400** in 29.65 seconds (31.11 seconds wall time)
+using `/dev/shm/midas-frontier-logical-bypass-20261028T1055Z`. Peak RSS was
+**378,052 KiB**, process swaps **0**, filesystem input **0**, output 384
+blocks. Ruff, format, strict mypy for three production modules, and
+`git diff --check` passed. One existing Starlette/httpx deprecation warning
+remains.
+
+At `10:55:13Z`, memory PSI avg10 was 0%, I/O PSI avg10 was 0.01%, about 10 GiB
+was available, and host swap was already 3.5/4 GiB used. At `10:55:57Z`, both
+PSI readings were 0%, about 10 GiB was available, and the test process used no
+swaps. No live source, protected capture, production service, or Arena job was
+used. Frontier remains **PARTIALLY VERIFIED**.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Malformed relationship input rejection | COMPLETE AND VERIFIED | Same-payoff v6 and logical implication v3 reject duplicate payoff states and instrument identities; independent audit v16 requires current logical evidence. |
+| Full Frontier Python suite | COMPLETE AND VERIFIED | 400/400 pass on the exact code commit; one existing deprecation warning remains. |
+| Semantic assertion authenticity | PARTIALLY VERIFIED | Reviewer and assertion remain self-attributed. |
+| Live cross-venue matching and economics | BLOCKED | Authorized genuine multi-venue evidence remains unavailable. |
+| Frontier project overall | PARTIALLY VERIFIED | Broader MIDAS regression, live science, production recovery, and deployment remain open. |
+
 ## Reject copied malformed payoff models — 2026-10-28 10:52 UTC
 
 Code commit `3dc3721` closes a fail-open path found with direct Pydantic
