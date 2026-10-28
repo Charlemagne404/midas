@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import random
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 
@@ -209,6 +210,130 @@ def test_joint_state_basket_is_independently_audited_and_replayed_deterministica
     ]
     assert replay_candidates
     assert all(item.independent_audit is not None for item in replay_candidates)
+
+
+def test_joint_state_search_matches_independent_seeded_subset_oracle():
+    rng = random.Random(0xF26A)
+    for case_index in range(48):
+        markets, _, _ = _event_pair()
+        ask_by_instrument = {
+            (market_value.canonical_id, instrument.native_instrument_id): (
+                Decimal(rng.randrange(5, 96)) / Decimal(100)
+            )
+            for market_value in markets
+            for instrument in market_value.instruments
+        }
+        books_by_market = {}
+        flat_books = {}
+        for market_value in markets:
+            instrument_books = {}
+            for instrument in market_value.instruments:
+                snapshot = book(
+                    market_value,
+                    instrument.native_instrument_id,
+                    str(
+                        ask_by_instrument[
+                            (market_value.canonical_id, instrument.native_instrument_id)
+                        ]
+                    ),
+                )
+                snapshot = snapshot.model_copy(
+                    update={
+                        "provenance": snapshot.provenance.model_copy(
+                            update={"clock_uncertainty_ms": Decimal(0)}
+                        )
+                    }
+                )
+                instrument_books[instrument.native_instrument_id] = snapshot
+                flat_books[(market_value.canonical_id, instrument.native_instrument_id)] = snapshot
+            books_by_market[market_value.canonical_id] = instrument_books
+
+        right_flipped = bool(rng.getrandbits(1))
+        state_by_market = {
+            markets[0].canonical_id: {"joint-no": "no", "joint-yes": "yes"},
+            markets[1].canonical_id: (
+                {"joint-no": "yes", "joint-yes": "no"}
+                if right_flipped
+                else {"joint-no": "no", "joint-yes": "yes"}
+            ),
+        }
+        mapping = JointStateMap.create(
+            market_ids=tuple(sorted(item.canonical_id for item in markets)),
+            joint_state_ids=("joint-no", "joint-yes"),
+            state_by_market=state_by_market,
+            external_assertion_id=f"seeded-oracle-case-{case_index}",
+            evidence_observation_ids=("a" * 64, "b" * 64),
+            asserted_at_utc=T0 + timedelta(milliseconds=50),
+        )
+
+        entries = tuple(
+            (market_value, instrument)
+            for market_value in markets
+            for instrument in market_value.instruments
+        )
+        oracle: list[tuple[Decimal, int, tuple[tuple[str, str], ...]]] = []
+        for mask in range(1, 1 << len(entries)):
+            selected = tuple(entries[index] for index in range(len(entries)) if mask & (1 << index))
+            if {item[0].canonical_id for item in selected} != set(mapping.market_ids):
+                continue
+            payout_by_state = tuple(
+                sum(
+                    (
+                        next(
+                            payout.amount
+                            for payout in instrument.payouts
+                            if payout.state_id
+                            == mapping.state_by_market[market_value.canonical_id][joint_state]
+                        )
+                        for market_value, instrument in selected
+                    ),
+                    Decimal(0),
+                )
+                for joint_state in mapping.joint_state_ids
+            )
+            if payout_by_state[0] <= 0 or any(
+                payout != payout_by_state[0] for payout in payout_by_state
+            ):
+                continue
+            identity = tuple(
+                sorted(
+                    (market_value.canonical_id, instrument.native_instrument_id)
+                    for market_value, instrument in selected
+                )
+            )
+            quoted_cost = sum(
+                (
+                    ask_by_instrument[(market_value.canonical_id, instrument.native_instrument_id)]
+                    for market_value, instrument in selected
+                ),
+                Decimal(0),
+            )
+            oracle.append((payout_by_state[0] - quoted_cost, len(selected), identity))
+
+        expected_identities = tuple(
+            identity
+            for _, _, identity in sorted(oracle, key=lambda item: (-item[0], item[1], item[2]))
+        )
+        assert len(expected_identities) == 3
+        candidates = generate_joint_state_basket_candidates(
+            markets,
+            mapping,
+            books_by_market,
+            scenario=ExecutionScenario(),
+            as_of_utc=T0 + timedelta(milliseconds=100),
+            max_candidates=8,
+        )
+        actual_identities = tuple(
+            tuple(sorted((leg.market_id, leg.instrument_id) for leg in candidate.legs))
+            for candidate in candidates
+        )
+        assert actual_identities == expected_identities
+
+        for candidate in candidates:
+            audited = _audit(candidate, markets, flat_books, mapping)
+            assert audited.independent_audit is not None
+            assert audited.independent_audit.disposition.value == "verified"
+            assert audited.classification == candidate.classification
 
 
 def test_joint_state_basket_rejects_missing_tampered_and_incomplete_evidence():
