@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import asyncio
+from datetime import UTC, datetime
 from decimal import Decimal
+from time import monotonic, monotonic_ns
 
 import httpx
 import pytest
@@ -14,9 +16,10 @@ from midas.frontier.adapters.coinbase import (
     CoinbaseSpotConfig,
     _positive_decimal,
 )
-from midas.frontier.adapters.transport import PublicReadTransport
+from midas.frontier.adapters.transport import HTTPObservation, PublicReadTransport
 from midas.frontier.models import (
     COINBASE_MARKET_DATA_TERMS_VERSION,
+    AdapterConfig,
     Capability,
     MarketKind,
     QuantityUnit,
@@ -26,6 +29,40 @@ from midas.frontier.registry import AdapterRegistry
 from midas.frontier.storage import FrontierStore
 
 from apps.api.frontier import router as frontier_router
+
+
+class _FixturePublicReadTransport(PublicReadTransport):
+    """Serve bounded fixture responses while retaining a held source config."""
+
+    async def get_json(
+        self,
+        url: str,
+        params: dict[str, str | int] | None = None,
+        *,
+        max_retries: int | None = None,
+    ) -> HTTPObservation:
+        del max_retries
+        self._validate_url(url)
+        started_at = datetime.now(UTC)
+        started_ns = monotonic_ns()
+        response = await self.client.get(url, params=params)
+        received_at = datetime.now(UTC)
+        raw_body = response.text
+        if len(raw_body.encode("utf-8")) > self.config.max_response_bytes:
+            raise AdapterError("RESPONSE_TOO_LARGE", "Fixture response exceeds configured bound")
+        if response.status_code >= 400:
+            raise AdapterError("HTTP_ERROR", f"Fixture returned HTTP {response.status_code}")
+        self.request_count += 1
+        self._request_starts_monotonic.append(monotonic())
+        return HTTPObservation(
+            url=str(response.url),
+            status_code=response.status_code,
+            raw_body=raw_body,
+            request_started_at_utc=started_at,
+            response_received_at_utc=received_at,
+            request_elapsed_monotonic_ns=max(0, monotonic_ns() - started_ns),
+            payload=response.json(),
+        )
 
 
 def _adapter(responses: dict[str, object]):
@@ -43,12 +80,11 @@ def _adapter(responses: dict[str, object]):
         live_public_probe_enabled=True,
         requests_per_second=5,
         retries=0,
-        probe_policy_block_reason=None,
         market_data_terms_version_acknowledged=COINBASE_MARKET_DATA_TERMS_VERSION,
         products=("BTC-USD",),
     )
     client = httpx.AsyncClient(transport=httpx.MockTransport(handler))
-    transport = PublicReadTransport({"api.exchange.coinbase.com"}, config, client)
+    transport = _FixturePublicReadTransport({"api.exchange.coinbase.com"}, config, client)
     return CoinbaseSpotAdapter(config, transport=transport), requests, client
 
 
@@ -235,6 +271,7 @@ async def test_coinbase_default_terms_hold_blocks_even_a_flagged_transport():
         CoinbaseSpotConfig(
             enabled=True,
             live_public_probe_enabled=True,
+            market_data_terms_version_acknowledged=COINBASE_MARKET_DATA_TERMS_VERSION,
             probe_policy_block_reason=None,
         )
 
@@ -253,6 +290,34 @@ def test_coinbase_copied_config_cannot_bypass_terms_hold_before_transport_setup(
         CoinbaseSpotAdapter(copied_bypass)
     with pytest.raises(ValueError, match="Adapter configuration fails structural validation"):
         PublicReadTransport({"api.exchange.coinbase.com"}, copied_bypass)
+
+    acknowledged_bypass = held_config.model_copy(
+        update={
+            "probe_policy_block_reason": None,
+            "market_data_terms_version_acknowledged": COINBASE_MARKET_DATA_TERMS_VERSION,
+        }
+    )
+    assert not acknowledged_bypass.has_valid_structure
+    with pytest.raises(ValueError, match="Adapter configuration fails structural validation"):
+        CoinbaseSpotAdapter(acknowledged_bypass)
+
+    with pytest.raises(ValueError, match="source-specific configuration"):
+        CoinbaseSpotAdapter(AdapterConfig(probe_policy_block_reason=None))
+
+
+@pytest.mark.asyncio
+async def test_coinbase_transport_config_cannot_override_source_use_hold():
+    held_config = CoinbaseSpotConfig(enabled=True, live_public_probe_enabled=True)
+    base_config = AdapterConfig(enabled=True, live_public_probe_enabled=True)
+    client = httpx.AsyncClient(transport=httpx.MockTransport(lambda request: httpx.Response(200)))
+    mismatched_transport = PublicReadTransport({"api.exchange.coinbase.com"}, base_config, client)
+    try:
+        with pytest.raises(ValueError, match="transport configuration differs"):
+            CoinbaseSpotAdapter(held_config, transport=mismatched_transport)
+        assert mismatched_transport.request_count == 0
+    finally:
+        await mismatched_transport.close()
+        await client.aclose()
 
 
 def test_coinbase_probe_api_persists_one_bounded_market_book_and_trade_capture(tmp_path):

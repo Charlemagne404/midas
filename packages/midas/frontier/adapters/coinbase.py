@@ -70,14 +70,11 @@ class CoinbaseSpotConfig(AdapterConfig):
     products: tuple[str, ...] = ("BTC-USD",)
 
     @model_validator(mode="after")
-    def terms_gate_cannot_be_cleared_without_acknowledgement(self) -> CoinbaseSpotConfig:
-        if (
-            self.market_data_terms_version_acknowledged != COINBASE_MARKET_DATA_TERMS_VERSION
-            and self.probe_policy_block_reason is None
-        ):
+    def source_use_hold_requires_validated_permission(self) -> CoinbaseSpotConfig:
+        if self.probe_policy_block_reason is None:
             raise ValueError(
-                "Coinbase source-use hold cannot be cleared without acknowledging the exact "
-                "reviewed Market Data Terms version"
+                "Coinbase source-use hold cannot be cleared by terms acknowledgement alone; "
+                "validated permission and intended-scope review are not configured"
             )
         return self
 
@@ -186,6 +183,8 @@ class CoinbaseSpotAdapter(BaseReadOnlyAdapter):
         *,
         transport: PublicReadTransport | None = None,
     ) -> None:
+        if config is not None and type(config) is not CoinbaseSpotConfig:
+            raise ValueError("Coinbase adapter requires its source-specific configuration")
         self.coinbase_config = config or CoinbaseSpotConfig()
         super().__init__(self.coinbase_config, transport=transport)
 
