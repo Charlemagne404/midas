@@ -1,5 +1,33 @@
 # Project Frontier Mission Ledger
 
+## Full Arena regression paused on memory pressure — 2026-10-28 17:18 UTC
+
+Started the full `pytest -q tests/arena` suite with a one-worker process, a
+temporary `MIDAS_ARENA_ROOT`, and pytest `--basetemp` under
+`/dev/shm/midas-frontier-arena-full.W5DIac/`. BLAS/OpenMP threads were set to
+one. After 2:25, the suite had **105 passing cases** and no assertion failures
+before interruption; it was paused with SIGINT while blocked in Python's
+selector wait. Pytest reported one existing Starlette/httpx deprecation
+warning. `/usr/bin/time -v` measured 484,168 KiB peak RSS, no swap, and no
+socket traffic. The run is partial, not a passing full Arena regression.
+
+During the run, a 17:17:33Z host sample showed memory PSI avg10 18.53% and
+`full` 16.16%, a material increase from the admission sample. I sent SIGINT to
+the test process. At 17:18:23Z, memory PSI was still 36.63% avg10 (`full`
+31.86%), with 9,910,060 KiB available. Reality and API remained active and
+unchanged. `MemoryCurrent` had fallen to 1,115,865,088 bytes for Reality and
+1,124,130,816 bytes for API, below their respective `MemoryHigh` limits.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Partial legacy Arena regression | PARTIALLY VERIFIED | 105 cases passed before SIGINT; no assertion failure was reported before the interruption. |
+| Full legacy Arena regression | PARTIALLY VERIFIED | Remaining cases were not run; system memory pressure remains high despite available memory. |
+| Protected services | COMPLETE AND VERIFIED | Reality and API stayed active; no configuration or service operation was performed. |
+
+**Next safe action:** leave broad regression stopped until a new resource
+sample shows sustained memory pressure has cleared; continue only low-resource
+source-independent review meanwhile.
+
 ## Live Gamma event-group graph and replay — 2026-10-28 17:14 UTC
 
 The [Polymarket Institute data guide](https://institute.polymarket.com/data)

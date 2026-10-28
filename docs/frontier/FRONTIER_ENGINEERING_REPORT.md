@@ -10777,3 +10777,27 @@ regression still requires a fresh resource-admission sample.
 | Reproducible replay over the event group | COMPLETE AND VERIFIED | Two results match exactly and the saved replay validates on reload; zero candidates. |
 | Verified cross-venue relationship | BLOCKED | No second cleared venue is available; these are same-venue source groupings only. |
 | Frontier overall | PARTIALLY VERIFIED | Cross-venue science, broad regression, resource endurance, protected recovery, and deployment remain open. |
+
+## Full Arena regression interrupted by host memory PSI — 2026-10-28 17:18 UTC
+
+The full `tests/arena` suite was launched with `MIDAS_ARENA_ROOT` and pytest
+`--basetemp` under the private `/dev/shm/midas-frontier-arena-full.W5DIac/`
+directory, one process, and BLAS/OpenMP thread limits of one. At 2:25 elapsed,
+105 tests had passed without a reported assertion failure. The suite was
+interrupted with SIGINT while blocked in Python's selector wait after the
+17:17:33Z host sample showed memory PSI avg10 18.53% (`full` 16.16%). Pytest
+reported one existing Starlette/httpx deprecation warning. The interruption
+is not a test failure, and it does not count as full-suite verification.
+
+The process peaked at 484,168 KiB RSS, used no swap, and sent/received no
+sockets. At 17:18:23Z, after the test process exited, memory PSI remained
+36.63% avg10 (`full` 31.86%) while `MemAvailable` was 9,910,060 KiB. Reality
+and API remained active and unchanged; their `MemoryCurrent` values were
+1,115,865,088 and 1,124,130,816 bytes, respectively.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Partial legacy Arena regression | PARTIALLY VERIFIED | 105 cases pass before resource-driven SIGINT; no assertion failure preceded it. |
+| Full legacy Arena regression | PARTIALLY VERIFIED | Not completed; remaining tests need a later resource-admission sample. |
+| Protected service state | COMPLETE AND VERIFIED | Both services remained active; no service or configuration change occurred. |
+| Frontier overall | PARTIALLY VERIFIED | Cross-venue source clearance, broad regression, resource endurance, protected recovery, and deployment remain open. |

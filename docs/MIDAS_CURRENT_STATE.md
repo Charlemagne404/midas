@@ -3328,3 +3328,12 @@ matched and reloaded with hash validation, producing zero candidates. This is
 same-venue graph evidence, not cross-venue validation. At 17:14:02Z CPU PSI
 avg10 was 2.70%, I/O PSI avg10 was 0.75%, and Reality had about 892 KiB below
 `MemoryHigh`; broad regression still requires a new admission check.
+
+## Full Arena regression paused — 2026-10-28 17:18 UTC
+
+The one-worker full `tests/arena` run passed 105 cases before a host memory PSI
+spike; it was interrupted with SIGINT and no assertion failure had been
+reported. Peak RSS was 484 MiB. At 17:18:23Z memory PSI avg10 was 36.63%
+(`full` 31.86%) despite 9.9 GiB available. Reality and API remained active.
+The run is partial; wait for a fresh admission sample before retrying the
+remaining legacy regression.
