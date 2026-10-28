@@ -24,6 +24,8 @@ def isolated_admission(tmp_path, monkeypatch):
             "available_memory_bytes": 16 * 1024**3,
             "disk_free_bytes": 30 * 1024**3,
             "cpu_psi": {"some": 0},
+            "available_cpu_count": 6,
+            "host_load_avg1": 0.5,
             "memory_psi": {"some": 0, "full": 0},
             "io_psi": {"some": 0},
         },
@@ -75,7 +77,7 @@ def test_resource_denial_keeps_campaign_ready_and_releases_lease(tmp_path, monke
     from midas.arena import admission
 
     snapshot = admission.resource_snapshot(tmp_path)
-    snapshot["cpu_psi"] = {"some": 99}
+    snapshot["host_load_avg1"] = 6.0
     monkeypatch.setattr(admission, "resource_snapshot", lambda _: snapshot)
     lab = Campaigns(tmp_path / "lab", DATASETS)
     try:

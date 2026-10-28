@@ -19,7 +19,7 @@ from midas.arena.frontier_replay import (
 from midas.arena.jobs import JobSpec
 from midas.frontier.economics import ExecutionScenario
 from midas.frontier.models import Venue
-from midas.frontier.relationships import verify_same_payoff
+from midas.frontier.relationships import VerificationState, verify_same_payoff
 from midas.frontier.replay import paired_deterministic_replay
 
 from apps.api.arena import router
@@ -195,9 +195,13 @@ def test_arena_executor_matches_direct_paired_replay_for_cross_venue_fixture(tmp
         state_mapping={"yes": "yes", "no": "no"},
         instrument_mapping=instrument_mapping,
         external_assertion_id="arena-paired-fixture-assertion",
-        evidence_observation_ids=("source-left", "source-right"),
+        evidence_observation_ids=(
+            left.provenance.observation_id,
+            right.provenance.observation_id,
+        ),
         asserted_at_utc=T0,
     )
+    assert relationship.state == VerificationState.VERIFIED
     books = (
         book(left, left.instruments[0].native_instrument_id, "0.40"),
         book(left, left.instruments[1].native_instrument_id, "0.65"),
