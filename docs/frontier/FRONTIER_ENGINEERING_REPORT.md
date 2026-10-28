@@ -8954,3 +8954,20 @@ threshold. The full MIDAS legacy suite therefore remains only partially
 verified. Frontier overall remains **PARTIALLY VERIFIED**; this regression
 work does not establish live cross-venue equivalence, production readiness, or
 deployment eligibility.
+
+### Coinbase hold-message correction — 2026-10-28
+
+Code commit 9552db5 fixes user-facing source-policy text in the Coinbase
+adapter. The old default message suggested that acknowledging the reviewed
+Market Data Terms version was sufficient to lift the hold, but the source-use
+review and validator require a separate validated permission and intended
+scope. The updated message makes the active boundary explicit. The focused
+offline Coinbase module passes **13/13**; Ruff and Ruff format pass. The run
+used a tmpfs basetemp, zero swaps, no filesystem input, and no socket
+messages. Memory PSI stayed at 0%; I/O PSI remained below 1% before and after.
+No live Coinbase request or held record was accessed.
+
+Changed in commit 9552db5: packages/midas/frontier/adapters/coinbase.py and
+tests/frontier/test_coinbase.py. The change corrects the explanation only.
+Coinbase probes remain blocked, and Frontier overall remains **PARTIALLY
+VERIFIED**.

@@ -33,6 +33,20 @@ in the dated addendum below and in the Frontier engineering report.
 
 ## Frontier development addendum — 2026-10-28
 
+### Latest isolated Frontier checkpoint — 2026-10-28 12:05 UTC
+
+Code commit 9552db5 corrects the Coinbase source hold message: a reviewed
+terms-version acknowledgement alone does not lift the hold; a validated
+permission and intended-scope review are still required. The hold and all
+probe guards remain active. The focused offline Coinbase module passes
+**13/13**; Ruff and format checks pass. No request or held record was accessed.
+
+At 12:05:41Z before the test, memory PSI avg10 was 0.00%, I/O was 0.61%
+some / 0.49% full, and about 10 GiB was available. At 12:06:00Z afterward,
+memory remained 0.00%, I/O was 0.72% some / 0.40% full, and about 10 GiB
+remained available. Frontier remains **PARTIALLY VERIFIED**, research-only,
+and undeployed.
+
 ### Latest isolated Frontier checkpoint — 2026-10-28 12:03 UTC
 
 Code/test commit bf9d933 updates the two regression fixtures summarized here.

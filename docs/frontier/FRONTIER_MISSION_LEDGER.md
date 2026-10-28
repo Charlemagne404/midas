@@ -1,5 +1,34 @@
 # Project Frontier Mission Ledger
 
+## Coinbase hold-message accuracy — 2026-10-28 12:05 UTC
+
+Code commit 9552db5 corrects the Coinbase source hold message. The prior
+wording implied that acknowledging the reviewed Market Data Terms version
+would lift the hold; the implemented policy requires a separately validated
+permission and intended-scope review, and a version acknowledgement alone is
+insufficient. The revised message states that distinction while preserving
+the unconditional hold.
+
+The focused offline Coinbase module passes **13/13** in 0.77 seconds (1.22
+seconds wall time), with 77,756 KiB peak RSS, zero swaps, zero filesystem
+input, and zero socket messages. Ruff, format, and git diff --check pass. The
+test asserts both the permission/scope requirement and that acknowledgement
+alone cannot lift the hold. No Coinbase request or held record was accessed.
+
+At 12:05:41Z before the run, memory PSI avg10 was **0.00%**, I/O was **0.61%
+some / 0.49% full**, and about **10 GiB** was available. At 12:06:00Z
+afterward, memory PSI remained **0.00%**, I/O was **0.72% some / 0.40% full**,
+and about **10 GiB** remained available.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Coinbase source-policy explanation | COMPLETE AND VERIFIED | Accurate hold reason is pinned by a 13-test offline module; policy remains held. |
+| Coinbase live validation | BLOCKED | Terms, jurisdiction, intended use, and validated permission remain unresolved; no probe was made. |
+| Frontier overall | PARTIALLY VERIFIED | Cross-venue evidence, broad legacy/browser acceptance, and deployment remain open. |
+
+Next safe action: keep the source held and continue source-independent work;
+do not interpret a terms-version acknowledgement as permission.
+
 ## Legacy Laboratory and Arena fixture refresh — 2026-10-28 12:03 UTC
 
 Code commit bf9d933 updates the two test fixtures described below.
