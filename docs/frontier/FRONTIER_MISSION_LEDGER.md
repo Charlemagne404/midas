@@ -5121,3 +5121,15 @@ this change remains unverified; no broad test or build was run afterward.
 | Arena/Veritas configured lock path | COMPLETE AND VERIFIED | Configured root creation, default behavior, symlink refusal, and shared helper are covered by 24 passing tests. |
 | Playwright/API runtime integration | PARTIALLY VERIFIED | Playwright already sets the environment variable; end-to-end runtime was not rerun after this change. |
 | Project Frontier overall | PARTIALLY VERIFIED | The full repository suite, live cross-venue matching, source authorization, and deployment readiness remain incomplete. |
+
+## Resource admission remains closed — 2026-10-28 04:57 UTC
+
+At `2026-10-28T04:57:41Z`, external Veritas batch PID **8201** had reacquired
+the shared Arena lock (`DNs`, **256,804 KiB RSS**). Memory PSI was **39.38%
+some / 34.80% full** over 10 seconds, **11.08% / 9.83%** over 60 seconds, and
+**11.05% / 9.74%** over 300 seconds; about **10.1 GiB** was available. I/O PSI
+avg10 remained below 1%. No further tests or builds were started after the
+configured-lock change's 24-test verification. The batch was not signaled.
+Next safe action: remeasure; when admitted, run isolated browser verification
+and resume repository tests with the Reality import mismatch and bounded
+Arena planning case handled separately.

@@ -6506,3 +6506,14 @@ patch; browser/runtime integration remains to be verified.
 | Configured Arena lock path | COMPLETE AND VERIFIED | Default behavior, configured root, symlink refusal, and shared Veritas/Arena path pass affected tests. |
 | API/Playwright runtime integration | PARTIALLY VERIFIED | Configuration supplies the isolated root and helper tests pass; browser E2E after the change is not yet run. |
 | Project Frontier overall | PARTIALLY VERIFIED | Full repository regression, genuine cross-venue equivalence, held-source permission, and production readiness remain incomplete. |
+
+## Resource admission remains closed — 2026-10-28 04:57 UTC
+
+At `2026-10-28T04:57:41Z`, external Veritas batch PID **8201** held the shared
+Arena lock in `DNs` state at **256,804 KiB RSS**. Memory PSI was **39.38% some
+/ 34.80% full** over 10 seconds, **11.08% / 9.83%** over 60 seconds, and
+**11.05% / 9.74%** over 300 seconds. About **10.1 GiB** was available; I/O PSI
+avg10 was below 1%. No tests, builds, source requests, or service changes
+started after the `bffa163` lock-path verification. The external process was
+left untouched. Defer further broad or browser verification until a fresh
+sample shows acceptable pressure and no shared-lock holder.
