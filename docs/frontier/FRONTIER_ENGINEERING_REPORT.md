@@ -6137,12 +6137,12 @@ boundary; it does not establish production behavior, cross-venue economic
 equivalence, or full MIDAS regression. Frontier remains **PARTIALLY VERIFIED**,
 isolated, research-only, and undeployed.
 
-## Current completion matrix and resource gate — 2026-10-28 04:18 UTC
+## Completion matrix snapshot — 2026-10-28 04:18 UTC
 
-This is the latest consolidated status. The detailed historical sections above
-retain their original timestamps; this matrix incorporates the 04:07 code and
-build verification, the 04:09 API-description check, the 04:16 legacy API
-regressions, and the current host admission sample.
+This snapshot incorporates the 04:07 code and build verification, the 04:09
+API-description check, the 04:16 legacy API regressions, and the host admission
+sample captured at 04:18 UTC. Later sections supersede its test and resource
+status where they contain newer evidence.
 
 | Requirement | Status | Current evidence and remaining boundary |
 | --- | --- | --- |

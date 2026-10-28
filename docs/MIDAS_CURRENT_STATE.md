@@ -1699,7 +1699,7 @@ and no process held the shared Arena lock. The full MIDAS suite and production
 deployment remain unverified; Frontier is still research-only and
 **PARTIALLY VERIFIED**.
 
-### Latest Frontier status and resource gate — 2026-10-28 04:18 UTC
+### Frontier status checkpoint — 2026-10-28 04:18 UTC
 
 The 04:16 offline legacy API and paper-research regressions pass **10/10** in
 temporary roots. The Frontier code checkpoint also has the **352/352** Python
