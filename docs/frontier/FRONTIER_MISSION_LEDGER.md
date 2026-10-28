@@ -5,8 +5,10 @@
 The public read transport now supplies a strict JSON parse-constant handler.
 Python's standard decoder otherwise accepts NaN and positive/negative
 Infinity, although those tokens are not valid JSON. Frontier classifies them
-as INVALID_JSON and retains the bounded raw response evidence. Added four
-fixture cases for top-level NaN, both infinities, and nested NaN.
+as INVALID_JSON and retains the bounded raw response evidence. Decimal parser
+arithmetic errors now share the existing JSON_COMPLEXITY_LIMIT path. Added
+four fixture cases for nonstandard constants and a 5,000-digit decimal
+exponent case for the parser-limit path.
 
 The new transport tests and Ruff checks have not run. At 15:47:55Z host memory
 PSI avg10 was 45.32% some / 40.12% full, I/O PSI was 0.61% some / 0.60% full,

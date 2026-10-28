@@ -10191,7 +10191,9 @@ The shared public-read transport now rejects Python's nonstandard JSON
 constants NaN, Infinity, and -Infinity at the decoding boundary. It classifies
 them as INVALID_JSON and preserves the bounded raw response evidence. Four
 mock-response cases cover top-level NaN, each infinity spelling, and a nested
-NaN token. No real exchange endpoint is used by these cases.
+NaN token; an additional parser-limit case uses a 5,000-digit decimal
+exponent. Decoder arithmetic exceptions are classified as
+JSON_COMPLEXITY_LIMIT. No real exchange endpoint is used by these cases.
 
 This change is implemented but not yet validated. At 15:47:55Z memory PSI
 avg10 measured 45.32% some / 40.12% full and I/O PSI 0.61% some / 0.60% full;

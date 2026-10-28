@@ -184,8 +184,8 @@ def _transport(host: str, bodies: dict[str, str], config: AdapterConfig | None =
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     "body",
-    ("[" * 20_000 + "0" + "]" * 20_000, "9" * 5000),
-    ids=("nested-depth", "integer-digits"),
+    ("[" * 20_000 + "0" + "]" * 20_000, "9" * 5000, "1e" + "9" * 5000),
+    ids=("nested-depth", "integer-digits", "decimal-exponent"),
 )
 async def test_transport_classifies_json_complexity_limits_and_preserves_bounded_evidence(body):
     transport, requests, client = _transport("api.example.test", {"/complex": body})

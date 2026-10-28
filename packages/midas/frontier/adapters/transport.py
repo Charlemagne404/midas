@@ -395,7 +395,7 @@ class PublicReadTransport:
                                 request_elapsed_monotonic_ns=request_elapsed_monotonic_ns,
                             ),
                         ) from error
-                    except (RecursionError, ValueError) as error:
+                    except (RecursionError, ValueError, ArithmeticError) as error:
                         raise AdapterError(
                             "JSON_COMPLEXITY_LIMIT",
                             "Public-source JSON exceeds parser complexity limits",
