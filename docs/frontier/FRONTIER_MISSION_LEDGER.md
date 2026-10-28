@@ -5043,3 +5043,41 @@ lock are sampled again.
 | Sparse test data boundary | COMPLETE AND VERIFIED | Held `data/frontier/live-probes` path remained absent before and after both attempts. |
 | Protected external Veritas workload | COMPLETE AND VERIFIED | External PID 4194119 and its shared-lock job were left untouched. |
 | Further full repository test | DEFERRED AT THIS SAMPLE | High memory PSI and external shared-lock holder remain. |
+
+## Isolated planning test admission stop — 2026-10-28 04:52 UTC
+
+At about `2026-10-28T04:52:00Z`, a fresh admission sample showed no holder of
+the shared Arena lock, memory PSI avg10 **0.00% some / 0.00% full**, avg60
+**6.36% / 5.51%**, I/O PSI avg10 **1.08% / 0.96%**, and about **10.2 GiB**
+available. I launched only the following test, identified by static review as
+the active child seen in the two interrupted broad diagnostics:
+
+```bash
+nice -n 10 /usr/bin/time -v env PYTHONPATH=packages:. \
+  /home/charlie/midas/.venv/bin/python -m pytest -q \
+  --basetemp=/tmp/midas-frontier-arena-plan-test-20261028T0452Z \
+  tests/arena/test_research_planning.py::test_native_plan_runs_four_fits_and_matched_fresh_studies
+```
+
+After roughly 21 seconds, external Veritas batch PID **4437** appeared and held
+the global Arena lock. Memory PSI at that sample was **26.81% some / 23.46%
+full** over 10 seconds, while the isolated test and its temporary worker were
+CPU-active. The worker's test path uses `create(..., launch=False)` and direct
+subprocess execution, so the external lock is concurrent activity, not an
+established wait dependency. SIGINT was sent only to the Frontier pytest PID.
+Pytest exited **2** after **37.95 seconds**, `KeyboardInterrupt`, **no tests
+ran**, **441,976 KiB** peak RSS, zero swaps, zero major faults, and zero socket
+messages. It was stopped before its 330-second subprocess timeout; no test
+result is claimed.
+
+At `2026-10-28T04:52:53Z`, PID 4437 remained and held the shared lock; memory
+PSI was **35.37% some / 31.45% full** over 10 seconds. The temporary child
+exited, the sparse worktree remained clean, and the held capture path remained
+absent. No source or test files changed. Defer further tests until a fresh
+admission sample.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Isolated Arena planning test | PARTIALLY VERIFIED | Interrupted after 37.95s under rising PSI; pytest reported no test completed. |
+| Held-data isolation | COMPLETE AND VERIFIED | The sparse path remained absent and its worktree remained clean. |
+| Further regression | DEFERRED AT THIS SAMPLE | External PID 4437 held the shared lock and short-window PSI was high. |

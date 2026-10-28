@@ -2,11 +2,11 @@
 
 **Report date:** 2026-10-28
 
-## Current status — 2026-10-28 04:51 UTC
+## Current status — 2026-10-28 04:52 UTC
 
 The isolated development branch is `codex/frontier-20261026`; the latest
-committed checkpoint before this update was `eb16aa2`
-(`docs(frontier): record interrupted repository regression`). The
+committed checkpoint before this update was `1ca862a`
+(`docs(frontier): qualify interrupted worker evidence`). The
 implementation code snapshot is commit `2064671`; later commits update only
 the report and mission ledger. The current implementation
 includes four read-only source adapters, canonical market and payoff models,
@@ -6435,3 +6435,39 @@ admission sample.
 | Sparse capture isolation | COMPLETE AND VERIFIED | Held capture path absent before and after both diagnostic runs. |
 | External Arena workload isolation | COMPLETE AND VERIFIED | Only Frontier pytest processes were interrupted; external Veritas PID 4194119 was left untouched. |
 | Further repository regression | DEFERRED AT THIS SAMPLE | External job holds the shared lock and memory PSI is high. |
+
+## Isolated planning test admission stop — 2026-10-28 04:52 UTC
+
+At `2026-10-28T04:52:00Z` (approximately), a fresh read-only sample found no
+Arena lock holder, memory PSI **0.00% some / 0.00% full** over 10 seconds and
+**6.36% / 5.51%** over 60 seconds, I/O PSI **1.08% / 0.96%** over 10 seconds,
+and about **10.2 GiB** available. The only test then started was the identified
+bounded Arena case:
+
+```bash
+nice -n 10 /usr/bin/time -v env PYTHONPATH=packages:. \
+  /home/charlie/midas/.venv/bin/python -m pytest -q \
+  --basetemp=/tmp/midas-frontier-arena-plan-test-20261028T0452Z \
+  tests/arena/test_research_planning.py::test_native_plan_runs_four_fits_and_matched_fresh_studies
+```
+
+After roughly 21 seconds, external Veritas batch PID **4437** appeared and held
+the shared Arena lock. At that sample, memory PSI rose to **26.81% some /
+23.46% full** over 10 seconds. The test and its temporary worker were CPU
+active; the worker was not waiting for the global lock. I sent SIGINT only to
+the Frontier pytest PID. Pytest exited **2** after **37.95 seconds** with
+`KeyboardInterrupt` and reported **no tests ran**. Peak RSS was **441,976 KiB**,
+with zero swaps, major faults, and socket messages. The test was stopped before
+its own 330-second subprocess timeout; no test result is claimed.
+
+At the post-stop sample `2026-10-28T04:52:53Z`, PID 4437 remained and held the
+shared lock; memory PSI was **35.37% some / 31.45% full** over 10 seconds. The
+temporary child exited, the sparse worktree stayed clean, and the held capture
+path remained absent. No source or test files changed. Defer further tests
+until a fresh admission sample.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Isolated Arena planning regression | PARTIALLY VERIFIED | Started under a clear admission sample, then was interrupted after 37.95s when shared-host PSI rose; no test completed. |
+| Sparse capture boundary | COMPLETE AND VERIFIED | Held path remained absent; sparse test worktree stayed clean. |
+| Further resource-bearing checks | DEFERRED AT THIS SAMPLE | External PID 4437 holds the shared lock and short-window PSI is high. |
