@@ -1,5 +1,40 @@
 # Project Frontier Mission Ledger
 
+## Frontier public egress static audit; validation remains held — 2026-10-28 15:57 UTC
+
+Read-only source review covered `packages/midas/frontier/adapters` and
+`apps/api/frontier.py`. Within that Frontier scope, the only production
+`PublicReadTransport` construction is `BaseReadOnlyAdapter`; its owned HTTPX
+client disables environment proxy discovery. All adapter network calls found
+use `get_json`. The transport validates HTTPS and an exact per-adapter host
+allowlist, rejects non-default ports and URL credentials, disables redirects,
+issues GET only, and revalidates the final request URL. It clears cookies around
+serialized requests and rejects injected clients except isolated
+`MockTransport` fixtures without custom mounts. Adapter allowlists are fixed
+in source for Polymarket, Kalshi, Kraken, and Coinbase Exchange. The API
+collection handlers select a registered venue adapter and bound each request
+to one finite capture; this source review made no network request and is not a
+runtime security test.
+
+This audit is scoped to Frontier. Separate HTTPX clients exist in legacy
+Polymarket market-data, CTF, Reality, and Veritas code; they were not modified
+or assessed here. The newly added strict-JSON and proxy-boundary tests remain
+unrun. At 15:57:34Z memory PSI avg10 was 33.82% some / 24.54% full, I/O PSI
+avg10 was 0.01% some / 0.01% full, about 10 GiB was available, and swap was
+full with 92 KiB free. No test or static-check process was started. No service,
+adapter configuration, live source, or untracked capture data was touched.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Frontier egress path inventory | PARTIALLY VERIFIED | Static callsite review found a single production transport construction path and fixed venue host allowlists; no runtime request or adversarial test was run. |
+| Frontier proxy and injected-client changes | IMPLEMENTED, VALIDATION PENDING | Tests are present but remain deferred under sustained host memory pressure. |
+| Non-Frontier MIDAS HTTP clients | DEFERRED | Legacy client paths were identified but left outside this bounded Frontier audit. |
+| Frontier project acceptance | PARTIALLY VERIFIED | Live cross-venue science, broad regression, endurance, protected recovery, and deployment remain open. |
+
+**Next safe action:** remeasure host PSI before the four focused transport tests;
+keep legacy HTTP clients and protected services unchanged unless a separately
+scoped review identifies a concrete need.
+
 ## Strict parsing and proxy boundaries; tests held for resource admission — 2026-10-28 15:48 UTC
 
 The public read transport now supplies a strict JSON parse-constant handler.

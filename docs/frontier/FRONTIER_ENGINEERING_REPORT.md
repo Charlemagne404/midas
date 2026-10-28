@@ -2,6 +2,36 @@
 
 **Report date:** 2026-10-28
 
+## Frontier public egress static audit — 2026-10-28
+
+Read-only code search of `packages/midas/frontier/adapters` and
+`apps/api/frontier.py` found one production construction point for
+`PublicReadTransport`, in `BaseReadOnlyAdapter`, and no separate direct HTTP
+client in that scoped Frontier path. Adapter network calls use the shared
+`get_json` method. The transport pins requests to HTTPS and exact source host
+allowlists, rejects URL credentials and non-default ports, disables redirects,
+uses GET only, revalidates the final request URL, and bounds response reads.
+Its owned client disables environment proxy discovery; injected clients are
+restricted to isolated `MockTransport` fixtures without custom mounts. The
+source API routes use registered adapters and finite collection bounds.
+
+This is static source evidence, not a runtime security assessment. The new
+parser and proxy regressions have not run because current memory PSI remains
+high and swap is full. At 2026-10-28 15:57:34 UTC, memory PSI avg10 was
+33.82% some / 24.54% full, I/O PSI avg10 was 0.01% some / 0.01% full, roughly
+10 GiB was available, and swap had 92 KiB free. No Frontier tests or lint
+process was started from that sample. The review also found legacy HTTPX
+clients in Polymarket market-data, CTF, Reality, and Veritas code; those paths
+were outside scope and remain unchanged. No public endpoint, capture, service,
+or untracked data was accessed.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Frontier egress-path source review | PARTIALLY VERIFIED | Static callsite and boundary review only; focused regressions and runtime validation remain pending. |
+| Frontier parser and proxy changes | IMPLEMENTED, VALIDATION PENDING | Tests are committed in the worktree but not run on current HEAD under the resource hold. |
+| Legacy MIDAS HTTP clients | DEFERRED | Identified by repository-wide callsite search, not modified or audited in this Frontier checkpoint. |
+| Frontier overall | PARTIALLY VERIFIED | Live cross-venue science, broader regression, endurance, protected recovery, and deployment remain open. |
+
 ## Revalidate every Frontier persistence input — 2026-10-28
 
 The write-boundary fix now covers all Frontier persistence methods, not only
