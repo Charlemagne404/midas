@@ -17,7 +17,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Literal
 
-from pydantic import Field, field_validator, model_validator
+from pydantic import Field, SerializeAsAny, field_validator, model_validator
 
 from midas.frontier.adapters.base import (
     AdapterError,
@@ -25,6 +25,8 @@ from midas.frontier.adapters.base import (
     FailedResponseEvidence,
     RejectedResponseEvidence,
 )
+from midas.frontier.adapters.coinbase import CoinbaseSpotConfig
+from midas.frontier.adapters.kraken import KrakenSpotConfig
 from midas.frontier.models import (
     AdapterCapabilities,
     AdapterConfig,
@@ -43,7 +45,7 @@ from midas.frontier.models import (
 from midas.frontier.storage import MAX_ROW_BYTES, FrontierStore, FrontierStoreError
 
 COLLECTION_JOURNAL_SCHEMA = 1
-COLLECTION_RUN_VERSION = "frontier-finite-collection-1"
+COLLECTION_RUN_VERSION = "frontier-finite-collection-2"
 MAX_COLLECTION_MARKETS = 20
 MAX_COLLECTION_MARKET_OBSERVATIONS = 32
 MAX_COLLECTION_BOOKS = 10
@@ -56,6 +58,21 @@ MAX_COLLECTION_HEALTH_EVENTS = 20
 MAX_COLLECTION_JOURNAL_BYTES = 64 * 1024 * 1024
 MAX_COLLECTION_CHECKPOINT_BYTES = 8 * 1024 * 1024
 MAX_COLLECTION_EVIDENCE_BYTES = 16 * 1024 * 1024
+
+AdapterConfigTag = Literal["base", "kraken_spot", "coinbase_spot"]
+_ADAPTER_CONFIG_TYPES: dict[AdapterConfigTag, type[AdapterConfig]] = {
+    "base": AdapterConfig,
+    "kraken_spot": KrakenSpotConfig,
+    "coinbase_spot": CoinbaseSpotConfig,
+}
+
+
+def _adapter_config_tag(config: AdapterConfig) -> AdapterConfigTag:
+    """Return an allowlisted config tag; never resolve class names from persisted data."""
+    for tag, config_type in _ADAPTER_CONFIG_TYPES.items():
+        if type(config) is config_type:
+            return tag  # type: ignore[return-value]
+    raise ValueError(f"Unsupported source configuration class: {type(config).__name__}")
 
 
 class CollectionSourceBusy(FrontierStoreError):
@@ -70,19 +87,59 @@ class CollectionBookTask(FrontierModel):
 
 
 class CollectionRunSpec(FrontierModel):
-    schema_version: Literal[1] = 1
+    schema_version: Literal[1, 2] = 2
     run_version: str = COLLECTION_RUN_VERSION
     run_id: str = Field(pattern=r"^[0-9a-f-]{36}$")
     venue: Venue
     adapter_version: str = Field(min_length=1, max_length=120)
     capability_manifest_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
-    adapter_config: AdapterConfig
+    adapter_config_type: AdapterConfigTag = "base"
+    adapter_config: SerializeAsAny[AdapterConfig]
     market_limit: int = Field(ge=1, le=MAX_COLLECTION_MARKETS)
     book_limit: int = Field(ge=0, le=MAX_COLLECTION_BOOKS)
     book_depth: int = Field(ge=1, le=20)
     max_evidence_bytes: int = Field(ge=1024 * 1024, le=MAX_COLLECTION_EVIDENCE_BYTES)
     max_wall_seconds: int = Field(ge=1, le=300)
     created_at_utc: datetime
+
+    @model_validator(mode="before")
+    @classmethod
+    def hydrate_allowlisted_adapter_config(cls, values: Any) -> Any:
+        """Preserve concrete adapter settings through the journal JSON boundary."""
+        if not isinstance(values, dict):
+            return values
+        values = dict(values)
+        config = values.get("adapter_config")
+        tag = values.get("adapter_config_type")
+        schema_version = values.get("schema_version", 2)
+        if isinstance(config, AdapterConfig):
+            inferred_tag = _adapter_config_tag(config)
+            if tag is not None and tag != inferred_tag:
+                raise ValueError("Collection config tag does not match its concrete class")
+            if schema_version == 1 and inferred_tag != "base":
+                raise ValueError("Legacy collection runs cannot pin subclass config types")
+            values["adapter_config_type"] = inferred_tag
+            return values
+        if isinstance(config, dict):
+            if tag is None:
+                # Legacy schema-v1 run records only carried the base config shape.
+                tag = "base"
+            if not isinstance(tag, str) or tag not in _ADAPTER_CONFIG_TYPES:
+                raise ValueError("Collection config tag is not allowlisted")
+            if schema_version == 1 and tag != "base":
+                raise ValueError("Legacy collection runs cannot pin subclass config types")
+            config_type = _ADAPTER_CONFIG_TYPES.get(tag)
+            assert config_type is not None
+            values["adapter_config_type"] = tag
+            values["adapter_config"] = config_type.model_validate(config)
+        return values
+
+    @model_validator(mode="after")
+    def adapter_config_matches_tag(self) -> CollectionRunSpec:
+        expected_type = _ADAPTER_CONFIG_TYPES.get(self.adapter_config_type)
+        if expected_type is None or type(self.adapter_config) is not expected_type:
+            raise ValueError("Collection config tag does not match its concrete class")
+        return self
 
     @field_validator("created_at_utc")
     @classmethod

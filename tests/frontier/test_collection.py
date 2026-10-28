@@ -16,6 +16,8 @@ from midas.frontier.adapters.base import (
     RejectedResponseEvidence,
     build_capabilities,
 )
+from midas.frontier.adapters.coinbase import CoinbaseSpotConfig
+from midas.frontier.adapters.kraken import KrakenSpotConfig
 from midas.frontier.collection import (
     BoundedSourceCollector,
     CollectionCheckpoint,
@@ -27,6 +29,7 @@ from midas.frontier.models import (
     AdapterConfig,
     BookLevel,
     Capability,
+    COINBASE_MARKET_DATA_TERMS_VERSION,
     FrontierModel,
     MarketBatch,
     RawObservation,
@@ -53,10 +56,13 @@ class FakeAdapter:
         fail_instruments: set[str] | None = None,
         fail_discovery: bool = False,
         enabled: bool = True,
+        venue: Venue = Venue.POLYMARKET,
+        config: AdapterConfig | None = None,
     ) -> None:
-        self.config = AdapterConfig(enabled=enabled, live_public_probe_enabled=enabled)
+        self.venue = venue
+        self.config = config or AdapterConfig(enabled=enabled, live_public_probe_enabled=enabled)
         self.capabilities = build_capabilities(
-            Venue.POLYMARKET,
+            self.venue,
             "fixture-adapter-1",
             {
                 Capability.MARKET_DISCOVERY: ("Fixture discovery", None),
@@ -67,17 +73,19 @@ class FakeAdapter:
         self.fail_instruments = fail_instruments or set()
         self.fail_discovery = fail_discovery
         self.failures: list[tuple[str, str]] = []
-        self.market_values = (market(Venue.POLYMARKET, "collection-fixture"),)
+        self.market_values = (market(self.venue, "collection-fixture"),)
         self.market_capture: RawObservation | None = None
         self.pending_captures: list[RawObservation] = []
         self.discovery_calls = 0
         self.book_calls: list[str] = []
 
     @staticmethod
-    def _raw(kind: str, identity: str) -> RawObservation:
+    def _raw(
+        kind: str, identity: str, venue: Venue = Venue.POLYMARKET
+    ) -> RawObservation:
         body = json.dumps({"kind": kind, "identity": identity}, sort_keys=True)
         return RawObservation(
-            venue=Venue.POLYMARKET,
+            venue=venue,
             observation_kind=kind,
             request_url=f"https://fixture.example/{kind}/{identity}",
             http_status=200,
@@ -105,7 +113,7 @@ class FakeAdapter:
         self.discovery_calls += 1
         if self.fail_discovery:
             raise AdapterError("FIXTURE_DISCOVERY_FAILURE", "Fixture source discovery failed")
-        self.market_capture = self._raw("market_listing", "one")
+        self.market_capture = self._raw("market_listing", "one", self.venue)
         self.pending_captures.append(self.market_capture)
         value = self.market_values[0]
         provenance = value.provenance.model_copy(
@@ -122,7 +130,7 @@ class FakeAdapter:
         self.book_calls.append(instrument_id)
         if instrument_id in self.fail_instruments:
             raise AdapterError("FIXTURE_BOOK_FAILURE", "Fixture book request failed")
-        capture = self._raw("book_snapshot", instrument_id)
+        capture = self._raw("book_snapshot", instrument_id, self.venue)
         self.pending_captures.append(capture)
         value = book(market_value, instrument_id, "0.40")
         provenance = value.provenance.model_copy(
@@ -391,6 +399,150 @@ async def test_pending_capture_resumes_with_a_reconstructed_collector(tmp_path):
     assert restarted_adapter.discovery_calls == 0
     assert len(restarted_adapter.book_calls) == 1
     assert restarted_store.summary()["observations"] == 2
+
+
+async def _pause_configured_collection(tmp_path, venue, config):
+    root = tmp_path / "frontier"
+    store = FailOnceStore(root)
+    adapter = FakeAdapter(venue=venue, config=config)
+    result = await BoundedSourceCollector(adapter, store).start(
+        market_limit=1, book_limit=0
+    )
+    assert result.state == "paused"
+    assert result.pending_observation_count == 1
+    return root, adapter, result, CollectionJournal(root)
+
+
+@pytest.mark.asyncio
+async def test_kraken_pair_config_survives_journal_and_restart_and_mismatch_fails_closed(
+    tmp_path,
+):
+    config = KrakenSpotConfig(
+        enabled=True,
+        live_public_probe_enabled=True,
+        pairs=("XBTUSD", "ETHUSD"),
+    )
+    root, original_adapter, paused, journal = await _pause_configured_collection(
+        tmp_path, Venue.KRAKEN, config
+    )
+
+    restored_spec = journal.run_spec(paused.run_id)
+    assert restored_spec.adapter_config_type == "kraken_spot"
+    assert type(restored_spec.adapter_config) is KrakenSpotConfig
+    assert restored_spec.adapter_config.pairs == ("XBTUSD", "ETHUSD")
+    untrusted_tag_spec = restored_spec.model_dump(mode="json")
+    untrusted_tag_spec["adapter_config_type"] = "python:arbitrary.import"
+    with pytest.raises(ValueError, match="not allowlisted"):
+        CollectionRunSpec.model_validate(untrusted_tag_spec)
+
+    listed_spec = journal.latest_run_checkpoints()[0][0]
+    assert type(listed_spec.adapter_config) is KrakenSpotConfig
+    assert listed_spec.adapter_config == config
+
+    paused_checkpoint = journal.latest_checkpoint(paused.run_id)
+    changed_adapter = FakeAdapter(
+        venue=Venue.KRAKEN,
+        config=config.model_copy(update={"pairs": ("ETHUSD",)}),
+    )
+    with pytest.raises(ValueError, match="configuration differs"):
+        await BoundedSourceCollector(
+            changed_adapter, FrontierStore(root), journal
+        ).resume(paused.run_id)
+    assert changed_adapter.discovery_calls == 0
+    assert changed_adapter.transport.request_count == 0
+    assert journal.latest_checkpoint(paused.run_id) == paused_checkpoint
+
+    restarted_adapter = FakeAdapter(venue=Venue.KRAKEN, config=config)
+    resumed = await BoundedSourceCollector(
+        restarted_adapter, FrontierStore(root), journal
+    ).resume(paused.run_id)
+    assert resumed.state == "completed"
+    assert restarted_adapter.discovery_calls == 0
+    assert restarted_adapter.transport.request_count == 0
+    assert original_adapter.discovery_calls == 1
+
+
+@pytest.mark.asyncio
+async def test_coinbase_product_and_terms_ack_config_survive_restart_and_are_pinned(tmp_path):
+    config = CoinbaseSpotConfig(
+        enabled=True,
+        live_public_probe_enabled=True,
+        probe_policy_block_reason=None,
+        market_data_terms_version_acknowledged=COINBASE_MARKET_DATA_TERMS_VERSION,
+        products=("BTC-USD", "ETH-USD"),
+    )
+    root, original_adapter, paused, journal = await _pause_configured_collection(
+        tmp_path, Venue.COINBASE_EXCHANGE, config
+    )
+
+    restored_spec = journal.run_spec(paused.run_id)
+    assert restored_spec.adapter_config_type == "coinbase_spot"
+    assert type(restored_spec.adapter_config) is CoinbaseSpotConfig
+    assert restored_spec.adapter_config.products == ("BTC-USD", "ETH-USD")
+    assert (
+        restored_spec.adapter_config.market_data_terms_version_acknowledged
+        == COINBASE_MARKET_DATA_TERMS_VERSION
+    )
+    listed_spec = journal.latest_run_checkpoints()[0][0]
+    assert type(listed_spec.adapter_config) is CoinbaseSpotConfig
+    assert listed_spec.adapter_config == config
+
+    changed_products = config.model_copy(update={"products": ("ETH-USD",)})
+    changed_product_adapter = FakeAdapter(
+        venue=Venue.COINBASE_EXCHANGE, config=changed_products
+    )
+    with pytest.raises(ValueError, match="configuration differs"):
+        await BoundedSourceCollector(
+            changed_product_adapter, FrontierStore(root), journal
+        ).resume(paused.run_id)
+    assert changed_product_adapter.discovery_calls == 0
+    assert changed_product_adapter.transport.request_count == 0
+
+    changed_ack = config.model_copy(
+        update={"market_data_terms_version_acknowledged": "fixture-other-terms"}
+    )
+    changed_ack_adapter = FakeAdapter(venue=Venue.COINBASE_EXCHANGE, config=changed_ack)
+    with pytest.raises(ValueError, match="configuration differs"):
+        await BoundedSourceCollector(changed_ack_adapter, FrontierStore(root), journal).resume(
+            paused.run_id
+        )
+    assert changed_ack_adapter.discovery_calls == 0
+    assert changed_ack_adapter.transport.request_count == 0
+
+    restarted_adapter = FakeAdapter(venue=Venue.COINBASE_EXCHANGE, config=config)
+    resumed = await BoundedSourceCollector(
+        restarted_adapter, FrontierStore(root), journal
+    ).resume(paused.run_id)
+    assert resumed.state == "completed"
+    assert restarted_adapter.discovery_calls == 0
+    assert restarted_adapter.transport.request_count == 0
+    assert original_adapter.discovery_calls == 1
+
+
+def test_legacy_collection_spec_without_a_config_tag_remains_readable():
+    legacy = CollectionRunSpec(
+        schema_version=1,
+        run_version="frontier-finite-collection-1",
+        run_id="33333333-3333-4333-8333-333333333333",
+        venue=Venue.POLYMARKET,
+        adapter_version="fixture-adapter-1",
+        capability_manifest_sha256="a" * 64,
+        adapter_config=AdapterConfig(enabled=False, live_public_probe_enabled=False),
+        market_limit=1,
+        book_limit=0,
+        book_depth=5,
+        max_evidence_bytes=1024 * 1024,
+        max_wall_seconds=30,
+        created_at_utc=T0,
+    )
+    payload = legacy.model_dump(mode="json")
+    payload.pop("adapter_config_type")
+
+    restored = CollectionRunSpec.model_validate(payload)
+
+    assert restored.schema_version == 1
+    assert restored.adapter_config_type == "base"
+    assert type(restored.adapter_config) is AdapterConfig
 
 
 @pytest.mark.asyncio
