@@ -243,6 +243,9 @@ class MarketInstrument(FrontierModel):
             self.price_currency_identity.code != self.price_currency
         ):
             raise ValueError("Instrument quote currency code differs from its canonical identity")
+        payout_state_ids = [item.state_id for item in self.payouts]
+        if len(payout_state_ids) != len(set(payout_state_ids)):
+            raise ValueError("Instrument payout state identifiers must be unique")
         previous_end: Decimal | None = None
         if self.price_increment_ranges is not None:
             for price_range in self.price_increment_ranges:
@@ -830,8 +833,14 @@ class FrontierMarket(FrontierModel):
         if self.payoff.verified:
             state_ids = set(self.payoff.state_ids)
             for outcome in self.instruments:
-                if {payout.state_id for payout in outcome.payouts} != state_ids:
-                    raise ValueError("Verified payoff must define every state for every outcome")
+                payout_state_ids = [payout.state_id for payout in outcome.payouts]
+                if (
+                    len(payout_state_ids) != len(set(payout_state_ids))
+                    or set(payout_state_ids) != state_ids
+                ):
+                    raise ValueError(
+                        "Verified payoff must define every state exactly once for every outcome"
+                    )
         return self
 
     def has_consistent_settlement_asset_identity(self) -> bool:
