@@ -11034,9 +11034,9 @@ All adapter contracts, Coinbase tests, and the focused trade API test pass
 messages. Strict mypy passes on the four core model/economic/replay modules;
 Ruff check/format and whitespace checks pass. No public endpoint was queried.
 
-At `2026-10-28T20:55:02Z`, Reality was **635,158,528 bytes below**
-`MemoryHigh`, while the API was only **786,432 bytes below** its boundary.
-Memory PSI remained elevated (`avg10 some` 25.07%, `full` 17.35%), so broad
+At `2026-10-28T20:55:32Z`, Reality was **565,792,768 bytes below**
+`MemoryHigh`, while the API was only **114,688 bytes below** its boundary.
+Memory PSI remained elevated (`avg10 some` 27.24%, `full` 15.58%), so broad
 regressions remain deferred. Both services were active and unchanged.
 
 | Requirement | Status | Evidence and boundary |

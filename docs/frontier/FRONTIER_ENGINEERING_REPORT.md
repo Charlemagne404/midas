@@ -11857,9 +11857,9 @@ The four-adapter contract module, Coinbase module, and focused stored-trade API
 case pass **201/201**. The process peaked at **87,776 KiB RSS** under a 1 GiB
 transient scope with zero swaps or socket messages. Strict mypy passes for the
 core model, economics, replay, and independent-audit modules. Ruff and
-whitespace checks pass. Memory PSI remained elevated and the API was very near
-its `MemoryHigh` boundary, so the full suites remain unrun. No public endpoint
-or protected service was touched.
+whitespace checks pass. At `2026-10-28T20:55:32Z`, memory PSI remained elevated
+and the API was **114,688 bytes below** its `MemoryHigh` boundary, so the full
+suites remain unrun. No public endpoint or protected service was touched.
 
 | Component | Current status | Evidence and remaining boundary |
 | --- | --- | --- |
