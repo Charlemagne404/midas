@@ -11468,3 +11468,33 @@ operation was performed.
 | Current full backend/legacy regression | PARTIALLY VERIFIED | Latest full 505-case Frontier pass predates current adapter and transport changes; broader tests remain deferred under the recorder resource gate. |
 | Live cross-venue scientific validation | BLOCKED | Source-use/retention gates remain unresolved. |
 | Frontier overall | PARTIALLY VERIFIED | Live cross-venue evidence, broad regression, endurance, protected recovery, and deployment remain incomplete. |
+
+## Coinbase book input binding — 2026-10-28 20:23 UTC
+
+Commit `c3bcb131ca57e2ca610dcda720b58cd293846039` advances the Coinbase Spot
+adapter to `frontier-coinbase-exchange-spot-5`. `fetch_book` now revalidates
+the supplied market and rejects it before transport unless the canonical
+market identity, base/quote assets, sole instrument, native instrument ID,
+quantity unit, and quote-currency identity match the configured product.
+
+Seven fixture mutations exercise missing/duplicate instruments and changed
+market or instrument identities. The full Coinbase fixture module passes
+**30/30** in 0.78 seconds pytest time (1.26 seconds wall), at 78,176 KiB
+maximum RSS, with no swaps or socket messages. Ruff and strict mypy pass. The
+only warning is the existing Starlette/httpx `TestClient` deprecation. The
+Coinbase source-use hold remains active; these local fixtures do not validate
+live source behavior.
+
+At `2026-10-28T20:23:33Z`, `MemAvailable` was 9,943,808 KiB and memory PSI
+avg10 was 0%; I/O PSI `some` avg10/avg60 was 0%/0%, with `full` 0%. Reality
+was 1,207,795,712 / 1,207,959,552 bytes, 163,840 bytes below `MemoryHigh`; API
+was 1,563,070,464 / 1,610,612,736 bytes. The focused module ran inside a
+transient 1 GiB cgroup cap. Broad regression remains deferred because recent
+samples show volatile protected-service memory headroom.
+
+| Requirement | Status | Evidence and boundary |
+| --- | --- | --- |
+| Coinbase book input binding | COMPLETE AND VERIFIED | Invalid or mismatched market metadata is rejected before book transport. |
+| Coinbase live validation | BLOCKED | Source-use/retention hold remains; fixtures are not live evidence. |
+| Current full Frontier/legacy regression | PARTIALLY VERIFIED | Latest full Frontier run predates current adapter changes. |
+| Frontier overall | PARTIALLY VERIFIED | Cross-venue live science, broad regression, endurance, protected recovery, and deployment remain incomplete. |

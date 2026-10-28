@@ -10581,3 +10581,39 @@ backend suites remain deferred.
 **Next safe action:** continue source-independent review and targeted
 verification. Do not run broad suites or public-source probes until the
 resource admission and source-use/retention gates are separately satisfied.
+
+## Coinbase book market binding — 2026-10-28 20:23 UTC
+
+Commit `c3bcb131ca57e2ca610dcda720b58cd293846039` advances the Coinbase spot
+adapter to `frontier-coinbase-exchange-spot-5`. Before requesting a book, the
+adapter now revalidates the supplied market and binds its canonical ID,
+base/quote assets, single instrument, native instrument ID, quantity unit, and
+quote-currency identity to the configured product. Malformed, copied, or
+cross-bound market objects fail as `INVALID_INSTRUMENT` before any book I/O.
+
+Seven adversarial fixture cases cover missing and duplicate instruments,
+altered canonical identity, altered base/quote metadata, altered instrument
+quote currency, and an unknown quantity unit. The Coinbase adapter module
+passes **30/30** in 0.78 seconds pytest time (1.26 seconds wall), with 78,176
+KiB maximum RSS, zero swaps, and zero socket messages. Ruff and strict mypy
+pass; mypy reports no issues in the Coinbase adapter. The one pytest warning
+is the existing Starlette/httpx `TestClient` deprecation. All responses were
+local `MockTransport` fixtures; the Coinbase source-use hold remains in place.
+
+At `2026-10-28T20:23:33Z`, host `MemAvailable` was 9,943,808 KiB, memory PSI
+avg10 was 0%, and I/O PSI `some` avg10/avg60 was 0%/0%, with `full` 0%. Reality
+was at 1,207,795,712 / 1,207,959,552 bytes, 163,840 bytes below `MemoryHigh`;
+API was at 1,563,070,464 / 1,610,612,736 bytes. The focused fixture suite was
+run under a transient 1 GiB cgroup cap. No broad suite or public request was
+started.
+
+| Requirement | Status | Evidence and boundary |
+| --- | --- | --- |
+| Coinbase book input binding | COMPLETE AND VERIFIED | Seven corrupted-market variants are rejected before transport; all 30 Coinbase fixtures pass. |
+| Coinbase live market validation | BLOCKED | The source-use/retention hold remains; MockTransport is not live evidence. |
+| Current full adapter/Frontier regression | PARTIALLY VERIFIED | The prior 505-case run predates current adapter changes; protected recorder headroom remains volatile. |
+| Project Frontier overall | PARTIALLY VERIFIED | Live cross-venue science, broad regressions, endurance, protected recovery, and deployment remain open. |
+
+**Next safe action:** continue source-independent review and bounded
+verification. Keep broad regressions deferred until protected-service memory
+headroom is sustained below `MemoryHigh`.
