@@ -1188,6 +1188,10 @@ class TradeObservation(FrontierModel):
 
     @model_validator(mode="after")
     def trade_schema_is_supported(self) -> TradeObservation:
+        if self.received_at_utc != self.provenance.response_received_at_utc:
+            raise ValueError("Trade receipt time differs from its provenance response time")
+        if self.exchange_timestamp_utc != self.provenance.exchange_timestamp_utc:
+            raise ValueError("Trade exchange timestamp differs from its provenance source time")
         if self.schema_version not in {1, 2, 3, 4}:
             raise ValueError("Unsupported trade-observation schema version")
         if self.schema_version >= 2 and self.native_instrument_id is None:

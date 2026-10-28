@@ -50,6 +50,7 @@ from midas.frontier.relationships import (
     verify_same_payoff,
 )
 from midas.frontier.storage import FrontierStore
+from pydantic import ValidationError
 
 from apps.api.frontier import (
     _enrich_markets_with_kalshi_fee_evidence,
@@ -4040,8 +4041,28 @@ def test_trade_read_returns_hash_verified_normalized_batch(tmp_path):
         aggressor_side="yes",
         exchange_timestamp_utc=T0,
         received_at_utc=T0 + timedelta(milliseconds=9),
-        provenance=source_market.provenance.model_copy(update={"raw_sha256": raw.raw_sha256}),
+        provenance=source_market.provenance.model_copy(
+            update={
+                "raw_sha256": raw.raw_sha256,
+                "response_received_at_utc": raw.received_at_utc,
+                "processed_at_utc": raw.received_at_utc,
+                "exchange_timestamp_utc": T0,
+            }
+        ),
     )
+    for update, reason in (
+        (
+            {"received_at_utc": T0 + timedelta(seconds=1)},
+            "receipt time differs from its provenance",
+        ),
+        (
+            {"exchange_timestamp_utc": T0 + timedelta(seconds=1)},
+            "exchange timestamp differs from its provenance",
+        ),
+    ):
+        malformed_trade = trade.model_copy(update=update)
+        with pytest.raises(ValidationError, match=reason):
+            TradeObservation.model_validate(malformed_trade.model_dump(mode="python"))
     observation_id = store.append_observation(raw, TradeBatch(venue=Venue.KALSHI, trades=(trade,)))
     try:
         response = client.get("/api/frontier/trades", params={"venue": "kalshi"})
@@ -4059,6 +4080,32 @@ def test_trade_read_returns_hash_verified_normalized_batch(tmp_path):
         }
         assert result["items"][0]["source_observation_record_id"] == observation_id
         assert result["items"][0]["source_raw_sha256"] == raw.raw_sha256
+        assert requests == []
+
+        with sqlite3.connect(store.path) as connection:
+            connection.execute("DROP TRIGGER observations_no_update")
+            row = connection.execute(
+                "SELECT raw_json,normalized_json FROM observations WHERE observation_id=?",
+                (observation_id,),
+            ).fetchone()
+            normalized = json.loads(row[1])
+            normalized["trades"][0]["exchange_timestamp_utc"] = (
+                T0 + timedelta(seconds=1)
+            ).isoformat()
+            normalized_json = json.dumps(
+                normalized, sort_keys=True, separators=(",", ":"), ensure_ascii=False
+            )
+            row_sha256 = hashlib.sha256(f"{row[0]}\n{normalized_json}".encode()).hexdigest()
+            connection.execute(
+                "UPDATE observations SET normalized_json=?,row_sha256=? WHERE observation_id=?",
+                (normalized_json, row_sha256, observation_id),
+            )
+        malformed_read = client.get("/api/frontier/trades", params={"venue": "kalshi"})
+        assert malformed_read.status_code == 409
+        assert (
+            "Trade exchange timestamp differs from its provenance"
+            in malformed_read.json()["detail"]
+        )
         assert requests == []
     finally:
         client.close()

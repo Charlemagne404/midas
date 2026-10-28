@@ -160,6 +160,11 @@ native metadata, source URL, adapter/schema versions, raw-body hash, request and
 receipt times, and source-time semantics. Source quality flags are carried forward
 instead of being replaced with guessed values.
 
+Book and trade observations require their local receipt timestamp and parsed
+exchange timestamp to match the corresponding timestamps in provenance.
+Structural revalidation applies this rule to copied book models, and stored
+observation readers return a conflict when a normalized record violates it.
+
 The shared adapter timestamp parser converts explicit-offset ISO strings to
 UTC and treats an ISO string with no timezone as unavailable. It does not
 assign the host's local timezone to an ambiguous source time; a regression test
