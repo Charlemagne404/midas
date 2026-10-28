@@ -52,7 +52,7 @@ from midas.frontier.relationships import (
 )
 
 D = Decimal
-ECONOMIC_MODEL_VERSION = "frontier-economic-verifiers-13"
+ECONOMIC_MODEL_VERSION = "frontier-economic-verifiers-14"
 PARTIAL_FILL_FRACTIONS = (D(0), D("0.25"), D("0.5"), D("0.75"), D(1))
 KALSHI_MVE_SETTLEMENT_AUDIT_VERSION = "kalshi-mve-settlement-audit-2"
 _KALSHI_TAKER_FEE_TYPES = frozenset({"quadratic", "quadratic_with_combo_maker_fees"})
@@ -192,6 +192,7 @@ class OpportunityFamily(StrEnum):
     CROSS_VENUE_COMPLETE_COVERAGE = "cross_venue_complete_coverage"
     LOGICAL_IMPLICATION_COVERAGE = "logical_implication_coverage"
     WITHIN_MARKET_MULTI_OUTCOME_COVERAGE = "within_market_multi_outcome_coverage"
+    WITHIN_MARKET_PAYOFF_BASKET = "within_market_payoff_basket"
     PRICE_DISCREPANCY = "price_discrepancy"
 
 
@@ -1477,7 +1478,6 @@ def generate_logical_implication_candidates(
     return (candidate,)
 
 
-@_high_precision_decimal_context
 def generate_multi_outcome_coverage_candidate(
     market: FrontierMarket,
     books: dict[str, BookSnapshot],
@@ -1494,13 +1494,194 @@ def generate_multi_outcome_coverage_candidate(
     be filled together. An explicit requested quantity is exact and is rejected
     when any displayed top level or the modeled fill fraction cannot support it.
     """
+    return _evaluate_single_market_basket(
+        market,
+        books,
+        scenario=scenario,
+        as_of_utc=as_of_utc,
+        quantity=quantity,
+        selected_instrument_ids=None,
+        allow_non_one_hot=False,
+        family=OpportunityFamily.WITHIN_MARKET_MULTI_OUTCOME_COVERAGE,
+    )
+
+
+@_high_precision_decimal_context
+def generate_bounded_payoff_basket_candidates(
+    market: FrontierMarket,
+    books: dict[str, BookSnapshot],
+    *,
+    scenario: ExecutionScenario | None = None,
+    as_of_utc: datetime | None = None,
+    quantity: Decimal | None = None,
+    max_candidates: int = 8,
+) -> tuple[OpportunityCandidate, ...]:
+    """Search a bounded event instrument set for exact constant-payout baskets.
+
+    The search enumerates at most 4,095 non-empty subsets from a market with
+    up to twelve instruments. Selected contracts must share a trading unit,
+    and their verified nonnegative payout vectors must sum to the same positive
+    amount in every exhaustive state. The best eight gross per-unit margins are
+    evaluated by default; this is candidate ranking, not execution simulation.
+    """
+    if type(max_candidates) is not int or not 1 <= max_candidates <= 32:
+        raise ValueError("max_candidates must be an integer from one to thirty-two")
     scenario = scenario or ExecutionScenario()
     as_of = as_of_utc or datetime.now(UTC)
     if as_of.tzinfo is None or as_of.utcoffset() is None:
         raise ValueError("Evaluation timestamp must be timezone-aware")
     as_of = as_of.astimezone(UTC)
-    family = OpportunityFamily.WITHIN_MARKET_MULTI_OUTCOME_COVERAGE
-    candidate_id = _multi_candidate_id(market, books, scenario, quantity)
+
+    if (
+        market.market_kind != MarketKind.MULTI_OUTCOME_EVENT
+        or market.lifecycle != Lifecycle.OPEN
+        or not market.payoff.verified
+        or not market.payoff.exhaustive
+        or not market.resolution.verified
+        or not market.has_consistent_settlement_asset_identity()
+        or not 3 <= len(market.payoff.state_ids) <= 16
+        or not 1 <= len(market.instruments) <= 12
+    ):
+        return ()
+
+    instruments = tuple(sorted(market.instruments, key=lambda item: item.native_instrument_id))
+    state_ids = market.payoff.state_ids
+    state_set = set(state_ids)
+    if len(state_set) != len(state_ids):
+        return ()
+    payout_vectors = []
+    for instrument in instruments:
+        vector = {item.state_id: item.amount for item in instrument.payouts}
+        if (
+            instrument.quantity_unit == QuantityUnit.UNKNOWN
+            or instrument.price_currency != market.payoff.payout_currency
+            or instrument.price_currency_identity != market.payoff.settlement_asset_identity
+            or len(vector) != len(instrument.payouts)
+            or set(vector) != state_set
+        ):
+            return ()
+        payout_vectors.append(tuple(vector[state] for state in state_ids))
+
+    # The existing one-hot family already emits this exact all-instrument basket.
+    # Avoid duplicating it in replay while retaining a general public search API.
+    if _is_complete_one_hot_market(instruments, state_ids):
+        return ()
+
+    ranked: list[tuple[bool, Decimal, int, tuple[str, ...]]] = []
+    instrument_count = len(instruments)
+    for mask in range(1, 1 << instrument_count):
+        selected = tuple(
+            instruments[index] for index in range(instrument_count) if mask & (1 << index)
+        )
+        if len({item.quantity_unit for item in selected}) != 1:
+            continue
+        selected_indexes = tuple(index for index in range(instrument_count) if mask & (1 << index))
+        payout_by_state = tuple(
+            sum((payout_vectors[index][state_index] for index in selected_indexes), D(0))
+            for state_index in range(len(state_ids))
+        )
+        guaranteed_payout = payout_by_state[0]
+        if guaranteed_payout <= 0 or any(value != guaranteed_payout for value in payout_by_state):
+            continue
+        asks: list[Decimal] = []
+        complete_quote_set = True
+        for instrument in selected:
+            book = books.get(instrument.native_instrument_id)
+            if (
+                book is None
+                or book.venue != market.venue
+                or book.native_market_id != market.native_market_id
+                or book.native_instrument_id != instrument.native_instrument_id
+                or book.quantity_unit != instrument.quantity_unit
+                or not _price_denomination_matches(market, instrument, book)
+                or book.crossed
+                or not book.asks
+            ):
+                complete_quote_set = False
+                break
+            ask = min(book.asks, key=lambda level: level.price)
+            if ask.price > max(
+                item.amount for item in instrument.payouts
+            ) or not _price_matches_instrument_constraints(instrument, ask.price):
+                complete_quote_set = False
+                break
+            asks.append(ask.price)
+        # Invalid or missing quotes rank after usable baskets. The evaluator
+        # preserves their explicit incomplete state when no usable basket exists.
+        gross_margin = guaranteed_payout - sum(asks, D(0)) if complete_quote_set else D(0)
+        if any(not any(value > 0 for value in payout_vectors[index]) for index in selected_indexes):
+            continue
+        ranked.append(
+            (
+                complete_quote_set,
+                gross_margin,
+                len(selected),
+                tuple(item.native_instrument_id for item in selected),
+            )
+        )
+
+    if not ranked:
+        return ()
+    ranked.sort(key=lambda item: (not item[0], -item[1], item[2], item[3]))
+    chosen = ranked[:max_candidates]
+    return tuple(
+        _evaluate_single_market_basket(
+            market,
+            books,
+            scenario=scenario,
+            as_of_utc=as_of,
+            quantity=quantity,
+            selected_instrument_ids=instrument_ids,
+            allow_non_one_hot=True,
+            family=OpportunityFamily.WITHIN_MARKET_PAYOFF_BASKET,
+        )
+        for _, _, _, instrument_ids in chosen
+    )
+
+
+def _is_complete_one_hot_market(
+    instruments: tuple[MarketInstrument, ...], state_ids: tuple[str, ...]
+) -> bool:
+    if len(instruments) != len(state_ids):
+        return False
+    outcomes = [item.outcome_id for item in instruments]
+    if set(outcomes) != set(state_ids) or len(set(outcomes)) != len(state_ids):
+        return False
+    for instrument in instruments:
+        payouts = {item.state_id: item.amount for item in instrument.payouts}
+        if any(
+            payouts.get(state) != (D(1) if state == instrument.outcome_id else D(0))
+            for state in state_ids
+        ):
+            return False
+    return True
+
+
+@_high_precision_decimal_context
+def _evaluate_single_market_basket(
+    market: FrontierMarket,
+    books: dict[str, BookSnapshot],
+    *,
+    scenario: ExecutionScenario | None,
+    as_of_utc: datetime | None,
+    quantity: Decimal | None,
+    selected_instrument_ids: tuple[str, ...] | None,
+    allow_non_one_hot: bool,
+    family: OpportunityFamily,
+) -> OpportunityCandidate:
+    scenario = scenario or ExecutionScenario()
+    as_of = as_of_utc or datetime.now(UTC)
+    if as_of.tzinfo is None or as_of.utcoffset() is None:
+        raise ValueError("Evaluation timestamp must be timezone-aware")
+    as_of = as_of.astimezone(UTC)
+    candidate_id = _multi_candidate_id(
+        market,
+        books,
+        scenario,
+        quantity,
+        family=family,
+        selected_instrument_ids=selected_instrument_ids,
+    )
 
     def empty(classification: OpportunityClassification, reason: str) -> OpportunityCandidate:
         return OpportunityCandidate(
@@ -1544,14 +1725,41 @@ def generate_multi_outcome_coverage_candidate(
             OpportunityClassification.INCOMPLETE_EVIDENCE,
             "Exhaustive payoff, resolution, and market settlement evidence are not all verified.",
         )
-    if not 3 <= len(states) <= 16 or len(market.instruments) != len(states):
+    all_instruments = tuple(sorted(market.instruments, key=lambda item: item.native_instrument_id))
+    instruments_by_id = {item.native_instrument_id: item for item in all_instruments}
+    if selected_instrument_ids is None:
+        instruments = all_instruments
+    else:
+        if (
+            not selected_instrument_ids
+            or len(selected_instrument_ids) > 16
+            or len(selected_instrument_ids) != len(set(selected_instrument_ids))
+            or any(item not in instruments_by_id for item in selected_instrument_ids)
+        ):
+            return empty(
+                OpportunityClassification.UNSUPPORTED_ECONOMICS,
+                "A payoff basket requires one to sixteen distinct market instruments.",
+            )
+        instruments = tuple(instruments_by_id[item] for item in selected_instrument_ids)
+    if (
+        not 3 <= len(states) <= 16
+        or not 1 <= len(instruments) <= 16
+        or (not allow_non_one_hot and len(all_instruments) != len(states))
+    ):
         return empty(
             OpportunityClassification.UNSUPPORTED_ECONOMICS,
-            "The bounded evaluator supports three to sixteen outcomes with one instrument per state.",
+            "The bounded evaluator supports three to sixteen outcomes/states and at most sixteen selected contracts.",
         )
-    instruments = tuple(sorted(market.instruments, key=lambda item: item.native_instrument_id))
     state_set = set(states)
-    if len(state_set) != len(states) or {item.outcome_id for item in instruments} != state_set:
+    if len(state_set) != len(states):
+        return empty(
+            OpportunityClassification.UNSUPPORTED_ECONOMICS,
+            "Verified event state identifiers must be unique.",
+        )
+    if not allow_non_one_hot and (
+        {item.outcome_id for item in instruments} != state_set
+        or len({item.outcome_id for item in instruments}) != len(states)
+    ):
         return empty(
             OpportunityClassification.UNSUPPORTED_ECONOMICS,
             "Outcome identifiers must form a one-to-one mapping to the verified state set.",
@@ -1585,7 +1793,7 @@ def generate_multi_outcome_coverage_candidate(
         payouts = {item.state_id: item.amount for item in instrument.payouts}
         for state in states:
             expected = D(1) if state == instrument.outcome_id else D(0)
-            if payouts[state] != expected:
+            if not allow_non_one_hot and payouts[state] != expected:
                 return empty(
                     OpportunityClassification.UNSUPPORTED_ECONOMICS,
                     "Only unit-payout one-hot contracts are supported; overlapping or partial payoffs are rejected.",
@@ -1613,10 +1821,11 @@ def generate_multi_outcome_coverage_candidate(
                 "An outcome book is empty, crossed, or does not match the market instrument.",
             )
         ask = min(book.asks, key=lambda level: level.price)
-        if ask.price > 1:
+        max_settlement_payout = max(item.amount for item in instrument.payouts)
+        if max_settlement_payout <= 0 or ask.price > max_settlement_payout:
             return empty(
                 OpportunityClassification.UNSUPPORTED_ECONOMICS,
-                "An observed ask exceeds the supported unit settlement payout.",
+                "An observed ask exceeds this contract's maximum verified terminal payout.",
             )
         if not _price_matches_instrument_constraints(instrument, ask.price):
             constraint_name = "tick-size" if instrument.tick_size is not None else "price-range"
@@ -1729,10 +1938,13 @@ def generate_multi_outcome_coverage_candidate(
     delay_seconds = D(scenario.execution_delay_for_venue(market.venue)) / D(1000)
     added_bps = scenario.slippage_bps + scenario.quote_decay_bps_per_second * delay_seconds
     effective_asks = [ask.price * (D(1) + added_bps / D(10000)) for _, _, ask in top_asks]
-    if any(price > 1 for price in effective_asks):
+    if any(
+        price > max(payout.amount for payout in instrument.payouts)
+        for (instrument, _, _), price in zip(top_asks, effective_asks, strict=True)
+    ):
         return empty(
             OpportunityClassification.UNSUPPORTED_ECONOMICS,
-            "Modeled slippage or quote decay exceeds the maximum unit settlement payout.",
+            "Modeled slippage or quote decay exceeds a selected contract's maximum terminal payout.",
         )
 
     execution_time = _projected_execution_time(as_of, scenario, market.venue)
@@ -1783,7 +1995,11 @@ def generate_multi_outcome_coverage_candidate(
     worst_net = min(net_by_state.values()) if net_by_state else None
     reasons = list(timing_reasons)
     assumptions = [
-        "Every verified state is covered by exactly one unit-payout outcome contract.",
+        (
+            "Selected verified nonnegative contract payoff vectors sum to the same positive payout in every exhaustive event state."
+            if allow_non_one_hot
+            else "Every verified state is covered by exactly one unit-payout outcome contract."
+        ),
         "All legs are hypothetical long positions in one venue at recorded best asks; no order was submitted.",
         "Only displayed best-ask depth is modeled; deeper liquidity and simultaneous fills are not established.",
         "No cross-venue equivalence, shared collateral, or transfer assumption is used.",
@@ -1999,22 +2215,23 @@ def _multi_candidate_id(
     books: dict[str, BookSnapshot],
     scenario: ExecutionScenario,
     quantity: Decimal | None,
+    *,
+    family: OpportunityFamily = OpportunityFamily.WITHIN_MARKET_MULTI_OUTCOME_COVERAGE,
+    selected_instrument_ids: tuple[str, ...] | None = None,
 ) -> str:
+    payload = {
+        "model": ECONOMIC_MODEL_VERSION,
+        "family": OpportunityFamily.WITHIN_MARKET_MULTI_OUTCOME_COVERAGE.value,
+        "market_id": market.canonical_id,
+        "book_observation_ids": sorted(item.provenance.observation_id for item in books.values()),
+        "scenario": scenario.model_dump(mode="json"),
+        "quantity": str(quantity) if quantity is not None else None,
+    }
+    if family != OpportunityFamily.WITHIN_MARKET_MULTI_OUTCOME_COVERAGE:
+        payload["family"] = family.value
+        payload["selected_instrument_ids"] = sorted(selected_instrument_ids or ())
     return hashlib.sha256(
-        json.dumps(
-            {
-                "model": ECONOMIC_MODEL_VERSION,
-                "family": OpportunityFamily.WITHIN_MARKET_MULTI_OUTCOME_COVERAGE.value,
-                "market_id": market.canonical_id,
-                "book_observation_ids": sorted(
-                    item.provenance.observation_id for item in books.values()
-                ),
-                "scenario": scenario.model_dump(mode="json"),
-                "quantity": str(quantity) if quantity is not None else None,
-            },
-            sort_keys=True,
-            separators=(",", ":"),
-        ).encode()
+        json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
     ).hexdigest()
 
 

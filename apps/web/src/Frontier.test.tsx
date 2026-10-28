@@ -405,7 +405,7 @@ it('renders recorded-evidence empty states and never probes a source automatical
     items: [
       {
         candidate_id: 'multi-outcome-fixture-candidate',
-        family: 'within_market_multi_outcome_coverage',
+        family: 'within_market_payoff_basket',
         classification: 'VERIFIED MATHEMATICAL INCONSISTENCY',
         hypothetical: true,
         practical_eligibility: false,
@@ -576,6 +576,7 @@ it('renders recorded-evidence empty states and never probes a source automatical
     offset: 0,
   });
   fireEvent.click(screen.getByRole('button', { name: 'Candidates' }));
+  expect(await screen.findByText('within market payoff basket')).toBeInTheDocument();
   expect(
     await screen.findByRole('heading', { name: 'Terminal-state payoff analysis' }),
   ).toBeInTheDocument();

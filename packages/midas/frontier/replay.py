@@ -13,7 +13,9 @@ from midas.frontier.economics import (
     ECONOMIC_MODEL_VERSION,
     ExecutionScenario,
     OpportunityCandidate,
+    _is_complete_one_hot_market,
     generate_binary_coverage_candidates,
+    generate_bounded_payoff_basket_candidates,
     generate_logical_implication_candidates,
     generate_multi_outcome_coverage_candidate,
 )
@@ -27,7 +29,7 @@ from midas.frontier.relationships import (
     propose_relationships,
 )
 
-REPLAY_VERSION = "frontier-deterministic-replay-13"
+REPLAY_VERSION = "frontier-deterministic-replay-14"
 PAIRED_COMPARISON_VERSION = "frontier-paired-replay-1"
 
 
@@ -263,14 +265,27 @@ def deterministic_replay(
             and market.payoff.verified
             and market.payoff.exhaustive
         ):
-            candidates.append(
-                generate_multi_outcome_coverage_candidate(
-                    market,
-                    book_index.get(market.canonical_id, {}),
-                    scenario=scenario,
-                    as_of_utc=pinned_as_of,
-                )
+            market_instruments = tuple(
+                sorted(market.instruments, key=lambda item: item.native_instrument_id)
             )
+            if _is_complete_one_hot_market(market_instruments, market.payoff.state_ids):
+                candidates.append(
+                    generate_multi_outcome_coverage_candidate(
+                        market,
+                        book_index.get(market.canonical_id, {}),
+                        scenario=scenario,
+                        as_of_utc=pinned_as_of,
+                    )
+                )
+            else:
+                candidates.extend(
+                    generate_bounded_payoff_basket_candidates(
+                        market,
+                        book_index.get(market.canonical_id, {}),
+                        scenario=scenario,
+                        as_of_utc=pinned_as_of,
+                    )
+                )
     relationship_index = {item.relationship_id: item for item in ordered_relationships}
     candidate_tuple = tuple(
         independently_audit_candidate(

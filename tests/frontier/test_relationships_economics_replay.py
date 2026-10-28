@@ -11,6 +11,7 @@ from midas.frontier.economics import (
     _calculate_fee,
     audit_kalshi_mve_reported_settlement,
     generate_binary_coverage_candidates,
+    generate_bounded_payoff_basket_candidates,
     generate_multi_outcome_coverage_candidate,
     kalshi_candidate_fee_schedule,
 )
@@ -1677,7 +1678,7 @@ def test_candidate_generation_and_independent_audit_enforce_price_ticks():
         as_of_utc=T0 + timedelta(milliseconds=100),
     )
     candidate = next(item for item in candidates if item.legs)
-    assert candidate.model_version == "frontier-economic-verifiers-13"
+    assert candidate.model_version == "frontier-economic-verifiers-14"
 
     def with_half_dollar_ticks(market_value):
         instruments = tuple(
@@ -1863,6 +1864,101 @@ def test_multi_outcome_candidate_and_audit_enforce_price_ticks():
     assert "violates its instrument tick size" in audited.independent_audit.message.lower()
 
 
+def test_bounded_payoff_basket_search_verifies_overlapping_three_leg_coverage():
+    one_hot = _multi_outcome_market()
+    state_ids = one_hot.payoff.state_ids
+    vectors = ((1, 1, 0), (0, 1, 1), (1, 0, 1))
+    instruments = tuple(
+        instrument.model_copy(
+            update={
+                "outcome_id": f"claim-{index}",
+                "payouts": tuple(
+                    StatePayout(state_id=state, amount=Decimal(vector[state_index]))
+                    for state_index, state in enumerate(state_ids)
+                ),
+            }
+        )
+        for index, (instrument, vector) in enumerate(zip(one_hot.instruments, vectors, strict=True))
+    )
+    basket_market = FrontierMarket.model_validate(
+        one_hot.model_dump(mode="python") | {"instruments": instruments}
+    )
+    books = _multi_outcome_books(basket_market, asks=("0.20", "0.25", "0.30"))
+    as_of = T0 + timedelta(milliseconds=100)
+
+    candidates = generate_bounded_payoff_basket_candidates(
+        basket_market,
+        books,
+        as_of_utc=as_of,
+    )
+
+    assert len(candidates) == 1
+    candidate = candidates[0]
+    assert candidate.family.value == "within_market_payoff_basket"
+    assert len(candidate.legs) == 3
+    assert candidate.outcome_payout_by_state == {state: Decimal(20) for state in state_ids}
+    assert candidate.worst_case_gross_pnl == Decimal("12.5")
+    audited = independently_audit_candidate(
+        candidate,
+        markets={basket_market.canonical_id: basket_market},
+        books_by_market={basket_market.canonical_id: books},
+        relationships={},
+        state_mappings={},
+        instrument_mappings={},
+        scenario=ExecutionScenario(),
+    )
+    assert audited.independent_audit is not None
+    assert audited.independent_audit.disposition.value == "verified"
+    assert audited.independent_audit.checked_leg_count == 3
+
+    partial_basket = candidate.model_copy(update={"legs": candidate.legs[:2]})
+    rejected_audit = independently_audit_candidate(
+        partial_basket,
+        markets={basket_market.canonical_id: basket_market},
+        books_by_market={basket_market.canonical_id: books},
+        relationships={},
+        state_mappings={},
+        instrument_mappings={},
+        scenario=ExecutionScenario(),
+    )
+    assert rejected_audit.independent_audit is not None
+    assert rejected_audit.independent_audit.disposition.value == "incomplete"
+    assert "constant positive payout" in rejected_audit.independent_audit.message.lower()
+    assert rejected_audit.classification == OpportunityClassification.INCOMPLETE_EVIDENCE
+
+    replay = deterministic_replay(
+        (basket_market,),
+        tuple(books.values()),
+        as_of_utc=as_of,
+    )
+    replay_candidates = [
+        item for item in replay.candidates if item.family.value == "within_market_payoff_basket"
+    ]
+    assert len(replay_candidates) == 1
+    assert replay_candidates[0].independent_audit is not None
+    assert replay_candidates[0].independent_audit.disposition.value == "verified"
+
+    no_coverage = tuple(
+        instrument.model_copy(
+            update={
+                "payouts": tuple(
+                    StatePayout(
+                        state_id=state,
+                        amount=Decimal(1 if state_index == 0 else 0),
+                    )
+                    for state_index, state in enumerate(state_ids)
+                )
+            }
+        )
+        for instrument in basket_market.instruments
+    )
+    rejected_market = FrontierMarket.model_validate(
+        basket_market.model_dump(mode="python") | {"instruments": no_coverage}
+    )
+    rejected_books = _multi_outcome_books(rejected_market, asks=("0.20", "0.25", "0.30"))
+    assert generate_bounded_payoff_basket_candidates(rejected_market, rejected_books) == ()
+
+
 def test_slippage_that_exceeds_binary_payout_is_rejected_as_unsupported():
     left, right, relationship, instrument_mapping = _verified_pair()
     left_books, right_books = _books(left, right)
@@ -2000,7 +2096,7 @@ def test_verified_multi_outcome_coverage_is_exact_and_stays_hypothetical():
         as_of_utc=T0 + timedelta(milliseconds=100),
         code_version="multi-outcome-fixture-v1",
     )
-    assert replay.manifest.replay_version == "frontier-deterministic-replay-13"
+    assert replay.manifest.replay_version == "frontier-deterministic-replay-14"
     replay_candidate = replay.candidates[0]
     assert replay_candidate.model_copy(update={"independent_audit": None}) == candidate
     assert replay_candidate.independent_audit is not None
@@ -2358,7 +2454,7 @@ def test_deterministic_replay_is_invariant_to_input_order():
     }
     first = deterministic_replay((left, right), all_books, **kwargs)
     second = deterministic_replay((right, left), tuple(reversed(all_books)), **kwargs)
-    assert first.manifest.economic_model_version == "frontier-economic-verifiers-13"
+    assert first.manifest.economic_model_version == "frontier-economic-verifiers-14"
     assert first.run_id == second.run_id
     assert first.result_sha256 == second.result_sha256
     assert first.candidates == second.candidates

@@ -17,6 +17,7 @@ from midas.frontier.adapters import KalshiAdapter, KrakenSpotAdapter, Polymarket
 from midas.frontier.adapters.transport import PublicReadTransport
 from midas.frontier.models import (
     AdapterConfig,
+    BookSnapshot,
     FeeSchedule,
     FeeStatus,
     FrontierMarket,
@@ -4359,7 +4360,7 @@ def test_replay_api_generates_and_persists_multi_outcome_candidate(tmp_path):
         replay = client.post("/api/frontier/replay", json={})
         assert replay.status_code == 200, replay.text
         result = replay.json()
-        assert result["manifest"]["replay_version"] == "frontier-deterministic-replay-13"
+        assert result["manifest"]["replay_version"] == "frontier-deterministic-replay-14"
         assert len(result["candidates"]) == 1
         candidate = result["candidates"][0]
         assert candidate["family"] == "within_market_multi_outcome_coverage"
@@ -4533,6 +4534,157 @@ def test_replay_api_generates_and_persists_multi_outcome_candidate(tmp_path):
             },
         )
         assert stale_carry.status_code == 409
+        assert requests == []
+    finally:
+        client.close()
+        asyncio.run(registry.aclose())
+        asyncio.run(http_client.aclose())
+
+
+def test_replay_api_generates_and_persists_bounded_payoff_basket(tmp_path):
+    client, registry, http_client, requests, store = _client(tmp_path)
+    base = market(Venue.KALSHI, "payoff-basket-api", title="Overlapping payoff API fixture")
+    states = ("red", "green", "blue")
+    vectors = ((1, 1, 0), (0, 1, 1), (1, 0, 1))
+    instruments = tuple(
+        MarketInstrument(
+            native_instrument_id=f"KX-BASKET:{index}",
+            label=f"Claim {index}",
+            outcome_id=f"claim-{index}",
+            quantity_unit=QuantityUnit.CONTRACT,
+            price_currency="USD",
+            price_currency_identity=SettlementAssetIdentity(
+                kind=SettlementAssetKind.FIAT, code="USD"
+            ),
+            payouts=tuple(
+                StatePayout(state_id=state, amount=Decimal(vector[state_index]))
+                for state_index, state in enumerate(states)
+            ),
+        )
+        for index, vector in enumerate(vectors)
+    )
+    market_data = base.model_dump(mode="python")
+    market_data.update(
+        market_kind=MarketKind.MULTI_OUTCOME_EVENT,
+        instruments=instruments,
+        payoff=PayoffSpec(
+            state_ids=states,
+            payout_currency="USD",
+            settlement_asset="USD",
+            settlement_asset_identity=SettlementAssetIdentity(
+                kind=SettlementAssetKind.FIAT, code="USD"
+            ),
+            exhaustive=True,
+            verified=True,
+            verification_basis="controlled overlapping payoff fixture",
+        ),
+    )
+    event = FrontierMarket.model_validate(market_data)
+
+    def observation_id_for(raw: RawObservation) -> str:
+        return hashlib.sha256(
+            "|".join(
+                (
+                    raw.venue.value,
+                    raw.observation_kind,
+                    raw.request_url,
+                    raw.raw_sha256,
+                    raw.request_started_at_utc.isoformat(),
+                    raw.received_at_utc.isoformat(),
+                )
+            ).encode()
+        ).hexdigest()
+
+    def append_capture(kind: str, path: str, body: str, index: int, value):
+        started = T0 + timedelta(seconds=index)
+        received = started + timedelta(milliseconds=10)
+        raw = RawObservation(
+            venue=Venue.KALSHI,
+            observation_kind=kind,
+            request_url=f"https://fixture.example/{path}",
+            http_status=200,
+            request_started_at_utc=started,
+            received_at_utc=received,
+            raw_body=body,
+            raw_sha256=hashlib.sha256(body.encode()).hexdigest(),
+            adapter_version="frontier-api-payoff-basket-fixture-v1",
+        )
+        observation_id = observation_id_for(raw)
+        provenance = value.provenance.model_copy(
+            update={
+                "source_url": raw.request_url,
+                "adapter_version": raw.adapter_version,
+                "request_started_at_utc": started,
+                "response_received_at_utc": received,
+                "processed_at_utc": received,
+                "raw_sha256": raw.raw_sha256,
+                "observation_id": observation_id,
+            }
+        )
+        value_updates = {"provenance": provenance}
+        if isinstance(value, BookSnapshot):
+            value_updates["received_at_utc"] = received
+        normalized = value.model_copy(update=value_updates)
+        store.append_observation(raw, normalized)
+        return normalized
+
+    try:
+        market_body = '{"market":"overlapping-payoff-fixture"}'
+        market_raw = RawObservation(
+            venue=Venue.KALSHI,
+            observation_kind="market_listing",
+            request_url="https://fixture.example/market",
+            http_status=200,
+            request_started_at_utc=T0,
+            received_at_utc=T0 + timedelta(milliseconds=10),
+            raw_body=market_body,
+            raw_sha256=hashlib.sha256(market_body.encode()).hexdigest(),
+            adapter_version="frontier-api-payoff-basket-fixture-v1",
+        )
+        market_provenance = event.provenance.model_copy(
+            update={
+                "source_url": market_raw.request_url,
+                "adapter_version": market_raw.adapter_version,
+                "request_started_at_utc": market_raw.request_started_at_utc,
+                "response_received_at_utc": market_raw.received_at_utc,
+                "processed_at_utc": market_raw.received_at_utc,
+                "raw_sha256": market_raw.raw_sha256,
+                "observation_id": observation_id_for(market_raw),
+            }
+        )
+        event = event.model_copy(update={"provenance": market_provenance})
+        store.append_observation(market_raw, MarketBatch(venue=Venue.KALSHI, markets=(event,)))
+        for index, (instrument, price) in enumerate(
+            zip(instruments, ("0.20", "0.25", "0.30"), strict=True), start=1
+        ):
+            snapshot = book(event, instrument.native_instrument_id, price)
+            append_capture(
+                "book_snapshot",
+                f"book/{instrument.native_instrument_id}",
+                json.dumps({"instrument": instrument.native_instrument_id, "price": price}),
+                index,
+                snapshot,
+            )
+
+        response = client.post("/api/frontier/replay", json={})
+        assert response.status_code == 200, response.text
+        result = response.json()
+        assert result["manifest"]["replay_version"] == "frontier-deterministic-replay-14"
+        assert len(result["candidates"]) == 1
+        candidate = result["candidates"][0]
+        assert candidate["family"] == "within_market_payoff_basket"
+        assert len(candidate["legs"]) == 3
+        assert candidate["independent_audit"]["disposition"] == "verified"
+        assert set(candidate["outcome_payout_by_state"].values()) == {"20"}
+        assert candidate["practical_eligibility"] is False
+
+        persisted = client.get("/api/frontier/opportunities")
+        assert persisted.status_code == 200, persisted.text
+        saved = next(
+            item for item in persisted.json()["items"] if item["source_run_id"] == result["run_id"]
+        )
+        assert saved["family"] == "within_market_payoff_basket"
+        assert saved["candidate_id"] == candidate["candidate_id"]
         assert requests == []
     finally:
         client.close()

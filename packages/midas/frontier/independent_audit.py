@@ -51,7 +51,7 @@ from midas.frontier.relationships import (
 )
 
 D = Decimal
-_AUDIT_VERSION = "frontier-independent-economic-audit-10"
+_AUDIT_VERSION = "frontier-independent-economic-audit-11"
 _FEE_QUANTUM = D("0.00001")
 _KALSHI_FEE_MAX_EVIDENCE_AGE = timedelta(hours=24)
 _AUDIT_PARTIAL_FILL_FRACTIONS = (D(0), D("0.25"), D("0.5"), D("0.75"), D(1))
@@ -214,6 +214,8 @@ def _recompute(
         )
     elif candidate.family == OpportunityFamily.WITHIN_MARKET_MULTI_OUTCOME_COVERAGE:
         state_ids = _verify_multi_outcome_market(candidate, selected_markets, mismatches)
+    elif candidate.family == OpportunityFamily.WITHIN_MARKET_PAYOFF_BASKET:
+        state_ids = _verify_bounded_payoff_basket_market(candidate, selected_markets, mismatches)
     else:
         raise _MissingAuditEvidence("This candidate family has no independent verifier.")
 
@@ -282,6 +284,7 @@ def _recompute(
             )
             continue
         best_ask = min(book.asks, key=lambda level: level.price)
+        maximum_terminal_payout = max((item.amount for item in instrument.payouts), default=D(0))
         valid_price = instrument.tick_size is None or (
             Fraction(best_ask.price) % Fraction(instrument.tick_size) == 0
         )
@@ -298,6 +301,10 @@ def _recompute(
             mismatches.append(
                 f"Leg {leg.instrument_id} best ask violates its instrument {constraint_name} constraints"
             )
+        if maximum_terminal_payout <= 0 or best_ask.price > maximum_terminal_payout:
+            mismatches.append(
+                f"Leg {leg.instrument_id} best ask exceeds its maximum verified terminal payout"
+            )
         delay_ms = (
             scenario.execution_delay_ms
             + scenario.additional_execution_delay_ms_by_venue.get(market.venue.value, 0)
@@ -306,6 +313,10 @@ def _recompute(
             scenario.quote_decay_bps_per_second * D(delay_ms) / D(1000)
         )
         modeled_price = best_ask.price * (D(1) + added_bps / D(10000))
+        if modeled_price > maximum_terminal_payout:
+            mismatches.append(
+                f"Leg {leg.instrument_id} modeled price exceeds its maximum verified terminal payout"
+            )
         modeled_price_by_leg[(leg.market_id, leg.instrument_id)] = modeled_price
         if (
             leg.book_observation_id != book.provenance.observation_id
@@ -367,7 +378,10 @@ def _recompute(
 
     payouts: dict[str, Decimal] = {}
     payout_by_leg: dict[str, dict[str, Decimal]] = {}
-    if candidate.family == OpportunityFamily.WITHIN_MARKET_MULTI_OUTCOME_COVERAGE:
+    if candidate.family in {
+        OpportunityFamily.WITHIN_MARKET_MULTI_OUTCOME_COVERAGE,
+        OpportunityFamily.WITHIN_MARKET_PAYOFF_BASKET,
+    }:
         for state_id in state_ids:
             payouts[state_id] = sum(
                 (
@@ -581,7 +595,10 @@ def _independent_timing_summary(
             timing_valid = False
         if any(ask.exchange_timestamp_utc is None for ask in asks):
             timing_valid = False
-    elif candidate.family == OpportunityFamily.WITHIN_MARKET_MULTI_OUTCOME_COVERAGE:
+    elif candidate.family in {
+        OpportunityFamily.WITHIN_MARKET_MULTI_OUTCOME_COVERAGE,
+        OpportunityFamily.WITHIN_MARKET_PAYOFF_BASKET,
+    }:
         level_values = tuple(ask.exchange_timestamp_utc for ask in asks)
         if any(value is None for value in (*exchange_values, *level_values)):
             exchange_skew = None
@@ -937,6 +954,66 @@ def _verify_multi_outcome_market(
     if leg_instruments != set(instruments):
         mismatches.append(
             "Candidate legs do not buy exactly one instrument for each verified outcome"
+        )
+    return state_ids
+
+
+def _verify_bounded_payoff_basket_market(
+    candidate: OpportunityCandidate,
+    markets: dict[str, FrontierMarket],
+    mismatches: list[str],
+) -> tuple[str, ...]:
+    """Independently prove that a selected long basket has constant positive payout."""
+    if len(markets) != 1 or candidate.relationship_id is not None:
+        mismatches.append("Payoff basket has relationship or multiple market identities")
+    if len(markets) != 1:
+        raise _MissingAuditEvidence("Payoff basket audit requires exactly one market.")
+    market = next(iter(markets.values()))
+    _require_verified_event(market)
+    state_ids = market.payoff.state_ids
+    if (
+        market.market_kind != MarketKind.MULTI_OUTCOME_EVENT
+        or not 3 <= len(state_ids) <= 16
+        or not 1 <= len(market.instruments) <= 12
+        or not 1 <= len(candidate.legs) <= 16
+        or market.payoff.payout_currency != market.payoff.settlement_asset
+        or not market.has_consistent_settlement_asset_identity()
+    ):
+        raise _MissingAuditEvidence("Market exceeds the bounded event payoff basket contract.")
+    if len({leg.quantity for leg in candidate.legs}) != 1:
+        raise _MissingAuditEvidence("Payoff basket legs do not use one common quantity.")
+
+    instruments = {item.native_instrument_id: item for item in market.instruments}
+    selected = []
+    for leg in candidate.legs:
+        instrument = instruments.get(leg.instrument_id)
+        if instrument is None:
+            raise _MissingAuditEvidence("Payoff basket leg is absent from its market contract.")
+        if (
+            instrument.quantity_unit == QuantityUnit.UNKNOWN
+            or instrument.price_currency != market.payoff.payout_currency
+            or instrument.price_currency_identity != market.payoff.settlement_asset_identity
+        ):
+            raise _MissingAuditEvidence(
+                "Payoff basket leg has an unsupported unit or denomination."
+            )
+        vector = {item.state_id: item.amount for item in instrument.payouts}
+        if len(vector) != len(instrument.payouts) or set(vector) != set(state_ids):
+            raise _MissingAuditEvidence(
+                "Payoff basket leg does not define every unique event state."
+            )
+        selected.append((leg, instrument, vector))
+    if len({instrument.quantity_unit for _, instrument, _ in selected}) != 1:
+        raise _MissingAuditEvidence("Payoff basket combines incompatible trading units.")
+
+    total_by_state = {
+        state_id: sum((leg.quantity * vector[state_id] for leg, _, vector in selected), D(0))
+        for state_id in state_ids
+    }
+    totals = set(total_by_state.values())
+    if len(totals) != 1 or next(iter(totals), D(0)) <= 0:
+        raise _MissingAuditEvidence(
+            "Selected contracts do not guarantee one constant positive payout in every verified state."
         )
     return state_ids
 
