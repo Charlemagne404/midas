@@ -5448,3 +5448,23 @@ below 1%.
 | Source-use and held-capture guard tests | COMPLETE AND VERIFIED | All 7 tests pass with no live request or access to historical capture content. |
 | Bounded Frontier regression | PARTIALLY VERIFIED | 223 tests pass across six invocations; six modules remain unrun as complete modules. |
 | Additional test workloads | DEFERRED | I/O `some` PSI was above the admission threshold at the last sample. |
+
+## Replay comparison and timeline API verification — 2026-10-28 05:27 UTC
+
+`tests/frontier/test_replay_comparison.py` and
+`tests/frontier/test_timeline_api.py` passed **8/8** in one bounded invocation:
+2.90 seconds pytest time, 3.61 seconds wall, and 211,468 KiB peak RSS. The run
+used `/tmp/frontier-replay-timeline-20261028`, had zero swaps and socket
+messages, and wrote 4,840 KiB. The existing Starlette/httpx TestClient
+deprecation warning appeared.
+
+The immediate post-run sample measured memory PSI avg10 **0.00% some / 0.00%
+full** and I/O PSI avg10 **1.52% some / 1.37% full**; no Frontier pytest or
+Arena research lock holder was active. Hold further tests until I/O `some`
+PSI is below 1%.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Replay comparison and timeline API modules | COMPLETE AND VERIFIED | Both complete modules pass 8/8 in an isolated temporary directory. |
+| Serial Frontier regression coverage | PARTIALLY VERIFIED | 231 tests pass across seven bounded invocations; four modules remain unrun as complete modules. |
+| Additional resource-bearing tests | DEFERRED | Post-run I/O PSI exceeded the admission threshold. |

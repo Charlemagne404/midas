@@ -6827,3 +6827,29 @@ no Arena lock holder was present. Defer additional test modules until I/O
 | Source-use and held-capture boundary tests | COMPLETE AND VERIFIED | All 7 tests pass; no new source request and only temporary test data were used. |
 | Serial Frontier regression coverage | PARTIALLY VERIFIED | 223 tests pass across six bounded invocations; six modules remain unrun as complete modules. |
 | Remaining resource-bearing tests | DEFERRED | I/O `some` PSI is slightly above the 1% threshold. |
+
+## Replay comparison and timeline API verification — 2026-10-28 05:27 UTC
+
+The complete `test_replay_comparison.py` and `test_timeline_api.py` modules
+passed **8/8** in one bounded invocation (2.90 seconds pytest time, 3.61
+seconds wall, 211,468 KiB peak RSS). Pytest used
+`/tmp/frontier-replay-timeline-20261028`; the process had zero swaps and socket
+messages and wrote 4,840 KiB. The existing Starlette/httpx TestClient
+deprecation warning appeared.
+
+The immediate post-run sample showed memory PSI avg10 **0.00% some / 0.00%
+full** and I/O PSI avg10 **1.52% some / 1.37% full**. No Frontier test or Arena
+research lock holder was active. Further tests are deferred until I/O `some`
+PSI falls below 1%. Serial regression coverage now totals **231 passed cases
+across seven bounded invocations**. Four complete modules remain:
+`test_api.py`, `test_relationships_economics_replay.py`,
+`test_relationship_reviews.py`, and `test_joint_state.py`. The full suite is
+still unverified; the two interrupted monolithic runs are not full-suite
+passes.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Replay comparison and timeline API | COMPLETE AND VERIFIED | Both modules pass 8/8 in an isolated temporary directory. |
+| Serial Frontier regression coverage | PARTIALLY VERIFIED | 231 passed across seven invocations; four modules remain. |
+| Full Frontier regression | PARTIALLY VERIFIED | Two monolithic attempts were interrupted; no full-suite pass is claimed. |
+| Additional resource-bearing checks | DEFERRED | Post-run I/O PSI exceeded the admission threshold. |
