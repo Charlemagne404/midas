@@ -2914,3 +2914,14 @@ avg10 was **44.54%**; memory PSI was 0.00%, I/O PSI was **0.14% some / 0.03%
 full**, and about **10.4 GiB** was available. No source, held capture,
 protected store, collector, or production service was accessed. Frontier
 remains research-only and **PARTIALLY VERIFIED**.
+
+### Frontier Arena snapshot integrity — 2026-10-28 13:35 UTC
+
+Commit `4788443` now revalidates replay, discovery, and timeline snapshots
+before writing and revalidates job specs before constructing snapshot paths.
+Six targeted corruption and happy-path tests pass; strict mypy, Ruff, and
+format checks pass. Tests ran under `/dev/shm` with zero swaps, filesystem
+input, or socket messages. Broader Arena/Frontier suites remain deferred while
+host CPU PSI avg10 is about **48%**. No source, capture, collector, protected
+store, service, or persistent job was accessed. Frontier remains research-only
+and **PARTIALLY VERIFIED**.

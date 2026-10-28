@@ -9486,3 +9486,41 @@ service or evidence.
 | Collection journal append and read boundaries | COMPLETE AND VERIFIED | The complete 29-case collection module passes after both fixes; strict mypy, Ruff, and format checks also pass. |
 | Full Frontier regression after journal fixes | PARTIALLY VERIFIED | The full suite was not rerun under sustained high host CPU pressure. |
 | Frontier project acceptance | PARTIALLY VERIFIED | Live cross-venue evidence, held-source permission, broad resource qualification, production recovery, and deployment remain open. |
+
+## Arena snapshot storage and path validation — 2026-10-28
+
+Commit `4788443` hardens the three Frontier snapshot families in Arena:
+replay, discovery, and timeline. Each `store_snapshot` now rebuilds and
+validates the typed snapshot from JSON-mode `exclude_unset` data before any
+size check or filesystem mutation, and takes the stored identity from that
+validated object. This closes a `model_copy(update=...)` boundary where nested
+objects could skip validation or a copied identifier could influence the
+output path. Each loader also reparses its typed job specification before
+using its identifier in a path. Timeline's schema-v1 field-set behavior is
+retained during round trips.
+
+Six focused tests passed on isolated tmpfs roots: four malformed-copy,
+content-address, and timeline-compatibility cases passed in 1.72 seconds
+(2.41 seconds wall, 193,700 KiB maximum RSS); two replay/discovery storage and
+artifact-reconstruction happy paths passed in 1.60 seconds (2.27 seconds wall,
+190,404 KiB maximum RSS). Both invocations recorded zero swaps, filesystem
+input, and socket messages. The three Arena modules pass strict mypy; Ruff
+check/format and `git diff --check` pass. The only output warning was the
+existing Starlette/httpx `TestClient` deprecation warning. These tests used
+temporary roots and did not access a collector, external source API, held
+capture, protected store, production service, or persistent Arena job.
+
+At `2026-10-28T13:35:05Z`, CPU PSI avg10 was 48.03%, I/O PSI was 0.21% some
+and 0.00% full, memory PSI was 0.00%, and approximately 10 GiB was available.
+The full Arena modules and full Frontier suite were not rerun under sustained
+CPU pressure. The repository's latest previous full Frontier pass remains
+379/379 at commit `f5dfb26`; it is not evidence that these later commits have
+passed the entire suite.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Arena Frontier snapshot validation and path boundaries | COMPLETE AND VERIFIED | Six focused tests, strict mypy, Ruff check/format, and diff check pass across replay, discovery, and timeline. |
+| Full Arena and Frontier regression after this fix | PARTIALLY VERIFIED | Focused cases pass; broad rerun deferred due to sustained host CPU PSI. |
+| Frontier overall | PARTIALLY VERIFIED | Live cross-venue equivalence, source-use permissions, held-capture access, production recovery, and deployment gates remain unresolved. |
+
+**Implementation commit:** `4788443` (`fix(arena): validate Frontier snapshot boundaries`).

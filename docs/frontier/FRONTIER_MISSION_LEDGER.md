@@ -8482,3 +8482,41 @@ production service, or Arena job was accessed or started.
 fresh host sample before any additional broad verification workload. The
 resource-gated tmpfs command is documented in `docs/frontier/FRONTIER_OPERATIONS.md`
 (commit `5e20c7f`).
+
+## Arena snapshot write and load boundaries — 2026-10-28 13:35 UTC
+
+**Implementation commit:** `4788443` (`fix(arena): validate Frontier snapshot boundaries`).
+
+Review of Frontier's Arena replay, discovery, and timeline snapshot stores
+found that copied Pydantic instances could bypass nested validation and that
+copied job-spec identifiers reached path construction without reparsing. All
+three writers now serialize and revalidate the snapshot before size checks or
+filesystem changes, then use the validated identifier. All three loaders
+revalidate job specs before constructing paths. Timeline schema-v1
+`exclude_unset` behavior is preserved so old field-presence semantics remain
+round-trippable.
+
+Six focused tests passed: four corruption and timeline-preservation cases
+(1.72 seconds pytest, 2.41 seconds wall, 193,700 KiB peak RSS) and two
+replay/discovery happy paths (1.60 seconds pytest, 2.27 seconds wall,
+190,404 KiB peak RSS). Both runs used isolated `/dev/shm` roots, recorded zero
+swaps, filesystem input, and socket messages, and had one existing
+Starlette/httpx `TestClient` deprecation warning each. Strict mypy reported no
+issues in the three Arena modules; Ruff check/format and `git diff --check`
+passed. No source API, collector, held capture, protected store, production
+service, or persistent Arena job was accessed.
+
+At `2026-10-28T13:35:05Z`, CPU PSI avg10 was **48.03%**, I/O PSI avg10 was
+**0.21% some / 0.00% full**, memory PSI avg10 was **0.00%**, and approximately
+**10 GiB** was available. With sustained CPU pressure, the full Arena modules
+and broader Frontier suite were not rerun.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Arena Frontier snapshot path and nested-data validation | COMPLETE AND VERIFIED | Focused corruption and round-trip tests pass for replay, discovery, and timeline stores/loaders; strict mypy and Ruff checks pass. |
+| Full Arena and Frontier regression after this change | PARTIALLY VERIFIED | Six focused tests pass; full suites were deferred under sustained CPU pressure. |
+| Frontier project acceptance | PARTIALLY VERIFIED | Source-use holds, held-capture restrictions, cross-venue equivalence evidence, production recovery, and deployment remain open. |
+
+**Next safe action:** continue bounded source-independent code review; sample
+host pressure again before any broader test run. Keep
+`data/frontier-public-probes/` untouched.
