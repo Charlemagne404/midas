@@ -10204,12 +10204,18 @@ avg10 measured 45.32% some / 40.12% full and I/O PSI 0.61% some / 0.60% full;
 9.5 GiB was available, with 3.7 GiB of 4 GiB swap in use. The focused
 transport test and Ruff checks are deferred until a fresh resource sample
 meets the local admission gate. Implementation commits are eab4a0b, 634ee5f,
-and 1938dc4.
+1938dc4, and eadec5d.
 
 At 15:52:21Z memory PSI avg10 remained 37.47% some / 23.71% full and avg60
 was 36.41% some / 24.95% full. I/O PSI avg10 was 0.09% some / 0.06% full,
 available memory was 9.7 GiB, and 3.8 GiB of 4 GiB swap was occupied. No
 validation process was started under that pressure sample.
+
+At 15:55:14Z, memory PSI avg10 measured 36.40% some / 21.49% full, with
+avg60 at 36.05% some / 23.01% full. I/O PSI avg10 was 0.00%, available memory
+was 9.9 GiB, and swap was full at 4.0 GiB with 39 MiB free. The transport now
+rejects injected network clients and custom proxy mounts (commit eadec5d),
+but its focused tests and Ruff checks remain pending.
 
 | Component | Status | Evidence and remaining boundary |
 | --- | --- | --- |
