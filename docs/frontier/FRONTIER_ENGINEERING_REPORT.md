@@ -9022,3 +9022,21 @@ and I/O was 0.60% some / 0.59% full. At 12:10:49Z afterward, memory remained
 that gate. Across the reviewed Reality slices, 71 tests pass and one
 self-signaling case remains deselected. No recording, live source, or service
 was accessed. Frontier overall remains **PARTIALLY VERIFIED**.
+
+### Research-schedule test fixture correction — 2026-10-28
+
+Test commit cd248ce updates a fixture that targeted the wrong module name.
+The schedule test patched the top-level test_reality_foundry module, while
+the dataset helper imports tests.test_reality_foundry; a read-only Python
+probe confirmed they are distinct objects. The date changes therefore never
+reached the generated tape, and the overlapping final-test-period guard
+correctly failed closed on the second synthetic evaluation. The test now
+patches the exact imported module and asserts distinct dataset identities.
+
+The original isolated invocation lacked tests on PYTHONPATH and failed before
+the pruning test body. A corrected import-path run reached the body and
+reported three passed / one failed at the intentional overlap guard. No data
+outside unique /dev/shm basetemps was changed. Ruff, format, and whitespace
+checks pass for cd248ce. Runtime verification of that commit remains pending:
+at 2026-10-28T12:12:41Z memory PSI avg10 was 44.70% some / 40.61% full.
+The research-schedule module remains unverified on the corrected fixture.

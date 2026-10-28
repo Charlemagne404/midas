@@ -33,6 +33,19 @@ in the dated addendum below and in the Frontier engineering report.
 
 ## Frontier development addendum — 2026-10-28
 
+### Latest isolated Frontier checkpoint — 2026-10-28 12:12 UTC
+
+Test commit cd248ce corrects the research-schedule fixture to patch the same
+source module used by dataset_fixture. The prior date shift targeted a
+separately imported top-level module, so it produced duplicate synthetic
+dataset periods and the overlap guard correctly rejected the second
+evaluation. Ruff and format checks pass; runtime verification is pending.
+
+At 12:12:41Z memory PSI avg10 was 44.70% some / 40.61% full, above the 1%
+test gate. All attempted writes were confined to /dev/shm. No protected data
+or service was accessed. Frontier remains **PARTIALLY VERIFIED**,
+research-only, and undeployed.
+
 ### Latest isolated Frontier checkpoint — 2026-10-28 12:10 UTC
 
 Additional bounded Reality regression passed: calibration **18/18** and

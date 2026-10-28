@@ -1,5 +1,39 @@
 # Project Frontier Mission Ledger
 
+## Reality research-schedule fixture correction — 2026-10-28 12:12 UTC
+
+Test commit cd248ce fixes a synthetic fixture that patched the wrong Python
+module identity. The schedule test changed top-level test_reality_foundry.START,
+while dataset_fixture uses tests.test_reality_foundry.START. A read-only
+identity probe confirmed those are distinct modules, so the intended time
+shift never reached the synthetic tape. The second dataset therefore reused
+the same final-test period and the research-access guard correctly rejected
+the overlap. The fixture now patches the imported module object and asserts
+the generated dataset IDs differ.
+
+The first isolated invocation omitted the tests directory from PYTHONPATH and
+failed while resolving the monkeypatch target. Rerunning with
+PYTHONPATH=packages:.:tests reached the test body: three tests passed, while
+the overlapping-period guard rejected the stale duplicate fixture. All data
+and the one opened temporary evaluation record remained under unique /dev/shm
+basetemps; no tracked or protected store was accessed. Ruff, format, and
+git diff --check pass.
+
+No runtime test has been run against cd248ce yet. At 12:12:41Z memory PSI
+avg10 was **44.70% some / 40.61% full**, I/O PSI was **0.57% some / 0.57%
+full**, and about **10 GiB** was available. The relevant test remains deferred
+until a fresh memory sample falls below the 1% admission threshold.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Research-schedule fixture alias correction | IMPLEMENTED, VALIDATION PENDING | cd248ce patches the module used by dataset_fixture and checks IDs differ; runtime test awaits resource admission. |
+| Research-schedule tests | PARTIALLY VERIFIED | Three of four pass on the pre-fix fixture; the fourth stopped safely on the intentional overlap guard. |
+| Frontier overall | PARTIALLY VERIFIED | Broad regression, source permission/evidence, and deployment remain open. |
+
+Next safe action: after memory PSI avg10 falls below 1%, run the exact
+research-schedule module with PYTHONPATH=packages:.:tests and a fresh tmpfs
+basetemp; preserve the overlap guard.
+
 ## Reality calibration and dashboard slices — 2026-10-28 12:10 UTC
 
 The isolated calibration module passed **18/18** tests in 0.46 seconds
