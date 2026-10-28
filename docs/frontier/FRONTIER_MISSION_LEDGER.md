@@ -1,5 +1,33 @@
 # Project Frontier Mission Ledger
 
+## Arena job-supervision regression and I/O admission stop — 2026-10-28 14:03 UTC
+
+The generic Arena job/supervisor module passed **16/16** in 31.95 seconds
+(32.55 seconds wall), at 180,988 KiB peak RSS, zero swaps, 120 filesystem input
+blocks, 105,904 output blocks, and no socket traffic. The test root was
+`/tmp/midas-frontier-arena-jobs-20261028T1402Z`. Tests cover cancelled and
+stale-source workers, artifact and disk budgets, supervisor failure state,
+durable retries, worker leases, and restricted launch commands. Child workers
+were test-scoped and exited with the suite; no production systemd unit, service,
+or Arena root was used.
+
+At `14:02:23Z` before the run, memory and I/O PSI avg10 were **0.00%**, with
+about **10 GiB** available. At `14:03:06Z` after the run, memory PSI remained
+**0.00%**, but I/O PSI had risen to **4.58% some / 3.59% full**. CPU PSI avg10
+was 43.91% before and 36.68% after. No further test or build was started; wait
+for a fresh I/O PSI avg10 below the 1% admission threshold. The worker test
+processes exited; no collector or persistent Arena job is running.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Arena generic job and supervisor regression | COMPLETE AND VERIFIED | `tests/arena/test_jobs.py` passes 16/16, including bounded worker-process cases. |
+| Further resource-bearing verification | DEFERRED | Post-run I/O PSI exceeded the admission gate; re-sample before continuing. |
+| Frontier project acceptance | PARTIALLY VERIFIED | Live source permission/evidence, broader MIDAS regression, production recovery, and deployment remain open. |
+
+**Next safe action:** continue read-only acceptance review while I/O pressure
+settles, then remeasure before another bounded test slice. Preserve the
+source-use holds and `data/frontier-public-probes/`.
+
 ## Frontier Arena replay integration verification — 2026-10-28 14:00 UTC
 
 At code commit `76d388b`, the targeted Arena integration modules passed

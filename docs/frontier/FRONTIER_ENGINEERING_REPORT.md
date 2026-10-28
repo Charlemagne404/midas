@@ -9744,3 +9744,32 @@ regression were not run.
 Frontier remains **PARTIALLY VERIFIED**: source-use authorization, genuine
 cross-venue evidence, production recovery, and deployment still need separate
 closure.
+
+## Arena job-supervision regression and I/O admission stop — 2026-10-28 14:03 UTC
+
+`tests/arena/test_jobs.py` passed **16/16** in 31.95 seconds (32.55 seconds
+wall), with **180,988 KiB** peak RSS, zero swaps, 120 filesystem input blocks,
+105,904 output blocks, and no socket traffic. Its isolated root was
+`/tmp/midas-frontier-arena-jobs-20261028T1402Z`. Coverage includes cancelled
+and stale-source workers, bounded artifact/disk accounting, supervisor state,
+retry lineage, worker leases, and launch-command restrictions. A few tests
+launch short-lived workers directly against their test-owned temporary roots;
+all exited with the suite. No production systemd unit, persistent Arena job,
+service, or collector was used.
+
+At `14:02:23Z` before the run, memory and I/O PSI avg10 were **0.00%**, with
+about **10 GiB** available. At `14:03:06Z`, memory PSI remained **0.00%** but
+I/O PSI reached **4.58% some / 3.59% full**. CPU PSI avg10 was 43.91% before
+and 36.68% after. No subsequent test or build was started. Wait for a fresh
+I/O PSI avg10 below the 1% admission gate before more resource-bearing work.
+The full legacy Arena and repository-wide MIDAS suites remain deferred.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Arena job/supervisor path | COMPLETE AND VERIFIED | `test_jobs.py` passes all 16 cases, including short-lived worker subprocesses. |
+| Broader legacy Arena/MIDAS regression | DEFERRED | This targeted module is not evidence for the full suites; I/O admission is currently exceeded. |
+| Production transition | DEFERRED | No production root, service, or systemd unit was used. |
+
+Frontier remains **PARTIALLY VERIFIED**; source-use authorization, genuine
+cross-venue evidence, full legacy regression, production recovery, and
+deployment remain open.

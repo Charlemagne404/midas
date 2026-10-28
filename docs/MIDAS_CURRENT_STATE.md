@@ -3003,3 +3003,12 @@ persistent Arena job or production root was used. Memory and I/O PSI avg10
 were 0% before and after. The broad legacy Arena suite remains deferred; live
 cross-venue permission/evidence and production recovery/deployment remain open.
 Frontier remains research-only and **PARTIALLY VERIFIED**.
+
+### Arena job supervision tests — 2026-10-28 14:03 UTC
+
+`tests/arena/test_jobs.py` passes **16/16** in 32.55 seconds wall time, at
+180,988 KiB peak RSS with zero swaps. Tests used a temporary root and their
+worker processes exited. Memory PSI remained 0%, but post-run I/O PSI rose to
+4.58% some / 3.59% full, so further resource-bearing checks are deferred until
+a fresh sample is below 1%. No production Arena job or service was used.
+Frontier remains research-only and **PARTIALLY VERIFIED**.
