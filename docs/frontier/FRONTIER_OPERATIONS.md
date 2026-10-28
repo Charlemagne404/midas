@@ -258,6 +258,12 @@ also under that temporary directory and all source probes were disabled. It
 verified the displayed observation ID and immutable evidence GET, then stopped
 both servers. The original capture hashes were unchanged.
 
+At `10:28:32Z`, memory and I/O PSI avg10 were both 0%. The focused offline
+FX/capital-carry verification passed `test_fx_sensitivity.py` and
+`test_capital_carry.py` (45 tests, 0.54 seconds) with `--basetemp` at
+`/dev/shm/midas-frontier-fx-capital-20261028T1027Z`. It used fixtures and did
+not read the preserved public capture or any protected service state.
+
 For a broad suite run, first sample `/proc/pressure/memory` and
 `/proc/pressure/io`; defer when memory or I/O PSI avg10 is at or above 1%.
 The successful run placed pytest temporary files on tmpfs, reducing block I/O:

@@ -33,6 +33,17 @@ in the dated addendum below and in the Frontier engineering report.
 
 ## Frontier development addendum — 2026-10-28
 
+### Latest isolated Frontier checkpoint — 2026-10-28 10:28 UTC
+
+The offline FX and venue-capital review found no code defect. The focused
+conversion/carry suites passed **45/45** in 0.54 seconds; memory and I/O PSI
+avg10 were 0% at `10:28:32Z`. FX rates retain explicit orientation and
+venue-local balances, while carry uses verified per-market settlement times
+and an explicit release delay. These remain hypothetical assumptions, not
+conversion, collateral, or execution evidence. Source-use, full MIDAS regression,
+production recovery, and deployment gates remain open. Frontier is still
+isolated, research-only, undeployed, and **PARTIALLY VERIFIED**.
+
 ### Latest isolated Frontier checkpoint — 2026-10-28 10:26 UTC
 
 Functional commit `be31236` adds the immutable observation ID to Frontier's

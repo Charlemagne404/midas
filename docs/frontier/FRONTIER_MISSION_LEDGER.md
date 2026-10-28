@@ -1,5 +1,24 @@
 # Project Frontier Mission Ledger
 
+## Offline FX and venue-capital invariant review — 2026-10-28 10:28 UTC
+
+Reviewed `packages/midas/frontier/fx.py` and `capital.py` without changing
+source or captured data. FX assumptions pin the orientation as target
+settlement-asset units per one funding unit; balances stay isolated by venue;
+conversion fees and adjusted terminal-state P&L are independently recomputed
+with exact rational inputs. Capital carry uses the maximum verified settlement
+time among a venue's candidate markets, then adds an explicit user-entered
+post-settlement delay. It does not pool collateral or assert settlement or
+conversion availability.
+
+Focused tests `tests/frontier/test_fx_sensitivity.py` and
+`tests/frontier/test_capital_carry.py` passed **45/45** in 0.54 seconds, with
+temporary files at `/dev/shm/midas-frontier-fx-capital-20261028T1027Z`. No
+defect requiring a patch was found. At `10:28:32Z`, memory and I/O PSI avg10
+were both 0%. No live venue rates or balances were used. Frontier remains
+**PARTIALLY VERIFIED**. Continue with offline model review and targeted
+adversarial tests; recheck PSI before broad tests, builds, or profiling.
+
 ## Observation ID provenance and current frontend verification — 2026-10-28 10:26 UTC
 
 Commit `be31236` adds the full `observation_id` to the immutable-response panel;

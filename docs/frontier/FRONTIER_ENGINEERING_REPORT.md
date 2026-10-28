@@ -2,7 +2,7 @@
 
 **Report date:** 2026-10-28
 
-## Current status — 2026-10-28 10:26 UTC
+## Current status — 2026-10-28 10:28 UTC
 
 Frontier is isolated at `/home/charlie/midas-frontier` on
 `codex/frontier-20261026`. It descends from verified Veritas V6 integration
@@ -42,7 +42,7 @@ and expanded the immutable source-response panel. Its observation endpoint
 returned HTTP 200 and the saved raw-response details rendered. The browser
 observed no page errors, external requests, or probe/collection POSTs. A
 screenshot is at `/dev/shm/frontier-live-capture-ui-20261028.png`. API and Vite
-  were stopped afterward. This verifies one local captured-data UI path only.
+were stopped afterward. This verifies one local captured-data UI path only.
 
 After commit `be31236` added the full observation ID to the evidence panel, a
 second bounded Chromium check used a byte-identical temporary copy of the
@@ -53,6 +53,15 @@ operation or external request. The API reported demo mode and
 `live_execution: false`; all public-probe flags were disabled. The original
 market store, collection journal, and manifest hashes were rechecked unchanged.
 Screenshot: `/dev/shm/frontier-live-capture-ui-observation-id-20261028.png`.
+
+At `10:27Z`, an offline review of `fx.py` and `capital.py` checked rate
+orientation, venue-local balances, exact conversion-fee recomputation,
+candidate P&L adjustment, and venue-specific capital release after each
+market's latest verified settlement plus an explicit delay. The focused
+`test_fx_sensitivity.py` and `test_capital_carry.py` suites passed **45/45** in
+0.54 seconds using tmpfs. The review found no defect requiring a code change.
+These are bounded hypothetical calculations; they do not establish venue
+convertibility, settlement truth, shared collateral, or execution.
 Existing implementation includes Polymarket, Kalshi, Kraken Spot, and Coinbase
 public read adapters; canonical instrument and payoff models; reviewable
 relationship evidence; bounded candidate discovery and independent economics;
@@ -76,6 +85,9 @@ Current bounded verification:
   tests passed again; TypeScript, scoped ESLint/Prettier, and production build
   also passed. The build emitted a 368.81 kB entry, 182.82 kB Frontier chunk,
   and a 544.51 kB Chart/ECharts chunk.
+- After an offline review of the separate FX and venue-capital sensitivities,
+  `test_fx_sensitivity.py` and `test_capital_carry.py` passed **45/45** in
+  0.54 seconds. The arithmetic remains assumption-driven and venue-local.
 - The current Frontier evidence disclosure displays the full immutable
   observation ID alongside timing, row hash, request metadata, and the raw
   response. The ID is covered by a UI test and was visible in the captured-data
@@ -107,6 +119,7 @@ Current bounded verification:
   `10:17:35Z`, memory PSI avg10 was **9.69% some / 6.56% full** and I/O PSI
   avg10 was 0%. At `10:22:00Z`, memory and I/O PSI avg10 were both 0%. At
   `10:26:49Z`, memory PSI avg10 was 0% and I/O PSI avg10 was 0.02% some/full.
+  At `10:28:32Z`, memory and I/O PSI avg10 were both 0%.
   The pressure source is unknown and is not attributed to Frontier.
 
 The complete MIDAS repository regression remains unverified. The current tree
@@ -128,12 +141,12 @@ quality, production resource/recovery, and deployment gates remain open.
 Frontier remains **PARTIALLY VERIFIED**, research-only, isolated, unmerged, and
 undeployed. No protected service or historical evidence was changed.
 
-## Current mission acceptance matrix — 2026-10-28 10:26 UTC
+## Current mission acceptance matrix — 2026-10-28 10:28 UTC
 
 This matrix assesses the requested Frontier scope against the current isolated
 branch and captured evidence. The current code/test tree includes `be31236`
 and the test-isolation guard `429f690`; `7651b81`, `2c8038d`, `6da77a1`,
-`95b00bc`, and `e65f763` are documentation-only commits. The genuine public
+`95b00bc`, `e65f763`, and `5c5d6f1` are documentation-only commits. The genuine public
 capture remains untracked and preserved under
 `data/frontier-public-probes/`.
 
@@ -146,7 +159,7 @@ capture remains untracked and preserved under
 | Canonical instruments and supported payoff semantics | PARTIALLY VERIFIED | Versioned models preserve venue IDs, outcomes, constraints, denomination identity, payoff and resolution metadata, and provenance. Supported binary, one-hot multi-outcome, and bounded basket semantics have explicit validation; the captured binary market's payoff and settlement remain unverified. |
 | Relationship graph and evidence persistence | PARTIALLY VERIFIED | Deterministic proposals, explicit hypothesis/verification states, evidence-backed reviews, bounded graph queries, and persistence are tested. No genuine verified cross-venue economic equivalence exists in permitted evidence. |
 | Opportunity discovery and independent verification | PARTIALLY VERIFIED | Bounded binary, outcome-coverage, implication, basket, and joint-state paths have independent arithmetic and fixture coverage. No live cross-venue candidate or positive eligible opportunity is demonstrated. |
-| Cross-venue costs, capital, and execution uncertainty | PARTIALLY VERIFIED | Fee, FX, carry, partial-fill, timing, and venue-separated virtual-capital models have independent checks. Account-specific fees, settlement, legal access, custody, transfers, and executable availability remain unresolved. |
+| Cross-venue costs, capital, and execution uncertainty | PARTIALLY VERIFIED | Fee, FX, carry, partial-fill, timing, and venue-separated virtual-capital models have independent checks; focused FX/carry regressions passed 45/45 after the latest UI work. Account-specific fees, settlement, legal access, custody, transfers, and executable availability remain unresolved. |
 | Collection, provenance, durable storage, and deterministic replay | PARTIALLY VERIFIED | Finite restartable collection, immutable hash-linked observations, bounded storage, replay, and source-quality metadata are fixture-tested; one bounded live Polymarket capture is preserved. Continuous feeds, broad history, and long-horizon source quality remain unmeasured. |
 | Laboratory/Arena integration | PARTIALLY VERIFIED | Replay/comparison artifacts and bounded job paths have deterministic fixture coverage and a prior short supervised worker demonstration. Endurance, concurrency, and production-worker readiness are not established. |
 | Frontier analytics and coverage | PARTIALLY VERIFIED | Source-aware coverage, quality, timing, candidate, and rejection summaries are implemented. The single live market/book sample cannot support venue-wide coverage or prevalence conclusions. |
@@ -154,7 +167,7 @@ capture remains untracked and preserved under
 | Full Frontier Python regression | COMPLETE AND VERIFIED | `tests/frontier` passed **387/387** in one process after the capture-path guard, in 29.38 seconds pytest time. The existing Starlette/httpx deprecation warning remains; this run did not measure peak RSS, swap, or filesystem input. |
 | Broader MIDAS regression | PARTIALLY VERIFIED | Not run on this branch. `tests/test_reality_full_scale_validation.py` imports `packages/midas/reality/recovery.py`, which is absent here; other Reality lineages have incompatible dependencies. |
 | Research-only and source-use boundary | COMPLETE AND VERIFIED | No authenticated trading, order, wallet, or deposit path was introduced. API health reported `live_execution: false`; probes were disabled in the local API check, and held-source routes remain quarantined. |
-| Resource sustainability | PARTIALLY VERIFIED | Earlier bounded tests and workers have measured profiles, but no sustained campaign is authorized. At `10:26:49Z`, memory PSI avg10 was 0% and I/O PSI avg10 was 0.02% some/full; this brief browser check is not sustained resource evidence. |
+| Resource sustainability | PARTIALLY VERIFIED | Earlier bounded tests and workers have measured profiles, but no sustained campaign is authorized. At `10:28:32Z`, memory and I/O PSI avg10 were both 0%; the browser and focused test runs are not sustained resource evidence. |
 | Required architecture, operations, current-state, report, venue-screen, and ledger documentation | COMPLETE AND VERIFIED | The requested architecture, operations, current-state, engineering report, additional-venue screen, and append-only mission ledger exist and include current test, API-capture, permission, and resource evidence. |
 | Production deployment | DEFERRED | Deployment remains separate and requires source-policy closure, recovery/resource review, deployment-scope verification, and explicit authorization. |
 | Genuine cross-venue relationship and economic validation | BLOCKED | Current source-use gates do not permit the additional venue evidence needed to verify a live cross-venue match. Do not bypass the gates; continue source-independent work. |
