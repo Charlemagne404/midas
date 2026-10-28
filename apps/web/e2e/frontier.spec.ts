@@ -345,6 +345,7 @@ test('saved Arena discovery artifact exposes scoped candidate evidence', async (
   await expect(page.getByRole('heading', { name: 'Inspect modeled constructions' })).toBeVisible();
   await page.getByText(/Inspect candidate/).click();
   await expect(page.getByText('Terminal outcomes under the pinned payoff model')).toBeVisible();
+  await expect(page.getByText(/Hypothetical replay only/)).toBeVisible();
   await expect(page.getByText('0.450000000000000001 USD').first()).toBeVisible();
   await page.getByText(/Independent audit, assumptions, and evidence hashes/).click();
   await expect(page.getByText('Arithmetic independently recomputed.')).toBeVisible();

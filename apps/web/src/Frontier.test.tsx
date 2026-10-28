@@ -3294,6 +3294,7 @@ it('submits bounded Arena replay and discovery comparisons with verified results
   expect(
     await screen.findByText('Terminal outcomes under the pinned payoff model'),
   ).toBeInTheDocument();
+  expect(screen.getByText(/Hypothetical replay only/)).toBeInTheDocument();
   fireEvent.click(screen.getByText(/Independent audit, assumptions, and evidence hashes/));
   expect(screen.getByText('Arithmetic independently recomputed.')).toBeInTheDocument();
   expect(screen.getByText(/Book evidence/)).toBeInTheDocument();

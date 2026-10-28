@@ -7448,11 +7448,11 @@ function DiscoveryCandidateDetails({ candidate }: { candidate: DiscoveryCandidat
             <dd>{exactMoney(candidate.modeled_net_cost)}</dd>
           </div>
           <div>
-            <dt>Worst gross result</dt>
+            <dt>Worst modeled gross P&amp;L</dt>
             <dd>{exactMoney(candidate.worst_case_gross_pnl)}</dd>
           </div>
           <div>
-            <dt>Worst net result</dt>
+            <dt>Worst modeled net P&amp;L</dt>
             <dd>{exactMoney(candidate.worst_case_net_pnl)}</dd>
           </div>
           <div>
@@ -7513,6 +7513,10 @@ function DiscoveryCandidateDetails({ candidate }: { candidate: DiscoveryCandidat
           </table>
         </div>
         <h5>Terminal outcomes under the pinned payoff model</h5>
+        <p className="fr-arena-replay-note">
+          Hypothetical replay only. These modeled values do not establish fills, venue access, or
+          realized profit.
+        </p>
         <div className="fr-discovery-outcome-list">
           {stateIds.map((state) => (
             <div key={`${candidate.candidate_id}-${state}`}>
