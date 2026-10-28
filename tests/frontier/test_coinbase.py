@@ -239,6 +239,22 @@ async def test_coinbase_default_terms_hold_blocks_even_a_flagged_transport():
         )
 
 
+def test_coinbase_copied_config_cannot_bypass_terms_hold_before_transport_setup():
+    held_config = CoinbaseSpotConfig(enabled=True, live_public_probe_enabled=True)
+    copied_bypass = held_config.model_copy(
+        update={
+            "probe_policy_block_reason": None,
+            "market_data_terms_version_acknowledged": None,
+        }
+    )
+
+    assert not copied_bypass.has_valid_structure
+    with pytest.raises(ValueError, match="Adapter configuration fails structural validation"):
+        CoinbaseSpotAdapter(copied_bypass)
+    with pytest.raises(ValueError, match="Adapter configuration fails structural validation"):
+        PublicReadTransport({"api.exchange.coinbase.com"}, copied_bypass)
+
+
 def test_coinbase_probe_api_persists_one_bounded_market_book_and_trade_capture(tmp_path):
     product_path = "/products/BTC-USD"
     responses = {
