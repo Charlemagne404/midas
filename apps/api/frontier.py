@@ -16,6 +16,15 @@ from typing import Any, Literal
 from urllib.parse import parse_qs, urlsplit
 
 from fastapi import APIRouter, HTTPException, Query
+from midas.arena.frontier_discovery import (
+    FrontierDiscoveryJobSpec,
+)
+from midas.arena.frontier_discovery import (
+    make_snapshot as make_discovery_snapshot,
+)
+from midas.arena.frontier_discovery import (
+    store_snapshot as store_discovery_snapshot,
+)
 from midas.arena.frontier_replay import (
     FrontierReplayJobSpec,
     make_snapshot,
@@ -235,6 +244,12 @@ class PairedReplayRequest(BaseModel):
         if self.scenarios[0].name == self.scenarios[1].name:
             raise ValueError("Paired replay scenario names must be unique")
         return self
+
+
+class DiscoveryScopeComparisonRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+    scenario: ExecutionScenario = Field(default_factory=ExecutionScenario)
+    relationship_limit: int = Field(default=500, ge=1, le=500)
 
 
 class JointStateReplayRequest(BaseModel):
@@ -3923,6 +3938,90 @@ def router(
                 if snapshot.evaluation_times_utc is not None
                 else "input_event_times_and_book_freshness_boundaries"
             ),
+        }
+
+    @api.post("/arena-discovery-comparison", status_code=201)
+    async def create_arena_discovery_comparison(
+        request: DiscoveryScopeComparisonRequest,
+    ) -> dict[str, Any]:
+        if arena_root is None:
+            raise HTTPException(
+                status_code=503,
+                detail="Arena discovery comparison integration is not configured",
+            )
+        try:
+            market_values = await _load_markets(store, 100, excluded_venues=held_venues)
+            market_keys = {(item.venue, item.native_market_id) for item in market_values}
+            instrument_keys = {
+                (market.venue, market.native_market_id, instrument.native_instrument_id)
+                for market in market_values
+                for instrument in market.instruments
+            }
+            books = tuple(
+                book
+                for book, _ in _load_book_records(store, 200, excluded_venues=held_venues)
+                if (book.venue, book.native_market_id) in market_keys
+                and (book.venue, book.native_market_id, book.native_instrument_id)
+                in instrument_keys
+            )
+            canonical_market_ids = {item.canonical_id for item in market_values}
+            relationship_rows = read_stored_relationships(
+                state="verified",
+                limit=500,
+                effective_only=True,
+                excluded_venues=held_venues,
+            )
+            verified = tuple(
+                relationship
+                for relationship in (
+                    Relationship.model_validate(item["relationship"]) for item in relationship_rows
+                )
+                if relationship.left_market_id in canonical_market_ids
+                and relationship.right_market_id in canonical_market_ids
+            )
+            observed_times = [
+                market.provenance.response_received_at_utc for market in market_values
+            ]
+            observed_times.extend(book.received_at_utc for book in books)
+            snapshot = make_discovery_snapshot(
+                code_version=_code_version(),
+                as_of_utc=max(observed_times, default=datetime(1970, 1, 1, tzinfo=UTC)),
+                relationship_limit=request.relationship_limit,
+                scenario=request.scenario,
+                markets=market_values,
+                books=books,
+                verified_relationships=verified,
+            )
+            snapshot_sha256 = store_discovery_snapshot(arena_root, snapshot)
+            from midas.arena.jobs import JobSpec, create
+
+            spec = JobSpec(
+                kind="frontier_discovery",
+                frontier_discovery=FrontierDiscoveryJobSpec(
+                    snapshot_id=snapshot.snapshot_id,
+                    snapshot_sha256=snapshot_sha256,
+                ),
+                max_wall_seconds=300,
+                memory_limit_mb=512,
+                cpu_quota_percent=50,
+                nice=15,
+                io_scheduling_class="idle",
+            )
+            job = await asyncio.to_thread(
+                create,
+                arena_root,
+                spec,
+                admission_key=f"frontier-discovery-scope-v1-{snapshot.snapshot_id}",
+            )
+        except (FrontierStoreError, OSError, ValueError) as error:
+            raise HTTPException(status_code=409, detail=str(error)) from error
+        return {
+            **job,
+            "frontier_snapshot_id": snapshot.snapshot_id,
+            "frontier_snapshot_sha256": snapshot_sha256,
+            "network_calls": 0,
+            "research_only": True,
+            "scope_profiles": ("polymarket_only", "venue_local", "cross_venue"),
         }
 
     @api.post("/replay")

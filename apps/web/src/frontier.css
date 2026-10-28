@@ -2425,6 +2425,82 @@
 .fr-arena-replay-card {
   grid-column: 1 / -1;
 }
+.fr-discovery-table-wrap {
+  margin: 12px 15px;
+  overflow-x: auto;
+  border: 1px solid #252e38;
+  border-radius: 7px;
+  overscroll-behavior-x: contain;
+}
+.fr-discovery-scope-table {
+  width: 100%;
+  min-width: 650px;
+  border-collapse: collapse;
+  text-align: left;
+}
+.fr-discovery-scope-table th,
+.fr-discovery-scope-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #252e38;
+  color: #c7d0dc;
+  font-size: 10px;
+  vertical-align: top;
+}
+.fr-discovery-scope-table thead th {
+  color: #8492a3;
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.fr-discovery-scope-table tbody tr:last-child th,
+.fr-discovery-scope-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+.fr-discovery-scope-table tbody th strong,
+.fr-discovery-scope-table tbody th small,
+.fr-discovery-scope-table td small {
+  display: block;
+}
+.fr-discovery-scope-table tbody th small,
+.fr-discovery-scope-table td small {
+  margin-top: 4px;
+  color: #7f8b9a;
+  font-size: 8px;
+  line-height: 1.5;
+}
+.fr-discovery-scope-deltas {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 12px 15px;
+}
+.fr-discovery-scope-deltas > div {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid #252e38;
+  border-radius: 7px;
+  background: #141a21;
+}
+.fr-discovery-scope-deltas strong {
+  color: #d3dce7;
+  font-size: 9px;
+}
+.fr-discovery-scope-deltas span {
+  color: #aeb9c6;
+  font-size: 9px;
+  line-height: 1.5;
+}
+.fr-discovery-scope-deltas small {
+  color: #7f8b9a;
+  font-size: 8px;
+  line-height: 1.5;
+}
+.fr-discovery-scope-result > .fr-arena-replay-note:last-child {
+  margin-top: 8px;
+}
 .fr-arena-replay-intro,
 .fr-arena-replay-note {
   margin: 0 15px 12px;
@@ -2820,6 +2896,9 @@
   }
   .fr-arena-replay-card {
     grid-column: auto;
+  }
+  .fr-discovery-scope-deltas {
+    grid-template-columns: 1fr;
   }
   .fr-source-cards {
     grid-template-columns: 1fr;

@@ -2656,11 +2656,15 @@ it('records a self-attributed relationship review with both stored market source
   expect(screen.getByText('Rules remain incomplete for equivalence.')).toBeInTheDocument();
 });
 
-it('submits a bounded Arena replay and displays its integrity-verified comparison', async () => {
+it('submits bounded Arena replay and discovery comparisons with verified results', async () => {
   const jobId = 'job-0123456789abcdef01234567';
+  const discoveryJobId = 'job-abcdef0123456789abcdef01';
   const snapshotId = 'a'.repeat(64);
   const snapshotSha256 = 'b'.repeat(64);
   const resultSha256 = 'c'.repeat(64);
+  const discoverySnapshotId = '6'.repeat(64);
+  const discoverySnapshotSha256 = '7'.repeat(64);
+  const discoveryResultSha256 = '8'.repeat(64);
   const healthCheckpointSha256 = '9'.repeat(64);
   const comparison = {
     comparison_id: 'd'.repeat(64),
@@ -2704,6 +2708,104 @@ it('submits a bounded Arena replay and displays its integrity-verified compariso
       positive_net_count_delta: 0,
       unknown_net_count_delta: 0,
     },
+  };
+  const discoveryComparison = {
+    comparison_id: '9'.repeat(64),
+    normalized_input_sha256: 'a'.repeat(64),
+    result_sha256: discoveryResultSha256,
+    code_version: 'frontier-fixture-scope-v1',
+    as_of_utc: '2026-10-27T00:00:00Z',
+    arms: [
+      {
+        scope: 'polymarket_only',
+        venues: ['polymarket'],
+        replay_run_ids: ['b'.repeat(64)],
+        market_count: 1,
+        instrument_count: 2,
+        book_count: 2,
+        observed_instrument_count: 2,
+        relationship_count: 0,
+        candidates: [],
+        family_counts: {},
+        classification_counts: {},
+        audit_disposition_counts: {},
+      },
+      {
+        scope: 'venue_local',
+        venues: ['kalshi', 'polymarket'],
+        replay_run_ids: ['c'.repeat(64), 'd'.repeat(64)],
+        market_count: 2,
+        instrument_count: 4,
+        book_count: 4,
+        observed_instrument_count: 4,
+        relationship_count: 0,
+        candidates: [],
+        family_counts: {},
+        classification_counts: {},
+        audit_disposition_counts: {},
+      },
+      {
+        scope: 'cross_venue',
+        venues: ['kalshi', 'polymarket'],
+        replay_run_ids: ['e'.repeat(64)],
+        market_count: 2,
+        instrument_count: 4,
+        book_count: 4,
+        observed_instrument_count: 4,
+        relationship_count: 1,
+        candidates: [
+          {
+            candidate_id: 'f'.repeat(64),
+            family: 'cross_venue_complete_coverage',
+            classification: 'CONDITIONAL ECONOMIC OPPORTUNITY',
+            audit_disposition: 'verified',
+            market_ids: ['kalshi:scope-event', 'polymarket:scope-event'],
+            participating_venues: ['kalshi', 'polymarket'],
+            leg_count: 4,
+            worst_case_gross_pnl: '1',
+            worst_case_net_pnl: null,
+          },
+        ],
+        family_counts: { cross_venue_complete_coverage: 1 },
+        classification_counts: { 'CONDITIONAL ECONOMIC OPPORTUNITY': 1 },
+        audit_disposition_counts: { verified: 1 },
+      },
+    ],
+    deltas: [
+      {
+        baseline: 'polymarket_only',
+        compared: 'venue_local',
+        matched_candidate_count: 0,
+        unchanged_classification_count: 0,
+        changed_classification_count: 0,
+        baseline_only_candidate_count: 0,
+        compared_only_candidate_count: 0,
+        family_count_delta: {},
+        classification_count_delta: {},
+      },
+      {
+        baseline: 'venue_local',
+        compared: 'cross_venue',
+        matched_candidate_count: 0,
+        unchanged_classification_count: 0,
+        changed_classification_count: 0,
+        baseline_only_candidate_count: 0,
+        compared_only_candidate_count: 1,
+        family_count_delta: { cross_venue_complete_coverage: 1 },
+        classification_count_delta: { 'CONDITIONAL ECONOMIC OPPORTUNITY': 1 },
+      },
+      {
+        baseline: 'polymarket_only',
+        compared: 'cross_venue',
+        matched_candidate_count: 0,
+        unchanged_classification_count: 0,
+        changed_classification_count: 0,
+        baseline_only_candidate_count: 0,
+        compared_only_candidate_count: 1,
+        family_count_delta: { cross_venue_complete_coverage: 1 },
+        classification_count_delta: { 'CONDITIONAL ECONOMIC OPPORTUNITY': 1 },
+      },
+    ],
   };
   const empty = { items: [], returned: 0, limit: 100, offset: 0 };
   const responses: Record<string, unknown> = {
@@ -2824,7 +2926,25 @@ it('submits a bounded Arena replay and displays its integrity-verified compariso
     },
     result: { comparison_id: comparison.comparison_id, frontier_replay_sha256: resultSha256 },
   };
+  const discoveryJobSummary = {
+    job_id: discoveryJobId,
+    state: 'COMPLETED',
+    created_at: 1_793_049_600,
+    updated_at: 1_793_049_601,
+    elapsed_seconds: 0.174,
+    progress: { done: 3, total: 3 },
+    phase: 'publishing-hash-verified-discovery-result',
+    error: null,
+    snapshot_id: discoverySnapshotId,
+    snapshot_sha256: discoverySnapshotSha256,
+    runtime_profile: null,
+    result: {
+      comparison_id: discoveryComparison.comparison_id,
+      frontier_discovery_sha256: discoveryResultSha256,
+    },
+  };
   let submission: Record<string, unknown> | undefined;
+  let discoverySubmission: Record<string, unknown> | undefined;
   let timelineSubmission: Record<string, unknown> | undefined;
   const submittedSourceEvents = () =>
     Array.isArray(timelineSubmission?.source_status_events)
@@ -2954,6 +3074,55 @@ it('submits a bounded Arena replay and displays its integrity-verified compariso
         }),
       } as Response;
     }
+    if (path === '/api/arena/frontier-discovery-comparisons?limit=20') {
+      return {
+        ok: true,
+        json: async () => ({
+          items: discoverySubmission ? [discoveryJobSummary] : [],
+          limit: 20,
+          scanned: discoverySubmission ? 1 : 0,
+          scan_bound: 500,
+          scan_may_be_incomplete: false,
+          research_only: true,
+        }),
+      } as Response;
+    }
+    if (path === '/api/frontier/arena-discovery-comparison' && init?.method === 'POST') {
+      discoverySubmission = JSON.parse(String(init.body)) as Record<string, unknown>;
+      return {
+        ok: true,
+        json: async () => ({
+          job_id: discoveryJobId,
+          state: 'COMPLETED',
+          created_at: discoveryJobSummary.created_at,
+          updated_at: discoveryJobSummary.updated_at,
+          elapsed_seconds: discoveryJobSummary.elapsed_seconds,
+          progress: discoveryJobSummary.progress,
+          phase: discoveryJobSummary.phase,
+          error: null,
+          result: discoveryJobSummary.result,
+          frontier_snapshot_id: discoverySnapshotId,
+          frontier_snapshot_sha256: discoverySnapshotSha256,
+        }),
+      } as Response;
+    }
+    if (path === `/api/arena/jobs/${discoveryJobId}/frontier-discovery`) {
+      return {
+        ok: true,
+        json: async () => ({
+          artifact: {
+            comparison: discoveryComparison,
+            snapshot_id: discoverySnapshotId,
+            snapshot_sha256: discoverySnapshotSha256,
+            result_sha256: discoveryResultSha256,
+          },
+          research_only: true,
+          orders_submitted: false,
+          authenticated_requests: false,
+          integrity_verified: true,
+        }),
+      } as Response;
+    }
     if (path === '/api/frontier/arena-replay' && init?.method === 'POST') {
       submission = JSON.parse(String(init.body)) as Record<string, unknown>;
       return {
@@ -3024,6 +3193,16 @@ it('submits a bounded Arena replay and displays its integrity-verified compariso
       quote_decay_bps_per_second: '15',
     },
   ]);
+
+  fireEvent.click(screen.getByRole('button', { name: 'Compare scopes in Arena' }));
+  expect(await screen.findByText(/Verified artifact/)).toBeInTheDocument();
+  expect(screen.getAllByText('4 saved books')).toHaveLength(2);
+  expect(screen.getAllByText(/1 added/)).toHaveLength(2);
+  expect(screen.getByText(/Counts describe this saved evidence window only/)).toBeInTheDocument();
+  expect(discoverySubmission).toEqual({
+    relationship_limit: 500,
+    scenario: { name: 'quoted baseline' },
+  });
 
   expect(await screen.findByText('No event-time replay jobs')).toBeInTheDocument();
   const recordedHealthCheckbox = await screen.findByRole('checkbox', {

@@ -2364,6 +2364,66 @@ def test_arena_replay_stages_a_pinned_snapshot_before_admitted_job_creation(tmp_
         asyncio.run(http_client.aclose())
 
 
+def test_arena_discovery_comparison_stages_only_local_inputs_and_never_probes(
+    tmp_path, monkeypatch
+):
+    import midas.arena.jobs as jobs
+    from midas.arena.frontier_discovery import FrontierDiscoverySnapshot
+
+    arena_root = tmp_path / "arena"
+    client, registry, http_client, requests, store = _client(tmp_path, arena_root=arena_root)
+    captured = {}
+
+    def create(root, spec, *, admission_key):
+        captured["root"] = root
+        captured["spec"] = spec
+        captured["admission_key"] = admission_key
+        return {
+            "job_id": "job-0123456789abcdef01234567",
+            "state": "QUEUED",
+            "configuration": spec.model_dump(mode="json"),
+        }
+
+    monkeypatch.setattr(jobs, "create", create)
+    try:
+        response = client.post(
+            "/api/frontier/arena-discovery-comparison",
+            json={"scenario": {"name": "scope fixture"}, "relationship_limit": 120},
+        )
+        assert response.status_code == 201, response.text
+        payload = response.json()
+        snapshot_path = (
+            arena_root / "frontier-discovery-snapshots" / f"{payload['frontier_snapshot_id']}.json"
+        )
+        pinned = FrontierDiscoverySnapshot.model_validate_json(snapshot_path.read_bytes())
+        assert pinned.markets == ()
+        assert pinned.books == ()
+        assert pinned.relationship_limit == 120
+        assert pinned.scenario.name == "scope fixture"
+        assert captured["root"] == arena_root
+        assert captured["spec"].kind == "frontier_discovery"
+        assert captured["spec"].frontier_discovery.snapshot_id == pinned.snapshot_id
+        assert captured["spec"].max_wall_seconds == 300
+        assert captured["spec"].memory_limit_mb == 512
+        assert captured["spec"].cpu_quota_percent == 50
+        assert captured["spec"].nice == 15
+        assert captured["spec"].io_scheduling_class == "idle"
+        assert captured["admission_key"].endswith(pinned.snapshot_id)
+        assert payload["network_calls"] == 0
+        assert payload["research_only"] is True
+        assert payload["scope_profiles"] == [
+            "polymarket_only",
+            "venue_local",
+            "cross_venue",
+        ]
+        assert requests == []
+        assert store.summary()["observations"] == 0
+    finally:
+        client.close()
+        asyncio.run(registry.aclose())
+        asyncio.run(http_client.aclose())
+
+
 def test_arena_resource_denial_keeps_snapshot_and_creates_no_job(tmp_path, monkeypatch):
     import midas.arena.jobs as jobs
     from midas.arena.admission import ResourceAdmissionDenied

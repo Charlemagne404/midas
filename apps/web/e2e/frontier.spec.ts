@@ -76,6 +76,7 @@ test('Frontier workspace uses isolated research state and remains responsive', a
 
 test('Arena replay history loads without submitting or launching work', async ({ page }) => {
   let replaySubmissions = 0;
+  let discoverySubmissions = 0;
   let timelineSubmissions = 0;
   let sourceProbeRequests = 0;
   page.on('request', (request) => {
@@ -88,6 +89,12 @@ test('Arena replay history loads without submitting or launching work', async ({
     ) {
       timelineSubmissions += 1;
     }
+    if (
+      request.method() === 'POST' &&
+      request.url().includes('/api/frontier/arena-discovery-comparison')
+    ) {
+      discoverySubmissions += 1;
+    }
     if (request.url().includes('/api/frontier/probe/')) sourceProbeRequests += 1;
   });
   await page.goto('/');
@@ -96,14 +103,18 @@ test('Arena replay history loads without submitting or launching work', async ({
 
   await expect(page.getByRole('heading', { name: 'Bounded paired replay' })).toBeVisible();
   await expect(page.getByText('No Arena replay jobs')).toBeVisible();
-  await expect(page.getByText(/host-wide Arena resource gate/)).toBeVisible();
+  await expect(page.getByText(/host-wide Arena resource gate/).first()).toBeVisible();
   await expect(page.getByRole('button', { name: 'Run paired replay in Arena' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Discovery scope comparison' })).toBeVisible();
+  await expect(page.getByText('No discovery scope comparisons')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Compare scopes in Arena' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Timeline replay' })).toBeVisible();
   await expect(page.getByRole('group', { name: 'Recorded adapter health' })).toBeVisible();
   await expect(page.getByText('No verified health checkpoints')).toBeVisible();
   await expect(page.getByText('No event-time replay jobs')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Replay saved timeline' })).toBeDisabled();
   expect(replaySubmissions).toBe(0);
+  expect(discoverySubmissions).toBe(0);
   expect(timelineSubmissions).toBe(0);
   expect(sourceProbeRequests).toBe(0);
 });

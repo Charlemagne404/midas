@@ -854,6 +854,80 @@ type FrontierArenaReplayResult = {
   authenticated_requests: false;
   integrity_verified: true;
 };
+type DiscoveryScopeArm = {
+  scope: 'polymarket_only' | 'venue_local' | 'cross_venue';
+  venues: Venue[];
+  replay_run_ids: string[];
+  market_count: number;
+  instrument_count: number;
+  book_count: number;
+  observed_instrument_count: number;
+  relationship_count: number;
+  candidates: {
+    candidate_id: string;
+    family: string;
+    classification: string;
+    audit_disposition: string;
+    worst_case_gross_pnl: string | null;
+    worst_case_net_pnl: string | null;
+  }[];
+  family_counts: Record<string, number>;
+  classification_counts: Record<string, number>;
+  audit_disposition_counts: Record<string, number>;
+};
+type DiscoveryScopeComparison = {
+  comparison_id: string;
+  normalized_input_sha256: string;
+  result_sha256: string;
+  code_version: string;
+  as_of_utc: string;
+  arms: [DiscoveryScopeArm, DiscoveryScopeArm, DiscoveryScopeArm];
+  deltas: {
+    baseline: string;
+    compared: string;
+    matched_candidate_count: number;
+    unchanged_classification_count: number;
+    changed_classification_count: number;
+    baseline_only_candidate_count: number;
+    compared_only_candidate_count: number;
+    family_count_delta: Record<string, number>;
+    classification_count_delta: Record<string, number>;
+  }[];
+};
+type FrontierArenaDiscoveryJob = {
+  job_id: string;
+  state: string;
+  created_at: number | null;
+  updated_at: number | null;
+  elapsed_seconds: number | null;
+  progress: { done?: number; total?: number } | null;
+  phase: string | null;
+  error: string | null;
+  snapshot_id: string | null;
+  snapshot_sha256: string | null;
+  runtime_profile: FrontierArenaReplayJob['runtime_profile'];
+  result: { comparison_id?: string; frontier_discovery_sha256?: string } | null;
+};
+type FrontierArenaDiscoveryJobs = {
+  items: FrontierArenaDiscoveryJob[];
+  limit: number;
+  scanned: number;
+  scan_bound: number;
+  scan_may_be_incomplete: boolean;
+  research_only: true;
+};
+type FrontierArenaDiscoveryResult = {
+  artifact: {
+    comparison: DiscoveryScopeComparison;
+    snapshot_id: string;
+    snapshot_sha256: string;
+    result_sha256: string;
+  };
+  research_only: true;
+  orders_submitted: false;
+  authenticated_requests: false;
+  integrity_verified: true;
+};
 type FrontierTimelineFrame = {
   as_of_utc: string;
   replay_run_id: string;
@@ -1731,6 +1805,7 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
   );
   const [fillPercent, setFillPercent] = useState('80');
   const [selectedArenaReplayId, setSelectedArenaReplayId] = useState<string | null>(null);
+  const [selectedArenaDiscoveryId, setSelectedArenaDiscoveryId] = useState<string | null>(null);
   const [selectedTimelineJobId, setSelectedTimelineJobId] = useState<string | null>(null);
   const [timelineMaxBookAgeMs, setTimelineMaxBookAgeMs] = useState('15000');
   const [selectedSourceHealthDigests, setSelectedSourceHealthDigests] = useState<string[]>([]);
@@ -1902,6 +1977,30 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
         `/arena/jobs/${encodeURIComponent(selectedArenaReplayJob!.job_id)}/frontier-replay`,
       ),
     enabled: section === 'replay' && selectedArenaReplayJob?.state === 'COMPLETED',
+    retry: false,
+  });
+  const arenaDiscoveryJobs = useQuery({
+    queryKey: ['frontier', 'arena-discovery-jobs'],
+    queryFn: () =>
+      api<FrontierArenaDiscoveryJobs>('/arena/frontier-discovery-comparisons?limit=20'),
+    enabled: section === 'replay',
+    refetchInterval: (query) =>
+      query.state.data?.items.some((job) => ['QUEUED', 'RUNNING'].includes(job.state))
+        ? 2000
+        : false,
+  });
+  const listedArenaDiscoveryJobs = arenaDiscoveryJobs.data?.items ?? [];
+  const selectedArenaDiscoveryJob =
+    listedArenaDiscoveryJobs.find((job) => job.job_id === selectedArenaDiscoveryId) ??
+    listedArenaDiscoveryJobs[0] ??
+    null;
+  const arenaDiscoveryResult = useQuery({
+    queryKey: ['frontier', 'arena-discovery-result', selectedArenaDiscoveryJob?.job_id],
+    queryFn: () =>
+      api<FrontierArenaDiscoveryResult>(
+        `/arena/jobs/${encodeURIComponent(selectedArenaDiscoveryJob!.job_id)}/frontier-discovery`,
+      ),
+    enabled: section === 'replay' && selectedArenaDiscoveryJob?.state === 'COMPLETED',
     retry: false,
   });
   const timelineJobs = useQuery({
@@ -2149,6 +2248,61 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
         }),
       );
       void queryClient.invalidateQueries({ queryKey: ['frontier', 'arena-replay-jobs'] });
+    },
+  });
+  const arenaDiscovery = useMutation({
+    mutationFn: () =>
+      api<{
+        job_id: string;
+        state: string;
+        created_at: number | null;
+        updated_at: number | null;
+        elapsed_seconds?: number | null;
+        progress: FrontierArenaDiscoveryJob['progress'];
+        phase?: string | null;
+        error?: string | null;
+        runtime_profile?: FrontierArenaDiscoveryJob['runtime_profile'];
+        result: FrontierArenaDiscoveryJob['result'];
+        frontier_snapshot_id: string;
+        frontier_snapshot_sha256: string;
+      }>('/frontier/arena-discovery-comparison', {
+        method: 'POST',
+        body: JSON.stringify({
+          relationship_limit: 500,
+          scenario: { name: 'quoted baseline' },
+        }),
+      }),
+    onSuccess: (job) => {
+      const summary: FrontierArenaDiscoveryJob = {
+        job_id: job.job_id,
+        state: job.state,
+        created_at: job.created_at,
+        updated_at: job.updated_at,
+        elapsed_seconds: job.elapsed_seconds ?? null,
+        progress: job.progress,
+        phase: job.phase ?? null,
+        error: job.error ?? null,
+        snapshot_id: job.frontier_snapshot_id,
+        snapshot_sha256: job.frontier_snapshot_sha256,
+        runtime_profile: job.runtime_profile ?? null,
+        result: job.result,
+      };
+      setSelectedArenaDiscoveryId(job.job_id);
+      queryClient.setQueryData<FrontierArenaDiscoveryJobs>(
+        ['frontier', 'arena-discovery-jobs'],
+        (current) => ({
+          items: [
+            summary,
+            ...(current?.items ?? []).filter((item) => item.job_id !== job.job_id),
+          ].slice(0, 20),
+          limit: current?.limit ?? 20,
+          scanned: current?.scanned ?? 0,
+          scan_bound: current?.scan_bound ?? 500,
+          scan_may_be_incomplete: current?.scan_may_be_incomplete ?? false,
+          research_only: true,
+        }),
+      );
+      void queryClient.invalidateQueries({ queryKey: ['frontier', 'arena-discovery-jobs'] });
     },
   });
   const timelineReplay = useMutation({
@@ -4103,6 +4257,138 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
                       comparison={arenaReplayResult.data.artifact.comparison}
                     />
                   </>
+                )}
+              </article>
+            )}
+          </section>
+          <section className="fr-card fr-arena-replay-card fr-discovery-comparison-card">
+            <div className="fr-card-head">
+              <div>
+                <span className="fr-kicker">COMPARATIVE DISCOVERY COVERAGE</span>
+                <h2>Discovery scope comparison</h2>
+              </div>
+              <button
+                className="fr-action"
+                onClick={() => arenaDiscovery.mutate()}
+                disabled={arenaDiscovery.isPending}
+              >
+                <GitBranch size={14} />
+                {arenaDiscovery.isPending ? 'Submitting…' : 'Compare scopes in Arena'}
+              </button>
+            </div>
+            <p className="fr-arena-replay-intro">
+              Arena runs the same pinned, saved evidence through Polymarket-only, venue-local, and
+              all-venue relationship scopes. It reports which candidates each scope can see and how
+              many recorded instruments have books.
+            </p>
+            <div className="fr-callout">
+              <ShieldCheck size={16} />
+              <span>
+                This compares universe coverage with the current deterministic calculators. It does
+                not compare independent algorithm versions, estimate venue-wide prevalence, or
+                establish executable returns. Workers are limited to 5 minutes, 512 MiB, half a CPU,
+                and idle I/O; job admission requires the host-wide Arena resource gate.
+              </span>
+            </div>
+            {arenaDiscovery.isError && <InlineError message={arenaDiscovery.error.message} />}
+            {arenaDiscoveryJobs.isLoading ? (
+              <div className="fr-loading">Loading discovery comparison history…</div>
+            ) : arenaDiscoveryJobs.isError ? (
+              <EmptyState
+                title="Discovery comparison history unavailable"
+                detail={arenaDiscoveryJobs.error.message}
+              />
+            ) : listedArenaDiscoveryJobs.length === 0 ? (
+              <EmptyState
+                title="No discovery scope comparisons"
+                detail="Submitting a comparison snapshots only local recorded evidence. It does not probe an exchange or start a collector."
+              />
+            ) : (
+              <div className="fr-arena-job-list" aria-label="Frontier discovery comparison jobs">
+                {listedArenaDiscoveryJobs.map((job) => (
+                  <button
+                    key={job.job_id}
+                    className={`fr-arena-job-row${job.job_id === selectedArenaDiscoveryJob?.job_id ? ' selected' : ''}`}
+                    aria-pressed={job.job_id === selectedArenaDiscoveryJob?.job_id}
+                    onClick={() => setSelectedArenaDiscoveryId(job.job_id)}
+                  >
+                    <span>
+                      <code>{shortHash(job.job_id)}</code>
+                      <small>
+                        {job.created_at == null
+                          ? 'Time not recorded'
+                          : new Date(job.created_at * 1000).toLocaleString()}
+                      </small>
+                    </span>
+                    <StateBadge state={job.state} />
+                  </button>
+                ))}
+              </div>
+            )}
+            {arenaDiscoveryJobs.data?.scan_may_be_incomplete && (
+              <p className="fr-arena-replay-note">
+                Job history is limited to a bounded scan of {arenaDiscoveryJobs.data.scan_bound}{' '}
+                Arena records; older entries may be omitted.
+              </p>
+            )}
+            {selectedArenaDiscoveryJob && (
+              <article className="fr-arena-job-detail" aria-label="Selected discovery comparison">
+                <div className="fr-arena-job-detail-head">
+                  <div>
+                    <span className="fr-kicker">SELECTED ARENA COMPARISON</span>
+                    <code>{selectedArenaDiscoveryJob.job_id}</code>
+                  </div>
+                  <StateBadge state={selectedArenaDiscoveryJob.state} />
+                </div>
+                {['QUEUED', 'RUNNING'].includes(selectedArenaDiscoveryJob.state) && (
+                  <p>
+                    {selectedArenaDiscoveryJob.phase
+                      ? label(selectedArenaDiscoveryJob.phase)
+                      : 'Waiting for the Arena worker lease'}
+                    {selectedArenaDiscoveryJob.progress &&
+                      ` · ${selectedArenaDiscoveryJob.progress.done ?? 0} / ${selectedArenaDiscoveryJob.progress.total ?? 0} steps`}
+                  </p>
+                )}
+                {selectedArenaDiscoveryJob.error && (
+                  <div className="fr-alert" role="status">
+                    <AlertTriangle size={16} />
+                    <div>
+                      <strong>Discovery comparison did not complete</strong>
+                      <span>{selectedArenaDiscoveryJob.error}</span>
+                    </div>
+                  </div>
+                )}
+                {selectedArenaDiscoveryJob.elapsed_seconds != null && (
+                  <p className="fr-arena-replay-note">
+                    Worker elapsed time: {selectedArenaDiscoveryJob.elapsed_seconds.toFixed(3)} s
+                    {selectedArenaDiscoveryJob.runtime_profile?.worker_process_peak_rss_bytes !=
+                      null &&
+                      ` · peak RSS ${(selectedArenaDiscoveryJob.runtime_profile.worker_process_peak_rss_bytes / 1024 / 1024).toFixed(1)} MiB`}
+                  </p>
+                )}
+                {selectedArenaDiscoveryJob.snapshot_id && (
+                  <dl className="fr-arena-job-hashes">
+                    <div>
+                      <dt>Input snapshot ID</dt>
+                      <dd>{selectedArenaDiscoveryJob.snapshot_id}</dd>
+                    </div>
+                    <div>
+                      <dt>Input snapshot SHA-256</dt>
+                      <dd>{selectedArenaDiscoveryJob.snapshot_sha256 ?? 'Not recorded'}</dd>
+                    </div>
+                  </dl>
+                )}
+                {selectedArenaDiscoveryJob.state === 'COMPLETED' &&
+                  arenaDiscoveryResult.isLoading && (
+                    <div className="fr-loading">Reading and verifying the comparison artifact…</div>
+                  )}
+                {arenaDiscoveryResult.isError && (
+                  <InlineError message={arenaDiscoveryResult.error.message} />
+                )}
+                {arenaDiscoveryResult.data?.integrity_verified && (
+                  <DiscoveryScopeComparisonSummary
+                    comparison={arenaDiscoveryResult.data.artifact.comparison}
+                  />
                 )}
               </article>
             )}
@@ -6923,6 +7209,94 @@ function ReplayComparisonSummary({ comparison }: { comparison: ReplayComparison 
         <code>{comparison.result_sha256}</code>
       </details>
     </article>
+  );
+}
+
+function DiscoveryScopeComparisonSummary({ comparison }: { comparison: DiscoveryScopeComparison }) {
+  const signed = (value: number) => (value > 0 ? `+${value}` : String(value));
+  return (
+    <div className="fr-discovery-scope-result">
+      <div className="fr-arena-replay-note">
+        Verified artifact · {time(comparison.as_of_utc)} · comparison{' '}
+        {shortHash(comparison.comparison_id)}
+      </div>
+      <div className="fr-discovery-table-wrap">
+        <table className="fr-discovery-scope-table">
+          <thead>
+            <tr>
+              <th scope="col">Discovery scope</th>
+              <th scope="col">Markets</th>
+              <th scope="col">Observed instruments</th>
+              <th scope="col">Relationships</th>
+              <th scope="col">Candidates</th>
+            </tr>
+          </thead>
+          <tbody>
+            {comparison.arms.map((arm) => (
+              <tr key={arm.scope}>
+                <th scope="row">
+                  <strong>{label(arm.scope)}</strong>
+                  <small>{arm.venues.map(venueLabel).join(' · ') || 'No venue data'}</small>
+                </th>
+                <td>{arm.market_count}</td>
+                <td>
+                  {arm.observed_instrument_count} / {arm.instrument_count}
+                  <small>{arm.book_count} saved books</small>
+                </td>
+                <td>{arm.relationship_count}</td>
+                <td>
+                  {arm.candidates.length}
+                  <small>
+                    {Object.entries(arm.family_counts)
+                      .map(([family, count]) => `${label(family)} ${count}`)
+                      .join(' · ') || 'No candidates'}
+                  </small>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div className="fr-discovery-scope-deltas" aria-label="Pairwise scope differences">
+        {comparison.deltas.map((delta) => (
+          <div key={`${delta.baseline}:${delta.compared}`}>
+            <strong>
+              {label(delta.baseline)} → {label(delta.compared)}
+            </strong>
+            <span>
+              {delta.matched_candidate_count} matched · {delta.compared_only_candidate_count} added
+              · {delta.baseline_only_candidate_count} removed · {delta.changed_classification_count}{' '}
+              classification changes
+            </span>
+            <small>
+              Candidate construction differences under the same pinned prices and execution
+              assumptions.
+            </small>
+          </div>
+        ))}
+      </div>
+      <details className="fr-run-details">
+        <summary>Comparison provenance · {comparison.comparison_id}</summary>
+        <p>Input SHA-256: {comparison.normalized_input_sha256}</p>
+        <p>Result SHA-256: {comparison.result_sha256}</p>
+        <p>Code version: {comparison.code_version}</p>
+        <p>
+          Classification deltas:{' '}
+          {comparison.deltas
+            .map((delta) => {
+              const counts = Object.entries(delta.classification_count_delta)
+                .map(([key, value]) => `${label(key)} ${signed(value)}`)
+                .join(' · ');
+              return `${label(delta.baseline)} → ${label(delta.compared)}: ${counts || 'none'}`;
+            })
+            .join(' | ')}
+        </p>
+      </details>
+      <p className="fr-arena-replay-note">
+        Counts describe this saved evidence window only. They do not estimate exchange-wide
+        opportunity prevalence, authenticate external market mappings, or imply executable profit.
+      </p>
+    </div>
   );
 }
 

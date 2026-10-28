@@ -20,6 +20,7 @@ from midas.arena.costs import CostSpec
 from midas.arena.datasets import DatasetSpec, research_hash
 from midas.arena.director import DirectorSpec
 from midas.arena.evolution import SweepSpec
+from midas.arena.frontier_discovery import FrontierDiscoveryJobSpec
 from midas.arena.frontier_replay import FrontierReplayJobSpec
 from midas.arena.frontier_timeline import FrontierTimelineJobSpec
 from midas.arena.migrations import MigrationSpec
@@ -74,6 +75,7 @@ class JobSpec(Model):
         "veritas_qualification",
         "frontier_replay",
         "frontier_timeline",
+        "frontier_discovery",
     ]
     dataset: DatasetSpec | None = None
     training: TrainingSpec | None = None
@@ -93,6 +95,7 @@ class JobSpec(Model):
     veritas_qualification: VeritasQualificationSpec | None = None
     frontier_replay: FrontierReplayJobSpec | None = None
     frontier_timeline: FrontierTimelineJobSpec | None = None
+    frontier_discovery: FrontierDiscoveryJobSpec | None = None
     max_wall_seconds: int = Field(default=1800, ge=10, le=7200)
     memory_limit_mb: int = Field(default=3072, ge=128, le=3072)
     cpu_quota_percent: int = Field(default=100, ge=1, le=100)
@@ -114,6 +117,7 @@ class JobSpec(Model):
             "veritas_qualification": "veritas_qualification",
             "frontier_replay": "frontier_replay",
             "frontier_timeline": "frontier_timeline",
+            "frontier_discovery": "frontier_discovery",
             "evaluation": "model_id",
             "diagnostics": "model_id",
             "rl": "rl",
@@ -141,10 +145,11 @@ class JobSpec(Model):
             "veritas_qualification",
             "frontier_replay",
             "frontier_timeline",
+            "frontier_discovery",
         ):
             if (getattr(self, field) is not None) != (field == required):
                 raise ValueError(f"{self.kind} job requires only {required}")
-        if self.kind in {"frontier_replay", "frontier_timeline"} and (
+        if self.kind in {"frontier_replay", "frontier_timeline", "frontier_discovery"} and (
             self.max_wall_seconds > 300
             or self.memory_limit_mb > 512
             or self.cpu_quota_percent > 50
@@ -642,6 +647,19 @@ def _run(root: Path, identity: str) -> None:
                     "timeline_id": timeline_artifact.timeline.timeline_id,
                     "snapshot_id": timeline_artifact.snapshot_id,
                     "artifact": "frontier-timeline-result.json",
+                }
+            elif spec.kind == "frontier_discovery":
+                from midas.arena.frontier_discovery import execute_frontier_discovery_job
+
+                assert spec.frontier_discovery is not None
+                discovery_artifact = execute_frontier_discovery_job(
+                    root, identity, spec.frontier_discovery, progress
+                )
+                record["result"] = {
+                    "frontier_discovery_sha256": discovery_artifact.result_sha256,
+                    "comparison_id": discovery_artifact.comparison.comparison_id,
+                    "snapshot_id": discovery_artifact.snapshot_id,
+                    "artifact": "frontier-discovery-result.json",
                 }
             elif spec.kind == "supervised":
                 from midas.arena.supervised import train
