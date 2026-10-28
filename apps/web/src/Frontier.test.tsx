@@ -4101,6 +4101,7 @@ it('captures one explicit bounded Kalshi multivariate event page', async () => {
   expect(screen.getByText(/One selected event · KX-MVE-EVENT/)).toBeInTheDocument();
   expect(screen.getByText('Inspect immutable source response')).toBeInTheDocument();
   fireEvent.click(screen.getByText('Inspect immutable source response'));
+  expect(await screen.findByText(`Observation ID · ${'a'.repeat(64)}`)).toBeInTheDocument();
   expect(
     await screen.findByText(/HTTP request\/body elapsed \(monotonic\): 9\.123 ms/),
   ).toBeInTheDocument();

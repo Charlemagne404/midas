@@ -6555,6 +6555,7 @@ function EvidenceDisclosure({ observationId }: { observationId: string }) {
                 )}
               </div>
             )}
+            <span>Observation ID · {evidence.data.observation_id}</span>
             <span>
               {evidence.data.raw.http_status} · {evidence.data.raw.request_url}
             </span>
