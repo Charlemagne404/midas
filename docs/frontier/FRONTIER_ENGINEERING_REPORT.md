@@ -2,6 +2,42 @@
 
 **Report date:** 2026-10-28
 
+## Bounded source-quality, Veritas, and integration regressions — 2026-10-28 12:33 UTC
+
+The source anomaly audit fixtures initially advertised reconstruction revision
+5. The current Reality replay engine and collector explicitly support revisions
+1–4, so they correctly rejected the unsupported fixture. The two synthetic
+records were corrected to revision 4; production code and recorded evidence
+were unchanged.
+
+The corrected source-quality regression group passes **10/10** in 0.17 seconds
+with 44,256 KiB peak RSS, zero swaps, and zero socket messages. The two Veritas
+fixture suites for independent Decimal economics and V6 offline replay pass
+**24/24** in 0.36 seconds with 45,460 KiB peak RSS, zero swaps, and zero socket
+messages. Their writes are confined to unique `/tmp` basetemps.
+
+The full `tests/integration` group passes **56 tests**, with the opt-in
+PostgreSQL test skipped because `MIDAS_TEST_POSTGRES_URL` was not configured.
+It took 28.49 seconds of pytest time (29.77 seconds wall), reached 222,868 KiB
+peak RSS, and reported zero swaps and socket messages. It emitted one existing
+Starlette/httpx `TestClient` deprecation warning. API databases, recording
+paths, and replay state were isolated under
+`/tmp/midas-frontier-integration-20261028T1235Z`.
+
+The integration pre-run sample showed memory PSI avg10 **0.00%** and I/O PSI
+**0.04%**. At `12:33:34Z` post-run, memory remained **0.00%**, I/O was
+**0.56% some / 0.39% full**, and about **10 GiB** was available. Host swap
+occupancy was 3.5/4 GiB, but pytest used no swap. No live source, protected
+recording, frozen campaign, service control, or operational evidence store was
+accessed.
+
+| Requirement | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Reality source-quality replay audits | COMPLETE AND VERIFIED | 10/10 against supported replay revision 4. |
+| Veritas V6 offline replay and independent economics | COMPLETE AND VERIFIED | 24/24 fixture-based; does not establish live economics. |
+| MIDAS integration regression | PARTIALLY VERIFIED | 56 passed, optional PostgreSQL skipped; browser and production acceptance remain. |
+| Frontier overall | PARTIALLY VERIFIED | Genuine cross-venue validation, broader browser regression, production recovery, and deployment remain open. |
+
 ## Additional Reality regression evidence — 2026-10-28 12:29 UTC
 
 Source-independent Reality tests now add the following evidence:

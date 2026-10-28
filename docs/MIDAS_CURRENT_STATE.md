@@ -33,6 +33,22 @@ in the dated addendum below and in the Frontier engineering report.
 
 ## Frontier development addendum — 2026-10-28
 
+### Latest isolated Frontier checkpoint — 2026-10-28 12:33 UTC
+
+Three bounded regression groups now pass: Reality source-quality reconciliation
+**10/10**, Veritas independent-economics plus offline V6 replay **24/24**, and
+the MIDAS integration suite **56 passed, 1 optional PostgreSQL test skipped**.
+The integration run used temporary databases and replay files, took 28.49
+seconds (29.77 seconds wall), peaked at 223 MiB RSS, and used no swap or socket
+traffic. One existing Starlette/httpx deprecation warning remains.
+
+The source anomaly fixture was corrected from unsupported reconstruction
+revision 5 to the current supported revision 4. At 12:33:34Z memory PSI avg10
+was 0.00%, I/O PSI was 0.56% some / 0.39% full, and about 10 GiB was
+available. No public source, protected recording, frozen campaign, production
+service control, or persistent operational store was accessed. Frontier
+remains **PARTIALLY VERIFIED**, research-only, isolated, and undeployed.
+
 ### Latest isolated Frontier checkpoint — 2026-10-28 12:29 UTC
 
 Additional Reality regression slices pass: synthetic foundry **18/18**,

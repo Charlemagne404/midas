@@ -1,5 +1,50 @@
 # Project Frontier Mission Ledger
 
+## Bounded source-quality, Veritas, and integration regressions — 2026-10-28 12:33 UTC
+
+The source anomaly audit fixtures advertised reconstruction revision 5, while
+the current Reality replay engine and collector support revisions 1–4. The
+engine correctly rejected the unsupported fixture. Both synthetic records now
+use revision 4; no production code or captured evidence changed.
+
+Verification on isolated inputs:
+
+- `tests/test_reality_source_anomaly_audit.py`,
+  `tests/test_reality_source_quality_reaudit.py`, and
+  `tests/test_reconcile_reality_source_quality.py`: **10/10** in 0.17 seconds,
+  44,256 KiB peak RSS, zero swaps and socket messages. All outputs were under
+  `/tmp/midas-frontier-source-quality-20261028T1231Z`.
+- `tests/test_veritas_independent_economics.py` and
+  `tests/test_veritas_v6_offline_replay.py`: **24/24** in 0.36 seconds,
+  45,460 KiB peak RSS, zero swaps and socket messages. Economics were fixture
+  based; replay artifacts were under
+  `/tmp/midas-frontier-veritas-fixtures-20261028T1232Z`.
+- `tests/integration`: **56 passed, 1 skipped** in 28.49 seconds (29.77 seconds
+  wall), 222,868 KiB peak RSS, zero swaps and socket messages. The PostgreSQL
+  case skipped because no explicit `MIDAS_TEST_POSTGRES_URL` was set. The run
+  emitted the existing Starlette/httpx `TestClient` deprecation warning. API
+  and persistence data stayed under
+  `/tmp/midas-frontier-integration-20261028T1235Z`.
+
+The integration pre-run sample had memory PSI avg10 **0.00%**, I/O PSI
+**0.04%**, and about **10 GiB** available. At `12:33:34Z` after the run,
+memory PSI remained **0.00%**, I/O PSI was **0.56% some / 0.39% full**, and
+about **10 GiB** remained available; host swap use remained 3.5/4 GiB, with
+zero swap attributed to pytest. No public source, protected recording, frozen
+campaign, production service control, or persistent operational store was
+used.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Reality source-quality replay audits | COMPLETE AND VERIFIED | 10/10 after correcting fixture revision to the supported revision 4. |
+| Veritas independent economics and V6 offline replay | COMPLETE AND VERIFIED | 24/24 fixture-based checks; no live-source claim. |
+| MIDAS integration regression | PARTIALLY VERIFIED | 56 passed and optional PostgreSQL skipped; browser/production acceptance remains separate. |
+| Frontier overall | PARTIALLY VERIFIED | Genuine cross-venue validation, broader browser regression, production recovery, and deployment remain open. |
+
+Next safe action: continue with source-independent regressions only after a
+fresh PSI admission sample. Keep the source-use holds and deployment boundary
+intact.
+
 ## Additional bounded Reality regression slices — 2026-10-28 12:29 UTC
 
 After the 430/430 Frontier run, more source-independent legacy tests passed:
