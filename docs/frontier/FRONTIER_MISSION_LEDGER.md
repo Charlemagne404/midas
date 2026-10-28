@@ -6585,16 +6585,19 @@ payloads before nested model parsing, so timestamp and exact price constraints
 run again before series checks.
 
 The historical-replay module passes **6/6**, including regressions for both a
-naive copied timestamp and a copied out-of-range price. Ruff check, Ruff format,
-and `git diff --check` pass. At `2026-10-28T08:09:33Z`, memory PSI avg10 was
-**0.00%**, I/O PSI avg10 was **0.00%**, and about **10 GiB** was available. The
-test completed in 1.81 seconds with **57,708 KiB** maximum RSS and zero swaps.
-It used temporary test state only and accessed no live source, worker,
-protected store, or production service.
+naive copied timestamp and a copied out-of-range price. The adapter module
+passes **68/68**, and the targeted history-probe/replay API case passes **1/1**.
+Ruff check, Ruff format, and `git diff --check` pass. The six-case history
+module completed in 1.81 seconds with **57,708 KiB** maximum RSS and zero swaps.
+At `2026-10-28T08:11:12Z`, memory PSI avg10 was **0.00%**, I/O PSI avg10 was
+**0.90% some / 0.74% full**, and about **10 GiB** was available. All tests used
+temporary or mocked state and accessed no live source, worker, protected store,
+or production service. The targeted API case emitted the existing
+Starlette/httpx `TestClient` deprecation warning.
 
 | Component | Status | Evidence and remaining boundary |
 | --- | --- | --- |
-| `PriceHistorySeries` nested-point validation | COMPLETE AND VERIFIED | Naive timestamps and invalid prices from copied model instances are rejected; six historical-replay tests pass. |
+| `PriceHistorySeries` nested-point validation | COMPLETE AND VERIFIED | Naive timestamps and invalid prices from copied model instances are rejected; historical replay, adapter, and targeted API tests pass. |
 | Full Frontier single-process suite | PARTIALLY VERIFIED | 193 of 378 tests passed before the documented I/O-pressure stop; 185 remain unrun. |
 | Frontier project overall | PARTIALLY VERIFIED | Live/source-policy, broad regression, endurance, and deployment gates remain open. |
 

@@ -1979,9 +1979,12 @@ test or replay work waits for a fresh admitted sample.
 Commit `2e73476` closes a nested-instance validation gap in `PriceHistorySeries`:
 copied point models are reparsed before timestamp range checks, so a naive
 timestamp or invalid price cannot bypass `HistoricalPricePoint` validators.
-The full historical-replay module passes **6/6**; Ruff check, Ruff format, and
-`git diff --check` pass. At 08:09:33 UTC, memory PSI avg10 was 0%, I/O PSI
-avg10 was 0%, and about 10 GiB was available. The test took 1.81 seconds,
-peaked at 57,708 KiB RSS, and used no swap. It touched only temporary test
-state. The full suite remains partial after 193/378 cases passed before I/O
-pressure forced a stop. Frontier remains **PARTIALLY VERIFIED**.
+The historical-replay module passes **6/6**, the adapter module passes **68/68**,
+and the targeted history-probe/replay API case passes **1/1**. Ruff check, Ruff
+format, and `git diff --check` pass. At 08:11:12 UTC, memory PSI avg10 was 0%,
+I/O PSI avg10 was **0.90% some / 0.74% full**, and about 10 GiB was available.
+The history module took 1.81 seconds, peaked at 57,708 KiB RSS, and used no
+swap. The tests used temporary or mocked state. The API case emitted the
+existing Starlette/httpx deprecation warning. The full suite remains partial
+after 193/378 cases passed before I/O pressure forced a stop. Frontier remains
+**PARTIALLY VERIFIED**.

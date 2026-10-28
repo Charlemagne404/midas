@@ -7817,16 +7817,18 @@ interpreted in the host timezone. The same bypass could admit an invalid price.
 A field pre-validator now serializes nested point instances to Python payloads
 before normal nested parsing. Existing UTC and `SettlementScalar` bounds are
 therefore rerun before the series order/range checks. The historical replay
-module passes **6/6**, including naive-time and out-of-range-price regressions.
-Ruff check, Ruff format, and `git diff --check` pass. At
-`2026-10-28T08:09:33Z`, memory PSI avg10 was **0.00%**, I/O PSI avg10 was
-**0.00%**, and approximately **10 GiB** was available. The test completed in
-**1.81 seconds**, maximum RSS **57,708 KiB**, with zero process swaps. It used
-temporary state only and accessed no live source, worker, protected store, or
-production service.
+module passes **6/6**, the adapter module passes **68/68**, and the targeted
+history-probe/replay API case passes **1/1**. Ruff check, Ruff format, and
+`git diff --check` pass. The six-case module completed in **1.81 seconds**,
+maximum RSS **57,708 KiB**, with zero process swaps. At
+`2026-10-28T08:11:12Z`, memory PSI avg10 was **0.00%**, I/O PSI avg10 was
+**0.90% some / 0.74% full**, and approximately **10 GiB** was available. Tests
+used temporary or mocked state and accessed no live source, worker, protected
+store, or production service. The API test emitted the existing
+Starlette/httpx `TestClient` deprecation warning.
 
 | Component | Status | Current evidence and remaining boundary |
 | --- | --- | --- |
-| Nested historical price-point validation | COMPLETE AND VERIFIED | `PriceHistorySeries` reparses nested model payloads; the complete historical-replay module passes. |
+| Nested historical price-point validation | COMPLETE AND VERIFIED | `PriceHistorySeries` reparses nested model payloads; historical replay, adapter, and targeted API tests pass. |
 | Full single-process Frontier suite | PARTIALLY VERIFIED | 193/378 cases passed before a measured I/O-pressure stop; 185 cases remain unrun. |
 | Frontier overall acceptance | PARTIALLY VERIFIED | This guard does not close live cross-venue, source-policy, broad resource/recovery, or deployment gates. |
