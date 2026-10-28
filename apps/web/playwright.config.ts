@@ -76,7 +76,27 @@ const database = join(browserRoot, 'paper.db');
 const frontierRoot = join(browserRoot, 'frontier');
 const arenaRoot = join(browserRoot, 'arena');
 const seededArenaJob = join(arenaRoot, 'jobs', 'job-e2e0123456789abcdef01234', 'job.json');
-if (process.env.MIDAS_SEED_FRONTIER_E2E === '1') {
+const seedSyntheticFrontier = process.env.MIDAS_SEED_FRONTIER_E2E === '1';
+const seedCapturedFrontier = process.env.MIDAS_FRONTIER_E2E_CAPTURED === '1';
+if (seedSyntheticFrontier && seedCapturedFrontier) {
+  throw new Error('Choose either the synthetic or captured Frontier E2E store');
+}
+if (seedCapturedFrontier) {
+  if (existsSync(arenaRoot)) {
+    throw new Error('Captured Frontier E2E must not reuse an Arena fixture root');
+  }
+  const seed = spawnSync(
+    python,
+    [join(webRoot, 'e2e/seed_captured_frontier_store.py'), frontierRoot],
+    {
+      cwd: repository,
+      env: { ...process.env, PYTHONPATH: join(repository, 'packages') },
+      stdio: 'inherit',
+    },
+  );
+  if (seed.error) throw seed.error;
+  if (seed.status !== 0) throw new Error(`Captured Frontier E2E seeder exited with ${seed.status}`);
+} else if (seedSyntheticFrontier) {
   const historyStoreExists = existsSync(join(frontierRoot, 'frontier.sqlite3'));
   const arenaJobExists = existsSync(seededArenaJob);
   if (historyStoreExists !== arenaJobExists || (!historyStoreExists && existsSync(arenaRoot))) {

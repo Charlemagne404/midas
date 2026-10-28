@@ -10920,3 +10920,34 @@ and API remained active and unchanged; their `MemoryCurrent` values were
 | Full legacy Arena regression | PARTIALLY VERIFIED | Not completed; remaining tests need a later resource-admission sample. |
 | Protected service state | COMPLETE AND VERIFIED | Both services remained active; no service or configuration change occurred. |
 | Frontier overall | PARTIALLY VERIFIED | Cross-venue source clearance, broad regression, resource endurance, protected recovery, and deployment remain open. |
+
+## Captured-evidence browser acceptance — 2026-10-28 17:36 UTC
+
+A gated Playwright browser case now renders the preserved public Polymarket
+capture through the native Frontier workspace. Its isolated seeder checks the
+committed SQLite capture's SHA-256, SQLite integrity, three observations, and
+ten relationship rows before copying it under a fresh temporary browser root.
+Playwright's repeated worker-side config load reuses this data only when its
+run owner and capture markers match.
+
+The one-case run passes in 5.1 seconds. The page displays the captured Fed
+market and its one-sided book, the `0.995` ask, the raw CLOB request URL, and a
+stored `same_event` edge labeled as a hypothesis. The browser test asserts zero
+public source-probe requests and zero API mutations. The API is started in demo
+mode against the disposable copy, and the capture itself remains unchanged.
+Prettier, ESLint, and `git diff --check` pass for the changed web files. A
+Playwright `--list` load discovers 20 configured cases; it is test discovery,
+not full browser verification.
+
+At 17:36:56Z post-run memory PSI avg10 was 0.00% (`full` 0.00%), avg60 was
+0.61% (`full` 0.55%), and avg300 was 6.08% (`full` 5.48%). The protected
+Reality and API services remained active at 1,150,152,704 / 1,207,959,552 and
+1,130,233,856 / 1,610,612,736 bytes, respectively. This short bounded browser
+run is not endurance or deployment evidence.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Captured public-evidence Frontier browser path | COMPLETE AND VERIFIED | The real saved market, book, raw provenance, and stored relationship hypothesis render from a hash-pinned isolated copy. |
+| Browser source and mutation boundary | COMPLETE AND VERIFIED | Zero source probes and zero API mutations were observed in the bounded case. |
+| Full browser and legacy regression | PARTIALLY VERIFIED | One captured-evidence case passes; broad regression remains resource-gated. |
+| Project Frontier overall | PARTIALLY VERIFIED | Live cross-venue science, broader regression, resource endurance, protected recovery, and deployment remain open. |

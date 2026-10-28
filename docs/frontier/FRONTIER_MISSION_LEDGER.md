@@ -9964,3 +9964,48 @@ warning remains.
 **Next safe action:** continue local source-independent code review. Keep all
 source-use holds and protected evidence untouched; take a fresh admission
 sample before another broad run.
+
+## Captured public-evidence browser acceptance — 2026-10-28 17:36 UTC
+
+Added a separately gated Playwright case for the committed Polymarket capture.
+The isolated seeder pins the source SQLite file SHA-256, verifies its SQLite
+integrity and expected three observations / ten relationship rows, and copies
+it into a fresh `/tmp/midas-browser-*` root. Playwright re-evaluates its
+configuration in a worker, so same-run reuse is accepted only with the matching
+temporary-root owner marker and the seeder's run-pinned capture marker.
+
+The browser case passes **1/1** in 5.1 seconds. It inspected the captured Fed
+market, its recorded one-sided public book (`0.995` ask), the raw CLOB response
+URL, and a persisted `same_event` relationship still classified as a
+`hypothesis`. The test observed zero source-probe requests and zero API
+mutations. It read a temporary copy of the existing capture; it did not contact
+Polymarket or change the captured store. The bounded `playwright test --list`
+check also discovered all 20 configured browser cases, but did not execute
+them. Prettier, ESLint, and `git diff --check` pass for the changed web files.
+
+Reproduce from `apps/web` with:
+
+```sh
+MIDAS_FRONTIER_E2E_CAPTURED=1 corepack pnpm exec playwright test \
+  --config=playwright.config.ts e2e/frontier.captured.spec.ts --workers=1
+```
+
+At 17:36:56Z, post-run memory PSI avg10 was 0.00% (`full` 0.00%), avg60 was
+0.61% (`full` 0.55%), and avg300 was 6.08% (`full` 5.48%). Reality and API
+remained active; their cgroup memory readings were 1,150,152,704 / 1,207,959,552
+bytes and 1,130,233,856 / 1,610,612,736 bytes. The test-owned API and Vite
+servers exited. These short-run measurements do not establish endurance or
+production capacity.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Captured-evidence browser inspection | COMPLETE AND VERIFIED | One actual public Polymarket market, book, raw provenance disclosure, and stored relationship hypothesis rendered from a hash-pinned copied store. |
+| Source-free dashboard inspection | COMPLETE AND VERIFIED | The browser asserted zero source-probe requests and zero API mutations; the saved capture was read locally. |
+| Web static checks for this change | COMPLETE AND VERIFIED | Prettier and ESLint passed; Playwright enumerated 20 cases without running the suite. |
+| Full browser and legacy regression | PARTIALLY VERIFIED | This bounded case passes; broad regression remains subject to fresh resource admission. |
+| Frontier overall | PARTIALLY VERIFIED | Live cross-venue science, broad regression, resource endurance, protected recovery, and deployment remain open. |
+
+**Next safe action:** commit this isolated browser acceptance coverage and
+continue source-independent review. Take a fresh pressure sample before another
+resource-bearing test batch; keep the prior full-Arena interruption classified
+as partial.
