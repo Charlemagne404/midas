@@ -9114,3 +9114,30 @@ Arena/repository regression and production worker readiness remain
 
 **Next safe action:** continue with bounded source-independent acceptance
 review; get a new resource sample before additional test batches.
+
+## Exact-tree web and Arena supervision verification — 2026-10-28 14:49 UTC
+
+On the current tree, the complete web unit suite passes **47/47** across nine
+files after the formatting-only `Frontier.test.tsx` edit. The run took 8.64
+seconds in Vitest; I/O PSI avg10 stayed at 0.00% in sampled checks and memory
+PSI stayed at 0.00%.
+
+The exact-current `tests/arena/test_jobs.py` passes **16/16** after the
+deterministic admission-test update. Pytest took 14.81 seconds and process wall
+time was 15.42 seconds at 180,992 KiB peak RSS. It used
+`/dev/shm/midas-frontier-arena-jobs-20261028T1448Z-kqDcZK`, zero swaps, zero
+filesystem inputs, 408 output blocks, and no socket traffic. I/O PSI avg10 was
+0.09% some / 0.00% full before the run and 0.00% some / 0.00% full in the
+post-run sample; memory PSI remained 0.00%.
+
+Together with the current 465/465 Frontier Python suite, 28/28 Frontier Arena
+integration cases, 11/11 admission cases, 47/47 web tests, and 19/19 browser
+cases across isolated runs, this closes the listed focused suites. It does
+not close the full legacy MIDAS/Arena regression, live cross-venue science,
+endurance, protected recovery, or deployment. Overall Frontier remains
+**PARTIALLY VERIFIED**.
+
+The superseding acceptance matrix is at the end of
+`FRONTIER_ENGINEERING_REPORT.md`. Keep `data/frontier-public-probes/`
+untouched; take a fresh admission sample before any broader resource-bearing
+run.

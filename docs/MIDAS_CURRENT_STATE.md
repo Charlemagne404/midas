@@ -3123,3 +3123,19 @@ basetemp, zero swaps, and no socket traffic. The existing Starlette/httpx
 deprecation warning remains. Post-run I/O PSI was 0.30% some / 0.18% full;
 memory PSI was 0.00%. This closes the focused Frontier Arena slice only;
 broader Arena and MIDAS regression remain **PARTIALLY VERIFIED**.
+
+## Superseding acceptance snapshot — 2026-10-28 14:49 UTC
+
+Exact-current web unit tests pass 47/47. `tests/arena/test_jobs.py` passes
+16/16 after its test-only admission determinism update (15.42 seconds wall,
+180,992 KiB peak RSS, tmpfs root, zero swaps or sockets). The Frontier Python
+suite remains 465/465 on code with no later Python changes; Frontier Arena
+integration is 28/28, admission is 11/11, and all 19 Mission Control browser
+cases pass across isolated runs. Typecheck, lint, formatting, and production
+build pass; the existing Chart bundle advisory is 544.51 kB.
+
+The adapter protocol and research-only boundary are implemented and tested.
+Live cross-venue data use remains held under the current source review; full
+legacy MIDAS/Arena regression, endurance, production recovery, and deployment
+remain open. Frontier overall is **PARTIALLY VERIFIED**. The report's new
+14:49 UTC matrix supersedes the earlier 14:05 snapshot.
