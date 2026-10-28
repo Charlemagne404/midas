@@ -3598,3 +3598,27 @@ At `2026-10-28T21:24:10Z`, Reality was 1,117,011,968 / 1,207,959,552 bytes at
 active. Memory PSI avg10 was 0%, avg300 `some` 0.07% and `full` 0.04%; host
 available memory was 10.01 GB, with 51.82 MB swap free. No protected service was
 modified. Broad regression remains deferred because API headroom is under 1 MiB.
+
+## Project Frontier isolated development checkpoint — 2026-10-28 21:36 UTC
+
+Frontier remains isolated at `/home/charlie/midas-frontier`, branch
+`codex/frontier-20261026`, checkpoint `d19bef3`. It is not merged into `main`
+or deployed. The current bounded adapter fixture contract covers Polymarket,
+Kalshi, Kraken spot, and Coinbase spot. It checks native IDs, trade timestamp
+semantics, pagination capability declarations, exact raw-response lineage,
+fixture persistence, and the Coinbase source-use hold. The responses use
+injected transports; no exchange endpoint was queried.
+
+The changed fixture test passes **1/1** after the latest assertions; Ruff and
+strict mypy pass for that file. The preceding bounded analytics/API/adapter
+slice passed **14/14**. At the schema-v3 UI checkpoint, Frontier tests passed
+**9/9**, typecheck passed, and the production frontend build passed after the
+timing-column changes. These fixture and frontend results do not establish live
+multi-venue validation or complete MIDAS regression.
+
+At `2026-10-28T21:36:16Z`, the protected Reality and API services were active.
+Reality used 1,207,574,528 / 1,207,959,552 bytes at `MemoryHigh`; API used
+1,607,020,544 / 1,610,612,736 bytes. Memory PSI was 0%, `MemAvailable` was
+9,742,044 kB, and `SwapFree` was 50,884 kB. No protected service was restarted
+or reconfigured. Source-use and physical-location holds remain, so no live
+collection occurred. Broader regressions and deployment remain deferred.

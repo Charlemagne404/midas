@@ -12018,3 +12018,69 @@ near-boundary API limit.
 | Live public-trade coverage | BLOCKED | Source-use and physical-location authorization remain unresolved. |
 | Full exact-tree regression and endurance | PARTIALLY VERIFIED | Not run under the protected API's approximately 1 MiB `MemoryHigh` margin. |
 | Project Frontier overall | PARTIALLY VERIFIED | Live cross-venue science, broad regression, endurance, protected recovery, and deployment remain open. |
+
+## Four-adapter trade fixtures and timestamp quality — 2026-10-28 21:36 UTC
+
+Commits `91c127f`, `df5ea00`, `6a3687b`, and `d19bef3` complete a bounded
+fixture contract for Polymarket, Kalshi, Kraken spot, and Coinbase spot public
+trades. The shared test preserves native market and instrument identifiers,
+raw-response hashes, request and receipt timing, monotonic duration, adapter
+version, and source timestamp semantics. It checks each adapter's declared
+`PAGINATED_PUBLIC_TRADES` capability and whether it exposes event outcome
+definitions. Equal fixture prices and quantities are not treated as evidence of
+equivalent exposures.
+
+Fixture responses use injected `httpx.MockTransport` and are persisted and
+re-read through a temporary `FrontierStore`, including stored observation IDs
+and nested trade hashes. The test verifies that no Authorization header is
+sent. Coinbase remains under its source-use hold; the fixture-only override
+asserts that the hold is still configured. No exchange endpoint was queried,
+and this is not live adapter validation or evidence of source permission.
+
+Coverage response schema version 3 reports source timestamp presence, clock
+uncertainty availability, receipt age, receipt timestamps after the summary
+cutoff, and exchange timestamps later than response receipt. It continues to
+read only the newest bounded stored sample and does not infer trade volume,
+complete history, synchronized executable quotes, or zero activity from empty
+responses.
+
+Verification on `d19bef3`:
+
+- Ruff and strict mypy pass for `tests/frontier/test_trade_adapter_contract.py`.
+- After adding timestamp-semantics and pagination-capability assertions, the
+  four-adapter contract test passes **1/1** in 0.95 seconds. It ran with a 1 GiB
+  address-space limit, a 60-second CPU-time limit, and reduced process priority.
+- The preceding bounded analytics/API/adapter slice passed **14/14**; the
+  updated adapter contract was then rerun independently as above. One existing
+  Starlette/httpx TestClient deprecation warning was present in the slice.
+- The Frontier UI test file passed **9/9**, and the frontend typecheck passed
+  after schema version 3 was reflected in the client type. ESLint and Prettier
+  passed after the UI timing columns were added. The production frontend build
+  passed after those UI changes; its later schema-version-only type update does
+  not change emitted application code. The known 544.51 kB Chart chunk advisory
+  remains.
+- `git diff --check` passes. No broad Python, web, browser, or legacy regression
+  suite was run at this checkpoint.
+
+At `2026-10-28T21:36:16Z`, Reality and API were active. Reality used
+1,207,574,528 / 1,207,959,552 bytes at `MemoryHigh` (385,024 bytes below); API
+used 1,607,020,544 / 1,610,612,736 bytes (3,592,192 bytes below). Memory PSI
+avg10/avg60/avg300 remained 0%. Host `MemAvailable` was 9,742,044 kB and
+`SwapFree` was 50,884 kB. No protected process or configuration was changed.
+The small fixture test does not justify broader suite admission at these
+service margins.
+
+| Requirement | Status | Evidence and boundary |
+| --- | --- | --- |
+| Four-adapter trade normalization contract | COMPLETE AND VERIFIED WITH FIXTURES | Native IDs, source timestamp semantics, pagination capability, raw response lineage, and outcome-definition capabilities are asserted for four adapter fixtures. |
+| Fixture persistence and source-hold guard | COMPLETE AND VERIFIED WITH FIXTURES | Trade captures round-trip through a temporary store; Coinbase's configured hold remains asserted. |
+| Stored trade timing-quality summary | COMPLETE AND VERIFIED WITH FIXTURES | Schema-v3 bounded read exposes timestamp and clock-uncertainty quality fields without source requests. |
+| Live multi-venue trade validation | BLOCKED | Source-use and location authorization remain unresolved; no live observation is claimed. |
+| Broad regression and resource endurance | PARTIALLY VERIFIED | Deferred under current protected-service `MemoryHigh` margins. |
+| Production deployment | DEFERRED | No deployment or protected service transition occurred. |
+| Project Frontier overall | PARTIALLY VERIFIED | Live scientific findings, broad regressions, endurance, protected recovery, and deployment prerequisites remain open. |
+
+Next safe action: continue isolated fixture review of each adapter's
+pagination and reconnect boundaries, then re-measure protected-service headroom
+before any larger regression. Keep live collection disabled while the source
+and location holds remain.

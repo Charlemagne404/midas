@@ -11175,3 +11175,38 @@ Next safe action: compare the four adapters' bounded recorded trade fixtures
 through shared read-only normalization and lineage assertions; keep results
 venue-specific and do not infer that spot prints equal event-contract exposure.
 Re-measure resource headroom before broader suites. Live capture remains held.
+
+## Four-adapter trade fixture contract — 2026-10-28 21:36 UTC
+
+Checkpoint `d19bef3` adds explicit assertions for each adapter's public-trade
+timestamp semantics and paginated-trade capability. Together with
+`91c127f`/`df5ea00`/`6a3687b`, the bounded test covers Polymarket, Kalshi,
+Kraken spot, and Coinbase spot; retains native IDs and exact response lineage;
+persists and re-reads captures using a temporary store; and verifies the
+Coinbase source-use hold remains configured. All requests are injected fixtures
+through `httpx.MockTransport`; no exchange endpoint was queried. Spot fixtures
+remain contextual market data and are not treated as event-contract equivalents.
+
+Ruff and strict mypy pass for the fixture test; after the new assertions, it
+passes **1/1** in 0.95 seconds with a 1 GiB address-space limit, 60-second
+CPU-time limit, and reduced priority. The preceding bounded analytics/API/adapter
+slice passed **14/14**. The schema-v3 UI test file passed **9/9** and typecheck
+passed; lint, format, and the production build passed at the prior UI checkpoint.
+No broad regression was run.
+
+At `2026-10-28T21:36:16Z`, both protected services were active. Reality was
+385,024 bytes below its 1,207,959,552-byte `MemoryHigh`; API was 3,592,192
+bytes below its 1,610,612,736-byte boundary. Memory PSI was 0%; available
+memory was 9,742,044 kB and swap free was 50,884 kB. No service was modified.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Four-adapter public-trade fixture contract | COMPLETE AND VERIFIED WITH FIXTURES | Native semantics, pagination capabilities, capture lineage, persistence, and source hold are asserted. |
+| Schema-v3 trade timing quality | COMPLETE AND VERIFIED WITH FIXTURES | Bounded stored-data summary only; no live source requests. |
+| Live cross-venue trade observations | BLOCKED | Source-use and physical-location authorization remain unresolved. |
+| Broad regression and endurance | PARTIALLY VERIFIED | Deferred under near-boundary protected-service memory. |
+| Deployment | DEFERRED | Frontier remains isolated and undeployed. |
+| Project Frontier overall | PARTIALLY VERIFIED | Live science, broad acceptance, endurance, protected recovery, and deployment remain open. |
+
+Next safe action: review adapter pagination/reconnect fixtures, keeping live
+collection disabled, then re-measure before broader regression.
