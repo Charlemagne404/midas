@@ -9789,7 +9789,7 @@ documentation-only updates in the current change. The working branch remains
 | Polymarket public adapter | PARTIALLY VERIFIED | A bounded genuine public observation was validated earlier in this mission. The sample does not establish sustained source quality, simultaneous availability, or executable economics. |
 | Kalshi, Kraken, and Coinbase adapters | IMPLEMENTED, LIVE VALIDATION PENDING | Read-only adapter code and fixture behavior are implemented; current source-use gates keep live probes and held evidence quarantined. |
 | Additional venue research | PARTIALLY VERIFIED | Deribit was screened and deferred; no adapter or probe was added. Current source-specific constraints and decisions are documented in the dated venue review. |
-| Canonical instruments and payoff semantics | PARTIALLY VERIFIED | Versioned models preserve native IDs, outcomes, denomination, constraints, payoff/resolution metadata, and provenance. Fixture payoff checks pass; real cross-venue settlement equivalence remains unverified. |
+| Canonical instruments and payoff semantics | PARTIALLY VERIFIED | Versioned models preserve native IDs, outcomes, denomination, constraints, payoff/resolution metadata, and provenance. Schema v5 now adds deterministic venue-scoped instrument IDs; fixture payoff checks pass, while real cross-venue settlement equivalence remains unverified. |
 | Relationship discovery, graph, and persistence | PARTIALLY VERIFIED | Deterministic proposals, explicit hypothesis/verification states, evidence-backed review, bounded graph access, and persistence have fixture coverage. No permitted genuine cross-venue economic equivalence is verified. |
 | Opportunity generation and independent verification | PARTIALLY VERIFIED | Supported binary, outcome-coverage, implication, basket, and joint-state cases have independent arithmetic and adversarial fixture coverage. No live cross-venue candidate or positive eligible opportunity is demonstrated. |
 | Cross-venue costs, capital, and execution uncertainty | PARTIALLY VERIFIED | Fee, FX, timing, partial-fill, and venue-separated virtual-capital models are tested with fixtures. Account-specific fees, jurisdiction, settlement, transfer, custody, and executable availability remain unresolved. |
@@ -9858,3 +9858,43 @@ capture, production service, or protected store was accessed; the held
 | Core relationship and replay input bounds | COMPLETE AND VERIFIED | Oversized direct inputs fail before structural validation, indexing, or sorting; affected module and caller slices pass. |
 | Full Frontier suite on current code | PARTIALLY VERIFIED | 111 focused tests cover the change and direct consumers; the complete suite has not been rerun on `f1d04bf`. |
 | Project Frontier overall | PARTIALLY VERIFIED | Live cross-venue evidence, broad regressions, sustained resource evidence, production recovery, and deployment remain open. |
+
+## Source-scoped instrument identity — 2026-10-28 14:21 UTC
+
+**Implementation commit:** `4305083` (`feat(frontier): add source-scoped instrument identities`).
+
+`FrontierMarket` schema v5 now exposes a stable canonical ID on every
+`MarketInstrument`. The ID hashes a version tag plus venue, native market ID,
+and native instrument ID, so it is deterministic and source-scoped. Existing
+schema v1–v4 payloads without the field derive it at validation time without
+rewriting their declared schema version. Mismatched supplied IDs fail
+validation. Adapter output and deterministic replay version numbers were
+advanced; the Frontier market detail view exposes the ID with an explicit
+label that it is not an equivalence claim.
+
+The final targeted identity/adapter/Coinbase run passed **89/89** in 3.44
+seconds wall time at **79,108 KiB** peak RSS, with zero swaps, filesystem input,
+or socket messages; pytest reported 2.97 seconds and one existing
+Starlette/httpx `TestClient` deprecation warning. Strict mypy passed on the
+model, replay module, and four adapters (**6 source files**). Ruff check and
+format check passed (**11 files**). `tsc -b` exited successfully, and the
+focused Frontier UI test passed **1/1** (8 unrelated tests were skipped by the
+filter). The adjacent model/replay/storage selection passed **140/140**, and
+the API replay selection passed **12/12** earlier in this increment, before a
+final type-guard-only adjustment in the migration validator; that final change
+was covered by the 89-test rerun and strict typing.
+
+At `14:20:34Z`, CPU PSI avg10 was **41.20%**, memory and I/O PSI avg10 were
+**0.00%**, and the protected Reality recorder and MIDAS API were active. At
+`14:21:27Z`, CPU PSI avg10 was **42.76%** with memory and I/O PSI avg10 at
+**0.00%**. The complete Frontier suite and broader legacy regression were not
+rerun under that sustained CPU pressure. No source request, production
+service, or protected store was accessed; the untracked
+`data/frontier-public-probes/` evidence path remains untouched.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Source-scoped canonical instrument IDs | COMPLETE AND VERIFIED | Schema v5 derivation, legacy v1–v4 migration, tamper rejection, four adapter fixtures, and UI display pass. IDs do not establish cross-venue payoff equivalence. |
+| Canonical payoff and cross-venue economic equivalence | PARTIALLY VERIFIED | Existing bounded payoff fixtures remain covered; no permitted genuine cross-venue settlement-equivalence evidence is established. |
+| Full Frontier and broad legacy regression on this commit | PARTIALLY VERIFIED | Focused changed-code checks pass; the full Frontier suite and repository-wide regression were not rerun. |
+| Frontier project overall | PARTIALLY VERIFIED | Live cross-venue evidence, broader regression, sustained-resource evidence, production recovery, and deployment remain open. |

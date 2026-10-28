@@ -3042,3 +3042,15 @@ this code, so its 452/452 result remains tied to the earlier storage/audit
 checkpoint. Memory and I/O PSI stayed below 0.03% avg10; CPU PSI remained high
 but fell during the short checks. Frontier remains research-only and
 **PARTIALLY VERIFIED**.
+
+### Frontier instrument identity — 2026-10-28 14:21 UTC
+
+Commit `4305083` adds schema-v5 venue-scoped canonical IDs for Frontier
+instruments, with deterministic legacy v1–v4 migration and rejection of IDs
+that disagree with native identifiers. Adapter outputs and replay versions
+were advanced. The 89-test identity/adapter/Coinbase slice passes, strict
+mypy and Ruff pass, TypeScript build succeeds, and the focused UI test passes.
+The IDs do not establish cross-venue payoff equivalence. The full Frontier and
+legacy suites were not rerun while CPU PSI avg10 remained about 41–43%. No live
+source, protected service, or held evidence path was accessed. Frontier stays
+research-only, isolated, undeployed, and **PARTIALLY VERIFIED**.

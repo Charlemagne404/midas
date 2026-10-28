@@ -8888,3 +8888,41 @@ protected store was accessed; `data/frontier-public-probes/` remains untouched.
 **Next safe action:** retain the resource gate and continue with a separate
 bounded source-independent acceptance item; do not present this targeted
 regression as a full-suite rerun.
+
+## Source-scoped canonical instrument IDs — 2026-10-28 14:21 UTC
+
+**Implementation commit:** `4305083` (`feat(frontier): add source-scoped instrument identities`).
+
+`FrontierMarket` schema v5 adds deterministic `MarketInstrument.canonical_id`
+values derived from a version tag, venue, native market ID, and native
+instrument ID. Schema v1–v4 payloads without the field derive the same value
+without changing their declared version; incorrect supplied values are
+rejected. Polymarket, Kalshi, Kraken spot, and Coinbase Exchange spot adapter
+versions advanced, as did deterministic replay. The UI labels this as a
+venue-scoped ID and explicitly says it is not an equivalence claim.
+
+The final identity/adapter/Coinbase selection passed **89/89** in 3.44 seconds
+wall time (79,108 KiB peak RSS, zero swaps, filesystem input, or socket
+messages). Strict mypy passed for six implementation modules; Ruff check and
+format passed for 11 Python files. TypeScript build succeeded and the focused
+UI test passed **1/1** with eight tests skipped by name filter. The related
+model/replay/storage set passed **140/140**, and API replay passed **12/12**
+earlier in this increment, before a final type-guard-only adjustment; the
+current guard is covered by the 89-test rerun and mypy.
+
+CPU PSI avg10 remained about **41–43%** around the checks while memory and I/O
+PSI avg10 were **0.00%**. The full Frontier and broader legacy suites were not
+rerun. No live source, production service, or protected store was accessed.
+The held `data/frontier-public-probes/` directory remains untouched. The new
+source-scoped IDs do not verify payoff, settlement, or cross-venue equivalence.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Source-scoped canonical instrument ID | COMPLETE AND VERIFIED | Schema migration, stable namespace derivation, mismatch rejection, adapter fixtures, and UI display have focused verification. |
+| Cross-venue payoff and settlement equivalence | PARTIALLY VERIFIED | No genuine permitted equivalence evidence is established; source-scoped IDs do not imply equivalence. |
+| Full Frontier suite on `4305083` | PARTIALLY VERIFIED | 89 focused identity/adapter tests plus adjacent earlier slices pass; the full suite was not rerun under CPU PSI pressure. |
+| Project Frontier overall | PARTIALLY VERIFIED | Live multi-venue evidence, broad regression, sustained-resource evidence, production recovery, and deployment remain open. |
+
+**Next safe action:** continue with independent bounded source work after a
+fresh resource admission sample; keep the held capture quarantined and do not
+infer cross-venue equivalence from canonical IDs.

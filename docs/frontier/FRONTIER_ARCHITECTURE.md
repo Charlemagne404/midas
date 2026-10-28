@@ -1349,3 +1349,24 @@ captures and replay artifacts. It drives the local API and Mission Control
 views, including replay submission and page navigation; this verifies the
 persisted UI/API contract without contacting a venue or changing the status of
 live source validation.
+
+## Source-scoped canonical instrument identities — 2026-10-28
+
+`FrontierMarket` schema v5 adds an explicit `MarketInstrument.canonical_id`.
+The stable `instrument-v1:` digest is derived from a version tag, venue, native
+market ID, and native instrument ID. It identifies an instrument within its
+source namespace while retaining the native identifiers needed to audit or
+reconstruct the mapping. It does not assert that instruments from different
+venues have equivalent payoffs, outcomes, settlement, or resolution rules;
+those claims continue to require relationship evidence and the independent
+payoff verifier.
+
+Inputs using market schemas v1–v4 that lack the field receive the same derived
+identity during model validation, while their declared schema version is
+preserved. A supplied canonical ID that does not match the venue and native
+identifiers is rejected. Polymarket, Kalshi, Kraken spot, and Coinbase Exchange
+spot adapter versions were advanced to reflect changed normalized output; the
+deterministic replay version was also advanced. Fixture tests cover stable
+derivation, namespace separation, legacy-schema migration, tampering, and each
+adapter's normalized IDs. They establish deterministic local identity only,
+not genuine cross-venue equivalence or live-source validation.
