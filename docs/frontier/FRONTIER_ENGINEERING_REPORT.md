@@ -21,8 +21,10 @@ Frontier browser E2E passed **6/6**, and a temporary-output TypeScript/Vite
 production build passed. Selected legacy API, paper-research, storage, recording,
 protected-service guard, and held-capture boundary checks also passed. The full
 `tests/integration` directory subsequently passed **56 tests**, with the
-optional PostgreSQL test skipped because no test URL was configured. The full
-MIDAS repository suite has not run.
+optional PostgreSQL test skipped because no test URL was configured. A later
+full `pytest tests` attempt stopped during collection because a Reality test
+imports a module absent from the selected source baseline; no test cases ran.
+The full MIDAS repository suite therefore remains unverified.
 
 The multi-market joint-state basket search accepts an explicit, bounded map
 across two to four event markets. Its payout arithmetic is independently
@@ -6311,3 +6313,35 @@ service action, or deployment was started after that sample.
 | Legacy integration regression | COMPLETE AND VERIFIED | `tests/integration`: 56 passed, one optional PostgreSQL test skipped; temporary pytest directory; 220,460 KiB peak RSS; zero swaps or socket messages. |
 | Full MIDAS repository regression | PARTIALLY VERIFIED | The Frontier/selected-Arena and complete integration suites pass, but the rest of `tests/` has not run as one repository-wide suite. |
 | Further resource-bearing checks at this checkpoint | DEFERRED | Post-run memory PSI rose and an external Veritas job held the shared lock; its process was not disturbed. |
+
+## Full-suite collection baseline mismatch — 2026-10-28 04:36 UTC
+
+A full Python-suite attempt was made in a detached test worktree at commit
+`29b09fa`; the Frontier worktree and its ignored capture data were not used as
+the test directory. Pytest stopped during collection after **10.89 seconds**
+with an `ImportError` in `tests/test_reality_full_scale_validation.py:12`:
+`from midas.reality import recovery`. The selected source tree does not contain
+`packages/midas/reality/recovery.py`, so no test cases executed. The command
+used the shared MIDAS virtual environment and a dedicated `/tmp` base directory
+and peaked at **453,748 KiB RSS**, with zero swaps and socket messages.
+
+Read-only Git-tree comparison found that `recovery.py` is present in the
+separate candidate `fix/reality-foundation-20261020` at `4278b5b`, but absent
+from both the selected Veritas V6 baseline and the protected `project/reality`
+checkout. The missing candidate implementation depends on companion Reality
+changes in reconstruction, replay, and storage. No files were copied or merged
+from that candidate, and no protected service or capture was accessed. This is
+a cross-worktree baseline/test mismatch; it does not establish that the full
+suite passes against either source revision.
+
+At `2026-10-28T04:38:33Z`, memory PSI avg10 was **1.17% some / 1.03% full**,
+avg60 **13.95% / 12.54%**, and avg300 **10.50% / 9.37%**. About **10 GiB** was
+available. The shared Arena lock no longer had a holder in that sample, but
+the host remained under material longer-window pressure; no further suite or
+build was started.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Full MIDAS Python suite | PARTIALLY VERIFIED | Collection is blocked by the selected checkout lacking `midas.reality.recovery`, imported by a current tracked test. No suite tests ran. |
+| Reality candidate integration | DEFERRED | The separate recovery implementation is coupled to newer reconstruction/replay/storage code; no cross-branch merge was attempted. |
+| Broader regression after this attempt | DEFERRED AT THIS SAMPLE | Longer-window memory PSI remained elevated; no test process or shared Arena lock holder remained. |

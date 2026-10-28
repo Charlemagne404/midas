@@ -4916,3 +4916,40 @@ deployment were started.
 | Legacy `tests/integration` directory | COMPLETE AND VERIFIED | 56 tests passed; optional PostgreSQL runtime skipped; temp pytest root; 220,460 KiB peak RSS with zero swaps or sockets. |
 | Full MIDAS repository regression | PARTIALLY VERIFIED | Frontier plus selected Arena and the complete integration directory pass; remaining repository suites have not run together. |
 | Further resource-bearing verification | DEFERRED AT THIS SAMPLE | Memory PSI rose after the run and external PID 4182417 held the shared Arena lock; the process was not interrupted. |
+
+### Full-suite collection audit — 2026-10-28 04:36 UTC
+
+A full Python test attempt used a detached worktree at Frontier commit `29b09fa`
+and an external pytest temporary directory:
+
+```bash
+nice -n 10 /usr/bin/time -v env PYTHONPATH=packages:. \
+  /home/charlie/midas/.venv/bin/python -m pytest -q \
+  --basetemp=/tmp/midas-frontier-full-regression-pytest-20261028T0435Z tests
+# collection stopped after 10.89s; process wall 12.30s; peak RSS 453,748 KiB
+# zero swaps and zero socket messages; no tests ran
+```
+
+Collection failed at `tests/test_reality_full_scale_validation.py:12`, which
+imports `midas.reality.recovery`. The selected Frontier/V6 source tree lacks
+`packages/midas/reality/recovery.py`. Read-only tree comparison confirmed the
+module is present in the separate `fix/reality-foundation-20261020` candidate
+at `4278b5b` but absent from both the selected V6 baseline and protected
+`project/reality` checkout. The candidate module also relies on newer
+Reality `reconstruction.py`, `replay.py`, and `storage.py`; no partial copy or
+merge was attempted. The mismatch is not evidence that either complete source
+revision passes the entire test suite. The detached test worktree contains no
+Frontier `data/frontier/live-probes` tree; no preserved capture or protected
+service was accessed.
+
+At `2026-10-28T04:38:33Z`, memory PSI avg10 was **1.17% some / 1.03% full**,
+avg60 **13.95% / 12.54%**, avg300 **10.50% / 9.37%**, and I/O PSI avg10
+**1.03% / 1.03%**. About **10 GiB** was available. The shared Arena lock had no
+holder at that sample, but elevated longer-window memory pressure remained.
+No further resource-bearing validation was started.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Full MIDAS Python regression | PARTIALLY VERIFIED | Pytest collection is blocked by the missing Reality recovery module in the selected baseline; no full suite tests executed. |
+| Reality candidate cross-branch integration | DEFERRED | Recovery support depends on newer Reality core modules; no files were merged into Frontier. |
+| Further broad test runs | DEFERRED AT THIS SAMPLE | Elevated memory PSI remained; the external job was no longer live and the shared lock was free. |
