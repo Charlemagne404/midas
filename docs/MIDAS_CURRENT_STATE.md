@@ -33,6 +33,26 @@ in the dated addendum below and in the Frontier engineering report.
 
 ## Frontier development addendum — 2026-10-28
 
+### Latest isolated Frontier checkpoint — 2026-10-28 08:28 UTC
+
+Code commit `c4adac6` defers the shared ECharts Chart module in Mission
+Control, Arena, and Reality until its reserved viewport area approaches view.
+The focused Playwright network assertion verifies zero Chart module requests
+while the chart is below the viewport, followed by one request and a rendered
+chart after scrolling. The overall 544.41 kB Chart chunk is unchanged; this
+defers loading rather than reducing bundle size. The frontend suite passes
+45/45 unit tests, 17 default Playwright tests with two seeded-only skips, build,
+TypeScript, lint, and formatting. The separately seeded Frontier/Arena browser
+checks remain 2/2.
+
+The isolated Frontier Python suite remains 379/379. The complete MIDAS
+regression, live multi-venue validation, held-source permissions, and production
+readiness remain open. No live cross-venue equivalence or economically
+eligible opportunity is claimed. Frontier remains **PARTIALLY VERIFIED**,
+research-only, unmerged, and undeployed; no protected service or historical
+evidence was changed. See the [engineering report](frontier/FRONTIER_ENGINEERING_REPORT.md)
+and [mission ledger](frontier/FRONTIER_MISSION_LEDGER.md) for measurements.
+
 ### Latest isolated Frontier checkpoint — 2026-10-28 08:23 UTC
 
 The exact `tests/frontier` suite passes **379/379** in a single process using

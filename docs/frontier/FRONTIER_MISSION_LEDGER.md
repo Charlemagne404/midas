@@ -1,5 +1,43 @@
 # Project Frontier Mission Ledger
 
+## Viewport-deferred chart loading — 2026-10-28 08:28 UTC
+
+Code commit `c4adac6` adds a shared `DeferredChart` boundary to Mission
+Control, Arena, and Reality. It preserves chart space and text status while
+using a 120 px `IntersectionObserver` root margin to wait before importing the
+Chart/ECharts module. Browsers without the observer API load immediately.
+
+The browser test uses a 390 by 200 px viewport, checks that the first chart is
+below it with no Chart module request, then scrolls into view and requires one
+module request plus a rendered SVG. It proves that payload loading is deferred;
+the minified Chart chunk remains **544.41 kB** (**186.76 kB gzip**) and total
+bundle size is not reduced.
+
+```bash
+cd apps/web
+./node_modules/.bin/vitest run
+# 45 passed in 8 files
+./node_modules/.bin/playwright test e2e/deferred-chart.spec.ts
+# 1 passed
+./node_modules/.bin/playwright test
+# 17 passed, 2 expected seeded-only skips
+npm run build
+# TypeScript and Vite passed; 368.81 kB entry, 182.75 kB Frontier,
+# 544.41 kB Chart chunk
+```
+
+The scoped ESLint and Prettier checks passed. At `08:28:12Z`, memory PSI avg10
+was 0%, I/O PSI avg10 was 0.14% some / 0.12% full, and about 10 GiB was
+available. Playwright started only isolated loopback demo services and
+temporary stores. No live source, production service, or protected store was
+used.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Shared deferred chart loading | COMPLETE AND VERIFIED | Unit test, full web suite, production build, and browser network assertion; chunk bytes are unchanged and are transferred only after an observed chart approaches view. |
+| Browser regression | COMPLETE AND VERIFIED | 17 default E2E cases pass; two seeded-only cases skip as expected, and their separate seeded run remains previously verified. |
+| Frontier project overall | PARTIALLY VERIFIED | This loading improvement does not close live source, full MIDAS regression, production recovery, or deployment gates. |
+
 ## Acceptance checkpoint — 2026-10-28 08:23 UTC
 
 The exact current Frontier Python suite passes **379/379** in one process via

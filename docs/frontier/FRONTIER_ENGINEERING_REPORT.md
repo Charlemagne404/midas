@@ -2,18 +2,17 @@
 
 **Report date:** 2026-10-28
 
-## Current status — 2026-10-28 08:21 UTC
+## Current status — 2026-10-28 08:28 UTC
 
 Frontier is isolated at `/home/charlie/midas-frontier` on
 `codex/frontier-20261026`. It descends from verified Veritas V6 integration
-commit `11d32a0` and retains merge base `55601b9` with `main`. The current HEAD
-is documentation commit `3763ff5`; the latest code changes are nested history
-validation commit `2e73476` and migration-test correction `f5dfb26`. Existing
-implementation includes Polymarket, Kalshi, Kraken Spot, and Coinbase public
-read adapters; canonical instrument and payoff models; reviewable relationship
-evidence; bounded candidate discovery and independent economics; isolated
-collection, storage, and replay; Arena integration; and the native Mission
-Control workspace.
+commit `11d32a0` and retains merge base `55601b9` with `main`. The latest
+feature code checkpoint is `c4adac6`, which defers the shared Chart payload
+until a chart approaches the viewport. Existing implementation includes
+Polymarket, Kalshi, Kraken Spot, and Coinbase public read adapters; canonical
+instrument and payoff models; reviewable relationship evidence; bounded
+candidate discovery and independent economics; isolated collection, storage,
+and replay; Arena integration; and the native Mission Control workspace.
 
 Current bounded verification:
 
@@ -23,11 +22,15 @@ Current bounded verification:
   12.91% some / 10.15% full; the successful tmpfs run used a fresh host sample
   and recorded zero filesystem input. One existing Starlette/httpx `TestClient`
   deprecation warning remains.
-- The most recent frontend checkpoint passed **44/44** unit tests, TypeScript,
-  ESLint, Prettier, production build, **16** default Playwright cases with two
-  expected seeded-only skips, and **2/2** seeded Frontier/Arena cases using
-  disposable local services and stores. The build emitted a 368.13 kB entry,
+- The updated frontend passes **45/45** unit tests, TypeScript, ESLint,
+  Prettier, production build, **17** default Playwright cases with two expected
+  seeded-only skips, and the separate **2/2** seeded Frontier/Arena cases using
+  disposable local services and stores. The build emitted a 368.81 kB entry,
   182.75 kB Frontier chunk, and the existing 544.41 kB Chart/ECharts chunk.
+- The new viewport-loading browser check observes no Chart module request while
+  the chart is below the viewport, then one request after scrolling it into
+  view. This defers transfer and parsing; it does not reduce the 544.41 kB
+  minified Chart chunk (186.76 kB gzip).
 - Strict configured mypy passes for the changed `models.py`; Ruff and formatting
   pass for the changed Python files. Earlier scoped strict mypy covered the
   Frontier package/API integration. The tmpfs test command and pressure gate are
@@ -51,6 +54,42 @@ quality, production resource/recovery, and deployment gates remain open.
 
 Frontier remains **PARTIALLY VERIFIED**, research-only, isolated, unmerged, and
 undeployed. No protected service or historical evidence was changed.
+
+## Viewport-deferred chart loading — 2026-10-28 08:28 UTC
+
+Code commit `c4adac6` centralizes chart rendering in
+`apps/web/src/DeferredChart.tsx` for Mission Control, Arena, and Reality. It
+reserves chart space, exposes a loading status, and uses `IntersectionObserver`
+with a 120 px root margin before importing the ECharts module. Browsers without
+`IntersectionObserver` retain immediate loading. The chart's dimensions remain
+242 px in the shared dashboard and 280 px in Reality.
+
+The focused browser test places the viewport at 390 by 200 px, confirms the
+chart container is below the viewport and no `Chart` module request occurs,
+then scrolls to the reserved area and confirms one module request and a
+rendered SVG. This verifies request timing only: the production build still
+contains the 544.41 kB minified Chart chunk (186.76 kB gzip). Its bytes are
+deferred until a chart is likely to be seen; total bundle size is unchanged.
+
+```bash
+cd apps/web
+./node_modules/.bin/vitest run
+# 45 passed in 8 files
+./node_modules/.bin/playwright test e2e/deferred-chart.spec.ts
+# 1 passed; isolated loopback demo API and Vite server
+./node_modules/.bin/playwright test
+# 17 passed, 2 seeded-only skips
+npm run build
+# TypeScript and Vite passed; entry 368.81 kB, Frontier 182.75 kB,
+# Chart 544.41 kB minified / 186.76 kB gzip
+./node_modules/.bin/eslint src/DeferredChart.tsx src/DeferredChart.test.tsx src/App.tsx src/Reality.tsx src/Arena.tsx e2e/deferred-chart.spec.ts
+./node_modules/.bin/prettier --check src/DeferredChart.tsx src/DeferredChart.test.tsx src/App.tsx src/Reality.tsx src/Arena.tsx src/styles.css e2e/deferred-chart.spec.ts
+```
+
+At `2026-10-28T08:28:12Z`, memory PSI avg10 was 0%, I/O PSI avg10 was
+0.14% some / 0.12% full, and about 10 GiB was available. Tests used only
+isolated browser/API state and fixtures; no exchange probe, production service,
+or protected store was accessed. Frontier remains **PARTIALLY VERIFIED**.
 
 ## Bounded metadata and initial resource checkpoint — 2026-10-28 03:59 UTC
 
