@@ -11817,6 +11817,8 @@ comparison API list/detail handling of missing or mismatched arm hashes. All
 **4/4 passed**. The process ran in the GNOME Terminal cgroup with a 512 MiB
 address-space cap and 30-second CPU and wall-time limits; it made no network
 requests. One existing Starlette/httpx deprecation warning remains.
+The results are recorded in commit
+`52c48b5cb87f5ecaf3a6645fa868e123dde24fc8`.
 
 At `2026-10-28T22:30:06Z`, API headroom was 1,527,808 bytes and Reality
 headroom was 557,928,448 bytes. PSI `avg10` was 0%; available memory was

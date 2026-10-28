@@ -12789,3 +12789,4 @@ Reality headroom **557,928,448 bytes**, PSI `avg10` 0%, and available memory
 **10,024,416 kB**. PSI averages over 60 and 300 seconds remained elevated, and
 the API remained near its limit. This is focused evidence, not the full
 comparison/storage regression or full Frontier suite.
+Documentation checkpoint: `52c48b5cb87f5ecaf3a6645fa868e123dde24fc8`.

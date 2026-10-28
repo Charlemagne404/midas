@@ -3950,6 +3950,7 @@ hash verification, rollback when the pair budget is exhausted, rejection of
 scenario/run mismatch, and API list/detail handling of missing and mismatched
 arm hashes. The test process was limited to 512 MiB address space and 30
 seconds CPU/wall time. It made no network requests.
+Checkpoint commit: `52c48b5cb87f5ecaf3a6645fa868e123dde24fc8`.
 
 At `2026-10-28T22:30:06Z`, API `MemoryHigh` headroom was 1,527,808 bytes and
 Reality headroom was 557,928,448 bytes. System PSI `avg10` was 0%; available
