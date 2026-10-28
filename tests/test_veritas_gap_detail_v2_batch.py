@@ -171,8 +171,13 @@ def test_resource_snapshot_checks_arena_jobs_across_both_repositories(tmp_path, 
     assert batch.resource_gate(gate_snapshot)["reasons"] == ["arena_worker_active"]
 
 
-def test_global_admission_lock_path_matches_arena_worker_path():
+def test_global_admission_lock_path_matches_arena_worker_path(tmp_path, monkeypatch):
+    isolated_root = tmp_path / "browser-arena"
+    monkeypatch.setenv("MIDAS_ARENA_ROOT", str(isolated_root))
+
     assert batch.global_lock_path() == admission.global_lock_path()
+    assert batch.global_lock_path() == isolated_root / ".global-admission.lock"
+    assert isolated_root.is_dir()
     assert Path.home() / "midas/data/reliability-endurance/arena" in batch.OTHER_ARENA_ROOTS
 
 

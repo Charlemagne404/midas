@@ -15,6 +15,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, cast
 
+from midas.arena.admission import global_lock_path
 from midas.veritas import gap_detail_analysis as analysis
 from midas.veritas.gap_detail_control import read_control, run_v2_batch
 
@@ -47,13 +48,6 @@ OTHER_ARENA_ROOTS = (
 
 class AdmissionLeaseBusy(RuntimeError):
     """Another MIDAS worker or bounded batch owns the host admission lease."""
-
-
-def global_lock_path() -> Path:
-    arena_root = Path.home() / "midas/data/arena"
-    if arena_root.is_symlink() or not arena_root.is_dir():
-        raise OSError("Primary Arena root is unavailable or unsafe")
-    return arena_root / ".global-admission.lock"
 
 
 @contextmanager

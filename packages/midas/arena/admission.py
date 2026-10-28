@@ -33,9 +33,22 @@ class ResourceAdmissionDenied(ValueError):
 
 
 def global_lock_path() -> Path:
-    arena_root = Path.home() / "midas/data/arena"
+    configured_root = os.environ.get("MIDAS_ARENA_ROOT")
+    if configured_root is None:
+        arena_root = Path.home() / "midas/data/arena"
+        if arena_root.is_symlink() or not arena_root.is_dir():
+            raise OSError("Primary Arena root is unavailable or unsafe")
+        return arena_root / ".global-admission.lock"
+
+    arena_root = Path(configured_root)
+    if not configured_root.strip() or arena_root.is_symlink():
+        raise OSError("Configured Arena root is unavailable or unsafe")
+    try:
+        arena_root.mkdir(parents=True, exist_ok=True)
+    except OSError as error:
+        raise OSError("Configured Arena root is unavailable or unsafe") from error
     if arena_root.is_symlink() or not arena_root.is_dir():
-        raise OSError("Primary Arena root is unavailable or unsafe")
+        raise OSError("Configured Arena root is unavailable or unsafe")
     return arena_root / ".global-admission.lock"
 
 

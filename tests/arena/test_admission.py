@@ -22,6 +22,34 @@ def ready_snapshot():
     }
 
 
+def test_global_lock_path_uses_configured_arena_root(tmp_path, monkeypatch):
+    root = tmp_path / "isolated" / "arena"
+    monkeypatch.setenv("MIDAS_ARENA_ROOT", str(root))
+
+    assert admission.global_lock_path() == root / ".global-admission.lock"
+    assert root.is_dir()
+
+
+def test_global_lock_path_keeps_primary_default_when_unconfigured(tmp_path, monkeypatch):
+    monkeypatch.delenv("MIDAS_ARENA_ROOT", raising=False)
+    monkeypatch.setattr(Path, "home", lambda: tmp_path)
+    root = tmp_path / "midas" / "data" / "arena"
+    root.mkdir(parents=True)
+
+    assert admission.global_lock_path() == root / ".global-admission.lock"
+
+
+def test_global_lock_path_rejects_configured_symlink(tmp_path, monkeypatch):
+    target = tmp_path / "arena-target"
+    target.mkdir()
+    link = tmp_path / "arena-link"
+    link.symlink_to(target, target_is_directory=True)
+    monkeypatch.setenv("MIDAS_ARENA_ROOT", str(link))
+
+    with pytest.raises(OSError, match="Configured Arena root is unavailable or unsafe"):
+        admission.global_lock_path()
+
+
 def test_resource_snapshot_detects_workers_across_arena_roots(tmp_path, monkeypatch):
     primary, veritas = tmp_path / "primary", tmp_path / "veritas"
     (primary / "jobs").mkdir(parents=True)
