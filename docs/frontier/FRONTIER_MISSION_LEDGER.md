@@ -11735,6 +11735,10 @@ and 0.06% (`full`); available memory was 10,038,936 kB and swap free was
 near its soft memory boundary. No protected service or external source was
 changed; the untracked `data/frontier-public-probes/` remains untouched.
 
+At `2026-10-28T22:25:26Z`, API headroom was 471,040 bytes and Reality
+headroom was 123,908,096 bytes; system PSI `avg10` was 0%. No additional test
+process was started after this measurement.
+
 | Component | Status | Evidence and boundary |
 | --- | --- | --- |
 | Comparison arm readback | COMPLETE AND VERIFIED WITH FIXTURES | List/detail resolve each run and verify its result hash; missing arm returns 409. |

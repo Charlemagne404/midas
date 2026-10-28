@@ -3908,3 +3908,7 @@ Reality headroom was 126,046,208 bytes. Memory PSI `avg10` was 0.07% (`some`)
 and 0.06% (`full`); available memory was 10,038,936 kB. Broad verification
 remains deferred with the API close to its soft boundary. Frontier remains
 partially verified.
+
+At `2026-10-28T22:25:26Z`, a follow-up sample showed API headroom of 471,040
+bytes and Reality headroom of 123,908,096 bytes. System PSI `avg10` was 0%;
+the API remains too close to `MemoryHigh` for further tests in this checkpoint.

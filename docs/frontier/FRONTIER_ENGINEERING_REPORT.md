@@ -12718,3 +12718,8 @@ changed.
 
 The comparison arm readback implementation is commit
 `447cf5cafb65f2fff867766f6a1a5c3fc5887dc3`.
+
+At `2026-10-28T22:25:26Z`, API `MemoryHigh` headroom had narrowed to
+**471,040 bytes** while Reality headroom was **123,908,096 bytes**; system
+memory PSI `avg10` was 0%. No additional test process was started after this
+sample.
