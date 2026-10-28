@@ -33,6 +33,22 @@ in the dated addendum below and in the Frontier engineering report.
 
 ## Frontier development addendum — 2026-10-28
 
+### Latest isolated Frontier checkpoint — 2026-10-28 12:48 UTC
+
+The broader one-worker non-Veritas browser suite passes **16 tests**; the two
+seeded Frontier cases were skipped in its empty-store run and pass separately
+**2/2**. This included Frontier, Arena, Laboratory, paper simulation,
+fixture-backed Reality explorer, Readiness, deferred charts, and Mission
+Control. Laboratory's bounded 6-run comparison and 1-run adversarial test
+completed in the temporary database. The historic Veritas artifact browser
+case remains unrun because it requires preserved workspace files; no such
+workspace was accessed.
+
+At 12:48:15Z memory PSI avg10 was 0.00%, I/O PSI some/full was 0.01%/0.00%,
+about 9 GiB was available, and no browser test process swapped. The local API
+and Vite servers exited. Frontier remains **PARTIALLY VERIFIED**,
+research-only, isolated, and undeployed.
+
 ### Latest isolated Frontier checkpoint — 2026-10-28 12:46 UTC
 
 Frontier frontend checks pass: TypeScript, ESLint, Prettier, production Vite

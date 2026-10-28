@@ -2,6 +2,35 @@
 
 **Report date:** 2026-10-28
 
+## Broader isolated browser regression — 2026-10-28 12:48 UTC
+
+The one-worker non-Veritas Playwright suite passes **16 tests**, with two
+seeded tests skipped because this run used an empty store. It took 35.8 seconds
+of Playwright time (36.36 seconds wall) and reached 222,188 KiB peak RSS, with
+zero swaps and socket messages. It covered Frontier, Arena, Laboratory, paper
+simulation, Reality's fixture-backed explorer, Readiness, deferred chart
+loading, and Mission Control. The two seeded Frontier cases passed separately
+**2/2** against their deterministic fixture store. The Laboratory tests
+completed one six-run comparison and one adversarial simulation in the
+temporary database; no long-running campaign was launched.
+
+The historical Veritas artifact browser test was excluded because its expected
+files are in the preserved Veritas workspace. That workspace was neither read
+nor redirected; Veritas unit component and offline economics/replay suites
+remain verified separately. The browser-run Reality operations were
+intercepted, paper state reported `synthetic` mode and zero live orders, and no
+exchange probe was enabled. The demo API/Vite processes exited after the run.
+
+At `12:48:15Z`, memory PSI avg10 was **0.00%** and I/O PSI was **0.01% some /
+0.00% full**; about **9 GiB** was available. Host swap occupancy remained
+3.5/4 GiB, but the test process used no swap.
+
+| Requirement | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Non-Veritas MIDAS browser regression | COMPLETE AND VERIFIED | 16 passed; two seeded Frontier cases pass separately. |
+| Veritas historical-artifact browser flow | PARTIALLY VERIFIED | Historical workspace was intentionally not read; fixture-backed components and offline economics/replay pass. |
+| Frontier overall | PARTIALLY VERIFIED | Genuine cross-venue evidence, protected recovery, wider source validation, and deployment remain open. |
+
 ## Frontier frontend build and browser verification — 2026-10-28 12:46 UTC
 
 The native Frontier frontend type-checks and builds in production mode. `tsc

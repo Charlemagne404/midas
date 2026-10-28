@@ -1,5 +1,40 @@
 # Project Frontier Mission Ledger
 
+## Broader isolated browser regression — 2026-10-28 12:48 UTC
+
+The one-worker Playwright run across the non-Veritas browser suite completed
+**16 passed, 2 skipped** in 35.8 seconds (36.36 seconds wall), with 222,188
+KiB peak RSS, zero swaps, and zero socket messages. It exercised Frontier,
+Arena, Laboratory, paper simulation, Reality's isolated explorer, readiness,
+deferred charts, and Mission Control. The two seeded Frontier tests were
+skipped because this run intentionally used an empty store; they pass **2/2**
+in the separate seeded run recorded below. Laboratory completed the bounded
+6-run comparison and 1-run adversarial simulation against the test database.
+Reality service operations were intercepted by fixtures, and the paper API
+reported synthetic mode with zero live orders.
+
+The Veritas browser case that asserts historical research artifacts was
+excluded because its expected artifacts are in the preserved Veritas
+workspace; it was not redirected to or read from that workspace. The Veritas
+unit component tests and offline independent-economics/replay regressions remain
+verified separately. The demo API and Vite test servers exited, and ports
+18000/15173 were clear afterward. No public source, service control, or
+operational evidence store was used.
+
+At `12:48:15Z`, memory PSI avg10 was **0.00%**, I/O PSI was **0.01% some /
+0.00% full**, about **9 GiB** was available, and host swap remained at 3.5/4
+GiB. Pytest used no swap.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Non-Veritas MIDAS browser regression | COMPLETE AND VERIFIED | 16 passed; seeded tests separately pass 2/2. |
+| Veritas historical-artifact browser flow | PARTIALLY VERIFIED | Not run against preserved artifact storage; fixture-backed component tests and offline economics pass. |
+| Frontier overall | PARTIALLY VERIFIED | Genuine cross-venue public evidence, broader live/browser validation, protected recovery, and deployment remain open. |
+
+Next safe action: continue implementation or use additional isolated
+regressions. Do not read the held Veritas workspace or cross the production
+boundary without explicit scope changes.
+
 ## Frontier frontend build and browser verification — 2026-10-28 12:46 UTC
 
 The Frontier workspace passes its current frontend checks:
