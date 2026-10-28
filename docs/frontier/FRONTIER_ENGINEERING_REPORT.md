@@ -12401,3 +12401,36 @@ avg10/avg60/avg300 was 0%; `MemAvailable` was 9,589,588 kB and `SwapFree` was
 
 Next safe action: inspect API and replay mapping entry points for equivalent
 fail-closed behavior; keep live sources held and broad regression deferred.
+
+## Replay and API mapping ingress — 2026-10-28 21:57 UTC
+
+The read-only API review found that relationship verification accepts explicit
+state/instrument mappings and pins them into the verified relationship. Normal
+`/replay` and `/replay/compare` load those stored relationships and do not
+accept mapping overrides. Internal `deterministic_replay` and paired/discovery
+entry points do accept explicit mappings; the new candidate and audit guards
+cover that internal path. The separate joint-state replay request has its own
+evidence and assertion checks. No API code change was needed.
+
+Commit `240ec0b` adds a deterministic-replay regression proving that an
+inverted same-payoff mapping override produces `INVALID_RELATIONSHIP`, no
+position legs, and a `NOT_EVALUATED` independent audit. It passes **1/1** in
+0.60 seconds under the same 1 GiB address-space and 60-second CPU limits with
+reduced priority. The mapping-guard production changes are in `8f2827f`;
+Ruff and format checks pass for the added test.
+
+At `2026-10-28T21:57:07Z`, API was active at 1,606,479,872 / 1,610,612,736
+bytes `MemoryHigh` (4,132,864 bytes below); Reality was active at
+1,102,872,576 / 1,207,959,552 bytes (105,086,976 bytes below). Memory PSI
+avg10/avg60/avg300 was 0%; `MemAvailable` was 9,613,916 kB and `SwapFree` was
+60,992 kB. No service changed and no source endpoint was queried.
+
+| Requirement | Status | Evidence and boundary |
+| --- | --- | --- |
+| Stored API relationship-map integrity | COMPLETE AND VERIFIED BY CODE REVIEW | Review endpoint pins mappings into the verified relationship; normal replay consumes that stored record. |
+| Internal replay override guard | COMPLETE AND VERIFIED WITH FIXTURES | Deterministic replay rejects altered maps before economic evaluation. |
+| Joint-state request path | COMPLETE AND VERIFIED WITH FIXTURES | Separate evidence-bound model and request checks remain in place. |
+| Project Frontier overall | PARTIALLY VERIFIED | Live cross-venue science, broad regression, endurance, recovery, and deployment remain open. |
+
+Next safe action: continue bounded review of stored replay identity and
+candidate persistence; defer broad suites at the current API memory margin.

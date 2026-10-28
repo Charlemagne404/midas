@@ -11461,3 +11461,26 @@ accessed. The forged positive-looking candidate is a fixture only.
 
 Next safe action: review replay/API mapping injection and serialization; no
 source use or production transition is enabled.
+
+## Replay and API mapping ingress — 2026-10-28 21:57 UTC
+
+Read-only inspection confirmed the relationship-review endpoint stores the
+reviewed mappings in the verified relationship; regular replay endpoints
+consume stored relationships without caller-provided mapping overrides.
+Internal deterministic, paired, and discovery replays can accept explicit
+mapping overrides, now guarded against evidence drift. Joint-state replay uses
+its own evidence-bound request object. No API code change was needed.
+
+Commit `240ec0b` adds a top-level deterministic-replay regression, passing
+**1/1** in 0.60 seconds. Ruff and format pass. At `2026-10-28T21:57:07Z`, API
+headroom was 4,132,864 bytes and Reality headroom was 105,086,976 bytes;
+memory PSI was 0%. No source endpoint or service was accessed.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| API mapping persistence/consumption | COMPLETE AND VERIFIED BY CODE REVIEW | Stored verified relationship is the replay source. |
+| Internal explicit mapping overrides | COMPLETE AND VERIFIED WITH FIXTURES | Changed mappings are rejected by replay candidate generation. |
+| Project Frontier overall | PARTIALLY VERIFIED | Live cross-venue science, broad regression, endurance, recovery, and deployment remain open. |
+
+Next safe action: continue static review of replay storage and candidate
+provenance; preserve source holds and the protected-service boundary.

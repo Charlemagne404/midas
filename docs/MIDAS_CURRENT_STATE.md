@@ -3765,3 +3765,17 @@ At `2026-10-28T21:56:15Z`, API was active at 1,605,910,528 / 1,610,612,736
 bytes; Reality was active at 1,109,176,320 / 1,207,959,552 bytes. Memory PSI
 was 0%, available memory 9,589,588 kB, and swap free 52,896 kB. Broad
 regression remains deferred because API headroom is narrow.
+
+## Project Frontier replay/API mapping ingress — 2026-10-28 21:57 UTC
+
+Read-only review confirmed the relationship-review API pins mappings into the
+verified relationship, and normal replay reads those stored mappings. Internal
+replay and comparison functions accept explicit overrides; candidate
+generation and independent audit now reject mapping drift. The new top-level
+replay fixture passes 1/1. No API change, external request, or protected
+service change occurred. Frontier remains partially verified; live science,
+broad regression, endurance, recovery, and deployment remain outstanding.
+
+At `2026-10-28T21:57:07Z`, API was active at 1,606,479,872 / 1,610,612,736
+bytes and Reality at 1,102,872,576 / 1,207,959,552 bytes. Memory PSI was 0%,
+available memory 9,613,916 kB, and swap free 60,992 kB.
