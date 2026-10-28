@@ -110,6 +110,72 @@ def test_logical_implication_verifier_rejects_oversized_observation_identity_inp
     assert "exceeds its bounded identity limit" in rejected.reason.lower()
 
 
+def test_logical_implication_rejects_reverse_direction_with_counterexample() -> None:
+    source, target, *_ = _fixture()
+    reverse = verify_logical_implication(
+        source,
+        target,
+        implication_from_market_id=target.canonical_id,
+        implication_to_market_id=source.canonical_id,
+        state_mapping=dict(zip(STATES, STATES, strict=True)),
+        external_assertion_id="fixture-reverse-direction-counterexample",
+        evidence_observation_ids=(
+            source.provenance.observation_id,
+            target.provenance.observation_id,
+        ),
+        asserted_at_utc=T0,
+    )
+
+    assert reverse.state.value == "rejected"
+    assert "source yes payout does not imply target yes" in reverse.reason.lower()
+
+
+def test_logical_implication_rejects_non_bijective_state_mapping() -> None:
+    source, target, *_ = _fixture()
+    mapping = {
+        STATES[0]: STATES[0],
+        STATES[1]: STATES[0],
+        STATES[2]: STATES[2],
+    }
+    rejected = verify_logical_implication(
+        source,
+        target,
+        implication_from_market_id=source.canonical_id,
+        implication_to_market_id=target.canonical_id,
+        state_mapping=mapping,
+        external_assertion_id="fixture-non-bijective-state-map",
+        evidence_observation_ids=(
+            source.provenance.observation_id,
+            target.provenance.observation_id,
+        ),
+        asserted_at_utc=T0,
+    )
+
+    assert rejected.state.value == "rejected"
+    assert "state mapping is not a bijection" in rejected.reason.lower()
+
+
+def test_logical_implication_rejects_oversized_joint_state_mapping() -> None:
+    source, target, *_ = _fixture()
+    oversized_mapping = {f"state-{index}": f"state-{index}" for index in range(1025)}
+    rejected = verify_logical_implication(
+        source,
+        target,
+        implication_from_market_id=source.canonical_id,
+        implication_to_market_id=target.canonical_id,
+        state_mapping=oversized_mapping,
+        external_assertion_id="fixture-oversized-state-map",
+        evidence_observation_ids=(
+            source.provenance.observation_id,
+            target.provenance.observation_id,
+        ),
+        asserted_at_utc=T0,
+    )
+
+    assert rejected.state.value == "rejected"
+    assert "exceeds the verification bounds of 1024 states" in rejected.reason.lower()
+
+
 def test_directed_implication_basket_is_capped_and_independently_audited():
     source, target, relationship, ordered_markets, by_market, books = _fixture()
     left, right = ordered_markets
