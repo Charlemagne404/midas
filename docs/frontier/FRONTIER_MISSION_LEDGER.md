@@ -6096,7 +6096,10 @@ integrity gating, reproducibility fields, and navigation; API responses were
 mocked in component tests. A final accessibility review then moved job-card
 selection to a proper nested button, avoiding block content inside a `<button>`.
 That final markup adjustment has not been rechecked. No post-change lint,
-format, build, or browser run is claimed.
+format, build, or browser run is claimed. Commit `afcc726` adds a fixture-routed
+Playwright case for saved-job selection, integrity-gated result display, and
+absence of source or Arena mutation requests; that browser case is also awaiting
+execution.
 
 At `2026-10-28T07:12:59Z`, memory PSI avg10 was **47.23% some / 42.98% full**,
 I/O PSI avg10 **0.75% some / 0.74% full**, and about **10 GiB** was available;

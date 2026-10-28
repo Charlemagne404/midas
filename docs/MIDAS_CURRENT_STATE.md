@@ -1791,7 +1791,9 @@ The focused Laboratory tests (4/4), full frontend unit suite (43/43), and
 TypeScript check passed before a final semantic markup refinement. The modified
 card markup has not yet been rechecked. At `2026-10-28T07:12:59Z`, memory PSI
 avg10 was **47.23% some / 42.98% full**; no additional resource-bearing
-verification was started. This UI-level integration does not verify Arena
+verification was started. Commit `afcc726` also adds a fixture-routed
+Playwright case for this view, but it has not been run. This UI-level
+integration does not verify Arena
 supervisor completion, a populated live-store browser flow, or source quality.
 Frontier remains isolated, research-only, **PARTIALLY VERIFIED**, and
 undeployed. Continue with a fresh host admission sample before rerunning the

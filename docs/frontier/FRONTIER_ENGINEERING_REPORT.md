@@ -7397,7 +7397,10 @@ identity display and integrity-result withholding, and confirmed navigation.
 During final review, job selection was moved into a valid nested button so the
 card no longer puts block elements inside a button. This last markup change
 was made after the reported test/typecheck results and remains unverified.
-Post-change Prettier, lint, build, and browser E2E were not run.
+Post-change Prettier, lint, build, and browser E2E were not run. Commit
+`afcc726` adds a fixture-routed Playwright case for retained-job selection,
+integrity-gated rendering, and no source or Arena mutation requests; this new
+browser case also awaits execution.
 
 At `2026-10-28T07:12:59Z`, memory PSI avg10 was **47.23% some / 42.98% full**,
 I/O PSI avg10 **0.75% some / 0.74% full**, with about **10 GiB** available.
@@ -7415,7 +7418,8 @@ contact any source.
 
 Changed files in this checkpoint include
 `apps/web/src/LaboratoryFrontierResearch.tsx`, `Laboratory.tsx`,
-`Laboratory.test.tsx`, `App.tsx`, and `styles.css`, plus the Laboratory,
+`Laboratory.test.tsx`, `App.tsx`, `styles.css`, and
+`apps/web/e2e/laboratory.spec.ts`, plus the Laboratory,
 Frontier architecture, operations, development, current-state, mission-ledger,
 and report documentation. No source endpoint, production service, or protected
 data store was accessed.

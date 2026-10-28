@@ -700,7 +700,8 @@ suite passed 43/43, and TypeScript passed before a final accessibility markup
 refinement to the job cards. Re-run the focused test, Prettier, lint, and
 typecheck after that refinement. At `2026-10-28T07:12:59Z`, memory PSI avg10
 was 47.23% some / 42.98% full, so resource-bearing verification is deferred
-until a fresh sample clears the admission gate.
+until a fresh sample clears the admission gate. A fixture-routed Playwright
+case covering this tab was added in `afcc726`; it also awaits execution.
 
 ## Keep worktrees and runtime data separate
 
