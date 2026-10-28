@@ -3309,3 +3309,24 @@ implementation commit is `530c9aa8b3fb2b4ee006c35c2494bccdb0b7cae8`.
 
 Continue with bounded offline acceptance; do not treat the explicit FX scenario
 as sourced or executable economics.
+
+### Funding-currency browser acceptance and full Frontier regression — 2026-10-28 00:27 UTC
+
+Commit `86b79fe10b6aed82dabbe3e40ea01e08923ad744` adds a browser regression for the saved-candidate funding-currency workbench. The fixture changes Kalshi funding from USD to EUR; the UI requires a user-entered rate and fee, keeps Kalshi and Polymarket balances separate, and displays the saved candidate classification as unchanged. The first browser run exposed an assertion expecting one unresolved-fee notice although both venue rows correctly showed one. The selector was fixed to assert both rows; the targeted test and then the full suite passed.
+
+Verification:
+
+- `pytest tests/frontier -q`: **322 passed** in 50.72 seconds; 52.04 seconds wall, **364,312 KiB peak RSS**, zero swaps, zero socket messages. One existing Starlette/httpx deprecation warning remains.
+- `corepack pnpm test` in `apps/web`: **40 passed** across seven files in 5.32 seconds.
+- `corepack pnpm exec playwright test --workers=1`: **12 passed** in 27.4 seconds using isolated demo API/web services and temporary databases. The funding-currency browser response is intercepted fixture data; the saved-run API is covered independently by Python tests.
+- Prettier, ESLint for the changed browser file, and `git diff --check` passed. This test-only commit did not rerun the production web build; typecheck and Vite build passed at the prior implementation checkpoint.
+
+At the post-test sample `2026-10-28T00:27:27Z`, memory PSI avg10 was **17.09% some / 11.86% full**, MemAvailable was **9,858,420 KiB**, and SwapFree was **335,952 KiB**. These short tests do not establish long-run resource sustainability. No exchange endpoint, protected Reality process, production store, deployment, Arena campaign, or long-running worker was used.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Frontier Python suite | COMPLETE AND VERIFIED | 322 Frontier tests pass, including adapters, relationships, replay, saved-run API, and FX arithmetic. This is not the full repository suite. |
+| Mission Control browser workflow | PARTIALLY VERIFIED | All 40 unit and 12 E2E tests pass; the FX browser response is fixture-intercepted and its API is separately fixture-tested. No live rate or conversion is established. |
+| Test resource profile | PARTIALLY VERIFIED | One run measured 364,312 KiB peak RSS and zero swaps; concurrent operation, sustained collection, and production admission are unmeasured. |
+| Genuine cross-venue economics / production | DEFERRED | Source-use permission, synchronized market evidence, FX availability, transfer constraints, and deployment remain unresolved. |
+| Project Frontier overall | PARTIALLY VERIFIED | Offline functionality has broad passing regressions; live multi-venue evidence and production gates remain open. |

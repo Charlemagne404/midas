@@ -2,7 +2,7 @@
 
 **Report date:** 2026-10-28
 
-**Latest code checkpoint:** `87c67b23fbda1624a6b36273b63cd94427113b4c`
+**Funding-sensitivity implementation checkpoint:** `87c67b23fbda1624a6b36273b63cd94427113b4c`
 adds oversized-input regression coverage to the virtual funding-currency
 sensitivity introduced in `530c9aa8b3fb2b4ee006c35c2494bccdb0b7cae8`. The API
 and Mission Control workspace accept explicit namespaced
@@ -14,15 +14,28 @@ conversion, or persist assumptions. The focused Python selection passed
 build passed, and scoped Ruff, Prettier, ESLint, and mypy checks passed. The
 build emits a Vite advisory for the 544.41 kB Chart chunk. Strict mypy on the
 new FX module passes; checking the full API module required suppressing its
-pre-existing `no-any-return` finding in the adapter registry. The full Frontier
-suite and Playwright browser check were not rerun while an external Veritas
-batch was active and memory PSI remained elevated. No exchange request, Arena
-worker, protected service, production store, or deployment was used. Live FX
+pre-existing `no-any-return` finding in the adapter registry. At that
+implementation checkpoint, the full Frontier suite and Playwright browser
+check were not rerun while an external Veritas batch was active and memory PSI
+remained elevated. No exchange request, Arena worker, protected service,
+production store, or deployment was used. Live FX
 data, cross-venue funding availability, source permissions, broader regression,
 and deployment remain unresolved; Frontier is isolated, incomplete, and
 undeployed.
 
 **Branch:** `codex/frontier-20261026`
+
+**Latest verification update (2026-10-28 00:27 UTC):** Commit
+`86b79fe10b6aed82dabbe3e40ea01e08923ad744` adds fixture-backed browser coverage
+for the funding-currency workbench. Since the preceding checkpoint, the full
+Frontier Python suite passed **322/322** (50.72 seconds, 364,312 KiB peak RSS,
+zero swaps); the full web unit suite passed **40/40**; and the configured
+browser suite passed **12/12** against isolated demo services. The funding
+workbench browser scenario confirms distinct venue balances, explicit FX
+assumptions, and unchanged candidate classification. Full details and the
+resource sample are recorded in the dated continuation at the end of this
+report. These fixture results do not establish live FX or cross-venue
+executable economics.
 
 **Worktree:** `/home/charlie/midas-frontier`
 
@@ -4944,3 +4957,37 @@ Arena worker, production store, or deployment was touched.
 
 Continue with bounded offline acceptance. Do not promote user-entered conversion
 scenarios to sourced exchange economics or executable capital availability.
+
+### Funding-currency browser acceptance and Frontier regression — 2026-10-28
+
+Commit `86b79fe10b6aed82dabbe3e40ea01e08923ad744` extends
+`apps/web/e2e/frontier.spec.ts`. The pinned candidate fixture changes Kalshi's
+funding identity from USD to EUR, confirms that the FX rate and conversion-fee
+inputs start empty, submits explicit values for Kalshi and a separate USD
+balance for Polymarket, and checks the response leaves the saved candidate's
+classification and practical eligibility unchanged. The first E2E attempt
+found a test-selector ambiguity because both venue rows correctly displayed
+the unresolved-fee notice. The assertion was corrected to require both rows;
+the targeted test then passed, followed by the full configured browser suite.
+
+Verification on 2026-10-28:
+
+- `env PYTHONPATH=packages:.:tests /usr/bin/time -v /home/charlie/midas/.venv/bin/pytest tests/frontier -q`: **322 passed**, 1 existing Starlette/httpx deprecation warning, 50.72 seconds pytest time / 52.04 seconds wall, **364,312 KiB peak RSS**, zero swaps, zero socket messages.
+- `corepack pnpm test` in `apps/web`: **40 passed** across 7 files in 5.32 seconds.
+- `corepack pnpm exec playwright test --workers=1` in `apps/web`: **12 passed** in 27.4 seconds. Playwright starts isolated demo API/web services and temporary databases; the FX response is an explicit browser fixture, while the saved-run endpoint is covered separately by the Python API tests.
+- Prettier, ESLint for the modified E2E file, `git diff --check`, and the earlier build/typecheck passed. No production frontend build was rerun because this checkpoint changed only E2E code.
+
+At `2026-10-28T00:27:27Z`, after these bounded tests, memory PSI avg10 was
+**17.09% some / 11.86% full**, MemAvailable was **9,858,420 KiB**, and
+SwapFree was **335,952 KiB**. This single run does not establish resource
+sustainability. The E2E suite used no exchange endpoint, production database,
+protected Reality process, or deployment. No Arena campaign or long-running
+worker was started.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Frontier Python regression | COMPLETE AND VERIFIED | 322 tests pass, including adapter, relationship, replay, API, and funding-currency coverage; full repository tests are outside this result. |
+| Mission Control and browser regression | PARTIALLY VERIFIED | All 40 web unit tests and 12 configured E2E tests pass. The funding-currency response is fixture-intercepted in browser; the API is independently fixture-tested. No live FX source is connected. |
+| Resource sustainability | PARTIALLY VERIFIED | This test run measured 364,312 KiB peak Python RSS and zero swaps; longer concurrency, steady-state collection, and production admission remain unmeasured. |
+| Live cross-venue economics and deployment | DEFERRED | Source permission, synchronized venue evidence, FX availability, transfers, and production transition remain unresolved. |
+| Project Frontier overall | PARTIALLY VERIFIED | The offline research implementation has broad passing regressions; genuine live cross-venue validation and deployment gates remain open. |
