@@ -39,6 +39,18 @@ def test_adapter_time_parser_rejects_naive_source_times_and_normalizes_offsets()
     assert parse_time("2026-10-28T12:34:56Z") == datetime(2026, 10, 28, 12, 34, 56, tzinfo=UTC)
 
 
+def test_transport_and_adapter_reject_copied_unbounded_config_before_network_setup():
+    invalid = AdapterConfig(max_response_bytes=1024).model_copy(
+        update={"max_response_bytes": 1_000_000_000}
+    )
+
+    assert not invalid.has_valid_structure
+    with pytest.raises(ValueError, match="Adapter configuration fails structural validation"):
+        PublicReadTransport({"api.example.test"}, invalid)
+    with pytest.raises(ValueError, match="Adapter configuration fails structural validation"):
+        PolymarketAdapter(invalid)
+
+
 @pytest.mark.asyncio
 async def test_source_health_request_count_is_a_bounded_rolling_window(monkeypatch):
     clock = [160.0]

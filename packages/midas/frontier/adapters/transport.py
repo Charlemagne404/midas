@@ -86,6 +86,8 @@ class PublicReadTransport:
         config: AdapterConfig,
         client: httpx.AsyncClient | None = None,
     ) -> None:
+        if not config.has_valid_structure:
+            raise ValueError("Adapter configuration fails structural validation")
         self.allowed_hosts = frozenset(host.lower() for host in allowed_hosts)
         self.config = config
         self._owns_client = client is None

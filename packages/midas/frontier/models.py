@@ -178,6 +178,25 @@ class AdapterConfig(FrontierModel):
     max_markets_per_call: Annotated[int, Field(ge=1, le=100)] = 20
     retries: Annotated[int, Field(ge=0, le=2)] = 1
 
+    @property
+    def has_valid_structure(self) -> bool:
+        """Revalidate public-source resource bounds after possible model copies."""
+        try:
+            validated = type(self).model_validate(self.model_dump(mode="python", warnings=False))
+            validated_payload = json.dumps(
+                validated.model_dump(mode="json", warnings=False),
+                sort_keys=True,
+                separators=(",", ":"),
+            )
+            source_payload = json.dumps(
+                self.model_dump(mode="json", warnings=False),
+                sort_keys=True,
+                separators=(",", ":"),
+            )
+        except (TypeError, ValueError):
+            return False
+        return validated_payload == source_payload
+
 
 class SourceHealth(FrontierModel):
     venue: Venue

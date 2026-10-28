@@ -153,6 +153,8 @@ class BaseReadOnlyAdapter:
         from midas.frontier.adapters.transport import PublicReadTransport
 
         self.config = config or AdapterConfig()
+        if not self.config.has_valid_structure:
+            raise ValueError("Adapter configuration fails structural validation")
         self.transport = transport or PublicReadTransport(self.allowed_hosts, self.config)
         self._captures: list[RawObservation] = []
         self._capture_bytes = 0
