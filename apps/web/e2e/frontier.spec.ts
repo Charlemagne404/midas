@@ -108,6 +108,134 @@ test('Arena replay history loads without submitting or launching work', async ({
   expect(sourceProbeRequests).toBe(0);
 });
 
+test('joint-state replay submits an explicit fixture map without probing a venue', async ({
+  page,
+}) => {
+  let sourceProbeRequests = 0;
+  let jointReplayRequests = 0;
+  page.on('request', (request) => {
+    if (request.url().includes('/api/frontier/probe/')) sourceProbeRequests += 1;
+  });
+  const eventMarket = (key: string, title: string, observation: string) => ({
+    canonical_id: `polymarket:${key}`,
+    source_observation_record_id: observation.repeat(64),
+    native_market_id: key,
+    native_event_id: null,
+    native_event_title: null,
+    outcome_label: null,
+    venue: 'polymarket',
+    title,
+    market_kind: 'binary_event',
+    lifecycle: 'open',
+    description: 'Explicit E2E fixture only.',
+    base_asset: null,
+    quote_asset: null,
+    settlement_asset: 'USD',
+    payoff: {
+      state_ids: ['no', 'yes'],
+      payout_currency: 'USD',
+      exhaustive: true,
+      verified: true,
+      verification_basis: 'E2E fixture only.',
+    },
+    resolution: {
+      primary_rule: 'Fixture-only resolution.',
+      secondary_rule: null,
+      authority: 'Fixture authority',
+      closes_at_utc: '2026-12-01T00:00:00Z',
+      settles_at_utc: '2026-12-02T00:00:00Z',
+      evidence_sha256: 'c'.repeat(64),
+      resolution_fingerprint: `${key}-rules-v1`,
+      verified: true,
+    },
+    fees: {
+      status: 'unknown',
+      version: null,
+      applies_to: null,
+      rate: null,
+      formula: null,
+      fee_currency: null,
+      source_url: null,
+      note: 'Unknown in fixture.',
+    },
+    native_fields: {},
+    instruments: [
+      { native_instrument_id: `${key}-yes`, label: 'Yes', outcome_id: 'yes' },
+      { native_instrument_id: `${key}-no`, label: 'No', outcome_id: 'no' },
+    ],
+    quality_flags: ['E2E_FIXTURE_ONLY'],
+    provenance: {
+      response_received_at_utc: '2026-10-27T12:00:00Z',
+      raw_sha256: 'd'.repeat(64),
+      observation_id: observation.repeat(64),
+    },
+  });
+  await page.route('**/api/frontier/markets?limit=100', (route) =>
+    route.fulfill({
+      json: {
+        items: [
+          eventMarket('event-a', 'Fixture event A', 'a'),
+          eventMarket('event-b', 'Fixture event B', 'b'),
+        ],
+        returned: 2,
+        limit: 100,
+        offset: 0,
+      },
+    }),
+  );
+  await page.route('**/api/frontier/replay/joint-state', async (route) => {
+    expect(route.request().method()).toBe('POST');
+    jointReplayRequests += 1;
+    const payload = route.request().postDataJSON() as {
+      mapping: Record<string, unknown>;
+      scenario: Record<string, unknown>;
+    };
+    expect(payload.mapping).not.toHaveProperty('mapping_id');
+    expect(payload.mapping).toMatchObject({
+      external_assertion_id: 'fixture-shared-event-reference',
+      market_ids: ['polymarket:event-a', 'polymarket:event-b'],
+      joint_state_ids: ['world-no', 'world-yes'],
+      evidence_observation_ids: ['a'.repeat(64), 'b'.repeat(64)],
+      semantic_status: 'externally_asserted_unverified',
+      state_by_market: {
+        'polymarket:event-a': { 'world-no': 'no', 'world-yes': 'yes' },
+        'polymarket:event-b': { 'world-no': 'no', 'world-yes': 'yes' },
+      },
+    });
+    await route.fulfill({
+      json: {
+        run_id: 'e'.repeat(64),
+        manifest: { joint_state_mappings: [{ mapping_id: 'f'.repeat(64) }] },
+        candidates: [],
+        classification_counts: {},
+      },
+    });
+  });
+
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Frontier', exact: true }).click();
+  await page.getByRole('button', { name: 'Replay & readiness', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Assert a joint-state map' })).toBeVisible();
+  const markets = page.getByRole('listbox', {
+    name: 'Stored event markets for joint-state replay',
+  });
+  await markets.selectOption(['polymarket:event-a', 'polymarket:event-b']);
+  await page.getByLabel('External assertion reference').fill('fixture-shared-event-reference');
+  await page.getByLabel('Assertion time').fill('2026-10-29T12:00');
+  await page.getByLabel('Joint-state IDs').fill('world-no\nworld-yes');
+  await page.getByLabel('world-no local payoff state for Fixture event A').selectOption('no');
+  await page.getByLabel('world-yes local payoff state for Fixture event A').selectOption('yes');
+  await page.getByLabel('world-no local payoff state for Fixture event B').selectOption('no');
+  await page.getByLabel('world-yes local payoff state for Fixture event B').selectOption('yes');
+  const submit = page.getByRole('button', { name: 'Replay conditional basket' });
+  await expect(submit).toBeEnabled();
+  await submit.click();
+
+  await expect(page.getByRole('status').getByText('Conditional replay saved')).toBeVisible();
+  expect(jointReplayRequests).toBe(1);
+  expect(sourceProbeRequests).toBe(0);
+});
+
 test('inspects fixture-only Kalshi settlement arithmetic without probing an exchange', async ({
   page,
 }) => {
