@@ -33,6 +33,31 @@ in the dated addendum below and in the Frontier engineering report.
 
 ## Frontier development addendum — 2026-10-28
 
+### Latest isolated Frontier checkpoint — 2026-10-28 12:46 UTC
+
+Frontier frontend checks pass: TypeScript, ESLint, Prettier, production Vite
+build, **47/47 Vitest**, and **12 focused Playwright cases** across empty and
+seeded data. Browser checks cover the Frontier workspace, mobile graph
+overflow, chart lazy-loading, explicit history replay, fixture-only Kalshi
+settlement, and hash-verified Arena evidence in Laboratory. All local servers,
+database files, replay artifacts, screenshots, and build output were isolated
+under `/tmp`; no exchange probe or production service was used.
+
+An additional readiness browser case passed **1/1** without an explicit E2E
+run ID, verifying that generated temp-root ownership markers survive worker
+config reloads.
+
+The first E2E run exposed a missing parent directory for the temporary SQLite
+database. The Playwright config now creates a fresh real temporary root and
+checks a per-run owner marker so workers can reload configuration without
+accepting stale state. The Vite build warns that its deferred chart chunk is
+544.51 kB (186.79 kB gzip); the chart remains lazy-loaded.
+
+At 12:46:07Z memory PSI avg10 was 0.00% and I/O PSI some/full was 0.08%, with
+about 9.9 GiB available and no timed test process swapping. Frontier remains **PARTIALLY VERIFIED**,
+research-only, isolated, and undeployed; genuine cross-venue evidence and
+production readiness remain open.
+
 ### Latest isolated Frontier checkpoint — 2026-10-28 12:33 UTC
 
 Three bounded regression groups now pass: Reality source-quality reconciliation

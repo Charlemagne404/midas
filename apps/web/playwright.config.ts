@@ -1,6 +1,16 @@
 import { defineConfig } from '@playwright/test';
+import { randomUUID } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdtempSync } from 'node:fs';
+import {
+  existsSync,
+  lstatSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  readdirSync,
+  realpathSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -12,11 +22,54 @@ const python =
   (existsSync(join(repository, '.venv/bin/python'))
     ? join(repository, '.venv/bin/python')
     : '/home/charlie/midas/.venv/bin/python');
+const temporaryRoot = resolve(tmpdir());
 const browserRoot = resolve(
-  process.env.MIDAS_FRONTIER_E2E_ROOT ?? mkdtempSync(join(tmpdir(), 'midas-browser-')),
+  process.env.MIDAS_FRONTIER_E2E_ROOT ?? mkdtempSync(join(temporaryRoot, 'midas-browser-')),
 );
-if (dirname(browserRoot) !== tmpdir() || !basename(browserRoot).startsWith('midas-browser-')) {
+if (dirname(browserRoot) !== temporaryRoot || !basename(browserRoot).startsWith('midas-browser-')) {
   throw new Error('Playwright browser root must be an isolated temporary directory');
+}
+const rootOwnerPath = join(browserRoot, '.midas-frontier-e2e-owner');
+if (existsSync(browserRoot)) {
+  const rootMetadata = lstatSync(browserRoot);
+  if (!rootMetadata.isDirectory() || rootMetadata.isSymbolicLink()) {
+    throw new Error('Playwright browser root must be a real directory');
+  }
+  const runId = process.env.MIDAS_FRONTIER_E2E_RUN_ID;
+  if (runId) {
+    if (!existsSync(rootOwnerPath)) {
+      throw new Error('Playwright browser root is missing its current-run owner marker');
+    }
+    const ownerMetadata = lstatSync(rootOwnerPath);
+    if (!ownerMetadata.isFile() || ownerMetadata.isSymbolicLink()) {
+      throw new Error('Playwright browser root owner marker must be a regular file');
+    }
+    const expectedOwner = `${runId}\n${realpathSync(browserRoot)}\n`;
+    if (readFileSync(rootOwnerPath, 'utf8') !== expectedOwner) {
+      throw new Error('Playwright browser root belongs to a different run');
+    }
+  } else {
+    if (readdirSync(browserRoot).length > 0) {
+      throw new Error('Playwright browser root must be fresh and empty');
+    }
+    const newRunId = randomUUID();
+    process.env.MIDAS_FRONTIER_E2E_RUN_ID = newRunId;
+    writeFileSync(rootOwnerPath, `${newRunId}\n${realpathSync(browserRoot)}\n`, {
+      flag: 'wx',
+      mode: 0o600,
+    });
+  }
+} else {
+  mkdirSync(browserRoot);
+  const newRunId = process.env.MIDAS_FRONTIER_E2E_RUN_ID ?? randomUUID();
+  process.env.MIDAS_FRONTIER_E2E_RUN_ID = newRunId;
+  writeFileSync(rootOwnerPath, `${newRunId}\n${realpathSync(browserRoot)}\n`, {
+    flag: 'wx',
+    mode: 0o600,
+  });
+}
+if (dirname(realpathSync(browserRoot)) !== realpathSync(temporaryRoot)) {
+  throw new Error('Playwright browser root must resolve directly inside the temporary directory');
 }
 process.env.MIDAS_FRONTIER_E2E_ROOT = browserRoot;
 const database = join(browserRoot, 'paper.db');

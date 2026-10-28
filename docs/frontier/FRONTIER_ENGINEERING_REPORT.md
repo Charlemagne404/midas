@@ -2,6 +2,54 @@
 
 **Report date:** 2026-10-28
 
+## Frontier frontend build and browser verification — 2026-10-28 12:46 UTC
+
+The native Frontier frontend type-checks and builds in production mode. `tsc
+-b` passes in 8.63 seconds with 471,424 KiB peak RSS. Vite transforms 2,230
+modules and builds in 4.78 seconds (5.03 seconds wall), with 684,180 KiB peak
+RSS. The output was directed to `/tmp/midas-frontier-web-build-20261028T1234Z`
+so the workspace `dist/` was not overwritten. Frontier is a lazy 182.82 kB
+JavaScript chunk (44.55 kB gzip). The deferred chart chunk is 544.51 kB
+(186.79 kB gzip), above Vite's 500 kB warning threshold; lazy-loading is
+verified in the browser.
+
+Frontend Vitest passes **47/47 in 9 files**, 20.32 seconds (20.73 seconds
+wall), with 288,496 KiB peak RSS. ESLint and the full Prettier check pass.
+Focused browser verification passes **10/10 in 20.5 seconds** (21.14 seconds
+wall; 206,744 KiB peak RSS). It covers Frontier empty states, market/source
+views, explicit recorded-history actions, hypothetical joint-state replay,
+fixture-only Kalshi settlement arithmetic, graph bounds, 390 px responsive
+overflow, deferred chart load, and read-only Arena/Laboratory artifact views.
+The separate seeded browser suite passes **2/2 in 8.0 seconds** (10.60 seconds
+wall; 180,704 KiB peak RSS), including 21 fixture history captures, persisted
+deterministic replay, and a hash-verified seeded Arena result loaded into
+Laboratory. A further **1/1** readiness browser check passed in 4.5 seconds
+(5.02 seconds wall; 166,284 KiB peak RSS) without an explicit
+`MIDAS_FRONTIER_E2E_RUN_ID`, confirming that generated owner markers survive
+worker config reloads.
+
+The initial browser attempt exposed a harness defect: Playwright did not create
+the parent directory for its temporary SQLite database, and API health returned
+503 (`unable to open database file`). The config now creates a fresh non-symlink
+root directly under the system temp directory and uses a per-run owner marker
+to let Playwright worker processes reopen config after test data is created;
+non-empty roots from other runs are rejected. Empty-state and seeded browser
+runs both pass after this fix. Both local servers exited, and their ports were
+clear after testing.
+
+At `12:46:07Z` post-verification, memory PSI avg10 was **0.00%**, I/O PSI
+some/full was **0.08%**, and about **9.9 GiB** was available. All timed test
+processes reported zero swaps and socket messages. The Vite chunk-size warning
+remains a performance follow-up, not a failed production build. Frontier
+remains research-only and undeployed.
+
+| Requirement | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Frontend type-check, lint, and format | COMPLETE AND VERIFIED | TypeScript, ESLint, and full Prettier checks pass. |
+| Frontier production frontend | COMPLETE AND VERIFIED | Vite build succeeds; chart chunk remains above the 500 kB warning threshold. |
+| Frontier browser acceptance | COMPLETE AND VERIFIED | 12 focused empty-state and seeded Playwright tests pass plus a default-token config check; broader unrelated UI E2E remains unrun. |
+| Frontier overall | PARTIALLY VERIFIED | Live cross-venue evidence, wider browser regression, protected recovery, and deployment remain open. |
+
 ## Bounded source-quality, Veritas, and integration regressions — 2026-10-28 12:33 UTC
 
 The source anomaly audit fixtures initially advertised reconstruction revision

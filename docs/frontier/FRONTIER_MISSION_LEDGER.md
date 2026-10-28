@@ -1,5 +1,62 @@
 # Project Frontier Mission Ledger
 
+## Frontier frontend build and browser verification — 2026-10-28 12:46 UTC
+
+The Frontier workspace passes its current frontend checks:
+
+- `tsc -b`: passed in 8.63 seconds, 471,424 KiB peak RSS, zero swaps and
+  socket messages.
+- Vite production build: **2,230 modules transformed**, built in 4.78 seconds
+  (5.03 seconds wall), 684,180 KiB peak RSS, zero swaps and socket messages.
+  Output is isolated at `/tmp/midas-frontier-web-build-20261028T1234Z`.
+  Frontier's lazy JavaScript chunk is 182.82 kB (44.55 kB gzip). The deferred
+  chart chunk is 544.51 kB (186.79 kB gzip), which triggers Vite's existing
+  500 kB chunk warning; the browser lazy-loading check passes.
+- Vitest: **47/47 across 9 files** in 20.32 seconds (20.73 seconds wall),
+  288,496 KiB peak RSS, zero swaps and socket messages.
+- ESLint and the full frontend Prettier check both pass.
+- Frontier-focused Playwright: **10/10** in 20.5 seconds (21.14 seconds wall),
+  206,744 KiB peak RSS, zero swaps and socket messages. Coverage includes
+  overview, source/market empty states, explicit history actions, joint-state
+  replay, fixture-only Kalshi settlement, bounded relationship graph, mobile
+  390 px overflow, deferred chart loading, Arena evidence, and Laboratory
+  artifact review.
+- Seeded Playwright: **2/2** in 8.0 seconds (10.60 seconds wall), 180,704 KiB
+  peak RSS, zero swaps and socket messages. It paginates 21 synthetic history
+  captures, persists and replays a deterministic result, then loads a
+  hash-verified fixture Arena artifact in Laboratory. All seeded data and
+  screenshots are under `/tmp`.
+- Default-token Playwright: **1/1** readiness browser check in 4.5 seconds
+  (5.02 seconds wall), 166,284 KiB peak RSS, zero swaps and socket messages.
+  This run omitted `MIDAS_FRONTIER_E2E_RUN_ID`, confirming generated owner
+  markers survive worker config reloads.
+
+The first browser startup attempt timed out because the configured temporary
+database parent did not exist; the API's `/api/health` returned SQLite
+`unable to open database file`. The Playwright config now creates only a fresh
+real directory directly under the system temp root, records a per-run owner
+marker, and rejects symlinked or stale roots. The marker lets workers reload
+configuration only for that run after the API creates its database. Both the
+empty-state and seeded browser runs now pass. The local demo API and Vite test
+servers exited; ports 18000 and 15173 were clear after the runs.
+
+At `12:46:07Z`, memory PSI avg10 was **0.00%**, I/O PSI some/full was
+**0.08%**, about **9.9 GiB** was available, and host swap was at 3.5/4 GiB.
+None of the timed frontend commands used swap.
+No public exchange probe, protected service, persistent source store, or
+production deployment was involved.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Frontend type-check, lint, and format | COMPLETE AND VERIFIED | `tsc -b`, ESLint, and full Prettier check pass. |
+| Frontier production bundle | COMPLETE AND VERIFIED | 2,230 modules; isolated build succeeds. Deferred chart chunk remains above Vite's 500 kB warning threshold. |
+| Frontier browser workspace | COMPLETE AND VERIFIED | 12 focused Playwright cases pass across empty and seeded roots; one extra check verifies generated run IDs. Wider unrelated UI E2E remains unrun. |
+| Frontier overall | PARTIALLY VERIFIED | Cross-venue source evidence, broad legacy/browser acceptance, production recovery, and deployment remain open. |
+
+Next safe action: continue with a bounded, source-independent acceptance gap
+or implementation defect. Keep Frontier isolated and preserve source-use and
+production boundaries.
+
 ## Bounded source-quality, Veritas, and integration regressions — 2026-10-28 12:33 UTC
 
 The source anomaly audit fixtures advertised reconstruction revision 5, while
