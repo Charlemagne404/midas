@@ -240,6 +240,21 @@ async def test_coinbase_book_binds_market_identity_before_request(corruption: st
         await client.aclose()
 
 
+@pytest.mark.parametrize("depth", (True, 1.0, "1"))
+@pytest.mark.asyncio
+async def test_coinbase_book_rejects_non_integer_depth_before_request(depth):
+    adapter, requests, client = _adapter({"/products/BTC-USD": _product()})
+    try:
+        (market,) = await adapter.discover_markets(limit=1)
+        with pytest.raises(AdapterError) as error:
+            await adapter.fetch_book(market, "BTC-USD", depth=depth)
+        assert error.value.code == "INVALID_DEPTH"
+        assert len(requests) == 1
+        assert requests[0].url.path == "/products/BTC-USD"
+    finally:
+        await client.aclose()
+
+
 @pytest.mark.asyncio
 async def test_coinbase_incomplete_book_timing_stays_unverified():
     product_path = "/products/BTC-USD"

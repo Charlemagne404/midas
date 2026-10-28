@@ -37,7 +37,7 @@ from midas.frontier.models import (
 )
 
 D = Decimal
-ADAPTER_VERSION = "frontier-coinbase-exchange-spot-5"
+ADAPTER_VERSION = "frontier-coinbase-exchange-spot-6"
 BASE = "https://api.exchange.coinbase.com"
 PRODUCTS_DOC = (
     "https://docs.cdp.coinbase.com/api-reference/exchange-api/rest-api/products/get-single-product"
@@ -304,7 +304,7 @@ class CoinbaseSpotAdapter(BaseReadOnlyAdapter):
         self._require(Capability.BOOK_SNAPSHOT)
         if market.venue != self.venue or market.market_kind != MarketKind.SPOT_PAIR:
             raise AdapterError("UNSUPPORTED_MARKET", "Coinbase adapter accepts spot pairs only")
-        if not 1 <= depth <= 20:
+        if type(depth) is not int or not 1 <= depth <= 20:
             raise AdapterError("INVALID_DEPTH", "Coinbase depth must be between 1 and 20")
         if (
             instrument_id != market.native_market_id
