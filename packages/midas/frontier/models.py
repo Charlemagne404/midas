@@ -12,7 +12,14 @@ from decimal import Decimal
 from enum import StrEnum
 from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, StrictBool, field_validator, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    StrictBool,
+    field_validator,
+    model_validator,
+)
 
 D = Decimal
 COINBASE_MARKET_DATA_TERMS_VERSION = "2026-08-07"
@@ -421,15 +428,28 @@ class JointStateMap(JointStateMapDefinition):
 
     mapping_id: str = Field(pattern=r"^[0-9a-f]{64}$")
 
+    @property
+    def content_identity_matches(self) -> bool:
+        try:
+            definition = JointStateMapDefinition.model_validate(
+                {
+                    field_name: getattr(self, field_name)
+                    for field_name in JointStateMapDefinition.model_fields
+                }
+            )
+            payload = definition.model_dump(mode="json")
+            digest = hashlib.sha256(
+                json.dumps(
+                    payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True
+                ).encode("utf-8")
+            ).hexdigest()
+        except (TypeError, ValueError):
+            return False
+        return self.mapping_id == digest
+
     @model_validator(mode="after")
     def verify_mapping_identity(self) -> JointStateMap:
-        payload = self.model_dump(mode="json", exclude={"mapping_id"})
-        digest = hashlib.sha256(
-            json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode(
-                "utf-8"
-            )
-        ).hexdigest()
-        if self.mapping_id != digest:
+        if not self.content_identity_matches:
             raise ValueError("Joint-state mapping identity does not match its evidence payload")
         return self
 
@@ -716,7 +736,7 @@ class IndependentEconomicAudit(FrontierModel):
     """Recomputed candidate economics from normalized contracts and source books."""
 
     schema_version: int = 3
-    model_version: str = "frontier-independent-economic-audit-17"
+    model_version: str = "frontier-independent-economic-audit-18"
     disposition: EconomicAuditDisposition
     input_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     checked_market_count: int = Field(ge=0, le=4)

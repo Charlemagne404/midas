@@ -44,6 +44,7 @@ def test_joint_state_map_has_canonical_identity_and_unverified_semantics():
     mapping = JointStateMap.create(**_mapping_payload())
 
     assert len(mapping.mapping_id) == 64
+    assert mapping.content_identity_matches
     assert mapping.semantic_status == "externally_asserted_unverified"
     assert JointStateMap.model_validate(mapping.model_dump(mode="json")) == mapping
 
@@ -210,6 +211,53 @@ def test_joint_state_basket_is_independently_audited_and_replayed_deterministica
     ]
     assert replay_candidates
     assert all(item.independent_audit is not None for item in replay_candidates)
+
+
+def test_joint_state_paths_reject_copied_payload_with_stale_mapping_identity():
+    markets, books, mapping = _event_pair()
+    books_by_market = {
+        market_value.canonical_id: {
+            instrument.native_instrument_id: books[
+                (market_value.canonical_id, instrument.native_instrument_id)
+            ]
+            for instrument in market_value.instruments
+        }
+        for market_value in markets
+    }
+    as_of = T0 + timedelta(milliseconds=100)
+    candidate = next(
+        item
+        for item in generate_joint_state_basket_candidates(
+            markets,
+            mapping,
+            books_by_market,
+            as_of_utc=as_of,
+        )
+        if item.legs
+    )
+    tampered = mapping.model_copy(update={"external_assertion_id": "tampered-without-rehash"})
+
+    assert tampered.mapping_id == mapping.mapping_id
+    assert not tampered.content_identity_matches
+    assert (
+        generate_joint_state_basket_candidates(markets, tampered, books_by_market, as_of_utc=as_of)
+        == ()
+    )
+
+    audited = _audit(candidate, markets, books, tampered)
+    assert audited.independent_audit is not None
+    assert audited.independent_audit.disposition.value == "incomplete"
+    assert audited.classification == OpportunityClassification.INCOMPLETE_EVIDENCE
+    assert "bounded contract" in audited.independent_audit.message.lower()
+
+    with pytest.raises(ValueError, match="invalid content identities"):
+        deterministic_replay(
+            markets,
+            tuple(books.values()),
+            joint_state_mappings=(tampered,),
+            as_of_utc=as_of,
+            code_version="stale-joint-map-identity-test-v1",
+        )
 
 
 def test_joint_state_search_matches_independent_seeded_subset_oracle():

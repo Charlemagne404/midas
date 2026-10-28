@@ -54,7 +54,7 @@ from midas.frontier.relationships import (
 )
 
 D = Decimal
-_AUDIT_VERSION = "frontier-independent-economic-audit-17"
+_AUDIT_VERSION = "frontier-independent-economic-audit-18"
 _FEE_QUANTUM = D("0.00001")
 _KALSHI_FEE_MAX_EVIDENCE_AGE = timedelta(hours=24)
 _AUDIT_PARTIAL_FILL_FRACTIONS = (D(0), D("0.25"), D("0.5"), D("0.75"), D(1))
@@ -1119,6 +1119,7 @@ def _verify_joint_state_basket(
         raise _MissingAuditEvidence("Joint-state mapping is absent from the pinned replay inputs.")
     if (
         mapping.mapping_id != candidate.joint_state_mapping_id
+        or not mapping.content_identity_matches
         or mapping.semantic_status != "externally_asserted_unverified"
         or mapping.market_ids != candidate.market_ids
         or set(markets) != set(mapping.market_ids)

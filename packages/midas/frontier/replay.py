@@ -36,7 +36,7 @@ from midas.frontier.relationships import (
     propose_relationships,
 )
 
-REPLAY_VERSION = "frontier-deterministic-replay-16"
+REPLAY_VERSION = "frontier-deterministic-replay-17"
 PAIRED_COMPARISON_VERSION = "frontier-paired-replay-1"
 
 
@@ -227,12 +227,13 @@ def deterministic_replay(
         len(ordered_joint_state_mappings) > 4
         or len({item.mapping_id for item in ordered_joint_state_mappings})
         != len(ordered_joint_state_mappings)
+        or any(not item.content_identity_matches for item in ordered_joint_state_mappings)
         or any(
             not set(item.market_ids).issubset(market_index) for item in ordered_joint_state_mappings
         )
     ):
         raise ValueError(
-            "Joint-state replay mappings are duplicated, missing markets, or exceed four"
+            "Joint-state replay mappings are duplicated, have invalid content identities, reference missing markets, or exceed four"
         )
     source_market_index = {(item.venue, item.native_market_id): item for item in ordered_markets}
     book_index: dict[str, dict[str, BookSnapshot]] = {}
