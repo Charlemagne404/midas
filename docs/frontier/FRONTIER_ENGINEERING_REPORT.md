@@ -17,9 +17,10 @@ timeline, and job tests passed **390/390** in one invocation at **380,624 KiB
 peak RSS**, with zero swaps or socket messages. The web suite passed **40/40**,
 Frontier browser E2E passed **6/6**, and a temporary-output TypeScript/Vite
 production build passed. Selected legacy API, paper-research, storage, recording,
-protected-service guard, and held-capture boundary checks also passed; see the
-dated ledger entries for commands, timings, and limitations. The full MIDAS
-repository suite has not run.
+protected-service guard, and held-capture boundary checks also passed. The full
+`tests/integration` directory subsequently passed **56 tests**, with the
+optional PostgreSQL test skipped because no test URL was configured. The full
+MIDAS repository suite has not run.
 
 The multi-market joint-state basket search accepts an explicit, bounded map
 across two to four event markets. Its payout arithmetic is independently
@@ -6283,3 +6284,28 @@ reference-data provider, not as a trading venue, exchange adapter, or decisive
 funding source. No ECB API request or data capture occurred. The [source terms
 review](SOURCE_DATA_TERMS_REVIEW_2026-10-27.md) records the primary links and
 the exact limitations.
+
+## Legacy integration regression — 2026-10-28 04:32 UTC
+
+The complete `tests/integration` directory passed **56/56 runnable tests**;
+one optional PostgreSQL runtime test was skipped because
+`MIDAS_TEST_POSTGRES_URL` was absent. The run used a dedicated pytest base
+directory at `/tmp/midas-frontier-integration-20261028T0432Z` and completed in
+**28.49 seconds pytest time** (**29.73 seconds wall**) at **220,460 KiB peak
+RSS**, with zero swaps, major faults, or socket messages. The existing
+Starlette/httpx TestClient deprecation warning remains. Temporary-root tests
+and the skipped PostgreSQL case do not establish database-backend runtime
+behavior.
+
+At `2026-10-28T04:32:51Z`, the post-run host sample showed memory PSI avg10
+**38.12% some / 32.63% full**, avg60 **16.02% / 13.44%**, and avg300 **9.56% /
+8.34%**; about **10 GiB** was available. Read-only inspection identified
+external Veritas PID **4182417** holding the shared Arena admission lock. It
+was left untouched. No additional tests, build, source request, protected
+service action, or deployment was started after that sample.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Legacy integration regression | COMPLETE AND VERIFIED | `tests/integration`: 56 passed, one optional PostgreSQL test skipped; temporary pytest directory; 220,460 KiB peak RSS; zero swaps or socket messages. |
+| Full MIDAS repository regression | PARTIALLY VERIFIED | The Frontier/selected-Arena and complete integration suites pass, but the rest of `tests/` has not run as one repository-wide suite. |
+| Further resource-bearing checks at this checkpoint | DEFERRED | Post-run memory PSI rose and an external Veritas job held the shared lock; its process was not disturbed. |

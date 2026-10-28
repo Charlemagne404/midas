@@ -4882,3 +4882,37 @@ documentation reconciliation.
 Rerun broader repository validation only after a fresh host and shared-Arena
 admission check. Keep held-source requests and use disabled until the relevant
 permission is independently validated; preserve the research-only boundary.
+
+### Full legacy integration directory — 2026-10-28 04:33 UTC
+
+The full `tests/integration` directory passed **56 tests**, with one optional
+PostgreSQL runtime test skipped because `MIDAS_TEST_POSTGRES_URL` was absent:
+
+```bash
+/usr/bin/time -v env PYTHONPATH=packages:. \
+  /home/charlie/midas/.venv/bin/python -m pytest -q \
+  --basetemp=/tmp/midas-frontier-integration-20261028T0432Z \
+  tests/integration
+# 56 passed, 1 skipped in 28.49s pytest time / 29.73s wall
+# 220,460 KiB peak RSS; zero swaps, major faults, or socket messages
+```
+
+The integration cases used fixtures and temporary roots; the test that
+asserts the legacy default recording path performed no write. The run emitted
+the existing Starlette/httpx TestClient deprecation warning. This closes the
+complete local integration directory, not the entire MIDAS Python repository
+suite or an enabled PostgreSQL backend.
+
+At the post-run sample `2026-10-28T04:32:51Z`, memory PSI avg10 was **38.12%
+some / 32.63% full**, avg60 **16.02% / 13.44%**, and avg300 **9.56% / 8.34%**.
+About **10 GiB** was available and **333 MiB** of swap was free. Read-only
+`fuser`/`ps` identified external Veritas PID **4182417** holding the shared
+Arena admission lock in `D` state. It was left untouched. No further
+resource-bearing checks, source requests, protected-service actions, or
+deployment were started.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Legacy `tests/integration` directory | COMPLETE AND VERIFIED | 56 tests passed; optional PostgreSQL runtime skipped; temp pytest root; 220,460 KiB peak RSS with zero swaps or sockets. |
+| Full MIDAS repository regression | PARTIALLY VERIFIED | Frontier plus selected Arena and the complete integration directory pass; remaining repository suites have not run together. |
+| Further resource-bearing verification | DEFERRED AT THIS SAMPLE | Memory PSI rose after the run and external PID 4182417 held the shared Arena lock; the process was not interrupted. |
