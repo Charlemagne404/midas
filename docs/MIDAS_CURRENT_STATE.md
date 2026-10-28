@@ -3054,3 +3054,9 @@ The IDs do not establish cross-venue payoff equivalence. The full Frontier and
 legacy suites were not rerun while CPU PSI avg10 remained about 41–43%. No live
 source, protected service, or held evidence path was accessed. Frontier stays
 research-only, isolated, undeployed, and **PARTIALLY VERIFIED**.
+
+Commit `de57883` expands legacy instrument-ID migration coverage across market
+schemas v1–v4. The focused identity/adapter/Coinbase slice passes 92/92; Ruff
+passes. The full Frontier suite was not rerun. CPU PSI avg10 remained above
+43%, so broad verification stays deferred; overall Frontier status remains
+**PARTIALLY VERIFIED**.

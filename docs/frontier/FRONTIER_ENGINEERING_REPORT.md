@@ -9898,3 +9898,21 @@ service, or protected store was accessed; the untracked
 | Canonical payoff and cross-venue economic equivalence | PARTIALLY VERIFIED | Existing bounded payoff fixtures remain covered; no permitted genuine cross-venue settlement-equivalence evidence is established. |
 | Full Frontier and broad legacy regression on this commit | PARTIALLY VERIFIED | Focused changed-code checks pass; the full Frontier suite and repository-wide regression were not rerun. |
 | Frontier project overall | PARTIALLY VERIFIED | Live cross-venue evidence, broader regression, sustained-resource evidence, production recovery, and deployment remain open. |
+
+### Follow-up: legacy schema migration coverage — 2026-10-28 14:24 UTC
+
+**Test commit:** `de57883` (`test(frontier): cover legacy instrument schema migration`).
+
+The legacy identity migration test now covers each declared `FrontierMarket`
+schema version from v1 through v4, verifying that a missing instrument ID is
+derived and the declared version is retained. The focused identity, adapter,
+and Coinbase selection passed **92/92** in 3.46 seconds wall time at **78,988
+KiB** peak RSS, with zero swaps, filesystem input, or socket messages. Ruff
+check and format pass for the changed test. One pre-existing
+Starlette/httpx `TestClient` deprecation warning remains. This is targeted
+coverage; the complete Frontier and broader legacy suites were not rerun.
+
+CPU PSI avg10 was **46.66%** before the selection and **43.48%** afterward;
+memory PSI stayed at **0.00%**, and I/O PSI was **0.03% some / 0.00% full**
+afterward. No source, production service, or protected store was accessed.
+Frontier remains research-only and **PARTIALLY VERIFIED**.

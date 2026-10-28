@@ -1367,6 +1367,6 @@ preserved. A supplied canonical ID that does not match the venue and native
 identifiers is rejected. Polymarket, Kalshi, Kraken spot, and Coinbase Exchange
 spot adapter versions were advanced to reflect changed normalized output; the
 deterministic replay version was also advanced. Fixture tests cover stable
-derivation, namespace separation, legacy-schema migration, tampering, and each
-adapter's normalized IDs. They establish deterministic local identity only,
-not genuine cross-venue equivalence or live-source validation.
+derivation, namespace separation, legacy v1–v4 payload migration, tampering,
+and each adapter's normalized IDs. They establish deterministic local identity
+only, not genuine cross-venue equivalence or live-source validation.

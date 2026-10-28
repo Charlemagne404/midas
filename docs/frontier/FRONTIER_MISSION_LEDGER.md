@@ -8926,3 +8926,22 @@ source-scoped IDs do not verify payoff, settlement, or cross-venue equivalence.
 **Next safe action:** continue with independent bounded source work after a
 fresh resource admission sample; keep the held capture quarantined and do not
 infer cross-venue equivalence from canonical IDs.
+
+## Legacy schema migration coverage — 2026-10-28 14:24 UTC
+
+**Test commit:** `de57883` (`test(frontier): cover legacy instrument schema migration`).
+
+Expanded the migration test from v4-only to all supported legacy market
+schema versions v1–v4. Each case verifies deterministic instrument-ID
+derivation while retaining its declared version. The focused identity, adapter,
+and Coinbase tests pass **92/92** in 3.46 seconds wall time at 78,988 KiB peak
+RSS, zero swaps, filesystem input, and socket messages. Ruff check and format
+pass for the modified test; the existing Starlette/httpx warning remains.
+
+CPU PSI avg10 was 46.66% before and 43.48% after; memory PSI stayed 0.00% and
+post-run I/O PSI was 0.03% some / 0.00% full. No live source or protected
+service was accessed. The complete Frontier and broader legacy suites remain
+unrun on the current branch; project status stays **PARTIALLY VERIFIED**.
+
+**Next safe action:** take a fresh resource sample before another test slice;
+continue with bounded source-independent review while CPU PSI remains elevated.
