@@ -3139,3 +3139,13 @@ Live cross-venue data use remains held under the current source review; full
 legacy MIDAS/Arena regression, endurance, production recovery, and deployment
 remain open. Frontier overall is **PARTIALLY VERIFIED**. The report's new
 14:49 UTC matrix supersedes the earlier 14:05 snapshot.
+
+## Held-source API regression — 2026-10-28 14:53 UTC
+
+The source-permission integration test now exercises seven specialized
+Kalshi probe/collection routes with enabled flags and arbitrary permission
+references. Every route returns the source hold before network access; the
+adapter request count stays zero. The complete Frontier Python suite passes
+465/465 with these assertions (31.00 seconds wall, 381,712 KiB peak RSS,
+tmpfs root, zero swaps or sockets). Live source permission remains unresolved;
+no source request was made.

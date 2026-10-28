@@ -10119,3 +10119,30 @@ untracked and untouched.
 **Continuation:** keep source-use holds and protected services unchanged. Continue
 bounded offline regressions or implementation work only where it closes a
 specific acceptance gap; remeasure resource admission before broader batches.
+
+### Specialized held-source route regression — 2026-10-28 14:53 UTC
+
+Extended `tests/frontier/test_source_data_permissions.py` to exercise the
+Kalshi public trade, fee metadata, market metadata, MVE component, event-market,
+multivariate-event, and finite collection routes with the source-use hold
+active. Every route returned the configured 409 hold reason and the adapter
+request count remained zero. The same integration test continues to verify
+that enabled probe flags and arbitrary permission-reference strings do not
+lift Kalshi or Kraken holds. This closes route-level API regression coverage;
+it does not grant or imply permission to use either source.
+
+The full current `tests/frontier` suite passed **465/465**, including these new
+assertions, in 29.51 seconds pytest time (31.00 seconds process wall) at
+381,712 KiB peak RSS. It used
+`/dev/shm/midas-frontier-python-20261028T1453Z-rzOuVr`, zero swaps, zero
+filesystem input, 376 output blocks, and no socket messages. The existing
+Starlette/httpx `TestClient` deprecation warning remains. I/O and memory PSI
+avg10 were both 0.00% in the pre-run sample at `14:53:02Z` and post-run sample
+at `14:53:58Z`.
+
+| Component | Status | Current evidence and remaining boundary |
+| --- | --- | --- |
+| Held-source API probe/collection routes | COMPLETE AND VERIFIED | All specialized Kalshi routes reject before network access; enabled flags and arbitrary references do not lift Kalshi/Kraken holds. |
+| Full Frontier Python suite | COMPLETE AND VERIFIED | 465/465 pass with the expanded route-level source-policy regression. |
+| Live Kalshi/Kraken research | BLOCKED | Source-use holds and absent validated authorization remain unchanged. |
+| Frontier project overall | PARTIALLY VERIFIED | Live cross-venue science, broader legacy regression, endurance, protected recovery, and deployment remain open. |

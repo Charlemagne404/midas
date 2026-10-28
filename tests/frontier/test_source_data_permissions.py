@@ -66,6 +66,32 @@ def test_probe_flags_and_references_do_not_enable_unvalidated_sources(tmp_path):
                 assert response.status_code == 409
                 assert response.json()["detail"] == item["probe_policy_block_reason"]
                 assert app.state.frontier_registry.get(venue).transport.request_count == 0
+
+            kalshi_hold = source_by_venue[Venue.KALSHI.value]["probe_policy_block_reason"]
+            specialized_kalshi_requests = (
+                ("/api/frontier/probe/kalshi/trades", {"market_id": "KXEVENT-MARKET"}),
+                ("/api/frontier/probe/kalshi/fee-metadata", {"market_id": "KXEVENT-MARKET"}),
+                ("/api/frontier/probe/kalshi/market-metadata", {"market_id": "KXEVENT-MARKET"}),
+                (
+                    "/api/frontier/probe/kalshi/mve-component-market",
+                    {"parent_market_id": "KXCOMBO", "component_market_id": "KXCOMPONENT"},
+                ),
+                (
+                    "/api/frontier/probe/kalshi/event-markets",
+                    {"market_id": "KXEVENT-MARKET", "native_event_id": "KXEVENT"},
+                ),
+                (
+                    "/api/frontier/probe/kalshi/multivariate-events",
+                    {"event_ticker": "KXEVENT"},
+                ),
+                ("/api/frontier/collect/kalshi", {}),
+            )
+            for path, payload in specialized_kalshi_requests:
+                response = client.post(path, json=payload)
+                assert response.status_code == 409, path
+                assert response.json()["detail"] == kalshi_hold, path
+            assert app.state.frontier_registry.get(Venue.KALSHI).transport.request_count == 0
+
             readiness = client.get("/api/frontier/readiness")
             assert readiness.status_code == 200
             permission_gate = next(

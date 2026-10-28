@@ -9141,3 +9141,24 @@ The superseding acceptance matrix is at the end of
 `FRONTIER_ENGINEERING_REPORT.md`. Keep `data/frontier-public-probes/`
 untouched; take a fresh admission sample before any broader resource-bearing
 run.
+
+## Held-source API route coverage and full Python regression — 2026-10-28 14:53 UTC
+
+Expanded `test_probe_flags_and_references_do_not_enable_unvalidated_sources`
+to call seven specialized Kalshi public-data routes with source probing flags
+set and arbitrary permission references configured. All returned the active
+409 hold reason, and the Kalshi adapter request count remained zero. The
+existing assertions also verify the generic probe route and the corresponding
+Kalshi/Kraken hold state. This is API-level regression coverage; it does not
+authorize live collection.
+
+The full current `tests/frontier` suite passes **465/465**, including the new
+route cases, in 29.51 seconds (31.00 seconds wall) at 381,712 KiB peak RSS.
+The run used a dedicated tmpfs basetemp, zero swaps, no filesystem input, 376
+output blocks, and no socket traffic. I/O and memory PSI avg10 were 0.00% in
+the pre-run and post-run samples. One existing Starlette/httpx deprecation
+warning remains.
+
+**Next safe action:** continue local source-independent code review. Keep all
+source-use holds and protected evidence untouched; take a fresh admission
+sample before another broad run.
