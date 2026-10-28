@@ -33,6 +33,31 @@ in the dated addendum below and in the Frontier engineering report.
 
 ## Frontier development addendum — 2026-10-28
 
+### Latest isolated Frontier checkpoint — 2026-10-28 11:15 UTC
+
+Code commit `1f6bd64` closes a copied joint-state mapping identity gap. Runtime
+use now reconstructs and revalidates the bounded mapping definition and checks
+its canonical content digest during candidate generation, independent audit,
+and replay. The fixture regression confirms stale content with the old ID
+produces no candidate, makes an existing candidate audit incomplete, and is
+rejected by replay. Economic model v18, audit v18, and replay v17 pin the
+changed rules. A valid mapping remains an unauthenticated semantic assertion.
+
+The focused joint-state suite passes **11/11**. Full `tests/frontier` passes
+**413/413** in 32.26 seconds wall time, with **379,304 KiB** peak RSS, zero
+test-process swaps, zero filesystem input, and zero socket messages. Ruff
+check/format, strict mypy for five production modules, and `git diff --check`
+pass. One existing Starlette/httpx deprecation warning remains. Tests used
+isolated tmpfs storage at
+`/dev/shm/midas-frontier-joint-map-final-20261028T1115Z`.
+
+At `11:14:51Z`, about 10 GiB was available, memory PSI avg10 was 0%, and I/O
+PSI avg10 was 0%. At `11:15:29Z`, about 10 GiB remained available, memory PSI
+avg10 was 0%, and I/O PSI was 0.03% some / 0% full. No live source, protected
+capture, or production service was accessed. Live cross-venue validation,
+broader MIDAS regression, production recovery, and deployment remain open.
+Frontier remains **PARTIALLY VERIFIED**, research-only, and undeployed.
+
 ### Latest isolated Frontier checkpoint — 2026-10-28 11:12 UTC
 
 Code commit `435153d` closes a copied-book depth-integrity gap. Runtime book

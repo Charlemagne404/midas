@@ -24,7 +24,7 @@ cannot validate a historical candidate.
 
 Previously saved pre-v6 same-payoff relationships remain readable and
 append-only, but the current independent audit
-(`frontier-independent-economic-audit-17`) classifies a candidate using one as
+(`frontier-independent-economic-audit-18`) classifies a candidate using one as
 `INCOMPLETE_EVIDENCE`. Re-review the original hypothesis against the current
 stored market records to produce a version-6 relationship before using it in a
 new audited replay. The verifier and audit also recheck uniqueness of payoff
@@ -37,7 +37,7 @@ The audit does not rewrite or delete stored relationships or reviews.
 
 Logical-implication reviews use
 `frontier-logical-implication-verifier-3` and the independent audit is now
-`frontier-independent-economic-audit-17`. The verifier rejects duplicate
+`frontier-independent-economic-audit-18`. The verifier rejects duplicate
 payoff states and native instrument identities even when they arrive inside a
 prebuilt model object. Version-2 logical-implication records remain readable,
 but they do not validate a new candidate until the relationship is reviewed
@@ -49,6 +49,14 @@ the independent audit reject copied books with duplicate prices, non-finite or
 out-of-domain prices, non-positive quantities, malformed levels, or naive
 level timestamps. Deterministic replay rejects such input before candidate
 generation. A malformed book cannot contribute inflated top-of-book depth.
+
+Joint-state maps also recompute their content digest and rerun the bounded
+definition validation when used for candidate generation, audit, or replay.
+A copied mapping whose assertion or projection changes while retaining its
+old ID cannot support a conditional candidate or a verified audit. Replay
+rejects the malformed mapping before search. A correctly hashed map remains an
+unauthenticated semantic assertion and does not prove that joint states are
+exhaustive or attainable.
 
 ## Public source captures
 

@@ -2,7 +2,50 @@
 
 **Report date:** 2026-10-28
 
-## Current status — 2026-10-28 11:12 UTC
+## Current status — 2026-10-28 11:15 UTC
+
+This entry supersedes the 11:12 UTC checkpoint below. Frontier remains
+isolated at `/home/charlie/midas-frontier` on `codex/frontier-20261026`.
+Code commit `1f6bd64` closes a content-identity gap in conditional joint-state
+analysis. A copied map could change its external assertion payload while
+retaining the prior content hash; a fixture produced three conditional
+candidates and an independently `verified` candidate audit before the fix.
+
+`JointStateMap.content_identity_matches` now reconstructs and revalidates the
+bounded definition before hashing. Candidate generation refuses stale map
+identities, the independent audit classifies them as incomplete evidence, and
+replay rejects them at intake. This protects the mapping's content address; a
+correct hash still does not authenticate the external assertion or prove that
+the listed joint states are exhaustive or attainable. Economic model v18,
+audit v18, and replay v17 identify the changed rules.
+
+The new stale-identity regression confirms all three boundaries. The focused
+joint-state module passed **11/11**. Full `tests/frontier` passed **413/413**
+in 30.79 seconds (32.26 seconds wall time), with **379,304 KiB** peak RSS,
+zero process swaps, zero filesystem input, 2,688 output blocks, and zero
+socket messages. Ruff check/format, strict mypy for five production modules,
+and `git diff --check` passed. One existing Starlette/httpx `TestClient`
+deprecation warning remains. The suite used tmpfs at
+`/dev/shm/midas-frontier-joint-map-final-20261028T1115Z`.
+
+At `11:14:51Z`, about 10 GiB was available, memory PSI avg10 was 0%, and I/O
+PSI avg10 was 0%. At `11:15:29Z`, about 10 GiB remained available, memory PSI
+avg10 was 0%, and I/O PSI was 0.03% some / 0% full. No live source, protected
+capture, production service, or Arena job was used; the saved public capture
+remains unstaged and untouched. Frontier remains **PARTIALLY VERIFIED**.
+
+### Latest acceptance delta
+
+| Requirement | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Joint-state map content identity | COMPLETE AND VERIFIED | Stale copied IDs are rejected at generation and replay, and make existing candidate audits incomplete; semantics remain unauthenticated. |
+| Full Frontier Python regression | COMPLETE AND VERIFIED | 413/413 pass on code commit `1f6bd64`; one existing deprecation warning remains. |
+| Live cross-venue equivalence and economics | BLOCKED | No authorized genuine multi-venue evidence is available for this checkpoint. |
+| Broader MIDAS regression | PARTIALLY VERIFIED | Not run on this branch; Reality recovery dependency and incompatible Reality lineages remain unresolved. |
+| Production recovery and deployment | DEFERRED | The research worktree remains isolated, unmerged, and undeployed. |
+| Frontier overall | PARTIALLY VERIFIED | Live science, broader regression, and production readiness remain open. |
+
+## Previous checkpoint — 2026-10-28 11:12 UTC
 
 This entry supersedes the 11:04 UTC checkpoint below. Frontier remains
 isolated at `/home/charlie/midas-frontier` on `codex/frontier-20261026`.

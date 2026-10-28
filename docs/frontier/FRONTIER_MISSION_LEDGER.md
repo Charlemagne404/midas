@@ -1,5 +1,38 @@
 # Project Frontier Mission Ledger
 
+## Revalidate joint-state content identities — 2026-10-28 11:15 UTC
+
+Code commit `1f6bd64` closes a copied joint-state map identity gap. A bounded
+fixture changed `external_assertion_id` through `model_copy(update=...)` while
+retaining the original `mapping_id`; before the fix, candidate generation
+returned three conditional candidates and the independent audit marked one
+verified. `JointStateMap.content_identity_matches` now reconstructs the bounded
+definition, reruns its validation, and hashes the canonical payload at the
+candidate-generation, independent-audit, and replay boundaries.
+
+The regression confirms a stale-ID copy produces no candidates, makes an
+existing candidate audit incomplete, and is rejected by replay. The focused
+joint-state test module passed **11/11**. Full `tests/frontier` passed
+**413/413** in 30.79 seconds (32.26 seconds wall time) using
+`/dev/shm/midas-frontier-joint-map-final-20261028T1115Z`. Peak RSS was
+**379,304 KiB**, process swaps **0**, filesystem input **0**, output 2,688
+blocks, and socket messages sent/received **0**. Ruff check/format, strict
+mypy for five production modules, and `git diff --check` passed. One existing
+Starlette/httpx deprecation warning remains.
+
+At `11:14:51Z`, about 10 GiB was available, memory PSI avg10 was 0%, and I/O
+PSI avg10 was 0%. At `11:15:29Z`, about 10 GiB remained available, memory PSI
+avg10 was 0%, and I/O PSI was 0.03% some / 0% full. No live source, protected
+capture, production service, or Arena job was used. The saved public capture
+remains unstaged and untouched. Frontier remains **PARTIALLY VERIFIED**.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Joint-state map content integrity | COMPLETE AND VERIFIED | Stale copied IDs fail closed at candidate generation, independent audit, and replay. External semantics remain unverified by design. |
+| Full Frontier Python suite | COMPLETE AND VERIFIED | 413/413 pass on code commit `1f6bd64`; one existing deprecation warning remains. |
+| Live cross-venue matching and economics | BLOCKED | Authorized genuine multi-venue evidence remains unavailable. |
+| Frontier project overall | PARTIALLY VERIFIED | Broader MIDAS regression, live science, production recovery, and deployment remain open. |
+
 ## Reject malformed copied book depth — 2026-10-28 11:12 UTC
 
 Code commit `435153d` adds a runtime integrity check for order-book levels,
