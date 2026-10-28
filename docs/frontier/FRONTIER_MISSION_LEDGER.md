@@ -4691,3 +4691,30 @@ swap was free. Read-only `fuser` and `ps` identified external Veritas PID
 **4166289** (`scripts/veritas_gap_detail_v2_batch.py`) in `D` state holding the
 shared Arena lock. It was left untouched. No tests, builds, probes, or other
 resource-bearing jobs were started after the 04:11 Arena regression.
+
+### Legacy API and paper-research safety regression — 2026-10-28 04:16 UTC
+
+Two additional bounded legacy integration modules passed using the isolated
+Frontier worktree and temporary test roots:
+
+- `tests/integration/test_api.py`: **5/5** in 4.47 seconds pytest time
+  (5.56 seconds process wall), **167,956 KiB peak RSS**. It checks the offline
+  Frontier API overview, demo-mode source-probe denial, temporary persistence,
+  database failure handling, and configured Reality/Veritas workspace routing.
+- `tests/integration/test_milestone2_journey.py`: **5/5** in 4.70 seconds
+  pytest time (5.55 seconds process wall), **134,632 KiB peak RSS**. It checks
+  fixture replay through the legacy verifier and paper broker, stale/negative
+  economics remaining disallowed, read-only transport restrictions, and
+  temporary paper-state recovery.
+
+Both runs reported zero swaps and zero socket messages. External public data,
+production databases, protected services, and the shared Arena root were not
+used. The existing Starlette/httpx TestClient deprecation warning remains.
+At `2026-10-28T04:16:39Z`, memory PSI avg10 was **0.00% some / 0.00% full**,
+I/O PSI avg10 **1.04% / 1.04%**, about **10 GiB** was available, and the shared
+Arena lock had no holder.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Legacy offline API and paper-research compatibility | COMPLETE AND VERIFIED | Ten selected integration tests pass in temporary roots; this is not deployed API or full-repository validation. |
+| Project Frontier overall | PARTIALLY VERIFIED | Cross-venue payoff validation, held-source permission, broad scientific acceptance, full-repository regression, and deployment remain incomplete. |

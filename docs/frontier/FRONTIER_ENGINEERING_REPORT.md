@@ -6113,3 +6113,26 @@ The full web unit suite was not started: the fresh resource gate at
 About **9.8 GiB** remained available, but external Veritas PID **4136998** held
 the shared Arena lock. It was left untouched. Browser E2E and production build
 remain pending; no deployment occurred.
+
+## Legacy API and research-boundary regression — 2026-10-28 04:16 UTC
+
+The isolated Frontier branch also passed two targeted MIDAS integration
+modules. `tests/integration/test_api.py` passed **5/5** in 4.47 seconds pytest
+time (5.56 seconds process wall) at **167,956 KiB peak RSS**. It verifies the
+offline Frontier API contract and probe denial in demo mode, persistence and
+failure gates using temporary databases, and configured workspace routing.
+`tests/integration/test_milestone2_journey.py` passed **5/5** in 4.70 seconds
+pytest time (5.55 seconds process wall) at **134,632 KiB peak RSS**. It checks
+fixture-backed verifier and paper-broker replay, disallowed stale/negative
+economics, read-only request guards, and temporary paper-state recovery. Both
+runs used zero swap and emitted no socket messages. The existing
+Starlette/httpx TestClient deprecation warning remains.
+
+At the post-run sample `2026-10-28T04:16:39Z`, memory PSI avg10 was **0.00%
+some / 0.00% full**, I/O PSI avg10 **1.04% / 1.04%**, about **10 GiB** was
+available, and the shared Arena lock had no holder. No live source endpoint,
+production database, protected service, real Arena worker, or deployment was
+used. This increases confidence in compatibility and the research-only API
+boundary; it does not establish production behavior, cross-venue economic
+equivalence, or full MIDAS regression. Frontier remains **PARTIALLY VERIFIED**,
+isolated, research-only, and undeployed.

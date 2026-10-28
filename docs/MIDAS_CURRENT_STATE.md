@@ -1684,3 +1684,17 @@ was not started after a fresh 03:37 UTC gate found memory PSI at 31.75% some /
 25.89% full and external Veritas PID 4136998 holding the shared lock. Browser
 E2E and production build remain unverified for this change. No source probe or
 deployment occurred.
+
+### Legacy integration regression addendum — 2026-10-28 04:16 UTC
+
+From `/home/charlie/midas-frontier`, `tests/integration/test_api.py` passed
+**5/5** and `tests/integration/test_milestone2_journey.py` passed **5/5**.
+Peak RSS was **167,956 KiB** and **134,632 KiB**, respectively; both runs had
+zero swaps and zero socket messages. The tests use temporary databases and
+fixture/mock transports. They cover offline Frontier API/probe-denial
+contracts, legacy read-only transport and paper-research behavior, and do not
+validate deployed services. At 04:16:39 UTC, memory PSI avg10 was 0.00% some /
+0.00% full, I/O PSI avg10 1.04% / 1.04%, approximately 10 GiB was available,
+and no process held the shared Arena lock. The full MIDAS suite and production
+deployment remain unverified; Frontier is still research-only and
+**PARTIALLY VERIFIED**.
