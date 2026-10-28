@@ -20,9 +20,11 @@ from midas.frontier.independent_audit import independently_audit_candidate
 from midas.frontier.models import (
     BookLevel,
     BookSnapshot,
+    EconomicAuditDisposition,
     FeeSchedule,
     FeeStatus,
     FrontierMarket,
+    IndependentEconomicAudit,
     KalshiFeeMetadata,
     Lifecycle,
     MarketInstrument,
@@ -72,6 +74,70 @@ def test_candidate_observation_time_must_be_aware_and_is_normalized_to_utc():
     candidate = _candidate_at(local_time)
 
     assert candidate.observed_at_utc == datetime(2026, 10, 28, 10, 0, tzinfo=UTC)
+
+
+def test_no_leg_audit_clears_stale_economics_and_preserves_discrepancy_only():
+    empty_inputs = {
+        "markets": {},
+        "books_by_market": {},
+        "relationships": {},
+        "state_mappings": {},
+        "instrument_mappings": {},
+        "scenario": ExecutionScenario(),
+    }
+    previous_audit = IndependentEconomicAudit(
+        disposition=EconomicAuditDisposition.VERIFIED,
+        input_sha256="c" * 64,
+        checked_market_count=1,
+        checked_leg_count=2,
+        recomputed_gross_cost=Decimal("0.8"),
+        recomputed_gross_pnl_by_state={"yes": Decimal("0.2")},
+        recomputed_net_pnl_by_state={"yes": Decimal("0.2")},
+        recomputed_worst_case_gross_pnl=Decimal("0.2"),
+        recomputed_worst_case_net_pnl=Decimal("0.2"),
+        message="Prior fixture audit before leg removal.",
+    )
+    copied_without_legs = _candidate_at(T0).model_copy(
+        update={
+            "classification": OpportunityClassification.VERIFIED_MATHEMATICAL_INCONSISTENCY,
+            "practical_eligibility": True,
+            "independent_audit": previous_audit,
+            "outcome_payout_by_state": {"yes": Decimal(1)},
+            "gross_cost": Decimal("0.8"),
+            "modeled_fees": Decimal(0),
+            "modeled_net_cost": Decimal("0.8"),
+            "gross_pnl_by_state": {"yes": Decimal("0.2")},
+            "net_pnl_by_state": {"yes": Decimal("0.2")},
+            "worst_case_gross_pnl": Decimal("0.2"),
+            "worst_case_net_pnl": Decimal("0.2"),
+            "capital_by_venue": {"polymarket": Decimal("0.8")},
+            "received_skew_ms": 2,
+            "exchange_skew_ms": 2,
+            "timing_verified": True,
+        }
+    )
+
+    audited_without_legs = independently_audit_candidate(copied_without_legs, **empty_inputs)
+    assert audited_without_legs.independent_audit is not None
+    assert (
+        audited_without_legs.independent_audit.disposition == EconomicAuditDisposition.NOT_EVALUATED
+    )
+    assert audited_without_legs.classification == OpportunityClassification.INCOMPLETE_EVIDENCE
+    assert not audited_without_legs.practical_eligibility
+    assert audited_without_legs.worst_case_gross_pnl is None
+    assert audited_without_legs.worst_case_net_pnl is None
+    assert not audited_without_legs.gross_pnl_by_state
+    assert not audited_without_legs.net_pnl_by_state
+    assert not audited_without_legs.capital_by_venue
+    assert audited_without_legs.received_skew_ms is None
+    assert audited_without_legs.exchange_skew_ms is None
+    assert not audited_without_legs.timing_verified
+
+    discrepancy_only = independently_audit_candidate(_candidate_at(T0), **empty_inputs)
+    assert discrepancy_only.classification == OpportunityClassification.PRICE_DISCREPANCY_ONLY
+    assert not discrepancy_only.practical_eligibility
+    assert discrepancy_only.independent_audit is not None
+    assert discrepancy_only.independent_audit.disposition == EconomicAuditDisposition.NOT_EVALUATED
 
 
 @pytest.mark.parametrize(

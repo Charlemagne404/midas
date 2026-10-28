@@ -124,7 +124,66 @@ def independently_audit_candidate(
             checks=(),
             message="No complete position construction was produced for independent arithmetic.",
         )
-        return candidate.model_copy(update={"independent_audit": audit})
+        previously_audited = candidate.independent_audit is not None and (
+            candidate.independent_audit.disposition
+            in {EconomicAuditDisposition.VERIFIED, EconomicAuditDisposition.DISAGREEMENT}
+        )
+        stale_economics = any(
+            (
+                candidate.one_sided_fill_sensitivity is not None,
+                candidate.partial_fill_grid_sensitivity is not None,
+                bool(candidate.outcome_payout_by_state),
+                candidate.gross_cost is not None,
+                candidate.modeled_fees is not None,
+                candidate.modeled_net_cost is not None,
+                bool(candidate.gross_pnl_by_state),
+                bool(candidate.net_pnl_by_state),
+                candidate.worst_case_gross_pnl is not None,
+                candidate.worst_case_net_pnl is not None,
+                bool(candidate.capital_by_venue),
+                candidate.capital_currency_identity is not None,
+                candidate.received_skew_ms is not None,
+                candidate.exchange_skew_ms is not None,
+                candidate.timing_verified,
+            )
+        )
+        claims_economic_result = (
+            candidate.practical_eligibility
+            or previously_audited
+            or stale_economics
+            or candidate.classification
+            in {
+                OpportunityClassification.VERIFIED_MATHEMATICAL_INCONSISTENCY,
+                OpportunityClassification.CONDITIONAL_ECONOMIC_OPPORTUNITY,
+                OpportunityClassification.NEGATIVE_AFTER_MODELED_COSTS,
+            }
+        )
+        no_leg_updates: dict[str, Any] = {
+            "independent_audit": audit,
+            "practical_eligibility": False,
+            "one_sided_fill_sensitivity": None,
+            "partial_fill_grid_sensitivity": None,
+            "outcome_payout_by_state": {},
+            "gross_cost": None,
+            "modeled_fees": None,
+            "modeled_net_cost": None,
+            "gross_pnl_by_state": {},
+            "net_pnl_by_state": {},
+            "worst_case_gross_pnl": None,
+            "worst_case_net_pnl": None,
+            "capital_by_venue": {},
+            "capital_currency_identity": None,
+            "received_skew_ms": None,
+            "exchange_skew_ms": None,
+            "timing_verified": False,
+        }
+        if claims_economic_result:
+            no_leg_updates["classification"] = OpportunityClassification.INCOMPLETE_EVIDENCE
+            no_leg_updates["reasons"] = (
+                *candidate.reasons,
+                "No position legs remain to support the previously reported economic result.",
+            )
+        return candidate.model_copy(update=no_leg_updates)
 
     with localcontext() as context:
         context.prec = 128
