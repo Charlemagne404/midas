@@ -4522,3 +4522,14 @@ is therefore unverified and must be run after a new resource admission check.
 | Component | Status | Evidence and remaining boundary |
 | --- | --- | --- |
 | Frontier event ID normalization correction | PARTIALLY VERIFIED | Conservative mapping and absent-event assertions are implemented; static lint/format pass; targeted adapter/API tests remain pending. Historical captures are immutable. |
+
+### Resource gate recheck — 2026-10-28 04:03 UTC
+
+The follow-up host sample at `2026-10-28T04:03:00Z` continued to deny
+resource-bearing verification: memory PSI avg10 was **42.66% some / 33.52%
+full**, avg60 **37.19% / 29.70%**, and avg300 **27.58% / 22.98%**. About **10
+GiB** was available, but only **333 MiB** of swap remained free. External
+Veritas PID **4154226** still held the shared Arena admission lock in `D` state
+with elapsed time 4:49. It was not signaled or modified. No tests, typecheck,
+browser run, or production build were started after the event-ID edit; those
+changes remain in the worktree awaiting a fresh passing resource gate.

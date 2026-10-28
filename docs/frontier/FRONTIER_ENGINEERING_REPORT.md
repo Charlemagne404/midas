@@ -44,6 +44,13 @@ external Veritas PID **4154226** held the shared Arena admission lock in `D`
 state. The process and lock were left untouched; no further resource-bearing
 checks were started.
 
+The `2026-10-28T04:03:00Z` follow-up remained above the resource gate:
+memory PSI avg10 was **42.66% some / 33.52% full**, avg60 **37.19% / 29.70%**,
+and avg300 **27.58% / 22.98%**. About **10 GiB** was available, with **333
+MiB** swap free. PID **4154226** still held the shared lock in `D` state. The
+event-ID correction remains untested and uncommitted pending another fresh
+resource admission; no host process was touched.
+
 | Component | Status | Evidence and remaining boundary |
 | --- | --- | --- |
 | Public Polymarket single-market metadata route | PARTIALLY VERIFIED | One bounded HTTP 200 capture persisted and hash-checked; no event, payoff, or cross-venue verification. Disposable harness teardown failed after read-back. |
