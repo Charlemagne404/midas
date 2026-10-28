@@ -1,5 +1,36 @@
 # Project Frontier Mission Ledger
 
+## Bounded adapter fixture regression — 2026-10-28 22:32 UTC
+
+Six selected offline adapter checks passed in **1.13 seconds**: Polymarket V1
+normalization preserves unverified payout semantics; Kalshi multivariate
+discovery preserves event and market evidence; Kraken spot books preserve
+spot units and native level timing; Coinbase fixtures preserve product, book,
+and trade semantics; the shared four-adapter trade contract passes; and the
+default Coinbase terms hold blocks a flagged transport. All source responses
+were fixture-backed. Pytest reported the existing Starlette/httpx deprecation
+warning. The first invocation did not start because `pytest` was absent from
+`PATH`; the successful invocation used `/home/charlie/midas/.venv/bin/pytest`
+from this worktree, whose `pyproject.toml` pins `.` and `packages` on the test
+import path. The test process peaked at 75,048 KiB RSS and ran in a separate
+GNOME Terminal cgroup.
+
+Memory PSI was already elevated around this short run and rose further in a
+later sample; this is not attributed to the test. At 22:32:40Z, both protected
+services were active: API PID 1201509 at 1,608,904,704 / 1,610,612,736 bytes
+(1,708,032 bytes below `MemoryHigh`), and Reality PID 1049184 at
+658,280,448 / 1,207,959,552 bytes. Memory PSI was 44.04% `some` / 40.11%
+`full` avg10 (15.92% / 14.42% avg60); 9,826,856 KiB was available and swap
+free was 954,864 KiB. No service, source, or collector action occurred.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Selected adapter normalization and read-only contract | COMPLETE AND VERIFIED WITHIN TESTED SCOPE | Six fixture-backed tests pass across four adapter semantics and shared trade capture. This is not live verification of Kalshi, Kraken, or Coinbase. |
+| Resource admission for broader tests | PARTIALLY VERIFIED | The test was bounded to 75 MiB and 1.13 seconds; host PSI is now high and API `MemoryHigh` headroom remains small. Defer further tests. |
+
+**Next safe action:** continue only source-independent static review; refresh
+resource admission before starting another test batch.
+
 ## Corrected user-manager service and live-workload check — 2026-10-28 17:27 UTC
 
 System-level `systemctl show` returned inactive units at 17:23–17:25. A

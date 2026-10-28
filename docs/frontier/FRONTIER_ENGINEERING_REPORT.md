@@ -2,6 +2,32 @@
 
 **Report date:** 2026-10-28
 
+## Bounded adapter fixture regression — 2026-10-28 22:32 UTC
+
+Six selected offline adapter checks passed in **1.13 seconds**: Polymarket V1
+normalization preserves unverified payout semantics; Kalshi multivariate
+discovery preserves event and market evidence; Kraken spot books preserve
+spot units and native level timing; Coinbase fixtures preserve product, book,
+and trade semantics; the shared four-adapter trade contract passes; and the
+default Coinbase terms hold blocks a flagged transport. The test process made
+no public source request, peaked at 75,048 KiB RSS, and ran in a separate
+GNOME Terminal cgroup. Pytest reported the existing Starlette/httpx
+deprecation warning. Its first invocation did not start because `pytest` was
+absent from `PATH`; the passing invocation used the shared
+`/home/charlie/midas/.venv/bin/pytest` runner with this worktree's pytest
+configuration (`pythonpath = [".", "packages"]`).
+
+This fixture result verifies the selected normalization and shared capture
+contract only. It does not constitute live validation of Kalshi, Kraken, or
+Coinbase. The source-use holds remain in force. Memory PSI was elevated before
+and after the short run; a later sample at 22:32:40Z measured 44.04% `some` /
+40.11% `full` avg10 (15.92% / 14.42% avg60). At that sample, the user-level
+API and Reality services were active. API memory was 1,608,904,704 /
+1,610,612,736 bytes, only 1,708,032 bytes below `MemoryHigh`; Reality was
+658,280,448 / 1,207,959,552 bytes. Available host memory was 9,826,856 KiB
+with 954,864 KiB swap free. No public request, collector action, or service
+operation occurred. Defer additional test batches while this pressure persists.
+
 ## Corrected user-service and active-workload recheck — 2026-10-28 17:27 UTC
 
 The prior 17:23–17:25 system-level `systemctl` queries reported the protected
