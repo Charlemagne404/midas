@@ -2902,3 +2902,15 @@ The dated details are recorded in
 and operations pages now link to it. No source API was called, no capture was
 opened, and no permission or hold state changed. Frontier remains
 research-only and **PARTIALLY VERIFIED**.
+
+### Frontier collection journal regression — 2026-10-28 13:28 UTC
+
+The exact `tests/frontier/test_collection.py` module passed **29/29** after
+commits `3153148` and `f440fa2` in 1.94 seconds (2.33 seconds wall), with
+69,124 KiB peak RSS, zero swaps, filesystem input, or socket messages. It used
+temporary SQLite roots and a bounded local file-lease child process. The full
+Frontier suite remains deferred: after the run at `13:28:47Z`, host CPU PSI
+avg10 was **44.54%**; memory PSI was 0.00%, I/O PSI was **0.14% some / 0.03%
+full**, and about **10.4 GiB** was available. No source, held capture,
+protected store, collector, or production service was accessed. Frontier
+remains research-only and **PARTIALLY VERIFIED**.

@@ -9461,3 +9461,28 @@ unavailable.
 | Genuine cross-venue equivalence | BLOCKED | No permitted live evidence establishes an equivalent multi-venue payoff. |
 
 **Documentation commit:** `c9388b2`.
+
+## Collection module regression after journal fixes — 2026-10-28 13:28 UTC
+
+The complete `tests/frontier/test_collection.py` module now passes **29/29**
+against commits `3153148` and `f440fa2`, covering the journal input and
+read-only lookup fixes in their surrounding collector tests. Pytest time was
+1.94 seconds (2.33 seconds wall); maximum RSS was **69,124 KiB**, with zero
+swaps, filesystem input, or socket messages and 576 output blocks. Output and
+SQLite test journals stayed under
+`/dev/shm/midas-frontier-collection-module-20261028`.
+
+Before the module at `13:28:17Z`, memory PSI avg10 was **0.00%**, I/O PSI was
+**0.03% some / 0.03% full**, and approximately **10.5 GiB** was available.
+Afterward at `13:28:47Z`, memory remained **0.00%**, I/O was **0.14% some /
+0.03% full**, and approximately **10.4 GiB** remained available. CPU PSI was
+still **44.54%**, so the full Frontier suite and broader repository regressions
+remain deferred. The test uses fake adapters, temporary roots, and a bounded
+local lock child; it makes no public-data request and touches no protected
+service or evidence.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Collection journal append and read boundaries | COMPLETE AND VERIFIED | The complete 29-case collection module passes after both fixes; strict mypy, Ruff, and format checks also pass. |
+| Full Frontier regression after journal fixes | PARTIALLY VERIFIED | The full suite was not rerun under sustained high host CPU pressure. |
+| Frontier project acceptance | PARTIALLY VERIFIED | Live cross-venue evidence, held-source permission, broad resource qualification, production recovery, and deployment remain open. |

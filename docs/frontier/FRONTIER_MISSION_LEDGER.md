@@ -1,5 +1,25 @@
 # Project Frontier Mission Ledger
 
+## Collection journal module verification — 2026-10-28 13:28 UTC
+
+After the append-input and read-only-query fixes (`3153148`, `f440fa2`), the
+full `tests/frontier/test_collection.py` module passes **29/29** in 1.94 seconds
+(2.33 seconds wall). The run used
+`/dev/shm/midas-frontier-collection-module-20261028`, peaked at **69,124 KiB**
+RSS, and recorded zero swaps, filesystem input, or socket messages (576 output
+blocks). It includes a short local file-lease child process and temporary
+journal roots; no external source or protected store was used.
+
+Before the run at `13:28:17Z`, memory PSI avg10 was 0.00%, I/O PSI was 0.03%
+some / 0.03% full, and 10.5 GiB was available. Afterward at `13:28:47Z`,
+memory remained 0.00%, I/O was 0.14% some / 0.03% full, and 10.4 GiB was
+available. CPU PSI remained elevated at 44.54%, so the full Frontier suite and
+broader repository suites remain deferred. **Code commits:** `3153148`,
+`f440fa2`.
+
+**Next safe action:** continue bounded source-independent audit; rerun broader
+tests only after a fresh resource sample supports admission.
+
 ## Official source-terms refresh — 2026-10-28 13:26 UTC
 
 Read-only review of the official Kalshi, Kraken, Coinbase, and Polymarket
@@ -15,8 +35,8 @@ lifted.
 
 No API request, exchange contact, or capture read occurred. The untracked
 `data/frontier-public-probes/` directory remains untouched. This work was
-documentation-only; implementation validation remains at the two focused
-collector tests recorded below. **Documentation commit:** `c9388b2`.
+documentation-only; focused collector tests and module verification are
+recorded below. **Documentation commit:** `c9388b2`.
 
 **Next safe action:** continue source-independent implementation review; do not
 enable a held source without a validated permission and scope review.
