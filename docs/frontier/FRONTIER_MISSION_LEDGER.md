@@ -10160,3 +10160,13 @@ component file and build checks pass.
 **Next safe action:** preserve source-use and service boundaries; continue
 source-independent engineering/document review. Remeasure I/O PSI and the
 Reality cgroup before any further test, and do not restart or reconfigure it.
+
+## Trade schema documentation sync — 2026-10-28 19:36 UTC
+
+Updated `docs/frontier/FRONTIER_ARCHITECTURE.md` and `docs/DEVELOPMENT.md` to
+match Kalshi trade-observation schema v4. The current guides now distinguish
+the three nullable normalized flags from raw `taker_side`, whose documented
+example has no published semantics. The adapter still does not derive a common
+aggressor direction from these venue-specific labels. This is a documentation
+sync only; the current-tree 505-case Frontier suite and UI checks above cover
+the corresponding implementation. No public source or protected data was read.

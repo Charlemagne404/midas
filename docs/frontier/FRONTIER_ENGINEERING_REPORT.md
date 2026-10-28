@@ -11063,3 +11063,8 @@ broader legacy Arena/MIDAS regression remain unrun on this exact tree.
 | Genuine live cross-venue relationship and economics | BLOCKED | Current Kalshi/Kraken/Coinbase source-use gates remain; no synthetic output is presented as live. |
 | Production deployment | DEFERRED | Branch remains isolated and undeployed; production recovery and deployment gates remain separate. |
 | Project Frontier overall | PARTIALLY VERIFIED | Core research platform and current bounded acceptance paths work; live cross-venue science, full broad regression, endurance, protected recovery, and deployment remain incomplete. |
+
+The architecture and development guides were then synchronized with
+Kalshi `TradeObservation` schema v4: three nullable native trade flags are
+normalized, while the example-only `taker_side` value remains raw and
+uninterpreted.
