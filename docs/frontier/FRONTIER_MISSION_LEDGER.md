@@ -1,5 +1,43 @@
 # Project Frontier Mission Ledger
 
+## Full Arena regression stopped under sustained CPU pressure — 2026-10-28 16:21 UTC
+
+Retried the finite `tests/arena` suite using the absolute Frontier worktree
+package path and tmpfs basetemp
+`/dev/shm/midas-frontier-arena-20261028-1610`. The run advanced beyond the
+50% progress marker with no assertion failure reported, then was stopped at
+9:06.59 elapsed after CPU pressure rose while the protected Reality recorder
+was active. The test worker peaked at 487,772 KiB RSS, used 549.86 CPU seconds,
+made zero socket calls, and used zero swaps. SIGINT and SIGTERM did not stop the
+CPU-bound pytest process; after confirming the PID belonged to this run, it was
+terminated with SIGKILL (exit 137). No test summary was produced, so this is not
+a pass.
+
+At 16:18:24Z, CPU PSI on the six-core host was 24.67% some avg10 / 23.78% avg60.
+The process was absent at 16:19:41Z, but CPU PSI remained 38.09% avg10 /
+28.68% avg60; memory PSI avg10 was 0.00%, I/O PSI avg10 was 0.36% some, and
+about 9.9 GiB was available. At 16:21:29Z, with no pytest or Arena worker
+present, CPU PSI was still 42.63% avg10 / 37.65% avg60. This shows sustained
+host CPU pressure after the test stopped; no cause is assigned to Frontier
+alone. Protected services, source data, and the untracked capture directory
+were not changed.
+
+A read-only sample at 16:23:12Z still showed CPU PSI at 41.51% avg10 /
+40.14% avg60. Memory and I/O PSI remained low. Broad regression stays deferred
+until repeated fresh samples show the host is stable.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Full legacy Arena suite | PARTIALLY VERIFIED | The retry passed the 50% progress marker, then stopped under sustained CPU PSI; no assertion failure was reported, but there is no full-suite result. |
+| Frontier Python suite | COMPLETE AND VERIFIED | Current `tests/frontier` passed 475/475 at 16:04 UTC. |
+| Frontier web suite | COMPLETE AND VERIFIED | Current Vitest suite passed 47/47 at 16:08 UTC; TypeScript, ESLint, and Prettier passed. |
+| Live cross-venue science | BLOCKED | Kalshi, Kraken, and Coinbase source-use holds remain; no new public endpoint was queried. |
+| Frontier overall | PARTIALLY VERIFIED | Full Arena regression, live cross-venue findings, endurance, protected recovery, and deployment remain open. |
+
+**Next safe action:** continue source-independent review and keep broad tests
+deferred until a fresh host CPU sample is stable. Keep all source-use holds and
+protected services unchanged.
+
 ## Spot-versus-event payoff boundary asserted in the native UI — 2026-10-28 16:09 UTC
 
 The Exchanges view already explains that Kraken and Coinbase spot prices are

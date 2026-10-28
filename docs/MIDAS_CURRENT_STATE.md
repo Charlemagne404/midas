@@ -33,6 +33,34 @@ in the dated addendum below and in the Frontier engineering report.
 
 ## Frontier development addendum — 2026-10-28
 
+### Latest isolated Frontier checkpoint — 2026-10-28 16:23 UTC
+
+The public-read transport follow-up contains injected adapter hosts within
+each adapter's declared host set. The focused regression passes **3/3**;
+strict mypy for the adapter base, Ruff, and Ruff format pass. The full current
+`tests/frontier` suite passes **475/475** (16:04 UTC), with one existing
+Starlette/httpx deprecation warning. The frontend suite passes **47/47**;
+TypeScript, targeted ESLint, and Prettier pass. A test-only UI assertion keeps
+the spot-price versus event-payoff distinction visible. Production build and
+fixture-browser evidence remain at the separately dated 13:59 UTC checkpoint.
+
+A finite retry of all **427 `tests/arena` cases** advanced beyond 50% without a
+reported assertion failure, but was stopped after 9:06.59 under sustained host
+CPU pressure. It produced no test summary and is not a pass. The verified
+Frontier pytest worker used 549.86 CPU seconds, peaked at 487,772 KiB RSS, and
+used zero swaps or sockets. After it exited, CPU PSI remained elevated: 42.63%
+avg10 / 37.65% avg60 at 16:21:29Z and 41.51% / 40.14% at 16:23:12Z. Memory and
+I/O PSI were low. This is host-level evidence; no cause is assigned to Frontier
+alone. Broader regression remains deferred until fresh samples show stable CPU
+pressure.
+
+Kalshi, Kraken, and Coinbase source-use holds remain in force. No live endpoint,
+protected Reality service, or historical source evidence was accessed or
+changed. Frontier stays isolated, research-only, and undeployed. See the
+[Frontier engineering report](frontier/FRONTIER_ENGINEERING_REPORT.md) and
+[mission ledger](frontier/FRONTIER_MISSION_LEDGER.md) for exact run details and
+the current acceptance matrix.
+
 ### Latest isolated Frontier checkpoint — 2026-10-28 13:09 UTC
 
 The relationship audit found that copied models with empty payout-state sets

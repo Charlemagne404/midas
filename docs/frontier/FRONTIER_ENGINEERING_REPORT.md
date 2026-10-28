@@ -2,6 +2,49 @@
 
 **Report date:** 2026-10-28
 
+## Arena regression stop and current status — 2026-10-28 16:21 UTC
+
+The finite `tests/arena` retry used the absolute Frontier worktree package path
+and tmpfs basetemp `/dev/shm/midas-frontier-arena-20261028-1610`. It advanced
+beyond the 50% progress marker without a reported assertion failure, then was
+stopped after 9:06.59 when CPU PSI remained elevated on the six-core host while
+the protected Reality recorder was active. The pytest process peaked at
+487,772 KiB RSS, used 549.86 CPU seconds, made zero socket calls, and used zero
+swaps. SIGINT and SIGTERM did not stop the CPU-bound process; after confirming
+its PID, the Frontier test process alone was terminated with SIGKILL (exit
+137). The run produced no pytest summary and is not a pass.
+
+CPU PSI at 16:18:24 UTC was 24.67% some avg10 / 23.78% avg60. After the test
+process was absent, CPU PSI measured 38.09% avg10 / 28.68% avg60 at 16:19:41
+and 42.63% / 37.65% at 16:21:29. Memory PSI avg10 remained 0.00%, I/O PSI
+avg10 was 0.36% some at the first post-stop sample, and about 9.9 GiB remained
+available. CPU pressure persisted without a pytest or Arena worker; no cause is
+attributed to Frontier alone. A read-only sample at 16:23:12Z still measured
+CPU PSI at 41.51% avg10 / 40.14% avg60, with memory and I/O PSI low. The Reality
+recorder, MIDAS services, public sources, preserved evidence, and untracked
+capture directory were left untouched.
+
+Current acceptance snapshot:
+
+| Requirement | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Isolated exchange-independent adapter foundation | COMPLETE AND VERIFIED | Four read-only adapters, capability declarations, canonical models, fixture contracts, and the shared bounded transport are implemented and covered by the current Python suite. |
+| Kalshi, Kraken, and Coinbase live source validation | IMPLEMENTED, LIVE VALIDATION PENDING | Adapters are fixture-verified; terms and intended-use holds keep further collection and held evidence quarantined. |
+| Canonical payoff, relationship, and opportunity research | PARTIALLY VERIFIED | Supported bounded constructions and independent Decimal audits pass controlled fixtures; no genuine verified cross-venue payoff relationship or eligible opportunity is established. |
+| Provenance, storage, and deterministic replay | COMPLETE AND VERIFIED WITHIN TESTED SCOPE | Hash-checked local observations, relationship reviews, deterministic/paired replay, and selected Arena handoffs have fixture and persistence regression coverage; no endurance claim is made. |
+| Laboratory/Arena integration | PARTIALLY VERIFIED | Frontier integration slices pass; the 427-case full Arena retry stopped beyond 50% under sustained CPU pressure and did not produce a suite result. |
+| Native Frontier workspace | COMPLETE AND VERIFIED, DEPLOYMENT PENDING | Vitest 47/47, TypeScript, ESLint, and Prettier pass. Production build and 7 regular + 2 seeded fixture browser cases passed at the 13:59 UTC checkpoint; this turn changed only a test assertion. |
+| Research-only security boundary | COMPLETE AND VERIFIED | Public transport is anonymous GET-only, host-contained, redirect-disabled, and source-gated; no authenticated trading, wallet, deposit, withdrawal, or order path is present in Frontier. |
+| Resource sustainability | PARTIALLY VERIFIED | Bounded Python/web runs have measured RSS and no test swaps; a broader Arena test caused sustained CPU pressure and was stopped. Continuous-source and deployment load are unmeasured. |
+| Live cross-venue scientific acceptance | BLOCKED | Current source-use holds prevent new Kalshi/Kraken/Coinbase research; fixture results are not represented as live evidence. |
+| Production deployment | DEFERRED | The Frontier worktree remains isolated and undeployed; recovery, source-use, operational, and explicit deployment gates remain outstanding. |
+| Project Frontier overall | PARTIALLY VERIFIED | The research platform is substantial and bounded-tested, but live cross-venue science, full Arena regression, endurance, protected recovery, and deployment are incomplete. |
+
+Continue with source-independent implementation review. Reattempt broad regression
+only after a fresh CPU PSI sample is stable. Preserve source-use holds and the
+current worktree boundary. The detailed 20-section engineering report and
+append-only work history follow.
+
 ## Spot-versus-event payoff distinction in the native UI — 2026-10-28
 
 The Exchanges view labels Kraken and Coinbase spot feeds as context and states
@@ -4063,6 +4106,41 @@ Latest isolated checkpoint commits and exact changed files:
   `docs/frontier/FRONTIER_MISSION_LEDGER.md`, `docs/MIDAS_CURRENT_STATE.md`.
 - `008106b` — `packages/midas/frontier/adapters/coinbase.py`,
   `tests/frontier/test_coinbase.py`.
+
+### Recent 2026-10-28 continuation commits
+
+- `eab4a0b`, `634ee5f` — strict JSON constant parsing and regression coverage;
+  `packages/midas/frontier/adapters/transport.py`,
+  `tests/frontier/test_adapters.py`, and the report and mission ledger.
+- `1938dc4` — disable environment-derived proxy routing for the public
+  transport; `packages/midas/frontier/adapters/transport.py`,
+  `tests/frontier/test_transport.py`, and the report and mission ledger.
+- `eadec5d` — reject injected proxy transports;
+  `packages/midas/frontier/adapters/transport.py`,
+  `tests/frontier/test_transport.py`, and the report and mission ledger.
+- `8ad54d7` — contain injected adapter hosts within the declared venue set;
+  `packages/midas/frontier/adapters/base.py` and
+  `tests/frontier/test_adapters.py`.
+- `8d61a62` — assert the native UI's spot-versus-event payoff disclosure;
+  `apps/web/src/Frontier.test.tsx`.
+- `9589ced` — anchor the Arena migration-pilot subprocess import to its
+  worktree; `tests/arena/test_migration_pilot_verification.py`, the report, and
+  the mission ledger.
+- `ba03b75` — guard specialized held-source routes;
+  `tests/frontier/test_source_data_permissions.py`,
+  `docs/MIDAS_CURRENT_STATE.md`, the report, and the mission ledger.
+- `02b7cbb`, `319cb1e`, `4bf8379`, `5bab54d`, `c8deaef` — current-state and
+  acceptance checkpoints in `docs/MIDAS_CURRENT_STATE.md`, this report, and
+  the mission ledger.
+- `fbfb08b`, `8513dee`, `df3af66`, `59f0e70`, `d521344`, `bbeb1ef`,
+  `55407dd` — report and mission-ledger checkpoints for proxy validation,
+  protected-resource admission, public egress, transport verification,
+  parser admission, adapter host containment, and spot-disclosure verification.
+
+All listed files are verified from the respective commit trees. The latest
+Arena-stop checkpoint and current-state addendum are recorded at the beginning
+of this report, ledger, and current-state document; their commit identity will
+be recorded in the next checkpoint.
 
 ## 20. Final status and continuation instructions
 
