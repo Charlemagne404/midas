@@ -2,7 +2,13 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
+import subprocess
+import sys
+from contextlib import nullcontext
 from datetime import UTC, datetime
+from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 from fastapi import FastAPI
@@ -139,6 +145,86 @@ def test_discovery_job_enforces_the_frontier_resource_ceiling():
             nice=15,
             io_scheduling_class="idle",
         )
+
+
+def test_frontier_discovery_supervisor_command_is_network_restricted(tmp_path, monkeypatch):
+    from midas.arena import admission
+    from midas.arena.jobs import create
+
+    commands = []
+
+    def launch(command, **kwargs):
+        commands.append(command)
+        return SimpleNamespace(returncode=0, stdout="", stderr="")
+
+    monkeypatch.setattr(admission, "admission_slot", lambda *_args, **_kwargs: nullcontext())
+    monkeypatch.setattr(subprocess, "run", launch)
+    snapshot = discovery_snapshot()
+    spec = FrontierDiscoveryJobSpec(snapshot_id=snapshot.snapshot_id, snapshot_sha256="b" * 64)
+    job = create(
+        tmp_path,
+        JobSpec(
+            kind="frontier_discovery",
+            frontier_discovery=spec,
+            max_wall_seconds=300,
+            memory_limit_mb=512,
+            cpu_quota_percent=50,
+            nice=15,
+            io_scheduling_class="idle",
+        ),
+    )
+
+    assert job["state"] == "QUEUED"
+    assert len(commands) == 1
+    assert "--property=MemoryMax=512M" in commands[0]
+    assert "--property=MemorySwapMax=0" in commands[0]
+    assert "--property=CPUQuota=50%" in commands[0]
+    assert "--property=RestrictAddressFamilies=AF_UNIX" in commands[0]
+
+
+def test_frontier_discovery_dispatches_through_the_arena_worker_process(tmp_path):
+    from midas.arena.jobs import create
+
+    snapshot = discovery_snapshot()
+    checksum = store_snapshot(tmp_path, snapshot)
+    spec = FrontierDiscoveryJobSpec(snapshot_id=snapshot.snapshot_id, snapshot_sha256=checksum)
+    job = create(
+        tmp_path,
+        JobSpec(
+            kind="frontier_discovery",
+            frontier_discovery=spec,
+            max_wall_seconds=300,
+            memory_limit_mb=512,
+            cpu_quota_percent=50,
+            nice=15,
+            io_scheduling_class="idle",
+        ),
+        launch=False,
+    )
+    repository = Path(__file__).resolve().parents[2]
+    environment = {
+        **os.environ,
+        "PYTHONPATH": os.pathsep.join((str(repository / "packages"), str(repository))),
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1",
+    }
+    worker = subprocess.run(
+        [sys.executable, "-m", "midas.arena.jobs", "--root", str(tmp_path), "--job", job["job_id"]],
+        cwd=repository,
+        env=environment,
+        capture_output=True,
+        text=True,
+        timeout=30,
+        check=False,
+    )
+
+    record = json.loads((tmp_path / "jobs" / job["job_id"] / "job.json").read_text())
+    assert worker.returncode == 0, worker.stderr
+    assert record["state"] == "COMPLETED"
+    assert record["result"]["snapshot_id"] == snapshot.snapshot_id
+    artifact = verify_frontier_discovery_job_result(tmp_path, job["job_id"], record)
+    assert artifact.comparison.arms[2].candidates
+    assert record["runtime_profile"]["worker_process_peak_rss_bytes"] > 0
 
 
 def test_discovery_catalog_and_result_are_verified_and_held_venues_are_quarantined(

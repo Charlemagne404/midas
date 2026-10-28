@@ -157,7 +157,7 @@ class JobSpec(Model):
             or self.io_scheduling_class != "idle"
         ):
             raise ValueError(
-                "Frontier replay and timeline jobs are limited to 300 seconds, 512 MiB, half a CPU, nice 15, and idle I/O"
+                "Frontier replay, timeline, and discovery jobs are limited to 300 seconds, 512 MiB, half a CPU, nice 15, and idle I/O"
             )
         return self
 
@@ -258,6 +258,7 @@ def _create(
         "veritas_qualification",
         "frontier_replay",
         "frontier_timeline",
+        "frontier_discovery",
     }
     memory_limit_mb = 512 if veritas_read_only else spec.memory_limit_mb
     # Global admission permits one worker. Respect its declared <= one-core
