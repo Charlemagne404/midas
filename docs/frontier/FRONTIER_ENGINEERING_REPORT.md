@@ -11020,3 +11020,46 @@ recorded memory PSI avg10 0.00%, avg60 4.96%, avg300 19.96% (`full` 0.00%,
 protected services remained active. These checks verify bounded normalization
 and presentation behavior; they do not verify live source reachability,
 permission, endurance, or production deployment.
+
+## Current-tree regression and build checkpoint — 2026-10-28 19:35 UTC
+
+The full `tests/frontier` suite passes **505/505** in 62.92 seconds (64.48
+seconds process wall) at 390,176 KiB peak RSS, with zero swaps and no socket
+traffic. The only warning is the existing Starlette/httpx `TestClient`
+deprecation. The full `apps/web/src/Frontier.test.tsx` file passes **9/9** in
+6.20 seconds of test time at 260,884 KiB peak RSS.
+
+Current-tree frontend `typecheck` passes in 9.24 seconds at 471,440 KiB peak
+RSS. The production build passes in 14.42 seconds at 671,000 KiB peak RSS and
+transforms 2,230 modules. Vite reports the existing Chart chunk at 544.51 kB
+(186.79 kB gzip) above its 500 kB advisory threshold; the lazy Frontier chunk
+is 183.24 kB (44.69 kB gzip). Ruff, Prettier, and ESLint pass. The isolated
+captured-public-evidence browser case passes **1/1** in 5.2 seconds; it reads a
+hash-verified temporary copy of three observations and ten relationships,
+makes no public-source requests, and records zero API mutations.
+
+At 19:35:02 UTC, post-run memory PSI was avg10 0.00%, avg60 0.00%, avg300
+6.02% (`full` 0.00%, 0.00%, 4.34%). I/O PSI was avg10 0.71% some / 0.50%
+full, avg60 3.57% / 2.49%, and avg300 2.08% / 1.45%. `MemAvailable` was
+9,906,408 KiB and `SwapFree` 19,032 KiB. Reality remained active at
+1,207,844,864 / 1,207,959,552 bytes, leaving about 112 KiB below `MemoryHigh`;
+the API remained active at 1,531,400,192 / 1,610,612,736 bytes. No further
+resource-bearing test was started at this sample. The complete web suite and
+broader legacy Arena/MIDAS regression remain unrun on this exact tree.
+
+| Requirement | Status | Current evidence and boundary |
+| --- | --- | --- |
+| Exchange-independent adapters and capability contracts | COMPLETE AND VERIFIED | Current Frontier suite passes 505 tests, including adapter and API contracts. |
+| Polymarket source and captured evidence path | PARTIALLY VERIFIED | A bounded genuine Polymarket capture is hash-pinned, browser-visible, and reproducible; no continuous quality or simultaneous-execution claim follows. |
+| Kalshi, Kraken, and Coinbase live source validation | IMPLEMENTED, LIVE VALIDATION PENDING | Fixture tests and official API contract reviews pass; source-use holds prevent live collection absent applicable permission. |
+| Canonical instruments, payoff semantics, relationship graph, and independent economic audit | PARTIALLY VERIFIED | Deterministic fixture, persistence, adversarial, and independent calculations pass; live cross-venue equivalence remains unavailable. |
+| Multi-source storage, provenance, and replay | PARTIALLY VERIFIED | Bounded replay, saved evidence, and current Frontier tests pass; sustained multi-source synchronization remains unmeasured. |
+| Laboratory/Arena integration | PARTIALLY VERIFIED | Frontier-specific Arena and supervision slices pass; full legacy Arena regression and production-worker readiness remain open. |
+| Frontier workspace, current changed UI path, typecheck, and production build | COMPLETE AND VERIFIED | Current Frontier UI test file 9/9, typecheck, lint, formatting, build, and captured-evidence browser case pass; the Chart size advisory remains. |
+| Full web suite on the exact current tree | PARTIALLY VERIFIED | Prior 47/47 baseline remains; current Frontier component file is 9/9. The 47-case suite was not rerun after this tree's changes because post-run I/O PSI rose and Reality reached its soft memory boundary. |
+| Full Frontier Python suite | COMPLETE AND VERIFIED | Current tree `tests/frontier`: 505/505. |
+| Broader MIDAS and full legacy Arena regression | PARTIALLY VERIFIED | Earlier broad run stopped at the host resource gate; no full-repository pass is claimed. |
+| Resource sustainability and protected recovery | PARTIALLY VERIFIED | Bounded run RSS and current PSI are measured; Reality is at its soft memory boundary, and there is no endurance or current-boundary recovery proof. |
+| Genuine live cross-venue relationship and economics | BLOCKED | Current Kalshi/Kraken/Coinbase source-use gates remain; no synthetic output is presented as live. |
+| Production deployment | DEFERRED | Branch remains isolated and undeployed; production recovery and deployment gates remain separate. |
+| Project Frontier overall | PARTIALLY VERIFIED | Core research platform and current bounded acceptance paths work; live cross-venue science, full broad regression, endurance, protected recovery, and deployment remain incomplete. |

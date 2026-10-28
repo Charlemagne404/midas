@@ -10112,3 +10112,51 @@ verification does not establish endurance or production readiness.
 
 **Next safe action:** continue with source-independent acceptance and regression
 work; remeasure before any larger test or build batch.
+
+## Current-tree broad regression and browser checkpoint — 2026-10-28 19:35 UTC
+
+The Kalshi trade-metadata code checkpoint is `dc32fef` on
+`codex/frontier-20261026`. Current-tree `pytest -q tests/frontier` passes
+**505/505** in 62.92 seconds (64.48 seconds process wall), with 390,176 KiB
+peak RSS, zero swaps, and no socket messages. The only warning is the existing
+Starlette/httpx `TestClient` deprecation. The complete changed component file,
+`apps/web/src/Frontier.test.tsx`, passes **9/9** in 6.20 seconds at 260,884
+KiB peak RSS. Separate full `tests/frontier/test_adapters.py` and
+`tests/frontier/test_api.py` runs also passed 84/84 and 56/56.
+
+On the current tree, the frontend typecheck passed (9.24 seconds, 471,440 KiB
+peak RSS); the production build passed (14.42 seconds, 671,000 KiB peak RSS,
+2,230 modules transformed); Ruff, Prettier, and ESLint passed. The Vite build
+retains its Chart chunk advisory at 544.51 kB (186.79 kB gzip); the lazy
+Frontier chunk is 183.24 kB (44.69 kB gzip). The isolated captured-public-data
+browser test passes **1/1** in 5.2 seconds and reads a temporary hash-verified
+copy with three observations and ten relationships. It makes zero source
+requests and zero API mutations.
+
+At 19:35:02 UTC, memory PSI was avg10 0.00%, avg60 0.00%, avg300 6.02% (`full`
+0.00%, 0.00%, 4.34%). I/O PSI was avg10 0.71% some / 0.50% full, avg60
+3.57% / 2.49%, and avg300 2.08% / 1.45%. `MemAvailable` was 9,906,408 KiB;
+`SwapFree` was 19,032 KiB. Reality and API remained active. Reality had
+1,207,844,864 / 1,207,959,552 bytes, only 112 KiB below `MemoryHigh`; API had
+1,531,400,192 / 1,610,612,736 bytes. No further resource-bearing test was
+started after this measurement. The exact-tree full 47-case web suite and
+broader legacy MIDAS/Arena regression remain open; the current changed Frontier
+component file and build checks pass.
+
+| Requirement | Status | Current evidence and boundary |
+| --- | --- | --- |
+| Shared adapter contracts and full Frontier Python suite | COMPLETE AND VERIFIED | Current `tests/frontier` is 505/505; this includes all current adapter and API regressions. |
+| Polymarket captured-evidence path | COMPLETE AND VERIFIED | The bounded public capture is hash-pinned and browser-visible from an isolated copy; it proves no continuous quality or executable availability. |
+| Kalshi/Kraken/Coinbase live validation | IMPLEMENTED, LIVE VALIDATION PENDING | Fixture behavior and official contract review are covered; source-use gates remain in force. |
+| Canonical models, graph, candidate engine, and economics | PARTIALLY VERIFIED | Fixture and independent-audit behavior is tested; permitted live cross-venue equivalence is absent. |
+| Multi-source persistence, replay, and Arena integration | PARTIALLY VERIFIED | Bounded deterministic paths pass; sustained feeds and full legacy worker readiness remain open. |
+| Frontier dashboard and current build | COMPLETE AND VERIFIED | Current component tests, typecheck, lint, formatting, build, and captured-data browser case pass; Chart size advisory remains. |
+| Exact-tree full web and broader MIDAS/Arena regressions | PARTIALLY VERIFIED | The changed Frontier test file is 9/9; full web and full legacy regressions were not rerun after host I/O/Reality soft-boundary evidence. |
+| Resource sustainability and production recovery | PARTIALLY VERIFIED | Short-run measurements exist, but Reality is near `MemoryHigh`; no endurance or current-boundary recovery proof. |
+| Genuine cross-venue relationship and economic result | BLOCKED | Current source-use holds prevent additional-venue evidence; no synthetic result is represented as live. |
+| Production deployment | DEFERRED | Frontier remains isolated; recovery, source-use, and deployment gates remain separate. |
+| Project Frontier overall | PARTIALLY VERIFIED | Core implementation and bounded current-tree evidence pass; live cross-venue research, broad regressions, endurance, recovery, and deployment remain incomplete. |
+
+**Next safe action:** preserve source-use and service boundaries; continue
+source-independent engineering/document review. Remeasure I/O PSI and the
+Reality cgroup before any further test, and do not restart or reconfigure it.
