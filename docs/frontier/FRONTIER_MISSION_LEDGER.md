@@ -1,5 +1,40 @@
 # Project Frontier Mission Ledger
 
+## Independent audit clears economics without position legs — 2026-10-28 13:42 UTC
+
+**Implementation commit:** `2d8e9fb` (`fix(frontier): clear unaudited economics without legs`).
+
+The independent-audit review found that a copied candidate could retain a
+verified classification and positive P&L after all position legs were
+removed. The audit correctly said `NOT_EVALUATED` but previously returned the
+stale result fields. The no-leg path now always clears practical eligibility,
+payoff/P&L/capital totals, sensitivities, and timing claims. It changes a
+previously audited or otherwise economically classified candidate to
+`INCOMPLETE_EVIDENCE`; a clean `PRICE_DISCREPANCY_ONLY` candidate remains a
+discrepancy.
+
+The focused regression passed **1/1** (0.56 seconds pytest, 0.91 seconds wall,
+**68,076 KiB** maximum RSS, zero swaps, filesystem input, or socket messages,
+and 1,496 output blocks). It used
+`/dev/shm/midas-frontier-no-leg-audit-20261028`. Strict mypy for
+`independent_audit.py`, Ruff check/format, and `git diff --check` pass.
+
+The surrounding 82-case economics/replay module was not run. At
+`2026-10-28T13:42:40Z`, CPU PSI avg10 was **0.98%**, I/O PSI **0.31% some /
+0.26% full**, and memory PSI **48.10% some / 44.12% full**; memory pressure
+exceeded admission by a wide margin, despite about 9 GiB being available. No
+source, capture, protected store, collector, or production service was used.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| No-leg independent-audit output | COMPLETE AND VERIFIED | Targeted regression proves stale positive economics are cleared and discrepancy-only status remains; strict mypy and Ruff pass. |
+| Full economics/replay module after this change | PARTIALLY VERIFIED | One focused regression passes; 81 sibling tests were not rerun under high memory PSI. |
+| Frontier project acceptance | PARTIALLY VERIFIED | Live cross-venue evidence, source-use permissions, held-capture access, production recovery, broad regression, and deployment remain open. |
+
+**Next safe action:** continue read-only review or wait for a fresh low-memory-
+pressure sample before running the economics module. Keep the public-probe
+directory and held captures untouched.
+
 ## FrontierStore write preflight — 2026-10-28 13:39 UTC
 
 **Implementation commit:** `c5b8822` (`fix(frontier): preflight storage writes before initialization`).

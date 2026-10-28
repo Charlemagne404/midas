@@ -2734,6 +2734,16 @@ route test used a mocked source transport. No source, protected store, worker,
 or production service was accessed. Frontier remains research-only and
 **PARTIALLY VERIFIED**.
 
+### Frontier independent audit with no position legs — 2026-10-28 13:42 UTC
+
+Commit `2d8e9fb` clears prior P&L, capital, sensitivity, and timing fields when
+no position legs remain. Previously economic classifications now become
+`INCOMPLETE EVIDENCE`; a clean discrepancy-only label is preserved. The
+focused regression, strict mypy, and Ruff pass. The 82-case economics/replay
+module was deferred after memory PSI avg10 reached **48.10% some / 44.12%
+full**. No exchange source, capture, protected store, collector, or production
+service was accessed. Frontier remains research-only and **PARTIALLY VERIFIED**.
+
 ### Exact-tree timestamp regression checkpoint — 2026-10-28 08:03 UTC
 
 The pending verifier rerun is now complete. On the final code tree, the

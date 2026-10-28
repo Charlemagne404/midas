@@ -9557,3 +9557,35 @@ or historical evidence was accessed.
 | Frontier overall | PARTIALLY VERIFIED | Live cross-venue equivalence, source-use permissions, held-capture access, production recovery, and deployment remain open. |
 
 **Implementation commit:** `c5b8822` (`fix(frontier): preflight storage writes before initialization`).
+
+## Independent audit behavior when position legs are absent — 2026-10-28
+
+Commit `2d8e9fb` closes a stale-result path in
+`independently_audit_candidate`. If a copied candidate loses all legs after
+carrying a verified audit, positive economics, eligibility, or timing fields,
+the no-leg result now clears those derived fields and sets the audit
+disposition to `NOT_EVALUATED`. An existing verified, conditional, or
+modeled-negative classification is downgraded to `INCOMPLETE_EVIDENCE`.
+Clean candidates classified only as `PRICE_DISCREPANCY_ONLY` preserve that
+classification because they make no payoff claim.
+
+The focused no-leg regression passed **1/1** in 0.56 seconds (0.91 seconds
+wall), with **68,076 KiB** peak RSS, zero swaps, filesystem input, or socket
+messages, and 1,496 output blocks under the tmpfs root
+`/dev/shm/midas-frontier-no-leg-audit-20261028`. Strict mypy on
+`independent_audit.py`, Ruff check/format, and `git diff --check` pass.
+
+The full 82-case `test_relationships_economics_replay.py` module was held. At
+`2026-10-28T13:42:40Z`, CPU PSI avg10 was 0.98%, I/O was 0.31% some / 0.26%
+full, and memory PSI was 48.10% some / 44.12% full. The memory gate was
+exceeded; available host memory alone did not justify a test run. No exchange
+source, capture, protected store, collector, production service, or historical
+evidence was accessed.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| No-leg independent economic audit output | COMPLETE AND VERIFIED | Focused mutation regression and static checks pass; stale economic outputs are removed. |
+| Full economics/replay regression after this change | PARTIALLY VERIFIED | One focused case passes; 81 sibling tests remain pending lower memory PSI. |
+| Frontier overall | PARTIALLY VERIFIED | Source-use permissions, held-capture validation, genuine cross-venue equivalence, production recovery, and deployment remain open. |
+
+**Implementation commit:** `2d8e9fb` (`fix(frontier): clear unaudited economics without legs`).
