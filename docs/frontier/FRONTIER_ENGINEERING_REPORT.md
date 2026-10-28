@@ -2,6 +2,48 @@
 
 **Report date:** 2026-10-28
 
+## Current status — 2026-10-28 11:04 UTC
+
+This entry supersedes the 11:02 UTC checkpoint below. Frontier remains
+isolated at `/home/charlie/midas-frontier` on `codex/frontier-20261026`. Test
+commit `d44bab0` adds an API-to-store regression for duplicate-key responses;
+code commit `0dbea9c` supplies the strict parser.
+
+The bounded API regression now exercises the full failure-evidence path: a
+response containing duplicate JSON keys returns HTTP 502 with
+`DUPLICATE_JSON_KEY`, preserves its exact raw body in an append-only
+`source_failure` observation, and serves that observation through the
+hash-verified evidence endpoint with the failure stage and code intact. The
+duplicate remains excluded from normalized market rows. This closes the gap
+between the earlier transport-level test and persisted source provenance.
+
+Full `tests/frontier` passes **404/404** in 29.66 seconds (31.12 seconds wall
+time); `/usr/bin/time -v` measured **378,492 KiB** peak RSS, zero process
+swaps, zero filesystem input, and 360 output blocks. One existing
+Starlette/httpx `TestClient` deprecation warning remains. Ruff check/format,
+strict mypy for six changed production modules, and `git diff --check` pass.
+The suite used tmpfs at
+`/dev/shm/midas-frontier-json-storage-final-20261028T1103Z`.
+
+At `11:03:02Z`, memory and I/O PSI avg10 were 0% and about 10 GiB was
+available; host swap remained 3.5/4 GiB used. At `11:03:37Z`, memory PSI was
+0%, I/O PSI was 0.03% some / 0% full, about 10 GiB was available, and the test
+process reported zero swaps. No live source, protected capture, production
+service, or Arena job was used. Frontier remains **PARTIALLY VERIFIED**; live
+multi-venue validation, broader MIDAS regression, production recovery, and
+deployment remain open.
+
+### Latest acceptance delta
+
+| Requirement | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Duplicate-key source failure provenance | COMPLETE AND VERIFIED | API returns classified error, persists exact bounded raw body, and exposes hash-verified evidence. |
+| Full Frontier Python regression | COMPLETE AND VERIFIED | 404/404 pass on the exact test commit; one existing deprecation warning remains. |
+| Live cross-venue equivalence and economics | BLOCKED | No authorized genuine multi-venue evidence is available for this checkpoint. |
+| Broader MIDAS regression | PARTIALLY VERIFIED | Not run on this branch; Reality recovery dependency and incompatible Reality lineages remain unresolved. |
+| Production recovery and deployment | DEFERRED | The research worktree remains isolated, unmerged, and undeployed. |
+| Frontier overall | PARTIALLY VERIFIED | Live science, broader regression, and production readiness remain open. |
+
 ## Current status — 2026-10-28 11:02 UTC
 
 This entry supersedes the 10:59 UTC checkpoint below. Frontier remains

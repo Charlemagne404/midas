@@ -1,5 +1,34 @@
 # Project Frontier Mission Ledger
 
+## Persist duplicate-key source failures — 2026-10-28 11:04 UTC
+
+Test commit `d44bab0` extends the duplicate-key regression through the API,
+append-only store, and evidence endpoint. A mock source response with repeated
+`id` fields returns HTTP 502 and `DUPLICATE_JSON_KEY`; its exact raw body and
+error code are retrievable through the hash-verified `source_failure`
+observation, and no normalized market row is created. No live source was used.
+
+The focused API regression passed **1/1**. Full `tests/frontier` passed
+**404/404** in 29.66 seconds (31.12 seconds wall time) using
+`/dev/shm/midas-frontier-json-storage-final-20261028T1103Z`. Peak RSS was
+**378,492 KiB**, process swaps **0**, filesystem input **0**, output 360
+blocks. Ruff, format, strict mypy for six changed production modules, and
+`git diff --check` passed. One existing Starlette/httpx deprecation warning
+remains.
+
+At `11:03:02Z`, memory and I/O PSI avg10 were 0%, about 10 GiB was available,
+and host swap was already 3.5/4 GiB used. At `11:03:37Z`, memory PSI was 0%,
+I/O PSI was 0.03% some / 0% full, about 10 GiB remained available, and the
+test process used no swaps. No live source, protected capture, production
+service, or Arena job was used. Frontier remains **PARTIALLY VERIFIED**.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Duplicate-key source failure provenance | COMPLETE AND VERIFIED | Classified raw response persists and is available by hash-verified observation ID. |
+| Full Frontier Python suite | COMPLETE AND VERIFIED | 404/404 pass on the exact test commit; one existing deprecation warning remains. |
+| Live cross-venue matching and economics | BLOCKED | Authorized genuine multi-venue evidence remains unavailable. |
+| Frontier project overall | PARTIALLY VERIFIED | Broader MIDAS regression, live science, production recovery, and deployment remain open. |
+
 ## Pin implication acceptance in economic model identity — 2026-10-28 11:02 UTC
 
 Code commit `ff522e9` advances `ECONOMIC_MODEL_VERSION` from

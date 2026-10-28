@@ -33,6 +33,25 @@ in the dated addendum below and in the Frontier engineering report.
 
 ## Frontier development addendum — 2026-10-28
 
+### Latest isolated Frontier checkpoint — 2026-10-28 11:04 UTC
+
+Test commit `d44bab0` adds end-to-end evidence for duplicate JSON-key source
+failures. The API returns `DUPLICATE_JSON_KEY`, persists the exact bounded
+response in a `source_failure` observation, and serves the raw body, failure
+stage, and code from the evidence endpoint without adding a normalized market.
+Full `tests/frontier` passes **404/404** in 31.12 seconds wall time, with
+**378,492 KiB** peak RSS and zero test-process swaps. Ruff, formatting, strict
+mypy for six changed production modules, and `git diff --check` pass. One
+existing Starlette/httpx deprecation warning remains.
+
+At `11:03:02Z`, memory and I/O PSI avg10 were 0% and about 10 GiB was
+available; host swap was already 3.5/4 GiB used. At `11:03:37Z`, memory PSI
+was 0%, I/O PSI was 0.03% some / 0% full, about 10 GiB was available, and the
+test process had used no swaps. No live source or protected capture was
+accessed. Live multi-venue validation, broader MIDAS regression, production
+recovery, and deployment remain open. Frontier remains **PARTIALLY VERIFIED**,
+research-only, and undeployed.
+
 ### Latest isolated Frontier checkpoint — 2026-10-28 11:02 UTC
 
 Commit `ff522e9` advances the economic model to v16 so candidate and replay
