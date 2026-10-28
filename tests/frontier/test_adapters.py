@@ -53,6 +53,28 @@ def test_transport_and_adapter_reject_copied_unbounded_config_before_network_set
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "allowed_hosts",
+    (
+        {"gamma-api.polymarket.com", "external-api.kalshi.com"},
+        {"external-api.kalshi.com"},
+    ),
+    ids=("broader-than-adapter", "different-venue"),
+)
+async def test_adapter_rejects_transport_with_mismatched_host_allowlist(allowed_hosts):
+    client = httpx.AsyncClient(
+        transport=httpx.MockTransport(lambda request: httpx.Response(200, request=request))
+    )
+    transport = PublicReadTransport(allowed_hosts, AdapterConfig(), client=client)
+    try:
+        with pytest.raises(ValueError, match="host allowlist exceeds"):
+            PolymarketAdapter(AdapterConfig(), transport=transport)
+        assert transport.request_count == 0
+    finally:
+        await client.aclose()
+
+
+@pytest.mark.asyncio
 async def test_source_health_request_count_is_a_bounded_rolling_window(monkeypatch):
     clock = [160.0]
     monkeypatch.setattr("midas.frontier.adapters.transport.time.monotonic", lambda: clock[0])

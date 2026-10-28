@@ -155,11 +155,19 @@ class BaseReadOnlyAdapter:
         self.config = config or AdapterConfig()
         if not self.config.has_valid_structure:
             raise ValueError("Adapter configuration fails structural validation")
-        if transport is not None and (
-            type(transport.config) is not type(self.config) or transport.config != self.config
-        ):
-            raise ValueError("Adapter transport configuration differs from adapter configuration")
-        self.transport = transport or PublicReadTransport(self.allowed_hosts, self.config)
+        if transport is not None:
+            if type(transport.config) is not type(self.config) or transport.config != self.config:
+                raise ValueError(
+                    "Adapter transport configuration differs from adapter configuration"
+                )
+            expected_hosts = frozenset(host.lower() for host in self.allowed_hosts)
+            if not transport.allowed_hosts <= expected_hosts:
+                raise ValueError("Adapter transport host allowlist exceeds adapter source")
+        self.transport = (
+            transport
+            if transport is not None
+            else PublicReadTransport(self.allowed_hosts, self.config)
+        )
         self._captures: list[RawObservation] = []
         self._capture_bytes = 0
         self._last_success: datetime | None = None
