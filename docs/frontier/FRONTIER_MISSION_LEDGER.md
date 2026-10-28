@@ -6125,6 +6125,9 @@ Checkpoint commits for this integration are `d396589` (Laboratory UI),
 (fixture-routed browser case), `87ef08e` (pending-verification handoff), and
 `91e61d7` (make reproducibility disclosure visible in test assertions). The
 working tree is clean at this checkpoint. No production branch was changed.
+Documentation follow-ups are `a1e5687` (commit identities) and `8c5ffbc`
+(correct shared-lock path and external holder); the latter is followed by this
+current admission note.
 
 ## Correct shared Arena admission check — 2026-10-28 07:17 UTC
 

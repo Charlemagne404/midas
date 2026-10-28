@@ -7432,6 +7432,8 @@ Commit identities on `codex/frontier-20261026`:
 - `afcc726` — Fixture-routed Laboratory browser scenario.
 - `87ef08e` — Record that final markup and browser checks were pending.
 - `91e61d7` — Expand the reproducibility disclosure before the visible-value assertion.
+- `a1e5687` — Pin integration commit identities in the report and ledger.
+- `8c5ffbc` — Correct the protected shared-lock path and record the live holder.
 
 The working tree was clean at `91e61d7`. The commits remain local to the
 isolated Frontier branch; there was no merge, push, or deployment.
