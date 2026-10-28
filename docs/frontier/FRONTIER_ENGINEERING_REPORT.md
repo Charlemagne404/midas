@@ -6212,3 +6212,26 @@ avg60 **4.36% / 3.95%**, avg300 **11.19% / 10.07%**, I/O PSI avg10
 | Component | Status | Current evidence and remaining boundary |
 | --- | --- | --- |
 | Held-source capture guard | COMPLETE AND VERIFIED | Current test-tree scan and temporary-path denial cases pass; no held data was accessed. |
+
+### Combined Frontier/Arena acceptance after current code — 2026-10-28 04:23 UTC
+
+The full Frontier test directory plus selected Arena discovery, replay,
+timeline, and job modules passed **390/390 in one pytest invocation** after
+the current Frontier code changes. Runtime was **91.63 seconds pytest time**
+(**93.00 seconds process wall**) at **380,624 KiB peak RSS**. The run used zero
+swaps and emitted zero socket messages. It produced the existing
+Starlette/httpx TestClient deprecation warning. Tests use fixtures and
+temporary roots; they do not prove a production systemd worker or live source
+behavior.
+
+At the post-run sample `2026-10-28T04:23:44Z`, memory PSI avg10 was **39.41%
+some / 35.46% full**, avg60 **29.70% / 26.17%**, avg300 **16.08% / 14.23%**,
+and I/O PSI avg10 **8.41% / 8.00%**. About **10 GiB** appeared available,
+but the shared Arena lock was held by external Veritas PID **4174453**. It was
+left untouched. No further resource-bearing check was started.
+
+| Component | Status | Current evidence and remaining boundary |
+| --- | --- | --- |
+| Combined Frontier and selected Arena regression | COMPLETE AND VERIFIED | 390/390 pass in one invocation after current code; this is not the full MIDAS suite. |
+| Resource sustainability under current host load | PARTIALLY VERIFIED | The combined run did not swap, but post-run PSI was high and the external batch held the shared lock; concurrent/sustained capacity remains unverified. |
+| Project Frontier overall | PARTIALLY VERIFIED | Live cross-venue equivalence, complete MIDAS regression, and deployment remain incomplete. |

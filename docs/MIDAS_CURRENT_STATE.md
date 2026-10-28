@@ -1741,3 +1741,15 @@ socket messages. No preserved capture was opened. At 04:20:34 UTC memory PSI
 avg10 was 0.00% some/full, avg60 4.36%/3.95%, avg300 11.19%/10.07%, I/O PSI
 avg10 0.87%/0.69%, and the shared Arena lock was free. This strengthens the
 offline source boundary evidence but does not release any source-use hold.
+
+### Combined Frontier/Arena regression — 2026-10-28 04:23 UTC
+
+The current `tests/frontier` suite and selected Arena discovery, replay,
+timeline, and job modules passed **390/390 in one invocation** in 91.63 seconds
+pytest time (93.00 seconds process wall), at **380,624 KiB peak RSS** with zero
+swaps and socket messages. This is not a full MIDAS repository regression or
+production worker check. The post-run sample at 04:23:44 UTC showed memory PSI
+avg10 39.41% some / 35.46% full, avg60 29.70% / 26.17%, avg300 16.08% / 14.23%,
+and I/O PSI avg10 8.41% / 8.00%. External Veritas PID 4174453 held the shared
+Arena lock; it was left untouched, and no further resource-bearing checks were
+started. Frontier remains research-only, undeployed, and **PARTIALLY VERIFIED**.

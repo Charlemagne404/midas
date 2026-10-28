@@ -4788,3 +4788,38 @@ it does not authorize use of held records or paths outside these guard rails.
 | Component | Status | Evidence and remaining boundary |
 | --- | --- | --- |
 | Held-source path guard and test-source isolation | COMPLETE AND VERIFIED | Current Python tests contain no held-capture path reference; direct and symlink path operations are denied on a temporary fixture. |
+
+### Combined Frontier and Arena regression — 2026-10-28 04:23 UTC
+
+The complete `tests/frontier` suite and selected Arena discovery, replay,
+timeline, and job modules passed together in one invocation:
+
+```bash
+/usr/bin/time -v env PYTHONPATH=packages:. \
+  /home/charlie/midas/.venv/bin/python -m pytest -q \
+  tests/frontier \
+  tests/arena/test_frontier_discovery.py \
+  tests/arena/test_frontier_replay.py \
+  tests/arena/test_frontier_timeline.py \
+  tests/arena/test_jobs.py
+# 390 passed in 91.63s pytest time (93.00s wall); 380,624 KiB peak RSS
+# zero swaps; zero socket messages
+```
+
+This is the first clean combined run after the Gamma event-ID correction and
+the later source-rejection diagnostics changes; it covers current Frontier
+tests plus the selected Arena consumers in one process. The existing
+Starlette/httpx TestClient deprecation warning remains. It does not cover all
+MIDAS tests, production Arena/systemd execution, live exchange calls, or
+deployment.
+
+At `2026-10-28T04:23:44Z`, post-run memory PSI avg10 was **39.41% some /
+35.46% full**, avg60 **29.70% / 26.17%**, avg300 **16.08% / 14.23%**; I/O PSI
+avg10 was **8.41% / 8.00%**. About **10 GiB** appeared available and **333
+MiB** of swap was free. External Veritas PID **4174453** held the shared Arena
+lock and was left untouched. No more resource-bearing checks were started.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Combined current Frontier and selected Arena regression | COMPLETE AND VERIFIED | 390/390 in one invocation at 380,624 KiB peak RSS with zero swaps and socket messages. |
+| Full MIDAS repository regression | PARTIALLY VERIFIED | Broad repository suite remains unrun; the selected suite is scoped to Frontier and Arena consumers. |
