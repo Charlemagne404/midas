@@ -247,10 +247,12 @@ class CollectionCheckpoint(FrontierModel):
     )
     @classmethod
     def checkpoint_digests_are_unique(cls, values: tuple[str, ...]) -> tuple[str, ...]:
-        if len(values) != len(set(values)) or any(
+        if any(
             len(value) != 64 or any(char not in "0123456789abcdef" for char in value)
             for value in values
         ):
+            raise ValueError("Collection checkpoint contains duplicate or invalid digests")
+        if len(values) != len(set(values)):
             raise ValueError("Collection checkpoint contains duplicate or invalid digests")
         return values
 

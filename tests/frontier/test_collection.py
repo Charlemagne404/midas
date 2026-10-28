@@ -866,6 +866,27 @@ def test_latest_source_health_checkpoints_are_bounded_read_only_and_use_latest_h
         journal.latest_source_health_checkpoints(limit=21)
 
 
+@pytest.mark.parametrize(
+    "field_name",
+    (
+        "market_observation_ids",
+        "book_observation_ids",
+        "diagnostic_observation_ids",
+        "completed_book_task_ids",
+        "failed_book_task_ids",
+    ),
+)
+def test_collection_checkpoint_rejects_invalid_digest_before_uniqueness(field_name):
+    with pytest.raises(ValueError, match="contains duplicate or invalid digests"):
+        CollectionCheckpoint(
+            run_id="f79d58bb-e799-4718-93f1-a94bb7492f21",
+            sequence=0,
+            updated_at_utc=T0,
+            state="created",
+            **{field_name: ("x" * 65,)},
+        )
+
+
 def test_latest_source_health_checkpoint_listing_rejects_a_broken_chain(tmp_path):
     from midas.frontier.collection import _canonical_json
 
