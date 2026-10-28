@@ -546,6 +546,7 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
   const tradePageRequests: Record<string, unknown>[] = [];
   const mvePageRequests: Record<string, unknown>[] = [];
   const capitalCarryRequests: Record<string, unknown>[] = [];
+  const fundingCurrencyRequests: Record<string, unknown>[] = [];
   await page.route('**/api/frontier/**', async (route) => {
     if (
       route.request().method() === 'GET' &&
@@ -721,6 +722,112 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
         }),
       });
     }
+    if (
+      route.request().method() === 'POST' &&
+      route.request().url().endsWith('/opportunities/funding-currency-sensitivity')
+    ) {
+      const request = route.request().postDataJSON() as Record<string, unknown>;
+      fundingCurrencyRequests.push(request);
+      expect(request).toEqual({
+        run_id: 'a'.repeat(64),
+        run_sha256: 'b'.repeat(64),
+        candidate_id: capitalCandidateId,
+        venues: [
+          {
+            venue: 'kalshi',
+            funding_currency_identity: {
+              schema_version: 1,
+              kind: 'fiat',
+              code: 'EUR',
+              network_id: null,
+              asset_reference: null,
+            },
+            balance_amount: '6',
+            target_units_per_funding_unit: '1.1',
+            conversion_fee_bps: '25',
+          },
+          {
+            venue: 'polymarket',
+            funding_currency_identity: USD_IDENTITY,
+            balance_amount: '4',
+            target_units_per_funding_unit: '1',
+            conversion_fee_bps: '0',
+          },
+        ],
+      });
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          schema_version: 1,
+          model_version: 'frontier-virtual-funding-currency-1',
+          run_id: 'a'.repeat(64),
+          run_sha256: 'b'.repeat(64),
+          candidate_id: capitalCandidateId,
+          candidate_evidence_sha256: 'e'.repeat(64),
+          candidate_classification: 'INCOMPLETE EVIDENCE',
+          candidate_practical_eligibility: false,
+          classification_unchanged: true,
+          practical_eligibility_unchanged: true,
+          candidate_economics_unchanged: true,
+          hypothetical_only: true,
+          target_currency_identity: USD_IDENTITY,
+          unresolved_candidate_fee_leg_count: 2,
+          venues: [
+            {
+              venue: 'kalshi',
+              required_capital_target: '5.5',
+              funding_currency_identity: {
+                schema_version: 1,
+                kind: 'fiat',
+                code: 'EUR',
+                network_id: null,
+                asset_reference: null,
+              },
+              balance_amount: '6',
+              target_units_per_funding_unit: '1.1',
+              conversion_fee_bps: '25',
+              required_funding_amount:
+                '5.012531328320802005012531328320802005012531328320802005012531328320802005012531328320802005012531328321',
+              available_capital_target_after_fee: '6.5835',
+              conversion_fee_target_amount:
+                '0.013784461152882205513784461152882205513784461152882205513784461152882205513784461152882205513784461153',
+              shortfall_target: '0',
+              shortfall_funding: '0',
+              model_requirement_covered: true,
+            },
+            {
+              venue: 'polymarket',
+              required_capital_target: '3.5',
+              funding_currency_identity: USD_IDENTITY,
+              balance_amount: '4',
+              target_units_per_funding_unit: '1',
+              conversion_fee_bps: '0',
+              required_funding_amount: '3.5',
+              available_capital_target_after_fee: '4',
+              conversion_fee_target_amount: '0',
+              shortfall_target: '0',
+              shortfall_funding: '0',
+              model_requirement_covered: true,
+            },
+          ],
+          total_conversion_fee_target:
+            '0.013784461152882205513784461152882205513784461152882205513784461152882205513784461152882205513784461153',
+          input_sha256: 'f'.repeat(64),
+          result_sha256: '1'.repeat(64),
+          audit: {
+            disposition: 'verified',
+            input_sha256: 'f'.repeat(64),
+            recomputed_total_conversion_fee_target:
+              '0.013784461152882205513784461152882205513784461152882205513784461152882205513784461152882205513784461153',
+            checks: ['Funding conversion arithmetic is independently reproduced.'],
+            message: 'Independent funding arithmetic matches the pinned browser fixture.',
+          },
+          assumptions: ['User-entered virtual FX assumptions only.'],
+          limitations: ['No live rate, conversion availability, or candidate fee is established.'],
+        }),
+      });
+    }
     if (route.request().method() === 'POST' && route.request().url().endsWith('/review')) {
       submittedReview = route.request().postDataJSON() as Record<string, unknown>;
       return route.fulfill({
@@ -831,6 +938,41 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
       post_settlement_delay_seconds_by_venue: { kalshi: '0', polymarket: '0' },
     },
   ]);
+  const fundingCurrency = page
+    .locator('.fr-candidate')
+    .filter({ hasText: 'KX-CAPITAL-FIXTURE' })
+    .locator('.fr-fx-sensitivity');
+  const kalshiFundingCode = fundingCurrency.getByRole('textbox', {
+    name: 'Kalshi funding asset code',
+  });
+  await kalshiFundingCode.fill('EUR');
+  const kalshiFundingRate = fundingCurrency.getByRole('textbox', {
+    name: 'Kalshi target units per funding unit',
+  });
+  const kalshiFundingFee = fundingCurrency.getByRole('textbox', {
+    name: 'Kalshi conversion fee in basis points',
+  });
+  await expect(kalshiFundingRate).toHaveValue('');
+  await expect(kalshiFundingFee).toHaveValue('');
+  await fundingCurrency
+    .getByRole('textbox', { name: 'Kalshi funding currency virtual balance' })
+    .fill('6');
+  await kalshiFundingRate.fill('1.1');
+  await kalshiFundingFee.fill('25');
+  await fundingCurrency
+    .getByRole('textbox', { name: 'Polymarket funding currency virtual balance' })
+    .fill('4');
+  await fundingCurrency
+    .getByRole('button', { name: 'Evaluate virtual funding sensitivity' })
+    .click();
+  await expect(
+    fundingCurrency.getByText('Independent funding arithmetic matches the pinned browser fixture.'),
+  ).toBeVisible();
+  await expect(
+    fundingCurrency.getByText('INCOMPLETE EVIDENCE · classification unchanged'),
+  ).toBeVisible();
+  await expect(fundingCurrency.getByText(/unresolved fees remain/)).toHaveCount(2);
+  expect(fundingCurrencyRequests).toHaveLength(1);
   await page.setViewportSize({ width: 390, height: 844 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
   await page.setViewportSize({ width: 1440, height: 1000 });
