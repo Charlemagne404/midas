@@ -10996,3 +10996,27 @@ sample; implementation verification remains partial.
 | --- | --- | --- |
 | Kalshi block/taker metadata preservation | PARTIALLY VERIFIED | Versioned fields and UI are implemented; focused adapter, API, and web tests remain pending due host pressure. |
 | Live Kalshi collection | IMPLEMENTED, LIVE VALIDATION PENDING | The documented API shape is mapped; no live request or source-use validation was performed. |
+
+## Kalshi trade metadata focused verification — 2026-10-28 19:30 UTC
+
+The follow-up tests passed after adding versioned `is_block_trade`,
+`taker_outcome_side`, and `taker_book_side` fields to normalized Kalshi trades.
+Seven mocked adapter cases passed for true, false, missing, and malformed
+values. The API pagination and storage test passed, preserving normalized flags
+and the raw source page without authorization headers. It emitted one existing
+Starlette/httpx deprecation warning. The focused Frontier UI test passed and
+rendered both the taker label and block-trade classification; its name filter
+selected one case and skipped eight other tests in the same file. Ruff,
+Prettier, ESLint, and whitespace checks passed after formatting.
+The official response example also includes `taker_side` without defining its
+semantics; Frontier preserves it in the raw page and does not infer a normalized
+meaning or aggressor direction from it.
+
+The tests used local fixtures and a temporary database. They made no Kalshi
+request. Peak RSS was 61,492 KiB for the adapter cases, 87,452 KiB for the API
+case, and 258,972 KiB for the web test. The post-run 19:29 UTC resource sample
+recorded memory PSI avg10 0.00%, avg60 4.96%, avg300 19.96% (`full` 0.00%,
+3.51%, 14.43%), 9,823,408 KiB available memory and 11,420 KiB free swap. Both
+protected services remained active. These checks verify bounded normalization
+and presentation behavior; they do not verify live source reachability,
+permission, endurance, or production deployment.

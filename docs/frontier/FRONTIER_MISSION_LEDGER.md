@@ -10075,3 +10075,40 @@ such.
 **Next safe action:** remeasure resource pressure and run only the focused
 adapter/API and web tests when the host gate permits; then record exact results
 before treating this change as verified.
+
+## Kalshi trade classification verification — 2026-10-28 19:30 UTC
+
+The focused checks are now complete; this supersedes the 17:43 pending-test
+entries above. The seven mocked adapter cases passed (including true, false,
+missing, and malformed source fields). The API pagination/storage/readback case
+passed and confirmed `is_block_trade`, taker labels, raw response evidence, and
+the absence of authorization headers. One existing Starlette/httpx deprecation
+warning was emitted by the API test import. The targeted web test passed with
+the trade table showing `Taker no · bid book` and `Block trade`; it also checks
+that mounting the workspace makes no source probe. Vitest reports one selected
+case passed and eight unrelated cases skipped by the name filter.
+
+The official response example includes `taker_side` but does not define it;
+the field remains in the raw page without normalized semantics.
+
+Ruff check and format, Prettier check, ESLint, and `git diff --check` passed on
+the changed files. The first Ruff-format check and Prettier check found only
+formatting drift in the newly changed lines; those files were formatted and all
+checks were rerun. Adapter, API, and UI test processes peaked at 61,492 KiB,
+87,452 KiB, and 258,972 KiB respectively. The API test used mocked HTTP and
+created only a temporary test store; no exchange requests were made. A
+post-check sample at 19:29 UTC showed PSI avg10 0.00%, avg60 4.96%, avg300
+19.96% (`full` 0.00%, 3.51%, 14.43%), `MemAvailable` 9,823,408 KiB and
+`SwapFree` 11,420 KiB. Reality and API remained active at 729,501,696 /
+1,207,959,552 bytes and 1,528,377,344 / 1,610,612,736 bytes. This bounded
+verification does not establish endurance or production readiness.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Kalshi trade metadata normalization | COMPLETE AND VERIFIED | Focused adapter parsing and API persistence tests pass; normalized metadata remains versioned and source-bounded. |
+| Kalshi trade classification UI | COMPLETE AND VERIFIED | The focused UI test passes after formatting, and lint/style checks pass. |
+| Live Kalshi collection | IMPLEMENTED, LIVE VALIDATION PENDING | Official documented response shape is mapped; this verification used fixtures and made no venue request. |
+| Frontier overall | PARTIALLY VERIFIED | Multi-venue live science, broad regression, resource endurance, protected recovery, and deployment remain open. |
+
+**Next safe action:** continue with source-independent acceptance and regression
+work; remeasure before any larger test or build batch.

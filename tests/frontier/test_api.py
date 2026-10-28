@@ -4234,9 +4234,7 @@ async def test_kalshi_public_trade_pages_are_ticker_bound_and_replayable(tmp_pat
         "notional_value_dollars": "1.00",
     }
 
-    def trade_row(
-        trade_id: str, *, timestamp: str, is_block_trade: bool
-    ) -> dict[str, str | bool]:
+    def trade_row(trade_id: str, *, timestamp: str, is_block_trade: bool) -> dict[str, str | bool]:
         return {
             "trade_id": trade_id,
             "ticker": ticker,
@@ -4251,17 +4249,13 @@ async def test_kalshi_public_trade_pages_are_ticker_bound_and_replayable(tmp_pat
 
     page1 = {
         "trades": [
-            trade_row(
-                "kalshi-page-1", timestamp="2026-10-27T12:34:56Z", is_block_trade=True
-            )
+            trade_row("kalshi-page-1", timestamp="2026-10-27T12:34:56Z", is_block_trade=True)
         ],
         "cursor": "opaque:kalshi-page-2",
     }
     page2 = {
         "trades": [
-            trade_row(
-                "kalshi-page-2", timestamp="2026-10-27T12:34:57Z", is_block_trade=False
-            )
+            trade_row("kalshi-page-2", timestamp="2026-10-27T12:34:57Z", is_block_trade=False)
         ],
         "cursor": "",
     }

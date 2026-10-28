@@ -392,9 +392,7 @@ it('renders recorded-evidence empty states and never probes a source automatical
   expect(screen.getByText(/A spot price is not a prediction-contract payoff/)).toBeInTheDocument();
   expect(screen.getByText(/terms acknowledgment is not authorization/)).toBeInTheDocument();
   expect(
-    screen.getByText(
-      /develop, train, fine-tune, teach, validate, benchmark, or improve/,
-    ),
+    screen.getByText(/develop, train, fine-tune, teach, validate, benchmark, or improve/),
   ).toBeInTheDocument();
   expect(screen.getAllByRole('button', { name: 'Public probe disabled' })).toHaveLength(1);
   screen

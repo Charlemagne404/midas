@@ -1825,11 +1825,7 @@ async def test_kalshi_trade_page_preserves_source_trade_flags_without_inventing_
                     "taker_outcome_side": "yes",
                     "taker_book_side": "bid",
                     "created_time": "2026-10-27T12:34:56Z",
-                    **(
-                        {"is_block_trade": is_block_trade}
-                        if is_block_trade is not None
-                        else {}
-                    ),
+                    **({"is_block_trade": is_block_trade} if is_block_trade is not None else {}),
                     "taker_side": "yes",
                 }
             ],
@@ -1902,7 +1898,7 @@ async def test_kalshi_trade_page_rejects_malformed_native_trade_flags(field, val
     }
     trade[field] = value
     body = json.dumps({"trades": [trade], "cursor": ""})
-    transport, _, client = _transport("external-api.kalshi.com", {"/markets/trades": body})
+    transport, requests, client = _transport("external-api.kalshi.com", {"/markets/trades": body})
     adapter = KalshiAdapter(
         AdapterConfig(
             enabled=True, live_public_probe_enabled=True, requests_per_second=5, retries=0
@@ -1910,9 +1906,7 @@ async def test_kalshi_trade_page_rejects_malformed_native_trade_flags(field, val
         transport=transport,
     )
     try:
-        with pytest.raises(
-            AdapterError, match="is_block_trade|taker_outcome_side|taker_book_side"
-        ):
+        with pytest.raises(AdapterError, match="is_block_trade|taker_outcome_side|taker_book_side"):
             await adapter.fetch_trade_page(ticker, limit=1)
         captures = adapter.take_captures()
     finally:

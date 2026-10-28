@@ -104,9 +104,7 @@ def _native_trade_flags(raw: dict[str, Any]) -> tuple[bool | None, str | None, s
     """Retain Kalshi's block and taker-side labels without coercing missing values."""
     is_block_trade = raw.get("is_block_trade")
     if is_block_trade is not None and type(is_block_trade) is not bool:
-        raise AdapterError(
-            "INVALID_TRADE", "Kalshi is_block_trade must be a boolean when supplied"
-        )
+        raise AdapterError("INVALID_TRADE", "Kalshi is_block_trade must be a boolean when supplied")
 
     taker_outcome_side = raw.get("taker_outcome_side")
     if taker_outcome_side is not None:
