@@ -2,6 +2,17 @@
 
 **Report date:** 2026-10-28
 
+## Resource recheck after graph-layout change — 2026-10-28 22:42 UTC
+
+At 22:42:57Z, memory PSI had risen to 52.42% `some` / 45.66% `full` avg10
+(24.44% / 21.31% avg60; 18.58% / 15.91% avg300). API and Reality remained
+active. API PID 1218662 used 1,605,795,840 / 1,610,612,736 bytes, 4,816,896
+bytes below `MemoryHigh`; Reality PID 1049184 used 577,486,848 /
+1,207,959,552 bytes. Available host memory was 10,169,504 KiB and swap free
+959,024 KiB. The cause of the host PSI rise is unknown. No test, public source
+request, or service operation occurred. Keep the focused UI rerun and broader
+regression deferred; continue static review.
+
 ## Unknown-node graph layout follow-up — 2026-10-28 22:42 UTC
 
 Static review found that the unknown-node x-position sat between the Kalshi

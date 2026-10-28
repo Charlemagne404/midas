@@ -1,5 +1,17 @@
 # Project Frontier Mission Ledger
 
+## Resource recheck after graph-layout change — 2026-10-28 22:42 UTC
+
+A fresh admission sample at 22:42:57Z showed memory PSI had risen to 52.42%
+`some` / 45.66% `full` avg10 (24.44% / 21.31% avg60; 18.58% / 15.91% avg300).
+Both protected services remained active. API PID 1218662 was at
+1,605,795,840 / 1,610,612,736 bytes, only 4,816,896 bytes below `MemoryHigh`;
+Reality PID 1049184 was at 577,486,848 / 1,207,959,552 bytes. Available host
+memory was 10,169,504 KiB and swap free was 959,024 KiB. The source and cause
+of the host PSI rise are unknown. No test, service operation, or source request
+occurred. Defer the focused UI rerun and broader regression; continue static
+review only.
+
 ## Unknown-node graph layout follow-up — 2026-10-28 22:42 UTC
 
 The unknown-venue pill fix exposed a second static graph-layout issue: the
