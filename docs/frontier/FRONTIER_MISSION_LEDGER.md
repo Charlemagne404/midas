@@ -5545,3 +5545,38 @@ PSI is below 1%.
 | API regression slices | PARTIALLY VERIFIED | 40/55 API cases pass across three isolated slices; the final 15 remain. |
 | Serial Frontier regression coverage | PARTIALLY VERIFIED | 343 cases pass across thirteen bounded invocations. |
 | Remaining API tests | DEFERRED | Post-run I/O PSI exceeded the admission threshold. |
+
+## Frontier serial regression completion — 2026-10-28 05:35 UTC
+
+The final API graph/trade-read/capture-lineage slice passed **15/15** in 11.60
+seconds pytest time (12.11 seconds wall) at 113,792 KiB peak RSS. It used
+`/tmp/frontier-api-graph-trades-20261028`, with zero swaps and socket messages.
+The existing Starlette/httpx TestClient deprecation warning appeared.
+
+The API test module collected to **55 cases** and is now fully covered by four
+non-overlapping slices:
+
+| Slice | Cases | Pytest time | Peak RSS |
+| --- | ---: | ---: | ---: |
+| Collection, overview, coverage | 9 | 3.31s | 97,360 KiB |
+| Source probes and metadata | 12 | 6.52s | 103,256 KiB |
+| Replay, Arena staging, readiness | 19 | 7.50s | 243,040 KiB |
+| Graph, trade reads, capture lineage | 15 | 11.60s | 113,792 KiB |
+
+Together with the earlier bounded slices, **all 22 `tests/frontier/test_*.py`
+modules completed successfully**, totaling **358 passing cases across 14
+bounded invocations**. There were zero swaps and zero socket messages in the
+recorded invocations. The two monolithic `pytest tests/frontier` attempts
+remain interrupted after 108 and 113 cases; no single-process full-suite pass
+is claimed.
+
+After the final API slice, memory PSI avg10 was **0.00% some / 0.00% full**;
+I/O PSI was **4.09% some / 3.01% full**. No Frontier test or Arena admission
+lock holder remained active. Defer the frontend build/browser workload until
+I/O `some` PSI falls below 1%.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Python modular regression | COMPLETE AND VERIFIED | All 22 Frontier test modules pass across bounded slices: 358 cases in 14 invocations. |
+| Single-process full Frontier suite | PARTIALLY VERIFIED | Two monolithic attempts were interrupted; no complete one-process run. |
+| Frontend build and browser integration | DEFERRED | Prior UI results exist, but current post-backend rerun is pending an admission sample. |

@@ -6947,3 +6947,38 @@ is still not established.
 | API regression slices | PARTIALLY VERIFIED | 40 of 55 cases pass across three slices; 15 remain. |
 | Serial Frontier regression coverage | PARTIALLY VERIFIED | 343 cases pass across thirteen invocations. |
 | Full Frontier regression | PARTIALLY VERIFIED | Both monolithic runs were interrupted; no full-suite pass is claimed. |
+
+## Frontier serial regression completion — 2026-10-28 05:35 UTC
+
+The final API graph/trade-read/capture-lineage slice passed **15/15** in 11.60
+seconds pytest time (12.11 seconds wall) at 113,792 KiB peak RSS. It used
+`/tmp/frontier-api-graph-trades-20261028`; the process had zero swaps and
+socket messages. The existing Starlette/httpx TestClient deprecation warning
+appeared.
+
+The API module collected to **55 cases** and all are covered by four
+non-overlapping slices:
+
+| Slice | Cases | Pytest time | Peak RSS |
+| --- | ---: | ---: | ---: |
+| Collection, overview, coverage | 9 | 3.31s | 97,360 KiB |
+| Source probes and metadata | 12 | 6.52s | 103,256 KiB |
+| Replay, Arena staging, readiness | 19 | 7.50s | 243,040 KiB |
+| Graph, trade reads, capture lineage | 15 | 11.60s | 113,792 KiB |
+
+Across bounded runs, **all 22 `tests/frontier/test_*.py` modules completed
+successfully**: **358 passing cases across fourteen invocations**. The
+recorded runs had zero swaps and zero socket messages. Two monolithic
+`pytest tests/frontier` attempts were interrupted after 108 and 113 cases;
+this is not represented as a single-process full-suite pass.
+
+The post-run sample measured memory PSI avg10 **0.00% some / 0.00% full** and
+I/O PSI **4.09% some / 3.01% full**. No Frontier test or Arena admission lock
+holder remained active. Defer the frontend build/browser workload until I/O
+`some` PSI falls below 1%.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Python modular regression | COMPLETE AND VERIFIED | All 22 modules pass across bounded invocations: 358 cases in fourteen runs. |
+| Single-process full Frontier suite | PARTIALLY VERIFIED | Two monolithic attempts were interrupted; no one-process pass. |
+| Frontend build and browser integration | DEFERRED | Earlier UI verification exists; the post-backend rerun is pending admission. |
