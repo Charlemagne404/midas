@@ -2,7 +2,7 @@
 
 **Incident date:** 2026-10-28 (CET)
 
-**Checkpoint captured:** 2026-10-29 00:25 CET
+**Checkpoint captured:** 2026-10-29 00:31 CET
 
 **Scope:** Host reliability interruption during Project Frontier
 
@@ -45,9 +45,9 @@ No operator restart or protected service configuration change was made.
 **The host is not yet safe for Frontier tests or research batches.** Continue
 only static/documentation work until Reality has demonstrably resumed capture,
 service headroom recovers, and memory pressure remains low across multiple
-scheduled-job cycles. No new kill was observed through 00:22, about 39 minutes
-after the last kill, but host PSI avg300 remains elevated and API and Reality
-are still close to their `MemoryHigh` thresholds.
+scheduled-job cycles. No new kill was observed through 00:30, about 47 minutes
+after the last kill. Current PSI is low, but Reality status is stale, API and
+Reality remain near `MemoryHigh`, and the revised capacity limit is unvalidated.
 
 ## Observed impact and timeline
 
@@ -184,6 +184,29 @@ active; their last measured cgroup usage at 00:22 was still within 2.9 MiB
 and 0.18 MiB of `MemoryHigh`. Reality `status.json` remained stale at 23:43:01
 with `DEGRADED_SOURCE_TIMING`. The capacity timer remains active, next due
 00:46; no manual run was started.
+
+At 00:30:19 CET, host `MemAvailable` was 9.9 GiB and swap remained 3.1/4 GiB.
+Host PSI was 0.00% avg10 / 0.37% avg300 `some` and 0.00% / 0.29% `full`;
+user-manager PSI avg300 was 0.35% / 0.31%. The scheduled Veritas observation
+pilot ran from 00:30:01 to 00:30:13 and exited successfully; no OOM entry
+appeared in this window. This one bounded run does not establish sustained
+recovery or prove the pilot cannot contribute under different conditions.
+API was active at 1,609,224,192 / 1,610,612,736 bytes `MemoryHigh` (1.32 MiB
+headroom); Reality was active at 1,204,600,832 / 1,207,959,552 bytes
+(3.20 MiB headroom). Their restart counters remained at 9 and 14. Reality
+`status.json` was rechecked and remained at 23:43:01 CET with
+`DEGRADED_SOURCE_TIMING`. The research-director run at 00:15:04 completed at
+00:15:05, so it did not overlap the 00:16 capacity run.
+
+At 00:30:58, Reality PID 1235804 was still running in state `R` with
+`VmRSS=135,148 kB`; `/proc/1235804/io` showed 6,868,652,032 `read_bytes` and
+4,096 `write_bytes`. The same PID had read 4,066,516,992 bytes at 00:12:15,
+so another 2.80 GB had been read in 18 minutes 43 seconds. Its cgroup was
+1,207,947,264 / 1,207,959,552 bytes at `MemoryHigh`, leaving about 12 KiB.
+`status.json` remained at 23:43:01 with `DEGRADED_SOURCE_TIMING`. This is
+evidence that the automatic restart is still replaying/reading the recording;
+it has not demonstrated return to live capture. Do not restart or reconfigure
+the collector, and do not resume Frontier runtime work.
 
 ### systemd-oomd kills
 

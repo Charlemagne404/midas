@@ -1,6 +1,6 @@
 # Project Frontier Mission Ledger
 
-## Current host state — 2026-10-29 00:25 CET
+## Current host state — 2026-10-29 00:31 CET
 
 The 00:16 capacity check timed out at 60 seconds without a logged OOM. Its
 peak memory was unavailable, and the saved capacity report remains at the
@@ -10,13 +10,18 @@ peak memory was unavailable, and the saved capacity report remains at the
 walks for invalid provenance, reporting unknown bytes/headroom. Their
 fixtures are untested and the code is undeployed.
 
-At 00:22, host available memory was about 10 GiB, swap remained 3.1/4 GiB,
-and PSI avg10 was 0% with avg300 at 2.16% `some` / 1.75% `full`. API and
-Reality remain close to `MemoryHigh`; Reality status is still stale at
-23:43:01 with `DEGRADED_SOURCE_TIMING`. At 00:25 PSI avg300 fell to 1.04%
-`some` / 0.84% `full`, with about 10 GiB available. No OOM kill appeared
-since 23:43:24; the capacity timer remains active for 00:46 after the prior
-timeout.
+At 00:30 host available memory was 9.9 GiB, swap 3.1/4 GiB, and PSI avg300
+0.37% `some` / 0.29% `full`. The existing public observation pilot completed
+in 12 seconds without a logged OOM. API and Reality were active with 1.32 MiB
+and 3.20 MiB `MemoryHigh` headroom. Reality status remained stale at 23:43:01
+with `DEGRADED_SOURCE_TIMING`; no OOM kill appeared since 23:43:24. Keep
+runtime tests, replay, probes, and research batches paused. The capacity
+timer remains active for 00:46 after its prior timeout.
+
+At 00:30:58 PID 1235804 remained in cold replay: cumulative `read_bytes` was
+6,868,652,032 (up 2.80 GB since 00:12:15), `status.json` remained stale, and
+the Reality cgroup was within 12 KiB of `MemoryHigh`. No recorder action was
+taken. This keeps recovery unverified and runtime work paused.
 Keep runtime tests, replay, probes, and research batches paused. The
 five-minute gap-detail timer remains disabled; do not restore it before
 admission and host recovery review.

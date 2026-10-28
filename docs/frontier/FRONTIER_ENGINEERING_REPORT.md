@@ -2,7 +2,7 @@
 
 **Report date:** 2026-10-29
 
-## Current completion matrix — 2026-10-29 00:25 CET
+## Current completion matrix — 2026-10-29 00:31 CET
 
 This is a current evidence classification, not a final completion claim. The
 dated implementation records below remain the detailed evidence; the
@@ -136,6 +136,17 @@ At 00:25, host PSI avg10 remained 0% and avg300 had fallen to 1.04% `some` /
 0.84% `full`; available memory was about 10 GiB. No OOM event appeared since
 23:43:24. The Reality capacity timer remains scheduled for 00:46 after its
 00:16 run timed out; the revised memory limit has not been validated.
+
+The 00:30 public observation pilot completed in 12 seconds with exit status 0.
+At 00:30, host PSI avg300 was 0.37% `some` / 0.29% `full` and available
+memory was 9.9 GiB. API and Reality remained active with 1.32 MiB and 3.20
+MiB `MemoryHigh` headroom. Reality status was still stale at 23:43:01 with
+`DEGRADED_SOURCE_TIMING`; keep runtime checks held.
+
+At 00:30:58, Reality had read 6.87 GB since its automatic restart and remained
+within 12 KiB of its `MemoryHigh`; the status file was still stale at 23:43:01.
+This confirms ongoing cold replay, not renewed live capture. Preserve the
+runtime-test hold and do not touch the recorder.
 
 ## Host memory-pressure incident and Frontier admission — 2026-10-28 22:56 UTC
 
