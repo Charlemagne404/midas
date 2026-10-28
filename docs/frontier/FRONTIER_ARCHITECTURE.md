@@ -1182,11 +1182,21 @@ venue-wide universe scans, sourced/live FX conversion, derivatives,
 capital transfer model, a general cross-market solver beyond the bounded
 explicit joint-state family, broad multi-leg search, automatic semantic
 certification, authenticated reviewer or assertion verification, full-universe
-graph search, Laboratory campaign integration, or production deployment. The
-bounded replay and timeline Arena integrations have completed under the
-supervisor after normal host admission. The new discovery-scope job's artifact
-and API paths are fixture-tested, but its supervisor path and resource
-sustainability remain unverified.
+graph search, lossless conversion into legacy Laboratory campaigns, or
+production deployment. The bounded replay and timeline Arena integrations
+have completed under the supervisor after normal host admission. The new
+discovery-scope job's artifact and API paths are fixture-tested, but its
+supervisor path and resource sustainability remain unverified.
+
+The existing Laboratory has a **Frontier research** tab that reads the same
+bounded Arena discovery-job catalog and integrity-verified completed result
+route as the Frontier workspace. It lets users select retained jobs and inspect
+their pinned scopes, paired differences, hashes, and implementation versions.
+This is a read-only result inspector: it creates no Laboratory campaign, copies
+no multi-market observations into the single-market `MarketEvent` dataset, and
+does not admit a worker. New discovery comparisons still go through Frontier's
+Arena admission path. This UI integration does not close the separate supervisor
+completion or resource-sustainability gates listed above.
 `/graph` limits source markets to 200, scans at most
 500 relationship rows through endpoint indexes for centered neighborhoods, and
 returns at most 200 edges per page over 1–3 hops. Centered one-hop queries use

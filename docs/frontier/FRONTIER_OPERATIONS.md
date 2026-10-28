@@ -552,3 +552,14 @@ uses a clearly labeled intercepted fixture; it does not establish that an
 Arena supervisor job completed or that a candidate is live or executable.
 Terminal values are labeled hypothetical modeled P&L; the detail view states
 that they do not establish fills, venue access, or realized profit.
+
+The Laboratory's **Frontier research** tab is another read-only client for the
+same `GET /api/arena/frontier-discovery-comparisons?limit=20` and
+`GET /api/arena/jobs/{identity}/frontier-discovery` routes. It can select any
+retained completed discovery job and displays an artifact only when the API's
+content-integrity verification succeeds. It does not submit or retry Arena
+jobs; use Frontier's discovery workspace for that action, where normal resource
+admission applies. The Laboratory tab neither copies data into Laboratory's
+single-market dataset schema nor starts a source request. A failed integrity
+check withholds summary details and should be treated as an artifact error, not
+as an empty or zero-result study.

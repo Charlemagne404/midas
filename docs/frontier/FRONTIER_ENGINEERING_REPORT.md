@@ -7377,3 +7377,45 @@ the I/O `some` value crossed the strict 1% threshold after the run, no further
 resource-bearing check followed. This browser evidence remains local-interface
 verification; source-use holds, live second-venue validation, and production
 eligibility are unchanged.
+
+## Laboratory/Arena integration checkpoint — 2026-10-28 07:13 UTC
+
+The Laboratory now exposes a read-only **Frontier research** tab over the
+existing Arena discovery study catalog and saved-result endpoint. It supports
+selection among retained jobs and displays scope summaries, pairwise scope
+deltas, and pinned reproducibility identities only after the API returns its
+integrity-verified artifact. The frontend does not create another campaign or
+admit a worker. It does not convert Frontier's multi-market inputs to the
+Laboratory's single-market episode schema; that conversion would need an
+explicit lossless economic contract. The Frontier workspace remains the entry
+point for submitting discovery comparisons through Arena's normal admission.
+
+The initial implementation passed the focused Laboratory component file
+**4/4**, the full frontend unit suite **43/43**, and TypeScript project check.
+Component tests mocked the Arena API, asserted older-job selection, verified
+identity display and integrity-result withholding, and confirmed navigation.
+During final review, job selection was moved into a valid nested button so the
+card no longer puts block elements inside a button. This last markup change
+was made after the reported test/typecheck results and remains unverified.
+Post-change Prettier, lint, build, and browser E2E were not run.
+
+At `2026-10-28T07:12:59Z`, memory PSI avg10 was **47.23% some / 42.98% full**,
+I/O PSI avg10 **0.75% some / 0.74% full**, with about **10 GiB** available.
+The expected shared Arena lock path was absent. No resource-bearing checks
+followed because memory pressure was above the admission threshold. This is a
+time-specific sample. The UI test did not read a persisted Arena store or
+contact any source.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Laboratory read-only Frontier study history | PARTIALLY VERIFIED | Initial component/unit/type checks pass; final semantic markup adjustment awaits rerun. Data was mocked, not loaded from a populated Arena store. |
+| Legacy Laboratory campaign execution of Frontier snapshots | DEFERRED | No lossless mapping from multi-market Frontier payoffs to single-market `MarketEvent` episodes is defined. |
+| Arena worker/admission path | PARTIALLY VERIFIED | This change only reads existing Arena routes; it adds no worker completion or live resource evidence. |
+| Project Frontier overall | PARTIALLY VERIFIED | Live cross-venue semantic evidence, held-source access, broader science/resource gates, and deployment remain incomplete. |
+
+Changed files in this checkpoint include
+`apps/web/src/LaboratoryFrontierResearch.tsx`, `Laboratory.tsx`,
+`Laboratory.test.tsx`, `App.tsx`, and `styles.css`, plus the Laboratory,
+Frontier architecture, operations, development, current-state, mission-ledger,
+and report documentation. No source endpoint, production service, or protected
+data store was accessed.

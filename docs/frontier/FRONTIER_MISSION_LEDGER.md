@@ -6077,3 +6077,40 @@ because I/O `some` was above the strict 1% threshold.
 resource-bearing run. Continue only source-independent implementation or code
 review while that admission gate is closed; preserve all held-source and
 production boundaries.
+
+## Laboratory read-only Frontier study history — 2026-10-28 07:13 UTC
+
+The existing Laboratory now has a **Frontier research** tab backed by Arena's
+existing bounded discovery-job catalog and completed-result endpoints. Users
+can select any listed job; only completed artifacts whose hashes were verified
+by the Arena API are summarized. The detail includes the three scope summaries,
+paired deltas, snapshot/result hashes, and discovery/replay versions. The view
+does not submit a job, contact a venue, or copy multi-market evidence into the
+legacy single-market Laboratory campaign model. Job creation remains in the
+Frontier workspace and uses existing Arena admission.
+
+The initial implementation and test run passed the focused Laboratory file
+**4/4**, the complete frontend unit suite **43/43**, and `pnpm typecheck`.
+Tests covered selection of a retained older job, route identity, result
+integrity gating, reproducibility fields, and navigation; API responses were
+mocked in component tests. A final accessibility review then moved job-card
+selection to a proper nested button, avoiding block content inside a `<button>`.
+That final markup adjustment has not been rechecked. No post-change lint,
+format, build, or browser run is claimed.
+
+At `2026-10-28T07:12:59Z`, memory PSI avg10 was **47.23% some / 42.98% full**,
+I/O PSI avg10 **0.75% some / 0.74% full**, and about **10 GiB** was available;
+the expected `data/arena/.global-admission.lock` path was absent. No further
+resource-bearing work was run after that sample. No protected API, source, or
+production store was accessed.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Laboratory read-only view of saved Frontier studies | PARTIALLY VERIFIED | Initial 4-test and 43-test runs pass before the final button-markup refinement; current markup must be rechecked. API data was fixture-mocked. |
+| Legacy Laboratory campaign execution of Frontier snapshots | DEFERRED | The single-market `MarketEvent` schema is not a lossless representation of Frontier's multi-market payoff snapshots. No lossy conversion was added. |
+| Arena discovery job completion and host resource sustainability | PARTIALLY VERIFIED | This UI reuses existing routes; it does not verify the separate worker supervisor or current resource gate. |
+| Populated-store browser integration for this Laboratory tab | DEFERRED | Component tests use mocked API results; the prior populated-store browser test covers the saved price-history UI, not this view. |
+
+**Next safe action:** obtain a fresh memory/I/O PSI and Arena-lock sample, then
+rerun the focused Laboratory tests, Prettier, lint, and typecheck. Keep the
+project PARTIALLY VERIFIED and production deployment deferred.

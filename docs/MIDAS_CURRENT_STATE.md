@@ -1777,3 +1777,22 @@ threshold. Frontier remains isolated, research-only, undeployed, and
 **PARTIALLY VERIFIED**; current source-use holds and cross-venue evidence gaps
 remain unchanged. See the [Frontier mission ledger](frontier/FRONTIER_MISSION_LEDGER.md)
 for continuation and admission details.
+
+### Frontier Laboratory/Arena study-history view — 2026-10-28 07:13 UTC
+
+The isolated Frontier branch adds a **Frontier research** tab to the existing
+Laboratory. It reads Arena's bounded discovery-job catalog, lets the user
+select a retained job, and displays a completed study only after the existing
+API verifies its artifact hashes. It reuses the Arena job and snapshot rather
+than converting multi-market inputs into the legacy single-market Laboratory
+campaign schema. The tab does not request source data or submit work.
+
+The focused Laboratory tests (4/4), full frontend unit suite (43/43), and
+TypeScript check passed before a final semantic markup refinement. The modified
+card markup has not yet been rechecked. At `2026-10-28T07:12:59Z`, memory PSI
+avg10 was **47.23% some / 42.98% full**; no additional resource-bearing
+verification was started. This UI-level integration does not verify Arena
+supervisor completion, a populated live-store browser flow, or source quality.
+Frontier remains isolated, research-only, **PARTIALLY VERIFIED**, and
+undeployed. Continue with a fresh host admission sample before rerunning the
+focused test, frontend lint/format checks, and typecheck.

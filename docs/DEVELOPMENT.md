@@ -690,6 +690,18 @@ resource-bearing tests until a fresh admission sample clears the strict I/O
 threshold and the shared Arena lock remains free. The seeded fixtures are not
 live venue validation.
 
+### Laboratory view of Frontier discovery studies — 2026-10-28
+
+The Laboratory's Frontier research tab reuses Arena's saved discovery-job
+catalog and integrity-verified result route. Its component tests mock those
+read-only API calls; they do not submit jobs, exercise the Arena worker, or
+contact sources. The focused Laboratory file passed 4/4, the full frontend unit
+suite passed 43/43, and TypeScript passed before a final accessibility markup
+refinement to the job cards. Re-run the focused test, Prettier, lint, and
+typecheck after that refinement. At `2026-10-28T07:12:59Z`, memory PSI avg10
+was 47.23% some / 42.98% full, so resource-bearing verification is deferred
+until a fresh sample clears the admission gate.
+
 ## Keep worktrees and runtime data separate
 
 Read [MIDAS_CURRENT_STATE.md](MIDAS_CURRENT_STATE.md) before changing an
