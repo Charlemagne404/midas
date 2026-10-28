@@ -2,10 +2,26 @@
 
 **Report date:** 2026-10-28
 
+## Historical replay request-bound checkpoint — 2026-10-28 16:45 UTC
+
+The historical price replay request validator now checks each observation ID's
+length before hashing IDs for duplicate detection. It rejects non-lowercase or
+non-hex SHA-256 values and then checks uniqueness. The API regression sends an
+overlength ID, receives HTTP 422, and confirms it did not create another replay.
+The focused test passes 1/1 (55 unrelated API cases filtered) using the
+MockTransport-backed fixture. Ruff, format, syntax, and diff checks pass.
+Commit `e44b23d` contains the implementation and regression.
+
+At 16:45:20Z, CPU PSI avg10 was 34.45%, memory PSI avg10 0%, I/O PSI avg10
+0.14%, and about 9.7 GiB was available; swap remained full. Protected Reality
+and API services were active and untouched. This focused fixture test made no
+public request. The full API and Frontier suites were not run.
+
 ## Virtual capital-carry verification — 2026-10-28 16:43 UTC
 
-The current-tree `tests/frontier/test_capital_carry.py` suite passes 27/27 in
-0.46 seconds on tmpfs. The tested sensitivity keeps hypothetical balances
+At code HEAD `b7f2155`, `tests/frontier/test_capital_carry.py` passed 27/27 in
+0.46 seconds on tmpfs. Subsequent commits changed API validation/tests and docs,
+not capital-carry logic. The tested sensitivity keeps hypothetical balances
 separate per venue, requires hash-pinned settlement inputs, holds each venue's
 capital until the latest modeled settlement plus the explicit release delay,
 and independently recomputes simple-interest carry. It does not establish

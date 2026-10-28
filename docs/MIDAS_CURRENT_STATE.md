@@ -33,13 +33,24 @@ in the dated addendum below and in the Frontier engineering report.
 
 ## Frontier development addendum — 2026-10-28
 
-### Latest isolated Frontier checkpoint — 2026-10-28 16:43 UTC
+### Latest isolated Frontier checkpoint — 2026-10-28 16:45 UTC
 
-The virtual cross-venue capital-carry module passes 27/27 on the current tree
-in 0.46 seconds using a tmpfs test directory. Static review confirms per-venue
-capital isolation and an independent arithmetic audit. It remains a sensitivity
-over user-entered rates; it does not establish venue fees, transfers,
-collateral, custody, or executable capital availability.
+Price-history replay now checks observation-ID length before duplicate-set
+hashing, then validates lowercase SHA-256 format and uniqueness. The API
+regression returns 422 for an overlength ID and confirms no extra replay is
+persisted. Its focused test passes 1/1; Ruff, format, syntax, and diff checks
+pass. The earlier relationship-review and Coinbase source-policy regressions
+also pass as recorded below. At 16:45Z, CPU PSI avg10 was 34.45%, memory PSI
+0%, I/O PSI 0.14%, and about 9.7 GiB was available; swap remained full. Reality
+and API services were active. No public endpoint was queried. Code commit:
+`e44b23d`.
+
+The virtual cross-venue capital-carry module passed 27/27 at 16:43 on code HEAD
+`b7f2155`, in 0.46 seconds using a tmpfs test directory. Subsequent commits
+changed API validation/tests and documentation, not capital-carry logic. Static
+review confirms per-venue capital isolation and an independent arithmetic
+audit. It remains a sensitivity over user-entered rates; it does not establish
+venue fees, transfers, collateral, custody, or executable capital availability.
 
 The relationship-review module passes 16/16 after request-level digest
 validation. Coinbase adapter/source-permission modules pass 18/18 after
@@ -50,20 +61,21 @@ expectation; the corrected rerun passes. At 16:42Z, CPU PSI avg10 was 33.24%,
 memory PSI 0%, I/O PSI 0.01%, and about 9.9 GiB was available; swap remained
 full. Reality and API services were active. No source endpoint was queried.
 
-Relationship-review requests now reject evidence identifiers unless each is a
-lowercase 64-character SHA-256 digest, before the handler performs observation
-lookups. The same-payoff and logical-implication mappings remain bounded by
-their request model. A malformed-ID regression was added. Python syntax and
-`git diff --check` pass; pytest remains pending because CPU PSI is about 40% and
-swap has only about 1.2 MiB free. Implementation commit: `8c898dc`.
+At the 16:39 checkpoint, relationship-review requests had been changed to
+reject evidence identifiers unless each is a lowercase 64-character SHA-256
+digest, before observation lookups. The same-payoff and logical-implication
+mappings remain bounded by their request model. The focused tests were pending
+at that timestamp; the later 16:42 run passed the full 16-case review module.
+Implementation commit: `8c898dc`.
 
 The Coinbase source-status reason now lists the specific activities in the
 2026-08-07 Market Data Terms restriction: developing, training, fine-tuning,
 teaching, validating, benchmarking, or improving AI/ML systems, plus related AI
 research, development, or operation, absent prior express written consent. No
 permission, entity, region, or intended-scope review is validated, so the
-deny-by-default source hold remains. Adapter, API, and UI regressions were
-updated; they are pending test admission. No Coinbase endpoint was queried.
+deny-by-default source hold remains. Tests were pending at the 16:36 checkpoint;
+the later 16:42 run passed the adapter/source-permission modules and changed UI
+case. No Coinbase endpoint was queried.
 
 The official [Coinbase Market Data Terms](https://www.coinbase.com/legal/market_data)
 and full source-use review are recorded in the linked Frontier engineering

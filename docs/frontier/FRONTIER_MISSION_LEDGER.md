@@ -1,5 +1,30 @@
 # Project Frontier Mission Ledger
 
+## Historical replay request IDs bounded before hashing — 2026-10-28 16:45 UTC
+
+`PriceHistoryReplayRequest` previously constructed a duplicate-check set before
+checking whether supplied observation IDs had the required 64-character SHA-256
+shape. It now rejects wrong-length/non-hex IDs before regex validation and set
+hashing, then checks uniqueness. The API regression submits a 65-character ID,
+expects HTTP 422, and verifies the valid saved replay remains the only listed
+result. Commit `e44b23d` contains the code and regression.
+
+The focused `test_polymarket_price_history_probe_is_bound_and_replayable`
+passes **1/1** (55 other `test_api.py` cases filtered), in 1.41 seconds. This is
+MockTransport-backed and made no public request. Ruff, format, py_compile, and
+`git diff --check` pass. At 16:45:20Z, CPU PSI avg10 was 34.45% / avg60 38.51%,
+memory PSI avg10 0%, I/O PSI avg10 0.14%, about 9.7 GiB was available, and swap
+was full. Reality and API services were active. The test used tmpfs and did not
+access either service. Broad suites remain deferred.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Historical replay request observation-ID validation | COMPLETE AND VERIFIED | Wrong-length IDs reject before duplicate hashing; the focused API regression passes. |
+| Full `test_api.py` and full Frontier regression | PARTIALLY VERIFIED | Only the relevant API case and prior focused slices were rerun on current edits. |
+
+**Next safe action:** continue reviewing bounded API inputs; take a fresh
+resource sample before any larger test batch.
+
 ## Virtual capital-carry module rechecked — 2026-10-28 16:43 UTC
 
 On current code HEAD `b7f2155`, `tests/frontier/test_capital_carry.py` passes
