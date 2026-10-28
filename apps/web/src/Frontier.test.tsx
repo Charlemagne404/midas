@@ -91,6 +91,7 @@ it('renders recorded-evidence empty states and never probes a source automatical
       items: [],
       returned: 0,
       limit: 20,
+      next_before_run_id: null,
       network_called: false,
       research_only: true,
     },
@@ -185,6 +186,41 @@ it('renders recorded-evidence empty states and never probes a source automatical
   let collectionState = 'paused';
   const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const path = String(input);
+    if (
+      path ===
+      '/api/frontier/collection-runs?limit=20&before_run_id=f79d58bb-e799-4718-93f1-a94bb7492f21'
+    ) {
+      return {
+        ok: true,
+        json: async () => ({
+          items: [
+            {
+              run_id: '01234567-89ab-41cd-8ef0-123456789abc',
+              venue: 'polymarket',
+              adapter_version: 'frontier-polymarket-v1',
+              created_at_utc: '2026-10-27T00:00:00Z',
+              updated_at_utc: '2026-10-27T00:00:00Z',
+              state: 'completed',
+              checkpoint_sequence: 4,
+              checkpoint_sha256: 'b'.repeat(64),
+              market_count: 2,
+              book_count: 1,
+              failed_book_count: 0,
+              request_count: 3,
+              failure_count: 0,
+              source_health_state: 'healthy',
+              resumable: false,
+              resume_block_reason: 'Collection run is terminal.',
+            },
+          ],
+          returned: 1,
+          limit: 20,
+          next_before_run_id: null,
+          network_called: false,
+          research_only: true,
+        }),
+      } as Response;
+    }
     if (path === '/api/frontier/collection-runs?limit=20') {
       const items = collectionState
         ? [
@@ -215,6 +251,7 @@ it('renders recorded-evidence empty states and never probes a source automatical
           items,
           returned: items.length,
           limit: 20,
+          next_before_run_id: items.length > 0 ? items[0].run_id : null,
           network_called: false,
           research_only: true,
         }),
@@ -328,6 +365,10 @@ it('renders recorded-evidence empty states and never probes a source automatical
     await screen.findByText(/3 total adapter requests across run · at most 8 per attempt/),
   ).toBeInTheDocument();
   expect(screen.queryByRole('button', { name: /Resume collection run f79d58bb-e79/ })).toBeNull();
+  fireEvent.click(screen.getByRole('button', { name: 'Load older runs' }));
+  expect(await screen.findByText(/Run 01234567-89a…/)).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Newest runs' }));
+  expect(await screen.findByText(/Run f79d58bb-e79…/)).toBeInTheDocument();
 
   fireEvent.click(screen.getByRole('button', { name: 'Markets' }));
   expect(await screen.findByText('No market observations recorded')).toBeInTheDocument();
@@ -2929,6 +2970,7 @@ it('captures one explicit bounded Kalshi multivariate event page', async () => {
       items: [],
       returned: 0,
       limit: 20,
+      next_before_run_id: null,
       network_called: false,
       research_only: true,
     },

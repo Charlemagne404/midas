@@ -81,6 +81,7 @@ type CollectionRunsResponse = {
   items: CollectionRunSummary[];
   returned: number;
   limit: number;
+  next_before_run_id: string | null;
   network_called: false;
   research_only: true;
 };
@@ -1718,6 +1719,7 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
   const [selectedTimelineJobId, setSelectedTimelineJobId] = useState<string | null>(null);
   const [timelineMaxBookAgeMs, setTimelineMaxBookAgeMs] = useState('15000');
   const [selectedSourceHealthDigests, setSelectedSourceHealthDigests] = useState<string[]>([]);
+  const [collectionRunsBeforeRunId, setCollectionRunsBeforeRunId] = useState<string | null>(null);
   const queryClient = useQueryClient();
   const options = { staleTime: 10_000, retry: 1 };
   const resetGraphPagination = () => {
@@ -1742,8 +1744,15 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
     ...options,
   });
   const collectionRuns = useQuery({
-    queryKey: ['frontier', 'collection-runs'],
-    queryFn: () => api<CollectionRunsResponse>('/frontier/collection-runs?limit=20'),
+    queryKey: ['frontier', 'collection-runs', collectionRunsBeforeRunId],
+    queryFn: () =>
+      api<CollectionRunsResponse>(
+        `/frontier/collection-runs?limit=20${
+          collectionRunsBeforeRunId
+            ? `&before_run_id=${encodeURIComponent(collectionRunsBeforeRunId)}`
+            : ''
+        }`,
+      ),
     enabled: section === 'sources',
     ...options,
   });
@@ -2115,6 +2124,7 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
       }),
     onSuccess: (result) => {
       setLatestCollectionResult(result);
+      setCollectionRunsBeforeRunId(null);
       refresh();
     },
   });
@@ -2126,6 +2136,7 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
       ),
     onSuccess: (result) => {
       setLatestCollectionResult(result);
+      setCollectionRunsBeforeRunId(null);
       refresh();
     },
   });
@@ -2850,8 +2861,11 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
           probe={probe}
           finiteCollection={finiteCollection}
           collectionRuns={collectionRuns.data}
-          collectionRunsLoading={collectionRuns.isLoading}
+          collectionRunsLoading={collectionRuns.isFetching}
           collectionRunsError={collectionRuns.error?.message}
+          collectionRunsBeforeRunId={collectionRunsBeforeRunId}
+          loadOlderCollectionRuns={setCollectionRunsBeforeRunId}
+          showNewestCollectionRuns={() => setCollectionRunsBeforeRunId(null)}
           latestCollectionResult={latestCollectionResult}
           resumeCollection={resumeCollection}
           multivariateProbe={captureKalshiMultivariate}
@@ -4951,6 +4965,9 @@ function SourcesView({
   collectionRuns,
   collectionRunsLoading,
   collectionRunsError,
+  collectionRunsBeforeRunId,
+  loadOlderCollectionRuns,
+  showNewestCollectionRuns,
   latestCollectionResult,
   resumeCollection,
   multivariateProbe,
@@ -4964,6 +4981,9 @@ function SourcesView({
   collectionRuns?: CollectionRunsResponse;
   collectionRunsLoading: boolean;
   collectionRunsError?: string;
+  collectionRunsBeforeRunId: string | null;
+  loadOlderCollectionRuns: (runId: string) => void;
+  showNewestCollectionRuns: () => void;
   latestCollectionResult: FiniteCollectionResponse | null;
   resumeCollection: ResumeCollectionMutation;
   multivariateProbe: KalshiMultivariateProbe;
@@ -4974,8 +4994,41 @@ function SourcesView({
     'series_ticker' | 'collection_ticker' | 'event_ticker'
   >('series_ticker');
   const [multivariateFilterValue, setMultivariateFilterValue] = useState('');
+  const nextCollectionRunCursor = collectionRuns?.next_before_run_id ?? null;
   return (
     <section className="fr-source-cards">
+      {!loading && !error && (
+        <div className="fr-card fr-collection-history-pager">
+          <div>
+            <strong>Finite collection history</strong>
+            <small>
+              Read-only pages of up to {collectionRuns?.limit ?? 20} locally hash-verified runs. The
+              run ID cursor keeps older pages stable when a new run is added.
+              {collectionRunsLoading ? ' Loading page…' : ''}
+            </small>
+          </div>
+          <div className="fr-collection-history-actions">
+            {collectionRunsBeforeRunId && (
+              <button
+                className="fr-inspect-button"
+                disabled={collectionRunsLoading}
+                onClick={showNewestCollectionRuns}
+              >
+                Newest runs
+              </button>
+            )}
+            {nextCollectionRunCursor && (
+              <button
+                className="fr-inspect-button"
+                disabled={collectionRunsLoading}
+                onClick={() => loadOlderCollectionRuns(nextCollectionRunCursor)}
+              >
+                Load older runs
+              </button>
+            )}
+          </div>
+        </div>
+      )}
       {loading ? (
         <div className="fr-card fr-loading">Loading source capability declarations…</div>
       ) : error ? (
@@ -5127,7 +5180,7 @@ function SourcesView({
                 )}
               </div>
               <div className="fr-probe-row fr-collection-history">
-                <strong>Recent finite collection runs</strong>
+                <strong>Finite collection run checkpoints</strong>
                 <small>
                   Read-only list of hash-verified local checkpoints. Resume is a separate explicit
                   public-data request and requires the source configuration to still match.
@@ -5186,7 +5239,7 @@ function SourcesView({
                 {!collectionRunsLoading &&
                   !collectionRunsError &&
                   (collectionRuns?.items ?? []).every((run) => run.venue !== source.venue) && (
-                    <small>No verified finite collection runs for this source.</small>
+                    <small>No verified finite collection runs for this source on this page.</small>
                   )}
               </div>
               {source.venue === 'kalshi' && (

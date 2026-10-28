@@ -1458,18 +1458,27 @@ def router(
     @api.get("/collection-runs")
     async def collection_runs(
         limit: int = Query(default=20, ge=1, le=MAX_COLLECTION_RUNS_LIST),
+        before_run_id: str | None = Query(
+            default=None,
+            min_length=36,
+            max_length=36,
+            pattern=r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+        ),
     ) -> dict[str, Any]:
-        """List recent, chain-verified local collection runs without source access."""
+        """List one bounded keyset page of verified local runs without source access."""
         journal = CollectionJournal(store.root)
         try:
             checkpoints = journal.latest_run_checkpoints(
-                limit,
+                limit + 1,
+                before_run_id=before_run_id,
                 excluded_venues=tuple(Venue(venue) for venue in held_venues),
             )
         except (FrontierStoreError, OSError, ValueError) as error:
             raise HTTPException(status_code=409, detail=str(error)) from error
+        has_more = len(checkpoints) > limit
+        page = checkpoints[:limit]
         items = []
-        for spec, checkpoint, digest in checkpoints:
+        for spec, checkpoint, digest in page:
             health = checkpoint.source_health
             try:
                 source_adapter = registry.get(spec.venue)
@@ -1538,6 +1547,7 @@ def router(
             "items": items,
             "returned": len(items),
             "limit": limit,
+            "next_before_run_id": page[-1][0].run_id if has_more and page else None,
             "network_called": False,
             "research_only": True,
         }

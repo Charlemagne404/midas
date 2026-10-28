@@ -518,6 +518,104 @@ def test_collection_api_rejects_corrupt_checkpoint_without_source_access(tmp_pat
         asyncio.run(registry.aclose())
 
 
+def test_collection_history_keyset_pages_are_stable_and_chain_verified(tmp_path):
+    from midas.frontier.collection import capability_manifest_sha256
+
+    from tests.frontier.test_collection import (
+        CollectionCheckpoint,
+        CollectionJournal,
+        CollectionRunSpec,
+        FakeAdapter,
+    )
+
+    adapter = FakeAdapter()
+    registry = AdapterRegistry((adapter,))
+    store = FrontierStore(tmp_path / "frontier")
+    app = FastAPI()
+    app.include_router(router(store, registry))
+    client = TestClient(app)
+    journal = CollectionJournal(store.root)
+    run_ids = [f"{index:08x}-1111-4111-8111-{index:012x}" for index in range(1, 7)]
+
+    def add_run(run_id: str) -> None:
+        spec = CollectionRunSpec(
+            run_id=run_id,
+            venue=Venue.POLYMARKET,
+            adapter_version=adapter.capabilities.adapter_version,
+            capability_manifest_sha256=capability_manifest_sha256(adapter.capabilities),
+            adapter_config=adapter.config,
+            market_limit=1,
+            book_limit=0,
+            book_depth=5,
+            max_evidence_bytes=4 * 1024 * 1024,
+            max_wall_seconds=30,
+            created_at_utc=T0,
+        )
+        journal.create_run(spec)
+        journal.append_checkpoint(
+            CollectionCheckpoint(
+                run_id=run_id,
+                sequence=0,
+                updated_at_utc=T0,
+                state="paused",
+            )
+        )
+
+    for run_id in run_ids[:5]:
+        add_run(run_id)
+
+    try:
+        first = client.get("/api/frontier/collection-runs?limit=2")
+        assert first.status_code == 200, first.text
+        assert [item["run_id"] for item in first.json()["items"]] == list(reversed(run_ids[3:5]))
+        assert first.json()["next_before_run_id"] == run_ids[3]
+        assert first.json()["network_called"] is False
+
+        add_run(run_ids[5])
+        second = client.get(
+            "/api/frontier/collection-runs",
+            params={"limit": 2, "before_run_id": first.json()["next_before_run_id"]},
+        )
+        assert second.status_code == 200, second.text
+        assert [item["run_id"] for item in second.json()["items"]] == list(reversed(run_ids[1:3]))
+        assert second.json()["next_before_run_id"] == run_ids[1]
+
+        third = client.get(
+            "/api/frontier/collection-runs",
+            params={"limit": 2, "before_run_id": second.json()["next_before_run_id"]},
+        )
+        assert third.status_code == 200, third.text
+        assert [item["run_id"] for item in third.json()["items"]] == [run_ids[0]]
+        assert third.json()["next_before_run_id"] is None
+
+        all_pages = [
+            item["run_id"]
+            for response in (first, second, third)
+            for item in response.json()["items"]
+        ]
+        assert all_pages == list(reversed(run_ids[:5]))
+        assert len(set(all_pages)) == len(all_pages)
+        assert (
+            client.get(
+                "/api/frontier/collection-runs?limit=2&before_run_id=not-a-run-id"
+            ).status_code
+            == 422
+        )
+        missing_anchor = client.get(
+            "/api/frontier/collection-runs",
+            params={
+                "limit": 2,
+                "before_run_id": "99999999-1111-4111-8111-000000000999",
+            },
+        )
+        assert missing_anchor.status_code == 409
+        assert "anchor was not found" in missing_anchor.json()["detail"]
+        assert adapter.transport.request_count == 0
+    finally:
+        client.close()
+        asyncio.run(registry.aclose())
+
+
 def _graph_fixture_edge(left: FrontierMarket, right: FrontierMarket) -> Relationship:
     left_id, right_id = sorted((left.canonical_id, right.canonical_id))
     relationship_id = hashlib.sha256(

@@ -465,66 +465,125 @@ class CollectionJournal:
         self,
         limit: int = MAX_COLLECTION_RUNS_LIST,
         *,
+        before_run_id: str | None = None,
         excluded_venues: tuple[Venue, ...] = (),
     ) -> tuple[tuple[CollectionRunSpec, CollectionCheckpoint, str], ...]:
-        """List latest run checkpoints, validating each selected run without writing."""
-        if not 1 <= limit <= MAX_COLLECTION_RUNS_LIST:
+        """List one bounded keyset page, validating its runs and cursor anchor."""
+        if not 1 <= limit <= MAX_COLLECTION_RUNS_LIST + 1:
             raise ValueError(
-                f"Collection run listing limit must be within 1..{MAX_COLLECTION_RUNS_LIST}"
+                f"Collection run scan limit must be within 1..{MAX_COLLECTION_RUNS_LIST + 1}"
             )
+        if before_run_id is not None and not _valid_run_id(before_run_id):
+            raise ValueError("Collection run page cursor is not a canonical run ID")
         if self.path.is_symlink():
             raise FrontierStoreError("Collection journal path cannot be a symlink")
         if not self.path.exists():
+            if before_run_id is not None:
+                raise FrontierStoreError("Collection run page cursor anchor was not found")
             return ()
         if self.path.stat().st_size > self.max_bytes:
             raise FrontierStoreError("Frontier collection journal exceeds its byte budget")
 
         excluded = set(excluded_venues)
         checkpoint_digests: list[str] = []
+        cursor_digest: str | None = None
         connection: sqlite3.Connection | None = None
         try:
             connection = sqlite3.connect(self.path.as_uri() + "?mode=ro", uri=True, timeout=0.5)
             connection.row_factory = sqlite3.Row
             connection.execute("PRAGMA busy_timeout=500")
             connection.execute("PRAGMA query_only=ON")
+            connection.execute("BEGIN")
             meta = connection.execute(
                 "SELECT value FROM collection_meta WHERE key='schema_version'"
             ).fetchone()
             if meta is None or str(meta["value"]) != str(COLLECTION_JOURNAL_SCHEMA):
                 raise FrontierStoreError("Unsupported Frontier collection journal schema")
-            rows = connection.execute(
-                "SELECT r.run_id,r.spec_sha256,r.spec_json,c.row_sha256 "
-                "FROM collection_runs AS r LEFT JOIN collection_checkpoints AS c "
-                "ON c.run_id=r.run_id AND c.sequence=(SELECT MAX(latest.sequence) "
-                "FROM collection_checkpoints AS latest WHERE latest.run_id=r.run_id) "
-                "ORDER BY r.rowid DESC LIMIT ?",
-                (MAX_COLLECTION_RUNS + 1,),
-            ).fetchall()
-            if len(rows) > MAX_COLLECTION_RUNS:
-                raise FrontierStoreError("Collection run scan exceeds its row bound")
-            for row in rows:
-                run_id = str(row["run_id"])
-                if not _valid_run_id(run_id):
-                    raise FrontierStoreError("Stored collection run identity is invalid")
-                if row["row_sha256"] is None:
-                    raise FrontierStoreError("Collection run has no durable checkpoint")
-                spec_bytes = str(row["spec_json"]).encode("utf-8")
-                if len(spec_bytes) > MAX_ROW_BYTES:
-                    raise FrontierStoreError("Stored collection run spec exceeds its record bound")
-                if hashlib.sha256(spec_bytes).hexdigest() != row["spec_sha256"]:
-                    raise FrontierStoreError(
-                        "Stored collection run hash does not match its payload"
-                    )
+            before_rowid: int | None = None
+            if before_run_id is not None:
+                anchor = connection.execute(
+                    "SELECT r.rowid AS run_rowid,r.run_id,r.spec_sha256,r.spec_json,c.row_sha256 "
+                    "FROM collection_runs AS r LEFT JOIN collection_checkpoints AS c "
+                    "ON c.run_id=r.run_id AND c.sequence=(SELECT MAX(latest.sequence) "
+                    "FROM collection_checkpoints AS latest WHERE latest.run_id=r.run_id) "
+                    "WHERE r.run_id=?",
+                    (before_run_id,),
+                ).fetchone()
+                if anchor is None:
+                    raise FrontierStoreError("Collection run page cursor anchor was not found")
+                anchor_id = str(anchor["run_id"])
+                anchor_bytes = str(anchor["spec_json"]).encode("utf-8")
+                if (
+                    anchor_id != before_run_id
+                    or not _valid_run_id(anchor_id)
+                    or len(anchor_bytes) > MAX_ROW_BYTES
+                    or hashlib.sha256(anchor_bytes).hexdigest() != anchor["spec_sha256"]
+                ):
+                    raise FrontierStoreError("Collection run page cursor anchor is corrupt")
                 try:
-                    spec = CollectionRunSpec.model_validate(json.loads(spec_bytes))
+                    anchor_spec = CollectionRunSpec.model_validate(json.loads(anchor_bytes))
                 except (json.JSONDecodeError, ValueError) as error:
-                    raise FrontierStoreError("Stored collection run spec is invalid") from error
-                if spec.run_id != run_id or str(row["run_id"]) != run_id:
-                    raise FrontierStoreError("Stored collection run identity is inconsistent")
-                if spec.venue not in excluded:
-                    checkpoint_digests.append(str(row["row_sha256"]))
-                    if len(checkpoint_digests) == limit:
-                        break
+                    raise FrontierStoreError(
+                        "Collection run page cursor anchor is invalid"
+                    ) from error
+                if anchor_spec.run_id != anchor_id:
+                    raise FrontierStoreError("Collection run page cursor anchor is inconsistent")
+                if anchor_spec.venue in excluded:
+                    raise FrontierStoreError("Collection run page cursor is unavailable")
+                if anchor["row_sha256"] is None:
+                    raise FrontierStoreError("Collection run page cursor has no checkpoint")
+                before_rowid = int(anchor["run_rowid"])
+                cursor_digest = str(anchor["row_sha256"])
+            run_count = int(
+                connection.execute("SELECT COUNT(*) FROM collection_runs").fetchone()[0]
+            )
+            if run_count > MAX_COLLECTION_RUNS:
+                raise FrontierStoreError("Collection run scan exceeds its row bound")
+            scan_rowid = before_rowid
+            scanned_runs = 0
+            while len(checkpoint_digests) < limit and scanned_runs < run_count:
+                batch_limit = min(64, run_count - scanned_runs)
+                where_clause = "WHERE r.rowid < ? " if scan_rowid is not None else ""
+                parameters: tuple[int, ...] = (
+                    (scan_rowid, batch_limit) if scan_rowid is not None else (batch_limit,)
+                )
+                rows = connection.execute(
+                    "SELECT r.rowid AS run_rowid,r.run_id,r.spec_sha256,r.spec_json,c.row_sha256 "
+                    "FROM collection_runs AS r LEFT JOIN collection_checkpoints AS c "
+                    "ON c.run_id=r.run_id AND c.sequence=(SELECT MAX(latest.sequence) "
+                    "FROM collection_checkpoints AS latest WHERE latest.run_id=r.run_id) "
+                    f"{where_clause}ORDER BY r.rowid DESC LIMIT ?",
+                    parameters,
+                ).fetchall()
+                if not rows:
+                    break
+                for row in rows:
+                    scanned_runs += 1
+                    scan_rowid = int(row["run_rowid"])
+                    run_id = str(row["run_id"])
+                    if not _valid_run_id(run_id):
+                        raise FrontierStoreError("Stored collection run identity is invalid")
+                    if row["row_sha256"] is None:
+                        raise FrontierStoreError("Collection run has no durable checkpoint")
+                    spec_bytes = str(row["spec_json"]).encode("utf-8")
+                    if len(spec_bytes) > MAX_ROW_BYTES:
+                        raise FrontierStoreError(
+                            "Stored collection run spec exceeds its record bound"
+                        )
+                    if hashlib.sha256(spec_bytes).hexdigest() != row["spec_sha256"]:
+                        raise FrontierStoreError(
+                            "Stored collection run hash does not match its payload"
+                        )
+                    try:
+                        spec = CollectionRunSpec.model_validate(json.loads(spec_bytes))
+                    except (json.JSONDecodeError, ValueError) as error:
+                        raise FrontierStoreError("Stored collection run spec is invalid") from error
+                    if spec.run_id != run_id or str(row["run_id"]) != run_id:
+                        raise FrontierStoreError("Collection run identity is inconsistent")
+                    if spec.venue not in excluded:
+                        checkpoint_digests.append(str(row["row_sha256"]))
+                        if len(checkpoint_digests) == limit:
+                            break
         except sqlite3.Error as error:
             raise FrontierStoreError("Collection journal could not be read safely") from error
         finally:
@@ -533,9 +592,14 @@ class CollectionJournal:
 
         if len(set(checkpoint_digests)) != len(checkpoint_digests):
             raise FrontierStoreError("Latest collection checkpoint digest is not unique")
-        verified = self.verified_checkpoints(tuple(checkpoint_digests))
-        if set(verified) != set(checkpoint_digests):
-            raise FrontierStoreError("Latest collection checkpoint failed chain verification")
+        verification_digests = tuple(checkpoint_digests) + (
+            (cursor_digest,) if cursor_digest is not None else ()
+        )
+        if len(set(verification_digests)) != len(verification_digests):
+            raise FrontierStoreError("Collection page cursor checkpoint is not unique")
+        verified = self.verified_checkpoints(verification_digests)
+        if set(verified) != set(verification_digests):
+            raise FrontierStoreError("Collection checkpoint page failed chain verification")
         return tuple(verified[digest] for digest in checkpoint_digests)
 
     def verified_source_health_checkpoints(

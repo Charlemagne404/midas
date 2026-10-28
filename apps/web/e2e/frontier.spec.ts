@@ -52,7 +52,7 @@ test('Frontier workspace uses isolated research state and remains responsive', a
   expect(history.status()).toBe(200);
   expect((await history.json()).network_called).toBe(false);
   await expect(
-    page.getByText('No verified finite collection runs for this source.').first(),
+    page.getByText('No verified finite collection runs for this source on this page.').first(),
   ).toBeVisible();
   expect(collectionPosts).toBe(0);
   expect(probeRequests).toBe(0);

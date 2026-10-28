@@ -597,6 +597,34 @@
   gap: 13px;
   align-items: start;
 }
+.fr-collection-history-pager {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.fr-collection-history-pager > div:first-child {
+  display: grid;
+  gap: 5px;
+}
+.fr-collection-history-pager strong {
+  color: #c7d0dc;
+  font-size: 11px;
+  font-weight: 600;
+}
+.fr-collection-history-pager small {
+  color: #8290a0;
+  font-size: 9px;
+  line-height: 1.5;
+}
+.fr-collection-history-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+}
 .fr-venue-card {
   padding: 16px;
 }

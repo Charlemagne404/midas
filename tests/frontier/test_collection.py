@@ -372,6 +372,50 @@ def test_collection_journal_detects_checkpoint_tampering_and_enforces_append_onl
         journal.latest_run_checkpoints()
 
 
+def test_collection_run_pages_scan_past_held_sources_across_bounded_batches(tmp_path):
+    journal = CollectionJournal(tmp_path / "frontier")
+    disabled = AdapterConfig(enabled=False, live_public_probe_enabled=False)
+
+    def add_run(index: int, venue: Venue) -> str:
+        run_id = f"{index:08x}-1111-4111-8111-{index:012x}"
+        journal.create_run(
+            CollectionRunSpec(
+                run_id=run_id,
+                venue=venue,
+                adapter_version="fixture-adapter-1",
+                capability_manifest_sha256="a" * 64,
+                adapter_config=disabled,
+                market_limit=1,
+                book_limit=0,
+                book_depth=5,
+                max_evidence_bytes=4 * 1024 * 1024,
+                max_wall_seconds=30,
+                created_at_utc=T0,
+            )
+        )
+        journal.append_checkpoint(
+            CollectionCheckpoint(
+                run_id=run_id,
+                sequence=0,
+                updated_at_utc=T0,
+                state="completed",
+            )
+        )
+        return run_id
+
+    oldest_polymarket = add_run(1, Venue.POLYMARKET)
+    for index in range(2, 67):
+        add_run(index, Venue.KALSHI)
+    newest_polymarket = add_run(67, Venue.POLYMARKET)
+
+    page = journal.latest_run_checkpoints(
+        limit=2,
+        excluded_venues=(Venue.KALSHI,),
+    )
+    assert [spec.run_id for spec, _, _ in page] == [newest_polymarket, oldest_polymarket]
+    assert all(spec.venue is Venue.POLYMARKET for spec, _, _ in page)
+
+
 def test_unknown_source_health_checkpoint_lookup_is_read_only(tmp_path):
     journal = CollectionJournal(tmp_path / "uncreated-frontier-root")
     assert journal.verified_source_health_checkpoint("a" * 64) is None
