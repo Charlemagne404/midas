@@ -11700,3 +11700,33 @@ volatile protected-service memory gate.
 | Kraken live validation | BLOCKED | Source-use/retention scope remains unresolved; fixture evidence is not live data. |
 | Current full Frontier/legacy regression | PARTIALLY VERIFIED | Current focused adapter contracts pass; the full suite predates the recent adapter changes. |
 | Frontier overall | PARTIALLY VERIFIED | Live cross-venue science, broad regression, endurance, protected recovery, and deployment remain incomplete. |
+
+## Current Frontier completion matrix — 2026-10-28 20:40 UTC
+
+This is the current handoff snapshot for branch `codex/frontier-20261026`,
+code commit `f8be86b`, and documentation head `9f415a8`. The only remaining
+untracked path is the preserved `data/frontier-public-probes/`; it was not
+read, modified, staged, or deleted.
+
+| Deliverable | Current status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Exchange-independent adapter protocol, capability registry, and normalization | COMPLETE AND VERIFIED WITHIN FIXTURE SCOPE | Polymarket, Kalshi, Kraken, and Coinbase adapters are implemented; the 167-case adapter module, 33-case Coinbase module, strict typing, and style checks pass. Live validation varies by source and remains pending or held. |
+| Canonical instruments, payoff semantics, and source provenance | PARTIALLY VERIFIED | Exact identities and bounded source metadata are implemented; source-specific and economic assertions remain unverified where evidence is absent. |
+| Relationship graph and cross-market candidate generation | PARTIALLY VERIFIED | Persistence, deterministic fixture construction, and candidate families are tested; genuine cross-venue equivalence is not established. |
+| Independent mathematical and multi-venue economics | PARTIALLY VERIFIED | Decimal-based verification, cost sensitivity, and virtual capital/carry models are implemented and fixture-tested; no live eligible opportunity or executable-profit claim exists. |
+| Collection, durable evidence, replay, and reproducibility | PARTIALLY VERIFIED | Bounded records, hashes, and deterministic replay are implemented; sustained multi-source synchronization and endurance remain unmeasured. |
+| Laboratory/Arena integration | PARTIALLY VERIFIED | Frontier-specific bounded paths pass; full legacy Arena regression and production-worker readiness remain unverified. |
+| Frontier Mission Control workspace | COMPLETE AND VERIFIED WITHIN TESTED SCOPE | Prior frontend tests, typecheck, production build, and seven local E2E scenarios pass; no UI changes occurred in the latest adapter checkpoints. |
+| Current Frontier Python suite | PARTIALLY VERIFIED | The 167-case adapter module and 33-case Coinbase module pass; the 505-case full Frontier run predates the latest adapter changes. |
+| Full web and broader MIDAS/Arena regressions | PARTIALLY VERIFIED | Prior bounded UI checks pass; no exact-tree full-web or broader legacy suite was run in this checkpoint. |
+| Live Kalshi/Kraken/Coinbase research | BLOCKED | Current official terms do not establish permission for Frontier's intended research, retention, automation, and display scope. |
+| Live cross-venue relationship and economic result | BLOCKED | No authorized genuine cross-venue observation or economic match is available; fixtures remain explicitly synthetic. |
+| Resource sustainability and protected recovery | PARTIALLY VERIFIED | Short bounded runs are measured; Reality remains close to `MemoryHigh`, and no endurance or current-boundary recovery proof exists. |
+| Production deployment | DEFERRED | Frontier remains isolated and undeployed; the user's protected-service and deployment exclusions remain in force. |
+| Project Frontier overall | PARTIALLY VERIFIED | Core implementation is substantial, but live cross-venue science, broad exact-tree regressions, endurance, protected recovery, and deployment prerequisites remain open. |
+
+No exchange endpoint was queried in this checkpoint. No service was restarted,
+reconfigured, or deployed. The last resource sample at `2026-10-28T20:34:48Z`
+showed Reality only 479,232 bytes below `MemoryHigh`, so the broad Frontier,
+Arena, and legacy suites remain deferred. Continue with source-independent,
+bounded work and update this matrix when evidence changes.

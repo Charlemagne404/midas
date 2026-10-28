@@ -10844,3 +10844,28 @@ remain deferred, and the latest protected-service sample is still the
 | Live cross-venue market match | BLOCKED | Other venue data-use holds remain; no live match is claimed. |
 | Full Frontier/legacy regression | PARTIALLY VERIFIED | Not run because protected Reality remains close to its soft boundary. |
 | Project Frontier overall | PARTIALLY VERIFIED | Cross-venue live science, broad regressions, endurance, recovery, and deployment remain incomplete. |
+
+## Current Frontier completion matrix — 2026-10-28 20:40 UTC
+
+Handoff state: isolated branch `codex/frontier-20261026`; code commit `f8be86b`
+with documentation head `9f415a8`. `data/frontier-public-probes/` remains the
+only untracked path and was preserved without access or mutation.
+
+| Deliverable | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Four public market-data adapters and shared contracts | COMPLETE AND VERIFIED WITHIN FIXTURE SCOPE | Polymarket, Kalshi, Kraken, and Coinbase; 167 adapter tests and 33 Coinbase tests pass, with strict mypy and Ruff checks. Live source validation remains pending or held. |
+| Canonical instruments, payoff and settlement semantics | PARTIALLY VERIFIED | Implemented with source-native identifiers and provenance; unverified metadata remains explicit. |
+| Relationship graph and opportunity discovery | PARTIALLY VERIFIED | Deterministic, persisted fixture paths pass; no genuine live cross-venue equivalence is established. |
+| Independent economic verification | PARTIALLY VERIFIED | Decimal audit, multi-venue cost and virtual-capital models are fixture-tested; no real execution or profitability claim. |
+| Storage, provenance, replay, and Arena integration | PARTIALLY VERIFIED | Bounded deterministic paths pass; endurance and full legacy worker readiness remain open. |
+| Frontier dashboard | COMPLETE AND VERIFIED WITHIN TESTED SCOPE | Prior unit, build, typecheck, and seven local E2E cases pass; no recent UI changes. |
+| Current full Frontier regression | PARTIALLY VERIFIED | 167 adapter tests and 33 Coinbase tests pass; the 505-case full suite predates current adapter changes. |
+| Live Kalshi/Kraken/Coinbase use | BLOCKED | Official terms review does not establish permission for intended research and retained-data scope. |
+| Genuine cross-venue economics | BLOCKED | No authorized cross-venue live evidence; fixture examples are not represented as actual opportunities. |
+| Resource endurance and protected recovery | PARTIALLY VERIFIED | Short runs are measured; protected Reality remains close to `MemoryHigh`. |
+| Production deployment | DEFERRED | Isolated branch remains undeployed in accordance with the production boundary. |
+| Project Frontier overall | PARTIALLY VERIFIED | Live cross-venue science, exact-tree broad regression, endurance, protected recovery, and deployment prerequisites remain open. |
+
+**Next safe action:** continue source-independent, bounded implementation and
+verification. Do not access the held probe path, call held source APIs, or run
+broad suites without a fresh admission sample showing sustained headroom.
