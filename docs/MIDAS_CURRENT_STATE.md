@@ -3927,3 +3927,18 @@ At `2026-10-28T22:27:27Z`, API `MemoryHigh` headroom was 1,069,056 bytes and
 Reality headroom was 237,490,176 bytes. PSI was elevated (`some avg10=19.23%`,
 `full avg10=16.32%`); available memory was 9,881,128 kB. Further runtime
 checks are deferred. Frontier remains partially verified.
+
+## Project Frontier live-source gate snapshot — 2026-10-28 22:28 UTC
+
+The isolated worktree `Settings()` snapshot has Polymarket public probes
+disabled. Kalshi, Kraken, and Coinbase probe-allowed properties are hardcoded
+false; Kalshi and Kraken permission references are absent in this shell, and
+the Coinbase terms acknowledgement is false. These are development
+shell settings, not a read of the protected API's environment. No source
+endpoint or retained capture was accessed. The official terms review keeps
+Kalshi, Kraken, and Coinbase source use held.
+
+At `2026-10-28T22:28:43Z`, API `MemoryHigh` headroom was 3,608,576 bytes and
+Reality headroom was 560,103,424 bytes. PSI was elevated (`some avg10=13.49%`,
+`full avg10=12.04%`); available memory was 10,051,796 kB. Broad and live-source
+validation remain deferred.

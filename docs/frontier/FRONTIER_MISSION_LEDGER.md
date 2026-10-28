@@ -11778,3 +11778,33 @@ attributed to the test. Further runtime checks are deferred.
 Next safe action: defer additional test processes until system PSI eases and
 API `MemoryHigh` headroom materially recovers; then run a bounded comparison
 and storage regression before continuing other acceptance gaps.
+
+## Development source-gate snapshot — 2026-10-28 22:28 UTC
+
+Read only the isolated worktree's `Settings()` permission booleans; no
+protected-service environment values or secrets were printed. The current
+shell snapshot has Polymarket public probes off. Kalshi, Kraken, and Coinbase
+probe-allowed properties return false; Kalshi and Kraken permission
+references are absent and the Coinbase terms acknowledgement is false. This
+does not claim to represent the protected API process environment.
+
+The current official terms review keeps Kalshi, Kraken, and Coinbase source
+use held for the intended research/retention scope. No source endpoint or
+retained capture was accessed. The source gates were not changed. A future
+permission record still requires a reviewed loader because current Kalshi,
+Kraken, and Coinbase allowed properties are hardcoded false.
+
+At `2026-10-28T22:28:43Z`, API headroom was 3,608,576 bytes and Reality
+headroom was 560,103,424 bytes; PSI was elevated (`some avg10=13.49%`,
+`full avg10=12.04%`), and available memory was 10,051,796 kB.
+
+| Component | Status | Evidence and boundary |
+| --- | --- | --- |
+| Isolated worktree probe configuration | COMPLETE AND VERIFIED | Current effective boolean snapshot captured without exposing configuration values. |
+| Polymarket live probe | DEFERRED | Probe flag is off in the worktree; no request was made. |
+| Kalshi/Kraken/Coinbase live probes | BLOCKED | Terms and validated permission records do not authorize current research use. |
+| Project Frontier overall | PARTIALLY VERIFIED | Live cross-venue research, broad regression, endurance, protected recovery, and deployment remain open. |
+
+Next safe action: continue offline implementation and fixture coverage. Do not
+lift source gates. Revisit live-source work only after applicable permissions
+are validated and host resource headroom is remeasured.

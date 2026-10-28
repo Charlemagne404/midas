@@ -12745,3 +12745,31 @@ Reality headroom was **237,490,176 bytes**, PSI was `some avg10=19.23%` and
 `full avg10=16.32%`, and available memory was **9,881,128 kB**. No cause is
 assigned to this sample. Further runtime checks are deferred under elevated
 PSI and narrow API headroom.
+
+## Current public-source probe gates — 2026-10-28
+
+A bounded `Settings()` read in the isolated development worktree printed only
+permission booleans. Polymarket's public-probe flag was false. Kalshi,
+Kraken, and Coinbase `probe_allowed` properties were false; the Kalshi and
+Kraken permission-reference fields were absent in this shell, and the
+Coinbase terms acknowledgement was false. This is the development-shell
+configuration, not an inspection of the protected API's environment.
+
+The source terms review dated 2026-10-28 leaves Kalshi, Kraken, and Coinbase
+held for the intended retained and aggregated research use. No public source
+request or capture read occurred in this checkpoint. Do not enable or bypass
+these gates absent a validated permission record. If permissions are later
+provided, the current Kalshi/Kraken/Coinbase `probe_allowed` properties still
+return false and will need a reviewed implementation.
+
+At `2026-10-28T22:28:43Z`, API `MemoryHigh` headroom was **3,608,576 bytes**,
+Reality headroom was **560,103,424 bytes**, PSI was `some avg10=13.49%` and
+`full avg10=12.04%`, and available memory was **10,051,796 kB**. Live-source
+validation and broad regression remain blocked or deferred; no protected
+service or source-use setting changed.
+
+| Component | Status | Evidence and boundary |
+| --- | --- | --- |
+| Development worktree source gates | COMPLETE AND VERIFIED WITH CONFIG SNAPSHOT | Polymarket flag is off; Kalshi/Kraken/Coinbase probes are denied by code-level permission properties. |
+| Live Polymarket validation | DEFERRED | Worktree public-probe flag is off; no live request was issued. |
+| Live Kalshi/Kraken/Coinbase validation | BLOCKED | Current terms review and absent validated permission references keep use held. |
