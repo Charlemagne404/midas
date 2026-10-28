@@ -33,7 +33,13 @@ in the dated addendum below and in the Frontier engineering report.
 
 ## Frontier development addendum — 2026-10-28
 
-### Latest isolated Frontier checkpoint — 2026-10-28 16:42 UTC
+### Latest isolated Frontier checkpoint — 2026-10-28 16:43 UTC
+
+The virtual cross-venue capital-carry module passes 27/27 on the current tree
+in 0.46 seconds using a tmpfs test directory. Static review confirms per-venue
+capital isolation and an independent arithmetic audit. It remains a sensitivity
+over user-entered rates; it does not establish venue fees, transfers,
+collateral, custody, or executable capital availability.
 
 The relationship-review module passes 16/16 after request-level digest
 validation. Coinbase adapter/source-permission modules pass 18/18 after

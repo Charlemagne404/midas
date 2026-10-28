@@ -1,5 +1,30 @@
 # Project Frontier Mission Ledger
 
+## Virtual capital-carry module rechecked — 2026-10-28 16:43 UTC
+
+On current code HEAD `b7f2155`, `tests/frontier/test_capital_carry.py` passes
+27/27 in 0.46 seconds with pytest state under
+`/dev/shm/midas-frontier-capital-carry-20261028T1643Z`. No capital-carry code
+changed in this checkpoint. Static review confirms the model keeps virtual
+capital separated by venue, requires pinned settlement evidence for each leg,
+holds each venue's capital through its latest settlement plus the declared
+release delay, and independently recomputes simple-interest arithmetic. The
+sensitivity does not model unknown fees, transfers, withdrawal/redemption,
+custody, or actual financing and does not change candidate classification.
+
+At 16:43:09Z, CPU PSI avg10 was 36.33% / avg60 35.90%, memory and I/O PSI
+avg10 were 0%, about 9.9 GiB was available, and swap remained full. Reality and
+API services were active. This was a short offline fixture suite; no public
+source or protected service was accessed.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Virtual venue capital carry sensitivity | COMPLETE AND VERIFIED | The 27-case module passes; unknown venue costs and real capital availability remain outside the model. |
+| Cross-venue capital and financing in live conditions | PARTIALLY VERIFIED | Fictional assumptions and fixture arithmetic are covered; no live financing, transfer, or collateral evidence is claimed. |
+
+**Next safe action:** continue source-independent economics review; keep the
+broad suites deferred while host CPU pressure remains elevated.
+
 ## Focused source-policy and relationship regressions — 2026-10-28 16:42 UTC
 
 After the relationship-review request change, the targeted malformed-ID cases

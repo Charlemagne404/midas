@@ -2,6 +2,22 @@
 
 **Report date:** 2026-10-28
 
+## Virtual capital-carry verification — 2026-10-28 16:43 UTC
+
+The current-tree `tests/frontier/test_capital_carry.py` suite passes 27/27 in
+0.46 seconds on tmpfs. The tested sensitivity keeps hypothetical balances
+separate per venue, requires hash-pinned settlement inputs, holds each venue's
+capital until the latest modeled settlement plus the explicit release delay,
+and independently recomputes simple-interest carry. It does not establish
+actual financing, transfer, custody, redemption, venue fees, or executable
+availability; candidate classification remains unchanged. No capital-carry
+code changed in this checkpoint.
+
+The 16:43:09Z post-run host sample showed CPU PSI avg10 36.33%, memory and I/O
+PSI avg10 0%, and about 9.9 GiB available; swap was full. Both protected
+Reality and API services were active. No external source or production service
+was accessed.
+
 ## Focused regression results — 2026-10-28 16:42 UTC
 
 The full `tests/frontier/test_relationship_reviews.py` module passes 16/16
