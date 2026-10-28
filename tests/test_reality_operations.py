@@ -636,6 +636,68 @@ def test_archive_capacity_skips_walk_when_manifest_provenance_is_invalid(
     assert "ARCHIVE_CAPACITY_UNKNOWN" in result["alerts"]
 
 
+def test_archive_capacity_does_not_parse_an_oversized_manifest(tmp_path, monkeypatch):
+    raw = tmp_path / "raw"
+    target = tmp_path / "hdd" / "archive"
+    target.mkdir(parents=True)
+    raw.mkdir()
+    mountpoint = target.parent
+    (target / "manifest.json").write_text("{}")
+    monkeypatch.setattr(operations, "MAX_ARCHIVE_MANIFEST_BYTES", 1)
+
+    def fail_read(_path, *args, **kwargs):
+        raise AssertionError("oversized archive manifest was parsed")
+
+    def fail_inventory_scan(_destination, _segments):
+        raise AssertionError("oversized archive manifest was scanned")
+
+    monkeypatch.setattr(Path, "read_text", fail_read)
+    monkeypatch.setattr(operations, "_archive_directory_usage", fail_inventory_scan)
+    monkeypatch.setattr(Path, "is_mount", lambda path: path == mountpoint)
+    original_stat = Path.stat
+
+    class StatProxy:
+        def __init__(self, value, device):
+            self.value = value
+            self.st_dev = device
+
+        def __getattr__(self, name):
+            return getattr(self.value, name)
+
+    def separate_devices(path, *args, **kwargs):
+        value = original_stat(path, *args, **kwargs)
+        if path == raw:
+            return StatProxy(value, 1)
+        if path in {mountpoint, target}:
+            return StatProxy(value, 2)
+        return value
+
+    monkeypatch.setattr(Path, "stat", separate_devices)
+
+    class Disk:
+        total = used = 0
+        free = 500
+
+    monkeypatch.setattr("midas.reality.operations.shutil.disk_usage", lambda _path: Disk())
+    result = archive_capacity(
+        raw,
+        target,
+        mountpoint,
+        budget=1_000,
+        reserve=100,
+        bytes_per_second=2,
+        segment_bytes=8,
+    )
+
+    assert result["destination_state"] == "UNVERIFIED_MANIFEST_SIZE_LIMIT"
+    assert result["archive_manifest_provenance_valid"] is None
+    assert result["archive_manifest_size_limited"] is True
+    assert result["raw_archive_bytes"] is None
+    assert "ARCHIVE_MANIFEST_SIZE_LIMIT" in result["alerts"]
+    assert "ARCHIVE_INVENTORY_UNVERIFIED" in result["alerts"]
+    assert "ARCHIVE_CAPACITY_UNKNOWN" in result["alerts"]
+
+
 def test_capacity_warns_thirty_days_ahead_and_marks_fourteen_day_critical(tmp_path):
     sample(tmp_path)
     used = sum(p.stat().st_size for p in tmp_path.iterdir() if p.is_file())

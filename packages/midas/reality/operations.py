@@ -36,6 +36,8 @@ from .storage import (
 CAPACITY_WARNING_SECONDS = 30 * 86400
 CAPACITY_CRITICAL_SECONDS = 14 * 86400
 CAPACITY_ACTION_SECONDS = 7 * 86400
+# Bound JSON object expansion under the capacity service's 128 MiB high limit.
+MAX_ARCHIVE_MANIFEST_BYTES = 4 * 1024**2
 MAX_ARCHIVE_INVENTORY_ENTRIES = 65_536
 CAPACITY_GROWTH_WINDOWS_SECONDS = (6 * 3600, 24 * 3600)
 ARCHIVE_IO_FULL_AVG10_MAX = 2.0
@@ -296,29 +298,35 @@ def archive_capacity(
     manifest_present = manifest_path.is_file() and not manifest_path.is_symlink()
     manifest_value: dict[str, Any] = {}
     provenance: dict[str, Any] = {}
+    manifest_size_limited = False
     manifest_provenance_valid: bool | None = False if manifest_exists else None
     if manifest_present:
         try:
-            parsed = json.loads(manifest_path.read_text())
-            if isinstance(parsed, dict):
-                manifest_value = parsed
-                candidate = parsed.get("archival_provenance")
-                if isinstance(candidate, dict):
-                    provenance = candidate
-                segments = parsed.get("segments")
-                manifest_provenance_valid = bool(
-                    isinstance(segments, list)
-                    and provenance.get("recording_root") == str(root)
-                    and provenance.get("source_manifest_sha256") == file_hash_list(segments)
-                    and provenance.get("originals_deleted") is False
-                    and provenance.get("active_segment_included") is False
-                )
+            if manifest_path.stat().st_size > MAX_ARCHIVE_MANIFEST_BYTES:
+                manifest_size_limited = True
+                manifest_provenance_valid = None
+                alerts.append("ARCHIVE_MANIFEST_SIZE_LIMIT")
+            else:
+                parsed = json.loads(manifest_path.read_text())
+                if isinstance(parsed, dict):
+                    manifest_value = parsed
+                    candidate = parsed.get("archival_provenance")
+                    if isinstance(candidate, dict):
+                        provenance = candidate
+                    segments = parsed.get("segments")
+                    manifest_provenance_valid = bool(
+                        isinstance(segments, list)
+                        and provenance.get("recording_root") == str(root)
+                        and provenance.get("source_manifest_sha256") == file_hash_list(segments)
+                        and provenance.get("originals_deleted") is False
+                        and provenance.get("active_segment_included") is False
+                    )
         except (OSError, ValueError, TypeError):
             manifest_provenance_valid = False
     catalog = manifest_value.get("segments")
-    if manifest_provenance_valid is False:
-        # An invalid archive manifest is not a safe inventory index; do not
-        # replace it with an unbounded filesystem walk on every timer run.
+    if manifest_provenance_valid is False or manifest_size_limited:
+        # An invalid or size-limited manifest is not a safe inventory index;
+        # do not replace it with a filesystem walk on every timer run.
         used, archive_inventory_valid = None, False
         inventory_scan_limited = False
         alerts.append("ARCHIVE_INVENTORY_UNVERIFIED")
@@ -335,6 +343,8 @@ def archive_capacity(
         alerts.append("ARCHIVE_SEGMENT_INVENTORY_INVALID")
     if not manifest_exists:
         state = "NOT_YET_VERIFIED"
+    elif manifest_size_limited:
+        state = "UNVERIFIED_MANIFEST_SIZE_LIMIT"
     elif manifest_provenance_valid:
         state = "MANIFEST_PRESENT"
     else:
@@ -349,6 +359,7 @@ def archive_capacity(
         verification_mode = "legacy_full_replay_receipt"
     archive_manifest_fields = dict(
         archive_manifest_provenance_valid=manifest_provenance_valid,
+        archive_manifest_size_limited=manifest_size_limited,
         archive_verification_mode=verification_mode,
         archive_full_verified_ns=provenance.get("full_verified_ns", provenance.get("verified_ns")),
         archive_full_verified_manifest_sha256=provenance.get(
