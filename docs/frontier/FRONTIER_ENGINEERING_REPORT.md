@@ -4765,3 +4765,30 @@ available**; host resources may change after that sample.
 
 Frontier remains isolated and research-only. Continue offline acceptance work
 without treating this fixture evidence as live-source or deployment evidence.
+
+### Missing-adapter collection responses — 2026-10-28 00:02 UTC
+
+Commit `169bfa2` adds a shared adapter lookup guard for finite collection start
+and resume. A venue that is part of the public venue enum but absent from the
+registry now returns HTTP 409, `The <venue> source adapter is not registered.`,
+before a collection journal is created or queried. The new API regression
+covers both routes and confirms that the journal remains absent.
+
+The complete collection API test module passes **6/6** in 1.98 seconds
+reported / 2.52 seconds wall at **84,136 KiB peak RSS**, zero swaps. Ruff and
+`git diff --check` pass; the existing Starlette/httpx deprecation warning is
+unchanged. At 00:02:40 UTC the shared Arena admission lock was held by PID
+3950719; memory PSI avg10 was **41.99% some / 37.85% full**, 10 GiB was
+available, and 3.7 GiB of swap was in use. The focused test did not stage Arena
+work. No source request, held capture access, protected service action, or
+production change occurred.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Collection API missing-adapter handling | COMPLETE AND VERIFIED | Both start/resume return a bounded 409 before journal access; fixture API module passes 6/6. |
+| Collection API history and resume | COMPLETE AND VERIFIED | Fixture-backed routes only; no live collection or populated genuine-source history. |
+| Arena-dependent broad regression | PARTIALLY VERIFIED | Previously passed across separate invocations; do not retry while the shared lock is held and PSI is elevated. |
+| Project Frontier overall | PARTIALLY VERIFIED | Genuine cross-venue validation, clean combined broad regression, live source policy review, and deployment prerequisites remain incomplete. |
+
+Continue with read-only audits and isolated changes. Frontier remains isolated,
+research-only, and undeployed.

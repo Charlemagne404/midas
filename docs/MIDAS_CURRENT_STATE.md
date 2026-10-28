@@ -1192,3 +1192,14 @@ free, PSI avg10 was 0.64% `some` / 0.58% `full`, and 10 GiB was available.
 Frontier remains research-only, undeployed, and **PARTIALLY VERIFIED**. See the
 [mission ledger](frontier/FRONTIER_MISSION_LEDGER.md) for the current evidence
 and continuation notes.
+
+### Frontier missing-adapter API guard — 2026-10-28 00:02 UTC
+
+Commit `169bfa2` gives finite collection start and resume a clear HTTP 409 when
+a venue adapter is unavailable, before the collection journal is touched. The
+collection API tests pass **6/6** in 2.52 seconds wall at **84,136 KiB peak
+RSS**, zero swaps; Ruff and `git diff --check` pass. No source request or Arena
+worker ran. At 00:02:40 UTC the shared Arena lock was held by PID 3950719 and
+memory PSI avg10 was 41.99% some / 37.85% full, so Arena-dependent verification
+is deferred pending a fresh admission check. Frontier remains research-only,
+undeployed, and **PARTIALLY VERIFIED**; see the [mission ledger](frontier/FRONTIER_MISSION_LEDGER.md).

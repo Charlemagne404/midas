@@ -3188,3 +3188,20 @@ guarantee. The broader suites were not repeated because implementation code
 did not change. Frontier remains isolated, research-only, undeployed, and
 **PARTIALLY VERIFIED**. Continue with offline acceptance gaps; preserve the
 source-use and production boundaries.
+
+### Missing-adapter collection responses — 2026-10-28 00:02 UTC
+
+Commit `169bfa2` makes finite collection start and resume return HTTP 409 with a
+clear unavailable-adapter detail when a supported venue has no registered
+adapter. Both routes reject before collection-journal creation or lookup. The
+collection API module passes **6/6** in 1.98 seconds reported by pytest / 2.52
+seconds wall, at **84,136 KiB peak RSS** and zero swaps; Ruff and
+`git diff --check` pass. The existing Starlette/httpx deprecation warning
+remains.
+
+At 00:02:40 UTC, the unrelated shared Arena admission lock was held by PID
+3950719, PSI avg10 was **41.99% some / 37.85% full**, and 10 GiB was available
+with 3.7 GiB swap in use. The API test did not acquire that lock or start an
+Arena worker. Avoid Arena-dependent tests while the lock and pressure remain;
+continue with read-only review or small isolated checks. Frontier remains
+research-only, undeployed, and **PARTIALLY VERIFIED**.
