@@ -11528,6 +11528,31 @@ source request or broad test was run after the sample.
 | Broad test admission | BLOCKED | Reality remained 479,232 bytes below `MemoryHigh`; sustained margin is not established. |
 | Frontier overall | PARTIALLY VERIFIED | Live cross-venue validation, broad regressions, endurance, protected recovery, and deployment remain incomplete. |
 
+## Current adapter contract regression — 2026-10-28 20:36 UTC
+
+At tree `7971acff50a771630f1b245ce2757e6069696451`, the full
+`tests/frontier/test_adapters.py` module passes **166/166** in 2.97 seconds
+pytest time (3.37 seconds wall), at 61,132 KiB maximum RSS with zero swaps and
+zero socket messages. It ran inside a transient 1 GiB cgroup cap. The full
+Coinbase adapter module passes **33/33** with one existing Starlette/httpx
+`TestClient` deprecation warning. Strict mypy passes for all four adapters;
+Ruff and formatting pass for the adapters and their test modules.
+
+The latest pre-run protected-service sample was `2026-10-28T20:34:48Z`.
+Reality used 1,207,480,320 / 1,207,959,552 bytes, 479,232 bytes below
+`MemoryHigh`; API used 1,567,940,608 / 1,610,612,736 bytes. I/O PSI `some`
+avg10 was 0.62%. The bounded adapter component run completed without swaps or
+socket traffic; this does not clear the gate for a full Frontier, Arena, or
+legacy MIDAS suite. Both services remained active and untouched.
+
+| Requirement | Status | Evidence and boundary |
+| --- | --- | --- |
+| Current four-venue adapter contract regression | COMPLETE AND VERIFIED | 166 adapter tests plus 33 Coinbase tests pass on the current tree using fixtures. |
+| Four adapter modules typechecked and styled | COMPLETE AND VERIFIED | Strict mypy and Ruff check/format pass. |
+| Full Frontier/legacy regressions | PARTIALLY VERIFIED | Not rerun at this tree; protected service headroom is not sustained. |
+| Live cross-venue research | BLOCKED | No new venue calls were made; source-use and retention boundaries remain. |
+| Frontier overall | PARTIALLY VERIFIED | Cross-venue live science, broad regression, endurance, protected recovery, and deployment remain incomplete. |
+
 ## Coinbase book depth type validation — 2026-10-28 20:33 UTC
 
 Commit `46cd7ad` advances Coinbase Spot to

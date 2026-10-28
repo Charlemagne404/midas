@@ -10751,3 +10751,34 @@ public source request was started.
 targeted fixtures. Keep public-source holds and production services unchanged;
 do not start broad regressions until repeated measurements show sustained
 headroom.
+
+## Current adapter contract regression — 2026-10-28 20:36 UTC
+
+At tree `7971acff50a771630f1b245ce2757e6069696451`, the complete
+`tests/frontier/test_adapters.py` module passes **166/166** in 2.97 seconds
+pytest time (3.37 seconds wall), at 61,132 KiB maximum RSS, zero swaps, and
+zero socket messages. It ran inside a transient 1 GiB cgroup cap. The complete
+Coinbase adapter module also passes **33/33**, with one existing
+Starlette/httpx `TestClient` deprecation warning. Strict mypy passes across
+Polymarket, Kalshi, Kraken, and Coinbase adapters; Ruff check and formatting
+pass across all four adapters and both adapter test files.
+
+The latest pre-run protected-service sample is `2026-10-28T20:34:48Z`:
+Reality remained only 479,232 bytes below `MemoryHigh`, API used
+1,567,940,608 / 1,610,612,736 bytes, and I/O PSI `some` avg10 was 0.62%. The
+small component regression completed without swaps or socket traffic, but
+this single sample does not clear admission for the full Frontier, Arena, or
+legacy MIDAS suites. The active services were only inspected; neither was
+changed.
+
+| Requirement | Status | Evidence and boundary |
+| --- | --- | --- |
+| Current multi-venue adapter contract suite | COMPLETE AND VERIFIED | 166/166 adapter tests and 33/33 Coinbase tests pass on the current code; fixture-only transport. |
+| Four-adapter strict typing and style | COMPLETE AND VERIFIED | Strict mypy on all four adapters; Ruff and format on all changed adapter/test files. |
+| Full Frontier and legacy MIDAS regression | PARTIALLY VERIFIED | Not run after these commits; protected Reality remains close to `MemoryHigh`. |
+| Live cross-venue research | BLOCKED | Source-use/retention restrictions remain; adapter fixtures are not live observations. |
+| Project Frontier overall | PARTIALLY VERIFIED | Cross-venue live science, broad regression, endurance, protected recovery, and deployment remain open. |
+
+**Next safe action:** continue source-independent work that does not require
+large host load or public-source access. Keep the protected services and held
+probe artifact untouched.
