@@ -11420,3 +11420,51 @@ sample.
 | Full current Frontier and legacy regressions | PARTIALLY VERIFIED | The prior 505-case Frontier run predates current adapter and transport changes; broad legacy testing remains unrun. |
 | Genuine live cross-venue science | BLOCKED | Source authorization/retention gates remain; fixture evidence is not live-market validation. |
 | Frontier overall | PARTIALLY VERIFIED | Broad regression, live observations, endurance, protected recovery, and deployment remain incomplete. |
+
+## Frontend build, unit, and browser verification — 2026-10-28 20:18 UTC
+
+The isolated frontend typecheck and production bundle pass. Vite transformed
+2,230 modules in 28.29 seconds wall time; measured maximum RSS was 560,236
+KiB, with no swaps. The Frontier route is code-split into a 183.24 kB bundle
+(44.69 kB gzip). The chart chunk remains 544.51 kB minified (186.79 kB gzip)
+and triggers Vite's 500 kB advisory. Chart import already uses a deferred
+feature boundary; the advisory was retained rather than hidden by changing the
+threshold.
+
+Frontend unit verification passes **47 tests across 9 files** in 29.23 seconds
+wall time, with 240,556 KiB maximum RSS and no swaps. ESLint and Prettier checks
+pass across the frontend in 16.11 seconds wall time, with 347,084 KiB maximum
+RSS.
+
+Playwright ran all seven cases in `apps/web/e2e/frontier.spec.ts`, completing
+in 21.9 seconds. It used a temporary SQLite store, `MIDAS_MODE=demo`, an
+isolated local API and Vite server, and a 2 GiB cgroup memory cap. The temporary
+servers used loopback ports 18000 and 15173 and exited after the run. The
+source-probe assertions remained zero; the browser fixtures do not establish
+live adapter or cross-venue validity. Output is retained under
+`/tmp/midas-frontier-playwright-frontier-20261028` and
+`/tmp/midas-browser-frontier-20261028`.
+
+An initial build invocation under `RLIMIT_AS=2 GiB` exited before compilation
+because Node could not allocate its WebAssembly runtime. The same build
+succeeded under the cgroup memory cap, showing that the earlier failure was a
+virtual-address-space restriction in the runner rather than a project build
+error.
+
+At `2026-10-28T20:20:04Z`, host `MemAvailable` was 9,950,196 KiB and memory
+PSI avg10 was 0%. I/O PSI `some` avg10/avg60 was 0.12%/0.10%, with `full` 0%.
+Reality measured 1,207,869,440 / 1,207,959,552 bytes, only 90,112 bytes below
+`MemoryHigh`; API measured 1,559,650,304 / 1,610,612,736 bytes. Despite host
+headroom and low PSI, that volatile protected-service margin does not justify
+a broad backend regression. No public source probe or production service
+operation was performed.
+
+| Requirement | Status | Evidence and boundary |
+| --- | --- | --- |
+| Frontend typecheck and production build | COMPLETE AND VERIFIED | Build passes with the chart size advisory preserved. |
+| Frontend unit suite | COMPLETE AND VERIFIED | 47 tests pass in 9 files. |
+| Frontier browser acceptance | COMPLETE AND VERIFIED | Seven local demo E2E scenarios pass; they provide no live-market evidence. |
+| Frontend lint and formatting | COMPLETE AND VERIFIED | ESLint and Prettier checks pass. |
+| Current full backend/legacy regression | PARTIALLY VERIFIED | Latest full 505-case Frontier pass predates current adapter and transport changes; broader tests remain deferred under the recorder resource gate. |
+| Live cross-venue scientific validation | BLOCKED | Source-use/retention gates remain unresolved. |
+| Frontier overall | PARTIALLY VERIFIED | Live cross-venue evidence, broad regression, endurance, protected recovery, and deployment remain incomplete. |
