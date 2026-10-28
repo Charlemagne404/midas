@@ -233,6 +233,14 @@ original observation without changing its timestamp or row hash. Older rows
 whose optional persistence field is absent or null remain readable as
 historical evidence.
 
+Every persistence method first reparses its typed input from a Python-mode
+model dump so nested Pydantic validators run again on objects that might have
+been changed with `model_copy(update=...)`. Deterministic replay writes also
+recompute the manifest-derived run ID and result digest before opening the
+store. Paired comparisons, price-history replays, relationship decisions, and
+reviews receive the same structural revalidation before their append-only
+write paths.
+
 The bounded HTTP transport also records `request_elapsed_monotonic_ns` from
 after per-source pacing until the complete response body has arrived. It is
 copied into raw response evidence and normalized provenance and shown in the
@@ -981,12 +989,14 @@ resolution assertions, fee authority, source timing, or execution.
 
 The API uses a separate `MIDAS_FRONTIER_ROOT`. Raw source observations, normalized
 records, relationship decisions/reviews, replay results, and paired comparisons
-are append-only. SQLite schema v6 migrates older v2/v3/v4/v5 stores additively
-and enforces update/delete triggers on evidence tables. The v5 migration adds
-endpoint indexes without rewriting stored relationship rows; v6 adds an indexed
-comparison table without changing earlier evidence. Review records link to their
-derived relationship revision, and effective queries resolve the latest decision. Query methods use
-SQLite read-only mode; they do not initialize or mutate the store. Listing reads
+are append-only. SQLite schema v7 migrates older v2/v3/v4/v5/v6 stores
+additively and enforces update/delete triggers on evidence tables. The v5
+migration adds endpoint indexes without rewriting stored relationship rows;
+v6 adds an indexed comparison table; v7 adds the bounded price-history replay
+table. These changes do not rewrite earlier evidence. Review records link to
+their derived relationship revision, and effective queries resolve the latest
+decision. Query methods use SQLite read-only mode; they do not initialize or
+mutate the store. Listing reads
 recheck raw body and normalized row hashes, relationship/review hashes and
 revision linkage, and replay/comparison result digests. Write routes
 enforce row and database byte budgets before committing. Repeated captures remain

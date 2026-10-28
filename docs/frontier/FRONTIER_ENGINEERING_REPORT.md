@@ -2,6 +2,33 @@
 
 **Report date:** 2026-10-28
 
+## Revalidate every Frontier persistence input — 2026-10-28
+
+The write-boundary fix now covers all Frontier persistence methods, not only
+source observations. Raw and normalized observations, relationship proposals,
+relationship reviews and revisions, deterministic replays, historical replays,
+and paired comparisons are reparsed from Python-mode model dumps before the
+store is initialized. Replay writes additionally recompute the manifest-derived
+run ID and result digest. This closes the copied-model route to persisting
+malformed normalized rows or unreadable replay artifacts.
+
+Storage regressions cover copied raw/normalized records, malformed
+relationships, and replay/comparison hashes. The storage module passes
+**25/25** in 1.31 seconds (1.66 seconds wall), at 68,560 KiB peak RSS, zero
+swaps, zero filesystem input, and zero socket messages. Strict mypy passes for
+`storage.py`; Ruff check/format and `git diff --check` pass. The exact Frontier
+plus Arena replay/discovery/timeline suite passes **468/468** in 31.61 seconds
+(33.10 seconds wall), at 380,404 KiB peak RSS, zero swaps, zero filesystem
+input, 8 output blocks, and zero socket messages. One existing Starlette/httpx
+deprecation warning remains. Output used the isolated tmpfs root
+`/dev/shm/midas-frontier-storage-all-writers-full-20261028`.
+
+Before the full suite memory PSI avg10 was 0.00%, I/O PSI was 0.12% some /
+0.02% full, and about 10 GiB was available. Afterward memory remained 0.00%,
+I/O was 0.01% some / 0.01% full, and about 10 GiB was available. No live
+source, protected store, production service, or historical research artifact
+was accessed. **Implementation commit:** `e99cf0e`.
+
 ## Observation write-boundary revalidation — 2026-10-28
 
 The append-only evidence store serialized already-instantiated raw and

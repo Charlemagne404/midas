@@ -1,5 +1,35 @@
 # Project Frontier Mission Ledger
 
+## Revalidate every Frontier persistence input — 2026-10-28
+
+The persistence review extended the `append_observation` guard across the
+remaining evidence writers. A shared boundary reparses relationship hypotheses,
+relationship reviews and revisions, replay manifests, price-history replay
+results, and paired comparisons before database initialization. Deterministic
+replay inputs also have their manifest-derived run ID and content digest
+recomputed before a write, preventing a malformed copied replay from becoming
+an unreadable stored row.
+
+Regression coverage now includes copied observations, invalid relationship
+models, replay result hashes, and paired comparison hashes. The storage module
+passes **25/25** in 1.31 seconds (1.66 seconds wall), at 68,560 KiB peak RSS,
+with zero swaps, filesystem input, or socket messages. Strict mypy passes for
+`storage.py`; Ruff check/format and `git diff --check` pass. The exact Frontier
+suite plus Arena replay/discovery/timeline suite passes **468/468** in 31.61
+seconds (33.10 seconds wall), with one existing Starlette/httpx deprecation
+warning. It peaked at 380,404 KiB RSS, used zero swaps and filesystem input
+(8 output blocks), and emitted no socket messages. Tests ran in
+`/dev/shm/midas-frontier-storage-all-writers-full-20261028`.
+
+Before the full run, memory PSI avg10 was 0.00%, I/O PSI was 0.12% some /
+0.02% full, and about 10 GiB was available. Afterward memory remained 0.00%,
+I/O was 0.01% some / 0.01% full, and about 10 GiB remained available. No live
+source, protected store, production service, or historical research artifact
+was accessed. **Implementation commit:** `e99cf0e`.
+
+**Next safe action:** continue source-independent provenance/replay review;
+keep broader tests behind a fresh resource sample below the 1% I/O threshold.
+
 ## Observation write-boundary revalidation — 2026-10-28
 
 The provenance-write audit found that `FrontierStore.append_observation`
