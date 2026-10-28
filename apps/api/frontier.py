@@ -692,9 +692,7 @@ class RelationshipReviewRequest(BaseModel):
 
     @field_validator("evidence_observation_ids")
     @classmethod
-    def bounded_evidence_observation_ids(
-        cls, value: tuple[str, ...]
-    ) -> tuple[str, ...]:
+    def bounded_evidence_observation_ids(cls, value: tuple[str, ...]) -> tuple[str, ...]:
         if any(
             len(observation_id) != 64
             or any(character not in "0123456789abcdef" for character in observation_id)
