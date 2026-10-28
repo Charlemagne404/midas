@@ -33,6 +33,17 @@ in the dated addendum below and in the Frontier engineering report.
 
 ## Frontier development addendum — 2026-10-28
 
+### Latest isolated Frontier checkpoint — 2026-10-28 10:35 UTC
+
+Commit `f591185` fixes verified-payoff ambiguity from duplicate payout rows:
+the same state can no longer appear twice in an instrument vector, and verified
+markets require every state exactly once. The focused regression passed **3/3**;
+the full Frontier suite passed **390/390** in 29.51 seconds. Strict mypy for
+`models.py`, Ruff, and formatting passed. Memory PSI avg10 was 0% and I/O PSI
+avg10 was 0.04% some / 0% full at `10:34:45Z`. The captured market's own payoff
+remains unverified; no live cross-venue evidence or production transition was
+created. Frontier remains **PARTIALLY VERIFIED**.
+
 ### Latest isolated Frontier checkpoint — 2026-10-28 10:30 UTC
 
 The fixture-backed Kalshi fee-sensitivity module passed **21/21**, including

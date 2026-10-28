@@ -1,5 +1,28 @@
 # Project Frontier Mission Ledger
 
+## Verified payoff row uniqueness — 2026-10-28 10:35 UTC
+
+Reproduced a canonical-model defect using a controlled verified binary fixture.
+The Yes instrument contained payout rows `yes=1`, `yes=0`, `no=0`; validation
+accepted it because the state-ID set still covered `{yes, no}`. A downstream
+state map kept the last `yes` amount, so row order could change the payoff used
+by later calculations.
+
+Commit `f591185` rejects duplicate payout state IDs in `MarketInstrument` and
+requires each state exactly once for every outcome in `FrontierMarket` with a
+verified payoff. New tests cover identical duplicates, contradictory amounts,
+and a prebuilt model instance. The focused test passed **3/3**; the full
+`tests/frontier` suite passed **390/390** in 29.51 seconds with temporary state
+at `/dev/shm/midas-frontier-payoff-regression-20261028T1033Z`. Strict mypy for
+`models.py`, Ruff check/format, and `git diff --check` passed. Independent binary,
+multi-outcome, payoff-basket, and implication audit paths also check payout-row
+uniqueness. The real captured Polymarket market still lacks verified payoff
+evidence; this model fix does not create live payoff evidence.
+
+At `10:34:45Z`, memory PSI avg10 was 0% and I/O PSI avg10 was 0.04% some / 0%
+full. No source request or production service was used. Frontier remains
+**PARTIALLY VERIFIED**.
+
 ## Fee rounding and provenance review — 2026-10-28 10:30 UTC
 
 Reviewed the bounded Kalshi fee estimate and its independent calculation. The

@@ -271,6 +271,15 @@ network request. At `10:29:58Z`, memory PSI avg10 was 0%; I/O PSI avg10 was
 0.02% some / 0% full. Keep account-specific fee authority and live source use
 classified as unverified.
 
+After a fresh admission sample below 1%, the full Frontier suite passed
+**390/390** after the verified-payoff duplicate-row fix. Pytest temporary state
+was placed at `/dev/shm/midas-frontier-payoff-regression-20261028T1033Z`; run
+time was 29.51 seconds. The three new model-invariant tests passed separately;
+strict mypy, Ruff, and formatting checks for the changed Python files also
+passed. At `10:34:45Z`, memory PSI avg10 was 0% and I/O PSI avg10 was 0.04% some
+/ 0% full. Peak RSS, swap, filesystem I/O, and sustained capacity were not
+measured in this regression.
+
 For a broad suite run, first sample `/proc/pressure/memory` and
 `/proc/pressure/io`; defer when memory or I/O PSI avg10 is at or above 1%.
 The successful run placed pytest temporary files on tmpfs, reducing block I/O:
