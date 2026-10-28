@@ -1,5 +1,54 @@
 # Project Frontier Mission Ledger
 
+## Bounded event payoff baskets — 2026-10-28 01:20 UTC
+
+Code commit `d16259422902bc4acd75cb45e0ced6eb8e186904` adds a bounded
+same-market candidate family for verified exhaustive multi-outcome contracts
+with overlapping or non-one-hot payoffs. It enumerates no more than 4,095
+subsets from twelve instruments and accepts only baskets whose nonnegative
+verified payout vectors produce the same positive total across all three to
+sixteen states. Replay defaults to eight candidate results and caps explicit
+requests at 32. It uses common trading units, one venue and settlement
+identity, exact displayed asks, quantity-step/depth checks, fees, timing,
+slippage, and existing fill sensitivities. Economic/replay versions moved to
+14 and the independent audit to 11.
+
+The independent audit reconstructs the selected contract vectors and requires
+a constant positive terminal payout before doing separate quote, fee, cost,
+and P&L calculations. A controlled three-leg fixture passes deterministic
+replay and audit; removing one leg fails the audit, and a market with no
+constant-payout subset yields no candidate. The fixture's USD 12.50 gross result
+is synthetic test arithmetic only, not an observed or economically meaningful
+opportunity. The new search has not been benchmarked on a representative
+market set.
+
+### Verification
+
+- Focused relationship/economics/replay tests plus both the one-hot and
+  payoff-basket replay API regressions: **51 passed** in 2.00 seconds; one
+  existing Starlette/httpx deprecation warning remains.
+- Focused Mission Control test passed **1/1**, confirming the new candidate
+  family is visible in the candidate detail card. The new API fixture verifies
+  replay persistence and candidate listing with no adapter requests.
+- Strict mypy passed for `economics.py`, `independent_audit.py`, `models.py`,
+  and `replay.py`. Scoped Ruff check/format and `git diff --check` passed.
+- The full serial Frontier suite passed **332 tests** in 52.98 seconds pytest
+  time / **54.32 seconds wall**; peak RSS was **369,040 KiB**, with zero swaps,
+  zero socket messages, zero major faults, and 35% CPU. One existing
+  Starlette/httpx deprecation warning remains. The full web/browser suites were
+  not rerun. No exchange, held source, protected Reality process, production
+  store, or deployment was used.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Bounded within-market payoff-basket discovery and audit | COMPLETE AND VERIFIED | Exact three-leg fixture, deterministic replay, truncated-basket audit rejection, and no-coverage rejection pass. Live source semantics and candidate economics are not established. |
+| General multi-market joint-state search | DEFERRED | This family only composes payoff vectors in one verified event state space. Cross-market joint-state inference remains unsupported. |
+| Project Frontier overall | PARTIALLY VERIFIED | Live cross-venue validation, source-use holds, broader source-quality evidence, general multi-market search, and deployment remain incomplete. |
+
+**Next safe action:** measure the bounded subset search on representative
+synthetic market sets, then continue other offline acceptance work. Keep
+current source holds and production boundaries in force.
+
 ## Cursor-paginated finite collection history — 2026-10-28 01:07 UTC
 
 Code commit `067b2ce` adds keyset pagination to the read-only finite collection

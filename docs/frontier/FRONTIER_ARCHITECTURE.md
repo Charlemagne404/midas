@@ -16,8 +16,8 @@ as mutable Frontier storage.
 | Public venue adapters | `adapters/polymarket.py`, `kalshi.py`, `kraken.py`, `coinbase.py` | Source-specific normalization and native metadata preservation. Coinbase Exchange adds a bounded explicit-product spot source with an exact-version data-terms gate. |
 | Registry | `registry.py` | Explicit capability inventory; default instances do not probe. |
 | Relationship intelligence | `relationships.py` | Deterministic indexed title and parent-event/outcome hypotheses, source-selected component references, strict payoff checks, and immutable review contracts. |
-| Candidate calculators | `economics.py` | Decimal cross-venue binary and same-market exhaustive multi-outcome all-long checks with fee, depth, freshness, timing, and scenario bounds; provenance-bound conditional Kalshi one-fill estimate; exact bounded one-sided fill sensitivity; separate instrument-bound Kalshi one-fill and one-order fee sensitivities. |
-| Independent arithmetic audit | `independent_audit.py` | Separately recomputes supported candidate identities, payoff vectors, pinned quotes/depth, fees, costs, terminal P&L, fill-pattern sensitivity, and classification from replay inputs. |
+| Candidate calculators | `economics.py` | Decimal cross-venue binary, same-market exhaustive one-hot coverage, and bounded constant-payout event baskets with fee, depth, freshness, timing, and scenario bounds; provenance-bound conditional Kalshi one-fill estimate; exact bounded one-sided fill sensitivity; separate instrument-bound Kalshi one-fill and one-order fee sensitivities. |
+| Independent arithmetic audit | `independent_audit.py` | Separately recomputes supported candidate identities, exhaustive payoff coverage or constant-payout basket proof, pinned quotes/depth, fees, costs, terminal P&L, fill-pattern sensitivity, and classification from replay inputs. |
 | Virtual capital-duration sensitivity | `capital.py` | Recomputes unrounded simple-interest carry from explicit per-venue user assumptions, candidate capital, hash-checked future settlement metadata, and a bounded scenario-only post-settlement release delay; an independent arithmetic pass cannot change candidate classification. |
 | Virtual funding-currency sensitivity | `fx.py` | Compares venue-isolated hypothetical balances with candidate capital under explicit namespaced asset identities and user-entered rates/fees; a separate Fraction-audited terminal-state P&L scenario is available only for an independently audited candidate with complete leg fees and sufficient virtual balance. It does not source rates or mutate candidate economics. |
 | Durable evidence | `storage.py` | Append-only, size- and row-bounded SQLite observations, markets, relationship reviews/revisions, runs, and paired comparisons. |
@@ -641,7 +641,7 @@ rows. Mission Control reports these bounds. This is not a full-universe search;
 the unfiltered recent-edge view remains a single bounded read, and broad or
 dense traversals can still be incomplete.
 
-The economic verifier supports three narrow families. Cross-venue binary
+The economic verifier supports four narrowly bounded families. Cross-venue binary
 coverage requires a previously verified same-payoff relationship. The
 logical-implication family evaluates the long-only NO(source) plus YES(target)
 construction over the pinned joint-state mapping and requires its worst
@@ -663,9 +663,16 @@ rejected if the common displayed depth or modeled fill fraction cannot support
 them. A valid verified schedule or supported provenance-bound Kalshi estimate
 can produce modeled net P&L; estimate-based results remain conditional. Unknown
 or expired fees leave net P&L unknown and are excluded, rather than zeroed.
-Other payoffs and general multi-leg constructions are unsupported. The
-multi-outcome and logical-implication families have fixture verification only;
-current public observations do not satisfy their relationship attestations.
+The within-market payoff-basket family searches at most 4,095 subsets from a
+market with up to twelve instruments and three to sixteen exhaustive states. It
+selects up to eight candidates by default (at most 32 for an explicit caller)
+by quoted gross margin per common quantity. It accepts only nonnegative
+verified payout vectors that sum to the same positive amount in every state.
+Its independent audit recomputes each selected leg and the constant terminal
+payout. This is bounded event-market coverage, not a general multi-market
+solver. Payoff-basket and logical-implication results have controlled-fixture
+verification only; current public observations do not satisfy their required
+semantic evidence.
 Cross-venue `timing_verified` additionally requires
 matching known exchange timestamp semantics, no source/receipt/book timestamp
 after the replay time, and observed exchange skew plus both declared clock
@@ -677,7 +684,7 @@ public snapshots do not prove fills, queue priority, venue access, simultaneous
 execution, capital transfer, or settlement. Opportunity classifications describe
 the mathematical and modeled evidence only.
 
-Economic model version 13 emits both a full-or-no-fill exposure sensitivity
+Economic model version 14 emits both a full-or-no-fill exposure sensitivity
 and a bounded partial-fill grid for supported candidates with one to sixteen
 legs. The full/no-fill calculation finds the exact adverse result across all
 `2^n` patterns without materializing them. The partial-fill calculation samples
@@ -687,7 +694,7 @@ terminal state, separability lets it select each leg's worst grid point in
 `O(states × legs × grid points)` work rather than enumerating the Cartesian
 product. It recalculates a source-supported fee at each nonzero aggregate
 quantity. After-fee results stay unknown when any required fee is unknown.
-Independent audit version 10 derives the quantity grid and fee amounts again
+Independent audit version 11 derives the quantity grid and fee amounts again
 from pinned market, book, scenario, and fee evidence using separate code.
 
 The partial-fill output is exact only over the declared grid. Each leg's
@@ -997,12 +1004,12 @@ and shows these interpretation limits.
 
 ## Known scope limits
 
-There are no persistent source workers, incremental order-book streams, full
-venue-wide universe scans, sourced/live FX conversion, derivatives, capital transfer model,
-multi-leg solver, automatic semantic certification, authenticated reviewer or
-assertion verification, full-universe graph search,
-Laboratory campaign integration, event-time timeline job integration, or
-production deployment. The bounded Arena
+There are no persistent source workers, incremental order-book streams,
+venue-wide universe scans, sourced/live FX conversion, derivatives,
+capital transfer model, cross-market joint-state composition, broad multi-leg
+search, automatic semantic certification, authenticated reviewer or assertion
+verification, full-universe graph search, Laboratory campaign integration,
+event-time timeline job integration, or production deployment. The bounded Arena
 job integration has completed under the systemd supervisor after normal host
 admission. The latest controlled fixture run produced process CPU and peak RSS
 measurements; broader runtime behavior and resource sustainability remain

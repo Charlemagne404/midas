@@ -33,6 +33,29 @@ in the dated addendum below and in the Frontier engineering report.
 
 ## Frontier development addendum — 2026-10-28
 
+### Bounded event payoff-basket research — 2026-10-28 01:20 UTC
+
+Commit `d16259422902bc4acd75cb45e0ced6eb8e186904` adds bounded search for
+constant-payout long baskets over non-one-hot contracts in one verified
+exhaustive event market. The search handles at most twelve instruments,
+3–16 terminal states, and 4,095 non-empty subsets, returning eight ranked
+candidates by default. Replay preserves the existing one-hot family, and the
+new candidate family reaches the independent audit, which rechecks the
+constant positive terminal payout from pinned contracts. This does not compose
+multiple event state spaces, infer semantic relationships, or establish
+execution.
+
+After the change, 49 relationship/economics/replay tests and two replay API
+tests passed (51 total), as did the focused Mission Control family-label test;
+strict mypy passed for the four changed core modules, and Ruff plus diff checks
+passed. The full serial Frontier suite then passed 332 tests in 54.32 seconds
+wall time at 369,040 KiB peak RSS, with zero swaps, socket messages, or major
+page faults. Full web and browser suites were not rerun after this change. The
+synthetic three-leg arithmetic is a fixture, not an observed market finding.
+Mission status remains **PARTIALLY VERIFIED**; live cross-venue validation,
+general multi-market research, source-quality evidence, and production
+deployment remain incomplete.
+
 ### Conversion-adjusted terminal-state sensitivity — 2026-10-28 00:47 UTC
 
 Code commit `71ee203b033c4bc0f38afce09b5255fe31bcae21` on the isolated Frontier

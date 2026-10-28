@@ -5022,7 +5022,7 @@ During the check at `2026-10-28T00:31:15Z`, memory PSI avg10 was **24.98% some
 gap-detail batch PID **3975405** was active. It was not touched. The strict API
 typing caveat remains unresolved; retry when shared-host pressure subsides.
 
-## Current mission acceptance matrix — 2026-10-28 01:07 UTC
+## Current mission acceptance matrix — 2026-10-28 01:20 UTC
 
 This matrix assesses the user-requested Frontier stages and scientific
 acceptance against current branch evidence, not intent or planned work.
@@ -5031,15 +5031,15 @@ acceptance against current branch evidence, not intent or planned work.
 | --- | --- | --- |
 | Isolated baseline and exchange-independent adapter foundation | COMPLETE AND VERIFIED | Branch `codex/frontier-20261026` is based on the verified V6 integration commit in a separate worktree. Shared capability contracts, registry, source-specific adapters, bounded transport, and compatibility tests pass in the Frontier suite. |
 | Polymarket, Kalshi, Kraken, and Coinbase read-only adapters | PARTIALLY VERIFIED | Adapters are implemented and contract/fixture tested; selected historical Polymarket, Kalshi, and Kraken public responses were captured. Kalshi and Kraken remain held, Coinbase remains held pending exact terms-scope validation, and no fresh live validation is claimed. |
-| Canonical instruments, precise denominations, and supported payoff semantics | PARTIALLY VERIFIED | Versioned models preserve native IDs, identities, outcomes, payoff rules, constraints, and provenance; binary and bounded multi-outcome evaluators reject unsupported or incompatible semantics. Spot remains contextual unless a supported payoff link is proved. Broader instrument families are not supported. |
+| Canonical instruments, precise denominations, and supported payoff semantics | PARTIALLY VERIFIED | Versioned models preserve native IDs, identities, outcomes, payoff rules, constraints, and provenance; binary, one-hot multi-outcome, and bounded same-market constant-payout basket evaluators reject unsupported or incompatible semantics. Spot remains contextual unless a supported payoff link is proved. Broader instrument families are not supported. |
 | Relationship graph, evidence, persistence, and bounded exploration | PARTIALLY VERIFIED | Deterministic proposals, explicit verification states, append-only review evidence, held-source filtering, and revision-pinned neighborhood/search pages have API and UI coverage. No genuine verified cross-venue economic match exists; reviewer identities and external assertions are not authenticated. |
-| Opportunity families and independent economic verification | PARTIALLY VERIFIED | Binary coverage, bounded multi-outcome, and logical-implication constructions have independent arithmetic checks and adversarial fixtures. No live positive or economically eligible opportunity is established; general multi-leg search is not implemented. |
+| Opportunity families and independent economic verification | PARTIALLY VERIFIED | Binary coverage, bounded one-hot coverage, directed implication, and exact constant-payout subset baskets have independent arithmetic checks. The new basket search is limited to one verified event market, twelve instruments, sixteen states, and 4,095 subsets; fixture replay and an independent three-leg audit pass. Broader multi-market joint-state search remains unimplemented. No live positive or economically eligible opportunity is established. |
 | Venue costs, capital, and currency assumptions | PARTIALLY VERIFIED | Public fee metadata, bounded fee/carry sensitivities, partial-fill stress, venue-separated virtual balances, and a separate conversion-adjusted terminal-P&L scenario exist. The P&L scenario requires verified candidate/funding audits, complete candidate leg fees, and sufficient per-venue balances; it never mutates candidate economics. Account-specific fees, sourced FX, cross-venue transfer/custody, settlement risk, and conversion availability remain unknown. |
 | Isolated collection, provenance, durable storage, and deterministic replay | PARTIALLY VERIFIED | Finite restartable collection, append-only hash-chained checkpoints, a read-only keyset-paginated run catalog across the 1,000-run journal bound, bounded storage, event-time replay, source-health evidence, and replay provenance are implemented and tested offline. No continuous market-data stream, full source-history backfill, or long-horizon source-quality study is established. |
 | Laboratory/Arena research integration | PARTIALLY VERIFIED | Bounded replay jobs, paired comparisons, integrity-checked results, and fixture/UI paths exist. No durable Laboratory experiment manager, long-duration campaign, or production worker is authorized or verified. |
-| Native Frontier Mission Control interface | IMPLEMENTED, DEPLOYMENT PENDING | The full web unit suite passes 40/40 and the Frontier browser spec passes 4/4 against isolated services on the current revision. Funding responses are fixture-intercepted in browser, while the saved-run API separately verifies the candidate scenario. Live source data is unavailable under current holds. No production deployment occurred. |
-| Scientific acceptance: normalization, rejection, controlled discrepancy, independent arithmetic, missing/stale/asynchronous evidence, and deterministic replay | PARTIALLY VERIFIED | Controlled fixtures and the 330-test Frontier suite cover supported behavior and rejection paths, including rationally checked funding conversion subtraction and route-level collection restart, pagination, quarantine, and corruption. Evidence does not establish a genuine cross-venue relationship, synchronized executable quotes, or positive economics. |
-| Resource sustainability under bounded development workloads | PARTIALLY VERIFIED | The latest serial 330-test Frontier suite measured 365,832 KiB peak RSS, zero swaps, and zero socket messages; the focused FX/API selection measured 82,756 KiB. Sustained collection, concurrent workloads, production resource admission, and broad latency/CPU behavior remain unmeasured. |
+| Native Frontier Mission Control interface | PARTIALLY VERIFIED | The prior revision passed the full web unit suite (40/40) and Frontier browser spec (4/4) against isolated services. After `d162594`, the focused family-label test passed 1/1; full web and browser suites were not rerun. Funding responses are fixture-intercepted in browser, while the saved-run API separately verifies the candidate scenario. Live source data is unavailable under current holds. No production deployment occurred. |
+| Scientific acceptance: normalization, rejection, controlled discrepancy, independent arithmetic, missing/stale/asynchronous evidence, and deterministic replay | PARTIALLY VERIFIED | After commit `d162594`, the complete serial Frontier suite passed 332 tests, including exact three-leg basket generation, replay, API persistence/listing, independent recomputation, non-coverage rejection, and audit rejection of a truncated basket. The focused Mission Control family-label test passed 1/1. Evidence does not establish a genuine cross-venue relationship, synchronized executable quotes, or positive economics. |
+| Resource sustainability under bounded development workloads | PARTIALLY VERIFIED | The 332-test serial Frontier suite measured 369,040 KiB peak RSS, zero swaps, zero socket messages, and zero major page faults. This is one short local run; sustained collection, concurrent workloads, production resource admission, and broader latency/CPU behavior remain unmeasured. |
 | Read-only research boundary and source-use gates | COMPLETE AND VERIFIED | No trading/authenticated exchange path is provided; source-policy tests ensure held venues return 409 without requests and held evidence stays quarantined. This does not grant permission to use a held source. |
 | Required architecture, operations, current-state, report, and continuation documentation | COMPLETE AND VERIFIED | The engineering report, architecture, operations guidance, current-state note, and append-only mission ledger record implementation, evidence, blockers, and continuation actions. |
 | Production deployment | DEFERRED | Requires separate source permission, resource/storage/recovery review, full deployment-scope regression, monitoring/rollback preparation, and explicit authorization. |
@@ -5277,3 +5277,66 @@ Verification on the isolated worktree:
 Continue offline acceptance from the current mission matrix. Do not infer live
 opportunity economics from fixtures or treat collection pagination as
 historical market-data coverage.
+
+## Bounded event payoff-basket search — 2026-10-28 01:20 UTC
+
+Commit `d16259422902bc4acd75cb45e0ced6eb8e186904` adds an additive candidate
+family for a verified exhaustive multi-outcome event market whose contract
+payoffs overlap or otherwise differ from one-hot outcomes. The candidate
+generator enumerates subsets of at most twelve instruments (4,095 non-empty
+subsets), across three to sixteen terminal states. A basket qualifies only if
+all selected nonnegative payoff vectors add to the same positive payout in
+every state, all legs use one quantity unit, and the payout settlement identity
+is exact. Candidate search returns eight ranked results by default and enforces
+a hard caller cap of 32. It does not infer contract semantics from labels.
+
+The selected long legs use one common quantity from aligned step/depth bounds.
+The evaluator then applies the existing exact quote-unit, price-tick, fee,
+slippage, freshness, timing, capital, and fill-sensitivity checks. Contract
+asks above their maximum verified state payout fail closed. Practical
+eligibility remains false. Deterministic replay version 14 preserves the
+existing one-hot path and invokes the new family only for other verified
+multi-outcome payoff structures. Economic model version 14 pins candidate
+identity. Independent audit version 11 separately checks the selected
+contracts, common quantity, complete state vectors, constant positive payout,
+quotes, fees, costs, terminal P&L, fill exposure, and classification.
+
+A controlled fixture uses three overlapping binary-payoff vectors whose sum is
+exactly USD 2 per contract in each of three states. At the fixture depth of ten
+contracts, the model recomputes USD 20 payout per state against USD 7.50 quoted
+cost, for USD 12.50 gross P&L. This is synthetic test arithmetic only; it is
+not an observed market, source-backed opportunity, or economic finding. The
+independent audit verifies all three legs and rejects the same candidate after
+one leg is removed. A separate fixture with no constant-payout subset returns
+no candidate.
+
+After the implementation, `tests/frontier/test_relationships_economics_replay.py`
+and both multi-outcome and payoff-basket replay API regressions passed **51
+tests** in 2.00 seconds. The complete serial Frontier suite then passed **332
+tests** in 52.98 seconds pytest time / **54.32 seconds wall**. Peak RSS was
+**369,040 KiB**, with zero swaps, socket messages, or major page faults and 35%
+CPU use. One existing Starlette/httpx deprecation warning remains. Strict mypy
+passed for `economics.py`, `independent_audit.py`, `models.py`, and `replay.py`;
+scoped Ruff check/format and `git diff --check` passed. The focused Mission
+Control test passed **1/1** for the new candidate-family label, and the API
+fixture verifies persistence/listing without adapter requests. No new
+subset-search benchmark was captured. The fixture and bounded input ceiling
+establish algorithm behavior, not representative workload performance.
+
+Reproduction commands:
+
+```bash
+PYTHONPATH=packages /home/charlie/midas/.venv/bin/python -m pytest -q tests/frontier/test_relationships_economics_replay.py tests/frontier/test_api.py::test_replay_api_generates_and_persists_multi_outcome_candidate tests/frontier/test_api.py::test_replay_api_generates_and_persists_bounded_payoff_basket
+corepack pnpm --dir apps/web exec vitest run src/Frontier.test.tsx -t 'renders recorded-evidence empty states and never probes a source automatically'
+PYTHONPATH=packages /home/charlie/midas/.venv/bin/python -m pytest -q tests/frontier
+```
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Bounded within-market payoff-basket candidate generation | COMPLETE AND VERIFIED | Exact 3-leg overlapping payoff fixture, deterministic replay, no-coverage rejection, strict bounds, and independent audit are covered by the focused regression. No public source record currently establishes this verified payoff structure. |
+| General multi-market joint-state search | DEFERRED | The new family uses one market's own exhaustive payoff state space; it does not compose arbitrary events or infer joint state spaces across venues. |
+| Project Frontier overall | PARTIALLY VERIFIED | Live cross-venue validation, source-use holds, broader source-quality evidence, general multi-market search, and production deployment remain unresolved. |
+
+Continue offline acceptance. Keep held sources unchanged, preserve the
+research-only boundary, and treat the synthetic gross result as a unit test
+only.
