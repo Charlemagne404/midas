@@ -2,13 +2,13 @@
 
 **Report date:** 2026-10-28
 
-## Current status — 2026-10-28 04:43 UTC
+## Current status — 2026-10-28 04:49 UTC
 
 The isolated development branch is `codex/frontier-20261026`; the latest
-baseline before this documentation correction was commit `c8989d5`
-(`docs(frontier): record repository suite baseline mismatch`). The
-implementation code snapshot is commit `2064671`; later changes in this
-checkpoint update only the report and mission ledger. The current implementation
+committed checkpoint before this update was `3e56673`
+(`docs(frontier): correct regression evidence and stop record`). The
+implementation code snapshot is commit `2064671`; later commits update only
+the report and mission ledger. The current implementation
 includes four read-only source adapters, canonical market and payoff models,
 evidence-backed relationship review, binary/implication/basket candidate
 families, bounded multi-market
@@ -6393,3 +6393,37 @@ validation is admitted at this checkpoint.
 | Capture exclusion for follow-up diagnostic | COMPLETE AND VERIFIED | Sparse test worktree omitted `data/`; the held capture path was absent before and after. |
 | Captures in the initial detached collection worktree | PARTIALLY VERIFIED | Tracked capture directory was present; no test functions ran, but access during collection cannot be ruled out without file-open tracing. |
 | Further local regression | DEFERRED AT THIS SAMPLE | Memory PSI was high and external Veritas PID 4190462 remained active; it was not interrupted. |
+
+## Re-admission attempt and second resource stop — 2026-10-28 04:49 UTC
+
+At `2026-10-28T04:45:48Z`, memory PSI had recovered to **0.00% some / 0.00%
+full** over 10 seconds and **7.46% / 6.57%** over 60 seconds; about **10.2
+GiB** was available. The shared Arena lock had no holder, and the sparse
+worktree remained clean with `data/frontier/live-probes` absent. On that fresh
+sample, the same bounded repository diagnostic was retried in the sparse tree,
+using `/tmp/midas-frontier-rest-regression-20261028T0445Z` for pytest output.
+
+It again reached **101 passed**, then stalled while its own test had dispatched
+a temporary Arena planning job and an external Veritas batch acquired the
+shared admission lock. At `2026-10-28T04:49:37Z`, PSI was **43.29% some / 37.60%
+full** over 10 seconds, **33.38% / 28.08%** over 60 seconds, and **19.74% /
+16.84%** over 300 seconds. PID **4194119** (`veritas_gap_detail_v2_batch.py`)
+was in `DNs` state with about **259 MiB RSS** and held the lock. Only Frontier
+pytest PID **4193289** was interrupted; the temporary child job and test
+process had exited by the post-stop check. The external process was not
+signaled.
+
+Pytest exited **2** with `KeyboardInterrupt` at **204.34 seconds** (205.98
+seconds process wall), with **534,664 KiB** peak RSS, zero swaps, zero major
+faults, and zero socket messages. The run does not pass the repository suite.
+The capture path remained absent after the attempt, and the sparse test
+worktree was clean at the post-run check. No code or test files were modified.
+Further resource-bearing checks are deferred until a new memory and Arena-lock
+admission sample.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Broad MIDAS Python regression excluding known collection blocker | PARTIALLY VERIFIED | Two runs each reached 101 passing tests; both ended with resource-driven interrupts and exit 2. Neither is a suite pass. |
+| Sparse capture isolation | COMPLETE AND VERIFIED | Held capture path absent before and after both diagnostic runs. |
+| External Arena workload isolation | COMPLETE AND VERIFIED | Only Frontier pytest processes were interrupted; external Veritas PID 4194119 was left untouched. |
+| Further repository regression | DEFERRED AT THIS SAMPLE | External job holds the shared lock and memory PSI is high. |

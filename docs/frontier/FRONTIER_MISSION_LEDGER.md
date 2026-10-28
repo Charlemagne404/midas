@@ -4995,3 +4995,42 @@ were deferred.
 | Follow-up test isolation | COMPLETE AND VERIFIED | Sparse checkout excluded `data/`; the held capture path stayed absent before and after. |
 | Initial detached collection capture boundary | PARTIALLY VERIFIED | Tracked captures were present; reads during collection cannot be ruled out, though no test functions ran and no writes/copies were intentional. |
 | Further broad verification | DEFERRED AT THIS SAMPLE | High memory PSI and active external Veritas batch; no action was taken on that process. |
+
+## Re-admission attempt and second resource stop — 2026-10-28 04:49 UTC
+
+At `2026-10-28T04:45:48Z`, memory PSI had recovered to **0.00% some / 0.00%
+full** over 10 seconds and **7.46% / 6.57%** over 60 seconds, with about
+**10.2 GiB** available. A read-only lock check found no shared Arena holder;
+the detached sparse worktree at `c8989d5` was clean and its held capture path
+was absent. The repository diagnostic was retried in that sparse tree:
+
+```bash
+nice -n 10 /usr/bin/time -v env PYTHONPATH=packages:. \
+  /home/charlie/midas/.venv/bin/python -m pytest -q \
+  --basetemp=/tmp/midas-frontier-rest-regression-20261028T0445Z \
+  --ignore=tests/test_reality_full_scale_validation.py tests
+```
+
+The run again reached **101 passed**, then stopped making progress while a
+test-dispatched Arena planning job was active. At `2026-10-28T04:49:37Z`, an
+external Veritas batch PID **4194119** held the shared Arena lock in `DNs`
+state (about **259 MiB RSS**) and host PSI had risen to **43.29% some / 37.60%
+full** over 10 seconds, **33.38% / 28.08%** over 60 seconds, and **19.74% /
+16.84%** over 300 seconds. Only Frontier pytest PID **4193289** was sent
+SIGINT; the external Veritas process was not signaled. The temporary child job
+and pytest process were gone at the post-stop check.
+
+Pytest exited **2** with `KeyboardInterrupt` after **204.34 seconds**; process
+wall time was **205.98 seconds**, peak RSS **534,664 KiB**, zero swaps, zero
+major faults, and zero socket messages. The run is incomplete and is not a
+full-suite pass. The held capture path remained absent after the run; the
+sparse test worktree was clean at the post-run check, and no code or test file
+was modified. Defer further resource-bearing work until memory PSI and the
+shared lock are sampled again.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Broad MIDAS Python regression excluding known Reality collection blocker | PARTIALLY VERIFIED | Two attempts each reached 101 tests, then were interrupted under resource pressure; neither completed. |
+| Sparse test data boundary | COMPLETE AND VERIFIED | Held `data/frontier/live-probes` path remained absent before and after both attempts. |
+| Protected external Veritas workload | COMPLETE AND VERIFIED | External PID 4194119 and its shared-lock job were left untouched. |
+| Further full repository test | DEFERRED AT THIS SAMPLE | High memory PSI and external shared-lock holder remain. |
