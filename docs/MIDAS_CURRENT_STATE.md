@@ -1268,3 +1268,7 @@ research-only, undeployed, and **PARTIALLY VERIFIED**.
 ### Frontier funding-currency browser acceptance — 2026-10-28 00:27 UTC
 
 Commit `86b79fe10b6aed82dabbe3e40ea01e08923ad744` adds a fixture-backed browser regression for explicit venue-local FX assumptions. The full Frontier Python suite passes **322/322**, the web unit suite **40/40**, and the configured browser suite **12/12**. Python peak RSS was **364,312 KiB** with zero swaps. Browser tests used isolated demo services; they do not establish a live FX source, cross-venue executable funding, source permission, or production readiness. Frontier remains research-only, undeployed, and **PARTIALLY VERIFIED**. See the [engineering report](frontier/FRONTIER_ENGINEERING_REPORT.md) and [mission ledger](frontier/FRONTIER_MISSION_LEDGER.md).
+
+### Frontier API registry typing — 2026-10-28 00:35 UTC
+
+Commit `480ba629171c855086cd375a34e688bbc72fdbcb` types the Frontier API router against `AdapterRegistry`, removing its `Any` return diagnostic. Strict mypy passes for the API module; a no-network API overview test passes **1/1**. Ruff and formatting pass. The earlier 322/40/12 suite results are unchanged; they were not rerun after this annotation-only change. Frontier remains research-only, undeployed, and **PARTIALLY VERIFIED**.

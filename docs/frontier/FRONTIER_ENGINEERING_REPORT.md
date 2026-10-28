@@ -25,7 +25,7 @@ undeployed.
 
 **Branch:** `codex/frontier-20261026`
 
-**Latest verification update (2026-10-28 00:27 UTC):** Commit
+**Latest full-regression checkpoint (2026-10-28 00:27 UTC):** Commit
 `86b79fe10b6aed82dabbe3e40ea01e08923ad744` adds fixture-backed browser coverage
 for the funding-currency workbench. Since the preceding checkpoint, the full
 Frontier Python suite passed **322/322** (50.72 seconds, 364,312 KiB peak RSS,
@@ -36,6 +36,17 @@ assumptions, and unchanged candidate classification. Full details and the
 resource sample are recorded in the dated continuation at the end of this
 report. These fixture results do not establish live FX or cross-venue
 executable economics.
+
+**Latest API type checkpoint (2026-10-28 00:35 UTC):** Commit
+`480ba629171c855086cd375a34e688bbc72fdbcb` types the Frontier router's
+registry parameter as `AdapterRegistry` instead of `Any`, removing the
+adapter-lookup `no-any-return` diagnostic. Strict mypy passes for
+`apps/api/frontier.py`; Ruff and format checks pass. The isolated API overview
+test passes **1/1** in 0.70 seconds at **77,492 KiB peak RSS**, zero swaps, and
+zero socket messages. The test has one pre-existing Starlette/httpx
+deprecation warning. The 322-test Python suite and 40/12 web/browser suites
+passed at the prior checkpoint and were not rerun after this annotation-only
+change.
 
 **Worktree:** `/home/charlie/midas-frontier`
 
@@ -1561,15 +1572,18 @@ evaluated as designed; they are not scientific or economic findings.
 
 ## 15. Economic limitations
 
-Kalshi fee parameters are now recorded, while exact market/account fee costs
-remain unresolved; Kraken account-tier fees are not known from the public spot capture;
-and Polymarket fee semantics remain constrained to the strict exponent-1
-normalizer and five-minute market metadata expiry. Cross-venue FX, collateral denomination,
-transfer/withdrawal cost, account funding allocation, capital duration,
-jurisdiction, custody, and settlement access are unmodeled. Public depth is a
-time-stamped displayed snapshot, not a fill guarantee. In this evidence set,
-cost-adjusted discrepancies and executable opportunities are therefore
-unestablished.
+Kalshi fee parameters are recorded, but exact market/account applicability
+remains unresolved; Kraken account-tier fees are unknown from the public spot
+capture; and Polymarket fee semantics remain constrained to the strict
+exponent-1 normalizer and five-minute market metadata expiry. A separate,
+non-classifying funding-currency sensitivity accepts explicit user FX
+assumptions and venue-local virtual balances. It does not provide sourced FX,
+alter candidate P&L, or establish that capital can be transferred or converted.
+Cross-venue collateral, transfer/withdrawal costs, account funding allocation,
+capital duration, jurisdiction, custody, and settlement access remain
+unmodeled. Public depth is a time-stamped displayed snapshot, not a fill
+guarantee. In this evidence set, cost-adjusted discrepancies and executable
+opportunities remain unestablished.
 The saved Kalshi fee-metadata pair supports a standalone one-fill sensitivity
 and a bounded manual one-order sensitivity under the July 7, 2026 public
 quadratic taker formula and both documented balance-precision cases. Replay now
@@ -1625,17 +1639,24 @@ gaps are deferred work, not hidden passed checks:
   pinned normalized evidence. It cannot authenticate source semantics, reviewer
   identity, external assertions, fee authority, timestamps, or exchange truth;
   it is not a second independent market-data source.
-- No account-specific fee quote, FX, cross-venue capital transfer, settlement
-  risk, or partial-leg exposure model exists. The Kalshi replay estimate is
-  one-fill and conditional, and does not resolve account applicability.
+- No account-specific fee quote, sourced FX rate, cross-venue capital transfer,
+  or settlement-risk model exists. The venue-local funding-currency sensitivity
+  is a separately labelled user-assumption scenario that does not change
+  candidate costs or establish conversion availability. One-sided and partial-
+  fill sensitivities model hypothetical exposures, not actual fills, queue
+  position, or execution probability. The Kalshi replay estimate is one-fill
+  and conditional, and does not resolve account applicability.
 - No continuous source worker, incremental book stream, gap reconstruction, or
   source-specific long-horizon quality study exists.
 - A bounded Frontier paired-replay job is now registered with Arena and exposed
   through its local API and Mission Control. It reuses the host-wide admission
   gate and has fixture, API, and UI coverage, but no systemd worker was admitted
   or launched. There is still no Laboratory experiment manager or durable
-  campaign scheduler. The complete repository Python suite and browser suite
-  beyond the targeted Frontier cases were not run.
+  campaign scheduler. The Frontier-specific Python suite passes **322 tests**,
+  and the configured web unit and browser suites pass **40** and **12** tests
+  respectively as of 2026-10-28. The complete repository Python suite,
+  deployment-scale concurrency, and steady-state resource sustainability remain
+  unverified.
 
 ## 17. Production deployment prerequisites
 
@@ -1659,10 +1680,10 @@ Priority order:
    evidence; do not continue fetching pages just to grow the sample. Broaden
    degraded-source evidence only through a short bounded probe.
 2. The centered multi-hop API/UI path is revision-bound and has deterministic
-   BFS fixture coverage. Run its targeted browser E2E when measured host memory
-   pressure permits. Extend beyond the current 200-market/500-row bounds or add
-   clustering only after representative data and resource measurements justify
-   the added scope.
+   BFS fixture coverage. The complete configured browser suite now passes,
+   including graph neighborhood pagination. Extend beyond the current
+   200-market/500-row bounds or add clustering only after representative data
+   and resource measurements justify the added scope.
 3. The Kalshi saved-evidence replay estimate now covers one supported quadratic
    taker fill. Extend it only when permitted public evidence and an independently
    checked model establish further fee timing, precision, maker/mixed-fill, or
@@ -1681,8 +1702,11 @@ Priority order:
 6. Only after representative evidence, consider authenticated reviewer identity
    and independent external assertion ingestion; this needs a separately
    designed security boundary.
-7. Only after representative evidence, consider FX, capital allocation,
-   settlement/transfer, and instrument hedge models.
+7. Venue-local funding-currency sensitivity now accepts explicit user
+   assumptions without changing candidate economics. Only after permitted,
+   representative rate and settlement evidence is available should Frontier
+   consider integrating FX into candidate P&L, cross-venue capital allocation,
+   settlement/transfer costs, or instrument hedge models.
 
 ## 19. Exact files and commits changed
 
@@ -5005,3 +5029,61 @@ During the check at `2026-10-28T00:31:15Z`, memory PSI avg10 was **24.98% some
 / 19.55% full**, MemAvailable was **9,799,260 KiB**, and the external Veritas
 gap-detail batch PID **3975405** was active. It was not touched. The strict API
 typing caveat remains unresolved; retry when shared-host pressure subsides.
+
+## Current mission acceptance matrix — 2026-10-28 00:34 UTC
+
+This matrix assesses the user-requested Frontier stages and scientific
+acceptance against current branch evidence, not intent or planned work.
+
+| Requirement | Status | Current evidence and remaining gap |
+| --- | --- | --- |
+| Isolated baseline and exchange-independent adapter foundation | COMPLETE AND VERIFIED | Branch `codex/frontier-20261026` is based on the verified V6 integration commit in a separate worktree. Shared capability contracts, registry, source-specific adapters, bounded transport, and compatibility tests pass in the Frontier suite. |
+| Polymarket, Kalshi, Kraken, and Coinbase read-only adapters | PARTIALLY VERIFIED | Adapters are implemented and contract/fixture tested; selected historical Polymarket, Kalshi, and Kraken public responses were captured. Kalshi and Kraken remain held, Coinbase remains held pending exact terms-scope validation, and no fresh live validation is claimed. |
+| Canonical instruments, precise denominations, and supported payoff semantics | PARTIALLY VERIFIED | Versioned models preserve native IDs, identities, outcomes, payoff rules, constraints, and provenance; binary and bounded multi-outcome evaluators reject unsupported or incompatible semantics. Spot remains contextual unless a supported payoff link is proved. Broader instrument families are not supported. |
+| Relationship graph, evidence, persistence, and bounded exploration | PARTIALLY VERIFIED | Deterministic proposals, explicit verification states, append-only review evidence, held-source filtering, and revision-pinned neighborhood/search pages have API and UI coverage. No genuine verified cross-venue economic match exists; reviewer identities and external assertions are not authenticated. |
+| Opportunity families and independent economic verification | PARTIALLY VERIFIED | Binary coverage, bounded multi-outcome, and logical-implication constructions have independent arithmetic checks and adversarial fixtures. No live positive or economically eligible opportunity is established; general multi-leg search is not implemented. |
+| Venue costs, capital, and currency assumptions | PARTIALLY VERIFIED | Public fee metadata, bounded fee and carry sensitivities, partial-fill stress, venue-separated virtual balances, and explicit non-classifying funding-currency sensitivity exist. Account-specific fees, sourced FX, cross-venue transfer/custody, settlement risk, and conversion availability remain unknown and are not folded into candidate P&L. |
+| Isolated collection, provenance, durable storage, and deterministic replay | PARTIALLY VERIFIED | Finite restartable collection, append-only hash-chained checkpoints, bounded storage, event-time replay, source-health evidence, and replay provenance are implemented and tested offline. No continuous stream, full history walk, or long-horizon source-quality study is established. |
+| Laboratory/Arena research integration | PARTIALLY VERIFIED | Bounded replay jobs, paired comparisons, integrity-checked results, and fixture/UI paths exist. No durable Laboratory experiment manager, long-duration campaign, or production worker is authorized or verified. |
+| Native Frontier Mission Control interface | IMPLEMENTED, DEPLOYMENT PENDING | The configured web unit suite passes 40/40 and browser E2E passes 12/12 against isolated services. The FX response is fixture-intercepted in browser; live source data is unavailable under current holds. No production deployment occurred. |
+| Scientific acceptance: normalization, rejection, controlled discrepancy, independent arithmetic, missing/stale/asynchronous evidence, and deterministic replay | PARTIALLY VERIFIED | Controlled fixtures and the 322-test Frontier suite cover supported behavior and rejection paths. Evidence does not establish a genuine cross-venue relationship, synchronized executable quotes, or positive economics. |
+| Resource sustainability under bounded development workloads | PARTIALLY VERIFIED | One complete Frontier suite measured 364,312 KiB peak RSS and zero swaps. Sustained collection, concurrent workloads, production resource admission, and broad latency/CPU behavior remain unmeasured. |
+| Read-only research boundary and source-use gates | COMPLETE AND VERIFIED | No trading/authenticated exchange path is provided; source-policy tests ensure held venues return 409 without requests and held evidence stays quarantined. This does not grant permission to use a held source. |
+| Required architecture, operations, current-state, report, and continuation documentation | COMPLETE AND VERIFIED | The engineering report, architecture, operations guidance, current-state note, and append-only mission ledger record implementation, evidence, blockers, and continuation actions. |
+| Production deployment | DEFERRED | Requires separate source permission, resource/storage/recovery review, full deployment-scope regression, monitoring/rollback preparation, and explicit authorization. |
+| Genuine cross-venue validation using currently held sources | BLOCKED | The current source-use review blocks new Kalshi/Kraken research and keeps Coinbase held pending a resolved terms scope. Polymarket research access alone cannot establish cross-venue equivalence. Continue offline work; do not bypass the holds. |
+
+Across the 14 scientific criteria, deterministic fixtures establish the
+supported normalization, rejection, arithmetic, missing/stale-data, persistence,
+and replay mechanisms. Cross-venue live matching and fully modeled execution
+economics remain unproven. Zero eligible opportunities is an honest outcome;
+it is not a claim that the opportunity question has been settled.
+
+The scoped API type check now passes after host pressure subsided. Continue
+offline acceptance; live cross-venue work remains gated on a validated
+source-use decision, and deployment remains a separately authorized activity.
+
+### Strict Frontier API registry typing — 2026-10-28 00:35 UTC
+
+Commit `480ba629171c855086cd375a34e688bbc72fdbcb` changes the
+`apps.api.frontier.router` parameter from `Any` to the concrete
+`AdapterRegistry`. Its typed `get` method returns `ExchangeAdapter`, so strict
+mypy no longer reports `no-any-return` at the registered-adapter boundary.
+This does not change API behavior or initiate network activity.
+
+Verification: `MYPYPATH=packages /home/charlie/midas/.venv/bin/mypy --strict
+--follow-imports=silent apps/api/frontier.py` passed with no issues in one
+source file. `/usr/bin/time -v` measured 27.22 seconds wall, 717,964 KiB peak
+RSS, zero swaps, and zero socket messages. Ruff check and format check passed.
+The API overview route regression passed **1/1** in 0.70 seconds; peak RSS was
+**77,492 KiB**, with zero swaps/socket messages and one existing
+Starlette/httpx deprecation warning. At the 00:34:53 UTC sample, memory PSI
+avg10 was 0.11% some / 0.10% full and MemAvailable was 9,913,344 KiB. The
+previous full Frontier/web/browser suites were not rerun because this change
+only narrows a router parameter type; the focused test confirms startup and
+router construction.
+
+The earlier 00:31 deferred attempt was stopped at 694,744 KiB while the external
+batch was active. That attempt changed no code; after the batch ended, the
+validated type change was committed. No external batch, protected service,
+exchange, or production store was modified.
