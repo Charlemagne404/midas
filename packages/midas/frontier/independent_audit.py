@@ -54,7 +54,7 @@ from midas.frontier.relationships import (
 )
 
 D = Decimal
-_AUDIT_VERSION = "frontier-independent-economic-audit-14"
+_AUDIT_VERSION = "frontier-independent-economic-audit-15"
 _FEE_QUANTUM = D("0.00001")
 _KALSHI_FEE_MAX_EVIDENCE_AGE = timedelta(hours=24)
 _AUDIT_PARTIAL_FILL_FRACTIONS = (D(0), D("0.25"), D("0.5"), D("0.75"), D(1))
@@ -1510,6 +1510,17 @@ def _verify_cross_venue_relationship(
         raise _MissingAuditEvidence("Cross-venue state mapping is not a bijection.")
     left_instruments = {item.native_instrument_id: item for item in left.instruments}
     right_instruments = {item.native_instrument_id: item for item in right.instruments}
+    left_outcome_ids = [item.outcome_id for item in left.instruments]
+    right_outcome_ids = [item.outcome_id for item in right.instruments]
+    if (
+        any(item is None for item in left_outcome_ids)
+        or len(set(left_outcome_ids)) != len(left_outcome_ids)
+        or any(item is None for item in right_outcome_ids)
+        or len(set(right_outcome_ids)) != len(right_outcome_ids)
+    ):
+        raise _MissingAuditEvidence(
+            "Cross-venue event contains missing or duplicate outcome identities."
+        )
     if any(
         item.price_currency != market.payoff.payout_currency
         or item.price_currency_identity != market.payoff.settlement_asset_identity
@@ -1530,6 +1541,10 @@ def _verify_cross_venue_relationship(
             )
         left_payout = {item.state_id: item.amount for item in left_item.payouts}
         right_payout = {item.state_id: item.amount for item in right_item.payouts}
+        if len(left_payout) != len(left_item.payouts) or len(right_payout) != len(
+            right_item.payouts
+        ):
+            raise _MissingAuditEvidence("Mapped instrument contains duplicate payout states.")
         if set(left_payout) != set(state_map) or set(right_payout) != set(state_map.values()):
             raise _MissingAuditEvidence("Mapped instrument payoff vector is incomplete.")
         if any(left_payout[state] != right_payout[mapped] for state, mapped in state_map.items()):
@@ -1572,6 +1587,17 @@ def _require_verified_event(market: FrontierMarket) -> None:
         raise _MissingAuditEvidence(
             "Event payoff, resolution, payout denomination, or settlement evidence is incomplete."
         )
+    if len(set(market.payoff.state_ids)) != len(market.payoff.state_ids):
+        raise _MissingAuditEvidence("Event payoff contains duplicate state identifiers.")
+    instrument_ids = [item.native_instrument_id for item in market.instruments]
+    if len(set(instrument_ids)) != len(instrument_ids):
+        raise _MissingAuditEvidence("Event contains duplicate native instrument identities.")
+    for instrument in market.instruments:
+        payout_state_ids = [item.state_id for item in instrument.payouts]
+        if len(set(payout_state_ids)) != len(payout_state_ids):
+            raise _MissingAuditEvidence(
+                "Market instrument contains duplicate payout state identifiers."
+            )
 
 
 def _payout(instrument: MarketInstrument, state_id: str) -> Decimal:

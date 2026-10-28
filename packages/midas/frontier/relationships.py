@@ -22,7 +22,7 @@ from midas.frontier.models import (
 
 D = Decimal
 MATCHER_VERSION = "frontier-relationship-matcher-5"
-SAME_PAYOFF_VERIFIER_VERSION = "frontier-equivalence-verifier-5"
+SAME_PAYOFF_VERIFIER_VERSION = "frontier-equivalence-verifier-6"
 LOGICAL_IMPLICATION_VERIFIER_VERSION = "frontier-logical-implication-verifier-2"
 MAX_LOGICAL_IMPLICATION_STATES = 1024
 MAX_LOGICAL_STATE_ID_CHARS = 128
@@ -577,10 +577,26 @@ def verify_same_payoff(
 
     left_states = set(left.payoff.state_ids)
     right_states = set(right.payoff.state_ids)
+    if len(left_states) != len(left.payoff.state_ids):
+        checks.append("Left payoff contains duplicate state identifiers")
+    if len(right_states) != len(right.payoff.state_ids):
+        checks.append("Right payoff contains duplicate state identifiers")
     if set(state_mapping) != left_states or set(state_mapping.values()) != right_states:
         checks.append("State mapping is not a bijection over both exhaustive state sets")
     left_instruments = {item.native_instrument_id: item for item in left.instruments}
     right_instruments = {item.native_instrument_id: item for item in right.instruments}
+    if len(left_instruments) != len(left.instruments):
+        checks.append("Left market contains duplicate native instrument identities")
+    if len(right_instruments) != len(right.instruments):
+        checks.append("Right market contains duplicate native instrument identities")
+    left_outcomes = [item.outcome_id for item in left.instruments]
+    right_outcomes = [item.outcome_id for item in right.instruments]
+    if any(item is None for item in left_outcomes) or len(set(left_outcomes)) != len(left_outcomes):
+        checks.append("Left market contains missing or duplicate outcome identities")
+    if any(item is None for item in right_outcomes) or len(set(right_outcomes)) != len(
+        right_outcomes
+    ):
+        checks.append("Right market contains missing or duplicate outcome identities")
     if set(instrument_mapping) != set(left_instruments) or set(instrument_mapping.values()) != set(
         right_instruments
     ):
@@ -594,6 +610,11 @@ def verify_same_payoff(
                 continue
             left_payouts = {item.state_id: item.amount for item in left_item.payouts}
             right_payouts = {item.state_id: item.amount for item in right_item.payouts}
+            if len(left_payouts) != len(left_item.payouts) or len(right_payouts) != len(
+                right_item.payouts
+            ):
+                checks.append(f"Mapped instrument {left_id} contains duplicate payout states")
+                continue
             if set(left_payouts) != left_states or set(right_payouts) != right_states:
                 checks.append(f"Mapped instrument {left_id} does not define every payoff state")
                 continue

@@ -108,6 +108,58 @@ def _verified_pair():
     return left, right, relationship, instrument_mapping
 
 
+@pytest.mark.parametrize(
+    ("corruption", "reason"),
+    (
+        ("duplicate_payoff_state", "duplicate state identifiers"),
+        ("duplicate_payout_row", "duplicate payout states"),
+        ("duplicate_outcome", "duplicate outcome identities"),
+        ("duplicate_instrument", "duplicate native instrument identities"),
+    ),
+)
+def test_same_payoff_verifier_rejects_malformed_model_copy(corruption, reason):
+    left, right, _relationship, instrument_mapping = _verified_pair()
+    if corruption == "duplicate_payoff_state":
+        payoff = left.payoff.model_copy(update={"state_ids": (*left.payoff.state_ids, "yes")})
+        malformed_left = left.model_copy(update={"payoff": payoff})
+    else:
+        instruments = list(left.instruments)
+        if corruption == "duplicate_payout_row":
+            instruments[0] = instruments[0].model_copy(
+                update={
+                    "payouts": (
+                        *instruments[0].payouts,
+                        StatePayout(state_id="yes", amount=Decimal("1")),
+                    )
+                }
+            )
+        elif corruption == "duplicate_outcome":
+            instruments[1] = instruments[1].model_copy(
+                update={"outcome_id": instruments[0].outcome_id}
+            )
+        else:
+            instruments[1] = instruments[1].model_copy(
+                update={"native_instrument_id": instruments[0].native_instrument_id}
+            )
+        malformed_left = left.model_copy(update={"instruments": tuple(instruments)})
+
+    result = verify_same_payoff(
+        malformed_left,
+        right,
+        state_mapping={"yes": "yes", "no": "no"},
+        instrument_mapping=instrument_mapping,
+        external_assertion_id="model-copy-malformation-regression",
+        evidence_observation_ids=(
+            malformed_left.provenance.observation_id,
+            right.provenance.observation_id,
+        ),
+        asserted_at_utc=T0,
+    )
+
+    assert result.state == VerificationState.REJECTED
+    assert reason in result.reason.lower()
+
+
 def _market_with_token_settlement_identity(market_value, identity):
     instruments = tuple(
         item.model_copy(
@@ -387,7 +439,7 @@ def test_cross_venue_replay_rejects_equivalence_evidence_missing_pinned_market()
 def test_cross_venue_replay_requires_current_equivalence_verifier_version():
     left, right, relationship, _instrument_mapping = _verified_pair()
     legacy_evidence = relationship.evidence[0].model_copy(
-        update={"verifier_version": "frontier-equivalence-verifier-4"}
+        update={"verifier_version": "frontier-equivalence-verifier-5"}
     )
     legacy_relationship = relationship.model_copy(update={"evidence": (legacy_evidence,)})
     left_books, right_books = _books(left, right)
@@ -564,7 +616,7 @@ def test_same_ticker_on_different_networks_cannot_verify_same_payoff():
     )
 
     assert same_asset_relationship.state == VerificationState.VERIFIED
-    assert same_asset_relationship.evidence[0].verifier_version == "frontier-equivalence-verifier-5"
+    assert same_asset_relationship.evidence[0].verifier_version == "frontier-equivalence-verifier-6"
     assert any(
         "settlement_asset_identities={" in detail
         for detail in same_asset_relationship.evidence[0].details
@@ -758,6 +810,63 @@ def _books(left, right):
             r_no.native_instrument_id: book(right, r_no.native_instrument_id, "0.45"),
         },
     )
+
+
+def test_independent_audit_rejects_duplicate_payout_on_unselected_instrument():
+    left, right, relationship, instrument_mapping = _verified_pair()
+    left_books, right_books = _books(left, right)
+    state_mapping = {"yes": "yes", "no": "no"}
+    candidate = generate_binary_coverage_candidates(
+        left,
+        right,
+        relationship,
+        left_books,
+        right_books,
+        state_mapping=state_mapping,
+        instrument_mapping=instrument_mapping,
+        as_of_utc=T0 + timedelta(milliseconds=100),
+    )[0]
+    selected_left_ids = {
+        leg.instrument_id for leg in candidate.legs if leg.market_id == left.canonical_id
+    }
+    unselected = next(
+        item for item in left.instruments if item.native_instrument_id not in selected_left_ids
+    )
+    malformed_unselected = unselected.model_copy(
+        update={
+            "payouts": (
+                *unselected.payouts,
+                StatePayout(state_id="yes", amount=Decimal("1")),
+            )
+        }
+    )
+    malformed_left = left.model_copy(
+        update={
+            "instruments": tuple(
+                malformed_unselected if item is unselected else item for item in left.instruments
+            )
+        }
+    )
+    canonical_instrument_mapping = (
+        instrument_mapping
+        if relationship.left_market_id == left.canonical_id
+        else {right_id: left_id for left_id, right_id in instrument_mapping.items()}
+    )
+
+    audited = independently_audit_candidate(
+        candidate.model_copy(update={"independent_audit": None}),
+        markets={left.canonical_id: malformed_left, right.canonical_id: right},
+        books_by_market={left.canonical_id: left_books, right.canonical_id: right_books},
+        relationships={relationship.relationship_id: relationship},
+        state_mappings={relationship.relationship_id: state_mapping},
+        instrument_mappings={relationship.relationship_id: canonical_instrument_mapping},
+        scenario=ExecutionScenario(),
+    )
+
+    assert audited.independent_audit is not None
+    assert audited.independent_audit.disposition.value == "incomplete"
+    assert audited.classification == OpportunityClassification.INCOMPLETE_EVIDENCE
+    assert "duplicate payout state identifiers" in audited.independent_audit.message.lower()
 
 
 def _multi_outcome_market(*, state_count: int = 3, steps: tuple[str | None, ...] | None = None):
@@ -1840,7 +1949,7 @@ def test_independent_audit_rejects_naive_book_time_from_a_reconstructed_model():
     assert audit.independent_audit is not None
     assert audit.independent_audit.disposition.value == "incomplete"
     assert "not timezone-aware" in audit.independent_audit.message
-    assert audit.independent_audit.model_version == "frontier-independent-economic-audit-14"
+    assert audit.independent_audit.model_version == "frontier-independent-economic-audit-15"
 
 
 def test_independent_audit_rejects_quantity_step_mutation():
