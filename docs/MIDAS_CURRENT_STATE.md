@@ -33,6 +33,22 @@ in the dated addendum below and in the Frontier engineering report.
 
 ## Frontier development addendum — 2026-10-28
 
+### Latest isolated Frontier checkpoint — 2026-10-28 11:38 UTC
+
+Test commit `c6dfff1` adds a Coinbase terms-hold regression against a copied
+`CoinbaseSpotConfig`. It checks both adapter and transport constructors refuse
+a copy that clears the hold without the exact reviewed terms acknowledgement.
+Ruff and `git diff --check` pass; the test has not run.
+
+At `11:38:45Z`, memory PSI avg10 was 35.09% some / 29.50% full and I/O PSI
+was 3.88% some / 3.67% full. About 10 GiB was available; host swap was
+3.4/4 GiB used. A read-only process inspection found the existing
+`veritas_gap_detail_v2_batch.py` process (PID 344473) in D state; it was left
+untouched. No test or replay was started under this pressure. The previously
+verified 418/418 suite covers product commit `1dd0987`, before this test-only
+commit; the full current test tree remains pending. Frontier remains
+**PARTIALLY VERIFIED**, research-only, and undeployed.
+
 ### Latest isolated Frontier checkpoint — 2026-10-28 11:35 UTC
 
 Code commit `1dd0987` makes adapter resource bounds fail closed after copied

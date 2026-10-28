@@ -2,6 +2,34 @@
 
 **Report date:** 2026-10-28
 
+## Current status — 2026-10-28 11:38 UTC
+
+This entry supersedes the 11:35 UTC checkpoint. Test commit `c6dfff1` adds a
+Coinbase-specific source-use hold regression: a copied config that removes the
+terms block without the reviewed acknowledgement must be rejected before
+adapter or transport setup. Ruff and `git diff --check` pass. The new test has
+not run because the host resource gate is currently exceeded.
+
+At `11:38:45Z`, memory PSI avg10 was **35.09% some / 29.50% full**, I/O PSI
+was **3.88% some / 3.67% full**, about **10 GiB** was available, and host
+swap was 3.4/4 GiB used. Read-only inspection found an existing
+`veritas_gap_detail_v2_batch.py` process (PID 344473) in D state; it was not
+interrupted or modified. No test, replay, source probe, protected service, or
+deployment action was performed under the measured pressure.
+
+The existing **418/418** full Frontier run is for product commit `1dd0987`
+before this test-only commit. It remains evidence for the unchanged product
+code but does not cover the newly added Coinbase regression or represent a
+full run of the latest test tree. Frontier remains **PARTIALLY VERIFIED**.
+
+| Requirement | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Adapter resource-bound validation | COMPLETE AND VERIFIED | Product code rejects copied invalid limits; 418 existing Frontier tests pass on `1dd0987`. |
+| Coinbase copied-config terms hold | PARTIALLY VERIFIED | Regression committed and linted, not executed due memory and I/O PSI exceeding the admission gate. |
+| Genuine cross-venue validation | BLOCKED | No authorized genuine multi-venue evidence is available. |
+| Production recovery and deployment | DEFERRED | Research worktree remains isolated, unmerged, and undeployed. |
+| Frontier overall | PARTIALLY VERIFIED | Latest test-tree regression, broader MIDAS tests, live evidence, and deployment remain open. |
+
 ## Current status — 2026-10-28 11:35 UTC
 
 This entry supersedes the 11:31 UTC checkpoint. Code commit `1dd0987`
@@ -8732,6 +8760,7 @@ store, or Arena job was accessed or started.
 | `4ddcd11` | `docs/MIDAS_CURRENT_STATE.md`; `docs/frontier/FRONTIER_ARCHITECTURE.md`; `docs/frontier/FRONTIER_ENGINEERING_REPORT.md`; `docs/frontier/FRONTIER_MISSION_LEDGER.md` | Record the copied execution-scenario integrity gate. |
 | `1dd0987` | `packages/midas/frontier/adapters/base.py`; `adapters/transport.py`; `models.py`; `tests/frontier/test_adapters.py` | Revalidate concrete adapter configuration bounds before adapter use or HTTP client creation. |
 | `0ac1094` | `docs/MIDAS_CURRENT_STATE.md`; `docs/frontier/FRONTIER_ARCHITECTURE.md`; `docs/frontier/FRONTIER_ENGINEERING_REPORT.md`; `docs/frontier/FRONTIER_MISSION_LEDGER.md`; `docs/frontier/FRONTIER_OPERATIONS.md` | Record adapter resource-bound validation and exact 418-test evidence. |
+| `c6dfff1` | `tests/frontier/test_coinbase.py` | Add a pending no-network regression for a copied config that attempts to clear Coinbase's source-use hold without the exact reviewed acknowledgement. |
 
 The temporary `tests/frontier/test_recorded_cross_venue_relationship.py` was
 removed after the test guard denied held-capture access; it is not part of the

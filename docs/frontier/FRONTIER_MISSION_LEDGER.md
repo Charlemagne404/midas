@@ -1,5 +1,35 @@
 # Project Frontier Mission Ledger
 
+## Coinbase copied-config hold regression pending resource admission — 2026-10-28 11:38 UTC
+
+Test commit `c6dfff1` adds a regression for clearing Coinbase's source-use
+hold on a `CoinbaseSpotConfig` copied with `model_copy(update=...)`. It checks
+that concrete-subclass revalidation rejects the copied config at both the
+adapter and transport constructors, before any HTTP client can be created.
+Ruff and `git diff --check` pass, but the new test has **not run**.
+
+At `11:38:45Z`, memory PSI avg10 was **35.09% some / 29.50% full**, I/O PSI
+was **3.88% some / 3.67% full**, and about **10 GiB** was available. Host swap
+was 3.4/4 GiB used. A read-only process sample showed an existing
+`veritas_gap_detail_v2_batch.py` process (PID 344473) in D state; it was left
+untouched. No test, replay, source probe, protected-service operation, or
+deployment was attempted under this pressure.
+
+The prior **418/418** full-suite result remains valid for the product code at
+`1dd0987`; `c6dfff1` adds one unrun regression, so it does not establish the
+current test tree's full-suite result.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Adapter resource-bound implementation | COMPLETE AND VERIFIED | Concrete config revalidation and 418 existing Frontier tests pass on product commit `1dd0987`. |
+| Coinbase copied-config terms-hold regression | PARTIALLY VERIFIED | Test is committed and linted; execution waits for a fresh PSI sample below the 1% admission limit. |
+| Frontier project overall | PARTIALLY VERIFIED | Full current test tree, live cross-venue science, broader MIDAS regression, and production deployment remain open. |
+
+**Next safe action:** once a fresh host sample is below the 1% PSI gate, run
+`PYTHONPATH=packages:. /home/charlie/midas/.venv/bin/python -m pytest -q tests/frontier/test_coinbase.py --basetemp=/dev/shm/midas-frontier-coinbase-copy-gate-<UTC-ID>`.
+If it passes, run the full Frontier suite once on the same tree and update the
+report from the measured results.
+
 ## Revalidate public-source resource configuration — 2026-10-28 11:35 UTC
 
 Code commit `1dd0987` closes a bounded-transport configuration gap. A copied
