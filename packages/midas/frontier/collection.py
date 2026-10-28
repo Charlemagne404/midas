@@ -71,7 +71,7 @@ def _adapter_config_tag(config: AdapterConfig) -> AdapterConfigTag:
     """Return an allowlisted config tag; never resolve class names from persisted data."""
     for tag, config_type in _ADAPTER_CONFIG_TYPES.items():
         if type(config) is config_type:
-            return tag  # type: ignore[return-value]
+            return tag
     raise ValueError(f"Unsupported source configuration class: {type(config).__name__}")
 
 

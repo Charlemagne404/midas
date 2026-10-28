@@ -336,10 +336,7 @@ class FundingCurrencySensitivity(FrontierModel):
             raise ValueError("Funding sensitivity cannot change candidate economics or eligibility")
         if self.audit.input_sha256 != self.input_sha256:
             raise ValueError("Independent funding audit is bound to different inputs")
-        if (
-            self.pnl_scenario.status == "verified"
-            and self.audit.disposition != "verified"
-        ):
+        if self.pnl_scenario.status == "verified" and self.audit.disposition != "verified":
             raise ValueError("Verified funding P&L requires a verified funding conversion audit")
         if self.audit.disposition == "verified":
             independently_recomputed_fee = self.audit.recomputed_total_conversion_fee_target
@@ -350,10 +347,7 @@ class FundingCurrencySensitivity(FrontierModel):
                 raise ValueError(
                     "Reported conversion fee differs from the verified independent funding audit"
                 )
-            if (
-                self.pnl_scenario.modeled_conversion_fee_target
-                != self.total_conversion_fee_target
-            ):
+            if self.pnl_scenario.modeled_conversion_fee_target != self.total_conversion_fee_target:
                 raise ValueError(
                     "Funding P&L modeled conversion fee differs from the verified total conversion fee"
                 )

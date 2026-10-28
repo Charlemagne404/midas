@@ -61,9 +61,7 @@ def _book_at(
     }
     if clock_uncertainty_ms is not None:
         provenance_updates["clock_uncertainty_ms"] = clock_uncertainty_ms
-    provenance = original.provenance.model_copy(
-        update=provenance_updates
-    )
+    provenance = original.provenance.model_copy(update=provenance_updates)
     asks = (original.asks[0].model_copy(update={"exchange_timestamp_utc": source_time}),)
     bids = (
         BookLevel(

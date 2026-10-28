@@ -281,9 +281,7 @@ def test_verified_sensitivity_rejects_rehashed_aggregate_fee_tampering():
     payload["total_conversion_fee_target"] = "0.01"
     _rehash_sensitivity_payload(payload)
 
-    with pytest.raises(
-        ValueError, match="differs from the verified independent funding audit"
-    ):
+    with pytest.raises(ValueError, match="differs from the verified independent funding audit"):
         FundingCurrencySensitivity.model_validate(payload)
 
 

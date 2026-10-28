@@ -26,10 +26,10 @@ from midas.frontier.collection import (
     CollectionSourceBusy,
 )
 from midas.frontier.models import (
+    COINBASE_MARKET_DATA_TERMS_VERSION,
     AdapterConfig,
     BookLevel,
     Capability,
-    COINBASE_MARKET_DATA_TERMS_VERSION,
     FrontierModel,
     MarketBatch,
     RawObservation,
@@ -80,9 +80,7 @@ class FakeAdapter:
         self.book_calls: list[str] = []
 
     @staticmethod
-    def _raw(
-        kind: str, identity: str, venue: Venue = Venue.POLYMARKET
-    ) -> RawObservation:
+    def _raw(kind: str, identity: str, venue: Venue = Venue.POLYMARKET) -> RawObservation:
         body = json.dumps({"kind": kind, "identity": identity}, sort_keys=True)
         return RawObservation(
             venue=venue,
@@ -405,9 +403,7 @@ async def _pause_configured_collection(tmp_path, venue, config):
     root = tmp_path / "frontier"
     store = FailOnceStore(root)
     adapter = FakeAdapter(venue=venue, config=config)
-    result = await BoundedSourceCollector(adapter, store).start(
-        market_limit=1, book_limit=0
-    )
+    result = await BoundedSourceCollector(adapter, store).start(market_limit=1, book_limit=0)
     assert result.state == "paused"
     assert result.pending_observation_count == 1
     return root, adapter, result, CollectionJournal(root)
@@ -445,17 +441,17 @@ async def test_kraken_pair_config_survives_journal_and_restart_and_mismatch_fail
         config=config.model_copy(update={"pairs": ("ETHUSD",)}),
     )
     with pytest.raises(ValueError, match="configuration differs"):
-        await BoundedSourceCollector(
-            changed_adapter, FrontierStore(root), journal
-        ).resume(paused.run_id)
+        await BoundedSourceCollector(changed_adapter, FrontierStore(root), journal).resume(
+            paused.run_id
+        )
     assert changed_adapter.discovery_calls == 0
     assert changed_adapter.transport.request_count == 0
     assert journal.latest_checkpoint(paused.run_id) == paused_checkpoint
 
     restarted_adapter = FakeAdapter(venue=Venue.KRAKEN, config=config)
-    resumed = await BoundedSourceCollector(
-        restarted_adapter, FrontierStore(root), journal
-    ).resume(paused.run_id)
+    resumed = await BoundedSourceCollector(restarted_adapter, FrontierStore(root), journal).resume(
+        paused.run_id
+    )
     assert resumed.state == "completed"
     assert restarted_adapter.discovery_calls == 0
     assert restarted_adapter.transport.request_count == 0
@@ -488,13 +484,11 @@ async def test_coinbase_product_and_terms_ack_config_survive_restart_and_are_pin
     assert listed_spec.adapter_config == config
 
     changed_products = config.model_copy(update={"products": ("ETH-USD",)})
-    changed_product_adapter = FakeAdapter(
-        venue=Venue.COINBASE_EXCHANGE, config=changed_products
-    )
+    changed_product_adapter = FakeAdapter(venue=Venue.COINBASE_EXCHANGE, config=changed_products)
     with pytest.raises(ValueError, match="configuration differs"):
-        await BoundedSourceCollector(
-            changed_product_adapter, FrontierStore(root), journal
-        ).resume(paused.run_id)
+        await BoundedSourceCollector(changed_product_adapter, FrontierStore(root), journal).resume(
+            paused.run_id
+        )
     assert changed_product_adapter.discovery_calls == 0
     assert changed_product_adapter.transport.request_count == 0
 
@@ -510,9 +504,9 @@ async def test_coinbase_product_and_terms_ack_config_survive_restart_and_are_pin
     assert changed_ack_adapter.transport.request_count == 0
 
     restarted_adapter = FakeAdapter(venue=Venue.COINBASE_EXCHANGE, config=config)
-    resumed = await BoundedSourceCollector(
-        restarted_adapter, FrontierStore(root), journal
-    ).resume(paused.run_id)
+    resumed = await BoundedSourceCollector(restarted_adapter, FrontierStore(root), journal).resume(
+        paused.run_id
+    )
     assert resumed.state == "completed"
     assert restarted_adapter.discovery_calls == 0
     assert restarted_adapter.transport.request_count == 0
