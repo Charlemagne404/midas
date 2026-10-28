@@ -2,13 +2,15 @@
 
 **Report date:** 2026-10-28
 
-## Current status — 2026-10-28 04:30 UTC
+## Current status — 2026-10-28 04:33 UTC
 
-The isolated development branch is `codex/frontier-20261026`, at commit
-`2064671` (`docs(frontier): evaluate official ECB FX reference data`); the
-worktree is clean. The current implementation includes four read-only source
-adapters, canonical market and payoff models, evidence-backed relationship
-review, binary/implication/basket candidate families, bounded multi-market
+The isolated development branch is `codex/frontier-20261026`, clean at commit
+`1047632` (`docs(frontier): record full legacy integration regression`). The
+implementation code snapshot is commit `2064671`; the two later commits
+updated only the report and mission ledger. The current implementation
+includes four read-only source adapters, canonical market and payoff models,
+evidence-backed relationship review, binary/implication/basket candidate
+families, bounded multi-market
 joint-state baskets, an independent arithmetic audit, isolated collection and
 replay, Arena integration, and the native Mission Control workspace.
 
