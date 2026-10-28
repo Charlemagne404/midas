@@ -33,14 +33,32 @@ in the dated addendum below and in the Frontier engineering report.
 
 ## Frontier development addendum — 2026-10-28
 
-### Latest isolated Frontier checkpoint — 2026-10-28 17:25 UTC
+### Latest isolated Frontier checkpoint — 2026-10-28 17:27 UTC
 
-Commit `5dcd369` adds a reproducible local regression over a temporary copy of
-the saved public Polymarket database. The focused test passes 1/1 in 0.80
-seconds and checks five markets, one book, ten hypothesis edges, a four-edge
-graph neighborhood, offline read routes, and the source raw/row hashes. Ruff,
-format, syntax, and diff checks pass; the existing Starlette/httpx TestClient
-deprecation warning remains.
+The earlier system-level service query showed inactive units because these
+services run under the user systemd manager. At 17:27:46Z,
+`midas-reality.service` and `midas-api.service` were `active/running` with
+MainPIDs 553843 and 374645. Their cgroup `MemoryCurrent` readings were
+1,130,409,984 / 1,207,959,552 bytes (Reality) and 1,126,404,096 / 1,610,612,736
+bytes (API). The expected recorder/API processes and capacity API PID 610950
+were present.
+
+The same sample found a live Veritas gap-detail batch, PID 719471, in D state
+and accessing Arena roots in the main and Veritas workspaces. This is not a
+Frontier worker and was left untouched. Host memory PSI had risen to 46.94%
+avg10 `some` / 43.17% `full`; available memory was about 9.7 GiB and swap was
+nearly full. No single process is identified as the cause. Keep the broad
+Arena suite paused while this workload and memory pressure are active.
+
+### Prior isolated Frontier checkpoint — 2026-10-28 17:25 UTC
+Commits `5dcd369` and `3e8fa17` add and strengthen a reproducible local
+regression over a temporary copy of the saved public Polymarket database. The
+final focused run passes 1/1 in 0.79 seconds. It checks five markets, one
+book, ten hypothesis edges, a four-edge graph neighborhood, offline reads,
+source raw/row hashes, and that all five payoffs remain unverified and
+non-exhaustive with unverified resolution. Ruff, format, syntax, and diff
+checks pass; the existing Starlette/httpx TestClient deprecation warning
+remains.
 
 At 17:25:29Z, memory PSI was 0% avg10 / 8.70% avg60 / 16.75% avg300, with
 about 9.9 GiB available and 2,112 KiB swap free. Both protected units remained

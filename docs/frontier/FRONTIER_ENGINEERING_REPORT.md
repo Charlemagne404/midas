@@ -2,19 +2,44 @@
 
 **Report date:** 2026-10-28
 
+## Corrected user-service and active-workload recheck — 2026-10-28 17:27 UTC
+
+The prior 17:23–17:25 system-level `systemctl` queries reported the protected
+units as inactive. A follow-up query to the **user** systemd manager corrected
+that interpretation: at 17:27:46Z, `midas-reality.service` and
+`midas-api.service` were both `active/running`, with MainPIDs **553843** and
+**374645**. Their `MemoryCurrent` values were 1,130,409,984 / 1,207,959,552
+bytes for Reality and 1,126,404,096 / 1,610,612,736 bytes for API. Both
+processes were also present with the expected recorder and release-server
+command lines. The capacity API PID **610950** was separately present.
+
+The same process sample found Veritas gap-detail worker PID **719471**, age 26
+seconds, in uninterruptible `D` state, running from `/home/charlie/midas` with
+roots under both `/home/charlie/midas/data/arena` and
+`/home/charlie/midas-veritas/data/arena`. This is an active non-Frontier
+workload; it was not started or changed here. Memory PSI at 17:27:46Z was
+46.94% avg10 `some` / 43.17% avg10 `full` (16.12% / 14.78% avg60), with
+10,210,504 KiB available and 2,132 KiB swap free. The PSI rise is host-level;
+it is not attributed to a single process. **Do not retry the full Arena suite
+while this workload and pressure are present.** No process or service action
+was taken. This entry supersedes the earlier system-level inactive reading.
+
 ## Saved live-evidence API regression — 2026-10-28 17:25 UTC
 
 Commit `5dcd369` adds
 `tests/frontier/test_captured_public_evidence_api.py`, which copies the
 committed genuine Polymarket capture database into pytest's temporary
 directory and verifies the Mission Control read API against it. The focused
-test passes **1/1 in 0.80 seconds**. It checks three stored observations, all
-five native market IDs, the one captured book, all ten `hypothesis` edges, a
-four-edge centered neighborhood, and the event observation's raw and SQLite
-row hashes. The overview confirms the read routes made no network request and
-markets are labeled `recorded observations only`. Ruff, format, `py_compile`,
-and diff checks pass. The existing Starlette/httpx TestClient deprecation
-warning remains.
+test passes **1/1 in 0.80 seconds**. Follow-up commit `3e8fa17` strengthens the
+same case to pin the live markets' payoff as unverified/non-exhaustive and
+resolution as unverified; the final test-tree rerun passes **1/1 in 0.79
+seconds**. It checks three stored observations, all five native market IDs,
+the one captured book, all ten `hypothesis` edges, a four-edge centered
+neighborhood, and the event observation's raw and SQLite row hashes. The
+overview confirms the read routes made no network request and markets are
+labeled `recorded observations only`. Ruff, format, `py_compile`, and diff
+checks pass. The existing Starlette/httpx TestClient deprecation warning
+remains.
 
 At 17:25:29Z, memory PSI was 0.00% avg10 / 8.70% avg60 / 16.75% avg300
 (`full`: 0.00% / 7.75% / 14.81%), with 10,414,440 KiB available and 2,112 KiB

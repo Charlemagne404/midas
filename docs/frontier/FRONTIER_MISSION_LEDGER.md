@@ -1,15 +1,44 @@
 # Project Frontier Mission Ledger
 
+## Corrected user-manager service and live-workload check — 2026-10-28 17:27 UTC
+
+System-level `systemctl show` returned inactive units at 17:23–17:25. A
+user-manager query at 17:27:46Z corrected that state: `midas-reality.service`
+and `midas-api.service` were both active/running, with MainPIDs 553843 and
+374645. `MemoryCurrent` was 1,130,409,984 / 1,207,959,552 bytes for Reality
+and 1,126,404,096 / 1,610,612,736 bytes for API. The recorder, release API,
+and a separate capacity API (PID 610950) were visible in the process list.
+
+A Veritas gap-detail batch (PID 719471) was also active from the main MIDAS
+workspace, in D state, with Arena roots in main and Veritas data paths. This
+is not a Frontier task and was not touched. Memory PSI at 17:27:46Z was 46.94%
+avg10 `some` / 43.17% `full` (16.12% / 14.78% avg60); available memory was
+10,210,504 KiB and swap free 2,132 KiB. This is host-level pressure with no
+single-process cause assigned.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Protected Reality/API processes | COMPLETE AND VERIFIED AS OBSERVED | User-level systemd and process list show the expected live recorder/API PIDs; no restart or configuration change occurred. MemoryHigh headroom is limited for Reality. |
+| Active Veritas batch | BLOCKING BROAD TESTS | PID 719471 is a non-Frontier worker touching Arena roots; its ownership/intent was not inferred and it remains untouched. |
+| Full Arena regression | PARTIALLY VERIFIED | Keep paused because the host memory PSI is high and another Arena-related batch is live. |
+
+**Next safe action:** continue only bounded, source-independent review. Recheck
+resource pressure and the active batch before considering more broad tests.
+The prior inactive-unit reading was an incorrect view of the wrong systemd
+manager and is superseded by this checkpoint.
+
 ## Saved public-capture API regression — 2026-10-28 17:25 UTC
 
 Commit `5dcd369` adds a repeatable pytest case that copies the genuine captured
 Polymarket store to a temporary root and reads it through the Frontier API.
-The focused run passes **1/1 in 0.80 seconds**. It confirms five native market
-IDs, one book, ten `hypothesis` relationships, a four-edge centered graph,
-three overview observations, and intact observation/raw/row hashes. The API
-reports recorded-only evidence and makes no network call. Ruff, format,
-`py_compile`, and `git diff --check` pass; the pre-existing
-Starlette/httpx TestClient deprecation warning remains.
+The focused run passes **1/1 in 0.80 seconds**. Commit `3e8fa17` adds explicit
+assertions that the five captured payoffs remain unverified and non-exhaustive
+and resolution remains unverified; the final test-tree rerun passes **1/1 in
+0.79 seconds**. It also confirms one book, ten `hypothesis` relationships, a
+four-edge centered graph, three overview observations, and intact
+observation/raw/row hashes. The API reports recorded-only evidence and makes
+no network call. Ruff, format, `py_compile`, and `git diff --check` pass; the
+pre-existing Starlette/httpx TestClient deprecation warning remains.
 
 At 17:25:29Z, memory PSI was 0% avg10 / 8.70% avg60 / 16.75% avg300, with
 10,414,440 KiB available and 2,112 KiB swap free. Both protected services
