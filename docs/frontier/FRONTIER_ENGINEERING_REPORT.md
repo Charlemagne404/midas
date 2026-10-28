@@ -10578,3 +10578,26 @@ source probe or protected-service operation was performed.
 | Live cross-venue validation | PARTIALLY VERIFIED | Fixture-based matching and economics are covered; live venue matching remains blocked by source-use gates. |
 | Resource sustainability and production readiness | PARTIALLY VERIFIED | Short bounded suites pass; endurance, protected recovery, and deployment have not been established. |
 | Frontier overall | PARTIALLY VERIFIED | Cross-venue live science, broad legacy regression, production recovery, and deployment remain open. |
+
+## Raw response capture and full Python regression — 2026-10-28 16:55 UTC
+
+Commit `62e5a61` closes a parsing-boundary gap in `RawObservation`. The model
+now rejects excessive UTF-8 or base64 text length before encoding or decoding,
+and retains the decoded-byte check for valid base64 at the boundary. A
+regression ensures over-limit base64 input never reaches the decoder. The
+complete storage module passes 31/31.
+
+The full `tests/frontier` suite passes **498/498** on the current code in
+29.75 seconds, with one existing Starlette/httpx deprecation warning. Pytest
+state was stored under `/dev/shm`. The 16:55:30Z post-run sample measured CPU
+PSI avg10 29.59%, memory PSI avg10 0%, I/O PSI avg10 0.08%, and 9.8 GiB
+available. No live source request or protected-service operation occurred.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Frontier raw-response parsing bound | COMPLETE AND VERIFIED | Oversized base64 rejects before decode; full storage module passes. |
+| Full Frontier Python regression | COMPLETE AND VERIFIED | 498/498 on current code; one existing deprecation warning. |
+| Frontier Arena integration | COMPLETE AND VERIFIED | The timeline/replay/discovery slice passes 28/28; broad legacy Arena remains open. |
+| Live cross-venue validation | PARTIALLY VERIFIED | Fixture-backed relationships and economics are covered; live-source evidence remains unavailable under current source-use holds. |
+| Resource sustainability and production readiness | PARTIALLY VERIFIED | Short suites pass; endurance, protected recovery, and deployment remain open. |
+| Frontier overall | PARTIALLY VERIFIED | Live cross-venue science, broad legacy regression, production recovery, and deployment remain open. |

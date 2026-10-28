@@ -1,5 +1,32 @@
 # Project Frontier Mission Ledger
 
+## Raw capture body bounded before decoding — 2026-10-28 16:55 UTC
+
+`RawObservation` previously encoded UTF-8 text or decoded base64 before checking
+the 256 KiB raw-byte limit. Commit `62e5a61` adds conditional encoded-character
+bounds before decoding, a field-level maximum for base64 text, and a defensive
+UTF-8 character check before `.encode()`. The regression patches the decoder
+to fail if called and confirms an over-limit base64 body is rejected first.
+The complete `test_storage.py` module passes **31/31**; Ruff, format, and diff
+checks pass.
+
+The full `tests/frontier` suite passes **498/498** on code at `62e5a61` in
+29.75 seconds with one existing Starlette/httpx TestClient deprecation
+warning. Pytest state was confined to
+`/dev/shm/frontier-full-raw-bound-20261028T1655Z`. At 16:55:30Z CPU PSI avg10
+was 29.59% / avg60 35.53%, memory PSI avg10 0%, I/O PSI avg10 0.08%, 9.8 GiB
+was available, and swap was full. No public source probe or protected service
+action was performed; `data/frontier-public-probes/` remains untouched.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Raw response-body parsing bound | COMPLETE AND VERIFIED | Oversized base64 is rejected before decoder use; storage module passes 31/31. |
+| Full Frontier Python suite | COMPLETE AND VERIFIED | 498/498 on the current code tree; one existing deprecation warning. |
+| Frontier overall | PARTIALLY VERIFIED | Live cross-venue validation, broad legacy Arena regression, resource endurance, protected recovery, and deployment remain open. |
+
+**Next safe action:** continue bounded source-independent code review; defer
+heavy legacy Arena regression while CPU contention remains sustained.
+
 ## Full Frontier Python regression on current code — 2026-10-28 16:53 UTC
 
 After the two evidence-boundary commits, the full `tests/frontier` suite passes

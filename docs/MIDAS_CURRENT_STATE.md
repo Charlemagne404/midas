@@ -3254,3 +3254,14 @@ memory and I/O PSI avg10 were 0%, and 9.9 GiB was available. This updates the
 16:51 focused-only snapshot. No public source probe or protected-service
 action occurred. Full legacy Arena regression, live cross-venue science,
 resource endurance, protected recovery, and deployment remain open.
+
+## Current Frontier raw-capture and Python regression — 2026-10-28 16:55 UTC
+
+Commit `62e5a61` bounds `RawObservation` body text before encoding/decoding.
+The focused storage module passes 31/31, and the full `tests/frontier` suite
+passes 498/498 in 29.75 seconds with one existing Starlette/httpx deprecation
+warning. Pytest state was under `/dev/shm`. At 16:55:30Z memory PSI avg10 was
+0%, I/O PSI avg10 was 0.08%, CPU PSI avg10 was 29.59%, and 9.8 GiB was
+available. No live source request or protected-service operation occurred.
+Broad legacy Arena regression, live cross-venue science, endurance, protected
+recovery, and deployment remain open.
