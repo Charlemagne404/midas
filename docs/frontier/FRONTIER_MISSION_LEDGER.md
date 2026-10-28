@@ -1,5 +1,44 @@
 # Project Frontier Mission Ledger
 
+## Additional bounded Reality regression slices — 2026-10-28 12:29 UTC
+
+After the 430/430 Frontier run, more source-independent legacy tests passed:
+
+- `tests/test_reality_foundry.py`: **18/18**, 0.83 seconds, 46,988 KiB peak
+  RSS, zero swaps and socket messages; all evidence is generated in `tmp_path`.
+- `tests/test_reality_training.py`: **19/19**, 3.87 seconds pytest time / 4.99
+  seconds wall, 400,572 KiB peak RSS, zero swaps and socket messages; model
+  training and dataset writes use synthetic temporary inputs.
+- `tests/test_reality_full_scale_validation_admission.py`: **17/17**, 0.15
+  seconds, 43,812 KiB peak RSS, zero swaps and socket messages; only synthetic
+  admission telemetry is evaluated.
+- `tests/test_reality_readonly_sandbox.py`: **1/1**, 0.16 seconds, 43,656 KiB
+  peak RSS, zero swaps and socket messages. Its child process operates only on
+  the test's temporary source/staging directories.
+- `tests/test_reality_shadow.py`: the first run on `/dev/shm` had **17 pass,
+  3 fail** because its configured filesystem reserve exceeded available space
+  on that mount. The three failed cases passed when rerun on `/tmp` (**3/3**),
+  and the complete module then passed **20/20** in 2.97 seconds pytest time /
+  3.54 seconds wall, 170,616 KiB peak RSS, zero swaps and socket messages.
+  All campaign and source paths were inside each run's unique pytest
+  temporary directory; no frozen campaign or recorder data was accessed.
+
+At `12:29:11Z`, memory PSI avg10 was **0.00%**, while I/O PSI some was
+**1.08%** (full **0.90%**); further tests are held until both avg10 values are
+below 1%. No protected service, live exchange source, or protected evidence
+was used.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Reality synthetic foundry and training regressions | COMPLETE AND VERIFIED | 18/18 and 19/19 passed on tmpfs; no source access or model deployment. |
+| Reality full-scale admission and sandbox regressions | COMPLETE AND VERIFIED | 17/17 and 1/1 passed with fixture telemetry and temporary source/staging roots. |
+| Reality shadow replay | COMPLETE AND VERIFIED | 20/20 pass on `/tmp`; the 3 `/dev/shm` failures were the configured reserve guard, not shadow assertions. |
+| Further test admission | DEFERRED | I/O PSI some briefly exceeded the 1% avg10 gate. |
+| Frontier overall | PARTIALLY VERIFIED | Remaining legacy modules, live cross-venue permission/evidence, production recovery, and deployment remain open. |
+
+Next safe action: remeasure PSI before the isolated Reality deployment-guard
+module or another legacy test slice. Do not run deployment operations.
+
 ## Anonymous public transport hardening and current regression — 2026-10-28 12:26 UTC
 
 Static security review found that `PublicReadTransport` accepted arbitrary

@@ -33,6 +33,21 @@ in the dated addendum below and in the Frontier engineering report.
 
 ## Frontier development addendum — 2026-10-28
 
+### Latest isolated Frontier checkpoint — 2026-10-28 12:29 UTC
+
+Additional Reality regression slices pass: synthetic foundry **18/18**,
+training/replay **19/19**, staging admission **17/17**, read-only sandbox
+**1/1**, and shadow replay **20/20**. All tests used synthetic or temporary
+roots; shadow needs `/tmp` because `/dev/shm` free space fell below its
+configured reserve. The initial three reserve-guard failures all passed on
+`/tmp` before the complete 20-test run. No protected recording, frozen
+campaign, live source, or service was accessed.
+
+At 12:29:11Z memory PSI avg10 was 0.00%; I/O PSI some was 1.08% and full was
+0.90%, so additional runs are deferred until a fresh sample clears the 1%
+gate. Frontier remains **PARTIALLY VERIFIED**, research-only, isolated, and
+undeployed.
+
 ### Latest isolated Frontier checkpoint — 2026-10-28 12:26 UTC
 
 The public transport now rejects injected HTTP clients carrying auth, sensitive

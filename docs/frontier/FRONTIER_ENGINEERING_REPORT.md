@@ -2,6 +2,30 @@
 
 **Report date:** 2026-10-28
 
+## Additional Reality regression evidence — 2026-10-28 12:29 UTC
+
+Source-independent Reality tests now add the following evidence:
+
+- The synthetic foundry suite passes **18/18** (0.83 seconds, 46,988 KiB
+  peak RSS).
+- Model-training and replay fixtures pass **19/19** (3.87 seconds pytest
+  time / 4.99 seconds wall, 400,572 KiB peak RSS).
+- Full-scale staging-admission predicates pass **17/17** (0.15 seconds,
+  43,812 KiB peak RSS).
+- The read-only sandbox check passes **1/1** with a child process confined to
+  temporary source/staging roots (0.16 seconds, 43,656 KiB peak RSS).
+- The Reality shadow suite passes **20/20** on `/tmp` (2.97 seconds pytest
+  time / 3.54 seconds wall, 170,616 KiB peak RSS). Its first `/dev/shm` run
+  had three capacity-guard failures because free space on that mount was below
+  the fixture's configured reserve; all three cases then passed on `/tmp` and
+  the full module passed there.
+
+All listed runs used isolated synthetic or temporary evidence, had zero swaps
+and zero socket messages, and did not access the protected recorder, frozen
+campaigns, live sources, or service controls. At `12:29:11Z`, I/O PSI some was
+**1.08%** avg10 (full **0.90%**); additional tests are paused until the gate
+clears. The Frontier suite remains **430/430** from the exact current tree.
+
 ## Public transport security and current verification — 2026-10-28 12:26 UTC
 
 Security review found that the optional injected `httpx.AsyncClient` could
