@@ -5038,8 +5038,8 @@ acceptance against current branch evidence, not intent or planned work.
 | Isolated collection, provenance, durable storage, and deterministic replay | PARTIALLY VERIFIED | Finite restartable collection, append-only hash-chained checkpoints, bounded storage, event-time replay, source-health evidence, and replay provenance are implemented and tested offline. No continuous stream, full history walk, or long-horizon source-quality study is established. |
 | Laboratory/Arena research integration | PARTIALLY VERIFIED | Bounded replay jobs, paired comparisons, integrity-checked results, and fixture/UI paths exist. No durable Laboratory experiment manager, long-duration campaign, or production worker is authorized or verified. |
 | Native Frontier Mission Control interface | IMPLEMENTED, DEPLOYMENT PENDING | The web unit suite passes 40/40 and the latest Frontier browser spec passes 4/4 against isolated services; the earlier configured browser suite passed 12/12. Funding responses are fixture-intercepted in browser, while the saved-run API separately verifies the candidate scenario. Live source data is unavailable under current holds. No production deployment occurred. |
-| Scientific acceptance: normalization, rejection, controlled discrepancy, independent arithmetic, missing/stale/asynchronous evidence, and deterministic replay | PARTIALLY VERIFIED | Controlled fixtures and the prior 325-test Frontier suite cover supported behavior and rejection paths, including rationally checked funding conversion subtraction. Two later route-level collection recovery/quarantine tests pass separately; the broad suite has not been rerun with them. Evidence does not establish a genuine cross-venue relationship, synchronized executable quotes, or positive economics. |
-| Resource sustainability under bounded development workloads | PARTIALLY VERIFIED | The latest full Frontier suite measured 365,976 KiB peak RSS and zero swaps; the focused FX/API selection measured 82,756 KiB. Sustained collection, concurrent workloads, production resource admission, and broad latency/CPU behavior remain unmeasured. |
+| Scientific acceptance: normalization, rejection, controlled discrepancy, independent arithmetic, missing/stale/asynchronous evidence, and deterministic replay | PARTIALLY VERIFIED | Controlled fixtures and the 328-test Frontier suite cover supported behavior and rejection paths, including rationally checked funding conversion subtraction and route-level collection restart/quarantine/corruption. Evidence does not establish a genuine cross-venue relationship, synchronized executable quotes, or positive economics. |
+| Resource sustainability under bounded development workloads | PARTIALLY VERIFIED | The latest serial 328-test Frontier suite measured 367,868 KiB peak RSS, zero swaps, and zero socket messages; the focused FX/API selection measured 82,756 KiB. Sustained collection, concurrent workloads, production resource admission, and broad latency/CPU behavior remain unmeasured. |
 | Read-only research boundary and source-use gates | COMPLETE AND VERIFIED | No trading/authenticated exchange path is provided; source-policy tests ensure held venues return 409 without requests and held evidence stays quarantined. This does not grant permission to use a held source. |
 | Required architecture, operations, current-state, report, and continuation documentation | COMPLETE AND VERIFIED | The engineering report, architecture, operations guidance, current-state note, and append-only mission ledger record implementation, evidence, blockers, and continuation actions. |
 | Production deployment | DEFERRED | Requires separate source permission, resource/storage/recovery review, full deployment-scope regression, monitoring/rollback preparation, and explicit authorization. |
@@ -5119,6 +5119,45 @@ live convertibility, transfer availability, executable quotes, or profitability.
 Continue offline engineering from the current mission matrix. Do not treat a
 positive fixture result as evidence of a live opportunity or as permission to
 use held sources.
+
+### Collection API checkpoint integrity and 328-test regression — 2026-10-28 00:55 UTC
+
+Commit `780575c` adds a route-level integrity check for finite collection
+history and resume. The test creates a valid paused run in a temporary journal,
+simulates a low-level payload-only disk alteration while restoring the SQLite
+append-only trigger, and leaves the original checkpoint digest in place. Both
+HTTP history and resume surface a bounded 409 integrity error; the fake adapter
+records no request. This verifies the API preserves the collection journal's
+hash-chain rejection behavior at its external read-only boundary.
+
+Together with code commit `4ba723f`, three API tests now cover reconstructed
+process recovery from a pending observation without rediscovery, held-source
+history/start/resume quarantine, and tampered checkpoint rejection. The
+complete serial Frontier suite includes these cases.
+
+Verification on the isolated worktree:
+
+- `pytest -q tests/frontier`: **328 passed** in 51.45 seconds pytest time and
+  **52.82 seconds wall**. `/usr/bin/time -v` measured **367,868 KiB peak RSS**,
+  zero swaps, zero socket messages, zero major page faults, and 35% CPU use. One
+  existing Starlette/httpx deprecation warning remains.
+- The focused collection API selection passed **3/3** in 1.81 seconds.
+  Ruff check/format and `git diff --check` passed.
+- Post-run host memory PSI was **0.01% avg10** for both `some` and `full`, with
+  about **10 GiB available** and **3.7 GiB swap in use**. The result supports
+  this bounded serial suite; it does not demonstrate sustained or concurrent
+  production capacity.
+- No exchange endpoint, held source, Reality process, external worker,
+  production store, or deployment was used.
+
+| Component | Status | Evidence and boundary |
+| --- | --- | --- |
+| Collection API restart, quarantine, and tamper rejection | COMPLETE AND VERIFIED | Three route-level fixture tests fail closed without new adapter calls; low-level corruption exists only in a temporary test database. |
+| Current Frontier Python regression | COMPLETE AND VERIFIED | 328 tests pass on this revision. Web/browser acceptance is not part of this Python suite. |
+| Project Frontier overall | PARTIALLY VERIFIED | Genuine cross-venue validation, held-source live capture, long-horizon source quality, and deployment remain incomplete. |
+
+Continue offline acceptance from the mission matrix. These fixture results do
+not establish a live cross-venue opportunity or authorize use of held sources.
 
 ### HTTP collection recovery across reconstructed API instances — 2026-10-28 00:53 UTC
 

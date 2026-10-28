@@ -1,5 +1,43 @@
 # Project Frontier Mission Ledger
 
+## Collection API integrity boundary and complete Frontier regression — 2026-10-28 00:55 UTC
+
+Code commit `780575c` adds an API-level corruption test for the collection
+journal. The fixture simulates offline disk corruption in a temporary SQLite
+file by removing and restoring the append-only update trigger around one
+payload-only edit, leaving the recorded checkpoint digest unchanged. Both
+collection history and resume return HTTP 409 with the chain-integrity failure;
+the adapter receives no requests. The append-only trigger itself remains
+present when the API reads the journal.
+
+Together with `4ba723f`, this covers three finite collection API cases:
+reconstruction and resume without rediscovery, held-source quarantine before
+mutation, and tampered checkpoint rejection before source access.
+
+### Verification and resource evidence
+
+- Focused API collection lifecycle/integrity selection: **3 passed** in 1.81
+  seconds. Ruff check/format and `git diff --check` passed.
+- Full serial Frontier suite: **328 passed**, one existing Starlette/httpx
+  deprecation warning, in 51.45 seconds pytest time / **52.82 seconds wall**.
+  `/usr/bin/time -v` measured **367,868 KiB peak RSS**, zero swaps, and zero
+  socket messages. CPU use was 35%; major page faults were zero.
+- Post-run host sample: memory PSI avg10 **0.01% some / 0.01% full**, about
+  **10 GiB available**, and **3.7 GiB swap in use**. This supports the bounded
+  serial run only; it does not establish sustained or concurrent production
+  capacity.
+- All evidence is fixture-backed and local. No exchange, held source,
+  protected service, production store, external worker, or deployment was used.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Collection API restart, history, held-source, and corruption handling | COMPLETE AND VERIFIED | Three route-level tests verify durable resume, source quarantine, and hash-chain failure closed with no adapter calls. |
+| Full Frontier Python regression | COMPLETE AND VERIFIED | 328 tests pass on the current code revision; sustained, concurrent, UI, browser, and deployment checks are separate evidence. |
+| Project Frontier overall | PARTIALLY VERIFIED | Genuine cross-venue relationship validation, live sources behind current holds, broad long-horizon data quality, and deployment remain incomplete. |
+
+**Next safe action:** continue offline acceptance from the mission matrix. Do not
+use held sources or infer live opportunity economics from these fixtures.
+
 ## HTTP collection recovery across reconstructed API instances — 2026-10-28 00:53 UTC
 
 The collection API regressions now exercise recovery after reconstructing the
