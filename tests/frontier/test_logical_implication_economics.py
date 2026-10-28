@@ -169,6 +169,31 @@ def test_directed_implication_basket_is_capped_and_independently_audited():
     assert disagreed.classification == OpportunityClassification.INCOMPLETE_EVIDENCE
 
 
+def test_replay_requires_current_logical_implication_verifier_version():
+    _, _, relationship, ordered_markets, _by_market, books = _fixture()
+    state_map = evidence_mapping(relationship, "state_mapping")
+    old_evidence = relationship.evidence[0].model_copy(
+        update={"verifier_version": "frontier-logical-implication-verifier-2"}
+    )
+    old_relationship = relationship.model_copy(update={"evidence": (old_evidence,)})
+
+    replay = deterministic_replay(
+        ordered_markets,
+        books,
+        verified_relationships=(old_relationship,),
+        state_mappings={old_relationship.relationship_id: state_map},
+        as_of_utc=T0,
+        code_version="frontier-old-implication-verifier-regression-v1",
+    )
+
+    assert len(replay.candidates) == 1
+    candidate = replay.candidates[0]
+    assert candidate.classification == OpportunityClassification.INCOMPLETE_EVIDENCE
+    assert not candidate.legs
+    assert candidate.model_version == "frontier-economic-verifiers-16"
+    assert any("directed relationship lacks" in reason.lower() for reason in candidate.reasons)
+
+
 def test_nonidentity_mapping_and_reversed_endpoint_order_preserve_directed_legs():
     source_states = ("source-no-a", "source-no-b", "source-yes")
     target_states = ("target-no", "target-yes-a", "target-yes-b")

@@ -2091,7 +2091,7 @@ def test_candidate_generation_and_independent_audit_enforce_price_ticks():
         as_of_utc=T0 + timedelta(milliseconds=100),
     )
     candidate = next(item for item in candidates if item.legs)
-    assert candidate.model_version == "frontier-economic-verifiers-15"
+    assert candidate.model_version == "frontier-economic-verifiers-16"
 
     def with_half_dollar_ticks(market_value):
         instruments = tuple(
@@ -2867,7 +2867,7 @@ def test_deterministic_replay_is_invariant_to_input_order():
     }
     first = deterministic_replay((left, right), all_books, **kwargs)
     second = deterministic_replay((right, left), tuple(reversed(all_books)), **kwargs)
-    assert first.manifest.economic_model_version == "frontier-economic-verifiers-15"
+    assert first.manifest.economic_model_version == "frontier-economic-verifiers-16"
     assert first.run_id == second.run_id
     assert first.result_sha256 == second.result_sha256
     assert first.candidates == second.candidates
