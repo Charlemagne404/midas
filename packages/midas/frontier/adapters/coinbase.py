@@ -51,8 +51,9 @@ TRADES_DOC = (
 _PRODUCT_ID = re.compile(r"^[A-Z0-9]{1,12}-[A-Z0-9]{1,12}$")
 _FIAT_QUOTES = frozenset({"USD", "EUR", "GBP", "CAD", "AUD", "CHF", "JPY", "NZD"})
 _DEFAULT_TERMS_HOLD_REASON = (
-    "Coinbase Exchange source use remains held until the operator acknowledges "
-    f"the reviewed Market Data Terms version {COINBASE_MARKET_DATA_TERMS_VERSION}."
+    "Coinbase Exchange source use remains held until validated permission and "
+    "intended-scope review are configured; acknowledging the reviewed Market "
+    f"Data Terms version {COINBASE_MARKET_DATA_TERMS_VERSION} alone does not lift the hold."
 )
 
 
