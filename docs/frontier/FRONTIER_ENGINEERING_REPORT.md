@@ -9961,8 +9961,10 @@ Before the run at `14:31:05Z`, CPU PSI avg10 was **44.60%**, memory PSI was
 **0.00%**, and I/O PSI was **0.01% some / 0.00% full**. Afterward at
 `14:31:45Z`, CPU PSI was **38.39%**, memory PSI **0.00%**, and I/O PSI
 **0.06% some / 0.00% full**. The temporary run directory occupies 19 MiB in
-tmpfs. No source, production service, protected store, or held evidence was
-accessed. This closes current-branch Frontier Python suite verification; it
+tmpfs. Its cleanup command was rejected by the shell safeguard (`rm -f` style
+commands are not permitted), so I left the isolated test directory intact.
+No source, production service, protected store, or held evidence was accessed.
+This closes current-branch Frontier Python suite verification; it
 does not establish full MIDAS, browser, Arena, live-source, or deployment
 acceptance.
 
@@ -9971,3 +9973,37 @@ acceptance.
 | Full Frontier Python suite on current code | COMPLETE AND VERIFIED | 465/465 pass on `d3e30a0`, with tmpfs-backed pytest state and measured resource profile. |
 | Broader MIDAS, browser, and Arena regression | PARTIALLY VERIFIED | Separate full suites and current browser/Arena acceptance remain outstanding. |
 | Frontier project overall | PARTIALLY VERIFIED | Genuine permitted cross-venue evidence, broader regression, resource sustainability, production recovery, and deployment remain open. |
+
+## Frontier workspace verification — 2026-10-28 14:36 UTC
+
+The complete web unit suite passed **47/47** across 9 files; the focused
+Frontier component file also passed **9/9** after formatting. TypeScript
+typecheck, ESLint, and the full Prettier check pass. The production build
+passed, including `tsc -b`, in 14.07 seconds wall time at **712,284 KiB** peak
+RSS, zero swaps, filesystem input, or socket messages. Vite completed in 4.90
+seconds. The existing Chart chunk advisory remains (**544.51 kB** minified;
+the configured warning threshold is 500 kB).
+
+Frontier-specific Playwright acceptance passed **7/7** with the normal empty
+temporary store and **2/2** with the explicit seeded path. The seeded run read
+21 labeled fixture captures and replay artifacts plus one fixture-only Arena
+discovery artifact. Both runs used isolated local API/UI services on ports
+18000/15173, one worker, no public-source requests, and no production service.
+The regular Frontier run took 19.46 seconds wall time at 201,688 KiB peak RSS;
+the seeded run took 11.62 seconds at 182,712 KiB. Both had zero swaps and
+socket messages. The seeded test emitted a harmless `NO_COLOR`/`FORCE_COLOR`
+environment warning.
+
+At `14:35:57Z`, CPU PSI avg10 was **44.34%**, memory PSI **0.00%**, and I/O PSI
+**0.44% some / 0.23% full**. At `14:36:23Z`, memory remained 0.00% and I/O PSI
+was **0.05% some / 0.01% full**. This verifies the current Frontier workspace
+and its seeded research path, not unrelated Mission Control E2E, external
+source validity, or production deployment.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Web unit tests, typecheck, lint, and formatting | COMPLETE AND VERIFIED | 47/47 unit tests; `tsc -b`, ESLint, Prettier, and post-format Frontier 9/9 pass. |
+| Production frontend build | COMPLETE AND VERIFIED | Build succeeds; the existing 544.51 kB Chart chunk advisory remains. |
+| Frontier browser and seeded research paths | COMPLETE AND VERIFIED | 7/7 normal and 2/2 seeded Playwright tests on isolated local services; all seeded evidence is fixture-only. |
+| Broader MIDAS browser regression | PARTIALLY VERIFIED | Non-Frontier E2E files were not rerun in this checkpoint. |
+| Frontier project overall | PARTIALLY VERIFIED | Live cross-venue validation, full broader regression, endurance, production recovery, and deployment remain open. |

@@ -8991,7 +8991,9 @@ existing Starlette/httpx warning remains.
 
 At `14:31:05Z`, CPU PSI avg10 was 44.60%, memory PSI 0.00%, and I/O PSI 0.01%
 some / 0.00% full. At `14:31:45Z`, CPU PSI was 38.39%, memory PSI 0.00%, and
-I/O PSI 0.06% some / 0.00% full. The tmpfs run directory occupies 19 MiB.
+I/O PSI 0.06% some / 0.00% full. The tmpfs run directory occupies 19 MiB;
+its cleanup command was rejected by the shell safeguard (`rm -f` style
+commands are not permitted), so it remains intact.
 No live source, protected service, or protected store was used. This closes
 the Frontier Python suite on current code, not the full MIDAS/browser/Arena
 regression or overall project acceptance.
@@ -9004,3 +9006,37 @@ regression or overall project acceptance.
 
 **Next safe action:** take a fresh resource sample before any additional test
 run; continue independent source-policy and UI review in the meantime.
+
+## Frontier workspace verification — 2026-10-28 14:36 UTC
+
+The full web unit suite passes **47/47** across 9 files; post-format
+`Frontier.test.tsx` passes **9/9**. TypeScript typecheck, ESLint, and full
+Prettier check pass. The production build passes, including `tsc -b`, in 14.07
+seconds wall time at 712,284 KiB peak RSS, zero swaps, filesystem input, or
+socket messages. Vite completed in 4.90 seconds; the existing Chart chunk
+advisory is 544.51 kB against the 500 kB warning threshold.
+
+Frontier-specific Playwright passes **7/7** against an empty temporary store
+and **2/2** on the explicitly seeded path. The seeded test reads 21 labeled
+fixture captures/replay artifacts and one fixture-only Arena discovery
+artifact. Both runs use isolated local services at ports 18000/15173, one
+worker, and no public-source requests. Regular/seeded process wall times were
+19.46/11.62 seconds; peak RSS was 201,688/182,712 KiB. Both used zero swaps or
+socket messages.
+
+At `14:35:57Z`, CPU PSI avg10 was 44.34%, memory PSI 0.00%, and I/O PSI
+0.44% some / 0.23% full. At `14:36:23Z`, memory PSI remained 0.00%, and I/O
+PSI was 0.05% some / 0.01% full. No public source or production service was
+accessed. The non-Frontier browser files, live-source science, endurance,
+production recovery, and deployment remain open. Project status remains
+**PARTIALLY VERIFIED**.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Web unit/type/lint/format/build | COMPLETE AND VERIFIED | 47 unit tests pass; typecheck, lint, format, and build pass with the known Chart advisory. |
+| Frontier browser acceptance | COMPLETE AND VERIFIED | 7 normal plus 2 seeded Playwright cases pass on isolated local state. |
+| Broader MIDAS/browser regression | PARTIALLY VERIFIED | Non-Frontier E2E files not rerun in this checkpoint. |
+| Project Frontier overall | PARTIALLY VERIFIED | Cross-venue live evidence, broad regression, resource sustainability, production recovery, and deployment remain outstanding. |
+
+**Next safe action:** continue with source-independent acceptance work and take
+a fresh resource admission sample before the next broad test batch.

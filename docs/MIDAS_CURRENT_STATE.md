@@ -3075,3 +3075,9 @@ The full current Frontier Python suite passes 465/465 on `d3e30a0` using a
 tmpfs test root, at 381,916 KiB peak RSS and zero swaps or sockets. Post-run
 I/O PSI avg10 remained 0.06% some / 0.00% full. This does not close broader
 MIDAS/browser/Arena, live-source, production-recovery, or deployment gates.
+
+The web suite passes 47/47; `tsc -b`, ESLint, Prettier, and production build
+pass. Frontier Playwright passes 7/7 on the empty path and 2/2 on seeded
+fixture data using isolated local services. The Chart bundle advisory remains
+544.51 kB. Frontier stays **PARTIALLY VERIFIED** pending broader regression,
+live-source, recovery, and deployment gates.
