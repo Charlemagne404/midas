@@ -1,5 +1,44 @@
 # Project Frontier Mission Ledger
 
+## Adapter host-allowlist containment and current suite verified — 2026-10-28 16:04 UTC
+
+An egress-boundary follow-up found that `BaseReadOnlyAdapter` checked injected
+transport configuration equality but did not verify that the transport host
+allowlist stayed within that adapter's declared hosts. The adapter now rejects
+any injected allowlist containing an undeclared host. Subsets remain valid so
+fixture transports can stay scoped to one endpoint such as Polymarket Gamma.
+Two new parameter cases prove that a broader list and another venue's host are
+rejected before any request. The new cases and a representative Gamma fixture
+pass **3/3** together. Strict mypy on `base.py`, Ruff check, and Ruff format
+check pass.
+
+The first full-suite attempt used exact allowlist equality and failed **70**
+tests at adapter construction because existing fixtures intentionally use
+valid single-host subsets; 405 tests passed. This was an implementation error,
+not a source or fixture failure. Replacing equality with subset containment
+preserved the scoped fixtures while still preventing host widening. The final
+current `tests/frontier` run passes **475/475** in 30.14 seconds pytest time
+(31.68 seconds wall), at 381,080 KiB peak RSS, with zero swaps and zero socket
+messages. It used the absolute worktree package path and tmpfs basetemp
+`/dev/shm/midas-frontier-host-final-20261028-1604`. One existing
+Starlette/httpx TestClient deprecation warning remains. Before that run, at
+16:03:57Z, memory PSI avg10 was 0.00% (avg60 0.03% some / 0.02% full), I/O PSI
+avg10 was 0.00%, about 9 GiB was available, and swap was full with 168 KiB
+free. At 16:04:42Z after the run, memory PSI avg10/avg60 was 0.00%/0.01%
+some and 0.00%/0.00% full; I/O PSI was 0.00%, about 9 GiB remained available,
+and swap had 180 KiB free. No public endpoint or protected service was used.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Adapter transport host containment | COMPLETE AND VERIFIED | Injected hosts must be a subset of adapter-declared hosts; broader and foreign-venue allowlists are rejected. Host-specific fixture subsets continue to work. |
+| Current Frontier Python suite | COMPLETE AND VERIFIED | `tests/frontier`: 475/475 pass with one existing deprecation warning. |
+| Changed adapter code static checks | COMPLETE AND VERIFIED | Targeted strict mypy, Ruff check, and Ruff format check pass. |
+| Full legacy Arena suite | PARTIALLY VERIFIED | Earlier corrected run reached 67% before resource interruption; no full pass is claimed. |
+| Frontier project acceptance | PARTIALLY VERIFIED | Live cross-venue science, broad legacy regression, endurance, protected recovery, and deployment remain open. |
+
+**Next safe action:** continue low-resource source and interface review. Remeasure
+host pressure before another broad legacy regression.
+
 ## Transport hardening and current Frontier suite verified — 2026-10-28 16:01 UTC
 
 The four focused fixture-only transport test selections passed **10/10**

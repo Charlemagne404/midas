@@ -2,6 +2,41 @@
 
 **Report date:** 2026-10-28
 
+## Adapter transport host containment — 2026-10-28
+
+`BaseReadOnlyAdapter` now requires every injected transport host to belong to
+that adapter's declared host allowlist. A subset remains permitted for
+endpoint-specific fixtures; an extra host or another venue's host fails closed
+at construction. Regression cases cover both rejection paths, and an existing
+single-host Polymarket Gamma fixture still passes. The focused selection passed
+**3/3**; strict mypy for `base.py`, Ruff check, and Ruff format check pass.
+
+The first full test attempt used exact equality between injected and declared
+host sets. It failed **70** tests because existing fixtures use valid subsets
+such as Gamma-only for an adapter that also supports CLOB endpoints. The
+implementation was refined to subset containment; 405 tests passed in that
+attempt, with all failures localized to the new constructor rejection. No
+fixture or test was changed to hide the boundary error. The final current
+`tests/frontier` suite passes **475/475** in 30.14 seconds pytest time (31.68
+seconds wall), peaking at 381,080 KiB RSS with zero swaps, filesystem inputs,
+and socket messages. It used the absolute worktree package path and tmpfs
+basetemp `/dev/shm/midas-frontier-host-final-20261028-1604`. One existing
+Starlette/httpx TestClient deprecation warning remains.
+
+Before the final run at 16:03:57 UTC, memory PSI avg10 was 0.00% (avg60 0.03%
+some / 0.02% full), I/O PSI avg10 was 0.00%, about 9 GiB was available, and
+swap had 168 KiB free. At 16:04:42 UTC after validation, memory PSI avg10/avg60
+was 0.00%/0.01% some and 0.00%/0.00% full, I/O PSI was 0.00%, and about 9 GiB
+remained available. No live endpoint or protected service was accessed.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Adapter host-allowlist containment | COMPLETE AND VERIFIED | Injected allowlists cannot widen beyond the adapter's source declaration; valid host subsets remain supported. |
+| Current Frontier Python suite | COMPLETE AND VERIFIED | `tests/frontier` passes 475/475 with one existing deprecation warning. |
+| Changed adapter static checks | COMPLETE AND VERIFIED | Targeted strict mypy, Ruff check, and Ruff format check pass. |
+| Full Arena/repository regression | PARTIALLY VERIFIED | The earlier Arena run stopped at 67%; broader legacy regression remains open. |
+| Frontier overall | PARTIALLY VERIFIED | Live cross-venue findings, broader regression, endurance, protected recovery, and deployment remain incomplete. |
+
 ## Transport hardening and current Frontier suite verification — 2026-10-28
 
 The focused fixture-only tests for nonstandard JSON tokens, parser complexity,
