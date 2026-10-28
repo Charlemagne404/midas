@@ -60,8 +60,10 @@ some/full with about 10 GiB available and no shared Arena lock holder. No
 protected service, production configuration, historical evidence, or Reality
 recording was changed. The post-Arena sample at `2026-10-28T04:11:18Z` still
 had memory PSI avg10 0.00% some/full, I/O PSI avg10 10.31% some / 9.83% full,
-about 9 GiB available, and no shared lock holder. Frontier is
-**PARTIALLY VERIFIED**, research-only,
+about 9 GiB available, and no shared lock holder. At the later
+`2026-10-28T04:12:29Z` check, memory PSI avg10 was 38.86% some / 33.25% full
+and external Veritas PID 4166289 held the shared lock; it was left untouched.
+Frontier is **PARTIALLY VERIFIED**, research-only,
 isolated, unmerged, and undeployed. See the [Frontier mission ledger](frontier/FRONTIER_MISSION_LEDGER.md),
 [engineering report](frontier/FRONTIER_ENGINEERING_REPORT.md), and
 [source terms review](frontier/SOURCE_DATA_TERMS_REVIEW_2026-10-27.md) for the

@@ -4615,3 +4615,13 @@ was touched.
 | Component | Status | Evidence and remaining boundary |
 | --- | --- | --- |
 | Arena discovery/replay/timeline/job consumers | COMPLETE AND VERIFIED | Selected 38-test regression passes after event normalization correction; no real systemd unit or production Arena root was used. |
+
+### Resource gate recheck — 2026-10-28 04:12 UTC
+
+At `2026-10-28T04:12:29Z`, memory PSI had risen again: avg10 **38.86% some /
+33.25% full**, avg60 **10.55% / 9.26%**, avg300 **12.13% / 10.61%**. I/O PSI
+avg10 was **0.44% / 0.34%**. About **9 GiB** was available and **333 MiB** of
+swap was free. Read-only `fuser` and `ps` identified external Veritas PID
+**4166289** (`scripts/veritas_gap_detail_v2_batch.py`) in `D` state holding the
+shared Arena lock. It was left untouched. No tests, builds, probes, or other
+resource-bearing jobs were started after the 04:11 Arena regression.

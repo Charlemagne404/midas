@@ -101,6 +101,12 @@ some / 0.00% full**, I/O PSI avg10 was **10.31% some / 9.83% full**, about
 **9 GiB** was available, and no process held the shared Arena lock. This is a
 point sample, not a sustainability claim.
 
+At `2026-10-28T04:12:29Z`, a fresh sample denied additional resource-bearing
+work: memory PSI avg10 was **38.86% some / 33.25% full**. External Veritas PID
+**4166289**, running `scripts/veritas_gap_detail_v2_batch.py`, held the shared
+Arena lock in `D` state. It was not touched. The regression and build results
+above remain valid; no follow-up work was launched under this pressure.
+
 TypeScript project build and production Vite bundle also pass. Vite wrote to
 `/tmp/midas-frontier-build-20261028T0406Z`, leaving the existing web `dist`
 output alone. The output transformed 2,228 modules in 4.83 seconds. Peak RSS
