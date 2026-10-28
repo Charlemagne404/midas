@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import timedelta
 from decimal import Decimal
 
+import pytest
 from midas.frontier.economics import (
     ExecutionScenario,
     OpportunityClassification,
@@ -169,11 +170,12 @@ def test_directed_implication_basket_is_capped_and_independently_audited():
     assert disagreed.classification == OpportunityClassification.INCOMPLETE_EVIDENCE
 
 
-def test_replay_requires_current_logical_implication_verifier_version():
+@pytest.mark.parametrize("legacy_version", (2, 3))
+def test_replay_requires_current_logical_implication_verifier_version(legacy_version):
     _, _, relationship, ordered_markets, _by_market, books = _fixture()
     state_map = evidence_mapping(relationship, "state_mapping")
     old_evidence = relationship.evidence[0].model_copy(
-        update={"verifier_version": "frontier-logical-implication-verifier-2"}
+        update={"verifier_version": f"frontier-logical-implication-verifier-{legacy_version}"}
     )
     old_relationship = relationship.model_copy(update={"evidence": (old_evidence,)})
 

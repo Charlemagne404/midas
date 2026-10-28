@@ -2,6 +2,32 @@
 
 **Report date:** 2026-10-28
 
+## Empty payoff-state rejection in relationship verifiers — 2026-10-28
+
+An offline audit found that malformed copied market records with no payoff
+states and no instrument payout rows could pass same-payoff or logical
+implication checks over empty mappings. Both direct verifiers now require
+nonempty exhaustive states and full market structural revalidation. The
+same-payoff verifier advanced from v7 to v8, logical implication from v3 to
+v4, and independent audit from v21 to v22 so earlier attestations do not count
+as current evidence for new candidate research.
+
+New regressions cover the copied empty-state cases and rejection of prior
+verifier versions. The three affected relationship/economics modules passed
+**97/97** in 1.04 seconds, at 65,304 KiB peak RSS with zero swaps, filesystem
+input, or socket messages. Strict mypy passes on `relationships.py`,
+`independent_audit.py`, and `models.py`; Ruff check/format and
+`git diff --check` pass. The complete Frontier suite plus Arena
+replay/discovery/timeline regression passed **463/463** in 111.02 seconds
+(112.48 seconds wall), at 380,764 KiB peak RSS, zero swaps, 16 filesystem input
+blocks, and zero socket messages. It emitted one existing Starlette/httpx
+deprecation warning. Test artifacts stayed under
+`/tmp/midas-frontier-v8-v4-full-20261028`. Pre-run memory PSI avg10 was 0.00%,
+I/O PSI was 0.03% some / 0.00% full, and about 10 GiB was available. Immediately
+afterward memory PSI remained 0.00%, while I/O rose to 5.37% some / 4.16%
+full; further tests are held until a fresh sample falls below the 1% gate.
+This correction provides no new live cross-venue equivalence evidence.
+
 ## Same-payoff verifier empty-instrument rejection — 2026-10-28
 
 Direct reproduction found that two verified binary markets with no

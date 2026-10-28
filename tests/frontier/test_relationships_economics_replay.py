@@ -188,6 +188,35 @@ def test_same_payoff_verifier_rejects_empty_instrument_payout_vectors(empty_side
     assert "no instrument payout vectors" in result.reason.lower()
 
 
+def test_same_payoff_verifier_rejects_empty_state_set_from_model_copy():
+    left, right, _relationship, instrument_mapping = _verified_pair()
+
+    def without_states(market_value):
+        instruments = tuple(
+            item.model_copy(update={"payouts": ()}) for item in market_value.instruments
+        )
+        payoff = market_value.payoff.model_copy(update={"state_ids": ()})
+        return market_value.model_copy(update={"instruments": instruments, "payoff": payoff})
+
+    left = without_states(left)
+    right = without_states(right)
+    result = verify_same_payoff(
+        left,
+        right,
+        state_mapping={},
+        instrument_mapping=instrument_mapping,
+        external_assertion_id="empty-state-set-model-copy-regression",
+        evidence_observation_ids=(
+            left.provenance.observation_id,
+            right.provenance.observation_id,
+        ),
+        asserted_at_utc=T0,
+    )
+
+    assert result.state == VerificationState.REJECTED
+    assert "no exhaustive states" in result.reason.lower()
+
+
 def _market_with_token_settlement_identity(market_value, identity):
     instruments = tuple(
         item.model_copy(
@@ -638,7 +667,7 @@ def test_cross_venue_replay_rejects_equivalence_evidence_missing_pinned_market()
     )
 
 
-@pytest.mark.parametrize("legacy_version", (5, 6))
+@pytest.mark.parametrize("legacy_version", (5, 6, 7))
 def test_cross_venue_replay_requires_current_equivalence_verifier_version(legacy_version):
     left, right, relationship, _instrument_mapping = _verified_pair()
     legacy_evidence = relationship.evidence[0].model_copy(
@@ -819,7 +848,7 @@ def test_same_ticker_on_different_networks_cannot_verify_same_payoff():
     )
 
     assert same_asset_relationship.state == VerificationState.VERIFIED
-    assert same_asset_relationship.evidence[0].verifier_version == "frontier-equivalence-verifier-7"
+    assert same_asset_relationship.evidence[0].verifier_version == "frontier-equivalence-verifier-8"
     assert any(
         "settlement_asset_identities={" in detail
         for detail in same_asset_relationship.evidence[0].details
@@ -2264,7 +2293,7 @@ def test_independent_audit_rejects_naive_book_time_from_a_reconstructed_model():
     assert audit.independent_audit is not None
     assert audit.independent_audit.disposition.value == "incomplete"
     assert "not timezone-aware" in audit.independent_audit.message
-    assert audit.independent_audit.model_version == "frontier-independent-economic-audit-21"
+    assert audit.independent_audit.model_version == "frontier-independent-economic-audit-22"
 
 
 def test_independent_audit_rejects_quantity_step_mutation():

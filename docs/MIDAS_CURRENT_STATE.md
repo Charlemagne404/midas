@@ -33,6 +33,24 @@ in the dated addendum below and in the Frontier engineering report.
 
 ## Frontier development addendum — 2026-10-28
 
+### Latest isolated Frontier checkpoint — 2026-10-28 13:07 UTC
+
+The relationship audit found that copied models with empty payout-state sets
+could make both same-payoff and logical-implication proofs pass over empty
+mappings. Both direct verifiers now require nonempty exhaustive states and
+structurally valid market records. Verifier versions advanced to same-payoff
+v8 and logical-implication v4; independent audit v22 makes earlier evidence
+incomplete for new audited candidates. The three affected regression modules
+pass **97/97**, strict mypy passes on all three changed core modules, and Ruff
+plus whitespace checks pass. The full Frontier suite plus Arena
+replay/discovery/timeline regression passes **463/463** in 111.02 seconds
+(112.48 seconds wall), at 380,764 KiB peak RSS with zero swaps and socket
+messages. One existing Starlette/httpx deprecation warning remains. Post-run
+memory PSI avg10 was 0.00%, I/O PSI was 5.37% some / 4.16% full, and about
+10 GiB was available; further tests are held until I/O pressure falls below the
+1% gate. Frontier remains **PARTIALLY VERIFIED**, isolated, research-only, and
+undeployed.
+
 ### Latest isolated Frontier checkpoint — 2026-10-28 13:00 UTC
 
 An offline verifier audit reproduced a vacuous proof: two binary markets with

@@ -1,5 +1,38 @@
 # Project Frontier Mission Ledger
 
+## Empty payoff-state rejection in relationship verifiers — 2026-10-28
+
+The verifier audit found a second vacuous-proof path. A malformed in-memory
+copy could erase the payoff state set and every instrument payout row; the
+empty state mapping then satisfied the logical-implication bijection and
+state-by-state implication checks. Same-payoff verification had the related
+empty-state risk when instruments remained present. Both direct verifiers now
+require nonempty exhaustive states and revalidate each market's full structure.
+Same-payoff verification advanced from v7 to v8, logical implication from v3
+to v4, and the independent audit from v21 to v22. Prior attestations remain
+inspectable but no longer count as current verification for new candidate
+audits.
+
+The new model-copy regressions and stale-version checks pass. All three
+affected relationship/economics modules pass **97/97** in 1.04 seconds; strict
+mypy passes for `relationships.py`, `independent_audit.py`, and `models.py`.
+Ruff check/format and `git diff --check` pass. Tests used
+`/tmp/midas-frontier-relationship-v8-v4-20261028`; the run peaked at 65,304
+KiB RSS with zero swaps, filesystem input, or socket messages. The full
+Frontier suite plus Arena replay/discovery/timeline regression passed
+**463/463** in 111.02 seconds (112.48 seconds wall), with one existing
+Starlette/httpx `TestClient` deprecation warning. It peaked at 380,764 KiB RSS,
+used zero swaps and 16 filesystem input blocks, and emitted no socket messages.
+Output was isolated under `/tmp/midas-frontier-v8-v4-full-20261028`. Pre-run
+memory PSI avg10 was 0.00%, I/O PSI was 0.03% some / 0.00% full, and about
+10 GiB was available. Immediately afterward memory PSI remained 0.00%; I/O PSI
+was 5.37% some / 4.16% full with about 10 GiB available, so additional tests
+are held until a fresh sample falls below the 1% admission threshold.
+
+**Next safe action:** continue the read-only audit while I/O pressure settles;
+run more tests only after a fresh sample is below the admission gate. Source-use
+holds, held-capture preservation, and production boundaries remain unchanged.
+
 ## Same-payoff verifier empty-instrument rejection — 2026-10-28
 
 A targeted review found that `verify_same_payoff` accepted two binary event

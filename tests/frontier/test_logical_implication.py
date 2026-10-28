@@ -52,6 +52,7 @@ def _verify(
     source: FrontierMarket,
     target: FrontierMarket,
     *,
+    state_mapping: dict[str, str] | None = None,
     evidence_ids: tuple[str, ...] | None = None,
     asserted_at_utc=T0,
 ):
@@ -60,7 +61,9 @@ def _verify(
         target,
         implication_from_market_id=source.canonical_id,
         implication_to_market_id=target.canonical_id,
-        state_mapping={state: state for state in JOINT_STATES},
+        state_mapping=(
+            state_mapping if state_mapping is not None else {state: state for state in JOINT_STATES}
+        ),
         external_assertion_id="fixture-joint-outcome-assertion-1",
         evidence_observation_ids=(
             evidence_ids
@@ -88,7 +91,7 @@ def test_verifies_directed_implication_over_complete_joint_binary_states():
     assert f"implication_from_market_id={implies_a.canonical_id}" in details
     assert f"implication_to_market_id={implies_b.canonical_id}" in details
     assert relationship.evidence[0].external_assertion_id == "fixture-joint-outcome-assertion-1"
-    assert relationship.evidence[0].verifier_version == "frontier-logical-implication-verifier-3"
+    assert relationship.evidence[0].verifier_version == "frontier-logical-implication-verifier-4"
 
 
 def test_rejects_logical_implication_for_malformed_model_copy():
@@ -112,6 +115,27 @@ def test_rejects_logical_implication_for_malformed_model_copy():
         relationship = _verify(malformed, target)
         assert relationship.state == VerificationState.REJECTED
         assert "duplicate" in relationship.reason.lower()
+
+
+def test_rejects_logical_implication_with_empty_state_set_from_model_copy():
+    source = _market_with_joint_payouts(Venue.POLYMARKET, "implication-empty-source", (0, 0, 1))
+    target = _market_with_joint_payouts(Venue.KALSHI, "implication-empty-target", (0, 1, 1))
+
+    def without_states(market_value):
+        instruments = tuple(
+            item.model_copy(update={"payouts": ()}) for item in market_value.instruments
+        )
+        payoff = market_value.payoff.model_copy(update={"state_ids": ()})
+        return market_value.model_copy(update={"instruments": instruments, "payoff": payoff})
+
+    relationship = _verify(
+        without_states(source),
+        without_states(target),
+        state_mapping={},
+    )
+
+    assert relationship.state == VerificationState.REJECTED
+    assert "no exhaustive states" in relationship.reason.lower()
 
 
 def test_exhaustive_three_state_boolean_vectors_match_implication_truth_table():

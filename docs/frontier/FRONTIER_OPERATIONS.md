@@ -16,19 +16,20 @@ campaigns, or other historical stores.
 ## Same-payoff review and replay cutoff
 
 New same-payoff reviews use verifier version
-`frontier-equivalence-verifier-7`. The review must cite the two distinct
+`frontier-equivalence-verifier-8`. The review must cite the two distinct
 stored market observation IDs loaded for the reviewed pair; its assertion time
 cannot predate either market record. Candidate replay also requires the
 versioned assertion to exist by that replay's cutoff. A review entered later
 cannot validate a historical candidate.
 
-Previously saved pre-v7 same-payoff relationships remain readable and
+Previously saved pre-v8 same-payoff relationships remain readable and
 append-only, but the current independent audit
-(`frontier-independent-economic-audit-20`) classifies a candidate using one as
+(`frontier-independent-economic-audit-22`) classifies a candidate using one as
 `INCOMPLETE_EVIDENCE`. Re-review the original hypothesis against the current
-stored market records to produce a version-7 relationship before using it in a
-new audited replay. The verifier also requires at least one instrument payout
-vector on each market, so an empty mapping cannot pass as a vacuous bijection.
+stored market records to produce a version-8 relationship before using it in a
+new audited replay. The verifier also requires nonempty exhaustive payoff
+states and structurally valid instrument payout vectors on each market, so
+empty state or instrument mappings cannot pass as vacuous bijections.
 The verifier and audit recheck uniqueness of payoff states, native instrument
 identities, outcome identities, and payout rows; the audit checks every
 instrument, including unselected legs. This guards
@@ -38,12 +39,12 @@ workflow does not authenticate them or establish legal or semantic equivalence.
 The audit does not rewrite or delete stored relationships or reviews.
 
 Logical-implication reviews use
-`frontier-logical-implication-verifier-3` and the independent audit is now
-`frontier-independent-economic-audit-20`. The verifier rejects duplicate
-payoff states and native instrument identities even when they arrive inside a
-prebuilt model object. Version-2 logical-implication records remain readable,
-but they do not validate a new candidate until the relationship is reviewed
-under v3.
+`frontier-logical-implication-verifier-4` and the independent audit is now
+`frontier-independent-economic-audit-22`. The verifier rejects empty or
+duplicate payoff states and native instrument identities even when they arrive
+inside a prebuilt model object. Earlier logical-implication records remain
+readable, but they do not validate a new candidate until the relationship is
+reviewed under v4.
 
 Book snapshots also expose a runtime price-level integrity check because
 `model_copy(update=...)` bypasses Pydantic validation. Candidate generators and

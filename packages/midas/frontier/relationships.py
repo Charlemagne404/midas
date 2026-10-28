@@ -22,8 +22,8 @@ from midas.frontier.models import (
 
 D = Decimal
 MATCHER_VERSION = "frontier-relationship-matcher-5"
-SAME_PAYOFF_VERIFIER_VERSION = "frontier-equivalence-verifier-7"
-LOGICAL_IMPLICATION_VERIFIER_VERSION = "frontier-logical-implication-verifier-3"
+SAME_PAYOFF_VERIFIER_VERSION = "frontier-equivalence-verifier-8"
+LOGICAL_IMPLICATION_VERIFIER_VERSION = "frontier-logical-implication-verifier-4"
 MAX_LOGICAL_IMPLICATION_STATES = 1024
 MAX_LOGICAL_STATE_ID_CHARS = 128
 DEFAULT_MINIMUM_JACCARD = D("0.45")
@@ -540,8 +540,12 @@ def verify_same_payoff(
     if left.market_kind not in supported_kinds or right.market_kind not in supported_kinds:
         checks.append("Only verified event contract structures are supported")
     for name, market in (("left", left), ("right", right)):
+        if not market.has_valid_structure:
+            checks.append(f"{name} market fails canonical structural revalidation")
         if not market.instruments:
             checks.append(f"{name} market has no instrument payout vectors to verify")
+        if not market.payoff.state_ids:
+            checks.append(f"{name} payoff has no exhaustive states to verify")
         if not market.payoff.verified or not market.payoff.exhaustive:
             checks.append(f"{name} payoff is not verified and exhaustive")
         if not market.has_consistent_settlement_asset_identity():
@@ -748,6 +752,10 @@ def verify_logical_implication(
         checks.append("Only binary event contracts are supported")
 
     for name, market_value in (("left", left), ("right", right)):
+        if not market_value.has_valid_structure:
+            checks.append(f"{name} market fails canonical structural revalidation")
+        if not market_value.payoff.state_ids:
+            checks.append(f"{name} payoff has no exhaustive states to verify")
         if not market_value.payoff.verified or not market_value.payoff.exhaustive:
             checks.append(f"{name} payoff is not verified and exhaustive")
         if len(set(market_value.payoff.state_ids)) != len(market_value.payoff.state_ids):

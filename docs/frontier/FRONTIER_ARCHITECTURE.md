@@ -723,20 +723,23 @@ authenticate the identity or fetch/verify the assertion. The verifier evaluates
 stored fields; it does not prove those fields are true beyond their source
 provenance.
 
-Same-payoff equivalence is versioned as `frontier-equivalence-verifier-7`.
+Same-payoff equivalence is versioned as `frontier-equivalence-verifier-8`.
 Verification requires two distinct pinned market observation identities,
 between two and ten unique nonempty evidence IDs, and an external assertion
 time no earlier than either captured market record. The independent arithmetic
-audit is version `frontier-independent-economic-audit-20`; it accepts exactly
+audit is version `frontier-independent-economic-audit-22`; it accepts exactly
 one current-version equivalence evidence record only when that record cites
 both markets and falls no later than the candidate's replay cutoff. A review
 created after that cutoff cannot validate an earlier candidate. Older verifier
 versions remain readable as stored evidence, but new candidate audits classify
-them incomplete until the relationship is re-reviewed. This provenance rule
+them incomplete until the relationship is re-reviewed. Pre-v8 relationship
+records remain readable but are incomplete for new cross-venue candidate
+audits. This provenance rule
 does not authenticate the reviewer or external assertion, or prove that the
 recorded market terms are semantically true. Each supplied market must also
-contain at least one instrument payout vector; an empty-to-empty instrument
-mapping cannot establish equivalence by vacuous bijection.
+have nonempty exhaustive states and pass structural revalidation; an
+empty-to-empty state or instrument mapping cannot establish equivalence by
+vacuous bijection.
 
 Both boundaries also recheck structural uniqueness instead of relying only on
 model validators, because direct Pydantic `model_copy(update=...)` calls can
@@ -745,20 +748,20 @@ verifier rejects duplicate payoff-state IDs, native instrument IDs, missing or
 duplicate outcome IDs, and duplicate payout rows. The independent audit checks
 the same payoff-state and instrument-ID uniqueness, scans payout rows across
 every instrument (including unselected legs), and requires unique cross-venue
-outcome IDs. Pre-v7 relationship records remain readable but are incomplete for
-new cross-venue candidate audits.
+outcome IDs.
 
 Logical implication uses the separate
-`frontier-logical-implication-verifier-3` version. It rejects copied markets
-with duplicate payoff-state identifiers or native instrument identities and
-requires unique YES/NO outcome identities. Independent audit v20 accepts only
-current v3 implication evidence; version-2 evidence remains available for
-inspection but cannot validate new candidate research.
+`frontier-logical-implication-verifier-4` version. It rejects copied markets
+with empty or duplicate payoff-state identifiers, invalid structural data,
+or duplicate native instrument identities and requires unique YES/NO outcome
+identities. Independent audit v22 accepts only current v4 implication evidence;
+older evidence remains available for inspection but cannot validate new
+candidate research.
 The current candidate/replay economic model is
-`frontier-economic-verifiers-20`, which pins that verifier acceptance rule in
+`frontier-economic-verifiers-21`, which pins that verifier acceptance rule in
 candidate and replay identities. Replays using v2 implication evidence produce
 incomplete evidence with no constructed position until the relationship is
-reviewed under v3. Book snapshots expose a runtime price-level integrity check
+reviewed under v4. Book snapshots expose a runtime price-level integrity check
 because `model_copy(update=...)` bypasses Pydantic validation. Candidate
 generators and the independent audit reject duplicate prices, invalid Decimal
 values, malformed levels, and naive level timestamps; deterministic replay
