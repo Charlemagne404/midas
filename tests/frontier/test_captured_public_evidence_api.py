@@ -52,6 +52,9 @@ def test_saved_polymarket_capture_is_read_only_and_hypothesis_labeled(tmp_path: 
         "2589813",
         "2589814",
     }
+    assert all(item["payoff"]["verified"] is False for item in market_result["items"])
+    assert all(item["payoff"]["exhaustive"] is False for item in market_result["items"])
+    assert all(item["resolution"]["verified"] is False for item in market_result["items"])
 
     assert books.status_code == 200
     assert len(books.json()["items"]) == 1
