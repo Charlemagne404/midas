@@ -238,6 +238,12 @@ class PriceIncrementRange(FrontierModel):
 
 
 class MarketInstrument(FrontierModel):
+    canonical_id: str | None = Field(
+        default=None,
+        min_length=78,
+        max_length=78,
+        pattern=r"^instrument-v1:[0-9a-f]{64}$",
+    )
     native_instrument_id: str
     label: str
     outcome_id: str | None = None
@@ -805,7 +811,7 @@ class Provenance(FrontierModel):
 
 
 class FrontierMarket(FrontierModel):
-    schema_version: int = 4
+    schema_version: int = 5
     venue: Venue
     canonical_id: str
     native_market_id: str
@@ -834,9 +840,57 @@ class FrontierMarket(FrontierModel):
     @field_validator("schema_version")
     @classmethod
     def supported_market_schema_version(cls, value: int) -> int:
-        if value not in {1, 2, 3, 4}:
+        if value not in {1, 2, 3, 4, 5}:
             raise ValueError("Unsupported Frontier market schema version")
         return value
+
+    @model_validator(mode="before")
+    @classmethod
+    def bind_source_scoped_instrument_ids(cls, value: Any) -> Any:
+        if not isinstance(value, dict):
+            return value
+        venue_value = value.get("venue")
+        if isinstance(venue_value, Venue):
+            venue = venue_value
+        elif isinstance(venue_value, str):
+            try:
+                venue = Venue(venue_value)
+            except ValueError:
+                return value
+        else:
+            return value
+        native_market_id = value.get("native_market_id")
+        instruments_value = value.get("instruments", ())
+        if not isinstance(native_market_id, str) or not isinstance(
+            instruments_value, (list, tuple)
+        ):
+            return value
+
+        normalized: list[Any] = []
+        changed = False
+        for instrument_value in instruments_value:
+            if isinstance(instrument_value, MarketInstrument):
+                instrument_data = instrument_value.model_dump(mode="python")
+            elif isinstance(instrument_value, dict):
+                instrument_data = instrument_value.copy()
+            else:
+                normalized.append(instrument_value)
+                continue
+            native_instrument_id = instrument_data.get("native_instrument_id")
+            if not isinstance(native_instrument_id, str):
+                normalized.append(instrument_data)
+                changed = True
+                continue
+            expected_id = stable_instrument_id(venue, native_market_id, native_instrument_id)
+            if instrument_data.get("canonical_id") is None:
+                instrument_data["canonical_id"] = expected_id
+                changed = True
+            normalized.append(instrument_data)
+        if not changed:
+            return value
+        normalized_market = value.copy()
+        normalized_market["instruments"] = normalized
+        return normalized_market
 
     @model_validator(mode="after")
     def consistent_structure(self) -> FrontierMarket:
@@ -880,6 +934,14 @@ class FrontierMarket(FrontierModel):
                     raise ValueError(
                         "Verified payoff must define every state exactly once for every outcome"
                     )
+        for instrument in self.instruments:
+            expected_id = stable_instrument_id(
+                self.venue, self.native_market_id, instrument.native_instrument_id
+            )
+            if instrument.canonical_id != expected_id:
+                raise ValueError(
+                    "Canonical instrument identity differs from its venue and native identifiers"
+                )
         return self
 
     @property
@@ -1357,6 +1419,16 @@ class SourceFailureRecord(FrontierModel):
 def stable_market_id(venue: Venue, native_market_id: str) -> str:
     """Venue-local stable identity; it does not assert cross-venue equivalence."""
     return f"{venue.value}:{native_market_id}"
+
+
+def stable_instrument_id(venue: Venue, native_market_id: str, native_instrument_id: str) -> str:
+    """Return a source-scoped identity; identical IDs do not imply equivalent payoffs."""
+    payload = json.dumps(
+        ["frontier-instrument-v1", venue.value, native_market_id, native_instrument_id],
+        ensure_ascii=True,
+        separators=(",", ":"),
+    )
+    return f"instrument-v1:{sha256_text(payload)}"
 
 
 def sha256_text(value: str) -> str:

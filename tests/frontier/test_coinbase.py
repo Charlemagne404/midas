@@ -24,6 +24,7 @@ from midas.frontier.models import (
     MarketKind,
     QuantityUnit,
     Venue,
+    stable_instrument_id,
 )
 from midas.frontier.registry import AdapterRegistry
 from midas.frontier.storage import FrontierStore
@@ -147,6 +148,10 @@ async def test_coinbase_product_book_and_trades_preserve_native_semantics_offlin
 
     assert market.venue == Venue.COINBASE_EXCHANGE
     assert market.market_kind == MarketKind.SPOT_PAIR
+    assert market.schema_version == 5
+    assert market.instruments[0].canonical_id == stable_instrument_id(
+        market.venue, market.native_market_id, market.instruments[0].native_instrument_id
+    )
     assert market.lifecycle.value == "open"
     assert market.base_asset == "BTC" and market.quote_asset == "USD"
     assert market.instruments[0].quantity_unit == QuantityUnit.BASE_ASSET

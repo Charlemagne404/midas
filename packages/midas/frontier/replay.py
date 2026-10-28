@@ -38,7 +38,7 @@ from midas.frontier.relationships import (
     propose_relationships,
 )
 
-REPLAY_VERSION = "frontier-deterministic-replay-20"
+REPLAY_VERSION = "frontier-deterministic-replay-21"
 PAIRED_COMPARISON_VERSION = "frontier-paired-replay-1"
 MAX_REPLAY_BOOKS = 400
 MAX_REPLAY_RELATIONSHIPS = 1000

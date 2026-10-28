@@ -37,7 +37,7 @@ from midas.frontier.models import (
 )
 
 D = Decimal
-ADAPTER_VERSION = "frontier-coinbase-exchange-spot-1"
+ADAPTER_VERSION = "frontier-coinbase-exchange-spot-2"
 BASE = "https://api.exchange.coinbase.com"
 PRODUCTS_DOC = (
     "https://docs.cdp.coinbase.com/api-reference/exchange-api/rest-api/products/get-single-product"

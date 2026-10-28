@@ -2059,6 +2059,7 @@ it('captures Kalshi fee metadata and exposes a separate hypothetical fee sensiti
     native_fields: {},
     instruments: [
       {
+        canonical_id: `instrument-v1:${'a'.repeat(64)}`,
         native_instrument_id: 'KX-FEE-1:YES',
         label: 'Yes',
         outcome_id: 'yes',
@@ -2450,6 +2451,11 @@ it('captures Kalshi fee metadata and exposes a separate hypothetical fee sensiti
   ).toBeInTheDocument();
   expect(
     screen.getByText(/Quantity step: 0\.1 · minimum: 0\.2 · minimum notional: 5/),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByText(
+      `instrument-v1:${'a'.repeat(64)}`,
+    ),
   ).toBeInTheDocument();
   expect(await screen.findByText('Public event context')).toBeInTheDocument();
   fireEvent.click(await screen.findByRole('button', { name: 'Capture market detail' }));

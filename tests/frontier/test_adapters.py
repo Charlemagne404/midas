@@ -22,6 +22,7 @@ from midas.frontier.models import (
     SourceState,
     TradeBatch,
     Venue,
+    stable_instrument_id,
 )
 from midas.frontier.relationships import (
     RelationshipType,
@@ -264,6 +265,10 @@ async def test_polymarket_v1_capture_normalizes_without_claiming_verified_payout
     assert first.market_kind == MarketKind.BINARY_EVENT
     assert first.native_market_id == "559651"
     assert first.native_event_id == "30828"
+    assert first.schema_version == 5
+    assert first.instruments[0].canonical_id == stable_instrument_id(
+        first.venue, first.native_market_id, first.instruments[0].native_instrument_id
+    )
     assert [item.outcome_id for item in first.instruments] == ["yes", "no"]
     assert first.payoff.verified is False
     assert first.settlement_asset is None
@@ -1364,6 +1369,10 @@ async def test_kraken_synthetic_pair_and_book_preserve_spot_units_and_level_time
     finally:
         await client.aclose()
     assert market.market_kind == MarketKind.SPOT_PAIR
+    assert market.schema_version == 5
+    assert market.instruments[0].canonical_id == stable_instrument_id(
+        market.venue, market.native_market_id, market.instruments[0].native_instrument_id
+    )
     assert (market.base_asset, market.quote_asset) == ("XBT", "USD")
     assert market.payoff.state_ids == ()
     assert market.fees.status.value == "unknown"
@@ -1902,7 +1911,8 @@ async def test_kalshi_single_market_metadata_lookup_is_ticker_bound_and_read_onl
     assert normalized.resolution.evidence_sha256 is not None
     assert normalized.resolution.verified is False
     assert normalized.payoff.verified is False
-    assert normalized.schema_version == 4
+    assert normalized.schema_version == 5
+    assert all(item.canonical_id is not None for item in normalized.instruments)
     assert [
         (item.start, item.end, item.step)
         for item in normalized.instruments[0].price_increment_ranges

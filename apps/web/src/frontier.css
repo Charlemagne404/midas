@@ -1432,6 +1432,9 @@
   color: #798697;
   font-size: 8px;
 }
+.fr-instrument-list > article > small code {
+  overflow-wrap: anywhere;
+}
 .fr-book-meta {
   display: flex;
   align-items: center;

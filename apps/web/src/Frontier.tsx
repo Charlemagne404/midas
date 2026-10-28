@@ -258,6 +258,7 @@ type Market = {
   };
   native_fields: Record<string, unknown>;
   instruments: {
+    canonical_id?: string;
     native_instrument_id: string;
     label: string;
     outcome_id: string | null;
@@ -6459,6 +6460,12 @@ function MarketDetails({
                 Quote unit: {instrument.price_currency ?? 'Unknown'} ·{' '}
                 {settlementIdentityLabel(instrument.price_currency_identity)}
               </small>
+              {instrument.canonical_id && (
+                <small>
+                  Canonical ID (venue-scoped; not an equivalence claim):{' '}
+                  <code>{instrument.canonical_id}</code>
+                </small>
+              )}
               <small>
                 Price increments:{' '}
                 {instrument.price_increment_ranges?.length

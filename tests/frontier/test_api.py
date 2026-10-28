@@ -37,6 +37,7 @@ from midas.frontier.models import (
     TradeBatch,
     TradeObservation,
     Venue,
+    stable_instrument_id,
 )
 from midas.frontier.registry import AdapterRegistry
 from midas.frontier.relationships import (
@@ -3276,10 +3277,20 @@ def test_polymarket_price_history_probe_is_bound_and_replayable(tmp_path):
         update={
             "instruments": (
                 source_market.instruments[0].model_copy(
-                    update={"native_instrument_id": "123456789"}
+                    update={
+                        "native_instrument_id": "123456789",
+                        "canonical_id": stable_instrument_id(
+                            source_market.venue, source_market.native_market_id, "123456789"
+                        ),
+                    }
                 ),
                 source_market.instruments[1].model_copy(
-                    update={"native_instrument_id": "987654321"}
+                    update={
+                        "native_instrument_id": "987654321",
+                        "canonical_id": stable_instrument_id(
+                            source_market.venue, source_market.native_market_id, "987654321"
+                        ),
+                    }
                 ),
             )
         }
@@ -4875,7 +4886,7 @@ def test_replay_api_generates_and_persists_multi_outcome_candidate(tmp_path):
         replay = client.post("/api/frontier/replay", json={})
         assert replay.status_code == 200, replay.text
         result = replay.json()
-        assert result["manifest"]["replay_version"] == "frontier-deterministic-replay-20"
+        assert result["manifest"]["replay_version"] == "frontier-deterministic-replay-21"
         assert len(result["candidates"]) == 1
         candidate = result["candidates"][0]
         assert candidate["family"] == "within_market_multi_outcome_coverage"
@@ -5184,7 +5195,7 @@ def test_replay_api_generates_and_persists_bounded_payoff_basket(tmp_path):
         response = client.post("/api/frontier/replay", json={})
         assert response.status_code == 200, response.text
         result = response.json()
-        assert result["manifest"]["replay_version"] == "frontier-deterministic-replay-20"
+        assert result["manifest"]["replay_version"] == "frontier-deterministic-replay-21"
         assert len(result["candidates"]) == 1
         candidate = result["candidates"][0]
         assert candidate["family"] == "within_market_payoff_basket"
