@@ -3942,3 +3942,16 @@ At `2026-10-28T22:28:43Z`, API `MemoryHigh` headroom was 3,608,576 bytes and
 Reality headroom was 560,103,424 bytes. PSI was elevated (`some avg10=13.49%`,
 `full avg10=12.04%`); available memory was 10,051,796 kB. Broad and live-source
 validation remain deferred.
+
+## Project Frontier paired comparison persistence check — 2026-10-28 22:30 UTC
+
+The selected paired-comparison regression passed **4/4**: atomic append and
+hash verification, rollback when the pair budget is exhausted, rejection of
+scenario/run mismatch, and API list/detail handling of missing and mismatched
+arm hashes. The test process was limited to 512 MiB address space and 30
+seconds CPU/wall time. It made no network requests.
+
+At `2026-10-28T22:30:06Z`, API `MemoryHigh` headroom was 1,527,808 bytes and
+Reality headroom was 557,928,448 bytes. System PSI `avg10` was 0%; available
+memory was 10,024,416 kB. Broader tests remain deferred under narrow API
+headroom and elevated longer-window PSI.

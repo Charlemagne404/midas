@@ -11808,3 +11808,27 @@ headroom was 560,103,424 bytes; PSI was elevated (`some avg10=13.49%`,
 Next safe action: continue offline implementation and fixture coverage. Do not
 lift source gates. Revisit live-source work only after applicable permissions
 are validated and host resource headroom is remeasured.
+
+## Paired comparison persistence check — 2026-10-28 22:30 UTC
+
+Ran a four-case bounded regression: paired storage atomic append/hash
+verification, budget-failure rollback, scenario/run mismatch rejection, and
+comparison API list/detail handling of missing or mismatched arm hashes. All
+**4/4 passed**. The process ran in the GNOME Terminal cgroup with a 512 MiB
+address-space cap and 30-second CPU and wall-time limits; it made no network
+requests. One existing Starlette/httpx deprecation warning remains.
+
+At `2026-10-28T22:30:06Z`, API headroom was 1,527,808 bytes and Reality
+headroom was 557,928,448 bytes. PSI `avg10` was 0%; available memory was
+10,024,416 kB. Longer-window PSI remained elevated; broad test suites stay
+deferred because the API remains close to its soft memory boundary.
+
+| Component | Status | Evidence and boundary |
+| --- | --- | --- |
+| Paired comparison persistence | COMPLETE AND VERIFIED WITH FIXTURES | Atomicity, budget rollback, and scenario pairing cases pass. |
+| Paired comparison readback | COMPLETE AND VERIFIED WITH FIXTURES | List/detail reject missing or mismatched arms. |
+| Full storage/API regression | PARTIALLY VERIFIED | Selected four cases pass; wider suites remain unrun after current changes. |
+| Project Frontier overall | PARTIALLY VERIFIED | Live cross-venue research, full regression, endurance, protected recovery, and deployment remain open. |
+
+Next safe action: continue offline coverage and implementation; defer broad
+runtime work until API headroom and PSI admit it.

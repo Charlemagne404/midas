@@ -12773,3 +12773,19 @@ service or source-use setting changed.
 | Development worktree source gates | COMPLETE AND VERIFIED WITH CONFIG SNAPSHOT | Polymarket flag is off; Kalshi/Kraken/Coinbase probes are denied by code-level permission properties. |
 | Live Polymarket validation | DEFERRED | Worktree public-probe flag is off; no live request was issued. |
 | Live Kalshi/Kraken/Coinbase validation | BLOCKED | Current terms review and absent validated permission references keep use held. |
+
+## Paired comparison persistence regression — 2026-10-28
+
+Three focused storage cases and the paired replay API case pass **4/4**:
+atomic paired append/hash verification, rollback under pair-budget failure,
+scenario-to-run mismatch rejection, and list/detail failure for missing or
+mismatched arm evidence. The process ran outside the protected API cgroup
+with a 512 MiB address-space cap and 30-second CPU and wall-time limits; no
+network calls were made. The pre-existing Starlette/httpx warning appears in
+the API case.
+
+At `2026-10-28T22:30:06Z`, API `MemoryHigh` headroom was **1,527,808 bytes**,
+Reality headroom **557,928,448 bytes**, PSI `avg10` 0%, and available memory
+**10,024,416 kB**. PSI averages over 60 and 300 seconds remained elevated, and
+the API remained near its limit. This is focused evidence, not the full
+comparison/storage regression or full Frontier suite.
