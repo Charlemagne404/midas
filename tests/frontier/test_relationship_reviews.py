@@ -207,6 +207,17 @@ def test_nonverified_implication_review_keeps_optional_direction_and_evidence_va
         )
 
 
+@pytest.mark.parametrize("evidence_id", ("x" * 65, "A" * 64, "g" * 64))
+def test_relationship_review_rejects_unbounded_or_non_sha256_evidence_ids(evidence_id):
+    with pytest.raises(ValidationError, match="lowercase SHA-256 digests"):
+        RelationshipReviewRequest(
+            decision=ReviewDecision.REJECTED,
+            reviewer_label="researcher-1",
+            reason="The evidence identity must be a source digest.",
+            evidence_observation_ids=(evidence_id,),
+        )
+
+
 def test_explicit_review_verifies_only_with_complete_stored_payoff_evidence(tmp_path):
     client, registry, http_client, store = _client(tmp_path)
     left, right, evidence = _seed_pair(store)
