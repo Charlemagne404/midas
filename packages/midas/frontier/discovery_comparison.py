@@ -15,6 +15,7 @@ from midas.frontier.economics import (
     OpportunityCandidate,
     OpportunityClassification,
     OpportunityFamily,
+    _require_valid_execution_scenario,
 )
 from midas.frontier.models import (
     BookSnapshot,
@@ -27,7 +28,7 @@ from midas.frontier.models import (
 from midas.frontier.relationships import Relationship, VerificationState
 from midas.frontier.replay import REPLAY_VERSION, ReplayResult, deterministic_replay
 
-COMPARISON_VERSION = "frontier-discovery-scope-comparison-1"
+COMPARISON_VERSION = "frontier-discovery-scope-comparison-2"
 MAX_MARKETS = 100
 MAX_BOOKS = 200
 MAX_RELATIONSHIPS = 500
@@ -114,8 +115,8 @@ class DiscoveryScopeDelta(FrontierModel):
 
 class DiscoveryScopeComparison(FrontierModel):
     schema_version: Literal[1] = 1
-    comparison_version: Literal["frontier-discovery-scope-comparison-1"] = (
-        "frontier-discovery-scope-comparison-1"
+    comparison_version: Literal["frontier-discovery-scope-comparison-2"] = (
+        "frontier-discovery-scope-comparison-2"
     )
     comparison_id: str = Field(pattern=_HEX_SHA256)
     normalized_input_sha256: str = Field(pattern=_HEX_SHA256)
@@ -200,6 +201,7 @@ def compare_discovery_scopes(
     ):
         raise ValueError("Discovery comparison book references an unpinned instrument")
     scenario_value = scenario or ExecutionScenario()
+    _require_valid_execution_scenario(scenario_value)
     times = [item.provenance.response_received_at_utc for item in markets]
     times.extend(item.received_at_utc for item in books)
     pinned_time = as_of_utc or max(times, default=datetime(1970, 1, 1, tzinfo=UTC))

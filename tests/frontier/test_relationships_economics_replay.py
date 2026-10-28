@@ -42,10 +42,11 @@ from midas.frontier.relationships import (
     RelationshipEvidence,
     RelationshipType,
     VerificationState,
+    evidence_mapping,
     propose_relationships,
     verify_same_payoff,
 )
-from midas.frontier.replay import deterministic_replay
+from midas.frontier.replay import deterministic_replay, paired_deterministic_replay
 from pydantic import ValidationError
 
 from tests.frontier.builders import T0, book, market
@@ -1670,6 +1671,76 @@ def test_per_venue_execution_delay_scenarios_reject_invalid_values(payload):
         ExecutionScenario.model_validate(payload)
 
 
+def test_copied_invalid_execution_scenario_cannot_scale_depth_or_pass_independent_audit():
+    left, right, relationship, instrument_mapping = _verified_pair()
+    left_books, right_books = _books(left, right)
+    invalid_scenario = ExecutionScenario(fill_fraction=Decimal("0.5")).model_copy(
+        update={"fill_fraction": Decimal("2")}
+    )
+    assert not invalid_scenario.has_valid_structure
+
+    with pytest.raises(ValueError, match="Execution scenario fails structural validation"):
+        generate_binary_coverage_candidates(
+            left,
+            right,
+            relationship,
+            left_books,
+            right_books,
+            state_mapping={"yes": "yes", "no": "no"},
+            instrument_mapping=instrument_mapping,
+            scenario=invalid_scenario,
+            as_of_utc=T0 + timedelta(milliseconds=100),
+        )
+
+    with pytest.raises(ValueError, match="Execution scenario fails structural validation"):
+        deterministic_replay(
+            (left, right),
+            tuple(left_books.values()) + tuple(right_books.values()),
+            verified_relationships=(relationship,),
+            scenario=invalid_scenario,
+            as_of_utc=T0 + timedelta(milliseconds=100),
+            code_version="copied-invalid-scenario-rejected-v1",
+        )
+    with pytest.raises(ValueError, match="Execution scenario fails structural validation"):
+        paired_deterministic_replay(
+            (left, right),
+            tuple(left_books.values()) + tuple(right_books.values()),
+            scenarios=(ExecutionScenario(), invalid_scenario),
+            verified_relationships=(relationship,),
+            as_of_utc=T0 + timedelta(milliseconds=100),
+            code_version="copied-invalid-paired-scenario-rejected-v1",
+        )
+
+    valid_replay = deterministic_replay(
+        (left, right),
+        tuple(left_books.values()) + tuple(right_books.values()),
+        verified_relationships=(relationship,),
+        as_of_utc=T0 + timedelta(milliseconds=100),
+        code_version="copied-invalid-scenario-audit-v1",
+    )
+    candidate = next(item for item in valid_replay.candidates if item.legs)
+    canonical_instrument_mapping = evidence_mapping(relationship, "instrument_mapping")
+    audited = independently_audit_candidate(
+        candidate.model_copy(update={"independent_audit": None}),
+        markets={left.canonical_id: left, right.canonical_id: right},
+        books_by_market={left.canonical_id: left_books, right.canonical_id: right_books},
+        relationships={relationship.relationship_id: relationship},
+        state_mappings={relationship.relationship_id: {"yes": "yes", "no": "no"}},
+        instrument_mappings={relationship.relationship_id: canonical_instrument_mapping},
+        scenario=invalid_scenario,
+    )
+    assert audited.independent_audit is not None
+    assert audited.independent_audit.disposition.value == "incomplete"
+    assert audited.classification == OpportunityClassification.INCOMPLETE_EVIDENCE
+    assert not audited.practical_eligibility
+    assert audited.legs == candidate.legs
+    assert max(leg.quantity for leg in candidate.legs) <= max(
+        level.quantity
+        for snapshot in (*left_books.values(), *right_books.values())
+        for level in snapshot.asks
+    )
+
+
 def test_fee_schedule_expiring_before_modeled_execution_stays_unknown_in_candidate_and_audit():
     left, right, _, instrument_mapping = _verified_pair()
     as_of = T0 + timedelta(milliseconds=100)
@@ -2165,7 +2236,7 @@ def test_independent_audit_rejects_naive_book_time_from_a_reconstructed_model():
     assert audit.independent_audit is not None
     assert audit.independent_audit.disposition.value == "incomplete"
     assert "not timezone-aware" in audit.independent_audit.message
-    assert audit.independent_audit.model_version == "frontier-independent-economic-audit-20"
+    assert audit.independent_audit.model_version == "frontier-independent-economic-audit-21"
 
 
 def test_independent_audit_rejects_quantity_step_mutation():
@@ -2291,7 +2362,7 @@ def test_candidate_generation_and_independent_audit_enforce_price_ticks():
         as_of_utc=T0 + timedelta(milliseconds=100),
     )
     candidate = next(item for item in candidates if item.legs)
-    assert candidate.model_version == "frontier-economic-verifiers-20"
+    assert candidate.model_version == "frontier-economic-verifiers-21"
 
     def with_half_dollar_ticks(market_value):
         instruments = tuple(
@@ -2709,7 +2780,7 @@ def test_verified_multi_outcome_coverage_is_exact_and_stays_hypothetical():
         as_of_utc=T0 + timedelta(milliseconds=100),
         code_version="multi-outcome-fixture-v1",
     )
-    assert replay.manifest.replay_version == "frontier-deterministic-replay-19"
+    assert replay.manifest.replay_version == "frontier-deterministic-replay-20"
     replay_candidate = replay.candidates[0]
     assert replay_candidate.model_copy(update={"independent_audit": None}) == candidate
     assert replay_candidate.independent_audit is not None
@@ -3067,7 +3138,7 @@ def test_deterministic_replay_is_invariant_to_input_order():
     }
     first = deterministic_replay((left, right), all_books, **kwargs)
     second = deterministic_replay((right, left), tuple(reversed(all_books)), **kwargs)
-    assert first.manifest.economic_model_version == "frontier-economic-verifiers-20"
+    assert first.manifest.economic_model_version == "frontier-economic-verifiers-21"
     assert first.run_id == second.run_id
     assert first.result_sha256 == second.result_sha256
     assert first.candidates == second.candidates

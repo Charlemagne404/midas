@@ -18,6 +18,7 @@ from midas.frontier.economics import (
     ExecutionScenario,
     OpportunityClassification,
     OpportunityFamily,
+    _require_valid_execution_scenario,
 )
 from midas.frontier.models import (
     BookSnapshot,
@@ -29,7 +30,7 @@ from midas.frontier.models import (
 from midas.frontier.relationships import Relationship, VerificationState
 from midas.frontier.replay import ReplayResult, deterministic_replay
 
-TIMELINE_REPLAY_VERSION = "frontier-event-time-replay-1"
+TIMELINE_REPLAY_VERSION = "frontier-event-time-replay-2"
 MAX_TIMELINE_MARKETS = 100
 MAX_TIMELINE_BOOKS = 200
 MAX_TIMELINE_RELATIONSHIPS = 100
@@ -267,6 +268,7 @@ def deterministic_timeline_replay(
         raise ValueError("Timeline input contains duplicate market identities")
 
     scenario = scenario or ExecutionScenario()
+    _require_valid_execution_scenario(scenario)
     ordered_markets = tuple(sorted(markets, key=lambda item: item.canonical_id))
     ordered_books = tuple(
         sorted(

@@ -5,7 +5,7 @@ from datetime import timedelta
 from decimal import Decimal
 
 import pytest
-from midas.frontier.economics import OpportunityClassification
+from midas.frontier.economics import ExecutionScenario, OpportunityClassification
 from midas.frontier.models import BookLevel, BookSnapshot, EconomicAuditDisposition, Venue
 from midas.frontier.relationships import verify_same_payoff
 from midas.frontier.timeline import (
@@ -195,6 +195,20 @@ def test_event_time_replay_tracks_quote_deterioration_then_quote_expiry():
         and item.worst_case_net_pnl is None
         for item in expired.candidates
     )
+
+
+def test_timeline_replay_rejects_copied_invalid_execution_scenario():
+    left, right, relationship = _verified_pair()
+    scenario = ExecutionScenario().model_copy(update={"fill_fraction": Decimal("2")})
+
+    with pytest.raises(ValueError, match="Execution scenario fails structural validation"):
+        deterministic_timeline_replay(
+            (left, right),
+            _fixture_books(left, right),
+            verified_relationships=(relationship,),
+            evaluation_times_utc=(T0,),
+            scenario=scenario,
+        )
 
 
 def test_receipt_time_controls_book_availability_and_exchange_time_reaches_audit():

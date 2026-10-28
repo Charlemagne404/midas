@@ -14,6 +14,7 @@ from midas.frontier.economics import (
     ExecutionScenario,
     OpportunityCandidate,
     _is_complete_one_hot_market,
+    _require_valid_execution_scenario,
     generate_binary_coverage_candidates,
     generate_bounded_payoff_basket_candidates,
     generate_logical_implication_candidates,
@@ -36,7 +37,7 @@ from midas.frontier.relationships import (
     propose_relationships,
 )
 
-REPLAY_VERSION = "frontier-deterministic-replay-19"
+REPLAY_VERSION = "frontier-deterministic-replay-20"
 PAIRED_COMPARISON_VERSION = "frontier-paired-replay-1"
 
 
@@ -194,6 +195,7 @@ def deterministic_replay(
 ) -> ReplayResult:
     """Replay saved evidence only. The function has no adapter or network dependency."""
     scenario = scenario or ExecutionScenario()
+    _require_valid_execution_scenario(scenario)
     if any(not market.has_valid_structure for market in markets):
         raise ValueError("Replay input contains a market that fails structural validation")
     if any(not book.has_valid_structure for book in books):
@@ -426,6 +428,8 @@ def paired_deterministic_replay(
     """
     if len(scenarios) != 2:
         raise ValueError("Paired replay requires exactly two scenarios")
+    for scenario in scenarios:
+        _require_valid_execution_scenario(scenario)
     if scenarios[0].name == scenarios[1].name:
         raise ValueError("Paired replay scenario names must be unique")
     if len(markets) > 100 or len(books) > 200 or len(verified_relationships) > 500:

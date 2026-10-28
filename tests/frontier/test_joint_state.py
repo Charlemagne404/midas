@@ -166,6 +166,15 @@ def test_joint_state_basket_is_independently_audited_and_replayed_deterministica
         scenario=ExecutionScenario(),
         as_of_utc=as_of,
     )
+    invalid_scenario = ExecutionScenario().model_copy(update={"fill_fraction": Decimal("2")})
+    with pytest.raises(ValueError, match="Execution scenario fails structural validation"):
+        generate_joint_state_basket_candidates(
+            markets,
+            mapping,
+            books_by_market,
+            scenario=invalid_scenario,
+            as_of_utc=as_of,
+        )
 
     candidate = next(
         item

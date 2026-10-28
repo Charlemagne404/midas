@@ -54,7 +54,7 @@ from midas.frontier.relationships import (
 )
 
 D = Decimal
-_AUDIT_VERSION = "frontier-independent-economic-audit-20"
+_AUDIT_VERSION = "frontier-independent-economic-audit-21"
 _FEE_QUANTUM = D("0.00001")
 _KALSHI_FEE_MAX_EVIDENCE_AGE = timedelta(hours=24)
 _AUDIT_PARTIAL_FILL_FRACTIONS = (D(0), D("0.25"), D("0.5"), D("0.75"), D(1))
@@ -73,6 +73,37 @@ def independently_audit_candidate(
 ) -> OpportunityCandidate:
     """Recompute a replay candidate from pinned contracts and books."""
     joint_state_mappings = joint_state_mappings or {}
+    if not scenario.has_valid_structure:
+        raw_scenario = scenario.model_dump(mode="python", warnings=False)
+        input_sha256 = hashlib.sha256(
+            json.dumps(
+                {
+                    "audit_version": _AUDIT_VERSION,
+                    "candidate_id": candidate.candidate_id,
+                    "invalid_execution_scenario": raw_scenario,
+                },
+                sort_keys=True,
+                separators=(",", ":"),
+                default=str,
+                allow_nan=False,
+            ).encode()
+        ).hexdigest()
+        audit = IndependentEconomicAudit(
+            model_version=_AUDIT_VERSION,
+            disposition=EconomicAuditDisposition.INCOMPLETE,
+            input_sha256=input_sha256,
+            checked_market_count=min(len(candidate.market_ids), 4),
+            checked_leg_count=min(len(candidate.legs), 16),
+            checks=(),
+            message="Execution scenario fails structural validation.",
+        )
+        return candidate.model_copy(
+            update={
+                "classification": OpportunityClassification.INCOMPLETE_EVIDENCE,
+                "practical_eligibility": False,
+                "independent_audit": audit,
+            }
+        )
     input_sha256 = _audit_input_hash(
         candidate,
         markets,

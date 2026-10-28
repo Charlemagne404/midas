@@ -1,7 +1,11 @@
+from decimal import Decimal
+
+import pytest
 from midas.frontier.discovery_comparison import (
     DiscoveryScope,
     compare_discovery_scopes,
 )
+from midas.frontier.economics import ExecutionScenario
 from midas.frontier.models import Venue
 from midas.frontier.relationships import verify_same_payoff
 
@@ -61,3 +65,7 @@ def test_discovery_scope_comparison_is_deterministic_and_exposes_cross_venue_del
     assert first.deltas[1].compared_only_candidate_count == 2
     assert first.deltas[2].compared_only_candidate_count == 2
     assert first.normalized_input_sha256 != "0" * 64
+
+    invalid_scenario = ExecutionScenario().model_copy(update={"fill_fraction": Decimal("2")})
+    with pytest.raises(ValueError, match="Execution scenario fails structural validation"):
+        compare_discovery_scopes(**kwargs, scenario=invalid_scenario)

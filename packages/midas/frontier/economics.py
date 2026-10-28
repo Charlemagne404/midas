@@ -52,7 +52,7 @@ from midas.frontier.relationships import (
 )
 
 D = Decimal
-ECONOMIC_MODEL_VERSION = "frontier-economic-verifiers-20"
+ECONOMIC_MODEL_VERSION = "frontier-economic-verifiers-21"
 PARTIAL_FILL_FRACTIONS = (D(0), D("0.25"), D("0.5"), D("0.75"), D(1))
 KALSHI_MVE_SETTLEMENT_AUDIT_VERSION = "kalshi-mve-settlement-audit-2"
 _KALSHI_TAKER_FEE_TYPES = frozenset({"quadratic", "quadratic_with_combo_maker_fees"})
@@ -245,6 +245,22 @@ class ExecutionScenario(FrontierModel):
         return self.execution_delay_ms + self.additional_execution_delay_ms_by_venue.get(
             venue_key, 0
         )
+
+    @property
+    def has_valid_structure(self) -> bool:
+        """Revalidate assumptions after possible unvalidated model copies."""
+        try:
+            validated = ExecutionScenario.model_validate(
+                self.model_dump(mode="python", warnings=False)
+            )
+        except (TypeError, ValueError):
+            return False
+        return validated == self
+
+
+def _require_valid_execution_scenario(scenario: ExecutionScenario) -> None:
+    if not scenario.has_valid_structure:
+        raise ValueError("Execution scenario fails structural validation")
 
 
 class PositionLeg(FrontierModel):
@@ -1064,6 +1080,7 @@ def generate_binary_coverage_candidates(
 ) -> tuple[OpportunityCandidate, ...]:
     """Check two all-long complementary portfolios; does not infer venue equivalence."""
     scenario = scenario or ExecutionScenario()
+    _require_valid_execution_scenario(scenario)
     as_of = as_of_utc or datetime.now(UTC)
     if as_of.tzinfo is None or as_of.utcoffset() is None:
         raise ValueError("Evaluation timestamp must be timezone-aware")
@@ -1276,6 +1293,7 @@ def generate_logical_implication_candidates(
     unauthenticated, so positive results are capped at conditional.
     """
     scenario = scenario or ExecutionScenario()
+    _require_valid_execution_scenario(scenario)
     as_of = as_of_utc or datetime.now(UTC)
     if as_of.tzinfo is None or as_of.utcoffset() is None:
         raise ValueError("Evaluation timestamp must be timezone-aware")
@@ -1559,6 +1577,7 @@ def generate_bounded_payoff_basket_candidates(
     if type(max_candidates) is not int or not 1 <= max_candidates <= 32:
         raise ValueError("max_candidates must be an integer from one to thirty-two")
     scenario = scenario or ExecutionScenario()
+    _require_valid_execution_scenario(scenario)
     as_of = as_of_utc or datetime.now(UTC)
     if as_of.tzinfo is None or as_of.utcoffset() is None:
         raise ValueError("Evaluation timestamp must be timezone-aware")
@@ -1704,6 +1723,7 @@ def _evaluate_single_market_basket(
     family: OpportunityFamily,
 ) -> OpportunityCandidate:
     scenario = scenario or ExecutionScenario()
+    _require_valid_execution_scenario(scenario)
     as_of = as_of_utc or datetime.now(UTC)
     if as_of.tzinfo is None or as_of.utcoffset() is None:
         raise ValueError("Evaluation timestamp must be timezone-aware")

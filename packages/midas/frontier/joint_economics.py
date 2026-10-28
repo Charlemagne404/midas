@@ -24,6 +24,7 @@ from midas.frontier.economics import (
     _price_denomination_matches,
     _price_matches_instrument_constraints,
     _projected_execution_time,
+    _require_valid_execution_scenario,
 )
 from midas.frontier.models import (
     BookLevel,
@@ -62,6 +63,7 @@ def generate_joint_state_basket_candidates(
     if type(max_candidates) is not int or not 1 <= max_candidates <= MAX_JOINT_BASKET_CANDIDATES:
         raise ValueError("max_candidates must be an integer from one to thirty-two")
     scenario = scenario or ExecutionScenario()
+    _require_valid_execution_scenario(scenario)
     as_of = as_of_utc or datetime.now(UTC)
     if as_of.tzinfo is None or as_of.utcoffset() is None:
         raise ValueError("Evaluation timestamp must be timezone-aware")
