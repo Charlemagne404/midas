@@ -9524,3 +9524,36 @@ passed the entire suite.
 | Frontier overall | PARTIALLY VERIFIED | Live cross-venue equivalence, source-use permissions, held-capture access, production recovery, and deployment gates remain unresolved. |
 
 **Implementation commit:** `4788443` (`fix(arena): validate Frontier snapshot boundaries`).
+
+## FrontierStore preflight before database initialization — 2026-10-28
+
+Commit `c5b8822` moves input-only validation ahead of FrontierStore
+initialization and migration for observations, relationship hypotheses,
+relationship reviews, replay results, price-history replay results, and paired
+comparisons. Encoded row bounds, replay budgets, and paired-run consistency
+are checked before database schema creation. Observation writes pre-serialize
+and bound the raw body plus normalized payload with its persistence provenance
+stamp. Validation that depends on stored state remains transaction-bound.
+
+The full `tests/frontier/test_storage.py` module passes **28/28** in 1.33
+seconds (1.68 seconds wall), with **70,916 KiB** maximum RSS, zero swaps,
+filesystem input, or socket messages, and 568 output blocks. It used the
+isolated tmpfs root `/dev/shm/midas-frontier-storage-preflight-module-20261028`.
+Strict mypy on `storage.py`, Ruff check/format, and `git diff --check` pass.
+Regressions verify oversized relationship and combined observation rows,
+invalid replay budgets, and mismatched paired comparisons leave the new store
+path absent.
+
+The combined full Frontier-plus-Arena snapshot regression was not run. At
+`2026-10-28T13:39:57Z`, CPU PSI avg10 was 2.06%, I/O PSI was 1.27% some / 1.24%
+full, and memory PSI was 0.00%; the I/O sample exceeded the 1% test-admission
+gate. No source, held capture, protected store, collector, production service,
+or historical evidence was accessed.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| FrontierStore write preflight | COMPLETE AND VERIFIED | Six append paths validate model and encoded-size constraints before initialization; the full 28-case storage module, strict mypy, and Ruff pass. |
+| Frontier/Arena full regression after this commit | PARTIALLY VERIFIED | Touched module passes; combined regression deferred by measured I/O pressure. |
+| Frontier overall | PARTIALLY VERIFIED | Live cross-venue equivalence, source-use permissions, held-capture access, production recovery, and deployment remain open. |
+
+**Implementation commit:** `c5b8822` (`fix(frontier): preflight storage writes before initialization`).

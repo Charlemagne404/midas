@@ -2925,3 +2925,14 @@ input, or socket messages. Broader Arena/Frontier suites remain deferred while
 host CPU PSI avg10 is about **48%**. No source, capture, collector, protected
 store, service, or persistent job was accessed. Frontier remains research-only
 and **PARTIALLY VERIFIED**.
+
+### FrontierStore preflight boundary — 2026-10-28 13:39 UTC
+
+Commit `c5b8822` moves encoded-size, budget, and paired-input validation ahead
+of SQLite initialization for six append paths. The complete storage test module
+passes **28/28** in 1.33 seconds with 70,916 KiB peak RSS and zero swaps,
+filesystem input, or socket messages; strict mypy and Ruff pass. The combined
+Frontier/Arena suite was held after a fresh sample showed I/O PSI avg10 at
+**1.27% some / 1.24% full**. No source, capture, protected store, collector,
+or production service was accessed. Frontier remains research-only and
+**PARTIALLY VERIFIED**.

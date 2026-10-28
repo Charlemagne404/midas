@@ -1,5 +1,44 @@
 # Project Frontier Mission Ledger
 
+## FrontierStore write preflight — 2026-10-28 13:39 UTC
+
+**Implementation commit:** `c5b8822` (`fix(frontier): preflight storage writes before initialization`).
+
+The source-independent persistence audit found that bounded FrontierStore
+writers initialized or migrated SQLite before validating encoded row size,
+replay budgets, or paired-input consistency. Observation, relationship,
+relationship-review, replay, price-history replay, and paired-comparison
+writers now complete those input-only checks before initialization. Observation
+preflight includes both the raw-plus-normalized payload and its final persisted
+provenance representation. Checks that require existing database evidence
+(for example, whether a reviewed hypothesis exists) still run inside the
+transaction.
+
+New regressions confirm that oversized observation and relationship rows,
+invalid replay budgets, and mismatched paired comparisons are rejected without
+creating the database file. The full `tests/frontier/test_storage.py` module
+passes **28/28** in **1.33 seconds** (1.68 seconds wall), at **70,916 KiB**
+maximum RSS, with zero swaps, filesystem input, or socket messages and 568
+filesystem-output blocks. It used
+`/dev/shm/midas-frontier-storage-preflight-module-20261028`. Strict mypy for
+`storage.py`, Ruff check/format, and `git diff --check` pass.
+
+The combined Frontier-plus-Arena snapshot suite was not started. A fresh sample
+at `2026-10-28T13:39:57Z` showed CPU PSI avg10 **2.06%**, I/O PSI **1.27% some
+/ 1.24% full**, and memory PSI **0.00%**; I/O exceeded the 1% admission gate.
+About 10 GiB remained available. No source, capture, protected store, collector,
+production service, or historical research evidence was accessed.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| FrontierStore bounded write preflight | COMPLETE AND VERIFIED | Six persistence paths preflight model consistency, encoded limits, and budgets before database initialization; the complete 28-case storage module passes. |
+| Full Frontier/Arena regression after this commit | PARTIALLY VERIFIED | Touched storage module passes; combined suite deferred after I/O PSI exceeded admission. |
+| Frontier project acceptance | PARTIALLY VERIFIED | Source-use holds, held-capture restrictions, genuine cross-venue evidence, production recovery, and deployment remain open. |
+
+**Next safe action:** continue bounded source-independent review; sample I/O
+pressure before a broader test invocation. Preserve
+`data/frontier-public-probes/` untouched.
+
 ## Collection journal module verification — 2026-10-28 13:28 UTC
 
 After the append-input and read-only-query fixes (`3153148`, `f440fa2`), the
