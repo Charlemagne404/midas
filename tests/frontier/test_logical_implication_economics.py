@@ -130,6 +130,36 @@ def test_logical_implication_rejects_reverse_direction_with_counterexample() -> 
     assert "source yes payout does not imply target yes" in reverse.reason.lower()
 
 
+def test_implication_candidate_revalidates_forged_reverse_edge() -> None:
+    source, target, relationship, ordered_markets, by_market, books = _fixture()
+    evidence = relationship.evidence[0]
+    forged_details = tuple(
+        f"implication_from_market_id={target.canonical_id}"
+        if item.startswith("implication_from_market_id=")
+        else f"implication_to_market_id={source.canonical_id}"
+        if item.startswith("implication_to_market_id=")
+        else item
+        for item in evidence.details
+    )
+    forged_relationship = relationship.model_copy(
+        update={"evidence": (evidence.model_copy(update={"details": forged_details}),)}
+    )
+    left, right = ordered_markets
+    candidates = generate_logical_implication_candidates(
+        left,
+        right,
+        forged_relationship,
+        by_market[left.canonical_id],
+        by_market[right.canonical_id],
+        state_mapping=evidence_mapping(relationship, "state_mapping"),
+        as_of_utc=T0,
+    )
+
+    assert len(candidates) == 1
+    assert candidates[0].classification == OpportunityClassification.INVALID_RELATIONSHIP
+    assert "fails for at least one mapped terminal state" in candidates[0].reasons[0]
+
+
 def test_logical_implication_rejects_non_bijective_state_mapping() -> None:
     source, target, *_ = _fixture()
     mapping = {
