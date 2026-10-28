@@ -171,7 +171,11 @@ validated permission and intended-scope review loader; the exact-version value
 records acknowledgement only. Coinbase probes return HTTP 409 before network
 access, and Coinbase source records remain quarantined from application
 research/replay routes. Coinbase fixture tests do not establish live validation
-or permission.
+or permission. The reviewed 2026-08-07 terms also restrict use of Market Data
+for AI/ML or other automated-system development, validation, benchmarking, and
+related AI research or operation without prior express written consent. The
+effective source-status reason names this restriction; it does not imply that
+permission is available or that a terms acknowledgement lifts the hold.
 The `CoinbaseSpotConfig` model rejects clearing its source-use hold even when
 the exact terms version is acknowledged, because no validated permission and
 intended-scope loader exists. Structural revalidation also rejects copied

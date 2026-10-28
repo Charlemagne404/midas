@@ -44,10 +44,15 @@ remain dated 7 August 2026. They provide a limited personal/research-use
 license subject to restrictions. Without prior written consent, the terms
 restrict building an application intended for users outside the individual or
 their organization's officers and employees, external display or dissemination
-of Market Data and Derived Works, and specified AI or machine-learning uses.
-The applicable entity, organization, region, internal distribution, and exact
-research scope are not established. The Coinbase source-use hold therefore
-remains; a version acknowledgement alone is not permission.
+of Market Data and Derived Works, and using Market Data to develop, train,
+fine-tune, teach, validate, benchmark, or improve an AI/ML model, algorithm,
+chatbot, agent, or other automated system, or for other AI research,
+development, or operation. The terms say these uses require prior express
+written consent. The applicable entity, organization, region, internal
+distribution, permission, and exact research scope are not established. The
+Coinbase source-use hold therefore remains; a version acknowledgement alone is
+not permission. The source status now surfaces the automated-system restriction
+in its hold reason. No Coinbase endpoint was queried for this refresh.
 
 ### Polymarket
 

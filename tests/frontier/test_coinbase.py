@@ -266,6 +266,8 @@ async def test_coinbase_default_terms_hold_blocks_even_a_flagged_transport():
     try:
         assert config.probe_policy_block_reason is not None
         assert "validated permission and intended-scope review" in config.probe_policy_block_reason
+        assert "AI/ML and other automated-system use" in config.probe_policy_block_reason
+        assert "prior express written consent" in config.probe_policy_block_reason
         assert "alone does not lift the hold" in config.probe_policy_block_reason
         with pytest.raises(AdapterError) as error:
             await adapter.discover_markets(limit=1)

@@ -50,10 +50,13 @@ TRADES_DOC = (
 )
 _PRODUCT_ID = re.compile(r"^[A-Z0-9]{1,12}-[A-Z0-9]{1,12}$")
 _FIAT_QUOTES = frozenset({"USD", "EUR", "GBP", "CAD", "AUD", "CHF", "JPY", "NZD"})
-_DEFAULT_TERMS_HOLD_REASON = (
-    "Coinbase Exchange source use remains held until validated permission and "
-    "intended-scope review are configured; acknowledging the reviewed Market "
-    f"Data Terms version {COINBASE_MARKET_DATA_TERMS_VERSION} alone does not lift the hold."
+COINBASE_SOURCE_USE_HOLD_REASON = (
+    "Coinbase Exchange source use remains held because Frontier has no validated permission "
+    "and intended-scope review loader. The reviewed Market Data Terms "
+    f"({COINBASE_MARKET_DATA_TERMS_VERSION}) restrict AI/ML and other automated-system use "
+    "for development, validation, benchmarking, and related AI research or operation without "
+    "prior express written consent. A terms-version acknowledgement alone does not lift the "
+    "hold; no Coinbase request will be made."
 )
 
 
@@ -66,7 +69,7 @@ def _quote_identity(code: str) -> SettlementAssetIdentity | None:
 class CoinbaseSpotConfig(AdapterConfig):
     """Explicit bounded Coinbase product allowlist; never enumerates the catalog."""
 
-    probe_policy_block_reason: str | None = _DEFAULT_TERMS_HOLD_REASON
+    probe_policy_block_reason: str | None = COINBASE_SOURCE_USE_HOLD_REASON
     market_data_terms_version_acknowledged: str | None = Field(default=None, max_length=32)
     products: tuple[str, ...] = ("BTC-USD",)
 

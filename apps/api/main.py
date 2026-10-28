@@ -9,7 +9,6 @@ import structlog
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from midas.analytics.research import feasibility
-from midas.frontier.models import COINBASE_MARKET_DATA_TERMS_VERSION
 from midas.simulation.scenarios import SCENARIOS, catalog
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -33,7 +32,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         KrakenSpotAdapter,
         PolymarketAdapter,
     )
-    from midas.frontier.adapters.coinbase import CoinbaseSpotConfig
+    from midas.frontier.adapters.coinbase import (
+        COINBASE_SOURCE_USE_HOLD_REASON,
+        CoinbaseSpotConfig,
+    )
     from midas.frontier.adapters.kraken import KrakenSpotConfig
     from midas.frontier.models import AdapterConfig
     from midas.frontier.registry import AdapterRegistry
@@ -61,13 +63,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     kraken_probe_block_reason = source_permission_block_reason(
         "Kraken", config.frontier_kraken_market_data_permission_ref
     )
-    coinbase_probe_block_reason = (
-        "Coinbase Exchange source use remains held because Frontier has no validated "
-        "permission and intended-scope review loader. An exact Market Data Terms version "
-        f"acknowledgement ({COINBASE_MARKET_DATA_TERMS_VERSION}) and the probe flag do not "
-        "resolve organization, region, retention, derived-data, display, or automated-system "
-        "scope; no Coinbase request will be made."
-    )
+    coinbase_probe_block_reason = COINBASE_SOURCE_USE_HOLD_REASON
 
     frontier_registry = AdapterRegistry(
         (

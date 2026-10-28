@@ -1,5 +1,22 @@
 # Project Frontier Mission Ledger
 
+## Coinbase automated-system restriction surfaced — 2026-10-28 16:35 UTC
+
+The official Coinbase Market Data Terms, last updated 2026-08-07, explicitly
+restrict using Market Data to develop, train, fine-tune, teach, validate,
+benchmark, or improve an AI/ML model, algorithm, chatbot, agent, or other
+automated system, as well as related AI research, development, or operation,
+absent prior express written consent. The applicable MIDAS entity, region,
+permission, distribution scope, and intended use are not validated. The source
+remains held and no Coinbase endpoint was queried.
+
+The adapter and API now share one source-hold reason, and the Exchanges view
+shows the specific AI/ML/automated-system restriction. Regression assertions
+cover adapter, source-permission API, and UI output. `git diff --check` passes;
+tests have not been run because CPU PSI remains above 40% with protected MIDAS
+services active. This change clarifies the existing deny-by-default gate and
+does not enable collection.
+
 ## Protected-service and resource recheck — 2026-10-28 16:30 UTC
 
 Read-only PSI at 16:30:27Z measured CPU `some` at 41.18% avg10 / 40.35%

@@ -23,7 +23,7 @@ it('renders recorded-evidence empty states and never probes a source automatical
     adapter_version: 'frontier-coinbase-exchange-spot-1',
     public_probe_enabled: false,
     probe_policy_block_reason:
-      'Coinbase Exchange source use remains held because Frontier has no validated permission and intended-scope review loader. An exact Market Data Terms version acknowledgement (2026-08-07) and the probe flag do not resolve organization, region, retention, derived-data, display, or automated-system scope; no Coinbase request will be made.',
+      'Coinbase Exchange source use remains held because Frontier has no validated permission and intended-scope review loader. The reviewed Market Data Terms (2026-08-07) restrict AI/ML and other automated-system use for development, validation, benchmarking, and related AI research or operation without prior express written consent. A terms-version acknowledgement alone does not lift the hold; no Coinbase request will be made.',
     capabilities: [
       {
         capability: 'market_discovery',
@@ -391,6 +391,7 @@ it('renders recorded-evidence empty states and never probes a source automatical
   expect(screen.getByRole('heading', { name: 'Coinbase Exchange Spot' })).toBeInTheDocument();
   expect(screen.getByText(/A spot price is not a prediction-contract payoff/)).toBeInTheDocument();
   expect(screen.getByText(/terms acknowledgment is not authorization/)).toBeInTheDocument();
+  expect(screen.getByText(/AI\/ML and other automated-system use/)).toBeInTheDocument();
   expect(screen.getAllByRole('button', { name: 'Public probe disabled' })).toHaveLength(1);
   screen
     .getAllByRole('button', { name: 'Public probe disabled' })

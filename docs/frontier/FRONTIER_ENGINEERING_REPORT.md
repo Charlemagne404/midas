@@ -2,6 +2,22 @@
 
 **Report date:** 2026-10-28
 
+## Coinbase source-use restriction checkpoint — 2026-10-28 16:35 UTC
+
+The current official [Coinbase Market Data Terms](https://www.coinbase.com/legal/market_data),
+updated 2026-08-07, restrict use of Market Data to develop, train, fine-tune,
+teach, validate, benchmark, or improve AI/ML models, algorithms, chatbots,
+agents, and other automated systems, or for related AI research, development,
+or operation, absent prior express written consent. MIDAS has no validated
+consent or intended-scope review for that use. Coinbase remains held; no
+endpoint was queried.
+
+The adapter and API now use one shared hold reason, and the Exchanges view
+surfaces the restriction. Adapter/API/UI regression assertions were updated
+but not run under the current CPU-pressure admission hold. `git diff --check`
+passes. This is a source-policy disclosure change; it does not enable source
+use or lift the existing hold.
+
 ## Arena regression stop and current status — 2026-10-28 16:30 UTC
 
 The finite `tests/arena` retry used the absolute Frontier worktree package path

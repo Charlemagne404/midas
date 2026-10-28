@@ -210,6 +210,7 @@ def test_coinbase_terms_acknowledgement_does_not_lift_unresolved_scope_hold(tmp_
         assert "no validated permission and intended-scope review loader" in (
             config.probe_policy_block_reason
         )
+        assert "AI/ML and other automated-system use" in config.probe_policy_block_reason
         assert config.market_data_terms_version_acknowledged == COINBASE_MARKET_DATA_TERMS_VERSION
         assert config.enabled is False
         assert config.live_public_probe_enabled is False
