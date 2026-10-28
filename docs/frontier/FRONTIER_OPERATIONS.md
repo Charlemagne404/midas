@@ -228,7 +228,10 @@ and the source-use guard continues to deny held captures.
 
 A later host sample at `2026-10-28T08:47:41Z` showed memory PSI avg10 **49.58%
 some / 45.01% full**, while I/O PSI was below 1%. No cause was attributed and
-no further broad test was started. Recheck pressure before the next broad run.
+no further broad test was started at that checkpoint. On 2026-10-28 at
+`09:06:50Z`, memory PSI avg10 was 0% and I/O PSI avg10 was **1.35% some / 1.35%
+full**. A local API/Vite smoke was stopped before starting a browser; no cause
+is attributed. Recheck pressure before the next browser, broad test, or build.
 
 For a broad suite run, first sample `/proc/pressure/memory` and
 `/proc/pressure/io`; defer when memory or I/O PSI avg10 is at or above 1%.

@@ -33,7 +33,22 @@ in the dated addendum below and in the Frontier engineering report.
 
 ## Frontier development addendum — 2026-10-28
 
-### Latest isolated Frontier checkpoint — 2026-10-28 09:03 UTC
+### Latest isolated Frontier checkpoint — 2026-10-28 09:06 UTC
+
+A short-lived local Uvicorn API ran in demo mode with its writable roots
+isolated under `/tmp/midas-frontier-live-ui-20261028-0905/`; all source probes
+were explicitly disabled. Its real Frontier market and book GET routes
+returned the preserved Polymarket records and observation IDs with a
+recorded-only disclosure. Hashes of both SQLite stores and the capture manifest
+were unchanged after shutdown. Health reported `live_execution: false`. Vite
+was started and stopped against this API, but no browser was launched.
+
+At `09:05:51Z`, I/O PSI avg10 was 0.99% some/full; at `09:06:50Z`, it was 1.35%
+some/full while memory PSI avg10 was 0%. No cause is attributed. Defer browser
+rendering until a fresh sample clears the resource gate. Frontier remains
+research-only and **PARTIALLY VERIFIED**.
+
+### Full Frontier regression checkpoint — 2026-10-28 09:03 UTC
 
 After capture-root isolation commit `429f690`, the complete `tests/frontier`
 suite passed **387/387** in one process in 29.38 seconds pytest time. The run

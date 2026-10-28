@@ -17,6 +17,26 @@ host cause. At `09:03:33Z`, memory avg10 was 0.93% some / 0.79% full and I/O
 avg10 was 0.79% some / 0.75% full. No follow-up resource-bearing operation has
 started. Frontier remains **PARTIALLY VERIFIED**.
 
+## Live API read of preserved Polymarket evidence — 2026-10-28 09:06 UTC
+
+Started and stopped the full API on loopback in demo mode, with writable paper,
+recording, Laboratory, Arena, and Reality roots isolated beneath
+`/tmp/midas-frontier-live-ui-20261028-0905/`. The Frontier store was the
+preserved live Polymarket capture; every venue probe flag was explicitly false.
+The API's `/api/frontier/markets` and `/api/frontier/books` GETs each returned
+one saved record with observation IDs
+`530a6f50dd9826fa200a2dc7fe8a60de3d59b0b465297bd5bb9c7c6f4274ec44` and
+`4bb731fd70467c6e8f4ebf33c994243ecb2a02f2701d8ba4e493aae729b0a6b5`, and the
+recorded-only disclosure. Post-run hashes of the market database, collection
+journal, and manifest match the capture report. API health identified demo mode
+and `live_execution: false`. No source request or production service was used.
+
+Vite was started and stopped against this local API, but the browser was not
+launched. I/O PSI avg10 was 0.99% some/full at `09:05:51Z`, then 1.35%
+some/full at `09:06:50Z`; no cause is attributed. A browser rendering check is
+pending a fresh resource sample below the 1% gate. Frontier remains
+**PARTIALLY VERIFIED**.
+
 ## Bounded live Polymarket adapter evidence and fixture isolation — 2026-10-28 08:57 UTC
 
 The Polymarket adapter was exercised against the public Gamma and CLOB APIs

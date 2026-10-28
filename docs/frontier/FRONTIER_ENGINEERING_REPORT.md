@@ -2,7 +2,7 @@
 
 **Report date:** 2026-10-28
 
-## Current status — 2026-10-28 09:03 UTC
+## Current status — 2026-10-28 09:06 UTC
 
 Frontier is isolated at `/home/charlie/midas-frontier` on
 `codex/frontier-20261026`. It descends from verified Veritas V6 integration
@@ -28,6 +28,16 @@ these public market APIs for research use. The local read-only
 `/api/frontier/markets` and `/api/frontier/books` routes returned the saved
 market and book with their observation IDs intact; the API disclosed the data
 as recorded observations only.
+
+At `09:05:58Z`, the full API was started briefly in demo mode on loopback with
+paper, recording, Laboratory, Arena, and Reality roots isolated under
+`/tmp/midas-frontier-live-ui-20261028-0905/`; all Frontier public-probe flags
+were explicitly disabled. Its Frontier API routes returned the saved market
+and book (`530a6f…ec44` and `4bb731…a6b5`) with
+`source_state: recorded observations only`. The API process was stopped, and
+the market-store, collection-store, and manifest hashes still match the
+preserved capture. Vite was started briefly against that API, but no browser
+was launched; the visual check remains pending.
 Existing implementation includes Polymarket, Kalshi, Kraken Spot, and Coinbase
 public read adapters; canonical instrument and payoff models; reviewable
 relationship evidence; bounded candidate discovery and independent economics;
@@ -63,8 +73,10 @@ Current bounded verification:
   `09:02:39Z`, memory PSI rose to **54.19% some / 48.45% full**; the cause is
   unknown and is not attributed to Frontier. At `09:03:33Z`, memory PSI avg10
   was 0.93% some / 0.79% full and I/O PSI avg10 was 0.79% some / 0.75% full.
-  No further resource-bearing work has started; take another admission sample
-  before the next broad test or build.
+  At `09:05:51Z`, I/O PSI avg10 was 0.99% some / 0.99% full; at `09:06:50Z` it
+  was 1.35% some / 1.35% full while memory PSI avg10 was 0%. The source of the
+  change is unknown and is not attributed to Frontier. No browser was launched;
+  take a fresh admission sample before more resource-bearing work.
 
 The complete MIDAS repository regression remains unverified. The current tree
 has `packages/midas/arena/recovery.py` but lacks
@@ -101,6 +113,25 @@ Sampled memory and I/O PSI remained below the documented 1% avg10 gate through
 0.79% full and I/O avg10 was 0.79% some / 0.75% full. The latest sample is
 below the gate, but another fresh sample is required before additional broad
 work. Frontier remains **PARTIALLY VERIFIED**.
+
+## Live API read of preserved Polymarket evidence — 2026-10-28 09:06 UTC
+
+A short-lived Uvicorn process ran the full MIDAS API in demo mode on loopback.
+Its paper database, recording root, Laboratory, Arena, and Reality roots were
+under `/tmp/midas-frontier-live-ui-20261028-0905/`; the Frontier read path
+pointed to the preserved Polymarket capture and all public-probe flags were
+false. `GET /api/frontier/markets?venue=polymarket&limit=5` and
+`GET /api/frontier/books?venue=polymarket&limit=5` each returned the saved row
+with its original observation ID and recorded-only disclosure. The market
+store, collection store, and manifest hashes matched the values in the capture
+report after shutdown. The demo API health response reported `live_execution`
+false. No source request or production service was used.
+
+Vite was started briefly on loopback against the local API. A browser was not
+started because I/O PSI was 0.99% some/full at `09:05:51Z` and 1.35% some/full
+at `09:06:50Z`, above the documented resource gate. The cause is unknown; this
+does not establish a UI defect. A genuine-capture browser rendering check
+remains pending. Frontier remains **PARTIALLY VERIFIED**.
 
 ## Bounded live Polymarket adapter validation — 2026-10-28 08:57 UTC
 
