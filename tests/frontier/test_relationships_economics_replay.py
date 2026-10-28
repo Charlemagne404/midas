@@ -405,6 +405,22 @@ def test_cross_venue_replay_rejects_equivalence_assertion_after_cutoff():
     )
 
 
+def test_deterministic_replay_rejects_duplicate_relationship_identities():
+    left, right, relationship, instrument_mapping = _verified_pair()
+    left_books, right_books = _books(left, right)
+
+    with pytest.raises(ValueError, match="duplicate relationship identities"):
+        deterministic_replay(
+            (left, right),
+            tuple(left_books.values()) + tuple(right_books.values()),
+            verified_relationships=(relationship, relationship),
+            state_mappings={relationship.relationship_id: {"yes": "yes", "no": "no"}},
+            instrument_mappings={relationship.relationship_id: instrument_mapping},
+            as_of_utc=T0 + timedelta(milliseconds=100),
+            code_version="duplicate-relationship-input-test-v1",
+        )
+
+
 def test_cross_venue_replay_rejects_equivalence_evidence_missing_pinned_market():
     left, right, relationship, _instrument_mapping = _verified_pair()
     incomplete_evidence = relationship.evidence[0].model_copy(

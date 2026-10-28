@@ -215,6 +215,8 @@ def deterministic_replay(
     ordered_relationships = tuple(
         sorted(verified_relationships, key=lambda item: item.relationship_id)
     )
+    if len({item.relationship_id for item in ordered_relationships}) != len(ordered_relationships):
+        raise ValueError("Replay contains duplicate relationship identities")
     market_index = {item.canonical_id: item for item in ordered_markets}
     if len(market_index) != len(ordered_markets):
         raise ValueError("Replay input contains duplicate market identities")
