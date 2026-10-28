@@ -33,6 +33,18 @@ in the dated addendum below and in the Frontier engineering report.
 
 ## Frontier development addendum — 2026-10-28
 
+### Production web build and complete current frontend checks — 2026-10-28 01:29 UTC
+
+The current web revision passes the full unit suite (**40/40**), isolated
+Frontier browser spec (**4/4**), and `corepack pnpm --dir apps/web build`
+(TypeScript plus Vite). The build transformed 2,228 modules and used **647,704
+KiB peak RSS** in 12.93 seconds wall time, with zero swaps. Vite retains the
+existing **544.41 kB** chart-chunk advisory. Playwright used only loopback demo
+services and temporary research storage. No production deployment occurred.
+Project Frontier remains **PARTIALLY VERIFIED**; multi-market joint-state
+composition, live cross-venue validation, long-horizon source-quality evidence,
+and deployment gates remain open.
+
 ### Varied subset shapes and frontend regression — 2026-10-28 01:27 UTC
 
 Benchmark commit `8f2d22fa7bc37ac806d070403d122d941dc226a8` measures four

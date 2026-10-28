@@ -1,5 +1,33 @@
 # Project Frontier Mission Ledger
 
+## Production web build verification — 2026-10-28 01:29 UTC
+
+The current Mission Control frontend passes the full web unit suite
+(**40/40**), Frontier browser spec (**4/4**), and production build:
+
+```bash
+corepack pnpm --dir apps/web test
+corepack pnpm --dir apps/web exec playwright test e2e/frontier.spec.ts --workers=1
+corepack pnpm --dir apps/web build
+```
+
+The build ran TypeScript and Vite 7.3.7, transformed **2,228 modules**, and
+completed in 4.65 seconds (**12.93 seconds wall**). Peak RSS was **647,704
+KiB**, with zero swaps, major faults, or socket messages. Vite reports the
+existing **544.41 kB** chart-chunk advisory above its 500 kB threshold. The
+browser spec uses loopback demo services and a temporary database/workspace.
+No live sources or production services were involved.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Current Mission Control frontend verification | COMPLETE AND VERIFIED | Web 40/40, Frontier Playwright 4/4, TypeScript check, and Vite production build pass. The bundle advisory remains. |
+| Production deployment | DEFERRED | This is a local build only; separate authorization and production readiness gates remain. |
+| Project Frontier overall | PARTIALLY VERIFIED | General multi-market composition, live cross-venue evidence, long-horizon source quality, and deployment remain open. |
+
+**Next safe action:** implement and independently audit a separately versioned,
+bounded joint-state representation for multi-market portfolios; preserve
+asserted state maps as conditional evidence and pin them into replay records.
+
 ## Varied payoff-basket workloads and frontend regression — 2026-10-28 01:27 UTC
 
 Benchmark commit `8f2d22fa7bc37ac806d070403d122d941dc226a8` measures four

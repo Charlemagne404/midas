@@ -5037,9 +5037,9 @@ acceptance against current branch evidence, not intent or planned work.
 | Venue costs, capital, and currency assumptions | PARTIALLY VERIFIED | Public fee metadata, bounded fee/carry sensitivities, partial-fill stress, venue-separated virtual balances, and a separate conversion-adjusted terminal-P&L scenario exist. The P&L scenario requires verified candidate/funding audits, complete candidate leg fees, and sufficient per-venue balances; it never mutates candidate economics. Account-specific fees, sourced FX, cross-venue transfer/custody, settlement risk, and conversion availability remain unknown. |
 | Isolated collection, provenance, durable storage, and deterministic replay | PARTIALLY VERIFIED | Finite restartable collection, append-only hash-chained checkpoints, a read-only keyset-paginated run catalog across the 1,000-run journal bound, bounded storage, event-time replay, source-health evidence, and replay provenance are implemented and tested offline. No continuous market-data stream, full source-history backfill, or long-horizon source-quality study is established. |
 | Laboratory/Arena research integration | PARTIALLY VERIFIED | Bounded replay jobs, paired comparisons, integrity-checked results, and fixture/UI paths exist. No durable Laboratory experiment manager, long-duration campaign, or production worker is authorized or verified. |
-| Native Frontier Mission Control interface | IMPLEMENTED, DEPLOYMENT PENDING | The complete web unit suite passes 40/40 and the Frontier browser spec 4/4 after the payoff-basket change, using isolated demo services and temporary SQLite/Arena/Frontier roots. No live source data was used; no production deployment occurred. |
+| Native Frontier Mission Control interface | IMPLEMENTED, DEPLOYMENT PENDING | The complete web unit suite passes 40/40, Frontier browser spec 4/4, and production TypeScript/Vite build after the payoff-basket change. Browser checks use isolated demo services and temporary SQLite/Arena/Frontier roots. The build retains the existing 544.41 kB chart-chunk advisory. No live source data was used; no production deployment occurred. |
 | Scientific acceptance: normalization, rejection, controlled discrepancy, independent arithmetic, missing/stale/asynchronous evidence, and deterministic replay | PARTIALLY VERIFIED | The serial Frontier suite passes 332 tests, including exact three-leg basket generation/replay, API persistence/listing, independent recomputation, non-coverage rejection, and truncated-basket audit rejection. Current web unit/browser checks also pass 40/40 and 4/4. Evidence does not establish a genuine cross-venue relationship, synchronized executable quotes, or positive economics. |
-| Resource sustainability under bounded development workloads | PARTIALLY VERIFIED | The 332-test serial Frontier suite measured 369,040 KiB peak RSS; web unit tests measured 310,652 KiB and Frontier Playwright measured 192,060 KiB. Four synthetic basket shapes covered 7 or 4,095 enumerated subsets and 0, 1, 11, or 4,095 qualifying combinations; the dense case returned 32 at 0.343868 seconds median / 0.355242 seconds maximum. These are short local measurements; representative public workloads, sustained collection, concurrency, production admission, and broad latency/CPU behavior remain unmeasured. |
+| Resource sustainability under bounded development workloads | PARTIALLY VERIFIED | The 332-test serial Frontier suite measured 369,040 KiB peak RSS; web unit tests measured 310,652 KiB, Frontier Playwright 192,060 KiB, and the production web build 647,704 KiB. Four synthetic basket shapes covered 7 or 4,095 enumerated subsets and 0, 1, 11, or 4,095 qualifying combinations; the dense case returned 32 at 0.343868 seconds median / 0.355242 seconds maximum. These are short local measurements; representative public workloads, sustained collection, concurrency, production admission, and broad latency/CPU behavior remain unmeasured. |
 | Read-only research boundary and source-use gates | COMPLETE AND VERIFIED | No trading/authenticated exchange path is provided; source-policy tests ensure held venues return 409 without requests and held evidence stays quarantined. This does not grant permission to use a held source. |
 | Required architecture, operations, current-state, report, and continuation documentation | COMPLETE AND VERIFIED | The engineering report, architecture, operations guidance, current-state note, and append-only mission ledger record implementation, evidence, blockers, and continuation actions. |
 | Production deployment | DEFERRED | Requires separate source permission, resource/storage/recovery review, full deployment-scope regression, monitoring/rollback preparation, and explicit authorization. |
@@ -5409,3 +5409,22 @@ Project Frontier remains **PARTIALLY VERIFIED**. In particular, general
 multi-market joint-state composition and corresponding independent audit are
 not implemented; current cross-market families remain pairwise, and their
 semantic evidence and current source-use holds constrain live validation.
+
+## Production web build after payoff-basket UI change — 2026-10-28 01:29 UTC
+
+`corepack pnpm --dir apps/web build` completed successfully on the current
+worktree. It ran `tsc -b` and Vite 7.3.7, transforming **2,228 modules** and
+producing the production bundle in **4.65 seconds** (12.93 seconds process wall
+time). `/usr/bin/time -v` measured **647,704 KiB peak RSS**, zero swaps, zero
+major faults, and zero socket messages. The only build diagnostic was the
+existing chart chunk advisory: `Chart-CMyjNNXf.js` is **544.41 kB** minified,
+above Vite's 500 kB warning threshold. The build was local and isolated; no
+deployment or service transition occurred.
+
+The current web unit suite (**40/40**) and Frontier browser spec (**4/4**) also
+pass after the payoff-basket UI update. The browser run used loopback demo
+services and temporary database/workspace roots. This verifies current
+frontend tests, types, and production compilation; it does not establish
+production deployment, operational capacity, live source behavior, or overall
+Frontier completion. General multi-market joint-state composition and its
+independent arithmetic audit remain unimplemented.
