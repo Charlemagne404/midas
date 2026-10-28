@@ -2,6 +2,40 @@
 
 **Report date:** 2026-10-28
 
+## Transport hardening and current Frontier suite verification — 2026-10-28
+
+The focused fixture-only tests for nonstandard JSON tokens, parser complexity,
+environment proxy handling, and injected transport rejection passed **10/10**
+(0.69 seconds pytest time, 1.06 seconds wall, 62,656 KiB peak RSS, zero swaps,
+and zero socket messages). Ruff check passed; Ruff format confirmed all three
+changed Python files were already formatted. Strict mypy reported no issues in
+`packages/midas/frontier/adapters/transport.py`.
+
+The full current `tests/frontier` suite passed **473/473** in 30.27 seconds
+pytest time (31.83 seconds wall), at 383,136 KiB peak RSS, with zero swaps and
+zero socket messages. The test used the absolute Frontier worktree package
+path and isolated tmpfs basetemp `/dev/shm/midas-frontier-full-20261028-1600`.
+One existing Starlette/httpx TestClient deprecation warning remains. A sample
+shortly before the full suite measured memory PSI avg10 0.00% (avg60 2.02%
+some / 1.42% full), I/O PSI avg10 0.00%, about 10 GiB available, and full swap
+with 112 KiB free. At 16:01:12 UTC after validation, memory PSI avg10/avg60 was
+0.00%/0.66% some and 0.00%/0.46% full, I/O PSI avg10 was 0.14% some / 0.00%
+full, and about 10 GiB remained available.
+
+No live endpoint or protected service was accessed. This verifies the current
+Frontier Python suite after parser and proxy hardening. The full legacy Arena
+suite remains partial: the corrected run reached 67% before it was stopped
+under host memory pressure. This checkpoint makes no production readiness,
+live cross-venue, or endurance claim.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Frontier public transport hardening | COMPLETE AND VERIFIED | Focused fixture regressions pass 10/10; no network request was made. |
+| Current Frontier Python suite | COMPLETE AND VERIFIED | `tests/frontier` passes 473/473 with one existing deprecation warning. |
+| Transport static checks | COMPLETE AND VERIFIED | Ruff check/format and targeted strict mypy pass. |
+| Full Arena/repository regression | PARTIALLY VERIFIED | The interrupted Arena rerun reached 67%; broader regression remains open. |
+| Frontier overall | PARTIALLY VERIFIED | Genuine cross-venue science, broad regression, endurance, protected recovery, and deployment remain incomplete. |
+
 ## Frontier public egress static audit — 2026-10-28
 
 Read-only code search of `packages/midas/frontier/adapters` and

@@ -1,5 +1,40 @@
 # Project Frontier Mission Ledger
 
+## Transport hardening and current Frontier suite verified — 2026-10-28 16:01 UTC
+
+The four focused fixture-only transport test selections passed **10/10**
+(0.69 seconds pytest time, 1.06 seconds wall, 62,656 KiB peak RSS, zero swaps,
+and zero socket messages). This includes strict rejection of NaN and infinities,
+the parser complexity path, environment-proxy disabling, and rejection of
+injected network/proxy transports. Ruff check passed, Ruff format reported all
+three changed Python files already formatted, and strict mypy reported no issues
+in `packages/midas/frontier/adapters/transport.py`.
+
+The full current `tests/frontier` suite then passed **473/473** in 30.27 seconds
+pytest time (31.83 seconds wall), at 383,136 KiB peak RSS, with zero swaps and
+zero socket messages. The run used the absolute worktree package path and the
+isolated tmpfs basetemp `/dev/shm/midas-frontier-full-20261028-1600`. It emitted
+one existing Starlette/httpx TestClient deprecation warning. The pre-run sample
+shortly before 16:00 UTC showed memory PSI avg10 0.00% (avg60 2.02% some /
+1.42% full), I/O PSI avg10 0.00%, about 10 GiB available, and swap full with
+112 KiB free. At 16:01:12Z after validation, memory PSI avg10/avg60 was
+0.00%/0.66% some and 0.00%/0.46% full, I/O PSI avg10 was 0.14% some / 0.00%
+full, and available memory remained about 10 GiB. The broad Arena rerun remains
+incomplete at 67% from the earlier stopped run; it is not represented as a
+pass. No live endpoint, protected service, or untracked capture was accessed.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Strict JSON and public transport proxy boundaries | COMPLETE AND VERIFIED | Focused fixture tests pass 10/10; full Frontier suite also passes on this tree. No live network call was made. |
+| Current Frontier Python suite | COMPLETE AND VERIFIED | `tests/frontier`: 473/473 passed with one existing deprecation warning. |
+| Transport lint, formatting, and strict typing | COMPLETE AND VERIFIED | Ruff check, Ruff format check, and targeted strict mypy pass. |
+| Full legacy Arena suite | PARTIALLY VERIFIED | Corrected full run reached 67% before interruption at the resource gate; a full-suite pass is still open. |
+| Frontier project acceptance | PARTIALLY VERIFIED | Live cross-venue science, broad legacy regression, endurance, protected recovery, and deployment remain open. |
+
+**Next safe action:** continue bounded static and documentation review. Remeasure
+resource pressure and use a separate admission decision before attempting any
+longer Arena or repository-wide regression.
+
 ## Frontier public egress static audit; validation remains held — 2026-10-28 15:57 UTC
 
 Read-only source review covered `packages/midas/frontier/adapters` and
