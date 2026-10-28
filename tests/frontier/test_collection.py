@@ -763,6 +763,31 @@ def test_unknown_source_health_checkpoint_lookup_is_read_only(tmp_path):
     assert not journal.path.exists()
 
 
+def test_collection_run_reads_do_not_create_or_repair_the_journal(tmp_path):
+    run_id = "77777777-7777-4777-8777-777777777777"
+    journal = CollectionJournal(tmp_path / "uncreated-frontier-root")
+
+    with pytest.raises(KeyError, match=run_id):
+        journal.run_spec(run_id)
+    assert journal.checkpoints(run_id) == ()
+    with pytest.raises(FrontierStoreError, match="no durable checkpoint"):
+        journal.latest_checkpoint(run_id)
+    assert not journal.root.exists()
+
+    journal.root.mkdir(parents=True)
+    with sqlite3.connect(journal.path):
+        pass
+    with pytest.raises(FrontierStoreError, match="could not be read safely"):
+        journal.run_spec(run_id)
+    with pytest.raises(FrontierStoreError, match="could not be read safely"):
+        journal.checkpoints(run_id)
+    with sqlite3.connect(journal.path) as connection:
+        tables = connection.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name"
+        ).fetchall()
+    assert tables == []
+
+
 def test_latest_source_health_checkpoints_are_bounded_read_only_and_use_latest_health(tmp_path):
     journal = CollectionJournal(tmp_path / "frontier")
     assert journal.latest_source_health_checkpoints() == ()

@@ -398,6 +398,34 @@ class CollectionJournal:
         connection.execute("PRAGMA synchronous=FULL")
         return connection
 
+    def _connect_readonly(self) -> sqlite3.Connection | None:
+        """Open an existing journal without creating or repairing its schema."""
+        if self.path.is_symlink():
+            raise FrontierStoreError("Collection journal path cannot be a symlink")
+        if not self.path.exists():
+            return None
+        self._check_size()
+        connection: sqlite3.Connection | None = None
+        try:
+            connection = sqlite3.connect(self.path.as_uri() + "?mode=ro", uri=True, timeout=0.5)
+            connection.row_factory = sqlite3.Row
+            connection.execute("PRAGMA busy_timeout=500")
+            connection.execute("PRAGMA query_only=ON")
+            meta = connection.execute(
+                "SELECT value FROM collection_meta WHERE key='schema_version'"
+            ).fetchone()
+            if meta is None or str(meta["value"]) != str(COLLECTION_JOURNAL_SCHEMA):
+                raise FrontierStoreError("Unsupported Frontier collection journal schema")
+            return connection
+        except sqlite3.Error as error:
+            if connection is not None:
+                connection.close()
+            raise FrontierStoreError("Collection journal could not be read safely") from error
+        except FrontierStoreError:
+            if connection is not None:
+                connection.close()
+            raise
+
     def _check_size(self) -> None:
         if self.path.exists() and self.path.stat().st_size > self.max_bytes:
             raise FrontierStoreError("Frontier collection journal exceeds its byte budget")
@@ -504,12 +532,18 @@ class CollectionJournal:
     def run_spec(self, run_id: str) -> CollectionRunSpec:
         if not _valid_run_id(run_id):
             raise ValueError("Collection run identity is invalid")
-        self.initialize()
-        with self._connect() as connection:
+        connection = self._connect_readonly()
+        if connection is None:
+            raise KeyError(run_id)
+        try:
             row = connection.execute(
                 "SELECT run_id,spec_sha256,spec_json FROM collection_runs WHERE run_id=?",
                 (run_id,),
             ).fetchone()
+        except sqlite3.Error as error:
+            raise FrontierStoreError("Collection journal could not be read safely") from error
+        finally:
+            connection.close()
         if row is None:
             raise KeyError(run_id)
         payload = str(row["spec_json"]).encode("utf-8")
@@ -587,13 +621,19 @@ class CollectionJournal:
     def checkpoints(self, run_id: str) -> tuple[CollectionCheckpoint, ...]:
         if not _valid_run_id(run_id):
             raise ValueError("Collection run identity is invalid")
-        self.initialize()
-        with self._connect() as connection:
+        connection = self._connect_readonly()
+        if connection is None:
+            return ()
+        try:
             rows = connection.execute(
                 "SELECT run_id,sequence,previous_sha256,checkpoint_json,row_sha256 "
                 "FROM collection_checkpoints WHERE run_id=? ORDER BY sequence LIMIT ?",
                 (run_id, MAX_COLLECTION_CHECKPOINTS + 1),
             ).fetchall()
+        except sqlite3.Error as error:
+            raise FrontierStoreError("Collection journal could not be read safely") from error
+        finally:
+            connection.close()
         if len(rows) > MAX_COLLECTION_CHECKPOINTS:
             raise FrontierStoreError("Collection checkpoint scan exceeds its row bound")
         result: list[CollectionCheckpoint] = []
