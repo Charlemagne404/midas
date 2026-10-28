@@ -4143,6 +4143,8 @@ Latest isolated checkpoint commits and exact changed files:
   parser admission, adapter host containment, and spot-disclosure verification.
 - `46fe772` — records the Arena CPU-pressure stop in this report, the mission
   ledger, and `docs/MIDAS_CURRENT_STATE.md`.
+- `d48a528` — expands this report's current acceptance matrix;
+  `docs/frontier/FRONTIER_ENGINEERING_REPORT.md`.
 
 All listed files are verified from the respective commit trees. The latest
 Arena-stop checkpoint and current-state addendum at the beginning of this
