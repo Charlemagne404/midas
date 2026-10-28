@@ -1,5 +1,16 @@
 # Project Frontier Mission Ledger
 
+## Memory pressure persists — 2026-10-28 12:20 UTC
+
+At `12:20:05Z`, memory PSI avg10 remained **36.90% some / 27.21% full**;
+I/O PSI had settled to **0.29% some / 0.00% full**. About **10 GiB** was
+available, with **3.5/4 GiB** swap in use. No runtime test, build, or type
+check was launched. The collection atomicity fix and research-schedule fixture
+remain implemented but await runtime validation.
+
+Next safe action: do not admit test work until a fresh sample shows both
+memory and I/O PSI avg10 below 1%.
+
 ## Memory admission remains closed — 2026-10-28 12:18 UTC
 
 At `12:18:47Z`, I/O PSI avg10 had fallen to **0.01% some / 0.01% full**, but

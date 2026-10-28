@@ -33,6 +33,14 @@ in the dated addendum below and in the Frontier engineering report.
 
 ## Frontier development addendum — 2026-10-28
 
+### Latest isolated Frontier checkpoint — 2026-10-28 12:20 UTC
+
+At 12:20:05Z memory PSI avg10 remained 36.90% some / 27.21% full; I/O PSI
+was 0.29% some / 0.00% full. About 10 GiB was available, with 3.5/4 GiB
+swap in use. No tests, build, or type check started. The new collection
+transaction and schedule fixture changes remain pending runtime validation.
+Frontier remains **PARTIALLY VERIFIED**, research-only, and undeployed.
+
 ### Latest isolated Frontier checkpoint — 2026-10-28 12:18 UTC
 
 At 12:18:47Z I/O PSI avg10 recovered to 0.01% some / 0.01% full, while

@@ -2,6 +2,13 @@
 
 **Report date:** 2026-10-28
 
+## Resource admission recheck — 2026-10-28 12:20 UTC
+
+At `12:20:05Z`, memory PSI avg10 was **36.90% some / 27.21% full** while
+I/O PSI avg10 was **0.29% some / 0.00% full**. About **10 GiB** was available;
+**3.5/4 GiB** swap was in use. No runtime verification started. The pending
+collection and research-schedule tests remain queued behind the memory gate.
+
 ## Memory-gated validation — 2026-10-28 12:18 UTC
 
 The last sample at `12:18:47Z` showed I/O PSI avg10 **0.01% some / 0.01%
