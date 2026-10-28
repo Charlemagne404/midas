@@ -47,6 +47,9 @@ type FiniteCollectionResponse = {
     market_count: number;
     book_count: number;
     failed_book_count: number;
+    trade_batch_count: number;
+    trade_count: number;
+    failed_trade_count: number;
     request_count: number;
     updated_at_utc: string;
     failures: { code: string; message: string }[];
@@ -71,6 +74,9 @@ type CollectionRunSummary = {
   market_count: number;
   book_count: number;
   failed_book_count: number;
+  trade_batch_count?: number;
+  trade_count?: number;
+  failed_trade_count?: number;
   request_count: number;
   failure_count: number;
   source_health_state: string | null;
@@ -2649,13 +2655,15 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
     onSuccess: refresh,
   });
   const finiteCollection = useMutation({
-    mutationFn: (venue: Venue) =>
+    mutationFn: ({ venue, includePublicTrades }: { venue: Venue; includePublicTrades: boolean }) =>
       api<FiniteCollectionResponse>('/frontier/collect/' + venue, {
         method: 'POST',
         body: JSON.stringify({
           market_limit: 3,
           book_limit: 1,
           book_depth: 5,
+          trade_market_limit: includePublicTrades ? 1 : 0,
+          trade_limit_per_market: 10,
           max_wall_seconds: 30,
         }),
       }),
@@ -6677,7 +6685,12 @@ function BookSide({ title, levels }: { title: string; levels: Book['asks'] }) {
 
 type ProbeVariables = { venue: Venue; includeOneBook: boolean };
 type ProbeMutation = UseMutationResult<unknown, Error, ProbeVariables, unknown>;
-type FiniteCollectionMutation = UseMutationResult<FiniteCollectionResponse, Error, Venue, unknown>;
+type FiniteCollectionMutation = UseMutationResult<
+  FiniteCollectionResponse,
+  Error,
+  { venue: Venue; includePublicTrades: boolean },
+  unknown
+>;
 type ResumeCollectionMutation = UseMutationResult<
   FiniteCollectionResponse,
   Error,
@@ -6726,6 +6739,9 @@ function SourcesView({
   loading: boolean;
   error?: string;
 }) {
+  const [includeCollectionTrades, setIncludeCollectionTrades] = useState<
+    Partial<Record<Venue, boolean>>
+  >({});
   const [multivariateFilterType, setMultivariateFilterType] = useState<
     'series_ticker' | 'collection_ticker' | 'event_ticker'
   >('series_ticker');
@@ -6781,6 +6797,9 @@ function SourcesView({
             source.capabilities.some(
               (item) => item.capability === 'market_discovery' && item.supported,
             );
+          const publicTradesSupported = source.capabilities.some(
+            (item) => item.capability === 'public_trades' && item.supported,
+          );
           const collectionRun =
             latestCollectionResult?.venue === source.venue ? latestCollectionResult : null;
           return (
@@ -6872,10 +6891,15 @@ function SourcesView({
                 <button
                   className="fr-action"
                   disabled={!collectionAvailable || finiteCollection.isPending}
-                  onClick={() => finiteCollection.mutate(source.venue)}
+                  onClick={() =>
+                    finiteCollection.mutate({
+                      venue: source.venue,
+                      includePublicTrades: includeCollectionTrades[source.venue] ?? false,
+                    })
+                  }
                 >
                   <Database size={14} />
-                  {finiteCollection.isPending && finiteCollection.variables === source.venue
+                  {finiteCollection.isPending && finiteCollection.variables?.venue === source.venue
                     ? 'Saving finite capture…'
                     : collectionAvailable
                       ? 'Capture finite batch with checkpoints'
@@ -6884,11 +6908,28 @@ function SourcesView({
                         : 'Finite collection disabled'}
                 </button>
                 <small>
-                  One explicit read-only request: up to 3 markets, 1 book, 5 levels, 4 MiB of
-                  evidence, and 30 seconds. It writes a restart-safe local run journal and starts no
-                  Arena job or background collector. No credentials or orders are used.
+                  One explicit read-only request: up to 3 markets, 1 book, 5 levels, optional public
+                  trades from 1 market, 4 MiB of evidence, and 30 seconds. It writes a restart-safe
+                  local run journal and starts no Arena job or background collector. No credentials
+                  or orders are used.
                 </small>
-                {finiteCollection.isError && finiteCollection.variables === source.venue && (
+                {publicTradesSupported && (
+                  <label className="fr-collection-trades-toggle">
+                    <input
+                      type="checkbox"
+                      checked={includeCollectionTrades[source.venue] ?? false}
+                      disabled={!collectionAvailable || finiteCollection.isPending}
+                      onChange={(event) =>
+                        setIncludeCollectionTrades((current) => ({
+                          ...current,
+                          [source.venue]: event.currentTarget.checked,
+                        }))
+                      }
+                    />
+                    <span>Include up to 10 public trade prints from 1 discovered market</span>
+                  </label>
+                )}
+                {finiteCollection.isError && finiteCollection.variables?.venue === source.venue && (
                   <InlineError message={finiteCollection.error.message} />
                 )}
                 {collectionRun && (
@@ -6897,7 +6938,10 @@ function SourcesView({
                     <span>
                       {count(collectionRun.collection_run.market_count)} market(s) ·{' '}
                       {count(collectionRun.collection_run.book_count)} book(s) ·{' '}
-                      {count(collectionRun.collection_run.failed_book_count)} failed book(s)
+                      {count(collectionRun.collection_run.failed_book_count)} failed book(s) ·{' '}
+                      {count(collectionRun.collection_run.trade_count)} trade print(s) ·{' '}
+                      {count(collectionRun.collection_run.failed_trade_count)} failed trade
+                      batch(es)
                     </span>
                     <span>
                       {count(collectionRun.adapter_request_count)} total adapter requests across run
@@ -6938,7 +6982,8 @@ function SourcesView({
                         <span>
                           {count(run.market_count)} market(s) · {count(run.book_count)} book(s) ·{' '}
                           {count(run.failed_book_count)} failed book(s) · {count(run.request_count)}{' '}
-                          recorded adapter request(s)
+                          recorded adapter request(s) · {count(run.trade_count ?? 0)} trade print(s)
+                          · {count(run.failed_trade_count ?? 0)} failed trade batch(es)
                         </span>
                         <small>
                           Run {shortHash(run.run_id)} · checkpoint {run.checkpoint_sequence} ·{' '}

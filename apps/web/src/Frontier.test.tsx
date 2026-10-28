@@ -57,6 +57,12 @@ it('renders recorded-evidence empty states and never probes a source automatical
         state: 'implemented',
         reason: 'one bounded public book request',
       },
+      {
+        capability: 'public_trades',
+        supported: true,
+        state: 'implemented',
+        reason: 'one bounded public trade request',
+      },
     ],
     health: {
       state: 'not_probed',
@@ -231,6 +237,9 @@ it('renders recorded-evidence empty states and never probes a source automatical
               market_count: 2,
               book_count: 1,
               failed_book_count: 0,
+              trade_batch_count: 1,
+              trade_count: 2,
+              failed_trade_count: 0,
               request_count: 3,
               failure_count: 0,
               source_health_state: 'healthy',
@@ -261,6 +270,9 @@ it('renders recorded-evidence empty states and never probes a source automatical
               market_count: 1,
               book_count: 0,
               failed_book_count: 0,
+              trade_batch_count: 0,
+              trade_count: 0,
+              failed_trade_count: 0,
               request_count: 1,
               failure_count: 1,
               source_health_state: 'degraded',
@@ -287,6 +299,8 @@ it('renders recorded-evidence empty states and never probes a source automatical
         market_limit: 3,
         book_limit: 1,
         book_depth: 5,
+        trade_market_limit: 1,
+        trade_limit_per_market: 10,
         max_wall_seconds: 30,
       });
       return {
@@ -299,13 +313,16 @@ it('renders recorded-evidence empty states and never probes a source automatical
             market_count: 1,
             book_count: 0,
             failed_book_count: 0,
+            trade_batch_count: 0,
+            trade_count: 0,
+            failed_trade_count: 0,
             request_count: 1,
             updated_at_utc: '2026-10-28T00:00:00Z',
             failures: [{ code: 'COLLECTION_WALL_LIMIT', message: 'Fixture pause.' }],
             source_health: { state: 'degraded' },
           },
           adapter_request_count: 1,
-          adapter_request_upper_bound_per_attempt: 8,
+          adapter_request_upper_bound_per_attempt: 10,
           research_only: true,
           live_orders: false,
           source_health_scope: 'adapter_local_checkpoint',
@@ -328,13 +345,16 @@ it('renders recorded-evidence empty states and never probes a source automatical
             market_count: 1,
             book_count: 1,
             failed_book_count: 0,
+            trade_batch_count: 1,
+            trade_count: 2,
+            failed_trade_count: 0,
             request_count: 3,
             updated_at_utc: '2026-10-28T00:00:30Z',
             failures: [],
             source_health: { state: 'healthy' },
           },
           adapter_request_count: 3,
-          adapter_request_upper_bound_per_attempt: 8,
+          adapter_request_upper_bound_per_attempt: 10,
           research_only: true,
           live_orders: false,
           source_health_scope: 'adapter_local_checkpoint',
@@ -398,11 +418,16 @@ it('renders recorded-evidence empty states and never probes a source automatical
   screen
     .getAllByRole('button', { name: 'Public probe disabled' })
     .forEach((button) => expect(button).toBeDisabled());
+  fireEvent.click(
+    screen.getByRole('checkbox', {
+      name: 'Include up to 10 public trade prints from 1 discovered market',
+    }),
+  );
   fireEvent.click(screen.getByRole('button', { name: 'Capture finite batch with checkpoints' }));
   expect(await screen.findByText('Finite capture paused')).toBeInTheDocument();
   expect(screen.getAllByText(/1 market\(s\) · 0 book\(s\) · 0 failed book\(s\)/)).toHaveLength(2);
   expect(
-    screen.getByText(/1 total adapter requests across run · at most 8 per attempt/),
+    screen.getByText(/1 total adapter requests across run · at most 10 per attempt/),
   ).toBeInTheDocument();
   expect(screen.getByText(/does not establish continuous venue availability/)).toBeInTheDocument();
   const resumeButton = screen.getByRole('button', {
@@ -411,7 +436,7 @@ it('renders recorded-evidence empty states and never probes a source automatical
   expect(resumeButton).toBeEnabled();
   fireEvent.click(resumeButton);
   expect(
-    await screen.findByText(/3 total adapter requests across run · at most 8 per attempt/),
+    await screen.findByText(/3 total adapter requests across run · at most 10 per attempt/),
   ).toBeInTheDocument();
   expect(screen.queryByRole('button', { name: /Resume collection run f79d58bb-e79/ })).toBeNull();
   fireEvent.click(screen.getByRole('button', { name: 'Load older runs' }));

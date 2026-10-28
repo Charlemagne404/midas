@@ -14,7 +14,7 @@ from midas.frontier.storage import FrontierStore
 
 from apps.api.frontier import router
 from tests.frontier.builders import T0
-from tests.frontier.test_collection import FakeAdapter
+from tests.frontier.test_collection import FakeAdapter, FakeTradeAdapter
 
 
 def test_finite_collection_api_persists_one_bounded_fixture_run(tmp_path):
@@ -81,6 +81,68 @@ def test_finite_collection_api_persists_one_bounded_fixture_run(tmp_path):
         assert terminal_resume.status_code == 200, terminal_resume.text
         assert terminal_resume.json()["collection_run"]["state"] == "completed"
         assert adapter.transport.request_count == request_count_before_terminal_resume
+    finally:
+        client.close()
+
+
+def test_finite_collection_api_collects_an_opt_in_bounded_trade_batch(tmp_path):
+    adapter = FakeTradeAdapter()
+    store = FrontierStore(tmp_path / "frontier")
+    app = FastAPI()
+    app.include_router(router(store, AdapterRegistry((adapter,))))
+    client = TestClient(app)
+    try:
+        response = client.post(
+            "/api/frontier/collect/polymarket",
+            json={
+                "market_limit": 1,
+                "book_limit": 0,
+                "trade_market_limit": 1,
+                "trade_limit_per_market": 2,
+            },
+        )
+        assert response.status_code == 200, response.text
+        payload = response.json()
+        run = payload["collection_run"]
+        assert run["state"] == "completed"
+        assert run["market_count"] == 1
+        assert run["trade_batch_count"] == 1
+        assert run["trade_count"] == 2
+        assert run["failed_trade_count"] == 0
+        assert payload["adapter_request_count"] == 2
+        assert payload["adapter_request_upper_bound_per_attempt"] == 4
+        assert adapter.trade_calls == [("collection-fixture", 2)]
+
+        journal = CollectionJournal(store.root)
+        spec = journal.run_spec(run["run_id"])
+        checkpoint = journal.latest_checkpoint(run["run_id"])
+        assert spec.trade_market_limit == 1
+        assert spec.trade_limit_per_market == 2
+        assert checkpoint.trade_print_count == 2
+        history = client.get("/api/frontier/collection-runs?limit=1")
+        item = history.json()["items"][0]
+        assert item["trade_batch_count"] == 1
+        assert item["trade_count"] == 2
+        assert item["failed_trade_count"] == 0
+    finally:
+        client.close()
+
+
+def test_finite_collection_api_rejects_undeclared_public_trade_capability(tmp_path):
+    adapter = FakeAdapter()
+    store = FrontierStore(tmp_path / "frontier")
+    app = FastAPI()
+    app.include_router(router(store, AdapterRegistry((adapter,))))
+    client = TestClient(app)
+    try:
+        response = client.post(
+            "/api/frontier/collect/polymarket",
+            json={"market_limit": 1, "book_limit": 0, "trade_market_limit": 1},
+        )
+        assert response.status_code == 409
+        assert "does not support public trades" in response.json()["detail"]
+        assert adapter.discovery_calls == 0
+        assert not CollectionJournal(store.root).path.exists()
     finally:
         client.close()
 

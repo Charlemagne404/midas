@@ -34,9 +34,12 @@ from midas.frontier.models import (
     Capability,
     FrontierModel,
     MarketBatch,
+    Provenance,
     RawObservation,
     SourceHealth,
     SourceState,
+    TradeBatch,
+    TradeObservation,
     Venue,
 )
 from midas.frontier.storage import FrontierStore, FrontierStoreError
@@ -228,6 +231,77 @@ class WrongBookCaptureMetadataAdapter(FakeAdapter):
                 )
             }
         )
+
+
+class FakeTradeAdapter(FakeAdapter):
+    def __init__(self, **kwargs) -> None:
+        super().__init__(**kwargs)
+        self.capabilities = build_capabilities(
+            self.venue,
+            "fixture-adapter-1",
+            {
+                Capability.MARKET_DISCOVERY: ("Fixture discovery", None),
+                Capability.BOOK_SNAPSHOT: ("Fixture book snapshot", None),
+                Capability.PUBLIC_TRADES: ("Fixture public trades", None),
+            },
+        )
+        self.trade_calls: list[tuple[str, int]] = []
+
+    async def fetch_trades(self, native_market_id: str, limit: int = 100):
+        self.transport.request_count += 1
+        self.trade_calls.append((native_market_id, limit))
+        capture = self._raw("public_trades", native_market_id, self.venue)
+        self.pending_captures.append(capture)
+        instrument_id = self.market_values[0].instruments[0].native_instrument_id
+        return tuple(
+            TradeObservation(
+                schema_version=2,
+                venue=self.venue,
+                native_market_id=native_market_id,
+                native_trade_id=f"fixture-trade-{index}",
+                native_instrument_id=instrument_id,
+                price=Decimal("0.45"),
+                quantity=Decimal(2),
+                quote_currency="USD",
+                exchange_timestamp_utc=T0,
+                received_at_utc=T0,
+                provenance=Provenance(
+                    source_url=capture.request_url,
+                    adapter_version=capture.adapter_version,
+                    request_started_at_utc=capture.request_started_at_utc,
+                    response_received_at_utc=capture.received_at_utc,
+                    processed_at_utc=T0,
+                    exchange_timestamp_utc=T0,
+                    exchange_timestamp_semantics="controlled trade fixture",
+                    raw_sha256=capture.raw_sha256,
+                    observation_id=f"{index:064x}",
+                ),
+            )
+            for index in range(1, min(limit, 2) + 1)
+        )
+
+
+class WrongTradeCaptureMetadataAdapter(FakeTradeAdapter):
+    async def fetch_trades(self, native_market_id: str, limit: int = 100):
+        trades = await super().fetch_trades(native_market_id, limit)
+        return tuple(
+            item.model_copy(
+                update={
+                    "provenance": item.provenance.model_copy(
+                        update={"source_url": "https://fixture.example/different-trade-request"}
+                    )
+                }
+            )
+            for item in trades
+        )
+
+
+class EmptyFakeTradeAdapter(FakeTradeAdapter):
+    async def fetch_trades(self, native_market_id: str, limit: int = 100):
+        self.transport.request_count += 1
+        self.trade_calls.append((native_market_id, limit))
+        self.pending_captures.append(self._raw("public_trades", native_market_id, self.venue))
+        return ()
 
 
 class OversizedBookAdapter(FakeAdapter):
@@ -1074,6 +1148,117 @@ async def test_book_capture_requires_exact_request_provenance(tmp_path):
     row = store.observation(result.diagnostic_observation_ids[0])
     assert row is not None
     assert row["normalized"]["error_code"] == "CAPTURE_LINEAGE_MISMATCH"
+
+
+@pytest.mark.asyncio
+async def test_trade_batches_are_bounded_persisted_and_resumable(tmp_path):
+    store = FrontierStore(tmp_path / "frontier")
+    adapter = FakeTradeAdapter()
+    collector = BoundedSourceCollector(adapter, store)
+
+    result = await collector.start(
+        market_limit=1,
+        book_limit=0,
+        trade_market_limit=1,
+        trade_limit_per_market=2,
+    )
+    assert result.state == "completed"
+    assert result.market_count == 1
+    assert result.book_count == 0
+    assert result.trade_batch_count == 1
+    assert result.trade_count == 2
+    assert result.failed_trade_count == 0
+    assert len(adapter.trade_calls) == 1
+    assert adapter.trade_calls[0][1] == 2
+
+    row = store.observation(result.trade_observation_ids[0])
+    assert row is not None
+    batch = TradeBatch.model_validate(row["normalized"])
+    assert batch.requested_market_id == "collection-fixture"
+    assert len(batch.trades) == 2
+    assert all(item.provenance.raw_sha256 == row["raw"]["raw_sha256"] for item in batch.trades)
+
+    terminal_retry = await collector.resume(result.run_id)
+    assert terminal_retry == result
+    assert len(adapter.trade_calls) == 1
+    assert store.summary()["observations"] == 2
+
+
+@pytest.mark.asyncio
+async def test_trade_capture_resume_does_not_repeat_market_discovery(tmp_path):
+    store = FailOnceStore(tmp_path / "frontier")
+    adapter = FakeTradeAdapter()
+    collector = BoundedSourceCollector(adapter, store)
+    paused = await collector.start(
+        market_limit=1,
+        book_limit=0,
+        trade_market_limit=1,
+        trade_limit_per_market=1,
+    )
+
+    assert paused.state == "paused"
+    assert adapter.discovery_calls == 1
+    assert adapter.trade_calls == []
+    resumed = await collector.resume(paused.run_id)
+    assert resumed.state == "completed"
+    assert resumed.trade_count == 1
+    assert adapter.discovery_calls == 1
+    assert len(adapter.trade_calls) == 1
+
+
+@pytest.mark.asyncio
+async def test_trade_capture_requires_exact_request_provenance(tmp_path):
+    store = FrontierStore(tmp_path / "frontier")
+    adapter = WrongTradeCaptureMetadataAdapter()
+    result = await BoundedSourceCollector(adapter, store).start(
+        market_limit=1,
+        book_limit=0,
+        trade_market_limit=1,
+        trade_limit_per_market=2,
+    )
+
+    assert result.state == "partial"
+    assert result.failed_trade_count == 1
+    assert result.trade_count == 0
+    assert result.failures[-1].operation == "trade"
+    assert result.failures[-1].code == "CAPTURE_LINEAGE_MISMATCH"
+    assert len(result.diagnostic_observation_ids) == 1
+    row = store.observation(result.diagnostic_observation_ids[0])
+    assert row is not None
+    assert row["raw"]["observation_kind"] == "public_trades"
+    assert row["normalized"]["failure_stage"] == "trade"
+
+
+@pytest.mark.asyncio
+async def test_empty_trade_response_is_persisted_as_an_observation_not_failure(tmp_path):
+    store = FrontierStore(tmp_path / "frontier")
+    result = await BoundedSourceCollector(EmptyFakeTradeAdapter(), store).start(
+        market_limit=1,
+        book_limit=0,
+        trade_market_limit=1,
+    )
+
+    assert result.state == "completed"
+    assert result.trade_batch_count == 1
+    assert result.trade_count == 0
+    assert result.failed_trade_count == 0
+    row = store.observation(result.trade_observation_ids[0])
+    assert row is not None
+    assert row["normalized"]["trades"] == []
+    assert row["normalized"]["requested_market_id"] == "collection-fixture"
+
+
+@pytest.mark.asyncio
+async def test_trade_collection_fails_closed_when_capability_is_not_declared(tmp_path):
+    store = FrontierStore(tmp_path / "frontier")
+    adapter = FakeAdapter()
+    collector = BoundedSourceCollector(adapter, store)
+
+    with pytest.raises(AdapterError, match="no public trade data"):
+        await collector.start(market_limit=1, book_limit=0, trade_market_limit=1)
+
+    assert adapter.discovery_calls == 0
+    assert not CollectionJournal(store.root).path.exists()
 
 
 @pytest.mark.asyncio

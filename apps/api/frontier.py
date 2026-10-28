@@ -141,6 +141,8 @@ class FiniteCollectionRequest(BaseModel):
     market_limit: int = Field(default=3, ge=1, le=5)
     book_limit: int = Field(default=1, ge=0, le=2)
     book_depth: int = Field(default=5, ge=1, le=10)
+    trade_market_limit: int = Field(default=0, ge=0, le=2)
+    trade_limit_per_market: int = Field(default=10, ge=1, le=10)
     max_wall_seconds: int = Field(default=30, ge=1, le=60)
 
 
@@ -1681,10 +1683,16 @@ def router(
                 Capability.BOOK_SNAPSHOT
             ):
                 resume_block_reason = "Current source capabilities lack book snapshots."
+            elif spec.trade_market_limit and not source_adapter.capabilities.supports(
+                Capability.PUBLIC_TRADES
+            ):
+                resume_block_reason = "Current source capabilities lack public trades."
             elif (
                 spec.market_limit > 5
                 or spec.book_limit > 2
                 or spec.book_depth > 10
+                or spec.trade_market_limit > 2
+                or spec.trade_limit_per_market > 10
                 or spec.max_evidence_bytes > 4 * 1024 * 1024
                 or spec.max_wall_seconds > 60
             ):
@@ -1710,6 +1718,9 @@ def router(
                     "market_count": len(checkpoint.market_observation_ids),
                     "book_count": len(checkpoint.book_observation_ids),
                     "failed_book_count": len(checkpoint.failed_book_task_ids),
+                    "trade_batch_count": len(checkpoint.trade_observation_ids),
+                    "trade_count": checkpoint.trade_print_count,
+                    "failed_trade_count": len(checkpoint.failed_trade_task_ids),
                     "request_count": checkpoint.request_count,
                     "failure_count": len(checkpoint.failures),
                     "source_health_state": health.state.value if health is not None else None,
@@ -5006,6 +5017,13 @@ def router(
                 status_code=409,
                 detail="Source does not support public order-book snapshots",
             )
+        if request.trade_market_limit and not adapter.capabilities.supports(
+            Capability.PUBLIC_TRADES
+        ):
+            raise HTTPException(
+                status_code=409,
+                detail="Source does not support public trades",
+            )
 
         async with source_locks[venue]:
             try:
@@ -5013,6 +5031,8 @@ def router(
                     market_limit=request.market_limit,
                     book_limit=request.book_limit,
                     book_depth=request.book_depth,
+                    trade_market_limit=request.trade_market_limit,
+                    trade_limit_per_market=request.trade_limit_per_market,
                     max_evidence_bytes=4 * 1024 * 1024,
                     max_wall_seconds=request.max_wall_seconds,
                 )
@@ -5024,7 +5044,9 @@ def router(
             except (FrontierStoreError, OSError) as error:
                 raise HTTPException(status_code=409, detail=str(error)) from error
 
-        request_bound = (request.market_limit + request.book_limit) * (config.retries + 1)
+        request_bound = (request.market_limit + request.book_limit + request.trade_market_limit) * (
+            config.retries + 1
+        )
         return {
             "venue": venue.value,
             "collection_run": result.model_dump(mode="json"),
@@ -5068,10 +5090,19 @@ def router(
                     status_code=409,
                     detail="Current source does not support book snapshots",
                 )
+            if spec.trade_market_limit and not adapter.capabilities.supports(
+                Capability.PUBLIC_TRADES
+            ):
+                raise HTTPException(
+                    status_code=409,
+                    detail="Current source does not support public trades",
+                )
             if (
                 spec.market_limit > 5
                 or spec.book_limit > 2
                 or spec.book_depth > 10
+                or spec.trade_market_limit > 2
+                or spec.trade_limit_per_market > 10
                 or spec.max_evidence_bytes > 4 * 1024 * 1024
                 or spec.max_wall_seconds > 60
             ):
@@ -5109,7 +5140,9 @@ def router(
         except (FrontierStoreError, OSError, ValueError) as error:
             raise HTTPException(status_code=409, detail=str(error)) from error
 
-        request_bound = (spec.market_limit + spec.book_limit) * (config.retries + 1)
+        request_bound = (spec.market_limit + spec.book_limit + spec.trade_market_limit) * (
+            config.retries + 1
+        )
         return {
             "venue": venue.value,
             "collection_run": result.model_dump(mode="json"),

@@ -41,16 +41,22 @@ from midas.frontier.models import (
     SourceFailureRecord,
     SourceHealth,
     SourceState,
+    TradeBatch,
+    TradeObservation,
     Venue,
 )
 from midas.frontier.storage import MAX_ROW_BYTES, FrontierStore, FrontierStoreError
 
 COLLECTION_JOURNAL_SCHEMA = 1
-COLLECTION_RUN_VERSION = "frontier-finite-collection-3"
+COLLECTION_RUN_VERSION = "frontier-finite-collection-4"
 MAX_COLLECTION_MARKETS = 20
 MAX_COLLECTION_MARKET_OBSERVATIONS = 32
 MAX_COLLECTION_BOOKS = 10
-MAX_COLLECTION_DIAGNOSTICS = MAX_COLLECTION_MARKET_OBSERVATIONS + MAX_COLLECTION_BOOKS + 1
+MAX_COLLECTION_TRADE_MARKETS = 2
+MAX_COLLECTION_TRADE_PRINTS = MAX_COLLECTION_TRADE_MARKETS * 10
+MAX_COLLECTION_DIAGNOSTICS = (
+    MAX_COLLECTION_MARKET_OBSERVATIONS + MAX_COLLECTION_BOOKS + MAX_COLLECTION_TRADE_MARKETS + 1
+)
 MAX_COLLECTION_RUNS = 1000
 MAX_COLLECTION_CHECKPOINTS = 100
 MAX_COLLECTION_CHECKPOINTS_TOTAL = 20_000
@@ -87,6 +93,12 @@ class CollectionBookTask(FrontierModel):
     native_instrument_id: str = Field(min_length=1, max_length=256)
 
 
+class CollectionTradeTask(FrontierModel):
+    task_id: str = Field(pattern=r"^[0-9a-f]{64}$")
+    canonical_market_id: str = Field(min_length=1, max_length=256)
+    native_market_id: str = Field(min_length=1, max_length=256)
+
+
 class CollectionRunSpec(FrontierModel):
     schema_version: Literal[1, 2] = 2
     run_version: str = COLLECTION_RUN_VERSION
@@ -99,6 +111,8 @@ class CollectionRunSpec(FrontierModel):
     market_limit: int = Field(ge=1, le=MAX_COLLECTION_MARKETS)
     book_limit: int = Field(ge=0, le=MAX_COLLECTION_BOOKS)
     book_depth: int = Field(ge=1, le=20)
+    trade_market_limit: int = Field(default=0, ge=0, le=MAX_COLLECTION_TRADE_MARKETS)
+    trade_limit_per_market: int = Field(default=10, ge=1, le=10)
     max_evidence_bytes: int = Field(ge=1024 * 1024, le=MAX_COLLECTION_EVIDENCE_BYTES)
     max_wall_seconds: int = Field(ge=1, le=300)
     created_at_utc: datetime
@@ -158,7 +172,7 @@ class CollectionRunSpec(FrontierModel):
 
 
 class CollectionFailure(FrontierModel):
-    operation: Literal["discovery", "book", "persistence", "budget", "worker"]
+    operation: Literal["discovery", "book", "trade", "persistence", "budget", "worker"]
     code: str = Field(min_length=1, max_length=80)
     message: str = Field(min_length=1, max_length=240)
     occurred_at_utc: datetime
@@ -174,7 +188,7 @@ class CollectionFailure(FrontierModel):
 
 class PendingCollectionObservation(FrontierModel):
     raw: RawObservation
-    normalized: MarketBatch | BookSnapshot | SourceFailureRecord
+    normalized: MarketBatch | BookSnapshot | TradeBatch | SourceFailureRecord
 
     @model_validator(mode="after")
     def normalized_source_matches_capture(self) -> PendingCollectionObservation:
@@ -191,11 +205,19 @@ class PendingCollectionObservation(FrontierModel):
                 self.raw, self.normalized.provenance
             ):
                 raise ValueError("Pending book provenance does not match its raw capture")
+        elif isinstance(self.normalized, TradeBatch):
+            if self.normalized.venue != self.raw.venue:
+                raise ValueError("Pending trade batch and raw capture venues differ")
+            if any(
+                not _capture_matches_provenance(self.raw, item.provenance)
+                for item in self.normalized.trades
+            ):
+                raise ValueError("Pending trade provenance does not match its raw capture")
         return self
 
 
 class CollectionCheckpoint(FrontierModel):
-    schema_version: Literal[1] = 1
+    schema_version: Literal[1, 2] = 2
     run_id: str = Field(pattern=r"^[0-9a-f-]{36}$")
     sequence: int = Field(ge=0, le=MAX_COLLECTION_CHECKPOINTS - 1)
     updated_at_utc: datetime
@@ -205,6 +227,8 @@ class CollectionCheckpoint(FrontierModel):
         "persisting_market",
         "books",
         "persisting_book",
+        "trades",
+        "persisting_trade",
         "paused",
         "completed",
         "partial",
@@ -215,16 +239,30 @@ class CollectionCheckpoint(FrontierModel):
         default=(), max_length=MAX_COLLECTION_MARKET_OBSERVATIONS
     )
     book_observation_ids: tuple[str, ...] = Field(default=(), max_length=MAX_COLLECTION_BOOKS)
+    trade_observation_ids: tuple[str, ...] = Field(
+        default=(), max_length=MAX_COLLECTION_TRADE_MARKETS
+    )
     diagnostic_observation_ids: tuple[str, ...] = Field(
         default=(), max_length=MAX_COLLECTION_DIAGNOSTICS
     )
     book_tasks: tuple[CollectionBookTask, ...] = Field(default=(), max_length=MAX_COLLECTION_BOOKS)
+    trade_tasks: tuple[CollectionTradeTask, ...] = Field(
+        default=(), max_length=MAX_COLLECTION_TRADE_MARKETS
+    )
     completed_book_task_ids: tuple[str, ...] = Field(default=(), max_length=MAX_COLLECTION_BOOKS)
     failed_book_task_ids: tuple[str, ...] = Field(default=(), max_length=MAX_COLLECTION_BOOKS)
+    completed_trade_task_ids: tuple[str, ...] = Field(
+        default=(), max_length=MAX_COLLECTION_TRADE_MARKETS
+    )
+    failed_trade_task_ids: tuple[str, ...] = Field(
+        default=(), max_length=MAX_COLLECTION_TRADE_MARKETS
+    )
+    trade_collection_complete: bool = False
+    trade_print_count: int = Field(default=0, ge=0, le=MAX_COLLECTION_TRADE_PRINTS)
     pending_observations: tuple[PendingCollectionObservation, ...] = Field(
         default=(), max_length=33
     )
-    pending_target: Literal["market", "book"] | None = None
+    pending_target: Literal["market", "book", "trade"] | None = None
     pending_task_id: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
     evidence_bytes: int = Field(default=0, ge=0, le=MAX_COLLECTION_EVIDENCE_BYTES)
     request_count: int = Field(default=0, ge=0, le=1000)
@@ -241,9 +279,12 @@ class CollectionCheckpoint(FrontierModel):
     @field_validator(
         "market_observation_ids",
         "book_observation_ids",
+        "trade_observation_ids",
         "diagnostic_observation_ids",
         "completed_book_task_ids",
         "failed_book_task_ids",
+        "completed_trade_task_ids",
+        "failed_trade_task_ids",
     )
     @classmethod
     def checkpoint_digests_are_unique(cls, values: tuple[str, ...]) -> tuple[str, ...]:
@@ -260,14 +301,18 @@ class CollectionCheckpoint(FrontierModel):
     def pending_target_matches_pending_observations(self) -> CollectionCheckpoint:
         if bool(self.pending_observations) != (self.pending_target is not None):
             raise ValueError("Pending collection observations require a matching target")
-        if self.pending_target == "book" and self.pending_task_id is None:
-            raise ValueError("Pending book evidence requires its task identity")
-        if self.pending_target != "book" and self.pending_task_id is not None:
-            raise ValueError("Only pending book evidence can name a book task")
+        if self.pending_target in {"book", "trade"} and self.pending_task_id is None:
+            raise ValueError("Pending book or trade evidence requires its task identity")
+        if self.pending_target not in {"book", "trade"} and self.pending_task_id is not None:
+            raise ValueError("Only pending book or trade evidence can name a task")
         if len({item.task_id for item in self.book_tasks}) != len(self.book_tasks):
             raise ValueError("Collection checkpoint contains duplicate book tasks")
+        if len({item.task_id for item in self.trade_tasks}) != len(self.trade_tasks):
+            raise ValueError("Collection checkpoint contains duplicate trade tasks")
         if set(self.completed_book_task_ids) & set(self.failed_book_task_ids):
             raise ValueError("A collection book task cannot be both complete and failed")
+        if set(self.completed_trade_task_ids) & set(self.failed_trade_task_ids):
+            raise ValueError("A collection trade task cannot be both complete and failed")
         pending_size = sum(
             len(_canonical_json(item.model_dump(mode="json"))) for item in self.pending_observations
         )
@@ -277,15 +322,19 @@ class CollectionCheckpoint(FrontierModel):
 
 
 class CollectionRunResult(FrontierModel):
-    schema_version: Literal[1] = 1
+    schema_version: Literal[1, 2] = 2
     run_id: str = Field(pattern=r"^[0-9a-f-]{36}$")
     venue: Venue
     state: Literal["paused", "completed", "partial", "failed"]
     market_count: int = Field(ge=0, le=MAX_COLLECTION_MARKETS)
     book_count: int = Field(ge=0, le=MAX_COLLECTION_BOOKS)
     failed_book_count: int = Field(ge=0, le=MAX_COLLECTION_BOOKS)
+    trade_batch_count: int = Field(default=0, ge=0, le=MAX_COLLECTION_TRADE_MARKETS)
+    trade_count: int = Field(default=0, ge=0, le=MAX_COLLECTION_TRADE_PRINTS)
+    failed_trade_count: int = Field(default=0, ge=0, le=MAX_COLLECTION_TRADE_MARKETS)
     market_observation_ids: tuple[str, ...]
     book_observation_ids: tuple[str, ...]
+    trade_observation_ids: tuple[str, ...] = ()
     diagnostic_observation_ids: tuple[str, ...]
     pending_observation_count: int = Field(ge=0, le=33)
     evidence_bytes: int = Field(ge=0, le=MAX_COLLECTION_EVIDENCE_BYTES)
@@ -1077,10 +1126,18 @@ class BoundedSourceCollector:
         market_limit: int = 5,
         book_limit: int = 2,
         book_depth: int = 10,
+        trade_market_limit: int = 0,
+        trade_limit_per_market: int = 10,
         max_evidence_bytes: int = 8 * 1024 * 1024,
         max_wall_seconds: int = 60,
     ) -> CollectionRunResult:
-        self._validate_start(market_limit, book_limit, book_depth)
+        self._validate_start(
+            market_limit,
+            book_limit,
+            book_depth,
+            trade_market_limit,
+            trade_limit_per_market,
+        )
         config = self.adapter.config
         if not config.enabled or not config.live_public_probe_enabled:
             raise AdapterError(
@@ -1093,6 +1150,8 @@ class BoundedSourceCollector:
             raise AdapterError("UNSUPPORTED_CAPABILITY", "Source has no market discovery")
         if book_limit and not self.adapter.capabilities.supports(Capability.BOOK_SNAPSHOT):
             raise AdapterError("UNSUPPORTED_CAPABILITY", "Source has no book snapshots")
+        if trade_market_limit and not self.adapter.capabilities.supports(Capability.PUBLIC_TRADES):
+            raise AdapterError("UNSUPPORTED_CAPABILITY", "Source has no public trade data")
         spec = CollectionRunSpec(
             run_id=str(uuid.uuid4()),
             venue=self.adapter.venue,
@@ -1102,6 +1161,8 @@ class BoundedSourceCollector:
             market_limit=market_limit,
             book_limit=book_limit,
             book_depth=book_depth,
+            trade_market_limit=trade_market_limit,
+            trade_limit_per_market=trade_limit_per_market,
             max_evidence_bytes=max_evidence_bytes,
             max_wall_seconds=max_wall_seconds,
             created_at_utc=datetime.now(UTC),
@@ -1129,7 +1190,14 @@ class BoundedSourceCollector:
                     return self._result(spec, latest)
                 return await self._execute_locked(spec, latest)
 
-    def _validate_start(self, market_limit: int, book_limit: int, book_depth: int) -> None:
+    def _validate_start(
+        self,
+        market_limit: int,
+        book_limit: int,
+        book_depth: int,
+        trade_market_limit: int,
+        trade_limit_per_market: int,
+    ) -> None:
         config = self.adapter.config
         if not 1 <= market_limit <= min(MAX_COLLECTION_MARKETS, config.max_markets_per_call):
             raise ValueError("Collection market limit exceeds the source's bounded call limit")
@@ -1137,6 +1205,10 @@ class BoundedSourceCollector:
             raise ValueError("Collection book limit must be within 0..10")
         if not 1 <= book_depth <= 20:
             raise ValueError("Collection book depth must be within 1..20")
+        if not 0 <= trade_market_limit <= MAX_COLLECTION_TRADE_MARKETS:
+            raise ValueError("Collection trade-market limit must be within 0..2")
+        if not 1 <= trade_limit_per_market <= 10:
+            raise ValueError("Collection trade limit per market must be within 1..10")
 
     def _validate_resume_adapter(self, spec: CollectionRunSpec) -> None:
         if spec.venue != self.adapter.venue:
@@ -1155,6 +1227,10 @@ class BoundedSourceCollector:
             raise AdapterError("UNSUPPORTED_CAPABILITY", "Source has no market discovery")
         if spec.book_limit and not self.adapter.capabilities.supports(Capability.BOOK_SNAPSHOT):
             raise AdapterError("UNSUPPORTED_CAPABILITY", "Source has no book snapshots")
+        if spec.trade_market_limit and not self.adapter.capabilities.supports(
+            Capability.PUBLIC_TRADES
+        ):
+            raise AdapterError("UNSUPPORTED_CAPABILITY", "Source has no public trade data")
         if spec.adapter_version != self.adapter.capabilities.adapter_version:
             raise ValueError("Collection adapter version differs from the pinned run")
         if spec.adapter_config != self.adapter.config:
@@ -1328,7 +1404,7 @@ class BoundedSourceCollector:
                 ),
             )
 
-        if spec.book_limit == 0:
+        if spec.book_limit == 0 and spec.trade_market_limit == 0:
             final_state: Literal["completed", "partial"] = (
                 "partial" if current.failures else "completed"
             )
@@ -1437,6 +1513,136 @@ class BoundedSourceCollector:
                 )
                 processed.add(task.task_id)
 
+        if spec.trade_market_limit:
+            if not current.trade_collection_complete:
+                trade_tasks = self._make_trade_tasks(markets, spec.trade_market_limit)
+                current = self._append(
+                    spec,
+                    current.model_copy(
+                        update={
+                            "state": "trades",
+                            "trade_tasks": trade_tasks,
+                            "trade_collection_complete": True,
+                        }
+                    ),
+                )
+            processed_trade_tasks = set(current.completed_trade_task_ids) | set(
+                current.failed_trade_task_ids
+            )
+            for trade_task in current.trade_tasks:
+                if trade_task.task_id in processed_trade_tasks:
+                    continue
+                market = market_by_id.get(trade_task.canonical_market_id)
+                if market is None:
+                    failure = self._failure(
+                        "trade",
+                        "MISSING_PINNED_MARKET",
+                        "Pinned collection market could not be loaded",
+                        trade_task.task_id,
+                    )
+                    current = self._append(
+                        spec,
+                        current.model_copy(
+                            update={
+                                "state": "trades",
+                                "failed_trade_task_ids": (
+                                    *current.failed_trade_task_ids,
+                                    trade_task.task_id,
+                                ),
+                                "failures": _bounded_failures((*current.failures, failure)),
+                            }
+                        ),
+                    )
+                    processed_trade_tasks.add(trade_task.task_id)
+                    continue
+                requests_before = self._request_count()
+                trade_captures: tuple[RawObservation, ...] = ()
+                try:
+                    trade_values = await self.adapter.fetch_trades(
+                        trade_task.native_market_id, limit=spec.trade_limit_per_market
+                    )
+                    trade_captures = self.adapter.take_captures()
+                    if (
+                        not isinstance(trade_values, tuple)
+                        or len(trade_values) > spec.trade_limit_per_market
+                        or len(trade_captures) != 1
+                        or trade_captures[0].observation_kind != "public_trades"
+                        or trade_captures[0].venue != spec.venue
+                        or trade_captures[0].adapter_version != spec.adapter_version
+                    ):
+                        raise AdapterError(
+                            "CAPTURE_LINEAGE_MISMATCH",
+                            "Trade response does not match its pinned source or capture",
+                        )
+                    trade_values = tuple(
+                        TradeObservation.model_validate(
+                            item.model_dump(mode="python", warnings=False)
+                            if isinstance(item, TradeObservation)
+                            else item
+                        )
+                        for item in trade_values
+                    )
+                    if any(
+                        item.venue != spec.venue
+                        or item.native_market_id != trade_task.native_market_id
+                        or not _capture_matches_provenance(trade_captures[0], item.provenance)
+                        for item in trade_values
+                    ):
+                        raise AdapterError(
+                            "CAPTURE_LINEAGE_MISMATCH",
+                            "Normalized trades do not match their requested market or capture",
+                        )
+                    batch = TradeBatch(
+                        venue=spec.venue,
+                        trades=trade_values,
+                        requested_market_id=trade_task.native_market_id,
+                        page_limit=spec.trade_limit_per_market,
+                    )
+                    current = self._append(
+                        spec,
+                        current.model_copy(
+                            update={
+                                "state": "persisting_trade",
+                                "pending_observations": (
+                                    PendingCollectionObservation(
+                                        raw=trade_captures[0], normalized=batch
+                                    ),
+                                ),
+                                "pending_target": "trade",
+                                "pending_task_id": trade_task.task_id,
+                                "request_count": current.request_count
+                                + self._request_count()
+                                - requests_before,
+                            }
+                        ),
+                    )
+                    current = self._persist_pending(spec, current)
+                    if current.state in {"paused", "partial"}:
+                        return self._result(spec, current)
+                    processed_trade_tasks.add(trade_task.task_id)
+                except (AdapterError, ValueError, FrontierStoreError) as error:
+                    trade_captures = trade_captures or self.adapter.take_captures()
+                    current = await self._record_failure(
+                        spec,
+                        current,
+                        operation="trade",
+                        code=error.code
+                        if isinstance(error, AdapterError)
+                        else "TRADE_CAPTURE_FAILED",
+                        message=str(error),
+                        captures=trade_captures,
+                        response=(
+                            error.response_evidence if isinstance(error, AdapterError) else None
+                        ),
+                        response_diagnostic=(
+                            error.response_diagnostic if isinstance(error, AdapterError) else None
+                        ),
+                        request_count=self._request_count() - requests_before,
+                        terminal_state=None,
+                        task_id=trade_task.task_id,
+                    )
+                    processed_trade_tasks.add(trade_task.task_id)
+
         final_state = "partial" if current.failures else "completed"
         current = self._append(
             spec,
@@ -1527,6 +1733,9 @@ class BoundedSourceCollector:
                 market_ids = tuple(dict.fromkeys((*current.market_observation_ids, observation_id)))
                 book_ids = current.book_observation_ids
                 completed = current.completed_book_task_ids
+                trade_ids = current.trade_observation_ids
+                completed_trade = current.completed_trade_task_ids
+                trade_print_count = current.trade_print_count
                 diagnostic_ids = current.diagnostic_observation_ids
             elif isinstance(pending_item.normalized, BookSnapshot):
                 pending_task_id = current.pending_task_id
@@ -1537,24 +1746,58 @@ class BoundedSourceCollector:
                 completed = tuple(
                     dict.fromkeys((*current.completed_book_task_ids, pending_task_id))
                 )
+                trade_ids = current.trade_observation_ids
+                completed_trade = current.completed_trade_task_ids
+                trade_print_count = current.trade_print_count
+                diagnostic_ids = current.diagnostic_observation_ids
+            elif isinstance(pending_item.normalized, TradeBatch):
+                pending_task_id = current.pending_task_id
+                if pending_task_id is None:
+                    raise FrontierStoreError("Pending trade observation has no task identity")
+                market_ids = current.market_observation_ids
+                book_ids = current.book_observation_ids
+                completed = current.completed_book_task_ids
+                trade_ids = tuple(dict.fromkeys((*current.trade_observation_ids, observation_id)))
+                completed_trade = tuple(
+                    dict.fromkeys((*current.completed_trade_task_ids, pending_task_id))
+                )
+                trade_print_count = current.trade_print_count + len(pending_item.normalized.trades)
                 diagnostic_ids = current.diagnostic_observation_ids
             else:
                 market_ids = current.market_observation_ids
                 book_ids = current.book_observation_ids
                 completed = current.completed_book_task_ids
+                trade_ids = current.trade_observation_ids
+                completed_trade = current.completed_trade_task_ids
+                trade_print_count = current.trade_print_count
                 diagnostic_ids = tuple(
                     dict.fromkeys((*current.diagnostic_observation_ids, observation_id))
                 )
             remaining = current.pending_observations[1:]
-            state: Literal["discovering", "books", "persisting_market", "persisting_book"] = (
-                "persisting_market"
-                if remaining and current.pending_target == "market"
-                else "persisting_book"
-                if remaining and current.pending_target == "book"
-                else "discovering"
-                if current.pending_target == "market"
-                else "books"
-            )
+            target = current.pending_target
+            if target is None:
+                raise FrontierStoreError("Pending collection evidence has no target")
+            state: Literal[
+                "discovering",
+                "books",
+                "trades",
+                "persisting_market",
+                "persisting_book",
+                "persisting_trade",
+            ]
+            if remaining:
+                if target == "market":
+                    state = "persisting_market"
+                elif target == "book":
+                    state = "persisting_book"
+                else:
+                    state = "persisting_trade"
+            elif target == "market":
+                state = "discovering"
+            elif target == "book":
+                state = "books"
+            else:
+                state = "trades"
             current = self._append(
                 spec,
                 current.model_copy(
@@ -1562,8 +1805,11 @@ class BoundedSourceCollector:
                         "state": state,
                         "market_observation_ids": market_ids,
                         "book_observation_ids": book_ids,
+                        "trade_observation_ids": trade_ids,
                         "diagnostic_observation_ids": diagnostic_ids,
                         "completed_book_task_ids": completed,
+                        "completed_trade_task_ids": completed_trade,
+                        "trade_print_count": trade_print_count,
                         "pending_observations": remaining,
                         "pending_target": current.pending_target if remaining else None,
                         "pending_task_id": current.pending_task_id if remaining else None,
@@ -1579,7 +1825,7 @@ class BoundedSourceCollector:
         spec: CollectionRunSpec,
         checkpoint: CollectionCheckpoint,
         *,
-        operation: Literal["discovery", "book"],
+        operation: Literal["discovery", "book", "trade"],
         code: str,
         message: str,
         captures: tuple[RawObservation, ...],
@@ -1636,13 +1882,28 @@ class BoundedSourceCollector:
                     ),
                 )
             )
-        target: Literal["market", "book"] = "market" if operation == "discovery" else "book"
-        state: Literal["persisting_market", "persisting_book", "failed", "books"] = (
+        target: Literal["market", "book", "trade"] = (
+            "market" if operation == "discovery" else operation
+        )
+        state: Literal[
+            "persisting_market",
+            "persisting_book",
+            "persisting_trade",
+            "failed",
+            "books",
+            "trades",
+        ] = (
             "failed"
             if terminal_state
             else "persisting_market"
-            if target == "market"
+            if target == "market" and pending
             else "persisting_book"
+            if target == "book" and pending
+            else "persisting_trade"
+            if target == "trade" and pending
+            else "trades"
+            if target == "trade"
+            else "books"
         )
         self.adapter.report_failure(code[:80], message[:240])
         current = self._append(
@@ -1652,13 +1913,18 @@ class BoundedSourceCollector:
                     "state": state,
                     "pending_observations": tuple(pending),
                     "pending_target": target if pending else None,
-                    "pending_task_id": task_id if pending and target == "book" else None,
+                    "pending_task_id": task_id if pending and target in {"book", "trade"} else None,
                     "request_count": min(1000, checkpoint.request_count + max(request_count, 0)),
                     "failures": _bounded_failures((*checkpoint.failures, failure)),
                     "failed_book_task_ids": (
                         (*checkpoint.failed_book_task_ids, task_id)
-                        if task_id is not None
+                        if task_id is not None and target == "book"
                         else checkpoint.failed_book_task_ids
+                    ),
+                    "failed_trade_task_ids": (
+                        (*checkpoint.failed_trade_task_ids, task_id)
+                        if task_id is not None and target == "trade"
+                        else checkpoint.failed_trade_task_ids
                     ),
                     "source_health": await self._health(),
                 }
@@ -1672,7 +1938,8 @@ class BoundedSourceCollector:
                 current.model_copy(update={"state": terminal_state, "pending_target": None}),
             )
         elif current.state not in {"paused", "partial"}:
-            current = self._append(spec, current.model_copy(update={"state": "books"}))
+            next_state = "trades" if operation == "trade" else "books"
+            current = self._append(spec, current.model_copy(update={"state": next_state}))
         return current
 
     def _load_markets(
@@ -1737,6 +2004,42 @@ class BoundedSourceCollector:
             )
         return tuple(tasks)
 
+    @staticmethod
+    def _make_trade_tasks(
+        markets: tuple[FrontierMarket, ...], trade_market_limit: int
+    ) -> tuple[CollectionTradeTask, ...]:
+        if trade_market_limit == 0:
+            return ()
+        candidates = sorted(
+            markets,
+            key=lambda item: (item.canonical_id, item.native_market_id),
+        )
+        tasks = []
+        seen: set[tuple[str, str]] = set()
+        for market in candidates:
+            identity_key = (market.canonical_id, market.native_market_id)
+            if identity_key in seen:
+                continue
+            seen.add(identity_key)
+            task_id = _hash_json(
+                {
+                    "venue": market.venue.value,
+                    "canonical_market_id": market.canonical_id,
+                    "native_market_id": market.native_market_id,
+                    "kind": "public_trades",
+                }
+            )
+            tasks.append(
+                CollectionTradeTask(
+                    task_id=task_id,
+                    canonical_market_id=market.canonical_id,
+                    native_market_id=market.native_market_id,
+                )
+            )
+            if len(tasks) >= trade_market_limit:
+                break
+        return tuple(tasks)
+
     def _append(
         self, spec: CollectionRunSpec, checkpoint: CollectionCheckpoint
     ) -> CollectionCheckpoint:
@@ -1756,7 +2059,14 @@ class BoundedSourceCollector:
         latest: CollectionCheckpoint | None,
         *,
         state: Literal[
-            "created", "discovering", "books", "completed", "partial", "failed", "paused"
+            "created",
+            "discovering",
+            "books",
+            "trades",
+            "completed",
+            "partial",
+            "failed",
+            "paused",
         ],
         source_health: SourceHealth | None = None,
         **updates: Any,
@@ -1769,10 +2079,16 @@ class BoundedSourceCollector:
             discovery_complete=latest.discovery_complete if latest else False,
             market_observation_ids=latest.market_observation_ids if latest else (),
             book_observation_ids=latest.book_observation_ids if latest else (),
+            trade_observation_ids=latest.trade_observation_ids if latest else (),
             diagnostic_observation_ids=latest.diagnostic_observation_ids if latest else (),
             book_tasks=latest.book_tasks if latest else (),
+            trade_tasks=latest.trade_tasks if latest else (),
             completed_book_task_ids=latest.completed_book_task_ids if latest else (),
             failed_book_task_ids=latest.failed_book_task_ids if latest else (),
+            completed_trade_task_ids=latest.completed_trade_task_ids if latest else (),
+            failed_trade_task_ids=latest.failed_trade_task_ids if latest else (),
+            trade_collection_complete=latest.trade_collection_complete if latest else False,
+            trade_print_count=latest.trade_print_count if latest else 0,
             pending_observations=latest.pending_observations if latest else (),
             pending_target=latest.pending_target if latest else None,
             pending_task_id=latest.pending_task_id if latest else None,
@@ -1819,8 +2135,12 @@ class BoundedSourceCollector:
             market_count=market_count,
             book_count=len(checkpoint.book_observation_ids),
             failed_book_count=len(checkpoint.failed_book_task_ids),
+            trade_batch_count=len(checkpoint.trade_observation_ids),
+            trade_count=checkpoint.trade_print_count,
+            failed_trade_count=len(checkpoint.failed_trade_task_ids),
             market_observation_ids=checkpoint.market_observation_ids,
             book_observation_ids=checkpoint.book_observation_ids,
+            trade_observation_ids=checkpoint.trade_observation_ids,
             diagnostic_observation_ids=checkpoint.diagnostic_observation_ids,
             pending_observation_count=len(checkpoint.pending_observations),
             evidence_bytes=checkpoint.evidence_bytes,
@@ -1850,7 +2170,7 @@ class BoundedSourceCollector:
 
     @staticmethod
     def _failure(
-        operation: Literal["discovery", "book", "persistence", "budget", "worker"],
+        operation: Literal["discovery", "book", "trade", "persistence", "budget", "worker"],
         code: str,
         message: str,
         task_id: str | None = None,

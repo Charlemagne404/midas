@@ -768,6 +768,20 @@
   color: #84958e;
   font-size: 8px;
 }
+.fr-collection-trades-toggle {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #9ca9b7;
+  font-size: 9px;
+  line-height: 1.4;
+}
+.fr-collection-trades-toggle input {
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  accent-color: #77c49c;
+}
 .fr-collection-history > strong {
   color: #c7d0dc;
   font-size: 10px;
