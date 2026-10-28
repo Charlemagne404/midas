@@ -7014,3 +7014,28 @@ Vite still emits a chunk-size advisory for the 504.00 kB main bundle and
 | Single-process full Python suite | PARTIALLY VERIFIED | Two monolithic runs were interrupted; modular coverage is complete. |
 | Live second-venue relationship/economics | BLOCKED | Existing source-use holds remain; no genuine cross-venue relationship or opportunity is claimed. |
 | Production transition | DEFERRED | The branch remains isolated and undeployed pending separate source, resource, recovery, and deployment review. |
+
+## Package-wide Frontier static analysis — 2026-10-28 05:43 UTC
+
+Strict typing now covers the complete Frontier package and its API integration
+route:
+
+- `mypy --strict --follow-imports=silent packages/midas/frontier`: **23 source
+  files**, no issues, 5.38 seconds wall, 199,892 KiB peak RSS.
+- Adding `apps/api/frontier.py` to the same strict check: **24 source files**,
+  no issues, 28.84 seconds wall, 723,472 KiB peak RSS.
+- Ruff check passes for `packages/midas/frontier`, `apps/api/frontier.py`, and
+  `tests/frontier`; Ruff format check reports all **51 files** already
+  formatted.
+
+Both mypy caches were under `/tmp`, and both processes used zero swaps. The
+post-check PSI sample showed memory avg10 **0.00% some/full** and I/O avg10
+**0.00% some/full**. No service, external source, or persistent research store
+was accessed or modified.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Frontier package and API strict typing | COMPLETE AND VERIFIED | 24 source files pass strict mypy. |
+| Frontier Python lint and formatting | COMPLETE AND VERIFIED | Ruff passes and all 51 relevant files are formatted. |
+| Live multi-venue validation | BLOCKED | Current source-use holds prevent a second-venue observation. |
+| Production eligibility | DEFERRED | The branch remains isolated; no deployment was attempted. |
