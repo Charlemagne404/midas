@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import base64
+import gzip
 import hashlib
 import json
 import sqlite3
@@ -4629,12 +4630,22 @@ async def test_probe_records_schema_failure_and_recovers_source_health(tmp_path)
     )
     duplicate_key_json = '{"id":"first","id":"last"}'
     deep_json = "[" * 20_000 + "0" + "]" * 20_000
+    compressed_body = gzip.compress(b"x" * 200_000)
+
+    class CompressedSourceStream(httpx.AsyncByteStream):
+        async def __aiter__(self):
+            yield compressed_body
+
+        async def aclose(self) -> None:
+            return None
+
     responses = (
         httpx.Response(200, text="not-json"),
         httpx.Response(200, text=duplicate_key_json),
         httpx.Response(200, text=deep_json),
         httpx.Response(200, content=b"\xff\x00"),
         httpx.Response(503, json={"error": "maintenance"}),
+        httpx.Response(200, headers={"Content-Encoding": "gzip"}),
         httpx.Response(200, json={"unexpected": []}),
         httpx.Response(200, json=[gamma_rows[0]]),
     )
@@ -4644,6 +4655,13 @@ async def test_probe_records_schema_failure_and_recovers_source_health(tmp_path)
         requests.append(request)
         index = len(requests) - 1
         response = responses[index]
+        if response.headers.get("Content-Encoding") == "gzip":
+            return httpx.Response(
+                response.status_code,
+                stream=CompressedSourceStream(),
+                headers=response.headers,
+                request=request,
+            )
         return httpx.Response(
             response.status_code,
             content=response.content,
@@ -4726,6 +4744,25 @@ async def test_probe_records_schema_failure_and_recovers_source_health(tmp_path)
             assert server_error.json()["raw"]["http_status"] == 503
             assert server_error.json()["raw"]["raw_body"] == '{"error":"maintenance"}'
 
+            compressed_failure = await client.post(
+                "/api/frontier/probe/polymarket", json={"limit": 1}
+            )
+            assert compressed_failure.status_code == 502
+            compressed_detail = compressed_failure.json()["detail"]
+            assert compressed_detail["code"] == "UNSUPPORTED_CONTENT_ENCODING"
+            compressed_error_id = compressed_detail["diagnostic_observation_ids"][0]
+            compressed_error = await client.get(f"/api/frontier/observations/{compressed_error_id}")
+            compressed_raw = base64.b64decode(
+                compressed_error.json()["raw"]["raw_body"], validate=True
+            )
+            assert compressed_raw == compressed_body
+            assert (
+                hashlib.sha256(compressed_raw).hexdigest() == compressed_error.json()["raw_sha256"]
+            )
+            compressed_normalized = compressed_error.json()["normalized"]
+            assert compressed_normalized["failure_stage"] == "transport_response"
+            assert compressed_normalized["error_code"] == "UNSUPPORTED_CONTENT_ENCODING"
+
             malformed_schema = await client.post(
                 "/api/frontier/probe/polymarket", json={"limit": 1}
             )
@@ -4757,12 +4794,12 @@ async def test_probe_records_schema_failure_and_recovers_source_health(tmp_path)
             assert health["polymarket"]["state"] == "healthy"
             assert health["polymarket"]["last_error_code"] is None
             assert len(store.observations(venue="polymarket", kind="market_listing")) == 2
-            assert len(store.observations(venue="polymarket", kind="source_failure")) == 5
+            assert len(store.observations(venue="polymarket", kind="source_failure")) == 6
             recorded_markets = await client.get(
                 "/api/frontier/markets", params={"venue": "polymarket"}
             )
             assert recorded_markets.json()["returned"] == 1
-            assert len(requests) == 7
+            assert len(requests) == 8
             assert all(item.method == "GET" for item in requests)
             assert all("authorization" not in item.headers for item in requests)
     finally:
