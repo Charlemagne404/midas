@@ -10146,3 +10146,41 @@ at `14:53:58Z`.
 | Full Frontier Python suite | COMPLETE AND VERIFIED | 465/465 pass with the expanded route-level source-policy regression. |
 | Live Kalshi/Kraken research | BLOCKED | Source-use holds and absent validated authorization remain unchanged. |
 | Frontier project overall | PARTIALLY VERIFIED | Live cross-venue science, broader legacy regression, endurance, protected recovery, and deployment remain open. |
+
+### Legacy Arena regression and subprocess import-path correction — 2026-10-28 15:45 UTC
+
+The full Arena suite collects 427 cases across 78 files. A first run launched
+with relative PYTHONPATH=packages failed after 216 passing cases because a
+test worker changed its working directory to a temporary root and imported
+the installed base checkout at /home/charlie/midas/packages. Its older JobSpec
+did not accept the three Frontier job fields. The failure was in test-process
+checkout selection, not a failure of the Frontier Arena worker contract.
+
+The migration verification test now prepends the active worktree's absolute
+packages path to the child environment. The exact worker case passes 1/1 with
+the original relative PYTHONPATH invocation (6.84 seconds pytest time, 7.82
+seconds wall, 346,064 KiB peak RSS, zero swaps, and no socket messages). Ruff
+check, Ruff format check, and git diff --check pass for this change.
+
+A second full-suite run with an absolute Frontier package path reached 67%
+without a reported test assertion failure. The process ran 9:47.35, used
+590.63 CPU seconds, peaked at 493,008 KiB RSS, and used zero swaps. Host memory
+PSI avg10 rose to 34.08% some / 30.80% full during the run; a post-stop sample
+reached 47.91% some / 43.67% full. The run was terminated after graceful
+signals did not promptly stop the CPU-bound test. A later 15:44:01Z sample
+showed memory PSI avg10 at 0.03% some / 0.02% full but avg60 at 6.91% some /
+6.34% full, I/O PSI avg10 at 0.63% some / 0.57% full, 9.6 GiB available, and
+3.7 GiB of 4 GiB swap in use. No test assertion failure was reported before
+the stop. The protected Reality recorder and separate Veritas work were left
+untouched.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Arena migration test worker path | COMPLETE AND VERIFIED | The subprocess now imports the active checkout; the exact migration worker case passes under the original relative environment. |
+| Full legacy Arena suite | PARTIALLY VERIFIED | The corrected run reached 67%, then ended at the host memory gate; this is not a full-suite pass. |
+| Broader MIDAS and Frontier acceptance | PARTIALLY VERIFIED | Existing Frontier, browser, and targeted Arena evidence remains valid; broad regression, live-source science, endurance, production recovery, and deployment remain open. |
+
+**Continuation:** keep source-use holds and protected services unchanged. Use
+absolute worktree paths for subprocess verification, and remeasure memory and
+I/O pressure before another broad suite. The full legacy Arena suite remains
+open.

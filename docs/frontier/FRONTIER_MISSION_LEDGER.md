@@ -1,5 +1,50 @@
 # Project Frontier Mission Ledger
 
+## Legacy Arena suite interrupted under host memory pressure — 2026-10-28 15:45 UTC
+
+Collected the full legacy Arena suite as 427 cases across 78 files. The first
+run used relative PYTHONPATH=packages; after the migration test changed into a
+temporary directory, its worker imported the installed base checkout at
+/home/charlie/midas/packages and rejected Frontier-only JobSpec fields. That
+run reached 216 passed before this environment-path failure.
+
+The focused migration worker case passed with an absolute Frontier package
+path. I then fixed its test helper to prepend the active worktree's absolute
+packages directory to the child PYTHONPATH. The same case passed again with
+the original relative PYTHONPATH=packages invocation: 1/1 in 6.84 seconds
+(7.82 seconds process wall), 346,064 KiB peak RSS, zero swaps, 2,536 input
+blocks, 16 output blocks, and no socket messages. Ruff check, Ruff format
+check, and git diff --check pass for the helper change.
+
+A corrected full-suite run used the absolute Frontier package path and reached
+67% without a reported assertion failure. It ran for 9:47.35, used 590.63 CPU
+seconds, peaked at 493,008 KiB RSS, and used zero swaps. During the run, host
+memory PSI avg10 rose above the admission gate; the sample before interruption
+was 34.08% some / 30.80% full. A post-stop sample briefly reached 47.91% some /
+43.67% full, so the pressure cannot be attributed to the Frontier test process
+alone. The pytest PID was terminated after SIGINT and SIGTERM did not promptly
+stop the CPU-bound test. No Arena test child remained. A read-only process
+snapshot showed separate active Veritas work and the protected Reality
+recorder; neither was touched.
+
+At 15:44:01Z after the pressure subsided, memory PSI avg10 was 0.03% some /
+0.02% full and avg60 was 6.91% some / 6.34% full. I/O PSI avg10 was 0.63% some
+/ 0.57% full, available memory was 9.6 GiB, and 3.7 GiB of 4 GiB swap was in
+use. The current evidence supports the focused migration case, not a completed
+full Arena suite.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Migration worker subprocess import path | COMPLETE AND VERIFIED | Test helper pins the active worktree package path; the exact case passes under relative PYTHONPATH. |
+| Full legacy Arena suite | PARTIALLY VERIFIED | Corrected run reached 67% with no reported assertion failures, then was stopped at severe host memory PSI. |
+| Further resource-bearing regression | DEFERRED | Remeasure host pressure before another batch; prefer bounded focused slices while memory avg60 and swap remain elevated. |
+| Frontier project acceptance | PARTIALLY VERIFIED | Live cross-venue evidence, broad regression, endurance, protected recovery, and deployment remain open. |
+
+**Next safe action:** keep the source-use holds and protected services
+unchanged. Use an absolute worktree package path for subprocess test runs and
+wait for a fresh resource sample before starting another resource-bearing
+test batch. Do not call the interrupted suite a pass.
+
 ## Arena job-supervision regression and I/O admission stop — 2026-10-28 14:03 UTC
 
 The generic Arena job/supervisor module passed **16/16** in 31.95 seconds
