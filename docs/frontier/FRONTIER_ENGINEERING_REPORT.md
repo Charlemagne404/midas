@@ -6877,3 +6877,27 @@ were interrupted.
 | Serial Frontier regression coverage | PARTIALLY VERIFIED | 244 passed across eight invocations; three modules remain. |
 | Full Frontier regression | PARTIALLY VERIFIED | Two monolithic attempts were interrupted; no full-suite pass is claimed. |
 | Additional resource-bearing checks | DEFERRED | Post-run I/O PSI exceeded the admission threshold. |
+
+## API regression, collection/overview slice — 2026-10-28 05:31 UTC
+
+The API module collects to **55 test cases**. Its first isolated slice covers
+collection start/resume/history, overview, coverage analytics, saved Kalshi
+fee-pair joining, and the disabled public-probe guard. All **9/9** selected
+cases passed in 3.31 seconds pytest time (3.80 seconds wall) at 97,360 KiB peak
+RSS. The run used `/tmp/frontier-api-collection-overview-20261028`, zero
+swaps, and zero socket messages. The existing Starlette/httpx TestClient
+deprecation warning appeared.
+
+The immediate post-run sample measured memory PSI avg10 **0.00% some / 0.00%
+full** and I/O PSI **2.07% some / 1.38% full**. No Frontier test or shared
+Arena admission lock holder remained active. Further slices are deferred
+until I/O `some` PSI falls below 1%. Total serial regression coverage is now
+**312 cases across eleven bounded invocations**. The API module remains
+partial, with 46 cases in three slices outstanding; no full Frontier suite
+pass is claimed.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| API collection and overview slice | COMPLETE AND VERIFIED | Nine selected cases pass; 46 API cases remain. |
+| Serial Frontier regression coverage | PARTIALLY VERIFIED | 312 cases pass across eleven invocations; API coverage is incomplete. |
+| Full Frontier regression | PARTIALLY VERIFIED | Both monolithic attempts remain interrupted, not completed passes. |

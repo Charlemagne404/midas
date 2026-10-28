@@ -5486,3 +5486,24 @@ below 1%.
 | Relationship review module | COMPLETE AND VERIFIED | All 13 tests pass in isolation. |
 | Serial Frontier regression coverage | PARTIALLY VERIFIED | 244 tests pass across eight bounded invocations; three modules remain unrun as complete modules. |
 | Additional resource-bearing tests | DEFERRED | Post-run I/O PSI exceeded the admission threshold. |
+
+## API regression, collection/overview slice — 2026-10-28 05:31 UTC
+
+The API module collects to **55 test cases**. The first bounded slice,
+`collection_api`, `collection_history`, overview, coverage analytics, saved
+Kalshi fee-pair joining, and the disabled public-probe guard, passed **9/9**
+in 3.31 seconds pytest time (3.80 seconds wall) at 97,360 KiB peak RSS. It
+used `/tmp/frontier-api-collection-overview-20261028`, with zero swaps and
+socket messages. The existing Starlette/httpx TestClient deprecation warning
+appeared.
+
+At the immediate post-run sample, memory PSI avg10 was **0.00% some / 0.00%
+full** and I/O PSI was **2.07% some / 1.38% full**. No Frontier tests or Arena
+admission lock holder remained active. Defer the other API slices until I/O
+`some` PSI drops below 1%.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| API collection and overview slice | COMPLETE AND VERIFIED | 9 selected cases pass; 46 API cases remain in three bounded slices. |
+| Serial Frontier regression coverage | PARTIALLY VERIFIED | 312 cases pass across eleven bounded invocations; the API module is still partial. |
+| Full Frontier regression | PARTIALLY VERIFIED | No full-suite pass is claimed. |
