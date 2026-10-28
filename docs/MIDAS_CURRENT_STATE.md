@@ -1820,3 +1820,17 @@ path remains unrun. At `2026-10-28T07:21:58Z`, memory PSI avg10 was
 **39.28% some / 20.15% full**; PID **124298** still held the protected Arena
 admission lock. I left it untouched and deferred browser/test/build work until
 the lock clears and memory pressure drops.
+
+### Laboratory/Arena saved-study verification complete — 2026-10-28 07:30 UTC
+
+After PID 124298 exited, the fixture-backed API/browser path passed. The
+opt-in seeded suite passed **2/2** against temporary Frontier and Arena stores;
+the Laboratory-specific browser case passed **1/1**. The full default browser
+suite passed **16** with **2** expected opt-in skips. Frontend unit tests passed
+**43/43**; TypeScript, lint, formatting, Ruff, and production build passed. The
+build retains the existing 511.30 kB main and 544.41 kB Chart advisories. At
+`2026-10-28T07:28:12Z`, post-run memory PSI avg10 was 0%, I/O PSI avg10 was
+0.01%, about 10 GiB was available, and the protected Arena lock was unheld.
+The saved job is a synthetic Polymarket-only fixture; this proves the local
+storage/API/UI path, not live-source or cross-venue matching. Frontier remains
+isolated, research-only, **PARTIALLY VERIFIED**, and undeployed.

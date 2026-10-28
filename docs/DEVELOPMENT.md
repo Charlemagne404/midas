@@ -703,9 +703,14 @@ was 47.23% some / 42.98% full, so resource-bearing verification is deferred
 until a fresh sample clears the admission gate. A fixture-routed Playwright
 case covering this tab was added in `afcc726`; it also awaits execution.
 Commit `a875ee2` adds a second opt-in case backed by a persisted, hash-verified
-Polymarket-only Arena fixture and the real local API routes. Re-run the seeded
-browser command above to exercise both scenarios; the new seed/API/UI path has
-not yet run and does not exercise an Arena worker or live source.
+Polymarket-only Arena fixture and the real local API routes. Both seeded cases
+subsequently passed **2/2**, and the fixture-routed Laboratory browser case
+passed **1/1**. The default suite passed **16** with the two seeded cases
+intentionally skipped. These tests exercise the API/UI path without a worker or
+live source. The full frontend unit suite passed **43/43**; typecheck, lint,
+Prettier, Ruff check/format, and production build also passed. The build keeps
+the existing 511.30 kB main and 544.41 kB Chart bundle advisories. The exact
+commands and admission samples are recorded in the [Frontier mission ledger](frontier/FRONTIER_MISSION_LEDGER.md).
 
 ## Keep worktrees and runtime data separate
 

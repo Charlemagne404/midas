@@ -7395,12 +7395,10 @@ The initial implementation passed the focused Laboratory component file
 Component tests mocked the Arena API, asserted older-job selection, verified
 identity display and integrity-result withholding, and confirmed navigation.
 During final review, job selection was moved into a valid nested button so the
-card no longer puts block elements inside a button. This last markup change
-was made after the reported test/typecheck results and remains unverified.
-Post-change Prettier, lint, build, and browser E2E were not run. Commit
-`afcc726` adds a fixture-routed Playwright case for retained-job selection,
-integrity-gated rendering, and no source or Arena mutation requests; this new
-browser case also awaits execution.
+card no longer puts block elements inside a button. At this checkpoint the
+change and its browser case were not yet rechecked; final results appear below.
+Commit `afcc726` adds a fixture-routed Playwright case for retained-job
+selection, integrity-gated rendering, and no source or Arena mutation requests.
 
 Commit `a875ee2` adds a stronger opt-in path. The temporary E2E seeder creates
 a Polymarket-only Frontier discovery snapshot, result artifact, and completed
@@ -7421,7 +7419,7 @@ a persisted Arena store or contact any source.
 
 | Component | Status | Evidence and remaining boundary |
 | --- | --- | --- |
-| Laboratory read-only Frontier study history | PARTIALLY VERIFIED | Initial component/unit/type checks pass before the final markup adjustment. A persisted-store/API browser test was added in `a875ee2` but has not run. |
+| Laboratory read-only Frontier study history | PARTIALLY VERIFIED AT THIS CHECKPOINT | Initial component/unit/type checks pass; the later markup and persisted-store/API results appear below. |
 | Legacy Laboratory campaign execution of Frontier snapshots | DEFERRED | No lossless mapping from multi-market Frontier payoffs to single-market `MarketEvent` episodes is defined. |
 | Arena worker/admission path | PARTIALLY VERIFIED | This change only reads existing Arena routes; it adds no worker completion or live resource evidence. |
 | Project Frontier overall | PARTIALLY VERIFIED | Live cross-venue semantic evidence, held-source access, broader science/resource gates, and deployment remain incomplete. |
@@ -7445,6 +7443,8 @@ Commit identities on `codex/frontier-20261026`:
 - `8c5ffbc` — Correct the protected shared-lock path and record the live holder.
 - `a875ee2` — Seed a persisted fixture Arena study and add actual API/browser inspection.
 - `9d8d98b` — List documentation follow-up commit identities.
+- `aa8483b` — Correct the fixture manifest and improve E2E failure diagnostics.
+- `5472d15` — Record the persisted Arena browser validation checkpoint.
 
 The working tree was clean at `91e61d7`. The commits remain local to the
 isolated Frontier branch; there was no merge, push, or deployment.
@@ -7470,3 +7470,44 @@ Arena lock under `midas-veritas-gap-detail-v2.service`. The protected batch was
 left untouched. No build, test, browser, source, or production operation was
 started after this measurement. Revalidate memory PSI and the exact lock path
 before running even the isolated browser suite.
+
+## Laboratory/Arena persisted-study verification — 2026-10-28 07:30 UTC
+
+After the Veritas batch exited, a controlled opt-in browser run exercised the
+seeded Frontier history and saved Arena discovery artifact. The seeder stores a
+single-market Polymarket fixture, result artifact, and completed manifest under
+a validated temporary browser root. The API then verifies the saved result
+against its snapshot and manifest; the Laboratory view loads the real local API
+routes. No Arena worker, exchange call, or production store is involved. The
+fixtures establish storage/API/UI wiring, not live source quality or a genuine
+cross-venue relationship.
+
+Two preparation defects were caught and corrected: the discovery snapshot
+builder needs an explicit empty verified-relationship tuple, and the completed
+job manifest needs `exit_status: 0`. After those fixes, verification passed:
+
+- Focused Laboratory component tests: **4/4**; full frontend unit suite: **43/43**.
+- TypeScript, ESLint, Prettier, and Ruff check/format check passed.
+- Production frontend build passed with 2,229 modules; existing 511.30 kB main
+  and 544.41 kB Chart chunk advisories remain.
+- Explicit seeded browser/API run: **2/2 passed**.
+- Fixture-routed Laboratory browser case: **1/1 passed**, including no source
+  probe and no Arena mutation request assertions.
+- Complete default browser suite: **16 passed, 2 skipped**; both seeded cases
+  were intentionally opt-in and passed separately.
+
+At the post-run sample `2026-10-28T07:28:12Z`, memory PSI avg10 was **0.00%
+some / 0.00% full**, I/O PSI avg10 **0.01% some / 0.01% full**, available
+memory about **10 GiB**, and no process held the protected shared Arena lock.
+The external Veritas worker remained untouched throughout.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Laboratory saved Frontier study inspector | COMPLETE AND VERIFIED | Component, full frontend, type, lint, format, build, and browser checks pass. |
+| Persisted Arena result through API and Laboratory UI | COMPLETE AND VERIFIED | Actual local API validates a content-addressed temporary fixture before UI display. No supervised worker or live source is involved. |
+| Live market/cross-venue validation | BLOCKED | Test evidence is synthetic and Polymarket-only; live source-use holds remain. |
+| Project Frontier overall | PARTIALLY VERIFIED | Live equivalent exposures, source permission, broader resource/science acceptance, and deployment remain open. |
+
+Commits `a875ee2` and `aa8483b` contain the seeded Arena fixture path and its
+contract fixes. These commits are local to `codex/frontier-20261026`; there was
+no merge, push, deployment, public source request, or protected-store change.
