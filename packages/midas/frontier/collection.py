@@ -14,7 +14,12 @@ from typing import Any, Literal
 
 from pydantic import Field, field_validator, model_validator
 
-from midas.frontier.adapters.base import AdapterError, ExchangeAdapter, FailedResponseEvidence
+from midas.frontier.adapters.base import (
+    AdapterError,
+    ExchangeAdapter,
+    FailedResponseEvidence,
+    RejectedResponseEvidence,
+)
 from midas.frontier.models import (
     AdapterCapabilities,
     AdapterConfig,
@@ -24,6 +29,7 @@ from midas.frontier.models import (
     FrontierModel,
     MarketBatch,
     RawObservation,
+    ResponseRejectionMetadata,
     SourceFailureRecord,
     SourceHealth,
     SourceState,
@@ -1083,6 +1089,9 @@ class BoundedSourceCollector:
                     message=str(error),
                     captures=captures,
                     response=(error.response_evidence if isinstance(error, AdapterError) else None),
+                    response_diagnostic=(
+                        error.response_diagnostic if isinstance(error, AdapterError) else None
+                    ),
                     request_count=self._request_count() - requests_before,
                     terminal_state="failed",
                 )
@@ -1205,6 +1214,9 @@ class BoundedSourceCollector:
                     message=str(error),
                     captures=captures,
                     response=(error.response_evidence if isinstance(error, AdapterError) else None),
+                    response_diagnostic=(
+                        error.response_diagnostic if isinstance(error, AdapterError) else None
+                    ),
                     request_count=self._request_count() - requests_before,
                     terminal_state=None,
                     task_id=task.task_id,
@@ -1358,6 +1370,7 @@ class BoundedSourceCollector:
         message: str,
         captures: tuple[RawObservation, ...],
         response: FailedResponseEvidence | None,
+        response_diagnostic: RejectedResponseEvidence | None,
         request_count: int,
         terminal_state: Literal["failed"] | None,
         task_id: str | None = None,
@@ -1387,6 +1400,28 @@ class BoundedSourceCollector:
                         ),
                     )
                 )
+        if response_diagnostic is not None:
+            raw = _raw_from_rejected_response(spec, response_diagnostic)
+            pending.append(
+                PendingCollectionObservation(
+                    raw=raw,
+                    normalized=SourceFailureRecord(
+                        failure_stage="transport_rejection",
+                        error_code=code[:80],
+                        message=message[:240] or "Source collection failed",
+                        response_rejection=ResponseRejectionMetadata(
+                            rejection_stage=response_diagnostic.rejection_stage,
+                            response_body_limit_bytes=response_diagnostic.max_response_bytes,
+                            declared_content_length_bytes=(
+                                response_diagnostic.declared_content_length_bytes
+                            ),
+                            bytes_yielded_at_rejection=(
+                                response_diagnostic.bytes_yielded_at_rejection
+                            ),
+                        ),
+                    ),
+                )
+            )
         target: Literal["market", "book"] = "market" if operation == "discovery" else "book"
         state: Literal["persisting_market", "persisting_book", "failed", "books"] = (
             "failed"
@@ -1636,6 +1671,24 @@ def _raw_from_failed_response(
         raw_body=text,
         raw_body_encoding=encoding,
         raw_sha256=hashlib.sha256(body).hexdigest(),
+        adapter_version=spec.adapter_version,
+    )
+
+
+def _raw_from_rejected_response(
+    spec: CollectionRunSpec, evidence: RejectedResponseEvidence
+) -> RawObservation:
+    return RawObservation(
+        venue=spec.venue,
+        observation_kind="collection_failure",
+        request_url=evidence.url,
+        http_status=evidence.status_code,
+        request_started_at_utc=evidence.request_started_at_utc,
+        received_at_utc=evidence.rejected_at_utc,
+        request_elapsed_monotonic_ns=evidence.request_elapsed_monotonic_ns,
+        raw_body="",
+        raw_body_state="not_captured_after_size_limit",
+        raw_sha256=hashlib.sha256(b"").hexdigest(),
         adapter_version=spec.adapter_version,
     )
 

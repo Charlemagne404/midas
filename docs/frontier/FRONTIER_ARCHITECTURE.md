@@ -230,6 +230,17 @@ pending. The current [Polymarket SDK protocol table](https://github.com/Polymark
 and [collateral adapter source](https://github.com/Polymarket/ctf-exchange-v2/blob/main/src/adapters/CtfCollateralAdapter.sol)
 are the mapping references. Cross-venue opportunity verification still fails
 closed; no USD-to-pUSD valuation bridge is enabled.
+
+The official [Gamma market-discovery documentation](https://docs.polymarket.com/market-data/discover-markets)
+describes `GET /events/{id}` as returning an event with an embedded `markets`
+array, and separately documents individual market lookups and paged
+`/markets/keyset` listing. It does not document pagination of a child-market
+list keyed by the Gamma event ID. Therefore one event-details request remains
+subject to Frontier's 256 KiB response cap; a rejected oversized response is
+represented by bounded metadata only. Individual lookups can hydrate known
+market IDs, but they do not prove the event's outcome set is exhaustive. The
+2026-10-28 bounded public probe encountered this limit for a group with 13
+listed children, so its payoff and exhaustiveness remain unverified.
 Event-group observations participate in
 latest-record selection and graph revision identity, so replay and paged reads
 cannot silently retain older child-only metadata.
@@ -780,8 +791,17 @@ integer-token length returns the non-retryable `JSON_COMPLEXITY_LIMIT` error
 and retains the bounded response body as the same kind of diagnostic.
 Delimiters inside JSON strings do not count toward this depth. Invalid UTF-8 is
 stored losslessly as base64 with the hash computed over original bytes.
-Oversized or partial bodies are rejected without persistence. A later
-successful probe clears the adapter's degraded health state.
+For a response rejected by the 256 KiB size bound, the API and finite
+collector persist a metadata-only `source_failure` record: schema-v2 raw
+observations mark `raw_body_state=not_captured_after_size_limit`, store an
+empty raw body, and hash that empty stored body. The normalized schema-v2
+`SourceFailureRecord` includes the response status through the raw observation
+plus the configured limit, declared `Content-Length` when available, rejection
+stage, and bytes yielded before rejection. The external response body is not
+retained. Schema-v1 raw observations and source-failure records remain
+readable. Other partial transport interruptions still have no complete source
+body to persist. A later successful probe clears the adapter's degraded health
+state.
 
 Replay reads only stored inputs, sorts records by canonical IDs, pins source
 observation IDs, effective state/instrument mappings, relationship IDs, proposal

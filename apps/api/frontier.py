@@ -40,7 +40,12 @@ from midas.arena.frontier_timeline import (
 from midas.arena.frontier_timeline import (
     store_snapshot as store_timeline_snapshot,
 )
-from midas.frontier.adapters.base import AdapterError, ExchangeAdapter, FailedResponseEvidence
+from midas.frontier.adapters.base import (
+    AdapterError,
+    ExchangeAdapter,
+    FailedResponseEvidence,
+    RejectedResponseEvidence,
+)
 from midas.frontier.adapters.coinbase import CoinbaseSpotAdapter
 from midas.frontier.adapters.kraken import KrakenSpotAdapter
 from midas.frontier.analytics import (
@@ -78,6 +83,7 @@ from midas.frontier.models import (
     KalshiFeeOrderFillInput,
     MarketBatch,
     RawObservation,
+    ResponseRejectionMetadata,
     SourceFailureRecord,
     SourceHealth,
     SourceState,
@@ -1307,11 +1313,12 @@ def router(
         message: str,
         response_evidence: FailedResponseEvidence | None = None,
         already_drained: tuple[RawObservation, ...] = (),
+        response_diagnostic: RejectedResponseEvidence | None = None,
     ) -> tuple[tuple[str, ...], str | None]:
-        """Keep complete bounded response evidence when normalization or transport fails."""
+        """Keep bounded response evidence and explicit metadata for locally rejected bodies."""
         captures = (*already_drained, *adapter.take_captures())
-        diagnostic_inputs: list[tuple[RawObservation, str]] = [
-            (capture, "probe_batch") for capture in captures
+        diagnostic_inputs: list[tuple[RawObservation, str, ResponseRejectionMetadata | None]] = [
+            (capture, "probe_batch", None) for capture in captures
         ]
         if response_evidence is not None and len(response_evidence.raw_body) <= 262144:
             try:
@@ -1338,15 +1345,45 @@ def router(
                         adapter_version=adapter.capabilities.adapter_version,
                     ),
                     "transport_response",
+                    None,
+                )
+            )
+        if response_diagnostic is not None:
+            rejection_metadata = ResponseRejectionMetadata(
+                rejection_stage=response_diagnostic.rejection_stage,
+                response_body_limit_bytes=response_diagnostic.max_response_bytes,
+                declared_content_length_bytes=response_diagnostic.declared_content_length_bytes,
+                bytes_yielded_at_rejection=response_diagnostic.bytes_yielded_at_rejection,
+            )
+            diagnostic_inputs.append(
+                (
+                    RawObservation(
+                        venue=adapter.venue,
+                        observation_kind="source_failure",
+                        request_url=response_diagnostic.url,
+                        http_status=response_diagnostic.status_code,
+                        request_started_at_utc=response_diagnostic.request_started_at_utc,
+                        received_at_utc=response_diagnostic.rejected_at_utc,
+                        request_elapsed_monotonic_ns=(
+                            response_diagnostic.request_elapsed_monotonic_ns
+                        ),
+                        raw_body="",
+                        raw_body_state="not_captured_after_size_limit",
+                        raw_sha256=hashlib.sha256(b"").hexdigest(),
+                        adapter_version=adapter.capabilities.adapter_version,
+                    ),
+                    "transport_rejection",
+                    rejection_metadata,
                 )
             )
         observation_ids: list[str] = []
         persistence_error: str | None = None
-        for capture, stage in diagnostic_inputs:
+        for capture, stage, rejection in diagnostic_inputs:
             diagnostic = SourceFailureRecord(
                 failure_stage=stage,
                 error_code=code[:80],
                 message=message[:240] or "Adapter probe failed",
+                response_rejection=rejection,
             )
             try:
                 observation_ids.append(store.append_observation(capture, diagnostic))
@@ -1978,6 +2015,7 @@ def router(
                     str(error),
                     error.response_evidence,
                     already_drained=captures,
+                    response_diagnostic=error.response_diagnostic,
                 )
                 adapter.report_failure(error.code, str(error))
                 raise HTTPException(
@@ -2119,7 +2157,12 @@ def router(
                 }
             except AdapterError as error:
                 diagnostic_ids, diagnostic_error = preserve_failed_captures(
-                    adapter, error.code, str(error), error.response_evidence, captures
+                    adapter,
+                    error.code,
+                    str(error),
+                    error.response_evidence,
+                    captures,
+                    response_diagnostic=error.response_diagnostic,
                 )
                 adapter.report_failure(error.code, str(error))
                 raise HTTPException(
@@ -2227,7 +2270,12 @@ def router(
                 }
             except AdapterError as error:
                 diagnostic_ids, diagnostic_error = preserve_failed_captures(
-                    adapter, error.code, str(error), error.response_evidence, captures
+                    adapter,
+                    error.code,
+                    str(error),
+                    error.response_evidence,
+                    captures,
+                    response_diagnostic=error.response_diagnostic,
                 )
                 adapter.report_failure(error.code, str(error))
                 raise HTTPException(
@@ -2360,7 +2408,12 @@ def router(
                 }
             except AdapterError as error:
                 diagnostic_ids, diagnostic_error = preserve_failed_captures(
-                    adapter, error.code, str(error), error.response_evidence, captures
+                    adapter,
+                    error.code,
+                    str(error),
+                    error.response_evidence,
+                    captures,
+                    response_diagnostic=error.response_diagnostic,
                 )
                 adapter.report_failure(error.code, str(error))
                 raise HTTPException(
@@ -2510,7 +2563,12 @@ def router(
                 }
             except AdapterError as error:
                 diagnostic_ids, diagnostic_error = preserve_failed_captures(
-                    adapter, error.code, str(error), error.response_evidence, captures
+                    adapter,
+                    error.code,
+                    str(error),
+                    error.response_evidence,
+                    captures,
+                    response_diagnostic=error.response_diagnostic,
                 )
                 adapter.report_failure(error.code, str(error))
                 raise HTTPException(
@@ -2640,7 +2698,12 @@ def router(
                 }
             except AdapterError as error:
                 diagnostic_ids, diagnostic_error = preserve_failed_captures(
-                    adapter, error.code, str(error), error.response_evidence, captures
+                    adapter,
+                    error.code,
+                    str(error),
+                    error.response_evidence,
+                    captures,
+                    response_diagnostic=error.response_diagnostic,
                 )
                 adapter.report_failure(error.code, str(error))
                 raise HTTPException(
@@ -4586,6 +4649,7 @@ def router(
                                 str(error),
                                 error.response_evidence,
                                 already_drained=tuple(unpersisted_captures),
+                                response_diagnostic=error.response_diagnostic,
                             )
                             unpersisted_captures.clear()
                             adapter.report_failure(error.code, str(error))
@@ -4633,6 +4697,7 @@ def router(
                     str(error),
                     error.response_evidence,
                     already_drained=tuple(unpersisted_captures),
+                    response_diagnostic=error.response_diagnostic,
                 )
                 adapter.report_failure(error.code, str(error))
                 raise HTTPException(

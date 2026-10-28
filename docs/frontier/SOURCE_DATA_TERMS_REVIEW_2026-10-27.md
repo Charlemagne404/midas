@@ -353,3 +353,40 @@ changed during this review. Public endpoint accessibility and compliance with
 published rate limits do not lift the established holds. Continue fixture-only
 adapter validation until a source-specific use review establishes the relevant
 terms, region, purpose, retention, and any required written permission.
+
+### Bounded Polymarket event-metadata probe — 2026-10-28 03:18 UTC
+
+The existing research-use boundary was applied to one read-only Polymarket
+Gamma session. It made exactly two GET requests at one request per second,
+with a 7-second timeout, zero retries, and a 256 KiB response cap. No
+credentials, account access, order route, geographic workaround, held source,
+or protected service was used.
+
+The `/markets` response was HTTP 200 and returned one liquidity-ordered page
+of 20 active markets. Its SHA-256 is
+`bee76335963dc0045b0a0be4638afab827dfef9e83cef4eaa3e812d8ba0ba094`; its
+Frontier observation ID is
+`5e5f63dbc701476347a814a8496f1e88869f27a49e884b2cf27ee8ee238e661a`; and its
+append-only store row SHA-256 is
+`75db34b2b7e9848637942dcbb771745774cfc52ec586322b90c278e7e78b65`.
+The 20 returned markets had two instruments each. The bounded page contained
+four numeric event identifiers, with at most 13 listed markets under one
+event. All 20 included rule text, one included a resolution authority, none
+included a close time, and none had a verified or exhaustive payoff in the
+Frontier model. This was a top-liquidity page, not a venue inventory or
+multi-outcome validation.
+
+One follow-up `/events/{id}` request for the largest event group was rejected
+by Frontier's response-size guard. The pre-change failure path retained no
+response body, HTTP status, or declared-length diagnostic, so those details
+remain unknown. No retry or follow-up was made. The first-page capture is
+stored in the ignored, worktree-local database
+`data/public-captures/frontier-polymarket-20261028T031822Z-pqzzdf1m/frontier.sqlite3`;
+its raw and normalized read-back hashes were verified. The rejected event
+response was not stored. This probe establishes source normalization and
+resolution-metadata gaps only; it does not establish an exhaustive outcome
+set, a verified payoff, a cross-venue relationship, or an opportunity.
+
+This capture does not change the Kalshi, Kraken, or Coinbase holds or broaden
+the Polymarket source-use purpose. It remains a local research record and is
+not published or copied into version control.

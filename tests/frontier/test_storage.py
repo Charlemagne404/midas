@@ -9,7 +9,13 @@ from pathlib import Path
 
 import pytest
 from midas.frontier.economics import ExecutionScenario
-from midas.frontier.models import MarketBatch, MarketGroup, RawObservation, Venue
+from midas.frontier.models import (
+    MarketBatch,
+    MarketGroup,
+    RawObservation,
+    SourceFailureRecord,
+    Venue,
+)
 from midas.frontier.relationships import propose_relationships, verify_same_payoff
 from midas.frontier.replay import deterministic_replay, paired_deterministic_replay
 from midas.frontier.storage import FrontierStore, FrontierStoreError
@@ -29,6 +35,24 @@ def _raw(venue: Venue, body: str, kind: str = "market_metadata") -> RawObservati
         raw_sha256=hashlib.sha256(body.encode()).hexdigest(),
         adapter_version="test-1",
     )
+
+
+def test_raw_and_source_failure_schema_v1_records_remain_readable():
+    raw_payload = _raw(Venue.POLYMARKET, "legacy fixture").model_dump(mode="json")
+    raw_payload["schema_version"] = 1
+    raw_payload.pop("raw_body_state")
+    legacy_raw = RawObservation.model_validate(raw_payload)
+    assert legacy_raw.schema_version == 1
+    assert legacy_raw.raw_body_state == "complete"
+
+    legacy_failure = SourceFailureRecord(
+        schema_version=1,
+        failure_stage="probe_batch",
+        error_code="INVALID_SCHEMA",
+        message="Legacy failure fixture",
+    )
+    assert legacy_failure.schema_version == 1
+    assert legacy_failure.response_rejection is None
 
 
 def _paired_fixture():

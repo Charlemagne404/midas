@@ -55,6 +55,45 @@ async def test_transport_rejects_host_redirect_and_oversized_response():
             await transport.get_json("https://example.com/large")
         assert error.value.code == "RESPONSE_TOO_LARGE"
         assert error.value.response_evidence is None
+        assert error.value.response_diagnostic is not None
+        assert error.value.response_diagnostic.status_code == 200
+        assert error.value.response_diagnostic.max_response_bytes == 1024
+        assert error.value.response_diagnostic.declared_content_length_bytes == 1100
+        assert error.value.response_diagnostic.bytes_yielded_at_rejection == 0
+        assert error.value.response_diagnostic.rejection_stage == "content_length"
+    finally:
+        await client.aclose()
+
+
+@pytest.mark.asyncio
+async def test_streamed_oversize_response_records_bounded_metadata_without_body_capture():
+    class OversizeStream(httpx.AsyncByteStream):
+        async def __aiter__(self):
+            yield b"x" * 5000
+
+        async def aclose(self) -> None:
+            return None
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, stream=OversizeStream(), request=request)
+
+    client = httpx.AsyncClient(transport=httpx.MockTransport(handler))
+    transport = PublicReadTransport(
+        {"example.com"},
+        AdapterConfig(
+            enabled=True, live_public_probe_enabled=True, max_response_bytes=1024, retries=0
+        ),
+        client=client,
+    )
+    try:
+        with pytest.raises(AdapterError) as error:
+            await transport.get_json("https://example.com/stream-large")
+        assert error.value.code == "RESPONSE_TOO_LARGE"
+        assert error.value.response_evidence is None
+        assert error.value.response_diagnostic is not None
+        assert error.value.response_diagnostic.declared_content_length_bytes is None
+        assert error.value.response_diagnostic.bytes_yielded_at_rejection == 2048
+        assert error.value.response_diagnostic.rejection_stage == "response_stream"
     finally:
         await client.aclose()
 

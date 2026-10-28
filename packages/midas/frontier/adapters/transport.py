@@ -15,7 +15,11 @@ from urllib.parse import urlsplit
 
 import httpx
 
-from midas.frontier.adapters.base import AdapterError, FailedResponseEvidence
+from midas.frontier.adapters.base import (
+    AdapterError,
+    FailedResponseEvidence,
+    RejectedResponseEvidence,
+)
 from midas.frontier.models import AdapterConfig
 
 D = Decimal
@@ -168,22 +172,56 @@ class PublicReadTransport:
                             "REDIRECT_REJECTED", "Public-source redirects are not followed"
                         )
                     content_length = response.headers.get("Content-Length")
+                    declared_content_length: int | None = None
                     if content_length is not None:
                         try:
-                            if int(content_length) > self.config.max_response_bytes:
+                            parsed_content_length = int(content_length)
+                            if parsed_content_length >= 0:
+                                declared_content_length = parsed_content_length
+                            if parsed_content_length > self.config.max_response_bytes:
+                                rejected_at = datetime.now(UTC)
                                 raise AdapterError(
-                                    "RESPONSE_TOO_LARGE", "Response exceeds configured byte bound"
+                                    "RESPONSE_TOO_LARGE",
+                                    "Response exceeds configured byte bound",
+                                    response_diagnostic=RejectedResponseEvidence(
+                                        url=request_url,
+                                        status_code=response.status_code,
+                                        request_started_at_utc=started,
+                                        rejected_at_utc=rejected_at,
+                                        request_elapsed_monotonic_ns=(
+                                            time.monotonic_ns() - started_monotonic_ns
+                                        ),
+                                        max_response_bytes=self.config.max_response_bytes,
+                                        declared_content_length_bytes=parsed_content_length,
+                                        bytes_yielded_at_rejection=0,
+                                        rejection_stage="content_length",
+                                    ),
                                 )
-                        except ValueError as error:
-                            if isinstance(error, AdapterError):
-                                raise
+                        except ValueError:
+                            declared_content_length = None
                     body = bytearray()
-                    async for chunk in response.aiter_bytes():
-                        body.extend(chunk)
-                        if len(body) > self.config.max_response_bytes:
+                    chunk_size = min(65536, self.config.max_response_bytes)
+                    async for chunk in response.aiter_bytes(chunk_size=chunk_size):
+                        if len(body) + len(chunk) > self.config.max_response_bytes:
+                            rejected_at = datetime.now(UTC)
                             raise AdapterError(
-                                "RESPONSE_TOO_LARGE", "Response exceeds configured byte bound"
+                                "RESPONSE_TOO_LARGE",
+                                "Response exceeds configured byte bound",
+                                response_diagnostic=RejectedResponseEvidence(
+                                    url=request_url,
+                                    status_code=response.status_code,
+                                    request_started_at_utc=started,
+                                    rejected_at_utc=rejected_at,
+                                    request_elapsed_monotonic_ns=(
+                                        time.monotonic_ns() - started_monotonic_ns
+                                    ),
+                                    max_response_bytes=self.config.max_response_bytes,
+                                    declared_content_length_bytes=declared_content_length,
+                                    bytes_yielded_at_rejection=len(body) + len(chunk),
+                                    rejection_stage="response_stream",
+                                ),
                             )
+                        body.extend(chunk)
                     request_elapsed_monotonic_ns = time.monotonic_ns() - started_monotonic_ns
                     received = datetime.now(UTC)
                     if response.status_code == 429 or response.status_code >= 500:

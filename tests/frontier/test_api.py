@@ -288,6 +288,75 @@ def test_kalshi_mve_component_probe_is_bound_to_recorded_parent_and_persists_met
         asyncio.run(http_client.aclose())
 
 
+def test_oversized_response_persists_body_omission_and_bounded_transport_metadata(tmp_path):
+    requests: list[httpx.Request] = []
+    oversized_body = b"x" * 262145
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        return httpx.Response(
+            200,
+            headers={"Content-Length": str(len(oversized_body))},
+            content=oversized_body,
+            request=request,
+        )
+
+    config = AdapterConfig(
+        enabled=True, live_public_probe_enabled=True, retries=0, requests_per_second=5
+    )
+    http_client = httpx.AsyncClient(transport=httpx.MockTransport(handler))
+    transport = PublicReadTransport({"gamma-api.polymarket.com"}, config, client=http_client)
+    registry = AdapterRegistry(
+        (
+            PolymarketAdapter(config, transport=transport),
+            KalshiAdapter(),
+            KrakenSpotAdapter(),
+        )
+    )
+    store = FrontierStore(tmp_path / "frontier", max_bytes=2 * 1024 * 1024)
+    app = FastAPI()
+    app.include_router(router(store, registry))
+    client = TestClient(app)
+    try:
+        response = client.post("/api/frontier/probe/polymarket", json={"limit": 1})
+        assert response.status_code == 502
+        detail = response.json()["detail"]
+        assert detail["code"] == "RESPONSE_TOO_LARGE"
+        assert len(detail["diagnostic_observation_ids"]) == 1
+        assert len(requests) == 1
+        assert requests[0].method == "GET"
+        assert "authorization" not in requests[0].headers
+
+        observation_id = detail["diagnostic_observation_ids"][0]
+        observation = store.observation(observation_id)
+        assert observation is not None
+        assert observation["raw"]["raw_body"] == ""
+        assert observation["raw"]["raw_body_state"] == "not_captured_after_size_limit"
+        assert observation["raw"]["raw_sha256"] == hashlib.sha256(b"").hexdigest()
+        diagnostic = observation["normalized"]
+        assert diagnostic["schema_version"] == 2
+        assert diagnostic["failure_stage"] == "transport_rejection"
+        assert diagnostic["error_code"] == "RESPONSE_TOO_LARGE"
+        assert diagnostic["response_rejection"] == {
+            "schema_version": 1,
+            "rejection_stage": "content_length",
+            "response_body_state": "not_captured_after_size_limit",
+            "response_body_limit_bytes": 262144,
+            "declared_content_length_bytes": 262145,
+            "bytes_yielded_at_rejection": 0,
+        }
+        health = client.get("/api/frontier/sources").json()
+        poly_health = next(
+            item["health"] for item in health["items"] if item["venue"] == "polymarket"
+        )
+        assert poly_health["state"] == "degraded"
+        assert poly_health["last_error_code"] == "RESPONSE_TOO_LARGE"
+    finally:
+        client.close()
+        asyncio.run(registry.aclose())
+        asyncio.run(http_client.aclose())
+
+
 def _client(tmp_path, *, arena_root=None, hold_sources=False):
     requests: list[httpx.Request] = []
 

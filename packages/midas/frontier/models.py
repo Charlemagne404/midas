@@ -1114,7 +1114,7 @@ class CandleSeries(FrontierModel):
 
 
 class RawObservation(FrontierModel):
-    schema_version: int = 1
+    schema_version: int = 2
     venue: Venue
     observation_kind: str
     request_url: str
@@ -1124,11 +1124,16 @@ class RawObservation(FrontierModel):
     request_elapsed_monotonic_ns: MonotonicElapsedNs | None = None
     raw_body: str
     raw_body_encoding: Literal["utf8", "base64"] = "utf8"
+    raw_body_state: Literal["complete", "not_captured_after_size_limit"] = "complete"
     raw_sha256: str
     adapter_version: str
 
     @model_validator(mode="after")
     def valid_hash_and_size(self) -> RawObservation:
+        if self.schema_version not in {1, 2}:
+            raise ValueError("Unsupported raw-observation schema version")
+        if self.schema_version == 1 and self.raw_body_state != "complete":
+            raise ValueError("Raw-observation schema v1 cannot describe omitted response bodies")
         if self.raw_body_encoding == "utf8":
             raw = self.raw_body.encode("utf-8")
         else:
@@ -1138,20 +1143,60 @@ class RawObservation(FrontierModel):
                 raise ValueError("Raw observation base64 body is invalid") from error
         if len(raw) > 262144:
             raise ValueError("Raw observation exceeds the 256 KiB record bound")
+        if self.raw_body_state == "not_captured_after_size_limit" and raw:
+            raise ValueError("Size-rejected response bodies must not be stored")
         digest = hashlib.sha256(raw).hexdigest()
         if digest != self.raw_sha256:
             raise ValueError("Raw observation hash mismatch")
         return self
 
 
-class SourceFailureRecord(FrontierModel):
-    """Bounded normalization failure attached to a captured successful response."""
+class ResponseRejectionMetadata(FrontierModel):
+    """Observed size metadata for a response rejected by the body-size limit."""
 
-    schema_version: int = 1
+    schema_version: Literal[1] = 1
+    rejection_stage: Literal["content_length", "response_stream"]
+    response_body_state: Literal["not_captured_after_size_limit"] = "not_captured_after_size_limit"
+    response_body_limit_bytes: int = Field(ge=1024, le=262144)
+    declared_content_length_bytes: int | None = Field(default=None, ge=0)
+    bytes_yielded_at_rejection: int = Field(ge=0, le=524288)
+
+    @model_validator(mode="after")
+    def size_metadata_matches_rejection(self) -> ResponseRejectionMetadata:
+        if self.rejection_stage == "content_length":
+            if (
+                self.declared_content_length_bytes is None
+                or self.declared_content_length_bytes <= self.response_body_limit_bytes
+                or self.bytes_yielded_at_rejection != 0
+            ):
+                raise ValueError("Content-length rejection metadata is inconsistent")
+        elif self.bytes_yielded_at_rejection <= self.response_body_limit_bytes:
+            raise ValueError("Stream rejection requires evidence beyond the configured limit")
+        return self
+
+
+class SourceFailureRecord(FrontierModel):
+    """Bounded source or normalization failure diagnostic."""
+
+    schema_version: int = 2
     record_kind: Literal["source_failure"] = "source_failure"
     failure_stage: str = Field(min_length=1, max_length=64)
     error_code: str = Field(min_length=1, max_length=80)
     message: str = Field(min_length=1, max_length=240)
+    response_rejection: ResponseRejectionMetadata | None = None
+
+    @field_validator("schema_version")
+    @classmethod
+    def supported_source_failure_schema(cls, value: int) -> int:
+        if value not in {1, 2}:
+            raise ValueError("Unsupported source-failure schema version")
+        return value
+
+    @model_validator(mode="after")
+    def rejection_requires_matching_stage(self) -> SourceFailureRecord:
+        if self.response_rejection is not None and self.failure_stage != "transport_rejection":
+            raise ValueError("Response-rejection metadata requires the transport_rejection stage")
+        return self
 
 
 def stable_market_id(venue: Venue, native_market_id: str) -> str:

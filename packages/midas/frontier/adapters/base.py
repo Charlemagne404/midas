@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Any, Literal, Protocol, runtime_checkable
 
 from midas.frontier.models import (
     AdapterCapabilities,
@@ -38,6 +38,21 @@ class FailedResponseEvidence:
     request_elapsed_monotonic_ns: int
 
 
+@dataclass(frozen=True, slots=True)
+class RejectedResponseEvidence:
+    """Bounded metadata for a response rejected before its complete body was retained."""
+
+    url: str
+    status_code: int
+    request_started_at_utc: datetime
+    rejected_at_utc: datetime
+    request_elapsed_monotonic_ns: int
+    max_response_bytes: int
+    declared_content_length_bytes: int | None
+    bytes_yielded_at_rejection: int
+    rejection_stage: Literal["content_length", "response_stream"]
+
+
 class AdapterError(RuntimeError):
     """A classified public-source or normalization failure."""
 
@@ -48,11 +63,13 @@ class AdapterError(RuntimeError):
         *,
         retryable: bool = False,
         response_evidence: FailedResponseEvidence | None = None,
+        response_diagnostic: RejectedResponseEvidence | None = None,
     ) -> None:
         super().__init__(message)
         self.code = code
         self.retryable = retryable
         self.response_evidence = response_evidence
+        self.response_diagnostic = response_diagnostic
 
 
 class UnsupportedCapability(AdapterError):

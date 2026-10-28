@@ -9,7 +9,11 @@ from decimal import Decimal
 from pathlib import Path
 
 import pytest
-from midas.frontier.adapters.base import AdapterError, build_capabilities
+from midas.frontier.adapters.base import (
+    AdapterError,
+    RejectedResponseEvidence,
+    build_capabilities,
+)
 from midas.frontier.collection import (
     BoundedSourceCollector,
     CollectionCheckpoint,
@@ -618,6 +622,45 @@ async def test_market_lineage_failure_keeps_the_raw_capture_as_diagnostic(tmp_pa
     assert row is not None
     assert row["raw"]["raw_sha256"] == adapter.market_capture.raw_sha256
     assert row["normalized"]["error_code"] == "CAPTURE_LINEAGE_MISMATCH"
+
+
+@pytest.mark.asyncio
+async def test_oversized_response_rejection_is_checkpointed_without_body_capture(tmp_path):
+    class OversizedDiscoveryAdapter(FakeAdapter):
+        async def discover_markets(self, limit: int = 20):
+            self.transport.request_count += 1
+            self.discovery_calls += 1
+            raise AdapterError(
+                "RESPONSE_TOO_LARGE",
+                "Response exceeds configured byte bound",
+                response_diagnostic=RejectedResponseEvidence(
+                    url="https://fixture.example/markets",
+                    status_code=200,
+                    request_started_at_utc=T0,
+                    rejected_at_utc=T0 + timedelta(milliseconds=25),
+                    request_elapsed_monotonic_ns=25_000_000,
+                    max_response_bytes=1024,
+                    declared_content_length_bytes=2048,
+                    bytes_yielded_at_rejection=0,
+                    rejection_stage="content_length",
+                ),
+            )
+
+    store = FrontierStore(tmp_path / "frontier")
+    adapter = OversizedDiscoveryAdapter()
+    result = await BoundedSourceCollector(adapter, store).start(market_limit=1, book_limit=0)
+
+    assert result.state == "failed"
+    assert result.request_count == 1
+    assert result.failures[0].code == "RESPONSE_TOO_LARGE"
+    assert len(result.diagnostic_observation_ids) == 1
+    diagnostic = store.observation(result.diagnostic_observation_ids[0])
+    assert diagnostic is not None
+    assert diagnostic["raw"]["raw_body"] == ""
+    assert diagnostic["raw"]["raw_body_state"] == "not_captured_after_size_limit"
+    assert diagnostic["raw"]["raw_sha256"] == hashlib.sha256(b"").hexdigest()
+    assert diagnostic["normalized"]["failure_stage"] == "transport_rejection"
+    assert diagnostic["normalized"]["response_rejection"]["declared_content_length_bytes"] == 2048
 
 
 @pytest.mark.asyncio

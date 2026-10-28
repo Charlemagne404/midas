@@ -5811,3 +5811,94 @@ two scoped modules. Frontier remains **PARTIALLY VERIFIED**, isolated,
 research-only, and undeployed; genuine cross-venue equivalence, held-source
 live evidence, broader typing, sustained resource evidence, and deployment
 remain unresolved.
+
+## Polymarket outcome evidence and bounded rejection diagnostics — 2026-10-28 03:25 UTC
+
+One permitted Polymarket Gamma probe made two public GET requests at one
+request per second, with a 7-second timeout, zero retries, and a 256-KiB
+response cap. The first `/markets` request returned HTTP 200 with 20 active
+markets ordered by liquidity. The immutable local row is stored at
+`data/public-captures/frontier-polymarket-20261028T031822Z-pqzzdf1m/frontier.sqlite3`
+and its read-back was checked:
+
+| Evidence | SHA-256 / identity |
+| --- | --- |
+| Raw page | `bee76335963dc0045b0a0be4638afab827dfef9e83cef4eaa3e812d8ba0ba094` |
+| Frontier observation | `5e5f63dbc701476347a814a8496f1e88869f27a49e884b2cf27ee8ee238e661a` |
+| Persisted row | `75db34b2b7e9848637942dcbb771745774cfc52ec586322b90c278e7e78b65` |
+
+The page had 20 two-instrument markets, four numeric event identifiers, and a
+largest event group with 13 listed children. All 20 records included rule
+text; one included a resolution authority; zero included a close time; and
+zero were marked verified or exhaustive for payoff. This is bounded source
+coverage, not an exhaustive market inventory or proof of an outcome set.
+
+The single selected `/events/{id}` request was rejected by the 256-KiB body
+bound. At the time, `RESPONSE_TOO_LARGE` retained neither status nor declared
+length metadata, and no body was stored or retried. No more source requests
+were made. The local database contains the first page only; it is under the
+ignored `data/public-captures/` path and is not committed or published. No
+Kalshi, Kraken, Coinbase, or protected Reality data was accessed.
+
+This exposed a source-diagnostics gap. `PublicReadTransport` now rejects
+declared or streamed bodies before copying beyond the configured limit and
+attaches status, timestamps, declared length when available, configured cap,
+and bytes yielded at rejection. It never retains an oversized body. API probe
+and finite collector failure paths persist a metadata-only `source_failure`
+observation with `raw_body_state=not_captured_after_size_limit`; its raw hash
+is explicitly the hash of the empty stored body, while the normalized
+version-2 `SourceFailureRecord` preserves the rejection metadata. Schema-v1
+raw observations and failure records remain readable. The implementation adds
+transport, API, collection, and legacy-schema tests.
+
+Ruff check/format and whitespace validation pass. The fresh 768-MiB admission
+attempt for focused tests and strict mypy was denied by the shared Arena lock.
+At `2026-10-28T03:23:40Z`, memory PSI avg10 was **12.12% some / 10.92% full**,
+above configured admission thresholds. Those tests and strict mypy are still
+pending; no test pass is claimed for this change. The earlier 383-test
+Frontier/selected-Arena regression remains dated evidence from before it.
+
+## Bounded response-rejection verification — 2026-10-28 03:27 UTC
+
+A fresh 768-MiB preflight admitted the focused regression. Nine tests passed
+in **3.19 seconds** across the complete Frontier transport test module and
+targeted API, finite-collection, and legacy-schema cases. They cover declared
+length and streaming rejection, metadata-only persistence without a response
+body, source-health degradation, and reading schema-v1 records. One existing
+Starlette/httpx TestClient deprecation warning remains.
+
+Strict mypy passed with `--strict --follow-imports=silent` for
+`apps/api/frontier.py`, `packages/midas/frontier/collection.py`,
+`packages/midas/frontier/models.py`, and the adapter base and transport
+modules. Ruff check/format and `git diff --check` passed. This verifies the
+focused rejection path and five scoped modules; it does not replace a full
+Frontier regression.
+
+A new preflight for all `tests/frontier` was denied with
+`resource_admission_lock_busy`; no test started. At `2026-10-28T03:27:25Z`,
+memory PSI avg10 was **14.17% some / 12.55% full**, I/O PSI avg10 was **0.93%
+some / 0.72% full**, available memory was about **9.8 GiB**, and free swap was
+about **333 MiB**. PID **4128967** was confirmed running
+`scripts/veritas_gap_detail_v2_batch.py` against the shared Arena root. It was
+not interrupted. The full Frontier suite remains pending a fresh passing
+preflight. No source request, protected service action, or deployment occurred
+during this verification.
+
+The focused response-size diagnostic is **COMPLETE AND VERIFIED** within its
+bounded tests. Frontier overall remains **PARTIALLY VERIFIED**, research-only,
+isolated, and undeployed.
+
+## Gamma event response bound and documented recovery path — 2026-10-28
+
+The official [Gamma market-discovery reference](https://docs.polymarket.com/market-data/discover-markets)
+describes `/events/{id}` as returning one event object containing its `markets`
+array. It also documents individual market lookups and a paged
+`/markets/keyset` collection. The reviewed reference does not describe
+event-ID-keyed pagination for the event's child markets. This means an event
+with many children can exceed Frontier's configured response cap even though
+the market listing page itself fit. Rejected bodies remain uncaptured; the new
+diagnostic record preserves only response metadata. Individual requests for
+already-known market IDs are a possible bounded way to hydrate those known
+markets, but cannot prove the complete event outcome set. No additional source
+requests were made for this documentation review. The observed event's payoff
+and exhaustiveness remain unverified.

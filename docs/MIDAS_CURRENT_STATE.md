@@ -1577,3 +1577,41 @@ worker, protected service, or recording was accessed. The overall mission
 remains **PARTIALLY VERIFIED**, research-only, isolated, and undeployed; see
 the [mission ledger](frontier/FRONTIER_MISSION_LEDGER.md) and
 [engineering report](frontier/FRONTIER_ENGINEERING_REPORT.md).
+
+### Polymarket metadata and response-size checkpoint — 2026-10-28 03:25 UTC
+
+A read-only, 2-request Polymarket Gamma probe stored one hash-verified
+20-market page in the ignored local database
+`data/public-captures/frontier-polymarket-20261028T031822Z-pqzzdf1m/frontier.sqlite3`.
+Every returned market had two instruments and rule text; one had a resolution
+authority, none had a close time, and none had verified/exhaustive payoff
+metadata. The event-detail follow-up was rejected at the 256-KiB response cap;
+the pre-change path did not preserve response size/status metadata. No held
+venue data or protected service was accessed.
+
+Transport, API, and finite-collector paths now persist bounded rejection
+metadata without storing the rejected body, with v1 record compatibility
+covered in new tests. This source and implementation checkpoint remains
+bounded; the verification follow-up below records focused test results and the
+full-suite blocker.
+
+### Response-rejection verification and full-suite admission — 2026-10-28 03:27 UTC
+
+The focused transport/API/collection/schema selection passed **9/9** in 3.19
+seconds after a fresh 768-MiB admission check. Strict mypy passed for five
+changed production modules; Ruff check/format and whitespace checks pass. The
+full `tests/frontier` suite was not started: a later preflight found
+`resource_admission_lock_busy`. At 03:27:25 UTC memory PSI avg10 was 14.17%
+some / 12.55% full and external Veritas PID 4128967 held the shared Arena
+lock. That batch was left untouched. Full Frontier regression after the raw
+observation schema change remains pending. No additional source request,
+protected service action, or deployment occurred. Frontier remains isolated,
+research-only, **PARTIALLY VERIFIED**, and undeployed.
+
+The official [Polymarket Gamma discovery reference](https://docs.polymarket.com/market-data/discover-markets)
+documents event fetch as one object with an embedded `markets` array, plus
+separate market-ID reads and paged market-keyset listing. It does not document
+child-market pagination keyed by Gamma event ID. The event response-size limit
+therefore remains an adapter constraint; hydrating known market IDs separately
+cannot establish an exhaustive outcome set. This documentation check made no
+additional market-data requests.

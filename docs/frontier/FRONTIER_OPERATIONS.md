@@ -380,6 +380,23 @@ for this response, retains its complete bounded raw bytes as a
 the error code and raw-body hash; do not treat the failure as an empty market
 response.
 
+`RESPONSE_TOO_LARGE` means the declared content length or bytes yielded by the
+response stream crossed the configured cap. The adapter rejects the response
+without retaining its body and makes no retry. The diagnostic observation has
+an empty raw body marked `not_captured_after_size_limit`; its normalized
+`response_rejection` records the configured limit, rejection stage, declared
+length when available, and bytes yielded. The raw SHA-256 is for the empty
+stored body, not the rejected source response. Partial transport interruptions
+without a complete body remain unpersisted.
+
+For Polymarket event groups, the current official
+[Gamma discovery reference](https://docs.polymarket.com/market-data/discover-markets)
+documents an event response with an embedded market array, plus individual
+market-ID reads and a paged market-keyset listing. It does not document
+child-market pagination keyed by Gamma event ID. If the event response exceeds
+the cap, retain it as incomplete. Hydrating known market IDs separately cannot
+establish an exhaustive outcome set.
+
 The Polymarket v2 trades route is a single explicit page. Its cursor is bound to
 condition and page size, and each request repeats the bounded source filters.
 There is no automatic continuation or background history crawl. The same
