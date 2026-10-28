@@ -138,7 +138,9 @@ export function LaboratoryFrontierResearch({
             {jobs.data.items.map((job) => (
               <article
                 key={job.job_id}
-                className={`lab-frontier-job ${selected?.job_id === job.job_id ? 'is-selected' : ''}`}
+                className={`lab-frontier-job ${
+                  selected?.job_id === job.job_id ? 'is-selected' : ''
+                }`}
               >
                 <button
                   type="button"

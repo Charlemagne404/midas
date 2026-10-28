@@ -67,3 +67,114 @@ test('controlled adversarial violation preserves minimized incident and replay',
   await page.getByRole('button', { name: 'Reproduce run', exact: true }).click();
   await expect(page.getByRole('status')).toHaveText('Exact result hash reproduced');
 });
+
+test('Laboratory inspects a saved Frontier discovery artifact without launching work', async ({
+  page,
+}) => {
+  const requests: { url: string; method: string }[] = [];
+  page.on('request', (request) => requests.push({ url: request.url(), method: request.method() }));
+  await page.route(
+    (url) =>
+      url.pathname === '/api/arena/frontier-discovery-comparisons' &&
+      url.searchParams.get('limit') === '20',
+    (route) =>
+      route.fulfill({
+        json: {
+          items: [
+            {
+              job_id: 'job-frontier-running',
+              state: 'RUNNING',
+              created_at: 1793167200,
+              updated_at: 1793167200,
+              elapsed_seconds: 1,
+              progress: { done: 1, total: 2 },
+              phase: 'discovering',
+              error: null,
+              snapshot_id: 'running-snapshot',
+              snapshot_sha256: 'a'.repeat(64),
+              result: null,
+            },
+            {
+              job_id: 'job-frontier-saved',
+              state: 'COMPLETED',
+              created_at: 1793163600,
+              updated_at: 1793163600,
+              elapsed_seconds: 0.4,
+              progress: { done: 3, total: 3 },
+              phase: 'complete',
+              error: null,
+              snapshot_id: 'saved-snapshot',
+              snapshot_sha256: 'b'.repeat(64),
+              result: { comparison_id: 'saved-comparison' },
+            },
+          ],
+          scanned: 2,
+          scan_bound: 500,
+          scan_may_be_incomplete: false,
+          research_only: true,
+        },
+      }),
+  );
+  await page.route(
+    '**/api/arena/jobs/job-frontier-saved/frontier-discovery',
+    (route) =>
+      route.fulfill({
+        json: {
+          artifact: {
+            snapshot_id: 'saved-snapshot',
+            snapshot_sha256: 'b'.repeat(64),
+            result_sha256: 'c'.repeat(64),
+            comparison: {
+              comparison_id: 'saved-comparison',
+              normalized_input_sha256: 'd'.repeat(64),
+              result_sha256: 'e'.repeat(64),
+              code_version: 'frontier-e2e-fixture',
+              replay_version: 'frontier-replay-e2e-fixture',
+              as_of_utc: '2026-10-28T06:00:00Z',
+              arms: ['polymarket_only', 'venue_local', 'cross_venue'].map((scope) => ({
+                scope,
+                venues: scope === 'cross_venue' ? ['polymarket', 'kalshi'] : ['polymarket'],
+                market_count: 2,
+                instrument_count: 2,
+                observed_instrument_count: 1,
+                book_count: 1,
+                relationship_count: 1,
+                candidates: [],
+                family_counts: {},
+              })),
+              deltas: [
+                ['polymarket_only', 'venue_local'],
+                ['venue_local', 'cross_venue'],
+                ['polymarket_only', 'cross_venue'],
+              ].map(([baseline, compared]) => ({
+                baseline,
+                compared,
+                matched_candidate_count: 0,
+                changed_classification_count: 0,
+                baseline_only_candidate_count: 0,
+                compared_only_candidate_count: 0,
+              })),
+            },
+          },
+          integrity_verified: true,
+          research_only: true,
+          orders_submitted: false,
+          authenticated_requests: false,
+        },
+      }),
+  );
+
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Laboratory', exact: true }).click();
+  await page.getByRole('tab', { name: 'Frontier research', exact: true }).click();
+  await page.getByRole('button', { name: /job-frontier-saved/ }).click();
+  await expect(page.getByText('INTEGRITY VERIFIED')).toBeVisible();
+  await expect(page.getByText('3 paired discovery scopes')).toBeVisible();
+  await expect(page.getByText('frontier-e2e-fixture · frontier-replay-e2e-fixture')).toBeVisible();
+  await expect(page.getByText('No orders were submitted, and no authenticated requests were made.'))
+    .toBeVisible();
+  expect(requests.some(({ url }) => url.includes('/probe/'))).toBe(false);
+  expect(
+    requests.some(({ url, method }) => url.includes('/api/arena/') && method !== 'GET'),
+  ).toBe(false);
+});
