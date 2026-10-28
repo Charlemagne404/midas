@@ -204,6 +204,12 @@ values, numeric strings, and out-of-range values reject the instrument rather
 than being coerced. The protected Reality recording and its evidence remain on
 separate roots.
 
+The shared `PublicReadTransport` requests `Accept-Encoding: identity` and
+rejects encoded 2xx responses before reading or decoding them. It streams raw
+response bytes through the configured size bound, so transparent gzip, deflate,
+Brotli, or Zstandard expansion cannot exceed the cap before validation. Bounded
+error bodies retain raw bytes for diagnostics and preserve retry behavior.
+
 Kalshi multivariate-event discovery is a separate explicit
 `POST /api/frontier/probe/kalshi/multivariate-events` operation. Supply exactly
 one of `series_ticker`, `collection_ticker`, or `event_ticker`; an event ticker

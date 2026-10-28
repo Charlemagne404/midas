@@ -12,7 +12,7 @@ as mutable Frontier storage.
 | Canonical contracts | `models.py` | Venue, instrument kind, payoff, resolution, fee, quantity, provenance, book, and venue-declared event-group models. |
 | Recorded-sample analytics | `analytics.py` | Bounded market/book/replay coverage, source-quality, pricing, timing, and candidate summaries over hash-checked local evidence. |
 | Adapter protocol and lifecycle | `adapters/base.py` | Capability declarations, local health, response capture, and common read-only adapter contract. |
-| Bounded HTTP transport | `adapters/transport.py` | HTTPS GET only, fixed host allowlist, bounded timeout/retry/rate/response sizes, no redirects or credentials. |
+| Bounded HTTP transport | `adapters/transport.py` | HTTPS GET only, fixed host allowlist, bounded timeout/retry/rate/raw-response size, identity encoding for successful payloads, no redirects or credentials. |
 | Public venue adapters | `adapters/polymarket.py`, `kalshi.py`, `kraken.py`, `coinbase.py` | Source-specific normalization and native metadata preservation. Coinbase Exchange adds a bounded explicit-product spot source; its exact-version acknowledgement does not lift the unresolved permission hold. |
 | Registry | `registry.py` | Explicit capability inventory; default instances do not probe. |
 | Relationship intelligence | `relationships.py` | Deterministic indexed title and parent-event/outcome hypotheses, source-selected component references, strict payoff checks, and immutable review contracts. |
@@ -44,6 +44,11 @@ counts are validated before the typed candle is built. Pair discovery also
 requires bounded JSON integer `pair_decimals` and `lot_decimals` values before
 deriving tick and quantity steps; it rejects booleans, fractions, numeric
 strings, and out-of-range precision instead of coercing source metadata.
+
+The shared transport requests identity content encoding and rejects any other
+encoding on successful responses before body decoding. Production response
+streams are read as raw bytes against the configured byte cap; HTTP error bodies
+are also retained within that cap and keep their existing retry classification.
 
 ### Dashboard loading
 

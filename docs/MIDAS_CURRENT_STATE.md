@@ -3516,3 +3516,23 @@ KiB; `SwapFree` was 43,896 KiB. Reality was at 1,207,746,560 /
 1,546,682,368 / 1,610,612,736 bytes. No broad suite was run. The prior
 115-case adapter pass predates v7/v8; the 505-case Frontier suite predates
 the latest adapter versions.
+
+## Shared response-byte enforcement — 2026-10-28 20:05 UTC
+
+Frontier commit `3ee3739da1b1fb48445c0d9423c9f4f1b3b9ad5a` hardens the shared
+public GET transport to request identity encoding, reject encoded successful
+responses before body reading, and enforce the byte cap on raw streamed data.
+All four adapter provenance identifiers advanced to include this collection
+behavior change; Kalshi side literal typing was also corrected. The full
+transport fixture module passes 19/19 (2.27 seconds pytest time, 2.65 seconds
+wall, 58,984 KiB peak RSS). The full adapter fixture module passes 134/134
+(3.13 seconds pytest time, 3.51 seconds wall, 67,164 KiB peak RSS). Both runs
+had zero swaps and socket messages. Ruff and strict targeted mypy pass; no
+source request or held data access occurred.
+
+At `2026-10-28T20:05:40Z`, memory PSI avg10/avg60 was 0%; I/O PSI `some`
+avg10/avg60 was 0.01%/0.02%, with `full` at 0%. `MemAvailable` was 9,911,416
+KiB and `SwapFree` was 44,056 KiB. Reality was at 1,207,709,696 /
+1,207,959,552 bytes (249,856 bytes below `MemoryHigh`); API was at
+1,551,216,640 / 1,610,612,736 bytes. No broad Frontier or legacy suite was
+started; the 505-case Frontier pass predates the latest adapter versions.

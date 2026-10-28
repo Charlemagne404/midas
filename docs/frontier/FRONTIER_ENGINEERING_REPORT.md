@@ -11308,3 +11308,47 @@ was started.
 | Current full adapter/Frontier suites | PARTIALLY VERIFIED | Earlier full passes predate v8 and the latest other adapter versions. |
 | Live Kraken data validation | BLOCKED | Research and retention authorization remain unresolved; no public request was made. |
 | Frontier overall | PARTIALLY VERIFIED | Broad regression, genuine live cross-venue science, endurance, protected recovery, and deployment remain incomplete. |
+
+## Shared transport response-byte enforcement — 2026-10-28 20:05 UTC
+
+Commit `3ee3739da1b1fb48445c0d9423c9f4f1b3b9ad5a` changes the public GET
+transport to request `Accept-Encoding: identity`, reject non-identity encoded
+2xx responses before body reading, and measure the configured response cap over
+raw streamed bytes with HTTPX `aiter_raw()`. This closes a decompression-bound
+gap: the repository lock pins HTTPX 0.28.1, whose `aiter_bytes()` transparently
+decodes gzip, deflate, Brotli, and Zstandard before returning data. A highly
+compressible response could therefore expand before Frontier evaluated its
+response-size cap. The versioned local test now supplies a 229-byte gzip body
+that expands to 200,000 bytes under a 1,024-byte cap and verifies that Frontier
+rejects it as unsupported encoding without decoding it. Bounded raw error
+bodies retain the 429/5xx retry and failure-evidence behavior.
+
+Because adapter-version provenance covers the shared collection behavior, the
+four identifiers advanced to Polymarket 10, Kalshi 21, Kraken Spot 9, and
+Coinbase Exchange Spot 4. Kalshi's normalized `taker_outcome_side` and
+`taker_book_side` are also explicitly narrowed to the model's validated literal
+types; accepted wire values and economics are unchanged.
+
+The full transport contract module passes **19/19** in 2.27 seconds pytest
+time (2.65 seconds wall), with 58,984 KiB peak RSS, zero swaps, and no socket
+messages. The complete adapter fixture module passes **134/134** in 3.13
+seconds pytest time (3.51 seconds wall), with 67,164 KiB peak RSS, zero swaps,
+and no socket messages. Ruff check/format passes across the five modified
+adapter/transport files and both test modules; strict targeted mypy passes for
+the five Python source modules. Tests use local fixture transports only.
+
+At `2026-10-28T20:05:40Z`, memory PSI avg10/avg60 was 0%. I/O PSI `some`
+avg10/avg60 was 0.01%/0.02%; `full` was 0%. `MemAvailable` was 9,911,416 KiB
+and `SwapFree` was 44,056 KiB. Reality was at 1,207,709,696 /
+1,207,959,552 bytes, 249,856 bytes below `MemoryHigh`; API was at
+1,551,216,640 / 1,610,612,736 bytes. No broad Frontier or legacy suite was
+started, and no public source was contacted. The 505-case Frontier suite
+predates this change.
+
+| Requirement | Status | Evidence and boundary |
+| --- | --- | --- |
+| Shared transport byte bound | COMPLETE AND VERIFIED | 19 fixture contract cases pass, including encoded expansion larger than the configured cap. |
+| Current adapter fixture modules | COMPLETE AND VERIFIED | The complete 134-case adapter module passes after the transport and version updates. |
+| Full current-tree Frontier and legacy suites | PARTIALLY VERIFIED | The 505-case Frontier pass predates current adapter versions and transport; broader legacy regression remains unrun. |
+| Live multi-venue validation | BLOCKED | Source-use/retention holds remain; no live collection or cross-venue observation is claimed. |
+| Frontier overall | PARTIALLY VERIFIED | Scientific coverage, broad regression, endurance, protected recovery, and deployment remain incomplete. |

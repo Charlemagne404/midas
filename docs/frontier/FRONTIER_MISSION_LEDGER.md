@@ -10410,3 +10410,44 @@ predates the latest adapter versions.
 **Next safe action:** continue source-independent review and retain all source-use
 holds. Defer broader test loads until Reality has a sustained margin below its
 soft memory boundary.
+
+## Public response byte-bound enforcement — 2026-10-28 20:05 UTC
+
+Commit `3ee3739da1b1fb48445c0d9423c9f4f1b3b9ad5a` hardens the shared
+`PublicReadTransport`. HTTPX 0.28.1's `aiter_bytes()` decodes compressed
+responses before yielding them; Frontier now asks for identity encoding,
+rejects encoded successful responses before reading the body, and counts raw
+streamed bytes against the configured cap. Bounded HTTP failures retain raw
+body evidence and existing retry classification. Fixture-only prebuffered
+responses remain supported. Adapter provenance versions advanced to
+Polymarket 10, Kalshi 21, Kraken Spot 9, and Coinbase Spot 4 so new observations
+identify the shared transport policy. The same commit narrows Kalshi's already
+validated native taker-side values to the model's literal types.
+
+The transport contract module passes **19/19** in 2.27 seconds pytest time
+(2.65 seconds wall), at 58,984 KiB peak RSS, zero swaps, and zero socket
+messages. The complete adapter fixture module passes **134/134** in 3.13
+seconds pytest time (3.51 seconds wall), at 67,164 KiB peak RSS, zero swaps,
+and zero socket messages. Ruff check/format and strict targeted mypy over all
+five adapter/transport modules pass. No external source request or held
+artifact was accessed.
+
+At `2026-10-28T20:05:40Z`, memory PSI avg10/avg60 was 0%; I/O PSI `some`
+avg10/avg60 was 0.01%/0.02% and `full` was 0%. `MemAvailable` was 9,911,416
+KiB and `SwapFree` 44,056 KiB. Reality was at 1,207,709,696 /
+1,207,959,552 bytes (249,856 bytes below `MemoryHigh`); API was at
+1,551,216,640 / 1,610,612,736 bytes. No broad Frontier or legacy suite was
+started. The prior 505-case Frontier suite predates the latest adapter and
+transport changes.
+
+| Requirement | Status | Current evidence and boundary |
+| --- | --- | --- |
+| Shared public transport raw-byte cap | COMPLETE AND VERIFIED | 19 transport contract cases pass, including an encoded response whose decompressed size exceeds the configured cap. |
+| Current adapter fixture contracts | COMPLETE AND VERIFIED | 134/134 adapter cases pass after the transport and provenance-version changes. |
+| Full current-tree Frontier/legacy suites | PARTIALLY VERIFIED | No post-change 505-case Frontier run or broader legacy regression is claimed. |
+| Live source use and cross-venue science | BLOCKED | Source policy/retention holds remain; fixture tests are not live-market evidence. |
+| Project Frontier overall | PARTIALLY VERIFIED | Broad regression, genuine live cross-venue science, endurance, protected recovery, and deployment remain open. |
+
+**Next safe action:** continue source-independent review. Keep source-use holds
+and defer full regressions until Reality maintains a sustained margin below
+`MemoryHigh`.
