@@ -1628,3 +1628,17 @@ shared lock. It was not interrupted. This supersedes the earlier dated note
 that the full Frontier suite had not yet been rerun after schema v2. The full
 MIDAS repository suite remains outside this checkpoint; Frontier remains
 isolated, research-only, **PARTIALLY VERIFIED**, and undeployed.
+
+The Frontier workspace also now renders saved response-rejection evidence
+from structured probe errors, including body-omission state and bounded
+response metadata. A fixture regression was added, but it has not yet run.
+Frontend typecheck, lint, formatting and build are also pending a fresh safe
+resource check; the post-run host gate at 03:32 UTC denied further work under
+high memory PSI with external Veritas PID 4132908 holding the shared lock.
+
+The focused source-failure evidence fixture then passed **1/1** after Prettier;
+web typecheck, targeted ESLint, and Prettier check passed. The wider web suite
+was not started after a fresh 03:37 UTC gate found memory PSI at 31.75% some /
+25.89% full and external Veritas PID 4136998 holding the shared lock. Browser
+E2E and production build remain unverified for this change. No source probe or
+deployment occurred.

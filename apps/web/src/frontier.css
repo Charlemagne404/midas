@@ -1401,6 +1401,35 @@
   gap: 7px;
   padding-top: 9px;
 }
+.fr-evidence-diagnostic,
+.fr-evidence-body-omitted,
+.fr-probe-failure-evidence {
+  display: grid;
+  gap: 6px;
+  border: 1px solid #3c3430;
+  border-radius: 4px;
+  padding: 9px;
+  color: #d4b39b;
+  background: #17120f;
+  font-size: 10px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.fr-evidence-diagnostic strong,
+.fr-evidence-body-omitted span {
+  color: #ebc8a8;
+}
+.fr-evidence-diagnostic span,
+.fr-evidence-body-omitted span,
+.fr-probe-failure-evidence small {
+  font:
+    9px/1.5 ui-monospace,
+    monospace;
+}
+.fr-probe-failure {
+  display: grid;
+  gap: 6px;
+}
 .fr-evidence-body > span {
   color: #7f8b9a;
   font:

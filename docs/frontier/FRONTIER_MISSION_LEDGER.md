@@ -4279,3 +4279,47 @@ root. It was left untouched. No more resource-bearing checks were started.
 | Full Frontier plus selected Arena regression after schema v2 | COMPLETE AND VERIFIED | 387/387 pass; 379,240 KiB peak RSS, zero swaps, zero socket messages. The complete repository suite is outside this run. |
 | Post-run resource admission | BLOCKED FOR MORE RESOURCE WORK | Fresh post-run gate denied high memory PSI while external Veritas PID 4132908 held the shared lock; preserve the batch and remeasure later. |
 | Project Frontier overall | PARTIALLY VERIFIED | Genuine cross-venue payoff equivalence, held-source permission, broad production readiness, and deployment remain open. |
+
+### Frontier probe rejection evidence UI — 2026-10-28 03:36 UTC
+
+The exchange workspace now parses structured probe-failure details, exposes
+valid saved diagnostic observation IDs as expandable evidence, and displays
+the failure code/message, response cap, declared length, streamed bytes, and
+explicit body-omission state. The raw-hash disclosure says that a size-rejected
+response hashes the empty stored body rather than the unavailable source body.
+Fixture coverage was added to the existing Frontier web test for a
+`RESPONSE_TOO_LARGE` failure and its saved record. No live request was made.
+
+The post-run host gate recorded at `2026-10-28T03:32:45Z` denied further work
+with high memory PSI while external Veritas PID 4132908 held the shared lock.
+No UI test, typecheck, linter, formatter, or build was started after this edit.
+Run the focused Frontier web test plus web typecheck, ESLint and Prettier after
+a fresh safe host check. This UI change remains **PARTIALLY VERIFIED**; the
+earlier 387-test backend regression does not cover it.
+
+### Probe failure evidence UI checks — 2026-10-28 03:37 UTC
+
+After formatting, the focused fixture regression passed **1/1**:
+
+```bash
+corepack pnpm exec vitest run src/Frontier.test.tsx \
+  -t 'captures one explicit bounded Kalshi multivariate event page'
+```
+
+The test covers a structured response-size failure, its saved observation ID,
+the rejection metadata disclosure, and the omitted-body/hash explanation.
+`corepack pnpm typecheck`, ESLint on `Frontier.tsx` and `Frontier.test.tsx`, and
+Prettier check on the two components and stylesheet also passed. The test is
+fixture-only and made no source request. No production build or browser E2E ran.
+
+A fresh post-check gate at `2026-10-28T03:37:23Z` denied the full web test suite
+with `host_memory_pressure`: memory PSI avg10 was **31.75% some / 25.89% full**
+with about **9.8 GiB** available. Read-only `fuser`/`ps` identified external
+Veritas PID **4136998** on the shared Arena admission lock; it was left
+untouched. The full web unit suite, browser suite, and production build remain
+pending a later fresh admission check.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Probe failure evidence UI | COMPLETE AND VERIFIED | Focused fixture passes 1/1; web typecheck, targeted ESLint, and Prettier check pass. |
+| Full web regression, browser E2E, and production build after this change | PARTIALLY VERIFIED | Not started because a fresh resource gate denied the full web suite under high memory PSI and an external Veritas lock. |

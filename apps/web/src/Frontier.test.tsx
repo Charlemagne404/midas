@@ -3440,9 +3440,25 @@ it('captures one explicit bounded Kalshi multivariate event page', async () => {
     '/api/frontier/comparisons?limit=30': { items: [], returned: 0, limit: 30, offset: 0 },
     '/api/frontier/readiness': { gates: [] },
   };
+  let multivariateCaptureCount = 0;
+  const failureObservationId = 'd'.repeat(64);
   const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const path = String(input);
     if (path === '/api/frontier/probe/kalshi/multivariate-events' && init?.method === 'POST') {
+      multivariateCaptureCount += 1;
+      if (multivariateCaptureCount === 2) {
+        return {
+          ok: false,
+          json: async () => ({
+            detail: {
+              code: 'RESPONSE_TOO_LARGE',
+              message: 'Response exceeds configured byte bound',
+              diagnostic_observation_ids: [failureObservationId],
+              diagnostic_persistence_error: null,
+            },
+          }),
+        } as Response;
+      }
       expect(JSON.parse(String(init.body))).toEqual({ event_ticker: 'KX-MVE-EVENT' });
       return {
         ok: true,
@@ -3470,6 +3486,44 @@ it('captures one explicit bounded Kalshi multivariate event page', async () => {
           network_calls_bounded_by: 1,
           hypothetical_only: true,
           note: 'One page; source cursor retained.',
+        }),
+      } as Response;
+    }
+    if (path === `/api/frontier/observations/${failureObservationId}`) {
+      return {
+        ok: true,
+        json: async () => ({
+          observation_id: failureObservationId,
+          venue: 'kalshi',
+          observation_kind: 'source_failure',
+          received_at_utc: '2026-10-27T20:00:01Z',
+          raw_sha256: 'e'.repeat(64),
+          row_sha256: 'f'.repeat(64),
+          raw: {
+            request_url: 'https://public.example.test/events/KX-MVE-EVENT',
+            http_status: 200,
+            request_started_at_utc: '2026-10-27T20:00:00Z',
+            received_at_utc: '2026-10-27T20:00:01Z',
+            request_elapsed_monotonic_ns: 1_234_000,
+            raw_body: '',
+            raw_body_state: 'not_captured_after_size_limit',
+            adapter_version: 'fixture-v1',
+          },
+          normalized: {
+            schema_version: 2,
+            record_kind: 'source_failure',
+            failure_stage: 'transport_rejection',
+            error_code: 'RESPONSE_TOO_LARGE',
+            message: 'Response exceeds configured byte bound',
+            response_rejection: {
+              schema_version: 1,
+              rejection_stage: 'content_length',
+              response_body_state: 'not_captured_after_size_limit',
+              response_body_limit_bytes: 262144,
+              declared_content_length_bytes: 524288,
+              bytes_yielded_at_rejection: 0,
+            },
+          },
         }),
       } as Response;
     }
@@ -3526,6 +3580,24 @@ it('captures one explicit bounded Kalshi multivariate event page', async () => {
   expect(
     await screen.findByText(/HTTP request\/body elapsed \(monotonic\): 9\.123 ms/),
   ).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Capture one event page' }));
+  expect(
+    await screen.findByText(/RESPONSE_TOO_LARGE: Response exceeds configured byte bound/),
+  ).toBeInTheDocument();
+  const failureEvidence = screen.getByText(
+    `Saved diagnostic observation · ${failureObservationId}`,
+  ).parentElement;
+  expect(failureEvidence).not.toBeNull();
+  fireEvent.click(within(failureEvidence!).getByText('Inspect immutable source response'));
+  expect(
+    await screen.findByText(/Rejected at content length · body cap 262144 bytes/),
+  ).toBeInTheDocument();
+  expect(
+    await screen.findByText(
+      /Response body not captured because it exceeded the configured size limit/,
+    ),
+  ).toBeInTheDocument();
+  expect(screen.getByText(`Stored raw SHA-256 · ${'e'.repeat(64)}`)).toBeInTheDocument();
   expect(fetchMock.mock.calls.some(([input]) => String(input).includes('/probe/'))).toBe(true);
   queryClient.clear();
 });

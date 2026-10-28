@@ -5925,3 +5925,32 @@ left untouched. No further resource-bearing checks were started.
 | --- | --- | --- |
 | Frontier plus selected Arena regression after schema v2 | COMPLETE AND VERIFIED | 387/387 pass with 379,240 KiB peak RSS, zero swaps, and zero socket messages. |
 | Project Frontier overall | PARTIALLY VERIFIED | Cross-venue payoff validation, held-source permission, broad scientific and production acceptance, and deployment remain incomplete. |
+
+## Frontier source-failure evidence in Mission Control — 2026-10-28 03:36 UTC
+
+The exchange workspace's probe error now surfaces saved diagnostic
+observations through the existing immutable-evidence disclosure. For an
+oversize rejection, the view labels the body as uncaptured, shows the transport
+cap and rejection metadata, and clarifies the empty-stored-body hash. The UI
+filters diagnostic IDs to lowercase SHA-256 identities before rendering them.
+A fixture regression was added for the structured probe error and evidence
+record. No network request is involved.
+
+The change is not yet verified. No web test, typecheck, lint, format check, or
+production build ran after the edit because the latest host preflight denied
+resource work at `2026-10-28T03:32:45Z` during high memory PSI and an external
+Veritas batch. The backend regression remains 387/387 at its prior checkpoint;
+it does not cover this UI edit.
+
+### Focused UI evidence verification — 2026-10-28 03:37 UTC
+
+The focused Frontier web regression passed **1/1** after formatting. It covers
+a structured `RESPONSE_TOO_LARGE` result, the linked diagnostic observation,
+and the body-omission and stored-hash disclosure. `corepack pnpm typecheck`,
+targeted ESLint, and Prettier check passed. No live source request was made.
+
+The full web unit suite was not started: the fresh resource gate at
+`2026-10-28T03:37:23Z` denied work at **31.75% memory PSI some / 25.89% full**.
+About **9.8 GiB** remained available, but external Veritas PID **4136998** held
+the shared Arena lock. It was left untouched. Browser E2E and production build
+remain pending; no deployment occurred.

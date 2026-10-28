@@ -1078,6 +1078,17 @@ type ObservationEvidence = {
   observation_id: string;
   raw_sha256: string;
   row_sha256: string;
+  normalized?: {
+    record_kind?: string;
+    error_code?: string;
+    message?: string;
+    response_rejection?: {
+      rejection_stage: 'content_length' | 'response_stream';
+      response_body_limit_bytes: number;
+      declared_content_length_bytes: number | null;
+      bytes_yielded_at_rejection: number;
+    } | null;
+  };
   raw: {
     request_url: string;
     http_status: number;
@@ -1085,6 +1096,7 @@ type ObservationEvidence = {
     received_at_utc?: string;
     request_elapsed_monotonic_ns?: number | null;
     raw_body: string;
+    raw_body_state?: 'complete' | 'not_captured_after_size_limit';
     adapter_version: string;
   };
 };
@@ -3355,7 +3367,7 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
                     ? 'Capture next page'
                     : 'Capture first page'}
               </button>
-              {captureTradePage.isError && <InlineError message={captureTradePage.error.message} />}
+              {captureTradePage.isError && <ProbeFailureEvidence error={captureTradePage.error} />}
               {captureTradePage.data && (
                 <div className="fr-trade-capture-status" role="status">
                   Saved {count(captureTradePage.data.trade_count)} trades ·{' '}
@@ -5094,7 +5106,7 @@ function MarketDetails({
             )}
           {mveComponentProbe.isError &&
             mveComponentProbe.variables?.parentMarketId === market.canonical_id && (
-              <InlineError message={mveComponentProbe.error.message} />
+              <ProbeFailureEvidence error={mveComponentProbe.error} />
             )}
         </div>
       ) : null}
@@ -5139,7 +5151,7 @@ function MarketDetails({
                   : 'Public probe disabled'}
             </button>
           </div>
-          {eventMarketsProbe.isError && <InlineError message={eventMarketsProbe.error.message} />}
+          {eventMarketsProbe.isError && <ProbeFailureEvidence error={eventMarketsProbe.error} />}
           {capturedEventMarkets && (
             <div className="fr-fee-metadata-result" role="status">
               <strong>{capturedEventMarkets.event_title}</strong>
@@ -5174,7 +5186,7 @@ function MarketDetails({
                 ? 'Capture fee metadata'
                 : 'Public probe disabled'}
           </button>
-          {feeMetadataProbe.isError && <InlineError message={feeMetadataProbe.error.message} />}
+          {feeMetadataProbe.isError && <ProbeFailureEvidence error={feeMetadataProbe.error} />}
           {feeMetadataProbe.isSuccess &&
             feeMetadataProbe.variables?.marketId === market.canonical_id && (
               <div className="fr-fee-metadata-result" role="status">
@@ -5533,6 +5545,24 @@ function EvidenceDisclosure({ observationId }: { observationId: string }) {
           <InlineError message={evidence.error.message} />
         ) : evidence.data ? (
           <div className="fr-evidence-body">
+            {evidence.data.normalized?.record_kind === 'source_failure' && (
+              <div className="fr-evidence-diagnostic" role="status">
+                <strong>{evidence.data.normalized.error_code ?? 'Source response failure'}</strong>
+                <span>{evidence.data.normalized.message ?? 'Source response was rejected.'}</span>
+                {evidence.data.normalized.response_rejection && (
+                  <span>
+                    Rejected at {label(evidence.data.normalized.response_rejection.rejection_stage)}{' '}
+                    · body cap{' '}
+                    {evidence.data.normalized.response_rejection.response_body_limit_bytes} bytes ·
+                    declared length{' '}
+                    {evidence.data.normalized.response_rejection.declared_content_length_bytes ??
+                      'not supplied'}{' '}
+                    · bytes yielded{' '}
+                    {evidence.data.normalized.response_rejection.bytes_yielded_at_rejection}
+                  </span>
+                )}
+              </div>
+            )}
             <span>
               {evidence.data.raw.http_status} · {evidence.data.raw.request_url}
             </span>
@@ -5547,10 +5577,64 @@ function EvidenceDisclosure({ observationId }: { observationId: string }) {
                 : `${(evidence.data.raw.request_elapsed_monotonic_ns / 1_000_000).toFixed(3)} ms`}
             </span>
             <span>Capture row SHA-256 · {evidence.data.row_sha256}</span>
-            <pre>{evidence.data.raw.raw_body}</pre>
+            {evidence.data.raw.raw_body_state === 'not_captured_after_size_limit' ? (
+              <div className="fr-evidence-body-omitted" role="note">
+                Response body not captured because it exceeded the configured size limit. The raw
+                SHA-256 below identifies the empty stored body, not the rejected source response.
+                <span>Stored raw SHA-256 · {evidence.data.raw_sha256}</span>
+              </div>
+            ) : (
+              <pre>{evidence.data.raw.raw_body}</pre>
+            )}
           </div>
         ) : null)}
     </details>
+  );
+}
+
+function ProbeFailureEvidence({ error }: { error: Error }) {
+  let detail: {
+    code?: string;
+    message?: string;
+    diagnostic_observation_ids?: string[];
+    diagnostic_persistence_error?: string | null;
+  } | null = null;
+  try {
+    const parsed: unknown = JSON.parse(error.message);
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      detail = parsed as {
+        code?: string;
+        message?: string;
+        diagnostic_observation_ids?: string[];
+        diagnostic_persistence_error?: string | null;
+      };
+    }
+  } catch {
+    // Non-JSON errors keep their original user-facing message.
+  }
+  const observationIds = Array.isArray(detail?.diagnostic_observation_ids)
+    ? detail.diagnostic_observation_ids.filter(
+        (value): value is string => typeof value === 'string' && /^[0-9a-f]{64}$/.test(value),
+      )
+    : [];
+  const message = detail
+    ? `${detail.code ?? 'Source probe failed'}: ${detail.message ?? error.message}`
+    : error.message;
+  return (
+    <div className="fr-probe-failure">
+      <InlineError message={message} />
+      {detail?.diagnostic_persistence_error && (
+        <small role="alert">
+          Failure metadata could not be saved: {detail.diagnostic_persistence_error}
+        </small>
+      )}
+      {observationIds.map((observationId) => (
+        <div className="fr-probe-failure-evidence" key={observationId}>
+          <small>Saved diagnostic observation · {observationId}</small>
+          <EvidenceDisclosure observationId={observationId} />
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -5950,7 +6034,7 @@ function SourcesView({
                         : 'Public probe disabled'}
                   </button>
                   {multivariateProbe.isError && (
-                    <InlineError message={multivariateProbe.error.message} />
+                    <ProbeFailureEvidence error={multivariateProbe.error} />
                   )}
                   {multivariateProbe.isSuccess && (
                     <div className="fr-mve-result" role="status">
