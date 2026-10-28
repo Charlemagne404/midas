@@ -4920,7 +4920,9 @@ deployment were started.
 ### Full-suite collection audit — 2026-10-28 04:36 UTC
 
 A full Python test attempt used a detached worktree at Frontier commit `29b09fa`
-and an external pytest temporary directory:
+and an external pytest temporary directory. That worktree did contain the
+tracked `data/frontier/live-probes` directory; the Frontier main worktree was
+not the pytest source tree:
 
 ```bash
 nice -n 10 /usr/bin/time -v env PYTHONPATH=packages:. \
@@ -4938,9 +4940,9 @@ at `4278b5b` but absent from both the selected V6 baseline and protected
 `project/reality` checkout. The candidate module also relies on newer
 Reality `reconstruction.py`, `replay.py`, and `storage.py`; no partial copy or
 merge was attempted. The mismatch is not evidence that either complete source
-revision passes the entire test suite. The detached test worktree contains no
-Frontier `data/frontier/live-probes` tree; no preserved capture or protected
-service was accessed.
+revision passes the entire test suite. No test functions executed in this
+attempt. File-open tracing was not enabled, so it cannot establish whether
+collection read a held capture; no capture writes or copies were intentional.
 
 At `2026-10-28T04:38:33Z`, memory PSI avg10 was **1.17% some / 1.03% full**,
 avg60 **13.95% / 12.54%**, avg300 **10.50% / 9.37%**, and I/O PSI avg10
@@ -4953,3 +4955,43 @@ No further resource-bearing validation was started.
 | Full MIDAS Python regression | PARTIALLY VERIFIED | Pytest collection is blocked by the missing Reality recovery module in the selected baseline; no full suite tests executed. |
 | Reality candidate cross-branch integration | DEFERRED | Recovery support depends on newer Reality core modules; no files were merged into Frontier. |
 | Further broad test runs | DEFERRED AT THIS SAMPLE | Elevated memory PSI remained; the external job was no longer live and the shared lock was free. |
+
+## Sparse-tree regression correction and resource stop — 2026-10-28 04:43 UTC
+
+The `29b09fa` detached worktree used for the 04:36 collection attempt did
+contain the tracked `data/frontier/live-probes` directory. No test functions
+ran because collection failed on the missing `midas.reality.recovery` module.
+File-open tracing was not enabled, so we cannot establish whether collection
+read a held capture. No capture writes or copies were intentional. This
+corrects the earlier statement that the detached tree did not contain the
+capture directory or that capture access could be ruled out.
+
+The follow-up used a detached sparse worktree at `c8989d5` with the `data/`
+tree excluded. The held path
+`/tmp/midas-frontier-regression-sparse-20261028T0440Z/data/frontier/live-probes`
+was absent before and after the run. The command was:
+
+```bash
+nice -n 10 /usr/bin/time -v env PYTHONPATH=packages:. \
+  /home/charlie/midas/.venv/bin/python -m pytest -q \
+  --basetemp=/tmp/midas-frontier-rest-regression-20261028T0440Z \
+  --ignore=tests/test_reality_full_scale_validation.py tests
+```
+
+The run reached **101 passed** at 149.66 seconds. A memory-PSI and shared-lock
+admission check then showed **35.48% some / 28.44% full** over 10 seconds,
+**15.83% / 13.22%** over 60 seconds, and **8.25% / 7.15%** over 300 seconds.
+External Veritas batch PID **4190462** held the shared Arena admission lock.
+Only the Frontier pytest PID was sent SIGINT; the Veritas process was left
+untouched. Pytest exited 2 with `KeyboardInterrupt`, so this did not complete
+the suite. Peak RSS was **539,616 KiB**, with zero swaps and socket messages.
+At `2026-10-28T04:43:58Z`, PID 4190462 remained present and memory PSI was
+**47.14% some / 42.14% full** over 10 seconds. Further resource-bearing checks
+were deferred.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Full MIDAS Python suite excluding known collection blocker | PARTIALLY VERIFIED | 101 tests passed before resource-driven interrupt; exit 2, no suite pass claimed. |
+| Follow-up test isolation | COMPLETE AND VERIFIED | Sparse checkout excluded `data/`; the held capture path stayed absent before and after. |
+| Initial detached collection capture boundary | PARTIALLY VERIFIED | Tracked captures were present; reads during collection cannot be ruled out, though no test functions ran and no writes/copies were intentional. |
+| Further broad verification | DEFERRED AT THIS SAMPLE | High memory PSI and active external Veritas batch; no action was taken on that process. |

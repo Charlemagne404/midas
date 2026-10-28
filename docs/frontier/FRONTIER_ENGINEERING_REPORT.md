@@ -2,12 +2,13 @@
 
 **Report date:** 2026-10-28
 
-## Current status — 2026-10-28 04:33 UTC
+## Current status — 2026-10-28 04:43 UTC
 
-The isolated development branch is `codex/frontier-20261026`, clean at commit
-`1047632` (`docs(frontier): record full legacy integration regression`). The
-implementation code snapshot is commit `2064671`; the two later commits
-updated only the report and mission ledger. The current implementation
+The isolated development branch is `codex/frontier-20261026`; the latest
+baseline before this documentation correction was commit `c8989d5`
+(`docs(frontier): record repository suite baseline mismatch`). The
+implementation code snapshot is commit `2064671`; later changes in this
+checkpoint update only the report and mission ledger. The current implementation
 includes four read-only source adapters, canonical market and payoff models,
 evidence-backed relationship review, binary/implication/basket candidate
 families, bounded multi-market
@@ -23,8 +24,11 @@ protected-service guard, and held-capture boundary checks also passed. The full
 `tests/integration` directory subsequently passed **56 tests**, with the
 optional PostgreSQL test skipped because no test URL was configured. A later
 full `pytest tests` attempt stopped during collection because a Reality test
-imports a module absent from the selected source baseline; no test cases ran.
-The full MIDAS repository suite therefore remains unverified.
+imports a module absent from the selected source baseline; no test cases ran
+in that attempt. A follow-up diagnostic run excluding that known collection
+blocker reached 101 passing tests before interruption after host memory
+pressure rose sharply while an external Veritas job remained active. The full
+MIDAS repository suite therefore remains unverified.
 
 The multi-market joint-state basket search accepts an explicit, bounded map
 across two to four event markets. Its payout arithmetic is independently
@@ -6317,8 +6321,9 @@ service action, or deployment was started after that sample.
 ## Full-suite collection baseline mismatch — 2026-10-28 04:36 UTC
 
 A full Python-suite attempt was made in a detached test worktree at commit
-`29b09fa`; the Frontier worktree and its ignored capture data were not used as
-the test directory. Pytest stopped during collection after **10.89 seconds**
+`29b09fa`; the Frontier worktree was not used as the test directory. That
+detached checkout did contain the tracked `data/frontier/live-probes` capture
+directory. Pytest stopped during collection after **10.89 seconds**
 with an `ImportError` in `tests/test_reality_full_scale_validation.py:12`:
 `from midas.reality import recovery`. The selected source tree does not contain
 `packages/midas/reality/recovery.py`, so no test cases executed. The command
@@ -6330,9 +6335,12 @@ separate candidate `fix/reality-foundation-20261020` at `4278b5b`, but absent
 from both the selected Veritas V6 baseline and the protected `project/reality`
 checkout. The missing candidate implementation depends on companion Reality
 changes in reconstruction, replay, and storage. No files were copied or merged
-from that candidate, and no protected service or capture was accessed. This is
-a cross-worktree baseline/test mismatch; it does not establish that the full
-suite passes against either source revision.
+from that candidate, and no protected service was accessed. This is a
+cross-worktree baseline/test mismatch; it does not establish that the full
+suite passes against either source revision. No test functions executed in
+this attempt. File-open tracing was not enabled, so available evidence does
+not establish whether collection read any held capture; no capture writes or
+copies were intentional.
 
 At `2026-10-28T04:38:33Z`, memory PSI avg10 was **1.17% some / 1.03% full**,
 avg60 **13.95% / 12.54%**, and avg300 **10.50% / 9.37%**. About **10 GiB** was
@@ -6345,3 +6353,43 @@ build was started.
 | Full MIDAS Python suite | PARTIALLY VERIFIED | Collection is blocked by the selected checkout lacking `midas.reality.recovery`, imported by a current tracked test. No suite tests ran. |
 | Reality candidate integration | DEFERRED | The separate recovery implementation is coupled to newer reconstruction/replay/storage code; no cross-branch merge was attempted. |
 | Broader regression after this attempt | DEFERRED AT THIS SAMPLE | Longer-window memory PSI remained elevated; no test process or shared Arena lock holder remained. |
+
+## Sparse-tree regression correction and resource stop — 2026-10-28 04:43 UTC
+
+This entry corrects the 04:36 account: the `29b09fa` detached worktree did
+contain the tracked `data/frontier/live-probes` directory. No test functions
+ran in that attempt because collection failed first, but file-open tracing was
+not enabled. Therefore, the evidence does not establish whether collection
+read a held capture. No capture writes or copies were intentional.
+
+The follow-up used a detached sparse worktree at `c8989d5` with `data/`
+excluded. The path
+`/tmp/midas-frontier-regression-sparse-20261028T0440Z/data/frontier/live-probes`
+was absent before and after the run. The source snapshot is documented in the
+mission ledger. The diagnostic command excluded the known Reality collection
+blocker:
+
+```bash
+nice -n 10 /usr/bin/time -v env PYTHONPATH=packages:. \
+  /home/charlie/midas/.venv/bin/python -m pytest -q \
+  --basetemp=/tmp/midas-frontier-rest-regression-20261028T0440Z \
+  --ignore=tests/test_reality_full_scale_validation.py tests
+```
+
+Pytest reported **101 passed** before SIGINT at **149.66 seconds**, then exited
+2 with `KeyboardInterrupt`. This is an incomplete diagnostic, not a suite pass.
+Peak RSS was **539,616 KiB**; swaps and socket messages were zero. At
+`2026-10-28T04:42:57Z`, memory PSI was **35.48% some / 28.44% full** over 10
+seconds, **15.83% / 13.22%** over 60 seconds, and **8.25% / 7.15%** over 300
+seconds. External Veritas batch PID **4190462** held the shared Arena lock and
+was left untouched; only the Frontier test process was interrupted. At
+`2026-10-28T04:43:58Z`, that PID remained present and memory PSI had risen to
+**47.14% some / 42.14% full** over 10 seconds. No further resource-bearing
+validation is admitted at this checkpoint.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Full MIDAS suite excluding the known Reality collection blocker | PARTIALLY VERIFIED | 101 tests passed before a resource-driven interrupt; pytest exited 2 and no full-suite result is claimed. |
+| Capture exclusion for follow-up diagnostic | COMPLETE AND VERIFIED | Sparse test worktree omitted `data/`; the held capture path was absent before and after. |
+| Captures in the initial detached collection worktree | PARTIALLY VERIFIED | Tracked capture directory was present; no test functions ran, but access during collection cannot be ruled out without file-open tracing. |
+| Further local regression | DEFERRED AT THIS SAMPLE | Memory PSI was high and external Veritas PID 4190462 remained active; it was not interrupted. |
