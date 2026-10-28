@@ -43,16 +43,23 @@ def main() -> None:
     instruments = tuple(
         instrument.model_copy(
             update={
+                "label": f"Synthetic all-state claim {index + 1}",
+                "outcome_id": f"synthetic-all-state-{index + 1}",
                 "payouts": tuple(
                     StatePayout(state_id=state, amount=Decimal(1)) for state in state_ids
-                )
+                ),
             }
         )
-        for instrument in base.instruments[:12]
+        for index, instrument in enumerate(base.instruments[:12])
     )
-    market = FrontierMarket.model_validate(
-        base.model_dump(mode="python") | {"instruments": instruments}
+    market_data = base.model_dump(mode="python")
+    market_data.update(
+        title="Synthetic all-state payoff search ceiling",
+        instruments=instruments,
+        payoff=base.payoff.model_dump(mode="python")
+        | {"verification_basis": "synthetic all-state payoff ceiling benchmark"},
     )
+    market = FrontierMarket.model_validate(market_data)
     books = _multi_outcome_books(market, asks=("0.10",) * len(instruments))
     kwargs = {
         "as_of_utc": T0 + timedelta(milliseconds=100),
