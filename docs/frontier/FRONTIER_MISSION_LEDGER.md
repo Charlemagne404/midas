@@ -6041,3 +6041,39 @@ claim.
 the next resource-bearing test. Continue independent code review and
 documentation while the host gate is closed; do not stop another workload or
 bypass shared admission.
+
+## Complete default browser regression — 2026-10-28 07:05 UTC
+
+At the pre-run sample, memory PSI avg10 was **0.00% some / 0.00% full**, I/O
+PSI avg10 was **0.92% some / 0.84% full**, about **10 GiB** memory was
+available, and no process held the shared Arena lock. The default full web
+browser command completed:
+
+```bash
+cd apps/web
+corepack pnpm exec playwright test
+# 15 passed, 1 skipped in 33.8s
+```
+
+The one skipped test is `frontier.seeded.spec.ts`, which requires the explicit
+`MIDAS_SEED_FRONTIER_E2E=1` flag and had separately passed **1/1** against the
+isolated populated-store path. The default suite covered Frontier, Arena,
+Laboratory, Paper, Readiness, Reality, and Veritas. It used temporary roots and
+loopback services; no public source request or order was submitted.
+
+At the post-run sample `2026-10-28T07:05:07Z`, memory PSI avg10 stayed at
+**0.00% some / 0.00% full**, while I/O PSI avg10 rose to **1.09% some / 0.88%
+full**. About **10 GiB** was available, swap free was about **0.52 GiB**, and
+the shared lock remained unheld. No additional resource-bearing test followed
+because I/O `some` was above the strict 1% threshold.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Complete default web browser regression | COMPLETE AND VERIFIED | 15 pass, 1 intentionally opt-in skip across all seven user workspaces. |
+| Populated saved-history browser/API path | COMPLETE AND VERIFIED | Separate opt-in test passes against temporary seeded storage and actual local API. |
+| Further resource-bearing runs | DEFERRED | Post-run I/O PSI `some` exceeded 1%; remeasure before another run. |
+
+**Next safe action:** remeasure I/O PSI and the shared Arena lock before another
+resource-bearing run. Continue only source-independent implementation or code
+review while that admission gate is closed; preserve all held-source and
+production boundaries.

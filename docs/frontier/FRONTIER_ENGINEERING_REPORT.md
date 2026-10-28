@@ -33,8 +33,9 @@ Current offline verification is strong and bounded:
   and route integration (**26 files**). Ruff passes on the changed Python
   files, and Python formatting, full web Prettier checking, and `git diff
   --check` pass.
-- All **41** web unit tests, the **7** standard Frontier Playwright cases, and
-  the **1** opt-in seeded-store browser/API integration pass. The seeded test
+- All **41** web unit tests pass. The complete default browser suite passes
+  **15** tests with the opt-in seeded case correctly skipped; the separate
+  seeded-store API/browser integration passes **1** test. That integration
   traverses both saved-history pages through the local API, submits a
   deterministic two-series replay, inspects its persisted lineage, and
   verifies zero source probes. TypeScript, ESLint, Prettier, Ruff, and the
@@ -7357,3 +7358,22 @@ This is a dated admission observation, not a capacity guarantee.
 **Continuation:** remeasure memory/I/O pressure and the shared lock before any
 additional resource-bearing acceptance run. Do not interrupt the separate
 Veritas workload or bypass normal admission.
+
+## Complete default browser regression — 2026-10-28 07:05 UTC
+
+With memory PSI avg10 at 0%, I/O PSI avg10 at 0.92%, about 10 GiB available,
+and the shared Arena lock unheld, the complete web browser suite ran on
+isolated loopback services. `corepack pnpm exec playwright test` completed
+**15 passed, 1 skipped** in 33.8 seconds. The skipped test is the explicitly
+opt-in populated-store integration; that test separately passed **1/1** with
+`MIDAS_SEED_FRONTIER_E2E=1`. The default run covered the Frontier, Arena,
+Laboratory, Paper, Readiness, Reality, and Veritas browser paths. No public
+source request or order was submitted.
+
+At `2026-10-28T07:05:07Z`, memory PSI avg10 remained **0.00% some / 0.00% full**,
+while I/O PSI rose to **1.09% some / 0.88% full**; available memory was about
+10 GiB, swap free about 0.52 GiB, and the shared lock had no holder. Because
+the I/O `some` value crossed the strict 1% threshold after the run, no further
+resource-bearing check followed. This browser evidence remains local-interface
+verification; source-use holds, live second-venue validation, and production
+eligibility are unchanged.
