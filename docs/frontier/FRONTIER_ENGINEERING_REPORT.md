@@ -2,13 +2,13 @@
 
 **Report date:** 2026-10-28
 
-## Current status — 2026-10-28 04:52 UTC
+## Current status — 2026-10-28 04:56 UTC
 
-The isolated development branch is `codex/frontier-20261026`; the latest
-committed checkpoint before this update was `1ca862a`
-(`docs(frontier): qualify interrupted worker evidence`). The
-implementation code snapshot is commit `2064671`; later commits update only
-the report and mission ledger. The current implementation
+The isolated development branch is `codex/frontier-20261026`; the latest code
+checkpoint is `bffa163` (`fix(arena): honor configured global admission
+root`). The major Frontier implementation snapshot is commit `2064671`; this
+incremental fix makes the shared Arena lock follow configured test roots while
+preserving the production default. The current implementation
 includes four read-only source adapters, canonical market and payoff models,
 evidence-backed relationship review, binary/implication/basket candidate
 families, bounded multi-market
@@ -25,10 +25,17 @@ protected-service guard, and held-capture boundary checks also passed. The full
 optional PostgreSQL test skipped because no test URL was configured. A later
 full `pytest tests` attempt stopped during collection because a Reality test
 imports a module absent from the selected source baseline; no test cases ran
-in that attempt. A follow-up diagnostic run excluding that known collection
-blocker reached 101 passing tests before interruption after host memory
-pressure rose sharply while an external Veritas job remained active. The full
-MIDAS repository suite therefore remains unverified.
+in that attempt. Follow-up diagnostics excluding that known collection blocker
+each reached 101 passing tests before interruption under elevated shared-host
+pressure. A separate bounded Arena planning test also had to be stopped before
+completion when the pressure rose again. The full MIDAS repository suite
+therefore remains unverified.
+
+The shared Arena admission lock now uses `MIDAS_ARENA_ROOT` when configured,
+creates that isolated root, rejects a symlink root, and keeps the original
+`~/midas/data/arena` default when no override is set. The Veritas batch imports
+the same lock-path implementation. Both affected test modules pass 24/24;
+browser end-to-end coverage has not been rerun after this change.
 
 The multi-market joint-state basket search accepts an explicit, bounded map
 across two to four event markets. Its payout arithmetic is independently
@@ -6471,3 +6478,31 @@ until a fresh admission sample.
 | Isolated Arena planning regression | PARTIALLY VERIFIED | Started under a clear admission sample, then was interrupted after 37.95s when shared-host PSI rose; no test completed. |
 | Sparse capture boundary | COMPLETE AND VERIFIED | Held path remained absent; sparse test worktree stayed clean. |
 | Further resource-bearing checks | DEFERRED AT THIS SAMPLE | External PID 4437 holds the shared lock and short-window PSI is high. |
+
+## Configured Arena lock isolation — 2026-10-28 04:56 UTC
+
+Code commit `bffa163` fixes a real test-isolation defect: API settings and both
+Playwright configurations already supplied a temporary `MIDAS_ARENA_ROOT`,
+but the Arena admission helper and Veritas batch independently hard-coded the
+primary production lock path. `midas.arena.admission.global_lock_path()` now
+uses the configured root, creates it when absent, rejects an empty or symlink
+root, and retains the prior primary-root behavior when the environment
+variable is unset. `scripts/veritas_gap_detail_v2_batch.py` imports that shared
+helper, keeping batch and Arena workers on the same lock path.
+
+The affected tests cover configured-root creation, unchanged default-path
+selection, symlink rejection, and Veritas/Arena lock-path identity. Both full
+affected modules passed **24/24** in **1.43 seconds pytest time** (**2.04
+seconds wall**) at **181,080 KiB peak RSS**, with zero swaps, major faults, or
+socket messages. Ruff check and format check passed on all four changed Python
+files; `git diff --check` passed. The test invocation used a dedicated
+`/tmp/midas-frontier-admission-regression-20261028T0456Z` base directory and
+temporary Arena roots. It made no exchange request or protected-service
+change. No Playwright run or broad repository suite was started after this
+patch; browser/runtime integration remains to be verified.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Configured Arena lock path | COMPLETE AND VERIFIED | Default behavior, configured root, symlink refusal, and shared Veritas/Arena path pass affected tests. |
+| API/Playwright runtime integration | PARTIALLY VERIFIED | Configuration supplies the isolated root and helper tests pass; browser E2E after the change is not yet run. |
+| Project Frontier overall | PARTIALLY VERIFIED | Full repository regression, genuine cross-venue equivalence, held-source permission, and production readiness remain incomplete. |

@@ -5081,3 +5081,43 @@ admission sample.
 | Isolated Arena planning test | PARTIALLY VERIFIED | Interrupted after 37.95s under rising PSI; pytest reported no test completed. |
 | Held-data isolation | COMPLETE AND VERIFIED | The sparse path remained absent and its worktree remained clean. |
 | Further regression | DEFERRED AT THIS SAMPLE | External PID 4437 held the shared lock and short-window PSI was high. |
+
+## Configured Arena lock isolation — 2026-10-28 04:56 UTC
+
+Code commit `bffa163` removes an isolation mismatch: the API and Playwright
+configurations already accept a temporary `MIDAS_ARENA_ROOT`, but the shared
+Arena/Veritas admission lock still pointed at `~/midas/data/arena`. The Arena
+helper now uses the configured root, creates it when absent, rejects an empty
+or symlink root, and preserves the previous default when the variable is
+unset. The Veritas gap-detail batch now imports the same helper, preventing
+the two consumers from diverging.
+
+Verification:
+
+```bash
+/home/charlie/midas/.venv/bin/ruff check \
+  packages/midas/arena/admission.py scripts/veritas_gap_detail_v2_batch.py \
+  tests/arena/test_admission.py tests/test_veritas_gap_detail_v2_batch.py
+# All checks passed
+/home/charlie/midas/.venv/bin/ruff format --check \
+  packages/midas/arena/admission.py scripts/veritas_gap_detail_v2_batch.py \
+  tests/arena/test_admission.py tests/test_veritas_gap_detail_v2_batch.py
+# 4 files already formatted
+nice -n 10 /usr/bin/time -v env PYTHONPATH=packages:. \
+  /home/charlie/midas/.venv/bin/python -m pytest -q \
+  --basetemp=/tmp/midas-frontier-admission-regression-20261028T0456Z \
+  tests/arena/test_admission.py tests/test_veritas_gap_detail_v2_batch.py
+# 24 passed in 1.43s; 181,080 KiB peak RSS; zero swaps, major faults, or sockets
+```
+
+`git diff --check` passed. The test cases use temporary roots; no exchange
+requests, protected service changes, or production lock writes were made. The
+focused helper and batch tests prove configured/default path behavior, symlink
+rejection, and cross-consumer path equality. Browser end-to-end behavior after
+this change remains unverified; no broad test or build was run afterward.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Arena/Veritas configured lock path | COMPLETE AND VERIFIED | Configured root creation, default behavior, symlink refusal, and shared helper are covered by 24 passing tests. |
+| Playwright/API runtime integration | PARTIALLY VERIFIED | Playwright already sets the environment variable; end-to-end runtime was not rerun after this change. |
+| Project Frontier overall | PARTIALLY VERIFIED | The full repository suite, live cross-venue matching, source authorization, and deployment readiness remain incomplete. |
