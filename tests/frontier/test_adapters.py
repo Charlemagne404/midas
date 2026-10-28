@@ -1427,6 +1427,155 @@ async def test_kraken_synthetic_pair_and_book_preserve_spot_units_and_level_time
     assert all("authorization" not in request.headers for request in requests)
 
 
+@pytest.mark.asyncio
+async def test_kraken_recent_trades_require_exact_pair_key_and_preserve_native_trade_identity():
+    trades = {
+        "error": [],
+        "result": {
+            "XXBTZUSD": [
+                ["60000.10", "0.25", 1793110000.125, "b", "m", "", 61044952],
+                ["60001.20", "0.50", 1793110001.25, "s", "l", ""],
+            ],
+            "last": "1793110001250000000",
+        },
+    }
+    config = KrakenSpotConfig(
+        enabled=True,
+        live_public_probe_enabled=True,
+        pairs=("XBTUSD",),
+        requests_per_second=5,
+        retries=0,
+    )
+    transport, requests, client = _transport(
+        "api.kraken.com", {"/Trades": json.dumps(trades)}, config
+    )
+    adapter = KrakenSpotAdapter(config, transport=transport)
+    try:
+        normalized = await adapter.fetch_trades("XXBTZUSD", limit=2)
+    finally:
+        await client.aclose()
+
+    assert len(normalized) == 2
+    first, second = normalized
+    assert first.schema_version == 2
+    assert first.native_market_id == first.native_instrument_id == "XXBTZUSD"
+    assert first.native_trade_id == "61044952"
+    assert first.price == Decimal("60000.10")
+    assert first.quantity == Decimal("0.25")
+    assert first.exchange_timestamp_utc == datetime.fromtimestamp(1793110000.125, tz=UTC)
+    assert first.aggressor_side is None
+    assert second.native_trade_id is None
+    assert second.aggressor_side is None
+    assert first.provenance.adapter_version == "frontier-kraken-spot-5"
+    assert requests[0].url.params["pair"] == "XXBTZUSD"
+    assert requests[0].url.params["count"] == "2"
+    assert all("authorization" not in request.headers for request in requests)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "result, expected_code",
+    (
+        ({"XBTUSD": [], "last": "marker"}, "TRADE_MARKET_MISMATCH"),
+        ({"XXBTZUSD": [], "XBTUSD": [], "last": "marker"}, "INVALID_TRADE"),
+    ),
+    ids=("wrong-pair-only", "requested-and-unexpected-pair"),
+)
+async def test_kraken_recent_trades_reject_mismatched_result_keys(result, expected_code):
+    config = KrakenSpotConfig(
+        enabled=True,
+        live_public_probe_enabled=True,
+        pairs=("XBTUSD",),
+        requests_per_second=5,
+        retries=0,
+    )
+    transport, requests, client = _transport(
+        "api.kraken.com", {"/Trades": json.dumps({"error": [], "result": result})}, config
+    )
+    adapter = KrakenSpotAdapter(config, transport=transport)
+    try:
+        with pytest.raises(AdapterError) as error:
+            await adapter.fetch_trades("XXBTZUSD")
+    finally:
+        await client.aclose()
+
+    assert error.value.code == expected_code
+    assert len(requests) == 1
+    assert all("authorization" not in request.headers for request in requests)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "row",
+    (
+        ["60000.1", "0.25", None, "b", "m", "", 61044952],
+        ["not-a-price", "0.25", 1793110000.125, "b", "m", "", 61044952],
+        ["60000.1", "0", 1793110000.125, "b", "m", "", 61044952],
+        ["60000.1", "0.25", 1793110000.125, "b", "m", "", True],
+        ["60000.1", "0.25", 1793110000.125, "b", "m", "", " "],
+        ["60000.1", "0.25", 1793110000.125, "b", "m", "", "x" * 257],
+        ["60000.1", "0.25", 1793110000.125, "b", "m", "", 61044952, "extra"],
+    ),
+    ids=(
+        "missing-timestamp",
+        "invalid-price",
+        "zero-quantity",
+        "boolean-trade-id",
+        "blank-trade-id",
+        "oversized-trade-id",
+        "extra-fields",
+    ),
+)
+async def test_kraken_recent_trades_reject_malformed_rows(row):
+    config = KrakenSpotConfig(
+        enabled=True,
+        live_public_probe_enabled=True,
+        pairs=("XBTUSD",),
+        requests_per_second=5,
+        retries=0,
+    )
+    transport, requests, client = _transport(
+        "api.kraken.com",
+        {"/Trades": json.dumps({"error": [], "result": {"XXBTZUSD": [row]}})},
+        config,
+    )
+    adapter = KrakenSpotAdapter(config, transport=transport)
+    try:
+        with pytest.raises(AdapterError) as error:
+            await adapter.fetch_trades("XXBTZUSD")
+    finally:
+        await client.aclose()
+
+    assert error.value.code == "INVALID_TRADE"
+    assert len(requests) == 1
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "native_market_id, limit",
+    (("https://outside.invalid", 1), ("XXBTZUSD", True), ("XXBTZUSD", 1001)),
+    ids=("unsafe-market-id", "boolean-limit", "over-limit"),
+)
+async def test_kraken_recent_trades_reject_invalid_request_before_network(native_market_id, limit):
+    config = KrakenSpotConfig(
+        enabled=True,
+        live_public_probe_enabled=True,
+        pairs=("XBTUSD",),
+        requests_per_second=5,
+        retries=0,
+    )
+    transport, requests, client = _transport("api.kraken.com", {}, config)
+    adapter = KrakenSpotAdapter(config, transport=transport)
+    try:
+        with pytest.raises(AdapterError) as error:
+            await adapter.fetch_trades(native_market_id, limit=limit)
+    finally:
+        await client.aclose()
+
+    assert error.value.code in {"INVALID_LIMIT", "INVALID_MARKET_ID"}
+    assert requests == []
+
+
 def test_source_configs_and_capability_manifests_fail_closed():
     with pytest.raises(ValueError):
         KrakenSpotConfig(pairs=("https://attacker.invalid",))

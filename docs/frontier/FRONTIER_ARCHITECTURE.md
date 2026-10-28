@@ -28,6 +28,14 @@ as mutable Frontier storage.
 | HTTP API | `apps/api/frontier.py`, `apps/api/arena.py` | Bounded local queries and graph neighborhoods, relationship proposals/reviews, deterministic, joint-state, paired, and discovery-scope replay, config-gated captures, fee/capital/funding-currency sensitivities, coverage analytics, a verified local collection-health catalog and checkpoint joins, and local-input Arena staging/result routes. |
 | Mission Control workspace | `apps/web/src/Frontier.tsx` | Sources, explicit finite checkpointed capture, markets/books/event context, coverage and source-quality analytics, relationship hypotheses, candidates, venue-separated capital assumptions and funding-currency sensitivity, local comparisons, an explicit conditional joint-state projection editor, paired/event-time/discovery-scope Arena history and evidence, pinned freshness, explicit recorded-health selection, per-scope candidate detail inspection, and readiness. |
 
+Kraken Spot trade normalization follows the documented REST `Trades` result:
+the requested internal pair key must be present exactly, the requested count
+is bounded and sent to the source, and optional native trade IDs are retained.
+The one-letter tuple field shown in Kraken's example is not assigned an
+aggressor meaning by the adapter; normalized `aggressor_side` remains unset
+while the hash-pinned raw response retains every native tuple field. See
+[Kraken Get Recent Trades](https://docs.kraken.com/api-reference/market-data/get-recent-trades).
+
 ### Dashboard loading
 
 `apps/web/src/App.tsx` loads Frontier, Veritas, Readiness, Laboratory, Arena,

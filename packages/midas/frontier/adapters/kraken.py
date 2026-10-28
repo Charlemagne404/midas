@@ -39,7 +39,7 @@ from midas.frontier.models import (
 )
 
 D = Decimal
-ADAPTER_VERSION = "frontier-kraken-spot-4"
+ADAPTER_VERSION = "frontier-kraken-spot-5"
 BASE = "https://api.kraken.com/0/public"
 ORDERBOOK_DOC = "https://docs.kraken.com/api-reference/market-data/get-order-book"
 _KNOWN_FIAT_QUOTES = frozenset({"USD", "EUR", "GBP", "CAD", "AUD", "CHF", "JPY"})
@@ -96,7 +96,7 @@ class KrakenSpotAdapter(BaseReadOnlyAdapter):
             Capability.BOOK_SNAPSHOT: ("Public REST aggregated order-book depth", ORDERBOOK_DOC),
             Capability.PUBLIC_TRADES: (
                 "Public spot trade history",
-                "https://docs.kraken.com/api/docs/rest-api/get-post-trade",
+                "https://docs.kraken.com/api-reference/market-data/get-recent-trades",
             ),
             Capability.HISTORICAL_CANDLES: (
                 "Public OHLC candles with source limit stated in each result",
@@ -130,7 +130,7 @@ class KrakenSpotAdapter(BaseReadOnlyAdapter):
             ),
             Capability.PAGINATED_PUBLIC_TRADES: (
                 "Kraken public trades expose a last marker but cursor pagination is not integrated into Frontier v1",
-                "https://docs.kraken.com/api/docs/rest-api/get-recent-trades",
+                "https://docs.kraken.com/api-reference/market-data/get-recent-trades",
             ),
             Capability.FEE_SCHEDULE: (
                 "Fee fields are retained when supplied, but account tier and current applicable fee are not resolved",
@@ -315,31 +315,64 @@ class KrakenSpotAdapter(BaseReadOnlyAdapter):
         self, native_market_id: str, limit: int = 100
     ) -> tuple[TradeObservation, ...]:
         self._require(Capability.PUBLIC_TRADES)
-        if not 1 <= limit <= 1000:
+        if type(limit) is not int or not 1 <= limit <= 1000:
             raise AdapterError("INVALID_LIMIT", "Kraken trade limit must be between 1 and 1000")
-        response = await self.transport.get_json(f"{BASE}/Trades", {"pair": native_market_id})
+        if (
+            not isinstance(native_market_id, str)
+            or not 1 <= len(native_market_id) <= 64
+            or not re.fullmatch(r"[A-Za-z0-9./_-]+", native_market_id)
+        ):
+            raise AdapterError("INVALID_MARKET_ID", "Kraken pair identifier is malformed")
+        response = await self.transport.get_json(
+            f"{BASE}/Trades", {"pair": native_market_id, "count": limit}
+        )
         self._capture_response(response, "public_trades")
         raw_map = self._result(response, "Trades")
-        rows = raw_map.get(native_market_id)
-        if rows is None and len(raw_map) >= 1:
-            rows = next((value for key, value in raw_map.items() if key != "last"), None)
-        if not isinstance(rows, list):
+        if native_market_id not in raw_map:
+            raise AdapterError(
+                "TRADE_MARKET_MISMATCH", "Kraken trades response omitted the requested pair key"
+            )
+        if any(key not in {native_market_id, "last"} for key in raw_map):
+            raise AdapterError(
+                "INVALID_TRADE", "Kraken trades response contains an unexpected pair"
+            )
+        rows = raw_map[native_market_id]
+        if not isinstance(rows, list) or len(rows) > limit:
             raise AdapterError("INVALID_TRADE", "Kraken trades response does not include pair rows")
         result = []
         for index, row in enumerate(rows[:limit]):
-            if not isinstance(row, list) or len(row) < 6:
+            if not isinstance(row, list) or len(row) not in {6, 7}:
                 raise AdapterError("INVALID_TRADE", "Kraken trade row is malformed")
             price, quantity = parse_decimal(row[0]), parse_decimal(row[1])
             timestamp = parse_time(row[2])
             if price is None or quantity is None or price <= 0 or quantity <= 0:
                 raise AdapterError("INVALID_TRADE", "Kraken trade price or quantity is invalid")
+            if timestamp is None:
+                raise AdapterError("INVALID_TRADE", "Kraken trade timestamp is invalid")
+            native_trade_id: str | None = None
+            if len(row) == 7:
+                raw_trade_id = row[6]
+                if (
+                    isinstance(raw_trade_id, bool)
+                    or not isinstance(raw_trade_id, (int, str))
+                    or (isinstance(raw_trade_id, int) and raw_trade_id < 0)
+                    or (isinstance(raw_trade_id, str) and not raw_trade_id.strip())
+                    or len(str(raw_trade_id)) > 256
+                ):
+                    raise AdapterError("INVALID_TRADE", "Kraken trade identifier is invalid")
+                native_trade_id = str(raw_trade_id)
             result.append(
                 TradeObservation(
+                    schema_version=2,
                     venue=self.venue,
                     native_market_id=native_market_id,
+                    native_trade_id=native_trade_id,
+                    native_instrument_id=native_market_id,
                     price=price,
                     quantity=quantity,
-                    aggressor_side=str(row[3]),
+                    # The official REST example shows a native one-letter code but does not
+                    # define its maker/taker or aggressor semantics. Keep it in raw evidence.
+                    aggressor_side=None,
                     exchange_timestamp_utc=timestamp,
                     received_at_utc=response.response_received_at_utc,
                     provenance=provenance(
@@ -347,8 +380,8 @@ class KrakenSpotAdapter(BaseReadOnlyAdapter):
                         ADAPTER_VERSION,
                         response,
                         "public_trade",
-                        f"{native_market_id}:{index}:{row[2]}",
-                        source_schema_version="REST Trades",
+                        f"{native_market_id}:{native_trade_id or f'{index}:{row[2]}'}",
+                        source_schema_version="Spot REST Trades",
                         exchange_timestamp=timestamp,
                         exchange_timestamp_semantics="Kraken per-trade epoch timestamp",
                     ),
