@@ -2,7 +2,7 @@
 
 **Report date:** 2026-10-28
 
-## Current status — 2026-10-28 05:05 UTC
+## Current status — 2026-10-28 05:06 UTC
 
 The isolated development branch is `codex/frontier-20261026`; the latest code
 checkpoint is `8fb4c0d` (`fix(frontier): serialize source collection across
@@ -17,9 +17,10 @@ families, bounded multi-market
 joint-state baskets, an independent arithmetic audit, isolated collection and
 replay, Arena integration, and the native Mission Control workspace.
 
-The complete Frontier test directory plus selected Arena discovery, replay,
-timeline, and job tests passed **390/390** in one invocation at **380,624 KiB
-peak RSS**, with zero swaps or socket messages. The web suite passed **40/40**,
+At the preceding implementation checkpoint, the complete Frontier test
+directory plus selected Arena discovery, replay, timeline, and job tests
+passed **390/390** in one invocation at **380,624 KiB peak RSS**, with zero
+swaps or socket messages. The web suite passed **40/40**,
 Frontier browser E2E passed **6/6**, and a temporary-output TypeScript/Vite
 production build passed. Selected legacy API, paper-research, storage, recording,
 protected-service guard, and held-capture boundary checks also passed. The full
@@ -56,12 +57,13 @@ transition remain open; deployment requires a separate authorized readiness
 review.
 
 The latest collection-only regression passes **21/21** after the new source
-lease change. This is not a rerun of the full Frontier or MIDAS suites. Strict
-type checking, browser verification, and broader regression after this change
-remain pending. At `2026-10-28T05:05Z`, memory PSI avg10 was **0.00% some / 0.00%
-full**, but I/O PSI avg10 was **1.17% some / 1.03% full**; the shared Arena
-lock was not held. No additional resource-bearing checks started at that
-sample.
+lease change. Strict `mypy --strict` also passes for
+`packages/midas/frontier/collection.py`. Neither result is a rerun of the full
+Frontier or MIDAS suites; web/API typing, browser verification, and broader
+regression after this change remain pending. At approximately
+`2026-10-28T05:06Z`, memory PSI avg10 was **0.01% some / 0.01% full** and I/O
+PSI avg10 was **0.99% some / 0.96% full**; the shared Arena lock was not held.
+No broad test or browser run started at that marginally admitted sample.
 
 ## Bounded metadata and initial resource checkpoint — 2026-10-28 03:59 UTC
 
@@ -6555,13 +6557,15 @@ The complete `tests/frontier/test_collection.py` module passed **21/21** in
 zero swaps, and zero socket messages. The added checks cover competing
 collector instances, a forked competing process, per-venue independence,
 rejection before run creation, and lease release. Ruff check/format and
-`git diff --check` passed. No exchange request, browser/build, protected
-service change, or production lock write was involved. Strict typing and the
-broader suites remain pending.
+`git diff --check` passed. Strict `mypy --strict --follow-imports=silent
+packages/midas/frontier/collection.py` also passed with no issues (134,940 KiB
+peak RSS, zero swaps or socket messages). No exchange request, browser/build,
+protected service change, or production lock write was involved. Web/API
+typing and the broader suites remain pending.
 
 | Component | Status | Evidence and remaining boundary |
 | --- | --- | --- |
 | Per-venue collection lifecycle isolation | COMPLETE AND VERIFIED | Process-shared nonblocking lease, competing-process rejection, other-venue concurrency, no orphan run, and lease release pass in the collection module. |
 | Full Frontier and MIDAS regression after this change | PARTIALLY VERIFIED | Only the complete collection module was rerun; the full suites remain outstanding. |
-| Strict typing and browser/runtime integration after this change | DEFERRED | At 05:05 UTC I/O PSI avg10 was above the 1% admission threshold; recheck before additional resource-bearing verification. |
+| Strict typing and browser/runtime integration after this change | PARTIALLY VERIFIED | Strict mypy passes for the collection module; web/API typing and browser runtime remain unverified. |
 | Live cross-venue economics and deployment | BLOCKED / DEFERRED | Existing source-use restrictions and production readiness boundaries remain unchanged. |

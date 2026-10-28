@@ -5174,16 +5174,24 @@ The focused module tests cross-instance and forked-process exclusion, separate
 venue leases, rejection before a competing run is inserted, and release after
 cancellation. `git diff --check` passed. No source request, protected service,
 production lock, browser, or build was touched. Strict typing and broad
-regression after this change remain pending.
+regression after this change remain pending. Strict mypy on
+`packages/midas/frontier/collection.py` then passed:
 
-At `2026-10-28T05:05Z`, no process held the shared Arena lock. Memory PSI avg10
-was **0.00% some / 0.00% full**; I/O PSI avg10 was **1.17% some / 1.03% full**.
-No further resource-bearing checks started. Recheck before running mypy,
-browser tests, or broader regression.
+```bash
+/home/charlie/midas/.venv/bin/mypy --strict --follow-imports=silent \
+  packages/midas/frontier/collection.py
+# Success: no issues found in 1 source file
+# 134,940 KiB peak RSS; zero swaps or socket messages
+```
+
+At approximately `2026-10-28T05:06Z`, no process held the shared Arena lock.
+Memory PSI avg10 was **0.01% some / 0.01% full**; I/O PSI avg10 was **0.99% some
+/ 0.96% full**. No broad test or browser check started at this marginally
+admitted sample. Recheck before broader regression or browser tests.
 
 | Component | Status | Evidence and remaining boundary |
 | --- | --- | --- |
 | Per-venue collection lifecycle isolation | COMPLETE AND VERIFIED | Cross-process lock behavior, independent venue leases, no orphan run, and cancellation release are covered by 21 passing collection tests. |
 | Full Frontier/MIDAS regression after `8fb4c0d` | PARTIALLY VERIFIED | Collection module passes 21/21; broader suites were not rerun. |
-| Strict typing and web runtime after `8fb4c0d` | DEFERRED | I/O PSI avg10 was above admission threshold at the last sample. |
+| Strict typing and web runtime after `8fb4c0d` | PARTIALLY VERIFIED | Strict mypy passes for the collection module; web/API typing and browser runtime remain outstanding. |
 | Project Frontier overall | PARTIALLY VERIFIED | Live cross-venue economic evidence, broad regression, source authorization, and deployment gates remain open. |
