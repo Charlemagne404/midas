@@ -1,5 +1,42 @@
 # Project Frontier Mission Ledger
 
+## Revalidate public-source resource configuration — 2026-10-28 11:35 UTC
+
+Code commit `1dd0987` closes a bounded-transport configuration gap. A copied
+`AdapterConfig` could bypass field validators and set `max_response_bytes` to
+one billion; `PublicReadTransport` used the value when constructing its
+bounded client and streaming responses. Configurations now revalidate against
+their concrete model type. `BaseReadOnlyAdapter` and `PublicReadTransport`
+reject invalid copies before adapter use or HTTP client creation. The
+concrete-type check retains Kraken/Coinbase subclass validators.
+
+The adapter module passed **71/71** and collection plus collection-API modules
+passed **34/34**. Full `tests/frontier` on the exact current tree passed
+**418/418** in 30.09 seconds (31.53 seconds wall time), with **379,004 KiB**
+peak RSS, zero process swaps, zero filesystem input, 392 output blocks, and
+zero socket messages. Ruff check/format, strict mypy for nine production
+modules, and `git diff --check` passed. One existing Starlette/httpx
+deprecation warning remains. The full run used tmpfs at
+`/dev/shm/midas-frontier-adapter-config-full-20261028T1135Z`.
+
+Before the full run at `11:34:58Z`, memory PSI avg10 was **0.00%**, I/O PSI
+was **0.66% some / 0.45% full**, and about **10 GiB** was available. At
+`11:35:49Z`, memory PSI avg10 was **0.00%**, I/O PSI was **0.57% some / 0.47%
+full**, and about **10 GiB** remained available. Host swap was 3.4/4 GiB used;
+the full test process used none. No live source, protected capture, production
+service, collector, or Arena job was used. The public-probe directory remains
+untracked and untouched. Frontier remains **PARTIALLY VERIFIED**.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Copied adapter resource configuration | COMPLETE AND VERIFIED | Out-of-bound response size is rejected before transport/client setup; adapter and collection regressions pass. |
+| Full Frontier Python suite | COMPLETE AND VERIFIED | 418/418 pass on code commit `1dd0987`; one existing deprecation warning remains. |
+| Live cross-venue validation | BLOCKED | No authorized genuine source evidence was used to establish a cross-venue match. |
+| Frontier project overall | PARTIALLY VERIFIED | Broader MIDAS regression, live science, production recovery, and deployment remain open. |
+
+**Next safe action:** continue source-independent acceptance review. Recheck
+host PSI before any further broad test or replay workload.
+
 ## Revalidate copied virtual execution assumptions — 2026-10-28 11:31 UTC
 
 Code commit `e26efab` fixes an over-depth candidate path reproduced with a

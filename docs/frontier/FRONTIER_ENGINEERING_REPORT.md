@@ -2,6 +2,42 @@
 
 **Report date:** 2026-10-28
 
+## Current status — 2026-10-28 11:35 UTC
+
+This entry supersedes the 11:31 UTC checkpoint. Code commit `1dd0987`
+revalidates adapter configurations before use. A copied `AdapterConfig` with
+a one-billion-byte response cap previously bypassed its Pydantic bounds and
+was accepted by `PublicReadTransport`. The concrete adapter config type is
+now reconstructed so subclass allowlists and Coinbase terms validation also
+rerun. Both `BaseReadOnlyAdapter` and `PublicReadTransport` reject a malformed
+copy before using it or constructing an HTTP client.
+
+The adapter module passed **71/71** and collection plus collection-API modules
+passed **34/34**. Full `tests/frontier` passed **418/418** in 30.09 seconds
+(31.53 seconds wall time), with **379,004 KiB** peak RSS, zero process swaps,
+zero filesystem input, 392 output blocks, and zero socket messages. Ruff
+check/format, strict mypy for nine production modules, and `git diff --check`
+passed. One existing Starlette/httpx `TestClient` deprecation warning
+remains. The full run used tmpfs at
+`/dev/shm/midas-frontier-adapter-config-full-20261028T1135Z`.
+
+Before the full run at `11:34:58Z`, memory PSI avg10 was **0.00%**, I/O PSI
+was **0.66% some / 0.45% full**, and about **10 GiB** was available. At
+`11:35:49Z`, memory PSI avg10 remained **0.00%**, I/O PSI was **0.57% some /
+0.47% full**, and about **10 GiB** remained available. Host swap was already
+3.4/4 GiB used; the test process used none. No live source, protected
+capture, production service, collector, or Arena job was used. Frontier
+remains **PARTIALLY VERIFIED**.
+
+| Requirement | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Adapter resource-bound validation | COMPLETE AND VERIFIED | Invalid copied limits are rejected before transport setup; adapter and collection tests pass. |
+| Full Frontier Python regression | COMPLETE AND VERIFIED | 418/418 pass on code commit `1dd0987`; one existing deprecation warning remains. |
+| Genuine cross-venue equivalence and economics | BLOCKED | No authorized genuine multi-venue evidence is available. |
+| Broader MIDAS regression | PARTIALLY VERIFIED | Not run on this branch; Reality recovery dependency and incompatible Reality lineages remain unresolved. |
+| Production recovery and deployment | DEFERRED | The research worktree remains isolated, unmerged, and undeployed. |
+| Frontier overall | PARTIALLY VERIFIED | Live science, broader regression, and production readiness remain open. |
+
 ## Current status — 2026-10-28 11:31 UTC
 
 This entry supersedes the 11:24 UTC checkpoint. Frontier remains isolated at

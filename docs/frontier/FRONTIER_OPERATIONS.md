@@ -82,6 +82,10 @@ listing/book/trade sample or one separately requested cursor page; it does not
 start a collector or crawl history. Do not enable probes in a production service
 as part of routine development.
 
+Adapter and transport construction revalidates the concrete source config
+before use. A copied config that bypassed its response, timeout, request-rate,
+market-count, or retry bounds is rejected before an HTTP client is created.
+
 The transport rejects duplicate JSON object keys at every nesting depth with a
 non-retryable `DUPLICATE_JSON_KEY` error. The bounded raw response is retained
 as failure evidence and is not normalized into market, book, or trade rows.

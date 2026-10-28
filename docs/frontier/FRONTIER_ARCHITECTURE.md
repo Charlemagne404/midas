@@ -631,6 +631,13 @@ component normalization or its payoff limitation.
 
 ## Source configurations and bounds
 
+`AdapterConfig.has_valid_structure` revalidates resource bounds through the
+concrete config model, including Kraken and Coinbase subclass checks. Adapter
+and transport constructors reject copied invalid configurations before they
+are used or before the HTTP client is created. This preserves configured
+timeout, pacing, response-size, market-count, and retry bounds when a typed
+model has been changed with `model_copy(update=...)`.
+
 The API creates all four adapter manifests, but the source transport is disabled
 unless its specific `MIDAS_FRONTIER_*_PUBLIC_PROBE_ENABLED` setting is true. In
 addition, Kalshi requires a non-empty

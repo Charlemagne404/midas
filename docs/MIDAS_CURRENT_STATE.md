@@ -33,6 +33,26 @@ in the dated addendum below and in the Frontier engineering report.
 
 ## Frontier development addendum — 2026-10-28
 
+### Latest isolated Frontier checkpoint — 2026-10-28 11:35 UTC
+
+Code commit `1dd0987` makes adapter resource bounds fail closed after copied
+model updates. `AdapterConfig` revalidates against its concrete type, and both
+adapter and transport constructors reject malformed configs before use or
+HTTP client creation. The adapter module passes **71/71**, collection and
+collection-API modules pass **34/34**, and full `tests/frontier` passes
+**418/418** in 31.53 seconds wall time. Peak RSS was **379,004 KiB**, with
+zero process swaps, filesystem inputs, and socket messages. Ruff, formatting,
+strict mypy for nine production modules, and `git diff --check` pass. One
+existing Starlette/httpx deprecation warning remains. Tests used tmpfs at
+`/dev/shm/midas-frontier-adapter-config-full-20261028T1135Z`.
+
+At the pre-run sample `11:34:58Z`, memory PSI avg10 was 0%, I/O PSI was 0.66%
+some / 0.45% full, and about 10 GiB was available. At `11:35:49Z`, memory
+PSI remained 0%, I/O PSI was 0.57% some / 0.47% full, and about 10 GiB
+remained available. Host swap was 3.4/4 GiB used; the test process used no
+swap. No live source, protected capture, or production service was accessed.
+Frontier remains **PARTIALLY VERIFIED**, research-only, and undeployed.
+
 ### Latest isolated Frontier checkpoint — 2026-10-28 11:31 UTC
 
 Code commit `e26efab` closes a copied execution-assumption gap. A
