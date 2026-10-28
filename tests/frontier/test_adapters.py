@@ -1661,7 +1661,7 @@ async def test_kraken_recent_trades_require_exact_pair_key_and_preserve_native_t
     assert first.aggressor_side is None
     assert second.native_trade_id is None
     assert second.aggressor_side is None
-    assert first.provenance.adapter_version == "frontier-kraken-spot-8"
+    assert first.provenance.adapter_version == "frontier-kraken-spot-9"
     assert requests[0].url.params["pair"] == "XXBTZUSD"
     assert requests[0].url.params["count"] == "2"
     assert all("authorization" not in request.headers for request in requests)
@@ -2124,7 +2124,7 @@ async def test_polymarket_legacy_trades_bind_condition_and_token_and_preserve_un
     assert all(trade.native_instrument_id == "1234567890" for trade in trades)
     assert all(trade.native_trade_id == "0xfixture-shared-tx" for trade in trades)
     assert all(trade.aggressor_side is None for trade in trades)
-    assert trades[0].provenance.adapter_version == "frontier-polymarket-9"
+    assert trades[0].provenance.adapter_version == "frontier-polymarket-10"
     assert trades[0].provenance.observation_id != trades[1].provenance.observation_id
     assert len(captures) == 1 and captures[0].raw_body == body
     assert requests[0].url.params["market"] == condition_id
@@ -2360,7 +2360,7 @@ async def test_kalshi_unpaginated_trade_rows_are_bound_to_requested_ticker():
     assert normalized.is_block_trade is False
     assert normalized.taker_outcome_side == "yes"
     assert normalized.taker_book_side == "bid"
-    assert normalized.provenance.adapter_version == "frontier-kalshi-20"
+    assert normalized.provenance.adapter_version == "frontier-kalshi-21"
     assert len(captures) == 1 and captures[0].raw_body == body
     assert len(requests) == 1
     assert dict(requests[0].url.params) == {"ticker": ticker, "limit": "1"}

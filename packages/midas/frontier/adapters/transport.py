@@ -6,6 +6,7 @@ import asyncio
 import json
 import time
 from collections import deque
+from collections.abc import AsyncIterator
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from decimal import Decimal
@@ -75,6 +76,19 @@ def _exceeds_json_nesting_depth(raw: str, maximum: int = MAX_JSON_NESTING_DEPTH)
     return False
 
 
+async def _response_body_chunks(response: httpx.Response, chunk_size: int) -> AsyncIterator[bytes]:
+    """Yield bounded chunks from a live raw stream or a prebuffered fixture."""
+    if response.is_stream_consumed:
+        # Injected MockTransport is fixture-only and may prebuffer a body;
+        # production clients follow the raw response stream below.
+        content = response.content
+        for offset in range(0, len(content), chunk_size):
+            yield content[offset : offset + chunk_size]
+        return
+    async for chunk in response.aiter_raw(chunk_size=chunk_size):
+        yield chunk
+
+
 @dataclass(frozen=True)
 class HTTPObservation:
     url: str
@@ -108,6 +122,7 @@ class PublicReadTransport:
                 follow_redirects=False,
                 headers={
                     "Accept": "application/json",
+                    "Accept-Encoding": "identity",
                     "User-Agent": "MIDAS-Frontier/0.1 (public read-only research)",
                 },
                 limits=httpx.Limits(max_connections=4, max_keepalive_connections=2),
@@ -250,6 +265,7 @@ class PublicReadTransport:
                     timeout=httpx.Timeout(self.config.timeout_seconds),
                     headers={
                         "Accept": "application/json",
+                        "Accept-Encoding": "identity",
                         "User-Agent": "MIDAS-Frontier/0.1 (public read-only research)",
                     },
                 ) as response:
@@ -259,6 +275,7 @@ class PublicReadTransport:
                         raise AdapterError(
                             "REDIRECT_REJECTED", "Public-source redirects are not followed"
                         )
+                    content_encoding = response.headers.get("Content-Encoding", "").strip().lower()
                     content_length = response.headers.get("Content-Length")
                     declared_content_length: int | None = None
                     if content_length is not None:
@@ -287,9 +304,17 @@ class PublicReadTransport:
                                 )
                         except ValueError:
                             declared_content_length = None
+                    if 200 <= response.status_code < 300 and content_encoding not in {
+                        "",
+                        "identity",
+                    }:
+                        raise AdapterError(
+                            "UNSUPPORTED_CONTENT_ENCODING",
+                            "Public-source response must use identity content encoding",
+                        )
                     body = bytearray()
                     chunk_size = min(65536, self.config.max_response_bytes)
-                    async for chunk in response.aiter_bytes(chunk_size=chunk_size):
+                    async for chunk in _response_body_chunks(response, chunk_size):
                         if len(body) + len(chunk) > self.config.max_response_bytes:
                             rejected_at = datetime.now(UTC)
                             raise AdapterError(

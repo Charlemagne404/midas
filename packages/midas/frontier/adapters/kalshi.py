@@ -45,7 +45,7 @@ from midas.frontier.models import (
 )
 
 D = Decimal
-ADAPTER_VERSION = "frontier-kalshi-20"
+ADAPTER_VERSION = "frontier-kalshi-21"
 _TICKER_PATTERN = re.compile(r"[A-Za-z0-9_-]{1,256}\Z")
 BASE = "https://external-api.kalshi.com/trade-api/v2"
 MARKET_DATA_DOC = "https://docs.kalshi.com/getting_started/quick_start_market_data"
@@ -100,29 +100,39 @@ def _price_increment_ranges(raw: dict[str, Any]) -> tuple[PriceIncrementRange, .
     return tuple(normalized)
 
 
-def _native_trade_flags(raw: dict[str, Any]) -> tuple[bool | None, str | None, str | None]:
+def _native_trade_flags(
+    raw: dict[str, Any],
+) -> tuple[bool | None, Literal["yes", "no"] | None, Literal["bid", "ask"] | None]:
     """Retain Kalshi's block and taker-side labels without coercing missing values."""
     is_block_trade = raw.get("is_block_trade")
     if is_block_trade is not None and type(is_block_trade) is not bool:
         raise AdapterError("INVALID_TRADE", "Kalshi is_block_trade must be a boolean when supplied")
 
-    taker_outcome_side = raw.get("taker_outcome_side")
-    if taker_outcome_side is not None:
-        if not isinstance(taker_outcome_side, str) or taker_outcome_side.casefold() not in {
-            "yes",
-            "no",
-        }:
+    taker_outcome_side: Literal["yes", "no"] | None = None
+    raw_outcome_side = raw.get("taker_outcome_side")
+    if raw_outcome_side is not None:
+        if not isinstance(raw_outcome_side, str):
             raise AdapterError("INVALID_TRADE", "Kalshi taker_outcome_side is invalid")
-        taker_outcome_side = taker_outcome_side.casefold()
+        normalized_outcome_side = raw_outcome_side.casefold()
+        if normalized_outcome_side == "yes":
+            taker_outcome_side = "yes"
+        elif normalized_outcome_side == "no":
+            taker_outcome_side = "no"
+        else:
+            raise AdapterError("INVALID_TRADE", "Kalshi taker_outcome_side is invalid")
 
-    taker_book_side = raw.get("taker_book_side")
-    if taker_book_side is not None:
-        if not isinstance(taker_book_side, str) or taker_book_side.casefold() not in {
-            "bid",
-            "ask",
-        }:
+    taker_book_side: Literal["bid", "ask"] | None = None
+    raw_book_side = raw.get("taker_book_side")
+    if raw_book_side is not None:
+        if not isinstance(raw_book_side, str):
             raise AdapterError("INVALID_TRADE", "Kalshi taker_book_side is invalid")
-        taker_book_side = taker_book_side.casefold()
+        normalized_book_side = raw_book_side.casefold()
+        if normalized_book_side == "bid":
+            taker_book_side = "bid"
+        elif normalized_book_side == "ask":
+            taker_book_side = "ask"
+        else:
+            raise AdapterError("INVALID_TRADE", "Kalshi taker_book_side is invalid")
 
     return is_block_trade, taker_outcome_side, taker_book_side
 

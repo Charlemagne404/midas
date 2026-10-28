@@ -48,7 +48,7 @@ from midas.frontier.models import (
 from midas.market_data.polymarket import normalize_market
 
 D = Decimal
-ADAPTER_VERSION = "frontier-polymarket-9"
+ADAPTER_VERSION = "frontier-polymarket-10"
 GAMMA = "https://gamma-api.polymarket.com"
 CLOB = "https://clob.polymarket.com"
 CLOB_V2 = "https://clob-v2.polymarket.com"

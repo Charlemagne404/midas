@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import gzip
+
 import httpx
 import pytest
 from midas.frontier.adapters.base import AdapterError
@@ -120,6 +122,48 @@ async def test_transport_does_not_retain_or_resend_source_cookies():
         assert len(client.cookies) == 0
         assert len(requests) == 1
         assert "cookie" not in requests[0].headers
+    finally:
+        await client.aclose()
+
+
+@pytest.mark.asyncio
+async def test_transport_requests_identity_and_rejects_compressed_responses():
+    requests: list[httpx.Request] = []
+    compressed = gzip.compress(b"x" * 200_000)
+
+    class CompressedStream(httpx.AsyncByteStream):
+        async def __aiter__(self):
+            yield compressed
+
+        async def aclose(self) -> None:
+            return None
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        return httpx.Response(
+            200,
+            stream=CompressedStream(),
+            headers={"Content-Encoding": "gzip"},
+            request=request,
+        )
+
+    client = httpx.AsyncClient(transport=httpx.MockTransport(handler))
+    transport = PublicReadTransport(
+        {"example.com"},
+        AdapterConfig(
+            enabled=True,
+            live_public_probe_enabled=True,
+            max_response_bytes=1024,
+            retries=0,
+        ),
+        client=client,
+    )
+    try:
+        with pytest.raises(AdapterError) as error:
+            await transport.get_json("https://example.com/markets")
+        assert error.value.code == "UNSUPPORTED_CONTENT_ENCODING"
+        assert len(requests) == 1
+        assert requests[0].headers["accept-encoding"] == "identity"
     finally:
         await client.aclose()
 
