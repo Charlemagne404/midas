@@ -5,6 +5,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from decimal import Decimal
+from pathlib import Path
 from time import monotonic, monotonic_ns
 from typing import Any, Protocol
 from urllib.parse import urlsplit
@@ -25,9 +26,11 @@ from midas.frontier.models import (
     AdapterConfig,
     Capability,
     RawObservation,
+    TradeBatch,
     TradeObservation,
     Venue,
 )
+from midas.frontier.storage import FrontierStore
 
 from tests.frontier.builders import T0
 
@@ -119,7 +122,9 @@ def _json_adapter_factory(
 
 
 @pytest.mark.asyncio
-async def test_four_trade_adapters_share_capture_contract_and_keep_native_semantics() -> None:
+async def test_four_trade_adapters_share_capture_contract_and_keep_native_semantics(
+    tmp_path: Path,
+) -> None:
     """Fixture prices match numerically; event and spot capabilities remain distinct."""
     condition = "0x" + "a" * 64
     ticker = "KXFRONTIER-EVENT-YES"
@@ -231,6 +236,8 @@ async def test_four_trade_adapters_share_capture_contract_and_keep_native_semant
     )
 
     observed: dict[Venue, TradeObservation] = {}
+    stored_observation_ids: dict[Venue, str] = {}
+    store = FrontierStore(tmp_path / "frontier")
     for case in cases:
         requests: list[httpx.Request] = []
 
@@ -286,7 +293,24 @@ async def test_four_trade_adapters_share_capture_contract_and_keep_native_semant
         assert request.url.params[case.query_name] == case.query_value
         assert "authorization" not in request.headers
         assert source.capabilities.supports(Capability.OUTCOME_DEFINITIONS) is case.event_contract
+        stored_observation_ids[case.venue] = store.append_observation(
+            capture,
+            TradeBatch(
+                venue=case.venue,
+                requested_market_id=case.native_market_id,
+                trades=trades,
+            ),
+        )
         observed[case.venue] = trade
+
+    stored_rows = store.observations(kind="public_trades", limit=10)
+    assert len(stored_rows) == 4
+    for row in stored_rows:
+        batch = TradeBatch.model_validate(row["normalized"])
+        venue = Venue(str(row["venue"]))
+        assert row["observation_id"] == stored_observation_ids[venue]
+        assert batch.venue == venue
+        assert all(trade.provenance.raw_sha256 == row["raw_sha256"] for trade in batch.trades)
 
     polymarket = observed[Venue.POLYMARKET]
     assert polymarket.native_instrument_id == "1234567890"
