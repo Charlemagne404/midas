@@ -10617,3 +10617,44 @@ started.
 **Next safe action:** continue source-independent review and bounded
 verification. Keep broad regressions deferred until protected-service memory
 headroom is sustained below `MemoryHigh`.
+
+## Kraken book market binding — 2026-10-28 20:25 UTC
+
+Commit `616e5cfa83b236802369d2c8d348d6baff731b92` advances Kraken Spot to
+`frontier-kraken-spot-10`. Pair asset normalization now uses one strict
+helper for the source `wsname` or native base/quote fields. Before requesting
+depth, the adapter revalidates the market, checks its canonical ID against the
+native pair, binds the normalized assets to the raw pair metadata, and requires
+one base-asset instrument with the matching native ID and quote identity. It
+then uses that validated instrument directly; malformed or cross-bound market
+objects fail as `INVALID_INSTRUMENT` before `/Depth` I/O.
+
+Eight fixture corruptions cover missing and duplicate instruments, altered
+canonical identity, altered base/quote assets, altered instrument quote
+currency, unknown quantity units, and raw pair metadata that conflicts with
+the normalized market. The Kraken-focused selection passes **43 tests** with
+99 deselected in 1.06 seconds pytest time (1.45 seconds wall), at 65,764 KiB
+maximum RSS, zero swaps, and zero socket messages. Ruff and strict mypy pass.
+The first run showed eight test assertion failures because the fixture
+expected `/AssetPairs` instead of the adapter's `/0/public/AssetPairs`; after
+correcting that expected path, all cases passed. The adapter rejected each
+corrupted object before a depth request. All transport responses were local
+`MockTransport` fixtures; no public Kraken request occurred.
+
+At `2026-10-28T20:25:57Z`, host `MemAvailable` was 9,899,784 KiB and memory
+PSI avg10 was 0%; I/O PSI `some` avg10/avg60 was 0%/0.01%, with `full` 0%.
+Reality was at 1,207,894,016 / 1,207,959,552 bytes, only 65,536 bytes below
+`MemoryHigh`; API was at 1,562,820,608 / 1,610,612,736 bytes. The focused test
+used a transient 1 GiB cgroup cap. The current sample does not authorize a
+broad regression.
+
+| Requirement | Status | Evidence and boundary |
+| --- | --- | --- |
+| Kraken book input binding | COMPLETE AND VERIFIED | Eight malformed-market variants reject before depth I/O; 43 Kraken-focused fixtures pass. |
+| Kraken live book validation | BLOCKED | Source-use/retention scope remains unresolved; fixtures are not live data. |
+| Current full adapter/Frontier regression | PARTIALLY VERIFIED | Current focused adapter contracts pass; full Frontier/legacy suites remain deferred under volatile protected-service memory. |
+| Project Frontier overall | PARTIALLY VERIFIED | Genuine live cross-venue science, broad regressions, endurance, protected recovery, and deployment remain incomplete. |
+
+**Next safe action:** continue bounded source-independent adapter and API
+review. Keep public-source probes and broad backend suites behind their
+separate authorization and resource gates.

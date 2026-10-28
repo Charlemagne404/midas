@@ -11498,3 +11498,33 @@ samples show volatile protected-service memory headroom.
 | Coinbase live validation | BLOCKED | Source-use/retention hold remains; fixtures are not live evidence. |
 | Current full Frontier/legacy regression | PARTIALLY VERIFIED | Latest full Frontier run predates current adapter changes. |
 | Frontier overall | PARTIALLY VERIFIED | Cross-venue live science, broad regression, endurance, protected recovery, and deployment remain incomplete. |
+
+## Kraken book input binding — 2026-10-28 20:25 UTC
+
+Commit `616e5cfa83b236802369d2c8d348d6baff731b92` advances Kraken Spot to
+`frontier-kraken-spot-10`. Before a depth request, `fetch_book` now
+revalidates the market, canonical pair identity, raw pair asset metadata,
+base/quote fields, sole instrument, quantity unit, and quote identity. Invalid
+or cross-bound objects return `INVALID_INSTRUMENT` without requesting `/Depth`.
+
+Eight fixture corruptions exercise those bindings. The Kraken-focused
+`test_adapters.py` selection passes **43 tests** (99 deselected) in 1.06 seconds
+pytest time (1.45 seconds wall), at 65,764 KiB maximum RSS, with no swaps or
+socket messages. Ruff and strict mypy pass. An initial run failed only because
+the test expected `/AssetPairs` instead of `/0/public/AssetPairs`; after
+correcting the test's expected path, all 43 cases passed. No live Kraken
+request was made.
+
+At `2026-10-28T20:25:57Z`, `MemAvailable` was 9,899,784 KiB and memory PSI
+avg10 was 0%; I/O PSI `some` avg10/avg60 was 0%/0.01%, with `full` 0%. Reality
+was 1,207,894,016 / 1,207,959,552 bytes, 65,536 bytes below `MemoryHigh`; API
+was 1,562,820,608 / 1,610,612,736 bytes. The focused tests ran inside a
+transient 1 GiB cgroup cap. Broad regression remains deferred under the
+volatile protected-service memory gate.
+
+| Requirement | Status | Evidence and boundary |
+| --- | --- | --- |
+| Kraken book input binding | COMPLETE AND VERIFIED | Eight malformed-market variants reject before depth I/O; 43 Kraken-focused fixture cases pass. |
+| Kraken live validation | BLOCKED | Source-use/retention scope remains unresolved; fixture evidence is not live data. |
+| Current full Frontier/legacy regression | PARTIALLY VERIFIED | Current focused adapter contracts pass; the full suite predates the recent adapter changes. |
+| Frontier overall | PARTIALLY VERIFIED | Live cross-venue science, broad regression, endurance, protected recovery, and deployment remain incomplete. |
