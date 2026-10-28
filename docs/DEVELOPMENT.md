@@ -640,6 +640,9 @@ The public-source boundary is unchanged: one bounded Polymarket metadata read
 was recorded, but it did not establish event membership, complete outcomes,
 payoff, settlement, or cross-venue equivalence. Kalshi, Kraken, and Coinbase
 source-use holds remain. Frontier is research-only, isolated, and undeployed.
+The exact captured detail body was also replayed offline with `MockTransport`:
+the current adapter returns no native event ID, the raw hash and title match,
+and the ignored store's row count is unchanged.
 
 ## Keep worktrees and runtime data separate
 

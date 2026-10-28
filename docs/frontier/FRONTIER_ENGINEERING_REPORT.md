@@ -140,6 +140,23 @@ Frontier overall remains **PARTIALLY VERIFIED**, research-only, and
 undeployed. The final completion matrix must preserve the held-source, live
 cross-venue, source-permission, and production-transition gaps.
 
+## Exact captured-body normalization replay — 2026-10-28 04:14 UTC
+
+The stored public Gamma detail body was re-run through the corrected
+Polymarket adapter using an in-memory HTTPX `MockTransport`. The existing raw
+SHA-256 remained `d462014349743a6175facab3aef0433a069899c43845c789ca4cdce87bd8cf26`;
+the result preserved the native market ID and title but returned
+`native_event_id=null` instead of the historical parser fallback
+`market:2589810`. The replay made one mocked request and **zero public network
+calls**. It did not append a row: SQLite integrity stayed `ok` and the
+read-only capture store remained at two observations.
+
+This confirms the event-ID correction against the exact genuine captured body
+without rewriting history. It does not establish parent-event membership,
+exhaustive outcomes, payoff, settlement, venue equivalence, or an opportunity.
+The capture remains in ignored local storage and is not included in version
+control.
+
 **Corrected combined Frontier/Arena verification — 2026-10-28 03:12 UTC:**
 After synchronizing the stale timeline message expectation and isolating two
 launch-command unit tests from the host-wide admission lock, the serial

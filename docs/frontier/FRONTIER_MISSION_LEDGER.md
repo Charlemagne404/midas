@@ -4616,6 +4616,31 @@ was touched.
 | --- | --- | --- |
 | Arena discovery/replay/timeline/job consumers | COMPLETE AND VERIFIED | Selected 38-test regression passes after event normalization correction; no real systemd unit or production Arena root was used. |
 
+### Offline replay of the captured Gamma detail — 2026-10-28 04:14 UTC
+
+The exact body from stored observation
+`d51864858856a0a8e8faff66fd75c5e590ee4b2f47642147b24c73e8581d74b9` was
+replayed in memory through the corrected Polymarket adapter using HTTPX
+`MockTransport`. It was loaded read-only from the ignored local capture store;
+the stored body hash
+`d462014349743a6175facab3aef0433a069899c43845c789ca4cdce87bd8cf26` matched
+before replay. The prior normalized value was `market:2589810`; the corrected
+normalizer returned `native_event_id=null`, while native market ID `2589810`,
+title, and raw hash matched. The adapter made one mocked request and no public
+network request.
+
+SQLite `integrity_check` remained `ok`, and the store had **2 rows both before
+and after** the replay. No observation was appended or rewritten. This verifies
+the new parser against the exact captured response; it still provides no event
+membership, outcome exhaustiveness, verified payoff, settlement equivalence,
+or opportunity evidence. At `2026-10-28T04:14:07Z`, memory PSI avg10 was
+**0.42% some / 0.39% full**, I/O PSI avg10 **0.53% / 0.48%**, about **10 GiB**
+was available, and no Arena lock holder was listed.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Corrected adapter replay of live captured body | COMPLETE AND VERIFIED | Exact stored response hash and title reproduced; event ID now remains unknown; read-only DB integrity and row count unchanged; no public network access. |
+
 ### Resource gate recheck — 2026-10-28 04:12 UTC
 
 At `2026-10-28T04:12:29Z`, memory PSI had risen again: avg10 **38.86% some /
