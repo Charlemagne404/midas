@@ -11061,6 +11061,82 @@ broader legacy Arena/MIDAS regression remain unrun on this exact tree.
 | Broader MIDAS and full legacy Arena regression | PARTIALLY VERIFIED | Earlier broad run stopped at the host resource gate; no full-repository pass is claimed. |
 | Resource sustainability and protected recovery | PARTIALLY VERIFIED | Bounded run RSS and current PSI are measured; Reality is at its soft memory boundary, and there is no endurance or current-boundary recovery proof. |
 | Genuine live cross-venue relationship and economics | BLOCKED | Current Kalshi/Kraken/Coinbase source-use gates remain; no synthetic output is presented as live. |
+
+## Kraken recent-trades parser audit — 2026-10-28 19:45 UTC
+
+Commit `4093a9a34a8476517cc5f4ead1844bbc3eee81b5` updates the read-only Kraken
+Spot adapter to `frontier-kraken-spot-5`. `fetch_trades` now sends the bounded
+requested count, validates the bounded pair identifier, and accepts records
+only under the exact requested internal pair key. It rejects unexpected
+additional pair keys, malformed tuple lengths, invalid prices/quantities or
+timestamps, and malformed optional native trade IDs. A present Kraken trade ID
+is retained as the native identity and instrument identity is attached to the
+trade record. The API example's one-letter tuple value remains in raw evidence;
+the adapter leaves `aggressor_side` unset because the official REST response
+documentation does not define that field's semantics. The capability URL now
+points at Kraken's `Get Recent Trades` endpoint, which the adapter actually
+uses.
+
+The full adapter test file passes **103/103** in 2.83 seconds pytest time
+(3.22 seconds wall), with 65,136 KiB peak RSS, zero swaps, and zero socket
+messages. Ruff check and format plus targeted mypy pass. Tests use mocked
+responses; no live Kraken request or held source artifact was read. The current
+official API documentation was reviewed at
+[Kraken Get Recent Trades](https://docs.kraken.com/api-reference/market-data/get-recent-trades).
+The exact tuple-key rule, documented `count` bound, sample layout, and internal
+pair key example informed this change. The page shows one-letter field values
+without defining their aggressor semantics, so the normalization intentionally
+does not assign one.
+
+This closes a fixture-verified parser correctness issue, not source validation.
+Kraken's applicable research/retention permission remains unresolved and live
+probes remain blocked. The 505-case Frontier suite passed before Kalshi v20
+and Kraken v5; it has not been rerun after those changes. At
+`2026-10-28T19:45:20Z`, Reality was 720,896 bytes below `MemoryHigh`, API had
+about 69 MiB below its high boundary, memory PSI avg10/avg60 was 0%, and I/O
+PSI avg10/avg60 was 0%/0.04%. A broader run was not started.
+
+| Requirement | Status | Evidence and boundary |
+| --- | --- | --- |
+| Kraken public-trade parser contract | COMPLETE AND VERIFIED | Fixture and adapter contract suite passes 103/103; live validation remains held. |
+| Full post-hardening Frontier suite | PARTIALLY VERIFIED | The prior 505-case pass predates Kalshi v20 and Kraken v5. |
+| Genuine Kraken or cross-venue live research | BLOCKED | Source-use/retention review remains unresolved; no new public request was made. |
+| Frontier overall | PARTIALLY VERIFIED | Live cross-venue science, broad regression, endurance, protected recovery, and deployment remain incomplete. |
+
+## Kraken pair binding across read endpoints — 2026-10-28 19:47 UTC
+
+Commit `36554c76a675ebdfcf08e5b0d871fc311c74c0e1` advances the Kraken Spot
+adapter to `frontier-kraken-spot-6`. Its order-book reader now requests the
+discovered internal pair ID instead of the display alias and requires the
+exact returned key. The OHLC reader rejects missing or unexpected pair keys,
+while permitting the source's separate `last` marker. Pair IDs are bounded
+and validated on discovery and reads. These changes remove two single-result
+fallbacks that could have attributed another pair's data to the selected
+instrument. The trade parser remains exact-key bound, sends `count`, retains
+optional native trade IDs, and leaves the undocumented tuple side code out of
+normalized aggressor direction.
+
+The complete adapter test file passes **105/105** in 3.04 seconds pytest time
+(3.44 seconds wall), at 65,256 KiB peak RSS, zero swaps, and zero socket
+messages. Ruff check/format and targeted mypy pass. These tests use mocked
+responses; no live Kraken request or held source artifact was read. The current
+official Kraken docs describe internal pair keys as the default response form
+for [Get Order Book](https://docs.kraken.com/api-reference/market-data/get-order-book),
+[Get Recent Trades](https://docs.kraken.com/api-reference/market-data/get-recent-trades),
+and [Get OHLC Data](https://docs.kraken.com/api-reference/market-data/get-ohlc-data).
+The Kraken source-use and retention hold still blocks live validation.
+
+The complete 505-case Frontier suite predates Kalshi v20 and Kraken v6 and was
+not rerun. At `2026-10-28T19:47:46Z`, Reality was only 28,672 bytes below
+`MemoryHigh`, while memory PSI avg10/avg60 remained 0%; no broad suite was
+started. I/O PSI avg10/avg60 was 0.02%/0.07%; `MemAvailable` was about 9.5 GiB.
+
+| Requirement | Status | Evidence and boundary |
+| --- | --- | --- |
+| Kraken books, candles, and trades exact-pair parser contract | COMPLETE AND VERIFIED | Fixture adapter suite passes 105/105; verifies exact pair identity and rejection behavior. Live use remains held. |
+| Full post-hardening Frontier suite | PARTIALLY VERIFIED | The prior 505-case pass predates Kalshi v20 and Kraken v6. |
+| Genuine Kraken/cross-venue live validation | BLOCKED | Applicable source-use and retention authorization are unresolved. |
+| Frontier overall | PARTIALLY VERIFIED | Live cross-venue science, broad regression, endurance, protected recovery, and deployment remain incomplete. |
 | Production deployment | DEFERRED | Branch remains isolated and undeployed; production recovery and deployment gates remain separate. |
 | Project Frontier overall | PARTIALLY VERIFIED | Core research platform and current bounded acceptance paths work; live cross-venue science, full broad regression, endurance, protected recovery, and deployment remain incomplete. |
 

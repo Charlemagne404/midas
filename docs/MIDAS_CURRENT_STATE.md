@@ -3408,3 +3408,39 @@ reported. Peak RSS was 484 MiB. At 17:18:23Z memory PSI avg10 was 36.63%
 (`full` 31.86%) despite 9.9 GiB available. Reality and API remained active.
 The run is partial; wait for a fresh admission sample before retrying the
 remaining legacy regression.
+
+## Kraken public-trade parser checkpoint — 2026-10-28 19:45 UTC
+
+Frontier commit `4093a9a34a8476517cc5f4ead1844bbc3eee81b5` updates the Kraken
+Spot adapter to version 5. Its recent-trades parser binds rows to the exact
+requested internal pair key, sends a bounded row count, retains the optional
+native trade ID, validates amount/timestamp fields, and does not infer
+aggressor direction from the source's undocumented one-letter tuple code.
+The adapter test file passes 103/103; Ruff and targeted mypy also pass. All
+tests used fixtures. No Kraken source request or held artifact read occurred;
+the source-use review still blocks live validation. The full 505-case Frontier
+suite predates the latest Kalshi and Kraken parser changes.
+
+At `2026-10-28T19:45:20Z`, memory PSI avg10/avg60 was 0%; I/O PSI avg10/avg60
+was 0%/0.04%. `MemAvailable` was 9,955,112 KiB. Reality was active at
+1,207,238,656 / 1,207,959,552 bytes (720,896 bytes below `MemoryHigh`); API was
+active at 1,537,425,408 / 1,610,612,736 bytes. No broad suite was run.
+
+## Kraken read-endpoint pair binding — 2026-10-28 19:47 UTC
+
+Frontier commit `36554c76a675ebdfcf08e5b0d871fc311c74c0e1` advances the Kraken
+Spot adapter to version 6. Books now request the discovered internal pair ID;
+book and OHLC responses must include that exact pair key. The former single-row
+fallbacks are removed. Trade count, timestamp, numeric amounts, and optional
+native trade ID remain validated, and the source's undocumented tuple code is
+not normalized as aggressor direction. The adapter test file passes 105/105 in
+3.04 seconds pytest time (3.44 seconds wall), at 65,256 KiB peak RSS, zero
+swaps, and no socket messages. Ruff and targeted mypy pass. Verification is
+fixture-only; no live Kraken request or held source artifact was read. The
+source-use/retention hold remains active. The 505-case Frontier suite predates
+the latest Kalshi v20 and Kraken v6 changes.
+
+At `2026-10-28T19:47:46Z`, memory PSI avg10/avg60 was 0%; I/O PSI avg10/avg60
+was 0.02%/0.07%. `MemAvailable` was 9,973,396 KiB. Reality was active at
+1,207,930,880 / 1,207,959,552 bytes (28,672 bytes below `MemoryHigh`); API was
+active at 1,538,605,056 / 1,610,612,736 bytes. No broad suite was run.

@@ -10199,3 +10199,77 @@ bytes. A broader suite was not started.
 **Next safe action:** keep source-use and service boundaries unchanged. Continue
 read-only review; remeasure Reality headroom before another resource-bearing
 run.
+
+## Kraken public-trade identity and normalization — 2026-10-28 19:45 UTC
+
+Commit `4093a9a34a8476517cc5f4ead1844bbc3eee81b5` hardens the Kraken Spot
+`/0/public/Trades` parser. Version `frontier-kraken-spot-5` now passes the
+bounded `count`, rejects malformed request IDs and mismatched/extra result
+keys, requires a valid timestamp and positive price/quantity, and retains the
+optional native trade ID. It no longer presents Kraken's undocumented
+one-letter tuple value as normalized aggressor direction. Exact native rows
+and that value remain in the existing hash-pinned raw response. Capability
+metadata now links the endpoint actually used.
+
+The complete adapter test file passes **103/103** in 2.83 seconds pytest time
+(3.22 seconds wall), with 65,136 KiB peak RSS, zero swaps, and zero socket
+messages. Ruff check/format and a targeted mypy check pass. These are fixture
+tests; no Kraken HTTP request or held capture was read. Official documentation
+was reviewed for the endpoint, pair-key convention, and count bound. The
+applicable Kraken source-use/retention hold remains in force, so this is not
+live validation. The 505-case Frontier suite still predates the latest
+Kalshi/Kraken hardening and was not rerun here.
+
+At `2026-10-28T19:45:20Z`, memory PSI avg10/avg60 was 0%; I/O PSI avg10 was 0%
+and avg60 0.04%. `MemAvailable` was 9,955,112 KiB and `SwapFree` 43,512 KiB.
+Reality was active at 1,207,238,656 / 1,207,959,552 bytes (720,896 bytes below
+`MemoryHigh`); API was active at 1,537,425,408 / 1,610,612,736 bytes. No broad
+suite was started.
+
+| Requirement | Status | Current evidence and boundary |
+| --- | --- | --- |
+| Kraken public-trade exact-key parsing and native identity | COMPLETE AND VERIFIED | Adapter fixture suite passes 103/103; exact response key, count, timestamp, positive amounts, optional ID, and no invented aggressor side are covered. Live source use remains held. |
+| Full current-tree Frontier Python suite | PARTIALLY VERIFIED | The 505-case suite passed before Kalshi v20 and Kraken v5; no post-hardening full run is claimed. |
+| Live Kraken research | BLOCKED | Source-use and retention authorization are unresolved; no source request or held artifact access occurred. |
+| Project Frontier overall | PARTIALLY VERIFIED | Broad regression, live cross-venue science, endurance, protected recovery, and deployment remain incomplete. |
+
+**Next safe action:** continue source-independent engineering and review. Keep
+Kraken live probes disabled and take a fresh admission sample before another
+resource-bearing test run.
+
+## Kraken exact pair binding across books, candles, and trades — 2026-10-28 19:47 UTC
+
+Commit `36554c76a675ebdfcf08e5b0d871fc311c74c0e1` advances Kraken Spot to
+`frontier-kraken-spot-6`. The book reader now requests the discovered native
+pair ID and requires that exact response key. The OHLC reader also requires the
+requested key, allowing only Kraken's documented `last` marker alongside it.
+Both former single-row fallbacks are removed. Pair IDs from discovery and all
+request paths are bounded and validated; the reserved marker name is rejected.
+Trade behavior from commit `4093a9a` remains: requested count, exact key,
+positive values and timestamp, optional native ID, and no unverified
+aggressor-side mapping.
+
+The entire adapter test file passes **105/105** in 3.04 seconds pytest time
+(3.44 seconds wall), 65,256 KiB peak RSS, zero swaps, and zero socket messages.
+Ruff check/format and targeted mypy pass. All network responses are fixtures;
+the official Kraken docs confirm internal pair keys by default for REST
+books/trades/OHLC and the documented count limits. No live Kraken request or
+held source artifact was read. The source-use/retention hold remains active.
+
+At `2026-10-28T19:47:46Z`, memory PSI avg10/avg60 was 0%; I/O PSI avg10/avg60
+was 0.02%/0.07%. `MemAvailable` was 9,973,396 KiB and `SwapFree` 43,548 KiB.
+Reality was active at 1,207,930,880 / 1,207,959,552 bytes (28,672 bytes below
+`MemoryHigh`); API was active at 1,538,605,056 / 1,610,612,736 bytes. No broad
+suite was started. The full 505-case Frontier suite still predates both recent
+Kalshi and Kraken parser changes.
+
+| Requirement | Status | Current evidence and boundary |
+| --- | --- | --- |
+| Kraken pair-bound public book, OHLC, and trade normalization | COMPLETE AND VERIFIED | Fixture adapter suite passes 105/105; all requested pair responses require exact native keys. This verifies parser behavior only. |
+| Full current-tree Frontier Python suite | PARTIALLY VERIFIED | The prior 505-case pass predates Kalshi v20 and Kraken v6. |
+| Live Kraken research | BLOCKED | Source-use and retention authorization remain unresolved; no source request or held artifact access occurred. |
+| Project Frontier overall | PARTIALLY VERIFIED | Broad regression, genuine cross-venue science, endurance, protected recovery, and deployment remain incomplete. |
+
+**Next safe action:** continue offline source-independent review and defer
+resource-bearing broad regressions until a fresh host admission sample shows a
+sustained margin from Reality's `MemoryHigh`.
