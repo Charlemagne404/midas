@@ -736,7 +736,7 @@ class IndependentEconomicAudit(FrontierModel):
     """Recomputed candidate economics from normalized contracts and source books."""
 
     schema_version: int = 3
-    model_version: str = "frontier-independent-economic-audit-18"
+    model_version: str = "frontier-independent-economic-audit-19"
     disposition: EconomicAuditDisposition
     input_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     checked_market_count: int = Field(ge=0, le=4)
@@ -862,6 +862,17 @@ class FrontierMarket(FrontierModel):
                         "Verified payoff must define every state exactly once for every outcome"
                     )
         return self
+
+    @property
+    def has_valid_structure(self) -> bool:
+        """Revalidate nested contract structure after possible unvalidated model copies."""
+        try:
+            validated = FrontierMarket.model_validate(
+                self.model_dump(mode="python", warnings=False)
+            )
+        except (TypeError, ValueError):
+            return False
+        return validated == self
 
     def has_consistent_settlement_asset_identity(self) -> bool:
         """Whether the market and payoff identify the same exact settlement asset."""

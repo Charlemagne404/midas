@@ -36,7 +36,7 @@ from midas.frontier.relationships import (
     propose_relationships,
 )
 
-REPLAY_VERSION = "frontier-deterministic-replay-17"
+REPLAY_VERSION = "frontier-deterministic-replay-18"
 PAIRED_COMPARISON_VERSION = "frontier-paired-replay-1"
 
 
@@ -220,6 +220,8 @@ def deterministic_replay(
     market_index = {item.canonical_id: item for item in ordered_markets}
     if len(market_index) != len(ordered_markets):
         raise ValueError("Replay input contains duplicate market identities")
+    if any(not item.has_valid_structure for item in ordered_markets):
+        raise ValueError("Replay input contains a market that fails structural validation")
     ordered_joint_state_mappings = tuple(
         sorted(joint_state_mappings, key=lambda item: item.mapping_id)
     )

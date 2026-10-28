@@ -52,7 +52,7 @@ from midas.frontier.relationships import (
 )
 
 D = Decimal
-ECONOMIC_MODEL_VERSION = "frontier-economic-verifiers-18"
+ECONOMIC_MODEL_VERSION = "frontier-economic-verifiers-19"
 PARTIAL_FILL_FRACTIONS = (D(0), D("0.25"), D("0.5"), D("0.75"), D(1))
 KALSHI_MVE_SETTLEMENT_AUDIT_VERSION = "kalshi-mve-settlement-audit-2"
 _KALSHI_TAKER_FEE_TYPES = frozenset({"quadratic", "quadratic_with_combo_maker_fees"})
@@ -1068,6 +1068,17 @@ def generate_binary_coverage_candidates(
     if as_of.tzinfo is None or as_of.utcoffset() is None:
         raise ValueError("Evaluation timestamp must be timezone-aware")
     as_of = as_of.astimezone(UTC)
+    if not left.has_valid_structure or not right.has_valid_structure:
+        return (
+            _empty_candidate(
+                left,
+                right,
+                relationship,
+                OpportunityClassification.INCOMPLETE_EVIDENCE,
+                as_of,
+                "A copied market contract fails its structural validation.",
+            ),
+        )
     if {relationship.left_market_id, relationship.right_market_id} != {
         left.canonical_id,
         right.canonical_id,
@@ -1286,6 +1297,11 @@ def generate_logical_implication_candidates(
             ),
         )
 
+    if not left.has_valid_structure or not right.has_valid_structure:
+        return empty(
+            OpportunityClassification.INCOMPLETE_EVIDENCE,
+            "A copied market contract fails its structural validation.",
+        )
     if {relationship.left_market_id, relationship.right_market_id} != {
         left.canonical_id,
         right.canonical_id,
@@ -1549,7 +1565,8 @@ def generate_bounded_payoff_basket_candidates(
     as_of = as_of.astimezone(UTC)
 
     if (
-        market.market_kind != MarketKind.MULTI_OUTCOME_EVENT
+        not market.has_valid_structure
+        or market.market_kind != MarketKind.MULTI_OUTCOME_EVENT
         or market.lifecycle != Lifecycle.OPEN
         or not market.payoff.verified
         or not market.payoff.exhaustive
@@ -1713,6 +1730,12 @@ def _evaluate_single_market_basket(
             assumptions=("No execution or realized P&L is represented.",),
             reasons=(reason,),
             evidence_sha256=_multi_candidate_hash(market, books, (), scenario),
+        )
+
+    if not market.has_valid_structure:
+        return empty(
+            OpportunityClassification.INCOMPLETE_EVIDENCE,
+            "A copied market contract fails its structural validation.",
         )
 
     states = market.payoff.state_ids

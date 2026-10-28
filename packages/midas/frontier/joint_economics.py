@@ -70,6 +70,7 @@ def generate_joint_state_basket_candidates(
     market_by_id = {item.canonical_id: item for item in markets}
     if (
         len(market_by_id) != len(markets)
+        or any(not market.has_valid_structure for market in markets)
         or not mapping.content_identity_matches
         or tuple(sorted(market_by_id)) != mapping.market_ids
         or not 2 <= len(markets) <= 4

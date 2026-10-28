@@ -1024,7 +1024,7 @@ def test_independent_audit_rejects_duplicate_payout_on_unselected_instrument():
     assert audited.independent_audit is not None
     assert audited.independent_audit.disposition.value == "incomplete"
     assert audited.classification == OpportunityClassification.INCOMPLETE_EVIDENCE
-    assert "duplicate payout state identifiers" in audited.independent_audit.message.lower()
+    assert "structural validation" in audited.independent_audit.message.lower()
 
 
 def _multi_outcome_market(*, state_count: int = 3, steps: tuple[str | None, ...] | None = None):
@@ -1074,6 +1074,48 @@ def _multi_outcome_books(market_value, asks=None):
         instrument.native_instrument_id: book(market_value, instrument.native_instrument_id, ask)
         for instrument, ask in zip(market_value.instruments, ask_values, strict=True)
     }
+
+
+def test_multi_outcome_paths_reject_copied_duplicate_instrument_id():
+    event = _multi_outcome_market()
+    books = _multi_outcome_books(event, asks=("0.20", "0.30", "0.40"))
+    valid_candidate = generate_multi_outcome_coverage_candidate(
+        event, books, as_of_utc=T0 + timedelta(milliseconds=100)
+    )
+    instruments = list(event.instruments)
+    instruments[1] = instruments[1].model_copy(
+        update={"native_instrument_id": instruments[0].native_instrument_id}
+    )
+    malformed = event.model_copy(update={"instruments": tuple(instruments)})
+
+    assert not malformed.has_valid_structure
+    candidate = generate_multi_outcome_coverage_candidate(
+        malformed, books, as_of_utc=T0 + timedelta(milliseconds=100)
+    )
+    assert candidate.classification == OpportunityClassification.INCOMPLETE_EVIDENCE
+    assert not candidate.legs
+    assert "structural validation" in candidate.reasons[0].lower()
+
+    audited = independently_audit_candidate(
+        valid_candidate.model_copy(update={"independent_audit": None}),
+        markets={malformed.canonical_id: malformed},
+        books_by_market={malformed.canonical_id: books},
+        relationships={},
+        state_mappings={},
+        instrument_mappings={},
+        scenario=ExecutionScenario(),
+    )
+    assert audited.independent_audit is not None
+    assert audited.independent_audit.disposition.value == "incomplete"
+    assert audited.classification == OpportunityClassification.INCOMPLETE_EVIDENCE
+
+    with pytest.raises(ValueError, match="fails structural validation"):
+        deterministic_replay(
+            (malformed,),
+            tuple(books.values()),
+            as_of_utc=T0 + timedelta(milliseconds=100),
+            code_version="copied-market-structure-test-v1",
+        )
 
 
 def _kalshi_rounded_fee_market(market_value):
@@ -1303,7 +1345,7 @@ def test_payout_currency_must_match_settlement_asset_without_valuation_bridge():
     )
     assert len(generated) == 1
     assert generated[0].classification == OpportunityClassification.INCOMPLETE_EVIDENCE
-    assert "no valuation bridge is modeled" in generated[0].reasons[0]
+    assert "structural validation" in generated[0].reasons[0].lower()
 
     original_left, original_right, original_relationship, original_mapping = _verified_pair()
     original_left_books, original_right_books = _books(original_left, original_right)
@@ -1341,7 +1383,7 @@ def test_payout_currency_must_match_settlement_asset_without_valuation_bridge():
     assert audit.independent_audit is not None
     assert audit.independent_audit.disposition.value == "incomplete"
     assert audit.classification == OpportunityClassification.INCOMPLETE_EVIDENCE
-    assert "payout denomination" in audit.independent_audit.message.lower()
+    assert "structural validation" in audit.independent_audit.message.lower()
 
     multi = _multi_outcome_market()
     unbridged_multi = multi.model_copy(
@@ -1356,7 +1398,7 @@ def test_payout_currency_must_match_settlement_asset_without_valuation_bridge():
         as_of_utc=T0 + timedelta(milliseconds=100),
     )
     assert multi_candidate.classification == OpportunityClassification.INCOMPLETE_EVIDENCE
-    assert "no valuation bridge is modeled" in multi_candidate.reasons[0]
+    assert "structural validation" in multi_candidate.reasons[0].lower()
 
 
 @pytest.mark.parametrize("venue", (Venue.KRAKEN, Venue.COINBASE_EXCHANGE))
@@ -2107,7 +2149,7 @@ def test_independent_audit_rejects_naive_book_time_from_a_reconstructed_model():
     assert audit.independent_audit is not None
     assert audit.independent_audit.disposition.value == "incomplete"
     assert "not timezone-aware" in audit.independent_audit.message
-    assert audit.independent_audit.model_version == "frontier-independent-economic-audit-18"
+    assert audit.independent_audit.model_version == "frontier-independent-economic-audit-19"
 
 
 def test_independent_audit_rejects_quantity_step_mutation():
@@ -2233,7 +2275,7 @@ def test_candidate_generation_and_independent_audit_enforce_price_ticks():
         as_of_utc=T0 + timedelta(milliseconds=100),
     )
     candidate = next(item for item in candidates if item.legs)
-    assert candidate.model_version == "frontier-economic-verifiers-18"
+    assert candidate.model_version == "frontier-economic-verifiers-19"
 
     def with_half_dollar_ticks(market_value):
         instruments = tuple(
@@ -2651,7 +2693,7 @@ def test_verified_multi_outcome_coverage_is_exact_and_stays_hypothetical():
         as_of_utc=T0 + timedelta(milliseconds=100),
         code_version="multi-outcome-fixture-v1",
     )
-    assert replay.manifest.replay_version == "frontier-deterministic-replay-17"
+    assert replay.manifest.replay_version == "frontier-deterministic-replay-18"
     replay_candidate = replay.candidates[0]
     assert replay_candidate.model_copy(update={"independent_audit": None}) == candidate
     assert replay_candidate.independent_audit is not None
@@ -3009,7 +3051,7 @@ def test_deterministic_replay_is_invariant_to_input_order():
     }
     first = deterministic_replay((left, right), all_books, **kwargs)
     second = deterministic_replay((right, left), tuple(reversed(all_books)), **kwargs)
-    assert first.manifest.economic_model_version == "frontier-economic-verifiers-18"
+    assert first.manifest.economic_model_version == "frontier-economic-verifiers-19"
     assert first.run_id == second.run_id
     assert first.result_sha256 == second.result_sha256
     assert first.candidates == second.candidates
