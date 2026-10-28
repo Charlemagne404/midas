@@ -12263,3 +12263,39 @@ deferred under the API memory boundary.
 
 Next safe action: inspect logical-implication verification and candidate
 classification boundaries with focused fixtures; keep broad suites deferred.
+
+## Logical-implication direction and state bounds — 2026-10-28 21:47 UTC
+
+The implication verifier treats direction as material. New tests exercise the
+valid source-YES-to-target-YES basket and reject its reverse when one joint
+state is a counterexample. They also reject a non-bijective state mapping and a
+1,025-state mapping before payout-vector traversal; the configured cap is
+1,024 states. The tests use pinned fixture markets and an explicit external
+assertion, so they verify bounded arithmetic and mapping behavior rather than
+semantic event equivalence.
+
+Test commit `cd8d95c` adds the three new verifier cases. Ruff and format checks
+pass for the changed test module. The three new verifier cases plus the
+existing directed basket and independent audit pass **4/4** in
+0.35 seconds under a 1 GiB address-space limit, 60-second CPU-time limit, and
+reduced process priority. No source endpoint was queried and no production
+logic changed.
+
+At `2026-10-28T21:47:46Z`, Reality and API were active. Reality used
+1,207,885,824 / 1,207,959,552 bytes at `MemoryHigh` (73,728 bytes below); API
+used 1,607,192,576 / 1,610,612,736 bytes (3,420,160 bytes below). Memory PSI
+avg10/avg60/avg300 was 0%. `MemAvailable` was 9,640,972 kB and `SwapFree` was
+51,260 kB. No protected service changed. No further tests are justified at
+this near-boundary sample.
+
+| Requirement | Status | Evidence and boundary |
+| --- | --- | --- |
+| Directed implication arithmetic | COMPLETE AND VERIFIED WITH FIXTURES | Forward basket verifies; reverse direction with a counterexample is rejected. |
+| State mapping validation | COMPLETE AND VERIFIED WITH FIXTURES | Non-bijective mapping and state count above 1,024 are rejected. |
+| Independent implication candidate audit | COMPLETE AND VERIFIED WITH FIXTURES | Existing directed basket audit still verifies and remains conditional economically. |
+| Semantic event relationship | PARTIALLY VERIFIED | External assertion and pinned evidence remain required; fixtures do not establish live event equivalence. |
+| Project Frontier overall | PARTIALLY VERIFIED | Live research, broad regression, endurance, recovery, and deployment remain open. |
+
+Next safe action: continue read-only review of candidate classification and
+adversarial relationship evidence. Defer further tests until a fresh sample
+shows materially more protected-service headroom.

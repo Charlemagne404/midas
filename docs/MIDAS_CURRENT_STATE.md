@@ -3702,3 +3702,18 @@ At `2026-10-28T21:46:10Z`, Reality and API were active. Reality used
 1,610,612,736 bytes. Memory PSI was 0%, `MemAvailable` was 9,656,552 kB, and
 `SwapFree` was 51,228 kB. No service changed. Semantic resolution evidence,
 live relationship validation, broad regression, and deployment remain open.
+
+## Project Frontier logical-implication review — 2026-10-28 21:47 UTC
+
+Commit `cd8d95c` adds the focused logical-implication cases, which pass **4/4**
+in 0.35 seconds. The tests confirm direction matters, reject a reverse
+implication with a counterexample and non-bijective joint-state mappings, and
+enforce the 1,024-state limit.
+The existing directed candidate still passes its independent fixture audit.
+No venue endpoint was queried; no production logic changed.
+
+At `2026-10-28T21:47:46Z`, both protected services were active. Reality used
+1,207,885,824 / 1,207,959,552 bytes at `MemoryHigh`; API used 1,607,192,576 /
+1,610,612,736 bytes. Memory PSI was 0%, `MemAvailable` was 9,640,972 kB, and
+`SwapFree` was 51,260 kB. Reality headroom was just 73,728 bytes. Further tests
+and broad regression remain deferred at this sample.

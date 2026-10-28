@@ -11359,3 +11359,29 @@ changed.
 
 Next safe action: review logical implication and dependent-market candidate
 classification with fixture-only checks.
+
+## Logical-implication direction and bounds — 2026-10-28 21:47 UTC
+
+Commit `cd8d95c` adds tests for reverse-direction counterexamples,
+non-bijective joint-state mapping, and the 1,024-state verification cap. Three
+new cases plus the existing
+directed basket and independent audit pass **4/4** in 0.35 seconds under a 1 GiB
+address-space and 60-second CPU-time limit with reduced priority. Ruff and
+format pass. All evidence is fixture-only; no production logic or source data
+changed.
+
+At `2026-10-28T21:47:46Z`, Reality was 73,728 bytes below its
+1,207,959,552-byte `MemoryHigh`; API was 3,420,160 bytes below its
+1,610,612,736-byte boundary. Both services were active and memory PSI was 0%.
+Available memory was 9,640,972 kB and swap free was 51,260 kB. Broad regression
+remains deferred.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Implication direction and counterexamples | COMPLETE AND VERIFIED WITH FIXTURES | Reverse implication is rejected when a mapped-state counterexample exists. |
+| Joint state bounds | COMPLETE AND VERIFIED WITH FIXTURES | Non-bijective and above-cap mappings fail closed. |
+| Semantic mapping | PARTIALLY VERIFIED | Assertions and market state mappings are fixture evidence only. |
+| Project Frontier overall | PARTIALLY VERIFIED | Live evidence, broad regression, endurance, recovery, and deployment remain open. |
+
+Next safe action: continue static review of candidate classifications; defer
+more tests until protected headroom improves.
