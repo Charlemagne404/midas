@@ -6484,3 +6484,34 @@ protected store, worker, or production service was accessed.
 **Next safe action:** after a fresh low-I/O sample, rerun the exact-commit
 economics/storage slices left pending above; keep source requests and protected
 production changes held.
+
+## Exact-tree timestamp regression checkpoint — 2026-10-28 08:03 UTC
+
+**Code commits:** `e1946bc` (independent audit v13) and `dd4882d`
+(price-history replay v2).
+
+The previously pending exact-commit regression has now run. The economics /
+replay, storage, and historical-replay modules passed **79/79** together,
+including the model-copy naive timestamp cases. This includes the full 74-case
+economics/storage slice after the final runtime `isinstance` check. The full
+Frontier API module passed **56/56** after audit v13. After price-history replay
+v2, its route-level mocked probe/replay case passed **1/1**. Ruff, Ruff format,
+strict mypy for both changed source areas, and `git diff --check` pass. The
+existing Starlette/httpx TestClient deprecation warning remains.
+
+At `2026-10-28T08:02:44Z`, memory PSI avg10 was **0.00% some/full**, I/O PSI
+avg10 was **0.15% some / 0.00% full**, about **10 GiB** was available, and the
+shared Arena lock was free. Earlier post-run samples briefly exceeded the I/O
+gate; no further broad suite was started. No live source, protected store,
+worker, or production service was accessed.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Independent audit naive-time rejection | COMPLETE AND VERIFIED | The final economics/replay and storage modules pass; full API module passes. |
+| Historical replay nested-model validation | COMPLETE AND VERIFIED | Five replay module cases and the route-level API case pass; new output version is v2. |
+| Exact-tree timestamp regression slice | COMPLETE AND VERIFIED | 79 relevant tests pass together on the final code. |
+| Frontier project acceptance | PARTIALLY VERIFIED | This does not close full single-process regression, live cross-venue science, held-source access, production recovery, or deployment gates. |
+
+**Next safe action:** return to source-independent acceptance gaps. Only start
+another test or replay workload after a fresh host admission sample; preserve
+all source-use and production holds.

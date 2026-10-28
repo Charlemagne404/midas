@@ -1936,3 +1936,17 @@ avg10 was **1.09% some / 0.68% full**, and about **10 GiB** was available. The
 route test used a mocked source transport. No source, protected store, worker,
 or production service was accessed. Frontier remains research-only and
 **PARTIALLY VERIFIED**.
+
+### Exact-tree timestamp regression checkpoint — 2026-10-28 08:03 UTC
+
+The pending verifier rerun is now complete. On the final code tree, the
+independent economics/replay, storage, and historical-replay modules passed
+**79/79**. The full Frontier API module had passed **56/56** after audit v13;
+the price-history API case passed **1/1** after replay v2. Ruff, Ruff format,
+strict mypy for the changed sources, and whitespace checks pass. The earlier
+74-case status is superseded. At 08:02:44 UTC, memory PSI avg10 was **0%**,
+I/O PSI avg10 was **0.15% some / 0.00% full**, about **10 GiB** was available,
+and no shared Arena lock holder was present. No source, worker, protected store,
+or production service was accessed. Overall Frontier remains **PARTIALLY
+VERIFIED**: the broader single-process suite and scientific/deployment gates
+remain open.

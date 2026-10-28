@@ -7731,3 +7731,32 @@ production service was accessed.
 | Reconstructed price-history input handling | COMPLETE AND VERIFIED | Nested naive points are rejected by model revalidation before replay arithmetic and hashing. |
 | Price-history replay/API integration | COMPLETE AND VERIFIED | Five replay tests and one mocked API replay case pass; new outputs are version 2. |
 | Frontier project acceptance | PARTIALLY VERIFIED | Live equivalent-market evidence, held-source approvals, broad resource/recovery, and deployment remain outstanding. |
+
+## Exact-tree timestamp regression checkpoint — 2026-10-28 08:03 UTC
+
+This checkpoint supersedes the preceding note that the final economics/storage
+rerun was still pending. On the exact current code, the economics/replay,
+storage, and historical-replay test modules pass **79/79** together. This
+includes the final runtime type guard in independent audit v13, the
+candidate/book `model_copy` naive-time regressions, and the nested historical
+price-point rejection in replay v2.
+
+The full `tests/frontier/test_api.py` module passed **56/56** after audit v13.
+After the replay v2 change, its fixture-backed price-history probe/replay case
+passed **1/1**. Strict mypy passes for `independent_audit.py`, `models.py`, and
+`historical_replay.py`; Ruff and Ruff format checks pass for all changed Python
+sources and tests. `git diff --check` passes. The API tests emit the existing
+Starlette/httpx `TestClient` deprecation warning.
+
+At `2026-10-28T08:02:44Z`, memory PSI avg10 was **0.00% some/full**, I/O PSI
+avg10 was **0.15% some / 0.00% full**, approximately **10 GiB** was available,
+and the shared Arena lock was free. No live source, worker, protected store, or
+production service was accessed. Earlier post-run I/O samples were elevated,
+so no extra broad suite was scheduled.
+
+| Component | Status | Current evidence and remaining boundary |
+| --- | --- | --- |
+| Independent economic audit time safety | COMPLETE AND VERIFIED | Final affected module and full API module pass; naive typed evidence fails closed. |
+| Descriptive price-history replay | COMPLETE AND VERIFIED | Final five-case module and route-level API test pass; new replay identity is v2. |
+| Timestamp regression slice | COMPLETE AND VERIFIED | 79 relevant tests pass on the exact current code. |
+| Frontier overall acceptance | PARTIALLY VERIFIED | Full single-process suite, live equivalent markets, held-source permission, resource endurance, and production deployment remain open. |
