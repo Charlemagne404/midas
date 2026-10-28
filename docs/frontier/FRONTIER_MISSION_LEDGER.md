@@ -1,5 +1,45 @@
 # Project Frontier Mission Ledger
 
+## Probe source-use hold closeout and exact-tree checks — 2026-10-28 11:53 UTC
+
+Commits `782df89`, `9776427`, and `4b8c9f0` enforce source-use holds across
+all 11 public probe routes, report effective probe eligibility, and preserve
+the validated config in route scope. The Coinbase API regression requires HTTP
+409 before any transport request. Tests were corrected to pass the same config
+to adapter and transport and to persist Coinbase config while its source stays
+held.
+
+The Coinbase module passed **13/13** and the four affected Kalshi/Coinbase
+collection cases passed **4/4**. The full Frontier suite then passed
+**420/420** in **28.88 s** (30.30 s wall), peak RSS **378,920 KiB**, zero swaps,
+zero filesystem input, 368 filesystem-output blocks, and zero socket messages.
+Pre-run PSI at `11:51:24Z` was memory **0.00%**, I/O **0.76% some / 0.73%
+full**. Post-run at `11:52:02Z`, memory remained **0.00%**, I/O was **0.52%**,
+and about **10 GiB** was available. One existing Starlette/httpx deprecation
+warning was emitted.
+
+The full run preceded the final `4b8c9f0` API helper refactor. A strict-mypy
+run on the prior boolean helper reported 13 union-attribute errors where the
+optional config was used after a separate boolean check. The current helper
+returns the validated config after enforcing flags and policy hold, preserving
+type narrowing. Ruff check/format pass; strict mypy and tests have not been
+rerun against that exact commit.
+
+The latest host sample at `11:53:54Z` showed memory PSI avg10 **1.16% some /
+1.02% full**, I/O PSI **0.91% some / 0.83% full**, about **10 GiB** available,
+and swap **3.5/4 GiB** used. The memory gate is exceeded; no further test or
+mypy workload was started.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Coinbase source-use hold | COMPLETE AND VERIFIED | Config/adapter/transport/API guards; focused module 13/13 on pre-refactor code. |
+| API source-use hold | PARTIALLY VERIFIED | Full suite 420/420 before type-narrowing refactor; exact-tree rerun and strict mypy pending. |
+| Frontier overall | PARTIALLY VERIFIED | Live cross-venue evidence, broader MIDAS/browser checks, and deployment remain open. |
+
+**Next safe action:** wait for a fresh memory and I/O PSI avg10 below 1%, run
+strict mypy on `apps/api/frontier.py` and the three modified adapter modules,
+then rerun the Frontier suite once on tmpfs if the gate remains admitted.
+
 ## API source-use hold preflight — 2026-10-28 11:48 UTC
 
 Code commit `782df89` makes every public probe route reject a source whose

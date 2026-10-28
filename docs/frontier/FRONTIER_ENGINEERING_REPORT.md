@@ -2,6 +2,42 @@
 
 **Report date:** 2026-10-28
 
+## Current status — 2026-10-28 11:53 UTC
+
+Commits `782df89`, `9776427`, and `4b8c9f0` complete the source-use hold path:
+all 11 public probe routes reject held source configs before adapter work,
+source listings report effective probe eligibility, and the guard returns the
+validated config for route use. The Coinbase API regression checks HTTP 409,
+the held reason, disabled effective status, and zero transport requests.
+
+The Coinbase module passed **13/13** on the immediately preceding guard
+implementation. Four affected Kalshi/Coinbase collection cases passed **4/4**.
+The full Frontier suite then passed **420/420** in **28.88 seconds** (30.30 s
+wall), with **378,920 KiB** peak RSS, zero swaps, zero filesystem input, 368
+filesystem-output blocks, and zero socket messages. Pre-run PSI at
+`11:51:24Z` was memory **0.00%**, I/O **0.76% some / 0.73% full**; post-run
+at `11:52:02Z`, memory remained **0.00%**, I/O was **0.52%**, and about
+**10 GiB** was available. The run emitted one existing Starlette/httpx
+deprecation warning.
+
+The full run preceded the final `4b8c9f0` refactor from a boolean guard to a
+guard that returns the validated config. That refactor preserves the runtime
+condition and addresses strict-mypy union-attribute errors found in the prior
+check, but strict mypy and tests have not yet been rerun against that exact
+commit. Ruff check/format and `git diff --check` pass on the current tree.
+
+At `11:53:54Z`, memory PSI avg10 rose to **1.16% some / 1.02% full**, I/O PSI
+was **0.91% some / 0.83% full**, about **10 GiB** was available, and host swap
+was **3.5/4 GiB** used. The memory gate is exceeded; no further tests or mypy
+run started under that sample. Frontier remains **PARTIALLY VERIFIED**.
+
+| Requirement | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Coinbase source-use hold | COMPLETE AND VERIFIED | `ca14e37`; direct/copy/type/transport guards pass in the 13-case module on the pre-`4b8c9f0` tree. |
+| API source-use hold | IMPLEMENTED, LIVE VALIDATION PENDING | `782df89`, `9776427`, `4b8c9f0`; 420 tests pass before the final type-narrowing refactor; exact-tree checks pending. |
+| Strict mypy on API guard | PARTIALLY VERIFIED | The first run exposed 13 union-attribute errors; `4b8c9f0` returns the validated config, but rerun awaits resource admission. |
+| Frontier overall | PARTIALLY VERIFIED | Live cross-venue evidence, broader MIDAS/browser checks, and deployment remain open. |
+
 ## Current status — 2026-10-28 11:48 UTC
 
 Commit `782df89` adds an API-level source-use hold preflight to all 11 bounded
@@ -8828,6 +8864,12 @@ store, or Arena job was accessed or started.
 | `ca14e37` | `packages/midas/frontier/adapters/base.py`; `packages/midas/frontier/adapters/coinbase.py`; `tests/frontier/test_coinbase.py` | Reject Coinbase hold clearing, generic config substitution, and mismatched injected transport config; keep offline adapter/API fixtures on a held config. |
 | `92b5bf0` | `tests/frontier/test_adapters.py` | Pass the same bounded `KrakenSpotConfig` into the adapter and fixture transport under the new config-match invariant. |
 | `782df89` | `apps/api/frontier.py`; `tests/frontier/test_coinbase.py` | Reject held sources in all 11 probe routes before adapter or transport work; replace the held Coinbase API success-path fixture with an HTTP 409/zero-request regression. |
+| `9776427` | `apps/api/frontier.py`; `tests/frontier/test_coinbase.py` | Report `public_probe_enabled` as effective eligibility, including source-policy holds; assert held Coinbase source status. |
+| `4b8c9f0` | `apps/api/frontier.py`; `tests/frontier/test_adapters.py`; `tests/frontier/test_collection.py` | Return the validated source config from the API guard for type narrowing; align Kalshi config bounds and preserve held Coinbase collection config in offline journal tests. |
+| `98704bb` | `docs/frontier/FRONTIER_ARCHITECTURE.md`; `docs/frontier/FRONTIER_OPERATIONS.md` | Document strict Coinbase source-use hold and fixture-only transport. |
+| `2315615` | `docs/MIDAS_CURRENT_STATE.md`; `docs/frontier/FRONTIER_ENGINEERING_REPORT.md`; `docs/frontier/FRONTIER_MISSION_LEDGER.md` | Record the Kraken fixture config alignment. |
+| `9577355` | `docs/MIDAS_CURRENT_STATE.md`; `docs/frontier/FRONTIER_ENGINEERING_REPORT.md`; `docs/frontier/FRONTIER_MISSION_LEDGER.md` | Record API source-use hold preflight and its regression evidence. |
+| `afde92c` | `docs/frontier/FRONTIER_ENGINEERING_REPORT.md`; `docs/frontier/FRONTIER_MISSION_LEDGER.md`; `docs/MIDAS_CURRENT_STATE.md` | Record resource-gated Coinbase policy regression status. |
 
 The temporary `tests/frontier/test_recorded_cross_venue_relationship.py` was
 removed after the test guard denied held-capture access; it is not part of the

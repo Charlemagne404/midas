@@ -2568,3 +2568,18 @@ run, memory PSI avg10 reached **52.19% some / 46.63% full** and I/O PSI reached
 Commit `92b5bf0` also aligns the Kraken fixture transport with the exact
 `KrakenSpotConfig` supplied to its adapter. Ruff check/format pass for the
 fixture; no tests were run under the current memory PSI gate.
+
+### Frontier probe-source hold continuation — 2026-10-28 11:53 UTC
+
+Commits `782df89`, `9776427`, and `4b8c9f0` gate held-source use in all 11
+public probe routes and report effective probe eligibility. The Coinbase API
+route now returns HTTP 409 before transport access while the source is held.
+The corrected Frontier suite passed **420/420** before the final type-narrowing
+refactor, with **378,920 KiB** peak RSS and zero swaps or filesystem input.
+That run emitted the existing Starlette/httpx deprecation warning. Strict
+mypy found 13 optional-config narrowing errors in the prior API guard; the
+current helper returns the validated config, but exact-tree mypy and tests
+remain pending. At `11:53:54Z`, memory PSI avg10 was **1.16% some / 1.02%
+full**, I/O PSI **0.91% some / 0.83% full**, and about **10 GiB** was
+available. No live source, protected service, or deployment was used.
+Frontier remains research-only and **PARTIALLY VERIFIED**.
