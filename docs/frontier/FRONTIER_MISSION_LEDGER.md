@@ -3223,3 +3223,19 @@ available, and no process holding the shared Arena lock at that instant. Keep
 Arena-dependent work deferred until another fresh admission check. No source
 request or Arena worker ran. Frontier remains isolated, research-only,
 undeployed, and **PARTIALLY VERIFIED**.
+
+### Collection history with an absent adapter — 2026-10-28 00:05 UTC
+
+Commit `b2e3eed` adds a regression proving that a hash-verified paused run
+remains visible in the local history after its adapter is unregistered. The API
+keeps the run non-resumable with the reason “The pinned source adapter is not
+registered.” and reports `network_called: false`. The test passes **1/1** in
+0.69 seconds at **72,864 KiB peak RSS**, zero swaps. Ruff and
+`git diff --check` pass; the existing Starlette/httpx deprecation warning
+remains.
+
+The pre-test host sample at 00:05:01 UTC had PSI avg10 **0.36% some / 0.33%
+full**, avg60 **18.90% some / 16.97% full**, 10 GiB available, and no visible
+Arena admission-lock holder. No source adapter, network request, or Arena
+worker was used. Frontier remains isolated, research-only, undeployed, and
+**PARTIALLY VERIFIED**.

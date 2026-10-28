@@ -1214,3 +1214,14 @@ pre-test sample, PSI avg10 was 11.06% some / 9.93% full, avg60 was 33.28%
 some / 29.88% full, 10 GiB was available, and the shared Arena lock was free.
 No source request or Arena worker ran. Frontier remains research-only,
 undeployed, and **PARTIALLY VERIFIED**; see the [mission ledger](frontier/FRONTIER_MISSION_LEDGER.md).
+
+### Frontier collection history when an adapter is absent — 2026-10-28 00:05 UTC
+
+Commit `b2e3eed` confirms that saved paused-run metadata remains inspectable
+without a registered adapter, while history reports `network_called: false` and
+resume remains disabled with a clear reason. The focused test passes **1/1**
+in 0.69 seconds at **72,864 KiB peak RSS**, zero swaps. Ruff and
+`git diff --check` pass. The pre-test resource sample recorded PSI avg10 below
+1%, 10 GiB available, and no Arena lock holder. No source request or worker
+ran. Frontier remains research-only, undeployed, and **PARTIALLY VERIFIED**;
+see the [mission ledger](frontier/FRONTIER_MISSION_LEDGER.md).

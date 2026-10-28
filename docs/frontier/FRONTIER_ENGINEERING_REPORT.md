@@ -4819,3 +4819,25 @@ some / 29.88% full**, 10 GiB available, and no Arena admission-lock holder.
 
 No exchange, collector, Arena worker, protected service, production store,
 or deployment was used. Continue bounded offline acceptance work.
+
+### Collection history with an absent adapter — 2026-10-28 00:05 UTC
+
+Commit `b2e3eed` tests the history endpoint when a saved run outlives its
+registered adapter. The API returns the locally pinned run and checkpoint
+metadata, sets `network_called: false`, and marks the run non-resumable with an
+explicit missing-adapter reason. The focused test passes **1/1** in 0.69
+seconds at **72,864 KiB peak RSS**, zero swaps. Ruff and `git diff --check`
+pass; the existing Starlette/httpx deprecation warning remains.
+
+At the pre-test 00:05:01 UTC resource sample, PSI avg10 was **0.36% some / 0.33%
+full**, avg60 was **18.90% some / 16.97% full**, 10 GiB was available, and no
+shared Arena lock holder was visible. This was an offline temporary-store test;
+no exchange call, held capture read, or Arena worker occurred.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Missing-adapter history and resume diagnostics | COMPLETE AND VERIFIED | The history remains inspectable while resume eligibility is false; fixture test confirms the reason and no network status. |
+| Cross-venue source evidence and economics | BLOCKED | Existing policy restrictions prevent new source requests; no new multi-venue evidence is claimed. |
+| Project Frontier overall | PARTIALLY VERIFIED | Deployment, genuine cross-venue validation, and broader clean combined regression remain incomplete. |
+
+Continue bounded offline acceptance; Frontier remains isolated and research-only.
