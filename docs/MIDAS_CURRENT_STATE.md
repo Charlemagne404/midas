@@ -1877,3 +1877,14 @@ PSI avg10 was 0%, while I/O PSI was **2.52% some / 1.96% full**, so the
 remaining Frontier regression was deferred. The shared Arena lock was free;
 no production service, source, or protected store was touched. Overall Frontier
 remains isolated, research-only, and **PARTIALLY VERIFIED**.
+
+### Arena snapshot time guard — 2026-10-28 07:42 UTC
+
+Commit `6d5e82b` closes a related issue in Arena snapshot builders: replay,
+discovery-scope, and event-time functions now reject naive time inputs before
+converting them to UTC and hashing the snapshot. The three affected Arena test
+modules pass **25/25**; strict mypy and Ruff pass. At 07:42:38 UTC memory PSI
+avg10 was 0%, but I/O PSI was **1.64% some / 1.08% full**, so remaining broad
+regression was deferred under the 1% admission gate. The shared Arena lock was
+free and no worker, source, production service, or protected store was touched.
+Frontier remains isolated, research-only, and **PARTIALLY VERIFIED**.

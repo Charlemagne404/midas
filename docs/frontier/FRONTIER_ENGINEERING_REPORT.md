@@ -7594,3 +7594,33 @@ service, protected store, worker, or source was accessed.
 | Raw response timestamp contract | COMPLETE AND VERIFIED | Request and receipt times reject naive values and normalize aware offsets. |
 | Broader regression after model changes | PARTIALLY VERIFIED | 73 affected tests pass; adapter/API and remaining Frontier modules are pending lower I/O pressure. |
 | Project Frontier overall | PARTIALLY VERIFIED | Live cross-venue science, source permissions, full resource/recovery evidence, and deployment remain open. |
+
+## Arena snapshot-builder timestamp guard — 2026-10-28 07:42 UTC
+
+The timestamp review extended to three Arena `make_snapshot` functions. The
+paired replay and discovery-scope builders serialize `as_of_utc` after calling
+`astimezone(UTC)`; the event-time builder does the same for its replay cutoff
+sequence. Without an earlier awareness check, a naive datetime is interpreted
+using the host local timezone and can be silently shifted before the snapshot
+hash is generated.
+
+Commit `6d5e82b` adds an explicit timezone-awareness check before conversion in
+all three builders. Aware timestamps still normalize to UTC. The affected
+Arena test modules pass **25/25**, including naive input rejection for replay,
+discovery, and timeline snapshots. Strict mypy passes for the three changed
+Arena modules, and Ruff check/format pass. The existing Starlette/httpx
+`TestClient` deprecation warning remains.
+
+At `2026-10-28T07:42:38Z`, memory PSI avg10 was **0.00% some/full**, I/O PSI
+avg10 was **1.64% some / 1.08% full**, about **10 GiB** was available, and the
+shared Arena lock was free. The broader suite remains deferred until I/O
+pressure is below the 1% admission threshold. No source, production service,
+protected store, or Arena worker was touched.
+
+| Component | Status | Current evidence and remaining boundary |
+| --- | --- | --- |
+| Paired replay snapshot time input | COMPLETE AND VERIFIED | Naive values reject before normalization; targeted module passes. |
+| Discovery-scope snapshot time input | COMPLETE AND VERIFIED | Naive values reject before normalization; targeted module passes. |
+| Event-time snapshot cutoff input | COMPLETE AND VERIFIED | Naive cutoffs reject before normalization; targeted module passes. |
+| Broader regression after timestamp audit | PARTIALLY VERIFIED | Targeted economics/storage/Arena modules pass; adapter/API and full suite are deferred by I/O admission. |
+| Frontier overall | PARTIALLY VERIFIED | Live multi-venue equivalence, source permissions, complete production readiness, and deployment remain incomplete. |

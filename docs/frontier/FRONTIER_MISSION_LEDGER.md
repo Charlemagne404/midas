@@ -6333,3 +6333,39 @@ admission threshold. No worker or protected store was touched.
 **Next safe action:** after I/O pressure falls, run the remaining adapter/API
 and Frontier regression slices affected by the shared model change. Continue
 source-independent code review while resource admission is closed.
+
+## Arena snapshot-builder timestamp guard — 2026-10-28 07:42 UTC
+
+**Stage:** E (deterministic replay and Arena artifacts).
+**Code commit:** `6d5e82b` on `codex/frontier-20261026`.
+
+Review found that the paired replay, discovery-scope, and event-time Arena
+`make_snapshot` functions converted their datetime inputs with
+`astimezone(UTC)` before checking that the values were aware. Python interprets
+naive datetimes in the host local timezone, so those public builders could
+silently shift `as_of_utc` or replay cutoffs before pinning the content hash.
+The builders now reject naive timestamps first; aware offsets continue to be
+normalized to UTC for snapshot identity.
+
+The three affected modules passed **25/25** tests, including one naive-time
+rejection case per builder. Strict mypy passed for the three Arena modules;
+Ruff check and format check passed for the changed modules and tests. The
+existing Starlette/httpx `TestClient` deprecation warning remains.
+
+At `2026-10-28T07:42:38Z`, memory PSI avg10 was **0.00% some/full**, I/O PSI
+avg10 was **1.64% some / 1.08% full**, about **10 GiB** was available, and the
+shared Arena lock was free. Further broad regression remains deferred until
+the I/O gate falls below 1%. No worker, source, protected store, or production
+service was accessed.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Arena replay snapshot time guard | COMPLETE AND VERIFIED | Naive analysis time is rejected before UTC normalization; test passes. |
+| Arena discovery snapshot time guard | COMPLETE AND VERIFIED | Naive analysis time is rejected before content addressing; test passes. |
+| Arena event-time snapshot guard | COMPLETE AND VERIFIED | Naive replay cutoffs are rejected before content addressing; test passes. |
+| Full Frontier regression after time-contract changes | PARTIALLY VERIFIED | Affected economics/storage and Arena modules pass; remaining adapter/API/full suite wait for lower I/O pressure. |
+| Project Frontier overall | PARTIALLY VERIFIED | Genuine cross-venue evidence, broad resource/recovery checks, and deployment remain open. |
+
+**Next safe action:** continue source-independent review without launching
+resource-bearing jobs while the shared-host I/O gate is high. Rerun the
+remaining affected regressions only after a fresh admitted sample.
