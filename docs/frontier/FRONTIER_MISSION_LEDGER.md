@@ -4835,3 +4835,50 @@ simultaneous conversion, funding, or transfer availability. ECB is documented
 as a possible contextual source, not added to the exchange registry or used
 to populate candidate economics. No ECB request or capture was made. See the
 [source-data terms review](SOURCE_DATA_TERMS_REVIEW_2026-10-27.md).
+
+### Current mission reconciliation — 2026-10-28 04:30 UTC
+
+The isolated worktree is clean on `codex/frontier-20261026` at
+`2064671` (`docs(frontier): evaluate official ECB FX reference data`). The
+current code includes read-only adapters for Polymarket, Kalshi, Kraken, and
+Coinbase; canonical market/payoff models; relationship review and provenance;
+supported candidate families; bounded multi-market joint-state baskets;
+independent arithmetic checks; source-aware storage/replay; selected Arena
+integration; and the native Frontier Mission Control interface.
+
+The complete `tests/frontier` suite plus selected Arena discovery, replay,
+timeline, and job modules passed **390/390** together at **380,624 KiB peak
+RSS**, with zero swaps and socket messages. Web unit tests passed **40/40**,
+Frontier browser E2E passed **6/6**, and the temporary-output production build
+passed. Targeted legacy API, paper-research, storage, recording, service-guard,
+and held-source-boundary checks also passed; earlier ledger entries retain the
+exact commands and per-run measurements. The full MIDAS repository suite was
+not run.
+
+This reconciliation supersedes earlier entries that described general
+multi-market search as deferred: commit `4bd3b7f` added a bounded conditional
+joint-state basket across two to four markets, and the current combined
+regression covers it. The map requires explicit shared-state projections and
+is not semantically authenticated; positive outputs remain conditional and
+practically ineligible.
+
+| Component | Status | Remaining boundary |
+| --- | --- | --- |
+| Frontier engine, supported candidate families, independent audit, replay, and UI | COMPLETE AND VERIFIED | Verified on bounded fixtures and selected consumers; the full repository suite and sustained service behavior remain unmeasured. |
+| Multi-market joint-state basket | COMPLETE AND VERIFIED | Arithmetic and replay are verified conditional on an external map; semantic truth and attainability are not certified. |
+| Four source adapters | PARTIALLY VERIFIED | Fixture/contract checks pass; Kalshi and Kraken use remains held, Coinbase remains held pending exact scope review, and no live cross-venue sample is claimed. |
+| Genuine cross-venue equivalence and economic opportunity | BLOCKED | Current source-use holds and missing synchronized, payoff-equivalent evidence prevent live scientific validation. |
+| Production transition | DEFERRED | Frontier remains isolated; full deployment-scope readiness, monitoring/rollback preparation, and separate authorization are outstanding. |
+| Project Frontier overall | PARTIALLY VERIFIED | Do not infer live equivalence, executable profitability, production readiness, or deployment from fixture results. |
+
+At `2026-10-28T04:29:44Z`, memory PSI was `avg10=0.00%` some/full,
+`avg60=3.83% / 3.49%`, and `avg300=10.54% / 9.46%`; I/O PSI avg10 was
+`0.91% / 0.63%`, with about 10.3 GiB available and 333 MiB swap free. This is a
+time-specific host observation, not a production capacity result. No test,
+build, source request, service action, or deployment was started for this
+documentation reconciliation.
+
+**Next safe action:** continue source-independent acceptance and code review.
+Rerun broader repository validation only after a fresh host and shared-Arena
+admission check. Keep held-source requests and use disabled until the relevant
+permission is independently validated; preserve the research-only boundary.

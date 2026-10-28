@@ -2,6 +2,41 @@
 
 **Report date:** 2026-10-28
 
+## Current status — 2026-10-28 04:30 UTC
+
+The isolated development branch is `codex/frontier-20261026`, at commit
+`2064671` (`docs(frontier): evaluate official ECB FX reference data`); the
+worktree is clean. The current implementation includes four read-only source
+adapters, canonical market and payoff models, evidence-backed relationship
+review, binary/implication/basket candidate families, bounded multi-market
+joint-state baskets, an independent arithmetic audit, isolated collection and
+replay, Arena integration, and the native Mission Control workspace.
+
+The complete Frontier test directory plus selected Arena discovery, replay,
+timeline, and job tests passed **390/390** in one invocation at **380,624 KiB
+peak RSS**, with zero swaps or socket messages. The web suite passed **40/40**,
+Frontier browser E2E passed **6/6**, and a temporary-output TypeScript/Vite
+production build passed. Selected legacy API, paper-research, storage, recording,
+protected-service guard, and held-capture boundary checks also passed; see the
+dated ledger entries for commands, timings, and limitations. The full MIDAS
+repository suite has not run.
+
+The multi-market joint-state basket search accepts an explicit, bounded map
+across two to four event markets. Its payout arithmetic is independently
+audited and replay-pinned, but the supplied map remains an unverified external
+assertion, so positive results stay conditional and practically ineligible.
+Earlier entries describing this search as deferred are historical and were
+superseded by the 02:03 UTC implementation checkpoint.
+
+Frontier remains **PARTIALLY VERIFIED**, research-only, isolated, and
+undeployed. Kalshi and Kraken data use remains held; Coinbase remains held
+pending use-scope review. The single bounded Polymarket detail capture does not
+prove event membership, payoff equivalence, exhaustive outcomes, or a
+cross-venue relationship. Consequently, no genuine cross-venue economic
+opportunity is established. Full repository regression and production
+transition remain open; deployment requires a separate authorized readiness
+review.
+
 ## Bounded metadata and initial resource checkpoint — 2026-10-28 03:59 UTC
 
 The isolated worktree is `/home/charlie/midas-frontier` on
