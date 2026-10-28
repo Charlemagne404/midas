@@ -7875,3 +7875,18 @@ store, or Arena job was accessed or started.
 | Broader MIDAS and browser regression | PARTIALLY VERIFIED | This suite does not replace separate legacy, frontend, or end-to-end evidence. |
 | Live cross-venue semantic/economic validation | BLOCKED | Held-capture test guard and unresolved source-use boundary remain. |
 | Frontier overall acceptance | PARTIALLY VERIFIED | Deployment, production recovery, and genuine cross-venue evidence remain open. |
+
+### October 28 continuation change inventory
+
+| Commit | Files | Change |
+| --- | --- | --- |
+| `2eff73e` | `tests/frontier/test_adapters.py` | Pin naive ISO rejection and UTC offset normalization. |
+| `2e73476` | `packages/midas/frontier/models.py`; `tests/frontier/test_historical_replay.py` | Revalidate nested historical price points before series timestamp checks; cover naive timestamp and invalid price copies. |
+| `aa88b03` | `tests/frontier/test_historical_replay.py` | Add the strict test return annotation. |
+| `f5dfb26` | `tests/frontier/test_relationship_reviews.py` | Compare migration results against the current `SCHEMA_VERSION` constant. |
+| `3ce0984`, `9e1649c` | `docs/MIDAS_CURRENT_STATE.md`; `docs/frontier/FRONTIER_ARCHITECTURE.md`; `docs/frontier/FRONTIER_ENGINEERING_REPORT.md`; `docs/frontier/FRONTIER_MISSION_LEDGER.md` | Record timestamp and nested-model validation contracts. |
+| `300fdcf`, `0ec12f0`, `a3fd358`, `252e5be`, `e4f6c82` | `docs/MIDAS_CURRENT_STATE.md`; `docs/frontier/FRONTIER_ENGINEERING_REPORT.md`; `docs/frontier/FRONTIER_MISSION_LEDGER.md` | Record the resource-gated attempt, test evidence, held-capture boundary, typing, and full-suite result. |
+
+The temporary `tests/frontier/test_recorded_cross_venue_relationship.py` was
+removed after the test guard denied held-capture access; it is not part of the
+final tree or any commit.
