@@ -5133,3 +5133,14 @@ configured-lock change's 24-test verification. The batch was not signaled.
 Next safe action: remeasure; when admitted, run isolated browser verification
 and resume repository tests with the Reality import mismatch and bounded
 Arena planning case handled separately.
+
+## Admission recheck — 2026-10-28 04:58 UTC
+
+At `2026-10-28T04:58:41Z`, the previously observed Veritas PID 8201 was absent
+and no process held the shared Arena lock. Memory PSI was **1.57% some / 1.44%
+full** over 10 seconds, **14.55% / 13.22%** over 60 seconds, and **13.02% /
+11.62%** over 300 seconds. About **10.3 GiB** was available and I/O PSI avg10
+remained below 1%. Although short-window `some` PSI is low, `full` PSI exceeds
+the Arena gate's 1% threshold; no test, build, or browser run was started.
+Next safe action: remeasure, then run isolated browser verification and resume
+the repository suite only when the full-PSI gate and shared lock both admit it.

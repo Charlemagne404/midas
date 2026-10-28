@@ -6517,3 +6517,13 @@ avg10 was below 1%. No tests, builds, source requests, or service changes
 started after the `bffa163` lock-path verification. The external process was
 left untouched. Defer further broad or browser verification until a fresh
 sample shows acceptable pressure and no shared-lock holder.
+
+## Admission recheck — 2026-10-28 04:58 UTC
+
+At `2026-10-28T04:58:41Z`, PID 8201 was no longer present and no process held
+the shared Arena lock. Memory PSI had fallen to **1.57% some / 1.44% full**
+over 10 seconds, **14.55% / 13.22%** over 60 seconds, and **13.02% / 11.62%**
+over 300 seconds. About **10.3 GiB** was available; I/O PSI avg10 was below
+1%. The short-window full PSI still exceeds the Arena admission threshold of
+1%, so no broad suite or browser run started. Recheck before resource-bearing
+verification.
