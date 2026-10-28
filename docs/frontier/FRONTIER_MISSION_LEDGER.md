@@ -4823,3 +4823,15 @@ lock and was left untouched. No more resource-bearing checks were started.
 | --- | --- | --- |
 | Combined current Frontier and selected Arena regression | COMPLETE AND VERIFIED | 390/390 in one invocation at 380,624 KiB peak RSS with zero swaps and socket messages. |
 | Full MIDAS repository regression | PARTIALLY VERIFIED | Broad repository suite remains unrun; the selected suite is scoped to Frontier and Arena consumers. |
+
+### Supplementary FX reference source reviewed — 2026-10-28
+
+Reviewed official ECB Data Portal API documentation and the ESCB statistics
+reuse policy. The API documents the HTTPS SDMX `EXR` dataflow and daily
+reference-rate series; the policy allows free reuse of released statistics
+with attribution and a no-modification condition. These are daily reference
+statistics rather than tradable FX quotes, so they cannot establish
+simultaneous conversion, funding, or transfer availability. ECB is documented
+as a possible contextual source, not added to the exchange registry or used
+to populate candidate economics. No ECB request or capture was made. See the
+[source-data terms review](SOURCE_DATA_TERMS_REVIEW_2026-10-27.md).

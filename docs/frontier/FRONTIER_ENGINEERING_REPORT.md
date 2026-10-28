@@ -6235,3 +6235,16 @@ left untouched. No further resource-bearing check was started.
 | Combined Frontier and selected Arena regression | COMPLETE AND VERIFIED | 390/390 pass in one invocation after current code; this is not the full MIDAS suite. |
 | Resource sustainability under current host load | PARTIALLY VERIFIED | The combined run did not swap, but post-run PSI was high and the external batch held the shared lock; concurrent/sustained capacity remains unverified. |
 | Project Frontier overall | PARTIALLY VERIFIED | Live cross-venue equivalence, complete MIDAS regression, and deployment remain incomplete. |
+
+### Supplemental FX source evaluation — 2026-10-28
+
+Official ECB Data Portal documentation provides an HTTPS SDMX API and daily
+reference-rate series such as `D.USD.EUR.SP00.A`. ESCB statistics are reusable
+with attribution, subject to the published no-modification rule and separate
+rights for third-party data. The source's daily reference values are not
+executable bid/ask quotes and do not establish same-time conversion, transfer,
+or account availability. ECB is therefore recorded as a possible contextual
+reference-data provider, not as a trading venue, exchange adapter, or decisive
+funding source. No ECB API request or data capture occurred. The [source terms
+review](SOURCE_DATA_TERMS_REVIEW_2026-10-27.md) records the primary links and
+the exact limitations.

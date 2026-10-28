@@ -391,6 +391,29 @@ This capture does not change the Kalshi, Kraken, or Coinbase holds or broaden
 the Polymarket source-use purpose. It remains a local research record and is
 not published or copied into version control.
 
+## Supplemental FX reference-data evaluation — 2026-10-28
+
+The [ECB Data Portal SDMX API documentation](https://data.ecb.europa.eu/help/api/data)
+documents HTTPS programmatic access to the `EXR` exchange-rate dataflow and the
+daily series key `D.USD.EUR.SP00.A`. This is a daily ECB reference-rate
+statistic, not an exchange order book or an executable conversion quote. The
+[ESCB reuse policy](https://www.ecb.europa.eu/stats/ecb_statistics/governance_and_quality_framework/html/usage_policy.ga.html)
+permits free reuse of public statistics subject to source attribution and its
+condition that the statistics and metadata are not modified; third-party data
+may have separate rights. The ECB [site copyright terms](https://www.ecb.europa.eu/services/using-our-site/disclaimer/html/index.en.html)
+also require accurate reproduction and source citation.
+
+This is a useful possible source for contextual historical FX, but it does not
+establish contemporaneous bid/ask availability, account eligibility, funding,
+conversion execution, transfer cost, custody, or venue settlement. ECB
+reference data therefore is not added as an exchange adapter and is not
+automatically fed into Frontier's virtual funding or candidate-P&L scenarios.
+No ECB API request or data capture was made. Any future integration must retain
+the exact released statistic and required attribution, keep every model
+transformation explicit, and preserve the non-executable reference-rate label.
+This evaluation does not affect the current Kalshi, Kraken, or Coinbase
+source-use holds.
+
 ### Bounded Polymarket single-market metadata probe — 2026-10-28 03:54 UTC
 
 After implementing and fixture-testing the capability-specific metadata
