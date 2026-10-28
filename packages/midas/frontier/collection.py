@@ -4,10 +4,15 @@ from __future__ import annotations
 
 import asyncio
 import base64
+import fcntl
 import hashlib
 import json
+import os
 import sqlite3
+import stat
 import uuid
+from collections.abc import Iterator
+from contextlib import contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Literal
@@ -51,6 +56,10 @@ MAX_COLLECTION_HEALTH_EVENTS = 20
 MAX_COLLECTION_JOURNAL_BYTES = 64 * 1024 * 1024
 MAX_COLLECTION_CHECKPOINT_BYTES = 8 * 1024 * 1024
 MAX_COLLECTION_EVIDENCE_BYTES = 16 * 1024 * 1024
+
+
+class CollectionSourceBusy(FrontierStoreError):
+    """Another process currently owns the finite collector for this source."""
 
 
 class CollectionBookTask(FrontierModel):
@@ -293,6 +302,33 @@ class CollectionJournal:
             elif meta[0] != str(COLLECTION_JOURNAL_SCHEMA):
                 raise FrontierStoreError("Unsupported Frontier collection journal schema")
         self._check_size()
+
+    @contextmanager
+    def source_lease(self, venue: Venue) -> Iterator[None]:
+        """Own a source's finite collector across API processes, without waiting."""
+        self.initialize()
+        path = self.root / f".frontier-collection-{venue.value.lower()}.lock"
+        flags = os.O_CREAT | os.O_RDWR | os.O_CLOEXEC | getattr(os, "O_NOFOLLOW", 0)
+        try:
+            fd = os.open(path, flags, 0o600)
+        except OSError as error:
+            raise FrontierStoreError("Collection source lease is unavailable or unsafe") from error
+        try:
+            metadata = os.fstat(fd)
+            if not stat.S_ISREG(metadata.st_mode) or metadata.st_uid != os.getuid():
+                raise FrontierStoreError("Collection source lease is not a user-owned regular file")
+            with os.fdopen(fd, "r+") as lease:
+                fd = -1
+                try:
+                    fcntl.flock(lease, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                except BlockingIOError:
+                    raise CollectionSourceBusy(
+                        f"A finite collection is already active for {venue.value}"
+                    ) from None
+                yield
+        finally:
+            if fd >= 0:
+                os.close(fd)
 
     def _connect(self) -> sqlite3.Connection:
         if self.path.is_symlink():
@@ -901,15 +937,17 @@ class BoundedSourceCollector:
             max_wall_seconds=max_wall_seconds,
             created_at_utc=datetime.now(UTC),
         )
-        self.journal.create_run(spec)
-        checkpoint = self._checkpoint(
-            spec,
-            None,
-            state="created",
-            source_health=await self._health(),
-        )
-        self.journal.append_checkpoint(checkpoint)
-        return await self._execute(spec, checkpoint)
+        async with self._lock:
+            with self.journal.source_lease(spec.venue):
+                self.journal.create_run(spec)
+                checkpoint = self._checkpoint(
+                    spec,
+                    None,
+                    state="created",
+                    source_health=await self._health(),
+                )
+                self.journal.append_checkpoint(checkpoint)
+                return await self._execute_locked(spec, checkpoint)
 
     async def resume(self, run_id: str) -> CollectionRunResult:
         spec = self.journal.run_spec(run_id)
@@ -918,7 +956,11 @@ class BoundedSourceCollector:
         if checkpoint.state in {"completed", "partial", "failed"}:
             return self._result(spec, checkpoint)
         async with self._lock:
-            return await self._execute_locked(spec, checkpoint)
+            with self.journal.source_lease(spec.venue):
+                latest = self.journal.latest_checkpoint(run_id)
+                if latest.state in {"completed", "partial", "failed"}:
+                    return self._result(spec, latest)
+                return await self._execute_locked(spec, latest)
 
     def _validate_start(self, market_limit: int, book_limit: int, book_depth: int) -> None:
         config = self.adapter.config
@@ -952,12 +994,6 @@ class BoundedSourceCollector:
             raise ValueError("Collection adapter configuration differs from the pinned run")
         if capability_manifest_sha256(self.adapter.capabilities) != spec.capability_manifest_sha256:
             raise ValueError("Collection capability manifest differs from the pinned run")
-
-    async def _execute(
-        self, spec: CollectionRunSpec, checkpoint: CollectionCheckpoint
-    ) -> CollectionRunResult:
-        async with self._lock:
-            return await self._execute_locked(spec, checkpoint)
 
     async def _execute_locked(
         self, spec: CollectionRunSpec, checkpoint: CollectionCheckpoint

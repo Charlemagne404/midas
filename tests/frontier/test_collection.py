@@ -6,6 +6,8 @@ import json
 import sqlite3
 from datetime import timedelta
 from decimal import Decimal
+from multiprocessing import get_context
+from multiprocessing.connection import Connection
 from pathlib import Path
 
 import pytest
@@ -19,6 +21,7 @@ from midas.frontier.collection import (
     CollectionCheckpoint,
     CollectionJournal,
     CollectionRunSpec,
+    CollectionSourceBusy,
 )
 from midas.frontier.models import (
     AdapterConfig,
@@ -178,6 +181,78 @@ class OversizedBookAdapter(FakeAdapter):
         value = await super().fetch_book(market_value, instrument_id, depth)
         extra_level = BookLevel(price=Decimal("0.41"), quantity=Decimal(1))
         return value.model_copy(update={"asks": (*value.asks, extra_level)})
+
+
+def _attempt_collection_source_lease(root: str, venue: Venue, connection: Connection) -> None:
+    try:
+        with CollectionJournal(Path(root)).source_lease(venue):
+            connection.send("acquired")
+    except CollectionSourceBusy:
+        connection.send("busy")
+    finally:
+        connection.close()
+
+
+def test_collection_source_lease_is_shared_between_journals_and_scoped_by_venue(tmp_path):
+    root = tmp_path / "frontier"
+    first = CollectionJournal(root)
+    second = CollectionJournal(root)
+
+    with first.source_lease(Venue.POLYMARKET):
+        with pytest.raises(CollectionSourceBusy, match="already active"):
+            with second.source_lease(Venue.POLYMARKET):
+                pass
+        with second.source_lease(Venue.KRAKEN):
+            pass
+
+    with second.source_lease(Venue.POLYMARKET):
+        pass
+
+
+def test_collection_source_lease_excludes_another_process(tmp_path):
+    root = tmp_path / "frontier"
+    journal = CollectionJournal(root)
+    context = get_context("fork")
+    receiver, sender = context.Pipe(duplex=False)
+
+    with journal.source_lease(Venue.POLYMARKET):
+        worker = context.Process(
+            target=_attempt_collection_source_lease,
+            args=(str(root), Venue.POLYMARKET, sender),
+        )
+        worker.start()
+        sender.close()
+        assert receiver.poll(5)
+        assert receiver.recv() == "busy"
+        worker.join(5)
+        if worker.is_alive():
+            worker.terminate()
+            worker.join()
+        assert worker.exitcode == 0
+
+    receiver.close()
+
+
+@pytest.mark.asyncio
+async def test_competing_collector_start_is_rejected_before_creating_an_orphan_run(tmp_path):
+    root = tmp_path / "frontier"
+    store = FrontierStore(root)
+    adapter = BlockingAdapter()
+    first_collector = BoundedSourceCollector(adapter, store)
+    first_run = asyncio.create_task(first_collector.start(market_limit=1, book_limit=0))
+    await adapter.discovery_entered.wait()
+
+    second_collector = BoundedSourceCollector(FakeAdapter(), FrontierStore(root))
+    try:
+        with pytest.raises(CollectionSourceBusy, match="already active"):
+            await second_collector.start(market_limit=1, book_limit=0)
+
+        with sqlite3.connect(root / "frontier-collection.sqlite3") as connection:
+            assert connection.execute("SELECT COUNT(*) FROM collection_runs").fetchone()[0] == 1
+    finally:
+        first_run.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await first_run
 
 
 @pytest.mark.asyncio
