@@ -666,3 +666,28 @@ not proof of a single root cause or durable closure. The 160 MiB capacity
 soft threshold has not yet been exercised; next scheduled run remains
 01:16:04 CET. Keep Frontier tests and experiments deferred until that run and
 the protected Reality recovery/readiness conditions are met.
+
+## Near-bound Reality recheck — 2026-10-29 00:54 CET
+
+At 00:54:24 CET, host memory remained 5.4 GiB used / 10 GiB available, with
+3.1/4 GiB swap used. Host PSI was `some` avg10/avg60/avg300
+0.00/0.00/0.62%, `full` 0.00/0.00/0.39%; user-manager PSI was
+`some` 0.00/0.00/0.55%, `full` 0.00/0.00/0.36%. No new oomd or kernel OOM
+record appeared after 23:43:24. Parent cgroup `high` increased another 2,605
+to 16,413,757 since 00:50; `max=728,363`, `oom=19`, and `oom_kill=15` stayed
+unchanged. This is not attributed to a specific workload.
+
+API was active at 1,609,302,016 / 1,610,612,736 bytes `MemoryHigh` (about
+1.25 MiB headroom). Reality was active at 1,207,951,360 / 1,207,959,552
+bytes, leaving only 8 KiB. Its leaf PSI was 0.00% avg10/avg60/avg300, but
+near-zero headroom plus stale `status.json` means replay/capture recovery is
+still not verified. The memory-admission hold remains in place despite the
+lower host and parent PSI. Arena's minute dispatcher continued to report
+`schedules: []` at 00:50–00:54. Keep Frontier runtime work paused; the next
+capacity run under `MemoryHigh=160M` is 01:16:04 CET.
+
+At 00:54:52, a read-only recheck confirmed no new oomd or kernel OOM entries
+after 23:43:24 and the same stale Reality status timestamp. Reality remained
+active; its cgroup current had fallen to 1,207,762,944 bytes, leaving about
+192 KiB below `MemoryHigh`. The observed current therefore fluctuates within
+hundreds of KiB of its soft limit rather than maintaining material headroom.

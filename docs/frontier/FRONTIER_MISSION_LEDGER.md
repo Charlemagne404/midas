@@ -1,5 +1,24 @@
 # Project Frontier Mission Ledger
 
+## Current host state — 2026-10-29 00:54 CET
+
+At 00:54:24, host PSI avg300 was `some=0.62%` / `full=0.39%`, available
+memory was 10 GiB, and no new OOM was found after 23:43:24. However, Reality
+is active at 1,207,951,360 / 1,207,959,552 bytes `MemoryHigh`, only 8 KiB
+below its soft limit; status remains stale and cold recovery is unverified.
+API has about 1.25 MiB headroom. User-slice PSI avg300 was 0.55% / 0.36%; its
+`high` event count rose by 2,605 since 00:50, with `max`, `oom`, and
+`oom_kill` unchanged. The 160 MiB capacity `MemoryHigh` is not yet validated.
+
+Keep runtime tests, replay, probes, and batches paused despite lower rolling
+PSI. Continue only static work until Reality has materially more headroom and
+fresh capture status and the scheduled 01:16 capacity run validates the new
+bound. Arena dispatch currently reports no queued schedules.
+
+At 00:54:52 the Reality cgroup had reclaimed to 1,207,762,944 bytes, but that
+was still only 192 KiB below `MemoryHigh`; `status.json` was unchanged and the
+OOM journals still showed no event newer than 23:43:24.
+
 ## Current host state — 2026-10-29 00:50 CET
 
 The scheduled capacity run completed at 00:46:37 with a 137.4 MiB peak and
