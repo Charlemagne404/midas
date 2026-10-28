@@ -10,6 +10,7 @@ from midas.frontier.economics import (
     OpportunityCandidate,
     OpportunityClassification,
     _calculate_fee,
+    _evaluate_pair,
     audit_kalshi_mve_reported_settlement,
     generate_binary_coverage_candidates,
     generate_bounded_payoff_basket_candidates,
@@ -2474,6 +2475,86 @@ def test_cross_venue_binary_coverage_rejects_legs_below_minimum_notional(constra
     assert candidate.classification == OpportunityClassification.INCOMPLETE_EVIDENCE
     assert not candidate.legs
     assert any("minimum notional" in reason for reason in candidate.reasons)
+
+
+def test_cross_venue_candidate_rejects_mapping_override_from_verified_edge():
+    left, right, relationship, instrument_mapping = _verified_pair()
+    left_yes = next(item for item in left.instruments if item.outcome_id == "yes")
+    left_no = next(item for item in left.instruments if item.outcome_id == "no")
+    right_yes_id = instrument_mapping[left_yes.native_instrument_id]
+    right_no_id = instrument_mapping[left_no.native_instrument_id]
+    left_books, right_books = _books(left, right)
+    overridden_state_mapping = {"yes": "no", "no": "yes"}
+    overridden_instrument_mapping = {
+        left_yes.native_instrument_id: right_no_id,
+        left_no.native_instrument_id: right_yes_id,
+    }
+
+    candidates = generate_binary_coverage_candidates(
+        left,
+        right,
+        relationship,
+        left_books,
+        right_books,
+        state_mapping=overridden_state_mapping,
+        instrument_mapping=overridden_instrument_mapping,
+        as_of_utc=T0 + timedelta(milliseconds=100),
+    )
+
+    assert len(candidates) == 1
+    assert candidates[0].classification == OpportunityClassification.INVALID_RELATIONSHIP
+    assert not candidates[0].legs
+    assert "differs from verified relationship evidence" in candidates[0].reasons[0]
+
+
+def test_cross_venue_independent_audit_rejects_mapping_override_from_verified_edge():
+    left, right, relationship, instrument_mapping = _verified_pair()
+    left_yes = next(item for item in left.instruments if item.outcome_id == "yes")
+    left_no = next(item for item in left.instruments if item.outcome_id == "no")
+    right_yes_id = instrument_mapping[left_yes.native_instrument_id]
+    right_no_id = instrument_mapping[left_no.native_instrument_id]
+    left_books, right_books = _books(left, right)
+    overridden_state_mapping = {"yes": "no", "no": "yes"}
+    overridden_instrument_mapping = {
+        left_yes.native_instrument_id: right_no_id,
+        left_no.native_instrument_id: right_yes_id,
+    }
+    candidate = _evaluate_pair(
+        left,
+        right,
+        relationship,
+        left_yes,
+        next(item for item in right.instruments if item.native_instrument_id == right_yes_id),
+        left_books[left_yes.native_instrument_id],
+        right_books[right_yes_id],
+        ExecutionScenario(),
+        T0 + timedelta(milliseconds=100),
+        None,
+        overridden_state_mapping,
+    )
+    canonical_instrument_mapping = (
+        overridden_instrument_mapping
+        if relationship.left_market_id == left.canonical_id
+        else {value: key for key, value in overridden_instrument_mapping.items()}
+    )
+
+    audited = independently_audit_candidate(
+        candidate,
+        markets={left.canonical_id: left, right.canonical_id: right},
+        books_by_market={left.canonical_id: left_books, right.canonical_id: right_books},
+        relationships={relationship.relationship_id: relationship},
+        state_mappings={relationship.relationship_id: overridden_state_mapping},
+        instrument_mappings={relationship.relationship_id: canonical_instrument_mapping},
+        scenario=ExecutionScenario(),
+    )
+
+    assert audited.independent_audit is not None
+    assert audited.independent_audit.disposition == EconomicAuditDisposition.INCOMPLETE
+    assert "differ from the pinned verified relationship evidence" in (
+        audited.independent_audit.message
+    )
+    assert audited.classification == OpportunityClassification.INCOMPLETE_EVIDENCE
+    assert audited.worst_case_gross_pnl is None
 
 
 def test_stale_books_are_not_practically_eligible():

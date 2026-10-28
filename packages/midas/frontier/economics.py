@@ -1146,6 +1146,29 @@ def generate_binary_coverage_candidates(
                 "A hypothesis or non-equivalence edge cannot support payoff arithmetic.",
             ),
         )
+    evidence_state_mapping = evidence_mapping(relationship, "state_mapping")
+    evidence_instrument_mapping = evidence_mapping(relationship, "instrument_mapping")
+    if relationship.left_market_id != left.canonical_id:
+        evidence_state_mapping = {value: key for key, value in evidence_state_mapping.items()}
+        evidence_instrument_mapping = {
+            value: key for key, value in evidence_instrument_mapping.items()
+        }
+    if (
+        not evidence_state_mapping
+        or state_mapping != evidence_state_mapping
+        or not evidence_instrument_mapping
+        or instrument_mapping != evidence_instrument_mapping
+    ):
+        return (
+            _empty_candidate(
+                left,
+                right,
+                relationship,
+                OpportunityClassification.INVALID_RELATIONSHIP,
+                as_of,
+                "Supplied state or instrument mapping differs from verified relationship evidence.",
+            ),
+        )
     supported = {MarketKind.BINARY_EVENT}
     if (
         left.market_kind not in supported

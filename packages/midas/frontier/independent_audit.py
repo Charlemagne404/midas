@@ -1611,10 +1611,14 @@ def _verify_cross_venue_relationship(
             "Cross-venue event terms are not verified equivalent binary payoffs."
         )
     rel_id = relationship.relationship_id
-    state_map = state_mappings.get(rel_id) or evidence_mapping(relationship, "state_mapping")
-    instrument_map = instrument_mappings.get(rel_id) or evidence_mapping(
-        relationship, "instrument_mapping"
-    )
+    evidence_state_map = evidence_mapping(relationship, "state_mapping")
+    evidence_instrument_map = evidence_mapping(relationship, "instrument_mapping")
+    state_map = state_mappings.get(rel_id) or evidence_state_map
+    instrument_map = instrument_mappings.get(rel_id) or evidence_instrument_map
+    if state_map != evidence_state_map or instrument_map != evidence_instrument_map:
+        raise _MissingAuditEvidence(
+            "Cross-venue mappings differ from the pinned verified relationship evidence."
+        )
     if set(state_map) != set(left.payoff.state_ids) or set(state_map.values()) != set(
         right.payoff.state_ids
     ):
