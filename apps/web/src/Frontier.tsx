@@ -113,7 +113,7 @@ type Overview = {
   limitations: string[];
 };
 type CoverageAnalytics = {
-  schema_version: 2;
+  schema_version: 3;
   as_of_utc: string;
   scope: string;
   samples: {
@@ -180,6 +180,9 @@ type CoverageAnalytics = {
     unique_instrument_count: number;
     prints_with_exchange_timestamp: number;
     prints_without_exchange_timestamp: number;
+    prints_with_clock_uncertainty: number;
+    prints_without_clock_uncertainty: number;
+    future_capture_timestamp_count: number;
     future_exchange_timestamp_count: number;
     latest_capture_received_at_utc: string | null;
     median_capture_age_ms: string | null;
@@ -3255,6 +3258,8 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
                             <th>Empty / invalid captures</th>
                             <th>Instruments</th>
                             <th>Exchange timestamped / missing</th>
+                            <th>Clock bound / missing</th>
+                            <th>Future receipt / source time</th>
                             <th>Latest capture / median age</th>
                           </tr>
                         </thead>
@@ -3274,6 +3279,14 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
                               <td>
                                 {count(source.prints_with_exchange_timestamp)} /{' '}
                                 {count(source.prints_without_exchange_timestamp)}
+                              </td>
+                              <td>
+                                {count(source.prints_with_clock_uncertainty)} /{' '}
+                                {count(source.prints_without_clock_uncertainty)}
+                              </td>
+                              <td>
+                                {count(source.future_capture_timestamp_count)} /{' '}
+                                {count(source.future_exchange_timestamp_count)}
                               </td>
                               <td>
                                 {source.latest_capture_received_at_utc

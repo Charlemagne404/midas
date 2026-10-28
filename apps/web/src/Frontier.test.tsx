@@ -133,7 +133,7 @@ it('renders recorded-evidence empty states and never probes a source automatical
     '/api/frontier/comparisons?limit=30': { items: [], returned: 0, limit: 30, offset: 0 },
     '/api/frontier/readiness': { gates: [] },
     '/api/frontier/analytics/coverage': {
-      schema_version: 2,
+      schema_version: 3,
       as_of_utc: '2026-10-27T21:00:00Z',
       scope: 'Latest bounded hash-checked stored market, book, and eligible replay samples.',
       samples: {
@@ -193,6 +193,9 @@ it('renders recorded-evidence empty states and never probes a source automatical
           unique_instrument_count: 0,
           prints_with_exchange_timestamp: 0,
           prints_without_exchange_timestamp: 0,
+          prints_with_clock_uncertainty: 0,
+          prints_without_clock_uncertainty: 0,
+          future_capture_timestamp_count: 0,
           future_exchange_timestamp_count: 0,
           latest_capture_received_at_utc: null,
           median_capture_age_ms: null,

@@ -1191,7 +1191,7 @@ def test_coverage_analytics_counts_trade_prints_empty_captures_and_held_sources(
         response = client.get("/api/frontier/analytics/coverage")
         assert response.status_code == 200, response.text
         payload = response.json()
-        assert payload["schema_version"] == 2
+        assert payload["schema_version"] == 3
         assert payload["samples"]["public_trade_observation_records"] == 2
         assert payload["samples"]["invalid_normalized_public_trade_records"] == 0
         polymarket = next(

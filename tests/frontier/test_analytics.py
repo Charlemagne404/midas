@@ -102,6 +102,7 @@ def _stored_trade_batch(
                 "exchange_timestamp_utc": (
                     received_at - timedelta(seconds=1) if index == 0 else None
                 ),
+                "clock_uncertainty_ms": D("15") if index == 0 else None,
                 "raw_sha256": raw_sha256,
                 "observation_id": f"{index + 1:064x}",
             }
@@ -260,6 +261,13 @@ def test_trade_quality_distinguishes_prints_empty_captures_and_bad_lineage():
         received_at=T0 + timedelta(seconds=1),
         print_count=0,
     )
+    future_empty = _stored_trade_batch(
+        Venue.KRAKEN,
+        "XXBTZUSD",
+        raw_sha256="e" * 64,
+        received_at=T0 + timedelta(seconds=10),
+        print_count=0,
+    )
     bad_lineage = _stored_trade_batch(
         Venue.KALSHI,
         "KX-FIXTURE",
@@ -278,7 +286,7 @@ def test_trade_quality_distinguishes_prints_empty_captures_and_bad_lineage():
         market_records=(),
         book_records=(),
         replay_rows=(),
-        trade_records=(populated, empty, mismatched_capture),
+        trade_records=(populated, empty, mismatched_capture, future_empty),
         as_of_utc=T0 + timedelta(seconds=5),
         invalid_trade_record_counts_by_venue=((Venue.KRAKEN.value, 1),),
     )
@@ -293,6 +301,8 @@ def test_trade_quality_distinguishes_prints_empty_captures_and_bad_lineage():
     assert polymarket["unique_instrument_count"] == 1
     assert polymarket["prints_with_exchange_timestamp"] == 1
     assert polymarket["prints_without_exchange_timestamp"] == 1
+    assert polymarket["prints_with_clock_uncertainty"] == 1
+    assert polymarket["prints_without_clock_uncertainty"] == 1
 
     coinbase = next(
         item
@@ -309,7 +319,13 @@ def test_trade_quality_distinguishes_prints_empty_captures_and_bad_lineage():
     )
     assert kalshi["capture_count"] == 0
     assert kalshi["invalid_capture_count"] == 1
-    assert result["samples"]["public_trade_observation_records"] == 4
+    kraken = next(
+        item for item in result["public_trade_quality"] if item["venue"] == Venue.KRAKEN.value
+    )
+    assert kraken["capture_count"] == 1
+    assert kraken["empty_capture_count"] == 1
+    assert kraken["future_capture_timestamp_count"] == 1
+    assert result["samples"]["public_trade_observation_records"] == 5
     assert result["samples"]["invalid_normalized_public_trade_records"] == 2
     assert "not a complete history" in result["public_trade_quality_scope"]
 

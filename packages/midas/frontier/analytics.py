@@ -541,6 +541,16 @@ def summarize_frontier_coverage(
                     "prints_without_exchange_timestamp": sum(
                         trade.exchange_timestamp_utc is None for trade in trades
                     ),
+                    "prints_with_clock_uncertainty": sum(
+                        trade.provenance.clock_uncertainty_ms is not None for trade in trades
+                    ),
+                    "prints_without_clock_uncertainty": sum(
+                        trade.provenance.clock_uncertainty_ms is None for trade in trades
+                    ),
+                    "future_capture_timestamp_count": sum(
+                        capture.received_at_utc.astimezone(UTC) > as_of_utc.astimezone(UTC)
+                        for capture in trade_captures
+                    ),
                     "future_exchange_timestamp_count": sum(
                         trade.exchange_timestamp_utc is not None
                         and trade.exchange_timestamp_utc > capture.received_at_utc
@@ -674,7 +684,7 @@ def summarize_frontier_coverage(
             )[:20]
         ]
         return {
-            "schema_version": 2,
+            "schema_version": 3,
             "as_of_utc": as_of_utc.astimezone(UTC).isoformat(),
             "scope": (
                 "Latest bounded hash-checked stored market, book, public-trade, price-history, "
