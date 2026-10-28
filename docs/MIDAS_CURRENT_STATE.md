@@ -33,14 +33,28 @@ in the dated addendum below and in the Frontier engineering report.
 
 ## Frontier development addendum — 2026-10-28
 
-### Latest isolated Frontier checkpoint — 2026-10-28 10:14 UTC
+### Latest isolated Frontier checkpoint — 2026-10-28 10:22 UTC
 
-The code/test tree includes `429f690`; `7651b81`, `2c8038d`, and `6da77a1` are
-documentation-only commits. The hash-validated Polymarket capture remains the
-only untracked worktree content, and the local API/Vite listeners are stopped.
-At `10:13:59Z`, memory PSI avg10 was 37.05% some / 31.35% full and I/O PSI
-avg10 was 0%. Defer tests, builds, and browser work until both avg10 values are
-below 1%. See the current acceptance matrix in the
+The code/test tree remains at `429f690` with documentation-only commits after
+it. A bounded browser smoke rendered the genuine captured Polymarket market,
+one-sided book, and immutable response panel through the isolated local API;
+the saved observation endpoint returned HTTP 200. No external request or
+source-probe/collection POST was made. API/Vite listeners are stopped. Hashes
+for the two SQLite stores and capture manifest still match. At `10:22:00Z`,
+memory and I/O PSI avg10 were both 0%; no broad suite, build, or long experiment
+was started. The untracked public capture remains preserved; the separate
+Deribit screen is now documented. Frontier remains research-only, isolated,
+undeployed, and **PARTIALLY VERIFIED**.
+
+### Latest isolated Frontier checkpoint — 2026-10-28 10:17 UTC
+
+The code/test tree includes `429f690`; later commits update documentation only.
+The hash-validated Polymarket capture remains the only untracked data, and the
+local API/Vite listeners are stopped. Deribit was screened from
+official API and terms sources and deferred pending written data-use approval;
+no request or adapter was added. At `10:17:35Z`, memory PSI avg10 was 9.69% some
+/ 6.56% full and I/O PSI avg10 was 0%. Defer tests, builds, and browser work
+until both avg10 values are below 1%. See the current acceptance matrix in the
 [Frontier engineering report](frontier/FRONTIER_ENGINEERING_REPORT.md).
 Frontier remains research-only, isolated, undeployed, and
 **PARTIALLY VERIFIED**.

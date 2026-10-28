@@ -1,14 +1,39 @@
 # Project Frontier Mission Ledger
 
-## Current resource admission and acceptance checkpoint — 2026-10-28 10:14 UTC
+## Bounded captured-data UI verification — 2026-10-28 10:22 UTC
 
-The current code/test tree includes `429f690`; `7651b81`, `2c8038d`, and
-`6da77a1` are documentation-only commits. The market-store, collector-journal,
-and manifest hashes still match the preserved public capture. At `10:13:59Z`,
-memory PSI avg10 was 37.05% some / 31.35% full and I/O PSI avg10 was 0%. Do not
-start tests, builds, or a browser until both avg10 measurements are below 1%.
-The latest requirement-by-requirement status is in the current mission matrix
-at the top of `FRONTIER_ENGINEERING_REPORT.md`. Frontier remains
+At `10:21Z`, a headless Chromium smoke opened the Frontier workspace through
+the isolated local Vite and demo API processes. The Exchange Explorer showed
+the genuine captured Polymarket market `2589810`; the book view showed the
+recorded empty bid side. Expanding “Inspect immutable source response” caused
+the saved observation route for book observation
+`4bb731fd70467c6e8f4ebf33c994243ecb2a02f2701d8ba4e493aae729b0a6b5` to return
+HTTP 200, and the evidence panel rendered its timing and row-hash details. The
+browser recorded no page errors, external requests, or source-probe/collection
+POSTs. Screenshot: `/dev/shm/frontier-live-capture-ui-20261028.png`.
+
+The temporary API and Vite servers were stopped; no listeners remained on
+ports 18017 or 15174. The captured market store, collection journal, and
+`capture-manifest.json` hashes still match the preserved evidence. At
+`10:22:00Z`, memory and I/O PSI avg10 were both 0%. This short browser smoke
+does not establish deployment readiness or sustained resource behavior.
+Frontier remains **PARTIALLY VERIFIED**.
+
+## Current resource admission and additional venue screen — 2026-10-28 10:17 UTC
+
+The current code/test tree includes `429f690`; `7651b81`, `2c8038d`, `6da77a1`,
+and `95b00bc` are documentation-only commits. Official Deribit API,
+membership-terms, and restricted-jurisdiction documents were screened; the
+public derivatives could provide context but data use remains held pending
+written approval. No Deribit request, adapter, or fixture was created. Details
+are in `ADDITIONAL_VENUE_SCREEN_2026-10-28.md`.
+
+The market-store, collector-journal, and manifest hashes still match the
+preserved Polymarket capture. At `10:17:35Z`, memory PSI avg10 was 9.69% some /
+6.56% full and I/O PSI avg10 was 0%. The subsequent brief browser smoke was
+admitted after a fresh sample below 1%; see the newer checkpoint above. The
+latest requirement-by-requirement matrix is at the top of
+`FRONTIER_ENGINEERING_REPORT.md`. Frontier remains
 **PARTIALLY VERIFIED**.
 
 ## Full Frontier regression after capture isolation — 2026-10-28 09:02 UTC

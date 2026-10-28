@@ -237,6 +237,18 @@ avg10 was 0%. Wait for both avg10 values to fall below the 1% admission gate
 before starting tests, builds, or a browser. The current worktree completion
 matrix and continuation state are recorded in the engineering report and
 mission ledger.
+At `10:17:35Z`, memory PSI avg10 remained above the gate at **9.69% some /
+6.56% full** and I/O PSI avg10 was 0%. The Deribit venue screen is documented
+separately; its public market data remains held pending written data-use
+approval. No live probe was made.
+
+At `10:22:00Z`, memory and I/O PSI avg10 were both 0%. A bounded captured-data
+browser smoke then used only the isolated local API/Vite pair and the preserved
+Polymarket store; it rendered the market, one-sided book, and saved raw-response
+details. The observation GET returned HTTP 200, with no external requests or
+source-probe/collection POSTs. Both listeners were stopped and capture hashes
+were rechecked. This verifies that single read path only; continue to gate broad
+tests, builds, or other resource-bearing work on a fresh PSI sample.
 
 For a broad suite run, first sample `/proc/pressure/memory` and
 `/proc/pressure/io`; defer when memory or I/O PSI avg10 is at or above 1%.
