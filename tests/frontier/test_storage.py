@@ -16,7 +16,15 @@ from midas.frontier.models import (
     SourceFailureRecord,
     Venue,
 )
-from midas.frontier.relationships import Relationship, propose_relationships, verify_same_payoff
+from midas.frontier.relationships import (
+    Relationship,
+    RelationshipEvidence,
+    RelationshipReview,
+    ReviewDecision,
+    VerificationState,
+    propose_relationships,
+    verify_same_payoff,
+)
 from midas.frontier.replay import deterministic_replay, paired_deterministic_replay
 from midas.frontier.storage import MAX_ROW_BYTES, FrontierStore, FrontierStoreError
 from pydantic import ValidationError
@@ -225,6 +233,47 @@ def test_append_relationship_rejects_oversized_payload_before_initialization(tmp
         store.append_relationship(oversized)
 
     assert not store.path.exists()
+
+
+def test_append_relationship_review_for_missing_store_does_not_initialize(tmp_path: Path):
+    store = FrontierStore(tmp_path / "missing-review-store")
+    left, right = (
+        market(Venue.POLYMARKET, "missing-review-left"),
+        market(Venue.KALSHI, "missing-review-right"),
+    )
+    proposed = propose_relationships((left, right), max_pairs=1)[0]
+    evidence = RelationshipEvidence(
+        method="bounded-test-fixture",
+        observation_ids=("c" * 64,),
+        created_at_utc=T0,
+    )
+    hypothesis = Relationship.model_validate(
+        proposed.model_dump(mode="python") | {"evidence": (evidence,)}
+    )
+    adjudicated = Relationship.model_validate(
+        hypothesis.model_dump(mode="python")
+        | {
+            "relationship_id": "a" * 64,
+            "state": VerificationState.REJECTED,
+            "supersedes": hypothesis.relationship_id,
+        }
+    )
+    review = RelationshipReview(
+        review_id="b" * 64,
+        relationship_id=hypothesis.relationship_id,
+        adjudicated_relationship_id=adjudicated.relationship_id,
+        decision=ReviewDecision.REJECTED,
+        reviewer_label="frontier-storage-test",
+        reason="The proposed relationship is not supported.",
+        evidence_observation_ids=("c" * 64,),
+        created_at_utc=T0,
+    )
+
+    with pytest.raises(FrontierStoreError, match="review target was not found"):
+        store.append_relationship_review(review, adjudicated)
+
+    assert not store.path.exists()
+    assert not store.root.exists()
 
 
 @pytest.mark.parametrize("corruption", ("raw", "normalized"))

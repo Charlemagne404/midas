@@ -515,6 +515,8 @@ class FrontierStore:
         review_hash = hashlib.sha256(review_json.encode("utf-8")).hexdigest()
         relationship_hash = hashlib.sha256(relationship_json.encode("utf-8")).hexdigest()
         created = review.created_at_utc.astimezone(UTC).isoformat()
+        if not self.path.exists():
+            raise FrontierStoreError("Relationship review target was not found")
         self.initialize()
         with self._connect() as connection:
             connection.execute("BEGIN IMMEDIATE")
