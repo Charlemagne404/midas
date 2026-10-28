@@ -88,6 +88,30 @@ def test_verifies_directed_implication_over_complete_joint_binary_states():
     assert f"implication_from_market_id={implies_a.canonical_id}" in details
     assert f"implication_to_market_id={implies_b.canonical_id}" in details
     assert relationship.evidence[0].external_assertion_id == "fixture-joint-outcome-assertion-1"
+    assert relationship.evidence[0].verifier_version == "frontier-logical-implication-verifier-3"
+
+
+def test_rejects_logical_implication_for_malformed_model_copy():
+    source = _market_with_joint_payouts(Venue.POLYMARKET, "implication-malformed-source", (0, 0, 1))
+    target = _market_with_joint_payouts(Venue.KALSHI, "implication-malformed-target", (0, 1, 1))
+
+    duplicate_states = source.model_copy(
+        update={
+            "payoff": source.payoff.model_copy(update={"state_ids": (*JOINT_STATES, "a_yes_b_yes")})
+        }
+    )
+    duplicate_instrument_ids = list(source.instruments)
+    duplicate_instrument_ids[1] = duplicate_instrument_ids[1].model_copy(
+        update={"native_instrument_id": duplicate_instrument_ids[0].native_instrument_id}
+    )
+    duplicate_instruments = source.model_copy(
+        update={"instruments": tuple(duplicate_instrument_ids)}
+    )
+
+    for malformed in (duplicate_states, duplicate_instruments):
+        relationship = _verify(malformed, target)
+        assert relationship.state == VerificationState.REJECTED
+        assert "duplicate" in relationship.reason.lower()
 
 
 def test_exhaustive_three_state_boolean_vectors_match_implication_truth_table():

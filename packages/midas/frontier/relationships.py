@@ -23,7 +23,7 @@ from midas.frontier.models import (
 D = Decimal
 MATCHER_VERSION = "frontier-relationship-matcher-5"
 SAME_PAYOFF_VERIFIER_VERSION = "frontier-equivalence-verifier-6"
-LOGICAL_IMPLICATION_VERIFIER_VERSION = "frontier-logical-implication-verifier-2"
+LOGICAL_IMPLICATION_VERIFIER_VERSION = "frontier-logical-implication-verifier-3"
 MAX_LOGICAL_IMPLICATION_STATES = 1024
 MAX_LOGICAL_STATE_ID_CHARS = 128
 DEFAULT_MINIMUM_JACCARD = D("0.45")
@@ -748,6 +748,14 @@ def verify_logical_implication(
     for name, market_value in (("left", left), ("right", right)):
         if not market_value.payoff.verified or not market_value.payoff.exhaustive:
             checks.append(f"{name} payoff is not verified and exhaustive")
+        if len(set(market_value.payoff.state_ids)) != len(market_value.payoff.state_ids):
+            checks.append(f"{name} payoff contains duplicate state identifiers")
+        instrument_ids = [item.native_instrument_id for item in market_value.instruments]
+        if len(set(instrument_ids)) != len(instrument_ids):
+            checks.append(f"{name} market contains duplicate native instrument identities")
+        outcome_ids = [item.outcome_id for item in market_value.instruments]
+        if any(item is None for item in outcome_ids) or len(set(outcome_ids)) != len(outcome_ids):
+            checks.append(f"{name} market contains missing or duplicate outcome identities")
         if (
             not market_value.resolution.verified
             or not market_value.resolution.resolution_fingerprint

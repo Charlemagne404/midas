@@ -1949,7 +1949,7 @@ def test_independent_audit_rejects_naive_book_time_from_a_reconstructed_model():
     assert audit.independent_audit is not None
     assert audit.independent_audit.disposition.value == "incomplete"
     assert "not timezone-aware" in audit.independent_audit.message
-    assert audit.independent_audit.model_version == "frontier-independent-economic-audit-15"
+    assert audit.independent_audit.model_version == "frontier-independent-economic-audit-16"
 
 
 def test_independent_audit_rejects_quantity_step_mutation():
