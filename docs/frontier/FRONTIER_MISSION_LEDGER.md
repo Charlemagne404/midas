@@ -1,5 +1,26 @@
 # Project Frontier Mission Ledger
 
+## Full Frontier Python regression on current code — 2026-10-28 16:53 UTC
+
+After the two evidence-boundary commits, the full `tests/frontier` suite passes
+**497/497** on code at `02912e5` (the tested code is unchanged by that
+documentation-only commit). Pytest completed in 30.28 seconds with one existing
+Starlette/httpx TestClient deprecation warning. Pytest state was confined to
+`/dev/shm/frontier-full-after-digest-20261028T1652Z`. At 16:53:09Z CPU PSI
+avg10 was 38.47% / avg60 37.01%; memory PSI avg10 and I/O PSI avg10 were 0%,
+and 9.9 GiB was available. No public source probe or protected service action
+was performed. The untracked public-probe capture directory remains untouched.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Full Frontier Python suite after evidence hardening | COMPLETE AND VERIFIED | 497/497 on current code; one existing deprecation warning. |
+| Frontier Arena integration slice | COMPLETE AND VERIFIED | The earlier 28/28 timeline/replay/discovery evidence remains; broader legacy Arena regression is open. |
+| Frontier overall | PARTIALLY VERIFIED | Live cross-venue science, broad legacy Arena regression, resource endurance, protected recovery, and deployment remain open. |
+
+**Next safe action:** continue only bounded source-independent review; avoid a
+full legacy Arena run under sustained CPU contention without a new admission
+sample.
+
 ## Evidence identity validation precedes hashing — 2026-10-28 16:51 UTC
 
 Extended the bounded-input review through persisted models and direct economic

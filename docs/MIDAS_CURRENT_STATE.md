@@ -3244,3 +3244,13 @@ accessed. At 16:50:58Z CPU PSI avg10 was 37.09%, memory and I/O PSI avg10 were
 0%, available memory was 9.9 GiB, and swap was full. Frontier overall remains
 **PARTIALLY VERIFIED**; live cross-venue science, full regression, protected
 recovery, and deployment remain open.
+
+## Current Frontier Python suite — 2026-10-28 16:53 UTC
+
+The complete `tests/frontier` suite passes **497/497** on the current code
+tree in 30.28 seconds; one existing Starlette/httpx deprecation warning
+remains. Pytest used `/dev/shm`. At 16:53:09Z CPU PSI avg10 was 38.47%,
+memory and I/O PSI avg10 were 0%, and 9.9 GiB was available. This updates the
+16:51 focused-only snapshot. No public source probe or protected-service
+action occurred. Full legacy Arena regression, live cross-venue science,
+resource endurance, protected recovery, and deployment remain open.

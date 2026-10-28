@@ -10560,3 +10560,21 @@ avg10 0%, 9.9 GiB available, and full swap. Pytest state was contained under
 | Collection checkpoint digest validation | COMPLETE AND VERIFIED | Five field cases and all 34 collection tests pass. |
 | Full Python suite after latest edits | PARTIALLY VERIFIED | The latest 143-case and 34-case focused suites pass; full Frontier regression is pending. |
 | Live source validation and production readiness | PARTIALLY VERIFIED | No live source request or deployment is claimed; applicable holds and protected-service requirements remain. |
+
+## Current Frontier Python regression — 2026-10-28 16:53 UTC
+
+The full `tests/frontier` suite now passes **497/497** on the current code tree
+at `02912e5` (the commit itself contains only the preceding documentation
+checkpoint, so tested code is identical to the validated changes). Pytest
+completed in 30.28 seconds in `/dev/shm`; one existing Starlette/httpx
+deprecation warning remains. The post-run sample at 16:53:09Z showed CPU PSI
+avg10 38.47%, memory and I/O PSI avg10 0%, and 9.9 GiB available. No live
+source probe or protected-service operation was performed.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Frontier Python suite | COMPLETE AND VERIFIED | 497/497 on the current code tree; one existing deprecation warning. |
+| Frontier Arena integration | COMPLETE AND VERIFIED | The timeline/replay/discovery integration slice passes 28/28; full legacy Arena suite remains open. |
+| Live cross-venue validation | PARTIALLY VERIFIED | Fixture-based matching and economics are covered; live venue matching remains blocked by source-use gates. |
+| Resource sustainability and production readiness | PARTIALLY VERIFIED | Short bounded suites pass; endurance, protected recovery, and deployment have not been established. |
+| Frontier overall | PARTIALLY VERIFIED | Cross-venue live science, broad legacy regression, production recovery, and deployment remain open. |
