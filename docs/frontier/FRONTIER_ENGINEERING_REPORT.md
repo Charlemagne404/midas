@@ -12299,3 +12299,32 @@ this near-boundary sample.
 Next safe action: continue read-only review of candidate classification and
 adversarial relationship evidence. Defer further tests until a fresh sample
 shows materially more protected-service headroom.
+
+## Candidate-side implication edge revalidation — 2026-10-28 21:49 UTC
+
+Test commit `a737e11` adds a forged-edge case for the candidate generator. The
+fixture starts with a valid directed relationship, changes its stored direction
+to the reverse while retaining the `VERIFIED` state, then confirms candidate
+generation reevaluates the payout implication and classifies the edge as
+`INVALID_RELATIONSHIP`. This verifies that a persisted verification label alone
+cannot authorize a basket. Ruff and format checks pass; the focused case passes
+**1/1** in 0.33 seconds under a 1 GiB address-space limit, 60-second CPU-time
+limit, and reduced priority. No source endpoint was queried; no production
+logic changed.
+
+At `2026-10-28T21:49:16Z`, Reality and API were active. Reality used
+1,158,930,432 / 1,207,959,552 bytes at `MemoryHigh` (49,029,120 bytes below);
+API used 1,607,307,264 / 1,610,612,736 bytes (3,305,472 bytes below). Memory
+PSI avg10/avg60/avg300 was 0%. `MemAvailable` was 9,658,460 kB and `SwapFree`
+was 51,276 kB. No protected service changed.
+
+| Requirement | Status | Evidence and boundary |
+| --- | --- | --- |
+| Candidate-side implication revalidation | COMPLETE AND VERIFIED WITH FIXTURES | A forged reverse edge is rejected despite retaining `VERIFIED` state. |
+| Independent candidate audit | COMPLETE AND VERIFIED WITH FIXTURES | The existing directed basket's independent verifier remains covered. |
+| Live logical relationship evidence | BLOCKED | Fixture assertions do not establish semantic event equivalence at live venues. |
+| Project Frontier overall | PARTIALLY VERIFIED | Live evidence, broad regression, endurance, recovery, and deployment remain open. |
+
+Next safe action: continue static review of cross-venue candidate
+classification and evidence reuse; only run another bounded fixture after a
+fresh protected-resource sample.

@@ -3717,3 +3717,18 @@ At `2026-10-28T21:47:46Z`, both protected services were active. Reality used
 1,610,612,736 bytes. Memory PSI was 0%, `MemAvailable` was 9,640,972 kB, and
 `SwapFree` was 51,260 kB. Reality headroom was just 73,728 bytes. Further tests
 and broad regression remain deferred at this sample.
+
+## Project Frontier implication candidate guard — 2026-10-28 21:49 UTC
+
+Commit `a737e11` adds a test proving candidate generation rejects a forged
+reverse logical-implication edge even when the persisted relationship still
+says `VERIFIED`. The generator reevaluates the payout inequality and classifies
+the result as `INVALID_RELATIONSHIP`. The focused case passes **1/1** in 0.33
+seconds; Ruff and format checks pass. No venue endpoint was queried and no
+production code changed.
+
+At `2026-10-28T21:49:16Z`, Reality and API were active. Reality used
+1,158,930,432 / 1,207,959,552 bytes at `MemoryHigh`; API used 1,607,307,264 /
+1,610,612,736 bytes. Memory PSI was 0%, `MemAvailable` was 9,658,460 kB, and
+`SwapFree` was 51,276 kB. No service changed. Live equivalence, broad testing,
+endurance, and deployment remain open.

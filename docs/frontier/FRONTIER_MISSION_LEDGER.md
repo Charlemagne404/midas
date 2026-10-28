@@ -11385,3 +11385,27 @@ remains deferred.
 
 Next safe action: continue static review of candidate classifications; defer
 more tests until protected headroom improves.
+
+## Candidate-side implication edge revalidation — 2026-10-28 21:49 UTC
+
+Commit `a737e11` adds a fixture that changes a verified relationship's direction
+to a counterexample direction while preserving its `VERIFIED` state. The
+candidate generator rechecks the payout inequality and returns
+`INVALID_RELATIONSHIP`. The test passes **1/1** in 0.33 seconds with a 1 GiB
+address-space limit, 60-second CPU-time limit, and reduced priority. Ruff and
+format pass. No venue request or production change occurred.
+
+At `2026-10-28T21:49:16Z`, Reality was 49,029,120 bytes below its
+1,207,959,552-byte `MemoryHigh`; API was 3,305,472 bytes below its
+1,610,612,736-byte boundary. Both services were active and memory PSI was 0%.
+Available memory was 9,658,460 kB; swap free was 51,276 kB. No service changed.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Candidate-side relationship revalidation | COMPLETE AND VERIFIED WITH FIXTURES | Forged verified state does not bypass directed payout checks. |
+| Live logical relationship validation | BLOCKED | No public cross-venue event equivalence was validated live. |
+| Broader candidate regression | PARTIALLY VERIFIED | Only focused implication and economic fixtures ran. |
+| Project Frontier overall | PARTIALLY VERIFIED | Live source evidence, broad regression, endurance, recovery, and deployment remain open. |
+
+Next safe action: continue static review of cross-venue candidate classification
+and evidence reuse; remeasure before any next test slice.
