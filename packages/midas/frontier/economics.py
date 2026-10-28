@@ -52,7 +52,7 @@ from midas.frontier.relationships import (
 )
 
 D = Decimal
-ECONOMIC_MODEL_VERSION = "frontier-economic-verifiers-21"
+ECONOMIC_MODEL_VERSION = "frontier-economic-verifiers-22"
 PARTIAL_FILL_FRACTIONS = (D(0), D("0.25"), D("0.5"), D("0.75"), D(1))
 KALSHI_MVE_SETTLEMENT_AUDIT_VERSION = "kalshi-mve-settlement-audit-2"
 _KALSHI_TAKER_FEE_TYPES = frozenset({"quadratic", "quadratic_with_combo_maker_fees"})
@@ -2384,14 +2384,23 @@ def _evaluate_pair(
             candidate_id=identity,
             family=family,
         )
-    if left_book.venue != left.venue or right_book.venue != right.venue:
+    if (
+        left_book.venue != left.venue
+        or right_book.venue != right.venue
+        or left_book.native_market_id != left.native_market_id
+        or right_book.native_market_id != right.native_market_id
+        or left_book.native_instrument_id != left_instrument.native_instrument_id
+        or right_book.native_instrument_id != right_instrument.native_instrument_id
+        or left_book.quantity_unit != left_instrument.quantity_unit
+        or right_book.quantity_unit != right_instrument.quantity_unit
+    ):
         return _empty_candidate(
             left,
             right,
             relationship,
             OpportunityClassification.INCOMPLETE_EVIDENCE,
             as_of,
-            "Book venue identity does not match its market.",
+            "Book venue, market, instrument, or quantity unit does not match the selected contract.",
             candidate_id=identity,
             family=family,
         )

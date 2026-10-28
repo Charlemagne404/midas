@@ -1166,6 +1166,61 @@ def _books(left, right):
     )
 
 
+@pytest.mark.parametrize(
+    ("field", "value"),
+    (
+        ("native_market_id", "misbound-market"),
+        ("native_instrument_id", "misbound-instrument"),
+        ("quantity_unit", QuantityUnit.LOT),
+    ),
+)
+def test_binary_coverage_rejects_book_not_bound_to_selected_instrument(field, value):
+    left, right, relationship, instrument_mapping = _verified_pair()
+    left_books, right_books = _books(left, right)
+    target = left.instruments[0]
+    clean_candidates = generate_binary_coverage_candidates(
+        left,
+        right,
+        relationship,
+        left_books,
+        right_books,
+        state_mapping={"yes": "yes", "no": "no"},
+        instrument_mapping=instrument_mapping,
+        as_of_utc=T0 + timedelta(milliseconds=100),
+    )
+    target_candidate_id = next(
+        candidate.candidate_id
+        for candidate in clean_candidates
+        if any(leg.instrument_id == target.native_instrument_id for leg in candidate.legs)
+    )
+    left_books[target.native_instrument_id] = left_books[target.native_instrument_id].model_copy(
+        update={field: value}
+    )
+
+    corrupted_candidates = generate_binary_coverage_candidates(
+        left,
+        right,
+        relationship,
+        left_books,
+        right_books,
+        state_mapping={"yes": "yes", "no": "no"},
+        instrument_mapping=instrument_mapping,
+        as_of_utc=T0 + timedelta(milliseconds=100),
+    )
+    corrupted = next(
+        candidate
+        for candidate in corrupted_candidates
+        if candidate.candidate_id == target_candidate_id
+    )
+
+    assert corrupted.classification == OpportunityClassification.INCOMPLETE_EVIDENCE
+    assert not corrupted.legs
+    assert any(
+        "book venue, market, instrument, or quantity unit" in reason.lower()
+        for reason in corrupted.reasons
+    )
+
+
 def test_independent_audit_rejects_duplicate_payout_on_unselected_instrument():
     left, right, relationship, instrument_mapping = _verified_pair()
     left_books, right_books = _books(left, right)
@@ -2599,7 +2654,7 @@ def test_candidate_generation_and_independent_audit_enforce_price_ticks():
         as_of_utc=T0 + timedelta(milliseconds=100),
     )
     candidate = next(item for item in candidates if item.legs)
-    assert candidate.model_version == "frontier-economic-verifiers-21"
+    assert candidate.model_version == "frontier-economic-verifiers-22"
 
     def with_half_dollar_ticks(market_value):
         instruments = tuple(
@@ -3375,7 +3430,7 @@ def test_deterministic_replay_is_invariant_to_input_order():
     }
     first = deterministic_replay((left, right), all_books, **kwargs)
     second = deterministic_replay((right, left), tuple(reversed(all_books)), **kwargs)
-    assert first.manifest.economic_model_version == "frontier-economic-verifiers-21"
+    assert first.manifest.economic_model_version == "frontier-economic-verifiers-22"
     assert first.run_id == second.run_id
     assert first.result_sha256 == second.result_sha256
     assert first.candidates == second.candidates
