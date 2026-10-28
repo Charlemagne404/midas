@@ -5427,3 +5427,24 @@ fresh sample clears the gate.
 | Storage integrity and recovery | COMPLETE AND VERIFIED | All 18 storage tests pass in the isolated module. |
 | Bounded Frontier regression after collector changes | PARTIALLY VERIFIED | 216 tests pass across five invocations; eight modules remain unrun as complete modules. |
 | Further resource-bearing checks | DEFERRED | I/O PSI remains above the 1% threshold at the latest sample. |
+
+## Source-use boundary regression slice — 2026-10-28 05:25 UTC
+
+`tests/frontier/test_held_capture_source_boundary.py` and
+`tests/frontier/test_source_data_permissions.py` pass **7/7** in 2.57 seconds
+pytest time (3.34 seconds wall) at 141,420 KiB peak RSS, with zero swaps or
+socket messages. They verify path guards, fail-closed source permission gates,
+and application quarantine behavior. The test process wrote 3,616 KiB into an
+isolated `/tmp` directory; no exchange endpoint was queried. One existing
+Starlette/httpx TestClient deprecation warning appeared.
+
+At the post-test sample around `2026-10-28T05:25Z`, memory PSI avg10 was
+**0.00% some / 0.00% full**, I/O PSI avg10 was **1.13% some / 0.97% full**, and
+no Arena lock holder was present. Defer further tests until I/O `some` PSI is
+below 1%.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Source-use and held-capture guard tests | COMPLETE AND VERIFIED | All 7 tests pass with no live request or access to historical capture content. |
+| Bounded Frontier regression | PARTIALLY VERIFIED | 223 tests pass across six invocations; six modules remain unrun as complete modules. |
+| Additional test workloads | DEFERRED | I/O `some` PSI was above the admission threshold at the last sample. |

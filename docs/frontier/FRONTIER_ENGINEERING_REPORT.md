@@ -61,15 +61,16 @@ transition remain open; deployment requires a separate authorized readiness
 review.
 
 The collector/API pair, adapter contracts, small analytics/relation modules,
-economics/capital modules, and storage module pass **216 tests** across
-bounded invocations; strict mypy passes on the latest collector code. Two full
+economics/capital modules, storage, and source-permission boundary tests pass
+**223 tests** across six bounded invocations; strict mypy passes on the latest
+collector code. Two full
 `pytest tests/frontier` attempts were interrupted: one after **108 passed** as
 an external Veritas batch drove pressure high, and a retry after **113 passed**
 when the suite itself drove I/O PSI above the gate. Both exited 2 with
 `KeyboardInterrupt`; neither is a suite pass. Web/API typing, browser
 verification, and broader regression remain pending. At approximately
-`2026-10-28T05:24Z`, memory PSI avg10 was **0.00% some / 0.00% full** and
-I/O PSI avg10 was **1.05% some / 1.04% full**; no process held the shared
+`2026-10-28T05:25Z`, memory PSI avg10 was **0.00% some / 0.00% full** and
+I/O PSI avg10 was **1.13% some / 0.97% full**; no process held the shared
 Arena lock. Further tests remain deferred at this sample.
 
 ## Bounded metadata and initial resource checkpoint — 2026-10-28 03:59 UTC
@@ -6803,3 +6804,26 @@ storage/API test modules until a fresh sample clears the I/O gate.
 | Storage integrity and recovery tests | COMPLETE AND VERIFIED | All 18 storage tests pass in isolation; no full suite claim. |
 | Serial Frontier regression slices | PARTIALLY VERIFIED | 216 passing tests across five bounded invocations; eight Frontier modules remain unrun as complete modules. |
 | Additional resource-bearing verification | DEFERRED | I/O PSI remains above 1% at the latest measurement. |
+
+## Source-use boundary regression slice — 2026-10-28 05:25 UTC
+
+The source-protection modules `test_held_capture_source_boundary.py` and
+`test_source_data_permissions.py` passed **7/7** in **2.57 seconds pytest
+time** (**3.34 seconds wall**) at **141,420 KiB peak RSS**, zero swaps, and
+zero socket messages. The checks guard against test/runtime access to held
+capture paths, confirm unvalidated permission references do not enable source
+probes, and verify held source evidence remains quarantined. The run wrote
+**3,616 KiB** to its isolated temporary directory; no exchange endpoint was
+requested. One existing Starlette/httpx TestClient deprecation warning
+remains.
+
+At the post-test sample around `2026-10-28T05:25Z`, memory PSI avg10 was
+**0.00% some / 0.00% full** and I/O PSI avg10 was **1.13% some / 0.97% full**;
+no Arena lock holder was present. Defer additional test modules until I/O
+`some` PSI falls below 1%.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Source-use and held-capture boundary tests | COMPLETE AND VERIFIED | All 7 tests pass; no new source request and only temporary test data were used. |
+| Serial Frontier regression coverage | PARTIALLY VERIFIED | 223 tests pass across six bounded invocations; six modules remain unrun as complete modules. |
+| Remaining resource-bearing tests | DEFERRED | I/O `some` PSI is slightly above the 1% threshold. |
