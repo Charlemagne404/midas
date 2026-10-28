@@ -3387,6 +3387,13 @@ def test_polymarket_price_history_probe_is_bound_and_replayable(tmp_path):
         )
         assert replayed_again.status_code == 200
         assert replayed_again.json()["run_id"] == replay_result["run_id"]
+
+        oversized_replay_id = client.post(
+            "/api/frontier/price-history/replay",
+            json={"observation_ids": ["x" * 65]},
+        )
+        assert oversized_replay_id.status_code == 422
+
         replay_list = client.get("/api/frontier/price-history/replays")
         assert replay_list.status_code == 200
         assert [item["run_id"] for item in replay_list.json()["items"]] == [replay_result["run_id"]]

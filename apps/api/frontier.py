@@ -178,9 +178,12 @@ class PriceHistoryReplayRequest(BaseModel):
 
     @model_validator(mode="after")
     def observation_ids_are_unique_sha256(self) -> PriceHistoryReplayRequest:
-        if len(set(self.observation_ids)) != len(self.observation_ids) or any(
-            re.fullmatch(r"[0-9a-f]{64}", item) is None for item in self.observation_ids
+        if any(
+            len(item) != 64 or re.fullmatch(r"[0-9a-f]{64}", item) is None
+            for item in self.observation_ids
         ):
+            raise ValueError("Price-history replay requires unique observation SHA-256 IDs")
+        if len(set(self.observation_ids)) != len(self.observation_ids):
             raise ValueError("Price-history replay requires unique observation SHA-256 IDs")
         return self
 
