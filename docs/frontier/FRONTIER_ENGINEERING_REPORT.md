@@ -7171,3 +7171,64 @@ Changed files in `2e27f11`: `apps/api/frontier.py`,
 `tests/frontier/{test_historical_replay,test_analytics,test_api,test_source_data_permissions}.py`.
 The architecture, operations, development, ledger, and engineering-report
 documentation checkpoint is recorded separately from the code commit.
+
+## Research & Replay history lineage inspector — 2026-10-28 06:44 UTC
+
+Code commit `ce8d7dd` adds a native inspector to Mission Control's Replay &
+readiness workspace. It reads up to 20 latest saved Polymarket historical-price
+captures and up to 20 saved descriptive replay artifacts. Researchers can
+select one to eight capture observation IDs and explicitly request a local
+replay. The UI does not call a source endpoint from this workflow, and its
+result panel labels candidate generation as not performed.
+
+Saved replay artifacts load through the existing hash-validating detail route.
+The inspector displays the run, normalized-input, and result hashes; replay and
+code versions; latest input receipt time; and, per input, source observation
+ID, raw-body hash, venue, native instrument, optional bound market observation,
+requested interval and range, returned sample price bounds, timestamp bounds,
+largest adjacent returned-point gap, and future-point count. For source records
+outside the currently loaded 20-capture page, it makes the missing receipt-time
+context explicit. No price sample is treated as a quote or candidate.
+
+The source selector enforces the backend's eight-input limit: once eight
+checkboxes are selected, further unchecked rows are disabled. The UI does not
+silently truncate a replay payload. Artifact list selection and detail loading
+are separate read operations, and held-source artifacts remain filtered by the
+existing API response.
+
+Verification:
+
+- `corepack pnpm test`: **41 passed** across seven frontend test files. The
+  Frontier component test covers saved list/detail reads, two-series replay,
+  receipt/raw lineage, no automatic POST, and the eight-selected/ninth-disabled
+  boundary.
+- `corepack pnpm exec playwright test e2e/frontier.spec.ts`: **7 passed** on
+  isolated local services. Its price-history case uses intercepted fixtures,
+  confirms the two-record replay and lineage, checks no extra source probe, and
+  verifies no horizontal overflow at a 390 px viewport.
+- `corepack pnpm build`: TypeScript and production Vite build pass with 2,228
+  modules transformed. The Frontier bundle is 181.57 kB; existing main and
+  Chart chunk advisories remain at 504.00 kB and 544.41 kB.
+- ESLint, Prettier check, and `git diff --check` pass.
+
+No API or Python implementation changed in this checkpoint. Browser and
+component tests use fixture responses; this is not a UI validation against a
+populated service store or live source. No service store was migrated, no
+deployment or resource profile was performed, and no economic calculation was
+run. Kalshi, Kraken, and Coinbase remain held, so only the existing Polymarket
+historical-price source is selectable in this inspector.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Multi-series replay selection and eight-input limit | COMPLETE AND VERIFIED | Frontend test selects eight, confirms the ninth is disabled, and checks the exact two-ID request after reducing selection. |
+| Saved replay list/detail interface | PARTIALLY VERIFIED | Fixture-backed browser and component runs pass; populated service-store UI validation remains pending. |
+| Per-series source lineage display | COMPLETE AND VERIFIED | Source IDs, raw hashes, instrument, binding, request interval, sampled bounds, and receipt context are visible. |
+| Cross-venue historical series | BLOCKED | Remaining source-use holds prevent additional venue data from entering the inspector. |
+| Production migration and deployment | DEFERRED | No service configuration or production database changed. |
+
+Changed files in `ce8d7dd`: `apps/web/src/Frontier.tsx`,
+`apps/web/src/Frontier.test.tsx`, `apps/web/src/frontier.css`, and
+`apps/web/e2e/frontier.spec.ts`. Documentation was updated in a separate
+checkpoint. **Next safe action:** add bounded offset paging to the two local
+saved-evidence lists, retaining held-source filtering and the eight-series
+limit.

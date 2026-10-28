@@ -5846,3 +5846,63 @@ Research & Replay inspection view, allowing selection of multiple saved IDs up
 to the eight-series cap and detailed lineage inspection. Keep every series
 classified as source-reported historical context. Do not probe held venues or
 migrate a service database.
+
+## Research & Replay history lineage inspector — 2026-10-28 06:44 UTC
+
+**Stage:** E/F (saved replay inspection in Mission Control).
+**Code commit:** `ce8d7dd` on `codex/frontier-20261026`.
+
+The Replay & readiness workspace now lists the newest 20 saved Polymarket
+historical-price captures and the newest 20 descriptive price-history replay
+artifacts. A researcher may select one through eight stored capture IDs and
+explicitly submit a local replay. The view reads saved list/detail routes only;
+it does not start a source request and it states that candidate generation was
+not performed. A component test fills eight selections, verifies the ninth is
+disabled, reduces the selection, then checks that only the selected two IDs are
+submitted.
+
+Saved replay rows can be selected for hash-verified detail reads. The inspector
+shows run, input, and result identities; replay and code versions; maximum
+input receipt time; and per-series source observation ID, raw response hash,
+venue, native instrument, optional bound market observation, request interval,
+capture receipt when it is still in the source page, returned price bounds,
+point-time bounds, adjacent returned-point gap, and future-point count. If a
+capture is older than the bounded source page, the UI says the per-series
+receipt time is outside that page. It retains the source-sample limits: no
+missing-data estimate, synchronized-availability claim, quote, fill, or
+opportunity is presented.
+
+Verification on this checkpoint:
+
+- `corepack pnpm test`: **41 passed** across seven frontend test files,
+  including the eight-series selection cap and multi-series lineage render.
+- `corepack pnpm exec playwright test e2e/frontier.spec.ts`: **7 passed** on
+  isolated local services. The updated price-history scenario intercepts the
+  capture and replay APIs, selects two saved samples, checks lineage, and
+  confirms the page stays within 390 px without horizontal overflow.
+- `corepack pnpm build`: TypeScript project build and production Vite build
+  pass (2,228 modules transformed). Existing bundle advisories remain for the
+  504.00 kB main chunk and 544.41 kB Chart chunk; the Frontier chunk is
+  181.57 kB.
+- ESLint, Prettier check, and `git diff --check` pass. No Python or API code
+  changed in this checkpoint.
+
+The API contract and page behavior were exercised with local fixture responses;
+the inspector was not validated against a populated service store. There was
+no live source request, authenticated request, service-store migration,
+deployment, resource profile, or economic evaluation. Source-use holds for
+Kalshi, Kraken, and Coinbase remain; the UI currently offers the usable
+Polymarket historical-price source only.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Bounded multi-series selection | COMPLETE AND VERIFIED | Component test proves the 1..8 UI bound and exact submitted IDs. |
+| Saved replay list and detail inspector | PARTIALLY VERIFIED | Fixture-backed list/detail integration and display pass; no populated service-store UI run. |
+| Source and input lineage display | COMPLETE AND VERIFIED | IDs, raw hashes, instrument, binding, requested range, sample bounds, and receipt context are exposed. |
+| Additional venue price-history selection | BLOCKED | Other candidate venues remain under source-use holds; no unsupported data is exposed. |
+| Production migration/deployment | DEFERRED | No service configuration or data store was touched. |
+
+**Next safe action:** add bounded offset paging for saved capture and replay
+lists, preserving the eight-input cap and showing page/truncation state. Keep
+the reads local and held-source aware. Do not probe held venues or migrate a
+service database.

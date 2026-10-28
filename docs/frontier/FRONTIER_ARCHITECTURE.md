@@ -173,8 +173,13 @@ gap. Overlapping captures are counted independently and can repeat points. The
 Mission Control quality view labels the gap as observed and explains that these
 metrics do not establish source completeness or cross-venue simultaneity. The
 Market detail panel offers an explicit replay action for the selected saved
-series and displays the resulting run/input hashes and sample summary; it does
-not start replay automatically after capture or page load.
+series and displays the resulting run/input hashes and sample summary. The
+Replay & readiness workspace reads the latest 20 saved Polymarket history
+captures and replay artifacts, supports a bounded selection of up to eight
+inputs, and requests each selected artifact through the saved detail route. It
+shows the source observation and raw hashes, native instrument, bound market
+observation, request range, and returned-point summaries. Both views use local
+evidence only and start no source request automatically.
 
 `FrontierMarket.native_event_id` is populated only from an explicit source event
 record or a parent-event response. The legacy Polymarket parser's local

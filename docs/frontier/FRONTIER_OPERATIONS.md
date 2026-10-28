@@ -451,7 +451,15 @@ adds a dedicated replay table; an existing schema 6 store is migrated in place
 when the normal Frontier store initializer runs. Development tests use
 temporary databases; no service store was migrated for this milestone.
 The Market detail interface offers replay only after the researcher presses
-“Replay saved series” for an identified stored capture.
+“Replay saved series” for an identified stored capture. In Replay & readiness,
+the source list and saved artifact list each read their latest 20 local rows;
+the user can select at most eight saved captures and run one descriptive
+replay. Selecting a saved artifact reads its hash-verified detail and displays
+its per-series observation ID, raw hash, instrument, optional market binding,
+request interval, receipt context when available in the source page, and
+sampled-point bounds. These reads are local. To inspect older rows, use the
+bounded API `offset` parameter directly; the current interface does not page
+beyond the first 20 rows.
 
 ## Resource and deployment limits
 

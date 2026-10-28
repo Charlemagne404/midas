@@ -149,15 +149,18 @@ observation IDs and performs a deterministic descriptive replay without
 network access or candidate generation. `GET /api/frontier/price-history/replays`
 and its run-ID detail route read saved replay artifacts. The Market detail
 panel exposes an explicit “Replay saved series” action after a capture is
-stored. Replays preserve each series' raw hash and store observation ID, point
-count, sampled price bounds, point-time span, and largest adjacent
-returned-sample gap. These are summaries
-of returned samples; no expected sampling cadence or missing-data percentage is
-inferred. Held source evidence is rejected or omitted by these routes. The
-coverage analytics endpoint includes the newest bounded set of stored history
-captures across sources, grouped by venue, and labels repeated overlapping
-points. The official endpoint contract is the [Polymarket CLOB price-history
-reference](https://docs.polymarket.com/api-reference/markets/get-prices-history).
+stored. The Replay & readiness workspace lists the latest 20 saved Polymarket
+captures and replay artifacts, allows selection of up to eight saved captures,
+and exposes each artifact's input/result hashes, source observation IDs, raw
+hashes, instrument IDs, market binding, request interval, and sample summaries.
+Replays preserve each series' raw hash and store observation ID, point count,
+sampled price bounds, point-time span, and largest adjacent returned-sample
+gap. These are summaries of returned samples; no expected sampling cadence or
+missing-data percentage is inferred. Held source evidence is rejected or
+omitted by these routes. The coverage analytics endpoint includes the newest
+bounded set of stored history captures across sources, grouped by venue, and
+labels repeated overlapping points. The official endpoint contract is the
+[Polymarket CLOB price-history reference](https://docs.polymarket.com/api-reference/markets/get-prices-history).
 Kalshi exposes a separate explicit
 `POST /api/frontier/probe/kalshi/trades` route with `market_id` (the recorded
 native ticker), `limit` (at most 100), and an optional returned cursor. Each
