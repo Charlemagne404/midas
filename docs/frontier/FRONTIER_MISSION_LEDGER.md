@@ -13,7 +13,8 @@ The focused offline Coinbase module passes **13/13** in 0.77 seconds (1.22
 seconds wall time), with 77,756 KiB peak RSS, zero swaps, zero filesystem
 input, and zero socket messages. Ruff, format, and git diff --check pass. The
 test asserts both the permission/scope requirement and that acknowledgement
-alone cannot lift the hold. No Coinbase request or held record was accessed.
+alone cannot lift the hold. Strict mypy passes for the changed Coinbase
+adapter (one source file). No Coinbase request or held record was accessed.
 
 At 12:05:41Z before the run, memory PSI avg10 was **0.00%**, I/O was **0.61%
 some / 0.49% full**, and about **10 GiB** was available. At 12:06:00Z

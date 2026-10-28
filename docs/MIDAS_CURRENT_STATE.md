@@ -40,6 +40,7 @@ terms-version acknowledgement alone does not lift the hold; a validated
 permission and intended-scope review are still required. The hold and all
 probe guards remain active. The focused offline Coinbase module passes
 **13/13**; Ruff and format checks pass. No request or held record was accessed.
+Strict mypy also passes for the changed adapter module.
 
 At 12:05:41Z before the test, memory PSI avg10 was 0.00%, I/O was 0.61%
 some / 0.49% full, and about 10 GiB was available. At 12:06:00Z afterward,

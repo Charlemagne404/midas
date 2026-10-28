@@ -8965,7 +8965,8 @@ scope. The updated message makes the active boundary explicit. The focused
 offline Coinbase module passes **13/13**; Ruff and Ruff format pass. The run
 used a tmpfs basetemp, zero swaps, no filesystem input, and no socket
 messages. Memory PSI stayed at 0%; I/O PSI remained below 1% before and after.
-No live Coinbase request or held record was accessed.
+Strict mypy passes for the changed adapter module. No live Coinbase request
+or held record was accessed.
 
 Changed in commit 9552db5: packages/midas/frontier/adapters/coinbase.py and
 tests/frontier/test_coinbase.py. The change corrects the explanation only.
