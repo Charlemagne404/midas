@@ -1961,3 +1961,15 @@ memory PSI avg10 was 0%, I/O PSI avg10 was **0.02% some / 0.00% full**, and
 about **10 GiB** was available. The change exercised no network transport,
 production service, worker, or protected store. Frontier remains **PARTIALLY
 VERIFIED**.
+
+### Full Frontier suite resource-gated attempt — 2026-10-28 08:07 UTC
+
+The final tree collected 378 `tests/frontier` tests. A single fixture-backed
+run passed 193 before live I/O PSI rose to **12.91% some / 10.15% full**; the
+process was stopped with SIGINT. The remaining 185 cases did not run, so the
+single-process suite remains **PARTIALLY VERIFIED**. `/usr/bin/time -v`
+reported 68.97 seconds wall time, 347,088 KiB peak RSS, and zero process
+swaps. After stopping, I/O PSI remained **4.49% some / 3.33% full**, while
+memory PSI stayed at 0% and about 10 GiB remained available. No network source,
+Arena job, worker, protected store, or production service was started. More
+test or replay work waits for a fresh admitted sample.

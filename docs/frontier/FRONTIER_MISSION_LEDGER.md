@@ -6541,3 +6541,32 @@ was touched.
 | Shared ISO timestamp normalization contract | COMPLETE AND VERIFIED | Naive ISO input stays unavailable; explicit offsets normalize to UTC; all 68 adapter module tests pass. |
 | Live adapter timestamp validation | IMPLEMENTED, LIVE VALIDATION PENDING | This is fixture-backed parser evidence; no live source probe was performed. |
 | Project Frontier overall | PARTIALLY VERIFIED | Live multi-venue science, source policy, broad resource/recovery, and production gates remain open. |
+
+## Full Frontier suite resource-gated attempt — 2026-10-28 08:07 UTC
+
+**Stage:** G (single-process regression and resource admission).
+
+The current tree collected **378** tests from `tests/frontier`. A single
+fixture-backed run was started after a fresh preflight sample showed memory
+PSI avg10 **0.00%**, I/O PSI avg10 **0.19%**, and about **10 GiB** available.
+After **193 tests passed**, live I/O PSI rose to **12.91% some / 10.15% full**.
+The process was sent SIGINT to stop additional shared-host I/O. Pytest exited
+2 with `KeyboardInterrupt`; no test failure was reported among the completed
+tests. The complete suite therefore remains **unverified in one process**.
+
+`/usr/bin/time -v` reported 68.97 seconds wall time, 347,088 KiB maximum RSS,
+and zero process swaps. A post-stop sample showed memory PSI avg10 **0.00%**,
+I/O PSI avg10 **4.49% some / 3.33% full**, and about **10 GiB** available.
+The I/O pressure persisted after the Frontier test process stopped. No public
+network source, production service, worker, protected store, or Arena job was
+started by this run. The test suite uses local fixtures and temporary test
+state.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| First 193 collected Frontier tests | PARTIALLY VERIFIED | All 193 completed tests passed; the other 185 did not run. |
+| Full single-process Frontier suite | PARTIALLY VERIFIED | Stopped at the resource gate after I/O PSI exceeded the 1% threshold. |
+| Frontier project overall | PARTIALLY VERIFIED | Continue source-independent work; retry only after a fresh admitted host sample. |
+
+**Next safe action:** keep reviewing and documenting without launching more
+test or replay workloads while shared I/O remains above the admission gate.

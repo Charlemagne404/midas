@@ -7781,3 +7781,26 @@ live source, worker, protected store, or production service was accessed.
 | ISO timestamp parsing contract | COMPLETE AND VERIFIED | Naive source time remains missing; explicit timezones normalize to UTC; adapter fixture module passes. |
 | Live timestamp behavior | IMPLEMENTED, LIVE VALIDATION PENDING | No live source probe was performed under the current source-use boundary. |
 | Frontier project acceptance | PARTIALLY VERIFIED | This parser test does not close live cross-venue, source-policy, resource/recovery, or deployment gates. |
+
+## Full Frontier suite resource-gated attempt — 2026-10-28 08:07 UTC
+
+The final tree collected **378 tests** under `tests/frontier`. I started one
+single-process fixture-backed run after a preflight sample showed memory PSI
+avg10 **0.00%**, I/O PSI avg10 **0.19%**, and approximately **10 GiB**
+available. After **193 tests passed**, a live host sample showed I/O PSI avg10
+had risen to **12.91% some / 10.15% full**. I sent SIGINT to stop the run.
+Pytest exited 2 with `KeyboardInterrupt`; no failures were reported in the 193
+completed cases, and the remaining 185 cases did not run.
+
+`/usr/bin/time -v` reported **68.97 seconds** wall time and **347,088 KiB**
+maximum RSS, with zero process swaps. A post-stop sample showed memory PSI
+avg10 **0.00%**, I/O PSI avg10 **4.49% some / 3.33% full**, and approximately
+**10 GiB** available. I/O pressure persisted after the test process ended.
+No public network source, production service, worker, protected store, or Arena
+job was started. The suite uses local fixtures and temporary test state.
+
+| Component | Status | Current evidence and remaining boundary |
+| --- | --- | --- |
+| Completed portion of full Frontier suite | PARTIALLY VERIFIED | 193 cases passed before resource-gated interruption. |
+| Full single-process Frontier suite | PARTIALLY VERIFIED | 185 collected cases remain unrun; retry waits on a fresh low-I/O sample. |
+| Frontier overall acceptance | PARTIALLY VERIFIED | This run does not establish full regression, live cross-venue science, resource endurance, or deployment readiness. |
