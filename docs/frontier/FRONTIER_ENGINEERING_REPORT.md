@@ -7659,3 +7659,41 @@ protected database, production service, or worker was accessed.
 | Lazy workspace load feedback and failure containment | COMPLETE AND VERIFIED | Seven workspace boundaries; unit, full browser, and seeded persisted-artifact cases pass. |
 | Frontend build and workspace splitting | PARTIALLY VERIFIED | Build passes; 544.41 kB Chart chunk warning remains and loads for initial Mission Control. |
 | Frontier project acceptance | PARTIALLY VERIFIED | This UI reliability checkpoint does not close live equivalent-market, source-policy, broad resource, production-recovery, or deployment requirements. |
+
+## Independent audit timezone guard — 2026-10-28 07:58 UTC
+
+Commit `e1946bc` advances the independent economic verifier from v12 to v13.
+The verifier now recursively checks the typed candidate, scenario, selected
+markets and pinned books, relationship evidence, and joint-state map for naive
+timestamps before it performs any fee, relationship, resolution, or timing
+arithmetic. This protects against malformed reconstructed models created with
+Pydantic `model_copy(update=...)`, which bypasses field validation. For an
+evaluated candidate with legs, invalid timestamps return an `INCOMPLETE` audit
+rather than allowing Python to infer a host-local timezone. The epoch conversion
+helper also rejects a non-datetime value. The v13 identifier is included in the
+audit input hash so it cannot be mistaken for a prior verifier result.
+
+Verification evidence:
+
+- Economics/replay and storage modules: **74/74 passed** after recursive
+  timestamp preflight was added. The final `isinstance` hardening in the epoch
+  helper followed that run; a post-hardening rerun is pending admission.
+- Full Frontier API module after the final code commit: **56/56 passed**. This
+  includes paired replay, multi-outcome, payoff-basket, joint-state, readiness,
+  and persistence/API paths.
+- Strict mypy for `independent_audit.py` and `models.py`, Ruff check, Ruff
+  format check, and `git diff --check`: passed on final source.
+- The API suite emitted the existing Starlette/httpx `TestClient`
+  deprecation warning.
+
+At `2026-10-28T07:57:51Z`, memory PSI avg10 was **0.00% some/full**, I/O PSI
+avg10 was **7.28% some / 5.30% full**, approximately **10 GiB** was available,
+and no Arena lock holder was present. Additional tests are deferred until I/O
+avg10 returns below the 1% admission threshold. The change accessed no public
+source, production service, worker, or protected store.
+
+| Component | Status | Current evidence and remaining boundary |
+| --- | --- | --- |
+| Independent audit timestamp validation | COMPLETE AND VERIFIED | Candidate and pinned-book naive-time regressions return incomplete; final API module and static checks pass. |
+| Exact-commit economics/storage module rerun | PARTIALLY VERIFIED | 74 cases passed after recursive preflight; the final runtime type guard still needs that bounded rerun. |
+| Frontier project acceptance | PARTIALLY VERIFIED | This integrity fix does not establish live economic equivalence, unrestricted source permission, production recovery, or deployment eligibility. |

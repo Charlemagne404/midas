@@ -1902,3 +1902,22 @@ advisory. At 07:47:03 UTC, memory PSI avg10 was 0%, I/O PSI avg10 was **0.07%
 some / 0.04% full**, and about **10 GiB** was available. No exchange source,
 protected store, production service, or worker was accessed. Overall Frontier
 remains isolated, research-only, and **PARTIALLY VERIFIED**.
+
+### Independent audit timestamp hardening — 2026-10-28 07:58 UTC
+
+Commit `e1946bc` advances the independent economic verifier to v13 and checks
+typed candidate, scenario, market, book, relationship, and joint-state inputs
+for timezone-aware timestamps before any arithmetic or temporal comparison.
+This closes the path where `model_copy(update=...)` could bypass ordinary
+Pydantic timestamp validators and make Python interpret a naive value in the
+host's local timezone. The verifier now returns incomplete evidence for those
+inputs when a candidate has a constructed position. The full Frontier API
+module passes **56/56** after the commit; the affected economics/storage slice
+passed **74/74** after the recursive preflight but before the final runtime
+type guard in the epoch converter. Ruff, Ruff format, strict mypy for the
+changed source modules, and `git diff --check` pass.
+The API run emitted the existing Starlette/httpx TestClient deprecation warning.
+Afterward, at 07:57:51 UTC, memory PSI avg10 was 0%, I/O PSI was **7.28% some /
+5.30% full**, and about **10 GiB** remained available. The broader post-commit
+economics/storage rerun is deferred. No source, production service, worker, or
+protected store was accessed. Frontier remains **PARTIALLY VERIFIED**.

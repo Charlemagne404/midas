@@ -6405,3 +6405,45 @@ service was accessed.
 and API/persistence review; use fresh host admission before broader replay or
 regression runs. Keep all held-source, production, and long-running research
 boundaries in place.
+
+## Independent audit timezone guard — 2026-10-28 07:58 UTC
+
+**Stage:** D/G (independent economic verification and regression).
+**Code commit:** `e1946bc` on `codex/frontier-20261026`.
+
+The audit previously converted typed `datetime` values to epoch milliseconds
+with `datetime.timestamp()`. Pydantic field validators reject naive input in
+normal construction, but reconstructed models can use `model_copy(update=...)`
+without revalidation. That left a path for candidate, book, or nested evidence
+times to be interpreted using the host's local timezone. Audit v13 now walks
+the candidate, execution scenario, pinned markets and books, relationship
+evidence, and joint-state map before performing temporal comparisons. Any naive
+timestamp in a candidate with a constructed position makes the audit
+`INCOMPLETE`; the epoch helper also rejects malformed non-datetime values. The
+verifier version is included in the audit input hash.
+
+The affected economics/replay and storage modules passed **74/74** after the
+recursive preflight was implemented. A final runtime type guard was added to
+the epoch helper afterward; Ruff and Ruff format pass, and strict mypy passes
+for `independent_audit.py` and `models.py` on the final code. After commit, the
+full API module passed **56/56**, exercising paired, multi-outcome,
+payoff-basket, joint-state, readiness, and persisted replay paths. One existing
+Starlette/httpx `TestClient` deprecation warning remains. The smaller explicit
+API subset also passed **4/4** before the full API module, so it is superseded
+by the latter result.
+
+At `2026-10-28T07:57:51Z`, memory PSI avg10 was **0.00% some/full**, I/O PSI
+avg10 was **7.28% some / 5.30% full**, about **10 GiB** was available, and no
+shared Arena lock holder was present. Further test runs remain deferred until
+I/O avg10 is below the 1% admission threshold. No live source, worker, protected
+store, or production service was accessed.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Naive timestamp handling in independent audit | COMPLETE AND VERIFIED | Candidate and book model-copy regressions return `INCOMPLETE`; affected module tests and final API module pass. |
+| Full post-commit economics/storage regression | PARTIALLY VERIFIED | 74 cases passed after recursive preflight but before final `isinstance` guard; rerun waits for low I/O pressure. |
+| Project Frontier overall | PARTIALLY VERIFIED | Live equivalent cross-venue evidence, held-source approvals, full resource/recovery, and deployment remain open. |
+
+**Next safe action:** when a fresh host sample admits work, rerun the economics
+and storage modules against the exact final commit; continue source-independent
+review without source requests or production changes while admission is closed.

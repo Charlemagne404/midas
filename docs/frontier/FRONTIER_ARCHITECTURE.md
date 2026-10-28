@@ -819,6 +819,15 @@ public snapshots do not prove fills, queue priority, venue access, simultaneous
 execution, capital transfer, or settlement. Opportunity classifications describe
 the mathematical and modeled evidence only.
 
+Independent economic audit v13 recursively checks typed audit inputs for
+timezone-aware datetimes before any resolution, relationship-evidence, fee, or
+book-timing comparison. This also protects against reconstructed Pydantic
+models whose `model_copy(update=...)` call bypassed field validation. For a
+candidate with a constructed position, malformed times return `INCOMPLETE`
+evidence instead of being interpreted in the host's local timezone. The
+verifier version participates in its audit input hash, so v13 results have a
+distinct identity from earlier audit logic.
+
 Economic model version 14 emits both a full-or-no-fill exposure sensitivity
 and a bounded partial-fill grid for supported candidates with one to sixteen
 legs. The full/no-fill calculation finds the exact adverse result across all
