@@ -11966,3 +11966,55 @@ remains deferred under this resource sample.
 | Live multi-venue trade research | BLOCKED | Source-use and location authorization remain unresolved; this work has no live collection evidence. |
 | Production deployment | DEFERRED | No deployment or protected service transition occurred. |
 | Project Frontier overall | PARTIALLY VERIFIED | Live scientific evidence, broad regressions, endurance, recovery, and deployment prerequisites remain open. |
+
+## Source-aware public-trade coverage — 2026-10-28 21:22 UTC
+
+Coverage analytics now includes response schema version 2 and reads at most 50
+newest stored `public_trades` observations across eligible venues. The storage
+reader hash-checks each row; the API then validates `TradeBatch`, checks its
+venue, and binds each print's raw-body digest and receipt timestamp to the
+captured observation. Invalid normalized batches and lineage mismatches are
+counted separately from valid captures. The summary reports capture and
+returned-print counts, valid empty responses, distinct requested/trade market
+and instrument counts, source-timestamp coverage, capture age, and future
+exchange timestamps. It does not deduplicate prints across overlapping pages.
+Collection failures remain in the separate verified collection checkpoints.
+
+Mission Control adds a **Public trade capture coverage** card with an explicit
+empty state and the sample interpretation limits. Held venues are omitted by
+the same SQL exclusion used for the other coverage inputs. This read performs no
+source requests and does not infer venue-wide volume, a complete trade history,
+or zero activity from an empty response.
+
+Verification on implementation commit `e371861`:
+
+- Analytics and three coverage API cases: **13/13 passed** in 4.69 seconds,
+  under a transient 1 GiB memory and 50% CPU cap. One existing
+  Starlette/httpx TestClient deprecation warning remains.
+- Strict mypy passes for `packages/midas/frontier/analytics.py`; Ruff check and
+  format pass. Strict mypy on `apps/api/frontier.py` reports the same 15
+  existing `no-any-return` diagnostics recorded at the prior checkpoint.
+- Mission Control typecheck passes. `Frontier.test.tsx` passes **9/9** in 21.11
+  seconds under a 2 GiB memory and 50% CPU cap; ESLint and Prettier pass.
+- Production build passes after transforming **2,230 modules**. Frontier emits
+  185.97 kB JS and 54.22 kB CSS. The existing 544.51 kB Chart chunk still
+  triggers Vite's over-500-kB advisory.
+- Tests used temporary fixture stores; no exchange market-data endpoint was
+  queried. No source terms or location holds were changed.
+
+At `2026-10-28T21:24:10Z`, both protected services were active. Reality used
+1,117,011,968 of 1,207,959,552 bytes at `MemoryHigh` (90,947,584 bytes below);
+API used 1,609,633,792 of 1,610,612,736 bytes (978,944 bytes below). Memory
+PSI avg10 was 0%; avg300 was 0.07% `some` and 0.04% `full`. Host available
+memory was 10.01 GB and swap free was 51.82 MB. No service configuration or
+process was changed. Broad Frontier/MIDAS regression remains deferred at the
+near-boundary API limit.
+
+| Requirement | Status | Evidence and boundary |
+| --- | --- | --- |
+| Stored public-trade coverage | COMPLETE AND VERIFIED WITH FIXTURES | Bounded hash-checked capture summaries distinguish prints, empty responses, invalid normalization, timestamps, and venue. |
+| Held-source filtering | COMPLETE AND VERIFIED WITH FIXTURES | API fixture confirms held Kalshi trade records are omitted. |
+| Coverage & quality UI | COMPLETE AND VERIFIED WITHIN TESTED SCOPE | 9/9 Frontier UI cases, typecheck, lint, format, and production build pass. |
+| Live public-trade coverage | BLOCKED | Source-use and physical-location authorization remain unresolved. |
+| Full exact-tree regression and endurance | PARTIALLY VERIFIED | Not run under the protected API's approximately 1 MiB `MemoryHigh` margin. |
+| Project Frontier overall | PARTIALLY VERIFIED | Live cross-venue science, broad regression, endurance, protected recovery, and deployment remain open. |

@@ -11132,3 +11132,46 @@ trade batches, empty responses, and print counts; then add bounded fixture
 comparisons across the four adapters. Re-measure protected-service headroom
 before any broader regression. Keep live collection disabled while source-use
 and location authorization holds remain.
+
+## Source-aware public-trade coverage — 2026-10-28 21:22 UTC
+
+Implementation commit **`e371861`** adds public-trade coverage to the existing
+read-only analytics and Mission Control view. Coverage schema version 2 reads
+at most 50 recent `public_trades` rows, validates the normalized batch and
+source venue, and checks each returned print's raw hash and receipt time
+against the hash-verified observation row. Per-venue measures distinguish
+valid response batches, empty responses, returned print rows, market and
+instrument counts, source timestamps, capture age, and invalid normalization
+or lineage. Overlapping pages can repeat prints; failed collection tasks remain
+in verified collection checkpoints rather than the print count. Held source
+rows are excluded and the API does not make a source request.
+
+The exact bounded verification passes **13/13** analytics/API cases in 4.69
+seconds (1 GiB memory, 50% CPU), with the existing Starlette/httpx deprecation
+warning. Strict mypy passes for the analytics module; Ruff passes. Mission
+Control typecheck, ESLint, and Prettier pass; the dedicated UI suite passes
+**9/9** in 21.11 seconds (2 GiB memory, 50% CPU). The production web build
+passes with 2,230 modules and the known 544.51 kB Chart chunk advisory. The API
+module's strict mypy check still reports 15 previously recorded
+`no-any-return` diagnostics. No exchange market-data endpoint was queried.
+
+At `2026-10-28T21:24:10Z`, Reality was **90,947,584 bytes below** its
+1,207,959,552-byte `MemoryHigh`; API was **978,944 bytes below** its
+1,610,612,736-byte boundary. Memory PSI avg10 was zero, avg300 `some` 0.07%,
+`full` 0.04%; host available memory was 10.01 GB and swap free was 51.82 MB.
+Both services remained active and unchanged. Broad regressions remain deferred
+while the API has only about 1 MiB of soft-limit margin.
+
+| Requirement | Status | Evidence and boundary |
+| --- | --- | --- |
+| Stored public-trade coverage | COMPLETE AND VERIFIED WITH FIXTURES | Up to 50 hash-checked observations, with valid empty batches and invalid lineage distinguished. |
+| Mission Control coverage view | COMPLETE AND VERIFIED WITHIN TESTED SCOPE | 9/9 UI tests, typecheck, lint, format, and production build pass. |
+| Live multi-venue coverage | BLOCKED | Source-use and location holds remain. |
+| Full MIDAS regression and endurance | PARTIALLY VERIFIED | Deferred under the protected API memory boundary. |
+| Production deployment | DEFERRED | No production service or configuration was changed. |
+| Project Frontier overall | PARTIALLY VERIFIED | Broader acceptance, live validation, endurance, recovery, and deployment remain open. |
+
+Next safe action: compare the four adapters' bounded recorded trade fixtures
+through shared read-only normalization and lineage assertions; keep results
+venue-specific and do not infer that spot prints equal event-contract exposure.
+Re-measure resource headroom before broader suites. Live capture remains held.

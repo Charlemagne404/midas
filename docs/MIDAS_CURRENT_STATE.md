@@ -3571,3 +3571,30 @@ avg10/avg60 was 0.29%/0.22%, `full` was 0.22%/0.14%. `MemAvailable` was
 9,883,468 KiB and `SwapFree` was 48,040 KiB. Reality was at 1,207,939,072 /
 1,207,959,552 bytes (20,480 bytes below `MemoryHigh`); API was at
 1,560,555,520 / 1,610,612,736 bytes. No further tests were run at this sample.
+
+## Frontier public-trade coverage analytics — 2026-10-28 21:22 UTC
+
+Commit `e371861` adds schema-v2 saved public-trade coverage to the existing
+Frontier analytics endpoint and native Mission Control workspace. The read
+examines at most 50 hash-checked saved trade responses across eligible venues,
+validates normalized batches and exact raw-hash/receipt binding, and reports
+valid captures, empty responses, returned print rows, market/instrument counts,
+source timestamp coverage, capture ages, and invalid normalized evidence.
+Overlapping pages may repeat prints, an empty response does not mean no market
+activity, and collection failures remain in separate verified checkpoints.
+Held sources are excluded. The read is local and makes no source request.
+
+The focused analytics/API suite passes **13/13** in 4.69 seconds under a 1 GiB,
+50% CPU scope; the only warning is the existing Starlette/httpx test-client
+deprecation. Strict mypy passes for `analytics.py`; Ruff passes. Mission Control
+typecheck, ESLint, Prettier, and **9/9** Frontier tests pass. The production
+build transforms 2,230 modules; Frontier is 185.97 kB JS and 54.22 kB CSS,
+with the existing 544.51 kB Chart chunk advisory. Strict mypy on the API module
+continues to report 15 existing `no-any-return` diagnostics. No exchange
+market-data endpoint was queried.
+
+At `2026-10-28T21:24:10Z`, Reality was 1,117,011,968 / 1,207,959,552 bytes at
+`MemoryHigh`; API was 1,609,633,792 / 1,610,612,736 bytes. Both services were
+active. Memory PSI avg10 was 0%, avg300 `some` 0.07% and `full` 0.04%; host
+available memory was 10.01 GB, with 51.82 MB swap free. No protected service was
+modified. Broad regression remains deferred because API headroom is under 1 MiB.

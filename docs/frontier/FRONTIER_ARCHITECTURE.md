@@ -1350,9 +1350,11 @@ practical eligibility. It remains conditional on user assumptions and does not
 establish a real conversion, transfer, or executable quote.
 
 `GET /api/frontier/analytics/coverage` is a read-only no-network summary of
-stored research. It considers at most 50 recent market records, 50 book
-observations, 20 eligible replay runs, and 5,000 candidate records; separate
-stored market/instrument identity counts come from indexed inventory. Held
+stored research (response schema version 2). It considers at most 50 recent
+market records, 50 book observations, 50 public-trade observations, 20
+price-history observations, 20 eligible replay runs, and 5,000 candidate
+records; separate stored market/instrument identity counts come from indexed
+inventory. Held
 source venues are filtered before both inventory and samples are summarized.
 Book pricing requires hash-checked receipt lineage, a matching
 market/instrument join, a two-sided uncrossed and unflagged book, and exact
@@ -1363,7 +1365,13 @@ verified timing, pinned market-evidence IDs and quote denominations, distinct
 book sets, and distinct replay times. These counts describe the bounded saved
 sample; they are not venue-wide coverage, independent opportunities, positive
 net economics, or executable profit. The Coverage & quality tab loads on demand
-and shows these interpretation limits.
+and shows these interpretation limits. Public-trade quality separates valid
+captured batches, empty responses, returned print rows, instrument and market
+counts, source-timestamp coverage, receipt age, and invalid normalized or
+capture-lineage records. The counts cover only the newest bounded response
+sample; overlapping pages may repeat prints, an empty response is not proof of
+zero activity, and failed collection tasks remain in their verified run
+checkpoints rather than being represented as print observations.
 
 ## Known scope limits
 

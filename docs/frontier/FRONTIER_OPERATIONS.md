@@ -651,6 +651,16 @@ market binding, request interval, receipt context when available in the source
 page, and sampled-point bounds. These reads are local and make no source
 request.
 
+The **Coverage & quality** view reads up to 50 newest saved `public_trades`
+observations across eligible venues. It reports hash-checked normalized capture
+batches, valid empty responses, returned print rows, market/instrument counts,
+source timestamp coverage, receipt age, and records rejected by normalization
+or capture-lineage validation. Overlapping pages can repeat print rows, empty
+responses do not prove no activity, and capture failures remain visible in
+collection checkpoints rather than being counted as trades. Held sources are
+excluded from the summary. The additive response is schema version 2; no source
+request is made by the coverage read.
+
 To verify the populated-store browser path, run the explicit seeded E2E from
 `apps/web`:
 
