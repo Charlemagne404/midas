@@ -7,8 +7,11 @@ peak memory was unavailable, and the saved capacity report remains at the
 23:46 timestamp. Isolated Reality commits
 `8b2131faf40ddd06c8dff155169bddec7048c807` and
 `9868dac2bdc762a5f6c29cbeeda88a13fed8075e` bound inventory scans and skip
-walks for invalid provenance, reporting unknown bytes/headroom. Their
-fixtures are untested and the code is undeployed.
+walks for invalid provenance. Commit
+`7e637a9b78155e8b0bc16361cefb18f0b2f34935` caps archive-manifest parsing at
+4 MiB and reports larger inputs as unverified without parsing or scanning.
+All three commits report unknown bytes/headroom when evidence is incomplete.
+Their fixtures are untested and the code is undeployed.
 
 At 00:30 host available memory was 9.9 GiB, swap 3.1/4 GiB, and PSI avg300
 0.37% `some` / 0.29% `full`. The existing public observation pilot completed

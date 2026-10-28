@@ -164,7 +164,9 @@ stops after 65,536 entries. Follow-up commit
 when manifest provenance is invalid, reporting unknown archive bytes and
 headroom. The saved 23:46 report records `INVALID_MANIFEST`, 18,695 catalog
 segments, and 5,393,427,930 archive bytes; the manifest itself is 7,406,466
-bytes. The two fixtures were not run. The candidate is not deployed into
+bytes. Commit `7e637a9b78155e8b0bc16361cefb18f0b2f34935` caps archive-manifest
+input at 4 MiB and reports larger manifests as unverified without parsing or
+scanning. All three fixtures were added but not run. The candidate is not deployed into
 `/home/charlie/midas-reality`; no archive or Reality service was modified.
 
 At 00:22 CET, host PSI had fallen to 0.00% avg10 / 2.16% avg300 `some` and
