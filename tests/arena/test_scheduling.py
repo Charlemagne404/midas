@@ -44,6 +44,7 @@ def prepared(tmp_path, monkeypatch):
             "available_cpu_count": 6,
             "host_load_avg1": 0.0,
             "memory_psi": {"some": 0.0, "full": 0.0},
+            "user_memory_psi": {"some": 0.0, "full": 0.0},
             "io_psi": {"some": 0.0},
         },
     )
@@ -129,6 +130,7 @@ def test_admission_expiry_and_resource_deferral(prepared, monkeypatch):
             "available_cpu_count": 6,
             "host_load_avg1": 0.0,
             "memory_psi": {"some": 0.0, "full": 0.0},
+            "user_memory_psi": {"some": 0.0, "full": 0.0},
             "io_psi": {"some": 0.0},
         },
     )
@@ -172,6 +174,7 @@ def test_resource_gate_uses_pressure_and_reserve_not_swap_occupancy():
         "available_cpu_count": 6,
         "host_load_avg1": 0.0,
         "memory_psi": {"some": 0.0, "full": 0.0},
+        "user_memory_psi": {"some": 0.0, "full": 0.0},
         "io_psi": {"some": 0.0},
     }
     assert scheduling.resource_gate(ready) == {"ready": True, "reasons": []}
@@ -179,6 +182,10 @@ def test_resource_gate_uses_pressure_and_reserve_not_swap_occupancy():
     assert scheduling.resource_gate(quota_wait)["ready"]
     saturated = {**ready, "host_load_avg1": 6.0}
     assert scheduling.resource_gate(saturated)["reasons"] == ["host_cpu_capacity"]
+    user_pressure = {**ready, "user_memory_psi": {"some": 11.0, "full": 0.0}}
+    assert scheduling.resource_gate(user_pressure)["reasons"] == ["user_memory_pressure"]
+    unavailable = {key: value for key, value in ready.items() if key != "user_memory_psi"}
+    assert scheduling.resource_gate(unavailable)["reasons"] == ["resource_pressure_unavailable"]
 
 
 def test_expired_crash_intent_without_child_does_not_admit(prepared):

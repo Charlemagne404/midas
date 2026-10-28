@@ -4,12 +4,13 @@ from __future__ import annotations
 
 import fcntl
 import json
+import math
 import os
 import shutil
 import stat
 from collections.abc import Iterator
 from contextlib import contextmanager
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any
 
 MINIMUM_AVAILABLE_MEMORY_BYTES = 2 * 1024**3
@@ -130,12 +131,62 @@ def _active_jobs(root: Path) -> list[str]:
 
 
 def _pressure_avg10(kind: str, root: Path) -> dict[str, float]:
+    return _pressure_avg10_file(root / kind)
+
+
+def _pressure_avg10_file(path: Path) -> dict[str, float]:
     values: dict[str, float] = {}
-    for line in (root / kind).read_text().splitlines():
+    for line in path.read_text().splitlines():
         label, _, rest = line.partition(" ")
         fields = dict(item.split("=", 1) for item in rest.split() if "=" in item)
         if "avg10" in fields:
-            values[label] = float(fields["avg10"])
+            value = float(fields["avg10"])
+            if not math.isfinite(value) or not 0 <= value <= 100:
+                raise ValueError(f"Pressure percentage in {path} is outside 0-100")
+            values[label] = value
+    return values
+
+
+def user_manager_memory_pressure_avg10(
+    *,
+    cgroup_root: Path = Path("/sys/fs/cgroup"),
+    process_cgroup_file: Path = Path("/proc/self/cgroup"),
+    user_id: int | None = None,
+) -> dict[str, float]:
+    """Read PSI from the oomd-monitored user manager containing this process."""
+    uid = os.getuid() if user_id is None else user_id
+    if not isinstance(uid, int) or uid < 0:
+        raise ValueError("User identity for resource admission is invalid")
+    membership = process_cgroup_file.read_text()
+    if len(membership) > 4096:
+        raise ValueError("Process cgroup membership exceeds its bound")
+    user_manager = f"user@{uid}.service"
+    target_components: tuple[str, ...] | None = None
+    for line in membership.splitlines():
+        hierarchy, separator, remainder = line.partition(":")
+        if not separator:
+            continue
+        controllers, separator, cgroup_path = remainder.partition(":")
+        if hierarchy != "0" or controllers or not separator or not cgroup_path.startswith("/"):
+            continue
+        components = PurePosixPath(cgroup_path).parts[1:]
+        if any(item in {".", ".."} for item in components):
+            raise ValueError("Process cgroup path contains an unsafe component")
+        try:
+            index = components.index(user_manager)
+        except ValueError:
+            continue
+        target_components = components[: index + 1]
+        break
+    if target_components is None:
+        raise ValueError("Process is not inside its oomd-monitored user manager cgroup")
+    target = cgroup_root.joinpath(*target_components)
+    pressure_file = target / "memory.pressure"
+    if target.is_symlink() or not target.is_dir() or pressure_file.is_symlink():
+        raise ValueError("User manager cgroup pressure source is missing or unsafe")
+    values = _pressure_avg10_file(pressure_file)
+    if not {"some", "full"}.issubset(values):
+        raise ValueError("User manager cgroup pressure source is incomplete")
     return values
 
 
@@ -171,6 +222,7 @@ def resource_snapshot(
         "cpu_psi": _pressure_avg10("cpu", pressure_root),
         **cpu_capacity_snapshot(),
         "memory_psi": _pressure_avg10("memory", pressure_root),
+        "user_memory_psi": user_manager_memory_pressure_avg10(),
         "io_psi": _pressure_avg10("io", pressure_root),
     }
 
@@ -192,6 +244,7 @@ def resource_gate(snapshot: dict[str, Any], *, requested_memory_bytes: int = 0) 
     available_cpu_count = snapshot.get("available_cpu_count")
     host_load_avg1 = snapshot.get("host_load_avg1")
     memory_psi = snapshot.get("memory_psi", {})
+    user_memory_psi = snapshot.get("user_memory_psi", {})
     io_psi = snapshot.get("io_psi", {})
     if (
         available_cpu_count is None
@@ -200,6 +253,8 @@ def resource_gate(snapshot: dict[str, Any], *, requested_memory_bytes: int = 0) 
         or "some" not in snapshot.get("cpu_psi", {})
         or "some" not in memory_psi
         or "full" not in memory_psi
+        or "some" not in user_memory_psi
+        or "full" not in user_memory_psi
         or "some" not in io_psi
     ):
         reasons.append("resource_pressure_unavailable")
@@ -211,6 +266,11 @@ def resource_gate(snapshot: dict[str, Any], *, requested_memory_bytes: int = 0) 
             or memory_psi["full"] > MAX_MEMORY_PSI_FULL_AVG10_PERCENT
         ):
             reasons.append("host_memory_pressure")
+        if (
+            user_memory_psi["some"] > MAX_MEMORY_PSI_SOME_AVG10_PERCENT
+            or user_memory_psi["full"] > MAX_MEMORY_PSI_FULL_AVG10_PERCENT
+        ):
+            reasons.append("user_memory_pressure")
         if io_psi["some"] > MAX_IO_PSI_SOME_AVG10_PERCENT:
             reasons.append("host_io_pressure")
     return {"ready": not reasons, "reasons": reasons}

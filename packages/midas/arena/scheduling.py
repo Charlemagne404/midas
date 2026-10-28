@@ -10,7 +10,11 @@ from typing import Any, Literal
 
 from pydantic import Field, model_validator
 
-from midas.arena.admission import ResourceAdmissionDenied, cpu_capacity_snapshot
+from midas.arena.admission import (
+    ResourceAdmissionDenied,
+    cpu_capacity_snapshot,
+    user_manager_memory_pressure_avg10,
+)
 from midas.arena.artifacts import artifact_path, atomic_json
 from midas.arena.datasets import research_hash
 from midas.arena.jobs import JobSpec, inspect
@@ -124,6 +128,10 @@ def resource_snapshot(root: Path) -> dict[str, Any]:
         if line.startswith("MemAvailable:")
     )
     disk_free = shutil.disk_usage(root).free
+    try:
+        user_memory_psi = user_manager_memory_pressure_avg10()
+    except (OSError, ValueError):
+        user_memory_psi = {}
     return {
         "active_job_ids": [job.get("job_id") for job in active_jobs],
         "available_memory_bytes": available,
@@ -131,6 +139,7 @@ def resource_snapshot(root: Path) -> dict[str, Any]:
         "cpu_psi": pressure_avg10("cpu"),
         **cpu_capacity_snapshot(),
         "memory_psi": pressure_avg10("memory"),
+        "user_memory_psi": user_memory_psi,
         "io_psi": pressure_avg10("io"),
     }
 
@@ -147,18 +156,37 @@ def resource_gate(snapshot: dict[str, Any]) -> dict[str, Any]:
         reasons.append("disk_reserve_for_next_job")
     available_cpu_count = snapshot.get("available_cpu_count")
     host_load_avg1 = snapshot.get("host_load_avg1")
-    if available_cpu_count is None or host_load_avg1 is None or int(available_cpu_count) < 1:
+    memory_psi = snapshot.get("memory_psi", {})
+    user_memory_psi = snapshot.get("user_memory_psi", {})
+    io_psi = snapshot.get("io_psi", {})
+    pressure_unavailable = (
+        "some" not in snapshot.get("cpu_psi", {})
+        or not {"some", "full"}.issubset(memory_psi)
+        or not {"some", "full"}.issubset(user_memory_psi)
+        or "some" not in io_psi
+    )
+    if (
+        available_cpu_count is None
+        or host_load_avg1 is None
+        or int(available_cpu_count) < 1
+        or pressure_unavailable
+    ):
         reasons.append("resource_pressure_unavailable")
     elif float(host_load_avg1) / int(available_cpu_count) >= MAX_CPU_LOAD_AVG1_PER_CPU:
         reasons.append("host_cpu_capacity")
-    memory_psi = snapshot.get("memory_psi", {})
-    if (
-        memory_psi.get("some", 0) > MAX_MEMORY_PSI_SOME_AVG10_PERCENT
-        or memory_psi.get("full", 0) > MAX_MEMORY_PSI_FULL_AVG10_PERCENT
-    ):
-        reasons.append("host_memory_pressure")
-    if snapshot.get("io_psi", {}).get("some", 0) > MAX_IO_PSI_SOME_AVG10_PERCENT:
-        reasons.append("host_io_pressure")
+    if not pressure_unavailable:
+        if (
+            memory_psi["some"] > MAX_MEMORY_PSI_SOME_AVG10_PERCENT
+            or memory_psi["full"] > MAX_MEMORY_PSI_FULL_AVG10_PERCENT
+        ):
+            reasons.append("host_memory_pressure")
+        if (
+            user_memory_psi["some"] > MAX_MEMORY_PSI_SOME_AVG10_PERCENT
+            or user_memory_psi["full"] > MAX_MEMORY_PSI_FULL_AVG10_PERCENT
+        ):
+            reasons.append("user_memory_pressure")
+        if io_psi["some"] > MAX_IO_PSI_SOME_AVG10_PERCENT:
+            reasons.append("host_io_pressure")
     return {"ready": not reasons, "reasons": reasons}
 
 

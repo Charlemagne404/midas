@@ -25,6 +25,7 @@ def ready_snapshot():
             for service in batch.CRITICAL_CPU_SERVICES
         },
         "memory_psi": {"some": 0.0, "full": 0.0},
+        "user_memory_psi": {"some": 0.0, "full": 0.0},
         "io_psi": {"some": 0.0},
     }
 
@@ -46,6 +47,17 @@ def test_resource_gate_blocks_worker_pressure_and_missing_metrics(ready_snapshot
     assert batch.resource_gate(unmeasured)["reasons"] == ["host_cpu_capacity_unavailable"]
     missing = {**ready_snapshot, "io_psi": {}}
     assert batch.resource_gate(missing)["reasons"] == ["resource_pressure_unavailable"]
+    user_pressure = {
+        **ready_snapshot,
+        "user_memory_psi": {"some": 50.0, "full": 0.0},
+    }
+    assert batch.resource_gate(user_pressure)["reasons"] == ["user_memory_pressure"]
+    missing_user_pressure = {
+        key: value for key, value in ready_snapshot.items() if key != "user_memory_psi"
+    }
+    assert batch.resource_gate(missing_user_pressure)["reasons"] == [
+        "resource_pressure_unavailable"
+    ]
 
 
 def test_resource_gate_blocks_critical_service_cpu_pressure_and_missing_telemetry(ready_snapshot):
@@ -111,6 +123,7 @@ def test_resource_snapshot_reads_psi_and_detects_active_jobs(tmp_path, ready_sna
         pressure_root=pressure,
         meminfo_path=meminfo,
         critical_service_cpu_pressure=ready_snapshot["critical_service_cpu_pressure"],
+        user_memory_psi=ready_snapshot["user_memory_psi"],
         available_cpu_count=6,
         host_load_avg1=0.5,
     )
@@ -161,6 +174,7 @@ def test_resource_snapshot_checks_arena_jobs_across_both_repositories(tmp_path, 
         output,
         other_arena_roots=(veritas,),
         critical_service_cpu_pressure=ready_snapshot["critical_service_cpu_pressure"],
+        user_memory_psi=ready_snapshot["user_memory_psi"],
         available_cpu_count=6,
         host_load_avg1=0.5,
     )

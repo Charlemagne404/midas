@@ -76,8 +76,17 @@ def test_laboratory_holds_shared_admission_through_pause_drain(tmp_path, monkeyp
 def test_resource_denial_keeps_campaign_ready_and_releases_lease(tmp_path, monkeypatch):
     from midas.arena import admission
 
-    snapshot = admission.resource_snapshot(tmp_path)
-    snapshot["host_load_avg1"] = 6.0
+    snapshot = {
+        "active_job_ids": [],
+        "available_memory_bytes": 8 * 1024**3,
+        "disk_free_bytes": 20 * 1024**3,
+        "cpu_psi": {"some": 0.0},
+        "available_cpu_count": 6,
+        "host_load_avg1": 6.0,
+        "memory_psi": {"some": 0.0, "full": 0.0},
+        "user_memory_psi": {"some": 0.0, "full": 0.0},
+        "io_psi": {"some": 0.0},
+    }
     monkeypatch.setattr(admission, "resource_snapshot", lambda _: snapshot)
     lab = Campaigns(tmp_path / "lab", DATASETS)
     try:

@@ -15,7 +15,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, cast
 
-from midas.arena.admission import global_lock_path
+from midas.arena.admission import global_lock_path, user_manager_memory_pressure_avg10
 from midas.veritas import gap_detail_analysis as analysis
 from midas.veritas.gap_detail_control import read_control, run_v2_batch
 
@@ -182,12 +182,18 @@ def resource_snapshot(
     pressure_root: Path = Path("/proc/pressure"),
     meminfo_path: Path = Path("/proc/meminfo"),
     cgroup_root: Path = Path("/sys/fs/cgroup"),
+    user_memory_psi: dict[str, float] | None = None,
     critical_service_cpu_pressure: dict[str, dict[str, Any]] | None = None,
     available_cpu_count: int | None = None,
     host_load_avg1: float | None = None,
 ) -> dict[str, Any]:
     if output_root.is_symlink() or not output_root.is_dir():
         raise ValueError("Gap-detail output root is missing or unsafe")
+    if user_memory_psi is None:
+        try:
+            user_memory_psi = user_manager_memory_pressure_avg10(cgroup_root=cgroup_root)
+        except (OSError, ValueError):
+            user_memory_psi = {}
     return {
         "active_arena_job_ids": _active_arena_jobs((arena_root, *other_arena_roots)),
         "available_memory_bytes": _available_memory_bytes(meminfo_path),
@@ -205,6 +211,7 @@ def resource_snapshot(
             else _critical_service_cpu_pressure(cgroup_root=cgroup_root)
         ),
         "memory_psi": _pressure_avg10("memory", pressure_root),
+        "user_memory_psi": user_memory_psi,
         "io_psi": _pressure_avg10("io", pressure_root),
     }
 
@@ -226,8 +233,15 @@ def resource_gate(
     ):
         reasons.append("disk_reserve_for_next_job")
     memory_psi = snapshot.get("memory_psi", {})
+    user_memory_psi = snapshot.get("user_memory_psi", {})
     io_psi = snapshot.get("io_psi", {})
-    if "some" not in memory_psi or "full" not in memory_psi or "some" not in io_psi:
+    if (
+        "some" not in memory_psi
+        or "full" not in memory_psi
+        or "some" not in user_memory_psi
+        or "full" not in user_memory_psi
+        or "some" not in io_psi
+    ):
         reasons.append("resource_pressure_unavailable")
     else:
         if (
@@ -235,6 +249,11 @@ def resource_gate(
             or memory_psi["full"] > MAX_MEMORY_PSI_FULL_AVG10_PERCENT
         ):
             reasons.append("host_memory_pressure")
+        if (
+            user_memory_psi["some"] > MAX_MEMORY_PSI_SOME_AVG10_PERCENT
+            or user_memory_psi["full"] > MAX_MEMORY_PSI_FULL_AVG10_PERCENT
+        ):
+            reasons.append("user_memory_pressure")
         if io_psi["some"] > MAX_IO_PSI_SOME_AVG10_PERCENT:
             reasons.append("host_io_pressure")
     cpu_count = snapshot.get("available_cpu_count", 0)
