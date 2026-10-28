@@ -29,10 +29,10 @@ JOB_ID = "job-0123456789abcdef01234567"
 AS_OF = datetime(2026, 10, 27, tzinfo=UTC)
 
 
-def snapshot():
+def snapshot(as_of_utc: datetime = AS_OF):
     return make_snapshot(
         code_version="frontier-test-source-sha256:" + "a" * 64,
-        as_of_utc=AS_OF,
+        as_of_utc=as_of_utc,
         relationship_limit=500,
         scenarios=(
             ExecutionScenario(name="quoted baseline"),
@@ -42,6 +42,11 @@ def snapshot():
         books=(),
         verified_relationships=(),
     )
+
+
+def test_snapshot_rejects_naive_analysis_time():
+    with pytest.raises(ValueError, match="must include a timezone"):
+        snapshot(datetime(2026, 10, 27))
 
 
 class Progress:

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 import pytest
 from fastapi import FastAPI
@@ -42,7 +42,7 @@ class Progress:
         self.steps.append((current, total))
 
 
-def make_fixture_snapshot():
+def make_fixture_snapshot(evaluation_times_utc=None):
     market_value = market(Venue.POLYMARKET, "arena-timeline")
     book_value = book(market_value, market_value.instruments[0].native_instrument_id, "0.42")
     return make_snapshot(
@@ -51,11 +51,20 @@ def make_fixture_snapshot():
         books=(book_value,),
         verified_relationships=(),
         source_status_events=(),
-        evaluation_times_utc=(T0 + timedelta(seconds=1), T0 + timedelta(seconds=20)),
+        evaluation_times_utc=(
+            evaluation_times_utc
+            if evaluation_times_utc is not None
+            else (T0 + timedelta(seconds=1), T0 + timedelta(seconds=20))
+        ),
         max_book_age_ms=10_000,
         scenario=ExecutionScenario(name="event-time baseline"),
         relationship_limit=100,
     )
+
+
+def test_timeline_snapshot_rejects_naive_evaluation_time():
+    with pytest.raises(ValueError, match="must include a timezone"):
+        make_fixture_snapshot((datetime(2026, 10, 27),))
 
 
 def test_timeline_snapshot_is_content_addressed_and_tamper_evident(tmp_path):

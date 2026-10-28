@@ -47,7 +47,7 @@ class Progress:
         self.steps.append((current, total))
 
 
-def discovery_snapshot():
+def discovery_snapshot(as_of_utc: datetime = AS_OF):
     left = market(Venue.POLYMARKET, "arena-discovery-left")
     right = market(Venue.KALSHI, "arena-discovery-right")
     relationship = verify_same_payoff(
@@ -64,7 +64,7 @@ def discovery_snapshot():
     )
     return make_snapshot(
         code_version="frontier-test-discovery-v1",
-        as_of_utc=AS_OF,
+        as_of_utc=as_of_utc,
         relationship_limit=500,
         scenario=ExecutionScenario(name="quoted fixture"),
         markets=(left, right),
@@ -76,6 +76,11 @@ def discovery_snapshot():
         ),
         verified_relationships=(relationship,),
     )
+
+
+def test_discovery_snapshot_rejects_naive_analysis_time():
+    with pytest.raises(ValueError, match="must include a timezone"):
+        discovery_snapshot(datetime(2026, 10, 27))
 
 
 def test_discovery_snapshot_and_arena_result_are_hash_pinned_and_reconstructable(tmp_path):

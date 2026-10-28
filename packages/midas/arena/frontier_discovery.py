@@ -139,6 +139,8 @@ def make_snapshot(
     instrument_mappings: dict[str, dict[str, str]] | None = None,
     joint_state_mappings: tuple[JointStateMap, ...] = (),
 ) -> FrontierDiscoverySnapshot:
+    if as_of_utc.tzinfo is None or as_of_utc.utcoffset() is None:
+        raise ValueError("Frontier discovery timestamp must include a timezone")
     data = {
         "schema_version": 1,
         "code_version": code_version,

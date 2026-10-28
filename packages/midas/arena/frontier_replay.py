@@ -106,6 +106,8 @@ def make_snapshot(
     books: tuple[BookSnapshot, ...],
     verified_relationships: tuple[Relationship, ...],
 ) -> FrontierReplaySnapshot:
+    if as_of_utc.tzinfo is None or as_of_utc.utcoffset() is None:
+        raise ValueError("Frontier Arena replay timestamp must include a timezone")
     data = {
         "schema_version": 1,
         "code_version": code_version,

@@ -175,6 +175,10 @@ def make_snapshot(
     scenario: ExecutionScenario,
     relationship_limit: int,
 ) -> FrontierTimelineSnapshot:
+    if evaluation_times_utc is not None and any(
+        value.tzinfo is None or value.utcoffset() is None for value in evaluation_times_utc
+    ):
+        raise ValueError("Timeline evaluation times must include a timezone")
     data = {
         "schema_version": 2,
         "code_version": code_version,
