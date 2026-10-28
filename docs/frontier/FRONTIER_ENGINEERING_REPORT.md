@@ -5783,3 +5783,31 @@ build checkpoint. No exchange, production service, preserved recording, or
 production store was accessed. The project remains **PARTIALLY VERIFIED**;
 source permission, genuine cross-venue semantics, long-horizon quality, and
 deployment are still open.
+
+## Scoped Frontier type checks closed — 2026-10-28 03:15 UTC
+
+After two fresh Arena admission snapshots each passed the configured 768-MiB
+request, strict mypy passed for `packages/midas/frontier/discovery_comparison.py`
+and `apps/api/frontier.py`:
+
+```bash
+env MYPYPATH=packages /home/charlie/midas/.venv/bin/mypy --strict \
+  --follow-imports=silent packages/midas/frontier/discovery_comparison.py
+env MYPYPATH=packages /home/charlie/midas/.venv/bin/mypy --strict \
+  --follow-imports=silent apps/api/frontier.py
+```
+
+The API check took 21.74 seconds. Imported-module diagnostics were suppressed,
+so this does not establish repository-wide typing. At `2026-10-28T03:15:11Z`,
+memory PSI avg10 was **0.00% some / 0.00% full**, I/O PSI avg10 was **0.62%
+some / 0.61% full**, available memory was about **10.1 GiB**, and free swap was
+about **333 MiB**. This is a dated point sample only. No code changed during
+these checks; no source endpoint, test database, worker, production service,
+or protected recording was accessed.
+
+The corrected Frontier plus selected Arena regression remains **383/383** at
+**377,372 KiB** peak RSS from its earlier run. The type checks close only the
+two scoped modules. Frontier remains **PARTIALLY VERIFIED**, isolated,
+research-only, and undeployed; genuine cross-venue equivalence, held-source
+live evidence, broader typing, sustained resource evidence, and deployment
+remain unresolved.

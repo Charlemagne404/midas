@@ -4126,3 +4126,31 @@ resource-bearing work until that lock releases and the pressure gate admits it.
 | Discovery-comparison strict typing | PARTIALLY VERIFIED | Local issues were corrected earlier; final scoped mypy is still pending because the actual resource gate denied work. |
 | Current host admission | BLOCKED FOR MORE RESOURCE WORK | Memory PSI is high and external Veritas PID 4117533 owns the shared lock. Preserve it and wait for fresh admission. |
 | Project Frontier overall | PARTIALLY VERIFIED | Source permission, live cross-venue evidence, wider repository verification, sustained operations, and deployment remain unresolved. |
+
+### Scoped Frontier type checks closed — 2026-10-28 03:15 UTC
+
+After two fresh Arena resource-admission snapshots each admitted a 768-MiB
+request, strict mypy passed for both changed targets:
+
+```bash
+env MYPYPATH=packages /home/charlie/midas/.venv/bin/mypy --strict \
+  --follow-imports=silent packages/midas/frontier/discovery_comparison.py
+env MYPYPATH=packages /home/charlie/midas/.venv/bin/mypy --strict \
+  --follow-imports=silent apps/api/frontier.py
+```
+
+The API check completed in 21.74 seconds. These are scoped target checks with
+diagnostics from imported modules suppressed; they are not a repository-wide
+typing result. The checks were read-only and used no source endpoints, test
+databases, workers, production services, or protected recordings. At
+`2026-10-28T03:15:11Z`, memory PSI avg10 was **0.00% some / 0.00% full**, I/O
+PSI avg10 was **0.62% some / 0.61% full**, available memory was about **10.1
+GiB**, and free swap was about **333 MiB**. This is one time-bounded host
+sample, not a sustained-capacity statement.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Discovery-comparison and Frontier API strict typing | COMPLETE AND VERIFIED | Both scoped mypy invocations pass after separate 768-MiB admission checks. Imported-module diagnostics are intentionally suppressed. |
+| Broader Python type safety | PARTIALLY VERIFIED | This closes two scoped targets only; no repository-wide typing pass is claimed. |
+| Current host sample | MEASURED | At 03:15:11 UTC, memory PSI avg10 was 0.00% and I/O PSI avg10 was 0.62% some / 0.61% full; this point sample does not establish sustained capacity. |
+| Project Frontier overall | PARTIALLY VERIFIED | Genuine cross-venue semantic evidence, held-source live validation, broad operational acceptance, and deployment remain open. |

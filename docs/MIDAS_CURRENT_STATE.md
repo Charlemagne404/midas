@@ -1563,3 +1563,17 @@ it for `host_memory_pressure`. At 03:12:36 UTC memory PSI avg10 was 34.89% some
 / 32.22% full and external Veritas batch PID 4117533 held the shared Arena
 lock. It was left untouched. Frontier remains isolated, research-only,
 undeployed, and **PARTIALLY VERIFIED**.
+
+### Scoped Frontier type checks completed — 2026-10-28 03:15 UTC
+
+After two separate 768-MiB Arena admission checks passed, strict mypy passed
+for `packages/midas/frontier/discovery_comparison.py` and `apps/api/frontier.py`
+with imported-module diagnostics suppressed. The API check took 21.74 seconds;
+this is not a repository-wide typing result. At 03:15:11 UTC memory PSI avg10
+was 0.00% some / full and I/O PSI avg10 was 0.62% some / 0.61% full, with
+about 10.1 GiB available memory and 333 MiB free swap. This dated sample is
+not a sustained-capacity measurement. No exchange source, test database,
+worker, protected service, or recording was accessed. The overall mission
+remains **PARTIALLY VERIFIED**, research-only, isolated, and undeployed; see
+the [mission ledger](frontier/FRONTIER_MISSION_LEDGER.md) and
+[engineering report](frontier/FRONTIER_ENGINEERING_REPORT.md).
