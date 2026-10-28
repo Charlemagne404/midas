@@ -3555,3 +3555,19 @@ I/O PSI `some` avg10/avg60 was 0%/0.04%, `full` was 0%. `MemAvailable` was
 9,979,384 KiB and `SwapFree` was 47,968 KiB. Reality was at 1,207,795,712 /
 1,207,959,552 bytes (163,840 bytes below `MemoryHigh`); API was at
 1,552,601,088 / 1,610,612,736 bytes. No broad suite was run.
+
+## Encoded failure evidence persistence — 2026-10-28 20:11 UTC
+
+Frontier commit `e8353ff2ee8e6c39fd8eda94e8e926afeb113e4e` adds an API-level
+fixture verifying the compressed response's exact bytes are persisted as
+base64 with a matching SHA-256 and `UNSUPPORTED_CONTENT_ENCODING` failure
+classification. The focused integration test passes 1/1 in 3.03 seconds pytest
+time (3.53 seconds wall; 88,748 KiB peak RSS), zero swaps and no sockets. Ruff
+passes; the existing Starlette/httpx TestClient deprecation is the only
+warning. It uses local fixtures only.
+
+At `2026-10-28T20:11:08Z`, memory PSI avg10/avg60 was 0%; I/O PSI `some`
+avg10/avg60 was 0.29%/0.22%, `full` was 0.22%/0.14%. `MemAvailable` was
+9,883,468 KiB and `SwapFree` was 48,040 KiB. Reality was at 1,207,939,072 /
+1,207,959,552 bytes (20,480 bytes below `MemoryHigh`); API was at
+1,560,555,520 / 1,610,612,736 bytes. No further tests were run at this sample.

@@ -11386,3 +11386,34 @@ avg10/avg60 0%, I/O PSI `some` avg10/avg60 0%/0.04% and `full` 0%,
 | Full Frontier and legacy regression | PARTIALLY VERIFIED | The prior 505-case suite predates current versions; broad legacy regression remains unrun. |
 | Live multi-venue science | BLOCKED | Source-use and retention gates remain unresolved; no cross-venue live observation is claimed. |
 | Frontier overall | PARTIALLY VERIFIED | Broad regression, live market evidence, endurance, protected recovery, and deployment remain open. |
+
+## Encoded-response evidence persistence — 2026-10-28 20:11 UTC
+
+Commit `e8353ff2ee8e6c39fd8eda94e8e926afeb113e4e` adds an API-level
+reproducibility check for encoded transport failures. The fixture supplies a
+gzip body whose decompressed payload exceeds the configured response limit.
+Frontier rejects the response as `UNSUPPORTED_CONTENT_ENCODING`, persists the
+bounded raw compressed bytes as base64 in a temporary evidence store, preserves
+their SHA-256, and labels the record `transport_response` with the same error
+code. The source health is subsequently recovered by the existing valid local
+fixture. The test does not contact an exchange.
+
+The focused API integration test passes **1/1** in 3.03 seconds pytest time
+(3.53 seconds wall), at 88,748 KiB peak RSS, zero swaps, and zero socket
+messages. Ruff passes. The existing Starlette/httpx `TestClient` deprecation
+is the only warning. No broader suite was started.
+
+At `2026-10-28T20:11:08Z`, memory PSI avg10/avg60 was 0%; I/O PSI `some`
+avg10/avg60 was 0.29%/0.22% and `full` was 0.22%/0.14%. `MemAvailable` was
+9,883,468 KiB and `SwapFree` 48,040 KiB. Reality was at 1,207,939,072 /
+1,207,959,552 bytes, only 20,480 bytes below `MemoryHigh`; API was at
+1,560,555,520 / 1,610,612,736 bytes. No further tests were run after this
+sample.
+
+| Requirement | Status | Evidence and boundary |
+| --- | --- | --- |
+| Durable encoded-failure evidence | COMPLETE AND VERIFIED | The API fixture proves bounded raw bytes, base64 representation, hash, classification, and health recovery. |
+| Current adapter and transport fixture suites | COMPLETE AND VERIFIED | The adapter module passes 134/134 and the transport module 19/19 against the final code. |
+| Full current Frontier and legacy regressions | PARTIALLY VERIFIED | The prior 505-case Frontier run predates current adapter and transport changes; broad legacy testing remains unrun. |
+| Genuine live cross-venue science | BLOCKED | Source authorization/retention gates remain; fixture evidence is not live-market validation. |
+| Frontier overall | PARTIALLY VERIFIED | Broad regression, live observations, endurance, protected recovery, and deployment remain incomplete. |

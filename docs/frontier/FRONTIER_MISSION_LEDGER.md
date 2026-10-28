@@ -10487,3 +10487,37 @@ was 1,552,601,088 / 1,610,612,736 bytes. No broad suite was started.
 **Next safe action:** continue source-independent review. Retain existing
 source-use holds and defer full regression while Reality remains near
 `MemoryHigh`.
+
+## Encoded-response evidence persistence — 2026-10-28 20:11 UTC
+
+Commit `e8353ff2ee8e6c39fd8eda94e8e926afeb113e4e` extends the bounded API
+failure-recovery fixture. A gzip response that expands beyond the configured
+size cap is rejected as `UNSUPPORTED_CONTENT_ENCODING`; the compressed bytes
+are stored in the temporary Frontier evidence database, encoded as base64, and
+verified against their raw SHA-256. The observation retains the transport
+failure stage and code, and the existing source-health recovery path still
+passes. The scenario uses an injected local stream and makes no external call.
+
+The focused API integration test passes **1/1** in 3.03 seconds pytest time
+(3.53 seconds wall), at 88,748 KiB peak RSS, zero swaps, and zero socket
+messages. Ruff passes. The existing Starlette/httpx `TestClient` deprecation is
+the only warning. No broad suite was started.
+
+At `2026-10-28T20:11:08Z`, memory PSI avg10/avg60 was 0%; I/O PSI `some`
+avg10/avg60 was 0.29%/0.22% and `full` was 0.22%/0.14%. `MemAvailable` was
+9,883,468 KiB and `SwapFree` 48,040 KiB. Reality was at 1,207,939,072 /
+1,207,959,552 bytes (20,480 bytes below `MemoryHigh`); API was at
+1,560,555,520 / 1,610,612,736 bytes. No further test run was started at this
+sample.
+
+| Requirement | Status | Current evidence and boundary |
+| --- | --- | --- |
+| Bounded transport-error persistence | COMPLETE AND VERIFIED | The API integration fixture verifies compressed bytes, base64 storage, SHA-256, failure classification, and recovery. |
+| Current adapter/transport fixture modules | COMPLETE AND VERIFIED | 134 adapter cases and 19 transport cases pass against current code. |
+| Full Frontier/legacy regression | PARTIALLY VERIFIED | The 505-case Frontier pass predates the latest code; broad regression remains unrun. |
+| Live source observations | BLOCKED | Source-use and retention restrictions remain; all new observations were local fixtures. |
+| Project Frontier overall | PARTIALLY VERIFIED | Broad regression, live cross-venue science, endurance, protected recovery, and deployment remain incomplete. |
+
+**Next safe action:** continue code/document review without tests until the
+protected recorder has sustained margin below `MemoryHigh` and I/O pressure
+has returned to its normal baseline.
