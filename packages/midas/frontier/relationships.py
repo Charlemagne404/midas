@@ -27,6 +27,7 @@ LOGICAL_IMPLICATION_VERIFIER_VERSION = "frontier-logical-implication-verifier-4"
 MAX_LOGICAL_IMPLICATION_STATES = 1024
 MAX_LOGICAL_STATE_ID_CHARS = 128
 DEFAULT_MINIMUM_JACCARD = D("0.45")
+MAX_RELATIONSHIP_MARKETS = 200
 _STOP_WORDS = {
     "a",
     "an",
@@ -251,6 +252,10 @@ def propose_relationships(
         raise ValueError("Relationship pair bound must be within 1..20000")
     if not D(0) <= minimum_jaccard <= D(1):
         raise ValueError("Minimum Jaccard threshold must be between zero and one")
+    if len(markets) > MAX_RELATIONSHIP_MARKETS:
+        raise ValueError(
+            f"Relationship proposal input exceeds the {MAX_RELATIONSHIP_MARKETS}-market bound"
+        )
     by_id = {market.canonical_id: market for market in markets}
     if len(by_id) != len(markets):
         raise ValueError("Duplicate canonical market identity")

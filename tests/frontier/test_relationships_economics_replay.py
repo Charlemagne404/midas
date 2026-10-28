@@ -544,6 +544,40 @@ def test_deterministic_replay_rejects_duplicate_relationship_identities():
         )
 
 
+def test_relationship_proposals_reject_oversized_market_universe_before_indexing():
+    source = market(Venue.POLYMARKET, "oversized-proposal-universe")
+
+    with pytest.raises(ValueError, match="200-market bound"):
+        propose_relationships((source,) * 201)
+
+
+def test_deterministic_replay_rejects_oversized_market_input_before_validation():
+    source = market(Venue.POLYMARKET, "oversized-replay-markets")
+
+    with pytest.raises(ValueError, match="200-market bound"):
+        deterministic_replay((source,) * 201, ())
+
+
+def test_deterministic_replay_rejects_oversized_book_input_before_validation():
+    source = market(Venue.POLYMARKET, "oversized-replay-books")
+    snapshot = book(source, source.instruments[0].native_instrument_id, "0.40")
+
+    with pytest.raises(ValueError, match="400-book bound"):
+        deterministic_replay((source,), (snapshot,) * 401)
+
+
+def test_deterministic_replay_rejects_oversized_relationship_input_before_sorting():
+    _left, _right, relationship, _instrument_mapping = _verified_pair()
+
+    with pytest.raises(ValueError, match="1000-relationship bound"):
+        deterministic_replay((), (), verified_relationships=(relationship,) * 1001)
+
+
+def test_deterministic_replay_rejects_oversized_relationship_proposal_limit():
+    with pytest.raises(ValueError, match="1..1000"):
+        deterministic_replay((), (), relationship_limit=1001)
+
+
 def _with_duplicated_inflated_best_ask(snapshot: BookSnapshot) -> BookSnapshot:
     best_ask = min(snapshot.asks, key=lambda item: item.price)
     inflated = best_ask.model_copy(update={"quantity": Decimal("100")})

@@ -31,6 +31,7 @@ from midas.frontier.models import (
 )
 from midas.frontier.relationships import (
     MATCHER_VERSION,
+    MAX_RELATIONSHIP_MARKETS,
     Relationship,
     RelationshipType,
     evidence_mapping,
@@ -39,6 +40,9 @@ from midas.frontier.relationships import (
 
 REPLAY_VERSION = "frontier-deterministic-replay-20"
 PAIRED_COMPARISON_VERSION = "frontier-paired-replay-1"
+MAX_REPLAY_BOOKS = 400
+MAX_REPLAY_RELATIONSHIPS = 1000
+MAX_REPLAY_RELATIONSHIP_PROPOSALS = 1000
 
 
 class ReplayManifest(FrontierModel):
@@ -194,6 +198,17 @@ def deterministic_replay(
     relationship_limit: int = 1000,
 ) -> ReplayResult:
     """Replay saved evidence only. The function has no adapter or network dependency."""
+    if len(markets) > MAX_RELATIONSHIP_MARKETS:
+        raise ValueError(f"Replay input exceeds the {MAX_RELATIONSHIP_MARKETS}-market bound")
+    if len(books) > MAX_REPLAY_BOOKS:
+        raise ValueError(f"Replay input exceeds the {MAX_REPLAY_BOOKS}-book bound")
+    if len(verified_relationships) > MAX_REPLAY_RELATIONSHIPS:
+        raise ValueError(f"Replay input exceeds the {MAX_REPLAY_RELATIONSHIPS}-relationship bound")
+    if not 1 <= relationship_limit <= MAX_REPLAY_RELATIONSHIP_PROPOSALS:
+        raise ValueError(
+            "Replay relationship proposal limit must be within "
+            f"1..{MAX_REPLAY_RELATIONSHIP_PROPOSALS}"
+        )
     scenario = scenario or ExecutionScenario()
     _require_valid_execution_scenario(scenario)
     if any(not market.has_valid_structure for market in markets):
