@@ -2,6 +2,23 @@
 
 **Report date:** 2026-10-28
 
+## Focused regression results — 2026-10-28 16:42 UTC
+
+The full `tests/frontier/test_relationship_reviews.py` module passes 16/16
+after adding request-level lowercase SHA-256 validation. The focused new cases
+pass 3/3. `test_coinbase.py` and `test_source_data_permissions.py` pass 18/18
+after correcting a stale test expectation that still used the prior Coinbase
+hold wording. The changed Frontier UI test passes 1/1 with eight unrelated
+cases filtered out. Ruff check, Ruff format check, and `git diff --check` pass.
+
+The first Coinbase-focused run reported 17 passes and one stale assertion
+failure; this was a test-fixture string mismatch, not a source-policy or
+runtime failure. The corrected two-module rerun passed. At 16:42:07Z, CPU PSI
+avg10 was 33.24%, memory PSI avg10 0%, I/O PSI avg10 0.01%, and about 9.9 GiB
+was available. Swap remained full. The protected Reality and API services were
+active; no source endpoint was queried. Broad suites remain deferred under
+host CPU pressure.
+
 ## Relationship-review evidence validation checkpoint — 2026-10-28 16:39 UTC
 
 Static review found that the review request bounded the number of observation

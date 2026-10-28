@@ -1,5 +1,32 @@
 # Project Frontier Mission Ledger
 
+## Focused source-policy and relationship regressions — 2026-10-28 16:42 UTC
+
+After the relationship-review request change, the targeted malformed-ID cases
+passed 3/3 and the complete `tests/frontier/test_relationship_reviews.py`
+module passed 16/16 on the formatted tree. The first Coinbase-focused run had
+17 passes and one failure because a source-status test still expected the
+previous hold wording. That test expectation was updated to the shared reason;
+`test_coinbase.py` plus `test_source_data_permissions.py` then passed 18/18.
+The affected `Frontier.test.tsx` UI case passed 1/1, with eight unrelated tests
+filtered out. Ruff check, Ruff format check, and `git diff --check` pass.
+
+The 16:42:07Z read-only sample measured CPU PSI avg10 33.24% / avg60 35.77%,
+memory PSI avg10 0%, I/O PSI avg10 0.01%, about 9.9 GiB available, and swap
+full. Reality and API services were active. These were short fixture-backed
+tests; no public endpoint or protected service was used. Broad regression
+remains deferred. The code change is `8c898dc`, its formatter-only follow-up is
+`8a7952e`, and the Coinbase wording commits are `5ea6921` and `df4d448`.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Relationship-review evidence request validation | COMPLETE AND VERIFIED | The full 16-case review module passes after enforcing lowercase SHA-256 request IDs. |
+| Coinbase source-use hold disclosure | COMPLETE AND VERIFIED | Adapter/API assertions pass; the UI policy case passes. The hold remains active and no source use is permitted by this change. |
+| Full Frontier regression after these edits | PARTIALLY VERIFIED | Only the affected Python modules and one UI case were rerun; the full suite and web suite remain prior-tree evidence. |
+
+**Next safe action:** continue source-independent review; take a fresh resource
+sample before any larger test batch.
+
 ## Relationship-review evidence IDs validated before lookup — 2026-10-28 16:39 UTC
 
 Read-only review of `RelationshipReviewRequest` found that evidence IDs were

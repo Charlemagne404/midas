@@ -33,7 +33,16 @@ in the dated addendum below and in the Frontier engineering report.
 
 ## Frontier development addendum — 2026-10-28
 
-### Latest isolated Frontier checkpoint — 2026-10-28 16:39 UTC
+### Latest isolated Frontier checkpoint — 2026-10-28 16:42 UTC
+
+The relationship-review module passes 16/16 after request-level digest
+validation. Coinbase adapter/source-permission modules pass 18/18 after
+updating a stale assertion to the shared hold reason. The changed Frontier UI
+test passes 1/1 (eight other cases were filtered out). Ruff, formatting, and
+`git diff --check` pass. The first Coinbase run exposed only that stale test
+expectation; the corrected rerun passes. At 16:42Z, CPU PSI avg10 was 33.24%,
+memory PSI 0%, I/O PSI 0.01%, and about 9.9 GiB was available; swap remained
+full. Reality and API services were active. No source endpoint was queried.
 
 Relationship-review requests now reject evidence identifiers unless each is a
 lowercase 64-character SHA-256 digest, before the handler performs observation

@@ -168,8 +168,12 @@ def test_coinbase_terms_acknowledgement_does_not_lift_unresolved_scope_hold(tmp_
             source = items[Venue.COINBASE_EXCHANGE.value]
             assert source["public_probe_enabled"] is False
             assert (
-                "no validated permission and intended-scope review loader"
+                "no validated permission or intended-scope review"
                 in (source["probe_policy_block_reason"])
+            )
+            assert (
+                "develop, train, fine-tune, teach, validate, benchmark, or improve"
+                in source["probe_policy_block_reason"]
             )
             response = client.post("/api/frontier/probe/coinbase_exchange", json={})
             assert response.status_code == 409
