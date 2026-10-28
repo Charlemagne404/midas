@@ -90,6 +90,23 @@ source-independent static work continues, while test/replay admission remains
 closed pending Reality capture recovery and meaningful protected-service
 headroom.
 
+### Adapter trust boundary and retry correction — 2026-10-29 00:00 CET
+
+Static review confirmed source HTTP is centralized in the anonymous,
+host-allowlisted, redirect-disabled GET transport. The API router uses one
+registered adapter per venue and a per-venue operation lock. Existing fixture
+tests cover auth/mutating-client rejection, disabled probes, cookie clearing,
+host/redirect rejection, response-size limits, and parser complexity. No
+exchange order/account path was found in the reviewed Frontier code; no live
+network request was made.
+
+The transport had an edge case where negative `max_retries` skipped the loop
+and returned without a response. It now clamps that value to zero retries,
+which still means one initial request; a fixture test asserts the single
+attempt and classified timeout. `git diff --check` passes. The new test was
+not run under the current protected-service admission hold. The change and
+fixture are included in this Frontier checkpoint.
+
 ## Resource recheck after graph-layout change — 2026-10-28 22:42 UTC
 
 A fresh admission sample at 22:42:57Z showed memory PSI had risen to 52.42%

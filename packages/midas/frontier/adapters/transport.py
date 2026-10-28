@@ -250,7 +250,9 @@ class PublicReadTransport:
                 "PUBLIC_PROBE_DISABLED",
                 "Enable this source and its bounded public-probe flag before making network requests",
             )
-        retries = self.config.retries if max_retries is None else min(max_retries, 2)
+        retries = (
+            self.config.retries if max_retries is None else max(0, min(max_retries, 2))
+        )
         for attempt in range(retries + 1):
             await self._pace()
             started_monotonic_ns = time.monotonic_ns()

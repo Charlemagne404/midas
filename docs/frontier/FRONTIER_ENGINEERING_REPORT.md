@@ -2,7 +2,7 @@
 
 **Report date:** 2026-10-28
 
-## Current completion matrix — 2026-10-28 23:57 CET
+## Current completion matrix — 2026-10-29 00:00 CET
 
 This is a current evidence classification, not a final completion claim. The
 dated implementation records below remain the detailed evidence; the
@@ -17,12 +17,34 @@ current host gate.
 | Candidate discovery and independent economic verification | PARTIALLY VERIFIED | Bounded mathematical fixtures and independent audits pass selected checks; no live eligible opportunity is demonstrated. |
 | Cross-venue costs, FX, capital, and execution uncertainty | PARTIALLY VERIFIED | Virtual models preserve unknown cost and applicability states; account-specific fees, jurisdiction, transfers, and execution remain unresolved. |
 | Collection, provenance, durable storage, and replay | IMPLEMENTED, LIVE VALIDATION PENDING | Fixture and captured Polymarket evidence paths exist; multi-venue live collection is held, and protected Reality recovery is currently unverified. |
+| Read-only source network and trading boundary | COMPLETE AND VERIFIED | Only `PublicReadTransport` issues source HTTP requests; it is anonymous HTTPS GET-only, host-allowlisted, redirect-disabled, and bounded. Adapter boundary fixtures cover disabled probes, credential/mutating clients, cookies, redirects, oversized payloads, and JSON complexity. No exchange order/account path was found in the reviewed Frontier code. |
 | Laboratory/Arena comparisons and bounded orchestration | PARTIALLY VERIFIED | Selected deterministic comparisons exist; full regression and endurance evidence remain incomplete. |
 | Native Frontier dashboard | PARTIALLY VERIFIED | The workspace and focused UI checks exist; the latest graph-layout assertion and full browser acceptance remain unverified. |
 | Broad regressions, resource endurance, and performance acceptance | DEFERRED | Held during the host memory incident; no stress run is authorized by this report. |
 | Live multi-venue source authorization and findings | BLOCKED | Kalshi, Kraken, and Coinbase retained research remain held; the worktree Polymarket probe flag is off. |
 | Production integration/deployment | DEFERRED | Frontier remains isolated; no protected service transition occurred. |
 | Project Frontier overall | PARTIALLY VERIFIED | The engine is substantial, but live cross-venue science, broad verification, recovery, endurance, and deployment gates remain open. |
+
+## Adapter trust boundary and retry bound review — 2026-10-29 00:00 CET
+
+Static inspection confirmed that the API router retains one registered adapter
+per venue and serializes source operations with a per-venue lock. The adapter
+network path is centralized in `PublicReadTransport`: requests use fixed
+anonymous HTTPS GETs, an adapter host allowlist, no redirects, no ambient proxy
+settings, and client revalidation that rejects auth, cookies, unsafe headers,
+hooks, or network-capable injected clients. Source config bounds request rate
+to 5/s, response bodies to 256 KiB, discovery pages to 100 markets, JSON
+nested depth to 64, and in-memory captures to 32 responses / 2 MiB. Existing
+fixture tests cover the corresponding disabled-probe, credential/mutating
+client, cookie, redirect, size, and parser-complexity cases. No live request
+was made in this review.
+
+The review found that an explicitly negative `max_retries` value produced an
+empty retry loop, silently skipping the request and returning `None`. The
+transport now clamps the retry count to zero, preserving one initial attempt;
+a fixture regression asserts one request and a classified timeout. The new
+fixture was added but not run because the host incident gate remains in force.
+`git diff --check` passes. Verification of this change is pending.
 
 ## Host memory-pressure incident and Frontier admission — 2026-10-28 22:56 UTC
 

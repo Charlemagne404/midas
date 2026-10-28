@@ -306,6 +306,32 @@ async def test_transport_timeout_retries_are_bounded_and_have_no_response_eviden
 
 
 @pytest.mark.asyncio
+async def test_negative_max_retries_still_attempts_request_once():
+    calls = 0
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal calls
+        calls += 1
+        raise httpx.ReadTimeout("fixture timeout", request=request)
+
+    client = httpx.AsyncClient(transport=httpx.MockTransport(handler))
+    transport = PublicReadTransport(
+        {"example.com"},
+        AdapterConfig(enabled=True, live_public_probe_enabled=True, requests_per_second=5),
+        client=client,
+    )
+    try:
+        with pytest.raises(AdapterError) as error:
+            await transport.get_json("https://example.com/markets", max_retries=-1)
+        assert error.value.code == "SOURCE_TIMEOUT"
+        assert error.value.retryable is True
+        assert error.value.response_evidence is None
+        assert calls == transport.request_count == 1
+    finally:
+        await client.aclose()
+
+
+@pytest.mark.asyncio
 async def test_transport_truncated_stream_keeps_no_partial_response_evidence():
     class TruncatedStream(httpx.AsyncByteStream):
         def __init__(self, request: httpx.Request) -> None:
