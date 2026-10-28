@@ -21,7 +21,7 @@ from midas.frontier.models import (
 from midas.frontier.relationships import propose_relationships
 from midas.frontier.replay import deterministic_replay, paired_deterministic_replay
 
-from apps.api.config import Settings
+from apps.api.config import COINBASE_MARKET_DATA_TERMS_VERSION, Settings
 from apps.api.frontier import router as frontier_router
 from apps.api.main import create_app
 from tests.frontier.builders import T0, book, market
@@ -67,7 +67,10 @@ def test_probe_flags_and_references_do_not_enable_unvalidated_sources(tmp_path):
                 if gate["name"] == "source_data_use_permissions"
             )
             assert permission_gate["state"] == "BLOCKED"
-            assert "no validated permission/terms-review loader" in permission_gate["detail"]
+            assert (
+                "no validated permission and intended-scope review loader"
+                in (permission_gate["detail"])
+            )
 
         for venue in (Venue.KALSHI, Venue.KRAKEN):
             config = app.state.frontier_registry.get(venue).config
@@ -111,9 +114,7 @@ def test_whitespace_permission_references_never_unlock_live_probes():
     assert settings.frontier_kraken_probe_allowed is False
 
 
-def test_coinbase_terms_revision_requires_exact_opt_in_and_separate_probe_flag(tmp_path):
-    from apps.api.config import COINBASE_MARKET_DATA_TERMS_VERSION
-
+def test_coinbase_terms_acknowledgement_does_not_lift_unresolved_scope_hold(tmp_path):
     default = Settings(
         _env_file=None,
         database_url=f"sqlite+aiosqlite:///{tmp_path / 'midas.db'}",
@@ -133,7 +134,10 @@ def test_coinbase_terms_revision_requires_exact_opt_in_and_separate_probe_flag(t
             }
             source = items[Venue.COINBASE_EXCHANGE.value]
             assert source["public_probe_enabled"] is False
-            assert "acknowledges" in source["probe_policy_block_reason"]
+            assert (
+                "no validated permission and intended-scope review loader"
+                in (source["probe_policy_block_reason"])
+            )
             response = client.post("/api/frontier/probe/coinbase_exchange", json={})
             assert response.status_code == 409
             assert response.json()["detail"] == source["probe_policy_block_reason"]
@@ -168,7 +172,11 @@ def test_coinbase_terms_revision_requires_exact_opt_in_and_separate_probe_flag(t
     acknowledged_app = create_app(acknowledged_but_probe_disabled)
     try:
         config = acknowledged_app.state.frontier_registry.get(Venue.COINBASE_EXCHANGE).config
-        assert config.probe_policy_block_reason is None
+        assert acknowledged_but_probe_disabled.frontier_coinbase_probe_allowed is False
+        assert config.probe_policy_block_reason is not None
+        assert "no validated permission and intended-scope review loader" in (
+            config.probe_policy_block_reason
+        )
         assert config.market_data_terms_version_acknowledged == COINBASE_MARKET_DATA_TERMS_VERSION
         assert config.enabled is False
         assert config.live_public_probe_enabled is False
@@ -189,11 +197,27 @@ def test_coinbase_terms_revision_requires_exact_opt_in_and_separate_probe_flag(t
     assert explicitly_enabled.frontier_coinbase_terms_acknowledged is True
     opted_in_app = create_app(explicitly_enabled)
     try:
+        api = FastAPI()
+        api.include_router(
+            frontier_router(opted_in_app.state.frontier_store, opted_in_app.state.frontier_registry)
+        )
         adapter = opted_in_app.state.frontier_registry.get(Venue.COINBASE_EXCHANGE)
-        assert adapter.config.enabled is True
-        assert adapter.config.live_public_probe_enabled is True
-        assert adapter.config.probe_policy_block_reason is None
+        assert explicitly_enabled.frontier_coinbase_probe_allowed is False
+        assert adapter.config.enabled is False
+        assert adapter.config.live_public_probe_enabled is False
+        assert adapter.config.probe_policy_block_reason is not None
         assert adapter.transport.request_count == 0
+        with TestClient(api) as client:
+            sources = {
+                item["venue"]: item for item in client.get("/api/frontier/sources").json()["items"]
+            }
+            source = sources[Venue.COINBASE_EXCHANGE.value]
+            assert source["public_probe_enabled"] is False
+            assert source["probe_policy_block_reason"] == adapter.config.probe_policy_block_reason
+            response = client.post("/api/frontier/probe/coinbase_exchange", json={})
+            assert response.status_code == 409
+            assert response.json()["detail"] == adapter.config.probe_policy_block_reason
+            assert adapter.transport.request_count == 0
     finally:
         asyncio.run(opted_in_app.state.frontier_registry.aclose())
 
@@ -206,7 +230,8 @@ def test_held_source_observations_relationships_and_replays_are_quarantined(tmp_
         arena_root=tmp_path / "arena",
         frontier_kalshi_research_authorization_ref="arbitrary-reference",
         frontier_kraken_market_data_permission_ref="arbitrary-reference",
-        frontier_coinbase_market_data_terms_version_acknowledged=None,
+        frontier_coinbase_public_probe_enabled=True,
+        frontier_coinbase_market_data_terms_version_acknowledged=COINBASE_MARKET_DATA_TERMS_VERSION,
     )
     app = create_app(settings)
     store = app.state.frontier_store

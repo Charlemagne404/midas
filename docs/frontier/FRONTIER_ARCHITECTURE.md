@@ -13,7 +13,7 @@ as mutable Frontier storage.
 | Recorded-sample analytics | `analytics.py` | Bounded market/book/replay coverage, source-quality, pricing, timing, and candidate summaries over hash-checked local evidence. |
 | Adapter protocol and lifecycle | `adapters/base.py` | Capability declarations, local health, response capture, and common read-only adapter contract. |
 | Bounded HTTP transport | `adapters/transport.py` | HTTPS GET only, fixed host allowlist, bounded timeout/retry/rate/response sizes, no redirects or credentials. |
-| Public venue adapters | `adapters/polymarket.py`, `kalshi.py`, `kraken.py`, `coinbase.py` | Source-specific normalization and native metadata preservation. Coinbase Exchange adds a bounded explicit-product spot source with an exact-version data-terms gate. |
+| Public venue adapters | `adapters/polymarket.py`, `kalshi.py`, `kraken.py`, `coinbase.py` | Source-specific normalization and native metadata preservation. Coinbase Exchange adds a bounded explicit-product spot source; its exact-version acknowledgement does not lift the unresolved permission hold. |
 | Registry | `registry.py` | Explicit capability inventory; default instances do not probe. |
 | Relationship intelligence | `relationships.py` | Deterministic indexed title and parent-event/outcome hypotheses, source-selected component references, strict payoff checks, and immutable review contracts. |
 | Candidate calculators | `economics.py`, `joint_economics.py` | Decimal cross-venue binary, same-market exhaustive one-hot coverage, bounded constant-payout event baskets, and a separately bounded multi-market basket over an explicit shared-state assertion. Joint-state search caches exact mapped payout vectors, then incrementally accumulates subset payouts, costs, and market coverage; venue fees, native quantity units, depth, freshness, timing, and scenario bounds remain attached. |
@@ -173,20 +173,20 @@ event arbitrage through the payoff verifiers.
 Coinbase's official [Market Data Terms](https://www.coinbase.com/legal/market_data)
 were reviewed as updated 2026-08-07. The terms limit use and redistribution;
 the applicable user/organization, region, and intended research/distribution
-scope are not machine-validated by Frontier. Coinbase use is therefore held
-unless `MIDAS_FRONTIER_COINBASE_MARKET_DATA_TERMS_VERSION_ACKNOWLEDGED` exactly
-matches `2026-08-07`; an independent
-`MIDAS_FRONTIER_COINBASE_PUBLIC_PROBE_ENABLED=true` is also required to make
-source requests. Both default off. The version string is an explicit operator
-acknowledgement for this local gate, not legal advice or a general permission
-grant. `CoinbaseSpotConfig` enforces the same exact-version check, so a direct
-adapter caller cannot clear the default hold by setting the generic policy
-reason to null. Re-review current terms before any future use. The adapter is
-registered but does not probe at application startup.
+scope are not machine-validated by Frontier. Coinbase use remains held because
+Frontier has no validated permission and intended-scope review loader. The
+`MIDAS_FRONTIER_COINBASE_MARKET_DATA_TERMS_VERSION_ACKNOWLEDGED` value records
+an exact-version acknowledgement only, and
+`MIDAS_FRONTIER_COINBASE_PUBLIC_PROBE_ENABLED=true` cannot lift the runtime
+hold. Coinbase probes are rejected before network access, and stored Coinbase
+records remain quarantined from application research/replay routes. Re-review
+current terms before any future use. The adapter is registered but does not
+probe at application startup.
 The 2026-10-28 review records additional terms that restrict derived works,
 benchmark/valuation uses, and AI/ML research use. The local version
 acknowledgement is not a blanket permission for every Frontier analysis;
-source use remains gated until the intended scope is reviewed. See the
+source use remains gated until the intended scope is reviewed and any required
+permission is validated. See the
 [source-data terms review](SOURCE_DATA_TERMS_REVIEW_2026-10-27.md).
 
 Polymarket adapter v3 and Kalshi adapter v8 declare

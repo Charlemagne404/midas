@@ -4511,11 +4511,12 @@ def router(
                     )
                     else "NOT_ESTABLISHED",
                     "detail": (
-                        "Kalshi and Kraken research use remains blocked because Frontier has no "
-                        "validated permission/terms-review loader. A configured reference "
-                        "string is descriptive and does not establish permission. Coinbase "
-                        "Exchange stored/live research use additionally requires an exact current "
-                        "Market Data Terms acknowledgement; spot prices remain contextual evidence."
+                        "Kalshi, Kraken, and Coinbase Exchange research use remains blocked "
+                        "because Frontier has no validated permission and intended-scope review "
+                        "loader. Configured references and an exact Coinbase Market Data Terms "
+                        "version acknowledgement are descriptive; they do not establish permission "
+                        "for organization, region, retention, derived-data, display, or automated "
+                        "research use. Coinbase spot prices remain contextual evidence."
                     ),
                 },
                 {

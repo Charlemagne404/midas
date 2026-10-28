@@ -23,7 +23,7 @@ it('renders recorded-evidence empty states and never probes a source automatical
     adapter_version: 'frontier-coinbase-exchange-spot-1',
     public_probe_enabled: false,
     probe_policy_block_reason:
-      'Coinbase Exchange source use remains held until the operator acknowledges the reviewed Market Data Terms version None.',
+      'Coinbase Exchange source use remains held because Frontier has no validated permission and intended-scope review loader. An exact Market Data Terms version acknowledgement (2026-08-07) and the probe flag do not resolve organization, region, retention, derived-data, display, or automated-system scope; no Coinbase request will be made.',
     capabilities: [
       {
         capability: 'market_discovery',

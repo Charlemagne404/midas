@@ -89,37 +89,30 @@ Frontier's public adapters are disabled by default and do not probe on API
 startup. Its local store is selected with `MIDAS_FRONTIER_ROOT` (default
 `data/frontier-store`), with an independent byte cap set by
 `MIDAS_FRONTIER_STORE_MAX_BYTES`. If a public sample is explicitly needed, enable
-only the intended venue with one of:
+only a source whose current use has been reviewed. The currently configured
+sample switch is:
 
 ```text
 MIDAS_FRONTIER_POLYMARKET_PUBLIC_PROBE_ENABLED=true
-MIDAS_FRONTIER_KALSHI_PUBLIC_PROBE_ENABLED=true
-MIDAS_FRONTIER_KRAKEN_PUBLIC_PROBE_ENABLED=true
-MIDAS_FRONTIER_COINBASE_PUBLIC_PROBE_ENABLED=true
 ```
 
 Kraken Spot discovery uses the comma-separated configured pair allowlist
 `MIDAS_FRONTIER_KRAKEN_PAIRS` (default `XBTUSD`). The Polymarket switch enables
-only its bounded unauthenticated public GET. Kalshi and Kraken additionally
-require `MIDAS_FRONTIER_KALSHI_RESEARCH_AUTHORIZATION_REF` and
-`MIDAS_FRONTIER_KRAKEN_MARKET_DATA_PERMISSION_REF`, respectively, before the
-main API can enable a live probe. The reference must point to a separately
-reviewed source permission/terms record; Frontier does not validate the record.
-The current review leaves both Kalshi and Kraken live probes blocked. See the
+only its bounded unauthenticated public GET. Kalshi and Kraken live probes
+remain blocked regardless of their public-probe flags or configured reference
+strings; Frontier has no validated permission loader for either venue. See the
 [source-data terms review](frontier/SOURCE_DATA_TERMS_REVIEW_2026-10-27.md).
 Coinbase Exchange uses an explicit product allowlist in
-`MIDAS_FRONTIER_COINBASE_PRODUCTS` (default `BTC-USD`). Its Market Data Terms
-must be acknowledged by setting
-`MIDAS_FRONTIER_COINBASE_MARKET_DATA_TERMS_VERSION_ACKNOWLEDGED=2026-08-07`;
-that exact-version acknowledgement and the probe flag are separate controls.
-The version gate does not validate organization, regional, retention, or
-redistribution scope. Coinbase spot remains contextual evidence, never an
-event-contract payoff, and no Coinbase source request was made during the
-current implementation checkpoint. The source-specific adapter config also
-rejects clearing the terms hold without the exact version. Re-review the terms
-before enabling the network switch.
+`MIDAS_FRONTIER_COINBASE_PRODUCTS` (default `BTC-USD`). Its exact Market Data
+Terms acknowledgement and public-probe flag do not lift the current source-use
+hold: Frontier has no validated permission and intended-scope review loader.
+Coinbase probes return HTTP 409 before network access, and stored records remain
+quarantined from application research/replay routes. Coinbase spot remains
+contextual evidence, never an event-contract payoff. Review the terms and
+intended organization, regional, retention, derived-data, and display scope
+before considering a future permission mechanism.
 These controls do not enable account access, order entry, or credential
-handling. While the reference is absent, the API also filters held venues from
+handling. The API also filters held venues from
 stored market, graph, replay, candidate, and comparison reads. Arena replay
 snapshots are checked through the dedicated routes, generic job summary/detail
 and log routes, and research-activity digests. Generic job submission rejects

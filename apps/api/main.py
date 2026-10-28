@@ -9,10 +9,11 @@ import structlog
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from midas.analytics.research import feasibility
+from midas.frontier.models import COINBASE_MARKET_DATA_TERMS_VERSION
 from midas.simulation.scenarios import SCENARIOS, catalog
 from pydantic import BaseModel, ConfigDict, Field
 
-from apps.api.config import COINBASE_MARKET_DATA_TERMS_VERSION, Settings
+from apps.api.config import Settings
 from apps.api.service import Service
 
 structlog.configure(
@@ -41,6 +42,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     kalshi_probe_allowed = config.frontier_kalshi_probe_allowed
     kraken_probe_allowed = config.frontier_kraken_probe_allowed
     coinbase_terms_acknowledged = config.frontier_coinbase_terms_acknowledged
+    coinbase_probe_allowed = config.frontier_coinbase_probe_allowed
 
     def source_permission_block_reason(venue: str, reference: str | None) -> str:
         if reference and reference.strip():
@@ -60,13 +62,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         "Kraken", config.frontier_kraken_market_data_permission_ref
     )
     coinbase_probe_block_reason = (
-        None
-        if coinbase_terms_acknowledged
-        else (
-            "Coinbase Exchange source use remains held until the operator acknowledges "
-            f"the reviewed Market Data Terms version {COINBASE_MARKET_DATA_TERMS_VERSION}; "
-            "the configured version does not match and no Coinbase requests have been made."
-        )
+        "Coinbase Exchange source use remains held because Frontier has no validated "
+        "permission and intended-scope review loader. An exact Market Data Terms version "
+        f"acknowledgement ({COINBASE_MARKET_DATA_TERMS_VERSION}) and the probe flag do not "
+        "resolve organization, region, retention, derived-data, display, or automated-system "
+        "scope; no Coinbase request will be made."
     )
 
     frontier_registry = AdapterRegistry(
@@ -95,11 +95,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             CoinbaseSpotAdapter(
                 CoinbaseSpotConfig(
                     enabled=(
-                        coinbase_terms_acknowledged
+                        coinbase_probe_allowed
+                        and coinbase_terms_acknowledged
                         and config.frontier_coinbase_public_probe_enabled
                     ),
                     live_public_probe_enabled=(
-                        coinbase_terms_acknowledged
+                        coinbase_probe_allowed
+                        and coinbase_terms_acknowledged
                         and config.frontier_coinbase_public_probe_enabled
                     ),
                     probe_policy_block_reason=coinbase_probe_block_reason,

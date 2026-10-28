@@ -81,22 +81,22 @@ source files were not used or changed. See the
 [source-data terms review](SOURCE_DATA_TERMS_REVIEW_2026-10-27.md) for details.
 
 Coinbase Exchange Spot has a separate explicit product allowlist
-(`MIDAS_FRONTIER_COINBASE_PRODUCTS`, default `BTC-USD`). Its source-use gate is
-held unless the operator acknowledges the reviewed Market Data Terms version
-exactly with `MIDAS_FRONTIER_COINBASE_MARKET_DATA_TERMS_VERSION_ACKNOWLEDGED=2026-08-07`;
-network capture also requires
-`MIDAS_FRONTIER_COINBASE_PUBLIC_PROBE_ENABLED=true`. These are configuration
-controls, not a legal or regional-eligibility validator. With no exact-version
-acknowledgement, Frontier rejects Coinbase probes before network access and
-quarantines Coinbase source records from application research/replay routes.
-The adapter configuration itself also rejects attempts to clear this hold
-without the exact acknowledged version.
-Coinbase fixture tests do not establish live validation or permission.
+(`MIDAS_FRONTIER_COINBASE_PRODUCTS`, default `BTC-USD`). Its source-use gate
+remains held even when the operator acknowledges the reviewed Market Data Terms
+version exactly with
+`MIDAS_FRONTIER_COINBASE_MARKET_DATA_TERMS_VERSION_ACKNOWLEDGED=2026-08-07` and
+sets `MIDAS_FRONTIER_COINBASE_PUBLIC_PROBE_ENABLED=true`. Frontier has no
+validated permission and intended-scope review loader; the exact-version value
+records acknowledgement only. Coinbase probes return HTTP 409 before network
+access, and Coinbase source records remain quarantined from application
+research/replay routes. Coinbase fixture tests do not establish live validation
+or permission.
 The 2026-10-28 terms refresh also records restrictions on third-party derived
-data, benchmark/valuation uses, and AI/ML research use. The exact-version gate
-is not a blanket grant for all Frontier analytics; do not set it solely to
-enable a source probe. Review the intended research, retention, and display
-scope first. See the [source-data terms review](SOURCE_DATA_TERMS_REVIEW_2026-10-27.md).
+data, benchmark/valuation uses, and AI/ML research use. The exact-version
+acknowledgement and probe flag do not grant permission for Frontier analytics;
+the runtime source-use hold remains until intended scope and any required
+permission have been validated. See the
+[source-data terms review](SOURCE_DATA_TERMS_REVIEW_2026-10-27.md).
 
 Cross-venue observations have independent clocks and freshness guarantees.
 Different receipt times or a shared local timestamp do not prove simultaneous

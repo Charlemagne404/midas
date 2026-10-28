@@ -58,9 +58,14 @@ class Settings(BaseSettings):
 
     @property
     def frontier_coinbase_terms_acknowledged(self) -> bool:
-        """Require a deliberate acknowledgement of the reviewed exact terms revision."""
+        """Record an exact terms acknowledgement; this is not source-use permission."""
         return (
             self.frontier_coinbase_market_data_terms_version_acknowledged is not None
             and self.frontier_coinbase_market_data_terms_version_acknowledged
             == COINBASE_MARKET_DATA_TERMS_VERSION
         )
+
+    @property
+    def frontier_coinbase_probe_allowed(self) -> bool:
+        """No validated permission and intended-scope loader exists for Coinbase."""
+        return False

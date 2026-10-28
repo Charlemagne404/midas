@@ -114,16 +114,13 @@ and planned research distribution has not been independently resolved. The
 technical fact that an endpoint is public does not waive those terms.
 
 The Coinbase adapter is implemented against synthetic local responses and has
-not queried Coinbase. By default it is held from Frontier research, replay, and
-capture. An exact acknowledged version setting is required to lift the data-use
-hold, and a separate public-probe flag is required for any network request.
-The exact-version field records an operator's configuration acknowledgement;
-the adapter config also fails closed if its generic hold reason is cleared
-without that exact version. This is not an independent legal or
-regional-eligibility validator. No data has been acquired or stored by this
-integration. Spot observations, if separately authorized, remain contextual
-evidence and cannot be treated as prediction contract payoff or direct
-arbitrage.
+not queried Coinbase. It remains held from Frontier research, replay, and
+capture. Frontier has no validated permission and intended-scope review loader;
+an exact acknowledged terms version and a separate public-probe flag do not
+lift the hold. The exact-version field records an operator's configuration
+acknowledgement only. No data has been acquired or stored by this integration.
+Spot observations, if separately authorized, remain contextual evidence and
+cannot be treated as prediction contract payoff or direct arbitrage.
 
 ## Polymarket
 
@@ -155,16 +152,15 @@ validated permission mechanism and an explicit source-use review; setting the
 existing flags or adding a reference is insufficient. Direct database access
 remains outside the route filter.
 
-Coinbase differs in that its source-specific gate can be opened only when the
-operator sets `MIDAS_FRONTIER_COINBASE_MARKET_DATA_TERMS_VERSION_ACKNOWLEDGED`
-to exactly `2026-08-07`. `MIDAS_FRONTIER_COINBASE_PUBLIC_PROBE_ENABLED` is a
-separate network switch. With the terms version absent, stale, or arbitrary,
-the source is held and its observations/derived evidence are quarantined by the
-same application route filters; a probe is rejected before any request. This
-local setting does not validate that the terms permit a particular
-organization, region, retention practice, or display. Re-review the linked
-terms before enabling. At this review date no Coinbase request or live capture
-was made.
+Coinbase's source-specific gate remains held even when the operator sets
+`MIDAS_FRONTIER_COINBASE_MARKET_DATA_TERMS_VERSION_ACKNOWLEDGED` to exactly
+`2026-08-07` and enables `MIDAS_FRONTIER_COINBASE_PUBLIC_PROBE_ENABLED`. The
+version value records acknowledgement only; it does not validate that the
+terms permit this organization, region, retention, derived-data, display, or
+automated-system use. Without a validated permission and intended-scope review
+loader, the source remains quarantined and probes return HTTP 409 before any
+request. Re-review the linked terms and intended use before considering a
+future permission mechanism. No Coinbase request or live capture was made.
 
 ## Read-quarantine verification — 2026-10-27
 
