@@ -2833,6 +2833,192 @@
     monospace;
   overflow-wrap: anywhere;
 }
+.fr-history-replay-card {
+  grid-column: 1 / -1;
+}
+.fr-history-replay-intro,
+.fr-history-replay-note {
+  margin: 0 15px 12px;
+  color: #8996a6;
+  font-size: 9px;
+  line-height: 1.55;
+}
+.fr-history-replay-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  border-top: 1px solid #252e38;
+}
+.fr-history-replay-layout > section {
+  min-width: 0;
+  padding: 13px 15px;
+}
+.fr-history-replay-layout > section + section {
+  border-left: 1px solid #252e38;
+}
+.fr-subsection-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 9px;
+}
+.fr-subsection-head h3 {
+  margin: 0;
+  color: #d5deea;
+  font-size: 10px;
+  font-weight: 550;
+}
+.fr-subsection-head > span {
+  color: #8290a1;
+  font-size: 8px;
+}
+.fr-history-capture-list,
+.fr-history-replay-list {
+  display: grid;
+  max-height: 280px;
+  overflow: auto;
+  border-top: 1px solid #252e38;
+  border-bottom: 1px solid #252e38;
+}
+.fr-history-capture-option {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 10px;
+  padding: 9px;
+  border-bottom: 1px solid #202833;
+  background: #10161c;
+  cursor: pointer;
+}
+.fr-history-capture-option:last-child,
+.fr-history-replay-row:last-child {
+  border-bottom: 0;
+}
+.fr-history-capture-option > input {
+  margin: 2px 0 0;
+  accent-color: #64bea2;
+}
+.fr-history-capture-option > span,
+.fr-history-replay-row > span {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+}
+.fr-history-capture-option strong {
+  color: #c7d2df;
+  font-size: 9px;
+  font-weight: 550;
+}
+.fr-history-capture-option small,
+.fr-history-replay-row small {
+  color: #8290a1;
+  font-size: 8px;
+}
+.fr-history-capture-option code,
+.fr-history-replay-row code {
+  color: #a9c9dd;
+  font-size: 8px;
+  overflow-wrap: anywhere;
+}
+.fr-history-replay-layout .fr-run-button {
+  margin: 10px 0 0;
+}
+.fr-history-replay-list {
+  max-height: 200px;
+}
+.fr-history-replay-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+  padding: 9px;
+  border-bottom: 1px solid #202833;
+  text-align: left;
+}
+.fr-history-replay-row.selected {
+  background: #1a2028;
+}
+.fr-history-replay-row > span:first-child {
+  min-width: 0;
+}
+.fr-history-replay-state {
+  flex: 0 0 auto;
+  color: #94c8ae;
+  font-size: 8px;
+}
+.fr-history-replay-detail {
+  padding: 13px 15px 15px;
+  border-top: 1px solid #252e38;
+}
+.fr-history-replay-detail .fr-subsection-head {
+  align-items: end;
+}
+.fr-history-replay-detail .fr-subsection-head > div {
+  display: grid;
+  gap: 5px;
+}
+.fr-history-replay-meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 14px;
+  margin: 0 0 12px;
+  padding: 10px;
+  border: 1px solid #293542;
+  background: #10161c;
+}
+.fr-history-replay-meta > div,
+.fr-history-lineage-list dl > div {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+}
+.fr-history-replay-meta dt,
+.fr-history-lineage-list dt {
+  color: #788697;
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.35px;
+}
+.fr-history-replay-meta dd,
+.fr-history-lineage-list dd {
+  min-width: 0;
+  margin: 0;
+  color: #b5c0ce;
+  font-size: 8px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.fr-history-replay-meta code,
+.fr-history-lineage-list code {
+  color: #c8dbea;
+  font: inherit;
+  overflow-wrap: anywhere;
+}
+.fr-history-lineage-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.fr-history-lineage-list article {
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid #293542;
+  background: #10161c;
+}
+.fr-history-lineage-list h4 {
+  margin: 0 0 9px;
+  color: #d0d9e4;
+  font-size: 9px;
+  font-weight: 550;
+  overflow-wrap: anywhere;
+}
+.fr-history-lineage-list dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+  margin: 0;
+}
 .fr-timeline-provenance {
   display: flex;
   flex-wrap: wrap;
@@ -3139,6 +3325,21 @@
   .fr-workbench {
     grid-template-columns: 1fr;
     gap: 0;
+  }
+  .fr-history-replay-card {
+    grid-column: auto;
+  }
+  .fr-history-replay-layout {
+    grid-template-columns: 1fr;
+  }
+  .fr-history-replay-layout > section + section {
+    border-top: 1px solid #252e38;
+    border-left: 0;
+  }
+  .fr-history-replay-meta,
+  .fr-history-lineage-list,
+  .fr-history-lineage-list dl {
+    grid-template-columns: 1fr;
   }
   .fr-arena-replay-card {
     grid-column: auto;

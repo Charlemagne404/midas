@@ -80,6 +80,11 @@ test('saved Polymarket price samples replay only after explicit user actions', a
   let probeRequests = 0;
   let captureRequest: Record<string, unknown> | null = null;
   let replayRequest: Record<string, unknown> | null = null;
+  const capturedHistoryId = 'e'.repeat(64);
+  const secondHistoryId = '6'.repeat(64);
+  const secondHistoryRawHash = '7'.repeat(64);
+  let capturedHistoryRecord: Record<string, unknown> | null = null;
+  let savedHistoryReplays: Record<string, unknown>[] = [];
   const marketObservationId = 'a'.repeat(64);
   const priceMarket = {
     canonical_id: 'polymarket:e2e-price-history',
@@ -174,12 +179,45 @@ test('saved Polymarket price samples replay only after explicit user actions', a
     });
   });
   await page.route('**/api/frontier/price-history?*', async (route) => {
+    const url = new URL(route.request().url());
+    const isInstrumentDetail = url.searchParams.has('native_instrument_id');
+    const items = isInstrumentDetail
+      ? []
+      : [
+          ...(capturedHistoryRecord ? [capturedHistoryRecord] : []),
+          {
+            series: {
+              venue: 'polymarket',
+              native_instrument_id: 'e2e-token-2',
+              interval: '1w',
+              fidelity_minutes: 1440,
+              requested_start_ts: 1792972800,
+              requested_end_ts: 1793577600,
+              bound_market_observation_id: marketObservationId,
+              points: [
+                { timestamp_utc: '2026-10-27T00:00:00Z', price: '0.37' },
+                { timestamp_utc: '2026-10-28T00:00:00Z', price: '0.44' },
+              ],
+              source_price_semantics: 'source_reported_price_sample',
+              source_limit_note: 'E2E fixture only.',
+              provenance: { observation_id: secondHistoryId, raw_sha256: secondHistoryRawHash },
+            },
+            observation_id: secondHistoryId,
+            raw_sha256: secondHistoryRawHash,
+            received_at_utc: '2026-10-28T00:02:00Z',
+          },
+        ];
     await route.fulfill({
       json: {
-        items: [],
+        items,
         venue: 'polymarket',
-        native_instrument_id: '123456789',
-        returned: 0,
+        native_instrument_id: isInstrumentDetail ? '123456789' : null,
+        returned: items.length,
+        limit: isInstrumentDetail ? 1 : 20,
+        offset: 0,
+        scan_bound: isInstrumentDetail ? 100 : 20,
+        scan_may_be_incomplete: false,
+        source_state: 'recorded observations only',
       },
     });
   });
@@ -205,6 +243,12 @@ test('saved Polymarket price samples replay only after explicit user actions', a
       source_limit_note: 'E2E fixture sample only; OHLC and volume are not inferred.',
       provenance: { observation_id: 'c'.repeat(64), raw_sha256: 'd'.repeat(64) },
     };
+    capturedHistoryRecord = {
+      series,
+      observation_id: capturedHistoryId,
+      raw_sha256: 'd'.repeat(64),
+      received_at_utc: '2026-10-28T00:01:00Z',
+    };
     await route.fulfill({
       json: {
         venue: 'polymarket',
@@ -226,31 +270,74 @@ test('saved Polymarket price samples replay only after explicit user actions', a
   await page.route('**/api/frontier/price-history/replay', async (route) => {
     replayRequests += 1;
     replayRequest = route.request().postDataJSON() as Record<string, unknown>;
+    const observationIds = (replayRequest.observation_ids as string[]).slice().sort();
+    const runId = observationIds.length === 1 ? 'f'.repeat(64) : '8'.repeat(64);
+    const replayResult = {
+      schema_version: 1,
+      run_id: runId,
+      result_sha256: '9'.repeat(64),
+      manifest: {
+        schema_version: 1,
+        input_sha256: '8'.repeat(64),
+        observation_ids: observationIds,
+        replay_version: 'frontier-price-history-replay-1',
+        code_version: 'frontier-e2e-fixture-v1',
+        as_of_utc: '2026-10-28T00:02:00Z',
+        interpretation: 'descriptive_source_sample_replay',
+      },
+      series: observationIds.map((observationId) => {
+        const firstSeries = observationId === capturedHistoryId;
+        const instrumentId = firstSeries ? '123456789' : 'e2e-token-2';
+        const rawSha256 = firstSeries ? 'd'.repeat(64) : secondHistoryRawHash;
+        return {
+          observation_id: observationId,
+          raw_sha256: rawSha256,
+          venue: 'polymarket',
+          native_instrument_id: instrumentId,
+          interval: firstSeries ? '1d' : '1w',
+          fidelity_minutes: firstSeries ? 60 : 1440,
+          requested_start_ts: 1792972800,
+          requested_end_ts: 1793577600,
+          bound_market_observation_id: marketObservationId,
+          point_count: 2,
+          first_point_ts: 1793059200,
+          last_point_ts: 1793145600,
+          observed_point_span_seconds: 86400,
+          largest_adjacent_sample_gap_seconds: 86400,
+          minimum_sampled_price: firstSeries ? '0.42' : '0.37',
+          maximum_sampled_price: firstSeries ? '0.46' : '0.44',
+          future_point_timestamp_count: 0,
+        };
+      }),
+      candidate_generation: 'not_performed',
+    };
+    savedHistoryReplays = [replayResult, ...savedHistoryReplays];
+    await route.fulfill({
+      json: replayResult,
+    });
+  });
+  await page.route('**/api/frontier/price-history/replays?*', async (route) => {
     await route.fulfill({
       json: {
-        run_id: 'f'.repeat(64),
-        result_sha256: '9'.repeat(64),
-        manifest: {
-          input_sha256: '8'.repeat(64),
-          observation_ids: ['e'.repeat(64)],
-          replay_version: 'frontier-price-history-replay-1',
-          as_of_utc: '2026-10-27T00:01:00Z',
-        },
-        series: [
-          {
-            observation_id: 'e'.repeat(64),
-            point_count: 1,
-            first_point_ts: 1793059200,
-            last_point_ts: 1793059200,
-            observed_point_span_seconds: 0,
-            largest_adjacent_sample_gap_seconds: null,
-            minimum_sampled_price: '0.42',
-            maximum_sampled_price: '0.42',
-          },
-        ],
-        candidate_generation: 'not_performed',
+        items: savedHistoryReplays,
+        returned: savedHistoryReplays.length,
+        limit: 20,
+        offset: 0,
+        held_replays_omitted: 0,
+        scan_may_be_incomplete: false,
+        source_state: 'saved deterministic local replay results only',
+        network_called: false,
       },
     });
+  });
+  await page.route('**/api/frontier/price-history/replays/*', async (route) => {
+    const runId = new URL(route.request().url()).pathname.split('/').at(-1);
+    const selectedRun = savedHistoryReplays.find((item) => item.run_id === runId);
+    if (!selectedRun) {
+      await route.fulfill({ status: 404, json: { detail: 'Replay fixture not found.' } });
+      return;
+    }
+    await route.fulfill({ json: selectedRun });
   });
 
   await page.goto('/');
@@ -281,6 +368,24 @@ test('saved Polymarket price samples replay only after explicit user actions', a
   expect(replayRequests).toBe(1);
   expect(replayRequest).toEqual({ observation_ids: ['e'.repeat(64)] });
   expect(probeRequests).toBe(1);
+
+  await page.getByRole('button', { name: 'Replay & readiness', exact: true }).click();
+  await expect(
+    page.getByRole('heading', { name: 'Multi-series descriptive replay' }),
+  ).toBeVisible();
+  await expect(page.getByText('candidate generation not performed')).toBeVisible();
+  await page.getByRole('checkbox', { name: /123456789/ }).check();
+  await page.getByRole('checkbox', { name: /e2e-token-2/ }).check();
+  await page.getByRole('button', { name: 'Replay 2 selected series' }).click();
+  await expect(page.getByText(secondHistoryRawHash)).toBeVisible();
+  expect(replayRequests).toBe(2);
+  expect(replayRequest).toEqual({
+    observation_ids: [capturedHistoryId, secondHistoryId],
+  });
+  expect(probeRequests).toBe(1);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.getByText(secondHistoryRawHash)).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
 });
 
 test('Arena replay history loads without submitting or launching work', async ({ page }) => {

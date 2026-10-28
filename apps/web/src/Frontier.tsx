@@ -396,6 +396,11 @@ type PriceHistoryResponse = {
   venue: Venue;
   native_instrument_id: string | null;
   returned: number;
+  limit?: number;
+  offset?: number;
+  scan_bound?: number;
+  scan_may_be_incomplete?: boolean;
+  source_state?: string;
 };
 type PriceHistoryCaptureResult = {
   venue: Venue;
@@ -413,16 +418,28 @@ type PriceHistoryCaptureResult = {
   note: string;
 };
 type PriceHistoryReplayResult = {
+  schema_version: number;
   run_id: string;
   result_sha256: string;
   manifest: {
+    schema_version: number;
     input_sha256: string;
     observation_ids: string[];
     replay_version: string;
+    code_version: string;
     as_of_utc: string;
+    interpretation: 'descriptive_source_sample_replay';
   };
   series: {
     observation_id: string;
+    raw_sha256: string;
+    venue: Venue;
+    native_instrument_id: string;
+    interval: '1d' | '1w';
+    fidelity_minutes: number;
+    requested_start_ts: number;
+    requested_end_ts: number;
+    bound_market_observation_id: string | null;
     point_count: number;
     first_point_ts: number | null;
     last_point_ts: number | null;
@@ -430,8 +447,19 @@ type PriceHistoryReplayResult = {
     largest_adjacent_sample_gap_seconds: number | null;
     minimum_sampled_price: string | null;
     maximum_sampled_price: string | null;
+    future_point_timestamp_count: number;
   }[];
   candidate_generation: 'not_performed';
+};
+type PriceHistoryReplayListResponse = {
+  items: PriceHistoryReplayResult[];
+  returned: number;
+  limit: number;
+  offset: number;
+  held_replays_omitted: number;
+  scan_may_be_incomplete: boolean;
+  source_state: string;
+  network_called: false;
 };
 type MarketMetadataCaptureResult = {
   venue: 'polymarket' | 'kalshi';
@@ -1967,6 +1995,12 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
   );
   const [fillPercent, setFillPercent] = useState('80');
   const [selectedArenaReplayId, setSelectedArenaReplayId] = useState<string | null>(null);
+  const [selectedPriceHistoryReplayId, setSelectedPriceHistoryReplayId] = useState<string | null>(
+    null,
+  );
+  const [selectedPriceHistoryObservationIds, setSelectedPriceHistoryObservationIds] = useState<
+    string[]
+  >([]);
   const [selectedArenaDiscoveryId, setSelectedArenaDiscoveryId] = useState<string | null>(null);
   const [selectedTimelineJobId, setSelectedTimelineJobId] = useState<string | null>(null);
   const [timelineMaxBookAgeMs, setTimelineMaxBookAgeMs] = useState('15000');
@@ -2118,6 +2152,39 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
     queryFn: () => api<Readiness>('/frontier/readiness'),
     ...options,
   });
+  const savedPriceHistorySources = useQuery({
+    queryKey: ['frontier', 'saved-price-history-sources'],
+    queryFn: () =>
+      api<PriceHistoryResponse>('/frontier/price-history?venue=polymarket&limit=20&offset=0'),
+    enabled: section === 'replay',
+    ...options,
+  });
+  const savedPriceHistoryReplays = useQuery({
+    queryKey: ['frontier', 'saved-price-history-replays'],
+    queryFn: () =>
+      api<PriceHistoryReplayListResponse>('/frontier/price-history/replays?limit=20&offset=0'),
+    enabled: section === 'replay',
+    ...options,
+  });
+  const listedPriceHistoryReplays = savedPriceHistoryReplays.data?.items ?? [];
+  const selectedPriceHistoryReplay = selectedPriceHistoryReplayId
+    ? (listedPriceHistoryReplays.find((run) => run.run_id === selectedPriceHistoryReplayId) ?? null)
+    : (listedPriceHistoryReplays[0] ?? null);
+  const priceHistoryReplayDetail = useQuery({
+    queryKey: ['frontier', 'price-history-replay-detail', selectedPriceHistoryReplay?.run_id],
+    queryFn: () =>
+      api<PriceHistoryReplayResult>(
+        `/frontier/price-history/replays/${encodeURIComponent(selectedPriceHistoryReplay!.run_id)}`,
+      ),
+    enabled: section === 'replay' && selectedPriceHistoryReplay != null,
+    retry: false,
+  });
+  const listedPriceHistorySources = savedPriceHistorySources.data?.items ?? [];
+  const selectedPriceHistorySources = selectedPriceHistoryObservationIds
+    .map((observationId) =>
+      listedPriceHistorySources.find((item) => item.observation_id === observationId),
+    )
+    .filter((item): item is PriceHistoryResponse['items'][number] => item != null);
   const arenaReplayJobs = useQuery({
     queryKey: ['frontier', 'arena-replay-jobs'],
     queryFn: () => api<FrontierArenaReplayJobs>('/arena/frontier-replays?limit=20'),
@@ -2271,6 +2338,18 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
   );
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: ['frontier'] });
+  const replaySavedPriceHistory = useMutation({
+    mutationFn: (observationIds: string[]) =>
+      api<PriceHistoryReplayResult>('/frontier/price-history/replay', {
+        method: 'POST',
+        body: JSON.stringify({ observation_ids: observationIds }),
+      }),
+    onSuccess: (result) => {
+      setSelectedPriceHistoryReplayId(result.run_id);
+      queryClient.setQueryData(['frontier', 'price-history-replay-detail', result.run_id], result);
+      void queryClient.invalidateQueries({ queryKey: ['frontier', 'saved-price-history-replays'] });
+    },
+  });
   const jointStateReplay = useMutation({
     mutationFn: () =>
       api<JointStateReplayResult>('/frontier/replay/joint-state', {
@@ -4123,6 +4202,289 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
 
       {section === 'replay' && (
         <div className="fr-overview-grid">
+          <section className="fr-card fr-history-replay-card">
+            <div className="fr-card-head">
+              <div>
+                <span className="fr-kicker">SAVED SOURCE PRICE SAMPLES</span>
+                <h2>Multi-series descriptive replay</h2>
+              </div>
+              <Activity size={17} />
+            </div>
+            <p className="fr-history-replay-intro">
+              Select up to eight locally stored Polymarket price-history captures. Replay reads
+              immutable records only; it makes no exchange request, generates no opportunity, and
+              does not treat historical samples as executable quotes.
+            </p>
+            <div className="fr-history-replay-layout">
+              <section aria-label="Saved price-history replay inputs">
+                <div className="fr-subsection-head">
+                  <h3>Input series</h3>
+                  <span>{selectedPriceHistorySources.length} / 8 selected</span>
+                </div>
+                {savedPriceHistorySources.isLoading ? (
+                  <div className="fr-loading">Reading saved Polymarket price-history captures…</div>
+                ) : savedPriceHistorySources.isError ? (
+                  <EmptyState
+                    title="Saved history unavailable"
+                    detail={savedPriceHistorySources.error.message}
+                  />
+                ) : listedPriceHistorySources.length === 0 ? (
+                  <EmptyState
+                    title="No saved price-history captures"
+                    detail="A capture must already exist in the local Frontier store. This view does not start a source request."
+                  />
+                ) : (
+                  <div className="fr-history-capture-list">
+                    {listedPriceHistorySources.map((capture) => {
+                      const checked = selectedPriceHistoryObservationIds.includes(
+                        capture.observation_id,
+                      );
+                      return (
+                        <label className="fr-history-capture-option" key={capture.observation_id}>
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            disabled={!checked && selectedPriceHistoryObservationIds.length >= 8}
+                            onChange={(event) =>
+                              setSelectedPriceHistoryObservationIds((current) =>
+                                event.target.checked
+                                  ? [...current, capture.observation_id]
+                                      .filter(
+                                        (value, index, values) => values.indexOf(value) === index,
+                                      )
+                                      .slice(0, 8)
+                                  : current.filter((value) => value !== capture.observation_id),
+                              )
+                            }
+                          />
+                          <span>
+                            <strong>
+                              {venueLabel(capture.series.venue)} ·{' '}
+                              {capture.series.native_instrument_id} · {capture.series.interval}
+                            </strong>
+                            <small>
+                              {count(capture.series.points.length)} returned points · received{' '}
+                              {new Date(capture.received_at_utc).toLocaleString()}
+                            </small>
+                            <code>{capture.observation_id}</code>
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                )}
+                {savedPriceHistorySources.data?.scan_may_be_incomplete && (
+                  <p className="fr-history-replay-note">
+                    The source list is a bounded scan of {savedPriceHistorySources.data.scan_bound}{' '}
+                    saved captures; older records may be omitted.
+                  </p>
+                )}
+                <button
+                  className="fr-action fr-run-button"
+                  onClick={() =>
+                    replaySavedPriceHistory.mutate(
+                      selectedPriceHistorySources.map((capture) => capture.observation_id),
+                    )
+                  }
+                  disabled={
+                    replaySavedPriceHistory.isPending || selectedPriceHistorySources.length === 0
+                  }
+                >
+                  <Play size={14} />
+                  {replaySavedPriceHistory.isPending
+                    ? 'Replaying stored samples…'
+                    : `Replay ${selectedPriceHistorySources.length} selected series`}
+                </button>
+                {replaySavedPriceHistory.isError && (
+                  <InlineError message={replaySavedPriceHistory.error.message} />
+                )}
+              </section>
+              <section aria-label="Saved price-history replay results">
+                <div className="fr-subsection-head">
+                  <h3>Saved replay artifacts</h3>
+                  <span>latest 20</span>
+                </div>
+                {savedPriceHistoryReplays.isLoading ? (
+                  <div className="fr-loading">Loading saved source-sample replays…</div>
+                ) : savedPriceHistoryReplays.isError ? (
+                  <EmptyState
+                    title="Replay history unavailable"
+                    detail={savedPriceHistoryReplays.error.message}
+                  />
+                ) : listedPriceHistoryReplays.length === 0 ? (
+                  <EmptyState
+                    title="No saved source-sample replays"
+                    detail="Choose saved inputs and run an explicit local replay to create an artifact."
+                  />
+                ) : (
+                  <div className="fr-history-replay-list" aria-label="Saved price-history replays">
+                    {listedPriceHistoryReplays.map((run) => (
+                      <button
+                        key={run.run_id}
+                        className={`fr-history-replay-row${run.run_id === selectedPriceHistoryReplay?.run_id ? ' selected' : ''}`}
+                        aria-pressed={run.run_id === selectedPriceHistoryReplay?.run_id}
+                        onClick={() => setSelectedPriceHistoryReplayId(run.run_id)}
+                      >
+                        <span>
+                          <code>{shortHash(run.run_id)}</code>
+                          <small>
+                            {run.series.length} source series ·{' '}
+                            {new Date(run.manifest.as_of_utc).toLocaleString()}
+                          </small>
+                        </span>
+                        <span className="fr-history-replay-state">descriptive</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {savedPriceHistoryReplays.data?.scan_may_be_incomplete && (
+                  <p className="fr-history-replay-note">
+                    Older saved artifacts may be outside this 20-run page.
+                  </p>
+                )}
+                {savedPriceHistoryReplays.data?.held_replays_omitted ? (
+                  <p className="fr-history-replay-note">
+                    {savedPriceHistoryReplays.data.held_replays_omitted} held-source replay(s) were
+                    omitted from this page.
+                  </p>
+                ) : null}
+              </section>
+            </div>
+            {selectedPriceHistoryReplay && (
+              <section className="fr-history-replay-detail" aria-label="Selected replay lineage">
+                <div className="fr-subsection-head">
+                  <div>
+                    <span className="fr-kicker">PINNED INPUT AND RESULT</span>
+                    <h3>Replay lineage</h3>
+                  </div>
+                  <span>candidate generation not performed</span>
+                </div>
+                {priceHistoryReplayDetail.isLoading ? (
+                  <div className="fr-loading">Verifying saved replay artifact…</div>
+                ) : priceHistoryReplayDetail.isError ? (
+                  <InlineError message={priceHistoryReplayDetail.error.message} />
+                ) : priceHistoryReplayDetail.data ? (
+                  <>
+                    <dl className="fr-history-replay-meta">
+                      <div>
+                        <dt>Run ID</dt>
+                        <dd>
+                          <code>{priceHistoryReplayDetail.data.run_id}</code>
+                        </dd>
+                      </div>
+                      <div>
+                        <dt>Input SHA-256</dt>
+                        <dd>
+                          <code>{priceHistoryReplayDetail.data.manifest.input_sha256}</code>
+                        </dd>
+                      </div>
+                      <div>
+                        <dt>Result SHA-256</dt>
+                        <dd>
+                          <code>{priceHistoryReplayDetail.data.result_sha256}</code>
+                        </dd>
+                      </div>
+                      <div>
+                        <dt>Replay and code version</dt>
+                        <dd>
+                          {priceHistoryReplayDetail.data.manifest.replay_version} ·{' '}
+                          {priceHistoryReplayDetail.data.manifest.code_version}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt>Latest input receipt time</dt>
+                        <dd>
+                          {new Date(
+                            priceHistoryReplayDetail.data.manifest.as_of_utc,
+                          ).toLocaleString()}
+                        </dd>
+                      </div>
+                    </dl>
+                    <div className="fr-history-lineage-list">
+                      {priceHistoryReplayDetail.data.series.map((series) => {
+                        const sourceCapture = listedPriceHistorySources.find(
+                          (capture) => capture.observation_id === series.observation_id,
+                        );
+                        return (
+                          <article key={series.observation_id}>
+                            <h4>
+                              {venueLabel(series.venue)} · {series.native_instrument_id}
+                            </h4>
+                            <dl>
+                              <div>
+                                <dt>Source observation</dt>
+                                <dd>
+                                  <code>{series.observation_id}</code>
+                                </dd>
+                              </div>
+                              <div>
+                                <dt>Raw response SHA-256</dt>
+                                <dd>
+                                  <code>{series.raw_sha256}</code>
+                                </dd>
+                              </div>
+                              <div>
+                                <dt>Local capture receipt</dt>
+                                <dd>
+                                  {sourceCapture
+                                    ? new Date(sourceCapture.received_at_utc).toLocaleString()
+                                    : 'outside the current 20-capture source page'}
+                                </dd>
+                              </div>
+                              <div>
+                                <dt>Bound market observation</dt>
+                                <dd>
+                                  <code>{series.bound_market_observation_id ?? 'unbound'}</code>
+                                </dd>
+                              </div>
+                              <div>
+                                <dt>Source request</dt>
+                                <dd>
+                                  {series.interval} · {series.fidelity_minutes} min ·{' '}
+                                  {new Date(series.requested_start_ts * 1000).toISOString()} →{' '}
+                                  {new Date(series.requested_end_ts * 1000).toISOString()}
+                                </dd>
+                              </div>
+                              <div>
+                                <dt>Returned sample range</dt>
+                                <dd>
+                                  {series.point_count} points ·{' '}
+                                  {series.minimum_sampled_price ?? '—'}
+                                  {' – '}
+                                  {series.maximum_sampled_price ?? '—'}
+                                </dd>
+                              </div>
+                              <div>
+                                <dt>Point-time bounds and gap</dt>
+                                <dd>
+                                  {series.first_point_ts == null
+                                    ? 'No returned points'
+                                    : `${new Date(series.first_point_ts * 1000).toISOString()} → ${new Date(series.last_point_ts! * 1000).toISOString()}`}{' '}
+                                  · largest adjacent returned-point gap{' '}
+                                  {series.largest_adjacent_sample_gap_seconds == null
+                                    ? 'not available'
+                                    : `${count(series.largest_adjacent_sample_gap_seconds)} s`}
+                                </dd>
+                              </div>
+                              <div>
+                                <dt>Points later than capture receipt</dt>
+                                <dd>{count(series.future_point_timestamp_count)}</dd>
+                              </div>
+                            </dl>
+                          </article>
+                        );
+                      })}
+                    </div>
+                    <p className="fr-history-replay-note">
+                      These are returned historical samples. They do not establish missing-data
+                      rates, synchronized availability, executable quotes, fills, or economic
+                      opportunity.
+                    </p>
+                  </>
+                ) : null}
+              </section>
+            )}
+          </section>
           <section className="fr-card fr-joint-state-editor">
             <div className="fr-card-head">
               <div>

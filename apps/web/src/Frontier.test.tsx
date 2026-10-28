@@ -1682,6 +1682,297 @@ it('captures one explicit Polymarket trade page and follows its bound cursor', a
   expect(requests[2]).toEqual({ market_id: 'KX-FRONTIER-1', limit: 50 });
 });
 
+it('replays multiple saved price-history series and inspects persisted source lineage', async () => {
+  const firstObservationId = 'a'.repeat(64);
+  const secondObservationId = 'b'.repeat(64);
+  const firstRawHash = 'c'.repeat(64);
+  const secondRawHash = 'd'.repeat(64);
+  const oldRunId = 'e'.repeat(64);
+  const newRunId = 'f'.repeat(64);
+  const makeSeriesReplay = (
+    observationId: string,
+    rawSha256: string,
+    nativeInstrumentId: string,
+  ) => ({
+    observation_id: observationId,
+    raw_sha256: rawSha256,
+    venue: 'polymarket' as const,
+    native_instrument_id: nativeInstrumentId,
+    interval: '1d' as const,
+    fidelity_minutes: 60,
+    requested_start_ts: 1792972800,
+    requested_end_ts: 1793577600,
+    bound_market_observation_id: '9'.repeat(64),
+    point_count: 2,
+    first_point_ts: 1793059200,
+    last_point_ts: 1793145600,
+    observed_point_span_seconds: 86400,
+    largest_adjacent_sample_gap_seconds: 86400,
+    minimum_sampled_price: '0.41',
+    maximum_sampled_price: '0.46',
+    future_point_timestamp_count: 0,
+  });
+  const makeReplay = (
+    runId: string,
+    observationIds: string[],
+    series: ReturnType<typeof makeSeriesReplay>[],
+  ) => ({
+    schema_version: 1,
+    run_id: runId,
+    result_sha256: '8'.repeat(64),
+    manifest: {
+      schema_version: 1,
+      input_sha256: '7'.repeat(64),
+      observation_ids: observationIds,
+      replay_version: 'frontier-price-history-replay-1',
+      code_version: 'frontier-test',
+      as_of_utc: '2026-10-27T00:01:00Z',
+      interpretation: 'descriptive_source_sample_replay' as const,
+    },
+    series,
+    candidate_generation: 'not_performed' as const,
+  });
+  const firstCapture = {
+    series: {
+      venue: 'polymarket',
+      native_instrument_id: 'token-asset-1',
+      interval: '1d',
+      fidelity_minutes: 60,
+      requested_start_ts: 1792972800,
+      requested_end_ts: 1793577600,
+      bound_market_observation_id: '9'.repeat(64),
+      points: [
+        { timestamp_utc: '2026-10-27T00:00:00Z', price: '0.41' },
+        { timestamp_utc: '2026-10-28T00:00:00Z', price: '0.46' },
+      ],
+      source_price_semantics: 'source_reported_price_sample',
+      source_limit_note: 'Historical sample fixture.',
+      provenance: { observation_id: firstObservationId, raw_sha256: firstRawHash },
+    },
+    observation_id: firstObservationId,
+    raw_sha256: firstRawHash,
+    received_at_utc: '2026-10-28T00:01:00Z',
+  };
+  const secondCapture = {
+    series: {
+      ...firstCapture.series,
+      native_instrument_id: 'token-asset-2',
+      points: [
+        { timestamp_utc: '2026-10-27T00:00:00Z', price: '0.41' },
+        { timestamp_utc: '2026-10-28T00:00:00Z', price: '0.46' },
+      ],
+      provenance: { observation_id: secondObservationId, raw_sha256: secondRawHash },
+    },
+    observation_id: secondObservationId,
+    raw_sha256: secondRawHash,
+    received_at_utc: '2026-10-28T00:02:00Z',
+  };
+  const additionalCaptures = Array.from({ length: 7 }, (_, index) => {
+    const observationId = String(index + 1).repeat(64);
+    const rawSha256 = String(index + 2).repeat(64);
+    const nativeInstrumentId = `token-asset-${index + 3}`;
+    return {
+      series: {
+        ...secondCapture.series,
+        native_instrument_id: nativeInstrumentId,
+        provenance: { observation_id: observationId, raw_sha256: rawSha256 },
+      },
+      observation_id: observationId,
+      raw_sha256: rawSha256,
+      received_at_utc: '2026-10-28T00:03:00Z',
+    };
+  });
+  const oldReplay = makeReplay(
+    oldRunId,
+    [firstObservationId],
+    [makeSeriesReplay(firstObservationId, firstRawHash, 'token-asset-1')],
+  );
+  let savedReplays = [oldReplay];
+  const replayRequests: Record<string, unknown>[] = [];
+  const detailReads: string[] = [];
+  const baseResponses: Record<string, unknown> = {
+    '/api/frontier/overview': {
+      state: 'AVAILABLE',
+      research_only: true,
+      live_execution: false,
+      summary: {
+        observations: 2,
+        relationships: 0,
+        relationship_reviews: 0,
+        runs: 0,
+        comparisons: 0,
+        markets_by_venue: { polymarket: 1 },
+        instruments_by_venue: { polymarket: 2 },
+        relationships_by_state: {},
+        database_bytes: 1024,
+        max_bytes: 67_108_864,
+      },
+      sources: [],
+      latest_evidence_at_utc: '2026-10-28T00:02:00Z',
+      limitations: [],
+    },
+    '/api/frontier/sources': { items: [] },
+    '/api/frontier/markets?limit=100': { items: [], returned: 0, limit: 100, offset: 0 },
+    '/api/frontier/books?limit=100': { items: [], returned: 0, limit: 100, offset: 0 },
+    '/api/frontier/trades?limit=100': {
+      items: [],
+      pages: [],
+      observation_count: 0,
+      trade_count: 0,
+      limit: 100,
+      offset: 0,
+    },
+    '/api/frontier/relationships?limit=200': { items: [], returned: 0, limit: 200, offset: 0 },
+    '/api/frontier/graph?depth=1&limit=100': {
+      nodes: [],
+      edges: [],
+      center_market_id: null,
+      search: null,
+      depth: 1,
+      edge_limit: 100,
+      returned_nodes: 0,
+      returned_edges: 0,
+      truncated_by_edge_limit: false,
+      relationship_scan_limit: 500,
+      relationships_scanned: 0,
+      relationship_scan_may_be_incomplete: false,
+      next_cursor: null,
+      source_market_window_limit: 200,
+    },
+    '/api/frontier/opportunities?limit=100': { items: [], returned: 0, limit: 100, offset: 0 },
+    '/api/frontier/runs?limit=30': { items: [], returned: 0, limit: 30, offset: 0 },
+    '/api/frontier/comparisons?limit=30': { items: [], returned: 0, limit: 30, offset: 0 },
+    '/api/frontier/readiness': { gates: [] },
+    '/api/arena/frontier-replays?limit=20': {
+      items: [],
+      limit: 20,
+      scanned: 0,
+      scan_bound: 500,
+      scan_may_be_incomplete: false,
+      research_only: true,
+    },
+    '/api/arena/frontier-discovery-comparisons?limit=20': {
+      items: [],
+      limit: 20,
+      scanned: 0,
+      scan_bound: 500,
+      scan_may_be_incomplete: false,
+      research_only: true,
+    },
+    '/api/arena/frontier-timelines?limit=20': {
+      items: [],
+      limit: 20,
+      scanned: 0,
+      scan_bound: 500,
+      scan_may_be_incomplete: false,
+      research_only: true,
+    },
+    '/api/frontier/collection-health-events?limit=20': {
+      items: [],
+      returned: 0,
+      limit: 20,
+      network_called: false,
+      research_only: true,
+      source_health_scope: 'adapter_local_checkpoint',
+    },
+  };
+  const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    const path = String(input);
+    if (path === '/api/frontier/price-history?venue=polymarket&limit=20&offset=0') {
+      return {
+        ok: true,
+        json: async () => ({
+          items: [firstCapture, secondCapture, ...additionalCaptures],
+          venue: 'polymarket',
+          native_instrument_id: null,
+          returned: 9,
+          limit: 20,
+          offset: 0,
+          scan_bound: 20,
+          scan_may_be_incomplete: false,
+          source_state: 'recorded observations only',
+        }),
+      } as Response;
+    }
+    if (path === '/api/frontier/price-history/replays?limit=20&offset=0') {
+      return {
+        ok: true,
+        json: async () => ({
+          items: savedReplays,
+          returned: savedReplays.length,
+          limit: 20,
+          offset: 0,
+          held_replays_omitted: 0,
+          scan_may_be_incomplete: false,
+          source_state: 'saved deterministic local replay results only',
+          network_called: false,
+        }),
+      } as Response;
+    }
+    if (path.startsWith('/api/frontier/price-history/replays/')) {
+      const runId = path.split('/').at(-1)!;
+      detailReads.push(runId);
+      const found = savedReplays.find((run) => run.run_id === runId);
+      if (!found) throw new Error(`Unknown replay detail ${runId}`);
+      return { ok: true, json: async () => found } as Response;
+    }
+    if (path === '/api/frontier/price-history/replay' && init?.method === 'POST') {
+      const request = JSON.parse(String(init.body)) as Record<string, unknown>;
+      replayRequests.push(request);
+      const result = makeReplay(
+        newRunId,
+        [firstObservationId, secondObservationId],
+        [
+          makeSeriesReplay(firstObservationId, firstRawHash, 'token-asset-1'),
+          makeSeriesReplay(secondObservationId, secondRawHash, 'token-asset-2'),
+        ],
+      );
+      savedReplays = [result, ...savedReplays];
+      return { ok: true, json: async () => result } as Response;
+    }
+    const response = baseResponses[path];
+    if (response === undefined) throw new Error(`Unexpected frontend request: ${path}`);
+    return { ok: true, json: async () => response } as Response;
+  });
+  vi.stubGlobal('fetch', fetchMock);
+  render(
+    <QueryClientProvider
+      client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+    >
+      <Frontier />
+    </QueryClientProvider>,
+  );
+
+  fireEvent.click(await screen.findByRole('button', { name: 'Replay & readiness' }));
+  expect(
+    await screen.findByRole('heading', { name: 'Multi-series descriptive replay' }),
+  ).toBeInTheDocument();
+  expect(await screen.findByRole('heading', { name: 'Replay lineage' })).toBeInTheDocument();
+  expect(await screen.findByText(firstRawHash)).toBeInTheDocument();
+  expect(detailReads).toContain(oldRunId);
+  expect(replayRequests).toHaveLength(0);
+  expect(fetchMock.mock.calls.every(([, init]) => init?.method !== 'POST')).toBe(true);
+
+  for (let index = 1; index <= 8; index += 1) {
+    fireEvent.click(screen.getByRole('checkbox', { name: new RegExp(`token-asset-${index}`) }));
+  }
+  expect(screen.getByRole('checkbox', { name: /token-asset-9/ })).toBeDisabled();
+  for (let index = 3; index <= 8; index += 1) {
+    fireEvent.click(screen.getByRole('checkbox', { name: new RegExp(`token-asset-${index}`) }));
+  }
+  expect(screen.getByRole('checkbox', { name: /token-asset-9/ })).toBeEnabled();
+  fireEvent.click(screen.getByRole('button', { name: 'Replay 2 selected series' }));
+
+  await waitFor(() => expect(replayRequests).toHaveLength(1));
+  expect(replayRequests[0]).toEqual({
+    observation_ids: [firstObservationId, secondObservationId],
+  });
+  expect(await screen.findByText(newRunId)).toBeInTheDocument();
+  expect(await screen.findByText(secondRawHash)).toBeInTheDocument();
+  expect(screen.getByText('candidate generation not performed')).toBeInTheDocument();
+  expect(screen.getAllByText(/do not establish missing-data rates/).length).toBeGreaterThan(0);
+});
+
 it('captures Kalshi fee metadata and exposes a separate hypothetical fee sensitivity', async () => {
   const market = {
     canonical_id: 'kalshi:KX-FEE-1',
