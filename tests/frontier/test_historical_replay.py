@@ -118,7 +118,7 @@ def test_price_history_replay_revalidates_reconstructed_nested_timestamps():
         )
 
 
-def test_price_history_series_revalidates_nested_point_models():
+def test_price_history_series_revalidates_nested_point_models() -> None:
     evidence = _evidence(5)
     series_payload = evidence.series.model_dump(mode="python")
     naive_point = evidence.series.points[0].model_copy(
