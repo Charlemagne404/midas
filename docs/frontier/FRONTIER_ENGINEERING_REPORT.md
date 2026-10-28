@@ -2,6 +2,31 @@
 
 **Report date:** 2026-10-28
 
+## Spot-versus-event payoff distinction in the native UI — 2026-10-28
+
+The Exchanges view labels Kraken and Coinbase spot feeds as context and states
+that a spot price is not a prediction-contract payoff. Added a rendered UI
+assertion to the existing Coinbase source-policy/no-auto-probe test. The
+focused case passes **1/1**, and the full frontend Vitest suite passes
+**47/47 across nine files** in 21.95 seconds (22.51 seconds wall), at 267,328
+KiB peak RSS, with zero swaps and socket messages. TypeScript `tsc -b`, targeted
+ESLint, and Prettier check pass. The initial Prettier check caught the new
+assertion's formatting; after formatting, the check and focused test passed.
+
+No production UI implementation changed. The production build and fixture
+browser E2E remain verified by the dated 13:59 UTC checkpoint; they were not
+rerun for this test-only edit. At 16:09:21 UTC after verification, memory and
+I/O PSI avg10/avg60 were both 0.00%, and approximately 10 GiB was available.
+No live exchange source, production service, or capture was accessed. Test
+commit: `8d61a62` (`apps/web/src/Frontier.test.tsx`).
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Spot-versus-event UI disclosure | COMPLETE AND VERIFIED | The rendered Exchanges view's spot disclaimer has a regression assertion. |
+| Current frontend tests and static checks | COMPLETE AND VERIFIED | Vitest 47/47, `tsc -b`, targeted ESLint, and Prettier check pass. |
+| Production build and browser E2E | COMPLETE AND VERIFIED, DATED | Existing 13:59 UTC acceptance remains relevant because production UI code did not change; this checkpoint did not rerun build/E2E. |
+| Frontier overall | PARTIALLY VERIFIED | Genuine cross-venue findings, broader legacy regression, endurance, protected recovery, and deployment remain incomplete. |
+
 ## Adapter transport host containment — 2026-10-28
 
 `BaseReadOnlyAdapter` now requires every injected transport host to belong to

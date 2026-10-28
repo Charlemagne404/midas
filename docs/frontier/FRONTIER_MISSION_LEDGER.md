@@ -1,5 +1,35 @@
 # Project Frontier Mission Ledger
 
+## Spot-versus-event payoff boundary asserted in the native UI — 2026-10-28 16:09 UTC
+
+The Exchanges view already explains that Kraken and Coinbase spot prices are
+context for event research and are not prediction-contract payoffs. Added a
+regression assertion to the existing Coinbase source-policy/no-auto-probe UI
+test so this distinction remains visible alongside the held-source notice.
+The focused case passes **1/1** after formatting. The complete web Vitest suite
+passes **47/47 across nine files** in 21.95 seconds (22.51 seconds wall), at
+267,328 KiB peak RSS, with zero swaps and zero socket messages. `tsc -b`,
+targeted ESLint, and Prettier check pass. An initial Prettier check flagged the
+one-line assertion; the file was formatted, then format and focused test checks
+were rerun successfully.
+
+At 16:09:21Z after the web checks, memory PSI avg10/avg60 was 0.00%/0.00% for
+both some and full, I/O PSI was 0.00%, and about 10 GiB was available. The
+production web code was not changed in this checkpoint; production-build and
+fixture-browser evidence remains the separately dated 13:59 UTC checkpoint.
+No live source, production service, or capture was accessed. **Test commit:**
+`8d61a62`.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Spot-versus-event distinction in Exchanges UI | COMPLETE AND VERIFIED | The rendered spot copy is asserted in the no-auto-probe source inventory test; spot prices are explicitly distinguished from event payoff. |
+| Current frontend unit suite | COMPLETE AND VERIFIED | 47/47 pass across nine files; `tsc -b`, targeted ESLint, and Prettier check pass. |
+| Production frontend build and browser E2E | COMPLETE AND VERIFIED, DATED | The unchanged UI implementation passed build and fixture E2E at 13:59 UTC; this test-only change did not rerun those checks. |
+| Frontier project acceptance | PARTIALLY VERIFIED | Live cross-venue evidence, broad legacy regression, endurance, protected recovery, and deployment remain open. |
+
+**Next safe action:** continue source-independent architecture and API acceptance
+review; do not infer live spot/event hedging from this UI disclosure.
+
 ## Adapter host-allowlist containment and current suite verified — 2026-10-28 16:04 UTC
 
 An egress-boundary follow-up found that `BaseReadOnlyAdapter` checked injected
