@@ -85,6 +85,28 @@ def test_finite_collection_api_persists_one_bounded_fixture_run(tmp_path):
         client.close()
 
 
+def test_finite_collection_api_returns_conflict_when_source_lease_is_busy(tmp_path):
+    adapter = FakeAdapter()
+    store = FrontierStore(tmp_path / "frontier")
+    journal = CollectionJournal(store.root)
+    app = FastAPI()
+    app.include_router(router(store, AdapterRegistry((adapter,))))
+    client = TestClient(app)
+    try:
+        with journal.source_lease(adapter.venue):
+            response = client.post(
+                "/api/frontier/collect/polymarket",
+                json={"market_limit": 1, "book_limit": 0},
+            )
+
+        assert response.status_code == 409
+        assert "already active" in response.json()["detail"]
+        assert adapter.discovery_calls == 0
+        assert journal.latest_run_checkpoints(limit=20) == ()
+    finally:
+        client.close()
+
+
 def test_finite_collection_api_rejects_disabled_and_held_sources_before_journal_or_request(
     tmp_path,
 ):
@@ -297,9 +319,7 @@ def test_source_routes_report_an_unregistered_adapter_before_journal_access(tmp_
         probe = client.post("/api/frontier/probe/polymarket", json={"limit": 1})
         for response in (start, resume, probe):
             assert response.status_code == 409, response.text
-            assert response.json()["detail"] == (
-                "The polymarket source adapter is not registered."
-            )
+            assert response.json()["detail"] == ("The polymarket source adapter is not registered.")
         assert not CollectionJournal(store.root).path.exists()
     finally:
         client.close()
