@@ -1,5 +1,56 @@
 # Project Frontier Mission Ledger
 
+## Review-store and independent-audit fail-closed verification — 2026-10-28 13:56 UTC
+
+**Implementation commits:** `13377dc` (`fix(frontier): preflight review targets read only`)
+and `76d388b` (`fix(frontier): clear unverified audit outputs`).
+
+`append_relationship_review` now checks the requested parent using a read-only
+SQLite connection before initialization, including when the path is an existing
+empty database. The independent audit now clears candidate-derived payout,
+cost, fee, P&L, capital, timing, and fill-sensitivity outputs when it cannot
+recompute them because the execution scenario is invalid or pinned evidence is
+missing. It also forces practical eligibility off and records
+`INCOMPLETE_EVIDENCE`. The clean no-leg price-discrepancy-only classification
+remains preserved. The audit algorithm version is now 23.
+
+Verification passed:
+
+- `tests/frontier/test_storage.py`: **30/30** in 1.33 seconds (1.67 seconds
+  wall), 68,232 KiB peak RSS, zero swaps, filesystem input, or socket traffic;
+  608 filesystem output blocks, isolated under
+  `/dev/shm/midas-frontier-storage-review-preflight-20261028T1354Z`.
+- `tests/frontier/test_relationships_economics_replay.py`: **83/83** in 0.68
+  seconds (1.03 seconds wall), 56,348 KiB peak RSS, zero swaps, filesystem
+  input, or socket traffic; 376 output blocks under
+  `/dev/shm/midas-frontier-economics-replay-fail-closed-20261028T1354Z`.
+- Full `tests/frontier`: **452/452** in 29.16 seconds (30.67 seconds wall),
+  380,164 KiB peak RSS, zero swaps, 224 filesystem input and 376 output blocks,
+  and no socket traffic. One existing Starlette/httpx deprecation warning
+  remains. The run used
+  `/dev/shm/midas-frontier-review-audit-full-20261028T1355Z`.
+- Strict mypy passed on `storage.py`, `independent_audit.py`, and `models.py`;
+  Ruff check/format and `git diff --check` passed on all five changed Python
+  files.
+
+Before the full run at `13:55:22Z`, memory and I/O PSI avg10 were both 0%,
+about 10 GiB was available, and 3.5 GiB of swap was occupied. After the run at
+`13:55:58Z`, memory and I/O PSI avg10 remained 0%. CPU PSI avg10 was 42.66%
+before and 32.88% after. The full suite was serial, bounded, fixture-backed,
+and isolated; no live API, protected capture/store, collector, production
+service, browser, or Arena job was accessed.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Review target preflight before SQLite initialization | COMPLETE AND VERIFIED | Missing path and existing empty-file regressions pass; complete storage module passes. |
+| Independent audit on invalid scenario or missing pinned evidence | COMPLETE AND VERIFIED | Regressions prove stale economic outputs are cleared; full Frontier suite and static checks pass. |
+| Frontier Python test suite on `76d388b` | COMPLETE AND VERIFIED | 452/452 pass; one existing TestClient deprecation warning. |
+| Frontier project acceptance | PARTIALLY VERIFIED | Source-use holds, genuine live cross-venue evidence, Arena/browser revalidation, production recovery, and deployment remain open. |
+
+**Next safe action:** continue the isolated browser/API acceptance work after a
+fresh resource sample. Preserve the source-use holds and keep
+`data/frontier-public-probes/` untouched.
+
 ## Read-only review-target preflight — 2026-10-28 13:48 UTC
 
 **Implementation commit:** `13377dc` (`fix(frontier): preflight review targets read only`).

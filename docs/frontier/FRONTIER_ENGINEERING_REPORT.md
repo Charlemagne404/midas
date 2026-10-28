@@ -9619,3 +9619,54 @@ CPU PSI **29.17%**, and I/O PSI **0.00%**. About 9 GiB was available, with
 3.5 GiB swap in use; memory exceeds the documented 1% admission gate. No
 source, capture, collector, protected store, or production service was accessed.
 Frontier remains **PARTIALLY VERIFIED**.
+
+## Review-store and independent-audit fail-closed verification — 2026-10-28 13:56 UTC
+
+Commits `13377dc` and `76d388b` finish two bounded hardening changes. The
+review writer now performs a read-only parent lookup before SQLite
+initialization, so a missing target in an absent store or an existing empty
+database does not create schema or advance a migration. The write transaction
+rechecks the row. The independent audit clears prior candidate-derived payout,
+cost, fee, P&L, capital, timing, and fill-sensitivity values when an invalid
+scenario or missing pinned evidence prevents recomputation. It also disables
+practical eligibility and returns `INCOMPLETE_EVIDENCE`; clean
+`PRICE_DISCREPANCY_ONLY` candidates without legs remain unchanged. The audit
+algorithm version was bumped to 23.
+
+`tests/frontier/test_storage.py` passes **30/30** in 1.33 seconds (1.67 seconds
+wall), at 68,232 KiB peak RSS, zero swaps, zero filesystem input, zero socket
+messages, and 608 filesystem output blocks. The 83-case
+`test_relationships_economics_replay.py` module passes **83/83** in 0.68
+seconds (1.03 seconds wall), at 56,348 KiB peak RSS, zero swaps, input, or
+socket messages, and 376 output blocks. Both used separate `/dev/shm` roots.
+
+The complete `tests/frontier` suite passes **452/452** in 29.16 seconds (30.67
+seconds wall), at 380,164 KiB peak RSS, with zero swaps, 224 filesystem input
+and 376 output blocks, and no socket traffic. One existing Starlette/httpx
+`TestClient` deprecation warning remains. Strict mypy passes on the three
+changed production modules; Ruff check/format and `git diff --check` pass on
+the five changed Python files.
+
+At `13:55:22Z`, memory and I/O PSI avg10 were both **0%**, and approximately
+**10 GiB** was available, although 3.5 GiB of swap was in use. Post-run at
+`13:55:58Z`, both remained at **0%**; CPU PSI avg10 was 42.66% before and
+32.88% after. No live source, capture, collector, protected store, service,
+browser, or Arena job was accessed. This completes the Python verification for
+these commits, not the Frontier mission. Live source authorization and
+cross-venue evidence remain blocked; browser/Arena verification, production
+recovery, and deployment remain outstanding. Frontier remains
+**PARTIALLY VERIFIED**.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Review-target preflight | COMPLETE AND VERIFIED | Missing-store and existing-empty-database cases pass in the full storage module. |
+| Independent audit fail-closed output | COMPLETE AND VERIFIED | Invalid-scenario and missing-evidence regressions pass; prior economics are cleared when no recomputation occurs. |
+| Frontier Python suite on `76d388b` | COMPLETE AND VERIFIED | 452/452; one existing TestClient deprecation warning remains. |
+| Live cross-venue relationship/economics | BLOCKED | Current source-use holds remain; no second-venue relationship is claimed. |
+| Browser/Arena and production transition | DEFERRED | No browser or Arena run was needed for these backend changes; production remains isolated and undeployed. |
+
+**Files and commits:** `packages/midas/frontier/storage.py` (`13377dc`),
+`packages/midas/frontier/independent_audit.py`,
+`packages/midas/frontier/models.py`, and
+`tests/frontier/test_relationships_economics_replay.py` (`76d388b`), plus the
+storage regressions in `tests/frontier/test_storage.py` (`13377dc`).

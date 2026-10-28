@@ -2966,3 +2966,16 @@ post-change storage/static validation has run. At `13:48:50Z`, memory PSI avg10
 was **37.45% some / 28.85% full**, CPU PSI **29.17%**, and I/O PSI **0.00%**;
 about 9 GiB was available while swap usage was 3.5 GiB. The memory gate remains
 exceeded. Frontier remains research-only and **PARTIALLY VERIFIED**.
+
+### Frontier audit fail-closed verification — 2026-10-28 13:56 UTC
+
+Commits `13377dc` and `76d388b` make missing review targets fail before SQLite
+initialization and clear candidate economics when the independent audit cannot
+recompute them due to an invalid scenario or missing pinned evidence. The
+complete Frontier Python suite passes **452/452** in 29.16 seconds; strict
+mypy, Ruff, and formatting checks pass. Peak RSS was 380,164 KiB with zero
+swaps or socket traffic under `/dev/shm`. An existing Starlette/httpx
+deprecation warning remains. No source, capture, production service, browser,
+or Arena job was accessed. Live cross-venue evidence and source-use
+authorization remain blocked; production recovery and deployment remain
+deferred. Frontier remains research-only and **PARTIALLY VERIFIED**.
