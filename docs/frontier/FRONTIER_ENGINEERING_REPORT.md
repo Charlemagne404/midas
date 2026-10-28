@@ -9670,3 +9670,45 @@ recovery, and deployment remain outstanding. Frontier remains
 `packages/midas/frontier/models.py`, and
 `tests/frontier/test_relationships_economics_replay.py` (`76d388b`), plus the
 storage regressions in `tests/frontier/test_storage.py` (`13377dc`).
+
+## Frontier dashboard and browser acceptance — 2026-10-28 13:59 UTC
+
+At verified code commit `76d388b`, all frontend unit checks passed: Vitest
+**47/47** across nine files, `tsc -b`, ESLint, and Prettier. The production Vite
+build completed after transforming 2,230 modules. It reports one advisory:
+`Chart` is **544.51 kB** minified (186.79 kB gzip), above the configured 500 kB
+warning threshold. No UI code changed during this checkpoint.
+
+The unseeded Frontier Playwright suite passed **7/7** tests in 17.8 seconds
+(18.66 seconds wall, 201,120 KiB peak RSS, zero swaps). The separate seeded
+suite passed **2/2** in 8.1 seconds (11.03 seconds wall, 183,388 KiB peak RSS,
+zero swaps). Its seeder wrote 21 deterministic fixture captures and replay
+artifacts plus one fixture-only Arena discovery artifact under
+`/tmp/midas-browser-xRjN0g`. This was isolated test state; no collector or Arena
+worker ran. The browser checks exercised responsive overview/graph views,
+explicit saved-history replay, candidate/relationship details, and the seeded
+Laboratory artifact path. The explicit history-probe UI action was fulfilled by
+a Playwright route; no request reached a venue or collection endpoint. Uvicorn
+and Vite bound only to loopback and stopped after each run; final port
+inspection found no listeners on ports 18000 or 15173.
+
+The Vitest run took 9.42 seconds wall and peaked at **323,972 KiB**. At
+`13:58:51Z` before the seeded browser test, memory PSI avg10 was **0.00%** and
+I/O PSI avg10 was **0.43% some / 0.21% full**, with about **9.8 GiB** available.
+At `13:59:19Z`, memory PSI remained **0.00%**, I/O PSI was **0.08% some / 0.04%
+full**, and no service listener remained. The build peaked at **686,100 KiB**,
+with zero swaps and 5,880 filesystem output blocks. No external source, held
+capture, protected store, or production service was accessed. The untracked
+`data/frontier-public-probes/` directory remains untouched.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Frontier web unit and component tests | COMPLETE AND VERIFIED | 47/47 Vitest tests pass; nine test files. |
+| Web typecheck, lint, format, and production build | COMPLETE AND VERIFIED | `tsc -b`, ESLint, and Prettier pass; Vite build succeeds with one large Chart chunk advisory. |
+| Frontier browser flows | COMPLETE AND VERIFIED | Seven regular and two seeded browser tests pass using isolated local state only. |
+| Genuine live cross-venue validation | BLOCKED | Source-use holds remain; no browser fixture is treated as a live observation. |
+| Production transition | DEFERRED | The isolated branch remains undeployed; production recovery and deployment gates are separate. |
+
+This closes the bounded Frontier dashboard verification, not the whole mission.
+Source-use permission, genuine cross-venue evidence, broader Arena/production
+readiness, and deployment remain unresolved; Frontier is **PARTIALLY VERIFIED**.

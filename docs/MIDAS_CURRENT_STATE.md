@@ -2979,3 +2979,16 @@ deprecation warning remains. No source, capture, production service, browser,
 or Arena job was accessed. Live cross-venue evidence and source-use
 authorization remain blocked; production recovery and deployment remain
 deferred. Frontier remains research-only and **PARTIALLY VERIFIED**.
+
+### Frontier dashboard browser verification — 2026-10-28 13:59 UTC
+
+Frontend checks pass: **47/47** Vitest tests, TypeScript, ESLint, Prettier, and
+the production build. The build has one advisory for a 544.51 kB minified
+Chart chunk. Frontier browser E2E passes **7/7**, and seeded local fixture E2E
+passes **2/2**. Both used loopback services and temporary roots; the explicit
+history-probe POST was intercepted in Playwright, no request reached a venue,
+and ports 18000/15173 are closed. The seeded
+run wrote fixture-only history and one Arena artifact in `/tmp`. Memory PSI
+avg10 remained at 0%; I/O PSI post-run was 0.08% some / 0.04% full. Live source
+authorization, cross-venue evidence, production recovery, and deployment remain
+open. Frontier remains research-only and **PARTIALLY VERIFIED**.

@@ -1,5 +1,48 @@
 # Project Frontier Mission Ledger
 
+## Frontier dashboard and browser acceptance — 2026-10-28 13:59 UTC
+
+**Verified source commit:** `76d388b`; documentation checkpoint follows at
+`3dd6cd2`.
+
+Frontend checks passed: Vitest **47/47** across nine files; TypeScript
+`tsc -b`; ESLint; Prettier format check; and the production build. The build
+transformed 2,230 modules. Vite emitted one size warning: `Chart` is 544.51 kB
+minified / 186.79 kB gzip, above its 500 kB advisory threshold. The build
+completed successfully.
+
+Frontier browser E2E passed **7/7**; the separate seeded local integration
+passed **2/2**. The regular run covered responsive views, explicit replay,
+relationship selection, and local Arena evidence. The seeded run used 21
+deterministic fixture captures/replays and one fixture-only Arena artifact at
+`/tmp/midas-browser-xRjN0g`; it verified local pagination, replay lineage, and
+Laboratory inspection. The explicit price-history probe action was fulfilled
+by a Playwright route; no request reached a venue, and no collection POST was
+observed. Both runs used one worker, local API/Vite listeners, and isolated
+temporary roots; the listeners were stopped after each run. The final port
+check found no listeners on 18000 or 15173.
+
+Representative resource evidence: Vitest ran in 9.42 seconds wall time with
+323,972 KiB peak RSS and zero swaps. The normal Frontier browser run took
+18.66 seconds wall and peaked at 201,120 KiB; the seeded run took 11.03 seconds
+wall and peaked at 183,388 KiB. Both used zero swaps. Before the seeded browser
+run at `13:58:51Z`, memory PSI avg10 was **0.00%**, I/O PSI was **0.43% some /
+0.21% full**, and about **9.8 GiB** was available. After both E2E runs at
+`13:59:19Z`, memory PSI remained **0.00%** and I/O PSI was **0.08% some / 0.04%
+full**. No live source, held capture, production service, or protected store
+was accessed. `data/frontier-public-probes/` remains untouched and unstaged.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Frontier frontend unit/component tests | COMPLETE AND VERIFIED | 47/47 pass across nine files. |
+| TypeScript, ESLint, Prettier, production build | COMPLETE AND VERIFIED | All pass; one non-fatal 544.51 kB Chart chunk advisory remains. |
+| Frontier browser E2E | COMPLETE AND VERIFIED | 7/7 regular and 2/2 seeded fixture-only tests; loopback services shut down. |
+| Live cross-venue validation | BLOCKED | Current source-use holds remain; fixture/browser evidence is not live source validation. |
+| Frontier mission and deployment | PARTIALLY VERIFIED | Production recovery, source-use authorization, and deployment gates remain open. |
+
+**Next safe action:** continue the remaining source-independent acceptance
+review; do not start production services or live source probes.
+
 ## Review-store and independent-audit fail-closed verification — 2026-10-28 13:56 UTC
 
 **Implementation commits:** `13377dc` (`fix(frontier): preflight review targets read only`)
