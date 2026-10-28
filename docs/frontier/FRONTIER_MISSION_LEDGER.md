@@ -4588,3 +4588,30 @@ contract assertion passes **1/1** in
 Commit `1da2b11` records the API description and companion documentation. This
 is API documentation only; it makes no source request and changes no runtime
 decision path.
+
+### Arena consumer regression after event identity correction — 2026-10-28 04:11 UTC
+
+The selected Arena discovery, replay, timeline, and job-supervision modules
+passed **38/38** after commit `fb6d800`:
+
+```bash
+/usr/bin/time -v env PYTHONPATH=packages:. \
+  /home/charlie/midas/.venv/bin/python -m pytest -q \
+  tests/arena/test_frontier_discovery.py \
+  tests/arena/test_frontier_replay.py \
+  tests/arena/test_frontier_timeline.py \
+  tests/arena/test_jobs.py
+# 38 passed in 37.70s; 200,152 KiB peak RSS; zero swaps and socket messages
+```
+
+The selection covers fixture-backed saved-input discovery/replay and
+temporary-root job dispatch. It does not launch a production Arena worker,
+write the shared Arena root, or validate actual systemd/cgroup execution.
+At `2026-10-28T04:11:18Z`, memory PSI avg10 was **0.00% some / 0.00% full**,
+I/O PSI avg10 **10.31% some / 9.83% full**, about **9 GiB** was available, and
+no process held the shared Arena lock. No protected service or external batch
+was touched.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Arena discovery/replay/timeline/job consumers | COMPLETE AND VERIFIED | Selected 38-test regression passes after event normalization correction; no real systemd unit or production Arena root was used. |

@@ -625,8 +625,10 @@ observation version when interpreting them.
 
 Verification for this checkpoint: `tests/frontier` passed **352/352**;
 Mission Control web tests passed **40/40**; `e2e/frontier.spec.ts` passed
-**6/6** with temporary loopback services; strict mypy passed for the API,
-models, adapter base, Polymarket, and Kalshi modules. TypeScript and Vite
+**6/6** with temporary loopback services; selected Arena discovery, replay,
+timeline, and job tests passed **38/38** with temporary roots. Strict mypy
+passed for the API, models, adapter base, Polymarket, and Kalshi modules.
+TypeScript and Vite
 production build passed with output under `/tmp`, preserving the existing web
 `dist`. The known **544.41 kB** Chart chunk and external output-directory
 advisories remain. The generated OpenAPI description for the bounded detail

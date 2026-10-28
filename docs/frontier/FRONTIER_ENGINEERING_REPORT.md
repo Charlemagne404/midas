@@ -64,7 +64,7 @@ resource admission; no host process was touched.
 | Multi-venue economic validation | BLOCKED | Other source-use holds remain in effect; no verified live cross-venue payoff is claimed. Fixture-only economic checks do not establish live equivalence. |
 | Production deployment | DEFERRED | Frontier remains isolated on its development branch; no production transition was attempted. |
 
-## Polymarket event identity, API docs, and verification closeout — 2026-10-28 04:09 UTC
+## Polymarket event identity and consumer regression closeout — 2026-10-28 04:11 UTC
 
 Commit `fb6d800` corrects Frontier's Polymarket normalization. The legacy MIDAS
 normalizer still supplies `market:<id>` for older callers, but Frontier now
@@ -92,6 +92,15 @@ Kalshi modules:
 # Success: no issues found in 5 source files
 ```
 
+The selected Arena discovery, replay, timeline, and job-supervision regression
+then passed **38/38** in 37.70 seconds (200,152 KiB peak RSS, zero swaps or
+socket messages). Its fixtures and temporary roots do not exercise a production
+Arena store or establish real systemd/cgroup execution.
+At the post-run sample `2026-10-28T04:11:18Z`, memory PSI avg10 was **0.00%
+some / 0.00% full**, I/O PSI avg10 was **10.31% some / 9.83% full**, about
+**9 GiB** was available, and no process held the shared Arena lock. This is a
+point sample, not a sustainability claim.
+
 TypeScript project build and production Vite bundle also pass. Vite wrote to
 `/tmp/midas-frontier-build-20261028T0406Z`, leaving the existing web `dist`
 output alone. The output transformed 2,228 modules in 4.83 seconds. Peak RSS
@@ -114,7 +123,8 @@ deployment occurred.
 
 | Component | Status | Evidence and remaining boundary |
 | --- | --- | --- |
-| Frontier Polymarket native event identity | COMPLETE AND VERIFIED | Commit `fb6d800`; 352-test Frontier regression, focused final-code 3/3, and strict mypy pass. Historical captures keep their original normalized value. |
+| Frontier Polymarket native event identity | COMPLETE AND VERIFIED | Commit `fb6d800`; 352-test Frontier regression, focused final-code 3/3, selected Arena regression 38/38, and strict mypy pass. Historical captures keep their original normalized value. |
+| Arena discovery/replay/timeline/job consumers | COMPLETE AND VERIFIED | Selected 38-test regression passes after the event normalization correction; no real systemd unit or production Arena root was used. |
 | Frontier web unit suite and browser E2E | COMPLETE AND VERIFIED | 40/40 and 6/6 respectively; E2E uses temporary local services and no public source probe. |
 | Production web build | COMPLETE AND VERIFIED | TypeScript plus Vite pass with output in `/tmp`; known Chart chunk and external outDir advisories remain. |
 | Live cross-venue equivalence and eligible economics | BLOCKED | Only one bounded Polymarket detail was fetched; other source-use holds prevent live cross-venue validation. No live opportunity or profitability is claimed. |

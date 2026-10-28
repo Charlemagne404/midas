@@ -44,12 +44,13 @@ rows are not rewritten.
 
 The full Frontier Python regression passes **352/352**, the full Mission
 Control web unit suite **40/40**, and Frontier browser E2E **6/6** against
-temporary local services and data. Strict typing for the API and affected
-adapter models passes, and TypeScript plus the production Vite build completes
-to a temporary directory. The existing Chart chunk advisory remains. The
-bounded detail route's generated OpenAPI description now records its listing
-binding and evidence limits. One
-bounded Polymarket Gamma detail request was captured and hash-checked, but it
+temporary local services and data. Selected Arena discovery/replay/timeline
+and job tests pass **38/38** with temporary roots. Strict typing for the API
+and affected adapter models passes, and TypeScript plus the production Vite
+build completes to a temporary directory. The existing Chart chunk advisory
+remains. The bounded detail route's generated OpenAPI description now records
+its listing binding and evidence limits. One bounded Polymarket Gamma detail
+request was captured and hash-checked, but it
 does not establish event membership, exhaustive outcomes, payoff, settlement,
 or an opportunity. No Kalshi, Kraken, or Coinbase live request was made under
 their current source-use holds.
@@ -57,7 +58,10 @@ their current source-use holds.
 At the post-build sample `2026-10-28T04:06:58Z`, memory PSI avg10 was 0.08%
 some/full with about 10 GiB available and no shared Arena lock holder. No
 protected service, production configuration, historical evidence, or Reality
-recording was changed. Frontier is **PARTIALLY VERIFIED**, research-only,
+recording was changed. The post-Arena sample at `2026-10-28T04:11:18Z` still
+had memory PSI avg10 0.00% some/full, I/O PSI avg10 10.31% some / 9.83% full,
+about 9 GiB available, and no shared lock holder. Frontier is
+**PARTIALLY VERIFIED**, research-only,
 isolated, unmerged, and undeployed. See the [Frontier mission ledger](frontier/FRONTIER_MISSION_LEDGER.md),
 [engineering report](frontier/FRONTIER_ENGINEERING_REPORT.md), and
 [source terms review](frontier/SOURCE_DATA_TERMS_REVIEW_2026-10-27.md) for the
