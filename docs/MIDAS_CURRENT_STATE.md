@@ -1950,3 +1950,14 @@ and no shared Arena lock holder was present. No source, worker, protected store,
 or production service was accessed. Overall Frontier remains **PARTIALLY
 VERIFIED**: the broader single-process suite and scientific/deployment gates
 remain open.
+
+### Adapter timestamp parser contract — 2026-10-28 08:04 UTC
+
+Commit `2eff73e` adds a fixture-only contract test for `parse_time`: a naive
+ISO timestamp string yields no timestamp, while `+02:00` and `Z` inputs
+normalize to the expected UTC instants. The full adapter test module passes
+**68/68**; Ruff, Ruff format, and `git diff --check` pass. At 08:04:42 UTC,
+memory PSI avg10 was 0%, I/O PSI avg10 was **0.02% some / 0.00% full**, and
+about **10 GiB** was available. The change exercised no network transport,
+production service, worker, or protected store. Frontier remains **PARTIALLY
+VERIFIED**.

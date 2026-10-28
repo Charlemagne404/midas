@@ -7760,3 +7760,24 @@ so no extra broad suite was scheduled.
 | Descriptive price-history replay | COMPLETE AND VERIFIED | Final five-case module and route-level API test pass; new replay identity is v2. |
 | Timestamp regression slice | COMPLETE AND VERIFIED | 79 relevant tests pass on the exact current code. |
 | Frontier overall acceptance | PARTIALLY VERIFIED | Full single-process suite, live equivalent markets, held-source permission, resource endurance, and production deployment remain open. |
+
+## Adapter timestamp parser regression — 2026-10-28 08:04 UTC
+
+Commit `2eff73e` adds a contract test for the existing shared adapter time
+parser. The test verifies that timezone-naive ISO strings return no parsed
+timestamp, explicit `+02:00` input normalizes to UTC, and `Z` input remains UTC.
+This protects source-time evidence from host-local interpretation without
+changing adapter behavior or requesting live data.
+
+`tests/frontier/test_adapters.py` passes **68/68**. Ruff, Ruff format, and
+`git diff --check` pass. All venue HTTP behavior in the module is driven by
+mocked transports; the new test calls only `parse_time`. At
+`2026-10-28T08:04:42Z`, memory PSI avg10 was **0.00% some/full**, I/O PSI avg10
+was **0.02% some / 0.00% full**, with approximately **10 GiB** available. No
+live source, worker, protected store, or production service was accessed.
+
+| Component | Status | Current evidence and remaining boundary |
+| --- | --- | --- |
+| ISO timestamp parsing contract | COMPLETE AND VERIFIED | Naive source time remains missing; explicit timezones normalize to UTC; adapter fixture module passes. |
+| Live timestamp behavior | IMPLEMENTED, LIVE VALIDATION PENDING | No live source probe was performed under the current source-use boundary. |
+| Frontier project acceptance | PARTIALLY VERIFIED | This parser test does not close live cross-venue, source-policy, resource/recovery, or deployment gates. |

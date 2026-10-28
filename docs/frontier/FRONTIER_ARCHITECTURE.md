@@ -133,6 +133,11 @@ native metadata, source URL, adapter/schema versions, raw-body hash, request and
 receipt times, and source-time semantics. Source quality flags are carried forward
 instead of being replaced with guessed values.
 
+The shared adapter timestamp parser converts explicit-offset ISO strings to
+UTC and treats an ISO string with no timezone as unavailable. It does not
+assign the host's local timezone to an ambiguous source time; a regression test
+pins both the rejection and valid-offset normalization.
+
 ### Polymarket historical price samples
 
 Polymarket adapter v7 exposes a separate `price_history` capability for the

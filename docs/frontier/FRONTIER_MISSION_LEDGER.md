@@ -6515,3 +6515,29 @@ worker, or production service was accessed.
 **Next safe action:** return to source-independent acceptance gaps. Only start
 another test or replay workload after a fresh host admission sample; preserve
 all source-use and production holds.
+
+## Adapter timestamp parser regression — 2026-10-28 08:04 UTC
+
+**Stage:** B/G (adapter normalization contract and tests).
+**Test commit:** `2eff73e` on `codex/frontier-20261026`.
+
+The common `parse_time` helper already returned `None` for naive ISO strings
+and normalized explicitly offset values to UTC, but the adapter contract suite
+did not pin that behavior. A focused regression now verifies naive input is
+left unavailable, `+02:00` maps to the equivalent UTC instant, and `Z` remains
+UTC. This preserves missing source-time evidence instead of inventing a local
+timezone.
+
+The complete fixture-driven `tests/frontier/test_adapters.py` module passed
+**68/68** in 2.70 seconds. Ruff, Ruff format, and `git diff --check` passed.
+The module's venue calls use injected/mock transport; no public
+network source was accessed. At `2026-10-28T08:04:42Z`, memory PSI avg10 was
+**0.00% some/full**, I/O PSI avg10 was **0.02% some / 0.00% full**, and about
+**10 GiB** was available. No production service, worker, or protected store
+was touched.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Shared ISO timestamp normalization contract | COMPLETE AND VERIFIED | Naive ISO input stays unavailable; explicit offsets normalize to UTC; all 68 adapter module tests pass. |
+| Live adapter timestamp validation | IMPLEMENTED, LIVE VALIDATION PENDING | This is fixture-backed parser evidence; no live source probe was performed. |
+| Project Frontier overall | PARTIALLY VERIFIED | Live multi-venue science, source policy, broad resource/recovery, and production gates remain open. |
