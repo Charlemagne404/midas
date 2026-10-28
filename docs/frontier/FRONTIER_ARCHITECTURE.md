@@ -714,7 +714,7 @@ Same-payoff equivalence is versioned as `frontier-equivalence-verifier-6`.
 Verification requires two distinct pinned market observation identities,
 between two and ten unique nonempty evidence IDs, and an external assertion
 time no earlier than either captured market record. The independent arithmetic
-audit is version `frontier-independent-economic-audit-19`; it accepts exactly
+audit is version `frontier-independent-economic-audit-20`; it accepts exactly
 one current-version equivalence evidence record only when that record cites
 both markets and falls no later than the candidate's replay cutoff. A review
 created after that cutoff cannot validate an earlier candidate. Older verifier
@@ -736,21 +736,23 @@ new cross-venue candidate audits.
 Logical implication uses the separate
 `frontier-logical-implication-verifier-3` version. It rejects copied markets
 with duplicate payoff-state identifiers or native instrument identities and
-requires unique YES/NO outcome identities. Independent audit v19 accepts only
+requires unique YES/NO outcome identities. Independent audit v20 accepts only
 current v3 implication evidence; version-2 evidence remains available for
 inspection but cannot validate new candidate research.
 The current candidate/replay economic model is
-`frontier-economic-verifiers-19`, which pins that verifier acceptance rule in
+`frontier-economic-verifiers-20`, which pins that verifier acceptance rule in
 candidate and replay identities. Replays using v2 implication evidence produce
 incomplete evidence with no constructed position until the relationship is
 reviewed under v3. Book snapshots expose a runtime price-level integrity check
 because `model_copy(update=...)` bypasses Pydantic validation. Candidate
 generators and the independent audit reject duplicate prices, invalid Decimal
 values, malformed levels, and naive level timestamps; deterministic replay
-v18 rejects the same input before candidate generation. Markets are also
+v19 rejects the same input before candidate generation. Markets are also
 reconstructed through Pydantic validation at candidate, audit, and replay
 boundaries so nested contract and payout invariants cannot be bypassed by a
-copied market. Joint-state maps
+copied market. Book snapshots are reconstructed at those boundaries as well;
+this checks top-level timestamps and provenance before replay computes its
+analysis cutoff. Joint-state maps
 revalidate the bounded definition and recompute their canonical content hash
 at candidate, audit, and replay boundaries. A stale hash is incomplete evidence
 or rejected replay input; a valid hash still records an unauthenticated

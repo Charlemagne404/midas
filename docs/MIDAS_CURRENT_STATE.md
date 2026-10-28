@@ -33,6 +33,31 @@ in the dated addendum below and in the Frontier engineering report.
 
 ## Frontier development addendum — 2026-10-28
 
+### Latest isolated Frontier checkpoint — 2026-10-28 11:24 UTC
+
+Code commit `ac85442` closes a copied snapshot-timestamp gap. Full book
+snapshots, including receipt/exchange times and provenance, are revalidated at
+candidate generation, independent audit, and replay intake. Replay validates
+before deriving its default cutoff, so a naive copied `received_at_utc` is
+rejected rather than reaching date arithmetic. Economic model v20, audit v20,
+and replay v19 pin the changed rules.
+
+The focused book-integrity slice passes **10/10**. Full `tests/frontier`
+passes **415/415** in 32.27 seconds wall time, with **378,208 KiB** peak RSS,
+zero test-process swaps, zero filesystem input, and zero socket messages. Ruff
+check/format, strict mypy for five production modules, and `git diff --check`
+pass. One existing Starlette/httpx deprecation warning remains. Tests used
+isolated tmpfs storage at
+`/dev/shm/midas-frontier-book-structure-final-20261028T1124Z`.
+
+At `11:24:07Z`, about 10 GiB was available, memory PSI avg10 was 0%, and I/O
+PSI was 0.29% some / 0.05% full. At `11:24:44Z`, about 10 GiB remained
+available, memory PSI avg10 was 0%, and I/O PSI was 0.32% some / 0% full. No
+live source, protected capture, or production service was accessed. Live
+cross-venue validation, broader MIDAS regression, production recovery, and
+deployment remain open. Frontier remains **PARTIALLY VERIFIED**, research-only,
+and undeployed.
+
 ### Latest isolated Frontier checkpoint — 2026-10-28 11:21 UTC
 
 Code commit `da347a4` closes a copied nested-market integrity gap. A duplicate

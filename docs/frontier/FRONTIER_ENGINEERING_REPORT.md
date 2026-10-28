@@ -2,7 +2,48 @@
 
 **Report date:** 2026-10-28
 
-## Current status — 2026-10-28 11:21 UTC
+## Current status — 2026-10-28 11:24 UTC
+
+This entry supersedes the 11:21 UTC checkpoint below. Frontier remains
+isolated at `/home/charlie/midas-frontier` on `codex/frontier-20261026`.
+Code commit `ac85442` extends copied-input validation to the full order-book
+snapshot. A naive copied `received_at_utc` previously passed the level-only
+check and raised `TypeError` during replay time arithmetic.
+
+`BookSnapshot.has_valid_structure` now reconstructs the snapshot through
+Pydantic validation, including top-level receipt/exchange times and nested
+provenance. Candidate generators and independent audit use the same check;
+deterministic replay applies it before calculating the default analysis
+cutoff. A copied naive timestamp is rejected at intake. Economic model v20,
+audit v20, and replay v19 identify the changed rules.
+
+The focused book-integrity slice passed **10/10**. Full `tests/frontier`
+passed **415/415** in 30.80 seconds (32.27 seconds wall time), with
+**378,208 KiB** peak RSS, zero process swaps, zero filesystem input, 1,856
+output blocks, and zero socket messages. Ruff check/format, strict mypy for
+five production modules, and `git diff --check` passed. One existing
+Starlette/httpx `TestClient` deprecation warning remains. Tests used tmpfs at
+`/dev/shm/midas-frontier-book-structure-final-20261028T1124Z`.
+
+At `11:24:07Z`, about 10 GiB was available, memory PSI avg10 was 0%, and I/O
+PSI was 0.29% some / 0.05% full. At `11:24:44Z`, about 10 GiB remained
+available, memory PSI avg10 was 0%, and I/O PSI was 0.32% some / 0% full. No
+live source, protected capture, production service, or Arena job was used; the
+saved public capture remains unstaged and untouched. Frontier remains
+**PARTIALLY VERIFIED**.
+
+### Latest acceptance delta
+
+| Requirement | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Copied book snapshot structure | COMPLETE AND VERIFIED | Full book and provenance validation runs at generation, audit, and replay boundaries; malformed copied timestamps fail before time arithmetic. |
+| Full Frontier Python regression | COMPLETE AND VERIFIED | 415/415 pass on code commit `ac85442`; one existing deprecation warning remains. |
+| Live cross-venue equivalence and economics | BLOCKED | No authorized genuine multi-venue evidence is available for this checkpoint. |
+| Broader MIDAS regression | PARTIALLY VERIFIED | Not run on this branch; Reality recovery dependency and incompatible Reality lineages remain unresolved. |
+| Production recovery and deployment | DEFERRED | The research worktree remains isolated, unmerged, and undeployed. |
+| Frontier overall | PARTIALLY VERIFIED | Live science, broader regression, and production readiness remain open. |
+
+## Previous checkpoint — 2026-10-28 11:21 UTC
 
 This entry supersedes the 11:15 UTC checkpoint below. Frontier remains
 isolated at `/home/charlie/midas-frontier` on `codex/frontier-20261026`.

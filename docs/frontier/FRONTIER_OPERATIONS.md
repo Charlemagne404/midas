@@ -24,7 +24,7 @@ cannot validate a historical candidate.
 
 Previously saved pre-v6 same-payoff relationships remain readable and
 append-only, but the current independent audit
-(`frontier-independent-economic-audit-19`) classifies a candidate using one as
+(`frontier-independent-economic-audit-20`) classifies a candidate using one as
 `INCOMPLETE_EVIDENCE`. Re-review the original hypothesis against the current
 stored market records to produce a version-6 relationship before using it in a
 new audited replay. The verifier and audit also recheck uniqueness of payoff
@@ -37,7 +37,7 @@ The audit does not rewrite or delete stored relationships or reviews.
 
 Logical-implication reviews use
 `frontier-logical-implication-verifier-3` and the independent audit is now
-`frontier-independent-economic-audit-19`. The verifier rejects duplicate
+`frontier-independent-economic-audit-20`. The verifier rejects duplicate
 payoff states and native instrument identities even when they arrive inside a
 prebuilt model object. Version-2 logical-implication records remain readable,
 but they do not validate a new candidate until the relationship is reviewed
@@ -63,6 +63,13 @@ independent-audit, and replay boundaries. This rechecks nested instrument,
 payout, payoff, and settlement invariants after in-memory `model_copy` calls.
 Malformed markets produce incomplete candidate/audit evidence or are rejected
 at replay intake; they do not reach payout arithmetic.
+
+Order-book snapshots are reconstructed through Pydantic validation at the
+candidate, independent-audit, and replay boundaries. This includes top-level
+receipt/exchange timestamps and nested provenance as well as level prices,
+quantities, and timestamps. Replay performs the check before deriving a
+default cutoff, so a copied naive timestamp is rejected instead of reaching
+date arithmetic.
 
 ## Public source captures
 

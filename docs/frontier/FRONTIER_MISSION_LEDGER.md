@@ -1,5 +1,43 @@
 # Project Frontier Mission Ledger
 
+## Validate full book snapshots before replay time arithmetic — 2026-10-28 11:24 UTC
+
+Code commit `ac85442` extends runtime book validation from individual price
+levels to the complete `BookSnapshot`. A controlled fixture copied a naive
+`received_at_utc`; replay previously reached time subtraction and raised
+`TypeError` instead of returning an evidence classification. Book snapshots
+are now reconstructed through Pydantic validation at candidate generation,
+independent audit, and replay boundaries. Replay validates before deriving
+its default cutoff. This covers snapshot and provenance timestamps as well as
+price levels, quantities, and their timestamps.
+
+The new regression confirms naive copied receipt time is rejected before
+cutoff calculation. The focused book-integrity slice passed **10/10**. Full
+`tests/frontier` passed **415/415** in 30.80 seconds (32.27 seconds wall time)
+using `/dev/shm/midas-frontier-book-structure-final-20261028T1124Z`. Peak RSS
+was **378,208 KiB**, process swaps **0**, filesystem input **0**, output 1,856
+blocks, and socket messages sent/received **0**. Ruff check/format, strict
+mypy for five production modules, and `git diff --check` passed. One existing
+Starlette/httpx deprecation warning remains.
+
+At `11:24:07Z`, about 10 GiB was available, memory PSI avg10 was 0%, and I/O
+PSI was 0.29% some / 0.05% full. At `11:24:44Z`, about 10 GiB remained
+available, memory PSI avg10 was 0%, and I/O PSI was 0.32% some / 0% full. No
+live source, protected capture, production service, or Arena job was used.
+The preserved public capture remains unstaged and untouched. Frontier remains
+**PARTIALLY VERIFIED**.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Copied book timestamp and level integrity | COMPLETE AND VERIFIED | Full snapshots are revalidated at generation, audit, and replay; naive replay timestamps fail before cutoff calculation. |
+| Full Frontier Python suite | COMPLETE AND VERIFIED | 415/415 pass on code commit `ac85442`; one existing deprecation warning remains. |
+| Live cross-venue matching and economics | BLOCKED | Authorized genuine multi-venue evidence remains unavailable. |
+| Frontier project overall | PARTIALLY VERIFIED | Broader MIDAS regression, live science, production recovery, and deployment remain open. |
+
+**Next safe action:** continue source-independent acceptance review. Recheck
+host PSI before another test workload; shared I/O pressure remains below the
+1% gate.
+
 ## Revalidate copied market contracts — 2026-10-28 11:21 UTC
 
 Code commit `da347a4` addresses a copied-market failure reproduced with a
