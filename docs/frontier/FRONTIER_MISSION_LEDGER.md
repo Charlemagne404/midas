@@ -1,5 +1,30 @@
 # Project Frontier Mission Ledger
 
+## Current host state — 2026-10-29 00:47 CET
+
+The scheduled 00:46 capacity run completed in 33.3 seconds with 6.520 CPU
+seconds, 137.4 MiB peak, and no swap. At 128 MiB `MemoryHigh`, its cgroup
+recorded 1,731 `high` events and transient cgroup PSI up to 48% full; host and
+user-slice full PSI briefly reached 15.66% and 14.42% avg10. No `max`, OOM,
+OOM-kill, or new oomd journal event was recorded. I raised only the auxiliary
+capacity service's soft threshold to 160 MiB, keeping its 192 MiB hard cap
+and zero swap; `daemon-reload` applied it for the next invocation. The next
+capacity run is scheduled at 01:16:04 CET.
+
+At 00:47:43, host available memory was 10 GiB and avg10 PSI had fallen below
+0.1%; avg60 and avg300 full PSI were still 2.70–2.89% and 1.53–1.65%. API
+and Reality remained active with only about 1.31 MiB and 0.30 MiB
+`MemoryHigh` headroom. Reality status remained stale at 23:43:01. No oomd or
+kernel OOM was observed after 23:43:24. The scheduled research jobs currently
+show staggered 30-minute cadence (Veritas) and a one-minute Arena dispatcher;
+the measured run snapshots do not demonstrate overlap. The workload that
+caused historical user-slice oomd pressure is still unknown.
+
+Keep Frontier runtime work paused. Continue documentation and static source
+review only while pressure averages recover; use the 01:16 run to validate
+the 160 MiB soft threshold. Preserve the dirty probe-evidence directory and
+do not touch Reality capture or archive provenance.
+
 ## Current host state — 2026-10-29 00:40 CET
 
 The scheduled capacity timer is enabled and next due at 00:46:04 CET. Its

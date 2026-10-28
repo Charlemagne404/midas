@@ -525,3 +525,81 @@ so read `memory.current`, `memory.peak`, `memory.events`, and `memory.pressure`
 while it is active. Do not manually start the unit, extend its timeout, alter
 the Reality unit, or interpret a short quiet interval as closure. If the run
 times out, record the failure and keep Frontier runtime work deferred.
+
+## Scheduled capacity run and follow-up — 2026-10-29 00:47 CET
+
+The timer fired normally at 00:46:04 CET. The capacity job completed at
+00:46:37, within its existing 60-second timeout, after 6.520 CPU seconds.
+Systemd recorded a 137.4 MiB peak, zero swap peak, and `Result=success`;
+`MemoryPeak=144,093,184`, below the 192 MiB hard limit. While active, the
+cgroup reported `high=1,731`, `max=0`, `oom=0`, and `oom_kill=0`. It reached
+144,093,184 bytes at 00:46:28 under the 128 MiB `MemoryHigh`; cgroup PSI then
+showed `some/full avg10=48.01%`, avg60=12.77%, avg300=2.87%. At the same
+sample host PSI was `some avg10=32.46%` / `full avg10=15.66%`, and the user
+manager was `some avg10=31.12%` / `full avg10=14.42%`. About 20 seconds after
+the service ended, host/user avg10 had fallen to about 1–2%, while rolling
+avg300 `full` remained 1.53–1.65%. This is direct evidence that the service
+crossed its soft bound and experienced reclaim stalls, and a time-correlated
+host/user PSI spike; it does not prove it caused all of the historical OOMd
+events.
+
+The fresh report at `/home/charlie/midas-reality/data/recordings/capacity.json`
+was written at 00:46:37 (4,539 bytes). It records 12,133,299,450 bytes under
+the active Reality recording root and retains the alerts
+`ARCHIVE_SEGMENT_INVENTORY_INVALID`, `ARCHIVE_MANIFEST_PROVENANCE_INVALID`,
+and `COLLECTOR_STATUS_STALE` (as well as pending budget/retention restart and
+capacity-window warnings). The archive manifest or history was not changed.
+Reality `status.json` remained timestamped 23:43:01.187 CET.
+
+In response to the measured `MemoryHigh` reclaim, the auxiliary capacity
+service's persistent drop-in now sets `MemoryHigh=160M`, keeping
+`MemoryMax=192M` and `MemorySwapMax=0`. `daemon-reload` applied the properties
+for future invocations only; the completed job was not restarted. This adds
+32 MiB of soft-threshold room while preserving the existing hard cap. Roll
+back this incremental adjustment with:
+
+```sh
+sed -i 's/^MemoryHigh=160M$/MemoryHigh=128M/' \
+  ~/.config/systemd/user/midas-reality-capacity.service.d/90-frontier-memory-bound.conf
+systemctl --user daemon-reload
+```
+
+At 00:47:43 CET, 10 GiB was available and no new oomd or kernel OOM record
+appeared after 23:43:24. Host/user avg10 PSI had fallen below 0.1%; however,
+avg60 `full` was 2.70–2.89% and avg300 `full` 1.53–1.65%. API and Reality
+were active at 1,609,244,672 / 1,610,612,736 bytes and 1,207,644,160 /
+1,207,959,552 bytes, respectively. These sub-MiB margins and stale Reality
+status keep production recovery unverified. The capacity timer's next run is
+01:16:04 CET; observe it passively to validate the 160 MiB threshold.
+
+### Workload and cause attribution update
+
+The measured scheduler inventory shows `midas-arena-scheduler.timer` polling
+once per minute with a 512 MiB service hard cap and 60-second timeout; its
+last service CPU accounting was 0.034 seconds. The Veritas observatory,
+source-analysis, and research-director timers run every 30 minutes, staggered
+at approximately :00, :10, and :15 UTC, with 256/512 MiB service hard caps.
+Recent runs completed and their CPU accounting was 1.69, 5.75, and 1.34
+seconds, respectively. The observed capacity run began 56 seconds after the
+director trigger; no overlap was demonstrated in those unit states. These
+snapshots do not exclude brief scheduler overlaps in earlier incidents.
+
+The oomd mechanism is established by its journal: it killed candidates after
+the `user@1000.service` slice exceeded its 50% pressure threshold for more
+than 20 seconds with reclaim activity. The separate kernel memcg OOM mechanism
+is established for the old capacity unit: its 128 MiB hard cap killed the
+capacity process seven times after recorded RSS of roughly 129–131 MiB plus
+file-backed charge. This run validates completion under the new 192 MiB hard
+cap. The workload that originally drove repeated user-slice pressure high
+enough to trigger oomd remains **unproven**. Earlier Terminal-slice, API, and
+Reality charges are time-specific and mostly file-backed; none identifies
+the historical trigger by itself. Oomd registration is also not confirmed by
+the unprivileged `oomctl` view.
+
+**Continuation gate remains closed for Frontier runtime work.** The capacity
+run completed, but it temporarily raised full PSI and both protected services
+remain close to their soft limits; Reality has not published post-restart
+capture status. Continue low-impact documentation and code review. Do not run
+tests, replay, probes, or batches until rolling pressure recovers and the
+next scheduled capacity check confirms the revised soft threshold behaves
+without a comparable reclaim spike.
