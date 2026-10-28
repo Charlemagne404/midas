@@ -212,6 +212,8 @@ Zstandard expansion cannot exceed the cap before validation. Oversized bodies
 produce bounded rejection diagnostics. A prebuffered encoded test response is
 rejected before its decoded-content accessor is used. Bounded HTTP error bodies
 retain raw bytes for diagnostics and preserve retry behavior.
+HTTPX's [async streaming reference](https://www.python-httpx.org/async/)
+documents `aiter_raw()` as returning response bytes without content decoding.
 
 Kalshi multivariate-event discovery is a separate explicit
 `POST /api/frontier/probe/kalshi/multivariate-events` operation. Supply exactly

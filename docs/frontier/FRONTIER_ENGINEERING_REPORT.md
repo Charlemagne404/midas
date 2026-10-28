@@ -11363,8 +11363,11 @@ the complete body fits the cap, its compressed bytes are stored in
 `FailedResponseEvidence`; an oversized body gets bounded rejection diagnostics.
 If an isolated `MockTransport` fixture has already buffered the response, the
 adapter rejects an encoded 2xx response before accessing the decoded-content
-property. The gzip test uses a 229-byte payload that expands to 200,000 bytes
-against a 1,024-byte cap and verifies exact compressed-byte evidence.
+property. HTTPX's official
+[async streaming reference](https://www.python-httpx.org/async/) specifies that
+`aiter_raw()` yields raw bytes without content decoding; the repository lock
+pins HTTPX 0.28.1. The gzip test uses a 229-byte payload that expands to 200,000
+bytes against a 1,024-byte cap and verifies exact compressed-byte evidence.
 
 The transport contract module passes **19/19** in 2.28 seconds pytest time
 (2.64 seconds wall), with 58,928 KiB peak RSS, zero swaps, and no socket

@@ -51,7 +51,9 @@ captured as raw bytes within the configured cap and retained as failure evidence
 when their encoding is unsupported; oversized bodies receive bounded rejection
 diagnostics. HTTP error bodies also retain raw bytes and keep their retry
 classification. Prebuffered encoded fixtures are rejected before HTTPX exposes
-decoded content.
+decoded content. This follows HTTPX's documented
+[`aiter_raw()` streaming behavior](https://www.python-httpx.org/async/), which
+returns raw response bytes without content decoding.
 
 ### Dashboard loading
 
