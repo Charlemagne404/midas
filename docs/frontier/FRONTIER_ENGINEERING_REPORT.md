@@ -4792,3 +4792,30 @@ production change occurred.
 
 Continue with read-only audits and isolated changes. Frontier remains isolated,
 research-only, and undeployed.
+
+### Unregistered adapter handling across source routes — 2026-10-28 00:04 UTC
+
+Commit `01ffe05` extends the shared adapter lookup guard across Frontier's
+source-specific trade, fee, market-detail, event-group, and multivariate
+probes, plus generic market discovery. Combined with finite collection start
+and resume in `169bfa2`, absent adapters now produce a bounded HTTP 409 rather
+than an unhandled registry `KeyError`. The route performs the lookup before
+source config, journal, or transport access.
+
+A focused API test calls collection start, collection resume, and generic
+market discovery with an empty registry; all three return the expected 409,
+and no collection journal is created. It passes **1/1** in 0.65 seconds at
+**75,800 KiB peak RSS**, zero swaps. Ruff and `git diff --check` pass. The
+existing Starlette/httpx deprecation warning remains. The pre-test host sample
+at 00:04:26 UTC had PSI avg10 **11.06% some / 9.93% full**, avg60 **33.28%
+some / 29.88% full**, 10 GiB available, and no Arena admission-lock holder.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Missing-adapter source-route degradation | COMPLETE AND VERIFIED | Shared guard covers all nine source-facing lookup sites; representative collection and discovery routes pass with an empty registry. |
+| Live multi-venue source validation | BLOCKED | Existing source-use holds and permission gaps remain; no source was probed in this checkpoint. |
+| Arena-dependent broad regression | PARTIALLY VERIFIED | Prior results passed across separate invocations; rerun only after fresh pressure and lock admission checks. |
+| Project Frontier overall | PARTIALLY VERIFIED | Live cross-venue economic evidence and production prerequisites remain outstanding. |
+
+No exchange, collector, Arena worker, protected service, production store,
+or deployment was used. Continue bounded offline acceptance work.

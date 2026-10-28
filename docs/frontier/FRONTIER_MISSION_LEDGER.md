@@ -3205,3 +3205,21 @@ with 3.7 GiB swap in use. The API test did not acquire that lock or start an
 Arena worker. Avoid Arena-dependent tests while the lock and pressure remain;
 continue with read-only review or small isolated checks. Frontier remains
 research-only, undeployed, and **PARTIALLY VERIFIED**.
+
+### Unregistered adapter handling across source routes — 2026-10-28 00:04 UTC
+
+Commit `01ffe05` applies the unavailable-adapter guard to the source-specific
+trade, fee, market-detail, event-group and multivariate probes, as well as the
+generic discovery probe. Together with `169bfa2`, every source-facing request
+now reports HTTP 409 when the requested adapter is missing. The focused
+regression exercises collection start, collection resume, and generic
+market discovery against an empty registry; it passes **1/1** in 0.65 seconds,
+at **75,800 KiB peak RSS**, with zero swaps. Ruff and `git diff --check` pass.
+The existing Starlette/httpx deprecation warning remains.
+
+The resource sample just before this test (00:04:26 UTC) showed PSI avg10
+**11.06% some / 9.93% full**, avg60 **33.28% some / 29.88% full**, 10 GiB
+available, and no process holding the shared Arena lock at that instant. Keep
+Arena-dependent work deferred until another fresh admission check. No source
+request or Arena worker ran. Frontier remains isolated, research-only,
+undeployed, and **PARTIALLY VERIFIED**.

@@ -1203,3 +1203,14 @@ worker ran. At 00:02:40 UTC the shared Arena lock was held by PID 3950719 and
 memory PSI avg10 was 41.99% some / 37.85% full, so Arena-dependent verification
 is deferred pending a fresh admission check. Frontier remains research-only,
 undeployed, and **PARTIALLY VERIFIED**; see the [mission ledger](frontier/FRONTIER_MISSION_LEDGER.md).
+
+### Frontier adapter-unavailable responses — 2026-10-28 00:04 UTC
+
+Commit `01ffe05` extends the HTTP 409 missing-adapter response across source
+probe routes. A focused regression covers collection start/resume and generic
+discovery against an empty registry (**1/1**, 0.65 seconds, 75,800 KiB peak
+RSS, zero swaps). Ruff and `git diff --check` pass. At the 00:04:26 UTC
+pre-test sample, PSI avg10 was 11.06% some / 9.93% full, avg60 was 33.28%
+some / 29.88% full, 10 GiB was available, and the shared Arena lock was free.
+No source request or Arena worker ran. Frontier remains research-only,
+undeployed, and **PARTIALLY VERIFIED**; see the [mission ledger](frontier/FRONTIER_MISSION_LEDGER.md).
