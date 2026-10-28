@@ -11103,6 +11103,42 @@ PSI avg10/avg60 was 0%/0.04%. A broader run was not started.
 | Genuine Kraken or cross-venue live research | BLOCKED | Source-use/retention review remains unresolved; no new public request was made. |
 | Frontier overall | PARTIALLY VERIFIED | Live cross-venue science, broad regression, endurance, protected recovery, and deployment remain incomplete. |
 
+## Polymarket legacy one-shot trade audit — 2026-10-28 19:52 UTC
+
+Commit `2b638ce047ee91b761681385e1e46a565346cd3b` updates the older
+Polymarket Data API `/trades` parser to `frontier-polymarket-9`. It now accepts
+only a bounded 32-byte condition identifier, requires each row to carry that
+exact condition, and rejects a response exceeding its requested limit. Price
+must be in `[0, 1]`; size must be positive; and timestamp must be parseable.
+The native outcome token ID is required and retained. An optional transaction
+hash is validated and preserved as the trade ID. A per-row index in provenance
+keeps two prints with the same transaction hash and token distinct. The legacy
+side field stays in the complete raw response and is not mapped to normalized
+aggressor direction because the reviewed legacy response reference does not
+define that meaning. The explicit Data API v2 cursor method is separate and
+unchanged.
+
+The adapter test file passed **115/115** in 3.06 seconds pytest time (3.46
+seconds wall), with 66,124 KiB peak RSS, zero swaps, and zero socket messages.
+After a final message-only wording edit, the ten focused legacy parser cases
+passed again. Ruff check/format and targeted mypy pass. This is mock-fixture
+verification; there was no live request, no held evidence access, and no claim
+that v1 and v2 source semantics are interchangeable. The official Data API v2
+reference separately describes public condition-filtered cursor trades and
+the condition/token identifier distinction:
+[Polymarket Data API v2 docs](https://data-api.polymarket.com/v2/docs).
+
+The broader 505-case Frontier suite predates Kalshi v20, Kraken v6, and
+Polymarket v9. At `2026-10-28T19:52:10Z`, Reality was about 212 KiB over
+`MemoryHigh`; memory PSI avg10/avg60 was 0%. No broader test run was started.
+
+| Requirement | Status | Evidence and boundary |
+| --- | --- | --- |
+| Polymarket legacy one-shot trade parser | COMPLETE AND VERIFIED | Exact condition/token binding, binary price bounds, required timestamp, and distinct same-transaction row identity are covered by fixture tests. |
+| Full post-hardening Frontier suite | PARTIALLY VERIFIED | The 505-case pass predates Kalshi v20, Kraken v6, and Polymarket v9. |
+| Live validation of this legacy parser revision | IMPLEMENTED, LIVE VALIDATION PENDING | Prior bounded Polymarket data predates v9; this parser change is fixture-only and no new request was made. |
+| Frontier overall | PARTIALLY VERIFIED | Broad regression, current cross-venue source validation, endurance, protected recovery, and deployment remain incomplete. |
+
 ## Kraken pair binding across read endpoints — 2026-10-28 19:47 UTC
 
 Commit `36554c76a675ebdfcf08e5b0d871fc311c74c0e1` advances the Kraken Spot

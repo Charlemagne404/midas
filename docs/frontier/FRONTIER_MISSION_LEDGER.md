@@ -10273,3 +10273,40 @@ Kalshi and Kraken parser changes.
 **Next safe action:** continue offline source-independent review and defer
 resource-bearing broad regressions until a fresh host admission sample shows a
 sustained margin from Reality's `MemoryHigh`.
+
+## Polymarket legacy trade normalization — 2026-10-28 19:52 UTC
+
+Commit `2b638ce047ee91b761681385e1e46a565346cd3b` advances Polymarket to
+`frontier-polymarket-9`. The older one-shot `/trades` path now validates the
+32-byte condition ID before the request, binds every row to that exact
+condition, rejects a response larger than the requested limit, constrains
+prices to `[0, 1]`, and requires positive size plus a timestamp. It requires
+and stores the native outcome token ID, validates an optional transaction hash,
+and includes a row index in provenance so multiple prints sharing a hash do
+not collide. The legacy `side` value remains in raw evidence only; the reviewed
+legacy reference does not establish aggressor semantics. The explicit v2
+cursor route remains separate.
+
+The adapter file passed **115/115** after the implementation in 3.06 seconds
+pytest time (3.46 seconds wall), with 66,124 KiB peak RSS, zero swaps, and zero
+socket messages. After a final error-message wording adjustment, the ten
+focused legacy-path cases passed. Ruff check/format and targeted mypy pass.
+These are fixtures only; no public request or held artifact read was made.
+The full 505-case Frontier suite predates Kalshi v20, Kraken v6, and
+Polymarket v9.
+
+At `2026-10-28T19:52:10Z`, memory PSI avg10/avg60 was 0%; I/O PSI avg10/avg60
+was 0.12%/0.05%. `MemAvailable` was 9,934,004 KiB and `SwapFree` 43,612 KiB.
+Reality was 1,208,176,640 / 1,207,959,552 bytes, about 212 KiB over
+`MemoryHigh`; API was active at 1,543,274,496 / 1,610,612,736 bytes. No broad
+suite was started.
+
+| Requirement | Status | Current evidence and boundary |
+| --- | --- | --- |
+| Polymarket legacy one-shot trade identity and field validation | COMPLETE AND VERIFIED | Adapter fixture suite passed 115/115 before a wording-only change; the 10 focused legacy cases passed afterward. No live validation is claimed. |
+| Full current-tree Frontier Python suite | PARTIALLY VERIFIED | The 505-case pass predates Kalshi v20, Kraken v6, and Polymarket v9. |
+| Polymarket live legacy `/trades` validation | IMPLEMENTED, LIVE VALIDATION PENDING | Prior bounded Polymarket evidence used the earlier parser version; this parser revision is fixture-only and no new source request was made. |
+| Project Frontier overall | PARTIALLY VERIFIED | Broad regression, current live cross-venue science, endurance, protected recovery, and deployment remain incomplete. |
+
+**Next safe action:** continue source-independent audit and defer further test
+loads until Reality has a sustained margin below `MemoryHigh`.

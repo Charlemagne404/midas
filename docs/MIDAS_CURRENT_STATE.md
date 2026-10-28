@@ -3444,3 +3444,21 @@ At `2026-10-28T19:47:46Z`, memory PSI avg10/avg60 was 0%; I/O PSI avg10/avg60
 was 0.02%/0.07%. `MemAvailable` was 9,973,396 KiB. Reality was active at
 1,207,930,880 / 1,207,959,552 bytes (28,672 bytes below `MemoryHigh`); API was
 active at 1,538,605,056 / 1,610,612,736 bytes. No broad suite was run.
+
+## Polymarket legacy trade parser checkpoint — 2026-10-28 19:52 UTC
+
+Frontier commit `2b638ce047ee91b761681385e1e46a565346cd3b` advances the
+Polymarket adapter to version 9. The legacy one-shot trade reader binds every
+row to the requested condition and token, enforces binary price and positive
+size, requires time, and makes same-transaction rows distinct in provenance.
+The old `side` field remains raw and is not labeled as aggressor direction.
+The full adapter test file passed 115/115 in 3.06 seconds pytest time (3.46
+seconds wall), at 66,124 KiB peak RSS, zero swaps and no sockets; ten focused
+tests passed after the final wording edit. Ruff and targeted mypy pass. This is
+fixture-only and no source request was made. The full 505-case Frontier suite
+predates Kalshi v20, Kraken v6, and Polymarket v9.
+
+At `2026-10-28T19:52:10Z`, memory PSI avg10/avg60 was 0%; I/O PSI avg10/avg60
+was 0.12%/0.05%. `MemAvailable` was 9,934,004 KiB. Reality was active at
+1,208,176,640 / 1,207,959,552 bytes (about 212 KiB over `MemoryHigh`); API was
+active at 1,543,274,496 / 1,610,612,736 bytes. No broad test run was started.
