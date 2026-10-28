@@ -10027,3 +10027,20 @@ disabled by default, source-use holds are enforced before public reads, and
 relationship proposals remain hypotheses. These are source observations, not
 new test evidence. The next engineering step is to remeasure pressure before a
 web typecheck and any additional bounded regression cases.
+
+## Official adapter-documentation review — 2026-10-28 17:40 UTC
+
+Read current official [Kalshi orderbook](https://docs.kalshi.com/api-reference/market/get-market-orderbook),
+[Kalshi trades](https://docs.kalshi.com/api-reference/market/get-trades),
+[Kalshi event](https://docs.kalshi.com/api-reference/events/get-event), and
+[Kraken spot depth](https://docs.kraken.com/api-reference/market-data/get-order-book)
+documentation alongside the source adapters. The documented response and
+query shapes align with Frontier's bounded implementations, including Kalshi
+YES/NO-only books, cursor-paged trades with block trades included by default,
+event child-market response variants, and Kraken per-level book timestamps.
+No code change was warranted. This reviewed public documentation only; there
+was no exchange request and no live adapter verification.
+
+The previously measured host pressure and protected-service readings still
+control the next test decision; no resource-bearing check was run during this
+documentation review.

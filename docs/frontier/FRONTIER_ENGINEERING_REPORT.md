@@ -10951,3 +10951,25 @@ run is not endurance or deployment evidence.
 | Browser source and mutation boundary | COMPLETE AND VERIFIED | Zero source probes and zero API mutations were observed in the bounded case. |
 | Full browser and legacy regression | PARTIALLY VERIFIED | One captured-evidence case passes; broad regression remains resource-gated. |
 | Project Frontier overall | PARTIALLY VERIFIED | Live cross-venue science, broader regression, resource endurance, protected recovery, and deployment remain open. |
+
+## Current official REST contract spot-check — 2026-10-28 17:40 UTC
+
+Read the current official [Kalshi market orderbook](https://docs.kalshi.com/api-reference/market/get-market-orderbook),
+[Kalshi trades](https://docs.kalshi.com/api-reference/market/get-trades),
+[Kalshi event](https://docs.kalshi.com/api-reference/events/get-event), and
+[Kraken spot orderbook](https://docs.kraken.com/api-reference/market-data/get-order-book)
+references against the implemented adapters. The documented Kalshi order book
+contains YES and NO bids only; the adapter derives complementary asks and keeps
+the source's fixed-point dollar prices and quantities. Kalshi's ticker-filtered
+trade page supports a cursor and includes block trades by default; Frontier
+caps each page at 100 and labels the block-trade limitation. The event endpoint
+documents nested child markets and a deprecated top-level child list, both of
+which the adapter validates. Kraken's `Depth` endpoint is an aggregated L2 book
+with per-level publication times; Frontier preserves those timestamps without
+claiming a single synchronized snapshot time.
+
+No endpoint-shape drift requiring a code change was found. This was a
+documentation-only review: it made no venue requests and does not establish
+current reachability, source permission, or live adapter validation. The
+existing source-use holds and disabled-by-default adapter config remain in
+force.
