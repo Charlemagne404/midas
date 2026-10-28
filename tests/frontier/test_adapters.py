@@ -1952,6 +1952,174 @@ async def test_polymarket_v2_trade_page_normalizes_opaque_keyset_response():
 
 
 @pytest.mark.asyncio
+async def test_polymarket_legacy_trades_bind_condition_and_token_and_preserve_unique_rows():
+    condition_id = "0x" + "a" * 64
+    body = json.dumps(
+        [
+            {
+                "conditionId": condition_id,
+                "asset": "1234567890",
+                "transactionHash": "0xfixture-shared-tx",
+                "price": "0.43",
+                "size": "2.5",
+                "timestamp": 1793000000,
+                "side": "BUY",
+            },
+            {
+                "conditionId": condition_id,
+                "asset": "1234567890",
+                "transactionHash": "0xfixture-shared-tx",
+                "price": "0.44",
+                "size": "1.5",
+                "timestamp": 1793000001,
+                "side": "SELL",
+            },
+        ]
+    )
+    transport, requests, client = _transport("data-api.polymarket.com", {"/trades": body})
+    adapter = PolymarketAdapter(
+        AdapterConfig(
+            enabled=True, live_public_probe_enabled=True, requests_per_second=5, retries=0
+        ),
+        transport=transport,
+    )
+    try:
+        trades = await adapter.fetch_trades(condition_id, limit=2)
+        captures = adapter.take_captures()
+    finally:
+        await client.aclose()
+
+    assert len(trades) == 2
+    assert all(trade.schema_version == 2 for trade in trades)
+    assert all(trade.native_market_id == condition_id for trade in trades)
+    assert all(trade.native_instrument_id == "1234567890" for trade in trades)
+    assert all(trade.native_trade_id == "0xfixture-shared-tx" for trade in trades)
+    assert all(trade.aggressor_side is None for trade in trades)
+    assert trades[0].provenance.adapter_version == "frontier-polymarket-9"
+    assert trades[0].provenance.observation_id != trades[1].provenance.observation_id
+    assert len(captures) == 1 and captures[0].raw_body == body
+    assert requests[0].url.params["market"] == condition_id
+    assert requests[0].url.params["limit"] == "2"
+    assert "authorization" not in requests[0].headers
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "row, expected_code",
+    (
+        ({"conditionId": "0x" + "b" * 64}, "TRADE_MARKET_MISMATCH"),
+        ({}, "TRADE_MARKET_MISMATCH"),
+        (
+            {
+                "conditionId": "0x" + "a" * 64,
+                "asset": "token",
+                "price": "1.01",
+                "size": "1",
+                "timestamp": 1793000000,
+            },
+            "INVALID_TRADE",
+        ),
+        (
+            {
+                "conditionId": "0x" + "a" * 64,
+                "price": "0.5",
+                "size": "1",
+                "timestamp": 1793000000,
+            },
+            "INVALID_TRADE",
+        ),
+        (
+            {
+                "conditionId": "0x" + "a" * 64,
+                "asset": "token",
+                "price": "0.5",
+                "size": "1",
+                "timestamp": None,
+            },
+            "INVALID_TRADE",
+        ),
+    ),
+    ids=(
+        "other-condition",
+        "missing-condition",
+        "price-out-of-range",
+        "missing-token",
+        "missing-time",
+    ),
+)
+async def test_polymarket_legacy_trades_reject_unbound_or_malformed_rows(row, expected_code):
+    condition_id = "0x" + "a" * 64
+    body = json.dumps([row])
+    transport, _, client = _transport("data-api.polymarket.com", {"/trades": body})
+    adapter = PolymarketAdapter(
+        AdapterConfig(
+            enabled=True, live_public_probe_enabled=True, requests_per_second=5, retries=0
+        ),
+        transport=transport,
+    )
+    try:
+        with pytest.raises(AdapterError) as error:
+            await adapter.fetch_trades(condition_id)
+        captures = adapter.take_captures()
+    finally:
+        await client.aclose()
+
+    assert error.value.code == expected_code
+    assert len(captures) == 1 and captures[0].raw_body == body
+
+
+@pytest.mark.asyncio
+async def test_polymarket_legacy_trades_reject_oversized_page_before_normalization():
+    condition_id = "0x" + "a" * 64
+    trade = {
+        "conditionId": condition_id,
+        "asset": "123",
+        "price": "0.5",
+        "size": "1",
+        "timestamp": 1793000000,
+    }
+    body = json.dumps([trade, trade])
+    transport, _, client = _transport("data-api.polymarket.com", {"/trades": body})
+    adapter = PolymarketAdapter(
+        AdapterConfig(
+            enabled=True, live_public_probe_enabled=True, requests_per_second=5, retries=0
+        ),
+        transport=transport,
+    )
+    try:
+        with pytest.raises(AdapterError) as error:
+            await adapter.fetch_trades(condition_id, limit=1)
+    finally:
+        await client.aclose()
+
+    assert error.value.code == "INVALID_SCHEMA"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "condition_id, limit",
+    (("559651", 1), ("0x" + "a" * 64, True), ("0x" + "a" * 64, 1001)),
+    ids=("market-id-not-condition", "boolean-limit", "over-limit"),
+)
+async def test_polymarket_legacy_trades_reject_invalid_requests_before_network(condition_id, limit):
+    transport, requests, client = _transport("data-api.polymarket.com", {})
+    adapter = PolymarketAdapter(
+        AdapterConfig(
+            enabled=True, live_public_probe_enabled=True, requests_per_second=5, retries=0
+        ),
+        transport=transport,
+    )
+    try:
+        with pytest.raises(AdapterError) as error:
+            await adapter.fetch_trades(condition_id, limit=limit)
+    finally:
+        await client.aclose()
+
+    assert error.value.code in {"INVALID_LIMIT", "INVALID_MARKET"}
+    assert requests == []
+
+
+@pytest.mark.asyncio
 async def test_polymarket_v2_trade_page_rejects_other_market_rows_after_capture():
     requested_condition = "0x" + "a" * 64
     other_condition = "0x" + "b" * 64

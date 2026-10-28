@@ -48,7 +48,7 @@ from midas.frontier.models import (
 from midas.market_data.polymarket import normalize_market
 
 D = Decimal
-ADAPTER_VERSION = "frontier-polymarket-8"
+ADAPTER_VERSION = "frontier-polymarket-9"
 GAMMA = "https://gamma-api.polymarket.com"
 CLOB = "https://clob.polymarket.com"
 CLOB_V2 = "https://clob-v2.polymarket.com"
@@ -537,26 +537,62 @@ class PolymarketAdapter(BaseReadOnlyAdapter):
         self, native_market_id: str, limit: int = 100
     ) -> tuple[TradeObservation, ...]:
         self._require(Capability.PUBLIC_TRADES)
-        if not 1 <= limit <= 1000:
+        if type(limit) is not int or not 1 <= limit <= 1000:
             raise AdapterError("INVALID_LIMIT", "Trade limit must be between 1 and 1000")
+        if not isinstance(native_market_id, str) or not re.fullmatch(
+            r"0x[0-9a-fA-F]{64}", native_market_id
+        ):
+            raise AdapterError("INVALID_MARKET", "Trade market ID must be a 32-byte condition ID")
         response = await self.transport.get_json(
             f"{DATA}/trades", {"market": native_market_id, "limit": limit}
         )
         self._capture_response(response, "public_trades")
-        if not isinstance(response.payload, list):
-            raise AdapterError("INVALID_SCHEMA", "Polymarket trade response must be an array")
+        if not isinstance(response.payload, list) or len(response.payload) > limit:
+            raise AdapterError(
+                "INVALID_SCHEMA", "Polymarket trade response must fit the requested row limit"
+            )
         result = []
-        for raw in response.payload[:limit]:
+        for index, raw in enumerate(response.payload):
             if not isinstance(raw, dict):
                 raise AdapterError("INVALID_SCHEMA", "Polymarket trade entry must be an object")
+            row_condition = raw.get("conditionId")
+            asset = raw.get("asset")
+            transaction_hash = raw.get("transactionHash")
             price = parse_decimal(raw.get("price"))
             quantity = parse_decimal(raw.get("size"))
             timestamp = parse_time(raw.get("timestamp"))
-            if price is None or quantity is None or quantity <= 0:
+            if row_condition != native_market_id:
                 raise AdapterError(
-                    "INVALID_TRADE", "Polymarket trade has invalid price or quantity"
+                    "TRADE_MARKET_MISMATCH",
+                    "Polymarket trade response contains a row for another condition",
                 )
-            identity = str(raw.get("transactionHash") or raw.get("asset") or "unknown")
+            if (
+                not isinstance(asset, str)
+                or not asset
+                or len(asset) > 256
+                or (
+                    transaction_hash is not None
+                    and (
+                        not isinstance(transaction_hash, str)
+                        or not transaction_hash
+                        or len(transaction_hash) > 128
+                    )
+                )
+                or price is None
+                or not D(0) <= price <= D(1)
+                or quantity is None
+                or quantity <= 0
+                or timestamp is None
+            ):
+                raise AdapterError(
+                    "INVALID_TRADE",
+                    "Polymarket trade has invalid token identity, price, quantity, or timestamp",
+                )
+            side = raw.get("side")
+            if side is not None and (not isinstance(side, str) or len(side) > 32):
+                raise AdapterError("INVALID_TRADE", "Polymarket trade side field is malformed")
+            native_trade_id = transaction_hash
+            identity = f"{native_market_id}:{asset}:{native_trade_id or 'no-hash'}:{index}"
             response_provenance = provenance(
                 self.venue,
                 ADAPTER_VERSION,
@@ -568,13 +604,17 @@ class PolymarketAdapter(BaseReadOnlyAdapter):
             )
             result.append(
                 TradeObservation(
+                    schema_version=2,
                     venue=self.venue,
-                    native_market_id=str(raw.get("conditionId") or native_market_id),
-                    native_trade_id=str(raw.get("transactionHash") or "") or None,
+                    native_market_id=native_market_id,
+                    native_trade_id=native_trade_id,
+                    native_instrument_id=asset,
                     price=price,
                     quantity=quantity,
                     quote_currency="USDC",
-                    aggressor_side=str(raw.get("side") or "unknown"),
+                    # The legacy endpoint's side convention is not specified in the
+                    # currently linked public reference. Keep it in raw evidence only.
+                    aggressor_side=None,
                     exchange_timestamp_utc=timestamp,
                     received_at_utc=response.response_received_at_utc,
                     provenance=response_provenance,

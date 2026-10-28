@@ -1257,7 +1257,11 @@ hash-verified normalized trades with their source observation and raw-body hash;
 the v2 trade record preserves the native token ID and outcome fields alongside
 the condition and transaction hash. Wallet profile fields from source rows are
 not copied into normalized trades, while complete bounded raw responses remain
-available as auditable source evidence. Kalshi uses a separate
+available as auditable source evidence. The older Polymarket one-shot collection
+path also binds each row to the requested condition and native token, bounds
+prices to `[0, 1]`, requires a source timestamp, and keeps the legacy side field
+out of normalized aggressor direction. It adds a row index to provenance so
+prints sharing one transaction hash remain distinct. Kalshi uses a separate
 `POST /probe/kalshi/trades` operation bound to a recorded ticker; block trades
 remain included under the source default. Kraken does not advertise cursor-page
 trades. The UI displays recorded trades as public

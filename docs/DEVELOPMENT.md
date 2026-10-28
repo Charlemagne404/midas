@@ -133,8 +133,13 @@ paginated-trade capability are enabled. It reuses the same condition, page size,
 taker-only, and 0.01-share filters per page; condition queries expose a fixed
 three-year history window. No page walk or data fetch starts automatically.
 Normalized v2 rows retain token ID and outcome identity, while wallet profile
-fields remain only in the bounded raw source response. Trade prints are not
-order-book depth. Polymarket also advertises the separate `price_history`
+fields remain only in the bounded raw source response. The older one-shot
+Polymarket collection path now requires exact condition/token identity, a
+`[0, 1]` price, positive size, and a timestamp; it preserves the source side
+only in raw evidence because the legacy reference does not define aggressor
+semantics. Repeated rows sharing one transaction hash retain distinct
+observation identities. Trade prints are not order-book depth. Polymarket also
+advertises the separate `price_history`
 capability for its public CLOB `GET /prices-history` endpoint. The Market detail
 view can explicitly capture `1d` or `1w` source intervals for an outcome token in
 the saved listing, over a selected window of up to 7 days. A longer 30-day
