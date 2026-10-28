@@ -1,5 +1,63 @@
 # Project Frontier Mission Ledger
 
+## Host memory pressure and OOM incident — 2026-10-28 22:54 UTC
+
+Incident report: [FRONTIER_MEMORY_PRESSURE_INCIDENT_2026-10-28.md](FRONTIER_MEMORY_PRESSURE_INCIDENT_2026-10-28.md).
+
+The incident checkpoint is on `codex/frontier-20261026` at the prior Frontier
+commit `53c21a3`; the existing untracked `data/frontier-public-probes/` was
+preserved. systemd-oomd logs confirm eight kills in the 23:23–23:43 CET window
+after user-session memory pressure remained above its 50% threshold for 20s
+with reclaim. The user hierarchy has no memory or swap ceiling and reached a
+13.0 GiB peak on this 15.5 GiB host. The exact process mix causing those
+system-wide episodes is not established. At the later 23:51 snapshot, the
+Terminal slice held 5.2 GB (3.9 GB file cache), MIDAS API 1.6 GB (1.5 GB file
+cache), and Reality 1.2 GB (1.0 GB file cache). These cgroup charges and the
+3.1/4 GiB host swap occupancy are evidence of a tight aggregate budget, not
+proof that one process caused the earlier PSI spikes.
+
+Two scoped containment actions were taken under the incident authorization:
+
+1. `midas-veritas-gap-detail-v2.timer` was stopped by 23:49 CET after confirming
+   it runs finalized-segment replay only, has no reverse dependents, and is
+   not the live collector. It remains enabled; the reversible resume command
+   is `systemctl --user start midas-veritas-gap-detail-v2.timer`.
+2. The short `midas-reality-capacity.service` received runtime-only limits:
+   `MemoryHigh=128M`, `MemoryMax=192M`, `MemorySwapMax=0`. Its original hard
+   cap of 128 MiB directly caused seven kernel memcg OOM kills between 17:15
+   and 20:15 CET. The latest unmodified run before the limit change completed
+   in 6.6s at 77.2 MiB peak. The new limit has not yet been exercised by its
+   next scheduled run (00:16 CET). The reversible effective reset is
+   `systemctl --user set-property --runtime midas-reality-capacity.service
+   MemoryHigh=infinity MemoryMax=128M MemorySwapMax=infinity`.
+
+Reality was killed by systemd-oomd at 23:43:09 and automatically restarted at
+23:43:19; no operator restart was issued. The restarted process has not yet
+published a fresh status or segment. At 23:54 CET it remained active but its
+cgroup was 1,207,193,600 / 1,207,959,552 bytes at `MemoryHigh`. Source code
+shows startup verifies and replays the entire recording before activating the
+store and resuming collection. The process had read about 1.1 GB since restart,
+and the latest segment/status timestamps still predate or immediately follow
+the OOM. Collection recovery and current-boundary integrity are therefore
+unverified. The separate `INVALID_MANIFEST` and archive inventory/provenance
+alerts remain untouched.
+
+After the last logged kill at 23:43:24, no further OOMd kill was present through
+the 23:51:44 sample (about eight minutes); host PSI had fallen to 0% avg10 and
+3.82% avg300. This is a short observation, not evidence of resolution. API was
+active but within 6.5 MiB of `MemoryHigh`; Reality was within 0.8 MiB. No
+Frontier test, replay, probe, or batch ran during this incident window.
+Continental user services, Echo production/staging, RustDesk, and the SSH
+socket were observed active. A separate Continental read-only audit failed at
+23:52:24 on pre-existing non-loopback listeners and a disabled Echo schedule;
+no change was made and no OOM relationship is established.
+
+**Frontier admission:** source-independent documentation/static review may
+continue. Defer test processes, captured-data replay, live probes, broad
+regression, and research batches until Reality publishes fresh status and
+capture after its automatic restart, service headroom recovers, and PSI stays
+low across subsequent timer cycles. Do not restart or reconfigure Reality.
+
 ## Resource recheck after graph-layout change — 2026-10-28 22:42 UTC
 
 A fresh admission sample at 22:42:57Z showed memory PSI had risen to 52.42%
