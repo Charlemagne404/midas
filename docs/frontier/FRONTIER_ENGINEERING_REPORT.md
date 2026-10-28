@@ -2,6 +2,23 @@
 
 **Report date:** 2026-10-28
 
+## Unknown-node graph layout follow-up — 2026-10-28 22:42 UTC
+
+Static review found that the unknown-node x-position sat between the Kalshi
+and Kraken columns, allowing their 208-pixel cards to overlap. The graph now
+uses five evenly spaced venue columns (including `unknown`) and derives the
+column headers from the same order and position map as the nodes. The focused
+missing-market UI test now asserts the `NOT IN LOADED WINDOW` header.
+
+The focused graph test passed before this follow-up; the new header assertion
+and revised coordinates have not yet been rerun. `git diff --check` passes.
+At 22:42:29Z, memory PSI was 26.86% `some` / 23.60% `full` avg10, with
+15.08% / 12.83% avg300. API remained active with 4,050,944 bytes of
+`MemoryHigh` headroom; Reality remained active with 632,565,760 bytes below
+its limit. Available host memory was 10,109,812 KiB and swap free 959,024 KiB.
+The focused UI rerun and wider suites are deferred until a fresh sample shows
+pressure has eased. No service operation or source request occurred.
+
 ## Unknown endpoint venue labeling — 2026-10-28 22:41 UTC
 
 Static review found that the relationship list displayed Polymarket for an

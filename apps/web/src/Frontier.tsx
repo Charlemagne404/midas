@@ -1493,11 +1493,11 @@ function RelationshipGraph({
       groups.set(venue, group);
     }
     const centers: Record<string, number> = {
-      polymarket: 150,
-      kalshi: 450,
-      kraken: 750,
-      coinbase_exchange: 1050,
-      unknown: 600,
+      polymarket: 120,
+      kalshi: 360,
+      kraken: 600,
+      coinbase_exchange: 840,
+      unknown: 1080,
     };
     const nodes = new Map<string, GraphPoint>();
     let maxRows = 0;
@@ -1515,7 +1515,7 @@ function RelationshipGraph({
         });
       });
     }
-    return { nodes, height: Math.max(250, 126 + maxRows * 66) };
+    return { nodes, centers, venueOrder, height: Math.max(250, 126 + maxRows * 66) };
   }, [relationships, marketById]);
 
   if (!relationships.length) return null;
@@ -1555,20 +1555,15 @@ function RelationshipGraph({
           role="group"
           aria-label={`Relationship network showing ${relationships.length} bounded market relationships`}
         >
-          {[
-            ['polymarket', 150],
-            ['kalshi', 450],
-            ['kraken', 750],
-            ['coinbase_exchange', 1050],
-          ].map(([venue, x]) => (
+          {graph.venueOrder.map((venue) => (
             <text
-              key={String(venue)}
+              key={venue}
               className="fr-network-column"
-              x={Number(x)}
+              x={graph.centers[venue]}
               y="24"
               textAnchor="middle"
             >
-              {venueName(String(venue))}
+              {venueName(venue)}
             </text>
           ))}
           {relationships.map((edge) => {

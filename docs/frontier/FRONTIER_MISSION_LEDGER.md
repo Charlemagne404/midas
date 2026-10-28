@@ -1,5 +1,33 @@
 # Project Frontier Mission Ledger
 
+## Unknown-node graph layout follow-up — 2026-10-28 22:42 UTC
+
+The unknown-venue pill fix exposed a second static graph-layout issue: the
+existing unknown-node x-position sat between Kalshi and Kraken, where 208-pixel
+node cards could overlap those venue columns. The graph now lays out all five
+columns, including `unknown`, at shared 240-pixel intervals and renders column
+headers from the same venue order and position map. The missing-market test
+also asserts that the graph exposes the `NOT IN LOADED WINDOW` column header.
+`git diff --check` passes.
+
+The focused graph test passed before this layout follow-up; its new header
+assertion and the revised coordinates have **not** been rerun. At 22:42:29Z,
+memory PSI was 26.86% `some` / 23.60% `full` avg10 (7.28% / 6.38% avg60).
+API PID 1218662 remained active at 4,050,944 bytes below `MemoryHigh`; Reality
+PID 1049184 remained active at 632,565,760 bytes below its limit. Host memory
+available was 10,109,812 KiB and swap free was 959,024 KiB. This is a fresh
+hold for the focused UI rerun and broader tests; no service or source action
+occurred.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Unknown relationship endpoint labels | COMPLETE AND VERIFIED WITHIN TESTED SCOPE | The focused UI case passed against the label fix before the graph layout follow-up. |
+| Five-column graph layout for unknown endpoints | IMPLEMENTED, VERIFICATION PENDING | Static diff checks pass; new header and placement changes need the focused UI rerun. |
+| Full frontend and legacy regression | PARTIALLY VERIFIED | Deferred while memory PSI avg10 and avg300 remain elevated. |
+
+**Next safe action:** remeasure host PSI and protected-service headroom, then
+rerun the focused graph test before widening UI or legacy verification.
+
 ## Unknown endpoint venue labeling — 2026-10-28 22:41 UTC
 
 Static UI/API review found that the relationship list assigned default

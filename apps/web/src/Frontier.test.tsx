@@ -2932,6 +2932,9 @@ it('renders a bounded accessible relationship graph and opens selected evidence'
   expect(await screen.findByText('Not in loaded window')).toBeInTheDocument();
   expect(screen.getByText('market not in loaded window')).toBeInTheDocument();
   expect(
+    screen.getByText('NOT IN LOADED WINDOW', { selector: 'text.fr-network-column' }),
+  ).toBeInTheDocument();
+  expect(
     await screen.findByText(
       /considered 500 relationship rows.*additional neighbors may be omitted/,
     ),
