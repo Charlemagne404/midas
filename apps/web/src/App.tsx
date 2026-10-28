@@ -1,5 +1,5 @@
-import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
-import type { ComponentProps } from 'react';
+import { Component, lazy, Suspense, useEffect, useMemo, useState } from 'react';
+import type { ComponentProps, ReactNode } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   flexRender,
@@ -49,11 +49,58 @@ const LazyFrontier = lazy(() =>
 const LazyReadiness = lazy(() =>
   import('./Readiness').then((module) => ({ default: module.Readiness })),
 );
+
+type WorkspaceErrorBoundaryProps = {
+  name: string;
+  children: ReactNode;
+};
+
+type WorkspaceErrorBoundaryState = { failed: boolean };
+
+export class WorkspaceErrorBoundary extends Component<
+  WorkspaceErrorBoundaryProps,
+  WorkspaceErrorBoundaryState
+> {
+  state: WorkspaceErrorBoundaryState = { failed: false };
+
+  static getDerivedStateFromError(): WorkspaceErrorBoundaryState {
+    return { failed: true };
+  }
+
+  render() {
+    if (this.state.failed) {
+      return (
+        <div className="empty" role="alert">
+          <h3>{this.props.name} workspace could not load</h3>
+          <p>Refresh Mission Control to try loading this workspace again.</p>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+function LazyWorkspace({
+  name,
+  loading,
+  children,
+}: {
+  name: string;
+  loading: string;
+  children: ReactNode;
+}) {
+  return (
+    <WorkspaceErrorBoundary name={name}>
+      <Suspense fallback={<div className="empty">{loading}</div>}>{children}</Suspense>
+    </WorkspaceErrorBoundary>
+  );
+}
+
 function Chart(props: ComponentProps<typeof LazyChart>) {
   return (
-    <Suspense fallback={<div className="chart empty">Loading chart…</div>}>
+    <LazyWorkspace name="Chart" loading="Loading chart…">
       <LazyChart {...props} />
-    </Suspense>
+    </LazyWorkspace>
   );
 }
 import type {
@@ -388,9 +435,9 @@ export function App() {
             />
           )}
           {page === 'Research Readiness' && (
-            <Suspense fallback={<div className="empty">Loading readiness evidence…</div>}>
+            <LazyWorkspace name="Readiness" loading="Loading readiness evidence…">
               <LazyReadiness />
-            </Suspense>
+            </LazyWorkspace>
           )}
           {page === 'Scanner' && (
             <Scanner
@@ -407,30 +454,30 @@ export function App() {
             </>
           )}
           {page === 'Laboratory' && (
-            <Suspense fallback={<div className="empty">Loading Laboratory research…</div>}>
+            <LazyWorkspace name="Laboratory" loading="Loading Laboratory research…">
               <LazyLaboratory onNavigate={setPage} />
-            </Suspense>
+            </LazyWorkspace>
           )}
           {page === 'Analytics' && <AnalyticsPage data={analytics.data} />}
           {page === 'Arena' && (
-            <Suspense fallback={<div className="empty">Loading Arena research…</div>}>
+            <LazyWorkspace name="Arena" loading="Loading Arena research…">
               <LazyArena />
-            </Suspense>
+            </LazyWorkspace>
           )}
           {page === 'Reality' && (
-            <Suspense fallback={<div className="empty">Loading Reality observations…</div>}>
+            <LazyWorkspace name="Reality" loading="Loading Reality observations…">
               <LazyReality />
-            </Suspense>
+            </LazyWorkspace>
           )}
           {page === 'Veritas' && (
-            <Suspense fallback={<div className="empty">Loading Veritas evidence…</div>}>
+            <LazyWorkspace name="Veritas" loading="Loading Veritas evidence…">
               <LazyVeritas />
-            </Suspense>
+            </LazyWorkspace>
           )}
           {page === 'Frontier' && (
-            <Suspense fallback={<div className="empty">Loading Frontier research workspace…</div>}>
+            <LazyWorkspace name="Frontier" loading="Loading Frontier research workspace…">
               <LazyFrontier onNavigate={setPage} />
-            </Suspense>
+            </LazyWorkspace>
           )}
           {page === 'Incidents' && <Incidents />}
           {page === 'Telemetry' && <Telemetry state={state} />}
