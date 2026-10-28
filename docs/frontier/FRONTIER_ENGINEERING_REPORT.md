@@ -7027,3 +7027,85 @@ was accessed or modified.
 | Frontier Python lint and formatting | COMPLETE AND VERIFIED | Ruff passes and all 51 relevant files are formatted. |
 | Live multi-venue validation | BLOCKED | Current source-use holds prevent a second-venue observation. |
 | Production eligibility | DEFERRED | The branch remains isolated; no deployment was attempted. |
+
+## Polymarket public price-history milestone — 2026-10-28 06:15 UTC
+
+Commit `f0a5957` (`feat(frontier): add bounded Polymarket price history`)
+adds a separate `PRICE_HISTORY` capability to Polymarket adapter v7. The
+official [CLOB price-history reference](https://docs.polymarket.com/api-reference/markets/get-prices-history)
+documents the token ID, time bounds, interval, and fidelity parameters. The
+adapter currently allows the documented `1d` and `1w` intervals, at most 7 days,
+up to 1500 points, and the configured response-byte limit. It validates exact
+Decimal prices in `[0,1]`, integral Unix-second timestamps, strict ordering,
+the requested window, and token IDs. Polymarket continues to declare
+`HISTORICAL_CANDLES` unsupported: the price response does not provide OHLC,
+volume, or trade count.
+
+The explicit API operation
+`POST /api/frontier/probe/polymarket/price-history` accepts only an outcome token
+present in the bounded recorded market listing. It persists the raw response,
+normalized series, and the listing observation ID used to authorize that token
+lookup. `GET /api/frontier/price-history` reads stored series only. Mission
+Control's Market detail view exposes token, CLOB interval, and 1/3/7-day lookback
+controls, an accessible sample-dot plot, a bounded sample table, and evidence
+inspection. No source request occurs on page load. Historical samples remain
+context only and are not executable quotes or simultaneous cross-venue prices.
+
+One explicit unauthenticated public request for token
+`98022490269692409998126496127597032490334070080325855126491859374983463996227`
+returned HTTP 200 with **79 samples**, **2139 response bytes**, and raw SHA-256
+`0b69fa1f31cd9618e922ab681c41c67e4de51d5572e662fa3db1d3267e50afc8`. A repeat
+request returned the same content hash. The byte-for-byte source response and
+capture sidecar are preserved in:
+
+- `tests/fixtures/polymarket_price_history_live_20261028.json`
+- `tests/fixtures/polymarket_price_history_live_20261028.meta.json`
+
+The live request was made directly through a temporary adapter configured for
+one GET. It did not run through or change the API service, write to a Frontier
+runtime store, access an account, or submit an order. Separate 30-day and
+36-day requests returned HTTP 400 with `startTs`/`endTs` “interval is too long”.
+The public reference does not publish an accepted maximum range; Frontier uses
+seven days as a conservative cap. The sidecar records status and message for
+those rejected attempts; they were not persisted as separate `RawObservation`
+records. No conclusion about source-wide historical coverage is drawn from one
+token and window.
+
+Verification on this branch:
+
+- `tests/frontier/test_adapters.py`: **67 passed** in 2.53 seconds, including
+  offline replay of the genuine captured public response.
+- `tests/frontier/test_api.py`: **56 passed** in 45.11 seconds, including
+  listing-bound lookup, persisted raw/normalized lineage, stored-series read,
+  unknown-token rejection before egress, and the 7-day request cap.
+- `Frontier.test.tsx`: **8 passed** in 5.39 seconds, including the explicit
+  token-history UI capture and no automatic source request.
+- `e2e/frontier.spec.ts`: **6 passed** in 15.6 seconds against isolated local
+  demo services. The added price-history workflow itself is covered by the
+  fixture-backed component test and API integration test.
+- Strict mypy: **5 changed Python source files**, no issues. Ruff check/format,
+  web lint, Prettier check, `git diff --check`, and the TypeScript/Vite
+  production build pass.
+
+The frontend build retains the existing 504.00 kB main and 544.41 kB Chart
+chunk advisory. The API test run also reports the existing Starlette
+`httpx` deprecation warning. No measured resource profile was taken for this
+feature. No live cross-venue relationship, candidate economics, or positive
+opportunity was demonstrated.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Polymarket price-history adapter | COMPLETE AND VERIFIED | A genuine 79-point public response is preserved and the normalizer replays it offline; current source-range cap is based on observed 400 responses, not a published maximum. |
+| Price-history API, raw persistence, and saved lookup | COMPLETE AND VERIFIED | Full API module passes; request is bound to a recorded instrument and stores the listing observation ID. No production deployment occurred. |
+| Market detail price-history interface | COMPLETE AND VERIFIED | Component and browser suites pass using fixtures; the new history control has no dedicated browser E2E scenario yet. |
+| Use of history in multi-venue economics | DEFERRED | History is contextual evidence only; no algorithm consumes it as an executable quote. |
+| Genuine cross-venue validation | BLOCKED | Kalshi, Kraken, and Coinbase source-use holds remain; no new cross-venue equivalence is claimed. |
+| Production transition | DEFERRED | No service configuration, production store, or deployment was changed. |
+
+**Changed files in `f0a5957`:** `apps/api/frontier.py`,
+`apps/web/src/Frontier.tsx`, `apps/web/src/Frontier.test.tsx`,
+`apps/web/src/frontier.css`, `packages/midas/frontier/models.py`,
+`packages/midas/frontier/adapters/{__init__,base,polymarket}.py`,
+`tests/frontier/{test_adapters,test_api}.py`, and the two captured fixture files
+listed above. Architecture, operations, and development docs plus the mission
+ledger were updated in the documentation checkpoint following this code commit.

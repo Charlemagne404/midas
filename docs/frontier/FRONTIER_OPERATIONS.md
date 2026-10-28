@@ -422,6 +422,19 @@ There is no automatic continuation or background history crawl. The same
 principle applies to the one-page Kalshi operations: a source cursor is retained
 as evidence but is not followed without a separate explicit request.
 
+Polymarket's `price_history` capability is another explicit action. The Market
+detail view requires an outcome token from saved market evidence and requests a
+single `1d` or `1w` source interval over at most seven days. A 30-day and a
+36-day range were rejected by the source with HTTP 400; the official reference
+does not publish the maximum accepted range, so seven days is the current
+conservative cap. The adapter retains the native response and rejects more than
+1500 points or any response above its configured byte limit.
+`GET /api/frontier/price-history` returns persisted evidence only. The point
+model has no OHLC or volume fields;
+do not treat the samples as executable quotes or synchronized cross-venue
+observations. The source documents token IDs and the endpoint parameters in the
+official [CLOB price-history reference](https://docs.polymarket.com/api-reference/markets/get-prices-history).
+
 ## Resource and deployment limits
 
 Use short, targeted tests and temporary stores. Before heavier local work,

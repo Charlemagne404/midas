@@ -134,7 +134,18 @@ taker-only, and 0.01-share filters per page; condition queries expose a fixed
 three-year history window. No page walk or data fetch starts automatically.
 Normalized v2 rows retain token ID and outcome identity, while wallet profile
 fields remain only in the bounded raw source response. Trade prints are not
-order-book depth. Kalshi exposes a separate explicit
+order-book depth. Polymarket also advertises the separate `price_history`
+capability for its public CLOB `GET /prices-history` endpoint. The Market detail
+view can explicitly capture `1d` or `1w` source intervals for an outcome token in
+the saved listing, over a selected window of up to 7 days. A longer 30-day
+request and the earlier 36-day request returned HTTP 400; the published API
+reference does not document the maximum, so 7 days is the current conservative
+bound. The response is capped at 1500 points and the configured response byte
+limit. These samples remain
+source-reported prices: no OHLC, volume, executable quote, or simultaneous
+availability is inferred. `GET /api/frontier/price-history` reads saved series
+only. The official endpoint contract is the [Polymarket CLOB price-history reference](https://docs.polymarket.com/api-reference/markets/get-prices-history).
+Kalshi exposes a separate explicit
 `POST /api/frontier/probe/kalshi/trades` route with `market_id` (the recorded
 native ticker), `limit` (at most 100), and an optional returned cursor. Each
 cursor is bound to its ticker and page size; one request captures one page and

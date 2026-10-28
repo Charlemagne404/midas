@@ -117,6 +117,33 @@ native metadata, source URL, adapter/schema versions, raw-body hash, request and
 receipt times, and source-time semantics. Source quality flags are carried forward
 instead of being replaced with guessed values.
 
+### Polymarket historical price samples
+
+Polymarket adapter v7 exposes a separate `price_history` capability for the
+public CLOB `GET /prices-history` endpoint. The source requires an outcome token
+ID and documents `startTs`, `endTs`, `interval`, and `fidelity` query values;
+Frontier currently allows `1d` or `1w` source intervals and at most seven days
+per request. A request must be explicit and its token ID must appear in a
+recorded market listing. The adapter rejects responses above 1500 points or the
+configured response byte limit, and validates source timestamps and
+probability-range prices before normalization. The source returned HTTP 400 for
+30-day and 36-day windows during one read-only probe; its published reference
+does not specify the maximum accepted range, so seven days is a conservative
+current cap. See the official [CLOB price-history reference](https://docs.polymarket.com/api-reference/markets/get-prices-history).
+
+The normalized `PriceHistorySeries` preserves the native token ID, requested
+window, interval, fidelity, ordered UTC timestamps, exact decimal samples, and
+raw-response provenance. It is not a `CandleSeries`: the API returns price
+points, so Frontier does not derive OHLC, volume, or trade count. Samples are
+historical source-reported values, not executable quotes, and do not establish
+cross-venue simultaneity. `POST /api/frontier/probe/polymarket/price-history`
+stores one response; `GET /api/frontier/price-history` reads persisted series
+from the local evidence store only. The Market detail view exposes an explicit
+token, interval, and lookback control. One seven-day live response with 79
+points (2139 bytes) is preserved byte-for-byte with capture metadata under
+`tests/fixtures`; its content hash matched a repeat capture. It was not inserted
+into a Frontier runtime database, and no cross-venue relationship was produced.
+
 `FrontierMarket.native_event_id` is populated only from an explicit source event
 record or a parent-event response. The legacy Polymarket parser's local
 `market:<market-id>` fallback is not a venue event identifier; Frontier leaves

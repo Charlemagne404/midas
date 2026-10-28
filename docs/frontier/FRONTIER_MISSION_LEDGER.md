@@ -5696,3 +5696,64 @@ unverified.
 | Coinbase API source-use gate | COMPLETE AND VERIFIED | Exact terms acknowledgment plus probe flag still returns HTTP 409 before transport; source records remain quarantined. |
 | Coinbase intended-scope permission | BLOCKED | Applicable organization, jurisdiction, retention, derived-data, and display scope has no validated permission record or loader. |
 | Live multi-venue relationship | BLOCKED | Other venues remain held; no genuine equivalent cross-venue exposure is established. |
+
+## Polymarket price-history checkpoint — 2026-10-28 06:15 UTC
+
+**Stage:** B (Multi-Source Integration), with Market detail UI integration.
+**Code commit:** `f0a5957` on `codex/frontier-20261026`.
+
+Added a distinct `PRICE_HISTORY` capability and `PriceHistorySeries` model for
+Polymarket CLOB source-reported price points. The Polymarket adapter is now v7;
+it deliberately leaves `HISTORICAL_CANDLES` unsupported. Adapter and API bounds
+are 1d/1w source intervals, a 7-day request window, at most 1500 points, and the
+configured HTTP response limit. Price values are exact decimals in `[0,1]`;
+timestamps must be integral Unix seconds, ordered, unique, and within the
+requested window. The API refuses tokens absent from the bounded recorded
+market listing and stores the listing observation ID with the normalized series.
+The GET route is local persisted evidence only. Mission Control now offers an
+explicit 1/3/7-day capture and displays the returned samples with evidence
+inspection. Price samples are not executable quotes, OHLC, or volume.
+
+Live source result: one documented public token returned HTTP 200 for a
+2026-07-29 to 2026-08-05 request at `interval=1d`, `fidelity=60`. The response
+contained 79 points and 2139 bytes, SHA-256
+`0b69fa1f31cd9618e922ab681c41c67e4de51d5572e662fa3db1d3267e50afc8`. The exact
+body and capture metadata are preserved in
+`tests/fixtures/polymarket_price_history_live_20261028.json` and its `.meta.json`
+sidecar. A repeat GET had the same body hash. Thirty-day and 36-day requests
+returned HTTP 400 (`startTs`/`endTs` interval too long); because the official
+reference publishes no maximum accepted range, Frontier now caps requests at
+seven days. The rejection status/message are recorded in the sidecar; the
+failed bodies were not stored as independent `RawObservation` records.
+
+Verification:
+
+- `tests/frontier/test_adapters.py`: **67 passed** in 2.53 seconds, including
+  fixture replay of the genuine public response.
+- `tests/frontier/test_api.py`: **56 passed** in 45.11 seconds.
+- `apps/web/src/Frontier.test.tsx`: **8 passed** in 5.39 seconds, including a
+  fixture-backed explicit history capture and confirmation that no request
+  starts automatically.
+- `apps/web/e2e/frontier.spec.ts`: **6 passed** in 15.6 seconds with isolated
+  local demo services.
+- Strict mypy passed for the five changed Python source modules; Ruff check and
+  formatting, web lint, Prettier, TypeScript, Vite production build, and
+  `git diff --check` passed. The build retains its existing 504/544 kB bundle
+  advisory; API tests retain the Starlette/httpx deprecation warning.
+
+No production service or runtime Frontier store was used for the live read. No
+authenticated call, credential, account access, order, deployment, or
+cross-venue economics was involved. Kalshi, Kraken, and Coinbase remain held.
+
+| Component | Status | Next boundary |
+| --- | --- | --- |
+| Polymarket historical price adapter | COMPLETE AND VERIFIED | Current 7-day bound is conservative, based on observed errors rather than a published maximum. |
+| Price-history API persistence and saved read | COMPLETE AND VERIFIED | In-process API integration passes; no production deployment. |
+| Market detail history UI | COMPLETE AND VERIFIED | Fixture component flow passes; no dedicated browser E2E action for history yet. |
+| Multi-venue use of historical prices | DEFERRED | No history-based relationship or economic candidate is generated. |
+| Live second-venue validation | BLOCKED | Kalshi, Kraken, and Coinbase source-use holds remain in effect. |
+
+**Next safe action:** continue isolated single-source research tooling by adding
+price-history series to deterministic local replay and source-quality summaries;
+keep the series contextual unless a validated payoff or executable quote model
+can use it. Do not probe held venues or deploy.
