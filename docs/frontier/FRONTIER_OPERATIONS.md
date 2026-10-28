@@ -199,6 +199,36 @@ transfer path, legal access, custody, collateral, FX timing, or executable
 availability. Do not describe a covered virtual balance or positive modeled
 terminal-state sensitivity as funded, tradable, or realized profit.
 
+## Development test execution
+
+The older 219-test Frontier count in the source-use section is an earlier
+checkpoint. On 2026-10-28, the exact current `tests/frontier` tree passed
+**379/379** in one process. The run took 29.51 seconds of pytest time and 31.00
+seconds wall time, peaked at 378,216 KiB RSS, used no swap, and recorded zero
+filesystem input. It emitted the existing Starlette/httpx `TestClient`
+deprecation warning. The tests are fixture-backed and the source-use guard
+continues to deny held captures.
+
+For a broad suite run, first sample `/proc/pressure/memory` and
+`/proc/pressure/io`; defer when memory or I/O PSI avg10 is at or above 1%.
+The successful run placed pytest temporary files on tmpfs, reducing block I/O:
+
+```sh
+frontier_run_id=$(date -u +%Y%m%dT%H%M%SZ)
+frontier_basetemp="/dev/shm/midas-frontier-pytest-$frontier_run_id"
+test ! -e "$frontier_basetemp" || exit 2
+PYTHONPATH=packages \
+  /home/charlie/midas/.venv/bin/python -m pytest -q tests/frontier \
+  --basetemp="$frontier_basetemp"
+```
+
+Use a new path for every run because pytest resets its `--basetemp` directory.
+Check that the path does not already exist and that `/dev/shm` has enough free
+space before starting. Tmpfs reduces disk writes but consumes RAM; stop the run
+if host pressure exceeds the gate. This command uses fixture/local state only;
+it does not authorize live source requests, workers, service changes, or
+production deployment.
+
 ## Saved Kalshi fee evidence
 
 The event/series fee-metadata probe is a source capture, not an immediate fee
