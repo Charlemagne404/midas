@@ -1,6 +1,6 @@
 # Project Frontier Mission Ledger
 
-## Strict JSON numeric-token handling added; test held for resource admission — 2026-10-28 15:48 UTC
+## Strict parsing and proxy boundaries; tests held for resource admission — 2026-10-28 15:48 UTC
 
 The public read transport now supplies a strict JSON parse-constant handler.
 Python's standard decoder otherwise accepts NaN and positive/negative
@@ -10,7 +10,9 @@ arithmetic errors now share the existing JSON_COMPLEXITY_LIMIT path. Added
 four fixture cases for nonstandard constants and a 5,000-digit decimal
 exponent case for the parser-limit path. The owned HTTPX client now uses
 trust_env=False so HTTP_PROXY, HTTPS_PROXY, and ALL_PROXY cannot reroute its
-public reads; a local configuration test covers this setting.
+public reads. Injected clients are limited to isolated MockTransport fixtures
+without mounted custom transports, rejecting both network clients and explicit
+proxy mounts. Local tests cover the default configuration and rejection paths.
 
 The new transport tests and Ruff checks have not run. At 15:47:55Z host memory
 PSI avg10 was 45.32% some / 40.12% full, I/O PSI was 0.61% some / 0.60% full,
@@ -28,6 +30,7 @@ changes remain implemented with validation pending.
 | --- | --- | --- |
 | Nonstandard JSON numeric-token rejection | IMPLEMENTED, VALIDATION PENDING | Transport and four mock-response cases are changed; run the focused adapter test after resource admission. |
 | Default transport environment-proxy handling | IMPLEMENTED, VALIDATION PENDING | The owned client disables environment proxy discovery; a local configuration regression is added. |
+| Injected transport proxy boundary | IMPLEMENTED, VALIDATION PENDING | Network clients and custom mounted transports are rejected; fixture-only validation is pending. |
 | Current Frontier Python suite | PARTIALLY VERIFIED | The prior 465/465 result predates this transport change and does not verify current HEAD. |
 | Live source and protected data | UNCHANGED | No adapter request or source capture was made; existing source-use holds remain active. |
 | Frontier project acceptance | PARTIALLY VERIFIED | Live cross-venue science, broad regression, endurance, protected recovery, and deployment remain open. |

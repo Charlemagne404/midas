@@ -142,6 +142,13 @@ class PublicReadTransport:
 
     def _validate_client_configuration(self) -> None:
         """Reject injected client state that could add credentials or widen requests."""
+        injected_transport = getattr(self.client, "_transport", None)
+        mounted_transports = getattr(self.client, "_mounts", {}).values()
+        if not self._owns_client and (
+            not isinstance(injected_transport, httpx.MockTransport)
+            or any(transport is not None for transport in mounted_transports)
+        ):
+            raise ValueError("Public read transport only accepts isolated fixture clients")
         base_url = self.client.base_url
         if (
             self.client.auth is not None

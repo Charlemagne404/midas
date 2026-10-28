@@ -19,6 +19,25 @@ async def test_default_public_transport_ignores_environment_proxy_settings(monke
         await transport.close()
 
 
+@pytest.mark.parametrize(
+    "proxy",
+    (None, "http://proxy.invalid:8080"),
+    ids=("network-client", "explicit-proxy"),
+)
+@pytest.mark.asyncio
+async def test_public_transport_rejects_injected_network_and_proxy_clients(proxy):
+    client = httpx.AsyncClient(proxy=proxy, trust_env=False)
+    try:
+        with pytest.raises(ValueError, match="isolated fixture clients"):
+            PublicReadTransport(
+                {"example.com"},
+                AdapterConfig(enabled=True, live_public_probe_enabled=True),
+                client=client,
+            )
+    finally:
+        await client.aclose()
+
+
 @pytest.mark.asyncio
 async def test_network_is_disabled_without_explicit_public_probe_configuration():
     calls = 0

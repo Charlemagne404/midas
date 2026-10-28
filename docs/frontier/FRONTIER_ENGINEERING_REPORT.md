@@ -10195,7 +10195,9 @@ NaN token; an additional parser-limit case uses a 5,000-digit decimal
 exponent. Decoder arithmetic exceptions are classified as
 JSON_COMPLEXITY_LIMIT. The owned HTTPX client now sets trust_env=False; a
 configuration regression sets HTTP_PROXY, HTTPS_PROXY, and ALL_PROXY and
-checks the client setting. No real exchange endpoint is used by these cases.
+checks the client setting. Injected clients now require an isolated
+MockTransport and cannot carry custom transport mounts, blocking explicit
+proxy clients as well. No real exchange endpoint is used by these cases.
 
 This change is implemented but not yet validated. At 15:47:55Z memory PSI
 avg10 measured 45.32% some / 40.12% full and I/O PSI 0.61% some / 0.60% full;
@@ -10213,6 +10215,7 @@ validation process was started under that pressure sample.
 | --- | --- | --- |
 | Malformed nonstandard JSON numbers | IMPLEMENTED, VALIDATION PENDING | Strict parse-constant handling and fixture regressions are present; focused validation is pending. |
 | Default transport proxy policy | IMPLEMENTED, VALIDATION PENDING | Environment proxy discovery is disabled for the owned client; its configuration regression is pending. |
+| Injected transport proxy policy | IMPLEMENTED, VALIDATION PENDING | The transport accepts fixture MockTransport clients only and rejects custom mounts; no live transport test has run. |
 | Current Frontier Python suite | PARTIALLY VERIFIED | The previous 465/465 result predates this transport change and is not current-tree evidence. |
 | Live source policy | COMPLETE AND VERIFIED | No source request was made for this work; held venues remain fail-closed. |
 | Frontier overall | PARTIALLY VERIFIED | Broad Arena regression, live cross-venue science, endurance, protected recovery, and deployment remain open. |
