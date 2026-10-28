@@ -23,7 +23,7 @@ as mutable Frontier storage.
 | Durable evidence | `storage.py` | Append-only, size- and row-bounded SQLite observations, markets, relationship reviews/revisions, runs, and paired comparisons. |
 | Replay | `replay.py` | Stable input ordering, scenario/mapping/proposal-limit-aware replay identities, exact store-record provenance for API-loaded models, deterministic results, and paired assumption comparisons. |
 | Event-time replay | `timeline.py` | Offline bounded replay over repeated book updates, source-state events, and explicit cutoffs; freshness, outage invalidation, candidate summaries, and timeline hashes. |
-| Finite source collection | `collection.py`, `apps/api/frontier.py` | One-source sequential bounded capture with durable restart checkpoints and an append-only hash-chained journal; explicit start/resume routes and a read-only recent-run catalog, with source policy/capability gates, per-source lock, and no job or background service. |
+| Finite source collection | `collection.py`, `apps/api/frontier.py` | One-source sequential bounded capture with durable restart checkpoints and an append-only hash-chained journal; explicit start/resume routes and a read-only keyset-paginated run catalog, with source policy/capability gates, per-source lock, and no job or background service. |
 | Arena replay jobs | `packages/midas/arena/frontier_replay.py`, `frontier_timeline.py`, `arena/jobs.py` | Immutable content-addressed inputs, bounded offline paired and event-time replay workers, hash-verified artifacts, and held-source filtering under Arena's existing admission gate. |
 | HTTP API | `apps/api/frontier.py`, `apps/api/arena.py` | Bounded local queries and graph neighborhoods, relationship proposals/reviews, deterministic and paired replay, config-gated captures, fee/capital/funding-currency sensitivities, coverage analytics, a verified local collection-health catalog and checkpoint joins, and local-input event-time Arena staging/result routes. |
 | Mission Control workspace | `apps/web/src/Frontier.tsx` | Sources, explicit finite checkpointed capture, markets/books/event context, coverage and source-quality analytics, relationship hypotheses, candidates, venue-separated capital assumptions and funding-currency sensitivity, local comparisons, paired and event-time Arena replay history/results with pinned freshness and explicit recorded-health selection, and readiness. |
@@ -856,6 +856,16 @@ venue before creating an Arena job, matching the deterministic timeline
 engine's ambiguity rule. The UI disables another event with a venue/check-time
 pair already selected; researchers can choose either checkpoint when separate
 runs recorded the same timestamp.
+
+`GET /api/frontier/collection-runs?limit=20` returns one read-only page of
+hash-chain-verified collection checkpoints. `next_before_run_id` is the last
+visible run ID only when another page exists; passing it as `before_run_id`
+reads older rows by the journal's append order. Each page verifies its
+cursor run's specification and full checkpoint chain before using the anchor,
+then scans at most the journal's 1,000-run bound in 64-row batches while
+filtering held venues. Newer appended runs do not shift an older page. The
+Exchanges view exposes explicit older/newest page controls and returns to the
+newest page after a collection start or resume.
 
 The request also pins either ordered UTC evaluation times or the engine's
 deterministic input-time/freshness-boundary schedule, maximum book age, scenario,

@@ -1,5 +1,54 @@
 # Project Frontier Mission Ledger
 
+## Cursor-paginated finite collection history — 2026-10-28 01:07 UTC
+
+Code commit `067b2ce` adds keyset pagination to the read-only finite collection
+run catalog. `GET /api/frontier/collection-runs?limit=20` returns a bounded page
+and `next_before_run_id`; passing that visible run ID as `before_run_id` fetches
+older entries. The journal validates the anchor specification and complete
+checkpoint chain, and verifies every returned checkpoint chain before
+responding. Page selection uses a read-only SQLite transaction for a consistent
+view, scans in 64-row batches, and observes the existing 1,000-run ceiling. Held
+venues remain excluded, including while the scan passes over their entries.
+Newly appended runs do not shift older pages.
+
+Mission Control's Exchanges view adds shared “Load older runs” and “Newest
+runs” controls. It resets to the newest page after a finite capture or resume.
+The page stays read-only and makes no source request; it only inspects local
+hash-chained checkpoints. A unit fixture exercises an older page after a newer
+run is inserted, while a storage regression crosses the 64-row scan boundary
+with held Kalshi entries excluded.
+
+### Verification and resource evidence
+
+- API/storage pagination regressions: **2 passed**; four adjacent collection
+  lifecycle/integrity route tests also passed. The Frontier Python suite passed
+  **330 tests** in 52.85 seconds pytest time / **54.20 seconds wall**. Peak RSS
+  was **365,832 KiB**, with zero swaps, zero socket messages, zero major page
+  faults, and 35% CPU use. One existing Starlette/httpx deprecation warning
+  remains.
+- The full web unit suite passed **40/40**; the Frontier Playwright spec passed
+  **4/4** against isolated services. TypeScript build, production Vite build,
+  scoped ESLint/Prettier, strict mypy for the API and collection journal, Ruff,
+  and `git diff --check` passed. Vite continues to report the existing 544.41
+  kB chart-chunk advisory.
+- No exchange endpoint, held source, protected Reality process, external
+  worker, production store, or deployment was used.
+
+Documentation follow-up records the architecture, operations, evidence, and
+remaining deployment boundary. Production deployment remains deferred.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Finite collection history pagination | COMPLETE AND VERIFIED | Stable run-ID pages, chain-verified anchors and results, malformed/missing cursor rejection, and held-source skip across bounded batches pass API/storage tests. |
+| Exchanges history controls | COMPLETE AND VERIFIED | Older/newest navigation, collection/resume reset, full web unit suite, browser spec, and production build pass. Browser test services use isolated local state. |
+| Frontier source-history collection | PARTIALLY VERIFIED | The UI can inspect the retained finite-run catalog, capped at 1,000 runs. It does not add a continuous feed or historical market-data backfill. |
+| Project Frontier overall | PARTIALLY VERIFIED | Genuine cross-venue live matching, broader multi-leg search, long-horizon source-quality evidence, and deployment remain incomplete. |
+
+**Next safe action:** continue offline acceptance against the remaining matrix.
+Prioritize bounded economic families with independently recomputed payoffs;
+retain current source-use holds and deployment boundary.
+
 ## Collection API integrity boundary and complete Frontier regression — 2026-10-28 00:55 UTC
 
 Code commit `780575c` adds an API-level corruption test for the collection

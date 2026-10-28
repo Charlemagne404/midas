@@ -293,11 +293,17 @@ three markets, one book, depth five, and 30 seconds. The per-source loop is
 sequential and records failures independently. A restart through the module
 resumes from the last append-only checkpoint and revalidates its sequence/hash
 chain and pinned adapter version/config; it does not silently relaunch a
-terminal run. `GET /api/frontier/collection-runs?limit=20` lists a bounded set
-of recent runs and verifies each selected checkpoint's complete hash chain.
-The read does not initialize a missing journal or contact a source. The
-Exchanges view offers an explicit `POST
-/api/frontier/collect/{venue}/{run_id}/resume` action for a nonterminal run
+terminal run. `GET /api/frontier/collection-runs?limit=20` lists one bounded
+page of recent runs and verifies each selected checkpoint's complete hash
+chain. If `next_before_run_id` is present, pass it as `before_run_id` to read
+the next older page. The API validates the cursor run's stored specification
+and full checkpoint chain before using it as a keyset anchor; pages scan the
+1,000-run journal ceiling in bounded batches, and newer appended runs do not
+shift older pages. Held-source entries remain excluded. The read does not
+initialize a missing journal or contact a source. Mission Control exposes
+explicit “Load older runs” and “Newest runs” controls and resets to the newest
+page after a collection start or resume. The Exchanges view offers an explicit
+`POST /api/frontier/collect/{venue}/{run_id}/resume` action for a nonterminal run
 only when current source flags, source-use policy, adapter version, capability
 manifest, and the API's smaller request bounds still match the pinned spec.
 Completed, partial, and failed runs are terminal. A resume is one request-bound

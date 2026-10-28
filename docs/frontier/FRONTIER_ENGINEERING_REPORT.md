@@ -5022,7 +5022,7 @@ During the check at `2026-10-28T00:31:15Z`, memory PSI avg10 was **24.98% some
 gap-detail batch PID **3975405** was active. It was not touched. The strict API
 typing caveat remains unresolved; retry when shared-host pressure subsides.
 
-## Current mission acceptance matrix — 2026-10-28 00:34 UTC
+## Current mission acceptance matrix — 2026-10-28 01:07 UTC
 
 This matrix assesses the user-requested Frontier stages and scientific
 acceptance against current branch evidence, not intent or planned work.
@@ -5035,11 +5035,11 @@ acceptance against current branch evidence, not intent or planned work.
 | Relationship graph, evidence, persistence, and bounded exploration | PARTIALLY VERIFIED | Deterministic proposals, explicit verification states, append-only review evidence, held-source filtering, and revision-pinned neighborhood/search pages have API and UI coverage. No genuine verified cross-venue economic match exists; reviewer identities and external assertions are not authenticated. |
 | Opportunity families and independent economic verification | PARTIALLY VERIFIED | Binary coverage, bounded multi-outcome, and logical-implication constructions have independent arithmetic checks and adversarial fixtures. No live positive or economically eligible opportunity is established; general multi-leg search is not implemented. |
 | Venue costs, capital, and currency assumptions | PARTIALLY VERIFIED | Public fee metadata, bounded fee/carry sensitivities, partial-fill stress, venue-separated virtual balances, and a separate conversion-adjusted terminal-P&L scenario exist. The P&L scenario requires verified candidate/funding audits, complete candidate leg fees, and sufficient per-venue balances; it never mutates candidate economics. Account-specific fees, sourced FX, cross-venue transfer/custody, settlement risk, and conversion availability remain unknown. |
-| Isolated collection, provenance, durable storage, and deterministic replay | PARTIALLY VERIFIED | Finite restartable collection, append-only hash-chained checkpoints, bounded storage, event-time replay, source-health evidence, and replay provenance are implemented and tested offline. No continuous stream, full history walk, or long-horizon source-quality study is established. |
+| Isolated collection, provenance, durable storage, and deterministic replay | PARTIALLY VERIFIED | Finite restartable collection, append-only hash-chained checkpoints, a read-only keyset-paginated run catalog across the 1,000-run journal bound, bounded storage, event-time replay, source-health evidence, and replay provenance are implemented and tested offline. No continuous market-data stream, full source-history backfill, or long-horizon source-quality study is established. |
 | Laboratory/Arena research integration | PARTIALLY VERIFIED | Bounded replay jobs, paired comparisons, integrity-checked results, and fixture/UI paths exist. No durable Laboratory experiment manager, long-duration campaign, or production worker is authorized or verified. |
-| Native Frontier Mission Control interface | IMPLEMENTED, DEPLOYMENT PENDING | The web unit suite passes 40/40 and the latest Frontier browser spec passes 4/4 against isolated services; the earlier configured browser suite passed 12/12. Funding responses are fixture-intercepted in browser, while the saved-run API separately verifies the candidate scenario. Live source data is unavailable under current holds. No production deployment occurred. |
-| Scientific acceptance: normalization, rejection, controlled discrepancy, independent arithmetic, missing/stale/asynchronous evidence, and deterministic replay | PARTIALLY VERIFIED | Controlled fixtures and the 328-test Frontier suite cover supported behavior and rejection paths, including rationally checked funding conversion subtraction and route-level collection restart/quarantine/corruption. Evidence does not establish a genuine cross-venue relationship, synchronized executable quotes, or positive economics. |
-| Resource sustainability under bounded development workloads | PARTIALLY VERIFIED | The latest serial 328-test Frontier suite measured 367,868 KiB peak RSS, zero swaps, and zero socket messages; the focused FX/API selection measured 82,756 KiB. Sustained collection, concurrent workloads, production resource admission, and broad latency/CPU behavior remain unmeasured. |
+| Native Frontier Mission Control interface | IMPLEMENTED, DEPLOYMENT PENDING | The full web unit suite passes 40/40 and the Frontier browser spec passes 4/4 against isolated services on the current revision. Funding responses are fixture-intercepted in browser, while the saved-run API separately verifies the candidate scenario. Live source data is unavailable under current holds. No production deployment occurred. |
+| Scientific acceptance: normalization, rejection, controlled discrepancy, independent arithmetic, missing/stale/asynchronous evidence, and deterministic replay | PARTIALLY VERIFIED | Controlled fixtures and the 330-test Frontier suite cover supported behavior and rejection paths, including rationally checked funding conversion subtraction and route-level collection restart, pagination, quarantine, and corruption. Evidence does not establish a genuine cross-venue relationship, synchronized executable quotes, or positive economics. |
+| Resource sustainability under bounded development workloads | PARTIALLY VERIFIED | The latest serial 330-test Frontier suite measured 365,832 KiB peak RSS, zero swaps, and zero socket messages; the focused FX/API selection measured 82,756 KiB. Sustained collection, concurrent workloads, production resource admission, and broad latency/CPU behavior remain unmeasured. |
 | Read-only research boundary and source-use gates | COMPLETE AND VERIFIED | No trading/authenticated exchange path is provided; source-policy tests ensure held venues return 409 without requests and held evidence stays quarantined. This does not grant permission to use a held source. |
 | Required architecture, operations, current-state, report, and continuation documentation | COMPLETE AND VERIFIED | The engineering report, architecture, operations guidance, current-state note, and append-only mission ledger record implementation, evidence, blockers, and continuation actions. |
 | Production deployment | DEFERRED | Requires separate source permission, resource/storage/recovery review, full deployment-scope regression, monitoring/rollback preparation, and explicit authorization. |
@@ -5223,3 +5223,57 @@ The earlier 00:31 deferred attempt was stopped at 694,744 KiB while the external
 batch was active. That attempt changed no code; after the batch ended, the
 validated type change was committed. No external batch, protected service,
 exchange, or production store was modified.
+
+### Cursor-paginated finite collection history — 2026-10-28 01:07 UTC
+
+Code commit `067b2ce` lets operators inspect the retained finite collection
+journal beyond its newest 20 entries. The history API accepts an optional
+`before_run_id`; when more rows exist it returns `next_before_run_id` as the
+last visible run ID. The next request resolves that anchor from the append-only
+run table, checks its pinned spec hash and complete checkpoint chain, then reads
+older entries. Page selection uses a read-only SQLite transaction for a
+consistent view and scans at most the journal's 1,000-run bound in 64-row
+batches. Every returned run still gets complete chain verification. The code
+never creates a missing journal or calls an adapter. Appending a newer run
+between page requests does not shift the older page anchor.
+
+The storage regression inserts one visible Polymarket run, 65 held Kalshi runs,
+and another visible Polymarket run. A two-item page scan must cross the 64-row
+batch boundary, omit all held entries, and return both visible runs in order.
+The API test walks three pages, appends a newer run between page requests, and
+confirms no duplicate or missing older entries; malformed and unknown cursors
+fail closed. Mission Control exposes shared “Load older runs” and “Newest runs”
+controls and resets to the newest page after collection start or resume.
+
+Files changed by `067b2ce`: `packages/midas/frontier/collection.py`,
+`apps/api/frontier.py`, `tests/frontier/test_collection.py`,
+`tests/frontier/test_api.py`, `apps/web/src/Frontier.tsx`,
+`apps/web/src/Frontier.test.tsx`, `apps/web/src/frontier.css`, and
+`apps/web/e2e/frontier.spec.ts`.
+
+Verification on the isolated worktree:
+
+- `pytest -q tests/frontier`: **330 passed** in 52.85 seconds pytest time and
+  **54.20 seconds wall**. `/usr/bin/time -v` measured **365,832 KiB peak RSS**,
+  zero swaps, zero socket messages, zero major page faults, and 35% CPU use. One
+  existing Starlette/httpx deprecation warning remains.
+- The full web unit suite passed **40/40** in 15.86 seconds. The Frontier
+  browser spec passed **4/4** in 12.0 seconds against isolated services.
+- `tsc -b`, the Vite production build, scoped ESLint/Prettier, strict mypy for
+  `apps/api/frontier.py` and `packages/midas/frontier/collection.py`, Ruff, and
+  `git diff --check` passed. Vite retains the existing 544.41 kB chart-chunk
+  advisory.
+- Tests used fixture stores or isolated local services; no exchange, held
+  source, protected Reality process, external worker, production store, or
+  deployment was used.
+
+| Component | Status | Evidence and boundary |
+| --- | --- | --- |
+| Retained finite collection history catalog | COMPLETE AND VERIFIED | Keyset pages cover up to 1,000 retained runs with a consistent read snapshot, chain-verified cursor anchors, bounded 64-row scans, and held-source filtering. No market-data backfill or continuous stream is added. |
+| Exchanges collection history UI | COMPLETE AND VERIFIED | Full web unit suite, 4-test Frontier browser spec, TypeScript, and production build pass. Browser services are isolated. |
+| Current Frontier Python regression | COMPLETE AND VERIFIED | 330 tests pass on code commit `067b2ce`; the broad scientific and source-use limitations in the current matrix still apply. |
+| Project Frontier overall | PARTIALLY VERIFIED | Genuine cross-venue relationship validation, live research behind current holds, broader multi-leg discovery, long-horizon source quality, and production deployment remain incomplete. |
+
+Continue offline acceptance from the current mission matrix. Do not infer live
+opportunity economics from fixtures or treat collection pagination as
+historical market-data coverage.
