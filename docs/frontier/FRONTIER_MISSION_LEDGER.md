@@ -4417,3 +4417,47 @@ the lock.
 | Polymarket/Kalshi shared API metadata capture | COMPLETE AND VERIFIED | 352-test Frontier suite; both venue routes are exercised with mocked public responses, exact URL and immutable listing linkage. No live request in this slice. |
 | Mission Control market detail control | COMPLETE AND VERIFIED | Frontier component suite passes 8/8; capability/config gates and evidence disclosure are fixture-backed. |
 | Full web suite, browser E2E, and production build after this slice | PARTIALLY VERIFIED | Typecheck, targeted ESLint/Prettier, and all Frontier component tests pass; broad web suite, browser E2E, and build remain pending. |
+
+### Bounded live metadata capture and harness cleanup finding — 2026-10-28 03:54 UTC
+
+One authorized public read-only request exercised the new Polymarket
+single-market metadata route for the already captured native market ID
+`2589810`. The route made one GET to the adapter-declared HTTPS URL with the
+configured 7-second timeout, zero retries, one-market bound, one-request-per-
+second rate limit, and 256-KiB response cap. It returned HTTP 200 with a
+4,198-byte body. No credentials, trading interface, account access, held
+exchange, or protected service was involved.
+
+The response body hash
+`d462014349743a6175facab3aef0433a069899c43845c789ca4cdce87bd8cf26` matches
+the hash persisted in observation
+`d51864858856a0a8e8faff66fd75c5e590ee4b2f47642147b24c73e8581d74b9`. Its
+append-only row hash is
+`b2215f17912c3f4e9558d2b314b22d96ceb08fdd0fd439b2429db3ad259a2027`; the
+store's read-only SQLite integrity check passed. The observation is bound to
+listing `5e5f63dbc701476347a814a8496f1e88869f27a49e884b2cf27ee8ee238e661a`
+and remains outside the catalogue index. The capture is worktree-local and
+ignored by Git; no prior database or source evidence was modified.
+
+The detail title and resolution authority match the linked listing. Its
+normalized event ID is the placeholder `market:2589810`, while the listing
+event ID is `606422`. This is not evidence of event membership or equivalence;
+the listing context remains authoritative for that captured event grouping.
+The response does not verify the resolution rule, exhaustive outcome set,
+payoff, settlement asset, or cross-venue equivalence, and it produces no
+opportunity claim.
+
+The request and database read-back succeeded, but the short-lived TestClient
+harness exited nonzero while closing its async adapter from a different event
+loop (`RuntimeError: Event loop is closed`). No retry occurred. This cleanup
+issue should be fixed in the probe harness by closing the adapter within the
+request's ASGI loop; it does not invalidate the recorded HTTP response but
+does mean the process-level probe is not fully clean. The source terms review
+records this limitation and preserves the existing Kalshi, Kraken, and
+Coinbase holds. No jurisdictional permission is inferred.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Polymarket single-market adapter live lookup | PARTIALLY VERIFIED | One bounded HTTP 200 response is persisted and hash-checked; event membership, payoff semantics, cross-venue matching, and clean harness teardown remain unverified. |
+| Isolated capture-store integrity | COMPLETE AND VERIFIED | SQLite integrity check passed; raw-body SHA-256 matches persisted metadata; original capture store stayed read-only. |
+| Full web suite, browser E2E, and production build | PARTIALLY VERIFIED | The previous targeted UI checks passed; broad web verification remains pending a fresh resource and shared-lock admission check. |

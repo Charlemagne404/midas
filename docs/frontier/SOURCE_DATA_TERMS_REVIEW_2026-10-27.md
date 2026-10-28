@@ -390,3 +390,44 @@ set, a verified payoff, a cross-venue relationship, or an opportunity.
 This capture does not change the Kalshi, Kraken, or Coinbase holds or broaden
 the Polymarket source-use purpose. It remains a local research record and is
 not published or copied into version control.
+
+### Bounded Polymarket single-market metadata probe — 2026-10-28 03:54 UTC
+
+After implementing and fixture-testing the capability-specific metadata
+route, one public read-only Gamma request fetched the already observed native
+market ID `2589810` from `/markets/2589810`. The request was bound before
+egress to listing observation
+`5e5f63dbc701476347a814a8496f1e88869f27a49e884b2cf27ee8ee238e661a`. The
+configured limits were one market, one request, one request per second,
+7-second timeout, zero retries, and a 256-KiB response cap. No credentials,
+account access, order route, geographic workaround, held source, or protected
+service was used.
+
+The HTTP 200 body was 4,198 bytes. Its raw SHA-256 is
+`d462014349743a6175facab3aef0433a069899c43845c789ca4cdce87bd8cf26`; the
+Frontier observation ID is
+`d51864858856a0a8e8faff66fd75c5e590ee4b2f47642147b24c73e8581d74b9`; and
+the append-only row SHA-256 is
+`b2215f17912c3f4e9558d2b314b22d96ceb08fdd0fd439b2429db3ad259a2027`. A
+read-only database check returned `integrity_check=ok`, and recomputing the
+stored response-body digest matched the recorded raw hash. The isolated local
+store is at
+`data/public-captures/frontier-polymarket-market-metadata-20261028Ta05wfo2d/frontier.sqlite3/frontier.sqlite3`;
+the prior capture database was read-only and was not modified.
+
+The returned title and Federal Reserve resolution-source URL agree with the
+listed market. The detail normalizer assigns `market:2589810` as its native
+event ID, while the linked listing records event `606422`; this endpoint
+response therefore does not establish event membership and must not replace
+the listing's event context. Resolution verification, exhaustive outcome
+coverage, payoff verification, settlement-asset attestation, and cross-venue
+equivalence all remain false or unsupported. This is one metadata lookup, not
+a multi-venue match or opportunity finding.
+
+The capture and store read-back completed, but the one-off TestClient process
+then exited with status 1 during `asyncio.run(registry.aclose())`: httpx
+reported `RuntimeError: Event loop is closed`. This is a post-request harness
+cleanup defect; no request was repeated. A future harness should close the
+adapter on the request's ASGI event loop before this probe is considered a
+clean end-to-end process run. This record makes no legal or jurisdictional
+determination and does not change any source-use hold.
