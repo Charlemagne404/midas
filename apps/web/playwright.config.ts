@@ -21,17 +21,23 @@ if (dirname(browserRoot) !== tmpdir() || !basename(browserRoot).startsWith('mida
 process.env.MIDAS_FRONTIER_E2E_ROOT = browserRoot;
 const database = join(browserRoot, 'paper.db');
 const frontierRoot = join(browserRoot, 'frontier');
-if (
-  process.env.MIDAS_SEED_FRONTIER_E2E === '1' &&
-  !existsSync(join(frontierRoot, 'frontier.sqlite3'))
-) {
-  const seed = spawnSync(python, [join(webRoot, 'e2e/seed_frontier_store.py'), frontierRoot], {
-    cwd: repository,
-    env: { ...process.env, PYTHONPATH: join(repository, 'packages') },
-    stdio: 'inherit',
-  });
-  if (seed.error) throw seed.error;
-  if (seed.status !== 0) throw new Error(`Frontier E2E seeder exited with ${seed.status}`);
+const arenaRoot = join(browserRoot, 'arena');
+const seededArenaJob = join(arenaRoot, 'jobs', 'job-e2e0123456789abcdef01234', 'job.json');
+if (process.env.MIDAS_SEED_FRONTIER_E2E === '1') {
+  const historyStoreExists = existsSync(join(frontierRoot, 'frontier.sqlite3'));
+  const arenaJobExists = existsSync(seededArenaJob);
+  if (historyStoreExists !== arenaJobExists || (!historyStoreExists && existsSync(arenaRoot))) {
+    throw new Error('Refusing to seed a partially populated Frontier/Arena E2E root');
+  }
+  if (!historyStoreExists) {
+    const seed = spawnSync(python, [join(webRoot, 'e2e/seed_frontier_store.py'), frontierRoot], {
+      cwd: repository,
+      env: { ...process.env, PYTHONPATH: join(repository, 'packages') },
+      stdio: 'inherit',
+    });
+    if (seed.error) throw seed.error;
+    if (seed.status !== 0) throw new Error(`Frontier E2E seeder exited with ${seed.status}`);
+  }
 }
 
 export default defineConfig({
@@ -51,7 +57,7 @@ export default defineConfig({
       env: {
         MIDAS_MODE: 'demo',
         MIDAS_DATABASE_URL: `sqlite+aiosqlite:///${database}`,
-        MIDAS_ARENA_ROOT: join(dirname(database), 'arena'),
+        MIDAS_ARENA_ROOT: arenaRoot,
         MIDAS_FRONTIER_ROOT: frontierRoot,
         MIDAS_VERITAS_WORKSPACE: process.env.MIDAS_VERITAS_WORKSPACE ?? repository,
         PYTHONPATH: join(repository, 'packages'),

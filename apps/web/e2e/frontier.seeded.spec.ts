@@ -127,3 +127,72 @@ test('seeded Frontier history pages and replay through the local API', async ({
   ).toBeVisible();
   expect(probeRequests).toBe(0);
 });
+
+test('seeded Frontier discovery artifact loads from Arena storage into Laboratory', async ({
+  page,
+  request,
+}) => {
+  let probeRequests = 0;
+  let arenaMutations = 0;
+  page.on('request', (item) => {
+    if (item.url().includes('/api/frontier/probe/')) probeRequests += 1;
+    if (item.url().includes('/api/arena/') && item.method() !== 'GET') arenaMutations += 1;
+  });
+
+  const catalogResponse = await request.get(
+    'http://127.0.0.1:18000/api/arena/frontier-discovery-comparisons?limit=20',
+  );
+  expect(catalogResponse.status()).toBe(200);
+  const catalog = (await catalogResponse.json()) as {
+    items: {
+      job_id: string;
+      state: string;
+      snapshot_id: string;
+      snapshot_sha256: string;
+    }[];
+    research_only: true;
+  };
+  expect(catalog.items).toHaveLength(1);
+  expect(catalog.items[0]).toMatchObject({
+    job_id: 'job-e2e0123456789abcdef01234',
+    state: 'COMPLETED',
+  });
+  expect(catalog.items[0]?.snapshot_id).toMatch(/^[0-9a-f]{64}$/);
+  expect(catalog.items[0]?.snapshot_sha256).toMatch(/^[0-9a-f]{64}$/);
+
+  const resultResponse = await request.get(
+    'http://127.0.0.1:18000/api/arena/jobs/job-e2e0123456789abcdef01234/frontier-discovery',
+  );
+  expect(resultResponse.status()).toBe(200);
+  const result = (await resultResponse.json()) as {
+    artifact: { result_sha256: string; comparison: { code_version: string } };
+    integrity_verified: boolean;
+    research_only: boolean;
+    orders_submitted: boolean;
+    authenticated_requests: boolean;
+  };
+  expect(result).toMatchObject({
+    integrity_verified: true,
+    research_only: true,
+    orders_submitted: false,
+    authenticated_requests: false,
+  });
+  expect(result.artifact.result_sha256).toMatch(/^[0-9a-f]{64}$/);
+  expect(result.artifact.comparison.code_version).toBe(
+    'frontier-seeded-arena-browser-fixture-v1',
+  );
+
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Laboratory', exact: true }).click();
+  await page.getByRole('tab', { name: 'Frontier research', exact: true }).click();
+  await page.getByRole('button', { name: /job-e2e0123456789abcdef01234/ }).click();
+  await expect(page.getByText('INTEGRITY VERIFIED')).toBeVisible();
+  await expect(page.getByText('3 paired discovery scopes')).toBeVisible();
+  await page.getByText('Reproducibility identities and execution limits').click();
+  await expect(page.getByText('frontier-seeded-arena-browser-fixture-v1')).toBeVisible();
+  await expect(
+    page.getByText('No orders were submitted, and no authenticated requests were made.'),
+  ).toBeVisible();
+  expect(probeRequests).toBe(0);
+  expect(arenaMutations).toBe(0);
+});
