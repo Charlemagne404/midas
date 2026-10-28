@@ -328,6 +328,16 @@ def test_coinbase_probe_api_rejects_held_source_before_transport(tmp_path):
     app.include_router(frontier_router(store, registry))
     try:
         with TestClient(app) as client:
+            coinbase_source = next(
+                item
+                for item in client.get("/api/frontier/sources").json()["items"]
+                if item["venue"] == Venue.COINBASE_EXCHANGE.value
+            )
+            assert coinbase_source["public_probe_enabled"] is False
+            assert (
+                coinbase_source["probe_policy_block_reason"]
+                == adapter.config.probe_policy_block_reason
+            )
             response = client.post(
                 "/api/frontier/probe/coinbase_exchange",
                 json={

@@ -1493,9 +1493,8 @@ def router(
                         item.model_dump(mode="json") for item in manifest.declarations
                     ],
                     "health": health_by_venue[manifest.venue].model_dump(mode="json"),
-                    "public_probe_enabled": bool(
-                        registry.get(manifest.venue).config.enabled
-                        and registry.get(manifest.venue).config.live_public_probe_enabled
+                    "public_probe_enabled": not probe_config_rejected(
+                        registry.get(manifest.venue).config
                     ),
                     "probe_policy_block_reason": getattr(
                         registry.get(manifest.venue).config,
@@ -1524,10 +1523,8 @@ def router(
                         item.model_dump(mode="json") for item in manifest.declarations
                     ],
                     "health": (await registry.get(manifest.venue).health()).model_dump(mode="json"),
-                    "public_probe_enabled": bool(
+                    "public_probe_enabled": not probe_config_rejected(
                         getattr(registry.get(manifest.venue), "config", None)
-                        and registry.get(manifest.venue).config.enabled
-                        and registry.get(manifest.venue).config.live_public_probe_enabled
                     ),
                     "probe_policy_block_reason": getattr(
                         getattr(registry.get(manifest.venue), "config", None),
