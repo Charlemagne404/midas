@@ -10722,3 +10722,32 @@ Coinbase source request occurred.
 **Next safe action:** continue bounded source-independent adapter review and
 targeted verification; do not start public probes or broad suites under the
 current evidence and resource gates.
+
+## Research-only boundary and resource recheck — 2026-10-28 20:35 UTC
+
+A static review of the Frontier adapters, API, and main workspace found no
+order submission/cancellation, deposit/withdrawal, wallet, private-key, or
+exchange API-key path. `PublicReadTransport` is built around anonymous HTTPS
+`GET` requests, rejects redirects, and has a fixed host allowlist. Mission
+Control's POST routes are for bounded research operations such as local replay,
+collection, and public-data probes; they do not create exchange orders. This
+is a scoped code review, not a runtime security certification.
+
+At `2026-10-28T20:34:48Z`, both protected services were active and untouched.
+Reality used 1,207,480,320 / 1,207,959,552 bytes, 479,232 bytes below its
+`MemoryHigh`; API used 1,567,940,608 / 1,610,612,736 bytes. Host
+`MemAvailable` was 9,930,252 KiB, `SwapFree` 48,608 KiB, memory PSI avg10 was
+0%, and I/O PSI `some` avg10/avg60/avg300 was 0.62% / 0.32% / 0.08%. This
+single sample does not establish sustained resource margin. No broad test or
+public source request was started.
+
+| Requirement | Status | Evidence and boundary |
+| --- | --- | --- |
+| Research-only external adapter boundary | COMPLETE AND VERIFIED WITHIN REVIEW SCOPE | Static inspection found anonymous GET-only transport and no external order/account operation path; no dynamic security certification is claimed. |
+| Protected service resource admission | BLOCKED FOR BROAD SUITES | Reality remains 479,232 bytes below `MemoryHigh`; one sample is insufficient for admission. |
+| Project Frontier overall | PARTIALLY VERIFIED | Live cross-venue validation, broad regression, endurance, protected recovery, and deployment remain open. |
+
+**Next safe action:** continue source-independent low-resource review and
+targeted fixtures. Keep public-source holds and production services unchanged;
+do not start broad regressions until repeated measurements show sustained
+headroom.

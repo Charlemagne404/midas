@@ -11504,6 +11504,30 @@ and the held `data/frontier-public-probes/` path was not read or modified.
 | Current broad Frontier/legacy regression | PARTIALLY VERIFIED | Focused adapter tests pass; the broad suite remains deferred under volatile protected-service memory headroom. |
 | Frontier overall | PARTIALLY VERIFIED | Live cross-venue science, full regression, endurance, protected recovery, and deployment remain incomplete. |
 
+## Research-only boundary and resource recheck — 2026-10-28 20:35 UTC
+
+A static review of the Frontier adapter, API, and workspace paths found no
+exchange order submission/cancellation, deposit/withdrawal, wallet,
+private-key, or exchange API-key operation. `PublicReadTransport` issues
+anonymous HTTPS `GET` requests through a fixed host allowlist and does not
+follow redirects. API POST routes found in this scope are local research
+operations such as replay, collection, and public-data probes. This code
+review does not certify runtime security against every possible caller.
+
+At `2026-10-28T20:34:48Z`, protected Reality and API services were active and
+untouched. Reality measured 1,207,480,320 / 1,207,959,552 bytes, 479,232 bytes
+below `MemoryHigh`; API measured 1,567,940,608 / 1,610,612,736 bytes. Host
+`MemAvailable` was 9,930,252 KiB and `SwapFree` 48,608 KiB. Memory PSI avg10
+was 0%; I/O PSI `some` avg10/avg60/avg300 was 0.62% / 0.32% / 0.08%. This
+single reading does not establish sustained admission margin. No public
+source request or broad test was run after the sample.
+
+| Requirement | Status | Evidence and boundary |
+| --- | --- | --- |
+| External trading boundary | COMPLETE AND VERIFIED WITHIN REVIEW SCOPE | External adapters use the anonymous GET-only transport; no exchange execution or account path was found in the reviewed Frontier scope. |
+| Broad test admission | BLOCKED | Reality remained 479,232 bytes below `MemoryHigh`; sustained margin is not established. |
+| Frontier overall | PARTIALLY VERIFIED | Live cross-venue validation, broad regressions, endurance, protected recovery, and deployment remain incomplete. |
+
 ## Coinbase book depth type validation — 2026-10-28 20:33 UTC
 
 Commit `46cd7ad` advances Coinbase Spot to
