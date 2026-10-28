@@ -5580,3 +5580,35 @@ I/O `some` PSI falls below 1%.
 | Python modular regression | COMPLETE AND VERIFIED | All 22 Frontier test modules pass across bounded slices: 358 cases in 14 invocations. |
 | Single-process full Frontier suite | PARTIALLY VERIFIED | Two monolithic attempts were interrupted; no complete one-process run. |
 | Frontend build and browser integration | DEFERRED | Prior UI results exist, but current post-backend rerun is pending an admission sample. |
+
+## Current frontend and integration verification — 2026-10-28 05:38 UTC
+
+The current branch frontend now passes:
+
+- Production build: `corepack pnpm build` completed `tsc -b` and Vite in
+  13.75 seconds wall time at 664,720 KiB peak RSS, with zero swaps or socket
+  messages.
+- Unit suite: **40/40** across seven files in 6.67 seconds Vitest time (7.70
+  seconds wall) at 290,488 KiB peak RSS; zero swaps or socket messages.
+- Frontier browser integration: **6/6** in 15.5 seconds Playwright time
+  (16.35 seconds wall) at 199,036 KiB peak RSS. Playwright used an isolated
+  demo API, temporary SQLite/Arena/Frontier roots, and local Vite; its services
+  exited and ports 15173/18000 were free afterward. These fixture/local flows
+  made no exchange probe and did not submit orders.
+- `corepack pnpm lint` and `corepack pnpm format:check` passed. Targeted Ruff
+  check and format verification pass for the changed collector and its tests;
+  strict mypy for the collector passes from the earlier checkpoint.
+
+Vite retains its chunk-size warning: the main bundle is 504.00 kB and the
+Chart bundle is 544.41 kB. Frontier's lazy bundle is 164.53 kB JavaScript and
+48.35 kB CSS. The build is successful; the advisory remains a performance
+follow-up.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Python modular regression | COMPLETE AND VERIFIED | All 22 Frontier modules pass: 358 cases in 14 bounded invocations. |
+| Frontier frontend unit/build/lint/format | COMPLETE AND VERIFIED | 40 unit cases, TypeScript/Vite build, lint, and Prettier pass. |
+| Frontier browser integration | COMPLETE AND VERIFIED | Six Frontier Playwright cases pass against isolated local demo services. |
+| Single-process full Python suite | PARTIALLY VERIFIED | Two large invocations were interrupted; module-by-module coverage is complete. |
+| Live second-venue relationship/economics | BLOCKED | Existing source-use holds remain; no genuine cross-venue equivalence or opportunity is claimed. |
+| Production transition | DEFERRED | Branch remains isolated and undeployed; separate source, resource, recovery, and deployment review is required. |
