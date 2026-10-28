@@ -15,6 +15,7 @@ import logging
 import math
 import os
 import shutil
+import stat
 import time
 from collections.abc import Callable
 from pathlib import Path
@@ -271,6 +272,26 @@ def _archive_directory_usage(
     return used, inventory_valid
 
 
+def _read_bounded_archive_manifest(path: Path) -> bytes | None:
+    """Read a regular archive manifest within the byte bound, including races."""
+    flags = os.O_RDONLY | getattr(os, "O_CLOEXEC", 0)
+    flags |= getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0)
+    descriptor = os.open(path, flags)
+    try:
+        metadata = os.fstat(descriptor)
+        if not stat.S_ISREG(metadata.st_mode):
+            raise OSError("Archive manifest is not a regular file")
+        if metadata.st_size > MAX_ARCHIVE_MANIFEST_BYTES:
+            return None
+        with os.fdopen(descriptor, "rb") as source:
+            descriptor = -1
+            contents = source.read(MAX_ARCHIVE_MANIFEST_BYTES + 1)
+        return contents if len(contents) <= MAX_ARCHIVE_MANIFEST_BYTES else None
+    finally:
+        if descriptor >= 0:
+            os.close(descriptor)
+
+
 def archive_capacity(
     root: Path,
     destination: Path,
@@ -302,12 +323,13 @@ def archive_capacity(
     manifest_provenance_valid: bool | None = False if manifest_exists else None
     if manifest_present:
         try:
-            if manifest_path.stat().st_size > MAX_ARCHIVE_MANIFEST_BYTES:
+            contents = _read_bounded_archive_manifest(manifest_path)
+            if contents is None:
                 manifest_size_limited = True
                 manifest_provenance_valid = None
                 alerts.append("ARCHIVE_MANIFEST_SIZE_LIMIT")
             else:
-                parsed = json.loads(manifest_path.read_text())
+                parsed = json.loads(contents.decode("utf-8"))
                 if isinstance(parsed, dict):
                     manifest_value = parsed
                     candidate = parsed.get("archival_provenance")

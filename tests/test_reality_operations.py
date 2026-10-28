@@ -642,7 +642,8 @@ def test_archive_capacity_does_not_parse_an_oversized_manifest(tmp_path, monkeyp
     target.mkdir(parents=True)
     raw.mkdir()
     mountpoint = target.parent
-    (target / "manifest.json").write_text("{}")
+    manifest_path = target / "manifest.json"
+    manifest_path.write_text("{}")
     monkeypatch.setattr(operations, "MAX_ARCHIVE_MANIFEST_BYTES", 1)
 
     def fail_read(_path, *args, **kwargs):
@@ -666,6 +667,11 @@ def test_archive_capacity_does_not_parse_an_oversized_manifest(tmp_path, monkeyp
 
     def separate_devices(path, *args, **kwargs):
         value = original_stat(path, *args, **kwargs)
+        if path == manifest_path:
+            proxy = StatProxy(value, value.st_dev)
+            # Simulate growth after the earlier path-level size observation.
+            proxy.st_size = 0
+            return proxy
         if path == raw:
             return StatProxy(value, 1)
         if path in {mountpoint, target}:
