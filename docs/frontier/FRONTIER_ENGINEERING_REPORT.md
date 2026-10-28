@@ -11868,3 +11868,39 @@ suites remain unrun. No public endpoint or protected service was touched.
 | Full exact-tree Frontier/MIDAS regression | PARTIALLY VERIFIED | Deferred under elevated PSI and the near-boundary API resource sample. |
 | Live cross-venue research | BLOCKED | Data-use and physical-location authorization remain unresolved. |
 | Frontier overall | PARTIALLY VERIFIED | Live evidence, broad regression, endurance, protected recovery, and deployment remain open. |
+
+## Exact collection-capture provenance — 2026-10-28 21:01 UTC
+
+Implementation and collector tests are committed as `49d7827` on
+`codex/frontier-20261026`.
+
+Collector version `frontier-finite-collection-3` binds normalized market and
+book evidence to the captured request URL, adapter version, request start,
+response receipt, monotonic request duration, and raw-body SHA-256. A matching
+body hash alone no longer suffices. The discovery path checks every normalized
+market against an exact capture; the book path checks its one pinned response
+and the adapter version recorded by the run. The pending checkpoint validator
+reapplies these bindings before a newly captured observation can be persisted.
+Lineage failures preserve the original raw response as a diagnostic record.
+
+The complete collector module passes **36/36** tests in 9.19 seconds within a
+transient scope capped at 1 GiB RAM, zero swap, and 50% CPU. Focused coverage
+also confirms a valid resumable collection and invalid URL provenance rejection
+for both market and book captures. Strict mypy passes on
+`packages/midas/frontier/collection.py`; Ruff check, Ruff format check, and
+`git diff --check` pass. No external endpoint was contacted.
+
+At `2026-10-28T21:01:22Z`, Reality remained active at 1,207,685,120 bytes of
+1,207,959,552-byte `MemoryHigh`; API remained active at 1,608,720,384 bytes of
+1,610,612,736-byte `MemoryHigh`. Memory PSI avg10 was 0%, avg300 `some` was
+11.79%; host available memory was 10.30 GB and swap had 49.98 MB free. The
+services were not modified. Broad Frontier/MIDAS regression remains deferred
+while the protected services have little soft-limit margin.
+
+| Requirement | Status | Evidence and boundary |
+| --- | --- | --- |
+| Collector request/capture provenance | COMPLETE AND VERIFIED | Normalized market/book lineage binds URL, adapter version, request and receipt times, monotonic duration, and raw hash. |
+| Exact-tree collector tests | COMPLETE AND VERIFIED | 36/36 tests pass on the current code. |
+| Full Frontier and MIDAS regression | PARTIALLY VERIFIED | Broad suites remain unrun under the protected-service resource gate. |
+| Genuine live cross-venue science | BLOCKED | Source-use/location authorization remains unresolved; fixture results are not live claims. |
+| Frontier overall | PARTIALLY VERIFIED | Live evidence, broad regressions, endurance, protected recovery, and deployment remain open. |
