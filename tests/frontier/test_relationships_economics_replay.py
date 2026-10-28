@@ -1842,6 +1842,8 @@ def test_copied_invalid_execution_scenario_cannot_scale_depth_or_pass_independen
         code_version="copied-invalid-scenario-audit-v1",
     )
     candidate = next(item for item in valid_replay.candidates if item.legs)
+    assert candidate.gross_cost is not None
+    assert candidate.gross_pnl_by_state
     canonical_instrument_mapping = evidence_mapping(relationship, "instrument_mapping")
     audited = independently_audit_candidate(
         candidate.model_copy(update={"independent_audit": None}),
@@ -1857,11 +1859,67 @@ def test_copied_invalid_execution_scenario_cannot_scale_depth_or_pass_independen
     assert audited.classification == OpportunityClassification.INCOMPLETE_EVIDENCE
     assert not audited.practical_eligibility
     assert audited.legs == candidate.legs
+    assert audited.gross_cost is None
+    assert audited.modeled_fees is None
+    assert audited.modeled_net_cost is None
+    assert not audited.outcome_payout_by_state
+    assert not audited.gross_pnl_by_state
+    assert not audited.net_pnl_by_state
+    assert audited.worst_case_gross_pnl is None
+    assert audited.worst_case_net_pnl is None
+    assert not audited.capital_by_venue
+    assert not audited.timing_verified
+    assert audited.one_sided_fill_sensitivity is None
+    assert audited.partial_fill_grid_sensitivity is None
     assert max(leg.quantity for leg in candidate.legs) <= max(
         level.quantity
         for snapshot in (*left_books.values(), *right_books.values())
         for level in snapshot.asks
     )
+
+
+def test_missing_pinned_market_clears_stale_candidate_economics():
+    left, right, relationship, instrument_mapping = _verified_pair()
+    left_books, right_books = _books(left, right)
+    replay = deterministic_replay(
+        (left, right),
+        tuple(left_books.values()) + tuple(right_books.values()),
+        verified_relationships=(relationship,),
+        as_of_utc=T0 + timedelta(milliseconds=100),
+        code_version="missing-pinned-market-audit-v1",
+    )
+    candidate = next(item for item in replay.candidates if item.legs)
+    assert candidate.gross_cost is not None
+    assert candidate.gross_pnl_by_state
+    copied_candidate = candidate.model_copy(update={"practical_eligibility": True})
+
+    audited = independently_audit_candidate(
+        copied_candidate,
+        markets={left.canonical_id: left},
+        books_by_market={left.canonical_id: left_books, right.canonical_id: right_books},
+        relationships={relationship.relationship_id: relationship},
+        state_mappings={relationship.relationship_id: {"yes": "yes", "no": "no"}},
+        instrument_mappings={relationship.relationship_id: instrument_mapping},
+        scenario=ExecutionScenario(),
+    )
+
+    assert audited.independent_audit is not None
+    assert audited.independent_audit.disposition == EconomicAuditDisposition.INCOMPLETE
+    assert "absent from the pinned replay inputs" in audited.independent_audit.message
+    assert audited.classification == OpportunityClassification.INCOMPLETE_EVIDENCE
+    assert not audited.practical_eligibility
+    assert audited.gross_cost is None
+    assert audited.modeled_fees is None
+    assert audited.modeled_net_cost is None
+    assert not audited.outcome_payout_by_state
+    assert not audited.gross_pnl_by_state
+    assert not audited.net_pnl_by_state
+    assert audited.worst_case_gross_pnl is None
+    assert audited.worst_case_net_pnl is None
+    assert not audited.capital_by_venue
+    assert not audited.timing_verified
+    assert audited.one_sided_fill_sensitivity is None
+    assert audited.partial_fill_grid_sensitivity is None
 
 
 def test_fee_schedule_expiring_before_modeled_execution_stays_unknown_in_candidate_and_audit():
@@ -2359,7 +2417,7 @@ def test_independent_audit_rejects_naive_book_time_from_a_reconstructed_model():
     assert audit.independent_audit is not None
     assert audit.independent_audit.disposition.value == "incomplete"
     assert "not timezone-aware" in audit.independent_audit.message
-    assert audit.independent_audit.model_version == "frontier-independent-economic-audit-22"
+    assert audit.independent_audit.model_version == "frontier-independent-economic-audit-23"
 
 
 def test_independent_audit_rejects_quantity_step_mutation():

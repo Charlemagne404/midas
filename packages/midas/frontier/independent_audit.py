@@ -54,10 +54,32 @@ from midas.frontier.relationships import (
 )
 
 D = Decimal
-_AUDIT_VERSION = "frontier-independent-economic-audit-22"
+_AUDIT_VERSION = "frontier-independent-economic-audit-23"
 _FEE_QUANTUM = D("0.00001")
 _KALSHI_FEE_MAX_EVIDENCE_AGE = timedelta(hours=24)
 _AUDIT_PARTIAL_FILL_FRACTIONS = (D(0), D("0.25"), D("0.5"), D("0.75"), D(1))
+
+
+def _clear_unverified_economic_outputs() -> dict[str, Any]:
+    """Remove candidate calculations when the independent audit cannot recompute them."""
+    return {
+        "practical_eligibility": False,
+        "one_sided_fill_sensitivity": None,
+        "partial_fill_grid_sensitivity": None,
+        "outcome_payout_by_state": {},
+        "gross_cost": None,
+        "modeled_fees": None,
+        "modeled_net_cost": None,
+        "gross_pnl_by_state": {},
+        "net_pnl_by_state": {},
+        "worst_case_gross_pnl": None,
+        "worst_case_net_pnl": None,
+        "capital_by_venue": {},
+        "capital_currency_identity": None,
+        "received_skew_ms": None,
+        "exchange_skew_ms": None,
+        "timing_verified": False,
+    }
 
 
 def independently_audit_candidate(
@@ -99,9 +121,13 @@ def independently_audit_candidate(
         )
         return candidate.model_copy(
             update={
+                **_clear_unverified_economic_outputs(),
                 "classification": OpportunityClassification.INCOMPLETE_EVIDENCE,
-                "practical_eligibility": False,
                 "independent_audit": audit,
+                "reasons": (
+                    *candidate.reasons,
+                    "Independent audit incomplete: execution scenario fails structural validation.",
+                ),
             }
         )
     input_sha256 = _audit_input_hash(
@@ -159,23 +185,8 @@ def independently_audit_candidate(
             }
         )
         no_leg_updates: dict[str, Any] = {
+            **_clear_unverified_economic_outputs(),
             "independent_audit": audit,
-            "practical_eligibility": False,
-            "one_sided_fill_sensitivity": None,
-            "partial_fill_grid_sensitivity": None,
-            "outcome_payout_by_state": {},
-            "gross_cost": None,
-            "modeled_fees": None,
-            "modeled_net_cost": None,
-            "gross_pnl_by_state": {},
-            "net_pnl_by_state": {},
-            "worst_case_gross_pnl": None,
-            "worst_case_net_pnl": None,
-            "capital_by_venue": {},
-            "capital_currency_identity": None,
-            "received_skew_ms": None,
-            "exchange_skew_ms": None,
-            "timing_verified": False,
         }
         if claims_economic_result:
             no_leg_updates["classification"] = OpportunityClassification.INCOMPLETE_EVIDENCE
@@ -210,6 +221,7 @@ def independently_audit_candidate(
             )
             return candidate.model_copy(
                 update={
+                    **_clear_unverified_economic_outputs(),
                     "independent_audit": audit,
                     "classification": OpportunityClassification.INCOMPLETE_EVIDENCE,
                     "reasons": (*candidate.reasons, f"Independent audit incomplete: {error}"),
