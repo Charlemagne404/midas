@@ -3099,3 +3099,18 @@ broader Mission Control browser suite and overall Frontier status remain
 **Next safe action:** take a fresh resource sample before any additional
 browser run; continue bounded, source-independent review until I/O admission
 is clear.
+
+## Mission Control E2E coverage — 2026-10-28 14:42 UTC
+
+All 19 collected Mission Control browser cases pass across isolated one-worker
+runs: 10 existing MIDAS cases, 7 normal Frontier cases, and 2 seeded Frontier
+fixture cases. The earlier combined run remains recorded as interrupted at
+the I/O gate. A first 10-case run had one Veritas failure because I overrode
+its historical artifact workspace with an empty directory; the successful
+repeat used the configured repository-backed read path and required no code
+or test edits. Mutable API, Arena, and Frontier data stayed in a fresh temp
+root. I/O PSI stayed below 1% in sampled checks; final I/O PSI at 14:42:48Z
+was 0.08% some / 0.06% full and memory PSI was 0.00%. No test server remained.
+
+Browser case coverage is **COMPLETE AND VERIFIED**. Broader repository
+regression and Frontier overall remain **PARTIALLY VERIFIED**.

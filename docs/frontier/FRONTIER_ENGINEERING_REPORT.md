@@ -10030,3 +10030,35 @@ check. No production service or public source was accessed.
 | Frontier-specific E2E | COMPLETE AND VERIFIED | Dedicated normal and seeded Frontier files pass 7/7 and 2/2. |
 | All Mission Control Playwright E2E | PARTIALLY VERIFIED | The 19-case run was resource-stopped after eight passes and two skips; nine did not complete. |
 | Frontier project overall | PARTIALLY VERIFIED | Broader regression, live-source science, endurance, production recovery, and deployment remain open. |
+
+### Browser coverage completed across isolated runs — 2026-10-28 14:42 UTC
+
+The earlier one-shot Mission Control Playwright command remains interrupted at
+the I/O gate as recorded above. To complete coverage without rerunning its
+already passing Frontier cases, the ten other E2E cases were run as a separate
+one-worker group. An initial attempt passed 9/10 because I explicitly pointed
+`MIDAS_VERITAS_WORKSPACE` at an empty directory; the Veritas page correctly
+reported that its historical evidence was unavailable. No application or
+test change was needed. The repeat omitted that override, matching the
+Playwright configuration's repository-backed read-only Veritas evidence path,
+while keeping the mutable API database, Arena root, and Frontier root in a
+fresh temporary directory. All ten cases then passed in 23.3 seconds.
+
+Combined with the previously passing dedicated Frontier runs (7/7 normal and
+2/2 seeded), all **19 collected Mission Control E2E cases passed across three
+isolated runs**. The seeded cases used fixture data only. This establishes
+current per-file browser coverage; it does not turn the interrupted one-shot
+into a completed run or close the broader Python, live-source, production, or
+deployment gates.
+
+Periodic I/O PSI avg10 samples during the admitted run remained below the 1%
+gate; the highest sampled value was 0.85% some / 0.42% full. At `14:42:48Z`
+the final sample was 0.08% some / 0.06% full; memory PSI was 0.00%. The test
+API and Vite servers were gone at the final process check. No public source,
+production service, or protected store was accessed.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Mission Control browser test coverage | COMPLETE AND VERIFIED | All 19 collected cases pass across isolated one-worker runs; the earlier combined run was stopped at the I/O gate. |
+| Broader MIDAS Python/Arena regression | PARTIALLY VERIFIED | Current full repository regression remains incomplete. |
+| Frontier project overall | PARTIALLY VERIFIED | Live cross-venue science, resource sustainability, production recovery, and deployment remain open. |

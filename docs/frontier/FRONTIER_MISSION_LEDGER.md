@@ -9064,3 +9064,35 @@ Frontier overall remains **PARTIALLY VERIFIED**.
 **Next safe action:** take a fresh I/O and resource sample before another
 resource-bearing run. Do not resume the broad E2E batch until the admission
 gate clears; continue source-independent static review meanwhile.
+
+## Mission Control browser coverage completed — 2026-10-28 14:42 UTC
+
+The ten non-Frontier browser cases passed **10/10** in a one-worker Playwright
+run (23.3 seconds). The first attempt passed 9/10 because I set
+`MIDAS_VERITAS_WORKSPACE` to an empty temporary directory; this hid the
+checked-in historical artifacts that the Veritas browser spec intentionally
+reads. I made no code or test change. The successful rerun left that setting
+unset, preserving the configured read-only repository evidence path, and
+isolated the mutable API database, Arena, and Frontier roots in a fresh temp
+directory.
+
+Together with the earlier isolated Frontier runs (7/7 normal and 2/2 seeded),
+all **19 collected Mission Control E2E cases pass across three runs**. Seeded
+data is fixture-only. The earlier combined run remains recorded as stopped
+after eight passes and two skips when I/O crossed the gate; this subsequent
+per-group evidence completes browser-case coverage without changing that
+historical result.
+
+I/O PSI avg10 stayed below 1% in periodic samples during the successful run;
+the maximum observed sample was 0.85% some / 0.42% full. At 14:42:48Z the
+final sample was 0.08% / 0.06%, and memory PSI was 0.00%. The test-owned API
+and Vite servers were gone. No public source, production service, or protected
+store was accessed.
+
+Mission Control browser test coverage is **COMPLETE AND VERIFIED**. Broader
+repository regression and overall Frontier remain **PARTIALLY VERIFIED**;
+live cross-venue evidence, resource sustainability, production recovery, and
+deployment are still open.
+
+**Next safe action:** continue source-independent acceptance review; take a
+fresh resource sample before any further broad test batch.
