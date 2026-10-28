@@ -12728,3 +12728,20 @@ At `2026-10-28T22:25:26Z`, API `MemoryHigh` headroom had narrowed to
 **471,040 bytes** while Reality headroom was **123,908,096 bytes**; system
 memory PSI `avg10` was 0%. No additional test process was started after this
 sample.
+
+## Comparison arm mismatch regression — 2026-10-28
+
+The paired replay API fixture now covers a valid comparison readback, missing
+arm rows, and arm rows whose stored result hashes differ from the comparison's
+pinned hashes. Both the list and detail routes fail closed with HTTP 409 for
+the missing and mismatched cases. The focused test passes **1/1**, running in
+a separate GNOME Terminal scope with a 512 MiB address-space limit, 30-second
+CPU limit, and 30-second timeout. It made no network calls. This adds
+case-specific readback coverage; full comparison/storage regression remains
+unrun.
+
+At `2026-10-28T22:27:27Z`, API `MemoryHigh` headroom was **1,069,056 bytes**,
+Reality headroom was **237,490,176 bytes**, PSI was `some avg10=19.23%` and
+`full avg10=16.32%`, and available memory was **9,881,128 kB**. No cause is
+assigned to this sample. Further runtime checks are deferred under elevated
+PSI and narrow API headroom.

@@ -11752,3 +11752,29 @@ process was started after this measurement.
 Next safe action: when API headroom and system pressure recover, test the
 mismatched-arm hash case and run the smallest targeted comparison/storage
 regression. Continue static work in the meantime.
+
+## Comparison mismatched-arm regression — 2026-10-28 22:27 UTC
+
+The paired replay API fixture now exercises both missing arm records and
+result-hash mismatch between a stored replay row and the comparison's pinned
+arm. Valid list/detail readback remains successful; each missing or mismatched
+case returns HTTP 409 from both routes. The single focused API test passed
+**1/1** with a 512 MiB address-space limit, 30-second CPU limit, and
+30-second timeout. The process ran in the GNOME Terminal cgroup, separate
+from the protected API cgroup, and made no network calls.
+
+At `2026-10-28T22:27:27Z`, API headroom was 1,069,056 bytes and Reality
+headroom was 237,490,176 bytes. PSI was elevated (`some avg10=19.23%`,
+`full avg10=16.32%`); available memory was 9,881,128 kB. This measurement is not
+attributed to the test. Further runtime checks are deferred.
+
+| Component | Status | Evidence and boundary |
+| --- | --- | --- |
+| Comparison arm missing-reference behavior | COMPLETE AND VERIFIED WITH FIXTURES | List/detail reject missing saved runs. |
+| Comparison arm result-hash behavior | COMPLETE AND VERIFIED WITH FIXTURES | List/detail reject run rows whose stored result hash differs from the pinned arm hash. |
+| Full comparison/storage regression | PARTIALLY VERIFIED | One paired API test passes; broader API/storage regressions remain deferred. |
+| Project Frontier overall | PARTIALLY VERIFIED | Live cross-venue science, broad regression, endurance, protected recovery, and deployment remain open. |
+
+Next safe action: defer additional test processes until system PSI eases and
+API `MemoryHigh` headroom materially recovers; then run a bounded comparison
+and storage regression before continuing other acceptance gaps.

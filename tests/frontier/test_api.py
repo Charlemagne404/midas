@@ -2524,6 +2524,8 @@ def test_paired_replay_persists_both_arms_and_deterministic_comparison(tmp_path,
         assert read_back.status_code == 200
         assert read_back.json()["result"]["result_sha256"] == comparison["result_sha256"]
 
+        pinned_run_ids = tuple(arm["run_id"] for arm in comparison["arms"])
+        pinned_rows = store.replays_by_ids(pinned_run_ids)
         monkeypatch.setattr(store, "replays_by_ids", lambda _run_ids: {})
         missing_arm_list = client.get("/api/frontier/comparisons")
         assert missing_arm_list.status_code == 409
@@ -2533,6 +2535,27 @@ def test_paired_replay_persists_both_arms_and_deterministic_comparison(tmp_path,
         missing_arm_detail = client.get(f"/api/frontier/comparisons/{comparison['comparison_id']}")
         assert missing_arm_detail.status_code == 409
         assert missing_arm_detail.json()["detail"] == (
+            "Stored replay comparison references missing or mismatched replay evidence"
+        )
+
+        mismatched_hash_rows = {
+            run_id: {
+                **row,
+                "result_sha256": ("0" * 64 if row["result_sha256"] != "0" * 64 else "1" * 64),
+            }
+            for run_id, row in pinned_rows.items()
+        }
+        monkeypatch.setattr(store, "replays_by_ids", lambda _run_ids: mismatched_hash_rows)
+        mismatched_hash_list = client.get("/api/frontier/comparisons")
+        assert mismatched_hash_list.status_code == 409
+        assert mismatched_hash_list.json()["detail"] == (
+            "Stored replay comparison references missing or mismatched replay evidence"
+        )
+        mismatched_hash_detail = client.get(
+            f"/api/frontier/comparisons/{comparison['comparison_id']}"
+        )
+        assert mismatched_hash_detail.status_code == 409
+        assert mismatched_hash_detail.json()["detail"] == (
             "Stored replay comparison references missing or mismatched replay evidence"
         )
 

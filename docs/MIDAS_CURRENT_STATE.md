@@ -3914,3 +3914,16 @@ partially verified.
 At `2026-10-28T22:25:26Z`, a follow-up sample showed API headroom of 471,040
 bytes and Reality headroom of 123,908,096 bytes. System PSI `avg10` was 0%;
 the API remains too close to `MemoryHigh` for further tests in this checkpoint.
+
+## Project Frontier comparison arm mismatch regression — 2026-10-28 22:27 UTC
+
+The paired replay API regression now verifies both missing arm rows and
+stored-row result hashes that differ from the hashes pinned by a comparison.
+The valid comparison still reads successfully; both corrupted list and detail
+readbacks return HTTP 409. The focused test passes 1/1 under a 512 MiB address
+space, 30-second CPU, and 30-second wall timeout. No network request was made.
+
+At `2026-10-28T22:27:27Z`, API `MemoryHigh` headroom was 1,069,056 bytes and
+Reality headroom was 237,490,176 bytes. PSI was elevated (`some avg10=19.23%`,
+`full avg10=16.32%`); available memory was 9,881,128 kB. Further runtime
+checks are deferred. Frontier remains partially verified.
