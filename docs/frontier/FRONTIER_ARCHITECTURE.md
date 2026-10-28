@@ -117,6 +117,12 @@ native metadata, source URL, adapter/schema versions, raw-body hash, request and
 receipt times, and source-time semantics. Source quality flags are carried forward
 instead of being replaced with guessed values.
 
+`FrontierMarket.native_event_id` is populated only from an explicit source event
+record or a parent-event response. The legacy Polymarket parser's local
+`market:<market-id>` fallback is not a venue event identifier; Frontier leaves
+event membership unknown when Gamma omits the event record, while retaining the
+original payload in raw evidence.
+
 Observation persistence copies the normalized model and stamps each missing
 typed `Provenance.persisted_at_utc` with the Frontier writer's UTC time
 immediately before serialization and the atomic SQLite insert. This records

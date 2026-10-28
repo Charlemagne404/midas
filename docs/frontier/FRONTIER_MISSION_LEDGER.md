@@ -4461,3 +4461,64 @@ Coinbase holds. No jurisdictional permission is inferred.
 | Polymarket single-market adapter live lookup | PARTIALLY VERIFIED | One bounded HTTP 200 response is persisted and hash-checked; event membership, payoff semantics, cross-venue matching, and clean harness teardown remain unverified. |
 | Isolated capture-store integrity | COMPLETE AND VERIFIED | SQLite integrity check passed; raw-body SHA-256 matches persisted metadata; original capture store stayed read-only. |
 | Full web suite, browser E2E, and production build | PARTIALLY VERIFIED | The previous targeted UI checks passed; broad web verification remains pending a fresh resource and shared-lock admission check. |
+
+### Full Frontier web suite and browser E2E — 2026-10-28 03:57 UTC
+
+At `2026-10-28T03:56:26Z`, memory PSI avg10 was 0%, about 10 GiB was
+available, and the shared Arena lock had no listed holder. The complete web
+unit suite passed **40/40 across seven files**:
+
+```bash
+/usr/bin/time -v corepack pnpm test
+# 40 passed; 360,100 KiB peak RSS; zero swaps and socket messages
+```
+
+The six Frontier browser scenarios then passed **6/6** against the Playwright
+configuration's temporary loopback API/database/Arena root and Vite server:
+
+```bash
+/usr/bin/time -v corepack pnpm exec playwright test e2e/frontier.spec.ts
+# 6 passed in 15.5s; 197,660 KiB peak RSS; zero swaps or socket messages
+```
+
+The scenarios covered the research-only overview and responsive layout, no
+automatic source probes, replay history without job submission, scoped saved
+discovery evidence, fixture-only joint-state replay and Kalshi fee arithmetic,
+and bounded relationship-graph interaction. No exchange source request,
+protected service, shared Arena artifact root, or production configuration was
+touched. The production web build was not run because resource pressure rose
+after E2E.
+
+At `2026-10-28T03:59:17Z`, memory PSI had risen to **35.49% some / 30.65% full**
+avg10, with about **10 GiB** available. External Veritas PID **4154226** held
+the shared Arena admission lock in `D` state. It was left untouched. No further
+resource-bearing checks were started.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Complete web unit suite | COMPLETE AND VERIFIED | 40/40 across seven files; 360,100 KiB peak RSS; zero swaps or socket messages. |
+| Frontier browser E2E | COMPLETE AND VERIFIED | 6/6 against temporary local services and data; 197,660 KiB peak RSS; no public source requests. |
+| Production web build | PARTIALLY VERIFIED | Typecheck passed earlier; final build remains pending a fresh resource admission check. |
+
+### Gamma missing-event identity correction — 2026-10-28 03:59 UTC
+
+The bounded Gamma detail response has no `events`, `eventId`, or `event_id`
+field. Its previously stored normalized `market:2589810` value came from the
+legacy MIDAS Polymarket normalizer's local fallback, not from Gamma. The
+immutable capture remains unchanged and its placeholder is not treated as
+evidence of event membership.
+
+The Frontier adapter is being corrected to set `native_event_id` only from an
+explicit nested Gamma event or the parent event lookup that supplied the
+market. Missing event context now normalizes as `null`; an existing listing
+event ID remains on the original listing observation. Adapter and API fixtures
+were adjusted to exercise this absent-event case, and the architecture contract
+now explains the distinction. Ruff check/format and `git diff --check` passed.
+No Python tests or build were started after the edit: at the fresh
+`2026-10-28T03:59:17Z` sample, memory PSI avg10 was **35.49% some / 30.65% full**
+and external Veritas PID **4154226** held the shared Arena lock. The test change
+is therefore unverified and must be run after a new resource admission check.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Frontier event ID normalization correction | PARTIALLY VERIFIED | Conservative mapping and absent-event assertions are implemented; static lint/format pass; targeted adapter/API tests remain pending. Historical captures are immutable. |
