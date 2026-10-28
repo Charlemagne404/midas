@@ -33,6 +33,18 @@ in the dated addendum below and in the Frontier engineering report.
 
 ## Frontier development addendum — 2026-10-28
 
+### Latest isolated Frontier checkpoint — 2026-10-28 10:14 UTC
+
+The code/test tree includes `429f690`; `7651b81`, `2c8038d`, and `6da77a1` are
+documentation-only commits. The hash-validated Polymarket capture remains the
+only untracked worktree content, and the local API/Vite listeners are stopped.
+At `10:13:59Z`, memory PSI avg10 was 37.05% some / 31.35% full and I/O PSI
+avg10 was 0%. Defer tests, builds, and browser work until both avg10 values are
+below 1%. See the current acceptance matrix in the
+[Frontier engineering report](frontier/FRONTIER_ENGINEERING_REPORT.md).
+Frontier remains research-only, isolated, undeployed, and
+**PARTIALLY VERIFIED**.
+
 ### Latest isolated Frontier checkpoint — 2026-10-28 09:06 UTC
 
 A short-lived local Uvicorn API ran in demo mode with its writable roots

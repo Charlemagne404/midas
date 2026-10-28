@@ -232,6 +232,11 @@ no further broad test was started at that checkpoint. On 2026-10-28 at
 `09:06:50Z`, memory PSI avg10 was 0% and I/O PSI avg10 was **1.35% some / 1.35%
 full**. A local API/Vite smoke was stopped before starting a browser; no cause
 is attributed. Recheck pressure before the next browser, broad test, or build.
+At `10:13:59Z`, memory PSI avg10 was **37.05% some / 31.35% full** and I/O PSI
+avg10 was 0%. Wait for both avg10 values to fall below the 1% admission gate
+before starting tests, builds, or a browser. The current worktree completion
+matrix and continuation state are recorded in the engineering report and
+mission ledger.
 
 For a broad suite run, first sample `/proc/pressure/memory` and
 `/proc/pressure/io`; defer when memory or I/O PSI avg10 is at or above 1%.

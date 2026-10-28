@@ -1,5 +1,16 @@
 # Project Frontier Mission Ledger
 
+## Current resource admission and acceptance checkpoint — 2026-10-28 10:14 UTC
+
+The current code/test tree includes `429f690`; `7651b81`, `2c8038d`, and
+`6da77a1` are documentation-only commits. The market-store, collector-journal,
+and manifest hashes still match the preserved public capture. At `10:13:59Z`,
+memory PSI avg10 was 37.05% some / 31.35% full and I/O PSI avg10 was 0%. Do not
+start tests, builds, or a browser until both avg10 measurements are below 1%.
+The latest requirement-by-requirement status is in the current mission matrix
+at the top of `FRONTIER_ENGINEERING_REPORT.md`. Frontier remains
+**PARTIALLY VERIFIED**.
+
 ## Full Frontier regression after capture isolation — 2026-10-28 09:02 UTC
 
 After commit `429f690` added the test I/O guard for the separate public

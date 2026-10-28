@@ -2,7 +2,7 @@
 
 **Report date:** 2026-10-28
 
-## Current status — 2026-10-28 09:06 UTC
+## Current status — 2026-10-28 10:14 UTC
 
 Frontier is isolated at `/home/charlie/midas-frontier` on
 `codex/frontier-20261026`. It descends from verified Veritas V6 integration
@@ -75,8 +75,10 @@ Current bounded verification:
   was 0.93% some / 0.79% full and I/O PSI avg10 was 0.79% some / 0.75% full.
   At `09:05:51Z`, I/O PSI avg10 was 0.99% some / 0.99% full; at `09:06:50Z` it
   was 1.35% some / 1.35% full while memory PSI avg10 was 0%. The source of the
-  change is unknown and is not attributed to Frontier. No browser was launched;
-  take a fresh admission sample before more resource-bearing work.
+  change is unknown and is not attributed to Frontier. At `10:13:59Z`, memory
+  PSI avg10 was **37.05% some / 31.35% full** and I/O PSI avg10 was 0%. No
+  browser or test was started; defer resource-bearing work until both PSI avg10
+  measurements are below 1%.
 
 The complete MIDAS repository regression remains unverified. The current tree
 has `packages/midas/arena/recovery.py` but lacks
@@ -96,6 +98,41 @@ quality, production resource/recovery, and deployment gates remain open.
 
 Frontier remains **PARTIALLY VERIFIED**, research-only, isolated, unmerged, and
 undeployed. No protected service or historical evidence was changed.
+
+## Current mission acceptance matrix — 2026-10-28 10:14 UTC
+
+This matrix assesses the requested Frontier scope against the current isolated
+branch and captured evidence. The current code/test tree includes `429f690`;
+subsequent commits `7651b81`, `2c8038d`, and `6da77a1` update documentation
+only. The genuine public capture remains untracked and preserved under
+`data/frontier-public-probes/`.
+
+| Requirement | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Isolated Frontier baseline and adapter capability framework | COMPLETE AND VERIFIED | Branch `codex/frontier-20261026` descends from the verified V6 baseline. Adapters declare supported and unsupported capabilities; configuration, transport, parsing, and fixture contracts are covered by the full Frontier suite. |
+| Polymarket public adapter and normalized API path | PARTIALLY VERIFIED | One genuine Gamma listing and one CLOB book were captured, hash-validated, and returned by the full local API with observation IDs and a recorded-only disclosure. This is not broad adapter conformance or simultaneous/executable evidence. |
+| Kalshi, Kraken, and Coinbase live source use | BLOCKED | Adapter and permission-gate fixtures pass, but current research-use/terms gates hold probes and quarantine stored evidence. No live cross-venue use is claimed. |
+| Canonical instruments and supported payoff semantics | PARTIALLY VERIFIED | Versioned models preserve venue IDs, outcomes, constraints, denomination identity, payoff and resolution metadata, and provenance. Supported binary, one-hot multi-outcome, and bounded basket semantics have explicit validation; the captured binary market's payoff and settlement remain unverified. |
+| Relationship graph and evidence persistence | PARTIALLY VERIFIED | Deterministic proposals, explicit hypothesis/verification states, evidence-backed reviews, bounded graph queries, and persistence are tested. No genuine verified cross-venue economic equivalence exists in permitted evidence. |
+| Opportunity discovery and independent verification | PARTIALLY VERIFIED | Bounded binary, outcome-coverage, implication, basket, and joint-state paths have independent arithmetic and fixture coverage. No live cross-venue candidate or positive eligible opportunity is demonstrated. |
+| Cross-venue costs, capital, and execution uncertainty | PARTIALLY VERIFIED | Fee, FX, carry, partial-fill, timing, and venue-separated virtual-capital models have independent checks. Account-specific fees, settlement, legal access, custody, transfers, and executable availability remain unresolved. |
+| Collection, provenance, durable storage, and deterministic replay | PARTIALLY VERIFIED | Finite restartable collection, immutable hash-linked observations, bounded storage, replay, and source-quality metadata are fixture-tested; one bounded live Polymarket capture is preserved. Continuous feeds, broad history, and long-horizon source quality remain unmeasured. |
+| Laboratory/Arena integration | PARTIALLY VERIFIED | Replay/comparison artifacts and bounded job paths have deterministic fixture coverage and a prior short supervised worker demonstration. Endurance, concurrency, and production-worker readiness are not established. |
+| Frontier analytics and coverage | PARTIALLY VERIFIED | Source-aware coverage, quality, timing, candidate, and rejection summaries are implemented. The single live market/book sample cannot support venue-wide coverage or prevalence conclusions. |
+| Native Mission Control Frontier workspace | IMPLEMENTED, LIVE VALIDATION PENDING | Frontend tests, type checks, lint/format, production build, and fixture browser flows pass on current frontend code. The actual API served captured rows; browser rendering against that capture remains pending because memory PSI is above the 1% gate. No deployment occurred. |
+| Full Frontier Python regression | COMPLETE AND VERIFIED | `tests/frontier` passed **387/387** in one process after the capture-path guard, in 29.38 seconds pytest time. The existing Starlette/httpx deprecation warning remains; this run did not measure peak RSS, swap, or filesystem input. |
+| Broader MIDAS regression | PARTIALLY VERIFIED | Not run on this branch. `tests/test_reality_full_scale_validation.py` imports `packages/midas/reality/recovery.py`, which is absent here; other Reality lineages have incompatible dependencies. |
+| Research-only and source-use boundary | COMPLETE AND VERIFIED | No authenticated trading, order, wallet, or deposit path was introduced. API health reported `live_execution: false`; probes were disabled in the local API check, and held-source routes remain quarantined. |
+| Resource sustainability | PARTIALLY VERIFIED | Earlier bounded tests and workers have measured profiles, but no sustained campaign is authorized. At `10:13:59Z`, memory PSI avg10 was **37.05% some / 31.35% full**; further resource-bearing checks remain deferred. |
+| Required architecture, operations, current-state, report, and ledger documentation | COMPLETE AND VERIFIED | The requested architecture, operations, current-state, engineering report, and append-only mission ledger exist and include the current test, API-capture, and resource evidence. |
+| Production deployment | DEFERRED | Deployment remains separate and requires source-policy closure, recovery/resource review, deployment-scope verification, and explicit authorization. |
+| Genuine cross-venue relationship and economic validation | BLOCKED | Current source-use gates do not permit the additional venue evidence needed to verify a live cross-venue match. Do not bypass the gates; continue source-independent work. |
+| Project Frontier overall | PARTIALLY VERIFIED | The multi-exchange research foundation is implemented, but live cross-venue science, browser rendering of captured data, broader MIDAS regression, sustained resource evidence, and deployment remain incomplete. |
+
+The zero-opportunity outcome remains valid. Fixture verification proves only
+the supported model behavior; the single Polymarket capture does not establish
+cross-venue equivalence, simultaneous availability, realizable profit, or that
+the market universe has been adequately covered.
 
 ## Full Frontier regression after capture isolation — 2026-10-28 09:03 UTC
 
