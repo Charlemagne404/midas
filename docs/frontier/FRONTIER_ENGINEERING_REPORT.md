@@ -8728,6 +8728,10 @@ store, or Arena job was accessed or started.
 | `300fdcf`, `0ec12f0`, `a3fd358`, `252e5be`, `e4f6c82` | `docs/MIDAS_CURRENT_STATE.md`; `docs/frontier/FRONTIER_ENGINEERING_REPORT.md`; `docs/frontier/FRONTIER_MISSION_LEDGER.md` | Record the resource-gated attempt, test evidence, held-capture boundary, typing, and full-suite result. |
 | `5e20c7f` | `docs/frontier/FRONTIER_OPERATIONS.md` | Document the PSI admission gate and tmpfs-backed Frontier test command. |
 | `5878235` | `docs/frontier/FRONTIER_ENGINEERING_REPORT.md` | Add this continuation change inventory. |
+| `e26efab` | `packages/midas/frontier/discovery_comparison.py`; `economics.py`; `independent_audit.py`; `joint_economics.py`; `models.py`; `replay.py`; `timeline.py`; `tests/frontier/test_api.py`; `test_discovery_comparison.py`; `test_joint_state.py`; `test_logical_implication_economics.py`; `test_relationships_economics_replay.py`; `test_timeline.py` | Revalidate copied virtual execution assumptions at candidate, joint-state, audit, replay, paired replay, timeline, and comparison boundaries; pin economics/audit/replay/timeline/comparison versions. |
+| `4ddcd11` | `docs/MIDAS_CURRENT_STATE.md`; `docs/frontier/FRONTIER_ARCHITECTURE.md`; `docs/frontier/FRONTIER_ENGINEERING_REPORT.md`; `docs/frontier/FRONTIER_MISSION_LEDGER.md` | Record the copied execution-scenario integrity gate. |
+| `1dd0987` | `packages/midas/frontier/adapters/base.py`; `adapters/transport.py`; `models.py`; `tests/frontier/test_adapters.py` | Revalidate concrete adapter configuration bounds before adapter use or HTTP client creation. |
+| `0ac1094` | `docs/MIDAS_CURRENT_STATE.md`; `docs/frontier/FRONTIER_ARCHITECTURE.md`; `docs/frontier/FRONTIER_ENGINEERING_REPORT.md`; `docs/frontier/FRONTIER_MISSION_LEDGER.md`; `docs/frontier/FRONTIER_OPERATIONS.md` | Record adapter resource-bound validation and exact 418-test evidence. |
 
 The temporary `tests/frontier/test_recorded_cross_venue_relationship.py` was
 removed after the test guard denied held-capture access; it is not part of the
