@@ -12434,3 +12434,36 @@ avg10/avg60/avg300 was 0%; `MemAvailable` was 9,613,916 kB and `SwapFree` was
 
 Next safe action: continue bounded review of stored replay identity and
 candidate persistence; defer broad suites at the current API memory margin.
+
+## Replay mapping override rejection — 2026-10-28 22:00 UTC
+
+Commit `40afc20` rejects explicit state or instrument mapping overrides that
+differ from verified same-payoff or logical-implication relationship
+evidence, before deterministic, paired, or discovery replay can produce an
+artifact. Accepted maps are therefore recoverable from the persisted applied
+relationships; a conflicting map cannot be represented only by its input
+hash. Candidate generation and independent audit retain their separate
+fail-closed checks.
+
+The complete focused relationship/economics/replay module passes **103/103**
+in 1.06 seconds under a 1 GiB address-space cap, 60-second CPU-time cap, and
+reduced priority. Ruff and format pass; strict mypy passes for `replay.py`.
+The first run had one stale assertion expecting the previous later payout
+mismatch diagnostic; it was updated to expect the new pinned-evidence reason.
+No source endpoint was queried and no protected service changed.
+
+At `2026-10-28T22:00:12Z`, API was active at 1,605,824,512 / 1,610,612,736
+bytes `MemoryHigh` (4,788,224 bytes below); Reality was active at
+1,006,538,752 / 1,207,959,552 bytes (201,420,800 bytes below). Memory PSI
+avg10/avg60/avg300 was 0%; `MemAvailable` was 9,550,416 kB and `SwapFree` was
+61,284 kB.
+
+| Requirement | Status | Evidence and boundary |
+| --- | --- | --- |
+| Replay mapping provenance | COMPLETE AND VERIFIED WITH FIXTURES | Mismatched overrides fail before run creation; accepted maps remain pinned in applied relationships. |
+| Generator and independent-audit defense in depth | COMPLETE AND VERIFIED WITH FIXTURES | Direct generation and forged candidate paths still reject mapping drift. |
+| Focused relationship/economics/replay regression | COMPLETE AND VERIFIED | 103/103 cases pass on the current implementation. |
+| Project Frontier overall | PARTIALLY VERIFIED | Live cross-venue science, broad regressions, endurance, protected recovery, and deployment remain open. |
+
+Next safe action: continue low-resource review of storage/replay provenance;
+keep broad regressions deferred under the current API memory margin.

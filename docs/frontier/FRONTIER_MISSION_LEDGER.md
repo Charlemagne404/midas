@@ -11484,3 +11484,32 @@ memory PSI was 0%. No source endpoint or service was accessed.
 
 Next safe action: continue static review of replay storage and candidate
 provenance; preserve source holds and the protected-service boundary.
+
+## Replay mapping override rejection — 2026-10-28 22:00 UTC
+
+Commit `40afc20` rejects mismatched explicit state/instrument maps at replay
+ingress for verified same-payoff and logical-implication edges. This keeps a
+conflicting map from producing a replay artifact whose only record of that
+input would be a non-reversible hash. Accepted maps are identical to the
+persisted relationship evidence. Candidate and independent-audit guards
+remain in place.
+
+The focused relationship/economics/replay module passes **103/103** in 1.06
+seconds with 1 GiB address-space and 60-second CPU limits at reduced priority.
+Ruff, format, and strict mypy for `replay.py` pass. An initial run found one
+outdated assertion for the older diagnostic; the expected pinned-evidence
+message was updated and the module passed on rerun.
+
+At `2026-10-28T22:00:12Z`, API was 4,788,224 bytes below `MemoryHigh`; Reality
+was 201,420,800 bytes below. Both were active, memory PSI was 0%, available
+memory 9,550,416 kB, and swap free 61,284 kB. No external source or service
+was accessed.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Deterministic replay map integrity | COMPLETE AND VERIFIED | Conflicting overrides are rejected before producing an artifact. |
+| Focused relationship/economics/replay tests | COMPLETE AND VERIFIED | 103/103 on current code. |
+| Overall Frontier acceptance | PARTIALLY VERIFIED | Live research, broader regression, endurance, recovery, and deployment remain open. |
+
+Next safe action: continue bounded audit of storage provenance; broad suites
+remain deferred under narrow API headroom.

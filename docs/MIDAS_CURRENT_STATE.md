@@ -3779,3 +3779,19 @@ broad regression, endurance, recovery, and deployment remain outstanding.
 At `2026-10-28T21:57:07Z`, API was active at 1,606,479,872 / 1,610,612,736
 bytes and Reality at 1,102,872,576 / 1,207,959,552 bytes. Memory PSI was 0%,
 available memory 9,613,916 kB, and swap free 60,992 kB.
+
+## Project Frontier replay mapping override rejection — 2026-10-28 22:00 UTC
+
+Commit `40afc20` makes deterministic and paired replay reject mapping
+overrides that differ from verified relationship evidence before writing a
+replay result. Candidate generation and independent audit retain their own
+checks. The focused relationship/economics/replay module passes 103/103;
+Ruff, format, and strict mypy for `replay.py` pass. No source endpoint or
+protected service changed. Frontier remains partially verified; live
+cross-venue science, broader regression, endurance, recovery, and deployment
+remain open.
+
+At `2026-10-28T22:00:12Z`, API was active at 1,605,824,512 / 1,610,612,736
+bytes and Reality at 1,006,538,752 / 1,207,959,552 bytes. Memory PSI was 0%,
+available memory 9,550,416 kB, and swap free 61,284 kB. Broad regression
+remains deferred due narrow API `MemoryHigh` headroom.
