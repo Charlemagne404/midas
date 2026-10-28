@@ -33,6 +33,19 @@ in the dated addendum below and in the Frontier engineering report.
 
 ## Frontier development addendum — 2026-10-28
 
+### Latest isolated Frontier checkpoint — 2026-10-28 12:10 UTC
+
+Additional bounded Reality regression passed: calibration **18/18** and
+dashboard API **14/14**, bringing the reviewed Reality slices to **71 passing
+tests** plus one intentionally deselected self-signaling case. Dashboard
+operations were rooted in tmp_path and its systemctl subprocess was mocked.
+The existing Starlette/httpx deprecation warning remains.
+
+After the dashboard run, I/O PSI avg10 rose to 1.53% some / 1.35% full, so
+additional test runs are deferred until a fresh sample falls below 1%. No
+recording, live source, or service was touched. Frontier remains
+**PARTIALLY VERIFIED**, research-only, and undeployed.
+
 ### Latest isolated Frontier checkpoint — 2026-10-28 12:09 UTC
 
 The isolated Reality model slice passed **13/13** selected tests; one

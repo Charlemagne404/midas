@@ -1,9 +1,41 @@
 # Project Frontier Mission Ledger
 
+## Reality calibration and dashboard slices — 2026-10-28 12:10 UTC
+
+The isolated calibration module passed **18/18** tests in 0.46 seconds
+(0.79 seconds wall time), peak RSS 52,396 KiB, zero swaps, and no socket
+messages. It used deterministic synthetic arithmetic fixtures. At 12:10:33Z
+before the run, memory PSI avg10 was 0.00%, I/O was 0.74% some / 0.72% full,
+and about 10 GiB was available; at 12:10:38Z afterward, memory remained 0.00%
+and I/O was 0.40% some / 0.39% full.
+
+The isolated Reality dashboard API module passed **14/14** in 0.70 seconds,
+peak RSS 65,308 KiB, zero swaps, and no socket messages. Its router was bound
+to tmp_path, and the operation endpoint's systemctl runner was mocked; no
+service command ran. The existing Starlette/httpx deprecation warning
+remains. At 12:10:42Z before this run, memory PSI was 0.00%, I/O was 0.60%
+some / 0.59% full; at 12:10:49Z afterward, memory remained 0.00% but I/O
+rose to **1.53% some / 1.35% full**. About 10 GiB remained available.
+
+The bounded Reality coverage now stands at **71 passing tests**, plus one
+self-signaling test intentionally deselected. No protected recording, public
+source, or production service was accessed. I/O PSI exceeded the 1% gate after
+the dashboard run, so no subsequent tests were started.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Reality model, panel, and calibration slices | PARTIALLY VERIFIED | 13 model tests, 26 panel tests, and 18 calibration tests pass; one self-signaling case remains excluded. |
+| Reality dashboard API slice | COMPLETE AND VERIFIED | 14/14 pass against temporary roots with mocked service command. |
+| Further test admission | DEFERRED | Post-dashboard I/O PSI was above 1%. |
+| Frontier overall | PARTIALLY VERIFIED | Full MIDAS regression, held-source access, genuine cross-venue science, and deployment remain open. |
+
+Next safe action: re-sample both PSI values and review the next candidate test
+roots before starting further legacy checks.
+
 ## Reality model and panel regression slices — 2026-10-28 12:09 UTC
 
 After the 12:08 admission hold, the 12:09:15Z sample fell below the 1% gate
-(memory PSI avg10 0.04% some / full; I/O 0.73% some / 0.67% full; about 10
+(memory PSI avg10 0.04% some / 0.04% full; I/O 0.73% some / 0.67% full; about 10
 GiB available). The bounded Reality model run passed **13/13** selected tests
 in 8.48 seconds; one test that signals its own runner was deselected. Peak
 RSS was 53,032 KiB, with zero swaps and no socket messages. Its HTTP fixture

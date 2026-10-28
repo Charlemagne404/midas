@@ -9006,3 +9006,19 @@ without persistent roots, network, or subprocesses, but it was not run. At
 admission threshold. The Reality model slice remains partial because the
 self-signaling case was excluded; the calibration slice remains deferred.
 Frontier overall remains **PARTIALLY VERIFIED**.
+
+### Reality calibration and dashboard API regression — 2026-10-28
+
+The synthetic Reality calibration module passed **18/18** tests, with 52,396
+KiB peak RSS, zero swaps, and no socket messages. The isolated Reality
+dashboard API module passed **14/14**, with 65,308 KiB peak RSS, zero swaps,
+and no socket messages. Its router used pytest temporary roots; the
+systemctl command path was mocked and no service command ran. The existing
+Starlette/httpx TestClient deprecation warning remains.
+
+At 2026-10-28T12:10:42Z before the dashboard run, memory PSI avg10 was 0.00%
+and I/O was 0.60% some / 0.59% full. At 12:10:49Z afterward, memory remained
+0.00% while I/O rose to 1.53% some / 1.35% full. Further tests were held at
+that gate. Across the reviewed Reality slices, 71 tests pass and one
+self-signaling case remains deselected. No recording, live source, or service
+was accessed. Frontier overall remains **PARTIALLY VERIFIED**.
