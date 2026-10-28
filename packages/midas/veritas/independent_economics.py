@@ -41,9 +41,11 @@ def _number(value: Any, name: str) -> Decimal:
     if not parsed.is_finite():
         raise ValueError(f"invalid_{name}")
     parts = parsed.as_tuple()
+    exponent = parts.exponent
     if (
         len(parts.digits) > _MAX_DECIMAL_DIGITS
-        or not -_MAX_DECIMAL_DIGITS <= parts.exponent <= _MAX_DECIMAL_DIGITS
+        or not isinstance(exponent, int)
+        or not -_MAX_DECIMAL_DIGITS <= exponent <= _MAX_DECIMAL_DIGITS
         or not -_MAX_DECIMAL_DIGITS <= parsed.adjusted() <= _MAX_DECIMAL_DIGITS
     ):
         raise ValueError(f"out_of_bounds_{name}")
@@ -293,7 +295,8 @@ def _audit_complementary_pair_economics(
                 raise ValueError(f"{side}_empty_ask_side")
             best_ask[side] = min(price for price, _size in asks[side])
             best_bid[side] = max((price for price, _size in bids[side]), default=None)
-            if best_bid[side] is not None and best_bid[side] > best_ask[side]:
+            side_best_bid = best_bid[side]
+            if side_best_bid is not None and side_best_bid > best_ask[side]:
                 raise ValueError(f"{side}_crossed_book")
 
         source_skew_ms = abs(source_timestamp_by_leg["yes"] - source_timestamp_by_leg["no"])
@@ -330,6 +333,9 @@ def _audit_complementary_pair_economics(
             and lifecycle_supported
             and minimum_notional_supported
         )
+        execution_scope = base.get("execution_scope")
+        if not isinstance(execution_scope, dict):
+            raise ValueError("execution_scope_unavailable")
         quantity_results: list[dict[str, Any]] = []
         for quantity in parsed_quantities:
             walked = {side: _buy_depth(asks[side], quantity) for side in ("yes", "no")}
@@ -404,7 +410,7 @@ def _audit_complementary_pair_economics(
                         else notional_satisfied and shares_satisfied
                     ),
                     "fee_status": fee_status,
-                    "execution_scope_status": base["execution_scope"]["market_restriction_status"],
+                    "execution_scope_status": execution_scope.get("market_restriction_status"),
                     "independent_fee_reference_by_leg": fee_by_leg,
                     "complete_position_fee_reference": complete_position_fees,
                     "complete_position_net_sensitivities_usdc": net_sensitivities,

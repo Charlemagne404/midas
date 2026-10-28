@@ -252,10 +252,12 @@ def _observation_rows(report: dict[str, Any]) -> Iterator[tuple[Any, ...]]:
             continue
         market_id = str(row["market_id"])
         selected = selection_rows.get(market_id, {})
-        audit = row.get("audit") if isinstance(row.get("audit"), dict) else {}
-        quality = audit.get("quality") if isinstance(audit.get("quality"), dict) else {}
-        ages = quality.get("reported_update_age_ms_by_leg")
-        ages = ages if isinstance(ages, dict) else {}
+        audit_value = row.get("audit")
+        audit: dict[str, Any] = audit_value if isinstance(audit_value, dict) else {}
+        quality_value = audit.get("quality")
+        quality: dict[str, Any] = quality_value if isinstance(quality_value, dict) else {}
+        ages_value = quality.get("reported_update_age_ms_by_leg")
+        ages: dict[str, Any] = ages_value if isinstance(ages_value, dict) else {}
         skew = _as_int(quality.get("reported_update_timestamp_skew_ms"))
         yes_age = _as_int(ages.get("yes"))
         no_age = _as_int(ages.get("no"))
@@ -318,6 +320,23 @@ def _observation_rows(report: dict[str, Any]) -> Iterator[tuple[Any, ...]]:
         )
 
 
+def _has_boolean_audit_field(row: Any, field: str) -> bool:
+    if not isinstance(row, dict):
+        return False
+    audit = row.get("audit")
+    return isinstance(audit, dict) and isinstance(audit.get(field), bool)
+
+
+def _count_true_audit_field(observations: list[Any], field: str) -> int:
+    return sum(
+        1
+        for row in observations
+        if isinstance(row, dict)
+        and isinstance(row.get("audit"), dict)
+        and row["audit"].get(field) is True
+    )
+
+
 def _scan_row(report: dict[str, Any], snapshot_sha256: str) -> tuple[Any, ...]:
     discovery = report.get("discovery")
     discovery = discovery if isinstance(discovery, dict) else {}
@@ -346,55 +365,45 @@ def _scan_row(report: dict[str, Any], snapshot_sha256: str) -> tuple[Any, ...]:
             request_durations.append((response_received - request_start) / 1_000_000)
     request_latency = sum(request_durations) if request_durations else None
     market_rows = list(_observation_rows(report))
-    observations = report.get("market_observations")
-    observations_complete = isinstance(observations, list) and len(observations) == len(market_rows)
+    observations_value = report.get("market_observations")
+    if isinstance(observations_value, list):
+        observations: list[Any] = observations_value
+        observations_present = True
+    else:
+        observations = []
+        observations_present = False
+    observations_complete = observations_present and len(observations) == len(market_rows)
     counts = report.get("counts")
     counts = counts if isinstance(counts, dict) else {}
     selected_count = _as_int(counts.get("selected_markets"))
-    if selected_count is None and isinstance(observations, list):
+    if selected_count is None and observations_present:
         selected_count = len(observations)
     valid_count = _as_int(counts.get("valid_quality_pairs"))
     if (
         valid_count is None
         and observations_complete
-        and all(
-            isinstance(row.get("audit"), dict) and isinstance(row["audit"].get("valid"), bool)
-            for row in observations
-            if isinstance(row, dict)
-        )
+        and all(_has_boolean_audit_field(row, "valid") for row in observations)
     ):
-        valid_count = sum(row["audit"]["valid"] for row in observations)
+        valid_count = _count_true_audit_field(observations, "valid")
     positive_count = _as_int(counts.get("positive_top_gross_pairs"))
     if (
         positive_count is None
         and observations_complete
-        and all(
-            isinstance(row.get("audit"), dict)
-            and isinstance(row["audit"].get("positive_top_pair_gross"), bool)
-            for row in observations
-            if isinstance(row, dict)
-        )
+        and all(_has_boolean_audit_field(row, "positive_top_pair_gross") for row in observations)
     ):
-        positive_count = sum(row["audit"]["positive_top_pair_gross"] for row in observations)
+        positive_count = _count_true_audit_field(observations, "positive_top_pair_gross")
     request_count = _as_int(source_requests.get("public_http_attempts"))
     availability = {
         "selected_market_observations": selected_count is not None,
         "quality_valid_pairs": valid_count is not None,
         "strict_fresh_pairs": observations_complete
-        and all(
-            isinstance(row, dict)
-            and isinstance(row.get("audit"), dict)
-            and isinstance(row["audit"].get("valid"), bool)
-            for row in observations
-        ),
+        and all(_has_boolean_audit_field(row, "valid") for row in observations),
         "positive_top_gross_pairs": positive_count is not None,
         "public_http_attempts": request_count is not None,
         "request_latency_ms": (len(request_durations) == len(batches) and bool(batches)),
     }
     strict_fresh_pairs = sum(
-        1
-        for row in (observations if isinstance(observations, list) else [])
-        if isinstance(row, dict) and _strict_fresh(row.get("audit"))
+        1 for row in observations if isinstance(row, dict) and _strict_fresh(row.get("audit"))
     )
     invalid_reasons = counts.get("invalid_reasons")
     if not isinstance(invalid_reasons, dict):
@@ -631,7 +640,7 @@ def _audit_one_indexed_snapshot(root: Path) -> dict[str, Any] | None:
         if relative.is_absolute() or ".." in relative.parts:
             observed = None
             status = "UNSAFE_PATH"
-            detail = "indexed snapshot path escapes the catalog root"
+            detail: str | None = "indexed snapshot path escapes the catalog root"
         else:
             path = root / relative
             try:

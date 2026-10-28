@@ -45,16 +45,26 @@ class DirectorSpec(Model):
 def load_reusable_sweep(root: Path, sweep_id: str, spec: DirectorSpec) -> dict[str, Any]:
     """Validate a completed validation-only sweep before a Director reuses it."""
     dataset, _ = load(root, spec.dataset_id)
-    sweep_spec = SweepSpec(
-        dataset_id=spec.dataset_id,
-        epochs=spec.training_epochs,
-        seeds=spec.sweep_seeds,
-        **({"candidates": spec.sweep_candidates} if spec.sweep_candidates is not None else {}),
-    )
+    if spec.sweep_candidates is None:
+        sweep_spec = SweepSpec(
+            dataset_id=spec.dataset_id,
+            epochs=spec.training_epochs,
+            seeds=spec.sweep_seeds,
+        )
+    else:
+        sweep_spec = SweepSpec(
+            dataset_id=spec.dataset_id,
+            epochs=spec.training_epochs,
+            seeds=spec.sweep_seeds,
+            candidates=spec.sweep_candidates,
+        )
     path = artifact_path(root, "sweeps", sweep_id) / "manifest.json"
     if not path.is_file():
         raise ValueError(f"Reusable sweep is missing: {sweep_id}")
-    sweep = json.loads(path.read_text())
+    sweep_data = json.loads(path.read_text())
+    if not isinstance(sweep_data, dict):
+        raise ValueError("Reusable sweep manifest must be a JSON object")
+    sweep: dict[str, Any] = sweep_data
     if (
         sweep.get("state") != "COMPLETED"
         or sweep.get("configuration") != sweep_spec.model_dump(mode="json")

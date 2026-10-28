@@ -631,7 +631,7 @@ def _event_from_snapshot(
                     }
                     incomplete_pairs += 1
                 else:
-                    expected_saved_books = {
+                    expected_saved_books: dict[str, dict[str, Any]] = {
                         asset: {
                             "market": str(raw.get("market") or "").casefold(),
                             "asset_id": str(raw.get("asset_id") or raw.get("assetId") or ""),
@@ -706,7 +706,11 @@ def _event_from_snapshot(
         invalid_reason = audit.get("reason")
         if primary_valid and economic_reference is None:
             invalid_reason = "independent_economic_reference_unavailable"
-        elif primary_valid and economic_reference.get("snapshot_valid") is not True:
+        elif (
+            primary_valid
+            and economic_reference is not None
+            and economic_reference.get("snapshot_valid") is not True
+        ):
             invalid_reason = f"independent_economic_reference:{economic_reference.get('reason')}"
         edge = (
             economic_reference.get("top_pair_gross_edge_per_share")

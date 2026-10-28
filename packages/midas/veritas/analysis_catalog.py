@@ -485,7 +485,8 @@ def apply_event(root: Path, event: dict[str, Any], *, snapshot_sha256: str) -> d
         reference_version = str(event.get("independent_reference_version") or "unversioned")
         if not re.fullmatch(r"[A-Za-z0-9._-]{1,200}", reference_version):
             raise ValueError("Independent reference version is invalid")
-        counts = event.get("counts") if isinstance(event.get("counts"), dict) else {}
+        counts_value = event.get("counts")
+        counts: dict[str, Any] = counts_value if isinstance(counts_value, dict) else {}
         connection.execute(
             """INSERT INTO analysis_reference_summary(
                    reference_version, processed_snapshot_count, selected_market_observations,

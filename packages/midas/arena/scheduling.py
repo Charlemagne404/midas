@@ -163,7 +163,7 @@ def resource_gate(snapshot: dict[str, Any]) -> dict[str, Any]:
 
 
 def resources_ready(root: Path) -> bool:
-    return resource_gate(resource_snapshot(root))["ready"]
+    return resource_gate(resource_snapshot(root)).get("ready") is True
 
 
 def tick(root: Path, identity: str, now: float | None = None) -> dict[str, Any]:

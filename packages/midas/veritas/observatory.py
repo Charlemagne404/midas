@@ -1259,7 +1259,7 @@ async def _collect_pair_books(
 
 def _write_failed_scan(root: Path, failure: dict[str, Any]) -> Path:
     """Persist bounded evidence for a scan that failed before its snapshot commit."""
-    record = {
+    record: dict[str, Any] = {
         "schema_version": 1,
         "failure_record_version": "veritas-observatory-failure-v1",
         "recorded_at_ns": time.time_ns(),
