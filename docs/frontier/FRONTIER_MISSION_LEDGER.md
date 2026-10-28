@@ -1,5 +1,22 @@
 # Project Frontier Mission Ledger
 
+## Protected-service and resource recheck — 2026-10-28 16:30 UTC
+
+Read-only PSI at 16:30:27Z measured CPU `some` at 41.18% avg10 / 40.35%
+avg60; memory and I/O PSI avg10 remained at 0.00%. A read-only user-systemd
+query at 16:30:43Z confirmed `midas-reality.service` and `midas-api.service`
+were both active. Their `MemoryCurrent` readings were 1,207,721,984 and
+1,223,196,672 bytes respectively; these are service-accounting snapshots, not
+headroom measurements. The Reality PID remained in its own service cgroup.
+No service action was taken. Given persistent CPU pressure and active
+protected services, further broad regression remains deferred.
+
+The source-independent audit confirmed candidate capital is explicitly labeled
+as venue-separated virtual funding in the UI, and the display states that
+unknown fees are excluded and prevent a sufficiency claim. The independent
+candidate audit recomputes those amounts without candidate-generator helpers.
+No code change or new test was needed for this review.
+
 ## Full Arena regression stopped under sustained CPU pressure — 2026-10-28 16:21 UTC
 
 Retried the finite `tests/arena` suite using the absolute Frontier worktree

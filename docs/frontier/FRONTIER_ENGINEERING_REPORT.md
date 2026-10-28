@@ -2,7 +2,7 @@
 
 **Report date:** 2026-10-28
 
-## Arena regression stop and current status — 2026-10-28 16:21 UTC
+## Arena regression stop and current status — 2026-10-28 16:30 UTC
 
 The finite `tests/arena` retry used the absolute Frontier worktree package path
 and tmpfs basetemp `/dev/shm/midas-frontier-arena-20261028-1610`. It advanced
@@ -22,7 +22,12 @@ available. CPU pressure persisted without a pytest or Arena worker; no cause is
 attributed to Frontier alone. A read-only sample at 16:23:12Z still measured
 CPU PSI at 41.51% avg10 / 40.14% avg60, with memory and I/O PSI low. The Reality
 recorder, MIDAS services, public sources, preserved evidence, and untracked
-capture directory were left untouched.
+capture directory were left untouched. A later read-only PSI sample at
+16:30:27Z showed CPU `some` at 41.18% avg10 / 40.35% avg60, with memory and I/O
+avg10 at 0.00%. At 16:30:43Z, `midas-reality.service` and `midas-api.service`
+were both active; service `MemoryCurrent` was 1,207,721,984 and 1,223,196,672
+bytes. These are service-accounting snapshots, not headroom. No service was
+restarted or reconfigured.
 
 Current acceptance snapshot:
 
@@ -4145,10 +4150,13 @@ Latest isolated checkpoint commits and exact changed files:
   ledger, and `docs/MIDAS_CURRENT_STATE.md`.
 - `d48a528` — expands this report's current acceptance matrix;
   `docs/frontier/FRONTIER_ENGINEERING_REPORT.md`.
+- `8438320` — indexes the acceptance-matrix expansion in this report;
+  `docs/frontier/FRONTIER_ENGINEERING_REPORT.md`.
 
-All listed files are verified from the respective commit trees. The latest
-Arena-stop checkpoint and current-state addendum at the beginning of this
-report, ledger, and current-state document are committed as `46fe772`.
+All listed files are verified from the respective commit trees. The 16:21
+Arena-stop checkpoint was committed as `46fe772`; the 16:30 protected-service
+and resource recheck is recorded at the beginning of this report, ledger, and
+current-state handoff.
 
 ## 20. Final status and continuation instructions
 

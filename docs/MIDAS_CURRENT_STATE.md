@@ -33,7 +33,7 @@ in the dated addendum below and in the Frontier engineering report.
 
 ## Frontier development addendum — 2026-10-28
 
-### Latest isolated Frontier checkpoint — 2026-10-28 16:23 UTC
+### Latest isolated Frontier checkpoint — 2026-10-28 16:30 UTC
 
 The public-read transport follow-up contains injected adapter hosts within
 each adapter's declared host set. The focused regression passes **3/3**;
@@ -53,6 +53,13 @@ avg10 / 37.65% avg60 at 16:21:29Z and 41.51% / 40.14% at 16:23:12Z. Memory and
 I/O PSI were low. This is host-level evidence; no cause is assigned to Frontier
 alone. Broader regression remains deferred until fresh samples show stable CPU
 pressure.
+
+At 16:30:27Z, CPU PSI remained 41.18% avg10 / 40.35% avg60 while memory and
+I/O PSI avg10 were 0.00%. At 16:30:43Z, read-only systemd inspection confirmed
+the protected `midas-reality.service` and `midas-api.service` were active; the
+Reality process was in its service cgroup. Their accounted memory was
+1,207,721,984 and 1,223,196,672 bytes. These readings do not represent
+available headroom. No service was restarted or reconfigured.
 
 Kalshi, Kraken, and Coinbase source-use holds remain in force. No live endpoint,
 protected Reality service, or historical source evidence was accessed or
