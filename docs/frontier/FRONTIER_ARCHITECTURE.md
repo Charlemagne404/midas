@@ -1249,19 +1249,27 @@ fills, venue access, or realized profit. The component and a fixture-backed
 browser flow pass; supervisor execution of this job kind and a genuine public
 cross-venue mapping remain unverified.
 
-The finite collector is deliberately not exposed as a request handler or
-background service. A caller must provide one configured adapter and one
-Frontier store to `BoundedSourceCollector`; start rechecks source capability,
-probe flags, and policy holds. One run is limited to 20 markets, 10 books, 20
-book levels, 16 MiB of evidence, and 300 seconds. Checkpoints are append-only,
-sequence- and previous-hash-linked, and capped separately from observation data.
-The adapter is sequential within a source run, while per-source failures leave
-other tasks eligible to complete. The journal supports a bounded read-only
-lookup of up to 100 health-checkpoint digests per timeline request; it validates
-each selected run's full chain and never initializes or creates a missing
-journal. The journal's existence does not constitute a collector scheduler,
-production worker, multi-source campaign, or live validation. The collector
-code is fixture-tested and no source request was made.
+The finite collector is exposed only through an explicit request handler; it is
+not a background service. A caller provides one configured adapter and one
+Frontier store to `BoundedSourceCollector`; start rechecks source capabilities,
+probe flags, and policy holds. A run can optionally capture trades for at most
+two discovered markets, with at most ten prints per market. Trade capture is
+off by default and rejected when the adapter does not declare public-trade
+support. Each trade batch, including a valid empty response, is stored beside
+its exact raw response. Normalized markets, books, and trades must match that
+capture's body hash, URL, adapter version, request start, response receipt, and
+monotonic request duration. A mismatch preserves the raw response as a
+diagnostic and rejects the normalized observation.
+
+Checkpoints are append-only, sequence- and previous-hash-linked, and capped
+separately from observation data. The adapter is sequential within a source
+run, while per-source failures leave other tasks eligible to complete. The
+journal supports a bounded read-only lookup of up to 100 health-checkpoint
+digests per timeline request; it validates each selected run's full chain and
+never initializes or creates a missing journal. The journal's existence does
+not constitute a collector scheduler, production worker, multi-source
+campaign, or live validation. The current collector/API path is
+fixture-tested; no public source request was made for this work.
 
 ## API and UI behavior
 

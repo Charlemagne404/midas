@@ -11081,3 +11081,54 @@ deferred under the protected-service resource gate.
 | Full Frontier and MIDAS regression | PARTIALLY VERIFIED | Not run; Reality and API remain near their soft memory boundaries. |
 | Live multi-venue market science | BLOCKED | Source-use/location authorization remains unresolved; no live result is claimed. |
 | Project Frontier overall | PARTIALLY VERIFIED | Live science, broad regressions, endurance, protected recovery, and deployment remain open. |
+
+## Bounded public-trade collection — 2026-10-28 21:13 UTC
+
+Implementation, API, and Mission Control changes are committed as `4d38b69` on
+`codex/frontier-20261026`. New finite runs use
+`frontier-finite-collection-4`. An explicit per-source option collects up to
+ten public prints for at most two discovered markets; the default remains off
+and unsupported capabilities fail before discovery. Each trade batch is
+checkpointed and replay-safe, including a successful empty response. Trade
+failure counts, print counts, source evidence, and resume checks are exposed in
+the API and Exchanges view. Capture binding uses the exact response hash, URL,
+adapter version, request/receipt timestamps, and monotonic duration.
+
+Backend collection plus API tests pass **51/51** in 14.51 seconds under a 1 GiB,
+no-swap, 50% CPU scope; one existing Starlette/httpx deprecation warning was
+reported. Four focused trade persistence/resume/empty-response tests pass after
+the final validator adjustment. Strict mypy passes on the collector module;
+Ruff and whitespace checks pass. The API module's strict mypy check still
+reports 15 existing unrelated `no-any-return` diagnostics.
+
+Frontend typecheck, ESLint, and Prettier pass. `Frontier.test.tsx` passes **9/9**.
+The production build passes after transforming 2,230 modules; Frontier emits
+184.05 kB JS and 54.22 kB CSS. Vite retains its existing 544.51 kB Chart-chunk
+size advisory. An accidental whole-web test invocation under a 50% CPU cap
+reported **43/47 passed** and four 5-second test timeouts. The dedicated
+Frontier file passes without that CPU throttle; this whole-web attempt is not a
+successful full-suite result. No live exchange request was made.
+
+At `2026-10-28T21:13:16Z`, both protected services remained active and
+unchanged. Reality was **65,536 bytes below** `MemoryHigh`; API was **3,088,288
+bytes below** its boundary. Memory PSI avg10 was 0%, avg300 was `some` 0.98%
+and `full` 0.71%; host memory available was 10.04 GB and swap had 50.25 MB
+free. Broad MIDAS regression remains deferred under this current boundary
+sample.
+
+| Requirement | Status | Evidence and boundary |
+| --- | --- | --- |
+| Bounded multi-source trade capture | COMPLETE AND VERIFIED WITH FIXTURES | Opt-in capability-gated trade tasks, exact capture binding, durable checkpoints, empty results, failures, and resume are covered. |
+| Collector and API regression | COMPLETE AND VERIFIED | 51/51 tests pass on the current implementation before the final equivalent model-input normalization guard; the four focused trade cases pass after it. |
+| Mission Control trade option | COMPLETE AND VERIFIED WITHIN TESTED SCOPE | 9/9 Frontier UI tests, typecheck, lint, format, and production build pass. |
+| Full frontend regression | PARTIALLY VERIFIED | Whole-web attempt had four timeout failures under CPUQuota 50%; exact Frontier test passes 9/9. |
+| Live public-trade collection | BLOCKED | Data-use and source authorization holds remain; fixtures are not live validation. |
+| Full Frontier/MIDAS regression and endurance | PARTIALLY VERIFIED | Not run under current protected-service memory boundary. |
+| Production deployment | DEFERRED | Frontier remains local and undeployed. |
+| Project Frontier overall | PARTIALLY VERIFIED | Live cross-venue science, broad regression, endurance, protected recovery, and deployment remain open. |
+
+Next safe action: extend source-aware coverage analytics to distinguish stored
+trade batches, empty responses, and print counts; then add bounded fixture
+comparisons across the four adapters. Re-measure protected-service headroom
+before any broader regression. Keep live collection disabled while source-use
+and location authorization holds remain.

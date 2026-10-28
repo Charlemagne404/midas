@@ -533,11 +533,15 @@ live-probe flags are set and its source-use hold is absent. Tests inject fixture
 adapters and make no exchange requests.
 
 `start` verifies adapter enablement, the source public-probe flag, policy hold,
-declared discovery/book capabilities, and request limits. Its standalone
-module bounds are 20 markets, 10 book tasks, depth 20, 16 MiB of captured
-evidence, and five minutes wall time. The API applies smaller hard caps of five
-markets, two books, depth ten, 4 MiB, and 60 seconds. Mission Control submits
-three markets, one book, depth five, and 30 seconds. The per-source loop is
+declared discovery/book/public-trade capabilities, and request limits. Its
+standalone module bounds are 20 markets, 10 book tasks, depth 20, at most two
+trade markets with ten prints each, 16 MiB of captured evidence, and five
+minutes wall time. Trade collection defaults to off. The API applies smaller
+hard caps of five markets, two books, depth ten, two trade markets with ten
+prints each, 4 MiB, and 60 seconds. Mission Control submits three markets, one
+book, depth five, and 30 seconds; its per-source checkbox explicitly opts one
+discovered market into a ten-print trade request. Request-count bounds include
+each opted-in trade market and each configured retry. The per-source loop is
 sequential and records failures independently. A restart through the module
 resumes from the last append-only checkpoint and revalidates its sequence/hash
 chain and pinned adapter version/config; it does not silently relaunch a

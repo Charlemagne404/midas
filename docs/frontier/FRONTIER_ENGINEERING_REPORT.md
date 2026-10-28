@@ -11904,3 +11904,65 @@ while the protected services have little soft-limit margin.
 | Full Frontier and MIDAS regression | PARTIALLY VERIFIED | Broad suites remain unrun under the protected-service resource gate. |
 | Genuine live cross-venue science | BLOCKED | Source-use/location authorization remains unresolved; fixture results are not live claims. |
 | Frontier overall | PARTIALLY VERIFIED | Live evidence, broad regressions, endurance, protected recovery, and deployment remain open. |
+
+## Bounded public-trade collection — 2026-10-28 21:13 UTC
+
+The trade collection implementation, API, UI, and fixture tests are committed
+as `4d38b69` on `codex/frontier-20261026`. Collector version
+`frontier-finite-collection-4` adds a restart-safe optional stage after market
+and book collection. Each finite run can select zero to two discovered markets
+and request one source page of up to ten prints per selected market. The run
+pins these limits and records dedicated trade tasks, batch observation IDs,
+print count, and per-task failures. Empty successful responses persist as
+empty `TradeBatch` records, so zero prints are distinguished from a failed or
+missing observation. Unsupported public-trade capability is rejected before
+discovery; the default trade-market limit is zero.
+
+For nonempty batches, each trade must match the requested venue and native
+market and bind to the exact response capture by raw SHA-256, source URL,
+adapter version, request start, response receipt, and monotonic request
+duration. The raw response is retained with a normalized batch. Failure
+diagnostics retain the captured response and mark the trade task failed. The
+append-only checkpoint stores separate in-progress, completed, and failed
+trade states, and resume skips completed work. The API includes opted-in trade
+calls in its request upper bound; Mission Control exposes a per-venue checkbox
+that is off by default and displays trade prints and failed batches.
+
+Verification on this checkpoint:
+
+- Backend collector and finite API modules: **51/51 passed** in 14.51 seconds,
+  1 GiB memory cap, zero swap, 50% CPU. The only warning is the existing
+  Starlette/httpx TestClient deprecation.
+- After the final input-normalization guard, four focused trade cases pass:
+  stored and resumable batches, exact provenance rejection, and empty successful
+  batches. Strict mypy passes for `collection.py`.
+- Frontier UI test file: **9/9 passed**. TypeScript project check, ESLint, and
+  Prettier pass.
+- Production frontend build: **2,230 modules transformed**. Frontier outputs
+  184.05 kB JS and 54.22 kB CSS. The existing Chart chunk is 544.51 kB and
+  continues to trigger Vite's over-500-kB advisory.
+- A whole-web Vitest invocation accidentally ran under a 50% CPU quota and
+  ended **43 passed, 4 timed out of 47**. All four failures were 5-second test
+  timeouts; the dedicated Frontier file passed without the CPU cap. This is
+  recorded as an unsuccessful broad-suite attempt, not a pass.
+- Strict mypy on `apps/api/frontier.py` still reports the same 15 unrelated
+  `no-any-return` sites; the changed request and resume branches produced no
+  diagnostic. No exchange endpoint was queried.
+
+At `2026-10-28T21:13:16Z`, Reality was active and **65,536 bytes below** its
+1,207,959,552-byte `MemoryHigh`; API was active and **3,088,288 bytes below**
+its 1,610,612,736-byte boundary. Memory PSI avg10 was 0%; avg300 `some` was
+0.98% and `full` 0.71%. Host available memory was 10.04 GB and swap free was
+50.25 MB. No protected service was modified. Broad Frontier/MIDAS regression
+remains deferred under this resource sample.
+
+| Requirement | Status | Evidence and boundary |
+| --- | --- | --- |
+| Durable public-trade collection | COMPLETE AND VERIFIED WITH FIXTURES | Bounded opt-in tasks, exact capture provenance, checkpoint/resume, empty results, and per-task failures pass fixture tests. |
+| API capability and request bounds | COMPLETE AND VERIFIED | Unsupported capability is rejected before collection; extra requests are included in the retry-aware upper bound. |
+| Mission Control trade option | COMPLETE AND VERIFIED WITHIN TESTED SCOPE | The explicit disabled-by-default checkbox, results, typecheck, lint, focused test, and production build pass. |
+| Full frontend suite | PARTIALLY VERIFIED | The throttled run had four 5-second timeout failures; the exact Frontier test passes 9/9. |
+| Current broad Frontier and MIDAS regressions | PARTIALLY VERIFIED | Not run under the protected-service memory boundary. |
+| Live multi-venue trade research | BLOCKED | Source-use and location authorization remain unresolved; this work has no live collection evidence. |
+| Production deployment | DEFERRED | No deployment or protected service transition occurred. |
+| Project Frontier overall | PARTIALLY VERIFIED | Live scientific evidence, broad regressions, endurance, recovery, and deployment prerequisites remain open. |
