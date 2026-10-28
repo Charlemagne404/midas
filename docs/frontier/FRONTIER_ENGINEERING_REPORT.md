@@ -6923,3 +6923,27 @@ bounded invocations**; no full Frontier suite pass is claimed.
 | API collection/overview and source-probe slices | COMPLETE AND VERIFIED | 21 of 55 cases pass across two isolated slices; 34 remain. |
 | Serial Frontier regression coverage | PARTIALLY VERIFIED | 324 pass across twelve invocations; the API module is partial. |
 | Full Frontier regression | PARTIALLY VERIFIED | The monolithic attempts were interrupted; no full-suite pass is claimed. |
+
+## API regression, replay/readiness slice — 2026-10-28 05:33 UTC
+
+The third API slice covers relationship proposal/replay, paired replay,
+resource-gated Arena staging, readiness, corrupt-row handling, raw
+observations, and persisted candidate replay. It passed **19/19** in 7.50
+seconds pytest time (8.31 seconds wall) at 243,040 KiB peak RSS. Pytest used
+`/tmp/frontier-api-replay-readiness-20261028`; the process had zero swaps and
+socket messages. The existing Starlette/httpx TestClient deprecation warning
+appeared.
+
+The immediate post-run sample showed memory PSI avg10 **0.00% some / 0.00%
+full** and I/O PSI **2.58% some / 2.23% full**. No Frontier test or shared
+Arena admission lock holder remained active. Defer the last API slice until
+I/O `some` PSI falls below 1%. API coverage is **40/55** cases across three
+slices, with 15 cases outstanding. Total serial regression coverage is now
+**343 passed cases across thirteen bounded invocations**; a full-suite pass
+is still not established.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| API regression slices | PARTIALLY VERIFIED | 40 of 55 cases pass across three slices; 15 remain. |
+| Serial Frontier regression coverage | PARTIALLY VERIFIED | 343 cases pass across thirteen invocations. |
+| Full Frontier regression | PARTIALLY VERIFIED | Both monolithic runs were interrupted; no full-suite pass is claimed. |

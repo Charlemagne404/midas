@@ -5526,3 +5526,22 @@ PSI falls below 1%.
 | API collection/overview and source-probe slices | COMPLETE AND VERIFIED | 21 of 55 API cases pass across two isolated slices; 34 remain. |
 | Serial Frontier regression coverage | PARTIALLY VERIFIED | 324 cases pass across twelve bounded invocations; the API module is partial. |
 | Remaining API slices | DEFERRED | I/O PSI rose above the admission threshold after the second slice. |
+
+## API regression, replay/readiness slice — 2026-10-28 05:33 UTC
+
+The replay, Arena staging, readiness, corruption-handling, and candidate replay
+slice passed **19/19** in 7.50 seconds pytest time (8.31 seconds wall) at
+243,040 KiB peak RSS. It used `/tmp/frontier-api-replay-readiness-20261028`,
+with zero swaps and socket messages. The existing Starlette/httpx TestClient
+deprecation warning appeared.
+
+The immediate post-run sample measured memory PSI avg10 **0.00% some / 0.00%
+full** and I/O PSI **2.58% some / 2.23% full**. No Frontier test or Arena
+admission lock holder was active. Defer the final API slice until I/O `some`
+PSI is below 1%.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| API regression slices | PARTIALLY VERIFIED | 40/55 API cases pass across three isolated slices; the final 15 remain. |
+| Serial Frontier regression coverage | PARTIALLY VERIFIED | 343 cases pass across thirteen bounded invocations. |
+| Remaining API tests | DEFERRED | Post-run I/O PSI exceeded the admission threshold. |
