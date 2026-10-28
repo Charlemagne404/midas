@@ -4533,3 +4533,45 @@ Veritas PID **4154226** still held the shared Arena admission lock in `D` state
 with elapsed time 4:49. It was not signaled or modified. No tests, typecheck,
 browser run, or production build were started after the event-ID edit; those
 changes remain in the worktree awaiting a fresh passing resource gate.
+
+### Event-ID correction and production build verification — 2026-10-28 04:07 UTC
+
+Commit `fb6d800` completes the event-identity correction. Frontier now emits
+`native_event_id` only from one explicit numeric Gamma event object or a
+validated parent-event lookup. The legacy MIDAS Polymarket normalizer is
+unchanged for existing callers. Missing or ambiguous Gamma event context is
+`null`, and no stored observation was rewritten. The original listing keeps
+its explicit event ID; the one older detail capture retains the local
+`market:2589810` parser fallback as historical normalized data and is not used
+as evidence of event membership.
+
+After the final code change, the full Frontier regression passed **352/352**
+in 55.83 seconds, at **376,888 KiB peak RSS**, with zero swaps and socket
+messages. The three focused event-ID/API tests were rerun after the type-only
+annotation fix and passed **3/3** in 1.02 seconds, at **81,848 KiB peak RSS**,
+also with zero swaps or socket messages. Strict mypy passed for five production
+modules (API, models, adapter base, Polymarket, and Kalshi). Ruff check/format
+and `git diff --check` passed.
+
+The production frontend build completed with TypeScript and Vite. To preserve
+the pre-existing ignored `apps/web/dist`, the bundle was written to
+`/tmp/midas-frontier-build-20261028T0406Z`; 2,228 modules transformed, Vite
+reported **4.83 seconds** build time and **685,120 KiB peak RSS**, with zero
+swaps and socket messages. Existing warnings remain for the **544.41 kB** Chart
+chunk and the temporary output directory being outside the project root. The
+full web test suite remains **40/40** and Frontier E2E **6/6** from the 03:57
+checkpoint; those browser cases use temporary loopback services and make no
+public source request.
+
+At `2026-10-28T04:06:58Z`, memory PSI avg10 was **0.08% some / 0.08% full**,
+about **10 GiB** was available, and no process held the shared Arena lock. The
+protected Reality API was left untouched. No live source request, historic
+evidence mutation, merge, push, or deployment occurred.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Polymarket event identity normalization | COMPLETE AND VERIFIED | Commit `fb6d800`; 352 full Frontier tests, focused final-code 3/3, strict mypy, and static lint/format pass. Historical captures remain immutable. |
+| Web unit suite and Frontier browser E2E | COMPLETE AND VERIFIED | 40/40 unit tests and 6/6 browser tests against isolated local services. |
+| Production web build | COMPLETE AND VERIFIED | TypeScript and Vite succeed to a temporary output directory; the existing Chart chunk advisory remains. |
+| Live cross-venue payoff equivalence | BLOCKED | Source-use holds prevent a genuine second-venue probe; no live opportunity or profitability is claimed. |
+| Production deployment | DEFERRED | Branch remains isolated and undeployed. |

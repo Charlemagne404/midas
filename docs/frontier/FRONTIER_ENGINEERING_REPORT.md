@@ -2,7 +2,7 @@
 
 **Report date:** 2026-10-28
 
-## Latest Frontier checkpoint — 2026-10-28 03:59 UTC
+## Bounded metadata and initial resource checkpoint — 2026-10-28 03:59 UTC
 
 The isolated worktree is `/home/charlie/midas-frontier` on
 `codex/frontier-20261026`. The relevant commits are `e4692d1`
@@ -63,6 +63,61 @@ resource admission; no host process was touched.
 | Production web build | PARTIALLY VERIFIED | Not run after the latest UI slice; defer until a fresh resource check admits it. |
 | Multi-venue economic validation | BLOCKED | Other source-use holds remain in effect; no verified live cross-venue payoff is claimed. Fixture-only economic checks do not establish live equivalence. |
 | Production deployment | DEFERRED | Frontier remains isolated on its development branch; no production transition was attempted. |
+
+## Polymarket event identity and verification closeout — 2026-10-28 04:07 UTC
+
+Commit `fb6d800` corrects Frontier's Polymarket normalization. The legacy MIDAS
+normalizer still supplies `market:<id>` for older callers, but Frontier now
+sets `native_event_id` only from an explicit numeric nested Gamma event or the
+validated event-page parent. Missing or ambiguous event context stays `null`.
+The listing observation and older normalized detail capture remain immutable;
+the latter's `market:2589810` value is retained as historical parser output,
+not source event evidence. Changed code/tests:
+`packages/midas/frontier/adapters/polymarket.py`,
+`tests/frontier/test_adapters.py`, and `tests/frontier/test_api.py`.
+
+The full Frontier suite passes **352/352** in 55.83 seconds (376,888 KiB peak
+RSS, zero swaps or socket messages). After the final type-only annotation
+change, the targeted explicit-event, absent-event, and bound-API tests pass
+**3/3** in 1.02 seconds (81,848 KiB peak RSS, zero swaps or socket messages).
+Strict typing passes for the API, shared models, adapter base, Polymarket, and
+Kalshi modules:
+
+```bash
+/home/charlie/midas/.venv/bin/mypy --strict --follow-imports=silent \
+  apps/api/frontier.py packages/midas/frontier/models.py \
+  packages/midas/frontier/adapters/base.py \
+  packages/midas/frontier/adapters/polymarket.py \
+  packages/midas/frontier/adapters/kalshi.py
+# Success: no issues found in 5 source files
+```
+
+TypeScript project build and production Vite bundle also pass. Vite wrote to
+`/tmp/midas-frontier-build-20261028T0406Z`, leaving the existing web `dist`
+output alone. The output transformed 2,228 modules in 4.83 seconds. Peak RSS
+was 685,120 KiB; no swap or socket messages were used. Existing advisories
+remain: the Chart chunk is 544.41 kB, and Vite notes that the temporary output
+directory is outside the project root and will not be emptied automatically.
+Ruff check/format and `git diff --check` pass. The full web suite remains
+40/40 and Frontier browser suite 6/6 from the 03:57 checkpoint above.
+
+At `2026-10-28T04:06:58Z`, memory PSI avg10 was **0.08% some / 0.08% full**,
+about **10 GiB** was available, and the shared Arena lock had no listed holder.
+The protected Reality API remained untouched. No public source request was
+made for this correction, no historical capture was rewritten, and no
+deployment occurred.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Frontier Polymarket native event identity | COMPLETE AND VERIFIED | Commit `fb6d800`; 352-test Frontier regression, focused final-code 3/3, and strict mypy pass. Historical captures keep their original normalized value. |
+| Frontier web unit suite and browser E2E | COMPLETE AND VERIFIED | 40/40 and 6/6 respectively; E2E uses temporary local services and no public source probe. |
+| Production web build | COMPLETE AND VERIFIED | TypeScript plus Vite pass with output in `/tmp`; known Chart chunk and external outDir advisories remain. |
+| Live cross-venue equivalence and eligible economics | BLOCKED | Only one bounded Polymarket detail was fetched; other source-use holds prevent live cross-venue validation. No live opportunity or profitability is claimed. |
+| Production deployment | DEFERRED | Isolated branch remains unmerged, unpushed, and undeployed. |
+
+Frontier overall remains **PARTIALLY VERIFIED**, research-only, and
+undeployed. The final completion matrix must preserve the held-source, live
+cross-venue, source-permission, and production-transition gaps.
 
 **Corrected combined Frontier/Arena verification — 2026-10-28 03:12 UTC:**
 After synchronizing the stale timeline message expectation and isolating two
