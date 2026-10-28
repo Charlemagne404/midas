@@ -11273,3 +11273,38 @@ Coinbase v3. At `2026-10-28T19:55:46Z`, Reality had only 212,992 bytes below
 | Full current-tree adapter/Frontier suites | PARTIALLY VERIFIED | Earlier full passes predate v7 and the latest other adapter versions. |
 | Live Kraken OHLC validation | BLOCKED | Source-use/retention scope remains unresolved; no request was made. |
 | Frontier overall | PARTIALLY VERIFIED | Broad regression, live cross-venue evidence, endurance, protected recovery, and deployment remain open. |
+
+## Kraken AssetPairs precision metadata audit — 2026-10-28 19:59 UTC
+
+Commit `7c66bc1d5c0e32e14c6894dca9107fdaef69307a` advances Kraken Spot to
+`frontier-kraken-spot-8`. Pair discovery now accepts `pair_decimals` and
+`lot_decimals` only as exact JSON integers within the adapter's precision
+bounds. Missing values, booleans, fractional numbers, numeric strings, and
+out-of-range values return `INVALID_INSTRUMENT` before they can generate tick
+or lot increments. This prevents permissive `int()` coercion from changing
+untrusted metadata. Kraken's official
+[API symbols and tickers reference](https://support.kraken.com/articles/360000920306-api-symbols-and-tickers)
+shows the precision fields as numeric AssetPairs metadata; the parser's exact
+integer rule is a conservative local validation contract.
+
+The focused `tests/frontier/test_adapters.py -k kraken` selection passes
+**35/35** with 99 cases deselected (1.04 seconds pytest time, 1.41 seconds
+wall), 65,692 KiB peak RSS, zero swaps, and zero socket messages. Ten new
+fixture cases reject invalid type and range variants across both precision
+fields. Ruff check/format and strict targeted mypy pass. There was no live
+Kraken request or held artifact access.
+
+At `2026-10-28T19:59:01Z`, memory PSI avg10/avg60 was 0%. I/O PSI `some`
+avg10/avg60 was 0%/0.02%; `full` was 0%. `MemAvailable` was 10,013,876 KiB and
+`SwapFree` was 43,896 KiB. Reality was at 1,207,746,560 / 1,207,959,552 bytes,
+212,992 bytes below `MemoryHigh`; API was at 1,546,682,368 /
+1,610,612,736 bytes. The 115-case full adapter pass predates Kraken v7/v8; the
+505-case Frontier suite predates the latest adapter versions. No broader suite
+was started.
+
+| Requirement | Status | Evidence and boundary |
+| --- | --- | --- |
+| Kraken pair precision parser | COMPLETE AND VERIFIED | 35 Kraken-focused fixture cases pass, including invalid boolean, string, fractional, missing, and out-of-range values. |
+| Current full adapter/Frontier suites | PARTIALLY VERIFIED | Earlier full passes predate v8 and the latest other adapter versions. |
+| Live Kraken data validation | BLOCKED | Research and retention authorization remain unresolved; no public request was made. |
+| Frontier overall | PARTIALLY VERIFIED | Broad regression, genuine live cross-venue science, endurance, protected recovery, and deployment remain incomplete. |

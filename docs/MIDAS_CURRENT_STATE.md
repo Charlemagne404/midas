@@ -3497,3 +3497,22 @@ At `2026-10-28T19:55:46Z`, memory PSI avg10/avg60 was 0%; I/O PSI `some`
 avg10/avg60 was 0.05%/0.04%. `MemAvailable` was 9,902,860 KiB. Reality was
 1,207,746,560 / 1,207,959,552 bytes (212,992 bytes below `MemoryHigh`); API
 was 1,550,843,904 / 1,610,612,736 bytes. No broad suite was run.
+
+## Kraken AssetPairs precision audit — 2026-10-28 19:59 UTC
+
+Frontier commit `7c66bc1d5c0e32e14c6894dca9107fdaef69307a` advances Kraken
+Spot to adapter v8. Pair and lot precision metadata must be bounded exact JSON
+integers before tick and quantity increments are derived. Ten new fixture
+cases reject booleans, fractional values, numeric strings, missing values, and
+out-of-range values. The Kraken-focused adapter selection passes 35/35 (99
+deselected) in 1.04 seconds pytest time (1.41 seconds wall), at 65,692 KiB
+peak RSS, zero swaps, and no sockets. Ruff check/format and strict targeted
+mypy pass. No source request or held artifact access occurred.
+
+At `2026-10-28T19:59:01Z`, memory PSI avg10/avg60 was 0%; I/O PSI `some`
+avg10/avg60 was 0%/0.02%, with `full` at 0%. `MemAvailable` was 10,013,876
+KiB; `SwapFree` was 43,896 KiB. Reality was at 1,207,746,560 /
+1,207,959,552 bytes (212,992 bytes below `MemoryHigh`); API was at
+1,546,682,368 / 1,610,612,736 bytes. No broad suite was run. The prior
+115-case adapter pass predates v7/v8; the 505-case Frontier suite predates
+the latest adapter versions.

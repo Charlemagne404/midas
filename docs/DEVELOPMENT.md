@@ -198,7 +198,10 @@ documentation; normalized `aggressor_side` stays unset. See the official
 and [Get OHLC Data](https://docs.kraken.com/api-reference/market-data/get-ohlc-data)
 pages. OHLC rows must match the exact eight-field source tuple and pass
 explicit timestamp, amount, range, volume, and count checks before model
-construction. The protected Reality recording and its evidence remain on
+construction. `AssetPairs.pair_decimals` and `lot_decimals` must be bounded
+JSON integers before deriving tick and quantity steps; booleans, fractional
+values, numeric strings, and out-of-range values reject the instrument rather
+than being coerced. The protected Reality recording and its evidence remain on
 separate roots.
 
 Kalshi multivariate-event discovery is a separate explicit

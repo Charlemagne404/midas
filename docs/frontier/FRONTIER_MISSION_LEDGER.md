@@ -10374,3 +10374,39 @@ suite was started.
 | Current full adapter and Frontier suites | PARTIALLY VERIFIED | Full adapter 115/115 predates Kraken v7; the 505-case suite predates the latest adapter versions. |
 | Live Kraken data use | BLOCKED | Research/retention authorization remains unresolved; no source request was made. |
 | Project Frontier overall | PARTIALLY VERIFIED | Cross-venue science, broad regression, endurance, protected recovery, and deployment remain incomplete. |
+
+## Kraken precision metadata validation — 2026-10-28 19:59 UTC
+
+Commit `7c66bc1d5c0e32e14c6894dca9107fdaef69307a` advances Kraken Spot to
+`frontier-kraken-spot-8`. `AssetPairs.pair_decimals` and `lot_decimals` now
+must be exact bounded JSON integers before they can derive price and quantity
+increments. Boolean values, fractional numbers, numeric strings, missing
+values, and out-of-range precision reject the instrument with
+`INVALID_INSTRUMENT`; no `int()` coercion can silently change source values.
+Kraken's [official API symbol reference](https://support.kraken.com/articles/360000920306-api-symbols-and-tickers)
+shows these precision fields as numeric metadata in AssetPairs examples.
+
+The focused adapter selection passes **35/35** (`-k kraken`; 99 deselected)
+in 1.04 seconds pytest time (1.41 seconds wall), with 65,692 KiB peak RSS,
+zero swaps, and zero socket messages. Ruff check/format and strict targeted
+mypy pass. The tests use a local mock transport; no Kraken request or held
+artifact was accessed. This is parser validation, not live-source validation.
+
+At `2026-10-28T19:59:01Z`, memory PSI avg10/avg60 was 0%; I/O PSI `some`
+avg10/avg60 was 0%/0.02% and `full` was 0%. `MemAvailable` was 10,013,876 KiB
+and `SwapFree` 43,896 KiB. Reality was active at 1,207,746,560 /
+1,207,959,552 bytes (212,992 bytes below `MemoryHigh`); API was at
+1,546,682,368 / 1,610,612,736 bytes. No broad suite was started. The 115-case
+adapter pass predates Kraken v7/v8, and the full 505-case Frontier pass
+predates the latest adapter versions.
+
+| Requirement | Status | Current evidence and boundary |
+| --- | --- | --- |
+| Kraken AssetPairs precision parser | COMPLETE AND VERIFIED | 35 Kraken-focused fixture tests pass; booleans, strings, fractions, missing values, and out-of-range precision reject safely. |
+| Current full adapter and Frontier suites | PARTIALLY VERIFIED | Prior full passes predate current adapter versions; no post-v8 full-suite pass is claimed. |
+| Live Kraken market-data validation | BLOCKED | Source-use and retention scope remain unresolved; no request or held-data access occurred. |
+| Project Frontier overall | PARTIALLY VERIFIED | Cross-venue science, broad regression, endurance, protected recovery, and deployment remain incomplete. |
+
+**Next safe action:** continue source-independent review and retain all source-use
+holds. Defer broader test loads until Reality has a sustained margin below its
+soft memory boundary.

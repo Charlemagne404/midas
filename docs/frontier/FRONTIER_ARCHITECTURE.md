@@ -40,7 +40,10 @@ retains every native tuple field. See [Get Recent Trades](https://docs.kraken.co
 and [Get OHLC Data](https://docs.kraken.com/api-reference/market-data/get-ohlc-data).
 Kraken candle tuples are required to contain exactly eight fields; timestamp,
 nonnegative amounts, OHLC range consistency, and integer nonnegative trade
-counts are validated before the typed candle is built.
+counts are validated before the typed candle is built. Pair discovery also
+requires bounded JSON integer `pair_decimals` and `lot_decimals` values before
+deriving tick and quantity steps; it rejects booleans, fractions, numeric
+strings, and out-of-range precision instead of coercing source metadata.
 
 ### Dashboard loading
 
