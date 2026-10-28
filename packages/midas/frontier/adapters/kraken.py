@@ -39,7 +39,7 @@ from midas.frontier.models import (
 )
 
 D = Decimal
-ADAPTER_VERSION = "frontier-kraken-spot-7"
+ADAPTER_VERSION = "frontier-kraken-spot-8"
 BASE = "https://api.kraken.com/0/public"
 ORDERBOOK_DOC = "https://docs.kraken.com/api-reference/market-data/get-order-book"
 _KNOWN_FIAT_QUOTES = frozenset({"USD", "EUR", "GBP", "CAD", "AUD", "CHF", "JPY"})
@@ -188,6 +188,11 @@ class KrakenSpotAdapter(BaseReadOnlyAdapter):
             raise AdapterError("INVALID_INSTRUMENT", "Kraken pair is missing base/quote identity")
         price_decimals = _bounded_int(raw.get("pair_decimals"), minimum=0, maximum=12)
         quantity_decimals = _bounded_int(raw.get("lot_decimals"), minimum=0, maximum=16)
+        if price_decimals is None or quantity_decimals is None:
+            raise AdapterError(
+                "INVALID_INSTRUMENT",
+                "Kraken pair precision must be bounded integer metadata",
+            )
         tick_size = parse_decimal(raw.get("tick_size"))
         minimum_quantity = parse_decimal(raw.get("ordermin"))
         minimum_notional = parse_decimal(raw.get("costmin"))
@@ -509,13 +514,11 @@ def _normalize_kraken_asset(native: str) -> str:
 
 
 def _bounded_int(value: Any, *, minimum: int, maximum: int) -> int | None:
-    try:
-        result = int(value)
-    except (TypeError, ValueError):
+    if type(value) is not int:
         return None
-    if not minimum <= result <= maximum:
+    if not minimum <= value <= maximum:
         return None
-    return result
+    return value
 
 
 def _kraken_book_side(value: Any, depth: int, *, reverse: bool) -> tuple[BookLevel, ...]:

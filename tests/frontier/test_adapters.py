@@ -1428,6 +1428,55 @@ async def test_kraken_synthetic_pair_and_book_preserve_spot_units_and_level_time
     assert all("authorization" not in request.headers for request in requests)
 
 
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("pair_decimals", True),
+        ("pair_decimals", 1.5),
+        ("pair_decimals", "1"),
+        ("pair_decimals", -1),
+        ("pair_decimals", 13),
+        ("lot_decimals", False),
+        ("lot_decimals", 8.5),
+        ("lot_decimals", "8"),
+        ("lot_decimals", -1),
+        ("lot_decimals", 17),
+    ],
+)
+@pytest.mark.asyncio
+async def test_kraken_pair_precision_requires_bounded_json_integers(field: str, value: object):
+    pair = {
+        "altname": "XBTUSD",
+        "wsname": "XBT/USD",
+        "base": "XXBT",
+        "quote": "ZUSD",
+        "pair_decimals": 1,
+        "lot_decimals": 8,
+        "status": "online",
+    }
+    pair[field] = value
+    config = KrakenSpotConfig(
+        enabled=True,
+        live_public_probe_enabled=True,
+        pairs=("XBTUSD",),
+        requests_per_second=5,
+        retries=0,
+    )
+    transport, _, client = _transport(
+        "api.kraken.com",
+        {"/AssetPairs": json.dumps({"error": [], "result": {"XXBTZUSD": pair}})},
+        config,
+    )
+    adapter = KrakenSpotAdapter(config, transport=transport)
+    try:
+        with pytest.raises(AdapterError) as error:
+            await adapter.discover_markets(1)
+    finally:
+        await client.aclose()
+
+    assert error.value.code == "INVALID_INSTRUMENT"
+
+
 @pytest.mark.asyncio
 async def test_kraken_book_rejects_mismatched_result_key_without_single_row_fallback():
     asset_pairs = {
@@ -1612,7 +1661,7 @@ async def test_kraken_recent_trades_require_exact_pair_key_and_preserve_native_t
     assert first.aggressor_side is None
     assert second.native_trade_id is None
     assert second.aggressor_side is None
-    assert first.provenance.adapter_version == "frontier-kraken-spot-7"
+    assert first.provenance.adapter_version == "frontier-kraken-spot-8"
     assert requests[0].url.params["pair"] == "XXBTZUSD"
     assert requests[0].url.params["count"] == "2"
     assert all("authorization" not in request.headers for request in requests)
