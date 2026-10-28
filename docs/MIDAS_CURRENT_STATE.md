@@ -1999,3 +1999,16 @@ removed; no copy or fixture conversion was made. Existing synthetic event
 group tests remain valid, but live cross-venue relationship evidence and
 economic equivalence remain open. No network, service, worker, or protected
 store was accessed. Frontier remains **PARTIALLY VERIFIED**.
+
+### Full Frontier Python suite — 2026-10-28 08:18 UTC
+
+After replacing three stale schema-6 test literals with `str(SCHEMA_VERSION)`,
+the exact final `tests/frontier` tree passes **379/379** in one process (29.51s
+pytest time; 31.00s wall). The tmpfs run peaked at 378,216 KiB RSS, used no
+swap, and recorded zero filesystem input. It emitted the existing
+Starlette/httpx TestClient deprecation warning. Pre/post memory PSI avg10 was
+0%; I/O PSI was **0.02%** pre-run and **0.02% some / 0.00% full** post-run,
+with about 10 GiB available. No public source, worker, protected store,
+production service, or Arena job was accessed. Frontier remains **PARTIALLY
+VERIFIED** because held-source validation, broader MIDAS/browser gates, and
+production readiness remain open.

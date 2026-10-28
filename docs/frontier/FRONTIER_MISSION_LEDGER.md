@@ -6622,3 +6622,33 @@ not copied or repackaged to bypass the guard.
 | Synthetic cross-venue hypothesis coverage | COMPLETE AND VERIFIED | Existing fixture test verifies event-context text proposals remain HYPOTHESIS and unverified payoffs stay unverified. |
 | Genuine cross-venue economic equivalence | BLOCKED | No new source-use permission or held-capture exception was available in this workstream. |
 | Frontier project overall | PARTIALLY VERIFIED | Continue independent work; do not route around the capture guard. |
+
+## Full Frontier suite pass on tmpfs — 2026-10-28 08:18 UTC
+
+**Test commit:** `f5dfb26` on `codex/frontier-20261026`.
+
+The three migration tests that failed in the first tmpfs run asserted literal
+schema `6`, while `storage.SCHEMA_VERSION` and the migration code correctly use
+current schema `7`. Their assertions now compare against `SCHEMA_VERSION`; no
+production storage behavior changed. The exact final Frontier tree then passed
+all **379/379** tests in **29.51 seconds** (31.00 seconds process wall time),
+with one existing Starlette/httpx `TestClient` deprecation warning.
+
+The command used `--basetemp=/dev/shm/midas-frontier-pytest-20261028-0817`.
+`/usr/bin/time -v` reported **378,216 KiB** maximum RSS, **zero swaps**, zero
+filesystem input, and 544 filesystem-output blocks. At `2026-10-28T08:17:18Z`
+before the run, memory PSI avg10 was **0.00%**, I/O PSI avg10 was **0.02%**,
+and about **10 GiB** was available. At `08:18:01Z` after the run, memory PSI
+avg10 remained **0.00%**, I/O PSI avg10 was **0.02% some / 0.00% full**, and
+about **10 GiB** remained available. No live source, worker, protected store,
+production service, or Arena job was accessed or started.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Full Frontier Python suite | COMPLETE AND VERIFIED | 379 tests pass on the exact current tree in one process. |
+| Full repository and browser acceptance | PARTIALLY VERIFIED | This run covers `tests/frontier`; broader legacy, frontend, and browser checks remain separately evidenced. |
+| Genuine live cross-venue equivalence | BLOCKED | The test harness denies held capture access and live source permission remains unresolved. |
+| Frontier project overall | PARTIALLY VERIFIED | Deployment, held-source validation, and production resource/recovery gates remain open. |
+
+**Next safe action:** continue source-independent acceptance review and use a
+fresh host sample before any additional broad verification workload.

@@ -7849,3 +7849,29 @@ relationship proposer emits only a `TEXT_CANDIDATE` hypothesis and leaves both
 payoff and resolution unverified. That does not establish a relationship from
 the held public capture or a verified cross-venue economic match. Source-use
 authorization and the full suite remain separate open gates.
+
+## Full Frontier suite pass on tmpfs — 2026-10-28 08:18 UTC
+
+The three migration-test failures from the first tmpfs run were stale literal
+expectations of schema `6`. The current store defines `SCHEMA_VERSION = 7`
+and migrates old schemas to that version. I updated the migration assertions to
+compare with the single source-of-truth constant; storage behavior was not
+changed. The exact final tree then passed **379/379** tests in one process.
+
+The test run took **29.51 seconds** (31.00 seconds process wall time) and
+emitted one existing Starlette/httpx `TestClient` deprecation warning. Pytest
+temporary files were placed under
+`/dev/shm/midas-frontier-pytest-20261028-0817` to reduce disk I/O. Maximum RSS
+was **378,216 KiB**, swaps **0**, filesystem input **0**, and filesystem output
+544 blocks. Pre-run pressure at `2026-10-28T08:17:18Z` was memory PSI avg10
+**0.00%**, I/O PSI avg10 **0.02%**, with about **10 GiB** available. After the
+run, at `08:18:01Z`, memory PSI remained **0.00%** and I/O PSI avg10 was
+**0.02% some / 0.00% full**. No source, worker, production service, protected
+store, or Arena job was accessed or started.
+
+| Component | Status | Current evidence and remaining boundary |
+| --- | --- | --- |
+| Full Frontier Python suite | COMPLETE AND VERIFIED | 379/379 tests pass against the final Frontier code and tests in one process. |
+| Broader MIDAS and browser regression | PARTIALLY VERIFIED | This suite does not replace separate legacy, frontend, or end-to-end evidence. |
+| Live cross-venue semantic/economic validation | BLOCKED | Held-capture test guard and unresolved source-use boundary remain. |
+| Frontier overall acceptance | PARTIALLY VERIFIED | Deployment, production recovery, and genuine cross-venue evidence remain open. |
