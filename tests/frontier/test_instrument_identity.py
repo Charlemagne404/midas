@@ -35,15 +35,18 @@ def test_instrument_identity_distinguishes_venue_market_and_instrument_fields():
     )
 
 
-def test_legacy_market_payload_derives_instrument_identity_without_rewriting_version():
-    payload = market(Venue.KALSHI, "legacy-v4").model_dump(mode="python")
-    payload["schema_version"] = 4
+@pytest.mark.parametrize("schema_version", [1, 2, 3, 4])
+def test_legacy_market_payload_derives_instrument_identity_without_rewriting_version(
+    schema_version: int,
+):
+    payload = market(Venue.KALSHI, f"legacy-v{schema_version}").model_dump(mode="python")
+    payload["schema_version"] = schema_version
     for instrument in payload["instruments"]:
         instrument.pop("canonical_id")
 
     normalized = FrontierMarket.model_validate(payload)
 
-    assert normalized.schema_version == 4
+    assert normalized.schema_version == schema_version
     assert all(item.canonical_id is not None for item in normalized.instruments)
     assert normalized.has_valid_structure
 
