@@ -1796,7 +1796,7 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
         request: TradePageProbeRequest,
     ) -> dict[str, Any]:
         venue = Venue.POLYMARKET
-        adapter: ExchangeAdapter = registry.get(venue)
+        adapter = registered_source_adapter(venue)
         if not adapter.capabilities.supports(Capability.PAGINATED_PUBLIC_TRADES):
             raise HTTPException(
                 status_code=409,
@@ -1940,7 +1940,7 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
         request: KalshiTradePageProbeRequest,
     ) -> dict[str, Any]:
         venue = Venue.KALSHI
-        adapter: ExchangeAdapter = registry.get(venue)
+        adapter = registered_source_adapter(venue)
         if not adapter.capabilities.supports(Capability.PAGINATED_PUBLIC_TRADES):
             raise HTTPException(
                 status_code=409, detail="Kalshi paginated public trades are unsupported"
@@ -2080,7 +2080,7 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
     @api.post("/probe/kalshi/fee-metadata")
     async def probe_kalshi_fee_metadata(request: FeeMetadataProbeRequest) -> dict[str, Any]:
         venue = Venue.KALSHI
-        adapter: ExchangeAdapter = registry.get(venue)
+        adapter = registered_source_adapter(venue)
         if not adapter.capabilities.supports(Capability.FEE_METADATA):
             raise HTTPException(status_code=409, detail="Kalshi fee metadata is unsupported")
         fetch_metadata = getattr(adapter, "fetch_fee_metadata", None)
@@ -2188,7 +2188,7 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
     ) -> dict[str, Any]:
         """Capture one referenced child contract from a recorded Kalshi combo."""
         venue = Venue.KALSHI
-        adapter: ExchangeAdapter = registry.get(venue)
+        adapter = registered_source_adapter(venue)
         if not adapter.capabilities.supports(Capability.MARKET_METADATA):
             raise HTTPException(status_code=409, detail="Kalshi market metadata is unsupported")
         fetch_market = getattr(adapter, "fetch_market_metadata", None)
@@ -2322,7 +2322,7 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
     async def probe_event_markets(
         venue: Venue, request: EventMarketsProbeRequest
     ) -> dict[str, Any]:
-        adapter: ExchangeAdapter = registry.get(venue)
+        adapter = registered_source_adapter(venue)
         if not adapter.capabilities.supports(Capability.EVENT_MARKET_GROUPS):
             raise HTTPException(
                 status_code=409, detail=f"{venue.value} event market groups are unsupported"
@@ -2470,7 +2470,7 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
         request: KalshiMultivariateEventsProbeRequest,
     ) -> dict[str, Any]:
         venue = Venue.KALSHI
-        adapter: ExchangeAdapter = registry.get(venue)
+        adapter = registered_source_adapter(venue)
         if not adapter.capabilities.supports(Capability.MULTIVARIATE_EVENT_DISCOVERY):
             raise HTTPException(
                 status_code=409, detail="Kalshi multivariate-event discovery is unsupported"
@@ -4168,7 +4168,7 @@ def router(store: FrontierStore, registry: Any, *, arena_root: Path | None = Non
 
     @api.post("/probe/{venue}")
     async def probe(venue: Venue, request: ProbeRequest) -> dict[str, Any]:
-        adapter: ExchangeAdapter = registry.get(venue)
+        adapter = registered_source_adapter(venue)
         config = getattr(adapter, "config", None)
         if config is None or not config.enabled or not config.live_public_probe_enabled:
             raise HTTPException(status_code=409, detail=probe_disabled_detail(config))
