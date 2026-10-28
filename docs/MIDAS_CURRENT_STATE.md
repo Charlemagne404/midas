@@ -1225,3 +1225,16 @@ in 0.69 seconds at **72,864 KiB peak RSS**, zero swaps. Ruff and
 1%, 10 GiB available, and no Arena lock holder. No source request or worker
 ran. Frontier remains research-only, undeployed, and **PARTIALLY VERIFIED**;
 see the [mission ledger](frontier/FRONTIER_MISSION_LEDGER.md).
+
+### Frontier source terms refresh — 2026-10-28
+
+Official terms were reviewed read-only. Kalshi's own-trading/data-storage
+restriction remains incompatible with unapproved Frontier research use. Kraken
+research retention and applicable regional terms remain unresolved; its public
+Spot REST guidance is one request per second or less, matching the adapter
+default. Coinbase allows limited personal or organizational research but also
+restricts some derived-data, valuation, and AI/ML uses; the existing exact-term
+version gate remains unchanged and is not a general permission grant. No API
+or capture was accessed and no source config changed. See the [source-data
+terms review](frontier/SOURCE_DATA_TERMS_REVIEW_2026-10-27.md). Frontier remains
+research-only, undeployed, and **PARTIALLY VERIFIED**.

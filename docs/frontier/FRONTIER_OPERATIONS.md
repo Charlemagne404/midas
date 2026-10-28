@@ -73,6 +73,11 @@ quarantines Coinbase source records from application research/replay routes.
 The adapter configuration itself also rejects attempts to clear this hold
 without the exact acknowledged version.
 Coinbase fixture tests do not establish live validation or permission.
+The 2026-10-28 terms refresh also records restrictions on third-party derived
+data, benchmark/valuation uses, and AI/ML research use. The exact-version gate
+is not a blanket grant for all Frontier analytics; do not set it solely to
+enable a source probe. Review the intended research, retention, and display
+scope first. See the [source-data terms review](SOURCE_DATA_TERMS_REVIEW_2026-10-27.md).
 
 Cross-venue observations have independent clocks and freshness guarantees.
 Different receipt times or a shared local timestamp do not prove simultaneous

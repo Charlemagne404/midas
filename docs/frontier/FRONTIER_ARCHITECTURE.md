@@ -144,6 +144,11 @@ grant. `CoinbaseSpotConfig` enforces the same exact-version check, so a direct
 adapter caller cannot clear the default hold by setting the generic policy
 reason to null. Re-review current terms before any future use. The adapter is
 registered but does not probe at application startup.
+The 2026-10-28 review records additional terms that restrict derived works,
+benchmark/valuation uses, and AI/ML research use. The local version
+acknowledgement is not a blanket permission for every Frontier analysis;
+source use remains gated until the intended scope is reviewed. See the
+[source-data terms review](SOURCE_DATA_TERMS_REVIEW_2026-10-27.md).
 
 Polymarket adapter v3 and Kalshi adapter v8 declare
 `EVENT_MARKET_GROUPS`. Their `discover_event_markets` operations issue one bounded

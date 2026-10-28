@@ -4841,3 +4841,18 @@ no exchange call, held capture read, or Arena worker occurred.
 | Project Frontier overall | PARTIALLY VERIFIED | Deployment, genuine cross-venue validation, and broader clean combined regression remain incomplete. |
 
 Continue bounded offline acceptance; Frontier remains isolated and research-only.
+
+### Official source terms refresh — 2026-10-28
+
+A read-only official-documentation review reconfirmed the Kalshi API's
+own-trading and data-retention restrictions and the unresolved Kraken research
+permission/retention scope. Kraken's current public Spot REST rate guidance is
+one request per second or less, consistent with the Frontier transport's
+default. Coinbase's Market Data Terms include a limited research-use license,
+while restricting redistribution, certain benchmark/valuation outputs, and
+AI/ML research use. Frontier does not enforce those purpose-specific limits;
+the exact-version acknowledgement is only a local gate, not a blanket grant
+for all analyses. The existing source holds and quarantine remain unchanged.
+No exchange API, stored capture, or configuration was accessed or changed.
+See the [source-data terms review](SOURCE_DATA_TERMS_REVIEW_2026-10-27.md) for
+links and operational detail.

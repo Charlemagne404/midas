@@ -255,3 +255,50 @@ remain the only permitted adapter-validation input in this worktree. A future
 change requires a validated source-use decision for the exact data, activity,
 retention, region, and intended distribution, not a configuration reference
 string alone.
+
+## Official terms refresh — 2026-10-28
+
+This was a read-only review of official public documentation. No exchange was
+contacted, no API endpoint was queried, no source setting changed, and no
+preserved capture was opened. This is an operational policy record, not legal
+advice or a conclusion about any person's eligibility or prior use.
+
+- **Kalshi:** The currently linked [Developer Agreement v1.1](https://kalshi-public-docs.s3.amazonaws.com/Kalshi-Developer-Agreement.pdf)
+  still limits API use to a member's own exchange trading and restricts
+  collecting, caching, aggregating, storing, and sharing API data outside that
+  purpose absent written authorization. It also requires membership, agreement
+  acceptance, and contact information. The public nature of GET endpoints does
+  not remove those terms. Keep live probes and new research use of preserved
+  captures blocked; do not treat a reference string or public endpoint as
+  permission.
+- **Kraken Spot:** The current [Global Terms](https://www.kraken.com/legal/global-terms)
+  state that EEA residents are subject to separate terms; the official
+  [EEA Terms](https://www.kraken.com/legal/eea-terms), if applicable, include
+  pricing data as “Our Content,” limit its use to approved purposes and the
+  user's own benefit, require prior permission for other purposes, and restrict
+  data extraction, automation, and third-party applications. The applicable
+  residence/account terms and permission for Frontier's storage and research
+  remain unverified. The official [Spot API rate-limit guidance](https://support.kraken.com/gb/articles/206548367-what-are-the-api-rate-limits-)
+  (updated 1 October 2026) says public REST requests at one per second or less
+  would remain within the published limits; Frontier's generic transport
+  default is one request per second. This operational limit does not resolve
+  the use restriction. Keep Kraken live probes and new stored-data research
+  held.
+- **Coinbase Exchange Spot:** The official [Market Data Terms](https://www.coinbase.com/legal/market_data)
+  remain marked last updated 7 August 2026. They grant a limited personal or
+  organizational research-use license, limited to the user or the entity's
+  officers and employees, and do not permit an app for other end users. Without
+  express written consent, the terms restrict third-party redistribution of
+  data and derived works; they also restrict creating specified benchmarks and
+  financial-product valuations and prohibit use of Market Data for AI/ML
+  research, development, validation, or operation. Frontier does not enforce
+  these output/use restrictions. Whether a particular private spot-context
+  analysis, its raw retention, and this research interface fit the permitted
+  scope is unresolved. Keep the existing hold: the exact-version environment
+  acknowledgement is a local configuration gate, not a blanket permission to
+  enable every Frontier use. Do not set it solely to enable cross-market
+  analysis.
+
+The source-policy conclusion is unchanged: fixtures and code review may
+continue offline; live requests, new research over held captures, and
+production use remain gated by a specific, validated source-use decision.

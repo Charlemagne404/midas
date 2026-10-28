@@ -3239,3 +3239,19 @@ full**, avg60 **18.90% some / 16.97% full**, 10 GiB available, and no visible
 Arena admission-lock holder. No source adapter, network request, or Arena
 worker was used. Frontier remains isolated, research-only, undeployed, and
 **PARTIALLY VERIFIED**.
+
+### Official source terms refresh — 2026-10-28
+
+A read-only review of official public terms confirmed that the Kalshi API hold
+still applies to Frontier's research and retention use. The current Kraken
+Global/EEA terms preserve uncertainty around automated extraction and the
+permitted scope for research storage; its public Spot REST limit guidance says
+one request per second or less remains within published limits, matching the
+adapter's generic default. Coinbase's Market Data Terms permit limited
+personal or organizational research but add restrictions on third-party
+redistribution, specified benchmarks/valuations, and AI/ML research. The exact
+fit for Frontier's stored spot-context analytics remains unresolved, so the
+existing terms-version gate stays in force. No configuration or code changed,
+and no exchange endpoint or stored capture was accessed. Full sources and
+scope notes are in
+[the source-data terms review](SOURCE_DATA_TERMS_REVIEW_2026-10-27.md).
