@@ -81,7 +81,7 @@ def _paired_fixture():
             left.instruments[1].native_instrument_id: right.instruments[1].native_instrument_id,
         },
         external_assertion_id="storage-paired-fixture-assertion",
-        evidence_observation_ids=("storage-source-left", "storage-source-right"),
+        evidence_observation_ids=(left.provenance.observation_id, right.provenance.observation_id),
         asserted_at_utc=T0,
     )
     books = tuple(

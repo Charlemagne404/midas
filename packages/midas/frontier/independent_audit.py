@@ -45,6 +45,7 @@ from midas.frontier.relationships import (
     LOGICAL_IMPLICATION_VERIFIER_VERSION,
     MAX_LOGICAL_IMPLICATION_STATES,
     MAX_LOGICAL_STATE_ID_CHARS,
+    SAME_PAYOFF_VERIFIER_VERSION,
     Relationship,
     RelationshipType,
     VerificationState,
@@ -53,7 +54,7 @@ from midas.frontier.relationships import (
 )
 
 D = Decimal
-_AUDIT_VERSION = "frontier-independent-economic-audit-13"
+_AUDIT_VERSION = "frontier-independent-economic-audit-14"
 _FEE_QUANTUM = D("0.00001")
 _KALSHI_FEE_MAX_EVIDENCE_AGE = timedelta(hours=24)
 _AUDIT_PARTIAL_FILL_FRACTIONS = (D(0), D("0.25"), D("0.5"), D("0.75"), D(1))
@@ -1433,6 +1434,38 @@ def _verify_cross_venue_relationship(
         )
     left = markets[relationship.left_market_id]
     right = markets[relationship.right_market_id]
+    equivalence_evidence = tuple(
+        item
+        for item in relationship.evidence
+        if item.method == "independent-payoff-equivalence-v2"
+        and item.verifier_version == SAME_PAYOFF_VERIFIER_VERSION
+    )
+    required_observations = {
+        left.provenance.observation_id,
+        right.provenance.observation_id,
+    }
+    if (
+        len(relationship.evidence) != 1
+        or len(equivalence_evidence) != 1
+        or equivalence_evidence[0].external_assertion_id is None
+        or not equivalence_evidence[0].external_assertion_id.strip()
+        or len(equivalence_evidence[0].external_assertion_id) > 120
+        or len(required_observations) != 2
+        or not 2 <= len(equivalence_evidence[0].observation_ids) <= 10
+        or any(not item.strip() for item in equivalence_evidence[0].observation_ids)
+        or len(set(equivalence_evidence[0].observation_ids))
+        != len(equivalence_evidence[0].observation_ids)
+        or not required_observations.issubset(set(equivalence_evidence[0].observation_ids))
+        or equivalence_evidence[0].created_at_utc
+        < max(
+            left.provenance.response_received_at_utc,
+            right.provenance.response_received_at_utc,
+        )
+        or equivalence_evidence[0].created_at_utc > candidate.observed_at_utc
+    ):
+        raise _MissingAuditEvidence(
+            "Same-payoff evidence lacks a post-observation external assertion citing both pinned market records by the replay cutoff."
+        )
     leg_market_ids = tuple(leg.market_id for leg in candidate.legs)
     if (
         set(leg_market_ids) != {left.canonical_id, right.canonical_id}

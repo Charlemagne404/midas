@@ -32,7 +32,7 @@ def _verified_pair():
         state_mapping={"yes": "yes", "no": "no"},
         instrument_mapping=mapping,
         external_assertion_id="timeline-fixture-equivalence-v1",
-        evidence_observation_ids=("timeline-left-rules", "timeline-right-rules"),
+        evidence_observation_ids=(left.provenance.observation_id, right.provenance.observation_id),
         asserted_at_utc=T0,
     )
     return left, right, relationship
@@ -387,7 +387,7 @@ def test_future_relationship_verification_is_not_applied_to_earlier_frames():
         state_mapping={"yes": "yes", "no": "no"},
         instrument_mapping=mapping,
         external_assertion_id="timeline-future-equivalence-v1",
-        evidence_observation_ids=("timeline-left-rules", "timeline-right-rules"),
+        evidence_observation_ids=(left.provenance.observation_id, right.provenance.observation_id),
         asserted_at_utc=verification_time,
     )
     future_source_event = TimelineSourceStatusEvent(

@@ -20,7 +20,7 @@ def test_discovery_scope_comparison_is_deterministic_and_exposes_cross_venue_del
             left.instruments[1].native_instrument_id: right.instruments[1].native_instrument_id,
         },
         external_assertion_id="fixture-discovery-map",
-        evidence_observation_ids=("polymarket-observation", "kalshi-observation"),
+        evidence_observation_ids=(left.provenance.observation_id, right.provenance.observation_id),
         asserted_at_utc=T0,
     )
     markets = (left, right)

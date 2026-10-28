@@ -99,7 +99,10 @@ def _verified_pair():
         state_mapping={"yes": "yes", "no": "no"},
         instrument_mapping=instrument_mapping,
         external_assertion_id="fixture-assertion-1",
-        evidence_observation_ids=("source-left", "source-right"),
+        evidence_observation_ids=(
+            left.provenance.observation_id,
+            right.provenance.observation_id,
+        ),
         asserted_at_utc=T0,
     )
     return left, right, relationship, instrument_mapping
@@ -204,7 +207,10 @@ def test_token_ticker_usd_does_not_match_fiat_usd_quote_books():
         state_mapping={"yes": "yes", "no": "no"},
         instrument_mapping=instrument_mapping,
         external_assertion_id="same-ticker-token-is-not-fiat",
-        evidence_observation_ids=("token-left", "token-right"),
+        evidence_observation_ids=(
+            token_left.provenance.observation_id,
+            token_right.provenance.observation_id,
+        ),
         asserted_at_utc=T0,
     )
     assert relationship.state == VerificationState.VERIFIED
@@ -304,6 +310,111 @@ def test_independent_audit_requires_exact_quote_and_capital_identities():
     )
 
 
+def test_cross_venue_replay_rejects_equivalence_assertion_after_cutoff():
+    left = market(Venue.POLYMARKET, "late-equivalence-left")
+    right = market(Venue.KALSHI, "late-equivalence-right")
+    instrument_mapping = {
+        left.instruments[0].native_instrument_id: right.instruments[0].native_instrument_id,
+        left.instruments[1].native_instrument_id: right.instruments[1].native_instrument_id,
+    }
+    relationship = verify_same_payoff(
+        left,
+        right,
+        state_mapping={"yes": "yes", "no": "no"},
+        instrument_mapping=instrument_mapping,
+        external_assertion_id="review-after-historical-cutoff",
+        evidence_observation_ids=(
+            left.provenance.observation_id,
+            right.provenance.observation_id,
+        ),
+        asserted_at_utc=T0 + timedelta(seconds=1),
+    )
+    left_books, right_books = _books(left, right)
+    replay = deterministic_replay(
+        (left, right),
+        tuple(left_books.values()) + tuple(right_books.values()),
+        verified_relationships=(relationship,),
+        as_of_utc=T0 + timedelta(milliseconds=100),
+        code_version="same-payoff-attestation-cutoff-test-v1",
+    )
+
+    candidates = tuple(
+        item for item in replay.candidates if item.relationship_id == relationship.relationship_id
+    )
+    assert candidates
+    assert all(
+        item.classification == OpportunityClassification.INCOMPLETE_EVIDENCE for item in candidates
+    )
+    assert all(item.independent_audit is not None for item in candidates)
+    assert all(
+        "by the replay cutoff" in item.independent_audit.message.lower()
+        for item in candidates
+        if item.independent_audit is not None
+    )
+
+
+def test_cross_venue_replay_rejects_equivalence_evidence_missing_pinned_market():
+    left, right, relationship, _instrument_mapping = _verified_pair()
+    incomplete_evidence = relationship.evidence[0].model_copy(
+        update={"observation_ids": (left.provenance.observation_id,)}
+    )
+    forged_relationship = relationship.model_copy(update={"evidence": (incomplete_evidence,)})
+    left_books, right_books = _books(left, right)
+    replay = deterministic_replay(
+        (left, right),
+        tuple(left_books.values()) + tuple(right_books.values()),
+        verified_relationships=(forged_relationship,),
+        as_of_utc=T0 + timedelta(milliseconds=100),
+        code_version="same-payoff-pinned-observation-test-v1",
+    )
+
+    candidates = tuple(
+        item
+        for item in replay.candidates
+        if item.relationship_id == forged_relationship.relationship_id
+    )
+    assert candidates
+    assert all(
+        item.classification == OpportunityClassification.INCOMPLETE_EVIDENCE for item in candidates
+    )
+    assert all(
+        "pinned market records" in item.independent_audit.message.lower()
+        for item in candidates
+        if item.independent_audit is not None
+    )
+
+
+def test_cross_venue_replay_requires_current_equivalence_verifier_version():
+    left, right, relationship, _instrument_mapping = _verified_pair()
+    legacy_evidence = relationship.evidence[0].model_copy(
+        update={"verifier_version": "frontier-equivalence-verifier-4"}
+    )
+    legacy_relationship = relationship.model_copy(update={"evidence": (legacy_evidence,)})
+    left_books, right_books = _books(left, right)
+    replay = deterministic_replay(
+        (left, right),
+        tuple(left_books.values()) + tuple(right_books.values()),
+        verified_relationships=(legacy_relationship,),
+        as_of_utc=T0 + timedelta(milliseconds=100),
+        code_version="same-payoff-verifier-version-test-v1",
+    )
+
+    candidates = tuple(
+        item
+        for item in replay.candidates
+        if item.relationship_id == legacy_relationship.relationship_id
+    )
+    assert candidates
+    assert all(
+        item.classification == OpportunityClassification.INCOMPLETE_EVIDENCE for item in candidates
+    )
+    assert all(
+        "same-payoff evidence" in item.independent_audit.message.lower()
+        for item in candidates
+        if item.independent_audit is not None
+    )
+
+
 def test_token_settlement_identity_requires_network_and_reference():
     with pytest.raises(ValidationError, match="require network and asset reference"):
         SettlementAssetIdentity(kind=SettlementAssetKind.TOKEN, code="USDC")
@@ -357,7 +468,10 @@ def test_same_payoff_relationship_ids_include_unambiguous_asset_identity():
             state_mapping={"yes": "yes", "no": "no"},
             instrument_mapping=instrument_mapping,
             external_assertion_id="same-assertion-for-collision-check",
-            evidence_observation_ids=("source-left", "source-right"),
+            evidence_observation_ids=(
+                left.provenance.observation_id,
+                right.provenance.observation_id,
+            ),
             asserted_at_utc=T0,
         )
 
@@ -427,7 +541,7 @@ def test_same_ticker_on_different_networks_cannot_verify_same_payoff():
         state_mapping={"yes": "yes", "no": "no"},
         instrument_mapping=instrument_mapping,
         external_assertion_id="fixture-token-identity-review",
-        evidence_observation_ids=("source-left", "source-right"),
+        evidence_observation_ids=(left.provenance.observation_id, right.provenance.observation_id),
         asserted_at_utc=T0,
     )
     cross_network_relationship = verify_same_payoff(
@@ -436,7 +550,7 @@ def test_same_ticker_on_different_networks_cannot_verify_same_payoff():
         state_mapping={"yes": "yes", "no": "no"},
         instrument_mapping=instrument_mapping,
         external_assertion_id="fixture-token-identity-review",
-        evidence_observation_ids=("source-left", "source-right"),
+        evidence_observation_ids=(left.provenance.observation_id, right.provenance.observation_id),
         asserted_at_utc=T0,
     )
     cross_contract_relationship = verify_same_payoff(
@@ -445,12 +559,12 @@ def test_same_ticker_on_different_networks_cannot_verify_same_payoff():
         state_mapping={"yes": "yes", "no": "no"},
         instrument_mapping=instrument_mapping,
         external_assertion_id="fixture-token-identity-review",
-        evidence_observation_ids=("source-left", "source-right"),
+        evidence_observation_ids=(left.provenance.observation_id, right.provenance.observation_id),
         asserted_at_utc=T0,
     )
 
     assert same_asset_relationship.state == VerificationState.VERIFIED
-    assert same_asset_relationship.evidence[0].verifier_version == "frontier-equivalence-verifier-4"
+    assert same_asset_relationship.evidence[0].verifier_version == "frontier-equivalence-verifier-5"
     assert any(
         "settlement_asset_identities={" in detail
         for detail in same_asset_relationship.evidence[0].details
@@ -819,11 +933,60 @@ def test_payoff_verification_rejects_authority_and_settlement_mismatch():
             left.instruments[1].native_instrument_id: right.instruments[1].native_instrument_id,
         },
         external_assertion_id="adversarial-assertion",
-        evidence_observation_ids=("left", "right"),
+        evidence_observation_ids=(left.provenance.observation_id, right.provenance.observation_id),
         asserted_at_utc=T0,
     )
     assert result.state == VerificationState.REJECTED
     assert "fingerprints differ" in result.reason
+
+
+def test_payoff_verification_requires_pinned_market_evidence_after_observation():
+    left = market(Venue.POLYMARKET, "evidence-left")
+    right = market(Venue.KALSHI, "evidence-right")
+    instrument_mapping = {
+        left.instruments[0].native_instrument_id: right.instruments[0].native_instrument_id,
+        left.instruments[1].native_instrument_id: right.instruments[1].native_instrument_id,
+    }
+    common = {
+        "left": left,
+        "right": right,
+        "state_mapping": {"yes": "yes", "no": "no"},
+        "instrument_mapping": instrument_mapping,
+        "external_assertion_id": "pinned-source-review",
+    }
+    missing_source = verify_same_payoff(
+        **common,
+        evidence_observation_ids=("other-left-record", "other-right-record"),
+        asserted_at_utc=T0,
+    )
+    predating_assertion = verify_same_payoff(
+        **common,
+        evidence_observation_ids=(left.provenance.observation_id, right.provenance.observation_id),
+        asserted_at_utc=T0 - timedelta(seconds=1),
+    )
+    shared_observation_market = right.model_copy(
+        update={
+            "provenance": right.provenance.model_copy(
+                update={"observation_id": left.provenance.observation_id}
+            )
+        }
+    )
+    shared_source = verify_same_payoff(
+        left,
+        shared_observation_market,
+        state_mapping={"yes": "yes", "no": "no"},
+        instrument_mapping=instrument_mapping,
+        external_assertion_id="shared-source-record",
+        evidence_observation_ids=(left.provenance.observation_id, right.provenance.observation_id),
+        asserted_at_utc=T0,
+    )
+
+    assert missing_source.state == VerificationState.REJECTED
+    assert "pinned observation for each supplied market" in missing_source.reason.lower()
+    assert predating_assertion.state == VerificationState.REJECTED
+    assert "predates one or more source observations" in predating_assertion.reason.lower()
+    assert shared_source.state == VerificationState.REJECTED
+    assert "distinct pinned observation" in shared_source.reason.lower()
 
 
 def test_payout_currency_must_match_settlement_asset_without_valuation_bridge():
@@ -852,7 +1015,7 @@ def test_payout_currency_must_match_settlement_asset_without_valuation_bridge():
         state_mapping=state_mapping,
         instrument_mapping=instrument_mapping,
         external_assertion_id="unmodeled-usd-usdc-bridge",
-        evidence_observation_ids=("left", "right"),
+        evidence_observation_ids=(left.provenance.observation_id, right.provenance.observation_id),
         asserted_at_utc=T0,
     )
     assert rejected.state == VerificationState.REJECTED
@@ -1010,7 +1173,10 @@ def test_exact_binary_outcome_construction_and_fee_classification():
         state_mapping=state_mapping,
         instrument_mapping=instrument_mapping,
         external_assertion_id="fixture-assertion-unknown-fees",
-        evidence_observation_ids=("left", "right"),
+        evidence_observation_ids=(
+            left.provenance.observation_id,
+            no_fee_evidence.provenance.observation_id,
+        ),
         asserted_at_utc=T0,
     )
     unknown_fee_candidates = generate_binary_coverage_candidates(
@@ -1055,7 +1221,10 @@ def test_exact_binary_outcome_construction_and_fee_classification():
         state_mapping=state_mapping,
         instrument_mapping=instrument_mapping,
         external_assertion_id="fixture-assertion-expired-fee",
-        evidence_observation_ids=("left", "right"),
+        evidence_observation_ids=(
+            left.provenance.observation_id,
+            expired_fee_event.provenance.observation_id,
+        ),
         asserted_at_utc=T0,
     )
     expired_fee_candidates = generate_binary_coverage_candidates(
@@ -1190,7 +1359,10 @@ def test_fee_schedule_expiring_before_modeled_execution_stays_unknown_in_candida
         state_mapping={"yes": "yes", "no": "no"},
         instrument_mapping=instrument_mapping,
         external_assertion_id="fee-expires-during-venue-delay",
-        evidence_observation_ids=("left", "right"),
+        evidence_observation_ids=(
+            left.provenance.observation_id,
+            expiring_right.provenance.observation_id,
+        ),
         asserted_at_utc=T0,
     )
     left_books, right_books = _books(left, expiring_right)
@@ -1286,7 +1458,7 @@ def test_kalshi_public_fee_estimate_flows_through_candidate_and_independent_audi
         state_mapping={"yes": "yes", "no": "no"},
         instrument_mapping=instrument_mapping,
         external_assertion_id="public-fee-candidate-integration",
-        evidence_observation_ids=("poly-market", "kalshi-market"),
+        evidence_observation_ids=(left.provenance.observation_id, right.provenance.observation_id),
         asserted_at_utc=T0,
     )
     candidates = generate_binary_coverage_candidates(
@@ -1668,7 +1840,7 @@ def test_independent_audit_rejects_naive_book_time_from_a_reconstructed_model():
     assert audit.independent_audit is not None
     assert audit.independent_audit.disposition.value == "incomplete"
     assert "not timezone-aware" in audit.independent_audit.message
-    assert audit.independent_audit.model_version == "frontier-independent-economic-audit-13"
+    assert audit.independent_audit.model_version == "frontier-independent-economic-audit-14"
 
 
 def test_independent_audit_rejects_quantity_step_mutation():
@@ -1689,7 +1861,10 @@ def test_independent_audit_rejects_quantity_step_mutation():
         state_mapping={"yes": "yes", "no": "no"},
         instrument_mapping=instrument_mapping,
         external_assertion_id="quantity-step-audit-fixture",
-        evidence_observation_ids=("quantity-step-left", "quantity-step-right"),
+        evidence_observation_ids=(
+            stepped_left.provenance.observation_id,
+            stepped_right.provenance.observation_id,
+        ),
         asserted_at_utc=T0,
     )
     left_books, right_books = _books(stepped_left, stepped_right)
@@ -2825,7 +3000,10 @@ def test_canonical_relationship_evidence_replays_different_native_state_labels()
         state_mapping=state_mapping,
         instrument_mapping=instrument_mapping,
         external_assertion_id="fixture-canonical-state-mapping",
-        evidence_observation_ids=("left-observation", "right-observation"),
+        evidence_observation_ids=(
+            left.provenance.observation_id,
+            right.provenance.observation_id,
+        ),
         asserted_at_utc=T0,
     )
     left_books, right_books = _books(left, right)

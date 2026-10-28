@@ -23,7 +23,7 @@ def _inputs():
             left.instruments[1].native_instrument_id: right.instruments[1].native_instrument_id,
         },
         external_assertion_id="fixture-paired-replay-assertion",
-        evidence_observation_ids=("source-left", "source-right"),
+        evidence_observation_ids=(left.provenance.observation_id, right.provenance.observation_id),
         asserted_at_utc=T0,
     )
     books = tuple(

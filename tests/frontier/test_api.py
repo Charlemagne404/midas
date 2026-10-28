@@ -841,6 +841,20 @@ def test_saved_kalshi_fee_pair_is_joined_only_when_raw_and_normalized_evidence_m
             adapter_version="fixture-cross-venue-fee-replay-v1",
         )
         polymarket_observation_id = store.append_observation(polymarket_raw, polymarket_market)
+        polymarket_market = polymarket_market.model_copy(
+            update={
+                "provenance": polymarket_market.provenance.model_copy(
+                    update={"observation_id": polymarket_observation_id}
+                )
+            }
+        )
+        source_market = source_market.model_copy(
+            update={
+                "provenance": source_market.provenance.model_copy(
+                    update={"observation_id": market_observation_id}
+                )
+            }
+        )
         instrument_mapping = {
             polymarket_market.instruments[0].native_instrument_id: source_market.instruments[
                 0
@@ -2718,7 +2732,7 @@ def test_readiness_reports_pinned_candidate_timing_audit_counts(tmp_path):
         state_mapping={"yes": "yes", "no": "no"},
         instrument_mapping=instrument_mapping,
         external_assertion_id="readiness-timing-fixture",
-        evidence_observation_ids=("readiness-left", "readiness-right"),
+        evidence_observation_ids=(left.provenance.observation_id, right.provenance.observation_id),
         asserted_at_utc=T0,
     )
     left_books = tuple(

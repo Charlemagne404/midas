@@ -716,7 +716,7 @@ class IndependentEconomicAudit(FrontierModel):
     """Recomputed candidate economics from normalized contracts and source books."""
 
     schema_version: int = 3
-    model_version: str = "frontier-independent-economic-audit-13"
+    model_version: str = "frontier-independent-economic-audit-14"
     disposition: EconomicAuditDisposition
     input_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     checked_market_count: int = Field(ge=0, le=4)

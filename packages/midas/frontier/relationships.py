@@ -22,7 +22,7 @@ from midas.frontier.models import (
 
 D = Decimal
 MATCHER_VERSION = "frontier-relationship-matcher-5"
-SAME_PAYOFF_VERIFIER_VERSION = "frontier-equivalence-verifier-4"
+SAME_PAYOFF_VERIFIER_VERSION = "frontier-equivalence-verifier-5"
 LOGICAL_IMPLICATION_VERIFIER_VERSION = "frontier-logical-implication-verifier-2"
 MAX_LOGICAL_IMPLICATION_STATES = 1024
 MAX_LOGICAL_STATE_ID_CHARS = 128
@@ -511,11 +511,27 @@ def verify_same_payoff(
     asserted_at_utc: datetime | None = None,
 ) -> Relationship:
     """Verify economic equivalence only from explicit, independently attested inputs."""
-    if not external_assertion_id.strip():
-        raise ValueError("A verification assertion identity is required")
+    if not external_assertion_id.strip() or len(external_assertion_id) > 120:
+        raise ValueError("A bounded verification assertion identity is required")
     checks: list[str] = []
     if not evidence_observation_ids:
         checks.append("Source observation identities are required")
+    elif (
+        len(evidence_observation_ids) < 2
+        or len(evidence_observation_ids) > 10
+        or any(not observation_id.strip() for observation_id in evidence_observation_ids)
+    ):
+        checks.append("Source evidence must contain two to ten nonempty observation identities")
+    if len(set(evidence_observation_ids)) != len(evidence_observation_ids):
+        checks.append("Source observation identities must be unique")
+    required_observations = {
+        left.provenance.observation_id,
+        right.provenance.observation_id,
+    }
+    if len(required_observations) != 2:
+        checks.append("Each supplied market must have a distinct pinned observation identity")
+    if not required_observations.issubset(set(evidence_observation_ids)):
+        checks.append("Evidence must cite the pinned observation for each supplied market")
     if left.canonical_id == right.canonical_id:
         checks.append("Markets must have distinct canonical identities")
     if left.venue == right.venue:
@@ -609,6 +625,11 @@ def verify_same_payoff(
     if assertion_time.tzinfo is None or assertion_time.utcoffset() is None:
         raise ValueError("Assertion time must include a timezone")
     assertion_time = assertion_time.astimezone(UTC)
+    if assertion_time < max(
+        left.provenance.response_received_at_utc,
+        right.provenance.response_received_at_utc,
+    ):
+        checks.append("External assertion predates one or more source observations")
     verifier_version = (
         f"{SAME_PAYOFF_VERIFIER_VERSION}|{external_assertion_id}|{assertion_time.isoformat()}|"
         f"{json_compact(canonical_state_mapping)}|{json_compact(canonical_instrument_mapping)}|"
