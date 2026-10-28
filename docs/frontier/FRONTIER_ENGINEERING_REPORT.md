@@ -4991,3 +4991,17 @@ worker was started.
 | Resource sustainability | PARTIALLY VERIFIED | This test run measured 364,312 KiB peak Python RSS and zero swaps; longer concurrency, steady-state collection, and production admission remain unmeasured. |
 | Live cross-venue economics and deployment | DEFERRED | Source permission, synchronized venue evidence, FX availability, transfers, and production transition remain unresolved. |
 | Project Frontier overall | PARTIALLY VERIFIED | The offline research implementation has broad passing regressions; genuine live cross-venue validation and deployment gates remain open. |
+
+### Strict API typing retry deferred — 2026-10-28 00:31 UTC
+
+A scoped strict mypy retry for `apps/api/frontier.py` was attempted after
+reviewing its existing `registry: Any` parameter and adapter-lookup
+`no-any-return` diagnostic. A temporary concrete `AdapterRegistry` annotation
+was removed when the check failed to finish. The process ran for 25.34 seconds
+at 99% CPU and reached **694,744 KiB peak RSS** without a type result; only that
+mypy process was stopped. It used zero swaps and left no source change.
+
+During the check at `2026-10-28T00:31:15Z`, memory PSI avg10 was **24.98% some
+/ 19.55% full**, MemAvailable was **9,799,260 KiB**, and the external Veritas
+gap-detail batch PID **3975405** was active. It was not touched. The strict API
+typing caveat remains unresolved; retry when shared-host pressure subsides.

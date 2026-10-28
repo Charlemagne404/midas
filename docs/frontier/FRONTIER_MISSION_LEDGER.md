@@ -3330,3 +3330,9 @@ At the post-test sample `2026-10-28T00:27:27Z`, memory PSI avg10 was **17.09% so
 | Test resource profile | PARTIALLY VERIFIED | One run measured 364,312 KiB peak RSS and zero swaps; concurrent operation, sustained collection, and production admission are unmeasured. |
 | Genuine cross-venue economics / production | DEFERRED | Source-use permission, synchronized market evidence, FX availability, transfer constraints, and deployment remain unresolved. |
 | Project Frontier overall | PARTIALLY VERIFIED | Offline functionality has broad passing regressions; live multi-venue evidence and production gates remain open. |
+
+### Strict API typing check deferred under shared-host pressure — 2026-10-28 00:31 UTC
+
+A targeted strict mypy retry for `apps/api/frontier.py` was started after a read-only review found that the router accepts `registry: Any`, causing the existing `no-any-return` diagnostic on the adapter lookup despite the concrete `AdapterRegistry.get` contract. The temporary annotation change to `AdapterRegistry` was discarded because the check did not complete. After 25.34 seconds at 99% CPU, mypy had reached **694,744 KiB peak RSS** without a result; I sent SIGTERM only to that mypy process. It used zero swaps and changed no files. At `2026-10-28T00:31:15Z`, PSI avg10 was **24.98% some / 19.55% full**, MemAvailable was **9,799,260 KiB**, and the separate Veritas gap-detail batch PID **3975405** remained active. It was left untouched.
+
+The scoped API typing issue remains open and is not treated as a pass or code failure. Retry after shared-host pressure subsides with a smaller type-check scope or controlled cache; do not reconfigure or interrupt the external batch. Frontier remains at the previously verified **PARTIALLY VERIFIED** checkpoint.
