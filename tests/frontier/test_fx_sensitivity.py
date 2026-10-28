@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import hashlib
+import json
 from decimal import Decimal, localcontext
 from fractions import Fraction
+from typing import Any
 
 import pytest
 from hypothesis import given, settings
@@ -33,6 +36,14 @@ from tests.frontier.builders import T0, USD_SETTLEMENT_IDENTITY, market
 D = Decimal
 RUN_ID = "1" * 64
 RUN_HASH = "2" * 64
+
+
+def _rehash_sensitivity_payload(payload: dict[str, Any]) -> None:
+    body = {key: value for key, value in payload.items() if key != "result_sha256"}
+    encoded = json.dumps(body, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    payload["result_sha256"] = hashlib.sha256(encoded.encode("utf-8")).hexdigest()
+
+
 TOKEN_A = SettlementAssetIdentity(
     kind=SettlementAssetKind.TOKEN,
     code="USDC",
@@ -221,6 +232,59 @@ def test_verified_funding_scenario_subtracts_conversion_fee_from_every_terminal_
     )
     assert scenario.all_outcomes_positive_after_conversion is True
     assert candidate.model_dump(mode="json") == before
+
+
+def test_verified_sensitivity_rejects_rehashed_scenario_fee_tampering():
+    result = evaluate_funding_currency_sensitivity(
+        independently_audited_candidate_fixture(),
+        run_id=RUN_ID,
+        run_sha256=RUN_HASH,
+        assumptions=assumptions(),
+    )
+    payload = result.model_dump(mode="json")
+    payload["pnl_scenario"]["modeled_conversion_fee_target"] = "999"
+    _rehash_sensitivity_payload(payload)
+
+    with pytest.raises(ValueError, match="states do not equal candidate P&L"):
+        FundingCurrencySensitivity.model_validate(payload)
+
+
+def test_verified_sensitivity_rejects_rehashed_fee_rebase_against_audit_total():
+    result = evaluate_funding_currency_sensitivity(
+        independently_audited_candidate_fixture(),
+        run_id=RUN_ID,
+        run_sha256=RUN_HASH,
+        assumptions=assumptions(),
+    )
+    payload = result.model_dump(mode="json")
+    scenario = payload["pnl_scenario"]
+    rebased_states = {"no": "0.19", "yes": "0.19"}
+    scenario["modeled_conversion_fee_target"] = "0.01"
+    scenario["net_pnl_after_conversion_by_state"] = rebased_states
+    scenario["worst_case_net_pnl_after_conversion"] = "0.19"
+    scenario["audit"]["recomputed_net_pnl_after_conversion_by_state"] = rebased_states
+    scenario["audit"]["recomputed_worst_case_net_pnl_after_conversion"] = "0.19"
+    _rehash_sensitivity_payload(payload)
+
+    with pytest.raises(ValueError, match="P&L modeled conversion fee differs"):
+        FundingCurrencySensitivity.model_validate(payload)
+
+
+def test_verified_sensitivity_rejects_rehashed_aggregate_fee_tampering():
+    result = evaluate_funding_currency_sensitivity(
+        independently_audited_candidate_fixture(),
+        run_id=RUN_ID,
+        run_sha256=RUN_HASH,
+        assumptions=assumptions(),
+    )
+    payload = result.model_dump(mode="json")
+    payload["total_conversion_fee_target"] = "0.01"
+    _rehash_sensitivity_payload(payload)
+
+    with pytest.raises(
+        ValueError, match="differs from the verified independent funding audit"
+    ):
+        FundingCurrencySensitivity.model_validate(payload)
 
 
 def test_funding_pnl_scenario_is_unavailable_for_incomplete_candidate_fees_or_virtual_balance():
@@ -418,7 +482,7 @@ def test_rational_audit_rejects_tampered_conversion_result():
     assert audit.disposition == "disagreement"
     assert "rational recomputation" in audit.message
     payload = result.model_dump(mode="json")
-    payload["total_conversion_fee_target"] = "0"
+    payload["assumptions"] = [*payload["assumptions"], "unhashed mutation"]
     with pytest.raises(ValueError, match="result hash"):
         FundingCurrencySensitivity.model_validate(payload)
 

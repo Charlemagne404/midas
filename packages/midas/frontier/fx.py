@@ -262,6 +262,21 @@ class FundingCurrencyPnlScenario(FrontierModel):
                 != self.audit.recomputed_net_pnl_after_conversion_by_state
             ):
                 raise ValueError("Funding P&L values differ from the independent audit")
+            try:
+                with localcontext() as context:
+                    context.prec = 96
+                    expected_after_conversion = {
+                        state: pnl - self.modeled_conversion_fee_target
+                        for state, pnl in sorted(self.candidate_net_pnl_by_state.items())
+                    }
+            except ArithmeticError as error:
+                raise ValueError(
+                    "Verified funding P&L cannot reproduce its modeled conversion fee"
+                ) from error
+            if expected_after_conversion != self.net_pnl_after_conversion_by_state:
+                raise ValueError(
+                    "Funding P&L states do not equal candidate P&L less the modeled conversion fee"
+                )
             worst = min(self.net_pnl_after_conversion_by_state.values())
             if self.worst_case_net_pnl_after_conversion != worst:
                 raise ValueError("Funding P&L worst case does not match its terminal states")
@@ -321,6 +336,27 @@ class FundingCurrencySensitivity(FrontierModel):
             raise ValueError("Funding sensitivity cannot change candidate economics or eligibility")
         if self.audit.input_sha256 != self.input_sha256:
             raise ValueError("Independent funding audit is bound to different inputs")
+        if (
+            self.pnl_scenario.status == "verified"
+            and self.audit.disposition != "verified"
+        ):
+            raise ValueError("Verified funding P&L requires a verified funding conversion audit")
+        if self.audit.disposition == "verified":
+            independently_recomputed_fee = self.audit.recomputed_total_conversion_fee_target
+            if (
+                independently_recomputed_fee is None
+                or self.total_conversion_fee_target != independently_recomputed_fee
+            ):
+                raise ValueError(
+                    "Reported conversion fee differs from the verified independent funding audit"
+                )
+            if (
+                self.pnl_scenario.modeled_conversion_fee_target
+                != self.total_conversion_fee_target
+            ):
+                raise ValueError(
+                    "Funding P&L modeled conversion fee differs from the verified total conversion fee"
+                )
         if self.pnl_scenario.funding_input_sha256 != self.input_sha256:
             raise ValueError("Funding P&L scenario is bound to different funding inputs")
         if self.pnl_scenario.target_currency_identity != self.target_currency_identity:
