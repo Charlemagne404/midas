@@ -487,12 +487,28 @@ last available page. The uncentered view remains a bounded recent-edge query
 without cursor pagination. List reads recheck stored observation, relationship,
 review-lineage, replay, and comparison hashes before research use.
 
-Deterministic replay currently evaluates verified cross-venue binary coverage
-and an all-long, same-market construction for three to sixteen verified
-exhaustive one-hot outcomes. The multi-outcome path is controlled-fixture
-verified; it does not evaluate captured listings without verified payoff and
-resolution evidence. Both paths are hypothetical research only and always leave
-practical execution eligibility false.
+Deterministic replay evaluates verified cross-venue binary coverage, same-market
+exhaustive one-hot and constant-payout baskets, directed logical implication,
+and a bounded multi-market joint-state basket. The latter uses two to four
+stored open event markets, at most twelve total instruments, and an explicit
+map of two to sixty-four shared states. It requires each selected market to have
+verified exhaustive payoff and resolution metadata, common settlement identity
+and currency, and identical future close and settlement times. Candidate legs
+keep each native quantity unit; no unit conversion is inferred. The exact
+positive-payout arithmetic is independently recomputed against the content-
+hashed map, but the map remains an unauthenticated external assertion, so
+positive results stay conditional. All candidate families leave practical
+execution eligibility false.
+
+`POST /api/frontier/replay/joint-state` replays this family over saved public
+market/book observations only. The request accepts a mapping definition without
+`mapping_id`; the server validates and normalizes the bounded payload before
+deriving its canonical SHA-256 identity. The request must cite the selected
+market observation IDs, and its assertion timestamp must postdate those market
+records. The API does not fetch or infer a relationship map. Mission Control's
+Replay & Readiness editor exposes this route and requires every joint-state to
+local-state projection cell to be filled explicitly. See the conditional
+joint-state section in the [Frontier operations guide](frontier/FRONTIER_OPERATIONS.md).
 
 Replay version 5 attaches a separately coded arithmetic audit and a full-or-no-fill
 exposure sensitivity to each supported candidate. The sensitivity analytically

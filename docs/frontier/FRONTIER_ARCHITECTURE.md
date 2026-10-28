@@ -16,17 +16,17 @@ as mutable Frontier storage.
 | Public venue adapters | `adapters/polymarket.py`, `kalshi.py`, `kraken.py`, `coinbase.py` | Source-specific normalization and native metadata preservation. Coinbase Exchange adds a bounded explicit-product spot source with an exact-version data-terms gate. |
 | Registry | `registry.py` | Explicit capability inventory; default instances do not probe. |
 | Relationship intelligence | `relationships.py` | Deterministic indexed title and parent-event/outcome hypotheses, source-selected component references, strict payoff checks, and immutable review contracts. |
-| Candidate calculators | `economics.py` | Decimal cross-venue binary, same-market exhaustive one-hot coverage, and bounded constant-payout event baskets with fee, depth, freshness, timing, and scenario bounds; provenance-bound conditional Kalshi one-fill estimate; exact bounded one-sided fill sensitivity; separate instrument-bound Kalshi one-fill and one-order fee sensitivities. |
-| Independent arithmetic audit | `independent_audit.py` | Separately recomputes supported candidate identities, exhaustive payoff coverage or constant-payout basket proof, pinned quotes/depth, fees, costs, terminal P&L, fill-pattern sensitivity, and classification from replay inputs. |
+| Candidate calculators | `economics.py`, `joint_economics.py` | Decimal cross-venue binary, same-market exhaustive one-hot coverage, bounded constant-payout event baskets, and a separately bounded multi-market basket over an explicit shared-state assertion; venue fees, native quantity units, depth, freshness, timing, and scenario bounds remain attached. |
+| Independent arithmetic audit | `independent_audit.py` | Separately recomputes supported candidate identities, payoff coverage or constant-payout basket proofs, pinned quotes/depth, native-unit leg identities, fees, costs, terminal P&L, fill-pattern sensitivity, and classification from replay inputs. Joint-state arithmetic is verified only conditional on the pinned unauthenticated state map. |
 | Virtual capital-duration sensitivity | `capital.py` | Recomputes unrounded simple-interest carry from explicit per-venue user assumptions, candidate capital, hash-checked future settlement metadata, and a bounded scenario-only post-settlement release delay; an independent arithmetic pass cannot change candidate classification. |
 | Virtual funding-currency sensitivity | `fx.py` | Compares venue-isolated hypothetical balances with candidate capital under explicit namespaced asset identities and user-entered rates/fees; a separate Fraction-audited terminal-state P&L scenario is available only for an independently audited candidate with complete leg fees and sufficient virtual balance. It does not source rates or mutate candidate economics. |
 | Durable evidence | `storage.py` | Append-only, size- and row-bounded SQLite observations, markets, relationship reviews/revisions, runs, and paired comparisons. |
-| Replay | `replay.py` | Stable input ordering, scenario/mapping/proposal-limit-aware replay identities, exact store-record provenance for API-loaded models, deterministic results, and paired assumption comparisons. |
+| Replay | `replay.py` | Stable input ordering, scenario/mapping/proposal-limit-aware replay identities, exact store-record provenance for API-loaded models, deterministic results, and paired assumption comparisons. Joint-state maps are content-hashed and pinned in replay manifests. |
 | Event-time replay | `timeline.py` | Offline bounded replay over repeated book updates, source-state events, and explicit cutoffs; freshness, outage invalidation, candidate summaries, and timeline hashes. |
 | Finite source collection | `collection.py`, `apps/api/frontier.py` | One-source sequential bounded capture with durable restart checkpoints and an append-only hash-chained journal; explicit start/resume routes and a read-only keyset-paginated run catalog, with source policy/capability gates, per-source lock, and no job or background service. |
 | Arena replay jobs | `packages/midas/arena/frontier_replay.py`, `frontier_timeline.py`, `arena/jobs.py` | Immutable content-addressed inputs, bounded offline paired and event-time replay workers, hash-verified artifacts, and held-source filtering under Arena's existing admission gate. |
-| HTTP API | `apps/api/frontier.py`, `apps/api/arena.py` | Bounded local queries and graph neighborhoods, relationship proposals/reviews, deterministic and paired replay, config-gated captures, fee/capital/funding-currency sensitivities, coverage analytics, a verified local collection-health catalog and checkpoint joins, and local-input event-time Arena staging/result routes. |
-| Mission Control workspace | `apps/web/src/Frontier.tsx` | Sources, explicit finite checkpointed capture, markets/books/event context, coverage and source-quality analytics, relationship hypotheses, candidates, venue-separated capital assumptions and funding-currency sensitivity, local comparisons, paired and event-time Arena replay history/results with pinned freshness and explicit recorded-health selection, and readiness. |
+| HTTP API | `apps/api/frontier.py`, `apps/api/arena.py` | Bounded local queries and graph neighborhoods, relationship proposals/reviews, deterministic, joint-state, and paired replay, config-gated captures, fee/capital/funding-currency sensitivities, coverage analytics, a verified local collection-health catalog and checkpoint joins, and local-input event-time Arena staging/result routes. |
+| Mission Control workspace | `apps/web/src/Frontier.tsx` | Sources, explicit finite checkpointed capture, markets/books/event context, coverage and source-quality analytics, relationship hypotheses, candidates, venue-separated capital assumptions and funding-currency sensitivity, local comparisons, an explicit conditional joint-state projection editor, paired and event-time Arena replay history/results with pinned freshness and explicit recorded-health selection, and readiness. |
 
 ## Additional venue selection
 
@@ -641,7 +641,7 @@ rows. Mission Control reports these bounds. This is not a full-universe search;
 the unfiltered recent-edge view remains a single bounded read, and broad or
 dense traversals can still be incomplete.
 
-The economic verifier supports four narrowly bounded families. Cross-venue binary
+The economic verifier supports five narrowly bounded families. Cross-venue binary
 coverage requires a previously verified same-payoff relationship. The
 logical-implication family evaluates the long-only NO(source) plus YES(target)
 construction over the pinned joint-state mapping and requires its worst
@@ -669,8 +669,17 @@ selects up to eight candidates by default (at most 32 for an explicit caller)
 by quoted gross margin per common quantity. It accepts only nonnegative
 verified payout vectors that sum to the same positive amount in every state.
 Its independent audit recomputes each selected leg and the constant terminal
-payout. This is bounded event-market coverage, not a general multi-market
-solver. Payoff-basket and logical-implication results have controlled-fixture
+payout. The multi-market joint-state family accepts two to four open event
+markets, at most twelve total instruments, and a content-hashed external map of
+two to sixty-four asserted shared states. It searches at most 4,095 subsets and
+retains only long baskets spanning every selected market with a constant
+positive payout over each mapped state. Markets must share exact settlement
+asset identity, payout currency, close time, and settlement time. Each leg keeps
+its native quantity unit; no share-to-contract conversion is inferred. The
+independent audit verifies the basket arithmetic over the pinned map but cannot
+prove the map's completeness, semantics, or attainability, so positive results
+remain conditional. This is not a general multi-market solver. Payoff-basket,
+joint-state, and logical-implication results have controlled-fixture
 verification only; current public observations do not satisfy their required
 semantic evidence.
 Cross-venue `timing_verified` additionally requires
@@ -1006,10 +1015,11 @@ and shows these interpretation limits.
 
 There are no persistent source workers, incremental order-book streams,
 venue-wide universe scans, sourced/live FX conversion, derivatives,
-capital transfer model, cross-market joint-state composition, broad multi-leg
-search, automatic semantic certification, authenticated reviewer or assertion
-verification, full-universe graph search, Laboratory campaign integration,
-event-time timeline job integration, or production deployment. The bounded Arena
+capital transfer model, a general cross-market solver beyond the bounded
+explicit joint-state family, broad multi-leg search, automatic semantic
+certification, authenticated reviewer or assertion verification, full-universe
+graph search, Laboratory campaign integration, event-time timeline job
+integration, or production deployment. The bounded Arena
 job integration has completed under the systemd supervisor after normal host
 admission. The latest controlled fixture run produced process CPU and peak RSS
 measurements; broader runtime behavior and resource sustainability remain

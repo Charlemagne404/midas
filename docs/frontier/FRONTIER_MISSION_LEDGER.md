@@ -1,5 +1,76 @@
 # Project Frontier Mission Ledger
 
+## Multi-market joint-state replay and browser verification — 2026-10-28 02:03 UTC
+
+Code checkpoint `4bd3b7f2636d5cd8d069fb2e2b2e97188ad68247` adds the bounded
+joint-state basket family, canonical asserted-map identity, independent
+arithmetic audit, stored-observation API route, and explicit Mission Control
+map editor. The path supports two to four selected event markets, two to
+sixty-four shared-state rows, twelve total instruments, and 4,095 subsets.
+The map is an unauthenticated assertion: arithmetic is independently checked
+conditional on it, but its semantics and attainability are not certified.
+Native leg quantity units remain distinct; practical eligibility stays false.
+Follow-up test commit `b0f38c2` adds a fixture-only Playwright flow for the
+explicit mapping editor.
+
+Verification commands and results on the code checkpoint:
+
+```bash
+PYTHONPATH=packages /home/charlie/midas/.venv/bin/python -m pytest -q tests/frontier/test_joint_state.py tests/frontier/test_relationships_economics_replay.py tests/frontier/test_capital_carry.py tests/frontier/test_fx_sensitivity.py tests/frontier/test_api.py
+# 152 passed; 1 existing Starlette/httpx deprecation warning
+
+/usr/bin/time -v env PYTHONPATH=packages /home/charlie/midas/.venv/bin/python -m pytest -q tests/frontier
+# 342 passed in 53.70s pytest time / 55.06s process wall; 368,788 KiB peak RSS;
+# zero swaps, major faults, or socket messages; same existing deprecation warning
+
+corepack pnpm --dir apps/web test
+# 40 passed
+
+/usr/bin/time -v corepack pnpm --dir apps/web build
+# TypeScript + Vite 7.3.7; 2,228 modules; 4.76s Vite / 13.18s process wall;
+# 713,040 KiB peak RSS; zero swaps; existing 544.41 kB chart chunk advisory
+
+/usr/bin/time -v corepack pnpm --dir apps/web exec playwright test e2e/frontier.spec.ts --workers=1
+# 5 passed in 13.7s test time / 14.52s process wall; 197,060 KiB peak RSS;
+# zero swaps; includes explicit mapping submit with fixture-only intercepted data
+# loopback demo services and temporary storage only
+```
+
+The added browser case selects two fixture event markets, fills every mapping
+cell, submits the map, checks that the response supplies the mapping ID, and
+asserts that no source probe occurs. The route response is intercepted and is
+not evidence of live adapter behavior.
+
+Ruff passed for changed Python files. Scoped strict mypy passed for
+`models.py`, `economics.py`, `joint_economics.py`, `independent_audit.py`, and
+`replay.py`. A broader mypy invocation produced 14 errors only in imported
+pre-existing Veritas/Arena modules; none were reported in the changed Frontier
+API router. No live source, protected service, Reality recording, production
+store, or deployment was involved. Memory PSI before the final regression was
+`avg10=0.00%`, `avg60=1.70%`, with about 9 GiB available; after the suite it was
+`avg10=0.00%`, `avg60=0.64%`, with about 10 GiB available. Swap remained
+approximately 3.7 GiB used. Following Playwright, PSI rose to
+`avg10=45.36%`, `avg60=26.91%`, with about 9.7 GiB available; the run itself
+did not swap. Further heavier checks should wait for host pressure to subside.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Conditional joint-state search and independent arithmetic | COMPLETE AND VERIFIED | Bounded fixture/API/replay suite and full Frontier regression pass. Semantic truth of the supplied shared-state map is not verified. |
+| Current Mission Control build and regression | COMPLETE AND VERIFIED | Web 40/40, production TypeScript/Vite build, and Frontier Playwright 5/5 pass. The browser suite includes explicit mapping submission and no-probe behavior using fixture data; it does not establish semantic map correctness. |
+| Genuine live cross-venue relationship and source validation | BLOCKED | Current terms holds and lack of a verified common event remain. Do not bypass source restrictions; offline work remains possible. |
+| Production deployment and long-duration reliability | DEFERRED | Requires separate readiness/resource/recovery review and authorization; no deployment or long-duration run was performed. |
+| Project Frontier overall | PARTIALLY VERIFIED | Multiple sources, bounded relationship research, costs, replay, and UI exist, but live semantic matching, source quality, economic feasibility, and production gates remain open. |
+
+The same documentation checkpoint updates the Frontier architecture and
+operations guides, development/API guidance, this ledger, the current-state
+addendum, and the engineering report. After committing these docs, record the
+documentation commit identity in the handoff output.
+
+**Next safe action:** continue work on source-independent acceptance and
+relationship validation. Recheck the source-terms gates before considering any
+public observation; this checkpoint made no source request. Recheck host PSI
+before further resource-bearing validation.
+
 ## Production web build verification — 2026-10-28 01:29 UTC
 
 The current Mission Control frontend passes the full web unit suite

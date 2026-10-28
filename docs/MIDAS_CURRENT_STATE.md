@@ -33,6 +33,48 @@ in the dated addendum below and in the Frontier engineering report.
 
 ## Frontier development addendum — 2026-10-28
 
+### Conditional multi-market joint-state basket and browser flow — 2026-10-28 02:03 UTC
+
+Code commit `4bd3b7f2636d5cd8d069fb2e2b2e97188ad68247` adds a bounded
+all-long constant-payout basket over an explicit shared-state map for two to
+four stored event markets. The replay and map are versioned and content-hashed;
+the independent audit recomputes the arithmetic while preserving each leg's
+native quantity unit. The map remains an unauthenticated external assertion,
+so any positive result stays conditional and practical eligibility is false.
+The API reads saved observations only, requires the assertion timestamp to
+postdate selected metadata, and makes no source request. Mission Control
+contains an explicit mapping editor.
+
+Follow-up test commit `b0f38c2` adds the explicit joint-state submission flow
+to `apps/web/e2e/frontier.spec.ts` using intercepted, labeled fixture data.
+
+The focused Frontier regression passed **152 tests**; the full Frontier Python
+suite then passed **342/342** in 53.70 seconds (55.06 seconds process wall) at
+**368,788 KiB peak RSS**, with zero swaps. The full web unit suite passed
+**40/40**, TypeScript passed, and the production build transformed
+**2,228 modules** in **4.76 seconds** (13.18 seconds process wall time) at
+**713,040 KiB peak RSS**, with zero swaps. The existing **544.41 kB** chart
+chunk advisory remains. The full Frontier Playwright spec passes **5/5** in
+13.7 seconds (14.52 seconds process wall) at **197,060 KiB peak RSS**, with
+zero swaps. A new fixture-only browser flow checks explicit projection
+submission, a server-derived mapping ID, the conditional result, and no venue
+probe. All browser runs use loopback demo services and temporary storage. Ruff
+and scoped strict mypy for the changed
+Frontier core modules pass. A broader mypy invocation still reports 14
+diagnostics in imported pre-existing Veritas/Arena modules, with none in the
+changed Frontier API router.
+
+Immediately after the full Frontier Python suite and before the browser run,
+memory PSI `avg10` was **0.00%** and `avg60` **0.64%**, with about **10 GiB
+available**. After the browser run PSI rose to `avg10=45.36%` and
+`avg60=26.91%`, with **9.7 GiB available**; swap remained **3.7 GiB used** and
+the browser process itself did not swap. Defer further heavy checks until host
+pressure subsides. These short checks establish neither sustained capacity nor
+production readiness. No live venue validation, service modification, or
+deployment was performed. General multi-market solving, semantic
+authentication of state maps, live cross-venue validation, and production
+gates remain open; Project Frontier is **PARTIALLY VERIFIED**.
+
 ### Production web build and complete current frontend checks — 2026-10-28 01:29 UTC
 
 The current web revision passes the full unit suite (**40/40**), isolated

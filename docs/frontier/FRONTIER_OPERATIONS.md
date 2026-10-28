@@ -208,6 +208,35 @@ adapters do not yet provide clock-uncertainty estimates, so inspect that field
 and the timing reasons instead of treating a positive recorded-value
 calculation as a simultaneous quote.
 
+## Conditional joint-state basket replay
+
+`POST /api/frontier/replay/joint-state` evaluates a bounded all-long basket
+across **two to four** stored open event markets. The caller must supply an
+explicit shared-state map with **two to sixty-four** rows. Each row projects
+every local outcome into that joint state; the API validates complete coverage
+and derives a canonical map ID from the normalized definition. It never
+discovers or certifies the shared states. The map is an unauthenticated
+research assertion and remains unverified semantic evidence.
+
+The request references saved market and book observations. The map's assertion
+timestamp must postdate the selected market metadata. Replay uses those stored
+records only; it makes no exchange request and does not load newer market or
+book data. Selected markets must provide exhaustive verified event payoffs and
+resolution metadata, share settlement asset identity and payout currency, and
+have the same future close and settlement timestamps. Search is bounded to
+twelve total instruments and 4,095 subsets. Position legs retain venue-native
+quantity units; Frontier does not assume that a share on one venue converts to
+a contract on another.
+
+The independent audit recomputes the constant-payout arithmetic over the
+pinned map and stored quotes, but it cannot establish that the map is complete,
+semantically correct, or jointly attainable. A positive result is therefore
+classified as conditional. No practical execution eligibility is emitted;
+capital transfer, simultaneous access, execution, settlement, and venue
+restrictions remain outside this calculation. Mission Control exposes the
+same definition fields in Replay & Readiness and requires each projection cell
+to be entered explicitly.
+
 ## Event-time Arena replay
 
 `POST /api/frontier/arena-timeline-replay` uses only the bounded local Frontier

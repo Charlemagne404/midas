@@ -2,6 +2,21 @@
 
 **Report date:** 2026-10-28
 
+**Latest implementation checkpoint — 2026-10-28 02:03 UTC:** Code commit
+`4bd3b7f2636d5cd8d069fb2e2b2e97188ad68247` adds bounded conditional
+multi-market joint-state basket replay, an independently recomputed payoff
+audit, the stored-evidence API, and an explicit Mission Control mapping editor.
+Test commit `b0f38c2` adds an end-to-end browser flow for explicit map
+submission using intercepted fixture data.
+The focused regression passed **152 tests**, and the full Frontier Python
+suite passed **342/342** after it. The full web unit suite passed **40/40**,
+the production build passed, and the Frontier Playwright spec now passes
+**5/5**, including a fixture-only test for explicit mapping submission. These
+are isolated local/fixture checks only. A shared-state map
+is an unauthenticated external assertion, so it cannot establish economic
+equivalence; live cross-venue validation and the broader Frontier acceptance
+remain incomplete.
+
 **Latest virtual funding / terminal P&L checkpoint:** code commit
 `71ee203b033c4bc0f38afce09b5255fe31bcae21` extends the saved-run funding
 sensitivity to expose a separate outcome-level P&L result after modeled
@@ -51,7 +66,8 @@ Frontier adds an isolated, research-only market-data foundation for Polymarket,
 Kalshi, Kraken spot, and a fixture-validated Coinbase Exchange spot adapter. It has versioned venue-aware contracts, a bounded
 public-GET adapter protocol, capability declarations, normalizers, an append-only
 SQLite evidence store, relationship hypotheses and append-only review revisions,
-an explicit payoff-equivalence check, three narrow Decimal opportunity evaluators,
+an explicit payoff-equivalence check, five narrowly bounded Decimal
+opportunity families,
 deterministic replay, local API routes, and a native Mission Control workspace.
 
 An official source-terms review on 2026-10-27 adds a live-data permission
@@ -1703,6 +1719,27 @@ Priority order:
 ## 19. Exact files and commits changed
 
 Implementation and documentation commits on this branch:
+
+- `4bd3b7f2636d5cd8d069fb2e2b2e97188ad68247` — bounded joint-state basket
+  candidate generation, replay manifest and canonical map identity, independent
+  payoff audit, stored-observation API, and explicit Mission Control editor.
+  Files: `apps/api/frontier.py`, `apps/web/src/Frontier.test.tsx`,
+  `apps/web/src/Frontier.tsx`, `apps/web/src/frontier.css`,
+  `packages/midas/frontier/economics.py`,
+  `packages/midas/frontier/independent_audit.py`,
+  `packages/midas/frontier/joint_economics.py`,
+  `packages/midas/frontier/models.py`, `packages/midas/frontier/replay.py`,
+  `tests/frontier/test_api.py`, `tests/frontier/test_capital_carry.py`,
+  `tests/frontier/test_fx_sensitivity.py`,
+  `tests/frontier/test_joint_state.py`,
+  `tests/frontier/test_relationships_economics_replay.py`.
+- `b0f38c2` — adds the explicit joint-state editor flow to
+  `apps/web/e2e/frontier.spec.ts`; fixture metadata and replay response are
+  intercepted, and the test asserts zero venue-probe requests.
+- Documentation checkpoint on this branch — this report, mission ledger,
+  current-state entry, architecture, operations, and development/API guidance
+  for the joint-state implementation. The commit identity is in branch history
+  and the final handoff.
 
 - `047298b` — paginated uncentered graph text search through a revision-pinned,
   bounded BFS result window; connected search submission, previous/next pages,
@@ -5022,7 +5059,7 @@ During the check at `2026-10-28T00:31:15Z`, memory PSI avg10 was **24.98% some
 gap-detail batch PID **3975405** was active. It was not touched. The strict API
 typing caveat remains unresolved; retry when shared-host pressure subsides.
 
-## Current mission acceptance matrix — 2026-10-28 01:27 UTC
+## Current mission acceptance matrix — 2026-10-28 02:03 UTC
 
 This matrix assesses the user-requested Frontier stages and scientific
 acceptance against current branch evidence, not intent or planned work.
@@ -5033,13 +5070,13 @@ acceptance against current branch evidence, not intent or planned work.
 | Polymarket, Kalshi, Kraken, and Coinbase read-only adapters | PARTIALLY VERIFIED | Adapters are implemented and contract/fixture tested; selected historical Polymarket, Kalshi, and Kraken public responses were captured. Kalshi and Kraken remain held, Coinbase remains held pending exact terms-scope validation, and no fresh live validation is claimed. |
 | Canonical instruments, precise denominations, and supported payoff semantics | PARTIALLY VERIFIED | Versioned models preserve native IDs, identities, outcomes, payoff rules, constraints, and provenance; binary, one-hot multi-outcome, and bounded same-market constant-payout basket evaluators reject unsupported or incompatible semantics. Spot remains contextual unless a supported payoff link is proved. Broader instrument families are not supported. |
 | Relationship graph, evidence, persistence, and bounded exploration | PARTIALLY VERIFIED | Deterministic proposals, explicit verification states, append-only review evidence, held-source filtering, and revision-pinned neighborhood/search pages have API and UI coverage. No genuine verified cross-venue economic match exists; reviewer identities and external assertions are not authenticated. |
-| Opportunity families and independent economic verification | PARTIALLY VERIFIED | Binary coverage, bounded one-hot coverage, directed implication, and exact constant-payout subset baskets have independent arithmetic checks. The new basket search is limited to one verified event market, twelve instruments, sixteen states, and 4,095 subsets; fixture replay and an independent three-leg audit pass. Broader multi-market joint-state search remains unimplemented. No live positive or economically eligible opportunity is established. |
+| Opportunity families and independent economic verification | PARTIALLY VERIFIED | Binary coverage, bounded one-hot coverage, directed implication, within-market constant-payout subsets, and multi-market joint-state baskets have independent arithmetic checks. The new joint-state path accepts two to four stored open markets, up to twelve instruments, and a content-hashed external assertion of two to sixty-four shared states; it searches at most 4,095 subsets. Focused replay/API and independent-audit fixtures pass. The audit proves arithmetic only over the asserted map; it cannot authenticate the event composition or establish the map's semantics. No live positive or economically eligible opportunity is established. |
 | Venue costs, capital, and currency assumptions | PARTIALLY VERIFIED | Public fee metadata, bounded fee/carry sensitivities, partial-fill stress, venue-separated virtual balances, and a separate conversion-adjusted terminal-P&L scenario exist. The P&L scenario requires verified candidate/funding audits, complete candidate leg fees, and sufficient per-venue balances; it never mutates candidate economics. Account-specific fees, sourced FX, cross-venue transfer/custody, settlement risk, and conversion availability remain unknown. |
 | Isolated collection, provenance, durable storage, and deterministic replay | PARTIALLY VERIFIED | Finite restartable collection, append-only hash-chained checkpoints, a read-only keyset-paginated run catalog across the 1,000-run journal bound, bounded storage, event-time replay, source-health evidence, and replay provenance are implemented and tested offline. No continuous market-data stream, full source-history backfill, or long-horizon source-quality study is established. |
 | Laboratory/Arena research integration | PARTIALLY VERIFIED | Bounded replay jobs, paired comparisons, integrity-checked results, and fixture/UI paths exist. No durable Laboratory experiment manager, long-duration campaign, or production worker is authorized or verified. |
-| Native Frontier Mission Control interface | IMPLEMENTED, DEPLOYMENT PENDING | The complete web unit suite passes 40/40, Frontier browser spec 4/4, and production TypeScript/Vite build after the payoff-basket change. Browser checks use isolated demo services and temporary SQLite/Arena/Frontier roots. The build retains the existing 544.41 kB chart-chunk advisory. No live source data was used; no production deployment occurred. |
-| Scientific acceptance: normalization, rejection, controlled discrepancy, independent arithmetic, missing/stale/asynchronous evidence, and deterministic replay | PARTIALLY VERIFIED | The serial Frontier suite passes 332 tests, including exact three-leg basket generation/replay, API persistence/listing, independent recomputation, non-coverage rejection, and truncated-basket audit rejection. Current web unit/browser checks also pass 40/40 and 4/4. Evidence does not establish a genuine cross-venue relationship, synchronized executable quotes, or positive economics. |
-| Resource sustainability under bounded development workloads | PARTIALLY VERIFIED | The 332-test serial Frontier suite measured 369,040 KiB peak RSS; web unit tests measured 310,652 KiB, Frontier Playwright 192,060 KiB, and the production web build 647,704 KiB. Four synthetic basket shapes covered 7 or 4,095 enumerated subsets and 0, 1, 11, or 4,095 qualifying combinations; the dense case returned 32 at 0.343868 seconds median / 0.355242 seconds maximum. These are short local measurements; representative public workloads, sustained collection, concurrency, production admission, and broad latency/CPU behavior remain unmeasured. |
+| Native Frontier Mission Control interface | IMPLEMENTED, DEPLOYMENT PENDING | The current web unit suite passes 40/40, Frontier browser spec 5/5, TypeScript, and Vite production build after the joint-state editor change. A new fixture-only browser case submits every mapping cell, verifies the server-derived ID response and conditional status, and confirms no venue probe. Browser checks use isolated demo services and temporary roots. The build transformed 2,228 modules at 713,040 KiB peak RSS and retains the existing 544.41 kB chart-chunk advisory. No live source data was used; no production deployment occurred. |
+| Scientific acceptance: normalization, rejection, controlled discrepancy, independent arithmetic, missing/stale/asynchronous evidence, and deterministic replay | PARTIALLY VERIFIED | The full Frontier regression passes 342 tests; it includes joint-state bounds, explicit maps, deterministic hashing, stored-observation API persistence, independent payout recomputation, native-unit preservation, and adversarial rejection cases. It ran in 53.70 seconds (55.06 seconds process wall time) at 368,788 KiB peak RSS, with zero swaps. The web suite passes 40/40, Frontier browser spec 4/4, and current production build. Evidence does not establish a genuine cross-venue relationship, authenticated state composition, synchronized executable quotes, or positive economics. |
+| Resource sustainability under bounded development workloads | PARTIALLY VERIFIED | The current full Frontier Python suite reached 368,788 KiB peak RSS; the Vite build transformed 2,228 modules at 713,040 KiB peak RSS; the Frontier Playwright spec used 192,908 KiB peak RSS. None swapped. These are bounded short runs, not sustained collection or production admission evidence. Four synthetic basket shapes covered 7 or 4,095 enumerated subsets; the dense case returned 32 at 0.343868 seconds median / 0.355242 seconds maximum. Representative public workloads, sustained collection, concurrency, production admission, and broad latency/CPU behavior remain unmeasured. |
 | Read-only research boundary and source-use gates | COMPLETE AND VERIFIED | No trading/authenticated exchange path is provided; source-policy tests ensure held venues return 409 without requests and held evidence stays quarantined. This does not grant permission to use a held source. |
 | Required architecture, operations, current-state, report, and continuation documentation | COMPLETE AND VERIFIED | The engineering report, architecture, operations guidance, current-state note, and append-only mission ledger record implementation, evidence, blockers, and continuation actions. |
 | Production deployment | DEFERRED | Requires separate source permission, resource/storage/recovery review, full deployment-scope regression, monitoring/rollback preparation, and explicit authorization. |
@@ -5428,3 +5465,55 @@ frontend tests, types, and production compilation; it does not establish
 production deployment, operational capacity, live source behavior, or overall
 Frontier completion. General multi-market joint-state composition and its
 independent arithmetic audit remain unimplemented.
+
+## Conditional multi-market joint-state baskets — 2026-10-28 02:03 UTC
+
+Code commit `4bd3b7f2636d5cd8d069fb2e2b2e97188ad68247` adds an all-long
+constant-payout search across two to four stored open event markets. The input
+is a bounded, explicit projection from two to sixty-four externally named
+shared states to each selected market's local outcomes. A validated model
+normalizes the map before computing its canonical SHA-256 ID, and replay pins
+both its definition and digest. The calculator considers at most twelve
+instruments and 4,095 subsets; it retains candidate legs in each market's
+native quantity unit. It requires verified exhaustive payoff and resolution
+metadata, identical settlement asset identity and payout currency, and common
+future close and settlement timestamps. It does not infer cross-venue unit
+conversion or settlement equivalence.
+
+The independent audit is separately implemented and recomputes leg arithmetic
+and constant payouts over every mapped state. That verifies the candidate's
+calculation relative to the supplied map; it does not verify that the shared
+states are semantically correct, exhaustive, or jointly attainable. The map is
+an unauthenticated external assertion. Positive results therefore remain
+conditional, practical execution eligibility remains false, and no result
+establishes a live opportunity.
+
+`POST /api/frontier/replay/joint-state` accepts map definitions but not a
+caller-provided identity. It requires stored market observation IDs and saved
+public book observations; the assertion timestamp must postdate selected
+market metadata. This route performs no network fetch and does not infer
+relationships. Held-source filtering remains active. Mission Control's
+Replay & Readiness editor requires every projection cell and displays the
+conditional classification. The editor request is covered by UI unit tests;
+the API is covered by stored-only, malformed, stale-assertion, and persisted
+replay tests. Test commit `b0f38c2` adds a Playwright flow using intercepted
+fixture observations and response. It verifies the complete request payload
+and no-probe behavior; it does not authenticate semantic mapping correctness
+or test a live exchange.
+
+Verification on this commit:
+
+| Check | Result | Boundary |
+| --- | --- | --- |
+| Full Frontier Python suite | **342 passed** in 53.70 seconds pytest time (55.06 seconds process wall), 368,788 KiB peak RSS, zero swaps | One existing Starlette/httpx TestClient deprecation warning. |
+| Focused regression | **152 passed** across joint-state, relationship/economics/replay, capital, FX, and API tests | Kept as a direct reproduction of the new integration paths. |
+| Full web unit suite | **40 passed** | Includes explicit joint-state form/request assertions. |
+| Frontier Playwright | **5 passed** in 13.7 seconds test time (14.52 seconds process wall), 197,060 KiB peak RSS, zero swaps | Includes the explicit joint-state form submission using fixture market metadata and an intercepted research API response; no source request. |
+| Production web build | Passed; TypeScript plus Vite 7.3.7 transformed 2,228 modules in 4.76 seconds (13.18 seconds process wall), 713,040 KiB peak RSS, zero swaps | Existing 544.41 kB chart-chunk advisory remains. |
+| Static checks | Ruff passed; scoped strict mypy passed for `models.py`, `economics.py`, `joint_economics.py`, `independent_audit.py`, and `replay.py` | A broader mypy invocation surfaced 14 diagnostics in imported pre-existing Veritas/Arena modules and none in the changed Frontier API router. |
+
+No live source, production service, protected recording, or production store
+was accessed or changed. No deployment occurred. The full scientific goals
+remain partially verified: live cross-venue relationship evidence, semantic
+map authentication, cross-venue capital/transfer feasibility, sustained
+source quality, and deployment are unresolved.
