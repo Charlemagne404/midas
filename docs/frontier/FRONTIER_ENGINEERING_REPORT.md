@@ -2,13 +2,14 @@
 
 **Report date:** 2026-10-28
 
-## Current status — 2026-10-28 05:54 UTC
+## Current status — 2026-10-28 06:59 UTC
 
 Frontier is isolated at `/home/charlie/midas-frontier` on
 `codex/frontier-20261026`. Frontier descends from the verified V6 integration
 commit `11d32a0` (`codex/veritas-v6-integration-20261026`); its merge base with
-current `main` is `55601b9`. The latest implementation commit is `8748a53`,
-which keeps Coinbase held until a validated permission and intended-scope
+current `main` is `55601b9`. The latest implementation commit is `3251941`,
+which validates the saved history inspector against an isolated populated
+store while keeping Coinbase held until a validated permission and intended-scope
 review mechanism exists. The preceding collection safeguards are `6c5c329`
 for finite wall-time enforcement and `8fb4c0d` for process-shared per-venue
 leases. The implementation includes Polymarket, Kalshi, Kraken Spot, and
@@ -27,17 +28,20 @@ Current offline verification is strong and bounded:
 - The latest source-permissions regression passes **5/5**, including a matched
   Coinbase terms acknowledgment plus probe flag: the API returns HTTP 409 with
   zero requests, and held Coinbase records remain quarantined. The focused
-  Frontier web component suite passes **8/8**.
+  Frontier web component suite passes **9/9**.
 - Strict mypy passes for the Frontier package and API configuration, startup,
   and route integration (**26 files**). Ruff passes on the changed Python
   files, and Python formatting, full web Prettier checking, and `git diff
   --check` pass.
-- The production TypeScript/Vite build, all **40** web unit tests, all **6**
-  Frontier Playwright cases, ESLint, and Prettier pass. Playwright used
-  temporary databases and local demo services; no exchange probe or order was
-  submitted. Vite's existing 504.00 kB main-bundle and 544.41 kB Chart-bundle
-  advisory remains; the Frontier lazy bundle is 164.53 kB JavaScript and
-  48.35 kB CSS.
+- All **41** web unit tests, the **7** standard Frontier Playwright cases, and
+  the **1** opt-in seeded-store browser/API integration pass. The seeded test
+  traverses both saved-history pages through the local API, submits a
+  deterministic two-series replay, inspects its persisted lineage, and
+  verifies zero source probes. TypeScript, ESLint, Prettier, Ruff, and the
+  production build pass. Playwright used disposable stores and loopback demo
+  services; no exchange probe or order was submitted. Vite's existing 504.00
+  kB main-bundle and 544.41 kB Chart-bundle advisory remains; the Frontier
+  lazy bundle is 182.67 kB JavaScript and 53.96 kB CSS.
 
 The complete repository regression remains unverified. In this Frontier
 baseline, `tests/test_reality_full_scale_validation.py` imports
@@ -7292,3 +7296,48 @@ Changed files in `797e00a`: `apps/api/frontier.py`,
 and report docs were updated separately. **Next safe action:** seed a dedicated
 temporary Frontier store with explicit fixture captures/replays and drive the
 browser inspector against the local API without contacting a venue.
+
+## Populated saved-history browser/API verification — 2026-10-28 06:59 UTC
+
+Code commit `3251941` adds an opt-in browser scenario and fixture seeder for the
+persisted price-history inspector. The seeder writes 21 immutable Polymarket-
+shaped history observations and their 21 deterministic replay artifacts into a
+fresh SQLite store under a temporary browser root. Every fixture uses a
+versioned adapter label and an explicit fixture-only limitation. It refuses to
+overwrite an existing store; it does not make HTTP requests. The Playwright
+configuration shares and validates the temporary root across its config and
+worker processes, seeds only under `MIDAS_SEED_FRONTIER_E2E=1`, and otherwise
+leaves the existing empty-store E2E behavior intact.
+
+The new test first checks the local API's first and final capture/replay pages
+and `has_more` transitions. It then navigates Mission Control, selects two
+saved captures, posts an explicit local descriptive replay, reads the saved
+artifact by run ID, inspects its per-series lineage, and pages the older saved
+records. The test observed no `/probe/` request. This verifies persistence and
+the API/UI path against controlled fixture rows; it is not venue validation,
+cross-venue evidence, or economic research.
+
+Verification since this checkpoint:
+
+- The opt-in seeded browser integration: **1 passed** against the real local
+  FastAPI routes and isolated temporary store.
+- Standard `e2e/frontier.spec.ts`: **7 passed** on temporary loopback services.
+- Frontend unit tests: **41 passed** across seven files.
+- TypeScript project check, ESLint, Prettier, Ruff check/format, and production
+  frontend build passed. Vite transformed 2,228 modules; existing 504.00 kB
+  main and 544.41 kB Chart chunk advisories remain.
+- Direct storage verification confirmed 21 captures and 21 replay artifacts
+  with newest-first paging. No production store, protected service, or source
+  endpoint was accessed.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Saved-history API/UI over persisted data | COMPLETE AND VERIFIED | Isolated SQLite fixture store, actual local routes, UI replay POST, saved detail and page navigation; zero source probes. |
+| Seeded E2E isolation | COMPLETE AND VERIFIED | Explicit opt-in, temporary-root validation, store overwrite refusal, default suite unseeded. |
+| Live source response validation | BLOCKED | Existing source-use holds remain; fixture evidence does not change this state. |
+| Production integration | DEFERRED | No production database, service, or deployment was changed. |
+
+**Next safe action:** continue the source-independent acceptance matrix and
+select the next bounded replay, resource, or supervisor gap. Remeasure host
+admission before a broad or resource-intensive run; keep source-use holds and
+production isolation unchanged.

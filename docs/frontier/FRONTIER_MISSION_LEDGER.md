@@ -5968,3 +5968,50 @@ economic evaluation occurred.
 temporary Frontier store with fixture-backed saved captures and replay rows,
 then drives the inspector against the actual local API routes. Keep all data in
 the isolated test store and do not probe or migrate any protected service.
+
+## Persisted history browser/API integration — 2026-10-28 06:59 UTC
+
+**Code commit:** `3251941` on `codex/frontier-20261026`.
+
+Added an explicit opt-in Playwright scenario backed by a disposable Frontier
+SQLite store. The Python seeder writes 21 versioned fixture captures and 21
+deterministic replay artifacts using the same immutable storage APIs as normal
+research data; it refuses to overwrite an existing store. It does not contact
+Polymarket or any other venue. The browser configuration creates one isolated
+temporary root and seeds only when `MIDAS_SEED_FRONTIER_E2E=1` is set. The
+default unseeded suite remains unchanged.
+
+The browser scenario reads first and final capture/replay pages through the
+real local FastAPI routes, checks `has_more`, submits a two-series descriptive
+replay through the UI, re-reads the saved run by its identity, inspects source
+lineage, then navigates both older pages. It asserts zero `/probe/` requests.
+The fixture values remain synthetic test inputs; a passing API-backed UI flow
+is not a live source validation or an economic result.
+
+Verification:
+
+- `MIDAS_SEED_FRONTIER_E2E=1 corepack pnpm exec playwright test e2e/frontier.seeded.spec.ts`:
+  **1 passed** against the real local API and temporary seeded store.
+- `corepack pnpm exec playwright test e2e/frontier.spec.ts`: **7 passed** on
+  isolated local services with no venue request.
+- `corepack pnpm test`: **41 passed** across seven frontend files.
+- TypeScript project check, ESLint, Prettier, Ruff check/format, and
+  `git diff --check` pass. The production build passes after 2,228 modules;
+  its existing main/Chart chunk-size advisory remains.
+- Direct seeder verification confirmed 21 persisted captures and 21 replay
+  artifacts, with correct newest-first page boundaries.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Saved-history API and UI over persisted data | COMPLETE AND VERIFIED | Isolated temporary store, real local routes, UI replay POST and lineage detail; no source probe. |
+| Seed fixture safety | COMPLETE AND VERIFIED | Explicit opt-in, temporary-root check, overwrite refusal, deterministic versioned rows. |
+| Live source response validation | BLOCKED | Current venue-use holds remain; fixtures do not satisfy live validation. |
+| Production store or service integration | DEFERRED | No protected database, service, or deployment was touched. |
+
+Changed files in `3251941`: `apps/web/playwright.config.ts`,
+`apps/web/e2e/frontier.seeded.spec.ts`, and
+`apps/web/e2e/seed_frontier_store.py`. Operations and architecture docs were
+updated in this documentation checkpoint. **Next safe action:** continue the
+remaining source-independent acceptance matrix, prioritizing bounded replay,
+resource, and supervisor gaps; remeasure host admission before any broad or
+resource-intensive run. Preserve all source-use holds and production state.

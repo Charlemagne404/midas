@@ -1197,3 +1197,10 @@ replay/candidate set is small and bounded. See
 the [engineering report](FRONTIER_ENGINEERING_REPORT.md) and
 [mission ledger](FRONTIER_MISSION_LEDGER.md) for acceptance status and continuation
 steps.
+
+The saved price-history inspector also has an opt-in browser integration over a
+temporary Frontier database seeded with deterministic, explicitly fixture-only
+captures and replay artifacts. It drives the local API and Mission Control
+views, including replay submission and page navigation; this verifies the
+persisted UI/API contract without contacting a venue or changing the status of
+live source validation.

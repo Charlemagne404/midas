@@ -464,6 +464,23 @@ market binding, request interval, receipt context when available in the source
 page, and sampled-point bounds. These reads are local and make no source
 request.
 
+To verify the populated-store browser path, run the explicit seeded E2E from
+`apps/web`:
+
+```bash
+MIDAS_SEED_FRONTIER_E2E=1 corepack pnpm exec playwright test e2e/frontier.seeded.spec.ts
+```
+
+Playwright creates a fresh `midas-browser-*` directory under the system temp
+directory. `e2e/seed_frontier_store.py` writes 21 clearly labeled deterministic
+captures and their 21 replay artifacts there; the test then reads both real
+local API pages, submits one local replay, and inspects its stored lineage.
+The seeder refuses to overwrite an existing Frontier database. Without the
+explicit environment flag, the seeded test is skipped and the normal browser
+suite retains its empty temporary store. The fixture URLs identify the source
+shape only; the seeder performs no HTTP request and does not validate a live
+venue response.
+
 ## Resource and deployment limits
 
 Use short, targeted tests and temporary stores. Before heavier local work,
