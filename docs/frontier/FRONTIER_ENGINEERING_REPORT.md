@@ -12715,3 +12715,6 @@ changed.
 | Comparison arm referential integrity | COMPLETE AND VERIFIED WITH FIXTURES | API list and detail both verify run identity and result hash against stored replay rows. |
 | Broader comparison regression | PARTIALLY VERIFIED | One paired-replay fixture covers success and missing-arm rejection; full API/storage suites remain deferred. |
 | Overall Frontier acceptance | PARTIALLY VERIFIED | Live cross-venue findings, broad regressions, endurance, protected recovery, and deployment remain open. |
+
+The comparison arm readback implementation is commit
+`447cf5cafb65f2fff867766f6a1a5c3fc5887dc3`.

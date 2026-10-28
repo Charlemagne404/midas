@@ -3900,6 +3900,8 @@ list/detail reads for missing arm rows. Ruff and format checks pass; the
 combined strict-mypy check for the API and replay modules passes. No network
 requests were made. Candidate provenance checkpoint commit:
 `cdef0208a48e20b2c3f6b0aa1535802f2449c933`.
+Comparison arm readback checkpoint commit:
+`447cf5cafb65f2fff867766f6a1a5c3fc5887dc3`.
 
 At `2026-10-28T22:24:22Z`, API `MemoryHigh` headroom was 520,192 bytes and
 Reality headroom was 126,046,208 bytes. Memory PSI `avg10` was 0.07% (`some`)

@@ -11726,7 +11726,7 @@ Starlette/httpx deprecation warning remains. No network request was made.
 The immediately preceding source-provenance checkpoint is committed as
 `cdef0208a48e20b2c3f6b0aa1535802f2449c933` on
 `codex/frontier-20261026`. The comparison arm readback fix is included in
-this checkpoint; its identity is recorded in git history.
+commit `447cf5cafb65f2fff867766f6a1a5c3fc5887dc3`.
 
 At `2026-10-28T22:24:22Z`, API `MemoryHigh` headroom was 520,192 bytes and
 Reality headroom was 126,046,208 bytes. Memory PSI `avg10` was 0.07% (`some`)
