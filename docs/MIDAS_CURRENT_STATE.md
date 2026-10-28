@@ -33,6 +33,30 @@ in the dated addendum below and in the Frontier engineering report.
 
 ## Frontier development addendum — 2026-10-28
 
+### Latest isolated Frontier checkpoint — 2026-10-28 11:12 UTC
+
+Code commit `435153d` closes a copied-book depth-integrity gap. Runtime book
+checks now reject duplicate prices, non-finite or negative prices,
+non-finite/non-positive quantities, malformed levels, and naive level
+timestamps in candidate generation, independent audit, and deterministic
+replay. Economic model v17, audit v17, and replay v16 pin the changed rules.
+
+Focused adversarial tests passed **8/8**. The full `tests/frontier` suite
+passes **412/412** in 31.33 seconds wall time, with **378,608 KiB** peak RSS,
+zero test-process swaps, zero filesystem input, and zero socket messages.
+Ruff check/format, strict mypy for five production modules, and
+`git diff --check` pass. One existing Starlette/httpx deprecation warning
+remains. Tests used isolated tmpfs storage at
+`/dev/shm/midas-frontier-book-depth-final-20261028T1112Z`.
+
+At `11:10:34Z`, about 10 GiB was available, memory PSI avg10 was 0%, and I/O
+PSI was 0.06% some / 0.01% full. At `11:12:10Z`, about 10 GiB remained
+available, memory PSI avg10 was 0%, and I/O PSI was 0.12% some / 0% full.
+No live source, protected capture, or production service was accessed. Live
+cross-venue validation, broader MIDAS regression, production recovery, and
+deployment remain open. Frontier remains **PARTIALLY VERIFIED**, research-only,
+and undeployed.
+
 ### Latest isolated Frontier checkpoint — 2026-10-28 11:04 UTC
 
 Test commit `d44bab0` adds end-to-end evidence for duplicate JSON-key source

@@ -2,7 +2,53 @@
 
 **Report date:** 2026-10-28
 
-## Current status — 2026-10-28 11:04 UTC
+## Current status — 2026-10-28 11:12 UTC
+
+This entry supersedes the 11:04 UTC checkpoint below. Frontier remains
+isolated at `/home/charlie/midas-frontier` on `codex/frontier-20261026`.
+Code commit `435153d` closes a copied-book integrity gap: direct
+`model_copy(update=...)` could bypass the constructor's unique-price-level
+validator and make a duplicate best ask appear to provide inflated depth.
+
+`BookSnapshot.has_valid_price_levels` now rechecks level type, unique prices,
+finite nonnegative prices, finite positive quantities, and aware optional
+level timestamps at each decisive boundary. Cross-venue, single-market,
+bounded-payoff, and joint-state generators reject malformed books; the
+independent audit classifies a selected malformed book as incomplete; replay
+rejects it before candidate generation. Economic model v17, audit v17, and
+replay v16 pin these acceptance changes. Existing stored model rows remain
+readable.
+
+Focused adversarial regressions passed **8/8**. An initial local run of the
+five copied-level cases used a nonexistent fixture instrument ID; the test
+setup was corrected to select the normalized fixture instrument and passed on
+rerun. The final full `tests/frontier` suite passed **412/412** in 29.83
+seconds (31.33 seconds wall time), with **378,608 KiB** peak RSS, zero process
+swaps, zero filesystem input, 376 output blocks, and zero socket messages.
+Ruff check/format, strict mypy for five production modules, and
+`git diff --check` passed. One existing Starlette/httpx `TestClient`
+deprecation warning remains. Tests used tmpfs at
+`/dev/shm/midas-frontier-book-depth-final-20261028T1112Z`.
+
+At `11:10:34Z`, about 10 GiB was available, memory PSI avg10 was 0%, and I/O
+PSI was 0.06% some / 0.01% full. At `11:12:10Z`, about 10 GiB remained
+available, memory PSI avg10 was 0%, and I/O PSI was 0.12% some / 0% full.
+No live source, protected capture, production service, or Arena job was used;
+the existing public capture remains unstaged and untouched. Frontier remains
+**PARTIALLY VERIFIED**.
+
+### Latest acceptance delta
+
+| Requirement | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Copied book-level integrity | COMPLETE AND VERIFIED | Candidate generation, independent audit, and replay reject duplicate or otherwise invalid levels; adversarial fixtures cover inflated depth and copied malformed values. |
+| Full Frontier Python regression | COMPLETE AND VERIFIED | 412/412 pass on code commit `435153d`; one existing deprecation warning remains. |
+| Live cross-venue equivalence and economics | BLOCKED | No authorized genuine multi-venue evidence is available for this checkpoint. |
+| Broader MIDAS regression | PARTIALLY VERIFIED | Not run on this branch; Reality recovery dependency and incompatible Reality lineages remain unresolved. |
+| Production recovery and deployment | DEFERRED | The research worktree remains isolated, unmerged, and undeployed. |
+| Frontier overall | PARTIALLY VERIFIED | Live science, broader regression, and production readiness remain open. |
+
+## Previous checkpoint — 2026-10-28 11:04 UTC
 
 This entry supersedes the 11:02 UTC checkpoint below. Frontier remains
 isolated at `/home/charlie/midas-frontier` on `codex/frontier-20261026`. Test

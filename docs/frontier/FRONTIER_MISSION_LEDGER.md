@@ -1,5 +1,44 @@
 # Project Frontier Mission Ledger
 
+## Reject malformed copied book depth — 2026-10-28 11:12 UTC
+
+Code commit `435153d` adds a runtime integrity check for order-book levels,
+because Pydantic `model_copy(update=...)` bypasses the model's duplicate-price
+validator. Cross-venue, multi-outcome, bounded-basket, and joint-state
+candidate generation now refuse duplicate or otherwise invalid price levels;
+the independent audit returns incomplete evidence for such a selected book,
+and deterministic replay rejects it before candidate generation. Economic
+model v17, independent audit v17, and replay v16 identify these semantics.
+
+Fixture regressions cover inflated duplicate top-ask depth at candidate, audit,
+and replay boundaries plus copied non-finite/negative prices, non-finite/zero
+quantities, and naive level timestamps. The focused checks passed **8/8**. An
+initial local run of the five copied-level cases used a nonexistent fixture
+instrument ID; the test setup was corrected to select the normalized fixture
+instrument and then passed.
+
+The final full `tests/frontier` run passed **412/412** in 29.83 seconds
+(31.33 seconds wall time) using
+`/dev/shm/midas-frontier-book-depth-final-20261028T1112Z`. Peak RSS was
+**378,608 KiB**, process swaps **0**, filesystem input **0**, filesystem
+output 376 blocks, and socket messages sent/received **0**. Ruff check/format,
+strict mypy for five production modules, and `git diff --check` passed. One
+existing Starlette/httpx deprecation warning remains.
+
+Before the test at `11:10:34Z`, roughly 10 GiB was available, memory PSI avg10
+was 0%, and I/O PSI was 0.06% some / 0.01% full. At `11:12:10Z`, roughly 10
+GiB remained available, memory PSI avg10 was 0%, and I/O PSI was 0.12% some /
+0% full. No live source, protected capture, production service, or Arena job
+was used. The pre-existing untracked public capture remains unstaged and
+untouched. Frontier remains **PARTIALLY VERIFIED**.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Copied book-level integrity | COMPLETE AND VERIFIED | Generator, independent-audit, and replay guards reject duplicate or invalid levels; the bounded adversarial regressions pass. |
+| Full Frontier Python suite | COMPLETE AND VERIFIED | 412/412 pass on code commit `435153d`; one existing deprecation warning remains. |
+| Live cross-venue matching and economics | BLOCKED | Authorized genuine multi-venue evidence remains unavailable. |
+| Frontier project overall | PARTIALLY VERIFIED | Broader MIDAS regression, live science, production recovery, and deployment remain open. |
+
 ## Persist duplicate-key source failures — 2026-10-28 11:04 UTC
 
 Test commit `d44bab0` extends the duplicate-key regression through the API,
