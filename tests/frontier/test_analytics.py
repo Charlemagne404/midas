@@ -6,6 +6,7 @@ from decimal import Decimal, localcontext
 from midas.frontier.analytics import (
     MARKET_SAMPLE_LIMIT,
     StoredBookEvidence,
+    StoredTradeEvidence,
     summarize_frontier_coverage,
 )
 from midas.frontier.historical_replay import PriceHistoryReplayInput
@@ -15,6 +16,8 @@ from midas.frontier.models import (
     PriceHistorySeries,
     SettlementAssetIdentity,
     SettlementAssetKind,
+    TradeBatch,
+    TradeObservation,
     Venue,
 )
 
@@ -78,6 +81,55 @@ def _stored_book(book_value, received_at, raw_sha256):
         raw_sha256=raw_sha256,
         received_at_utc=received_at,
         book=saved_book,
+    )
+
+
+def _stored_trade_batch(
+    venue: Venue,
+    native_market_id: str,
+    *,
+    raw_sha256: str,
+    received_at,
+    print_count: int,
+):
+    source_market = market(venue, native_market_id)
+    trades = []
+    for index in range(print_count):
+        provenance = source_market.provenance.model_copy(
+            update={
+                "response_received_at_utc": received_at,
+                "processed_at_utc": received_at,
+                "exchange_timestamp_utc": (
+                    received_at - timedelta(seconds=1) if index == 0 else None
+                ),
+                "raw_sha256": raw_sha256,
+                "observation_id": f"{index + 1:064x}",
+            }
+        )
+        trades.append(
+            TradeObservation(
+                venue=venue,
+                native_market_id=native_market_id,
+                native_trade_id=f"{native_market_id}-{index}",
+                native_instrument_id=f"{native_market_id}-instrument",
+                price=D("0.4"),
+                quantity=D("2"),
+                quote_currency="USD",
+                quote_currency_identity=source_market.instruments[0].price_currency_identity,
+                exchange_timestamp_utc=(received_at - timedelta(seconds=1) if index == 0 else None),
+                received_at_utc=received_at,
+                provenance=provenance,
+            )
+        )
+    return StoredTradeEvidence(
+        venue=venue.value,
+        raw_sha256=raw_sha256,
+        received_at_utc=received_at,
+        batch=TradeBatch(
+            venue=venue,
+            requested_market_id=native_market_id,
+            trades=tuple(trades),
+        ),
     )
 
 
@@ -160,6 +212,8 @@ def test_empty_analytics_are_bounded_and_have_explicit_sample_scope():
     assert all(item["quality_valid_pricing_books"] == 0 for item in result["source_quality"])
     assert any("not venue-wide coverage" in item for item in result["limitations"])
     assert all(item["capture_count"] == 0 for item in result["historical_price_quality"])
+    assert result["samples"]["public_trade_observation_records"] == 0
+    assert all(item["capture_count"] == 0 for item in result["public_trade_quality"])
 
 
 def test_historical_price_quality_reports_samples_without_estimating_completeness():
@@ -189,6 +243,75 @@ def test_historical_price_quality_reports_samples_without_estimating_completenes
     assert result["samples"]["price_history_observation_records"] == 3
     assert result["samples"]["invalid_normalized_price_history_records"] == 1
     assert "do not estimate missing data" in result["historical_price_quality_scope"]
+
+
+def test_trade_quality_distinguishes_prints_empty_captures_and_bad_lineage():
+    populated = _stored_trade_batch(
+        Venue.POLYMARKET,
+        "analytics-trades",
+        raw_sha256="a" * 64,
+        received_at=T0,
+        print_count=2,
+    )
+    empty = _stored_trade_batch(
+        Venue.COINBASE_EXCHANGE,
+        "BTC-USD",
+        raw_sha256="b" * 64,
+        received_at=T0 + timedelta(seconds=1),
+        print_count=0,
+    )
+    bad_lineage = _stored_trade_batch(
+        Venue.KALSHI,
+        "KX-FIXTURE",
+        raw_sha256="c" * 64,
+        received_at=T0,
+        print_count=1,
+    )
+    mismatched_capture = StoredTradeEvidence(
+        venue=bad_lineage.venue,
+        raw_sha256="d" * 64,
+        received_at_utc=bad_lineage.received_at_utc,
+        batch=bad_lineage.batch,
+    )
+
+    result = summarize_frontier_coverage(
+        market_records=(),
+        book_records=(),
+        replay_rows=(),
+        trade_records=(populated, empty, mismatched_capture),
+        as_of_utc=T0 + timedelta(seconds=5),
+        invalid_trade_record_counts_by_venue=((Venue.KRAKEN.value, 1),),
+    )
+
+    polymarket = next(
+        item for item in result["public_trade_quality"] if item["venue"] == Venue.POLYMARKET.value
+    )
+    assert polymarket["capture_count"] == 1
+    assert polymarket["trade_print_count"] == 2
+    assert polymarket["empty_capture_count"] == 0
+    assert polymarket["unique_market_count"] == 1
+    assert polymarket["unique_instrument_count"] == 1
+    assert polymarket["prints_with_exchange_timestamp"] == 1
+    assert polymarket["prints_without_exchange_timestamp"] == 1
+
+    coinbase = next(
+        item
+        for item in result["public_trade_quality"]
+        if item["venue"] == Venue.COINBASE_EXCHANGE.value
+    )
+    assert coinbase["capture_count"] == 1
+    assert coinbase["trade_print_count"] == 0
+    assert coinbase["empty_capture_count"] == 1
+    assert coinbase["unique_market_count"] == 1
+
+    kalshi = next(
+        item for item in result["public_trade_quality"] if item["venue"] == Venue.KALSHI.value
+    )
+    assert kalshi["capture_count"] == 0
+    assert kalshi["invalid_capture_count"] == 1
+    assert result["samples"]["public_trade_observation_records"] == 4
+    assert result["samples"]["invalid_normalized_public_trade_records"] == 2
+    assert "not a complete history" in result["public_trade_quality_scope"]
 
 
 def test_pricing_summary_uses_latest_joined_book_and_preserves_unit_denominators():

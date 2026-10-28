@@ -15,7 +15,13 @@ from typing import Any
 
 from midas.frontier.economics import OpportunityClassification
 from midas.frontier.historical_replay import PriceHistoryReplayInput
-from midas.frontier.models import BookSnapshot, FrontierMarket, MarketInstrument, Venue
+from midas.frontier.models import (
+    BookSnapshot,
+    FrontierMarket,
+    MarketInstrument,
+    TradeBatch,
+    Venue,
+)
 
 D = Decimal
 _BPS = D(10_000)
@@ -38,6 +44,7 @@ MARKET_SAMPLE_LIMIT = 50
 BOOK_SAMPLE_LIMIT = 50
 REPLAY_SAMPLE_LIMIT = 20
 PRICE_HISTORY_SAMPLE_LIMIT = 20
+TRADE_SAMPLE_LIMIT = 50
 
 
 @dataclass(frozen=True, slots=True)
@@ -48,6 +55,16 @@ class StoredBookEvidence:
     raw_sha256: str
     received_at_utc: datetime
     book: BookSnapshot
+
+
+@dataclass(frozen=True, slots=True)
+class StoredTradeEvidence:
+    """A normalized trade response joined to its hash-checked observation row."""
+
+    venue: str
+    raw_sha256: str
+    received_at_utc: datetime
+    batch: TradeBatch
 
 
 def _decimal_text(value: Decimal | None) -> str | None:
@@ -168,9 +185,11 @@ def summarize_frontier_coverage(
     market_records: tuple[tuple[FrontierMarket, str], ...],
     book_records: tuple[StoredBookEvidence, ...],
     replay_rows: tuple[dict[str, Any], ...],
+    trade_records: tuple[StoredTradeEvidence, ...] = (),
     price_history_records: tuple[PriceHistoryReplayInput, ...] = (),
     as_of_utc: datetime,
     invalid_book_record_count: int = 0,
+    invalid_trade_record_counts_by_venue: tuple[tuple[str, int], ...] = (),
     invalid_price_history_record_count: int = 0,
     stored_market_counts_by_venue: tuple[tuple[str, int, int], ...] = (),
 ) -> dict[str, Any]:
@@ -180,12 +199,18 @@ def summarize_frontier_coverage(
     if (
         len(market_records) > MARKET_SAMPLE_LIMIT
         or len(book_records) > BOOK_SAMPLE_LIMIT
+        or len(trade_records) > TRADE_SAMPLE_LIMIT
         or len(replay_rows) > REPLAY_SAMPLE_LIMIT
         or len(price_history_records) > PRICE_HISTORY_SAMPLE_LIMIT
     ):
         raise ValueError("Coverage analytics inputs exceed their bounded sample windows")
     if invalid_book_record_count < 0:
         raise ValueError("Invalid book-record count must be nonnegative")
+    if any(
+        not venue or len(venue) > 80 or count < 0
+        for venue, count in invalid_trade_record_counts_by_venue
+    ):
+        raise ValueError("Invalid trade-record counts must be nonnegative and venue-scoped")
     if invalid_price_history_record_count < 0:
         raise ValueError("Invalid price-history-record count must be nonnegative")
     if any(
@@ -193,6 +218,11 @@ def summarize_frontier_coverage(
         for item in book_records
     ):
         raise ValueError("Stored book record timestamps must be timezone-aware")
+    if any(
+        item.received_at_utc.tzinfo is None or item.received_at_utc.utcoffset() is None
+        for item in trade_records
+    ):
+        raise ValueError("Stored trade record timestamps must be timezone-aware")
 
     with localcontext() as context:
         context.prec = 96
@@ -458,6 +488,73 @@ def summarize_frontier_coverage(
                 }
             )
 
+        trade_by_venue: dict[str, list[StoredTradeEvidence]] = {item.value: [] for item in Venue}
+        trade_record_issues: Counter[str] = Counter(dict(invalid_trade_record_counts_by_venue))
+        for stored_trade in trade_records:
+            batch = stored_trade.batch
+            if stored_trade.venue != batch.venue.value or any(
+                trade.provenance.raw_sha256 != stored_trade.raw_sha256
+                or trade.received_at_utc.astimezone(UTC)
+                != stored_trade.received_at_utc.astimezone(UTC)
+                for trade in batch.trades
+            ):
+                trade_record_issues[stored_trade.venue] += 1
+                continue
+            trade_by_venue.setdefault(stored_trade.venue, []).append(stored_trade)
+
+        trade_quality = []
+        for venue in sorted({item.value for item in Venue} | set(trade_by_venue)):
+            trade_captures = trade_by_venue.get(venue, [])
+            trades = [trade for capture in trade_captures for trade in capture.batch.trades]
+            capture_times = [capture.received_at_utc for capture in trade_captures]
+            capture_ages = [
+                age
+                for capture in trade_captures
+                if (age := _elapsed_ms(capture.received_at_utc, as_of_utc)) >= 0
+            ]
+            market_ids = {
+                capture.batch.requested_market_id
+                for capture in trade_captures
+                if capture.batch.requested_market_id is not None
+            }
+            market_ids.update(trade.native_market_id for trade in trades)
+            trade_quality.append(
+                {
+                    "venue": venue,
+                    "capture_count": len(trade_captures),
+                    "invalid_capture_count": trade_record_issues[venue],
+                    "trade_print_count": len(trades),
+                    "empty_capture_count": sum(
+                        not capture.batch.trades for capture in trade_captures
+                    ),
+                    "unique_market_count": len(market_ids),
+                    "unique_instrument_count": len(
+                        {
+                            trade.native_instrument_id
+                            for trade in trades
+                            if trade.native_instrument_id is not None
+                        }
+                    ),
+                    "prints_with_exchange_timestamp": sum(
+                        trade.exchange_timestamp_utc is not None for trade in trades
+                    ),
+                    "prints_without_exchange_timestamp": sum(
+                        trade.exchange_timestamp_utc is None for trade in trades
+                    ),
+                    "future_exchange_timestamp_count": sum(
+                        trade.exchange_timestamp_utc is not None
+                        and trade.exchange_timestamp_utc > capture.received_at_utc
+                        for capture in trade_captures
+                        for trade in capture.batch.trades
+                    ),
+                    "latest_capture_received_at_utc": (
+                        max(capture_times).astimezone(UTC).isoformat() if capture_times else None
+                    ),
+                    "median_capture_age_ms": _decimal_text(_median(capture_ages)),
+                    "p90_capture_age_ms": _decimal_text(_percentile(capture_ages, D("0.90"))),
+                }
+            )
+
         pricing = []
         for pricing_key in sorted(spreads):
             venue, market_kind, quantity_unit, quote_identity = pricing_key
@@ -577,14 +674,20 @@ def summarize_frontier_coverage(
             )[:20]
         ]
         return {
-            "schema_version": 1,
+            "schema_version": 2,
             "as_of_utc": as_of_utc.astimezone(UTC).isoformat(),
-            "scope": "Latest bounded hash-checked stored market, book, and eligible replay samples.",
+            "scope": (
+                "Latest bounded hash-checked stored market, book, public-trade, price-history, "
+                "and eligible replay samples."
+            ),
             "samples": {
                 "distinct_markets": len(unique_markets),
                 "market_records": len(market_records),
                 "book_observation_records": len(book_records) + invalid_book_record_count,
                 "invalid_normalized_book_records": invalid_book_record_count,
+                "public_trade_observation_records": len(trade_records)
+                + sum(count for _, count in invalid_trade_record_counts_by_venue),
+                "invalid_normalized_public_trade_records": sum(trade_record_issues.values()),
                 "price_history_observation_records": (
                     len(price_history_records) + invalid_price_history_record_count
                 ),
@@ -595,6 +698,7 @@ def summarize_frontier_coverage(
                 "candidate_scan_truncated": candidate_scan_truncated,
                 "market_record_limit": MARKET_SAMPLE_LIMIT,
                 "book_record_limit": BOOK_SAMPLE_LIMIT,
+                "public_trade_record_limit": TRADE_SAMPLE_LIMIT,
                 "replay_run_limit": REPLAY_SAMPLE_LIMIT,
                 "price_history_record_limit": PRICE_HISTORY_SAMPLE_LIMIT,
                 "candidate_record_limit": MAX_CANDIDATE_ROWS,
@@ -618,6 +722,15 @@ def summarize_frontier_coverage(
                 for (venue, kind), values in sorted(market_groups.items())
             ],
             "source_quality": source_quality,
+            "public_trade_quality_scope": (
+                "Newest bounded sample of up to 50 hash-checked saved public-trade responses "
+                "across eligible venues, reported by venue. A zero-print response is a captured "
+                "empty result, not a complete history or a measure of "
+                "venue-wide volume. Counts are returned print rows and may repeat across "
+                "overlapping captures. Failed collection tasks are represented in saved run "
+                "checkpoints, not as trade observations."
+            ),
+            "public_trade_quality": trade_quality,
             "historical_price_quality": historical_price_quality,
             "historical_price_quality_scope": (
                 "Newest bounded saved price-history captures by venue. Point totals count each saved capture, "
@@ -649,6 +762,7 @@ def summarize_frontier_coverage(
                 "Pricing summaries include only latest per-instrument two-sided, uncrossed, unflagged books with matching market units and exact quote-asset identity.",
                 "Receipt age is measured at this API response; a missing venue freshness limit remains unknown.",
                 "Historical price samples are source-reported context. Their count, timestamp range, and adjacent-sample gaps do not establish completeness, executable availability, or cross-venue simultaneity.",
+                "Trade summaries count returned print rows in a bounded recent capture sample; overlapping captures may repeat prints. Empty responses do not establish no activity, and failed requests or unrequested pages are not represented as prints.",
                 "Cross-market timing summaries use independently verified replay audits; missing exchange timestamps or clock uncertainty are not inferred.",
                 "Candidate counts are replay records and may repeat overlapping inputs; they are not independent opportunities.",
                 "Rejection-reason frequencies count each distinct reason once per candidate classified as incomplete, invalid, negative after modeled costs, or unsupported.",

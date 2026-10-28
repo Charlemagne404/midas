@@ -113,6 +113,7 @@ type Overview = {
   limitations: string[];
 };
 type CoverageAnalytics = {
+  schema_version: 2;
   as_of_utc: string;
   scope: string;
   samples: {
@@ -120,6 +121,8 @@ type CoverageAnalytics = {
     market_records: number;
     book_observation_records: number;
     invalid_normalized_book_records: number;
+    public_trade_observation_records: number;
+    invalid_normalized_public_trade_records: number;
     price_history_observation_records: number;
     invalid_normalized_price_history_records: number;
     unique_instrument_books: number;
@@ -128,6 +131,7 @@ type CoverageAnalytics = {
     candidate_scan_truncated: boolean;
     market_record_limit: number;
     book_record_limit: number;
+    public_trade_record_limit: number;
     replay_run_limit: number;
     price_history_record_limit: number;
     candidate_record_limit: number;
@@ -165,6 +169,22 @@ type CoverageAnalytics = {
     p90_receipt_age_ms: string | null;
   }[];
   historical_price_quality_scope: string;
+  public_trade_quality_scope: string;
+  public_trade_quality: {
+    venue: Venue;
+    capture_count: number;
+    invalid_capture_count: number;
+    trade_print_count: number;
+    empty_capture_count: number;
+    unique_market_count: number;
+    unique_instrument_count: number;
+    prints_with_exchange_timestamp: number;
+    prints_without_exchange_timestamp: number;
+    future_exchange_timestamp_count: number;
+    latest_capture_received_at_utc: string | null;
+    median_capture_age_ms: string | null;
+    p90_capture_age_ms: string | null;
+  }[];
   historical_price_quality: {
     venue: Venue;
     capture_count: number;
@@ -3213,6 +3233,72 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
                     </div>
                   ) : (
                     <p className="fr-footnote">No eligible market identities are stored.</p>
+                  )}
+                </section>
+
+                <section className="fr-card">
+                  <div className="fr-card-head">
+                    <div>
+                      <span className="fr-kicker">RECORDED PRINTS</span>
+                      <h2>Public trade capture coverage</h2>
+                    </div>
+                    <Activity size={17} />
+                  </div>
+                  {coverageAnalytics.data.samples.public_trade_observation_records > 0 ? (
+                    <div className="fr-table-wrap">
+                      <table className="fr-table">
+                        <thead>
+                          <tr>
+                            <th>Venue</th>
+                            <th>Captures / markets</th>
+                            <th>Returned prints</th>
+                            <th>Empty / invalid captures</th>
+                            <th>Instruments</th>
+                            <th>Exchange timestamped / missing</th>
+                            <th>Latest capture / median age</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {coverageAnalytics.data.public_trade_quality.map((source) => (
+                            <tr key={source.venue}>
+                              <td>{label(source.venue)}</td>
+                              <td>
+                                {count(source.capture_count)} / {count(source.unique_market_count)}
+                              </td>
+                              <td>{count(source.trade_print_count)}</td>
+                              <td>
+                                {count(source.empty_capture_count)} /{' '}
+                                {count(source.invalid_capture_count)}
+                              </td>
+                              <td>{count(source.unique_instrument_count)}</td>
+                              <td>
+                                {count(source.prints_with_exchange_timestamp)} /{' '}
+                                {count(source.prints_without_exchange_timestamp)}
+                              </td>
+                              <td>
+                                {source.latest_capture_received_at_utc
+                                  ? `${time(source.latest_capture_received_at_utc)} / ${source.median_capture_age_ms == null ? '—' : `${money(source.median_capture_age_ms)} ms`}`
+                                  : '—'}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <EmptyState
+                      title="No saved public-trade captures"
+                      detail="Print counts appear only after a bounded source response has been captured."
+                    />
+                  )}
+                  <p className="fr-footnote">{coverageAnalytics.data.public_trade_quality_scope}</p>
+                  {coverageAnalytics.data.samples.invalid_normalized_public_trade_records > 0 && (
+                    <p className="fr-footnote">
+                      {count(
+                        coverageAnalytics.data.samples.invalid_normalized_public_trade_records,
+                      )}{' '}
+                      saved trade responses failed normalization or capture-lineage checks.
+                    </p>
                   )}
                 </section>
 

@@ -55,7 +55,9 @@ from midas.frontier.analytics import (
     MARKET_SAMPLE_LIMIT,
     PRICE_HISTORY_SAMPLE_LIMIT,
     REPLAY_SAMPLE_LIMIT,
+    TRADE_SAMPLE_LIMIT,
     StoredBookEvidence,
+    StoredTradeEvidence,
     summarize_frontier_coverage,
 )
 from midas.frontier.capital import CapitalCarryRequest, evaluate_capital_carry
@@ -1759,6 +1761,12 @@ def router(
                 excluded_venues=held_venues,
                 limit=PRICE_HISTORY_SAMPLE_LIMIT,
             )
+            trade_rows = _read_stored_observations(
+                store,
+                kind="public_trades",
+                excluded_venues=held_venues,
+                limit=TRADE_SAMPLE_LIMIT,
+            )
             inventory = store.summary(excluded_venues=held_venues)
         except (FrontierStoreError, ValueError) as error:
             raise HTTPException(
@@ -1786,6 +1794,34 @@ def router(
                 )
             except (KeyError, TypeError, ValueError):
                 invalid_book_record_count += 1
+
+        trade_records: list[StoredTradeEvidence] = []
+        invalid_trade_record_counts = {item.value: 0 for item in Venue}
+        for row in trade_rows:
+            venue = str(row.get("venue", "unknown"))
+            normalized = row.get("normalized")
+            try:
+                if not isinstance(normalized, dict):
+                    raise ValueError("Normalized public-trade batch is not an object")
+                batch = TradeBatch.model_validate(normalized)
+                received_at = datetime.fromisoformat(str(row["received_at_utc"]))
+                raw_sha256 = str(row["raw_sha256"])
+                if venue != batch.venue.value or any(
+                    trade.provenance.raw_sha256 != raw_sha256
+                    or trade.received_at_utc.astimezone(UTC) != received_at.astimezone(UTC)
+                    for trade in batch.trades
+                ):
+                    raise ValueError("Stored public-trade batch does not match its capture")
+                trade_records.append(
+                    StoredTradeEvidence(
+                        venue=venue,
+                        raw_sha256=raw_sha256,
+                        received_at_utc=received_at,
+                        batch=batch,
+                    )
+                )
+            except (KeyError, TypeError, ValueError):
+                invalid_trade_record_counts[venue] = invalid_trade_record_counts.get(venue, 0) + 1
 
         price_history_records: list[PriceHistoryReplayInput] = []
         invalid_price_history_record_count = 0
@@ -1826,9 +1862,13 @@ def router(
                 market_records=market_records,
                 book_records=tuple(book_records),
                 replay_rows=replay_rows,
+                trade_records=tuple(trade_records),
                 price_history_records=tuple(price_history_records),
                 as_of_utc=datetime.now(UTC),
                 invalid_book_record_count=invalid_book_record_count,
+                invalid_trade_record_counts_by_venue=tuple(
+                    sorted(invalid_trade_record_counts.items())
+                ),
                 invalid_price_history_record_count=invalid_price_history_record_count,
                 stored_market_counts_by_venue=stored_market_counts_by_venue,
             )

@@ -133,7 +133,7 @@ it('renders recorded-evidence empty states and never probes a source automatical
     '/api/frontier/comparisons?limit=30': { items: [], returned: 0, limit: 30, offset: 0 },
     '/api/frontier/readiness': { gates: [] },
     '/api/frontier/analytics/coverage': {
-      schema_version: 1,
+      schema_version: 2,
       as_of_utc: '2026-10-27T21:00:00Z',
       scope: 'Latest bounded hash-checked stored market, book, and eligible replay samples.',
       samples: {
@@ -141,6 +141,8 @@ it('renders recorded-evidence empty states and never probes a source automatical
         market_records: 0,
         book_observation_records: 0,
         invalid_normalized_book_records: 0,
+        public_trade_observation_records: 0,
+        invalid_normalized_public_trade_records: 0,
         price_history_observation_records: 0,
         invalid_normalized_price_history_records: 0,
         unique_instrument_books: 0,
@@ -149,6 +151,7 @@ it('renders recorded-evidence empty states and never probes a source automatical
         candidate_scan_truncated: false,
         market_record_limit: 50,
         book_record_limit: 50,
+        public_trade_record_limit: 50,
         replay_run_limit: 20,
         price_history_record_limit: 20,
         candidate_record_limit: 5000,
@@ -177,6 +180,25 @@ it('renders recorded-evidence empty states and never probes a source automatical
       })),
       historical_price_quality_scope:
         'Newest bounded saved captures by venue; gaps describe returned samples only.',
+      public_trade_quality_scope:
+        'Newest bounded saved public-trade responses. Empty results do not establish venue-wide volume.',
+      public_trade_quality: ['polymarket', 'kalshi', 'kraken', 'coinbase_exchange'].map(
+        (venue) => ({
+          venue,
+          capture_count: 0,
+          invalid_capture_count: 0,
+          trade_print_count: 0,
+          empty_capture_count: 0,
+          unique_market_count: 0,
+          unique_instrument_count: 0,
+          prints_with_exchange_timestamp: 0,
+          prints_without_exchange_timestamp: 0,
+          future_exchange_timestamp_count: 0,
+          latest_capture_received_at_utc: null,
+          median_capture_age_ms: null,
+          p90_capture_age_ms: null,
+        }),
+      ),
       historical_price_quality: ['polymarket', 'kalshi', 'kraken', 'coinbase_exchange'].map(
         (venue) => ({
           venue,
@@ -399,9 +421,13 @@ it('renders recorded-evidence empty states and never probes a source automatical
   expect(
     screen.getByRole('heading', { name: 'Price-history capture coverage' }),
   ).toBeInTheDocument();
+  expect(
+    screen.getByRole('heading', { name: 'Public trade capture coverage' }),
+  ).toBeInTheDocument();
   expect(screen.getByText('No eligible market records')).toBeInTheDocument();
   expect(screen.getByText('No quality-valid book pairs')).toBeInTheDocument();
   expect(screen.getByText('No saved price-history captures')).toBeInTheDocument();
+  expect(screen.getByText('No saved public-trade captures')).toBeInTheDocument();
   expect(screen.getByText(/not venue-wide coverage/)).toBeInTheDocument();
 
   fireEvent.click(screen.getByRole('button', { name: 'Exchanges' }));

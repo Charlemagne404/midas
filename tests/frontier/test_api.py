@@ -1134,6 +1134,94 @@ def test_coverage_analytics_summarizes_a_saved_joined_book(tmp_path):
         asyncio.run(http_client.aclose())
 
 
+def test_coverage_analytics_counts_trade_prints_empty_captures_and_held_sources(tmp_path):
+    client, registry, http_client, requests, store = _client(tmp_path, hold_sources=True)
+
+    def save_trade_capture(venue: Venue, market_id: str, print_count: int) -> None:
+        source_market = market(venue, market_id)
+        body = json.dumps({"fixture_trade_capture": market_id})
+        raw_sha256 = hashlib.sha256(body.encode()).hexdigest()
+        provenance = source_market.provenance.model_copy(
+            update={
+                "response_received_at_utc": T0,
+                "processed_at_utc": T0,
+                "raw_sha256": raw_sha256,
+                "observation_id": f"{venue.value}-{market_id}",
+            }
+        )
+        trades = tuple(
+            TradeObservation(
+                venue=venue,
+                native_market_id=market_id,
+                native_trade_id=f"{market_id}-trade-{index}",
+                native_instrument_id=f"{market_id}-instrument",
+                price=Decimal("0.42"),
+                quantity=Decimal("3"),
+                quote_currency="USD",
+                quote_currency_identity=source_market.instruments[0].price_currency_identity,
+                received_at_utc=T0,
+                provenance=provenance,
+            )
+            for index in range(print_count)
+        )
+        store.append_observation(
+            RawObservation(
+                venue=venue,
+                observation_kind="public_trades",
+                request_url=f"https://example.test/trades/{market_id}",
+                http_status=200,
+                request_started_at_utc=T0,
+                received_at_utc=T0,
+                raw_body=body,
+                raw_sha256=raw_sha256,
+                adapter_version="coverage-fixture-v1",
+            ),
+            TradeBatch(
+                venue=venue,
+                requested_market_id=market_id,
+                trades=trades,
+            ),
+        )
+
+    save_trade_capture(Venue.POLYMARKET, "coverage-trade-populated", 2)
+    save_trade_capture(Venue.COINBASE_EXCHANGE, "BTC-USD", 0)
+    save_trade_capture(Venue.KALSHI, "coverage-trade-held", 1)
+
+    try:
+        response = client.get("/api/frontier/analytics/coverage")
+        assert response.status_code == 200, response.text
+        payload = response.json()
+        assert payload["schema_version"] == 2
+        assert payload["samples"]["public_trade_observation_records"] == 2
+        assert payload["samples"]["invalid_normalized_public_trade_records"] == 0
+        polymarket = next(
+            item
+            for item in payload["public_trade_quality"]
+            if item["venue"] == Venue.POLYMARKET.value
+        )
+        assert polymarket["capture_count"] == 1
+        assert polymarket["trade_print_count"] == 2
+        assert polymarket["empty_capture_count"] == 0
+        coinbase = next(
+            item
+            for item in payload["public_trade_quality"]
+            if item["venue"] == Venue.COINBASE_EXCHANGE.value
+        )
+        assert coinbase["capture_count"] == 1
+        assert coinbase["trade_print_count"] == 0
+        assert coinbase["empty_capture_count"] == 1
+        kalshi = next(
+            item for item in payload["public_trade_quality"] if item["venue"] == Venue.KALSHI.value
+        )
+        assert kalshi["capture_count"] == 0
+        assert kalshi["trade_print_count"] == 0
+        assert requests == []
+    finally:
+        client.close()
+        asyncio.run(registry.aclose())
+        asyncio.run(http_client.aclose())
+
+
 def test_disabled_public_probe_fails_closed_without_egress(tmp_path):
     client, registry, http_client, requests, _ = _client(tmp_path)
     try:
