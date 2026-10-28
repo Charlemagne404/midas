@@ -9431,3 +9431,33 @@ accessed.
 | Frontier project acceptance | PARTIALLY VERIFIED | Genuine cross-venue evidence, held-source permission, broad resource qualification, production recovery, and deployment remain open. |
 
 **Implementation commit:** `f440fa2` (`fix(frontier): keep collection journal reads read-only`).
+
+## Official source-terms refresh — 2026-10-28 13:26 UTC
+
+A read-only review refreshed the operational source-use boundaries against the
+official terms and API notices. The current Kalshi Developer Agreement still
+limits API use to a member's own trading and limits collection, aggregation,
+and storage to that purpose. Kraken's API introduction says prior permission
+is required for certain uses, including non-personal commercial use of public
+market data. The Coinbase Market Data Terms remain dated 7 August 2026 and
+restrict external display/dissemination, end-user apps, and specified AI/ML
+uses without written consent. The Polymarket Institute research guide
+distinguishes the decentralized and US exchanges and their separate APIs.
+These findings support the existing source-use gates; they do not determine
+the user's applicable terms or establish permission.
+
+See the dated [source-data terms refresh](SOURCE_DATA_TERMS_REVIEW_2026-10-28.md)
+for scope, limitations, and the official links. No source API was called,
+no saved capture was opened, and no gate was changed. The existing Polymarket
+integration remains distinct from the separate US exchange. Frontier's
+cross-venue scientific acceptance remains **PARTIALLY VERIFIED** while
+additional source-use permission and genuine equivalent-market evidence are
+unavailable.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Current source terms review | COMPLETE AND VERIFIED | Official materials were refreshed read-only on 2026-10-28 and the dated review is linked from architecture and operations docs. |
+| Kalshi, Kraken, and Coinbase source use | BLOCKED | Existing code gates and quarantines remain active; no permission was inferred from public endpoints or config values. |
+| Genuine cross-venue equivalence | BLOCKED | No permitted live evidence establishes an equivalent multi-venue payoff. |
+
+**Documentation commit:** pending.

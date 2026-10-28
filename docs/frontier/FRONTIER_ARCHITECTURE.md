@@ -298,7 +298,8 @@ benchmark/valuation uses, and AI/ML research use. The local version
 acknowledgement is not a blanket permission for every Frontier analysis;
 source use remains gated until the intended scope is reviewed and any required
 permission is validated. See the
-[source-data terms review](SOURCE_DATA_TERMS_REVIEW_2026-10-27.md).
+[current source-data terms review](SOURCE_DATA_TERMS_REVIEW_2026-10-28.md),
+with the 27 October review retained for prior findings.
 
 Polymarket adapter v3 and Kalshi adapter v8 declare
 `EVENT_MARKET_GROUPS`. Their `discover_event_markets` operations issue one bounded

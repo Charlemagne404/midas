@@ -134,8 +134,8 @@ blocked even when a probe flag and reference are set.
 `MIDAS_FRONTIER_KALSHI_RESEARCH_AUTHORIZATION_REF` and
 `MIDAS_FRONTIER_KRAKEN_MARKET_DATA_PERMISSION_REF` are descriptive only; a
 string reference is not permission. See the
-[source-data terms review](SOURCE_DATA_TERMS_REVIEW_2026-10-27.md). Existing
-Kalshi and Kraken capture artifacts remain preserved, but do not treat them as
+[current source-data terms review](SOURCE_DATA_TERMS_REVIEW_2026-10-28.md).
+Existing Kalshi and Kraken capture artifacts remain preserved; do not treat them as
 available inputs for new research until the corresponding use review is closed.
 While the validated permission mechanism is unavailable, Frontier application
 routes also quarantine previously stored Kalshi/Kraken observations and derived
@@ -159,7 +159,7 @@ pass **2/2**, covering direct paths, symlink traversal including `..`, and
 relative `dir_fd` opens through common Python file-open APIs. These synthetic
 tests do not establish source permission or live-source validation. Preserved
 source files were not used or changed. See the
-[source-data terms review](SOURCE_DATA_TERMS_REVIEW_2026-10-27.md) for details.
+[current source-data terms review](SOURCE_DATA_TERMS_REVIEW_2026-10-28.md) for details.
 
 Coinbase Exchange Spot has a separate explicit product allowlist
 (`MIDAS_FRONTIER_COINBASE_PRODUCTS`, default `BTC-USD`). Its source-use gate
@@ -185,7 +185,7 @@ data, benchmark/valuation uses, and AI/ML research use. The exact-version
 acknowledgement and probe flag do not grant permission for Frontier analytics;
 the runtime source-use hold remains until intended scope and any required
 permission have been validated. See the
-[source-data terms review](SOURCE_DATA_TERMS_REVIEW_2026-10-27.md).
+[current source-data terms review](SOURCE_DATA_TERMS_REVIEW_2026-10-28.md).
 
 Cross-venue observations have independent clocks and freshness guarantees.
 Different receipt times or a shared local timestamp do not prove simultaneous

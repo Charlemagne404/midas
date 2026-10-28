@@ -2891,3 +2891,14 @@ changes. At `2026-10-28T13:24:39Z`, memory PSI avg10 was **0.00%**, I/O PSI was
 **47.65%**. The untracked `data/frontier-public-probes/` directory remains
 untouched. No collector, source, protected store, or production service was
 accessed. Frontier remains research-only and **PARTIALLY VERIFIED**.
+
+### Frontier source-terms refresh — 2026-10-28 13:26 UTC
+
+The official Kalshi, Kraken, Coinbase, and Polymarket materials were refreshed
+read-only. The findings support the current Kalshi/Kraken/Coinbase use holds and
+confirm that Polymarket's decentralized and US exchanges have separate APIs.
+The dated details are recorded in
+`docs/frontier/SOURCE_DATA_TERMS_REVIEW_2026-10-28.md`; current architecture
+and operations pages now link to it. No source API was called, no capture was
+opened, and no permission or hold state changed. Frontier remains
+research-only and **PARTIALLY VERIFIED**.

@@ -1,5 +1,26 @@
 # Project Frontier Mission Ledger
 
+## Official source-terms refresh — 2026-10-28 13:26 UTC
+
+Read-only review of the official Kalshi, Kraken, Coinbase, and Polymarket
+materials confirmed the existing source-use holds. Kalshi's API agreement
+limits use to a member's own trading; Kraken's API notice says prior permission
+is required for certain uses including non-personal commercial use of public
+market data; Coinbase's current market-data terms restrict external display,
+end-user apps, and AI/ML uses absent written consent. Polymarket's research
+guide distinguishes its .com and US exchanges and APIs. The new dated review
+is `docs/frontier/SOURCE_DATA_TERMS_REVIEW_2026-10-28.md`, linked from current
+architecture and operations docs. No permission was inferred and no hold was
+lifted.
+
+No API request, exchange contact, or capture read occurred. The untracked
+`data/frontier-public-probes/` directory remains untouched. This work was
+documentation-only; implementation validation remains at the two focused
+collector tests recorded below. **Documentation commit:** pending.
+
+**Next safe action:** continue source-independent implementation review; do not
+enable a held source without a validated permission and scope review.
+
 ## Collector journal reads remain read-only — 2026-10-28 13:23 UTC
 
 Follow-up review found `run_spec()` and `checkpoints()` routed reads through
