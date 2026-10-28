@@ -2,7 +2,7 @@
 
 **Report date:** 2026-10-28
 
-## Current status — 2026-10-28 05:23 UTC
+## Current status — 2026-10-28 05:25 UTC
 
 The isolated development branch is `codex/frontier-20261026`; the latest
 implementation checkpoint is `6c5c329` (`fix(frontier): enforce
@@ -61,15 +61,15 @@ transition remain open; deployment requires a separate authorized readiness
 review.
 
 The collector/API pair, adapter contracts, small analytics/relation modules,
-and economics/capital modules pass **198 tests** across bounded invocations;
-strict mypy passes on the latest collector code. Two subsequent full
+economics/capital modules, and storage module pass **216 tests** across
+bounded invocations; strict mypy passes on the latest collector code. Two full
 `pytest tests/frontier` attempts were interrupted: one after **108 passed** as
 an external Veritas batch drove pressure high, and a retry after **113 passed**
 when the suite itself drove I/O PSI above the gate. Both exited 2 with
 `KeyboardInterrupt`; neither is a suite pass. Web/API typing, browser
 verification, and broader regression remain pending. At approximately
-`2026-10-28T05:23Z`, memory PSI avg10 was **31.74% some / 28.60% full** and
-I/O PSI avg10 was **0.39% some / 0.38% full**; no process held the shared
+`2026-10-28T05:24Z`, memory PSI avg10 was **0.00% some / 0.00% full** and
+I/O PSI avg10 was **1.05% some / 1.04% full**; no process held the shared
 Arena lock. Further tests remain deferred at this sample.
 
 ## Bounded metadata and initial resource checkpoint — 2026-10-28 03:59 UTC
@@ -6781,3 +6781,25 @@ No full Frontier/MIDAS pass or browser/build verification is claimed.
 | Four serial test slices | COMPLETE AND VERIFIED | 198 passing tests across bounded modules; no external network, swap, or socket traffic. |
 | Full Frontier Python regression | PARTIALLY VERIFIED | Two monolithic attempts interrupted; nine test modules remain unrun as complete modules. |
 | Resource admission | DEFERRED | Memory PSI remained high at the latest sample despite no active Arena lock holder. |
+
+## Storage module verification — 2026-10-28 05:25 UTC
+
+`tests/frontier/test_storage.py` passes **18/18** in **7.61 seconds pytest
+time** (**7.97 seconds wall**) at **69,800 KiB peak RSS**, zero swaps, and zero
+socket messages. The module covers append-only observations and relationships,
+hash/tamper checks, read-only query behavior, keyset graph pages, budgets, and
+additive migrations. It used an isolated `/tmp` basetemp and did not access
+the held live-probe directory.
+
+The timed process wrote **98,840 KiB** into its temporary SQLite evidence
+stores. At approximately `2026-10-28T05:24Z`, memory PSI avg10 was **0.01% some
+/ 0.01% full**, while I/O PSI avg10 rose to **7.74% some / 7.24% full**. At
+the later 05:24:49 sample, I/O PSI remained just over admission at **1.05%
+some / 1.04% full**; no process held the shared Arena lock. Defer additional
+storage/API test modules until a fresh sample clears the I/O gate.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Storage integrity and recovery tests | COMPLETE AND VERIFIED | All 18 storage tests pass in isolation; no full suite claim. |
+| Serial Frontier regression slices | PARTIALLY VERIFIED | 216 passing tests across five bounded invocations; eight Frontier modules remain unrun as complete modules. |
+| Additional resource-bearing verification | DEFERRED | I/O PSI remains above 1% at the latest measurement. |

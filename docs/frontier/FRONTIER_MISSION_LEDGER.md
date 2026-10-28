@@ -5405,3 +5405,25 @@ incomplete; complete module runs still outstanding are `test_api.py`,
 | Bounded serial regression slices | COMPLETE AND VERIFIED | 198 tests pass across four invocations after the collector changes. |
 | Full Frontier/MIDAS suite | PARTIALLY VERIFIED | Two monolithic attempts interrupted; nine modules remain for serial coverage. |
 | Browser/build and production deployment | PARTIALLY VERIFIED / DEFERRED | Earlier UI checks pass; no rerun after latest backend work; deployment remains separate. |
+
+## Storage module verification — 2026-10-28 05:25 UTC
+
+The `tests/frontier/test_storage.py` module passes **18/18** in 7.61 seconds
+pytest time (7.97 seconds wall) at 69,800 KiB peak RSS, zero swaps, and zero
+socket messages. It covers append-only persistence, hash integrity/tampering,
+read-only queries, bounded relationship pages, budgets, and additive schema
+migrations. It used an isolated `/tmp` basetemp and did not access
+`data/frontier/live-probes`.
+
+The test process wrote **98,840 KiB** into temporary SQLite stores. The
+post-test sample near 05:24 showed memory PSI avg10 **0.01% some / 0.01% full**
+and I/O PSI **7.74% some / 7.24% full**. At 05:24:49, I/O PSI was still just
+over the gate at **1.05% some / 1.04% full**, memory PSI was near zero, and no
+Arena lock holder was present. Further storage/API tests are deferred until a
+fresh sample clears the gate.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Storage integrity and recovery | COMPLETE AND VERIFIED | All 18 storage tests pass in the isolated module. |
+| Bounded Frontier regression after collector changes | PARTIALLY VERIFIED | 216 tests pass across five invocations; eight modules remain unrun as complete modules. |
+| Further resource-bearing checks | DEFERRED | I/O PSI remains above the 1% threshold at the latest sample. |
