@@ -144,6 +144,7 @@ def seed_arena_discovery(root: Path) -> None:
     from midas.arena.jobs import JobSpec
     from midas.frontier.economics import ExecutionScenario
     from midas.frontier.models import Venue
+
     from tests.frontier.builders import T0, book, market
 
     fixture_market = market(Venue.POLYMARKET, "seeded-browser-study")
@@ -157,6 +158,7 @@ def seed_arena_discovery(root: Path) -> None:
             book(fixture_market, fixture_market.instruments[0].native_instrument_id, "0.40"),
             book(fixture_market, fixture_market.instruments[1].native_instrument_id, "0.65"),
         ),
+        verified_relationships=(),
     )
     snapshot_sha256 = store_snapshot(root, snapshot)
     discovery_spec = FrontierDiscoveryJobSpec(
@@ -190,6 +192,7 @@ def seed_arena_discovery(root: Path) -> None:
             "job_id": ARENA_JOB_ID,
             "configuration": configuration.model_dump(mode="json"),
             "state": "COMPLETED",
+            "exit_status": 0,
             "created_at": T0.timestamp(),
             "updated_at": T0.timestamp() + 1,
             "elapsed_seconds": 0.0,

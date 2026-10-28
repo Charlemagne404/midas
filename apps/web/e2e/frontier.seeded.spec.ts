@@ -163,8 +163,9 @@ test('seeded Frontier discovery artifact loads from Arena storage into Laborator
   const resultResponse = await request.get(
     'http://127.0.0.1:18000/api/arena/jobs/job-e2e0123456789abcdef01234/frontier-discovery',
   );
-  expect(resultResponse.status()).toBe(200);
-  const result = (await resultResponse.json()) as {
+  const resultBody = await resultResponse.text();
+  expect(resultResponse.status(), resultBody).toBe(200);
+  const result = JSON.parse(resultBody) as {
     artifact: { result_sha256: string; comparison: { code_version: string } };
     integrity_verified: boolean;
     research_only: boolean;
@@ -178,9 +179,7 @@ test('seeded Frontier discovery artifact loads from Arena storage into Laborator
     authenticated_requests: false,
   });
   expect(result.artifact.result_sha256).toMatch(/^[0-9a-f]{64}$/);
-  expect(result.artifact.comparison.code_version).toBe(
-    'frontier-seeded-arena-browser-fixture-v1',
-  );
+  expect(result.artifact.comparison.code_version).toBe('frontier-seeded-arena-browser-fixture-v1');
 
   await page.goto('/');
   await page.getByRole('button', { name: 'Laboratory', exact: true }).click();

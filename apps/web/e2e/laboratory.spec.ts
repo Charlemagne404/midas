@@ -115,53 +115,51 @@ test('Laboratory inspects a saved Frontier discovery artifact without launching 
         },
       }),
   );
-  await page.route(
-    '**/api/arena/jobs/job-frontier-saved/frontier-discovery',
-    (route) =>
-      route.fulfill({
-        json: {
-          artifact: {
-            snapshot_id: 'saved-snapshot',
-            snapshot_sha256: 'b'.repeat(64),
-            result_sha256: 'c'.repeat(64),
-            comparison: {
-              comparison_id: 'saved-comparison',
-              normalized_input_sha256: 'd'.repeat(64),
-              result_sha256: 'e'.repeat(64),
-              code_version: 'frontier-e2e-fixture',
-              replay_version: 'frontier-replay-e2e-fixture',
-              as_of_utc: '2026-10-28T06:00:00Z',
-              arms: ['polymarket_only', 'venue_local', 'cross_venue'].map((scope) => ({
-                scope,
-                venues: scope === 'cross_venue' ? ['polymarket', 'kalshi'] : ['polymarket'],
-                market_count: 2,
-                instrument_count: 2,
-                observed_instrument_count: 1,
-                book_count: 1,
-                relationship_count: 1,
-                candidates: [],
-                family_counts: {},
-              })),
-              deltas: [
-                ['polymarket_only', 'venue_local'],
-                ['venue_local', 'cross_venue'],
-                ['polymarket_only', 'cross_venue'],
-              ].map(([baseline, compared]) => ({
-                baseline,
-                compared,
-                matched_candidate_count: 0,
-                changed_classification_count: 0,
-                baseline_only_candidate_count: 0,
-                compared_only_candidate_count: 0,
-              })),
-            },
+  await page.route('**/api/arena/jobs/job-frontier-saved/frontier-discovery', (route) =>
+    route.fulfill({
+      json: {
+        artifact: {
+          snapshot_id: 'saved-snapshot',
+          snapshot_sha256: 'b'.repeat(64),
+          result_sha256: 'c'.repeat(64),
+          comparison: {
+            comparison_id: 'saved-comparison',
+            normalized_input_sha256: 'd'.repeat(64),
+            result_sha256: 'e'.repeat(64),
+            code_version: 'frontier-e2e-fixture',
+            replay_version: 'frontier-replay-e2e-fixture',
+            as_of_utc: '2026-10-28T06:00:00Z',
+            arms: ['polymarket_only', 'venue_local', 'cross_venue'].map((scope) => ({
+              scope,
+              venues: scope === 'cross_venue' ? ['polymarket', 'kalshi'] : ['polymarket'],
+              market_count: 2,
+              instrument_count: 2,
+              observed_instrument_count: 1,
+              book_count: 1,
+              relationship_count: 1,
+              candidates: [],
+              family_counts: {},
+            })),
+            deltas: [
+              ['polymarket_only', 'venue_local'],
+              ['venue_local', 'cross_venue'],
+              ['polymarket_only', 'cross_venue'],
+            ].map(([baseline, compared]) => ({
+              baseline,
+              compared,
+              matched_candidate_count: 0,
+              changed_classification_count: 0,
+              baseline_only_candidate_count: 0,
+              compared_only_candidate_count: 0,
+            })),
           },
-          integrity_verified: true,
-          research_only: true,
-          orders_submitted: false,
-          authenticated_requests: false,
         },
-      }),
+        integrity_verified: true,
+        research_only: true,
+        orders_submitted: false,
+        authenticated_requests: false,
+      },
+    }),
   );
 
   await page.goto('/');
@@ -172,10 +170,11 @@ test('Laboratory inspects a saved Frontier discovery artifact without launching 
   await expect(page.getByText('3 paired discovery scopes')).toBeVisible();
   await page.getByText('Reproducibility identities and execution limits').click();
   await expect(page.getByText('frontier-e2e-fixture · frontier-replay-e2e-fixture')).toBeVisible();
-  await expect(page.getByText('No orders were submitted, and no authenticated requests were made.'))
-    .toBeVisible();
+  await expect(
+    page.getByText('No orders were submitted, and no authenticated requests were made.'),
+  ).toBeVisible();
   expect(requests.some(({ url }) => url.includes('/probe/'))).toBe(false);
-  expect(
-    requests.some(({ url, method }) => url.includes('/api/arena/') && method !== 'GET'),
-  ).toBe(false);
+  expect(requests.some(({ url, method }) => url.includes('/api/arena/') && method !== 'GET')).toBe(
+    false,
+  );
 });
