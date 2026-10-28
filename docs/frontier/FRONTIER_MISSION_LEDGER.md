@@ -1,5 +1,42 @@
 # Project Frontier Mission Ledger
 
+## Reject copied malformed payoff models — 2026-10-28 10:52 UTC
+
+Code commit `3dc3721` closes a fail-open path found with direct Pydantic
+`model_copy(update=...)`: in-memory objects could carry duplicate payoff rows
+or identities past model field validation. Same-payoff verifier v6 rejects
+duplicate state IDs, native instrument IDs, missing/duplicate outcome IDs,
+and duplicate payout rows. Independent audit v15 independently checks payoff
+state and native instrument uniqueness and scans every instrument for
+duplicate payout rows, including legs not selected in the candidate. Its
+cross-venue path also requires unique outcome identities. Existing v5 evidence
+is retained but no longer validates new audits without a current review.
+
+Four verifier cases and one independent-audit case reproduce the issue. The
+focused relationship/economics module passed **63/63**; full
+`tests/frontier` passed **399/399** in 29.59 seconds (31.07 seconds wall time)
+using `/dev/shm/midas-frontier-malformed-model-20261028T1052Z`. Peak RSS was
+**379,224 KiB**, process swaps **0**, filesystem input **0**, and output 384
+blocks. Ruff, format, strict mypy for three production modules, and
+`git diff --check` passed. One existing Starlette/httpx deprecation warning
+remains.
+
+At `10:51:36Z`, memory and I/O PSI avg10 were 0% and about 10 GiB was
+available; host swap was already 3.5/4 GiB used. At `10:52:24Z`, PSI remained
+0%, availability was about 10 GiB, and the test process reported zero swaps.
+No live source, protected capture, production service, or Arena job was used.
+Frontier remains **PARTIALLY VERIFIED**. Continue with bounded offline audits
+and preserve the separate live-source, broader-regression, and deployment
+gates.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Copied malformed payoff rejection | COMPLETE AND VERIFIED | Verifier v6 and audit v15 reject duplicate identities and payout rows, including an unselected instrument. |
+| Full Frontier Python suite | COMPLETE AND VERIFIED | 399/399 pass on the exact code commit; one existing deprecation warning remains. |
+| Semantic assertion authenticity | PARTIALLY VERIFIED | Reviewer and assertion remain self-attributed; no assertion truth proof is added. |
+| Live cross-venue matching and economics | BLOCKED | Genuine authorized multi-venue evidence remains unavailable. |
+| Frontier project overall | PARTIALLY VERIFIED | Broader MIDAS regression, live science, production recovery, and deployment remain open. |
+
 ## Same-payoff evidence and replay cutoff — 2026-10-28 10:46 UTC
 
 Code commit `7ebe56a` closes a replay-provenance gap. `verify_same_payoff` now

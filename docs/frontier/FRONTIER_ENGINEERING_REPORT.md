@@ -2,6 +2,52 @@
 
 **Report date:** 2026-10-28
 
+## Current status — 2026-10-28 10:52 UTC
+
+This entry supersedes the 10:46 UTC checkpoint below. Frontier remains
+isolated at `/home/charlie/midas-frontier` on `codex/frontier-20261026`; code
+commit `3dc3721` is the latest implementation checkpoint.
+
+An offline audit reproduced that direct Pydantic `model_copy(update=...)` can
+construct malformed in-memory market models without running field validators.
+Same-payoff verifier v6 rejects duplicate payoff-state identifiers, native
+instrument identities, missing or duplicate outcome identities, and duplicate
+payout rows. Independent audit v15 checks these payoff and instrument
+identities again, including payout rows on instruments not selected by a
+candidate. Version-5 relationship evidence remains readable but is incomplete
+for new audits until it is reviewed under v6.
+
+Four parametrized verifier regressions and one audit regression cover copied
+model corruption, including a duplicate payout on an unselected instrument.
+The focused relationship/economics module passes **63/63**. The exact full
+`tests/frontier` tree passes **399/399** in 29.59 seconds (31.07 seconds wall
+time); `/usr/bin/time -v` measured **379,224 KiB** peak RSS, zero process
+swaps, zero filesystem input, and 384 output blocks. One existing
+Starlette/httpx `TestClient` deprecation warning remains. Ruff check/format,
+strict mypy for the three changed production modules, and `git diff --check`
+pass. The suite used tmpfs at
+`/dev/shm/midas-frontier-malformed-model-20261028T1052Z`.
+
+At the pre-run sample (`10:51:36Z`), memory and I/O PSI avg10 were 0% and about
+10 GiB was available; the host already showed 3.5 GiB of 4 GiB swap occupied.
+At `10:52:24Z`, PSI avg10 remained 0%, about 10 GiB was available, and the
+test process reported zero swaps. No live source, protected capture, service,
+or Arena job was used. External semantic assertions remain self-attributed;
+live equivalence, broader MIDAS regression, production recovery, and
+deployment are still unresolved. Frontier remains **PARTIALLY VERIFIED**.
+
+### Latest acceptance delta
+
+| Requirement | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Copied malformed payoff rejection | COMPLETE AND VERIFIED | Verifier v6 and audit v15 reject duplicate payoff states, native instruments, outcomes, and payout rows, including an unselected instrument. |
+| Full Frontier Python regression | COMPLETE AND VERIFIED | 399/399 pass on the exact implementation commit; one existing deprecation warning remains. |
+| Cross-venue semantic assertion | PARTIALLY VERIFIED | Replay inputs are bounded and deterministic; reviewer identity and assertion authenticity remain unresolved. |
+| Live cross-venue equivalence and economics | BLOCKED | No authorized genuine multi-venue evidence is available for this checkpoint. |
+| Broader MIDAS regression | PARTIALLY VERIFIED | Not run on this branch; Reality recovery dependency and incompatible Reality lineages remain unresolved. |
+| Production recovery and deployment | DEFERRED | The research worktree remains isolated, unmerged, and undeployed. |
+| Frontier overall | PARTIALLY VERIFIED | Live science, broader regression, and production readiness remain open. |
+
 ## Current status — 2026-10-28 10:46 UTC
 
 This entry supersedes the 10:35 UTC status and acceptance matrix below.

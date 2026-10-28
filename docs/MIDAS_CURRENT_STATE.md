@@ -33,6 +33,27 @@ in the dated addendum below and in the Frontier engineering report.
 
 ## Frontier development addendum — 2026-10-28
 
+### Latest isolated Frontier checkpoint — 2026-10-28 10:52 UTC
+
+Commit `3dc3721` closes malformed in-memory market-object cases where direct
+`model_copy(update=...)` bypassed field validators. Same-payoff verifier v6
+and independent audit v15 reject duplicate payoff states, native instruments,
+outcomes, and payout rows; the independent audit checks even unselected
+instruments. Four verifier cases and one audit case cover copied corruption.
+The focused module passes **63/63** and full `tests/frontier` passes **399/399**
+in 31.07 seconds wall time, with **379,224 KiB** peak RSS and zero test-process
+swaps. Ruff, formatting, strict mypy, and `git diff --check` pass. One existing
+Starlette/httpx deprecation warning remains.
+
+At `10:51:36Z`, memory and I/O PSI avg10 were 0% and about 10 GiB was
+available; the host already had 3.5/4 GiB swap occupied. At `10:52:24Z`, PSI
+remained 0%, about 10 GiB was available, and the test process had used no
+swaps. No live source, protected capture, service, or Arena job was used.
+Semantic assertions remain self-attributed, the captured Polymarket payoff and
+resolution remain unverified, and live cross-venue matching, broader MIDAS
+regression, production recovery, and deployment remain open. Frontier remains
+**PARTIALLY VERIFIED**, research-only, and undeployed.
+
 ### Latest isolated Frontier checkpoint — 2026-10-28 10:46 UTC
 
 Commit `7ebe56a` binds same-payoff relationship review evidence to the two
