@@ -11414,7 +11414,8 @@ and evidence reuse; remeasure before any next test slice.
 
 Static review found and fixed a generator/auditor mismatch: candidate
 generation now rejects a selected leg when top-ask notional is below that
-instrument's declared minimum, matching the independent audit. A two-sided
+instrument's declared minimum, matching the independent audit. Commit
+`d9f7faf` contains the code and regression. A two-sided
 fixture regression passes **2/2** in 0.63 seconds under 1 GiB address-space
 and 60-second CPU limits with reduced priority. Ruff, format, and strict mypy
 for the changed production module pass. Initial fixture mapping and ask

@@ -12338,6 +12338,10 @@ a position that the independent audit then rejected. The generator now checks
 `common_quantity * best_ask` against each leg's minimum notional and returns an
 empty `INCOMPLETE_EVIDENCE` candidate before computing economics.
 
+Implementation and regression are in commit `d9f7faf` across
+`packages/midas/frontier/economics.py` and
+`tests/frontier/test_relationships_economics_replay.py`.
+
 The regression fixture covers the constraint on both the left and right venue
 legs. Both cases pass (**2/2**, 0.63 seconds) under a 1 GiB address-space cap,
 60-second CPU-time cap, and reduced priority. Ruff check and format pass, as

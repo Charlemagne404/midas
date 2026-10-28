@@ -3737,7 +3737,8 @@ endurance, and deployment remain open.
 
 Fixed a mismatch between cross-venue candidate generation and the independent
 audit. The generator now rejects a leg whose displayed top-ask notional is
-below its declared venue minimum before it emits a position. Two parameterized
+below its declared venue minimum before it emits a position. Commit `d9f7faf`
+contains the implementation and fixture regression. Two parameterized
 fixture cases covering either venue leg pass; Ruff, format, and strict mypy for
 the production module pass. No external source data was queried and no
 protected service changed.
