@@ -11469,6 +11469,40 @@ operation was performed.
 | Live cross-venue scientific validation | BLOCKED | Source-use/retention gates remain unresolved. |
 | Frontier overall | PARTIALLY VERIFIED | Live cross-venue evidence, broad regression, endurance, protected recovery, and deployment remain incomplete. |
 
+## Kalshi and Polymarket book request binding — 2026-10-28 20:32 UTC
+
+Commit `dcb522d9538b7782a01db2efccc82e63d737f009` advances the Kalshi and
+Polymarket adapters to `frontier-kalshi-23` and `frontier-polymarket-12`.
+Kalshi now binds its book request to a revalidated native ticker, canonical
+market ID, USD settlement identity, exact YES/NO contract instruments, and
+binary payout vectors. Book depth must be an actual integer. Polymarket now
+revalidates its market/outcome mapping, protocol-specific quote and settlement
+metadata, and the instrument IDs against the native v1 `clobTokenIds` or v2
+`positionIds` retained at discovery. Invalid identities fail before CLOB book
+transport.
+
+The combined `test_adapters.py -k 'kalshi or polymarket'` selection passes
+**104 tests** with 61 deselected in 2.64 seconds pytest time (3.04 seconds
+wall). Maximum RSS was 66,956 KiB, with zero swaps and zero socket messages.
+The selection includes 8 Kalshi market-corruption cases, 3 invalid-depth
+cases, and 12 Polymarket market-corruption cases. Ruff check/format and strict
+mypy pass for the changed modules. The run used fixture-only `MockTransport`
+responses; it is not live exchange validation.
+
+No current full backend regression was run. The latest protected-service
+sample recorded for this checkpoint is `2026-10-28T20:25:57Z`: Reality was
+65,536 bytes below `MemoryHigh`, and API usage was 1,562,820,608 /
+1,610,612,736 bytes. The focused tests ran in a transient 1 GiB cgroup with no
+swaps. Public source probes remain blocked by the source-use/retention gate,
+and the held `data/frontier-public-probes/` path was not read or modified.
+
+| Requirement | Status | Evidence and boundary |
+| --- | --- | --- |
+| Kalshi and Polymarket book request binding | COMPLETE AND VERIFIED | Native market, instrument, outcome, settlement, and depth checks pass focused adversarial fixtures. |
+| Live Kalshi and Polymarket book validation | BLOCKED | No public exchange calls were made; fixture validation does not prove current source behavior. |
+| Current broad Frontier/legacy regression | PARTIALLY VERIFIED | Focused adapter tests pass; the broad suite remains deferred under volatile protected-service memory headroom. |
+| Frontier overall | PARTIALLY VERIFIED | Live cross-venue science, full regression, endurance, protected recovery, and deployment remain incomplete. |
+
 ## Coinbase book input binding — 2026-10-28 20:23 UTC
 
 Commit `c3bcb131ca57e2ca610dcda720b58cd293846039` advances the Coinbase Spot

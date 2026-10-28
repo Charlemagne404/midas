@@ -10658,3 +10658,41 @@ broad regression.
 **Next safe action:** continue bounded source-independent adapter and API
 review. Keep public-source probes and broad backend suites behind their
 separate authorization and resource gates.
+
+## Kalshi and Polymarket book request binding — 2026-10-28 20:32 UTC
+
+Commit `dcb522d9538b7782a01db2efccc82e63d737f009` advances the Kalshi and
+Polymarket adapters to `frontier-kalshi-23` and `frontier-polymarket-12`.
+Before a Kalshi book request, the adapter now revalidates the canonical ticker,
+retained native ticker, USD settlement identity, YES/NO outcome identities,
+contract units, and binary payout vectors. It also rejects boolean, floating,
+and string depth values. Before a Polymarket book request, the adapter binds
+the native market ID, condition ID, protocol, quote/settlement identities,
+outcome order, and instrument IDs to the retained v1 `clobTokenIds` or v2
+`positionIds` list.
+
+The adapter fixture selection passes **104 tests**, with 61 deselected, in
+2.64 seconds pytest time (3.04 seconds wall), at 66,956 KiB maximum RSS, zero
+swaps, and zero socket messages. It includes 8 corrupt Kalshi-market cases,
+3 invalid Kalshi depth cases, and 12 corrupt Polymarket-market cases. Ruff
+check and formatting pass; strict mypy reports no issues in both adapters.
+All source responses came from local `MockTransport` fixtures. No public
+exchange request was made.
+
+The latest protected-service sample for this checkpoint remains the prior
+dated reading at `2026-10-28T20:25:57Z`: Reality was 65,536 bytes below
+`MemoryHigh`, with API usage at 1,562,820,608 / 1,610,612,736 bytes. The
+focused suite ran inside a transient 1 GiB cgroup cap. This does not justify a
+broad backend regression.
+
+| Requirement | Status | Evidence and boundary |
+| --- | --- | --- |
+| Kalshi and Polymarket book input binding | COMPLETE AND VERIFIED | Native outcome and contract metadata corruption is rejected before book I/O; 104 focused fixtures pass. |
+| Kalshi and Polymarket live book validation | BLOCKED | Source-use/retention scope remains unresolved; MockTransport fixtures do not establish live behavior. |
+| Current full Frontier/legacy regression | PARTIALLY VERIFIED | The focused adapter selection passes; broad regressions remain deferred under the protected-service resource gate. |
+| Project Frontier overall | PARTIALLY VERIFIED | Live cross-venue evidence, broad regression, endurance, protected recovery, and deployment remain incomplete. |
+
+**Next safe action:** continue bounded source-independent implementation and
+verification. Keep the held public-probe artifact untouched, and defer broad
+regressions until resource headroom is sustained and source-use gates are
+separately resolved.
