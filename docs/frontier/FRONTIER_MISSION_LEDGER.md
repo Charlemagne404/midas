@@ -11576,3 +11576,55 @@ service was accessed. No changes were made to the pre-existing untracked
 Next safe action: continue source-independent inspection of candidate-to-run
 provenance and API readback, with broad tests deferred under narrow API
 headroom.
+
+## Relationship evidence quarantine and replay lineage — 2026-10-28 22:15 UTC
+
+The source-hold audit found that replay quarantine checked manifest market,
+fee, book, and joint-state observations but omitted IDs inside applied and
+proposed relationship evidence. Relationship listing and graph paths also
+filtered held venue endpoints without examining the evidence sources cited by
+the relationship. This allowed a stored relationship with Polymarket
+endpoints and a held Kalshi evidence reference to remain visible and eligible
+for replay.
+
+The API now resolves relationship evidence IDs through the observation venue
+index and fails closed on missing, malformed, or held references. The filter
+is applied to relationship listings, graph neighbors, review history, and
+relationship review input. Replay quarantine includes relationship evidence
+IDs, so pre-existing runs that cite held evidence are omitted. Deterministic
+replay now passes valid SHA-256 market observation IDs into proposal
+generation; fixture-only placeholder IDs are skipped. `REPLAY_VERSION` is
+`frontier-deterministic-replay-22`.
+
+A fixture API regression proves that a verified relationship with only
+non-held endpoints but one held-source evidence ID is hidden from relationship
+and graph reads, excluded from new API replay, and quarantines an already
+persisted run. It makes no network calls. The final focused results are
+**105/105** relationship/economics/replay tests, **14/14** API tests selected
+by `replay or relationship`, **1/1** legacy replay manifest/audit test, and
+the held-evidence API case **1/1** after adding graph and standard replay
+assertions. Ruff check/format and strict mypy for the API/replay modules pass.
+
+Initial focused attempts found two test-fixture assumptions that were updated:
+offline builder IDs are not persisted SHA-256 IDs, so proposal binding now
+skips only those placeholders; and the hash-corruption fixture now changes a
+valid manifest field so it still reaches the hash verifier after the new
+cross-field model validation. The final selected runs pass. A pre-existing
+Starlette/httpx deprecation warning remains in API tests.
+
+At `2026-10-28T22:14:18Z`, API `MemoryHigh` headroom was 4,087,808 bytes and
+Reality headroom was 114,688 bytes. Memory PSI was 0%; available memory was
+10,075,068 kB and swap free was 954,736 kB. No exchange endpoint, retained
+public capture, or protected service was accessed or changed. The untracked
+`data/frontier-public-probes/` directory remains untouched.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Relationship evidence source quarantine | COMPLETE AND VERIFIED WITH FIXTURES | Missing and held evidence references are excluded from API graph/relation reads and review; held-source fixture verifies. |
+| Replay relationship provenance | COMPLETE AND VERIFIED WITH FIXTURES | New proposals cite valid source IDs; held evidence in persisted runs is quarantined. |
+| Replay version 22 | IMPLEMENTED, LIVE VALIDATION PENDING | Proposal identities now carry source observations; only fixture validation is performed. |
+| Project Frontier overall | PARTIALLY VERIFIED | Live cross-venue research, broad regressions, endurance, protected recovery, and deployment remain open. |
+
+Next safe action: continue read-only review of remaining summary and
+candidate-to-run source paths; defer broad work while Reality remains close to
+its soft memory boundary.

@@ -2972,7 +2972,7 @@ def test_readiness_fails_closed_when_a_stored_replay_hash_does_not_match(tmp_pat
     )
     store.append_replay(replay)
     tampered = replay.model_dump(mode="json")
-    tampered["classification_counts"] = {"tampered": 1}
+    tampered["manifest"]["scenario"]["name"] = "tampered-hash-fixture"
     tampered_json = FrontierStore._canonical(tampered)
     with sqlite3.connect(store.path) as connection:
         connection.execute("DROP TRIGGER research_runs_no_update")
@@ -3062,6 +3062,113 @@ def test_replay_with_held_fee_metadata_is_quarantined_and_preserved(tmp_path):
         assert response.json()["held_runs_omitted"] == 1
         assert store.observation(fee_observation_id) is not None
         assert store.summary()["runs"] == 1
+    finally:
+        client.close()
+        asyncio.run(registry.aclose())
+        asyncio.run(http_client.aclose())
+
+
+def test_held_relationship_evidence_is_quarantined_from_graph_and_replay(tmp_path):
+    from midas.frontier.replay import deterministic_replay
+
+    client, registry, http_client, requests, store = _client(tmp_path, hold_sources=True)
+
+    def save_market(source_market, label: str):
+        body = json.dumps({"held_relationship_fixture": label}, separators=(",", ":"))
+        url = f"https://fixture.invalid/{label}"
+        raw = RawObservation(
+            venue=source_market.venue,
+            observation_kind="market_listing",
+            request_url=url,
+            http_status=200,
+            request_started_at_utc=T0,
+            received_at_utc=T0,
+            raw_body=body,
+            raw_sha256=hashlib.sha256(body.encode()).hexdigest(),
+            adapter_version="held-relationship-fixture-v1",
+        )
+        normalized = source_market.model_copy(
+            update={
+                "provenance": source_market.provenance.model_copy(
+                    update={
+                        "source_url": url,
+                        "adapter_version": raw.adapter_version,
+                        "request_started_at_utc": T0,
+                        "response_received_at_utc": T0,
+                        "processed_at_utc": T0,
+                        "raw_sha256": raw.raw_sha256,
+                    }
+                )
+            }
+        )
+        observation_id = store.append_observation(raw, normalized)
+        normalized = normalized.model_copy(
+            update={
+                "provenance": normalized.provenance.model_copy(
+                    update={"observation_id": observation_id}
+                )
+            }
+        )
+        return normalized, observation_id
+
+    left, left_observation_id = save_market(market(Venue.POLYMARKET, "held-rel-left"), "poly-left")
+    right, right_observation_id = save_market(
+        market(Venue.POLYMARKET, "held-rel-right"), "poly-right"
+    )
+    _held_market, held_observation_id = save_market(
+        market(Venue.KALSHI, "held-rel-evidence"), "kalshi-held-evidence"
+    )
+    relationship = verify_same_payoff(
+        left,
+        right,
+        state_mapping={"yes": "yes", "no": "no"},
+        instrument_mapping={
+            left.instruments[0].native_instrument_id: right.instruments[0].native_instrument_id,
+            left.instruments[1].native_instrument_id: right.instruments[1].native_instrument_id,
+        },
+        external_assertion_id="held-evidence-fixture-assertion",
+        evidence_observation_ids=(
+            left_observation_id,
+            right_observation_id,
+            held_observation_id,
+        ),
+        asserted_at_utc=T0,
+    )
+    store.append_relationship(relationship)
+    replay = deterministic_replay(
+        (left, right),
+        (),
+        verified_relationships=(relationship,),
+        as_of_utc=T0,
+        code_version="held-relationship-evidence-quarantine-v1",
+    )
+    store.append_replay(replay)
+    assert replay.manifest.market_observation_ids == tuple(
+        sorted((left_observation_id, right_observation_id))
+    )
+    try:
+        relationship_response = client.get("/api/frontier/relationships")
+        assert relationship_response.status_code == 200, relationship_response.text
+        assert relationship_response.json()["items"] == []
+
+        graph_response = client.get(
+            "/api/frontier/graph",
+            params={"center_market_id": left.canonical_id, "depth": 1},
+        )
+        assert graph_response.status_code == 200, graph_response.text
+        assert graph_response.json()["edges"] == []
+
+        replay_response = client.post("/api/frontier/replay", json={})
+        assert replay_response.status_code == 200, replay_response.text
+        assert relationship.relationship_id not in {
+            item["relationship_id"] for item in replay_response.json()["applied_relationships"]
+        }
+
+        runs_response = client.get("/api/frontier/runs")
+        assert runs_response.status_code == 200, runs_response.text
+        assert len(runs_response.json()["items"]) == 1
+        assert runs_response.json()["held_runs_omitted"] == 1
+        assert requests == []
     finally:
         client.close()
         asyncio.run(registry.aclose())
@@ -5133,7 +5240,7 @@ def test_replay_api_generates_and_persists_multi_outcome_candidate(tmp_path):
         replay = client.post("/api/frontier/replay", json={})
         assert replay.status_code == 200, replay.text
         result = replay.json()
-        assert result["manifest"]["replay_version"] == "frontier-deterministic-replay-21"
+        assert result["manifest"]["replay_version"] == "frontier-deterministic-replay-22"
         assert len(result["candidates"]) == 1
         candidate = result["candidates"][0]
         assert candidate["family"] == "within_market_multi_outcome_coverage"
@@ -5442,7 +5549,7 @@ def test_replay_api_generates_and_persists_bounded_payoff_basket(tmp_path):
         response = client.post("/api/frontier/replay", json={})
         assert response.status_code == 200, response.text
         result = response.json()
-        assert result["manifest"]["replay_version"] == "frontier-deterministic-replay-21"
+        assert result["manifest"]["replay_version"] == "frontier-deterministic-replay-22"
         assert len(result["candidates"]) == 1
         candidate = result["candidates"][0]
         assert candidate["family"] == "within_market_payoff_basket"

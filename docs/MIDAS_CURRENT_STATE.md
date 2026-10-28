@@ -3826,3 +3826,20 @@ At `2026-10-28T22:05:48Z`, API was at 1,606,180,864 / 1,610,612,736 bytes and
 Reality at 1,010,692,096 / 1,207,959,552 bytes. Memory PSI was 0%, available
 memory 9,548,252 kB, and swap free 61,596 kB. Broad regression remains
 deferred because API headroom is narrow.
+
+## Project Frontier relationship evidence quarantine — 2026-10-28 22:15 UTC
+
+Replay and graph source holds now include the observation IDs cited in
+relationship evidence. Relationship list, graph, and review routes omit or
+reject relationships with malformed, missing, or held evidence; replay
+readback quarantines stored runs citing held relationship evidence.
+Deterministic replay pins valid market observation IDs into generated
+proposals and advances to replay version 22. Fixture verification passes
+105/105 core relationship/economics/replay cases, 14/14 selected API
+relationship/replay cases, and the legacy replay read test. No source request
+or protected service change occurred. Frontier remains partially verified.
+
+At `2026-10-28T22:14:18Z`, API was at 1,606,524,928 / 1,610,612,736 bytes and
+Reality at 1,207,844,864 / 1,207,959,552 bytes. Memory PSI was 0%, available
+memory 10,075,068 kB, and swap free 954,736 kB. Broad tests remain deferred
+under narrow service headroom.

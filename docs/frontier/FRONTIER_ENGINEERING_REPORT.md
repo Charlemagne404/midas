@@ -12539,3 +12539,59 @@ directory was preserved.
 
 Next safe action: continue static review of candidate-to-run provenance and
 API readback; broad suites remain deferred under narrow API headroom.
+
+## Relationship source-evidence quarantine — 2026-10-28 22:15 UTC
+
+The API source-hold audit found that replay quarantine checked manifest
+market, fee, book, and joint-state observation IDs but not observation IDs in
+applied or proposed relationship evidence. Relationship and graph reads also
+excluded held venue endpoints without checking the cited source evidence. A
+verified relationship could therefore have only non-held market endpoints
+while retaining an evidence reference from a held venue.
+
+Added shared evidence-ID extraction and fail-closed venue filtering for stored
+relationships. The filter now applies to relationship lists, bounded graph
+neighbors, review-history reads, and the relationship review path. Replay run
+quarantine gathers relationship evidence IDs as well as manifest IDs, so a
+previously persisted run with held relationship evidence is omitted.
+`deterministic_replay` now passes valid market observation IDs to proposal
+generation; human-readable fixture placeholders that are not SHA-256 IDs are
+not treated as persisted provenance. The replay version is now
+`frontier-deterministic-replay-22`.
+
+The new bounded API fixture stores two Polymarket market observations, one
+Kalshi observation cited only by a same-payoff relationship, and a replay
+using that relationship. It confirms the relationship is hidden from list
+and graph APIs, standard API replay does not apply it, and the earlier stored
+run is quarantined while the new non-held replay remains visible. The fixture
+makes no network calls.
+
+Final focused checks pass: **105/105**
+`tests/frontier/test_relationships_economics_replay.py`; **14/14** API cases
+selected by `replay or relationship`; **1/1** legacy replay manifest/audit
+test; and the expanded held-evidence API regression **1/1**. Strict mypy
+passes for `apps/api/frontier.py` and `packages/midas/frontier/replay.py`;
+Ruff check and format pass for all five checked Python files. The first core
+attempt exposed non-SHA synthetic IDs in old fixtures; the generator now
+leaves those unpinned and the final core suite passes. One hash-integrity test
+was adjusted to corrupt a semantically valid manifest field so it exercises
+the hash check after the new model-level index checks. API tests retain one
+existing Starlette/httpx deprecation warning.
+
+At `2026-10-28T22:14:18Z`, API `MemoryHigh` headroom was 4,087,808 bytes and
+Reality headroom was only 114,688 bytes. Memory PSI was 0%; available memory
+was 10,075,068 kB and swap free was 954,736 kB. No exchange endpoint or
+retained public capture was accessed; no protected service changed. The
+existing untracked `data/frontier-public-probes/` directory remains
+untouched.
+
+| Requirement | Status | Evidence and boundary |
+| --- | --- | --- |
+| Relationship source evidence filtering | COMPLETE AND VERIFIED WITH FIXTURES | List, graph, and review routes reject or omit missing/held evidence references. |
+| Replay source-hold quarantine | COMPLETE AND VERIFIED WITH FIXTURES | Held relationship evidence excludes historical runs and is excluded from new replay inputs. |
+| Proposal observation lineage | COMPLETE AND VERIFIED WITH FIXTURES | Valid SHA-256 source IDs are attached to replay-generated relationship hypotheses. |
+| Replay version compatibility | PARTIALLY VERIFIED | New runs use version 22; legacy manifest/audit reading passes, live data remains unvalidated. |
+| Overall Frontier acceptance | PARTIALLY VERIFIED | Live cross-venue research, broad regressions, endurance, protected recovery, and deployment remain open. |
+
+Next safe action: inspect remaining summary and candidate detail source paths;
+defer broad suites while Reality remains near `MemoryHigh`.

@@ -1053,6 +1053,7 @@ def _bounded_graph_neighbors(
             scan_limit=remaining,
             excluded_venues=excluded_venues,
         )
+        page = _relationship_rows_without_held_sources(store, page, excluded_venues)
         scanned += page_scanned
         truncated |= page_truncated
         for item in page:
@@ -1064,6 +1065,68 @@ def _bounded_graph_neighbors(
     ordered_rows.sort(key=lambda item: str(item["relationship_id"]))
     ordered_rows.sort(key=lambda item: str(item["created_at_utc"]), reverse=True)
     return tuple(ordered_rows), scanned, truncated
+
+
+def _relationship_evidence_observation_ids(
+    relationship: dict[str, Any],
+) -> tuple[str, ...] | None:
+    evidence = relationship.get("evidence")
+    if not isinstance(evidence, (list, tuple)) or not evidence:
+        return None
+    observation_ids: set[str] = set()
+    for item in evidence:
+        if not isinstance(item, dict):
+            return None
+        ids = item.get("observation_ids")
+        if not isinstance(ids, (list, tuple)):
+            return None
+        for observation_id in ids:
+            if (
+                not isinstance(observation_id, str)
+                or len(observation_id) != 64
+                or any(character not in "0123456789abcdef" for character in observation_id)
+            ):
+                return None
+            observation_ids.add(observation_id)
+    return tuple(sorted(observation_ids))
+
+
+def _relationship_rows_without_held_sources(
+    store: FrontierStore,
+    rows: tuple[dict[str, Any], ...],
+    excluded_venues: tuple[str, ...],
+) -> tuple[dict[str, Any], ...]:
+    """Fail closed when any cited relationship observation is held or missing."""
+    if not excluded_venues or not rows:
+        return rows
+    ids_by_relationship: dict[str, tuple[str, ...] | None] = {}
+    observation_ids: set[str] = set()
+    for index, row in enumerate(rows):
+        relationship = row.get("relationship")
+        ids = (
+            _relationship_evidence_observation_ids(relationship)
+            if isinstance(relationship, dict)
+            else None
+        )
+        key = str(row.get("relationship_id", index))
+        ids_by_relationship[key] = ids
+        if ids is not None:
+            observation_ids.update(ids)
+    observation_venues = store.observation_venues(tuple(sorted(observation_ids)))
+    held = set(excluded_venues)
+    return tuple(
+        row
+        for index, row in enumerate(rows)
+        if (
+            (ids := ids_by_relationship.get(str(row.get("relationship_id", index)))) is not None
+            and ids
+            and all(
+                observation_id in observation_venues
+                and observation_venues[observation_id] not in held
+                for observation_id in ids
+            )
+        )
+    )
 
 
 def _encode_trade_cursor(condition_id: str, limit: int, source_cursor: str) -> str:
@@ -1193,6 +1256,15 @@ def router(
             )
         return item["venue"] in held_venues
 
+    def relationship_uses_held_source(relationship: Relationship) -> bool:
+        if not held_venues:
+            return False
+        row = {
+            "relationship_id": relationship.relationship_id,
+            "relationship": relationship.model_dump(mode="json"),
+        }
+        return not _relationship_rows_without_held_sources(store, (row,), held_venues)
+
     def replay_input_observation_ids(result: dict[str, Any]) -> tuple[str, ...]:
         manifest = result.get("manifest")
         if not isinstance(manifest, dict):
@@ -1206,6 +1278,15 @@ def router(
                 if isinstance(mapping, dict):
                     evidence_ids = mapping.get("evidence_observation_ids", ())
                     if isinstance(evidence_ids, (list, tuple)):
+                        observation_ids.update(evidence_ids)
+        for key in ("proposed_relationships", "applied_relationships"):
+            relationships = result.get(key, ())
+            if not isinstance(relationships, (list, tuple)):
+                continue
+            for relationship in relationships:
+                if isinstance(relationship, dict):
+                    evidence_ids = _relationship_evidence_observation_ids(relationship)
+                    if evidence_ids is not None:
                         observation_ids.update(evidence_ids)
         return tuple(sorted(str(item) for item in observation_ids))
 
@@ -1235,13 +1316,22 @@ def router(
             relationships = result.get(key, ())
             if not isinstance(relationships, (list, tuple)):
                 return True
-            if any(
-                not isinstance(item, dict)
-                or market_id_is_held(str(item.get("left_market_id", "")))
-                or market_id_is_held(str(item.get("right_market_id", "")))
-                for item in relationships
-            ):
-                return True
+            for item in relationships:
+                if (
+                    not isinstance(item, dict)
+                    or market_id_is_held(str(item.get("left_market_id", "")))
+                    or market_id_is_held(str(item.get("right_market_id", "")))
+                ):
+                    return True
+                evidence_ids = _relationship_evidence_observation_ids(item)
+                if evidence_ids is None or (key == "applied_relationships" and not evidence_ids):
+                    return True
+                if evidence_ids is not None and any(
+                    observation_id not in observation_venues
+                    or observation_venues[observation_id] in held_venues
+                    for observation_id in evidence_ids
+                ):
+                    return True
         candidates = result.get("candidates", ())
         if not isinstance(candidates, (list, tuple)):
             return True
@@ -1307,12 +1397,13 @@ def router(
         excluded_venues: tuple[str, ...] = (),
     ) -> tuple[dict[str, Any], ...]:
         try:
-            return store.relationships(
+            rows = store.relationships(
                 state=state,
                 limit=limit,
                 effective_only=effective_only,
                 excluded_venues=excluded_venues,
             )
+            return _relationship_rows_without_held_sources(store, rows, excluded_venues)
         except FrontierStoreError as error:
             raise HTTPException(
                 status_code=409,
@@ -3589,6 +3680,11 @@ def router(
                     status_code=409,
                     detail="Relationship uses source data held from research use",
                 )
+            if relationship_uses_held_source(relationship):
+                raise HTTPException(
+                    status_code=409,
+                    detail="Relationship uses source data held from research use",
+                )
             after = (
                 _decode_relationship_review_cursor(cursor, relationship_id)
                 if cursor is not None
@@ -3741,6 +3837,7 @@ def router(
                             excluded_venues=held_venues,
                         )
                     )
+                    page = _relationship_rows_without_held_sources(store, page, held_venues)
                     revision_after = store.graph_revision()
                     if revision_after != revision_before:
                         raise HTTPException(
@@ -3881,6 +3978,9 @@ def router(
                     effective_only=True,
                     excluded_venues=held_venues,
                 )
+                relationship_rows = _relationship_rows_without_held_sources(
+                    store, relationship_rows, held_venues
+                )
             except FrontierStoreError as error:
                 raise HTTPException(status_code=409, detail=str(error)) from error
             relationships_scanned = len(relationship_rows)
@@ -3999,6 +4099,11 @@ def router(
             original = store.relationship(relationship_id)
             if original is None:
                 raise HTTPException(status_code=404, detail="Relationship was not found")
+            if relationship_uses_held_source(original):
+                raise HTTPException(
+                    status_code=409,
+                    detail="Relationship uses source data held from research use",
+                )
             if original.state != VerificationState.HYPOTHESIS or original.supersedes:
                 raise HTTPException(
                     status_code=409,

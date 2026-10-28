@@ -574,6 +574,29 @@ def test_replay_result_rejects_manifest_and_classification_summary_drift():
         ReplayResult.model_validate(classification_drift)
 
 
+def test_deterministic_replay_pins_source_ids_on_relationship_proposals():
+    left = market(Venue.POLYMARKET, "proposed-source-left")
+    right = market(Venue.KALSHI, "proposed-source-right")
+    left_id, right_id = "a" * 64, "b" * 64
+    left = left.model_copy(
+        update={"provenance": left.provenance.model_copy(update={"observation_id": left_id})}
+    )
+    right = right.model_copy(
+        update={"provenance": right.provenance.model_copy(update={"observation_id": right_id})}
+    )
+
+    replay = deterministic_replay(
+        (left, right), (), as_of_utc=T0, code_version="proposal-source-lineage-test-v1"
+    )
+
+    assert replay.proposed_relationships
+    assert all(
+        evidence.observation_ids == tuple(sorted((left_id, right_id)))
+        for proposal in replay.proposed_relationships
+        for evidence in proposal.evidence
+    )
+
+
 def test_deterministic_replay_rejects_duplicate_relationship_identities():
     left, right, relationship, instrument_mapping = _verified_pair()
     left_books, right_books = _books(left, right)
@@ -3391,7 +3414,7 @@ def test_verified_multi_outcome_coverage_is_exact_and_stays_hypothetical():
         as_of_utc=T0 + timedelta(milliseconds=100),
         code_version="multi-outcome-fixture-v1",
     )
-    assert replay.manifest.replay_version == "frontier-deterministic-replay-21"
+    assert replay.manifest.replay_version == "frontier-deterministic-replay-22"
     replay_candidate = replay.candidates[0]
     assert replay_candidate.model_copy(update={"independent_audit": None}) == candidate
     assert replay_candidate.independent_audit is not None
