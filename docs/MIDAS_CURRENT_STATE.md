@@ -1809,3 +1809,14 @@ avg10 **0.02% some / 0.02% full**. The earlier check used a relative path in
 the Frontier worktree, not the protected shared lock, and is superseded. No
 resource-bearing checks were started; rerun only after memory pressure clears
 and the exact protected lock is free.
+
+### Persisted Laboratory/Arena browser case queued — 2026-10-28 07:22 UTC
+
+Commit `a875ee2` extends the explicit seeded browser setup with a
+content-addressed, fixture-only Arena discovery artifact and a Playwright case
+that reads it through the actual local API and Laboratory UI. The seeder writes
+only into a validated temporary browser root and starts no worker. This new
+path remains unrun. At `2026-10-28T07:21:58Z`, memory PSI avg10 was
+**39.28% some / 20.15% full**; PID **124298** still held the protected Arena
+admission lock. I left it untouched and deferred browser/test/build work until
+the lock clears and memory pressure drops.

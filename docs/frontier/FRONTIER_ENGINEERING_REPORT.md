@@ -7402,6 +7402,15 @@ Post-change Prettier, lint, build, and browser E2E were not run. Commit
 integrity-gated rendering, and no source or Arena mutation requests; this new
 browser case also awaits execution.
 
+Commit `a875ee2` adds a stronger opt-in path. The temporary E2E seeder creates
+a Polymarket-only Frontier discovery snapshot, result artifact, and completed
+Arena job manifest through the content-addressed artifact APIs. The new
+Playwright scenario reads the listing and verified result from the real local
+Arena API and opens the same artifact in Laboratory. It performs no source
+request and starts no Arena worker. This is controlled synthetic evidence,
+clearly versioned as an E2E fixture, and the new seeded scenario has not been
+executed yet.
+
 At `2026-10-28T07:12:59Z`, memory PSI avg10 was **47.23% some / 42.98% full**,
 I/O PSI avg10 **0.75% some / 0.74% full**, with about **10 GiB** available.
 The lock check at that time inspected the Frontier worktree's relative
@@ -7412,7 +7421,7 @@ a persisted Arena store or contact any source.
 
 | Component | Status | Evidence and remaining boundary |
 | --- | --- | --- |
-| Laboratory read-only Frontier study history | PARTIALLY VERIFIED | Initial component/unit/type checks pass; final semantic markup adjustment awaits rerun. Data was mocked, not loaded from a populated Arena store. |
+| Laboratory read-only Frontier study history | PARTIALLY VERIFIED | Initial component/unit/type checks pass before the final markup adjustment. A persisted-store/API browser test was added in `a875ee2` but has not run. |
 | Legacy Laboratory campaign execution of Frontier snapshots | DEFERRED | No lossless mapping from multi-market Frontier payoffs to single-market `MarketEvent` episodes is defined. |
 | Arena worker/admission path | PARTIALLY VERIFIED | This change only reads existing Arena routes; it adds no worker completion or live resource evidence. |
 | Project Frontier overall | PARTIALLY VERIFIED | Live cross-venue semantic evidence, held-source access, broader science/resource gates, and deployment remain incomplete. |
@@ -7434,6 +7443,8 @@ Commit identities on `codex/frontier-20261026`:
 - `91e61d7` — Expand the reproducibility disclosure before the visible-value assertion.
 - `a1e5687` — Pin integration commit identities in the report and ledger.
 - `8c5ffbc` — Correct the protected shared-lock path and record the live holder.
+- `a875ee2` — Seed a persisted fixture Arena study and add actual API/browser inspection.
+- `9d8d98b` — List documentation follow-up commit identities.
 
 The working tree was clean at `91e61d7`. The commits remain local to the
 isolated Frontier branch; there was no merge, push, or deployment.
@@ -7448,3 +7459,14 @@ avg10 **0.02% some / 0.02% full**. Resource-bearing verification remains
 deferred until memory pressure clears and the same protected lock is free. The
 earlier relative-path check in this worktree did not prove the shared lock was
 free. No protected API, source, store, or service was changed.
+
+## Frontier E2E admission recheck — 2026-10-28 07:21 UTC
+
+The source-independent persisted-Arena browser test and temporary seeder were
+added in `a875ee2`; neither has been executed. At `2026-10-28T07:21:58Z`,
+memory PSI avg10 was **39.28% some / 20.15% full**, I/O PSI was **0.00%**, and
+about **10 GiB** was available. PID **124298** still held the protected shared
+Arena lock under `midas-veritas-gap-detail-v2.service`. The protected batch was
+left untouched. No build, test, browser, source, or production operation was
+started after this measurement. Revalidate memory PSI and the exact lock path
+before running even the isolated browser suite.

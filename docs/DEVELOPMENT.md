@@ -702,6 +702,10 @@ typecheck after that refinement. At `2026-10-28T07:12:59Z`, memory PSI avg10
 was 47.23% some / 42.98% full, so resource-bearing verification is deferred
 until a fresh sample clears the admission gate. A fixture-routed Playwright
 case covering this tab was added in `afcc726`; it also awaits execution.
+Commit `a875ee2` adds a second opt-in case backed by a persisted, hash-verified
+Polymarket-only Arena fixture and the real local API routes. Re-run the seeded
+browser command above to exercise both scenarios; the new seed/API/UI path has
+not yet run and does not exercise an Arena worker or live source.
 
 ## Keep worktrees and runtime data separate
 

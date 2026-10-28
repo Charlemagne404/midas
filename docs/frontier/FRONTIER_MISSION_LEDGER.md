@@ -6102,6 +6102,15 @@ absence of source or Arena mutation requests; that browser case is also awaiting
 execution. Commit `91e61d7` opens the disclosure before asserting visible
 reproducibility values.
 
+Commit `a875ee2` strengthens the explicit opt-in seeded browser test. Its
+temporary-root seeder now stores one Polymarket-only discovery snapshot,
+completed result, and Arena job manifest using Frontier's content-addressed
+artifact writer. A new browser case reads the saved job and hash-verified
+result through the real local Arena API, then inspects it in Laboratory. The
+fixture is synthetic, makes no source call, and writes directly into a fresh
+temporary Arena root; it does not start a supervised Arena worker. This new
+seeded API/browser path has not yet run.
+
 At `2026-10-28T07:12:59Z`, memory PSI avg10 was **47.23% some / 42.98% full**,
 I/O PSI avg10 **0.75% some / 0.74% full**, and about **10 GiB** was available;
 the check at that time inspected the relative `data/arena` under the Frontier
@@ -6114,7 +6123,7 @@ production store was accessed.
 | Laboratory read-only view of saved Frontier studies | PARTIALLY VERIFIED | Initial 4-test and 43-test runs pass before the final button-markup refinement; current markup must be rechecked. API data was fixture-mocked. |
 | Legacy Laboratory campaign execution of Frontier snapshots | DEFERRED | The single-market `MarketEvent` schema is not a lossless representation of Frontier's multi-market payoff snapshots. No lossy conversion was added. |
 | Arena discovery job completion and host resource sustainability | PARTIALLY VERIFIED | This UI reuses existing routes; it does not verify the separate worker supervisor or current resource gate. |
-| Populated-store browser integration for this Laboratory tab | DEFERRED | Component tests use mocked API results; the prior populated-store browser test covers the saved price-history UI, not this view. |
+| Populated-store browser integration for this Laboratory tab | IMPLEMENTED, LIVE VALIDATION PENDING | `a875ee2` seeds a verified fixture artifact into the isolated Arena root and adds an actual API/UI browser test; no execution after this addition is claimed. |
 
 **Next safe action:** obtain a fresh memory/I/O PSI and Arena-lock sample, then
 rerun the focused Laboratory tests, Prettier, lint, and typecheck. Keep the
@@ -6123,7 +6132,8 @@ project PARTIALLY VERIFIED and production deployment deferred.
 Checkpoint commits for this integration are `d396589` (Laboratory UI),
 `8227f34` (architecture and initial status documentation), `afcc726`
 (fixture-routed browser case), `87ef08e` (pending-verification handoff), and
-`91e61d7` (make reproducibility disclosure visible in test assertions). The
+`91e61d7` (make reproducibility disclosure visible in test assertions), and
+`a875ee2` (persisted fixture-backed Arena API/browser flow). The
 working tree is clean at this checkpoint. No production branch was changed.
 Documentation follow-ups are `a1e5687` (commit identities) and `8c5ffbc`
 (correct shared-lock path and external holder); the latter is followed by this
@@ -6140,3 +6150,22 @@ Memory PSI avg10 was **36.43% some / 28.38% full** and I/O PSI avg10
 after this sample. The prior relative-path check was not evidence that the
 shared lock was free. Recheck both PSI and this exact lock path before
 resource-bearing verification.
+
+## Seeded Arena browser verification pending — 2026-10-28 07:22 UTC
+
+Commit `a875ee2` extends the explicit `MIDAS_SEED_FRONTIER_E2E=1` setup to
+create one fixture-only Polymarket discovery snapshot, completed artifact, and
+Arena manifest in the same disposable browser root as the existing history
+fixtures. Its new Playwright case checks the actual local Arena catalog and
+hash-verifying result API, then opens the saved result in Laboratory. The API
+and browser calls are read-only; the seeder writes only after validating a
+fresh `/tmp/midas-browser-*` root. No source data or Arena worker is involved.
+
+This test and the final Laboratory markup refinement remain unverified. At
+`2026-10-28T07:21:58Z`, memory PSI avg10 was **39.28% some / 20.15% full**,
+I/O PSI was **0.00%**, and PID **124298** still held
+`/home/charlie/midas/data/arena/.global-admission.lock` inside
+`midas-veritas-gap-detail-v2.service`. The worker and its stores were left
+untouched. No verification process was started. Once both admission conditions
+clear, run the explicit seeded browser test and focused UI checks, then record
+the result without promoting fixture evidence to live-source validation.
