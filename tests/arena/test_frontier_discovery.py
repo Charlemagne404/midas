@@ -16,6 +16,7 @@ from fastapi.testclient import TestClient
 from midas.arena.artifacts import atomic_json
 from midas.arena.frontier_discovery import (
     FrontierDiscoveryJobSpec,
+    _sha256_json,
     execute_frontier_discovery_job,
     load_snapshot,
     make_snapshot,
@@ -84,6 +85,38 @@ def discovery_snapshot(as_of_utc: datetime = AS_OF):
 def test_discovery_snapshot_rejects_naive_analysis_time():
     with pytest.raises(ValueError, match="must include a timezone"):
         discovery_snapshot(datetime(2026, 10, 27))
+
+
+def test_discovery_snapshot_store_and_loader_revalidate_copied_models(tmp_path):
+    invalid_root = tmp_path / "invalid-path-snapshot"
+    invalid_snapshot = discovery_snapshot().model_copy(update={"snapshot_id": "../outside"})
+    with pytest.raises(ValueError, match="storage validation"):
+        store_snapshot(invalid_root, invalid_snapshot)
+    assert not invalid_root.exists()
+
+    invalid_spec = FrontierDiscoveryJobSpec(
+        snapshot_id="a" * 64,
+        snapshot_sha256="b" * 64,
+    ).model_copy(update={"snapshot_id": "../outside"})
+    with pytest.raises(ValueError, match="job spec failed validation"):
+        load_snapshot(invalid_root, invalid_spec)
+    assert not invalid_root.exists()
+
+    valid_snapshot = discovery_snapshot()
+    market_value = valid_snapshot.markets[0]
+    invalid_market = market_value.model_copy(update={"native_market_id": ""})
+    invalid_payload = valid_snapshot.model_dump(mode="json", exclude={"snapshot_id"})
+    invalid_payload["markets"][0]["native_market_id"] = ""
+    invalid_nested = valid_snapshot.model_copy(
+        update={
+            "markets": (invalid_market, *valid_snapshot.markets[1:]),
+            "snapshot_id": _sha256_json(invalid_payload),
+        }
+    )
+    nested_root = tmp_path / "invalid-nested-snapshot"
+    with pytest.raises(ValueError, match="storage validation"):
+        store_snapshot(nested_root, invalid_nested)
+    assert not nested_root.exists()
 
 
 def test_discovery_snapshot_and_arena_result_are_hash_pinned_and_reconstructable(tmp_path):

@@ -188,13 +188,19 @@ def _snapshot_directory(root: Path) -> Path:
 
 
 def store_snapshot(root: Path, snapshot: FrontierDiscoverySnapshot) -> str:
-    directory = _snapshot_directory(root)
-    path = directory / f"{snapshot.snapshot_id}.json"
-    if path.is_symlink():
-        raise ValueError("Frontier discovery snapshot cannot be a symlink")
-    encoded = _canonical_json(snapshot.model_dump(mode="json"))
+    try:
+        validated_snapshot = FrontierDiscoverySnapshot.model_validate(
+            snapshot.model_dump(mode="json", exclude_unset=True)
+        )
+    except (TypeError, ValueError) as error:
+        raise ValueError("Frontier discovery snapshot failed its storage validation") from error
+    encoded = _canonical_json(validated_snapshot.model_dump(mode="json"))
     if len(encoded) > MAX_SNAPSHOT_BYTES:
         raise ValueError("Frontier discovery snapshot exceeds the 8 MiB artifact bound")
+    directory = _snapshot_directory(root)
+    path = directory / f"{validated_snapshot.snapshot_id}.json"
+    if path.is_symlink():
+        raise ValueError("Frontier discovery snapshot cannot be a symlink")
     if path.exists():
         current = path.read_bytes()
         if current != encoded:
@@ -216,8 +222,12 @@ def store_snapshot(root: Path, snapshot: FrontierDiscoverySnapshot) -> str:
 
 
 def load_snapshot(root: Path, spec: FrontierDiscoveryJobSpec) -> FrontierDiscoverySnapshot:
+    try:
+        validated_spec = FrontierDiscoveryJobSpec.model_validate(spec.model_dump(mode="json"))
+    except (TypeError, ValueError) as error:
+        raise ValueError("Pinned Frontier discovery job spec failed validation") from error
     directory = root / "frontier-discovery-snapshots"
-    path = directory / f"{spec.snapshot_id}.json"
+    path = directory / f"{validated_spec.snapshot_id}.json"
     if (
         root.is_symlink()
         or directory.is_symlink()
@@ -227,13 +237,13 @@ def load_snapshot(root: Path, spec: FrontierDiscoveryJobSpec) -> FrontierDiscove
     ):
         raise ValueError("Pinned Frontier discovery snapshot is unavailable or unsafe")
     payload = path.read_bytes()
-    if hashlib.sha256(payload).hexdigest() != spec.snapshot_sha256:
+    if hashlib.sha256(payload).hexdigest() != validated_spec.snapshot_sha256:
         raise ValueError("Pinned Frontier discovery snapshot file hash does not match the job")
     try:
         snapshot = FrontierDiscoverySnapshot.model_validate(json.loads(payload))
     except (json.JSONDecodeError, ValueError) as error:
         raise ValueError("Pinned Frontier discovery snapshot is invalid") from error
-    if snapshot.snapshot_id != spec.snapshot_id:
+    if snapshot.snapshot_id != validated_spec.snapshot_id:
         raise ValueError("Frontier discovery snapshot identity does not match the job")
     return snapshot
 

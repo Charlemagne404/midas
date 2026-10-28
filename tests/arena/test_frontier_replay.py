@@ -10,6 +10,7 @@ from fastapi.testclient import TestClient
 from midas.arena.artifacts import atomic_json
 from midas.arena.frontier_replay import (
     FrontierReplayJobSpec,
+    _sha256_json,
     execute_frontier_replay_job,
     load_snapshot,
     make_snapshot,
@@ -29,7 +30,7 @@ JOB_ID = "job-0123456789abcdef01234567"
 AS_OF = datetime(2026, 10, 27, tzinfo=UTC)
 
 
-def snapshot(as_of_utc: datetime = AS_OF):
+def snapshot(as_of_utc: datetime = AS_OF, *, markets=()):
     return make_snapshot(
         code_version="frontier-test-source-sha256:" + "a" * 64,
         as_of_utc=as_of_utc,
@@ -38,7 +39,7 @@ def snapshot(as_of_utc: datetime = AS_OF):
             ExecutionScenario(name="quoted baseline"),
             ExecutionScenario(name="stress", slippage_bps="25"),
         ),
-        markets=(),
+        markets=markets,
         books=(),
         verified_relationships=(),
     )
@@ -47,6 +48,38 @@ def snapshot(as_of_utc: datetime = AS_OF):
 def test_snapshot_rejects_naive_analysis_time():
     with pytest.raises(ValueError, match="must include a timezone"):
         snapshot(datetime(2026, 10, 27))
+
+
+def test_snapshot_store_and_loader_revalidate_copied_models_before_path_use(tmp_path):
+    invalid_root = tmp_path / "invalid-path-snapshot"
+    invalid_snapshot = snapshot().model_copy(update={"snapshot_id": "../outside"})
+    with pytest.raises(ValueError, match="storage validation"):
+        store_snapshot(invalid_root, invalid_snapshot)
+    assert not invalid_root.exists()
+
+    invalid_spec = FrontierReplayJobSpec(
+        snapshot_id="a" * 64,
+        snapshot_sha256="b" * 64,
+    ).model_copy(update={"snapshot_id": "../outside"})
+    with pytest.raises(ValueError, match="job spec failed validation"):
+        load_snapshot(invalid_root, invalid_spec)
+    assert not invalid_root.exists()
+
+    market_value = market(Venue.POLYMARKET, "arena-replay-invalid-nested-model")
+    valid_snapshot = snapshot(markets=(market_value,))
+    invalid_market = market_value.model_copy(update={"native_market_id": ""})
+    invalid_payload = valid_snapshot.model_dump(mode="json", exclude={"snapshot_id"})
+    invalid_payload["markets"][0]["native_market_id"] = ""
+    invalid_nested = valid_snapshot.model_copy(
+        update={
+            "markets": (invalid_market,),
+            "snapshot_id": _sha256_json(invalid_payload),
+        }
+    )
+    nested_root = tmp_path / "invalid-nested-snapshot"
+    with pytest.raises(ValueError, match="storage validation"):
+        store_snapshot(nested_root, invalid_nested)
+    assert not nested_root.exists()
 
 
 class Progress:

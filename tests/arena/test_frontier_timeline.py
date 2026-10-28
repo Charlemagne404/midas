@@ -11,6 +11,7 @@ from midas.arena.artifacts import atomic_json
 from midas.arena.frontier_timeline import (
     FrontierTimelineJobSpec,
     FrontierTimelineSnapshot,
+    _sha256_json,
     execute_frontier_timeline_job,
     load_snapshot,
     make_snapshot,
@@ -67,6 +68,40 @@ def test_timeline_snapshot_rejects_naive_evaluation_time():
         make_fixture_snapshot((datetime(2026, 10, 27),))
 
 
+def test_timeline_snapshot_store_and_loader_revalidate_copied_models(tmp_path):
+    invalid_root = tmp_path / "invalid-path-snapshot"
+    invalid_snapshot = make_fixture_snapshot().model_copy(update={"snapshot_id": "../outside"})
+    with pytest.raises(ValueError, match="storage validation"):
+        store_snapshot(invalid_root, invalid_snapshot)
+    assert not invalid_root.exists()
+
+    invalid_spec = FrontierTimelineJobSpec(
+        snapshot_id="a" * 64,
+        snapshot_sha256="b" * 64,
+    ).model_copy(update={"snapshot_id": "../outside"})
+    with pytest.raises(ValueError, match="job spec failed validation"):
+        load_snapshot(invalid_root, invalid_spec)
+    assert not invalid_root.exists()
+
+    valid_snapshot = make_fixture_snapshot()
+    market_value = valid_snapshot.markets[0]
+    invalid_market = market_value.model_copy(update={"native_market_id": ""})
+    invalid_payload = valid_snapshot.model_dump(
+        mode="json", exclude={"snapshot_id"}, exclude_unset=True
+    )
+    invalid_payload["markets"][0]["native_market_id"] = ""
+    invalid_nested = valid_snapshot.model_copy(
+        update={
+            "markets": (invalid_market,),
+            "snapshot_id": _sha256_json(invalid_payload),
+        }
+    )
+    nested_root = tmp_path / "invalid-nested-snapshot"
+    with pytest.raises(ValueError, match="storage validation"):
+        store_snapshot(nested_root, invalid_nested)
+    assert not nested_root.exists()
+
+
 def test_timeline_snapshot_is_content_addressed_and_tamper_evident(tmp_path):
     snapshot = make_fixture_snapshot()
     checksum = store_snapshot(tmp_path, snapshot)
@@ -96,6 +131,16 @@ def test_timeline_snapshot_is_content_addressed_and_tamper_evident(tmp_path):
         {"snapshot_id": legacy_id, **legacy_payload}
     )
     assert legacy_snapshot.schema_version == 1
+    legacy_root = tmp_path / "legacy-store"
+    legacy_checksum = store_snapshot(legacy_root, legacy_snapshot)
+    restored_legacy = load_snapshot(
+        legacy_root,
+        FrontierTimelineJobSpec(
+            snapshot_id=legacy_snapshot.snapshot_id,
+            snapshot_sha256=legacy_checksum,
+        ),
+    )
+    assert restored_legacy == legacy_snapshot
 
 
 def test_recorded_source_status_snapshot_requires_pinned_join_attestation():

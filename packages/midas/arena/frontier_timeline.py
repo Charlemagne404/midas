@@ -216,13 +216,19 @@ def _snapshot_directory(root: Path) -> Path:
 
 
 def store_snapshot(root: Path, snapshot: FrontierTimelineSnapshot) -> str:
-    directory = _snapshot_directory(root)
-    path = directory / f"{snapshot.snapshot_id}.json"
-    if path.is_symlink():
-        raise ValueError("Frontier timeline snapshot cannot be a symlink")
-    encoded = _canonical_json(snapshot.model_dump(mode="json"))
+    try:
+        validated_snapshot = FrontierTimelineSnapshot.model_validate(
+            snapshot.model_dump(mode="json", exclude_unset=True)
+        )
+    except (TypeError, ValueError) as error:
+        raise ValueError("Frontier timeline snapshot failed its storage validation") from error
+    encoded = _canonical_json(validated_snapshot.model_dump(mode="json", exclude_unset=True))
     if len(encoded) > MAX_TIMELINE_INPUT_BYTES:
         raise ValueError("Frontier timeline snapshot exceeds the 32 MiB input bound")
+    directory = _snapshot_directory(root)
+    path = directory / f"{validated_snapshot.snapshot_id}.json"
+    if path.is_symlink():
+        raise ValueError("Frontier timeline snapshot cannot be a symlink")
     if path.exists():
         current = path.read_bytes()
         if current != encoded:
@@ -248,8 +254,12 @@ def store_snapshot(root: Path, snapshot: FrontierTimelineSnapshot) -> str:
 
 
 def load_snapshot(root: Path, spec: FrontierTimelineJobSpec) -> FrontierTimelineSnapshot:
+    try:
+        validated_spec = FrontierTimelineJobSpec.model_validate(spec.model_dump(mode="json"))
+    except (TypeError, ValueError) as error:
+        raise ValueError("Pinned Frontier timeline job spec failed validation") from error
     directory = root / "frontier-timeline-snapshots"
-    path = directory / f"{spec.snapshot_id}.json"
+    path = directory / f"{validated_spec.snapshot_id}.json"
     if (
         root.is_symlink()
         or directory.is_symlink()
@@ -259,13 +269,13 @@ def load_snapshot(root: Path, spec: FrontierTimelineJobSpec) -> FrontierTimeline
     ):
         raise ValueError("Pinned Frontier timeline snapshot is unavailable or unsafe")
     payload = path.read_bytes()
-    if hashlib.sha256(payload).hexdigest() != spec.snapshot_sha256:
+    if hashlib.sha256(payload).hexdigest() != validated_spec.snapshot_sha256:
         raise ValueError("Pinned Frontier timeline snapshot file hash does not match the job")
     try:
         snapshot = FrontierTimelineSnapshot.model_validate(json.loads(payload))
     except (json.JSONDecodeError, ValueError) as error:
         raise ValueError("Pinned Frontier timeline snapshot is invalid") from error
-    if snapshot.snapshot_id != spec.snapshot_id:
+    if snapshot.snapshot_id != validated_spec.snapshot_id:
         raise ValueError("Pinned Frontier timeline snapshot identity does not match the job")
     return snapshot
 

@@ -133,13 +133,19 @@ def _snapshot_directory(root: Path) -> Path:
 
 
 def store_snapshot(root: Path, snapshot: FrontierReplaySnapshot) -> str:
-    directory = _snapshot_directory(root)
-    path = directory / f"{snapshot.snapshot_id}.json"
-    if path.is_symlink():
-        raise ValueError("Frontier replay snapshot cannot be a symlink")
-    encoded = _canonical_json(snapshot.model_dump(mode="json"))
+    try:
+        validated_snapshot = FrontierReplaySnapshot.model_validate(
+            snapshot.model_dump(mode="json", exclude_unset=True)
+        )
+    except (TypeError, ValueError) as error:
+        raise ValueError("Frontier replay snapshot failed its storage validation") from error
+    encoded = _canonical_json(validated_snapshot.model_dump(mode="json"))
     if len(encoded) > MAX_SNAPSHOT_BYTES:
         raise ValueError("Frontier replay snapshot exceeds the 8 MiB artifact bound")
+    directory = _snapshot_directory(root)
+    path = directory / f"{validated_snapshot.snapshot_id}.json"
+    if path.is_symlink():
+        raise ValueError("Frontier replay snapshot cannot be a symlink")
     if path.exists():
         current = path.read_bytes()
         if current != encoded:
@@ -162,8 +168,12 @@ def store_snapshot(root: Path, snapshot: FrontierReplaySnapshot) -> str:
 
 
 def load_snapshot(root: Path, spec: FrontierReplayJobSpec) -> FrontierReplaySnapshot:
+    try:
+        validated_spec = FrontierReplayJobSpec.model_validate(spec.model_dump(mode="json"))
+    except (TypeError, ValueError) as error:
+        raise ValueError("Pinned Frontier replay job spec failed validation") from error
     directory = root / "frontier-replay-snapshots"
-    path = directory / f"{spec.snapshot_id}.json"
+    path = directory / f"{validated_spec.snapshot_id}.json"
     if (
         root.is_symlink()
         or directory.is_symlink()
@@ -173,13 +183,13 @@ def load_snapshot(root: Path, spec: FrontierReplayJobSpec) -> FrontierReplaySnap
     ):
         raise ValueError("Pinned Frontier replay snapshot is unavailable or unsafe")
     payload = path.read_bytes()
-    if hashlib.sha256(payload).hexdigest() != spec.snapshot_sha256:
+    if hashlib.sha256(payload).hexdigest() != validated_spec.snapshot_sha256:
         raise ValueError("Pinned Frontier replay snapshot file hash does not match the job")
     try:
         snapshot = FrontierReplaySnapshot.model_validate(json.loads(payload))
     except (json.JSONDecodeError, ValueError) as error:
         raise ValueError("Pinned Frontier replay snapshot is invalid") from error
-    if snapshot.snapshot_id != spec.snapshot_id:
+    if snapshot.snapshot_id != validated_spec.snapshot_id:
         raise ValueError("Pinned Frontier replay snapshot identity does not match the job")
     return snapshot
 
