@@ -7,7 +7,7 @@ import json
 import sqlite3
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import Any
+from typing import Any, TypeVar
 
 from pydantic import ValidationError
 
@@ -30,6 +30,7 @@ from midas.frontier.replay import PairedReplayComparison, ReplayResult
 
 SCHEMA_VERSION = 7
 MAX_ROW_BYTES = 512 * 1024
+_ModelT = TypeVar("_ModelT", bound=FrontierModel)
 
 
 class FrontierStoreError(RuntimeError):
@@ -264,6 +265,38 @@ class FrontierStore:
         return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
 
     @staticmethod
+    def _revalidate_input(value: _ModelT, label: str) -> _ModelT:
+        try:
+            return type(value).model_validate(value.model_dump(mode="python", warnings=False))
+        except (AttributeError, TypeError, ValueError) as error:
+            raise FrontierStoreError(f"{label} fails canonical model validation") from error
+
+    @staticmethod
+    def _revalidate_replay_input(result: ReplayResult) -> ReplayResult:
+        result = FrontierStore._revalidate_input(result, "Replay result")
+        expected_run_id = hashlib.sha256(
+            FrontierStore._canonical(result.manifest).encode("utf-8")
+        ).hexdigest()
+        output = {
+            "run_id": result.run_id,
+            "manifest": result.manifest.model_dump(mode="json"),
+            "proposed_relationships": [
+                item.model_dump(mode="json") for item in result.proposed_relationships
+            ],
+            "applied_relationships": [
+                item.model_dump(mode="json") for item in result.applied_relationships
+            ],
+            "candidates": [item.model_dump(mode="json") for item in result.candidates],
+            "classification_counts": result.classification_counts,
+        }
+        expected_result_sha256 = hashlib.sha256(
+            FrontierStore._canonical(output).encode("utf-8")
+        ).hexdigest()
+        if result.run_id != expected_run_id or result.result_sha256 != expected_result_sha256:
+            raise FrontierStoreError("Replay result identity or content hash is invalid")
+        return result
+
+    @staticmethod
     def _with_persisted_at(value: Any, persisted_at_utc: datetime | None) -> Any:
         """Copy typed provenance, clearing it for comparisons or stamping missing writer time."""
         if isinstance(value, Provenance):
@@ -309,15 +342,8 @@ class FrontierStore:
         raw: RawObservation,
         normalized: FrontierModel,
     ) -> str:
-        try:
-            raw = RawObservation.model_validate(raw.model_dump(mode="python", warnings=False))
-            normalized = type(normalized).model_validate(
-                normalized.model_dump(mode="python", warnings=False)
-            )
-        except (AttributeError, TypeError, ValueError) as error:
-            raise FrontierStoreError(
-                "Observation input fails canonical model validation"
-            ) from error
+        raw = self._revalidate_input(raw, "Raw observation")
+        normalized = self._revalidate_input(normalized, "Normalized observation")
         self.initialize()
         normalized_without_persisted_time = self._with_persisted_at(normalized, None)
         normalized_content_json = self._canonical(normalized_without_persisted_time)
@@ -419,6 +445,7 @@ class FrontierStore:
         return observation_id
 
     def append_relationship(self, relationship: Relationship) -> str:
+        relationship = self._revalidate_input(relationship, "Relationship")
         self.initialize()
         relationship_json = self._canonical(relationship)
         if len(relationship_json.encode("utf-8")) > MAX_ROW_BYTES:
@@ -470,6 +497,8 @@ class FrontierStore:
         adjudicated: Relationship,
     ) -> str:
         """Append a review and its derived relationship state in one transaction."""
+        review = self._revalidate_input(review, "Relationship review")
+        adjudicated = self._revalidate_input(adjudicated, "Adjudicated relationship")
         self.initialize()
         if (
             adjudicated.supersedes != review.relationship_id
@@ -858,6 +887,7 @@ class FrontierStore:
             return tuple(self._validated_observation_row(row, include_raw=False) for row in rows)
 
     def append_replay(self, result: ReplayResult, *, max_runs: int = 5000) -> str:
+        result = self._revalidate_replay_input(result)
         self.initialize()
         if not 1 <= max_runs <= 100_000:
             raise ValueError("Replay run budget must be within 1..100000")
@@ -894,6 +924,7 @@ class FrontierStore:
         *,
         max_runs: int = 5000,
     ) -> str:
+        result = self._revalidate_input(result, "Price-history replay")
         self.initialize()
         if not 1 <= max_runs <= 100_000:
             raise ValueError("Price-history replay run budget must be within 1..100000")
@@ -938,6 +969,11 @@ class FrontierStore:
         max_comparisons: int = 5000,
     ) -> str:
         """Atomically append both replay arms and their paired comparison."""
+        runs = (
+            self._revalidate_replay_input(runs[0]),
+            self._revalidate_replay_input(runs[1]),
+        )
+        comparison = self._revalidate_input(comparison, "Replay comparison")
         self.initialize()
         if not 1 <= max_runs <= 100_000 or not 1 <= max_comparisons <= 100_000:
             raise ValueError("Paired research run budgets are out of range")

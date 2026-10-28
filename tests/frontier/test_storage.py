@@ -150,11 +150,54 @@ def test_paired_replay_storage_rejects_scenario_to_run_mismatch(tmp_path: Path):
     )
     altered = comparison.model_copy(update={"arms": (altered_first_arm, comparison.arms[1])})
 
-    with pytest.raises(FrontierStoreError, match="scenarios and replay time"):
+    # The copied comparison can fail its own validation before the run/arm join check.
+    with pytest.raises(
+        FrontierStoreError,
+        match="canonical model validation|scenarios and replay time",
+    ):
         store.append_paired_comparison(runs, altered)
 
     assert store.summary()["runs"] == 0
     assert store.summary()["comparisons"] == 0
+
+
+def test_append_replay_revalidates_copied_result_hash_before_initialization(tmp_path: Path):
+    store = FrontierStore(tmp_path / "invalid-replay-store")
+    _comparison, runs = _paired_fixture()
+    malformed = runs[0].model_copy(update={"result_sha256": "0" * 64})
+
+    with pytest.raises(FrontierStoreError, match="Replay result identity or content hash"):
+        store.append_replay(malformed)
+
+    assert not store.path.exists()
+
+
+def test_append_comparison_revalidates_copied_result_hash_before_initialization(tmp_path: Path):
+    store = FrontierStore(tmp_path / "invalid-comparison-store")
+    comparison, runs = _paired_fixture()
+    malformed = comparison.model_copy(update={"result_sha256": "0" * 64})
+
+    with pytest.raises(
+        FrontierStoreError, match="Replay comparison fails canonical model validation"
+    ):
+        store.append_paired_comparison(runs, malformed)
+
+    assert not store.path.exists()
+
+
+def test_append_relationship_revalidates_copied_model_before_initialization(tmp_path: Path):
+    store = FrontierStore(tmp_path / "invalid-relationship-store")
+    left, right = (
+        market(Venue.POLYMARKET, "store-review-left"),
+        market(Venue.KALSHI, "store-review-right"),
+    )
+    relationship = propose_relationships((left, right), max_pairs=1)[0]
+    malformed = relationship.model_copy(update={"right_market_id": relationship.left_market_id})
+
+    with pytest.raises(FrontierStoreError, match="Relationship fails canonical model validation"):
+        store.append_relationship(malformed)
+
+    assert not store.path.exists()
 
 
 @pytest.mark.parametrize("corruption", ("raw", "normalized"))
