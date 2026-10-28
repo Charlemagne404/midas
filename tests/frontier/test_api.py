@@ -2498,7 +2498,7 @@ def test_relationship_proposals_and_replay_are_durable_empty_research_runs(tmp_p
         asyncio.run(http_client.aclose())
 
 
-def test_paired_replay_persists_both_arms_and_deterministic_comparison(tmp_path):
+def test_paired_replay_persists_both_arms_and_deterministic_comparison(tmp_path, monkeypatch):
     client, registry, http_client, requests, store = _client(tmp_path)
     body = {
         "scenarios": [
@@ -2523,6 +2523,18 @@ def test_paired_replay_persists_both_arms_and_deterministic_comparison(tmp_path)
         read_back = client.get(f"/api/frontier/comparisons/{comparison['comparison_id']}")
         assert read_back.status_code == 200
         assert read_back.json()["result"]["result_sha256"] == comparison["result_sha256"]
+
+        monkeypatch.setattr(store, "replays_by_ids", lambda _run_ids: {})
+        missing_arm_list = client.get("/api/frontier/comparisons")
+        assert missing_arm_list.status_code == 409
+        assert missing_arm_list.json()["detail"] == (
+            "Stored replay comparison references missing or mismatched replay evidence"
+        )
+        missing_arm_detail = client.get(f"/api/frontier/comparisons/{comparison['comparison_id']}")
+        assert missing_arm_detail.status_code == 409
+        assert missing_arm_detail.json()["detail"] == (
+            "Stored replay comparison references missing or mismatched replay evidence"
+        )
 
         repeated = client.post("/api/frontier/replay/compare", json=body)
         assert repeated.status_code == 200

@@ -3889,3 +3889,20 @@ A later host sample at `2026-10-28T22:22:55Z` showed system memory PSI
 and Reality headroom was 111,448,064 bytes. Available memory was 9,642,744 kB.
 No cause is attributed to Frontier. Further broad verification is deferred
 until host pressure eases.
+
+## Project Frontier comparison arm integrity — 2026-10-28 22:24 UTC
+
+Replay comparison list and detail reads now load the referenced replay arms
+and verify both run IDs and result hashes, even when no venue source hold is
+active. Missing or mismatched arm evidence returns HTTP 409. The paired replay
+API regression passes 1/1, including successful valid readback and fail-closed
+list/detail reads for missing arm rows. Ruff and format checks pass; the
+combined strict-mypy check for the API and replay modules passes. No network
+requests were made. Candidate provenance checkpoint commit:
+`cdef0208a48e20b2c3f6b0aa1535802f2449c933`.
+
+At `2026-10-28T22:24:22Z`, API `MemoryHigh` headroom was 520,192 bytes and
+Reality headroom was 126,046,208 bytes. Memory PSI `avg10` was 0.07% (`some`)
+and 0.06% (`full`); available memory was 10,038,936 kB. Broad verification
+remains deferred with the API close to its soft boundary. Frontier remains
+partially verified.

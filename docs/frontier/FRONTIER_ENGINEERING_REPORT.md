@@ -12686,3 +12686,32 @@ until system pressure eases.
 | Opportunity API source binding | COMPLETE AND VERIFIED WITH FIXTURES | Candidate legs are returned from hash-pinned runs; mismatch under source hold is fail-closed. |
 | Summary query performance | PARTIALLY VERIFIED | 5,000 synthetic rows measured; no maximum-store or production benchmark. |
 | Overall Frontier acceptance | PARTIALLY VERIFIED | Live cross-venue findings, broad regressions, endurance, protected recovery, and deployment remain open. |
+
+## Paired-comparison arm readback — 2026-10-28
+
+Comparison list and detail routes now verify that each stored arm resolves to
+a hash-verified replay row and that its stored result hash matches the arm's
+reference. Missing or mismatched replay evidence returns HTTP 409 regardless
+of whether a venue hold is configured. The paired replay API fixture now
+checks both successful readback and rejection of missing arm rows on list and
+detail requests. It passes **1/1**; Ruff check/format and the combined strict
+mypy invocation pass. The API fixture made no network requests and retains
+the existing Starlette/httpx deprecation warning.
+
+The preceding candidate provenance checkpoint is commit
+`cdef0208a48e20b2c3f6b0aa1535802f2449c933` on
+`codex/frontier-20261026`. The comparison arm validation is included in this
+checkpoint; its commit identity is recorded in git history.
+
+At `2026-10-28T22:24:22Z`, API `MemoryHigh` headroom was **520,192 bytes** and
+Reality headroom was **126,046,208 bytes**. Memory PSI was `some avg10=0.07%`
+and `full avg10=0.06%`; available memory was **10,038,936 kB** and swap free
+954,776 kB. Further broad tests and profiling are deferred while the API
+remains near its soft boundary. No protected service or external source was
+changed.
+
+| Component | Status | Evidence and boundary |
+| --- | --- | --- |
+| Comparison arm referential integrity | COMPLETE AND VERIFIED WITH FIXTURES | API list and detail both verify run identity and result hash against stored replay rows. |
+| Broader comparison regression | PARTIALLY VERIFIED | One paired-replay fixture covers success and missing-arm rejection; full API/storage suites remain deferred. |
+| Overall Frontier acceptance | PARTIALLY VERIFIED | Live cross-venue findings, broad regressions, endurance, protected recovery, and deployment remain open. |

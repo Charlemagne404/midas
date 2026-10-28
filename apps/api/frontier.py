@@ -1434,16 +1434,43 @@ def router(
         )
         try:
             runs_by_id = store.replays_by_ids(run_ids)
-            observation_ids = tuple(
-                sorted(
-                    {
-                        observation_id
-                        for row in runs_by_id.values()
-                        for observation_id in replay_input_observation_ids(row.get("result", {}))
-                    }
+            for item in items:
+                result = item.get("result")
+                arms = result.get("arms") if isinstance(result, dict) else None
+                if not isinstance(arms, (list, tuple)):
+                    raise HTTPException(
+                        status_code=409,
+                        detail="Stored replay comparison does not contain its replay arms",
+                    )
+                for arm in arms:
+                    if not isinstance(arm, dict):
+                        raise HTTPException(
+                            status_code=409,
+                            detail="Stored replay comparison contains an invalid replay arm",
+                        )
+                    run = runs_by_id.get(str(arm.get("run_id", "")))
+                    if run is None or run.get("result_sha256") != arm.get("result_sha256"):
+                        raise HTTPException(
+                            status_code=409,
+                            detail=(
+                                "Stored replay comparison references missing or mismatched "
+                                "replay evidence"
+                            ),
+                        )
+            observation_venues: dict[str, str] = {}
+            if held_venues:
+                observation_ids = tuple(
+                    sorted(
+                        {
+                            observation_id
+                            for row in runs_by_id.values()
+                            for observation_id in replay_input_observation_ids(
+                                row.get("result", {})
+                            )
+                        }
+                    )
                 )
-            )
-            observation_venues = store.observation_venues(observation_ids)
+                observation_venues = store.observation_venues(observation_ids)
         except (FrontierStoreError, ValueError) as error:
             raise HTTPException(status_code=409, detail=str(error)) from error
         return runs_by_id, observation_venues
@@ -1469,9 +1496,9 @@ def router(
     def comparison_rows_without_held_sources(
         rows: tuple[dict[str, Any], ...],
     ) -> tuple[dict[str, Any], ...]:
+        runs_by_id, observation_venues = comparison_run_rows(rows)
         if not held_venues:
             return rows
-        runs_by_id, observation_venues = comparison_run_rows(rows)
         return tuple(
             row
             for row in rows
@@ -4559,10 +4586,7 @@ def router(
             ) from error
         if item is None:
             raise HTTPException(status_code=404, detail="Replay comparison was not found")
-        if held_venues:
-            runs_by_id, observation_venues = comparison_run_rows((item,))
-        else:
-            runs_by_id, observation_venues = {}, {}
+        runs_by_id, observation_venues = comparison_run_rows((item,))
         if comparison_uses_held_sources(item, runs_by_id, observation_venues):
             raise HTTPException(
                 status_code=409,

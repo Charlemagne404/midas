@@ -11705,3 +11705,42 @@ assigned to Frontier; defer broader workload until system pressure eases.
 Next safe action: review remaining persisted-candidate and comparison detail
 routes, then continue bounded contract checks. Keep broad regression deferred
 under near-`MemoryHigh` API and Reality headroom.
+
+## Comparison arm readback integrity — 2026-10-28 22:24 UTC
+
+The comparison route audit found that write-time storage validation checked
+that comparison arms matched the saved runs, but readback only checked the
+comparison payload's own hash. Comparison list and detail paths now resolve
+the referenced runs, fail closed when an arm is missing, and compare the
+stored run result hash with the arm's pinned result hash. This check runs even
+when no venue source hold is active; held-source filtering then reuses the
+same loaded arm rows.
+
+The paired replay API fixture passes **1/1**, covering a valid list/detail
+readback and HTTP 409 for missing arm rows on both routes. Ruff and format
+checks pass, and strict mypy passes for the API plus replay module targets.
+This is a focused fixture check; mismatched-hash and full comparison/storage
+regressions remain untested in this checkpoint. The pre-existing
+Starlette/httpx deprecation warning remains. No network request was made.
+
+The immediately preceding source-provenance checkpoint is committed as
+`cdef0208a48e20b2c3f6b0aa1535802f2449c933` on
+`codex/frontier-20261026`. The comparison arm readback fix is included in
+this checkpoint; its identity is recorded in git history.
+
+At `2026-10-28T22:24:22Z`, API `MemoryHigh` headroom was 520,192 bytes and
+Reality headroom was 126,046,208 bytes. Memory PSI `avg10` was 0.07% (`some`)
+and 0.06% (`full`); available memory was 10,038,936 kB and swap free was
+954,776 kB. Broad test suites and profiling are deferred because the API is
+near its soft memory boundary. No protected service or external source was
+changed; the untracked `data/frontier-public-probes/` remains untouched.
+
+| Component | Status | Evidence and boundary |
+| --- | --- | --- |
+| Comparison arm readback | COMPLETE AND VERIFIED WITH FIXTURES | List/detail resolve each run and verify its result hash; missing arm returns 409. |
+| Comparison mismatch regression | PARTIALLY VERIFIED | Missing-arm case covered; mismatched-hash case and broad regression remain open. |
+| Project Frontier overall | PARTIALLY VERIFIED | Live cross-venue science, broad regression, endurance, protected recovery, and deployment remain open. |
+
+Next safe action: when API headroom and system pressure recover, test the
+mismatched-arm hash case and run the smallest targeted comparison/storage
+regression. Continue static work in the meantime.
