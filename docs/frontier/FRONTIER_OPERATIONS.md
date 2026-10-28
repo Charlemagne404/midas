@@ -13,6 +13,25 @@ commit. Keep the Frontier store at `MIDAS_FRONTIER_ROOT` (default
 store. Do not point Frontier at Reality recordings, Veritas evidence, frozen
 campaigns, or other historical stores.
 
+## Same-payoff review and replay cutoff
+
+New same-payoff reviews use verifier version
+`frontier-equivalence-verifier-5`. The review must cite the two distinct
+stored market observation IDs loaded for the reviewed pair; its assertion time
+cannot predate either market record. Candidate replay also requires the
+versioned assertion to exist by that replay's cutoff. A review entered later
+cannot validate a historical candidate.
+
+Previously saved version-4 same-payoff relationships remain readable and
+append-only, but the current independent audit
+(`frontier-independent-economic-audit-14`) classifies a candidate using one as
+`INCOMPLETE_EVIDENCE`. Re-review the original hypothesis against the current
+stored market records to produce a version-5 relationship before using it in a
+new audited replay. The reviewer label and assertion ID remain self-attributed;
+this workflow does not authenticate them or establish legal or semantic
+equivalence. The audit does not rewrite or delete stored relationships or
+reviews.
+
 ## Public source captures
 
 Adapters make no startup requests and live probing is disabled by default. A

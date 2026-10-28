@@ -33,6 +33,24 @@ in the dated addendum below and in the Frontier engineering report.
 
 ## Frontier development addendum — 2026-10-28
 
+### Latest isolated Frontier checkpoint — 2026-10-28 10:46 UTC
+
+Commit `7ebe56a` binds same-payoff relationship review evidence to the two
+distinct pinned market observations and the replay cutoff. Verifier v5 rejects
+missing/shared evidence and assertions predating either source; independent
+audit v14 rejects late attestations and older verifier versions. Four new
+regressions cover these boundaries. The full `tests/frontier` suite passes
+**394/394** in 29.62 seconds, with **378,716 KiB** peak RSS and zero swaps.
+Ruff, formatting, strict mypy for the three changed production modules, and
+`git diff --check` pass. One existing Starlette/httpx deprecation warning
+remains.
+
+External semantic assertions and reviewer labels remain self-attributed; live
+cross-venue equivalence is not established. The captured Polymarket payoff and
+resolution remain unverified. Source-use, broader MIDAS regression,
+production-recovery, and deployment gates remain open. Frontier is still
+**PARTIALLY VERIFIED**, research-only, and undeployed.
+
 ### Latest isolated Frontier checkpoint — 2026-10-28 10:35 UTC
 
 Commit `f591185` fixes verified-payoff ambiguity from duplicate payout rows:

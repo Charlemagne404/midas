@@ -2,6 +2,51 @@
 
 **Report date:** 2026-10-28
 
+## Current status — 2026-10-28 10:46 UTC
+
+This entry supersedes the 10:35 UTC status and acceptance matrix below.
+Frontier remains isolated at `/home/charlie/midas-frontier` on
+`codex/frontier-20261026`; code commit `7ebe56a` is the latest implementation
+checkpoint.
+
+An offline relationship audit found that same-payoff reviews were not bound to
+their replay cutoff. The verifier now requires both distinct pinned market
+observation IDs, bounded unique evidence IDs, and an assertion timestamp no
+earlier than either source capture. The independent audit requires a single
+current-version attestation citing both records and created by the candidate's
+replay cutoff. A later review can no longer validate a historical candidate;
+older version-4 edges stay readable but produce incomplete evidence until
+re-reviewed. Reviewer identity and the external semantic assertion remain
+self-attributed and unauthenticated.
+
+The exact committed tree passes **394/394** Frontier tests in 29.62 seconds
+(31.09 seconds process wall time). `/usr/bin/time -v` measured **378,716 KiB**
+peak RSS, **zero swaps**, zero filesystem input, and 368 filesystem-output
+blocks. The only warning is the existing Starlette/httpx `TestClient`
+deprecation. Ruff check/format, strict mypy for `relationships.py`,
+`independent_audit.py`, and `models.py`, and `git diff --check` pass. The run
+used tmpfs at `/dev/shm/midas-frontier-rel-audit-verified-20261028T1048Z`.
+Pre-run memory PSI avg10 was 0%; I/O PSI avg10 was 0.06% some / 0.03% full,
+with about 10.8 GiB available. At `10:45:46Z` after the run, memory and I/O
+PSI avg10 were 0%, with about 10.9 GiB available.
+
+### Latest acceptance delta
+
+| Requirement | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Same-payoff source evidence and assertion timing | COMPLETE AND VERIFIED | Verifier v5 checks both distinct market IDs and assertion ordering; the independent audit v14 enforces the replay cutoff. Four new regressions cover late, missing, shared, and old-version evidence. |
+| Full Frontier Python regression | COMPLETE AND VERIFIED | 394/394 tests pass on the exact implementation commit with zero swaps. |
+| Cross-venue semantic assertion | PARTIALLY VERIFIED | Replay evidence is now bounded and deterministic; reviewer identity and semantic assertion authenticity remain unresolved. |
+| Live cross-venue equivalence and economic opportunity | BLOCKED | Existing source-use holds still prevent authorized validation with Kalshi, Kraken, and Coinbase observations. |
+| Broader MIDAS regression | PARTIALLY VERIFIED | Not run on this branch; the Reality recovery dependency and incompatible Reality lineages remain unresolved. |
+| Production recovery and deployment | DEFERRED | The research worktree remains isolated, unmerged, and undeployed; production gates remain separate. |
+| Frontier overall | PARTIALLY VERIFIED | The new relationship gate is verified, while live science, broader regression, and production readiness remain open. |
+
+No live source, held capture, protected store, production service, or Arena job
+was accessed in this checkpoint. The preserved Polymarket capture remains
+single-venue evidence with unverified payoff and resolution; no opportunity or
+profitability claim follows from this change.
+
 ## Current status — 2026-10-28 10:35 UTC
 
 Frontier is isolated at `/home/charlie/midas-frontier` on

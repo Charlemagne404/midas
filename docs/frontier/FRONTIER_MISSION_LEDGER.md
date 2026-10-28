@@ -1,5 +1,48 @@
 # Project Frontier Mission Ledger
 
+## Same-payoff evidence and replay cutoff — 2026-10-28 10:46 UTC
+
+Code commit `7ebe56a` closes a replay-provenance gap. `verify_same_payoff` now
+requires distinct pinned market observation IDs for both inputs, between two
+and ten unique nonempty evidence IDs, and an assertion time no earlier than
+either source record. Verifier version advances to
+`frontier-equivalence-verifier-5`.
+
+The independent audit now advances to
+`frontier-independent-economic-audit-14` and accepts exactly one current
+same-payoff attestation only when it cites both pinned markets and was created
+by the candidate replay cutoff. Reproductions showed that a review created one
+second after the historical replay cutoff had previously been accepted by the
+cross-venue audit. It is now classified `INCOMPLETE_EVIDENCE`. Missing market
+evidence, shared observation identity, and a prior verifier version also fail
+closed. Older v4 records remain readable and append-only; they need a new
+review before they can validate a new audited replay. Reviewer identity and
+external assertion truth remain unauthenticated.
+
+Four new verifier/audit regressions accompany the change. The full
+`tests/frontier` suite passes **394/394** in 29.62 seconds (31.09 seconds
+process wall time) using `/dev/shm/midas-frontier-rel-audit-verified-20261028T1048Z`.
+Peak RSS was **378,716 KiB**, swaps **0**, filesystem input **0**, and output
+368 blocks. One existing Starlette/httpx `TestClient` deprecation warning
+remains. Ruff check/format, strict mypy for the three changed production
+modules, and `git diff --check` pass.
+
+The pre-run sample had memory PSI avg10 **0%**, I/O PSI avg10 **0.06% some /
+0.03% full**, and about **10.8 GiB** available. After the run, at
+`10:45:46Z`, memory and I/O PSI avg10 were **0%**, about **10.9 GiB** remained
+available, and no process swaps were reported. No live source, held capture,
+production service, protected store, or Arena job was used. Frontier remains
+**PARTIALLY VERIFIED**; no live cross-venue equivalence or economic opportunity
+is claimed.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Same-payoff evidence binding | COMPLETE AND VERIFIED | Verifier v5 pins both market observations and rejects predating assertions; audit v14 rejects attestations after replay cutoff and older evidence versions. |
+| Full Frontier Python suite | COMPLETE AND VERIFIED | 394/394 tests pass on the exact committed implementation; one existing deprecation warning remains. |
+| Semantic assertion authenticity | PARTIALLY VERIFIED | Assertion and reviewer remain self-attributed; no source authenticity or truth proof is added. |
+| Live cross-venue matching and economics | BLOCKED | Source-use holds and unavailable authorized evidence remain. |
+| Frontier project overall | PARTIALLY VERIFIED | Broader MIDAS regression, live science, production recovery, endurance, and deployment remain open. |
+
 ## Verified payoff row uniqueness — 2026-10-28 10:35 UTC
 
 Reproduced a canonical-model defect using a controlled verified binary fixture.

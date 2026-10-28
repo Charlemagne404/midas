@@ -706,6 +706,19 @@ authenticate the identity or fetch/verify the assertion. The verifier evaluates
 stored fields; it does not prove those fields are true beyond their source
 provenance.
 
+Same-payoff equivalence is versioned as `frontier-equivalence-verifier-5`.
+Verification requires two distinct pinned market observation identities,
+between two and ten unique nonempty evidence IDs, and an external assertion
+time no earlier than either captured market record. The independent arithmetic
+audit is version `frontier-independent-economic-audit-14`; it accepts exactly
+one current-version equivalence evidence record only when that record cites
+both markets and falls no later than the candidate's replay cutoff. A review
+created after that cutoff cannot validate an earlier candidate. Older verifier
+versions remain readable as stored evidence, but new candidate audits classify
+them incomplete until the relationship is re-reviewed. This provenance rule
+does not authenticate the reviewer or external assertion, or prove that the
+recorded market terms are semantically true.
+
 `verify_logical_implication` separately checks a directed binary YES implication
 over an explicit bijection between two joint state spaces. It requires complete
 verified payout vectors, binary complementary YES/NO settlements, verified
