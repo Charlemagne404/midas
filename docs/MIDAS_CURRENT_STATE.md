@@ -3316,3 +3316,15 @@ opportunity is claimed. The store holds two observations and two replays and
 uses 167,936 bytes. Source-use holds and protected services are unchanged.
 At 17:11:25Z CPU PSI avg10 was 39.52%; Reality was 360 KiB below `MemoryHigh`,
 and swap had 1,816 KiB free. Broad regression remains deferred.
+
+## Frontier live Gamma event-group graph — 2026-10-28 17:14 UTC
+
+One bounded public Gamma event lookup returned five binary submarkets under
+native event `606422`. Frontier persisted ten pairwise `SAME_EVENT`
+hypotheses, all tied to the raw event observation; the first market has four
+neighbors. The child payoffs remain unverified and non-exhaustive, so these
+edges do not establish payoff equivalence. Two deterministic event replays
+matched and reloaded with hash validation, producing zero candidates. This is
+same-venue graph evidence, not cross-venue validation. At 17:14:02Z CPU PSI
+avg10 was 2.70%, I/O PSI avg10 was 0.75%, and Reality had about 892 KiB below
+`MemoryHigh`; broad regression still requires a new admission check.

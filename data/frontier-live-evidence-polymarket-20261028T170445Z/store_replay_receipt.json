@@ -48,6 +48,143 @@
     "store_observation_id": "1409e26c7434f6c52a248cfa5558aadc8f24112b33b9cecc20cc558e57a79581",
     "store_row_sha256": "910abf0d1587da14faf4b9d415587a5a38bafc7ff4e6fcaf124d1a07b6fcaf21"
   },
+  "live_event_group": {
+    "adapter_version": "frontier-polymarket-8",
+    "authentication": "none",
+    "event_id": "606422",
+    "event_title": "Fed Decision in October?",
+    "http_status": 200,
+    "hypothesis_relationship_count": 10,
+    "limitations": [
+      "Same-venue event grouping only; no cross-venue match.",
+      "Exact event IDs establish source event membership but not equivalent payoff, exhaustive outcomes, resolution identity, or settlement.",
+      "All five child markets preserve unverified and non-exhaustive payoffs.",
+      "No child-market book was requested."
+    ],
+    "market_count": 5,
+    "market_neighbors_for_first_endpoint": 4,
+    "market_summary": [
+      {
+        "canonical_id": "polymarket:2589810",
+        "instrument_count": 2,
+        "market_kind": "binary_event",
+        "native_event_id": "606422",
+        "native_market_id": "2589810",
+        "payout_exhaustive": false,
+        "payout_verified": false,
+        "quality_flags": [
+          "PAYOUT_NOT_ATTESTED",
+          "SETTLEMENT_ASSET_NOT_ATTESTED",
+          "CROSS_VENUE_EQUIVALENCE_NOT_ASSERTED"
+        ],
+        "resolution_verified": false,
+        "title": "Will the Fed decrease interest rates by 50+ bps after the October 2026 meeting?"
+      },
+      {
+        "canonical_id": "polymarket:2589811",
+        "instrument_count": 2,
+        "market_kind": "binary_event",
+        "native_event_id": "606422",
+        "native_market_id": "2589811",
+        "payout_exhaustive": false,
+        "payout_verified": false,
+        "quality_flags": [
+          "PAYOUT_NOT_ATTESTED",
+          "SETTLEMENT_ASSET_NOT_ATTESTED",
+          "CROSS_VENUE_EQUIVALENCE_NOT_ASSERTED"
+        ],
+        "resolution_verified": false,
+        "title": "Will the Fed decrease interest rates by 25 bps after the October 2026 meeting?"
+      },
+      {
+        "canonical_id": "polymarket:2589812",
+        "instrument_count": 2,
+        "market_kind": "binary_event",
+        "native_event_id": "606422",
+        "native_market_id": "2589812",
+        "payout_exhaustive": false,
+        "payout_verified": false,
+        "quality_flags": [
+          "PAYOUT_NOT_ATTESTED",
+          "SETTLEMENT_ASSET_NOT_ATTESTED",
+          "CROSS_VENUE_EQUIVALENCE_NOT_ASSERTED"
+        ],
+        "resolution_verified": false,
+        "title": "Will there be no change in Fed interest rates after the October 2026 meeting?"
+      },
+      {
+        "canonical_id": "polymarket:2589813",
+        "instrument_count": 2,
+        "market_kind": "binary_event",
+        "native_event_id": "606422",
+        "native_market_id": "2589813",
+        "payout_exhaustive": false,
+        "payout_verified": false,
+        "quality_flags": [
+          "PAYOUT_NOT_ATTESTED",
+          "SETTLEMENT_ASSET_NOT_ATTESTED",
+          "CROSS_VENUE_EQUIVALENCE_NOT_ASSERTED"
+        ],
+        "resolution_verified": false,
+        "title": "Will the Fed increase interest rates by 25 bps after the October 2026 meeting?"
+      },
+      {
+        "canonical_id": "polymarket:2589814",
+        "instrument_count": 2,
+        "market_kind": "binary_event",
+        "native_event_id": "606422",
+        "native_market_id": "2589814",
+        "payout_exhaustive": false,
+        "payout_verified": false,
+        "quality_flags": [
+          "PAYOUT_NOT_ATTESTED",
+          "SETTLEMENT_ASSET_NOT_ATTESTED",
+          "CROSS_VENUE_EQUIVALENCE_NOT_ASSERTED"
+        ],
+        "resolution_verified": false,
+        "title": "Will the Fed increase interest rates by 50+ bps after the October 2026 meeting?"
+      }
+    ],
+    "network_requests": 1,
+    "normalized_batch_artifact": "normalized_event_group_batch.json",
+    "normalized_batch_artifact_sha256": "29c6649f9c12772d0ec8af63c2c9ccf65630c93e98b6e53ee5705bfc963d686c",
+    "persisted_hypothesis_relationship_count": 10,
+    "probe": "PolymarketAdapter.discover_event_markets(\"606422\")",
+    "raw_observation_artifact": "live_event_group_raw_observation.json",
+    "raw_observation_artifact_sha256": "97a6b173848f071f40fb189674c065f5e948fc9e7439432d6e34e6fc2dc2db0d",
+    "raw_response_bytes": 27059,
+    "raw_sha256": "37d62949c6e5377d67ca89dbe9c68283b6bbc7cf5ac4e441fab754723360e348",
+    "received_at_utc": "2026-10-28T17:13:05.764808+00:00",
+    "relationship_evidence_observation_id": "d32fc5d5e8b78e93da9d0b049d6a30aa52eda35c75972a77fbad5785904a951e",
+    "relationship_ids": [
+      "fb1ee8408c293cfde346e13b244406e421cb96e459c2d539264ba24a9195cbc3",
+      "d7b480456c7f6572c4cb5d819a2e24d98992819878860b603cfe12f555840aed",
+      "521b96e256e234aa0e262f12f3f930d0f2764975834ed2896b9d09ac8a1d1c51",
+      "9902413827ca381e1fba0d3a4fe02dfde8f3e903ec817a278309076ea8fb19ff",
+      "ca20957e61f341406084221fb65f51565a55f7f7a130b6711ebb007b0ce60696",
+      "dbda4a5a767b223ddd8f1db07003cd070ce125e1b2629bf06fd16d652f3342df",
+      "0fbd2b4ea09274ee9e31c9f707edd98c61f2150a1529cd2978a18c031e8d894f",
+      "c2816f0bf98a49a5b16e2c8c0f41e97a321f799b4e1fa311b0e227a792fc6723",
+      "3fe54652c640a21c8f6fd7fd8ae87e7fb1ccb91c44e3ff1a8f5e4989bec1be81",
+      "31912ba17ab769beaf8fa255d751360c16a003af54851b1648282237c4fda636"
+    ],
+    "relationship_types": [
+      "same_event"
+    ],
+    "relationships_all_hypotheses": true,
+    "replay_candidate_count": 0,
+    "replay_relationship_proposal_count": 10,
+    "replay_result_sha256": "aa95c4c6b35c681631e054c4a8a7bd44bb0e420987f8833a58c71b7e8f55debe",
+    "replay_run_id": "68ffa2fee9e70f727395e1d11371b561a4ee51c7baddc82004f0b6a5bcee99ea",
+    "request_url": "https://gamma-api.polymarket.com/events/606422",
+    "response_limit_bytes": 262144,
+    "retries": 0,
+    "schema_version": 1,
+    "source": "polymarket_decentralized_gamma_public_event_detail",
+    "store_observation_id": "d32fc5d5e8b78e93da9d0b049d6a30aa52eda35c75972a77fbad5785904a951e",
+    "store_row_sha256": "dbdd733569d7a4e783cc3e84192d7dbc1b4e660e078069814dbe4df21545527e",
+    "timeout_seconds": 8
+  },
   "normalized_market_ids": [
     "polymarket:2589810"
   ],

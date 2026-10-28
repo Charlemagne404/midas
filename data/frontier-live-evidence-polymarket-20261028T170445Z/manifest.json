@@ -33,6 +33,41 @@
       "source": "polymarket_decentralized_clob_public_order_book",
       "store_observation_id": "1409e26c7434f6c52a248cfa5558aadc8f24112b33b9cecc20cc558e57a79581",
       "store_row_sha256": "910abf0d1587da14faf4b9d415587a5a38bafc7ff4e6fcaf124d1a07b6fcaf21"
+    },
+    {
+      "adapter_version": "frontier-polymarket-8",
+      "all_are_hypotheses": true,
+      "authentication": "none",
+      "event_title": "Fed Decision in October?",
+      "limitations": [
+        "Same-venue event grouping only; no cross-venue match.",
+        "Exact event IDs establish source event membership but not equivalent payoff, exhaustive outcomes, resolution identity, or settlement.",
+        "All five child markets preserve unverified and non-exhaustive payoffs.",
+        "No child-market book was requested."
+      ],
+      "market_count": 5,
+      "native_event_id": "606422",
+      "normalized_batch_artifact": "normalized_event_group_batch.json",
+      "normalized_batch_artifact_sha256": "29c6649f9c12772d0ec8af63c2c9ccf65630c93e98b6e53ee5705bfc963d686c",
+      "probe": "PolymarketAdapter.discover_event_markets(\"606422\")",
+      "raw_observation_artifact": "live_event_group_raw_observation.json",
+      "raw_observation_artifact_sha256": "97a6b173848f071f40fb189674c065f5e948fc9e7439432d6e34e6fc2dc2db0d",
+      "raw_response_bytes": 27059,
+      "raw_response_sha256": "37d62949c6e5377d67ca89dbe9c68283b6bbc7cf5ac4e441fab754723360e348",
+      "received_at_utc": "2026-10-28T17:13:05.764808+00:00",
+      "relationship_proposals": 10,
+      "relationship_types": [
+        "same_event"
+      ],
+      "request_host": "gamma-api.polymarket.com",
+      "request_path": "/events/606422",
+      "response_limit_bytes": 262144,
+      "response_status": 200,
+      "retries": 0,
+      "source": "polymarket_decentralized_gamma_public_event_detail",
+      "store_observation_id": "d32fc5d5e8b78e93da9d0b049d6a30aa52eda35c75972a77fbad5785904a951e",
+      "store_row_sha256": "dbdd733569d7a4e783cc3e84192d7dbc1b4e660e078069814dbe4df21545527e",
+      "timeout_seconds": 8
     }
   ],
   "authentication": "none",
@@ -56,7 +91,7 @@
   ],
   "markets_returned": 1,
   "network_requests": 1,
-  "network_requests_total": 2,
+  "network_requests_total": 3,
   "normalized_batch_sha256": "33b695f32865aefc8e96eb2602f213e1dade4c679b62bc60112b51641d056767",
   "observed_at_utc": "2026-10-28T17:04:45.011118+00:00",
   "probe": "PolymarketAdapter.discover_markets(limit=1)",
@@ -69,7 +104,8 @@
     "The initial Gamma listing probe did not request an order book or trade.",
     "This observation does not establish simultaneity, payoff equivalence, or executable economics.",
     "This is the decentralized Polymarket Gamma API, not the separate Polymarket US exchange.",
-    "One additional public GET fetched one outcome-token order book; it does not establish simultaneous execution or economic opportunity."
+    "One additional public GET fetched one outcome-token order book; it does not establish simultaneous execution or economic opportunity.",
+    "One bounded public Gamma event-detail GET returned five same-venue child markets and ten source-event membership hypotheses; it does not attest the markets as mutually exclusive, exhaustive, or payoff-equivalent."
   ],
   "response_status": 200,
   "retries": 0,

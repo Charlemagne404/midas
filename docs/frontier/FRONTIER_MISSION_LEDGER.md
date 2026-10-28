@@ -1,5 +1,52 @@
 # Project Frontier Mission Ledger
 
+## Live Gamma event-group graph and replay — 2026-10-28 17:14 UTC
+
+The [Polymarket Institute data guide](https://institute.polymarket.com/data)
+documents Gamma event lookup by ID. Starting from the `native_event_id` in the
+already captured market metadata, one unauthenticated
+`PolymarketAdapter.discover_event_markets("606422")` request used an 8-second
+timeout, a 256 KiB body cap, 20-market bound, and zero retries. The endpoint
+returned HTTP 200 and 27,059 bytes at 2026-10-28T17:13:05.764808Z.
+
+Gamma returned five binary child markets under event `606422`, “Fed Decision
+in October?” (native market IDs `2589810`–`2589814`). Frontier proposed ten
+pairwise `SAME_EVENT` edges. All ten remain `HYPOTHESIS`, cite the stored event
+observation ID
+`d32fc5d5e8b78e93da9d0b049d6a30aa52eda35c75972a77fbad5785904a951e`, and were
+persisted in the isolated graph store. A neighborhood query for the first
+market returned its four linked peers. The raw event response and normalized
+batch are preserved in `live_event_group_raw_observation.json` and
+`normalized_event_group_batch.json`; `live_event_group_observation.json`
+contains the market and edge identities.
+
+Two deterministic replays over this stored event group produced run
+`68ffa2fee9e70f727395e1d11371b561a4ee51c7baddc82004f0b6a5bcee99ea` and result
+hash `aa95c4c6b35c681631e054c4a8a7bd44bb0e420987f8833a58c71b7e8f55debe`. The
+persisted replay reloads with hash validation; it contains ten source-event
+membership proposals and zero candidates. All five markets retain
+unverified, non-exhaustive payoffs and unverified resolution metadata. The
+source grouping does not establish mutually exclusive or exhaustive outcomes,
+economic equivalence, or cross-venue relationships. No additional child book
+was requested in this event lookup.
+
+At 17:14:02Z CPU PSI avg10 was 2.70%, avg60 was 11.76%, and avg300 was 30.82%.
+Memory PSI was 0%; I/O PSI avg10 was 0.75% (`full` 0.62%). Available memory
+was 10,219,060 KiB. Both services were active; Reality was at
+1,207,046,144 / 1,207,959,552 bytes, and swap had 1,932 KiB free. This sample
+is not sufficient for a broad regression batch; refresh admission first.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Live Gamma event-group adapter | COMPLETE AND VERIFIED | One bounded public event lookup normalized five child markets with the exact native event ID. |
+| Persisted live same-event graph | COMPLETE AND VERIFIED | Ten source-pinned hypotheses persist; an indexed neighborhood query returns the four peers. They are not payoff equivalence attestations. |
+| Deterministic event-group replay | COMPLETE AND VERIFIED | Two runs share run/result hashes; persisted replay reloads and contains zero candidates. |
+| Live cross-venue relationships and economics | BLOCKED | Other venue source-use holds remain; event grouping is same-venue only and market terms remain unverified. |
+
+**Next safe action:** continue fixture-backed cross-venue acceptance and
+source-independent UI/replay review. Recheck host admission before broad
+legacy regression; do not infer payoff equivalence from shared event IDs.
+
 ## Bounded live Polymarket book capture — 2026-10-28 17:10 UTC
 
 The official [Polymarket CLOB book endpoint guide](https://docs.polymarket.com/api-reference/market-data/get-order-book)

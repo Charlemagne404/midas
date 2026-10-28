@@ -10734,3 +10734,46 @@ these conditions.
 | Durable storage and deterministic replay with a book | COMPLETE AND VERIFIED | Two replays share run/result hashes; the stored replay reloads with validation. |
 | Live economic opportunity | PARTIALLY VERIFIED | No complete, verified payout and only one outcome's book were observed; no economic claim follows. |
 | Frontier overall | PARTIALLY VERIFIED | Live multi-venue evidence, broad legacy regression, resource endurance, protected recovery, and deployment remain open. |
+
+## Live Gamma event-group graph and replay — 2026-10-28 17:14 UTC
+
+The [Polymarket Institute data guide](https://institute.polymarket.com/data)
+documents the Gamma lookup route for a known event ID. Frontier used the event
+ID `606422` from the 17:04 public market listing in one unauthenticated
+`discover_event_markets` request. The request had an 8-second timeout,
+256 KiB response-body maximum, 20-market limit, and zero retries. The response
+returned HTTP 200, contained 27,059 bytes, and arrived at
+2026-10-28T17:13:05.764808Z.
+
+The response yielded five binary submarkets (`2589810`–`2589814`) grouped under
+the native event “Fed Decision in October?”. Deterministic relationship
+discovery produced ten pairwise `SAME_EVENT` edges. Each is stored in the
+isolated Frontier graph store as a `HYPOTHESIS` and cites the event observation
+ID `d32fc5d5e8b78e93da9d0b049d6a30aa52eda35c75972a77fbad5785904a951e`. A
+bounded indexed neighborhood query returned the four peers of one endpoint.
+The raw event response, normalized batch, and a machine-readable edge receipt
+are preserved in
+`data/frontier-live-evidence-polymarket-20261028T170445Z/`.
+
+Two replay runs over the recovered five-market batch produced run ID
+`68ffa2fee9e70f727395e1d11371b561a4ee51c7baddc82004f0b6a5bcee99ea` and
+result SHA-256 `aa95c4c6b35c681631e054c4a8a7bd44bb0e420987f8833a58c71b7e8f55debe`.
+The saved replay reloads with hash validation. It contains ten event-membership
+hypotheses and zero economic candidates. Every child contract retains an
+unverified, non-exhaustive payoff and unverified resolution metadata. Shared
+event membership does not establish mutually exclusive or exhaustive outcome
+semantics, equivalent payoffs, or a cross-venue relationship.
+
+At 17:14:02Z CPU PSI avg10 was 2.70%, avg60 11.76%, and avg300 30.82%; memory
+PSI was 0%; I/O PSI avg10 was 0.75% (`full` 0.62%). Available memory was
+10,219,060 KiB. Reality and API were active; Reality was at
+1,207,046,144 / 1,207,959,552 bytes, with 1,932 KiB free swap. Broad
+regression still requires a fresh resource-admission sample.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Live Gamma event-group normalization | COMPLETE AND VERIFIED | One bounded official public route returned five child contracts under one native event ID. |
+| Live graph proposal and persistence | COMPLETE AND VERIFIED | Ten source-observation-pinned `SAME_EVENT` hypotheses persist; first endpoint has four indexed peers. |
+| Reproducible replay over the event group | COMPLETE AND VERIFIED | Two results match exactly and the saved replay validates on reload; zero candidates. |
+| Verified cross-venue relationship | BLOCKED | No second cleared venue is available; these are same-venue source groupings only. |
+| Frontier overall | PARTIALLY VERIFIED | Cross-venue science, broad regression, resource endurance, protected recovery, and deployment remain open. |
