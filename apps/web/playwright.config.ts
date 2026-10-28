@@ -1,7 +1,8 @@
 import { defineConfig } from '@playwright/test';
+import { spawnSync } from 'node:child_process';
 import { existsSync, mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, join, resolve } from 'node:path';
+import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const webRoot = dirname(fileURLToPath(import.meta.url));
@@ -11,8 +12,28 @@ const python =
   (existsSync(join(repository, '.venv/bin/python'))
     ? join(repository, '.venv/bin/python')
     : '/home/charlie/midas/.venv/bin/python');
-const database = join(mkdtempSync(join(tmpdir(), 'midas-browser-')), 'paper.db');
-const frontierRoot = join(dirname(database), 'frontier');
+const browserRoot = resolve(
+  process.env.MIDAS_FRONTIER_E2E_ROOT ?? mkdtempSync(join(tmpdir(), 'midas-browser-')),
+);
+if (dirname(browserRoot) !== tmpdir() || !basename(browserRoot).startsWith('midas-browser-')) {
+  throw new Error('Playwright browser root must be an isolated temporary directory');
+}
+process.env.MIDAS_FRONTIER_E2E_ROOT = browserRoot;
+const database = join(browserRoot, 'paper.db');
+const frontierRoot = join(browserRoot, 'frontier');
+if (
+  process.env.MIDAS_SEED_FRONTIER_E2E === '1' &&
+  !existsSync(join(frontierRoot, 'frontier.sqlite3'))
+) {
+  const seed = spawnSync(python, [join(webRoot, 'e2e/seed_frontier_store.py'), frontierRoot], {
+    cwd: repository,
+    env: { ...process.env, PYTHONPATH: join(repository, 'packages') },
+    stdio: 'inherit',
+  });
+  if (seed.error) throw seed.error;
+  if (seed.status !== 0) throw new Error(`Frontier E2E seeder exited with ${seed.status}`);
+}
+
 export default defineConfig({
   testDir: './e2e',
   workers: 1,
