@@ -20,7 +20,7 @@ from midas.frontier.models import (
     Venue,
 )
 
-PRICE_HISTORY_REPLAY_VERSION = "frontier-price-history-replay-1"
+PRICE_HISTORY_REPLAY_VERSION = "frontier-price-history-replay-2"
 MAX_PRICE_HISTORY_REPLAY_SERIES = 8
 
 
@@ -164,10 +164,13 @@ def deterministic_price_history_replay(
         raise ValueError(
             f"Price-history replay requires 1..{MAX_PRICE_HISTORY_REPLAY_SERIES} captures"
         )
-    if len({item.observation_id for item in evidence}) != len(evidence):
+    validated_evidence = tuple(
+        PriceHistoryReplayInput.model_validate(item.model_dump(mode="python")) for item in evidence
+    )
+    if len({item.observation_id for item in validated_evidence}) != len(validated_evidence):
         raise ValueError("Price-history replay contains duplicate observation identities")
 
-    ordered = tuple(sorted(evidence, key=lambda item: item.observation_id))
+    ordered = tuple(sorted(validated_evidence, key=lambda item: item.observation_id))
     input_payload = [item.model_dump(mode="json") for item in ordered]
     input_sha256 = _hash_json(
         {

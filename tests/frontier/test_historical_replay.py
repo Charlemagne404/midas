@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import sqlite3
-from datetime import timedelta
+from datetime import datetime, timedelta
 from decimal import Decimal
 
 import pytest
@@ -101,6 +101,21 @@ def test_price_history_replay_rejects_capture_mismatch_duplicate_and_unbounded_i
     too_many = tuple(_evidence(index) for index in range(1, MAX_PRICE_HISTORY_REPLAY_SERIES + 2))
     with pytest.raises(ValueError, match="requires 1..8 captures"):
         deterministic_price_history_replay(too_many, code_version="frontier-test-history-v1")
+
+
+def test_price_history_replay_revalidates_reconstructed_nested_timestamps():
+    evidence = _evidence(4)
+    first_point = evidence.series.points[0]
+    naive_point = first_point.model_copy(update={"timestamp_utc": datetime(2026, 10, 26, 20, 0)})
+    naive_series = evidence.series.model_copy(
+        update={"points": (naive_point, *evidence.series.points[1:])}
+    )
+    reconstructed = evidence.model_copy(update={"series": naive_series})
+
+    with pytest.raises(ValidationError, match="Price-history time must include a timezone"):
+        deterministic_price_history_replay(
+            (reconstructed,), code_version="frontier-test-history-v2"
+        )
 
 
 def test_price_history_replay_store_is_append_only_and_hash_checked(tmp_path):
