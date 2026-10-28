@@ -19,6 +19,7 @@ from midas.frontier.models import (
     FeeSchedule,
     FeeStatus,
     MarketKind,
+    QuantityUnit,
     SourceState,
     TradeBatch,
     Venue,
@@ -1429,6 +1430,86 @@ async def test_kraken_synthetic_pair_and_book_preserve_spot_units_and_level_time
 
 
 @pytest.mark.parametrize(
+    "corruption",
+    (
+        "missing_instrument",
+        "duplicate_instrument",
+        "wrong_canonical_id",
+        "wrong_base_asset",
+        "wrong_quote_asset",
+        "wrong_instrument_quote",
+        "wrong_quantity_unit",
+        "wrong_raw_pair_identity",
+    ),
+)
+@pytest.mark.asyncio
+async def test_kraken_book_binds_market_identity_before_request(corruption: str):
+    asset_pairs = {
+        "error": [],
+        "result": {
+            "XXBTZUSD": {
+                "altname": "XBTUSD",
+                "wsname": "XBT/USD",
+                "base": "XXBT",
+                "quote": "ZUSD",
+                "pair_decimals": 1,
+                "lot_decimals": 8,
+                "status": "online",
+            }
+        },
+    }
+    config = KrakenSpotConfig(
+        enabled=True,
+        live_public_probe_enabled=True,
+        pairs=("XBTUSD",),
+        requests_per_second=5,
+        retries=0,
+    )
+    transport, requests, client = _transport(
+        "api.kraken.com", {"/AssetPairs": json.dumps(asset_pairs)}, config
+    )
+    adapter = KrakenSpotAdapter(config, transport=transport)
+    try:
+        (market,) = await adapter.discover_markets(1)
+        adapter.take_captures()
+        instrument = market.instruments[0]
+        if corruption == "missing_instrument":
+            forged_market = market.model_copy(update={"instruments": ()})
+        elif corruption == "duplicate_instrument":
+            forged_market = market.model_copy(update={"instruments": (instrument, instrument)})
+        elif corruption == "wrong_canonical_id":
+            forged_market = market.model_copy(update={"canonical_id": "kraken:ETH/EUR"})
+        elif corruption == "wrong_base_asset":
+            forged_market = market.model_copy(update={"base_asset": "ETH"})
+        elif corruption == "wrong_quote_asset":
+            forged_market = market.model_copy(update={"quote_asset": "EUR"})
+        elif corruption == "wrong_instrument_quote":
+            forged_instrument = instrument.model_copy(update={"price_currency": "EUR"})
+            forged_market = market.model_copy(update={"instruments": (forged_instrument,)})
+        elif corruption == "wrong_quantity_unit":
+            forged_instrument = instrument.model_copy(
+                update={"quantity_unit": QuantityUnit.UNKNOWN}
+            )
+            forged_market = market.model_copy(update={"instruments": (forged_instrument,)})
+        else:
+            forged_market = market.model_copy(
+                update={
+                    "native_fields": {**market.native_fields, "wsname": "ETH/EUR"},
+                }
+            )
+
+        with pytest.raises(AdapterError) as error:
+            await adapter.fetch_book(forged_market, "XXBTZUSD", depth=1)
+
+        assert error.value.code == "INVALID_INSTRUMENT"
+        assert len(requests) == 1
+        assert requests[0].url.path == "/0/public/AssetPairs"
+        assert adapter.take_captures() == ()
+    finally:
+        await client.aclose()
+
+
+@pytest.mark.parametrize(
     ("field", "value"),
     [
         ("pair_decimals", True),
@@ -1661,7 +1742,7 @@ async def test_kraken_recent_trades_require_exact_pair_key_and_preserve_native_t
     assert first.aggressor_side is None
     assert second.native_trade_id is None
     assert second.aggressor_side is None
-    assert first.provenance.adapter_version == "frontier-kraken-spot-9"
+    assert first.provenance.adapter_version == "frontier-kraken-spot-10"
     assert requests[0].url.params["pair"] == "XXBTZUSD"
     assert requests[0].url.params["count"] == "2"
     assert all("authorization" not in request.headers for request in requests)

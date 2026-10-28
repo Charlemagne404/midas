@@ -39,7 +39,7 @@ from midas.frontier.models import (
 )
 
 D = Decimal
-ADAPTER_VERSION = "frontier-kraken-spot-9"
+ADAPTER_VERSION = "frontier-kraken-spot-10"
 BASE = "https://api.kraken.com/0/public"
 ORDERBOOK_DOC = "https://docs.kraken.com/api-reference/market-data/get-order-book"
 _KNOWN_FIAT_QUOTES = frozenset({"USD", "EUR", "GBP", "CAD", "AUD", "CHF", "JPY"})
@@ -178,14 +178,12 @@ class KrakenSpotAdapter(BaseReadOnlyAdapter):
         self, native_id: str, raw: dict[str, Any], response: HTTPObservation
     ) -> FrontierMarket:
         native_id = self._validate_native_pair_id(native_id)
-        wsname = str(raw.get("wsname") or "")
-        if "/" in wsname:
-            base_asset, quote_asset = (part.strip().upper() for part in wsname.split("/", 1))
-        else:
-            base_asset = _normalize_kraken_asset(str(raw.get("base") or ""))
-            quote_asset = _normalize_kraken_asset(str(raw.get("quote") or ""))
-        if not base_asset or not quote_asset:
+        wsname_value = raw.get("wsname")
+        wsname = wsname_value if isinstance(wsname_value, str) else ""
+        assets = _kraken_pair_assets(raw)
+        if assets is None:
             raise AdapterError("INVALID_INSTRUMENT", "Kraken pair is missing base/quote identity")
+        base_asset, quote_asset = assets
         price_decimals = _bounded_int(raw.get("pair_decimals"), minimum=0, maximum=12)
         quantity_decimals = _bounded_int(raw.get("lot_decimals"), minimum=0, maximum=16)
         if price_decimals is None or quantity_decimals is None:
@@ -266,6 +264,28 @@ class KrakenSpotAdapter(BaseReadOnlyAdapter):
                 "INSTRUMENT_NOT_FOUND", "Pair identifier does not belong to the market"
             )
         native_market_id = self._validate_native_pair_id(market.native_market_id)
+        if not market.has_valid_structure:
+            raise AdapterError("INVALID_INSTRUMENT", "Kraken market fails structural revalidation")
+        native_assets = _kraken_pair_assets(market.native_fields)
+        if (
+            market.canonical_id != stable_market_id(self.venue, native_market_id)
+            or native_assets is None
+            or (market.base_asset, market.quote_asset) != native_assets
+            or len(market.instruments) != 1
+        ):
+            raise AdapterError(
+                "INVALID_INSTRUMENT", "Kraken market identity does not match native pair metadata"
+            )
+        instrument = market.instruments[0]
+        if (
+            instrument.native_instrument_id != native_market_id
+            or instrument.quantity_unit != QuantityUnit.BASE_ASSET
+            or instrument.price_currency != market.quote_asset
+            or instrument.price_currency_identity != _quote_unit_identity(market.quote_asset or "")
+        ):
+            raise AdapterError(
+                "INVALID_INSTRUMENT", "Kraken instrument does not match its native pair identity"
+            )
         response = await self.transport.get_json(
             f"{BASE}/Depth", {"pair": native_market_id, "count": depth}
         )
@@ -285,12 +305,7 @@ class KrakenSpotAdapter(BaseReadOnlyAdapter):
             flags.append("CROSSED_OR_LOCKED")
         if any(level.exchange_timestamp_utc is None for level in asks + bids):
             flags.append("LEVEL_TIMESTAMP_MISSING")
-        base = market.base_asset or "base"
-        quote_asset = market.quote_asset or "quote"
-        instrument = next(
-            (item for item in market.instruments if item.native_instrument_id == instrument_id),
-            None,
-        )
+        base, quote_asset = market.base_asset, market.quote_asset
         return BookSnapshot(
             venue=self.venue,
             native_market_id=market.native_market_id,
@@ -298,10 +313,8 @@ class KrakenSpotAdapter(BaseReadOnlyAdapter):
             asks=asks,
             bids=bids,
             price_unit=f"{quote_asset} per {base}",
-            price_currency=instrument.price_currency if instrument is not None else quote_asset,
-            price_currency_identity=(
-                instrument.price_currency_identity if instrument is not None else None
-            ),
+            price_currency=instrument.price_currency,
+            price_currency_identity=instrument.price_currency_identity,
             quantity_unit=QuantityUnit.BASE_ASSET,
             received_at_utc=response.response_received_at_utc,
             exchange_timestamp_semantics="Each level has an independent last-update time; no unified book snapshot time is asserted",
@@ -511,6 +524,24 @@ def _normalize_kraken_asset(native: str) -> str:
     if native.startswith("XX") or native.startswith("ZA"):
         return native[1:]
     return native
+
+
+def _kraken_pair_assets(raw: dict[str, Any]) -> tuple[str, str] | None:
+    wsname = raw.get("wsname")
+    if isinstance(wsname, str) and "/" in wsname:
+        parts = wsname.split("/")
+        if len(parts) != 2:
+            return None
+        base_asset, quote_asset = (part.strip().upper() for part in parts)
+    else:
+        native_base, native_quote = raw.get("base"), raw.get("quote")
+        if not isinstance(native_base, str) or not isinstance(native_quote, str):
+            return None
+        base_asset = _normalize_kraken_asset(native_base)
+        quote_asset = _normalize_kraken_asset(native_quote)
+    if not base_asset or not quote_asset:
+        return None
+    return base_asset, quote_asset
 
 
 def _bounded_int(value: Any, *, minimum: int, maximum: int) -> int | None:
