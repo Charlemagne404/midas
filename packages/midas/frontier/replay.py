@@ -36,7 +36,7 @@ from midas.frontier.relationships import (
     propose_relationships,
 )
 
-REPLAY_VERSION = "frontier-deterministic-replay-15"
+REPLAY_VERSION = "frontier-deterministic-replay-16"
 PAIRED_COMPARISON_VERSION = "frontier-paired-replay-1"
 
 
@@ -243,6 +243,8 @@ def deterministic_replay(
         per_market = book_index.setdefault(market.canonical_id, {})
         if book.native_instrument_id in per_market:
             raise ValueError("Replay contains duplicate book observations for one instrument")
+        if not book.has_valid_price_levels:
+            raise ValueError("Replay contains duplicate or invalid book price levels")
         per_market[book.native_instrument_id] = book
 
     proposals = propose_relationships(ordered_markets, max_pairs=relationship_limit)

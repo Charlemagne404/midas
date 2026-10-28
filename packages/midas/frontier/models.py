@@ -716,7 +716,7 @@ class IndependentEconomicAudit(FrontierModel):
     """Recomputed candidate economics from normalized contracts and source books."""
 
     schema_version: int = 3
-    model_version: str = "frontier-independent-economic-audit-16"
+    model_version: str = "frontier-independent-economic-audit-17"
     disposition: EconomicAuditDisposition
     input_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     checked_market_count: int = Field(ge=0, le=4)
@@ -1008,6 +1008,39 @@ class BookSnapshot(FrontierModel):
             if len(prices) != len(set(prices)):
                 raise ValueError("Duplicate book price level")
         return self
+
+    @property
+    def has_valid_price_levels(self) -> bool:
+        """Recheck level invariants at runtime after possible unvalidated model copies."""
+        for side in (self.asks, self.bids):
+            if not isinstance(side, tuple):
+                return False
+            prices: set[Decimal] = set()
+            for level in side:
+                if not isinstance(level, BookLevel):
+                    return False
+                price = level.price
+                quantity = level.quantity
+                if (
+                    not isinstance(price, Decimal)
+                    or not price.is_finite()
+                    or price < 0
+                    or not isinstance(quantity, Decimal)
+                    or not quantity.is_finite()
+                    or quantity <= 0
+                ):
+                    return False
+                if price in prices:
+                    return False
+                prices.add(price)
+                timestamp = level.exchange_timestamp_utc
+                if timestamp is not None and (
+                    not isinstance(timestamp, datetime)
+                    or timestamp.tzinfo is None
+                    or timestamp.utcoffset() is None
+                ):
+                    return False
+        return True
 
     @model_validator(mode="after")
     def quote_identity_matches_code(self) -> BookSnapshot:

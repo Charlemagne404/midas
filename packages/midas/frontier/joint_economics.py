@@ -150,6 +150,7 @@ def generate_joint_state_basket_candidates(
                 or book.native_instrument_id != instrument.native_instrument_id
                 or book.quantity_unit != instrument.quantity_unit
                 or not _price_denomination_matches(market, instrument, book)
+                or not book.has_valid_price_levels
                 or book.crossed
                 or not book.asks
             ):

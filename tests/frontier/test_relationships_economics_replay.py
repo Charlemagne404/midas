@@ -421,6 +421,148 @@ def test_deterministic_replay_rejects_duplicate_relationship_identities():
         )
 
 
+def _with_duplicated_inflated_best_ask(snapshot: BookSnapshot) -> BookSnapshot:
+    best_ask = min(snapshot.asks, key=lambda item: item.price)
+    inflated = best_ask.model_copy(update={"quantity": Decimal("100")})
+    return snapshot.model_copy(update={"asks": (inflated, *snapshot.asks)})
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    (
+        ("price", Decimal("NaN")),
+        ("price", Decimal("-0.01")),
+        ("quantity", Decimal("NaN")),
+        ("quantity", Decimal("0")),
+        ("exchange_timestamp_utc", datetime(2026, 10, 28, 12, 0)),
+    ),
+)
+def test_book_runtime_integrity_rejects_invalid_copied_levels(field, value):
+    market_value = market(Venue.POLYMARKET, "copied-level")
+    source = book(market_value, market_value.instruments[0].native_instrument_id, "0.40")
+    copied_level = source.asks[0].model_copy(update={field: value})
+    malformed = source.model_copy(update={"asks": (copied_level,)})
+
+    assert source.has_valid_price_levels
+    assert not malformed.has_valid_price_levels
+
+
+def test_binary_candidate_generation_rejects_duplicate_best_ask_depth():
+    left, right, relationship, instrument_mapping = _verified_pair()
+    left_books, right_books = _books(left, right)
+    state_mapping = {"yes": "yes", "no": "no"}
+    valid_candidates = generate_binary_coverage_candidates(
+        left,
+        right,
+        relationship,
+        left_books,
+        right_books,
+        state_mapping=state_mapping,
+        instrument_mapping=instrument_mapping,
+        as_of_utc=T0 + timedelta(milliseconds=100),
+    )
+    positive = next(
+        item
+        for item in valid_candidates
+        if item.worst_case_gross_pnl is not None and item.worst_case_gross_pnl > 0
+    )
+    malformed_left_books = left_books.copy()
+    malformed_right_books = right_books.copy()
+    for leg in positive.legs:
+        target = (
+            malformed_left_books if leg.market_id == left.canonical_id else malformed_right_books
+        )
+        target[leg.instrument_id] = _with_duplicated_inflated_best_ask(target[leg.instrument_id])
+
+    candidates = generate_binary_coverage_candidates(
+        left,
+        right,
+        relationship,
+        malformed_left_books,
+        malformed_right_books,
+        state_mapping=state_mapping,
+        instrument_mapping=instrument_mapping,
+        as_of_utc=T0 + timedelta(milliseconds=100),
+    )
+
+    rejected = next(item for item in candidates if item.candidate_id == positive.candidate_id)
+    assert rejected.classification == OpportunityClassification.INCOMPLETE_EVIDENCE
+    assert rejected.legs == ()
+    assert not any(
+        item.worst_case_gross_pnl is not None and item.worst_case_gross_pnl > 0
+        for item in candidates
+    )
+
+
+def test_independent_audit_rejects_duplicate_book_depth_even_for_existing_candidate():
+    left, right, relationship, instrument_mapping = _verified_pair()
+    left_books, right_books = _books(left, right)
+    candidate = next(
+        item
+        for item in generate_binary_coverage_candidates(
+            left,
+            right,
+            relationship,
+            left_books,
+            right_books,
+            state_mapping={"yes": "yes", "no": "no"},
+            instrument_mapping=instrument_mapping,
+            as_of_utc=T0 + timedelta(milliseconds=100),
+        )
+        if item.worst_case_gross_pnl is not None and item.worst_case_gross_pnl > 0
+    )
+    canonical_instrument_mapping = (
+        instrument_mapping
+        if relationship.left_market_id == left.canonical_id
+        else {right_id: left_id for left_id, right_id in instrument_mapping.items()}
+    )
+    malformed_left_books = left_books.copy()
+    malformed_right_books = right_books.copy()
+    first_leg = candidate.legs[0]
+    target = (
+        malformed_left_books if first_leg.market_id == left.canonical_id else malformed_right_books
+    )
+    target[first_leg.instrument_id] = _with_duplicated_inflated_best_ask(
+        target[first_leg.instrument_id]
+    )
+
+    audited = independently_audit_candidate(
+        candidate.model_copy(update={"independent_audit": None}),
+        markets={left.canonical_id: left, right.canonical_id: right},
+        books_by_market={
+            left.canonical_id: malformed_left_books,
+            right.canonical_id: malformed_right_books,
+        },
+        relationships={relationship.relationship_id: relationship},
+        state_mappings={relationship.relationship_id: {"yes": "yes", "no": "no"}},
+        instrument_mappings={relationship.relationship_id: canonical_instrument_mapping},
+        scenario=ExecutionScenario(),
+    )
+
+    assert audited.independent_audit is not None
+    assert audited.independent_audit.disposition.value == "incomplete"
+    assert audited.classification == OpportunityClassification.INCOMPLETE_EVIDENCE
+    assert "duplicate or invalid price levels" in audited.independent_audit.message.lower()
+
+
+def test_deterministic_replay_rejects_duplicate_book_price_levels():
+    left, right, relationship, instrument_mapping = _verified_pair()
+    left_books, right_books = _books(left, right)
+    all_books = list(left_books.values()) + list(right_books.values())
+    all_books[0] = _with_duplicated_inflated_best_ask(all_books[0])
+
+    with pytest.raises(ValueError, match="duplicate or invalid book price levels"):
+        deterministic_replay(
+            (left, right),
+            tuple(all_books),
+            verified_relationships=(relationship,),
+            state_mappings={relationship.relationship_id: {"yes": "yes", "no": "no"}},
+            instrument_mappings={relationship.relationship_id: instrument_mapping},
+            as_of_utc=T0 + timedelta(milliseconds=100),
+            code_version="duplicate-book-level-input-test-v1",
+        )
+
+
 def test_cross_venue_replay_rejects_equivalence_evidence_missing_pinned_market():
     left, right, relationship, _instrument_mapping = _verified_pair()
     incomplete_evidence = relationship.evidence[0].model_copy(
@@ -1965,7 +2107,7 @@ def test_independent_audit_rejects_naive_book_time_from_a_reconstructed_model():
     assert audit.independent_audit is not None
     assert audit.independent_audit.disposition.value == "incomplete"
     assert "not timezone-aware" in audit.independent_audit.message
-    assert audit.independent_audit.model_version == "frontier-independent-economic-audit-16"
+    assert audit.independent_audit.model_version == "frontier-independent-economic-audit-17"
 
 
 def test_independent_audit_rejects_quantity_step_mutation():
@@ -2091,7 +2233,7 @@ def test_candidate_generation_and_independent_audit_enforce_price_ticks():
         as_of_utc=T0 + timedelta(milliseconds=100),
     )
     candidate = next(item for item in candidates if item.legs)
-    assert candidate.model_version == "frontier-economic-verifiers-16"
+    assert candidate.model_version == "frontier-economic-verifiers-17"
 
     def with_half_dollar_ticks(market_value):
         instruments = tuple(
@@ -2509,7 +2651,7 @@ def test_verified_multi_outcome_coverage_is_exact_and_stays_hypothetical():
         as_of_utc=T0 + timedelta(milliseconds=100),
         code_version="multi-outcome-fixture-v1",
     )
-    assert replay.manifest.replay_version == "frontier-deterministic-replay-15"
+    assert replay.manifest.replay_version == "frontier-deterministic-replay-16"
     replay_candidate = replay.candidates[0]
     assert replay_candidate.model_copy(update={"independent_audit": None}) == candidate
     assert replay_candidate.independent_audit is not None
@@ -2867,7 +3009,7 @@ def test_deterministic_replay_is_invariant_to_input_order():
     }
     first = deterministic_replay((left, right), all_books, **kwargs)
     second = deterministic_replay((right, left), tuple(reversed(all_books)), **kwargs)
-    assert first.manifest.economic_model_version == "frontier-economic-verifiers-16"
+    assert first.manifest.economic_model_version == "frontier-economic-verifiers-17"
     assert first.run_id == second.run_id
     assert first.result_sha256 == second.result_sha256
     assert first.candidates == second.candidates

@@ -52,7 +52,7 @@ from midas.frontier.relationships import (
 )
 
 D = Decimal
-ECONOMIC_MODEL_VERSION = "frontier-economic-verifiers-16"
+ECONOMIC_MODEL_VERSION = "frontier-economic-verifiers-17"
 PARTIAL_FILL_FRACTIONS = (D(0), D("0.25"), D("0.5"), D("0.75"), D(1))
 KALSHI_MVE_SETTLEMENT_AUDIT_VERSION = "kalshi-mve-settlement-audit-2"
 _KALSHI_TAKER_FEE_TYPES = frozenset({"quadratic", "quadratic_with_combo_maker_fees"})
@@ -1610,6 +1610,7 @@ def generate_bounded_payoff_basket_candidates(
                 or book.native_instrument_id != instrument.native_instrument_id
                 or book.quantity_unit != instrument.quantity_unit
                 or not _price_denomination_matches(market, instrument, book)
+                or not book.has_valid_price_levels
                 or book.crossed
                 or not book.asks
             ):
@@ -1829,12 +1830,13 @@ def _evaluate_single_market_basket(
             or book.native_instrument_id != instrument.native_instrument_id
             or book.quantity_unit != instrument.quantity_unit
             or not _price_denomination_matches(market, instrument, book)
+            or not book.has_valid_price_levels
             or book.crossed
             or not book.asks
         ):
             return empty(
                 OpportunityClassification.INCOMPLETE_EVIDENCE,
-                "An outcome book is empty, crossed, or does not match the market instrument.",
+                "An outcome book is empty, malformed, crossed, or does not match the market instrument.",
             )
         ask = min(book.asks, key=lambda level: level.price)
         max_settlement_payout = max(item.amount for item in instrument.payouts)
@@ -2321,14 +2323,21 @@ def _evaluate_pair(
             candidate_id=identity,
             family=family,
         )
-    if left_book.crossed or right_book.crossed or not left_book.asks or not right_book.asks:
+    if (
+        not left_book.has_valid_price_levels
+        or not right_book.has_valid_price_levels
+        or left_book.crossed
+        or right_book.crossed
+        or not left_book.asks
+        or not right_book.asks
+    ):
         return _empty_candidate(
             left,
             right,
             relationship,
             OpportunityClassification.INCOMPLETE_EVIDENCE,
             as_of,
-            "A book is empty, crossed, or locked; no quote is eligible for arithmetic.",
+            "A book is empty, malformed, crossed, or locked; no quote is eligible for arithmetic.",
             candidate_id=identity,
             family=family,
         )

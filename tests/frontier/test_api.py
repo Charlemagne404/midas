@@ -4875,7 +4875,7 @@ def test_replay_api_generates_and_persists_multi_outcome_candidate(tmp_path):
         replay = client.post("/api/frontier/replay", json={})
         assert replay.status_code == 200, replay.text
         result = replay.json()
-        assert result["manifest"]["replay_version"] == "frontier-deterministic-replay-15"
+        assert result["manifest"]["replay_version"] == "frontier-deterministic-replay-16"
         assert len(result["candidates"]) == 1
         candidate = result["candidates"][0]
         assert candidate["family"] == "within_market_multi_outcome_coverage"
@@ -5184,7 +5184,7 @@ def test_replay_api_generates_and_persists_bounded_payoff_basket(tmp_path):
         response = client.post("/api/frontier/replay", json={})
         assert response.status_code == 200, response.text
         result = response.json()
-        assert result["manifest"]["replay_version"] == "frontier-deterministic-replay-15"
+        assert result["manifest"]["replay_version"] == "frontier-deterministic-replay-16"
         assert len(result["candidates"]) == 1
         candidate = result["candidates"][0]
         assert candidate["family"] == "within_market_payoff_basket"
