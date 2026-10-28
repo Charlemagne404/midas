@@ -3301,3 +3301,18 @@ market and no book. No cross-venue conclusion is claimed. At 17:07:40Z CPU PSI
 avg10 was 41.15%; protected Reality was within about 216 KiB of its soft memory
 boundary, so broad legacy regression remains deferred. Both protected
 services were active and unchanged.
+
+## Frontier live Polymarket book and replay — 2026-10-28 17:10 UTC
+
+One unauthenticated, bounded CLOB book GET for the previously captured YES
+instrument returned HTTP 200. The raw response and normalized book are now
+preserved both as portable files and in the isolated Frontier store. It had
+zero bid levels and five asks (best ask 0.995); its exchange timestamp was
+about 10.04 seconds before receipt, with timestamp semantics still uncertain.
+Two deterministic replays over the stored market and book had identical run
+and result hashes, and the saved replay reloaded with hash verification. It
+reported zero relationships or candidates; no completed payoff or economic
+opportunity is claimed. The store holds two observations and two replays and
+uses 167,936 bytes. Source-use holds and protected services are unchanged.
+At 17:11:25Z CPU PSI avg10 was 39.52%; Reality was 360 KiB below `MemoryHigh`,
+and swap had 1,816 KiB free. Broad regression remains deferred.

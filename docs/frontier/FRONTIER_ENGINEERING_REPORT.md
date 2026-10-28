@@ -10625,6 +10625,7 @@ request or protected-service action occurred.
 | Full Frontier regression after integration edits | COMPLETE AND VERIFIED | 498/498 pass on the current code tree. |
 | Live cross-venue science | PARTIALLY VERIFIED | Fixture-backed matching/economics pass; held-source permission and live equivalence remain unresolved. |
 | Frontier overall | PARTIALLY VERIFIED | Broad legacy regression, resource endurance, protected recovery, and deployment remain open. |
+
 ## Bounded live Polymarket metadata observation — 2026-10-28 17:04 UTC
 
 The [official Polymarket Institute guide](https://institute.polymarket.com/data)
@@ -10692,3 +10693,44 @@ bytes. I deferred the broad legacy regression under this measured pressure.
 | Deterministic replay over recovered genuine input | COMPLETE AND VERIFIED | Two runs share exact run/result hashes; persisted result reloads and verifies. Zero candidates are expected for one market without books. |
 | Live multi-venue relationship and economics | BLOCKED | Held-source policy remains active and this capture is single-venue metadata only. |
 | Frontier overall | PARTIALLY VERIFIED | Broad regression, cross-venue science, resource endurance, protected recovery, and deployment remain open. |
+
+## Bounded live Polymarket order book — 2026-10-28 17:10 UTC
+
+The official [Polymarket CLOB order-book reference](https://docs.polymarket.com/api-reference/market-data/get-order-book)
+documents the public `GET /book` endpoint, including a no-auth request example;
+the [Polymarket Institute research guide](https://institute.polymarket.com/data)
+describes the CLOB as the source for current spread and book depth. On
+`frontier-polymarket-8`, one unauthenticated `fetch_book` request for the YES
+instrument of the captured Gamma market returned HTTP 200. The bounded probe
+used an 8-second timeout, a 65,536-byte response-body maximum, and no retry.
+
+The 3,164-byte raw response is preserved with a normalized `BookSnapshot` in
+`data/frontier-live-evidence-polymarket-20261028T170445Z/`. The response
+contained zero bid levels and five ask levels; best ask within that returned
+depth was 0.995. The source supplied timestamp 17:09:09.345Z and the local
+receipt timestamp was 17:09:19.386225Z. Their difference is about 10.04
+seconds, but source timestamp precision and simultaneity are not established.
+The capture files have hashes recorded in both the manifest and the book
+receipt. The isolated 4 MiB Frontier store now contains two validated source
+observations and two persisted replay results; its size is 167,936 bytes.
+
+Two deterministic replays over the recovered market and book produced run ID
+`cb7bbcf1fa03d0ad62bb8d60023d2b048168fc04f0aacf64304337ac4d467a9c` and result
+SHA-256 `caba4ebffaf4972fa5ba1805b8b2d9b41a5ba3d26323c613f960f50e89c0f0a3`.
+The second result is persisted and reloads with hash validation. It contains no
+relationship proposals or candidates. This is the expected conservative
+result for a single one-sided outcome book with an unattested market payout;
+it establishes neither a complete payoff nor an executable trade.
+
+At 17:11:25Z CPU PSI avg10 was 39.52%, memory PSI avg10 was 0%, I/O PSI
+avg10 was 0.01%, and 10,209,340 KiB was available. Reality and API remained
+active. Reality was at 1,207,590,912 / 1,207,959,552 bytes, 360 KiB below
+`MemoryHigh`, with 1,816 KiB free swap. I deferred broader regression under
+these conditions.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Polymarket live book retrieval and normalization | COMPLETE AND VERIFIED | One official public GET returned HTTP 200; a bounded raw body and normalized book are preserved and hash-linked. |
+| Durable storage and deterministic replay with a book | COMPLETE AND VERIFIED | Two replays share run/result hashes; the stored replay reloads with validation. |
+| Live economic opportunity | PARTIALLY VERIFIED | No complete, verified payout and only one outcome's book were observed; no economic claim follows. |
+| Frontier overall | PARTIALLY VERIFIED | Live multi-venue evidence, broad legacy regression, resource endurance, protected recovery, and deployment remain open. |

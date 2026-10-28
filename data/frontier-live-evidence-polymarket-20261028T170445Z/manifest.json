@@ -1,1 +1,79 @@
-{"adapter_version":"frontier-polymarket-8","authentication":"none","code_commit":"e3a2bd2","configured_market_limit":1,"configured_response_body_limit_bytes":262144,"markets":[{"canonical_id":"polymarket:2589810","instrument_count":2,"lifecycle":"open","market_kind":"binary_event","native_market_id":"2589810","quality_flags":["PAYOUT_NOT_ATTESTED","SETTLEMENT_ASSET_NOT_ATTESTED","CROSS_VENUE_EQUIVALENCE_NOT_ASSERTED"],"title":"Will the Fed decrease interest rates by 50+ bps after the October 2026 meeting?"}],"markets_returned":1,"network_requests":1,"normalized_batch_sha256":"33b695f32865aefc8e96eb2602f213e1dade4c679b62bc60112b51641d056767","observed_at_utc":"2026-10-28T17:04:45.011118+00:00","probe":"PolymarketAdapter.discover_markets(limit=1)","raw_market_response_sha256":"1f00dfadcf90bc5845bddf2065b242c1fbdd7b7a03b425c75b19d752c656ad14","raw_observation_record_sha256":"2f22072dcb104f39469e447e7ee9cba117d514e86d738bd6f518d00c91a310ba","request_host":"gamma-api.polymarket.com","request_path":"/markets","research_limits":["Single market-listing response; not a venue-wide coverage sample.","No order book or trade was requested.","This observation does not establish simultaneity, payoff equivalence, or executable economics.","This is the decentralized Polymarket Gamma API, not the separate Polymarket US exchange."],"response_status":200,"retries":0,"schema_version":1,"source":"polymarket_decentralized_gamma_public_market_listing","timeout_seconds":8}
+{
+  "adapter_version": "frontier-polymarket-8",
+  "additional_observations": [
+    {
+      "adapter_version": "frontier-polymarket-8",
+      "ask_levels_returned": 5,
+      "authentication": "none",
+      "bid_levels_returned": 0,
+      "exchange_timestamp_utc": "2026-10-28T17:09:09.345000+00:00",
+      "instrument_id": "17010377994663817312158123655937348199252960045746746128731746451645055725586",
+      "instrument_label": "Yes",
+      "limitations": [
+        "One outcome token only.",
+        "Zero bid levels and five ask levels in the returned depth.",
+        "Source timestamp semantics and matching-engine simultaneity are not established.",
+        "No payoff attestation, opposite-outcome book, fee validation, or economic conclusion."
+      ],
+      "normalized_snapshot_artifact": "normalized_book_snapshot.json",
+      "normalized_snapshot_artifact_sha256": "cd8732c496e00ea8202d9df86f75e2d760547717f86acf1be4963922663ee970",
+      "probe": "PolymarketAdapter.fetch_book(market, instrument_id, depth=5)",
+      "raw_observation_artifact": "live_book_raw_observation.json",
+      "raw_observation_artifact_sha256": "2043c75e11deadeb19076b829599f53986a62361e6994e053491425237587c9d",
+      "raw_response_bytes": 3164,
+      "raw_response_sha256": "b9f96bf50575d6e733b6243084f09f9ec750af4c908190ef912038524b115e16",
+      "received_at_utc": "2026-10-28T17:09:19.386225+00:00",
+      "request_host": "clob.polymarket.com",
+      "request_path": "/book",
+      "request_query": {
+        "token_id": "17010377994663817312158123655937348199252960045746746128731746451645055725586"
+      },
+      "requested_depth": 5,
+      "response_status": 200,
+      "source": "polymarket_decentralized_clob_public_order_book",
+      "store_observation_id": "1409e26c7434f6c52a248cfa5558aadc8f24112b33b9cecc20cc558e57a79581",
+      "store_row_sha256": "910abf0d1587da14faf4b9d415587a5a38bafc7ff4e6fcaf124d1a07b6fcaf21"
+    }
+  ],
+  "authentication": "none",
+  "code_commit": "e3a2bd2",
+  "configured_market_limit": 1,
+  "configured_response_body_limit_bytes": 262144,
+  "markets": [
+    {
+      "canonical_id": "polymarket:2589810",
+      "instrument_count": 2,
+      "lifecycle": "open",
+      "market_kind": "binary_event",
+      "native_market_id": "2589810",
+      "quality_flags": [
+        "PAYOUT_NOT_ATTESTED",
+        "SETTLEMENT_ASSET_NOT_ATTESTED",
+        "CROSS_VENUE_EQUIVALENCE_NOT_ASSERTED"
+      ],
+      "title": "Will the Fed decrease interest rates by 50+ bps after the October 2026 meeting?"
+    }
+  ],
+  "markets_returned": 1,
+  "network_requests": 1,
+  "network_requests_total": 2,
+  "normalized_batch_sha256": "33b695f32865aefc8e96eb2602f213e1dade4c679b62bc60112b51641d056767",
+  "observed_at_utc": "2026-10-28T17:04:45.011118+00:00",
+  "probe": "PolymarketAdapter.discover_markets(limit=1)",
+  "raw_market_response_sha256": "1f00dfadcf90bc5845bddf2065b242c1fbdd7b7a03b425c75b19d752c656ad14",
+  "raw_observation_record_sha256": "2f22072dcb104f39469e447e7ee9cba117d514e86d738bd6f518d00c91a310ba",
+  "request_host": "gamma-api.polymarket.com",
+  "request_path": "/markets",
+  "research_limits": [
+    "Single market-listing response; not a venue-wide coverage sample.",
+    "The initial Gamma listing probe did not request an order book or trade.",
+    "This observation does not establish simultaneity, payoff equivalence, or executable economics.",
+    "This is the decentralized Polymarket Gamma API, not the separate Polymarket US exchange.",
+    "One additional public GET fetched one outcome-token order book; it does not establish simultaneous execution or economic opportunity."
+  ],
+  "response_status": 200,
+  "retries": 0,
+  "schema_version": 1,
+  "source": "polymarket_decentralized_gamma_public_market_listing",
+  "timeout_seconds": 8
+}

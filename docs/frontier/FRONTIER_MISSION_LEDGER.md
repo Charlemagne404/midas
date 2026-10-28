@@ -1,5 +1,53 @@
 # Project Frontier Mission Ledger
 
+## Bounded live Polymarket book capture — 2026-10-28 17:10 UTC
+
+The official [Polymarket CLOB book endpoint guide](https://docs.polymarket.com/api-reference/market-data/get-order-book)
+documents a public GET for a token book. The Polymarket Institute data guide
+describes CLOB data for examining current spread and depth. With that evidence,
+I made one unauthenticated call through
+`PolymarketAdapter.fetch_book(market, instrument_id, depth=5)` using the YES
+instrument from the already preserved Gamma observation. The ephemeral
+configuration used an 8-second timeout, a 65,536-byte response cap, and zero
+retries. The CLOB returned HTTP 200 at 2026-10-28T17:09:19.386225Z with a
+3,164-byte body.
+
+The returned order book had zero bid levels and five ask levels; the best ask
+in that returned depth was 0.995. Its source timestamp was
+2026-10-28T17:09:09.345Z, approximately 10.04 seconds before local receipt;
+timestamp precision and matching-engine simultaneity remain unestablished.
+The raw observation and normalized `BookSnapshot` were appended to the
+existing isolated 4 MiB Frontier store, which now contains two observations
+and two replay results in 167,936 bytes. Portable files
+`live_book_raw_observation.json` and `normalized_book_snapshot.json` have
+SHA-256 hashes `2043c75e11deadeb19076b829599f53986a62361e6994e053491425237587c9d`
+and `cd8732c496e00ea8202d9df86f75e2d760547717f86acf1be4963922663ee970`.
+
+Two deterministic replays over the recovered market and book rows produced
+run `cb7bbcf1fa03d0ad62bb8d60023d2b048168fc04f0aacf64304337ac4d467a9c` and
+result hash `caba4ebffaf4972fa5ba1805b8b2d9b41a5ba3d26323c613f960f50e89c0f0a3`;
+the replay also round-trips through the hash-validating store. It reports zero
+relationships and zero candidates. The observed book is one-sided and belongs
+to a market whose payout remains unverified, so this says nothing about a
+complete position or an executable opportunity. The observation details and
+store/replay identities are in
+`data/frontier-live-evidence-polymarket-20261028T170445Z/live_book_snapshot.json`
+and `store_replay_receipt.json`.
+
+At 17:11:25Z CPU PSI avg10 was 39.52%, memory PSI avg10 was 0%, I/O PSI
+avg10 was 0.01%, and 10,209,340 KiB was available. Reality and API services
+were active. Reality used 1,207,590,912 / 1,207,959,552 bytes, 360 KiB below
+`MemoryHigh`; swap had 1,816 KiB free. Broad regression remains deferred.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Live public book adapter and normalization | COMPLETE AND VERIFIED | One official documented public GET returned HTTP 200 and normalized a five-ask, zero-bid depth; raw and typed artifacts are preserved. |
+| Durable book storage and replay | COMPLETE AND VERIFIED | Append/read and two deterministic runs share exact identities and hashes; the persisted replay verifies on reload. |
+| Live economics or cross-venue opportunity | PARTIALLY VERIFIED | One outcome book only; no bids, opposite outcome, verified payout, or second venue is in evidence. |
+
+**Next safe action:** continue source-independent acceptance work; keep the
+public snapshot distinct from execution and leave held source gates unchanged.
+
 ## Durable live observation storage and replay — 2026-10-28 17:07 UTC
 
 Using only the preserved 17:04 Polymarket capture, I appended one normalized
