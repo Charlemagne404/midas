@@ -568,7 +568,7 @@ At 00:47:43 CET, 10 GiB was available and no new oomd or kernel OOM record
 appeared after 23:43:24. Host/user avg10 PSI had fallen below 0.1%; however,
 avg60 `full` was 2.70–2.89% and avg300 `full` 1.53–1.65%. API and Reality
 were active at 1,609,244,672 / 1,610,612,736 bytes and 1,207,644,160 /
-1,207,959,552 bytes, respectively. These sub-MiB margins and stale Reality
+1,207,959,552 bytes, respectively. These small margins and stale Reality
 status keep production recovery unverified. The capacity timer's next run is
 01:16:04 CET; observe it passively to validate the 160 MiB threshold.
 
@@ -603,3 +603,53 @@ capture status. Continue low-impact documentation and code review. Do not run
 tests, replay, probes, or batches until rolling pressure recovers and the
 next scheduled capacity check confirms the revised soft threshold behaves
 without a comparable reclaim spike.
+
+## Protected-service and scheduler recheck — 2026-10-29 00:50 CET
+
+At 00:50:25, API and Reality remained active with restart counters 9 and 14.
+The API cgroup was 1,609,125,888 / 1,610,612,736 bytes `MemoryHigh` and Reality
+was 1,207,750,656 / 1,207,959,552 bytes. Both service-level memory PSI
+`avg10/avg60/avg300` was 0.00% in this sample. The API cgroup's 1.482 GB
+file-backed charge was almost entirely inactive file cache, against 125 MB
+anonymous memory; Reality's 1.082 GB file charge was likewise almost entirely
+inactive cache, against 124 MB anonymous memory. This explains why cgroup
+accounting is near `MemoryHigh` while process RSS is about 143 MB for the API
+and 133 MB for Reality. It does not show current stalls in those two leaf
+cgroups.
+
+The user-manager cgroup had no `MemoryHigh` or `MemoryMax`. Its `memory.stat`
+sample was 1.96 GB anon, 8.00 GB file, 1.15 GB kernel, including 6.22 GB
+inactive file. Its `memory.events` now reads `high=16,411,152`,
+`max=728,363`, `oom=19`, `oom_kill=15`; `high` rose 8,299 from the 00:40
+sample, but `max` and OOM counters did not change. This increment is not
+attributed to a particular service. At 00:50:25 its PSI was `some
+avg10/avg60/avg300=0.00/0.26/1.30%`, `full=0.00/0.17/0.86%`. The system-scope
+`user@1000.service` still has `ManagedOOMMemoryPressure=kill`; the historical
+oomd journal specifies the observed 50% for 20 seconds trigger. There is no
+user-slice hard memory cap.
+
+The Reality process's `read_bytes` reached 9,715,167,232 at 00:49:28, up
+2,846,515,200 bytes from 00:30:58, while `status.json` remained timestamped
+23:43:01.187. This confirms continued cold-replay reads without fresh capture
+attestation. Do not interrupt it.
+
+Scheduler logs now give exact bounded-run intervals: Arena dispatches lasted
+about 34 ms each minute; the 00:46:04.373 dispatcher completed at 00:46:04.408,
+before the capacity job started at 00:46:04.556. The 00:45:08.764 Research
+Director run completed at 00:45:10.157, before capacity began. The recent
+Veritas observation and source-analysis runs lasted 12.2 and 5.9 seconds;
+the samples show no actual overlap with the 00:46 capacity run. All observed
+Midas/Reality interfaces, Continental services, Echo production/staging,
+RustDesk, and `ssh.socket` were active at the checks; none was changed. The
+only unit configuration change was the auxiliary capacity monitor drop-in.
+These recent successful short runs do not disprove earlier timer overlap or
+identify the historical oomd pressure initiator.
+
+The specific OOMd trigger and old capacity hard-limit failure are demonstrated;
+the workload that produced the historical 50% user-slice pressure is not.
+Disabling the five-minute auxiliary gap-detail timer, bounding the capacity
+hard limit, and observing no new OOM for over an hour are favorable evidence,
+not proof of a single root cause or durable closure. The 160 MiB capacity
+soft threshold has not yet been exercised; next scheduled run remains
+01:16:04 CET. Keep Frontier tests and experiments deferred until that run and
+the protected Reality recovery/readiness conditions are met.

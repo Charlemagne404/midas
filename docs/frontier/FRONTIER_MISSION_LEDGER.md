@@ -1,5 +1,29 @@
 # Project Frontier Mission Ledger
 
+## Current host state — 2026-10-29 00:50 CET
+
+The scheduled capacity run completed at 00:46:37 with a 137.4 MiB peak and
+no OOM, but crossed `MemoryHigh=128M` with 1,731 high events and a transient
+host/user PSI spike. The auxiliary service drop-in is now 160M soft / 192M
+hard / zero swap; the 160M setting applies only to its next scheduled run at
+01:16:04. The five-minute gap-detail timer remains disabled.
+
+At 00:50:25 user-slice `full` PSI was 0.86% avg300 and 0.17% avg60. The
+user-manager has no memory high/max cap; its `high` counter rose to 16,411,152
+since 00:40, while `max=728,363`, `oom=19`, and `oom_kill=15` stayed fixed.
+The historical OOMd trigger mechanism is clear, but the original pressure
+initiator remains unknown. API and Reality are active but remain within
+1.42 MiB and 0.20 MiB of `MemoryHigh`; their leaf PSI was zero in the last
+sample and cgroup charge is mostly inactive file cache. Reality has read
+9.72 GB since restart, while its status timestamp remains 23:43:01.187.
+
+Recent scheduled runs show no overlap with the capacity job; this is not proof
+against earlier overlap. Critical API, Reality, Continental, Echo, RustDesk,
+and SSH socket states were active. Frontier runtime work remains paused until
+the next capacity run validates 160M and Reality publishes post-restart
+capture status. Continue static work only; do not alter protected capture or
+archive evidence.
+
 ## Current host state — 2026-10-29 00:47 CET
 
 The scheduled 00:46 capacity run completed in 33.3 seconds with 6.520 CPU
