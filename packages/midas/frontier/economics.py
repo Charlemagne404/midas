@@ -52,7 +52,7 @@ from midas.frontier.relationships import (
 )
 
 D = Decimal
-ECONOMIC_MODEL_VERSION = "frontier-economic-verifiers-19"
+ECONOMIC_MODEL_VERSION = "frontier-economic-verifiers-20"
 PARTIAL_FILL_FRACTIONS = (D(0), D("0.25"), D("0.5"), D("0.75"), D(1))
 KALSHI_MVE_SETTLEMENT_AUDIT_VERSION = "kalshi-mve-settlement-audit-2"
 _KALSHI_TAKER_FEE_TYPES = frozenset({"quadratic", "quadratic_with_combo_maker_fees"})
@@ -1627,7 +1627,7 @@ def generate_bounded_payoff_basket_candidates(
                 or book.native_instrument_id != instrument.native_instrument_id
                 or book.quantity_unit != instrument.quantity_unit
                 or not _price_denomination_matches(market, instrument, book)
-                or not book.has_valid_price_levels
+                or not book.has_valid_structure
                 or book.crossed
                 or not book.asks
             ):
@@ -1853,7 +1853,7 @@ def _evaluate_single_market_basket(
             or book.native_instrument_id != instrument.native_instrument_id
             or book.quantity_unit != instrument.quantity_unit
             or not _price_denomination_matches(market, instrument, book)
-            or not book.has_valid_price_levels
+            or not book.has_valid_structure
             or book.crossed
             or not book.asks
         ):
@@ -2347,8 +2347,8 @@ def _evaluate_pair(
             family=family,
         )
     if (
-        not left_book.has_valid_price_levels
-        or not right_book.has_valid_price_levels
+        not left_book.has_valid_structure
+        or not right_book.has_valid_structure
         or left_book.crossed
         or right_book.crossed
         or not left_book.asks

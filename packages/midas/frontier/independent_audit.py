@@ -54,7 +54,7 @@ from midas.frontier.relationships import (
 )
 
 D = Decimal
-_AUDIT_VERSION = "frontier-independent-economic-audit-19"
+_AUDIT_VERSION = "frontier-independent-economic-audit-20"
 _FEE_QUANTUM = D("0.00001")
 _KALSHI_FEE_MAX_EVIDENCE_AGE = timedelta(hours=24)
 _AUDIT_PARTIAL_FILL_FRACTIONS = (D(0), D("0.25"), D("0.5"), D("0.75"), D(1))
@@ -319,9 +319,9 @@ def _recompute(
         if book is None:
             raise _MissingAuditEvidence(f"Pinned book for leg {leg.instrument_id} is missing.")
         book_by_leg[(leg.market_id, leg.instrument_id)] = book
-        if not book.has_valid_price_levels:
+        if not book.has_valid_structure:
             raise _MissingAuditEvidence(
-                f"Pinned book for leg {leg.instrument_id} contains duplicate or invalid price levels."
+                f"Pinned book for leg {leg.instrument_id} fails structural validation."
             )
         if book.price_currency_identity is None:
             raise _MissingAuditEvidence(

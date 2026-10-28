@@ -443,8 +443,8 @@ def test_book_runtime_integrity_rejects_invalid_copied_levels(field, value):
     copied_level = source.asks[0].model_copy(update={field: value})
     malformed = source.model_copy(update={"asks": (copied_level,)})
 
-    assert source.has_valid_price_levels
-    assert not malformed.has_valid_price_levels
+    assert source.has_valid_structure
+    assert not malformed.has_valid_structure
 
 
 def test_binary_candidate_generation_rejects_duplicate_best_ask_depth():
@@ -542,7 +542,7 @@ def test_independent_audit_rejects_duplicate_book_depth_even_for_existing_candid
     assert audited.independent_audit is not None
     assert audited.independent_audit.disposition.value == "incomplete"
     assert audited.classification == OpportunityClassification.INCOMPLETE_EVIDENCE
-    assert "duplicate or invalid price levels" in audited.independent_audit.message.lower()
+    assert "structural validation" in audited.independent_audit.message.lower()
 
 
 def test_deterministic_replay_rejects_duplicate_book_price_levels():
@@ -551,7 +551,7 @@ def test_deterministic_replay_rejects_duplicate_book_price_levels():
     all_books = list(left_books.values()) + list(right_books.values())
     all_books[0] = _with_duplicated_inflated_best_ask(all_books[0])
 
-    with pytest.raises(ValueError, match="duplicate or invalid book price levels"):
+    with pytest.raises(ValueError, match="book that fails structural validation"):
         deterministic_replay(
             (left, right),
             tuple(all_books),
@@ -560,6 +560,22 @@ def test_deterministic_replay_rejects_duplicate_book_price_levels():
             instrument_mappings={relationship.relationship_id: instrument_mapping},
             as_of_utc=T0 + timedelta(milliseconds=100),
             code_version="duplicate-book-level-input-test-v1",
+        )
+
+
+def test_deterministic_replay_rejects_naive_copied_book_time_before_cutoff():
+    left, right, _relationship, _instrument_mapping = _verified_pair()
+    left_books, right_books = _books(left, right)
+    all_books = list(left_books.values()) + list(right_books.values())
+    all_books[0] = all_books[0].model_copy(
+        update={"received_at_utc": datetime(2026, 10, 26, 20, 0)}
+    )
+
+    with pytest.raises(ValueError, match="book that fails structural validation"):
+        deterministic_replay(
+            (left, right),
+            tuple(all_books),
+            code_version="naive-book-time-input-test-v1",
         )
 
 
@@ -2149,7 +2165,7 @@ def test_independent_audit_rejects_naive_book_time_from_a_reconstructed_model():
     assert audit.independent_audit is not None
     assert audit.independent_audit.disposition.value == "incomplete"
     assert "not timezone-aware" in audit.independent_audit.message
-    assert audit.independent_audit.model_version == "frontier-independent-economic-audit-19"
+    assert audit.independent_audit.model_version == "frontier-independent-economic-audit-20"
 
 
 def test_independent_audit_rejects_quantity_step_mutation():
@@ -2275,7 +2291,7 @@ def test_candidate_generation_and_independent_audit_enforce_price_ticks():
         as_of_utc=T0 + timedelta(milliseconds=100),
     )
     candidate = next(item for item in candidates if item.legs)
-    assert candidate.model_version == "frontier-economic-verifiers-19"
+    assert candidate.model_version == "frontier-economic-verifiers-20"
 
     def with_half_dollar_ticks(market_value):
         instruments = tuple(
@@ -2693,7 +2709,7 @@ def test_verified_multi_outcome_coverage_is_exact_and_stays_hypothetical():
         as_of_utc=T0 + timedelta(milliseconds=100),
         code_version="multi-outcome-fixture-v1",
     )
-    assert replay.manifest.replay_version == "frontier-deterministic-replay-18"
+    assert replay.manifest.replay_version == "frontier-deterministic-replay-19"
     replay_candidate = replay.candidates[0]
     assert replay_candidate.model_copy(update={"independent_audit": None}) == candidate
     assert replay_candidate.independent_audit is not None
@@ -3051,7 +3067,7 @@ def test_deterministic_replay_is_invariant_to_input_order():
     }
     first = deterministic_replay((left, right), all_books, **kwargs)
     second = deterministic_replay((right, left), tuple(reversed(all_books)), **kwargs)
-    assert first.manifest.economic_model_version == "frontier-economic-verifiers-19"
+    assert first.manifest.economic_model_version == "frontier-economic-verifiers-20"
     assert first.run_id == second.run_id
     assert first.result_sha256 == second.result_sha256
     assert first.candidates == second.candidates

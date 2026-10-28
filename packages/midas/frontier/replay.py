@@ -36,7 +36,7 @@ from midas.frontier.relationships import (
     propose_relationships,
 )
 
-REPLAY_VERSION = "frontier-deterministic-replay-18"
+REPLAY_VERSION = "frontier-deterministic-replay-19"
 PAIRED_COMPARISON_VERSION = "frontier-paired-replay-1"
 
 
@@ -194,6 +194,10 @@ def deterministic_replay(
 ) -> ReplayResult:
     """Replay saved evidence only. The function has no adapter or network dependency."""
     scenario = scenario or ExecutionScenario()
+    if any(not market.has_valid_structure for market in markets):
+        raise ValueError("Replay input contains a market that fails structural validation")
+    if any(not book.has_valid_structure for book in books):
+        raise ValueError("Replay input contains a book that fails structural validation")
     all_times = [market.provenance.response_received_at_utc for market in markets]
     all_times.extend(book.received_at_utc for book in books)
     pinned_as_of = as_of_utc or max(all_times, default=datetime(1970, 1, 1, tzinfo=UTC))
@@ -220,8 +224,6 @@ def deterministic_replay(
     market_index = {item.canonical_id: item for item in ordered_markets}
     if len(market_index) != len(ordered_markets):
         raise ValueError("Replay input contains duplicate market identities")
-    if any(not item.has_valid_structure for item in ordered_markets):
-        raise ValueError("Replay input contains a market that fails structural validation")
     ordered_joint_state_mappings = tuple(
         sorted(joint_state_mappings, key=lambda item: item.mapping_id)
     )
@@ -246,8 +248,6 @@ def deterministic_replay(
         per_market = book_index.setdefault(market.canonical_id, {})
         if book.native_instrument_id in per_market:
             raise ValueError("Replay contains duplicate book observations for one instrument")
-        if not book.has_valid_price_levels:
-            raise ValueError("Replay contains duplicate or invalid book price levels")
         per_market[book.native_instrument_id] = book
 
     proposals = propose_relationships(ordered_markets, max_pairs=relationship_limit)
