@@ -2,13 +2,15 @@
 
 **Report date:** 2026-10-28
 
-## Current status — 2026-10-28 04:56 UTC
+## Current status — 2026-10-28 05:05 UTC
 
 The isolated development branch is `codex/frontier-20261026`; the latest code
-checkpoint is `bffa163` (`fix(arena): honor configured global admission
-root`). The major Frontier implementation snapshot is commit `2064671`; this
-incremental fix makes the shared Arena lock follow configured test roots while
-preserving the production default. The current implementation
+checkpoint is `8fb4c0d` (`fix(frontier): serialize source collection across
+processes`), following `bffa163` (`fix(arena): honor configured global
+admission root`). The major Frontier implementation snapshot is commit
+`2064671`; these incremental fixes make the shared Arena lock follow configured
+test roots and prevent competing API processes from collecting the same venue
+concurrently. The current implementation
 includes four read-only source adapters, canonical market and payoff models,
 evidence-backed relationship review, binary/implication/basket candidate
 families, bounded multi-market
@@ -52,6 +54,14 @@ cross-venue relationship. Consequently, no genuine cross-venue economic
 opportunity is established. Full repository regression and production
 transition remain open; deployment requires a separate authorized readiness
 review.
+
+The latest collection-only regression passes **21/21** after the new source
+lease change. This is not a rerun of the full Frontier or MIDAS suites. Strict
+type checking, browser verification, and broader regression after this change
+remain pending. At `2026-10-28T05:05Z`, memory PSI avg10 was **0.00% some / 0.00%
+full**, but I/O PSI avg10 was **1.17% some / 1.03% full**; the shared Arena
+lock was not held. No additional resource-bearing checks started at that
+sample.
 
 ## Bounded metadata and initial resource checkpoint — 2026-10-28 03:59 UTC
 
@@ -6527,3 +6537,31 @@ over 300 seconds. About **10.3 GiB** was available; I/O PSI avg10 was below
 1%. The short-window full PSI still exceeds the Arena admission threshold of
 1%, so no broad suite or browser run started. Recheck before resource-bearing
 verification.
+
+## Cross-process source collection lease — 2026-10-28 05:05 UTC
+
+Code commit `8fb4c0d` gives each venue a process-shared, nonblocking `flock`
+lease in the isolated Frontier collection store. A second API process cannot
+start or resume a competing finite collection for that venue while the lease
+is held; other venues use separate leases. A rejected start does not create a
+run record. Resume re-reads the latest checkpoint after taking the lease, so a
+run completed by another process is returned from its terminal checkpoint.
+Lease files are opened without following symlinks and must be user-owned
+regular files. The lease is released on normal completion, error, timeout, or
+cancellation.
+
+The complete `tests/frontier/test_collection.py` module passed **21/21** in
+6.04 seconds pytest time (**6.41 seconds wall**) at **67,672 KiB peak RSS**,
+zero swaps, and zero socket messages. The added checks cover competing
+collector instances, a forked competing process, per-venue independence,
+rejection before run creation, and lease release. Ruff check/format and
+`git diff --check` passed. No exchange request, browser/build, protected
+service change, or production lock write was involved. Strict typing and the
+broader suites remain pending.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Per-venue collection lifecycle isolation | COMPLETE AND VERIFIED | Process-shared nonblocking lease, competing-process rejection, other-venue concurrency, no orphan run, and lease release pass in the collection module. |
+| Full Frontier and MIDAS regression after this change | PARTIALLY VERIFIED | Only the complete collection module was rerun; the full suites remain outstanding. |
+| Strict typing and browser/runtime integration after this change | DEFERRED | At 05:05 UTC I/O PSI avg10 was above the 1% admission threshold; recheck before additional resource-bearing verification. |
+| Live cross-venue economics and deployment | BLOCKED / DEFERRED | Existing source-use restrictions and production readiness boundaries remain unchanged. |

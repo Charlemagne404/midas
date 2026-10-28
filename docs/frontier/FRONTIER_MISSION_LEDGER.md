@@ -5144,3 +5144,46 @@ remained below 1%. Although short-window `some` PSI is low, `full` PSI exceeds
 the Arena gate's 1% threshold; no test, build, or browser run was started.
 Next safe action: remeasure, then run isolated browser verification and resume
 the repository suite only when the full-PSI gate and shared lock both admit it.
+
+## Cross-process source collection lease — 2026-10-28 05:05 UTC
+
+Code commit `8fb4c0d` adds a nonblocking `flock` lease per venue to the finite
+Frontier collector. The lock is shared across API processes, keeps venues
+independent, and is acquired before a new run is recorded. Resume reloads the
+latest checkpoint after lease acquisition, avoiding stale sequence writes when
+another process finishes the run first. Unsafe/symlink lock paths are rejected;
+the OS releases the lease on exceptions, timeout, cancellation, or process exit.
+
+Verification:
+
+```bash
+/home/charlie/midas/.venv/bin/ruff check \
+  packages/midas/frontier/collection.py tests/frontier/test_collection.py
+# All checks passed
+/home/charlie/midas/.venv/bin/ruff format --check \
+  packages/midas/frontier/collection.py tests/frontier/test_collection.py
+# 2 files already formatted
+nice -n 10 /usr/bin/time -v env PYTHONPATH=packages:. \
+  /home/charlie/midas/.venv/bin/python -m pytest -q \
+  --basetemp=/tmp/midas-frontier-collection-regression-20261028T0501Z \
+  tests/frontier/test_collection.py
+# 21 passed in 6.04s; 67,672 KiB peak RSS; zero swaps or socket messages
+```
+
+The focused module tests cross-instance and forked-process exclusion, separate
+venue leases, rejection before a competing run is inserted, and release after
+cancellation. `git diff --check` passed. No source request, protected service,
+production lock, browser, or build was touched. Strict typing and broad
+regression after this change remain pending.
+
+At `2026-10-28T05:05Z`, no process held the shared Arena lock. Memory PSI avg10
+was **0.00% some / 0.00% full**; I/O PSI avg10 was **1.17% some / 1.03% full**.
+No further resource-bearing checks started. Recheck before running mypy,
+browser tests, or broader regression.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Per-venue collection lifecycle isolation | COMPLETE AND VERIFIED | Cross-process lock behavior, independent venue leases, no orphan run, and cancellation release are covered by 21 passing collection tests. |
+| Full Frontier/MIDAS regression after `8fb4c0d` | PARTIALLY VERIFIED | Collection module passes 21/21; broader suites were not rerun. |
+| Strict typing and web runtime after `8fb4c0d` | DEFERRED | I/O PSI avg10 was above admission threshold at the last sample. |
+| Project Frontier overall | PARTIALLY VERIFIED | Live cross-venue economic evidence, broad regression, source authorization, and deployment gates remain open. |
