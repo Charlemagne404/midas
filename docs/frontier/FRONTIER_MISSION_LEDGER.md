@@ -11513,3 +11513,66 @@ was accessed.
 
 Next safe action: continue bounded audit of storage provenance; broad suites
 remain deferred under narrow API headroom.
+
+## Stored replay provenance review — 2026-10-28 22:03 UTC
+
+Read-only review traced the normal API replay path from storage to its manifest.
+Market and book loaders replace embedded provenance IDs with the immutable
+store observation IDs; replay relationship inputs come from the effective,
+verified, held-source-filtered relationship query. Existing API regression
+coverage asserts that market and book IDs in the manifest resolve to stored
+observations, relationship evidence resolves, repeat replay returns the same
+run ID, and paired replay retains those inputs. This test was inspected but not
+rerun in this checkpoint.
+
+The generic storage method still accepts deterministic in-memory replay
+fixtures without corresponding observation rows. Existing storage tests use
+that behavior, so source-reference enforcement belongs at the source-backed
+API boundary rather than as a universal store constraint. No code change was
+warranted. No source endpoint or protected service was accessed.
+
+At `2026-10-28T22:02:22Z`, host memory PSI was 0%, `MemAvailable` was
+9,546,976 kB, and `SwapFree` was 61,308 kB. At `22:02:33Z`, API cgroup
+headroom was 5,099,520 bytes and Reality cgroup headroom was 209,018,880
+bytes. Broad regression remains deferred under the narrow API margin.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Source-backed replay observation lineage | COMPLETE AND VERIFIED BY CODE REVIEW | API loaders bind markets and books to immutable store record IDs; existing fixture integration asserts references resolve. |
+| Synthetic replay persistence | COMPLETE AND VERIFIED WITH FIXTURES | Generic store accepts offline deterministic runs without public observation rows. |
+| Project Frontier overall | PARTIALLY VERIFIED | Live cross-venue science, broad regression, endurance, recovery, and deployment remain open. |
+
+Next safe action: inspect replay-result internal consistency and storage
+revalidation without accessing held source evidence.
+
+## Replay-result cross-field validation — 2026-10-28 22:06 UTC
+
+`ReplayResult` now rejects a manifest relationship list that differs from the
+applied relationships and classification totals that differ from the stored
+candidate rows. `FrontierStore.append_replay` revalidates model instances, so
+the same check catches inconsistent `model_copy` inputs before database
+initialization. The rule does not change replay hashes or legacy payload
+normalization.
+
+The new model regression passes **1/1**. The complete focused relationship,
+economics, and replay module passes **104/104**; the storage replay selection,
+including legacy replay readability, passes **8/8**. Ruff check and format
+pass for all changed Python files, and strict mypy passes for
+`packages/midas/frontier/replay.py`. Runs were capped at 1 GiB address space
+and 60 CPU seconds with reduced priority.
+
+At `2026-10-28T22:05:48Z`, API headroom was 4,431,872 bytes and Reality
+headroom was 197,267,456 bytes. Memory PSI was 0%; available memory was
+9,548,252 kB and swap free was 61,596 kB. No exchange endpoint or protected
+service was accessed. No changes were made to the pre-existing untracked
+`data/frontier-public-probes/` evidence.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Replay summary and relationship index consistency | COMPLETE AND VERIFIED WITH FIXTURES | Model validation rejects cross-field drift; the append path rejects a copied inconsistent result before creating a database. |
+| Focused replay regression | COMPLETE AND VERIFIED | 104/104 relationship/economics/replay tests; 8/8 storage replay tests including legacy reading. |
+| Project Frontier overall | PARTIALLY VERIFIED | Live cross-venue research, broad regression, endurance, protected recovery, and deployment remain open. |
+
+Next safe action: continue source-independent inspection of candidate-to-run
+provenance and API readback, with broad tests deferred under narrow API
+headroom.

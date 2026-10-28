@@ -49,7 +49,7 @@ from midas.frontier.relationships import (
     propose_relationships,
     verify_same_payoff,
 )
-from midas.frontier.replay import deterministic_replay, paired_deterministic_replay
+from midas.frontier.replay import ReplayResult, deterministic_replay, paired_deterministic_replay
 from pydantic import ValidationError
 
 from tests.frontier.builders import T0, book, market
@@ -549,6 +549,29 @@ def test_cross_venue_replay_rejects_equivalence_assertion_after_cutoff():
         for item in candidates
         if item.independent_audit is not None
     )
+
+
+def test_replay_result_rejects_manifest_and_classification_summary_drift():
+    left, right, relationship, _instrument_mapping = _verified_pair()
+    left_books, right_books = _books(left, right)
+    replay = deterministic_replay(
+        (left, right),
+        tuple(left_books.values()) + tuple(right_books.values()),
+        verified_relationships=(relationship,),
+        as_of_utc=T0 + timedelta(milliseconds=100),
+        code_version="replay-result-index-consistency-test-v1",
+    )
+    assert replay.candidates
+
+    relationship_drift = replay.model_dump(mode="json")
+    relationship_drift["manifest"]["relationship_ids"] = []
+    with pytest.raises(ValidationError, match="manifest relationships"):
+        ReplayResult.model_validate(relationship_drift)
+
+    classification_drift = replay.model_dump(mode="json")
+    classification_drift["classification_counts"] = {}
+    with pytest.raises(ValidationError, match="classification counts"):
+        ReplayResult.model_validate(classification_drift)
 
 
 def test_deterministic_replay_rejects_duplicate_relationship_identities():

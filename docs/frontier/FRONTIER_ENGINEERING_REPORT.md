@@ -12467,3 +12467,75 @@ avg10/avg60/avg300 was 0%; `MemAvailable` was 9,550,416 kB and `SwapFree` was
 
 Next safe action: continue low-resource review of storage/replay provenance;
 keep broad regressions deferred under the current API memory margin.
+
+## Source-backed replay provenance review — 2026-10-28 22:03 UTC
+
+Read-only inspection traced `/api/frontier/replay` and joint-state replay
+through their input loaders. Market records come from hash-validated stored
+observations and have their runtime provenance ID replaced with the immutable
+observation record ID. Book records follow the same pattern. The replay API
+selects effective verified relationships after the held-source filter; the
+manifest is built from those market and book provenance IDs and applied
+relationship IDs.
+
+Existing fixture API coverage at `tests/frontier/test_api.py` asserts manifest
+market IDs equal the stored market observation set, the book ID equals the
+stored book record, relationship evidence IDs resolve, repeated replay has the
+same run ID, and paired replay retains the inputs. This review did not rerun
+that API test. `FrontierStore.append_replay` intentionally also accepts offline
+deterministic fixture runs that have no source observation rows; current
+storage tests exercise that behavior. A universal foreign-key rule would
+conflate synthetic research with source-backed capture, so no code change was
+made. API-input lineage is validated by the loaders and existing fixture
+assertions.
+
+At `2026-10-28T22:02:22Z`, memory PSI was 0%, available memory 9,546,976 kB,
+and swap free 61,308 kB. At `22:02:33Z`, API `MemoryHigh` headroom was
+5,099,520 bytes and Reality headroom was 209,018,880 bytes. No source endpoint
+or protected service was accessed. This was static review only; broad tests
+remain deferred.
+
+| Requirement | Status | Evidence and boundary |
+| --- | --- | --- |
+| Source-backed replay observation lineage | COMPLETE AND VERIFIED BY CODE REVIEW | Market and book loaders bind runtime provenance to stored observation IDs; existing fixture API assertions cover reference resolution and repeat identity. |
+| Offline synthetic replay persistence | COMPLETE AND VERIFIED WITH FIXTURES | Store tests persist deterministic fixture results without source observation rows. |
+| Overall Frontier acceptance | PARTIALLY VERIFIED | Live cross-venue research, broad regression, endurance, protected recovery, and deployment remain open. |
+
+Next safe action: inspect cross-field replay-result consistency and write-path
+validation; continue preserving the source-use holds.
+
+## Replay-result consistency validation — 2026-10-28 22:06 UTC
+
+Static review found `ReplayResult` had no cross-field validation: a
+manifest could claim a different applied-relationship list, or
+`classification_counts` could disagree with the candidates in the same
+artifact. The deterministic builder currently writes matching fields, but the
+model and storage accepted inconsistent copied inputs. `ReplayResult` now
+checks both invariants. The storage append path revalidates copied models, so
+the regression confirms an inconsistent result is rejected before database
+initialization. The validator does not recalculate run or result hashes; the
+existing storage hash and legacy normalization behavior remain unchanged.
+
+The new invariant test passes **1/1**. The full focused
+`tests/frontier/test_relationships_economics_replay.py` module passes
+**104/104**. `tests/frontier/test_storage.py -k replay` passes **8/8**, including
+the legacy replay manifest/audit read case. Ruff check and format pass on the
+three changed Python files; strict mypy passes for `replay.py`. Verification
+processes were capped at 1 GiB address space and 60 seconds CPU and ran at
+reduced priority.
+
+At `2026-10-28T22:05:48Z`, API `MemoryHigh` headroom was 4,431,872 bytes and
+Reality headroom was 197,267,456 bytes. Memory PSI was 0%, available memory
+9,548,252 kB, and swap free 61,596 kB. No exchange endpoint or protected
+service was accessed. The pre-existing untracked `data/frontier-public-probes/`
+directory was preserved.
+
+| Requirement | Status | Evidence and boundary |
+| --- | --- | --- |
+| Replay manifest/applied relationship consistency | COMPLETE AND VERIFIED | Model validation compares the persisted relationship index to applied relationships. |
+| Replay classification summary consistency | COMPLETE AND VERIFIED | Model validation recomputes counts from candidates; append rejects inconsistent copied models. |
+| Legacy replay storage compatibility | COMPLETE AND VERIFIED WITH FIXTURES | The selected storage replay tests include legacy manifest and audit payload readback. |
+| Overall Frontier acceptance | PARTIALLY VERIFIED | Live cross-venue science, broad regressions, endurance, protected recovery, and deployment remain open. |
+
+Next safe action: continue static review of candidate-to-run provenance and
+API readback; broad suites remain deferred under narrow API headroom.

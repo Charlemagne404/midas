@@ -189,6 +189,19 @@ def test_append_replay_revalidates_copied_result_hash_before_initialization(tmp_
     assert not store.path.exists()
 
 
+def test_append_replay_rejects_copied_inconsistent_summary_before_initialization(
+    tmp_path: Path,
+):
+    store = FrontierStore(tmp_path / "inconsistent-replay-store")
+    _comparison, runs = _paired_fixture()
+    malformed = runs[0].model_copy(update={"classification_counts": {}})
+
+    with pytest.raises(FrontierStoreError, match="Replay result fails canonical model validation"):
+        store.append_replay(malformed)
+
+    assert not store.path.exists()
+
+
 def test_append_comparison_revalidates_copied_result_hash_before_initialization(tmp_path: Path):
     store = FrontierStore(tmp_path / "invalid-comparison-store")
     comparison, runs = _paired_fixture()

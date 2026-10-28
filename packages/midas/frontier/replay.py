@@ -72,6 +72,23 @@ class ReplayResult(FrontierModel):
     classification_counts: dict[str, int] = Field(default_factory=dict)
     result_sha256: str
 
+    @model_validator(mode="after")
+    def replay_indexes_match_payload(self) -> ReplayResult:
+        applied_relationship_ids = tuple(
+            item.relationship_id for item in self.applied_relationships
+        )
+        if self.manifest.relationship_ids != applied_relationship_ids:
+            raise ValueError("Replay manifest relationships do not match applied relationships")
+        expected_classification_counts: dict[str, int] = {}
+        for candidate in self.candidates:
+            classification = candidate.classification.value
+            expected_classification_counts[classification] = (
+                expected_classification_counts.get(classification, 0) + 1
+            )
+        if self.classification_counts != expected_classification_counts:
+            raise ValueError("Replay classification counts do not match its candidates")
+        return self
+
 
 class ReplayComparisonArm(FrontierModel):
     scenario: ExecutionScenario

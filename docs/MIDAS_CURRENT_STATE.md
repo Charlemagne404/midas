@@ -3795,3 +3795,34 @@ At `2026-10-28T22:00:12Z`, API was active at 1,605,824,512 / 1,610,612,736
 bytes and Reality at 1,006,538,752 / 1,207,959,552 bytes. Memory PSI was 0%,
 available memory 9,550,416 kB, and swap free 61,284 kB. Broad regression
 remains deferred due narrow API `MemoryHigh` headroom.
+
+## Project Frontier stored replay provenance review — 2026-10-28 22:03 UTC
+
+Read-only review confirmed that source-backed API replay takes markets, books,
+and effective verified relationships from the store and builds manifest
+observation IDs from immutable stored records. Existing fixture API coverage
+checks those references resolve and that replay identities repeat
+deterministically; it was not rerun in this checkpoint. Generic storage also
+supports synthetic offline replays, so referential enforcement is kept at the
+API source boundary. No code or source data changed. Frontier remains
+partially verified; live source research, broad regression, endurance,
+recovery, and deployment remain outstanding.
+
+At `2026-10-28T22:02:22Z`, memory PSI was 0%, available memory 9,546,976 kB,
+and swap free 61,308 kB. At `22:02:33Z`, API cgroup headroom was 5,099,520
+bytes and Reality headroom was 209,018,880 bytes. Broad tests remain deferred.
+
+## Project Frontier replay-result consistency — 2026-10-28 22:06 UTC
+
+`ReplayResult` now validates that manifest relationship IDs match its applied
+relationships and that classification counts match its candidate rows. Store
+append revalidation rejects inconsistent copied models before initializing a
+database. Focused verification passes: 104/104 relationship/economics/replay
+cases and 8/8 storage replay cases, including legacy replay reading. Ruff,
+format, and strict mypy pass for the changed code. No source endpoint or
+protected service changed. Frontier remains partially verified.
+
+At `2026-10-28T22:05:48Z`, API was at 1,606,180,864 / 1,610,612,736 bytes and
+Reality at 1,010,692,096 / 1,207,959,552 bytes. Memory PSI was 0%, available
+memory 9,548,252 kB, and swap free 61,596 kB. Broad regression remains
+deferred because API headroom is narrow.
