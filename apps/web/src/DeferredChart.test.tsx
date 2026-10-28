@@ -72,4 +72,13 @@ describe('DeferredChart', () => {
     expect(observers[0].disconnected).toBe(true);
     expect(document.querySelector('.chart-deferred')).toHaveAttribute('aria-busy', 'false');
   });
+
+  it('loads immediately when IntersectionObserver is unavailable', async () => {
+    Reflect.deleteProperty(globalThis, 'IntersectionObserver');
+
+    render(<DeferredChart label="Price history fallback" option={{}} />);
+
+    expect(await screen.findByTestId('heavy-chart')).toHaveTextContent('Price history fallback');
+    expect(observers).toHaveLength(0);
+  });
 });
