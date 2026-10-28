@@ -311,6 +311,31 @@ async def test_competing_collector_start_is_rejected_before_creating_an_orphan_r
 
 
 @pytest.mark.asyncio
+async def test_initial_checkpoint_failure_rolls_back_the_new_collection_run(tmp_path):
+    store = FrontierStore(tmp_path / "frontier")
+    journal = CollectionJournal(store.root)
+    journal.initialize()
+    with sqlite3.connect(journal.path) as connection:
+        connection.execute(
+            """CREATE TRIGGER reject_initial_checkpoint
+               BEFORE INSERT ON collection_checkpoints
+               BEGIN SELECT RAISE(ABORT, 'fixture initial-checkpoint failure'); END"""
+        )
+
+    adapter = FakeAdapter()
+    with pytest.raises(sqlite3.IntegrityError, match="fixture initial-checkpoint failure"):
+        await BoundedSourceCollector(adapter, store, journal).start(
+            market_limit=1,
+            book_limit=0,
+        )
+
+    with sqlite3.connect(journal.path) as connection:
+        assert connection.execute("SELECT COUNT(*) FROM collection_runs").fetchone()[0] == 0
+        assert connection.execute("SELECT COUNT(*) FROM collection_checkpoints").fetchone()[0] == 0
+    assert adapter.discovery_calls == 0
+
+
+@pytest.mark.asyncio
 async def test_finite_collection_persists_market_books_and_is_idempotent_on_resume(tmp_path):
     store = FrontierStore(tmp_path / "frontier")
     adapter = FakeAdapter()
@@ -332,6 +357,7 @@ async def test_finite_collection_persists_market_books_and_is_idempotent_on_resu
     assert adapter.discovery_calls == 1
     assert len(adapter.book_calls) == 2
     checkpoints = CollectionJournal(store.root).checkpoints(result.run_id)
+    assert checkpoints[0].state == "created"
     assert checkpoints[-1].state == "completed"
     assert [item.sequence for item in checkpoints] == list(range(len(checkpoints)))
     assert checkpoints[-1].completed_book_task_ids == tuple(

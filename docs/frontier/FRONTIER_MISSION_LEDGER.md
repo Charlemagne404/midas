@@ -1,5 +1,36 @@
 # Project Frontier Mission Ledger
 
+## Atomic initial collection checkpoint — 2026-10-28 12:16 UTC
+
+Source-only review found that finite collection startup wrote a run record and
+its first checkpoint in separate SQLite transactions. A process failure between
+those writes could leave a run without the durable checkpoint required by
+history and resume. `BoundedSourceCollector.start()` now writes both records in
+one transaction through `create_run_with_initial_checkpoint()`. A failed
+checkpoint insert rolls back the run row as well; source requests happen only
+after this transaction commits.
+
+A fixture regression installs a temporary SQLite trigger that rejects the
+initial checkpoint insert and verifies that both tables remain empty and no
+adapter request starts. The existing successful finite-capture test also checks
+that the first durable state is `created`. Ruff and format checks pass, and
+`git diff --check` is clean. Runtime tests and strict typing have not run yet.
+
+At 12:16:02 UTC memory PSI avg10 was **26.58% some / 17.06% full**, I/O PSI
+avg10 was **3.67% some / 2.54% full**, about **10 GiB** was available, and
+**3.5/4 GiB** swap was in use. No test was launched against this sample. No
+service, live source, capture, or protected store was used. The pre-existing
+untracked public-capture directory remains untouched.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Initial collection persistence atomicity | IMPLEMENTED, VALIDATION PENDING | Run and initial checkpoint now share a transaction; rollback and success-state tests are committed after runtime admission. |
+| Frontier overall | PARTIALLY VERIFIED | Broad MIDAS regression, authorized cross-venue evidence, production recovery, and deployment remain open. |
+
+Next safe action: after fresh memory and I/O PSI avg10 both fall below 1%, run
+the focused collection module with a unique tmpfs pytest basetemp and then
+strictly type-check the changed module.
+
 ## Reality research-schedule fixture correction — 2026-10-28 12:12 UTC
 
 Test commit cd248ce fixes a synthetic fixture that patched the wrong Python

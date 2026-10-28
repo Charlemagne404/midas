@@ -431,6 +431,76 @@ class CollectionJournal:
             self._budget_check(connection)
             connection.commit()
 
+    def create_run_with_initial_checkpoint(
+        self,
+        spec: CollectionRunSpec,
+        checkpoint: CollectionCheckpoint,
+    ) -> str:
+        """Atomically persist a new run and its required initial checkpoint."""
+        self.initialize()
+        try:
+            validated_spec = CollectionRunSpec.model_validate(spec.model_dump(mode="json"))
+            validated_checkpoint = CollectionCheckpoint.model_validate(
+                checkpoint.model_dump(mode="json")
+            )
+        except ValueError as error:
+            raise FrontierStoreError(
+                "Initial collection run/checkpoint failed storage validation"
+            ) from error
+        if (
+            validated_checkpoint.run_id != validated_spec.run_id
+            or validated_checkpoint.sequence != 0
+            or validated_checkpoint.state != "created"
+        ):
+            raise FrontierStoreError(
+                "Initial collection checkpoint must be sequence zero for a new run"
+            )
+
+        spec_encoded = _canonical_json(validated_spec.model_dump(mode="json"))
+        checkpoint_encoded = _canonical_json(validated_checkpoint.model_dump(mode="json"))
+        if len(spec_encoded) > MAX_ROW_BYTES:
+            raise FrontierStoreError("Collection run spec exceeds the record bound")
+        if len(checkpoint_encoded) > MAX_COLLECTION_CHECKPOINT_BYTES:
+            raise FrontierStoreError("Collection checkpoint exceeds the 8 MiB record bound")
+        spec_digest = hashlib.sha256(spec_encoded).hexdigest()
+        checkpoint_digest = hashlib.sha256(checkpoint_encoded).hexdigest()
+
+        with self._connect() as connection:
+            connection.execute("BEGIN IMMEDIATE")
+            run_count = int(
+                connection.execute("SELECT COUNT(*) FROM collection_runs").fetchone()[0]
+            )
+            if run_count >= MAX_COLLECTION_RUNS:
+                connection.rollback()
+                raise FrontierStoreError("Frontier collection run budget is exhausted")
+            checkpoint_count = int(
+                connection.execute("SELECT COUNT(*) FROM collection_checkpoints").fetchone()[0]
+            )
+            if checkpoint_count >= MAX_COLLECTION_CHECKPOINTS_TOTAL:
+                connection.rollback()
+                raise FrontierStoreError("Global collection checkpoint budget is exhausted")
+            connection.execute(
+                "INSERT INTO collection_runs VALUES(?,?,?)",
+                (
+                    validated_spec.run_id,
+                    spec_digest,
+                    spec_encoded.decode("utf-8"),
+                ),
+            )
+            connection.execute(
+                "INSERT INTO collection_checkpoints VALUES(?,?,?,?,?)",
+                (
+                    validated_checkpoint.run_id,
+                    0,
+                    None,
+                    checkpoint_encoded.decode("utf-8"),
+                    checkpoint_digest,
+                ),
+            )
+            self._budget_check(connection)
+            connection.commit()
+        return checkpoint_digest
+
     def run_spec(self, run_id: str) -> CollectionRunSpec:
         if not _valid_run_id(run_id):
             raise ValueError("Collection run identity is invalid")
@@ -996,13 +1066,12 @@ class BoundedSourceCollector:
         )
         async with self._lock:
             with self.journal.source_lease(spec.venue):
-                self.journal.create_run(spec)
                 checkpoint = self._checkpoint(
                     spec,
                     None,
                     state="created",
                 )
-                self.journal.append_checkpoint(checkpoint)
+                self.journal.create_run_with_initial_checkpoint(spec, checkpoint)
                 return await self._execute_locked(spec, checkpoint)
 
     async def resume(self, run_id: str) -> CollectionRunResult:
