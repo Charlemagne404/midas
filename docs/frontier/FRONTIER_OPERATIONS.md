@@ -16,20 +16,22 @@ campaigns, or other historical stores.
 ## Same-payoff review and replay cutoff
 
 New same-payoff reviews use verifier version
-`frontier-equivalence-verifier-6`. The review must cite the two distinct
+`frontier-equivalence-verifier-7`. The review must cite the two distinct
 stored market observation IDs loaded for the reviewed pair; its assertion time
 cannot predate either market record. Candidate replay also requires the
 versioned assertion to exist by that replay's cutoff. A review entered later
 cannot validate a historical candidate.
 
-Previously saved pre-v6 same-payoff relationships remain readable and
+Previously saved pre-v7 same-payoff relationships remain readable and
 append-only, but the current independent audit
 (`frontier-independent-economic-audit-20`) classifies a candidate using one as
 `INCOMPLETE_EVIDENCE`. Re-review the original hypothesis against the current
-stored market records to produce a version-6 relationship before using it in a
-new audited replay. The verifier and audit also recheck uniqueness of payoff
-states, native instrument identities, outcome identities, and payout rows;
-the audit checks every instrument, including unselected legs. This guards
+stored market records to produce a version-7 relationship before using it in a
+new audited replay. The verifier also requires at least one instrument payout
+vector on each market, so an empty mapping cannot pass as a vacuous bijection.
+The verifier and audit recheck uniqueness of payoff states, native instrument
+identities, outcome identities, and payout rows; the audit checks every
+instrument, including unselected legs. This guards
 against in-memory `model_copy(update=...)` objects that bypass ordinary model
 validation. The reviewer label and assertion ID remain self-attributed; this
 workflow does not authenticate them or establish legal or semantic equivalence.

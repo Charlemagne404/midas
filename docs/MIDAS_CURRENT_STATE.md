@@ -33,6 +33,19 @@ in the dated addendum below and in the Frontier engineering report.
 
 ## Frontier development addendum — 2026-10-28
 
+### Latest isolated Frontier checkpoint — 2026-10-28 13:00 UTC
+
+An offline verifier audit reproduced a vacuous proof: two binary markets with
+empty instrument sets could be marked as same-payoff equivalent because the
+empty instrument mapping is a bijection. The verifier now requires actual
+instrument payout vectors and has advanced to version 7, which causes the
+independent audit to reject prior v6 attestations as current verification.
+The empty-left/right/both regression and prior-verifier v5/v6 checks pass; the
+full Frontier and related Arena regression passes **459/459**. Ruff, format,
+and strict mypy for the changed verifier and independent audit pass. Tests and
+mypy used isolated `/tmp` roots with zero swap and socket traffic. Frontier
+remains **PARTIALLY VERIFIED**, research-only, isolated, and undeployed.
+
 ### Latest isolated Frontier checkpoint — 2026-10-28 12:52 UTC
 
 The Arena discovery fixture now cites the exact source observation IDs pinned

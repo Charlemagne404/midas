@@ -1,5 +1,40 @@
 # Project Frontier Mission Ledger
 
+## Same-payoff verifier empty-instrument rejection — 2026-10-28
+
+A targeted review found that `verify_same_payoff` accepted two binary event
+markets with no instruments when given an empty instrument mapping. Because
+the empty mapping is technically a bijection over two empty sets, the verifier
+incorrectly produced a `VERIFIED` edge without comparing any payout vectors.
+This was reproduced directly against the current branch. The verifier now
+rejects either market when it has no instrument payout vectors, and its version
+has advanced from 6 to 7 so the independent audit will not treat prior edges
+as current verification. Existing v6 evidence remains readable but requires
+re-review for new audited candidates.
+
+The regression covers an empty left market, empty right market, and both empty.
+The targeted verifier/version slice passed **10/10** in 0.57 seconds; Ruff
+check, Ruff format, and `git diff --check` pass. The full `tests/frontier`
+suite plus Arena replay/discovery/timeline passed **459/459** in 108.32 seconds
+(109.76 seconds wall), at 381,136 KiB peak RSS with zero swaps and socket
+messages. All test output was isolated under
+`/tmp/midas-frontier-v7-full-20261028`.
+
+Before the full run memory PSI avg10 was 0.00%, I/O PSI avg10 was 0.04% some /
+0.04% full, and 10.2 GiB was available. Afterward memory PSI remained 0.00%,
+while I/O PSI rose to 4.38% some / 2.65% full. Strict mypy is held until a
+fresh I/O sample is below the 1% admission threshold. After I/O avg10 returned
+below 1%, strict mypy passed with no issues in `relationships.py` and
+`independent_audit.py` (2.49 seconds). The exact command was:
+
+```text
+PYTHONPATH=packages:. /home/charlie/midas/.venv/bin/mypy --cache-dir=/tmp/midas-frontier-mypy-v7-20261028 packages/midas/frontier/relationships.py packages/midas/frontier/independent_audit.py
+```
+
+At 13:00:52 UTC, memory PSI avg10 was 0.00%, I/O PSI avg10 was 0.01% some /
+0.01% full, and 10.2 GiB was available. No capture, exchange endpoint,
+production service, or historical research artifact was used or modified.
+
 ## Arena relationship fixture repair — 2026-10-28 12:52 UTC
 
 Four Arena discovery regressions rejected their synthetic cross-venue

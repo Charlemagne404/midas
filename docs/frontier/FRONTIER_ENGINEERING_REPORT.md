@@ -2,6 +2,27 @@
 
 **Report date:** 2026-10-28
 
+## Same-payoff verifier empty-instrument rejection — 2026-10-28
+
+Direct reproduction found that two verified binary markets with no
+instruments could receive a `VERIFIED` same-payoff edge: the empty instrument
+mapping passed the bijection check without comparing any payout vectors. The
+verifier now rejects a supplied market with no instrument payout vectors, and
+the version is advanced from 6 to 7. This invalidates old v6 attestations for
+new independent candidate audits while leaving their stored evidence
+readable; a fresh review against current source records is required.
+
+The regression covers the empty-left, empty-right, and both-empty cases. The
+targeted verifier/version slice passed **10/10**; Ruff check/format and
+`git diff --check` pass. The complete `tests/frontier` suite plus Arena
+replay/discovery/timeline passed **459/459** in 108.32 seconds (109.76 seconds
+wall), peaking at 381,136 KiB RSS with zero swaps and socket messages. Test
+artifacts stayed under `/tmp/midas-frontier-v7-full-20261028`. Strict mypy is
+also passed after I/O PSI avg10 returned below 1%: `relationships.py` and
+`independent_audit.py` have no issues. Ruff check/format and `git diff --check`
+pass. This is an implementation correction, not evidence of a live cross-venue
+equivalence.
+
 ## Arena relationship fixture repair — 2026-10-28 12:52 UTC
 
 The Arena discovery fixtures used placeholder source observation IDs. The

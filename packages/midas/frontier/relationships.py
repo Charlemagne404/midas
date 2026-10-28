@@ -22,7 +22,7 @@ from midas.frontier.models import (
 
 D = Decimal
 MATCHER_VERSION = "frontier-relationship-matcher-5"
-SAME_PAYOFF_VERIFIER_VERSION = "frontier-equivalence-verifier-6"
+SAME_PAYOFF_VERIFIER_VERSION = "frontier-equivalence-verifier-7"
 LOGICAL_IMPLICATION_VERIFIER_VERSION = "frontier-logical-implication-verifier-3"
 MAX_LOGICAL_IMPLICATION_STATES = 1024
 MAX_LOGICAL_STATE_ID_CHARS = 128
@@ -540,6 +540,8 @@ def verify_same_payoff(
     if left.market_kind not in supported_kinds or right.market_kind not in supported_kinds:
         checks.append("Only verified event contract structures are supported")
     for name, market in (("left", left), ("right", right)):
+        if not market.instruments:
+            checks.append(f"{name} market has no instrument payout vectors to verify")
         if not market.payoff.verified or not market.payoff.exhaustive:
             checks.append(f"{name} payoff is not verified and exhaustive")
         if not market.has_consistent_settlement_asset_identity():

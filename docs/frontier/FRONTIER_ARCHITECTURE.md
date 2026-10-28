@@ -723,7 +723,7 @@ authenticate the identity or fetch/verify the assertion. The verifier evaluates
 stored fields; it does not prove those fields are true beyond their source
 provenance.
 
-Same-payoff equivalence is versioned as `frontier-equivalence-verifier-6`.
+Same-payoff equivalence is versioned as `frontier-equivalence-verifier-7`.
 Verification requires two distinct pinned market observation identities,
 between two and ten unique nonempty evidence IDs, and an external assertion
 time no earlier than either captured market record. The independent arithmetic
@@ -734,7 +734,9 @@ created after that cutoff cannot validate an earlier candidate. Older verifier
 versions remain readable as stored evidence, but new candidate audits classify
 them incomplete until the relationship is re-reviewed. This provenance rule
 does not authenticate the reviewer or external assertion, or prove that the
-recorded market terms are semantically true.
+recorded market terms are semantically true. Each supplied market must also
+contain at least one instrument payout vector; an empty-to-empty instrument
+mapping cannot establish equivalence by vacuous bijection.
 
 Both boundaries also recheck structural uniqueness instead of relying only on
 model validators, because direct Pydantic `model_copy(update=...)` calls can
@@ -743,7 +745,7 @@ verifier rejects duplicate payoff-state IDs, native instrument IDs, missing or
 duplicate outcome IDs, and duplicate payout rows. The independent audit checks
 the same payoff-state and instrument-ID uniqueness, scans payout rows across
 every instrument (including unselected legs), and requires unique cross-venue
-outcome IDs. Pre-v6 relationship records remain readable but are incomplete for
+outcome IDs. Pre-v7 relationship records remain readable but are incomplete for
 new cross-venue candidate audits.
 
 Logical implication uses the separate

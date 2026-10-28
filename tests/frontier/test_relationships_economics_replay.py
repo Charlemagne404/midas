@@ -161,6 +161,33 @@ def test_same_payoff_verifier_rejects_malformed_model_copy(corruption, reason):
     assert reason in result.reason.lower()
 
 
+@pytest.mark.parametrize("empty_side", ("left", "right", "both"))
+def test_same_payoff_verifier_rejects_empty_instrument_payout_vectors(empty_side):
+    left, right, _relationship, instrument_mapping = _verified_pair()
+    if empty_side in {"left", "both"}:
+        left = left.model_copy(update={"instruments": ()})
+    if empty_side in {"right", "both"}:
+        right = right.model_copy(update={"instruments": ()})
+    if empty_side == "both":
+        instrument_mapping = {}
+
+    result = verify_same_payoff(
+        left,
+        right,
+        state_mapping={"yes": "yes", "no": "no"},
+        instrument_mapping=instrument_mapping,
+        external_assertion_id=f"empty-instrument-{empty_side}",
+        evidence_observation_ids=(
+            left.provenance.observation_id,
+            right.provenance.observation_id,
+        ),
+        asserted_at_utc=T0,
+    )
+
+    assert result.state == VerificationState.REJECTED
+    assert "no instrument payout vectors" in result.reason.lower()
+
+
 def _market_with_token_settlement_identity(market_value, identity):
     instruments = tuple(
         item.model_copy(
@@ -611,10 +638,11 @@ def test_cross_venue_replay_rejects_equivalence_evidence_missing_pinned_market()
     )
 
 
-def test_cross_venue_replay_requires_current_equivalence_verifier_version():
+@pytest.mark.parametrize("legacy_version", (5, 6))
+def test_cross_venue_replay_requires_current_equivalence_verifier_version(legacy_version):
     left, right, relationship, _instrument_mapping = _verified_pair()
     legacy_evidence = relationship.evidence[0].model_copy(
-        update={"verifier_version": "frontier-equivalence-verifier-5"}
+        update={"verifier_version": f"frontier-equivalence-verifier-{legacy_version}"}
     )
     legacy_relationship = relationship.model_copy(update={"evidence": (legacy_evidence,)})
     left_books, right_books = _books(left, right)
@@ -791,7 +819,7 @@ def test_same_ticker_on_different_networks_cannot_verify_same_payoff():
     )
 
     assert same_asset_relationship.state == VerificationState.VERIFIED
-    assert same_asset_relationship.evidence[0].verifier_version == "frontier-equivalence-verifier-6"
+    assert same_asset_relationship.evidence[0].verifier_version == "frontier-equivalence-verifier-7"
     assert any(
         "settlement_asset_identities={" in detail
         for detail in same_asset_relationship.evidence[0].details
