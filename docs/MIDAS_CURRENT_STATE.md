@@ -1753,3 +1753,27 @@ avg10 39.41% some / 35.46% full, avg60 29.70% / 26.17%, avg300 16.08% / 14.23%,
 and I/O PSI avg10 8.41% / 8.00%. External Veritas PID 4174453 held the shared
 Arena lock; it was left untouched, and no further resource-bearing checks were
 started. Frontier remains research-only, undeployed, and **PARTIALLY VERIFIED**.
+
+### Frontier saved-history persistence and complete browser regression — 2026-10-28 07:06 UTC
+
+Code commit `3251941` adds an opt-in seeded browser integration for the saved
+price-history inspector. Its deterministic seeder writes 21 fixture captures
+and 21 replay artifacts to a fresh temporary Frontier store; the browser then
+reads both pages through the real local API, submits one two-series replay,
+checks the saved result and source lineage, and pages older records. It asserts
+zero source-probe requests. The separate integration passes **1/1**. The full
+default browser suite reports **15 passed, 1 skipped**; the seeded test is the
+intentional skip. It covers Frontier, Arena, Laboratory, Paper, Readiness,
+Reality, and Veritas.
+The frontend unit suite also passes **41/41**, and typecheck, lint, formatting,
+and production build pass. No public endpoint, order, protected service, or
+production database was accessed.
+
+At `2026-10-28T07:05:07Z`, post-browser memory PSI avg10 was **0.00% some/full**
+and I/O PSI avg10 was **1.09% some / 0.88% full**; about **10 GiB** memory was
+available, and no process held the shared Arena lock. Further
+resource-bearing tests were deferred because I/O `some` exceeded the 1%
+threshold. Frontier remains isolated, research-only, undeployed, and
+**PARTIALLY VERIFIED**; current source-use holds and cross-venue evidence gaps
+remain unchanged. See the [Frontier mission ledger](frontier/FRONTIER_MISSION_LEDGER.md)
+for continuation and admission details.

@@ -669,6 +669,27 @@ The shared legacy normalizer still preserves its `market:<id>` fallback; the
 full `tests/integration/test_adapters.py` file passes **10/10**, including the
 fallback check, without contacting an exchange.
 
+### Saved Frontier history browser/API verification — 2026-10-28 07:06 UTC
+
+The complete default Playwright suite passes **15 tests**, with the isolated
+populated-store test intentionally skipped unless explicitly enabled. Its
+separate invocation passes **1/1** using 21 deterministic capture and replay
+fixtures in a temporary Frontier SQLite root; it drives the saved-history UI
+through the actual local API, submits a descriptive local replay, and checks
+stored lineage and page navigation without a source probe. Reproduce it with:
+
+```bash
+cd apps/web
+MIDAS_SEED_FRONTIER_E2E=1 corepack pnpm exec playwright test e2e/frontier.seeded.spec.ts
+```
+
+The default full browser suite also passes across Frontier, Arena, Laboratory,
+Paper, Readiness, Reality, and Veritas. After that run at `2026-10-28T07:05:07Z`,
+I/O PSI avg10 was **1.09% some / 0.88% full**. Defer additional
+resource-bearing tests until a fresh admission sample clears the strict I/O
+threshold and the shared Arena lock remains free. The seeded fixtures are not
+live venue validation.
+
 ## Keep worktrees and runtime data separate
 
 Read [MIDAS_CURRENT_STATE.md](MIDAS_CURRENT_STATE.md) before changing an
