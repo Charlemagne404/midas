@@ -1346,20 +1346,19 @@ async def test_kraken_synthetic_pair_and_book_preserve_spot_units_and_level_time
             }
         },
     }
+    config = KrakenSpotConfig(
+        enabled=True,
+        live_public_probe_enabled=True,
+        pairs=("XBTUSD",),
+        requests_per_second=5,
+        retries=0,
+    )
     transport, requests, client = _transport(
         "api.kraken.com",
         {"/AssetPairs": json.dumps(asset_pairs), "/Depth": json.dumps(depth)},
+        config,
     )
-    adapter = KrakenSpotAdapter(
-        KrakenSpotConfig(
-            enabled=True,
-            live_public_probe_enabled=True,
-            pairs=("XBTUSD",),
-            requests_per_second=5,
-            retries=0,
-        ),
-        transport=transport,
-    )
+    adapter = KrakenSpotAdapter(config, transport=transport)
     try:
         market = (await adapter.discover_markets(1))[0]
         book = await adapter.fetch_book(market, market.native_market_id, depth=2)
