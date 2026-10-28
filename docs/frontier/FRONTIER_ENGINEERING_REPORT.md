@@ -2,6 +2,43 @@
 
 **Report date:** 2026-10-28
 
+**Latest bounded Arena discovery execution — 2026-10-28:** One
+synthetic `frontier_discovery` job passed the real host-wide admission gate and
+ran through `midas.arena.jobs` in an actual transient user systemd unit. The
+run occurred between the `03:00:30Z` clock sample and the `03:03:40Z` post-run
+pressure sample; exact worker start time was not separately captured. The
+hash-pinned input and output were confined to a temporary directory, the
+worker was AF_UNIX-only, and systemd exposed `MemoryMax=536870912`,
+`MemorySwapMax=0`, and `CPUQuotaPerSecUSec=500ms`. The bounded supervisor
+smoke command took 5.9 seconds wall; the worker's own elapsed field was not
+retained. Its content-addressed artifact passed the
+result verifier and contained two fixture candidates. Job ID was
+`job-16457e8fea8a483d8d10c8df`; result SHA-256 was
+`c4c753fd209b0857a522a19054d82793c65b03c31c33890915cf4c0f64982e36`.
+Systemd recorded cgroup MemoryPeak
+117,252,096 bytes, while the worker process reported peak RSS 170,110,976
+bytes; these separate measurements are not reconciled by this run. After
+completion, the unit was not found/inactive/dead with `Result=success`, and no
+matching worker process remained. This verifies one bounded supervisor/cgroup
+execution, not sustained capacity or live exchange evidence.
+
+At `2026-10-28T03:03:40Z`, during the post-run review, host memory PSI avg10
+was **49.40% some / 41.21% full**, with about **9.8 GiB** available and **332
+MiB** swap free. No cause is assigned to this increase; defer another heavy
+check until a fresh admission sample. No
+exchange request, held capture, production Arena root write, protected
+service, or persistent systemd unit was used.
+
+**Official source terms supplement — 2026-10-28 03:00 UTC:** A fresh read-only
+review confirmed that public unauthenticated access is a technical API
+property, not permission for Frontier's research and retention. Kalshi's
+public market-data endpoints remain subject to the Developer Agreement and
+the linked Data Terms; Kraken's API guidance requires prior permission for
+certain uses, including non-personal commercial use of public market data;
+Coinbase's Market Data Terms prohibit AI/ML development use and specified
+benchmark and valuation uses. No endpoint was queried and no hold changed.
+See [the detailed terms review](SOURCE_DATA_TERMS_REVIEW_2026-10-27.md).
+
 **Candidate outcome disclosure — 2026-10-28 02:57 UTC:** Code commit
 `3af51c0589c9550ff5bbf9333e24a818e75041c0` makes the candidate detail view
 label worst-case values as modeled P&L and explicitly states that deterministic
@@ -5194,7 +5231,7 @@ During the check at `2026-10-28T00:31:15Z`, memory PSI avg10 was **24.98% some
 gap-detail batch PID **3975405** was active. It was not touched. The strict API
 typing caveat remains unresolved; retry when shared-host pressure subsides.
 
-## Current mission acceptance matrix — 2026-10-28 02:57 UTC
+## Current mission acceptance matrix — 2026-10-28 03:03 UTC
 
 This matrix assesses the user-requested Frontier stages and scientific
 acceptance against current branch evidence, not intent or planned work.
@@ -5208,12 +5245,12 @@ acceptance against current branch evidence, not intent or planned work.
 | Opportunity families and independent economic verification | PARTIALLY VERIFIED | Binary coverage, bounded one-hot coverage, directed implication, within-market constant-payout subsets, and multi-market joint-state baskets have independent arithmetic checks. The new joint-state path accepts two to four stored open markets, up to twelve instruments, and a content-hashed external assertion of two to sixty-four shared states; it searches at most 4,095 subsets. Focused replay/API and independent-audit fixtures pass. The audit proves arithmetic only over the asserted map; it cannot authenticate the event composition or establish the map's semantics. No live positive or economically eligible opportunity is established. |
 | Venue costs, capital, and currency assumptions | PARTIALLY VERIFIED | Public fee metadata, bounded fee/carry sensitivities, partial-fill stress, venue-separated virtual balances, and a separate conversion-adjusted terminal-P&L scenario exist. The P&L scenario requires verified candidate/funding audits, complete candidate leg fees, and sufficient per-venue balances; it never mutates candidate economics. Account-specific fees, sourced FX, cross-venue transfer/custody, settlement risk, and conversion availability remain unknown. |
 | Isolated collection, provenance, durable storage, and deterministic replay | PARTIALLY VERIFIED | Finite restartable collection, append-only hash-chained checkpoints, a read-only keyset-paginated run catalog across the 1,000-run journal bound, bounded storage, event-time replay, source-health evidence, and replay provenance are implemented and tested offline. No continuous market-data stream, full source-history backfill, or long-horizon source-quality study is established. |
-| Laboratory/Arena research integration | PARTIALLY VERIFIED | Bounded replay jobs, paired comparisons, content-addressed discovery artifacts, and integrity-checked APIs exist. A fixture job completes through a child process running `midas.arena.jobs`, and its artifact passes the durable result verifier. JobSpec enforces the 300-second/512-MiB/50%-CPU/nice-15/idle-I/O limits; the launch-command test asserts 512 MiB, swap prohibition, 50% CPU, and AF_UNIX-only networking. `systemd-run` and host admission are stubbed in that test, so cgroup execution and shared-gate admission remain unverified. No long-duration campaign or production worker is authorized. |
+| Laboratory/Arena research integration | PARTIALLY VERIFIED | Bounded replay jobs, paired comparisons, content-addressed discovery artifacts, and integrity-checked APIs exist. In addition to the child-process fixture test, one synthetic discovery job passed real host-wide admission and completed in an actual transient user systemd unit under `MemoryMax=512M`, `MemorySwapMax=0`, `CPUQuota=50%`, and AF_UNIX-only networking; its artifact passed hash verification. This is one short fixture run, not sustained, concurrent, or production service validation. No long-duration campaign or production worker is authorized. |
 | Native Frontier Mission Control interface | IMPLEMENTED, DEPLOYMENT PENDING | The full web suite last passed 40/40; the current candidate-detail UI also passes its focused component test, fixture browser flow, TypeScript, and Vite production build. The detail view preserves decimal strings, matches candidates to their scope summaries, caps display at 50 per scope, and labels terminal P&L as hypothetical without fills or realized profit. Browser artifact data is intercepted fixture content on loopback demo services. The build retains the existing 544.41 kB Chart chunk advisory. No live source data or production deployment occurred. |
 | Scientific acceptance: normalization, rejection, controlled discrepancy, independent arithmetic, missing/stale/asynchronous evidence, and deterministic replay | PARTIALLY VERIFIED | The full Frontier regression previously passed 343 tests, including 48 seeded differential cases against an independent exhaustive oracle. The latest 21-test Arena job/discovery selection passes, including actual child-process dispatch and artifact verification. The web suite passes 40/40 on the candidate-inspection checkpoint; the latest disclaimer adjustment passes its focused component and browser tests and production build. Evidence still does not establish a genuine cross-venue relationship, authenticated state composition, synchronized executable quotes, or positive economics. |
-| Resource sustainability under bounded development workloads | PARTIALLY VERIFIED | The full Frontier Python suite previously reached 366,360 KiB peak RSS; the Vite build previously reached 713,040 KiB, and the latest Arena job/discovery selection reached 193,632 KiB peak RSS, all with zero swaps. The synthetic 12-instrument/64-state search evaluated 4,095 subsets; three one-candidate runs measured 0.101767 seconds median / 0.104521 seconds maximum at 70,576 KiB peak RSS, with an eight-candidate run at 0.174308 seconds / 71,460 KiB. Representative public workloads, sustained collection, concurrency, systemd worker cgroup execution, and broad latency/CPU behavior remain unmeasured. Latest PSI avg10 after the bounded build reached 29.83% some / 24.02% full; defer heavy checks and remeasure admission. |
+| Resource sustainability under bounded development workloads | PARTIALLY VERIFIED | The full Frontier Python suite previously reached 366,360 KiB peak RSS; the Vite build previously reached 713,040 KiB; and the latest test selection reached 193,632 KiB peak RSS, all with zero swaps. One real systemd discovery unit recorded MemoryMax 512 MiB, swap max zero, 50% CPU quota, cgroup MemoryPeak 117,252,096 bytes, and worker process peak RSS 170,110,976 bytes; those high-water measurements differ and are not reconciled. The synthetic 12-instrument/64-state search evaluated 4,095 subsets; three one-candidate runs measured 0.101767 seconds median / 0.104521 seconds maximum at 70,576 KiB peak RSS, with an eight-candidate run at 0.174308 seconds / 71,460 KiB. Sustained collection, concurrency, and broad latency/CPU behavior remain unmeasured. At 03:03:40 UTC after the run, memory PSI avg10 was 49.40% some / 41.21% full; defer further heavy checks and remeasure admission. |
 | Read-only research boundary and source-use gates | COMPLETE AND VERIFIED | No trading/authenticated exchange path is provided; source-policy tests ensure held venues return 409 without requests and held evidence stays quarantined. This does not grant permission to use a held source. |
-| Required architecture, operations, current-state, report, and continuation documentation | COMPLETE AND VERIFIED | The engineering report, architecture, operations guidance, current-state note, and append-only mission ledger record implementation, evidence, blockers, and continuation actions. |
+| Required architecture, operations, current-state, report, and continuation documentation | COMPLETE AND VERIFIED | The engineering report, architecture, operations guidance, current-state note, source terms review, and append-only mission ledger record implementation, evidence, blockers, and continuation actions. |
 | Production deployment | DEFERRED | Requires separate source permission, resource/storage/recovery review, full deployment-scope regression, monitoring/rollback preparation, and explicit authorization. |
 | Genuine cross-venue validation using currently held sources | BLOCKED | The current source-use review blocks new Kalshi/Kraken research and keeps Coinbase held pending a resolved terms scope. Polymarket research access alone cannot establish cross-venue equivalence. Continue offline work; do not bypass the holds. |
 

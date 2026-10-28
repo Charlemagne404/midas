@@ -1511,3 +1511,27 @@ scope/Arena tests pass **4/4**; no source probe or worker was run. Peak RSS was
 with zero swaps. This fixes snapshot construction but does not establish quote
 freshness, cross-venue synchronization, supervisor execution, or profitability.
 Project Frontier remains **PARTIALLY VERIFIED**.
+
+### Frontier terms and supervised worker checkpoint — 2026-10-28 03:03 UTC
+
+A read-only refresh of official Kalshi, Kraken, and Coinbase materials confirms
+that unauthenticated endpoints and published rate limits do not establish
+permission for Frontier research, retention, or distribution. Kalshi and
+Kraken probes and new use of held captures remain blocked; Coinbase's exact
+terms-version acknowledgement is not blanket permission. No API request or
+capture read occurred. Details are in the
+[source-data terms review](frontier/SOURCE_DATA_TERMS_REVIEW_2026-10-27.md).
+
+One synthetic `frontier_discovery` job completed through the actual Arena host
+admission gate and transient systemd worker. Its hash-pinned input and artifact
+were confined to a temporary directory; the output passed integrity
+verification, and the unit exited successfully. Systemd exposed 512 MiB
+memory, no swap, 50% CPU, and AF_UNIX-only networking. One process peak-RSS
+measurement differed from the cgroup memory peak; both figures are preserved
+separately without treating them as equivalent. This one fixture run closes
+supervisor execution for a bounded case, not sustained capacity, live source
+validity, or production readiness. At 03:03:40 UTC during post-run review,
+memory PSI avg10 was 49.40% some / 41.21% full; wait for a fresh admission
+check before another heavy workload.
+Frontier remains isolated, research-only, undeployed, and **PARTIALLY
+VERIFIED**.

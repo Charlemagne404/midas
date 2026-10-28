@@ -302,3 +302,54 @@ advice or a conclusion about any person's eligibility or prior use.
 The source-policy conclusion is unchanged: fixtures and code review may
 continue offline; live requests, new research over held captures, and
 production use remain gated by a specific, validated source-use decision.
+
+### Official terms supplement — 2026-10-28 03:00 UTC
+
+This read-only supplement checked current official terms and API guidance to
+resolve whether unauthenticated public endpoints change the source-use
+decision. No exchange was contacted, no API endpoint was queried, and no held
+capture or production setting was accessed.
+
+- **Kalshi:** The current [Market Data API quick start](https://docs.kalshi.com/getting_started/quick_start_market_data)
+  documents unauthenticated GET access for public market data, including
+  market and order-book endpoints. That describes technical access. The
+  currently linked [Data Terms of Use](https://kalshi-public-docs.s3.amazonaws.com/kalshi-data-terms-of-service.pdf)
+  apply to website data and expressly exclude software development and
+  archived/cached datasets from the personal, non-commercial permission; they
+  also reserve systematic extraction, collection, analysis, and derivative use
+  absent prior written authorization. The separate [Developer Agreement v1.1](https://kalshi-public-docs.s3.amazonaws.com/Kalshi-Developer-Agreement.pdf)
+  remains the governing API document and limits API use to facilitating a
+  member's own trading. The fact that GET calls need no key does not establish
+  a research or retention license. Keep the Kalshi API and captured-data hold.
+- **Kraken Spot:** Kraken's [API Center introduction](https://docs-legacy.kraken.com/api/docs/guides/global-intro/)
+  states that API use is subject to its terms and that prior permission is
+  required for certain uses, including non-personal commercial use of data
+  from public endpoints such as market data and exchange status. The current
+  [EEA Terms](https://www.kraken.com/legal/eea-terms), effective 14 October
+  2026, apply to EEA clients and classify pricing data as “Our Content”; they
+  reserve uses outside approved purposes and specifically restrict automated
+  extraction and scripts interacting with that content. Neither the user's
+  residence nor the exact permission scope for Frontier is established here.
+  The [public API examples](https://support.kraken.com/articles/360000919986-public-endpoint-examples-you-can-try-them-directly-in-a-web-browser-)
+  confirm technical access without an account; the published
+  [rate-limit guidance](https://support.kraken.com/gb/articles/206548367-what-are-the-api-rate-limits-)
+  recommends public REST requests at one per second or less to remain within
+  limits. Rate compliance does not grant research or storage permission. Keep
+  Kraken probes and new research over held data blocked.
+- **Coinbase Exchange Spot:** The [Market Data Terms](https://www.coinbase.com/legal/market_data)
+  remain marked last updated 7 August 2026. In addition to the restrictions
+  already recorded above, they explicitly prohibit using Market Data or
+  derived works to develop, train, fine-tune, validate, benchmark, or otherwise
+  improve AI/ML or other automated systems. They also restrict creation of
+  fair-value prices, benchmarks, and financial-product valuations. Frontier
+  does not encode a validated exception or permission for those activities.
+  The exact-version local acknowledgement is therefore not proof that a
+  planned use, data retention, or presentation is permitted; retain the
+  existing default hold and do not enable Coinbase probes on that setting
+  alone.
+
+No source flag, adapter policy, stored observation, or permission status
+changed during this review. Public endpoint accessibility and compliance with
+published rate limits do not lift the established holds. Continue fixture-only
+adapter validation until a source-specific use review establishes the relevant
+terms, region, purpose, retention, and any required written permission.

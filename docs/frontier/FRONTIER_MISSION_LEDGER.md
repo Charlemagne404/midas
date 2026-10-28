@@ -3989,3 +3989,56 @@ and live or production validation remains out of scope for this checkpoint.
 | Discovery snapshot book selection | COMPLETE AND VERIFIED | Repeated observations collapse to the most recently received local snapshot per instrument with its exact observation ID; API, full API module, and direct scope/Arena tests pass. This does not establish exchange-time synchronization or freshness. |
 | Arena discovery supervisor and sustained resources | PARTIALLY VERIFIED | Artifact execution and job schema are fixture-tested; actual supervisor admission and representative runtime are pending. |
 | Project Frontier overall | PARTIALLY VERIFIED | The snapshot correction improves local replay integrity; source permission, cross-venue validation, broad science acceptance, and deployment remain open. |
+
+### Official source terms supplement — 2026-10-28 03:00 UTC
+
+Read current official Kalshi Data Terms and API quick start, Kraken API
+guidance and current EEA Terms, and Coinbase Market Data Terms. The review
+confirmed that unauthenticated public endpoints do not by themselves permit
+Frontier's systematic collection, software development, retention, or research
+use. Kraken's API guidance calls for prior permission for certain uses,
+including non-personal commercial use of public market data; Coinbase's terms
+prohibit AI/ML development use and specified benchmark/valuation uses. No API
+call, contact, capture read, setting change, or policy change occurred. Keep
+all existing source holds. Detailed sources are recorded in
+`docs/frontier/SOURCE_DATA_TERMS_REVIEW_2026-10-27.md`.
+
+### Bounded Frontier discovery through the real Arena supervisor — 2026-10-28
+
+One synthetic `frontier_discovery` job completed through `midas.arena.jobs`
+and the user's actual transient systemd service, using the real host-wide
+admission lock and resource snapshot. It ran after the `03:00:30Z` clock
+sample and completed before the `03:03:40Z` post-run sample; the exact worker
+start time was not separately captured. Admission passed. The pinned input and
+all job artifacts lived under a temporary directory; the job used the
+AF_UNIX-only network restriction and the configured 300-second, 512-MiB,
+zero-swap, 50%-CPU limits. It returned two fixture candidates and its saved
+result passed the independent artifact/hash verifier. The job ID was
+`job-16457e8fea8a483d8d10c8df` and result hash
+`c4c753fd209b0857a522a19054d82793c65b03c31c33890915cf4c0f64982e36`.
+
+While active, systemd reported `MemoryMax=536870912`, `MemorySwapMax=0`,
+`CPUQuotaPerSecUSec=500ms`, and cgroup `MemoryPeak=117252096` bytes. The worker
+process reported peak RSS **170,110,976 bytes**, user CPU **0.066162 seconds**,
+and system CPU **0.010004 seconds**. Process and cgroup memory high-water
+figures differ and are retained as separate measurements; this single sample
+does not reconcile their accounting scopes or establish a sustained capacity
+limit. The bounded supervisor smoke command took **5.9 seconds wall**; the
+worker's own elapsed field was not retained. After the worker exited,
+systemd reported the transient unit as not found/inactive/dead with
+`Result=success`, and no matching worker process remained.
+
+The after-run host sample at `2026-10-28T03:03:40Z` showed memory PSI avg10
+**49.40% some / 41.21% full**, about **9.8 GiB** available, and about **332
+MiB** swap free. The pressure is not attributed to the short worker; it is a
+reason to defer any additional heavy run until a fresh admission check. A
+Starlette/httpx TestClient deprecation warning arose from importing the
+fixture builder module. No exchange request, held capture, production Arena
+root write, protected service, or persistent unit was used.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Synthetic discovery through actual systemd and host admission | COMPLETE AND VERIFIED | One temporary-root job completed under real host admission and systemd limits; its content-addressed artifact passed verification. It used fixtures only and one short run. |
+| Worker resource sustainability | PARTIALLY VERIFIED | Systemd resource properties and one process/cgroup usage sample were captured. The high-water figures differ, and sustained, concurrent, and production behavior remain unmeasured. |
+| Genuine cross-venue public finding and deployment | DEFERRED | Source-use holds, semantic equivalence, synchronized pricing, venue funding/settlement, and production readiness remain unresolved. |
+| Project Frontier overall | PARTIALLY VERIFIED | One supervisor/cgroup gap is closed for bounded fixture execution; source permission, live evidence, broad scientific acceptance, and deployment remain incomplete. |
