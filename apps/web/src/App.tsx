@@ -34,12 +34,14 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { api } from './api';
-import { Laboratory } from './Laboratory';
-import { Arena } from './Arena';
-import { Reality } from './Reality';
 import { PaperPage, PaperSummary, ExperimentPanel } from './Paper';
 import { chartBase } from './chart-theme';
 const LazyChart = lazy(() => import('./Chart').then((module) => ({ default: module.Chart })));
+const LazyLaboratory = lazy(() =>
+  import('./Laboratory').then((module) => ({ default: module.Laboratory })),
+);
+const LazyArena = lazy(() => import('./Arena').then((module) => ({ default: module.Arena })));
+const LazyReality = lazy(() => import('./Reality').then((module) => ({ default: module.Reality })));
 const LazyVeritas = lazy(() => import('./Veritas').then((module) => ({ default: module.Veritas })));
 const LazyFrontier = lazy(() =>
   import('./Frontier').then((module) => ({ default: module.Frontier })),
@@ -404,10 +406,22 @@ export function App() {
               <ExperimentPanel />
             </>
           )}
-          {page === 'Laboratory' && <Laboratory onNavigate={setPage} />}
+          {page === 'Laboratory' && (
+            <Suspense fallback={<div className="empty">Loading Laboratory research…</div>}>
+              <LazyLaboratory onNavigate={setPage} />
+            </Suspense>
+          )}
           {page === 'Analytics' && <AnalyticsPage data={analytics.data} />}
-          {page === 'Arena' && <Arena />}
-          {page === 'Reality' && <Reality />}
+          {page === 'Arena' && (
+            <Suspense fallback={<div className="empty">Loading Arena research…</div>}>
+              <LazyArena />
+            </Suspense>
+          )}
+          {page === 'Reality' && (
+            <Suspense fallback={<div className="empty">Loading Reality observations…</div>}>
+              <LazyReality />
+            </Suspense>
+          )}
           {page === 'Veritas' && (
             <Suspense fallback={<div className="empty">Loading Veritas evidence…</div>}>
               <LazyVeritas />
