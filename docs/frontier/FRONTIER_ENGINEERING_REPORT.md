@@ -8988,3 +8988,21 @@ The Reality model regression remains deferred until memory and I/O PSI both
 fall below the 1% admission threshold. This does not change the protection or
 state of any Reality recording or Veritas process. Frontier overall remains
 **PARTIALLY VERIFIED**.
+
+### Reality model and panel regression slices — 2026-10-28
+
+After the resource hold above, the isolated Reality model regression passed
+**13/13** selected tests in 8.48 seconds; one test that signals its own
+runner was deselected. It used a tmpfs basetemp, mocked HTTP, and ephemeral
+localhost WebSockets, with 53,032 KiB peak RSS and zero swaps.
+tests/test_reality_panel.py passed **26/26** in 0.24 seconds, with 46,876
+KiB peak RSS and zero swaps; source discovery used MockTransport and an
+in-memory recorder callback. No protected recording, live source, or service
+was accessed.
+
+The calibration test module was reviewed and found to use synthetic fixtures
+without persistent roots, network, or subprocesses, but it was not run. At
+2026-10-28T12:10:00Z, I/O PSI avg10 some was 1.04%, just above the 1%
+admission threshold. The Reality model slice remains partial because the
+self-signaling case was excluded; the calibration slice remains deferred.
+Frontier overall remains **PARTIALLY VERIFIED**.

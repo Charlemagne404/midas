@@ -33,6 +33,18 @@ in the dated addendum below and in the Frontier engineering report.
 
 ## Frontier development addendum — 2026-10-28
 
+### Latest isolated Frontier checkpoint — 2026-10-28 12:09 UTC
+
+The isolated Reality model slice passed **13/13** selected tests; one
+self-signaling test was deselected. The Reality panel and observation slice
+passed **26/26**. Both used tmpfs or in-memory evidence, mocked HTTP, and
+localhost-only WebSockets. No protected recording, source, or service was
+accessed.
+
+The calibration test module was reviewed as synthetic and source-independent,
+but not run after the 12:10:00Z I/O PSI sample reached 1.04% some. Frontier
+remains **PARTIALLY VERIFIED**, research-only, and undeployed.
+
 ### Latest isolated Frontier checkpoint — 2026-10-28 12:08 UTC
 
 A review of the isolated Reality model tests found all file writes use pytest

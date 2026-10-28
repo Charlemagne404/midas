@@ -1,5 +1,40 @@
 # Project Frontier Mission Ledger
 
+## Reality model and panel regression slices — 2026-10-28 12:09 UTC
+
+After the 12:08 admission hold, the 12:09:15Z sample fell below the 1% gate
+(memory PSI avg10 0.04% some / full; I/O 0.73% some / 0.67% full; about 10
+GiB available). The bounded Reality model run passed **13/13** selected tests
+in 8.48 seconds; one test that signals its own runner was deselected. Peak
+RSS was 53,032 KiB, with zero swaps and no socket messages. Its HTTP fixture
+was mocked, its WebSocket fixtures bound to localhost, and writes used a
+unique /dev/shm basetemp.
+
+The full tests/test_reality_panel.py module then passed **26/26** in 0.24
+seconds, with 46,876 KiB peak RSS, zero swaps, and no socket messages. Its
+source-discovery case used MockTransport and an in-memory recorder callback.
+The 12:09:47Z pre-run sample had memory PSI avg10 0.00%, I/O 0.77% some /
+0.71% full, and about 10 GiB available; at 12:09:52Z afterward, memory
+remained 0.00% and I/O was 0.87% some / 0.69% full. No protected recording,
+public source, or service was accessed.
+
+The next read-only review found tests/test_reality_calibration.py contains
+synthetic arithmetic fixtures and no persistent-root, network, or subprocess
+operations. It was not run: at 12:10:00Z I/O PSI avg10 some had risen to
+**1.04%**, just above the admission threshold.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Reality model slice | PARTIALLY VERIFIED | 13 selected tests pass; the self-signaling test remains unrun. |
+| Reality panel/observation slice | COMPLETE AND VERIFIED | 26/26 synthetic tests pass. |
+| Reality calibration slice | DEFERRED | Effects reviewed; no run at I/O PSI 1.04%. |
+| Full MIDAS legacy suite | PARTIALLY VERIFIED | Other Reality, Veritas, Arena, integration, and broader modules remain unrun. |
+| Frontier overall | PARTIALLY VERIFIED | Live cross-venue permissions/evidence, broad regression/browser acceptance, and deployment remain open. |
+
+Next safe action: rerun a fresh PSI sample before admitting calibration or
+other tests. Keep the self-signaling Reality case excluded unless its signal
+handling can be safely isolated.
+
 ## Reality regression admission hold — 2026-10-28 12:08 UTC
 
 A source-only review of tests/test_reality.py found 14 tests. Their recording
