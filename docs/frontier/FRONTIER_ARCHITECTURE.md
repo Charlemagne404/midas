@@ -19,7 +19,7 @@ as mutable Frontier storage.
 | Candidate calculators | `economics.py` | Decimal cross-venue binary and same-market exhaustive multi-outcome all-long checks with fee, depth, freshness, timing, and scenario bounds; provenance-bound conditional Kalshi one-fill estimate; exact bounded one-sided fill sensitivity; separate instrument-bound Kalshi one-fill and one-order fee sensitivities. |
 | Independent arithmetic audit | `independent_audit.py` | Separately recomputes supported candidate identities, payoff vectors, pinned quotes/depth, fees, costs, terminal P&L, fill-pattern sensitivity, and classification from replay inputs. |
 | Virtual capital-duration sensitivity | `capital.py` | Recomputes unrounded simple-interest carry from explicit per-venue user assumptions, candidate capital, hash-checked future settlement metadata, and a bounded scenario-only post-settlement release delay; an independent arithmetic pass cannot change candidate classification. |
-| Virtual funding-currency sensitivity | `fx.py` | Compares venue-isolated hypothetical balances with candidate capital under explicit namespaced asset identities, user-entered conversion rates and fees, and a Fraction-based audit; it does not source rates or change candidate economics. |
+| Virtual funding-currency sensitivity | `fx.py` | Compares venue-isolated hypothetical balances with candidate capital under explicit namespaced asset identities and user-entered rates/fees; a separate Fraction-audited terminal-state P&L scenario is available only for an independently audited candidate with complete leg fees and sufficient virtual balance. It does not source rates or mutate candidate economics. |
 | Durable evidence | `storage.py` | Append-only, size- and row-bounded SQLite observations, markets, relationship reviews/revisions, runs, and paired comparisons. |
 | Replay | `replay.py` | Stable input ordering, scenario/mapping/proposal-limit-aware replay identities, exact store-record provenance for API-loaded models, deterministic results, and paired assumption comparisons. |
 | Event-time replay | `timeline.py` | Offline bounded replay over repeated book updates, source-state events, and explicit cutoffs; freshness, outage invalidation, candidate summaries, and timeline hashes. |
@@ -956,6 +956,18 @@ assumptions. Unlike the client-only same-denomination balance comparison, the
 request is sent to the local Frontier API; it is still not persisted or sent to
 an exchange. The independent Fraction audit and exact behavioral limits are
 specified under [Virtual funding-currency sensitivity](#virtual-funding-currency-sensitivity).
+
+Schema version 2 also returns `pnl_scenario`, a separate outcome-level
+sensitivity. It is calculated only when the saved candidate's independent
+economic audit is verified, every candidate leg has a modeled fee, the funding
+conversion audit verifies, and each venue-local virtual balance covers that
+venue's recorded capital requirement. The engine subtracts the modeled target
+currency conversion fee from each independently audited terminal-state net P&L
+and independently recomputes the results with rational arithmetic. An
+unavailable or disagreeing scenario exposes no adjusted state values. This
+scenario does not mutate the saved candidate, its P&L, classification, or
+practical eligibility. It remains conditional on user assumptions and does not
+establish a real conversion, transfer, or executable quote.
 
 `GET /api/frontier/analytics/coverage` is a read-only no-network summary of
 stored research. It considers at most 50 recent market records, 50 book

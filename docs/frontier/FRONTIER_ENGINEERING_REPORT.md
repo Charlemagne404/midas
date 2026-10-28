@@ -2,42 +2,34 @@
 
 **Report date:** 2026-10-28
 
-**Funding-sensitivity implementation checkpoint:** `87c67b23fbda1624a6b36273b63cd94427113b4c`
-adds oversized-input regression coverage to the virtual funding-currency
-sensitivity introduced in `530c9aa8b3fb2b4ee006c35c2494bccdb0b7cae8`. The API
-and Mission Control workspace accept explicit namespaced
-funding identities, per-venue balances, target-per-funding rates, and conversion
-fees; a rational-arithmetic audit independently checks the Decimal outputs.
-The sensitivity does not alter candidate economics or eligibility, perform a
-conversion, or persist assumptions. The focused Python selection passed
-**40/40**, the Frontier web file passed **8/8**, TypeScript and Vite production
-build passed, and scoped Ruff, Prettier, ESLint, and mypy checks passed. The
-build emits a Vite advisory for the 544.41 kB Chart chunk. Strict mypy on the
-new FX module passes; checking the full API module required suppressing its
-pre-existing `no-any-return` finding in the adapter registry. At that
-implementation checkpoint, the full Frontier suite and Playwright browser
-check were not rerun while an external Veritas batch was active and memory PSI
-remained elevated. No exchange request, Arena worker, protected service,
-production store, or deployment was used. Live FX
-data, cross-venue funding availability, source permissions, broader regression,
-and deployment remain unresolved; Frontier is isolated, incomplete, and
-undeployed.
+**Latest virtual funding / terminal P&L checkpoint:** code commit
+`71ee203b033c4bc0f38afce09b5255fe31bcae21` extends the saved-run funding
+sensitivity to expose a separate outcome-level P&L result after modeled
+conversion costs. It is available only when the candidate and funding audits
+verify, candidate fees are complete, and each venue-local balance covers its
+recorded requirement. A separate rational audit checks every terminal state;
+the candidate's stored P&L, classification, and practical eligibility remain
+unchanged. Incomplete or disagreeing evidence returns no adjusted state values.
+Full Frontier Python regression passed **325/325** (51.73 seconds wall,
+365,976 KiB peak RSS, zero swaps/socket messages). The Web suite passed
+**40/40**; the Frontier browser spec passed **4/4** against isolated test
+services. TypeScript, targeted ESLint/Prettier, Ruff, strict scoped mypy for
+`fx.py`, and the Vite production build passed. The build retains the 544.41 kB
+Chart-chunk advisory. One existing Starlette/httpx deprecation warning remains.
+No exchange request, protected service, production store, external worker, or
+deployment was used. Live FX, cross-venue funding availability, source
+permissions, and production readiness remain unresolved.
 
 **Branch:** `codex/frontier-20261026`
 
-**Latest full-regression checkpoint (2026-10-28 00:27 UTC):** Commit
-`86b79fe10b6aed82dabbe3e40ea01e08923ad744` adds fixture-backed browser coverage
-for the funding-currency workbench. Since the preceding checkpoint, the full
-Frontier Python suite passed **322/322** (50.72 seconds, 364,312 KiB peak RSS,
-zero swaps); the full web unit suite passed **40/40**; and the configured
-browser suite passed **12/12** against isolated demo services. The funding
-workbench browser scenario confirms distinct venue balances, explicit FX
-assumptions, and unchanged candidate classification. Full details and the
-resource sample are recorded in the dated continuation at the end of this
-report. These fixture results do not establish live FX or cross-venue
-executable economics.
+**Prior browser baseline (2026-10-28 00:27 UTC):** Commit
+`86b79fe10b6aed82dabbe3e40ea01e08923ad744` added fixture-backed funding-currency
+browser coverage and passed the configured **12/12** E2E suite. The latest
+change reran the full Frontier browser spec (**4/4**) after extending the
+response model. Both are isolated fixture evidence, not live FX or executable
+cross-venue economics.
 
-**Latest API type checkpoint (2026-10-28 00:35 UTC):** Commit
+**API type checkpoint (2026-10-28 00:35 UTC):** Commit
 `480ba629171c855086cd375a34e688bbc72fdbcb` types the Frontier router's
 registry parameter as `AdapterRegistry` instead of `Any`, removing the
 adapter-lookup `no-any-return` diagnostic. Strict mypy passes for
@@ -5042,12 +5034,12 @@ acceptance against current branch evidence, not intent or planned work.
 | Canonical instruments, precise denominations, and supported payoff semantics | PARTIALLY VERIFIED | Versioned models preserve native IDs, identities, outcomes, payoff rules, constraints, and provenance; binary and bounded multi-outcome evaluators reject unsupported or incompatible semantics. Spot remains contextual unless a supported payoff link is proved. Broader instrument families are not supported. |
 | Relationship graph, evidence, persistence, and bounded exploration | PARTIALLY VERIFIED | Deterministic proposals, explicit verification states, append-only review evidence, held-source filtering, and revision-pinned neighborhood/search pages have API and UI coverage. No genuine verified cross-venue economic match exists; reviewer identities and external assertions are not authenticated. |
 | Opportunity families and independent economic verification | PARTIALLY VERIFIED | Binary coverage, bounded multi-outcome, and logical-implication constructions have independent arithmetic checks and adversarial fixtures. No live positive or economically eligible opportunity is established; general multi-leg search is not implemented. |
-| Venue costs, capital, and currency assumptions | PARTIALLY VERIFIED | Public fee metadata, bounded fee and carry sensitivities, partial-fill stress, venue-separated virtual balances, and explicit non-classifying funding-currency sensitivity exist. Account-specific fees, sourced FX, cross-venue transfer/custody, settlement risk, and conversion availability remain unknown and are not folded into candidate P&L. |
+| Venue costs, capital, and currency assumptions | PARTIALLY VERIFIED | Public fee metadata, bounded fee/carry sensitivities, partial-fill stress, venue-separated virtual balances, and a separate conversion-adjusted terminal-P&L scenario exist. The P&L scenario requires verified candidate/funding audits, complete candidate leg fees, and sufficient per-venue balances; it never mutates candidate economics. Account-specific fees, sourced FX, cross-venue transfer/custody, settlement risk, and conversion availability remain unknown. |
 | Isolated collection, provenance, durable storage, and deterministic replay | PARTIALLY VERIFIED | Finite restartable collection, append-only hash-chained checkpoints, bounded storage, event-time replay, source-health evidence, and replay provenance are implemented and tested offline. No continuous stream, full history walk, or long-horizon source-quality study is established. |
 | Laboratory/Arena research integration | PARTIALLY VERIFIED | Bounded replay jobs, paired comparisons, integrity-checked results, and fixture/UI paths exist. No durable Laboratory experiment manager, long-duration campaign, or production worker is authorized or verified. |
-| Native Frontier Mission Control interface | IMPLEMENTED, DEPLOYMENT PENDING | The configured web unit suite passes 40/40 and browser E2E passes 12/12 against isolated services. The FX response is fixture-intercepted in browser; live source data is unavailable under current holds. No production deployment occurred. |
-| Scientific acceptance: normalization, rejection, controlled discrepancy, independent arithmetic, missing/stale/asynchronous evidence, and deterministic replay | PARTIALLY VERIFIED | Controlled fixtures and the 322-test Frontier suite cover supported behavior and rejection paths. Evidence does not establish a genuine cross-venue relationship, synchronized executable quotes, or positive economics. |
-| Resource sustainability under bounded development workloads | PARTIALLY VERIFIED | One complete Frontier suite measured 364,312 KiB peak RSS and zero swaps. Sustained collection, concurrent workloads, production resource admission, and broad latency/CPU behavior remain unmeasured. |
+| Native Frontier Mission Control interface | IMPLEMENTED, DEPLOYMENT PENDING | The web unit suite passes 40/40 and the latest Frontier browser spec passes 4/4 against isolated services; the earlier configured browser suite passed 12/12. Funding responses are fixture-intercepted in browser, while the saved-run API separately verifies the candidate scenario. Live source data is unavailable under current holds. No production deployment occurred. |
+| Scientific acceptance: normalization, rejection, controlled discrepancy, independent arithmetic, missing/stale/asynchronous evidence, and deterministic replay | PARTIALLY VERIFIED | Controlled fixtures and the 325-test Frontier suite cover supported behavior and rejection paths, including rationally checked funding conversion subtraction. Evidence does not establish a genuine cross-venue relationship, synchronized executable quotes, or positive economics. |
+| Resource sustainability under bounded development workloads | PARTIALLY VERIFIED | The latest full Frontier suite measured 365,976 KiB peak RSS and zero swaps; the focused FX/API selection measured 82,756 KiB. Sustained collection, concurrent workloads, production resource admission, and broad latency/CPU behavior remain unmeasured. |
 | Read-only research boundary and source-use gates | COMPLETE AND VERIFIED | No trading/authenticated exchange path is provided; source-policy tests ensure held venues return 409 without requests and held evidence stays quarantined. This does not grant permission to use a held source. |
 | Required architecture, operations, current-state, report, and continuation documentation | COMPLETE AND VERIFIED | The engineering report, architecture, operations guidance, current-state note, and append-only mission ledger record implementation, evidence, blockers, and continuation actions. |
 | Production deployment | DEFERRED | Requires separate source permission, resource/storage/recovery review, full deployment-scope regression, monitoring/rollback preparation, and explicit authorization. |
@@ -5062,6 +5054,71 @@ it is not a claim that the opportunity question has been settled.
 The scoped API type check now passes after host pressure subsided. Continue
 offline acceptance; live cross-venue work remains gated on a validated
 source-use decision, and deployment remains a separately authorized activity.
+
+### Funding-adjusted terminal-state P&L — 2026-10-28 00:47 UTC
+
+Code commit `71ee203b033c4bc0f38afce09b5255fe31bcae21` closes a gap in the
+virtual funding sensitivity: it previously reported conversion costs without
+applying them to outcome economics. Schema/model version 2 now includes a
+separate `pnl_scenario`. The input digest binds the saved run and candidate,
+candidate independent-audit identity and terminal P&L, per-leg modeled-fee
+completeness, venue capital, and user assumptions. A separate `Fraction`
+calculation recomputes the fee and subtracts it from every terminal state.
+
+The scenario is **verified** only if the saved candidate audit and funding
+conversion audit verify, every candidate leg has a modeled fee, the candidate
+P&L agrees with its independent audit, and all virtual balances cover their
+venue-local requirements. Missing prerequisites return **unavailable**;
+inconsistent P&L or arithmetic returns **disagreement**. Neither state exposes
+adjusted terminal values. The result never modifies the saved candidate's P&L,
+classification, or practical eligibility. The API reads only the hash-pinned
+saved candidate and makes no exchange request or database write. The UI renders
+both verified state values and the unavailable explanation.
+
+Files in `71ee203`: `packages/midas/frontier/fx.py`,
+`tests/frontier/test_fx_sensitivity.py`, `tests/frontier/test_api.py`,
+`apps/web/src/Frontier.tsx`, `apps/web/src/Frontier.test.tsx`, and
+`apps/web/e2e/frontier.spec.ts`.
+The documentation checkpoint updates `docs/frontier/FRONTIER_ARCHITECTURE.md`,
+`docs/frontier/FRONTIER_OPERATIONS.md`, `docs/frontier/FRONTIER_MISSION_LEDGER.md`,
+`docs/DEVELOPMENT.md`, `docs/MIDAS_CURRENT_STATE.md`, and this report.
+
+Verification on the isolated worktree:
+
+- `pytest tests/frontier -q`: **325 passed** in 50.39 seconds; **51.73 seconds
+  wall**, **365,976 KiB peak RSS**, zero swaps, and zero socket messages. One
+  existing Starlette/httpx deprecation warning remains.
+- Focused funding sensitivity and saved-run API selection: **16 passed** in
+  1.14 seconds; `/usr/bin/time -v` measured **82,756 KiB peak RSS**, zero swaps,
+  and zero socket messages.
+- Web unit suite: **40 passed** across seven files. This covers the panel's
+  verified and unavailable display states.
+- `tsc -b`, scoped ESLint, Prettier, Ruff check/format, and strict scoped mypy
+  for `packages/midas/frontier/fx.py` passed.
+- `playwright test e2e/frontier.spec.ts --workers=1`: **4 passed** in 11.7
+  seconds using the isolated demo API/web services. The funding response is a
+  fixture; the saved-run Python API test independently exercises the verified
+  P&L scenario.
+- Vite production build passed in 4.69 seconds. It still reports the existing
+  544.41 kB Chart-chunk size advisory.
+
+The first updated web-unit run caught an old assertion that counted two `red`
+labels; the verified P&L panel correctly adds a third state label. The selector
+was updated and all **40** web tests passed. No real FX data, source endpoint,
+account, wallet, protected Reality process, production database, or deployment
+was used. The fixture verifies arithmetic and UI behavior; it does not establish
+live convertibility, transfer availability, executable quotes, or profitability.
+
+| Component | Status | Evidence and boundary |
+| --- | --- | --- |
+| Virtual conversion-adjusted outcome P&L | COMPLETE AND VERIFIED | Saved-run API, rational differential checks, incomplete-fee/balance rejection, tampered candidate-P&L rejection, and UI verified/unavailable states pass. Still entirely assumption-driven. |
+| Funding-currency web/API workflow | COMPLETE AND VERIFIED | Version 2 API contract, full web suite, Frontier browser spec, TypeScript, lint, and production build pass. Browser source response is fixture-intercepted. |
+| Live FX, conversion and cross-venue capital access | DEFERRED | No FX observation, account balance, transfer, jurisdiction, custody, collateral, or conversion availability is sourced. |
+| Project Frontier overall | PARTIALLY VERIFIED | Other scientific and source-use gaps in the current matrix remain open; there is no genuine verified cross-venue match or production deployment. |
+
+Continue offline engineering from the current mission matrix. Do not treat a
+positive fixture result as evidence of a live opportunity or as permission to
+use held sources.
 
 ### Strict Frontier API registry typing — 2026-10-28 00:35 UTC
 

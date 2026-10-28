@@ -164,12 +164,21 @@ both must be entered before submission. Values are not rounded. Decimal
 results are checked by an independent Fraction calculation and bound to input
 and result hashes.
 
-This feature compares venue-local balances independently. It does not pool
-capital, perform or verify conversion, subtract fees from candidate P&L, or
-change classification or practical eligibility. The response counts candidate
-legs with unresolved modeled fees. It does not establish a conversion market,
+Venue-local balances remain isolated and are never pooled. Schema version 2 adds
+a separate outcome-level P&L sensitivity: it subtracts the modeled conversion
+fee from every terminal state only when the candidate's independent economic
+audit verifies, every leg fee is known, the funding audit verifies, and every
+venue balance covers its recorded capital requirement. The Fraction audit
+recomputes both the modeled conversion fee and each adjusted state value. When
+one of those checks is unavailable or disagrees, the response includes a
+reason and no adjusted P&L values. This does not mutate the candidate's saved
+P&L or classification.
+
+No conversion is performed or confirmed. The response counts candidate legs
+with unresolved modeled fees and does not establish a conversion market,
 transfer path, legal access, custody, collateral, FX timing, or executable
-availability. Do not describe a covered virtual balance as funded or tradable.
+availability. Do not describe a covered virtual balance or positive modeled
+terminal-state sensitivity as funded, tradable, or realized profit.
 
 ## Saved Kalshi fee evidence
 

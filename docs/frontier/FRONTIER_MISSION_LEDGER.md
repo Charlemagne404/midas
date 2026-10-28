@@ -1,5 +1,61 @@
 # Project Frontier Mission Ledger
 
+## Funding-adjusted terminal-state P&L — 2026-10-28 00:47 UTC
+
+Code commit **`71ee203b033c4bc0f38afce09b5255fe31bcae21`** upgrades the saved-run
+virtual funding sensitivity to schema/model version 2. It returns a separate
+outcome-level P&L scenario after subtracting the user-assumed conversion fee
+from each independently audited terminal state. The input digest binds the
+candidate independent-audit identity and P&L, modeled-fee completeness, venue
+capital, and user assumptions. A second `Fraction` pass independently
+recomputes each conversion charge and adjusted state.
+
+The scenario is verified only if the saved candidate audit and funding audit
+verify, candidate P&L matches its audit, every candidate leg has a modeled fee,
+and each venue-local virtual balance covers its capital requirement. Incomplete
+evidence returns `unavailable`; disagreement returns no adjusted state values.
+The candidate's saved P&L, classification, and practical eligibility remain
+unchanged. The API reads the exact hash-pinned saved run; it makes no source
+request, database write, or execution action. Mission Control displays verified
+state values or the specific unavailable/disagreement explanation.
+
+### Verification
+
+- Full Frontier Python suite: **325 passed** in 50.39 seconds pytest time / 51.73
+  seconds wall. `/usr/bin/time -v` measured **365,976 KiB peak RSS**, zero
+  swaps, and zero socket messages. One existing Starlette/httpx deprecation
+  warning remains.
+- Focused funding model plus saved-run API tests: **16 passed** in 1.14 seconds.
+  The measured command used **82,756 KiB peak RSS**, zero swaps, and zero socket
+  messages.
+- Web unit suite: **40 passed** across seven files, covering both verified and
+  unavailable P&L panel states.
+- TypeScript, targeted ESLint and Prettier, Ruff check and format, and strict
+  scoped mypy for `packages/midas/frontier/fx.py` passed.
+- `playwright test e2e/frontier.spec.ts --workers=1`: **4 passed** in 11.7
+  seconds using isolated demo services. Browser funding responses are fixtures;
+  the saved-run API is independently fixture-tested.
+- Vite production build passed in 4.69 seconds. It emitted the existing
+  544.41 kB Chart-chunk advisory.
+
+The first expanded UI unit run found a stale count assertion for `red`; the
+verified outcome panel adds one state label. The assertion was updated and all
+40 Web tests passed. No exchange endpoint, FX source, account, wallet, protected
+Reality process, production store, external worker, or deployment was used.
+Fixture economics demonstrate the calculation and do not establish live
+convertibility, transfers, executable quotes, or profitability.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Conversion-adjusted terminal-state P&L scenario | COMPLETE AND VERIFIED | Saved-run API, rational recomputation, verified/unavailable UI states, incomplete-fee/balance rejection, candidate-audit mismatch rejection, and invariance checks pass. Assumptions remain hypothetical. |
+| Funding-currency workflow and Mission Control | COMPLETE AND VERIFIED | Python/Web regressions, Frontier browser spec, TypeScript, lint, scoped mypy, and production build pass. The browser response is fixture-intercepted. |
+| Live FX, conversion, and cross-venue capital access | DEFERRED | No FX observation, account balance, transfer, jurisdiction, custody, collateral, or availability evidence is sourced. |
+| Project Frontier overall | PARTIALLY VERIFIED | Other science/source gaps remain. There is no genuine verified cross-venue match and no production deployment. |
+
+**Next safe action:** continue offline work from the full acceptance matrix and
+mission report. Keep held sources quarantined and the production transition
+separate. A positive fixture result is not an observed opportunity.
+
 ## Explicit finite collection API — 2026-10-28 01:38 CET
 
 Code commit **`cf67b2b`** adds an explicit `POST

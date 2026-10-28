@@ -33,6 +33,30 @@ in the dated addendum below and in the Frontier engineering report.
 
 ## Frontier development addendum — 2026-10-28
 
+### Conversion-adjusted terminal-state sensitivity — 2026-10-28 00:47 UTC
+
+Code commit `71ee203b033c4bc0f38afce09b5255fe31bcae21` on the isolated Frontier
+branch applies user-entered virtual conversion fees to a separate terminal-state
+P&L sensitivity. The calculation is available only when the saved candidate's
+economic audit and funding conversion audit verify, all modeled candidate leg
+fees are known, and every venue-local virtual balance covers the recorded
+capital requirement. An independent rational pass checks the per-state result.
+Incomplete or disagreeing inputs produce no adjusted P&L map. The candidate's
+saved P&L, classification, and practical eligibility stay unchanged. This adds
+no FX source, transfer, account, wallet, execution, or production path.
+
+The full Frontier regression passed **325/325** in 51.73 seconds wall time, with
+**365,976 KiB peak RSS**, zero swaps, and zero socket messages. Focused
+currency/P&L plus saved-run API coverage passed **16/16**; that measured run used
+**82,756 KiB peak RSS**, zero swaps, and zero socket messages. The web suite
+passed **40/40**, TypeScript passed, the Frontier browser spec passed **4/4**,
+and the Vite production build passed with the existing 544.41 kB Chart chunk
+advisory. Ruff, scoped mypy, ESLint, Prettier, and `git diff --check` passed.
+One existing Starlette/httpx deprecation warning remains. The build and browser
+tests used the isolated worktree. No source endpoint or protected MIDAS service
+was accessed. Current mission status remains **PARTIALLY VERIFIED**; genuine
+live cross-venue matching and production deployment remain open.
+
 ### Virtual funding-currency sensitivity — 2026-10-28 00:22 UTC
 
 Frontier branch `codex/frontier-20261026` is at test-hardening commit

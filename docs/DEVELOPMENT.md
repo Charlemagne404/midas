@@ -358,12 +358,14 @@ The candidate workbench also offers a separate virtual funding-currency
 sensitivity at `POST /api/frontier/opportunities/funding-currency-sensitivity`.
 It requires a user-entered, namespaced funding identity, venue-local balance,
 explicit rate orientation, and conversion fee. A ticker match never creates a
-1:1 assumption; the different-identity rate and fee fields start blank. Its
-independent arithmetic result reports per-venue funding shortfall and modeled
-conversion cost without changing candidate P&L or classification. It does not
-retrieve FX data, verify convertibility or transfers, connect accounts, or
-persist user assumptions. See the [operations guide](frontier/FRONTIER_OPERATIONS.md)
-for the calculation and research limitations.
+1:1 assumption; the different-identity rate and fee fields start blank. Schema
+version 2 can also show a separate conversion-adjusted terminal-state P&L
+sensitivity when the candidate audit, all leg fees, the funding audit, and
+every venue-local balance are complete. This sensitivity does not mutate
+candidate P&L or classification. It does not retrieve FX data, verify
+convertibility or transfers, connect accounts, or persist user assumptions.
+See the [operations guide](frontier/FRONTIER_OPERATIONS.md) for the calculation
+and research limitations.
 
 Keep Frontier experiments in a temporary store and use the bounded probe gates
 described by the [Frontier operations guide](frontier/FRONTIER_OPERATIONS.md).
