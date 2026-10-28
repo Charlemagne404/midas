@@ -1716,3 +1716,17 @@ shared Arena lock holder was found. Read-only inspection identified PID
 48.45% some / 43.86% full, I/O PSI avg10 0.79% / 0.79%, approximately 10 GiB
 was available, and 333 MiB of swap was free. The external process was left
 untouched; no additional tests or resource-bearing checks were started.
+
+### Follow-up after shared Arena lock cleared — 2026-10-28 04:19 UTC
+
+The previously deferred temporary-root storage-query and recording-isolation
+tests passed **7/7**; the focused API/Reality protected-service
+materialization guard passed **1/1**. Peak RSS was 103,244 KiB and 72,156 KiB,
+respectively, with zero swaps and zero socket messages. A source-tree audit
+found no `data/frontier/live-probes` path references under tests, packages, or
+apps, without opening held data. At 04:19:47 UTC memory PSI avg10 was
+0.01% some/full, avg60 9.38%/8.50%, avg300 13.11%/11.79%; I/O PSI avg10 was
+1.27%/1.08%; about 10 GiB was available and the shared Arena lock was free.
+This closes those specific checks. Broader suite work remains subject to a
+fresh resource gate; Frontier remains research-only, undeployed, and
+**PARTIALLY VERIFIED**.

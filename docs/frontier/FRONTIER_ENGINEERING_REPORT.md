@@ -6171,3 +6171,28 @@ memory PSI rising. At `2026-10-28T04:18:00Z`, `fuser` showed external PID
 `midas-veritas-gap-detail-v2.service`. It was not interrupted. About **10 GiB**
 of available memory does not override that gate. Resume only after a fresh
 admission sample passes and the shared lock is free.
+
+### Subsequent bounded compatibility and service-guard checks — 2026-10-28 04:19 UTC
+
+The lock later cleared and a fresh low-avg10 sample admitted three narrowly
+scoped checks. Storage-query plus recording-isolation tests passed **7/7** in
+2.18 seconds pytest time (2.68 seconds process wall), with **103,244 KiB peak
+RSS**. The protected-service materialization guard test passed **1/1** in 0.43
+seconds (0.84 seconds process wall), with **72,156 KiB peak RSS**. These tests
+use temporary roots or mocked service state. A source-tree search for
+`data/frontier/live-probes` and `live-probes/` returned no matches in
+`tests`, `packages`, or `apps`; it did not open held capture data.
+
+All test processes used zero swap and emitted zero socket messages. At
+`2026-10-28T04:19:47Z`, memory PSI avg10 was **0.01% some / 0.01% full**,
+avg60 **9.38% / 8.50%**, avg300 **13.11% / 11.79%**, and I/O PSI avg10
+**1.27% / 1.08%**. About **10 GiB** was available and no Arena lock holder was
+listed. The selected checks close the previously deferred legacy storage and
+recording contracts, not the full MIDAS suite or sustained resource admission.
+
+| Component | Status | Current evidence and remaining boundary |
+| --- | --- | --- |
+| Storage query and recording isolation compatibility | COMPLETE AND VERIFIED | 7/7 selected tests pass using temporary roots/path assertions. |
+| Protected-service paper-state mutation guard | COMPLETE AND VERIFIED | Focused mock-backed test proves the service guard rejects API and Reality materialization; no actual service interaction occurred. |
+| Held-capture path references in source/test trees | COMPLETE AND VERIFIED | No direct `live-probes` path references found in tests, packages, or apps; no held data was opened. |
+| Project Frontier overall | PARTIALLY VERIFIED | Live cross-venue validation, complete repository acceptance, and deployment remain incomplete. |

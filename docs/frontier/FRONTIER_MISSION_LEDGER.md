@@ -4738,3 +4738,34 @@ an unheld shared lock.
 | --- | --- | --- |
 | Optional legacy storage-query/recording-isolation tests | DEFERRED | Isolated test code was inspected; no test ran because current shared-host admission failed. |
 | Project Frontier overall | PARTIALLY VERIFIED | The implementation and bounded regression evidence remain valid; source permission, genuine cross-venue equivalence, full-repository acceptance, and deployment remain open. |
+
+### Storage, recording, and protected-service guard regressions — 2026-10-28 04:19 UTC
+
+After the shared Arena lock cleared, the bounded tests deferred above were
+rerun in isolation:
+
+- `tests/integration/test_storage_queries.py` and
+  `tests/integration/test_recording_isolation.py`: **7/7** in 2.18 seconds
+  pytest time (2.68 seconds process wall), **103,244 KiB peak RSS**. The
+  storage cases use temporary SQLite databases; recording cases use temporary
+  roots or assert the configured path without writing it.
+- `tests/integration/test_state_codec.py::test_materialization_refuses_a_running_or_protected_service`:
+  **1/1** in 0.43 seconds pytest time (0.84 seconds process wall), **72,156
+  KiB peak RSS**. `systemctl` output is mocked and the test confirms the API
+  and Reality service materializations are refused.
+- A source-tree reference audit, `rg -n "data/frontier/live-probes|live-probes/" tests packages apps`,
+  returned no matches. It read source paths only; no held capture was opened.
+
+Both pytest invocations had zero swaps and zero socket messages. At
+`2026-10-28T04:19:47Z`, memory PSI avg10 was **0.01% some / 0.01% full**,
+avg60 **9.38% / 8.50%**, avg300 **13.11% / 11.79%**; I/O PSI avg10 was
+**1.27% / 1.08%**. About **10 GiB** was available, **333 MiB** of swap was
+free, and no process held the shared Arena lock. This supersedes the
+04:18 deferment for these selected checks only; it does not justify a broad
+suite during elevated longer-window pressure.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Bounded legacy storage and recording compatibility | COMPLETE AND VERIFIED | Seven temporary-root/path-contract tests pass with low peak RSS and no swap or network traffic. |
+| Guard against paper-state materialization on protected services | COMPLETE AND VERIFIED | Focused test confirms API and Reality service guards fail closed; actual services were not contacted or modified. |
+| Current source-tree held-capture path references | COMPLETE AND VERIFIED | Static audit found no references under tests/packages/apps; this does not authorize direct database access or held-source use. |
