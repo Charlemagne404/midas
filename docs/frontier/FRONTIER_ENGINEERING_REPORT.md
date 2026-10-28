@@ -5,10 +5,13 @@
 ## Latest Frontier checkpoint — 2026-10-28 03:59 UTC
 
 The isolated worktree is `/home/charlie/midas-frontier` on
-`codex/frontier-20261026`. Recent commits are `e4692d1` (capability-specific
-single-market metadata capture), `b7638db` (bounded live-probe evidence), and
-`447ea0f` (web regression and event-identity checkpoint). There is no merge,
-push, production deployment, source credential, or protected-service change.
+`codex/frontier-20261026`. The relevant commits are `e4692d1`
+(capability-specific single-market metadata capture), `b7638db` (bounded
+live-probe evidence), `447ea0f` (web regression and event-identity checkpoint),
+`e994654` (current engineering-report checkpoint), and `c2e3db0` (resource-gate
+recheck). The Polymarket event-ID code/test correction described below remains
+uncommitted. There is no merge, push, production deployment, source credential,
+or protected-service change.
 
 One bounded, public, read-only Polymarket Gamma detail request for previously
 recorded market `2589810` returned HTTP 200 and was persisted in a separate,
