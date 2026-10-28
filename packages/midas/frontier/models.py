@@ -1140,6 +1140,12 @@ class BookSnapshot(FrontierModel):
             raise ValueError("Book quote currency code differs from its canonical identity")
         return self
 
+    @model_validator(mode="after")
+    def receipt_time_matches_provenance(self) -> BookSnapshot:
+        if self.received_at_utc != self.provenance.response_received_at_utc:
+            raise ValueError("Book receipt time differs from its provenance response time")
+        return self
+
     @property
     def crossed(self) -> bool:
         return bool(

@@ -802,10 +802,11 @@ identities. Independent audit v22 accepts only current v4 implication evidence;
 older evidence remains available for inspection but cannot validate new
 candidate research.
 The current candidate/replay economic model is
-`frontier-economic-verifiers-22`, which pins that verifier acceptance rule in
+`frontier-economic-verifiers-23`, which pins that verifier acceptance rule in
 candidate and replay identities. Pair-based cross-venue evaluations also bind
 each book to its native market, native instrument, and quantity unit before
-using displayed asks. Replays using v2 implication evidence produce
+using displayed asks, and reject receipt times that differ from response-time
+provenance. Replays using v2 implication evidence produce
 incomplete evidence with no constructed position until the relationship is
 reviewed under v4. Book snapshots expose a runtime price-level integrity check
 because `model_copy(update=...)` bypasses Pydantic validation. Candidate
