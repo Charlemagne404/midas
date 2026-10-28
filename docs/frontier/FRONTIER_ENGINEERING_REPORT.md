@@ -2,6 +2,16 @@
 
 **Report date:** 2026-10-28
 
+## Current status — 2026-10-28 11:46 UTC
+
+This entry supersedes the 11:44 UTC status. Follow-up commit `92b5bf0` aligns
+the Kraken adapter fixture so its `PublicReadTransport` receives the same
+source-specific `KrakenSpotConfig` as the adapter, preserving the newly
+enforced config-match invariant. Ruff check/format and `git diff --check` pass
+for the changed Python files. Tests remain unrun under the memory PSI gate
+recorded below. The report and ledger inventory include both `ca14e37` and
+`92b5bf0`; no source, production service, or protected store was touched.
+
 ## Current status — 2026-10-28 11:44 UTC
 
 Code commit `ca14e37` closes Coinbase source-use hold bypasses found during
@@ -8792,6 +8802,8 @@ store, or Arena job was accessed or started.
 | `1dd0987` | `packages/midas/frontier/adapters/base.py`; `adapters/transport.py`; `models.py`; `tests/frontier/test_adapters.py` | Revalidate concrete adapter configuration bounds before adapter use or HTTP client creation. |
 | `0ac1094` | `docs/MIDAS_CURRENT_STATE.md`; `docs/frontier/FRONTIER_ARCHITECTURE.md`; `docs/frontier/FRONTIER_ENGINEERING_REPORT.md`; `docs/frontier/FRONTIER_MISSION_LEDGER.md`; `docs/frontier/FRONTIER_OPERATIONS.md` | Record adapter resource-bound validation and exact 418-test evidence. |
 | `c6dfff1` | `tests/frontier/test_coinbase.py` | Add a pending no-network regression for a copied config that attempts to clear Coinbase's source-use hold without the exact reviewed acknowledgement. |
+| `ca14e37` | `packages/midas/frontier/adapters/base.py`; `packages/midas/frontier/adapters/coinbase.py`; `tests/frontier/test_coinbase.py` | Reject Coinbase hold clearing, generic config substitution, and mismatched injected transport config; keep offline adapter/API fixtures on a held config. |
+| `92b5bf0` | `tests/frontier/test_adapters.py` | Pass the same bounded `KrakenSpotConfig` into the adapter and fixture transport under the new config-match invariant. |
 
 The temporary `tests/frontier/test_recorded_cross_venue_relationship.py` was
 removed after the test guard denied held-capture access; it is not part of the

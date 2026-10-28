@@ -1,5 +1,15 @@
 # Project Frontier Mission Ledger
 
+## Kraken fixture config alignment — 2026-10-28 11:45 UTC
+
+Test commit `92b5bf0` updates the Kraken adapter fixture to construct one
+`KrakenSpotConfig` and pass it to both `KrakenSpotAdapter` and its
+`PublicReadTransport`. This keeps the test aligned with `BaseReadOnlyAdapter`'s
+new invariant that an injected transport's concrete config type and value must
+match the adapter's. Ruff check, Ruff format check, and `git diff --check` pass
+for this file. The Frontier tests remain unrun because memory PSI is above the
+1% admission threshold; the latest recorded sample is in the 11:44 entry.
+
 ## Coinbase source-use hold integrity fix — 2026-10-28 11:44 UTC
 
 Code commit `ca14e37` tightens the Coinbase public-source policy boundary.

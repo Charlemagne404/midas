@@ -2555,3 +2555,7 @@ PSI was **0.59% some / 0.45% full**, about **10 GiB** was available, and swap
 was **3.5/4 GiB** used. The prior `418/418` result is for `1dd0987`, before
 this change. No live source, protected service, or deployment was used.
 Frontier remains research-only and **PARTIALLY VERIFIED**.
+
+Commit `92b5bf0` also aligns the Kraken fixture transport with the exact
+`KrakenSpotConfig` supplied to its adapter. Ruff check/format pass for the
+fixture; no tests were run under the current memory PSI gate.
