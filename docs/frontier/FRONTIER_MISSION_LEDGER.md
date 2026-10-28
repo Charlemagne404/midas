@@ -10950,3 +10950,36 @@ regressions remain pending.
 | Full current Frontier regression | PARTIALLY VERIFIED | The full suite was not run because protected service headroom remains constrained. |
 | Genuine live cross-venue science | BLOCKED | Source-use scope and location authorization remain unresolved; no live result is claimed. |
 | Project Frontier overall | PARTIALLY VERIFIED | Live science, broad regressions, endurance, protected recovery, and deployment remain open. |
+
+## Book exchange timestamp provenance binding — 2026-10-28 20:49 UTC
+
+Code commit `f13bb2212c98` advances `ECONOMIC_MODEL_VERSION` to
+`frontier-economic-verifiers-24`. The `BookSnapshot` invariant now requires
+both local receipt time to equal `provenance.response_received_at_utc` and the
+book's source timestamp to equal `provenance.exchange_timestamp_utc`. This
+prevents a changed top-level exchange time from making cross-venue observations
+appear more synchronous than the source evidence records. Sources without a
+unified exchange timestamp keep both fields absent; independently timestamped
+book levels remain separately represented.
+
+The first 306-case run found one timing fixture that changed only the
+top-level timestamp; it was updated to preserve the exact provenance match
+while retaining the future-timestamp rejection scenario. The final four-module
+run passes **306/306** (4.26 seconds pytest time, 4.76 seconds process wall),
+peaking at **94,148 KiB RSS** in a 1 GiB transient systemd scope, with zero
+swaps or socket messages. Strict mypy passes on the four core source modules;
+Ruff check/format and whitespace checks pass. No public source endpoint was
+queried.
+
+At `2026-10-28T20:49:54Z`, Reality was **12,460,032 bytes below**
+`MemoryHigh` and the API was **30,314,400 bytes below** its boundary. Both
+services remained active and unchanged. Full Frontier, Arena, and legacy
+regressions remain pending.
+
+| Requirement | Status | Evidence and boundary |
+| --- | --- | --- |
+| Book receipt and exchange timestamp binding | COMPLETE AND VERIFIED | Snapshot construction and runtime revalidation require both duplicated timestamps to match provenance. |
+| Current focused adapter/economics/replay regression | COMPLETE AND VERIFIED | 306/306 tests pass on the current code commit. |
+| Full exact-tree Frontier regression | PARTIALLY VERIFIED | Not run; the protected Reality service remains close to `MemoryHigh`. |
+| Genuine cross-venue science | BLOCKED | Data-use holds and physical-location uncertainty remain; no live result is claimed. |
+| Project Frontier overall | PARTIALLY VERIFIED | Broad regressions, live research evidence, endurance, protected recovery, and deployment remain open. |

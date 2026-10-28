@@ -11791,3 +11791,29 @@ the corrected rerun passed completely. No public endpoint was queried.
 | Exact-tree full Frontier and legacy regression | PARTIALLY VERIFIED | Broad suites remain unrun under the protected service resource gate. |
 | Live cross-venue relationship and economics | BLOCKED | Source-use terms and current location remain unresolved; fixture results are not live claims. |
 | Frontier overall | PARTIALLY VERIFIED | Live science, broad regressions, endurance, protected recovery, and deployment prerequisites remain open. |
+
+## Latest implementation checkpoint — 2026-10-28 20:49 UTC
+
+Commit `f13bb2212c98` advances the replay economic identity to
+`frontier-economic-verifiers-24`. The `BookSnapshot` integrity rule now binds
+both local receipt time and parsed exchange time to their copies in
+provenance. This protects freshness and cross-venue timestamp comparisons
+against an internally altered snapshot. Venues that do not supply a unified
+book timestamp retain `None` in both fields, while per-level timestamps remain
+independent.
+
+The four focused adapter, economics, and replay modules pass **306/306** after
+one existing future-time fixture was corrected to move its provenance copy
+along with the book timestamp. The run took 4.26 seconds of pytest time, peaked
+at **94,148 KiB RSS** under a 1 GiB transient scope, and produced no swaps or
+socket messages. Strict mypy passed for the core model, economics, replay, and
+independent-audit modules; Ruff and whitespace checks pass. No source API was
+queried.
+
+| Component | Current status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Book receipt/exchange time provenance | COMPLETE AND VERIFIED | Construction and structural revalidation reject either timestamp mismatch. |
+| Focused adapter/economics/replay regression | COMPLETE AND VERIFIED | 306/306 fixture cases pass on commit `f13bb2212c98`. |
+| Full Frontier and legacy regression | PARTIALLY VERIFIED | Exact-tree broad suites remain unrun under the protected resource gate. |
+| Live cross-venue economics | BLOCKED | Exchange data-use scope and current location remain unresolved; no live opportunity is claimed. |
+| Frontier overall | PARTIALLY VERIFIED | Live evidence, broad regressions, endurance, protected recovery, and deployment remain open. |
