@@ -2,11 +2,11 @@
 
 **Report date:** 2026-10-28
 
-## Current status — 2026-10-28 04:49 UTC
+## Current status — 2026-10-28 04:51 UTC
 
 The isolated development branch is `codex/frontier-20261026`; the latest
-committed checkpoint before this update was `3e56673`
-(`docs(frontier): correct regression evidence and stop record`). The
+committed checkpoint before this update was `eb16aa2`
+(`docs(frontier): record interrupted repository regression`). The
 implementation code snapshot is commit `2064671`; later commits update only
 the report and mission ledger. The current implementation
 includes four read-only source adapters, canonical market and payoff models,
@@ -6403,15 +6403,23 @@ worktree remained clean with `data/frontier/live-probes` absent. On that fresh
 sample, the same bounded repository diagnostic was retried in the sparse tree,
 using `/tmp/midas-frontier-rest-regression-20261028T0445Z` for pytest output.
 
-It again reached **101 passed**, then stalled while its own test had dispatched
-a temporary Arena planning job and an external Veritas batch acquired the
-shared admission lock. At `2026-10-28T04:49:37Z`, PSI was **43.29% some / 37.60%
+It again reached **101 passed**. At interruption, a test-dispatched Arena
+planning child was still active under the pytest temporary root. Static review
+identified it as
+`tests/arena/test_research_planning.py::test_native_plan_runs_four_fits_and_matched_fresh_studies`:
+the test calls `create(..., launch=False)` and then directly starts
+`midas.arena.jobs` with a 300-second worker limit and a 330-second subprocess
+timeout. The worker and pytest process were CPU-active; the external Veritas
+lock was concurrent host activity, not evidence that the test was waiting on
+that lock. At `2026-10-28T04:49:37Z`, PSI was **43.29% some / 37.60%
 full** over 10 seconds, **33.38% / 28.08%** over 60 seconds, and **19.74% /
 16.84%** over 300 seconds. PID **4194119** (`veritas_gap_detail_v2_batch.py`)
 was in `DNs` state with about **259 MiB RSS** and held the lock. Only Frontier
 pytest PID **4193289** was interrupted; the temporary child job and test
 process had exited by the post-stop check. The external process was not
-signaled.
+signaled. The run ended before the declared subprocess timeout; it is
+incomplete because it was stopped under high shared-host pressure, not because
+the test failed or timed out.
 
 Pytest exited **2** with `KeyboardInterrupt` at **204.34 seconds** (205.98
 seconds process wall), with **534,664 KiB** peak RSS, zero swaps, zero major

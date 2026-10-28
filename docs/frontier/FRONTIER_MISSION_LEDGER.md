@@ -5011,11 +5011,18 @@ nice -n 10 /usr/bin/time -v env PYTHONPATH=packages:. \
   --ignore=tests/test_reality_full_scale_validation.py tests
 ```
 
-The run again reached **101 passed**, then stopped making progress while a
-test-dispatched Arena planning job was active. At `2026-10-28T04:49:37Z`, an
-external Veritas batch PID **4194119** held the shared Arena lock in `DNs`
-state (about **259 MiB RSS**) and host PSI had risen to **43.29% some / 37.60%
-full** over 10 seconds, **33.38% / 28.08%** over 60 seconds, and **19.74% /
+The run again reached **101 passed**. At interruption, a test-dispatched Arena
+planning child remained active under the pytest temporary root. Static review
+identified it as
+`tests/arena/test_research_planning.py::test_native_plan_runs_four_fits_and_matched_fresh_studies`.
+It calls `create(..., launch=False)` and starts `midas.arena.jobs` directly
+with a 300-second worker limit and a 330-second subprocess timeout. The worker
+and pytest were CPU-active, so the external lock holder is concurrent host
+activity, not evidence that the test waited on the global lock. At
+`2026-10-28T04:49:37Z`, an external Veritas batch PID **4194119** held the
+shared Arena lock in `DNs` state (about **259 MiB RSS**) and host PSI had risen
+to **43.29% some / 37.60% full** over 10 seconds, **33.38% / 28.08%** over 60
+seconds, and **19.74% /
 16.84%** over 300 seconds. Only Frontier pytest PID **4193289** was sent
 SIGINT; the external Veritas process was not signaled. The temporary child job
 and pytest process were gone at the post-stop check.
@@ -5025,8 +5032,10 @@ wall time was **205.98 seconds**, peak RSS **534,664 KiB**, zero swaps, zero
 major faults, and zero socket messages. The run is incomplete and is not a
 full-suite pass. The held capture path remained absent after the run; the
 sparse test worktree was clean at the post-run check, and no code or test file
-was modified. Defer further resource-bearing work until memory PSI and the
-shared lock are sampled again.
+was modified. This run ended before the worker's declared subprocess timeout;
+it was stopped under high shared-host pressure, not due to a test failure or
+timeout. Defer further resource-bearing work until memory PSI and the shared
+lock are sampled again.
 
 | Component | Status | Evidence and remaining boundary |
 | --- | --- | --- |
