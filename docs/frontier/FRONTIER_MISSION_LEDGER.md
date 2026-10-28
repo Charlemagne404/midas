@@ -6015,3 +6015,29 @@ updated in this documentation checkpoint. **Next safe action:** continue the
 remaining source-independent acceptance matrix, prioritizing bounded replay,
 resource, and supervisor gaps; remeasure host admission before any broad or
 resource-intensive run. Preserve all source-use holds and production state.
+
+## Host admission recheck after the browser integration — 2026-10-28 07:03 UTC
+
+At `2026-10-28T07:02:48Z`, `/home/charlie/midas/data/arena/.global-admission.lock`
+was held by PID **115803**, running
+`/home/charlie/midas/.venv/bin/python -S scripts/veritas_gap_detail_v2_batch.py`
+inside `midas-veritas-gap-detail-v2.service`. It exited before the next sample;
+the lock had no holder at `2026-10-28T07:03:02Z`. No signal or other action was
+taken against the worker or its stores.
+
+At `2026-10-28T07:03:02Z`, memory PSI avg10 was **32.56% some / 29.27% full**;
+I/O PSI avg10 was **0.70% some / 0.70% full**. Available host memory was about
+10.7 GiB, with about 0.52 GiB swap free. No resource-bearing Frontier test,
+build, or Arena launch followed this sample because the memory-pressure gate
+was not clear. These are time-specific host measurements, not a capacity
+claim.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Additional resource-bearing acceptance runs | DEFERRED | Memory PSI remained high despite I/O PSI falling below 1%; no admission or sustained-resource claim. |
+| Protected Veritas worker | COMPLETE FOR THIS SAMPLE | PID 115803 exited and released the shared lock; its run and artifacts were left untouched. |
+
+**Next safe action:** remeasure memory/I/O PSI and the shared Arena lock before
+the next resource-bearing test. Continue independent code review and
+documentation while the host gate is closed; do not stop another workload or
+bypass shared admission.

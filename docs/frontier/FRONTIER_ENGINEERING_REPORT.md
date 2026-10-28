@@ -7341,3 +7341,19 @@ Verification since this checkpoint:
 select the next bounded replay, resource, or supervisor gap. Remeasure host
 admission before a broad or resource-intensive run; keep source-use holds and
 production isolation unchanged.
+
+## Host admission recheck — 2026-10-28 07:03 UTC
+
+At `2026-10-28T07:02:48Z`, the shared Arena admission lock was held by external
+Veritas batch PID **115803** in `midas-veritas-gap-detail-v2.service`. The
+process had exited and released the lock by the next sample at
+`2026-10-28T07:03:02Z`; no signal was sent and no store was touched. At that
+time memory PSI avg10 was **32.56% some / 29.27% full**, while I/O PSI avg10
+was **0.70% some / 0.70% full**. Available memory was about **10.7 GiB** and
+free swap about **0.52 GiB**. No resource-bearing Frontier test, build, or
+Arena job was started after the sample because memory pressure remained high.
+This is a dated admission observation, not a capacity guarantee.
+
+**Continuation:** remeasure memory/I/O pressure and the shared lock before any
+additional resource-bearing acceptance run. Do not interrupt the separate
+Veritas workload or bypass normal admission.
