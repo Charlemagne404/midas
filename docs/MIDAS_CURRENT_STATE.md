@@ -33,6 +33,24 @@ in the dated addendum below and in the Frontier engineering report.
 
 ## Frontier development addendum — 2026-10-28
 
+### Latest isolated Frontier checkpoint — 2026-10-28 08:47 UTC
+
+The full Frontier Python suite now passes **386/386** after the collection,
+FX-integrity, and timeline-timestamp changes. It ran on tmpfs in 29.38 seconds
+of pytest time (30.82 seconds wall), peaked at 378,704 KiB RSS, used no swap,
+and recorded zero filesystem input. After final formatting/type cleanup, the
+affected collection/API, FX, and timeline selection passed **57/57**; strict
+mypy, Ruff check/format, and `git diff --check` pass.
+
+Collection run specs now preserve allowlisted Kraken pair and Coinbase product
+and terms-ack config across restart. Verified FX sensitivities bind the total
+conversion fee to terminal P&L deductions. Timeline coverage verifies that a
+quote cannot be used before local receipt and that exchange-time skew remains
+visible to the timing audit. At `08:47:41Z`, host memory PSI avg10 rose to
+49.58% some / 45.01% full; no further broad test or build was started. No live
+source, protected service, or historical evidence was touched. Frontier remains
+**PARTIALLY VERIFIED**.
+
 ### Latest isolated Frontier checkpoint — 2026-10-28 08:37 UTC
 
 The seeded browser integration was rerun after the latest chart changes and

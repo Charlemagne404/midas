@@ -2,7 +2,7 @@
 
 **Report date:** 2026-10-28
 
-## Current status — 2026-10-28 08:36 UTC
+## Current status — 2026-10-28 08:47 UTC
 
 Frontier is isolated at `/home/charlie/midas-frontier` on
 `codex/frontier-20261026`. It descends from verified Veritas V6 integration
@@ -10,6 +10,10 @@ commit `11d32a0` and retains merge base `55601b9` with `main`. Feature commits
 `c4adac6` and `6c13b47` defer the shared Chart payload until it approaches the
 viewport and reuse each mounted ECharts instance when its options refresh;
 test commit `c04f699` covers fallback when `IntersectionObserver` is absent.
+Recent Python verification commits `006fa38`, `5fd3158`, and `668a243` close
+an FX result-integrity gap, pin receipt-time replay evidence, and preserve
+venue-specific collector configuration across restart. `7f7cd6d` records
+strict-format/type cleanup for those changes.
 Existing implementation includes Polymarket, Kalshi, Kraken Spot, and Coinbase
 public read adapters; canonical instrument and payoff models; reviewable
 relationship evidence; bounded candidate discovery and independent economics;
@@ -18,11 +22,12 @@ Mission Control workspace.
 
 Current bounded verification:
 
-- The exact current `tests/frontier` suite passes **379/379** in one process.
-  The tmpfs run took 29.51 seconds of pytest time, peaked at 378,216 KiB RSS,
-  and used no swap. A first disk-backed attempt stopped after I/O PSI rose to
-  12.91% some / 10.15% full; the successful tmpfs run used a fresh host sample
-  and recorded zero filesystem input. One existing Starlette/httpx `TestClient`
+- The full `tests/frontier` suite passes **386/386** in one process on the
+  tree with all three research fixes. The tmpfs run took 29.38 seconds of
+  pytest time, peaked at 378,704 KiB RSS, used no swap, and recorded zero
+  filesystem input. A later formatting/type-ignore-only cleanup was followed by
+  **57/57** focused collection, FX, and timeline tests and strict mypy for the
+  changed collection and FX modules. One existing Starlette/httpx `TestClient`
   deprecation warning remains.
 - The updated frontend passes **47/47** unit tests, TypeScript, full-project
   ESLint and Prettier, production build, **17** default Playwright cases with
@@ -41,6 +46,9 @@ Current bounded verification:
   pass for the changed Python files. Earlier scoped strict mypy covered the
   Frontier package/API integration. The tmpfs test command and pressure gate are
   documented in `FRONTIER_OPERATIONS.md`.
+- A later `2026-10-28T08:47:41Z` sample showed memory PSI avg10 at **49.58%
+  some / 45.01% full**, with about 10 GiB available. The cause was not
+  attributed to Frontier; no further broad test or build was started.
 
 The complete MIDAS repository regression remains unverified. The current tree
 has `packages/midas/arena/recovery.py` but lacks
@@ -60,6 +68,44 @@ quality, production resource/recovery, and deployment gates remain open.
 
 Frontier remains **PARTIALLY VERIFIED**, research-only, isolated, unmerged, and
 undeployed. No protected service or historical evidence was changed.
+
+## Collector configuration, FX audit, and timeline timestamp integrity — 2026-10-28 08:47 UTC
+
+Three focused research fixes are now checkpointed:
+
+- Commit `668a243` preserves concrete `KrakenSpotConfig` and
+  `CoinbaseSpotConfig` fields in the finite collection run spec using an
+  explicit allowlisted type tag. Pair/product allowlists and Coinbase terms
+  acknowledgment survive journal creation, listing, and restart. Resume rejects
+  changed configuration before adapter work. Schema-v1 base-config records
+  remain readable; arbitrary persisted class names are rejected.
+- Commit `006fa38` binds a verified virtual FX result's reported conversion
+  fee to both the independent audit total and the terminal P&L fee deduction.
+  Recomputed result hashes can no longer legitimize a forged fee or mismatched
+  after-conversion P&L. Unavailable and disagreement states remain explicit.
+- Commit `5fd3158` adds a timeline test where exchange time precedes receipt
+  time. The quote remains unavailable until local receipt, and its source-time
+  skew reaches the existing economic timing audit.
+
+The full Python suite passed **386/386** after these logic and test changes in
+29.38 seconds pytest time / 30.82 seconds wall time, with **378,704 KiB** peak
+RSS, zero swaps, and zero filesystem input. After a final formatting/type
+cleanup commit (`7f7cd6d`), the affected collection/API, FX, and timeline
+selection passed **57/57** in 3.44 seconds; strict configured mypy for
+`collection.py` and `fx.py`, Ruff check/format, and `git diff --check` passed.
+The full run began at `2026-10-28T08:46:01Z` after memory PSI avg10 was 0%, I/O
+PSI avg10 was 0.82% some / 0.74% full, and no Arena admission lock holder was
+found. After tests, PSI was low; at `08:47:41Z` a later sample showed memory
+pressure above 45% full, so no further broad work was started. No live source,
+held capture, protected service, or production store was used.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Full Frontier Python suite | COMPLETE AND VERIFIED | 386 tests passed after logic changes; the final post-format affected selection passed 57/57. |
+| Collection restart config pinning | COMPLETE AND VERIFIED | Kraken/Coinbase config round-trip, mismatch rejection, no adapter call, and legacy schema-v1 readability pass. |
+| FX result integrity | COMPLETE AND VERIFIED | Rehashed tampering of scenario fee, aggregate fee, and audit relationship is rejected. |
+| Timeline receipt/source time distinction | COMPLETE AND VERIFIED | Availability follows local receipt; exchange-time skew remains unverified by the economic timing gate. |
+| Frontier project overall | PARTIALLY VERIFIED | Live multi-venue evidence, full MIDAS regression, production recovery, and deployment remain open. |
 
 ## Chart instance reuse on data refresh — 2026-10-28 08:31 UTC
 

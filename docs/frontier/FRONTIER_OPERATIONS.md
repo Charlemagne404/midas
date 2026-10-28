@@ -201,13 +201,19 @@ terminal-state sensitivity as funded, tradable, or realized profit.
 
 ## Development test execution
 
-The older 219-test Frontier count in the source-use section is an earlier
-checkpoint. On 2026-10-28, the exact current `tests/frontier` tree passed
-**379/379** in one process. The run took 29.51 seconds of pytest time and 31.00
-seconds wall time, peaked at 378,216 KiB RSS, used no swap, and recorded zero
-filesystem input. It emitted the existing Starlette/httpx `TestClient`
-deprecation warning. The tests are fixture-backed and the source-use guard
-continues to deny held captures.
+The older 219- and 379-test Frontier counts elsewhere in this document are
+earlier checkpoints. On 2026-10-28 at 08:46 UTC, the full `tests/frontier` suite
+passed **386/386** in one process. The tmpfs run took 29.38 seconds of pytest
+time and 30.82 seconds wall time, peaked at 378,704 KiB RSS, used no swap, and
+recorded zero filesystem input. It emitted the existing Starlette/httpx
+`TestClient` deprecation warning. After a formatting/type-only cleanup, the
+57 affected collection/API, FX, and timeline cases passed again; strict mypy,
+Ruff check/format, and `git diff --check` passed. The tests are fixture-backed
+and the source-use guard continues to deny held captures.
+
+A later host sample at `2026-10-28T08:47:41Z` showed memory PSI avg10 **49.58%
+some / 45.01% full**, while I/O PSI was below 1%. No cause was attributed and
+no further broad test was started. Recheck pressure before the next broad run.
 
 For a broad suite run, first sample `/proc/pressure/memory` and
 `/proc/pressure/io`; defer when memory or I/O PSI avg10 is at or above 1%.

@@ -1,5 +1,49 @@
 # Project Frontier Mission Ledger
 
+## Collection config, FX integrity, and timeline time evidence — 2026-10-28 08:47 UTC
+
+Commits `668a243`, `006fa38`, and `5fd3158` close three bounded research gaps.
+`668a243` adds allowlisted config tags to the finite collection run spec so
+Kraken pair configuration and Coinbase product/terms acknowledgment survive
+journal JSON round-trips. Resume fails before adapter work when any pinned
+setting differs. Legacy schema-v1 base configs remain readable and unknown tags
+are rejected. `006fa38` enforces agreement among a verified funding conversion
+fee, its independent audit total, and each post-fee terminal P&L state—even if
+the result hash is recomputed. `5fd3158` adds a timeline fixture with exchange
+time before local receipt; the quote becomes available only upon receipt, and
+the skew remains visible to timing audit state.
+
+The full Python suite passed **386/386** after these changes. To reduce I/O, it
+used `/dev/shm/midas-frontier-pytest-20261028-0846`: **29.38s** pytest time,
+**30.82s** wall, **378,704 KiB** maximum RSS, zero swaps, and zero filesystem
+input. The known Starlette/httpx TestClient deprecation warning remains. After
+`7f7cd6d` formatting/type cleanup, focused verification was rerun:
+
+```bash
+PYTHONPATH=packages:. /home/charlie/midas/.venv/bin/python -m pytest -q \
+  tests/frontier/test_collection.py tests/frontier/test_collection_api.py \
+  tests/frontier/test_fx_sensitivity.py tests/frontier/test_timeline.py \
+  --basetemp=/dev/shm/midas-frontier-focused-20261028-0847
+# 57 passed in 3.44s; 97,480 KiB maximum RSS; zero swaps and filesystem input
+```
+
+Strict mypy passes for `collection.py` and `fx.py`; Ruff check and format pass
+for the five changed Python files. At the full-run preflight
+`2026-10-28T08:46:01Z`, memory PSI avg10 was 0%, I/O PSI was 0.82% some /
+0.74% full, and no shared Arena admission lock holder was present. After the
+full run, PSI remained below 1%; a later host sample at
+`2026-10-28T08:47:41Z` showed memory PSI avg10 **49.58% some / 45.01% full**.
+No cause is attributed and no more broad workload was started. No source,
+held capture, production service, or protected store was used.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Collection config survives restart | COMPLETE AND VERIFIED | 34 collection/API tests plus full 386-test suite; mismatched source settings reject before adapter calls. |
+| FX result integrity | COMPLETE AND VERIFIED | 18 FX tests plus full suite; rehashed arithmetic contradictions fail model validation. |
+| Timeline receipt-time gating | COMPLETE AND VERIFIED | Focused timing case and full suite; source-time skew remains unverified in economic timing state. |
+| Frontier Python regression | COMPLETE AND VERIFIED | 386/386 after logic changes; 57 affected cases passed on final formatted tree. |
+| Frontier project overall | PARTIALLY VERIFIED | Live source permission, broader MIDAS regression, production recovery, and deployment remain open. |
+
 ## Seeded Frontier/Arena browser integration after chart changes — 2026-10-28 08:37 UTC
 
 After commits `6c13b47` and `c04f699`, the opt-in seeded browser suite passes
