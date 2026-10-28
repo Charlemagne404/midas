@@ -208,6 +208,15 @@ evidence that the automatic restart is still replaying/reading the recording;
 it has not demonstrated return to live capture. Do not restart or reconfigure
 the collector, and do not resume Frontier runtime work.
 
+At 00:31:49, the user-manager cgroup charged 11,157,987,328 bytes of memory
+and 1,893,208,064 bytes of swap; user PSI avg300 was 0.26% `some` / 0.22%
+`full`. The Terminal app slice was 5,474,066,432 bytes (4,123,885,568 file,
+841,838,592 anon, and 506,671,104 kernel); API was 1,608,781,824 bytes
+(1,481,334,784 file / 125,706,240 anon), and Reality was 1,204,981,760
+(1,080,209,408 file / 122,904,576 anon). This is a current charge snapshot,
+not attribution of the earlier pressure. Host `MemAvailable` remained about
+10 GiB.
+
 ### systemd-oomd kills
 
 The journal contains ten kills from 21:51 through 23:43 CET. All explicitly

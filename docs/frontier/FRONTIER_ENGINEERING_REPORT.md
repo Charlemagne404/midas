@@ -148,6 +148,12 @@ within 12 KiB of its `MemoryHigh`; the status file was still stale at 23:43:01.
 This confirms ongoing cold replay, not renewed live capture. Preserve the
 runtime-test hold and do not touch the recorder.
 
+At 00:31:49, the user-manager cgroup charged 11.16 GB memory and 1.89 GB swap
+with avg300 PSI 0.26% `some` / 0.22% `full`. Terminal was the largest current
+child at 5.47 GB, mostly file charge. API and Reality were about 1.61 GB and
+1.20 GB, also mostly file charge. The sample does not identify which process
+populated the file cache or caused the prior reclaim events.
+
 ## Host memory-pressure incident and Frontier admission — 2026-10-28 22:56 UTC
 
 The host experienced ten systemd-oomd kills between 21:51 and 23:43 CET.

@@ -22,6 +22,12 @@ At 00:30:58 PID 1235804 remained in cold replay: cumulative `read_bytes` was
 6,868,652,032 (up 2.80 GB since 00:12:15), `status.json` remained stale, and
 the Reality cgroup was within 12 KiB of `MemoryHigh`. No recorder action was
 taken. This keeps recovery unverified and runtime work paused.
+
+At 00:31:49, the user cgroup charged 11.16 GB memory and 1.89 GB swap with
+avg300 PSI 0.26% `some` / 0.22% `full`; Terminal was 5.47 GB, API 1.61 GB,
+and Reality 1.20 GB. These cgroup charges were mostly file-backed and do not
+identify the earlier pressure initiator. Host available memory was about
+10 GiB.
 Keep runtime tests, replay, probes, and research batches paused. The
 five-minute gap-detail timer remains disabled; do not restore it before
 admission and host recovery review.
