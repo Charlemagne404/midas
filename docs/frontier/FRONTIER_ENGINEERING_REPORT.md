@@ -9377,3 +9377,31 @@ outside unique /dev/shm basetemps was changed. Ruff, format, and whitespace
 checks pass for cd248ce. Runtime verification of that commit remains pending:
 at 2026-10-28T12:12:41Z memory PSI avg10 was 44.70% some / 40.61% full.
 The research-schedule module remains unverified on the corrected fixture.
+
+## Collection journal write-boundary revalidation — 2026-10-28 13:21 UTC
+
+Review of the isolated collector journal found three write methods that called
+`initialize()` before reparsing typed input: `create_run`,
+`create_run_with_initial_checkpoint`, and `append_checkpoint`. A malformed
+copied Pydantic model could therefore create or mutate the journal schema
+before being rejected. All three methods now revalidate and apply record-size
+bounds before initialization. Checkpoint lookup and sequence checks use the
+reparsed checkpoint instance.
+
+The regression passes **1/1** in 0.45 seconds and proves invalid run specs and
+checkpoints are rejected without creating the root directory. Peak RSS was
+**61,960 KiB**, with zero swaps, filesystem input, and socket messages. Ruff
+check/format, `git diff --check`, and strict mypy for `collection.py` pass.
+At `2026-10-28T13:21:09Z`, memory PSI avg10 was **0.00%**, I/O PSI avg10 was
+**0.00%**, and approximately **10.4 GiB** was available. CPU PSI avg10 was
+**41.79%**, so module-wide and broader test runs remain deferred pending a
+fresh resource sample. No collector, live source, protected store, or
+production service was accessed.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Collection journal append input validation | COMPLETE AND VERIFIED | All three append paths reject malformed copied models before SQLite initialization; targeted regression, strict mypy, and lint/format pass. |
+| Full collection module after this change | PARTIALLY VERIFIED | Not rerun while host CPU pressure is elevated; the focused regression passes. |
+| Frontier project acceptance | PARTIALLY VERIFIED | Genuine live cross-venue equivalence, held-source permissions, production recovery, broad resource qualification, and deployment remain open. |
+
+**Implementation commit:** `3153148` (`fix(frontier): validate collection writes before initialization`).

@@ -1,5 +1,27 @@
 # Project Frontier Mission Ledger
 
+## Collection journal input checks before initialization — 2026-10-28 13:21 UTC
+
+The source-independent persistence review found that `CollectionJournal`'s run,
+initial-checkpoint, and checkpoint append methods initialized SQLite before
+revalidating caller-supplied models. They now validate and enforce encoded-size
+bounds before initialization. Checkpoint database lookups use the reparsed
+record. A regression submits malformed `model_copy(update=...)` values to all
+three methods and confirms rejection without creating the journal root.
+
+The targeted case passes **1/1** in 0.45 seconds; peak RSS was **61,960 KiB**,
+with zero swaps, filesystem input, or socket messages. Ruff check/format,
+`git diff --check`, and strict mypy for `collection.py` pass. At
+`2026-10-28T13:21:09Z`, memory PSI avg10 was 0.00%, I/O PSI avg10 was 0.00%,
+and 10.4 GiB was available. Host CPU PSI avg10 remained elevated at 41.79%,
+so the collection module and broader suites were not run. No live source,
+collector, protected store, or production service was accessed.
+
+**Implementation commit:** `3153148` (`fix(frontier): validate collection writes before initialization`).
+
+**Next safe action:** continue source-independent provenance/replay review;
+admit a broader regression slice only after a fresh resource sample supports it.
+
 ## Revalidate every Frontier persistence input — 2026-10-28
 
 The persistence review extended the `append_observation` guard across the
