@@ -239,6 +239,8 @@ async def test_four_trade_adapters_share_capture_contract_and_keep_native_semant
     stored_observation_ids: dict[Venue, str] = {}
     store = FrontierStore(tmp_path / "frontier")
     for case in cases:
+        if case.fixture_only_transport:
+            assert case.config.probe_policy_block_reason is not None
         requests: list[httpx.Request] = []
 
         def handler(
