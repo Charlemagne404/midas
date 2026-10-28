@@ -33,6 +33,10 @@ class _DuplicateJSONKeyError(ValueError):
     pass
 
 
+class _NonStandardJSONConstantError(ValueError):
+    pass
+
+
 def _unique_json_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
     result: dict[str, Any] = {}
     for key, value in pairs:
@@ -40,6 +44,10 @@ def _unique_json_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
             raise _DuplicateJSONKeyError(f"Duplicate JSON object key: {key}")
         result[key] = value
     return result
+
+
+def _reject_nonstandard_json_constant(value: str) -> None:
+    raise _NonStandardJSONConstantError(f"Non-standard JSON numeric constant: {value}")
 
 
 def _exceeds_json_nesting_depth(raw: str, maximum: int = MAX_JSON_NESTING_DEPTH) -> bool:
@@ -356,9 +364,12 @@ class PublicReadTransport:
                         )
                     try:
                         payload = json.loads(
-                            raw, parse_float=D, object_pairs_hook=_unique_json_object
+                            raw,
+                            parse_float=D,
+                            parse_constant=_reject_nonstandard_json_constant,
+                            object_pairs_hook=_unique_json_object,
                         )
-                    except json.JSONDecodeError as error:
+                    except (json.JSONDecodeError, _NonStandardJSONConstantError) as error:
                         raise AdapterError(
                             "INVALID_JSON",
                             "Public source returned invalid JSON",

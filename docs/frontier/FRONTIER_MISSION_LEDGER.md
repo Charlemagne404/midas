@@ -1,5 +1,31 @@
 # Project Frontier Mission Ledger
 
+## Strict JSON numeric-token handling added; test held for resource admission — 2026-10-28 15:48 UTC
+
+The public read transport now supplies a strict JSON parse-constant handler.
+Python's standard decoder otherwise accepts NaN and positive/negative
+Infinity, although those tokens are not valid JSON. Frontier classifies them
+as INVALID_JSON and retains the bounded raw response evidence. Added four
+fixture cases for top-level NaN, both infinities, and nested NaN.
+
+The new transport tests and Ruff checks have not run. At 15:47:55Z host memory
+PSI avg10 was 45.32% some / 40.12% full, I/O PSI was 0.61% some / 0.60% full,
+9.5 GiB was available, and 3.7 GiB of 4 GiB swap was occupied. A separate
+Veritas gap-detail batch was visible; no source, capture, or service was
+changed. This parser change remains implemented with validation pending.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Nonstandard JSON numeric-token rejection | IMPLEMENTED, VALIDATION PENDING | Transport and four mock-response cases are changed; run the focused adapter test after resource admission. |
+| Current Frontier Python suite | PARTIALLY VERIFIED | The prior 465/465 result predates this transport change and does not verify current HEAD. |
+| Live source and protected data | UNCHANGED | No adapter request or source capture was made; existing source-use holds remain active. |
+| Frontier project acceptance | PARTIALLY VERIFIED | Live cross-venue science, broad regression, endurance, protected recovery, and deployment remain open. |
+
+**Next safe action:** take a fresh memory and I/O PSI sample before running
+the focused transport test; rerun the full Frontier Python suite only after
+focused validation and a separate resource admission check. Keep this parser
+boundary fail-closed and do not use live venue endpoints for fixture validation.
+
 ## Legacy Arena suite interrupted under host memory pressure — 2026-10-28 15:45 UTC
 
 Collected the full legacy Arena suite as 427 cases across 78 files. The first

@@ -228,6 +228,27 @@ async def test_transport_rejects_duplicate_json_keys_and_preserves_response(body
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "body",
+    ("NaN", "Infinity", "-Infinity", '{"price": NaN}'),
+    ids=("nan", "positive-infinity", "negative-infinity", "nested-nan"),
+)
+async def test_transport_rejects_nonstandard_json_numbers_and_preserves_response(body):
+    transport, requests, client = _transport("api.example.test", {"/nonstandard": body})
+    try:
+        with pytest.raises(AdapterError) as error:
+            await transport.get_json("https://api.example.test/nonstandard")
+    finally:
+        await client.aclose()
+
+    assert error.value.code == "INVALID_JSON"
+    assert error.value.retryable is False
+    assert error.value.response_evidence is not None
+    assert error.value.response_evidence.raw_body == body.encode("utf-8")
+    assert len(requests) == 1
+
+
+@pytest.mark.asyncio
 async def test_transport_ignores_bracket_characters_inside_json_strings():
     value = '"' + "[" * 100 + "]" * 100 + '"'
     body = json.dumps(value)

@@ -10184,3 +10184,24 @@ untouched.
 absolute worktree paths for subprocess verification, and remeasure memory and
 I/O pressure before another broad suite. The full legacy Arena suite remains
 open.
+
+### Strict handling of nonstandard JSON numeric tokens — 2026-10-28 15:48 UTC
+
+The shared public-read transport now rejects Python's nonstandard JSON
+constants NaN, Infinity, and -Infinity at the decoding boundary. It classifies
+them as INVALID_JSON and preserves the bounded raw response evidence. Four
+mock-response cases cover top-level NaN, each infinity spelling, and a nested
+NaN token. No real exchange endpoint is used by these cases.
+
+This change is implemented but not yet validated. At 15:47:55Z memory PSI
+avg10 measured 45.32% some / 40.12% full and I/O PSI 0.61% some / 0.60% full;
+9.5 GiB was available, with 3.7 GiB of 4 GiB swap in use. The focused
+transport test and Ruff checks are deferred until a fresh resource sample
+meets the local admission gate.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Malformed nonstandard JSON numbers | IMPLEMENTED, VALIDATION PENDING | Strict parse-constant handling and fixture regressions are present; focused validation is pending. |
+| Current Frontier Python suite | PARTIALLY VERIFIED | The previous 465/465 result predates this transport change and is not current-tree evidence. |
+| Live source policy | COMPLETE AND VERIFIED | No source request was made for this work; held venues remain fail-closed. |
+| Frontier overall | PARTIALLY VERIFIED | Broad Arena regression, live cross-venue science, endurance, protected recovery, and deployment remain open. |
