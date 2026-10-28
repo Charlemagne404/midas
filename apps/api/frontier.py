@@ -64,6 +64,7 @@ from midas.frontier.models import (
     BookSnapshot,
     Capability,
     FrontierMarket,
+    JointStateMap,
     KalshiFeeMetadata,
     KalshiFeeOrderFillInput,
     MarketBatch,
@@ -234,6 +235,27 @@ class PairedReplayRequest(BaseModel):
         if self.scenarios[0].name == self.scenarios[1].name:
             raise ValueError("Paired replay scenario names must be unique")
         return self
+
+
+class JointStateReplayRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+    mapping: JointStateMap
+    scenario: ExecutionScenario = Field(default_factory=ExecutionScenario)
+    market_limit: int = Field(default=100, ge=1, le=200)
+    book_limit: int = Field(default=200, ge=1, le=400)
+    relationship_limit: int = Field(default=100, ge=1, le=1000)
+
+    @model_validator(mode="before")
+    @classmethod
+    def derive_mapping_identity(cls, value: Any) -> Any:
+        if not isinstance(value, dict):
+            return value
+        mapping = value.get("mapping")
+        if isinstance(mapping, dict) and "mapping_id" not in mapping:
+            normalized = dict(value)
+            normalized["mapping"] = JointStateMap.create(**mapping)
+            return normalized
+        return value
 
 
 class TimelineReplayRequest(BaseModel):
@@ -1081,6 +1103,13 @@ def router(
         observation_ids = set(manifest.get("market_observation_ids", ()))
         observation_ids.update(manifest.get("fee_metadata_observation_ids", ()))
         observation_ids.update(manifest.get("book_observation_ids", ()))
+        joint_mappings = manifest.get("joint_state_mappings", ())
+        if isinstance(joint_mappings, (list, tuple)):
+            for mapping in joint_mappings:
+                if isinstance(mapping, dict):
+                    evidence_ids = mapping.get("evidence_observation_ids", ())
+                    if isinstance(evidence_ids, (list, tuple)):
+                        observation_ids.update(evidence_ids)
         return tuple(sorted(str(item) for item in observation_ids))
 
     def replay_uses_held_sources(
@@ -1094,6 +1123,17 @@ def router(
             return True
         if any(observation_venues[item] in held_venues for item in input_ids):
             return True
+        joint_mappings = manifest.get("joint_state_mappings", ())
+        if not isinstance(joint_mappings, (list, tuple)):
+            return True
+        for mapping in joint_mappings:
+            if not isinstance(mapping, dict):
+                return True
+            market_ids = mapping.get("market_ids", ())
+            if not isinstance(market_ids, (list, tuple)) or any(
+                market_id_is_held(str(market_id)) for market_id in market_ids
+            ):
+                return True
         for key in ("proposed_relationships", "applied_relationships"):
             relationships = result.get(key, ())
             if not isinstance(relationships, (list, tuple)):
@@ -3916,6 +3956,102 @@ def router(
         try:
             store.append_replay(result)
         except FrontierStoreError as error:
+            raise HTTPException(status_code=409, detail=str(error)) from error
+        return result.model_dump(mode="json")
+
+    @api.post("/replay/joint-state")
+    async def replay_joint_state(request: JointStateReplayRequest) -> dict[str, Any]:
+        """Replay one bounded externally asserted map over already stored public evidence."""
+        market_values = await _load_markets(
+            store, request.market_limit, excluded_venues=held_venues
+        )
+        market_index = {item.canonical_id: item for item in market_values}
+        if not set(request.mapping.market_ids).issubset(market_index):
+            raise HTTPException(
+                status_code=409,
+                detail="Joint-state mapping references markets absent from the stored replay window",
+            )
+        selected_markets = tuple(market_index[item] for item in request.mapping.market_ids)
+        selected_market_observation_ids = {
+            item.provenance.observation_id for item in selected_markets
+        }
+        if not selected_market_observation_ids.issubset(
+            set(request.mapping.evidence_observation_ids)
+        ):
+            raise HTTPException(
+                status_code=409,
+                detail="Joint-state mapping must cite every selected stored market observation",
+            )
+        if request.mapping.asserted_at_utc < max(
+            item.provenance.response_received_at_utc for item in selected_markets
+        ):
+            raise HTTPException(
+                status_code=409,
+                detail="Joint-state assertion predates one or more cited market observations",
+            )
+        for observation_id in request.mapping.evidence_observation_ids:
+            if observation_uses_held_source(observation_id):
+                raise HTTPException(
+                    status_code=409,
+                    detail="Joint-state evidence cites a source held from research use",
+                )
+
+        selected_keys = {(item.venue, item.native_market_id) for item in selected_markets}
+        selected_instrument_keys = {
+            (item.venue, item.native_market_id, instrument.native_instrument_id)
+            for item in selected_markets
+            for instrument in item.instruments
+        }
+        books = tuple(
+            book
+            for book, _ in _load_book_records(
+                store, request.book_limit, excluded_venues=held_venues
+            )
+            if (book.venue, book.native_market_id) in selected_keys
+            and (
+                book.venue,
+                book.native_market_id,
+                book.native_instrument_id,
+            )
+            in selected_instrument_keys
+        )
+        replay_as_of = max(
+            (
+                *(item.provenance.response_received_at_utc for item in selected_markets),
+                *(item.received_at_utc for item in books),
+                request.mapping.asserted_at_utc,
+            ),
+            default=datetime(1970, 1, 1, tzinfo=UTC),
+        )
+
+        relation_rows = read_stored_relationships(
+            state="verified",
+            limit=request.relationship_limit,
+            effective_only=True,
+            excluded_venues=held_venues,
+        )
+        selected_ids = set(request.mapping.market_ids)
+        verified = tuple(
+            relationship
+            for relationship in (
+                Relationship.model_validate(item["relationship"]) for item in relation_rows
+            )
+            if relationship.left_market_id in selected_ids
+            and relationship.right_market_id in selected_ids
+        )
+        try:
+            result = deterministic_replay(
+                selected_markets,
+                books,
+                verified_relationships=verified,
+                joint_state_mappings=(request.mapping,),
+                scenario=request.scenario,
+                as_of_utc=replay_as_of,
+                relationship_limit=request.relationship_limit,
+                code_version=_code_version(),
+            )
+            store.append_replay(result)
+        except (FrontierStoreError, ValueError) as error:
             raise HTTPException(status_code=409, detail=str(error)) from error
         return result.model_dump(mode="json")
 

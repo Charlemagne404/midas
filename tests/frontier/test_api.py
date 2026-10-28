@@ -21,6 +21,7 @@ from midas.frontier.models import (
     FeeSchedule,
     FeeStatus,
     FrontierMarket,
+    JointStateMap,
     KalshiFeeMetadata,
     Lifecycle,
     MarketBatch,
@@ -4360,7 +4361,7 @@ def test_replay_api_generates_and_persists_multi_outcome_candidate(tmp_path):
         replay = client.post("/api/frontier/replay", json={})
         assert replay.status_code == 200, replay.text
         result = replay.json()
-        assert result["manifest"]["replay_version"] == "frontier-deterministic-replay-14"
+        assert result["manifest"]["replay_version"] == "frontier-deterministic-replay-15"
         assert len(result["candidates"]) == 1
         candidate = result["candidates"][0]
         assert candidate["family"] == "within_market_multi_outcome_coverage"
@@ -4669,7 +4670,7 @@ def test_replay_api_generates_and_persists_bounded_payoff_basket(tmp_path):
         response = client.post("/api/frontier/replay", json={})
         assert response.status_code == 200, response.text
         result = response.json()
-        assert result["manifest"]["replay_version"] == "frontier-deterministic-replay-14"
+        assert result["manifest"]["replay_version"] == "frontier-deterministic-replay-15"
         assert len(result["candidates"]) == 1
         candidate = result["candidates"][0]
         assert candidate["family"] == "within_market_payoff_basket"
@@ -4685,6 +4686,147 @@ def test_replay_api_generates_and_persists_bounded_payoff_basket(tmp_path):
         )
         assert saved["family"] == "within_market_payoff_basket"
         assert saved["candidate_id"] == candidate["candidate_id"]
+        assert requests == []
+    finally:
+        client.close()
+        asyncio.run(registry.aclose())
+        asyncio.run(http_client.aclose())
+
+
+def test_joint_state_replay_api_uses_only_stored_public_evidence(tmp_path):
+    client, registry, http_client, requests, store = _client(tmp_path)
+    markets = (
+        market(Venue.POLYMARKET, "joint-state-api-a"),
+        market(Venue.POLYMARKET, "joint-state-api-b"),
+    )
+
+    def capture(kind: str, url: str, body: str, received_at: datetime, normalized):
+        raw = RawObservation(
+            venue=Venue.POLYMARKET,
+            observation_kind=kind,
+            request_url=url,
+            http_status=200,
+            request_started_at_utc=received_at - timedelta(milliseconds=1),
+            received_at_utc=received_at,
+            raw_body=body,
+            raw_sha256=hashlib.sha256(body.encode()).hexdigest(),
+            adapter_version="frontier-joint-api-fixture-v1",
+        )
+
+        def updated_provenance(value):
+            return value.provenance.model_copy(
+                update={
+                    "source_url": url,
+                    "adapter_version": raw.adapter_version,
+                    "request_started_at_utc": raw.request_started_at_utc,
+                    "response_received_at_utc": received_at,
+                    "processed_at_utc": received_at,
+                    "raw_sha256": raw.raw_sha256,
+                }
+            )
+
+        if isinstance(normalized, MarketBatch):
+            stored_value = normalized.model_copy(
+                update={
+                    "markets": tuple(
+                        item.model_copy(update={"provenance": updated_provenance(item)})
+                        for item in normalized.markets
+                    )
+                }
+            )
+        elif isinstance(normalized, BookSnapshot):
+            provenance = updated_provenance(normalized).model_copy(
+                update={"clock_uncertainty_ms": Decimal(0)}
+            )
+            stored_value = normalized.model_copy(
+                update={
+                    "received_at_utc": received_at,
+                    "provenance": provenance,
+                }
+            )
+        else:
+            raise AssertionError(f"unsupported test capture type: {type(normalized).__name__}")
+        return store.append_observation(raw, stored_value)
+
+    try:
+        market_observation_ids = []
+        for index, market_value in enumerate(markets, start=1):
+            received_at = T0 + timedelta(milliseconds=index * 10)
+            market_observation_ids.append(
+                capture(
+                    "market_listing",
+                    f"https://fixture.example/joint-market/{index}",
+                    json.dumps({"fixture_market": market_value.native_market_id}),
+                    received_at,
+                    MarketBatch(venue=Venue.POLYMARKET, markets=(market_value,)),
+                )
+            )
+        for market_value, asks in zip(markets, (("0.30", "0.60"), ("0.60", "0.30")), strict=True):
+            for instrument, ask in zip(market_value.instruments, asks, strict=True):
+                snapshot = book(market_value, instrument.native_instrument_id, ask)
+                capture(
+                    "book_snapshot",
+                    f"https://fixture.example/joint-book/{instrument.native_instrument_id}",
+                    json.dumps({"instrument": instrument.native_instrument_id, "ask": ask}),
+                    T0 + timedelta(milliseconds=40),
+                    snapshot,
+                )
+
+        mapping = JointStateMap.create(
+            market_ids=tuple(sorted(item.canonical_id for item in markets)),
+            joint_state_ids=("joint-no", "joint-yes"),
+            state_by_market={
+                item.canonical_id: {"joint-no": "no", "joint-yes": "yes"} for item in markets
+            },
+            external_assertion_id="api-fixture-equivalence-assertion-v1",
+            evidence_observation_ids=tuple(sorted(market_observation_ids)),
+            asserted_at_utc=T0 + timedelta(milliseconds=30),
+        )
+        mapping_without_derived_id = mapping.model_dump(mode="json")
+        mapping_without_derived_id.pop("mapping_id")
+        response = client.post(
+            "/api/frontier/replay/joint-state",
+            json={"mapping": mapping_without_derived_id},
+        )
+        assert response.status_code == 200, response.text
+        result = response.json()
+        assert result["manifest"]["joint_state_mappings"][0]["mapping_id"] == mapping.mapping_id
+        candidates = [
+            item
+            for item in result["candidates"]
+            if item["family"] == "multi_market_joint_state_basket"
+        ]
+        assert candidates
+        assert all(
+            item["practical_eligibility"] is False
+            and item["independent_audit"]["disposition"] == "verified"
+            for item in candidates
+        )
+        assert any(
+            item["classification"] == "CONDITIONAL ECONOMIC OPPORTUNITY" for item in candidates
+        )
+        assert any(item["classification"] == "NEGATIVE AFTER MODELED COSTS" for item in candidates)
+        reloaded = FrontierStore(store.root).replay(result["run_id"])
+        assert reloaded is not None
+        assert reloaded["result"]["manifest"]["joint_state_mappings"][0]["mapping_id"] == (
+            mapping.mapping_id
+        )
+        assert requests == []
+
+        missing_markets_map = mapping.model_dump(mode="python")
+        missing_markets_map["market_ids"] = ["kalshi:missing-market-a", "kalshi:missing-market-b"]
+        missing_markets_map["state_by_market"] = {
+            "kalshi:missing-market-a": {"joint-no": "no", "joint-yes": "yes"},
+            "kalshi:missing-market-b": {"joint-no": "no", "joint-yes": "yes"},
+        }
+        missing_markets_map.pop("mapping_id")
+        invalid_map = JointStateMap.create(**missing_markets_map)
+        missing = client.post(
+            "/api/frontier/replay/joint-state",
+            json={"mapping": invalid_map.model_dump(mode="json")},
+        )
+        assert missing.status_code == 409
+        assert "absent from the stored replay window" in missing.json()["detail"]
         assert requests == []
     finally:
         client.close()

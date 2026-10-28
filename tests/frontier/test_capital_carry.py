@@ -20,7 +20,7 @@ from midas.frontier.economics import (
     OpportunityFamily,
     PositionLeg,
 )
-from midas.frontier.models import Venue
+from midas.frontier.models import QuantityUnit, Venue
 
 from tests.frontier.builders import T0, market
 
@@ -51,6 +51,7 @@ def candidate_and_markets():
             native_market_id=left.native_market_id,
             instrument_id=left.instruments[0].native_instrument_id,
             outcome_id="yes",
+            quantity_unit=QuantityUnit.SHARE,
             quantity=D(1),
             quoted_ask=D("0.4"),
             modeled_buy_price=D("0.4"),
@@ -67,6 +68,7 @@ def candidate_and_markets():
             native_market_id=right.native_market_id,
             instrument_id=right.instruments[1].native_instrument_id,
             outcome_id="no",
+            quantity_unit=QuantityUnit.CONTRACT,
             quantity=D(1),
             quoted_ask=D("0.4"),
             modeled_buy_price=D("0.4"),

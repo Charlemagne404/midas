@@ -12,7 +12,7 @@ import json
 from datetime import datetime, timedelta
 from decimal import ROUND_CEILING, ROUND_HALF_UP, Decimal, localcontext
 from fractions import Fraction
-from typing import Any
+from typing import Any, cast
 
 from midas.frontier.economics import (
     ExecutionScenario,
@@ -33,6 +33,7 @@ from midas.frontier.models import (
     FeeStatus,
     FrontierMarket,
     IndependentEconomicAudit,
+    JointStateMap,
     Lifecycle,
     MarketInstrument,
     MarketKind,
@@ -51,7 +52,7 @@ from midas.frontier.relationships import (
 )
 
 D = Decimal
-_AUDIT_VERSION = "frontier-independent-economic-audit-11"
+_AUDIT_VERSION = "frontier-independent-economic-audit-12"
 _FEE_QUANTUM = D("0.00001")
 _KALSHI_FEE_MAX_EVIDENCE_AGE = timedelta(hours=24)
 _AUDIT_PARTIAL_FILL_FRACTIONS = (D(0), D("0.25"), D("0.5"), D("0.75"), D(1))
@@ -66,8 +67,10 @@ def independently_audit_candidate(
     state_mappings: dict[str, dict[str, str]],
     instrument_mappings: dict[str, dict[str, str]],
     scenario: ExecutionScenario,
+    joint_state_mappings: dict[str, JointStateMap] | None = None,
 ) -> OpportunityCandidate:
     """Recompute a replay candidate from pinned contracts and books."""
+    joint_state_mappings = joint_state_mappings or {}
     input_sha256 = _audit_input_hash(
         candidate,
         markets,
@@ -76,6 +79,7 @@ def independently_audit_candidate(
         state_mappings,
         instrument_mappings,
         scenario,
+        joint_state_mappings,
     )
     if not candidate.legs:
         audit = IndependentEconomicAudit(
@@ -100,6 +104,7 @@ def independently_audit_candidate(
                 state_mappings=state_mappings,
                 instrument_mappings=instrument_mappings,
                 scenario=scenario,
+                joint_state_mappings=joint_state_mappings,
             )
         except _MissingAuditEvidence as error:
             audit = IndependentEconomicAudit(
@@ -182,6 +187,7 @@ def _recompute(
     state_mappings: dict[str, dict[str, str]],
     instrument_mappings: dict[str, dict[str, str]],
     scenario: ExecutionScenario,
+    joint_state_mappings: dict[str, JointStateMap],
 ) -> dict[str, Any]:
     mismatches: list[str] = []
     resolved = {market_id: markets.get(market_id) for market_id in candidate.market_ids}
@@ -216,6 +222,10 @@ def _recompute(
         state_ids = _verify_multi_outcome_market(candidate, selected_markets, mismatches)
     elif candidate.family == OpportunityFamily.WITHIN_MARKET_PAYOFF_BASKET:
         state_ids = _verify_bounded_payoff_basket_market(candidate, selected_markets, mismatches)
+    elif candidate.family == OpportunityFamily.MULTI_MARKET_JOINT_STATE_BASKET:
+        state_ids = _verify_joint_state_basket(
+            candidate, selected_markets, joint_state_mappings, mismatches
+        )
     else:
         raise _MissingAuditEvidence("This candidate family has no independent verifier.")
 
@@ -254,7 +264,8 @@ def _recompute(
         if (
             leg.venue != market.venue.value
             or leg.native_market_id != market.native_market_id
-            or leg.outcome_id != instrument.outcome_id
+            or leg.outcome_id != (instrument.outcome_id or "unknown")
+            or (leg.quantity_unit is not None and leg.quantity_unit != instrument.quantity_unit)
             or leg.market_observation_id != market.provenance.observation_id
             or leg.quote_currency != instrument.price_currency
             or leg.quote_currency_identity != instrument.price_currency_identity
@@ -396,6 +407,17 @@ def _recompute(
             payout_by_leg[_fill_leg_identity(leg)] = {
                 state_id: leg.quantity * _payout(instrument, state_id) for state_id in state_ids
             }
+    elif candidate.family == OpportunityFamily.MULTI_MARKET_JOINT_STATE_BASKET:
+        mapping = joint_state_mappings[candidate.joint_state_mapping_id or ""]
+        for state_id in state_ids:
+            payout = D(0)
+            for leg in candidate.legs:
+                instrument = instrument_by_leg[(leg.market_id, leg.instrument_id)]
+                local_state = mapping.state_by_market[leg.market_id][state_id]
+                leg_payout = leg.quantity * _payout(instrument, local_state)
+                payout_by_leg.setdefault(_fill_leg_identity(leg), {})[state_id] = leg_payout
+                payout += leg_payout
+            payouts[state_id] = payout
     else:
         relation = relationships[candidate.relationship_id or ""]
         left = selected_markets[relation.left_market_id]
@@ -442,6 +464,13 @@ def _recompute(
     expected_classification = _classification(
         worst_gross, worst_net, fees_computable, fees_authoritative
     )
+    if candidate.family == OpportunityFamily.MULTI_MARKET_JOINT_STATE_BASKET:
+        if not timing_verified:
+            expected_classification = OpportunityClassification.INCOMPLETE_EVIDENCE
+        elif (
+            expected_classification == OpportunityClassification.VERIFIED_MATHEMATICAL_INCONSISTENCY
+        ):
+            expected_classification = OpportunityClassification.CONDITIONAL_ECONOMIC_OPPORTUNITY
     if (
         candidate.family == OpportunityFamily.LOGICAL_IMPLICATION_COVERAGE
         and expected_classification == OpportunityClassification.VERIFIED_MATHEMATICAL_INCONSISTENCY
@@ -564,6 +593,7 @@ def _independent_timing_summary(
     if candidate.family in {
         OpportunityFamily.CROSS_VENUE_COMPLETE_COVERAGE,
         OpportunityFamily.LOGICAL_IMPLICATION_COVERAGE,
+        OpportunityFamily.MULTI_MARKET_JOINT_STATE_BASKET,
     }:
         if any(value is None for value in exchange_values):
             timing_valid = False
@@ -595,6 +625,16 @@ def _independent_timing_summary(
             timing_valid = False
         if any(ask.exchange_timestamp_utc is None for ask in asks):
             timing_valid = False
+        if candidate.family == OpportunityFamily.MULTI_MARKET_JOINT_STATE_BASKET:
+            level_times = tuple(ask.exchange_timestamp_utc for ask in asks)
+            if any(value is None for value in level_times):
+                timing_valid = False
+            else:
+                level_ms = tuple(
+                    _independent_epoch_ms(value) for value in level_times if value is not None
+                )
+                if max(level_ms) - min(level_ms) > scenario.max_exchange_skew_ms:
+                    timing_valid = False
     elif candidate.family in {
         OpportunityFamily.WITHIN_MARKET_MULTI_OUTCOME_COVERAGE,
         OpportunityFamily.WITHIN_MARKET_PAYOFF_BASKET,
@@ -604,14 +644,17 @@ def _independent_timing_summary(
             exchange_skew = None
             timing_valid = False
         else:
-            exchange_times = tuple(value for value in exchange_values if value is not None)
-            level_times = tuple(value for value in level_values if value is not None)
+            exchange_times = tuple(cast(datetime, value) for value in exchange_values)
+            level_times = tuple(cast(datetime, value) for value in level_values)
             exchange_ms = tuple(_independent_epoch_ms(value) for value in exchange_times)
             level_ms = tuple(_independent_epoch_ms(value) for value in level_times)
             exchange_skew = max(exchange_ms) - min(exchange_ms)
             level_skew = max(level_ms) - min(level_ms)
             if (
-                any(value > as_of for value in (*exchange_times, *level_times))
+                any(
+                    _independent_epoch_ms(value) > _independent_epoch_ms(as_of)
+                    for value in (*exchange_times, *level_times)
+                )
                 or exchange_skew > scenario.max_exchange_skew_ms
                 or level_skew > scenario.max_exchange_skew_ms
             ):
@@ -1016,6 +1059,117 @@ def _verify_bounded_payoff_basket_market(
             "Selected contracts do not guarantee one constant positive payout in every verified state."
         )
     return state_ids
+
+
+def _verify_joint_state_basket(
+    candidate: OpportunityCandidate,
+    markets: dict[str, FrontierMarket],
+    joint_state_mappings: dict[str, JointStateMap],
+    mismatches: list[str],
+) -> tuple[str, ...]:
+    """Reconstruct a bounded basket conditional on a pinned external state map."""
+    mapping = joint_state_mappings.get(candidate.joint_state_mapping_id or "")
+    if mapping is None:
+        raise _MissingAuditEvidence("Joint-state mapping is absent from the pinned replay inputs.")
+    if (
+        mapping.mapping_id != candidate.joint_state_mapping_id
+        or mapping.semantic_status != "externally_asserted_unverified"
+        or mapping.market_ids != candidate.market_ids
+        or set(markets) != set(mapping.market_ids)
+        or len(markets) != len(mapping.market_ids)
+        or not 2 <= len(markets) <= 4
+        or not 2 <= len(mapping.joint_state_ids) <= 64
+        or len(candidate.legs) > 12
+        or {leg.market_id for leg in candidate.legs} != set(mapping.market_ids)
+    ):
+        raise _MissingAuditEvidence("Joint-state mapping or basket exceeds its bounded contract.")
+    if sum(len(market.instruments) for market in markets.values()) > 12:
+        raise _MissingAuditEvidence("Joint-state instrument universe exceeds twelve contracts.")
+
+    market_values = tuple(markets[item] for item in mapping.market_ids)
+    for market in market_values:
+        _require_verified_event(market)
+        if market.market_kind not in {MarketKind.BINARY_EVENT, MarketKind.MULTI_OUTCOME_EVENT}:
+            raise _MissingAuditEvidence("Joint-state baskets require supported event markets.")
+        projection = mapping.state_by_market.get(market.canonical_id, {})
+        if set(projection) != set(mapping.joint_state_ids) or not set(projection.values()).issubset(
+            set(market.payoff.state_ids)
+        ):
+            raise _MissingAuditEvidence(
+                "Joint-state projection is incomplete or refers to an unknown local outcome."
+            )
+    asset_identities = {market.payoff.settlement_asset_identity for market in market_values}
+    currencies = {market.payoff.payout_currency for market in market_values}
+    close_time = market_values[0].resolution.closes_at_utc
+    settlement_time = market_values[0].resolution.settles_at_utc
+    if (
+        len(asset_identities) != 1
+        or None in asset_identities
+        or len(currencies) != 1
+        or None in currencies
+        or close_time is None
+        or settlement_time is None
+        or any(market.resolution.closes_at_utc != close_time for market in market_values)
+        or any(market.resolution.settles_at_utc != settlement_time for market in market_values)
+        or close_time <= candidate.observed_at_utc
+        or settlement_time <= candidate.observed_at_utc
+    ):
+        raise _MissingAuditEvidence(
+            "Joint-state markets require one settlement asset and identical future close/settlement times."
+        )
+    cited_market_observations = {market.provenance.observation_id for market in market_values}
+    if (
+        not cited_market_observations.issubset(set(mapping.evidence_observation_ids))
+        or mapping.asserted_at_utc
+        < max(market.provenance.response_received_at_utc for market in market_values)
+        or mapping.asserted_at_utc > candidate.observed_at_utc
+    ):
+        raise _MissingAuditEvidence(
+            "Joint-state assertion does not postdate and cite every pinned market observation."
+        )
+    if len({leg.quantity for leg in candidate.legs}) != 1:
+        mismatches.append("Joint-state basket legs do not use one common quantity")
+    if len({(leg.market_id, leg.instrument_id) for leg in candidate.legs}) != len(candidate.legs):
+        raise _MissingAuditEvidence("Joint-state basket repeats one or more contract legs.")
+
+    for leg in candidate.legs:
+        market = markets[leg.market_id]
+        instrument = next(
+            (item for item in market.instruments if item.native_instrument_id == leg.instrument_id),
+            None,
+        )
+        if instrument is None:
+            raise _MissingAuditEvidence("Joint-state basket leg is absent from its market.")
+        payouts = {item.state_id: item.amount for item in instrument.payouts}
+        if (
+            instrument.quantity_unit == QuantityUnit.UNKNOWN
+            or instrument.price_currency != market.payoff.payout_currency
+            or instrument.price_currency_identity != market.payoff.settlement_asset_identity
+            or len(payouts) != len(instrument.payouts)
+            or set(payouts) != set(market.payoff.state_ids)
+        ):
+            raise _MissingAuditEvidence(
+                "Joint-state basket contract has unsupported payout semantics."
+            )
+    total_by_joint_state: dict[str, Decimal] = {}
+    for joint_state in mapping.joint_state_ids:
+        total = D(0)
+        for leg in candidate.legs:
+            market = markets[leg.market_id]
+            instrument = next(
+                item
+                for item in market.instruments
+                if item.native_instrument_id == leg.instrument_id
+            )
+            local_state = mapping.state_by_market[market.canonical_id][joint_state]
+            total += leg.quantity * _payout(instrument, local_state)
+        total_by_joint_state[joint_state] = total
+    distinct_totals = set(total_by_joint_state.values())
+    if len(distinct_totals) != 1 or next(iter(distinct_totals), D(0)) <= 0:
+        raise _MissingAuditEvidence(
+            "Selected long contracts do not produce one positive payout across all mapped joint states."
+        )
+    return mapping.joint_state_ids
 
 
 def _verify_logical_implication_relationship(
@@ -1458,6 +1612,7 @@ def _audit_input_hash(
     state_mappings: dict[str, dict[str, str]],
     instrument_mappings: dict[str, dict[str, str]],
     scenario: ExecutionScenario,
+    joint_state_mappings: dict[str, JointStateMap],
 ) -> str:
     market_ids = set(candidate.market_ids)
     relationship = (
@@ -1488,6 +1643,11 @@ def _audit_input_hash(
         "relationship": relationship.model_dump(mode="json") if relationship is not None else None,
         "state_mapping": state_mapping,
         "instrument_mapping": instrument_mapping,
+        "joint_state_mapping": (
+            joint_state_mappings[candidate.joint_state_mapping_id].model_dump(mode="json")
+            if candidate.joint_state_mapping_id in joint_state_mappings
+            else None
+        ),
         "scenario": scenario.model_dump(mode="json"),
     }
     canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False)

@@ -23,6 +23,12 @@ SettlementScalar = Annotated[
     Decimal, Field(ge=0, le=1, max_digits=36, decimal_places=18, allow_inf_nan=False)
 ]
 Positive = Annotated[Decimal, Field(gt=0, max_digits=36, decimal_places=18, allow_inf_nan=False)]
+JointMarketId = Annotated[str, Field(min_length=1, max_length=256)]
+JointStateId = Annotated[str, Field(min_length=1, max_length=128)]
+JointLocalStateId = Annotated[str, Field(min_length=1, max_length=128)]
+JointStateProjection = Annotated[
+    dict[JointStateId, JointLocalStateId], Field(min_length=2, max_length=64)
+]
 FeeRate = Annotated[
     Decimal, Field(ge=0, le=1, max_digits=18, decimal_places=12, allow_inf_nan=False)
 ]
@@ -350,6 +356,94 @@ class PayoffSpec(FrontierModel):
         return self
 
 
+class JointStateMapDefinition(FrontierModel):
+    """Validated joint-state definition before its content identity is added."""
+
+    schema_version: Literal[1] = 1
+    market_ids: tuple[JointMarketId, ...] = Field(min_length=2, max_length=4)
+    joint_state_ids: tuple[JointStateId, ...] = Field(min_length=2, max_length=64)
+    state_by_market: dict[JointMarketId, JointStateProjection] = Field(min_length=2, max_length=4)
+    external_assertion_id: str = Field(min_length=1, max_length=120)
+    evidence_observation_ids: tuple[str, ...] = Field(min_length=2, max_length=8)
+    asserted_at_utc: datetime
+    semantic_status: Literal["externally_asserted_unverified"] = "externally_asserted_unverified"
+
+    @field_validator("asserted_at_utc")
+    @classmethod
+    def assertion_time_is_utc(cls, value: datetime) -> datetime:
+        if value.tzinfo is None or value.utcoffset() is None:
+            raise ValueError("Joint-state assertion time must include a timezone")
+        return value.astimezone(UTC)
+
+    @model_validator(mode="after")
+    def bounded_mapping(self) -> JointStateMapDefinition:
+        if (
+            not self.external_assertion_id.strip()
+            or any(not item.strip() for item in self.market_ids)
+            or any(not item.strip() for item in self.joint_state_ids)
+        ):
+            raise ValueError("Joint-state assertion and identity labels cannot be blank")
+        if tuple(sorted(set(self.market_ids))) != self.market_ids:
+            raise ValueError("Joint-state market IDs must be unique and lexically ordered")
+        if tuple(sorted(set(self.joint_state_ids))) != self.joint_state_ids:
+            raise ValueError("Joint-state IDs must be unique and lexically ordered")
+        if set(self.state_by_market) != set(self.market_ids):
+            raise ValueError("Joint-state projection markets must exactly match market_ids")
+        joint_states = set(self.joint_state_ids)
+        for market_id, projection in self.state_by_market.items():
+            if set(projection) != joint_states or any(
+                not local_state for local_state in projection.values()
+            ):
+                raise ValueError(
+                    f"Joint-state projection for {market_id} must map every state to a bounded local state"
+                )
+        if len(set(self.evidence_observation_ids)) != len(self.evidence_observation_ids):
+            raise ValueError("Joint-state evidence observation IDs must be unique")
+        for observation_id in self.evidence_observation_ids:
+            if len(observation_id) != 64 or any(
+                character not in "0123456789abcdef" for character in observation_id
+            ):
+                raise ValueError("Joint-state evidence IDs must be lowercase SHA-256 digests")
+        return self
+
+
+class JointStateMap(JointStateMapDefinition):
+    """Bounded, externally asserted map pinned by a canonical content hash.
+
+    The model deliberately has no ``verified`` state. A complete, correctly
+    hashed mapping is still a semantic assertion and cannot certify that the
+    listed joint states are exhaustive or physically attainable.
+    """
+
+    mapping_id: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+    @model_validator(mode="after")
+    def verify_mapping_identity(self) -> JointStateMap:
+        payload = self.model_dump(mode="json", exclude={"mapping_id"})
+        digest = hashlib.sha256(
+            json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode(
+                "utf-8"
+            )
+        ).hexdigest()
+        if self.mapping_id != digest:
+            raise ValueError("Joint-state mapping identity does not match its evidence payload")
+        return self
+
+    @classmethod
+    def create(cls, **values: Any) -> JointStateMap:
+        """Build a canonical mapping ID, then validate the complete payload."""
+        if "mapping_id" in values:
+            raise ValueError("mapping_id is derived from the joint-state evidence payload")
+        definition = JointStateMapDefinition.model_validate(values)
+        payload = definition.model_dump(mode="json")
+        digest = hashlib.sha256(
+            json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode(
+                "utf-8"
+            )
+        ).hexdigest()
+        return cls.model_validate(payload | {"mapping_id": digest})
+
+
 class ResolutionSpec(FrontierModel):
     primary_rule: str | None = None
     secondary_rule: str | None = None
@@ -617,11 +711,11 @@ class KalshiFeeOrderSensitivity(FrontierModel):
 class IndependentEconomicAudit(FrontierModel):
     """Recomputed candidate economics from normalized contracts and source books."""
 
-    schema_version: int = 2
-    model_version: str = "frontier-independent-economic-audit-11"
+    schema_version: int = 3
+    model_version: str = "frontier-independent-economic-audit-12"
     disposition: EconomicAuditDisposition
     input_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
-    checked_market_count: int = Field(ge=0, le=2)
+    checked_market_count: int = Field(ge=0, le=4)
     checked_leg_count: int = Field(ge=0, le=16)
     recomputed_gross_cost: SignedDecimal | None = None
     recomputed_modeled_fees: SignedDecimal | None = None

@@ -184,6 +184,7 @@ it('renders recorded-evidence empty states and never probes a source automatical
     },
   };
   let collectionState = 'paused';
+  const jointReplayRequests: { mapping: Record<string, unknown> }[] = [];
   const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const path = String(input);
     if (
@@ -317,6 +318,22 @@ it('renders recorded-evidence empty states and never probes a source automatical
         }),
       } as Response;
     }
+    if (path === '/api/frontier/replay/joint-state' && init?.method === 'POST') {
+      jointReplayRequests.push(
+        JSON.parse(String(init.body)) as { mapping: Record<string, unknown> },
+      );
+      return {
+        ok: true,
+        json: async () => ({
+          run_id: 'c'.repeat(64),
+          manifest: {
+            joint_state_mappings: [{ mapping_id: 'd'.repeat(64) }],
+          },
+          candidates: [],
+          classification_counts: {},
+        }),
+      } as Response;
+    }
     const body = responses[path];
     if (body === undefined) throw new Error(`Unexpected frontend request: ${path}`);
     void init;
@@ -416,6 +433,7 @@ it('renders recorded-evidence empty states and never probes a source automatical
             native_market_id: 'KX-THREEWAY',
             instrument_id: 'KX-THREEWAY:RED',
             outcome_id: 'red',
+            quantity_unit: 'contract',
             quantity: '10',
             quoted_ask: '0.20',
             modeled_buy_price: '0.20',
@@ -430,6 +448,7 @@ it('renders recorded-evidence empty states and never probes a source automatical
             native_market_id: 'KX-THREEWAY',
             instrument_id: 'KX-THREEWAY:GREEN',
             outcome_id: 'green',
+            quantity_unit: 'contract',
             quantity: '10',
             quoted_ask: '0.30',
             modeled_buy_price: '0.30',
@@ -444,6 +463,7 @@ it('renders recorded-evidence empty states and never probes a source automatical
             native_market_id: 'KX-THREEWAY',
             instrument_id: 'KX-THREEWAY:BLUE',
             outcome_id: 'blue',
+            quantity_unit: 'contract',
             quantity: '10',
             quoted_ask: '0.40',
             modeled_buy_price: '0.40',
@@ -628,17 +648,20 @@ it('renders recorded-evidence empty states and never probes a source automatical
       return { ...item, independent_audit: legacyAudit };
     }),
   });
-  await waitFor(() =>
-    expect(screen.getByText('Recomputed receipt skew').parentElement).toHaveTextContent(
-      'Not recorded',
-    ),
-  );
-  expect(screen.getByText('Recomputed exchange timestamp skew').parentElement).toHaveTextContent(
-    'Not recorded',
-  );
-  expect(screen.getByText('Independent timing gate').parentElement).toHaveTextContent(
-    'Not recorded',
-  );
+  await waitFor(() => {
+    const missingReceiptSkew = screen
+      .getAllByText('Recomputed receipt skew')
+      .find((item) => item.parentElement?.textContent?.includes('Not recorded'));
+    expect(missingReceiptSkew?.parentElement).toHaveTextContent('Not recorded');
+  });
+  const missingExchangeSkew = screen
+    .getAllByText('Recomputed exchange timestamp skew')
+    .find((item) => item.parentElement?.textContent?.includes('Not recorded'));
+  expect(missingExchangeSkew?.parentElement).toHaveTextContent('Not recorded');
+  const missingTimingGate = screen
+    .getAllByText('Independent timing gate')
+    .find((item) => item.parentElement?.textContent?.includes('Not recorded'));
+  expect(missingTimingGate?.parentElement).toHaveTextContent('Not recorded');
   expect(screen.getByText('Gross basket cost')).toBeInTheDocument();
   const capital = screen.getByRole('region', { name: 'Venue-separated virtual funding' });
   expect(capital).toHaveTextContent('Modeled requirement: 9 USD (fiat:USD)');
@@ -1123,6 +1146,72 @@ it('renders recorded-evidence empty states and never probes a source automatical
   });
   expect(screen.getAllByText('red')).toHaveLength(3);
 
+  const jointMapping = {
+    mapping_id: 'f'.repeat(64),
+    market_ids: ['polymarket:event-a', 'polymarket:event-b'],
+    joint_state_ids: ['world-no', 'world-yes'],
+    state_by_market: {
+      'polymarket:event-a': { 'world-no': 'no', 'world-yes': 'yes' },
+      'polymarket:event-b': { 'world-no': 'no', 'world-yes': 'yes' },
+    },
+    external_assertion_id: 'fixture-equivalence-assertion',
+    evidence_observation_ids: ['a'.repeat(64), 'b'.repeat(64)],
+    asserted_at_utc: '2026-10-26T20:00:00.050Z',
+    semantic_status: 'externally_asserted_unverified',
+  } as const;
+  queryClient.setQueryData(['frontier', 'runs'], {
+    items: [
+      {
+        run_id: 'joint-state-ui-run',
+        created_at_utc: '2026-10-26T20:00:00Z',
+        result_sha256: 'e'.repeat(64),
+        result: {
+          manifest: { joint_state_mappings: [jointMapping] },
+          candidates: [],
+          classification_counts: {},
+        },
+      },
+    ],
+  });
+  const candidateBeforeJointFixture = queryClient.getQueryData<{
+    items: Array<Record<string, unknown> & { candidate_id: string }>;
+  }>(['frontier', 'opportunities']);
+  expect(candidateBeforeJointFixture).toBeDefined();
+  queryClient.setQueryData(['frontier', 'opportunities'], {
+    ...candidateBeforeJointFixture!,
+    items: [
+      ...candidateBeforeJointFixture!.items,
+      {
+        ...candidateBeforeJointFixture!.items[0],
+        candidate_id: 'joint-state-ui-candidate',
+        source_run_id: 'joint-state-ui-run',
+        source_run_sha256: 'e'.repeat(64),
+        family: 'multi_market_joint_state_basket',
+        classification: 'CONDITIONAL ECONOMIC OPPORTUNITY',
+        market_ids: jointMapping.market_ids,
+        joint_state_mapping_id: jointMapping.mapping_id,
+        outcome_payout_by_state: { 'world-no': '10', 'world-yes': '10' },
+        gross_pnl_by_state: { 'world-no': '1', 'world-yes': '1' },
+        net_pnl_by_state: { 'world-no': '1', 'world-yes': '1' },
+      },
+    ],
+  });
+  const jointStateRegion = await screen.findByRole('region', {
+    name: 'External joint-state assertion',
+  });
+  expect(jointStateRegion).toHaveTextContent(
+    /completeness and semantic equivalence are unverified/,
+  );
+  expect(jointStateRegion).toHaveTextContent('fixture-equivalence-assertion');
+  expect(jointStateRegion).toHaveTextContent('polymarket:event-a');
+  expect(
+    await screen.findByRole('heading', { name: 'Payoffs over asserted joint states' }),
+  ).toBeInTheDocument();
+  fireEvent.click(screen.getByText(/Inspect the asserted projections/));
+  expect(
+    within(jointStateRegion).getByRole('columnheader', { name: 'polymarket:event-a' }),
+  ).toBeInTheDocument();
+
   queryClient.setQueryData(['frontier', 'runs'], {
     items: [
       {
@@ -1150,8 +1239,72 @@ it('renders recorded-evidence empty states and never probes a source automatical
     limit: 30,
     offset: 0,
   });
+  const jointMarketFixture = (suffix: string, observation: string) => ({
+    canonical_id: `polymarket:joint-${suffix}`,
+    source_observation_record_id: observation.repeat(64),
+    venue: 'polymarket',
+    title: `Fixture event ${suffix.toUpperCase()}`,
+    market_kind: 'binary_event',
+    lifecycle: 'open',
+    instruments: [],
+    payoff: {
+      state_ids: ['yes', 'no'],
+      verified: true,
+      exhaustive: true,
+    },
+    resolution: { verified: true },
+    provenance: { response_received_at_utc: '2026-10-27T17:00:00Z' },
+  });
+  queryClient.setQueryData(['frontier', 'markets'], {
+    items: [jointMarketFixture('a', 'a'), jointMarketFixture('b', 'b')],
+    returned: 2,
+    limit: 100,
+    offset: 0,
+  });
   fireEvent.click(screen.getByRole('button', { name: 'Replay & readiness' }));
   expect(await screen.findByText('2 fee metadata observations')).toBeInTheDocument();
+  const marketSelector = await screen.findByRole('listbox', {
+    name: 'Stored event markets for joint-state replay',
+  });
+  for (const option of Array.from((marketSelector as HTMLSelectElement).options)) {
+    option.selected = ['polymarket:joint-a', 'polymarket:joint-b'].includes(option.value);
+  }
+  fireEvent.change(marketSelector);
+  fireEvent.change(screen.getByLabelText('External assertion reference'), {
+    target: { value: 'fixture-state-assertion' },
+  });
+  fireEvent.change(screen.getByLabelText('Joint-state IDs'), {
+    target: { value: 'world-no\nworld-yes' },
+  });
+  fireEvent.change(screen.getByLabelText('world-no local payoff state for Fixture event A'), {
+    target: { value: 'no' },
+  });
+  fireEvent.change(screen.getByLabelText('world-yes local payoff state for Fixture event A'), {
+    target: { value: 'yes' },
+  });
+  fireEvent.change(screen.getByLabelText('world-no local payoff state for Fixture event B'), {
+    target: { value: 'no' },
+  });
+  fireEvent.change(screen.getByLabelText('world-yes local payoff state for Fixture event B'), {
+    target: { value: 'yes' },
+  });
+  const jointReplayButton = screen.getByRole('button', { name: 'Replay conditional basket' });
+  expect(jointReplayButton).toBeEnabled();
+  fireEvent.click(jointReplayButton);
+  await waitFor(() => expect(jointReplayRequests).toHaveLength(1));
+  expect(await screen.findByText('Conditional replay saved')).toBeInTheDocument();
+  const submittedJointMapping = jointReplayRequests[0]!.mapping;
+  expect(submittedJointMapping).not.toHaveProperty('mapping_id');
+  expect(submittedJointMapping).toMatchObject({
+    external_assertion_id: 'fixture-state-assertion',
+    market_ids: ['polymarket:joint-a', 'polymarket:joint-b'],
+    joint_state_ids: ['world-no', 'world-yes'],
+    evidence_observation_ids: ['a'.repeat(64), 'b'.repeat(64)],
+    state_by_market: {
+      'polymarket:joint-a': { 'world-no': 'no', 'world-yes': 'yes' },
+      'polymarket:joint-b': { 'world-no': 'no', 'world-yes': 'yes' },
+    },
+  });
 });
 
 it('captures one explicit Polymarket trade page and follows its bound cursor', async () => {

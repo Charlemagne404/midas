@@ -22,6 +22,7 @@ from midas.frontier.fx import (
 from midas.frontier.models import (
     EconomicAuditDisposition,
     IndependentEconomicAudit,
+    QuantityUnit,
     SettlementAssetIdentity,
     SettlementAssetKind,
     Venue,
@@ -56,6 +57,7 @@ def candidate_fixture():
             native_market_id=polymarket.native_market_id,
             instrument_id=polymarket.instruments[0].native_instrument_id,
             outcome_id="yes",
+            quantity_unit=QuantityUnit.SHARE,
             quantity=D(1),
             quoted_ask=D("0.4"),
             modeled_buy_price=D("0.4"),
@@ -72,6 +74,7 @@ def candidate_fixture():
             native_market_id=kalshi.native_market_id,
             instrument_id=kalshi.instruments[1].native_instrument_id,
             outcome_id="no",
+            quantity_unit=QuantityUnit.CONTRACT,
             quantity=D(1),
             quoted_ask=D("0.4"),
             modeled_buy_price=D("0.4"),

@@ -52,7 +52,7 @@ from midas.frontier.relationships import (
 )
 
 D = Decimal
-ECONOMIC_MODEL_VERSION = "frontier-economic-verifiers-14"
+ECONOMIC_MODEL_VERSION = "frontier-economic-verifiers-15"
 PARTIAL_FILL_FRACTIONS = (D(0), D("0.25"), D("0.5"), D("0.75"), D(1))
 KALSHI_MVE_SETTLEMENT_AUDIT_VERSION = "kalshi-mve-settlement-audit-2"
 _KALSHI_TAKER_FEE_TYPES = frozenset({"quadratic", "quadratic_with_combo_maker_fees"})
@@ -193,6 +193,7 @@ class OpportunityFamily(StrEnum):
     LOGICAL_IMPLICATION_COVERAGE = "logical_implication_coverage"
     WITHIN_MARKET_MULTI_OUTCOME_COVERAGE = "within_market_multi_outcome_coverage"
     WITHIN_MARKET_PAYOFF_BASKET = "within_market_payoff_basket"
+    MULTI_MARKET_JOINT_STATE_BASKET = "multi_market_joint_state_basket"
     PRICE_DISCREPANCY = "price_discrepancy"
 
 
@@ -252,6 +253,7 @@ class PositionLeg(FrontierModel):
     native_market_id: str
     instrument_id: str
     outcome_id: str
+    quantity_unit: QuantityUnit | None = None
     quantity: Decimal = Field(gt=0, allow_inf_nan=False)
     quoted_ask: Decimal = Field(ge=0, allow_inf_nan=False)
     modeled_buy_price: Decimal = Field(ge=0, allow_inf_nan=False)
@@ -382,7 +384,7 @@ class PartialFillGridSensitivity(FrontierModel):
 
 
 class OpportunityCandidate(FrontierModel):
-    schema_version: int = 2
+    schema_version: int = 3
     candidate_id: str
     family: OpportunityFamily
     classification: OpportunityClassification
@@ -391,6 +393,7 @@ class OpportunityCandidate(FrontierModel):
     market_ids: tuple[str, ...]
     venues: tuple[str, ...]
     relationship_id: str | None = None
+    joint_state_mapping_id: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
     legs: tuple[PositionLeg, ...] = ()
     one_sided_fill_sensitivity: OneSidedFillSensitivity | None = None
     partial_fill_grid_sensitivity: PartialFillGridSensitivity | None = None
@@ -416,10 +419,16 @@ class OpportunityCandidate(FrontierModel):
 
     @model_validator(mode="after")
     def capital_identity_matches_legs(self) -> OpportunityCandidate:
+        if self.schema_version >= 3 and any(leg.quantity_unit is None for leg in self.legs):
+            raise ValueError("Candidate schema v3 legs must preserve each native quantity unit")
         if self.capital_currency_identity is not None and any(
             leg.quote_currency_identity != self.capital_currency_identity for leg in self.legs
         ):
             raise ValueError("Candidate capital denomination differs from a leg quote identity")
+        if (self.family == OpportunityFamily.MULTI_MARKET_JOINT_STATE_BASKET) != (
+            self.joint_state_mapping_id is not None
+        ):
+            raise ValueError("Joint-state candidates require exactly one mapping identity")
         return self
 
 
@@ -2071,6 +2080,7 @@ def _evaluate_single_market_basket(
             native_market_id=market.native_market_id,
             instrument_id=instrument.native_instrument_id,
             outcome_id=instrument.outcome_id or "unknown",
+            quantity_unit=instrument.quantity_unit,
             quantity=common_quantity,
             quoted_ask=ask.price,
             modeled_buy_price=effective,
@@ -2718,6 +2728,7 @@ def _evaluate_pair(
         native_market_id=left.native_market_id,
         instrument_id=left_instrument.native_instrument_id,
         outcome_id=left_instrument.outcome_id or "unknown",
+        quantity_unit=left_instrument.quantity_unit,
         quantity=common_quantity,
         quoted_ask=l_ask.price,
         modeled_buy_price=l_effective,
@@ -2734,6 +2745,7 @@ def _evaluate_pair(
         native_market_id=right.native_market_id,
         instrument_id=right_instrument.native_instrument_id,
         outcome_id=right_instrument.outcome_id or "unknown",
+        quantity_unit=right_instrument.quantity_unit,
         quantity=common_quantity,
         quoted_ask=r_ask.price,
         modeled_buy_price=r_effective,

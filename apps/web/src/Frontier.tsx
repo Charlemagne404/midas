@@ -530,12 +530,25 @@ type GraphResponse = {
   source_market_window_limit: number;
 };
 type GraphPoint = { id: string; title: string; venue: string; x: number; y: number };
+type JointStateMapping = {
+  mapping_id: string;
+  market_ids: string[];
+  joint_state_ids: string[];
+  state_by_market: Record<string, Record<string, string>>;
+  external_assertion_id: string;
+  evidence_observation_ids: string[];
+  asserted_at_utc: string;
+  semantic_status: 'externally_asserted_unverified';
+};
+type JointStateReplayResult = Run['result'] & { run_id: string };
 type Candidate = {
   candidate_id: string;
   source_run_id?: string;
   source_run_sha256?: string;
   family: string;
   classification: string;
+  market_ids?: string[];
+  joint_state_mapping_id?: string | null;
   hypothetical: boolean;
   practical_eligibility: boolean;
   venues: string[];
@@ -544,6 +557,7 @@ type Candidate = {
     native_market_id: string;
     instrument_id: string;
     outcome_id: string;
+    quantity_unit?: string | null;
     quantity: string;
     quoted_ask: string;
     modeled_buy_price: string;
@@ -742,6 +756,7 @@ type Run = {
       fee_metadata_observation_ids?: string[];
       book_observation_ids: string[];
       relationship_ids: string[];
+      joint_state_mappings?: JointStateMapping[];
       as_of_utc: string;
       scenario: Record<string, string | number>;
     };
@@ -1719,6 +1734,18 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
   const [selectedTimelineJobId, setSelectedTimelineJobId] = useState<string | null>(null);
   const [timelineMaxBookAgeMs, setTimelineMaxBookAgeMs] = useState('15000');
   const [selectedSourceHealthDigests, setSelectedSourceHealthDigests] = useState<string[]>([]);
+  const [jointMarketIds, setJointMarketIds] = useState<string[]>([]);
+  const [jointStateLabels, setJointStateLabels] = useState('');
+  const [jointAssertionId, setJointAssertionId] = useState('');
+  const [jointAssertedAt, setJointAssertedAt] = useState(() => {
+    const now = new Date();
+    return new Date(now.getTime() - now.getTimezoneOffset() * 60_000).toISOString().slice(0, 16);
+  });
+  const [jointProjection, setJointProjection] = useState<Record<string, Record<string, string>>>(
+    {},
+  );
+  const [jointStateReplayResult, setJointStateReplayResult] =
+    useState<JointStateReplayResult | null>(null);
   const [collectionRunsBeforeRunId, setCollectionRunsBeforeRunId] = useState<string | null>(null);
   const queryClient = useQueryClient();
   const options = { staleTime: 10_000, retry: 1 };
@@ -1761,6 +1788,44 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
     queryFn: () => api<ListResponse<Market>>('/frontier/markets?limit=100'),
     ...options,
   });
+  const jointMarketOptions = (markets.data?.items ?? []).filter(
+    (market) =>
+      ['binary_event', 'multi_outcome_event'].includes(market.market_kind) &&
+      market.lifecycle === 'open' &&
+      market.payoff.verified &&
+      market.payoff.exhaustive &&
+      market.resolution.verified &&
+      market.payoff.state_ids.length >= 2 &&
+      /^[0-9a-f]{64}$/.test(market.source_observation_record_id),
+  );
+  const selectedJointMarkets = jointMarketIds
+    .map((marketId) => jointMarketOptions.find((market) => market.canonical_id === marketId))
+    .filter((market): market is Market => market != null)
+    .sort((left, right) => left.canonical_id.localeCompare(right.canonical_id));
+  const jointStateIds = [...new Set(jointStateLabels.split(/\r?\n/).map((id) => id.trim()))]
+    .filter(Boolean)
+    .sort();
+  const jointProjectionComplete =
+    jointMarketIds.length >= 2 &&
+    jointMarketIds.length <= 4 &&
+    selectedJointMarkets.length === jointMarketIds.length &&
+    jointStateIds.length >= 2 &&
+    jointStateIds.length <= 64 &&
+    jointAssertionId.trim().length > 0 &&
+    jointAssertionId.trim().length <= 120 &&
+    Number.isFinite(Date.parse(jointAssertedAt)) &&
+    selectedJointMarkets.every((market) =>
+      jointStateIds.every((stateId) =>
+        market.payoff.state_ids.includes(jointProjection[market.canonical_id]?.[stateId] ?? ''),
+      ),
+    ) &&
+    jointStateIds.every((stateId) => stateId.length <= 128) &&
+    new Set(
+      jointStateLabels
+        .split(/\r?\n/)
+        .map((id) => id.trim())
+        .filter(Boolean),
+    ).size === jointStateIds.length;
   const books = useQuery({
     queryKey: ['frontier', 'books'],
     queryFn: () => api<ListResponse<Book>>('/frontier/books?limit=100'),
@@ -1927,6 +1992,52 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
     );
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: ['frontier'] });
+  const jointStateReplay = useMutation({
+    mutationFn: () =>
+      api<JointStateReplayResult>('/frontier/replay/joint-state', {
+        method: 'POST',
+        body: JSON.stringify({
+          mapping: {
+            external_assertion_id: jointAssertionId.trim(),
+            market_ids: selectedJointMarkets.map((market) => market.canonical_id),
+            joint_state_ids: jointStateIds,
+            state_by_market: Object.fromEntries(
+              selectedJointMarkets.map((market) => [
+                market.canonical_id,
+                Object.fromEntries(
+                  jointStateIds.map((stateId) => [
+                    stateId,
+                    jointProjection[market.canonical_id]?.[stateId] ?? '',
+                  ]),
+                ),
+              ]),
+            ),
+            evidence_observation_ids: selectedJointMarkets
+              .map((market) => market.source_observation_record_id)
+              .sort(),
+            asserted_at_utc: new Date(jointAssertedAt).toISOString(),
+            semantic_status: 'externally_asserted_unverified',
+          },
+          scenario: {
+            name: 'external-joint-state-conditional',
+            slippage_bps: slippage,
+            execution_delay_ms: Number(delay),
+            additional_execution_delay_ms_by_venue: additionalExecutionDelayPayload,
+            fill_fraction: (Number(fillPercent) / 100).toFixed(4),
+            quote_decay_bps_per_second: '15',
+          },
+        }),
+      }),
+    onMutate: () => setJointStateReplayResult(null),
+    onSuccess: (result) => {
+      setJointStateReplayResult(result);
+      void Promise.all(
+        ['overview', 'opportunities', 'readiness', 'runs'].map((key) =>
+          queryClient.invalidateQueries({ queryKey: ['frontier', key] }),
+        ),
+      );
+    },
+  });
   const propose = useMutation({
     mutationFn: () =>
       api<{ proposed: number; persisted: number }>(
@@ -3409,7 +3520,15 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
           ) : candidates.data?.items.length ? (
             <div className="fr-candidate-list">
               {candidates.data.items.map((candidate) => (
-                <CandidateCard key={candidate.candidate_id} candidate={candidate} />
+                <CandidateCard
+                  key={candidate.candidate_id}
+                  candidate={candidate}
+                  jointStateMapping={runs.data?.items
+                    .find((run) => run.run_id === candidate.source_run_id)
+                    ?.result.manifest.joint_state_mappings?.find(
+                      (mapping) => mapping.mapping_id === candidate.joint_state_mapping_id,
+                    )}
+                />
               ))}
             </div>
           ) : (
@@ -3566,6 +3685,178 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
 
       {section === 'replay' && (
         <div className="fr-overview-grid">
+          <section className="fr-card fr-joint-state-editor">
+            <div className="fr-card-head">
+              <div>
+                <span className="fr-kicker">CONDITIONAL MULTI-MARKET REPLAY</span>
+                <h2>Assert a joint-state map</h2>
+              </div>
+              <GitBranch size={17} />
+            </div>
+            <p className="fr-joint-state-editor-copy">
+              Select two to four stored event markets, then explicitly map each asserted shared
+              state to a local payoff state for every market. Mission Control pins the market
+              observations and derives a content hash. The assertion is self-attributed and remains
+              semantically unverified; this tool makes no exchange requests.
+            </p>
+            {markets.isError ? (
+              <EmptyState title="Stored markets unavailable" detail={markets.error.message} />
+            ) : jointMarketOptions.length === 0 ? (
+              <EmptyState
+                title="No eligible stored event markets"
+                detail="This editor requires open event markets with exhaustive verified payoff states, verified resolution metadata, and pinned public observations."
+              />
+            ) : (
+              <>
+                <label className="fr-field">
+                  Stored event markets <span>select two to four · local evidence only</span>
+                  <select
+                    multiple
+                    size={Math.min(8, Math.max(3, jointMarketOptions.length))}
+                    aria-label="Stored event markets for joint-state replay"
+                    value={jointMarketIds}
+                    onChange={(event) =>
+                      setJointMarketIds(
+                        Array.from(event.currentTarget.selectedOptions, (option) => option.value)
+                          .slice(0, 4)
+                          .sort(),
+                      )
+                    }
+                  >
+                    {jointMarketOptions.map((market) => (
+                      <option key={market.canonical_id} value={market.canonical_id}>
+                        {venueLabel(market.venue)} · {market.title} ·{' '}
+                        {market.payoff.state_ids.length} states
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                {selectedJointMarkets.map((market) => (
+                  <div className="fr-joint-market-summary" key={market.canonical_id}>
+                    <strong>{market.title}</strong>
+                    <span>
+                      {venueLabel(market.venue)} · local payoff states:{' '}
+                      <code>{market.payoff.state_ids.join(', ')}</code>
+                    </span>
+                    <small>
+                      Metadata observation{' '}
+                      <code>{shortHash(market.source_observation_record_id)}</code>
+                    </small>
+                  </div>
+                ))}
+                <label className="fr-field">
+                  External assertion reference <span>self-attributed, not authenticated</span>
+                  <input
+                    aria-label="External assertion reference"
+                    value={jointAssertionId}
+                    onChange={(event) => setJointAssertionId(event.target.value)}
+                    maxLength={120}
+                    placeholder="e.g. research-note-2026-10-28-01"
+                  />
+                </label>
+                <label className="fr-field">
+                  Assertion time <span>must postdate every selected market observation</span>
+                  <input
+                    aria-label="Assertion time"
+                    type="datetime-local"
+                    value={jointAssertedAt}
+                    onChange={(event) => setJointAssertedAt(event.target.value)}
+                  />
+                </label>
+                <label className="fr-field">
+                  Joint-state IDs <span>one bounded label per line · 2 to 64</span>
+                  <textarea
+                    aria-label="Joint-state IDs"
+                    value={jointStateLabels}
+                    onChange={(event) => setJointStateLabels(event.target.value)}
+                    maxLength={9000}
+                    placeholder={'state-a\nstate-b'}
+                    rows={4}
+                  />
+                </label>
+                {jointStateIds.length > 0 && selectedJointMarkets.length > 0 && (
+                  <div className="fr-table-wrap fr-joint-projection-table">
+                    <table className="fr-table">
+                      <thead>
+                        <tr>
+                          <th>Asserted shared state</th>
+                          {selectedJointMarkets.map((market) => (
+                            <th key={market.canonical_id}>{market.title}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {jointStateIds.map((stateId) => (
+                          <tr key={stateId}>
+                            <th scope="row">{stateId}</th>
+                            {selectedJointMarkets.map((market) => (
+                              <td key={`${market.canonical_id}:${stateId}`}>
+                                <select
+                                  aria-label={`${stateId} local payoff state for ${market.title}`}
+                                  value={jointProjection[market.canonical_id]?.[stateId] ?? ''}
+                                  onChange={(event) =>
+                                    setJointProjection((current) => ({
+                                      ...current,
+                                      [market.canonical_id]: {
+                                        ...current[market.canonical_id],
+                                        [stateId]: event.target.value,
+                                      },
+                                    }))
+                                  }
+                                >
+                                  <option value="">Choose a local state</option>
+                                  {market.payoff.state_ids.map((localState) => (
+                                    <option key={localState} value={localState}>
+                                      {localState}
+                                    </option>
+                                  ))}
+                                </select>
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+                <p className="fr-review-verifier-note">
+                  These projections are the submitted assertion. The independent audit checks exact
+                  payoff arithmetic over the listed states, but cannot prove that the list is
+                  exhaustive, attainable, or equivalent across venues. Results remain conditional.
+                </p>
+                <button
+                  className="fr-action fr-run-button"
+                  onClick={() => jointStateReplay.mutate()}
+                  disabled={jointStateReplay.isPending || !jointProjectionComplete}
+                >
+                  <Play size={14} />
+                  {jointStateReplay.isPending
+                    ? 'Replaying stored joint-state evidence…'
+                    : 'Replay conditional basket'}
+                </button>
+              </>
+            )}
+            {jointStateReplay.isError && <InlineError message={jointStateReplay.error.message} />}
+            {jointStateReplayResult && (
+              <div className="fr-joint-state-result" role="status">
+                <strong>Conditional replay saved</strong>
+                <span>
+                  Run <code>{shortHash(jointStateReplayResult.run_id)}</code> · mapping{' '}
+                  <code>
+                    {shortHash(
+                      jointStateReplayResult.manifest.joint_state_mappings?.[0]?.mapping_id,
+                    )}
+                  </code>
+                </span>
+                <span>
+                  {jointStateReplayResult.candidates.length} candidate evaluations ·{' '}
+                  {Object.entries(jointStateReplayResult.classification_counts)
+                    .map(([classification, value]) => `${label(classification)} ${value}`)
+                    .join(' · ') || 'no candidate classifications'}
+                </span>
+              </div>
+            )}
+          </section>
           <section className="fr-card">
             <div className="fr-card-head">
               <div>
@@ -5399,7 +5690,13 @@ function InlineError({ message }: { message: string }) {
   );
 }
 
-function CandidateCard({ candidate }: { candidate: Candidate }) {
+function CandidateCard({
+  candidate,
+  jointStateMapping,
+}: {
+  candidate: Candidate;
+  jointStateMapping?: JointStateMapping;
+}) {
   const [virtualBalances, setVirtualBalances] = useState<Record<string, string>>({});
   const [carryRates, setCarryRates] = useState<Record<string, string>>({});
   const [carryReleaseDelays, setCarryReleaseDelays] = useState<Record<string, string>>({});
@@ -5627,6 +5924,91 @@ function CandidateCard({ candidate }: { candidate: Candidate }) {
           </>
         )}
       </section>
+      {candidate.joint_state_mapping_id && (
+        <section className="fr-joint-state-map" aria-label="External joint-state assertion">
+          <div>
+            <span className="fr-kicker">CONDITIONAL CROSS-MARKET BASIS</span>
+            <h4>External joint-state assertion</h4>
+          </div>
+          <p>
+            Payoffs below are evaluated over this asserted state map. The map’s completeness and
+            semantic equivalence are unverified, so the arithmetic audit does not certify a
+            mathematical inconsistency or executable opportunity.
+          </p>
+          <dl>
+            <div>
+              <dt>Mapping SHA-256</dt>
+              <dd>
+                <code>{candidate.joint_state_mapping_id}</code>
+              </dd>
+            </div>
+            <div>
+              <dt>Market set</dt>
+              <dd>
+                {jointStateMapping?.market_ids.join(' · ') ??
+                  candidate.market_ids?.join(' · ') ??
+                  'Pinned to replay manifest'}
+              </dd>
+            </div>
+            <div>
+              <dt>External assertion</dt>
+              <dd>
+                {jointStateMapping?.external_assertion_id ?? 'Details not in loaded replay window'}
+              </dd>
+            </div>
+            <div>
+              <dt>Evidence observations</dt>
+              <dd>
+                {jointStateMapping
+                  ? `${jointStateMapping.evidence_observation_ids.length} pinned source observations`
+                  : 'Pinned with the source replay'}
+              </dd>
+            </div>
+            <div>
+              <dt>Assertion time</dt>
+              <dd>
+                {jointStateMapping
+                  ? new Date(jointStateMapping.asserted_at_utc).toLocaleString()
+                  : 'Pinned with the source replay'}
+              </dd>
+            </div>
+          </dl>
+          {jointStateMapping && (
+            <details>
+              <summary>
+                Inspect the asserted projections · {jointStateMapping.joint_state_ids.length} joint
+                states
+              </summary>
+              <div className="fr-table-wrap">
+                <table className="fr-table">
+                  <thead>
+                    <tr>
+                      <th>Asserted joint state</th>
+                      {jointStateMapping.market_ids.map((marketId) => (
+                        <th key={marketId}>{marketId}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {jointStateMapping.joint_state_ids.map((state) => (
+                      <tr key={state}>
+                        <th scope="row">{label(state)}</th>
+                        {jointStateMapping.market_ids.map((marketId) => (
+                          <td key={`${marketId}-${state}`}>
+                            {label(
+                              jointStateMapping.state_by_market[marketId]?.[state] ?? 'missing',
+                            )}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </details>
+          )}
+        </section>
+      )}
       {Object.keys(candidate.capital_by_venue).length > 0 && (
         <section
           className="fr-candidate-fill-stress fr-capital-allocation"
@@ -6205,7 +6587,7 @@ function CandidateCard({ candidate }: { candidate: Candidate }) {
               <tr>
                 <th>Venue / native market</th>
                 <th>Outcome</th>
-                <th>Quantity</th>
+                <th>Native quantity</th>
                 <th>Observed ask</th>
                 <th>Modeled cost</th>
                 <th>Depth</th>
@@ -6219,7 +6601,10 @@ function CandidateCard({ candidate }: { candidate: Candidate }) {
                     <code>{leg.native_market_id}</code>
                   </td>
                   <td>{label(leg.outcome_id)}</td>
-                  <td>{leg.quantity}</td>
+                  <td>
+                    {leg.quantity}{' '}
+                    {leg.quantity_unit ? label(leg.quantity_unit) : '(unit unrecorded)'}
+                  </td>
                   <td>{money(leg.quoted_ask)}</td>
                   <td>
                     {money(leg.modeled_buy_price)} · fee {money(leg.modeled_fee)}
@@ -6389,12 +6774,18 @@ function CandidateCard({ candidate }: { candidate: Candidate }) {
       )}
       {Object.keys(candidate.gross_pnl_by_state).length > 0 && (
         <section className="fr-candidate-states" aria-label="Terminal-state payoff analysis">
-          <h4>Terminal-state payoff analysis</h4>
+          <h4>
+            {candidate.joint_state_mapping_id
+              ? 'Payoffs over asserted joint states'
+              : 'Terminal-state payoff analysis'}
+          </h4>
           <div className="fr-table-wrap">
             <table className="fr-table">
               <thead>
                 <tr>
-                  <th>Terminal state</th>
+                  <th>
+                    {candidate.joint_state_mapping_id ? 'Asserted joint state' : 'Terminal state'}
+                  </th>
                   <th>Modeled payout</th>
                   <th>Gross result</th>
                   <th>Net result</th>

@@ -20,7 +20,14 @@ from midas.frontier.economics import (
     generate_multi_outcome_coverage_candidate,
 )
 from midas.frontier.independent_audit import independently_audit_candidate
-from midas.frontier.models import BookSnapshot, FrontierMarket, FrontierModel, MarketKind
+from midas.frontier.joint_economics import generate_joint_state_basket_candidates
+from midas.frontier.models import (
+    BookSnapshot,
+    FrontierMarket,
+    FrontierModel,
+    JointStateMap,
+    MarketKind,
+)
 from midas.frontier.relationships import (
     MATCHER_VERSION,
     Relationship,
@@ -29,12 +36,12 @@ from midas.frontier.relationships import (
     propose_relationships,
 )
 
-REPLAY_VERSION = "frontier-deterministic-replay-14"
+REPLAY_VERSION = "frontier-deterministic-replay-15"
 PAIRED_COMPARISON_VERSION = "frontier-paired-replay-1"
 
 
 class ReplayManifest(FrontierModel):
-    schema_version: int = 2
+    schema_version: int = 3
     replay_version: str = REPLAY_VERSION
     matcher_version: str = MATCHER_VERSION
     economic_model_version: str = ECONOMIC_MODEL_VERSION
@@ -44,6 +51,7 @@ class ReplayManifest(FrontierModel):
     fee_metadata_observation_ids: tuple[str, ...] = ()
     book_observation_ids: tuple[str, ...]
     relationship_ids: tuple[str, ...]
+    joint_state_mappings: tuple[JointStateMap, ...] = Field(default=(), max_length=4)
     as_of_utc: datetime
     scenario: ExecutionScenario
 
@@ -178,6 +186,7 @@ def deterministic_replay(
     verified_relationships: tuple[Relationship, ...] = (),
     state_mappings: dict[str, dict[str, str]] | None = None,
     instrument_mappings: dict[str, dict[str, str]] | None = None,
+    joint_state_mappings: tuple[JointStateMap, ...] = (),
     scenario: ExecutionScenario | None = None,
     as_of_utc: datetime | None = None,
     code_version: str = "unversioned",
@@ -209,6 +218,20 @@ def deterministic_replay(
     market_index = {item.canonical_id: item for item in ordered_markets}
     if len(market_index) != len(ordered_markets):
         raise ValueError("Replay input contains duplicate market identities")
+    ordered_joint_state_mappings = tuple(
+        sorted(joint_state_mappings, key=lambda item: item.mapping_id)
+    )
+    if (
+        len(ordered_joint_state_mappings) > 4
+        or len({item.mapping_id for item in ordered_joint_state_mappings})
+        != len(ordered_joint_state_mappings)
+        or any(
+            not set(item.market_ids).issubset(market_index) for item in ordered_joint_state_mappings
+        )
+    ):
+        raise ValueError(
+            "Joint-state replay mappings are duplicated, missing markets, or exceed four"
+        )
     source_market_index = {(item.venue, item.native_market_id): item for item in ordered_markets}
     book_index: dict[str, dict[str, BookSnapshot]] = {}
     for book in ordered_books:
@@ -286,6 +309,19 @@ def deterministic_replay(
                         as_of_utc=pinned_as_of,
                     )
                 )
+    joint_state_map_index = {item.mapping_id: item for item in ordered_joint_state_mappings}
+    for mapping in ordered_joint_state_mappings:
+        mapping_markets = tuple(market_index[item] for item in mapping.market_ids)
+        mapping_books = {item: book_index.get(item, {}) for item in mapping.market_ids}
+        candidates.extend(
+            generate_joint_state_basket_candidates(
+                mapping_markets,
+                mapping,
+                mapping_books,
+                scenario=scenario,
+                as_of_utc=pinned_as_of,
+            )
+        )
     relationship_index = {item.relationship_id: item for item in ordered_relationships}
     candidate_tuple = tuple(
         independently_audit_candidate(
@@ -296,6 +332,7 @@ def deterministic_replay(
             state_mappings=states,
             instrument_mappings=instruments,
             scenario=scenario,
+            joint_state_mappings=joint_state_map_index,
         )
         for item in sorted(candidates, key=lambda item: item.candidate_id)
     )
@@ -312,6 +349,9 @@ def deterministic_replay(
         "relationships": [item.model_dump(mode="json") for item in ordered_relationships],
         "state_mappings": states,
         "instrument_mappings": instruments,
+        "joint_state_mappings": [
+            item.model_dump(mode="json") for item in ordered_joint_state_mappings
+        ],
         "relationship_limit": relationship_limit,
         "scenario": scenario.model_dump(mode="json"),
         "as_of_utc": pinned_as_of.isoformat(),
@@ -336,6 +376,7 @@ def deterministic_replay(
             sorted({item.provenance.observation_id for item in ordered_books})
         ),
         relationship_ids=tuple(item.relationship_id for item in ordered_relationships),
+        joint_state_mappings=ordered_joint_state_mappings,
         as_of_utc=pinned_as_of,
         scenario=scenario,
     )
