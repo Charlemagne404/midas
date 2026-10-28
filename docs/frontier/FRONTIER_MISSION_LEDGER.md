@@ -5319,3 +5319,30 @@ Python, browser, and build checks until a fresh sample clears the I/O gate.
 | Collection and collection API regression | COMPLETE AND VERIFIED | Both modules pass 31/31 together after the latest collector implementation. |
 | Strict mypy for the changed collection module | COMPLETE AND VERIFIED | `mypy --strict` passes after `6c5c329`. |
 | Full Frontier/MIDAS and browser regression | PARTIALLY VERIFIED | Broader suites remain pending host admission and have not been rerun after the latest collector changes. |
+
+## Full Frontier suite stopped after resource gate closed — 2026-10-28 05:17 UTC
+
+I started `pytest tests/frontier` in `/tmp/midas-frontier-full-suite-20261028T0518Z`
+after a clean admission sample. During the test, external Veritas PID **24419**
+appeared and held the shared Arena lock; memory PSI reached **18.13% some /
+14.58% full**, and I/O PSI reached **4.98% some / 4.42% full**. I sent SIGINT
+only to Frontier pytest PID **24413**. I did not signal or modify the external
+batch.
+
+Pytest exited **2** with `KeyboardInterrupt` after **19.11 seconds** (**20.14
+seconds process wall**), reporting **108 passed** before interruption. Peak
+RSS was **323,856 KiB**, with zero swaps, major faults, or socket messages.
+The run is not a full-suite pass. The run used only its `/tmp` basetemp; a
+source scan found no `live-probes` references in the Frontier tests/package/API,
+and the git worktree remained clean.
+
+At the post-stop sample `2026-10-28T05:17Z`, memory PSI avg10 was **44.56% some
+/ 36.62% full**, I/O PSI avg10 was **2.48% some / 2.34% full**, and PID 24419
+still held the shared Arena lock. No further test, build, browser, or source
+request started.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Full Frontier Python regression | PARTIALLY VERIFIED | 108 tests completed before the suite was interrupted; no full pass. |
+| Shared-host isolation | COMPLETE AND VERIFIED | Only Frontier pytest was stopped; the external Veritas process and lock were left untouched. |
+| Broad regression/browser continuation | DEFERRED | Recheck the Arena lock and short-window PSI after the external job finishes. |

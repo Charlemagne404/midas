@@ -2,7 +2,7 @@
 
 **Report date:** 2026-10-28
 
-## Current status — 2026-10-28 05:15 UTC
+## Current status — 2026-10-28 05:17 UTC
 
 The isolated development branch is `codex/frontier-20261026`; the latest
 implementation checkpoint is `6c5c329` (`fix(frontier): enforce
@@ -60,13 +60,15 @@ opportunity is established. Full repository regression and production
 transition remain open; deployment requires a separate authorized readiness
 review.
 
-The collector and collection API regressions now pass **31/31** together in
-one invocation, and strict mypy passes on the latest collector code. This is
-not a rerun of the full Frontier or MIDAS suites. Web/API typing, browser
+The collector and collection API regressions pass **31/31** together, and
+strict mypy passes on the latest collector code. A later `pytest tests/frontier`
+attempt ended after **108 passed** when shared-host pressure rose; it exited
+2 with `KeyboardInterrupt` and is not a suite pass. Web/API typing, browser
 verification, and broader regression remain pending. At approximately
-`2026-10-28T05:15Z`, memory PSI avg10 was **0.00% some / 0.00% full** and I/O
-PSI avg10 was **6.55% some / 6.10% full**; no process held the shared Arena
-lock. No additional resource-bearing checks started at that sample.
+`2026-10-28T05:17Z`, memory PSI avg10 was **44.56% some / 36.62% full** and
+I/O PSI avg10 was **2.48% some / 2.34% full**; external Veritas PID **24419**
+held the shared Arena lock. No further resource-bearing checks started at
+that sample.
 
 ## Bounded metadata and initial resource checkpoint — 2026-10-28 03:59 UTC
 
@@ -6681,3 +6683,35 @@ new admission sample clears the I/O gate.
 | Collector, lease, timeout, and HTTP endpoint regression | COMPLETE AND VERIFIED | Combined collection and API modules pass 31/31 after the latest code; this does not substitute for full Frontier/MIDAS regression. |
 | Strict typecheck of the changed collector | COMPLETE AND VERIFIED | Mypy strict passes on `packages/midas/frontier/collection.py` after `6c5c329`. |
 | Broad regression and browser verification | PARTIALLY VERIFIED | Deferred after the post-test I/O PSI sample exceeded 1%; remeasure before launch. |
+
+## Full Frontier suite interrupted by shared-host pressure — 2026-10-28 05:17 UTC
+
+The full `tests/frontier` suite was started in an isolated `/tmp` base after
+an admission sample showed no shared Arena lock and short-window PSI below the
+1% gate. During the run, external Veritas batch PID **24419** appeared and
+held `/home/charlie/midas/data/arena/.global-admission.lock`. Memory PSI rose
+to **18.13% some / 14.58% full** and I/O PSI to **4.98% some / 4.42% full**.
+Only Frontier pytest PID **24413** received SIGINT; the external batch and its
+lock were left untouched.
+
+Pytest reported **108 passed** before `KeyboardInterrupt`, then exited **2**
+after **19.11 seconds pytest time** (**20.14 seconds process wall**) at
+**323,856 KiB peak RSS**, zero swaps, zero major faults, and zero socket
+messages. This is an interrupted diagnostic, not a full-suite pass. The
+captured pytest output included the existing Starlette/httpx TestClient
+deprecation warning. The run used
+`/tmp/midas-frontier-full-suite-20261028T0518Z` as its base. A source scan
+found no `live-probes` references in `tests/frontier`, the Frontier package,
+or its API module. The worktree remained clean.
+
+At the post-stop sample `2026-10-28T05:17Z`, memory PSI avg10 was **44.56%
+some / 36.62% full**, I/O PSI avg10 was **2.48% some / 2.34% full**, and PID
+24419 still held the Arena lock. No further tests, builds, browser work, or
+source requests started. Recheck after the external batch releases the lock
+and short-window PSI falls below admission thresholds.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Full Frontier Python suite after collector changes | PARTIALLY VERIFIED | Interrupted after 108 passed under rising host pressure; exit 2, no suite pass. |
+| Interruption isolation | COMPLETE AND VERIFIED | Only Frontier pytest was interrupted; external Veritas batch was not signaled and worktree remained clean. |
+| Further resource-bearing checks | DEFERRED | External lock held and PSI exceeded admission thresholds at the latest sample. |
