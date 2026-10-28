@@ -33,6 +33,32 @@ in the dated addendum below and in the Frontier engineering report.
 
 ## Frontier development addendum — 2026-10-28
 
+### Latest isolated Frontier checkpoint — 2026-10-28 11:31 UTC
+
+Code commit `e26efab` closes a copied execution-assumption gap. A
+`model_copy(update=...)` scenario with `fill_fraction=2` previously produced
+positions twice the displayed best-ask depth, and both independent audits
+marked the result verified. Scenario objects are now reconstructed through
+validation at candidate, joint-state, replay, timeline, comparison, and direct
+audit boundaries. Invalid assumptions fail closed; direct audit records
+incomplete evidence and disables practical eligibility. Economic model v21,
+audit v21, replay v20, timeline v2, and discovery comparison v2 pin the
+behavior.
+
+The focused affected slices passed **100/100** and full `tests/frontier`
+passed **417/417** in 32.02 seconds wall time, with **380,336 KiB** peak RSS,
+zero process swaps, zero filesystem input, and zero socket messages. Ruff
+check/format, strict mypy for seven production modules, and `git diff --check`
+pass. One existing Starlette/httpx deprecation warning remains. Tests used
+tmpfs at `/dev/shm/midas-frontier-scenario-integrity-full-20261028T1131Z`.
+
+At the pre-run sample, memory PSI avg10 was 0%, I/O PSI was 0.33% some / 0.16%
+full, and about 10 GiB was available. At `11:31:38Z`, memory PSI remained 0%,
+I/O PSI was 0.72% some / 0.71% full, and about 10 GiB remained available.
+Host swap was already 3.4/4 GiB used; this test process used no swap. No live
+source, protected capture, or production service was accessed. Frontier
+remains **PARTIALLY VERIFIED**, research-only, and undeployed.
+
 ### Latest isolated Frontier checkpoint — 2026-10-28 11:24 UTC
 
 Code commit `ac85442` closes a copied snapshot-timestamp gap. Full book

@@ -941,6 +941,15 @@ account precision and non-taker costs remain unknown. Kraken's public pair feed
 does not expose an account's applied tier; Frontier does not call the
 authenticated account-volume API. Unknown venue costs remain unknown.
 
+`ExecutionScenario` values are revalidated at the public candidate, joint-state,
+replay, paired-replay, event-time replay, and discovery-comparison boundaries.
+This includes re-parsing a typed model because Pydantic's `model_copy(update=...)`
+can bypass constructor validators. An invalid scenario cannot expand modeled
+depth, alter prices, or be recorded in a replay manifest as if it were valid.
+Direct audit records incomplete evidence and disables practical eligibility.
+Scenario acceptance changes advance the economic, audit, replay, timeline, and
+discovery-comparison model versions.
+
 Replay then runs a separate arithmetic implementation that does not call the
 candidate calculator's arithmetic helpers. It records `verified`, `disagreement`,
 `incomplete`, or `not_evaluated`, the recomputed figures and a versioned SHA-256

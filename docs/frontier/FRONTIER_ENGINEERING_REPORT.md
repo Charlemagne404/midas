@@ -2,6 +2,47 @@
 
 **Report date:** 2026-10-28
 
+## Current status — 2026-10-28 11:31 UTC
+
+This entry supersedes the 11:24 UTC checkpoint. Frontier remains isolated at
+`/home/charlie/midas-frontier` on `codex/frontier-20261026`. Code commit
+`e26efab` closes a virtual-assumption integrity gap: a copied execution
+scenario with `fill_fraction=2` previously generated quantity-20 positions
+against displayed depth 10 and the independent audit classified both as
+verified.
+
+`ExecutionScenario.has_valid_structure` now reparses the complete scenario.
+Candidate generators, joint-state generation, replay, paired replay,
+event-time replay, and discovery-scope comparison reject malformed scenario
+copies. Direct independent audit returns incomplete evidence and clears
+practical eligibility. The change is pinned by economic model v21, audit v21,
+replay v20, timeline v2, and discovery-comparison v2.
+
+Five affected test modules passed **100/100**. Full `tests/frontier` passed
+**417/417** in 30.54 seconds (32.02 seconds wall time), with **380,336 KiB**
+peak RSS, zero process swaps, zero filesystem input, 1,872 output blocks, and
+zero socket messages. Ruff check/format, strict mypy for seven production
+modules, and `git diff --check` passed. One existing Starlette/httpx
+`TestClient` deprecation warning remains. Tests used tmpfs at
+`/dev/shm/midas-frontier-scenario-integrity-full-20261028T1131Z`.
+
+Before the run, memory PSI avg10 was **0.00%**, I/O PSI was **0.33% some /
+0.16% full**, and about **10 GiB** was available. At `11:31:38Z`, memory PSI
+avg10 remained **0.00%**, I/O PSI was **0.72% some / 0.71% full**, and about
+**10 GiB** remained available. Host swap was already 3.4/4 GiB used; the test
+process used none. No public source, protected capture, production service,
+worker, or Arena job was used. The untracked public-probe directory remains
+untouched.
+
+| Requirement | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Copied execution-assumption integrity | COMPLETE AND VERIFIED | A fill fraction above one cannot scale book depth or pass as verified at audit/replay boundaries. |
+| Full Frontier Python regression | COMPLETE AND VERIFIED | 417/417 pass on code commit `e26efab`; one existing deprecation warning remains. |
+| Genuine cross-venue equivalence and economics | BLOCKED | No authorized genuine multi-venue evidence is available. |
+| Broader MIDAS regression | PARTIALLY VERIFIED | Not run on this branch; Reality recovery dependency and incompatible Reality lineages remain unresolved. |
+| Production recovery and deployment | DEFERRED | The research worktree remains isolated, unmerged, and undeployed. |
+| Frontier overall | PARTIALLY VERIFIED | Live science, broader regression, and production readiness remain open. |
+
 ## Current status — 2026-10-28 11:24 UTC
 
 This entry supersedes the 11:21 UTC checkpoint below. Frontier remains

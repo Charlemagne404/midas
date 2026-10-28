@@ -1,5 +1,47 @@
 # Project Frontier Mission Ledger
 
+## Revalidate copied virtual execution assumptions — 2026-10-28 11:31 UTC
+
+Code commit `e26efab` fixes an over-depth candidate path reproduced with a
+copied `ExecutionScenario`. A model with `fill_fraction=2` bypassed Pydantic
+validation through `model_copy(update=...)`; replay generated two candidate
+positions of quantity 20 against displayed depth 10, and both independent
+audits reported `verified`.
+
+`ExecutionScenario.has_valid_structure` now reconstructs scenario payloads
+through Pydantic validation. Cross-venue, implication, single-market, bounded
+basket, and joint-state candidate entry points reject malformed assumptions.
+Replay, paired replay, event-time replay, and discovery-scope comparison reject
+them before use. Direct independent audit returns `INCOMPLETE` and clears
+practical eligibility. Economic model v21, audit v21, replay v20, timeline v2,
+and discovery comparison v2 identify these contracts.
+
+The focused affected-module slices passed **100/100**. Full `tests/frontier`
+passed **417/417** in 30.54 seconds (32.02 seconds wall time); peak RSS was
+**380,336 KiB**, process swaps **0**, filesystem input **0**, output 1,872
+blocks, and socket messages sent/received **0**. Ruff check/format, strict
+mypy for seven production modules, and `git diff --check` passed. One existing
+Starlette/httpx deprecation warning remains. The suite used tmpfs at
+`/dev/shm/midas-frontier-scenario-integrity-full-20261028T1131Z`.
+
+Before the run, memory PSI avg10 was **0.00%**, I/O PSI was **0.33% some /
+0.16% full**, and about **10 GiB** was available. At `11:31:38Z`, memory PSI
+avg10 remained **0.00%**, I/O PSI was **0.72% some / 0.71% full**, and about
+**10 GiB** remained available. Host swap was already 3.4/4 GiB used; this
+process used none. No public source, protected capture, production service,
+worker, or Arena job was accessed. The public-probe directory remains
+untracked and untouched. Frontier remains **PARTIALLY VERIFIED**.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Copied execution-scenario validation | COMPLETE AND VERIFIED | Invalid fill fraction cannot scale displayed depth or pass audit/replay; all decisive scenario entry points revalidate. |
+| Full Frontier Python suite | COMPLETE AND VERIFIED | 417/417 pass on code commit `e26efab`; one existing deprecation warning remains. |
+| Genuine cross-venue science | BLOCKED | No authorized, accessible evidence was used to establish a genuine cross-venue match. |
+| Frontier project overall | PARTIALLY VERIFIED | Broader MIDAS regression, live evidence, production recovery, and deployment remain open. |
+
+**Next safe action:** continue source-independent acceptance review. Take a
+fresh host PSI sample before any further test or replay workload.
+
 ## Validate full book snapshots before replay time arithmetic — 2026-10-28 11:24 UTC
 
 Code commit `ac85442` extends runtime book validation from individual price
