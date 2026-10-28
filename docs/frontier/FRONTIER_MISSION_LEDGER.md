@@ -1,5 +1,53 @@
 # Project Frontier Mission Ledger
 
+## Revalidate copied market contracts — 2026-10-28 11:21 UTC
+
+Code commit `da347a4` addresses a copied-market failure reproduced with a
+three-outcome fixture. Duplicating one `native_instrument_id` through
+`model_copy(update=...)` bypassed `FrontierMarket` validation, then the public
+multi-outcome generator raised `ValueError` while constructing fill-pattern
+sensitivity. `FrontierMarket.has_valid_structure` now reconstructs the
+complete nested market payload with Pydantic validation. Binary, implication,
+single-market, bounded-basket, and joint-state generators fail closed;
+independent audit marks a selected invalid market incomplete; deterministic
+replay rejects invalid markets before candidate generation.
+
+The regression confirms the copied duplicate ID no longer throws and cannot
+reach a verified candidate, audit, or replay result. Economic model v19,
+independent audit v19, and replay v18 identify the new acceptance rules.
+The first full run after the implementation had **412 passed and 2 failed**:
+both failures asserted narrower diagnostic text that the new structural gate
+now supersedes; a Pydantic serializer warning also appeared while inspecting a
+deliberately copied field. The tests now assert the earlier structural
+rejection, and validation-only reconstruction suppresses serializer warnings.
+The focused cases passed **3/3** after correction.
+
+The final full `tests/frontier` run passed **414/414** in 29.94 seconds
+(31.40 seconds wall time) using
+`/dev/shm/midas-frontier-market-copy-final2-20261028T1121Z`. Peak RSS was
+**377,768 KiB**, process swaps **0**, filesystem input **0**, filesystem
+output 376 blocks, and socket messages sent/received **0**. Ruff check/format,
+strict mypy for five production modules, and `git diff --check` passed. One
+existing Starlette/httpx deprecation warning remains.
+
+At `11:20:51Z`, about 10 GiB was available, memory PSI avg10 was 0%, and I/O
+PSI was 0.34% some / 0% full. At `11:21:37Z`, about 10 GiB remained available,
+memory PSI avg10 was 0%, and I/O PSI was 0.64% some / 0.44% full. No live
+source, protected capture, production service, or Arena job was used. The
+saved public capture remains unstaged and untouched. Frontier remains
+**PARTIALLY VERIFIED**.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Copied market contract integrity | COMPLETE AND VERIFIED | Nested market validators rerun at generation, audit, and replay boundaries; duplicate-instrument fixture no longer throws. |
+| Full Frontier Python suite | COMPLETE AND VERIFIED | 414/414 pass on code commit `da347a4`; one existing deprecation warning remains. |
+| Live cross-venue matching and economics | BLOCKED | Authorized genuine multi-venue evidence remains unavailable. |
+| Frontier project overall | PARTIALLY VERIFIED | Broader MIDAS regression, live science, production recovery, and deployment remain open. |
+
+**Next safe action:** continue source-independent acceptance review. Recheck
+host PSI before another test workload; I/O pressure was below the 1% gate but
+had risen to 0.64% some / 0.44% full after this run.
+
 ## Revalidate joint-state content identities — 2026-10-28 11:15 UTC
 
 Code commit `1f6bd64` closes a copied joint-state map identity gap. A bounded

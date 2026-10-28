@@ -2,7 +2,54 @@
 
 **Report date:** 2026-10-28
 
-## Current status — 2026-10-28 11:15 UTC
+## Current status — 2026-10-28 11:21 UTC
+
+This entry supersedes the 11:15 UTC checkpoint below. Frontier remains
+isolated at `/home/charlie/midas-frontier` on `codex/frontier-20261026`.
+Code commit `da347a4` closes a copied nested-market integrity gap found with
+a fixture that duplicated an instrument's native ID. The multi-outcome
+generator previously reached fill-sensitivity construction and raised
+`ValueError` because it treated duplicate contract identities as separate
+legs.
+
+`FrontierMarket.has_valid_structure` now rebuilds the complete market payload
+through Pydantic validation at candidate generation, independent audit, and
+replay boundaries. Malformed copied markets produce incomplete candidate or
+audit evidence, or are rejected at replay intake. This includes nested
+instrument, payout, payoff, and settlement rules. Economic model v19, audit
+v19, and replay v18 pin the change.
+
+The first full run after the implementation had **412 passed and 2 failed**;
+both failures asserted narrower diagnostic text than the new structural gate,
+and the run also exposed a serializer warning from a copied field. Those
+assertions now expect the structural rejection, and the validation-only dump
+suppresses serializer warnings. Focused corrections passed **3/3**. The final
+full `tests/frontier` run passed **414/414** in 29.94 seconds (31.40 seconds
+wall time), with **377,768 KiB** peak RSS, zero process swaps, zero filesystem
+input, 376 output blocks, and zero socket messages. Ruff check/format, strict
+mypy for five production modules, and `git diff --check` passed. One existing
+Starlette/httpx `TestClient` deprecation warning remains. Tests used tmpfs at
+`/dev/shm/midas-frontier-market-copy-final2-20261028T1121Z`.
+
+At `11:20:51Z`, about 10 GiB was available, memory PSI avg10 was 0%, and I/O
+PSI was 0.34% some / 0% full. At `11:21:37Z`, about 10 GiB remained available,
+memory PSI avg10 was 0%, and I/O PSI was 0.64% some / 0.44% full. No live
+source, protected capture, production service, or Arena job was used; the
+saved public capture remains unstaged and untouched. Frontier remains
+**PARTIALLY VERIFIED**.
+
+### Latest acceptance delta
+
+| Requirement | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Copied market contract structure | COMPLETE AND VERIFIED | Nested validators rerun at candidate, audit, and replay boundaries; malformed duplicate instrument identity fails closed. |
+| Full Frontier Python regression | COMPLETE AND VERIFIED | 414/414 pass on code commit `da347a4`; one existing deprecation warning remains. |
+| Live cross-venue equivalence and economics | BLOCKED | No authorized genuine multi-venue evidence is available for this checkpoint. |
+| Broader MIDAS regression | PARTIALLY VERIFIED | Not run on this branch; Reality recovery dependency and incompatible Reality lineages remain unresolved. |
+| Production recovery and deployment | DEFERRED | The research worktree remains isolated, unmerged, and undeployed. |
+| Frontier overall | PARTIALLY VERIFIED | Live science, broader regression, and production readiness remain open. |
+
+## Previous checkpoint — 2026-10-28 11:15 UTC
 
 This entry supersedes the 11:12 UTC checkpoint below. Frontier remains
 isolated at `/home/charlie/midas-frontier` on `codex/frontier-20261026`.

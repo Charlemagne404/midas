@@ -24,7 +24,7 @@ cannot validate a historical candidate.
 
 Previously saved pre-v6 same-payoff relationships remain readable and
 append-only, but the current independent audit
-(`frontier-independent-economic-audit-18`) classifies a candidate using one as
+(`frontier-independent-economic-audit-19`) classifies a candidate using one as
 `INCOMPLETE_EVIDENCE`. Re-review the original hypothesis against the current
 stored market records to produce a version-6 relationship before using it in a
 new audited replay. The verifier and audit also recheck uniqueness of payoff
@@ -37,7 +37,7 @@ The audit does not rewrite or delete stored relationships or reviews.
 
 Logical-implication reviews use
 `frontier-logical-implication-verifier-3` and the independent audit is now
-`frontier-independent-economic-audit-18`. The verifier rejects duplicate
+`frontier-independent-economic-audit-19`. The verifier rejects duplicate
 payoff states and native instrument identities even when they arrive inside a
 prebuilt model object. Version-2 logical-implication records remain readable,
 but they do not validate a new candidate until the relationship is reviewed
@@ -57,6 +57,12 @@ old ID cannot support a conditional candidate or a verified audit. Replay
 rejects the malformed mapping before search. A correctly hashed map remains an
 unauthenticated semantic assertion and does not prove that joint states are
 exhaustive or attainable.
+
+Markets are also reconstructed through Pydantic validation at candidate,
+independent-audit, and replay boundaries. This rechecks nested instrument,
+payout, payoff, and settlement invariants after in-memory `model_copy` calls.
+Malformed markets produce incomplete candidate/audit evidence or are rejected
+at replay intake; they do not reach payout arithmetic.
 
 ## Public source captures
 

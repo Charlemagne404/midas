@@ -33,6 +33,31 @@ in the dated addendum below and in the Frontier engineering report.
 
 ## Frontier development addendum — 2026-10-28
 
+### Latest isolated Frontier checkpoint — 2026-10-28 11:21 UTC
+
+Code commit `da347a4` closes a copied nested-market integrity gap. A duplicate
+instrument ID bypassed `FrontierMarket` constructor validation and caused the
+multi-outcome candidate generator to raise during sensitivity construction.
+Markets are now reconstructed and validated at candidate generation,
+independent audit, and replay boundaries. Malformed copies fail closed as
+incomplete evidence or rejected replay input. Economic model v19, audit v19,
+and replay v18 pin the behavior.
+
+The final full `tests/frontier` suite passes **414/414** in 31.40 seconds wall
+time, with **377,768 KiB** peak RSS, zero test-process swaps, zero filesystem
+input, and zero socket messages. Ruff check/format, strict mypy for five
+production modules, and `git diff --check` pass. One existing Starlette/httpx
+deprecation warning remains. Tests used isolated tmpfs storage at
+`/dev/shm/midas-frontier-market-copy-final2-20261028T1121Z`.
+
+At `11:20:51Z`, about 10 GiB was available, memory PSI avg10 was 0%, and I/O
+PSI was 0.34% some / 0% full. At `11:21:37Z`, about 10 GiB remained available,
+memory PSI avg10 was 0%, and I/O PSI was 0.64% some / 0.44% full. No live
+source, protected capture, or production service was accessed. Live
+cross-venue validation, broader MIDAS regression, production recovery, and
+deployment remain open. Frontier remains **PARTIALLY VERIFIED**, research-only,
+and undeployed.
+
 ### Latest isolated Frontier checkpoint — 2026-10-28 11:15 UTC
 
 Code commit `1f6bd64` closes a copied joint-state mapping identity gap. Runtime
