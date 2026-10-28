@@ -6570,3 +6570,33 @@ state.
 
 **Next safe action:** keep reviewing and documenting without launching more
 test or replay workloads while shared I/O remains above the admission gate.
+
+## Nested price-history point revalidation — 2026-10-28 08:09 UTC
+
+**Stage:** E/G (canonical model validation and timestamp integrity).
+**Code commit:** `2e73476` on `codex/frontier-20261026`.
+
+Source review found that Pydantic does not revalidate an already-instantiated
+nested model by default. A `HistoricalPricePoint.model_copy(update=...)` with a
+naive timestamp or an out-of-range price could therefore be accepted inside a
+new `PriceHistorySeries`; its range validator then called `.timestamp()` on the
+naive value. `PriceHistorySeries` now converts nested point instances to Python
+payloads before nested model parsing, so timestamp and exact price constraints
+run again before series checks.
+
+The historical-replay module passes **6/6**, including regressions for both a
+naive copied timestamp and a copied out-of-range price. Ruff check, Ruff format,
+and `git diff --check` pass. At `2026-10-28T08:09:33Z`, memory PSI avg10 was
+**0.00%**, I/O PSI avg10 was **0.00%**, and about **10 GiB** was available. The
+test completed in 1.81 seconds with **57,708 KiB** maximum RSS and zero swaps.
+It used temporary test state only and accessed no live source, worker,
+protected store, or production service.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| `PriceHistorySeries` nested-point validation | COMPLETE AND VERIFIED | Naive timestamps and invalid prices from copied model instances are rejected; six historical-replay tests pass. |
+| Full Frontier single-process suite | PARTIALLY VERIFIED | 193 of 378 tests passed before the documented I/O-pressure stop; 185 remain unrun. |
+| Frontier project overall | PARTIALLY VERIFIED | Live/source-policy, broad regression, endurance, and deployment gates remain open. |
+
+**Next safe action:** continue source-independent review; run further test
+slices only after a fresh low-I/O sample.

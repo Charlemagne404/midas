@@ -165,6 +165,11 @@ points (2139 bytes) is preserved byte-for-byte with capture metadata under
 `tests/fixtures`; its content hash matched a repeat capture. It was not inserted
 into a Frontier runtime database, and no cross-venue relationship was produced.
 
+Before validating a `PriceHistorySeries`, nested `HistoricalPricePoint` model
+instances are converted to Python payloads and parsed again. This ensures
+Pydantic field and timestamp checks also run for previously constructed model
+objects, including objects copied with unchecked updates.
+
 ### Saved price-history replay
 
 Price history uses a dedicated descriptive replay path rather than the market,

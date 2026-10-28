@@ -7804,3 +7804,29 @@ job was started. The suite uses local fixtures and temporary test state.
 | Completed portion of full Frontier suite | PARTIALLY VERIFIED | 193 cases passed before resource-gated interruption. |
 | Full single-process Frontier suite | PARTIALLY VERIFIED | 185 collected cases remain unrun; retry waits on a fresh low-I/O sample. |
 | Frontier overall acceptance | PARTIALLY VERIFIED | This run does not establish full regression, live cross-venue science, resource endurance, or deployment readiness. |
+
+## Nested price-history point revalidation — 2026-10-28 08:09 UTC
+
+Commit `2e73476` closes a nested-instance validation gap in the canonical
+`PriceHistorySeries` model. Pydantic's default nested-instance behavior could
+skip validation for a previously constructed `HistoricalPricePoint`, including
+an instance changed with `model_copy(update=...)`. The series validator then
+used `.timestamp()` for range checks, so a copied naive timestamp could be
+interpreted in the host timezone. The same bypass could admit an invalid price.
+
+A field pre-validator now serializes nested point instances to Python payloads
+before normal nested parsing. Existing UTC and `SettlementScalar` bounds are
+therefore rerun before the series order/range checks. The historical replay
+module passes **6/6**, including naive-time and out-of-range-price regressions.
+Ruff check, Ruff format, and `git diff --check` pass. At
+`2026-10-28T08:09:33Z`, memory PSI avg10 was **0.00%**, I/O PSI avg10 was
+**0.00%**, and approximately **10 GiB** was available. The test completed in
+**1.81 seconds**, maximum RSS **57,708 KiB**, with zero process swaps. It used
+temporary state only and accessed no live source, worker, protected store, or
+production service.
+
+| Component | Status | Current evidence and remaining boundary |
+| --- | --- | --- |
+| Nested historical price-point validation | COMPLETE AND VERIFIED | `PriceHistorySeries` reparses nested model payloads; the complete historical-replay module passes. |
+| Full single-process Frontier suite | PARTIALLY VERIFIED | 193/378 cases passed before a measured I/O-pressure stop; 185 cases remain unrun. |
+| Frontier overall acceptance | PARTIALLY VERIFIED | This guard does not close live cross-venue, source-policy, broad resource/recovery, or deployment gates. |
