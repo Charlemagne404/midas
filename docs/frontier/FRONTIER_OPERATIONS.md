@@ -435,6 +435,24 @@ do not treat the samples as executable quotes or synchronized cross-venue
 observations. The source documents token IDs and the endpoint parameters in the
 official [CLOB price-history reference](https://docs.polymarket.com/api-reference/markets/get-prices-history).
 
+To reproduce stored samples locally, submit 1..8 history observation IDs to
+`POST /api/frontier/price-history/replay`. The operation is network-free and
+accepts only immutable saved `historical_price_points` records with consistent
+raw hashes, receipt metadata, and any saved market binding. It records a
+separate append-only replay artifact; this is a descriptive sample audit and
+does not generate quotes or opportunity candidates. Read list/detail artifacts
+with `GET /api/frontier/price-history/replays` and
+`GET /api/frontier/price-history/replays/{run_id}`. Missing or held-source
+evidence is rejected for new runs and omitted from saved reads. The capture
+coverage summary scans at most 20 newest stored series, labels repeated
+overlapping points, and reports adjacent returned-point gaps without inferring
+completeness or expected cadence. The SQLite schema advances to version 7 and
+adds a dedicated replay table; an existing schema 6 store is migrated in place
+when the normal Frontier store initializer runs. Development tests use
+temporary databases; no service store was migrated for this milestone.
+The Market detail interface offers replay only after the researcher presses
+“Replay saved series” for an identified stored capture.
+
 ## Resource and deployment limits
 
 Use short, targeted tests and temporary stores. Before heavier local work,

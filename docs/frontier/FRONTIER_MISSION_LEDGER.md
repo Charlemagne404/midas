@@ -5757,3 +5757,92 @@ cross-venue economics was involved. Kalshi, Kraken, and Coinbase remain held.
 price-history series to deterministic local replay and source-quality summaries;
 keep the series contextual unless a validated payoff or executable quote model
 can use it. Do not probe held venues or deploy.
+
+## Deterministic price-history replay and coverage — 2026-10-28 06:34 UTC
+
+**Stage:** E (Scientific replay and source-quality summaries), integrated into
+the existing Mission Control Frontier workspace.
+**Code commit:** `2e27f1102d8055f822b41ad40b02421385d7df33` on
+`codex/frontier-20261026`.
+
+Added `packages/midas/frontier/historical_replay.py`, a separate deterministic
+description path for one to eight saved historical-price captures. It validates
+the stored observation/raw-row hashes, normalized venue/raw-body/receipt
+provenance, and any market-observation binding and native instrument. Its
+versioned manifest pins sorted observation IDs, normalized input hash, code
+version, and replay time. The result records each series' exact sampled price
+minimum/maximum, first and last point, observed span, largest adjacent returned
+point gap, and point timestamps later than local receipt. It explicitly sets
+`candidate_generation` to `not_performed`; these are point-sample summaries,
+not quotes, candles, fills, missing-data estimates, or opportunities.
+
+The append-only Frontier store advances from schema 6 to 7 and adds a separate
+`price_history_replays` table with row validation and update/delete triggers.
+Existing evidence rows are unchanged. The API accepts stored observation IDs
+only, makes no network call, checks any saved market binding, persists a
+reproducible result, and exposes bounded list/detail reads. Held and missing
+source evidence is rejected for a new run and omitted from saved reads. A
+focused policy fixture confirms held Kalshi replay artifacts and history
+captures remain in the temporary evidence store but do not enter replay reads
+or coverage summaries.
+
+Coverage analytics now read at most the newest 20 eligible stored history
+captures and report capture/instrument/point counts, empty and unbound series,
+future timestamps, capture age, point timestamp bounds, and largest observed
+adjacent gap by venue. Overlapping captures remain separately counted, so a
+point total can contain repeated samples. The existing Mission Control Coverage
+view shows this evidence with explicit completeness limits. The Market detail
+history panel adds a user-triggered “Replay saved series” action and displays
+the run/input hashes, sample price range, and largest observed gap; it never
+replays automatically after a capture or page load.
+
+Verification on the committed implementation:
+
+- `pytest -q tests/frontier/test_historical_replay.py tests/frontier/test_analytics.py tests/frontier/test_storage.py`:
+  **31 passed** in 18.60 seconds, covering deterministic ordering, exact
+  summaries, bounded inputs, schema-6 migration, append-only persistence, and
+  corrupted-result rejection.
+- `pytest -q tests/frontier/test_api.py`: **56 passed** in 48.39 seconds.
+  A final focused API and held-source run passed **2 tests** in 2.97 seconds
+  after the saved-list response added explicit held-row and incomplete-scan
+  counts.
+- `pytest -q tests/frontier/test_source_data_permissions.py`: **5 passed** in
+  3.23 seconds; the existing Starlette/httpx deprecation warning remains.
+- `corepack pnpm --dir apps/web test`: **40 passed** across 7 files; the
+  Frontier suite includes explicit capture and saved replay rendering.
+- `corepack pnpm --dir apps/web exec playwright test e2e/frontier.spec.ts`:
+  **7 passed** in 15.5 seconds on isolated local services. The added browser
+  scenario intercepts the historical source request with a fixture, asserts
+  there is no request before the click, verifies the request is capped to 7
+  days, and checks the separate replay click and output. No live source was
+  contacted by this E2E scenario.
+- TypeScript, ESLint, Prettier, Ruff check/format, `git diff --check`, and the
+  production frontend build pass. Vite transformed 2,228 modules; its existing
+  504.00 kB main and 544.41 kB Chart chunk advisory remains.
+- Strict mypy with `--follow-imports=silent` passes for the four changed Python
+  source modules. The unsuppressed import traversal reports **14 errors in
+  imported Veritas and Arena files** (`independent_economics.py`,
+  `analysis_catalog.py`, `continuous_analysis.py`, and `arena/director.py`);
+  it reports no errors in the four changed modules.
+
+No feature-specific RSS/CPU profile was captured. The replay computation is
+bounded to eight series of at most 1500 points each, and all persistence and API
+verification used temporary test databases. No service store was migrated, no
+source probe, authenticated request, order, deployment, or cross-venue
+economic calculation occurred.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Deterministic historical sample replay | COMPLETE AND VERIFIED | Hash-pinned, order-independent result; API and storage tests pass; generates no candidate. |
+| Schema-7 persistence and schema-6 migration | COMPLETE AND VERIFIED | Temporary-database tests cover migration, immutable rows, idempotency, and tamper detection. |
+| Held-source replay and coverage quarantine | COMPLETE AND VERIFIED | Kalshi capture/replay fixture is not visible through research reads or analytics. |
+| Coverage and Market detail replay interface | COMPLETE AND VERIFIED | Component suite and seven browser tests pass with fixture-backed replay. |
+| Historical sample use in economic analysis | DEFERRED | No history-based payoff, quote, hedge, or opportunity is modeled. |
+| Live second-venue relationship/economics | BLOCKED | Kalshi, Kraken, and Coinbase remain held; no genuine cross-venue match is claimed. |
+| Production migration/deployment | DEFERRED | Only isolated code and temporary test stores were used. |
+
+**Next safe action:** connect the bounded replay artifact to the existing
+Research & Replay inspection view, allowing selection of multiple saved IDs up
+to the eight-series cap and detailed lineage inspection. Keep every series
+classified as source-reported historical context. Do not probe held venues or
+migrate a service database.

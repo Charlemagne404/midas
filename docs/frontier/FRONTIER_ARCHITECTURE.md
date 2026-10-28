@@ -144,6 +144,38 @@ points (2139 bytes) is preserved byte-for-byte with capture metadata under
 `tests/fixtures`; its content hash matched a repeat capture. It was not inserted
 into a Frontier runtime database, and no cross-venue relationship was produced.
 
+### Saved price-history replay
+
+Price history uses a dedicated descriptive replay path rather than the market,
+book, and candidate replay contract. A caller selects one to eight stored
+`historical_price_points` observation IDs. Before computation, the API validates
+the stored raw/normalized row hashes, venue, raw-body hash, receipt timestamp,
+and (when present) the bound market observation and its native instrument.
+`deterministic_price_history_replay` sorts the exact source records, hashes the
+normalized inputs with its replay and backend-code versions, and produces one
+append-only result keyed by that pinned input manifest. It reports returned
+point count, sampled Decimal minimum and maximum, first/last point timestamps,
+span, maximum adjacent returned-point gap, and point timestamps later than
+local receipt. It does not create order quotes, fill assumptions, opportunity
+candidates, or economic claims. A large adjacent gap is descriptive; it does
+not estimate missing points because the source has not established a complete
+sampling cadence.
+
+These artifacts use a separate `price_history_replays` table with immutable
+update/delete triggers. Store schema 7 creates it and upgrades a schema 6 store
+without changing existing observation, relationship, or replay rows. Saved
+replay reads verify the manifest, run identity, result digest, and source
+eligibility; held or missing observation IDs are omitted. Coverage analytics
+scan at most the newest 20 history captures, group them by venue, and show
+capture counts, distinct instruments, returned points, empty/unbound records,
+future timestamps, capture age, point-time range, and largest observed adjacent
+gap. Overlapping captures are counted independently and can repeat points. The
+Mission Control quality view labels the gap as observed and explains that these
+metrics do not establish source completeness or cross-venue simultaneity. The
+Market detail panel offers an explicit replay action for the selected saved
+series and displays the resulting run/input hashes and sample summary; it does
+not start replay automatically after capture or page load.
+
 `FrontierMarket.native_event_id` is populated only from an explicit source event
 record or a parent-event response. The legacy Polymarket parser's local
 `market:<market-id>` fallback is not a venue event identifier; Frontier leaves

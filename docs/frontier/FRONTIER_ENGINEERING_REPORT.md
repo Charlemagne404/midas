@@ -7109,3 +7109,65 @@ opportunity was demonstrated.
 `tests/frontier/{test_adapters,test_api}.py`, and the two captured fixture files
 listed above. Architecture, operations, and development docs plus the mission
 ledger were updated in the documentation checkpoint following this code commit.
+
+## Deterministic price-history replay and coverage — 2026-10-28 06:34 UTC
+
+Code commit `2e27f1102d8055f822b41ad40b02421385d7df33` adds a descriptive
+historical price-sample replay alongside the existing market/book opportunity
+replay. It accepts one to eight persisted `historical_price_points`
+observations, revalidates immutable observation and raw hashes, source venue,
+receipt time, and any saved market/token binding, then pins sorted input IDs,
+normalized data hash, backend code version, and replay version in a separate
+manifest. For each series the result records point count, exact Decimal price
+bounds, first/last point timestamps, span, largest adjacent returned-sample gap,
+and point timestamps later than local receipt. No price quote, candle, fill,
+candidate, or opportunity is generated. A returned-point gap does not estimate
+missing data because the source has not specified completeness or expected
+cadence.
+
+The immutable SQLite `price_history_replays` table is part of schema 7. The
+initializer upgrades schema 6 without changing historic evidence. The
+`POST /api/frontier/price-history/replay` route reads only existing source rows,
+does not make a network call, and writes the exact result; list/detail routes
+verify hashes and filter missing or held source IDs. The coverage endpoint scans
+at most 20 recent eligible history records and groups capture counts, unique
+instrument counts, source point counts, empty/unbound captures, future times,
+capture ages, source point time ranges, and largest adjacent observed gaps.
+Overlapping records remain separate, and repeated samples may appear in summed
+point counts. Mission Control exposes these summaries on the existing Coverage
+view and offers a button in Market detail to replay a saved series explicitly.
+
+The E2E fixture suite intercepts the Polymarket capture route and proves the
+workflow performs no request until capture is pressed, then issues a separate
+local replay only after its own click. This is an interface demonstration with
+fixture data, not a live or historical source validation. The genuine Polymarket
+response captured in the previous milestone remains preserved only as a test
+fixture; it was not inserted into a runtime database.
+
+Verification includes 31 deterministic replay/analytics/storage tests, the
+56-test API module, the five-test source-permission module, 40 frontend unit
+tests, and seven Frontier browser tests. TypeScript, ESLint, Prettier, Ruff,
+strict targeted mypy, `git diff --check`, and the production frontend build pass.
+The API test process emitted the existing Starlette/httpx deprecation warning;
+Vite retains its 504.00 kB main and 544.41 kB Chart chunk-size advisory. An
+unsuppressed strict mypy traversal reported 14 errors in imported Veritas and
+Arena files and none in the four changed Frontier Python modules. No
+feature-specific RSS/CPU profile was captured.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Deterministic descriptive history replay | COMPLETE AND VERIFIED | Pinned inputs, exact summaries, result hashes, and bounded acceptance. No opportunity candidates. |
+| History replay persistence | COMPLETE AND VERIFIED | Schema 7 table, schema 6 migration, immutable writes, hash validation, temporary-store tests. |
+| Historical source-quality summary | COMPLETE AND VERIFIED | Newest bounded captures by venue; repeated windows and gaps are explicitly described without inferred completeness. |
+| Mission Control replay action | COMPLETE AND VERIFIED | Explicit, fixture-backed capture/replay flow in component and browser tests. |
+| History-based cross-venue economics | DEFERRED | Historical prices remain context; no payoff or executable quote model consumes them. |
+| Second-venue live validation | BLOCKED | Source-use holds remain for Kalshi, Kraken, and Coinbase. |
+| Production migration and deployment | DEFERRED | No production store, service, or deployment was changed. |
+
+Changed files in `2e27f11`: `apps/api/frontier.py`,
+`packages/midas/frontier/{historical_replay,analytics,storage}.py`,
+`apps/web/src/{Frontier.tsx,Frontier.test.tsx,frontier.css}`,
+`apps/web/e2e/frontier.spec.ts`, and
+`tests/frontier/{test_historical_replay,test_analytics,test_api,test_source_data_permissions}.py`.
+The architecture, operations, development, ledger, and engineering-report
+documentation checkpoint is recorded separately from the code commit.
