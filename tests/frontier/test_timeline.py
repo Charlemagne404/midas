@@ -6,7 +6,7 @@ from decimal import Decimal
 
 import pytest
 from midas.frontier.economics import OpportunityClassification
-from midas.frontier.models import BookLevel, BookSnapshot, Venue
+from midas.frontier.models import BookLevel, BookSnapshot, EconomicAuditDisposition, Venue
 from midas.frontier.relationships import verify_same_payoff
 from midas.frontier.timeline import (
     TimelineBookExclusion,
@@ -44,25 +44,32 @@ def _book_at(
     ask: str,
     received_at,
     capture_suffix: str,
+    *,
+    exchange_at=None,
+    clock_uncertainty_ms: Decimal | None = None,
 ) -> BookSnapshot:
     original = book(market_value, instrument_id, ask)
+    source_time = exchange_at or received_at
     digest = hashlib.sha256(capture_suffix.encode()).hexdigest()
+    provenance_updates = {
+        "request_started_at_utc": received_at,
+        "response_received_at_utc": received_at,
+        "processed_at_utc": received_at,
+        "exchange_timestamp_utc": source_time,
+        "raw_sha256": digest,
+        "observation_id": digest,
+    }
+    if clock_uncertainty_ms is not None:
+        provenance_updates["clock_uncertainty_ms"] = clock_uncertainty_ms
     provenance = original.provenance.model_copy(
-        update={
-            "request_started_at_utc": received_at,
-            "response_received_at_utc": received_at,
-            "processed_at_utc": received_at,
-            "exchange_timestamp_utc": received_at,
-            "raw_sha256": digest,
-            "observation_id": digest,
-        }
+        update=provenance_updates
     )
-    asks = (original.asks[0].model_copy(update={"exchange_timestamp_utc": received_at}),)
+    asks = (original.asks[0].model_copy(update={"exchange_timestamp_utc": source_time}),)
     bids = (
         BookLevel(
             price=max(Decimal(0), Decimal(ask) - Decimal("0.01")),
             quantity=Decimal(10),
-            exchange_timestamp_utc=received_at,
+            exchange_timestamp_utc=source_time,
         ),
     )
     return original.model_copy(
@@ -70,18 +77,46 @@ def _book_at(
             "asks": asks,
             "bids": bids,
             "received_at_utc": received_at,
-            "exchange_timestamp_utc": received_at,
+            "exchange_timestamp_utc": source_time,
             "provenance": provenance,
         }
     )
 
 
-def _fixture_books(left, right):
+def _fixture_books(left, right, *, clock_uncertainty_ms: Decimal | None = None):
     return (
-        _book_at(left, left.instruments[0].native_instrument_id, "0.40", T0, "left-yes-0"),
-        _book_at(left, left.instruments[1].native_instrument_id, "0.65", T0, "left-no-0"),
-        _book_at(right, right.instruments[0].native_instrument_id, "0.55", T0, "right-yes-0"),
-        _book_at(right, right.instruments[1].native_instrument_id, "0.45", T0, "right-no-0"),
+        _book_at(
+            left,
+            left.instruments[0].native_instrument_id,
+            "0.40",
+            T0,
+            "left-yes-0",
+            clock_uncertainty_ms=clock_uncertainty_ms,
+        ),
+        _book_at(
+            left,
+            left.instruments[1].native_instrument_id,
+            "0.65",
+            T0,
+            "left-no-0",
+            clock_uncertainty_ms=clock_uncertainty_ms,
+        ),
+        _book_at(
+            right,
+            right.instruments[0].native_instrument_id,
+            "0.55",
+            T0,
+            "right-yes-0",
+            clock_uncertainty_ms=clock_uncertainty_ms,
+        ),
+        _book_at(
+            right,
+            right.instruments[1].native_instrument_id,
+            "0.45",
+            T0,
+            "right-no-0",
+            clock_uncertainty_ms=clock_uncertainty_ms,
+        ),
     )
 
 
@@ -161,6 +196,60 @@ def test_event_time_replay_tracks_quote_deterioration_then_quote_expiry():
         item.classification == OpportunityClassification.INCOMPLETE_EVIDENCE
         and item.worst_case_net_pnl is None
         for item in expired.candidates
+    )
+
+
+def test_receipt_time_controls_book_availability_and_exchange_time_reaches_audit():
+    left, right, relationship = _verified_pair()
+    receipt_time = T0 + timedelta(seconds=1)
+    source_time = T0 - timedelta(seconds=2)
+    books = _fixture_books(left, right, clock_uncertainty_ms=Decimal(0))
+    delayed = _book_at(
+        right,
+        right.instruments[0].native_instrument_id,
+        "0.55",
+        receipt_time,
+        "right-yes-source-time-before-receipt",
+        exchange_at=source_time,
+        clock_uncertainty_ms=Decimal(0),
+    )
+    other_books = tuple(
+        item
+        for item in books
+        if item.native_instrument_id != right.instruments[0].native_instrument_id
+        or item.venue != right.venue
+    )
+
+    result = deterministic_timeline_replay(
+        (left, right),
+        (*other_books, delayed),
+        verified_relationships=(relationship,),
+        evaluation_times_utc=(T0 + timedelta(milliseconds=500), receipt_time),
+        max_book_age_ms=5_000,
+        code_version="timeline-receipt-vs-source-time-v1",
+    )
+
+    before_receipt, at_receipt = result.frames
+    delayed_state_before = next(
+        item
+        for item in before_receipt.instrument_states
+        if item.venue == right.venue
+        and item.native_instrument_id == right.instruments[0].native_instrument_id
+    )
+    delayed_state_after = next(
+        item
+        for item in at_receipt.instrument_states
+        if item.venue == right.venue
+        and item.native_instrument_id == right.instruments[0].native_instrument_id
+    )
+    assert delayed_state_before.book_state == TimelineBookState.NOT_YET_OBSERVED
+    assert delayed_state_before.observation_id is None
+    assert delayed_state_after.included_in_replay is True
+    assert delayed_state_after.observation_id == delayed.provenance.observation_id
+    assert any(
+        item.timing_verified is False
+        and item.audit_disposition == EconomicAuditDisposition.VERIFIED
+        for item in at_receipt.candidates
     )
 
 
