@@ -519,6 +519,129 @@ async def test_polymarket_book_rejects_market_schema_provenance_mismatch():
     assert requests == []
 
 
+@pytest.mark.parametrize(
+    "corruption",
+    (
+        "missing_instruments",
+        "duplicate_instrument",
+        "wrong_canonical_id",
+        "wrong_native_market_id",
+        "wrong_raw_market_id",
+        "wrong_raw_instrument_ids",
+        "wrong_native_instrument_id",
+        "malformed_condition_id",
+        "wrong_market_quote",
+        "wrong_instrument_quote",
+        "wrong_quantity_unit",
+        "wrong_outcome_id",
+    ),
+)
+@pytest.mark.asyncio
+async def test_polymarket_book_binds_market_identity_before_request(corruption: str):
+    raw_market = json.loads(_captured("tests/fixtures/gamma_live.json"))[0]
+    market_transport, _, market_client = _transport(
+        "gamma-api.polymarket.com", {"/markets": json.dumps([raw_market])}
+    )
+    market_adapter = PolymarketAdapter(
+        AdapterConfig(
+            enabled=True, live_public_probe_enabled=True, requests_per_second=5, retries=0
+        ),
+        transport=market_transport,
+    )
+    try:
+        (market,) = await market_adapter.discover_markets(1)
+    finally:
+        await market_client.aclose()
+
+    first_instrument = market.instruments[0]
+    if corruption == "missing_instruments":
+        forged_market = market.model_copy(update={"instruments": ()})
+    elif corruption == "duplicate_instrument":
+        forged_market = market.model_copy(
+            update={"instruments": (first_instrument, first_instrument)}
+        )
+    elif corruption == "wrong_canonical_id":
+        forged_market = market.model_copy(update={"canonical_id": "wrong-market-identity"})
+    elif corruption == "wrong_native_market_id":
+        forged_market = market.model_copy(update={"native_market_id": "999999999"})
+    elif corruption == "wrong_raw_market_id":
+        forged_market = market.model_copy(
+            update={"native_fields": {**market.native_fields, "id": "999999999"}}
+        )
+    elif corruption == "wrong_raw_instrument_ids":
+        raw_ids = json.loads(market.native_fields["clobTokenIds"])
+        forged_market = market.model_copy(
+            update={
+                "native_fields": {
+                    **market.native_fields,
+                    "clobTokenIds": json.dumps(["999999999", *raw_ids[1:]]),
+                }
+            }
+        )
+    elif corruption == "wrong_native_instrument_id":
+        forged_id = "999999999"
+        forged_instrument = first_instrument.model_copy(
+            update={
+                "native_instrument_id": forged_id,
+                "canonical_id": stable_instrument_id(
+                    Venue.POLYMARKET, market.native_market_id, forged_id
+                ),
+            }
+        )
+        forged_market = market.model_copy(
+            update={"instruments": (forged_instrument, *market.instruments[1:])}
+        )
+    elif corruption == "malformed_condition_id":
+        forged_market = market.model_copy(
+            update={"native_fields": {**market.native_fields, "conditionId": None}}
+        )
+    elif corruption == "wrong_market_quote":
+        forged_market = market.model_copy(update={"quote_asset": "EUR"})
+    elif corruption == "wrong_instrument_quote":
+        forged_instrument = first_instrument.model_copy(update={"price_currency": "EUR"})
+        forged_market = market.model_copy(
+            update={
+                "instruments": (forged_instrument, *market.instruments[1:]),
+            }
+        )
+    elif corruption == "wrong_quantity_unit":
+        forged_instrument = first_instrument.model_copy(
+            update={"quantity_unit": QuantityUnit.CONTRACT}
+        )
+        forged_market = market.model_copy(
+            update={
+                "instruments": (forged_instrument, *market.instruments[1:]),
+            }
+        )
+    else:
+        forged_instrument = first_instrument.model_copy(update={"outcome_id": "unknown"})
+        forged_market = market.model_copy(
+            update={
+                "instruments": (forged_instrument, *market.instruments[1:]),
+            }
+        )
+
+    transport, requests, client = _transport("clob.polymarket.com", {})
+    adapter = PolymarketAdapter(
+        AdapterConfig(
+            enabled=True, live_public_probe_enabled=True, requests_per_second=5, retries=0
+        ),
+        transport=transport,
+    )
+    try:
+        with pytest.raises(AdapterError) as error:
+            await adapter.fetch_book(forged_market, first_instrument.native_instrument_id, depth=1)
+    finally:
+        await client.aclose()
+
+    assert error.value.code in {
+        "INVALID_MARKET",
+        "UNSUPPORTED_SETTLEMENT_ASSET",
+        "INSTRUMENT_NOT_FOUND",
+    }
+    assert requests == []
+
+
 @pytest.mark.asyncio
 async def test_polymarket_unknown_fee_exponent_is_not_promoted_to_verified():
     captured = json.loads(_captured("tests/fixtures/gamma_live.json"))
@@ -1279,6 +1402,132 @@ async def test_kalshi_synthetic_capture_preserves_multivariate_legs_and_empty_bo
     assert health.state == SourceState.HEALTHY
     assert adapter.capabilities.supports(Capability.BOOK_SNAPSHOT)
     assert not adapter.capabilities.supports(Capability.BOOK_UPDATES)
+
+
+@pytest.mark.parametrize(
+    "corruption",
+    (
+        "missing_instrument",
+        "duplicate_instrument",
+        "wrong_canonical_id",
+        "wrong_native_ticker",
+        "wrong_settlement_currency",
+        "wrong_outcome_identity",
+        "wrong_quantity_unit",
+        "missing_payout_vector",
+    ),
+)
+@pytest.mark.asyncio
+async def test_kalshi_book_binds_market_identity_before_request(corruption: str):
+    ticker = "KX-BOOK-BOUND"
+    market_body = {
+        "markets": [_synthetic_kalshi_mve_market(ticker=ticker, event_ticker="KX-BOOK-EVENT")]
+    }
+    empty_orderbook = {"orderbook_fp": {"yes_dollars": [], "no_dollars": []}}
+    transport, requests, client = _transport(
+        "external-api.kalshi.com",
+        {"/markets": json.dumps(market_body), "/orderbook": json.dumps(empty_orderbook)},
+    )
+    adapter = KalshiAdapter(
+        AdapterConfig(
+            enabled=True,
+            live_public_probe_enabled=True,
+            requests_per_second=5,
+            retries=0,
+        ),
+        transport=transport,
+    )
+    try:
+        (market,) = await adapter.discover_markets(1)
+        adapter.take_captures()
+        yes_instrument = next(item for item in market.instruments if item.outcome_id == "yes")
+        if corruption == "missing_instrument":
+            forged_market = market.model_copy(update={"instruments": ()})
+        elif corruption == "duplicate_instrument":
+            forged_market = market.model_copy(
+                update={"instruments": (yes_instrument, yes_instrument)}
+            )
+        elif corruption == "wrong_canonical_id":
+            forged_market = market.model_copy(update={"canonical_id": "wrong-market-identity"})
+        elif corruption == "wrong_native_ticker":
+            forged_market = market.model_copy(
+                update={
+                    "native_fields": {**market.native_fields, "ticker": "KX-OTHER"},
+                }
+            )
+        elif corruption == "wrong_settlement_currency":
+            forged_market = market.model_copy(update={"settlement_asset": "EUR"})
+        elif corruption == "wrong_outcome_identity":
+            forged_yes = yes_instrument.model_copy(update={"outcome_id": "neither"})
+            forged_market = market.model_copy(
+                update={
+                    "instruments": tuple(
+                        forged_yes if item.outcome_id == "yes" else item
+                        for item in market.instruments
+                    )
+                }
+            )
+        elif corruption == "wrong_quantity_unit":
+            forged_yes = yes_instrument.model_copy(update={"quantity_unit": QuantityUnit.UNKNOWN})
+            forged_market = market.model_copy(
+                update={
+                    "instruments": tuple(
+                        forged_yes if item.outcome_id == "yes" else item
+                        for item in market.instruments
+                    )
+                }
+            )
+        else:
+            forged_yes = yes_instrument.model_copy(update={"payouts": ()})
+            forged_market = market.model_copy(
+                update={
+                    "instruments": tuple(
+                        forged_yes if item.outcome_id == "yes" else item
+                        for item in market.instruments
+                    )
+                }
+            )
+
+        with pytest.raises(AdapterError) as error:
+            await adapter.fetch_book(forged_market, yes_instrument.native_instrument_id, depth=1)
+
+        assert error.value.code == "INVALID_MARKET"
+        assert len(requests) == 1
+        assert requests[0].url.path.endswith("/markets")
+        assert adapter.take_captures() == ()
+    finally:
+        await client.aclose()
+
+
+@pytest.mark.parametrize("depth", (True, 1.0, "1"))
+@pytest.mark.asyncio
+async def test_kalshi_book_rejects_non_integer_depth_before_request(depth):
+    ticker = "KX-DEPTH-BOUND"
+    transport, requests, client = _transport(
+        "external-api.kalshi.com",
+        {
+            "/markets": json.dumps(
+                {"markets": [_synthetic_kalshi_mve_market(ticker=ticker, event_ticker=ticker)]}
+            ),
+            "/orderbook": json.dumps({"orderbook_fp": {"yes_dollars": [], "no_dollars": []}}),
+        },
+    )
+    adapter = KalshiAdapter(
+        AdapterConfig(
+            enabled=True, live_public_probe_enabled=True, requests_per_second=5, retries=0
+        ),
+        transport=transport,
+    )
+    try:
+        (market,) = await adapter.discover_markets(1)
+        yes_instrument = next(item for item in market.instruments if item.outcome_id == "yes")
+        with pytest.raises(AdapterError) as error:
+            await adapter.fetch_book(market, yes_instrument.native_instrument_id, depth=depth)
+        assert error.value.code == "INVALID_DEPTH"
+        assert len(requests) == 1
+        assert requests[0].url.path.endswith("/markets")
+    finally:
+        await client.aclose()
 
 
 @pytest.mark.parametrize(
@@ -2205,7 +2454,7 @@ async def test_polymarket_legacy_trades_bind_condition_and_token_and_preserve_un
     assert all(trade.native_instrument_id == "1234567890" for trade in trades)
     assert all(trade.native_trade_id == "0xfixture-shared-tx" for trade in trades)
     assert all(trade.aggressor_side is None for trade in trades)
-    assert trades[0].provenance.adapter_version == "frontier-polymarket-10"
+    assert trades[0].provenance.adapter_version == "frontier-polymarket-12"
     assert trades[0].provenance.observation_id != trades[1].provenance.observation_id
     assert len(captures) == 1 and captures[0].raw_body == body
     assert requests[0].url.params["market"] == condition_id
@@ -2441,7 +2690,7 @@ async def test_kalshi_unpaginated_trade_rows_are_bound_to_requested_ticker():
     assert normalized.is_block_trade is False
     assert normalized.taker_outcome_side == "yes"
     assert normalized.taker_book_side == "bid"
-    assert normalized.provenance.adapter_version == "frontier-kalshi-21"
+    assert normalized.provenance.adapter_version == "frontier-kalshi-23"
     assert len(captures) == 1 and captures[0].raw_body == body
     assert len(requests) == 1
     assert dict(requests[0].url.params) == {"ticker": ticker, "limit": "1"}

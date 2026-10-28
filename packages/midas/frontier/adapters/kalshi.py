@@ -45,7 +45,7 @@ from midas.frontier.models import (
 )
 
 D = Decimal
-ADAPTER_VERSION = "frontier-kalshi-21"
+ADAPTER_VERSION = "frontier-kalshi-23"
 _TICKER_PATTERN = re.compile(r"[A-Za-z0-9_-]{1,256}\Z")
 BASE = "https://external-api.kalshi.com/trade-api/v2"
 MARKET_DATA_DOC = "https://docs.kalshi.com/getting_started/quick_start_market_data"
@@ -844,13 +844,60 @@ class KalshiAdapter(BaseReadOnlyAdapter):
             raise AdapterError(
                 "UNSUPPORTED_MARKET", "Only source-declared binary markets are supported"
             )
-        if not 1 <= depth <= 100:
+        if type(depth) is not int or not 1 <= depth <= 100:
             raise AdapterError("INVALID_DEPTH", "Book depth must be between 1 and 100")
-        if instrument_id not in {item.native_instrument_id for item in market.instruments}:
+        if not market.has_valid_structure:
+            raise AdapterError("INVALID_MARKET", "Kalshi market fails structural revalidation")
+        ticker = market.native_market_id
+        usd_identity = SettlementAssetIdentity(kind=SettlementAssetKind.FIAT, code="USD")
+        if (
+            not _TICKER_PATTERN.fullmatch(ticker)
+            or market.canonical_id != stable_market_id(self.venue, ticker)
+            or market.native_fields.get("ticker") != ticker
+            or len(market.instruments) != 2
+            or set(market.payoff.state_ids) != {"yes", "no"}
+            or market.settlement_asset != "USD"
+            or market.settlement_asset_identity != usd_identity
+            or market.payoff.payout_currency != "USD"
+            or not market.has_consistent_settlement_asset_identity()
+        ):
+            raise AdapterError(
+                "INVALID_MARKET",
+                "Kalshi market identity or USD binary contract metadata is inconsistent",
+            )
+        instruments_by_outcome = {
+            item.outcome_id: item for item in market.instruments if item.outcome_id is not None
+        }
+        if set(instruments_by_outcome) != {"yes", "no"}:
+            raise AdapterError(
+                "INVALID_MARKET", "Kalshi book requires exactly one YES and one NO instrument"
+            )
+        for outcome_id, item in instruments_by_outcome.items():
+            payouts = {payout.state_id: payout.amount for payout in item.payouts}
+            other_outcome = "no" if outcome_id == "yes" else "yes"
+            if (
+                item.native_instrument_id != f"{ticker}:{outcome_id.upper()}"
+                or item.quantity_unit != QuantityUnit.CONTRACT
+                or item.price_currency != "USD"
+                or item.price_currency_identity != usd_identity
+                or len(payouts) != len(item.payouts)
+                or set(payouts) != {"yes", "no"}
+                or payouts[outcome_id] <= 0
+                or payouts[other_outcome] != 0
+            ):
+                raise AdapterError(
+                    "INVALID_MARKET",
+                    "Kalshi outcome instrument does not match the native binary contract",
+                )
+        instrument = next(
+            (item for item in market.instruments if item.native_instrument_id == instrument_id),
+            None,
+        )
+        if instrument is None:
             raise AdapterError(
                 "INSTRUMENT_NOT_FOUND", "Instrument does not belong to this Kalshi market"
             )
-        ticker = quote(market.native_market_id, safe="")
+        ticker = quote(ticker, safe="")
         response = await self.transport.get_json(
             f"{BASE}/markets/{ticker}/orderbook", {"depth": depth}
         )
@@ -861,7 +908,7 @@ class KalshiAdapter(BaseReadOnlyAdapter):
         raw_book = payload["orderbook_fp"]
         yes = self._levels(raw_book.get("yes_dollars"), depth, "YES")
         no = self._levels(raw_book.get("no_dollars"), depth, "NO")
-        is_yes = instrument_id.endswith(":YES")
+        is_yes = instrument.outcome_id == "yes"
         bids = yes if is_yes else no
         opposite = no if is_yes else yes
         # A NO bid at p is a YES ask at 1-p. The public docs explicitly describe this.

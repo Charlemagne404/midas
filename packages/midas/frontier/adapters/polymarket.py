@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import re
 from datetime import UTC, datetime
 from decimal import Decimal
@@ -48,7 +49,7 @@ from midas.frontier.models import (
 from midas.market_data.polymarket import normalize_market
 
 D = Decimal
-ADAPTER_VERSION = "frontier-polymarket-10"
+ADAPTER_VERSION = "frontier-polymarket-12"
 GAMMA = "https://gamma-api.polymarket.com"
 CLOB = "https://clob.polymarket.com"
 CLOB_V2 = "https://clob-v2.polymarket.com"
@@ -460,25 +461,84 @@ class PolymarketAdapter(BaseReadOnlyAdapter):
         self._require(Capability.BOOK_SNAPSHOT)
         if market.venue != self.venue:
             raise AdapterError("VENUE_MISMATCH", "Market does not belong to Polymarket")
-        if not 1 <= depth <= 100:
+        if type(depth) is not int or not 1 <= depth <= 100:
             raise AdapterError("INVALID_DEPTH", "Book depth must be between 1 and 100")
-        instrument = next(
-            (item for item in market.instruments if item.native_instrument_id == instrument_id),
-            None,
-        )
-        if instrument is None:
-            raise AdapterError("INSTRUMENT_NOT_FOUND", "Instrument does not belong to this market")
+        if not market.has_valid_structure:
+            raise AdapterError("INVALID_MARKET", "Polymarket market fails structural revalidation")
+        raw_market_id = market.native_fields.get("id")
+        condition_id = market.native_fields.get("conditionId")
+        if (
+            not re.fullmatch(r"[0-9]{1,20}", market.native_market_id)
+            or market.canonical_id != stable_market_id(self.venue, market.native_market_id)
+            or isinstance(raw_market_id, bool)
+            or not isinstance(raw_market_id, (str, int))
+            or str(raw_market_id) != market.native_market_id
+            or not isinstance(condition_id, str)
+            or not condition_id.strip()
+            or len(condition_id) > 256
+            or market.market_kind not in {MarketKind.BINARY_EVENT, MarketKind.MULTI_OUTCOME_EVENT}
+            or len(market.instruments) < 2
+            or len(market.payoff.state_ids) != len(market.instruments)
+            or tuple(item.outcome_id for item in market.instruments) != market.payoff.state_ids
+        ):
+            raise AdapterError(
+                "INVALID_MARKET", "Polymarket market identity or outcome mapping is inconsistent"
+            )
         protocol = market.provenance.source_schema_version
         if protocol not in {"v1", "v2"} or market.native_fields.get("version") != protocol:
             raise AdapterError(
                 "UNSUPPORTED_MARKET_SCHEMA",
                 "Market protocol does not match its source provenance",
             )
+        native_ids_field = "positionIds" if protocol == "v2" else "clobTokenIds"
+        native_ids_value = market.native_fields.get(native_ids_field)
+        try:
+            native_ids = (
+                json.loads(native_ids_value)
+                if isinstance(native_ids_value, str)
+                else native_ids_value
+            )
+        except json.JSONDecodeError as error:
+            raise AdapterError(
+                "INVALID_MARKET", "Polymarket native outcome IDs are malformed"
+            ) from error
+        if (
+            not isinstance(native_ids, list)
+            or len(native_ids) != len(market.instruments)
+            or any(not isinstance(item, str) or not item.isdecimal() for item in native_ids)
+            or tuple(item.native_instrument_id for item in market.instruments) != tuple(native_ids)
+        ):
+            raise AdapterError(
+                "INVALID_MARKET", "Polymarket instrument IDs do not match native outcome IDs"
+            )
         payout_asset_identity = _payout_asset_identity(protocol)
-        if market.settlement_asset_identity != payout_asset_identity:
+        quote_currency = payout_asset_identity.code if payout_asset_identity else "USDC"
+        settlement_asset = quote_currency if payout_asset_identity else None
+        if (
+            market.quote_asset != quote_currency
+            or market.settlement_asset != settlement_asset
+            or market.settlement_asset_identity != payout_asset_identity
+            or market.payoff.settlement_asset != settlement_asset
+            or market.payoff.settlement_asset_identity != payout_asset_identity
+            or market.payoff.payout_currency != (settlement_asset or "USD")
+        ):
             raise AdapterError(
                 "UNSUPPORTED_SETTLEMENT_ASSET",
-                "Market settlement asset does not match its documented protocol mapping",
+                "Market quote and settlement metadata do not match its documented protocol mapping",
+            )
+        instrument = next(
+            (item for item in market.instruments if item.native_instrument_id == instrument_id),
+            None,
+        )
+        if instrument is None:
+            raise AdapterError("INSTRUMENT_NOT_FOUND", "Instrument does not belong to this market")
+        if (
+            instrument.quantity_unit != QuantityUnit.SHARE
+            or instrument.price_currency != quote_currency
+            or instrument.price_currency_identity != payout_asset_identity
+        ):
+            raise AdapterError(
+                "INVALID_MARKET", "Polymarket instrument does not match the market quote identity"
             )
         clob_base = CLOB_V2 if protocol == "v2" else CLOB
         response = await self.transport.get_json(f"{clob_base}/book", {"token_id": instrument_id})
