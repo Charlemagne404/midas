@@ -10983,3 +10983,35 @@ regressions remain pending.
 | Full exact-tree Frontier regression | PARTIALLY VERIFIED | Not run; the protected Reality service remains close to `MemoryHigh`. |
 | Genuine cross-venue science | BLOCKED | Data-use holds and physical-location uncertainty remain; no live result is claimed. |
 | Project Frontier overall | PARTIALLY VERIFIED | Broad regressions, live research evidence, endurance, protected recovery, and deployment remain open. |
+
+## Invalid stored book schema handling — 2026-10-28 20:52 UTC
+
+Commit `ea04e319c219` adds `_validate_stored_book` for the `/books` route and
+replay loader. A row whose persistence hash is valid but whose normalized book
+fails schema validation now returns HTTP **409** with an explicit stored-book
+schema error. This covers the stricter timestamp/provenance invariant without
+turning a bad row into an internal server error. Coverage analytics retains
+its existing behavior of counting and omitting invalid book rows.
+
+An integration fixture stores a normal book, then alters its normalized
+exchange timestamp and recomputes the row hash. `/books` and `/replay` both
+return 409, the row remains unchanged by the reads, and no request is made to
+an adapter. A second valid synthetic event-replay case passes alongside it:
+**2/2** focused API tests, 1.03 seconds pytest time and 1.51 seconds process
+wall, **86,560 KiB** peak RSS, zero swaps/socket messages, in a transient 1 GiB
+scope. Ruff check/format and whitespace checks pass.
+
+Strict mypy on `apps/api/frontier.py` still reports 15 `no-any-return`
+diagnostics at unrelated route and helper return sites; no diagnostic points
+to the changed loader or validator. At `2026-10-28T20:52:26Z`, both protected
+services were active. Memory PSI was elevated (avg10 `some` 26.52%, `full`
+17.58%), so broad suites remain deferred despite reclaimed cgroup memory. No
+service was changed and no public endpoint was queried.
+
+| Requirement | Status | Evidence and boundary |
+| --- | --- | --- |
+| Invalid normalized book API behavior | COMPLETE AND VERIFIED | `/books` and `/replay` return 409 for a hash-valid schema violation. |
+| Valid book read and replay path | COMPLETE AND VERIFIED WITHIN FIXTURE SCOPE | Existing cross-venue replay fixture passes; all data are controlled. |
+| Strict API mypy | PARTIALLY VERIFIED | The changed code has no diagnostic; 15 existing unrelated `no-any-return` errors remain in the module. |
+| Full current Frontier regression | PARTIALLY VERIFIED | Deferred while memory PSI is elevated and protected resources are volatile. |
+| Project Frontier overall | PARTIALLY VERIFIED | Live cross-venue data, broad regressions, endurance, protected recovery, and deployment remain open. |

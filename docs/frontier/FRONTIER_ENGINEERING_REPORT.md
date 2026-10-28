@@ -11817,3 +11817,28 @@ queried.
 | Full Frontier and legacy regression | PARTIALLY VERIFIED | Exact-tree broad suites remain unrun under the protected resource gate. |
 | Live cross-venue economics | BLOCKED | Exchange data-use scope and current location remain unresolved; no live opportunity is claimed. |
 | Frontier overall | PARTIALLY VERIFIED | Live evidence, broad regressions, endurance, protected recovery, and deployment remain open. |
+
+## Latest implementation checkpoint — 2026-10-28 20:52 UTC
+
+Commit `ea04e319c219` converts normalized stored-book validation failures in
+`/books` and replay loading into explicit HTTP 409 responses. Coverage
+analytics continues counting invalid book records as excluded evidence. An
+integration fixture recomputes a stored row hash after introducing a
+provenance-inconsistent timestamp and verifies that `/books` and `/replay`
+reject it without contacting an adapter or changing the stored row. A valid
+synthetic cross-venue book/replay flow also passes.
+
+The two focused API tests pass; the scoped process peaked at **86,560 KiB RSS**
+with zero swaps or socket messages. Ruff and whitespace checks pass. Strict
+mypy on the API module still has 15 unrelated `no-any-return` diagnostics; the
+new validator and loader have no diagnostic. Memory PSI was elevated at the
+latest sample, so broader tests remain deferred. No source endpoint was
+queried, and no protected service was changed.
+
+| Component | Current status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Stored book validation error handling | COMPLETE AND VERIFIED | Invalid normalized books return explicit 409 from the public book read and replay paths. |
+| Valid stored book/replay API | COMPLETE AND VERIFIED WITHIN FIXTURE SCOPE | Existing synthetic cross-venue replay flow passes. |
+| API module strict typing | PARTIALLY VERIFIED | 15 unrelated existing `no-any-return` issues remain in the module. |
+| Full current Frontier and MIDAS regressions | PARTIALLY VERIFIED | Deferred under elevated system memory pressure. |
+| Frontier overall | PARTIALLY VERIFIED | Live science, broad regressions, endurance, protected recovery, and deployment remain open. |
