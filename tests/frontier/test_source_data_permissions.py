@@ -207,10 +207,12 @@ def test_coinbase_terms_acknowledgement_does_not_lift_unresolved_scope_hold(tmp_
         config = acknowledged_app.state.frontier_registry.get(Venue.COINBASE_EXCHANGE).config
         assert acknowledged_but_probe_disabled.frontier_coinbase_probe_allowed is False
         assert config.probe_policy_block_reason is not None
-        assert "no validated permission and intended-scope review loader" in (
+        assert "no validated permission or intended-scope review" in (
             config.probe_policy_block_reason
         )
-        assert "AI/ML and other automated-system use" in config.probe_policy_block_reason
+        assert "develop, train, fine-tune, teach, validate, benchmark, or improve" in (
+            config.probe_policy_block_reason
+        )
         assert config.market_data_terms_version_acknowledged == COINBASE_MARKET_DATA_TERMS_VERSION
         assert config.enabled is False
         assert config.live_public_probe_enabled is False

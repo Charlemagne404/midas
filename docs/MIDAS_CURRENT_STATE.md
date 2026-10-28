@@ -33,15 +33,15 @@ in the dated addendum below and in the Frontier engineering report.
 
 ## Frontier development addendum — 2026-10-28
 
-### Latest isolated Frontier checkpoint — 2026-10-28 16:35 UTC
+### Latest isolated Frontier checkpoint — 2026-10-28 16:36 UTC
 
-The Coinbase source-status reason now explicitly describes the current
-2026-08-07 Market Data Terms restriction on using its data for AI/ML or other
-automated-system development, validation, benchmarking, and related AI research
-or operation without prior express written consent. No permission, entity,
-region, or intended-scope review is validated, so the deny-by-default source
-hold remains. Adapter, API, and UI regressions were updated; they are pending
-test admission. No Coinbase endpoint was queried.
+The Coinbase source-status reason now lists the specific activities in the
+2026-08-07 Market Data Terms restriction: developing, training, fine-tuning,
+teaching, validating, benchmarking, or improving AI/ML systems, plus related AI
+research, development, or operation, absent prior express written consent. No
+permission, entity, region, or intended-scope review is validated, so the
+deny-by-default source hold remains. Adapter, API, and UI regressions were
+updated; they are pending test admission. No Coinbase endpoint was queried.
 
 The official [Coinbase Market Data Terms](https://www.coinbase.com/legal/market_data)
 and full source-use review are recorded in the linked Frontier engineering

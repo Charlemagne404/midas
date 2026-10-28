@@ -52,11 +52,12 @@ _PRODUCT_ID = re.compile(r"^[A-Z0-9]{1,12}-[A-Z0-9]{1,12}$")
 _FIAT_QUOTES = frozenset({"USD", "EUR", "GBP", "CAD", "AUD", "CHF", "JPY", "NZD"})
 COINBASE_SOURCE_USE_HOLD_REASON = (
     "Coinbase Exchange source use remains held because Frontier has no validated permission "
-    "and intended-scope review loader. The reviewed Market Data Terms "
-    f"({COINBASE_MARKET_DATA_TERMS_VERSION}) restrict AI/ML and other automated-system use "
-    "for development, validation, benchmarking, and related AI research or operation without "
-    "prior express written consent. A terms-version acknowledgement alone does not lift the "
-    "hold; no Coinbase request will be made."
+    "or intended-scope review. The "
+    f"{COINBASE_MARKET_DATA_TERMS_VERSION} Market Data Terms require prior express written "
+    "consent to use data to develop, train, fine-tune, teach, validate, benchmark, or improve "
+    "AI/ML models, algorithms, chatbots, agents, or other automated systems, or for related "
+    "AI research, development, or operation. Acknowledging the terms does not lift the hold; "
+    "no Coinbase request will be made."
 )
 
 
