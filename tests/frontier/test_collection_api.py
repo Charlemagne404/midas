@@ -236,3 +236,47 @@ def test_collection_api_rejects_resume_when_capability_manifest_changed(tmp_path
         assert adapter.transport.request_count == 0
     finally:
         client.close()
+
+
+def test_collection_run_history_filters_a_source_that_is_now_held(tmp_path):
+    adapter = FakeAdapter()
+    store = FrontierStore(tmp_path / "frontier")
+    journal = CollectionJournal(store.root)
+    spec = CollectionRunSpec(
+        run_id="cbceae27-a5f6-441e-a648-01c88c908134",
+        venue=adapter.venue,
+        adapter_version=adapter.capabilities.adapter_version,
+        capability_manifest_sha256=capability_manifest_sha256(adapter.capabilities),
+        adapter_config=adapter.config,
+        market_limit=1,
+        book_limit=0,
+        book_depth=1,
+        max_evidence_bytes=1024 * 1024,
+        max_wall_seconds=30,
+        created_at_utc=T0,
+    )
+    journal.create_run(spec)
+    journal.append_checkpoint(
+        CollectionCheckpoint(
+            run_id=spec.run_id,
+            sequence=0,
+            updated_at_utc=T0,
+            state="paused",
+        )
+    )
+    adapter.config = AdapterConfig(
+        enabled=True,
+        live_public_probe_enabled=True,
+        probe_policy_block_reason="Fixture source-use hold",
+    )
+    app = FastAPI()
+    app.include_router(router(store, AdapterRegistry((adapter,))))
+    client = TestClient(app)
+    try:
+        response = client.get("/api/frontier/collection-runs")
+        assert response.status_code == 200, response.text
+        assert response.json()["items"] == []
+        assert response.json()["network_called"] is False
+        assert adapter.transport.request_count == 0
+    finally:
+        client.close()

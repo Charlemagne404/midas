@@ -368,6 +368,8 @@ def test_collection_journal_detects_checkpoint_tampering_and_enforces_append_onl
         journal.checkpoints(result.run_id)
     with pytest.raises(FrontierStoreError, match="chain integrity"):
         journal.verified_source_health_checkpoint(first_digest)
+    with pytest.raises(FrontierStoreError, match="chain integrity"):
+        journal.latest_run_checkpoints()
 
 
 def test_unknown_source_health_checkpoint_lookup_is_read_only(tmp_path):
