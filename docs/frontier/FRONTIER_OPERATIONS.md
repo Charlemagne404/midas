@@ -250,6 +250,14 @@ source-probe/collection POSTs. Both listeners were stopped and capture hashes
 were rechecked. This verifies that single read path only; continue to gate broad
 tests, builds, or other resource-bearing work on a fresh PSI sample.
 
+At `10:26:49Z`, memory PSI avg10 was 0% and I/O PSI avg10 was 0.02% some/full.
+The follow-up UI verification used a temporary byte-identical copy of the
+captured Frontier store under
+`/tmp/midas-frontier-live-ui-id-20261028T1026Z/`; all write-capable roots were
+also under that temporary directory and all source probes were disabled. It
+verified the displayed observation ID and immutable evidence GET, then stopped
+both servers. The original capture hashes were unchanged.
+
 For a broad suite run, first sample `/proc/pressure/memory` and
 `/proc/pressure/io`; defer when memory or I/O PSI avg10 is at or above 1%.
 The successful run placed pytest temporary files on tmpfs, reducing block I/O:

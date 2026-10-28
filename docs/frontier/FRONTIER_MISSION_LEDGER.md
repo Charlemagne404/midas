@@ -1,5 +1,36 @@
 # Project Frontier Mission Ledger
 
+## Observation ID provenance and current frontend verification — 2026-10-28 10:26 UTC
+
+Commit `be31236` adds the full `observation_id` to the immutable-response panel;
+its UI regression test asserts the value is displayed. After that change, the
+entire frontend suite passed **47/47**, `pnpm typecheck` passed, scoped ESLint
+and Prettier passed, and `pnpm build` passed. The production build retains the
+existing Vite warning for the **544.51 kB** Chart/ECharts chunk; the Frontier
+chunk is 182.82 kB. The one-line provenance change does not address that size.
+
+A bounded Chromium check ran against a byte-identical copy of the captured
+Polymarket market store at
+`/tmp/midas-frontier-live-ui-id-20261028T1026Z/`. It rendered market `2589810`,
+its one-sided book, and the full observation ID
+`4bb731fd70467c6e8f4ebf33c994243ecb2a02f2701d8ba4e493aae729b0a6b5`; the saved
+evidence GET returned HTTP 200. It made no external request or source operation.
+The demo API reported `live_execution: false`, all source probes were disabled,
+and both local listeners were stopped. The original capture's market database,
+collection journal, and manifest SHA-256 values remain
+`e9efca9b1658a29cf768222883f9eda0d466e011622b36b0e38efecd846a2052`,
+`8b21af2bae0af48a66d52e76aeb228606a530ffc1e83725ab0d7c808cfa0773d`, and
+`2e1574b5a42499ba8efe3ac9033de9e6c4e1a3a1a6d381955ce57e9815938e79`.
+Screenshot: `/dev/shm/frontier-live-capture-ui-observation-id-20261028.png`.
+
+At `10:26:49Z`, memory PSI avg10 was 0% and I/O PSI avg10 was 0.02% some/full.
+No broad MIDAS suite, long-duration collection, production transition, or
+cross-venue probe was started. Live cross-venue equivalence remains blocked by
+source-use review; the full MIDAS suite still has an incompatible/missing
+Reality recovery dependency. Frontier remains **PARTIALLY VERIFIED**. Next
+safe work is offline review of payoff, fee, FX, and venue-separated capital
+invariants, with a fresh resource admission sample before broader tests.
+
 ## Bounded captured-data UI verification — 2026-10-28 10:22 UTC
 
 At `10:21Z`, a headless Chromium smoke opened the Frontier workspace through

@@ -33,6 +33,19 @@ in the dated addendum below and in the Frontier engineering report.
 
 ## Frontier development addendum — 2026-10-28
 
+### Latest isolated Frontier checkpoint — 2026-10-28 10:26 UTC
+
+Functional commit `be31236` adds the immutable observation ID to Frontier's
+evidence panel. Afterward, all 47 frontend unit tests, TypeScript, scoped
+ESLint/Prettier, and the production build passed. A bounded Chromium check
+against a temporary copy of the genuine Polymarket capture displayed market
+`2589810`, its one-sided book, and the full book observation ID; its saved
+evidence endpoint returned HTTP 200. No source operation or external request
+was made. Both local listeners were stopped and the original capture hashes
+still match. Memory PSI avg10 was 0%; I/O PSI avg10 was 0.02% some/full at
+`10:26:49Z`. The Vite build still reports a 544.51 kB Chart/ECharts chunk.
+Frontier remains isolated, research-only, undeployed, and **PARTIALLY VERIFIED**.
+
 ### Latest isolated Frontier checkpoint — 2026-10-28 10:22 UTC
 
 The code/test tree remains at `429f690` with documentation-only commits after
