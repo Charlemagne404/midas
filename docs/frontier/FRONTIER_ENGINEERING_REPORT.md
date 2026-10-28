@@ -2,6 +2,37 @@
 
 **Report date:** 2026-10-28
 
+## Current status — 2026-10-28 11:44 UTC
+
+Code commit `ca14e37` closes Coinbase source-use hold bypasses found during
+review of the pending copied-config regression. `CoinbaseSpotConfig` can no
+longer clear the hold with an exact terms acknowledgement alone. The adapter
+requires the exact Coinbase config type, and `BaseReadOnlyAdapter` rejects an
+injected transport whose concrete config type or value differs. Offline parser
+and API fixture tests now use a test-only in-memory transport while retaining a
+held config. Regression coverage includes copied configs with and without the
+exact acknowledgement, generic config substitution, and mismatched transport
+configuration.
+
+Ruff check, Ruff format check, and `git diff --check` pass. The Coinbase tests
+have **not run**. At `11:43:51Z`, memory PSI avg10 was **6.41% some / 5.82%
+full**, I/O PSI was **0.59% some / 0.45% full**, about **10 GiB** was available,
+and host swap was **3.5/4 GiB** used. The previously observed PID 344473 was no
+longer present. The memory PSI admission gate remains exceeded; no tests,
+replay, source probe, protected service, or deployment action was attempted.
+
+The **418/418** Frontier result remains evidence for product commit `1dd0987`,
+before `ca14e37` and the added regressions. Frontier remains
+**PARTIALLY VERIFIED** until the focused test and current full suite pass under
+an admitted host sample.
+
+| Requirement | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Coinbase source-use hold enforcement | IMPLEMENTED, LIVE VALIDATION PENDING | `ca14e37`; config, adapter, and transport mismatch guards plus offline regressions; tests await memory PSI below 1%. |
+| Adapter resource-bound validation | COMPLETE AND VERIFIED | Product code and 418 existing Frontier tests pass on `1dd0987`. |
+| Genuine cross-venue validation | BLOCKED | Held source permission/evidence boundary remains. |
+| Frontier overall | PARTIALLY VERIFIED | New regressions, broader MIDAS checks, live evidence, and deployment remain open. |
+
 ## Current status — 2026-10-28 11:38 UTC
 
 This entry supersedes the 11:35 UTC checkpoint. Test commit `c6dfff1` adds a

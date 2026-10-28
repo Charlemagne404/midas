@@ -169,6 +169,14 @@ records acknowledgement only. Coinbase probes return HTTP 409 before network
 access, and Coinbase source records remain quarantined from application
 research/replay routes. Coinbase fixture tests do not establish live validation
 or permission.
+The `CoinbaseSpotConfig` model rejects clearing its source-use hold even when
+the exact terms version is acknowledged, because no validated permission and
+intended-scope loader exists. Structural revalidation also rejects copied
+configurations that attempt to clear the hold before adapter or transport
+setup, and adapters reject injected transports with a different config model
+or value. The adapter also requires the exact source-specific config type.
+Parser/API fixture tests use a test-only in-memory transport and make no source
+requests.
 The 2026-10-28 terms refresh also records restrictions on third-party derived
 data, benchmark/valuation uses, and AI/ML research use. The exact-version
 acknowledgement and probe flag do not grant permission for Frontier analytics;

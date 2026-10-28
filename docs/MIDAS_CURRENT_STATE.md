@@ -2542,3 +2542,16 @@ with about 10 GiB available. No public source, worker, protected store,
 production service, or Arena job was accessed. Frontier remains **PARTIALLY
 VERIFIED** because held-source validation, broader MIDAS/browser gates, and
 production readiness remain open.
+
+### Coinbase source-use hold integrity — 2026-10-28 11:44 UTC
+
+Code commit `ca14e37` prevents Coinbase's source-use hold from being cleared
+through terms acknowledgement alone, copied config values, generic config
+substitution, or an injected transport with a different configuration. Offline
+parser/API fixtures use an in-memory test transport while retaining a held
+config. Ruff check, Ruff formatting, and `git diff --check` pass; tests remain
+unrun. At `11:43:51Z`, memory PSI avg10 was **6.41% some / 5.82% full**, I/O
+PSI was **0.59% some / 0.45% full**, about **10 GiB** was available, and swap
+was **3.5/4 GiB** used. The prior `418/418` result is for `1dd0987`, before
+this change. No live source, protected service, or deployment was used.
+Frontier remains research-only and **PARTIALLY VERIFIED**.

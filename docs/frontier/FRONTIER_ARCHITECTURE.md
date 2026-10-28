@@ -279,6 +279,12 @@ hold. Coinbase probes are rejected before network access, and stored Coinbase
 records remain quarantined from application research/replay routes. Re-review
 current terms before any future use. The adapter is registered but does not
 probe at application startup.
+The config model rejects a cleared source-use hold even when the exact terms
+version is acknowledged; a copied model that attempts the same bypass fails
+structural revalidation before adapter or transport setup, and the adapter
+requires its exact source-specific config type and rejects an injected
+transport whose config differs. Offline parser/API fixtures use an in-memory
+test transport and do not establish permission or live source validation.
 The 2026-10-28 review records additional terms that restrict derived works,
 benchmark/valuation uses, and AI/ML research use. The local version
 acknowledgement is not a blanket permission for every Frontier analysis;

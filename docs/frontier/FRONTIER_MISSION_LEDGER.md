@@ -1,5 +1,40 @@
 # Project Frontier Mission Ledger
 
+## Coinbase source-use hold integrity fix — 2026-10-28 11:44 UTC
+
+Code commit `ca14e37` tightens the Coinbase public-source policy boundary.
+Review found that the terms-version acknowledgement could be paired with
+`probe_policy_block_reason=None`, even though the current source-use review
+requires a validated permission and intended-scope loader that does not exist.
+The config validator now rejects any cleared hold, including an exact-version
+acknowledgement. The adapter requires the exact `CoinbaseSpotConfig` type, and
+the base adapter rejects an injected transport unless its concrete config type
+and value match the adapter config. This closes generic-config and mismatched-
+transport paths around the source-specific hold.
+
+Offline Coinbase parser/API fixtures now use a test-only in-memory transport
+with the source-use hold still present. Regressions cover direct and copied
+hold clearing, the copied-config exact-ack case, generic config substitution,
+and mismatched transport config. Ruff check, Ruff format check, and
+`git diff --check` pass. The tests have **not run**.
+
+At `2026-10-28T11:43:51Z`, memory PSI avg10 was **6.41% some / 5.82% full**,
+I/O PSI was **0.59% some / 0.45% full**, about **10 GiB** was available, and
+swap was **3.5/4 GiB** used. PID 344473 was no longer present in the sample.
+Test execution remains gated on memory PSI falling below 1%; no test or replay
+was started under the current sample. The `418/418` result is still for
+`1dd0987`, before `ca14e37`.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Coinbase source-use hold integrity | IMPLEMENTED, LIVE VALIDATION PENDING | `ca14e37`; static checks pass; targeted and full tests await resource admission. |
+| Frontier overall | PARTIALLY VERIFIED | Cross-venue permission/evidence, broad regressions, and deployment remain open. |
+
+**Next safe action:** when a fresh sample shows memory and I/O PSI below 1%,
+run `tests/frontier/test_coinbase.py` on tmpfs, then run the Frontier suite once
+if the gate remains admitted. Preserve `data/frontier-public-probes/` as
+untracked research data.
+
 ## Coinbase copied-config hold regression pending resource admission — 2026-10-28 11:38 UTC
 
 Test commit `c6dfff1` adds a regression for clearing Coinbase's source-use
