@@ -2373,6 +2373,54 @@ def test_arena_discovery_comparison_stages_only_local_inputs_and_never_probes(
     arena_root = tmp_path / "arena"
     client, registry, http_client, requests, store = _client(tmp_path, arena_root=arena_root)
     captured = {}
+    saved_market = market(Venue.POLYMARKET, "discovery-scope-saved-event")
+    market_body = json.dumps({"fixture": "one saved market"}, separators=(",", ":"))
+    store.append_observation(
+        RawObservation(
+            venue=Venue.POLYMARKET,
+            observation_kind="market_listing",
+            request_url="https://fixture.invalid/discovery-scope-market",
+            http_status=200,
+            request_started_at_utc=T0,
+            received_at_utc=T0,
+            raw_body=market_body,
+            raw_sha256=hashlib.sha256(market_body.encode()).hexdigest(),
+            adapter_version="discovery-scope-fixture-v1",
+        ),
+        MarketBatch(venue=Venue.POLYMARKET, markets=(saved_market,)),
+    )
+    newest_book_observation_id = ""
+    for index, (price, received_at) in enumerate(
+        (("0.41", T0 + timedelta(seconds=1)), ("0.36", T0 + timedelta(seconds=2)))
+    ):
+        book_body = json.dumps(
+            {"fixture": "repeated book", "version": index + 1}, separators=(",", ":")
+        )
+        raw = RawObservation(
+            venue=Venue.POLYMARKET,
+            observation_kind="book_snapshot",
+            request_url=f"https://fixture.invalid/discovery-scope-book/{index}",
+            http_status=200,
+            request_started_at_utc=received_at,
+            received_at_utc=received_at,
+            raw_body=book_body,
+            raw_sha256=hashlib.sha256(book_body.encode()).hexdigest(),
+            adapter_version="discovery-scope-fixture-v1",
+        )
+        snapshot = book(saved_market, saved_market.instruments[0].native_instrument_id, price)
+        snapshot = snapshot.model_copy(
+            update={
+                "received_at_utc": received_at,
+                "provenance": snapshot.provenance.model_copy(
+                    update={
+                        "request_started_at_utc": received_at,
+                        "response_received_at_utc": received_at,
+                        "processed_at_utc": received_at,
+                    }
+                ),
+            }
+        )
+        newest_book_observation_id = store.append_observation(raw, snapshot)
 
     def create(root, spec, *, admission_key):
         captured["root"] = root
@@ -2396,8 +2444,11 @@ def test_arena_discovery_comparison_stages_only_local_inputs_and_never_probes(
             arena_root / "frontier-discovery-snapshots" / f"{payload['frontier_snapshot_id']}.json"
         )
         pinned = FrontierDiscoverySnapshot.model_validate_json(snapshot_path.read_bytes())
-        assert pinned.markets == ()
-        assert pinned.books == ()
+        assert len(pinned.markets) == 1
+        assert pinned.markets[0].canonical_id == saved_market.canonical_id
+        assert len(pinned.books) == 1
+        assert pinned.books[0].asks[0].price == Decimal("0.36")
+        assert pinned.books[0].provenance.observation_id == newest_book_observation_id
         assert pinned.relationship_limit == 120
         assert pinned.scenario.name == "scope fixture"
         assert captured["root"] == arena_root
@@ -2417,7 +2468,7 @@ def test_arena_discovery_comparison_stages_only_local_inputs_and_never_probes(
             "cross_venue",
         ]
         assert requests == []
-        assert store.summary()["observations"] == 0
+        assert store.summary()["observations"] == 3
     finally:
         client.close()
         asyncio.run(registry.aclose())

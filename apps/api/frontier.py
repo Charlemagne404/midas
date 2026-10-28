@@ -3957,12 +3957,21 @@ def router(
                 for market in market_values
                 for instrument in market.instruments
             }
+            latest_books: dict[tuple[Venue, str, str], BookSnapshot] = {}
+            for book, _ in _load_book_records(store, 200, excluded_venues=held_venues):
+                market_key = (book.venue, book.native_market_id)
+                instrument_key = (*market_key, book.native_instrument_id)
+                if market_key not in market_keys or instrument_key not in instrument_keys:
+                    continue
+                # The store query is newest-first by local receipt time. Keep one
+                # current quote per instrument for this simultaneous snapshot.
+                latest_books.setdefault(instrument_key, book)
             books = tuple(
-                book
-                for book, _ in _load_book_records(store, 200, excluded_venues=held_venues)
-                if (book.venue, book.native_market_id) in market_keys
-                and (book.venue, book.native_market_id, book.native_instrument_id)
-                in instrument_keys
+                latest_books[key]
+                for key in sorted(
+                    latest_books,
+                    key=lambda item: (item[0].value, item[1], item[2]),
+                )
             )
             canonical_market_ids = {item.canonical_id for item in market_values}
             relationship_rows = read_stored_relationships(
