@@ -33,6 +33,24 @@ in the dated addendum below and in the Frontier engineering report.
 
 ## Frontier development addendum — 2026-10-28
 
+### Latest isolated Frontier checkpoint — 2026-10-28 08:31 UTC
+
+Code commit `6c13b47` updates ECharts options on the mounted chart instance
+instead of disposing and reinitializing the chart after every option refresh.
+The chart lifecycle unit test verifies one initialization, updated options, and
+disposal on unmount. The web unit suite passes **46/46**, the production build
+and scoped lint/format pass, and post-change browser smoke plus deferred-load
+checks pass **2/2**. The preceding complete default browser suite passed 17
+cases with two expected seeded-only skips.
+
+The prior `c4adac6` change defers the Chart payload until the viewport observer
+nears it. The latest 544.51 kB minified chart chunk (186.79 kB gzip) is unchanged
+in size, but now loads only when needed; mounted charts reuse their instance.
+The Frontier Python suite remains 379/379. Full MIDAS regression, live
+multi-venue validation, held-source permissions, and production readiness
+remain open. Frontier is **PARTIALLY VERIFIED**, isolated, research-only,
+unmerged, and undeployed. No protected service or historical evidence changed.
+
 ### Latest isolated Frontier checkpoint — 2026-10-28 08:28 UTC
 
 Code commit `c4adac6` defers the shared ECharts Chart module in Mission

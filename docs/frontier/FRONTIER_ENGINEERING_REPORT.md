@@ -2,17 +2,18 @@
 
 **Report date:** 2026-10-28
 
-## Current status — 2026-10-28 08:28 UTC
+## Current status — 2026-10-28 08:31 UTC
 
 Frontier is isolated at `/home/charlie/midas-frontier` on
 `codex/frontier-20261026`. It descends from verified Veritas V6 integration
-commit `11d32a0` and retains merge base `55601b9` with `main`. The latest
-feature code checkpoint is `c4adac6`, which defers the shared Chart payload
-until a chart approaches the viewport. Existing implementation includes
-Polymarket, Kalshi, Kraken Spot, and Coinbase public read adapters; canonical
-instrument and payoff models; reviewable relationship evidence; bounded
-candidate discovery and independent economics; isolated collection, storage,
-and replay; Arena integration; and the native Mission Control workspace.
+commit `11d32a0` and retains merge base `55601b9` with `main`. Feature commits
+`c4adac6` and `6c13b47` defer the shared Chart payload until it approaches the
+viewport and reuse each mounted ECharts instance when its options refresh.
+Existing implementation includes Polymarket, Kalshi, Kraken Spot, and Coinbase
+public read adapters; canonical instrument and payoff models; reviewable
+relationship evidence; bounded candidate discovery and independent economics;
+isolated collection, storage, and replay; Arena integration; and the native
+Mission Control workspace.
 
 Current bounded verification:
 
@@ -22,15 +23,18 @@ Current bounded verification:
   12.91% some / 10.15% full; the successful tmpfs run used a fresh host sample
   and recorded zero filesystem input. One existing Starlette/httpx `TestClient`
   deprecation warning remains.
-- The updated frontend passes **45/45** unit tests, TypeScript, ESLint,
+- The updated frontend passes **46/46** unit tests, TypeScript, ESLint,
   Prettier, production build, **17** default Playwright cases with two expected
   seeded-only skips, and the separate **2/2** seeded Frontier/Arena cases using
-  disposable local services and stores. The build emitted a 368.81 kB entry,
-  182.75 kB Frontier chunk, and the existing 544.41 kB Chart/ECharts chunk.
+  disposable local services and stores. After the subsequent chart lifecycle
+  update, targeted browser smoke and deferred-load cases pass **2/2**. The
+  latest build emitted a 368.81 kB entry, 182.75 kB Frontier chunk, and a
+  544.51 kB Chart/ECharts chunk.
 - The new viewport-loading browser check observes no Chart module request while
   the chart is below the viewport, then one request after scrolling it into
-  view. This defers transfer and parsing; it does not reduce the 544.41 kB
-  minified Chart chunk (186.76 kB gzip).
+  view. This defers transfer and parsing; it does not reduce the 544.51 kB
+  minified Chart chunk (186.79 kB gzip). Option refreshes now update the
+  existing chart and do not reinitialize the ECharts instance.
 - Strict configured mypy passes for the changed `models.py`; Ruff and formatting
   pass for the changed Python files. Earlier scoped strict mypy covered the
   Frontier package/API integration. The tmpfs test command and pressure gate are
@@ -54,6 +58,29 @@ quality, production resource/recovery, and deployment gates remain open.
 
 Frontier remains **PARTIALLY VERIFIED**, research-only, isolated, unmerged, and
 undeployed. No protected service or historical evidence was changed.
+
+## Chart instance reuse on data refresh — 2026-10-28 08:31 UTC
+
+Code commit `6c13b47` separates ECharts instance lifetime from option updates.
+`Chart.tsx` now initializes the chart and resize observer once per mounted
+component, applies each new option with `notMerge: true`, and disposes the
+instance only on unmount. This prevents refreshed API data from tearing down
+and recreating the same chart while ensuring removed series or axes do not
+linger after an option change.
+
+`Chart.test.tsx` verifies that an option update calls `setOption` on the same
+single instance and that disposal happens on unmount. The complete frontend
+unit suite passes **46/46** in nine files. The production build passes
+TypeScript and Vite (2,230 modules; entry 368.81 kB, Frontier 182.75 kB, Chart
+544.51 kB / 186.79 kB gzip). The post-change Playwright chart smoke and deferred
+loading tests pass **2/2**. The full default browser suite at the immediately
+preceding viewport-loading checkpoint was **17 passed, 2 expected seeded-only
+skips**. ESLint, Prettier, and `git diff --check` pass.
+
+At `2026-10-28T08:31:18Z`, memory PSI avg10 was 0%, I/O PSI avg10 was
+0.35% some / 0.02% full, and about 10 GiB was available. Tests use disposable
+browser state and loopback demo services. No source probe, protected service,
+or protected store was accessed. Frontier remains **PARTIALLY VERIFIED**.
 
 ## Viewport-deferred chart loading — 2026-10-28 08:28 UTC
 

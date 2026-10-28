@@ -1,5 +1,43 @@
 # Project Frontier Mission Ledger
 
+## Chart instance reuse on data refresh — 2026-10-28 08:31 UTC
+
+Code commit `6c13b47` makes the ECharts instance in `Chart.tsx` live for the
+mounted component instead of recreating it whenever an option object changes.
+Each new option is applied with `notMerge: true`, so removed series and axes do
+not remain from the previous option. The resize observer and chart are
+disconnected/disposed on unmount.
+
+```bash
+cd apps/web
+./node_modules/.bin/vitest run
+# 46 passed in 9 files
+./node_modules/.bin/vitest run src/Chart.test.tsx
+# 1 passed after the final lint correction
+./node_modules/.bin/playwright test e2e/smoke.spec.ts e2e/deferred-chart.spec.ts
+# 2 passed after the chart lifecycle update
+npm run build
+# TypeScript and Vite passed; 2,230 modules; 368.81 kB entry,
+# 182.75 kB Frontier, 544.51 kB Chart / 186.79 kB gzip
+./node_modules/.bin/eslint src/Chart.tsx src/Chart.test.tsx
+./node_modules/.bin/prettier --check src/Chart.tsx src/Chart.test.tsx
+```
+
+The unit test verifies one `init`, successive option updates on the same chart,
+and one disposal on unmount. The browser checks exercise real ECharts rendering
+through the local demo API and recheck that loading remains deferred. The full
+default browser suite at the preceding code checkpoint passed 17 cases with
+two seeded-only skips; only the two chart-specific cases were rerun after this
+change. At `08:31:18Z`, memory PSI avg10 was 0%, I/O PSI avg10 was 0.35% some /
+0.02% full, and about 10 GiB was available. No exchange request or protected
+service/store was used.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| ECharts option refresh lifecycle | COMPLETE AND VERIFIED | Unit test proves one instance is reused and disposed only on unmount; real-browser chart smoke passes. |
+| Deferred chart payload | COMPLETE AND VERIFIED | Viewport request-timing browser assertion passes; chunk remains 544.51 kB minified and 186.79 kB gzip. |
+| Frontier project overall | PARTIALLY VERIFIED | Shared UI improvements do not close live source, full MIDAS regression, production recovery, or deployment gates. |
+
 ## Viewport-deferred chart loading — 2026-10-28 08:28 UTC
 
 Code commit `c4adac6` adds a shared `DeferredChart` boundary to Mission
