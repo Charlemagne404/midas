@@ -1834,3 +1834,21 @@ build retains the existing 511.30 kB main and 544.41 kB Chart advisories. At
 The saved job is a synthetic Polymarket-only fixture; this proves the local
 storage/API/UI path, not live-source or cross-venue matching. Frontier remains
 isolated, research-only, **PARTIALLY VERIFIED**, and undeployed.
+
+### Frontier workspace bundle split — 2026-10-28 07:33 UTC
+
+Commit `87a6a3c` moves Laboratory, Arena, and Reality behind lazy navigation
+boundaries with visible loading states. The production web build passes and
+the entry JavaScript chunk is **367.85 kB**, down from the previously recorded
+**511.30 kB** (about 28%). Those three workspaces are emitted as separate
+chunks. The **544.41 kB** Chart/ECharts chunk advisory remains; Mission Control
+uses charts on its initial view, so the entry-chunk change is not a 28% claim
+about total initial transfer. The complete web unit suite passes **43/43** and
+the default browser suite passes **16** with **2** opt-in seeded-store skips.
+The seeded cases were run separately after the code split and passed **2/2**,
+including the populated Arena-to-Laboratory path. TypeScript build, ESLint, and
+Prettier checks pass. No source, protected store, or production service was
+accessed. At 07:35:37 UTC memory PSI avg10 was **0.00% some/full**, I/O PSI
+avg10 was **0.44% some / 0.28% full**, about **10 GiB** was available, and the
+shared Arena lock was free. Frontier remains isolated,
+research-only, **PARTIALLY VERIFIED**, and undeployed.

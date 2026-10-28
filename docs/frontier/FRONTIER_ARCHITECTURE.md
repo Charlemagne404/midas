@@ -28,6 +28,16 @@ as mutable Frontier storage.
 | HTTP API | `apps/api/frontier.py`, `apps/api/arena.py` | Bounded local queries and graph neighborhoods, relationship proposals/reviews, deterministic, joint-state, paired, and discovery-scope replay, config-gated captures, fee/capital/funding-currency sensitivities, coverage analytics, a verified local collection-health catalog and checkpoint joins, and local-input Arena staging/result routes. |
 | Mission Control workspace | `apps/web/src/Frontier.tsx` | Sources, explicit finite checkpointed capture, markets/books/event context, coverage and source-quality analytics, relationship hypotheses, candidates, venue-separated capital assumptions and funding-currency sensitivity, local comparisons, an explicit conditional joint-state projection editor, paired/event-time/discovery-scope Arena history and evidence, pinned freshness, explicit recorded-health selection, per-scope candidate detail inspection, and readiness. |
 
+### Dashboard loading
+
+`apps/web/src/App.tsx` loads Frontier, Veritas, Readiness, Laboratory, Arena,
+and Reality as separate workspace chunks when their navigation item is
+selected. Each lazy workspace has a visible loading state. The generic chart
+module is also split; Mission Control uses it on the initial view, so the
+separate ECharts chunk still loads there. This reduces code loaded for
+unselected research workspaces without implying an equivalent reduction in the
+complete Mission Control transfer.
+
 ## Additional venue selection
 
 The current adapter set is limited to the four sources in the capability

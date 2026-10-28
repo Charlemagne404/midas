@@ -7511,3 +7511,32 @@ The external Veritas worker remained untouched throughout.
 Commits `a875ee2` and `aa8483b` contain the seeded Arena fixture path and its
 contract fixes. These commits are local to `codex/frontier-20261026`; there was
 no merge, push, deployment, public source request, or protected-store change.
+
+## Mission Control workspace bundle refinement — 2026-10-28 07:35 UTC
+
+Commit `87a6a3c` makes Laboratory, Arena, and Reality lazy-loaded workspaces in
+`apps/web/src/App.tsx`, each with a visible loading state. The production build
+emits dedicated chunks for those workspaces. The JavaScript entry chunk fell
+from the previously recorded **511.30 kB** to **367.85 kB** (about 28%). The
+separate Chart/ECharts chunk remains **544.41 kB** and above Vite's advisory
+threshold. Because Mission Control displays a chart on its initial view, this
+is an entry-chunk reduction, not a same-sized reduction in full initial page
+transfer.
+
+The updated production build passed (2,229 transformed modules), as did all
+**43** web unit tests, the default browser suite (**16 passed, 2 opt-in seeded
+tests skipped**), ESLint, and Prettier. The two seeded scenarios were then run
+explicitly after the App change and passed **2/2**, including the persisted
+Frontier artifact API and lazy Laboratory view. TypeScript is included in the
+passing production build. At `2026-10-28T07:35:37Z`, host memory PSI avg10 was
+0.00% some/full and I/O PSI avg10 was **0.44% some / 0.28% full**; approximately
+**10 GiB** was available and no process held the shared Arena lock. Both
+browser runs used temporary local API/storage roots; no exchange endpoint or
+production service was accessed.
+
+| Component | Status | Current evidence and remaining boundary |
+| --- | --- | --- |
+| Separate loading of Laboratory, Arena, and Reality | COMPLETE AND VERIFIED | Build output has separate chunks, and the full unit and browser regressions pass. |
+| Entry JavaScript bundle | COMPLETE AND VERIFIED | 367.85 kB, down about 28% from the prior 511.30 kB measurement. |
+| Chart/ECharts bundle | PARTIALLY VERIFIED | Build passes; its 544.41 kB warning remains, and Mission Control loads it for its initial chart. |
+| Frontier overall | PARTIALLY VERIFIED | Genuine live cross-venue equivalence/economics and deployment prerequisites remain open. |

@@ -6216,3 +6216,53 @@ Commits `a875ee2` (persisted Arena fixture E2E) and `aa8483b` (manifest
 contract fixes and formatted assertions) contain this test path. The working
 tree was clean after `aa8483b`; changes remain local to the isolated Frontier
 branch, with no merge, push, deployment, source probe, or protected-store write.
+
+## Mission Control lazy research workspaces — 2026-10-28 07:35 UTC
+
+**Stage:** F (native dashboard), performance and workspace-loading refinement.
+**Code commit:** `87a6a3c` on `codex/frontier-20261026`.
+
+`apps/web/src/App.tsx` now lazy-loads the Laboratory, Arena, and Reality page
+modules when a user opens each workspace. Each has a visible Suspense loading
+state. This brings those modules in line with the existing Frontier, Veritas,
+Readiness, and Chart split. No workspace was removed or redesigned.
+
+The production build passed and emits separate Laboratory (**33.13 kB**),
+Reality (**44.05 kB**), and Arena (**66.43 kB**) chunks. The JavaScript entry
+chunk is **367.85 kB**, compared with the previously recorded **511.30 kB**
+(about 28% lower). The Chart/ECharts chunk remains **544.41 kB** and continues
+to trigger Vite's size advisory. Since Mission Control uses a chart in its
+initial view, the entry-chunk reduction does not equal a total initial-transfer
+reduction of the same size.
+
+Verification on `87a6a3c`:
+
+- `corepack pnpm build`: passed; TypeScript project build passed; 2,229 modules
+  transformed.
+- `corepack pnpm test`: **43 passed** across seven files.
+- `corepack pnpm exec playwright test`: **16 passed, 2 skipped**. The skips are
+  the explicitly opt-in seeded Frontier store scenarios. After this code
+  change, `MIDAS_SEED_FRONTIER_E2E=1 corepack pnpm exec playwright test
+  e2e/frontier.seeded.spec.ts` separately passed **2/2**, including a populated
+  Arena artifact opened in lazy-loaded Laboratory. E2E navigation into
+  Frontier, Laboratory, Arena, Reality, and other workspaces remained green.
+- `corepack pnpm lint` and `corepack pnpm format:check`: passed.
+- `git diff --check`: passed before commit.
+
+The final host sample at `2026-10-28T07:35:37Z` measured memory PSI avg10
+**0.00% some / 0.00% full**, I/O PSI avg10 **0.44% some / 0.28% full**, about
+**10 GiB** available, and no holder on
+`/home/charlie/midas/data/arena/.global-admission.lock`. Tests used isolated
+local web/API services. No venue request, protected service, production store,
+deployment, or order was involved.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Lazy loading for standalone research workspaces | COMPLETE AND VERIFIED | Build output confirms separate page chunks; full unit/browser suites pass. |
+| Mission Control entry bundle reduction | COMPLETE AND VERIFIED | Entry chunk is 367.85 kB vs. prior 511.30 kB; initial chart loading still includes the separate large Chart chunk. |
+| Chart chunk size | PARTIALLY VERIFIED | Build passes; 544.41 kB advisory remains for future measured optimization. |
+| Project Frontier overall | PARTIALLY VERIFIED | Live cross-venue scientific validation, source permissions, broad production resource/recovery checks, and deployment remain incomplete. |
+
+**Next safe action:** continue the source-independent scientific acceptance
+matrix, including economic and replay verifier review; retain the existing
+source-use holds and production isolation.
