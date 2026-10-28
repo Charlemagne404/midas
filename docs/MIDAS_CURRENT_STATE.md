@@ -33,6 +33,30 @@ in the dated addendum below and in the Frontier engineering report.
 
 ## Frontier development addendum — 2026-10-28
 
+### Hypothetical replay P&L disclosure — 2026-10-28 02:57 UTC
+
+Frontier code commit `3af51c0589c9550ff5bbf9333e24a818e75041c0` labels the
+candidate's worst-case values as modeled P&L and states that replay outcomes do
+not establish fills, venue access, or realized profit. The focused component
+test, saved-artifact Playwright fixture, and TypeScript/Vite build pass. The
+browser test uses intercepted fixture data, and the build retains the existing
+544.41 kB Chart chunk advisory. After the build, PSI avg10 reached **29.83%
+some / 24.02% full**; further heavy work is deferred pending a fresh sample.
+Frontier remains **PARTIALLY VERIFIED**.
+
+### Arena discovery worker dispatch containment — 2026-10-28 02:56 UTC
+
+Frontier code commit `9b0b28f89832799fdcc8ff66f117e156d133be7c` restricts
+launched `frontier_discovery` Arena jobs to AF_UNIX socket families and keeps
+the 300-second, 512-MiB, half-CPU, nice-15, idle-I/O bounds. A child-process
+fixture completed through the durable Arena job dispatcher and its result
+passed artifact verification. The related Arena supervision regression passes
+**21/21** at **193,632 KiB peak RSS**, zero swaps, and zero socket messages.
+The command test mocks `systemd-run` and admission, and the worker fixture uses
+a temporary root; actual systemd/cgroup execution and host-gated admission
+remain unverified. No production or protected service was changed. Frontier
+remains undeployed and **PARTIALLY VERIFIED**.
+
 ### Saved Arena candidate evidence UI — 2026-10-28 02:52 UTC
 
 Frontier code commit `4c40c7f4403d7571ae52849e6c4d10c81fa4d5c1` adds

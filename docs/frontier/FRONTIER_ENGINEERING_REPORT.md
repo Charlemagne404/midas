@@ -2,6 +2,45 @@
 
 **Report date:** 2026-10-28
 
+**Candidate outcome disclosure — 2026-10-28 02:57 UTC:** Code commit
+`3af51c0589c9550ff5bbf9333e24a818e75041c0` makes the candidate detail view
+label worst-case values as modeled P&L and explicitly states that deterministic
+replay outcomes do not establish fills, venue access, or realized profit. The
+scoped component test passes **1/1** (the other seven Frontier component tests
+were skipped by the filter), the saved-artifact Playwright path passes **1/1**
+in 5.4 seconds, and the final production build passes TypeScript and Vite with
+2,228 modules transformed. Vite still reports the existing **544.41 kB** Chart
+chunk advisory. These UI checks use the explicitly intercepted fixture and
+local demo services; no real-source or Arena execution evidence is added.
+
+After the build, the host sample at `2026-10-28T02:57:42Z` measured PSI avg10
+**29.83% some / 24.02% full**, avg60 **9.75% / 7.88%**, with about **9.8 GiB**
+available and **332 MiB** swap free. This elevated short sample is a reason to
+defer further heavy work until resources are rechecked; it does not change the
+bounded test results.
+
+**Latest Arena worker isolation checkpoint — 2026-10-28 02:56 UTC:** Code
+commit `9b0b28f89832799fdcc8ff66f117e156d133be7c` adds the missing AF_UNIX-only
+network restriction to launched `frontier_discovery` jobs and includes
+discovery in the consistent 300-second/512-MiB/50%-CPU/nice-15/idle-I/O
+validation message. The Frontier discovery tests now create a pinned fixture
+job and execute it through a child process running `python -m midas.arena.jobs`;
+the durable job completes and its resulting discovery artifact passes the
+existing job/result verifier. A separate launch-command test checks the
+systemd properties, including `MemorySwapMax=0` and
+`RestrictAddressFamilies=AF_UNIX`; it mocks `systemd-run` and the admission
+context, so no service or real Arena job was launched.
+
+`tests/arena/test_jobs.py` plus `tests/arena/test_frontier_discovery.py` pass
+**21/21** in 36.59 seconds pytest time / 37.28 seconds process wall, at
+**193,632 KiB peak RSS**, zero swaps, and zero socket messages. One existing
+Starlette/httpx TestClient deprecation warning remains. Ruff and
+`git diff --check` pass. This closes fixture verification of worker dispatch
+and its containment command, not systemd/cgroup runtime verification. No
+source request, shared Arena-root write, protected service action, or
+deployment occurred. The normal systemd job launch remains behind the shared
+host admission gate.
+
 **Latest Mission Control checkpoint — 2026-10-28 02:52 UTC:** Code commit
 `4c40c7f4403d7571ae52849e6c4d10c81fa4d5c1` adds read-only candidate
 inspection to saved Arena discovery-scope artifacts. Each scope resolves a

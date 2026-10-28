@@ -1,5 +1,53 @@
 # Project Frontier Mission Ledger
 
+## Explicit hypothetical replay-outcome disclosure — 2026-10-28 02:57 UTC
+
+Code commit `3af51c0589c9550ff5bbf9333e24a818e75041c0` changes the candidate
+detail metrics to “worst modeled gross/net P&L” and places a disclosure beside
+terminal outcomes: these hypothetical replay values do not establish fills,
+venue access, or realized profit.
+
+```bash
+cd apps/web
+./node_modules/.bin/vitest run src/Frontier.test.tsx -t "submits bounded Arena replay and discovery comparisons with verified results"
+# 1 passed; 7 skipped
+./node_modules/.bin/playwright test e2e/frontier.spec.ts -g "saved Arena discovery artifact exposes scoped candidate evidence"
+# 1 passed in 5.4s on loopback demo services with an intercepted fixture
+npm run build
+# TypeScript and Vite passed; 2,228 modules; existing 544.41 kB Chart chunk advisory
+```
+
+The browser fixture checks the disclosure in the rendered candidate view. It
+does not represent observed market data or an executed opportunity. After the
+build, PSI avg10 was **29.83% some / 24.02% full** at `2026-10-28T02:57:42Z`,
+with about **9.8 GiB** available and **332 MiB** swap free; defer heavier local
+work until another admission sample.
+
+## Discovery worker dispatch and network isolation — 2026-10-28 02:56 UTC
+
+Code commit `9b0b28f89832799fdcc8ff66f117e156d133be7c` adds
+`frontier_discovery` to the Arena systemd launcher's network-restricted job
+set, so the command allows only AF_UNIX sockets. Its bounded resource error
+message now includes discovery alongside replay and timeline. Two fixture
+checks exercise the configuration: one stubs only the host admission context
+and `systemd-run` to inspect the launch command; the other stages an immutable
+input in `tmp_path`, starts a child process with
+`python -m midas.arena.jobs`, waits for the actual discovery dispatch, and
+verifies the durable result artifact.
+
+```bash
+/usr/bin/time -v env PYTHONPATH=packages /home/charlie/midas/.venv/bin/python -m pytest -q tests/arena/test_jobs.py tests/arena/test_frontier_discovery.py
+# 21 passed in 36.59s; 193,632 KiB peak RSS; zero swaps or socket messages
+```
+
+Ruff and `git diff --check` pass. One existing Starlette/httpx deprecation
+warning remains. The launch-command test does not invoke systemd or the host
+admission gate; the actual subprocess uses a temporary Arena root and is not
+under a production cgroup. The normal systemd launch remains resource-gated.
+No live endpoint, shared Arena artifact root, source, protected service, or
+production deployment was touched. Project Frontier remains **PARTIALLY
+VERIFIED**.
+
 ## Saved discovery-candidate evidence in Mission Control — 2026-10-28 02:52 UTC
 
 Code commit `4c40c7f4403d7571ae52849e6c4d10c81fa4d5c1` completes the current

@@ -429,8 +429,13 @@ host-resource gate. Inspect recent jobs at
 hash-verified result at
 `GET /api/arena/jobs/{identity}/frontier-discovery`. A denied admission leaves
 the saved snapshot available for a later explicit retry; do not bypass the
-shared lock or resource gate. No discovery-scope worker has yet completed
-through the Arena supervisor in this checkpoint.
+shared lock or resource gate. The systemd launch also restricts this job to
+AF_UNIX socket families; the discovery worker has no HTTP client or exchange
+request path. Fixture tests have now exercised the durable `midas.arena.jobs`
+dispatch in a child process and checked the generated systemd restriction
+command. The launch command was inspected with a mocked `systemd-run`; no
+systemd service ran, so cgroup enforcement and shared-lock admission remain
+unverified for this job kind.
 
 The staging query examines at most 200 recent saved book observations and keeps
 the newest locally received book for each pinned instrument. The resulting
@@ -450,3 +455,5 @@ and hashes. Additional rows are counted instead of expanded. If a summary has
 no matching detail, the panel reports the artifact mismatch. The browser check
 uses a clearly labeled intercepted fixture; it does not establish that an
 Arena supervisor job completed or that a candidate is live or executable.
+Terminal values are labeled hypothetical modeled P&L; the detail view states
+that they do not establish fills, venue access, or realized profit.
