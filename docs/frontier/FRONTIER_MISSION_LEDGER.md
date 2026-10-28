@@ -1,5 +1,22 @@
 # Project Frontier Mission Ledger
 
+## Memory admission remains closed — 2026-10-28 12:18 UTC
+
+At `12:18:47Z`, I/O PSI avg10 had fallen to **0.01% some / 0.01% full**, but
+memory PSI avg10 remained **36.13% some / 31.37% full**. About **10 GiB** was
+available and **3.5/4 GiB** swap was in use. No tests, build, or mypy job was
+started. Both memory and I/O must be below the 1% admission threshold before
+runtime verification resumes.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Atomic collection run/checkpoint creation | IMPLEMENTED, VALIDATION PENDING | Commit `36546cd`; runtime tests and strict typing await memory admission. |
+| Research-schedule module | IMPLEMENTED, VALIDATION PENDING | Commit `cd248ce`; corrected fixture is not yet runtime-verified. |
+| Frontier overall | PARTIALLY VERIFIED | Latest full Frontier suite predates current edits; live cross-venue evidence, broader regressions, and deployment remain open. |
+
+Next safe action: sample host pressure again; run targeted tmpfs tests only when
+both PSI avg10 values fall below 1%.
+
 ## Atomic initial collection checkpoint — 2026-10-28 12:16 UTC
 
 Source-only review found that finite collection startup wrote a run record and

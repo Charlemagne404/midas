@@ -33,6 +33,15 @@ in the dated addendum below and in the Frontier engineering report.
 
 ## Frontier development addendum — 2026-10-28
 
+### Latest isolated Frontier checkpoint — 2026-10-28 12:18 UTC
+
+At 12:18:47Z I/O PSI avg10 recovered to 0.01% some / 0.01% full, while
+memory PSI remained 36.13% some / 31.37% full. About 10 GiB was available
+and 3.5/4 GiB swap was occupied. No tests, build, or mypy run started. Runtime
+verification of commits `36546cd` and `cd248ce` remains pending until both PSI
+avg10 values fall below 1%. Frontier remains **PARTIALLY VERIFIED**,
+research-only, isolated, and undeployed.
+
 ### Latest isolated Frontier checkpoint — 2026-10-28 12:16 UTC
 
 Commit `36546cd` makes creation of a finite collection run and its initial

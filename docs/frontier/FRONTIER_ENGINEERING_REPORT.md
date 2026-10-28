@@ -2,6 +2,15 @@
 
 **Report date:** 2026-10-28
 
+## Memory-gated validation — 2026-10-28 12:18 UTC
+
+The last sample at `12:18:47Z` showed I/O PSI avg10 **0.01% some / 0.01%
+full**, but memory PSI avg10 **36.13% some / 31.37% full**. Available memory
+was about **10 GiB**, with **3.5/4 GiB** swap occupied. No tests, build, or
+type-check ran. The 420/420 Frontier result is prior-tree evidence; current
+collection and schedule fixture changes still need runtime verification after
+both PSI avg10 values fall below the 1% gate.
+
 ## Atomic collection startup persistence — 2026-10-28 12:16 UTC
 
 Commit `36546cd` fixes a crash window in finite collection startup. The run
