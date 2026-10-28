@@ -10007,3 +10007,26 @@ source validity, or production deployment.
 | Frontier browser and seeded research paths | COMPLETE AND VERIFIED | 7/7 normal and 2/2 seeded Playwright tests on isolated local services; all seeded evidence is fixture-only. |
 | Broader MIDAS browser regression | PARTIALLY VERIFIED | Non-Frontier E2E files were not rerun in this checkpoint. |
 | Frontier project overall | PARTIALLY VERIFIED | Live cross-venue validation, full broader regression, endurance, production recovery, and deployment remain open. |
+
+### Broader Playwright run stopped at the I/O gate — 2026-10-28 14:38 UTC
+
+The full web E2E command collected **19 tests** with one worker; the two
+seeded-only cases were skipped because the seed flag was not enabled. Eight
+tests completed successfully and two were reported skipped before the run was
+interrupted with SIGINT after host I/O pressure crossed the 1% admission
+threshold. No assertion failure was reported; the remaining nine cases did not
+complete. This is not a passing full-suite result.
+
+I/O PSI avg10 was **0.33% some / 0.00% full** before the run at `14:37:53Z`;
+at `14:38:19Z` it reached **1.12% some / 0.64% full**. After stopping, it fell
+to **0.59% some / 0.41% full** at `14:38:29Z` and **0.21% some / 0.15% full**
+at `14:38:38Z`. The Playwright interruption left its isolated local API and
+Vite test servers running; I verified their exact process arguments and
+terminated only those test-owned PIDs. Both were gone at the next process
+check. No production service or public source was accessed.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Frontier-specific E2E | COMPLETE AND VERIFIED | Dedicated normal and seeded Frontier files pass 7/7 and 2/2. |
+| All Mission Control Playwright E2E | PARTIALLY VERIFIED | The 19-case run was resource-stopped after eight passes and two skips; nine did not complete. |
+| Frontier project overall | PARTIALLY VERIFIED | Broader regression, live-source science, endurance, production recovery, and deployment remain open. |

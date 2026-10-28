@@ -9040,3 +9040,27 @@ production recovery, and deployment remain open. Project status remains
 
 **Next safe action:** continue with source-independent acceptance work and take
 a fresh resource admission sample before the next broad test batch.
+
+## Broader Mission Control E2E stopped at I/O gate — 2026-10-28 14:38 UTC
+
+The one-worker Playwright run collected 19 tests. Eight passed and two
+seeded-only tests were skipped because `MIDAS_SEED_FRONTIER_E2E` was unset;
+the remaining nine did not complete. I stopped the run with SIGINT after I/O
+PSI crossed the 1% admission threshold. No assertion failure was reported,
+and this is not a passing full-suite result.
+
+I/O PSI avg10 was 0.33% some / 0.00% full at 14:37:53Z, reached 1.12% some /
+0.64% full at 14:38:19Z, then fell to 0.59% / 0.41% at 14:38:29Z and
+0.21% / 0.15% at 14:38:38Z. The interrupted run left only its isolated local
+API and Vite servers alive. After verifying exact arguments, I terminated
+those test-owned PIDs and verified both were gone. No production service,
+protected store, or public source was accessed.
+
+Frontier-specific E2E remains **COMPLETE AND VERIFIED** at 7/7 normal and 2/2
+seeded tests. All Mission Control Playwright E2E remains **PARTIALLY
+VERIFIED**: eight completed, two skipped, and nine incomplete in this run.
+Frontier overall remains **PARTIALLY VERIFIED**.
+
+**Next safe action:** take a fresh I/O and resource sample before another
+resource-bearing run. Do not resume the broad E2E batch until the admission
+gate clears; continue source-independent static review meanwhile.

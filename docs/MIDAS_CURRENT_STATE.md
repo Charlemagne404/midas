@@ -3081,3 +3081,21 @@ pass. Frontier Playwright passes 7/7 on the empty path and 2/2 on seeded
 fixture data using isolated local services. The Chart bundle advisory remains
 544.51 kB. Frontier stays **PARTIALLY VERIFIED** pending broader regression,
 live-source, recovery, and deployment gates.
+
+## Broader browser regression stopped — 2026-10-28 14:38 UTC
+
+The full one-worker Mission Control Playwright command collected 19 tests;
+eight passed, two seeded-only cases were skipped, and nine did not complete.
+I stopped it with SIGINT after I/O PSI crossed the 1% admission gate
+(1.12% some / 0.64% full at 14:38:19Z). No assertion failure was reported.
+The interrupted process left its isolated test API and Vite servers running;
+I verified and terminated only those test-owned processes. Both were gone on
+the next process check. No production service or public source was accessed.
+
+Frontier-specific browser tests still pass 7/7 normal and 2/2 seeded. The
+broader Mission Control browser suite and overall Frontier status remain
+**PARTIALLY VERIFIED**.
+
+**Next safe action:** take a fresh resource sample before any additional
+browser run; continue bounded, source-independent review until I/O admission
+is clear.
