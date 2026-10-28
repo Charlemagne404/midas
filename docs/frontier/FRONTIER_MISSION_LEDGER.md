@@ -5507,3 +5507,22 @@ admission lock holder remained active. Defer the other API slices until I/O
 | API collection and overview slice | COMPLETE AND VERIFIED | 9 selected cases pass; 46 API cases remain in three bounded slices. |
 | Serial Frontier regression coverage | PARTIALLY VERIFIED | 312 cases pass across eleven bounded invocations; the API module is still partial. |
 | Full Frontier regression | PARTIALLY VERIFIED | No full-suite pass is claimed. |
+
+## API regression, source-probe slice — 2026-10-28 05:32 UTC
+
+The source-probe and metadata slice passed **12/12** in 6.52 seconds pytest
+time (7.01 seconds wall) at 103,256 KiB peak RSS. It used
+`/tmp/frontier-api-source-probes-20261028`, with zero swaps and socket
+messages. The existing Starlette/httpx TestClient deprecation warning
+appeared.
+
+The post-run sample measured memory PSI avg10 **0.00% some / 0.00% full** and
+I/O PSI **2.95% some / 2.12% full**. No Frontier test or shared Arena
+admission lock holder was active. Hold further test work until I/O `some`
+PSI falls below 1%.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| API collection/overview and source-probe slices | COMPLETE AND VERIFIED | 21 of 55 API cases pass across two isolated slices; 34 remain. |
+| Serial Frontier regression coverage | PARTIALLY VERIFIED | 324 cases pass across twelve bounded invocations; the API module is partial. |
+| Remaining API slices | DEFERRED | I/O PSI rose above the admission threshold after the second slice. |
