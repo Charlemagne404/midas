@@ -10886,3 +10886,33 @@ holds.
 | Polymarket research API contract | IMPLEMENTED, LIVE VALIDATION PENDING | Official research documentation supports research access; current physical eligibility remains unverified. |
 | Geographic restriction handling | PARTIALLY VERIFIED | Official list and no-bypass rule reviewed; no proxy/VPN or endpoint probe used. |
 | Genuine multi-venue validation | BLOCKED | Additional venue terms remain restrictive and the user's current location is unverified. |
+
+## Pair-based candidate book identity binding — 2026-10-28 20:45 UTC
+
+Code commit `bc00a34b966e` advances `ECONOMIC_MODEL_VERSION` to
+`frontier-economic-verifiers-22`. `_evaluate_pair` now requires each public
+book to match its selected market's venue, native market ID, native instrument
+ID, and quantity unit before using its displayed asks. A snapshot stored under
+the expected dictionary key but carrying another identity now produces an
+`INCOMPLETE EVIDENCE` candidate with no legs. This keeps unbound input from
+appearing as a mathematical candidate before the independent audit stage.
+
+Three adversarial cases cover wrong native market, wrong native instrument,
+and wrong quantity unit. The current pair-economics/replay and logical
+implication economics modules pass **104/104** after the economic model version
+bump. Peak RSS was **69,148 KiB** in a transient 1 GiB systemd scope; the run
+used no swaps and sent or received no socket messages. Ruff check/format and
+`git diff --check` pass. Tests use controlled fixtures; no public exchange
+endpoint was queried.
+
+At `2026-10-28T20:45:21Z`, Reality was **905,216 bytes below** its
+`MemoryHigh` boundary and the API was **36,716,544 bytes below** its boundary.
+Both services remained active; neither was changed. The full Frontier, Arena,
+and legacy suites remain deferred under the resource gate.
+
+| Requirement | Status | Evidence and boundary |
+| --- | --- | --- |
+| Pair candidate book-to-contract binding | COMPLETE AND VERIFIED | Three mismatch variants reject before quote arithmetic; scoped economics/replay modules pass 104/104. |
+| Current full Frontier regression | PARTIALLY VERIFIED | The directly affected modules pass; the full suite has not been rerun on the current tree. |
+| Genuine live cross-venue economics | BLOCKED | Source-use holds and location uncertainty remain; no live match or opportunity is claimed. |
+| Project Frontier overall | PARTIALLY VERIFIED | Full regressions, live cross-venue science, endurance, protected recovery, and deployment remain open. |

@@ -11746,3 +11746,23 @@ eligibility; this does not alter the other venues' terms holds.
 | Polymarket research use | IMPLEMENTED, LIVE VALIDATION PENDING | Official research guide is available; physical eligibility at request time remains unknown. |
 | Geographic restriction compliance | PARTIALLY VERIFIED | Official list reviewed; no endpoint request or circumvention occurred. |
 | Frontier overall | PARTIALLY VERIFIED | Cross-venue live evidence, exact-tree broad regression, endurance, protected recovery, and deployment remain open. |
+
+## Latest implementation checkpoint — 2026-10-28 20:45 UTC
+
+Commit `bc00a34b966e` hardens pair-based cross-venue candidate generation.
+Each book must identify the exact selected venue, native market, native
+instrument, and quantity unit before displayed prices enter the economics.
+Candidate/replay economic model identity is now
+`frontier-economic-verifiers-22`. The directly affected economics/replay and
+logical implication modules pass **104/104** fixture tests; Ruff check/format
+and whitespace checks pass. The bounded run peaked at **69,148 KiB RSS** in a
+1 GiB transient scope with zero swaps or socket messages. No source endpoint
+was queried.
+
+| Component | Current status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Pair-based candidate book identity | COMPLETE AND VERIFIED | Wrong market, instrument, or quantity-unit snapshots are rejected before quote arithmetic. |
+| Focused economic and replay regression | COMPLETE AND VERIFIED | 104/104 tests pass on this checkpoint. |
+| Full current Frontier and legacy regressions | PARTIALLY VERIFIED | Broad suites remain unrun while Reality is close to `MemoryHigh`. |
+| Live cross-venue market relationship | BLOCKED | Source-use scope and location authorization remain unresolved; no live cross-venue result is claimed. |
+| Frontier overall | PARTIALLY VERIFIED | Live science, broad regressions, endurance, protected recovery, and deployment prerequisites remain open. |
