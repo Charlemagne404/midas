@@ -1271,6 +1271,57 @@ def test_binary_coverage_rejects_book_receipt_time_not_bound_to_provenance():
     assert any("malformed" in reason.lower() for reason in corrupted.reasons)
 
 
+def test_binary_coverage_rejects_exchange_time_not_bound_to_provenance():
+    left, right, relationship, instrument_mapping = _verified_pair()
+    left_books, right_books = _books(left, right)
+    target = left.instruments[0]
+    clean_candidates = generate_binary_coverage_candidates(
+        left,
+        right,
+        relationship,
+        left_books,
+        right_books,
+        state_mapping={"yes": "yes", "no": "no"},
+        instrument_mapping=instrument_mapping,
+        as_of_utc=T0 + timedelta(milliseconds=100),
+    )
+    target_candidate_id = next(
+        candidate.candidate_id
+        for candidate in clean_candidates
+        if any(leg.instrument_id == target.native_instrument_id for leg in candidate.legs)
+    )
+    original_book = left_books[target.native_instrument_id]
+    stale_source_time = T0 - timedelta(seconds=30)
+    stale_provenance = original_book.provenance.model_copy(
+        update={"exchange_timestamp_utc": stale_source_time}
+    )
+    mismatched_book = original_book.model_copy(update={"provenance": stale_provenance})
+    assert not mismatched_book.has_valid_structure
+    with pytest.raises(ValidationError, match="exchange timestamp differs from its provenance"):
+        BookSnapshot.model_validate(mismatched_book.model_dump(mode="python"))
+    left_books[target.native_instrument_id] = mismatched_book
+
+    corrupted_candidates = generate_binary_coverage_candidates(
+        left,
+        right,
+        relationship,
+        left_books,
+        right_books,
+        state_mapping={"yes": "yes", "no": "no"},
+        instrument_mapping=instrument_mapping,
+        as_of_utc=T0 + timedelta(milliseconds=100),
+    )
+    corrupted = next(
+        candidate
+        for candidate in corrupted_candidates
+        if candidate.candidate_id == target_candidate_id
+    )
+
+    assert corrupted.classification == OpportunityClassification.INCOMPLETE_EVIDENCE
+    assert not corrupted.legs
+    assert any("malformed" in reason.lower() for reason in corrupted.reasons)
+
+
 def test_independent_audit_rejects_duplicate_payout_on_unselected_instrument():
     left, right, relationship, instrument_mapping = _verified_pair()
     left_books, right_books = _books(left, right)
@@ -2491,6 +2542,9 @@ def test_cross_venue_timing_requires_comparable_semantics_and_clock_bounds():
         instrument_id: snapshot.model_copy(
             update={
                 "exchange_timestamp_utc": future,
+                "provenance": snapshot.provenance.model_copy(
+                    update={"exchange_timestamp_utc": future}
+                ),
                 "asks": tuple(
                     level.model_copy(update={"exchange_timestamp_utc": future})
                     for level in snapshot.asks
@@ -2704,7 +2758,7 @@ def test_candidate_generation_and_independent_audit_enforce_price_ticks():
         as_of_utc=T0 + timedelta(milliseconds=100),
     )
     candidate = next(item for item in candidates if item.legs)
-    assert candidate.model_version == "frontier-economic-verifiers-23"
+    assert candidate.model_version == "frontier-economic-verifiers-24"
 
     def with_half_dollar_ticks(market_value):
         instruments = tuple(
@@ -3486,7 +3540,7 @@ def test_deterministic_replay_is_invariant_to_input_order():
     }
     first = deterministic_replay((left, right), all_books, **kwargs)
     second = deterministic_replay((right, left), tuple(reversed(all_books)), **kwargs)
-    assert first.manifest.economic_model_version == "frontier-economic-verifiers-23"
+    assert first.manifest.economic_model_version == "frontier-economic-verifiers-24"
     assert first.run_id == second.run_id
     assert first.result_sha256 == second.result_sha256
     assert first.candidates == second.candidates

@@ -1141,9 +1141,11 @@ class BookSnapshot(FrontierModel):
         return self
 
     @model_validator(mode="after")
-    def receipt_time_matches_provenance(self) -> BookSnapshot:
+    def timestamps_match_provenance(self) -> BookSnapshot:
         if self.received_at_utc != self.provenance.response_received_at_utc:
             raise ValueError("Book receipt time differs from its provenance response time")
+        if self.exchange_timestamp_utc != self.provenance.exchange_timestamp_utc:
+            raise ValueError("Book exchange timestamp differs from its provenance source time")
         return self
 
     @property
