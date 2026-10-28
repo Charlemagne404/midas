@@ -11435,3 +11435,29 @@ exchange endpoint or external evidence was accessed.
 
 Next safe action: continue focused static review; defer broad regression under
 the current API memory margin.
+
+## Same-payoff mapping evidence binding — 2026-10-28 21:56 UTC
+
+Commit `8f2827f` binds candidate-generation and independent-audit maps to the
+state and instrument mappings inside the verified same-payoff relationship.
+The generator handles caller left/right orientation; the independent audit
+checks canonical relationship orientation. An inverted mapping now fails as
+`INVALID_RELATIONSHIP` at generation and as `INCOMPLETE_EVIDENCE` for a forged
+candidate. Two new adversarial cases pass **2/2**, and the binary/cross-venue
+slice passes **16/16**. Ruff, formatting, and strict mypy for the two changed
+production modules pass.
+
+At `2026-10-28T21:56:15Z`, API was 4,702,208 bytes below `MemoryHigh`; Reality
+was 98,783,232 bytes below. Memory PSI was 0%; available memory was 9,589,588
+kB and swap free 52,896 kB. No source endpoint or protected service was
+accessed. The forged positive-looking candidate is a fixture only.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Mapping provenance and candidate generation | COMPLETE AND VERIFIED WITH FIXTURES | Overrides cannot replace the mapping bound to the verified edge. |
+| Independent mapping audit | COMPLETE AND VERIFIED WITH FIXTURES | Forged candidate economic outputs are cleared. |
+| Semantic resolution assertion | PARTIALLY VERIFIED | External assertion remains a human/source trust boundary. |
+| Project Frontier overall | PARTIALLY VERIFIED | Live cross-venue science, broad regression, endurance, recovery, and deployment remain open. |
+
+Next safe action: review replay/API mapping injection and serialization; no
+source use or production transition is enabled.

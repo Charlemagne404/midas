@@ -3749,3 +3749,19 @@ was 0%, available memory 9,639,216 kB, and swap free 52,592 kB. Broad regression
 remains deferred due narrow API `MemoryHigh` headroom. Frontier overall remains
 partially verified; live sources, broad acceptance, endurance, recovery, and
 deployment are unresolved.
+
+## Project Frontier same-payoff mapping evidence — 2026-10-28 21:56 UTC
+
+Commit `8f2827f` prevents caller-supplied same-payoff state and instrument
+mappings from replacing the maps pinned in relationship evidence. Candidate
+generation and independent audit now both fail closed on mapping drift. The
+two adversarial tests pass, along with 16 focused binary/cross-venue cases;
+Ruff, format, and strict mypy pass. Results are fixture-only. No live source
+or protected service was accessed. Frontier overall remains partially
+verified, with live research, broad regression, endurance, recovery, and
+deployment unresolved.
+
+At `2026-10-28T21:56:15Z`, API was active at 1,605,910,528 / 1,610,612,736
+bytes; Reality was active at 1,109,176,320 / 1,207,959,552 bytes. Memory PSI
+was 0%, available memory 9,589,588 kB, and swap free 52,896 kB. Broad
+regression remains deferred because API headroom is narrow.

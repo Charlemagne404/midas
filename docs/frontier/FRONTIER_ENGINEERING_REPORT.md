@@ -12366,3 +12366,38 @@ queried and no external source data was captured.
 
 Next safe action: continue static review of source-bound economic constraints;
 keep broad regression deferred while API `MemoryHigh` headroom remains narrow.
+
+## Same-payoff mapping evidence binding — 2026-10-28 21:56 UTC
+
+Commit `8f2827f` makes same-payoff candidate generation and independent audit
+require the supplied state and instrument maps to equal the mapping recorded
+in the verified relationship evidence. Candidate-generation input maps are
+oriented to the supplied left/right arguments; audit maps remain in canonical
+relationship order. A caller override no longer substitutes for the mapping
+whose verifier version and relationship identity were pinned.
+
+Two adversarial tests cover both paths. The generator rejects an inverted
+state/instrument mapping as `INVALID_RELATIONSHIP`; a separately constructed
+candidate that uses the same override is cleared by independent audit as
+`INCOMPLETE_EVIDENCE`. The new cases pass **2/2** in 0.63 seconds. The broader
+same-file binary/cross-venue fixture slice passes **16/16** in 0.42 seconds.
+Ruff, format, and strict mypy for both changed production modules pass. The
+positive-looking result used in the adversarial construction is a synthetic
+test object and is not a market finding.
+
+At `2026-10-28T21:56:15Z`, API was active at 1,605,910,528 / 1,610,612,736
+bytes `MemoryHigh` (4,702,208 bytes below); Reality was active at
+1,109,176,320 / 1,207,959,552 bytes (98,783,232 bytes below). Memory PSI
+avg10/avg60/avg300 was 0%; `MemAvailable` was 9,589,588 kB and `SwapFree` was
+52,896 kB. No services changed; no exchange endpoint was queried.
+
+| Requirement | Status | Evidence and boundary |
+| --- | --- | --- |
+| Relationship-mapping provenance | COMPLETE AND VERIFIED WITH FIXTURES | Generator and auditor reject caller mappings that differ from pinned relationship evidence. |
+| Independent audit of overridden mappings | COMPLETE AND VERIFIED WITH FIXTURES | A forged candidate is cleared before economic outputs survive. |
+| Semantic event-equivalence assertion | PARTIALLY VERIFIED | Assertion identities remain unauthenticated and fixture-backed. |
+| Live cross-venue science and broad regression | PARTIALLY VERIFIED | No live equivalence or exact-tree broad regression is claimed. |
+| Project Frontier overall | PARTIALLY VERIFIED | Live research, broad regression, endurance, recovery, and deployment remain open. |
+
+Next safe action: inspect API and replay mapping entry points for equivalent
+fail-closed behavior; keep live sources held and broad regression deferred.
