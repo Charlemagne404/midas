@@ -102,6 +102,8 @@ class TradeFixtureCase:
     config: AdapterConfig
     adapter_factory: Callable[[AdapterConfig, Any], TradeAdapter]
     event_contract: bool
+    timestamp_semantics: str
+    supports_paginated_trades: bool
     fixture_only_transport: bool = False
 
 
@@ -159,6 +161,8 @@ async def test_four_trade_adapters_share_capture_contract_and_keep_native_semant
             config=basic_config,
             adapter_factory=_json_adapter_factory(PolymarketAdapter),
             event_contract=True,
+            timestamp_semantics="Data API trade timestamp",
+            supports_paginated_trades=True,
         ),
         TradeFixtureCase(
             venue=Venue.KALSHI,
@@ -185,6 +189,8 @@ async def test_four_trade_adapters_share_capture_contract_and_keep_native_semant
             config=basic_config,
             adapter_factory=_json_adapter_factory(KalshiAdapter),
             event_contract=True,
+            timestamp_semantics="Kalshi created_time",
+            supports_paginated_trades=True,
         ),
         TradeFixtureCase(
             venue=Venue.KRAKEN,
@@ -205,6 +211,8 @@ async def test_four_trade_adapters_share_capture_contract_and_keep_native_semant
             ),
             adapter_factory=_json_adapter_factory(KrakenSpotAdapter),
             event_contract=False,
+            timestamp_semantics="Kraken per-trade epoch timestamp",
+            supports_paginated_trades=False,
         ),
         TradeFixtureCase(
             venue=Venue.COINBASE_EXCHANGE,
@@ -231,6 +239,8 @@ async def test_four_trade_adapters_share_capture_contract_and_keep_native_semant
             ),
             adapter_factory=_json_adapter_factory(CoinbaseSpotAdapter),
             event_contract=False,
+            timestamp_semantics="Coinbase trade execution time",
+            supports_paginated_trades=False,
             fixture_only_transport=True,
         ),
     )
@@ -276,6 +286,7 @@ async def test_four_trade_adapters_share_capture_contract_and_keep_native_semant
         assert trade.quantity == Decimal("2.00")
         assert trade.received_at_utc == trade.provenance.response_received_at_utc
         assert trade.exchange_timestamp_utc == T0
+        assert trade.provenance.exchange_timestamp_semantics == case.timestamp_semantics
 
         assert len(captures) == 1
         capture = captures[0]
@@ -295,6 +306,9 @@ async def test_four_trade_adapters_share_capture_contract_and_keep_native_semant
         assert request.url.params[case.query_name] == case.query_value
         assert "authorization" not in request.headers
         assert source.capabilities.supports(Capability.OUTCOME_DEFINITIONS) is case.event_contract
+        assert source.capabilities.supports(
+            Capability.PAGINATED_PUBLIC_TRADES
+        ) is case.supports_paginated_trades
         stored_observation_ids[case.venue] = store.append_observation(
             capture,
             TradeBatch(
