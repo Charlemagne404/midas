@@ -2,6 +2,23 @@
 
 **Report date:** 2026-10-28
 
+## Relationship-review evidence validation checkpoint — 2026-10-28 16:39 UTC
+
+Static review found that the review request bounded the number of observation
+IDs but did not validate their SHA-256 format until constructing the durable
+review record, after the handler had looked them up in storage. The request
+model now requires lowercase 64-character SHA-256 IDs before route processing.
+An adversarial regression covers overlength, uppercase, and non-hex values.
+
+Same-payoff mappings remain limited to 20 entries of at most 120 characters;
+logical-implication mappings remain limited to 1,024 entries of at most 128
+characters. The route also pins both markets to stored observations, verifies
+the normalized evidence contains those markets, rejects held-source evidence,
+and states that reviewer and external-assertion identities are unauthenticated.
+Commit `8c898dc` contains the code and regression. `py_compile` and
+`git diff --check` pass. The focused test remains pending because CPU PSI was
+39.68% avg10 and swap had only 1.2 MiB free at the latest sample.
+
 ## Coinbase source-use restriction checkpoint — 2026-10-28 16:36 UTC
 
 The current official [Coinbase Market Data Terms](https://www.coinbase.com/legal/market_data),

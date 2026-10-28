@@ -1,5 +1,31 @@
 # Project Frontier Mission Ledger
 
+## Relationship-review evidence IDs validated before lookup — 2026-10-28 16:39 UTC
+
+Read-only review of `RelationshipReviewRequest` found that evidence IDs were
+bounded only by tuple count and uniqueness. The route later uses each ID for a
+stored-observation lookup; the durable `RelationshipReview` model requires
+lowercase SHA-256 digests, but that check happened after the lookups. Added the
+same exact digest-format validation to the request model and an adversarial
+regression covering overlength, uppercase, and non-hex IDs. The existing
+same-payoff mapping bound remains 20 entries of at most 120 characters; logical
+implication allows at most 1,024 entries of at most 128 characters. The handler
+also requires pinned market observations and rejects held-source evidence.
+
+`python3 -m py_compile apps/api/frontier.py tests/frontier/test_relationship_reviews.py`
+and `git diff --check` pass. Pytest was not run: the 16:39:43Z sample showed CPU
+PSI avg10 39.68% / avg60 38.84%, memory and I/O PSI avg10 0%, and swap with only
+1.2 MiB free. Protected Reality and API services are active. No service or
+external source was accessed. Implementation commit: `8c898dc`.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Relationship review request digest validation | IMPLEMENTED, LIVE VALIDATION PENDING | Syntax check passes and regression is added; pytest has not run. |
+| Relationship mapping and evidence route checks | COMPLETE AND VERIFIED | Static review confirms mapping count/identifier bounds, evidence-to-market pinning, held-source rejection, and unauthenticated assertion labeling. |
+
+**Next safe action:** rerun the focused relationship-review regression when host
+resource admission improves, then continue bounded source-independent review.
+
 ## Coinbase automated-system restriction surfaced — 2026-10-28 16:36 UTC
 
 The official Coinbase Market Data Terms, last updated 2026-08-07, explicitly

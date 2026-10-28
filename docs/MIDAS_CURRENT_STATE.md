@@ -33,7 +33,14 @@ in the dated addendum below and in the Frontier engineering report.
 
 ## Frontier development addendum — 2026-10-28
 
-### Latest isolated Frontier checkpoint — 2026-10-28 16:36 UTC
+### Latest isolated Frontier checkpoint — 2026-10-28 16:39 UTC
+
+Relationship-review requests now reject evidence identifiers unless each is a
+lowercase 64-character SHA-256 digest, before the handler performs observation
+lookups. The same-payoff and logical-implication mappings remain bounded by
+their request model. A malformed-ID regression was added. Python syntax and
+`git diff --check` pass; pytest remains pending because CPU PSI is about 40% and
+swap has only about 1.2 MiB free. Implementation commit: `8c898dc`.
 
 The Coinbase source-status reason now lists the specific activities in the
 2026-08-07 Market Data Terms restriction: developing, training, fine-tuning,
