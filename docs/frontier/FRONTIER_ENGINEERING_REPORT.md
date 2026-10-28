@@ -12224,3 +12224,42 @@ PSI avg10/avg60/avg300 was 0%. Host `MemAvailable` was 9,666,780 kB and
 Next safe action: continue review of source-independent relationship and
 opportunity verification; reserve broad suites for adequate protected-service
 headroom or an isolated host.
+
+## Payoff-equivalence fail-closed review — 2026-10-28 21:46 UTC
+
+The existing `verify_same_payoff` path requires distinct venues and supported
+event-contract structures, exhaustive verified state sets, a bijective state
+and instrument mapping, equal payout vectors, matching settlement asset
+identity, and matching resolution fingerprint, authority, close time, and
+settlement time. It also binds the assertion to each market's pinned source
+observation and rejects an assertion timestamp that predates either source
+record. The verifier requires an external assertion; it does not claim that
+string similarity or matching titles prove resolution semantics.
+
+Candidate generation independently reruns structural checks. The focused
+tests include a forged `VERIFIED` relationship over mismatched settlement
+semantics and confirm the candidate remains incomplete. The fail-closed
+relationship slice passes **5/5** in 0.33 seconds under a 1 GiB address-space
+limit, 60-second CPU-time limit, and reduced process priority. It covers
+spot-versus-event rejection, same-ticker assets on different networks, pinned
+evidence identity and timing, payout currency/settlement mismatch, and the
+candidate guard against a forged relationship. No venue request was made; no
+code change was warranted.
+
+At `2026-10-28T21:46:10Z`, both protected services were active. Reality used
+1,200,824,320 / 1,207,959,552 bytes at `MemoryHigh` (7,135,232 bytes below);
+API used 1,606,815,744 / 1,610,612,736 bytes (3,796,992 bytes below). Memory
+PSI avg10/avg60/avg300 was 0%. `MemAvailable` was 9,656,552 kB and `SwapFree`
+was 51,228 kB. No protected service was changed. Broad regressions remain
+deferred under the API memory boundary.
+
+| Requirement | Status | Evidence and boundary |
+| --- | --- | --- |
+| Exact payoff-equivalence structure | COMPLETE AND VERIFIED WITH FIXTURES | Mapping bijections, exhaustive payoff vectors, settlement identity, and timing/authority fields are checked. |
+| Pinned source evidence and assertion order | COMPLETE AND VERIFIED WITH FIXTURES | Both market observations are required; predating and shared evidence are rejected. |
+| Semantic resolution equivalence | PARTIALLY VERIFIED | The system requires an external assertion and matching fingerprint; public text similarity does not certify semantics. |
+| Spot and asset-identity safeguards | COMPLETE AND VERIFIED WITH FIXTURES | Spot/event structures and same-ticker cross-network settlement identities do not pass as equivalent. |
+| Project Frontier overall | PARTIALLY VERIFIED | Live relationship evidence, broad regression, endurance, recovery, and deployment remain open. |
+
+Next safe action: inspect logical-implication verification and candidate
+classification boundaries with focused fixtures; keep broad suites deferred.

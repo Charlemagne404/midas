@@ -11328,3 +11328,34 @@ No service changed.
 
 Next safe action: review independent relationship and opportunity verification;
 defer broad regressions until protected headroom is suitable.
+
+## Payoff-equivalence fail-closed review — 2026-10-28 21:46 UTC
+
+The same-payoff verifier requires explicit external assertion evidence, distinct
+venues, supported event contracts, exhaustive payout vectors, bijective state
+and instrument mappings, settlement identity, and matching resolution
+fingerprint/authority/times. It binds the assertion to both pinned observations
+and rejects a predating assertion. Candidate generation repeats structural
+checks, so a forged verified edge cannot bypass an incompatible settlement.
+
+Focused fixture tests pass **5/5** in 0.33 seconds under a 1 GiB address-space
+limit, 60-second CPU-time limit, and reduced priority. They cover spot/event
+rejection, same ticker on different networks, pinned source evidence and
+assertion time, settlement mismatches, and the candidate-side forged-edge guard.
+No exchange endpoint was queried; no code change was needed.
+
+At `2026-10-28T21:46:10Z`, Reality was 7,135,232 bytes below its
+1,207,959,552-byte `MemoryHigh`; API was 3,796,992 bytes below its
+1,610,612,736-byte boundary. Both services were active, memory PSI was 0%,
+available memory was 9,656,552 kB and swap free was 51,228 kB. No service
+changed.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Same-payoff mathematical verification | COMPLETE AND VERIFIED WITH FIXTURES | Exact outcome and settlement conditions are checked against source-pinned inputs. |
+| Semantic resolution validation | PARTIALLY VERIFIED | The supplied external assertion/fingerprint remains a semantic trust boundary. |
+| Candidate revalidation of relationship | COMPLETE AND VERIFIED WITH FIXTURES | Forged state does not bypass structural payoff or settlement checks. |
+| Project Frontier overall | PARTIALLY VERIFIED | Live sources, broad regression, endurance, recovery, and deployment remain open. |
+
+Next safe action: review logical implication and dependent-market candidate
+classification with fixture-only checks.

@@ -3687,3 +3687,18 @@ At `2026-10-28T21:43:49Z`, Reality and API were active. Reality used
 1,610,612,736 bytes. Memory PSI was 0%, `MemAvailable` was 9,666,780 kB, and
 `SwapFree` was 51,200 kB. No service or configuration changed. Broad regression
 and deployment remain deferred.
+
+## Project Frontier payoff-equivalence review — 2026-10-28 21:46 UTC
+
+The focused same-payoff fail-closed slice passes **5/5** in 0.33 seconds. It
+verifies explicit external assertions, pinned market evidence and assertion
+timing, exhaustive outcome mappings, settlement identity, and candidate-side
+structural revalidation. Spot/event structures, cross-network same-ticker
+assets, and forged verified relationships do not create eligible equivalence.
+No venue endpoint was queried and no code change was needed.
+
+At `2026-10-28T21:46:10Z`, Reality and API were active. Reality used
+1,200,824,320 / 1,207,959,552 bytes at `MemoryHigh`; API used 1,606,815,744 /
+1,610,612,736 bytes. Memory PSI was 0%, `MemAvailable` was 9,656,552 kB, and
+`SwapFree` was 51,228 kB. No service changed. Semantic resolution evidence,
+live relationship validation, broad regression, and deployment remain open.
