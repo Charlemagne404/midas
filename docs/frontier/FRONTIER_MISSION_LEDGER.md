@@ -1,5 +1,33 @@
 # Project Frontier Mission Ledger
 
+## Exact-tree probe hold and suite verification — 2026-10-28 11:55 UTC
+
+Strict mypy passes for the final source-hold path in `apps/api/frontier.py`,
+`packages/midas/frontier/adapters/base.py`, and
+`packages/midas/frontier/adapters/coinbase.py` (**3 source files**, no issues).
+The exact current Frontier tree then passed **420/420** tests in **29.02 s**
+pytest time (**30.50 s** wall), with **378,276 KiB** peak RSS, zero swaps,
+filesystem input, and socket messages, and 912 filesystem-output blocks. One
+existing Starlette/httpx deprecation warning remains.
+
+At `11:55:04Z` before the run, memory PSI avg10 was **0.00%**, I/O was
+**0.85% some / 0.70% full**, and about **10 GiB** was available. At
+`11:55:41Z` afterward, memory PSI remained **0.00%**, I/O was **0.91% some /
+0.63% full**, and about **10 GiB** remained available. This run is exact-tree
+verification after `4b8c9f0`'s type-narrowing refactor.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Coinbase source-use hold | COMPLETE AND VERIFIED | Coinbase config, adapter, transport, and API regressions pass in the exact 420-test suite. |
+| API source-use hold | COMPLETE AND VERIFIED | All 11 probe routes enforce policy; effective availability is surfaced; strict mypy passes. |
+| Frontier Python regression | COMPLETE AND VERIFIED | 420/420 current-tree tests pass; one existing deprecation warning. |
+| Frontier overall | PARTIALLY VERIFIED | Cross-venue permissions/evidence, broader repository/browser acceptance, and deployment remain open. |
+
+**Next safe action:** continue with source-independent full-repository and
+frontend acceptance checks after a fresh resource sample. Keep live cross-venue
+data use and production transition behind their existing permission and
+deployment gates.
+
 ## Probe source-use hold closeout and exact-tree checks — 2026-10-28 11:53 UTC
 
 Commits `782df89`, `9776427`, and `4b8c9f0` enforce source-use holds across

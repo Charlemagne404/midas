@@ -2,6 +2,32 @@
 
 **Report date:** 2026-10-28
 
+## Current status — 2026-10-28 11:55 UTC
+
+Strict mypy passes on the current API guard, base adapter, and Coinbase adapter:
+`apps/api/frontier.py`, `packages/midas/frontier/adapters/base.py`, and
+`packages/midas/frontier/adapters/coinbase.py` report **no issues in 3 source
+files**. The exact current `tests/frontier` tree then passed **420/420** in
+**29.02 seconds** (30.50 s wall). Peak RSS was **378,276 KiB**, with zero
+swaps, zero filesystem input, 912 filesystem-output blocks, and zero socket
+messages. One existing Starlette/httpx `TestClient` deprecation warning
+remains.
+
+The pre-run sample at `11:55:04Z` showed memory PSI avg10 **0.00%**, I/O PSI
+**0.85% some / 0.70% full**, and about **10 GiB** available. After the run at
+`11:55:41Z`, memory PSI remained **0.00%**, I/O was **0.91% some / 0.63%
+full**, and about **10 GiB** remained available. The test process used no swap.
+This closes the earlier type-narrowing rerun; the API guard’s exact current
+tree is both type-checked and fully covered by `tests/frontier`.
+
+| Requirement | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Coinbase source-use hold | COMPLETE AND VERIFIED | Source-specific config, adapter, transport, and API checks pass in the full current suite. |
+| API source-use hold | COMPLETE AND VERIFIED | All 11 probe routes reject held config before work; source status reports effective eligibility; strict mypy and 420 tests pass. |
+| Full Frontier Python suite | COMPLETE AND VERIFIED | 420/420 on current code; 29.02 s, 378,276 KiB peak RSS, zero swaps and filesystem input. |
+| Cross-venue live semantic/economic validation | BLOCKED | Current terms and held-capture restrictions remain; fixtures do not establish live equivalence. |
+| Full Frontier project | PARTIALLY VERIFIED | Broader MIDAS/browser gates, genuine cross-venue evidence, and deployment remain separate open criteria. |
+
 ## Current status — 2026-10-28 11:53 UTC
 
 Commits `782df89`, `9776427`, and `4b8c9f0` complete the source-use hold path:
@@ -8870,6 +8896,7 @@ store, or Arena job was accessed or started.
 | `2315615` | `docs/MIDAS_CURRENT_STATE.md`; `docs/frontier/FRONTIER_ENGINEERING_REPORT.md`; `docs/frontier/FRONTIER_MISSION_LEDGER.md` | Record the Kraken fixture config alignment. |
 | `9577355` | `docs/MIDAS_CURRENT_STATE.md`; `docs/frontier/FRONTIER_ENGINEERING_REPORT.md`; `docs/frontier/FRONTIER_MISSION_LEDGER.md` | Record API source-use hold preflight and its regression evidence. |
 | `afde92c` | `docs/frontier/FRONTIER_ENGINEERING_REPORT.md`; `docs/frontier/FRONTIER_MISSION_LEDGER.md`; `docs/MIDAS_CURRENT_STATE.md` | Record resource-gated Coinbase policy regression status. |
+| `fbb46e4` | `docs/MIDAS_CURRENT_STATE.md`; `docs/frontier/FRONTIER_ENGINEERING_REPORT.md`; `docs/frontier/FRONTIER_MISSION_LEDGER.md` | Record the 11:53 status, full-suite result before the type-narrowing refactor, and PSI hold. |
 
 The temporary `tests/frontier/test_recorded_cross_venue_relationship.py` was
 removed after the test guard denied held-capture access; it is not part of the

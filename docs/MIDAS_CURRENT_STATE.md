@@ -2583,3 +2583,17 @@ remain pending. At `11:53:54Z`, memory PSI avg10 was **1.16% some / 1.02%
 full**, I/O PSI **0.91% some / 0.83% full**, and about **10 GiB** was
 available. No live source, protected service, or deployment was used.
 Frontier remains research-only and **PARTIALLY VERIFIED**.
+
+### Exact Frontier source-hold verification — 2026-10-28 11:55 UTC
+
+Strict mypy passes for the API hold guard, base adapter, and Coinbase adapter.
+The exact current `tests/frontier` tree passes **420/420** in 29.02 seconds
+(30.50 seconds wall), with **378,276 KiB** peak RSS, zero swaps, zero
+filesystem input, and zero socket messages. One existing Starlette/httpx test
+client deprecation warning remains. Pre-run memory PSI avg10 was 0.00% and
+I/O PSI was **0.85% some / 0.70% full**; post-run memory remained 0.00% and
+I/O was **0.91% some / 0.63% full**, with about 10 GiB available. All 11
+probe routes reject a held source before transport work, and the source
+listing reports effective probe status. Live cross-venue evidence, broader
+MIDAS/browser acceptance, and deployment remain open; Frontier is **PARTIALLY
+VERIFIED** overall.
