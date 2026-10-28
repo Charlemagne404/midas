@@ -575,6 +575,7 @@ async def test_polymarket_v2_book_rejects_position_id_mismatch_before_request():
         "wrong_raw_instrument_ids",
         "wrong_native_instrument_id",
         "malformed_condition_id",
+        "missing_condition_id",
         "wrong_market_quote",
         "wrong_instrument_quote",
         "wrong_quantity_unit",
@@ -637,6 +638,10 @@ async def test_polymarket_book_binds_market_identity_before_request(corruption: 
             update={"instruments": (forged_instrument, *market.instruments[1:])}
         )
     elif corruption == "malformed_condition_id":
+        forged_market = market.model_copy(
+            update={"native_fields": {**market.native_fields, "conditionId": "not-a-condition"}}
+        )
+    elif corruption == "missing_condition_id":
         forged_market = market.model_copy(
             update={"native_fields": {**market.native_fields, "conditionId": None}}
         )
@@ -2499,7 +2504,7 @@ async def test_polymarket_legacy_trades_bind_condition_and_token_and_preserve_un
     assert all(trade.native_instrument_id == "1234567890" for trade in trades)
     assert all(trade.native_trade_id == "0xfixture-shared-tx" for trade in trades)
     assert all(trade.aggressor_side is None for trade in trades)
-    assert trades[0].provenance.adapter_version == "frontier-polymarket-12"
+    assert trades[0].provenance.adapter_version == "frontier-polymarket-13"
     assert trades[0].provenance.observation_id != trades[1].provenance.observation_id
     assert len(captures) == 1 and captures[0].raw_body == body
     assert requests[0].url.params["market"] == condition_id

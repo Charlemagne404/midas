@@ -49,7 +49,7 @@ from midas.frontier.models import (
 from midas.market_data.polymarket import normalize_market
 
 D = Decimal
-ADAPTER_VERSION = "frontier-polymarket-12"
+ADAPTER_VERSION = "frontier-polymarket-13"
 GAMMA = "https://gamma-api.polymarket.com"
 CLOB = "https://clob.polymarket.com"
 CLOB_V2 = "https://clob-v2.polymarket.com"
@@ -476,6 +476,7 @@ class PolymarketAdapter(BaseReadOnlyAdapter):
             or not isinstance(condition_id, str)
             or not condition_id.strip()
             or len(condition_id) > 256
+            or not re.fullmatch(r"0x[0-9a-fA-F]{64}", condition_id)
             or market.market_kind not in {MarketKind.BINARY_EVENT, MarketKind.MULTI_OUTCOME_EVENT}
             or len(market.instruments) < 2
             or len(market.payoff.state_ids) != len(market.instruments)
