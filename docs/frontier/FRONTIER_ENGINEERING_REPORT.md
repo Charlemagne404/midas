@@ -5902,3 +5902,26 @@ already-known market IDs are a possible bounded way to hydrate those known
 markets, but cannot prove the complete event outcome set. No additional source
 requests were made for this documentation review. The observed event's payoff
 and exhaustiveness remain unverified.
+
+## Full regression after response-rejection schema change — 2026-10-28 03:32 UTC
+
+Following commit `c91bdf43f125b15279907d4ca53291f377b58387`, a fresh 768-MiB
+resource admission check passed and the complete `tests/frontier` suite plus
+the selected Arena discovery, replay, timeline, and job tests passed **387/387**
+in 90.74 seconds pytest time (92.21 seconds process wall). Maximum RSS was
+**379,240 KiB**, with zero swaps and zero socket messages. The existing
+Starlette/httpx TestClient deprecation warning remains. This closes the
+Frontier and selected Arena regression for the new raw-observation schema v2
+and rejection metadata path; it is not a full repository regression.
+
+At `2026-10-28T03:32:45Z`, the post-run 768-MiB gate denied additional work with
+`host_memory_pressure`. Memory PSI avg10 was **41.42% some / 36.83% full** and
+I/O PSI avg10 was **7.68% some / 7.20% full**; about **10.1 GiB** was available.
+Read-only inspection found external Veritas PID **4132908** running
+`scripts/veritas_gap_detail_v2_batch.py` against the shared Arena root. It was
+left untouched. No further resource-bearing checks were started.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Frontier plus selected Arena regression after schema v2 | COMPLETE AND VERIFIED | 387/387 pass with 379,240 KiB peak RSS, zero swaps, and zero socket messages. |
+| Project Frontier overall | PARTIALLY VERIFIED | Cross-venue payoff validation, held-source permission, broad scientific and production acceptance, and deployment remain incomplete. |

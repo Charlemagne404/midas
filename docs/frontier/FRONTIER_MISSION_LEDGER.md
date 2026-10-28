@@ -4242,3 +4242,40 @@ query keyed by the Gamma event ID. The previously observed 13-child event
 therefore remains subject to Frontier's 256-KiB response cap. Known market
 IDs can be fetched individually, but that cannot establish event outcome-set
 exhaustiveness. No additional public requests were made during this review.
+
+### Combined post-diagnostic regression — 2026-10-28 03:32 UTC
+
+After commit `c91bdf43f125b15279907d4ca53291f377b58387`, a fresh 768-MiB
+resource preflight passed with no active Arena jobs, low memory pressure, and
+about 10.1 GiB available. The full Frontier suite plus the selected Arena
+discovery/replay/timeline/jobs modules then passed **387/387**:
+
+```bash
+/usr/bin/time -v env PYTHONPATH=packages:. \
+  /home/charlie/midas/.venv/bin/python -m pytest -q \
+  tests/frontier \
+  tests/arena/test_frontier_discovery.py \
+  tests/arena/test_frontier_replay.py \
+  tests/arena/test_frontier_timeline.py \
+  tests/arena/test_jobs.py
+```
+
+The run took **90.74 seconds** in pytest (**92.21 seconds** process wall),
+peaked at **379,240 KiB RSS**, used zero swap, and sent or received zero socket
+messages. The existing Starlette/httpx TestClient deprecation warning remains.
+This closes the full Frontier regression and selected Arena regression for
+the response-rejection schema change; it does not represent the full MIDAS
+repository suite.
+
+At `2026-10-28T03:32:45Z`, the post-run 768-MiB gate denied further resource
+work with `host_memory_pressure`: memory PSI avg10 was **41.42% some / 36.83%
+full**, I/O PSI avg10 was **7.68% some / 7.20% full**, and about **10.1 GiB**
+was available. Read-only process inspection identified PID **4132908** running
+the external `scripts/veritas_gap_detail_v2_batch.py` against the shared Arena
+root. It was left untouched. No more resource-bearing checks were started.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Full Frontier plus selected Arena regression after schema v2 | COMPLETE AND VERIFIED | 387/387 pass; 379,240 KiB peak RSS, zero swaps, zero socket messages. The complete repository suite is outside this run. |
+| Post-run resource admission | BLOCKED FOR MORE RESOURCE WORK | Fresh post-run gate denied high memory PSI while external Veritas PID 4132908 held the shared lock; preserve the batch and remeasure later. |
+| Project Frontier overall | PARTIALLY VERIFIED | Genuine cross-venue payoff equivalence, held-source permission, broad production readiness, and deployment remain open. |

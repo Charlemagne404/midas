@@ -1615,3 +1615,16 @@ child-market pagination keyed by Gamma event ID. The event response-size limit
 therefore remains an adapter constraint; hydrating known market IDs separately
 cannot establish an exhaustive outcome set. This documentation check made no
 additional market-data requests.
+
+### Frontier regression after response-size diagnostics — 2026-10-28 03:32 UTC
+
+After commit `c91bdf43f125b15279907d4ca53291f377b58387`, the complete Frontier
+and selected Arena regression passed **387/387** in 90.74 seconds pytest time
+(92.21 seconds process wall), with **379,240 KiB** peak RSS, zero swaps, and
+zero socket messages. A fresh 768-MiB preflight admitted the run. At the
+post-run sample, memory PSI avg10 had risen to **41.42% some / 36.83% full**;
+the gate denied further work while external Veritas PID **4132908** held the
+shared lock. It was not interrupted. This supersedes the earlier dated note
+that the full Frontier suite had not yet been rerun after schema v2. The full
+MIDAS repository suite remains outside this checkpoint; Frontier remains
+isolated, research-only, **PARTIALLY VERIFIED**, and undeployed.
