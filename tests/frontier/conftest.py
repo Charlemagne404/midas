@@ -8,18 +8,22 @@ from typing import Any
 
 import pytest
 
-_HELD_SOURCE_PATH_PARTS = ("data", "frontier", "live-" + "probes")
+_LIVE_SOURCE_PATH_PARTS = (
+    ("data", "frontier", "live-" + "probes"),
+    ("data", "frontier-" + "public", "probes"),
+)
 
 
-def _has_held_source_path_parts(path_value: str) -> bool:
+def _has_live_source_path_parts(path_value: str) -> bool:
     parts = Path(os.path.normpath(path_value)).parts
-    width = len(_HELD_SOURCE_PATH_PARTS)
     return any(
-        parts[index : index + width] == _HELD_SOURCE_PATH_PARTS for index in range(len(parts))
+        parts[index : index + len(root_parts)] == root_parts
+        for root_parts in _LIVE_SOURCE_PATH_PARTS
+        for index in range(len(parts))
     )
 
 
-def _is_held_source_path(value: object, *, dir_fd: int | None = None) -> bool:
+def _is_captured_live_source_path(value: object, *, dir_fd: int | None = None) -> bool:
     try:
         path_value = os.fspath(value)
     except TypeError:
@@ -34,16 +38,16 @@ def _is_held_source_path(value: object, *, dir_fd: int | None = None) -> bool:
             return True
         path = os.path.join(directory, path)
     try:
-        return _has_held_source_path_parts(os.path.realpath(path))
+        return _has_live_source_path_parts(os.path.realpath(path))
     except (OSError, ValueError):
         return True
 
 
 @pytest.fixture(autouse=True)
-def deny_held_source_capture_io(monkeypatch: pytest.MonkeyPatch) -> None:
+def deny_captured_live_source_io(monkeypatch: pytest.MonkeyPatch) -> None:
     def deny(path: object, *, dir_fd: int | None = None) -> None:
-        if _is_held_source_path(path, dir_fd=dir_fd):
-            raise PermissionError("Frontier tests may not access held source captures")
+        if _is_captured_live_source_path(path, dir_fd=dir_fd):
+            raise PermissionError("Frontier tests may not access captured live source data")
 
     original_builtin_open = builtins.open
     original_io_open = io.open
