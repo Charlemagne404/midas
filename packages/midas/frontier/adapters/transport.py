@@ -26,6 +26,7 @@ D = Decimal
 REQUEST_COUNT_WINDOW_SECONDS = 60.0
 REQUEST_COUNT_HISTORY_MAX = 301
 MAX_JSON_NESTING_DEPTH = 64
+SAFE_HTTP_CLIENT_HEADERS = frozenset({"accept", "accept-encoding", "connection", "user-agent"})
 
 
 class _DuplicateJSONKeyError(ValueError):
@@ -91,19 +92,25 @@ class PublicReadTransport:
         self.allowed_hosts = frozenset(host.lower() for host in allowed_hosts)
         self.config = config
         self._owns_client = client is None
-        self.client = client or httpx.AsyncClient(
-            timeout=httpx.Timeout(config.timeout_seconds),
-            follow_redirects=False,
-            headers={
-                "Accept": "application/json",
-                "User-Agent": "MIDAS-Frontier/0.1 (public read-only research)",
-            },
-            limits=httpx.Limits(max_connections=4, max_keepalive_connections=2),
+        self.client = (
+            client
+            if client is not None
+            else httpx.AsyncClient(
+                timeout=httpx.Timeout(config.timeout_seconds),
+                follow_redirects=False,
+                headers={
+                    "Accept": "application/json",
+                    "User-Agent": "MIDAS-Frontier/0.1 (public read-only research)",
+                },
+                limits=httpx.Limits(max_connections=4, max_keepalive_connections=2),
+            )
         )
         self._lock = asyncio.Lock()
+        self._request_lock = asyncio.Lock()
         self._last_start = 0.0
         self.request_count = 0
         self._request_starts_monotonic: deque[float] = deque(maxlen=REQUEST_COUNT_HISTORY_MAX)
+        self._validate_client_configuration()
 
     async def close(self) -> None:
         if self._owns_client:
@@ -122,6 +129,27 @@ class PublicReadTransport:
         ):
             raise AdapterError(
                 "URL_NOT_ALLOWLISTED", "Request URL is outside the HTTPS host allowlist"
+            )
+
+    def _validate_client_configuration(self) -> None:
+        """Reject injected client state that could add credentials or widen requests."""
+        base_url = self.client.base_url
+        if (
+            self.client.auth is not None
+            or self.client.follow_redirects
+            or len(self.client.cookies) > 0
+            or len(self.client.params) > 0
+            or base_url.scheme
+            or base_url.host
+            or base_url.username
+            or base_url.password
+            or base_url.path not in {"", "/"}
+            or base_url.query
+            or any(self.client.event_hooks.values())
+            or any(name.lower() not in SAFE_HTTP_CLIENT_HEADERS for name in self.client.headers)
+        ):
+            raise ValueError(
+                "Public read transport requires an anonymous client with no defaults or hooks"
             )
 
     async def _pace(self) -> None:
@@ -165,6 +193,24 @@ class PublicReadTransport:
         *,
         max_retries: int | None = None,
     ) -> HTTPObservation:
+        # HTTPX stores Set-Cookie values on the client. Serialize requests so the
+        # jar can be emptied before and after every public read without a racing
+        # request sending another response's cookie.
+        async with self._request_lock:
+            self.client.cookies.clear()
+            try:
+                self._validate_client_configuration()
+                return await self._get_json(url, params, max_retries=max_retries)
+            finally:
+                self.client.cookies.clear()
+
+    async def _get_json(
+        self,
+        url: str,
+        params: dict[str, str | int] | None = None,
+        *,
+        max_retries: int | None = None,
+    ) -> HTTPObservation:
         self._validate_url(url)
         if self.config.probe_policy_block_reason is not None:
             raise AdapterError("SOURCE_USE_HELD", self.config.probe_policy_block_reason)
@@ -179,7 +225,18 @@ class PublicReadTransport:
             started_monotonic_ns = time.monotonic_ns()
             started = datetime.now(UTC)
             try:
-                async with self.client.stream("GET", url, params=params) as response:
+                async with self.client.stream(
+                    "GET",
+                    url,
+                    params=params,
+                    auth=None,
+                    follow_redirects=False,
+                    timeout=httpx.Timeout(self.config.timeout_seconds),
+                    headers={
+                        "Accept": "application/json",
+                        "User-Agent": "MIDAS-Frontier/0.1 (public read-only research)",
+                    },
+                ) as response:
                     request_url = str(response.url)
                     self._validate_url(request_url)
                     if response.history:

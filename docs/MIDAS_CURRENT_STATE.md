@@ -33,6 +33,22 @@ in the dated addendum below and in the Frontier engineering report.
 
 ## Frontier development addendum — 2026-10-28
 
+### Latest isolated Frontier checkpoint — 2026-10-28 12:26 UTC
+
+The public transport now rejects injected HTTP clients carrying auth, sensitive
+headers, cookies, request hooks, default query parameters, base URLs, or
+redirect settings. Requests enforce anonymous GETs, configured timeouts, no
+redirects, and cookie cleanup. Strict mypy and Ruff pass.
+
+The exact current Frontier Python suite passes **430/430**. Focused transport,
+adapter/Coinbase, and collection slices pass **15/15**, **84/84**, and
+**27/27**; the corrected Reality schedule module passes **4/4**. Those bounded
+runs report zero swaps and socket messages. Pre/post full-suite samples show
+memory and I/O PSI avg10 at 0.00%. No live source, protected store, or service
+was accessed. Frontier remains **PARTIALLY VERIFIED**, research-only, isolated,
+and undeployed; source authorization and broader repository acceptance remain
+open.
+
 ### Latest isolated Frontier checkpoint — 2026-10-28 12:20 UTC
 
 At 12:20:05Z memory PSI avg10 remained 36.90% some / 27.21% full; I/O PSI

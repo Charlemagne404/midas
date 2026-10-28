@@ -27,6 +27,72 @@ async def test_network_is_disabled_without_explicit_public_probe_configuration()
     assert calls == 0
 
 
+@pytest.mark.parametrize(
+    "client_options",
+    [
+        pytest.param({"auth": ("researcher", "secret")}, id="auth"),
+        pytest.param({"headers": {"Authorization": "Bearer secret"}}, id="authorization"),
+        pytest.param({"headers": {"X-API-Key": "secret"}}, id="api-key-header"),
+        pytest.param({"cookies": {"session": "secret"}}, id="cookie"),
+        pytest.param({"params": {"api_key": "secret"}}, id="default-query"),
+        pytest.param({"follow_redirects": True}, id="redirects"),
+        pytest.param({"base_url": "https://example.com/"}, id="base-url"),
+        pytest.param(
+            {"event_hooks": {"request": [lambda request: request]}},
+            id="request-hook",
+        ),
+    ],
+)
+@pytest.mark.asyncio
+async def test_transport_rejects_authenticated_or_mutating_injected_clients(client_options):
+    calls = 0
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal calls
+        calls += 1
+        return httpx.Response(200, json={"ok": True}, request=request)
+
+    client = httpx.AsyncClient(transport=httpx.MockTransport(handler), **client_options)
+    try:
+        with pytest.raises(ValueError, match="anonymous client"):
+            PublicReadTransport(
+                {"example.com"},
+                AdapterConfig(enabled=True, live_public_probe_enabled=True),
+                client=client,
+            )
+    finally:
+        await client.aclose()
+    assert calls == 0
+
+
+@pytest.mark.asyncio
+async def test_transport_does_not_retain_or_resend_source_cookies():
+    requests: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        return httpx.Response(
+            200,
+            json={"ok": True},
+            headers={"Set-Cookie": "source-session=fixture; Path=/"},
+            request=request,
+        )
+
+    client = httpx.AsyncClient(transport=httpx.MockTransport(handler))
+    transport = PublicReadTransport(
+        {"example.com"},
+        AdapterConfig(enabled=True, live_public_probe_enabled=True),
+        client=client,
+    )
+    try:
+        await transport.get_json("https://example.com/markets")
+        assert len(client.cookies) == 0
+        assert len(requests) == 1
+        assert "cookie" not in requests[0].headers
+    finally:
+        await client.aclose()
+
+
 @pytest.mark.asyncio
 async def test_transport_rejects_host_redirect_and_oversized_response():
     def handler(request: httpx.Request) -> httpx.Response:

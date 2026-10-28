@@ -2,6 +2,41 @@
 
 **Report date:** 2026-10-28
 
+## Public transport security and current verification — 2026-10-28 12:26 UTC
+
+Security review found that the optional injected `httpx.AsyncClient` could
+carry authorization headers/auth handlers, cookies, request hooks, default
+query parameters, or redirect behavior. `PublicReadTransport` now rejects
+those defaults, revalidates client state for each call, pins anonymous GETs to
+configured timeouts with redirects disabled, and clears response cookies while
+serializing requests. The request method remains GET-only.
+
+The current source tree passes `tests/frontier` **430/430** in 28.96 seconds.
+Focused tests pass for transport **15/15**, adapters plus Coinbase **84/84**,
+collection **27/27**, and the corrected Reality schedule module **4/4**. Peak
+RSS for those respective focused runs was 56,888 KiB, 79,156 KiB, 70,400 KiB,
+and 163,236 KiB; all reported zero swaps and zero socket messages. Strict mypy
+reports no issues in the changed collection and transport modules. Ruff check,
+Ruff format, and whitespace checks pass. The Frontier suite emitted one
+existing Starlette/httpx `TestClient` deprecation warning.
+
+Full-suite pre/post samples at `12:25:36Z` and `12:26:13Z` showed memory and
+I/O PSI avg10 at **0.00%** and about **10 GiB** available. Tests used a tmpfs
+basetemp. No external source, production service, or protected store was
+accessed. Live cross-venue equivalence remains blocked by source-use holds and
+the held-capture boundary. Frontier remains **PARTIALLY VERIFIED** and
+undeployed; broader legacy/browser regression and deployment readiness remain
+open.
+
+| Requirement | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Exchange-independent read transport security | COMPLETE AND VERIFIED | No-auth/no-redirect/client-state regressions; 15 transport, 84 adapter, and 430 full Frontier tests pass; strict mypy passes. |
+| Atomic finite collection startup | COMPLETE AND VERIFIED | One SQLite transaction for run plus sequence-zero checkpoint; rollback regression and collection lifecycle module pass. |
+| Frontier Python suite | COMPLETE AND VERIFIED | 430/430 on exact current source tree. |
+| Broader MIDAS regression | PARTIALLY VERIFIED | Selected legacy slices pass; other legacy modules and browser acceptance remain. |
+| Genuine cross-venue validation | BLOCKED | No authorized genuine multi-venue relationship or eligible economic result established. |
+| Production deployment | DEFERRED | Frontier remains isolated; no deployment was performed. |
+
 ## Resource admission recheck — 2026-10-28 12:20 UTC
 
 At `12:20:05Z`, memory PSI avg10 was **36.90% some / 27.21% full** while

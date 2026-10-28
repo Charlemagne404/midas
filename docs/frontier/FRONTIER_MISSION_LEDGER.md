@@ -1,5 +1,52 @@
 # Project Frontier Mission Ledger
 
+## Anonymous public transport hardening and current regression — 2026-10-28 12:26 UTC
+
+Static security review found that `PublicReadTransport` accepted arbitrary
+injected `httpx.AsyncClient` state. A client configured with credentials,
+default query parameters, cookies, request hooks, a base URL, or redirects could
+widen requests beyond the transport's stated public-read contract. The
+transport now rejects those client configurations, rechecks before each
+request, forces anonymous GET/no-redirect/configured-timeout behavior, and
+clears source cookies under a per-transport request lock. Added regressions
+cover client authentication, sensitive headers, cookies, query defaults,
+hooks, redirects, base URLs, and server-set cookie cleanup.
+
+Verification on the exact current source tree:
+
+- `tests/frontier/test_transport.py`: **15/15** in 2.15 seconds, 56,888 KiB
+  peak RSS, zero swaps, zero socket messages.
+- `tests/frontier/test_adapters.py tests/frontier/test_coinbase.py`: **84/84**
+  in 2.95 seconds, 79,156 KiB peak RSS, zero swaps and socket messages.
+- `tests/frontier/test_collection.py`: **27/27** in 1.95 seconds,
+  70,400 KiB peak RSS, zero swaps and socket messages. This includes the
+  atomic initial-checkpoint rollback regression.
+- `tests/test_reality_research_schedule.py`: **4/4** in 1.56 seconds,
+  163,236 KiB peak RSS, zero swaps and socket messages; the corrected module
+  alias now produces distinct dataset periods.
+- Full `tests/frontier`: **430/430** in 28.96 seconds with the existing
+  Starlette/httpx deprecation warning. Pre/post PSI avg10 was 0.00% for memory
+  and I/O; about 10 GiB was available. Test state was isolated under
+  `/dev/shm`.
+- Strict mypy: **no issues in 2 source files** (`collection.py` and
+  `adapters/transport.py`). Ruff check/format and `git diff --check` pass.
+
+No live exchange source, protected store, production service, or account was
+used. The preserved untracked public-capture directory remains untouched.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Public HTTP transport anonymous-client boundary | COMPLETE AND VERIFIED | Injected credential/default-state rejection, redirect override, configured timeout, and cookie cleanup; 15 transport tests plus 84 adapter/API-adjacent tests and strict typing pass. |
+| Atomic collection run/checkpoint creation | COMPLETE AND VERIFIED | Rollback trigger regression and 27/27 collection lifecycle tests pass. |
+| Corrected Reality schedule fixture | COMPLETE AND VERIFIED | 4/4 schedule tests pass with distinct generated dataset IDs. |
+| Full Frontier Python regression | COMPLETE AND VERIFIED | 430/430 pass on the exact current source tree. |
+| Genuine cross-venue equivalence and economics | BLOCKED | Source-use holds and held-capture boundary remain; no live match is claimed. |
+| Frontier overall | PARTIALLY VERIFIED | Broader MIDAS/browser regression, production recovery, and deployment remain open. |
+
+Next safe action: continue bounded, source-independent MIDAS regressions;
+re-measure host PSI before each workload. Keep source-use holds and the
+production/deployment boundary intact.
+
 ## Memory pressure persists — 2026-10-28 12:20 UTC
 
 At `12:20:05Z`, memory PSI avg10 remained **36.90% some / 27.21% full**;
