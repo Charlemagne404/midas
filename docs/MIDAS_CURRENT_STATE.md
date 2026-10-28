@@ -1799,3 +1799,13 @@ supervisor completion, a populated live-store browser flow, or source quality.
 Frontier remains isolated, research-only, **PARTIALLY VERIFIED**, and
 undeployed. Continue with a fresh host admission sample before rerunning the
 focused test, frontend lint/format checks, and typecheck.
+
+### Protected Arena lock recheck — 2026-10-28 07:17 UTC
+
+At `2026-10-28T07:17:18Z`, PID **124298** (`midas-veritas-gap-detail-v2.service`)
+held `/home/charlie/midas/data/arena/.global-admission.lock`. The worker was
+left untouched. Memory PSI avg10 was **36.43% some / 28.38% full** and I/O PSI
+avg10 **0.02% some / 0.02% full**. The earlier check used a relative path in
+the Frontier worktree, not the protected shared lock, and is superseded. No
+resource-bearing checks were started; rerun only after memory pressure clears
+and the exact protected lock is free.

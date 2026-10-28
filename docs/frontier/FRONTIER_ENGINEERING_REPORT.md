@@ -7404,10 +7404,11 @@ browser case also awaits execution.
 
 At `2026-10-28T07:12:59Z`, memory PSI avg10 was **47.23% some / 42.98% full**,
 I/O PSI avg10 **0.75% some / 0.74% full**, with about **10 GiB** available.
-The expected shared Arena lock path was absent. No resource-bearing checks
-followed because memory pressure was above the admission threshold. This is a
-time-specific sample. The UI test did not read a persisted Arena store or
-contact any source.
+The lock check at that time inspected the Frontier worktree's relative
+`data/arena` path and did not establish the protected shared lock state. No
+resource-bearing checks followed because memory pressure was above the
+admission threshold. This is a time-specific sample. The UI test did not read
+a persisted Arena store or contact any source.
 
 | Component | Status | Evidence and remaining boundary |
 | --- | --- | --- |
@@ -7434,3 +7435,14 @@ Commit identities on `codex/frontier-20261026`:
 
 The working tree was clean at `91e61d7`. The commits remain local to the
 isolated Frontier branch; there was no merge, push, or deployment.
+
+## Protected host admission recheck — 2026-10-28 07:17 UTC
+
+At `2026-10-28T07:17:18Z`, the correct shared Arena lock at
+`/home/charlie/midas/data/arena/.global-admission.lock` was held by PID
+**124298**, the `midas-veritas-gap-detail-v2.service` worker. It was left
+untouched. Memory PSI avg10 was **36.43% some / 28.38% full**, and I/O PSI
+avg10 **0.02% some / 0.02% full**. Resource-bearing verification remains
+deferred until memory pressure clears and the same protected lock is free. The
+earlier relative-path check in this worktree did not prove the shared lock was
+free. No protected API, source, store, or service was changed.

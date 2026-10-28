@@ -6104,7 +6104,8 @@ reproducibility values.
 
 At `2026-10-28T07:12:59Z`, memory PSI avg10 was **47.23% some / 42.98% full**,
 I/O PSI avg10 **0.75% some / 0.74% full**, and about **10 GiB** was available;
-the expected `data/arena/.global-admission.lock` path was absent. No further
+the check at that time inspected the relative `data/arena` under the Frontier
+worktree and did not establish the protected shared-lock state. No further
 resource-bearing work was run after that sample. No protected API, source, or
 production store was accessed.
 
@@ -6124,3 +6125,15 @@ Checkpoint commits for this integration are `d396589` (Laboratory UI),
 (fixture-routed browser case), `87ef08e` (pending-verification handoff), and
 `91e61d7` (make reproducibility disclosure visible in test assertions). The
 working tree is clean at this checkpoint. No production branch was changed.
+
+## Correct shared Arena admission check — 2026-10-28 07:17 UTC
+
+The correct protected lock path,
+`/home/charlie/midas/data/arena/.global-admission.lock`, was held at
+`2026-10-28T07:17:18Z` by PID **124298**, running the Veritas gap-detail batch
+under `midas-veritas-gap-detail-v2.service`. The worker was left untouched.
+Memory PSI avg10 was **36.43% some / 28.38% full** and I/O PSI avg10
+**0.02% some / 0.02% full**. No test, build, or browser process was started
+after this sample. The prior relative-path check was not evidence that the
+shared lock was free. Recheck both PSI and this exact lock path before
+resource-bearing verification.
