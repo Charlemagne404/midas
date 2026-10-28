@@ -38,6 +38,12 @@ separate ECharts chunk still loads there. This reduces code loaded for
 unselected research workspaces without implying an equivalent reduction in the
 complete Mission Control transfer.
 
+Each lazy workspace is wrapped in an error boundary outside its Suspense
+loader. A failed chunk or render is contained to that workspace and shown as an
+accessible alert with a refresh instruction; the rest of Mission Control
+remains mounted. This guards the view against load-time failures but does not
+retry the same rejected module in place.
+
 ## Additional venue selection
 
 The current adapter set is limited to the four sources in the capability

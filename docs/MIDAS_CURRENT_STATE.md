@@ -1888,3 +1888,17 @@ avg10 was 0%, but I/O PSI was **1.64% some / 1.08% full**, so remaining broad
 regression was deferred under the 1% admission gate. The shared Arena lock was
 free and no worker, source, production service, or protected store was touched.
 Frontier remains isolated, research-only, and **PARTIALLY VERIFIED**.
+
+### Workspace load-failure containment — 2026-10-28 07:47 UTC
+
+Commit `8f5bf83` wraps lazy Mission Control workspaces in accessible error
+boundaries. A failed workspace chunk now displays a contained alert with a
+refresh instruction instead of taking down the workspace view. The complete
+web unit suite passes **44/44**, TypeScript, ESLint, and Prettier pass, and the
+production build succeeds. Default browser E2E passes **16** with **2**
+expected opt-in skips; seeded Frontier/Arena browser E2E passes **2/2** using
+disposable `/tmp` fixtures. Vite still reports the **544.41 kB** Chart chunk
+advisory. At 07:47:03 UTC, memory PSI avg10 was 0%, I/O PSI avg10 was **0.07%
+some / 0.04% full**, and about **10 GiB** was available. No exchange source,
+protected store, production service, or worker was accessed. Overall Frontier
+remains isolated, research-only, and **PARTIALLY VERIFIED**.

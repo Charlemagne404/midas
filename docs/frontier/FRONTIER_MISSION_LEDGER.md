@@ -6369,3 +6369,39 @@ service was accessed.
 **Next safe action:** continue source-independent review without launching
 resource-bearing jobs while the shared-host I/O gate is high. Rerun the
 remaining affected regressions only after a fresh admitted sample.
+
+## Lazy workspace failure containment — 2026-10-28 07:47 UTC
+
+**Stage:** F/G (native interface reliability and verification).
+**Code commit:** `8f5bf83` on `codex/frontier-20261026`.
+
+The chunk-splitting change left lazy workspaces with loading feedback but no
+local error UI. A rejected import could therefore escape the workspace view.
+Mission Control now wraps Chart, Readiness, Laboratory, Arena, Reality, Veritas,
+and Frontier in error boundaries outside their Suspense loaders. A failure
+shows an accessible alert scoped to the affected workspace, with an instruction
+to refresh. The boundary intentionally does not claim to retry a rejected
+module in place.
+
+Verification: the complete frontend unit suite passed **44/44**; TypeScript,
+ESLint, and Prettier passed; and `pnpm build` succeeded. The default browser
+suite passed **16** with **2** expected seeded-only skips. The separately
+enabled seeded Frontier/Arena suite passed **2/2**, reading the persisted
+fixture artifact into lazy-loaded Laboratory. It used only temporary `/tmp`
+stores. The production build emitted a **368.13 kB** entry JS chunk and the
+existing **544.41 kB** Chart/ECharts advisory; Mission Control still loads the
+chart on its initial view. At `2026-10-28T07:47:03Z`, memory PSI avg10 was
+**0.00% some/full**, I/O PSI avg10 was **0.07% some / 0.04% full**, and about
+**10 GiB** was available. No source, protected store, worker, or production
+service was accessed.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Lazy workspace loading and failure UI | COMPLETE AND VERIFIED | Seven lazy workspace boundaries; focused error-boundary test and full frontend unit/browser suites pass. |
+| Frontend production bundle | PARTIALLY VERIFIED | Build succeeds; initial chart still loads a 544.41 kB ECharts chunk and Vite keeps the size advisory. |
+| Project Frontier overall | PARTIALLY VERIFIED | Live cross-venue economic equivalence, held-source permissions, broad production readiness, and deployment remain open. |
+
+**Next safe action:** continue with source-independent scientific correctness
+and API/persistence review; use fresh host admission before broader replay or
+regression runs. Keep all held-source, production, and long-running research
+boundaries in place.

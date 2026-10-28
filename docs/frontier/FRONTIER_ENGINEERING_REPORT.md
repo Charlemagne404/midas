@@ -7624,3 +7624,38 @@ protected store, or Arena worker was touched.
 | Event-time snapshot cutoff input | COMPLETE AND VERIFIED | Naive cutoffs reject before normalization; targeted module passes. |
 | Broader regression after timestamp audit | PARTIALLY VERIFIED | Targeted economics/storage/Arena modules pass; adapter/API and full suite are deferred by I/O admission. |
 | Frontier overall | PARTIALLY VERIFIED | Live multi-venue equivalence, source permissions, complete production readiness, and deployment remain incomplete. |
+
+## Lazy workspace failure containment — 2026-10-28 07:47 UTC
+
+Commit `8f5bf83` wraps the seven lazy Mission Control workspaces in a shared
+error boundary outside Suspense. A rejected import or descendant render failure
+is now contained to its workspace and displayed as an accessible alert with a
+refresh instruction. The error boundary does not claim an in-place retry; it
+preserves the surrounding Mission Control shell.
+
+Verification on the isolated Frontier worktree:
+
+- Frontend unit tests: **44/44 passed**, including the error-boundary case.
+- TypeScript project build, ESLint, and Prettier check: passed.
+- Production frontend build: passed, with **2,229 modules transformed**.
+- Default Playwright suite: **16 passed**, **2 expected seeded-only skips**.
+- Seeded Frontier/Arena Playwright suite: **2/2 passed** against disposable
+  temporary stores, including the saved Arena discovery artifact in
+  lazy-loaded Laboratory.
+- Generated JS chunks include a **368.13 kB** entry, **182.75 kB** Frontier,
+  and the existing **544.41 kB** Chart/ECharts chunk. Vite still warns about
+  Chart's minified size; the initial Mission Control view loads that chart, so
+  the entry reduction must not be represented as an equivalent initial
+  transfer reduction.
+
+The latest admission sample at `2026-10-28T07:47:03Z` reported memory PSI
+avg10 **0.00% some/full**, I/O PSI avg10 **0.07% some / 0.04% full**, and
+approximately **10 GiB** available. Browser APIs were configured for local
+demo mode with temporary SQLite, Frontier, and Arena roots. No external source,
+protected database, production service, or worker was accessed.
+
+| Component | Status | Current evidence and remaining boundary |
+| --- | --- | --- |
+| Lazy workspace load feedback and failure containment | COMPLETE AND VERIFIED | Seven workspace boundaries; unit, full browser, and seeded persisted-artifact cases pass. |
+| Frontend build and workspace splitting | PARTIALLY VERIFIED | Build passes; 544.41 kB Chart chunk warning remains and loads for initial Mission Control. |
+| Frontier project acceptance | PARTIALLY VERIFIED | This UI reliability checkpoint does not close live equivalent-market, source-policy, broad resource, production-recovery, or deployment requirements. |

@@ -563,3 +563,9 @@ admission applies. The Laboratory tab neither copies data into Laboratory's
 single-market dataset schema nor starts a source request. A failed integrity
 check withholds summary details and should be treated as an artifact error, not
 as an empty or zero-result study.
+
+Lazy Mission Control workspaces show a loading message while their code chunk
+loads. If a workspace chunk or render fails, the workspace shows an accessible
+error alert instructing the operator to refresh Mission Control; other mounted
+workspace shell content remains available. The current boundary does not offer
+an in-place retry for a rejected chunk.
