@@ -1698,3 +1698,21 @@ validate deployed services. At 04:16:39 UTC, memory PSI avg10 was 0.00% some /
 and no process held the shared Arena lock. The full MIDAS suite and production
 deployment remain unverified; Frontier is still research-only and
 **PARTIALLY VERIFIED**.
+
+### Latest Frontier status and resource gate — 2026-10-28 04:18 UTC
+
+The 04:16 offline legacy API and paper-research regressions pass **10/10** in
+temporary roots. The Frontier code checkpoint also has the **352/352** Python
+suite, **40/40** web tests, **6/6** Frontier browser scenarios, the temporary
+production build, and **38/38** selected Arena consumers documented. No live
+cross-venue equivalence is established; current source-use holds remain in
+force. Frontier is isolated, research-only, **PARTIALLY VERIFIED**, and
+undeployed.
+
+At 04:17 UTC, the optional storage/recording regression was deferred after a
+shared Arena lock holder was found. Read-only inspection identified PID
+4170342 as `scripts/veritas_gap_detail_v2_batch.py` under
+`midas-veritas-gap-detail-v2.service`. At 04:18:00 UTC memory PSI avg10 was
+48.45% some / 43.86% full, I/O PSI avg10 0.79% / 0.79%, approximately 10 GiB
+was available, and 333 MiB of swap was free. The external process was left
+untouched; no additional tests or resource-bearing checks were started.

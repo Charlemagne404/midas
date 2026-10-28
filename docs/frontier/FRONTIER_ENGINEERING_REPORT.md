@@ -6136,3 +6136,38 @@ used. This increases confidence in compatibility and the research-only API
 boundary; it does not establish production behavior, cross-venue economic
 equivalence, or full MIDAS regression. Frontier remains **PARTIALLY VERIFIED**,
 isolated, research-only, and undeployed.
+
+## Current completion matrix and resource gate — 2026-10-28 04:18 UTC
+
+This is the latest consolidated status. The detailed historical sections above
+retain their original timestamps; this matrix incorporates the 04:07 code and
+build verification, the 04:09 API-description check, the 04:16 legacy API
+regressions, and the current host admission sample.
+
+| Requirement | Status | Current evidence and remaining boundary |
+| --- | --- | --- |
+| Isolated baseline and exchange-independent adapter foundation | COMPLETE AND VERIFIED | Separate worktree and branch; capability registry, bounded transports, source-specific adapters, and compatibility contracts are implemented. |
+| Polymarket, Kalshi, Kraken, and Coinbase adapters | PARTIALLY VERIFIED | Read-only adapters have fixture/contract coverage; one bounded Polymarket detail response was captured. Kalshi and Kraken remain held and Coinbase remains held pending terms-scope resolution; no fresh cross-venue request is claimed. |
+| Canonical instruments and payoff semantics | PARTIALLY VERIFIED | Versioned identities, native units, and bounded binary, one-hot, and basket semantics are implemented; broader instrument classes and sourced equivalence remain unsupported. |
+| Relationship graph and evidence | PARTIALLY VERIFIED | Bounded proposals, explicit verification states, append-only review evidence, persistence, and neighborhood APIs/UI are tested. No genuine verified cross-venue economic match exists; reviewer and external joint-state assertions are not authenticated. |
+| Opportunity generation and independent verification | PARTIALLY VERIFIED | Supported binary, implication, payoff-basket, and bounded joint-state arithmetic has independent checks and differential fixtures. No live positive or economically eligible opportunity is established. |
+| Venue costs, capital, and currency | PARTIALLY VERIFIED | Fee sensitivities, partial-fill stress, venue-separated virtual balances, and assumption-driven conversion scenarios exist. Sourced FX, custody/transfer access, account-specific costs, jurisdiction, and settlement risks remain unknown. |
+| Collection, provenance, storage, and deterministic replay | PARTIALLY VERIFIED | Bounded restartable collection, hash-chained checkpoints, immutable evidence, and replay are implemented and offline tested. Continuous feeds, complete source histories, and long-horizon source quality are unverified. |
+| Laboratory/Arena integration | PARTIALLY VERIFIED | Deterministic replay and bounded jobs are integrated; one short synthetic job completed under a real constrained transient unit. Selected Arena tests pass 38/38 after event-ID correction; sustained and production worker behavior is unmeasured. |
+| Native Frontier dashboard | IMPLEMENTED, DEPLOYMENT PENDING | Web unit tests 40/40, Frontier Playwright 6/6, and temporary-directory production build pass. Browser/source data is fixture/local; the existing Chart chunk advisory remains. |
+| Scientific acceptance | PARTIALLY VERIFIED | Full Frontier Python tests pass 352/352 after event-ID correction; selected Arena tests pass 38/38 separately; recorded-body replay, offline capture integrity, and 10 legacy API/adapter tests pass. No live equivalent cross-venue observation or economic validation exists. |
+| Bounded resource sustainability | PARTIALLY VERIFIED | Prior bounded tests/builds recorded their peak RSS and zero swaps. Concurrency, continuous collection, and production admission remain unmeasured. At 04:18 UTC memory PSI avg10 was 48.45% some / 43.86% full, and an external Veritas batch held the shared Arena lock; no further resource-bearing work was started. |
+| Research-only boundary and source-use gates | COMPLETE AND VERIFIED | Tests ensure held sources reject before network use and no trading/authenticated order pathway is exposed. This does not grant permission to use a held source. |
+| Documentation and continuation evidence | COMPLETE AND VERIFIED | Architecture, operations, source terms, current-state, engineering report, and append-only ledger record the implementation and blockers. |
+| Genuine live cross-venue validation | BLOCKED | Existing source-use holds prevent an authorized second-venue observation; the captured Polymarket detail lacks event membership/payoff evidence. No equivalence or profitability claim is made. |
+| Production deployment | DEFERRED | Requires separate source permission, production resource/storage/recovery review, full deployment-scope regression, monitoring/rollback preparation, and explicit authorization. |
+| Project Frontier overall | PARTIALLY VERIFIED | The isolated research system is substantially implemented and bounded-tested, but live cross-venue scientific acceptance and deployment criteria remain open. |
+
+The optional legacy storage-query and recording-isolation tests were inspected
+but not run after the 04:17 preflight found the shared Arena lock held and
+memory PSI rising. At `2026-10-28T04:18:00Z`, `fuser` showed external PID
+**4170342** using the lock; `ps` identified the process as
+`scripts/veritas_gap_detail_v2_batch.py` under
+`midas-veritas-gap-detail-v2.service`. It was not interrupted. About **10 GiB**
+of available memory does not override that gate. Resume only after a fresh
+admission sample passes and the shared lock is free.

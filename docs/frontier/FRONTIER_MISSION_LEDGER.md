@@ -4718,3 +4718,23 @@ Arena lock had no holder.
 | --- | --- | --- |
 | Legacy offline API and paper-research compatibility | COMPLETE AND VERIFIED | Ten selected integration tests pass in temporary roots; this is not deployed API or full-repository validation. |
 | Project Frontier overall | PARTIALLY VERIFIED | Cross-venue payoff validation, held-source permission, broad scientific acceptance, full-repository regression, and deployment remain incomplete. |
+
+### Shared-host admission deferment — 2026-10-28 04:18 UTC
+
+A read-only preflight for the optional legacy storage-query and recording-
+isolation regression found memory PSI avg10 at **48.45% some / 43.86% full**
+at `2026-10-28T04:18:00Z`. I/O PSI avg10 was **0.79% / 0.79%**; about
+**10 GiB** appeared available and **333 MiB** of swap was free. Those capacity
+figures do not override the shared admission gate. `fuser` identified PID
+**4170342** holding `/home/charlie/midas/data/arena/.global-admission.lock`;
+read-only process inspection identified it as the external
+`scripts/veritas_gap_detail_v2_batch.py` under
+`midas-veritas-gap-detail-v2.service`. It was left untouched. The optional
+tests were not started. No Frontier process, protected service, database, or
+evidence store was modified. Resume only after a fresh low-pressure sample and
+an unheld shared lock.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Optional legacy storage-query/recording-isolation tests | DEFERRED | Isolated test code was inspected; no test ran because current shared-host admission failed. |
+| Project Frontier overall | PARTIALLY VERIFIED | The implementation and bounded regression evidence remain valid; source permission, genuine cross-venue equivalence, full-repository acceptance, and deployment remain open. |
