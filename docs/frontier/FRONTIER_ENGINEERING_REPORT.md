@@ -5038,7 +5038,7 @@ acceptance against current branch evidence, not intent or planned work.
 | Isolated collection, provenance, durable storage, and deterministic replay | PARTIALLY VERIFIED | Finite restartable collection, append-only hash-chained checkpoints, bounded storage, event-time replay, source-health evidence, and replay provenance are implemented and tested offline. No continuous stream, full history walk, or long-horizon source-quality study is established. |
 | Laboratory/Arena research integration | PARTIALLY VERIFIED | Bounded replay jobs, paired comparisons, integrity-checked results, and fixture/UI paths exist. No durable Laboratory experiment manager, long-duration campaign, or production worker is authorized or verified. |
 | Native Frontier Mission Control interface | IMPLEMENTED, DEPLOYMENT PENDING | The web unit suite passes 40/40 and the latest Frontier browser spec passes 4/4 against isolated services; the earlier configured browser suite passed 12/12. Funding responses are fixture-intercepted in browser, while the saved-run API separately verifies the candidate scenario. Live source data is unavailable under current holds. No production deployment occurred. |
-| Scientific acceptance: normalization, rejection, controlled discrepancy, independent arithmetic, missing/stale/asynchronous evidence, and deterministic replay | PARTIALLY VERIFIED | Controlled fixtures and the 325-test Frontier suite cover supported behavior and rejection paths, including rationally checked funding conversion subtraction. Evidence does not establish a genuine cross-venue relationship, synchronized executable quotes, or positive economics. |
+| Scientific acceptance: normalization, rejection, controlled discrepancy, independent arithmetic, missing/stale/asynchronous evidence, and deterministic replay | PARTIALLY VERIFIED | Controlled fixtures and the prior 325-test Frontier suite cover supported behavior and rejection paths, including rationally checked funding conversion subtraction. Two later route-level collection recovery/quarantine tests pass separately; the broad suite has not been rerun with them. Evidence does not establish a genuine cross-venue relationship, synchronized executable quotes, or positive economics. |
 | Resource sustainability under bounded development workloads | PARTIALLY VERIFIED | The latest full Frontier suite measured 365,976 KiB peak RSS and zero swaps; the focused FX/API selection measured 82,756 KiB. Sustained collection, concurrent workloads, production resource admission, and broad latency/CPU behavior remain unmeasured. |
 | Read-only research boundary and source-use gates | COMPLETE AND VERIFIED | No trading/authenticated exchange path is provided; source-policy tests ensure held venues return 409 without requests and held evidence stays quarantined. This does not grant permission to use a held source. |
 | Required architecture, operations, current-state, report, and continuation documentation | COMPLETE AND VERIFIED | The engineering report, architecture, operations guidance, current-state note, and append-only mission ledger record implementation, evidence, blockers, and continuation actions. |
@@ -5119,6 +5119,46 @@ live convertibility, transfer availability, executable quotes, or profitability.
 Continue offline engineering from the current mission matrix. Do not treat a
 positive fixture result as evidence of a live opportunity or as permission to
 use held sources.
+
+### HTTP collection recovery across reconstructed API instances — 2026-10-28 00:53 UTC
+
+Two route-level tests now cover the durable collection lifecycle across
+reconstructed API state. The recovery test starts a fixture-backed finite
+Polymarket collection and injects a one-time local persistence interruption,
+which leaves a pending market capture in a paused checkpoint. It closes the
+original test client and registry, constructs a new API app, registry, adapter,
+and `FrontierStore` over the same temporary journal, and resumes by run ID. The
+run completes from its persisted pending observation with zero requests from
+the reconstructed adapter and zero rediscovery calls. History exposes the
+checkpoint digest and correct resumability state; a terminal retry returns the
+same result without a request.
+
+The quarantine test seeds a paused Kalshi run in a temporary journal while
+`hold_sources=True`. The history API omits the held run, and both start and
+resume return 409 before adapter requests or journal mutation. This validates
+the API boundary with local synthetic metadata only; it does not access or
+authorize the held source.
+
+Verification on the isolated worktree:
+
+- The two focused collection-history/recovery/quarantine tests passed in 1.66
+  seconds. Ruff check/format and `git diff --check` passed.
+- The broader Frontier suite was not rerun after these tests were added. The
+  preceding host sample showed memory PSI avg10 at 43.18% some / 39.51% full,
+  9.8 GiB available, and 3.7 GiB swap in use. Broad regression remains pending
+  a fresh admission check after pressure subsides.
+- No exchange endpoint, protected service, external worker, production store,
+  or deployment was used. The repository changes are limited to
+  `tests/frontier/test_api.py` and this documentation checkpoint.
+
+| Component | Status | Evidence and boundary |
+| --- | --- | --- |
+| HTTP collection recovery across reconstructed app/registry/store | COMPLETE AND VERIFIED | Fixture-backed restart resumes the pending observation without rediscovery; terminal retry is idempotent. |
+| Held-source collection history/start/resume API gates | COMPLETE AND VERIFIED | A held Kalshi journal entry is hidden, and start/resume reject before fake network calls or journal mutation. |
+| Full Frontier suite after these tests | PARTIALLY VERIFIED | The prior 325-test suite predates the two new tests; focused checks pass. Rerun only after resource pressure is remeasured. |
+
+Continue bounded offline acceptance. Keep all held sources quarantined and the
+production transition separate.
 
 ### Strict Frontier API registry typing — 2026-10-28 00:35 UTC
 

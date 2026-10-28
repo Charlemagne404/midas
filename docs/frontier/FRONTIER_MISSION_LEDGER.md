@@ -1,5 +1,41 @@
 # Project Frontier Mission Ledger
 
+## HTTP collection recovery across reconstructed API instances — 2026-10-28 00:53 UTC
+
+The collection API regressions now exercise recovery after reconstructing the
+API app, adapter registry, adapter instance, and store from the same local
+collection journal. A fixture-induced persistence interruption leaves a paused
+checkpoint with one pending market capture. The reconstructed API resumes it
+from the persisted observation, completes the run, and issues no rediscovery
+request. Terminal retries remain idempotent. A separate route-level fixture
+confirms a held Kalshi run is hidden from history and that both start and resume
+are rejected before adapter calls or journal mutation.
+
+### Verification and resource boundary
+
+- Focused HTTP collection recovery/quarantine tests: **2 passed** in 1.66
+  seconds. Ruff check/format and `git diff --check` passed.
+- The run uses only fixture adapters and a temporary local store. It does not
+  contact an exchange or access protected service data.
+- The full Frontier suite was not rerun after adding these tests. At the
+  pre-run host sample, memory PSI avg10 was **43.18% some / 39.51% full**, with
+  **9.8 GiB available** and **3.7 GiB swap in use**. Defer the broad suite until
+  pressure subsides and remeasure admission first.
+
+Code commit `4ba723f` adds the route-level recovery and quarantine tests in
+`tests/frontier/test_api.py`. The ledger and engineering-report updates are
+documentation-only follow-up changes.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| HTTP collection history, restart recovery, and held-source quarantine | COMPLETE AND VERIFIED | Route-level temporary-store tests cover reconstructed-instance resume without rediscovery, terminal retry, and held-source rejection before mutation. No live capture was performed. |
+| Full Frontier regression after these additions | PARTIALLY VERIFIED | The prior 325-test suite predates these two tests; the focused additions pass. Broad rerun is deferred while host memory PSI is high. |
+| Live source collection and deployment | DEFERRED | All source collection remains disabled by default; no production deployment or Reality action occurred. |
+
+**Next safe action:** remeasure host pressure before considering the full
+Frontier suite; meanwhile continue offline acceptance work and keep held-source
+quarantine intact.
+
 ## Funding-adjusted terminal-state P&L — 2026-10-28 00:47 UTC
 
 Code commit **`71ee203b033c4bc0f38afce09b5255fe31bcae21`** upgrades the saved-run
