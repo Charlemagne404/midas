@@ -2,7 +2,7 @@
 
 **Incident date:** 2026-10-28 (CET)
 
-**Checkpoint captured:** 2026-10-28 23:54 CET
+**Checkpoint captured:** 2026-10-28 23:55 CET
 
 **Scope:** Host reliability interruption during Project Frontier
 
@@ -242,6 +242,15 @@ Read-only validation after the containment actions confirmed:
 - At 23:51:44 host PSI avg10 was 0%, avg300 was 3.82%; there were no new oomd
   kill entries after 23:43:24 through that sample. The quiet interval was only
   about eight minutes total and about five minutes after stopping the timer.
+- At 23:55:33 host PSI remained 0% avg10 and had fallen to 1.71% `some` /
+  1.47% `full` avg300; user-session PSI avg300 was 2.01% / 1.87%. No new oomd
+  kill entries appeared after 23:43:24. Host swap remained 3.1/4 GiB used.
+- At 23:55 Reality remained active at 1,207,398,400 / 1,207,959,552 bytes
+  `MemoryHigh` (about 0.5 MiB headroom), while API was active at
+  1,605,521,408 / 1,610,612,736 bytes (about 4.9 MiB headroom). Reality's
+  status timestamp remained 23:43:01 CET. The quiet period was about 12
+  minutes after the last kill and at least six minutes after the gap timer
+  stop, still too short to establish durable recovery.
 - API, Reality, Continental, Echo, RustDesk, and the SSH socket were observed
   active as described above. Reality’s fresh capture was not verified.
 - No stress test, service restart, cache drop, broad test suite, public source

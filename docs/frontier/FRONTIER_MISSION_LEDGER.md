@@ -58,6 +58,19 @@ regression, and research batches until Reality publishes fresh status and
 capture after its automatic restart, service headroom recovers, and PSI stays
 low across subsequent timer cycles. Do not restart or reconfigure Reality.
 
+### Post-containment observation — 2026-10-28 22:55 UTC
+
+At 23:55:33 CET, host PSI was 0% avg10 / 1.71% `some` and 1.47% `full`
+avg300; user-session PSI avg300 was 2.01% / 1.87%. No OOMd kills appeared
+after 23:43:24 through this sample. Available memory remained 9.9 GiB and swap
+use remained 3.1/4 GiB. API was active at 1,605,521,408 / 1,610,612,736 bytes
+`MemoryHigh` (about 4.9 MiB headroom); Reality was active at
+1,207,398,400 / 1,207,959,552 bytes (about 0.5 MiB headroom). Reality
+`status.json` still had its 23:43:01 timestamp. This is a quiet interval of
+about 12 minutes after the last logged kill and at least six minutes after the
+gap timer stop; it is not a durable recovery signal. The Frontier test and
+research admission hold remains in effect.
+
 ## Resource recheck after graph-layout change — 2026-10-28 22:42 UTC
 
 A fresh admission sample at 22:42:57Z showed memory PSI had risen to 52.42%
