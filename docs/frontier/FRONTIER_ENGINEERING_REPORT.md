@@ -11766,3 +11766,28 @@ was queried.
 | Full current Frontier and legacy regressions | PARTIALLY VERIFIED | Broad suites remain unrun while Reality is close to `MemoryHigh`. |
 | Live cross-venue market relationship | BLOCKED | Source-use scope and location authorization remain unresolved; no live cross-venue result is claimed. |
 | Frontier overall | PARTIALLY VERIFIED | Live science, broad regressions, endurance, protected recovery, and deployment prerequisites remain open. |
+
+## Latest implementation checkpoint — 2026-10-28 20:48 UTC
+
+Commit `68bc6f2` advances the candidate/replay economic identity to
+`frontier-economic-verifiers-23` and validates a source timing invariant:
+`BookSnapshot.received_at_utc` must equal the response receipt time in its
+provenance. The check also runs during structural revalidation of unvalidated
+model copies, so candidate generation fails closed on a tampered or
+misassociated timestamp. A fixture update keeps the existing asynchronous-book
+scenario valid while still testing two seconds of receipt skew.
+
+Four focused modules covering all four adapters, pair and multi-outcome
+economics, and replay pass **305/305**. Strict mypy passes for the four core
+economic/model modules. Ruff check/format and whitespace checks pass. The test
+run used a 1 GiB transient scope, peaked at **95,148 KiB RSS**, and produced no
+swaps or socket messages. One initial run exposed the old inconsistent fixture;
+the corrected rerun passed completely. No public endpoint was queried.
+
+| Component | Current status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Book receipt/provenance timing integrity | COMPLETE AND VERIFIED | Constructor and structural revalidation reject divergent receipt timestamps. |
+| Focused adapter, economics, and replay regression | COMPLETE AND VERIFIED | 305/305 cases pass on commit `68bc6f2`. |
+| Exact-tree full Frontier and legacy regression | PARTIALLY VERIFIED | Broad suites remain unrun under the protected service resource gate. |
+| Live cross-venue relationship and economics | BLOCKED | Source-use terms and current location remain unresolved; fixture results are not live claims. |
+| Frontier overall | PARTIALLY VERIFIED | Live science, broad regressions, endurance, protected recovery, and deployment prerequisites remain open. |

@@ -10916,3 +10916,37 @@ and legacy suites remain deferred under the resource gate.
 | Current full Frontier regression | PARTIALLY VERIFIED | The directly affected modules pass; the full suite has not been rerun on the current tree. |
 | Genuine live cross-venue economics | BLOCKED | Source-use holds and location uncertainty remain; no live match or opportunity is claimed. |
 | Project Frontier overall | PARTIALLY VERIFIED | Full regressions, live cross-venue science, endurance, protected recovery, and deployment remain open. |
+
+## Book receipt timestamp provenance binding — 2026-10-28 20:48 UTC
+
+Code commit `68bc6f2` advances `ECONOMIC_MODEL_VERSION` to
+`frontier-economic-verifiers-23`. `BookSnapshot` now rejects any local receipt
+time that differs from `provenance.response_received_at_utc`; its runtime
+structure check applies the same rule to unvalidated `model_copy` instances.
+Because pair candidate generation already requires structurally valid books,
+an internally stale receipt timestamp cannot be used to claim freshness or
+understate cross-source receipt skew. Analytics and event-time replay already
+enforced this relationship independently.
+
+One existing asynchronous fixture initially failed because it changed only the
+book receipt time. The fixture was corrected to advance receipt, provenance
+response, and processing times together while retaining the intended two-second
+cross-source skew. The final four-module run passes **305/305** (4.25 seconds
+pytest time, 4.75 seconds process wall), peaking at **95,148 KiB RSS** in a
+1 GiB transient systemd scope, with zero swaps and zero socket messages. Strict
+mypy passed for `models.py`, `economics.py`, `replay.py`, and
+`independent_audit.py`; Ruff check/format and whitespace checks pass. No public
+endpoint was queried.
+
+At `2026-10-28T20:48:11Z`, Reality was **17,010,688 bytes below**
+`MemoryHigh`; the API was **31,150,080 bytes below** its boundary. Both
+services remained active and unchanged. Broad Frontier, Arena, and legacy
+regressions remain pending.
+
+| Requirement | Status | Evidence and boundary |
+| --- | --- | --- |
+| Book receipt time/provenance invariant | COMPLETE AND VERIFIED | Construction and runtime revalidation reject mismatches; all four focused adapter, economics, and replay modules pass. |
+| Current focused adapter/economic regression | COMPLETE AND VERIFIED | 305/305 cases pass on the current code commit. |
+| Full current Frontier regression | PARTIALLY VERIFIED | The full suite was not run because protected service headroom remains constrained. |
+| Genuine live cross-venue science | BLOCKED | Source-use scope and location authorization remain unresolved; no live result is claimed. |
+| Project Frontier overall | PARTIALLY VERIFIED | Live science, broad regressions, endurance, protected recovery, and deployment remain open. |
