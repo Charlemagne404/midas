@@ -3902,6 +3902,8 @@ requests were made. Candidate provenance checkpoint commit:
 `cdef0208a48e20b2c3f6b0aa1535802f2449c933`.
 Comparison arm readback checkpoint commit:
 `447cf5cafb65f2fff867766f6a1a5c3fc5887dc3`.
+An API-only `mypy --strict` invocation emitted 14 `no-any-return` diagnostics;
+the invocation discrepancy is unresolved.
 
 At `2026-10-28T22:24:22Z`, API `MemoryHigh` headroom was 520,192 bytes and
 Reality headroom was 126,046,208 bytes. Memory PSI `avg10` was 0.07% (`some`)

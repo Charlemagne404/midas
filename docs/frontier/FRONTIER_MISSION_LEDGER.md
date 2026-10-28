@@ -11723,6 +11723,10 @@ This is a focused fixture check; mismatched-hash and full comparison/storage
 regressions remain untested in this checkpoint. The pre-existing
 Starlette/httpx deprecation warning remains. No network request was made.
 
+The separate API-only strict-mypy invocation reported 14
+`no-any-return` diagnostics; the combined API plus replay target passed. This
+invocation-mode discrepancy is unresolved.
+
 The immediately preceding source-provenance checkpoint is committed as
 `cdef0208a48e20b2c3f6b0aa1535802f2449c933` on
 `codex/frontier-20261026`. The comparison arm readback fix is included in

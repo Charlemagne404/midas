@@ -12698,6 +12698,11 @@ detail requests. It passes **1/1**; Ruff check/format and the combined strict
 mypy invocation pass. The API fixture made no network requests and retains
 the existing Starlette/httpx deprecation warning.
 
+A separate strict-mypy invocation targeting only `apps/api/frontier.py`
+reported 14 `no-any-return` diagnostics across API handlers. The combined
+API-plus-replay target passed; the difference between those invocation modes
+was not resolved during this resource-constrained checkpoint.
+
 The preceding candidate provenance checkpoint is commit
 `cdef0208a48e20b2c3f6b0aa1535802f2449c933` on
 `codex/frontier-20261026`. The comparison arm validation is included in this
