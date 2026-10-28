@@ -10217,6 +10217,13 @@ was 9.9 GiB, and swap was full at 4.0 GiB with 39 MiB free. The transport now
 rejects injected network clients and custom proxy mounts (commit eadec5d),
 but its focused tests and Ruff checks remain pending.
 
+At 15:55:43Z, memory PSI avg10 was 37.30% some / 22.94% full and avg60 was
+36.29% some / 22.83% full. I/O PSI avg10 remained 0.00%; available memory was
+9.8 GiB, with 4.0 GiB of 4.0 GiB swap in use and 8 KiB free. A read-only
+process snapshot showed the Reality recorder and separate Veritas gap-detail
+work active. No Frontier test or Arena worker was running; both services were
+left untouched.
+
 | Component | Status | Evidence and remaining boundary |
 | --- | --- | --- |
 | Malformed nonstandard JSON numbers | IMPLEMENTED, VALIDATION PENDING | Strict parse-constant handling and fixture regressions are present; focused validation is pending. |

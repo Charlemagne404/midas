@@ -32,6 +32,13 @@ avg10, with avg60 at 36.05% some / 23.01% full. I/O PSI avg10 was 0.00%;
 injected-client restriction was committed as eadec5d. No transport test or
 Ruff check has run after the parser and proxy changes.
 
+At 15:55:43Z, memory PSI was 37.30% some / 22.94% full avg10 and 36.29% some
+/ 22.83% full avg60. I/O PSI avg10 remained 0.00%; 9.8 GiB was available and
+swap was full at 4.0 GiB with 8 KiB free. A read-only process snapshot showed
+the Reality recorder and a separate Veritas gap-detail batch active; neither
+was touched. No Frontier test or Arena worker was running, so new transport
+validation remains deferred.
+
 | Component | Status | Evidence and remaining boundary |
 | --- | --- | --- |
 | Nonstandard JSON numeric-token rejection | IMPLEMENTED, VALIDATION PENDING | Transport and four mock-response cases are changed; run the focused adapter test after resource admission. |
