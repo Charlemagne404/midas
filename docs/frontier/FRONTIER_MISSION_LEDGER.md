@@ -10521,3 +10521,63 @@ sample.
 **Next safe action:** continue code/document review without tests until the
 protected recorder has sustained margin below `MemoryHigh` and I/O pressure
 has returned to its normal baseline.
+
+## Frontend production and bounded browser acceptance — 2026-10-28 20:18 UTC
+
+The isolated Frontier worktree's frontend production pipeline passes:
+
+- `tsc -b` completed, followed by Vite production build; 2,230 modules
+  transformed in 28.29 seconds wall time, with 560,236 KiB maximum RSS and no
+  swaps. The Frontier route is emitted as a 183.24 kB JavaScript chunk (44.69
+  kB gzip).
+- Vite reports the existing lazy chart chunk at 544.51 kB minified (186.79 kB
+  gzip), above its 500 kB advisory threshold. Chart loading already uses a
+  deferred feature boundary; the warning remains visible and the threshold was
+  not raised.
+- Frontend unit suite: **9 files, 47 tests passed** in 29.23 seconds wall time;
+  240,556 KiB maximum RSS, no swaps.
+- Frontier browser E2E: `e2e/frontier.spec.ts`, **7 passed** in 21.9 seconds.
+  Playwright used a temporary database and isolated demo API/Vite servers on
+  loopback, with package-manager network access disabled. Source-probe
+  assertions remained zero. Browser output is under
+  `/tmp/midas-frontier-playwright-frontier-20261028`; the temporary E2E root is
+  `/tmp/midas-browser-frontier-20261028`. No public market endpoint or
+  authenticated exchange interface was used.
+- ESLint and Prettier check pass across `apps/web`; 16.11 seconds wall time,
+  347,084 KiB maximum RSS.
+
+An initial build attempt with a 2 GiB `RLIMIT_AS` failed before compilation
+because Node could not reserve memory for its WebAssembly runtime. Re-running
+under a transient 2 GiB cgroup memory cap succeeded; this was a virtual-address
+limit imposed by the runner, not a frontend compilation defect. The transient
+Playwright API and Vite servers exited after the run, and ports 18000/15173
+were closed. The unrelated Reality API on port 8010 and another existing Vite
+process were left untouched.
+
+| Requirement | Status | Current evidence and boundary |
+| --- | --- | --- |
+| Frontend TypeScript and production build | COMPLETE AND VERIFIED | `tsc -b` plus Vite build pass; chart chunk advisory remains recorded. |
+| Frontend unit suite | COMPLETE AND VERIFIED | 47 tests across 9 files pass under a bounded two-worker run. |
+| Frontier browser acceptance | COMPLETE AND VERIFIED | Seven local E2E cases pass against an isolated demo API and temporary stores; this is not live exchange validation. |
+| Frontend lint and formatting | COMPLETE AND VERIFIED | ESLint and Prettier check pass. |
+| Full Frontier/legacy regression suites | PARTIALLY VERIFIED | The current 505-case Frontier suite and broad legacy regression were not run; protected recorder margin is volatile and these frontend checks do not replace them. |
+| Live cross-venue evidence | BLOCKED | Source-use and retention restrictions remain; browser fixtures are not live-market evidence. |
+| Project Frontier overall | PARTIALLY VERIFIED | Full backend/legacy regression, genuine live cross-venue science, endurance, protected recovery, and deployment remain incomplete. |
+
+At `2026-10-28T20:18:33Z`, immediately after browser E2E, memory PSI avg10 was
+0%; I/O PSI `some` avg10/avg60 was 0.60%/0.32%, with `full` 0.24%/0.11%.
+`MemAvailable` was not recorded in that sample. Reality was at
+1,054,941,184 / 1,207,959,552 bytes and API at 1,562,619,904 /
+1,610,612,736 bytes. The local E2E test group used a 2 GiB cgroup cap and
+observed 700,022,784 bytes while active; it completed with no swaps.
+
+At `2026-10-28T20:20:04Z`, host `MemAvailable` was 9,950,196 KiB and memory
+PSI avg10 was 0%; I/O PSI `some` avg10/avg60 was 0.12%/0.10% and `full` was
+0%. Reality had returned to 1,207,869,440 / 1,207,959,552 bytes, only 90,112
+bytes below `MemoryHigh`; API was 1,559,650,304 / 1,610,612,736 bytes. The
+contrasting samples do not establish sustained admission margin, so broad
+backend suites remain deferred.
+
+**Next safe action:** continue source-independent review and targeted
+verification. Do not run broad suites or public-source probes until the
+resource admission and source-use/retention gates are separately satisfied.
