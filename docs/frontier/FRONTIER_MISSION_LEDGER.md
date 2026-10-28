@@ -1,5 +1,26 @@
 # Project Frontier Mission Ledger
 
+## Current host state — 2026-10-29 00:40 CET
+
+The scheduled capacity timer is enabled and next due at 00:46:04 CET. Its
+00:16 run timed out after the existing 60-second limit; no manual rerun was
+started. The capacity service now reads back as `MemoryHigh=128M`,
+`MemoryMax=192M`, `MemorySwapMax=0`. The gap-detail timer remains inactive.
+
+At 00:40:07 host memory was 5.7 GiB used / 9.9 GiB available and swap was
+3.1/4 GiB. Host and user-manager avg300 PSI were near zero. The user-manager
+cgroup charged 11.16 GB memory and 1.89 GB swap; its cumulative counters are
+`high=16,402,853`, `max=728,363`, `oom=19`, `oom_kill=15`, with no increase
+since 00:13. No new oomd/kernel OOM entry was found after 23:43:24. API and
+Reality are active but have only 1.44 MB and 0.32 MB of `MemoryHigh` headroom,
+respectively. Reality `status.json` remains stale at 23:43:01; cold recovery
+and live capture are unverified. Therefore continue documentation/static
+work only; do not run Frontier tests, replay, probes, or batches.
+
+Next safe action: capture cgroup peak/events/pressure and unit result during
+the already scheduled 00:46 capacity run, without manually invoking it. Keep
+the original Frontier branch and untracked public-probe evidence intact.
+
 ## Current host state — 2026-10-29 00:31 CET
 
 The 00:16 capacity check timed out at 60 seconds without a logged OOM. Its

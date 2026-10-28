@@ -493,3 +493,35 @@ change.
 Until then, Frontier may continue static/documentation work only. Do not run
 tests, replays, live probes, or batch research. Continue to preserve the
 untracked `data/frontier-public-probes/` and all Reality/Veritas/Arena data.
+
+## Follow-up observation — 2026-10-29 00:40 CET
+
+Read-only checks found the capacity timer enabled and waiting for its scheduled
+00:46:04 CET trigger. The previous run remains a timeout at 00:17:04; the
+service retains `TimeoutStartSec=60`, `MemoryHigh=128M`, `MemoryMax=192M`, and
+`MemorySwapMax=0`. No manual invocation was made. The gap-detail timer remains
+inactive. Its service's displayed `oom-kill` result is the historical result
+from before containment, not a new kill.
+
+At 00:40:07 CET, host memory was 5.7 GiB used / 9.9 GiB available, with
+3.1/4 GiB swap used. Host PSI was `some avg10=0.00%, avg60=0.00%,
+avg300=0.02%` and `full avg10=0.00%, avg60=0.00%, avg300=0.00%`. The user
+manager cgroup held 11,160,563,712 bytes and 1,893,208,064 bytes of swap;
+its PSI was `some avg300=0.02%`, `full avg300=0.01%`. Parent cgroup counters
+remain `high=16,402,853`, `max=728,363`, `oom=19`, `oom_kill=15`; no increase
+has been observed since 00:13. No oomd or kernel OOM journal entry appeared
+in the post-23:43:24 interval queried at this check.
+
+The API was active at 1,609,175,040 / 1,610,612,736 bytes `MemoryHigh`
+(1,437,696 bytes remaining); Reality was active at 1,207,640,064 /
+1,207,959,552 bytes (319,488 bytes remaining). Reality's `status.json` still
+has its 2026-10-28 23:43:01.187 CET timestamp. Thus the low PSI sample does
+not establish recovery: the two protected services remain almost exactly at
+their soft limits and post-restart capture is still unverified.
+
+The next action is a passive sample during the already scheduled 00:46
+capacity invocation. The service cgroup can disappear after the oneshot exits,
+so read `memory.current`, `memory.peak`, `memory.events`, and `memory.pressure`
+while it is active. Do not manually start the unit, extend its timeout, alter
+the Reality unit, or interpret a short quiet interval as closure. If the run
+times out, record the failure and keep Frontier runtime work deferred.
