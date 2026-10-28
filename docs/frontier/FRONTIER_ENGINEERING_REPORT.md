@@ -2,69 +2,55 @@
 
 **Report date:** 2026-10-28
 
-## Current status — 2026-10-28 06:59 UTC
+## Current status — 2026-10-28 08:21 UTC
 
 Frontier is isolated at `/home/charlie/midas-frontier` on
-`codex/frontier-20261026`. Frontier descends from the verified V6 integration
-commit `11d32a0` (`codex/veritas-v6-integration-20261026`); its merge base with
-current `main` is `55601b9`. The latest implementation commit is `3251941`,
-which validates the saved history inspector against an isolated populated
-store while keeping Coinbase held until a validated permission and intended-scope
-review mechanism exists. The preceding collection safeguards are `6c5c329`
-for finite wall-time enforcement and `8fb4c0d` for process-shared per-venue
-leases. The implementation includes Polymarket, Kalshi, Kraken Spot, and
-Coinbase read-only adapters; canonical instruments and payoff models;
-reviewable relationship evidence; binary, implication, within-market basket,
-and conditional multi-market joint-state candidate families; independent
-economic audits; bounded collection, storage, and replay; Arena integration;
-and the native Mission Control workspace.
+`codex/frontier-20261026`. It descends from verified Veritas V6 integration
+commit `11d32a0` and retains merge base `55601b9` with `main`. The current HEAD
+is documentation commit `3763ff5`; the latest code changes are nested history
+validation commit `2e73476` and migration-test correction `f5dfb26`. Existing
+implementation includes Polymarket, Kalshi, Kraken Spot, and Coinbase public
+read adapters; canonical instrument and payoff models; reviewable relationship
+evidence; bounded candidate discovery and independent economics; isolated
+collection, storage, and replay; Arena integration; and the native Mission
+Control workspace.
 
-Current offline verification is strong and bounded:
+Current bounded verification:
 
-- All **22 Frontier Python test modules** pass across **14 serial invocations**
-  (**358 cases**). Both one-process `pytest tests/frontier` attempts were
-  interrupted after 108 and 113 cases under measured host pressure; no
-  one-process full-suite pass is claimed.
-- The latest source-permissions regression passes **5/5**, including a matched
-  Coinbase terms acknowledgment plus probe flag: the API returns HTTP 409 with
-  zero requests, and held Coinbase records remain quarantined. The focused
-  Frontier web component suite passes **9/9**.
-- Strict mypy passes for the Frontier package and API configuration, startup,
-  and route integration (**26 files**). Ruff passes on the changed Python
-  files, and Python formatting, full web Prettier checking, and `git diff
-  --check` pass.
-- All **41** web unit tests pass. The complete default browser suite passes
-  **15** tests with the opt-in seeded case correctly skipped; the separate
-  seeded-store API/browser integration passes **1** test. That integration
-  traverses both saved-history pages through the local API, submits a
-  deterministic two-series replay, inspects its persisted lineage, and
-  verifies zero source probes. TypeScript, ESLint, Prettier, Ruff, and the
-  production build pass. Playwright used disposable stores and loopback demo
-  services; no exchange probe or order was submitted. Vite's existing 504.00
-  kB main-bundle and 544.41 kB Chart-bundle advisory remains; the Frontier
-  lazy bundle is 182.67 kB JavaScript and 53.96 kB CSS.
+- The exact current `tests/frontier` suite passes **379/379** in one process.
+  The tmpfs run took 29.51 seconds of pytest time, peaked at 378,216 KiB RSS,
+  and used no swap. A first disk-backed attempt stopped after I/O PSI rose to
+  12.91% some / 10.15% full; the successful tmpfs run used a fresh host sample
+  and recorded zero filesystem input. One existing Starlette/httpx `TestClient`
+  deprecation warning remains.
+- The most recent frontend checkpoint passed **44/44** unit tests, TypeScript,
+  ESLint, Prettier, production build, **16** default Playwright cases with two
+  expected seeded-only skips, and **2/2** seeded Frontier/Arena cases using
+  disposable local services and stores. The build emitted a 368.13 kB entry,
+  182.75 kB Frontier chunk, and the existing 544.41 kB Chart/ECharts chunk.
+- Strict configured mypy passes for the changed `models.py`; Ruff and formatting
+  pass for the changed Python files. Earlier scoped strict mypy covered the
+  Frontier package/API integration. The tmpfs test command and pressure gate are
+  documented in `FRONTIER_OPERATIONS.md`.
 
-The complete repository regression remains unverified. In this Frontier
-baseline, `tests/test_reality_full_scale_validation.py` imports
-`midas.reality.recovery`, which is absent from the selected source tree. A
-recovery module exists on another Reality lineage, but relative to the V6
-baseline its collector, reconstruction, replay, and storage dependencies differ
-by 761 insertions and 233 deletions. Those source worktrees also contain
-unrelated dirty or untracked material. No recovery module was copied or
-cherry-picked into Frontier; doing so without a deliberate compatibility port
-would mix two Reality implementations. Selected legacy API, paper, storage,
-recording, and service-boundary regressions passed in earlier bounded runs,
-but they do not substitute for the full MIDAS suite.
+The complete MIDAS repository regression remains unverified. The current tree
+has `packages/midas/arena/recovery.py` but lacks
+`packages/midas/reality/recovery.py`, which
+`tests/test_reality_full_scale_validation.py` imports. Other Reality lineages
+have different collector, reconstruction, replay, and storage dependencies;
+no module was copied or cherry-picked into this branch. Earlier selected legacy
+regressions do not replace the full suite.
 
-Frontier remains **PARTIALLY VERIFIED**, research-only, isolated, and
-undeployed. Kalshi, Kraken, and Coinbase remain held from live probes and
-application research/replay routes. Coinbase's exact terms acknowledgment and
-probe flag no longer lift that hold. Bounded Polymarket captures still do not
-establish an equivalent cross-venue contract. No genuine cross-venue relationship,
-economically eligible opportunity, or realizable profit is claimed. Continuous
-source quality, production resource sustainability, and the production
-transition remain open; no protected service or historical evidence was
-changed.
+Live cross-venue validation remains blocked by source-use holds. Kalshi, Kraken,
+and Coinbase stay quarantined from live probes and research routes; a test to
+replay an archived held capture was denied by `tests/frontier/conftest.py` and
+removed without a workaround. Existing synthetic tests establish only
+hypothesis behavior. No verified live cross-venue payoff match, economically
+eligible opportunity, or realizable profit is claimed. Continuous source
+quality, production resource/recovery, and deployment gates remain open.
+
+Frontier remains **PARTIALLY VERIFIED**, research-only, isolated, unmerged, and
+undeployed. No protected service or historical evidence was changed.
 
 ## Bounded metadata and initial resource checkpoint — 2026-10-28 03:59 UTC
 

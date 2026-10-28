@@ -33,6 +33,27 @@ in the dated addendum below and in the Frontier engineering report.
 
 ## Frontier development addendum — 2026-10-28
 
+### Latest isolated Frontier checkpoint — 2026-10-28 08:23 UTC
+
+The exact `tests/frontier` suite passes **379/379** in a single process using
+the documented tmpfs workflow (29.51 seconds pytest time, 378,216 KiB peak RSS,
+zero swaps and zero filesystem input). Latest bounded web evidence is 44/44
+unit tests, TypeScript, ESLint, Prettier, production build, 16 default browser
+cases with two expected seeded-only skips, and 2/2 seeded Frontier/Arena cases
+on disposable services and stores. The full MIDAS regression remains
+unverified because this selected tree lacks `midas.reality.recovery`, imported
+by `tests/test_reality_full_scale_validation.py`; other Reality lineages have
+incompatible dependencies and were not copied into this branch.
+
+Kalshi, Kraken, and Coinbase remain quarantined from live probes and
+research/replay routes. The test harness rejected an attempted held-capture
+read, and no workaround was used. Synthetic relationship tests do not establish
+live cross-venue equivalence. Frontier is **PARTIALLY VERIFIED**, research-only,
+isolated, unmerged, and undeployed. No protected service or historical
+evidence was changed. See the [Frontier engineering report](frontier/FRONTIER_ENGINEERING_REPORT.md)
+and [mission ledger](frontier/FRONTIER_MISSION_LEDGER.md) for dated evidence
+and remaining gates.
+
 ### Latest isolated Frontier checkpoint — 2026-10-28 04:07 UTC
 
 Frontier remains on `/home/charlie/midas-frontier`, branch

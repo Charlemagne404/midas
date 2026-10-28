@@ -1,5 +1,33 @@
 # Project Frontier Mission Ledger
 
+## Acceptance checkpoint — 2026-10-28 08:23 UTC
+
+The exact current Frontier Python suite passes **379/379** in one process via
+the documented tmpfs workflow. It took 29.51 seconds pytest time, peaked at
+378,216 KiB RSS, used no swap, and recorded zero filesystem input. The latest
+separate frontend checkpoint passed 44/44 unit tests, TypeScript, ESLint,
+Prettier, the production build, 16 default browser cases with two expected
+seeded-only skips, and two seeded Frontier/Arena cases against disposable local
+services and stores.
+
+The full MIDAS repository regression is unverified because this selected tree
+does not contain `midas.reality.recovery`, required by
+`tests/test_reality_full_scale_validation.py`; another Reality lineage has
+different dependencies and no copy or cherry-pick was made. Kalshi, Kraken,
+and Coinbase remain held from live probes and research/replay routes. The
+attempted held-capture test was denied by the test guard and removed without
+accessing or repackaging the capture. No live cross-venue match, economically
+eligible opportunity, or realizable profit is claimed. Frontier remains
+**PARTIALLY VERIFIED**, research-only, isolated, unmerged, and undeployed.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Full Frontier Python regression | COMPLETE AND VERIFIED | 379/379 in one process on the exact tested code tree; resource details are recorded in the engineering report. |
+| Frontier web and browser acceptance | PARTIALLY VERIFIED | Latest unit/build/browser evidence is fixture-backed; no live cross-venue data is displayed as evidence. |
+| Full MIDAS repository regression | BLOCKED | Selected checkout lacks `midas.reality.recovery`; a compatibility port needs separate dependency and scope work. |
+| Live multi-venue scientific validation | BLOCKED | Source holds and the held-capture test guard remain in force. |
+| Frontier project overall | PARTIALLY VERIFIED | Continue source-independent acceptance review; production transition and deployment remain out of scope. |
+
 ## Explicit hypothetical replay-outcome disclosure — 2026-10-28 02:57 UTC
 
 Code commit `3af51c0589c9550ff5bbf9333e24a818e75041c0` changes the candidate
