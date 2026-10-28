@@ -5881,8 +5881,9 @@ function SourcesView({
                     : 'The existing Polymarket schema is adapted while preserving its legacy source identifiers and fee validation.'}
                 {source.venue === 'coinbase_exchange' && (
                   <small className="fr-source-terms-note">
-                    Data use is gated by acknowledgement of Market Data Terms version 2026-08-07;
-                    maker-side trade fields are not interpreted as aggressor-side.
+                    Source use remains held pending validated permission and intended-scope review;
+                    terms acknowledgment is not authorization. Maker-side trade fields are not
+                    treated as aggressor-side.
                   </small>
                 )}
               </p>
