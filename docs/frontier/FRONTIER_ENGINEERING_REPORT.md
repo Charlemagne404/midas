@@ -2,6 +2,59 @@
 
 **Report date:** 2026-10-28
 
+## Current status and acceptance delta — 2026-10-28 17:18 UTC
+
+This checkpoint supersedes the earlier 16:30 acceptance snapshot. Frontier
+remains isolated on `codex/frontier-20261026`, research-only, and undeployed.
+The only untracked path is the pre-existing `data/frontier-public-probes/`
+directory; it was preserved and not used for this evidence.
+
+Three bounded, unauthenticated requests through the Polymarket public adapters
+returned and were retained as raw and normalized evidence: one Gamma listing
+at 17:04:45Z (one open binary market, native ID `2589810`), one CLOB book at
+17:09:19Z (five asks, no bids, best ask 0.995 in the returned depth), and one
+Gamma event lookup at 17:13:05Z (five child markets under native event
+`606422`, “Fed Decision in October?”). Requests used 8-second timeouts,
+bounded response sizes, and zero retries. The book's exchange timestamp was
+about 10.04 seconds before receipt; precision and simultaneity are unknown.
+Public API availability is documented in Polymarket's [research data
+guide](https://institute.polymarket.com/data) and [CLOB order-book
+reference](https://docs.polymarket.com/api-reference/market-data/get-order-book).
+
+The isolated SQLite store is 270,336 bytes under its 4 MiB bound, with three
+observations, three deterministic replay results, and ten persisted,
+source-pinned `SAME_EVENT` hypotheses. Two repeated event-group replays share
+run ID
+`68ffa2fee9e70f727395e1d11371b561a4ee51c7baddc82004f0b6a5bcee99ea` and result
+hash `aa95c4c6b35c681631e054c4a8a7bd44bb0e420987f8833a58c71b7e8f55debe`; the
+reloaded result contains ten membership proposals and zero candidates. An
+offline integrity pass verified raw and normalized file hashes, SQLite row
+hashes, all three replay records, and all ten hypotheses. Event membership
+does not prove mutually exclusive/exhaustive outcomes, settlement or payoff
+equivalence, a cross-venue relationship, or executable economics.
+
+The full `tests/arena` regression was interrupted after 105 passes in 2:25
+when system memory PSI rose to 36.63% avg10 / 31.86% full at 17:18:23Z. No
+assertion failure was reported before interruption; the run is partial, not a
+pass. It peaked at 484,168 KiB RSS, used no swap or sockets, and both protected
+services remained active and untouched. Broader regression stays deferred
+until a fresh resource sample shows that memory pressure has cleared.
+
+| Requirement | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Polymarket public adapter evidence | PARTIALLY VERIFIED | Three bounded public responses cover one market listing, one token book, and one event group. This is selected live evidence, not broad adapter conformance, synchronized execution, or venue-wide coverage. |
+| Live same-venue event graph | COMPLETE AND VERIFIED WITHIN TESTED SCOPE | Five source-grouped markets yield ten stored, observation-pinned `SAME_EVENT` hypotheses and an indexed neighborhood. All are hypotheses; no payoff or resolution equivalence is certified. |
+| Stored evidence and deterministic replay | COMPLETE AND VERIFIED WITHIN TESTED SCOPE | Three observation/replay records and ten relationships pass offline hash checks; repeated event replays reproduce the same run and result hashes. Cross-source synchronization and endurance remain unmeasured. |
+| Opportunity discovery and independent economics | PARTIALLY VERIFIED | Fixture-backed candidate families and independent Decimal audits remain covered. The live event replay emitted zero candidates; no live cross-venue match or eligible opportunity is established. |
+| Other venue live research | BLOCKED | Existing Kalshi, Kraken, and Coinbase source-use holds remain in force. No probe was performed for them. |
+| Laboratory/Arena integration | PARTIALLY VERIFIED | Frontier slices remain covered; the broader Arena regression stopped after 105 cases under system memory pressure and has no full-suite result. |
+| Resource sustainability | PARTIALLY VERIFIED | Bounded components have measured profiles, but this Arena run encountered material memory pressure. Long-running collection and deployment load remain unmeasured. |
+| Production deployment | DEFERRED | Frontier remains isolated and undeployed; protected recovery, source policy, operations, and deployment gates remain separate. |
+| Project Frontier overall | PARTIALLY VERIFIED | Genuine Polymarket metadata, book, event graph, and replay evidence now extend the fixture-backed platform; multi-venue economic validation, full legacy regression, endurance, protected recovery, and deployment remain incomplete. |
+
+Continue source-independent, low-resource review. Do not retry the broad Arena
+suite until a new resource admission sample supports it.
+
 ## Historical replay request-bound checkpoint — 2026-10-28 16:45 UTC
 
 The historical price replay request validator now checks each observation ID's

@@ -33,7 +33,29 @@ in the dated addendum below and in the Frontier engineering report.
 
 ## Frontier development addendum — 2026-10-28
 
-### Latest isolated Frontier checkpoint — 2026-10-28 16:45 UTC
+### Latest isolated Frontier checkpoint — 2026-10-28 17:18 UTC
+
+Three bounded unauthenticated requests through the Polymarket public adapters
+produced a Gamma market listing, a CLOB order book, and a Gamma event group.
+The event lookup returned five child markets for event `606422`; Frontier
+persisted ten source-pinned `SAME_EVENT` hypotheses, all still unverified for
+payoff or settlement equivalence. Two replays reproduced the same run and
+result hashes, returned zero opportunity candidates, and passed persisted
+hash validation. The isolated store contains three observations, three replay
+records, and ten relationships in 270,336 bytes. The book had five asks, no
+bids, and a best ask of 0.995 in the requested depth; its exchange timestamp
+was about 10.04 seconds before receipt, with precision and simultaneity
+unknown. No cross-venue equivalence or executable economics is established.
+
+The full Arena regression was paused after 105 passing cases when memory PSI
+rose to 36.63% avg10 / 31.86% full. No assertion failure preceded
+interruption; this is not a full-suite pass. Both protected services remained
+active and untouched. Keep broad regression paused until a fresh resource
+sample clears the memory-pressure gate. Raw capture, replay, and integrity
+details are in the [Frontier mission ledger](frontier/FRONTIER_MISSION_LEDGER.md)
+and [engineering report](frontier/FRONTIER_ENGINEERING_REPORT.md).
+
+### Prior isolated Frontier checkpoint — 2026-10-28 16:45 UTC
 
 Price-history replay now checks observation-ID length before duplicate-set
 hashing, then validates lowercase SHA-256 format and uniqueness. The API
