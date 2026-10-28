@@ -2,6 +2,27 @@
 
 **Report date:** 2026-10-28
 
+## Live evidence API exposure and host recheck — 2026-10-28 17:23 UTC
+
+A bounded local API smoke used a temporary copy of the committed 270,336-byte
+Polymarket evidence store and the normal Frontier read router. No network
+probe was enabled or made. The overview reported three observations; the
+markets route returned five markets as `recorded observations only`; the books
+route returned the one captured book; the relationship route returned ten
+`hypothesis` edges; and a centered query returned four neighboring edges. The
+exact source observation route returned HTTP 200 for the event-group evidence.
+All checks passed. Starlette emitted its existing `httpx` TestClient
+deprecation warning. This verifies the saved-evidence API surface, not a new
+browser E2E run or live collection through Mission Control.
+
+At 17:23:10Z, read-only systemd inspection reported both
+`midas-reality.service` and `midas-api.service` as `inactive/dead` with no main
+PID. This differs from the 17:18:23Z sample, when both were active; no cause is
+known and no service action was taken. Memory PSI at 17:23:10Z was 48.55%
+avg10 / 43.35% full avg10 (32.43% / 28.77% avg60), with 10,200,612 KiB
+available and 2,092 KiB swap free. Keep broad regression stopped. Do not infer
+production recovery or outage cause from these snapshots.
+
 ## Current status and acceptance delta — 2026-10-28 17:18 UTC
 
 This checkpoint supersedes the earlier 16:30 acceptance snapshot. Frontier

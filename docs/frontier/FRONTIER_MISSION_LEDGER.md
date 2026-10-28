@@ -1,5 +1,35 @@
 # Project Frontier Mission Ledger
 
+## Live evidence API exposure and host recheck — 2026-10-28 17:23 UTC
+
+A bounded local API smoke mounted the Frontier read router around a temporary
+copy of the committed public Polymarket evidence store. The overview exposed
+three observations; the market route returned five recorded markets; the book
+route returned one saved book; the relationship route returned ten
+`hypothesis` edges; the centered graph query returned four neighboring edges;
+and the event observation route returned HTTP 200. All assertions passed and
+no public network request was enabled or made. The existing Starlette/httpx
+TestClient deprecation warning appeared. This verifies recorded-evidence API
+exposure, not a fresh browser E2E or live collector run.
+
+At 17:23:10Z, a read-only systemd query reported
+`midas-reality.service` and `midas-api.service` as `inactive/dead`, each with
+MainPID 0. This differs from the 17:18:23Z active sample. The cause is unknown;
+no service operation or configuration change was made. Memory PSI was 48.55%
+avg10 / 43.35% full avg10, 32.43% / 28.77% avg60, with 10,200,612 KiB
+available and 2,092 KiB swap free. This remains an admission hold for broad
+regression despite available memory.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Saved Polymarket evidence API | COMPLETE AND VERIFIED WITHIN TESTED SCOPE | Read routes return the captured markets, book, graph neighborhood, and hash-pinned source observation; no network access occurs. Browser E2E was not rerun. |
+| Protected service state observation | PARTIALLY VERIFIED | Two consecutive read-only samples show services changed from active to inactive; cause and operational intent are unknown. No intervention was performed. |
+| Broad Arena regression | PARTIALLY VERIFIED | Remains paused after the earlier partial 105-case run; fresh host memory pressure is high. |
+
+**Next safe action:** continue source-independent static review and document
+bounded findings. Do not restart services or resume broad regression from this
+resource sample.
+
 ## Full Arena regression paused on memory pressure — 2026-10-28 17:18 UTC
 
 Started the full `pytest -q tests/arena` suite with a one-worker process, a

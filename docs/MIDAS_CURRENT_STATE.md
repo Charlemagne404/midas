@@ -33,7 +33,23 @@ in the dated addendum below and in the Frontier engineering report.
 
 ## Frontier development addendum — 2026-10-28
 
-### Latest isolated Frontier checkpoint — 2026-10-28 17:18 UTC
+### Latest isolated Frontier checkpoint — 2026-10-28 17:23 UTC
+
+A local read-only API smoke against a temporary copy of the captured Polymarket
+store returned all five event markets, the one saved book, ten `hypothesis`
+relationships, a four-edge centered neighborhood, and HTTP 200 for the
+hash-pinned event observation. The routes reported recorded-only evidence and
+made no network request. This did not rerun browser E2E. The smoke emitted the
+existing Starlette/httpx TestClient deprecation warning.
+
+At 17:23:10Z, systemd reported `midas-reality.service` and `midas-api.service`
+as `inactive/dead` with no main PID. No cause is known and no service action
+was taken; a prior 17:18:23Z sample had shown both active. Memory PSI was
+48.55% avg10 / 43.35% full avg10 (32.43% / 28.77% avg60), with about 9.7 GiB
+available and 2,092 KiB swap free. Broad regression remains paused. Read the
+report and mission ledger for evidence and timing limits.
+
+### Prior isolated Frontier checkpoint — 2026-10-28 17:18 UTC
 
 Three bounded unauthenticated requests through the Polymarket public adapters
 produced a Gamma market listing, a CLOB order book, and a Gamma event group.
