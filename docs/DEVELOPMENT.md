@@ -644,8 +644,8 @@ The exact captured detail body was also replayed offline with `MockTransport`:
 the current adapter returns no native event ID, the raw hash and title match,
 and the ignored store's row count is unchanged.
 The shared legacy normalizer still preserves its `market:<id>` fallback; the
-focused integration check `test_legacy_polymarket_event_id_fallback_remains_compatible`
-passes without a network request.
+full `tests/integration/test_adapters.py` file passes **10/10**, including the
+fallback check, without contacting an exchange.
 
 ## Keep worktrees and runtime data separate
 

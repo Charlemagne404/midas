@@ -4665,6 +4665,23 @@ service was used.
 | --- | --- | --- |
 | Legacy Polymarket event-ID fallback | COMPLETE AND VERIFIED | Shared normalizer remains unchanged and focused integration regression passes; broader repository tests remain outside this check. |
 
+### Full legacy adapter integration file — 2026-10-28 04:15 UTC
+
+The complete `tests/integration/test_adapters.py` module passed **10/10** in
+0.75 seconds pytest time (1.24 seconds process wall), at **91,336 KiB peak RSS**,
+with zero swaps and socket messages. This includes the new explicit fallback
+contract check, recorded Gamma/CLOB fixture normalization, GET-only transport,
+record/replay, storage-budget, and degraded-storage cases. The tests use local
+transports and fixtures; no exchange endpoint was contacted.
+
+At the post-run sample `2026-10-28T04:15:16Z`, memory PSI avg10 was **0.00%
+some / 0.00% full**, I/O PSI avg10 **0.91% some / 0.87% full**, about **10 GiB**
+was available, and no process held the shared Arena lock.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Legacy market-data adapter integration | COMPLETE AND VERIFIED | Full 10-test integration adapter module passes with no network or protected data; this is not the full MIDAS repository suite. |
+
 ### Resource gate recheck — 2026-10-28 04:12 UTC
 
 At `2026-10-28T04:12:29Z`, memory PSI had risen again: avg10 **38.86% some /
