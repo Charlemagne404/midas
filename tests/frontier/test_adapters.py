@@ -10,6 +10,7 @@ import pytest
 from midas.frontier.adapters.base import AdapterError
 from midas.frontier.adapters.kalshi import KalshiAdapter
 from midas.frontier.adapters.kraken import KrakenSpotAdapter, KrakenSpotConfig
+from midas.frontier.adapters.normalization import parse_time
 from midas.frontier.adapters.polymarket import PolymarketAdapter
 from midas.frontier.adapters.transport import PublicReadTransport
 from midas.frontier.models import (
@@ -30,6 +31,12 @@ from midas.frontier.relationships import (
 )
 
 ROOT = Path(__file__).resolve().parents[2]
+
+
+def test_adapter_time_parser_rejects_naive_source_times_and_normalizes_offsets():
+    assert parse_time("2026-10-28T12:34:56") is None
+    assert parse_time("2026-10-28T12:34:56+02:00") == datetime(2026, 10, 28, 10, 34, 56, tzinfo=UTC)
+    assert parse_time("2026-10-28T12:34:56Z") == datetime(2026, 10, 28, 12, 34, 56, tzinfo=UTC)
 
 
 @pytest.mark.asyncio
