@@ -33,6 +33,29 @@ in the dated addendum below and in the Frontier engineering report.
 
 ## Frontier development addendum — 2026-10-28
 
+### Latest isolated Frontier checkpoint — 2026-10-28 12:03 UTC
+
+Code/test commit bf9d933 updates the two regression fixtures summarized here.
+
+Two legacy test fixtures were brought into line with existing production
+contracts. The Laboratory admission fixture now supplies CPU count and host
+load telemetry, and its pressure test sets the normalized host-load metric
+that the current fail-closed gate evaluates. The Arena replay fixture now
+binds a verified cross-venue relationship to the actual observation IDs pinned
+by both synthetic markets.
+
+The scoped legacy slices pass: unit/simulation/property **153/153**,
+Laboratory **75/75**, and Arena admission plus Frontier replay/timeline
+**30/30**. The latter two were rerun after fixture corrections. Ruff, format,
+and whitespace checks pass. Tests used isolated /dev/shm basetemps; no live
+source, held capture, production store, or service was accessed.
+
+At 12:03:40Z, host memory PSI avg10 was **54.85% some / 49.81% full** and
+I/O PSI was **1.28% some / 1.22% full**. About 10 GiB was available, with
+3.5/4 GiB swap already occupied. The combined and broader repository reruns
+remain deferred until a fresh sample falls below the 1% I/O admission gate.
+Frontier remains **PARTIALLY VERIFIED**, research-only, and undeployed.
+
 ### Latest isolated Frontier checkpoint — 2026-10-28 11:38 UTC
 
 Test commit `c6dfff1` adds a Coinbase terms-hold regression against a copied

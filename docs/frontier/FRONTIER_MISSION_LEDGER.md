@@ -1,5 +1,57 @@
 # Project Frontier Mission Ledger
 
+## Legacy Laboratory and Arena fixture refresh — 2026-10-28 12:03 UTC
+
+Code commit bf9d933 updates the two test fixtures described below.
+
+The first tmpfs-backed Laboratory slice exposed an outdated test-only resource
+snapshot: it omitted available_cpu_count and host_load_avg1, so the current
+fail-closed admission gate correctly returned resource_pressure_unavailable.
+Its denial test also changed CPU PSI, whose magnitude is intentionally not a
+host-saturation signal under the current quota-aware gate. The fixture now
+supplies the same bounded CPU fields as Arena's ready_snapshot; the denial
+case uses a normalized host load at the configured limit.
+
+The first Arena replay slice exposed a mismatched synthetic evidence identity.
+The cross-venue relationship fixture cited source-left and source-right,
+which were not the pinned markets' observation IDs. The verifier correctly
+rejected that relationship, and replay produced one invalid-edge candidate.
+The fixture now cites each market's actual provenance observation and asserts
+the relationship reaches VERIFIED before expecting both payoff directions.
+
+Final bounded verification on the changed tree:
+
+- tests/unit tests/simulation tests/property: **153 passed** in 5.37 seconds;
+  peak RSS 73,472 KiB, zero swaps, no sockets.
+- tests/laboratory: **75 passed** in 26.67 seconds; peak RSS 165,892 KiB,
+  zero swaps and filesystem input. An existing Starlette/httpx deprecation
+  warning remains.
+- tests/arena/test_admission.py tests/arena/test_frontier_replay.py
+  tests/arena/test_frontier_timeline.py: **30 passed** in 2.10 seconds; peak
+  RSS 198,056 KiB, zero swaps, filesystem input, and sockets.
+- Ruff check, Ruff format check, and git diff --check pass for both changed
+  test modules.
+
+All pytest basetemps were unique directories under /dev/shm; Laboratory's
+existing data/datasets inputs were read-only. No production store, service,
+public source, or held capture was accessed. At 12:03:40Z, host memory PSI
+avg10 was **54.85% some / 49.81% full**, I/O PSI was **1.28% some / 1.22%
+full**, and about **10 GiB** was available. The I/O reading exceeded the 1%
+admission threshold, so the redundant combined rerun and broader suite were
+not started. This sample is not a causal attribution to these test processes.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Legacy unit, simulation, and property slice | COMPLETE AND VERIFIED | 153/153 pass on the current tree. |
+| Laboratory regression slice | COMPLETE AND VERIFIED | 75/75 pass after aligning the synthetic gate inputs with the current contract. |
+| Arena admission and Frontier replay | COMPLETE AND VERIFIED | 30/30 pass; replay fixture now cites pinned observation provenance. |
+| Full MIDAS legacy suite | PARTIALLY VERIFIED | Only the bounded slices above were admitted; other modules remain unrun. |
+| Frontier overall | PARTIALLY VERIFIED | Live multi-venue evidence, full legacy/browser acceptance, and deployment remain open. |
+
+Next safe action: re-sample host PSI before the next test workload. Continue
+with source-independent audit while holding broader runs whenever I/O avg10 is
+at or above 1%; preserve the current source-use and deployment gates.
+
 ## Broader MIDAS regression admission — 2026-10-28 11:57 UTC
 
 The exact Frontier suite and strict-mypy slice are complete as recorded in the

@@ -8915,7 +8915,42 @@ store, or Arena job was accessed or started.
 | `afde92c` | `docs/frontier/FRONTIER_ENGINEERING_REPORT.md`; `docs/frontier/FRONTIER_MISSION_LEDGER.md`; `docs/MIDAS_CURRENT_STATE.md` | Record resource-gated Coinbase policy regression status. |
 | `fbb46e4` | `docs/MIDAS_CURRENT_STATE.md`; `docs/frontier/FRONTIER_ENGINEERING_REPORT.md`; `docs/frontier/FRONTIER_MISSION_LEDGER.md` | Record the 11:53 status, full-suite result before the type-narrowing refactor, and PSI hold. |
 | `597d9ff` | `docs/MIDAS_CURRENT_STATE.md`; `docs/frontier/FRONTIER_ENGINEERING_REPORT.md`; `docs/frontier/FRONTIER_MISSION_LEDGER.md` | Record strict-mypy success and exact-tree 420/420 verification. |
+| `bf9d933` | `tests/laboratory/test_campaigns.py`; `tests/arena/test_frontier_replay.py` | Align isolated resource-gate inputs with current telemetry and pin replay relationship evidence to actual fixture observations. |
 
 The temporary `tests/frontier/test_recorded_cross_venue_relationship.py` was
 removed after the test guard denied held-capture access; it is not part of the
 final tree or any commit.
+
+### Legacy regression fixture corrections — 2026-10-28
+
+Test commit bf9d933 records the two fixture-only corrections below.
+
+The resource-aware legacy regression review found two stale test fixtures:
+
+- Laboratory tests omitted available_cpu_count and host_load_avg1 from their
+  ready resource snapshot. The current admission gate correctly failed closed.
+  One denial test set CPU PSI to 99, although the gate deliberately decides
+  host capacity from normalized load per available CPU because CPU PSI can be
+  distorted by quota waits. The fixtures now match Arena's existing ready
+  snapshot and use host_load_avg1=6 across six CPUs for deterministic denial.
+- An Arena cross-venue replay test cited observation IDs that were not present
+  in the two pinned fixture markets. The relationship verifier rejected the
+  edge as unsupported evidence, so the replay summary correctly contained one
+  invalid-edge candidate. The test now cites the exact pinned market
+  observation IDs and asserts the relationship is verified before checking
+  both payoff directions.
+
+The final affected legacy slices pass: **153/153** unit/simulation/property
+tests, **75/75** Laboratory tests, and **30/30** Arena admission plus Frontier
+replay/timeline tests. Ruff, Ruff format, and git diff --check pass. Test
+basetemps were isolated under /dev/shm; data/datasets inputs were read-only.
+No production service, live source, or held capture was used.
+
+At 2026-10-28T12:03:40Z, host memory PSI avg10 was 54.85% some / 49.81%
+full; I/O PSI was 1.28% some / 1.22% full. About 10 GiB was available but
+3.5/4 GiB of swap was already occupied. The redundant combined rerun and
+unreviewed legacy modules were held because I/O PSI exceeded the 1% admission
+threshold. The full MIDAS legacy suite therefore remains only partially
+verified. Frontier overall remains **PARTIALLY VERIFIED**; this regression
+work does not establish live cross-venue equivalence, production readiness, or
+deployment eligibility.
