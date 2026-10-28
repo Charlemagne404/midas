@@ -3230,3 +3230,17 @@ adapter request count stays zero. The complete Frontier Python suite passes
 465/465 with these assertions (31.00 seconds wall, 381,712 KiB peak RSS,
 tmpfs root, zero swaps or sockets). Live source permission remains unresolved;
 no source request was made.
+
+## Frontier bounded evidence validation — 2026-10-28 16:51 UTC
+
+After that full-suite run, additional source-independent changes were made in
+`5455b6e` and `d0d1f41`. Five focused model, replay, and verifier modules pass
+143/143; `tests/frontier/test_collection.py` passes 34/34. The newly covered
+validators reject malformed evidence IDs before set-based duplicate checks.
+Ruff, format, syntax, and diff checks pass. The full Frontier suite has not
+been rerun on this latest tree, so the 465/465 result is historical rather
+than current-tree evidence. No exchange endpoint or protected service was
+accessed. At 16:50:58Z CPU PSI avg10 was 37.09%, memory and I/O PSI avg10 were
+0%, available memory was 9.9 GiB, and swap was full. Frontier overall remains
+**PARTIALLY VERIFIED**; live cross-venue science, full regression, protected
+recovery, and deployment remain open.

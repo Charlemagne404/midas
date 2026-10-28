@@ -10533,3 +10533,30 @@ left untouched.
 | Current Frontier Python suite | PARTIALLY VERIFIED | The previous 465/465 result predates this transport change and is not current-tree evidence. |
 | Live source policy | COMPLETE AND VERIFIED | No source request was made for this work; held venues remain fail-closed. |
 | Frontier overall | PARTIALLY VERIFIED | Broad Arena regression, live cross-venue science, endurance, protected recovery, and deployment remain open. |
+
+## Current validation-boundary hardening — 2026-10-28 16:51 UTC
+
+The latest source-independent review closed two additional hash-before-shape
+checks. `5455b6e` validates persisted replay, joint-state, fee-schedule, and
+relationship-review evidence IDs before uniqueness operations, and bounds
+direct same-payoff and logical-implication verifier inputs. Five focused
+modules pass 143/143. `d0d1f41` moves collection-checkpoint digest validation
+ahead of duplicate hashing; all five digest fields have adversarial coverage,
+and the complete collection module passes 34/34. Ruff and formatting checks
+pass for both commits, and the working changes have clean diff checks.
+
+These results are fixture-backed local verification. No public exchange
+request, protected service interaction, or production deployment occurred.
+The full Frontier suite has not been rerun after the latest edits, so overall
+status remains **PARTIALLY VERIFIED**. Live cross-venue validation, resource
+sustainability, production recovery, and deployment remain open. The latest
+resource sample (16:50:58Z) showed CPU PSI avg10 37.09%, memory and I/O PSI
+avg10 0%, 9.9 GiB available, and full swap. Pytest state was contained under
+`/dev/shm`; the untracked public-probe capture directory remains untouched.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Evidence identity validation before hashing | COMPLETE AND VERIFIED | Five focused modules pass 143/143; oversized and malformed digests are rejected. |
+| Collection checkpoint digest validation | COMPLETE AND VERIFIED | Five field cases and all 34 collection tests pass. |
+| Full Python suite after latest edits | PARTIALLY VERIFIED | The latest 143-case and 34-case focused suites pass; full Frontier regression is pending. |
+| Live source validation and production readiness | PARTIALLY VERIFIED | No live source request or deployment is claimed; applicable holds and protected-service requirements remain. |

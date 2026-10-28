@@ -1,5 +1,38 @@
 # Project Frontier Mission Ledger
 
+## Evidence identity validation precedes hashing — 2026-10-28 16:51 UTC
+
+Extended the bounded-input review through persisted models and direct economic
+verifiers. Commit `5455b6e` validates historical replay, joint-state, fee, and
+relationship-review evidence identities before duplicate-set operations. The
+same-payoff and logical-implication verifiers now reject oversized evidence
+lists before set construction. The five affected focused modules pass
+**143/143** in 3.61 seconds; one existing Starlette/httpx deprecation warning
+remains. Ruff, format, syntax, and diff checks passed.
+
+The same ordering issue existed in `CollectionCheckpoint`: its digest lists
+were count-bounded but uniqueness was checked before digest shape. Commit
+`d0d1f41` validates the SHA-256 format first. The five-field adversarial slice
+passes **5/5**, and the entire `test_collection.py` module passes **34/34** in
+1.95 seconds. Ruff, format, and diff checks passed.
+
+At 16:50:58Z CPU PSI avg10 was 37.09% / avg60 38.46%, memory and I/O PSI
+avg10 were 0%, about 9.9 GiB was available, and swap was full. Runs used
+`/dev/shm`; they made no public-source requests and did not touch protected
+services. The untracked `data/frontier-public-probes/` capture directory was
+left untouched. The full Frontier suite has not been rerun after these model
+changes; Frontier overall remains **PARTIALLY VERIFIED**.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Persisted and direct-verifier evidence identity bounds | COMPLETE AND VERIFIED | Five focused modules pass 143/143; wrong-format and oversized identities reject before duplicate hashing. |
+| Collection checkpoint digest bounds | COMPLETE AND VERIFIED | All five digest-bearing fields are covered; the full collection module passes 34/34. |
+| Full Frontier regression after current changes | PARTIALLY VERIFIED | Focused modules pass; the full suite has not been rerun after the latest model hardening. |
+| Live multi-venue science, production recovery, deployment | PARTIALLY VERIFIED | Source-use holds and protected-service boundaries remain; no live cross-venue evidence or production deployment is claimed. |
+
+**Next safe action:** continue bounded source-independent review and refresh
+host admission before any broader suite.
+
 ## Historical replay request IDs bounded before hashing — 2026-10-28 16:45 UTC
 
 `PriceHistoryReplayRequest` previously constructed a duplicate-check set before
