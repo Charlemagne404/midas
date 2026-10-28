@@ -2,76 +2,59 @@
 
 **Report date:** 2026-10-28
 
-## Current status — 2026-10-28 05:25 UTC
+## Current status — 2026-10-28 05:46 UTC
 
-The isolated development branch is `codex/frontier-20261026`; the latest
-implementation checkpoint is `6c5c329` (`fix(frontier): enforce
-collection wall limit from health`), and the latest test checkpoint is
-`f502977` (`test(frontier): verify lease released after wall timeout`), following
-`be73099` (`test(frontier): cover busy collection API lease`),
-`8fb4c0d` (`fix(frontier): serialize source collection across processes`) and
-`bffa163` (`fix(arena): honor configured global admission root`). The major
-Frontier implementation snapshot is commit
-`2064671`; these incremental fixes make the shared Arena lock follow configured
-test roots and prevent competing API processes from collecting the same venue
-concurrently. The current implementation
-includes four read-only source adapters, canonical market and payoff models,
-evidence-backed relationship review, binary/implication/basket candidate
-families, bounded multi-market
-joint-state baskets, an independent arithmetic audit, isolated collection and
-replay, Arena integration, and the native Mission Control workspace.
+Frontier is isolated at `/home/charlie/midas-frontier` on
+`codex/frontier-20261026`. Frontier descends from the verified V6 integration
+commit `11d32a0` (`codex/veritas-v6-integration-20261026`); its merge base with
+current `main` is `55601b9`. The latest
+implementation commit remains `6c5c329` for finite collection wall-time
+enforcement, following `8fb4c0d` for process-shared per-venue collection
+leases. The implementation includes Polymarket, Kalshi, Kraken Spot, and
+Coinbase read-only adapters; canonical instruments and payoff models;
+reviewable relationship evidence; binary, implication, within-market basket,
+and conditional multi-market joint-state candidate families; independent
+economic audits; bounded collection, storage, and replay; Arena integration;
+and the native Mission Control workspace.
 
-At the preceding implementation checkpoint, the complete Frontier test
-directory plus selected Arena discovery, replay, timeline, and job tests
-passed **390/390** in one invocation at **380,624 KiB peak RSS**, with zero
-swaps or socket messages. The web suite passed **40/40**,
-Frontier browser E2E passed **6/6**, and a temporary-output TypeScript/Vite
-production build passed. Selected legacy API, paper-research, storage, recording,
-protected-service guard, and held-capture boundary checks also passed. The full
-`tests/integration` directory subsequently passed **56 tests**, with the
-optional PostgreSQL test skipped because no test URL was configured. A later
-full `pytest tests` attempt stopped during collection because a Reality test
-imports a module absent from the selected source baseline; no test cases ran
-in that attempt. Follow-up diagnostics excluding that known collection blocker
-each reached 101 passing tests before interruption under elevated shared-host
-pressure. A separate bounded Arena planning test also had to be stopped before
-completion when the pressure rose again. The full MIDAS repository suite
-therefore remains unverified.
+Current offline verification is strong and bounded:
 
-The shared Arena admission lock now uses `MIDAS_ARENA_ROOT` when configured,
-creates that isolated root, rejects a symlink root, and keeps the original
-`~/midas/data/arena` default when no override is set. The Veritas batch imports
-the same lock-path implementation. Both affected test modules pass 24/24;
-browser end-to-end coverage has not been rerun after this change.
+- All **22 Frontier Python test modules** pass across **14 serial invocations**
+  (**358 cases**). Both one-process `pytest tests/frontier` attempts were
+  interrupted after 108 and 113 cases under measured host pressure; no
+  one-process full-suite pass is claimed.
+- Strict mypy passes for all 23 Frontier package source files, and for those
+  files plus `apps/api/frontier.py` (**24 files**). Ruff check passes for the
+  Frontier package, Frontier API route, and Frontier tests; Ruff format check
+  reports all 51 files formatted.
+- The production TypeScript/Vite build, all **40** web unit tests, all **6**
+  Frontier Playwright cases, ESLint, and Prettier pass. Playwright used
+  temporary databases and local demo services; no exchange probe or order was
+  submitted. Vite's existing 504.00 kB main-bundle and 544.41 kB Chart-bundle
+  advisory remains; the Frontier lazy bundle is 164.53 kB JavaScript and
+  48.35 kB CSS.
 
-The multi-market joint-state basket search accepts an explicit, bounded map
-across two to four event markets. Its payout arithmetic is independently
-audited and replay-pinned, but the supplied map remains an unverified external
-assertion, so positive results stay conditional and practically ineligible.
-Earlier entries describing this search as deferred are historical and were
-superseded by the 02:03 UTC implementation checkpoint.
+The complete repository regression remains unverified. In this Frontier
+baseline, `tests/test_reality_full_scale_validation.py` imports
+`midas.reality.recovery`, which is absent from the selected source tree. A
+recovery module exists on another Reality lineage, but relative to the V6
+baseline its collector, reconstruction, replay, and storage dependencies differ
+by 761 insertions and 233 deletions. Those source worktrees also contain
+unrelated dirty or untracked material. No recovery module was copied or
+cherry-picked into Frontier; doing so without a deliberate compatibility port
+would mix two Reality implementations. Selected legacy API, paper, storage,
+recording, and service-boundary regressions passed in earlier bounded runs,
+but they do not substitute for the full MIDAS suite.
 
 Frontier remains **PARTIALLY VERIFIED**, research-only, isolated, and
-undeployed. Kalshi and Kraken data use remains held; Coinbase remains held
-pending use-scope review. The single bounded Polymarket detail capture does not
-prove event membership, payoff equivalence, exhaustive outcomes, or a
-cross-venue relationship. Consequently, no genuine cross-venue economic
-opportunity is established. Full repository regression and production
-transition remain open; deployment requires a separate authorized readiness
-review.
-
-The collector/API pair, adapter contracts, small analytics/relation modules,
-economics/capital modules, storage, and source-permission boundary tests pass
-**223 tests** across six bounded invocations; strict mypy passes on the latest
-collector code. Two full
-`pytest tests/frontier` attempts were interrupted: one after **108 passed** as
-an external Veritas batch drove pressure high, and a retry after **113 passed**
-when the suite itself drove I/O PSI above the gate. Both exited 2 with
-`KeyboardInterrupt`; neither is a suite pass. Web/API typing, browser
-verification, and broader regression remain pending. At approximately
-`2026-10-28T05:25Z`, memory PSI avg10 was **0.00% some / 0.00% full** and
-I/O PSI avg10 was **1.13% some / 0.97% full**; no process held the shared
-Arena lock. Further tests remain deferred at this sample.
+undeployed. The source-terms review keeps Kalshi and Kraken live use held, with
+Coinbase held pending scope review. The single bounded Polymarket detail
+capture does not establish its event membership, payoff equivalence, or an
+equivalent cross-venue contract. No genuine cross-venue relationship,
+economically eligible opportunity, or realizable profit is claimed. Continuous
+source quality, production resource sustainability, and the production
+transition remain open; no protected service or historical evidence was
+changed.
 
 ## Bounded metadata and initial resource checkpoint — 2026-10-28 03:59 UTC
 

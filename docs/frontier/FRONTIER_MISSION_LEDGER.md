@@ -5637,3 +5637,26 @@ stores were accessed or modified.
 | Frontier Python lint and formatting | COMPLETE AND VERIFIED | Ruff check passes and all 51 relevant files are formatted. |
 | Live multi-venue validation | BLOCKED | Existing source-use restrictions prevent a second-venue observation. |
 | Production eligibility | DEFERRED | No deployment or protected-service transition was attempted. |
+
+## Legacy-suite baseline audit — 2026-10-28 05:46 UTC
+
+The current Frontier branch descends from the V6 integration commit
+`11d32a0`; its merge base with `main` is `55601b9`. The repository-wide test
+collection blocker is specific: the tracked
+`tests/test_reality_full_scale_validation.py` imports
+`midas.reality.recovery`, which the selected Frontier/V6 tree does not contain.
+
+The recovery module exists on a separate Reality lineage. Comparing that
+lineage's corrected recovery commit `c2e73eb` with the Frontier V6 baseline
+shows **761 insertions and 233 deletions** across `collector.py`,
+`reconstruction.py`, `replay.py`, and `storage.py`. The candidate source
+worktrees also contain unrelated dirty or untracked files. No source file was
+transplanted and no other worktree was changed. Resolving this regression
+requires a deliberate Reality compatibility port or a verified integrated
+baseline; copying only `recovery.py` would not test compatible source.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Frontier/V6 baseline identity | COMPLETE AND VERIFIED | Ancestry and merge-base were checked from the current Git graph. |
+| Full MIDAS repository regression | PARTIALLY VERIFIED | Collection is blocked by the missing Reality recovery module; full-suite execution is not claimed. |
+| Cross-lineage Reality recovery integration | DEFERRED | Dependency code differs materially and was not merged into the isolated Frontier branch. |
