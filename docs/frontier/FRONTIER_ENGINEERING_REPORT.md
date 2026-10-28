@@ -30,9 +30,14 @@ Current acceptance snapshot:
 | --- | --- | --- |
 | Isolated exchange-independent adapter foundation | COMPLETE AND VERIFIED | Four read-only adapters, capability declarations, canonical models, fixture contracts, and the shared bounded transport are implemented and covered by the current Python suite. |
 | Kalshi, Kraken, and Coinbase live source validation | IMPLEMENTED, LIVE VALIDATION PENDING | Adapters are fixture-verified; terms and intended-use holds keep further collection and held evidence quarantined. |
-| Canonical payoff, relationship, and opportunity research | PARTIALLY VERIFIED | Supported bounded constructions and independent Decimal audits pass controlled fixtures; no genuine verified cross-venue payoff relationship or eligible opportunity is established. |
-| Provenance, storage, and deterministic replay | COMPLETE AND VERIFIED WITHIN TESTED SCOPE | Hash-checked local observations, relationship reviews, deterministic/paired replay, and selected Arena handoffs have fixture and persistence regression coverage; no endurance claim is made. |
+| Canonical instrument and supported payoff semantics | PARTIALLY VERIFIED | Versioned canonical models and exhaustive supported payoff constructions pass controlled fixtures; cross-venue settlement equivalence is not established. |
+| Relationship graph and evidence validation | PARTIALLY VERIFIED | Bounded hypothesis discovery, relationship review history, and verified payoff edges are fixture-tested; no genuine verified cross-venue payoff relationship is established. |
+| Candidate generation and independent economic audit | PARTIALLY VERIFIED | Bounded opportunity families and independent Decimal recalculation pass controlled fixtures; no eligible live cross-venue opportunity is established. |
+| Cross-venue costs, capital, and execution scenarios | PARTIALLY VERIFIED | Fee evidence, depth, virtual venue balances, timing, partial fills, and stress scenarios are modeled; account-specific fees, jurisdiction, transfer, collateral, and settlement remain unresolved. |
+| Provenance, storage, and deterministic replay | COMPLETE AND VERIFIED WITHIN TESTED SCOPE | Hash-checked observations, relationship reviews, deterministic/paired replay, and selected Arena handoffs have fixture and persistence regression coverage; cross-source synchronization and endurance are unmeasured. |
+| Bounded collection and source-health handling | IMPLEMENTED, LIVE VALIDATION PENDING | Isolated bounded collection and failure/health evidence paths are fixture-tested; current venue holds prevent live validation for Kalshi, Kraken, and Coinbase. |
 | Laboratory/Arena integration | PARTIALLY VERIFIED | Frontier integration slices pass; the 427-case full Arena retry stopped beyond 50% under sustained CPU pressure and did not produce a suite result. |
+| Source-aware analytics and readiness | PARTIALLY VERIFIED | Coverage, quality, rejection, and readiness views use bounded stored evidence; the current sample does not support venue-wide prevalence claims. |
 | Native Frontier workspace | COMPLETE AND VERIFIED, DEPLOYMENT PENDING | Vitest 47/47, TypeScript, ESLint, and Prettier pass. Production build and 7 regular + 2 seeded fixture browser cases passed at the 13:59 UTC checkpoint; this turn changed only a test assertion. |
 | Research-only security boundary | COMPLETE AND VERIFIED | Public transport is anonymous GET-only, host-contained, redirect-disabled, and source-gated; no authenticated trading, wallet, deposit, withdrawal, or order path is present in Frontier. |
 | Resource sustainability | PARTIALLY VERIFIED | Bounded Python/web runs have measured RSS and no test swaps; a broader Arena test caused sustained CPU pressure and was stopped. Continuous-source and deployment load are unmeasured. |
@@ -4136,11 +4141,12 @@ Latest isolated checkpoint commits and exact changed files:
   `55407dd` — report and mission-ledger checkpoints for proxy validation,
   protected-resource admission, public egress, transport verification,
   parser admission, adapter host containment, and spot-disclosure verification.
+- `46fe772` — records the Arena CPU-pressure stop in this report, the mission
+  ledger, and `docs/MIDAS_CURRENT_STATE.md`.
 
 All listed files are verified from the respective commit trees. The latest
-Arena-stop checkpoint and current-state addendum are recorded at the beginning
-of this report, ledger, and current-state document; their commit identity will
-be recorded in the next checkpoint.
+Arena-stop checkpoint and current-state addendum at the beginning of this
+report, ledger, and current-state document are committed as `46fe772`.
 
 ## 20. Final status and continuation instructions
 
