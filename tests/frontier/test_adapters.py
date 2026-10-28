@@ -191,6 +191,30 @@ async def test_transport_classifies_json_complexity_limits_and_preserves_bounded
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "body",
+    (
+        '{"id":"first","id":"last"}',
+        '{"market":{"price":"0.4","price":"0.9"}}',
+    ),
+    ids=("top-level-key", "nested-key"),
+)
+async def test_transport_rejects_duplicate_json_keys_and_preserves_response(body):
+    transport, requests, client = _transport("api.example.test", {"/duplicate": body})
+    try:
+        with pytest.raises(AdapterError) as error:
+            await transport.get_json("https://api.example.test/duplicate")
+    finally:
+        await client.aclose()
+
+    assert error.value.code == "DUPLICATE_JSON_KEY"
+    assert error.value.retryable is False
+    assert error.value.response_evidence is not None
+    assert error.value.response_evidence.raw_body == body.encode("utf-8")
+    assert len(requests) == 1
+
+
+@pytest.mark.asyncio
 async def test_transport_ignores_bracket_characters_inside_json_strings():
     value = '"' + "[" * 100 + "]" * 100 + '"'
     body = json.dumps(value)

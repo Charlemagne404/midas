@@ -28,6 +28,19 @@ REQUEST_COUNT_HISTORY_MAX = 301
 MAX_JSON_NESTING_DEPTH = 64
 
 
+class _DuplicateJSONKeyError(ValueError):
+    pass
+
+
+def _unique_json_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    result: dict[str, Any] = {}
+    for key, value in pairs:
+        if key in result:
+            raise _DuplicateJSONKeyError(f"Duplicate JSON object key: {key}")
+        result[key] = value
+    return result
+
+
 def _exceeds_json_nesting_depth(raw: str, maximum: int = MAX_JSON_NESTING_DEPTH) -> bool:
     """Bound container nesting before decoding into recursive Python objects."""
     depth = 0
@@ -283,11 +296,26 @@ class PublicReadTransport:
                             ),
                         )
                     try:
-                        payload = json.loads(raw, parse_float=D)
+                        payload = json.loads(
+                            raw, parse_float=D, object_pairs_hook=_unique_json_object
+                        )
                     except json.JSONDecodeError as error:
                         raise AdapterError(
                             "INVALID_JSON",
                             "Public source returned invalid JSON",
+                            response_evidence=FailedResponseEvidence(
+                                url=request_url,
+                                status_code=response.status_code,
+                                raw_body=bytes(body),
+                                request_started_at_utc=started,
+                                response_received_at_utc=received,
+                                request_elapsed_monotonic_ns=request_elapsed_monotonic_ns,
+                            ),
+                        ) from error
+                    except _DuplicateJSONKeyError as error:
+                        raise AdapterError(
+                            "DUPLICATE_JSON_KEY",
+                            "Public source returned JSON with a duplicate object key",
                             response_evidence=FailedResponseEvidence(
                                 url=request_url,
                                 status_code=response.status_code,
