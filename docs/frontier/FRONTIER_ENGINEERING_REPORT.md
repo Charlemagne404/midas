@@ -9601,3 +9601,21 @@ and I/O PSI at **0.09% some / 0.08% full**, despite about 9 GiB available.
 Validation remains pending a fresh resource-admission sample. No source,
 capture, collector, protected store, or production service was accessed.
 Frontier remains **PARTIALLY VERIFIED**.
+
+## Read-only review-target preflight — 2026-10-28 13:48 UTC
+
+Commit `13377dc` closes the empty-database case left by the earlier missing-path
+guard. Before `initialize()`, `append_relationship_review` now checks for the
+relationship table and requested parent through `_read_connect()`. An absent
+table or row returns the existing target-not-found error without schema
+creation or migration. SQLite inspection errors are surfaced as a store error;
+the write transaction still rechecks the parent after initialization. A second
+regression asserts that an existing empty database remains byte-for-byte
+unchanged. Neither focused regression, the storage module, nor strict
+mypy/Ruff was run after the change.
+
+At `2026-10-28T13:48:50Z`, memory PSI avg10 was **37.45% some / 28.85% full**,
+CPU PSI **29.17%**, and I/O PSI **0.00%**. About 9 GiB was available, with
+3.5 GiB swap in use; memory exceeds the documented 1% admission gate. No
+source, capture, collector, protected store, or production service was accessed.
+Frontier remains **PARTIALLY VERIFIED**.

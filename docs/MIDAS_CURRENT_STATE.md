@@ -2956,3 +2956,13 @@ resource sample. At `13:46:08Z`, memory PSI avg10 was **35.83% some / 28.31%
 full**, CPU PSI **29.19%**, and I/O PSI **0.09% some / 0.08% full**. No source,
 capture, protected store, collector, or production service was accessed.
 Frontier remains research-only and **PARTIALLY VERIFIED**.
+
+### Frontier read-only review-target preflight — 2026-10-28 13:48 UTC
+
+Commit `13377dc` checks a review parent through a read-only SQLite connection
+before database initialization. This also covers an existing empty database;
+a byte-preservation regression is committed, but neither focused case nor
+post-change storage/static validation has run. At `13:48:50Z`, memory PSI avg10
+was **37.45% some / 28.85% full**, CPU PSI **29.17%**, and I/O PSI **0.00%**;
+about 9 GiB was available while swap usage was 3.5 GiB. The memory gate remains
+exceeded. Frontier remains research-only and **PARTIALLY VERIFIED**.

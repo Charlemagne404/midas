@@ -1,5 +1,32 @@
 # Project Frontier Mission Ledger
 
+## Read-only review-target preflight — 2026-10-28 13:48 UTC
+
+**Implementation commit:** `13377dc` (`fix(frontier): preflight review targets read only`).
+
+The prior absent-path guard did not cover an existing empty SQLite file:
+`initialize()` could still create schema before the review target lookup failed.
+`append_relationship_review` now checks the relationship table and target using
+the store's read-only connection before initialization. The existing missing
+store regression uses a shared review fixture, and a second regression checks
+that an empty database remains byte-for-byte unchanged. Neither regression,
+the storage module, nor mypy/Ruff has run after this commit.
+
+At `2026-10-28T13:48:50Z`, memory PSI avg10 was **37.45% some / 28.85% full**,
+CPU PSI **29.17%**, and I/O PSI **0.00%**; about 9 GiB was available and swap
+usage was 3.5 GiB. The memory admission gate remains exceeded. No source,
+capture, collector, protected store, or production service was accessed.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Review-target preflight before SQLite initialization | IMPLEMENTED, VALIDATION PENDING | Missing-path and empty-file regressions are committed; both await test/static validation. |
+| FrontierStore module after `13377dc` | PARTIALLY VERIFIED | The prior 28/28 module result predates both review-guard commits. |
+| Frontier project acceptance | PARTIALLY VERIFIED | Live source-use holds, cross-venue evidence, broad regression, production recovery, and deployment remain open. |
+
+**Next safe action:** when a fresh sample shows memory and I/O PSI avg10
+below 1%, run both focused review-target cases, strict mypy/Ruff, then the
+complete storage module. Keep `data/frontier-public-probes/` untouched.
+
 ## Missing relationship-review store no longer initializes — 2026-10-28 13:46 UTC
 
 **Implementation commit:** `ccc44ce` (`fix(frontier): avoid initializing for missing review targets`).
