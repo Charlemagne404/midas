@@ -314,6 +314,141 @@ def _client(tmp_path, *, arena_root=None, hold_sources=False):
     return TestClient(app), registry, client, requests, store
 
 
+def test_finite_collection_api_lists_and_resumes_a_checkpointed_run(tmp_path):
+    from tests.frontier.test_collection import FailOnceStore, FakeAdapter
+
+    adapter = FakeAdapter()
+    registry = AdapterRegistry((adapter,))
+    store = FailOnceStore(tmp_path / "frontier")
+    app = FastAPI()
+    app.include_router(router(store, registry))
+    client = TestClient(app)
+    try:
+        empty_history = client.get("/api/frontier/collection-runs")
+        assert empty_history.status_code == 200
+        assert empty_history.json()["items"] == []
+        assert empty_history.json()["network_called"] is False
+        assert adapter.transport.request_count == 0
+
+        started = client.post(
+            "/api/frontier/collect/polymarket",
+            json={
+                "market_limit": 1,
+                "book_limit": 0,
+                "book_depth": 5,
+                "max_wall_seconds": 30,
+            },
+        )
+        assert started.status_code == 200, started.text
+        start_result = started.json()["collection_run"]
+        run_id = start_result["run_id"]
+        assert start_result["state"] == "paused"
+        assert start_result["market_count"] == 0
+        assert start_result["pending_observation_count"] == 1
+        assert adapter.discovery_calls == 1
+
+        paused_history = client.get("/api/frontier/collection-runs?limit=1")
+        assert paused_history.status_code == 200
+        paused_row = paused_history.json()["items"][0]
+        assert paused_row["run_id"] == run_id
+        assert paused_row["state"] == "paused"
+        assert paused_row["resumable"] is True
+        assert len(paused_row["checkpoint_sha256"]) == 64
+        assert adapter.transport.request_count == 1
+
+        client.close()
+        asyncio.run(registry.aclose())
+
+        restarted_adapter = FakeAdapter()
+        restarted_registry = AdapterRegistry((restarted_adapter,))
+        restarted_store = FrontierStore(store.root)
+        restarted_app = FastAPI()
+        restarted_app.include_router(router(restarted_store, restarted_registry))
+        registry = restarted_registry
+        adapter = restarted_adapter
+        store = restarted_store
+        client = TestClient(restarted_app)
+
+        resumed = client.post(f"/api/frontier/collect/polymarket/{run_id}/resume")
+        assert resumed.status_code == 200, resumed.text
+        resumed_result = resumed.json()["collection_run"]
+        assert resumed_result["state"] == "completed"
+        assert resumed_result["market_count"] == 1
+        assert resumed_result["book_count"] == 0
+        assert resumed_result["request_count"] == 1
+        assert adapter.discovery_calls == 0
+        assert adapter.transport.request_count == 0
+        assert store.summary()["observations"] == 1
+
+        terminal_history = client.get("/api/frontier/collection-runs?limit=1")
+        terminal_row = terminal_history.json()["items"][0]
+        assert terminal_row["state"] == "completed"
+        assert terminal_row["resumable"] is False
+        assert terminal_row["resume_block_reason"] == "Collection run is terminal."
+        request_count_at_completion = adapter.transport.request_count
+        terminal_retry = client.post(f"/api/frontier/collect/polymarket/{run_id}/resume")
+        assert terminal_retry.status_code == 200, terminal_retry.text
+        assert terminal_retry.json()["collection_run"] == resumed_result
+        assert adapter.transport.request_count == request_count_at_completion
+    finally:
+        client.close()
+        asyncio.run(registry.aclose())
+
+
+def test_collection_api_quarantines_held_runs_and_blocks_start_and_resume(tmp_path):
+    from tests.frontier.test_collection import (
+        CollectionCheckpoint,
+        CollectionJournal,
+        CollectionRunSpec,
+    )
+
+    client, registry, http_client, requests, store = _client(tmp_path, hold_sources=True)
+    held_config = registry.get(Venue.KALSHI).config
+    run_id = "11111111-1111-4111-8111-111111111111"
+    journal = CollectionJournal(store.root)
+    spec = CollectionRunSpec(
+        run_id=run_id,
+        venue=Venue.KALSHI,
+        adapter_version=registry.get(Venue.KALSHI).capabilities.adapter_version,
+        capability_manifest_sha256="a" * 64,
+        adapter_config=held_config,
+        market_limit=1,
+        book_limit=0,
+        book_depth=5,
+        max_evidence_bytes=4 * 1024 * 1024,
+        max_wall_seconds=30,
+        created_at_utc=T0,
+    )
+    checkpoint = CollectionCheckpoint(
+        run_id=run_id,
+        sequence=0,
+        updated_at_utc=T0,
+        state="paused",
+    )
+    journal.create_run(spec)
+    journal.append_checkpoint(checkpoint)
+    try:
+        history = client.get("/api/frontier/collection-runs?limit=20")
+        assert history.status_code == 200, history.text
+        assert history.json()["items"] == []
+        assert history.json()["network_called"] is False
+
+        start = client.post(
+            "/api/frontier/collect/kalshi",
+            json={"market_limit": 1, "book_limit": 0},
+        )
+        assert start.status_code == 409
+        resume = client.post(f"/api/frontier/collect/kalshi/{run_id}/resume")
+        assert resume.status_code == 409
+        assert requests == []
+        assert journal.run_spec(run_id) == spec
+        assert journal.latest_checkpoint(run_id) == checkpoint
+    finally:
+        client.close()
+        asyncio.run(registry.aclose())
+        asyncio.run(http_client.aclose())
+
+
 def _graph_fixture_edge(left: FrontierMarket, right: FrontierMarket) -> Relationship:
     left_id, right_id = sorted((left.canonical_id, right.canonical_id))
     relationship_id = hashlib.sha256(
