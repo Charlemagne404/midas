@@ -135,6 +135,8 @@ it('renders recorded-evidence empty states and never probes a source automatical
         market_records: 0,
         book_observation_records: 0,
         invalid_normalized_book_records: 0,
+        price_history_observation_records: 0,
+        invalid_normalized_price_history_records: 0,
         unique_instrument_books: 0,
         eligible_replay_runs: 0,
         candidate_records: 0,
@@ -142,6 +144,7 @@ it('renders recorded-evidence empty states and never probes a source automatical
         market_record_limit: 50,
         book_record_limit: 50,
         replay_run_limit: 20,
+        price_history_record_limit: 20,
         candidate_record_limit: 5000,
       },
       market_mix: [],
@@ -166,6 +169,27 @@ it('renders recorded-evidence empty states and never probes a source automatical
         median_receipt_age_ms: null,
         p90_receipt_age_ms: null,
       })),
+      historical_price_quality_scope:
+        'Newest bounded saved captures by venue; gaps describe returned samples only.',
+      historical_price_quality: ['polymarket', 'kalshi', 'kraken', 'coinbase_exchange'].map(
+        (venue) => ({
+          venue,
+          capture_count: 0,
+          unique_instrument_count: 0,
+          source_point_count: 0,
+          empty_capture_count: 0,
+          market_bound_capture_count: 0,
+          unbound_capture_count: 0,
+          future_capture_timestamp_count: 0,
+          future_point_timestamp_count: 0,
+          latest_capture_received_at_utc: null,
+          median_capture_age_ms: null,
+          p90_capture_age_ms: null,
+          earliest_source_point_at_utc: null,
+          latest_source_point_at_utc: null,
+          largest_adjacent_sample_gap_seconds: null,
+        }),
+      ),
       pricing: [],
       candidate_research: {
         counts_by_classification: {},
@@ -352,8 +376,12 @@ it('renders recorded-evidence empty states and never probes a source automatical
   expect(fetchMock.mock.calls.every(([, init]) => init?.method !== 'POST')).toBe(true);
   fireEvent.click(screen.getByRole('button', { name: 'Coverage & quality' }));
   expect(await screen.findByRole('heading', { name: 'Recent market mix' })).toBeInTheDocument();
+  expect(
+    screen.getByRole('heading', { name: 'Price-history capture coverage' }),
+  ).toBeInTheDocument();
   expect(screen.getByText('No eligible market records')).toBeInTheDocument();
   expect(screen.getByText('No quality-valid book pairs')).toBeInTheDocument();
+  expect(screen.getByText('No saved price-history captures')).toBeInTheDocument();
   expect(screen.getByText(/not venue-wide coverage/)).toBeInTheDocument();
 
   fireEvent.click(screen.getByRole('button', { name: 'Exchanges' }));
@@ -1311,6 +1339,7 @@ it('captures one explicit Polymarket trade page and follows its bound cursor', a
   const conditionId = `0x${'a'.repeat(64)}`;
   const requests: Record<string, unknown>[] = [];
   const priceHistoryRequests: Record<string, unknown>[] = [];
+  const priceHistoryReplayRequests: Record<string, unknown>[] = [];
   let savedPriceHistory: Record<string, unknown> | null = null;
   const market = {
     canonical_id: 'polymarket:trade-condition',
@@ -1537,6 +1566,35 @@ it('captures one explicit Polymarket trade page and follows its bound cursor', a
         }),
       } as Response;
     }
+    if (path === '/api/frontier/price-history/replay' && init?.method === 'POST') {
+      priceHistoryReplayRequests.push(JSON.parse(String(init.body)) as Record<string, unknown>);
+      return {
+        ok: true,
+        json: async () => ({
+          run_id: 'c'.repeat(64),
+          result_sha256: 'e'.repeat(64),
+          manifest: {
+            input_sha256: 'd'.repeat(64),
+            observation_ids: ['history-observation'],
+            replay_version: 'frontier-price-history-replay-1',
+            as_of_utc: '2026-10-27T00:01:00Z',
+          },
+          series: [
+            {
+              observation_id: 'history-observation',
+              point_count: 1,
+              first_point_ts: 1793059200,
+              last_point_ts: 1793059200,
+              observed_point_span_seconds: 0,
+              largest_adjacent_sample_gap_seconds: null,
+              minimum_sampled_price: '0.42',
+              maximum_sampled_price: '0.42',
+            },
+          ],
+          candidate_generation: 'not_performed',
+        }),
+      } as Response;
+    }
     if (
       (path === '/api/frontier/probe/polymarket/trades' ||
         path === '/api/frontier/probe/kalshi/trades') &&
@@ -1593,6 +1651,10 @@ it('captures one explicit Polymarket trade page and follows its bound cursor', a
   ).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Capture one series' }));
   expect(await screen.findByText('0.42')).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Replay saved series' }));
+  expect(await screen.findByText('Deterministic source-sample replay')).toBeInTheDocument();
+  expect(screen.getByText(/Candidate generation was not performed/)).toBeInTheDocument();
+  expect(priceHistoryReplayRequests).toEqual([{ observation_ids: ['history-observation'] }]);
   expect(priceHistoryRequests).toHaveLength(1);
   expect(priceHistoryRequests[0]).toMatchObject({
     native_instrument_id: '123456789',

@@ -1268,6 +1268,21 @@
 .fr-price-history-meta button {
   color: #a5cbbb;
 }
+.fr-price-history-replay {
+  display: grid;
+  gap: 4px;
+  padding: 9px 11px;
+  border: 1px solid #355046;
+  border-radius: 8px;
+  background: #12201b;
+  color: #b7c9c1;
+  font-size: 9px;
+  overflow-wrap: anywhere;
+}
+.fr-price-history-replay strong {
+  color: #9bd4bb;
+  font-size: 10px;
+}
 .fr-event-group-controls {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;

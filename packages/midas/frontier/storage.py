@@ -11,6 +11,7 @@ from typing import Any
 
 from pydantic import ValidationError
 
+from midas.frontier.historical_replay import PriceHistoryReplayResult
 from midas.frontier.models import (
     FrontierMarket,
     FrontierModel,
@@ -27,7 +28,7 @@ from midas.frontier.relationships import (
 )
 from midas.frontier.replay import PairedReplayComparison, ReplayResult
 
-SCHEMA_VERSION = 6
+SCHEMA_VERSION = 7
 MAX_ROW_BYTES = 512 * 1024
 
 
@@ -136,6 +137,14 @@ class FrontierStore:
                 );
                 CREATE INDEX IF NOT EXISTS research_runs_created
                     ON research_runs(created_at_utc DESC, run_id);
+                CREATE TABLE IF NOT EXISTS price_history_replays (
+                    run_id TEXT PRIMARY KEY,
+                    created_at_utc TEXT NOT NULL,
+                    result_sha256 TEXT NOT NULL,
+                    result_json TEXT NOT NULL
+                );
+                CREATE INDEX IF NOT EXISTS price_history_replays_created
+                    ON price_history_replays(created_at_utc DESC, run_id);
                 CREATE TABLE IF NOT EXISTS research_comparisons (
                     comparison_id TEXT PRIMARY KEY,
                     created_at_utc TEXT NOT NULL,
@@ -168,6 +177,10 @@ class FrontierStore:
                     BEFORE UPDATE ON research_runs BEGIN SELECT RAISE(ABORT, 'Frontier runs are append-only'); END;
                 CREATE TRIGGER IF NOT EXISTS research_runs_no_delete
                     BEFORE DELETE ON research_runs BEGIN SELECT RAISE(ABORT, 'Frontier runs are append-only'); END;
+                CREATE TRIGGER IF NOT EXISTS price_history_replays_no_update
+                    BEFORE UPDATE ON price_history_replays BEGIN SELECT RAISE(ABORT, 'Frontier price-history replays are append-only'); END;
+                CREATE TRIGGER IF NOT EXISTS price_history_replays_no_delete
+                    BEFORE DELETE ON price_history_replays BEGIN SELECT RAISE(ABORT, 'Frontier price-history replays are append-only'); END;
                 CREATE TRIGGER IF NOT EXISTS research_comparisons_no_update
                     BEFORE UPDATE ON research_comparisons BEGIN SELECT RAISE(ABORT, 'Frontier comparisons are append-only'); END;
                 CREATE TRIGGER IF NOT EXISTS research_comparisons_no_delete
@@ -204,13 +217,7 @@ class FrontierStore:
                     (str(SCHEMA_VERSION),),
                 )
                 connection.commit()
-            elif current[0] == "4":
-                connection.execute(
-                    "UPDATE frontier_meta SET value=? WHERE key='schema_version'",
-                    (str(SCHEMA_VERSION),),
-                )
-                connection.commit()
-            elif current[0] == "5":
+            elif current[0] in {"4", "5", "6"}:
                 connection.execute(
                     "UPDATE frontier_meta SET value=? WHERE key='schema_version'",
                     (str(SCHEMA_VERSION),),
@@ -872,6 +879,47 @@ class FrontierStore:
             )
         return result.run_id
 
+    def append_price_history_replay(
+        self,
+        result: PriceHistoryReplayResult,
+        *,
+        max_runs: int = 5000,
+    ) -> str:
+        self.initialize()
+        if not 1 <= max_runs <= 100_000:
+            raise ValueError("Price-history replay run budget must be within 1..100000")
+        result_json = self._canonical(result)
+        if len(result_json.encode("utf-8")) > MAX_ROW_BYTES:
+            raise FrontierStoreError("Price-history replay exceeds the 512 KiB record bound")
+        with self._connect() as connection:
+            existing = connection.execute(
+                "SELECT run_id,created_at_utc,result_sha256,result_json "
+                "FROM price_history_replays WHERE run_id=?",
+                (result.run_id,),
+            ).fetchone()
+            if existing is not None:
+                if self._validated_price_history_replay_row(existing) != result:
+                    raise FrontierStoreError(
+                        "Price-history replay identity collision with different output"
+                    )
+                return result.run_id
+            count = int(
+                connection.execute("SELECT COUNT(*) FROM price_history_replays").fetchone()[0]
+            )
+            if count >= max_runs:
+                raise FrontierStoreError("Price-history replay run budget is exhausted")
+            self._budgeted_insert(
+                connection,
+                "INSERT INTO price_history_replays VALUES(?,?,?,?)",
+                (
+                    result.run_id,
+                    result.manifest.as_of_utc.astimezone(UTC).isoformat(),
+                    result.result_sha256,
+                    result_json,
+                ),
+            )
+        return result.run_id
+
     def append_paired_comparison(
         self,
         runs: tuple[ReplayResult, ReplayResult],
@@ -1176,6 +1224,60 @@ class FrontierStore:
         if result.result_sha256 not in {raw_digest, normalized_digest}:
             raise FrontierStoreError("Stored replay result hash does not match its payload")
         return result
+
+    @staticmethod
+    def _validated_price_history_replay_row(row: sqlite3.Row) -> PriceHistoryReplayResult:
+        try:
+            raw_result = json.loads(str(row["result_json"]))
+            result = PriceHistoryReplayResult.model_validate(raw_result)
+        except (json.JSONDecodeError, ValidationError, TypeError) as error:
+            raise FrontierStoreError("Stored price-history replay payload is invalid") from error
+        if (
+            result.run_id != row["run_id"]
+            or result.result_sha256 != row["result_sha256"]
+            or result.manifest.as_of_utc.astimezone(UTC).isoformat() != row["created_at_utc"]
+        ):
+            raise FrontierStoreError("Stored price-history replay indexes do not match its payload")
+        return result
+
+    def price_history_replays(
+        self, *, limit: int = 100, offset: int = 0
+    ) -> tuple[dict[str, Any], ...]:
+        if not 1 <= limit <= 200 or not 0 <= offset <= 1_000_000:
+            raise ValueError("Price-history replay query limit/offset exceeds the bounded range")
+        if not self.path.exists():
+            return ()
+        with self._read_connect() as connection:
+            rows = connection.execute(
+                "SELECT run_id,created_at_utc,result_sha256,result_json FROM price_history_replays "
+                "ORDER BY created_at_utc DESC,run_id LIMIT ? OFFSET ?",
+                (limit, offset),
+            ).fetchall()
+        return tuple(
+            {
+                **dict(row),
+                "result": self._validated_price_history_replay_row(row).model_dump(mode="json"),
+            }
+            for row in rows
+        )
+
+    def price_history_replay(self, run_id: str) -> dict[str, Any] | None:
+        if len(run_id) != 64 or any(character not in "0123456789abcdef" for character in run_id):
+            raise ValueError("Price-history replay identity must be a lowercase SHA-256 digest")
+        if not self.path.exists():
+            return None
+        with self._read_connect() as connection:
+            row = connection.execute(
+                "SELECT run_id,created_at_utc,result_sha256,result_json "
+                "FROM price_history_replays WHERE run_id=?",
+                (run_id,),
+            ).fetchone()
+        if row is None:
+            return None
+        return {
+            **dict(row),
+            "result": self._validated_price_history_replay_row(row).model_dump(mode="json"),
+        }
 
     def replays(self, *, limit: int = 100, offset: int = 0) -> tuple[dict[str, Any], ...]:
         if not 1 <= limit <= 200 or not 0 <= offset <= 1_000_000:

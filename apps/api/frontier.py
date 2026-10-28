@@ -53,6 +53,7 @@ from midas.frontier.adapters.kraken import KrakenSpotAdapter
 from midas.frontier.analytics import (
     BOOK_SAMPLE_LIMIT,
     MARKET_SAMPLE_LIMIT,
+    PRICE_HISTORY_SAMPLE_LIMIT,
     REPLAY_SAMPLE_LIMIT,
     StoredBookEvidence,
     summarize_frontier_coverage,
@@ -75,6 +76,12 @@ from midas.frontier.economics import (
 from midas.frontier.fx import (
     FundingCurrencySensitivityRequest,
     evaluate_funding_currency_sensitivity,
+)
+from midas.frontier.historical_replay import (
+    MAX_PRICE_HISTORY_REPLAY_SERIES,
+    PriceHistoryReplayInput,
+    PriceHistoryReplayResult,
+    deterministic_price_history_replay,
 )
 from midas.frontier.models import (
     BookSnapshot,
@@ -160,6 +167,21 @@ class PolymarketPriceHistoryProbeRequest(BaseModel):
             raise ValueError("Price-history requests are bounded to 7 days")
         if self.end_ts > now_ts:
             raise ValueError("Price-history end timestamp cannot be in the future")
+        return self
+
+
+class PriceHistoryReplayRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+    observation_ids: tuple[str, ...] = Field(
+        min_length=1, max_length=MAX_PRICE_HISTORY_REPLAY_SERIES
+    )
+
+    @model_validator(mode="after")
+    def observation_ids_are_unique_sha256(self) -> PriceHistoryReplayRequest:
+        if len(set(self.observation_ids)) != len(self.observation_ids) or any(
+            re.fullmatch(r"[0-9a-f]{64}", item) is None for item in self.observation_ids
+        ):
+            raise ValueError("Price-history replay requires unique observation SHA-256 IDs")
         return self
 
 
@@ -1689,6 +1711,12 @@ def router(
                 excluded_venues=held_venues,
                 limit=BOOK_SAMPLE_LIMIT,
             )
+            price_history_rows = _read_stored_observations(
+                store,
+                kind="historical_price_points",
+                excluded_venues=held_venues,
+                limit=PRICE_HISTORY_SAMPLE_LIMIT,
+            )
             inventory = store.summary(excluded_venues=held_venues)
         except (FrontierStoreError, ValueError) as error:
             raise HTTPException(
@@ -1717,6 +1745,27 @@ def router(
             except (KeyError, TypeError, ValueError):
                 invalid_book_record_count += 1
 
+        price_history_records: list[PriceHistoryReplayInput] = []
+        invalid_price_history_record_count = 0
+        for row in price_history_rows:
+            normalized = row.get("normalized")
+            if not isinstance(normalized, dict):
+                invalid_price_history_record_count += 1
+                continue
+            try:
+                series = PriceHistorySeries.model_validate(normalized)
+                price_history_records.append(
+                    PriceHistoryReplayInput(
+                        observation_id=str(row["observation_id"]),
+                        venue=Venue(str(row["venue"])),
+                        raw_sha256=str(row["raw_sha256"]),
+                        received_at_utc=datetime.fromisoformat(str(row["received_at_utc"])),
+                        series=series,
+                    )
+                )
+            except (KeyError, TypeError, ValueError):
+                invalid_price_history_record_count += 1
+
         replay_rows = replay_rows_without_held_sources(read_stored_replays(REPLAY_SAMPLE_LIMIT))
         stored_market_counts_by_venue = tuple(
             (
@@ -1735,8 +1784,10 @@ def router(
                 market_records=market_records,
                 book_records=tuple(book_records),
                 replay_rows=replay_rows,
+                price_history_records=tuple(price_history_records),
                 as_of_utc=datetime.now(UTC),
                 invalid_book_record_count=invalid_book_record_count,
+                invalid_price_history_record_count=invalid_price_history_record_count,
                 stored_market_counts_by_venue=stored_market_counts_by_venue,
             )
         except ValueError as error:
@@ -1984,6 +2035,166 @@ def router(
             ),
             "source_state": "recorded observations only",
         }
+
+    def eligible_price_history_replay_rows(
+        rows: tuple[dict[str, Any], ...],
+    ) -> tuple[dict[str, Any], ...]:
+        observation_ids = tuple(
+            sorted(
+                {
+                    str(observation_id)
+                    for row in rows
+                    for observation_id in row.get("result", {})
+                    .get("manifest", {})
+                    .get("observation_ids", ())
+                }
+            )
+        )
+        try:
+            venues = store.observation_venues(observation_ids)
+        except (FrontierStoreError, ValueError) as error:
+            raise HTTPException(status_code=409, detail=str(error)) from error
+        return tuple(
+            row
+            for row in rows
+            if all(
+                observation_id in venues and venues[observation_id] not in held_venues
+                for observation_id in row.get("result", {})
+                .get("manifest", {})
+                .get("observation_ids", ())
+            )
+        )
+
+    @api.get("/price-history/replays")
+    async def price_history_replays(
+        limit: int = Query(default=20, ge=1, le=100),
+        offset: int = Query(default=0, ge=0, le=100_000),
+    ) -> dict[str, Any]:
+        try:
+            rows = store.price_history_replays(limit=limit, offset=offset)
+            eligible = eligible_price_history_replay_rows(rows)
+        except (FrontierStoreError, ValueError) as error:
+            raise HTTPException(status_code=409, detail=str(error)) from error
+        return {
+            "items": [row["result"] for row in eligible],
+            "returned": len(eligible),
+            "held_replays_omitted": len(rows) - len(eligible),
+            "limit": limit,
+            "offset": offset,
+            "scan_may_be_incomplete": len(rows) == limit,
+            "source_state": "saved deterministic local replay results only",
+            "network_called": False,
+        }
+
+    @api.get("/price-history/replays/{run_id}")
+    async def price_history_replay(run_id: str) -> dict[str, Any]:
+        try:
+            row = store.price_history_replay(run_id)
+            if row is None:
+                raise HTTPException(status_code=404, detail="Price-history replay was not found")
+            eligible = eligible_price_history_replay_rows((row,))
+            if not eligible:
+                raise HTTPException(
+                    status_code=409,
+                    detail="Price-history replay uses held or missing source evidence",
+                )
+        except (FrontierStoreError, ValueError) as error:
+            raise HTTPException(status_code=409, detail=str(error)) from error
+        return PriceHistoryReplayResult.model_validate(eligible[0]["result"]).model_dump(
+            mode="json"
+        )
+
+    @api.post("/price-history/replay")
+    async def replay_price_history(request: PriceHistoryReplayRequest) -> dict[str, Any]:
+        evidence: list[PriceHistoryReplayInput] = []
+        for observation_id in request.observation_ids:
+            try:
+                row = store.observation(observation_id)
+            except (FrontierStoreError, ValueError) as error:
+                raise HTTPException(status_code=409, detail=str(error)) from error
+            if row is None:
+                raise HTTPException(
+                    status_code=404, detail="Price-history observation was not found"
+                )
+            if row["venue"] in held_venues:
+                raise HTTPException(
+                    status_code=409,
+                    detail="Price-history replay cannot include held source evidence",
+                )
+            if row["observation_kind"] != "historical_price_points":
+                raise HTTPException(
+                    status_code=409,
+                    detail="Price-history replay input is not a historical price capture",
+                )
+            try:
+                series = PriceHistorySeries.model_validate(row["normalized"])
+                if (
+                    row["venue"] != series.venue.value
+                    or row["raw_sha256"] != series.provenance.raw_sha256
+                    or datetime.fromisoformat(str(row["received_at_utc"]))
+                    != series.provenance.response_received_at_utc
+                ):
+                    raise ValueError(
+                        "Stored price-history provenance does not match its source row"
+                    )
+                bound_observation_id = series.bound_market_observation_id
+                if bound_observation_id is not None:
+                    bound = store.observation(bound_observation_id)
+                    if (
+                        bound is None
+                        or bound["venue"] != row["venue"]
+                        or bound["observation_kind"]
+                        not in {
+                            "market_listing",
+                            "instrument_metadata",
+                            "market_metadata",
+                            "event_market_listing",
+                        }
+                    ):
+                        raise ValueError("Bound market evidence is missing or incompatible")
+                    normalized_market = bound["normalized"]
+                    market_values = (
+                        normalized_market.get("markets", [])
+                        if isinstance(normalized_market, dict)
+                        else []
+                    )
+                    if isinstance(normalized_market, dict) and "instruments" in normalized_market:
+                        market_values = [normalized_market]
+                    if not any(
+                        isinstance(market_value, dict)
+                        and isinstance(market_value.get("instruments"), list)
+                        and any(
+                            isinstance(instrument, dict)
+                            and instrument.get("native_instrument_id")
+                            == series.native_instrument_id
+                            for instrument in market_value["instruments"]
+                        )
+                        for market_value in market_values
+                    ):
+                        raise ValueError("Bound market evidence does not include this instrument")
+                evidence.append(
+                    PriceHistoryReplayInput(
+                        observation_id=str(row["observation_id"]),
+                        venue=Venue(str(row["venue"])),
+                        raw_sha256=str(row["raw_sha256"]),
+                        received_at_utc=datetime.fromisoformat(str(row["received_at_utc"])),
+                        series=series,
+                    )
+                )
+            except (KeyError, TypeError, ValueError) as error:
+                raise HTTPException(
+                    status_code=409,
+                    detail=f"Price-history replay evidence is incomplete or inconsistent: {error}",
+                ) from error
+
+        try:
+            result = deterministic_price_history_replay(
+                tuple(evidence), code_version=_code_version()
+            )
+            store.append_price_history_replay(result)
+        except (FrontierStoreError, ValueError) as error:
+            raise HTTPException(status_code=409, detail=str(error)) from error
+        return result.model_dump(mode="json")
 
     @api.post("/probe/polymarket/trades")
     async def probe_polymarket_trade_page(

@@ -14,6 +14,7 @@ from decimal import ROUND_CEILING, Decimal, InvalidOperation, localcontext
 from typing import Any
 
 from midas.frontier.economics import OpportunityClassification
+from midas.frontier.historical_replay import PriceHistoryReplayInput
 from midas.frontier.models import BookSnapshot, FrontierMarket, MarketInstrument, Venue
 
 D = Decimal
@@ -36,6 +37,7 @@ _GROSS_CANDIDATE_CLASSIFICATIONS = frozenset(
 MARKET_SAMPLE_LIMIT = 50
 BOOK_SAMPLE_LIMIT = 50
 REPLAY_SAMPLE_LIMIT = 20
+PRICE_HISTORY_SAMPLE_LIMIT = 20
 
 
 @dataclass(frozen=True, slots=True)
@@ -166,8 +168,10 @@ def summarize_frontier_coverage(
     market_records: tuple[tuple[FrontierMarket, str], ...],
     book_records: tuple[StoredBookEvidence, ...],
     replay_rows: tuple[dict[str, Any], ...],
+    price_history_records: tuple[PriceHistoryReplayInput, ...] = (),
     as_of_utc: datetime,
     invalid_book_record_count: int = 0,
+    invalid_price_history_record_count: int = 0,
     stored_market_counts_by_venue: tuple[tuple[str, int, int], ...] = (),
 ) -> dict[str, Any]:
     """Summarize bounded latest markets, books, and eligible replay results."""
@@ -177,10 +181,13 @@ def summarize_frontier_coverage(
         len(market_records) > MARKET_SAMPLE_LIMIT
         or len(book_records) > BOOK_SAMPLE_LIMIT
         or len(replay_rows) > REPLAY_SAMPLE_LIMIT
+        or len(price_history_records) > PRICE_HISTORY_SAMPLE_LIMIT
     ):
         raise ValueError("Coverage analytics inputs exceed their bounded sample windows")
     if invalid_book_record_count < 0:
         raise ValueError("Invalid book-record count must be nonnegative")
+    if invalid_price_history_record_count < 0:
+        raise ValueError("Invalid price-history-record count must be nonnegative")
     if any(
         item.received_at_utc.tzinfo is None or item.received_at_utc.utcoffset() is None
         for item in book_records
@@ -383,6 +390,74 @@ def summarize_frontier_coverage(
                 }
             )
 
+        historical_by_venue: dict[str, list[PriceHistoryReplayInput]] = {
+            item.value: [] for item in Venue
+        }
+        for item in price_history_records:
+            historical_by_venue.setdefault(item.venue.value, []).append(item)
+        historical_price_quality = []
+        for venue in sorted({item.value for item in Venue} | set(historical_by_venue)):
+            captures = historical_by_venue.get(venue, [])
+            point_times = [
+                point.timestamp_utc for capture in captures for point in capture.series.points
+            ]
+            capture_ages = [
+                age
+                for capture in captures
+                if (age := _elapsed_ms(capture.received_at_utc, as_of_utc)) >= 0
+            ]
+            observed_gaps = [
+                int((right.timestamp_utc - left.timestamp_utc).total_seconds())
+                for capture in captures
+                for left, right in zip(
+                    capture.series.points,
+                    capture.series.points[1:],
+                    strict=False,
+                )
+            ]
+            capture_times = [capture.received_at_utc for capture in captures]
+            historical_price_quality.append(
+                {
+                    "venue": venue,
+                    "capture_count": len(captures),
+                    "unique_instrument_count": len(
+                        {capture.series.native_instrument_id for capture in captures}
+                    ),
+                    "source_point_count": sum(len(capture.series.points) for capture in captures),
+                    "empty_capture_count": sum(not capture.series.points for capture in captures),
+                    "market_bound_capture_count": sum(
+                        capture.series.bound_market_observation_id is not None
+                        for capture in captures
+                    ),
+                    "unbound_capture_count": sum(
+                        capture.series.bound_market_observation_id is None for capture in captures
+                    ),
+                    "future_capture_timestamp_count": sum(
+                        capture.received_at_utc.astimezone(UTC) > as_of_utc.astimezone(UTC)
+                        for capture in captures
+                    ),
+                    "future_point_timestamp_count": sum(
+                        point.timestamp_utc > capture.received_at_utc
+                        for capture in captures
+                        for point in capture.series.points
+                    ),
+                    "latest_capture_received_at_utc": (
+                        max(capture_times).astimezone(UTC).isoformat() if capture_times else None
+                    ),
+                    "median_capture_age_ms": _decimal_text(_median(capture_ages)),
+                    "p90_capture_age_ms": _decimal_text(_percentile(capture_ages, D("0.90"))),
+                    "earliest_source_point_at_utc": (
+                        min(point_times).astimezone(UTC).isoformat() if point_times else None
+                    ),
+                    "latest_source_point_at_utc": (
+                        max(point_times).astimezone(UTC).isoformat() if point_times else None
+                    ),
+                    "largest_adjacent_sample_gap_seconds": max(observed_gaps)
+                    if observed_gaps
+                    else None,
+                }
+            )
+
         pricing = []
         for pricing_key in sorted(spreads):
             venue, market_kind, quantity_unit, quote_identity = pricing_key
@@ -510,6 +585,10 @@ def summarize_frontier_coverage(
                 "market_records": len(market_records),
                 "book_observation_records": len(book_records) + invalid_book_record_count,
                 "invalid_normalized_book_records": invalid_book_record_count,
+                "price_history_observation_records": (
+                    len(price_history_records) + invalid_price_history_record_count
+                ),
+                "invalid_normalized_price_history_records": invalid_price_history_record_count,
                 "unique_instrument_books": len(latest_books),
                 "eligible_replay_runs": len(replay_rows),
                 "candidate_records": candidate_rows,
@@ -517,6 +596,7 @@ def summarize_frontier_coverage(
                 "market_record_limit": MARKET_SAMPLE_LIMIT,
                 "book_record_limit": BOOK_SAMPLE_LIMIT,
                 "replay_run_limit": REPLAY_SAMPLE_LIMIT,
+                "price_history_record_limit": PRICE_HISTORY_SAMPLE_LIMIT,
                 "candidate_record_limit": MAX_CANDIDATE_ROWS,
             },
             "stored_market_counts_by_venue": [
@@ -538,6 +618,12 @@ def summarize_frontier_coverage(
                 for (venue, kind), values in sorted(market_groups.items())
             ],
             "source_quality": source_quality,
+            "historical_price_quality": historical_price_quality,
+            "historical_price_quality_scope": (
+                "Newest bounded saved price-history captures by venue. Point totals count each saved capture, "
+                "so overlapping captures may repeat points; gaps describe adjacent returned samples and do not "
+                "estimate missing data or source completeness."
+            ),
             "pricing": pricing,
             "candidate_research": {
                 "counts_by_classification": dict(sorted(candidate_classifications.items())),
@@ -562,6 +648,7 @@ def summarize_frontier_coverage(
                 "Counts describe bounded recorded samples, not venue-wide coverage or opportunity prevalence.",
                 "Pricing summaries include only latest per-instrument two-sided, uncrossed, unflagged books with matching market units and exact quote-asset identity.",
                 "Receipt age is measured at this API response; a missing venue freshness limit remains unknown.",
+                "Historical price samples are source-reported context. Their count, timestamp range, and adjacent-sample gaps do not establish completeness, executable availability, or cross-venue simultaneity.",
                 "Cross-market timing summaries use independently verified replay audits; missing exchange timestamps or clock uncertainty are not inferred.",
                 "Candidate counts are replay records and may repeat overlapping inputs; they are not independent opportunities.",
                 "Rejection-reason frequencies count each distinct reason once per candidate classified as incomplete, invalid, negative after modeled costs, or unsupported.",

@@ -3329,6 +3329,46 @@ def test_polymarket_price_history_probe_is_bound_and_replayable(tmp_path):
         assert recorded.json()["items"][0]["observation_id"] == result["observation_id"]
         assert recorded.json()["items"][0]["series"]["points"][0]["price"] == "0.42"
 
+        coverage = client.get("/api/frontier/analytics/coverage")
+        assert coverage.status_code == 200, coverage.text
+        assert coverage.json()["samples"]["price_history_observation_records"] == 1
+        assert coverage.json()["samples"]["invalid_normalized_price_history_records"] == 0
+        pm_history_quality = next(
+            item
+            for item in coverage.json()["historical_price_quality"]
+            if item["venue"] == "polymarket"
+        )
+        assert pm_history_quality["capture_count"] == 1
+        assert pm_history_quality["unique_instrument_count"] == 1
+        assert pm_history_quality["source_point_count"] == 1
+        assert pm_history_quality["market_bound_capture_count"] == 1
+
+        replayed = client.post(
+            "/api/frontier/price-history/replay",
+            json={"observation_ids": [result["observation_id"]]},
+        )
+        assert replayed.status_code == 200, replayed.text
+        replay_result = replayed.json()
+        assert replay_result["manifest"]["observation_ids"] == [result["observation_id"]]
+        assert replay_result["candidate_generation"] == "not_performed"
+        assert replay_result["series"][0]["point_count"] == 1
+        assert replay_result["series"][0]["minimum_sampled_price"] == "0.42"
+        assert replay_result["series"][0]["maximum_sampled_price"] == "0.42"
+        assert replay_result["series"][0]["bound_market_observation_id"] == listing_id
+        replayed_again = client.post(
+            "/api/frontier/price-history/replay",
+            json={"observation_ids": [result["observation_id"]]},
+        )
+        assert replayed_again.status_code == 200
+        assert replayed_again.json()["run_id"] == replay_result["run_id"]
+        replay_list = client.get("/api/frontier/price-history/replays")
+        assert replay_list.status_code == 200
+        assert [item["run_id"] for item in replay_list.json()["items"]] == [replay_result["run_id"]]
+        replay_saved = client.get(f"/api/frontier/price-history/replays/{replay_result['run_id']}")
+        assert replay_saved.status_code == 200
+        assert replay_saved.json()["result_sha256"] == replay_result["result_sha256"]
+        assert len(requests) == 1
+
         unknown = client.post(
             "/api/frontier/probe/polymarket/price-history",
             json={

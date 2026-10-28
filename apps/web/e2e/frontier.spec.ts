@@ -74,6 +74,215 @@ test('Frontier workspace uses isolated research state and remains responsive', a
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
 });
 
+test('saved Polymarket price samples replay only after explicit user actions', async ({ page }) => {
+  let captureRequests = 0;
+  let replayRequests = 0;
+  let probeRequests = 0;
+  let captureRequest: Record<string, unknown> | null = null;
+  let replayRequest: Record<string, unknown> | null = null;
+  const marketObservationId = 'a'.repeat(64);
+  const priceMarket = {
+    canonical_id: 'polymarket:e2e-price-history',
+    source_observation_record_id: marketObservationId,
+    native_market_id: 'e2e-price-history-market',
+    native_event_id: null,
+    native_event_title: null,
+    outcome_label: null,
+    venue: 'polymarket',
+    title: 'E2E historical price fixture',
+    market_kind: 'binary_event',
+    lifecycle: 'open',
+    description: 'Browser fixture for explicit history actions.',
+    base_asset: null,
+    quote_asset: 'USDC',
+    settlement_asset: 'USDC',
+    payoff: {
+      state_ids: ['yes', 'no'],
+      payout_currency: 'USDC',
+      exhaustive: true,
+      verified: true,
+      verification_basis: 'E2E fixture only.',
+    },
+    resolution: {
+      primary_rule: 'E2E fixture rules.',
+      secondary_rule: null,
+      authority: 'Fixture authority',
+      closes_at_utc: null,
+      settles_at_utc: null,
+      evidence_sha256: 'b'.repeat(64),
+      resolution_fingerprint: 'e2e-history-rules-v1',
+      verified: true,
+    },
+    fees: {
+      status: 'unknown',
+      version: null,
+      applies_to: null,
+      rate: null,
+      formula: null,
+      fee_currency: null,
+      source_url: null,
+      note: 'E2E fixture only.',
+    },
+    native_fields: {},
+    instruments: [
+      { native_instrument_id: '123456789', label: 'Yes', outcome_id: 'yes' },
+      { native_instrument_id: '987654321', label: 'No', outcome_id: 'no' },
+    ],
+    selected_components: [],
+    quality_flags: ['E2E_FIXTURE_ONLY'],
+    provenance: {
+      response_received_at_utc: '2026-10-27T00:00:00Z',
+      raw_sha256: marketObservationId,
+      observation_id: marketObservationId,
+    },
+  };
+
+  page.on('request', (request) => {
+    if (request.url().includes('/api/frontier/probe/')) probeRequests += 1;
+  });
+  await page.route('**/api/frontier/sources', async (route) => {
+    await route.fulfill({
+      json: {
+        items: [
+          {
+            venue: 'polymarket',
+            adapter_version: 'frontier-e2e-history-fixture-v1',
+            public_probe_enabled: true,
+            capabilities: [
+              {
+                capability: 'price_history',
+                supported: true,
+                state: 'implemented',
+                reason: 'Intercepted E2E fixture.',
+              },
+            ],
+            health: {
+              state: 'not_probed',
+              last_success_at_utc: null,
+              last_error_code: null,
+              last_error: null,
+              notes: [],
+            },
+          },
+        ],
+      },
+    });
+  });
+  await page.route('**/api/frontier/markets*', async (route) => {
+    await route.fulfill({
+      json: { items: [priceMarket], returned: 1, limit: 100, offset: 0 },
+    });
+  });
+  await page.route('**/api/frontier/price-history?*', async (route) => {
+    await route.fulfill({
+      json: {
+        items: [],
+        venue: 'polymarket',
+        native_instrument_id: '123456789',
+        returned: 0,
+      },
+    });
+  });
+  await page.route('**/api/frontier/probe/polymarket/price-history', async (route) => {
+    captureRequests += 1;
+    captureRequest = route.request().postDataJSON() as Record<string, unknown>;
+    const body = captureRequest;
+    const series = {
+      venue: 'polymarket',
+      native_instrument_id: body.native_instrument_id,
+      interval: body.interval,
+      fidelity_minutes: body.fidelity_minutes,
+      requested_start_ts: body.start_ts,
+      requested_end_ts: body.end_ts,
+      bound_market_observation_id: marketObservationId,
+      points: [
+        {
+          timestamp_utc: new Date((Number(body.start_ts) + 60) * 1000).toISOString(),
+          price: '0.42',
+        },
+      ],
+      source_price_semantics: 'source_reported_price_sample',
+      source_limit_note: 'E2E fixture sample only; OHLC and volume are not inferred.',
+      provenance: { observation_id: 'c'.repeat(64), raw_sha256: 'd'.repeat(64) },
+    };
+    await route.fulfill({
+      json: {
+        venue: 'polymarket',
+        native_instrument_id: body.native_instrument_id,
+        bound_market_id: priceMarket.canonical_id,
+        bound_market_observation_id: marketObservationId,
+        series,
+        point_count: 1,
+        observation_id: 'e'.repeat(64),
+        raw_sha256: 'd'.repeat(64),
+        source_state: 'healthy',
+        request_count_delta: 1,
+        network_calls_bounded_by: 1,
+        hypothetical_only: true,
+        note: 'Intercepted E2E fixture; not a live observation.',
+      },
+    });
+  });
+  await page.route('**/api/frontier/price-history/replay', async (route) => {
+    replayRequests += 1;
+    replayRequest = route.request().postDataJSON() as Record<string, unknown>;
+    await route.fulfill({
+      json: {
+        run_id: 'f'.repeat(64),
+        result_sha256: '9'.repeat(64),
+        manifest: {
+          input_sha256: '8'.repeat(64),
+          observation_ids: ['e'.repeat(64)],
+          replay_version: 'frontier-price-history-replay-1',
+          as_of_utc: '2026-10-27T00:01:00Z',
+        },
+        series: [
+          {
+            observation_id: 'e'.repeat(64),
+            point_count: 1,
+            first_point_ts: 1793059200,
+            last_point_ts: 1793059200,
+            observed_point_span_seconds: 0,
+            largest_adjacent_sample_gap_seconds: null,
+            minimum_sampled_price: '0.42',
+            maximum_sampled_price: '0.42',
+          },
+        ],
+        candidate_generation: 'not_performed',
+      },
+    });
+  });
+
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Frontier', exact: true }).click();
+  await page.getByRole('button', { name: 'Markets', exact: true }).click();
+  await page.getByRole('button', { name: 'Inspect', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Historical price points' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Capture one series' })).toBeEnabled();
+  expect(captureRequests).toBe(0);
+  expect(replayRequests).toBe(0);
+  expect(probeRequests).toBe(0);
+
+  await page.getByRole('button', { name: 'Capture one series' }).click();
+  await expect(page.getByText('0.42', { exact: true })).toBeVisible();
+  expect(captureRequests).toBe(1);
+  expect(captureRequest).toMatchObject({
+    native_instrument_id: '123456789',
+    interval: '1d',
+    fidelity_minutes: 60,
+  });
+  expect(Number(captureRequest?.end_ts) - Number(captureRequest?.start_ts)).toBeLessThanOrEqual(
+    7 * 24 * 60 * 60,
+  );
+
+  await page.getByRole('button', { name: 'Replay saved series' }).click();
+  await expect(page.getByText('Deterministic source-sample replay')).toBeVisible();
+  await expect(page.getByText(/Candidate generation was not performed/)).toBeVisible();
+  expect(replayRequests).toBe(1);
+  expect(replayRequest).toEqual({ observation_ids: ['e'.repeat(64)] });
+  expect(probeRequests).toBe(1);
+});
+
 test('Arena replay history loads without submitting or launching work', async ({ page }) => {
   let replaySubmissions = 0;
   let discoverySubmissions = 0;

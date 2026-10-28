@@ -8,8 +8,11 @@ from midas.frontier.analytics import (
     StoredBookEvidence,
     summarize_frontier_coverage,
 )
+from midas.frontier.historical_replay import PriceHistoryReplayInput
 from midas.frontier.models import (
     BookLevel,
+    HistoricalPricePoint,
+    PriceHistorySeries,
     SettlementAssetIdentity,
     SettlementAssetKind,
     Venue,
@@ -18,6 +21,44 @@ from midas.frontier.models import (
 from tests.frontier.builders import T0, book, market
 
 D = Decimal
+
+
+def _price_history_capture(index: int, received_seconds: int, instrument_id: str):
+    observation_id = f"{index:064x}"
+    raw_sha256 = f"{index + 10:064x}"
+    received_at = T0 + timedelta(seconds=received_seconds)
+    source_market = market(Venue.POLYMARKET, f"analytics-history-{index}")
+    provenance = source_market.provenance.model_copy(
+        update={
+            "response_received_at_utc": received_at,
+            "processed_at_utc": received_at + timedelta(milliseconds=1),
+            "raw_sha256": raw_sha256,
+            "observation_id": f"{index + 20:064x}",
+        }
+    )
+    start_ts = int(T0.timestamp())
+    series = PriceHistorySeries(
+        venue=Venue.POLYMARKET,
+        native_instrument_id=instrument_id,
+        interval="1d",
+        fidelity_minutes=60,
+        requested_start_ts=start_ts,
+        requested_end_ts=start_ts + 300,
+        bound_market_observation_id="a" * 64,
+        points=(
+            HistoricalPricePoint(timestamp_utc=T0 + timedelta(seconds=10), price=D("0.3")),
+            HistoricalPricePoint(timestamp_utc=T0 + timedelta(seconds=70), price=D("0.4")),
+        ),
+        source_limit_note="Fixture returned price samples only.",
+        provenance=provenance,
+    )
+    return PriceHistoryReplayInput(
+        observation_id=observation_id,
+        venue=Venue.POLYMARKET,
+        raw_sha256=raw_sha256,
+        received_at_utc=received_at,
+        series=series,
+    )
 
 
 def _stored_book(book_value, received_at, raw_sha256):
@@ -118,6 +159,36 @@ def test_empty_analytics_are_bounded_and_have_explicit_sample_scope():
     }
     assert all(item["quality_valid_pricing_books"] == 0 for item in result["source_quality"])
     assert any("not venue-wide coverage" in item for item in result["limitations"])
+    assert all(item["capture_count"] == 0 for item in result["historical_price_quality"])
+
+
+def test_historical_price_quality_reports_samples_without_estimating_completeness():
+    first = _price_history_capture(1, 100, "shared-token")
+    second = _price_history_capture(2, 60, "shared-token")
+    result = summarize_frontier_coverage(
+        market_records=(),
+        book_records=(),
+        replay_rows=(),
+        price_history_records=(first, second),
+        as_of_utc=T0 + timedelta(seconds=120),
+        invalid_price_history_record_count=1,
+    )
+
+    quality = next(
+        item for item in result["historical_price_quality"] if item["venue"] == "polymarket"
+    )
+    assert quality["capture_count"] == 2
+    assert quality["unique_instrument_count"] == 1
+    assert quality["source_point_count"] == 4
+    assert quality["empty_capture_count"] == 0
+    assert quality["market_bound_capture_count"] == 2
+    assert quality["future_point_timestamp_count"] == 1
+    assert quality["largest_adjacent_sample_gap_seconds"] == 60
+    assert quality["earliest_source_point_at_utc"] == (T0 + timedelta(seconds=10)).isoformat()
+    assert quality["latest_source_point_at_utc"] == (T0 + timedelta(seconds=70)).isoformat()
+    assert result["samples"]["price_history_observation_records"] == 3
+    assert result["samples"]["invalid_normalized_price_history_records"] == 1
+    assert "do not estimate missing data" in result["historical_price_quality_scope"]
 
 
 def test_pricing_summary_uses_latest_joined_book_and_preserves_unit_denominators():

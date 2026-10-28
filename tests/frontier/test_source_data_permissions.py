@@ -3,16 +3,23 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import json
+from datetime import timedelta
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from midas.frontier.economics import ExecutionScenario
+from midas.frontier.historical_replay import (
+    PriceHistoryReplayInput,
+    deterministic_price_history_replay,
+)
 from midas.frontier.models import (
     FrontierMarket,
+    HistoricalPricePoint,
     MarketBatch,
     MarketInstrument,
     MarketKind,
     PayoffSpec,
+    PriceHistorySeries,
     QuantityUnit,
     RawObservation,
     TradeBatch,
@@ -311,6 +318,56 @@ def test_held_source_observations_relationships_and_replays_are_quarantined(tmp_
     (held_market, held_market_id, _) = saved[Venue.KALSHI]
     (_, coinbase_market_id, _) = saved[Venue.COINBASE_EXCHANGE]
     (available_market, available_market_id, _) = saved[Venue.POLYMARKET]
+
+    history_body = '{"fixture":"held historical price samples"}'
+    history_raw = RawObservation(
+        venue=Venue.KALSHI,
+        observation_kind="historical_price_points",
+        request_url="https://fixture.invalid/kalshi/history",
+        http_status=200,
+        request_started_at_utc=T0,
+        received_at_utc=T0 + timedelta(seconds=2),
+        raw_body=history_body,
+        raw_sha256=hashlib.sha256(history_body.encode()).hexdigest(),
+        adapter_version="controlled-quarantine-fixture-v1",
+    )
+    history_provenance = held_market.provenance.model_copy(
+        update={
+            "request_started_at_utc": T0,
+            "response_received_at_utc": history_raw.received_at_utc,
+            "processed_at_utc": history_raw.received_at_utc,
+            "raw_sha256": history_raw.raw_sha256,
+            "observation_id": hashlib.sha256(b"held-history-normalized").hexdigest(),
+        }
+    )
+    history_end = int(T0.timestamp())
+    held_history_series = PriceHistorySeries(
+        venue=Venue.KALSHI,
+        native_instrument_id=held_market.instruments[0].native_instrument_id,
+        interval="1d",
+        fidelity_minutes=60,
+        requested_start_ts=history_end - 60,
+        requested_end_ts=history_end,
+        bound_market_observation_id=held_market_id,
+        points=(HistoricalPricePoint(timestamp_utc=T0 - timedelta(seconds=30), price="0.4"),),
+        source_limit_note="Controlled held-source fixture.",
+        provenance=history_provenance,
+    )
+    held_history_id = store.append_observation(history_raw, held_history_series)
+    held_history_replay = deterministic_price_history_replay(
+        (
+            PriceHistoryReplayInput(
+                observation_id=held_history_id,
+                venue=Venue.KALSHI,
+                raw_sha256=history_raw.raw_sha256,
+                received_at_utc=history_raw.received_at_utc,
+                series=held_history_series,
+            ),
+        ),
+        code_version="controlled-quarantine-fixture-v1",
+    )
+    store.append_price_history_replay(held_history_replay)
+
     relationship = propose_relationships(
         (held_market, available_market),
         max_pairs=1,
@@ -369,6 +426,30 @@ def test_held_source_observations_relationships_and_replays_are_quarantined(tmp_
 
             assert client.get(f"/api/frontier/observations/{held_market_id}").status_code == 409
             assert client.get(f"/api/frontier/observations/{coinbase_market_id}").status_code == 409
+            assert (
+                client.post(
+                    "/api/frontier/price-history/replay",
+                    json={"observation_ids": [held_history_id]},
+                ).status_code
+                == 409
+            )
+            held_history_replays = client.get("/api/frontier/price-history/replays")
+            assert held_history_replays.status_code == 200
+            assert held_history_replays.json()["items"] == []
+            assert held_history_replays.json()["held_replays_omitted"] == 1
+            assert (
+                client.get(
+                    f"/api/frontier/price-history/replays/{held_history_replay.run_id}"
+                ).status_code
+                == 409
+            )
+            history_coverage = client.get("/api/frontier/analytics/coverage")
+            assert history_coverage.status_code == 200
+            assert history_coverage.json()["samples"]["price_history_observation_records"] == 0
+            assert all(
+                item["capture_count"] == 0
+                for item in history_coverage.json()["historical_price_quality"]
+            )
             assert client.get("/api/frontier/relationships").json()["items"] == []
             held_history = client.get(
                 f"/api/frontier/relationships/{relationship.relationship_id}/reviews"
@@ -415,6 +496,6 @@ def test_held_source_observations_relationships_and_replays_are_quarantined(tmp_
 
         # Quarantine affects API research access, never append-only evidence.
         assert store.observation(held_market_id) is not None
-        assert store.summary()["observations_by_venue"]["kalshi"] == 3
+        assert store.summary()["observations_by_venue"]["kalshi"] == 4
     finally:
         asyncio.run(app.state.frontier_registry.aclose())

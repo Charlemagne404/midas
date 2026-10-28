@@ -114,6 +114,8 @@ type CoverageAnalytics = {
     market_records: number;
     book_observation_records: number;
     invalid_normalized_book_records: number;
+    price_history_observation_records: number;
+    invalid_normalized_price_history_records: number;
     unique_instrument_books: number;
     eligible_replay_runs: number;
     candidate_records: number;
@@ -121,6 +123,7 @@ type CoverageAnalytics = {
     market_record_limit: number;
     book_record_limit: number;
     replay_run_limit: number;
+    price_history_record_limit: number;
     candidate_record_limit: number;
   };
   market_mix: {
@@ -154,6 +157,24 @@ type CoverageAnalytics = {
     future_received_timestamp: number;
     median_receipt_age_ms: string | null;
     p90_receipt_age_ms: string | null;
+  }[];
+  historical_price_quality_scope: string;
+  historical_price_quality: {
+    venue: Venue;
+    capture_count: number;
+    unique_instrument_count: number;
+    source_point_count: number;
+    empty_capture_count: number;
+    market_bound_capture_count: number;
+    unbound_capture_count: number;
+    future_capture_timestamp_count: number;
+    future_point_timestamp_count: number;
+    latest_capture_received_at_utc: string | null;
+    median_capture_age_ms: string | null;
+    p90_capture_age_ms: string | null;
+    earliest_source_point_at_utc: string | null;
+    latest_source_point_at_utc: string | null;
+    largest_adjacent_sample_gap_seconds: number | null;
   }[];
   pricing: {
     venue: Venue;
@@ -390,6 +411,27 @@ type PriceHistoryCaptureResult = {
   network_calls_bounded_by: number;
   hypothetical_only: true;
   note: string;
+};
+type PriceHistoryReplayResult = {
+  run_id: string;
+  result_sha256: string;
+  manifest: {
+    input_sha256: string;
+    observation_ids: string[];
+    replay_version: string;
+    as_of_utc: string;
+  };
+  series: {
+    observation_id: string;
+    point_count: number;
+    first_point_ts: number | null;
+    last_point_ts: number | null;
+    observed_point_span_seconds: number | null;
+    largest_adjacent_sample_gap_seconds: number | null;
+    minimum_sampled_price: string | null;
+    maximum_sampled_price: string | null;
+  }[];
+  candidate_generation: 'not_performed';
 };
 type MarketMetadataCaptureResult = {
   venue: 'polymarket' | 'kalshi';
@@ -3137,6 +3179,78 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
                 <section className="fr-card">
                   <div className="fr-card-head">
                     <div>
+                      <span className="fr-kicker">HISTORICAL SOURCE SAMPLES</span>
+                      <h2>Price-history capture coverage</h2>
+                    </div>
+                    <Activity size={17} />
+                  </div>
+                  {coverageAnalytics.data.samples.price_history_observation_records > 0 ? (
+                    <div className="fr-table-wrap">
+                      <table className="fr-table">
+                        <thead>
+                          <tr>
+                            <th>Venue</th>
+                            <th>Captures / instruments</th>
+                            <th>Returned points</th>
+                            <th>Empty / unbound</th>
+                            <th>Future points</th>
+                            <th>Latest capture</th>
+                            <th>Largest observed sample gap</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {coverageAnalytics.data.historical_price_quality.map((source) => (
+                            <tr key={source.venue}>
+                              <td>{label(source.venue)}</td>
+                              <td>
+                                {count(source.capture_count)} /{' '}
+                                {count(source.unique_instrument_count)}
+                              </td>
+                              <td>{count(source.source_point_count)}</td>
+                              <td>
+                                {count(source.empty_capture_count)} /{' '}
+                                {count(source.unbound_capture_count)}
+                              </td>
+                              <td>{count(source.future_point_timestamp_count)}</td>
+                              <td>
+                                {source.latest_capture_received_at_utc
+                                  ? time(source.latest_capture_received_at_utc)
+                                  : '—'}
+                              </td>
+                              <td>
+                                {source.largest_adjacent_sample_gap_seconds == null
+                                  ? '—'
+                                  : `${count(source.largest_adjacent_sample_gap_seconds)} s`}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <EmptyState
+                      title="No saved price-history captures"
+                      detail="Historical samples appear only after an explicit bounded public-data capture."
+                    />
+                  )}
+                  <p className="fr-footnote">
+                    {coverageAnalytics.data.historical_price_quality_scope} These values describe
+                    returned samples, not completeness, executable quotes, or simultaneous venue
+                    prices.
+                  </p>
+                  {coverageAnalytics.data.samples.invalid_normalized_price_history_records > 0 && (
+                    <p className="fr-footnote">
+                      {count(
+                        coverageAnalytics.data.samples.invalid_normalized_price_history_records,
+                      )}{' '}
+                      saved history records could not be normalized for this summary.
+                    </p>
+                  )}
+                </section>
+
+                <section className="fr-card">
+                  <div className="fr-card-head">
+                    <div>
                       <span className="fr-kicker">RECORDED QUOTES</span>
                       <h2>Spread and top depth</h2>
                     </div>
@@ -4951,6 +5065,13 @@ function PolymarketPriceHistoryPanel({
       ),
     enabled: Boolean(instrumentId),
   });
+  const replayPriceHistory = useMutation({
+    mutationFn: (sourceObservationId: string) =>
+      api<PriceHistoryReplayResult>('/frontier/price-history/replay', {
+        method: 'POST',
+        body: JSON.stringify({ observation_ids: [sourceObservationId] }),
+      }),
+  });
   const isCurrentProbe =
     probe.isSuccess &&
     probe.variables?.nativeInstrumentId === instrumentId &&
@@ -5096,7 +5217,44 @@ function PolymarketPriceHistoryPanel({
             <span>Evidence {observationId ? shortHash(observationId) : 'unavailable'}</span>
             {rawSha256 && <span>Raw SHA-256 {shortHash(rawSha256)}</span>}
             {observationId && <EvidenceDisclosure observationId={observationId} />}
+            {observationId && (
+              <button
+                className="fr-inspect-button"
+                disabled={replayPriceHistory.isPending}
+                onClick={() => replayPriceHistory.mutate(observationId)}
+              >
+                {replayPriceHistory.isPending ? 'Replaying…' : 'Replay saved series'}
+              </button>
+            )}
           </div>
+          {replayPriceHistory.isError && replayPriceHistory.variables === observationId && (
+            <EmptyState
+              title="Local price-history replay failed"
+              detail={replayPriceHistory.error.message}
+            />
+          )}
+          {replayPriceHistory.isSuccess && replayPriceHistory.variables === observationId && (
+            <div className="fr-price-history-replay" role="status">
+              <strong>Deterministic source-sample replay</strong>
+              <span>
+                {count(replayPriceHistory.data.series[0]?.point_count ?? 0)} points · run{' '}
+                {shortHash(replayPriceHistory.data.run_id)} · input{' '}
+                {shortHash(replayPriceHistory.data.manifest.input_sha256)}
+              </span>
+              <span>
+                Sampled prices {replayPriceHistory.data.series[0]?.minimum_sampled_price ?? '—'} to{' '}
+                {replayPriceHistory.data.series[0]?.maximum_sampled_price ?? '—'} · largest observed
+                adjacent gap{' '}
+                {replayPriceHistory.data.series[0]?.largest_adjacent_sample_gap_seconds == null
+                  ? '—'
+                  : `${count(replayPriceHistory.data.series[0].largest_adjacent_sample_gap_seconds)} s`}
+              </span>
+              <small>
+                Local replay of saved samples only. Candidate generation was not performed; returned
+                point gaps do not estimate missing data.
+              </small>
+            </div>
+          )}
           <div className="fr-table-wrap">
             <table className="fr-table">
               <thead>
