@@ -39,7 +39,7 @@ from midas.frontier.models import (
 )
 
 D = Decimal
-ADAPTER_VERSION = "frontier-kraken-spot-5"
+ADAPTER_VERSION = "frontier-kraken-spot-6"
 BASE = "https://api.kraken.com/0/public"
 ORDERBOOK_DOC = "https://docs.kraken.com/api-reference/market-data/get-order-book"
 _KNOWN_FIAT_QUOTES = frozenset({"USD", "EUR", "GBP", "CAD", "AUD", "CHF", "JPY"})
@@ -177,6 +177,7 @@ class KrakenSpotAdapter(BaseReadOnlyAdapter):
     def _normalize_pair(
         self, native_id: str, raw: dict[str, Any], response: HTTPObservation
     ) -> FrontierMarket:
+        native_id = self._validate_native_pair_id(native_id)
         wsname = str(raw.get("wsname") or "")
         if "/" in wsname:
             base_asset, quote_asset = (part.strip().upper() for part in wsname.split("/", 1))
@@ -253,20 +254,20 @@ class KrakenSpotAdapter(BaseReadOnlyAdapter):
         self._require(Capability.BOOK_SNAPSHOT)
         if market.venue != self.venue or market.market_kind != MarketKind.SPOT_PAIR:
             raise AdapterError("UNSUPPORTED_MARKET", "Kraken adapter accepts spot pairs only")
-        if not 1 <= depth <= 20:
+        if type(depth) is not int or not 1 <= depth <= 20:
             raise AdapterError("INVALID_DEPTH", "Kraken depth must be between 1 and 20")
         if instrument_id != market.native_market_id:
             raise AdapterError(
                 "INSTRUMENT_NOT_FOUND", "Pair identifier does not belong to the market"
             )
-        altname = str(market.native_fields.get("altname") or market.native_market_id)
-        response = await self.transport.get_json(f"{BASE}/Depth", {"pair": altname, "count": depth})
+        native_market_id = self._validate_native_pair_id(market.native_market_id)
+        response = await self.transport.get_json(
+            f"{BASE}/Depth", {"pair": native_market_id, "count": depth}
+        )
         self._capture_response(response, "book_snapshot")
         raw_map = self._result(response, "Depth")
-        raw_book = raw_map.get(market.native_market_id)
-        if raw_book is None and len(raw_map) == 1:
-            raw_book = next(iter(raw_map.values()))
-        if not isinstance(raw_book, dict):
+        raw_book = raw_map.get(native_market_id)
+        if any(key != native_market_id for key in raw_map) or not isinstance(raw_book, dict):
             raise AdapterError(
                 "INVALID_BOOK", "Kraken book response does not match the requested pair"
             )
@@ -317,12 +318,7 @@ class KrakenSpotAdapter(BaseReadOnlyAdapter):
         self._require(Capability.PUBLIC_TRADES)
         if type(limit) is not int or not 1 <= limit <= 1000:
             raise AdapterError("INVALID_LIMIT", "Kraken trade limit must be between 1 and 1000")
-        if (
-            not isinstance(native_market_id, str)
-            or not 1 <= len(native_market_id) <= 64
-            or not re.fullmatch(r"[A-Za-z0-9./_-]+", native_market_id)
-        ):
-            raise AdapterError("INVALID_MARKET_ID", "Kraken pair identifier is malformed")
+        native_market_id = self._validate_native_pair_id(native_market_id)
         response = await self.transport.get_json(
             f"{BASE}/Trades", {"pair": native_market_id, "count": limit}
         )
@@ -399,21 +395,29 @@ class KrakenSpotAdapter(BaseReadOnlyAdapter):
         intervals = {1, 5, 15, 30, 60, 240, 1440, 10080, 21600}
         if interval_minutes not in intervals:
             raise AdapterError("INVALID_INTERVAL", "Unsupported Kraken OHLC interval")
-        if since_epoch_seconds is not None and not 0 <= since_epoch_seconds <= int(
-            datetime.now(UTC).timestamp()
+        if since_epoch_seconds is not None and (
+            type(since_epoch_seconds) is not int
+            or not 0 <= since_epoch_seconds <= int(datetime.now(UTC).timestamp())
         ):
             raise AdapterError(
                 "INVALID_SINCE", "OHLC start time must be a non-future Unix timestamp"
             )
+        native_market_id = self._validate_native_pair_id(native_market_id)
         params: dict[str, str | int] = {"pair": native_market_id, "interval": interval_minutes}
         if since_epoch_seconds is not None:
             params["since"] = since_epoch_seconds
         response = await self.transport.get_json(f"{BASE}/OHLC", params)
         self._capture_response(response, "historical_candles")
         raw_map = self._result(response, "OHLC")
-        rows = raw_map.get(native_market_id)
-        if rows is None:
-            rows = next((value for key, value in raw_map.items() if key != "last"), None)
+        if native_market_id not in raw_map:
+            raise AdapterError(
+                "CANDLE_PAIR_MISMATCH", "Kraken OHLC response omitted the requested pair"
+            )
+        if any(key not in {native_market_id, "last"} for key in raw_map):
+            raise AdapterError(
+                "INVALID_CANDLES", "Kraken OHLC response contains an unexpected pair"
+            )
+        rows = raw_map[native_market_id]
         if not isinstance(rows, list) or len(rows) > 720:
             raise AdapterError(
                 "INVALID_CANDLES", "Kraken OHLC response is malformed or exceeds 720 rows"
@@ -474,6 +478,17 @@ class KrakenSpotAdapter(BaseReadOnlyAdapter):
         if not isinstance(result, dict):
             raise AdapterError("INVALID_SCHEMA", f"Kraken {endpoint} response has no result object")
         return result
+
+    @staticmethod
+    def _validate_native_pair_id(value: Any) -> str:
+        if (
+            not isinstance(value, str)
+            or not 1 <= len(value) <= 64
+            or not re.fullmatch(r"[A-Za-z0-9./_-]+", value)
+            or value.lower() == "last"
+        ):
+            raise AdapterError("INVALID_MARKET_ID", "Kraken pair identifier is malformed")
+        return value
 
 
 def _normalize_kraken_asset(native: str) -> str:

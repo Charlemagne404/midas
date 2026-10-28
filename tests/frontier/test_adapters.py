@@ -1424,7 +1424,73 @@ async def test_kraken_synthetic_pair_and_book_preserve_spot_units_and_level_time
     assert book.exchange_timestamp_utc is None
     assert all(level.exchange_timestamp_utc is not None for level in book.asks + book.bids)
     assert "ACCOUNT_FEE_TIER_UNKNOWN" in market.quality_flags
+    assert requests[1].url.params["pair"] == "XXBTZUSD"
     assert all("authorization" not in request.headers for request in requests)
+
+
+@pytest.mark.asyncio
+async def test_kraken_book_rejects_mismatched_result_key_without_single_row_fallback():
+    asset_pairs = {
+        "error": [],
+        "result": {
+            "XXBTZUSD": {
+                "altname": "XBTUSD",
+                "wsname": "XBT/USD",
+                "base": "XXBT",
+                "quote": "ZUSD",
+                "pair_decimals": 1,
+                "lot_decimals": 8,
+                "status": "online",
+            }
+        },
+    }
+    depth = {"error": [], "result": {"XETHZUSD": {"asks": [], "bids": []}}}
+    config = KrakenSpotConfig(
+        enabled=True,
+        live_public_probe_enabled=True,
+        pairs=("XBTUSD",),
+        requests_per_second=5,
+        retries=0,
+    )
+    transport, requests, client = _transport(
+        "api.kraken.com",
+        {"/AssetPairs": json.dumps(asset_pairs), "/Depth": json.dumps(depth)},
+        config,
+    )
+    adapter = KrakenSpotAdapter(config, transport=transport)
+    try:
+        market = (await adapter.discover_markets(1))[0]
+        with pytest.raises(AdapterError) as error:
+            await adapter.fetch_book(market, market.native_market_id, depth=2)
+    finally:
+        await client.aclose()
+
+    assert error.value.code == "INVALID_BOOK"
+    assert requests[1].url.params["pair"] == "XXBTZUSD"
+
+
+@pytest.mark.asyncio
+async def test_kraken_ohlc_rejects_mismatched_result_key_without_pair_fallback():
+    config = KrakenSpotConfig(
+        enabled=True,
+        live_public_probe_enabled=True,
+        pairs=("XBTUSD",),
+        requests_per_second=5,
+        retries=0,
+    )
+    response = {"error": [], "result": {"XETHZUSD": [], "last": 1793110000}}
+    transport, requests, client = _transport(
+        "api.kraken.com", {"/OHLC": json.dumps(response)}, config
+    )
+    adapter = KrakenSpotAdapter(config, transport=transport)
+    try:
+        with pytest.raises(AdapterError) as error:
+            await adapter.fetch_candles("XXBTZUSD")
+    finally:
+        await client.aclose()
+
+    assert error.value.code == "CANDLE_PAIR_MISMATCH"
+    assert requests[0].url.params["pair"] == "XXBTZUSD"
 
 
 @pytest.mark.asyncio
@@ -1466,7 +1532,7 @@ async def test_kraken_recent_trades_require_exact_pair_key_and_preserve_native_t
     assert first.aggressor_side is None
     assert second.native_trade_id is None
     assert second.aggressor_side is None
-    assert first.provenance.adapter_version == "frontier-kraken-spot-5"
+    assert first.provenance.adapter_version == "frontier-kraken-spot-6"
     assert requests[0].url.params["pair"] == "XXBTZUSD"
     assert requests[0].url.params["count"] == "2"
     assert all("authorization" not in request.headers for request in requests)

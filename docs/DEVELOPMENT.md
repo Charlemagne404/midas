@@ -178,13 +178,17 @@ researcher select either Polymarket or Kalshi and then choose a market already
 present in saved listing evidence. Kalshi adapter v20 also validates the
 requested ticker, required trade ID and timestamp, and `[0, 1]` price range in
 the older one-shot collection path. Kraken does not currently claim
-cursor-paginated public trades. Its adapter sends the requested count to the
-official [Get Recent Trades](https://docs.kraken.com/api-reference/market-data/get-recent-trades)
-endpoint and accepts rows only under the exact returned internal pair key.
-Native trade IDs are retained when present. The example's one-letter tuple code
-is kept only in the hash-pinned raw response because its aggressor semantics are
-not defined in the response documentation; normalized `aggressor_side` stays
-unset. The protected Reality recording and its evidence remain on separate
+cursor-paginated public trades. Its book, candle, and trade readers request the
+native internal pair identifier and accept observations only under the exact
+returned pair key, without selecting a sole but mismatched response row. Trade
+requests send the bounded requested count, and native trade IDs are retained
+when present. The example's one-letter tuple code is kept only in the hash-pinned
+raw response because its aggressor semantics are not defined in the response
+documentation; normalized `aggressor_side` stays unset. See the official
+[Get Recent Trades](https://docs.kraken.com/api-reference/market-data/get-recent-trades),
+[Get Order Book](https://docs.kraken.com/api-reference/market-data/get-order-book),
+and [Get OHLC Data](https://docs.kraken.com/api-reference/market-data/get-ohlc-data)
+pages. The protected Reality recording and its evidence remain on separate
 roots.
 
 Kalshi multivariate-event discovery is a separate explicit
