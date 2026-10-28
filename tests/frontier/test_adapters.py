@@ -519,6 +519,51 @@ async def test_polymarket_book_rejects_market_schema_provenance_mismatch():
     assert requests == []
 
 
+@pytest.mark.asyncio
+async def test_polymarket_v2_book_rejects_position_id_mismatch_before_request():
+    raw_market = json.loads(_captured("tests/fixtures/gamma_live.json"))[0]
+    raw_market["version"] = "v2"
+    raw_market["positionIds"] = ["9001", "9002"]
+    raw_market.pop("clobTokenIds", None)
+    discovery_transport, _, discovery_client = _transport(
+        "gamma-api.polymarket.com", {"/markets": json.dumps([raw_market])}
+    )
+    discovery_adapter = PolymarketAdapter(
+        AdapterConfig(
+            enabled=True, live_public_probe_enabled=True, requests_per_second=5, retries=0
+        ),
+        transport=discovery_transport,
+    )
+    try:
+        (market,) = await discovery_adapter.discover_markets(1)
+    finally:
+        await discovery_client.aclose()
+
+    forged_market = market.model_copy(
+        update={
+            "native_fields": {
+                **market.native_fields,
+                "positionIds": json.dumps(["9999", "9002"]),
+            }
+        }
+    )
+    book_transport, requests, book_client = _transport("clob-v2.polymarket.com", {})
+    book_adapter = PolymarketAdapter(
+        AdapterConfig(
+            enabled=True, live_public_probe_enabled=True, requests_per_second=5, retries=0
+        ),
+        transport=book_transport,
+    )
+    try:
+        with pytest.raises(AdapterError) as error:
+            await book_adapter.fetch_book(forged_market, "9001", depth=1)
+    finally:
+        await book_client.aclose()
+
+    assert error.value.code == "INVALID_MARKET"
+    assert requests == []
+
+
 @pytest.mark.parametrize(
     "corruption",
     (
