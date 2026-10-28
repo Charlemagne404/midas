@@ -16,7 +16,7 @@ from midas.frontier.adapters.transport import PublicReadTransport
 from midas.frontier.models import AdapterConfig, FrontierMarket, RawObservation, StatePayout, Venue
 from midas.frontier.registry import AdapterRegistry
 from midas.frontier.relationships import ReviewDecision, propose_relationships
-from midas.frontier.storage import FrontierStore
+from midas.frontier.storage import SCHEMA_VERSION, FrontierStore
 from pydantic import ValidationError
 
 from apps.api.frontier import RelationshipReviewRequest, router
@@ -689,12 +689,9 @@ def test_store_schema_two_migrates_additively_to_review_schema(tmp_path):
         )
     store.initialize()
     with sqlite3.connect(store.path) as connection:
-        assert (
-            connection.execute(
-                "SELECT value FROM frontier_meta WHERE key='schema_version'"
-            ).fetchone()[0]
-            == "6"
-        )
+        assert connection.execute(
+            "SELECT value FROM frontier_meta WHERE key='schema_version'"
+        ).fetchone()[0] == str(SCHEMA_VERSION)
         assert (
             connection.execute(
                 "SELECT name FROM sqlite_master WHERE type='table' AND name='relationship_reviews'"
@@ -737,12 +734,9 @@ def test_store_schema_four_adds_endpoint_indexes_without_rewriting_records(tmp_p
         connection.execute("UPDATE frontier_meta SET value='4' WHERE key='schema_version'")
     store.initialize()
     with sqlite3.connect(store.path) as connection:
-        assert (
-            connection.execute(
-                "SELECT value FROM frontier_meta WHERE key='schema_version'"
-            ).fetchone()[0]
-            == "6"
-        )
+        assert connection.execute(
+            "SELECT value FROM frontier_meta WHERE key='schema_version'"
+        ).fetchone()[0] == str(SCHEMA_VERSION)
         index_names = {
             row[0]
             for row in connection.execute("SELECT name FROM sqlite_master WHERE type='index'")
@@ -769,12 +763,9 @@ def test_store_schema_five_adds_append_only_comparison_table(tmp_path):
     store.initialize()
 
     with sqlite3.connect(store.path) as connection:
-        assert (
-            connection.execute(
-                "SELECT value FROM frontier_meta WHERE key='schema_version'"
-            ).fetchone()[0]
-            == "6"
-        )
+        assert connection.execute(
+            "SELECT value FROM frontier_meta WHERE key='schema_version'"
+        ).fetchone()[0] == str(SCHEMA_VERSION)
         assert (
             connection.execute(
                 "SELECT name FROM sqlite_master WHERE type='table' AND name='research_comparisons'"
