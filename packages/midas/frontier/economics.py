@@ -13,7 +13,7 @@ from fractions import Fraction
 from functools import wraps
 from typing import Literal
 
-from pydantic import Field, StrictInt, model_validator
+from pydantic import Field, StrictInt, field_validator, model_validator
 
 from midas.frontier.models import (
     KALSHI_QUADRATIC_TAKER_FORMULA,
@@ -416,6 +416,13 @@ class OpportunityCandidate(FrontierModel):
     assumptions: tuple[str, ...] = ()
     reasons: tuple[str, ...] = ()
     evidence_sha256: str
+
+    @field_validator("observed_at_utc")
+    @classmethod
+    def candidate_observation_time_is_utc(cls, value: datetime) -> datetime:
+        if value.tzinfo is None or value.utcoffset() is None:
+            raise ValueError("Candidate observation time must include a timezone")
+        return value.astimezone(UTC)
 
     @model_validator(mode="after")
     def capital_identity_matches_legs(self) -> OpportunityCandidate:

@@ -1,12 +1,13 @@
 from __future__ import annotations
 
-from datetime import timedelta
+from datetime import UTC, datetime, timedelta, timezone
 from decimal import Decimal
 from itertools import product
 
 import pytest
 from midas.frontier.economics import (
     ExecutionScenario,
+    OpportunityCandidate,
     OpportunityClassification,
     _calculate_fee,
     audit_kalshi_mve_reported_settlement,
@@ -48,6 +49,28 @@ from midas.frontier.replay import deterministic_replay
 from pydantic import ValidationError
 
 from tests.frontier.builders import T0, book, market
+
+
+def _candidate_at(observed_at_utc: datetime) -> OpportunityCandidate:
+    return OpportunityCandidate(
+        candidate_id="a" * 64,
+        family="price_discrepancy",
+        classification=OpportunityClassification.PRICE_DISCREPANCY_ONLY,
+        market_ids=("market",),
+        venues=("polymarket",),
+        observed_at_utc=observed_at_utc,
+        evidence_sha256="b" * 64,
+    )
+
+
+def test_candidate_observation_time_must_be_aware_and_is_normalized_to_utc():
+    with pytest.raises(ValidationError, match="must include a timezone"):
+        _candidate_at(datetime(2026, 10, 28, 12, 0))
+
+    local_time = datetime(2026, 10, 28, 12, 0, tzinfo=timezone(timedelta(hours=2)))
+    candidate = _candidate_at(local_time)
+
+    assert candidate.observed_at_utc == datetime(2026, 10, 28, 10, 0, tzinfo=UTC)
 
 
 def _verified_pair():
