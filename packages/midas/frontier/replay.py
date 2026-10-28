@@ -34,6 +34,7 @@ from midas.frontier.relationships import (
     MAX_RELATIONSHIP_MARKETS,
     Relationship,
     RelationshipType,
+    VerificationState,
     evidence_mapping,
     propose_relationships,
 )
@@ -629,12 +630,24 @@ def _effective_relationship_mappings(
     states: dict[str, dict[str, str]] = {}
     instruments: dict[str, dict[str, str]] = {}
     for relationship in relationships:
-        state_mapping = explicit_states.get(relationship.relationship_id) or evidence_mapping(
-            relationship, "state_mapping"
-        )
-        instrument_mapping = explicit_instruments.get(
-            relationship.relationship_id
-        ) or evidence_mapping(relationship, "instrument_mapping")
+        evidence_state_mapping = evidence_mapping(relationship, "state_mapping")
+        evidence_instrument_mapping = evidence_mapping(relationship, "instrument_mapping")
+        state_override = explicit_states.get(relationship.relationship_id)
+        instrument_override = explicit_instruments.get(relationship.relationship_id)
+        if (
+            relationship.state == VerificationState.VERIFIED
+            and relationship.relationship_type
+            in {RelationshipType.SAME_PAYOFF, RelationshipType.LOGICAL_IMPLICATION}
+            and (
+                (state_override and state_override != evidence_state_mapping)
+                or (instrument_override and instrument_override != evidence_instrument_mapping)
+            )
+        ):
+            raise ValueError(
+                "Replay mapping override differs from the relationship's pinned evidence"
+            )
+        state_mapping = state_override or evidence_state_mapping
+        instrument_mapping = instrument_override or evidence_instrument_mapping
         if state_mapping:
             states[relationship.relationship_id] = state_mapping
         if instrument_mapping:

@@ -2507,7 +2507,8 @@ def test_cross_venue_candidate_rejects_mapping_override_from_verified_edge():
     assert "differs from verified relationship evidence" in candidates[0].reasons[0]
 
 
-def test_deterministic_replay_rejects_same_payoff_mapping_override():
+@pytest.mark.parametrize("override_kind", ("state", "instrument"))
+def test_deterministic_replay_rejects_same_payoff_mapping_override(override_kind):
     left, right, relationship, instrument_mapping = _verified_pair()
     left_yes = next(item for item in left.instruments if item.outcome_id == "yes")
     left_no = next(item for item in left.instruments if item.outcome_id == "no")
@@ -2522,26 +2523,31 @@ def test_deterministic_replay_rejects_same_payoff_mapping_override():
         if relationship.left_market_id == left.canonical_id
         else {value: key for key, value in overridden_instrument_mapping.items()}
     )
+    pinned_instrument_mapping = (
+        instrument_mapping
+        if relationship.left_market_id == left.canonical_id
+        else {value: key for key, value in instrument_mapping.items()}
+    )
     left_books, right_books = _books(left, right)
-
-    replay = deterministic_replay(
-        (left, right),
-        (*left_books.values(), *right_books.values()),
-        verified_relationships=(relationship,),
-        state_mappings={relationship.relationship_id: {"yes": "no", "no": "yes"}},
-        instrument_mappings={relationship.relationship_id: canonical_instrument_mapping},
-        as_of_utc=T0 + timedelta(milliseconds=100),
-        code_version="same-payoff-mapping-evidence-guard-v1",
+    state_mapping = (
+        {"yes": "no", "no": "yes"} if override_kind == "state" else {"yes": "yes", "no": "no"}
     )
-    candidate = next(
-        item for item in replay.candidates if item.relationship_id == relationship.relationship_id
+    replay_instrument_mapping = (
+        canonical_instrument_mapping if override_kind == "instrument" else pinned_instrument_mapping
     )
 
-    assert candidate.classification == OpportunityClassification.INVALID_RELATIONSHIP
-    assert not candidate.legs
-    assert replay.manifest.normalized_input_sha256
-    assert candidate.independent_audit is not None
-    assert candidate.independent_audit.disposition == EconomicAuditDisposition.NOT_EVALUATED
+    with pytest.raises(
+        ValueError, match="mapping override differs from the relationship's pinned evidence"
+    ):
+        deterministic_replay(
+            (left, right),
+            (*left_books.values(), *right_books.values()),
+            verified_relationships=(relationship,),
+            state_mappings={relationship.relationship_id: state_mapping},
+            instrument_mappings={relationship.relationship_id: replay_instrument_mapping},
+            as_of_utc=T0 + timedelta(milliseconds=100),
+            code_version="same-payoff-mapping-evidence-guard-v1",
+        )
 
 
 def test_cross_venue_independent_audit_rejects_mapping_override_from_verified_edge():
@@ -2925,7 +2931,7 @@ def test_independent_audit_rejects_state_mapping_mutation():
     assert audited.independent_audit is not None
     assert audited.independent_audit.disposition.value == "incomplete"
     assert audited.classification == OpportunityClassification.INCOMPLETE_EVIDENCE
-    assert "relationship instrument mapping has mismatched payoffs" in (
+    assert "differ from the pinned verified relationship evidence" in (
         audited.independent_audit.message.lower()
     )
 
@@ -3739,24 +3745,11 @@ def test_deterministic_replay_is_invariant_to_input_order():
     )
     assert evidence_mapped.candidates == first.candidates
     assert evidence_mapped.run_id == first.run_id
-    changed_mapping = deterministic_replay(
-        (right, left),
-        tuple(reversed(all_books)),
-        verified_relationships=(relationship,),
-        state_mappings={relationship.relationship_id: {"yes": "no", "no": "yes"}},
-        instrument_mappings={relationship.relationship_id: canonical_instrument_mapping},
-        as_of_utc=T0 + timedelta(milliseconds=100),
-        code_version="fixture-commit-1",
-    )
     changed_limit = deterministic_replay(
         (right, left),
         tuple(reversed(all_books)),
         relationship_limit=1,
         **kwargs,
-    )
-    assert changed_mapping.run_id != first.run_id
-    assert changed_mapping.manifest.normalized_input_sha256 != (
-        first.manifest.normalized_input_sha256
     )
     assert changed_limit.run_id != first.run_id
     assert changed_limit.manifest.normalized_input_sha256 != first.manifest.normalized_input_sha256
