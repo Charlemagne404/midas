@@ -11553,6 +11553,37 @@ legacy MIDAS suite. Both services remained active and untouched.
 | Live cross-venue research | BLOCKED | No new venue calls were made; source-use and retention boundaries remain. |
 | Frontier overall | PARTIALLY VERIFIED | Cross-venue live science, broad regression, endurance, protected recovery, and deployment remain incomplete. |
 
+## Polymarket condition identifier validation — 2026-10-28 20:38 UTC
+
+Commit `f8be86b6cb57f0eb17e17cfaee832698cb1b58c7` advances Polymarket to
+`frontier-polymarket-13`. Before a book request, `fetch_book` now validates
+that `conditionId` has the documented 32-byte hex form, in addition to the
+native market, protocol, outcome order, and native token/position ID bindings.
+Missing and malformed identifiers have distinct fixture cases.
+
+The full `tests/frontier/test_adapters.py` module passes **167/167** in 3.23
+seconds pytest time (3.63 seconds wall), with 68,624 KiB maximum RSS, zero
+swaps, and zero socket messages, inside a transient 1 GiB cgroup. Strict mypy
+passes for all four exchange adapters; Ruff and formatting pass across all
+four adapters and their test files. No live exchange endpoint was called.
+
+The format requirement follows the Polymarket Institute research guide's
+description of `conditionId` as a blockchain identifier and its 32-byte
+hexadecimal example. Current official source-use material for Kalshi, Kraken,
+Coinbase, and Polymarket was refreshed in this turn and recorded in the source
+terms review. No captured source data was opened. The source holds remain in
+force, so there is no new cross-venue live match. The full Frontier, Arena,
+and legacy regression suites remain deferred under the protected-service
+resource gate.
+
+| Requirement | Status | Evidence and boundary |
+| --- | --- | --- |
+| Polymarket condition ID validation | COMPLETE AND VERIFIED | Missing and malformed IDs reject before book I/O; adapter fixtures pass. |
+| Current adapter regression | COMPLETE AND VERIFIED | 167/167 adapter tests pass with fixture-only transports. |
+| Live cross-venue validation | BLOCKED | Kalshi, Kraken, and Coinbase use remains held; no live match is represented. |
+| Full Frontier/legacy regression | PARTIALLY VERIFIED | Not run at this checkpoint; Reality remains close to `MemoryHigh`. |
+| Frontier overall | PARTIALLY VERIFIED | Live cross-venue science, broad regression, endurance, recovery, and deployment remain open. |
+
 ## Official source-use terms refresh — 2026-10-28 20:37 UTC
 
 Read-only review of the current linked official materials reconfirmed the

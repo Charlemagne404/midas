@@ -10814,3 +10814,33 @@ restriction.
 **Next safe action:** keep the venue-specific holds, proceed with synthetic
 fixtures and source-independent research, and require validated
 scope-specific permission before any new capture.
+
+## Polymarket condition identifier validation — 2026-10-28 20:38 UTC
+
+Commit `f8be86b6cb57f0eb17e17cfaee832698cb1b58c7` advances Polymarket to
+`frontier-polymarket-13`. `fetch_book` now requires `conditionId` to match the
+documented 32-byte blockchain identifier form (`0x` plus 64 hexadecimal
+characters), in addition to matching the native market and returned book.
+Fixture cases distinguish missing and malformed identifiers.
+
+The complete `tests/frontier/test_adapters.py` module passes **167/167** in
+3.23 seconds pytest time (3.63 seconds wall), at 68,624 KiB maximum RSS, with
+zero swaps and zero socket messages. It ran inside a transient 1 GiB cgroup.
+Strict mypy passes for all four exchange adapters, and Ruff check/format pass
+across the four adapters and their two test files. The Polymarket v1/v2 tests
+use fixture transports; no live request was made.
+
+The official Polymarket researcher guide identifies `conditionId` as a unique
+blockchain identifier and illustrates the hex form. Official Kalshi, Kraken,
+and Coinbase terms were refreshed in this turn; their source holds remain in
+force. No held data was read. The full Frontier, Arena, and legacy regressions
+remain deferred, and the latest protected-service sample is still the
+`20:34:48Z` reading documented above.
+
+| Requirement | Status | Evidence and boundary |
+| --- | --- | --- |
+| Polymarket condition ID and outcome binding | COMPLETE AND VERIFIED | v1/v2 IDs and malformed/missing condition IDs are covered by the 167-case adapter module. |
+| Current adapter contract suite | COMPLETE AND VERIFIED | All 167 tests pass; fixture-only, zero socket messages. |
+| Live cross-venue market match | BLOCKED | Other venue data-use holds remain; no live match is claimed. |
+| Full Frontier/legacy regression | PARTIALLY VERIFIED | Not run because protected Reality remains close to its soft boundary. |
+| Project Frontier overall | PARTIALLY VERIFIED | Cross-venue live science, broad regressions, endurance, recovery, and deployment remain incomplete. |
