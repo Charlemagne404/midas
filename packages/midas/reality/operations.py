@@ -36,6 +36,7 @@ from .storage import (
 CAPACITY_WARNING_SECONDS = 30 * 86400
 CAPACITY_CRITICAL_SECONDS = 14 * 86400
 CAPACITY_ACTION_SECONDS = 7 * 86400
+MAX_ARCHIVE_INVENTORY_ENTRIES = 65_536
 CAPACITY_GROWTH_WINDOWS_SECONDS = (6 * 3600, 24 * 3600)
 ARCHIVE_IO_FULL_AVG10_MAX = 2.0
 ARCHIVE_IO_FULL_AVG60_MAX = 2.0
@@ -221,11 +222,10 @@ def _last_started_budget(
 
 def _archive_directory_usage(
     destination: Path, segments: list[dict[str, Any]] | None
-) -> tuple[int, bool]:
-    """Count a verified archive from catalog sizes without statting every HDD segment."""
+) -> tuple[int | None, bool]:
+    """Count archive usage with a streaming, bounded directory walk."""
     if not destination.is_dir():
         return 0, True
-    entries = {entry.name: entry for entry in os.scandir(destination)}
     segment_map = (
         {info["file"]: info for info in segments if isinstance(info, dict)}
         if segments is not None
@@ -233,31 +233,39 @@ def _archive_directory_usage(
     )
     inventory_valid = segments is not None and len(segment_map) == len(segments)
     used = 0
-    if segments is not None:
-        for name, info in segment_map.items():
-            entry = entries.get(name)
-            size = info.get("bytes")
-            if (
-                entry is None
-                or entry.is_symlink()
-                or not entry.is_file(follow_symlinks=False)
-                or type(size) is not int
-                or size < 0
-            ):
-                inventory_valid = False
+    matched_segments = 0
+    entry_count = 0
+    with os.scandir(destination) as entries:
+        for entry in entries:
+            entry_count += 1
+            if entry_count > MAX_ARCHIVE_INVENTORY_ENTRIES:
+                # An incomplete scan cannot support a byte count or headroom estimate.
+                return None, False
+            name = entry.name
+            info = segment_map.get(name)
+            if info is not None:
+                matched_segments += 1
+                size = info.get("bytes")
+                if (
+                    entry.is_symlink()
+                    or not entry.is_file(follow_symlinks=False)
+                    or type(size) is not int
+                    or size < 0
+                ):
+                    inventory_valid = False
+                    continue
+                used += size
                 continue
-            used += size
-    for name, entry in entries.items():
-        if name in segment_map:
-            continue
-        if name.endswith(".seg") and segments is not None:
-            inventory_valid = False
-        if entry.is_symlink():
-            inventory_valid = False
-        elif entry.is_file(follow_symlinks=False):
-            used += entry.stat(follow_symlinks=False).st_size
-        elif segments is not None:
-            inventory_valid = False
+            if name.endswith(".seg") and segments is not None:
+                inventory_valid = False
+            if entry.is_symlink():
+                inventory_valid = False
+            elif entry.is_file(follow_symlinks=False):
+                used += entry.stat(follow_symlinks=False).st_size
+            elif segments is not None:
+                inventory_valid = False
+    if segments is not None and matched_segments != len(segment_map):
+        inventory_valid = False
     return used, inventory_valid
 
 
@@ -312,6 +320,9 @@ def archive_capacity(
         destination,
         catalog if manifest_provenance_valid and isinstance(catalog, list) else None,
     )
+    inventory_scan_limited = used is None
+    if inventory_scan_limited:
+        alerts.append("ARCHIVE_INVENTORY_SCAN_LIMIT")
     if manifest_provenance_valid and not archive_inventory_valid:
         manifest_provenance_valid = False
         alerts.append("ARCHIVE_SEGMENT_INVENTORY_INVALID")
@@ -372,22 +383,30 @@ def archive_capacity(
             destination_state=state,
             **archive_manifest_fields,
             raw_archive_bytes=used,
+            archive_inventory_scan_limited=inventory_scan_limited,
             budget_bytes=budget,
             filesystem_free_bytes=None,
             filesystem_reserve_bytes=reserve,
-            available_headroom_bytes=0,
+            available_headroom_bytes=0 if used is not None else None,
             estimated_storage_seconds_remaining=None,
             alerts=alerts,
         )
     free = shutil.disk_usage(mountpoint).free
-    headroom = min(budget - used, free - reserve)
-    seconds = max(0, headroom) / bytes_per_second if bytes_per_second else None
-    if headroom <= 0:
-        alerts.append("ARCHIVE_CAPACITY_EXHAUSTED")
-    elif budget - used < max(segment_bytes * 2, budget * 0.1):
-        alerts.append("ARCHIVE_BUDGET_LOW")
-    if free - reserve < segment_bytes * 2:
-        alerts.append("ARCHIVE_DISK_RESERVE_LOW")
+    headroom = min(budget - used, free - reserve) if used is not None else None
+    seconds = (
+        max(0, headroom) / bytes_per_second
+        if headroom is not None and bytes_per_second
+        else None
+    )
+    if headroom is None:
+        alerts.append("ARCHIVE_CAPACITY_UNKNOWN")
+    else:
+        if headroom <= 0:
+            alerts.append("ARCHIVE_CAPACITY_EXHAUSTED")
+        elif budget - used < max(segment_bytes * 2, budget * 0.1):
+            alerts.append("ARCHIVE_BUDGET_LOW")
+        if free - reserve < segment_bytes * 2:
+            alerts.append("ARCHIVE_DISK_RESERVE_LOW")
     if seconds is not None:
         if seconds <= CAPACITY_WARNING_SECONDS:
             alerts.append("ARCHIVE_CAPACITY_WARNING_WITHIN_THIRTY_DAYS")
@@ -404,10 +423,11 @@ def archive_capacity(
         destination_state=state,
         **archive_manifest_fields,
         raw_archive_bytes=used,
+        archive_inventory_scan_limited=inventory_scan_limited,
         budget_bytes=budget,
         filesystem_free_bytes=free,
         filesystem_reserve_bytes=reserve,
-        available_headroom_bytes=max(0, headroom),
+        available_headroom_bytes=max(0, headroom) if headroom is not None else None,
         estimated_storage_seconds_remaining=seconds,
         alerts=alerts,
     )
