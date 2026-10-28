@@ -1,5 +1,37 @@
 # Project Frontier Mission Ledger
 
+## API source-use hold preflight — 2026-10-28 11:48 UTC
+
+Code commit `782df89` makes every public probe route reject a source whose
+`probe_policy_block_reason` is set, in addition to requiring enabled probe
+flags. The check runs before route locks and adapter calls. The Coinbase API
+regression asserts HTTP 409 and zero transport requests for a held source.
+
+The first focused run before this change completed **12/13** Coinbase tests;
+one existing API success-path case failed because a test-only transport
+returned fixture data while the application correctly hid the held venue's
+stored records. This exposed the missing API preflight: the route reached the
+fixture transport rather than rejecting the held source first. It made no
+external request. The run took **1.28 s**, peaked at **78,636 KiB**, and used
+zero swaps. Ruff check/format and `git diff --check` pass for the fix, but the
+updated Coinbase module has not run.
+
+Before the attempt at `11:46:30Z`, memory PSI avg10 was **0.00%**, I/O PSI was
+**0.41%**, and about **10 GiB** was available. At `11:46:51Z`, I/O PSI rose to
+**1.19%**. The latest sample at `11:47:55Z` showed memory PSI **52.19% some /
+46.63% full** and I/O PSI **1.10% some / 0.75% full**; further tests remain
+gated. No live source or protected service was used.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| API source-use hold preflight | IMPLEMENTED, LIVE VALIDATION PENDING | `782df89`; all 11 probe routes guard source holds; updated module awaits resource admission. |
+| Coinbase focused module | PARTIALLY VERIFIED | Pre-fix attempt 12/13; failure led to this API guard and test change; rerun pending. |
+| Frontier overall | PARTIALLY VERIFIED | The existing full suite predates the latest code; broader regression, cross-venue evidence, and deployment remain open. |
+
+**Next safe action:** require a fresh memory and I/O PSI avg10 below 1%, rerun
+`tests/frontier/test_coinbase.py` on tmpfs, then run the Frontier suite once if
+the gate remains admitted.
+
 ## Kraken fixture config alignment — 2026-10-28 11:45 UTC
 
 Test commit `92b5bf0` updates the Kraken adapter fixture to construct one

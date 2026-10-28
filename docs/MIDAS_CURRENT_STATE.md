@@ -2556,6 +2556,15 @@ was **3.5/4 GiB** used. The prior `418/418` result is for `1dd0987`, before
 this change. No live source, protected service, or deployment was used.
 Frontier remains research-only and **PARTIALLY VERIFIED**.
 
+Commit `782df89` closes the API-side hold gap across all 11 public probe
+routes. The pre-fix focused Coinbase run passed 12/13 tests; its one failure
+showed the route let a test-only transport through before the source's read
+quarantine hid the resulting fixture record. The route now rejects held
+sources before transport work. The updated test remains unrun: after the first
+run, memory PSI avg10 reached **52.19% some / 46.63% full** and I/O PSI reached
+**1.10% some / 0.75% full**. No real source was contacted; Frontier remains
+**PARTIALLY VERIFIED**.
+
 Commit `92b5bf0` also aligns the Kraken fixture transport with the exact
 `KrakenSpotConfig` supplied to its adapter. Ruff check/format pass for the
 fixture; no tests were run under the current memory PSI gate.

@@ -2,6 +2,29 @@
 
 **Report date:** 2026-10-28
 
+## Current status — 2026-10-28 11:48 UTC
+
+Commit `782df89` adds an API-level source-use hold preflight to all 11 bounded
+probe routes, before locks, reads, or adapter calls. The Coinbase API regression
+now expects HTTP 409 and zero transport requests while the source remains held.
+Ruff check/format and `git diff --check` pass for the API changes.
+
+The first focused Coinbase run was on the tree before this API fix: **12 passed,
+1 failed** in 1.28 seconds, with **78,636 KiB** maximum RSS and zero swaps. The
+failure was the old success-path API test trying to read quarantined Coinbase
+records after a test-only fixture transport had returned success. That run
+made no real network request. The pre-run sample at `11:46:30Z` had memory PSI
+avg10 **0.00%**, I/O PSI **0.41%**, and about **10 GiB** available. At
+`11:46:51Z`, I/O PSI rose to **1.19%**; at `11:47:55Z`, memory PSI avg10 rose
+to **52.19% some / 46.63% full** and I/O PSI was **1.10% some / 0.75% full**.
+The current regression has not been rerun; the resource gate is exceeded.
+
+| Requirement | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| API source-use hold enforcement | IMPLEMENTED, LIVE VALIDATION PENDING | `782df89` checks all 11 probe routes; focused post-fix test awaits a fresh admitted sample. |
+| Coinbase source-use hold model | IMPLEMENTED, LIVE VALIDATION PENDING | `ca14e37`; static checks pass, current tests pending. |
+| Frontier overall | PARTIALLY VERIFIED | The 418/418 result predates these changes; cross-venue evidence, current regression, broader MIDAS checks, and deployment remain open. |
+
 ## Current status — 2026-10-28 11:46 UTC
 
 This entry supersedes the 11:44 UTC status. Follow-up commit `92b5bf0` aligns
@@ -8804,6 +8827,7 @@ store, or Arena job was accessed or started.
 | `c6dfff1` | `tests/frontier/test_coinbase.py` | Add a pending no-network regression for a copied config that attempts to clear Coinbase's source-use hold without the exact reviewed acknowledgement. |
 | `ca14e37` | `packages/midas/frontier/adapters/base.py`; `packages/midas/frontier/adapters/coinbase.py`; `tests/frontier/test_coinbase.py` | Reject Coinbase hold clearing, generic config substitution, and mismatched injected transport config; keep offline adapter/API fixtures on a held config. |
 | `92b5bf0` | `tests/frontier/test_adapters.py` | Pass the same bounded `KrakenSpotConfig` into the adapter and fixture transport under the new config-match invariant. |
+| `782df89` | `apps/api/frontier.py`; `tests/frontier/test_coinbase.py` | Reject held sources in all 11 probe routes before adapter or transport work; replace the held Coinbase API success-path fixture with an HTTP 409/zero-request regression. |
 
 The temporary `tests/frontier/test_recorded_cross_venue_relationship.py` was
 removed after the test guard denied held-capture access; it is not part of the
