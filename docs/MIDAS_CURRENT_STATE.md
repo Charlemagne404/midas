@@ -33,6 +33,21 @@ in the dated addendum below and in the Frontier engineering report.
 
 ## Frontier development addendum — 2026-10-28
 
+### Saved Arena candidate evidence UI — 2026-10-28 02:52 UTC
+
+Frontier code commit `4c40c7f4403d7571ae52849e6c4d10c81fa4d5c1` adds
+read-only detail inspection for candidates in saved Arena discovery-scope
+artifacts. The UI matches details to the selected scope's replay runs and
+summary identity/classification/audit/worst-case fields, preserves exact
+decimal strings, shows legs, observation IDs, terminal outcomes, timing,
+independent audit, assumptions, and hashes, and caps rendering at 50 per
+scope. The web unit suite passes **40/40**, TypeScript and the production build
+pass, and a fixture-backed browser path passes **1/1**. Vite retains its
+existing **544.41 kB** Chart chunk advisory. The browser artifact is intercepted
+fixture data; no Arena worker or live exchange data was used. Project Frontier
+remains **PARTIALLY VERIFIED**, with supervisor execution, live cross-venue
+matching, source-use gates, and deployment still unresolved.
+
 ### Joint-state search differential and bounded performance — 2026-10-28 02:16 UTC
 
 Performance commit `bc8d073` changes joint-state subset evaluation to cache

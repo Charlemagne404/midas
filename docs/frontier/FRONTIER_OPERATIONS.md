@@ -438,3 +438,15 @@ snapshot retains that record's observation ID. This is a deterministic store
 selection rule; use each book's receipt/exchange timestamps and quality fields
 when interpreting age, and do not describe separate venue observations as
 simultaneous quotes.
+
+For a completed, integrity-verified artifact, Mission Control groups candidate
+detail by the arm's pinned replay IDs and checks its identity, family,
+classification, audit disposition, and worst-case outputs against the summary.
+The expanded read-only view is capped at the first 50 candidates per scope. It
+shows exact decimal costs and prices, native leg units, quote denomination,
+displayed depth and book IDs, terminal-state results, timing uncertainty,
+practical-eligibility state, the independent arithmetic audit, assumptions,
+and hashes. Additional rows are counted instead of expanded. If a summary has
+no matching detail, the panel reports the artifact mismatch. The browser check
+uses a clearly labeled intercepted fixture; it does not establish that an
+Arena supervisor job completed or that a candidate is live or executable.

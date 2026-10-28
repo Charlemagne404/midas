@@ -2,6 +2,41 @@
 
 **Report date:** 2026-10-28
 
+**Latest Mission Control checkpoint — 2026-10-28 02:52 UTC:** Code commit
+`4c40c7f4403d7571ae52849e6c4d10c81fa4d5c1` adds read-only candidate
+inspection to saved Arena discovery-scope artifacts. Each scope resolves a
+candidate only through its own pinned replay IDs and checks the candidate ID,
+family, classification, audit disposition, and worst-case outputs against
+that scope's summary before showing details. The panel displays exact decimal
+strings for basket costs, fees, leg quotes, terminal payout/P&L, per-leg book
+observation IDs, timing evidence, practical eligibility, the independent audit,
+assumptions, and evidence hashes. It caps rendered detail at 50 candidates per
+scope and identifies the remainder. No API, source, or Arena-worker behavior
+changed.
+
+Verification on the UI checkpoint:
+
+- `./node_modules/.bin/vitest run` in `apps/web`: **40/40** tests passed across
+  7 files in 7.85 seconds.
+- `npm run build` in `apps/web`: TypeScript and Vite passed; 2,228 modules
+  transformed and Vite completed in 4.71 seconds. The existing **544.41 kB**
+  Chart chunk advisory remains.
+- `npm run lint` passed before the E2E addition; scoped ESLint on the final
+  changed TSX and E2E files passed. Prettier check and `git diff --check` pass.
+- The targeted saved-artifact Playwright case passed **1/1** in 5.2 seconds
+  using loopback demo APIs, temporary storage, and an explicitly labeled
+  intercepted fixture. It checks expansion of the outcome, leg, and audit
+  evidence. It does not execute an Arena worker or validate live exchange data.
+
+No Python tests were rerun because this checkpoint changes only the web UI and
+its browser fixture. At `2026-10-28T02:52:22Z`, memory PSI was avg10 **21.85%
+some / 20.89% full**, avg60 **4.93% / 4.69%**, with about **9.8 GiB** available
+and **332 MiB** swap free. This single host sample is not a capacity admission.
+Candidate detail rendering is **COMPLETE AND VERIFIED** for saved fixture
+artifacts; the Arena supervisor path, genuine live cross-venue evidence, and
+production deployment remain pending. Project Frontier remains **PARTIALLY
+VERIFIED**.
+
 **Latest API snapshot correction — 2026-10-28 02:45 UTC:** Code commit
 `3f084a99732b0cb610bafe18aacaf13fb54a92c2` fixes discovery-scope staging when
 the local store contains repeated snapshots for one instrument. The bounded

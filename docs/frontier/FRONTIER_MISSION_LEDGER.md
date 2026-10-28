@@ -1,5 +1,59 @@
 # Project Frontier Mission Ledger
 
+## Saved discovery-candidate evidence in Mission Control — 2026-10-28 02:52 UTC
+
+Code commit `4c40c7f4403d7571ae52849e6c4d10c81fa4d5c1` completes the current
+read-only UI step for Arena discovery artifacts. The scope comparison now
+opens candidate details from the artifact's replay runs associated with that
+scope. Before rendering, the UI matches candidate ID, family, classification,
+audit disposition, and worst-case gross/net values to the discovery summary.
+The expanded view exposes per-leg venue, native market/instrument/outcome,
+native quantity, exact decimal ask/model price/fee, displayed depth, and book
+observation ID; settlement identity; terminal payout and gross/net results;
+receipt/exchange timing skew; practical eligibility; independent audit checks;
+assumptions; and evidence hashes. It renders at most 50 candidates per scope
+and reports additional rows. This is inspection of the existing hash-verified
+artifact, not a new research calculation or execution path.
+
+Changed files: `apps/web/src/Frontier.tsx`,
+`apps/web/src/Frontier.test.tsx`, `apps/web/src/frontier.css`, and
+`apps/web/e2e/frontier.spec.ts`.
+
+Reproducible checks on the final UI code:
+
+```bash
+cd apps/web
+./node_modules/.bin/vitest run src/Frontier.test.tsx -t "submits bounded Arena replay and discovery comparisons with verified results"
+# 1 passed; 7 skipped
+./node_modules/.bin/vitest run
+# 40 passed in 7 files
+npm run build
+# TypeScript and Vite passed; 2,228 modules; existing 544.41 kB Chart chunk warning
+./node_modules/.bin/playwright test e2e/frontier.spec.ts -g "saved Arena discovery artifact exposes scoped candidate evidence"
+# 1 passed in 5.2s; isolated loopback demo services and temporary storage
+./node_modules/.bin/eslint src/Frontier.tsx src/Frontier.test.tsx e2e/frontier.spec.ts
+./node_modules/.bin/prettier --check src/Frontier.tsx src/Frontier.test.tsx src/frontier.css e2e/frontier.spec.ts
+```
+
+No Python files changed. No source probe, Arena job submission, protected
+service action, deployment, or historical evidence write occurred. The E2E
+artifact is a labeled fixture; no supervisor-produced `frontier_discovery`
+result has yet been inspected in this browser path. After the bounded E2E, the
+`2026-10-28T02:52:22Z` host sample was avg10 PSI **21.85% some / 20.89% full**,
+avg60 **4.93% / 4.69%**, about **9.8 GiB** available, and **332 MiB** swap
+free. Recheck before any resource-heavy work.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Saved Arena candidate evidence UI | COMPLETE AND VERIFIED | Web unit, TypeScript/build, scoped lint/format, and fixture browser path pass; this does not exercise an Arena supervisor result or live source. |
+| Arena discovery job execution | PARTIALLY VERIFIED | Artifact code, API staging, and result inspection are fixture-tested; supervisor completion and resource sustainability remain open. |
+| Genuine cross-venue relationship and economic result | DEFERRED | No verified live equivalent relationship or executable synchronized opportunity is established. |
+| Project Frontier overall | PARTIALLY VERIFIED | Production, source-use permissions, live matching, and broader operational acceptance remain unresolved. |
+
+**Next safe action:** continue source-independent implementation or documentation;
+before any broad suite or benchmark, take a fresh resource/admission sample and
+preserve the existing source and production gates.
+
 ## Joint-state differential verification and search optimization — 2026-10-28 02:16 UTC
 
 Test commit `29f1a5b` adds a seeded 48-case differential test for candidate

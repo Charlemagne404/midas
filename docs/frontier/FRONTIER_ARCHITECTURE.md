@@ -24,9 +24,9 @@ as mutable Frontier storage.
 | Replay | `replay.py` | Stable input ordering, scenario/mapping/proposal-limit-aware replay identities, exact store-record provenance for API-loaded models, deterministic results, and paired assumption comparisons. Joint-state maps are content-hashed and pinned in replay manifests. |
 | Event-time replay | `timeline.py` | Offline bounded replay over repeated book updates, source-state events, and explicit cutoffs; freshness, outage invalidation, candidate summaries, and timeline hashes. |
 | Finite source collection | `collection.py`, `apps/api/frontier.py` | One-source sequential bounded capture with durable restart checkpoints and an append-only hash-chained journal; explicit start/resume routes and a read-only keyset-paginated run catalog, with source policy/capability gates, per-source lock, and no job or background service. |
-| Arena replay jobs | `packages/midas/arena/frontier_replay.py`, `frontier_timeline.py`, `arena/jobs.py` | Immutable content-addressed inputs, bounded offline paired and event-time replay workers, hash-verified artifacts, and held-source filtering under Arena's existing admission gate. |
-| HTTP API | `apps/api/frontier.py`, `apps/api/arena.py` | Bounded local queries and graph neighborhoods, relationship proposals/reviews, deterministic, joint-state, and paired replay, config-gated captures, fee/capital/funding-currency sensitivities, coverage analytics, a verified local collection-health catalog and checkpoint joins, and local-input event-time Arena staging/result routes. |
-| Mission Control workspace | `apps/web/src/Frontier.tsx` | Sources, explicit finite checkpointed capture, markets/books/event context, coverage and source-quality analytics, relationship hypotheses, candidates, venue-separated capital assumptions and funding-currency sensitivity, local comparisons, an explicit conditional joint-state projection editor, paired and event-time Arena replay history/results with pinned freshness and explicit recorded-health selection, and readiness. |
+| Arena replay jobs | `packages/midas/arena/frontier_replay.py`, `frontier_timeline.py`, `frontier_discovery.py`, `arena/jobs.py` | Immutable content-addressed inputs, bounded offline paired, event-time, and discovery-scope comparison workers, hash-verified artifacts, and held-source filtering under Arena's existing admission gate. |
+| HTTP API | `apps/api/frontier.py`, `apps/api/arena.py` | Bounded local queries and graph neighborhoods, relationship proposals/reviews, deterministic, joint-state, paired, and discovery-scope replay, config-gated captures, fee/capital/funding-currency sensitivities, coverage analytics, a verified local collection-health catalog and checkpoint joins, and local-input Arena staging/result routes. |
+| Mission Control workspace | `apps/web/src/Frontier.tsx` | Sources, explicit finite checkpointed capture, markets/books/event context, coverage and source-quality analytics, relationship hypotheses, candidates, venue-separated capital assumptions and funding-currency sensitivity, local comparisons, an explicit conditional joint-state projection editor, paired/event-time/discovery-scope Arena history and evidence, pinned freshness, explicit recorded-health selection, per-scope candidate detail inspection, and readiness. |
 
 ## Additional venue selection
 
@@ -939,6 +939,18 @@ store's newest-first local receipt order. The chosen book's immutable
 observation ID remains in the content-addressed input. This avoids duplicate
 instrument rows and makes the selection reproducible; it does not claim
 exchange-time synchronization or prove the selected book is fresh.
+
+The completed artifact exposes candidate detail from the replay IDs listed on
+each scope arm. Mission Control resolves within those IDs and requires the
+candidate identity, family, classification, audit disposition, and worst-case
+gross/net values to agree with the arm summary before displaying a construction.
+The browser shows at most 50 details per scope, retains exact decimal strings,
+and includes leg-level observation IDs and independently audited terminal
+outcomes. Missing or mismatched detail is surfaced as an artifact mismatch.
+This inspection is read-only; it neither recalculates the opportunity nor
+turns a fixture into live market evidence. The component and a fixture-backed
+browser flow pass; supervisor execution of this job kind and a genuine public
+cross-venue mapping remain unverified.
 
 The finite collector is deliberately not exposed as a request handler or
 background service. A caller must provide one configured adapter and one
