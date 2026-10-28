@@ -1494,6 +1494,86 @@ async def test_kraken_ohlc_rejects_mismatched_result_key_without_pair_fallback()
 
 
 @pytest.mark.asyncio
+async def test_kraken_ohlc_normalizes_exact_eight_field_native_rows():
+    config = KrakenSpotConfig(
+        enabled=True,
+        live_public_probe_enabled=True,
+        pairs=("XBTUSD",),
+        requests_per_second=5,
+        retries=0,
+    )
+    row = [1793110000, "60000", "61000", "59000", "60500", "60000", "1.5", 23]
+    body = json.dumps({"error": [], "result": {"XXBTZUSD": [row], "last": 1793110000}})
+    transport, requests, client = _transport("api.kraken.com", {"/OHLC": body}, config)
+    adapter = KrakenSpotAdapter(config, transport=transport)
+    try:
+        series = await adapter.fetch_candles("XXBTZUSD", interval_minutes=60)
+        captures = adapter.take_captures()
+    finally:
+        await client.aclose()
+
+    assert series.native_market_id == "XXBTZUSD"
+    assert series.interval_seconds == 3600
+    assert len(series.candles) == 1
+    candle = series.candles[0]
+    assert candle.open == Decimal("60000")
+    assert candle.high == Decimal("61000")
+    assert candle.low == Decimal("59000")
+    assert candle.close == Decimal("60500")
+    assert candle.volume == Decimal("1.5")
+    assert candle.trade_count == 23
+    assert len(captures) == 1 and captures[0].raw_body == body
+    assert requests[0].url.params["pair"] == "XXBTZUSD"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "row",
+    (
+        [1793110000, "60000", "61000", "59000", "60500", "60000", "1.5", 23, "extra"],
+        [1793110000, "60000", "61000", "59000", "60500", "60000", "1.5", True],
+        [1793110000, "60000", "61000", "59000", "60500", "60000", "1.5", "23"],
+        [1793110000, "60000", "61000", "59000", "60500", "60000", "1.5", -1],
+        [1793110000, "60000", "61000", "59000", "60500", "60000", "-1.5", 23],
+        [1793110000, "60000", "59000", "61000", "60500", "60000", "1.5", 23],
+        [1793110000, "62000", "61000", "59000", "60500", "60000", "1.5", 23],
+        [None, "60000", "61000", "59000", "60500", "60000", "1.5", 23],
+    ),
+    ids=(
+        "extra-tuple-field",
+        "boolean-trade-count",
+        "string-trade-count",
+        "negative-trade-count",
+        "negative-volume",
+        "inverted-high-low",
+        "open-outside-range",
+        "invalid-timestamp",
+    ),
+)
+async def test_kraken_ohlc_rejects_malformed_native_rows(row):
+    config = KrakenSpotConfig(
+        enabled=True,
+        live_public_probe_enabled=True,
+        pairs=("XBTUSD",),
+        requests_per_second=5,
+        retries=0,
+    )
+    body = json.dumps({"error": [], "result": {"XXBTZUSD": [row]}})
+    transport, requests, client = _transport("api.kraken.com", {"/OHLC": body}, config)
+    adapter = KrakenSpotAdapter(config, transport=transport)
+    try:
+        with pytest.raises(AdapterError) as error:
+            await adapter.fetch_candles("XXBTZUSD")
+        captures = adapter.take_captures()
+    finally:
+        await client.aclose()
+
+    assert error.value.code == "INVALID_CANDLES"
+    assert len(requests) == 1
+    assert len(captures) == 1 and captures[0].raw_body == body
+
+
+@pytest.mark.asyncio
 async def test_kraken_recent_trades_require_exact_pair_key_and_preserve_native_trade_identity():
     trades = {
         "error": [],
@@ -1532,7 +1612,7 @@ async def test_kraken_recent_trades_require_exact_pair_key_and_preserve_native_t
     assert first.aggressor_side is None
     assert second.native_trade_id is None
     assert second.aggressor_side is None
-    assert first.provenance.adapter_version == "frontier-kraken-spot-6"
+    assert first.provenance.adapter_version == "frontier-kraken-spot-7"
     assert requests[0].url.params["pair"] == "XXBTZUSD"
     assert requests[0].url.params["count"] == "2"
     assert all("authorization" not in request.headers for request in requests)

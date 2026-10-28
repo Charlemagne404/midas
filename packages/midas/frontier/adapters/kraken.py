@@ -39,7 +39,7 @@ from midas.frontier.models import (
 )
 
 D = Decimal
-ADAPTER_VERSION = "frontier-kraken-spot-6"
+ADAPTER_VERSION = "frontier-kraken-spot-7"
 BASE = "https://api.kraken.com/0/public"
 ORDERBOOK_DOC = "https://docs.kraken.com/api-reference/market-data/get-order-book"
 _KNOWN_FIAT_QUOTES = frozenset({"USD", "EUR", "GBP", "CAD", "AUD", "CHF", "JPY"})
@@ -424,7 +424,7 @@ class KrakenSpotAdapter(BaseReadOnlyAdapter):
             )
         candles = []
         for row in rows:
-            if not isinstance(row, list) or len(row) < 8:
+            if not isinstance(row, list) or len(row) != 8:
                 raise AdapterError("INVALID_CANDLES", "Kraken OHLC row is malformed")
             values = [parse_decimal(value) for value in row[1:7]]
             timestamp = parse_time(row[0])
@@ -433,12 +433,18 @@ class KrakenSpotAdapter(BaseReadOnlyAdapter):
             open_price, high, low, close, _vwap, volume = values
             assert open_price is not None and high is not None and low is not None
             assert close is not None and volume is not None
-            try:
-                trade_count = int(row[7])
-            except (TypeError, ValueError) as error:
+            trade_count = row[7]
+            if (
+                any(value < 0 for value in values if value is not None)
+                or low > high
+                or not low <= open_price <= high
+                or not low <= close <= high
+                or type(trade_count) is not int
+                or trade_count < 0
+            ):
                 raise AdapterError(
-                    "INVALID_CANDLES", "Kraken OHLC trade count is invalid"
-                ) from error
+                    "INVALID_CANDLES", "Kraken OHLC prices, volume, or trade count are invalid"
+                )
             candles.append(
                 HistoricalCandle(
                     open_time_utc=timestamp,

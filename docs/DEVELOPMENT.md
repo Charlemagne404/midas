@@ -196,8 +196,10 @@ documentation; normalized `aggressor_side` stays unset. See the official
 [Get Recent Trades](https://docs.kraken.com/api-reference/market-data/get-recent-trades),
 [Get Order Book](https://docs.kraken.com/api-reference/market-data/get-order-book),
 and [Get OHLC Data](https://docs.kraken.com/api-reference/market-data/get-ohlc-data)
-pages. The protected Reality recording and its evidence remain on separate
-roots.
+pages. OHLC rows must match the exact eight-field source tuple and pass
+explicit timestamp, amount, range, volume, and count checks before model
+construction. The protected Reality recording and its evidence remain on
+separate roots.
 
 Kalshi multivariate-event discovery is a separate explicit
 `POST /api/frontier/probe/kalshi/multivariate-events` operation. Supply exactly

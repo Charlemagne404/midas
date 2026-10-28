@@ -38,6 +38,9 @@ normalized `aggressor_side` remains unset while the hash-pinned raw response
 retains every native tuple field. See [Get Recent Trades](https://docs.kraken.com/api-reference/market-data/get-recent-trades),
 [Get Order Book](https://docs.kraken.com/api-reference/market-data/get-order-book),
 and [Get OHLC Data](https://docs.kraken.com/api-reference/market-data/get-ohlc-data).
+Kraken candle tuples are required to contain exactly eight fields; timestamp,
+nonnegative amounts, OHLC range consistency, and integer nonnegative trade
+counts are validated before the typed candle is built.
 
 ### Dashboard loading
 
