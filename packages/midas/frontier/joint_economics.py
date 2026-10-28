@@ -165,37 +165,57 @@ def generate_joint_state_basket_candidates(
     if not entries or len(entries) > MAX_JOINT_BASKET_INSTRUMENTS:
         return ()
 
-    ranked: list[tuple[Decimal, int, tuple[tuple[str, str], ...]]] = []
-    for mask in range(1, 1 << len(entries)):
-        selected_indexes = tuple(index for index in range(len(entries)) if mask & (1 << index))
-        selected = tuple(entries[index] for index in selected_indexes)
-        if {item[0].canonical_id for item in selected} != set(mapping.market_ids):
-            continue
-        payout_by_joint_state = tuple(
-            sum(
-                (
-                    {payout.state_id: payout.amount for payout in instrument.payouts}[
-                        projection_by_market[market.canonical_id][joint_state]
-                    ]
-                    for market, instrument, _, _ in selected
-                ),
-                D(0),
-            )
+    market_bit_by_id = {market_id: 1 << index for index, market_id in enumerate(mapping.market_ids)}
+    payout_by_entry = tuple(
+        tuple(
+            {payout.state_id: payout.amount for payout in instrument.payouts}[
+                projection_by_market[market.canonical_id][joint_state]
+            ]
             for joint_state in mapping.joint_state_ids
         )
+        for market, instrument, _, _ in entries
+    )
+    entry_market_bits = tuple(market_bit_by_id[market.canonical_id] for market, _, _, _ in entries)
+    subset_count = 1 << len(entries)
+    zero_payout_vector = tuple(D(0) for _ in mapping.joint_state_ids)
+    payout_by_subset: list[tuple[Decimal, ...]] = [zero_payout_vector] * subset_count
+    cost_by_subset: list[Decimal] = [D(0)] * subset_count
+    market_mask_by_subset = [0] * subset_count
+    for mask in range(1, subset_count):
+        # Add the highest entry index last to preserve the previous ascending Decimal sum order.
+        entry_index = mask.bit_length() - 1
+        previous_mask = mask ^ (1 << entry_index)
+        payout_by_subset[mask] = tuple(
+            previous_payout + entry_payout
+            for previous_payout, entry_payout in zip(
+                payout_by_subset[previous_mask], payout_by_entry[entry_index], strict=True
+            )
+        )
+        cost_by_subset[mask] = cost_by_subset[previous_mask] + entries[entry_index][3].price
+        market_mask_by_subset[mask] = (
+            market_mask_by_subset[previous_mask] | entry_market_bits[entry_index]
+        )
+
+    all_markets_mask = (1 << len(mapping.market_ids)) - 1
+    ranked: list[tuple[Decimal, int, tuple[tuple[str, str], ...]]] = []
+    for mask in range(1, subset_count):
+        if market_mask_by_subset[mask] != all_markets_mask:
+            continue
+        payout_by_joint_state = payout_by_subset[mask]
         guaranteed_payout = payout_by_joint_state[0]
         if guaranteed_payout <= 0 or any(
             item != guaranteed_payout for item in payout_by_joint_state
         ):
             continue
+        selected_indexes = tuple(index for index in range(len(entries)) if mask & (1 << index))
+        selected = tuple(entries[index] for index in selected_indexes)
         identity = tuple(
             sorted(
                 (market.canonical_id, instrument.native_instrument_id)
                 for market, instrument, _, _ in selected
             )
         )
-        quoted_cost = sum((ask.price for _, _, _, ask in selected), D(0))
-        ranked.append((guaranteed_payout - quoted_cost, len(selected), identity))
+        ranked.append((guaranteed_payout - cost_by_subset[mask], len(selected_indexes), identity))
 
     if not ranked:
         return ()
