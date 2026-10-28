@@ -6651,4 +6651,6 @@ production service, or Arena job was accessed or started.
 | Frontier project overall | PARTIALLY VERIFIED | Deployment, held-source validation, and production resource/recovery gates remain open. |
 
 **Next safe action:** continue source-independent acceptance review and use a
-fresh host sample before any additional broad verification workload.
+fresh host sample before any additional broad verification workload. The
+resource-gated tmpfs command is documented in `docs/frontier/FRONTIER_OPERATIONS.md`
+(commit `5e20c7f`).

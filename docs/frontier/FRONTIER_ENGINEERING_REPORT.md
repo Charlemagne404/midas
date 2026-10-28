@@ -7886,6 +7886,8 @@ store, or Arena job was accessed or started.
 | `f5dfb26` | `tests/frontier/test_relationship_reviews.py` | Compare migration results against the current `SCHEMA_VERSION` constant. |
 | `3ce0984`, `9e1649c` | `docs/MIDAS_CURRENT_STATE.md`; `docs/frontier/FRONTIER_ARCHITECTURE.md`; `docs/frontier/FRONTIER_ENGINEERING_REPORT.md`; `docs/frontier/FRONTIER_MISSION_LEDGER.md` | Record timestamp and nested-model validation contracts. |
 | `300fdcf`, `0ec12f0`, `a3fd358`, `252e5be`, `e4f6c82` | `docs/MIDAS_CURRENT_STATE.md`; `docs/frontier/FRONTIER_ENGINEERING_REPORT.md`; `docs/frontier/FRONTIER_MISSION_LEDGER.md` | Record the resource-gated attempt, test evidence, held-capture boundary, typing, and full-suite result. |
+| `5e20c7f` | `docs/frontier/FRONTIER_OPERATIONS.md` | Document the PSI admission gate and tmpfs-backed Frontier test command. |
+| `5878235` | `docs/frontier/FRONTIER_ENGINEERING_REPORT.md` | Add this continuation change inventory. |
 
 The temporary `tests/frontier/test_recorded_cross_venue_relationship.py` was
 removed after the test guard denied held-capture access; it is not part of the
