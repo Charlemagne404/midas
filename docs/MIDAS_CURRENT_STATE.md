@@ -54,16 +54,19 @@ follow-up found no further empty-state acceptance in the bounded multi-outcome
 and joint-state audits or the verified relationship-review API path; no new
 runtime test was run during the post-suite I/O pressure hold.
 
-### Latest isolated Frontier checkpoint — 2026-10-28 13:11 UTC
+### Latest isolated Frontier checkpoint — 2026-10-28 13:13 UTC
 
 The Frontier evidence store now reparses raw and normalized observation input
 before database initialization, closing a copied-model validation bypass at
 the write boundary. The storage suite passes **22/22** and strict mypy passes
-for the store module. The full Frontier/Arena suite passed **463/463** before
-this latest change. Post-storage-test memory PSI avg10 was 0.00%, but I/O PSI
-was 7.44% some / 5.56% full; exact-tree broad regression is pending until I/O
-falls below the 1% admission gate. Frontier remains **PARTIALLY VERIFIED**,
-research-only, isolated, and undeployed.
+for the store module. The full Frontier/Arena suite passes **465/465** on the
+exact updated tree in 31.56 seconds (33.02 seconds wall), at 380,600 KiB peak
+RSS with zero swaps, filesystem input, and socket messages. One existing
+Starlette/httpx warning remains. The `/dev/shm` test output is isolated at
+`midas-frontier-storage-exact-full-20261028`. Post-run memory PSI avg10 was
+0.00%, I/O PSI was 0.01% some / full, and about 10 GiB was available. The
+write-boundary fix is committed as `6a3e459`. Frontier remains **PARTIALLY
+VERIFIED**, research-only, isolated, and undeployed.
 
 ### Latest isolated Frontier checkpoint — 2026-10-28 13:00 UTC
 

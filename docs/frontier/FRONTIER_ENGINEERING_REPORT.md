@@ -15,11 +15,15 @@ and a copied market with invalid payoff structure fail before database creation.
 `tests/frontier/test_storage.py` passed **22/22** in 16.83 seconds, at 68,252
 KiB peak RSS, with zero swaps, filesystem input, and socket messages. Strict
 mypy passes for `storage.py`; Ruff and whitespace checks pass. Output stayed
-under `/tmp/midas-frontier-storage-input-validation-20261028`. The Frontier
-and Arena suite had passed **463/463** before this change, but exact-tree broad
-regression is pending. At the post-run sample memory PSI avg10 was 0.00%, I/O
-PSI was 7.44% some / 5.56% full, and about 10 GiB was available. Additional
-tests are held until I/O avg10 falls below the 1% admission gate.
+under `/tmp/midas-frontier-storage-input-validation-20261028`. The exact
+Frontier suite plus Arena replay/discovery/timeline regression then passed
+**465/465** in 31.56 seconds (33.02 seconds wall), at 380,600 KiB peak RSS,
+zero swaps, zero filesystem input, and zero socket messages. It emitted one
+existing Starlette/httpx deprecation warning; output used the isolated tmpfs
+root `/dev/shm/midas-frontier-storage-exact-full-20261028`. Pre-run memory PSI
+avg10 was 0.00%, I/O PSI 0.09% some / 0.06% full; immediately afterward
+memory remained 0.00% and I/O was 0.01% some / 0.01% full, with about 10 GiB
+available. The write-boundary fix is committed as `6a3e459`.
 
 ## Empty payoff-state rejection in relationship verifiers — 2026-10-28
 

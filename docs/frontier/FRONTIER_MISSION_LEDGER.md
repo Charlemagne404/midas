@@ -17,16 +17,22 @@ socket messages. Strict mypy passes for `storage.py`; Ruff check/format and
 `git diff --check` pass. The focused output used
 `/tmp/midas-frontier-storage-input-validation-20261028`.
 
-The full Frontier plus Arena suite passed 463/463 immediately before this
-write-boundary change, so the exact current tree still needs broader regression.
-After the focused storage run, memory PSI avg10 was 0.00%, but I/O PSI was
-7.44% some / 5.56% full with about 10 GiB available. Hold further test runs
-until a fresh sample is below the 1% admission threshold. No live source,
-protected store, production service, or historical research artifact was
-accessed.
+The exact post-change Frontier suite plus Arena replay/discovery/timeline
+regression passed **465/465** in 31.56 seconds (33.02 seconds wall), with one
+existing Starlette/httpx `TestClient` deprecation warning. It peaked at
+380,600 KiB RSS, used zero swaps and filesystem input (8 output blocks), and
+emitted no socket messages. The run used the unique tmpfs basetemp
+`/dev/shm/midas-frontier-storage-exact-full-20261028`. Pre-run memory PSI avg10
+was 0.00%, I/O PSI was 0.09% some / 0.06% full, and about 10 GiB was available.
+Post-run memory PSI remained 0.00%, I/O was 0.01% some / 0.01% full, and about
+10 GiB was available. No live source, protected store, production service, or
+historical research artifact was accessed.
 
-**Next safe action:** after the I/O gate clears, run the Frontier suite on the
-exact tree, then continue source-independent provenance and replay review.
+**Implementation commit:** `6a3e459` (`fix(frontier): validate observations before persistence`).
+
+**Next safe action:** continue source-independent provenance and replay review;
+admit more tests only when a fresh resource sample remains below the 1% I/O
+threshold.
 
 ## Empty payoff-state rejection in relationship verifiers — 2026-10-28
 
