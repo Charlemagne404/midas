@@ -2,7 +2,7 @@
 
 **Report date:** 2026-10-28
 
-## Current status — 2026-10-28 05:14 UTC
+## Current status — 2026-10-28 05:15 UTC
 
 The isolated development branch is `codex/frontier-20261026`; the latest
 implementation checkpoint is `6c5c329` (`fix(frontier): enforce
@@ -60,16 +60,13 @@ opportunity is established. Full repository regression and production
 transition remain open; deployment requires a separate authorized readiness
 review.
 
-The latest collection module passes **23/23**, including successful source
-lease reacquisition after a stalled health check, and the collection API module
-passes **8/8**, including a busy-lease response with no run or discovery
-request. Strict `mypy --strict` passed for the collector at `8fb4c0d`, before
-the health-timeout refinement in `6c5c329`; a post-refinement typecheck is
-pending. Neither test result is a rerun of the full Frontier or MIDAS suites.
-Web/API typing, browser verification, and broader regression remain pending.
-At approximately `2026-10-28T05:14Z`, memory PSI avg10 was **0.05% some / 0.05%
-full** and I/O PSI avg10 was **6.98% some / 6.73% full**; no process held the
-shared Arena lock. No further resource-bearing check started at that sample.
+The collector and collection API regressions now pass **31/31** together in
+one invocation, and strict mypy passes on the latest collector code. This is
+not a rerun of the full Frontier or MIDAS suites. Web/API typing, browser
+verification, and broader regression remain pending. At approximately
+`2026-10-28T05:15Z`, memory PSI avg10 was **0.00% some / 0.00% full** and I/O
+PSI avg10 was **6.55% some / 6.10% full**; no process held the shared Arena
+lock. No additional resource-bearing checks started at that sample.
 
 ## Bounded metadata and initial resource checkpoint — 2026-10-28 03:59 UTC
 
@@ -6654,3 +6651,33 @@ and broader suites remain deferred pending a fresh resource sample.
 | Lease release after wall timeout | COMPLETE AND VERIFIED | The stalled-health run pauses at the wall limit and a subsequent same-venue run completes; the 23-test collection module passes. |
 | Collection API endpoint integration | COMPLETE AND VERIFIED | The API module passes 8/8, including HTTP 409 on a busy lease. |
 | Post-refinement strict typing and broad regression | PARTIALLY VERIFIED | Latest mypy remains pending; full Frontier/MIDAS and browser suites remain outstanding. |
+
+## Combined collection verification and strict typecheck — 2026-10-28 05:15 UTC
+
+After `6c5c329`, strict `mypy --strict --follow-imports=silent
+packages/midas/frontier/collection.py` passed with **no issues** at **134,740
+KiB peak RSS**, zero swaps, and zero socket messages.
+
+The collector and HTTP API modules then passed together:
+
+```bash
+nice -n 10 /usr/bin/time -v env PYTHONPATH=packages:. \
+  /home/charlie/midas/.venv/bin/python -m pytest -q \
+  --basetemp=/tmp/midas-frontier-collection-combined-20261028T0518Z \
+  tests/frontier/test_collection.py tests/frontier/test_collection_api.py
+# 31 passed in 9.40s; 91,868 KiB peak RSS; zero swaps or socket messages
+```
+
+The run emitted one existing Starlette deprecation warning for `httpx` with
+`TestClient`. Both test modules use synthetic in-process adapters and temporary
+stores; no external request or held-capture path was involved. After the run,
+at approximately `2026-10-28T05:15Z`, memory PSI avg10 was **0.00% some / 0.00%
+full**, I/O PSI avg10 was **6.55% some / 6.10% full**, and no process held the
+shared Arena lock. Defer broad Python, browser, and build workloads until a
+new admission sample clears the I/O gate.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Collector, lease, timeout, and HTTP endpoint regression | COMPLETE AND VERIFIED | Combined collection and API modules pass 31/31 after the latest code; this does not substitute for full Frontier/MIDAS regression. |
+| Strict typecheck of the changed collector | COMPLETE AND VERIFIED | Mypy strict passes on `packages/midas/frontier/collection.py` after `6c5c329`. |
+| Broad regression and browser verification | PARTIALLY VERIFIED | Deferred after the post-test I/O PSI sample exceeded 1%; remeasure before launch. |

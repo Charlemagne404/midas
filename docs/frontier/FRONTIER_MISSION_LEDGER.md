@@ -5288,3 +5288,34 @@ regression until the I/O gate clears.
 | Lease release after wall timeout | COMPLETE AND VERIFIED | A second same-venue run completes after the first health probe times out; all 23 collection tests pass. |
 | Collection API conflict handling | COMPLETE AND VERIFIED | All 8 API tests pass, including HTTP 409 without a run or discovery request. |
 | Post-refinement typing and broader regression | PARTIALLY VERIFIED | Mypy after `6c5c329` and the full Frontier/MIDAS/browser suites remain pending. |
+
+## Combined collector/API regression and post-refinement mypy — 2026-10-28 05:15 UTC
+
+After `6c5c329`, strict mypy passed for the changed collection module. The
+complete collection and collection API test modules then passed together:
+
+```bash
+/home/charlie/midas/.venv/bin/mypy --strict --follow-imports=silent \
+  packages/midas/frontier/collection.py
+# Success: no issues found in 1 source file
+# 134,740 KiB peak RSS; zero swaps or socket messages
+
+nice -n 10 /usr/bin/time -v env PYTHONPATH=packages:. \
+  /home/charlie/midas/.venv/bin/python -m pytest -q \
+  --basetemp=/tmp/midas-frontier-collection-combined-20261028T0518Z \
+  tests/frontier/test_collection.py tests/frontier/test_collection_api.py
+# 31 passed in 9.40s; 91,868 KiB peak RSS; zero swaps or socket messages
+```
+
+The suite emitted one existing Starlette deprecation warning for
+`httpx`/`TestClient`. It used synthetic adapters, temporary stores, and no
+external network or held-capture paths. At approximately `2026-10-28T05:15Z`,
+memory PSI avg10 was **0.00% some / 0.00% full**, I/O PSI avg10 was **6.55%
+some / 6.10% full**, and no process held the shared Arena lock. Defer broad
+Python, browser, and build checks until a fresh sample clears the I/O gate.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Collection and collection API regression | COMPLETE AND VERIFIED | Both modules pass 31/31 together after the latest collector implementation. |
+| Strict mypy for the changed collection module | COMPLETE AND VERIFIED | `mypy --strict` passes after `6c5c329`. |
+| Full Frontier/MIDAS and browser regression | PARTIALLY VERIFIED | Broader suites remain pending host admission and have not been rerun after the latest collector changes. |
