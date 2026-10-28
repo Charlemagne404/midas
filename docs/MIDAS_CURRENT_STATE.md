@@ -1180,3 +1180,15 @@ seconds wall at **192,280 KiB peak RSS**, zero swaps. It verifies Exchanges
 history loads without collection/source POSTs, replay history submits no job,
 fixture-only settlement review, and responsive bounded graph exploration.
 The run used temporary API/data roots and did not call an exchange endpoint.
+
+### Frontier collection acceptance follow-up — 2026-10-28 00:00 UTC
+
+Commit `a7996f9` adds held-source history filtering and corrupted checkpoint
+chain regressions. The focused collection module/API tests pass **21/21** in
+6.53 seconds wall at **87,676 KiB peak RSS**, zero swaps; Ruff and
+`git diff --check` pass. Verification used fake adapters and temporary storage
+and made no source request. At 00:00:12 UTC, the shared admission lock was
+free, PSI avg10 was 0.64% `some` / 0.58% `full`, and 10 GiB was available.
+Frontier remains research-only, undeployed, and **PARTIALLY VERIFIED**. See the
+[mission ledger](frontier/FRONTIER_MISSION_LEDGER.md) for the current evidence
+and continuation notes.

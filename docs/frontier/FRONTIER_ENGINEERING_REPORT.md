@@ -4737,3 +4737,31 @@ local Exchanges history request without collection/source POSTs, no automatic
 Arena job submission, fixture-only settlement inspection, and responsive
 bounded graph interaction. The API ran with isolated test roots; no exchange
 endpoint was called.
+
+### Collection history policy and checkpoint-chain regressions — 2026-10-28 00:00 UTC
+
+Commit `a7996f9` adds a regression for collection history when a venue's
+source-use hold is active. The endpoint returns no eligible runs, reports that
+no network was called, and leaves the adapter transport untouched. A second
+assertion verifies that `latest_run_checkpoints()` fails closed when a stored
+checkpoint digest is tampered with, matching the existing integrity checks on
+other journal reads.
+
+The focused collection module/API suite passes **21/21** in 6.06 seconds
+reported by pytest / 6.53 seconds wall, at **87,676 KiB peak RSS** and zero
+swaps. Ruff and `git diff --check` pass. Tests used fake adapters and temporary
+storage. No exchange request, held capture read, Arena worker, Reality action,
+or production change occurred. Since only tests changed, broader suites were
+not repeated. The latest resource sample, at 00:00:12 UTC, showed the shared
+admission lock free, PSI avg10 **0.64% some / 0.58% full**, and **10 GiB
+available**; host resources may change after that sample.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Collection source-hold filtering and checkpoint-chain integrity | COMPLETE AND VERIFIED | Fixture regressions are included in the 21-case focused collection suite; no live source capture was performed. |
+| Collection history and explicit resume | COMPLETE AND VERIFIED | HTTP and module tests only; live source use remains disabled by default and requires a separate policy review. |
+| Cross-venue live relationships/economics and deployment | DEFERRED | No genuine cross-venue observation or production transition was established. |
+| Project Frontier overall | PARTIALLY VERIFIED | Source permissions, genuine cross-venue validation, broader clean combined regression, and production prerequisites remain incomplete. |
+
+Frontier remains isolated and research-only. Continue offline acceptance work
+without treating this fixture evidence as live-source or deployment evidence.

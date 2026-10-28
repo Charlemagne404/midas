@@ -3170,3 +3170,21 @@ corepack pnpm --dir apps/web exec vite build --outDir /tmp/midas-frontier-build-
 corepack pnpm --dir apps/web exec playwright test e2e/frontier.spec.ts --grep 'Frontier workspace uses isolated research state and remains responsive' --workers=1
 corepack pnpm --dir apps/web exec playwright test e2e/frontier.spec.ts --workers=1
 ```
+
+### Collection history policy and checkpoint-chain regressions — 2026-10-28 00:00 UTC
+
+Commit `a7996f9` adds two focused collection regressions: a source that is
+currently held is omitted from collection history without a network request,
+and `latest_run_checkpoints()` rejects a checkpoint chain whose stored digest
+has been tampered with. The focused collection module/API suite passes **21/21**
+in 6.06 seconds reported by pytest / 6.53 seconds wall, with **87,676 KiB peak
+RSS** and zero swaps. Ruff and `git diff --check` pass.
+
+The test run used fake adapters and temporary storage; it made no source
+request, read no held capture, and started no Arena worker. At 00:00:12 UTC the
+shared admission lock was free, PSI avg10 was 0.64% `some` / 0.58% `full`, and
+10 GiB was available; this is a dated host sample, not a standing resource
+guarantee. The broader suites were not repeated because implementation code
+did not change. Frontier remains isolated, research-only, undeployed, and
+**PARTIALLY VERIFIED**. Continue with offline acceptance gaps; preserve the
+source-use and production boundaries.
