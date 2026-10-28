@@ -12631,3 +12631,58 @@ accessed or changed.
 
 Next safe action: inspect remaining candidate detail provenance and measure a
 small synthetic summary store within the resource caps.
+
+## Candidate-to-run provenance and synthetic summary timing — 2026-10-28
+
+`ReplayResult` now checks that each candidate leg's `market_observation_id`
+and `book_observation_id` occur in the manifest's pinned source indexes. It
+also requires the leg's market ID and venue to appear in that candidate's
+indexes. This closes a cross-field provenance gap where a candidate payload
+could otherwise cite a different observation from the run that supposedly
+produced it. During held-source filtering, a candidate leg that disagrees
+with the run manifest or candidate indexes is fail-closed from opportunities
+and run reads. Fixture-only offline IDs remain supported because these checks
+enforce membership, not live-source formatting.
+
+Verification for this checkpoint:
+
+- `tests/frontier/test_relationships_economics_replay.py`: **109 passed**.
+- Multi-outcome API replay and persisted opportunity: **1 passed**.
+- Held-fee quarantine, held relationship quarantine, and legacy replay storage:
+  **3 passed**.
+- Ruff check and format check pass for the changed Python files.
+- Strict mypy passes for `apps/api/frontier.py` and
+  `packages/midas/frontier/replay.py`.
+- API tests use local fixtures and report the existing Starlette/httpx
+  deprecation warning.
+
+A one-off synthetic benchmark exercised the source-filtered `summary()` query
+over 5,000 relationship rows, each with one observation evidence reference.
+The SQLite file was **4,001,792 bytes** under a configured **512 MiB** store
+budget. Five query samples were 27.450, 27.143, 27.284, 27.419, and 26.797 ms;
+median **27.284 ms**. Process peak RSS was **48,364 KiB**. The run used a
+temporary fixture database, one recorded Polymarket observation, and no
+exchange calls. It checks small-store query cost only; maximum-store latency,
+larger evidence arrays, disk contention, and production resource impact remain
+unmeasured.
+
+At `2026-10-28T22:21:38Z`, the API used 1,607,839,744 of 1,610,612,736 bytes
+at `MemoryHigh` (2,772,992 bytes of headroom); Reality used 1,206,243,328 of
+1,207,959,552 bytes (1,716,224 bytes of headroom). Memory PSI was 0%, available
+memory 10,014,912 kB, and swap free 954,752 kB. This narrow headroom is why
+verification remained focused. No protected service was restarted or
+reconfigured, and no external source was accessed.
+
+A follow-up sample at `2026-10-28T22:22:55Z` showed system memory PSI
+`some avg10=47.54%` and `full avg10=41.17%`. API `MemoryHigh` headroom was
+4,476,928 bytes; Reality headroom was 111,448,064 bytes; available memory was
+9,642,744 kB. This is a time-specific observation and is not attributed to
+the focused Frontier checks. Broader test and profiling work is deferred
+until system pressure eases.
+
+| Component | Status | Evidence and boundary |
+| --- | --- | --- |
+| Candidate-to-manifest source references | COMPLETE AND VERIFIED WITH FIXTURES | Market/book evidence IDs and candidate market/venue indexes are cross-checked. |
+| Opportunity API source binding | COMPLETE AND VERIFIED WITH FIXTURES | Candidate legs are returned from hash-pinned runs; mismatch under source hold is fail-closed. |
+| Summary query performance | PARTIALLY VERIFIED | 5,000 synthetic rows measured; no maximum-store or production benchmark. |
+| Overall Frontier acceptance | PARTIALLY VERIFIED | Live cross-venue findings, broad regressions, endurance, protected recovery, and deployment remain open. |

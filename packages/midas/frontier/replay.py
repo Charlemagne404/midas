@@ -87,6 +87,22 @@ class ReplayResult(FrontierModel):
             )
         if self.classification_counts != expected_classification_counts:
             raise ValueError("Replay classification counts do not match its candidates")
+        market_observation_ids = set(self.manifest.market_observation_ids)
+        book_observation_ids = set(self.manifest.book_observation_ids)
+        for candidate in self.candidates:
+            for leg in candidate.legs:
+                if leg.market_observation_id not in market_observation_ids:
+                    raise ValueError(
+                        "Candidate market observation is absent from the replay manifest"
+                    )
+                if leg.book_observation_id not in book_observation_ids:
+                    raise ValueError(
+                        "Candidate book observation is absent from the replay manifest"
+                    )
+                if leg.market_id not in candidate.market_ids:
+                    raise ValueError("Candidate leg market is absent from its market index")
+                if leg.venue not in candidate.venues:
+                    raise ValueError("Candidate leg venue is absent from its venue index")
         return self
 
 

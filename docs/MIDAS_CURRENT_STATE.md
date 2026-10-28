@@ -3860,3 +3860,32 @@ At `2026-10-28T22:17:56Z`, API was at 1,606,975,488 / 1,610,612,736
 bytes and Reality at 1,206,743,040 / 1,207,959,552 bytes. Memory PSI was 0%,
 available memory 10,082,484 kB, and swap free 954,744 kB. Broad tests remain
 deferred under narrow protected-service headroom.
+
+## Project Frontier candidate provenance and bounded summary query — 2026-10-28 22:22 UTC
+
+Replay results now reject candidate legs whose market or book observation IDs
+are absent from the manifest, or whose market and venue are absent from the
+candidate indexes. Under a source hold, stored replay filtering also omits a
+candidate whose leg provenance does not agree with those pinned indexes. The
+full focused relationship/economics/replay module passes 109/109; the
+multi-outcome API replay and persisted-opportunity case passes 1/1, and the
+held-source plus legacy storage selections pass 3/3. Ruff, format, and strict
+mypy pass for the changed code.
+
+A bounded synthetic summary measurement used 5,000 relationship rows in a
+4,001,792-byte SQLite file. Five source-filtered summary calls had a 27.284 ms
+median and the process peak RSS was 48,364 KiB. This is a small fixture only;
+it does not predict performance at the 512 MiB store cap. No external source
+or protected service was changed.
+
+At `2026-10-28T22:21:38Z`, API `MemoryHigh` headroom was 2,772,992 bytes and
+Reality headroom was 1,716,224 bytes. Memory PSI was 0%; available memory was
+10,014,912 kB and swap free was 954,752 kB. Broad regression, live source
+research, endurance, recovery, and deployment remain open. Frontier is
+partially verified.
+
+A later host sample at `2026-10-28T22:22:55Z` showed system memory PSI
+`some avg10=47.54%` and `full avg10=41.17%`; API headroom was 4,476,928 bytes
+and Reality headroom was 111,448,064 bytes. Available memory was 9,642,744 kB.
+No cause is attributed to Frontier. Further broad verification is deferred
+until host pressure eases.

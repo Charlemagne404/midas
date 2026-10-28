@@ -11661,3 +11661,47 @@ was accessed or changed.
 Next safe action: inspect remaining candidate detail provenance and bound the
 summary query cost against a small synthetic store; keep production evidence
 and protected services untouched.
+
+## Candidate leg provenance and synthetic summary measurement — 2026-10-28 22:22 UTC
+
+Candidate legs are now checked against their replay manifest market and book
+observation indexes and their candidate market and venue indexes. With a
+source hold active, an opportunity candidate with a leg that does not agree
+with the run's pinned source indexes is excluded. Fixture-only offline IDs
+remain accepted when internally consistent. This complements the earlier
+manifest/applied-relationship and classification-count checks.
+
+Validation: **109/109** focused relationship/economics/replay tests;
+**1/1** multi-outcome API replay/persisted opportunity; and **3/3** held-source
+API plus legacy replay-storage tests. Ruff check, format check, and strict
+mypy pass. API tests make no external requests; one pre-existing
+Starlette/httpx deprecation warning remains.
+
+The requested bounded summary query check used 5,000 synthetic relationship
+rows (one source reference each) in a **4,001,792-byte** temporary SQLite
+store configured with a **512 MiB** maximum. Five query samples were 27.450,
+27.143, 27.284, 27.419, and 26.797 ms (median **27.284 ms**); peak RSS was
+**48,364 KiB**. The file was about 0.75% of the store budget. This is not a
+max-store projection and does not measure production API impact.
+
+At `2026-10-28T22:21:38Z`, API `MemoryHigh` headroom was 2,772,992 bytes and
+Reality headroom was 1,716,224 bytes. Memory PSI was 0%, available memory was
+10,014,912 kB, and swap free was 954,752 kB. No source endpoint or protected
+service was accessed or changed; `data/frontier-public-probes/` remains
+untouched.
+
+A follow-up measurement at `2026-10-28T22:22:55Z` recorded PSI `some avg10=47.54%`,
+`full avg10=41.17%`, API headroom 4,476,928 bytes, Reality
+headroom 111,448,064 bytes, and 9,642,744 kB available memory. No cause is
+assigned to Frontier; defer broader workload until system pressure eases.
+
+| Component | Status | Evidence and boundary |
+| --- | --- | --- |
+| Candidate leg source provenance | COMPLETE AND VERIFIED WITH FIXTURES | Leg market/book observation references and candidate indexes must match the replay manifest. |
+| Opportunity source-hold readback | COMPLETE AND VERIFIED WITH FIXTURES | Held runs are already omitted; candidate-to-manifest drift also fails closed. |
+| Summary query resource behavior | PARTIALLY VERIFIED | Small 5,000-row fixture measured; max-store and production performance remain unknown. |
+| Project Frontier overall | PARTIALLY VERIFIED | Live cross-venue science, broad regression, endurance, protected recovery, and deployment remain open. |
+
+Next safe action: review remaining persisted-candidate and comparison detail
+routes, then continue bounded contract checks. Keep broad regression deferred
+under near-`MemoryHigh` API and Reality headroom.

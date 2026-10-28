@@ -574,6 +574,36 @@ def test_replay_result_rejects_manifest_and_classification_summary_drift():
         ReplayResult.model_validate(classification_drift)
 
 
+@pytest.mark.parametrize(
+    ("field", "message"),
+    (
+        ("market_observation_id", "market observation is absent"),
+        ("book_observation_id", "book observation is absent"),
+        ("market_id", "leg market is absent"),
+        ("venue", "leg venue is absent"),
+    ),
+)
+def test_replay_result_rejects_candidate_leg_provenance_drift(field, message):
+    left, right, relationship, _instrument_mapping = _verified_pair()
+    left_books, right_books = _books(left, right)
+    replay = deterministic_replay(
+        (left, right),
+        tuple(left_books.values()) + tuple(right_books.values()),
+        verified_relationships=(relationship,),
+        as_of_utc=T0 + timedelta(milliseconds=100),
+        code_version="candidate-leg-provenance-consistency-test-v1",
+    )
+    candidate_index = next(
+        index for index, candidate in enumerate(replay.candidates) if candidate.legs
+    )
+    corrupted = replay.model_dump(mode="json")
+    leg = corrupted["candidates"][candidate_index]["legs"][0]
+    leg[field] = "not-in-the-pinned-replay" if field != "venue" else "held-venue"
+
+    with pytest.raises(ValidationError, match=message):
+        ReplayResult.model_validate(corrupted)
+
+
 def test_deterministic_replay_pins_source_ids_on_relationship_proposals():
     left = market(Venue.POLYMARKET, "proposed-source-left")
     right = market(Venue.KALSHI, "proposed-source-right")

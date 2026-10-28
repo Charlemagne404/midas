@@ -1332,6 +1332,8 @@ def router(
                     for observation_id in evidence_ids
                 ):
                     return True
+        market_observation_ids = set(manifest.get("market_observation_ids", ()))
+        book_observation_ids = set(manifest.get("book_observation_ids", ()))
         candidates = result.get("candidates", ())
         if not isinstance(candidates, (list, tuple)):
             return True
@@ -1343,7 +1345,14 @@ def router(
             if set(candidate.get("venues", ())) & set(held_venues):
                 return True
             for leg in candidate.get("legs", ()):
-                if not isinstance(leg, dict) or leg.get("venue") in held_venues:
+                if (
+                    not isinstance(leg, dict)
+                    or leg.get("venue") in held_venues
+                    or leg.get("market_observation_id") not in market_observation_ids
+                    or leg.get("book_observation_id") not in book_observation_ids
+                    or leg.get("market_id") not in candidate.get("market_ids", ())
+                    or leg.get("venue") not in candidate.get("venues", ())
+                ):
                     return True
         return False
 
