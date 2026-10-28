@@ -36,7 +36,7 @@ import type { LucideIcon } from 'lucide-react';
 import { api } from './api';
 import { PaperPage, PaperSummary, ExperimentPanel } from './Paper';
 import { chartBase } from './chart-theme';
-const LazyChart = lazy(() => import('./Chart').then((module) => ({ default: module.Chart })));
+import { DeferredChart } from './DeferredChart';
 const LazyLaboratory = lazy(() =>
   import('./Laboratory').then((module) => ({ default: module.Laboratory })),
 );
@@ -96,10 +96,10 @@ function LazyWorkspace({
   );
 }
 
-function Chart(props: ComponentProps<typeof LazyChart>) {
+function Chart(props: ComponentProps<typeof DeferredChart>) {
   return (
     <LazyWorkspace name="Chart" loading="Loading chart…">
-      <LazyChart {...props} />
+      <DeferredChart {...props} />
     </LazyWorkspace>
   );
 }
