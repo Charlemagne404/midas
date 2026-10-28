@@ -23,6 +23,8 @@ from pydantic import (
 
 D = Decimal
 COINBASE_MARKET_DATA_TERMS_VERSION = "2026-08-07"
+MAX_RAW_OBSERVATION_BODY_BYTES = 262144
+MAX_RAW_OBSERVATION_BASE64_CHARS = 4 * ((MAX_RAW_OBSERVATION_BODY_BYTES + 2) // 3)
 Nonnegative = Annotated[Decimal, Field(ge=0, max_digits=36, decimal_places=18, allow_inf_nan=False)]
 MonotonicElapsedNs = Annotated[int, Field(strict=True, ge=0, le=9_223_372_036_854_775_807)]
 ExactNonnegative = Annotated[Decimal, Field(ge=0, allow_inf_nan=False)]
@@ -1332,11 +1334,29 @@ class RawObservation(FrontierModel):
     request_started_at_utc: datetime
     received_at_utc: datetime
     request_elapsed_monotonic_ns: MonotonicElapsedNs | None = None
-    raw_body: str
     raw_body_encoding: Literal["utf8", "base64"] = "utf8"
+    raw_body: str = Field(max_length=MAX_RAW_OBSERVATION_BASE64_CHARS)
     raw_body_state: Literal["complete", "not_captured_after_size_limit"] = "complete"
     raw_sha256: str
     adapter_version: str
+
+    @model_validator(mode="before")
+    @classmethod
+    def encoded_body_is_bounded(cls, value: Any) -> Any:
+        if not isinstance(value, dict):
+            return value
+        raw_body = value.get("raw_body")
+        if not isinstance(raw_body, str):
+            return value
+        encoding = value.get("raw_body_encoding", "utf8")
+        character_limit = (
+            MAX_RAW_OBSERVATION_BODY_BYTES
+            if encoding == "utf8"
+            else MAX_RAW_OBSERVATION_BASE64_CHARS
+        )
+        if len(raw_body) > character_limit:
+            raise ValueError("Raw observation exceeds the 256 KiB record bound")
+        return value
 
     @field_validator("request_started_at_utc", "received_at_utc")
     @classmethod
@@ -1352,13 +1372,15 @@ class RawObservation(FrontierModel):
         if self.schema_version == 1 and self.raw_body_state != "complete":
             raise ValueError("Raw-observation schema v1 cannot describe omitted response bodies")
         if self.raw_body_encoding == "utf8":
+            if len(self.raw_body) > MAX_RAW_OBSERVATION_BODY_BYTES:
+                raise ValueError("Raw observation exceeds the 256 KiB record bound")
             raw = self.raw_body.encode("utf-8")
         else:
             try:
                 raw = base64.b64decode(self.raw_body, validate=True)
             except (binascii.Error, ValueError) as error:
                 raise ValueError("Raw observation base64 body is invalid") from error
-        if len(raw) > 262144:
+        if len(raw) > MAX_RAW_OBSERVATION_BODY_BYTES:
             raise ValueError("Raw observation exceeds the 256 KiB record bound")
         if self.raw_body_state == "not_captured_after_size_limit" and raw:
             raise ValueError("Size-rejected response bodies must not be stored")

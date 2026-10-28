@@ -604,6 +604,28 @@ def test_raw_hash_and_record_bound_are_validated():
         _raw(Venue.KALSHI, oversized)
 
 
+def test_oversized_base64_raw_body_rejects_before_decoding(monkeypatch):
+    import midas.frontier.models as frontier_models
+
+    def fail_decode(*_args, **_kwargs):
+        pytest.fail("Oversized base64 body reached the decoder")
+
+    monkeypatch.setattr(frontier_models.base64, "b64decode", fail_decode)
+    with pytest.raises(ValueError, match="256 KiB"):
+        RawObservation(
+            venue=Venue.KALSHI,
+            observation_kind="book",
+            request_url="https://external-api.kalshi.com/book",
+            http_status=200,
+            request_started_at_utc=T0,
+            received_at_utc=T0,
+            raw_body_encoding="base64",
+            raw_body="A" * (4 * ((262144 + 2) // 3) + 1),
+            raw_sha256="0" * 64,
+            adapter_version="test-1",
+        )
+
+
 def test_evidence_read_detects_offline_payload_tampering(tmp_path: Path):
     store = FrontierStore(tmp_path, max_bytes=2 * 1024 * 1024)
     observation_id = store.append_observation(
