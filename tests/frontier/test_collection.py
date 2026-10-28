@@ -567,6 +567,47 @@ def test_legacy_collection_spec_without_a_config_tag_remains_readable():
     assert type(restored.adapter_config) is AdapterConfig
 
 
+def test_collection_journal_revalidates_all_append_inputs_before_initialization(
+    tmp_path, monkeypatch
+):
+    journal = CollectionJournal(tmp_path / "not-created")
+    spec = CollectionRunSpec(
+        run_id=str(uuid4()),
+        venue=Venue.POLYMARKET,
+        adapter_version="fixture-adapter-1",
+        capability_manifest_sha256="a" * 64,
+        adapter_config=AdapterConfig(enabled=False, live_public_probe_enabled=False),
+        market_limit=1,
+        book_limit=0,
+        book_depth=1,
+        max_evidence_bytes=1024 * 1024,
+        max_wall_seconds=30,
+        created_at_utc=T0,
+    )
+    checkpoint = CollectionCheckpoint(
+        run_id=spec.run_id,
+        sequence=0,
+        updated_at_utc=T0,
+        state="created",
+    )
+
+    def unexpected_initialize():
+        raise AssertionError("invalid append input must be rejected before journal initialization")
+
+    monkeypatch.setattr(journal, "initialize", unexpected_initialize)
+
+    with pytest.raises(FrontierStoreError, match="run spec failed its storage validation"):
+        journal.create_run(spec.model_copy(update={"market_limit": 0}))
+    with pytest.raises(FrontierStoreError, match="run/checkpoint failed storage validation"):
+        journal.create_run_with_initial_checkpoint(
+            spec, checkpoint.model_copy(update={"sequence": -1})
+        )
+    with pytest.raises(FrontierStoreError, match="checkpoint failed its storage validation"):
+        journal.append_checkpoint(checkpoint.model_copy(update={"sequence": -1}))
+
+    assert not journal.root.exists()
+
+
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     ("current_config", "expected_code"),

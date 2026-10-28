@@ -409,7 +409,6 @@ class CollectionJournal:
             raise FrontierStoreError("Frontier collection journal byte budget would be exceeded")
 
     def create_run(self, spec: CollectionRunSpec) -> None:
-        self.initialize()
         try:
             validated_spec = CollectionRunSpec.model_validate(spec.model_dump(mode="json"))
         except ValueError as error:
@@ -418,6 +417,7 @@ class CollectionJournal:
         if len(encoded) > MAX_ROW_BYTES:
             raise FrontierStoreError("Collection run spec exceeds the record bound")
         digest = hashlib.sha256(encoded).hexdigest()
+        self.initialize()
         with self._connect() as connection:
             connection.execute("BEGIN IMMEDIATE")
             count = int(connection.execute("SELECT COUNT(*) FROM collection_runs").fetchone()[0])
@@ -437,7 +437,6 @@ class CollectionJournal:
         checkpoint: CollectionCheckpoint,
     ) -> str:
         """Atomically persist a new run and its required initial checkpoint."""
-        self.initialize()
         try:
             validated_spec = CollectionRunSpec.model_validate(spec.model_dump(mode="json"))
             validated_checkpoint = CollectionCheckpoint.model_validate(
@@ -465,6 +464,7 @@ class CollectionJournal:
         spec_digest = hashlib.sha256(spec_encoded).hexdigest()
         checkpoint_digest = hashlib.sha256(checkpoint_encoded).hexdigest()
 
+        self.initialize()
         with self._connect() as connection:
             connection.execute("BEGIN IMMEDIATE")
             run_count = int(
@@ -524,7 +524,6 @@ class CollectionJournal:
         return spec
 
     def append_checkpoint(self, checkpoint: CollectionCheckpoint) -> str:
-        self.initialize()
         try:
             validated_checkpoint = CollectionCheckpoint.model_validate(
                 checkpoint.model_dump(mode="json")
@@ -537,28 +536,29 @@ class CollectionJournal:
         if len(encoded) > MAX_COLLECTION_CHECKPOINT_BYTES:
             raise FrontierStoreError("Collection checkpoint exceeds the 8 MiB record bound")
         row_sha256 = hashlib.sha256(encoded).hexdigest()
+        self.initialize()
         with self._connect() as connection:
             connection.execute("BEGIN IMMEDIATE")
             exists = connection.execute(
-                "SELECT 1 FROM collection_runs WHERE run_id=?", (checkpoint.run_id,)
+                "SELECT 1 FROM collection_runs WHERE run_id=?", (validated_checkpoint.run_id,)
             ).fetchone()
             if exists is None:
                 connection.rollback()
-                raise KeyError(checkpoint.run_id)
+                raise KeyError(validated_checkpoint.run_id)
             latest = connection.execute(
                 "SELECT sequence,row_sha256 FROM collection_checkpoints "
                 "WHERE run_id=? ORDER BY sequence DESC LIMIT 1",
-                (checkpoint.run_id,),
+                (validated_checkpoint.run_id,),
             ).fetchone()
             expected_sequence = int(latest["sequence"]) + 1 if latest else 0
             previous_sha256 = str(latest["row_sha256"]) if latest else None
-            if checkpoint.sequence != expected_sequence:
+            if validated_checkpoint.sequence != expected_sequence:
                 connection.rollback()
                 raise FrontierStoreError("Collection checkpoint sequence is not consecutive")
             count = int(
                 connection.execute(
                     "SELECT COUNT(*) FROM collection_checkpoints WHERE run_id=?",
-                    (checkpoint.run_id,),
+                    (validated_checkpoint.run_id,),
                 ).fetchone()[0]
             )
             if count >= MAX_COLLECTION_CHECKPOINTS:
