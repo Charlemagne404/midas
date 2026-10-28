@@ -2,6 +2,58 @@
 
 **Report date:** 2026-10-28
 
+## Latest Frontier checkpoint — 2026-10-28 03:59 UTC
+
+The isolated worktree is `/home/charlie/midas-frontier` on
+`codex/frontier-20261026`. Recent commits are `e4692d1` (capability-specific
+single-market metadata capture), `b7638db` (bounded live-probe evidence), and
+`447ea0f` (web regression and event-identity checkpoint). There is no merge,
+push, production deployment, source credential, or protected-service change.
+
+One bounded, public, read-only Polymarket Gamma detail request for previously
+recorded market `2589810` returned HTTP 200 and was persisted in a separate,
+ignored local capture store. Its 4,198-byte response hash is
+`d462014349743a6175facab3aef0433a069899c43845c789ca4cdce87bd8cf26`; the
+evidence envelope links to the original listing observation and passes
+read-only SQLite integrity and raw-hash checks. The detail title and Federal
+Reserve authority match the listing, but the response has no event field and
+does not prove event membership, outcome completeness, payoff, settlement
+asset, or cross-venue equivalence. The persisted detail's `market:2589810`
+event value was a local fallback from the legacy MIDAS parser, not a Gamma
+event ID. The request succeeded, but the disposable TestClient harness then
+exited nonzero while closing an async client on a different event loop; no
+request was retried. Exact capture and source-use boundaries are in
+[`SOURCE_DATA_TERMS_REVIEW_2026-10-27.md`](SOURCE_DATA_TERMS_REVIEW_2026-10-27.md).
+
+The full Mission Control web unit suite passed **40/40 across seven files**
+(360,100 KiB peak RSS, zero swaps or socket messages). The Frontier browser
+suite passed **6/6** against temporary loopback services and isolated data
+(197,660 KiB peak RSS, zero swaps or socket messages). The browser cases made
+no public source request. Earlier typecheck, targeted lint, formatting, and
+Frontier backend checks are recorded in the mission ledger. The production
+web build remains pending.
+
+An additional working-tree correction removes the legacy Polymarket
+`market:<id>` fallback from Frontier's `native_event_id`: the adapter now
+retains only an explicit numeric event object or a validated parent-event ID.
+Fixture tests cover missing event context and preservation of the saved
+listing's event grouping. Ruff and formatting pass, but those Python tests and
+strict typing have not been run after this correction. At
+`2026-10-28T03:59:17Z`, memory PSI avg10 was **35.49% some / 30.65% full** and
+external Veritas PID **4154226** held the shared Arena admission lock in `D`
+state. The process and lock were left untouched; no further resource-bearing
+checks were started.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Public Polymarket single-market metadata route | PARTIALLY VERIFIED | One bounded HTTP 200 capture persisted and hash-checked; no event, payoff, or cross-venue verification. Disposable harness teardown failed after read-back. |
+| Frontier web unit suite | COMPLETE AND VERIFIED | 40/40 tests across seven files; 360,100 KiB peak RSS; zero swaps or socket messages. |
+| Frontier browser E2E | COMPLETE AND VERIFIED | 6/6 tests on temporary local services/data; no public source probes. |
+| Polymarket missing-event identity correction | PARTIALLY VERIFIED | Adapter and API assertions are written and static checks pass; Python tests/typecheck pending a fresh resource admission. |
+| Production web build | PARTIALLY VERIFIED | Not run after the latest UI slice; defer until a fresh resource check admits it. |
+| Multi-venue economic validation | BLOCKED | Other source-use holds remain in effect; no verified live cross-venue payoff is claimed. Fixture-only economic checks do not establish live equivalence. |
+| Production deployment | DEFERRED | Frontier remains isolated on its development branch; no production transition was attempted. |
+
 **Corrected combined Frontier/Arena verification — 2026-10-28 03:12 UTC:**
 After synchronizing the stale timeline message expectation and isolating two
 launch-command unit tests from the host-wide admission lock, the serial
