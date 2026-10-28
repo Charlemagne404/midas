@@ -303,3 +303,50 @@ def test_source_routes_report_an_unregistered_adapter_before_journal_access(tmp_
         assert not CollectionJournal(store.root).path.exists()
     finally:
         client.close()
+
+
+def test_collection_history_marks_a_missing_adapter_as_non_resumable(tmp_path):
+    adapter = FakeAdapter()
+    store = FrontierStore(tmp_path / "frontier")
+    journal = CollectionJournal(store.root)
+    spec = CollectionRunSpec(
+        run_id="4b261237-2d5d-4768-9905-d82b335de5af",
+        venue=adapter.venue,
+        adapter_version=adapter.capabilities.adapter_version,
+        capability_manifest_sha256=capability_manifest_sha256(adapter.capabilities),
+        adapter_config=adapter.config,
+        market_limit=1,
+        book_limit=0,
+        book_depth=1,
+        max_evidence_bytes=1024 * 1024,
+        max_wall_seconds=30,
+        created_at_utc=T0,
+    )
+    journal.create_run(spec)
+    journal.append_checkpoint(
+        CollectionCheckpoint(
+            run_id=spec.run_id,
+            sequence=0,
+            updated_at_utc=T0,
+            state="paused",
+        )
+    )
+    app = FastAPI()
+    app.include_router(router(store, AdapterRegistry(())))
+    client = TestClient(app)
+    try:
+        response = client.get("/api/frontier/collection-runs")
+        assert response.status_code == 200, response.text
+        payload = response.json()
+        assert payload["network_called"] is False
+        assert len(payload["items"]) == 1
+        item = payload["items"][0]
+        assert item["run_id"] == spec.run_id
+        assert item["venue"] == "polymarket"
+        assert item["state"] == "paused"
+        assert item["checkpoint_sequence"] == 0
+        assert len(item["checkpoint_sha256"]) == 64
+        assert item["resumable"] is False
+        assert item["resume_block_reason"] == "The pinned source adapter is not registered."
+    finally:
+        client.close()
