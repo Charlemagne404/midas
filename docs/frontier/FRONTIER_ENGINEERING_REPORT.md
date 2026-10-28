@@ -7423,3 +7423,14 @@ Changed files in this checkpoint include
 Frontier architecture, operations, development, current-state, mission-ledger,
 and report documentation. No source endpoint, production service, or protected
 data store was accessed.
+
+Commit identities on `codex/frontier-20261026`:
+
+- `d396589` — Laboratory study-history UI, selection, and integrity-gated summary.
+- `8227f34` — Laboratory/Frontier architecture and status documentation.
+- `afcc726` — Fixture-routed Laboratory browser scenario.
+- `87ef08e` — Record that final markup and browser checks were pending.
+- `91e61d7` — Expand the reproducibility disclosure before the visible-value assertion.
+
+The working tree was clean at `91e61d7`. The commits remain local to the
+isolated Frontier branch; there was no merge, push, or deployment.

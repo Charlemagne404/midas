@@ -6099,7 +6099,8 @@ That final markup adjustment has not been rechecked. No post-change lint,
 format, build, or browser run is claimed. Commit `afcc726` adds a fixture-routed
 Playwright case for saved-job selection, integrity-gated result display, and
 absence of source or Arena mutation requests; that browser case is also awaiting
-execution.
+execution. Commit `91e61d7` opens the disclosure before asserting visible
+reproducibility values.
 
 At `2026-10-28T07:12:59Z`, memory PSI avg10 was **47.23% some / 42.98% full**,
 I/O PSI avg10 **0.75% some / 0.74% full**, and about **10 GiB** was available;
@@ -6117,3 +6118,9 @@ production store was accessed.
 **Next safe action:** obtain a fresh memory/I/O PSI and Arena-lock sample, then
 rerun the focused Laboratory tests, Prettier, lint, and typecheck. Keep the
 project PARTIALLY VERIFIED and production deployment deferred.
+
+Checkpoint commits for this integration are `d396589` (Laboratory UI),
+`8227f34` (architecture and initial status documentation), `afcc726`
+(fixture-routed browser case), `87ef08e` (pending-verification handoff), and
+`91e61d7` (make reproducibility disclosure visible in test assertions). The
+working tree is clean at this checkpoint. No production branch was changed.

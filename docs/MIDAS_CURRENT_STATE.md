@@ -1792,7 +1792,8 @@ TypeScript check passed before a final semantic markup refinement. The modified
 card markup has not yet been rechecked. At `2026-10-28T07:12:59Z`, memory PSI
 avg10 was **47.23% some / 42.98% full**; no additional resource-bearing
 verification was started. Commit `afcc726` also adds a fixture-routed
-Playwright case for this view, but it has not been run. This UI-level
+Playwright case for this view, but it has not been run; `91e61d7` makes its
+reproducibility assertion open the disclosure first. This UI-level
 integration does not verify Arena
 supervisor completion, a populated live-store browser flow, or source quality.
 Frontier remains isolated, research-only, **PARTIALLY VERIFIED**, and
