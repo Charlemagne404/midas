@@ -277,8 +277,11 @@ retry, timeout, and pacing limits. The level-2 endpoint returns the full
 aggregated book; the adapter parses only the requested top 1–20 levels after
 the transport's 256 KiB response bound. Coinbase's response `sequence`,
 `auction_mode`, and native trade `side` remain in the pinned raw response.
+The trade parser rejects responses above the requested limit and validates
+the documented int32 trade ID, `buy`/`sell` maker side, positive price/size,
+and timestamp. It emits schema-v2 trades with the native product identity.
 Because the documented trade `side` describes the maker order, normalized
-`aggressor_side` stays unknown. Auction books are marked indicative. Product
+`aggressor_side` remains unset. Auction books are marked indicative. Product
 increments and minimums use exact Decimal; account-tier fees stay unknown.
 
 Products normalize to `spot_pair` with base-asset quantities and a quote-currency

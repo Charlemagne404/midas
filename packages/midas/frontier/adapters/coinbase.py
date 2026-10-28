@@ -37,7 +37,7 @@ from midas.frontier.models import (
 )
 
 D = Decimal
-ADAPTER_VERSION = "frontier-coinbase-exchange-spot-2"
+ADAPTER_VERSION = "frontier-coinbase-exchange-spot-3"
 BASE = "https://api.exchange.coinbase.com"
 PRODUCTS_DOC = (
     "https://docs.cdp.coinbase.com/api-reference/exchange-api/rest-api/products/get-single-product"
@@ -376,7 +376,7 @@ class CoinbaseSpotAdapter(BaseReadOnlyAdapter):
         self, native_market_id: str, limit: int = 100
     ) -> tuple[TradeObservation, ...]:
         self._require(Capability.PUBLIC_TRADES)
-        if not 1 <= limit <= 100:
+        if type(limit) is not int or not 1 <= limit <= 100:
             raise AdapterError(
                 "INVALID_LIMIT", "Coinbase trade page limit must be between 1 and 100"
             )
@@ -389,31 +389,35 @@ class CoinbaseSpotAdapter(BaseReadOnlyAdapter):
         )
         self._capture_response(response, "public_trades")
         rows = response.payload
-        if not isinstance(rows, list) or len(rows) > 100:
+        if not isinstance(rows, list) or len(rows) > limit:
             raise AdapterError(
-                "INVALID_TRADE", "Coinbase trade response is malformed or exceeds 100 rows"
+                "INVALID_TRADE", "Coinbase trade response is malformed or exceeds requested limit"
             )
         result = []
-        for row in rows[:limit]:
+        for row in rows:
             if not isinstance(row, dict):
                 raise AdapterError("INVALID_TRADE", "Coinbase trade row must be an object")
             price = _positive_decimal(row.get("price"))
             quantity = _positive_decimal(row.get("size"))
             timestamp = parse_time(row.get("time"))
             trade_id = row.get("trade_id")
+            side = row.get("side")
             if (
                 price is None
                 or quantity is None
                 or timestamp is None
-                or isinstance(trade_id, bool)
-                or not isinstance(trade_id, (str, int))
-                or len(str(trade_id)) > 256
+                or type(trade_id) is not int
+                or not 0 <= trade_id <= 2_147_483_647
+                or not isinstance(side, str)
+                or side not in {"buy", "sell"}
             ):
                 raise AdapterError(
-                    "INVALID_TRADE", "Coinbase trade row has invalid identity, price, size, or time"
+                    "INVALID_TRADE",
+                    "Coinbase trade row has invalid identity, maker side, price, size, or time",
                 )
             result.append(
                 TradeObservation(
+                    schema_version=2,
                     venue=self.venue,
                     native_market_id=native_market_id,
                     native_trade_id=str(trade_id),

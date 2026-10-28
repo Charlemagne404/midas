@@ -173,6 +173,8 @@ async def test_coinbase_product_book_and_trades_preserve_native_semantics_offlin
     assert book.exchange_timestamp_utc is not None
     assert "cross-venue execution timestamp" in book.exchange_timestamp_semantics
     assert len(trades) == 1
+    assert trades[0].schema_version == 2
+    assert trades[0].native_instrument_id == "BTC-USD"
     assert trades[0].native_trade_id == "42"
     assert trades[0].aggressor_side is None
     assert trades[0].quote_currency == "USD"
@@ -252,11 +254,85 @@ async def test_coinbase_trade_limit_and_allowlist_fail_before_network():
     try:
         with pytest.raises(AdapterError, match="between 1 and 100"):
             await adapter.fetch_trades("BTC-USD", 101)
+        with pytest.raises(AdapterError, match="between 1 and 100"):
+            await adapter.fetch_trades("BTC-USD", True)
         with pytest.raises(AdapterError, match="outside the configured allowlist"):
             await adapter.fetch_trades("ETH-USD", 10)
     finally:
         await client.aclose()
     assert not requests
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "field, value",
+    (
+        ("trade_id", "42"),
+        ("trade_id", True),
+        ("trade_id", -1),
+        ("trade_id", 2_147_483_648),
+        ("side", None),
+        ("side", "unknown"),
+        ("side", 1),
+        ("time", None),
+        ("size", "0"),
+    ),
+    ids=(
+        "string-trade-id",
+        "boolean-trade-id",
+        "negative-trade-id",
+        "oversized-trade-id",
+        "missing-maker-side",
+        "unsupported-maker-side",
+        "invalid-maker-side-type",
+        "missing-time",
+        "zero-size",
+    ),
+)
+async def test_coinbase_public_trades_reject_invalid_native_fields(field, value):
+    row: dict[str, object] = {
+        "time": "2026-10-27T19:29:59.500Z",
+        "trade_id": 42,
+        "price": "67000.20",
+        "size": "0.002",
+        "side": "sell",
+    }
+    row[field] = value
+    adapter, requests, client = _adapter({"/products/BTC-USD/trades": [row]})
+    try:
+        with pytest.raises(AdapterError) as error:
+            await adapter.fetch_trades("BTC-USD", limit=1)
+        captures = adapter.take_captures()
+    finally:
+        await client.aclose()
+
+    assert error.value.code == "INVALID_TRADE"
+    assert len(requests) == 1
+    assert len(captures) == 1
+    assert "authorization" not in requests[0].headers
+
+
+@pytest.mark.asyncio
+async def test_coinbase_public_trades_reject_response_over_requested_limit():
+    row = {
+        "time": "2026-10-27T19:29:59.500Z",
+        "trade_id": 42,
+        "price": "67000.20",
+        "size": "0.002",
+        "side": "sell",
+    }
+    adapter, requests, client = _adapter({"/products/BTC-USD/trades": [row, row]})
+    try:
+        with pytest.raises(AdapterError) as error:
+            await adapter.fetch_trades("BTC-USD", limit=1)
+        captures = adapter.take_captures()
+    finally:
+        await client.aclose()
+
+    assert error.value.code == "INVALID_TRADE"
+    assert len(requests) == 1
+    assert requests[0].url.params["limit"] == "1"
+    assert len(captures) == 1
 
 
 @pytest.mark.asyncio

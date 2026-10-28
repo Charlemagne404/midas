@@ -110,7 +110,10 @@ Coinbase probes return HTTP 409 before network access, and stored records remain
 quarantined from application research/replay routes. Coinbase spot remains
 contextual evidence, never an event-contract payoff. Review the terms and
 intended organization, regional, retention, derived-data, and display scope
-before considering a future permission mechanism.
+before considering a future permission mechanism. Fixture-only Coinbase trade
+normalization validates the documented int32 trade ID, `buy`/`sell` maker side,
+and requested page bound; maker side remains raw and is not presented as
+aggressor direction.
 These controls do not enable account access, order entry, or credential
 handling. The API also filters held venues from
 stored market, graph, replay, candidate, and comparison reads. Arena replay
