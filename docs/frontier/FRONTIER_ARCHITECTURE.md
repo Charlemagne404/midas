@@ -16,7 +16,7 @@ as mutable Frontier storage.
 | Public venue adapters | `adapters/polymarket.py`, `kalshi.py`, `kraken.py`, `coinbase.py` | Source-specific normalization and native metadata preservation. Coinbase Exchange adds a bounded explicit-product spot source with an exact-version data-terms gate. |
 | Registry | `registry.py` | Explicit capability inventory; default instances do not probe. |
 | Relationship intelligence | `relationships.py` | Deterministic indexed title and parent-event/outcome hypotheses, source-selected component references, strict payoff checks, and immutable review contracts. |
-| Candidate calculators | `economics.py`, `joint_economics.py` | Decimal cross-venue binary, same-market exhaustive one-hot coverage, bounded constant-payout event baskets, and a separately bounded multi-market basket over an explicit shared-state assertion; venue fees, native quantity units, depth, freshness, timing, and scenario bounds remain attached. |
+| Candidate calculators | `economics.py`, `joint_economics.py` | Decimal cross-venue binary, same-market exhaustive one-hot coverage, bounded constant-payout event baskets, and a separately bounded multi-market basket over an explicit shared-state assertion. Joint-state search caches exact mapped payout vectors, then incrementally accumulates subset payouts, costs, and market coverage; venue fees, native quantity units, depth, freshness, timing, and scenario bounds remain attached. |
 | Independent arithmetic audit | `independent_audit.py` | Separately recomputes supported candidate identities, payoff coverage or constant-payout basket proofs, pinned quotes/depth, native-unit leg identities, fees, costs, terminal P&L, fill-pattern sensitivity, and classification from replay inputs. Joint-state arithmetic is verified only conditional on the pinned unauthenticated state map. |
 | Virtual capital-duration sensitivity | `capital.py` | Recomputes unrounded simple-interest carry from explicit per-venue user assumptions, candidate capital, hash-checked future settlement metadata, and a bounded scenario-only post-settlement release delay; an independent arithmetic pass cannot change candidate classification. |
 | Virtual funding-currency sensitivity | `fx.py` | Compares venue-isolated hypothetical balances with candidate capital under explicit namespaced asset identities and user-entered rates/fees; a separate Fraction-audited terminal-state P&L scenario is available only for an independently audited candidate with complete leg fees and sufficient virtual balance. It does not source rates or mutate candidate economics. |
@@ -676,9 +676,11 @@ retains only long baskets spanning every selected market with a constant
 positive payout over each mapped state. Markets must share exact settlement
 asset identity, payout currency, close time, and settlement time. Each leg keeps
 its native quantity unit; no share-to-contract conversion is inferred. The
-independent audit verifies the basket arithmetic over the pinned map but cannot
-prove the map's completeness, semantics, or attainability, so positive results
-remain conditional. This is not a general multi-market solver. Payoff-basket,
+search caches exact mapped payout vectors and incrementally sums subsets in
+ascending leg order. The independent audit verifies the basket arithmetic over
+the pinned map but cannot prove the map's completeness, semantics, or
+attainability, so positive results remain conditional. This is not a general
+multi-market solver. Payoff-basket,
 joint-state, and logical-implication results have controlled-fixture
 verification only; current public observations do not satisfy their required
 semantic evidence.

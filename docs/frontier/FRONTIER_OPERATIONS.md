@@ -237,6 +237,23 @@ restrictions remain outside this calculation. Mission Control exposes the
 same definition fields in Replay & Readiness and requires each projection cell
 to be entered explicitly.
 
+## Joint-state search resource check
+
+Run the reproducible synthetic ceiling benchmark from the repository root:
+
+```bash
+PYTHONPATH=packages:. /usr/bin/time -v /home/charlie/midas/.venv/bin/python tests/frontier/benchmark_joint_state_search.py
+```
+
+It measures two fixture markets, twelve instruments, sixty-four asserted
+states, and 4,095 subsets without reading a store or contacting a source. The
+current three-run, one-candidate measurement had a 0.101767-second median and
+0.104521-second maximum at 70,576 KiB process peak RSS. A one-run eight-result
+sample took 0.174308 seconds at 71,460 KiB. The fixture deliberately makes
+3,969 subsets satisfy a constant payout; these are not venue results or
+opportunity evidence. The figures bound this local code path only and do not
+establish request latency under load or sustained resource capacity.
+
 ## Event-time Arena replay
 
 `POST /api/frontier/arena-timeline-replay` uses only the bounded local Frontier

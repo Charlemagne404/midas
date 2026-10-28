@@ -33,6 +33,37 @@ in the dated addendum below and in the Frontier engineering report.
 
 ## Frontier development addendum — 2026-10-28
 
+### Joint-state search differential and bounded performance — 2026-10-28 02:16 UTC
+
+Performance commit `bc8d073` changes joint-state subset evaluation to cache
+each instrument's asserted-state payoff vector and incrementally sum subset
+vectors in ascending instrument order. This preserves Decimal summation order
+while avoiding repeated payoff dictionary construction. Test commit `29f1a5b`
+adds a seeded 48-case differential test against an independent exhaustive
+subset oracle and a reproducible 12-instrument/64-state benchmark. The oracle
+checks all three constant-payout baskets for each two-market fixture and
+independently audits every generated candidate.
+
+The full Frontier Python suite passes **343/343** in 53.88 seconds pytest time
+(55.23 seconds process wall) at **366,360 KiB peak RSS**, with zero swaps. One
+existing Starlette/httpx TestClient deprecation warning remains. Ruff and strict
+scoped mypy for `joint_economics.py` pass. The synthetic max-bound benchmark
+examined **4,095 subsets**, of which **3,969** covered both markets and had the
+fixture's constant payout. Three timed runs with one returned candidate had a
+**0.101767-second median** and **0.104521-second maximum**, at **70,576 KiB
+peak RSS** for the complete process, with zero swaps. A separate run returning
+eight candidates took **0.174308 seconds**; peak RSS was **71,460 KiB**.
+Before the optimization, the one-candidate run measured a **5.122457-second
+median** at **38,624 KiB peak RSS**. The optimized one-candidate median is about
+50 times lower with about 32 MiB more peak RSS. These are synthetic code-path
+measurements, not market latency or economic evidence.
+
+At the post-suite sample, PSI `avg10` was **0.00%**, `avg60` **4.36%**, and
+about **10 GiB** was available; swap remained **3.7 GiB used**. No source,
+protected service, or production store was accessed. Project Frontier remains
+**PARTIALLY VERIFIED**: live semantic matching, source permission, economic
+feasibility, sustained collection, and deployment gates remain open.
+
 ### Conditional multi-market joint-state basket and browser flow — 2026-10-28 02:03 UTC
 
 Code commit `4bd3b7f2636d5cd8d069fb2e2b2e97188ad68247` adds a bounded

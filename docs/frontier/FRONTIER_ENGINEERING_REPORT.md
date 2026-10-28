@@ -2,17 +2,21 @@
 
 **Report date:** 2026-10-28
 
-**Latest implementation checkpoint — 2026-10-28 02:03 UTC:** Code commit
+**Latest implementation checkpoint — 2026-10-28 02:16 UTC:** Feature commit
 `4bd3b7f2636d5cd8d069fb2e2b2e97188ad68247` adds bounded conditional
 multi-market joint-state basket replay, an independently recomputed payoff
 audit, the stored-evidence API, and an explicit Mission Control mapping editor.
-Test commit `b0f38c2` adds an end-to-end browser flow for explicit map
-submission using intercepted fixture data.
-The focused regression passed **152 tests**, and the full Frontier Python
-suite passed **342/342** after it. The full web unit suite passed **40/40**,
-the production build passed, and the Frontier Playwright spec now passes
-**5/5**, including a fixture-only test for explicit mapping submission. These
-are isolated local/fixture checks only. A shared-state map
+Browser test commit `b0f38c2` adds an end-to-end fixture flow for explicit map
+submission. Differential test commit `29f1a5b` adds seeded subset-oracle tests
+and a bounded 64-state performance harness; optimization commit `bc8d073`
+caches exact per-instrument payout vectors and incrementally sums candidate
+subsets. The focused randomized differential passed and the full
+Frontier Python suite passed **343/343**. The full web unit suite passes
+**40/40**, the production build passed, and the Frontier Playwright spec passes
+**5/5**, including the fixture-only map flow. The synthetic 12-instrument,
+64-state search improved from a **5.122-second** one-candidate median to
+**0.102 seconds**, at the cost of about 32 MiB more peak RSS. These are isolated
+local/fixture checks only. A shared-state map
 is an unauthenticated external assertion, so it cannot establish economic
 equivalence; live cross-venue validation and the broader Frontier acceptance
 remain incomplete.
@@ -1736,6 +1740,12 @@ Implementation and documentation commits on this branch:
 - `b0f38c2` — adds the explicit joint-state editor flow to
   `apps/web/e2e/frontier.spec.ts`; fixture metadata and replay response are
   intercepted, and the test asserts zero venue-probe requests.
+- `29f1a5b` — adds a seeded 48-case differential subset-oracle test and
+  `tests/frontier/benchmark_joint_state_search.py` for the 12-instrument,
+  64-state synthetic search ceiling.
+- `bc8d073` — caches per-instrument mapped payout vectors and incrementally
+  computes subset payouts, costs, and market coverage in
+  `packages/midas/frontier/joint_economics.py`.
 - Documentation checkpoint on this branch — this report, mission ledger,
   current-state entry, architecture, operations, and development/API guidance
   for the joint-state implementation. The commit identity is in branch history
@@ -5059,7 +5069,7 @@ During the check at `2026-10-28T00:31:15Z`, memory PSI avg10 was **24.98% some
 gap-detail batch PID **3975405** was active. It was not touched. The strict API
 typing caveat remains unresolved; retry when shared-host pressure subsides.
 
-## Current mission acceptance matrix — 2026-10-28 02:03 UTC
+## Current mission acceptance matrix — 2026-10-28 02:16 UTC
 
 This matrix assesses the user-requested Frontier stages and scientific
 acceptance against current branch evidence, not intent or planned work.
@@ -5075,8 +5085,8 @@ acceptance against current branch evidence, not intent or planned work.
 | Isolated collection, provenance, durable storage, and deterministic replay | PARTIALLY VERIFIED | Finite restartable collection, append-only hash-chained checkpoints, a read-only keyset-paginated run catalog across the 1,000-run journal bound, bounded storage, event-time replay, source-health evidence, and replay provenance are implemented and tested offline. No continuous market-data stream, full source-history backfill, or long-horizon source-quality study is established. |
 | Laboratory/Arena research integration | PARTIALLY VERIFIED | Bounded replay jobs, paired comparisons, integrity-checked results, and fixture/UI paths exist. No durable Laboratory experiment manager, long-duration campaign, or production worker is authorized or verified. |
 | Native Frontier Mission Control interface | IMPLEMENTED, DEPLOYMENT PENDING | The current web unit suite passes 40/40, Frontier browser spec 5/5, TypeScript, and Vite production build after the joint-state editor change. A new fixture-only browser case submits every mapping cell, verifies the server-derived ID response and conditional status, and confirms no venue probe. Browser checks use isolated demo services and temporary roots. The build transformed 2,228 modules at 713,040 KiB peak RSS and retains the existing 544.41 kB chart-chunk advisory. No live source data was used; no production deployment occurred. |
-| Scientific acceptance: normalization, rejection, controlled discrepancy, independent arithmetic, missing/stale/asynchronous evidence, and deterministic replay | PARTIALLY VERIFIED | The full Frontier regression passes 342 tests; it includes joint-state bounds, explicit maps, deterministic hashing, stored-observation API persistence, independent payout recomputation, native-unit preservation, and adversarial rejection cases. It ran in 53.70 seconds (55.06 seconds process wall time) at 368,788 KiB peak RSS, with zero swaps. The web suite passes 40/40, Frontier browser spec 4/4, and current production build. Evidence does not establish a genuine cross-venue relationship, authenticated state composition, synchronized executable quotes, or positive economics. |
-| Resource sustainability under bounded development workloads | PARTIALLY VERIFIED | The current full Frontier Python suite reached 368,788 KiB peak RSS; the Vite build transformed 2,228 modules at 713,040 KiB peak RSS; the Frontier Playwright spec used 192,908 KiB peak RSS. None swapped. These are bounded short runs, not sustained collection or production admission evidence. Four synthetic basket shapes covered 7 or 4,095 enumerated subsets; the dense case returned 32 at 0.343868 seconds median / 0.355242 seconds maximum. Representative public workloads, sustained collection, concurrency, production admission, and broad latency/CPU behavior remain unmeasured. |
+| Scientific acceptance: normalization, rejection, controlled discrepancy, independent arithmetic, missing/stale/asynchronous evidence, and deterministic replay | PARTIALLY VERIFIED | The full Frontier regression passes 343 tests in 53.88 seconds (55.23 seconds process wall) at 366,360 KiB peak RSS, with zero swaps. It includes 48 seeded differential cases comparing joint-state generation with an independent exhaustive oracle, plus API persistence, separate arithmetic auditing, native-unit preservation, and adversarial rejection. The web suite passes 40/40, Frontier browser spec 5/5, and current production build. Evidence does not establish a genuine cross-venue relationship, authenticated state composition, synchronized executable quotes, or positive economics. |
+| Resource sustainability under bounded development workloads | PARTIALLY VERIFIED | The current Frontier Python suite reached 366,360 KiB peak RSS; the Vite build transformed 2,228 modules at 713,040 KiB peak RSS; the Frontier Playwright spec used 197,060 KiB peak RSS. None swapped. The synthetic 12-instrument/64-state search evaluated 4,095 subsets and 3,969 qualifying baskets: three one-candidate runs measured 0.101767 seconds median / 0.104521 seconds maximum at 70,576 KiB peak RSS; one eight-candidate run took 0.174308 seconds at 71,460 KiB. Representative public workloads, sustained collection, concurrency, production admission, and broad latency/CPU behavior remain unmeasured. |
 | Read-only research boundary and source-use gates | COMPLETE AND VERIFIED | No trading/authenticated exchange path is provided; source-policy tests ensure held venues return 409 without requests and held evidence stays quarantined. This does not grant permission to use a held source. |
 | Required architecture, operations, current-state, report, and continuation documentation | COMPLETE AND VERIFIED | The engineering report, architecture, operations guidance, current-state note, and append-only mission ledger record implementation, evidence, blockers, and continuation actions. |
 | Production deployment | DEFERRED | Requires separate source permission, resource/storage/recovery review, full deployment-scope regression, monitoring/rollback preparation, and explicit authorization. |
@@ -5517,3 +5527,58 @@ was accessed or changed. No deployment occurred. The full scientific goals
 remain partially verified: live cross-venue relationship evidence, semantic
 map authentication, cross-venue capital/transfer feasibility, sustained
 source quality, and deployment are unresolved.
+
+## Joint-state differential and search performance — 2026-10-28 02:16 UTC
+
+Test commit `29f1a5b` adds a deterministic, seeded 48-case differential test.
+Each case builds two binary event-market fixtures, varies exact ask prices, and
+uses either identity or flipped local-state projections. A standalone oracle
+enumerates all 15 non-empty contract subsets, retains the three constant
+positive-payout baskets that span both markets, computes their ranking, and
+compares the full ordered identities with the candidate generator. Every
+generated candidate is also run through the separate arithmetic audit. The
+full Frontier regression then passed **343/343** in 53.88 seconds pytest time
+(55.23 seconds process wall), at **366,360 KiB peak RSS**, with zero swaps and
+zero socket messages. One existing Starlette/httpx deprecation warning
+remains.
+
+The new `tests/frontier/benchmark_joint_state_search.py` measures a synthetic
+ceiling case with two markets, twelve instruments, and sixty-four joint states.
+Each synthetic instrument pays one unit in every state, and the fixture quotes
+each at 0.01. Of 4,095 non-empty subsets, 3,969 span both markets and have a
+constant payout. This input intentionally maximizes qualifying baskets; it is
+not a source observation, representative book, or economic finding.
+
+On the original implementation before optimization commit `bc8d073`, three
+timed one-candidate searches measured a **5.122457 s median** and
+**5.147910 s maximum**; the complete process used **38,624 KiB peak RSS**. The
+implementation in `bc8d073` now precomputes each instrument's payout vector in
+joint-state order, then uses subset dynamic programming to incrementally sum
+Decimal payout vectors, ask costs, and market-coverage bits. It adds the
+highest-index leg last to keep the prior ascending Decimal addition order.
+Ranking, candidate identities, candidate economics, and bounds are unchanged.
+
+After that change, three timed searches returning one candidate measured
+**0.101767 seconds median** and **0.104521 seconds maximum**. With
+`--max-candidates 8`, one timed search measured **0.174308 seconds**. Process
+peak RSS was **70,576 KiB** for the three-repeat run and **71,460 KiB** for the
+eight-candidate run; neither swapped. The one-candidate median fell by about
+50 times while peak memory rose by about 32 MiB. These measurements cover this
+one synthetic host workload only; they do not prove API latency under live
+data, concurrency, service memory headroom, or sustained operation.
+
+The initial five-repeat/eight-candidate invocation yielded no captured output
+at the 30-second tool boundary, and no benchmark process remained on follow-up.
+It is excluded from the measurements. The harness defaults were reduced to
+three repeats and one returned candidate; an explicit eight-candidate sample
+then completed normally. This preserves a reproducible short default while
+still allowing the configured result cap to be measured deliberately.
+
+Verification on this checkpoint: Ruff check and format pass for the changed
+Python files; `mypy --strict --follow-imports=silent` passes for
+`joint_economics.py`; the 343-test Frontier suite passes. Frontend source did
+not change from the preceding **40/40** web, **5/5** Playwright, and production
+build checkpoint. No exchange, production service, preserved recording, or
+production store was accessed. The project remains **PARTIALLY VERIFIED**;
+source permission, genuine cross-venue semantics, long-horizon quality, and
+deployment are still open.

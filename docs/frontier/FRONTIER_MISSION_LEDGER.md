@@ -1,5 +1,67 @@
 # Project Frontier Mission Ledger
 
+## Joint-state differential verification and search optimization — 2026-10-28 02:16 UTC
+
+Test commit `29f1a5b` adds a seeded 48-case differential test for candidate
+generation and a reproducible max-state benchmark. The differential test
+compares the generator against a separate exhaustive oracle over all 15
+non-empty subsets of two binary event markets; each case varies exact ask
+prices and uses identity or flipped local-state projections. The oracle checks
+all three valid constant-payout baskets, candidate ordering, and independent
+audit disposition.
+
+Code commit `bc8d073` replaces repeated per-subset payout dictionary creation
+with cached per-instrument joint-state vectors, incremental subset payout/cost
+vectors, and a market-coverage bit mask. It adds the highest-index entry last
+to preserve the prior ascending Decimal accumulation order.
+
+Reproduction and verification:
+
+```bash
+env PYTHONPATH=packages /home/charlie/midas/.venv/bin/python -m pytest -q tests/frontier/test_joint_state.py::test_joint_state_search_matches_independent_seeded_subset_oracle
+# 1 passed in 0.56s
+
+/usr/bin/time -v env PYTHONPATH=packages /home/charlie/midas/.venv/bin/python -m pytest -q tests/frontier
+# 343 passed in 53.88s pytest time / 55.23s process wall; 366,360 KiB peak RSS;
+# zero swaps, major faults, or socket messages; one existing deprecation warning
+
+PYTHONPATH=packages:. /usr/bin/time -v /home/charlie/midas/.venv/bin/python tests/frontier/benchmark_joint_state_search.py
+# 3 timed runs, 12 instruments, 64 joint states, 4,095 enumerated subsets,
+# 3,969 qualifying subsets; one returned candidate; median 0.101767s,
+# maximum 0.104521s; 70,576 KiB peak RSS; zero swaps
+
+PYTHONPATH=packages:. /usr/bin/time -v /home/charlie/midas/.venv/bin/python tests/frontier/benchmark_joint_state_search.py --repeats 1 --max-candidates 8
+# one sample 0.174308s; 8 candidates; 71,460 KiB peak RSS; zero swaps
+
+MYPYPATH=packages /home/charlie/midas/.venv/bin/mypy --strict --follow-imports=silent packages/midas/frontier/joint_economics.py
+# Success: no issues found in 1 source file
+```
+
+Before optimization, the same three-run one-candidate benchmark measured a
+**5.122457-second median**, **5.147910-second maximum**, and **38,624 KiB peak
+RSS**, with no swaps. The optimized median is about **50x lower**, at roughly
+**32 MiB additional peak RSS**. A first attempt using five repeats and eight
+returned candidates produced no captured measurement at the 30-second tool
+boundary; no process remained on follow-up, so that attempt is excluded. Bounded
+reruns with fewer output candidates produced the measurements above.
+
+All benchmark payoffs are explicit synthetic fixtures engineered to make
+subsets qualify. These results show bounded local computation only; they are
+not market workload, source latency, opportunity, or profitability evidence.
+At the post-suite sample PSI was `avg10=0.00%`, `avg60=4.36%`, with about 10 GiB
+available; swap remained about 3.7 GiB used. The full suite did not swap.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Joint-state candidate generation and independent differential | COMPLETE AND VERIFIED | Full Frontier suite 343/343, 48 seeded exhaustive-oracle cases, and independent candidate audit pass. Randomized fixtures cover two binary markets; they do not establish real event semantics. |
+| Bounded 12-instrument / 64-state search cost | COMPLETE AND VERIFIED | Synthetic ceiling benchmark examines 4,095 subsets and returns the requested cap with sub-0.2-second measured latency after vector caching. Peak RSS rises by about 32 MiB; representative source workload and sustained service behavior remain unmeasured. |
+| Project Frontier overall | PARTIALLY VERIFIED | Live semantic relationship evidence, source permission, cross-venue funding/settlement feasibility, long-horizon quality, and deployment remain open. |
+
+**Next safe action:** keep the public/source gates unchanged. Continue only with
+offline source-independent acceptance unless an allowed source and defensible
+cross-venue relationship become available. Recheck host PSI before any larger
+test or profiling run.
+
 ## Multi-market joint-state replay and browser verification — 2026-10-28 02:03 UTC
 
 Code checkpoint `4bd3b7f2636d5cd8d069fb2e2b2e97188ad68247` adds the bounded

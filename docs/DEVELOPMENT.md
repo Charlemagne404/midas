@@ -510,6 +510,13 @@ Replay & Readiness editor exposes this route and requires every joint-state to
 local-state projection cell to be filled explicitly. See the conditional
 joint-state section in the [Frontier operations guide](frontier/FRONTIER_OPERATIONS.md).
 
+For a source-free search-ceiling measurement, run
+`PYTHONPATH=packages:. /usr/bin/time -v /home/charlie/midas/.venv/bin/python tests/frontier/benchmark_joint_state_search.py`.
+It builds a synthetic 12-instrument, 64-state map and does no API, store, or
+exchange work. The default is three measured runs returning one candidate;
+pass `--repeats 1 --max-candidates 8` to include an eight-result construction.
+Treat these as local algorithm measurements, not public-source latency.
+
 Replay version 5 attaches a separately coded arithmetic audit and a full-or-no-fill
 exposure sensitivity to each supported candidate. The sensitivity analytically
 finds the exact adverse pattern across up to 16 legs; it does not model partial
