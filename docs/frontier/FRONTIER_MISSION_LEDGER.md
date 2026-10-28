@@ -11015,3 +11015,34 @@ service was changed and no public endpoint was queried.
 | Strict API mypy | PARTIALLY VERIFIED | The changed code has no diagnostic; 15 existing unrelated `no-any-return` errors remain in the module. |
 | Full current Frontier regression | PARTIALLY VERIFIED | Deferred while memory PSI is elevated and protected resources are volatile. |
 | Project Frontier overall | PARTIALLY VERIFIED | Live cross-venue data, broad regressions, endurance, protected recovery, and deployment remain open. |
+
+## Public-trade timestamp provenance binding — 2026-10-28 20:55 UTC
+
+Commit `2205227e0b0d` applies the receipt/exchange timestamp invariant to
+`TradeObservation`, in addition to `BookSnapshot`. Both duplicate timestamps
+must agree with `Provenance`; trades without a unified exchange timestamp must
+leave both fields absent. The existing `/trades` reader already converts a
+normalized `ValueError` into HTTP 409, and now rejects a hash-valid row whose
+trade exchange timestamp conflicts with its provenance.
+
+The trade API fixture was corrected so its request receipt and parsed source
+time are represented consistently. It now exercises rejection of copied
+trades with either mismatched timestamp and a hash-valid malformed stored row.
+All adapter contracts, Coinbase tests, and the focused trade API test pass
+**201/201** (4.15 seconds pytest time / 4.69 seconds process wall), peaking at
+**87,776 KiB RSS** under a 1 GiB transient scope, with zero swaps or socket
+messages. Strict mypy passes on the four core model/economic/replay modules;
+Ruff check/format and whitespace checks pass. No public endpoint was queried.
+
+At `2026-10-28T20:55:02Z`, Reality was **635,158,528 bytes below**
+`MemoryHigh`, while the API was only **786,432 bytes below** its boundary.
+Memory PSI remained elevated (`avg10 some` 25.07%, `full` 17.35%), so broad
+regressions remain deferred. Both services were active and unchanged.
+
+| Requirement | Status | Evidence and boundary |
+| --- | --- | --- |
+| Trade receipt/source time provenance | COMPLETE AND VERIFIED | Model validation requires both timestamps to match provenance; all adapter tests pass. |
+| Stored trade read integrity | COMPLETE AND VERIFIED WITHIN FIXTURE SCOPE | Valid batches read; hash-valid timestamp mismatch returns HTTP 409 without source access. |
+| Current focused adapter/trade regression | COMPLETE AND VERIFIED | 201/201 cases pass on commit `2205227e0b0d`. |
+| Full exact-tree Frontier and MIDAS regression | PARTIALLY VERIFIED | Deferred under elevated memory PSI and a nearly full API `MemoryHigh` boundary. |
+| Project Frontier overall | PARTIALLY VERIFIED | Live cross-venue evidence, broad regressions, endurance, protected recovery, and deployment remain open. |

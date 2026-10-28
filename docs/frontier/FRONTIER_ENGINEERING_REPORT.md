@@ -11842,3 +11842,29 @@ queried, and no protected service was changed.
 | API module strict typing | PARTIALLY VERIFIED | 15 unrelated existing `no-any-return` issues remain in the module. |
 | Full current Frontier and MIDAS regressions | PARTIALLY VERIFIED | Deferred under elevated system memory pressure. |
 | Frontier overall | PARTIALLY VERIFIED | Live science, broad regressions, endurance, protected recovery, and deployment remain open. |
+
+## Latest implementation checkpoint — 2026-10-28 20:55 UTC
+
+Commit `2205227e0b0d` extends the timestamp/provenance integrity rule to
+`TradeObservation`. Local receipt and parsed exchange timestamps must match
+their provenance copies, with both source-time fields absent when no unified
+exchange timestamp is available. The `/trades` route already reports model
+validation failures as HTTP 409; its regression now confirms that a hash-valid
+stored row with an altered exchange timestamp is rejected without source
+access.
+
+The four-adapter contract module, Coinbase module, and focused stored-trade API
+case pass **201/201**. The process peaked at **87,776 KiB RSS** under a 1 GiB
+transient scope with zero swaps or socket messages. Strict mypy passes for the
+core model, economics, replay, and independent-audit modules. Ruff and
+whitespace checks pass. Memory PSI remained elevated and the API was very near
+its `MemoryHigh` boundary, so the full suites remain unrun. No public endpoint
+or protected service was touched.
+
+| Component | Current status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Book and trade timestamp provenance | COMPLETE AND VERIFIED | Both receipt and exchange timestamps are checked against source provenance. |
+| Focused adapter and trade API regression | COMPLETE AND VERIFIED | 201/201 fixture cases pass on commit `2205227e0b0d`. |
+| Full exact-tree Frontier/MIDAS regression | PARTIALLY VERIFIED | Deferred under elevated PSI and the near-boundary API resource sample. |
+| Live cross-venue research | BLOCKED | Data-use and physical-location authorization remain unresolved. |
+| Frontier overall | PARTIALLY VERIFIED | Live evidence, broad regression, endurance, protected recovery, and deployment remain open. |
