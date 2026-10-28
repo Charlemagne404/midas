@@ -336,6 +336,10 @@ def test_observations_and_relationships_are_append_only(tmp_path: Path):
     assert evidence is not None
     assert evidence["raw"]["raw_body"] == '{"public":true}'
     assert evidence["raw_sha256"] == hashlib.sha256(b'{"public":true}').hexdigest()
+    persisted_instruments = evidence["normalized"]["instruments"]
+    assert [item["canonical_id"] for item in persisted_instruments] == [
+        item.canonical_id for item in left.instruments
+    ]
     persisted_at = datetime.fromisoformat(evidence["normalized"]["provenance"]["persisted_at_utc"])
     assert persisted_at.tzinfo is not None and persisted_at.utcoffset() == timedelta(0)
     assert persisted_at >= _raw(Venue.POLYMARKET, '{"public":true}').received_at_utc
@@ -386,6 +390,10 @@ def test_observation_persistence_stamps_nested_market_and_group_provenance(tmp_p
     evidence = store.observation(observation_id)
     assert evidence is not None
     normalized = evidence["normalized"]
+    persisted_market = normalized["markets"][0]
+    assert [item["canonical_id"] for item in persisted_market["instruments"]] == [
+        item.canonical_id for item in source_market.instruments
+    ]
     market_persisted_at = normalized["markets"][0]["provenance"]["persisted_at_utc"]
     group_persisted_at = normalized["market_groups"][0]["provenance"]["persisted_at_utc"]
     assert market_persisted_at is not None
