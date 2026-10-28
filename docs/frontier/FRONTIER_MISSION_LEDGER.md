@@ -9096,3 +9096,21 @@ deployment are still open.
 
 **Next safe action:** continue source-independent acceptance review; take a
 fresh resource sample before any further broad test batch.
+
+## Frontier Arena integration regression — 2026-10-28 14:44 UTC
+
+On `4bf8379`, `tests/arena/test_frontier_timeline.py`,
+`test_frontier_replay.py`, and `test_frontier_discovery.py` pass **28/28**.
+Pytest took 3.91 seconds; process wall time was 4.63 seconds at 201,368 KiB
+peak RSS. The run used a dedicated `/dev/shm` basetemp, zero swaps, no
+filesystem input, 376 output blocks, and no socket messages. One existing
+Starlette/httpx TestClient deprecation warning remains. At `14:44:31Z`,
+post-run I/O PSI avg10 was 0.30% some / 0.18% full and memory PSI was 0.00%.
+
+The slice covers Frontier Arena timeline/replay/discovery against temporary
+fixture state. It is **COMPLETE AND VERIFIED** for those modules; full legacy
+Arena/repository regression and production worker readiness remain
+**PARTIALLY VERIFIED**. Frontier overall remains **PARTIALLY VERIFIED**.
+
+**Next safe action:** continue with bounded source-independent acceptance
+review; get a new resource sample before additional test batches.

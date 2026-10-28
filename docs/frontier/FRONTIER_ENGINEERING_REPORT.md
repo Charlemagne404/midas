@@ -10062,3 +10062,24 @@ production service, or protected store was accessed.
 | Mission Control browser test coverage | COMPLETE AND VERIFIED | All 19 collected cases pass across isolated one-worker runs; the earlier combined run was stopped at the I/O gate. |
 | Broader MIDAS Python/Arena regression | PARTIALLY VERIFIED | Current full repository regression remains incomplete. |
 | Frontier project overall | PARTIALLY VERIFIED | Live cross-venue science, resource sustainability, production recovery, and deployment remain open. |
+
+### Frontier Arena job and replay integration — 2026-10-28 14:44 UTC
+
+On code revision `4bf8379`, the focused Frontier Arena timeline, replay, and
+discovery integration modules pass **28/28**. Pytest completed in 3.91
+seconds; process wall time was 4.63 seconds and peak RSS was 201,368 KiB.
+The run used a dedicated `/dev/shm` basetemp, zero swaps, no filesystem input,
+376 filesystem output blocks, and no socket messages. The only warning is the
+existing Starlette/httpx TestClient deprecation. Post-run I/O PSI avg10 at
+`14:44:31Z` was 0.30% some / 0.18% full; memory PSI was 0.00%.
+
+These tests exercise bounded Frontier job specs, durable artifacts, replay,
+and API reads using temporary fixture state. They do not establish the full
+legacy Arena suite, production worker readiness, live source quality, or
+resource endurance.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Frontier Arena timeline/replay/discovery integration | COMPLETE AND VERIFIED | Current-code targeted modules pass 28/28 with temporary test roots. |
+| Full legacy Arena/repository regression | PARTIALLY VERIFIED | Remaining Arena and broader MIDAS tests are not closed by this focused slice. |
+| Frontier project overall | PARTIALLY VERIFIED | Live cross-venue evidence, endurance, production recovery, and deployment remain open. |

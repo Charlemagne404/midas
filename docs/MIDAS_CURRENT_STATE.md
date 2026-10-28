@@ -3114,3 +3114,12 @@ was 0.08% some / 0.06% full and memory PSI was 0.00%. No test server remained.
 
 Browser case coverage is **COMPLETE AND VERIFIED**. Broader repository
 regression and Frontier overall remain **PARTIALLY VERIFIED**.
+
+## Frontier Arena integration — 2026-10-28 14:44 UTC
+
+Current-code Frontier Arena timeline, replay, and discovery tests pass 28/28.
+The run took 4.63 seconds wall time at 201,368 KiB peak RSS, with a tmpfs
+basetemp, zero swaps, and no socket traffic. The existing Starlette/httpx
+deprecation warning remains. Post-run I/O PSI was 0.30% some / 0.18% full;
+memory PSI was 0.00%. This closes the focused Frontier Arena slice only;
+broader Arena and MIDAS regression remain **PARTIALLY VERIFIED**.
