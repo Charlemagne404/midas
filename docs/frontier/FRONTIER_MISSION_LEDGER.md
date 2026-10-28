@@ -1,5 +1,31 @@
 # Project Frontier Mission Ledger
 
+## Reality regression admission hold — 2026-10-28 12:08 UTC
+
+A source-only review of tests/test_reality.py found 14 tests. Their recording
+and replay writes use tmp_path; REST discovery uses httpx.MockTransport, and
+the WebSocket cases bind only to ephemeral 127.0.0.1 servers. The config
+isolation test passes the historical Laboratory path only to a constructor
+that is expected to reject it. One test sends SIGTERM to its own test-runner
+process; exclude that case from the next bounded run.
+
+No Reality test was started. At 12:08:02Z, host memory PSI avg10 was **50.74%
+some / 45.23% full**, I/O PSI was **0.84% some / 0.68% full**, available
+memory was about **10 GiB**, and swap was **3.5/4 GiB** used. A read-only
+process listing showed PID 369790 running
+scripts/veritas_gap_detail_v2_batch.py; it was left untouched. This sample
+does not establish what caused the pressure.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Reality model regression | DEFERRED | Test effects reviewed; no run under elevated memory PSI. |
+| Full MIDAS legacy suite | PARTIALLY VERIFIED | Unit, simulation, property, Laboratory, and selected Arena slices pass; most legacy modules remain unrun. |
+| Frontier overall | PARTIALLY VERIFIED | Live multi-venue permission/evidence, broad legacy/browser acceptance, and deployment remain open. |
+
+Next safe action: after a fresh memory and I/O sample meets the 1% gate, run
+tests/test_reality.py excluding bounded_transport_burst_is_preserved_under_slow_writes
+with a tmpfs basetemp. Do not interact with the observed Veritas process.
+
 ## Coinbase hold-message accuracy — 2026-10-28 12:05 UTC
 
 Code commit 9552db5 corrects the Coinbase source hold message. The prior

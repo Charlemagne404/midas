@@ -33,6 +33,17 @@ in the dated addendum below and in the Frontier engineering report.
 
 ## Frontier development addendum — 2026-10-28
 
+### Latest isolated Frontier checkpoint — 2026-10-28 12:08 UTC
+
+A review of the isolated Reality model tests found all file writes use pytest
+temporary roots and their network fixtures are mocked HTTP plus ephemeral
+localhost WebSockets. One case signals its own test process and will be
+excluded from a bounded run. No test was started because at 12:08:02Z memory
+PSI avg10 was 50.74% some / 45.23% full; I/O PSI was 0.84% some / 0.68% full.
+About 10 GiB was available, with 3.5/4 GiB swap occupied. A read-only process
+listing showed the existing Veritas batch process; it was left untouched.
+Frontier remains **PARTIALLY VERIFIED**, research-only, and undeployed.
+
 ### Latest isolated Frontier checkpoint — 2026-10-28 12:05 UTC
 
 Code commit 9552db5 corrects the Coinbase source hold message: a reviewed

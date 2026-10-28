@@ -8972,3 +8972,19 @@ Changed in commit 9552db5: packages/midas/frontier/adapters/coinbase.py and
 tests/frontier/test_coinbase.py. The change corrects the explanation only.
 Coinbase probes remain blocked, and Frontier overall remains **PARTIALLY
 VERIFIED**.
+
+### Reality regression resource hold — 2026-10-28
+
+A read-only review of the 14-test tests/test_reality.py module found its
+recording and replay paths are temporary, its HTTP fixture is mocked, and its
+WebSocket tests bind only to localhost. One case signals its own test-runner
+process and is excluded from the next bounded run. The module was not run:
+at 2026-10-28T12:08:02Z memory PSI avg10 was 50.74% some / 45.23% full and
+I/O PSI was 0.84% some / 0.68% full. About 10 GiB was available, with 3.5/4
+GiB swap occupied. A process listing showed PID 369790 running the Veritas
+gap-detail batch; it was left untouched, and no causal attribution is made.
+
+The Reality model regression remains deferred until memory and I/O PSI both
+fall below the 1% admission threshold. This does not change the protection or
+state of any Reality recording or Veritas process. Frontier overall remains
+**PARTIALLY VERIFIED**.
