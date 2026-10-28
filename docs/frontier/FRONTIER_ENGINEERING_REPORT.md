@@ -2,7 +2,7 @@
 
 **Report date:** 2026-10-28
 
-## Current status — 2026-10-28 05:17 UTC
+## Current status — 2026-10-28 05:20 UTC
 
 The isolated development branch is `codex/frontier-20261026`; the latest
 implementation checkpoint is `6c5c329` (`fix(frontier): enforce
@@ -61,14 +61,15 @@ transition remain open; deployment requires a separate authorized readiness
 review.
 
 The collector and collection API regressions pass **31/31** together, and
-strict mypy passes on the latest collector code. A later `pytest tests/frontier`
-attempt ended after **108 passed** when shared-host pressure rose; it exited
-2 with `KeyboardInterrupt` and is not a suite pass. Web/API typing, browser
+strict mypy passes on the latest collector code. Two subsequent full
+`pytest tests/frontier` attempts were interrupted: one after **108 passed** as
+an external Veritas batch drove pressure high, and a retry after **113 passed**
+when the suite itself drove I/O PSI above the gate. Both exited 2 with
+`KeyboardInterrupt`; neither is a suite pass. Web/API typing, browser
 verification, and broader regression remain pending. At approximately
-`2026-10-28T05:17Z`, memory PSI avg10 was **44.56% some / 36.62% full** and
-I/O PSI avg10 was **2.48% some / 2.34% full**; external Veritas PID **24419**
-held the shared Arena lock. No further resource-bearing checks started at
-that sample.
+`2026-10-28T05:20Z`, memory PSI avg10 was **0.00% some / 0.00% full** and I/O
+PSI avg10 was **1.65% some / 1.59% full**; no process held the shared Arena
+lock. Further tests remain deferred at this sample.
 
 ## Bounded metadata and initial resource checkpoint — 2026-10-28 03:59 UTC
 
@@ -6715,3 +6716,31 @@ and short-window PSI falls below admission thresholds.
 | Full Frontier Python suite after collector changes | PARTIALLY VERIFIED | Interrupted after 108 passed under rising host pressure; exit 2, no suite pass. |
 | Interruption isolation | COMPLETE AND VERIFIED | Only Frontier pytest was interrupted; external Veritas batch was not signaled and worktree remained clean. |
 | Further resource-bearing checks | DEFERRED | External lock held and PSI exceeded admission thresholds at the latest sample. |
+
+## Second full Frontier suite attempt stopped at I/O gate — 2026-10-28 05:20 UTC
+
+A retry of `pytest tests/frontier` began after a fresh sample had memory and
+I/O PSI avg10 below 1% and no shared Arena lock. At approximately 20% test
+progress, I/O PSI rose to **5.43% some / 5.43% full** while no external lock
+holder or batch process was present. This run itself was causing material I/O
+pressure, so I sent SIGINT only to Frontier pytest PID **27532**.
+
+Pytest reported **113 passed** before `KeyboardInterrupt`, then exited **2**
+after **23.59 seconds pytest time** (**24.69 seconds process wall**) at
+**339,596 KiB peak RSS**, zero swaps, zero major faults, and zero socket
+messages. It wrote **139,160 KiB** to its isolated test area. This is an
+interrupted diagnostic, not a full-suite pass. The worktree remained clean,
+and the source scan found no `live-probes` references in the selected test,
+package, or API paths. The existing Starlette/httpx TestClient deprecation
+warning appeared.
+
+At `2026-10-28T05:20Z`, post-stop memory PSI avg10 was **0.00% some / 0.00%
+full**, I/O PSI avg10 was **1.65% some / 1.59% full**, and no process held the
+shared Arena lock. Avoid another monolithic run; resume broader coverage as
+smaller serial file groups after short-window PSI clears the gate.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Monolithic Frontier Python regression | PARTIALLY VERIFIED | Two attempts stopped at 108 and 113 completed cases; both exited 2 and neither is a suite pass. |
+| Changed collection and collection API modules | COMPLETE AND VERIFIED | The focused pair passes 31/31 in one invocation, with strict mypy for the changed collection module. |
+| Remaining Frontier regressions | PARTIALLY VERIFIED | Split into smaller serial groups after host admission; no browser/build run yet. |

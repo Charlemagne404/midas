@@ -5346,3 +5346,29 @@ request started.
 | Full Frontier Python regression | PARTIALLY VERIFIED | 108 tests completed before the suite was interrupted; no full pass. |
 | Shared-host isolation | COMPLETE AND VERIFIED | Only Frontier pytest was stopped; the external Veritas process and lock were left untouched. |
 | Broad regression/browser continuation | DEFERRED | Recheck the Arena lock and short-window PSI after the external job finishes. |
+
+## Monolithic retry stopped by its own I/O pressure — 2026-10-28 05:20 UTC
+
+I retried the monolithic `pytest tests/frontier` run in
+`/tmp/midas-frontier-full-suite-retry-20261028T0522Z`. It began under a clean
+admission sample with no Arena lock holder. Near 20% progress, I/O PSI reached
+**5.43% some / 5.43% full** and no external Veritas process was present. I
+stopped only Frontier pytest PID **27532** with SIGINT.
+
+Pytest reported **113 passed** before interruption and exited **2** after
+**23.59 seconds** (**24.69 seconds process wall**). Peak RSS was **339,596
+KiB**, swaps, major faults, and socket messages were zero, and test output
+recorded **139,160 KiB** filesystem output. This is not a full-suite pass.
+The test worktree remained clean; static source review found no
+`live-probes` path references in the selected Frontier tests/package/API.
+
+At `2026-10-28T05:20Z`, memory PSI avg10 was **0.00% some / 0.00% full**, I/O
+PSI avg10 was **1.65% some / 1.59% full**, and no Arena lock holder remained.
+Use smaller serial file groups after a fresh admitted sample instead of
+another monolithic attempt.
+
+| Component | Status | Evidence and remaining boundary |
+| --- | --- | --- |
+| Full Frontier suite | PARTIALLY VERIFIED | Two monolithic attempts stopped after 108 and 113 passing cases; neither completed. |
+| Focused collector/API regressions | COMPLETE AND VERIFIED | 31/31 combined; strict mypy passes on the collector. |
+| Remaining Python/browser regression | PARTIALLY VERIFIED | Split into resource-aware serial groups after the PSI gate clears. |
