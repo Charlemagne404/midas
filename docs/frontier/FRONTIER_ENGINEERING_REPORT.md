@@ -2,7 +2,7 @@
 
 **Report date:** 2026-10-29
 
-## Current completion matrix — 2026-10-29 02:57 CET
+## Current completion matrix — 2026-10-29 02:58 CET
 
 This is a current evidence classification, not a final completion claim. The
 dated implementation records below remain the detailed evidence; the
@@ -11,7 +11,7 @@ current host gate.
 
 | Component | Status | Current evidence and boundary |
 | --- | --- | --- |
-| Exchange-independent adapter core and Polymarket/Kalshi/Kraken/Coinbase adapters | IMPLEMENTED, LIVE VALIDATION PENDING | Offline default-registry readback confirms four adapters with 19 explicit declarations each: Polymarket 15 supported, Kalshi 16, Kraken 10, Coinbase Exchange 9. All mark incremental book updates unsupported. The new default-registry startup contract passes 1/1 on the current tree; the other 167 adapter tests were not rerun in this checkpoint. Source-use holds remain. |
+| Exchange-independent adapter core and Polymarket/Kalshi/Kraken/Coinbase adapters | IMPLEMENTED, LIVE VALIDATION PENDING | Offline default-registry readback confirms four adapters with 19 explicit declarations each: Polymarket 15 supported, Kalshi 16, Kraken 10, Coinbase Exchange 9. All mark incremental book updates unsupported. The exact-tree adapter module now passes 168/168 under an explicit resource cap using fixture transports. Source-use holds remain. |
 | Canonical instruments and supported payoff semantics | PARTIALLY VERIFIED | Supported structures have model and invariant tests; this does not claim universal instrument support. |
 | Relationship graph, evidence binding, and review | PARTIALLY VERIFIED | Deterministic fixture relationships and pinned evidence are covered; a live cross-venue economic equivalence is not established. |
 | Candidate discovery and independent economic verification | PARTIALLY VERIFIED | Bounded mathematical fixtures and independent audits pass selected checks; no live eligible opportunity is demonstrated. |
@@ -22,9 +22,9 @@ current host gate.
 | User-cgroup-aware workload admission | IMPLEMENTED, BOUNDED VALIDATION PASSED | Central Arena admission (15), finite schedules (12), and the Laboratory denial case (1) pass fixture tests using user-manager pressure; no runtime deployment occurred. |
 | Reality capacity inventory bounds | PARTIALLY VERIFIED | Candidate inventory code remains undeployed. The separate monitor is bounded at `MemoryHigh=160M`, `MemoryMax=192M`, and zero swap; its 02:46 scheduled run succeeded in 6.810 CPU seconds, but systemd retained no peak. Its report still identifies invalid archive inventory and provenance. |
 | Native Frontier dashboard | PARTIALLY VERIFIED | Vitest passed 47/47; default Playwright passed 17/20 with three opt-in skips; synthetic seeded replay/Arena browser tests passed 2/2. Captured-evidence browser validation remains open. An earlier `tsc -b` passed at a 768 MiB cap; a later 640 MiB attempt hit the Node/V8 heap limit and generated an Apport report. No further Node check was run. |
-| Host reliability containment | PARTIALLY VERIFIED | The five-minute gap-detail timer is disabled and capacity monitor has a reversible 160/192 MiB, zero-swap bound. At 02:57, MemAvailable was 11,437,328 kB, SwapFree 228 kB, and memory PSI was zero; API/Reality remained active at restart counts 9/14. User-manager `oom=19`/`oom_kill=15` were unchanged. Full swap and historical workload attribution remain unresolved. |
+| Host reliability containment | PARTIALLY VERIFIED | The five-minute gap-detail timer is disabled and capacity monitor has a reversible 160/192 MiB, zero-swap bound. After the 02:58 adapter run, MemAvailable was 11,451,564 kB, SwapFree 228 kB, memory PSI was zero, and API/Reality remained active at restart counts 9/14. User-manager `oom=19`/`oom_kill=15` were unchanged. Full swap and historical workload attribution remain unresolved. |
 | Node/V8 and Apport side effect | PARTIALLY VERIFIED | The 02:36 TypeScript attempt aborted at Node's heap limit with a 300.6 MiB cgroup peak, not a kernel OOM. Whoopsie attempted to submit the 58,222,586-byte crash report and received HTTP 504; remote receipt is unknown. No `.uploaded` marker exists; avoid further crash-prone Node checks. |
-| Broad regressions, resource endurance, and performance acceptance | DEFERRED | Frontier Python passed 648/648, web Vitest 47/47, default Playwright 17/20, and synthetic seeded journeys 2/2 under bounded scopes. Full MIDAS regression, captured-evidence browser journey, endurance, and broad performance tests remain deferred. |
+| Broad regressions, resource endurance, and performance acceptance | DEFERRED | Frontier Python passed 648/648 at 02:19 and the exact-tree adapter module passed 168/168 at 02:58; web Vitest passed 47/47, default Playwright 17/20, and synthetic seeded journeys 2/2 under bounded scopes. Full MIDAS regression, captured-evidence browser journey, endurance, and broad performance tests remain deferred. |
 | Live multi-venue source authorization and findings | BLOCKED | Kalshi, Kraken, and Coinbase retained research remain held; the worktree Polymarket probe flag is off. |
 | Production integration/deployment | DEFERRED | Frontier remains isolated; no protected service transition occurred. |
 | Project Frontier overall | PARTIALLY VERIFIED | The engine is substantial, but live cross-venue science, broad verification, recovery, endurance, and deployment gates remain open. |
@@ -13404,3 +13404,18 @@ After the check at 02:57:03 CET, MemAvailable was 11,437,328 kB, SwapFree 228
 kB, and host memory PSI was zero. User-manager OOM counters were unchanged at
 `oom=19`/`oom_kill=15`; API and Reality stayed active with restart counts
 9/14. This is a point sample and does not clear the full-swap warning.
+
+## Exact-tree adapter contract regression — 2026-10-29 02:58 CET
+
+The full `tests/frontier/test_adapters.py` module passed **168/168 in 5.29
+seconds** under `MemoryHigh=512M`, `MemoryMax=640M`, zero swap, 25% CPU, 64
+tasks, and a 90-second wall timeout. The cases use fixture transports and
+assert no live source validation. This reran the complete adapter module after
+adding the default-registry startup contract; it does not replace the full
+Frontier/MIDAS regression suites.
+
+At 02:58:21 CET, `MemAvailable` was 11,451,564 kB, `SwapFree` was 228 kB, and
+memory PSI remained zero. User-manager OOM counters were unchanged at
+`oom=19`/`oom_kill=15`; API and Reality stayed active with restart counts
+9/14. No new systemd-oomd entry appeared after 02:57. This was one short
+bounded check, not endurance validation.

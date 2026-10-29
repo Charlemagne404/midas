@@ -12709,3 +12709,18 @@ SwapFree was 228 kB, and user-manager `oom`/`oom_kill` counters remained
 19/15. API/Reality stayed active at restart counts 9/14. This confirms the
 test ran in isolation without an observed counter or service-state change;
 full swap occupancy and the original pressure attribution remain unresolved.
+
+### Exact-tree adapter contract suite — 2026-10-29 02:58 CET
+
+The complete `tests/frontier/test_adapters.py` module passed **168/168 in
+5.29 s** under a transient scope with 512 MiB `MemoryHigh`, 640 MiB
+`MemoryMax`, zero swap, 25% CPU, 64 tasks, and a 90-second limit. This includes
+the default-registry contract test; the adapter cases use fixture transports
+and made no live source request. It verifies adapter fixtures on the current
+tree, not the complete Frontier or MIDAS regression set.
+
+At 02:58:21 CET, MemAvailable was 11,451,564 kB, SwapFree 228 kB, host memory
+PSI zero, and user-manager `oom`/`oom_kill` remained 19/15. API and Reality
+stayed active with restart counts 9/14; no systemd-oomd journal event appeared
+after 02:57. Broad regression, endurance, full-swap resolution, live
+cross-venue permission, and exact initiating-workload attribution remain open.
