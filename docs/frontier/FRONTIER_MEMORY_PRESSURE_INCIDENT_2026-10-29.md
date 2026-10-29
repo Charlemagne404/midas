@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 18:06 CET |
+| Latest addendum | 2026-10-29 18:08 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Pre-incident checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -148,6 +148,7 @@ prove that other workloads never overlap or contribute.
 | --- | --- | --- | --- |
 | Stop/disable `midas-veritas-gap-detail-v2.timer` | Auxiliary replay only; 106 of 129 October 28 OOMd kills targeted its service. It is not live capture or an integrity check. | `inactive`, `disabled`; service remains failed after its last OOMd kill. | After resource admission and an explicit decision to resume replay: `systemctl --user enable --now midas-veritas-gap-detail-v2.timer` |
 | Bound Reality capacity monitor at High 160M / Max 192M / SwapMax 0 | Original 128M cap had seven kernel memcg kills. Latest scheduled run at 15:49:17 succeeded; the 00:46 run previously recorded a 137.4 MiB peak. systemd retained no peak for the 15:49 run. This does not repair the possible unbounded archive scan. | Persistent drop-in `/home/charlie/.config/systemd/user/midas-reality-capacity.service.d/90-frontier-memory-bound.conf`; timer remains active at 30-minute intervals. | To restore the prior 128M hard cap, replace that file with `[Service]`, `MemoryMax=128M`, `MemorySwapMax=0`, then run `systemctl --user daemon-reload` and verify `systemctl --user show midas-reality-capacity.service -p MemoryHigh -p MemoryMax -p MemorySwapMax`. The existing runtime High setting is 128M. |
+| Bound isolated Reality API at High 576M / Max 640M / SwapMax 0 | Between 17:17:59 and 17:19:53, five user-manager `max` increments matched five Reality API local `memory.max` increments; the service was repeatedly contacting its original 512M hard cap. This is local-limit evidence, not the cause of the October 28 global OOMD events. | Persistent API-only drop-in `/home/charlie/.config/systemd/user/midas-reality-api.service.d/70-frontier-memory-bound.conf`; applied without restarting the API or protected collector. | Remove the drop-in, reload the user manager, then restore runtime `MemoryHigh=infinity` / `MemoryMax=512M` with `systemctl --user set-property --runtime midas-reality-api.service MemoryHigh=infinity MemoryMax=512M`. Exact sequence is recorded in the 17:26 follow-up below. |
 | Checkpoint Frontier worktree | Preserve current implementation before incident edits. | Local commit `ac4222f`; branch `codex/frontier-20261026`. Probe evidence directory remains untracked and untouched. | No rollback needed; normal Git history is the recovery point. |
 
 The exact capacity rollback can be applied with:
@@ -4427,3 +4428,13 @@ single capped scope after fresh admission checks. Do not overlap the next
 18:10:23 source-analysis, 18:15:27 research-director, or 18:20:04 capacity
 timer runs. No incident-related service configuration changed during this
 interval.
+
+### Final pre-timer read-only sample — 2026-10-29 18:08 CET
+
+At 18:08:14, host memory PSI remained zero, `MemAvailable` was 10,898,404
+kB, and `SwapFree` was 18,688 kB. Kernel and systemd-oomd journal queries
+since 18:02 still contained no OOM/kill entries. MIDAS API, Reality, and
+Reality API were active with restart counts 9/14/0; the gap-detail timer was
+inactive and the Reality capacity timer active. This is a two-minute
+follow-up, not evidence of sustained recovery. The next source-analysis timer
+was due at 18:10:23, so no further manual check was started in this interval.

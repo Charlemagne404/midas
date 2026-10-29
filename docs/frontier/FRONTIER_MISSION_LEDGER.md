@@ -28,6 +28,19 @@
   windows. The incident report contains the current evidence and reversible
   actions.
 
+## 2026-10-29 18:08 CET — final pre-timer admission sample
+
+- Host memory PSI remained zero, with 10,898,404 kB available RAM and only
+  18,688 kB free swap. No kernel/systemd-oomd OOM entry appeared since 18:02.
+  MIDAS API, Reality, and Reality API remained active at restart counts 9/14/0;
+  the gap-detail timer was inactive and capacity timer active.
+- This short quiet window does not resolve the nearly full swap or unbounded
+  user hierarchy. The next source-analysis timer was due at 18:10:23, so no
+  additional manual workload was admitted.
+- The incident rollback table now includes the isolated Reality API bound and
+  points to its exact restore sequence, alongside the gap timer and capacity
+  checker rollbacks.
+
 ## 2026-10-29 18:02 CET — capture lineage, rule-evidence binding, and bounded continuation
 
 - Tightened normalized-observation provenance: every market, group, book, and
