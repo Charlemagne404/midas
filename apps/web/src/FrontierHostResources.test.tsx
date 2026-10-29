@@ -81,6 +81,9 @@ it('does not infer swap or user-manager metrics omitted by the deployed API', as
   expect(await screen.findByText('Captured 2026-10-29T17:33:23.830325 UTC')).toBeInTheDocument();
   expect(screen.getByText('10.4 GiB / 15.5 GiB')).toBeInTheDocument();
   expect(screen.getAllByText('Not measured')).toHaveLength(2);
+  expect(
+    screen.getByText(/The connected API omitted swap totals and user-manager memory PSI/),
+  ).toBeInTheDocument();
 });
 
 it('shows a bounded degraded state when the readiness API is unavailable', async () => {

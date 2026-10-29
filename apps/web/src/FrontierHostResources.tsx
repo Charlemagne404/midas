@@ -65,6 +65,18 @@ export function FrontierHostResourcePanel() {
   });
   const data = snapshot.data;
   const manager = data?.services?.['user-manager'];
+  const managerSome = resourcePressure(manager?.pressure?.memory?.some?.avg10);
+  const managerFull = resourcePressure(manager?.pressure?.memory?.full?.avg10);
+  const unavailableMetrics = data
+    ? [
+        swapSummary(data.host_memory) === 'Not measured' ? 'swap totals' : null,
+        manager?.status !== 'MEASURED' ||
+        managerSome === 'Not measured' ||
+        managerFull === 'Not measured'
+          ? 'user-manager memory PSI'
+          : null,
+      ].filter((metric): metric is string => metric !== null)
+    : [];
 
   return (
     <section className="fr-card" aria-labelledby="frontier-host-resource-title">
@@ -113,7 +125,7 @@ export function FrontierHostResourcePanel() {
               <dt>User-manager memory PSI some / full avg10</dt>
               <dd>
                 {manager?.status === 'MEASURED'
-                  ? `${resourcePressure(manager.pressure?.memory?.some?.avg10)} / ${resourcePressure(manager.pressure?.memory?.full?.avg10)}`
+                  ? `${managerSome} / ${managerFull}`
                   : 'Not measured'}
               </dd>
             </div>
@@ -121,6 +133,13 @@ export function FrontierHostResourcePanel() {
           <p className="fr-host-resource-note">
             Point-in-time telemetry only; it does not establish sustained resource capacity. Swap
             occupancy alone is not a pressure diagnosis.
+            {unavailableMetrics.length > 0 && (
+              <>
+                {' '}
+                The connected API omitted {unavailableMetrics.join(' and ')}; these remain not
+                measured.
+              </>
+            )}
           </p>
         </>
       ) : (
