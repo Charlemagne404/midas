@@ -16209,3 +16209,67 @@ timer were unchanged. Almost all swap remains occupied and Reality API has
 about 1 MiB below its hard cap. The host incident remains
 **PARTIALLY CONTAINED / PARTIALLY VERIFIED**; avoid further memory-bearing
 work when pressure exceeds the gate.
+
+### Host memory/OOM incident reassessment — 2026-10-29 16:55 CET
+
+The incident review found two demonstrated failure mechanisms and one
+unresolved upstream pressure source. On Oct 28, `systemd-oomd` repeatedly
+killed members of the unbounded `user@1000.service` after its memory PSI
+exceeded the configured 50% threshold for more than 20 seconds with reclaim
+activity. The gap-detail replay was the most frequent victim (106 kills),
+followed by Reality (10), MIDAS API (8), Firefox (1), and terminal scopes
+(4). Victim frequency alone does not identify the pressure source. The
+five-minute gap-detail timer is already disabled; it only advances bounded
+finalized-data analysis and has no live collection dependency.
+
+Kernel logs separately prove that the Reality capacity worker exceeded its
+old 128 MiB limit at a measured 129–131 MiB anonymous RSS. The pre-existing
+160 MiB high / 192 MiB max / zero-swap bound is active and recent 30-minute
+runs complete in about seven seconds. A separate Reality research worker had
+one historical memcg kill at 766.7 MiB against 768 MiB; its scheduler is
+currently inactive and the latest check launched no experiment.
+
+At historical OOMD samples, `sar` still recorded roughly 9.6 GiB available
+RAM, so global RAM exhaustion is not demonstrated. The current user manager
+remains unbounded, current swap is 99.6% occupied, and one Codex terminal
+scope accounts for 2.81 GiB current memory (mostly file cache). This is a
+material current workload charge but not proof of the Oct 28 cause. API and
+Reality service cgroups also contain substantial file cache. The precise
+upstream PSI source remains unresolved; do not raise all service limits or
+alter systemd-oomd policy.
+
+At 16:55, memory PSI was zero, critical services were active, OOMD had no
+kill after Oct 28 23:43, and the kernel had no memcg kill after Oct 28 20:15.
+Swap and Reality API headroom remain limiting. No production/service
+configuration was changed by this reassessment. Continue only serial,
+source-independent development and small bounded fixture checks; defer
+full-project builds, browser tests, broad replay, and live probes. Detailed
+measurements and reversible controls are in
+[`FRONTIER_MEMORY_PRESSURE_INCIDENT_2026-10-29.md`](FRONTIER_MEMORY_PRESSURE_INCIDENT_2026-10-29.md).
+
+### Exact Kraken candle market binding — 2026-10-29 16:54 CET
+
+Commit `70407b0` binds each public Kraken candle probe to the exact immutable
+market observation selected in Mission Control. Before a source request, the
+API validates that stored observation as Kraken instrument metadata for the
+same spot pair and native market/instrument ID. Mission Control passes the
+observation ID from that selected market. This avoids rescanning a bounded,
+mixed-venue latest-observation window that could exclude an older selected
+Kraken pair.
+
+The API fixture tests passed **3/3 in 6.71 seconds** and the candle panel
+tests passed **2/2 in 10.19 seconds**. Focused strict TypeScript, targeted
+ESLint/Prettier, Ruff/format, and diff checks passed. These were mock-based;
+no live Kraken call, full frontend typecheck, production build, or browser run
+occurred. The validation preceded the 17:03 admission update below.
+
+### Admission recheck — 2026-10-29 17:03 CET
+
+Memory PSI remained zero and 11,355,181,056 bytes were available, but swap
+was 4,276,088,832 / 4,294,963,200 bytes occupied. Since the 16:55 sample,
+the user-manager `max` event count advanced by 12 and Reality API `max` by
+seven; both OOM counters stayed unchanged. Reality API remained within about
+1.2 MiB of its 512 MiB limit. No test ran after this sample. Frontier is
+resumed only for source-independent edits and documentation while those
+counters move; even small fixture tests are deferred until they stabilize and
+the API has more headroom.

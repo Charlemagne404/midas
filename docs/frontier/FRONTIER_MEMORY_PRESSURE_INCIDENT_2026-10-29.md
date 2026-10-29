@@ -3852,3 +3852,150 @@ The cgroup `max` movement is recorded without causal attribution. The host
 still has almost no free swap and the Reality API remains about 1 MiB below
 its hard limit. This short validation interval does not establish recovery;
 the incident remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**.
+
+### High-priority host incident reassessment — 2026-10-29 16:55 CET
+
+The Frontier checkpoint before this reassessment is branch
+`codex/frontier-20261026`, commit `70407b0` (`fix(frontier): bind candles to
+selected market evidence`). The tracked worktree was clean. The existing
+untracked `data/frontier-public-probes/` directory was preserved. This
+reassessment did not change service files, timers, OOM policy, collectors,
+research data, or archive manifests.
+
+#### Findings established by live and historical evidence
+
+- At 16:55:44 CET, the host reported 10 GiB available RAM, 561 MiB free RAM,
+  4,175,936 kB used of 4,194,300 kB swap, and zero memory PSI. I/O PSI was
+  0.61/0.63/0.73% `some` and 0.56/0.47/0.50% `full` for avg10/60/300.
+  A three-row `vmstat -w 2` sample showed zero swap-in/out in its two live
+  intervals after the initial since-boot row. This is not sustained swap
+  recovery evidence.
+- The user manager had 10,937,708,544 bytes current memory, 13,992,292,352
+  bytes peak, and 2,853,675,008 bytes swap. Its `memory.high`, `memory.max`,
+  and `memory.swap.max` were unlimited. `user-1000.slice` was also unlimited.
+  `user@1000.service` is explicitly monitored by systemd-oomd with a 50%
+  memory-pressure threshold; the OOMD log says a kill follows pressure above
+  that threshold for more than 20 seconds with reclaim activity. OOMD is
+  enabled and running; it was not disabled or reconfigured.
+- Between 00:00 and 23:43 CET on Oct 28, systemd-oomd logged 106 kills of
+  `midas-veritas-gap-detail-v2.service`, 10 of `midas-reality.service`, 8 of
+  `midas-api.service`, one Firefox scope, and four VTE terminal scopes. The
+  last observed OOMD kill was the gap-detail unit at 23:43:24. The timer was
+  stopped at 23:46:27 and is now disabled and inactive. The count identifies
+  the gap unit as a frequent victim; it does not establish that it caused the
+  aggregate pressure.
+- The gap-detail timer is a five-minute schedule. Its static oneshot reads
+  bounded finalized data, writes Veritas analysis artifacts, and has no
+  dependency on live Reality collection. It is auxiliary replay/analysis.
+  It remains stopped; no new disablement was needed in this reassessment.
+- Kernel memcg logs show repeated `midas-reality-capacity.service` kills at
+  30-minute intervals on Oct 28 from 17:15 through 20:15, plus one Oct 27
+  kill. The killed Python processes had approximately 129–131 MiB anonymous
+  RSS while the old effective hard limit was 128 MiB. This is a demonstrated
+  per-unit cap mismatch. The existing persistent drop-in
+  `~/.config/systemd/user/midas-reality-capacity.service.d/90-frontier-memory-bound.conf`
+  sets `MemoryHigh=160M`, `MemoryMax=192M`, and `MemorySwapMax=0`; it was
+  created at 00:47 on Oct 29. The timer remains active every 30 minutes.
+  Recent runs complete in about 7 seconds; the 16:49:49 run exited
+  successfully at 16:49:56. The prior run at 16:19 also succeeded. Recent
+  service output retains `ARCHIVE_MANIFEST_SIZE_LIMIT`,
+  `ARCHIVE_INVENTORY_UNVERIFIED`, and `ARCHIVE_CAPACITY_UNKNOWN`; those are
+  separate integrity findings and were not repaired or rewritten.
+- One additional historical kernel memcg OOM occurred in
+  `midas-reality-research.service` on Oct 27 at 04:08:54, with 766.7 MiB
+  anonymous RSS against its 768 MiB limit. The research scheduler is inactive
+  now; its Oct 29 check reported `ALREADY_ATTEMPTED_THIS_WEEK` and launched no
+  run. No campaign or timer was altered.
+- `sar` samples near the Oct 28 OOMD kills showed 9.58–9.76 GiB available
+  RAM and 24–25% physical memory used at 23:30 and 23:40. Swap was then
+  77.2% occupied; it had been 98.5% at 23:00. These ten-minute samples do not
+  rule out a transient global shortage, but they do not support global RAM
+  exhaustion as the demonstrated cause. The proven OOMD trigger was user
+  manager PSI; the workload that initiated the historical spikes is not
+  identified by the available per-unit history.
+- At the later cgroup inventory check, the largest live user-manager leaf was
+  the terminal scope
+  containing this Codex/CUA session: 2.81 GiB current, 2.95 GiB peak, about
+  593 MiB anonymous and 2.17 GiB file cache, with no swap and no local memory
+  ceiling. This is a material current charge, but the file cache is largely
+  reclaimable and the sample does not attribute the Oct 28 OOMs to this
+  session. Other current charges included MIDAS API at 1.17 GiB (about
+  1.04 GiB file cache), Reality at 0.78 GiB, and Reality API at 511 MiB.
+  No Frontier test, replay, build, or live probe was running during the
+  sample. Frontier's tool session contributes to current user-slice use;
+  historical causality remains unproven.
+
+#### Current service state and containment
+
+At the current check, MIDAS API and the public Reality collector were active
+with restart counters 9 and 14; Reality API was active with zero restarts.
+Reality API was at 535,781,376 / 536,870,912 bytes, with `oom=0` and
+`oom_kill=0`; its local `max` event count was 5,162. MIDAS API was at
+1,255,424,000 / 1,879,048,192 bytes, and Reality at 822,448,128 /
+1,342,177,280 bytes, both with no local OOM events. The capacity timer was
+waiting for its next run at 17:19. Continental services and Echo production
+and staging were active. RustDesk was active. `ssh.socket` was active; the
+socket-activated `ssh.service` was inactive. Nothing in this incident work
+restarted or interrupted these services.
+
+Journal queries found no OOMD kill after Oct 28 23:43:24 and no kernel memcg
+kill after Oct 28 20:15:44. This quiet interval follows the gap timer stop
+and capacity limit adjustment, so those controls are plausible contributors
+to reduced churn, but it is not proof of sustained recovery. Swap remains
+99.6% occupied, Reality API remains close to its hard limit, the user-manager
+has no aggregate ceiling, and the historical trigger workload is unresolved.
+
+#### Changes and rollback
+
+No new service or timer change was made in this reassessment. The two
+containment controls already present are:
+
+1. Gap-detail timer disabled/inactive. After a fresh service and PSI review,
+   restoration is:
+   ```sh
+   systemctl --user enable --now midas-veritas-gap-detail-v2.timer
+   ```
+   Re-containment is:
+   ```sh
+   systemctl --user disable --now midas-veritas-gap-detail-v2.timer
+   ```
+2. Capacity worker bounded by the existing 160/192 MiB, zero-swap drop-in.
+   No rollback is recommended while the prior 128 MiB limit is known to OOM
+   at the measured working set. The drop-in has not been edited here.
+
+Do not raise critical Reality/API limits to make pressure evidence disappear.
+Do not change the user-slice OOM policy, kill the high-use terminal scope, or
+restart the live collector based on this evidence. A lasting aggregate fix
+requires better workload-attributed PSI/cgroup history and a host resource
+budget that includes the active user session, service file cache, and swap.
+
+#### Admission decision
+
+The host is **PARTIALLY CONTAINED / PARTIALLY VERIFIED**, not recovered. The
+zero PSI, 10 GiB available RAM, active critical services, stopped gap timer,
+and successful capacity runs permit only serial, source-independent Frontier
+edits and small fixture checks under explicit memory/CPU/time bounds. Keep
+full builds, browser suites, broad replay, live source probes, and campaigns
+deferred. Recheck PSI, available RAM, swap, user-manager events, Reality API
+headroom, and service health before each bounded task. Stop immediately if
+memory PSI rises, a `max`/OOM counter advances unexpectedly, or Reality API
+approaches its hard limit further.
+
+### Follow-up admission sample — 2026-10-29 17:03 CET
+
+At 17:03:09, memory PSI avg10/60/300 remained zero and `MemAvailable` was
+11,355,181,056 bytes. Swap was 4,276,088,832 / 4,294,963,200 bytes occupied
+(18,874,368 bytes free). I/O PSI was 0.80/0.91/0.84% `some` and
+0.77/0.83/0.72% `full`. The user manager held 10,952,769,536 bytes current
+memory and 2,853,613,568 bytes swap. Its `max` event counter advanced from
+730,780 to 730,792 since 16:55; OOM and OOM-kill counts stayed at 19 and 15.
+Reality API was at 535,621,632 / 536,870,912 bytes and its local `max` count
+advanced from 5,162 to 5,169, with no OOM. The two event-counter increases
+are not attributed to Frontier or any one service.
+
+This is still not a pressure recovery verdict: free swap remains about 18 MiB,
+Reality API has about 1.2 MiB below its hard limit, and the aggregate `max`
+counter continued to move. No test, replay, build, or live probe was started
+after this sample. Until the limit-event counters stop advancing and API
+headroom improves, keep Frontier work to source-independent code and
+documentation; defer even the small fixture checks.

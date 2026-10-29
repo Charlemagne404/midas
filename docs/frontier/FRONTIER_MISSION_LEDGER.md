@@ -15802,3 +15802,59 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
   536,870,912 bytes, local `max=5,143`, `oom=0`. No new OOMD/kernel kill was
   found since 16:38:58. The host remains **PARTIALLY CONTAINED / PARTIALLY
   VERIFIED**, not recovered.
+
+## 2026-10-29 16:55 CET — high-priority memory incident reassessment
+
+- Preserved Frontier at `codex/frontier-20261026` / `70407b0`; the tracked
+  worktree was clean before documentation. Left the existing untracked
+  `data/frontier-public-probes/` untouched.
+- Re-measured host and cgroups. Memory PSI was zero and available RAM about
+  10 GiB, while swap was 4,175,936 / 4,194,300 kB occupied. The user-manager
+  cgroup was unbounded and systemd-oomd monitors it at 50% memory PSI for
+  more than 20 seconds. Historical Oct 28 samples showed about 9.6 GiB
+  available near kills; the initiating workload is not proven.
+- Oct 28 OOMD victim totals: gap-detail 106, Reality 10, MIDAS API 8, Firefox
+  1, terminal scopes 4. Gap-detail was already disabled at 23:46 and is
+  auxiliary finalized-data replay. No OOMD kill has followed 23:43:24.
+- The capacity checker’s old 128 MiB cap caused repeated kernel memcg OOMs
+  at 129–131 MiB RSS. Existing 160/192 MiB zero-swap bound is intact; the
+  16:19 and 16:49 runs succeeded. Preserve archive integrity warnings.
+- Critical services remained active (API, Reality, Reality API, Continental,
+  Echo, RustDesk, ssh.socket). Reality API remained close to its 512 MiB
+  hard cap; do not add memory to critical services without fresh evidence.
+- No service, timer, OOM policy, collector, or historical data was changed.
+  The incident report records the evidence, rollback commands for the
+  existing gap timer hold, and admission limits. Status remains **PARTIALLY
+  CONTAINED / PARTIALLY VERIFIED**.
+- Safe continuation: serial source-independent work and small zero-swap
+  fixture scopes only. Defer full builds, browser suites, broad replay, live
+  probes, and campaigns pending a better resource trend and more headroom.
+
+## 2026-10-29 16:54 CET — exact Kraken candle evidence binding
+
+- Committed `70407b0` to bind a public candle probe to the exact immutable
+  market observation selected in Mission Control. The API checks the saved
+  Kraken metadata, spot pair, and native market/instrument ID before source
+  access; the UI passes the selected observation ID. This removes the
+  bounded mixed-venue rescan that could miss an older selected pair.
+- Verification before the incident recheck: API fixture tests **3/3 in
+  6.71s**, candle-panel tests **2/2 in 10.19s**, focused strict TypeScript,
+  targeted ESLint/Prettier, Ruff/format, and diff checks passed. Tests used
+  mocks; no live request, whole-frontend typecheck, build, or browser suite
+  ran.
+- At 16:54, the host showed zero memory PSI, about 10.6 GiB available, and
+  less than 20 MiB free swap. The user-manager `max` count advanced by two
+  during the bounded checks; no OOM was attributed to them. Incident status
+  remains partial.
+
+## 2026-10-29 17:03 CET — admission tightened
+
+- Follow-up sample: memory PSI remained zero and 11,355,181,056 bytes were
+  available, but swap was 4,276,088,832 / 4,294,963,200 bytes occupied.
+- User-manager `max` advanced 12 events since 16:55; Reality API `max`
+  advanced seven and the API remained within about 1.2 MiB of its 512 MiB
+  hard limit. OOM/oom-kill counters were unchanged. These changes have no
+  attributed cause.
+- No tests or experiments ran after the 17:03 sample. Continue only
+  source-independent edits and docs until limit-event counters stabilize and
+  Reality API headroom recovers; keep broad checks and source probes deferred.
