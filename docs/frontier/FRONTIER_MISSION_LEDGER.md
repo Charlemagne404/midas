@@ -15688,3 +15688,20 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
   protected-service restart counts were unchanged. The latest user-manager
   and Reality API `max` counters had advanced, so the incident remains
   partially contained rather than resolved.
+
+## 2026-10-29 16:19 CET — continuity after provenance commit
+
+- The contract/provenance changes are committed as `d4cf83a`; the ledger
+  checkpoint is `7dfcc2b`. The only untracked item is the preserved
+  `data/frontier-public-probes/`.
+- At 16:18:54, MemAvailable was 11,107,804 kB, SwapFree 16,584 kB, and host
+  PSI avg10/60/300 was zero. User-manager events were
+  `high=16,437,792`, `max=730,716`, `oom=19`, `oom_kill=15`; Reality API local
+  events were `max=5,093`, `oom=0`, `oom_kill=0`. Both `max` counters advanced
+  by three since the prior sample, without causal attribution. No matching
+  OOMD or kernel kill appeared since 16:17:25.
+- MIDAS API, Reality, Reality API, Continental tailnet/identity, Echo
+  production/staging, RustDesk, systemd-oomd, and listening `ssh.socket` were
+  active. MIDAS restart counts remained 9/14/0. Host status remains
+  partially contained because swap is nearly full and max-event counters
+  continue to rise.

@@ -3756,6 +3756,23 @@ This short result supports the use of bounded fixture tests under the current
 cap, but does not establish sustained host recovery. Keep the incident
 partially contained and retain the same admission policy.
 
+### Critical-service continuity after metadata work — 2026-10-29 16:18 CET
+
+At 16:18:54, host PSI avg10/60/300 remained zero, `MemAvailable` was
+11,107,804 kB, and `SwapFree` was 16,584 kB. User-manager events were
+`high=16,437,792`, `max=730,716`, `oom=19`, and `oom_kill=15`; Reality API
+local events were `max=5,093`, `oom=0`, and `oom_kill=0`. Both `max` counters
+had advanced by three since the 16:17:25 sample; this is not attributed to
+the Frontier test process. OOMD and kernel journal queries from 16:17:25
+returned zero matching kills.
+
+MIDAS API, Reality, Reality API, Continental tailnet/identity, Echo production
+and staging, RustDesk, systemd-oomd, and `ssh.socket` were active; the SSH
+socket was listening. MIDAS restart counts remained 9/14/0. No protected
+service was restarted or reconfigured. Despite this continuity sample, nearly
+full swap and advancing `max` counters mean the incident remains
+**PARTIALLY CONTAINED / PARTIALLY VERIFIED**.
+
 ### Source-health fixture follow-up — 2026-10-29 16:13 CET
 
 The focused capability and health-diagnostic bound tests completed with host
