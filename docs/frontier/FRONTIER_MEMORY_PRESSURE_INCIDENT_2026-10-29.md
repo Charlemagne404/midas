@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 19:21 CET |
+| Latest addendum | 2026-10-29 20:21 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Pre-incident checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -81,11 +81,24 @@ The kernel journal contains seven separate `CONSTRAINT_MEMCG` OOM records for
 30 minutes apart. Every record identifies that service as `oom_memcg` and a
 128 MiB hard cap. Later scheduled runs also succeeded while the old cap was in
 place, so demand varied; the cap explains those seven kills but not every
-successful or failed run. Source inspection previously found a plausible
-high-memory archive-inventory fallback when provenance is invalid. The killed
-runs did not retain inventory size or peak allocation, so that code path is a
-hypothesis, not a proven cause. No archive manifest or historical evidence was
-changed.
+successful or failed run. The earlier high-memory archive-inventory hypothesis
+is withdrawn: the 19:50 capacity report marked the archive manifest
+size-limited, left provenance and archive bytes unknown, and skipped the
+archive inventory scan because the manifest was invalid. The raw recording
+root had 40,316 numeric JSON sidecars (largest observed: 477 bytes) and
+12,683,704,616 bytes total. The capacity implementation materialized every
+sidecar as a Python object list through `manifest(root)`, then traversed that
+list again for growth statistics. This is the strongest source-level
+explanation for the capacity checker's roughly 130 MiB anonymous RSS before
+the cap was raised; no allocator profile or exact seven-run catalog count was
+retained, so it is not per-kill allocation proof. No archive manifest or
+historical evidence was changed.
+
+An isolated, reversible capacity-scan fix is committed as `bd09640` in
+`/home/charlie/midas-reality-capacity-scan-frontier-20261029`, based on
+`d8629e4`. It caps catalog count and per-file bytes, retains only the bounded
+sample, and computes growth statistics in one catalog pass. It remains
+undeployed and was tested only on deterministic fixtures.
 
 ## Cgroup, pressure, and workload findings
 
@@ -147,9 +160,9 @@ prove that other workloads never overlap or contribute.
 | Change | Reason and evidence | Current state | Rollback |
 | --- | --- | --- | --- |
 | Stop/disable `midas-veritas-gap-detail-v2.timer` | Auxiliary replay only; 106 of 129 October 28 OOMd kills targeted its service. It is not live capture or an integrity check. | `inactive`, `disabled`; service remains failed after its last OOMd kill. | After resource admission and an explicit decision to resume replay: `systemctl --user enable --now midas-veritas-gap-detail-v2.timer` |
-| Bound Reality capacity monitor at High 160M / Max 192M / SwapMax 0 | Original 128M cap had seven kernel memcg kills. Latest scheduled run at 15:49:17 succeeded; the 00:46 run previously recorded a 137.4 MiB peak. systemd retained no peak for the 15:49 run. This does not repair the possible unbounded archive scan. | Persistent drop-in `/home/charlie/.config/systemd/user/midas-reality-capacity.service.d/90-frontier-memory-bound.conf`; timer remains active at 30-minute intervals. | To restore the prior 128M hard cap, replace that file with `[Service]`, `MemoryMax=128M`, `MemorySwapMax=0`, then run `systemctl --user daemon-reload` and verify `systemctl --user show midas-reality-capacity.service -p MemoryHigh -p MemoryMax -p MemorySwapMax`. The existing runtime High setting is 128M. |
+| Bound Reality capacity monitor at High 160M / Max 192M / SwapMax 0 | Original 128M cap had seven kernel memcg kills. The scheduled 17:50 run exited successfully with a 147.8 MiB reported peak and zero swap. The isolated scan fix addresses the identified full-manifest materialization but is not installed. | Persistent drop-in `/home/charlie/.config/systemd/user/midas-reality-capacity.service.d/90-frontier-memory-bound.conf`; timer remains active at 30-minute intervals. | To restore the prior 128M hard cap, replace that file with `[Service]`, `MemoryMax=128M`, `MemorySwapMax=0`, then run `systemctl --user daemon-reload` and verify `systemctl --user show midas-reality-capacity.service -p MemoryHigh -p MemoryMax -p MemorySwapMax`. |
 | Bound isolated Reality API at High 576M / Max 640M / SwapMax 0 | Between 17:17:59 and 17:19:53, five user-manager `max` increments matched five Reality API local `memory.max` increments; the service was repeatedly contacting its original 512M hard cap. This is local-limit evidence, not the cause of the October 28 global OOMD events. | Persistent API-only drop-in `/home/charlie/.config/systemd/user/midas-reality-api.service.d/70-frontier-memory-bound.conf`; applied without restarting the API or protected collector. | Remove the drop-in, reload the user manager, then restore runtime `MemoryHigh=infinity` / `MemoryMax=512M` with `systemctl --user set-property --runtime midas-reality-api.service MemoryHigh=infinity MemoryMax=512M`. Exact sequence is recorded in the 17:26 follow-up below. |
-| Checkpoint Frontier worktree | Preserve current implementation before incident edits. | Local commit `ac4222f`; branch `codex/frontier-20261026`. Probe evidence directory remains untracked and untouched. | No rollback needed; normal Git history is the recovery point. |
+| Checkpoint Frontier worktree | Preserve current implementation before incident edits. | Current commit `f2d0199`; branch `codex/frontier-20261026`. Untracked `data/frontier-public-probes/` remains untouched. | No rollback needed; normal Git history is the recovery point. |
 
 The exact capacity rollback can be applied with:
 
@@ -164,9 +177,11 @@ systemctl --user show midas-reality-capacity.service -p MemoryHigh -p MemoryMax 
 ```
 
 The higher capacity bound is currently retained because it gives the checker
-room for the measured 137.4 MiB peak. No process was manually started or
-stopped by this follow-up. The gap-detail timer should remain disabled until
-its replay memory behavior is bounded and the host admission gate is reviewed.
+room for the measured 147.8 MiB peak. No production process or service
+configuration was changed by the 20:17 follow-up; only short, capped fixture
+test units were started and stopped. The gap-detail timer should remain
+disabled until its replay memory behavior is bounded and the host admission
+gate is reviewed.
 
 ## Validation and service health
 
@@ -4947,3 +4962,82 @@ No OOM or kill occurred, and no service limit was changed.
 This successful bounded run supports the current hard cap and timer operation;
 it does not establish a peak, endurance safety, or resolution of the global
 swap and OOMD-monitoring concerns. Keep the current admission restrictions.
+
+### Capacity root-cause refinement and bounded validation — 2026-10-29 20:17 CET
+
+At 20:17, the host had about 10 GiB `MemAvailable`, about 332 MiB free RAM,
+and only about 20 MiB free of 4 GiB swap. Host and user-manager memory PSI
+averages were zero. The user-manager cgroup was charged 11,176,181,760 bytes
+of memory and 2,853,175,296 bytes of swap, with no memory or swap ceiling;
+its event counters were `high=16,438,185`, `max=732,165`, `oom=19`,
+`oom_kill=15`, and `oom_group_kill=0`. `systemd-oomd` remained active. The
+system unit has `ManagedOOMMemoryPressure=kill`, and the vendor drop-in sets
+50%; `oomctl dump` still listed no monitored cgroups. This visibility mismatch
+remains unresolved. There are no new OOMD or kernel OOM entries after the
+October 28 cluster.
+
+The scheduled Veritas source-analysis batch completed at 20:10:44–20:10:55,
+processed 59 segments, consumed 8.656 CPU seconds, and reported a
+154,902,528-byte (147.7 MiB) peak under its 256 MiB hard limit with zero swap.
+The parent `max` counter increased by 174 during the surrounding interval;
+post-exit leaf counters were unavailable, so this is an association only.
+Research Director ran at 20:15:41–20:15:42 and reported
+`WAITING_FOR_FINALIZATION` with no qualified gross candidate. Neither job
+overlapped the 20:17 fixture test. The next scheduled capacity run was due at
+20:20:43.
+
+The current user session reports active API and Reality units (cumulative
+restart counts 9 and 14 from earlier kills). Their current charges were about
+1.27 GiB and 0.88 GiB, below their respective hard limits; their reported
+peaks were just over `MemoryHigh` and remained below `MemoryMax`. The Reality
+collector status is a separate integrity caveat: it reports
+`RECORDING_UNSEQUENCED`, 8 markets, 8 accumulated failures,
+`sequence_verified=false`, and a stale-observation timeout. The unit remains
+running and was not restarted. Continental services, Echo production/staging,
+RustDesk, and the SSH socket remained active.
+
+The capacity fix commit `bd09640` changes only the isolated worktree. Three
+focused capacity tests passed and Ruff lint passed in a transient unit capped
+at High 160 MiB / Max 192 MiB / zero swap / 10% CPU / 64 tasks / 45 seconds.
+Measured peak was 33,624,064 bytes; `memory.events` high/max/oom/oom_kill were
+all zero and swap current was zero. `git diff --check` passed. Ruff format
+check still flags three unchanged baseline lines in `operations.py` and the
+existing archive test; no unrelated formatting was applied. The code has not
+been run against the live recording tree or deployed to the Reality worktree.
+
+The Frontier branch remains at `f2d0199` with only its pre-existing untracked
+public-probe directory. The incident continuation is
+**PARTIALLY CONTAINED / PARTIALLY VERIFIED**, not resolved. Continue only with
+serial, fixture-only or documentation work after a fresh pressure check.
+Keep the gap-detail timer disabled. Do not run broad suites, replays, or live
+probes while swap remains nearly full. Treat production integration of
+`bd09640` as a separately reviewed code transition; no Reality collection,
+archive, service, or timer configuration was changed in this follow-up.
+
+### Scheduled capacity run and admission recheck — 2026-10-29 20:21 CET
+
+The normal capacity timer fired at 20:20:51 and its service completed at
+20:20:59 with exit status 0 under the active High 160 MiB / Max 192 MiB /
+zero-swap configuration. It consumed 6.345 CPU seconds and updated
+`capacity.json` at 20:20:59. The transient leaf had already been removed when
+queried, so this run has no retained `MemoryPeak` or leaf event counters. This
+run used the active Reality worktree's existing code, not isolated fix
+`bd09640`.
+
+At 20:21, PSI remained zero, `MemAvailable` was about 10 GiB, and about 20 MiB
+of swap remained free. The user-manager `memory.events.high` counter increased
+by 74 since the 20:17 sample; `max`, `oom`, and `oom_kill` remained
+732,165/19/15. The increment overlaps the capacity run but cannot be
+attributed without its leaf counters. No systemd-oomd or kernel OOM kill
+appeared. The next capacity run was scheduled for 20:50:51; source analysis
+and Research Director were scheduled for 20:40:41 and 20:45:19 respectively,
+with no timer overlap in that schedule.
+
+The current cap and timer are applied as configured, and this scheduled run
+succeeded. The missing leaf peak, +74 parent high-event association, full
+swap, unbounded user hierarchy, OOMD registration discrepancy, and stale
+Reality observations remain unresolved. Keep the incident
+**PARTIALLY CONTAINED / PARTIALLY VERIFIED**. Resume Frontier only with serial,
+resource-capped fixture/code work or documentation after fresh admission
+checks; defer broad tests, builds, replay, live probes, and production code
+integration.

@@ -1,5 +1,61 @@
 # Project Frontier Mission Ledger
 
+## 2026-10-29 20:21 CET — scheduled capacity check
+
+- The normal capacity timer ran at 20:20:51–20:20:59 and returned success
+  under High 160 MiB / Max 192 MiB / zero swap; it consumed 6.345 CPU seconds
+  and refreshed `capacity.json`. systemd removed its leaf before peak/event
+  capture, so this run has no trustworthy peak. It used the active Reality
+  source, not isolated capacity-scan commit `bd09640`.
+- Host PSI remained zero with about 10 GiB RAM available and about 20 MiB
+  swap free. User-manager `memory.events.high` increased by 74 during the
+  surrounding interval; max/oom/oom_kill stayed 732,165/19/15. The high
+  increment cannot be attributed without leaf counters. No OOM kill appeared.
+- Capacity is next due 20:50:51; source analysis and Research Director are due
+  20:40:41 and 20:45:19. The gap-detail timer remains disabled. Do not run
+  another manual task before a fresh admission check.
+- The host remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**: swap is
+  nearly full, user@1000 is unbounded, `oomctl` has no monitored groups, and
+  Reality reports stale unsequenced observations. Continue only serial
+  fixture/code/doc work; no deployment or live probe.
+
+## 2026-10-29 20:17 CET — incident containment and capacity-scan checkpoint
+
+- Rechecked the host before admitting one serial test run: about 10 GiB RAM
+  available, about 20 MiB swap free, and zero host/user memory PSI. The
+  unbounded `user@1000.service` charge was 11,176,181,760 bytes memory and
+  2,853,175,296 bytes swap; counters were high/max/oom/oom_kill
+  16,438,185/732,165/19/15. systemd-oomd is active with the vendor 50%
+  per-user pressure setting, but `oomctl` still lists no monitored cgroups.
+  No new OOM kill appeared after the October 28 cluster.
+- Corrected the capacity-checker diagnosis: the invalid/size-limited archive
+  manifest prevented archive inventory scanning. The stronger code-path
+  evidence is `capacity()` materializing 40,316 small JSON sidecars through
+  `manifest(root)` before sampling; historical per-run allocator profiles
+  are unavailable. Added a reversible streaming/bounded fix in isolated
+  worktree `/home/charlie/midas-reality-capacity-scan-frontier-20261029`,
+  commit `bd09640` on `codex/frontier-capacity-scan-bound-20261029` based on
+  `d8629e4`. It is not deployed or run against live recordings.
+- Under the capacity service's 160 MiB High / 192 MiB Max / zero-swap limit,
+  the three focused fixture tests passed; Ruff lint and `git diff --check`
+  passed. The transient test peak was 33,624,064 bytes with no leaf high,
+  max, OOM, OOM-kill, or swap events. Ruff format check reports only existing
+  formatting in two unchanged operations lines and one unchanged archive test.
+- At 20:10, source analysis completed 59 segments with a 154,902,528-byte
+  peak (zero swap); a +174 parent max-event change in the surrounding window
+  cannot be attributed because the leaf was already gone. Research Director
+  ran at 20:15 and returned `WAITING_FOR_FINALIZATION` without a qualified
+  gross candidate. No manual workload overlapped either scheduled task.
+- API, Reality, Continental, Echo, RustDesk, and SSH socket were left alone.
+  Reality remains running but its latest status is stale/unsequenced with 8
+  accumulated failures; no restart was attempted. Frontier remains at
+  `f2d0199`; pre-existing untracked public-probe data is preserved.
+- Incident state remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**. Keep
+  gap-detail disabled and work serial/fixture-only after a fresh admission
+  check. Observe the scheduled 20:20 capacity run before any additional task.
+  Do not broad-test, deploy the isolated fix, or probe live sources under this
+  checkpoint.
+
 ## 2026-10-29 18:16 CET — admission policy evidence and scheduled-job attribution
 
 - The scheduled Veritas source-analysis service succeeded at 18:10:44–56,
