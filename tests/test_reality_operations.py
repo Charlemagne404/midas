@@ -93,6 +93,23 @@ def test_parse_process_peak_rss_bytes():
     assert operations._parse_process_peak_rss_bytes("VmHWM: 123 MB\n") is None
 
 
+def test_process_peak_rss_reads_proc_status_vm_hwm(monkeypatch):
+    monkeypatch.setattr(
+        Path,
+        "read_text",
+        lambda _path, *args, **kwargs: "VmHWM:\t321 kB\n",
+    )
+    assert operations._process_peak_rss_bytes() == 321 * 1024
+
+
+def test_process_peak_rss_is_none_when_proc_status_is_unavailable(monkeypatch):
+    def unavailable(_path, *args, **kwargs):
+        raise OSError("proc status unavailable")
+
+    monkeypatch.setattr(Path, "read_text", unavailable)
+    assert operations._process_peak_rss_bytes() is None
+
+
 def test_capacity_fails_closed_when_catalog_count_exceeds_bound(tmp_path, monkeypatch):
     sample(tmp_path)
     atomic_json(
