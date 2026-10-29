@@ -1114,3 +1114,24 @@ active at restart counts 9/14, using about 901 MiB / 379 MiB against
 capacity monitor next elapses at 07:47:27. No kernel or OOMD kill appeared
 between 07:32 and 07:36. This remains short admission evidence, not resolution
 of nearly full swap or the historical pressure trigger.
+
+## Bounded replay acceptance and host sample — 2026-10-29 07:53 CET
+
+The exact current worktree passed `tests/frontier/test_replay_comparison.py`
+**4/4** in 1.61 seconds. The tests cover identical pinned inputs across paired
+scenarios, unique scenario names, rejection of a conflicting state mapping,
+bounded double-pass inputs, and comparison-model invariants. Two targeted
+timeline checks passed **2/2** in 1.81 seconds: a source outage invalidates
+pre-outage books until new snapshots arrive, and timeline hashing is invariant
+to input order and tamper-evident. Both transient user services used
+`MemoryHigh=384M`, `MemoryMax=512M`, `MemorySwapMax=0`, `CPUQuota=20%`,
+`TasksMax=64`, and a 60-second runtime. No public source or captured probe
+evidence was read.
+
+At 07:52:52 PSI avg10/60/300 remained zero, `MemAvailable` was 10 GiB, and
+`SwapFree` 8.2 MiB. User-manager memory/swap was 9,687,404,544 /
+2,858,422,272 bytes, with inherited counters unchanged at 19/15/0. API and
+Reality remained active at restart counts 9/14 and about 910/386 MiB. No
+OOMD/kernel OOM entry appeared since 07:50. These short fixture checks did
+not change incident status; broad suites, replay batches, live probes,
+endurance, and deployment remain deferred.

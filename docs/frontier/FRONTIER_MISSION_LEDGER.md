@@ -13721,3 +13721,10 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
 - **Other loads:** API about 908 MiB, Reality 385 MiB, Reality API 299 MiB. System slice about 3.3 GiB; larger groups included Netdata 398 MiB, RustDesk 217 MiB, snapd 207 MiB, Continental status 199 MiB, and Echo production 170 MiB. Services remained active and untouched.
 - **Pressure:** Host PSI zero, MemAvailable 10 GiB, SwapFree 8.2 MiB. User-manager ancestry remains uncapped; counters 19/15/0. No OOMD or kernel OOM was logged since 07:38. This confirms distributed concurrent load but not historical causation. No terminal scope or unrelated service was terminated or reconfigured.
 - **Status:** Incident remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**. Stop further workload attribution and tests in this session; near-full swap and long-run validation remain open. The next scheduled capacity run is 08:17:45.
+
+## Deterministic replay acceptance — 2026-10-29 07:53 CET
+
+- **Tests:** Current-tree `tests/frontier/test_replay_comparison.py` passed **4/4** in 1.61 seconds. Two selected timeline cases passed **2/2** in 1.81 seconds: stale books are invalidated across a source outage until a new snapshot arrives, and replay hash is invariant to input order and tamper-evident.
+- **Bounds:** Each test run used a transient user service with 384 MiB high / 512 MiB hard memory, zero swap, 20% CPU, 64 tasks, and a 60-second runtime. No live source or captured-probe evidence was accessed.
+- **Post-test host:** At 07:52:52 PSI avg10/60/300 was zero, MemAvailable 10 GiB, SwapFree 8.2 MiB. User-manager memory/swap was 9,687,404,544 / 2,858,422,272 bytes and OOM counters remained 19/15/0. API/Reality were active at restart counts 9/14 and about 910/386 MiB; no OOMD/kernel OOM entry appeared since 07:50.
+- **Status:** This advances deterministic replay validation but does not clear the incident or broad acceptance gates. Near-full swap, long-run recovery, live multi-venue validation, broad regressions, and deployment remain open. Continue only with fresh admission and small serial checks.
