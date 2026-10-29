@@ -12691,3 +12691,21 @@ The current completion matrix and operations resource gate were refreshed to
 were unchanged. The OOM initiator remains unknown, source-use holds remain in
 force, and Node checks remain deferred following the V8/Apport incident.
 No external source request or captured-data read occurred in this checkpoint.
+
+### Default adapter-registry startup contract — 2026-10-29 02:57 CET
+
+Added a fixture test that checks `default_registry()` contains Polymarket,
+Kalshi, Kraken, and Coinbase Exchange; each has all 19 unique capability
+declarations with reasons; default probe flags are off; registration and
+health inspection make zero requests; health stays `NOT_PROBED`; and all
+four explicitly reject the unsupported `BOOK_UPDATES` capability. The focused
+test passed **1/1 in 2.79 s** under 256 MiB, zero swap, and 25% CPU; Ruff
+passed under 192 MiB, zero swap, and 20% CPU. The 167 other adapter tests were
+not rerun. Commit `d072722` contains only the test; rollback with
+`git revert d072722`.
+
+At 02:57:03 CET, host memory PSI was zero, MemAvailable was 11,437,328 kB,
+SwapFree was 228 kB, and user-manager `oom`/`oom_kill` counters remained
+19/15. API/Reality stayed active at restart counts 9/14. This confirms the
+test ran in isolation without an observed counter or service-state change;
+full swap occupancy and the original pressure attribution remain unresolved.

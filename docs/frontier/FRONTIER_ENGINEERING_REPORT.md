@@ -2,7 +2,7 @@
 
 **Report date:** 2026-10-29
 
-## Current completion matrix — 2026-10-29 02:53 CET
+## Current completion matrix — 2026-10-29 02:57 CET
 
 This is a current evidence classification, not a final completion claim. The
 dated implementation records below remain the detailed evidence; the
@@ -11,7 +11,7 @@ current host gate.
 
 | Component | Status | Current evidence and boundary |
 | --- | --- | --- |
-| Exchange-independent adapter core and Polymarket/Kalshi/Kraken/Coinbase adapters | IMPLEMENTED, LIVE VALIDATION PENDING | Offline default-registry readback confirms four adapters with 19 explicit declarations each: Polymarket 15 supported, Kalshi 16, Kraken 10, Coinbase Exchange 9. All mark incremental book updates unsupported. Fixture tests remain the implementation evidence; source-use holds remain. |
+| Exchange-independent adapter core and Polymarket/Kalshi/Kraken/Coinbase adapters | IMPLEMENTED, LIVE VALIDATION PENDING | Offline default-registry readback confirms four adapters with 19 explicit declarations each: Polymarket 15 supported, Kalshi 16, Kraken 10, Coinbase Exchange 9. All mark incremental book updates unsupported. The new default-registry startup contract passes 1/1 on the current tree; the other 167 adapter tests were not rerun in this checkpoint. Source-use holds remain. |
 | Canonical instruments and supported payoff semantics | PARTIALLY VERIFIED | Supported structures have model and invariant tests; this does not claim universal instrument support. |
 | Relationship graph, evidence binding, and review | PARTIALLY VERIFIED | Deterministic fixture relationships and pinned evidence are covered; a live cross-venue economic equivalence is not established. |
 | Candidate discovery and independent economic verification | PARTIALLY VERIFIED | Bounded mathematical fixtures and independent audits pass selected checks; no live eligible opportunity is demonstrated. |
@@ -22,7 +22,7 @@ current host gate.
 | User-cgroup-aware workload admission | IMPLEMENTED, BOUNDED VALIDATION PASSED | Central Arena admission (15), finite schedules (12), and the Laboratory denial case (1) pass fixture tests using user-manager pressure; no runtime deployment occurred. |
 | Reality capacity inventory bounds | PARTIALLY VERIFIED | Candidate inventory code remains undeployed. The separate monitor is bounded at `MemoryHigh=160M`, `MemoryMax=192M`, and zero swap; its 02:46 scheduled run succeeded in 6.810 CPU seconds, but systemd retained no peak. Its report still identifies invalid archive inventory and provenance. |
 | Native Frontier dashboard | PARTIALLY VERIFIED | Vitest passed 47/47; default Playwright passed 17/20 with three opt-in skips; synthetic seeded replay/Arena browser tests passed 2/2. Captured-evidence browser validation remains open. An earlier `tsc -b` passed at a 768 MiB cap; a later 640 MiB attempt hit the Node/V8 heap limit and generated an Apport report. No further Node check was run. |
-| Host reliability containment | PARTIALLY VERIFIED | The five-minute gap-detail timer is disabled and capacity monitor has a reversible 160/192 MiB, zero-swap bound. At 02:53, MemAvailable was 11,437,528 kB, SwapFree 220 kB, and memory PSI was zero; API/Reality remained active at restart counts 9/14. User-manager `oom=19`/`oom_kill=15` were unchanged, with no new OOM log after Oct 28 23:43:24. Full swap and historical workload attribution remain unresolved. |
+| Host reliability containment | PARTIALLY VERIFIED | The five-minute gap-detail timer is disabled and capacity monitor has a reversible 160/192 MiB, zero-swap bound. At 02:57, MemAvailable was 11,437,328 kB, SwapFree 228 kB, and memory PSI was zero; API/Reality remained active at restart counts 9/14. User-manager `oom=19`/`oom_kill=15` were unchanged. Full swap and historical workload attribution remain unresolved. |
 | Node/V8 and Apport side effect | PARTIALLY VERIFIED | The 02:36 TypeScript attempt aborted at Node's heap limit with a 300.6 MiB cgroup peak, not a kernel OOM. Whoopsie attempted to submit the 58,222,586-byte crash report and received HTTP 504; remote receipt is unknown. No `.uploaded` marker exists; avoid further crash-prone Node checks. |
 | Broad regressions, resource endurance, and performance acceptance | DEFERRED | Frontier Python passed 648/648, web Vitest 47/47, default Playwright 17/20, and synthetic seeded journeys 2/2 under bounded scopes. Full MIDAS regression, captured-evidence browser journey, endurance, and broad performance tests remain deferred. |
 | Live multi-venue source authorization and findings | BLOCKED | Kalshi, Kraken, and Coinbase retained research remain held; the worktree Polymarket probe flag is off. |
@@ -13387,3 +13387,20 @@ incident or validate endurance.
 | Sampler behavior on undecodable proc data | COMPLETE AND VERIFIED | Invalid-byte fixture returns explicit unavailable value; focused tests and lint pass. |
 | Current resource state | PARTIALLY VERIFIED | Point-in-time available memory is high and PSI is zero; swap remains full and workload attribution unknown. |
 | Safe Frontier continuation | PARTIALLY VERIFIED | One small Python-only change completed under cgroup limits; broad tests and Node checks remain deferred. |
+
+## Default adapter-registry contract — 2026-10-29 02:57 CET
+
+A new fixture contract test instantiates `default_registry()` and verifies all
+four expected venues, exactly one declaration for every capability, a reason
+for every declaration, disabled source/probe flags, zero HTTP requests during
+registration and health inspection, `NOT_PROBED` health state, and explicit
+unsupported `BOOK_UPDATES`. It passed **1/1 in 2.79 seconds** under a 256 MiB,
+zero-swap, 25% CPU scope. Ruff passed under a 192 MiB, zero-swap, 20% CPU
+scope. The other 167 tests in `test_adapters.py` were deselected and not
+rerun. No live source was contacted. Commit `d072722` contains only this test;
+rollback with `git revert d072722`.
+
+After the check at 02:57:03 CET, MemAvailable was 11,437,328 kB, SwapFree 228
+kB, and host memory PSI was zero. User-manager OOM counters were unchanged at
+`oom=19`/`oom_kill=15`; API and Reality stayed active with restart counts
+9/14. This is a point sample and does not clear the full-swap warning.
