@@ -8,11 +8,15 @@ from midas.frontier.models import (
     CandleSeries,
     Capability,
     CapabilityDeclaration,
+    FeeSchedule,
     FrontierMarket,
     HistoricalCandle,
     MarketBatch,
     MarketInstrument,
     PayoffSpec,
+    Provenance,
+    RawObservation,
+    ResolutionSpec,
     SourceHealth,
     StatePayout,
     TradeBatch,
@@ -198,3 +202,56 @@ def test_source_health_rejects_oversized_error_diagnostics() -> None:
 
     with pytest.raises(ValidationError):
         SourceHealth(venue=Venue.KRAKEN, requests_in_window=2_147_483_648)
+
+
+def test_contract_text_and_market_asset_identifiers_are_bounded() -> None:
+    with pytest.raises(ValidationError):
+        ResolutionSpec(primary_rule="r" * 16_385)
+
+    with pytest.raises(ValidationError):
+        FeeSchedule(formula="f" * 8193)
+
+    with pytest.raises(ValidationError):
+        MarketInstrument(
+            native_instrument_id="instrument-1",
+            label="BTC/USD",
+            price_currency="U" * 17,
+        )
+
+    market_payload = market(Venue.KRAKEN, "ASSET-BOUNDS").model_dump(mode="python")
+    market_payload["settlement_asset"] = "s" * 257
+    with pytest.raises(ValidationError):
+        FrontierMarket.model_validate(market_payload)
+
+
+def test_raw_and_normalized_provenance_require_bounded_urls_and_sha256() -> None:
+    source_market = market(Venue.KRAKEN, "PROVENANCE-BOUNDS")
+    provenance = source_market.provenance.model_dump(mode="python")
+    raw_observation = {
+        "venue": Venue.KRAKEN,
+        "observation_kind": "ticker",
+        "request_url": "https://api.kraken.com/0/public/Ticker",
+        "http_status": 200,
+        "request_started_at_utc": T0,
+        "received_at_utc": T0,
+        "raw_body": "{}",
+        "raw_sha256": "a" * 64,
+        "adapter_version": "test-v1",
+    }
+
+    with pytest.raises(ValidationError):
+        Provenance.model_validate(provenance | {"source_url": "u" * 4097})
+
+    with pytest.raises(ValidationError):
+        Provenance.model_validate(provenance | {"raw_sha256": "z" * 64})
+
+    with pytest.raises(ValidationError):
+        FeeSchedule(evidence_sha256="z" * 64)
+
+    with pytest.raises(ValidationError):
+        RawObservation(
+            **(raw_observation | {"raw_sha256": "z" * 64}),
+        )
+
+    with pytest.raises(ValidationError):
+        RawObservation.model_validate(raw_observation | {"request_url": "u" * 4097})

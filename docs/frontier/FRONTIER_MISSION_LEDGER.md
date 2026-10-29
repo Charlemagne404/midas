@@ -15628,6 +15628,42 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
   is recorded without causal attribution; nearly full swap and the Reality
   API hard-limit pressure keep the host incident partially contained.
 
+## 2026-10-29 16:17 CET — contract and provenance bounds
+
+- Bounded normalized resolution/fee text, market asset identifiers, currency
+  codes, provenance/source URLs, adapter versions, observation IDs, and raw
+  capture metadata. Evidence hashes now reject malformed non-lowercase or
+  non-64-character values; source-body digest matching remains a separate
+  capture/replay check.
+- The focused model-bound tests, adapter capability-manifest regression, and
+  five-adapter trade-contract test passed **15/15 in 3.29 seconds** under a
+  transient 256/384 MiB, zero-swap, 15%-CPU, 48-task scope. Ruff check/format
+  passed; no external source was used.
+- At 16:16:30, PSI was zero, MemAvailable was 11,072,676 kB, and SwapFree was
+  16,560 kB. User-manager/Reality API max counters were unchanged from
+  16:16:14; OOM counters remained unchanged. The three protected services
+  were active at restart counts 9/14/0. The checked OOMD/kernel kill queries
+  since 16:13:45 were empty.
+- **Status:** the metadata structure limits are fixture-verified; the host
+  remains partially contained because swap is almost full. No causal
+  attribution is made for prior max-event growth.
+
+## 2026-10-29 16:18 CET — raw capture URL fixture follow-up
+
+- Added explicit rejection coverage for `RawObservation.request_url` beyond
+  its 4,096-character bound. Re-ran the full focused model-bound group, the
+  adapter manifest regression, and the five-adapter trade-contract fixture:
+  **15/15 in 3.19 seconds**. Ruff check and format check passed. No public
+  source call was made.
+- At 16:17:25, host PSI was zero, MemAvailable was 11,098,964 kB, and
+  SwapFree was 16,572 kB. User-manager `max=730,713` and Reality API local
+  `max=5,090` matched the 16:17:07 pre-test sample; OOM counters were
+  unchanged. The three services remained active at restart counts 9/14/0 and
+  checked OOMD/kernel kill queries were empty.
+- **Status:** raw-capture URL and digest structure are fixture-verified. The
+  host remains partially contained; a brief stable test interval is not a
+  recovery claim.
+
 ## 2026-10-29 16:14 CET — capability-health metadata checkpoint
 
 - Checkpointed the source-health and capability bounds as `2352c22`

@@ -34,6 +34,11 @@ MAX_CANDLES_PER_SERIES = 10_000
 MAX_SOURCE_IDENTIFIER_CHARS = 256
 MAX_MARKET_TITLE_CHARS = 2048
 MAX_MARKET_DESCRIPTION_CHARS = 65536
+MAX_SOURCE_URL_CHARS = 4096
+MAX_RESOLUTION_RULE_CHARS = 16384
+MAX_FEE_FORMULA_CHARS = 8192
+MAX_ADAPTER_VERSION_CHARS = 80
+MAX_PROVENANCE_ID_CHARS = 256
 Nonnegative = Annotated[Decimal, Field(ge=0, max_digits=36, decimal_places=18, allow_inf_nan=False)]
 MonotonicElapsedNs = Annotated[int, Field(strict=True, ge=0, le=9_223_372_036_854_775_807)]
 ExactNonnegative = Annotated[Decimal, Field(ge=0, allow_inf_nan=False)]
@@ -164,7 +169,7 @@ class CapabilityDeclaration(FrontierModel):
 class AdapterCapabilities(FrontierModel):
     schema_version: int = 1
     venue: Venue
-    adapter_version: str = Field(min_length=1, max_length=80)
+    adapter_version: str = Field(min_length=1, max_length=MAX_ADAPTER_VERSION_CHARS)
     declarations: tuple[CapabilityDeclaration, ...] = Field(
         min_length=len(Capability), max_length=len(Capability)
     )
@@ -262,7 +267,7 @@ class MarketInstrument(FrontierModel):
     label: str = Field(max_length=512)
     outcome_id: str | None = Field(default=None, max_length=MAX_SOURCE_IDENTIFIER_CHARS)
     quantity_unit: QuantityUnit = QuantityUnit.UNKNOWN
-    price_currency: str | None = None
+    price_currency: str | None = Field(default=None, max_length=16)
     price_currency_identity: SettlementAssetIdentity | None = None
     tick_size: Positive | None = None
     price_increment_ranges: tuple[PriceIncrementRange, ...] | None = Field(
@@ -508,14 +513,14 @@ class JointStateMap(JointStateMapDefinition):
 
 
 class ResolutionSpec(FrontierModel):
-    primary_rule: str | None = None
-    secondary_rule: str | None = None
-    authority: str | None = None
+    primary_rule: str | None = Field(default=None, max_length=MAX_RESOLUTION_RULE_CHARS)
+    secondary_rule: str | None = Field(default=None, max_length=MAX_RESOLUTION_RULE_CHARS)
+    authority: str | None = Field(default=None, max_length=512)
     closes_at_utc: datetime | None = None
     settles_at_utc: datetime | None = None
-    source_timestamp_semantics: str | None = None
-    evidence_sha256: str | None = None
-    resolution_fingerprint: str | None = None
+    source_timestamp_semantics: str | None = Field(default=None, max_length=256)
+    evidence_sha256: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
+    resolution_fingerprint: str | None = Field(default=None, max_length=MAX_PROVENANCE_ID_CHARS)
     verified: bool = False
 
     @field_validator("closes_at_utc", "settles_at_utc")
@@ -528,21 +533,21 @@ class ResolutionSpec(FrontierModel):
 
 class FeeSchedule(FrontierModel):
     status: FeeStatus = FeeStatus.UNKNOWN
-    version: str | None = None
-    applies_to: str | None = None
+    version: str | None = Field(default=None, max_length=MAX_ADAPTER_VERSION_CHARS)
+    applies_to: str | None = Field(default=None, max_length=256)
     fixed_fee: Nonnegative | None = None
     rate: FeeRate | None = None
     fee_multiplier: Nonnegative | None = None
-    formula: str | None = None
-    fee_currency: str | None = None
+    formula: str | None = Field(default=None, max_length=MAX_FEE_FORMULA_CHARS)
+    fee_currency: str | None = Field(default=None, max_length=16)
     fee_currency_identity: SettlementAssetIdentity | None = None
-    source_url: str | None = None
-    evidence_sha256: str | None = None
+    source_url: str | None = Field(default=None, max_length=MAX_SOURCE_URL_CHARS)
+    evidence_sha256: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
     evidence_observation_ids: tuple[str, ...] = Field(default=(), max_length=64)
     evidence_observed_at_utc: datetime | None = None
     effective_at_utc: datetime | None = None
     expires_at_utc: datetime | None = None
-    note: str = "No verified instrument-specific schedule"
+    note: str = Field(default="No verified instrument-specific schedule", max_length=2048)
 
     @model_validator(mode="after")
     def verified_schedule_has_evidence(self) -> FeeSchedule:
@@ -796,19 +801,19 @@ class IndependentEconomicAudit(FrontierModel):
 
 
 class Provenance(FrontierModel):
-    source_url: str
-    adapter_version: str
-    source_schema_version: str | None = None
+    source_url: str = Field(min_length=1, max_length=MAX_SOURCE_URL_CHARS)
+    adapter_version: str = Field(min_length=1, max_length=MAX_ADAPTER_VERSION_CHARS)
+    source_schema_version: str | None = Field(default=None, max_length=128)
     request_started_at_utc: datetime
     response_received_at_utc: datetime
     request_elapsed_monotonic_ns: MonotonicElapsedNs | None = None
     processed_at_utc: datetime
     persisted_at_utc: datetime | None = None
     exchange_timestamp_utc: datetime | None = None
-    exchange_timestamp_semantics: str = "unknown"
+    exchange_timestamp_semantics: str = Field(default="unknown", max_length=256)
     clock_uncertainty_ms: Nonnegative | None = None
-    raw_sha256: str
-    observation_id: str
+    raw_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    observation_id: str = Field(min_length=1, max_length=MAX_PROVENANCE_ID_CHARS)
 
     @field_validator(
         "request_started_at_utc",
@@ -843,9 +848,9 @@ class FrontierMarket(FrontierModel):
     payoff: PayoffSpec = PayoffSpec()
     resolution: ResolutionSpec = ResolutionSpec()
     fees: FeeSchedule = FeeSchedule()
-    base_asset: str | None = None
-    quote_asset: str | None = None
-    settlement_asset: str | None = None
+    base_asset: str | None = Field(default=None, max_length=MAX_SOURCE_IDENTIFIER_CHARS)
+    quote_asset: str | None = Field(default=None, max_length=MAX_SOURCE_IDENTIFIER_CHARS)
+    settlement_asset: str | None = Field(default=None, max_length=MAX_SOURCE_IDENTIFIER_CHARS)
     settlement_asset_identity: SettlementAssetIdentity | None = None
     reported_settlement_value_dollars: SettlementScalar | None = None
     settlement_is_provisional: StrictBool | None = None
@@ -1117,7 +1122,7 @@ class BookSnapshot(FrontierModel):
     asks: tuple[BookLevel, ...] = Field(default=(), max_length=MAX_BOOK_LEVELS_PER_SIDE)
     bids: tuple[BookLevel, ...] = Field(default=(), max_length=MAX_BOOK_LEVELS_PER_SIDE)
     price_unit: str = Field(max_length=128)
-    price_currency: str | None = None
+    price_currency: str | None = Field(default=None, max_length=16)
     price_currency_identity: SettlementAssetIdentity | None = None
     quantity_unit: QuantityUnit
     received_at_utc: datetime
@@ -1638,8 +1643,8 @@ class PriceHistorySeries(FrontierModel):
 class RawObservation(FrontierModel):
     schema_version: int = 2
     venue: Venue
-    observation_kind: str
-    request_url: str
+    observation_kind: str = Field(min_length=1, max_length=80)
+    request_url: str = Field(min_length=1, max_length=MAX_SOURCE_URL_CHARS)
     http_status: int
     request_started_at_utc: datetime
     received_at_utc: datetime
@@ -1647,8 +1652,8 @@ class RawObservation(FrontierModel):
     raw_body_encoding: Literal["utf8", "base64"] = "utf8"
     raw_body: str = Field(max_length=MAX_RAW_OBSERVATION_BASE64_CHARS)
     raw_body_state: Literal["complete", "not_captured_after_size_limit"] = "complete"
-    raw_sha256: str
-    adapter_version: str
+    raw_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    adapter_version: str = Field(min_length=1, max_length=MAX_ADAPTER_VERSION_CHARS)
 
     @model_validator(mode="before")
     @classmethod

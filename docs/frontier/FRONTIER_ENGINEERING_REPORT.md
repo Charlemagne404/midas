@@ -16089,3 +16089,42 @@ movement is not causally attributed to the tests; host status remains
 **PARTIALLY CONTAINED / PARTIALLY VERIFIED**.
 
 | Source-health request-count bound | COMPLETE AND VERIFIED FOR FIXTURE PATH | Strict count rejection is covered by the normalized-model fixture; live health data remains unmeasured. |
+
+### Contract terms and provenance shape bounds — 2026-10-29 16:17 CET
+
+Normalized contract text, asset/currency identifiers, source URLs, adapter
+versions, fee notes/formulas, and provenance observation IDs now have explicit
+limits. Fee and resolution evidence hashes, normalized provenance raw hashes,
+and captured raw-observation hashes require lowercase 64-character SHA-256
+shape. This rejects malformed evidence metadata; it does not verify that a
+provided digest matches the source body (that check remains in the relevant
+capture/replay paths).
+
+The focused model-bound, capability-manifest, and five-adapter trade-contract
+fixtures passed **15/15 in 3.29 seconds** under a 256 MiB high / 384 MiB max,
+zero-swap, 15%-CPU, 48-task scope. Ruff check and format check passed after an
+import-order correction. No public source call was made.
+
+At 16:16:30 CET, host PSI remained zero, `MemAvailable` was 11,072,676 kB,
+and `SwapFree` was 16,560 kB. User-manager and Reality API event counters were
+unchanged from 16:16:14 (`max=730,712` and `max=5,089`); OOM counters remained
+19/15 and 0/0. API, Reality, and Reality API were active at restart counts
+9/14/0. The checked OOMD/kernel kill queries since 16:13:45 returned no
+entries. This brief quiet interval does not resolve the host incident.
+
+| Contract/source/provenance bounds | COMPLETE AND VERIFIED FOR FIXTURE PATH | Rejection shape and adapter construction are fixture-tested; real payload limits and digest-to-body binding remain source/replay-path evidence, not covered by this group. |
+
+#### Raw-request URL bound follow-up — 2026-10-29 16:18 CET
+
+Added a fixture that rejects a 4,097-character `RawObservation.request_url`;
+the provenance suite also rejects malformed raw-body digests. The complete
+focused model-bound group plus capability-manifest and five-adapter trade
+contract checks passed **15/15 in 3.19 seconds** under the same 256/384 MiB,
+zero-swap, 15%-CPU scope. Ruff check/format passed.
+
+At 16:17:25 CET, host PSI avg10/60/300 was zero, `MemAvailable` was
+11,098,964 kB, and `SwapFree` was 16,572 kB. User-manager `max=730,713` and
+Reality API local `max=5,090` matched the 16:17:07 pre-test sample; OOM
+counters were unchanged. API, Reality, and Reality API remained active at
+restart counts 9/14/0. OOMD/kernel kill queries since 16:16:30 were empty.
+This is a short bounded check and does not establish host recovery.

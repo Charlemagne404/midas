@@ -797,6 +797,14 @@ declarations require exactly one bounded declaration per registered
 capability; reason text is at most 512 characters, documentation URLs at most
 2,048, and adapter versions at most 80.
 
+Resolution rules have a 16,384-character limit, fee formulas 8,192, and
+evidence hashes require lowercase SHA-256 shape. Fee notes are at most 2,048
+characters. Normalized provenance and raw captures bound source/request URLs
+at 4,096 characters, adapter versions at 80, and observation IDs at 256;
+captured raw-body hashes must also have lowercase SHA-256 shape. Asset
+identifiers and market IDs are limited to 256 characters, while quote/fee
+currency codes are limited to 16.
+
 When the terms gate blocks a venue, read APIs also quarantine that venue's
 stored observations and derived research. SQL-level exclusions cover source
 aggregates, market/book/trade rows, relationships, and bounded graph neighbors.

@@ -3727,6 +3727,35 @@ These counter deltas are not attributed to the test process. They show that
 max-limit events continue during an otherwise quiet host-PSI sample. Retain
 the existing resource gate and do not alter protected Reality API limits.
 
+### Nested contract/provenance fixture sample — 2026-10-29 16:16 CET
+
+The focused model and adapter-contract fixture group completed without a
+change in the sampled parent or Reality API `max` counters. At 16:16:30,
+`MemAvailable` was 11,072,676 kB, `SwapFree` was 16,560 kB, and host PSI
+avg10/60/300 was zero. User-manager events remained
+`high=16,437,792`, `max=730,712`, `oom=19`, `oom_kill=15`; Reality API local
+events remained `max=5,089`, `oom=0`, `oom_kill=0`. MIDAS API, Reality, and
+Reality API remained active at restart counts 9/14/0. No OOMD or kernel kill
+was found since 16:13:45.
+
+This is only a short post-test observation. Swap remains nearly full, so the
+incident remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**.
+
+### Raw capture URL fixture rerun — 2026-10-29 16:17 CET
+
+After adding explicit over-limit `RawObservation.request_url` coverage, the
+15-case focused model/adapter group passed in 3.19 seconds under the transient
+resource cap. The 16:17:07 pre-test and 16:17:25 post-test samples both showed
+user-manager `max=730,713`, Reality API local `max=5,090`, and unchanged OOM
+counters. At the post-test sample, `MemAvailable` was 11,098,964 kB,
+`SwapFree` was 16,572 kB, and host PSI avg10/60/300 was zero. Protected
+services remained active at restart counts 9/14/0. Checked OOMD/kernel kill
+queries since 16:16:30 were empty.
+
+This short result supports the use of bounded fixture tests under the current
+cap, but does not establish sustained host recovery. Keep the incident
+partially contained and retain the same admission policy.
+
 ### Source-health fixture follow-up — 2026-10-29 16:13 CET
 
 The focused capability and health-diagnostic bound tests completed with host
