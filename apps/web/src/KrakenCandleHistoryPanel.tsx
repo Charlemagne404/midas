@@ -222,8 +222,20 @@ export function KrakenCandleHistoryPanel({
       )}
       {!saved.isLoading && !saved.isError && items.length === 0 && (
         <div className="fr-empty">
-          <strong>No saved candle captures</strong>
-          <p>This view is local evidence only; capture remains an explicit action.</p>
+          {saved.data?.scan_may_be_incomplete ? (
+            <>
+              <strong>No matching captures in the bounded scan</strong>
+              <p>
+                The first {saved.data.scan_bound} saved candle observations had no matching
+                capture. Additional matching captures may exist outside this scan.
+              </p>
+            </>
+          ) : (
+            <>
+              <strong>No saved candle captures</strong>
+              <p>This view is local evidence only; capture remains an explicit action.</p>
+            </>
+          )}
         </div>
       )}
       {items.length > 0 && (
@@ -243,7 +255,8 @@ export function KrakenCandleHistoryPanel({
           ))}
           {saved.data?.scan_may_be_incomplete && (
             <small>
-              Only the bounded first {saved.data.scan_bound} matching captures were scanned.
+              The first {saved.data.scan_bound} saved candle observations were scanned; additional
+              matching captures may exist beyond this window.
             </small>
           )}
         </div>

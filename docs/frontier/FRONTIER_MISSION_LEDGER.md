@@ -15870,3 +15870,20 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
 - The short observation does not establish recovery. No tests ran; keep
   Frontier to documentation/source edits until counters settle and service
   headroom improves.
+
+## 2026-10-29 17:06 CET — bounded candle-scan empty state
+
+- Changed the Kraken candle panel to distinguish “no saved captures” from no
+  matching capture in an incomplete bounded scan. Corrected the nonempty
+  warning to describe the API’s actual scan of saved candle observations
+  before pair matching.
+- Added a focused regression test for the incomplete-empty result. It was not
+  run because user-manager and Reality API `max` counters advanced again,
+  swap remained 99.6% occupied, and Reality API remained near its 512 MiB
+  cap. `git diff --check` passed; runtime/type/test verification is pending.
+- At 17:06:19, memory PSI was zero, available RAM 11,251,814,400 bytes, and
+  free swap 18,878,464 bytes. User-manager `max=730,798`, Reality API
+  `max=5,175`, both without OOM. No new kill appeared after 17:05:02.
+- The edit is source-only; no service, API behavior, timer, market source, or
+  evidence store changed. Continue source-only work; do not run tests until
+  limit-event counters stabilize and Reality API headroom improves.

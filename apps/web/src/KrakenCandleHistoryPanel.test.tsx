@@ -93,6 +93,37 @@ it('shows saved candles and keeps a source-held probe disabled', async () => {
   expect(String(fetchMock.mock.calls[0]?.[0])).toContain('/api/frontier/candles?');
 });
 
+it('explains an empty result when the bounded saved-observation scan may be incomplete', async () => {
+  const fetchMock = vi.fn<typeof fetch>(
+    async () =>
+      new Response(
+        JSON.stringify({
+          ...savedResponse,
+          items: [],
+          scan_bound: 20,
+          scan_may_be_incomplete: true,
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } },
+      ),
+  );
+  vi.stubGlobal('fetch', fetchMock);
+  wrap(
+    <KrakenCandleHistoryPanel
+      nativeMarketId="XXBTZUSD"
+      marketObservationId={'a'.repeat(64)}
+      probeEnabled={false}
+    />,
+  );
+
+  expect(await screen.findByText('No matching captures in the bounded scan')).toBeInTheDocument();
+  expect(
+    screen.getByText(
+      /first 20 saved candle observations had no matching capture\. Additional matching captures may exist outside this scan\./,
+    ),
+  ).toBeInTheDocument();
+  expect(fetchMock).toHaveBeenCalledTimes(1);
+});
+
 it('starts a bounded capture only after action and renders persisted evidence', async () => {
   let getCalls = 0;
   const fetchMock = vi.fn<typeof fetch>(async (input, init) => {

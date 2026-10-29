@@ -16283,3 +16283,15 @@ remained 4,276,088,832 / 4,294,963,200 bytes occupied. The user-manager
 5,172; Reality API had 1,015,808 bytes below its 512 MiB limit. OOM counters
 were unchanged. The short quiet interval does not establish recovery, and the
 limit-event increases keep Frontier tests deferred.
+
+### Bounded candle-scan empty state — 2026-10-29 17:06 CET
+
+The Kraken candle panel now tells users when an empty result came from a
+bounded scan that may have omitted older observations. Its existing warning
+now accurately says the backend scans saved candle observations before
+matching the selected spot pair. A focused regression test was added for the
+incomplete empty state. It was not executed: the host admission gate still
+shows advancing user-manager and Reality API `max` events, nearly full swap,
+and roughly 1.3 MiB of Reality API limit headroom. `git diff --check` passed;
+type and runtime verification remain pending. This change did not modify any
+service, source request, or stored market evidence.

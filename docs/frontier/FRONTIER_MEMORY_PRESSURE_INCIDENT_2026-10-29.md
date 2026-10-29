@@ -4010,3 +4010,20 @@ by three to 5,172. Reality API current usage was 535,855,104 / 536,870,912
 bytes, leaving 1,015,808 bytes. OOM counts were unchanged. This short sample
 is not a recovery signal; the event counters continued to advance, so no
 additional Frontier tests were run.
+
+### 17:06 source-edit checkpoint
+
+At 17:06:19, memory PSI remained zero and `MemAvailable` was 11,251,814,400
+bytes, but only 18,878,464 bytes of swap were free. The user-manager `max`
+counter increased three to 730,798; its OOM counts stayed 19/15. Reality API
+was at 535,527,424 / 536,870,912 bytes, with `max=5,175` and no OOM. No new
+OOMD or kernel memcg kill was present after 17:05:02. The gap timer remained
+disabled and no Frontier test/replay/build was running.
+
+The source-only Frontier edit now distinguishes an empty result from an
+incomplete bounded scan in the Kraken candle panel. It also corrects the
+warning to say that the API scans saved observations before matching the
+selected pair. A focused regression test was added but **not run**: the
+user-manager and Reality API `max` counters continued to advance and the API
+remained close to its hard limit. Only static diff inspection was performed;
+runtime/type/test verification remains pending the resource gate.
