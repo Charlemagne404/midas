@@ -1,5 +1,21 @@
 # Project Frontier Mission Ledger
 
+## 2026-10-29 17:30 CET — read-only transport boundary regression
+
+- `tests/frontier/test_transport.py` passed **20/20 in 4.80 seconds** under
+  the 384 MiB high / 512 MiB max, zero-swap, 15% CPU, 64-task,
+  60-second scope. All requests were blocked or served by local fixtures;
+  there was no live source traffic.
+- At 17:30:23, memory PSI was zero and `MemAvailable` was 11,271,147,520
+  bytes. Only 19,013,632 bytes of swap were free. User-manager `max=730,822`
+  and Reality API local `max=5,199` remained unchanged. API, Reality, and
+  Reality API stayed active at restart counts 9/14/0; no OOMD entry appeared
+  after 17:29. The new persistent Reality API bound remains effective.
+- This is bounded fixture evidence and a short quiet period only. Keep broad
+  tests, builds, browser suites, replay, and source probes deferred while swap
+  remains nearly full. Incident status remains **PARTIALLY CONTAINED /
+  PARTIALLY VERIFIED**.
+
 ## 2026-10-29 17:28 CET — current candle module verification and pressure recheck
 
 - The complete Kraken candle API module passed **4/4 in 7.70 seconds** in a

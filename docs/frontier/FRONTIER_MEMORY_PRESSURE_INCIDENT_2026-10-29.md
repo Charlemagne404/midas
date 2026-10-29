@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 17:28 CET |
+| Latest addendum | 2026-10-29 17:30 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Pre-incident checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -4200,3 +4200,22 @@ API remained active at original restart counts 9/14/0. No OOMD entry or
 kernel OOM match appeared since 17:26. This extends the quiet post-adjustment
 window to about nine minutes, not an endurance result. Swap remains nearly
 full and the Oct 28 system-wide OOMD workload attribution is unresolved.
+
+### Transport boundary fixture validation — 2026-10-29 17:30 CET
+
+`tests/frontier/test_transport.py` passed **20/20 in 4.80 seconds** in a
+transient scope capped at 384 MiB high / 512 MiB max, zero swap, 15% CPU,
+64 tasks, and 60 seconds. The module exercises disabled-probe enforcement,
+rejection of injected network/proxy/auth clients, cookie isolation,
+redirect/host and size limits, bounded retries, and incomplete stream
+handling. Its requests use mock transports; no public source request occurred.
+
+At 17:30:23, host memory PSI remained zero, `MemAvailable` was
+11,271,147,520 bytes, and `SwapFree` was 19,013,632 bytes. User-manager
+`max=730,822` and Reality API local `max=5,199` were unchanged; aggregate
+OOM counts remained 19/15 and Reality API OOM/kill counters remained zero.
+MIDAS API, Reality, and Reality API remained active at restart counts 9/14/0.
+The Reality API was at 540,794,880 / 671,088,640 bytes. No systemd-oomd
+entry appeared after 17:29. This additional short fixture interval supports
+bounded continuation only; nearly full swap and historical OOMD source
+attribution remain unresolved.
