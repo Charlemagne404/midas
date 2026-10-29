@@ -523,7 +523,9 @@ def project_market_entity_context(
             instrument_node_id = builder.add_node(
                 instrument_kind,
                 (canonical_instrument_id,),
-                label=instrument.label or instrument.native_instrument_id,
+                label=(
+                    instrument.label or instrument.native_instrument_id or canonical_instrument_id
+                ),
                 venue=market.venue,
                 native_id=instrument.native_instrument_id,
                 market_id=market.canonical_id,
@@ -572,7 +574,7 @@ def project_market_entity_context(
                 state_node_id = builder.add_node(
                     EntityContextKind.PAYOFF_STATE,
                     (market.canonical_id, canonical_instrument_id, payout.state_id),
-                    label=payout.state_id,
+                    label=payout.state_id or "Unlabelled payout state",
                     venue=market.venue,
                     native_id=payout.state_id,
                     market_id=market.canonical_id,

@@ -1,12 +1,14 @@
 from __future__ import annotations
 
+from decimal import Decimal
+
 from midas.frontier.entity_graph import (
     MAX_ENTITY_CONTEXT_MARKETS,
     EntityContextKind,
     EntityContextLinkType,
     project_market_entity_context,
 )
-from midas.frontier.models import Venue
+from midas.frontier.models import MarketInstrument, StatePayout, Venue
 
 from .builders import market
 
@@ -103,3 +105,25 @@ def test_entity_context_retains_missing_records_and_reports_bounded_truncation()
     assert "market_input_limit" in graph.truncation_reasons
     assert len(missing_nodes) == MAX_ENTITY_CONTEXT_MARKETS - 1
     assert any(node.native_id == "z-present" for node in graph.nodes)
+
+
+def test_entity_context_keeps_labels_valid_for_empty_native_labels() -> None:
+    market_with_empty_native_labels = market(Venue.POLYMARKET, "empty-labels").model_copy(
+        update={
+            "instruments": (
+                MarketInstrument(
+                    native_instrument_id="",
+                    label="",
+                    payouts=(StatePayout(state_id="", amount=Decimal("0")),),
+                ),
+            )
+        }
+    )
+
+    graph = project_market_entity_context(
+        ((market_with_empty_native_labels.canonical_id, market_with_empty_native_labels, "obs"),)
+    )
+
+    assert all(node.label for node in graph.nodes)
+    assert any(node.label.startswith("instrument-v1:") for node in graph.nodes)
+    assert any(node.label == "Unlabelled payout state" for node in graph.nodes)
