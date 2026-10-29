@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 13:14 CET |
+| Latest addendum | 2026-10-29 13:17 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Pre-incident checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -2905,3 +2905,39 @@ API, Reality, and Reality API remained active at restart counts 9/14/0. No new
 OOMD or kernel kill appeared in the checked interval. This bounded browser
 journey did not change the partially contained disposition: nearly full swap,
 historical workload attribution, and archive integrity remain unresolved.
+
+## Cross-adapter regression and current resource sample — 2026-10-29 13:17 CET
+
+Four fixture-driven market normalization regressions passed **4/4 in 3.71 s**
+for Polymarket event groups, Kalshi multivariate event batches, Coinbase spot
+discovery, and Gemini spot discovery. They ran without source requests in a
+transient scope limited to 512 MiB high / 640 MiB max, zero swap, 20% CPU,
+128 tasks, and 90 seconds. The tests establish parser/normalizer behavior for
+these fixture cases only; no live cross-venue validation is claimed.
+
+At 13:17:26 CET, host `MemAvailable` was 11,411,402,752 bytes (10.63 GiB) and
+`SwapFree` was 15,986,688 bytes (15.25 MiB) out of 4 GiB. Global PSI and
+`user@1000.service` PSI were zero through avg300. User-manager `memory.events`
+remained high=16,428,175, max=730,409, oom=19, oom_kill=15, and
+oom_group_kill=0. Its cgroup currently accounted for 10,554,929,152 bytes of
+memory and 2,855,981,056 bytes of swap, with `memory.high=max` and
+`memory.max=max`. `memory.stat` split current memory into 7.02 GB file,
+2.36 GB anonymous, and 1.15 GB kernel categories. Cumulative direct-scan and
+swap-out counters are large, but are not interval measurements and do not
+identify a process or root cause. OOMD/kernel journals had no entries since
+13:14.
+
+API, Reality, and Reality API remained active at restart counts 9/14/0. API
+current/peak memory was 1.05/1.50 GiB; Reality was 610 MiB/1.125 GiB, each
+currently below its configured high threshold. The Reality-capacity timer was
+active while its service was inactive. The gap-detail timer remained inactive;
+its service remained failed from the prior incident. No service configuration,
+production data, or archive manifest changed in this continuation. This short
+quiet observation does not resolve nearly full swap, historical workload
+attribution, or archive provenance concerns.
+
+**Admission:** Continue Frontier only as serial, offline work in a transient
+scope with an explicit memory cap and zero swap. Keep live source probes,
+production changes, broad suites, and persistent workers deferred. Reassess
+swap and cgroup PSI before each bounded step; do not treat this sample as
+proof the host has recovered.

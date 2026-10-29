@@ -14862,3 +14862,24 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
 - **Status:** Captured public evidence rendering is capture-verified.
   Captured-data replay and broad browser integration remain open. Host remains
   partially contained; continue only bounded offline work.
+
+## 2026-10-29 13:17 CET — cross-adapter regression and incident recheck
+
+- Four Polymarket, Kalshi, Coinbase, and Gemini market normalization fixtures
+  passed 4/4 in 3.71 s under 512 MiB high / 640 MiB max, zero swap, 20% CPU,
+  128 tasks, and a 90-second cap. These were mock-transport tests, not live
+  source observations.
+- At 13:17:26 CET, global and user-manager PSI were zero, but host swap had
+  only 15.25 MiB free. The user manager accounted for 10.55 GB current memory
+  and 2.86 GB swap without a high/max limit; its current breakdown included
+  7.02 GB file, 2.36 GB anon, and 1.15 GB kernel memory. Large cumulative
+  reclaim counters are not interval deltas and do not establish which workload
+  initiated the incident.
+- API, Reality, and Reality API stayed active at restart counts 9/14/0. The
+  capacity timer remained active; gap-detail remained disabled. No OOMD or
+  kernel journal event appeared since 13:14. Archive provenance and historical
+  workload attribution remain unresolved.
+- **Status:** Host is quiet in this brief sample but remains partially
+  contained. Continue Frontier as serial, offline, memory-capped work with
+  zero swap; reassess before each step. No live probe, production change,
+  broad suite, or persistent worker was started.
