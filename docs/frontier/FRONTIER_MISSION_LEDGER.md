@@ -16642,3 +16642,20 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
   collector, production service, or persistent historical store was changed.
 - **Code checkpoint:** `9487807` (`feat(frontier): preserve Polymarket book metadata`)
   on `codex/frontier-20261026`.
+
+## 2026-10-29 20:41 CET — replay response type aligned to normalized schema
+
+- Replaced the replay UI's inaccurate reuse of capture-summary event types
+  with the full serialized `PolymarketBookUpdate` schema, including level
+  arrays and source changes. The replay panel now reports bid/ask level counts
+  from the real normalized event payload; the fixture mirrors schema v2.
+- **Verification:** The focused Frontier interaction passed 1/1 with eight
+  unrelated cases skipped (8.49 seconds test time, 26.66 seconds wall time)
+  under 512 MiB high / 768 MiB max / zero swap / 20%-CPU and a 256 MiB Node
+  heap. Prettier passed. Full TypeScript checking and another ESLint pass are
+  deferred because only 208 KiB of host swap was free and the user-slice
+  `memory.events.max` counter advanced by 57 during the interval. OOM counts
+  did not advance; the increment is not attributed to this test.
+- **Files:** `apps/web/src/Frontier.tsx` and `Frontier.test.tsx`; this entry and
+  the engineering/incident reports. The untracked public-probe directory is
+  unchanged. No live source, production service, or stored evidence was used.

@@ -559,9 +559,38 @@ type PolymarketStoredBookUpdatePage = {
   network_called: false;
   research_only: true;
 };
+type PolymarketBookReplayUpdate = {
+  schema_version: 1 | 2;
+  native_market_id: string;
+  native_market_id_kind: 'condition_id';
+  native_instrument_id: string;
+  event_type: 'book' | 'price_change' | 'best_bid_ask' | 'tick_size_change';
+  source_timestamp_utc: string | null;
+  bids: { price: string; quantity: string; exchange_timestamp_utc: string | null }[];
+  asks: { price: string; quantity: string; exchange_timestamp_utc: string | null }[];
+  changes: {
+    price: string;
+    reported_size: string;
+    side: 'BUY' | 'SELL';
+    source_hash: string | null;
+    reported_best_bid: string | null;
+    reported_best_ask: string | null;
+  }[];
+  reported_best_bid: string | null;
+  reported_best_ask: string | null;
+  book_hash: string | null;
+  min_order_size: string | null;
+  tick_size: string | null;
+  neg_risk: boolean | null;
+  last_trade_price: string | null;
+  old_tick_size: string | null;
+  new_tick_size: string | null;
+  continuity: 'unverified_no_sequence_or_gap_detection';
+  quality_flags: string[];
+};
 type PolymarketBookUpdatesReplayResult = {
-  replay_version: string;
-  schema_version: number;
+  replay_version: 'polymarket-book-event-replay-1' | 'polymarket-book-event-replay-2';
+  schema_version: 1 | 2;
   native_market_id: string;
   bound_market_observation_id: string;
   capture_started_at_utc: string;
@@ -579,7 +608,7 @@ type PolymarketBookUpdatesReplayResult = {
     observation_id: string;
     frame_ordinal: number;
     received_at_utc: string;
-    updates: PolymarketBookUpdateCaptureResult['frames'][number]['updates'];
+    updates: PolymarketBookReplayUpdate[];
   }[];
   event_count: number;
   input_sha256: string;
@@ -6563,7 +6592,8 @@ function PolymarketBookUpdatesPanel({
                 .filter((update) => update.event_type === 'book')
                 .map((update, index) => (
                   <small key={`${frame.observation_id}:snapshot:${index}`}>
-                    Snapshot · min size {update.min_order_size ?? 'not reported'} · tick{' '}
+                    Snapshot · {update.bids.length} bid / {update.asks.length} ask levels · min size{' '}
+                    {update.min_order_size ?? 'not reported'} · tick{' '}
                     {update.tick_size ?? 'not reported'} · negative risk{' '}
                     {update.neg_risk == null ? 'not reported' : update.neg_risk ? 'yes' : 'no'} ·
                     last trade {update.last_trade_price ?? 'not reported'} · hash{' '}

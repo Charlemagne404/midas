@@ -1816,13 +1816,15 @@ it('captures one explicit Polymarket trade page and follows its bound cursor', a
               received_at_utc: '2026-10-27T00:01:00Z',
               updates: [
                 {
+                  schema_version: 2,
                   native_market_id: conditionId,
+                  native_market_id_kind: 'condition_id',
                   native_instrument_id: '123456789',
                   event_type: 'book',
                   source_timestamp_utc: '2026-10-27T00:00:00Z',
-                  bid_level_count: 1,
-                  ask_level_count: 1,
-                  price_change_count: 0,
+                  bids: [{ price: '0.42', quantity: '4.5', exchange_timestamp_utc: null }],
+                  asks: [{ price: '0.46', quantity: '6.25', exchange_timestamp_utc: null }],
+                  changes: [],
                   reported_best_bid: null,
                   reported_best_ask: null,
                   book_hash: '0xabc123',
@@ -1830,6 +1832,8 @@ it('captures one explicit Polymarket trade page and follows its bound cursor', a
                   tick_size: '0.01',
                   neg_risk: true,
                   last_trade_price: '0.47',
+                  old_tick_size: null,
+                  new_tick_size: null,
                   continuity: 'unverified_no_sequence_or_gap_detection',
                   quality_flags: ['NO_SEQUENCE_FIELD', 'DELTAS_NOT_APPLIED_TO_LOCAL_BOOK'],
                 },
@@ -1936,6 +1940,7 @@ it('captures one explicit Polymarket trade page and follows its bound cursor', a
   expect(
     await screen.findByText(/Replayed 1 normalized event across 1 saved update frame/),
   ).toBeInTheDocument();
+  expect(screen.getByText(/Snapshot · 1 bid \/ 1 ask levels · min size 5/)).toBeInTheDocument();
   expect(bookUpdateRequests).toHaveLength(0);
   expect(bookUpdateReplayRequests).toEqual([{ observation_ids: ['saved-stream-observation'] }]);
   const captureBookUpdatesButton = screen.getByRole('button', {

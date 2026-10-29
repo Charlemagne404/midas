@@ -16692,3 +16692,24 @@ these processes; no cgroup peak is claimed. The host had zero PSI and about
 Polymarket stream, production service, or persistent store was touched.
 The implementation checkpoint is commit `9487807` on
 `codex/frontier-20261026`.
+
+## Polymarket replay wire-contract alignment — 2026-10-29 20:41 CET
+
+The replay API serializes full normalized `PolymarketBookUpdate` objects,
+whereas the frontend had typed replay events as the smaller capture-summary
+shape. The replay contract now describes schema-v1/v2 events, full bid/ask
+levels, source-reported changes, and optional snapshot metadata. The replay
+panel also shows captured level counts from the actual normalized payload.
+Its fixture uses the complete schema-v2 event structure instead of summary
+counts.
+
+The focused Frontier interaction passed 1/1 (eight unrelated cases skipped)
+in 8.49 seconds of test time / 26.66 seconds wall time under a 512 MiB high /
+768 MiB maximum, zero-swap, 20%-CPU unit with a 256 MiB Node heap. Prettier
+passed. A full TypeScript project check and ESLint rerun were deferred after
+the scheduled source-analysis job and UI test interval ended with only 208 KiB
+of swap free; host PSI remained low and no OOM count changed, but the parent
+`memory.events.max` counter advanced by 57 and cannot be attributed to the UI
+test. The transient runner again reported an implausible 256 KiB memory peak.
+No live source, service, or stored evidence was touched. The typecheck remains
+pending a fresh resource-admission window.

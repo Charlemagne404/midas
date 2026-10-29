@@ -5068,3 +5068,21 @@ resolve the full-swap condition, historical pressure attribution, the
 user-slice limit/OOMD visibility discrepancy, or any unresolved Reality data
 integrity warning. No service, timer, production configuration, recording, or
 historical research evidence was changed during this validation.
+
+### Post-analysis Frontier UI check — 2026-10-29 20:41 CET
+
+The scheduled source-analysis unit completed successfully by 20:40:58. The
+single capped Frontier replay-UI interaction then passed by 20:41:34. At the
+20:41:39 sample, host PSI was `some avg10=0`, `avg60=0.02` and `full avg10=0`,
+`avg60=0.02`; `MemAvailable` was 10,897,428 KiB. Swap was effectively full
+with 208 KiB free. User-slice counters were `high=16,438,259`,
+`max=732,222`, `oom=19`, `oom_kill=15`, and `oom_group_kill=0`; the `max`
+counter had advanced by 57 since the prior sample. The transient UI unit
+reported zero swap peak, but its 256 KiB memory-peak statistic is not credible
+and the parent increment cannot be attributed to that test.
+
+Research Director and Reality capacity jobs were still scheduled for 20:45:19
+and 20:50:51. No additional TypeScript project check, linter, or test was
+started in this window. Continue code review/documentation only until a fresh
+post-schedule admission sample; keep the incident **PARTIALLY CONTAINED /
+PARTIALLY VERIFIED**.
