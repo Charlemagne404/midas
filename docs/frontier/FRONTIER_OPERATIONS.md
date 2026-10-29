@@ -690,6 +690,34 @@ sample is not an admission grant. Stop or defer builds and broad suites if host
 pressure rises. Do not add persistent workers or run multi-day experiments as
 part of ordinary development.
 
+### Host memory-incident gate — 2026-10-29
+
+systemd-oomd last logged a kill at 2026-10-28 23:43:24 CET after
+`user@1000.service` memory pressure exceeded 50% for more than 20 seconds
+while reclaim was active. The five-minute `midas-veritas-gap-detail-v2.timer`
+remains stopped because it only replays finalized segments. The separate
+Reality capacity monitor has a reversible user-unit override of
+`MemoryHigh=160M`, `MemoryMax=192M`, and `MemorySwapMax=0`; its 02:46 scheduled
+run exited successfully, but systemd did not retain a peak-memory value. The
+monitor still reports invalid archive inventory/provenance; do not edit or
+repair those artifacts as part of Frontier development.
+
+At 02:53 CET, host `MemAvailable` was about 11.44 GB and memory PSI was zero,
+while only 220 kB of the 4 GiB swap device was free. User-manager OOM counters
+were `oom=19` and `oom_kill=15`. Treat the full swap and unknown historical
+workload attribution as active cautions even when a short PSI sample is quiet.
+Current service state, exact rollback commands, and the bounded post-run
+sample are recorded in
+[`FRONTIER_MEMORY_PRESSURE_INCIDENT_2026-10-28.md`](FRONTIER_MEMORY_PRESSURE_INCIDENT_2026-10-28.md).
+
+The last TypeScript attempt reached Node's internal heap limit and triggered
+Apport/Whoopsie. Whoopsie logged HTTP 504 and no successful-upload marker is
+present; remote receipt remains unknown. Do not rerun Node checks that could
+crash until an explicitly bounded heap and crash-report path are established.
+The crash report was left untouched. Current development admission is limited
+to isolated, short, zero-swap tasks; broad suites and competing research jobs
+remain deferred.
+
 The API, UI, adapter fixtures, and bounded Arena replay are development
 artifacts. Production deployment, protected-service changes, Reality restart,
 campaign mutation, and changes to historical evidence are outside this routine

@@ -12675,3 +12675,19 @@ timer active and gap-detail inactive. Whoopsie was inactive; its report and
 `.upload` marker were retained without a `.uploaded` marker. No production or
 archive changes were made. Continue only bounded, isolated, zero-swap work;
 full swap and historical workload attribution remain unresolved.
+
+### Current-state and capability readback — 2026-10-29 02:53 CET
+
+The offline default registry instantiated without a network request under a
+192 MiB, zero-swap, 20% CPU scope. It reported all 19 capabilities exactly
+once for each adapter: Polymarket v13 supports 15, Kalshi v23 supports 16,
+Kraken Spot v10 supports 10, and Coinbase Exchange v6 supports 9. All four
+explicitly declare `BOOK_UPDATES` unsupported, so the dashboard and research
+engine must not imply streaming or sequenced book reconstruction.
+
+The current completion matrix and operations resource gate were refreshed to
+02:53 CET. At that sample host memory PSI was zero and `MemAvailable` was
+11,437,528 kB, but swap remained full (220 kB free); user-manager OOM counters
+were unchanged. The OOM initiator remains unknown, source-use holds remain in
+force, and Node checks remain deferred following the V8/Apport incident.
+No external source request or captured-data read occurred in this checkpoint.
