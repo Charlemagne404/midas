@@ -12894,3 +12894,37 @@ contacted. TypeScript build/browser checks remain open due the earlier V8 heap
 failure. At 03:23:39, host PSI was zero, MemAvailable 11,422,164 kB,
 SwapFree 1,316 kB, and OOM counters unchanged at 19/15; API/Reality remained
 active at restarts 9/14. Updated the engineering and incident reports.
+
+## Host incident checkpoint — 2026-10-29 03:33 CET
+
+Frontier is checkpointed on `codex/frontier-20261026`, commit `9b35b50` before
+this review. The only untracked path is the preserved
+`data/frontier-public-probes/` evidence directory; it was not staged or
+modified. This follow-up changed documentation only.
+
+The current host is calm enough for sequential bounded offline work, but the
+incident is not resolved. At 03:32, `MemAvailable` was about 10 GiB and host
+and user-manager PSI were zero; swap remained 4,192,968/4,194,300 kB used.
+The user manager remains unbounded at about 7.91 GB charged memory and 2.86 GB
+swap. Its `oom=19`/`oom_kill=15` counters are unchanged. The October 28
+systemd-oomd trigger is established as user-manager PSI above 50% for over 20
+seconds with reclaim, but no single initiating workload is established. The
+largest current child is the Terminal slice; this is not historical
+attribution.
+
+API and Reality remain active with restart counts 9/14, no service swap, and
+fresh collector status at 03:33 (`RECORDING_UNSEQUENCED`, `active_receiving`,
+16 fresh books, sequence unverified, no backpressure). The auxiliary
+gap-detail timer remains disabled. The capacity monitor retains the
+reversible 160/192 MiB, zero-swap override; its 03:16 scheduled run completed
+successfully, without a retained memory peak. No OOMd or kernel OOM record
+appears after 23:43:24 on October 28. The exact containment and rollback
+commands remain in
+[`FRONTIER_MEMORY_PRESSURE_INCIDENT_2026-10-28.md`](FRONTIER_MEMORY_PRESSURE_INCIDENT_2026-10-28.md).
+
+After the 03:23 UI test, the isolated TypeScript check passed with exit 0, and
+the production Vite build passed under zero-swap CPU/memory limits. It emitted
+the existing 544.51 kB Chart chunk advisory. No broad suite or live source
+probe was run in this incident follow-up. Resume Frontier in serial,
+resource-limited offline steps; keep broad regression, long experiments, live
+source use, and any production or aggregate OOM-policy change gated.

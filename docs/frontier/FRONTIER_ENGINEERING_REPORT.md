@@ -13512,3 +13512,32 @@ At 03:23:39 CET, MemAvailable was 11,422,164 kB, SwapFree was 1,316 kB, host
 memory PSI was zero, and user-manager `oom`/`oom_kill` counters remained 19/15.
 MIDAS API and Reality were active at restart counts 9/14. This does not
 resolve the host's full-swap or historical workload-attribution issues.
+
+## Host incident checkpoint and bounded frontend build — 2026-10-29 03:33 CET
+
+After the focused timeline component case, the TypeScript project check passed
+with exit 0 in a transient systemd scope bounded to 1 GiB `MemoryHigh`, 1,280
+MiB `MemoryMax`, zero swap, and 25% CPU. The production Vite build completed
+successfully in 46.58 seconds after transforming 2,230 modules; it ran with
+768 MiB `MemoryHigh`, 896 MiB `MemoryMax`, zero swap, and 25% CPU. Vite emitted
+the existing Chart chunk size advisory (544.51 kB, 186.79 kB gzip). No live
+source or API call was involved. The saved-timeline browser path remains
+unverified; the focused Vitest test is the current evidence for the timing
+table.
+
+At 03:32, host PSI and user-manager PSI were zero and MemAvailable was about
+10 GiB, while swap remained effectively full (4,192,968/4,194,300 kB). The
+user manager was unbounded and charged about 7.91 GB memory and 2.86 GB swap;
+its OOM counters remained 19/15. API and Reality were active at restart counts
+9/14. Reality's 03:33 status says `RECORDING_UNSEQUENCED`,
+`active_receiving`, 16 fresh books, `sequence_verified=false`, and no
+backpressure. No new oomd or kernel OOM record appeared after Oct 28 23:43:24.
+See `FRONTIER_MEMORY_PRESSURE_INCIDENT_2026-10-28.md` for the resource
+breakdown, containment, rollback, and unresolved workload attribution.
+
+The host is suitable for sequential, isolated offline Frontier checks with
+explicit memory/CPU bounds, zero swap, and hard timeouts. Do not use broad
+suites, concurrent research, or long experiments while swap remains full and
+the aggregate user manager has no memory ceiling. Historical incident cause
+and long-duration stability remain unresolved; Frontier overall remains
+PARTIALLY VERIFIED.

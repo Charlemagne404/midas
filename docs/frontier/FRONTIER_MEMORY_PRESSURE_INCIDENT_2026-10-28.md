@@ -3,7 +3,7 @@
 **Incident date:** 2026-10-28 (CET)
 
 **Initial checkpoint:** 2026-10-29 01:54 CET; append-only follow-up observations
-through 2026-10-29 03:23 CET are recorded below.
+through 2026-10-29 03:33 CET are recorded below.
 
 **Scope:** Host reliability interruption during Project Frontier
 
@@ -1392,3 +1392,74 @@ manager remained at `oom=19`/`oom_kill=15`; API and Reality remained active at
 restarts 9/14. No new systemd-oomd or kernel OOM records appeared after 03:20.
 This observation window is only a few minutes and does not establish
 endurance; retain the zero-swap test gate and defer broad or Node build work.
+
+### Host and bounded-work checkpoint — 2026-10-29 03:33 CET
+
+The Frontier worktree remained on `codex/frontier-20261026` at commit
+`9b35b50`. Its only untracked path was the preserved public-probe evidence
+directory `data/frontier-public-probes/`; it was not staged or modified. The
+worktree had already been checkpointed before this incident review. This
+follow-up changed documentation only and did not alter service configuration,
+recordings, archive evidence, or other research data.
+
+At 03:32:25, host memory was 15 GiB total, 4.6 GiB used, and about 10 GiB
+available. Swap remained 4,192,968 kB of 4,194,300 kB used (1,332 kB free).
+Host and user-manager memory PSI averages were all zero. `vmstat` showed zero
+swap-in and swap-out in both one-second interval rows; swap use did not change.
+This indicates cold pages remain in swap without measurable active swap churn
+in that brief sample. It does not establish that swap is healthy or that future
+pressure is impossible.
+
+The user manager charged 7,909,601,280 bytes of memory and 2,864,865,280 bytes
+of swap; its effective `MemoryHigh`, `MemoryMax`, and `MemorySwapMax` are all
+unbounded. `user.slice` and `user-1000.slice` are also unbounded. The manager's
+`memory.stat` sample was about 2.10 GB anonymous, 4.52 GB file cache, and
+1.10 GB kernel memory. Its current event counts were `high=16,417,339`,
+`max=730,045`, `oom=19`, and `oom_kill=15`; the OOM counters did not change.
+The largest current user child was `app-org.gnome.Terminal.slice` at about
+3.73 GB memory and 1.65 GB swap. One Codex/terminal scope accounted for
+about 1.18 GB memory and no swap. These are current workload observations,
+not attribution for the Oct 28 OOMs. At the historical 23:23 candidate sample,
+oomd recorded concurrent API, Reality, Terminal, and gap-detail charges; no
+single initiating workload is proven.
+
+At 03:32:25, API was active at 809.9 MB against 1,610.6 MB `MemoryHigh` and
+1,879.0 MB `MemoryMax`, with zero swap; its peak was 1,611.0 MB. Reality was
+active at 229.9 MB against 1,208.0 MB `MemoryHigh` and 1,342.2 MB
+`MemoryMax`, with zero swap; its peak was 1,208.5 MB. Restart counters remain
+9 and 14, respectively. The current Reality `status.json` mtime was 03:33:15;
+it reports `RECORDING_UNSEQUENCED`, `active_receiving`, 16 fresh books,
+`sequence_verified=false`, and no active backpressure. The `.open` segment
+also advanced at 03:33:31. No collector restart or archive operation was
+performed.
+
+The gap-detail timer remains `disabled/inactive`; its replay-only service is
+not live collection or integrity monitoring. The capacity timer remains
+active, and the 03:16:44 run exited successfully in 8 seconds (6.575 CPU
+seconds) at `MemoryHigh=160M`, `MemoryMax=192M`, `MemorySwapMax=0`; systemd
+retained no peak. The 03:31 Veritas observation completed in 12 seconds, the
+03:32 daily Reality research check returned `ALREADY_ATTEMPTED_THIS_WEEK` in
+16 seconds, and recent source-analysis/research-director runs were staggered
+and completed in seconds. The Arena dispatcher continued returning an empty
+schedule. There are no queued user-manager jobs. No timer change beyond the
+documented gap-detail containment is justified by these observations.
+
+The full swap occupancy persists, but no new OOMd or kernel OOM record appears
+after Oct 28 23:43:24, through 03:33. The current evidence supports only
+sequential, bounded, offline Frontier work in transient scopes with explicit
+memory limits, zero swap, CPU limits, and timeouts. Do not run broad suites,
+concurrent jobs, or long experiments. A manager-wide memory ceiling or change
+to oomd policy could affect Reality, API, interactive sessions, and remote
+administration; no such policy change is made here. Further design work must
+reserve those critical workloads and retain a rollback path before changing
+that boundary.
+
+After the 03:23 Vitest sample, a bounded TypeScript project check passed with
+exit 0 under a transient 1 GiB `MemoryHigh`, 1,280 MiB `MemoryMax`, zero-swap,
+25% CPU scope. The production Vite build also passed (2,230 modules, 46.58 s)
+under a 768/896 MiB, zero-swap, 25% CPU scope. It emitted the existing
+544.51 kB Chart chunk warning. The 03:27 host sample remained at zero PSI with
+11,426,460 kB available and 1,332 kB swap free; OOM counters remained 19/15.
+These checks were serialized and did not produce a new OOM event. Continue
+only with similarly bounded work; production readiness and the historical
+pressure source remain unresolved.
