@@ -15576,3 +15576,19 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
   guard are verified. The host remains partially contained: free swap is
   negligible and capped-service `max` counters continue to advance. Keep the
   incident admission limits and do not infer causation from these counters.
+
+## 2026-10-29 16:10 CET — candle-bound commit checkpoint
+
+- The normalized candle-series work and focused source-page fixture are
+  committed as `0b39f79` (`feat(frontier): enforce bounded candle series`).
+  The pre-existing untracked `data/frontier-public-probes/` remains untouched.
+- At 16:10:24 CET, MemAvailable was 11,127,260 kB, SwapFree 16,468 kB, and
+  host memory PSI avg10/60/300 was zero. User-manager events were
+  `high=16,437,792`, `max=730,701`, `oom=19`, `oom_kill=15`; Reality API local
+  events were `max=5,078`, `oom=0`, `oom_kill=0`. MIDAS API, Reality, and
+  Reality API remained active at restart counts 9/14/0, and the gap-detail
+  timer remained disabled.
+- **Status:** code and fixture checks are checkpointed. The host is still
+  partially contained because swap is nearly full and limit-event counters
+  continue to rise; this does not establish which process caused their
+  increments or demonstrate recovery.
