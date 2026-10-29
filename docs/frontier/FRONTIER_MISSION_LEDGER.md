@@ -16149,3 +16149,27 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
   Laboratory work in `midas-api.service`. No Frontier job was active at this
   sample. The host remains suitable only for serial bounded fixtures; no
   broad check, build, browser suite, replay batch, or source probe was admitted.
+
+## 2026-10-29 18:31 CET — Frontier host resource snapshot UI
+
+- Added a host resource snapshot card to Replay & readiness, backed by the
+  existing read-only readiness API. The card reports its capture time, RAM,
+  swap utilization, and host/user-manager memory PSI; it clearly labels the
+  sample as point-in-time and does not promote the sustainability gate.
+- Added isolated UI tests for measured and unavailable API responses.
+  `FrontierHostResources.test.tsx`: **2/2 passed in 7.49s** under a transient
+  384 MiB high / 512 MiB max / zero-swap / 20%-CPU / 64-task cap. Strict
+  frontend `tsc -b` passed in 1m37.6s, capped at 768 MiB high / 1 GiB max /
+  zero swap / 20% CPU / 64 tasks; cgroup peak was 387.6 MiB. Prettier and
+  `git diff --check` passed.
+- The larger existing Frontier workflow test timed out at 5s and 15s under a
+  15%-CPU cap and remains an incomplete regression check. It did not reach the
+  transient memory cap; no retry is planned during the incident window.
+- At 18:31:18, host PSI was zero with 10.2 GiB available RAM and 18.3 MiB free
+  swap. User-manager `high/max/oom/oom_kill` remained
+  16,437,902 / 731,309 / 19 / 15, and no kernel/OOMD kill appeared since
+  18:16. MIDAS API, Reality, and Reality API remained active. The gap-detail
+  timer is inactive; source-analysis is next due at 18:40:26.
+- No services, timers, cgroup limits, protected campaign, or evidence stores
+  were modified. Incident status remains **PARTIALLY CONTAINED / PARTIALLY
+  VERIFIED**; continue with one bounded source-independent task at a time.

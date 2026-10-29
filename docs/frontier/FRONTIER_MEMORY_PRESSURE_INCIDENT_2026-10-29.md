@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 18:16 CET |
+| Latest addendum | 2026-10-29 18:31 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Pre-incident checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -4479,3 +4479,47 @@ bytes. Ruff and Ruff format checks passed for the two changed test files.
 No service, timer, protected campaign, Reality collector setting, or archive
 data was changed. This remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**;
 the latest short check supports only serial, capped, fixture-based work.
+
+### Bounded Frontier readiness UI validation — 2026-10-29 18:31 CET
+
+Added a host resource snapshot card to Frontier's Replay & readiness view.
+It reads the existing read-only `/api/readiness/resources` endpoint only while
+that view is mounted and displays the capture time, RAM available/total, swap
+free/total and utilization, plus host and user-manager memory PSI avg10. The
+card labels the values as point-in-time telemetry and states that swap usage
+alone is not a pressure diagnosis. The existing sustainability gate remains
+unchanged. A failed local telemetry request is shown immediately without a
+retry.
+
+The focused panel test passed **2/2 in 7.49 seconds** with a 384 MiB
+`MemoryHigh`, 512 MiB `MemoryMax`, zero swap, 20% CPU, 64 tasks, and a
+120-second runtime limit. Strict frontend `tsc -b` passed in 1m37.6s under a
+768 MiB high / 1 GiB max / zero-swap / 20%-CPU / 64-task / 120-second cap; its
+observed cgroup peak was 387.6 MiB. Prettier check and `git diff --check`
+passed. No source probe was performed, and no systemd unit was started,
+stopped, reloaded, or reconfigured by these checks.
+
+The larger existing Frontier workflow test did not finish within its 5-second
+default or a 15-second test timeout under a 15% CPU quota. After those two
+capped attempts, it was not retried; the regression remains incomplete, not a
+passing result. Its transient service did not reach its configured memory cap.
+At 18:31:18, host memory PSI
+was zero, `MemAvailable` was 10,718,144 kB, and only 18,732 kB of 4,194,300 kB
+swap was free. User-manager counters were unchanged at
+`high=16,437,902`, `max=731,309`, `oom=19`, `oom_kill=15`; no kernel or
+systemd-oomd kill entry appeared since 18:16. MIDAS API, Reality, and Reality
+API were active at restart counts 9/14/0. The gap-detail timer was inactive;
+the capacity timer was active and source-analysis was next due at 18:40:26.
+
+The scheduled Reality capacity check completed successfully at 18:20:04–18:20:12
+with 6.88 CPU seconds. systemd did not retain `MemoryPeak` for that run, so it
+confirms completion but provides no new peak-memory measurement. The separate
+`INVALID_MANIFEST` and archive provenance warnings remain unresolved; this
+check did not alter or repair any archive evidence.
+
+No incident-related service, timer, user-manager limit, or protected collector
+setting changed. The incident remains **PARTIALLY CONTAINED / PARTIALLY
+VERIFIED**: this short quiet window does not identify the historic global
+pressure initiator, and swap remains nearly full. Continue with serial,
+source-independent work under explicit transient limits; do not run broad
+frontend suites or builds on this host during the scheduled analysis window.
