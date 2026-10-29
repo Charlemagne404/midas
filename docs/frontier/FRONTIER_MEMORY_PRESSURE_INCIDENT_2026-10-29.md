@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 05:22 CET |
+| Latest addendum | 2026-10-29 05:24 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Preservation checkpoint | `ac4222f` (`feat(frontier): add held Gemini spot research adapter`) |
@@ -511,3 +511,13 @@ serial, bounded continuation only. It does not validate the complete scheduler
 or host endurance, and it does not resolve full swap, the OOMD monitor-listing
 mismatch, uncertain historic workload attribution, or the invalid archive
 provenance/inventory evidence.
+
+## Critical service check — 2026-10-29 05:24 CET
+
+After the bounded admission test, Caddy, Continental's tailnet proxy and
+identity backend, Echo production and staging, Headscale, Tailscale, RustDesk,
+the MIDAS API, MIDAS web, Reality recorder, and the Reality API/web services
+were active. `ssh.socket` remained active; `ssh.service` was inactive under
+socket activation. No service was stopped, restarted, or reconfigured during
+this check. The current service snapshot supports continued infrastructure
+availability; it is not a recovery or endurance certification.

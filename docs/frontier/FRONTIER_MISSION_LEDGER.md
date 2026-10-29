@@ -13500,3 +13500,9 @@ admitted only for serial source-independent work and small bounded fixtures;
 the incident remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**. Keep broad
 work deferred while swap remains full and `oomctl` monitor visibility is
 unresolved.
+
+At 05:24 CET, the post-test service check showed Caddy, Continental tailnet
+and identity services, Echo production/staging, Headscale, Tailscale,
+RustDesk, MIDAS API/web, and the Reality recorder/API/web active; SSH socket
+activation remained available. No service was changed. This confirms current
+service presence only, not endurance.
