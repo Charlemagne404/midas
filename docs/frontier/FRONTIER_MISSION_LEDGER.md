@@ -14525,3 +14525,29 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
   bounded to zero swap and finite memory, CPU, tasks, and runtime. Keep live
   source probes, broad regressions, endurance, and production transition
   deferred while incident status remains partial.
+
+## 2026-10-29 11:47 CET — captured-store startup migration
+
+- Captured Frontier UI verification found a schema-7 store reaching current
+  schema-8 readiness queries. Added startup migration for existing stores,
+  with absent stores left absent and migration failures reported as Frontier
+  degraded health. A symlink failure-path check confirms its target is
+  preserved, Frontier readiness returns 503, and `/api/health` stays available.
+- Commit `a05f025` contains `apps/api/main.py` and
+  `tests/frontier/test_store_startup_migration.py`; no production service was
+  restarted or deployed. The captured source database and untracked
+  `data/frontier-public-probes/` directory were not modified or staged.
+- Captured browser E2E passed **1/1** (14.6 s test, 32.3 s unit total):
+  temporary migrated copy was schema 8, 3 observations, 10 relationships,
+  graph revision `(2, 10, 0)`. Scope peak was 693,190,656 bytes under 1 GiB,
+  zero swap, and no memory or task-limit events.
+- Targeted API/store migration tests passed **3/3 in 11.41 s** under 640 MiB
+  max, zero swap, 20% CPU, 64 tasks, and 90 seconds. Ruff check and format
+  passed. One existing Starlette/httpx deprecation warning remains.
+- At 11:47:14, PSI was zero and `MemAvailable` was 10.69 GiB, but only
+  12.2 MiB of swap was free. OOM counters remained 19/15; no kernel/oomd kill
+  appeared after 11:18. API/Reality/Reality API and listed Continental, Echo,
+  and RustDesk services remained active. The Reality API cgroup showed
+  `memory.max` events but no OOM and zero current PSI; its relationship to
+  earlier host pressure is unproven. The incident remains partially
+  contained/verified. Continue serial offline work only after fresh admission.

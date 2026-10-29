@@ -15026,3 +15026,38 @@ the gap-detail timer was inactive and the Reality capacity timer active. No
 user jobs remained and no kernel or systemd-oomd kill appeared in the checked
 journal after 11:18. This remains a short bounded observation, not durable
 recovery evidence.
+
+## Captured Frontier store migration and readiness failure behavior
+
+The captured-data browser journey found that an existing schema-7 Frontier
+store could reach the readiness route without being upgraded to the current
+schema 8. API lifespan now migrates an existing store before requests are
+served, without creating a database when the configured store is absent.
+Migration errors are retained in startup state and `/api/health` reports the
+Frontier store as degraded while the rest of the API remains available. A
+symlinked database is rejected; its target is preserved, the Frontier
+readiness route returns 503, and the API health route remains 200. The code is
+in commit `a05f025` on the isolated Frontier branch and has not been deployed.
+
+Validation evidence:
+
+- The captured browser E2E passed **1/1 in 14.6 seconds** after the fix. It
+  used an isolated copy of a pinned captured dataset, not a live source. The
+  temporary copy migrated to schema 8 and retained 3 observations, 10
+  relationships, and graph revision `(2, 10, 0)`; the original capture was
+  unchanged.
+- The two new API startup cases and the existing graph revision migration
+  test passed **3/3 in 11.41 seconds** under a 640 MiB memory cap, zero swap,
+  20% CPU, 64 tasks, and a 90-second runtime cap. Ruff check and format checks
+  passed for the changed Python files.
+- The browser scope peaked at 693,190,656 bytes under a 1 GiB cap, with zero
+  swap and zero cgroup memory or task-limit events. No production service,
+  research store, historical recording, or retained probe artifact was
+  changed.
+
+The test run surfaced one existing Starlette/httpx TestClient deprecation
+warning. The migration behavior is fixture/captured-data verified; it has not
+been applied to a production API store. Frontier development remains safe only
+for serial bounded fixture work while the host incident is partially
+contained, swap remains nearly full, and historical pressure attribution is
+unresolved.

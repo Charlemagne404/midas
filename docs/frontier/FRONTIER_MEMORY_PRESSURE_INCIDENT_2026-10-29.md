@@ -2455,3 +2455,57 @@ counts 9/14/0. The gap-detail timer remained inactive and the Reality capacity
 timer active; no user jobs remained. No kernel or systemd-oomd kill appeared
 in the checked journal after 11:18. This short interval supports only
 continued bounded work and does not establish durable recovery.
+
+## Frontier captured-store migration follow-up — 2026-10-29 11:42–11:47 CET
+
+A bounded captured-data browser run exposed an API startup compatibility gap:
+the isolated captured Frontier database used schema 7 while the current code
+expects schema 8. The first run reached the UI but emitted repeated API errors
+when readiness queried the old schema. The original captured database was
+copied to a temporary test root; its source evidence was not migrated or
+modified.
+
+Commit `a05f025` adds startup migration for an existing Frontier store before
+the API starts serving its Frontier router. Missing databases are not created
+as a side effect. A migration error is logged, visible in `/api/health` as a
+degraded Frontier store, and does not prevent the broader API from starting.
+The migration runs in a worker thread. This is a code change in the isolated
+Frontier branch only; no production process was restarted and the fix has not
+been deployed.
+
+After the change, the captured browser case passed **1/1 in 14.6 seconds**
+(32.3 seconds total unit runtime). Its scope used MemoryHigh=768 MiB,
+MemoryMax=1 GiB, MemorySwapMax=0, CPUQuota=25%, TasksMax=256, and
+RuntimeMaxSec=180s. Peak memory was 693,190,656 bytes; swap, memory events,
+and pids-limit events were zero, with 111 peak tasks. The copied temporary
+database was schema 8 with 3 observations, 10 relationships, and graph
+revision `(2, 10, 0)`. This is fixture/captured-data evidence, not a live
+exchange validation.
+
+Two startup migration cases and the existing graph revision migration case
+passed **3/3 in 11.41 seconds** under a 640 MiB max, zero-swap, 20%-CPU,
+64-task, 90-second scope. The added failure-path case verifies a symlinked
+database is rejected without changing its target, the Frontier readiness
+surface returns 503, and `/api/health` remains available with degraded status.
+Ruff check and format checks passed for the changed Python files. The tests
+emitted one existing Starlette/httpx TestClient deprecation warning.
+
+At 11:47:14, host `MemAvailable` was 11.48 GB (10.69 GiB), memory PSI was
+zero, and `SwapFree` was 12.75 MB (12.2 MiB). User-manager counters remained
+`oom=19` and `oom_kill=15`; the checked kernel and systemd-oomd journals had
+no matching kill entries after 11:18. API, Reality, and Reality API remained
+active at restart counts 9/14/0. Continental contact/status, Continental
+tailnet/auth, Echo production/staging, and RustDesk were active. The
+gap-detail timer remained inactive and the capacity timer waiting. No jobs
+were active. This quiet sample does not resolve the nearly full swap or
+historical pressure attribution.
+
+The Reality API cgroup remained near its 512 MiB hard limit at the 11:46
+sample: 438,611,968 bytes current, 536,870,912 bytes peak, `max=5030`, and
+`oom=0`/`oom_kill=0`, with zero current local PSI. About 324 MB was accounted
+as file cache and 99 MB as anonymous memory. The cumulative `max` count means
+allocation attempts reached this cgroup's hard limit; `oom=0` records no
+memcg OOM at this sample. Neither value establishes a host-pressure cause.
+No limit change was made. Incident status remains **PARTIALLY CONTAINED /
+PARTIALLY VERIFIED**; Frontier may continue only as serial, bounded, offline
+work with a fresh resource admission check.
