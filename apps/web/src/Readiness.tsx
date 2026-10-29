@@ -290,6 +290,7 @@ export function Readiness() {
   const runtimeResources = asRecord(resources.data?.services);
   const realityRuntime = asRecord(runtimeResources['midas-reality']);
   const apiRuntime = asRecord(runtimeResources['midas-api']);
+  const userManagerRuntime = asRecord(runtimeResources['user-manager']);
   const observerRuntime = asRecord(runtimeResources['midas-veritas-observatory']);
   const observerLastRun = asRecord(resources.data?.observer_last_run);
   const realityService = asRecord(resources.data?.reality_service);
@@ -919,6 +920,41 @@ export function Readiness() {
                     <span>I/O PSI full avg10</span>
                     <strong>{percent(at(hostPressure, 'io', 'full', 'avg10'))}</strong>
                   </div>
+                </section>
+                <section>
+                  <h3>User-manager cgroup (systemd-oomd)</h3>
+                  <div>
+                    <span>Current memory charge</span>
+                    <strong>{bytes(userManagerRuntime.memory_current_bytes)}</strong>
+                  </div>
+                  <div>
+                    <span>Memory PSI some / full avg10</span>
+                    <strong>
+                      {percent(at(userManagerRuntime, 'pressure', 'memory', 'some', 'avg10'))} /{' '}
+                      {percent(at(userManagerRuntime, 'pressure', 'memory', 'full', 'avg10'))}
+                    </strong>
+                  </div>
+                  <div>
+                    <span>OOM / process kills / group kills since cgroup start</span>
+                    <strong>
+                      {count(at(userManagerRuntime, 'memory_events_since_cgroup_start', 'oom'))} /{' '}
+                      {count(
+                        at(userManagerRuntime, 'memory_events_since_cgroup_start', 'oom_kill'),
+                      )}{' '}
+                      /{' '}
+                      {count(
+                        at(
+                          userManagerRuntime,
+                          'memory_events_since_cgroup_start',
+                          'oom_group_kill',
+                        ),
+                      )}
+                    </strong>
+                  </div>
+                  <p>
+                    Cumulative counters include descendants and do not attribute kills to one
+                    workload. PSI measures stalled time, not memory usage.
+                  </p>
                 </section>
                 <section>
                   <h3>Reality recorder cgroup</h3>

@@ -159,6 +159,20 @@ it('shows measured zero-candidate evidence without turning it into a profitabili
           sample_delta: { cpu_quota_utilization_percent: 25, cpu_throttled_delta_usec: 0 },
         },
         'midas-veritas-observatory': { status: 'NOT_MEASURED' },
+        'user-manager': {
+          status: 'MEASURED',
+          memory_current_bytes: 9 * 1024 ** 3,
+          memory_events_since_cgroup_start: {
+            high: 16_417_339,
+            max: 730_045,
+            oom: 19,
+            oom_kill: 15,
+            oom_group_kill: 0,
+          },
+          pressure: {
+            memory: { some: { avg10: 0.5 }, full: { avg10: 0.1 } },
+          },
+        },
       },
       reality_recording_filesystem: {
         status: 'MEASURED',
@@ -237,6 +251,12 @@ it('shows measured zero-candidate evidence without turning it into a profitabili
   expect(screen.getAllByText('e988cbb').length).toBeGreaterThan(0);
   expect(screen.getByText(/2 tracked source changes · dirty · not deployed/)).toBeInTheDocument();
   expect(screen.getAllByText('Anonymous / file-backed charge')).toHaveLength(2);
+  const userManager = screen
+    .getByRole('heading', { name: 'User-manager cgroup (systemd-oomd)' })
+    .closest('section');
+  expect(userManager).toHaveTextContent('9.0 GiB');
+  expect(userManager).toHaveTextContent('0.5% / 0.1%');
+  expect(userManager).toHaveTextContent('19 / 15 / 0');
   expect(screen.getByText('256.0 MiB / 512.0 MiB')).toBeInTheDocument();
   expect(
     screen.getByText(/File-backed charge may be reclaimable but still counts toward MemoryHigh/),

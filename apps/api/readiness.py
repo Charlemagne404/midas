@@ -13,7 +13,7 @@ from typing import Any
 CGROUP_ROOT = Path("/sys/fs/cgroup")
 MAX_PROC_BYTES = 16 * 1024
 _sample_lock = threading.Lock()
-_previous_samples: dict[str, tuple[float, int, int, int, int]] = {}
+_previous_samples: dict[str, tuple[float, int, int, int | None, int]] = {}
 
 
 def _bounded_text(path: Path, limit: int = MAX_PROC_BYTES) -> str | None:
@@ -114,26 +114,25 @@ def _service_cgroup(name: str, root: Path, now: float) -> dict[str, Any]:
     throttle_events = cpu_stat.get("nr_throttled", 0)
     deltas: dict[str, float | int] = {}
     if usage_usec is not None:
+        high_event_count = memory_events.get("high")
         with _sample_lock:
             previous = _previous_samples.get(name)
             _previous_samples[name] = (
                 now,
                 usage_usec,
                 throttle_usec,
-                memory_events.get("high", 0),
+                high_event_count,
                 throttle_events,
             )
         if previous is not None:
             elapsed = now - previous[0]
             usage_delta = usage_usec - previous[1]
             throttle_delta = throttle_usec - previous[2]
-            high_delta = memory_events.get("high", 0) - previous[3]
             throttle_events_delta = throttle_events - previous[4]
             if (
                 elapsed > 0
                 and usage_delta >= 0
                 and throttle_delta >= 0
-                and high_delta >= 0
                 and throttle_events_delta >= 0
             ):
                 deltas = {
@@ -141,8 +140,11 @@ def _service_cgroup(name: str, root: Path, now: float) -> dict[str, Any]:
                     "cpu_usage_delta_usec": usage_delta,
                     "cpu_throttled_delta_usec": throttle_delta,
                     "cpu_throttle_events_delta": throttle_events_delta,
-                    "memory_high_events_delta": high_delta,
                 }
+                if high_event_count is not None and previous[3] is not None:
+                    high_delta = high_event_count - previous[3]
+                    if high_delta >= 0:
+                        deltas["memory_high_events_delta"] = high_delta
                 if quota_usec is not None and period_usec and usage_delta >= 0:
                     allowed_usec = elapsed * quota_usec / period_usec * 1_000_000
                     deltas["cpu_quota_utilization_percent"] = (
@@ -158,7 +160,8 @@ def _service_cgroup(name: str, root: Path, now: float) -> dict[str, Any]:
         "memory_max_bytes": memory_max,
         "memory_composition_bytes": memory_composition or None,
         "memory_events_since_cgroup_start": {
-            key: memory_events.get(key, 0) for key in ("high", "max", "oom", "oom_kill")
+            key: memory_events.get(key)
+            for key in ("high", "max", "oom", "oom_kill", "oom_group_kill")
         },
         "cpu_quota_usec": quota_usec,
         "cpu_period_usec": period_usec,
@@ -356,6 +359,7 @@ def resource_snapshot(
     reality_workspace: Path,
     *,
     cgroup_root: Path | None = None,
+    user_manager_cgroup: Path | None = None,
     proc_root: Path = Path("/proc"),
     now: float | None = None,
 ) -> dict[str, Any]:
@@ -376,6 +380,15 @@ def resource_snapshot(
             "midas-veritas-observatory.service",
         )
     }
+    manager_group = user_manager_cgroup
+    if manager_group is None and cgroup_root is None:
+        uid = os.getuid()
+        manager_group = CGROUP_ROOT / "user.slice" / f"user-{uid}.slice" / f"user@{uid}.service"
+    services["user-manager"] = (
+        _service_cgroup(manager_group.name, manager_group.parent, sample_time)
+        if manager_group is not None
+        else {"status": "NOT_MEASURED", "reason": "user_manager_fixture_not_provided"}
+    )
     return {
         "captured_at_utc": datetime.now(UTC).isoformat(),
         "sampling": "bounded procfs, cgroup-v2 and statvfs reads; counters are cumulative unless marked sample_delta; memory composition fields can overlap and do not replace charged memory.current",

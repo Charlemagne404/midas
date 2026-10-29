@@ -18,13 +18,22 @@ def test_host_memory_keeps_missing_or_malformed_swap_unmeasured(tmp_path):
     }
 
 
-def _write_cgroup(directory: Path, *, usage: int, high_events: int, throttle_events: int) -> None:
+def _write_cgroup(
+    directory: Path,
+    *,
+    usage: int,
+    high_events: int,
+    throttle_events: int,
+    oom_events: int = 0,
+    oom_kills: int = 0,
+) -> None:
     directory.mkdir(parents=True, exist_ok=True)
     (directory / "memory.current").write_text("90\n")
     (directory / "memory.high").write_text("100\n")
     (directory / "memory.max").write_text("200\n")
     (directory / "memory.events").write_text(
-        f"low 0\nhigh {high_events}\nmax 0\noom 0\noom_kill 0\n"
+        f"low 0\nhigh {high_events}\nmax 0\noom {oom_events}\n"
+        f"oom_kill {oom_kills}\noom_group_kill 0\n"
     )
     (directory / "memory.stat").write_text(
         "anon 4096\nfile 8192\nshmem 1024\nactive_file 2048\ninactive_file 6144\n"
@@ -75,6 +84,7 @@ def test_resource_snapshot_reports_bounded_cgroup_deltas_and_missing_services(tm
     }
     assert first["host_pressure"]["cpu"]["some"]["avg10"] == 1.25
     assert first["reality_recording_filesystem"]["status"] == "MEASURED"
+    assert first["services"]["user-manager"]["status"] == "NOT_MEASURED"
 
     _write_cgroup(api_group, usage=2_500_000, high_events=5, throttle_events=3)
     second = readiness.resource_snapshot(
@@ -85,6 +95,62 @@ def test_resource_snapshot_reports_bounded_cgroup_deltas_and_missing_services(tm
     assert delta["cpu_quota_utilization_percent"] == 60.0
     assert delta["memory_high_events_delta"] == 1
     assert delta["cpu_throttle_events_delta"] == 1
+
+
+def test_user_manager_snapshot_reports_hierarchical_pressure_and_oom_counts(tmp_path):
+    user_manager = tmp_path / "user-manager" / "user@1000.service"
+    _write_cgroup(
+        user_manager,
+        usage=4_000_000,
+        high_events=16_417_339,
+        throttle_events=0,
+        oom_events=19,
+        oom_kills=15,
+    )
+    (user_manager / "memory.pressure").write_text(
+        "some avg10=0.5 avg60=1.0 avg300=2.0 total=100\n"
+        "full avg10=0.1 avg60=0.2 avg300=0.3 total=20\n"
+    )
+
+    with readiness._sample_lock:
+        readiness._previous_samples.clear()
+    result = readiness.resource_snapshot(
+        tmp_path / "reality",
+        cgroup_root=tmp_path / "services",
+        user_manager_cgroup=user_manager,
+        proc_root=tmp_path / "proc",
+        now=10.0,
+    )["services"]["user-manager"]
+
+    assert result["status"] == "MEASURED"
+    assert result["memory_events_since_cgroup_start"]["oom"] == 19
+    assert result["memory_events_since_cgroup_start"]["oom_kill"] == 15
+    assert result["memory_events_since_cgroup_start"]["oom_group_kill"] == 0
+    assert result["pressure"]["memory"]["some"]["avg60"] == 1.0
+    assert result["pressure"]["memory"]["full"]["avg10"] == 0.1
+
+
+def test_missing_cgroup_event_counters_remain_unmeasured(tmp_path):
+    user_manager = tmp_path / "user-manager" / "user@1000.service"
+    _write_cgroup(user_manager, usage=1_000_000, high_events=0, throttle_events=0)
+    (user_manager / "memory.events").unlink()
+
+    result = readiness.resource_snapshot(
+        tmp_path / "reality",
+        cgroup_root=tmp_path / "services",
+        user_manager_cgroup=user_manager,
+        proc_root=tmp_path / "proc",
+        now=10.0,
+    )["services"]["user-manager"]
+
+    assert result["memory_events_since_cgroup_start"] == {
+        "high": None,
+        "max": None,
+        "oom": None,
+        "oom_kill": None,
+        "oom_group_kill": None,
+    }
+    assert "memory_high_events_delta" not in (result["sample_delta"] or {})
 
 
 def test_memory_composition_is_optional_bounded_and_does_not_change_charge(tmp_path):
