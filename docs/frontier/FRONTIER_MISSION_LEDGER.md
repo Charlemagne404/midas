@@ -1,5 +1,24 @@
 # Project Frontier Mission Ledger
 
+## 2026-10-29 08:30 CET — OOMD monitor-tree recheck
+
+- The previous point-in-time `oomctl dump` with no monitored-cgroup rows is
+  not reproducible in the 08:30:35 sample: OOMD now lists
+  `/user.slice/user-1000.slice/user@1000.service` at the expected 50% memory
+  pressure threshold. Current cgroup PSI is zero. The `oomctl` System Context
+  summary nevertheless reports RAM and swap totals as 0B while showing 9.1G
+  memory for the monitored cgroup; this output inconsistency remains
+  unexplained. The swap-monitor list is empty.
+- At 08:30:31, `MemAvailable` was 11,072,948 kB, `SwapFree` 8,612 kB, host PSI
+  avg10/60/300 zero, user-manager memory/swap 9,794,785,280 / 2,858,242,048
+  bytes, and aggregate events unchanged at 19/15/0. API/Reality remained
+  active at restarts 9/14 with 974,974,976 / 432,996,352 bytes current. No
+  OOMD or kernel OOM appeared after 08:24:26.
+- **Status:** Incident remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**.
+  The 5-minute observation does not establish recovery; swap remains nearly
+  full and historical workload attribution is unresolved. Keep the auxiliary
+  timer disabled and continue only bounded, serial offline work.
+
 ## 2026-10-29 08:27 CET — official adapter protocol review and host recheck
 
 - Reviewed the current official Kalshi, Coinbase Exchange, Kraken Spot,

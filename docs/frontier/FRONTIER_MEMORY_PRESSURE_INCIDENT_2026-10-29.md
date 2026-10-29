@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 08:27 CET |
+| Latest addendum | 2026-10-29 08:30 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Pre-incident checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -1479,3 +1479,23 @@ No systemd-oomd entry or kernel OOM appeared after the 08:24:26 sample. This
 is only a three-minute quiet interval with almost no free swap; it is not
 evidence of durable recovery. The historical initiating workload remains
 unknown. No production service or archive data was changed during this check.
+
+## OOMD monitor-tree recheck — 2026-10-29 08:30 CET
+
+The earlier `oomctl dump` output that listed no monitored cgroups is not
+reproducible in the latest sample: at 08:30:35, `oomctl` listed
+`/user.slice/user-1000.slice/user@1000.service` under memory-pressure
+monitoring at 50% for the configured 20-second duration. Its reported current
+pressure was zero, matching the cgroup's zero avg10/60/300 PSI. The `oomctl`
+`System Context` totals still displayed 0B for RAM and swap even while the
+monitored user cgroup reported 9.1G current memory; this display inconsistency
+remains unexplained. The swap-monitor list was empty.
+
+At 08:30:31, host `MemAvailable` was 11,072,948 kB and `SwapFree` 8,612 kB.
+The user-manager cgroup held 9,794,785,280 bytes memory and 2,858,242,048
+bytes swap. Aggregate events remained `oom=19`, `oom_kill=15`, and
+`oom_group_kill=0`. API and Reality were active at restart counts 9/14 with
+974,974,976 / 432,996,352 bytes current. No systemd-oomd or kernel OOM log
+appeared after 08:24:26. This five-minute observation remains too short to
+establish recovery; nearly full swap and the historical initiating workload
+remain unresolved.
