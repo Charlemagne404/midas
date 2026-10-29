@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 10:33 CET |
+| Latest addendum | 2026-10-29 10:51 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Pre-incident checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -2150,3 +2150,129 @@ The short test did not change cgroup OOM counters or PSI, but swap remains
 near exhaustion and no long-duration stability evidence exists. Host status
 remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**; continue only serial,
 offline, resource-capped Frontier work after a fresh admission check.
+
+## 2026-10-29 10:51 CET — priority incident recheck
+
+### Current trigger and attribution limits
+
+The active systemd-oomd policy is confirmed in the vendor drop-in
+`/usr/lib/systemd/system/user@.service.d/10-oomd-user-service-defaults.conf`:
+`ManagedOOMMemoryPressure=kill` and a 50% user-manager memory-pressure limit.
+The applicable pressure duration is 20 seconds. `user.slice`,
+`user-1000.slice`, and `user@1000.service` have no `MemoryHigh`, `MemoryMax`,
+or `MemorySwapMax` ceiling. This explains the recorded systemd-oomd action:
+the parent user manager crossed its PSI threshold with reclaim activity, and
+oomd selected eligible descendant cgroups. The kernel journal has seven
+separate `CONSTRAINT_MEMCG` capacity-checker kills and no system-wide kernel
+OOM record in the searched interval.
+
+At 10:51, `oomctl dump` showed `/user.slice/user-1000.slice/user@1000.service`
+as the memory-pressure-monitored cgroup at 50%; its current pressure averages
+were zero. The same output showed a 90% swap-used limit but no swap-monitored
+cgroups. This differs from the 10:33 capture that showed no monitored cgroup.
+Neither `systemd-oomd` nor `user@1000.service` had restarted, and no policy
+change was observed between samples; the reporting discrepancy remains
+unexplained. The October 28 kill records themselves cite memory PSI, not a
+swap-used threshold.
+
+The evidence does not identify one primary host-wide workload. October 28's
+129 oomd victims comprised 106 gap-detail replay kills, 10 Reality recorder
+kills, 8 MIDAS API kills, 4 GNOME Terminal scopes, and 1 Firefox scope. The
+gap-detail job is a strong recurring load contributor: its own cgroup had
+about 205 MiB current use and 50–77% PSI around the final kills. The frequency
+and victim counts do not prove it was the sole or initiating cause. The 10:44
+occupancy sample identifies additional candidates, not historic causation:
+the GNOME Terminal slice was at about 4.5 GiB memory / 1.53 GiB swap with an
+8.79 GiB lifetime peak; the API cgroup was at 0.98 / 1.50 GiB (High 1.50,
+Max 1.75), and Reality at 0.50 / 1.13 GiB (High 1.125, Max 1.25). The largest
+terminal scope was 2.14 GiB, mostly charged file cache, with zero current PSI.
+The user manager's 10:44 memory.stat was file/cache-heavy (about 6.4 GB file,
+4.9 GB inactive file, 2.2 GB anonymous, and 1.1 GB kernel); host
+`MemAvailable` remained high. These facts do not establish that the terminal
+scope or any one MIDAS service initiated the historical pressure.
+
+The current service cgroups also show different local-limit signals: API had
+11,692 `memory.events high` increments and no `max` events; Reality had
+33,176 `high` and no `max`; Reality API was at 0.38 / 0.50 GiB against its
+512 MiB hard cap, with 5,030 `max` events but no OOM events. These counters
+are cumulative cgroup events, not kill counts. They warrant continued
+monitoring; no critical service limit was changed in response.
+
+### Fresh state and workload review
+
+At 10:51:03 CET the host had 16,665,567,232 bytes RAM, 11,416,158,208 bytes
+available (10.63 GiB), and zero memory PSI. Swap had only 9,805,824 bytes
+free (9.35 MiB). `vmstat` showed no continuing swap-in or swap-out after its
+first sample. User-manager event counters remained `oom=19`, `oom_kill=15`,
+and `oom_group_kill=0`. No systemd-oomd or kernel kill had appeared since
+23:43:24 on October 28, about 11 hours earlier. This is a quiet interval, not
+durable recovery evidence.
+
+Reality, MIDAS API, and Reality API were active with restart counts 14/9/0;
+RustDesk, Caddy, Echo production and staging, and the Continental services
+observed here remained active. No user-systemd jobs were running at the
+sample. Scheduled work observed during this recheck was staggered and short:
+the Veritas observatory took about 12 seconds (1.73 CPU seconds), source
+analysis 10 seconds (8.90 CPU seconds), and the research director 2 seconds
+(1.33 CPU seconds). Arena's minute dispatcher returned an empty schedule in
+about 0.03 CPU seconds. The capacity monitor completed its 10:48:30 run with
+exit status 0 in 7 seconds (6.40 CPU seconds). This establishes no overlap in
+the observed window; it does not rule out overlap at other times.
+
+The capacity monitor's already-installed drop-in remains
+`/home/charlie/.config/systemd/user/midas-reality-capacity.service.d/90-frontier-memory-bound.conf`
+with `MemoryHigh=160M`, `MemoryMax=192M`, and `MemorySwapMax=0`. Its 10:18
+run peaked at 135,696,384 bytes (129.4 MiB) and succeeded; the 10:48 run also
+exited successfully. The latest output still reports
+`ARCHIVE_MANIFEST_SIZE_LIMIT`, `ARCHIVE_INVENTORY_UNVERIFIED`, and
+`ARCHIVE_CAPACITY_UNKNOWN`, alongside existing capacity warnings. No archive
+manifest, inventory, or historical evidence was modified. These integrity
+warnings remain a separate unresolved issue.
+
+The Frontier UI integration test had two bounded timeouts at 10:37 and 10:42.
+Their cgroup peaks were 382,668,800 and 362,721,280 bytes, with zero cgroup
+high/max/OOM events and zero swap. They were not evidence of a memory kill,
+but the repeated slow test is deferred. Both test units were complete and no
+Frontier test or service job was active at the 10:51 sample; active interactive
+sessions were left intact and not attributed to a project. The separate 08:20
+analytics test failure peaked at 41,836,544 bytes. No new test, batch, or live
+source request was started for this incident review. The scheduled Veritas
+public-observation pilot ran before this interruption at 10:31; it was not
+started by this review.
+
+The 10:45 Continental read-only audit exited 1 with 72 pass, 19 warn, 3 fail,
+and 3 unknown. Its three existing findings concern listeners on
+`0.0.0.0:8081` and `0.0.0.0:5174` and the disabled Echo offsite schedule. No
+Continental, Echo, SSH, RustDesk, Reality, or MIDAS service configuration was
+changed here.
+
+### Actions, rollback, and continuation
+
+No additional host configuration was changed during this recheck. The
+five-minute gap-detail timer was already stopped at 23:46:27 on October 28
+and remains `inactive`/`disabled`; its unit performs finalized replay, not
+live capture or archive-integrity repair. When a separately reviewed
+resource-safe replay is desired, its previous schedule can be restored with
+`systemctl --user enable --now midas-veritas-gap-detail-v2.timer`. Do not
+restore it while its batch admission and five-minute cadence remain
+unreviewed. The capacity drop-in is also pre-existing and remains in force;
+removing it would restore the known-failing 128 MiB base limit, so no rollback
+is recommended during this incident. No oomd policy, swap setting, protected
+service limit, service state, or access path was changed.
+
+Before investigation edits, the isolated Frontier tree was checkpointed at
+HEAD `e1a82c620221578822c0b90ea5c270e87aefc8a9`. The tracked UI diff is
+recoverable from
+`/home/charlie/frontier-checkpoints/frontier-before-memory-incident-20261029T104431+0100.patch`
+(SHA-256 `923cf479e583fbd2d5ca8a8a2b85ed8201bce7779e6bd1d9de4361335f3e64f1`).
+The existing `data/frontier-public-probes/` directory was left untouched.
+
+**Disposition:** partially contained and partially verified. No new instance
+of either previously observed failure pattern was recorded through this
+sample while the timer pause and capacity bound were in effect; this is not
+long-run proof of recovery. Continue only serial, offline, bounded Frontier
+work after a fresh admission check (zero-swap transient scope, finite
+memory/CPU/task/time limits). Defer broad
+frontend tests, builds, parallel analysis, and any new live-source polling.
+Do not change the user-manager oomd policy, protected service limits, swap, or
+archive provenance without a separately justified and reviewed change.

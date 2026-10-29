@@ -14349,3 +14349,32 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
 - Host memory incident remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**:
   swap is almost full and there is no endurance evidence. Continue Frontier
   only as serial, fixture-only, resource-capped work after fresh admission.
+
+## 2026-10-29 10:51 CET — priority memory incident recheck
+
+- Checkpointed the uncommitted Frontier UI timestamp diff before incident
+  review: base `e1a82c6`; external patch
+  `/home/charlie/frontier-checkpoints/frontier-before-memory-incident-20261029T104431+0100.patch`
+  (SHA-256 `923cf479e583fbd2d5ca8a8a2b85ed8201bce7779e6bd1d9de4361335f3e64f1`).
+  The existing `data/frontier-public-probes/` directory was not touched.
+- Confirmed the vendor `user@.service` oomd policy: kill at 50% user-manager
+  memory PSI for 20 seconds. The ancestor cgroups are uncapped; prior kills
+  were pressure-policy selections, while seven capacity runs separately hit
+  the old 128 MiB leaf cap. Historical host-wide initiating workload remains
+  unproven; the 106 gap-detail kills make it a recurring contributor, not a
+  demonstrated sole cause.
+- Current 10:51 sample: 10.63 GiB `MemAvailable`, zero PSI, 9.35 MiB swap
+  free, no oomd/kernel kill since 23:43:24 Oct 28. `oomctl` now lists the
+  user-manager pressure monitor, unlike the 10:33 snapshot; no related
+  daemon/unit restart or policy change was observed, so the discrepancy is
+  unresolved. No active systemd jobs; API/Reality/Reality API and unrelated
+  Continental/Echo/RustDesk services were active.
+- Gap-detail timer remained inactive/disabled; capacity drop-in remained
+  `MemoryHigh=160M`, `MemoryMax=192M`, swap 0. Its 10:48 run exited 0; the
+  capacity output still marks archive inventory/provenance unknown. No
+  service configuration or archive data was changed.
+- Two earlier bounded Frontier UI integration attempts timed out at 10:37 and
+  10:42 (cgroup peaks 382.7 / 362.7 MB, zero swap and cgroup OOM events).
+  Defer that slow integration test; resume with serial offline work only
+  after fresh admission. Host remains **PARTIALLY CONTAINED / PARTIALLY
+  VERIFIED**, not resolved.
