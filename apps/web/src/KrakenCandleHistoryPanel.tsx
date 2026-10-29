@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { api } from './api';
 
@@ -37,6 +37,9 @@ type SavedCandleResponse = {
   returned: number;
   limit: number;
   offset: number;
+  scan_offset: number;
+  scanned_observations: number;
+  next_scan_offset: number | null;
   has_more: boolean;
   scan_bound: number;
   scan_may_be_incomplete: boolean;
@@ -93,12 +96,32 @@ export function KrakenCandleHistoryPanel({
   const [sinceInput, setSinceInput] = useState('');
   const [selectedObservationId, setSelectedObservationId] = useState<string | null>(null);
   const queryKey = ['frontier', 'kraken-candles', nativeMarketId] as const;
-  const saved = useQuery({
+  const saved = useInfiniteQuery({
     queryKey,
-    queryFn: () =>
-      api<SavedCandleResponse>(
-        `/frontier/candles?venue=kraken&native_market_id=${encodeURIComponent(nativeMarketId)}&limit=5`,
-      ),
+    initialPageParam: { scanOffset: 0, matchOffset: 0 },
+    queryFn: ({ pageParam }) => {
+      const params = new URLSearchParams({
+        venue: 'kraken',
+        native_market_id: nativeMarketId,
+        limit: '5',
+        offset: String(pageParam.matchOffset),
+        scan_offset: String(pageParam.scanOffset),
+      });
+      return api<SavedCandleResponse>(`/frontier/candles?${params.toString()}`);
+    },
+    getNextPageParam: (lastPage, _pages, lastPageParam) => {
+      if (lastPage.has_more) {
+        return {
+          ...lastPageParam,
+          matchOffset: lastPageParam.matchOffset + lastPage.returned,
+        };
+      }
+      if (lastPage.scan_may_be_incomplete && lastPage.next_scan_offset !== null) {
+        return { scanOffset: lastPage.next_scan_offset, matchOffset: 0 };
+      }
+      return undefined;
+    },
+    maxPages: 10,
     retry: false,
   });
   const capture = useMutation({
@@ -116,11 +139,15 @@ export function KrakenCandleHistoryPanel({
       }),
     onSuccess: async (result) => {
       setSelectedObservationId(result.observation_id);
-      await queryClient.invalidateQueries({ queryKey });
+      await queryClient.resetQueries({ queryKey });
     },
   });
 
-  const items = saved.data?.items ?? [];
+  const uniqueItems = new Map<string, SavedCandleObservation>();
+  for (const item of saved.data?.pages.flatMap((page) => page.items) ?? []) {
+    uniqueItems.set(item.observation_id, item);
+  }
+  const items = Array.from(uniqueItems.values());
   const selected =
     items.find((item) => item.observation_id === selectedObservationId) ?? items[0] ?? null;
   const sinceMillis = sinceInput ? Date.parse(sinceInput) : null;
@@ -222,12 +249,15 @@ export function KrakenCandleHistoryPanel({
       )}
       {!saved.isLoading && !saved.isError && items.length === 0 && (
         <div className="fr-empty">
-          {saved.data?.scan_may_be_incomplete ? (
+          {saved.data?.pages.at(-1)?.scan_may_be_incomplete ? (
             <>
               <strong>No matching captures in the bounded scan</strong>
               <p>
-                The first {saved.data.scan_bound} saved candle observations had no matching
-                capture. Additional matching captures may exist outside this scan.
+                This batch checked{' '}
+                {saved.data.pages.at(-1)?.scanned_observations ?? 0} of up to{' '}
+                {saved.data.pages.at(-1)?.scan_bound ?? 20} saved candle observations and found no
+                match. Additional matching
+                captures may exist outside this scan.
               </p>
             </>
           ) : (
@@ -253,13 +283,27 @@ export function KrakenCandleHistoryPanel({
               · {item.series.candles.length} candles · {shortHash(item.observation_id)}
             </button>
           ))}
-          {saved.data?.scan_may_be_incomplete && (
+          {saved.data?.pages.some((page) => page.scan_may_be_incomplete) && (
             <small>
-              The first {saved.data.scan_bound} saved candle observations were scanned; additional
-              matching captures may exist beyond this window.
+              Saved observations are scanned newest first in bounded batches. New captures can
+              shift later offset pages while scanning.
             </small>
           )}
         </div>
+      )}
+      {saved.hasNextPage && (
+        <button
+          type="button"
+          className="fr-inspect-button"
+          disabled={saved.isFetchingNextPage}
+          onClick={() => void saved.fetchNextPage()}
+        >
+          {saved.isFetchingNextPage
+            ? 'Scanning saved observations…'
+            : saved.data?.pages.at(-1)?.has_more
+              ? 'Load more matching captures'
+              : `Scan next ${saved.data?.pages.at(-1)?.scan_bound ?? 20} observations`}
+        </button>
       )}
       {selected && (
         <div className="fr-price-history-result" role="status">

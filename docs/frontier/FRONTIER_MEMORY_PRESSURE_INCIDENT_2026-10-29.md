@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 15:56 CET |
+| Latest addendum | 2026-10-29 17:11 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Pre-incident checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -4027,3 +4027,40 @@ selected pair. A focused regression test was added but **not run**: the
 user-manager and Reality API `max` counters continued to advance and the API
 remained close to its hard limit. Only static diff inspection was performed;
 runtime/type/test verification remains pending the resource gate.
+
+### 17:11 bounded source-work checkpoint
+
+At 17:11:07, host `MemAvailable` was 11,175,006,208 bytes and only
+18,890,752 bytes of swap were free. Memory PSI avg10/60/300 remained zero.
+`user@1000.service` held 11,127,222,272 bytes of memory and 2,853,613,568
+bytes of swap. Its `max` event count advanced from 730,798 at 17:06 to
+730,809; `oom=19` and `oom_kill=15` were unchanged. Reality API was at
+535,900,160 / 536,870,912 bytes (970,752 bytes of headroom); its local `max`
+count advanced from 5,175 to 5,186, with `oom=0` and `oom_kill=0`. The counter
+changes are not attributed to Frontier or any single workload.
+
+MIDAS API, Reality, and Reality API were active with restart counts 9, 14, and
+0. The gap-detail timer remained inactive; the capacity timer remained
+active. Read-only journals showed no systemd-oomd entry and no kernel OOM
+match after 17:06:19. This is a short quiet period, not recovery: swap remains
+nearly full, cgroup `max` events continue to advance, and Reality API is
+within 1 MiB of its hard limit.
+
+The isolated Frontier worktree received a bounded pagination follow-up for
+saved Kraken candle evidence: the API now accepts a separate raw-observation
+scan offset, exposes scanned-row and next-offset metadata, and the UI advances
+by explicit user action with a ten-page client cap. The existing per-request
+scan remains capped at 20 rows; the path reads local evidence and does not
+call Kraken. API and UI regression cases were added, including a fixture
+scenario with 20 unrelated newer observations before the matching row.
+`git diff --check` passed. The focused tests, type checks, builds, browser
+tests, replays, and live probes were **not run** because the user/API cgroup
+`max` counters continued to advance and Reality API headroom remained below
+1 MiB. No service, timer, collector, OOM policy, database, or archive was
+changed.
+
+Admission remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**. Continue only
+source-independent edits and documentation after a fresh sample. Defer even
+the focused regression tests until the `max` counters stop advancing and
+Reality API has meaningful headroom; this short sample cannot establish that
+the next Frontier phase can safely run.

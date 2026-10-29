@@ -2358,13 +2358,19 @@ def router(
         native_market_id: str | None = Query(default=None, min_length=1, max_length=64),
         limit: int = Query(default=5, ge=1, le=10),
         offset: int = Query(default=0, ge=0, le=100_000),
+        scan_offset: int = Query(default=0, ge=0, le=1_000_000),
     ) -> dict[str, Any]:
         """List only hash-checked, locally stored OHLC captures."""
         if venue != Venue.KRAKEN:
             raise HTTPException(status_code=409, detail="Historical candles are unsupported here")
         reject_held_venue(venue)
+        if native_market_id is None and scan_offset != 0:
+            raise HTTPException(
+                status_code=422,
+                detail="A raw scan offset requires a native market filter",
+            )
         scan_limit = 20 if native_market_id is not None else limit + 1
-        scan_offset = 0 if native_market_id is not None else offset
+        observation_offset = scan_offset if native_market_id is not None else offset
         try:
             observations = _read_stored_observations(
                 store,
@@ -2372,7 +2378,7 @@ def router(
                 kind="historical_candles",
                 excluded_venues=held_venues,
                 limit=scan_limit,
-                offset=scan_offset,
+                offset=observation_offset,
             )
             items: list[dict[str, Any]] = []
             for observation in observations:
@@ -2411,6 +2417,17 @@ def router(
             "native_market_id": native_market_id,
             "limit": limit,
             "offset": offset,
+            "scan_offset": observation_offset,
+            "scanned_observations": len(observations),
+            "next_scan_offset": (
+                observation_offset + len(observations)
+                if (
+                    native_market_id is not None
+                    and len(observations) == scan_limit
+                    and observation_offset + len(observations) <= 1_000_000
+                )
+                else None
+            ),
             "returned": len(items),
             "has_more": has_more,
             "scan_bound": scan_limit,

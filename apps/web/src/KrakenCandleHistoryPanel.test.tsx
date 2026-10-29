@@ -61,6 +61,9 @@ const savedResponse = {
   returned: 1,
   limit: 5,
   offset: 0,
+  scan_offset: 0,
+  scanned_observations: 1,
+  next_scan_offset: null,
   has_more: false,
   scan_bound: 20,
   scan_may_be_incomplete: false,
@@ -100,6 +103,8 @@ it('explains an empty result when the bounded saved-observation scan may be inco
         JSON.stringify({
           ...savedResponse,
           items: [],
+          scanned_observations: 20,
+          next_scan_offset: 20,
           scan_bound: 20,
           scan_may_be_incomplete: true,
         }),
@@ -117,11 +122,53 @@ it('explains an empty result when the bounded saved-observation scan may be inco
 
   expect(await screen.findByText('No matching captures in the bounded scan')).toBeInTheDocument();
   expect(
-    screen.getByText(
-      /first 20 saved candle observations had no matching capture\. Additional matching captures may exist outside this scan\./,
-    ),
+    screen.getByText(/batch checked 20 of up to 20 saved candle observations and found no match\./),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByText(/Additional matching captures may exist outside this scan\./),
   ).toBeInTheDocument();
   expect(fetchMock).toHaveBeenCalledTimes(1);
+});
+
+it('scans a later bounded batch when matching captures are older than the first page', async () => {
+  const fetchMock = vi.fn<typeof fetch>(async (input) => {
+    const url = new URL(String(input), 'http://localhost');
+    const scanOffset = Number(url.searchParams.get('scan_offset') ?? 0);
+    const response =
+      scanOffset === 0
+        ? {
+            ...savedResponse,
+            items: [],
+            scanned_observations: 20,
+            next_scan_offset: 20,
+            scan_may_be_incomplete: true,
+          }
+        : {
+            ...savedResponse,
+            scan_offset: 20,
+            scanned_observations: 1,
+            next_scan_offset: null,
+          };
+    return new Response(JSON.stringify(response), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  });
+  vi.stubGlobal('fetch', fetchMock);
+  wrap(
+    <KrakenCandleHistoryPanel
+      nativeMarketId="XXBTZUSD"
+      marketObservationId={'a'.repeat(64)}
+      probeEnabled={false}
+    />,
+  );
+
+  expect(await screen.findByText('No matching captures in the bounded scan')).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Scan next 20 observations' }));
+
+  expect(await screen.findByText('60500')).toBeInTheDocument();
+  expect(fetchMock).toHaveBeenCalledTimes(2);
+  expect(String(fetchMock.mock.calls[1]?.[0])).toContain('scan_offset=20');
 });
 
 it('starts a bounded capture only after action and renders persisted evidence', async () => {

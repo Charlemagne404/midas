@@ -1,5 +1,23 @@
 # Project Frontier Mission Ledger
 
+## 2026-10-29 17:11 CET — saved-candle scan pagination and admission gate
+
+- Added a separate bounded raw-observation offset to the local Kraken candle
+  API and an explicit, capped “scan next batch” UI path. Added API and UI
+  regression cases, including a fixture with 20 newer unrelated observations
+  before the matching capture. The source request path was not called.
+- `git diff --check` passed. Tests, type checks, builds, browser checks, and
+  probes remain deferred: at 17:11, memory PSI was zero, but swap had only
+  18,890,752 bytes free; user-manager `max` events rose by 11 and Reality API
+  `max` events by 11 since 17:06. Reality API had 970,752 bytes below its
+  hard limit. No OOM kill was logged in the short interval. API, Reality, and
+  Reality API remained active; gap-detail stayed inactive and the capacity
+  timer active.
+- No service, timer, collector, OOM policy, database, or archive was changed.
+  The incident remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**; continue
+  source-only edits and documentation, and keep runtime verification gated.
+  See [`FRONTIER_MEMORY_PRESSURE_INCIDENT_2026-10-29.md`](FRONTIER_MEMORY_PRESSURE_INCIDENT_2026-10-29.md).
+
 ## 2026-10-29 15:56 CET — short swap and reclaim delta
 
 - Across 15:56:12–15:56:46, host swap-in rose one page and swap-out stayed

@@ -4,6 +4,7 @@ import asyncio
 import hashlib
 import json
 from datetime import UTC, datetime, timedelta
+from typing import Any
 
 import httpx
 import pytest
@@ -11,7 +12,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from midas.frontier.adapters.kraken import ADAPTER_VERSION, KrakenSpotAdapter, KrakenSpotConfig
 from midas.frontier.adapters.transport import HTTPObservation, PublicReadTransport
-from midas.frontier.models import CandleSeries, RawObservation, Venue
+from midas.frontier.models import CandleSeries, Provenance, RawObservation, Venue
 from midas.frontier.registry import AdapterRegistry
 from midas.frontier.storage import FrontierStore
 
@@ -31,20 +32,30 @@ PAIR_METADATA = {
     "status": "online",
     "tick_size": "0.1",
 }
-MARKET_BODY = json.dumps({"error": [], "result": {PAIR_ID: PAIR_METADATA}}, separators=(",", ":"))
 
 
-def _store_saved_pair(adapter: KrakenSpotAdapter, store: FrontierStore) -> str:
+def _store_saved_pair(
+    adapter: KrakenSpotAdapter,
+    store: FrontierStore,
+    native_market_id: str = PAIR_ID,
+    pair_metadata: dict[str, Any] = PAIR_METADATA,
+) -> str:
+    market_body = json.dumps(
+        {"error": [], "result": {native_market_id: pair_metadata}}, separators=(",", ":")
+    )
     market_response = HTTPObservation(
-        url="https://api.kraken.com/0/public/AssetPairs?pair=XBTUSD",
+        url=(
+            "https://api.kraken.com/0/public/AssetPairs?pair="
+            f"{pair_metadata.get('altname', native_market_id)}"
+        ),
         status_code=200,
-        raw_body=MARKET_BODY,
+        raw_body=market_body,
         request_started_at_utc=T0,
         response_received_at_utc=T0 + timedelta(milliseconds=2),
         request_elapsed_monotonic_ns=2_000_000,
-        payload=json.loads(MARKET_BODY),
+        payload=json.loads(market_body),
     )
-    market = adapter._normalize_pair(PAIR_ID, PAIR_METADATA, market_response)
+    market = adapter._normalize_pair(native_market_id, pair_metadata, market_response)
     raw = RawObservation(
         venue=Venue.KRAKEN,
         observation_kind="instrument_metadata",
@@ -53,11 +64,63 @@ def _store_saved_pair(adapter: KrakenSpotAdapter, store: FrontierStore) -> str:
         request_started_at_utc=market_response.request_started_at_utc,
         received_at_utc=market_response.response_received_at_utc,
         request_elapsed_monotonic_ns=market_response.request_elapsed_monotonic_ns,
-        raw_body=MARKET_BODY,
-        raw_sha256=hashlib.sha256(MARKET_BODY.encode()).hexdigest(),
+        raw_body=market_body,
+        raw_sha256=hashlib.sha256(market_body.encode()).hexdigest(),
         adapter_version=ADAPTER_VERSION,
     )
     return store.append_observation(raw, market)
+
+
+def _store_saved_candle(
+    store: FrontierStore,
+    native_market_id: str,
+    bound_market_observation_id: str,
+    ordinal: int,
+) -> str:
+    request_started = T0 + timedelta(seconds=ordinal + 1)
+    received = request_started + timedelta(milliseconds=1)
+    request_url = (
+        "https://api.kraken.com/0/public/OHLC?"
+        f"pair={native_market_id}&interval=60"
+    )
+    raw_body = json.dumps(
+        {"error": [], "result": {native_market_id: [], "last": int(T0.timestamp())}},
+        separators=(",", ":"),
+    )
+    raw_sha256 = hashlib.sha256(raw_body.encode()).hexdigest()
+    elapsed_ns = 1_000_000
+    raw = RawObservation(
+        venue=Venue.KRAKEN,
+        observation_kind="historical_candles",
+        request_url=request_url,
+        http_status=200,
+        request_started_at_utc=request_started,
+        received_at_utc=received,
+        request_elapsed_monotonic_ns=elapsed_ns,
+        raw_body=raw_body,
+        raw_sha256=raw_sha256,
+        adapter_version=ADAPTER_VERSION,
+    )
+    series = CandleSeries(
+        venue=Venue.KRAKEN,
+        native_market_id=native_market_id,
+        interval_seconds=3600,
+        candles=(),
+        bound_market_observation_id=bound_market_observation_id,
+        source_limit_note="Controlled fixture with no candle rows.",
+        provenance=Provenance(
+            source_url=request_url,
+            adapter_version=ADAPTER_VERSION,
+            source_schema_version="OHLC:60m",
+            request_started_at_utc=request_started,
+            response_received_at_utc=received,
+            request_elapsed_monotonic_ns=elapsed_ns,
+            processed_at_utc=received,
+            raw_sha256=raw_sha256,
+            observation_id=f"fixture-candle-{ordinal}-{native_market_id}",
+        ),
+    )
+    return store.append_observation(raw, series)
 
 
 def _configured_adapter(
@@ -146,6 +209,9 @@ def test_kraken_candle_capture_is_market_bound_hash_checked_and_listed(tmp_path)
         assert page["network_called"] is False
         assert page["returned"] == 1
         assert page["has_more"] is False
+        assert page["scan_offset"] == 0
+        assert page["scanned_observations"] == 1
+        assert page["next_scan_offset"] is None
         assert page["items"][0]["observation_id"] == result["observation_id"]
         assert page["items"][0]["series"]["candles"][0]["close"] == "60500"
 
@@ -197,6 +263,79 @@ def test_kraken_candle_source_hold_and_future_time_fail_before_request(tmp_path)
             },
         )
         assert future.status_code == 422
+        assert requests == []
+    finally:
+        client.close()
+        asyncio.run(registry.aclose())
+
+
+def test_kraken_candle_scan_reaches_older_matching_observations(tmp_path):
+    requests: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        pair = request.url.params["pair"]
+        body = json.dumps(
+            {"error": [], "result": {pair: [], "last": int(T0.timestamp())}},
+            separators=(",", ":"),
+        )
+        return httpx.Response(200, text=body, request=request)
+
+    other_pair_id = "XETHZUSD"
+    other_pair_metadata = {
+        **PAIR_METADATA,
+        "wsname": "ETH/USD",
+        "altname": "ETHUSD",
+        "base": "XETH",
+    }
+    adapter, registry = _configured_adapter(handler)
+    store = FrontierStore(tmp_path / "frontier.sqlite3")
+    target_market_observation_id = _store_saved_pair(adapter, store)
+    other_market_observation_id = _store_saved_pair(
+        adapter,
+        store,
+        native_market_id=other_pair_id,
+        pair_metadata=other_pair_metadata,
+    )
+    _store_saved_candle(store, PAIR_ID, target_market_observation_id, 0)
+    for ordinal in range(1, 21):
+        _store_saved_candle(
+            store,
+            other_pair_id,
+            other_market_observation_id,
+            ordinal,
+        )
+    app = FastAPI()
+    app.include_router(router(store, registry))
+    client = TestClient(app)
+    try:
+        first = client.get(
+            "/api/frontier/candles",
+            params={"venue": "kraken", "native_market_id": PAIR_ID},
+        )
+        assert first.status_code == 200, first.text
+        first_page = first.json()
+        assert first_page["items"] == []
+        assert first_page["scanned_observations"] == 20
+        assert first_page["scan_offset"] == 0
+        assert first_page["next_scan_offset"] == 20
+        assert first_page["scan_may_be_incomplete"] is True
+
+        second = client.get(
+            "/api/frontier/candles",
+            params={
+                "venue": "kraken",
+                "native_market_id": PAIR_ID,
+                "scan_offset": first_page["next_scan_offset"],
+            },
+        )
+        assert second.status_code == 200, second.text
+        second_page = second.json()
+        assert second_page["returned"] == 1
+        assert second_page["items"][0]["series"]["native_market_id"] == PAIR_ID
+        assert second_page["scan_offset"] == 20
+        assert second_page["scanned_observations"] == 1
+        assert second_page["next_scan_offset"] is None
         assert requests == []
     finally:
         client.close()
