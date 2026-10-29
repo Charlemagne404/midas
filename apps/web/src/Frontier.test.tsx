@@ -3108,6 +3108,10 @@ it('renders a bounded accessible relationship graph and opens selected evidence'
     const body = path.startsWith('/api/frontier/graph?')
       ? {
           ...graphBase,
+          entity_context:
+            graphParams.get('include_entity_context') === 'true'
+              ? graphBase.entity_context
+              : undefined,
           center_market_id: graphParams.get('center_market_id'),
           next_cursor: graphParams.get('cursor') ? null : 'cursor-page-2',
           truncated_by_edge_limit: !graphParams.get('cursor'),
@@ -3128,6 +3132,13 @@ it('renders a bounded accessible relationship graph and opens selected evidence'
   expect(
     await screen.findByRole('group', { name: /Relationship network showing 1/ }),
   ).toBeInTheDocument();
+  expect(
+    fetchMock.mock.calls.some(
+      ([input]) =>
+        String(input).includes('/api/frontier/graph?') &&
+        String(input).includes('include_entity_context=true'),
+    ),
+  ).toBe(true);
   expect(await screen.findByText('Not in loaded window')).toBeInTheDocument();
   expect(screen.getByText('market not in loaded window')).toBeInTheDocument();
   expect(

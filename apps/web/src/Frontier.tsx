@@ -2444,6 +2444,7 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
   });
   const graphCursor = graphPageCursors[graphPageIndex] ?? null;
   const graphPageSize = graphCenterMarketId ? 30 : 100;
+  const includeEntityContext = section === 'relationships';
   const graph = useQuery({
     queryKey: [
       'frontier',
@@ -2454,11 +2455,13 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
       graphPageSize,
       graphCursor,
       graphQuerySession,
+      includeEntityContext,
     ],
     queryFn: () => {
       const params = new URLSearchParams({
         depth: String(graphDepth),
         limit: String(graphPageSize),
+        include_entity_context: String(includeEntityContext),
       });
       if (graphCenterMarketId) params.set('center_market_id', graphCenterMarketId);
       if (graphSearch.trim()) params.set('q', graphSearch.trim());

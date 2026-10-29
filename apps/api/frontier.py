@@ -4018,6 +4018,7 @@ def router(
         depth: int = Query(default=1, ge=1, le=3),
         limit: int = Query(default=50, ge=1, le=200),
         cursor: str | None = Query(default=None, max_length=2048),
+        include_entity_context: bool = Query(default=False),
     ) -> dict[str, Any]:
         if center_market_id and q:
             raise HTTPException(
@@ -4327,20 +4328,9 @@ def router(
                     ),
                 }
             )
-        entity_context = project_market_entity_context(
-            tuple(
-                (
-                    market_id,
-                    market_by_id.get(market_id),
-                    market_observation_by_id.get(market_id),
-                )
-                for market_id in sorted(node_ids)
-            )
-        )
-        return {
+        response: dict[str, Any] = {
             "nodes": nodes,
             "edges": edges,
-            "entity_context": entity_context.model_dump(mode="json"),
             "center_market_id": center_market_id,
             "search": q,
             "depth": depth,
@@ -4354,6 +4344,19 @@ def router(
             "next_cursor": next_cursor,
             "source_market_window_limit": 200,
         }
+        if include_entity_context:
+            entity_context = project_market_entity_context(
+                tuple(
+                    (
+                        market_id,
+                        market_by_id.get(market_id),
+                        market_observation_by_id.get(market_id),
+                    )
+                    for market_id in sorted(node_ids)
+                )
+            )
+            response["entity_context"] = entity_context.model_dump(mode="json")
+        return response
 
     @api.post("/relationships/propose")
     async def propose(

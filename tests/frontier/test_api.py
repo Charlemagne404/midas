@@ -3846,9 +3846,21 @@ def test_graph_neighborhood_is_centered_bounded_and_review_aware(tmp_path):
     for relationship in relationships:
         store.append_relationship(relationship)
     try:
-        centered = client.get(
+        unexpanded = client.get(
             "/api/frontier/graph",
             params={"center_market_id": markets[0].canonical_id, "depth": 1, "limit": 1},
+        )
+        assert unexpanded.status_code == 200
+        assert "entity_context" not in unexpanded.json()
+
+        centered = client.get(
+            "/api/frontier/graph",
+            params={
+                "center_market_id": markets[0].canonical_id,
+                "depth": 1,
+                "limit": 1,
+                "include_entity_context": "true",
+            },
         )
         assert centered.status_code == 200
         assert centered.json()["returned_edges"] == 1
