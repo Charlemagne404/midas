@@ -79,10 +79,7 @@ def _store_saved_candle(
 ) -> str:
     request_started = T0 + timedelta(seconds=ordinal + 1)
     received = request_started + timedelta(milliseconds=1)
-    request_url = (
-        "https://api.kraken.com/0/public/OHLC?"
-        f"pair={native_market_id}&interval=60"
-    )
+    request_url = f"https://api.kraken.com/0/public/OHLC?pair={native_market_id}&interval=60"
     raw_body = json.dumps(
         {"error": [], "result": {native_market_id: [], "last": int(T0.timestamp())}},
         separators=(",", ":"),

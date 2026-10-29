@@ -253,11 +253,9 @@ export function KrakenCandleHistoryPanel({
             <>
               <strong>No matching captures in the bounded scan</strong>
               <p>
-                This batch checked{' '}
-                {saved.data.pages.at(-1)?.scanned_observations ?? 0} of up to{' '}
+                This batch checked {saved.data.pages.at(-1)?.scanned_observations ?? 0} of up to{' '}
                 {saved.data.pages.at(-1)?.scan_bound ?? 20} saved candle observations and found no
-                match. Additional matching
-                captures may exist outside this scan.
+                match. Additional matching captures may exist outside this scan.
               </p>
             </>
           ) : (
@@ -285,8 +283,8 @@ export function KrakenCandleHistoryPanel({
           ))}
           {saved.data?.pages.some((page) => page.scan_may_be_incomplete) && (
             <small>
-              Saved observations are scanned newest first in bounded batches. New captures can
-              shift later offset pages while scanning.
+              Saved observations are scanned newest first in bounded batches. New captures can shift
+              later offset pages while scanning.
             </small>
           )}
         </div>
