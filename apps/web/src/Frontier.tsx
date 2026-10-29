@@ -24,6 +24,7 @@ import {
 import { api } from './api';
 import {
   KrakenBookUpdatesPanel,
+  type KrakenBookCaptureReplay,
   type KrakenBookUpdateCaptureResult,
 } from './KrakenBookUpdatesPanel';
 import './frontier.css';
@@ -3142,6 +3143,13 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
       }),
     onSuccess: refresh,
   });
+  const replayKrakenBookUpdates = useMutation({
+    mutationFn: (input: { observationIds: string[] }) =>
+      api<KrakenBookCaptureReplay>('/frontier/replay/kraken/book-updates', {
+        method: 'POST',
+        body: JSON.stringify({ observation_ids: input.observationIds }),
+      }),
+  });
   const captureKalshiMultivariate = useMutation({
     mutationFn: (input: KalshiMultivariateFilter) =>
       api<KalshiMultivariateCaptureResult>('/frontier/probe/kalshi/multivariate-events', {
@@ -4069,6 +4077,7 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
               bookUpdatesProbe={capturePolymarketBookUpdates}
               bookUpdatesProbeEnabled={polymarketBookUpdatesProbeEnabled}
               krakenBookUpdatesProbe={captureKrakenBookUpdates}
+              krakenBookUpdatesReplay={replayKrakenBookUpdates}
               krakenBookUpdatesProbeEnabled={krakenBookUpdatesProbeEnabled}
               krakenBookUpdatesDisabledReason={krakenBookUpdatesSource?.probe_policy_block_reason}
               eventMarketsProbe={captureEventMarketGroup}
@@ -6303,6 +6312,7 @@ function MarketDetails({
   bookUpdatesProbe,
   bookUpdatesProbeEnabled,
   krakenBookUpdatesProbe,
+  krakenBookUpdatesReplay,
   krakenBookUpdatesProbeEnabled,
   krakenBookUpdatesDisabledReason,
   eventMarketsProbe,
@@ -6348,6 +6358,12 @@ function MarketDetails({
     KrakenBookUpdateCaptureResult,
     Error,
     { marketId: string },
+    unknown
+  >;
+  krakenBookUpdatesReplay: UseMutationResult<
+    KrakenBookCaptureReplay,
+    Error,
+    { observationIds: string[] },
     unknown
   >;
   krakenBookUpdatesProbeEnabled: boolean;
@@ -6512,6 +6528,7 @@ function MarketDetails({
           marketId={market.canonical_id}
           nativeMarketId={market.native_market_id}
           probe={krakenBookUpdatesProbe}
+          replay={krakenBookUpdatesReplay}
           probeEnabled={krakenBookUpdatesProbeEnabled}
           disabledReason={krakenBookUpdatesDisabledReason}
           renderEvidence={(observationId) => <EvidenceDisclosure observationId={observationId} />}

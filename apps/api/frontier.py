@@ -53,6 +53,7 @@ from midas.frontier.adapters.base import (
 from midas.frontier.adapters.coinbase import CoinbaseSpotAdapter
 from midas.frontier.adapters.gemini import GeminiSpotAdapter
 from midas.frontier.adapters.kraken import KrakenSpotAdapter
+from midas.frontier.adapters.kraken_book_replay import replay_kraken_book_capture
 from midas.frontier.adapters.polymarket import PolymarketAdapter
 from midas.frontier.analytics import (
     BOOK_SAMPLE_LIMIT,
@@ -205,6 +206,19 @@ class KrakenBookUpdatesProbeRequest(BaseModel):
     market_id: str = Field(min_length=1, max_length=256)
     max_frames: int = Field(default=16, strict=True, ge=1, le=16)
     max_updates: int = Field(default=16, strict=True, ge=1, le=16)
+
+
+class KrakenBookUpdatesReplayRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+    observation_ids: tuple[str, ...] = Field(min_length=1, max_length=32)
+
+    @model_validator(mode="after")
+    def observation_ids_are_unique_sha256(self) -> KrakenBookUpdatesReplayRequest:
+        if any(re.fullmatch(r"[0-9a-f]{64}", item) is None for item in self.observation_ids):
+            raise ValueError("Kraken book replay requires lowercase observation SHA-256 IDs")
+        if len(set(self.observation_ids)) != len(self.observation_ids):
+            raise ValueError("Kraken book replay observation IDs must be unique")
+        return self
 
 
 class PriceHistoryReplayRequest(BaseModel):
@@ -3024,7 +3038,10 @@ def router(
                 frame_summaries: list[dict[str, Any]] = []
                 state_count = 0
                 for capture, frame in zip(captures, frames, strict=True):
-                    if not isinstance(frame, KrakenBookUpdateFrame) or not frame.has_valid_structure:
+                    if (
+                        not isinstance(frame, KrakenBookUpdateFrame)
+                        or not frame.has_valid_structure
+                    ):
                         raise AdapterError(
                             "BOOK_UPDATE_CAPTURE_MISMATCH",
                             "Kraken adapter returned an invalid normalized WebSocket message",
@@ -3066,6 +3083,7 @@ def router(
                             "frame_type": frame.frame_type,
                             "stream_message_index": frame.stream_message_index,
                             "symbol": frame.symbol,
+                            "subscription_depth": frame.subscription_depth,
                             "subscription_acknowledged": frame.subscription_acknowledged,
                             "source_timestamp_utc": (
                                 frame.source_timestamp_utc.isoformat()
@@ -3144,6 +3162,43 @@ def router(
                         "diagnostic_persistence_error": diagnostic_error,
                     },
                 ) from error
+
+    @api.post("/replay/kraken/book-updates")
+    async def replay_kraken_book_updates(
+        request: KrakenBookUpdatesReplayRequest,
+    ) -> dict[str, Any]:
+        """Replay only persisted Kraken frames; this route never opens a source connection."""
+        venue = Venue.KRAKEN
+        reject_held_venue(venue)
+        records: list[dict[str, Any]] = []
+        async with source_operation(venue):
+            for observation_id in request.observation_ids:
+                try:
+                    row = store.observation(observation_id)
+                except (FrontierStoreError, ValueError) as error:
+                    raise HTTPException(status_code=409, detail=str(error)) from error
+                if row is None:
+                    raise HTTPException(status_code=404, detail="Kraken frame was not found")
+                if (
+                    row["venue"] != venue.value
+                    or row["observation_kind"] != "public_book_update_frame"
+                ):
+                    raise HTTPException(
+                        status_code=409,
+                        detail="Kraken replay accepts only persisted Kraken book-update frames",
+                    )
+                records.append(row)
+            try:
+                result = replay_kraken_book_capture(records)
+            except (AdapterError, FrontierStoreError, ValueError) as error:
+                raise HTTPException(
+                    status_code=409,
+                    detail={
+                        "code": getattr(error, "code", "KRAKEN_REPLAY_INVALID"),
+                        "message": str(error),
+                    },
+                ) from error
+        return result.model_dump(mode="json")
 
     @api.post("/probe/kalshi/trades")
     async def probe_kalshi_trade_page(

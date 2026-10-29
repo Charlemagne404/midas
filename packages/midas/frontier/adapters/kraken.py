@@ -370,9 +370,13 @@ class KrakenSpotAdapter(BaseReadOnlyAdapter):
                 "Enable this source and its bounded public-probe flag before opening a stream",
             )
         if type(max_frames) is not int or not 1 <= max_frames <= MAX_KRAKEN_STREAM_FRAMES:
-            raise AdapterError("INVALID_STREAM_LIMIT", "Kraken frame limit must be between 1 and 32")
+            raise AdapterError(
+                "INVALID_STREAM_LIMIT", "Kraken frame limit must be between 1 and 32"
+            )
         if type(max_updates) is not int or not 1 <= max_updates <= 100:
-            raise AdapterError("INVALID_STREAM_LIMIT", "Kraken update limit must be between 1 and 100")
+            raise AdapterError(
+                "INVALID_STREAM_LIMIT", "Kraken update limit must be between 1 and 100"
+            )
         if (
             not isinstance(max_duration_seconds, (int, float))
             or isinstance(max_duration_seconds, bool)
@@ -457,9 +461,7 @@ class KrakenSpotAdapter(BaseReadOnlyAdapter):
                     )
                 )
                 while received_frames < max_frames and book_state_count < max_updates:
-                    receive_timeout = min(
-                        deadline - loop.time(), self.config.timeout_seconds
-                    )
+                    receive_timeout = min(deadline - loop.time(), self.config.timeout_seconds)
                     if receive_timeout <= 0:
                         break
                     try:
@@ -518,9 +520,11 @@ class KrakenSpotAdapter(BaseReadOnlyAdapter):
                         observation_id=observation_id,
                     )
                     frame = KrakenBookUpdateFrame(
+                        schema_version=2,
                         frame_type=frame_type,
                         native_market_id=market.native_market_id,
                         symbol=symbol,
+                        subscription_depth=depth,
                         stream_message_index=received_frames - 1,
                         book_message_index=state.message_index if state is not None else None,
                         subscription_acknowledged=reconstructor.subscription_acknowledged,
@@ -604,7 +608,9 @@ class KrakenSpotAdapter(BaseReadOnlyAdapter):
             self._capture_bytes + len(raw_bytes) > MAX_KRAKEN_CAPTURE_BYTES
             or len(self._captures) >= MAX_KRAKEN_CAPTURE_RECORDS
         ):
-            raise AdapterError("CAPTURE_BUDGET_EXCEEDED", "Kraken stream capture budget is exhausted")
+            raise AdapterError(
+                "CAPTURE_BUDGET_EXCEEDED", "Kraken stream capture budget is exhausted"
+            )
         received_at = datetime.now(UTC)
         capture = RawObservation(
             venue=self.venue,

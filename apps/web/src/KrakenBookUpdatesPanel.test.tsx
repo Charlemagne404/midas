@@ -3,6 +3,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import type { UseMutationResult } from '@tanstack/react-query';
 import {
   KrakenBookUpdatesPanel,
+  type KrakenBookCaptureReplay,
   type KrakenBookUpdateCaptureResult,
 } from './KrakenBookUpdatesPanel';
 
@@ -12,6 +13,12 @@ type Mutation = UseMutationResult<
   KrakenBookUpdateCaptureResult,
   Error,
   { marketId: string },
+  unknown
+>;
+type ReplayMutation = UseMutationResult<
+  KrakenBookCaptureReplay,
+  Error,
+  { observationIds: string[] },
   unknown
 >;
 
@@ -26,6 +33,17 @@ const mutationState = (overrides: Record<string, unknown> = {}) =>
     mutate: vi.fn(),
     ...overrides,
   }) as unknown as Mutation;
+const replayMutationState = (overrides: Record<string, unknown> = {}) =>
+  ({
+    isSuccess: false,
+    isPending: false,
+    isError: false,
+    variables: undefined,
+    data: undefined,
+    error: null,
+    mutate: vi.fn(),
+    ...overrides,
+  }) as unknown as ReplayMutation;
 
 const capture: KrakenBookUpdateCaptureResult = {
   venue: 'kraken',
@@ -44,6 +62,24 @@ const capture: KrakenBookUpdateCaptureResult = {
   },
   frames: [
     {
+      observation_id: 'd'.repeat(64),
+      raw_sha256: 'e'.repeat(64),
+      received_at_utc: '2026-10-29T07:59:59.800Z',
+      source_url: 'wss://ws.kraken.com/v2',
+      source_schema_version: 'kraken-spot-websocket-v2',
+      adapter_version: 'frontier-kraken-spot-12',
+      frame_type: 'subscription_ack',
+      stream_message_index: 0,
+      symbol: 'BTC/USD',
+      subscription_depth: 10,
+      subscription_acknowledged: true,
+      source_timestamp_utc: null,
+      checksum: null,
+      checksum_verified: false,
+      bid_level_count: 0,
+      ask_level_count: 0,
+    },
+    {
       observation_id: 'b'.repeat(64),
       raw_sha256: 'c'.repeat(64),
       received_at_utc: '2026-10-29T08:00:00Z',
@@ -53,6 +89,7 @@ const capture: KrakenBookUpdateCaptureResult = {
       frame_type: 'snapshot',
       stream_message_index: 1,
       symbol: 'BTC/USD',
+      subscription_depth: 10,
       subscription_acknowledged: true,
       source_timestamp_utc: '2026-10-29T07:59:59.900Z',
       checksum: 123456,
@@ -74,6 +111,7 @@ it('keeps capture disabled and explains a source policy hold', () => {
       marketId="kraken:XBT/USD"
       nativeMarketId="XBT/USD"
       probe={probe}
+      replay={replayMutationState()}
       probeEnabled={false}
       disabledReason={disabledReason}
       renderEvidence={(observationId) => <span>Inspect stored {observationId}</span>}
@@ -94,6 +132,7 @@ it('submits only the explicitly selected saved market when capture is enabled', 
       marketId={capture.market_id}
       nativeMarketId={capture.native_market_id}
       probe={probe}
+      replay={replayMutationState()}
       probeEnabled
       renderEvidence={(observationId) => <span>Inspect stored {observationId}</span>}
     />,
@@ -109,11 +148,13 @@ it('shows checksum state, source timing, and immutable evidence for a saved-mark
     variables: { marketId: capture.market_id },
     data: capture,
   });
+  const replay = replayMutationState();
   render(
     <KrakenBookUpdatesPanel
       marketId={capture.market_id}
       nativeMarketId={capture.native_market_id}
       probe={probe}
+      replay={replay}
       probeEnabled
       renderEvidence={(observationId) => <span>Inspect stored {observationId}</span>}
     />,
@@ -129,11 +170,74 @@ it('shows checksum state, source timing, and immutable evidence for a saved-mark
   expect(
     screen.getByText(/Bid\/ask levels 10\/10 · subscription ack observed/),
   ).toBeInTheDocument();
+  expect(screen.getAllByText(/subscribed depth 10/)).toHaveLength(2);
   expect(screen.getByText(/raw SHA-256 c{12}/i)).toBeInTheDocument();
   expect(screen.getByText(`Inspect stored ${'b'.repeat(64)}`)).toBeInTheDocument();
+  expect(screen.getByText(`Inspect stored ${'d'.repeat(64)}`)).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Replay saved capture offline' }));
+  expect(replay.mutate).toHaveBeenCalledWith({
+    observationIds: ['d'.repeat(64), 'b'.repeat(64)],
+  });
   expect(
     screen.getByText(/Spot prices are contextual evidence; they are not event-contract payouts/),
   ).toBeInTheDocument();
+});
+
+it('labels deterministic stored-frame replay as contextual and economically ineligible', () => {
+  const probe = mutationState({
+    isSuccess: true,
+    variables: { marketId: capture.market_id },
+    data: capture,
+  });
+  const replay = replayMutationState({
+    isSuccess: true,
+    variables: { observationIds: ['d'.repeat(64), 'b'.repeat(64)] },
+    data: {
+      replay_version: 'kraken-spot-book-context-replay-1',
+      native_market_id: 'XBT/USD',
+      symbol: 'BTC/USD',
+      subscription_depth: 10,
+      frame_evidence: [{ observation_id: 'd'.repeat(64) }, { observation_id: 'b'.repeat(64) }],
+      book_states: [
+        {
+          observation_id: 'b'.repeat(64),
+          frame_type: 'snapshot',
+          message_index: 0,
+          source_timestamp_utc: '2026-10-29T07:59:59.900Z',
+          received_at_utc: '2026-10-29T08:00:00Z',
+          bids: [{ price: '100.0', quantity: '0.5' }],
+          asks: [{ price: '100.1', quantity: '0.4' }],
+          checksum: 123456,
+          checksum_verified: true,
+        },
+      ],
+      reconstruction_status: 'checksum_verified_states',
+      input_sha256: 'f'.repeat(64),
+      result_sha256: '1'.repeat(64),
+      classification: 'context_only',
+      event_economics_eligible: false,
+    },
+  });
+  render(
+    <KrakenBookUpdatesPanel
+      marketId={capture.market_id}
+      nativeMarketId={capture.native_market_id}
+      probe={probe}
+      replay={replay}
+      probeEnabled
+      renderEvidence={(observationId) => <span>Inspect stored {observationId}</span>}
+    />,
+  );
+
+  expect(
+    screen.getByText(
+      'Reconstructed 1 checksum-verified book state from 2 immutable stored frames at depth 10.',
+    ),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByText('Context only · event-contract economics ineligible.'),
+  ).toBeInTheDocument();
+  expect(screen.getByText(/result SHA-256 111111111111/)).toBeInTheDocument();
 });
 
 it.each([
@@ -176,6 +280,7 @@ it.each([
       marketId={capture.market_id}
       nativeMarketId={capture.native_market_id}
       probe={probe}
+      replay={replayMutationState()}
       probeEnabled
       renderEvidence={(observationId) => <span>Inspect stored {observationId}</span>}
     />,
@@ -196,6 +301,7 @@ it('does not show a prior market capture after the selected market changes', () 
       marketId="kraken:BTC/USD"
       nativeMarketId="BTC/USD"
       probe={probe}
+      replay={replayMutationState()}
       probeEnabled
       renderEvidence={(observationId) => <span>Inspect stored {observationId}</span>}
     />,

@@ -1318,11 +1318,12 @@ class PolymarketBookUpdateFrame(FrontierModel):
 class KrakenBookUpdateFrame(FrontierModel):
     """One raw-bound Kraken v2 control or CRC-verified L2 book message."""
 
-    schema_version: Literal[1] = 1
+    schema_version: Literal[1, 2] = 1
     venue: Literal[Venue.KRAKEN] = Venue.KRAKEN
     frame_type: Literal["subscription_ack", "status", "heartbeat", "snapshot", "update"]
     native_market_id: str = Field(min_length=1, max_length=256)
     symbol: str = Field(pattern=r"^[A-Z0-9]{2,20}/[A-Z0-9]{2,20}$")
+    subscription_depth: int | None = Field(default=None, ge=10, le=100, strict=True)
     stream_message_index: int = Field(ge=0, le=31, strict=True)
     book_message_index: int | None = Field(default=None, ge=0, strict=True)
     subscription_acknowledged: StrictBool
@@ -1357,6 +1358,10 @@ class KrakenBookUpdateFrame(FrontierModel):
             raise ValueError("Kraken frame adapter version is invalid")
         if self.provenance.source_schema_version != "kraken-spot-websocket-v2-book-v1":
             raise ValueError("Kraken frame source schema is invalid")
+        if self.schema_version == 1 and self.subscription_depth is not None:
+            raise ValueError("Kraken frame schema v1 cannot claim a subscription depth")
+        if self.schema_version == 2 and self.subscription_depth not in {10, 25, 100}:
+            raise ValueError("Kraken frame schema v2 requires its subscribed book depth")
         expected_observation_id = hashlib.sha256(
             "|".join(
                 (

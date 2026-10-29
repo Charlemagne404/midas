@@ -18,6 +18,7 @@ from midas.frontier.adapters.kraken import (
     KrakenSpotAdapter,
     KrakenSpotConfig,
 )
+from midas.frontier.adapters.kraken_book_replay import replay_kraken_book_capture
 from midas.frontier.adapters.kraken_book_stream import kraken_book_checksum
 from midas.frontier.adapters.transport import HTTPObservation
 from midas.frontier.models import KrakenBookUpdateFrame, RawObservation, Venue
@@ -191,6 +192,25 @@ def test_kraken_book_stream_is_disabled_before_connector_use(tmp_path: Path):
         asyncio.run(adapter.aclose())
 
 
+def test_kraken_persisted_replay_respects_source_hold_before_storage_access(tmp_path: Path):
+    config = KrakenSpotConfig(probe_policy_block_reason="Fixture source-use hold")
+    adapter = _adapter(config)
+    store = FrontierStore(tmp_path / "frontier.sqlite3")
+    app = FastAPI()
+    app.include_router(router(store, AdapterRegistry((adapter,))))
+    client = TestClient(app)
+    try:
+        response = client.post(
+            "/api/frontier/replay/kraken/book-updates",
+            json={"observation_ids": ["a" * 64]},
+        )
+        assert response.status_code == 409
+        assert response.json()["detail"] == "Fixture source-use hold"
+    finally:
+        client.close()
+        asyncio.run(adapter.aclose())
+
+
 def test_kraken_book_stream_api_binds_persists_and_verifies_each_raw_message(tmp_path: Path):
     connector = FixtureConnector(list(_stream_frames()))
     config = KrakenSpotConfig(enabled=True, live_public_probe_enabled=True)
@@ -225,6 +245,7 @@ def test_kraken_book_stream_api_binds_persists_and_verifies_each_raw_message(tmp
         ]
         assert all(frame["subscription_acknowledged"] for frame in result["frames"])
         assert result["frames"][1]["checksum_verified"] is True
+        assert result["frames"][1]["subscription_depth"] == 10
         assert result["frames"][2]["bid_level_count"] == 1
         assert connector.calls == 1
         assert connector.url == KRAKEN_SPOT_WEBSOCKET_V2_URL
@@ -245,9 +266,45 @@ def test_kraken_book_stream_api_binds_persists_and_verifies_each_raw_message(tmp
         assert stored[0]["raw"]["raw_body"] == _stream_frames()[0]
         assert stored[1]["normalized"]["frame_type"] == "snapshot"
         assert stored[1]["normalized"]["checksum_verified"] is True
-        assert stored[1]["normalized"]["bound_market_observation_id"] == result[
-            "bound_market_observation_id"
-        ]
+        assert stored[1]["normalized"]["subscription_depth"] == 10
+        assert (
+            stored[1]["normalized"]["bound_market_observation_id"]
+            == result["bound_market_observation_id"]
+        )
+
+        replay = replay_kraken_book_capture(stored)
+        assert replay.replay_version == "kraken-spot-book-context-replay-1"
+        assert replay.subscription_depth == 10
+        assert len(replay.frame_evidence) == 3
+        assert len(replay.book_states) == 2
+        assert replay.book_states[1].bids[0].quantity == Decimal("0.500")
+        assert replay.classification == "context_only"
+        assert replay.event_economics_eligible is False
+        reordered_replay = replay_kraken_book_capture(tuple(reversed(stored)))
+        assert reordered_replay.input_sha256 == replay.input_sha256
+        assert reordered_replay.result_sha256 == replay.result_sha256
+
+        replay_response = client.post(
+            "/api/frontier/replay/kraken/book-updates",
+            json={"observation_ids": [item["observation_id"] for item in stored]},
+        )
+        assert replay_response.status_code == 200, replay_response.text
+        replay_result = replay_response.json()
+        assert replay_result["result_sha256"] == replay.result_sha256
+        assert replay_result["classification"] == "context_only"
+        assert replay_result["event_economics_eligible"] is False
+        replay_reordered_response = client.post(
+            "/api/frontier/replay/kraken/book-updates",
+            json={"observation_ids": [item["observation_id"] for item in reversed(stored)]},
+        )
+        assert replay_reordered_response.status_code == 200, replay_reordered_response.text
+        assert replay_reordered_response.json()["result_sha256"] == replay_result["result_sha256"]
+        assert connector.calls == 1
+
+        tampered = json.loads(json.dumps(stored))
+        tampered[2]["normalized"]["bids"][0]["quantity"] = "9.000"
+        with pytest.raises(ValueError, match="differs from persisted normalized evidence"):
+            replay_kraken_book_capture(tampered)
 
         mismatched_raw = RawObservation.model_validate(stored[1]["raw"]).model_copy(
             update={"raw_body": "{}", "raw_sha256": hashlib.sha256(b"{}").hexdigest()}

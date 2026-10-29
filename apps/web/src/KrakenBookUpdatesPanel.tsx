@@ -26,6 +26,7 @@ export type KrakenBookUpdateCaptureResult = {
     frame_type: string;
     stream_message_index: number;
     symbol: string;
+    subscription_depth: number | null;
     subscription_acknowledged: boolean;
     source_timestamp_utc: string | null;
     checksum: number | null;
@@ -38,10 +39,38 @@ export type KrakenBookUpdateCaptureResult = {
   note: string;
 };
 
+export type KrakenBookCaptureReplay = {
+  replay_version: string;
+  native_market_id: string;
+  symbol: string;
+  subscription_depth: 10 | 25 | 100;
+  frame_evidence: { observation_id: string }[];
+  book_states: {
+    observation_id: string;
+    frame_type: 'snapshot' | 'update';
+    message_index: number;
+    source_timestamp_utc: string;
+    received_at_utc: string;
+    bids: { price: string; quantity: string }[];
+    asks: { price: string; quantity: string }[];
+    checksum: number;
+    checksum_verified: true;
+  }[];
+  reconstruction_status:
+    'checksum_verified_states' | 'acknowledged_no_book_state' | 'control_only_no_ack';
+  input_sha256: string;
+  result_sha256: string;
+  classification: 'context_only';
+  event_economics_eligible: false;
+};
+
+type KrakenBookReplayInput = { observationIds: string[] };
+
 type KrakenBookUpdatesPanelProps = {
   marketId: string;
   nativeMarketId: string;
   probe: UseMutationResult<KrakenBookUpdateCaptureResult, Error, { marketId: string }, unknown>;
+  replay: UseMutationResult<KrakenBookCaptureReplay, Error, KrakenBookReplayInput, unknown>;
   probeEnabled: boolean;
   disabledReason?: string | null;
   renderEvidence: (observationId: string) => ReactNode;
@@ -53,11 +82,18 @@ export function KrakenBookUpdatesPanel({
   marketId,
   nativeMarketId,
   probe,
+  replay,
   probeEnabled,
   disabledReason,
   renderEvidence,
 }: KrakenBookUpdatesPanelProps) {
   const result = probe.isSuccess && probe.variables?.marketId === marketId ? probe.data : null;
+  const replayObservationIds = result?.frames.map((frame) => frame.observation_id) ?? [];
+  const replayResult =
+    replay.isSuccess &&
+    replay.variables?.observationIds.join(',') === replayObservationIds.join(',')
+      ? replay.data
+      : null;
   const stateLabel = (value: string) => value.replaceAll('_', ' ');
 
   return (
@@ -90,10 +126,19 @@ export function KrakenBookUpdatesPanel({
               ? 'Capture 3-second Kraken spot stream'
               : 'Kraken stream unavailable'}
         </button>
+        <button
+          className="fr-inspect-button"
+          disabled={
+            replayObservationIds.length === 0 || Boolean(disabledReason) || replay.isPending
+          }
+          onClick={() => replay.mutate({ observationIds: replayObservationIds })}
+        >
+          {replay.isPending ? 'Replaying stored frames…' : 'Replay saved capture offline'}
+        </button>
       </div>
       <p className="fr-price-history-note">
         {probeEnabled
-          ? 'Capture starts only after this button is pressed. Spot prices are contextual evidence; they are not event-contract payouts, a verified hedge, or proof of simultaneous executable depth.'
+          ? 'Capture starts only after this button is pressed. Saved-capture replay reads immutable frames and opens no source connection. Spot prices are contextual evidence; they are not event-contract payouts, a verified hedge, or proof of simultaneous executable depth.'
           : (disabledReason ??
             'Capture is unavailable because Kraken is disabled, held by source policy, or does not advertise book updates.')}
       </p>
@@ -101,6 +146,36 @@ export function KrakenBookUpdatesPanel({
         <p role="alert" className="fr-price-history-note">
           {probe.error?.message ?? 'Kraken capture failed without a diagnostic message.'}
         </p>
+      )}
+      {replay.isError &&
+        replay.variables?.observationIds.join(',') === replayObservationIds.join(',') && (
+          <p role="alert" className="fr-price-history-note">
+            {replay.error?.message ?? 'Stored Kraken replay failed without a diagnostic message.'}
+          </p>
+        )}
+      {replayResult && (
+        <div
+          className="fr-price-history-result"
+          role="status"
+          aria-label="Kraken offline replay result"
+        >
+          <p>
+            Reconstructed {replayResult.book_states.length} checksum-verified book state
+            {replayResult.book_states.length === 1 ? '' : 's'} from{' '}
+            {replayResult.frame_evidence.length} immutable stored frame
+            {replayResult.frame_evidence.length === 1 ? '' : 's'} at depth{' '}
+            {replayResult.subscription_depth}.
+          </p>
+          <p>
+            Replay {replayResult.replay_version} · state{' '}
+            {stateLabel(replayResult.reconstruction_status)}
+          </p>
+          <p>
+            Input SHA-256 {shortHash(replayResult.input_sha256)} · result SHA-256{' '}
+            {shortHash(replayResult.result_sha256)}
+          </p>
+          <strong>Context only · event-contract economics ineligible.</strong>
+        </div>
       )}
       {result && (
         <div className="fr-price-history-result" role="status">
@@ -130,7 +205,8 @@ export function KrakenBookUpdatesPanel({
               </span>
               <span>
                 Bid/ask levels {frame.bid_level_count}/{frame.ask_level_count} · subscription ack{' '}
-                {frame.subscription_acknowledged ? 'observed' : 'not observed'}
+                {frame.subscription_acknowledged ? 'observed' : 'not observed'} · subscribed depth{' '}
+                {frame.subscription_depth ?? 'not recorded'}
               </span>
               <span>
                 Record {shortHash(frame.observation_id)} · raw SHA-256 {shortHash(frame.raw_sha256)}
