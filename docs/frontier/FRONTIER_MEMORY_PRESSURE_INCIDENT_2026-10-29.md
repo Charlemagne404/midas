@@ -877,6 +877,25 @@ historical pressure contributor is still not identified; this check adds a
 bounded development workload as a plausible pressure contributor, not a
 historical root cause.
 
+## Focused recovery-window checks — 2026-10-29 07:11 CET
+
+After host PSI returned to zero over its 10- and 60-second windows, the
+new-module-only strict mypy check passed under 512/384 MiB, zero swap, 20% CPU.
+The exact-tree frontend TypeScript check, ESLint, Prettier, and isolated Vite
+build also passed under bounded scopes; the build wrote only to
+`/tmp/midas-frontier-build-20261029T0608Z`. A final backend regression selection
+passed **4/4**, including the empty-native-label case, under 768/640 MiB, zero
+swap, 20% CPU. It emitted one existing Starlette/httpx deprecation warning.
+
+At 07:11:41 CET, host memory PSI avg10/avg60 was zero and avg300 was
+some/full `0.38/0.36%`; `MemAvailable=11,485,286,400` bytes (10.69 GiB) and
+`SwapFree=8,433,664` bytes (8.04 MiB). User-manager memory/swap charges were
+9,596,448,768 / 2,858,450,944 bytes, with unchanged OOM counters 19/15/0.
+API and Reality remained active at restart counts 9/14, and the preceding
+ten-minute OOM journal query was quiet. This supports further serial bounded
+development checks only; it does not resolve the nearly exhausted swap or
+identify historic OOM contributors. The whole-API mypy check remains deferred.
+
 ## Post-build and admission-telemetry sample — 2026-10-29 06:49 CET
 
 Frontier added process-local source gate counters and a refreshable Exchange Explorer snapshot in commit d712df1. The API reports current admitted operations/venues, cumulative admissions, and busy rejections split by venue and shared capacity with a UTC sample time. Counters reset with the router and are not aggregated across API workers. This improves visibility into Frontier's own bounded source calls; it is not a host-level resource monitor.

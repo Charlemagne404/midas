@@ -14238,3 +14238,25 @@ the historical incident is resolved.
 | Relationship graph UI context inspector | PARTIALLY VERIFIED | Focused fixture UI test, exact-tree TypeScript, lint, and production build pass; captured-browser validation remains pending. |
 | Strict entity-context module type check | COMPLETE AND VERIFIED | The new module passes strict mypy under a bounded zero-swap scope. |
 | Strict Frontier API type check | PARTIALLY VERIFIED | One issue was found and fixed; whole-API check stopped due resource pressure and was not rerun. |
+
+### Empty-label resilience and post-test sample — 2026-10-29 07:11 CET
+
+Commit `b631333` makes the structural projection retain non-empty display
+labels when a stored instrument has an empty native ID/label or a payout state
+has an empty state ID. It uses the source-scoped instrument identity or an
+explicit “Unlabelled payout state” label; raw empty identifiers remain
+preserved in the corresponding `native_id` field. The malformed-label fixture,
+the other entity-context fixtures, and the centered graph API regression passed
+**4/4** under a 768 MiB hard, 640 MiB high, zero-swap, 20% CPU scope (one
+existing Starlette/httpx deprecation warning). The entity-context module also
+passed strict mypy and Ruff after the change.
+
+At 07:11:41 CET, after these checks, host `MemAvailable` was 11,485,286,400
+bytes (10.69 GiB), `SwapFree` was 8,433,664 bytes (8.04 MiB), host memory PSI
+`avg10/avg60` was zero and `avg300` was `some=0.38%` / `full=0.36%`. The
+user-manager cgroup held 9,596,448,768 bytes of memory and 2,858,450,944 bytes
+of swap; OOM counters remained 19/15/0. API and Reality were active with
+unchanged restart counts 9/14 and the last ten-minute OOM journal query was
+quiet. This remains short observation, not recovery evidence. The full API
+mypy check and captured-browser validation remain pending; no live source was
+queried or matched.
