@@ -13733,3 +13733,21 @@ the changed storage and test modules, and a SQLite-only smoke check passed the
 backfill and filtered-trigger counter behavior. The actual Frontier store
 integration remains pending the test environment and is not production
 validation. No database or service was accessed for this implementation.
+
+### Focused graph-revision verification — 2026-10-29 04:42 CET
+
+The system Python lacks the project dependencies, but the existing
+`/home/charlie/midas/.venv` was available. Running from the Frontier worktree
+with `PYTHONPATH=/home/charlie/midas-frontier/packages` and cache writes
+disabled, five focused cases passed **5/5 in 2.20 seconds**: graph metadata
+invalidation, schema-7 backfill, atomic relationship/review increments,
+relationship page stability, and the schema-6 historical replay migration.
+The test scope used `MemoryHigh=384M`, `MemoryMax=512M`,
+`MemorySwapMax=0`, and `CPUQuota=20%`. A separate import check resolved the
+loaded storage module to this worktree and reported schema version 8.
+
+After the run, PSI remained zero, available memory was 11.52 GB, swap had
+2.03 MB free, and API/Reality restart counts remained 9/14. systemd-oomd did
+not retain the transient test scope's peak for later inspection. This closes
+the focused storage-test gap only; full-suite, broader regression, and
+production validation remain open.

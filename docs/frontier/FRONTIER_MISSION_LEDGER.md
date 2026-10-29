@@ -13215,3 +13215,22 @@ deployed.
 
 Implementation checkpoint: `53dcbd1`
 (`perf(frontier): maintain graph cursor revisions incrementally`).
+
+### Graph revision fixture verification — 2026-10-29 04:42 CET
+
+The primary checkout's existing `/home/charlie/midas/.venv` supplied pytest
+and Pydantic without installing anything. From `/home/charlie/midas-frontier`,
+five focused graph-counter, backfill, pagination, and historical schema
+migration cases passed **5/5 in 2.20 seconds** under `MemoryHigh=384M`,
+`MemoryMax=512M`, `MemorySwapMax=0`, `CPUQuota=20%`, with pytest cache disabled
+and basetemp on `/dev/shm`. `PYTHONPATH` was explicitly pinned to this
+worktree's `packages` directory; the loaded storage module reported its
+Frontier path and schema version 8. No production database was accessed.
+
+After the test, PSI remained zero, `MemAvailable` was 11.52 GB, free swap was
+2.03 MB, API/Reality restart counts were unchanged, and no new OOM log was
+found. systemd-oomd did not retain the transient scope's peak. The test pass
+is focused fixture verification, not full-suite or host-endurance evidence.
+
+Verification checkpoint: working-tree test result recorded before the
+follow-up documentation commit.

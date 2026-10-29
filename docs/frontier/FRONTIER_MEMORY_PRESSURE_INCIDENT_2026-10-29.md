@@ -207,6 +207,19 @@ not run: host Python has neither pytest nor Pydantic installed. No packages
 were installed. This was bounded development validation, not a host stability
 or application integration test.
 
+At 04:42, an existing virtual environment at
+`/home/charlie/midas/.venv/bin/python` was found. The five focused graph
+revision and schema-migration cases then passed **5/5 in 2.20 seconds** in a
+scope capped at 384 MiB `MemoryHigh`, 512 MiB `MemoryMax`, zero swap, and 20%
+CPU. An explicit `PYTHONPATH` check confirmed imports resolve to
+`/home/charlie/midas-frontier/packages/midas/frontier/storage.py` at schema
+version 8. The post-test sample still showed zero PSI, 11.52 GB
+`MemAvailable`, 2.03 MB free swap, active API/Reality, and unchanged restart
+counts 9/14. No OOM record appeared. The transient scope's peak was not
+retained by systemd. These fixture tests verify the storage migration and
+counter behavior; they do not verify the full suite, production storage, or
+host endurance.
+
 ## Frontier continuation gate
 
 Frontier is **safe to continue with serial code/documentation work and small,
