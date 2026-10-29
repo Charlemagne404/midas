@@ -1,5 +1,18 @@
 # Project Frontier Mission Ledger
 
+## Current host state — 2026-10-29 01:05 CET
+
+The focused isolated capacity regression passed **5/5** (`35` deselected) in
+0.61 seconds under a 384 MiB hard cap, zero swap, 25% CPU quota, 16 tasks, and
+a 20-second timeout. It covers three candidate fixtures and two existing
+capacity checks. Post-run PSI stayed near zero, available memory was 9.8 GiB,
+and OOM counters did not change. The transient peak was not retained.
+
+Reality and API were active with their service cgroups close to `MemoryHigh`;
+Reality had roughly 220 KiB headroom and still had not written fresh capture
+status. The capacity monitor's 160 MiB soft bound remains unvalidated until
+its scheduled 01:16 run. Keep full suites, replay, probes, and batches paused.
+
 ## Current host state — 2026-10-29 01:02 CET
 
 All three isolated capacity-candidate fixtures now pass; two were run at

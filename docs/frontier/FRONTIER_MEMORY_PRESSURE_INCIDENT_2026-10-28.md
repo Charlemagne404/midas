@@ -718,3 +718,20 @@ headroom and its status was still stale. The candidate branch is clean at
 the full test file, the Reality service, the archive, or production capacity
 behavior. Keep broad tests deferred until after the 01:16 capacity run and
 fresh Reality recovery evidence.
+
+## Focused capacity regression — 2026-10-29 01:05 CET
+
+At 01:05, the isolated candidate worktree ran the complete focused
+`test_reality_operations.py -k archive_capacity` group in a new transient
+scope with the same 384 MiB hard cap, no swap, 25% CPU quota, 16-task limit,
+and 20-second timeout. Result: **5 passed, 35 deselected in 0.61 seconds**.
+This covers the three new candidate fixtures plus two existing capacity
+checks; it does not cover the remaining Reality tests or the Frontier suite.
+
+At 01:05:55, available host memory was 9.8 GiB. Host/user avg10 PSI was
+0.00%, avg300 `full` PSI was 0.00%, and user-manager `max`, `oom`, and
+`oom_kill` counts were unchanged; no newer OOM journal entry appeared. API
+and Reality were still active; Reality remained only about 220 KiB below
+`MemoryHigh` with stale status. Its isolated candidate branch is clean and
+undeployed. Keep the broader runtime gate closed pending the 01:16 capacity
+run and fresh Reality recovery evidence.
