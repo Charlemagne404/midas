@@ -8,6 +8,8 @@ import hashlib
 import json
 import math
 import re
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from datetime import UTC, datetime
 from decimal import Decimal
 from functools import lru_cache
@@ -119,6 +121,12 @@ from midas.frontier.relationships import (
     verify_same_payoff,
 )
 from midas.frontier.replay import deterministic_replay, paired_deterministic_replay
+from midas.frontier.source_gate import (
+    MAX_CONCURRENT_SOURCE_OPERATIONS,
+    SOURCE_OPERATION_ACQUIRE_TIMEOUT_SECONDS,
+    BoundedSourceOperationGate,
+    SourceOperationBusy,
+)
 from midas.frontier.storage import FrontierStore, FrontierStoreError
 from midas.frontier.timeline import MAX_TIMELINE_FRAMES, TimelineSourceStatusEvent
 from pydantic import (
@@ -1221,7 +1229,25 @@ def router(
     store: FrontierStore, registry: AdapterRegistry, *, arena_root: Path | None = None
 ) -> APIRouter:
     api = APIRouter(prefix="/api/frontier", tags=["frontier"])
-    source_locks = {venue: asyncio.Lock() for venue in Venue}
+    source_operation_gate = BoundedSourceOperationGate()
+
+    @asynccontextmanager
+    async def source_operation(venue: Venue) -> AsyncIterator[None]:
+        try:
+            async with source_operation_gate.operation(venue):
+                yield
+        except SourceOperationBusy as error:
+            raise HTTPException(
+                status_code=429,
+                detail={
+                    "code": "SOURCE_OPERATION_BUSY",
+                    "venue": venue.value,
+                    "scope": error.scope,
+                    "message": str(error),
+                },
+                headers={"Retry-After": "1"},
+            ) from error
+
     held_venues = tuple(
         manifest.venue.value
         for manifest in registry.capability_manifests()
@@ -1700,6 +1726,14 @@ def router(
                 }
                 for manifest in registry.capability_manifests()
             ],
+            "operation_admission": {
+                "scope": "frontier_router_instance",
+                "max_concurrent_source_operations": MAX_CONCURRENT_SOURCE_OPERATIONS,
+                "single_flight_per_venue": True,
+                "maximum_acquire_wait_ms": int(SOURCE_OPERATION_ACQUIRE_TIMEOUT_SECONDS * 1000),
+                "overload_status": 429,
+                "overload_behavior": "fail_fast_no_request_queued",
+            },
             "network_called": False,
         }
 
@@ -2469,7 +2503,7 @@ def router(
                 )
             source_cursor = decoded_cursor["source_cursor"]
 
-        async with source_locks[venue]:
+        async with source_operation(venue):
             adapter.take_captures()
             requests_before = adapter.transport.request_count
             captures: tuple[RawObservation, ...] = ()
@@ -2607,7 +2641,7 @@ def router(
                 detail="Recorded market has no immutable source-observation binding",
             )
 
-        async with source_locks[venue]:
+        async with source_operation(venue):
             adapter.take_captures()
             requests_before = adapter.transport.request_count
             captures: tuple[RawObservation, ...] = ()
@@ -2746,7 +2780,7 @@ def router(
 
         stored_observation_ids: list[str] = []
         unpersisted_captures: list[RawObservation] = []
-        async with source_locks[venue]:
+        async with source_operation(venue):
             adapter.take_captures()
             try:
                 frames = await adapter.capture_book_updates(
@@ -2957,7 +2991,7 @@ def router(
                 )
             source_cursor = decoded_cursor["source_cursor"]
 
-        async with source_locks[venue]:
+        async with source_operation(venue):
             adapter.take_captures()
             requests_before = adapter.transport.request_count
             captures: tuple[RawObservation, ...] = ()
@@ -3080,7 +3114,7 @@ def router(
                 detail="Fee metadata can only be fetched for a Kalshi market in the recorded listing window",
             )
 
-        async with source_locks[venue]:
+        async with source_operation(venue):
             adapter.take_captures()
             requests_before = adapter.transport.request_count
             captures: tuple[RawObservation, ...] = ()
@@ -3221,7 +3255,7 @@ def router(
         except (AdapterError, ValueError) as error:
             raise HTTPException(status_code=409, detail=str(error)) from error
 
-        async with source_locks[venue]:
+        async with source_operation(venue):
             adapter.take_captures()
             requests_before = adapter.transport.request_count
             captures: tuple[RawObservation, ...] = ()
@@ -3358,7 +3392,7 @@ def router(
                 detail="Component ticker must be referenced by the recorded parent combo",
             )
 
-        async with source_locks[venue]:
+        async with source_operation(venue):
             adapter.take_captures()
             requests_before = adapter.transport.request_count
             captures: tuple[RawObservation, ...] = ()
@@ -3502,7 +3536,7 @@ def router(
                 detail="A native event ID is required; the recorded market has no event-group identity",
             )
 
-        async with source_locks[venue]:
+        async with source_operation(venue):
             adapter.take_captures()
             requests_before = adapter.transport.request_count
             captures: tuple[RawObservation, ...] = ()
@@ -3614,7 +3648,7 @@ def router(
         config = getattr(adapter, "config", None)
         config = require_probe_config(config)
 
-        async with source_locks[venue]:
+        async with source_operation(venue):
             adapter.take_captures()
             requests_before = adapter.transport.request_count
             captures: tuple[RawObservation, ...] = ()
@@ -5428,7 +5462,7 @@ def router(
                 detail="Source does not support public trades",
             )
 
-        async with source_locks[venue]:
+        async with source_operation(venue):
             try:
                 result = await BoundedSourceCollector(adapter, store).start(
                     market_limit=request.market_limit,
@@ -5534,7 +5568,7 @@ def router(
             if checkpoint.state in {"completed", "partial", "failed"}:
                 result = await BoundedSourceCollector(adapter, store, journal).resume(run_id)
             else:
-                async with source_locks[venue]:
+                async with source_operation(venue):
                     result = await BoundedSourceCollector(adapter, store, journal).resume(run_id)
         except KeyError as error:
             raise HTTPException(status_code=404, detail="Collection run was not found") from error
@@ -5569,7 +5603,7 @@ def router(
             raise HTTPException(
                 status_code=422, detail="Requested discovery limit exceeds source configuration"
             )
-        async with source_locks[venue]:
+        async with source_operation(venue):
             unpersisted_captures: list[RawObservation] = []
             try:
                 adapter.take_captures()

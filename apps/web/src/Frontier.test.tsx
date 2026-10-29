@@ -2320,7 +2320,18 @@ it('captures Kalshi fee metadata and exposes a separate hypothetical fee sensiti
       latest_evidence_at_utc: '2026-10-26T20:00:00Z',
       limitations: [],
     },
-    '/api/frontier/sources': { items: [source] },
+    '/api/frontier/sources': {
+      items: [source],
+      operation_admission: {
+        scope: 'frontier_router_instance',
+        max_concurrent_source_operations: 2,
+        single_flight_per_venue: true,
+        maximum_acquire_wait_ms: 50,
+        overload_status: 429,
+        overload_behavior: 'fail_fast_no_request_queued',
+      },
+      network_called: false,
+    },
     '/api/frontier/markets?limit=100': { items: [market], returned: 1, limit: 100, offset: 0 },
     '/api/frontier/books?limit=100': { items: [], returned: 0, limit: 100, offset: 0 },
     '/api/frontier/trades?limit=100': {
@@ -4117,7 +4128,18 @@ it('captures one explicit bounded Kalshi multivariate event page', async () => {
       latest_evidence_at_utc: null,
       limitations: ['No recorded evidence.'],
     },
-    '/api/frontier/sources': { items: [source] },
+    '/api/frontier/sources': {
+      items: [source],
+      operation_admission: {
+        scope: 'frontier_router_instance',
+        max_concurrent_source_operations: 2,
+        single_flight_per_venue: true,
+        maximum_acquire_wait_ms: 50,
+        overload_status: 429,
+        overload_behavior: 'fail_fast_no_request_queued',
+      },
+      network_called: false,
+    },
     '/api/frontier/collection-runs?limit=20': {
       items: [],
       returned: 0,
@@ -4284,6 +4306,9 @@ it('captures one explicit bounded Kalshi multivariate event page', async () => {
   expect(fetchMock.mock.calls.every(([, init]) => init?.method !== 'POST')).toBe(true);
   fireEvent.click(screen.getByRole('button', { name: 'Exchanges' }));
   expect(await screen.findByText('Multivariate event discovery')).toBeInTheDocument();
+  expect(
+    screen.getByText(/Public captures allow at most 2 concurrent source operations/),
+  ).toBeInTheDocument();
   fireEvent.change(screen.getByLabelText('Kalshi multivariate filter type'), {
     target: { value: 'event_ticker' },
   });

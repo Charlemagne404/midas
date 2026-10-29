@@ -39,6 +39,19 @@ type Source = {
     notes: string[];
   };
 };
+type SourceOperationAdmission = {
+  scope: 'frontier_router_instance';
+  max_concurrent_source_operations: number;
+  single_flight_per_venue: boolean;
+  maximum_acquire_wait_ms: number;
+  overload_status: number;
+  overload_behavior: string;
+};
+type SourceInventory = {
+  items: Source[];
+  operation_admission?: SourceOperationAdmission;
+  network_called?: false;
+};
 type FiniteCollectionResponse = {
   venue: Venue;
   collection_run: {
@@ -2136,7 +2149,7 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
   });
   const sources = useQuery({
     queryKey: ['frontier', 'sources'],
-    queryFn: () => api<{ items: Source[] }>('/frontier/sources'),
+    queryFn: () => api<SourceInventory>('/frontier/sources'),
     ...options,
   });
   const collectionRuns = useQuery({
@@ -3682,6 +3695,7 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
       {section === 'sources' && (
         <SourcesView
           sources={sources.data?.items ?? []}
+          operationAdmission={sources.data?.operation_admission}
           markets={summary?.markets_by_venue ?? {}}
           probe={probe}
           finiteCollection={finiteCollection}
@@ -6989,6 +7003,7 @@ type KalshiMultivariateProbe = UseMutationResult<
 
 function SourcesView({
   sources,
+  operationAdmission,
   markets,
   probe,
   finiteCollection,
@@ -7005,6 +7020,7 @@ function SourcesView({
   error,
 }: {
   sources: Source[];
+  operationAdmission?: SourceOperationAdmission;
   markets: Record<string, number>;
   probe: ProbeMutation;
   finiteCollection: FiniteCollectionMutation;
@@ -7039,6 +7055,15 @@ function SourcesView({
               run ID cursor keeps older pages stable when a new run is added.
               {collectionRunsLoading ? ' Loading page…' : ''}
             </small>
+            {operationAdmission && (
+              <small role="note">
+                Public captures allow at most {operationAdmission.max_concurrent_source_operations}{' '}
+                concurrent source operations in this API process, with one active operation per
+                venue. Contention waits up to {operationAdmission.maximum_acquire_wait_ms} ms, then
+                returns HTTP {operationAdmission.overload_status} without queueing or making a
+                source request.
+              </small>
+            )}
           </div>
           <div className="fr-collection-history-actions">
             {collectionRunsBeforeRunId && (
