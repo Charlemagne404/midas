@@ -1218,3 +1218,18 @@ remained 19/15/0. API, Reality, and Reality API stayed active at restart
 counts 9/14/0; API/Reality used about 912/393 MiB. No OOMD/kernel OOM
 appeared since 07:50. These fixture tests add no live validation and the
 incident remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**.
+
+## Held-source transport denial — 2026-10-29 07:59 CET
+
+Four focused tests passed **4/4** in 3.29 seconds. They verify that Gemini's
+hold blocks before request; flagged, copied, or transport-overridden Coinbase
+configurations cannot bypass the terms hold. All use fake transports; no
+network request was made. The transient user service used 384 MiB high /
+512 MiB hard, zero swap, 20% CPU, 64 tasks, and a 60-second runtime. One
+existing Starlette/httpx deprecation warning appeared.
+
+At 07:58:42 PSI was zero, `MemAvailable` 10 GiB, and `SwapFree` 8.2 MiB.
+User-manager memory/swap was 9,708,617,728 / 2,858,422,272 bytes; OOM
+counters remained 19/15/0. API/Reality were active at restart counts 9/14,
+using about 913/394 MiB. No OOMD/kernel OOM appeared since 07:50. This
+verifies the hold boundary in fixtures, not source permission or live access.

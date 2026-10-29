@@ -13763,3 +13763,10 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
 - **Bounds:** Transient service had 384 MiB high / 512 MiB hard, zero swap, 20% CPU, 64 tasks, and 60 seconds. No live source or captured probes were used.
 - **Post-test host:** At 07:57:55 PSI zero, MemAvailable 10 GiB, SwapFree 8.2 MiB; user-manager memory/swap 9,709,481,984 / 2,858,422,272 bytes; OOM counters 19/15/0. API/Reality/Reality API active at restarts 9/14/0; API/Reality about 912/393 MiB. No OOMD/kernel OOM since 07:50.
 - **Status:** Fixture adapter coverage advanced; live access remains held and incident status unchanged.
+
+## Held-source transport denial — 2026-10-29 07:59 CET
+
+- **Tests:** Four current-tree cases passed **4/4** in 3.29 seconds: Gemini blocks before request; flagged Coinbase transport, copied configuration, and transport-level override all remain blocked by the source-use hold.
+- **Bounds:** Transient service used 384 MiB high / 512 MiB hard, zero swap, 20% CPU, 64 tasks, and 60 seconds. One existing Starlette/httpx deprecation warning. Fake transports only; no network call.
+- **Post-test host:** At 07:58:42 PSI zero, MemAvailable 10 GiB, SwapFree 8.2 MiB; user-manager memory/swap 9,708,617,728 / 2,858,422,272 bytes; OOM counters 19/15/0. API/Reality active at restarts 9/14 and about 913/394 MiB. No OOMD/kernel OOM since 07:50.
+- **Status:** Hold enforcement is fixture-verified; authorization for live adapter use remains unresolved. Incident remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**.
