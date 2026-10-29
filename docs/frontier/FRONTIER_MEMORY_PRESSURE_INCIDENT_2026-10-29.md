@@ -1305,3 +1305,20 @@ user-manager memory/swap 9,728,978,944 / 2,858,254,336 bytes. OOM counters
 remained 19/15/0; API/Reality were active at restarts 9/14, about 916/398
 MiB. No OOMD or kernel OOM appeared since 08:00. The tests do not change the
 **PARTIALLY CONTAINED / PARTIALLY VERIFIED** incident assessment.
+
+## Pinned-input replay and provenance checks — 2026-10-29 08:05 CET
+
+Two selected `test_timeline_api.py` cases passed **2/2** in 10.59 seconds.
+The replay API staged only pinned local inputs without source requests; the
+empty journal remained missing and hash-chain corruption failed closed. The
+transient cgroup was retained and measured 69,042,176 bytes peak (about
+65.9 MiB), under 384 MiB high / 512 MiB hard, zero swap, 20% CPU, 64 tasks,
+and a 60-second runtime. One existing Starlette/httpx deprecation warning
+appeared; temporary stores and fixtures only.
+
+At 08:05:36 PSI was zero, `MemAvailable` 10 GiB, and `SwapFree` 8.4 MiB.
+User-manager memory/swap was 9,732,186,112 / 2,858,254,336 bytes; OOM
+counters remained 19/15/0. API, Reality, and Reality API were active at
+restarts 9/14/0; API/Reality used about 917/399 MiB. No OOMD or kernel OOM
+appeared since 08:03. Incident status remains **PARTIALLY CONTAINED /
+PARTIALLY VERIFIED**.

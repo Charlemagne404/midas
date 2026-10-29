@@ -13798,3 +13798,10 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
 - **Bounds:** Transient user unit configured at 384 MiB high / 512 MiB hard, zero swap, 20% CPU, 64 tasks, and 60 seconds. The fast collected-unit exit field reported 256 KiB and is not a trustworthy peak measurement; do not use it as such. No external source was accessed.
 - **Host:** At 08:04:33 PSI zero, MemAvailable 10 GiB, SwapFree 8.4 MiB; user-manager memory/swap 9,728,978,944 / 2,858,254,336 bytes; OOM counters 19/15/0. API/Reality active at restarts 9/14, about 916/398 MiB. No OOMD/kernel OOM since 08:00.
 - **Status:** Cost and capital fixture coverage advanced; account-specific costs and live execution remain unresolved. Incident remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**.
+
+## Pinned-input replay and journal integrity — 2026-10-29 08:05 CET
+
+- **Tests:** Two current-tree `test_timeline_api.py` cases passed **2/2** in 10.59 seconds: replay stages only pinned local inputs and makes no source request; an empty health journal stays missing and hash-chain corruption fails closed.
+- **Bounds:** Retained cgroup peak was 69,042,176 bytes (65.9 MiB), under 384 MiB high / 512 MiB hard, zero swap, 20% CPU, 64 tasks, and 60 seconds. One Starlette/httpx deprecation warning. Temporary stores/fixtures only.
+- **Host:** 08:05:36 PSI zero, MemAvailable 10 GiB, SwapFree 8.4 MiB; user-manager memory/swap 9,732,186,112 / 2,858,254,336 bytes; OOM counters 19/15/0. API/Reality/Reality API active at restarts 9/14/0; API/Reality about 917/399 MiB. No OOMD/kernel OOM since 08:03.
+- **Status:** Provenance/replay rejection evidence advanced. The memory incident remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**; live sources and broader recovery remain open.

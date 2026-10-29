@@ -2,7 +2,7 @@
 
 **Report date:** 2026-10-29
 
-## Current completion matrix — 2026-10-29 08:04 CET
+## Current completion matrix — 2026-10-29 08:05 CET
 
 This is a current evidence classification, not a final completion claim. The
 dated implementation records below remain the detailed evidence; the
@@ -14587,3 +14587,19 @@ OOM counters remained 19/15/0. API and Reality were active at restarts 9/14,
 using about 916/398 MiB. No OOMD or kernel OOM appeared since 08:00. This is
 virtual-model fixture evidence; account-specific funding and conversion data
 remain unresolved.
+
+### Pinned-input replay and provenance fail-closed checks — 2026-10-29 08:05 CET
+
+Two current-tree `test_timeline_api.py` cases passed **2/2** in 10.59 seconds:
+the replay route stages only pinned local inputs and makes no source request;
+an empty collection-health journal remains missing, and hash-chain corruption
+fails closed. The focused run used a retained transient cgroup at 384 MiB high
+/ 512 MiB hard, zero swap, 20% CPU, 64 tasks, and 60 seconds. Its measured
+peak was 69,042,176 bytes (about 65.9 MiB); one existing Starlette/httpx
+deprecation warning appeared.
+
+At 08:05:36 host PSI remained zero, `MemAvailable` 10 GiB, and `SwapFree`
+8.4 MiB. User-manager memory/swap was 9,732,186,112 / 2,858,254,336 bytes;
+OOM counters remained 19/15/0. API, Reality, and Reality API were active at
+restarts 9/14/0, API/Reality about 917/399 MiB. No OOMD or kernel OOM appeared
+since 08:03. The tests used fixtures/local temporary stores only.
