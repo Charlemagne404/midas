@@ -206,7 +206,7 @@ async def test_four_trade_adapters_share_capture_contract_and_keep_native_semant
                 },
             },
             config=KrakenSpotConfig(
-                **basic_config.model_dump(),
+                **{**basic_config.model_dump(), "requests_per_second": 1.0},
                 pairs=("XBTUSD",),
             ),
             adapter_factory=_json_adapter_factory(KrakenSpotAdapter),
@@ -306,9 +306,10 @@ async def test_four_trade_adapters_share_capture_contract_and_keep_native_semant
         assert request.url.params[case.query_name] == case.query_value
         assert "authorization" not in request.headers
         assert source.capabilities.supports(Capability.OUTCOME_DEFINITIONS) is case.event_contract
-        assert source.capabilities.supports(
-            Capability.PAGINATED_PUBLIC_TRADES
-        ) is case.supports_paginated_trades
+        assert (
+            source.capabilities.supports(Capability.PAGINATED_PUBLIC_TRADES)
+            is case.supports_paginated_trades
+        )
         stored_observation_ids[case.venue] = store.append_observation(
             capture,
             TradeBatch(

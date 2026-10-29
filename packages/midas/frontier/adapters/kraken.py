@@ -5,9 +5,9 @@ from __future__ import annotations
 import re
 from datetime import UTC, datetime
 from decimal import Decimal
-from typing import Any
+from typing import Annotated, Any
 
-from pydantic import field_validator
+from pydantic import Field, field_validator
 
 from midas.frontier.adapters.base import AdapterError, BaseReadOnlyAdapter, build_capabilities
 from midas.frontier.adapters.normalization import (
@@ -39,7 +39,7 @@ from midas.frontier.models import (
 )
 
 D = Decimal
-ADAPTER_VERSION = "frontier-kraken-spot-10"
+ADAPTER_VERSION = "frontier-kraken-spot-11"
 BASE = "https://api.kraken.com/0/public"
 ORDERBOOK_DOC = "https://docs.kraken.com/api-reference/market-data/get-order-book"
 _KNOWN_FIAT_QUOTES = frozenset({"USD", "EUR", "GBP", "CAD", "AUD", "CHF", "JPY"})
@@ -52,9 +52,12 @@ def _quote_unit_identity(code: str) -> SettlementAssetIdentity | None:
 
 
 class KrakenSpotConfig(AdapterConfig):
-    """Bounded explicit pair allowlist; does not enumerate the full Kraken catalog."""
+    """Bounded pair allowlist and public Spot REST rate no higher than 1 request/sec."""
 
+    # Kraken's published public Spot REST guidance is 1 request/sec or less.
+    # https://support.kraken.com/articles/206548367-what-are-the-api-rate-limits-
     pairs: tuple[str, ...] = ("XBTUSD",)
+    requests_per_second: Annotated[float, Field(gt=0, le=1)] = 1.0
 
     @field_validator("pairs")
     @classmethod

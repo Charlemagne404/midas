@@ -1698,7 +1698,7 @@ async def test_kraken_synthetic_pair_and_book_preserve_spot_units_and_level_time
         enabled=True,
         live_public_probe_enabled=True,
         pairs=("XBTUSD",),
-        requests_per_second=5,
+        requests_per_second=1,
         retries=0,
     )
     transport, requests, client = _transport(
@@ -1762,7 +1762,7 @@ async def test_kraken_book_binds_market_identity_before_request(corruption: str)
         enabled=True,
         live_public_probe_enabled=True,
         pairs=("XBTUSD",),
-        requests_per_second=5,
+        requests_per_second=1,
         retries=0,
     )
     transport, requests, client = _transport(
@@ -1840,7 +1840,7 @@ async def test_kraken_pair_precision_requires_bounded_json_integers(field: str, 
         enabled=True,
         live_public_probe_enabled=True,
         pairs=("XBTUSD",),
-        requests_per_second=5,
+        requests_per_second=1,
         retries=0,
     )
     transport, _, client = _transport(
@@ -1879,7 +1879,7 @@ async def test_kraken_book_rejects_mismatched_result_key_without_single_row_fall
         enabled=True,
         live_public_probe_enabled=True,
         pairs=("XBTUSD",),
-        requests_per_second=5,
+        requests_per_second=1,
         retries=0,
     )
     transport, requests, client = _transport(
@@ -1905,7 +1905,7 @@ async def test_kraken_ohlc_rejects_mismatched_result_key_without_pair_fallback()
         enabled=True,
         live_public_probe_enabled=True,
         pairs=("XBTUSD",),
-        requests_per_second=5,
+        requests_per_second=1,
         retries=0,
     )
     response = {"error": [], "result": {"XETHZUSD": [], "last": 1793110000}}
@@ -1929,7 +1929,7 @@ async def test_kraken_ohlc_normalizes_exact_eight_field_native_rows():
         enabled=True,
         live_public_probe_enabled=True,
         pairs=("XBTUSD",),
-        requests_per_second=5,
+        requests_per_second=1,
         retries=0,
     )
     row = [1793110000, "60000", "61000", "59000", "60500", "60000", "1.5", 23]
@@ -1985,7 +1985,7 @@ async def test_kraken_ohlc_rejects_malformed_native_rows(row):
         enabled=True,
         live_public_probe_enabled=True,
         pairs=("XBTUSD",),
-        requests_per_second=5,
+        requests_per_second=1,
         retries=0,
     )
     body = json.dumps({"error": [], "result": {"XXBTZUSD": [row]}})
@@ -2019,7 +2019,7 @@ async def test_kraken_recent_trades_require_exact_pair_key_and_preserve_native_t
         enabled=True,
         live_public_probe_enabled=True,
         pairs=("XBTUSD",),
-        requests_per_second=5,
+        requests_per_second=1,
         retries=0,
     )
     transport, requests, client = _transport(
@@ -2042,7 +2042,7 @@ async def test_kraken_recent_trades_require_exact_pair_key_and_preserve_native_t
     assert first.aggressor_side is None
     assert second.native_trade_id is None
     assert second.aggressor_side is None
-    assert first.provenance.adapter_version == "frontier-kraken-spot-10"
+    assert first.provenance.adapter_version == "frontier-kraken-spot-11"
     assert requests[0].url.params["pair"] == "XXBTZUSD"
     assert requests[0].url.params["count"] == "2"
     assert all("authorization" not in request.headers for request in requests)
@@ -2062,7 +2062,7 @@ async def test_kraken_recent_trades_reject_mismatched_result_keys(result, expect
         enabled=True,
         live_public_probe_enabled=True,
         pairs=("XBTUSD",),
-        requests_per_second=5,
+        requests_per_second=1,
         retries=0,
     )
     transport, requests, client = _transport(
@@ -2107,7 +2107,7 @@ async def test_kraken_recent_trades_reject_malformed_rows(row):
         enabled=True,
         live_public_probe_enabled=True,
         pairs=("XBTUSD",),
-        requests_per_second=5,
+        requests_per_second=1,
         retries=0,
     )
     transport, requests, client = _transport(
@@ -2137,7 +2137,7 @@ async def test_kraken_recent_trades_reject_invalid_request_before_network(native
         enabled=True,
         live_public_probe_enabled=True,
         pairs=("XBTUSD",),
-        requests_per_second=5,
+        requests_per_second=1,
         retries=0,
     )
     transport, requests, client = _transport("api.kraken.com", {}, config)
@@ -2157,6 +2157,13 @@ def test_source_configs_and_capability_manifests_fail_closed():
         KrakenSpotConfig(pairs=("https://attacker.invalid",))
     with pytest.raises(ValueError):
         KrakenSpotConfig(pairs=("XBTUSD", "XBTUSD"))
+    with pytest.raises(ValueError):
+        KrakenSpotConfig(requests_per_second=1.01)
+    with pytest.raises(ValueError):
+        KrakenSpotConfig(requests_per_second=5)
+    assert KrakenSpotConfig().requests_per_second == 1.0
+    copied_with_unsafe_rate = KrakenSpotConfig().model_copy(update={"requests_per_second": 5})
+    assert not copied_with_unsafe_rate.has_valid_structure
     assert len(PolymarketAdapter.capabilities.declarations) == len(Capability)
     assert len(KalshiAdapter.capabilities.declarations) == len(Capability)
     assert len(KrakenSpotAdapter.capabilities.declarations) == len(Capability)

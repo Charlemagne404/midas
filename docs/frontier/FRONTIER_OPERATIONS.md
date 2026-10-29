@@ -85,6 +85,12 @@ listing/book/trade sample or one separately requested cursor page; it does not
 start a collector or crawl history. Do not enable probes in a production service
 as part of routine development.
 
+The Kraken Spot adapter validates `requests_per_second <= 1`, following
+[Kraken's public REST rate-limit guidance](https://support.kraken.com/articles/206548367-what-are-the-api-rate-limits-).
+This limiter is local to one adapter instance. Do not run concurrent Kraken
+adapter instances through the same public egress IP; separate instances and
+processes do not share a request budget.
+
 Adapter and transport construction revalidates the concrete source config
 before use. A copied config that bypassed its response, timeout, request-rate,
 market-count, or retry bounds is rejected before an HTTP client is created.

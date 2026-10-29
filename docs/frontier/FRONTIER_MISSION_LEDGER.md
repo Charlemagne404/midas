@@ -12856,6 +12856,22 @@ No host configuration or historical data was changed in this check. Continue
 only sequential, isolated, zero-swap offline work; full swap and initiating
 workload attribution remain unresolved.
 
+### Kraken public request-rate bound — 2026-10-29 03:20 CET
+
+Official Kraken Spot REST guidance says public calls should be made no more
+frequently than once per second. `KrakenSpotConfig` previously inherited the
+shared maximum of 5 requests/second despite defaulting to 1; it now rejects
+rates above 1 request/second, and the adapter schema version is
+`frontier-kraken-spot-11`. This is a per-adapter-instance limit; separate
+processes do not share a rate budget, so concurrent same-IP adapter instances
+remain unsupported. No live Kraken request was made. The adapter fixtures
+plus four-venue trade-contract test passed 169/169 in a 640 MiB, zero-swap,
+25%-CPU scope; after adding an explicit `model_copy` bypass regression, the
+focused config case passed 1/1 in a 384 MiB scope. Strict mypy passed for the
+Kraken adapter, and Ruff check/format passed for the changed Python files. Updated
+`docs/frontier/FRONTIER_OPERATIONS.md` and the current completion matrix.
+Official source: [Kraken Spot REST rate limits](https://support.kraken.com/articles/206548367-what-are-the-api-rate-limits-).
+
 ### Capacity timer observation — 2026-10-29 03:16 CET
 
 The scheduled capacity monitor completed at 03:16:44 in 8 seconds (6.575 CPU
