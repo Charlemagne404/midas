@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 19:00 CET |
+| Latest addendum | 2026-10-29 19:11 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Pre-incident checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -4702,13 +4702,11 @@ reports `awaiting_finalized_campaign_window_end`. Its timer and output store
 were not changed.
 
 A read-only watcher began at 18:56:46 to sample that service's transient
-cgroup during its next already-scheduled run. The watcher is itself transient,
-with a 16-minute runtime limit, 32 MiB High / 64 MiB Max / no swap / 5% CPU /
-32 tasks. At 18:57:11 it used about 5.7 MiB. It will capture the leaf's local
-`memory.events`, `memory.peak`, swap, and PSI plus parent counters, then exit;
-it does not start the Veritas job or write to the research store. This bounded
-observation is intended to distinguish source-analysis local cap events from
-other descendants without changing the scheduled research workload.
+cgroup during its next already-scheduled run. The watcher was transient, with
+a 16-minute runtime limit, 32 MiB High / 64 MiB Max / no swap / 5% CPU / 32
+tasks. It used about 5.7 MiB and exited successfully after capturing the
+19:10:33–19:10:45 run. It did not start the Veritas job or write to its
+research store.
 
 ### OOMD registration and scheduled observatory recheck — 2026-10-29 19:00 CET
 
@@ -4727,5 +4725,32 @@ completed successfully under its existing 256 MiB `MemoryMax`. It reported no
 usable post-run `MemoryPeak`; parent `memory.events.high`, `max`, `oom`, and
 `oom_kill` did not change. At 19:00:45, host PSI remained zero, about 10 GiB
 RAM was available, and free swap remained about 19 MiB. OOMD had no kill entry
-in the preceding five minutes. The source-analysis cgroup watcher remains
-bounded and waiting for the 19:10 timer.
+in the preceding five minutes.
+
+### Source-analysis cgroup attribution and post-run health — 2026-10-29 19:11 CET
+
+The watcher captured the source-analysis service at 250 ms intervals. Its
+`memory.peak` reached exactly 268,435,456 bytes (256 MiB), equal to its
+`MemoryMax`. The leaf's local `memory.events.max` increased by 233; its local
+`high`, `oom`, and `oom_kill` remained zero. The leaf used no swap. Its local
+PSI `some` and `full` totals increased by only 6,243 microseconds, with avg10,
+avg60, and avg300 all zero. The parent user-manager `memory.events.max` rose
+from 731,550 to 731,783, exactly the same 233 events; parent high/oom/oom_kill
+did not change. Its pressure averages remained zero.
+
+The job exited successfully at 19:10:45 after processing 59 segments, with no
+pending segments and readiness `awaiting_finalized_campaign_window_end`. This
+directly attributes the current 233 parent `max` increments to the source
+analysis hitting its own 256 MiB cap, but the very brief local PSI and zero
+OOM counters do not implicate it in the October 28 OOMD threshold crossings.
+The 18:10 and 18:40 counter increments remain historical associations because
+their leaf cgroups were not sampled. No service limit, timer, campaign input,
+or output store was changed.
+
+At 19:11:02 the host still had about 10 GiB available RAM, zero PSI, and about
+19 MiB free swap. MIDAS API, Reality, and Reality API remained active; the
+capacity timer remained active and gap-detail remained disabled. No OOMD or
+kernel kill appeared since the previous incident sample. Keep the current
+source-analysis timer and 256 MiB cap; continue only serial, resource-capped
+Frontier work while the nearly full swap and OOMD registration discrepancy
+remain open.

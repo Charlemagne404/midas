@@ -16402,3 +16402,28 @@ open.
 | Frontier host-resource panel | COMPLETE AND VERIFIED FOR FIXTURE API | Focused UI tests verify measured and omitted-field states; the deployed API omits swap and user-manager fields, and no production deployment was attempted. |
 | Memory incident containment | PARTIALLY VERIFIED | Gap-detail is disabled and bounded checks pass; swap remains nearly full and historical upstream pressure attribution is incomplete. |
 | Project Frontier overall | PARTIALLY VERIFIED | Live cross-venue evidence, broad acceptance, endurance, protected recovery, and production deployment remain open. |
+
+### Scheduled source-analysis cgroup measurement — 2026-10-29 19:11 CET
+
+A bounded read-only observer sampled the already-scheduled Veritas
+source-analysis service cgroup during its 19:10:33–19:10:45 run. The service
+reached its existing `MemoryMax=256 MiB`, and its local `memory.events.max`
+count increased by 233. The parent user-manager `max` counter increased by
+the same 233, directly accounting for the current run's event churn. The leaf
+used no swap, had no OOM/high events, and accumulated only about 6.2 ms of PSI
+some/full time with zero pressure averages. It processed 59 finalized
+segments, had no pending segments, and completed successfully. No timer,
+limit, campaign input, or analysis store changed.
+
+This measurement distinguishes local memory-limit counters from the October
+28 OOMD kills: the job's current local PSI was far below the 50% parent
+threshold and its run did not trigger an OOM. The historical 18:10/18:40
+counter increases remain associations. The source-analysis timer stays
+unchanged. A second bounded observer is waiting for the normal 19:20 Reality
+capacity check to determine whether its earlier 110 parent `high` increments
+were local to that worker.
+
+At 19:11 host PSI remained zero with about 10 GiB available RAM and about 19
+MiB swap free. Core API and Reality services remained active. Frontier is
+admitted only for serial, resource-capped fixture work; live probes, broad
+builds/suites, and deployment remain deferred.

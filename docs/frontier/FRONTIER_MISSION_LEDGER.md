@@ -16305,3 +16305,25 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
 - The capped, read-only source-analysis cgroup watcher remains active for its
   next scheduled 19:10 run. It will observe local cgroup peaks/events without
   modifying the frozen campaign, service limits, timer, or evidence.
+
+## 2026-10-29 19:11 CET — source-analysis local cap directly measured
+
+- The transient cgroup watcher captured the already-scheduled service at
+  250 ms intervals. It reached `memory.peak=268,435,456` bytes (256 MiB), its
+  hard limit. Local `memory.events.max=233`; local high/oom/oom_kill were zero;
+  swap was zero. Local PSI some/full totaled only 6,243 microseconds, with
+  zero averages.
+- Parent `user@1000` max rose exactly 233 (731,550→731,783), with no change in
+  high/oom/oom_kill and zero PSI averages. This directly attributes today's
+  max counter churn to source-analysis, but its brief pressure and clean exit
+  do not implicate it in the Oct 28 OOMD trigger. Earlier +280/+241 events
+  remain associations because their leaf cgroups were not captured.
+- The 19:10:33–19:10:45 job succeeded after 59 segments, no pending segments,
+  and `awaiting_finalized_campaign_window_end`. Its timer, 256 MiB cap,
+  campaign inputs, and store were left unchanged. The 16-minute observer
+  exited successfully after using about 5.9 MiB peak.
+- At 19:11:02, host PSI remained zero, available RAM about 10 GiB, free swap
+  about 19 MiB; API, Reality, and Reality API remained active. No OOMD/kernel
+  kill appeared since 19:00. The gap-detail timer remains disabled. Continue
+  only serial, capped Frontier fixture work; incident status is still
+  **PARTIALLY CONTAINED / PARTIALLY VERIFIED**.
