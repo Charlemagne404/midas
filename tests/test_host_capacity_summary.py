@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from scripts.host_capacity_sample import cgroup_ancestor_paths
+from scripts.host_capacity_sample import cgroup_ancestor_paths, read
 from scripts.host_capacity_summary import fields, summarize
 
 
@@ -20,6 +20,12 @@ def test_cgroup_ancestor_paths_cover_leaf_to_root():
 def test_cgroup_ancestor_paths_reject_untrusted_path_shapes(path):
     assert cgroup_ancestor_paths(path) == ()
     assert cgroup_ancestor_paths("/safe/" + chr(0) + "escape") == ()
+
+
+def test_read_marks_undecodable_proc_text_unavailable(tmp_path):
+    path = tmp_path / "proc-entry"
+    path.write_bytes(b"valid-prefix \xff invalid-utf8\n")
+    assert read(path) is None
 
 
 def test_units_pressure_cpu_and_swap_rates_are_distinct(tmp_path):

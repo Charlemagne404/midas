@@ -9,7 +9,7 @@ from pathlib import Path, PurePosixPath
 def read(path: Path) -> str | None:
     try:
         return path.read_text()
-    except (OSError, PermissionError):
+    except (OSError, UnicodeDecodeError):
         return None
 
 
