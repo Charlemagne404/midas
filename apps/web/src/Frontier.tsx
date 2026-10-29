@@ -7850,6 +7850,10 @@ function InlineError({ message }: { message: string }) {
   );
 }
 
+const MAX_RELATIONSHIP_TERM_DETAIL_INSTRUMENTS = 32;
+const MAX_RELATIONSHIP_TERM_DETAIL_PAYOUTS = 32;
+const MAX_RELATIONSHIP_TERM_DETAIL_STATES = 32;
+
 function RelationshipContractTerms({
   side,
   market,
@@ -7857,6 +7861,11 @@ function RelationshipContractTerms({
   side: 'Left' | 'Right';
   market: Market | undefined;
 }) {
+  const payoffStateIds = market?.payoff.state_ids ?? [];
+  const visiblePayoffStateIds = payoffStateIds.slice(0, MAX_RELATIONSHIP_TERM_DETAIL_STATES);
+  const instruments = market?.instruments ?? [];
+  const visibleInstruments = instruments.slice(0, MAX_RELATIONSHIP_TERM_DETAIL_INSTRUMENTS);
+
   return (
     <section className="fr-contract-terms" aria-label={`${side} recorded contract terms`}>
       {market ? (
@@ -7884,7 +7893,15 @@ function RelationshipContractTerms({
             </div>
             <div>
               <dt>Payoff states</dt>
-              <dd>{market.payoff.state_ids.map(label).join(' · ') || 'Not reported'}</dd>
+              <dd>
+                {visiblePayoffStateIds.map(label).join(' · ') || 'Not reported'}
+                {payoffStateIds.length > visiblePayoffStateIds.length && (
+                  <small>
+                    {payoffStateIds.length - visiblePayoffStateIds.length} additional payoff states
+                    omitted from this view.
+                  </small>
+                )}
+              </dd>
             </div>
             <div>
               <dt>Payoff evidence</dt>
@@ -7936,53 +7953,69 @@ function RelationshipContractTerms({
                 </>
               )}
               <strong>Instrument definitions</strong>
+              {instruments.length > visibleInstruments.length && (
+                <p className="fr-contract-term-limit-note">
+                  Showing the first {visibleInstruments.length} of {instruments.length} instruments.
+                  Remaining captured terms are retained in the saved market record.
+                </p>
+              )}
               <ul>
-                {market.instruments.map((instrument) => (
-                  <li key={instrument.canonical_id ?? instrument.native_instrument_id}>
-                    <span>
-                      {instrument.label} · {instrument.outcome_id ?? 'outcome not identified'} ·{' '}
-                      <code>{instrument.native_instrument_id}</code>
-                    </span>
-                    <span className="fr-contract-instrument-meta">
-                      {[
-                        instrument.quantity_unit
-                          ? `quantity unit ${label(instrument.quantity_unit)}`
-                          : 'quantity unit not reported',
-                        instrument.price_currency
-                          ? `price currency ${instrument.price_currency}`
-                          : 'price currency not reported',
-                        `price currency identity ${settlementIdentityLabel(instrument.price_currency_identity)}`,
-                        instrument.tick_size
-                          ? `tick ${instrument.tick_size}`
-                          : 'tick size not reported',
-                        instrument.price_increment_ranges?.length
-                          ? `price increments ${instrument.price_increment_ranges
-                              .map(({ start, end, step }) => `${start}–${end} by ${step}`)
-                              .join(', ')}`
-                          : 'price increments not reported',
-                        instrument.quantity_step
-                          ? `quantity step ${instrument.quantity_step}`
-                          : 'quantity step not reported',
-                        instrument.minimum_quantity
-                          ? `minimum quantity ${instrument.minimum_quantity}`
-                          : 'minimum quantity not reported',
-                        instrument.minimum_notional
-                          ? `minimum notional ${instrument.minimum_notional}`
-                          : 'minimum notional not reported',
-                      ]
-                        .filter(Boolean)
-                        .join(' · ')}
-                    </span>
-                    <span className="fr-contract-payout-vector">
-                      Payout by state:{' '}
-                      {instrument.payouts?.length
-                        ? instrument.payouts
-                            .map(({ state_id, amount }) => `${state_id}: ${amount}`)
-                            .join(' · ')
-                        : 'not reported'}
-                    </span>
-                  </li>
-                ))}
+                {visibleInstruments.map((instrument) => {
+                  const payouts = instrument.payouts ?? [];
+                  const visiblePayouts = payouts.slice(0, MAX_RELATIONSHIP_TERM_DETAIL_PAYOUTS);
+                  return (
+                    <li key={instrument.canonical_id ?? instrument.native_instrument_id}>
+                      <span>
+                        {instrument.label} · {instrument.outcome_id ?? 'outcome not identified'} ·{' '}
+                        <code>{instrument.native_instrument_id}</code>
+                      </span>
+                      <span className="fr-contract-instrument-meta">
+                        {[
+                          instrument.quantity_unit
+                            ? `quantity unit ${label(instrument.quantity_unit)}`
+                            : 'quantity unit not reported',
+                          instrument.price_currency
+                            ? `price currency ${instrument.price_currency}`
+                            : 'price currency not reported',
+                          `price currency identity ${settlementIdentityLabel(instrument.price_currency_identity)}`,
+                          instrument.tick_size
+                            ? `tick ${instrument.tick_size}`
+                            : 'tick size not reported',
+                          instrument.price_increment_ranges?.length
+                            ? `price increments ${instrument.price_increment_ranges
+                                .map(({ start, end, step }) => `${start}–${end} by ${step}`)
+                                .join(', ')}`
+                            : 'price increments not reported',
+                          instrument.quantity_step
+                            ? `quantity step ${instrument.quantity_step}`
+                            : 'quantity step not reported',
+                          instrument.minimum_quantity
+                            ? `minimum quantity ${instrument.minimum_quantity}`
+                            : 'minimum quantity not reported',
+                          instrument.minimum_notional
+                            ? `minimum notional ${instrument.minimum_notional}`
+                            : 'minimum notional not reported',
+                        ]
+                          .filter(Boolean)
+                          .join(' · ')}
+                      </span>
+                      <span className="fr-contract-payout-vector">
+                        Payout by state:{' '}
+                        {visiblePayouts.length
+                          ? visiblePayouts
+                              .map(({ state_id, amount }) => `${state_id}: ${amount}`)
+                              .join(' · ')
+                          : 'not reported'}
+                        {payouts.length > visiblePayouts.length && (
+                          <small>
+                            {payouts.length - visiblePayouts.length} additional payout states
+                            omitted from this view.
+                          </small>
+                        )}
+                      </span>
+                    </li>
+                  );
+                })}
               </ul>
               <strong>Payoff verification basis</strong>
               <p>{market.payoff.verification_basis || 'Not reported'}</p>

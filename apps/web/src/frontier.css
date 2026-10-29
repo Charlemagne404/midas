@@ -2037,6 +2037,12 @@
   margin: 3px 0;
   white-space: pre-wrap;
 }
+.fr-contract-term-limit-note {
+  padding: 5px 7px;
+  border-left: 2px solid #c5a361;
+  background: #171b1d;
+  color: #c7b57e;
+}
 .fr-contract-rule ul {
   margin: 3px 0;
   padding-left: 16px;
@@ -2055,6 +2061,11 @@
 }
 .fr-contract-payout-vector {
   color: #c4b28c;
+}
+.fr-contract-payout-vector small,
+.fr-contract-terms dd small {
+  display: block;
+  color: #9ba8b8;
 }
 .fr-review-wrap {
   grid-column: 1 / -1;

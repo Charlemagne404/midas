@@ -3438,6 +3438,53 @@ it('renders a bounded accessible relationship graph and opens selected evidence'
     expect(screen.queryByRole('region', { name: 'Left recorded contract terms' })).toBeNull(),
   );
 
+  const largeKalshiMarket = {
+    ...kalshiMarket,
+    payoff: {
+      ...kalshiMarket.payoff,
+      state_ids: Array.from({ length: 64 }, (_, index) => `state-${index}`),
+    },
+    instruments: Array.from({ length: 40 }, (_, instrumentIndex) => ({
+      ...kalshiMarket.instruments[0]!,
+      native_instrument_id: `event-1-outcome-${instrumentIndex}`,
+      label: `Outcome ${instrumentIndex}`,
+      outcome_id: `outcome-${instrumentIndex}`,
+      payouts: Array.from({ length: 40 }, (_, stateIndex) => ({
+        state_id: `state-${stateIndex}`,
+        amount: stateIndex === instrumentIndex ? '1' : '0',
+      })),
+    })),
+  };
+  responses['/api/frontier/markets?limit=100'] = {
+    items: [polymarketMarket, largeKalshiMarket],
+    returned: 2,
+    limit: 100,
+    offset: 0,
+  };
+  await queryClient.refetchQueries({ queryKey: ['frontier', 'markets'] });
+  fireEvent.click(screen.getByText('Compare recorded contract terms', { selector: 'summary' }));
+  const rightContractTerms = await screen.findByRole('region', {
+    name: 'Right recorded contract terms',
+  });
+  expect(rightContractTerms).toHaveTextContent(
+    '32 additional payoff states omitted from this view.',
+  );
+  fireEvent.click(
+    within(rightContractTerms).getByText('Rules, instruments, and source provenance'),
+  );
+  expect(rightContractTerms).toHaveTextContent(
+    'Showing the first 32 of 40 instruments. Remaining captured terms are retained in the saved market record.',
+  );
+  expect(within(rightContractTerms).getAllByRole('listitem')).toHaveLength(32);
+  expect(
+    within(rightContractTerms).getAllByText('8 additional payout states omitted from this view.'),
+  ).toHaveLength(32);
+  expect(rightContractTerms).not.toHaveTextContent('state-63');
+  fireEvent.click(screen.getByText('Compare recorded contract terms', { selector: 'summary' }));
+  await vi.waitFor(() =>
+    expect(screen.queryByRole('region', { name: 'Right recorded contract terms' })).toBeNull(),
+  );
+
   fireEvent.change(screen.getByLabelText('Relationship graph center market'), {
     target: { value: '' },
   });
