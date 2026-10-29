@@ -4788,3 +4788,26 @@ contact/status, Echo production/staging, and RustDesk were active. All nine
 GNOME Terminal VTE scopes were present. Host PSI remained zero with about 10
 GiB available RAM and 19 MiB free swap; user-manager OOM counters were
 unchanged. No kernel or OOMD kill was logged since the October 28 events.
+
+### Post-commit host and service check — 2026-10-29 19:24 CET
+
+At 19:24:25, host memory PSI avg10/60/300 remained zero and `MemAvailable`
+was 10,885,024 KiB (about 10.4 GiB). Swap had 20,448 KiB free of 4 GiB
+(about 20 MiB free); its near-full state remains an unresolved risk. The
+user-manager counters were unchanged at `high=16,438,055`, `max=731,783`,
+`oom=19`, `oom_kill=15`, and `oom_group_kill=0`. Neither the systemd-oomd
+journal nor the kernel OOM search showed an entry since 19:20.
+
+MIDAS API, Reality, and Reality API units remained active. Their measured
+current memory was about 1.24/1.75 GiB, 0.85/1.25 GiB, and 0.31/0.63 GiB
+respectively (current / `MemoryMax`). The gap-detail timer remained disabled
+and inactive, and its service remained failed; it was not reset or restarted.
+The Reality capacity timer remained active. A Reality collector warning at
+19:22:51 reported `DEGRADED` after stale market observations; the unit stayed
+active and was not interrupted. This is a source-health caveat, not evidence
+of another memory kill.
+
+This point-in-time sample supports continued serial, capped fixture-only
+Frontier work. It does not resolve near-exhausted swap, the OOMD registration
+mismatch, or Reality source freshness, and is not endurance evidence. The
+incident remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**.

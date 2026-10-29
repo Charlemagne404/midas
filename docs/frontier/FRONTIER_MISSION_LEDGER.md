@@ -16373,3 +16373,18 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
 - This resumes Frontier with one focused, source-independent UI improvement.
   Overall acceptance remains **PARTIALLY VERIFIED**; live cross-venue
   validation, broad regression/endurance, recovery, and deployment are open.
+
+## 2026-10-29 19:24 CET — post-commit incident check
+
+- Host PSI averages remained zero; `MemAvailable=10,885,024 KiB` (about 10.4
+  GiB), but only about 20 MiB of 4 GiB swap was free. User-manager counters
+  stayed at high 16,438,055 / max 731,783 / oom 19 / oom_kill 15 /
+  oom_group_kill 0. No systemd-oomd or kernel OOM entry appeared since 19:20.
+- API, Reality, and Reality API stayed active at about 1.24/1.75, 0.85/1.25,
+  and 0.31/0.63 GiB current/Max. The capacity timer remained active; the
+  gap-detail timer remained disabled and its service failed, without reset or
+  restart. Reality logged one `DEGRADED` stale-observation warning at 19:22:51;
+  its unit stayed active. Preserve this as a source-health caveat.
+- Continue serial capped fixture-only work. Near-full swap, OOMD registration
+  mismatch, and Reality freshness remain unresolved; the incident is
+  **PARTIALLY CONTAINED / PARTIALLY VERIFIED**, not closed.
