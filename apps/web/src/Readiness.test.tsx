@@ -131,7 +131,12 @@ it('shows measured zero-candidate evidence without turning it into a profitabili
     '/readiness/resources': {
       captured_at_utc: new Date(now).toISOString(),
       sampling: 'bounded procfs, cgroup-v2 and statvfs reads',
-      host_memory: { total_bytes: 16_000_000_000, available_bytes: 7_000_000_000 },
+      host_memory: {
+        total_bytes: 16_000_000_000,
+        available_bytes: 7_000_000_000,
+        swap_total_bytes: 8 * 1024 ** 3,
+        swap_free_bytes: 2 * 1024 ** 3,
+      },
       host_pressure: {
         cpu: { some: { avg10: 0.2 } },
         memory: { some: { avg10: 0.1 } },
@@ -196,6 +201,12 @@ it('shows measured zero-candidate evidence without turning it into a profitabili
     ),
   ).toBeInTheDocument();
   expect(screen.getByText('0 / 12')).toBeInTheDocument();
+  expect(screen.getByText('2.0 GiB / 8.0 GiB free (75.0% used)')).toBeInTheDocument();
+  expect(
+    screen.getByText(
+      /Swap occupancy is shown as context and does not independently determine admission/,
+    ),
+  ).toBeInTheDocument();
   expect(screen.getByText(/Full latest-boundary verification is not reported/)).toBeInTheDocument();
   expect(screen.getByText(/Cold recovery boundary: not verified/)).toBeInTheDocument();
   expect(

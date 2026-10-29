@@ -3,6 +3,21 @@ from pathlib import Path
 from apps.api import readiness
 
 
+def test_host_memory_keeps_missing_or_malformed_swap_unmeasured(tmp_path):
+    proc = tmp_path / "proc"
+    proc.mkdir()
+    (proc / "meminfo").write_text(
+        "MemTotal: 1000 kB\nMemAvailable: 400 kB\nSwapTotal: 8000 kB\nSwapFree: unknown\n"
+    )
+
+    assert readiness._host_memory(proc) == {
+        "total_bytes": 1_024_000,
+        "available_bytes": 409_600,
+        "swap_total_bytes": 8_192_000,
+        "swap_free_bytes": None,
+    }
+
+
 def _write_cgroup(directory: Path, *, usage: int, high_events: int, throttle_events: int) -> None:
     directory.mkdir(parents=True, exist_ok=True)
     (directory / "memory.current").write_text("90\n")
@@ -30,7 +45,9 @@ def test_resource_snapshot_reports_bounded_cgroup_deltas_and_missing_services(tm
     _write_cgroup(api_group, usage=1_000_000, high_events=4, throttle_events=2)
     proc = tmp_path / "proc"
     (proc / "pressure").mkdir(parents=True)
-    (proc / "meminfo").write_text("MemTotal: 1000 kB\nMemAvailable: 400 kB\n")
+    (proc / "meminfo").write_text(
+        "MemTotal: 1000 kB\nMemAvailable: 400 kB\nSwapTotal: 8000 kB\nSwapFree: 2 kB\n"
+    )
     for name in ("cpu", "memory", "io"):
         (proc / "pressure" / name).write_text("some avg10=1.25 avg60=1.00 avg300=0.75 total=500\n")
     recordings = tmp_path / "reality" / "data" / "recordings"
@@ -50,7 +67,12 @@ def test_resource_snapshot_reports_bounded_cgroup_deltas_and_missing_services(tm
         "inactive_file": 6144,
     }
     assert first["services"]["midas-reality"]["status"] == "NOT_MEASURED"
-    assert first["host_memory"] == {"total_bytes": 1_024_000, "available_bytes": 409_600}
+    assert first["host_memory"] == {
+        "total_bytes": 1_024_000,
+        "available_bytes": 409_600,
+        "swap_total_bytes": 8_192_000,
+        "swap_free_bytes": 2_048,
+    }
     assert first["host_pressure"]["cpu"]["some"]["avg10"] == 1.25
     assert first["reality_recording_filesystem"]["status"] == "MEASURED"
 
@@ -72,7 +94,9 @@ def test_memory_composition_is_optional_bounded_and_does_not_change_charge(tmp_p
     (api_group / "memory.stat").write_text("anon 20\nfile 80\nshmem 10\n")
     proc = tmp_path / "proc"
     (proc / "pressure").mkdir(parents=True)
-    (proc / "meminfo").write_text("MemTotal: 1000 kB\nMemAvailable: 400 kB\n")
+    (proc / "meminfo").write_text(
+        "MemTotal: 1000 kB\nMemAvailable: 400 kB\nSwapTotal: 0 kB\nSwapFree: 0 kB\n"
+    )
     for name in ("cpu", "memory", "io"):
         (proc / "pressure" / name).write_text("some avg10=0 avg60=0 avg300=0 total=0\n")
     recordings = tmp_path / "reality" / "data" / "recordings"

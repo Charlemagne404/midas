@@ -46,6 +46,15 @@ const percent = (value: unknown) => {
   const parsed = asNumber(value);
   return parsed === null ? 'Not measured' : `${parsed.toFixed(1)}%`;
 };
+const swapCapacity = (memory: JsonRecord) => {
+  const total = asNumber(memory.swap_total_bytes);
+  const free = asNumber(memory.swap_free_bytes);
+  if (total === null || free === null || total < 0 || free < 0 || free > total) {
+    return 'Not measured';
+  }
+  if (total === 0) return free === 0 ? 'No swap configured' : 'Not measured';
+  return `${bytes(free)} / ${bytes(total)} free (${(((total - free) / total) * 100).toFixed(1)}% used)`;
+};
 const fmtTime = (value: unknown) => {
   if (typeof value !== 'string' && typeof value !== 'number') return 'Not measured';
   const parsed = typeof value === 'number' ? new Date(value) : new Date(value);
@@ -895,6 +904,10 @@ export function Readiness() {
                     </strong>
                   </div>
                   <div>
+                    <span>Swap free / total</span>
+                    <strong>{swapCapacity(hostMemory)}</strong>
+                  </div>
+                  <div>
                     <span>CPU PSI avg10</span>
                     <strong>{percent(at(hostPressure, 'cpu', 'some', 'avg10'))}</strong>
                   </div>
@@ -1069,6 +1082,10 @@ export function Readiness() {
                 Memory composition comes from cgroup memory.stat. File-backed charge may be
                 reclaimable but still counts toward MemoryHigh; shared-memory and active/inactive
                 file fields are subsets and are not added to the anonymous/file values.
+              </p>
+              <p className="rr-note">
+                Swap occupancy is shown as context and does not independently determine admission;
+                the gate uses available RAM, pressure, cgroup headroom, and Arena job state.
               </p>
               <div className="rr-sampling-note">
                 <strong>Sampling bounds:</strong>{' '}

@@ -174,7 +174,12 @@ def _service_cgroup(name: str, root: Path, now: float) -> dict[str, Any]:
 
 def _host_memory(proc_root: Path) -> dict[str, int | None]:
     raw = _bounded_text(proc_root / "meminfo")
-    values: dict[str, int | None] = {"total_bytes": None, "available_bytes": None}
+    values: dict[str, int | None] = {
+        "total_bytes": None,
+        "available_bytes": None,
+        "swap_total_bytes": None,
+        "swap_free_bytes": None,
+    }
     if raw is None:
         return values
     fields = {
@@ -182,7 +187,12 @@ def _host_memory(proc_root: Path) -> dict[str, int | None]:
         for line in raw.splitlines()
         if ":" in line and len(line.split()) >= 2
     }
-    for source, target in (("MemTotal", "total_bytes"), ("MemAvailable", "available_bytes")):
+    for source, target in (
+        ("MemTotal", "total_bytes"),
+        ("MemAvailable", "available_bytes"),
+        ("SwapTotal", "swap_total_bytes"),
+        ("SwapFree", "swap_free_bytes"),
+    ):
         try:
             values[target] = int(fields[source]) * 1024
         except (KeyError, ValueError):
