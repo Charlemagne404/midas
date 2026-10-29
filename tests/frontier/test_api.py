@@ -16,6 +16,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from midas.frontier.adapters import KalshiAdapter, KrakenSpotAdapter, PolymarketAdapter
 from midas.frontier.adapters.transport import PublicReadTransport
+from midas.frontier.entity_graph import ENTITY_CONTEXT_MODEL_VERSION
 from midas.frontier.models import (
     AdapterConfig,
     BookSnapshot,
@@ -3873,6 +3874,7 @@ def test_graph_neighborhood_is_centered_bounded_and_review_aware(tmp_path):
             for node in centered.json()["nodes"]
         )
         entity_context = centered.json()["entity_context"]
+        assert entity_context["model_version"] == ENTITY_CONTEXT_MODEL_VERSION
         assert entity_context["semantics"] == "structural_metadata_only"
         assert entity_context["economic_equivalence_asserted"] is False
         assert entity_context["represented_market_count"] == centered.json()["returned_nodes"]
