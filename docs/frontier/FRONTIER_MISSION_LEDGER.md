@@ -1,6 +1,6 @@
 # Project Frontier Mission Ledger
 
-## Current host state — 2026-10-29 01:11 CET
+## Current host state — 2026-10-29 01:17 CET
 
 Reality has resumed recording after cold replay: status says
 `RECORDING_UNSEQUENCED`, `active_receiving`, 16/16 fresh books, zero failures,
@@ -15,10 +15,24 @@ The same test passed on rerun under a 1 GiB hard cap, no swap, 25% CPU quota,
 oomd-kill counter changed; host and user PSI avg10/avg60/avg300 were zero and
 9.8 GiB was available after the run. API and Reality remained active.
 
-The scheduled capacity monitor at 01:16 is the next gate for the 160 MiB soft
-limit. Keep full suites, replay, probes, and research batches paused until
-that run is observed. Gap-detail timer remains disabled. Preserve all original
-dirty changes and the untracked public-probe evidence directory.
+The scheduled capacity monitor completed at 01:16:11 with `Result=success`,
+`MemoryPeak=134,225,920` bytes, `MemoryHigh=160 MiB`, `MemoryMax=192 MiB`,
+zero swap, and 6.56 CPU seconds. The peak was below the revised soft bound.
+Its report at 01:16:09 UTC says collector state `RECORDING_UNSEQUENCED`,
+status age 3.36 seconds, and raw recording size 12,137,375,646 bytes.
+`ARCHIVE_SEGMENT_INVENTORY_INVALID` and
+`ARCHIVE_MANIFEST_PROVENANCE_INVALID` remain; neither was altered.
+
+At 01:16:56 host available memory was 9.8 GiB and host PSI avg10/avg60/avg300
+was zero. User-manager `max=728,363`, `oom=19`, and `oom_kill=15` stayed fixed;
+`high` rose by three during the interval. No OOM journal entry appeared after
+the 23:43 incident. Reality and API remained active with unchanged restart
+counts (14 and 9) and were close to their own `MemoryHigh` bounds. Echo
+production/staging, Continental, Caddy, RustDesk, and the SSH socket were also
+active. This supports resuming bounded offline Frontier tests only. Keep full
+suites, replay, live probes, and research batches gated; continue to avoid
+overlap with scheduled work. The five-minute gap-detail timer remains disabled.
+Preserve all original dirty changes and the untracked public-probe evidence.
 
 ## Current host state — 2026-10-29 01:05 CET
 

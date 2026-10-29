@@ -2,7 +2,7 @@
 
 **Incident date:** 2026-10-28 (CET)
 
-**Checkpoint captured:** 2026-10-29 01:11 CET
+**Checkpoint captured:** 2026-10-29 01:17 CET
 
 **Scope:** Host reliability interruption during Project Frontier
 
@@ -794,3 +794,36 @@ all broad runtime work gated.
 The revised capacity-monitor `MemoryHigh=160M` is still not validated. Its
 scheduled 01:16 run is the next evidence gate. No claims are made that the
 incident is resolved based on this brief quiet period.
+
+## Revised capacity-bound validation — 2026-10-29 01:17 CET
+
+The scheduled 01:16:04 capacity timer completed successfully at 01:16:11.
+Systemd retained `MemoryPeak=134,225,920` bytes (about 128 MiB), below the
+revised `MemoryHigh=160 MiB`; `MemoryMax=192 MiB` and `MemorySwapMax=0` were
+effective. The service used 6.56 CPU seconds and returned status 0. Its peak
+was 8 KiB above the former 128 MiB threshold and about 32 MiB below the revised
+threshold, consistent with avoiding repeated soft-limit reclaim in this run.
+This validates one scheduled run under the new bound, not long-term behavior.
+
+The generated capacity report measured at 01:16:09 CET reports fresh collector
+status age 3.36 seconds, state `RECORDING_UNSEQUENCED`, and raw recording root
+size 12,137,375,646 bytes. Archive state remains `INVALID_MANIFEST`; the
+inventory and provenance alerts remain in the report. No archive or manifest
+was modified.
+
+At 01:16:56, host `MemAvailable` was 9.8 GiB, swap use 3.1/4 GiB, and host
+memory PSI avg10/avg60/avg300 was 0.00%. The user-manager event counts were
+`max=728,363`, `oom=19`, and `oom_kill=15` unchanged; its `high` count rose by
+three since 01:14:26. Neither the kernel nor systemd-oomd journal has a new
+kill since 23:43:24 CET on 2026-10-28. Reality/API restart counts remain 14/9;
+both services are active but close to their `MemoryHigh` limits. Echo
+production/staging, Continental, Caddy, RustDesk, and SSH were active at the
+same check. The five-minute gap-detail timer remains disabled.
+
+The historical systemd-oomd mechanism is confirmed, and the recurring capacity
+service's old 128 MiB local cap was exceeded. The original workload mix that
+drove the user hierarchy above oomd's pressure threshold is still unknown.
+Current evidence supports resuming only bounded offline Frontier tests with
+explicit memory, swap, CPU, task, and wall-time limits. Keep broad suites,
+replay, live probes, and research batches gated; do not treat this single run
+or quiet observation window as incident closure.
