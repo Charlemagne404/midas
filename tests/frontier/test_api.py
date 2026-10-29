@@ -61,7 +61,7 @@ from apps.api.frontier import (
     _validate_polymarket_price_history_source_row,
     router,
 )
-from tests.frontier.builders import T0, book, market
+from tests.frontier.builders import T0, append_capture, book, market
 
 
 def _synthetic_polymarket_event_market(
@@ -187,7 +187,8 @@ def test_kalshi_mve_component_probe_is_bound_to_recorded_parent_and_persists_met
     registry = AdapterRegistry((KalshiAdapter(config, transport=transport),))
     store = FrontierStore(tmp_path / "frontier-component-market")
     raw_parent = json.dumps({"recorded_fixture": "parent MVE metadata"})
-    parent_observation_id = store.append_observation(
+    parent_observation_id = append_capture(
+        store,
         RawObservation(
             venue=Venue.KALSHI,
             observation_kind="market_listing",
@@ -423,7 +424,8 @@ def test_markets_route_rejects_rehashed_cross_venue_market_batch(
         raw_sha256=hashlib.sha256(b'{"fixture":true}').hexdigest(),
         adapter_version="frontier-market-venue-test-v1",
     )
-    observation_id = store.append_observation(
+    observation_id = append_capture(
+        store,
         raw,
         MarketBatch(venue=Venue.POLYMARKET, markets=(source_market,)),
     )
@@ -795,7 +797,7 @@ def test_saved_kalshi_fee_pair_is_joined_only_when_raw_and_normalized_evidence_m
         raw_sha256=hashlib.sha256(market_body.encode()).hexdigest(),
         adapter_version="fixture-kalshi-v1",
     )
-    market_observation_id = store.append_observation(market_raw, source_market)
+    market_observation_id = append_capture(store, market_raw, source_market)
     event_body = json.dumps(
         {
             "event": {
@@ -859,8 +861,8 @@ def test_saved_kalshi_fee_pair_is_joined_only_when_raw_and_normalized_evidence_m
         event_received_at_utc=T0,
         series_received_at_utc=T0,
     )
-    event_id = store.append_observation(event_raw, metadata)
-    series_id = store.append_observation(series_raw, metadata)
+    event_id = append_capture(store, event_raw, metadata)
+    series_id = append_capture(store, series_raw, metadata)
 
     joined = _enrich_markets_with_kalshi_fee_evidence(
         store, ((source_market, market_observation_id),)
@@ -895,7 +897,7 @@ def test_saved_kalshi_fee_pair_is_joined_only_when_raw_and_normalized_evidence_m
             raw_sha256=hashlib.sha256(polymarket_body.encode()).hexdigest(),
             adapter_version="fixture-cross-venue-fee-replay-v1",
         )
-        polymarket_observation_id = store.append_observation(polymarket_raw, polymarket_market)
+        polymarket_observation_id = append_capture(store, polymarket_raw, polymarket_market)
         polymarket_market = polymarket_market.model_copy(
             update={
                 "provenance": polymarket_market.provenance.model_copy(
@@ -982,7 +984,7 @@ def test_saved_kalshi_fee_pair_is_joined_only_when_raw_and_normalized_evidence_m
                         ),
                     }
                 )
-                store.append_observation(raw, snapshot)
+                append_capture(store, raw, snapshot)
                 book_index += 1
 
         replay_response = api_client.post("/api/frontier/replay", json={})
@@ -1035,9 +1037,9 @@ def test_saved_kalshi_fee_pair_is_joined_only_when_raw_and_normalized_evidence_m
     )
     corrupted_metadata = metadata.model_copy(update={"event_raw_sha256": corrupted_raw.raw_sha256})
     corrupted_store = FrontierStore(tmp_path / "fee-evidence-bad-source")
-    corrupted_market_id = corrupted_store.append_observation(market_raw, source_market)
-    corrupted_store.append_observation(corrupted_raw, corrupted_metadata)
-    corrupted_store.append_observation(series_raw, corrupted_metadata)
+    corrupted_market_id = append_capture(corrupted_store, market_raw, source_market)
+    append_capture(corrupted_store, corrupted_raw, corrupted_metadata)
+    append_capture(corrupted_store, series_raw, corrupted_metadata)
     rejected = _enrich_markets_with_kalshi_fee_evidence(
         corrupted_store, ((source_market, corrupted_market_id),)
     )[0][0]
@@ -1084,7 +1086,8 @@ def test_coverage_analytics_omits_held_source_market_records(tmp_path):
     kalshi = market(Venue.KALSHI, "coverage-held")
     for market_value in (polymarket, kalshi):
         body = json.dumps({"fixture_market": market_value.native_market_id})
-        store.append_observation(
+        append_capture(
+            store,
             RawObservation(
                 venue=market_value.venue,
                 observation_kind="market_listing",
@@ -1126,7 +1129,8 @@ def test_coverage_analytics_summarizes_a_saved_joined_book(tmp_path):
     client, registry, http_client, requests, store = _client(tmp_path)
     source_market = market(Venue.POLYMARKET, "coverage-saved-book")
     market_body = '{"fixture":"coverage-saved-market"}'
-    store.append_observation(
+    append_capture(
+        store,
         RawObservation(
             venue=Venue.POLYMARKET,
             observation_kind="market_listing",
@@ -1152,7 +1156,8 @@ def test_coverage_analytics_summarizes_a_saved_joined_book(tmp_path):
             "provenance": source_book.provenance.model_copy(update={"raw_sha256": book_raw_sha256})
         }
     )
-    store.append_observation(
+    append_capture(
+        store,
         RawObservation(
             venue=Venue.POLYMARKET,
             observation_kind="book_snapshot",
@@ -1217,7 +1222,8 @@ def test_coverage_analytics_counts_trade_prints_empty_captures_and_held_sources(
             )
             for index in range(print_count)
         )
-        store.append_observation(
+        append_capture(
+            store,
             RawObservation(
                 venue=venue,
                 observation_kind="public_trades",
@@ -1347,7 +1353,7 @@ def test_synthetic_event_group_probe_persists_parent_context_and_binds_to_record
             raw_sha256=hashlib.sha256(seed_body.encode()).hexdigest(),
             adapter_version="test-seed-v1",
         )
-        store.append_observation(raw, MarketBatch(venue=Venue.POLYMARKET, markets=(seed,)))
+        append_capture(store, raw, MarketBatch(venue=Venue.POLYMARKET, markets=(seed,)))
 
     app = FastAPI()
     app.include_router(router(store, registry))
@@ -1422,7 +1428,7 @@ def test_polymarket_market_metadata_probe_is_bound_and_does_not_replace_listing(
     markets = asyncio.run(adapter.discover_markets(3))
     listing_capture = adapter.take_captures()[0]
     store = FrontierStore(tmp_path / "frontier")
-    store.append_observation(listing_capture, MarketBatch(venue=Venue.POLYMARKET, markets=markets))
+    append_capture(store, listing_capture, MarketBatch(venue=Venue.POLYMARKET, markets=markets))
     target = next(item for item in markets if item.native_market_id == native_market_id)
     app = FastAPI()
     app.include_router(router(store, registry))
@@ -1533,7 +1539,7 @@ def test_synthetic_kalshi_event_group_probe_uses_nested_public_event_markets(tmp
         raw_sha256=hashlib.sha256(seed_body.encode()).hexdigest(),
         adapter_version="test-seed-v1",
     )
-    store.append_observation(raw, MarketBatch(venue=Venue.KALSHI, markets=(seed,)))
+    append_capture(store, raw, MarketBatch(venue=Venue.KALSHI, markets=(seed,)))
     app = FastAPI()
     app.include_router(router(store, registry))
     client = TestClient(app)
@@ -1837,7 +1843,7 @@ def test_synthetic_kalshi_mve_ticker_filter_replays_persisted_response(tmp_path)
         synthetic_raw = RawObservation.model_validate(evidence["raw"])
         synthetic_normalized = MarketBatch.model_validate(evidence["normalized"])
         snapshot_store = FrontierStore(tmp_path / "frontier-kalshi-mve-ticker-snapshot")
-        snapshot_id = snapshot_store.append_observation(synthetic_raw, synthetic_normalized)
+        snapshot_id = append_capture(snapshot_store, synthetic_raw, synthetic_normalized)
         snapshot_readback = snapshot_store.observation(snapshot_id)
         assert snapshot_readback is not None
         assert snapshot_readback["row_sha256"] == evidence["row_sha256"]
@@ -1942,7 +1948,7 @@ def test_synthetic_cross_venue_event_context_creates_reviewable_hypothesis(tmp_p
             raw_sha256=hashlib.sha256(raw_body.encode()).hexdigest(),
             adapter_version="test-seed-v1",
         )
-        store.append_observation(raw, MarketBatch(venue=venue, markets=(seed_market,)))
+        append_capture(store, raw, MarketBatch(venue=venue, markets=(seed_market,)))
 
     app = FastAPI()
     app.include_router(router(store, registry))
@@ -2022,7 +2028,7 @@ def test_synthetic_cross_venue_event_context_creates_reviewable_hypothesis(tmp_p
             raw_sha256=hashlib.sha256(book_body.encode()).hexdigest(),
             adapter_version="test-seed-v1",
         )
-        book_record_id = store.append_observation(book_raw, public_book)
+        book_record_id = append_capture(store, book_raw, public_book)
         saved_books = client.get("/api/frontier/books?venue=polymarket").json()["items"]
         assert len(saved_books) == 1
         assert saved_books[0]["provenance"]["observation_id"] == book_record_id
@@ -2133,7 +2139,7 @@ def test_kalshi_fee_metadata_probe_persists_event_and_series_evidence(tmp_path):
         raw_sha256=hashlib.sha256(listing_body.encode()).hexdigest(),
         adapter_version="frontier-kalshi-test-v1",
     )
-    store.append_observation(listing, source_market)
+    append_capture(store, listing, source_market)
     app = FastAPI()
     app.include_router(router(store, registry))
     client = TestClient(app)
@@ -2323,7 +2329,8 @@ def test_kalshi_fee_metadata_partial_failure_preserves_evidence_and_recovers(tmp
     registry = AdapterRegistry((KalshiAdapter(config, transport=transport),))
     store = FrontierStore(tmp_path / "frontier")
     listing_body = '{"test_fixture":"recorded market metadata"}'
-    store.append_observation(
+    append_capture(
+        store,
         RawObservation(
             venue=Venue.KALSHI,
             observation_kind="market_listing",
@@ -2648,7 +2655,8 @@ def test_arena_replay_stages_a_pinned_snapshot_before_admitted_job_creation(tmp_
     client, registry, http_client, requests, store = _client(tmp_path, arena_root=arena_root)
     source_market = market(Venue.KALSHI, "arena-source-record-link")
     market_body = '{"fixture":"arena-source-record-link"}'
-    market_record_id = store.append_observation(
+    market_record_id = append_capture(
+        store,
         RawObservation(
             venue=Venue.KALSHI,
             observation_kind="market_listing",
@@ -2668,7 +2676,8 @@ def test_arena_replay_stages_a_pinned_snapshot_before_admitted_job_creation(tmp_
         "0.4",
     )
     book_body = '{"fixture":"arena-book-record-link"}'
-    book_record_id = store.append_observation(
+    book_record_id = append_capture(
+        store,
         RawObservation(
             venue=Venue.KALSHI,
             observation_kind="book_snapshot",
@@ -2736,7 +2745,8 @@ def test_arena_discovery_comparison_stages_only_local_inputs_and_never_probes(
     captured = {}
     saved_market = market(Venue.POLYMARKET, "discovery-scope-saved-event")
     market_body = json.dumps({"fixture": "one saved market"}, separators=(",", ":"))
-    store.append_observation(
+    append_capture(
+        store,
         RawObservation(
             venue=Venue.POLYMARKET,
             observation_kind="market_listing",
@@ -2781,7 +2791,7 @@ def test_arena_discovery_comparison_stages_only_local_inputs_and_never_probes(
                 ),
             }
         )
-        newest_book_observation_id = store.append_observation(raw, snapshot)
+        newest_book_observation_id = append_capture(store, raw, snapshot)
 
     def create(root, spec, *, admission_key):
         captured["root"] = root
@@ -3104,9 +3114,7 @@ def test_replay_with_held_fee_metadata_is_quarantined_and_preserved(tmp_path):
         raw_sha256=hashlib.sha256(fee_body.encode()).hexdigest(),
         adapter_version="held-fee-fixture-v1",
     )
-    fee_observation_id = store.append_observation(
-        fee_raw, TradeBatch(venue=Venue.KALSHI, trades=())
-    )
+    fee_observation_id = append_capture(store, fee_raw, TradeBatch(venue=Venue.KALSHI, trades=()))
     poly_market = market(Venue.POLYMARKET, "held-fee-reference")
     poly_market = poly_market.model_copy(
         update={
@@ -3127,7 +3135,7 @@ def test_replay_with_held_fee_metadata_is_quarantined_and_preserved(tmp_path):
         raw_sha256=hashlib.sha256(market_body.encode()).hexdigest(),
         adapter_version="held-fee-fixture-v1",
     )
-    market_observation_id = store.append_observation(market_raw, poly_market)
+    market_observation_id = append_capture(store, market_raw, poly_market)
     poly_market = poly_market.model_copy(
         update={
             "provenance": poly_market.provenance.model_copy(
@@ -3189,7 +3197,7 @@ def test_held_relationship_evidence_is_quarantined_from_graph_and_replay(tmp_pat
                 )
             }
         )
-        observation_id = store.append_observation(raw, normalized)
+        observation_id = append_capture(store, raw, normalized)
         normalized = normalized.model_copy(
             update={
                 "provenance": normalized.provenance.model_copy(
@@ -3388,7 +3396,7 @@ def test_source_observation_reads_fail_closed_on_hash_mismatch(tmp_path):
             raw_sha256=hashlib.sha256(body.encode()).hexdigest(),
             adapter_version="observation-integrity-fixture-v1",
         )
-        observation_ids[kind] = store.append_observation(raw, normalized)
+        observation_ids[kind] = append_capture(store, raw, normalized)
     with sqlite3.connect(store.path) as connection:
         connection.execute("DROP TRIGGER observations_no_update")
         for observation_id in observation_ids.values():
@@ -3440,7 +3448,7 @@ def test_hash_valid_but_invalid_book_schema_returns_conflict(tmp_path):
         raw_sha256=hashlib.sha256(raw_body.encode()).hexdigest(),
         adapter_version="invalid-book-schema-fixture-v1",
     )
-    observation_id = store.append_observation(raw, snapshot)
+    observation_id = append_capture(store, raw, snapshot)
 
     with sqlite3.connect(store.path) as connection:
         connection.execute("DROP TRIGGER observations_no_update")
@@ -3583,7 +3591,7 @@ def test_raw_observation_route_returns_hash_verified_public_capture(tmp_path):
         raw_sha256=hashlib.sha256(body.encode()).hexdigest(),
         adapter_version="test-fixture-adapter-v1",
     )
-    observation_id = store.append_observation(raw, market(Venue.KALSHI, "fixture-market"))
+    observation_id = append_capture(store, raw, market(Venue.KALSHI, "fixture-market"))
     try:
         response = client.get(f"/api/frontier/observations/{observation_id}")
         assert response.status_code == 200
@@ -3653,8 +3661,8 @@ def test_polymarket_price_history_probe_is_bound_and_replayable(tmp_path):
         raw_sha256=hashlib.sha256(listing_body.encode()).hexdigest(),
         adapter_version="fixture-polymarket-listing-v1",
     )
-    listing_id = store.append_observation(
-        listing_raw, MarketBatch(venue=Venue.POLYMARKET, markets=(source_market,))
+    listing_id = append_capture(
+        store, listing_raw, MarketBatch(venue=Venue.POLYMARKET, markets=(source_market,))
     )
     app = FastAPI()
     app.include_router(router(store, registry))
@@ -3839,7 +3847,10 @@ def test_polymarket_price_history_probe_is_bound_and_replayable(tmp_path):
             json={"observation_ids": [result["observation_id"]]},
         )
         assert mismatched_parent_replay.status_code == 409
-        assert "batch and member venues" in mismatched_parent_replay.json()["detail"]
+        assert (
+            "Stored normalized observation venue does not match its raw evidence"
+            in (mismatched_parent_replay.json()["detail"])
+        )
 
         valid_parent_hash = hashlib.sha256(
             f"{parent_raw_json}\n{valid_parent_json}".encode()
@@ -3991,7 +4002,7 @@ def test_kraken_instrument_metadata_is_visible_as_a_market(tmp_path):
         raw_sha256=hashlib.sha256(raw_body.encode()).hexdigest(),
         adapter_version="frontier-kraken-spot-test-v1",
     )
-    observation_id = store.append_observation(raw, MarketBatch(venue=Venue.KRAKEN, markets=(spot,)))
+    observation_id = append_capture(store, raw, MarketBatch(venue=Venue.KRAKEN, markets=(spot,)))
     try:
         response = client.get("/api/frontier/markets", params={"venue": "kraken"})
         assert response.status_code == 200
@@ -4025,7 +4036,7 @@ def test_graph_neighborhood_is_centered_bounded_and_review_aware(tmp_path):
             raw_sha256=hashlib.sha256(body.encode()).hexdigest(),
             adapter_version="graph-fixture-v1",
         )
-        store.append_observation(raw, item)
+        append_capture(store, raw, item)
     relationships = propose_relationships(markets, max_pairs=20)
     for relationship in relationships:
         store.append_relationship(relationship)
@@ -4136,7 +4147,8 @@ def test_uncentered_graph_search_pages_pinned_bounded_results(tmp_path):
     leaf = market(Venue.POLYMARKET, "search-event-leaf")
     markets = (center, *neighbors, leaf)
     body = '{"fixture":"uncentered-graph-search-pagination"}'
-    store.append_observation(
+    append_capture(
+        store,
         RawObservation(
             venue=Venue.POLYMARKET,
             observation_kind="market_listing",
@@ -4239,7 +4251,7 @@ def test_graph_page_cursor_rejects_a_changed_append_only_graph(tmp_path):
             raw_sha256=hashlib.sha256(body.encode()).hexdigest(),
             adapter_version="graph-cursor-fixture-v1",
         )
-        store.append_observation(raw, item)
+        append_capture(store, raw, item)
     for relationship in propose_relationships(markets, max_pairs=20):
         store.append_relationship(relationship)
     params = {"center_market_id": markets[0].canonical_id, "depth": 1, "limit": 1}
@@ -4275,7 +4287,8 @@ def test_multihop_graph_cursor_paginates_in_deterministic_breadth_first_order(tm
     )
     markets = (center, first_a, first_b, second_a, second_b)
     market_body = '{"fixture":"bounded-breadth-first-graph"}'
-    store.append_observation(
+    append_capture(
+        store,
         RawObservation(
             venue=Venue.POLYMARKET,
             observation_kind="market_listing",
@@ -4361,21 +4374,25 @@ def test_multihop_graph_cursor_binds_depth_and_rejects_stale_revision(tmp_path):
         market(Venue.POLYMARKET, "bfs-stale-leaf"),
     )
     markets = (center, neighbor_a, neighbor_b, leaf)
-    market_body = '{"fixture":"bounded-breadth-first-stale-cursor"}'
-    store.append_observation(
-        RawObservation(
-            venue=Venue.POLYMARKET,
-            observation_kind="market_listing",
-            request_url="https://public.example.test/frontier/bfs-stale-markets",
-            http_status=200,
-            request_started_at_utc=T0,
-            received_at_utc=T0,
-            raw_body=market_body,
-            raw_sha256=hashlib.sha256(market_body.encode()).hexdigest(),
-            adapter_version="graph-bfs-fixture-v1",
-        ),
-        MarketBatch(venue=Venue.POLYMARKET, markets=markets),
-    )
+    for item in markets:
+        market_body = json.dumps(
+            {"fixture": "bounded-breadth-first-stale-cursor", "market_id": item.canonical_id}
+        )
+        append_capture(
+            store,
+            RawObservation(
+                venue=item.venue,
+                observation_kind="market_listing",
+                request_url="https://public.example.test/frontier/bfs-stale-markets",
+                http_status=200,
+                request_started_at_utc=T0,
+                received_at_utc=T0,
+                raw_body=market_body,
+                raw_sha256=hashlib.sha256(market_body.encode()).hexdigest(),
+                adapter_version="graph-bfs-fixture-v1",
+            ),
+            item,
+        )
     for left, right in ((center, neighbor_a), (center, neighbor_b), (neighbor_a, leaf)):
         store.append_relationship(_graph_fixture_edge(left, right))
 
@@ -4422,7 +4439,8 @@ def test_multihop_graph_chunks_frontiers_above_storage_query_bound(tmp_path):
         market_body = json.dumps(
             {"fixture": "bounded-wide-breadth-first-graph", "id": item.canonical_id}
         )
-        store.append_observation(
+        append_capture(
+            store,
             RawObservation(
                 venue=Venue.POLYMARKET,
                 observation_kind="market_listing",
@@ -4512,7 +4530,7 @@ def test_trade_read_returns_hash_verified_normalized_batch(tmp_path):
         malformed_trade = trade.model_copy(update=update)
         with pytest.raises(ValidationError, match=reason):
             TradeObservation.model_validate(malformed_trade.model_dump(mode="python"))
-    observation_id = store.append_observation(raw, TradeBatch(venue=Venue.KALSHI, trades=(trade,)))
+    observation_id = append_capture(store, raw, TradeBatch(venue=Venue.KALSHI, trades=(trade,)))
     try:
         response = client.get("/api/frontier/trades", params={"venue": "kalshi"})
         assert response.status_code == 200
@@ -5456,7 +5474,7 @@ def test_replay_api_generates_and_persists_multi_outcome_candidate(tmp_path):
             )
         }
     )
-    store.append_observation(market_raw, MarketBatch(venue=Venue.KALSHI, markets=(event,)))
+    append_capture(store, market_raw, MarketBatch(venue=Venue.KALSHI, markets=(event,)))
     prices = ("0.20", "0.30", "0.40")
     for index, (instrument, price) in enumerate(zip(instruments, prices, strict=True), start=1):
         raw, observation_id = raw_capture(
@@ -5481,7 +5499,7 @@ def test_replay_api_generates_and_persists_multi_outcome_candidate(tmp_path):
                 ),
             }
         )
-        store.append_observation(raw, snapshot)
+        append_capture(store, raw, snapshot)
 
     try:
         fiat_usd_identity = {
@@ -5890,7 +5908,7 @@ def test_joint_state_replay_api_uses_only_stored_public_evidence(tmp_path):
             )
         else:
             raise AssertionError(f"unsupported test capture type: {type(normalized).__name__}")
-        return store.append_observation(raw, stored_value)
+        return append_capture(store, raw, stored_value)
 
     try:
         market_observation_ids = []

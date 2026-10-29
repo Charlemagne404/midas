@@ -111,10 +111,10 @@ def test_entity_context_keeps_labels_valid_for_empty_native_labels() -> None:
     market_with_empty_native_labels = market(Venue.POLYMARKET, "empty-labels").model_copy(
         update={
             "instruments": (
-                MarketInstrument(
+                MarketInstrument.model_construct(
                     native_instrument_id="",
                     label="",
-                    payouts=(StatePayout(state_id="", amount=Decimal("0")),),
+                    payouts=(StatePayout.model_construct(state_id="", amount=Decimal("0")),),
                 ),
             )
         }
@@ -134,14 +134,14 @@ def test_entity_context_marks_clipped_external_display_fields() -> None:
     source = market(Venue.POLYMARKET, "oversized-context").model_copy(
         update={
             "instruments": (
-                MarketInstrument(
+                MarketInstrument.model_construct(
                     native_instrument_id="native-id",
                     label=oversized,
                     outcome_id=oversized,
-                    payouts=(StatePayout(state_id=oversized, amount=Decimal("1")),),
+                    payouts=(StatePayout.model_construct(state_id=oversized, amount=Decimal("1")),),
                 ),
             ),
-            "payoff": PayoffSpec(state_ids=(oversized,)),
+            "payoff": PayoffSpec.model_construct(state_ids=(oversized,)),
         }
     )
 

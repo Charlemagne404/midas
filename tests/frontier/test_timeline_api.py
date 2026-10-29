@@ -26,7 +26,7 @@ from midas.frontier.registry import AdapterRegistry
 from midas.frontier.storage import FrontierStore
 
 from apps.api.frontier import router
-from tests.frontier.builders import T0, book, market
+from tests.frontier.builders import T0, append_capture, book, market
 
 
 def test_timeline_route_stages_only_pinned_local_inputs_without_source_requests(
@@ -53,8 +53,8 @@ def test_timeline_route_stages_only_pinned_local_inputs_without_source_requests(
         update={"raw_sha256": market_raw.raw_sha256, "observation_id": "fixture-market"}
     )
     source_market = source_market.model_copy(update={"provenance": market_provenance})
-    market_observation_id = store.append_observation(
-        market_raw, MarketBatch(venue=Venue.POLYMARKET, markets=(source_market,))
+    market_observation_id = append_capture(
+        store, market_raw, MarketBatch(venue=Venue.POLYMARKET, markets=(source_market,))
     )
 
     source_book = book(source_market, source_market.instruments[0].native_instrument_id, "0.42")
@@ -77,7 +77,7 @@ def test_timeline_route_stages_only_pinned_local_inputs_without_source_requests(
             )
         }
     )
-    book_observation_id = store.append_observation(book_raw, source_book)
+    book_observation_id = append_capture(store, book_raw, source_book)
 
     journal = CollectionJournal(store.root)
     run_spec = CollectionRunSpec(

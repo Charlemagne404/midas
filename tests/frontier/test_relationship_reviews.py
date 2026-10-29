@@ -20,7 +20,7 @@ from midas.frontier.storage import SCHEMA_VERSION, FrontierStore
 from pydantic import ValidationError
 
 from apps.api.frontier import RelationshipReviewRequest, router
-from tests.frontier.builders import T0, market
+from tests.frontier.builders import T0, append_capture, market
 from tests.frontier.builders import book as build_book
 
 
@@ -66,8 +66,8 @@ def _seed_pair(store: FrontierStore):
     right = market(Venue.KALSHI, "review-right")
     _left_body, left_raw = _body(Venue.POLYMARKET, "review-left")
     _right_body, right_raw = _body(Venue.KALSHI, "review-right")
-    left_evidence = store.append_observation(left_raw, left)
-    right_evidence = store.append_observation(right_raw, right)
+    left_evidence = append_capture(store, left_raw, left)
+    right_evidence = append_capture(store, right_raw, right)
     return left, right, (left_evidence, right_evidence)
 
 
@@ -99,8 +99,8 @@ def _seed_logical_implication_pair(store: FrontierStore):
     right = _joint_state_market(market(Venue.KALSHI, "implication-right"), (0, 1, 1))
     _left_body, left_raw = _body(Venue.POLYMARKET, "implication-left")
     _right_body, right_raw = _body(Venue.KALSHI, "implication-right")
-    left_evidence = store.append_observation(left_raw, left)
-    right_evidence = store.append_observation(right_raw, right)
+    left_evidence = append_capture(store, left_raw, left)
+    right_evidence = append_capture(store, right_raw, right)
     return left, right, (left_evidence, right_evidence)
 
 
@@ -135,7 +135,7 @@ def _seed_future_logical_pair(store: FrontierStore):
                 ),
             }
         )
-        evidence_id = store.append_observation(raw, value)
+        evidence_id = append_capture(store, raw, value)
         if venue == Venue.POLYMARKET:
             left = value
             evidence_ids[venue] = evidence_id
@@ -177,7 +177,7 @@ def _append_book(store: FrontierStore, market_value, instrument_id: str, price: 
             ),
         }
     )
-    store.append_observation(raw, snapshot)
+    append_capture(store, raw, snapshot)
 
 
 def _close(client, registry, http_client):
@@ -530,7 +530,8 @@ def test_failed_payoff_verification_is_not_recorded_as_verified(tmp_path):
         }
     )
     _right_body, right_raw = _body(Venue.KALSHI, "review-right-incompatible")
-    incompatible_evidence = store.append_observation(
+    incompatible_evidence = append_capture(
+        store,
         right_raw.model_copy(
             update={
                 "request_started_at_utc": T0 + timedelta(seconds=1),

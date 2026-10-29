@@ -10,7 +10,7 @@ import re
 import time
 from datetime import UTC, datetime
 from decimal import Decimal
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 
 from pydantic import Field, field_validator
 
@@ -595,7 +595,7 @@ class KrakenSpotAdapter(BaseReadOnlyAdapter):
         if isinstance(raw_frame, bytes):
             raw_bytes = raw_frame
             raw_body = base64.b64encode(raw_bytes).decode("ascii")
-            encoding = "base64"
+            encoding: Literal["base64", "utf8"] = "base64"
         elif isinstance(raw_frame, str):
             raw_bytes = raw_frame.encode("utf-8", errors="strict")
             raw_body = raw_frame

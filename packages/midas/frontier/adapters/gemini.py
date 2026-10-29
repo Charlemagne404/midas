@@ -592,7 +592,8 @@ def _gemini_trade_timestamp(row: dict[str, Any]) -> datetime | None:
             # with a subsecond `timestampms`; they agree at their precisions.
             return None
 
-    return values.get("timestampms", values.get("timestamp"))[1]
+    selected_timestamp = values.get("timestampms", values.get("timestamp"))
+    return selected_timestamp[1] if selected_timestamp is not None else None
 
 
 def _book_side(value: Any, depth: int, *, reverse: bool) -> tuple[BookLevel, ...]:

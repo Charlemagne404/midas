@@ -31,7 +31,7 @@ from midas.frontier.replay import deterministic_replay, paired_deterministic_rep
 from apps.api.config import COINBASE_MARKET_DATA_TERMS_VERSION, Settings
 from apps.api.frontier import router as frontier_router
 from apps.api.main import create_app
-from tests.frontier.builders import T0, book, market
+from tests.frontier.builders import T0, append_capture, book, market
 
 
 def test_probe_flags_and_references_do_not_enable_unvalidated_sources(tmp_path):
@@ -312,7 +312,8 @@ def test_held_source_observations_relationships_and_replays_are_quarantined(tmp_
 
     for value in (held, coinbase_held, available):
         market_body = json.dumps({"fixture": "old market source evidence", "venue": value.venue})
-        market_id = store.append_observation(
+        market_id = append_capture(
+            store,
             RawObservation(
                 venue=value.venue,
                 observation_kind="market_listing",
@@ -327,7 +328,8 @@ def test_held_source_observations_relationships_and_replays_are_quarantined(tmp_
             MarketBatch(venue=value.venue, markets=(value,)),
         )
         book_body = json.dumps({"fixture": "old book source evidence", "venue": value.venue})
-        saved_book_id = store.append_observation(
+        saved_book_id = append_capture(
+            store,
             RawObservation(
                 venue=value.venue,
                 observation_kind="book_snapshot",
@@ -342,7 +344,8 @@ def test_held_source_observations_relationships_and_replays_are_quarantined(tmp_
             book(value, value.instruments[0].native_instrument_id, "0.4"),
         )
         trades_body = json.dumps({"fixture": "old trade source evidence", "venue": value.venue})
-        store.append_observation(
+        append_capture(
+            store,
             RawObservation(
                 venue=value.venue,
                 observation_kind="public_trades",
@@ -399,7 +402,7 @@ def test_held_source_observations_relationships_and_replays_are_quarantined(tmp_
         source_limit_note="Controlled held-source fixture.",
         provenance=history_provenance,
     )
-    held_history_id = store.append_observation(history_raw, held_history_series)
+    held_history_id = append_capture(store, history_raw, held_history_series)
     held_history_replay = deterministic_price_history_replay(
         (
             PriceHistoryReplayInput(

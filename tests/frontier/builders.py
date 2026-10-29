@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
+from typing import Any
 
 from midas.frontier.models import (
     BookLevel,
@@ -10,15 +11,18 @@ from midas.frontier.models import (
     FeeStatus,
     FrontierMarket,
     Lifecycle,
+    MarketBatch,
     MarketInstrument,
     MarketKind,
     PayoffSpec,
     Provenance,
     QuantityUnit,
+    RawObservation,
     ResolutionSpec,
     SettlementAssetIdentity,
     SettlementAssetKind,
     StatePayout,
+    TradeBatch,
     Venue,
     sha256_text,
 )
@@ -26,6 +30,48 @@ from midas.frontier.models import (
 D = Decimal
 T0 = datetime(2026, 10, 26, 20, 0, tzinfo=UTC)
 USD_SETTLEMENT_IDENTITY = SettlementAssetIdentity(kind=SettlementAssetKind.FIAT, code="USD")
+
+
+def bind_to_capture(raw: RawObservation, normalized: Any) -> Any:
+    """Bind synthetic normalized fixtures to the exact capture used by a test."""
+
+    def bind_record(record: Any) -> Any:
+        provenance = getattr(record, "provenance", None)
+        if not isinstance(provenance, Provenance):
+            return record
+        updates: dict[str, Any] = {
+            "provenance": provenance.model_copy(
+                update={
+                    "source_url": raw.request_url,
+                    "adapter_version": raw.adapter_version,
+                    "request_started_at_utc": raw.request_started_at_utc,
+                    "response_received_at_utc": raw.received_at_utc,
+                    "request_elapsed_monotonic_ns": raw.request_elapsed_monotonic_ns,
+                    "raw_sha256": raw.raw_sha256,
+                }
+            )
+        }
+        if hasattr(record, "received_at_utc"):
+            updates["received_at_utc"] = raw.received_at_utc
+        return record.model_copy(update=updates)
+
+    if isinstance(normalized, MarketBatch):
+        return normalized.model_copy(
+            update={
+                "markets": tuple(bind_record(item) for item in normalized.markets),
+                "market_groups": tuple(bind_record(item) for item in normalized.market_groups),
+            }
+        )
+    if isinstance(normalized, TradeBatch):
+        return normalized.model_copy(
+            update={"trades": tuple(bind_record(item) for item in normalized.trades)}
+        )
+    return bind_record(normalized)
+
+
+def append_capture(store: Any, raw: RawObservation, normalized: Any) -> str:
+    """Append a synthetic fixture only after binding its normalized provenance."""
+    return store.append_observation(raw, bind_to_capture(raw, normalized))
 
 
 def market(

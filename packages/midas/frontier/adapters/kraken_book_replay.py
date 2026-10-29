@@ -20,7 +20,9 @@ from midas.frontier.models import (
     Venue,
 )
 
-KRAKEN_BOOK_REPLAY_VERSION = "kraken-spot-book-context-replay-1"
+KRAKEN_BOOK_REPLAY_VERSION: Literal["kraken-spot-book-context-replay-1"] = (
+    "kraken-spot-book-context-replay-1"
+)
 MAX_KRAKEN_REPLAY_FRAMES = 32
 MAX_KRAKEN_REPLAY_BYTES = MAX_KRAKEN_REPLAY_FRAMES * MAX_FRAME_BYTES
 
@@ -314,7 +316,9 @@ def replay_kraken_book_capture(
     )
     state_values = tuple(book_states)
     evidence_values = tuple(frame_evidence)
-    reconstruction_status = (
+    reconstruction_status: Literal[
+        "checksum_verified_states", "acknowledged_no_book_state", "control_only_no_ack"
+    ] = (
         "checksum_verified_states"
         if state_values
         else "acknowledged_no_book_state"

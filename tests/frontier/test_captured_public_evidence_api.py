@@ -24,6 +24,7 @@ def test_saved_polymarket_capture_is_read_only_and_hypothesis_labeled(tmp_path: 
 
     capture = json.loads((CAPTURE_ROOT / "live_event_group_observation.json").read_text())
     store = FrontierStore(copied_root, max_bytes=4 * 1024 * 1024)
+    store.initialize()
     app = FastAPI()
     app.include_router(router(store, default_registry()))
 

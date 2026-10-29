@@ -11,13 +11,14 @@ from midas.frontier.storage import FrontierStore
 
 from apps.api.config import Settings
 from apps.api.main import create_app
-from tests.frontier.builders import T0, market
+from tests.frontier.builders import T0, append_capture, market
 
 
 def _seed_schema_7_store(root: Path) -> tuple[FrontierStore, tuple[int, int, int]]:
     store = FrontierStore(root, max_bytes=2 * 1024 * 1024)
     body = '{"market":"startup-migration"}'
-    store.append_observation(
+    append_capture(
+        store,
         RawObservation(
             venue=Venue.POLYMARKET,
             observation_kind="market_listing",
