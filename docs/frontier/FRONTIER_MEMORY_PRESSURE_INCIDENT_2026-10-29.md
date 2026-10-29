@@ -5103,3 +5103,19 @@ is still disabled; source-analysis and Research Director have completed their
 20:40/20:45 runs, and capacity is due at 20:50:51. This supports the single
 bounded check, not further broad work or incident closure. Recheck after the
 capacity run; keep PSI, OOM, and leaf-limit evidence separate.
+
+### Scheduled capacity result — 2026-10-29 20:51 CET
+
+The capacity timer's 20:50:51 run completed successfully; by 20:51:08 the
+service was inactive with `Result=success`, exit status 0, and 6.259 CPU
+seconds. Its configured High 160 MiB / Max 192 MiB / zero-swap bound remained
+in force. PSI stayed zero, `MemAvailable` was 10,906,900 KiB, and only 264 KiB
+of swap was free. User-slice `memory.events.high` increased by 112 since the
+20:48:43 sample; `max=732,222`, `oom=19`, `oom_kill=15`, and
+`oom_group_kill=0` remained unchanged. The collected service again reported an
+implausible 256 KiB peak, so no capacity-process peak or causal attribution is
+claimed for the parent high-event increment.
+
+The service succeeded within its bound, but swap remains full and parent high
+events advanced. Do not start another memory-bearing task before a fresh
+admission sample; continue only code review/documentation in the meantime.

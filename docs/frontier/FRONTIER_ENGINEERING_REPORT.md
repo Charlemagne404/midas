@@ -16733,3 +16733,15 @@ host PSI remained zero and `MemAvailable` was 10,732,072 KiB, but only 264 KiB
 of swap was free. User-slice counters were unchanged at
 high/max/oom/oom_kill `16,438,259/732,222/19/15`. Do not infer resolution from
 the quiet sample; keep further workloads serial and capped.
+
+### 20:50 scheduled capacity follow-up — 2026-10-29 20:51 CET
+
+The scheduled Reality capacity service exited successfully at 20:51:08 with
+6.259 CPU seconds under its active 160 MiB High / 192 MiB Max / zero-swap
+configuration. At that sample PSI was zero, `MemAvailable` was 10,906,900
+KiB, and `SwapFree` remained 264 KiB. User-slice `memory.events.high` advanced
+by 112 since 20:48:43; `max=732,222`, `oom=19`, and `oom_kill=15` were
+unchanged. The collected service reported a 256 KiB peak, not credible for
+this Python job; no peak or exact event attribution is claimed. The capacity
+run is successful and bounded, but the high-event increment and full swap keep
+the overall host status **PARTIALLY CONTAINED / PARTIALLY VERIFIED**.

@@ -16678,3 +16678,16 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
   work only and recheck after scheduled load.
 - **Code checkpoint:** `8177bdf`; source and production boundaries remain
   unchanged. Live source verification and deployment remain pending.
+
+## 2026-10-29 20:51 CET — scheduled capacity post-check
+
+- Reality capacity service exited 0 at 20:51:08 and consumed 6.259 CPU
+  seconds under the existing 160 MiB High / 192 MiB Max / zero-swap bound.
+- Host PSI was zero and MemAvailable 10,906,900 KiB; SwapFree remained 264
+  KiB. Parent user-slice `memory.events.high` rose 112 since 20:48:43, while
+  `max=732,222`, `oom=19`, and `oom_kill=15` did not change. The service's
+  reported 256 KiB peak is invalid; the +112 is temporally associated, not
+  causally attributed. No extra resource-bearing check started after it.
+- The gap-detail timer remains disabled. The TypeScript replay-contract check
+  is verified; live source validation, broad acceptance, and deployment remain
+  pending. Host containment remains **PARTIALLY VERIFIED** with full swap.
