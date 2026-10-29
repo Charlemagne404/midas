@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 15:36 CET |
+| Latest addendum | 2026-10-29 15:40 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Pre-incident checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -3576,3 +3576,13 @@ gap-detail timer remained inactive and the capacity timer waiting. No matching
 kernel, systemd-oomd, or service OOM/kill journal entry appeared after
 15:33:39. This is a short post-commit observation only; it does not resolve
 near-full swap or establish long-duration stability.
+
+### Post-analytics verification — 2026-10-29 15:40 CET
+
+After the bounded 10-test analytics fixture run, the 15:40:05 host sample
+showed 11,389,853,696 bytes available RAM, 16,461,824 bytes free swap, and
+zero memory PSI. MIDAS API, Reality, and Reality API remained active at
+restart counts 9/14/0; gap-detail stayed inactive and capacity was waiting.
+No matching kernel, systemd-oomd, or service OOM/kill entry appeared between
+15:36:56 and this check. This remains a brief quiet interval, not evidence of
+sustained recovery; swap remains almost entirely used.
