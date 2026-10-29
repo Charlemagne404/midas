@@ -2,7 +2,7 @@
 
 **Incident date:** 2026-10-28 (CET)
 
-**Checkpoint captured:** 2026-10-29 01:35 CET
+**Checkpoint captured:** 2026-10-29 01:36 CET
 
 **Scope:** Host reliability interruption during Project Frontier
 
@@ -864,3 +864,10 @@ fixture stores. No live source calls were made. The earlier Chromium
 SIGTRAP did not repeat with the larger bounded browser scope; it is not
 attributed to memory pressure. This adds bounded verification but does not
 identify the historical pressure initiator or constitute endurance evidence.
+
+At 01:36:35, after the finite collection/API, Coinbase, and analytics fixture
+slices (102 tests total), host available memory was 9.7 GiB, PSI remained
+zero, and user-manager `max`, `oom`, and `oom_kill` were unchanged. Reality
+and API were active with restart counts 14/9. The next scheduled source
+analysis is at 01:40 and the next capacity report is due at 01:46; observe
+those existing jobs without starting competing work.

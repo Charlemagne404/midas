@@ -1,6 +1,6 @@
 # Project Frontier Mission Ledger
 
-## Current host and Frontier state — 2026-10-29 01:35 CET
+## Current host and Frontier state — 2026-10-29 01:36 CET
 
 Reality has resumed recording after cold replay: status says
 `RECORDING_UNSEQUENCED`, `active_receiving`, 16/16 fresh books, zero failures,
@@ -21,7 +21,7 @@ status age 3.36 seconds, and raw recording size 12,137,375,646 bytes.
 `ARCHIVE_SEGMENT_INVENTORY_INVALID` and
 `ARCHIVE_MANIFEST_PROVENANCE_INVALID` remain; neither was altered.
 
-Through 01:34, host available memory stayed about 9.6–10 GiB, host/user PSI
+Through 01:36, host available memory stayed about 9.7–10 GiB, host/user PSI
 avg10/avg60/avg300 stayed zero, and user-manager `max=728,363`, `oom=19`, and
 `oom_kill=15` remained fixed. The `high` counter rose from 16,416,821 at 01:16
 to 16,416,839 at 01:34 without new max/OOM events. Reality and API remain
@@ -34,6 +34,8 @@ suite, live probes, endurance, and research campaigns remain gated.
 Recent bounded Frontier evidence:
 
 - Transport 20/20; adapters 167/167.
+- Finite collection/API 51/51; Coinbase plus trade contract 34/34; coverage,
+  timeline, and discovery analytics 17/17.
 - Instrument/payoff/FX/capital/Kalshi-fee 77/77; joint-state and implication
   economics 35/35.
 - Storage 32/32; API 59/59; the API suite required a 90-second harness after

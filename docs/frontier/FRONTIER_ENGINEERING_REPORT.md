@@ -2,7 +2,7 @@
 
 **Report date:** 2026-10-29
 
-## Current completion matrix — 2026-10-29 01:35 CET
+## Current completion matrix — 2026-10-29 01:36 CET
 
 This is a current evidence classification, not a final completion claim. The
 dated implementation records below remain the detailed evidence; the
@@ -11,12 +11,12 @@ current host gate.
 
 | Component | Status | Current evidence and boundary |
 | --- | --- | --- |
-| Exchange-independent adapter core and Polymarket/Kalshi/Kraken/Coinbase adapters | IMPLEMENTED, LIVE VALIDATION PENDING | Fixture contracts cover four adapters; no current multi-venue public capture is claimed. Source-use holds remain. |
+| Exchange-independent adapter core and Polymarket/Kalshi/Kraken/Coinbase adapters | IMPLEMENTED, LIVE VALIDATION PENDING | Adapter fixture tests pass 167/167; Coinbase plus trade-contract tests pass 34/34. No current multi-venue public capture is claimed. Source-use holds remain. |
 | Canonical instruments and supported payoff semantics | PARTIALLY VERIFIED | Supported structures have model and invariant tests; this does not claim universal instrument support. |
 | Relationship graph, evidence binding, and review | PARTIALLY VERIFIED | Deterministic fixture relationships and pinned evidence are covered; a live cross-venue economic equivalence is not established. |
 | Candidate discovery and independent economic verification | PARTIALLY VERIFIED | Bounded mathematical fixtures and independent audits pass selected checks; no live eligible opportunity is demonstrated. |
 | Cross-venue costs, FX, capital, and execution uncertainty | PARTIALLY VERIFIED | Virtual models preserve unknown cost and applicability states; account-specific fees, jurisdiction, transfers, and execution remain unresolved. |
-| Collection, provenance, durable storage, and replay | PARTIALLY VERIFIED | Fixture and captured Polymarket evidence paths exist; Reality resumed fresh `RECORDING_UNSEQUENCED` capture after cold replay. Sequencing, multi-venue live collection, and archive provenance remain unverified or held. |
+| Collection, provenance, durable storage, and replay | PARTIALLY VERIFIED | Finite-collection/API fixtures pass 51/51 and storage passes 32/32; Reality resumed fresh `RECORDING_UNSEQUENCED` capture after cold replay. Sequencing, multi-venue live collection, and archive provenance remain unverified or held. |
 | Read-only source network and trading boundary | COMPLETE AND VERIFIED | Only `PublicReadTransport` issues source HTTP requests; it is anonymous HTTPS GET-only, host-allowlisted, redirect-disabled, and bounded. Adapter boundary fixtures cover disabled probes, credential/mutating clients, cookies, redirects, oversized payloads, and JSON complexity. No exchange order/account path was found in the reviewed Frontier code. |
 | Laboratory/Arena comparisons and bounded orchestration | PARTIALLY VERIFIED | Arena admission and finite scheduling regressions pass; a Laboratory resource-denial case passes with a harness cap above its 722,894,848-byte capacity precondition. Full endurance evidence remains incomplete. |
 | User-cgroup-aware workload admission | IMPLEMENTED, BOUNDED VALIDATION PASSED | Central Arena admission (15), finite schedules (12), and the Laboratory denial case (1) pass fixture tests using user-manager pressure; no runtime deployment occurred. |
@@ -28,7 +28,7 @@ current host gate.
 | Production integration/deployment | DEFERRED | Frontier remains isolated; no protected service transition occurred. |
 | Project Frontier overall | PARTIALLY VERIFIED | The engine is substantial, but live cross-venue science, broad verification, recovery, endurance, and deployment gates remain open. |
 
-## Bounded Frontier verification after host containment — 2026-10-29 01:35 CET
+## Bounded Frontier verification after host containment — 2026-10-29 01:36 CET
 
 Frontier work resumed only in sequential transient user scopes. Python test
 scopes used a 768 MiB maximum, zero swap, 25% CPU quota, 64-task cap, and
@@ -43,6 +43,9 @@ exchange request was made.
 | Instrument identity, payoff invariants, FX, capital carry, and Kalshi fee sensitivity | 77/77 passed | 768 MiB, zero swap, 25% CPU, 64 tasks; 3.58 s. |
 | Joint-state and logical-implication economics | 35/35 passed | 768 MiB, zero swap, 25% CPU, 64 tasks; 4.19 s. |
 | Frontier storage | 32/32 passed | 768 MiB, zero swap, 25% CPU, 64 tasks; 9.59 s. |
+| Finite collection and collection API | 51/51 passed | 768 MiB, zero swap, 50% CPU, 64 tasks; 14.48 s. Fake adapters and temporary stores only. |
+| Coinbase adapter and trade-adapter contract | 34/34 passed | 512 MiB, zero swap, 50% CPU, 32 tasks; 1.83 s. Fixture transport only. |
+| Coverage, timeline, and paired discovery analytics | 17/17 passed | 512 MiB, zero swap, 50% CPU, 32 tasks; 1.05 s. |
 | Frontier API | 59/59 passed | 768 MiB, zero swap, 25% CPU, 64 tasks; 58.60 s. One existing Starlette/httpx deprecation warning. |
 | Relationship, historical replay, paired replay, and source-permission slice | 126 passed, 1 failed on first run | The failing assertion supplied a flipped mapping against a verified relationship's pinned evidence. |
 | Paired-replay mapping regression after correction | 4/4 passed | The stale assertion now verifies that conflicting overrides are rejected, preserving the integrity rule from `40afc20`. |
