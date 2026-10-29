@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 06:15 CET |
+| Latest addendum | 2026-10-29 06:17 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Pre-incident checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -776,3 +776,19 @@ uncapped, historical attribution is incomplete, and the observation window is
 short. Incident status remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**;
 continue only serial, source-independent work and capped fixture checks after
 a fresh admission sample.
+
+## Final short-window recheck — 2026-10-29 06:17 CET
+
+At 05:17:02 UTC, after the bounded UI test, `MemAvailable` was
+11,387,441,152 bytes (about 10.61 GiB), `SwapFree` was 7,921,664 bytes
+(7.55 MiB), and host memory PSI averages remained zero. User-manager event
+counters remained `oom=19`, `oom_kill=15`, and `oom_group_kill=0`. The actual
+registered `/api/health` endpoints for the MIDAS API (port 8000) and Reality
+API (port 8010) both returned `status=READY`; each reported
+`live_execution=false`. Both services and the capacity timer remained active;
+the gap-detail timer remained inactive. Kernel and systemd-oomd journal
+queries contained no kill entries from 05:11:26 through 05:17 UTC.
+
+This is a short quiet interval, not evidence of durable recovery. Swap remains
+almost entirely occupied, historical attribution is incomplete, and the
+archive inventory/provenance warnings are unchanged.
