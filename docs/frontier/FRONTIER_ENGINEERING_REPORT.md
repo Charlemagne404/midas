@@ -2,7 +2,7 @@
 
 **Report date:** 2026-10-29
 
-## Current completion matrix — 2026-10-29 08:18 CET
+## Current completion matrix — 2026-10-29 08:19 CET
 
 This is a current evidence classification, not a final completion claim. The
 dated implementation records below remain the detailed evidence; the
@@ -14701,3 +14701,22 @@ At 08:17:52 global memory PSI and oomd user-cgroup pressure were zero;
 9/14/0. A second successful capacity run after the reversible bound is useful
 operational evidence, but does not prove the memory peak margin or clear the
 archive-provenance blocker.
+
+### Collection API hold and resume safety — 2026-10-29 08:19 CET
+
+Three current-tree collection API tests passed **3/3** in 4.99 seconds:
+disabled/held sources are rejected before journal creation or requests;
+resume is rejected after the capability manifest changes; and an unregistered
+adapter is reported before journal access. The run used a serial transient
+unit at 384 MiB high / 512 MiB max, zero swap, 20% CPU, 64 tasks, and a
+60-second runtime. A live cgroup sample measured a 64,749,568-byte peak,
+zero swap, and zero high/max/OOM events. One existing Starlette/httpx
+deprecation warning appeared. The tests used local fakes; no public request
+was issued.
+
+At 08:19:30 global memory PSI avg10/60 was zero and avg300 was 0.06%; oomd's
+monitored user-cgroup pressure was zero at avg10/60 and 0.07% at avg300.
+`MemAvailable` remained 10 GiB and swap remained nearly full. OOM counters
+stayed 19/15/0; API and Reality remained active at restarts 9/14 and about
+969/426 MiB. This is bounded fixture evidence; source-use holds and live
+validation limits remain in force.

@@ -1415,3 +1415,22 @@ pressure were zero, `MemAvailable` was 10 GiB, swap remained nearly full, and
 OOM counters remained 19/15/0. The API, Reality, and Reality API services
 remained active at restarts 9/14/0. This is another successful bounded run,
 not proof of sustained memory headroom or full incident recovery.
+
+## Collection API safety fixtures and host sample — 2026-10-29 08:19 CET
+
+Three collection API tests passed **3/3** in 4.99 seconds: held/disabled
+sources fail before journal creation or network request; a capability-manifest
+change blocks checkpoint resume; and an unregistered adapter is reported
+before journal access. They ran under 384 MiB high / 512 MiB max, zero swap,
+20% CPU, 64 tasks, and a 60-second timeout. Live cgroup peak was 64,749,568
+bytes with no swap or high/max/OOM events. One existing Starlette/httpx
+deprecation warning appeared. Local fake adapters only; no external source
+request.
+
+At 08:19:30 global memory PSI was 0/0/0.06% avg10/60/300, and oomd's
+user-cgroup pressure was 0/0/0.07%; `MemAvailable` was 10 GiB while swap was
+still nearly full. OOM counters remained 19/15/0; API and Reality remained
+active at restart counts 9/14, around 969/426 MiB. No OOMD or kernel OOM
+appeared in the recent window. This supports continuing small serial fixture
+work only; the 640 MiB UI retry, broad suites, and endurance runs stay
+deferred.

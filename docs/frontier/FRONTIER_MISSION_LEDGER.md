@@ -13828,3 +13828,10 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
 - The report still flags pending budget/retention restart changes, capacity horizons, invalid archive segment inventory, and invalid archive manifest provenance. No archive or recorder changes were made.
 - Host memory PSI and oomd user-cgroup pressure were zero at launch; `MemAvailable` was 10 GiB, swap nearly full, OOM counters remained 19/15/0, and API/Reality/Reality API stayed active at restart counts 9/14/0.
 - **Status:** Successful bounded scheduled run; long-run memory margin, archive provenance, and the workload that initiated prior OOMD pressure remain unresolved.
+
+## 2026-10-29 08:19 CET — collection API safety fixtures
+
+- **Tests:** Three collection API cases passed **3/3**: held/disabled sources are rejected before journal or request; changed capabilities block resume; and missing adapters are reported before journal access. One existing Starlette/httpx deprecation warning appeared. Local fakes only, no network calls.
+- **Bounds:** 384 MiB high / 512 MiB max, zero swap, 20% CPU, 64 tasks, 60 seconds. Direct live cgroup peak 64,749,568 bytes; no swap or high/max/OOM events.
+- **Host:** At 08:19:30 global memory PSI avg10/60 was zero and avg300 0.06%; oomd user-cgroup avg300 0.06%; 10 GiB available; swap nearly full; OOM counters 19/15/0. API/Reality active at restarts 9/14. No recent OOMD/kernel OOM.
+- **Status:** Small serial fixture admission remains acceptable after a fresh check. Live-source access stays held; incident remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**.
