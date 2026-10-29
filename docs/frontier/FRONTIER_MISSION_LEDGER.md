@@ -13372,3 +13372,27 @@ cross-venue validation.
 Checkpoint commits: `65192c8` (incident attribution), `87e2241` (evidence
 pin), and `fe9d59c` (bounded joint-state verification). The untracked
 `data/frontier-public-probes/` directory remains untouched.
+
+### Bounded transport, relationship, and static verification — 2026-10-29 05:04 CET
+
+The focused joint-state, implication/review, and transport fixture suites
+passed **14/14**, **27/27**, and **20/20**, respectively. Each ran serially in
+a separate transient user scope capped at 384 MiB `MemoryHigh`, 512 MiB
+`MemoryMax`, zero swap, and 20% CPU. Strict mypy passed for selected
+economics and adapter modules; Ruff check and format passed on twelve files.
+The only code change was a one-line formatting correction in
+`packages/midas/frontier/adapters/transport.py`, committed as `ef4e77d`
+(`style(frontier): format public transport retry bound`). No runtime behavior
+or host service configuration changed.
+
+At 05:04:25 CET, `MemAvailable` was 10.802 GiB, `SwapFree` 0.002 GiB, PSI
+zero, and user-manager `memory.events` unchanged at `oom=19`/`oom_kill=15`.
+API and Reality remained active at restart counts 9/14; gap-detail stayed
+inactive and capacity-check active. `oomctl dump` still showed no monitored
+groups; no OOM entry appeared in the checked journal interval since 05:03.
+Treat as a short observation only. Swap use and OOMD visibility remain
+unresolved, so continue with serial capped checks and documentation only;
+defer broad suites, source probes, and large replay work. The full host
+incident status remains PARTIALLY CONTAINED / PARTIALLY VERIFIED. Preserve
+the untracked `data/frontier-public-probes/` directory without inspection or
+staging.

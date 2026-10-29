@@ -2,7 +2,7 @@
 
 **Report date:** 2026-10-29
 
-## Current completion matrix — 2026-10-29 04:58 CET
+## Current completion matrix — 2026-10-29 05:04 CET
 
 This is a current evidence classification, not a final completion claim. The
 dated implementation records below remain the detailed evidence; the
@@ -11,10 +11,10 @@ current host gate.
 
 | Component | Status | Current evidence and boundary |
 | --- | --- | --- |
-| Exchange-independent adapter core and Polymarket/Kalshi/Kraken/Coinbase/Gemini adapters | IMPLEMENTED, LIVE VALIDATION PENDING | The default registry now includes five distinct sources. Gemini Spot adds eight declared metadata/book/context capabilities, a 1–20 pair allowlist, exact-string bounded book parsing, no catalog crawl, and explicit rejection of swaps and event-payoff semantics. Its unconditional source-use hold blocks probes and stored research pending current agreement/scope review. Gemini fixture tests pass 4/4; the full adapter module passes 168/168. No Gemini live validation is claimed. |
+| Exchange-independent adapter core and Polymarket/Kalshi/Kraken/Coinbase/Gemini adapters | IMPLEMENTED, LIVE VALIDATION PENDING | The default registry now includes five distinct sources. Gemini Spot adds eight declared metadata/book/context capabilities, a 1–20 pair allowlist, exact-string bounded book parsing, no catalog crawl, and explicit rejection of swaps and event-payoff semantics. Its unconditional source-use hold blocks probes and stored research pending current agreement/scope review. Gemini fixture tests pass 4/4; the full adapter module passes 168/168. The focused public transport module passes 20/20; selected strict mypy and Ruff checks pass. No Gemini live validation is claimed. |
 | Canonical instruments and supported payoff semantics | PARTIALLY VERIFIED | Supported structures have model and invariant tests; this does not claim universal instrument support. |
 | Relationship graph, evidence binding, and review | PARTIALLY VERIFIED | Deterministic fixture relationships and pinned evidence are covered; a live cross-venue economic equivalence is not established. |
-| Candidate discovery and independent economic verification | PARTIALLY VERIFIED | Bounded mathematical fixtures and independent audits pass selected checks; joint-state basket, audit, and deterministic replay tests pass 14/14. Receipt age and timestamp/receipt skew now use exact deltas rounded up to milliseconds in both generator and verifier. No live eligible opportunity is demonstrated. |
+| Candidate discovery and independent economic verification | PARTIALLY VERIFIED | Bounded mathematical fixtures and independent audits pass selected checks; joint-state basket, audit, and deterministic replay tests pass 14/14; logical implication and relationship review tests pass 27/27. Receipt age and timestamp/receipt skew now use exact deltas rounded up to milliseconds in both generator and verifier. No live eligible opportunity is demonstrated. |
 | Cross-venue costs, FX, capital, and execution uncertainty | PARTIALLY VERIFIED | Four bounded fixture modules for venue funding/FX, capital carry, Kalshi fees, and logical implications pass 79/79. Virtual models preserve unknown cost and applicability states; account-specific fees, jurisdiction, transfers, and execution remain unresolved. |
 | Collection, provenance, durable storage, and replay | PARTIALLY VERIFIED | Finite-collection/API fixtures pass 51/51 and the prior storage slice passed 32/32; after schema-v8 graph counters, focused revision/pagination and schema-6/7 migration cases pass 5/5, with older schema-2/4/5 migrations passing 3/3. Timeline replay v3 includes per-instrument receipt time, source timestamp semantics, clock uncertainty, and source freshness limits. Gemini's source-specific configuration tag round-trips in the finite-collection journal; collection remains blocked by the source-use hold. Sequencing, multi-venue live collection, and archive provenance remain unverified or held. |
 | Read-only source network and trading boundary | COMPLETE AND VERIFIED | Only `PublicReadTransport` issues source HTTP requests; it is anonymous HTTPS GET-only, host-allowlisted, redirect-disabled, and bounded. Adapter boundary fixtures cover disabled probes, credential/mutating clients, cookies, redirects, oversized payloads, and JSON complexity. No exchange order/account path was found in the reviewed Frontier code. |
@@ -22,9 +22,9 @@ current host gate.
 | User-cgroup-aware workload admission | IMPLEMENTED, BOUNDED VALIDATION PASSED | Central Arena admission (15), finite schedules (12), and the Laboratory denial case (1) pass fixture tests using user-manager pressure; no runtime deployment occurred. |
 | Reality capacity inventory bounds | PARTIALLY VERIFIED | Candidate inventory code remains undeployed. The separate monitor is bounded at `MemoryHigh=160M`, `MemoryMax=192M`, and zero swap; its scheduled 04:47 run succeeded in 6.257 CPU seconds with zero swap. systemd logged a 3.2 MiB peak, unexpectedly below the earlier 137.4 MiB measurement, so that peak does not establish representative memory use. The report still identifies invalid archive inventory and provenance. |
 | Native Frontier dashboard | PARTIALLY VERIFIED | The dashboard now includes the held Gemini Spot capability and timing explanation. Its focused explorer fixture passed 1/1 with a 15-second per-test allowance under a 50% CPU cap; eight other cases were skipped. The saved timeline timing and result-pagination browser fixtures passed earlier. TypeScript project build and a production Vite build passed in bounded zero-swap scopes. Default Playwright last passed 17/20 with three opt-in skips; captured-evidence browser validation remains open. |
-| Host reliability containment | PARTIALLY VERIFIED | The five-minute gap-detail timer is disabled; a full October 28 journal audit found 129 systemd-oomd kills, 106 targeting this replay. Seven separate kernel memcg kills hit the capacity checker's original 128 MiB cap. The capacity checker now has reversible 160/192 MiB, zero-swap limits. At 04:58, `MemAvailable` was 10.802 GiB, free swap 0.002 GiB, and host/user-manager PSI was zero; user-manager `oom=19`/`oom_kill=15` were unchanged. API/Reality were active at restarts 9/14. `oomctl` last listed no groups at 04:56 despite the user-manager 50% pressure policy. OOMD decision logs show the replay had high local PSI during one kill; the target statistics do not prove a single workload caused aggregate pressure. No new kill has appeared since 23:43 Oct 28, but swap and monitor visibility remain unresolved. |
+| Host reliability containment | PARTIALLY VERIFIED | The five-minute gap-detail timer is disabled; a full October 28 journal audit found 129 systemd-oomd kills, 106 targeting this replay. Seven separate kernel memcg kills hit the capacity checker's original 128 MiB cap. The capacity checker now has reversible 160/192 MiB, zero-swap limits. At 05:04, `MemAvailable` was 10.802 GiB, free swap 0.002 GiB, and host/user-manager PSI was zero; user-manager `oom=19`/`oom_kill=15` were unchanged. API/Reality were active at restarts 9/14. `oomctl` still listed no groups despite the user-manager 50% pressure policy. OOMD decision logs show the replay had high local PSI during one kill; the target statistics do not prove a single workload caused aggregate pressure. No new kill appeared in the checked journal interval since 05:03, but swap and monitor visibility remain unresolved. |
 | Node/V8 and Apport side effect | PARTIALLY VERIFIED | The 02:36 TypeScript attempt aborted at Node's heap limit with a 300.6 MiB cgroup peak, not a kernel OOM. Whoopsie attempted to submit the 58,222,586-byte crash report and received HTTP 504; remote receipt is unknown. No `.uploaded` marker exists; avoid further crash-prone Node checks. |
-| Broad regressions, resource endurance, and performance acceptance | DEFERRED | Selected Python, API, adapter, collection, and economics tests passed under bounded zero-swap scopes. The graph-revision storage/migration cases pass 8/8; API cursor invalidation passes 1/1; four core economics modules pass 79/79; joint-state basket/audit/replay passes 14/14; Ruff check/format and strict mypy pass under caps. Full MIDAS regression, full browser suite, captured-evidence browser journey, endurance, and broad performance tests remain deferred. |
+| Broad regressions, resource endurance, and performance acceptance | DEFERRED | Selected Python, API, adapter, collection, and economics tests passed under bounded zero-swap scopes. The graph-revision storage/migration cases pass 8/8; API cursor invalidation passes 1/1; four core economics modules pass 79/79; joint-state basket/audit/replay passes 14/14; logical implication/relationship review passes 27/27; transport passes 20/20. Ruff check/format passed on 12 files and selected strict mypy checks pass under caps. Full MIDAS regression, full browser suite, captured-evidence browser journey, endurance, and broad performance tests remain deferred. |
 | Live multi-venue source authorization and findings | BLOCKED | Kalshi, Kraken, Coinbase, and Gemini probes and retained-data research remain held; the worktree Polymarket probe flag is off. |
 | Production integration/deployment | DEFERRED | Frontier remains isolated; no protected service transition occurred. |
 | Project Frontier overall | PARTIALLY VERIFIED | The engine is substantial, but live cross-venue science, broad verification, recovery, endurance, and deployment gates remain open. |
@@ -13880,3 +13880,32 @@ checked journal interval from 04:58:25 to 04:58:58. API and Reality remained
 active with restart counts 9/14; the gap-detail timer stayed inactive and the
 capacity timer stayed active. This is focused fixture evidence, not live or
 endurance validation.
+
+## Bounded transport, relationship, and static verification — 2026-10-29 05:04 CET
+
+After the joint-state run, bounded fixture checks passed for the stored public
+transport boundary (**20/20**, 4.08 seconds) and logical-implication plus
+relationship review (**27/27**, 10.89 seconds; one existing Starlette/httpx
+TestClient deprecation warning). Both ran in transient user scopes with
+`MemoryHigh=384M`, `MemoryMax=512M`, `MemorySwapMax=0`, and `CPUQuota=20%`.
+The joint-state module passed **14/14 in 4.28 seconds** under a separate
+`MemoryHigh=384M`, `MemoryMax=512M`, zero-swap, 20% CPU scope. These were
+deterministic fixtures; no live source, production database, or historical
+store was accessed.
+
+Strict mypy passed on `joint_economics.py`, `independent_audit.py`, `fx.py`,
+`capital.py`, and adapter `base.py`, `transport.py`, `polymarket.py`, and
+`registry.py`. Ruff check and format passed on the twelve touched production
+and test files. The only code change in this checkpoint was the formatter's
+one-line wrap in `adapters/transport.py`, committed as `ef4e77d`; it changes
+no behavior.
+
+At 05:04:25 CET, `MemAvailable` was 10.802 GiB, `SwapFree` 0.002 GiB, and
+host/user-manager PSI was zero. User-manager `memory.events` remained at
+`oom=19`/`oom_kill=15`; API and Reality were active with restart counts 9/14.
+The gap-detail timer remained inactive, the capacity timer active, and no OOM
+entry appeared in the checked journal interval since 05:03. `oomctl dump`
+still listed no monitored groups despite the user-manager pressure policy.
+This short observation does not resolve the nearly full swap or OOMD monitor
+visibility concerns and is not endurance evidence. Broad regressions, live
+source validation, and production deployment remain deferred or held.

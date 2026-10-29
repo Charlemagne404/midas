@@ -356,3 +356,31 @@ replay churn has been removed from the schedule and the capacity checker's
 hard limit has safe headroom for its measured peak. Root-cause attribution
 outside the replay workload, full-swap risk, current OOMD monitor visibility,
 and long-duration host stability remain unresolved.
+
+## Bounded verification follow-up — 2026-10-29 05:04 CET
+
+Three focused fixture suites passed under separate transient user scopes,
+each with `MemoryHigh=384M`, `MemoryMax=512M`, `MemorySwapMax=0`, and
+`CPUQuota=20%`:
+
+- `tests/frontier/test_joint_state.py`: **14/14** in 4.28 seconds.
+- `tests/frontier/test_logical_implication.py` and
+  `tests/frontier/test_relationship_reviews.py`: **27/27** in 10.89 seconds.
+- `tests/frontier/test_transport.py`: **20/20** in 4.08 seconds.
+
+Selected strict mypy checks passed for four economics modules and four
+adapter modules. Ruff check and format passed on twelve files. The only code
+change was a one-line formatter correction in `adapters/transport.py`,
+committed as `ef4e77d`; no service configuration was changed in this follow-up.
+One existing Starlette/httpx TestClient deprecation warning remains.
+
+At 05:04:25 CET, host and user-manager PSI were zero, `MemAvailable` was
+10.802 GiB, `SwapFree` was 0.002 GiB, and user-manager `memory.events`
+remained `oom=19`/`oom_kill=15`. API and Reality remained active at restart
+counts 9/14; the gap-detail timer remained inactive and the capacity timer
+active. `oomctl dump` still listed no monitored groups, and no OOM entry was
+found in the checked journal interval since 05:03. This is a brief post-check
+sample only. It does not resolve swap exhaustion, current OOMD monitor
+visibility, root-cause attribution beyond the demonstrated replay-local
+pressure, or endurance stability. Keep broad suites, public probes, and large
+replays deferred.
