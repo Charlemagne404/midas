@@ -2509,3 +2509,31 @@ memcg OOM at this sample. Neither value establishes a host-pressure cause.
 No limit change was made. Incident status remains **PARTIALLY CONTAINED /
 PARTIALLY VERIFIED**; Frontier may continue only as serial, bounded, offline
 work with a fresh resource admission check.
+
+## Current workload attribution sample — 2026-10-29 11:49 CET
+
+A fresh read-only sample showed 11.44 GB (10.66 GiB) `MemAvailable`, zero
+host PSI, and 12.78 MB (12.2 MiB) `SwapFree`. The uncapped user-manager
+cgroup charged 10,118,754,304 bytes (9.42 GiB) of memory and
+2,857,951,232 bytes (2.66 GiB) of swap. Its `memory.stat` attributed about
+2.33 GB to anonymous pages, 6.63 GB to file cache, and 1.14 GB to kernel
+memory. OOM counters remained 19/15/0; no jobs were active.
+
+The largest current leaf under that user manager was a GNOME Terminal VTE
+scope charged 2,354,704,384 bytes (2.19 GiB): 598 MB anonymous memory and
+1.72 GB file cache, no swap, zero current PSI, and zero local high/max/OOM
+events. Its processes included the active Codex CLI (about 403 MiB RSS), the
+Codex app server (about 330 MiB), and MCP/CUA processes. This identifies a
+substantial current development-session charge; its quiet local PSI and
+current host headroom do not establish that this scope caused the October 28
+OOM events.
+
+`systemd-cgtop` charged `system.slice` about 3.0 GiB, spread across services;
+large listed entries included Netdata (~421 MiB), RustDesk (~217 MiB), snapd
+(~207 MiB), Continental status (~199 MiB), Echo production (~162 MiB), and
+journald (~150 MiB). These services were not altered. The current Reality
+recorder, MIDAS API, Reality API, and their separate cgroups remain active.
+The 11:49 sample is an attribution snapshot, not a causal reconstruction. It
+reinforces that pressure is aggregate and file-cache-heavy at this time, but
+does not resolve what crossed the user-slice pressure threshold on October 28.
+No process was killed or stopped to reduce the current charge.

@@ -14551,3 +14551,19 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
   `memory.max` events but no OOM and zero current PSI; its relationship to
   earlier host pressure is unproven. The incident remains partially
   contained/verified. Continue serial offline work only after fresh admission.
+
+## 2026-10-29 11:49 CET — fresh cgroup attribution sample
+
+- Host sample: `MemAvailable` 10.66 GiB, PSI zero, `SwapFree` 12.2 MiB.
+  User-manager charge was 9.42 GiB memory and 2.66 GiB swap; its current
+  `memory.stat` was file-cache-heavy (6.63 GB file, 2.33 GB anonymous,
+  1.14 GB kernel). OOM counters stayed 19/15/0 and no jobs were active.
+- The largest current leaf was a VTE terminal scope at 2.19 GiB, including
+  about 1.72 GB file cache and 598 MB anonymous memory; local PSI, swap, and
+  cgroup limit/OOM events were zero. It contained the current Codex CLI and
+  app-server/MCP processes. This is a notable current workload, not proof of
+  the historical OOM initiator.
+- `system.slice` charged about 3.0 GiB across Netdata, RustDesk, snapd,
+  Continental, Echo, journald, and other services. All remained untouched.
+  Host pressure is currently quiet but swap remains nearly exhausted; the
+  aggregate workload cause and durable recovery remain unresolved.
