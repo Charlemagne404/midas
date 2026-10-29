@@ -15636,3 +15636,20 @@ OOMD/kernel kill appeared since 14:05. No further browser job was launched.
 The fixture is synthetic, so genuine cross-venue validation remains blocked;
 the host also remains partially contained with near-full swap and an uncapped
 user-manager hierarchy.
+
+### Leaf-cgroup workload sample — 2026-10-29 14:08 CET
+
+A read-only scan of 79 leaf cgroups found the largest current charge in a
+long-lived GNOME Terminal `vte-spawn` scope: 2,567.9 MiB memory, no swap,
+599.9 MiB anonymous, 1,927.9 MiB file cache, and 39.3 MiB kernel memory.
+Sleeping Codex and Node processes were present. This is a current workload
+candidate, not evidence that this scope initiated the earlier kills.
+
+Other large leaf charges were MIDAS API at 1,106.8 MiB, Reality at 649.3 MiB,
+and Reality API at 471.6 MiB. The Reality API value is close to its 512 MiB
+hard limit; it remained active and did not hit the limit. Chromium and GNOME
+Shell also had 133.7 and 300.8 MiB of swap charged. At the same 14:08:02
+sample, `MemAvailable` was 10.60 GiB, swap free 15.45 MiB, and global PSI was
+zero. No process was stopped or reconfigured. The uncapped shared user
+manager remains a broad resource boundary, but the historical initiating
+workload is unconfirmed.

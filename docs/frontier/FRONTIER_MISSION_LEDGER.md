@@ -15073,3 +15073,17 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
   synthetic two-venue fixture only. No live multi-venue evidence was added.
   Stop browser work for this checkpoint; continue only after a fresh host
   admission sample and under transient resource limits.
+
+## 2026-10-29 14:08 CET — leaf-cgroup resource attribution
+
+- A read-only scan of 79 leaf cgroups found a long-lived GNOME Terminal scope
+  at 2,567.9 MiB current memory, including 1,927.9 MiB file cache and 599.9
+  MiB anonymous memory. Sleeping Codex/Node processes were present. This is a
+  major current shared-user charge, not proof of the historical kill trigger.
+- Other large leaf charges were API 1,106.8 MiB, Reality 649.3 MiB, and
+  Reality API 471.6 MiB against its 512 MiB max. All remained active. Chromium
+  and GNOME Shell each had additional swap charges. Host `MemAvailable` was
+  10.60 GiB, free swap 15.45 MiB, and PSI zero at the sample.
+- No process was stopped or changed. The uncapped shared user-manager remains
+  a plausible resource-risk boundary, but per-workload historical attribution
+  and sustained recovery remain unproven. No further browser work was started.

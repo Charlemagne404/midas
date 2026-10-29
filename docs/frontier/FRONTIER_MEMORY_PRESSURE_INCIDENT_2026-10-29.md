@@ -3165,3 +3165,30 @@ This is a successful bounded fixture verification with no observed host PSI
 or OOM event. Swap remains almost full and the shared user manager remains
 uncapped; do not infer sustained recovery. No further browser work was started
 in this checkpoint.
+
+## Leaf-cgroup workload snapshot — 2026-10-29 14:08 CET
+
+A read-only scan of 79 leaf cgroups at 14:08:02 showed the largest current
+charge in a long-lived GNOME Terminal `vte-spawn` scope: 2,567.9 MiB memory,
+no swap, 599.9 MiB anonymous, 1,927.9 MiB file cache, and 39.3 MiB kernel
+memory. The process inventory from the same inspection showed sleeping Codex
+and Node processes in that scope. The snapshot command itself ran inside the
+scope and contributes a small amount; it was not stopped or altered. This is
+a significant current shared-user workload candidate, not proof that it
+triggered the October 28 kills.
+
+Other large leaf charges were MIDAS API at 1,106.8 MiB (978.4 MiB file,
+116.5 MiB anonymous), Reality at 649.3 MiB (341.7 MiB file, 292.6 MiB
+anonymous), and Reality API at 471.6 MiB (361.4 MiB file, 95.9 MiB anonymous).
+The latter's measured charge is close to its 512 MiB `MemoryMax`, though it
+remained active and did not hit the limit in this sample. Chromium and GNOME
+Shell also had 133.7 MiB and 300.8 MiB of swap charged respectively. These
+leaf values explain why process RSS and service kill frequency alone do not
+describe the memory hierarchy, but still do not assign the historical OOMD
+trigger to one workload.
+
+At 14:08:02, host `MemAvailable` was 10.60 GiB, free swap 15.45 MiB, and
+global PSI avg10/60/300 was zero. No service was stopped, signaled, or
+reconfigured. This is current-state attribution evidence only; root cause
+remains **PARTIALLY IDENTIFIED** at the shared uncapped user-manager and
+high-swap-pressure level, with the initiating workload unconfirmed.
