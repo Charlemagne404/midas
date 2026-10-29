@@ -13170,3 +13170,22 @@ The completion matrix in `FRONTIER_ENGINEERING_REPORT.md` now links to it.
 The only untracked path remains the preserved `data/frontier-public-probes/`
 directory; it was neither read nor changed. The report commit is
 `06f7886`; the ledger follow-up commit records that identity.
+
+### Host follow-up and Frontier graph review — 2026-10-29 04:36 CET
+
+The 04:36 low-impact host sample remained quiet (zero PSI, 11.61 GB available
+RAM) but swap was 99.96% occupied. The gap-detail timer was still inactive
+and disabled; the capacity monitor's last result was success at 04:16; API
+and Reality were active. No OOM journal entry newer than 23:43:24 on October
+28 was found. This extends the quiet window by four minutes only and does not
+change the partial-containment verdict.
+
+Resumed a read-only Frontier graph API review. Request/page bounds are
+present, and relationship/observation tables are append-only. However,
+`FrontierStore.graph_revision()` performs three table counts for each graph
+revision read, including a filtered count over graph-relevant observations.
+This cost grows with stored history. Frontier is not deployed; no change or
+test was made under the incident host gate. Follow up with a migration-safe,
+constant-time revision counter design and one focused bounded test after swap
+headroom and OOMD monitor visibility permit it. No Frontier process was
+running.

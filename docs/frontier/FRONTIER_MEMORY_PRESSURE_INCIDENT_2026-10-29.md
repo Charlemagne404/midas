@@ -188,6 +188,14 @@ No OOMd kill has appeared since October 28 23:43:24, no kernel OOM since
 4-hour-49-minute quiet window after the last OOMd action, not endurance
 validation.
 
+At 04:36 the host still had zero PSI and 11.61 GB `MemAvailable`, but only
+1.94 MB of swap remained free. The gap-detail timer remained inactive and
+disabled; the capacity timer and API/Reality services were active. The
+capacity service's most recent scheduled result remained successful at
+04:16:51. Journal review still showed no OOM kill newer than 23:43:24 on
+October 28. This adds four minutes to the bounded quiet observation only;
+swap exhaustion risk and the OOMD registration discrepancy remain unresolved.
+
 ## Frontier continuation gate
 
 Frontier is **safe to continue with serial code/documentation work and small,
