@@ -5,6 +5,13 @@ import { preciseUtcTime } from './frontierTime';
 
 type PressureWindow = { avg10?: number | null };
 type PressureSample = { some?: PressureWindow | null; full?: PressureWindow | null };
+type MemoryEventCounts = {
+  high?: number | null;
+  max?: number | null;
+  oom?: number | null;
+  oom_kill?: number | null;
+  oom_group_kill?: number | null;
+};
 type ResourceSnapshot = {
   captured_at_utc?: string | null;
   host_memory?: {
@@ -17,6 +24,7 @@ type ResourceSnapshot = {
   services?: {
     'user-manager'?: {
       status?: string;
+      memory_events_since_cgroup_start?: MemoryEventCounts | null;
       pressure?: { memory?: PressureSample | null } | null;
     } | null;
   } | null;
@@ -37,6 +45,11 @@ const resourceBytes = (value: number | null | undefined) => {
 
 const resourcePressure = (value: number | null | undefined) =>
   value == null || !Number.isFinite(value) || value < 0 ? 'Not measured' : `${value.toFixed(2)}%`;
+
+const resourceCount = (value: number | null | undefined) =>
+  value == null || !Number.isSafeInteger(value) || value < 0
+    ? 'Not measured'
+    : value.toLocaleString('en-US');
 
 const swapSummary = (memory: ResourceSnapshot['host_memory']) => {
   const total = memory?.swap_total_bytes;
@@ -67,6 +80,14 @@ export function FrontierHostResourcePanel() {
   const manager = data?.services?.['user-manager'];
   const managerSome = resourcePressure(manager?.pressure?.memory?.some?.avg10);
   const managerFull = resourcePressure(manager?.pressure?.memory?.full?.avg10);
+  const managerEvents = manager?.memory_events_since_cgroup_start;
+  const managerEventCounts = [
+    managerEvents?.high,
+    managerEvents?.max,
+    managerEvents?.oom,
+    managerEvents?.oom_kill,
+    managerEvents?.oom_group_kill,
+  ];
   const unavailableMetrics = data
     ? [
         swapSummary(data.host_memory) === 'Not measured' ? 'swap totals' : null,
@@ -74,6 +95,12 @@ export function FrontierHostResourcePanel() {
         managerSome === 'Not measured' ||
         managerFull === 'Not measured'
           ? 'user-manager memory PSI'
+          : null,
+        manager?.status !== 'MEASURED' ||
+        managerEventCounts.some(
+          (count) => count == null || !Number.isSafeInteger(count) || count < 0,
+        )
+          ? 'user-manager memory event counters'
           : null,
       ].filter((metric): metric is string => metric !== null)
     : [];
@@ -129,10 +156,16 @@ export function FrontierHostResourcePanel() {
                   : 'Not measured'}
               </dd>
             </div>
+            <div>
+              <dt>User-manager high / max / OOM / kill / group-kill counts</dt>
+              <dd>{managerEventCounts.map(resourceCount).join(' / ')}</dd>
+            </div>
           </dl>
           <p className="fr-host-resource-note">
             Point-in-time telemetry only; it does not establish sustained resource capacity. Swap
-            occupancy alone is not a pressure diagnosis.
+            occupancy alone is not a pressure diagnosis. User-manager event counts are cumulative
+            since cgroup start, include descendants, and do not identify a workload; a max event
+            does not necessarily mean an OOM kill occurred.
             {unavailableMetrics.length > 0 && (
               <>
                 {' '}
