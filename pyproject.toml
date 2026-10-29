@@ -35,7 +35,7 @@ asyncio_mode = "auto"
 
 [tool.ruff]
 line-length = 100
-extend-exclude = ["deploy/runtime/**"]
+extend-exclude = ["deploy/runtime/**", "docs/history/**"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP"]

@@ -10,22 +10,27 @@ Midas evaluates complementary binary positions using exact ask-depth arithmetic,
 
 ## Current project state
 
-Prometheus, Reality, and Veritas engineering is consolidated in `main`. The
-Reality recorder and campaign workers continue from their retained runtime
-worktree; Veritas scheduled replay and observation use their retained data
-workspace. These worktrees remain because active services depend on their paths.
-Their runtime stores and historical evidence remain separate and unchanged.
+The authoritative development checkout is `/home/charlie/midas-unification`,
+branch `codex/midas-unification`. It contains the integrated Core, Prometheus,
+Laboratory, Arena, Reality, Veritas V6, Frontier, Mission Control, and Research
+Readiness code. Production services still use versioned releases and retained
+runtime worktrees; Project Unification did not deploy or restart them.
 
-The recorded Reality and Veritas evidence does not establish an eligible trading
-strategy, real fills, or profitability. Read the [current state and operations
-reference](docs/MIDAS_CURRENT_STATE.md) for the live service map, retained
-worktrees, data locations, latest receipted findings, and known operating limits.
-The [Reality acceptance record](docs/REALITY_MISSION2_ACCEPTANCE.md),
-[Veritas research ledger](docs/VERITAS_RESEARCH_LEDGER.json), and historical
-checkpoints preserve the original evidence and provenance.
+Use the [current state](docs/MIDAS_CURRENT_STATE.md),
+[architecture](docs/ARCHITECTURE.md),
+[development guide](docs/DEVELOPMENT.md), and
+[operations guide](docs/OPERATIONS.md) as the current references. The
+[unification report](docs/UNIFICATION_REPORT.md),
+[branch inventory](docs/UNIFICATION_BRANCH_INVENTORY.md), and
+[deployment plan](docs/UNIFICATION_DEPLOYMENT_PLAN.md) record the integration
+and remaining guarded transitions. Historical measurements remain in the
+[archived current-state ledger](docs/history/MIDAS_CURRENT_STATE_HISTORY_2026-10-29.md)
+and the dated engineering reports.
 
-Project Frontier is being developed on the isolated branch
-`codex/frontier-20261026`, based on the verified Veritas V6 integration. It adds
+Recorded, synthetic, paper, and independently checked evidence remain distinct.
+No current artifact establishes realized profitability or real fills.
+
+Project Frontier is integrated into the unified branch. It adds
 Polymarket, Kalshi, and Kraken Spot research adapters, evidence-backed market
 normalization, conservative relationship hypotheses with append-only review
 revisions, independent hypothetical economics for verified cross-venue binary
@@ -113,39 +118,32 @@ outcomes, synchronized prices, or returns. Only documentation-shaped fixtures
 currently contain the required parent and component settlement values; no live
 settlement audit has been observed.
 Review labels and assertion references are not authenticated; replay follows
-only the latest revision. It is not merged into `main` or deployed. Read the [Frontier mission ledger](docs/frontier/FRONTIER_MISSION_LEDGER.md)
+only the latest revision. It is not merged into protected `main` or deployed.
+Read the [Frontier mission ledger](docs/frontier/FRONTIER_MISSION_LEDGER.md)
 and [current engineering report](docs/frontier/FRONTIER_ENGINEERING_REPORT.md)
 for verified scope and remaining work.
 
 ## Install and run
 
-Requirements: Python 3.12+, Node 22+, Corepack, and uv. Dependencies are locked. If uv is unavailable, bootstrap it locally:
+Requirements: Python 3.12+, Node 22+, Corepack, and uv. Python and frontend
+dependencies are pinned by the checked-in lockfiles. Start with the safe,
+temporary-data workflow in [DEVELOPMENT.md](docs/DEVELOPMENT.md).
 
 ```bash
 python3 -m venv .venv
 .venv/bin/pip install uv
-.venv/bin/uv sync --frozen
-```
-
-If uv is already installed, `uv sync --frozen` creates the environment. Frontend dependencies:
-
-```bash
+.venv/bin/uv sync --locked --group dev
 corepack pnpm install --frozen-lockfile
 ```
 
-Start the API from the repository root:
+If uv is already installed, run `uv sync --locked --group dev` from the
+repository root. Do not point a development process at a service-owned data
+root. The development guide starts the API on a separate local port with all
+mutable stores under a temporary directory.
 
-```bash
-.venv/bin/uv run uvicorn apps.api.main:app --host 127.0.0.1 --port 8000
-```
-
-Start the dashboard in a second terminal:
-
-```bash
-corepack pnpm dev
-```
-
-Open **http://127.0.0.1:5173**. API documentation: **http://127.0.0.1:8000/docs**. Default mode is `demo`; Alembic migrates SQLite and automatically initializes `data/midas.db`. The frontend uses only local assets and its `/api` proxy. Copy `.env.example` to `.env` to customize settings.
+The dashboard and API URLs depend on the port configuration in the development
+guide. The default application mode is `demo`; the frontend uses local assets
+and its `/api` proxy.
 
 Optional container startup uses PostgreSQL and versioned migrations:
 
