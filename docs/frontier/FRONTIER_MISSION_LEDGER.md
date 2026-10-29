@@ -16745,3 +16745,19 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
   and 21:20:55. No Frontier test, replay, live probe, or memory-bearing
   work was started through this sample. Keep admission serial and wait for a
   fresh post-capacity sample before another memory-bearing job.
+
+## 2026-10-29 21:11 CET — source-analysis resource attribution
+
+- Veritas source analysis ran 21:10:44–55, processed 59 finalized segments
+  with none pending, exited 0, consumed 8.946 CPU seconds, and logged
+  MemoryPeak=147.7 MiB with zero swap under MemoryMax=256 MiB.
+- User-manager max events advanced 210 since 21:03; high/oom/oom_kill stayed
+  16,438,371/19/15. Since the service cgroup was removed and this run peaked
+  below its cap, the parent max increment is not attributable to source
+  analysis. Do not pause its timer on this evidence alone. The earlier
+  18:10 run that reached 256 MiB remains a separate data point.
+- PSI averages remained zero; MemAvailable was about 10 GiB and swap had
+  about 424 KiB free. API and Reality remained active at restart counts 9/14;
+  no OOMD/kernel kill appeared. Research Director is due 21:15 and capacity
+  21:20:55. The RSS instrumentation candidate remains isolated; its focused
+  test is still held pending the scheduled capacity run and fresh admission.

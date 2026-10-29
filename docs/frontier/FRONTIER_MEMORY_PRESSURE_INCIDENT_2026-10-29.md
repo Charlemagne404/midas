@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 21:04 CET |
+| Latest addendum | 2026-10-29 21:11 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Pre-incident checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -5222,3 +5222,29 @@ unbounded, OOMD currently lists no monitored groups, capacity-run peak
 telemetry is invalid, and the Continental audit's exit-1 cause is unknown.
 Wait for the capacity run and a fresh host sample before admitting another
 memory-bearing Frontier job.
+
+### Source-analysis run and counter review — 2026-10-29 21:11 CET
+
+The scheduled Veritas source-analysis batch ran from 21:10:44 to 21:10:55
+and exited 0. It processed 59 finalized segments, had no pending segments or
+bytes, consumed 8.946 CPU seconds, and reported a plausible 147.7 MiB
+MemoryPeak with zero swap under its 256 MiB MemoryMax. This run did not reach
+its hard limit; leave the 30-minute analysis timer enabled. A separate
+October 29 18:10 run had reached the configured 256 MiB peak, so memory use
+varies across runs.
+
+Between the 21:03 and 21:11 host samples, user@1000 memory.events.max rose
+from 732,222 to 732,432 (+210), while high=16,438,371, oom=19, and
+oom_kill=15 stayed unchanged. The source-analysis cgroup was removed after
+exit. Its 147.7 MiB process peak is below the cap and does not explain the
+parent max-event delta; the delta remains unattributed. The 21:11 host PSI
+averages were zero, MemAvailable was about 10 GiB, and swap had about
+424 KiB free. API and Reality remained active with restart counts 9 and 14.
+No OOMD or kernel OOM kill appeared.
+
+This is additional evidence against pausing the bounded source-analysis
+timer solely because of the parent counter. It remains a read-only finalized
+data job, not live collection or an integrity check. The next Research
+Director run is due 21:15 and the capacity check is due 21:20:55. No Frontier
+test, replay, or public probe was admitted. Keep the capacity-candidate test
+pending until after the scheduled capacity run and a fresh pressure sample.
