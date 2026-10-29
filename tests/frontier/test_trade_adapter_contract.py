@@ -3,7 +3,7 @@ from __future__ import annotations
 import hashlib
 from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
 from time import monotonic, monotonic_ns
@@ -107,6 +107,7 @@ class TradeFixtureCase:
     supports_paginated_trades: bool
     fixture_only_transport: bool = False
     prerequisite_responses: dict[str, Any] | None = None
+    expected_exchange_timestamp_utc: datetime | None = None
 
 
 class TradeAdapter(Protocol):
@@ -254,7 +255,7 @@ async def test_five_trade_adapters_share_capture_contract_and_keep_native_semant
             payload=[
                 {
                     "timestamp": int(T0.timestamp()),
-                    "timestampms": int(T0.timestamp() * 1000),
+                    "timestampms": int(T0.timestamp()) * 1000 + 123,
                     "tid": 61044953,
                     "price": "0.5000",
                     "amount": "2.00",
@@ -292,6 +293,7 @@ async def test_five_trade_adapters_share_capture_contract_and_keep_native_semant
                     "contract_price_currency": "USD",
                 }
             },
+            expected_exchange_timestamp_utc=T0 + timedelta(milliseconds=123),
         ),
     )
 
@@ -340,7 +342,7 @@ async def test_five_trade_adapters_share_capture_contract_and_keep_native_semant
         assert trade.price == Decimal("0.5000")
         assert trade.quantity == Decimal("2.00")
         assert trade.received_at_utc == trade.provenance.response_received_at_utc
-        assert trade.exchange_timestamp_utc == T0
+        assert trade.exchange_timestamp_utc == (case.expected_exchange_timestamp_utc or T0)
         assert trade.provenance.exchange_timestamp_semantics == case.timestamp_semantics
 
         assert len(captures) == 1
@@ -388,6 +390,7 @@ async def test_five_trade_adapters_share_capture_contract_and_keep_native_semant
         assert row["observation_id"] == stored_observation_ids[venue]
         assert batch.venue == venue
         assert all(trade.provenance.raw_sha256 == row["raw_sha256"] for trade in batch.trades)
+        assert batch.trades[0].exchange_timestamp_utc == observed[venue].exchange_timestamp_utc
     polymarket = observed[Venue.POLYMARKET]
     assert polymarket.native_instrument_id == "1234567890"
     assert polymarket.quote_currency == "USDC"
