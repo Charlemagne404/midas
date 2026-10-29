@@ -887,3 +887,25 @@ exchange emitted no unobserved message, bridge a reconnect, establish a
 cross-venue simultaneous book, or make spot inventory equivalent to an event
 contract. No live Kraken WebSocket connection has been made by this
 implementation; fixture tests cover the capture and persistence path.
+
+## Kraken persisted book replay
+
+`POST /api/frontier/replay/kraken/book-updates` reconstructs one capture from
+1–32 unique lowercase SHA-256 observation IDs in `observation_ids`. It reads
+only persisted Kraken `public_book_update_frame` observations; it never opens a
+WebSocket or fetches market data. The existing source-use hold is checked
+before storage access. Frames must belong to one saved-market binding and
+capture session, record one explicit subscription depth, and form a complete
+zero-based message-index sequence. Each raw frame is limited to 256 KiB and
+the total replay input to 8 MiB. Raw hashes, store IDs, provenance, CRC-verified
+book states, and normalized rows are revalidated before a deterministic result
+hash is returned.
+
+Legacy schema-v1 rows do not record the requested depth and are rejected;
+replay does not infer that value. Results are classified `context_only` with
+`event_economics_eligible=false`. The saved-market panel offers this operation
+after a capture and displays its input/result hashes. A valid replay proves
+reconstruction of the retained frames only; it does not prove exchange
+continuity, simultaneous execution, or event-contract payoff equivalence.
+Focused verification is fixture-only (two API cases and seven panel tests);
+no live source or production route was used.

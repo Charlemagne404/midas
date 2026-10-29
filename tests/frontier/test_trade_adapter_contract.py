@@ -16,6 +16,7 @@ from midas.frontier.adapters.coinbase import (
     CoinbaseSpotAdapter,
     CoinbaseSpotConfig,
 )
+from midas.frontier.adapters.gemini import GeminiSpotAdapter, GeminiSpotConfig
 from midas.frontier.adapters.kalshi import KalshiAdapter
 from midas.frontier.adapters.kraken import KrakenSpotAdapter, KrakenSpotConfig
 from midas.frontier.adapters.polymarket import PolymarketAdapter
@@ -124,7 +125,7 @@ def _json_adapter_factory(
 
 
 @pytest.mark.asyncio
-async def test_four_trade_adapters_share_capture_contract_and_keep_native_semantics(
+async def test_five_trade_adapters_share_capture_contract_and_keep_native_semantics(
     tmp_path: Path,
 ) -> None:
     """Fixture prices match numerically; event and spot capabilities remain distinct."""
@@ -243,6 +244,39 @@ async def test_four_trade_adapters_share_capture_contract_and_keep_native_semant
             supports_paginated_trades=False,
             fixture_only_transport=True,
         ),
+        TradeFixtureCase(
+            venue=Venue.GEMINI_SPOT,
+            native_market_id="BTCUSD",
+            query_name="limit_trades",
+            query_value="1",
+            path_suffix="/v1/trades/BTCUSD",
+            payload=[
+                {
+                    "timestamp": int(T0.timestamp()),
+                    "timestampms": int(T0.timestamp() * 1000),
+                    "tid": 61044953,
+                    "price": "0.5000",
+                    "amount": "2.00",
+                    "exchange": "gemini",
+                    "type": "buy",
+                    "broken": False,
+                }
+            ],
+            config=GeminiSpotConfig(
+                enabled=True,
+                live_public_probe_enabled=True,
+                requests_per_second=1,
+                retries=0,
+                pairs=("BTCUSD",),
+            ),
+            adapter_factory=_json_adapter_factory(GeminiSpotAdapter),
+            event_contract=False,
+            timestamp_semantics=(
+                "Gemini trade execution time; timestampms preferred when both fields exist"
+            ),
+            supports_paginated_trades=False,
+            fixture_only_transport=True,
+        ),
     )
 
     observed: dict[Venue, TradeObservation] = {}
@@ -273,6 +307,9 @@ async def test_four_trade_adapters_share_capture_contract_and_keep_native_semant
         )
         source = case.adapter_factory(case.config, transport)
         try:
+            if case.venue == Venue.GEMINI_SPOT:
+                await source.discover_markets(limit=1)
+                source.take_captures()
             trades = await source.fetch_trades(case.native_market_id, limit=1)
             captures = source.take_captures()
         finally:
@@ -328,6 +365,7 @@ async def test_four_trade_adapters_share_capture_contract_and_keep_native_semant
         assert row["observation_id"] == stored_observation_ids[venue]
         assert batch.venue == venue
         assert all(trade.provenance.raw_sha256 == row["raw_sha256"] for trade in batch.trades)
+    assert len(stored_rows) == 5
 
     polymarket = observed[Venue.POLYMARKET]
     assert polymarket.native_instrument_id == "1234567890"
@@ -352,6 +390,12 @@ async def test_four_trade_adapters_share_capture_contract_and_keep_native_semant
     assert coinbase.quote_currency == "USD"
     assert coinbase.aggressor_side is None
 
+    gemini = observed[Venue.GEMINI_SPOT]
+    assert gemini.native_instrument_id == "BTCUSD"
+    assert gemini.native_trade_id == "61044953"
+    assert gemini.quote_currency == "USD"
+    assert gemini.aggressor_side == "buy"
+
 
 def _adapter_host(venue: Venue) -> frozenset[str]:
     return {
@@ -359,4 +403,5 @@ def _adapter_host(venue: Venue) -> frozenset[str]:
         Venue.KALSHI: frozenset({"external-api.kalshi.com"}),
         Venue.KRAKEN: frozenset({"api.kraken.com"}),
         Venue.COINBASE_EXCHANGE: frozenset({"api.exchange.coinbase.com"}),
+        Venue.GEMINI_SPOT: frozenset({"api.gemini.com"}),
     }[venue]

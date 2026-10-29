@@ -194,6 +194,15 @@ Kraken spot prices are contextual data, not event-contract payoffs or a
 verified hedge. The source-use hold remains in effect, so live capture is
 currently unavailable.
 
+Persisted Kraken stream captures have a separate network-free replay route,
+`POST /api/frontier/replay/kraken/book-updates`. The replay accepts a bounded
+set of stored frame IDs, requires one contiguous capture session and an
+explicitly recorded subscription depth, validates raw and normalized evidence,
+and returns deterministic input/result hashes. It rejects legacy frames without
+depth and labels reconstructed Spot states as contextual and ineligible for
+event-contract economics. Replay does not weaken the source-use hold for
+capture, infer unobserved messages, or establish continuity across connections.
+
 ### Polymarket historical price samples
 
 Polymarket adapter v7 exposes a separate `price_history` capability for the

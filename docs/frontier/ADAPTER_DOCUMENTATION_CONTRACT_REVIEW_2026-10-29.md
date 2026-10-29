@@ -1,5 +1,10 @@
 # Exchange adapter documentation contract review — 2026-10-29
 
+**Implementation status refreshed:** 2026-10-29 09:52 CET, after the bounded
+Kraken stored-frame replay checkpoint (`00efbf1`). The contract review remains
+documentation-derived; the status refresh inspected local implementation and
+fixture evidence only.
+
 ## Scope and method
 
 This is a bounded review of current official API documentation against the
@@ -15,13 +20,15 @@ eligibility, regional access, or executable economics.
 | --- | --- | --- | --- |
 | Kalshi | The public market-orderbook endpoint returns binary YES and NO bids; the response example uses fixed-point decimal strings. The documentation describes an opposite-outcome bid at `1 - price` as the corresponding ask. | The adapter preserves exact decimal inputs, derives the opposite-side ask at `1 - price`, retains local receipt provenance, and explicitly marks the absence of one unified exchange book timestamp. | No incremental book reconstruction is implemented. Binary complement logic does not certify contract-resolution equivalence across markets. |
 | Coinbase Exchange | The product-book endpoint's level 2 mode is the full aggregated book and includes `sequence` and `time`. During auction mode, quotes are indicative and can change before trading resumes. | Frontier requests level 2, preserves the raw response including sequence/time and auction fields, validates sequence/time presence, and adds `AUCTION_MODE_INDICATIVE` when the source reports an auction. Candidate evaluation records any book quality flag as a source-quality reason, and the independent audit will not validate a flagged book. | REST response time is not treated as cross-venue simultaneity. The adapter does not reconstruct the Coinbase WebSocket book. |
-| Kraken Spot | REST order-book data is distinct from the documented WebSocket v2 `book` channel. The latter provides aggregated level 2 snapshots and updates, configurable depth, per-symbol acknowledgements, and a checksum; the documentation says updates must be processed in sequence. | Frontier uses bounded public REST depth, retains individual level timestamps, and does not claim a single snapshot timestamp. The finite stream adapter gates on an explicit acknowledgement and full snapshot, applies in-connection updates in arrival order, verifies CRC32, invalidates state on malformed or mismatched input, and retains raw protocol and book frames with provenance. The `BOOK_UPDATES` capability and config-gated API are implemented. | Reconnecting must not silently bridge missing updates. The stream path has fixture evidence only and is not live-source validation. The existing source-use hold remains in force. |
+| Kraken Spot | REST order-book data is distinct from the documented WebSocket v2 `book` channel. The latter provides aggregated level 2 snapshots and updates, configurable depth, per-symbol acknowledgements, and a checksum; the documentation says updates must be processed in sequence. | Frontier uses bounded public REST depth, retains individual level timestamps, and does not claim a single snapshot timestamp. The finite stream adapter gates on an explicit acknowledgement and full snapshot, applies in-connection updates in arrival order, verifies CRC32, invalidates state on malformed or mismatched input, and retains raw protocol and book frames with provenance. Schema-v2 frames preserve the requested subscription depth. The bounded offline replayer rebuilds from persisted raw frames, verifies hashes and normalized state, and emits deterministic context-only results. The `BOOK_UPDATES` capability and config-gated capture API are implemented. | The replayer rejects legacy frames without an explicit recorded depth. Reconnecting must not silently bridge missing updates; no cross-connection continuity or exchange sequence guarantee is claimed. Capture and replay have fixture evidence only, not live-source validation. The existing source-use hold remains in force. |
 | Gemini Spot | The current public book reference specifies aggregated price levels and exact decimal-string prices and quantities. Its per-level timestamp is expressly a dummy compatibility field. The current market-data reference also lists a public trades endpoint. | Frontier preserves exact decimal book fields, ignores the dummy timestamps, and flags that source exchange book time is unavailable. Public trades are explicitly unsupported in this adapter version. | Gemini remains under its non-clearable source-use hold pending agreement and scope review; documented endpoint availability does not authorize requests or retained-data research. |
 | Polymarket | The current public market-stream reference describes distinct `book`, `price_change`, `last_trade_price`, and `tick_size_change` events; book events may carry a hash and timestamp. Outcome identifiers differ by protocol, including CTF token IDs and Protocol V2 position IDs. | Frontier's finite legacy market-stream path binds capture to saved asset IDs, preserves raw frames and normalized observations, and does not apply deltas or claim sequence continuity. The worktree probe flag remains off. | Before any future capture, revalidate the legacy wire format against the exact supported protocol and market version. No capture or live compatibility claim is made by this review. |
 
 ## Engineering decisions
 
-- No adapter code change was justified by this documentation-only pass.
+- The original documentation-only pass made no adapter code change. The later
+  replay checkpoint adds an offline consumer of the persisted Kraken evidence;
+  it does not change source-use policy or the live-adapter boundary.
 - Keep REST snapshots, event-driven updates, and historical observations as
   separate declared capabilities; do not infer stream support from REST docs.
 - Keep source time, local receipt time, sequence, and book validity distinct.
@@ -31,6 +38,9 @@ eligibility, regional access, or executable economics.
   declaration does not authorize requests or establish live validation.
 - A live stream capture still requires a source-use decision and a fresh host
   admission check. A checksum-valid fixture is not live evidence.
+- Stored-frame replay opens no source connection and refuses to infer missing
+  subscription depth for legacy rows. Its deterministic reconstruction does
+  not prove cross-connection continuity or event-contract economics.
 - Reconsider Gemini trade normalization only after the data-use hold is
   resolved; implementing the parser does not make those observations eligible
   for research.

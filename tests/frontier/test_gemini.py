@@ -7,7 +7,7 @@ from time import monotonic, monotonic_ns
 
 import httpx
 import pytest
-from midas.frontier.adapters.base import AdapterError, UnsupportedCapability
+from midas.frontier.adapters.base import AdapterError
 from midas.frontier.adapters.gemini import (
     ADAPTER_VERSION,
     GEMINI_MARKET_DATA_AGREEMENT_DATE,
@@ -65,7 +65,7 @@ def _details() -> dict[str, object]:
     }
 
 
-def _adapter(responses: dict[str, object]):
+def _adapter(responses: dict[str, object], *, pairs: tuple[str, ...] = ("BTCUSD",)):
     requests: list[httpx.Request] = []
 
     def handler(request: httpx.Request) -> httpx.Response:
@@ -79,7 +79,7 @@ def _adapter(responses: dict[str, object]):
         enabled=True,
         live_public_probe_enabled=True,
         retries=0,
-        pairs=("BTCUSD",),
+        pairs=pairs,
     )
     client = httpx.AsyncClient(transport=httpx.MockTransport(handler))
     transport = _FixtureTransport({"api.gemini.com"}, config, client)
@@ -139,6 +139,149 @@ async def test_gemini_document_shaped_spot_metadata_and_book_are_normalized_offl
 
 
 @pytest.mark.asyncio
+async def test_gemini_recent_trades_preserve_exact_units_side_and_order_offline():
+    timestamp = int(datetime(2026, 10, 26, 20, 0, tzinfo=UTC).timestamp())
+    adapter, requests, client = _adapter(
+        {
+            "/v1/symbols/details/BTCUSD": _details(),
+            "/v1/trades/BTCUSD": [
+                {
+                    "timestamp": timestamp + 5,
+                    "timestampms": (timestamp + 5) * 1000,
+                    "tid": 102,
+                    "price": "67001.1250",
+                    "amount": "0.12500000",
+                    "exchange": "gemini",
+                    "type": "buy",
+                    "broken": False,
+                },
+                {
+                    "timestamp": timestamp,
+                    "timestampms": timestamp * 1000,
+                    "tid": 101,
+                    "price": "67000.5000",
+                    "amount": "0.25000000",
+                    "exchange": "gemini",
+                    "type": "sell",
+                    "broken": False,
+                },
+            ]
+        }
+    )
+    try:
+        await adapter.discover_markets(limit=1)
+        adapter.take_captures()
+        trades = await adapter.fetch_trades("BTCUSD", limit=2)
+        (capture,) = adapter.take_captures()
+    finally:
+        await client.aclose()
+
+    assert [trade.native_trade_id for trade in trades] == ["102", "101"]
+    assert trades[0].price == Decimal("67001.1250")
+    assert trades[0].quantity == Decimal("0.12500000")
+    assert trades[0].native_instrument_id == "BTCUSD"
+    assert trades[0].quote_currency == "USD"
+    assert trades[0].aggressor_side == "buy"
+    assert trades[1].aggressor_side == "sell"
+    assert all(trade.exchange_timestamp_utc is not None for trade in trades)
+    assert all(trade.provenance.raw_sha256 == capture.raw_sha256 for trade in trades)
+    assert capture.observation_kind == "public_trades"
+    assert requests[1].url.path == "/v1/trades/BTCUSD"
+    assert requests[1].url.params["limit_trades"] == "2"
+    assert "include_breaks" not in requests[1].url.params
+    assert "authorization" not in requests[1].headers
+
+
+@pytest.mark.asyncio
+async def test_gemini_trade_quote_requires_metadata_for_non_fiat_pair():
+    timestamp = int(datetime(2026, 10, 26, 20, 0, tzinfo=UTC).timestamp())
+    adapter, requests, client = _adapter(
+        {
+            "/v1/symbols/details/ETHBTC": {
+                **_details(),
+                "symbol": "ETHBTC",
+                "base_currency": "ETH",
+                "quote_currency": "BTC",
+                "contract_price_currency": "BTC",
+            },
+            "/v1/trades/ETHBTC": [
+                {
+                    "timestampms": timestamp * 1000,
+                    "tid": 55,
+                    "price": "0.05",
+                    "amount": "1.2",
+                    "exchange": "gemini",
+                    "type": "sell",
+                }
+            ],
+        },
+        pairs=("ETHBTC",),
+    )
+    try:
+        with pytest.raises(AdapterError, match="source-verified quote-currency metadata"):
+            await adapter.fetch_trades("ETHBTC", limit=1)
+        assert requests == []
+        await adapter.discover_markets(limit=1)
+        adapter.take_captures()
+        (trade,) = await adapter.fetch_trades("ETHBTC", limit=1)
+        assert trade.quote_currency == "BTC"
+        assert trade.quote_currency_identity is None
+        assert trade.aggressor_side == "sell"
+        assert requests[0].url.path == "/v1/symbols/details/ETHBTC"
+        assert requests[1].url.path == "/v1/trades/ETHBTC"
+    finally:
+        await client.aclose()
+
+
+@pytest.mark.asyncio
+async def test_gemini_broken_trade_and_timestamp_disagreement_fail_closed():
+    timestamp = int(datetime(2026, 10, 26, 20, 0, tzinfo=UTC).timestamp())
+    broken_adapter, _, broken_client = _adapter(
+        {
+            "/v1/trades/BTCUSD": [
+                {
+                    "timestampms": timestamp * 1000,
+                    "tid": 1,
+                    "price": "10.0",
+                    "amount": "0.1",
+                    "exchange": "gemini",
+                    "type": "buy",
+                    "broken": True,
+                }
+            ]
+        }
+    )
+    try:
+        with pytest.raises(AdapterError, match="broken trades are excluded"):
+            await broken_adapter.fetch_trades("BTCUSD", limit=1)
+        assert len(broken_adapter.take_captures()) == 1
+    finally:
+        await broken_client.aclose()
+
+    timestamp_adapter, _, timestamp_client = _adapter(
+        {
+            "/v1/trades/BTCUSD": [
+                {
+                    "timestamp": timestamp,
+                    "timestampms": (timestamp + 1) * 1000,
+                    "tid": 2,
+                    "price": "10.0",
+                    "amount": "0.1",
+                    "exchange": "gemini",
+                    "type": "buy",
+                    "broken": False,
+                }
+            ]
+        }
+    )
+    try:
+        with pytest.raises(AdapterError, match="timestamp is invalid or inconsistent"):
+            await timestamp_adapter.fetch_trades("BTCUSD", limit=1)
+    finally:
+        await timestamp_client.aclose()
+
+
+@pytest.mark.asyncio
 async def test_gemini_rejects_perpetual_symbol_and_non_string_book_decimals():
     adapter, _, client = _adapter(
         {
@@ -190,9 +333,11 @@ async def test_gemini_hold_blocks_real_transport_before_request_and_trades_are_u
             await adapter.discover_markets(limit=1)
         assert error.value.code == "SOURCE_USE_HELD"
         assert adapter.transport.request_count == 0
-        assert not adapter.capabilities.supports(Capability.PUBLIC_TRADES)
-        with pytest.raises(UnsupportedCapability):
+        assert adapter.capabilities.supports(Capability.PUBLIC_TRADES)
+        assert not adapter.capabilities.supports(Capability.PAGINATED_PUBLIC_TRADES)
+        with pytest.raises(AdapterError, match="source use remains held"):
             await adapter.fetch_trades("BTCUSD", limit=1)
+        assert adapter.transport.request_count == 0
     finally:
         await adapter.aclose()
 
