@@ -14,10 +14,16 @@ def replay(
     through: int | None = None,
     *,
     before_segment: Callable[[], None] | None = None,
+    _engine: Engine | None = None,
 ) -> tuple[Engine, int]:
-    engine = Engine()
+    engine = _engine if _engine is not None else Engine()
     checkpoints = 0
-    for record in _read_manifest_for_replay(root, manifest, before_segment=before_segment):
+    for record in _read_manifest_for_replay(
+        root,
+        manifest,
+        previous=engine.last_ordinal,
+        before_segment=before_segment,
+    ):
         if through is not None and record["ordinal"] > through:
             # Consume the immutable tail so each segment's checksum and manifest
             # metadata are still verified after a prefix-only state reconstruction.

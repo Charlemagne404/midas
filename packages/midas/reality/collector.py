@@ -4,6 +4,7 @@ import asyncio
 import hashlib
 import json
 import logging
+import shutil
 import signal
 import time
 import uuid
@@ -16,12 +17,13 @@ import httpx
 from websockets.asyncio.client import connect
 from websockets.exceptions import WebSocketException
 
+from . import recovery
 from .config import Config
 from .discovery import GAMMA, WS, select
 from .observation import discover, independent_book
 from .quality import clock_health, compare
-from .replay import replay
 from .storage import Store, atomic_json, manifest
+from .transport import bounded_get
 
 
 class StorageFailure(RuntimeError):
@@ -85,7 +87,7 @@ async def run(config: Config, duration: float | None = None) -> None:
     )
     try:
         source_manifest = manifest(root)
-        engine, _ = replay(root, source_manifest)
+        engine, recovery_status = recovery.recover(root, source_manifest)
         if engine.last_ordinal != store.ordinal:
             raise ValueError("Verified replay ordinal differs from the durable segment index")
     except BaseException:
@@ -194,6 +196,7 @@ async def run(config: Config, duration: float | None = None) -> None:
                 fresh_books=fresh,
                 expected_books=status["markets"] * 2,
                 state_sha256=engine.digest(),
+                recovery=status["recovery"],
                 sequence_verified=False,
                 clock_health=clock_health(),
                 books=books,
@@ -222,7 +225,7 @@ async def run(config: Config, duration: float | None = None) -> None:
         loop.add_signal_handler(sig, stop.set)
     loop.add_signal_handler(signal.SIGUSR1, rotate.set)
     started = time.monotonic()
-    last_report = last_checkpoint = started
+    last_report = last_checkpoint = last_recovery_checkpoint = started
     status: dict[str, Any] = dict(
         state="STARTING",
         started_ns=time.time_ns(),
@@ -233,11 +236,41 @@ async def run(config: Config, duration: float | None = None) -> None:
         failures=0,
         markets=0,
         last_observation_ns=None,
+        recovery=recovery_status,
         config=config.dump(),
     )
+
+    def save_recovery() -> None:
+        """Write a disposable replay accelerator after a finalized boundary."""
+        began = time.monotonic()
+        try:
+            catalog = manifest(root)
+            if not catalog["segments"]:
+                return
+            checkpoint = root / recovery.CHECKPOINT_NAME
+            try:
+                previous_size = checkpoint.stat().st_size
+            except FileNotFoundError:
+                previous_size = 0
+            if (
+                store.used + recovery.MAX_CHECKPOINT_BYTES > store.budget
+                or shutil.disk_usage(root).free < store.reserve + recovery.MAX_CHECKPOINT_BYTES
+            ):
+                status["recovery_checkpoint_error"] = "insufficient_checkpoint_disk_budget"
+                return
+            size = recovery.save(root, engine, catalog)
+            store.used += size - previous_size
+            status.pop("recovery_checkpoint_error", None)
+            status["recovery_checkpoint_ordinal"] = engine.last_ordinal
+        except (OSError, ValueError, TypeError, KeyError) as error:
+            status["recovery_checkpoint_error"] = f"{type(error).__name__}: {error}"
+        finally:
+            status["process_recovery_checkpoint_seconds"] = time.monotonic() - began
+
     atomic_json(root / "config.json", config.dump())
     backoff = 1
     try:
+        save_recovery()
         append(
             "gap",
             dict(
@@ -285,8 +318,10 @@ async def run(config: Config, duration: float | None = None) -> None:
                         )
                         status["selection_audit"] = selection_audit
                     else:
-                        response = await client.get(
+                        response = await bounded_get(
+                            client,
                             GAMMA + "/markets",
+                            append=append,
                             params=dict(
                                 active="true",
                                 closed="false",
@@ -371,6 +406,12 @@ async def run(config: Config, duration: float | None = None) -> None:
                                 store.rotate()
                                 rotate.clear()
                                 last_checkpoint = now
+                                if (
+                                    now - last_recovery_checkpoint
+                                    >= recovery.CHECKPOINT_INTERVAL_SECONDS
+                                ):
+                                    save_recovery()
+                                    last_recovery_checkpoint = time.monotonic()
                             if comparison_task is not None and comparison_task.done():
                                 result = comparison_task.result()
                                 comparison_task = None
@@ -428,6 +469,7 @@ async def run(config: Config, duration: float | None = None) -> None:
                                         asset,
                                         engine.tokens[asset],
                                         config.comparison_timeout_seconds,
+                                        append=append,
                                     )
                                 )
                                 last_comparison = now
@@ -579,6 +621,7 @@ async def run(config: Config, duration: float | None = None) -> None:
                                     pending_snapshots.remove(asset)
                             if payload != "PONG":
                                 last_frame = time.monotonic()
+                                status.pop("error", None)
                                 status.update(
                                     frames=status["frames"] + 1,
                                     process_frames=status["process_frames"] + 1,
@@ -632,6 +675,8 @@ async def run(config: Config, duration: float | None = None) -> None:
             append("gap", dict(reason="process_stop"))
         finally:
             store.close()
+            if status["state"] != "FAILED" and not store.write_failed:
+                save_recovery()
             atomic_json(
                 root / "status.json",
                 dict(

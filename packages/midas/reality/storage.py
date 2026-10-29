@@ -410,6 +410,7 @@ def _read_manifest_for_replay(
     root: Path,
     value: dict[str, Any],
     *,
+    previous: int = 0,
     before_segment: Callable[[], None] | None = None,
 ) -> Iterator[dict[str, Any]]:
     """Verify and stream records into private replay state with bounded memory.
@@ -421,7 +422,8 @@ def _read_manifest_for_replay(
     """
     if value["schema_version"] != 1 or value["format"] != "midas-reality-framed-zlib-v1":
         raise ValueError("Unsupported manifest")
-    previous = 0
+    if type(previous) is not int or previous < 0:
+        raise ValueError("Invalid replay prefix ordinal")
     for info in value["segments"]:
         if Path(info["file"]).name != info["file"]:
             raise ValueError("Unsafe segment path")
