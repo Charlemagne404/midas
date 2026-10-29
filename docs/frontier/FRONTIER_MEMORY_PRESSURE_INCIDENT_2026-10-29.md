@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 10:57 CET |
+| Latest addendum | 2026-10-29 11:13 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Pre-incident checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -2310,3 +2310,43 @@ based work after a fresh admission sample, within zero-swap cgroup limits and
 finite CPU, memory, tasks, and runtime. Full frontend tests/builds, parallel
 analysis, and new live-source polling remain deferred. Incident status stays
 **PARTIALLY CONTAINED / PARTIALLY VERIFIED**.
+
+## 2026-10-29 11:13 CET — bounded Frontier resumption
+
+A fresh 11:05:26 admission sample showed 10.57 GiB MemAvailable, zero PSI, about
+9.4 MiB free swap, no active systemd jobs, and unchanged user-manager OOM
+counters 19/15/0. Frontier resumed only with isolated offline UI verification.
+Commit f874cf0 extracts the Kalshi fee/sensitivity panel into its own component.
+No public request, service operation, data-directory read, or host configuration
+change accompanied it.
+
+The focused UI suite passed 3/3 after explicit test cleanup was added. Its
+transient cgroup was bounded to 384 MiB high / 512 MiB max, zero swap, 20% CPU,
+64 tasks, and 60 seconds; the in-unit peak was 138,158,080 bytes with no
+high/max/OOM event. Targeted ESLint and Prettier passed. The first test attempt
+had two failures caused by retained DOM between cases and was corrected before
+the successful rerun.
+
+Two TypeScript build attempts did not produce diagnostics. The first reached its
+60-second runtime cap at a 315,731,968-byte cgroup peak. The second exited with
+Node's V8 heap exhausted near 251 MiB old-space after 50.1 seconds; cgroup peak
+was 315,351,040 bytes. Both runs used zero swap and recorded no cgroup
+high/max/OOM event. This was a Node process heap limit, not a host memcg OOM.
+The exact-tree typecheck therefore remains unverified; no further TypeScript
+retry or broad UI build was run.
+
+At 11:11:53, MemAvailable was 10.54 GiB, SwapFree 10.1 MiB, and global memory
+PSI was zero; user-manager OOM counters remained 19/15/0. API, Reality, Reality
+API, Continental contact/status sites, Echo production/staging services, and
+RustDesk were active. The scheduled Veritas source-analysis unit completed
+successfully. No kernel or systemd-oomd kill was found in the journal interval
+checked after 11:05. The quiet interval is short and swap remains nearly full.
+
+The existing mitigations remain unchanged: the auxiliary gap-detail timer is
+inactive/disabled, and the Reality capacity service is bounded at 160 MiB high /
+192 MiB max / zero swap with its timer enabled. No protected service, timer,
+archive, historical record, or service configuration was changed. Host status
+remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**. Safe continuation is
+limited to serial, offline, fixture-based tasks under fresh admission and finite
+zero-swap cgroup bounds; historical pressure attribution and durable recovery
+remain unresolved.

@@ -14399,3 +14399,37 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
   kill since Oct 28 23:43:24. Host incident remains
   **PARTIALLY CONTAINED / PARTIALLY VERIFIED**; only serial offline bounded
   work is admitted.
+
+## 2026-10-29 11:13 CET — isolated Kalshi fee panel and bounded checks
+
+- Commit f874cf0 extracts the Kalshi fee metadata and hypothetical order-fee
+  sensitivity panel from Frontier.tsx. Existing evidence disclosures, API
+  mutations, and error presentation remain connected. The result now says
+  explicitly that hypothetical sensitivity does not change candidate net
+  economics. No public request or retained probe-data access occurred.
+
+- Focused panel tests passed **3/3 in 7.80 s** after the first run exposed
+  missing cross-test DOM cleanup (2 failures). Successful cgroup bounds: 384 MiB
+  high / 512 MiB max, zero swap, 20% CPU, 64 tasks, 60 seconds; in-unit peak
+  138,158,080 bytes and zero cgroup events. Targeted ESLint, Prettier, and git
+  diff checks passed; ESLint peak was 275,865,600 bytes.
+
+- Exact-tree TypeScript remains **unverified**. A 60-second tsc build timed out
+  at 315,731,968 bytes peak. A second attempt exited 134 when Node's default V8
+  heap filled near 251 MiB; cgroup peak was 315,351,040 bytes, with zero swap
+  and cgroup OOM events. This was not a host or memcg OOM; no further compiler
+  attempt or broad UI build was made.
+
+- At 11:11:53, MemAvailable was 10.54 GiB, SwapFree 10.1 MiB, PSI zero, and
+  user-manager OOM counters remained 19/15/0. API/Reality/Reality API and
+  Continental, Echo, and RustDesk production services were active; the scheduled
+  Veritas source-analysis service exited successfully. No matching kernel or
+  oomd kill appeared after 11:05. These short observations do not prove
+  sustained recovery.
+
+- The gap-detail timer remains disabled and the capacity service remains bounded
+  at 160/192 MiB with zero swap. No protected infrastructure or historical
+  evidence was changed. Host status remains **PARTIALLY CONTAINED / PARTIALLY
+  VERIFIED**. Continue with serial offline fixtures only after another fresh
+  resource-admission sample; type checking, broad UI integration, build/browser
+  validation, and production deployment remain open.

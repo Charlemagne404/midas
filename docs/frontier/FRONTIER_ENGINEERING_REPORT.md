@@ -2,7 +2,7 @@
 
 **Report date:** 2026-10-29
 
-## Current completion matrix — 2026-10-29 10:33 CET
+## Current completion matrix — 2026-10-29 11:13 CET
 
 This is a current evidence classification, not a final completion claim. The
 dated implementation records below remain the detailed evidence; the
@@ -24,10 +24,10 @@ it made no endpoint requests and does not change source-use holds.
 | Laboratory/Arena comparisons and bounded orchestration | PARTIALLY VERIFIED | Arena admission and finite scheduling regressions pass; a Laboratory resource-denial case passes with a harness cap above its 722,894,848-byte capacity precondition. Full endurance evidence remains incomplete. |
 | User-cgroup-aware workload admission | IMPLEMENTED, BOUNDED VALIDATION PASSED | Central Arena admission (15), finite schedules (12), and the Laboratory denial case (1) pass fixture tests using user-manager pressure; no runtime deployment occurred. |
 | Source-operation admission telemetry | COMPLETE AND VERIFIED FOR ONE ROUTER INSTANCE | The bounded source gate exposes active venues, admitted totals, and contention rejections by scope with a UTC sample time. The source page can refresh the snapshot. Counters reset with that router and do not aggregate across workers or deployments. |
-| Reality capacity inventory bounds | PARTIALLY VERIFIED | Candidate inventory code remains undeployed. The separate monitor is bounded at `MemoryHigh=160M`, `MemoryMax=192M`, and zero swap. The 10:18:23 scheduled run exited at 10:18:29 and recorded a 129.4 MiB peak with no swap; earlier 07:47/08:17 runs did not retain reliable peaks. This short run fits the current soft bound but does not establish future peak margin. The monitor still reports `ARCHIVE_CAPACITY_UNKNOWN` and archive inventory/provenance limitations; no archive evidence was altered. |
-| Native Frontier dashboard | PARTIALLY VERIFIED | The existing native workspace includes source, coverage, graph, opportunity, replay, and readiness views. The Kraken saved-market inspector exposes a policy-gated explicit spot-stream action, per-frame immutable evidence, and offline replay of the current persisted capture. The panel slice passes 7/7 UI tests. TypeScript checking of this latest integration remains unverified after full-app heap/runtime failures and a targeted check stopped during elevated PSI. A full UI build and browser replay journey remain open. |
-| Host reliability containment | PARTIALLY VERIFIED | OOMD's 50%/20s policy monitors `user@1000.service` pressure, not a global-PSI threshold crossing; its Oct 28 journal records 129 kills (106 auxiliary gap-detail), while seven separate kernel memcg OOMs hit the capacity job's former 128 MiB cap. The gap timer remains disabled; capacity is bounded at `MemoryHigh=160M`, `MemoryMax=192M`, zero swap. The 10:18:23 run exited 0 at 129.4 MiB peak and zero swap but still reported `ARCHIVE_CAPACITY_UNKNOWN` and inventory/provenance limitations. At 10:33:26, `MemAvailable` was 10.47 GiB, PSI averages were zero, and only 9.22 MiB swap was free. OOM counters remained 19/15/0; API/Reality/Reality API restart counts remained 9/14/0. Historic pressure initiation, durable recovery, and archive provenance remain unresolved. |
-| Node/V8 and Apport side effect | PARTIALLY VERIFIED | Earlier targeted TypeScript validation passed before this Kraken replay change. The latest full-app check exited at Node's default heap limit; a 320 MiB heap retry reached its runtime limit. A narrower check was stopped after it exceeded `MemoryHigh=256M` and host PSI rose; its cgroup OOM counters did not change. No typecheck result for the latest integration is claimed. An earlier crash-report upload attempt received HTTP 504; remote receipt remains unknown. |
+| Reality capacity inventory bounds | PARTIALLY VERIFIED | Candidate inventory code remains undeployed. The separate monitor is bounded at MemoryHigh=160M, MemoryMax=192M, and zero swap. Its 10:18 run recorded a 129.4 MiB peak; the 10:48 run exited successfully but did not retain a valid peak. The service still reports archive inventory/provenance limitations, and no archive evidence was altered. |
+| Native Frontier dashboard | PARTIALLY VERIFIED | The native workspace includes source, coverage, graph, opportunity, replay, and readiness views. The Kalshi fee/sensitivity panel is extracted as a focused component and its isolated UI suite passes 3/3; targeted ESLint and Prettier checks pass. TypeScript remains unverified after bounded runtime and V8-heap failures, while the full UI build and browser replay journey remain open. |
+| Host reliability containment | PARTIALLY VERIFIED | OOMD's 50%/20s policy monitors user@1000.service pressure; the Oct 28 journal records 129 kills (106 gap-detail), with seven separate kernel memcg OOMs against the capacity job's former 128 MiB cap. Gap-detail remains disabled; capacity remains bounded at 160/192 MiB with zero swap. At 11:11:53, MemAvailable was 10.54 GiB, PSI zero, SwapFree 10.1 MiB, and cumulative OOM counters 19/15/0; API/Reality/Reality API remained active at restart counts 9/14/0. Historical initiating workload and durable recovery remain unresolved. |
+| Node/V8 and Apport side effect | PARTIALLY VERIFIED | The current frontend TypeScript check remains unverified. Two memory-capped attempts produced no diagnostics: one hit its 60-second runtime cap; the other reached Node's default V8 heap limit near 251 MiB after 50 seconds while the cgroup peaked at 315 MiB with zero cgroup OOM events. This was a process heap failure, not a host or cgroup OOM. An earlier crash-report upload attempt received HTTP 504; remote receipt remains unknown. |
 | Broad regressions, resource endurance, and performance acceptance | DEFERRED | Selected Python, API, adapter, collection, and economics tests passed under bounded zero-swap scopes. The graph-revision storage/migration cases pass 8/8; API cursor invalidation passes 1/1; four core economics modules pass 79/79; joint-state basket/audit/replay passes 14/14; logical implication/relationship review passes 27/27; transport passes 20/20; readiness resource API passes 7/7 and its focused UI passes 3/3. Ruff check/format, ESLint, Prettier, and strict mypy on the readiness resource module passed under caps. Full MIDAS regression, full browser suite, captured-evidence browser journey, endurance, and broad performance tests remain deferred. |
 | Live multi-venue source authorization and findings | BLOCKED | Kalshi, Kraken, Coinbase, and Gemini probes and retained-data research remain held; the worktree Polymarket probe flag is off. |
 | Production integration/deployment | DEFERRED | Frontier remains isolated; no protected service transition occurred. |
@@ -14873,3 +14873,50 @@ At 08:24:26 memory PSI and oomd user-cgroup pressure were zero, about 10 GiB
 was available, and OOM counters remained 19/15/0. API and Reality were active
 at restart counts 9/14. This adds research-fixture coverage without changing
 the incident or live-source status.
+
+## Bounded Frontier UI continuation — 2026-10-29 11:13 CET
+
+Commit f874cf0 extracts the Kalshi public fee metadata and hypothetical order-
+fee sensitivity view from the large MarketDetails component into KalshiFeePanel.
+The existing API mutation, market evidence disclosures, and failure renderers
+remain wired through Mission Control. The display now states explicitly that a
+modeled sensitivity does not change candidate net economics. The isolated
+fixture suite checks unresolved fee metadata, one-instrument/one-side input
+validation, attached event and series evidence IDs, and hypothetical-only result
+labeling. It makes no API or public-source request.
+
+The first isolated run failed 2 of 3 tests because the test module did not clean
+up rendered DOM between cases. Adding explicit afterEach cleanup resolved the
+fixture contamination; the rerun passed 3/3 in 7.80 seconds. The successful
+transient used MemoryHigh=384 MiB, MemoryMax=512 MiB, MemorySwapMax=0,
+CPUQuota=20%, TasksMax=64, and RuntimeMaxSec=60s. Its in-unit memory peak was
+138,158,080 bytes, with zero swap and zero high/max/OOM events. The failed first
+run peaked at 144,650,240 bytes and also recorded zero cgroup events or swap.
+
+Targeted ESLint for Frontier.tsx and the new component/test passed in 20.25
+seconds under the same memory and CPU bounds; its in-unit peak was 275,865,600
+bytes, with no swap or cgroup events. Prettier and git diff --check also passed.
+A first exact-tree TypeScript build attempt reached its 60-second limit at
+315,731,968 bytes peak. A second attempt ended with Node V8 heap exhaustion near
+a 251 MiB old-space limit after 50.1 seconds; cgroup peak was 315,351,040 bytes
+and all cgroup OOM counters and swap remained zero. No TypeScript diagnostics
+were produced, so type checking is unverified. The broader Frontier UI test,
+production build, and browser journey remain unverified.
+
+At 11:11:53, host MemAvailable was 11,311,505,408 bytes (10.54 GiB), SwapFree
+10,596,352 bytes (10.1 MiB), and global memory PSI was zero. User-manager
+memory/swap charges were 10,275,590,144 / 4,284,366,848 bytes; cumulative OOM
+counters stayed 19/15/0. MIDAS API, Reality, and Reality API remained active at
+restart counts 9/14/0; the main Continental contact/status sites, Echo
+production/staging services, and RustDesk were active. The scheduled Veritas
+source-analysis run exited successfully with a recorded 241,631,232-byte peak.
+No matching kernel or systemd-oomd kill was found in the checked interval after
+11:05. This short quiet window does not resolve the host incident.
+
+No host service, timer, resource limit, protected collector, historical data,
+archive manifest, or public-data permission was changed. The gap-detail timer
+remains disabled; the Reality capacity timer remains enabled and its service
+retains the existing 160 MiB high / 192 MiB max / zero-swap limit. Archive
+provenance warnings remain untouched. Host status remains PARTIALLY CONTAINED /
+PARTIALLY VERIFIED; continue only serial, offline, resource-capped Frontier work
+after a fresh admission sample.
