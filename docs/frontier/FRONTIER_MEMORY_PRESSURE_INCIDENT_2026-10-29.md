@@ -924,3 +924,78 @@ At 07:17:31 CET, host PSI avg10/avg60 was zero and avg300 was `some=0.09%`,
 Reality remained active at restart counts 9/14. The last ten-minute kernel and
 OOMD journal query was quiet. This sample follows one bounded build; nearly
 full swap and historic OOM attribution remain unresolved.
+
+## Historical kill attribution and current host sample — 2026-10-29 07:21 CET
+
+The unfiltered October 28 OOMD snapshots confirm simultaneous large user-session
+charges, but do not identify a sole initiating workload. At 23:32:57 the user
+manager was at 62.37% pressure against its 50%/20-second policy; the candidate
+snapshot listed `midas-api.service` at 1.4 GiB, a GNOME Terminal VTE scope at
+1.0 GiB, and `midas-reality.service` at 627.8 MiB. OOMD killed the API. At
+23:33:14 pressure remained 52.86%; the 1.0 GiB VTE scope and 627.9 MiB Reality
+group were still listed, and OOMD killed that terminal scope. At 23:43:09 the
+snapshot listed Reality at 550.7 MiB, the Chromium-named application scope at
+337.9 MiB, the MIDAS API at 1.4 GiB, and Reality API at 156.6 MiB; OOMD reported
+61.64% parent pressure and killed Reality. The collector restarted at 23:43:19.
+At 23:43:24 OOMD killed the gap-detail replay at 54.45% parent pressure while
+the API and multiple terminal scopes remained among the candidates. These are
+concurrent cgroup charges at the kill instants. A selected kill target is not
+proof that the target alone caused parent PSI. The five-minute replay remains
+the strongest recurring contributor (106/129 kills and high local PSI), while
+the other large user-session workloads and the original trigger cannot be
+ranked causally from retained evidence.
+
+The gap-detail service log shows a 23:32:09 start, an OOMD kill at 23:38:29,
+an immediate short queued invocation, and another start at 23:42:14 that was
+killed at 23:43:24. Its timer was stopped at 23:46:27 and is now inactive and
+disabled. Its unit performs bounded replay over finalized Reality data and
+writes gap-detail/Arena research state; it is not the live recorder or a
+required integrity gate. It remains disabled. Restore only after a separate
+resource admission and decision: `systemctl --user enable --now
+midas-veritas-gap-detail-v2.timer`.
+
+At 07:20:54 host memory was 5.1 GiB used with 10 GiB available; swap had only
+8.1 MiB free. Host memory PSI was 0.00% avg10/avg60 and 0.03/0.02% avg300
+(`some`/`full`). The user manager charged 9.61 GB, had a 13.99 GB peak, and
+used 2.86 GB swap; its current `memory.stat` was approximately 2.25 GB anon,
+6.22 GB file, and 1.12 GB kernel. The user manager and ancestors have no
+`MemoryHigh`, `MemoryMax`, or `MemorySwapMax`; `memory.events.local` is zero
+there, while aggregate descendant counters remain `high=16,420,097`,
+`max=730,045`, `oom=19`, `oom_kill=15`. These inherited counters must not be
+attributed to the parent or a single unit. `oomctl` currently lists
+`user@1000.service` as monitored at 50%, with pressure avg10/avg60 zero and
+avg300 0.04%; the earlier empty monitored-group dump at 04:58 has not been
+explained. The current low PSI and large available RAM do not clear the nearly
+full swap or the historical reclaim risk.
+
+No systemd-oomd kill appeared after 23:43:24 on October 28; no kernel OOM
+appeared after the 20:15:44 capacity-service memcg kill. The Reality capacity
+monitor remains on its reversible 160 MiB `MemoryHigh` / 192 MiB `MemoryMax` /
+zero-swap drop-in. Its 07:17:27 run completed successfully in about seven
+seconds; it still reports `ARCHIVE_SEGMENT_INVENTORY_INVALID` and
+`ARCHIVE_MANIFEST_PROVENANCE_INVALID`, plus pending startup-config changes.
+These integrity warnings were not repaired or rewritten. The next 30-minute
+run is due at 07:47; one successful run is not sustained validation.
+
+MIDAS API, Reality recorder, and Reality API are active. API last started at
+23:33:08 and Reality at 23:43:19 after OOMD kills; current restart counts are
+9 and 14 respectively. The one-minute Arena dispatcher and Veritas
+Observatory completed their sampled runs. Continental production services,
+Echo production/staging, Caddy, Headscale, Tailscale, RustDesk, and
+`ssh.socket` are active. A separate read-only Continental infrastructure
+audit remains failed on its existing `0.0.0.0:8081`, `0.0.0.0:5174`, and
+disabled Echo offsite-schedule findings; no unrelated service was changed.
+The user-manager failed-unit inventory contains retained historical OOM,
+Arena-job, and validation failures; it was not reset, and causes were not
+generalized beyond the journal evidence above.
+
+Incident status remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**. The
+five-minute pressure churn and capacity-checker hard-cap failures have
+targeted reversible controls in effect, and no new kill was observed through
+07:20. The original whole-user pressure trigger, near-exhausted swap, long-run
+behavior, and archive integrity remain unresolved. Resume Frontier only in
+serial work with fresh admission checks, focused fixture tests capped at
+768 MiB, zero swap, and at most 25% CPU. Keep broad suites, whole-API mypy,
+replay batches, live probes, and deployment deferred. Stop further work if
+host PSI rises, cgroup OOM counters change, or API/Reality approach their
+`MemoryHigh` limits.
