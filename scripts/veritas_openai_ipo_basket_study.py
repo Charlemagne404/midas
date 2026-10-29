@@ -133,7 +133,9 @@ def _source_responses(source_archive: dict[str, Any]) -> dict[str, dict[str, Any
     return result
 
 
-def _rpc_result(responses: dict[str, dict[str, Any]], name: str) -> tuple[dict[str, Any], dict[str, Any]]:
+def _rpc_result(
+    responses: dict[str, dict[str, Any]], name: str
+) -> tuple[dict[str, Any], dict[str, Any]]:
     response = responses.get(name)
     if response is None or not isinstance(response.get("request_body"), dict):
         raise ValueError(f"Missing captured Polygon RPC evidence: {name}")
@@ -191,7 +193,9 @@ def _verify_membership(
         raise ValueError("Missing official NegRisk adapter address source")
     address_map = json.loads(str(addresses["body"]))
     if str(address_map.get("137", {}).get("negRiskAdapter", "")).casefold() != ADAPTER_ADDRESS:
-        raise ValueError("Captured Polygon adapter address does not match the official address source")
+        raise ValueError(
+            "Captured Polygon adapter address does not match the official address source"
+        )
     chain_request, chain_response = _rpc_result(responses, "rpc_eth_chainId")
     block_request, block_response = _rpc_result(responses, "rpc_eth_blockNumber")
     call_request, call_response = _rpc_result(responses, "rpc_eth_call")
@@ -235,8 +239,7 @@ def _verify_membership(
     onchain_probe = membership.get("onchain_membership_probe")
     if (
         not isinstance(onchain_probe, dict)
-        or onchain_probe.get("adapter_address_source_url")
-        != addresses.get("url")
+        or onchain_probe.get("adapter_address_source_url") != addresses.get("url")
         or str(onchain_probe.get("adapter_address", "")).casefold() != ADAPTER_ADDRESS
         or onchain_probe.get("market_id") != GROUP_ID
         or onchain_probe.get("returned_question_count") != onchain_count
@@ -279,7 +282,9 @@ def _verify_membership(
             or market.get("enableOrderBook") is not True
             or market.get("version") != "v1"
         ):
-            raise ValueError(f"Market {market.get('id')} has unsupported NegRisk or lifecycle state")
+            raise ValueError(
+                f"Market {market.get('id')} has unsupported NegRisk or lifecycle state"
+            )
         outcomes = json.loads(str(market.get("outcomes") or "null"))
         token_ids = json.loads(str(market.get("clobTokenIds") or "null"))
         if (
@@ -292,7 +297,10 @@ def _verify_membership(
             or any(not str(value).isdecimal() for value in token_ids)
         ):
             raise ValueError(f"Market {market.get('id')} has invalid outcome tokens")
-        tokens = {str(outcome).casefold(): str(token) for outcome, token in zip(outcomes, token_ids, strict=True)}
+        tokens = {
+            str(outcome).casefold(): str(token)
+            for outcome, token in zip(outcomes, token_ids, strict=True)
+        }
         schedule = market.get("feeSchedule")
         if (
             market.get("feesEnabled") is not True
@@ -347,7 +355,9 @@ def _verify_membership(
         or indices != list(range(len(MARKET_IDS)))
         or onchain_count != len(raw_markets)
     ):
-        raise ValueError("Direct Gamma market IDs and sequential indices do not match on-chain count")
+        raise ValueError(
+            "Direct Gamma market IDs and sequential indices do not match on-chain count"
+        )
     normalized.sort(key=lambda row: row["question_index"])
     descriptions_folded = {description.casefold() for description in descriptions}
     if (
@@ -356,11 +366,16 @@ def _verify_membership(
         or "exactly between two brackets" not in next(iter(descriptions_folded))
         or "higher range bracket" not in next(iter(descriptions_folded))
     ):
-        raise ValueError("Shared event description does not establish deadline and boundary handling")
+        raise ValueError(
+            "Shared event description does not establish deadline and boundary handling"
+        )
     ranges = sorted(
-        (Decimal(row["outcome_interval_billions"]["lower_inclusive"]),
-         Decimal(row["outcome_interval_billions"]["upper_exclusive"])
-         if row["outcome_interval_billions"]["upper_exclusive"] is not None else None)
+        (
+            Decimal(row["outcome_interval_billions"]["lower_inclusive"]),
+            Decimal(row["outcome_interval_billions"]["upper_exclusive"])
+            if row["outcome_interval_billions"]["upper_exclusive"] is not None
+            else None,
+        )
         for row in normalized
         if row["outcome_interval_billions"] is not None
     )
@@ -371,7 +386,9 @@ def _verify_membership(
         or ranges[-1][1] is not None
         or any(left[1] != right[0] for left, right in zip(ranges, ranges[1:], strict=False))
     ):
-        raise ValueError("Market-cap outcomes have a gap or overlap, or the No-IPO outcome is missing")
+        raise ValueError(
+            "Market-cap outcomes have a gap or overlap, or the No-IPO outcome is missing"
+        )
 
     probe_markets = membership.get("markets")
     if not isinstance(probe_markets, list) or len(probe_markets) != len(raw_markets):
@@ -384,8 +401,7 @@ def _verify_membership(
             or probe.get("question_index") != row["question_index"]
             or probe.get("condition_id") != row["condition_id"]
             or probe.get("neg_risk_market_id") != GROUP_ID
-            or json.loads(str(probe.get("token_ids")))
-            != [row["yes_token_id"], row["no_token_id"]]
+            or json.loads(str(probe.get("token_ids"))) != [row["yes_token_id"], row["no_token_id"]]
             or str(raw.get("question")) != row["question"]
         ):
             raise ValueError("Membership summary does not match its direct Gamma market source")
@@ -402,7 +418,9 @@ def _verify_membership(
     filtered = json.loads(str(filter_response["body"]))
     if not isinstance(filtered, list):
         raise ValueError("Captured Gamma group-filter result is malformed")
-    filter_matches = [row for row in filtered if isinstance(row, dict) and row.get("negRiskMarketID") == GROUP_ID]
+    filter_matches = [
+        row for row in filtered if isinstance(row, dict) and row.get("negRiskMarketID") == GROUP_ID
+    ]
     if len(filtered) != 20 or filter_matches:
         raise ValueError("Captured Gamma group-filter result no longer reproduces the mismatch")
     if (
@@ -428,9 +446,7 @@ def _verify_membership(
         "gamma_filter_group_matches": len(filter_matches),
         "exact_boundary_goes_to_higher_bracket": True,
         "numeric_ranges_billions": [row["outcome_interval_billions"] for row in normalized],
-        "no_ipo_outcome_count": sum(
-            row["outcome_interval_billions"] is None for row in normalized
-        ),
+        "no_ipo_outcome_count": sum(row["outcome_interval_billions"] is None for row in normalized),
     }
 
 
@@ -442,9 +458,7 @@ def _analyze_baskets(
     batch_started_ns: int,
 ) -> dict[str, Any]:
     expected_tokens = {
-        token
-        for market in markets
-        for token in (market["yes_token_id"], market["no_token_id"])
+        token for market in markets for token in (market["yes_token_id"], market["no_token_id"])
     }
     observed = [str(book.get("asset_id")) for book in books]
     complete = len(observed) == len(expected_tokens) and set(observed) == expected_tokens
@@ -465,11 +479,7 @@ def _analyze_baskets(
     }
     for side in ("yes", "no"):
         token_field = f"{side}_token_id"
-        selected = [
-            book
-            for market in markets
-            for book in by_asset.get(market[token_field], [])
-        ]
+        selected = [book for market in markets for book in by_asset.get(market[token_field], [])]
         payout = ONE if side == "yes" else Decimal(len(markets) - 1)
         audited = audit_books(
             markets,
@@ -508,9 +518,7 @@ def _make_artifact(
         raise ValueError("Membership evidence payload is not an object")
     markets, structure = _verify_membership(membership, source_archive)
     token_ids = [
-        token
-        for market in markets
-        for token in (market["yes_token_id"], market["no_token_id"])
+        token for market in markets for token in (market["yes_token_id"], market["no_token_id"])
     ]
     request_body = _canonical([{"token_id": token} for token in token_ids])
     if capture.get("request_asset_ids") != token_ids or capture.get("request_sha256") != _sha256(
@@ -596,11 +604,11 @@ def _load_capture_metadata(path: Path) -> tuple[dict[str, Any], bytes, list[dict
     return capture, body, books
 
 
-def _capture_public(markets: list[dict[str, Any]]) -> tuple[dict[str, Any], bytes, list[dict[str, Any]]]:
+def _capture_public(
+    markets: list[dict[str, Any]],
+) -> tuple[dict[str, Any], bytes, list[dict[str, Any]]]:
     token_ids = [
-        token
-        for market in markets
-        for token in (market["yes_token_id"], market["no_token_id"])
+        token for market in markets for token in (market["yes_token_id"], market["no_token_id"])
     ]
     request_body = _canonical([{"token_id": token} for token in token_ids])
     books, response_body, metadata = _read_public_books(request_body)
@@ -672,15 +680,16 @@ def replay_study(path: Path) -> dict[str, Any]:
         raise ValueError("Stored study evidence is incomplete")
     membership_bytes = str(evidence.get("membership_probe_payload") or "").encode()
     archive_bytes = str(evidence.get("source_archive_payload") or "").encode()
-    if (
-        _sha256(membership_bytes) != evidence.get("membership_probe_sha256")
-        or _sha256(archive_bytes) != evidence.get("source_archive_sha256")
-    ):
+    if _sha256(membership_bytes) != evidence.get("membership_probe_sha256") or _sha256(
+        archive_bytes
+    ) != evidence.get("source_archive_sha256"):
         raise ValueError("Stored membership source evidence digest does not match")
     membership = json.loads(membership_bytes)
     source_archive = json.loads(archive_bytes)
     markets, structure = _verify_membership(membership, source_archive)
-    if structure != artifact.get("verified_structure") or markets != artifact.get("normalized_markets"):
+    if structure != artifact.get("verified_structure") or markets != artifact.get(
+        "normalized_markets"
+    ):
         raise ValueError("Replayed group structure differs from the stored study")
     books_body = str(artifact.get("books_response_payload") or "").encode()
     if (
@@ -696,9 +705,7 @@ def replay_study(path: Path) -> dict[str, Any]:
         [{"token_id": token} for token in artifact["scope"]["request_asset_ids"]]
     )
     expected_tokens = [
-        token
-        for market in markets
-        for token in (market["yes_token_id"], market["no_token_id"])
+        token for market in markets for token in (market["yes_token_id"], market["no_token_id"])
     ]
     if (
         request.get("url") != BOOKS_URL
@@ -776,9 +783,7 @@ def replay_market_stream(path: Path) -> dict[str, Any]:
             "Market-stream REST reference does not contain the verified seven-market set"
         )
     expected_tokens = [
-        token
-        for market in markets
-        for token in (market["yes_token_id"], market["no_token_id"])
+        token for market in markets for token in (market["yes_token_id"], market["no_token_id"])
     ]
     if artifact.get("subscription_asset_ids") != expected_tokens:
         raise ValueError("Market-stream subscription differs from the verified token set")
@@ -810,9 +815,8 @@ def replay_market_stream(path: Path) -> dict[str, Any]:
     ):
         raise ValueError("Market-stream frame or book-event counts do not match")
     observed_tokens = [str(book.get("asset_id")) for book in books]
-    if (
-        len(observed_tokens) != len(set(observed_tokens))
-        or set(observed_tokens) != set(expected_tokens)
+    if len(observed_tokens) != len(set(observed_tokens)) or set(observed_tokens) != set(
+        expected_tokens
     ):
         raise ValueError("Market-stream books do not match the complete unique token set")
 
@@ -823,11 +827,9 @@ def replay_market_stream(path: Path) -> dict[str, Any]:
     }
     for book in books:
         market = metadata_by_asset[str(book["asset_id"])]
-        if (
-            str(book.get("market", "")).casefold() != market["condition_id"]
-            or Decimal(str(book.get("tick_size")))
-            != Decimal(market["tick_size"])
-        ):
+        if str(book.get("market", "")).casefold() != market["condition_id"] or Decimal(
+            str(book.get("tick_size"))
+        ) != Decimal(market["tick_size"]):
             raise ValueError("Market-stream book identity or tick differs from verified metadata")
         # The public book event omits NegRisk and minimum-size fields; bind those
         # constraints from the digest-verified REST/Gamma reference before audit.

@@ -10,6 +10,7 @@ be unique. Epoch-relative schedules also support captures preceding the demo epo
 ```python
 from midas.laboratory.spec import generate
 from midas.laboratory.runtime import execute
+
 scenario = generate("liquidity_shock", 42)
 result = execute(scenario)
 assert result["economically_verified"] is False

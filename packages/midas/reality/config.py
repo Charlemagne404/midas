@@ -10,9 +10,7 @@ from typing import Any
 @dataclass(frozen=True)
 class Config:
     root: str = field(
-        default_factory=lambda: str(
-            Path(__file__).resolve().parents[3] / "data/recordings/reality"
-        )
+        default_factory=lambda: str(Path(__file__).resolve().parents[3] / "data/recordings/reality")
     )
     markets: int = 3
     discovery_limit: int = 50

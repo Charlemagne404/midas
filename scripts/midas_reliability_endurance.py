@@ -615,10 +615,10 @@ def reconcile_completed_schedule(evidence_session_id: str, schedule_id: str) -> 
     worker_swap_peaks: dict[str, int] = {}
     for row in observations:
         for unit, properties in row.get("worker_units", {}).items():
-            worker_peaks[unit] = max(worker_peaks.get(unit, 0), int(properties.get("MemoryPeak", 0)))
-            worker_cpu[unit] = max(
-                worker_cpu.get(unit, 0), int(properties.get("CPUUsageNSec", 0))
+            worker_peaks[unit] = max(
+                worker_peaks.get(unit, 0), int(properties.get("MemoryPeak", 0))
             )
+            worker_cpu[unit] = max(worker_cpu.get(unit, 0), int(properties.get("CPUUsageNSec", 0)))
             worker_swap_peaks[unit] = max(
                 worker_swap_peaks.get(unit, 0), int(properties.get("MemorySwapPeak", 0))
             )

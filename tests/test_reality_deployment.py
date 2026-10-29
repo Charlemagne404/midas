@@ -19,8 +19,8 @@ from scripts.reality_deployment import (
     deployment_tool_hash,
     preflight,
     service_unit_hash,
-    storage_commitment,
     source_hash,
+    storage_commitment,
     verification_environment,
 )
 
@@ -126,6 +126,7 @@ def test_storage_commitment_preserves_combined_same_filesystem_reserve(tmp_path,
             raw_reserve=20,
         )
 
+
 def test_storage_commitment_accounts_separate_archive_filesystem_and_reserve(tmp_path, monkeypatch):
     raw = tmp_path / "raw"
     raw.mkdir()
@@ -187,6 +188,7 @@ def test_storage_commitment_accounts_separate_archive_filesystem_and_reserve(tmp
             archive_destination=archive,
             archive_reserve=400,
         )
+
 
 def test_preflight_requires_source_unit_and_effective_limits(tmp_path, monkeypatch):
     unit = _service_state(tmp_path, monkeypatch)
@@ -321,17 +323,20 @@ def test_apply_timeout_keeps_one_shot_guard_and_never_restarts_back(tmp_path, mo
     )
     with (
         patch("scripts.reality_deployment.production_source_hash", return_value=source_hash()),
-        patch("scripts.reality_deployment.service", side_effect=[
-            dict(service_state, MainPID="123", Restart="on-failure"),
-            service_state,
-            service_state,
-            service_state,
-        ]),
+        patch(
+            "scripts.reality_deployment.service",
+            side_effect=[
+                dict(service_state, MainPID="123", Restart="on-failure"),
+                service_state,
+                service_state,
+                service_state,
+            ],
+        ),
         patch("scripts.reality_deployment._install_restart_guard", return_value=tmp_path / "guard"),
         patch("scripts.reality_deployment._remove_restart_guard") as remove_guard,
         patch("scripts.reality_deployment.atomic_json") as write,
         patch("scripts.reality_deployment.subprocess.run") as restart,
-            patch("scripts.reality_deployment.time.monotonic", side_effect=[0, 0, 2401]),
+        patch("scripts.reality_deployment.time.monotonic", side_effect=[0, 0, 2401]),
         patch("scripts.reality_deployment.time.sleep"),
     ):
         with pytest.raises(ValueError, match="no retry or rollback"):

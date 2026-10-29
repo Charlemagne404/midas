@@ -84,9 +84,7 @@ def segment_index_for_ordinal(segments: list[dict[str, Any]], ordinal: int) -> i
     since their zero ``last`` values break the sorted-end invariant.
     """
     indexed = [
-        (index, item)
-        for index, item in enumerate(segments)
-        if int(item.get("count", 0)) > 0
+        (index, item) for index, item in enumerate(segments) if int(item.get("count", 0)) > 0
     ]
     ends = [int(item["last"]) for _, item in indexed]
     position = bisect.bisect_left(ends, ordinal)
@@ -256,9 +254,7 @@ def audit(
         divergence_by_record[record_ordinal].append(item)
 
     gap_examples = [
-        example
-        for examples in quality.get("gap_examples", {}).values()
-        for example in examples
+        example for examples in quality.get("gap_examples", {}).values() for example in examples
     ]
     gap_by_ordinal = {
         int(item["ordinal"]): item for item in gap_examples if type(item.get("ordinal")) is int
@@ -271,7 +267,11 @@ def audit(
 
     records_by_ordinal: dict[int, dict[str, Any]] = {}
     for index in sorted(selected):
-        wanted = {n for n in target_ordinals if int(segments[index]["first"]) <= n <= int(segments[index]["last"])}
+        wanted = {
+            n
+            for n in target_ordinals
+            if int(segments[index]["first"]) <= n <= int(segments[index]["last"])
+        }
         records_by_ordinal.update(hash_segment_records(source, segments[index], wanted))
     if records_by_ordinal.keys() != target_ordinals:
         missing = sorted(target_ordinals - records_by_ordinal.keys())

@@ -97,9 +97,7 @@ def _unit_configuration_identity(unit: dict[str, str]) -> dict[str, Any]:
         ),
         "environment_files": unit.get("EnvironmentFiles", ""),
         "user": unit.get("User", ""),
-        "effective_limits": {
-            name: unit.get(name) for name in EXPECTED_EFFECTIVE_LIMITS
-        },
+        "effective_limits": {name: unit.get(name) for name in EXPECTED_EFFECTIVE_LIMITS},
         "restart": unit.get("Restart"),
     }
 
@@ -119,7 +117,9 @@ def _validate_service_configuration(unit: dict[str, str]) -> dict[str, Any]:
         f"record --config {PRODUCTION_CONFIG} ;"
     )
     if expected_start not in identity["exec_start"]:
-        raise ValueError("Reality service executable or module arguments differ from the verified target")
+        raise ValueError(
+            "Reality service executable or module arguments differ from the verified target"
+        )
     if identity["working_directory"] != str(PRODUCTION_WORKSPACE):
         raise ValueError("Reality service working directory differs from the verified target")
     expected_environment_hash = hashlib.sha256(b"PYTHONUNBUFFERED=1").hexdigest()
@@ -128,7 +128,9 @@ def _validate_service_configuration(unit: dict[str, str]) -> dict[str, Any]:
     if identity["environment_files"] or identity["user"]:
         raise ValueError("Reality service has an unverified environment file or user override")
     if identity["effective_limits"] != EXPECTED_EFFECTIVE_LIMITS:
-        raise ValueError("Effective Reality service resource limits differ from the verified contract")
+        raise ValueError(
+            "Effective Reality service resource limits differ from the verified contract"
+        )
     if identity["restart"] != "on-failure":
         raise ValueError("Reality service restart policy is not the expected bounded policy")
     return identity
@@ -342,7 +344,11 @@ def storage_commitment(
         )
 
     archive_root = archive_destination.resolve()
-    if archive_root == raw_root or archive_root.is_relative_to(raw_root) or raw_root.is_relative_to(archive_root):
+    if (
+        archive_root == raw_root
+        or archive_root.is_relative_to(raw_root)
+        or raw_root.is_relative_to(archive_root)
+    ):
         raise ValueError("Archive destination must be separate from the raw recording root")
     archive_mount = archive_root
     while not archive_mount.exists() and archive_mount != archive_mount.parent:
@@ -613,7 +619,9 @@ def apply(
             no_automatic_retry_or_rollback=True,
         )
         atomic_json(output, result)
-        raise ValueError("One-shot recorder start failed; automatic retry and rollback are disabled") from exc
+        raise ValueError(
+            "One-shot recorder start failed; automatic retry and rollback are disabled"
+        ) from exc
 
     deadline = time.monotonic() + health_timeout_seconds
     baseline_events = _memory_events(before)
@@ -665,7 +673,9 @@ def apply(
             if status_age_ns > 30 * 10**9:
                 failure_reason = "Recorder status became stale during the stability window"
                 break
-            if status.get("ordinal", 0) < last_status.get("ordinal", 0) or status.get("frames", 0) < last_status.get("frames", 0):
+            if status.get("ordinal", 0) < last_status.get("ordinal", 0) or status.get(
+                "frames", 0
+            ) < last_status.get("frames", 0):
                 failure_reason = "Recorder counters regressed during the stability window"
                 break
             last_status = status
@@ -675,7 +685,9 @@ def apply(
                     or status.get("ordinal", 0) <= first_ready_status.get("ordinal", 0)
                     or status.get("frames", 0) <= first_ready_status.get("frames", 0)
                 ):
-                    failure_reason = "Recorder did not advance observations during the stability window"
+                    failure_reason = (
+                        "Recorder did not advance observations during the stability window"
+                    )
                     break
                 try:
                     _remove_restart_guard(restart_guard, before["Restart"])

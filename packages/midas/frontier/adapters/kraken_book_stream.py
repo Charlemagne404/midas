@@ -181,9 +181,9 @@ class KrakenBookReconstructor:
         self._synchronized = False
         self._message_index = -1
         self._subscription_acknowledged = False
-        self._last_frame_type: Literal[
-            "subscription_ack", "status", "heartbeat", "snapshot", "update"
-        ] | None = None
+        self._last_frame_type: (
+            Literal["subscription_ack", "status", "heartbeat", "snapshot", "update"] | None
+        ) = None
 
     @property
     def has_snapshot(self) -> bool:

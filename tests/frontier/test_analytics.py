@@ -204,9 +204,7 @@ def test_empty_analytics_are_bounded_and_have_explicit_sample_scope():
     assert result["market_mix"] == []
     assert result["pricing"] == []
     assert result["candidate_research"]["counts_by_classification"] == {}
-    assert {item["venue"] for item in result["source_quality"]} == {
-        venue.value for venue in Venue
-    }
+    assert {item["venue"] for item in result["source_quality"]} == {venue.value for venue in Venue}
     assert all(item["quality_valid_pricing_books"] == 0 for item in result["source_quality"])
     assert any("not venue-wide coverage" in item for item in result["limitations"])
     assert all(item["capture_count"] == 0 for item in result["historical_price_quality"])
