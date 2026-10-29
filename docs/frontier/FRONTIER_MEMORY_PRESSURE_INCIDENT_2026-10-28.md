@@ -2,7 +2,7 @@
 
 **Incident date:** 2026-10-28 (CET)
 
-**Checkpoint captured:** 2026-10-29 01:40 CET
+**Checkpoint captured:** 2026-10-29 01:48 CET
 
 **Scope:** Host reliability interruption during Project Frontier
 
@@ -33,10 +33,11 @@ Two narrowly scoped containment changes are in effect:
   `MemorySwapMax=0` in a reversible persistent user-unit drop-in. Its previous
   128 MiB hard cap caused seven kernel memcg OOM kills. The 00:46 scheduled
   run completed in 33.3 seconds at a 137.4 MiB peak, but the old 128 MiB soft
-  limit caused measurable reclaim PSI. The new 160 MiB soft limit is pending
-  its next scheduled validation at 01:16; the 00:46 `capacity.json` records
-  invalid archive provenance and stale collector status as of that earlier
-  observation.
+  limit caused measurable reclaim PSI. The new 160 MiB soft limit has one
+  measured scheduled run at 01:16 (134,225,920-byte peak) and a second
+  successful scheduled run at 01:46; the latter's peak was not retained.
+  Both capacity reports preserve the invalid archive provenance/inventory
+  warnings. The 01:46 report shows a fresh but unsequenced collector status.
 
 Reality was killed by systemd-oomd and automatically restarted. Its restart
 path fully replays and verifies the recording before resuming collection. At
@@ -48,13 +49,14 @@ new persisted observations after cold replay. Recovery and current capture
 are now demonstrated, with `sequence_verified=false` still explicit. No
 operator restart or protected Reality configuration change was made.
 
-**The host supports short, strictly bounded tests but not broad suites or
-research batches yet.** No new oomd or kernel OOM kill was observed through
-01:08, about 85 minutes after the last kill. After two scoped Frontier test
-modules, host/user PSI remained near zero and 9.9 GiB was available. API and
-Reality are active with zero leaf PSI, but remain within about 1.1 MiB and
-0.8 MiB of `MemoryHigh`. The next 160 MiB capacity run at 01:16 remains an
-important validation gate before expanding runtime work.
+**The host supports short, strictly bounded offline tests but not broad suites
+or research batches yet.** No new oomd or kernel OOM kill was observed through
+01:48, about two hours after the last kill. Host PSI is zero and 10 GiB is
+available, but swap remains 3.1/4 GiB used. API and Reality are active; at
+01:48:23 the API was within 1.41 MiB of `MemoryHigh`, and Reality was within
+about 601 MiB. Their leaf `max`, `oom`, and `oom_kill` counters were zero. The
+original workload mix that crossed the user-manager pressure threshold is
+still unknown, so this quiet interval does not establish incident resolution.
 
 ## Observed impact and timeline
 
@@ -876,5 +878,36 @@ The 01:40 source-analysis run finished at 01:40:13 with exit status 0 after
 processing 58 new segments; pending count was zero and status was `current`.
 Its measured peak was 226.3 MiB under `MemoryMax=256 MiB`, with zero swap and
 8.382 CPU seconds. At 01:40:19, host `MemAvailable` was 9.7 GiB, host PSI was
-zero, and the user-manager's max/OOM/OOM-kill counters were unchanged. The
-next existing capacity check is scheduled for 01:46:04.
+zero, and the user-manager's max/OOM/OOM-kill counters were unchanged.
+
+## Scheduled service and replay regression checkpoint — 2026-10-29 01:48 CET
+
+The 01:45:04 research-director job exited successfully at 01:45:05 after 1.325
+CPU seconds. It reported `WAITING_FOR_FINALIZATION`; the latest scan had not
+reached finalized v4 analysis and no qualified gross candidate existed. The
+01:46:11 capacity job exited successfully at 01:46:17 after 6.168 CPU seconds.
+The capacity report still carries
+`ARCHIVE_SEGMENT_INVENTORY_INVALID` and
+`ARCHIVE_MANIFEST_PROVENANCE_INVALID`, and reports
+`RECORDING_UNSEQUENCED`. Raw recording-root usage increased by 11,641,577
+bytes between the 01:16 and 01:46 reports. No manifest or archive was changed.
+
+At 01:48:23, host available memory was 10 GiB, PSI avg10/avg60/avg300 was zero,
+and swap use was 3.1/4 GiB. The API cgroup used 1,609,134,080 bytes against a
+1,610,612,736-byte `MemoryHigh` (1.41 MiB headroom); its `memory.events` showed
+11,655 `high` events and zero `max`, `oom`, or `oom_kill`. Reality used
+577,245,184 bytes against a 1,207,959,552-byte high bound and also had zero
+leaf max/OOM events. The user-manager high count was 16,416,854; its max/OOM/
+OOM-kill counts were unchanged at 728,363/19/15. No kernel or systemd-oomd kill
+was logged after 23:43:24 CET.
+
+The corrected four-file relationship/history/replay/source-permission test
+slice passed 127/127 in 13.19 seconds in a transient service with a 768 MiB
+memory cap, zero swap, 25% CPU, 64-task limit, and 180-second runtime bound.
+No live source calls occurred. The service emitted an implausible 256 KiB
+memory peak; that value is not accepted as a measured process peak. After this
+run, PSI remained zero, the user-manager `max`, `oom`, and `oom_kill` counts
+were unchanged, and Reality/API remained active with restart counts 14/9.
+Because the API remains within about 1.4 MiB of `MemoryHigh`, broader test
+execution is deferred. This is a quiet observation window and bounded test
+evidence, not proof that the historic pressure initiator is fixed.

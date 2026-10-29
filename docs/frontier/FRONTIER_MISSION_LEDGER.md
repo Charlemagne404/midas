@@ -1,6 +1,6 @@
 # Project Frontier Mission Ledger
 
-## Current host and Frontier state — 2026-10-29 01:40 CET
+## Current host and Frontier state — 2026-10-29 01:48 CET
 
 Reality has resumed recording after cold replay: status says
 `RECORDING_UNSEQUENCED`, `active_receiving`, 16/16 fresh books, zero failures,
@@ -8,9 +8,9 @@ and storage continued growing through the 01:10:25 sample. `sequence_verified`
 remains false. Do not restart or alter it.
 
 The incident is contained enough for bounded offline work, but remains open:
-the capacity run passed once with its 160 MiB soft bound, no kill is logged
-since 23:43 CET, and the original pressure initiator is unknown. The auxiliary
-five-minute gap-detail timer remains disabled. Reality is fresh but
+the capacity monitor completed another scheduled run, no kill is logged since
+23:43 CET, and the original pressure initiator is unknown. The auxiliary
+five-minute gap-detail timer remains disabled. Reality reports
 `RECORDING_UNSEQUENCED`; the archive manifest/inventory alerts are preserved.
 
 The scheduled capacity monitor completed at 01:16:11 with `Result=success`,
@@ -21,21 +21,30 @@ status age 3.36 seconds, and raw recording size 12,137,375,646 bytes.
 `ARCHIVE_SEGMENT_INVENTORY_INVALID` and
 `ARCHIVE_MANIFEST_PROVENANCE_INVALID` remain; neither was altered.
 
-Through 01:36, host available memory stayed about 9.7–10 GiB, host/user PSI
-avg10/avg60/avg300 stayed zero, and user-manager `max=728,363`, `oom=19`, and
-`oom_kill=15` remained fixed. The `high` counter rose from 16,416,821 at 01:16
-to 16,416,839 at 01:34 without new max/OOM events. Reality and API remain
-active with restart counts 14 and 9; API remains close to its own
-`MemoryHigh`. Echo production/staging, Continental, Caddy, RustDesk, and the
-SSH socket were verified active at 01:16. Keep work sequential, fixture-based,
-and explicitly bounded. Full repository regression, the full browser E2E
+At 01:48:23, host `MemAvailable` was 10 GiB, host PSI avg10/avg60/avg300 was
+zero, and swap was 3.1/4 GiB used. User-manager counters were
+`high=16,416,854`, `max=728,363`, `oom=19`, and `oom_kill=15`. The API cgroup
+used 1,609,134,080 bytes against `MemoryHigh=1,610,612,736`, leaving 1.41 MiB;
+its leaf `max`, `oom`, and `oom_kill` counters were zero. Reality and API were
+active with restart counts 14 and 9. Echo production/staging, Continental,
+Caddy, RustDesk, and the SSH socket were verified active at 01:16. Keep any
+further runtime work sequential and tightly bounded; API headroom is too
+narrow for broader suites. Full repository regression, the full browser E2E
 suite, live probes, endurance, and research campaigns remain gated.
 
 At 01:40:13, the scheduled Veritas source-analysis job completed with
 `status=current`, 58 segments processed, zero pending, and readiness
 `awaiting_finalized_campaign_window_end`. It peaked at 226.3 MiB under its
-256 MiB cap, used no swap, and exited successfully. The capacity monitor's
-next scheduled run is 01:46:04; do not overlap it with additional tests.
+256 MiB cap, used no swap, and exited successfully.
+
+The scheduled research director completed at 01:45:05 with
+`WAITING_FOR_FINALIZATION`, no finalized v4 analysis, and no qualified gross
+candidate. The capacity monitor completed at 01:46:17 with `Result=success`;
+the raw recording root grew 11,641,577 bytes since the 01:16 sample. Its report
+still contains `ARCHIVE_SEGMENT_INVENTORY_INVALID` and
+`ARCHIVE_MANIFEST_PROVENANCE_INVALID`. The collector state remains
+`RECORDING_UNSEQUENCED`; the next existing source-analysis, director, and
+capacity jobs are scheduled for 02:10, 02:15, and 02:16 respectively.
 
 Recent bounded Frontier evidence:
 
@@ -46,11 +55,12 @@ Recent bounded Frontier evidence:
   economics 35/35.
 - Storage 32/32; API 59/59; the API suite required a 90-second harness after
   its 60-second run reached the final cases but timed out before summary.
-- The combined relationship/history/replay/source-permission slice had
-  126 passes and one stale mapping-override assertion. The assertion now
-  checks the intended rejection of a caller mapping that conflicts with
-  verified pinned evidence; `test_replay_comparison.py` passes 4/4 after this
-  correction. The combined slice was not rerun.
+- The corrected relationship/history/replay/source-permission slice passes
+  127/127 in 13.19 seconds under a 768 MiB, zero-swap, 25% CPU, 64-task,
+  180-second transient-service bound. It used fixtures only. The service's
+  reported 256 KiB peak is implausible and is not treated as a process-memory
+  measurement; the earlier first invocation exited before collection due to
+  its default working directory.
 - UI graph test 1/1. The full UI file had two default 5-second timeouts at the
   25% CPU quota; those two passed with a 15-second test timeout. `tsc -b`
   passed and the production Vite build passed in a temporary output directory.
@@ -60,11 +70,11 @@ Recent bounded Frontier evidence:
   fixture requests made no exchange calls. The broader E2E suite remains
   unrun.
 
-All tests and builds ran in sequential systemd scopes with a no-swap memory
-cap, CPU quota, task limit, and wall timeout. `data/frontier-public-probes/`
-remains intentionally untracked and untouched. The latest working change is
-the replay-comparison test correction; stage only that test and the current
-Frontier documentation when committing.
+Tests and builds ran sequentially with explicit systemd memory, swap, CPU,
+task, and runtime bounds. No live probes ran. `data/frontier-public-probes/`
+remains intentionally untracked and untouched. The latest implementation
+change is the replay-comparison assertion correction; the current working
+changes are progress documentation only.
 
 ## Current host state — 2026-10-29 01:05 CET
 

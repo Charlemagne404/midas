@@ -2,7 +2,7 @@
 
 **Report date:** 2026-10-29
 
-## Current completion matrix — 2026-10-29 01:40 CET
+## Current completion matrix — 2026-10-29 01:48 CET
 
 This is a current evidence classification, not a final completion claim. The
 dated implementation records below remain the detailed evidence; the
@@ -20,15 +20,15 @@ current host gate.
 | Read-only source network and trading boundary | COMPLETE AND VERIFIED | Only `PublicReadTransport` issues source HTTP requests; it is anonymous HTTPS GET-only, host-allowlisted, redirect-disabled, and bounded. Adapter boundary fixtures cover disabled probes, credential/mutating clients, cookies, redirects, oversized payloads, and JSON complexity. No exchange order/account path was found in the reviewed Frontier code. |
 | Laboratory/Arena comparisons and bounded orchestration | PARTIALLY VERIFIED | Arena admission and finite scheduling regressions pass; a Laboratory resource-denial case passes with a harness cap above its 722,894,848-byte capacity precondition. Full endurance evidence remains incomplete. |
 | User-cgroup-aware workload admission | IMPLEMENTED, BOUNDED VALIDATION PASSED | Central Arena admission (15), finite schedules (12), and the Laboratory denial case (1) pass fixture tests using user-manager pressure; no runtime deployment occurred. |
-| Reality capacity inventory bounds | PARTIALLY VERIFIED | Isolated candidate tests pass 5/5; candidate code remains undeployed. The separate capacity monitor completed one scheduled run at 134,225,920 bytes under `MemoryHigh=160M`, `MemoryMax=192M`, and zero swap. |
+| Reality capacity inventory bounds | PARTIALLY VERIFIED | Isolated candidate tests pass 5/5; candidate code remains undeployed. The separate monitor has one measured scheduled run at 134,225,920 bytes under `MemoryHigh=160M`, `MemoryMax=192M`, and zero swap, plus a second successful scheduled run whose peak was not retained. |
 | Native Frontier dashboard | PARTIALLY VERIFIED | The graph/evidence UI test and all 9 UI cases pass across the default-timeout run and a 15-second retry for its two slow fixtures. Typecheck/build and three isolated Playwright smoke/replay/Arena journeys pass; the full browser suite remains unverified. |
-| Host reliability containment | PARTIALLY VERIFIED | The auxiliary five-minute gap-detail timer is disabled; one scheduled capacity run passed and the 01:40 source-analysis run completed under its 256 MiB cap. No OOM kill has been logged since 23:43 CET; the workload mix that triggered aggregate pressure remains unknown. |
+| Host reliability containment | PARTIALLY VERIFIED | The auxiliary five-minute gap-detail timer is disabled; scheduled source-analysis and capacity jobs completed at 01:40 and 01:46. At 01:48 the API was only 1.41 MiB below `MemoryHigh`; PSI was zero and no OOM kill has been logged since 23:43 CET. The historical pressure initiator remains unknown. |
 | Broad regressions, resource endurance, and performance acceptance | DEFERRED | Several targeted suites pass under explicit memory, swap, CPU, task, and wall-time limits; the full repository suite, endurance, and broad performance tests remain deferred. |
 | Live multi-venue source authorization and findings | BLOCKED | Kalshi, Kraken, and Coinbase retained research remain held; the worktree Polymarket probe flag is off. |
 | Production integration/deployment | DEFERRED | Frontier remains isolated; no protected service transition occurred. |
 | Project Frontier overall | PARTIALLY VERIFIED | The engine is substantial, but live cross-venue science, broad verification, recovery, endurance, and deployment gates remain open. |
 
-## Bounded Frontier verification after host containment — 2026-10-29 01:40 CET
+## Bounded Frontier verification after host containment — 2026-10-29 01:48 CET
 
 Frontier work resumed only in sequential transient user scopes. Python test
 scopes used a 768 MiB maximum, zero swap, 25% CPU quota, 64-task cap, and
@@ -49,13 +49,18 @@ exchange request was made.
 | Frontier API | 59/59 passed | 768 MiB, zero swap, 25% CPU, 64 tasks; 58.60 s. One existing Starlette/httpx deprecation warning. |
 | Relationship, historical replay, paired replay, and source-permission slice | 126 passed, 1 failed on first run | The failing assertion supplied a flipped mapping against a verified relationship's pinned evidence. |
 | Paired-replay mapping regression after correction | 4/4 passed | The stale assertion now verifies that conflicting overrides are rejected, preserving the integrity rule from `40afc20`. |
+| Complete four-file relationship/history/replay/source-permission rerun | 127/127 passed | 13.19 s in a transient service with `MemoryMax=768 MiB`, zero swap, 25% CPU quota, 64-task limit, and 180-second runtime bound. No network or live source calls. |
 
 The mapping-test correction changes no production behavior: the old test treated
 a prohibited override as a way to vary the digest, despite verified
 same-payoff mappings being bound to relationship evidence. The corrected test
-checks the intended rejection. The other 126 cases in the combined replay
-slice passed before this test-only correction; the combined slice was not
-rerun as a whole.
+checks the intended rejection. The other 126 cases passed before this
+test-only correction, and the complete four-file slice passed after the
+correction. A first transient-service invocation used the manager's default
+working directory and exited before collection; the rerun set an explicit
+working directory. The service reported an implausible 256 KiB memory peak,
+so that value is not treated as a test-process peak measurement; the configured
+hard memory and zero-swap limits remain the resource bounds for this run.
 
 The Frontier UI graph/evidence test passed 1/1. The full `Frontier.test.tsx`
 file produced 7 passes and two default 5-second timeouts at the 25% CPU quota;
@@ -90,6 +95,25 @@ The existing 01:40 Veritas source-analysis timer also completed successfully:
 `awaiting_finalized_campaign_window_end`. It used 8.382 CPU seconds, peaked at
 226.3 MiB under its 256 MiB hard cap, and used no swap. This is a bounded
 operational observation, not evidence of positive or eligible opportunities.
+
+The 01:45 research-director timer completed successfully in one second and
+reported `WAITING_FOR_FINALIZATION`; its latest scan had not reached finalized
+v4 analysis and no qualified gross candidate existed. The 01:46 capacity
+monitor completed successfully. Its report retained
+`ARCHIVE_SEGMENT_INVENTORY_INVALID` and
+`ARCHIVE_MANIFEST_PROVENANCE_INVALID`; the raw recording root increased by
+11,641,577 bytes between the 01:16 and 01:46 reports, while the collector state
+remained `RECORDING_UNSEQUENCED`.
+
+At 01:48:23, host `MemAvailable` was 10 GiB, host PSI avg10/avg60/avg300 was
+zero, and swap use was 3.1/4 GiB. The API cgroup was at 1,609,134,080 bytes
+against `MemoryHigh=1,610,612,736` (1.41 MiB headroom); its `high` counter was
+11,655 while `max`, `oom`, and `oom_kill` remained zero. Reality was active at
+577,245,184 bytes with no leaf max/OOM events. User-manager `high` was
+16,416,854; `max=728,363`, `oom=19`, and `oom_kill=15` were unchanged. No
+kernel OOM or systemd-oomd kill was logged after 23:43:24 CET. These samples
+support only bounded offline work; API headroom remains too narrow for broader
+test execution, and the initiating workload is still undetermined.
 
 ## Adapter trust boundary and retry bound review — 2026-10-29 00:00 CET
 
