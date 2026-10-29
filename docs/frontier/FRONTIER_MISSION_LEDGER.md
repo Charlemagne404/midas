@@ -13251,3 +13251,6 @@ gap-detail timer was inactive, the capacity timer active, and `oomctl dump`
 again showed no monitored groups despite the user-manager 50% policy. No new
 OOM journal record was found. Host memory incident remains partially
 contained. The scope's test peak was not retained for inspection.
+
+Code-quality, completion-matrix, and 04:44 host-sample checkpoint:
+`b6b3b74` (`style(frontier): finalize graph revision validation`).
