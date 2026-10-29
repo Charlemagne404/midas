@@ -201,6 +201,7 @@ class PolymarketPriceHistoryProbeRequest(BaseModel):
 class KrakenCandleProbeRequest(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
     native_market_id: str = Field(min_length=1, max_length=64, pattern=r"^[A-Za-z0-9./_-]+$")
+    bound_market_observation_id: str = Field(pattern=r"^[0-9a-f]{64}$")
     interval_minutes: Literal[1, 5, 15, 30, 60, 240, 1440, 10080, 21600] = 60
     since_epoch_seconds: int | None = Field(default=None, strict=True, ge=0)
 
@@ -2830,32 +2831,14 @@ def router(
             )
         config = require_probe_config(getattr(adapter, "config", None))
         try:
-            known_markets = await _load_markets(store, 200, excluded_venues=held_venues)
+            recorded_market = _load_kraken_candle_market(
+                store,
+                request.bound_market_observation_id,
+                request.native_market_id,
+            )
         except (FrontierStoreError, ValueError) as error:
             raise HTTPException(status_code=409, detail=str(error)) from error
-        recorded_market = next(
-            (
-                item
-                for item in known_markets
-                if item.venue == venue
-                and item.native_market_id == request.native_market_id
-                and item.market_kind.value == "spot_pair"
-                and len(item.instruments) == 1
-                and item.instruments[0].native_instrument_id == request.native_market_id
-            ),
-            None,
-        )
-        if recorded_market is None:
-            raise HTTPException(
-                status_code=404,
-                detail="Candles can only be fetched for a native Kraken spot pair in the recorded market window",
-            )
-        bound_market_observation_id = recorded_market.provenance.observation_id
-        if bound_market_observation_id is None:
-            raise HTTPException(
-                status_code=409,
-                detail="Recorded spot pair has no immutable source-observation binding",
-            )
+        bound_market_observation_id = request.bound_market_observation_id
 
         async with source_operation(venue):
             adapter.take_captures()
@@ -6800,7 +6783,15 @@ def _validate_kraken_candle_market_binding(
     bound_observation_id = series.bound_market_observation_id
     if bound_observation_id is None:
         raise ValueError("Persisted Kraken candles have no saved-market observation binding")
-    bound = store.observation(bound_observation_id)
+    _load_kraken_candle_market(store, bound_observation_id, series.native_market_id)
+
+
+def _load_kraken_candle_market(
+    store: FrontierStore,
+    observation_id: str,
+    native_market_id: str,
+) -> FrontierMarket:
+    bound = store.observation(observation_id)
     if (
         bound is None
         or bound["venue"] != Venue.KRAKEN.value
@@ -6814,11 +6805,12 @@ def _validate_kraken_candle_market_binding(
     if (
         market.venue != Venue.KRAKEN
         or market.market_kind.value != "spot_pair"
-        or market.native_market_id != series.native_market_id
+        or market.native_market_id != native_market_id
         or len(market.instruments) != 1
-        or market.instruments[0].native_instrument_id != series.native_market_id
+        or market.instruments[0].native_instrument_id != native_market_id
     ):
         raise ValueError("Bound Kraken metadata does not contain this native spot pair")
+    return market
 
 
 async def _load_market_records(

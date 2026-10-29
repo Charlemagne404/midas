@@ -80,6 +80,7 @@ it('shows saved candles and keeps a source-held probe disabled', async () => {
   wrap(
     <KrakenCandleHistoryPanel
       nativeMarketId="XXBTZUSD"
+      marketObservationId={'a'.repeat(64)}
       probeEnabled={false}
       disabledReason="Kraken public capture remains held pending source review."
     />,
@@ -106,6 +107,7 @@ it('starts a bounded capture only after action and renders persisted evidence', 
     if (path === '/api/frontier/probe/kraken/candles' && init?.method === 'POST') {
       expect(JSON.parse(String(init.body))).toEqual({
         native_market_id: 'XXBTZUSD',
+        bound_market_observation_id: 'a'.repeat(64),
         interval_minutes: 60,
       });
       return new Response(
@@ -131,7 +133,13 @@ it('starts a bounded capture only after action and renders persisted evidence', 
     return new Response(JSON.stringify({ detail: 'Unexpected request' }), { status: 404 });
   });
   vi.stubGlobal('fetch', fetchMock);
-  wrap(<KrakenCandleHistoryPanel nativeMarketId="XXBTZUSD" probeEnabled />);
+  wrap(
+    <KrakenCandleHistoryPanel
+      nativeMarketId="XXBTZUSD"
+      marketObservationId={'a'.repeat(64)}
+      probeEnabled
+    />,
+  );
 
   expect(await screen.findByText('No saved candle captures')).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Capture Kraken OHLC history' }));

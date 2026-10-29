@@ -6780,6 +6780,7 @@ function MarketDetails({
         <>
           <KrakenCandleHistoryPanel
             nativeMarketId={market.native_market_id}
+            marketObservationId={market.provenance.observation_id}
             probeEnabled={krakenCandleProbeEnabled}
             disabledReason={krakenCandleDisabledReason}
           />

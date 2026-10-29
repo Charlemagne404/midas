@@ -108,6 +108,7 @@ def test_kraken_candle_capture_is_market_bound_hash_checked_and_listed(tmp_path)
             "/api/frontier/probe/kraken/candles",
             json={
                 "native_market_id": PAIR_ID,
+                "bound_market_observation_id": market_observation_id,
                 "interval_minutes": 60,
                 "since_epoch_seconds": since,
             },
@@ -172,14 +173,17 @@ def test_kraken_candle_source_hold_and_future_time_fail_before_request(tmp_path)
         hold_reason="Kraken source-use review is pending",
     )
     store = FrontierStore(tmp_path / "frontier.sqlite3")
-    _store_saved_pair(adapter, store)
+    market_observation_id = _store_saved_pair(adapter, store)
     app = FastAPI()
     app.include_router(router(store, registry))
     client = TestClient(app)
     try:
         held = client.post(
             "/api/frontier/probe/kraken/candles",
-            json={"native_market_id": PAIR_ID},
+            json={
+                "native_market_id": PAIR_ID,
+                "bound_market_observation_id": market_observation_id,
+            },
         )
         assert held.status_code == 409
         assert held.json()["detail"] == "Kraken source-use review is pending"
@@ -188,10 +192,40 @@ def test_kraken_candle_source_hold_and_future_time_fail_before_request(tmp_path)
             "/api/frontier/probe/kraken/candles",
             json={
                 "native_market_id": PAIR_ID,
+                "bound_market_observation_id": market_observation_id,
                 "since_epoch_seconds": int(datetime.now(UTC).timestamp()) + 3600,
             },
         )
         assert future.status_code == 422
+        assert requests == []
+    finally:
+        client.close()
+        asyncio.run(registry.aclose())
+
+
+def test_kraken_candle_probe_rejects_a_different_saved_market_binding(tmp_path):
+    requests: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        return httpx.Response(200, json={"error": [], "result": {PAIR_ID: []}}, request=request)
+
+    adapter, registry = _configured_adapter(handler)
+    store = FrontierStore(tmp_path / "frontier.sqlite3")
+    market_observation_id = _store_saved_pair(adapter, store)
+    app = FastAPI()
+    app.include_router(router(store, registry))
+    client = TestClient(app)
+    try:
+        mismatch = client.post(
+            "/api/frontier/probe/kraken/candles",
+            json={
+                "native_market_id": f"{PAIR_ID}-OTHER",
+                "bound_market_observation_id": market_observation_id,
+            },
+        )
+        assert mismatch.status_code == 409
+        assert "does not contain this native spot pair" in mismatch.json()["detail"]
         assert requests == []
     finally:
         client.close()

@@ -63,6 +63,7 @@ type CandleCaptureResponse = {
 
 type KrakenCandleHistoryPanelProps = {
   nativeMarketId: string;
+  marketObservationId: string;
   probeEnabled: boolean;
   disabledReason?: string | null;
 };
@@ -83,6 +84,7 @@ const shortHash = (value: string) => value.slice(0, 12);
 
 export function KrakenCandleHistoryPanel({
   nativeMarketId,
+  marketObservationId,
   probeEnabled,
   disabledReason,
 }: KrakenCandleHistoryPanelProps) {
@@ -105,6 +107,7 @@ export function KrakenCandleHistoryPanel({
         method: 'POST',
         body: JSON.stringify({
           native_market_id: nativeMarketId,
+          bound_market_observation_id: marketObservationId,
           interval_minutes: input.intervalMinutes,
           ...(input.sinceEpochSeconds === undefined
             ? {}
