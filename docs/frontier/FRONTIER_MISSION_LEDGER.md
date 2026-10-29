@@ -16191,3 +16191,19 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
   active. The incident remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**;
   resume only serial, bounded development pending the 18:40:26 scheduled
   source-analysis run.
+
+## 2026-10-29 18:41 CET — scheduled source-analysis observed
+
+- The untouched source-analysis timer fired at 18:40:31; the job succeeded at
+  18:40:43 after processing 58 segments (40,140 cumulative, no pending).
+  Its last result remained `awaiting_finalized_campaign_window_end`.
+- User-manager `memory.events.max` rose by 241 during the run, from 731,309 to
+  731,550; `high`, `oom`, and `oom_kill` did not change. This repeats the
+  earlier timing correlation, but the leaf cgroup was removed and the
+  systemd-reported 256 KiB peak is not credible as a Python memory peak.
+  Treat the job as a plausible source of limit-event churn, not proven cause.
+- At 18:41:05, memory PSI remained zero, 10.4 GiB RAM was available, and
+  18.5 MiB swap was free. Core services remained active; no kernel/OOMD kill
+  appeared since 18:31. No campaign, timer, service configuration, or
+  evidence store was changed. The incident remains **PARTIALLY CONTAINED /
+  PARTIALLY VERIFIED**; proceed only with serial, bounded work.

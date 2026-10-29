@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 18:34 CET |
+| Latest addendum | 2026-10-29 18:41 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Pre-incident checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -4546,3 +4546,28 @@ swap. User-manager `high/max/oom/oom_kill` remained
 The core API, Reality collector, and Reality API remained active. This confirms
 the local endpoint contract and truthful UI fallback, not a production UI
 deployment or sustained recovery.
+
+### Scheduled source-analysis run — 2026-10-29 18:41 CET
+
+The existing source-analysis timer fired at 18:40:31; its service succeeded
+and exited at 18:40:43. The job processed 58 segments (40,140 cumulative,
+last ordinal 7,423,914), with no pending segments, and remained
+`awaiting_finalized_campaign_window_end`. It consumed 9.636 CPU seconds under
+its existing `MemoryMax=256M`; its post-exit cgroup was removed and systemd
+reported an implausible 256 KiB memory peak, so no peak or service-local event
+measurement is available.
+
+The user-manager `memory.events.max` count rose from 731,309 at 18:40:31 to
+731,550 at 18:41:05 (+241), while `high` stayed 16,437,902 and `oom` /
+`oom_kill` stayed 19/15. This repeats the temporal association observed after
+the 18:10 source-analysis run, but the aggregate counter and vanished leaf
+cgroup do not prove that this job caused all increments or the earlier global
+pressure episodes. Host memory PSI remained zero, `MemAvailable` was
+10,922,832 kB, and `SwapFree` was 18,940 kB. MIDAS API, Reality, and Reality
+API remained active; no kernel or OOMD kill appeared since 18:31. The timer,
+service limits, and frozen analysis inputs were not changed.
+
+Continue to treat source-analysis as a plausible contributor to cgroup limit
+event churn, not an established sole pressure initiator. No further Frontier
+test overlapped the run. The incident remains **PARTIALLY CONTAINED / PARTIALLY
+VERIFIED**.
