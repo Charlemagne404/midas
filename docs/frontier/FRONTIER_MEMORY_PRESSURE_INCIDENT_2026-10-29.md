@@ -4828,3 +4828,17 @@ This point-in-time sample supports continued serial, capped fixture-only
 Frontier work. It does not resolve near-exhausted swap, the OOMD registration
 mismatch, or Reality source freshness, and is not endurance evidence. The
 incident remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**.
+
+### Post-test memory event check — 2026-10-29 19:41 CET
+
+The single bounded graph UI journey exited successfully at 19:41 with one
+selected test passed and eight skipped. The transient service was inactive
+with `Result=success` / exit status 0 when checked; its collected leaf event
+counters and peak were unavailable. Between the 19:36 and 19:41 host samples,
+user-manager `memory.events.max` increased by 208 while `high`, `oom`,
+`oom_kill`, and `oom_group_kill` remained unchanged. PSI averages remained
+zero and about 10.2 GiB was available, with only about 20 MiB swap free.
+Neither systemd-oomd nor the kernel OOM query showed a new entry since 19:36.
+The timing overlaps the test, but without leaf counters the increase cannot
+be attributed to it. No further test workload was started; retain the serial
+admission policy and re-sample before continuing.

@@ -16469,3 +16469,19 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
   remained disabled and its service failed. No workload/config change was
   made. Continue serial capped fixture work only; incident remains
   **PARTIALLY CONTAINED / PARTIALLY VERIFIED**.
+
+## 2026-10-29 19:41 CET — bounded relationship contract detail
+
+- The relationship inspector now renders at most 32 of up to 256 instruments,
+  32 of up to 64 payoff states, and 32 payouts per instrument. It labels the
+  omitted counts and keeps the saved source record unchanged.
+- The existing captured-graph journey passed **1/1** with 8 unrelated tests
+  skipped. Its mock market contained 40 instruments, 64 payoff states, and
+  40 payouts per instrument. Prettier passed; full app type-check/build were
+  deferred. No live source/store was accessed.
+- At 19:41:26 PSI averages were zero, available RAM about 10.2 GiB, and free
+  swap about 20 MiB. Parent `memory.events.max` increased by 208 since 19:36;
+  the test unit was collected before leaf counters were captured, so
+  attribution is unknown. OOM/kill counters and PSI averages were unchanged;
+  OOMD/kernel queries had no entries since 19:36. Hold further tests until a
+  fresh admission sample; incident remains **PARTIALLY VERIFIED**.

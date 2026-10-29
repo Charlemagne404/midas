@@ -16559,3 +16559,26 @@ increased by 19 since the earlier sample; max/oom/oom_kill/group-kill remained
 731,783/19/15/0. Individual transient-unit event deltas were not captured, so
 that increment is unattributed. Frontier remains **PARTIALLY VERIFIED** and
 admission stays serial and fixture-only.
+
+### Bounded relationship contract inspector — 2026-10-29 19:41 CET
+
+The canonical market schema accepts up to 256 instruments, 64 payoff states,
+and 64 payouts per instrument. The expanded side-by-side contract inspector
+now renders at most 32 instruments, 32 payoff states, and 32 payout entries
+per instrument. It reports omitted counts and retains the saved market record;
+the view no longer expands a valid maximum-size market into thousands of
+detail rows at once.
+
+The existing graph journey was extended with a deterministic mock market
+containing 40 instruments, 64 payoff states, and 40 payouts per instrument.
+The selected journey passed **1/1** (8 unrelated tests skipped), confirming
+the displayed caps and omission notes. Prettier passed. No live source or
+production store was used; a full frontend type-check/build remains deferred.
+
+At 19:41:26, memory PSI averages were zero, available RAM about 10.2 GiB, and
+free swap about 20 MiB. Parent user-manager `memory.events.max` rose by 208
+since 19:36; OOM/kill counts were unchanged, but the collected test unit no
+longer exposed leaf counters or peak, so the increase is unattributed. No new
+systemd-oomd or kernel OOM journal entry appeared since 19:36. Keep the
+incident partially verified and pause further test workloads until a fresh
+admission sample.
