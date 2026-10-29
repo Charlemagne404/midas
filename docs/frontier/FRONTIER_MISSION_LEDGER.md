@@ -1,6 +1,6 @@
 # Project Frontier Mission Ledger
 
-## Current host and Frontier state — 2026-10-29 01:48 CET
+## Current host and Frontier state — 2026-10-29 01:52 CET
 
 Reality has resumed recording after cold replay: status says
 `RECORDING_UNSEQUENCED`, `active_receiving`, 16/16 fresh books, zero failures,
@@ -21,15 +21,15 @@ status age 3.36 seconds, and raw recording size 12,137,375,646 bytes.
 `ARCHIVE_SEGMENT_INVENTORY_INVALID` and
 `ARCHIVE_MANIFEST_PROVENANCE_INVALID` remain; neither was altered.
 
-At 01:48:23, host `MemAvailable` was 10 GiB, host PSI avg10/avg60/avg300 was
+At 01:51:59, host `MemAvailable` was 10 GiB, host PSI avg10/avg60/avg300 was
 zero, and swap was 3.1/4 GiB used. User-manager counters were
-`high=16,416,854`, `max=728,363`, `oom=19`, and `oom_kill=15`. The API cgroup
-used 1,609,134,080 bytes against `MemoryHigh=1,610,612,736`, leaving 1.41 MiB;
-its leaf `max`, `oom`, and `oom_kill` counters were zero. Reality and API were
-active with restart counts 14 and 9. Echo production/staging, Continental,
-Caddy, RustDesk, and the SSH socket were verified active at 01:16. Keep any
-further runtime work sequential and tightly bounded; API headroom is too
-narrow for broader suites. Full repository regression, the full browser E2E
+`high=16,416,858`, `max=728,363`, `oom=19`, and `oom_kill=15`. The API cgroup
+used 1,610,100,736 bytes against `MemoryHigh=1,610,612,736`, leaving 512,000
+bytes (0.49 MiB); its leaf `max`, `oom`, and `oom_kill` counters were zero.
+Reality used 581,099,520 bytes, and Reality/API were active with restart counts
+14 and 9. Echo production/staging, Continental, Caddy, RustDesk, and the SSH
+socket were verified active at 01:16. Stop runtime work until API headroom
+materially recovers; broader suites remain deferred. Full repository regression, the full browser E2E
 suite, live probes, endurance, and research campaigns remain gated.
 
 At 01:40:13, the scheduled Veritas source-analysis job completed with
@@ -45,6 +45,19 @@ still contains `ARCHIVE_SEGMENT_INVENTORY_INVALID` and
 `ARCHIVE_MANIFEST_PROVENANCE_INVALID`. The collector state remains
 `RECORDING_UNSEQUENCED`; the next existing source-analysis, director, and
 capacity jobs are scheduled for 02:10, 02:15, and 02:16 respectively.
+
+The existing read-only host/cgroup sampler collected seven samples from
+01:50:35–01:51:05 under a transient 256 MiB, zero-swap, 25% CPU, 32-task,
+45-second bound. Host `MemAvailable` ranged 10,262–10,284 MiB; swap counters
+did not move; and host/API/Reality PSI stayed zero. Current user-hierarchy
+charges included an API cgroup around 1,535 MiB (about 1,414 MiB file cache,
+118 MiB anonymous), a GNOME Terminal scope around 1,214 MiB, a second Terminal
+scope around 316 MiB, and Reality around 553 MiB. API `memory.events.high`
+rose from 11,657 to 11,658 during the sample and to 11,659 by 01:51:59, without
+local PSI stalls or max/OOM events. This describes contributors during the
+quiet sample and does not identify the October 28 trigger. The temporary raw
+sample is `/tmp/frontier-host-pressure-20261029-0150.jsonl`; its systemd
+reported 256 KiB peak was implausible and is not used as a measured peak.
 
 Recent bounded Frontier evidence:
 

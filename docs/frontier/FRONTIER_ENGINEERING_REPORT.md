@@ -2,7 +2,7 @@
 
 **Report date:** 2026-10-29
 
-## Current completion matrix — 2026-10-29 01:48 CET
+## Current completion matrix — 2026-10-29 01:52 CET
 
 This is a current evidence classification, not a final completion claim. The
 dated implementation records below remain the detailed evidence; the
@@ -22,13 +22,13 @@ current host gate.
 | User-cgroup-aware workload admission | IMPLEMENTED, BOUNDED VALIDATION PASSED | Central Arena admission (15), finite schedules (12), and the Laboratory denial case (1) pass fixture tests using user-manager pressure; no runtime deployment occurred. |
 | Reality capacity inventory bounds | PARTIALLY VERIFIED | Isolated candidate tests pass 5/5; candidate code remains undeployed. The separate monitor has one measured scheduled run at 134,225,920 bytes under `MemoryHigh=160M`, `MemoryMax=192M`, and zero swap, plus a second successful scheduled run whose peak was not retained. |
 | Native Frontier dashboard | PARTIALLY VERIFIED | The graph/evidence UI test and all 9 UI cases pass across the default-timeout run and a 15-second retry for its two slow fixtures. Typecheck/build and three isolated Playwright smoke/replay/Arena journeys pass; the full browser suite remains unverified. |
-| Host reliability containment | PARTIALLY VERIFIED | The auxiliary five-minute gap-detail timer is disabled; scheduled source-analysis and capacity jobs completed at 01:40 and 01:46. At 01:48 the API was only 1.41 MiB below `MemoryHigh`; PSI was zero and no OOM kill has been logged since 23:43 CET. The historical pressure initiator remains unknown. |
+| Host reliability containment | PARTIALLY VERIFIED | The auxiliary five-minute gap-detail timer is disabled; scheduled source-analysis and capacity jobs completed at 01:40 and 01:46. At 01:51 the API was 0.49 MiB below `MemoryHigh`; PSI was zero and no OOM kill has been logged since 23:43 CET. The historical pressure initiator remains unknown. |
 | Broad regressions, resource endurance, and performance acceptance | DEFERRED | Several targeted suites pass under explicit memory, swap, CPU, task, and wall-time limits; the full repository suite, endurance, and broad performance tests remain deferred. |
 | Live multi-venue source authorization and findings | BLOCKED | Kalshi, Kraken, and Coinbase retained research remain held; the worktree Polymarket probe flag is off. |
 | Production integration/deployment | DEFERRED | Frontier remains isolated; no protected service transition occurred. |
 | Project Frontier overall | PARTIALLY VERIFIED | The engine is substantial, but live cross-venue science, broad verification, recovery, endurance, and deployment gates remain open. |
 
-## Bounded Frontier verification after host containment — 2026-10-29 01:48 CET
+## Bounded Frontier verification after host containment — 2026-10-29 01:52 CET
 
 Frontier work resumed only in sequential transient user scopes. Python test
 scopes used a 768 MiB maximum, zero swap, 25% CPU quota, 64-task cap, and
@@ -114,6 +114,24 @@ against `MemoryHigh=1,610,612,736` (1.41 MiB headroom); its `high` counter was
 kernel OOM or systemd-oomd kill was logged after 23:43:24 CET. These samples
 support only bounded offline work; API headroom remains too narrow for broader
 test execution, and the initiating workload is still undetermined.
+
+The existing read-only `host_capacity_sample.py` sampler ran for 30 seconds
+from 01:50:35 to 01:51:05 CET, with seven samples under a transient 256 MiB,
+zero-swap, 25% CPU, 32-task, 45-second bound. Its 3.23 MB temporary JSONL
+captured process/cgroup state but is not committed. `MemAvailable` ranged from
+10,262 to 10,284 MiB; `SwapFree` stayed at 938.2 MiB, and `pswpin`/`pswpout`
+did not change. Host and sampled API/Reality memory PSI remained zero. API
+`memory.current` ranged 1,534.7–1,535.2 MiB against a 1,536 MiB `MemoryHigh`;
+its `memory.stat` showed about 1,413.9 MiB file cache and 117.9 MiB anonymous
+memory. A large GNOME Terminal scope held about 1,214 MiB (777.5 MiB file,
+411.5 MiB anonymous); another held about 315.9 MiB. Reality was about 553 MiB.
+These are current hierarchy contributors, not attribution of the historic
+OOM window. At 01:51:59 the API had 512,000 bytes (0.49 MiB) below `MemoryHigh`;
+its `high` counter was 11,659 and its `max`, `oom`, and `oom_kill` remained
+zero. User-manager `high` was 16,416,858; `max`, `oom`, and `oom_kill` remained
+728,363/19/15. The sampler's reported 256 KiB peak was implausible and is not
+used as a measured process peak. Runtime work is deferred because API headroom
+remains extremely narrow.
 
 ## Adapter trust boundary and retry bound review — 2026-10-29 00:00 CET
 

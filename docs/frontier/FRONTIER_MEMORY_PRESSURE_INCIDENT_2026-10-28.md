@@ -2,7 +2,7 @@
 
 **Incident date:** 2026-10-28 (CET)
 
-**Checkpoint captured:** 2026-10-29 01:48 CET
+**Checkpoint captured:** 2026-10-29 01:52 CET
 
 **Scope:** Host reliability interruption during Project Frontier
 
@@ -18,11 +18,12 @@ on a host with 15.5 GiB physical memory. This establishes hierarchical
 reclaim pressure, not global physical-memory exhaustion, and does not identify
 one workload as the sole cause.
 
-The host had 9.9 GiB `MemAvailable` and low current PSI by the final sample,
-but swap remained 3.1 of 4 GiB used. `memory.current` included large file-cache
-charges: at 23:51 CET the Terminal slice was 5.2 GB (3.9 GB file cache), MIDAS
-API was 1.6 GB (1.5 GB file cache), and Reality was 1.2 GB (1.0 GB file
-cache). Process RSS alone therefore understated the cgroup budget in use.
+At 01:51:59 CET, host `MemAvailable` was 10 GiB and PSI avg10/avg60/avg300
+was zero, but swap remained 3.1 of 4 GiB used. The 01:50:35–01:51:05 sample
+showed substantial file-cache charges: MIDAS API was about 1.535 GiB
+(1.414 GiB file cache, 118 MiB anonymous), a GNOME Terminal scope was about
+1.214 GiB (778 MiB file, 412 MiB anonymous), and Reality was about 553 MiB.
+Process RSS alone therefore understates the cgroup budget in use.
 
 Two narrowly scoped containment changes are in effect:
 
@@ -51,12 +52,13 @@ operator restart or protected Reality configuration change was made.
 
 **The host supports short, strictly bounded offline tests but not broad suites
 or research batches yet.** No new oomd or kernel OOM kill was observed through
-01:48, about two hours after the last kill. Host PSI is zero and 10 GiB is
+01:51, more than two hours after the last kill. Host PSI is zero and 10 GiB is
 available, but swap remains 3.1/4 GiB used. API and Reality are active; at
-01:48:23 the API was within 1.41 MiB of `MemoryHigh`, and Reality was within
-about 601 MiB. Their leaf `max`, `oom`, and `oom_kill` counters were zero. The
-original workload mix that crossed the user-manager pressure threshold is
-still unknown, so this quiet interval does not establish incident resolution.
+01:51:59 the API was within 512,000 bytes (0.49 MiB) of `MemoryHigh`, and
+Reality was within about 598 MiB. Their leaf `max`, `oom`, and `oom_kill`
+counters were zero. The original workload mix that crossed the user-manager
+pressure threshold is still unknown, so this quiet interval does not establish
+incident resolution.
 
 ## Observed impact and timeline
 
@@ -911,3 +913,33 @@ were unchanged, and Reality/API remained active with restart counts 14/9.
 Because the API remains within about 1.4 MiB of `MemoryHigh`, broader test
 execution is deferred. This is a quiet observation window and bounded test
 evidence, not proof that the historic pressure initiator is fixed.
+
+## Short host and cgroup sample — 2026-10-29 01:50–01:52 CET
+
+The existing read-only `host_capacity_sample.py` ran for 30 seconds, taking
+seven samples from 01:50:35 to 01:51:05 CET. It ran in a transient systemd
+service bounded to 256 MiB, zero swap, 25% CPU, 32 tasks, and 45 seconds. The
+temporary JSONL was 3.23 MB at
+`/tmp/frontier-host-pressure-20261029-0150.jsonl`; it was not added to the
+repository. The service's printed 256 KiB peak is implausible and is not used
+as a process-memory measurement.
+
+Across the sample, host `MemAvailable` was 10,262–10,284 MiB, `SwapFree` was
+stable at 938.2 MiB, and `pswpin`/`pswpout` did not change. Host, API, and
+Reality memory PSI averages were zero. API cgroup `memory.current` varied from
+1,534.7 to 1,535.2 MiB under a 1,536 MiB `MemoryHigh`; `memory.stat` showed
+about 1,413.9 MiB file cache and 117.9 MiB anonymous memory. Its `high` event
+count rose from 11,657 to 11,658, while its `memory.pressure` total barely
+changed and `max`, `oom`, and `oom_kill` stayed zero. Reality was about 553 MiB
+with unchanged high/OOM events. One active GNOME Terminal scope held about
+1,214 MiB (778 MiB file, 412 MiB anonymous); another held about 316 MiB.
+
+At 01:51:59, API usage was 1,610,100,736 bytes against a 1,610,612,736-byte
+`MemoryHigh`, leaving 512,000 bytes. Its `high` count was 11,659. The
+user-manager `high` count was 16,416,858, four above the 01:48:23 checkpoint;
+`max`, `oom`, and `oom_kill` remained 728,363/19/15. Reality/API were still
+active with restart counts 14/9, host PSI remained zero, 10 GiB was available,
+and no kernel or systemd-oomd kill was logged since 23:43:24. The sample
+identifies current cgroup contributors but cannot attribute the historical
+OOM window. API `MemoryHigh` margin is now less than half a MiB, so further
+tests and runtime work are deferred pending material recovery.
