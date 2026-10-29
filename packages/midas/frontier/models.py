@@ -1158,6 +1158,162 @@ class BookSnapshot(FrontierModel):
         )
 
 
+class PolymarketBookPriceChange(FrontierModel):
+    """One source-reported price/side/size tuple; it is not applied to local state."""
+
+    price: Nonnegative
+    reported_size: Nonnegative
+    side: Literal["BUY", "SELL"]
+    source_hash: str | None = Field(default=None, max_length=256)
+    reported_best_bid: Nonnegative | None = None
+    reported_best_ask: Nonnegative | None = None
+
+    @model_validator(mode="after")
+    def prices_are_binary_bounded(self) -> PolymarketBookPriceChange:
+        if self.price > 1 or any(
+            value is not None and value > 1
+            for value in (self.reported_best_bid, self.reported_best_ask)
+        ):
+            raise ValueError("Polymarket contract prices must be between zero and one")
+        return self
+
+
+class PolymarketBookUpdate(FrontierModel):
+    """A single full book event or set of source-reported level changes.
+
+    The public CLOB stream does not document a sequence number or gap-recovery
+    contract. These events therefore remain observations and never imply a
+    continuously reconstructed book.
+    """
+
+    schema_version: Literal[1] = 1
+    native_market_id: str = Field(min_length=1, max_length=256)
+    native_market_id_kind: Literal["condition_id"] = "condition_id"
+    native_instrument_id: str = Field(min_length=1, max_length=256)
+    event_type: Literal["book", "price_change", "best_bid_ask", "tick_size_change"]
+    source_timestamp_utc: datetime | None = None
+    bids: tuple[BookLevel, ...] = Field(default=(), max_length=500)
+    asks: tuple[BookLevel, ...] = Field(default=(), max_length=500)
+    changes: tuple[PolymarketBookPriceChange, ...] = Field(default=(), max_length=100)
+    reported_best_bid: Nonnegative | None = None
+    reported_best_ask: Nonnegative | None = None
+    old_tick_size: Positive | None = None
+    new_tick_size: Positive | None = None
+    continuity: Literal["unverified_no_sequence_or_gap_detection"] = (
+        "unverified_no_sequence_or_gap_detection"
+    )
+    quality_flags: tuple[str, ...] = (
+        "NO_SEQUENCE_FIELD",
+        "NO_DOCUMENTED_GAP_DETECTION",
+        "DELTAS_NOT_APPLIED_TO_LOCAL_BOOK",
+    )
+
+    @field_validator("source_timestamp_utc")
+    @classmethod
+    def update_time_is_utc(cls, value: datetime | None) -> datetime | None:
+        if value is not None and (value.tzinfo is None or value.utcoffset() is None):
+            raise ValueError("Polymarket update timestamp must include a timezone")
+        return value.astimezone(UTC) if value is not None else None
+
+    @model_validator(mode="after")
+    def event_payload_matches_type(self) -> PolymarketBookUpdate:
+        if any(
+            value is not None and value > 1
+            for value in (self.reported_best_bid, self.reported_best_ask)
+        ):
+            raise ValueError("Polymarket contract prices must be between zero and one")
+        if self.event_type == "book":
+            if self.changes:
+                raise ValueError("A full book event cannot also contain level changes")
+            if any(
+                value is not None
+                for value in (
+                    self.reported_best_bid,
+                    self.reported_best_ask,
+                    self.old_tick_size,
+                    self.new_tick_size,
+                )
+            ):
+                raise ValueError("A full book event cannot contain quote or tick-change fields")
+            if any(level.price > 1 for level in (*self.bids, *self.asks)):
+                raise ValueError("Polymarket contract book prices must be between zero and one")
+            for side in (self.bids, self.asks):
+                prices = [level.price for level in side]
+                if len(prices) != len(set(prices)):
+                    raise ValueError("Duplicate price levels in Polymarket book event")
+        elif self.event_type == "price_change" and (
+            not self.changes
+            or self.bids
+            or self.asks
+            or self.old_tick_size is not None
+            or self.new_tick_size is not None
+        ):
+            raise ValueError("A price-change event requires changes and no full-book levels")
+        elif self.event_type == "best_bid_ask" and (
+            self.changes
+            or self.bids
+            or self.asks
+            or self.old_tick_size is not None
+            or self.new_tick_size is not None
+            or (self.reported_best_bid is None and self.reported_best_ask is None)
+        ):
+            raise ValueError("A best-bid/ask event requires top-of-book prices only")
+        elif self.event_type == "tick_size_change" and (
+            self.changes
+            or self.bids
+            or self.asks
+            or self.reported_best_bid is not None
+            or self.reported_best_ask is not None
+            or self.new_tick_size is None
+        ):
+            raise ValueError("A tick-size event requires a new tick and no book prices")
+        if not self.native_instrument_id.isdecimal():
+            raise ValueError("Polymarket asset ID must be a decimal identifier")
+        return self
+
+
+class PolymarketBookUpdateFrame(FrontierModel):
+    """Normalized market updates carried by one hash-pinned WebSocket frame."""
+
+    schema_version: Literal[1] = 1
+    venue: Literal[Venue.POLYMARKET] = Venue.POLYMARKET
+    updates: tuple[PolymarketBookUpdate, ...] = Field(min_length=1, max_length=100)
+    received_at_utc: datetime
+    raw_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    provenance: Provenance
+
+    @field_validator("received_at_utc")
+    @classmethod
+    def frame_time_is_utc(cls, value: datetime) -> datetime:
+        if value.tzinfo is None or value.utcoffset() is None:
+            raise ValueError("Polymarket frame receipt timestamp must include a timezone")
+        return value.astimezone(UTC)
+
+    @model_validator(mode="after")
+    def frame_hash_matches_provenance(self) -> PolymarketBookUpdateFrame:
+        if self.raw_sha256 != self.provenance.raw_sha256:
+            raise ValueError("Polymarket frame hash differs from its provenance")
+        if self.received_at_utc != self.provenance.response_received_at_utc:
+            raise ValueError("Polymarket frame receipt time differs from its provenance")
+        if self.provenance.source_url != "wss://ws-subscriptions-clob.polymarket.com/ws/market":
+            raise ValueError("Polymarket frame provenance uses an unexpected stream URL")
+        if not self.provenance.adapter_version.startswith("frontier-polymarket-"):
+            raise ValueError("Polymarket frame adapter version is invalid")
+        if self.provenance.source_schema_version != "polymarket-market-stream-v1":
+            raise ValueError("Polymarket frame source schema is invalid")
+        return self
+
+    @property
+    def has_valid_structure(self) -> bool:
+        try:
+            validated = PolymarketBookUpdateFrame.model_validate(
+                self.model_dump(mode="python", warnings=False)
+            )
+        except (TypeError, ValueError):
+            return False
+        return validated == self
+
+
 class TradeObservation(FrontierModel):
     """Normalized print with bounded native execution flags when a venue supplies them."""
 

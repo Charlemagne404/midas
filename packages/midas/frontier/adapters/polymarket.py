@@ -2,8 +2,12 @@
 
 from __future__ import annotations
 
+import asyncio
+import base64
+import hashlib
 import json
 import re
+import time
 from datetime import UTC, datetime
 from decimal import Decimal
 from typing import Any, Literal
@@ -22,6 +26,7 @@ from midas.frontier.adapters.normalization import (
     parse_time,
     provenance,
 )
+from midas.frontier.adapters.polymarket_stream import decode_market_stream_frame
 from midas.frontier.adapters.transport import HTTPObservation
 from midas.frontier.models import (
     AdapterConfig,
@@ -35,8 +40,11 @@ from midas.frontier.models import (
     MarketInstrument,
     MarketKind,
     PayoffSpec,
+    PolymarketBookUpdateFrame,
     PriceHistorySeries,
+    Provenance,
     QuantityUnit,
+    RawObservation,
     ResolutionSpec,
     SettlementAssetIdentity,
     SettlementAssetKind,
@@ -49,7 +57,7 @@ from midas.frontier.models import (
 from midas.market_data.polymarket import normalize_market
 
 D = Decimal
-ADAPTER_VERSION = "frontier-polymarket-13"
+ADAPTER_VERSION = "frontier-polymarket-14"
 GAMMA = "https://gamma-api.polymarket.com"
 CLOB = "https://clob.polymarket.com"
 CLOB_V2 = "https://clob-v2.polymarket.com"
@@ -59,7 +67,12 @@ POLY_DATA_DOC = "https://docs.polymarket.com/developers/CLOB/introduction"
 POLY_PRICE_HISTORY_DOC = "https://docs.polymarket.com/api-reference/markets/get-prices-history"
 POLY_PROTOCOL_DOC = "https://github.com/Polymarket/rs-clob-client-v2/blob/main/README.md"
 POLY_V2_ASSETS_DOC = "https://github.com/Polymarket/polymarket-v2-external/blob/main/README.md"
+POLYMARKET_MARKET_STREAM_URL = "wss://ws-subscriptions-clob.polymarket.com/ws/market"
+POLYMARKET_REALTIME_DATA_DOC = "https://docs.polymarket.com/market-data/realtime-data"
 POLY_V2_PUSD_ADDRESS = "0xC011a7E12a19f7B1f670d46F03B03f3342E82DFB"
+MAX_POLYMARKET_STREAM_FRAMES = 32
+MAX_POLYMARKET_STREAM_UPDATES = 100
+MAX_POLYMARKET_STREAM_SECONDS = 30.0
 
 
 def _payout_asset_identity(protocol: str) -> SettlementAssetIdentity | None:
@@ -80,6 +93,7 @@ class PolymarketAdapter(BaseReadOnlyAdapter):
         "clob.polymarket.com",
         "clob-v2.polymarket.com",
         "data-api.polymarket.com",
+        "ws-subscriptions-clob.polymarket.com",
     }
     capabilities = build_capabilities(
         Venue.POLYMARKET,
@@ -108,6 +122,10 @@ class PolymarketAdapter(BaseReadOnlyAdapter):
             Capability.BOOK_SNAPSHOT: (
                 "Public CLOB REST snapshots use the host for the source market's v1 or v2 asset schema",
                 POLY_PROTOCOL_DOC,
+            ),
+            Capability.BOOK_UPDATES: (
+                "Finite public market-stream capture normalizes full book and level-change events; it does not apply deltas or claim sequence continuity",
+                POLYMARKET_REALTIME_DATA_DOC,
             ),
             Capability.PUBLIC_TRADES: (
                 "Public Data API trades",
@@ -147,10 +165,6 @@ class PolymarketAdapter(BaseReadOnlyAdapter):
             ),
         },
         {
-            Capability.BOOK_UPDATES: (
-                "No incremental book stream is consumed by this bounded adapter",
-                None,
-            ),
             Capability.HISTORICAL_CANDLES: (
                 "The public CLOB response contains price points and does not provide OHLC candle fields",
                 POLY_PRICE_HISTORY_DOC,
@@ -158,8 +172,316 @@ class PolymarketAdapter(BaseReadOnlyAdapter):
         },
     )
 
-    def __init__(self, config: AdapterConfig | None = None, *, transport: Any = None) -> None:
+    def __init__(
+        self,
+        config: AdapterConfig | None = None,
+        *,
+        transport: Any = None,
+        stream_connector: Any = None,
+    ) -> None:
         super().__init__(config, transport=transport)
+        self._stream_connector = stream_connector
+
+    async def capture_book_updates(
+        self,
+        asset_ids: tuple[str, ...],
+        *,
+        max_frames: int = 16,
+        max_duration_seconds: float = 10.0,
+        max_updates: int = 50,
+    ) -> tuple[PolymarketBookUpdateFrame, ...]:
+        """Capture a finite public CLOB stream window without rebuilding local books.
+
+        Both public-read flags must be enabled explicitly. The method performs
+        no retry or reconnect, records raw frames for returned updates, and
+        leaves sequence continuity unverified.
+        """
+        self._require(Capability.BOOK_UPDATES)
+        if self.config.probe_policy_block_reason is not None:
+            raise AdapterError("SOURCE_USE_HELD", self.config.probe_policy_block_reason)
+        if not self.config.enabled or not self.config.live_public_probe_enabled:
+            raise AdapterError(
+                "PUBLIC_PROBE_DISABLED",
+                "Enable this source and its bounded public-probe flag before opening a stream",
+            )
+        if not isinstance(asset_ids, tuple) or not 1 <= len(asset_ids) <= 50:
+            raise AdapterError(
+                "INVALID_ASSET_IDS", "Stream subscriptions require 1 to 50 unique decimal asset IDs"
+            )
+        if any(
+            not isinstance(value, str) or not re.fullmatch(r"[0-9]{1,256}", value)
+            for value in asset_ids
+        ) or len(set(asset_ids)) != len(asset_ids):
+            raise AdapterError(
+                "INVALID_ASSET_IDS", "Stream subscriptions require 1 to 50 unique decimal asset IDs"
+            )
+        if type(max_frames) is not int or not 1 <= max_frames <= MAX_POLYMARKET_STREAM_FRAMES:
+            raise AdapterError(
+                "INVALID_STREAM_LIMIT", "Stream frame limit must be between 1 and 32"
+            )
+        if type(max_updates) is not int or not 1 <= max_updates <= MAX_POLYMARKET_STREAM_UPDATES:
+            raise AdapterError(
+                "INVALID_STREAM_LIMIT", "Stream update limit must be between 1 and 100"
+            )
+        if (
+            not isinstance(max_duration_seconds, (int, float))
+            or isinstance(max_duration_seconds, bool)
+            or not 0.1 <= max_duration_seconds <= MAX_POLYMARKET_STREAM_SECONDS
+        ):
+            raise AdapterError(
+                "INVALID_STREAM_LIMIT", "Stream duration must be between 0.1 and 30 seconds"
+            )
+        if self._captures:
+            raise AdapterError(
+                "UNCLEARED_CAPTURE_BUFFER",
+                "Consume earlier adapter captures before starting a stream",
+            )
+
+        if self._stream_connector is None:
+            from websockets.asyncio.client import connect
+
+            connector = connect
+        else:
+            connector = self._stream_connector
+        loop = asyncio.get_running_loop()
+        deadline = loop.time() + float(max_duration_seconds)
+        try:
+            await asyncio.wait_for(
+                self.transport.pace(),
+                timeout=min(self.config.timeout_seconds, float(max_duration_seconds)),
+            )
+        except TimeoutError as error:
+            raise AdapterError(
+                "STREAM_RATE_LIMIT_WAIT", "Polymarket stream deferred by the bounded pacing wait"
+            ) from error
+        request_started = datetime.now(UTC)
+        request_monotonic_ns = time.monotonic_ns()
+        open_timeout = min(self.config.timeout_seconds, deadline - loop.time())
+        if open_timeout <= 0:
+            raise AdapterError("STREAM_DEADLINE", "Polymarket stream capture deadline expired")
+        received_frames = 0
+        update_count = 0
+        records: list[PolymarketBookUpdateFrame] = []
+        try:
+            async with connector(
+                POLYMARKET_MARKET_STREAM_URL,
+                open_timeout=open_timeout,
+                close_timeout=min(1.0, self.config.timeout_seconds),
+                max_size=self.config.max_response_bytes,
+                max_queue=1,
+                ping_interval=None,
+                compression=None,
+                proxy=None,
+            ) as websocket:
+
+                async def send_bounded(message: str) -> None:
+                    send_timeout = min(self.config.timeout_seconds, deadline - loop.time())
+                    if send_timeout <= 0:
+                        raise AdapterError(
+                            "STREAM_DEADLINE", "Polymarket stream capture deadline expired"
+                        )
+                    try:
+                        await asyncio.wait_for(websocket.send(message), timeout=send_timeout)
+                    except TimeoutError as error:
+                        raise AdapterError(
+                            "STREAM_SEND_TIMEOUT", "Polymarket stream send exceeded its time bound"
+                        ) from error
+
+                await send_bounded(json.dumps({"assets_ids": list(asset_ids), "type": "market"}))
+                heartbeat_at = loop.time() + 10.0
+                while received_frames < max_frames and update_count < max_updates:
+                    now = loop.time()
+                    remaining = deadline - now
+                    if remaining <= 0:
+                        break
+                    receive_window = min(remaining, max(0.0, heartbeat_at - now))
+                    if receive_window <= 0:
+                        await send_bounded("PING")
+                        heartbeat_at = loop.time() + 10.0
+                        continue
+                    try:
+                        raw_frame = await asyncio.wait_for(websocket.recv(), timeout=receive_window)
+                    except TimeoutError:
+                        if loop.time() >= deadline:
+                            break
+                        await send_bounded("PING")
+                        heartbeat_at = loop.time() + 10.0
+                        continue
+                    received_frames += 1
+                    if isinstance(raw_frame, str) and raw_frame == "PING":
+                        await send_bounded("PONG")
+                        continue
+                    if isinstance(raw_frame, str) and raw_frame == "PONG":
+                        continue
+                    if isinstance(raw_frame, bytes):
+                        if len(raw_frame) <= self.config.max_response_bytes:
+                            self._capture_binary_stream_frame(
+                                raw_frame,
+                                request_started=request_started,
+                                request_monotonic_ns=request_monotonic_ns,
+                            )
+                        raise AdapterError(
+                            "INVALID_STREAM_FRAME", "Polymarket market stream sent a binary frame"
+                        )
+                    try:
+                        updates = decode_market_stream_frame(
+                            raw_frame,
+                            subscribed_asset_ids=frozenset(asset_ids),
+                        )
+                    except AdapterError:
+                        if (
+                            isinstance(raw_frame, str)
+                            and len(raw_frame.encode("utf-8")) <= self.config.max_response_bytes
+                        ):
+                            self._capture_stream_frame(
+                                raw_frame,
+                                request_started=request_started,
+                                request_monotonic_ns=request_monotonic_ns,
+                            )
+                        raise
+                    except (ArithmeticError, TypeError, ValueError) as error:
+                        if (
+                            isinstance(raw_frame, str)
+                            and len(raw_frame.encode("utf-8")) <= self.config.max_response_bytes
+                        ):
+                            self._capture_stream_frame(
+                                raw_frame,
+                                request_started=request_started,
+                                request_monotonic_ns=request_monotonic_ns,
+                            )
+                        raise AdapterError(
+                            "INVALID_STREAM_EVENT",
+                            "Polymarket stream event failed strict normalization",
+                        ) from error
+                    if not updates:
+                        continue
+                    if update_count + len(updates) > max_updates:
+                        self._capture_stream_frame(
+                            raw_frame,
+                            request_started=request_started,
+                            request_monotonic_ns=request_monotonic_ns,
+                        )
+                        raise AdapterError(
+                            "STREAM_UPDATE_LIMIT",
+                            "Polymarket frame exceeds the remaining normalized-update limit",
+                        )
+                    capture = self._capture_stream_frame(
+                        raw_frame,
+                        request_started=request_started,
+                        request_monotonic_ns=request_monotonic_ns,
+                    )
+                    frame_provenance = Provenance(
+                        source_url=POLYMARKET_MARKET_STREAM_URL,
+                        adapter_version=ADAPTER_VERSION,
+                        source_schema_version="polymarket-market-stream-v1",
+                        request_started_at_utc=request_started,
+                        response_received_at_utc=capture.received_at_utc,
+                        request_elapsed_monotonic_ns=capture.request_elapsed_monotonic_ns,
+                        processed_at_utc=datetime.now(UTC),
+                        exchange_timestamp_semantics=(
+                            "Per-event timestamps retained; source timestamp semantics are not attested"
+                        ),
+                        raw_sha256=capture.raw_sha256,
+                        observation_id=hashlib.sha256(
+                            "|".join(
+                                (
+                                    self.venue.value,
+                                    capture.observation_kind,
+                                    capture.request_url,
+                                    capture.raw_sha256,
+                                    request_started.isoformat(),
+                                    capture.received_at_utc.isoformat(),
+                                )
+                            ).encode("utf-8")
+                        ).hexdigest(),
+                    )
+                    records.append(
+                        PolymarketBookUpdateFrame(
+                            updates=updates,
+                            received_at_utc=capture.received_at_utc,
+                            raw_sha256=capture.raw_sha256,
+                            provenance=frame_provenance,
+                        )
+                    )
+                    update_count += len(updates)
+        except AdapterError as error:
+            self.report_failure(error.code, str(error))
+            raise
+        except Exception as error:
+            self.report_failure("STREAM_FAILED", type(error).__name__)
+            raise AdapterError(
+                "STREAM_FAILED", f"Polymarket public stream ended: {type(error).__name__}"
+            ) from error
+        self._last_success = datetime.now(UTC)
+        self._last_error_code = None
+        self._last_error = None
+        return tuple(records)
+
+    def _capture_stream_frame(
+        self,
+        raw_frame: str,
+        *,
+        request_started: datetime,
+        request_monotonic_ns: int,
+    ) -> RawObservation:
+        raw_bytes = raw_frame.encode("utf-8")
+        return self._capture_stream_body(
+            raw_bytes,
+            raw_body=raw_frame,
+            raw_body_encoding="utf8",
+            request_started=request_started,
+            request_monotonic_ns=request_monotonic_ns,
+        )
+
+    def _capture_binary_stream_frame(
+        self,
+        raw_frame: bytes,
+        *,
+        request_started: datetime,
+        request_monotonic_ns: int,
+    ) -> RawObservation:
+        return self._capture_stream_body(
+            raw_frame,
+            raw_body=base64.b64encode(raw_frame).decode("ascii"),
+            raw_body_encoding="base64",
+            request_started=request_started,
+            request_monotonic_ns=request_monotonic_ns,
+        )
+
+    def _capture_stream_body(
+        self,
+        raw_bytes: bytes,
+        *,
+        raw_body: str,
+        raw_body_encoding: Literal["utf8", "base64"],
+        request_started: datetime,
+        request_monotonic_ns: int,
+    ) -> RawObservation:
+        if len(raw_bytes) > self.config.max_response_bytes:
+            raise AdapterError(
+                "STREAM_FRAME_TOO_LARGE", "Polymarket stream frame exceeds source byte budget"
+            )
+        if self._capture_bytes + len(raw_bytes) > 2 * 1024 * 1024 or len(self._captures) >= 32:
+            raise AdapterError(
+                "CAPTURE_BUDGET_EXCEEDED", "In-memory stream capture budget is exhausted"
+            )
+        received_at = datetime.now(UTC)
+        capture = RawObservation(
+            venue=self.venue,
+            observation_kind="public_book_update_frame",
+            request_url=POLYMARKET_MARKET_STREAM_URL,
+            http_status=101,
+            request_started_at_utc=request_started,
+            received_at_utc=received_at,
+            request_elapsed_monotonic_ns=max(0, time.monotonic_ns() - request_monotonic_ns),
+            raw_body_encoding=raw_body_encoding,
+            raw_body=raw_body,
+            raw_sha256=hashlib.sha256(raw_bytes).hexdigest(),
+            adapter_version=ADAPTER_VERSION,
+        )
+        self._captures.append(capture)
+        self._capture_bytes += len(raw_bytes)
+        return capture
 
     async def discover_markets(self, limit: int = 20) -> tuple[FrontierMarket, ...]:
         self._require(Capability.MARKET_DISCOVERY)

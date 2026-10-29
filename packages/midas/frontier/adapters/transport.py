@@ -194,6 +194,10 @@ class PublicReadTransport:
             self.request_count += 1
             self._request_starts_monotonic.append(request_started)
 
+    async def pace(self) -> None:
+        """Reserve one per-source rate-limit slot for a non-HTTP public read."""
+        await self._pace()
+
     def requests_in_window(self, window_seconds: float = REQUEST_COUNT_WINDOW_SECONDS) -> int:
         """Count bounded request starts in the trailing monotonic-time window."""
         cutoff = time.monotonic() - window_seconds

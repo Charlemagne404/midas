@@ -2203,7 +2203,9 @@ async def test_default_registry_is_complete_disabled_and_network_idle():
             assert adapter.config.enabled is False
             assert adapter.config.live_public_probe_enabled is False
             assert adapter.transport.request_count == 0
-            assert not manifest.supports(Capability.BOOK_UPDATES)
+            assert manifest.supports(Capability.BOOK_UPDATES) is (
+                manifest.venue == Venue.POLYMARKET
+            )
 
         health = await registry.health()
         assert {item.venue for item in health} == expected_venues
@@ -2545,7 +2547,7 @@ async def test_polymarket_legacy_trades_bind_condition_and_token_and_preserve_un
     assert all(trade.native_instrument_id == "1234567890" for trade in trades)
     assert all(trade.native_trade_id == "0xfixture-shared-tx" for trade in trades)
     assert all(trade.aggressor_side is None for trade in trades)
-    assert trades[0].provenance.adapter_version == "frontier-polymarket-13"
+    assert trades[0].provenance.adapter_version == "frontier-polymarket-14"
     assert trades[0].provenance.observation_id != trades[1].provenance.observation_id
     assert len(captures) == 1 and captures[0].raw_body == body
     assert requests[0].url.params["market"] == condition_id
