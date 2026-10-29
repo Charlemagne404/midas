@@ -2,7 +2,7 @@
 
 **Report date:** 2026-10-29
 
-## Current completion matrix — 2026-10-29 08:00 CET
+## Current completion matrix — 2026-10-29 08:02 CET
 
 This is a current evidence classification, not a final completion claim. The
 dated implementation records below remain the detailed evidence; the
@@ -14531,3 +14531,26 @@ OOM counters remained 19/15/0. API, Reality, and Reality API remained active
 at restart counts 9/14/0. No OOMD/kernel OOM appeared after 07:55. This
 verifies a fixture UI interaction, not live opportunity execution or overall
 dashboard completion.
+
+### Transient cgroup cap and memory-peak calibration — 2026-10-29 08:02 CET
+
+A live transient user unit confirmed the kernel cgroup files enforce
+`memory.high=402,653,184` (384 MiB), `memory.max=536,870,912` (512 MiB),
+`memory.swap.max=0`, and `TasksMax=64`. A separate low-impact 32 MiB touched
+allocation reported cgroup current/peak of 37,662,720 / 37,744,640 bytes and
+zero swap; its systemd-run exit summary reported 35.9 MiB.
+
+For the four-case replay-comparison pytest module, a wrapper kept the transient
+cgroup alive after pytest exited. While it remained present, systemd reported
+a 42,086,400-byte peak (about 40.1 MiB); pytest passed 4/4. Equivalent fast
+`--collect --wait` runs that removed the cgroup before sampling printed a
+256 KiB peak, which is underreported and must not be used as a measured pytest
+peak. The memory caps themselves are effective. Subsequent peak evidence will
+use a live retained cgroup sample or a wrapper that keeps the unit alive until
+systemd has captured `memory.peak`.
+
+At 08:02:24, PSI was zero, `MemAvailable` 10 GiB, and `SwapFree` 8.3 MiB.
+User-manager memory/swap was 9,718,988,800 / 2,858,340,352 bytes; counters
+remained 19/15/0. API, Reality, and Reality API were active at restarts
+9/14/0; API and Reality used about 915/397 MiB. No OOMD or kernel OOM appeared
+since 07:58. No production service or persistent configuration changed.

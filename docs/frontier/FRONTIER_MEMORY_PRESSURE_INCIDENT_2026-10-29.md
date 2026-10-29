@@ -1249,3 +1249,26 @@ OOM counters remained 19/15/0. API, Reality, and Reality API were active at
 restarts 9/14/0. No OOMD/kernel OOM appeared after 07:55. This short
 fixture-based UI check does not establish long-run stability or change the
 **PARTIALLY CONTAINED / PARTIALLY VERIFIED** incident state.
+
+## Transient cgroup accounting calibration — 2026-10-29 08:02 CET
+
+A live transient unit confirmed the effective cgroup controls directly:
+`memory.high=402,653,184`, `memory.max=536,870,912`,
+`memory.swap.max=0`, and `TasksMax=64`. A 32 MiB touched-allocation check
+showed 37,662,720 bytes current / 37,744,640 bytes peak with no swap.
+
+A current-tree four-test pytest slice was run with a shell wrapper that kept
+its transient cgroup alive after pytest exited. Live systemd/cgroup telemetry
+showed a 42,086,400-byte peak (about 40.1 MiB); the tests passed 4/4. In
+contrast, fast `systemd-run --collect --wait` pytest jobs, whose cgroups had
+already been removed before the final status was sampled, printed 256 KiB.
+That exit-summary value underreports pytest peak memory and must not be
+treated as a benchmark. The configured caps are enforced; later peak claims
+will require a live/retained cgroup sample.
+
+At 08:02:24 PSI was zero, `MemAvailable` 10 GiB, and `SwapFree` 8.3 MiB.
+User-manager memory/swap was 9,718,988,800 / 2,858,340,352 bytes; OOM
+counters remained 19/15/0. API/Reality/Reality API remained active at
+restarts 9/14/0; API/Reality used about 915/397 MiB. No OOMD or kernel OOM
+appeared since 07:58. This instrumentation check changed no persistent host
+configuration and does not resolve near-full swap or long-run stability.

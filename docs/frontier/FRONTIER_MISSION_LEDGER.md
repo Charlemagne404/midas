@@ -13777,3 +13777,10 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
 - **Bounds:** Transient service used 640 MiB high / 768 MiB hard, zero swap, 25% CPU, 96 tasks, and 90 seconds; Node heap 384 MiB. No source endpoint was contacted.
 - **Post-test host:** At 08:00:02 PSI zero, MemAvailable 10 GiB, SwapFree 8.2 MiB; user-manager memory/swap 9,715,281,920 / 2,858,409,984 bytes; OOM counters 19/15/0. API/Reality/Reality API active at restart counts 9/14/0. No OOMD/kernel OOM since 07:55.
 - **Status:** Economic Workbench fixture interaction verified. Overall UI remains partial and the incident remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**.
+
+## Transient cgroup peak-accounting calibration — 2026-10-29 08:02 CET
+
+- **Caps:** A live user unit showed kernel cgroup values `memory.high=402,653,184`, `memory.max=536,870,912`, `memory.swap.max=0`, and `TasksMax=64`. A 32 MiB touched buffer registered 37,662,720 current / 37,744,640 peak bytes and zero swap.
+- **Pytest sampling:** The current-tree replay comparison file passed **4/4** in 1.61 seconds while a wrapper retained its cgroup for five seconds. Live systemd telemetry showed 42,086,400 bytes peak (about 40.1 MiB). The prior fast `--collect --wait` exit summary printed 256 KiB because its cgroup disappeared before peak sampling; do not use that value as a pytest memory measurement. Future peak records require retained cgroup telemetry.
+- **Host:** At 08:02:24 PSI zero, MemAvailable 10 GiB, SwapFree 8.3 MiB; user-manager memory/swap 9,718,988,800 / 2,858,340,352 bytes; OOM counters 19/15/0. API/Reality/Reality API active at restarts 9/14/0; API/Reality about 915/397 MiB. No OOMD/kernel OOM since 07:58.
+- **Status:** Cgroup limits are effective; the peak-summary issue is measurement-only and documented. Incident remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**, with near-full swap and sustained recovery unresolved.
