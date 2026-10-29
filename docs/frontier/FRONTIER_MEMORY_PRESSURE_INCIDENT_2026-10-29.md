@@ -1151,3 +1151,21 @@ At 07:54:13, host PSI avg10/60/300 was zero, `MemAvailable` 10 GiB, and
 at restart counts 9/14 and about 911/388 MiB. No OOMD or kernel OOM appeared
 after 07:50. Incident status remains **PARTIALLY CONTAINED / PARTIALLY
 VERIFIED**; nearly full swap and broad acceptance limits are unchanged.
+
+## Cross-market relationship safety checks — 2026-10-29 07:55 CET
+
+Five current-tree cases passed **5/5** in 1.62 seconds from
+`test_relationships_economics_replay.py`: text matching proposes hypotheses
+only, payoff verification rejects authority/settlement mismatch, spot cannot
+be verified as a prediction contract across three venue cases, and payout
+currency mismatch fails without an explicit valuation bridge. The transient
+user service had 384 MiB high / 512 MiB hard memory, zero swap, 20% CPU, 64
+tasks, and 60-second runtime. No live source or captured probe data was read.
+
+At 07:55:22 host PSI was zero, `MemAvailable` 10 GiB, and `SwapFree` 8.2 MiB.
+User-manager memory/swap was 9,700,184,064 / 2,858,422,272 bytes; OOM counters
+remained 19/15/0. API and Reality were active at restart counts 9/14 and about
+912/390 MiB. No OOMD or kernel OOM appeared since 07:50. This fixture result
+strengthens relationship rejection behavior but does not establish a live
+cross-venue match or change the **PARTIALLY CONTAINED / PARTIALLY VERIFIED**
+incident state.

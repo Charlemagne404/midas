@@ -13735,3 +13735,10 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
 - **Bounds:** Transient user service used 384 MiB high / 512 MiB hard memory, zero swap, 20% CPU, 64 tasks, and 60-second runtime. No live source or captured probe data was accessed.
 - **Post-test host:** At 07:54:13 PSI was zero, MemAvailable 10 GiB, SwapFree 8.2 MiB; user-manager memory/swap 9,688,809,472 / 2,858,422,272 bytes; OOM counters remained 19/15/0. API/Reality stayed active at restarts 9/14 and about 911/388 MiB. No OOMD/kernel OOM appeared after 07:50.
 - **Status:** Incident remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**. The targeted timing tests add replay evidence only; near-full swap, broad regression, live cross-venue validation, endurance, and deployment gates remain open.
+
+## Cross-market relationship safety acceptance — 2026-10-29 07:55 CET
+
+- **Tests:** Five current-tree cases passed **5/5** in 1.62 seconds: string matching is hypothesis-only; authority and settlement mismatch invalidate payoff equivalence; spot is rejected as a prediction contract for all three tested venues; and payout/settlement currency mismatch fails without a valuation bridge.
+- **Bounds:** Transient service capped at 384 MiB high / 512 MiB max, zero swap, 20% CPU, 64 tasks, and 60 seconds. No network or captured source data was accessed.
+- **Post-test host:** 07:55:22 PSI zero, MemAvailable 10 GiB, SwapFree 8.2 MiB; user-manager memory/swap 9,700,184,064 / 2,858,422,272 bytes; OOM counters 19/15/0. API/Reality active at restarts 9/14 and about 912/390 MiB. No OOMD/kernel OOM since 07:50.
+- **Status:** Relationship safety gains fixture evidence, not live economic equivalence. The memory incident remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**; near-full swap and broader science/verification gates remain open.
