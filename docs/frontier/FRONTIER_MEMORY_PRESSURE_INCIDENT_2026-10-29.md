@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 12:42 CET |
+| Latest addendum | 2026-10-29 13:03 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Pre-incident checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -2808,3 +2808,42 @@ Reality, and Reality API remained active at restart counts 9/14/0. No new
 OOMd/kernel kill appeared in the checked interval since 12:58. This is another
 short sample; full swap, global workload attribution, and long-window recovery
 remain unresolved.
+
+## Current host and admission sample — 2026-10-29 13:03 CET
+
+At 13:03, the host reported 11,403,976,704 bytes `MemAvailable` (10.62 GiB),
+15,368,192 bytes free swap (14.65 MiB), and zero `some`/`full` memory PSI for
+avg10, avg60, and avg300. `user@1000.service` held 10,544,066,560 bytes
+(9.82 GiB): approximately 2.21 GiB anonymous, 6.51 GiB file-backed, and 1.07
+GiB kernel memory. Its cumulative counters remained `high=16,428,175`,
+`max=730,409`, `oom=19`, and `oom_kill=15`. Cumulative `memory.stat` counts
+include about 394.6 million pages scanned and 28.5 million / 29.9 million
+pages swapped in / out. Current PSI is quiet, but these totals confirm
+substantial historical reclaim and swap churn without attributing them to one
+process.
+
+`oomctl` currently lists `user@1000.service` as a pressure-monitored cgroup
+with zero current PSI. The earlier 04:32 dump that listed no monitored cgroups
+was therefore not reproduced in this sample; its cause remains unknown. No
+systemd-oomd kill appeared after the last recorded October 28 23:43:24 kill,
+and the kernel query found no memcg OOM after the last October 28 20:15:44
+capacity-checker kill. This is a quiet interval, not endurance validation.
+
+MIDAS API, Reality, and Reality API were active at restart counts 9, 14, and 0
+with current memory 1.05 GiB, 603 MiB, and 457 MiB. Their existing bounds
+remain API 1.5/1.75 GiB high/max, Reality 1.125/1.25 GiB, and Reality API 512
+MiB max; no service was restarted or reconfigured. The capacity timer remains
+active and waiting, with its last observed run at 12:49:07 successful at a
+130.5 MiB peak under the 160/192 MiB high/max bound. The gap-detail timer
+remains inactive and disabled; its service remains failed from the prior OOM
+kill. No new capacity run or live collector intervention was started for this
+sample.
+
+**Admission decision:** Continue Frontier only as serial, offline work in
+transient scopes with explicit memory, swap, CPU, task, and runtime bounds. Do
+not run broad suites, public probes, high-memory profiling, or production
+deployment while swap is nearly exhausted and historical user-slice reclaim
+is unexplained. The observed short test scopes and current quiet PSI support
+bounded development only; they do not establish that the host-wide incident is
+resolved. Archive-manifest provenance and inventory warnings remain a
+separate unresolved integrity concern.

@@ -14789,3 +14789,25 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
 - **Status:** Source-to-normalized history replay validation is
   fixture-verified. Live/production-source evidence and broad acceptance
   remain pending. Continue serial bounded offline Frontier work only.
+
+## 2026-10-29 13:03 CET — refresh memory incident admission
+
+- Refreshed host state without changing services: 10.62 GiB `MemAvailable`,
+  14.65 MiB free swap, zero host PSI through avg300. The user manager held
+  9.82 GiB current memory (about 2.21 GiB anonymous, 6.51 GiB file-backed,
+  1.07 GiB kernel); its cumulative reclaim and swap counters remain high.
+- OOM counters were unchanged at `oom=19` / `oom_kill=15`. OOMD logs show no
+  kill since October 28 23:43:24 and the kernel query shows no memcg OOM after
+  October 28 20:15:44. `oomctl` now lists the user manager as monitored with
+  zero current PSI; the earlier empty monitored-cgroup dump remains unexplained.
+- MIDAS API, Reality, Reality API remain active at restart counts 9/14/0.
+  Reality capacity timer is active; its 12:49 run passed at 130.5 MiB under
+  160/192 MiB high/max. The gap-detail timer remains disabled and its service
+  remains failed from the historical OOM event. No service or timer was
+  changed or restarted.
+- Updated the incident report with this current sample and its admission
+  decision. The initiating workload mix and swap exhaustion risk remain
+  unresolved; proceed only with serial offline work in resource-bounded scopes.
+- **Status:** Incident **PARTIALLY CONTAINED / PARTIALLY VERIFIED**; Frontier
+  may continue in bounded offline mode. Broad suites, probes, high-memory
+  profiling, and production deployment remain deferred.
