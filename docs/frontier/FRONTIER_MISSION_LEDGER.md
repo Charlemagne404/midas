@@ -13575,3 +13575,34 @@ Continental, Caddy, Headscale, Tailscale, RustDesk, and `ssh.socket` were
 active. The capacity timer remained waiting and gap-detail timer inactive;
 the old service failure remains visible. This is a short quiet period, not
 resolution. Swap remains near full. No service or protected data changed.
+
+## Ancestor memory policy and final sample — 2026-10-29 05:54 CET
+
+Rechecked effective user-manager limits. `user@1000.service` has no
+`MemoryHigh`, `MemoryMax`, or `MemorySwapMax`; its `user-1000.slice` and
+`user.slice` ancestors are also unbounded. `ManagedOOMMemoryPressure=kill` is
+active at a 50% threshold with a 20-second duration. At 05:53:40 the manager
+cgroup's current charge was 9,338,646,528 bytes, with a lifetime peak of
+13,992,292,352 bytes. This verifies the uncapped aggregate user hierarchy and
+OOMD pressure policy but still does not identify all historical pressure
+contributors.
+
+At 05:53:40 API current/peak memory was 888,283,136 / 1,611,026,432 bytes
+against 1,610,612,736 `MemoryHigh` and 1,879,048,192 `MemoryMax`; Reality was
+336,347,136 / 1,208,467,456 bytes against 1,207,959,552 `MemoryHigh` and
+1,342,177,280 `MemoryMax`. Both units had zero swap limits; current charges
+were below `MemoryHigh`, and peaks were slightly above `MemoryHigh` but below
+the hard maximum.
+
+At 05:54 host `MemAvailable` was 11,545,051,136 bytes (10.76 GiB), `SwapFree`
+was 2,756,608 bytes (2.63 MiB), and host/user-manager memory PSI was zero.
+User-manager event counters remained `oom=19`, `oom_kill=15`,
+`oom_group_kill=0`. `oomctl` showed the 50% monitored group with zero current
+pressure averages. No kernel or OOMD event appeared since 05:42. API, Reality,
+web/API services, Echo production/staging, Continental tailnet/auth, Caddy,
+Headscale, Tailscale, RustDesk, and SSH socket remained available at the 05:51
+service check. The auxiliary gap-detail timer is inactive/disabled; its unit
+still records the earlier OOM. The capacity timer is waiting. No service,
+timer, limit, or protected artifact was changed. Swap remains nearly full, so
+continue only serial source-independent edits and small capped tests after
+fresh checks; do not run broad suites, replay, live probes, or deployment.

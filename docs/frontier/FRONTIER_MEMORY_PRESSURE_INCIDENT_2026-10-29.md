@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 05:51 CET |
+| Latest addendum | 2026-10-29 05:54 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Preservation checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -636,3 +636,39 @@ and its failed service retained the earlier OOM result. Nothing was restarted,
 reconfigured, or deployed. The host remains only partially contained because
 swap is nearly full and the observation window is short. Keep only serial,
 source-independent edits and capped fixtures within the admission limits.
+
+## Effective ancestor limits and latest admission check — 2026-10-29 05:54 CET
+
+`user@1000.service` has `MemoryHigh=infinity`, `MemoryMax=infinity`, and
+`MemorySwapMax=infinity`. Its `user-1000.slice` and `user.slice` ancestors also
+have no memory or swap caps. `ManagedOOMMemoryPressure=kill` is active with the
+50% pressure threshold; `oomctl` reports a 20-second duration. At 05:53:40 the
+manager cgroup had 9,338,646,528 bytes current memory and a 13,992,292,352-byte
+lifetime peak. The OOMD policy watches aggregate user-manager pressure, but the
+historical evidence still does not identify every contributing child workload.
+
+At 05:53:40, API current/peak memory was 888,283,136 / 1,611,026,432 bytes
+(`MemoryHigh=1,610,612,736`, `MemoryMax=1,879,048,192`, swap max zero). Reality
+was 336,347,136 / 1,208,467,456 bytes (`MemoryHigh=1,207,959,552`,
+`MemoryMax=1,342,177,280`, swap max zero). Their current charges were below
+`MemoryHigh`; lifetime peaks were slightly above `MemoryHigh` and below their
+hard maxima.
+
+At 05:54, `MemAvailable` was 11,545,051,136 bytes (10.76 GiB), free swap was
+2,756,608 bytes (2.63 MiB), and host and user-manager memory PSI averages were
+zero. User-manager memory events remained `oom=19`, `oom_kill=15`, and
+`oom_group_kill=0`. `oomctl` continued to show the user-manager monitored at
+50% with zero pressure averages. No kernel or OOMD journal entry appeared
+after 05:42. API, Reality, their web/API services, Echo production/staging,
+Continental tailnet/auth, Caddy, Headscale, Tailscale, RustDesk, and
+`ssh.socket` were active at the 05:51 service check. The capacity timer was
+waiting; the gap-detail timer remained inactive and disabled, and its service
+retained the earlier OOM failure. No service, timer, or limit changed.
+
+The user-manager monitor is visible again in current `oomctl` samples, but the
+earlier empty listings remain unexplained. Swap remains almost fully occupied,
+and this quiet interval is brief. Frontier can continue with serial,
+source-independent edits and small capped fixture tests after fresh admission
+checks; broad tests, replays, live probes, collectors, and production changes
+remain deferred. Incident status remains **PARTIALLY CONTAINED / PARTIALLY
+VERIFIED**.
