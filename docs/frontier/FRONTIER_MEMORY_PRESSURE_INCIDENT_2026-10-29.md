@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 11:16 CET |
+| Latest addendum | 2026-10-29 11:31 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Pre-incident checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -2363,3 +2363,75 @@ the checked interval after 11:05. There were no active systemd jobs at 11:16:25.
 This quiet interval includes the bounded offline test and compiler attempts but
 does not establish sustained recovery; swap remains nearly full and historical
 pressure attribution is unresolved.
+
+
+## 2026-10-29 11:22 CET — bounded typecheck and production build
+
+At 11:21:15, a fresh admission sample showed 10.62 GiB MemAvailable, zero PSI,
+about 10.1 MiB free swap, no active systemd jobs, and unchanged user-manager OOM
+counters 19/15/0. The current Frontier tree then passed tsc -b with an explicit
+384 MiB Node heap. Its transient cgroup was limited to 512 MiB high / 640 MiB
+max, zero swap, 25% CPU, 64 tasks, and 120 seconds; the run took 76.833 seconds,
+peaked at 402,681,856 bytes, and recorded no cgroup events or swap.
+
+A Vite production build transformed 2,233 modules and succeeded in 55.28
+seconds, writing 16 files totaling 1.5 MiB to this temporary output directory:
+
+`/tmp/midas-frontier-build-20261029T1121Z`
+
+Its cgroup was limited to 640 MiB high / 768 MiB max, zero swap, 25% CPU, 64
+tasks, and 120 seconds. The in-unit peak was 609,099,776 bytes with zero
+cgroup events and swap. Vite retained its 544.51 kB Chart chunk advisory and
+noted that the new external output directory would not be automatically
+emptied.
+
+At 11:22:29, MemAvailable was 10.66 GiB, SwapFree 10.2 MiB, PSI was zero, and
+OOM counters remained 19/15/0. API/Reality/Reality API remained active at
+restart counts 9/14/0; no kernel or systemd-oomd kill appeared after 11:19. The
+build and compiler did not contact an exchange, change a service, or write into
+the repository's dist directory. The short quiet window does not resolve nearly
+full swap or historical workload attribution.
+
+
+## 2026-10-29 11:30 CET — bounded browser validation and task-limit diagnosis
+
+The first fixture-only overview browser attempt failed before the test body
+when headless Chromium crashed; its unit peaked at 527,007,744 bytes, used zero
+swap, and recorded no memory cgroup OOM event. The kernel recorded a Chromium
+`int3` trap. A minimal diagnostic then exited successfully after Chromium
+launched, created a page, and closed it.
+
+A bounded E2E retry with `TasksMax=96` failed at browser launch with
+`pthread_create: Resource temporarily unavailable`. The kernel explicitly
+recorded `fork rejected by pids controller` against that temporary E2E unit.
+Host-wide task headroom was ample: the user slice had 899 tasks against a
+37,082 limit, with a per-user process limit of 56,186. This was the test unit's
+own task ceiling, not evidence of host PID exhaustion. With only that unit's
+limit raised to 256, Chromium reached the page; the test then exposed a
+five-second assertion timeout while React was still loading the lazy Frontier
+workspace. The E2E now grants 20 seconds for that route and 60 seconds for the
+single journey.
+
+The targeted overview E2E passed 1/1 in 15.3 seconds (38.9 seconds total unit
+runtime). Its temporary unit used MemoryHigh=768 MiB, MemoryMax=1 GiB,
+MemorySwapMax=0, CPUQuota=25%, TasksMax=256, and RuntimeMaxSec=180s. The unit's
+memory peak was 723,308,544 bytes; swap and memory cgroup events were zero.
+Peak tasks were 113 and the pids controller recorded no limit event. The
+browser verified that this fixture-only flow made no source-probe or collection
+request.
+
+At 11:30:05, MemAvailable was 11,235,135,488 bytes (10.47 GiB), memory PSI was
+zero, SwapFree was 12,263,424 bytes (11.7 MiB), and the user slice had 899 of
+37,082 tasks. API, Reality, and Reality API remained active at restart counts
+9/14/0. User-manager OOM counters remained 19/15/0; no kernel or systemd-oomd
+kill appeared in the checked journal after 11:18. This brief quiet interval
+does not establish durable recovery. Swap remains nearly full and historical
+pressure attribution remains unresolved.
+
+At 11:31:43, the scheduled Veritas observatory unit exited successfully and no
+user jobs remained. MemAvailable was 11,431,862,272 bytes (10.65 GiB), memory
+PSI was zero, and SwapFree was 12,595,200 bytes (12.0 MiB). At 11:31:53, the
+user-manager counters remained 19/15/0, API/Reality/Reality API remained active
+at restarts 9/14/0, and no kernel or systemd-oomd kill appeared in the checked
+journal after 11:18. This is a short post-run observation, not evidence of
+durable recovery.

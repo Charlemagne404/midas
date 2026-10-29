@@ -14445,3 +14445,56 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
 - This brief quiet sample supports only serial offline work with fresh
   zero-swap cgroup admission. It does not resolve the nearly full swap or
   identify the historical pressure initiator.
+
+## 2026-10-29 11:22 CET — exact-tree typecheck and production build
+
+- After a fresh 11:21:15 admission sample (10.62 GiB available, zero PSI, 10.1
+  MiB free swap, no jobs, unchanged OOM counters), exact-tree tsc -b passed with
+  NODE_OPTIONS=--max-old-space-size=384. The transient used 512 MiB high / 640
+  MiB max, zero swap, 25% CPU, 64 tasks, and 120 seconds; runtime was 76.833 s,
+  CPU 19.002 s, in-unit peak 402,681,856 bytes, and all cgroup events remained
+  zero.
+
+- Vite production build transformed 2,233 modules and passed in 55.28 s. Output
+  was isolated at /tmp/midas-frontier-build-20261029T1121Z (16 files, 1.5 MiB);
+  the existing dist output was untouched. Build cgroup: 640 MiB high / 768 MiB
+  max, zero swap, 25% CPU, 64 tasks, 120 seconds; peak 609,099,776 bytes and no
+  cgroup events. Vite still warns about the 544.51 kB Chart chunk and the new
+  external output path.
+
+- At 11:22:29, PSI was zero, MemAvailable 10.66 GiB, SwapFree 10.2 MiB, OOM
+  counters 19/15/0, and API/Reality/Reality API remained active at restarts
+  9/14/0. No kernel or oomd kill appeared after 11:19. Host recovery remains
+  unproven; broad Frontier integration, browser journey, and production
+  deployment remain open.
+
+## 2026-10-29 11:30 CET — bounded overview browser journey and task cap
+
+- The first fixture-only browser run crashed Chromium before the test body; its
+  unit peaked at 527,007,744 bytes with zero swap and no memory cgroup OOM. A
+  minimal launch diagnostic then passed. A subsequent run with `TasksMax=96`
+  failed on `pthread_create`; the kernel logged `fork rejected by pids
+  controller` for the temporary E2E unit. Host-wide headroom was not the
+  cause: the user slice had 899/37,082 tasks and the per-user process limit was
+  56,186.
+- With only the temporary test unit raised to `TasksMax=256`, Chromium started
+  and reached the page. The test's five-second assertion expired while the
+  lazy Frontier module was still in React's Suspense fallback. The assertion
+  now allows 20 seconds for route loading and the test has a 60-second bound.
+- The isolated overview journey passed **1/1 in 15.3 s** (38.9 s total unit
+  runtime) with MemoryHigh=768 MiB, MemoryMax=1 GiB, zero swap, 25% CPU,
+  TasksMax=256, and 180 seconds maximum runtime. Peak memory was 723,308,544
+  bytes; swap, memory cgroup events, and pids-limit events were zero; pids
+  peak was 113. The assertions verify the demo fixture made no public probe or
+  collection request.
+- At 11:30:05, PSI was zero, MemAvailable was 10.47 GiB, SwapFree 11.7 MiB,
+  user-slice tasks 899/37,082, and OOM counters 19/15/0. API/Reality/Reality
+  API remained active at restarts 9/14/0. No kernel or oomd kill appeared in
+  the checked journal after 11:18. Incident status remains **PARTIALLY
+  CONTAINED / PARTIALLY VERIFIED**; swap is nearly full and historical
+  pressure attribution is unresolved.
+- At 11:31:43, the scheduled Veritas observatory exited successfully and no
+  user jobs remained. MemAvailable was 10.65 GiB, PSI zero, SwapFree 12.0 MiB,
+  and OOM counters remained 19/15/0. API/Reality/Reality API stayed active at
+  restarts 9/14/0; no new kernel or oomd kill appeared through 11:31:53. This
+  remains a short observation, not evidence of durable recovery.

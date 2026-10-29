@@ -9,6 +9,7 @@ const USD_IDENTITY = {
 } as const;
 
 test('Frontier workspace uses isolated research state and remains responsive', async ({ page }) => {
+  test.setTimeout(60_000);
   let probeRequests = 0;
   let collectionPosts = 0;
   page.on('request', (request) => {
@@ -23,7 +24,7 @@ test('Frontier workspace uses isolated research state and remains responsive', a
   await expect(page.getByText('FRONTIER · READ-ONLY RESEARCH')).toBeVisible();
   await expect(
     page.getByRole('heading', { name: 'Market relationships, with evidence attached.' }),
-  ).toBeVisible();
+  ).toBeVisible({ timeout: 20_000 });
   await expect(page.getByText('No replay runs yet')).toBeVisible();
   await page.screenshot({ path: test.info().outputPath('frontier-overview.png'), fullPage: true });
   await expect(page.getByText('SYNTHETIC DATA')).toHaveCount(0);

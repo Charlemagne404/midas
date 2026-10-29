@@ -2,7 +2,7 @@
 
 **Report date:** 2026-10-29
 
-## Current completion matrix — 2026-10-29 11:16 CET
+## Current completion matrix — 2026-10-29 11:31 CET
 
 This is a current evidence classification, not a final completion claim. The
 dated implementation records below remain the detailed evidence; the
@@ -25,9 +25,9 @@ it made no endpoint requests and does not change source-use holds.
 | User-cgroup-aware workload admission | IMPLEMENTED, BOUNDED VALIDATION PASSED | Central Arena admission (15), finite schedules (12), and the Laboratory denial case (1) pass fixture tests using user-manager pressure; no runtime deployment occurred. |
 | Source-operation admission telemetry | COMPLETE AND VERIFIED FOR ONE ROUTER INSTANCE | The bounded source gate exposes active venues, admitted totals, and contention rejections by scope with a UTC sample time. The source page can refresh the snapshot. Counters reset with that router and do not aggregate across workers or deployments. |
 | Reality capacity inventory bounds | PARTIALLY VERIFIED | Candidate inventory code remains undeployed. The separate monitor is bounded at MemoryHigh=160M, MemoryMax=192M, and zero swap. Its 10:18 run recorded a 129.4 MiB peak; the 10:48 run exited successfully but did not retain a valid peak. The service still reports archive inventory/provenance limitations, and no archive evidence was altered. |
-| Native Frontier dashboard | PARTIALLY VERIFIED | The native workspace includes source, coverage, graph, opportunity, replay, and readiness views. The Kalshi fee/sensitivity panel is extracted as a focused component and its isolated UI suite passes 3/3; targeted ESLint and Prettier checks pass. TypeScript remains unverified after bounded runtime and V8-heap failures, while the full UI build and browser replay journey remain open. |
-| Host reliability containment | PARTIALLY VERIFIED | OOMD's 50%/20s policy monitors user@1000.service pressure; the Oct 28 journal records 129 kills (106 gap-detail), with seven separate kernel memcg OOMs against the capacity job's former 128 MiB cap. Gap-detail remains disabled; capacity remains bounded at 160/192 MiB with zero swap. At 11:16:11, MemAvailable was 10.53 GiB, PSI zero, SwapFree 10.1 MiB, and cumulative OOM counters 19/15/0; API/Reality/Reality API remained active at restart counts 9/14/0. No kernel or oomd kill appeared in the checked 11:05–11:16 interval. Historical initiating workload and durable recovery remain unresolved. |
-| Node/V8 and Apport side effect | PARTIALLY VERIFIED | The current frontend TypeScript check remains unverified. Two memory-capped attempts produced no diagnostics: one hit its 60-second runtime cap; the other reached Node's default V8 heap limit near 251 MiB after 50 seconds while the cgroup peaked at 315 MiB with zero cgroup OOM events. This was a process heap failure, not a host or cgroup OOM. An earlier crash-report upload attempt received HTTP 504; remote receipt remains unknown. |
+| Native Frontier dashboard | PARTIALLY VERIFIED | The native workspace includes source, coverage, graph, opportunity, replay, and readiness views. The extracted Kalshi fee panel passes 3/3 isolated UI tests; targeted ESLint and Prettier pass. Exact-tree TypeScript, bounded production build, and one offline fixture-backed overview browser journey now pass. Captured-evidence browser replay and broad integration remain open. |
+| Host reliability containment | PARTIALLY VERIFIED | OOMD's 50%/20s policy monitors user@1000.service pressure; the Oct 28 journal records 129 kills (106 gap-detail), with seven separate kernel memcg OOMs against the capacity job's former 128 MiB cap. Gap-detail remains disabled; capacity remains bounded at 160/192 MiB with zero swap. At 11:31:43, MemAvailable was 10.65 GiB, PSI zero, and SwapFree 12.0 MiB; cumulative OOM counters remained 19/15/0. API/Reality/Reality API remained active at restart counts 9/14/0. No new kernel or oomd kill appeared after 11:18 through 11:31:53. Historical initiating workload and durable recovery remain unresolved. |
+| Node/V8 and Apport side effect | PARTIALLY VERIFIED | The exact-tree frontend TypeScript check now passes with an explicit 384 MiB Node heap under a 512 MiB high / 640 MiB max zero-swap cgroup. Earlier attempts with Node's default heap timed out or exhausted V8 at about 251 MiB; those were process heap failures, not cgroup OOMs. An earlier crash-report upload attempt received HTTP 504; remote receipt remains unknown. |
 | Broad regressions, resource endurance, and performance acceptance | DEFERRED | Selected Python, API, adapter, collection, and economics tests passed under bounded zero-swap scopes. The graph-revision storage/migration cases pass 8/8; API cursor invalidation passes 1/1; four core economics modules pass 79/79; joint-state basket/audit/replay passes 14/14; logical implication/relationship review passes 27/27; transport passes 20/20; readiness resource API passes 7/7 and its focused UI passes 3/3. Ruff check/format, ESLint, Prettier, and strict mypy on the readiness resource module passed under caps. Full MIDAS regression, full browser suite, captured-evidence browser journey, endurance, and broad performance tests remain deferred. |
 | Live multi-venue source authorization and findings | BLOCKED | Kalshi, Kraken, Coinbase, and Gemini probes and retained-data research remain held; the worktree Polymarket probe flag is off. |
 | Production integration/deployment | DEFERRED | Frontier remains isolated; no protected service transition occurred. |
@@ -14932,3 +14932,76 @@ counts 9/14/0. Continental contact/status, Echo production/staging, and RustDesk
 services were active. The scheduled Veritas research director exited
 successfully; no systemd-oomd or kernel kill entry appeared after 11:05. This is
 a short observation only.
+
+
+## Exact-tree UI typecheck and production build — 2026-10-29 11:22 CET
+
+The exact current Frontier tree passed `tsc -b` with
+`NODE_OPTIONS=--max-old-space-size=384`. The transient cgroup used
+MemoryHigh=512 MiB, MemoryMax=640 MiB,
+MemorySwapMax=0, CPUQuota=25%, TasksMax=64, and RuntimeMaxSec=120s. The run took
+76.833 seconds, consumed 19.002 CPU seconds, and peaked at 402,681,856 bytes;
+swap and all high/max/OOM events remained zero.
+
+Vite production build then transformed 2,233 modules and succeeded in 55.28
+seconds. It wrote 16 files (1.5 MiB total) to the new temporary directory
+/tmp/midas-frontier-build-20261029T1121Z, leaving the repository's dist output
+untouched. The transient used MemoryHigh=640 MiB, MemoryMax=768 MiB,
+MemorySwapMax=0, CPUQuota=25%, TasksMax=64, and RuntimeMaxSec=120s. Its in-unit
+peak was 609,099,776 bytes, with zero swap and zero cgroup high/max/OOM events.
+Vite reported the existing Chart chunk advisory at 544.51 kB and the expected
+external outDir warning; the build succeeded.
+
+At 11:22:29, MemAvailable was 11,441,950,720 bytes (10.66 GiB), SwapFree was
+10,645,504 bytes (10.2 MiB), PSI remained zero, and user-manager OOM counters
+stayed 19/15/0. API, Reality, and Reality API remained active at restart counts
+9/14/0. No matching kernel or systemd-oomd kill appeared after 11:19. This
+improves implementation verification but does not establish host recovery or
+test the full browser journey.
+
+
+## Bounded Frontier overview browser E2E — 2026-10-29 11:30 CET
+
+The first fixture-only browser attempt failed before the test body when
+Chromium's headless process crashed; it peaked at 527,007,744 bytes in its
+1 GiB-capped unit with zero swap and no memory OOM event. The kernel recorded a
+Chromium `int3` trap. A subsequent minimal launch diagnostic exited successfully
+after launching Chromium, creating a page, and closing it.
+
+A rerun with `TasksMax=96` failed when Chromium could not create a thread. The
+kernel explicitly logged `fork rejected by pids controller` for that test
+unit. This was the disposable test unit's own task cap: the host user slice had
+899 tasks against its 37,082 limit and the per-user process limit was 56,186.
+There is no evidence of host-wide task exhaustion. Raising only the temporary
+test unit to 256 tasks allowed Chromium to start; its peak was 113 tasks with
+zero `pids.events` limit hits. That run reached the application but the test's
+five-second assertion expired while the lazy Frontier workspace was still in
+React's Suspense fallback.
+
+The isolated test now allows 20 seconds for that lazy route and 60 seconds for
+the single journey. It passed **1/1** in 15.3 seconds (38.9 seconds total unit
+runtime), with MemoryHigh=768 MiB, MemoryMax=1 GiB, zero swap, CPUQuota=25%,
+TasksMax=256, and a 180-second runtime cap. Cgroup `memory.peak` was
+723,308,544 bytes; swap, memory high/max/OOM events, and pids limit events were
+zero; `pids.peak` was 113. The browser assertions verified the overview made
+no live source probe or collection request. The test used only its isolated
+temporary demo API/data root.
+
+At 11:30:05, MemAvailable was 11,235,135,488 bytes (10.47 GiB), PSI was zero,
+SwapFree was 12,263,424 bytes (11.7 MiB), and the user-slice task count was
+899/37,082. API, Reality, and Reality API remained active at restart counts
+9/14/0. Cumulative user-manager OOM counters remained 19/15/0, and no
+systemd-oomd or kernel OOM kill appeared in the checked journal after 11:18.
+The incident remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**: swap is
+nearly full and the historic initiating workload and durable recovery remain
+unresolved.
+
+### Post-run service observation — 2026-10-29 11:31 CET
+
+The scheduled `midas-veritas-observatory.service` run exited successfully
+(`Result=success`, exit status 0); no user jobs remained at 11:31:43. At that
+time, MemAvailable was 11,431,862,272 bytes (10.65 GiB), memory PSI was zero,
+and SwapFree was 12,595,200 bytes (12.0 MiB). At 11:31:53, the user-manager
+OOM counters remained 19/15/0 and the checked journal still contained no
+oomd or kernel kill after 11:18. API, Reality, and Reality API were active at
+restart counts 9/14/0. This short quiet interval does not clear the incident.
