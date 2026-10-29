@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 22:03 CET |
+| Latest addendum | 2026-10-29 22:36 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Pre-incident checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -15,7 +15,88 @@ This is the current incident report. It supplements the chronological record in
 The full-day journal query below expands that earlier report's final-ten-event
 sample to all October 28 systemd-oomd kills.
 
-## Latest addendum — 2026-10-29 22:03 CET
+## Latest addendum — 2026-10-29 22:36 CET
+
+The focused Mission Control fixture now replays three captured frames: a
+snapshot, a price change with a bid discrepancy, and a standalone
+`best_bid_ask` event with an ask discrepancy. The interface assertions confirm
+both mismatch labels, the standalone-BBO quality flag, and unchanged projected
+depth. The UI case passed **1/1** with eight unrelated cases skipped in 27.09
+seconds total. A follow-up `tsc -b` passed under a 768 MiB High / 1 GiB Max,
+zero-swap, 20%-CPU scope with a 512 MiB Node heap; targeted Prettier and ESLint
+also passed. The Python capture/persist/replay case remains **1/1** passing.
+No source endpoint or production store was accessed.
+
+At 22:36, PSI averages were zero and `MemAvailable` about 10 GiB, with swap
+still full. User-manager counters remained `high=16,438,823`, `max=733,810`,
+`oom=19`, `oom_kill=15`; no OOMD or kernel OOM entry appeared since 22:22.
+API and Reality remained active at restart counts 9/14; the Reality API also
+remained active at 0 restarts. No host service or resource configuration
+changed. The next source-analysis run is due at 22:40; this short quiet sample
+does not establish durable recovery. Keep the incident **PARTIALLY CONTAINED /
+PARTIALLY VERIFIED**.
+
+## Prior addendum — 2026-10-29 22:30 CET
+
+Frontier replay now preserves standalone Polymarket `best_bid_ask` reports
+before a book snapshot as captured frame evidence without creating projected
+state; after a full snapshot, those events update only the reported BBO
+cross-check and do not change depth. The replay algorithm/schema version is
+4. Its first schema-v4 test attempt exposed a hard-coded version 3 in the
+result payload; after correcting the implementation, the final bounded
+capture/persist/replay test passed **1/1** in 6.70 seconds under High 384 MiB /
+Max 512 MiB / zero swap / 15% CPU / 64 tasks. A focused Mission Control test
+passed **1/1** with eight unrelated cases skipped, and the bounded TypeScript
+project check, Ruff, Prettier, and targeted ESLint passed. The fixture work
+used no source endpoint or production store.
+
+After these checks, a 22:30 host sample showed PSI averages zero, about 10 GiB
+MemAvailable, and all 4 GiB swap still occupied. User-manager counters were
+unchanged from 22:22 (`high=16,438,823`, `max=733,810`, `oom=19`,
+`oom_kill=15`). API, Reality, and Reality API remained active at restart counts
+9/14/0. No OOMD or kernel OOM entry appeared since 22:22. Gap-detail remains
+inactive and disabled; capacity remains enabled at its 160/192 MiB,
+zero-swap cap. Source analysis is next scheduled at 22:40. This brief sample
+does not establish durable recovery; keep the incident **PARTIALLY CONTAINED /
+PARTIALLY VERIFIED**.
+
+## Prior addendum — 2026-10-29 22:22 CET
+
+The scheduled Veritas source-analysis run completed 22:10:44–22:10:57 with
+`Result=success`, 59 finalized segments processed, zero pending, and 9.755
+CPU seconds. Its effective limit is 256 MiB with unlimited swap; systemd
+removed the leaf cgroup before `MemoryPeak` or local counters were available.
+The user-manager `memory.events.max` count rose from 732,947 at 22:03 to
+733,810 at 22:11, while OOM and kill counts stayed 19/15. The temporal overlap
+does not attribute those max events to this run. The 22:15 Research Director
+one-shot succeeded in 1.391 CPU seconds, reported no qualified gross
+candidate, and did not change the user-manager counters.
+
+The 22:21 Reality capacity monitor succeeded in 10 seconds with 7.349 CPU
+seconds under its effective `MemoryHigh=160 MiB`, `MemoryMax=192 MiB`, and
+`MemorySwapMax=0` limits. Its cgroup peak was not retained. The read-only
+report continued to warn `ARCHIVE_MANIFEST_SIZE_LIMIT`,
+`ARCHIVE_INVENTORY_UNVERIFIED`, and `ARCHIVE_CAPACITY_UNKNOWN`; no archive,
+manifest, or collector state was changed. User `memory.events.high` increased
+by 216 between 22:15 and 22:22; `max=733,810`, `oom=19`, and `oom_kill=15`
+were unchanged. Because the capacity leaf cgroup was gone and its reported
+peak was unavailable, this high-event increment is only temporally associated.
+
+At 22:22, PSI averages remained zero and `MemAvailable` was about 10 GiB, but
+the 4 GiB swap device remained full (about 68 KiB free). API, Reality, and
+Reality API were active at restart counts 9/14/0. No OOMD or kernel OOM kill
+appeared since 22:03. The gap-detail timer remained inactive and disabled;
+the capacity timer remained active. This is another short quiet sample, not
+proof of durable recovery or complete causal attribution.
+
+After the capacity run, the isolated Frontier fixture test for standalone
+Polymarket `best_bid_ask` replay passed **1/1** in 6.80 seconds under a
+384/512 MiB, zero-swap, 15%-CPU, 64-task transient scope. It used only local
+fixtures and did not access an exchange or production store. No production
+service or resource configuration changed. Keep Frontier work serial and
+bounded; the incident remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**.
+
+## Prior addendum — 2026-10-29 22:03 CET
 
 A read-only cgroup swap inventory confirms the full 4.29 GB device use is
 distributed across multiple host slices at 22:03: `user.slice` held

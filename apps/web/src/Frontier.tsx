@@ -592,8 +592,9 @@ type PolymarketBookUpdatesReplayResult = {
   replay_version:
     | 'polymarket-book-event-replay-1'
     | 'polymarket-book-event-replay-2'
-    | 'polymarket-book-event-replay-3';
-  schema_version: 1 | 2 | 3;
+    | 'polymarket-book-event-replay-3'
+    | 'polymarket-book-event-replay-4';
+  schema_version: 1 | 2 | 3 | 4;
   native_market_id: string;
   bound_market_observation_id: string;
   capture_started_at_utc: string;

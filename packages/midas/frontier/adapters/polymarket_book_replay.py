@@ -29,7 +29,8 @@ POLYMARKET_BOOK_EVENT_REPLAY_VERSION: Literal[
     "polymarket-book-event-replay-1",
     "polymarket-book-event-replay-2",
     "polymarket-book-event-replay-3",
-] = "polymarket-book-event-replay-3"
+    "polymarket-book-event-replay-4",
+] = "polymarket-book-event-replay-4"
 MAX_POLYMARKET_REPLAY_FRAMES = 32
 MAX_POLYMARKET_REPLAY_BYTES = MAX_POLYMARKET_REPLAY_FRAMES * MAX_STREAM_FRAME_BYTES
 MAX_POLYMARKET_REPLAY_BOOK_STATES = 64
@@ -114,11 +115,12 @@ class PolymarketBookReplayState(FrontierModel):
 class PolymarketBookEventReplay(FrontierModel):
     """Hash-pinned, context-only replay with a bounded local book projection."""
 
-    schema_version: Literal[1, 2, 3] = 3
+    schema_version: Literal[1, 2, 3, 4] = 4
     replay_version: Literal[
         "polymarket-book-event-replay-1",
         "polymarket-book-event-replay-2",
         "polymarket-book-event-replay-3",
+        "polymarket-book-event-replay-4",
     ] = POLYMARKET_BOOK_EVENT_REPLAY_VERSION
     venue: Literal[Venue.POLYMARKET] = Venue.POLYMARKET
     native_market_id: str
@@ -219,6 +221,7 @@ class _MutableBookProjection:
     reported_best_bid: Decimal | None = None
     reported_best_ask: Decimal | None = None
     reported_best_prices_present: bool = False
+    reported_best_prices_from_standalone_event: bool = False
 
 
 def _levels(values: Mapping[Decimal, Decimal], *, descending: bool) -> tuple[BookLevel, ...]:
@@ -271,6 +274,28 @@ def _replay_book_frame(
             )
             touched_assets.add(instrument_id)
             continue
+        if update.event_type == "best_bid_ask":
+            state = projections.get(instrument_id)
+            if state is None:
+                # A top-of-book report cannot anchor a projected book. The raw
+                # and normalized event remain in the replay frame evidence.
+                continue
+            if (
+                update.source_timestamp_utc is not None
+                and state.source_timestamp_utc is not None
+                and update.source_timestamp_utc < state.source_timestamp_utc
+            ):
+                raise ValueError("Polymarket source timestamps regress within the captured stream")
+            if update.source_timestamp_utc is not None:
+                state.source_timestamp_utc = update.source_timestamp_utc
+            state.reported_best_bid = update.reported_best_bid
+            state.reported_best_ask = update.reported_best_ask
+            state.reported_best_prices_present = (
+                update.reported_best_bid is not None or update.reported_best_ask is not None
+            )
+            state.reported_best_prices_from_standalone_event = True
+            touched_assets.add(instrument_id)
+            continue
         if update.event_type != "price_change":
             continue
 
@@ -316,6 +341,7 @@ def _replay_book_frame(
         state.reported_best_prices_present = (
             reported_best_bid is not None or reported_best_ask is not None
         )
+        state.reported_best_prices_from_standalone_event = False
         if len(state.bids) > 500 or len(state.asks) > 500:
             raise ValueError("Polymarket projected book exceeds the 500-level side bound")
         touched_assets.add(instrument_id)
@@ -335,6 +361,8 @@ def _replay_book_frame(
             "SOURCE_GAP_DETECTION_UNAVAILABLE",
             "LEVEL_SIZE_REPLACEMENT_IS_AN_ASSUMPTION",
         }
+        if state.reported_best_prices_from_standalone_event:
+            quality_flags.add("REPORTED_BBO_FROM_STANDALONE_EVENT")
         if state.reported_best_prices_present:
             matches = True
             if state.reported_best_bid is not None and state.reported_best_bid != (
@@ -560,7 +588,7 @@ def replay_polymarket_book_capture(
     frame_values = tuple(replay_frames)
     event_count = sum(len(frame.updates) for frame in frame_values)
     result_payload = {
-        "schema_version": 3,
+        "schema_version": 4,
         "replay_version": POLYMARKET_BOOK_EVENT_REPLAY_VERSION,
         "venue": Venue.POLYMARKET.value,
         "native_market_id": native_market_id,

@@ -1,5 +1,72 @@
 # Project Frontier Mission Ledger
 
+## 2026-10-29 22:36 CET — three-frame BBO dashboard verification
+
+- Mission Control's captured replay fixture now includes a full snapshot, a
+  price-change bid mismatch, and a standalone `best_bid_ask` ask mismatch. The
+  journey asserts both discrepancy labels, the standalone-BBO source flag,
+  and unchanged projected depth. It passed 1/1 with eight unrelated tests
+  skipped in 27.09 seconds. The bounded TypeScript build, Prettier, and
+  targeted ESLint passed after this UI fixture change.
+- The final API replay-v4 fixture passed 1/1, including pre-snapshot evidence
+  retention without a projected state. Ruff check/format passed. No exchange
+  endpoint or production store was accessed.
+- At 22:36, PSI was zero and MemAvailable about 10 GiB; swap remained full.
+  User OOM counters were unchanged (`max=733,810`, `oom=19`, `oom_kill=15`),
+  API/Reality/Reality API remained active at restart counts 9/14/0, and no
+  OOMD/kernel kill appeared since 22:22. Next source analysis is due at 22:40;
+  do not infer sustained recovery from this sample.
+- No service or resource limit changed; the existing untracked public-probe
+  directory and all historical evidence remain untouched.
+
+## 2026-10-29 22:30 CET — replay v4 schema check and post-test sample
+
+- The standalone BBO projection is now versioned as Polymarket replay v4.
+  Its first schema-v4 API regression found a stale hard-coded result schema
+  value of 3; the implementation now emits 4 consistently. The final test
+  passed 1/1 in 6.70 seconds under High 384 MiB / Max 512 MiB / zero swap /
+  CPU 15% / TasksMax 64. It covers a pre-snapshot BBO event remaining in
+  evidence without projected state and a post-snapshot ask mismatch that
+  changes only the cross-check, not depth.
+- The focused Mission Control journey with the v4 response passed 1/1 with
+  eight unrelated cases skipped. The bounded TypeScript build, Ruff checks,
+  Prettier, and targeted ESLint passed under capped scopes. No live endpoint
+  or production store was used.
+- At 22:30, PSI was zero and MemAvailable about 10 GiB; swap remained full.
+  User memory counters (`high=16,438,823`, `max=733,810`, `oom=19`,
+  `oom_kill=15`) were unchanged after the checks; API/Reality/Reality API
+  remained active at restart counts 9/14/0. No OOMD/kernel kill appeared
+  since 22:22. These quiet samples are bounded; incident remains partial.
+- No host service/configuration or historical evidence changed. The existing
+  untracked public-probe directory remains untouched.
+
+## 2026-10-29 22:22 CET — standalone BBO event replay and post-capacity sample
+
+- Polymarket replay v4 now consumes a standalone `best_bid_ask` event only after
+  a full snapshot exists. It updates reported BBO/source-time evidence and
+  quality flags without modifying projected depth or price-change counts; a
+  pre-snapshot BBO remains captured frame evidence and does not create state.
+  The fixture test exercises a standalone ask mismatch and deterministic
+  replay. It passed 1/1 in 6.80 seconds under High 384 MiB / Max 512 MiB / zero
+  swap / CPU 15% / TasksMax 64. No cgroup peak was retained; the test used no
+  network or production store.
+- The 22:10 source-analysis job succeeded after 59 segments with no pending
+  segments. Parent user `memory.events.max` rose by 863 around it, but the
+  one-shot cgroup was removed; attribution is unresolved. The 22:15 Research
+  Director succeeded and left counters unchanged. The 22:21 capacity monitor
+  succeeded at 7.349 CPU seconds under the established 160/192 MiB,
+  zero-swap bound; `memory.events.high` rose by 216, with no leaf peak or event
+  counters retained.
+- At 22:22, PSI was zero and MemAvailable about 10 GiB, while swap remained
+  full. User `max=733,810`, `oom=19`, and `oom_kill=15`; API/Reality/Reality API
+  were active at restart counts 9/14/0. No OOMD/kernel kill appeared since
+  22:03. These short quiet samples do not resolve pressure attribution or
+  swap risk. Gap-detail remains disabled; archive warnings remain unchanged.
+- No live source request, protected service change, or historical evidence
+  modification occurred. The preexisting untracked public-probe directory is
+  untouched. Host incident remains **PARTIALLY CONTAINED / PARTIALLY
+  VERIFIED**.
+
 ## 2026-10-29 22:03 CET — host swap distribution across slices
 
 - A read-only cgroup inventory accounted for the full 4.29 GB swap device:
