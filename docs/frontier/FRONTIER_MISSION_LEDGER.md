@@ -13041,3 +13041,20 @@ Files: `apps/web/src/Frontier.tsx`, `apps/web/e2e/frontier.spec.ts`, this
 ledger, the engineering report, and the memory pressure incident report. No
 untracked evidence or historical data was touched. The changes are awaiting a
 separate local commit. Overall Frontier remains **PARTIALLY VERIFIED**.
+
+The UI commits are now recorded as `d7e2482` (saved timeline paging) and
+`d2d5ff1` (saved replay candidate paging), both local on
+`codex/frontier-20261026`; neither is pushed or deployed. The only untracked
+path remains the preserved `data/frontier-public-probes/` evidence directory.
+
+At 04:04:14 a read-only cgroup sample found 3,773,067,264 bytes memory and
+1,647,288,320 bytes swap in the GNOME Terminal slice, while the whole user app
+slice held 7,846,883,328 bytes memory and 2,236,157,952 bytes swap. The
+Terminal slice charge includes about 2.34 GB file cache and 490 MB kernel
+memory; its own cgroup OOM counters were zero. The active Continental
+`status.service` held 447,082,496 bytes swap, with 207,802,368 bytes current
+memory and a recorded 831,500,288-byte peak; it has no memory limits and zero
+cgroup OOMs. It was not changed or restarted. These current charges clarify
+where memory and swap reside now but do not prove the historical October 28
+trigger. Host PSI was zero and no new OOM event appeared; the incident remains
+open and only bounded serial offline work continues.

@@ -1588,3 +1588,29 @@ API/Reality remained active at restart counts 9/14 with zero service swap. No
 kernel OOM or oomd kill appeared after 03:56:57; the last previously recorded
 OOM event remains Oct 28 23:43:24. This remains a quiet bounded interval, not
 evidence of sustained host stability.
+
+### Current cgroup attribution snapshot — 2026-10-29 04:04 CET
+
+At 04:04:14, PSI remained zero, `MemAvailable` was 11,384,972 kB, and swap
+was 4,192,504/4,194,300 kB used (1,796 kB free). The user app slice was
+7,846,883,328 bytes memory and 2,236,157,952 bytes swap, with its historical
+`oom=19` / `oom_kill=15` counters unchanged. Its GNOME Terminal slice alone
+was 3,773,067,264 bytes memory and 1,647,288,320 bytes swap. That slice's
+`memory.stat` included 2,336,428,032 bytes file cache (1,987,100,672 bytes
+inactive file), 490,041,344 bytes kernel memory, and 941,285,376 bytes anon.
+Its own cgroup OOM counters were zero. These are current mixed cache, kernel,
+anonymous-memory, and swap charges; they do not identify which workload caused
+the earlier pressure window.
+
+The largest individual `VmSwap` process sample was the active Continental
+`status.service`: 447,082,496 bytes swap, 207,802,368 bytes current cgroup
+memory, and 831,500,288 bytes recorded peak since Oct 9. It has no configured
+MemoryHigh, MemoryMax, or MemorySwapMax and its cgroup OOM counters are zero.
+GNOME Shell and Nautilus were additional current process-level swap holders.
+The Continental status service was not changed or restarted; its contribution
+to present swap occupancy is not evidence that it triggered an OOM kill.
+
+No kernel OOM or systemd-oomd kill appeared after the 04:02:10 sample. The
+host remains suitable only for sequential, bounded, offline Frontier work.
+Historical initiating-workload attribution and durable swap recovery remain
+unresolved; no safe service change is supported by this sample alone.

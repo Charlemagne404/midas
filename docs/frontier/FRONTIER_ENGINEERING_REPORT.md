@@ -13644,3 +13644,23 @@ submission. No live or production artifact was used.
 | Persisted run integrity or live artifact validation | PARTIALLY VERIFIED | The UI consumes the existing verified-run API contract; this fixture does not retrieve a production artifact. |
 | Host memory incident | PARTIALLY VERIFIED | At 04:02:10 PSI was zero and OOM counters unchanged, but swap remained 99.96% occupied. |
 | Project Frontier overall | PARTIALLY VERIFIED | Live multi-venue evidence, broad acceptance, endurance, protected recovery, and deployment remain open. |
+
+## Current host cgroup attribution — 2026-10-29 04:04 CET
+
+A read-only cgroup sample at 04:04:14 found the user app slice at 7.85 GB
+memory and 2.24 GB swap. Its GNOME Terminal slice was 3.77 GB memory and
+1.65 GB swap; `memory.stat` attributes about 2.34 GB to file cache, 490 MB to
+kernel memory, and 941 MB to anon. The Terminal slice itself had zero cgroup
+OOM events. This makes the terminal subtree a large current resource holder,
+but does not establish the historical source of the October 28 PSI spike.
+
+The active Continental `status.service` used 447 MB swap and 208 MB current
+cgroup memory, with an 832 MB recorded peak since Oct 9. It has no cgroup
+memory or swap limits and no cgroup OOM events. It was not modified or
+restarted, consistent with the production-service boundary. These readings
+describe current occupancy only; they do not justify assigning historical
+OOM causality to Continental or any single process. PSI remained zero and
+swap was still 99.96% occupied at this sample, so host incident status remains
+**PARTIALLY VERIFIED**.
+
+The two UI checkpoints on this branch are `d7e2482` and `d2d5ff1`.
