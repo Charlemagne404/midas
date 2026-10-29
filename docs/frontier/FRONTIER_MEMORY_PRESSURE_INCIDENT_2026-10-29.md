@@ -1135,3 +1135,19 @@ Reality remained active at restart counts 9/14 and about 910/386 MiB. No
 OOMD/kernel OOM entry appeared since 07:50. These short fixture checks did
 not change incident status; broad suites, replay batches, live probes,
 endurance, and deployment remain deferred.
+
+## Replay timing and look-ahead checks — 2026-10-29 07:54 CET
+
+Three targeted current-tree timeline cases passed **3/3** in 1.80 seconds:
+source-clock/freshness evidence remains intact, receipt time controls book
+availability while exchange time reaches the audit, and future relationship
+verification is not applied to earlier frames. They ran in a transient user
+service capped at 384 MiB high / 512 MiB hard, zero swap, 20% CPU, 64 tasks,
+and a 60-second runtime. No live source or captured probe was accessed.
+
+At 07:54:13, host PSI avg10/60/300 was zero, `MemAvailable` 10 GiB, and
+`SwapFree` 8.2 MiB. User-manager memory/swap was 9,688,809,472 /
+2,858,422,272 bytes; OOM counters stayed 19/15/0. API and Reality were active
+at restart counts 9/14 and about 911/388 MiB. No OOMD or kernel OOM appeared
+after 07:50. Incident status remains **PARTIALLY CONTAINED / PARTIALLY
+VERIFIED**; nearly full swap and broad acceptance limits are unchanged.

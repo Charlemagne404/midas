@@ -13728,3 +13728,10 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
 - **Bounds:** Each test run used a transient user service with 384 MiB high / 512 MiB hard memory, zero swap, 20% CPU, 64 tasks, and a 60-second runtime. No live source or captured-probe evidence was accessed.
 - **Post-test host:** At 07:52:52 PSI avg10/60/300 was zero, MemAvailable 10 GiB, SwapFree 8.2 MiB. User-manager memory/swap was 9,687,404,544 / 2,858,422,272 bytes and OOM counters remained 19/15/0. API/Reality were active at restart counts 9/14 and about 910/386 MiB; no OOMD/kernel OOM entry appeared since 07:50.
 - **Status:** This advances deterministic replay validation but does not clear the incident or broad acceptance gates. Near-full swap, long-run recovery, live multi-venue validation, broad regressions, and deployment remain open. Continue only with fresh admission and small serial checks.
+
+## Replay timing and look-ahead acceptance — 2026-10-29 07:54 CET
+
+- **Tests:** Three selected `test_timeline.py` cases passed **3/3** in 1.80 seconds: preserve source clock/freshness, gate book availability on receipt time while retaining exchange time for audit, and prevent future relationship verification from affecting earlier frames.
+- **Bounds:** Transient user service used 384 MiB high / 512 MiB hard memory, zero swap, 20% CPU, 64 tasks, and 60-second runtime. No live source or captured probe data was accessed.
+- **Post-test host:** At 07:54:13 PSI was zero, MemAvailable 10 GiB, SwapFree 8.2 MiB; user-manager memory/swap 9,688,809,472 / 2,858,422,272 bytes; OOM counters remained 19/15/0. API/Reality stayed active at restarts 9/14 and about 911/388 MiB. No OOMD/kernel OOM appeared after 07:50.
+- **Status:** Incident remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**. The targeted timing tests add replay evidence only; near-full swap, broad regression, live cross-venue validation, endurance, and deployment gates remain open.
