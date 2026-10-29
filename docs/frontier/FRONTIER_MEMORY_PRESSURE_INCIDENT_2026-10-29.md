@@ -220,6 +220,15 @@ retained by systemd. These fixture tests verify the storage migration and
 counter behavior; they do not verify the full suite, production storage, or
 host endurance.
 
+At 04:44, a fresh host and user-manager sample still showed zero PSI and no
+new OOM record. `MemAvailable` was 11.60 GB, free swap 2.04 MB, and the user
+manager charged 9.09 GB memory plus 2.86 GB swap with a 13.99 GB peak. Its
+`memory.events` remained `oom=19`, `oom_kill=15`. API and Reality were active
+at unchanged restart counts 9/14; the gap-detail timer was inactive and the
+capacity timer active. `oomctl dump` still listed no monitored groups while
+the user-manager 50% memory-pressure policy property remained present. The
+current quiet interval does not resolve the swap or monitoring risks.
+
 ## Frontier continuation gate
 
 Frontier is **safe to continue with serial code/documentation work and small,

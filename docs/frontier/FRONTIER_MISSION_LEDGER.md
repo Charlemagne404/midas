@@ -13234,3 +13234,20 @@ is focused fixture verification, not full-suite or host-endurance evidence.
 
 Verification checkpoint: working-tree test result recorded before the
 follow-up documentation commit `5f7506b`.
+
+### Code-quality and host follow-up — 2026-10-29 04:44 CET
+
+After formatting the graph revision change, Ruff check and format passed on
+all three changed Python files; strict mypy passed for the storage module.
+The five focused graph revision/schema-migration tests passed **5/5 in
+2.20 seconds** again on the formatted tree, within the 384 MiB high / 512 MiB
+max, zero-swap, 20%-CPU scope.
+
+The 04:44 host and user-manager PSI remained zero. `MemAvailable` was
+11.60 GB; free swap was 2.04 MB. The user manager charged 9.09 GB memory and
+2.86 GB swap, with a 13.99 GB peak and `memory.events` still `oom=19`,
+`oom_kill=15`. API and Reality remained active at restart counts 9/14. The
+gap-detail timer was inactive, the capacity timer active, and `oomctl dump`
+again showed no monitored groups despite the user-manager 50% policy. No new
+OOM journal record was found. Host memory incident remains partially
+contained. The scope's test peak was not retained for inspection.

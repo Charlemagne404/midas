@@ -601,9 +601,12 @@ def test_graph_revision_migration_backfills_legacy_database(tmp_path: Path):
 
     assert store.graph_revision() == expected
     with sqlite3.connect(store.path) as connection:
-        assert connection.execute(
-            "SELECT value FROM frontier_meta WHERE key='schema_version'"
-        ).fetchone()[0] == "8"
+        assert (
+            connection.execute(
+                "SELECT value FROM frontier_meta WHERE key='schema_version'"
+            ).fetchone()[0]
+            == "8"
+        )
 
 
 def test_graph_revision_counts_relationship_reviews_atomically(tmp_path: Path):

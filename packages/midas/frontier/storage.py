@@ -245,9 +245,7 @@ class FrontierStore:
             "relationships_graph_revision_insert",
             "relationship_reviews_graph_revision_insert",
         )
-        counters = connection.execute(
-            "SELECT 1 FROM frontier_graph_revision WHERE id=1"
-        ).fetchone()
+        counters = connection.execute("SELECT 1 FROM frontier_graph_revision WHERE id=1").fetchone()
         triggers = {
             str(row["name"])
             for row in connection.execute(
@@ -1621,13 +1619,11 @@ class FrontierStore:
             return (0, 0, 0)
         with self._read_connect() as connection:
             revision_table = connection.execute(
-                "SELECT 1 FROM sqlite_master WHERE type='table' "
-                "AND name='frontier_graph_revision'"
+                "SELECT 1 FROM sqlite_master WHERE type='table' AND name='frontier_graph_revision'"
             ).fetchone()
             if revision_table is not None:
                 row = connection.execute(
-                    "SELECT markets,relationships,reviews "
-                    "FROM frontier_graph_revision WHERE id=1"
+                    "SELECT markets,relationships,reviews FROM frontier_graph_revision WHERE id=1"
                 ).fetchone()
                 if row is None:
                     raise FrontierStoreError("Frontier graph revision counters are uninitialized")
