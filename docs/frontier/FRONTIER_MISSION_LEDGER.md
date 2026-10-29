@@ -13342,3 +13342,33 @@ The OOMD/workload follow-up was committed as `65192c8` (`docs(frontier):
 attribute OOMD candidate pressure`); the prior evidence-pin commit is
 `de2d9c5`. Continue only with serial, capped Frontier work while swap is
 nearly full.
+
+### Bounded joint-state verification and host follow-up — 2026-10-29 04:58 CET
+
+`tests/frontier/test_joint_state.py` passed **14/14 in 4.28 seconds**. The
+module exercises explicit joint-state map bounds, cross-market basket
+generation, independent audit, and deterministic replay on fixtures. Exact
+bounded invocation:
+
+```sh
+systemd-run --user --scope \
+  -p MemoryHigh=384M -p MemoryMax=512M -p MemorySwapMax=0 -p CPUQuota=20% -- \
+  /usr/bin/env PYTHONPATH=/home/charlie/midas-frontier/packages \
+  PYTHONDONTWRITEBYTECODE=1 \
+  /home/charlie/midas/.venv/bin/pytest -q -p no:cacheprovider \
+  --basetemp=/dev/shm/midas-frontier-joint-state-20261029-0459 \
+  tests/frontier/test_joint_state.py
+```
+
+An initial wrapper attempt combined `--wait` with `--scope`; systemd-run
+rejected it before pytest started. The corrected invocation above ran once.
+Post-test PSI was zero, `MemAvailable` moved from 10.828 to 10.802 GiB,
+`SwapFree` stayed 0.002 GiB, user-manager `oom=19`/`oom_kill=15` were
+unchanged, and API/Reality restarts remained 9/14. No OOM journal entry
+appeared in the checked interval. Both timers retained their intended states.
+This is fixture evidence only and does not establish endurance or live
+cross-venue validation.
+
+Checkpoint commits: `65192c8` (incident attribution) and `87e2241` (ledger
+pin). The untracked `data/frontier-public-probes/` directory remains
+untouched.

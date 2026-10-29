@@ -3,7 +3,7 @@
 | Field | Value |
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
-| Sample time | 2026-10-29 04:57 CET |
+| Sample time | 2026-10-29 04:58 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Preservation checkpoint | `ac4222f` (`feat(frontier): add held Gemini spot research adapter`) |
@@ -33,10 +33,10 @@ The gap-detail timer is stopped and disabled. The capacity service now has a
 reversible 160 MiB soft / 192 MiB hard limit with swap disabled, and its
 04:16 and 04:46 scheduled runs succeeded. Since the final systemd-oomd kill
 at 23:43:24 on October 28, no additional systemd-oomd kill has appeared
-through 04:57 on October 29; no kernel OOM has appeared since the 20:15:44
+through 04:58 on October 29; no kernel OOM has appeared since the 20:15:44
 capacity kill.
 
-This is **partially contained, not resolved**. At 04:57 the host had 10.80
+This is **partially contained, not resolved**. At 04:58 the host had 10.80
 GiB available RAM, zero current host/user PSI, and about 2 MiB free swap.
 `oomctl dump` still lists no monitored cgroups despite the active user-unit
 OOM policy and historical kill records. The reason for this current reporting
@@ -317,6 +317,24 @@ and user-manager PSI remained zero; user-manager `memory.events` stayed at
 entry appeared in the checked kernel/systemd-oomd journal interval since
 04:45. The observation remains short relative to the prior repeated-kill
 pattern, and the swap/monitoring issues remain open.
+
+## Bounded joint-state regression and post-test host check — 2026-10-29 04:58 CET
+
+The focused `tests/frontier/test_joint_state.py` module passed **14/14 in
+4.28 seconds** in a transient scope capped at `MemoryHigh=384M`,
+`MemoryMax=512M`, `MemorySwapMax=0`, and `CPUQuota=20%`. It used deterministic
+fixtures, pinned imports to the Frontier worktree, disabled pytest cache
+writes, and placed its temporary files under `/dev/shm`. It did not access
+external sources, production databases, or historical research stores.
+
+Before the run, host and user-manager PSI were zero, `MemAvailable` was
+10.828 GiB, and 0.002 GiB swap was free. At 04:58:45, PSI remained zero,
+`MemAvailable` was 10.802 GiB, swap free remained 0.002 GiB, and user-manager
+`memory.events` remained at `oom=19`/`oom_kill=15`. No OOM entry appeared in
+the checked kernel/systemd-oomd journal interval from 04:58:25 to 04:58:58.
+API and Reality remained active at restarts 9/14; the gap-detail timer remained
+inactive and the capacity timer active. This bounded test provides no
+endurance evidence.
 
 ## Frontier continuation gate
 
