@@ -1733,3 +1733,51 @@ live probes, and background experiments deferred. Current zero PSI and the
 quiet interval support this narrow continuation; nearly exhausted swap,
 unknown historical workload attribution, and the unresolved
 `oomctl`/monitor-registration discrepancy mean host recovery is not proven.
+
+## 2026-10-29 09:05 CET — bounded Frontier resumption and host recheck
+
+- Frontier resumed with one offline, fixture-driven Kraken Spot WebSocket v2
+  capture path. It accepts one explicitly configured spot symbol, one finite
+  connection, bounded frames and captured records, and validates the book
+  checksum before accepting reconstructed state. It stores raw-frame hashes
+  and source timestamps with the normalized update. The feature is contextual
+  market research only; it does not imply payoff equivalence with prediction
+  contracts or execution capability. No public network probe was made.
+- The new capture tests and existing Kraken book-stream tests passed 15/15;
+  three focused adapter/capability regressions passed 3/3; Ruff and staged
+  whitespace checks passed. These ran serially in the transient scope
+  documented above. No broad suite, build, profiling run, or background job
+  was started. Commit `588ff1c556648f85c27111357488f9a31295e8a1` contains this
+  Frontier implementation and its tests. The pre-resumption checkpoint at
+  `75e6f2602a33ca7d04ffb507279dd61fd33d7bac` remains available on branch
+  `checkpoint/frontier-memory-interruption-20261029-0854`; the probe-data
+  directory remains untracked and untouched.
+- At 09:05:39, host `MemAvailable` was about 10 GiB and global PSI averages
+  were zero. Swap was still fully occupied (4.0/4.0 GiB; about 8.9 MiB free).
+  The app slice used about 9.65 GB memory and 2.23 GB swap, with no local
+  `MemoryHigh`, `MemoryMax`, or `MemorySwapMax`. Its memory accounting showed
+  6.52 GB file cache (5.07 GB inactive), 2.02 GB anonymous memory, and 1.08 GB
+  kernel memory (0.93 GB reclaimable slab). These are current cgroup charges,
+  not an attribution of the October 28 pressure event. The app-slice
+  `oom=19` and `oom_kill=15` counters were unchanged; cgroup high/max and reclaim
+  counters are cumulative and likewise do not identify the responsible job.
+- A one-shot cgroup/process sample showed `midas-api` near 949 MiB,
+  `midas-reality-api` near 337 MiB, `midas-reality` near 441 MiB, and several
+  Codex processes between about 333 and 396 MiB RSS. No one sampled process
+  accounts for the whole app-slice charge. The exact workload mix, cache
+  ownership, and event-time process attribution remain unknown. This supports
+  the prior conclusion that user-cgroup pressure and oomd policy are
+  demonstrated, while a unique system-wide cause is not.
+- `midas-api` and `midas-reality` remained active with restart counts 9 and 14.
+  The capacity unit's latest result remained successful; its existing timer was
+  active with its next run scheduled for 09:18. The gap-detail unit remained
+  failed from its earlier OOM, and its timer was absent from the active timer
+  listing. No new oomd or kernel OOM entries appeared after the 08:54 check.
+  No protected service was restarted or reconfigured.
+
+**Continuation decision:** Frontier can continue only with short, serial,
+offline work under fresh admission checks and the documented transient resource
+scope. Full suites, builds, live probes, large replay, profiling, and persistent
+workers remain deferred. The quiet interval and successful bounded tests do not
+prove host recovery; full swap, 9.65 GB current app-slice charge, unresolved
+workload attribution, and archive provenance warnings remain open risks.
