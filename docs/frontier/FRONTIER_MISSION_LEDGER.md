@@ -13791,3 +13791,10 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
 - **Resource evidence:** A five-second post-test wrapper preserved the transient cgroup. Its live peak was 43,180,032 bytes (41.1 MiB); limits were 384 MiB high / 512 MiB hard, zero swap, 20% CPU, 64 tasks. No external data was used.
 - **Host after run:** At 08:03:24 PSI zero, MemAvailable 10 GiB, SwapFree 8.4 MiB; user-manager memory/swap 9,731,592,192 / 2,858,254,336 bytes; OOM counters 19/15/0. API/Reality active at restarts 9/14, about 916/397 MiB. No OOMD/kernel OOM since 08:00.
 - **Status:** Multi-outcome fixture science advances; no live eligible opportunity is demonstrated. Incident remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**.
+
+## Cross-venue capital and FX verification — 2026-10-29 08:04 CET
+
+- **Tests:** Four selected cases passed **4/4** in 1.61 seconds: independently audit deterministic venue-separated capital carry, require per-venue release delay inputs, deduct conversion fees from every terminal state, and reject implicit FX assumptions even when asset identities match.
+- **Bounds:** Transient user unit configured at 384 MiB high / 512 MiB hard, zero swap, 20% CPU, 64 tasks, and 60 seconds. The fast collected-unit exit field reported 256 KiB and is not a trustworthy peak measurement; do not use it as such. No external source was accessed.
+- **Host:** At 08:04:33 PSI zero, MemAvailable 10 GiB, SwapFree 8.4 MiB; user-manager memory/swap 9,728,978,944 / 2,858,254,336 bytes; OOM counters 19/15/0. API/Reality active at restarts 9/14, about 916/398 MiB. No OOMD/kernel OOM since 08:00.
+- **Status:** Cost and capital fixture coverage advanced; account-specific costs and live execution remain unresolved. Incident remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**.

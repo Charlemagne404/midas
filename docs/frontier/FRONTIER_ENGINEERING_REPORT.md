@@ -2,7 +2,7 @@
 
 **Report date:** 2026-10-29
 
-## Current completion matrix — 2026-10-29 08:03 CET
+## Current completion matrix — 2026-10-29 08:04 CET
 
 This is a current evidence classification, not a final completion claim. The
 dated implementation records below remain the detailed evidence; the
@@ -15,7 +15,7 @@ current host gate.
 | Canonical instruments and supported payoff semantics | PARTIALLY VERIFIED | Supported structures have model and invariant tests; this does not claim universal instrument support. |
 | Relationship graph, evidence binding, and review | PARTIALLY VERIFIED | Deterministic fixture relationships and pinned evidence are covered; typed entity context v2 exposes clipped display fields explicitly and preserves source records. The centered graph API fixture pins the returned model version to the shared v2 constant. A live cross-venue economic equivalence is not established. |
 | Candidate discovery and independent economic verification | PARTIALLY VERIFIED | Bounded mathematical fixtures and independent audits pass selected checks; joint-state basket, audit, and deterministic replay tests pass 14/14; paired replay acceptance passes 4/4; source-outage invalidation and deterministic/tamper-evident timeline checks pass 2/2; source-clock/freshness, receipt-time ordering, and no-lookahead relationship checks pass 3/3; text-only hypothesis, settlement-authority/currency, and spot-versus-prediction rejection checks pass 5/5; implication-direction, fee, stale-leg, settlement-time, and cutoff checks pass 5/5; multi-outcome tick, hypothetical-classification, and three-leg basket checks pass 3/3. Logical implication and relationship review tests pass 27/27. Receipt age and timestamp/receipt skew now use exact deltas rounded up to milliseconds in both generator and verifier. No live eligible opportunity is demonstrated. |
-| Cross-venue costs, FX, capital, and execution uncertainty | PARTIALLY VERIFIED | Four bounded fixture modules for venue funding/FX, capital carry, Kalshi fees, and logical implications pass 79/79. Virtual models preserve unknown cost and applicability states; account-specific fees, jurisdiction, transfers, and execution remain unresolved. |
+| Cross-venue costs, FX, capital, and execution uncertainty | PARTIALLY VERIFIED | Four bounded fixture modules for venue funding/FX, capital carry, Kalshi fees, and logical implications pass 79/79; four additional current-tree capital/FX checks pass 4/4 for venue-separated carry, release delay completeness, fee application across terminal states, and explicit conversion assumptions. Virtual models preserve unknown cost and applicability states; account-specific fees, jurisdiction, transfers, and execution remain unresolved. |
 | Collection, provenance, durable storage, and replay | PARTIALLY VERIFIED | Finite-collection/API fixtures pass 51/51 and the prior storage slice passed 32/32; after schema-v8 graph counters, focused revision/pagination and schema-6/7 migration cases pass 5/5, with older schema-2/4/5 migrations passing 3/3. Timeline replay v3 includes per-instrument receipt time, source timestamp semantics, clock uncertainty, and source freshness limits. Gemini's source-specific configuration tag round-trips in the finite-collection journal; collection remains blocked by the source-use hold. Sequencing, multi-venue live collection, and archive provenance remain unverified or held. |
 | Read-only source network and trading boundary | COMPLETE AND VERIFIED | Bounded HTTP source reads use anonymous, host-allowlisted HTTPS GET with redirects disabled; the separate Polymarket market stream uses one fixed anonymous WSS URL with proxy, retries, and reconnect disabled. The stream defaults off and its fixtures verify the source gates, bounds, and raw evidence path. Adapter boundary fixtures cover credential/mutating clients, cookies, redirects, oversized payloads, and JSON complexity. No exchange order/account path was found in the reviewed Frontier code. |
 | Laboratory/Arena comparisons and bounded orchestration | PARTIALLY VERIFIED | Arena admission and finite scheduling regressions pass; a Laboratory resource-denial case passes with a harness cap above its 722,894,848-byte capacity precondition. Full endurance evidence remains incomplete. |
@@ -14569,3 +14569,21 @@ At 08:03:24 host PSI remained zero, `MemAvailable` 10 GiB, and `SwapFree`
 OOM counters stayed 19/15/0. API and Reality remained active at restarts 9/14,
 using about 916/397 MiB. No OOMD/kernel OOM appeared since 08:00. The tests
 validate bounded fixture economics only, not live profitability.
+
+### Cross-venue capital and FX checks — 2026-10-29 08:04 CET
+
+Four selected tests passed **4/4** in 1.61 seconds: carry remains
+deterministic and venue-separated under independent checking; supplied
+release delays must cover every venue; conversion fees are deducted from
+every terminal state; and a same-identity scenario cannot smuggle in FX or
+conversion assumptions. The run used a 384 MiB high / 512 MiB hard, zero-swap,
+20% CPU, 64-task, 60-second transient service. This fast collected unit did
+not retain a valid peak measurement; do not interpret its 256 KiB exit-summary
+field as pytest memory usage.
+
+At 08:04:33 host PSI remained zero, `MemAvailable` 10 GiB, and `SwapFree`
+8.4 MiB. User-manager memory/swap was 9,728,978,944 / 2,858,254,336 bytes;
+OOM counters remained 19/15/0. API and Reality were active at restarts 9/14,
+using about 916/398 MiB. No OOMD or kernel OOM appeared since 08:00. This is
+virtual-model fixture evidence; account-specific funding and conversion data
+remain unresolved.

@@ -1288,3 +1288,20 @@ counters remained 19/15/0. API/Reality were active at restart counts 9/14,
 using about 916/397 MiB. No OOMD or kernel OOM appeared since 08:00. The
 bounded fixture test did not change the **PARTIALLY CONTAINED / PARTIALLY
 VERIFIED** incident status.
+
+## Capital and FX fixtures with post-run host sample — 2026-10-29 08:04 CET
+
+Four selected tests passed **4/4** in 1.61 seconds: venue-separated capital
+carry is independently checked; supplied release delays cover every venue;
+conversion fees apply to every terminal state; and a same-identity case
+cannot add an unverified FX/conversion assumption. The transient service was
+configured with 384 MiB high / 512 MiB hard, zero swap, 20% CPU, 64 tasks,
+and a 60-second runtime. Its fast collected-unit peak field was 256 KiB and
+is not a trustworthy measurement under the calibration above; no peak claim
+is made for this test. No external data was accessed.
+
+At 08:04:33 PSI was zero, `MemAvailable` 10 GiB, `SwapFree` 8.4 MiB, and
+user-manager memory/swap 9,728,978,944 / 2,858,254,336 bytes. OOM counters
+remained 19/15/0; API/Reality were active at restarts 9/14, about 916/398
+MiB. No OOMD or kernel OOM appeared since 08:00. The tests do not change the
+**PARTIALLY CONTAINED / PARTIALLY VERIFIED** incident assessment.
