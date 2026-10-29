@@ -1,4 +1,5 @@
 import os
+import sqlite3
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime
@@ -41,7 +42,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     from midas.frontier.adapters.kraken import KrakenSpotConfig
     from midas.frontier.models import AdapterConfig
     from midas.frontier.registry import AdapterRegistry
-    from midas.frontier.storage import FrontierStore
+    from midas.frontier.storage import FrontierStore, FrontierStoreError
 
     kalshi_probe_allowed = config.frontier_kalshi_probe_allowed
     kraken_probe_allowed = config.frontier_kraken_probe_allowed
@@ -130,8 +131,18 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         app.state.startup_error = None
         app.state.campaign_recovery_ids = []
         app.state.campaign_recovery_errors = []
+        app.state.frontier_store_startup_error = None
         app.state.laboratory = None
         try:
+            if frontier_store.path.is_file():
+                try:
+                    await asyncio.to_thread(frontier_store.initialize)
+                except (FrontierStoreError, OSError, sqlite3.Error, ValueError) as error:
+                    app.state.frontier_store_startup_error = f"{type(error).__name__}: {error}"
+                    structlog.get_logger().error(
+                        "frontier_store_startup_migration_failed",
+                        error=app.state.frontier_store_startup_error,
+                    )
             await service.start()
             database_path = service.store.engine.url.database
             if config.laboratory_root is not None:
@@ -163,7 +174,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                     app.state.campaign_recovery_errors.append(
                         {"campaign_id": campaign["id"], "error": str(error)}
                     )
-            app.state.startup_status = "DEGRADED" if app.state.campaign_recovery_errors else "READY"
+            app.state.startup_status = (
+                "DEGRADED"
+                if app.state.campaign_recovery_errors or app.state.frontier_store_startup_error
+                else "READY"
+            )
         except Exception as error:
             startup_failed = True
             app.state.startup_status = "FAILED"
@@ -305,6 +320,16 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             "checked_at_utc": datetime.now(UTC).isoformat(),
             "startup_status": startup,
             "startup_error": app.state.startup_error,
+            "frontier_store": {
+                "status": (
+                    "DEGRADED"
+                    if app.state.frontier_store_startup_error
+                    else "READY"
+                    if frontier_store.path.is_file()
+                    else "EMPTY"
+                ),
+                "startup_error": app.state.frontier_store_startup_error,
+            },
             "mode": config.mode,
             "live_execution": False,
             "paper_recovery": {
