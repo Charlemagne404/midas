@@ -16353,3 +16353,23 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
   GNOME Terminal VTE scopes active. PSI was zero, available RAM about 10 GiB,
   free swap about 19 MiB, and user-manager OOM counters unchanged. No kernel or
   OOMD kill has appeared since Oct 28.
+
+## 2026-10-29 19:23 CET — Frontier host event-counter visibility
+
+- The Frontier host-resource panel now renders user-manager `high`, `max`,
+  `oom`, `oom_kill`, and `oom_group_kill` counters when the readiness API
+  provides them. Its note explains these counts are cumulative, include
+  descendants, and do not identify the workload; a `max` event is not itself
+  an OOM kill. Missing fields from the deployed API remain explicitly
+  **Not measured**, with the omission called out.
+- The current-tree readiness API already collects these event fields; the
+  active deployed API release still omits the user-manager block. No deploy or
+  source request was made.
+- `FrontierHostResources.test.tsx` passed **3/3** and Prettier passed in a
+  transient 384 MiB High / 512 MiB Max / zero-swap / 20%-CPU / 64-task /
+  120-second service. At 19:22:57, PSI remained zero, available RAM about 10
+  GiB, free swap about 19 MiB, and OOM counters were unchanged. Broad frontend
+  typecheck/build remain deferred during the incident.
+- This resumes Frontier with one focused, source-independent UI improvement.
+  Overall acceptance remains **PARTIALLY VERIFIED**; live cross-venue
+  validation, broad regression/endurance, recovery, and deployment are open.

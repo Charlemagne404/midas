@@ -16450,3 +16450,22 @@ available RAM about 10 GiB, free swap about 19 MiB, and the user-manager OOM
 counters were unchanged. No OOMD/kernel kill has appeared since Oct 28. The
 host is suitable for serial capped fixture work only; Frontier overall remains
 **PARTIALLY VERIFIED**.
+
+### Frontier readiness event-counter display — 2026-10-29 19:23 CET
+
+The Replay & readiness host snapshot now includes user-manager memory
+`high`, `max`, `oom`, `oom_kill`, and `oom_group_kill` counts when the API
+reports them. The note identifies these as cumulative descendant counters;
+`max` does not necessarily mean an OOM kill, and the values do not attribute
+events to a specific workload. The panel explains omissions and leaves fields
+**Not measured** when the connected API does not provide them. The current-tree
+readiness API already collects these counters, but the active deployed release
+still omits its user-manager block; no production change was attempted.
+
+The focused host-resource panel suite passed **3/3** under a transient
+384 MiB High / 512 MiB Max / zero-swap / 20%-CPU / 64-task / 120-second cap;
+Prettier and `git diff --check` passed. At 19:22:57, host PSI remained zero,
+available RAM about 10 GiB, free swap about 19 MiB, and OOM counters were
+unchanged. No live source call or broad frontend build was made. Project
+Frontier remains **PARTIALLY VERIFIED**; cross-venue live evidence, broad
+regression/endurance, protected recovery, and deployment remain open.
