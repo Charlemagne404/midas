@@ -15962,3 +15962,8 @@ nearly full and the user-manager hierarchy uncapped, so the incident remains
 partially contained. Continue only serial, offline Frontier work under
 transient resource bounds; this short quiet period does not establish durable
 recovery.
+
+At 15:36:56 CET, the three MIDAS services remained active at restart counts
+9/14/0, host memory PSI was zero, and no matching kernel/OOMD/service kill
+entry had appeared since 15:33:39. Available RAM was 11.40 GB and free swap
+16.45 MB. This brief post-commit check does not establish sustained recovery.

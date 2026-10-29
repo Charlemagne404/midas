@@ -15427,3 +15427,18 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
   remains uncapped, and this quiet interval is brief. Continue only serial,
   offline Frontier work under transient resource bounds; incident remains
   partially contained.
+
+## 2026-10-29 15:36 CET — post-commit continuity check
+
+- Committed the sampler, focused tests, evidence summary, and report updates
+  as `4a4cc16` (`feat(ops): attribute local cgroup pressure events`). The only
+  remaining worktree item is the pre-existing untracked
+  `data/frontier-public-probes/`; it remains untouched.
+- At 15:36:56, available RAM was 11,398,017,024 bytes, swap free was
+  16,449,536 bytes, and host memory PSI some/full avg10/60/300 was zero.
+  MIDAS API, Reality, and Reality API remained active at restart counts
+  9/14/0; gap-detail remained inactive and capacity waiting. No matching
+  kernel/OOMD/service OOM or kill entry appeared since 15:33:39.
+- **Status:** serial, offline Frontier implementation may continue under
+  transient resource bounds. Swap is still almost full and this observation
+  window is too short to establish durable host recovery.

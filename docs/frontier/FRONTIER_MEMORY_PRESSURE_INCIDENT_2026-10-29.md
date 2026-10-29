@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 15:33 CET |
+| Latest addendum | 2026-10-29 15:36 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Pre-incident checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -3564,5 +3564,15 @@ user-manager `high` increment. It does not close the host incident: swap
 remains nearly exhausted, user-manager parents remain uncapped, and the quiet
 window is brief. No service configuration, protected collector, archive,
 manifest, or historical research data changed in this follow-up. The
-diagnostic code can be rolled back with `git revert HEAD` while this
-checkpoint is the branch tip; no runtime rollback is required.
+diagnostic code can be rolled back with `git revert 4a4cc16`; no runtime
+rollback is required.
+
+### Post-commit continuity check — 2026-10-29 15:36 CET
+
+At 15:36:56, `MemAvailable` was 11,398,017,024 bytes and free swap was
+16,449,536 bytes. Host memory PSI some/full avg10/60/300 remained zero. MIDAS
+API, Reality, and Reality API remained active at restart counts 9/14/0; the
+gap-detail timer remained inactive and the capacity timer waiting. No matching
+kernel, systemd-oomd, or service OOM/kill journal entry appeared after
+15:33:39. This is a short post-commit observation only; it does not resolve
+near-full swap or establish long-duration stability.
