@@ -3364,10 +3364,10 @@ it('renders a bounded accessible relationship graph and opens selected evidence'
   expect(screen.getByText('shared_terms=mayor,election')).toBeInTheDocument();
   expect(screen.queryByRole('region', { name: 'Left recorded contract terms' })).toBeNull();
   fireEvent.click(screen.getByText('Compare recorded contract terms', { selector: 'summary' }));
-  expect(
-    await screen.findByRole('region', { name: 'Left recorded contract terms' }),
-  ).toBeInTheDocument();
-  expect(screen.getByText(/Market identity fiat:USD/)).toBeInTheDocument();
+  const leftContractTerms = await screen.findByRole('region', {
+    name: 'Left recorded contract terms',
+  });
+  expect(leftContractTerms).toHaveTextContent(/market identity fiat:USD/i);
   expect(screen.getByText(/fixed fee 0\.01/)).toBeInTheDocument();
   expect(screen.getByText(/expires 2026-11-26T20:00:00Z/)).toBeInTheDocument();
   fireEvent.click(screen.getByText('Rules, instruments, and source provenance'));
@@ -3404,7 +3404,7 @@ it('renders a bounded accessible relationship graph and opens selected evidence'
         String(input).includes('cursor=cursor-page-2'),
     ),
   ).toBe(true);
-});
+}, 15000);
 
 it('records a self-attributed relationship review with both stored market sources', async () => {
   const markets = [

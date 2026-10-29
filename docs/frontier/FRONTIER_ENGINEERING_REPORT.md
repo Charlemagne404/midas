@@ -15795,3 +15795,49 @@ and PSI avg10 was zero (avg300 some/full 0.02/0.01%). The shared hierarchical
 not identify which process caused the events. OOM counters remained 19/15,
 API/Reality/Reality API remained active at restarts 9/14/0, and no new OOMD or
 kernel kill was observed. This is not evidence of sustained incident recovery.
+
+### Captured graph contract-terms component verification — 2026-10-29 14:51 CET
+
+The selected `Frontier.test.tsx` relationship-graph journey now passes **1/1**
+in a 512 MiB high / 768 MiB max, zero-swap, 20%-CPU, 64-task, 90-second
+scope. The test asserted the rendered comparison-panel identity text, fee
+schedule/evidence, lazy expansion and collapse. The test initially exposed
+fixture-text mismatches and the five-second default timeout; the fixture now
+asserts the rendered panel text and uses a 15-second per-test timeout. The
+passing test took 6.0 seconds (22.9 seconds total runner time). It used only
+fixture responses and contacted no live or production data source.
+
+At 14:51:25, available RAM was about 10 GiB, free swap about 15 MiB, PSI
+avg10/60/300 some/full was zero, and user-manager `high/max/oom/oom_kill`
+counters were 16,437,686/730,447/19/15, unchanged from the pre-run sample.
+API/Reality/Reality API remained active at restarts 9/14/0, and no OOMD or
+kernel kill was logged during the test interval. This bounded check adds UI
+verification but does not establish host recovery or live multi-venue
+validation; nearly full swap and unattributed historical pressure remain.
+
+### Bounded instrument-level relationship comparison — 2026-10-29 14:59 CET
+
+The graph's recorded-term difference summary now compares instrument count,
+outcome IDs and labels, quote currency and canonical asset identity, tick
+size and price increment ranges, quantity unit/step/minimums, and payout
+vectors by state. Outcome ID (falling back to the recorded label) is used only
+to order and group literal field values; venue-native instrument IDs are
+excluded from cross-venue matching because their differences are expected.
+The UI still explicitly distinguishes these recorded differences from
+economic equivalence.
+
+The comparison fails to `unavailable` for missing instrument metadata and is
+bounded to 32 instruments, 64 payout/range items per instrument, and 4 KiB per
+serialized field. Ordering differences in instrument arrays, payout states,
+and increment ranges normalize deterministically. Tests cover asset-network
+mismatch, quantity increments, payoff vectors, incomplete metadata, ordering,
+and oversized inputs.
+
+Focused helper tests passed **7/7**. Targeted ESLint and Prettier passed; full
+frontend TypeScript checking passed under 640/768 MiB high/max, zero swap,
+25% CPU, 64 tasks and a 120-second bound. The graph UI component test also
+passed **1/1** on captured fixture responses in its separate bounded run. No
+live source, production API, or production store was contacted. The host
+follow-up at 14:59:27 showed about 10 GiB available RAM, 15 MiB free swap,
+zero PSI, and unchanged OOM counters; the short observation does not resolve
+the memory incident or validate live multi-venue science.

@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 14:45 CET |
+| Latest addendum | 2026-10-29 14:59 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Pre-incident checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -3377,3 +3377,47 @@ restart counts 9/14/0, and no kernel or systemd-oomd kill was logged in the
 interval. This short sample does not resolve the host incident. Keep browser
 and build workloads deferred and continue only serial, offline work after a
 fresh admission sample.
+
+## Focused relationship UI verification — 2026-10-29 14:51 CET
+
+The previously inconclusive graph contract-terms component check was rerun
+under a bounded transient scope: 512 MiB `MemoryHigh`, 768 MiB `MemoryMax`, no
+swap, 20% CPU, 64 tasks, 90-second runtime. After correcting fixture text to
+assert the comparison panel's actual combined label and raising only that
+long fixture's timeout from five to 15 seconds, the selected test passed
+**1/1** (6.0 seconds test time; 22.9 seconds total runner time). It exercises
+recorded settlement identity, fee details/evidence, lazy expansion, and
+collapse. The earlier attempts failed on fixture text matching and the
+default timeout; no OOM or assertion failure remained in the passing run.
+No live source, production API, or production store was used.
+
+At 14:51:25, host available RAM was about 10 GiB, free swap about 15 MiB,
+global PSI avg10/60/300 some/full was 0/0/0%, and shared-user counters were
+high/max/oom/oom_kill = 16,437,686/730,447/19/15, unchanged from the pre-run
+sample. API, Reality, and Reality API remained active at restart counts
+9/14/0. No kernel OOM or systemd-oomd kill was logged since 14:50:45. This is
+a short post-run quiet sample, not incident closure; nearly all swap remains
+occupied and the historical pressure initiator is still unattributed.
+
+## Bounded instrument-term comparison work — 2026-10-29 14:59 CET
+
+Frontier's graph contract comparison now also compares recorded instrument
+count/outcome identifiers and labels, quote currency and canonical identity,
+tick size and increment ranges, quantity unit/step/minimum quantity/minimum
+notional, and payout vectors by state. Venue-native instrument IDs remain
+visible in the contract detail but are not used as cross-venue match keys.
+Input size is bounded at 32 instruments, 64 increments or payouts per
+instrument, and 4 KiB per serialized comparison field. Missing or over-limit
+detail increments the unavailable count instead of being treated as equal.
+The comparison remains literal metadata review, not an equivalence verdict.
+
+The focused pure comparator suite passed **7/7**. Targeted ESLint and
+Prettier passed, and the full frontend TypeScript check passed under a
+640 MiB high / 768 MiB max, zero-swap, 25%-CPU, 64-task, 120-second scope.
+No live source or production store was used. At 14:59:27, host available RAM
+was about 10 GiB, free swap 15 MiB, and global PSI avg10/60/300 was zero.
+Shared-user high/max/oom/oom_kill counters remained
+16,437,686/730,447/19/15; API/Reality/Reality API remained active at restart
+counts 9/14/0, and no OOMD or kernel kill was logged since 14:57:45. This is
+bounded verification and a brief quiet sample only; swap remains nearly full
+and the incident stays partially contained.

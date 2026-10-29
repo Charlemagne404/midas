@@ -15248,3 +15248,46 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
   almost-full swap and the prior reclaim excursion. Continue serial offline
   Frontier work only after a fresh host admission check. The existing
   untracked public-probe data remains untouched.
+
+## 2026-10-29 14:52 CET — verify lazy contract-term rendering
+
+- The focused graph-inspector component journey passed **1/1** under
+  512 MiB high / 768 MiB max, zero swap, 20% CPU, 64 tasks, and a 90-second
+  scope. It verifies settlement identity, fee details/evidence, deferred
+  rendering, and collapse. The test body took 6.0 seconds (22.9 seconds
+  total). Fixture matching now asserts the panel's actual combined text, and
+  this single long journey has a 15-second timeout.
+- Earlier bounded attempts failed on a fixture label mismatch and the default
+  five-second test timeout; the final run passed. No live source, production
+  API, or store was contacted.
+- Post-run at 14:51:25: about 10 GiB available RAM, 15 MiB free swap, zero
+  PSI, and unchanged shared-user memory/OOM counters
+  (16,437,686/730,447/19/15). API/Reality/Reality API remained active at
+  restart counts 9/14/0; no OOMD/kernel kill occurred in the interval.
+- **Status:** a brief quiet sample only, not incident resolution. Swap is
+  nearly full and the historical pressure initiator remains unattributed.
+  Continue serial, offline, resource-bounded Frontier work only. The prior
+  untracked `data/frontier-public-probes/` remains untouched.
+
+## 2026-10-29 14:59 CET — instrument-level relationship evidence
+
+- Extended the literal contract comparison across instrument outcomes and
+  labels, quote currency/asset identity, tick sizes and increment ranges,
+  quantity units and bounds, and outcome payout vectors. Native venue
+  instrument IDs remain visible separately and are not treated as shared
+  match keys. Missing or oversized details are marked unavailable; serialized
+  summaries are bounded to 32 instruments, 64 list entries, and 4 KiB per
+  field. Sorting of outcomes, ranges, and instrument rows is deterministic.
+- Focused comparator suite passed **7/7**; Prettier and targeted ESLint
+  passed; frontend TypeScript passed under a 640/768 MiB high/max, zero-swap,
+  25%-CPU, 64-task, 120-second scope. The graph component journey passed
+  **1/1** against fixtures. No live source or production store was used.
+- Post-TypeScript sample at 14:59:27: about 10 GiB available RAM, 15 MiB free
+  swap, zero PSI, shared user-manager high/max/oom/oom_kill counters
+  16,437,686/730,447/19/15, and API/Reality/Reality API active at restarts
+  9/14/0. No OOMD/kernel kill was logged in the sampled interval.
+- **Status:** brief bounded validation only. Host incident and overall
+  Frontier remain partially verified; the swap is nearly full, the shared
+  user manager has no aggregate cap, and live cross-venue scientific findings
+  remain unvalidated. Continue serial offline work only. Preserve the
+  pre-existing untracked public-probe data untouched.

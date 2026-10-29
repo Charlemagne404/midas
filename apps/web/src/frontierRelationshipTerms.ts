@@ -5,6 +5,20 @@ type AssetIdentity = {
   asset_reference: string | null;
 };
 
+type InstrumentTermRecord = {
+  outcome_id: string | null;
+  label: string;
+  quantity_unit?: string | null;
+  price_currency?: string | null;
+  price_currency_identity?: AssetIdentity | null;
+  tick_size?: string | null;
+  price_increment_ranges?: { start: string; end: string; step: string }[] | null;
+  quantity_step?: string | null;
+  minimum_quantity?: string | null;
+  minimum_notional?: string | null;
+  payouts?: { state_id: string; amount: string }[];
+};
+
 export type RelationshipTermRecord = {
   market_kind: string;
   lifecycle: string;
@@ -41,6 +55,7 @@ export type RelationshipTermRecord = {
     effective_at_utc?: string | null;
     expires_at_utc?: string | null;
   };
+  instruments?: InstrumentTermRecord[];
 };
 
 export type RelationshipTermDifference = {
@@ -54,6 +69,10 @@ export type RelationshipTermComparison = {
   differences: RelationshipTermDifference[];
   unavailableFields: number;
 };
+
+const MAX_COMPARISON_INSTRUMENTS = 32;
+const MAX_COMPARISON_LIST_ITEMS = 64;
+const MAX_COMPARISON_TEXT_CHARS = 4096;
 
 export function compareRelationshipTerms(
   left: RelationshipTermRecord | undefined,
@@ -82,6 +101,49 @@ export function compareRelationshipTerms(
       identity.asset_reference,
     ]);
   };
+  const compareText = (leftText: string, rightText: string) =>
+    leftText === rightText ? 0 : leftText < rightText ? -1 : 1;
+  const sortedJson = <T>(items: T[]): string | null => {
+    if (!items.length || items.length > MAX_COMPARISON_LIST_ITEMS) return null;
+    const serialized = JSON.stringify(
+      [...items].sort((leftItem, rightItem) =>
+        compareText(JSON.stringify(leftItem) ?? '', JSON.stringify(rightItem) ?? ''),
+      ),
+    );
+    return serialized && serialized.length <= MAX_COMPARISON_TEXT_CHARS ? serialized : null;
+  };
+  const instrumentValues = (
+    instruments: InstrumentTermRecord[] | undefined,
+    select: (instrument: InstrumentTermRecord) => string | null,
+  ): string | null => {
+    if (!instruments?.length || instruments.length > MAX_COMPARISON_INSTRUMENTS) {
+      return null;
+    }
+    const entries: { key: string; value: string }[] = [];
+    for (const instrument of instruments) {
+      const key = instrument.outcome_id?.trim() || instrument.label.trim();
+      const value = select(instrument);
+      if (!key || !value?.trim()) return null;
+      entries.push({ key, value });
+    }
+    entries.sort(
+      (leftEntry, rightEntry) =>
+        compareText(leftEntry.key, rightEntry.key) ||
+        compareText(leftEntry.value, rightEntry.value),
+    );
+    const serialized = JSON.stringify(entries.map(({ key, value }) => [key, value]));
+    return serialized.length <= MAX_COMPARISON_TEXT_CHARS ? serialized : null;
+  };
+  const priceIncrementRangesKey = (instrument: InstrumentTermRecord): string | null => {
+    const ranges = instrument.price_increment_ranges;
+    if (!ranges?.length || ranges.length > MAX_COMPARISON_LIST_ITEMS) return null;
+    return sortedJson(ranges.map(({ start, end, step }) => [start, end, step]));
+  };
+  const payoutVectorKey = (instrument: InstrumentTermRecord): string | null => {
+    const payouts = instrument.payouts;
+    if (!payouts?.length || payouts.length > MAX_COMPARISON_LIST_ITEMS) return null;
+    return sortedJson(payouts.map(({ state_id, amount }) => [state_id, amount]));
+  };
 
   compare('Instrument type', left.market_kind, right.market_kind);
   compare('Lifecycle', left.lifecycle, right.lifecycle);
@@ -97,6 +159,72 @@ export function compareRelationshipTerms(
   compare('Payoff verification', String(left.payoff.verified), String(right.payoff.verified));
   compare('Outcome coverage', String(left.payoff.exhaustive), String(right.payoff.exhaustive));
   compare('Payout currency', left.payoff.payout_currency, right.payoff.payout_currency);
+  if (left.instruments !== undefined || right.instruments !== undefined) {
+    compare(
+      'Instrument count',
+      left.instruments?.length ? String(left.instruments.length) : null,
+      right.instruments?.length ? String(right.instruments.length) : null,
+    );
+    compare(
+      'Instrument outcome identifiers',
+      instrumentValues(left.instruments, (instrument) => instrument.outcome_id),
+      instrumentValues(right.instruments, (instrument) => instrument.outcome_id),
+    );
+    compare(
+      'Instrument labels',
+      instrumentValues(left.instruments, (instrument) => instrument.label),
+      instrumentValues(right.instruments, (instrument) => instrument.label),
+    );
+    compare(
+      'Instrument quantity units',
+      instrumentValues(left.instruments, (instrument) => instrument.quantity_unit ?? null),
+      instrumentValues(right.instruments, (instrument) => instrument.quantity_unit ?? null),
+    );
+    compare(
+      'Instrument quote currencies',
+      instrumentValues(left.instruments, (instrument) => instrument.price_currency ?? null),
+      instrumentValues(right.instruments, (instrument) => instrument.price_currency ?? null),
+    );
+    compare(
+      'Instrument quote asset identities',
+      instrumentValues(left.instruments, (instrument) =>
+        identityKey(instrument.price_currency_identity),
+      ),
+      instrumentValues(right.instruments, (instrument) =>
+        identityKey(instrument.price_currency_identity),
+      ),
+    );
+    compare(
+      'Instrument tick sizes',
+      instrumentValues(left.instruments, (instrument) => instrument.tick_size ?? null),
+      instrumentValues(right.instruments, (instrument) => instrument.tick_size ?? null),
+    );
+    compare(
+      'Instrument price increment ranges',
+      instrumentValues(left.instruments, priceIncrementRangesKey),
+      instrumentValues(right.instruments, priceIncrementRangesKey),
+    );
+    compare(
+      'Instrument quantity steps',
+      instrumentValues(left.instruments, (instrument) => instrument.quantity_step ?? null),
+      instrumentValues(right.instruments, (instrument) => instrument.quantity_step ?? null),
+    );
+    compare(
+      'Instrument minimum quantities',
+      instrumentValues(left.instruments, (instrument) => instrument.minimum_quantity ?? null),
+      instrumentValues(right.instruments, (instrument) => instrument.minimum_quantity ?? null),
+    );
+    compare(
+      'Instrument minimum notionals',
+      instrumentValues(left.instruments, (instrument) => instrument.minimum_notional ?? null),
+      instrumentValues(right.instruments, (instrument) => instrument.minimum_notional ?? null),
+    );
+    compare(
+      'Instrument payout vectors',
+      instrumentValues(left.instruments, payoutVectorKey),
+      instrumentValues(right.instruments, payoutVectorKey),
+    );
+  }
   compare('Settlement asset', left.settlement_asset, right.settlement_asset);
   compare(
     'Market settlement identity',

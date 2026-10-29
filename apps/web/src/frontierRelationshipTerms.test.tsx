@@ -52,6 +52,50 @@ const contract = (overrides: Partial<RelationshipTermRecord> = {}): Relationship
     effective_at_utc: '2026-10-29T00:00:00Z',
     expires_at_utc: '2026-11-29T00:00:00Z',
   },
+  instruments: [
+    {
+      outcome_id: 'no',
+      label: 'No',
+      quantity_unit: 'contract',
+      price_currency: 'USD',
+      price_currency_identity: {
+        kind: 'fiat',
+        code: 'USD',
+        network_id: null,
+        asset_reference: null,
+      },
+      tick_size: '0.01',
+      price_increment_ranges: [{ start: '0', end: '1', step: '0.01' }],
+      quantity_step: '1',
+      minimum_quantity: '1',
+      minimum_notional: '1',
+      payouts: [
+        { state_id: 'no', amount: '1' },
+        { state_id: 'yes', amount: '0' },
+      ],
+    },
+    {
+      outcome_id: 'yes',
+      label: 'Yes',
+      quantity_unit: 'contract',
+      price_currency: 'USD',
+      price_currency_identity: {
+        kind: 'fiat',
+        code: 'USD',
+        network_id: null,
+        asset_reference: null,
+      },
+      tick_size: '0.01',
+      price_increment_ranges: [{ start: '0', end: '1', step: '0.01' }],
+      quantity_step: '1',
+      minimum_quantity: '1',
+      minimum_notional: '1',
+      payouts: [
+        { state_id: 'no', amount: '0' },
+        { state_id: 'yes', amount: '1' },
+      ],
+    },
+  ],
   ...overrides,
 });
 
@@ -138,6 +182,98 @@ it('separates nominal currency codes from asset identity and fee evidence terms'
       'Fee evidence hash',
     ]),
   );
+});
+
+it('compares instrument quote identity, trading constraints, and complete payout vectors', () => {
+  const left = contract();
+  const right = contract({
+    instruments: left.instruments?.map((instrument) => ({
+      ...instrument,
+      price_currency_identity: {
+        kind: 'token',
+        code: 'USD',
+        network_id: 'eip155:137',
+        asset_reference: `0x${'a'.repeat(40)}`,
+      },
+      quantity_step: '0.5',
+      payouts:
+        instrument.outcome_id === 'yes'
+          ? [
+              { state_id: 'yes', amount: '0.99' },
+              { state_id: 'no', amount: '0' },
+            ]
+          : instrument.payouts,
+    })),
+  });
+
+  const comparison = compareRelationshipTerms(left, right);
+  const fields = comparison.differences.map(({ field }) => field);
+
+  expect(fields).toEqual(
+    expect.arrayContaining([
+      'Instrument quote asset identities',
+      'Instrument quantity steps',
+      'Instrument payout vectors',
+    ]),
+  );
+});
+
+it('keeps partial instrument metadata unavailable instead of treating it as a match', () => {
+  const left = contract();
+  const right = contract({
+    instruments: left.instruments?.map((instrument, index) =>
+      index === 0 ? { ...instrument, price_currency_identity: null } : instrument,
+    ),
+  });
+
+  const comparison = compareRelationshipTerms(left, right);
+
+  expect(
+    comparison.differences.some(({ field }) => field === 'Instrument quote asset identities'),
+  ).toBe(false);
+  expect(comparison.unavailableFields).toBe(1);
+});
+
+it('normalizes instrument ordering and refuses oversized detail summaries', () => {
+  const left = contract();
+  const reordered = contract({
+    instruments: left.instruments
+      ?.map((instrument) => ({
+        ...instrument,
+        price_increment_ranges: [...(instrument.price_increment_ranges ?? [])].reverse(),
+        payouts: [...(instrument.payouts ?? [])].reverse(),
+      }))
+      .reverse(),
+  });
+  expect(compareRelationshipTerms(left, reordered).differences).toEqual([]);
+
+  const oversized = contract({
+    instruments: Array.from({ length: 33 }, (_, index) => ({
+      ...left.instruments![index % left.instruments!.length]!,
+      outcome_id: `outcome-${index}`,
+    })),
+  });
+  const comparison = compareRelationshipTerms(oversized, oversized);
+
+  expect(comparison.differences.some(({ field }) => field === 'Instrument payout vectors')).toBe(
+    false,
+  );
+  expect(comparison.unavailableFields).toBeGreaterThan(0);
+
+  const oversizedPayouts = contract({
+    instruments: left.instruments?.map((instrument) => ({
+      ...instrument,
+      payouts: Array.from({ length: 65 }, (_, index) => ({
+        state_id: `state-${index}`,
+        amount: '1',
+      })),
+    })),
+  });
+  const payoutComparison = compareRelationshipTerms(oversizedPayouts, oversizedPayouts);
+  expect(
+    payoutComparison.differences.some(({ field }) => field === 'Instrument payout vectors'),
+  ).toBe(false);
+  expect(payoutComparison.unavailableFields).toBeGreaterThan(0);
 });
 
 it('makes the comparison unavailable when one market is outside the loaded graph window', () => {
