@@ -13521,9 +13521,10 @@ MiB `MemoryMax`, zero swap, and 25% CPU. The production Vite build completed
 successfully in 46.58 seconds after transforming 2,230 modules; it ran with
 768 MiB `MemoryHigh`, 896 MiB `MemoryMax`, zero swap, and 25% CPU. Vite emitted
 the existing Chart chunk size advisory (544.51 kB, 186.79 kB gzip). No live
-source or API call was involved. The saved-timeline browser path remains
-unverified; the focused Vitest test is the current evidence for the timing
-table.
+source or API call was involved. At this checkpoint the saved-timeline browser
+path remained unverified; a fixture-backed browser case is recorded in the
+follow-up below. This fixture validates UI rendering only, not live capture or
+stored-artifact end-to-end recovery.
 
 At 03:32, host PSI and user-manager PSI were zero and MemAvailable was about
 10 GiB, while swap remained effectively full (4,192,968/4,194,300 kB). The
@@ -13541,3 +13542,59 @@ suites, concurrent research, or long experiments while swap remains full and
 the aggregate user manager has no memory ceiling. Historical incident cause
 and long-duration stability remain unresolved; Frontier overall remains
 PARTIALLY VERIFIED.
+
+## Fixture-backed timeline browser verification — 2026-10-29 03:38 CET
+
+Added a Playwright case that loads a completed timeline through explicit
+fixture routes in an isolated test run. It expands the saved frame and checks
+the per-instrument table's receipt age, received and exchange timestamps,
+timestamp meaning, clock uncertainty, and freshness limit. It passed **1/1 in
+12.3 seconds** (32.8 seconds including web-server startup/shutdown) in a
+single-worker 1,280 MiB max, zero-swap, 25%-CPU scope. The test also asserts
+there were no source-probe requests or Arena job submissions. The first test
+attempt omitted the user action that expands a collapsed frame; after adding
+that action, the test passed. This is fixture-backed UI evidence, not evidence
+that a recorded live artifact was retrieved or verified by the production API.
+
+The post-test host sample at 03:37:53 remained at zero memory PSI with about
+10 GiB available and swap still effectively full. User-manager OOM counters
+remained 19/15; API and Reality remained active with restart counts 9/14.
+Reality briefly reported `AWAITING_DATA`/stale with zero fresh books; the next
+status read returned to `active_receiving` with 16 fresh books and no
+backpressure. The collector was not restarted. Its sequence remains
+unverified. This brief source-freshness transition has no corresponding OOM
+event and is recorded separately from the host memory incident.
+
+## Scheduled source-analysis sample — 2026-10-29 03:41 CET
+
+A 35-second, five-second-interval read-only host/cgroup sample ran in a
+transient 256 MiB `MemoryHigh`, 384 MiB `MemoryMax`, zero-swap, 25%-CPU scope.
+Host and user-manager PSI stayed at zero, `MemAvailable` stayed above 11.3
+million kB, and swap counters did not move. User-manager OOM counters remained
+19/15. The randomized source-analysis timer started at 03:40:42, near the
+sample's end, and completed at 03:40:51 after processing 60 segments with
+none pending (8.371 CPU seconds). One sample recorded 44,097,536 bytes and
+zero swap in the service cgroup; neither systemd nor this sampling window
+retained its peak. This brief observation found no pressure or timer overlap,
+but it is not a peak-memory measurement or an explanation of the October 28
+OOM workload.
+
+## Post-browser resource validation — 2026-10-29 03:44 CET
+
+The E2E file's strict TypeScript check passes under a 512 MiB high / 640 MiB
+max, zero-swap, 25%-CPU scope after replacing a callback-captured request local
+with a mutable holder. The prior request-body checks remain intact. Prettier
+passes. The saved price-history action case and fixture timeline timing-table
+case passed **2/2 in 47.0 seconds** in a single-worker 1 GiB high / 1,280 MiB
+max, zero-swap, 25%-CPU scope with a 180-second bound. Fixture routes served
+venue data; the new timeline case verified zero probe requests and zero Arena
+submissions. This verifies browser rendering for the saved timeline shape, not
+live capture or production artifact retrieval.
+
+At 03:43:49 the host had about 10 GiB available and zero memory PSI, while
+swap remained effectively full (about 1.4 MiB free). User-manager OOM
+counters remained 19/15; API and Reality were active at restart counts 9/14. Reality status at
+03:43:43 showed active receiving, 16 fresh books, no failures/backpressure,
+and `sequence_verified=false`. No OOMd or kernel OOM appeared after Oct 28
+23:43:24. Continue only with serial bounded offline Frontier work. The host
+incident and Frontier overall remain **PARTIALLY VERIFIED**.

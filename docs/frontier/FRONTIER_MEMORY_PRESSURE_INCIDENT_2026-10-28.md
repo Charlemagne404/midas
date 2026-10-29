@@ -3,7 +3,7 @@
 **Incident date:** 2026-10-28 (CET)
 
 **Initial checkpoint:** 2026-10-29 01:54 CET; append-only follow-up observations
-through 2026-10-29 03:33 CET are recorded below.
+through 2026-10-29 03:44 CET are recorded below.
 
 **Scope:** Host reliability interruption during Project Frontier
 
@@ -1463,3 +1463,92 @@ under a 768/896 MiB, zero-swap, 25% CPU scope. It emitted the existing
 These checks were serialized and did not produce a new OOM event. Continue
 only with similarly bounded work; production readiness and the historical
 pressure source remain unresolved.
+
+### Fixture-backed timeline browser check and collector point check — 03:38 CET
+
+The focused Playwright case for the saved timeline timing table passed 1/1 in
+12.3 seconds (32.8 seconds including isolated server startup and shutdown).
+It used a new `/tmp/midas-browser-*` fixture root and a transient systemd scope
+with 1 GiB `MemoryHigh`, 1,280 MiB `MemoryMax`, zero swap, 25% CPU, 192 tasks,
+and a 180-second timeout. The first attempt showed that the UI correctly
+collapses frame details by default; the test now opens the frame before
+checking receipt age, exchange time and meaning, clock uncertainty, and the
+freshness limit. It asserted zero source-probe requests and zero Arena POSTs.
+No production API, public source, or saved MIDAS/Reality data was used.
+
+At 03:37:53, host PSI remained zero, MemAvailable was about 10 GiB, and swap
+was still 4,192,968/4,194,300 kB used. User-manager OOM counters remained
+`oom=19`/`oom_kill=15`; its charge was 8,136,388,608 bytes memory and
+2,864,861,184 bytes swap. The scope completed without OOM; no oomd or kernel
+OOM record appeared. API and Reality remained active at restart counts 9/14,
+with zero swap. No queued user-manager job was present after the test.
+
+One status read around 03:37 reported `AWAITING_DATA`, `collection_health=stale`,
+and zero fresh books. A subsequent read at 03:38:08 reported
+`RECORDING_UNSEQUENCED`, `active_receiving`, 16 fresh books,
+`sequence_verified=false`, no failures, and no backpressure; an `.open`
+recording segment had mtime 03:38:09. The collector sets `AWAITING_DATA` after
+subscribing while it awaits initial snapshots, so this sequence is consistent
+with a short resubscription/data gap. Its trigger is unknown. The process PID,
+service state, and restart count did not change, and no OOM event coincided
+with it. Do not restart or reconfigure Reality; keep source freshness and
+sequence verification as separate open quality checks.
+
+### Short sampler around the existing source-analysis timer — 03:41 CET
+
+Ran the existing read-only `scripts/host_capacity_sample.py` for 35 seconds
+with five-second intervals under a transient 256 MiB `MemoryHigh`, 384 MiB
+`MemoryMax`, zero-swap, 25%-CPU, 64-task scope. It recorded eight snapshots
+from 03:40:08 through 03:40:43 in
+`/tmp/frontier-host-pressure-20261029-0340.jsonl` (3,979,630 bytes). The
+Veritas source-analysis timer was later than the predicted next-elapse value:
+it started at 03:40:42 and finished at 03:40:51, after most of the sample
+window. Only one sample captured the service (44,097,536 bytes, zero swap), so
+this run does not measure its peak memory.
+
+Across all eight snapshots host and user-manager memory PSI remained zero,
+`MemAvailable` stayed above 11.3 million kB, swap free stayed at 1,356 kB,
+`pswpin`/`pswpout` counters did not move, user-manager swap remained
+2,864,861,184 bytes, and `oom=19`/`oom_kill=15` were unchanged. The source
+analysis then completed successfully at 03:40:51, processed 60 segments with
+zero pending segments/bytes, used 8.371 CPU seconds, and reported
+`awaiting_finalized_campaign_window_end`. No OOMd or kernel OOM record
+appeared through 03:41. This establishes no pressure during this short window;
+it does not identify the October 28 workload mix or validate a full peak for
+this service. Timer overlap was not observed in this interval.
+
+### Post-browser-check resource state — 2026-10-29 03:44 CET
+
+The E2E TypeScript file now passes a targeted strict `tsc --noEmit` check
+under a transient 512 MiB `MemoryHigh`, 640 MiB `MemoryMax`, zero-swap,
+25%-CPU scope. That check exposed a pre-existing control-flow narrowing issue
+in the price-history E2E capture variable; converting it to a mutable holder
+preserved the assertions and made the existing case type-check. Prettier
+passes for the file. The price-history user-action case and the new timeline
+timing-table case then passed **2/2 in 47.0 seconds** with one Playwright
+worker under a 1 GiB `MemoryHigh`, 1,280 MiB `MemoryMax`, zero-swap, 25%-CPU
+scope and 180-second timeout. Venue data was served by test fixtures; no live
+exchange source was called. The timeline case asserted zero source probes and
+zero Arena submissions.
+
+At 03:43:49, host `MemAvailable` was about 10 GiB and PSI remained zero; swap
+was still effectively full, with `free` showing about 1.4 MiB free. The user
+manager charged 8,166,600,704 bytes memory and 2,864,803,840 bytes swap. Its event counts
+remained `high=16,417,339`, `max=730,045`, `oom=19`, and `oom_kill=15`. No new
+oomd or kernel OOM appeared after Oct 28 23:43:24. API and Reality were active
+at restart counts 9 and 14 with zero swap. Reality's 03:43:43 status reported
+`RECORDING_UNSEQUENCED`, `active_receiving`, 16 fresh books, zero failures,
+and no backpressure; `sequence_verified` remains false. The same collector
+PID persisted and a fresh `.open` segment was updated at 03:43:41.
+
+This supports resuming serial, bounded, offline Frontier implementation and
+verification. It does not close the host incident: swap is almost exhausted,
+the user manager remains unbounded, the initiating workload remains unknown,
+and brief pressure-free samples do not establish endurance. Broad suites,
+concurrent research, long experiments, and any production change remain
+deferred.
+
+At 03:44:14, `/proc/swaps` read 4,192,872 kB used of 4,194,300 kB with
+1,428 kB free; `MemAvailable` was 11,387,008 kB and PSI remained zero. User
+manager OOM counters were unchanged, and no OOMd or kernel OOM appeared since
+the 03:43:49 check.

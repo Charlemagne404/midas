@@ -12928,3 +12928,62 @@ the existing 544.51 kB Chart chunk advisory. No broad suite or live source
 probe was run in this incident follow-up. Resume Frontier in serial,
 resource-limited offline steps; keep broad regression, long experiments, live
 source use, and any production or aggregate OOM-policy change gated.
+
+### Saved-timeline browser check and collector point state — 2026-10-29 03:38 CET
+
+Added one fixture-backed Playwright test for the saved timeline timing table.
+It passed **1/1 in 12.3 seconds** (32.8 seconds including server startup and
+shutdown) in a single-worker scope bounded to 1 GiB `MemoryHigh`, 1,280 MiB
+`MemoryMax`, zero swap, 25% CPU, and a 180-second timeout. It reads one
+synthetic fixture timeline through route interception, expands the collapsed
+frame, and checks receipt age, exchange timestamp/meaning, clock uncertainty,
+and freshness limit. It asserted zero public probe requests and zero Arena
+submissions. This is UI fixture verification, not a live stored-artifact test.
+The first attempt failed only because the frame details were collapsed; the
+test now performs that UI action.
+
+At 03:37:53 host PSI was zero, MemAvailable was about 10 GiB, and swap remained
+99.97% occupied. OOM counters remained 19/15, with no new oomd/kernel OOM; API
+and Reality stayed active at restarts 9/14. One Reality status read showed
+`AWAITING_DATA`/stale/zero fresh books, followed about 15 seconds later by
+`active_receiving`, 16 fresh books, no failures/backpressure, and a newly
+written `.open` segment. The collector source marks `AWAITING_DATA` directly
+after subscription until initial snapshots arrive; the triggering cause is
+unknown. PID and restart count stayed fixed. Do not restart the collector;
+source quality and sequence verification remain independent gates.
+
+The bounded next diagnostic was one 35-second host/per-cgroup sample around
+the Veritas source-analysis timer, using the read-only
+`scripts/host_capacity_sample.py` in a transient 256/384 MiB, zero-swap,
+25%-CPU scope; no persistent monitor was added. The capture completed, but the
+service's randomized timer start was
+03:40:42 and most samples preceded it. Eight snapshots through 03:40:43 showed
+zero host/user PSI, no swap-counter movement, unchanged `oom=19`/`oom_kill=15`,
+and `MemAvailable` above 11.3 million kB. Only one sample saw source analysis
+at 44,097,536 bytes and zero swap, so no peak is claimed. The job then exited
+successfully at 03:40:51 after processing 60 segments with none pending; it
+used 8.371 CPU seconds. The run did not cause observed pressure, but this is a
+short interval and not historical attribution or a full peak measurement.
+No timer or service setting was changed.
+
+### Post-browser validation checkpoint — 2026-10-29 03:44 CET
+
+The strict TypeScript check for `apps/web/e2e/frontier.spec.ts` passed after a
+type-safe mutable-holder correction for an existing callback-captured request
+variable; its value assertions were preserved. Prettier passed. The saved
+price-history action case plus the fixture timeline timing-view case passed
+**2/2 in 47.0 seconds**, one worker, under 1 GiB high / 1,280 MiB max, zero
+swap, 25% CPU, and a 180-second timeout. The API/browser data were fixture
+responses; no live source or production API was used. The new test asserts no
+public probe request and no Arena submission.
+
+The 03:43:49 host read remained at zero PSI and about 10 GiB MemAvailable,
+with swap still effectively full (about 1.4 MiB free). User-manager
+`oom=19`/`oom_kill=15` were unchanged; API/Reality were active at restart counts
+9/14, and Reality's
+03:43 status reported active receiving with 16 fresh books, no failures or
+backpressure. Its sequence remains unverified. No OOMd or kernel OOM appeared
+after Oct 28 23:43:24. The host is suitable for serial, bounded, offline
+Frontier work only; full swap, unbounded user-manager usage, and historical
+OOM initiator remain unresolved. Overall Frontier status remains
+**PARTIALLY VERIFIED**.

@@ -78,7 +78,7 @@ test('saved Polymarket price samples replay only after explicit user actions', a
   let captureRequests = 0;
   let replayRequests = 0;
   let probeRequests = 0;
-  let captureRequest: Record<string, unknown> | null = null;
+  const captureRequest: { current: Record<string, unknown> | null } = { current: null };
   let replayRequest: Record<string, unknown> | null = null;
   const capturedHistoryId = 'e'.repeat(64);
   const secondHistoryId = '6'.repeat(64);
@@ -224,8 +224,8 @@ test('saved Polymarket price samples replay only after explicit user actions', a
   });
   await page.route('**/api/frontier/probe/polymarket/price-history', async (route) => {
     captureRequests += 1;
-    captureRequest = route.request().postDataJSON() as Record<string, unknown>;
-    const body = captureRequest;
+    captureRequest.current = route.request().postDataJSON() as Record<string, unknown>;
+    const body = captureRequest.current;
     const series = {
       venue: 'polymarket',
       native_instrument_id: body.native_instrument_id,
@@ -355,14 +355,14 @@ test('saved Polymarket price samples replay only after explicit user actions', a
   await page.getByRole('button', { name: 'Capture one series' }).click();
   await expect(page.getByText('0.42', { exact: true })).toBeVisible();
   expect(captureRequests).toBe(1);
-  expect(captureRequest).toMatchObject({
+  expect(captureRequest.current).toMatchObject({
     native_instrument_id: '123456789',
     interval: '1d',
     fidelity_minutes: 60,
   });
-  expect(Number(captureRequest?.end_ts) - Number(captureRequest?.start_ts)).toBeLessThanOrEqual(
-    7 * 24 * 60 * 60,
-  );
+  expect(
+    Number(captureRequest.current?.end_ts) - Number(captureRequest.current?.start_ts),
+  ).toBeLessThanOrEqual(7 * 24 * 60 * 60);
 
   await page.getByRole('button', { name: 'Replay saved series' }).click();
   await expect(page.getByText('Deterministic source-sample replay')).toBeVisible();
@@ -433,6 +433,129 @@ test('Arena replay history loads without submitting or launching work', async ({
   expect(discoverySubmissions).toBe(0);
   expect(timelineSubmissions).toBe(0);
   expect(sourceProbeRequests).toBe(0);
+});
+
+test('fixture timeline shows per-instrument source timing evidence', async ({ page }) => {
+  const jobId = `job-${'c'.repeat(24)}`;
+  const digest = (character: string) => character.repeat(64);
+  let sourceProbeRequests = 0;
+  let arenaSubmissions = 0;
+  page.on('request', (request) => {
+    if (request.url().includes('/api/frontier/probe/')) sourceProbeRequests += 1;
+    if (request.method() === 'POST' && request.url().includes('/api/arena/')) arenaSubmissions += 1;
+  });
+
+  await page.route('**/api/arena/frontier-timelines?limit=20', async (route) => {
+    await route.fulfill({
+      json: {
+        items: [
+          {
+            job_id: jobId,
+            state: 'COMPLETED',
+            created_at: 1793232000,
+            updated_at: 1793232001,
+            elapsed_seconds: 0.75,
+            progress: null,
+            phase: null,
+            error: null,
+            snapshot_id: 'snapshot-fixture',
+            snapshot_sha256: digest('a'),
+            runtime_profile: null,
+            result: {
+              timeline_id: 'timeline-fixture',
+              frontier_timeline_sha256: digest('b'),
+            },
+          },
+        ],
+        limit: 20,
+        scanned: 1,
+        scan_bound: 200,
+        scan_may_be_incomplete: false,
+        research_only: true,
+      },
+    });
+  });
+  await page.route(`**/api/arena/jobs/${jobId}/frontier-timeline`, async (route) => {
+    await route.fulfill({
+      json: {
+        artifact: {
+          snapshot_id: 'snapshot-fixture',
+          snapshot_sha256: digest('a'),
+          result_sha256: digest('b'),
+          timeline: {
+            timeline_id: 'timeline-fixture',
+            result_sha256: digest('b'),
+            manifest: {
+              code_version: 'frontier-e2e-fixture-v1',
+              input_sha256: digest('c'),
+              market_observation_ids: [digest('d')],
+              book_observation_ids: [digest('e')],
+              relationship_ids: [],
+              source_status_sha256s: [],
+              evaluation_times_utc: ['2026-10-29T00:00:00Z'],
+              max_book_age_ms: 2000,
+            },
+            frames: [
+              {
+                as_of_utc: '2026-10-29T00:00:00Z',
+                replay_run_id: 'run-fixture',
+                replay_result_sha256: digest('f'),
+                fresh_book_count: 1,
+                included_book_count: 1,
+                stale_book_count: 0,
+                not_yet_observed_count: 0,
+                excluded_source_book_count: 0,
+                source_states: [],
+                instrument_states: [
+                  {
+                    market_id: 'polymarket:fixture-event',
+                    venue: 'polymarket',
+                    native_market_id: 'fixture-event',
+                    native_instrument_id: 'fixture-token',
+                    book_state: 'fresh',
+                    exclusion: 'none',
+                    included_in_replay: true,
+                    observation_id: digest('e'),
+                    received_at_utc: '2026-10-28T23:59:59.999Z',
+                    age_ms: 1,
+                    exchange_timestamp_utc: '2026-10-28T23:59:59.990Z',
+                    exchange_timestamp_semantics: 'Fixture venue update time',
+                    clock_uncertainty_ms: '3.2',
+                    freshness_limit_ms: 2000,
+                  },
+                ],
+                candidate_count: 0,
+                classification_counts: {},
+                candidates: [],
+              },
+            ],
+          },
+        },
+        research_only: true,
+        orders_submitted: false,
+        authenticated_requests: false,
+        integrity_verified: true,
+      },
+    });
+  });
+
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Frontier', exact: true }).click();
+  await page.getByRole('button', { name: 'Replay & readiness', exact: true }).click();
+  const timelineTable = page.getByRole('table', { name: 'Per-instrument source timing evidence' });
+  await page.locator('.fr-timeline-frame summary').click();
+  await expect(timelineTable).toBeVisible();
+  const instrumentRow = timelineTable.getByRole('row').nth(1);
+  await expect(instrumentRow).toContainText('fixture-event');
+  await expect(instrumentRow).toContainText('fixture-token');
+  await expect(instrumentRow).toContainText('1 ms');
+  await expect(instrumentRow).toContainText('2026-10-28T23:59:59.999Z');
+  await expect(instrumentRow).toContainText('2026-10-28T23:59:59.990Z');
+  await expect(instrumentRow).toContainText('3.2 ms');
+  await expect(instrumentRow).toContainText('2,000 ms');
+  await expect(instrumentRow).toContainText('Fixture venue update time');
+  expect(sourceProbeRequests).toBe(0);
+  expect(arenaSubmissions).toBe(0);
 });
 
 test('saved Arena discovery artifact exposes scoped candidate evidence', async ({ page }) => {
