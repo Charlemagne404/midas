@@ -1,5 +1,20 @@
 # Project Frontier Mission Ledger
 
+## Current host state — 2026-10-29 01:01 CET
+
+The 01:00 Veritas observation completed in 12.1 seconds at a 30.3 MiB peak,
+with no swap, cgroup PSI, or OOM. One candidate unit fixture,
+`test_archive_capacity_does_not_parse_an_oversized_manifest`, then passed in
+1.01 seconds under a transient 384 MiB hard cap, zero swap, 25% CPU quota,
+16-task limit, and a 20-second timeout. The transient scope's peak was not
+retained after cleanup. Post-test host available memory was 9.8 GiB, short PSI
+was zero, and OOM counters were unchanged.
+
+The broad runtime gate remains closed. Reality and API remain near their
+`MemoryHigh` limits; Reality status is still stale. The 160 MiB capacity soft
+limit has not yet been validated. Keep full tests, replay, probes, and batches
+paused until the 01:16 capacity run and fresh Reality recovery evidence.
+
 ## Current host state — 2026-10-29 00:54 CET
 
 At 00:54:24, host PSI avg300 was `some=0.62%` / `full=0.39%`, available
