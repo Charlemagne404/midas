@@ -14761,3 +14761,27 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
   after fresh host admission samples. Broad suites, live probes, and production
   deployment remain deferred. Host incident disposition remains
   **PARTIALLY CONTAINED / PARTIALLY VERIFIED**.
+
+## 2026-10-29 12:58 CET — verify raw price history and bound timestamps
+
+- Commit `1e242a4` re-decodes the exact bounded CLOB raw response during replay,
+  verifies request query fields, rejects duplicate JSON keys/constants, checks
+  source timestamps and Decimal prices against normalized points, and validates
+  bound market batch/member venue consistency. It also checks extreme integral
+  Decimal timestamps against the request window before integer conversion in
+  both capture normalization and replay. Legacy unbound samples remain
+  explicitly unbound and produce no market relationship or candidate.
+- Rehashed normalized-price and mixed-venue-parent rows fail closed with HTTP
+  409. The adapter rejects `1e1000000000` during capture normalization, and
+  replay validation rejects the same value before integer conversion. The
+  focused group passed **3/3 in 8.69 s** under a 512 MiB high / 640 MiB max,
+  zero-swap, 20%-CPU, 128-task scope. Ruff check/format passed; the existing
+  Starlette/httpx warning remains. No network or production store was used.
+- At 12:58, `MemAvailable` was about 10 GiB, swap free about 14 MiB, and PSI
+  zero. User-slice OOM counters remained 19/15/0; API, Reality, and Reality API
+  were active at restart counts 9/14/0. The scheduled capacity run passed at
+  12:49 with a 130.5 MiB peak and zero swap. Global pressure attribution,
+  full-swap risk, and durable recovery remain unresolved.
+- **Status:** Source-to-normalized history replay validation is
+  fixture-verified. Live/production-source evidence and broad acceptance
+  remain pending. Continue serial bounded offline Frontier work only.

@@ -2,7 +2,7 @@
 
 **Report date:** 2026-10-29
 
-## Current completion matrix — 2026-10-29 11:34 CET
+## Current completion matrix — 2026-10-29 12:58 CET
 
 This is a current evidence classification, not a final completion claim. The
 dated implementation records below remain the detailed evidence; the
@@ -19,14 +19,14 @@ it made no endpoint requests and does not change source-use holds.
 | Relationship graph, evidence binding, and review | PARTIALLY VERIFIED | Deterministic fixture relationships and pinned evidence are covered; typed entity context v2 exposes clipped display fields explicitly and preserves source records. The centered graph API fixture pins the returned model version to the shared v2 constant. A live cross-venue economic equivalence is not established. |
 | Candidate discovery and independent economic verification | PARTIALLY VERIFIED | Bounded mathematical fixtures and independent audits pass selected checks; joint-state basket, audit, and deterministic replay tests pass 14/14; paired replay acceptance passes 4/4; deterministic three-scope discovery comparison passes 1/1 with candidates only in the fixture-verified cross-venue arm; source-outage invalidation and deterministic/tamper-evident timeline checks pass 2/2; source-clock/freshness, receipt-time ordering, and no-lookahead relationship checks pass 3/3; text-only hypothesis, settlement-authority/currency, and spot-versus-prediction rejection checks pass 5/5; implication-direction, fee, stale-leg, settlement-time, and cutoff checks pass 5/5; multi-outcome tick, hypothetical-classification, and three-leg basket checks pass 3/3. Logical implication and relationship review tests pass 27/27. Receipt age and timestamp/receipt skew now use exact deltas rounded up to milliseconds in both generator and verifier. No live eligible opportunity is demonstrated. |
 | Cross-venue costs, FX, capital, and execution uncertainty | PARTIALLY VERIFIED | Four bounded fixture modules for venue funding/FX, capital carry, Kalshi fees, and logical implications pass 79/79; four additional current-tree capital/FX checks pass 4/4 for venue-separated carry, release delay completeness, fee application across terminal states, and explicit conversion assumptions. Virtual models preserve unknown cost and applicability states; account-specific fees, jurisdiction, transfers, and execution remain unresolved. |
-| Collection, provenance, durable storage, and replay | PARTIALLY VERIFIED | Finite-collection/API fixtures pass 51/51 and the prior storage slice passed 32/32; after schema-v8 graph counters, focused revision/pagination and schema-6/7 migration cases pass 5/5, with older schema-2/4/5 migrations passing 3/3. Recent focused storage-security, graph-revision, collection-safety, and Kraken replay slices passed 2/2, 3/3, 3/3, and 2/2 under zero-swap caps. Timeline replay v3 includes per-instrument receipt time, source timestamp semantics, clock uncertainty, and source freshness limits. Kraken's deterministic book replay pins ordered raw and normalized frame evidence and refuses depth inference for schema-v1 rows. Gemini's parser requires same-instance source metadata; the five-venue storage contract verifies its subsecond timestamp survives hash-pinned persistence/readback. Gemini collection remains blocked by the source-use hold and no Gemini source observation is retained. Sequencing, multi-venue live collection, and archive provenance remain unverified or held. |
+| Collection, provenance, durable storage, and replay | PARTIALLY VERIFIED | Finite-collection/API fixtures pass 51/51 and the prior storage slice passed 32/32; after schema-v8 graph counters, focused revision/pagination and schema-6/7 migration cases pass 5/5, with older schema-2/4/5 migrations passing 3/3. Recent focused storage-security, graph-revision, collection-safety, and Kraken replay slices passed 2/2, 3/3, 3/3, and 2/2 under zero-swap caps. Timeline replay v3 includes per-instrument receipt time, source timestamp semantics, clock uncertainty, and source freshness limits. Kraken's deterministic book replay pins ordered raw and normalized frame evidence and refuses depth inference for schema-v1 rows. Polymarket price-history replay now re-decodes the bounded raw response, checks the exact query and Decimal/timestamp points, validates parent batch/member venues, and range-checks extreme Decimal timestamps before integer conversion; its focused API/adapter slice passes 3/3. Gemini's parser requires same-instance source metadata; the five-venue storage contract verifies its subsecond timestamp survives hash-pinned persistence/readback. Gemini collection remains blocked by the source-use hold and no Gemini source observation is retained. Sequencing, multi-venue live collection, and archive provenance remain unverified or held. |
 | Read-only source network and trading boundary | COMPLETE AND VERIFIED | Bounded HTTP source reads use anonymous, host-allowlisted HTTPS GET with redirects disabled; the separate Polymarket market stream uses one fixed anonymous WSS URL with proxy, retries, and reconnect disabled. The stream defaults off and its fixtures verify the source gates, bounds, and raw evidence path. Adapter boundary fixtures cover credential/mutating clients, cookies, redirects, oversized payloads, and JSON complexity. No exchange order/account path was found in the reviewed Frontier code. |
 | Laboratory/Arena comparisons and bounded orchestration | PARTIALLY VERIFIED | Arena admission and finite scheduling regressions pass; a Laboratory resource-denial case passes with a harness cap above its 722,894,848-byte capacity precondition. Full endurance evidence remains incomplete. |
 | User-cgroup-aware workload admission | IMPLEMENTED, BOUNDED VALIDATION PASSED | Central Arena admission (15), finite schedules (12), and the Laboratory denial case (1) pass fixture tests using user-manager pressure; no runtime deployment occurred. |
 | Source-operation admission telemetry | COMPLETE AND VERIFIED FOR ONE ROUTER INSTANCE | The bounded source gate exposes active venues, admitted totals, and contention rejections by scope with a UTC sample time. The source page can refresh the snapshot. Counters reset with that router and do not aggregate across workers or deployments. |
-| Reality capacity inventory bounds | PARTIALLY VERIFIED | Candidate inventory code remains undeployed. The separate monitor is bounded at MemoryHigh=160M, MemoryMax=192M, and zero swap. Its 10:18 run recorded a 129.4 MiB peak; the 10:48 run exited successfully but did not retain a valid peak. The service still reports archive inventory/provenance limitations, and no archive evidence was altered. |
+| Reality capacity inventory bounds | PARTIALLY VERIFIED | Candidate inventory code remains undeployed. The separate monitor is bounded at MemoryHigh=160M, MemoryMax=192M, and zero swap. Its 12:49 scheduled run exited successfully with a 130.5 MiB peak and zero swap; the service still reports archive inventory/provenance limitations, and no archive evidence was altered. |
 | Native Frontier dashboard | PARTIALLY VERIFIED | The native workspace includes source, coverage, graph, opportunity, replay, and readiness views. The extracted Kalshi fee panel passes 3/3 isolated UI tests; targeted ESLint and Prettier pass. Exact-tree TypeScript, bounded production build, and two offline fixture-backed browser journeys now pass, covering overview responsiveness and saved Polymarket sample replay after explicit user action. Captured-evidence replay and broad integration remain open. |
-| Host reliability containment | PARTIALLY VERIFIED | OOMD's 50%/20s policy monitors user@1000.service pressure; the Oct 28 journal records 129 kills (106 gap-detail), with seven separate kernel memcg OOMs against the capacity job's former 128 MiB cap. Gap-detail remains disabled; capacity remains bounded at 160/192 MiB with zero swap. At 11:34:46, MemAvailable was 10.35 GiB, PSI zero, and SwapFree 12.0 MiB; cumulative OOM counters remained 19/15/0. API/Reality/Reality API remained active at restart counts 9/14/0. No new kernel or oomd kill appeared after 11:18 through 11:34:46. Historical initiating workload and durable recovery remain unresolved. |
+| Host reliability containment | PARTIALLY VERIFIED | OOMD's 50%/20s policy monitors user@1000.service pressure; the Oct 28 journal records 129 kills (106 gap-detail), with seven separate kernel memcg OOMs against the capacity job's former 128 MiB cap. Gap-detail remains disabled; capacity remains bounded at 160/192 MiB with zero swap. At 12:58, MemAvailable was about 10 GiB, PSI zero, and SwapFree about 14 MiB; cumulative OOM counters remained 19/15/0. API/Reality/Reality API remained active at restart counts 9/14/0. No new kernel or oomd kill appeared in the checked interval since 12:49. Historical initiating workload, full-swap risk, and durable recovery remain unresolved. |
 | Node/V8 and Apport side effect | PARTIALLY VERIFIED | The exact-tree frontend TypeScript check now passes with an explicit 384 MiB Node heap under a 512 MiB high / 640 MiB max zero-swap cgroup. Earlier attempts with Node's default heap timed out or exhausted V8 at about 251 MiB; those were process heap failures, not cgroup OOMs. An earlier crash-report upload attempt received HTTP 504; remote receipt remains unknown. |
 | Broad regressions, resource endurance, and performance acceptance | DEFERRED | Selected Python, API, adapter, collection, and economics tests passed under bounded zero-swap scopes. The graph-revision storage/migration cases pass 8/8; API cursor invalidation passes 1/1; four core economics modules pass 79/79; joint-state basket/audit/replay passes 14/14; logical implication/relationship review passes 27/27; transport passes 20/20; readiness resource API passes 7/7 and its focused UI passes 3/3. Ruff check/format, ESLint, Prettier, and strict mypy on the readiness resource module passed under caps. Full MIDAS regression, full browser suite, captured-evidence browser journey, endurance, and broad performance tests remain deferred. |
 | Live multi-venue source authorization and findings | BLOCKED | Kalshi, Kraken, Coinbase, and Gemini probes and retained-data research remain held; the worktree Polymarket probe flag is off. |
@@ -15287,3 +15287,65 @@ At 12:40, `MemAvailable` remained about 10 GiB, swap free about 14 MiB, and
 PSI was zero through avg300. OOM counters were unchanged, and no OOMD/kernel
 kill appeared since 12:38. This short window does not change the partially
 contained host disposition.
+
+### Raw-bound Polymarket price-history replay — 2026-10-29 12:55 CET
+
+Saved price-history replay now checks the exact anonymous CLOB request URL and
+query, re-decodes the complete bounded UTF-8 response, rejects duplicate JSON
+keys and non-standard numeric constants, and compares every source timestamp
+and Decimal price to the normalized series before producing a result. When a
+market binding is present, the API validates it as a `FrontierMarket` or
+`MarketBatch`, checks the source-row, batch, and member venues, and requires the
+native instrument ID. Legacy unbound captures remain visibly unbound and do
+not gain a market relationship or candidate.
+
+The existing fixture-driven capture/replay test now rehashes two tampered rows:
+a normalized price that disagrees with the immutable raw response, and a market
+batch declaring Kalshi while containing Polymarket markets. Both replay
+requests fail closed with HTTP 409; the valid fixture capture still replays
+deterministically. The focused test passed **1/1 in 6.91 seconds** under a
+512 MiB `MemoryHigh` / 640 MiB `MemoryMax`, zero-swap, 20%-CPU, 128-task scope.
+Ruff check and format passed. The test used a temporary SQLite store and mock
+transport; it made no exchange request and did not read production stores.
+
+At 12:55, the host had about 10 GiB `MemAvailable`, 14 MiB free swap, and zero
+PSI through avg300. User-slice counters remained `oom=19`, `oom_kill=15`, and
+`oom_group_kill=0`; API, Reality, and Reality API were active at restart counts
+9/14/0. No OOMd/kernel kill appeared in the checked interval after 12:49. This
+remains short observation only: swap is full, the October 28 initiating global
+workload is unknown, and broad regressions and endurance remain deferred.
+
+| Verification item | Status | Evidence / remaining limit |
+| --- | --- | --- |
+| Raw price-history to normalized-sample integrity | COMPLETE AND VERIFIED FOR THE FIXTURE PATH | Exact query and source points are re-derived from the stored raw body; a rehashed price mismatch is rejected. Production-store behavior remains pending. |
+| Bound market batch venue integrity | COMPLETE AND VERIFIED FOR THE FIXTURE PATH | Mismatched batch/member venue is rejected before replay; no production artifact was queried. |
+| Host incident state after the bounded test | PARTIALLY VERIFIED | Zero PSI and unchanged OOM counters at 12:55, with about 10 GiB available RAM; swap remains full and the test interval is short. |
+| Project Frontier overall | PARTIALLY VERIFIED | Live cross-venue evidence, full acceptance, endurance, protected recovery, and deployment remain open. |
+
+### Extreme Decimal timestamp bound — 2026-10-29 12:58 CET
+
+Review of the raw-replay parser found that a syntactically valid source value
+such as `1e1000000000` could be converted to a huge Python integer before the
+price-history request range check. Both Polymarket capture normalization and
+offline raw-response replay now compare integral Decimal timestamps against
+the bounded request window before integer conversion. Out-of-range exponents
+fail closed without materializing oversized integers.
+
+The focused validation group passed **3/3 in 8.69 seconds**: valid capture
+and replay plus rehashed normalized-price and mixed-venue-parent tampering, an
+adapter response with a huge Decimal timestamp, and direct replay validation
+of the same extreme timestamp. Ruff check and format passed. All source
+responses used mock transports or in-memory fixtures; no exchange or
+production store was accessed.
+
+At 12:58, `MemAvailable` remained about 10 GiB, free swap about 14 MiB, and PSI
+zero through avg300. User-slice OOM counters remained unchanged at 19/15/0;
+API, Reality, and Reality API were active at restart counts 9/14/0. The
+checked journals had no new OOM kill since 12:55. This remains a short sample
+and does not resolve full swap, global cause attribution, or endurance.
+
+| Verification item | Status | Evidence / remaining limit |
+| --- | --- | --- |
+| Extreme Decimal timestamp handling | COMPLETE AND VERIFIED FOR FIXTURE PATH | Capture and replay reject an out-of-window `1e1000000000` timestamp before integer conversion. |
+| Host incident after the bounded three-case group | PARTIALLY VERIFIED | PSI and OOM counters remained unchanged at 12:58; swap is still full and the observation window is short. |
+| Project Frontier overall | PARTIALLY VERIFIED | Live cross-venue evidence, broad acceptance, endurance, recovery, and deployment remain open. |

@@ -253,8 +253,15 @@ Price history uses a dedicated descriptive replay path rather than the market,
 book, and candidate replay contract. A caller selects one to eight stored
 `historical_price_points` observation IDs. Before computation, the API validates
 the stored raw/normalized row hashes, venue, raw-body hash, receipt timestamp,
-and (when present) the bound market observation and its native instrument.
-`deterministic_price_history_replay` sorts the exact source records, hashes the
+and (when present) the bound market observation, its declared/member venue, and
+its native instrument. Before replay, the API re-decodes the bounded raw CLOB
+response, checks its exact instrument/window query, and requires every raw
+timestamp and Decimal price to match the normalized points. Duplicate JSON
+keys, non-standard numeric constants, malformed URLs, and mismatched samples
+are rejected. Decimal timestamps are checked against the requested window
+before integer conversion, so extreme exponents are rejected without
+materializing oversized integers. `deterministic_price_history_replay` sorts
+the exact source records, hashes the
 normalized inputs with its replay and backend-code versions, and produces one
 append-only result keyed by that pinned input manifest. It reports returned
 point count, sampled Decimal minimum and maximum, first/last point timestamps,

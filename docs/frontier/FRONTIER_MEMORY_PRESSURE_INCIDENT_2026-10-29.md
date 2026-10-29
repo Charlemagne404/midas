@@ -2757,3 +2757,39 @@ critical services were active in the checked scopes. Full swap and the
 unidentified initiating global workload mix remain open. Continue Frontier
 only with serial offline work and fresh admission samples; broad suites, live
 probes, and production deployment remain deferred.
+
+## Post-replay bounded validation sample — 2026-10-29 12:55 CET
+
+The focused Polymarket price-history API test passed **1/1 in 6.91 s** under a
+512 MiB high / 640 MiB max, zero-swap, 20%-CPU, 128-task transient scope. It
+replayed the valid fixture, then verified that a rehashed price-history row
+whose normalized Decimal differs from the stored raw response is rejected, and
+that a rehashed market batch with mismatched declared/member venues is
+rejected. Ruff check and formatting passed. The test used a temporary SQLite
+store and mock transport; no exchange or production data was accessed.
+
+At 12:55, the host still had about 10 GiB `MemAvailable`, 14 MiB free swap,
+and zero PSI through avg300. User-slice event counters remained
+`high=16,428,175`, `max=730,409`, `oom=19`, `oom_kill=15`, and
+`oom_group_kill=0`. MIDAS API, Reality, and Reality API were active at restart
+counts 9, 14, and 0. The gap-detail timer remained disabled and the capacity
+timer active. The checked OOMd/kernel journals had no new kill records since
+12:49. This short post-test sample adds no endurance or global-cause evidence;
+full swap and the initiating workload remain unresolved.
+
+## Numeric-bound follow-up — 2026-10-29 12:58 CET
+
+The historical-price replay implementation and Polymarket adapter now compare
+integral Decimal timestamps with the bounded request interval before converting
+them to Python integers. The extreme fixture value `1e1000000000` fails in
+both capture parsing and offline replay without oversized integer
+materialization. The combined focused group passed **3/3 in 8.69 s** under a
+512 MiB high / 640 MiB max, zero-swap, 20%-CPU, 128-task scope. Ruff check and
+format passed. No source or production evidence was accessed.
+
+At 12:58, available RAM remained about 10 GiB, swap free 14 MiB, and PSI zero
+through avg300. User-slice OOM counters remained 19/15/0, API/Reality/Reality
+API remained active at restart counts 9/14/0, and the checked OOMd/kernel
+journals showed no new kill since 12:55. Full swap and the historical
+initiating workload remain unresolved; the host stays **PARTIALLY CONTAINED /
+PARTIALLY VERIFIED**.
