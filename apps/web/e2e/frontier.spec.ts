@@ -1169,6 +1169,7 @@ test('inspects fixture-only Kalshi settlement arithmetic without probing an exch
 test('relationship network remains bounded, selectable, and scroll-contained on mobile', async ({
   page,
 }) => {
+  test.setTimeout(60_000);
   const capitalCandidateId = '8'.repeat(64);
   const graphQueries: string[] = [];
   const marketRecord = (venue: 'polymarket' | 'kalshi', nativeId: string, title: string) => ({
@@ -1184,20 +1185,26 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
     quote_asset: null,
     settlement_asset: 'USD',
     payoff: {
-      state_ids: [`${nativeId}-world`],
+      state_ids: [`${venue}-${nativeId}-world`],
       payout_currency: 'USD',
       exhaustive: true,
       verified: true,
       verification_basis: 'bounded browser fixture',
     },
     resolution: {
-      primary_rule: 'Fixture rules only.',
+      primary_rule:
+        venue === 'polymarket'
+          ? 'Polymarket fixture election-board rule.'
+          : 'Kalshi fixture state-official rule.',
       secondary_rule: null,
-      authority: 'Fixture authority',
-      closes_at_utc: '2026-12-01T00:00:00Z',
-      settles_at_utc: '2026-12-02T00:00:00Z',
-      evidence_sha256: 'b'.repeat(64),
-      resolution_fingerprint: `${nativeId}-rules-v1`,
+      authority:
+        venue === 'polymarket'
+          ? 'Polymarket fixture election board'
+          : 'Kalshi fixture state officials',
+      closes_at_utc: venue === 'polymarket' ? '2026-12-01T00:00:00Z' : '2026-12-03T00:00:00Z',
+      settles_at_utc: venue === 'polymarket' ? '2026-12-02T00:00:00Z' : '2026-12-04T00:00:00Z',
+      evidence_sha256: venue === 'polymarket' ? 'c'.repeat(64) : 'd'.repeat(64),
+      resolution_fingerprint: `${venue}-${nativeId}-rules-v1`,
       verified: true,
     },
     fees: {
@@ -1212,8 +1219,8 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
     },
     native_fields: venue === 'polymarket' ? { conditionId: `0x${'a'.repeat(64)}` } : {},
     instruments: [
-      { native_instrument_id: `${nativeId}-yes`, label: 'Yes', outcome_id: 'yes' },
-      { native_instrument_id: `${nativeId}-no`, label: 'No', outcome_id: 'no' },
+      { native_instrument_id: `${venue}-${nativeId}-yes`, label: 'Yes', outcome_id: 'yes' },
+      { native_instrument_id: `${venue}-${nativeId}-no`, label: 'No', outcome_id: 'no' },
     ],
     selected_components:
       venue === 'kalshi'
@@ -1229,7 +1236,7 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
     quality_flags: ['E2E_FIXTURE_ONLY'],
     provenance: {
       response_received_at_utc: '2026-10-26T20:00:00Z',
-      raw_sha256: 'a'.repeat(64),
+      raw_sha256: venue === 'polymarket' ? 'a'.repeat(64) : 'b'.repeat(64),
       observation_id: `${venue}-observation`,
     },
   });
@@ -1948,6 +1955,15 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
   await edge.click();
   await expect(edge).toHaveAttribute('aria-pressed', 'true');
   await expect(page.locator('.fr-edge details[open] p')).toHaveText(reason);
+  const contractComparison = page.locator('.fr-contract-comparison').first();
+  await contractComparison.locator('summary').first().click();
+  const contractTerms = contractComparison.locator('.fr-contract-terms');
+  await expect(contractTerms).toHaveCount(2);
+  await expect(contractTerms.nth(0)).toContainText('Polymarket fixture election board');
+  await expect(contractTerms.nth(1)).toContainText('Kalshi fixture state officials');
+  await expect(contractTerms.nth(0)).toContainText('2026-12-01T00:00:00Z');
+  await expect(contractTerms.nth(1)).toContainText('2026-12-03T00:00:00Z');
+  await expect(contractComparison).toContainText('do not establish equivalent payoffs');
   await page.screenshot({
     path: test.info().outputPath('frontier-relationship-network.png'),
     fullPage: true,
