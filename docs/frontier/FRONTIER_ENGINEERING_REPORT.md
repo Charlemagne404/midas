@@ -16690,3 +16690,5 @@ transient runners reported a 256 KiB memory peak, which is not credible for
 these processes; no cgroup peak is claimed. The host had zero PSI and about
 10 GiB available before and after, but swap remained nearly full. No live
 Polymarket stream, production service, or persistent store was touched.
+The implementation checkpoint is commit `9487807` on
+`codex/frontier-20261026`.

@@ -16640,3 +16640,5 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
   engineering report, and this ledger. Existing untracked
   `data/frontier-public-probes/` remains untouched. No source probe, live
   collector, production service, or persistent historical store was changed.
+- **Code checkpoint:** `9487807` (`feat(frontier): preserve Polymarket book metadata`)
+  on `codex/frontier-20261026`.
