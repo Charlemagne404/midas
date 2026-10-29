@@ -532,7 +532,7 @@ it('renders recorded-evidence empty states and never probes a source automatical
         is_block_trade: true,
         taker_outcome_side: 'no',
         taker_book_side: 'bid',
-        exchange_timestamp_utc: null,
+        exchange_timestamp_utc: '2026-10-26T21:25:20.123000Z',
         received_at_utc: '2026-10-26T21:25:20.750899Z',
         source_observation_record_id: 'a'.repeat(64),
         source_raw_sha256: 'b'.repeat(64),
@@ -548,6 +548,15 @@ it('renders recorded-evidence empty states and never probes a source automatical
   expect(screen.getByText(/0\.51 USD · denomination identity unknown/)).toBeInTheDocument();
   expect(screen.getByText('Taker no · bid book')).toBeInTheDocument();
   expect(screen.getByText('Block trade')).toBeInTheDocument();
+  expect(screen.getByRole('columnheader', { name: 'Exchange time (UTC)' })).toBeInTheDocument();
+  expect(screen.getByText('2026-10-26T21:25:20.123000 UTC')).toHaveAttribute(
+    'datetime',
+    '2026-10-26T21:25:20.123000Z',
+  );
+  expect(screen.getByText('2026-10-26T21:25:20.750899 UTC')).toHaveAttribute(
+    'datetime',
+    '2026-10-26T21:25:20.750899Z',
+  );
 
   queryClient.setQueryData(['frontier', 'opportunities'], {
     items: [

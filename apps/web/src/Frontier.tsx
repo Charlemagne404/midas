@@ -22,6 +22,7 @@ import {
   SlidersHorizontal,
 } from 'lucide-react';
 import { api } from './api';
+import { preciseUtcTime } from './frontierTime';
 import {
   KrakenBookUpdatesPanel,
   type KrakenBookCaptureReplay,
@@ -4193,8 +4194,8 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
                       <th>Quantity</th>
                       <th>Taker / aggressor</th>
                       <th>Trade type</th>
-                      <th>Exchange time</th>
-                      <th>Received</th>
+                      <th>Exchange time (UTC)</th>
+                      <th>Received (UTC)</th>
                       <th>Evidence</th>
                     </tr>
                   </thead>
@@ -4240,11 +4241,19 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
                               : 'Non-block trade'}
                         </td>
                         <td>
-                          {trade.exchange_timestamp_utc
-                            ? time(trade.exchange_timestamp_utc)
-                            : 'Not supplied'}
+                          {trade.exchange_timestamp_utc ? (
+                            <time dateTime={trade.exchange_timestamp_utc}>
+                              {preciseUtcTime(trade.exchange_timestamp_utc)}
+                            </time>
+                          ) : (
+                            'Not supplied'
+                          )}
                         </td>
-                        <td>{time(trade.received_at_utc)}</td>
+                        <td>
+                          <time dateTime={trade.received_at_utc}>
+                            {preciseUtcTime(trade.received_at_utc)}
+                          </time>
+                        </td>
                         <td>
                           <code title={trade.source_raw_sha256}>
                             {shortHash(trade.source_observation_record_id)} ·{' '}
