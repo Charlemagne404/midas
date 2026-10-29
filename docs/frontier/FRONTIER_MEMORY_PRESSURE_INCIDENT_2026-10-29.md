@@ -1028,6 +1028,24 @@ pressure, and archive integrity remain open. The next observation is the
 scheduled 07:47 capacity run; do not infer durable recovery from the current
 quiet interval.
 
+## Graph API version check and host sample — 2026-10-29 07:38 CET
+
+The centered graph API fixture now asserts its returned `model_version`
+matches the shared entity-context v2 constant. The focused test passed **1/1**
+in 5.39 seconds under a 768 MiB hard / 640 MiB high, zero-swap, 25% CPU
+transient unit; Ruff check and format passed. No runtime configuration or
+service state was changed.
+
+At 07:38:08 CET, host memory PSI avg10/avg60/avg300 was zero, `MemAvailable`
+was 10 GiB, and `SwapFree` was 8.1 MiB. The user-manager charged 9.68 GB
+memory and 2.86 GB swap; its descendant OOM counters remained 19/15/0. API,
+Reality, and Reality API were active, with restart counts 9/14/0. API and
+Reality used about 902 MiB and 379 MiB, respectively, below `MemoryHigh`. No
+kernel or OOMD kill appeared after 07:36:50. Gap-detail remains inactive; the
+capacity timer is due at 07:47:27. The host remains **PARTIALLY CONTAINED /
+PARTIALLY VERIFIED** with nearly full swap and historical pressure attribution
+unresolved.
+
 ## Post-UI assertion pressure sample — 2026-10-29 07:36 CET
 
 The focused graph UI test now asserts the truncation display. It passed **1/1**

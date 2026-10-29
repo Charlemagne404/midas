@@ -13700,3 +13700,9 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
 - **Test:** `d4e22e6` adds UI assertions that graph context marks a clipped label with an ellipsis, marks clipped payoff-state IDs, and shows the truncation reason. The focused UI test passed **1/1**, with eight unrelated cases skipped. Prettier and ESLint passed. The first assertion attempt had a selector-label typo and failed; correcting its expected punctuation made the test pass without product-code changes.
 - **Host:** 07:36:50 host PSI avg10/60/300 was zero; MemAvailable was 10 GiB, SwapFree 8.1 MiB. User-manager memory/swap was 9.67/2.86 GB, counters remained 19/15/0. API/Reality were active at restart counts 9/14 and about 901/379 MiB. No kernel/OOMD kill appeared 07:32–07:36. Gap-detail is inactive; capacity timer next due 07:47:27.
 - **Status:** Incident remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**; source-independent bounded Frontier work continues. Nearly full swap and unexplained historical pressure remain. The next action is to observe the scheduled capacity run and sample host/cgroup pressure afterward.
+
+## Entity-context API version contract — 2026-10-29 07:38 CET
+
+- **Test:** `64b8da3` pins the graph API's `model_version` to `ENTITY_CONTEXT_MODEL_VERSION`. The centered API test passed **1/1** in 5.39 seconds with one existing Starlette/httpx warning; Ruff check/format passed.
+- **Host:** At 07:38:08 PSI was zero, MemAvailable 10 GiB, SwapFree 8.1 MiB, user-manager memory/swap 9.68/2.86 GB, and OOM counters 19/15/0. API/Reality were active at restarts 9/14. No OOMD/kernel kill appeared after 07:36:50. Capacity monitor is due 07:47:27; gap-detail stays disabled.
+- **Next:** Observe the 07:47 scheduled capacity run and recheck memory pressure, cgroup events, and essential service state. Continue only serial, bounded Frontier work; incident remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**.
