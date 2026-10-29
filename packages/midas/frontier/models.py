@@ -156,16 +156,18 @@ class Capability(StrEnum):
 class CapabilityDeclaration(FrontierModel):
     capability: Capability
     supported: bool
-    state: str = "documented"
-    reason: str
-    documentation_url: str | None = None
+    state: str = Field(default="documented", min_length=1, max_length=64)
+    reason: str = Field(min_length=1, max_length=512)
+    documentation_url: str | None = Field(default=None, max_length=2048)
 
 
 class AdapterCapabilities(FrontierModel):
     schema_version: int = 1
     venue: Venue
-    adapter_version: str
-    declarations: tuple[CapabilityDeclaration, ...]
+    adapter_version: str = Field(min_length=1, max_length=80)
+    declarations: tuple[CapabilityDeclaration, ...] = Field(
+        min_length=len(Capability), max_length=len(Capability)
+    )
 
     @model_validator(mode="after")
     def declares_all_capabilities_once(self) -> AdapterCapabilities:
@@ -215,12 +217,12 @@ class SourceHealth(FrontierModel):
     state: SourceState = SourceState.NOT_PROBED
     checked_at_utc: datetime | None = None
     last_success_at_utc: datetime | None = None
-    last_error_code: str | None = None
-    last_error: str | None = None
-    requests_in_window: int = 0
-    supported_capabilities: tuple[Capability, ...] = ()
-    unsupported_capabilities: tuple[Capability, ...] = ()
-    notes: tuple[str, ...] = ()
+    last_error_code: str | None = Field(default=None, max_length=80)
+    last_error: str | None = Field(default=None, max_length=1024)
+    requests_in_window: int = Field(default=0, ge=0, le=2_147_483_647, strict=True)
+    supported_capabilities: tuple[Capability, ...] = Field(default=(), max_length=len(Capability))
+    unsupported_capabilities: tuple[Capability, ...] = Field(default=(), max_length=len(Capability))
+    notes: tuple[Annotated[str, Field(max_length=512)], ...] = Field(default=(), max_length=32)
 
     @field_validator("checked_at_utc", "last_success_at_utc")
     @classmethod

@@ -16043,3 +16043,49 @@ kernel kill appeared since 16:04:44. These counters remain warning evidence;
 they do not identify a causal workload or establish sustained recovery.
 
 | Normalized candle bounds and Kraken source-page guard | COMPLETE AND VERIFIED FOR FIXTURE PATH | Shared 10,000-row cap and Kraken 720-row rejection have focused fixtures; no live exchange call or venue-wide payload assessment. |
+
+### Capability and source-health input bounds — 2026-10-29 16:13 CET
+
+Capability records now require exactly one declaration for every registered
+capability before the semantic uniqueness check, with explicit limits on
+adapter-version, declaration-state, reason, and documentation-URL text.
+`SourceHealth` caps supported/unsupported capability arrays at the registry
+size, request counts at a nonnegative 32-bit limit, error codes at 80
+characters, error messages at 1,024, and notes at 32 entries of up to 512
+characters each. Inputs over these limits are rejected, not clipped.
+
+The normalized-model bound tests plus the existing adapter capability-manifest
+regression passed **12/12 in 2.61 seconds** under a transient 256 MiB high /
+384 MiB max, zero-swap, 15%-CPU, 48-task scope. Ruff check and format check
+passed after import ordering was corrected. The tests use in-memory fixtures
+and do not establish live source behavior.
+
+At 16:12:53 CET, host PSI avg10/60/300 remained zero and `MemAvailable` was
+11,055,876 kB; `SwapFree` was 16,516 kB. User-manager hierarchical events
+were `high=16,437,792`, `max=730,705`, `oom=19`, and `oom_kill=15`. Reality
+API local events were `max=5,082`, `oom=0`, and `oom_kill=0`. MIDAS API,
+Reality, and Reality API remained active at restart counts 9/14/0. No matching
+OOMD or kernel kill appeared since 16:10:24. Counters are not causal
+attribution; the host remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**.
+
+| Adapter capability and health bounds | COMPLETE AND VERIFIED FOR FIXTURE PATH | Bounded declaration cardinality and diagnostic text have rejection tests; live health-message distributions are unmeasured. |
+
+### Source-health request-count bound — 2026-10-29 16:14 CET
+
+`SourceHealth.requests_in_window` is now a strict nonnegative 32-bit integer,
+closing an unbounded numeric field alongside the previously bounded error and
+capability metadata. The focused model-bound and adapter capability-manifest
+checks passed **12/12 in 2.70 seconds** under a transient 256 MiB high / 384
+MiB max, zero-swap, 15%-CPU, 48-task scope. Ruff check and format check
+passed.
+
+At 16:13:45 CET, host PSI avg10/60/300 remained zero, MemAvailable was
+11,099,920 kB, and SwapFree was 16,524 kB. Between 16:12:53 and this sample,
+the user-manager `max` counter advanced by two to 730,707 and Reality API
+local `max` advanced by two to 5,084; their OOM counters did not change.
+API, Reality, and Reality API remained active at restart counts 9/14/0. The
+checked OOMD/kernel journals contained no new kill since 16:10:24. This event
+movement is not causally attributed to the tests; host status remains
+**PARTIALLY CONTAINED / PARTIALLY VERIFIED**.
+
+| Source-health request-count bound | COMPLETE AND VERIFIED FOR FIXTURE PATH | Strict count rejection is covered by the normalized-model fixture; live health data remains unmeasured. |

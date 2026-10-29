@@ -2,14 +2,18 @@ from decimal import Decimal
 
 import pytest
 from midas.frontier.models import (
+    AdapterCapabilities,
     BookLevel,
     BookSnapshot,
     CandleSeries,
+    Capability,
+    CapabilityDeclaration,
     FrontierMarket,
     HistoricalCandle,
     MarketBatch,
     MarketInstrument,
     PayoffSpec,
+    SourceHealth,
     StatePayout,
     TradeBatch,
     TradeObservation,
@@ -158,3 +162,39 @@ def test_candle_series_rejects_oversized_source_identity_and_invalid_trade_count
             volume=Decimal("3"),
             trade_count=2_147_483_648,
         )
+
+
+def test_capability_metadata_is_bounded_and_complete() -> None:
+    capability = next(iter(Capability))
+    with pytest.raises(ValidationError):
+        CapabilityDeclaration(
+            capability=capability,
+            supported=False,
+            reason="r" * 513,
+        )
+
+    declaration = CapabilityDeclaration(
+        capability=capability,
+        supported=False,
+        reason="Documented as unsupported",
+    )
+    with pytest.raises(ValidationError):
+        AdapterCapabilities(
+            venue=Venue.KRAKEN,
+            adapter_version="fixture-v1",
+            declarations=(declaration,) * (len(Capability) + 1),
+        )
+
+
+def test_source_health_rejects_oversized_error_diagnostics() -> None:
+    with pytest.raises(ValidationError):
+        SourceHealth(venue=Venue.KRAKEN, last_error="e" * 1025)
+
+    with pytest.raises(ValidationError):
+        SourceHealth(venue=Venue.KRAKEN, notes=("n" * 513,))
+
+    with pytest.raises(ValidationError):
+        SourceHealth(venue=Venue.KRAKEN, notes=("bounded note",) * 33)
+
+    with pytest.raises(ValidationError):
+        SourceHealth(venue=Venue.KRAKEN, requests_in_window=2_147_483_648)

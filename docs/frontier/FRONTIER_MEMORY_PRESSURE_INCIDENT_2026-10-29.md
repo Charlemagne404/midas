@@ -3712,3 +3712,32 @@ These are bounded before/after observations and do not prove that Frontier
 work caused a counter change or that the host has recovered. The Reality API
 is a protected service and its near-limit event history remains an unresolved
 constraint. Keep the same serial, source-independent resource gate.
+
+### Diagnostic-bound validation sample — 2026-10-29 16:13 CET
+
+After the source-health fixture run, host PSI avg10/60/300 remained zero.
+At 16:13:45, `MemAvailable` was 11,099,920 kB and `SwapFree` was 16,524 kB.
+From 16:12:53, the user-manager hierarchical `max` count rose by two to
+730,707 and Reality API's local `max` rose by two to 5,084; user-manager and
+Reality API OOM counters remained 19/15 and 0/0. MIDAS API, Reality, and
+Reality API remained active at restart counts 9/14/0. No matching OOMD or
+kernel kill appeared in the checked interval.
+
+These counter deltas are not attributed to the test process. They show that
+max-limit events continue during an otherwise quiet host-PSI sample. Retain
+the existing resource gate and do not alter protected Reality API limits.
+
+### Source-health fixture follow-up — 2026-10-29 16:13 CET
+
+The focused capability and health-diagnostic bound tests completed with host
+PSI avg10/60/300 still zero. At 16:12:53, `MemAvailable` was 11,055,876 kB
+and `SwapFree` 16,516 kB. User-manager hierarchical events were
+`high=16,437,792`, `max=730,705`, `oom=19`, and `oom_kill=15`; Reality API
+local events were `max=5,082`, `oom=0`, and `oom_kill=0`. MIDAS API, Reality,
+and Reality API remained active at restart counts 9/14/0. No matching OOMD
+or kernel kill appeared since 16:10:24.
+
+The bounded fixture run did not demonstrate recovery or identify what caused
+the limit-event increments. Do not change the protected Reality API limits
+without authorization; retain the serial admission policy and continue
+monitoring.

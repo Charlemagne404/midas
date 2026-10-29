@@ -15592,3 +15592,38 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
   partially contained because swap is nearly full and limit-event counters
   continue to rise; this does not establish which process caused their
   increments or demonstrate recovery.
+
+## 2026-10-29 16:13 CET — capability and health diagnostics bounds
+
+- Bounded adapter capability declarations and versions, source-health error
+  codes/messages, request counts, capability arrays, and note cardinality/
+  length. Capability declarations must fit the finite registry exactly;
+  values beyond bounds are rejected without truncation.
+- The normalized-model bound tests plus the existing adapter manifest
+  regression passed **12/12 in 2.61 seconds** under a transient 256/384 MiB,
+  zero-swap, 15%-CPU, 48-task scope. Ruff check and format check passed. All
+  inputs were fixtures; no live source was used.
+- At 16:12:53 CET, host PSI was zero, MemAvailable was 11,055,876 kB, and
+  SwapFree was 16,516 kB. User-manager `oom`/`oom_kill` remained 19/15;
+  `max` was 730,705. Reality API local `max` was 5,082 with local OOM counters
+  zero. Protected services remained active at restart counts 9/14/0, with no
+  checked OOMD/kernel kill since 16:10:24.
+- **Status:** this closes a bounded normalized diagnostic-input gap in the
+  fixture path only. Host containment remains partial; advancing `max`
+  counters and nearly full swap remain unresolved.
+
+## 2026-10-29 16:14 CET — source-health count bound and follow-up sample
+
+- Tightened `SourceHealth.requests_in_window` to a strict nonnegative 32-bit
+  integer. The normalized-model bound tests plus the existing adapter
+  capability-manifest regression passed **12/12 in 2.70 seconds** under a
+  transient 256/384 MiB, zero-swap, 15%-CPU, 48-task scope; Ruff check and
+  format check passed.
+- At 16:13:45, host PSI was zero, MemAvailable was 11,099,920 kB, and
+  SwapFree was 16,524 kB. Since 16:12:53, user-manager `max` advanced by two
+  to 730,707 and Reality API local `max` advanced by two to 5,084; OOM
+  counters remained unchanged. Protected services remained active at restart
+  counts 9/14/0, and no checked OOMD/kernel kill was new.
+- **Status:** the model count bound is fixture-verified. Event-counter growth
+  is recorded without causal attribution; nearly full swap and the Reality
+  API hard-limit pressure keep the host incident partially contained.

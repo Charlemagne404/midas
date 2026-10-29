@@ -789,6 +789,14 @@ Exceeding a model limit rejects the whole object; no source values or list
 members are silently clipped. These schema ceilings bound supported inputs,
 not a claim that every venue can supply every record shape.
 
+Source-health diagnostics also reject excessive metadata: one last error is at
+most 1,024 characters, error codes at most 80, and there are at most 32 notes
+of 512 characters each. The request count is a nonnegative 32-bit integer.
+Capability arrays cannot exceed the finite capability registry. Capability
+declarations require exactly one bounded declaration per registered
+capability; reason text is at most 512 characters, documentation URLs at most
+2,048, and adapter versions at most 80.
+
 When the terms gate blocks a venue, read APIs also quarantine that venue's
 stored observations and derived research. SQL-level exclusions cover source
 aggregates, market/book/trade rows, relationships, and bounded graph neighbors.
