@@ -1144,6 +1144,22 @@ type FrontierTimelineFrame = {
   not_yet_observed_count: number;
   excluded_source_book_count: number;
   source_states: { venue: string; state: string; basis: string | null; reason: string | null }[];
+  instrument_states: {
+    market_id: string;
+    venue: string;
+    native_market_id: string;
+    native_instrument_id: string;
+    book_state: string;
+    exclusion: string;
+    included_in_replay: boolean;
+    observation_id: string | null;
+    received_at_utc: string | null;
+    age_ms: number | null;
+    exchange_timestamp_utc?: string | null;
+    exchange_timestamp_semantics?: string | null;
+    clock_uncertainty_ms?: string | null;
+    freshness_limit_ms?: number | null;
+  }[];
   candidate_count: number;
   classification_counts: Record<string, number>;
   candidates: {
@@ -8860,6 +8876,76 @@ function TimelineFrameSummary({ frame }: { frame: FrontierTimelineFrame }) {
             No explicit source-state event was pinned. This absence does not certify source health;
             book receipt time and freshness are evaluated separately.
           </p>
+        )}
+        {frame.instrument_states.length > 0 && (
+          <>
+            <h4>Per-instrument timing evidence</h4>
+            <p className="fr-arena-replay-note">
+              Exchange timestamps retain each venue’s stated meaning. Clock uncertainty is shown as
+              recorded; missing values remain unknown.
+            </p>
+            <div className="fr-table-wrap">
+              <table className="fr-table" aria-label="Per-instrument source timing evidence">
+                <thead>
+                  <tr>
+                    <th>Venue / native market</th>
+                    <th>Instrument</th>
+                    <th>Replay status</th>
+                    <th>Receipt age</th>
+                    <th>Received at</th>
+                    <th>Exchange timestamp</th>
+                    <th>Clock uncertainty</th>
+                    <th>Source freshness limit</th>
+                    <th>Timestamp meaning</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {frame.instrument_states.slice(0, 24).map((instrument) => (
+                    <tr
+                      key={JSON.stringify([
+                        instrument.venue,
+                        instrument.native_market_id,
+                        instrument.native_instrument_id,
+                      ])}
+                    >
+                      <td>
+                        <VenuePill venue={instrument.venue} />
+                        <code>{instrument.native_market_id}</code>
+                      </td>
+                      <td>
+                        <code>{instrument.native_instrument_id}</code>
+                      </td>
+                      <td>
+                        {instrument.included_in_replay ? 'Included' : 'Excluded'}
+                        <small>
+                          {label(instrument.book_state)} · {label(instrument.exclusion)}
+                        </small>
+                      </td>
+                      <td>
+                        {instrument.age_ms == null ? '—' : `${count(instrument.age_ms)} ms`}
+                      </td>
+                      <td>{instrument.received_at_utc ?? 'Not observed'}</td>
+                      <td>{instrument.exchange_timestamp_utc ?? 'Unknown'}</td>
+                      <td>
+                        {instrument.clock_uncertainty_ms == null
+                          ? 'Unknown'
+                          : `${instrument.clock_uncertainty_ms} ms`}
+                      </td>
+                      <td>
+                        {instrument.freshness_limit_ms == null
+                          ? 'Not supplied'
+                          : `${count(instrument.freshness_limit_ms)} ms`}
+                      </td>
+                      <td>{instrument.exchange_timestamp_semantics ?? 'No observed book'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {frame.instrument_states.length > 24 && (
+              <p>Showing 24 of {frame.instrument_states.length} instrument timing records.</p>
+            )}
+          </>
         )}
         {frame.candidates.length > 0 && (
           <div className="fr-timeline-candidates">

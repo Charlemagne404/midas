@@ -23,8 +23,10 @@ from midas.frontier.timeline import (
     MAX_TIMELINE_MARKETS,
     MAX_TIMELINE_RELATIONSHIPS,
     MAX_TIMELINE_SOURCE_EVENTS,
+    PREVIOUS_TIMELINE_REPLAY_VERSION,
     TimelineReplayResult,
     TimelineSourceStatusEvent,
+    _strip_v3_timing_fields_from_legacy_payload,
     deterministic_timeline_replay,
 )
 
@@ -144,8 +146,16 @@ class FrontierTimelineJobArtifact(FrontierModel):
             raise ValueError("Frontier timeline artifact time must include a timezone")
         payload = self.model_dump(mode="json", exclude={"result_sha256"})
         if _sha256_json(payload) != self.result_sha256:
-            raise ValueError("Frontier timeline result hash does not match its payload")
+            _strip_v3_timing_fields_from_legacy_payload(payload)
+            if _sha256_json(payload) != self.result_sha256:
+                raise ValueError("Frontier timeline result hash does not match its payload")
         return self
+
+
+def serialize_frontier_timeline_artifact(artifact: FrontierTimelineJobArtifact) -> dict[str, Any]:
+    """Preserve the original field shape when returning hash-verified v2 artifacts."""
+    legacy_v2 = artifact.timeline.manifest.timeline_version == PREVIOUS_TIMELINE_REPLAY_VERSION
+    return artifact.model_dump(mode="json", exclude_unset=legacy_v2)
 
 
 def _canonical_json(value: Any) -> bytes:

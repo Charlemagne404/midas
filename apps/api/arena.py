@@ -1855,7 +1855,10 @@ def router(
     @api.get("/jobs/{identity}/frontier-timeline")
     async def frontier_timeline_result(identity: str) -> Any:
         def read() -> Any:
-            from midas.arena.frontier_timeline import verify_frontier_timeline_job_result
+            from midas.arena.frontier_timeline import (
+                serialize_frontier_timeline_artifact,
+                verify_frontier_timeline_job_result,
+            )
             from midas.arena.jobs import inspect
 
             record = json.loads((path("jobs", identity) / "job.json").read_text())
@@ -1864,7 +1867,7 @@ def router(
             reject_held_frontier_replay(record)
             artifact = verify_frontier_timeline_job_result(root, identity, record)
             return {
-                "artifact": artifact.model_dump(mode="json"),
+                "artifact": serialize_frontier_timeline_artifact(artifact),
                 "research_only": True,
                 "orders_submitted": False,
                 "authenticated_requests": False,

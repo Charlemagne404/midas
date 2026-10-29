@@ -22,7 +22,7 @@ as mutable Frontier storage.
 | Virtual funding-currency sensitivity | `fx.py` | Compares venue-isolated hypothetical balances with candidate capital under explicit namespaced asset identities and user-entered rates/fees; a separate Fraction-audited terminal-state P&L scenario is available only for an independently audited candidate with complete leg fees and sufficient virtual balance. It does not source rates or mutate candidate economics. |
 | Durable evidence | `storage.py` | Append-only, size- and row-bounded SQLite observations, markets, relationship reviews/revisions, runs, and paired comparisons. |
 | Replay | `replay.py` | Stable input ordering, scenario/mapping/proposal-limit-aware replay identities, exact store-record provenance for API-loaded models, deterministic results, and paired assumption comparisons. Joint-state maps are content-hashed and pinned in replay manifests. |
-| Event-time replay | `timeline.py` | Offline bounded replay over repeated book updates, source-state events, and explicit cutoffs; freshness, outage invalidation, candidate summaries, and timeline hashes. |
+| Event-time replay | `timeline.py` | Offline bounded replay over repeated book updates, source-state events, and explicit cutoffs; freshness, outage invalidation, per-instrument receipt/source timestamps, timestamp semantics, clock uncertainty, source freshness limits, candidate summaries, and timeline hashes. Current artifact version: `frontier-event-time-replay-3`. |
 | Finite source collection | `collection.py`, `apps/api/frontier.py` | One-source sequential bounded capture with durable restart checkpoints and an append-only hash-chained journal; explicit start/resume routes and a read-only keyset-paginated run catalog, with source policy/capability gates, per-source lock, and no job or background service. |
 | Arena replay jobs | `packages/midas/arena/frontier_replay.py`, `frontier_timeline.py`, `frontier_discovery.py`, `arena/jobs.py` | Immutable content-addressed inputs, bounded offline paired, event-time, and discovery-scope comparison workers, hash-verified artifacts, AF_UNIX-only networking, and held-source filtering under Arena's existing admission gate. |
 | HTTP API | `apps/api/frontier.py`, `apps/api/arena.py` | Bounded local queries and graph neighborhoods, relationship proposals/reviews, deterministic, joint-state, paired, and discovery-scope replay, config-gated captures, fee/capital/funding-currency sensitivities, coverage analytics, a verified local collection-health catalog and checkpoint joins, and local-input Arena staging/result routes. |
@@ -1137,7 +1137,14 @@ degraded or unavailable source excludes its books; after an interruption, a
 newer successful book is required before that venue's quotes can re-enter a
 frame. The engine records `unreported`, `fixture`, `scenario`, or `recorded`
 source-state provenance, book selection/exclusion reasons, candidate
-classification summaries, and deterministic replay/result hashes. It reuses
+classification summaries, and deterministic replay/result hashes. Version 3
+also pins each selected book's receipt time and age, source exchange timestamp,
+declared timestamp semantics, clock uncertainty, and source freshness limit in
+the frame. An unobserved instrument cannot carry timing evidence. These fields
+are diagnostics: they do not make unknown clock uncertainty comparable or
+prove simultaneous execution. Previously persisted v2 timeline and Arena
+artifact hashes retain their original serialized shape during verification.
+It reuses
 `deterministic_replay` and its independent economic audit for every frame. It
 performs no adapter calls and writes no evidence itself.
 

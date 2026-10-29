@@ -25,12 +25,20 @@ from midas.frontier.models import (
     EconomicAuditDisposition,
     FrontierMarket,
     FrontierModel,
+    Nonnegative,
     Venue,
 )
 from midas.frontier.relationships import Relationship, VerificationState
 from midas.frontier.replay import ReplayResult, deterministic_replay
 
-TIMELINE_REPLAY_VERSION = "frontier-event-time-replay-2"
+TIMELINE_REPLAY_VERSION = "frontier-event-time-replay-3"
+PREVIOUS_TIMELINE_REPLAY_VERSION = "frontier-event-time-replay-2"
+TIMELINE_V3_INSTRUMENT_FIELDS = (
+    "exchange_timestamp_utc",
+    "exchange_timestamp_semantics",
+    "clock_uncertainty_ms",
+    "freshness_limit_ms",
+)
 MAX_TIMELINE_MARKETS = 100
 MAX_TIMELINE_BOOKS = 200
 MAX_TIMELINE_RELATIONSHIPS = 100
@@ -40,6 +48,31 @@ MAX_TIMELINE_FRAMES = 128
 MAX_BOOK_LEVELS_PER_SIDE = 200
 MAX_TIMELINE_INPUT_BYTES = 32 * 1024 * 1024
 MAX_TIMELINE_RESULT_BYTES = 16 * 1024 * 1024
+
+
+def _strip_v3_timing_fields_from_legacy_payload(payload: dict[str, Any]) -> None:
+    """Restore the v2 JSON shape when verifying a persisted v2 result hash."""
+    timeline_payload = payload.get("timeline", payload)
+    if not isinstance(timeline_payload, dict):
+        return
+    manifest = timeline_payload.get("manifest")
+    if not isinstance(manifest, dict) or manifest.get("timeline_version") != (
+        PREVIOUS_TIMELINE_REPLAY_VERSION
+    ):
+        return
+    frames = timeline_payload.get("frames")
+    if not isinstance(frames, list):
+        return
+    for frame in frames:
+        if not isinstance(frame, dict):
+            continue
+        states = frame.get("instrument_states")
+        if not isinstance(states, list):
+            continue
+        for state in states:
+            if isinstance(state, dict):
+                for field_name in TIMELINE_V3_INSTRUMENT_FIELDS:
+                    state.pop(field_name, None)
 
 
 class TimelineSourceState(StrEnum):
@@ -110,6 +143,17 @@ class TimelineInstrumentState(FrontierModel):
     observation_id: str | None = None
     received_at_utc: datetime | None = None
     age_ms: int | None = Field(default=None, ge=0)
+    exchange_timestamp_utc: datetime | None = None
+    exchange_timestamp_semantics: str | None = Field(default=None, max_length=1000)
+    clock_uncertainty_ms: Nonnegative | None = None
+    freshness_limit_ms: int | None = Field(default=None, ge=0)
+
+    @field_validator("received_at_utc", "exchange_timestamp_utc")
+    @classmethod
+    def timing_evidence_times_are_utc(cls, value: datetime | None) -> datetime | None:
+        if value is not None and (value.tzinfo is None or value.utcoffset() is None):
+            raise ValueError("Timeline timing evidence must include a timezone")
+        return value.astimezone(UTC) if value is not None else None
 
     @model_validator(mode="after")
     def observation_fields_match_state(self) -> TimelineInstrumentState:
@@ -122,6 +166,16 @@ class TimelineInstrumentState(FrontierModel):
             raise ValueError("Only observed books can be included in replay")
         if self.book_state == TimelineBookState.NOT_YET_OBSERVED and self.age_ms is not None:
             raise ValueError("An unobserved book cannot have an age")
+        if not present and any(
+            value is not None
+            for value in (
+                self.exchange_timestamp_utc,
+                self.exchange_timestamp_semantics,
+                self.clock_uncertainty_ms,
+                self.freshness_limit_ms,
+            )
+        ):
+            raise ValueError("An unobserved book cannot have timing evidence")
         return self
 
 
@@ -219,7 +273,9 @@ class TimelineReplayResult(FrontierModel):
             raise ValueError("Timeline frame times do not match the pinned manifest")
         payload = self.model_dump(mode="json", exclude={"result_sha256"})
         if _hash_json(payload) != self.result_sha256:
-            raise ValueError("Timeline result hash does not match its payload")
+            _strip_v3_timing_fields_from_legacy_payload(payload)
+            if _hash_json(payload) != self.result_sha256:
+                raise ValueError("Timeline result hash does not match its payload")
         return self
 
 
@@ -483,6 +539,10 @@ def deterministic_timeline_replay(
                         observation_id=observed.provenance.observation_id,
                         received_at_utc=observed.received_at_utc,
                         age_ms=age_ms,
+                        exchange_timestamp_utc=observed.exchange_timestamp_utc,
+                        exchange_timestamp_semantics=observed.exchange_timestamp_semantics,
+                        clock_uncertainty_ms=observed.provenance.clock_uncertainty_ms,
+                        freshness_limit_ms=observed.freshness_limit_ms,
                     )
                 )
         replay: ReplayResult = deterministic_replay(

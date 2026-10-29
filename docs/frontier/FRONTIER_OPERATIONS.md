@@ -469,11 +469,15 @@ collector or query a source.
 The saved timeline UI remains read-only until the researcher explicitly submits
 the job. Replay is disabled until at least one saved market is available. The
 result page shows per-frame book freshness/exclusion counts, source-state
-labels, candidate classifications, and hash identities. These are hypothetical
-research outputs and do not demonstrate simultaneous quotes, fills, venue
-access, or profit. A frame with no explicit source-state event must not be read
-as evidence that the venue was healthy; receipt-time book freshness is reported
-separately.
+labels, candidate classifications, and hash identities. It also shows up to 24
+per-instrument timing records per frame: local receipt time and age, source
+timestamp, declared timestamp meaning, clock uncertainty, source freshness
+limit, and replay inclusion state. Missing clock uncertainty remains unknown;
+the display does not establish comparable clocks or simultaneous execution.
+These are hypothetical research outputs and do not demonstrate simultaneous
+quotes, fills, venue access, or profit. A frame with no explicit source-state
+event must not be read as evidence that the venue was healthy; receipt-time
+book freshness is reported separately.
 
 Recorded source-health events must name the SHA-256 row digest of a collector
 checkpoint. Before staging, the API opens the existing collection journal in

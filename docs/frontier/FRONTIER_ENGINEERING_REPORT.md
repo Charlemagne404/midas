@@ -2,7 +2,7 @@
 
 **Report date:** 2026-10-29
 
-## Current completion matrix — 2026-10-29 02:58 CET
+## Current completion matrix — 2026-10-29 03:05 CET
 
 This is a current evidence classification, not a final completion claim. The
 dated implementation records below remain the detailed evidence; the
@@ -16,18 +16,48 @@ current host gate.
 | Relationship graph, evidence binding, and review | PARTIALLY VERIFIED | Deterministic fixture relationships and pinned evidence are covered; a live cross-venue economic equivalence is not established. |
 | Candidate discovery and independent economic verification | PARTIALLY VERIFIED | Bounded mathematical fixtures and independent audits pass selected checks; no live eligible opportunity is demonstrated. |
 | Cross-venue costs, FX, capital, and execution uncertainty | PARTIALLY VERIFIED | Virtual models preserve unknown cost and applicability states; account-specific fees, jurisdiction, transfers, and execution remain unresolved. |
-| Collection, provenance, durable storage, and replay | PARTIALLY VERIFIED | Finite-collection/API fixtures pass 51/51 and storage passes 32/32; Reality resumed fresh `RECORDING_UNSEQUENCED` capture after cold replay. Sequencing, multi-venue live collection, and archive provenance remain unverified or held. |
+| Collection, provenance, durable storage, and replay | PARTIALLY VERIFIED | Finite-collection/API fixtures pass 51/51 and storage passes 32/32; timeline replay v3 includes per-instrument receipt time, source timestamp semantics, clock uncertainty, and source freshness limits. Sequencing, multi-venue live collection, and archive provenance remain unverified or held. |
 | Read-only source network and trading boundary | COMPLETE AND VERIFIED | Only `PublicReadTransport` issues source HTTP requests; it is anonymous HTTPS GET-only, host-allowlisted, redirect-disabled, and bounded. Adapter boundary fixtures cover disabled probes, credential/mutating clients, cookies, redirects, oversized payloads, and JSON complexity. No exchange order/account path was found in the reviewed Frontier code. |
 | Laboratory/Arena comparisons and bounded orchestration | PARTIALLY VERIFIED | Arena admission and finite scheduling regressions pass; a Laboratory resource-denial case passes with a harness cap above its 722,894,848-byte capacity precondition. Full endurance evidence remains incomplete. |
 | User-cgroup-aware workload admission | IMPLEMENTED, BOUNDED VALIDATION PASSED | Central Arena admission (15), finite schedules (12), and the Laboratory denial case (1) pass fixture tests using user-manager pressure; no runtime deployment occurred. |
 | Reality capacity inventory bounds | PARTIALLY VERIFIED | Candidate inventory code remains undeployed. The separate monitor is bounded at `MemoryHigh=160M`, `MemoryMax=192M`, and zero swap; its 02:46 scheduled run succeeded in 6.810 CPU seconds, but systemd retained no peak. Its report still identifies invalid archive inventory and provenance. |
-| Native Frontier dashboard | PARTIALLY VERIFIED | Vitest passed 47/47; default Playwright passed 17/20 with three opt-in skips; synthetic seeded replay/Arena browser tests passed 2/2. Captured-evidence browser validation remains open. An earlier `tsc -b` passed at a 768 MiB cap; a later 640 MiB attempt hit the Node/V8 heap limit and generated an Apport report. No further Node check was run. |
-| Host reliability containment | PARTIALLY VERIFIED | The five-minute gap-detail timer is disabled and capacity monitor has a reversible 160/192 MiB, zero-swap bound. After the 02:58 adapter run, MemAvailable was 11,451,564 kB, SwapFree 228 kB, memory PSI was zero, and API/Reality remained active at restart counts 9/14. User-manager `oom=19`/`oom_kill=15` were unchanged. Full swap and historical workload attribution remain unresolved. |
+| Native Frontier dashboard | PARTIALLY VERIFIED | Vitest passed 47/47; default Playwright passed 17/20 with three opt-in skips; synthetic seeded replay/Arena browser tests passed 2/2. Timeline frame view now exposes bounded per-instrument timing evidence; this frontend change was not run through Node tooling or browser tests. Captured-evidence browser validation remains open. An earlier `tsc -b` passed at a 768 MiB cap; a later 640 MiB attempt hit the Node/V8 heap limit and generated an Apport report. No further Node check was run. |
+| Host reliability containment | PARTIALLY VERIFIED | The five-minute gap-detail timer is disabled and capacity monitor has a reversible 160/192 MiB, zero-swap bound. At 03:05, MemAvailable was 11,416,944 kB, SwapFree 236 kB, memory PSI was zero, and API/Reality remained active at restart counts 9/14. User-manager `oom=19`/`oom_kill=15` were unchanged; no oomd unit entries appeared after 02:58. Full swap and historical workload attribution remain unresolved. |
 | Node/V8 and Apport side effect | PARTIALLY VERIFIED | The 02:36 TypeScript attempt aborted at Node's heap limit with a 300.6 MiB cgroup peak, not a kernel OOM. Whoopsie attempted to submit the 58,222,586-byte crash report and received HTTP 504; remote receipt is unknown. No `.uploaded` marker exists; avoid further crash-prone Node checks. |
 | Broad regressions, resource endurance, and performance acceptance | DEFERRED | Frontier Python passed 648/648 at 02:19 and the exact-tree adapter module passed 168/168 at 02:58; web Vitest passed 47/47, default Playwright 17/20, and synthetic seeded journeys 2/2 under bounded scopes. Full MIDAS regression, captured-evidence browser journey, endurance, and broad performance tests remain deferred. |
 | Live multi-venue source authorization and findings | BLOCKED | Kalshi, Kraken, and Coinbase retained research remain held; the worktree Polymarket probe flag is off. |
 | Production integration/deployment | DEFERRED | Frontier remains isolated; no protected service transition occurred. |
 | Project Frontier overall | PARTIALLY VERIFIED | The engine is substantial, but live cross-venue science, broad verification, recovery, endurance, and deployment gates remain open. |
+
+### Per-instrument timeline timing evidence — 2026-10-29 03:05 CET
+
+Timeline replay version 3 preserves each selected book's local receipt time and
+age alongside its exchange timestamp, declared timestamp semantics, recorded
+clock uncertainty, and source freshness limit. Unobserved books are prohibited
+from carrying timing metadata. The values are shown as source evidence; the
+view does not infer comparable clocks or synchronized execution from them.
+The timeline workspace displays at most 24 instrument rows per frame and
+labels absent clock uncertainty as unknown. Existing v2 timeline and Arena
+artifact hashes retain their historical serialized shape during verification,
+so persisted artifacts require no rewrite.
+
+The combined `tests/frontier/test_timeline.py`,
+`tests/frontier/test_timeline_api.py`, and
+`tests/arena/test_frontier_timeline.py` run passed **22/22 in 10.99 s**, with
+one existing Starlette/httpx deprecation warning, under a transient 640 MiB
+maximum, zero-swap, 25% CPU, 64-task scope. This includes preservation and
+verification of legacy v2 timeline and Arena artifact hashes. Ruff check and
+format check passed for changed Python files. The frontend fixture and
+component change were reviewed but not executed because Node checks remain
+deferred following the prior V8 heap crash and crash-report side effect.
+These fixture checks do not provide live cross-venue timing validation.
+
+At 03:05:39 CET, host memory PSI was zero, MemAvailable was 11,416,944 kB,
+SwapFree was 236 kB, and user-manager `oom`/`oom_kill` counters remained
+19/15. API and Reality were active; the capacity timer was active and the
+auxiliary gap-detail timer inactive. No systemd-oomd unit entries appeared
+since 02:58. Full swap occupancy and historical pressure attribution remain
+unresolved.
 
 ## Bounded Frontier verification after host containment — 2026-10-29 01:54 CET
 

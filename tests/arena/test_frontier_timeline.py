@@ -16,6 +16,7 @@ from midas.arena.frontier_timeline import (
     load_snapshot,
     make_snapshot,
     read_frontier_timeline_artifact,
+    serialize_frontier_timeline_artifact,
     store_snapshot,
     verify_frontier_timeline_job_result,
 )
@@ -274,6 +275,65 @@ def test_executor_matches_direct_timeline_and_verifies_completed_job_binding(tmp
     record["state"] = "FAILED"
     with pytest.raises(ValueError, match="Completed Frontier timeline result"):
         verify_frontier_timeline_job_result(tmp_path, JOB_ID, record)
+
+
+def test_v2_timeline_artifact_hashes_remain_readable(tmp_path):
+    snapshot = make_fixture_snapshot()
+    checksum = store_snapshot(tmp_path, snapshot)
+    (tmp_path / "jobs" / JOB_ID).mkdir(parents=True)
+    spec = FrontierTimelineJobSpec(snapshot_id=snapshot.snapshot_id, snapshot_sha256=checksum)
+    artifact = execute_frontier_timeline_job(tmp_path, JOB_ID, spec, Progress())
+
+    legacy = artifact.model_dump(mode="json")
+    timeline = legacy["timeline"]
+    timeline["manifest"]["timeline_version"] = "frontier-event-time-replay-2"
+    timeline["timeline_id"] = _sha256_json(timeline["manifest"])
+    for frame in timeline["frames"]:
+        for state in frame["instrument_states"]:
+            for field_name in (
+                "exchange_timestamp_utc",
+                "exchange_timestamp_semantics",
+                "clock_uncertainty_ms",
+                "freshness_limit_ms",
+            ):
+                state.pop(field_name)
+    timeline["result_sha256"] = _sha256_json(
+        {key: value for key, value in timeline.items() if key != "result_sha256"}
+    )
+    legacy["result_sha256"] = _sha256_json(
+        {key: value for key, value in legacy.items() if key != "result_sha256"}
+    )
+    result_path = tmp_path / "jobs" / JOB_ID / "frontier-timeline-result.json"
+    atomic_json(result_path, legacy)
+
+    restored = read_frontier_timeline_artifact(tmp_path, JOB_ID)
+    assert restored.timeline.manifest.timeline_version == "frontier-event-time-replay-2"
+    assert restored.result_sha256 == legacy["result_sha256"]
+    assert serialize_frontier_timeline_artifact(restored) == legacy
+
+    configuration = JobSpec(
+        kind="frontier_timeline",
+        frontier_timeline=spec,
+        max_wall_seconds=300,
+        memory_limit_mb=512,
+        cpu_quota_percent=50,
+        nice=15,
+        io_scheduling_class="idle",
+    )
+    legacy_record = {
+        "job_id": JOB_ID,
+        "configuration": configuration.model_dump(mode="json"),
+        "state": "COMPLETED",
+        "exit_status": 0,
+        "result": {
+            "frontier_timeline_sha256": legacy["result_sha256"],
+            "timeline_id": timeline["timeline_id"],
+            "snapshot_id": artifact.snapshot_id,
+            "artifact": "frontier-timeline-result.json",
+        },
+    }
+    verified_legacy = verify_frontier_timeline_job_result(tmp_path, JOB_ID, legacy_record)
+    assert verified_legacy.timeline.manifest.timeline_version == "frontier-event-time-replay-2"
 
 
 def test_held_timeline_evidence_is_hidden_from_catalog_and_result_route(tmp_path):

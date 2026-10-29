@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 from datetime import timedelta
 from decimal import Decimal
 
@@ -9,14 +10,27 @@ from midas.frontier.economics import ExecutionScenario, OpportunityClassificatio
 from midas.frontier.models import BookLevel, BookSnapshot, EconomicAuditDisposition, Venue
 from midas.frontier.relationships import verify_same_payoff
 from midas.frontier.timeline import (
+    PREVIOUS_TIMELINE_REPLAY_VERSION,
     TimelineBookExclusion,
     TimelineBookState,
+    TimelineReplayResult,
     TimelineSourceState,
     TimelineSourceStatusEvent,
     deterministic_timeline_replay,
 )
 
 from tests.frontier.builders import T0, book, market
+
+
+def _json_sha256(value) -> str:
+    encoded = json.dumps(
+        value,
+        sort_keys=True,
+        allow_nan=False,
+        separators=(",", ":"),
+        ensure_ascii=False,
+    ).encode()
+    return hashlib.sha256(encoded).hexdigest()
 
 
 def _verified_pair():
@@ -209,6 +223,88 @@ def test_timeline_replay_rejects_copied_invalid_execution_scenario():
             evaluation_times_utc=(T0,),
             scenario=scenario,
         )
+
+
+def test_timeline_frames_preserve_source_clock_and_freshness_evidence():
+    left, right, relationship = _verified_pair()
+    timed_book = _book_at(
+        left,
+        left.instruments[0].native_instrument_id,
+        "0.42",
+        T0,
+        "left-yes-clock-evidence",
+        clock_uncertainty_ms=Decimal("1.25"),
+    ).model_copy(update={"freshness_limit_ms": 900})
+    books = (
+        timed_book,
+        *_fixture_books(left, right)[1:],
+    )
+
+    result = deterministic_timeline_replay(
+        (left, right),
+        books,
+        verified_relationships=(relationship,),
+        evaluation_times_utc=(T0 + timedelta(milliseconds=250),),
+        code_version="timeline-source-timing-evidence-v1",
+    )
+    state = next(
+        item
+        for item in result.frames[0].instrument_states
+        if item.observation_id == timed_book.provenance.observation_id
+    )
+
+    assert state.received_at_utc == T0
+    assert state.exchange_timestamp_utc == T0
+    assert state.exchange_timestamp_semantics == timed_book.exchange_timestamp_semantics
+    assert state.clock_uncertainty_ms == Decimal("1.25")
+    assert state.freshness_limit_ms == 900
+
+    with pytest.raises(ValueError, match="cannot have timing evidence"):
+        type(state).model_validate(
+            state.model_dump()
+            | {
+                "book_state": TimelineBookState.NOT_YET_OBSERVED,
+                "exclusion": TimelineBookExclusion.NOT_YET_OBSERVED,
+                "included_in_replay": False,
+                "observation_id": None,
+                "received_at_utc": None,
+                "age_ms": None,
+            }
+        )
+
+
+def test_v2_timeline_result_hashes_remain_readable_and_tamper_evident():
+    left, right, relationship = _verified_pair()
+    result = deterministic_timeline_replay(
+        (left, right),
+        _fixture_books(left, right),
+        verified_relationships=(relationship,),
+        evaluation_times_utc=(T0,),
+        code_version="timeline-legacy-integrity-fixture-v1",
+    )
+    legacy = result.model_dump(mode="json")
+    legacy["manifest"]["timeline_version"] = PREVIOUS_TIMELINE_REPLAY_VERSION
+    legacy["timeline_id"] = _json_sha256(legacy["manifest"])
+    for frame in legacy["frames"]:
+        for state in frame["instrument_states"]:
+            for field_name in (
+                "exchange_timestamp_utc",
+                "exchange_timestamp_semantics",
+                "clock_uncertainty_ms",
+                "freshness_limit_ms",
+            ):
+                state.pop(field_name)
+    legacy["result_sha256"] = _json_sha256(
+        {key: value for key, value in legacy.items() if key != "result_sha256"}
+    )
+
+    restored = TimelineReplayResult.model_validate(legacy)
+    assert restored.manifest.timeline_version == PREVIOUS_TIMELINE_REPLAY_VERSION
+
+    tampered = json.loads(json.dumps(legacy))
+    tampered["frames"][0]["instrument_states"][0]["age_ms"] += 1
+    with pytest.raises(ValueError, match="Timeline result hash does not match"):
+        TimelineReplayResult.model_validate(tampered)
 
 
 def test_receipt_time_controls_book_availability_and_exchange_time_reaches_audit():

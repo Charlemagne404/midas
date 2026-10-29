@@ -12724,3 +12724,55 @@ PSI zero, and user-manager `oom`/`oom_kill` remained 19/15. API and Reality
 stayed active with restart counts 9/14; no systemd-oomd journal event appeared
 after 02:57. Broad regression, endurance, full-swap resolution, live
 cross-venue permission, and exact initiating-workload attribution remain open.
+
+### Per-instrument timeline timing evidence — 2026-10-29 03:02 CET
+
+Timeline replay version 3 now carries each selected book's receipt time and
+age, exchange timestamp, declared timestamp semantics, clock uncertainty, and
+source freshness limit into the hash-verified frame. The frame model rejects
+timing metadata on a not-yet-observed book. The Frontier replay view shows a
+bounded 24 rows per frame and keeps missing uncertainty explicitly unknown.
+No timestamp-comparability or simultaneous-execution claim was added.
+
+The focused Python timeline suite passed **7/7 in 1.80 s** and the timeline
+API suite passed **4/4 in 9.81 s**, each under a transient 640 MiB maximum,
+zero-swap, 25% CPU, 64-task bound. Ruff check and format checks passed for the
+changed Python files. One initial test attempt failed because it compared a
+fixture label to the SHA-256 observation ID; the assertion was corrected to
+use the actual pinned ID and the rerun passed. The new frontend display and
+fixture were not executed through Node tooling or a browser due to the
+previous V8 heap crash and Apport side effect; frontend runtime verification
+remains open.
+
+At 03:01:38 CET, MemAvailable was 11,446,900 kB, SwapFree was 232 kB, memory
+PSI was zero, and user-manager `oom`/`oom_kill` counters stayed 19/15. API and
+Reality were active, capacity timer active, and gap-detail timer inactive.
+No live source request was made. Low swap headroom and unknown historical OOM
+initiator remain reasons to keep work sequential and bounded.
+
+### Timeline compatibility and final bounded verification — 2026-10-29 03:05 CET
+
+Added compatibility validation for persisted `frontier-event-time-replay-2`
+results: the result and Arena artifact validators verify their original v2
+serialized hashes, and the API serializer preserves that field shape without
+rewriting the stored artifact. New v3 frame fields preserve source timestamp,
+timestamp semantics, clock uncertainty, receipt age, and source freshness
+limits. The timestamp evidence remains diagnostic and does not certify
+simultaneous observations.
+
+The combined timeline, timeline API, and Arena timeline suites passed
+**22/22 in 10.99 s** under a transient scope capped at 640 MiB, zero swap,
+25% CPU, and 64 tasks. One existing Starlette/httpx deprecation warning was
+reported. Ruff check and format checks passed for all changed Python files.
+Two interim attempts failed on mistakes in the new test fixture's job binding
+and nested timeline identity; both were corrected before the passing run. No
+production service, stored research artifact, or external source was changed.
+The frontend view and its fixture were not run through Node or a browser;
+verification remains pending after the prior V8 heap crash.
+
+At 03:05:39 CET, MemAvailable was 11,416,944 kB, SwapFree 236 kB, PSI was
+zero, and user-manager `oom`/`oom_kill` counters remained 19/15. API and
+Reality remained active with restart counts 9/14. The capacity timer was active
+and the gap-detail timer inactive; no systemd-oomd entries appeared after
+02:58. The host remains only suitable for sequential, bounded work while swap
+is nearly full and the October 28 pressure initiator remains unknown.

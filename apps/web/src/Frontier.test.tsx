@@ -3638,6 +3638,24 @@ it('submits bounded Arena replay and discovery comparisons with verified results
                     basis: event.basis,
                     reason: event.reason,
                   })),
+                  instrument_states: [
+                    {
+                      market_id: 'fixture-market',
+                      venue: 'polymarket',
+                      native_market_id: 'fixture-native-market',
+                      native_instrument_id: 'fixture-token',
+                      book_state: 'fresh',
+                      exclusion: 'none',
+                      included_in_replay: true,
+                      observation_id: 'fixture-book',
+                      received_at_utc: '2026-10-27T00:00:00Z',
+                      age_ms: 0,
+                      exchange_timestamp_utc: '2026-10-26T23:59:59.900Z',
+                      exchange_timestamp_semantics: 'CLOB snapshot timestamp',
+                      clock_uncertainty_ms: '2.5',
+                      freshness_limit_ms: 1200,
+                    },
+                  ],
                   candidate_count: 0,
                   classification_counts: {},
                   candidates: [],
@@ -3930,6 +3948,10 @@ it('submits bounded Arena replay and discovery comparisons with verified results
     screen.getByText('1 fresh · 0 stale · 0 not yet observed · 0 source-excluded'),
   ).toBeInTheDocument();
   expect(screen.getByText('polymarket: available')).toBeInTheDocument();
+  expect(
+    screen.getByRole('table', { name: 'Per-instrument source timing evidence' }),
+  ).toHaveTextContent('2.5 ms');
+  expect(screen.getByText('CLOB snapshot timestamp')).toBeInTheDocument();
   expect(screen.getByLabelText('Recorded health checkpoint digests')).toHaveTextContent(
     healthCheckpointSha256,
   );
