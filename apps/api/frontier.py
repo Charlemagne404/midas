@@ -3087,6 +3087,23 @@ def router(
                                         if update.reported_best_ask is not None
                                         else None
                                     ),
+                                    "book_hash": update.book_hash,
+                                    "min_order_size": (
+                                        str(update.min_order_size)
+                                        if update.min_order_size is not None
+                                        else None
+                                    ),
+                                    "tick_size": (
+                                        str(update.tick_size)
+                                        if update.tick_size is not None
+                                        else None
+                                    ),
+                                    "neg_risk": update.neg_risk,
+                                    "last_trade_price": (
+                                        str(update.last_trade_price)
+                                        if update.last_trade_price is not None
+                                        else None
+                                    ),
                                     "continuity": update.continuity,
                                     "quality_flags": list(update.quality_flags),
                                 }

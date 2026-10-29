@@ -16613,3 +16613,30 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
   [HELD_SOURCE_TERMS_FOLLOWUP_2026-10-29.md](HELD_SOURCE_TERMS_FOLLOWUP_2026-10-29.md);
   Gemini's detailed review remains in its existing terms artifact.
   Live multi-venue acceptance remains blocked; fixture-backed work continues.
+
+## 2026-10-29 20:35 CET — Polymarket stream schema v2 metadata
+
+- Preserved Polymarket full-book `hash`, `min_order_size`, `tick_size`,
+  `neg_risk`, and `last_trade_price` as versioned, bounded normalized fields.
+  The capture API summary and Frontier capture/offline-replay panels now show
+  reported values and distinguish absent values.
+- Bumped normalized stream provenance to `polymarket-market-stream-v2` and
+  event replay to schema/replay version 2. Legacy v1 frames retain their
+  original field projection and remain hash-pinned/replayable from raw data.
+  Sequence continuity remains unverified, no local book is reconstructed, and
+  replay stays context-only/economics-ineligible.
+- **Verification:** `tests/frontier/test_polymarket_stream.py` passed 20/20
+  under a transient 160 MiB high / 192 MiB max / zero-swap / 10%-CPU bound
+  (13.99 seconds test time, 19.013 seconds wall time). The focused
+  `Frontier.test.tsx` interaction passed 1/1 with eight unrelated cases
+  skipped (9.00 seconds test time, 26.661 seconds wall time) under a 512 MiB
+  high / 768 MiB max / zero-swap / 20%-CPU bound and 256 MiB Node heap.
+  Ruff, Ruff format, Prettier, ESLint, and `git diff --check` passed. A
+  Starlette/httpx TestClient deprecation warning remains. Both transient
+  runners' 256 KiB memory-peak reports are not credible, so no cgroup peak is
+  claimed.
+- **Files:** `models.py`, Polymarket stream decoder/adapter/replay, Frontier
+  API serializer, `Frontier.tsx`, focused backend/UI fixtures, architecture,
+  engineering report, and this ledger. Existing untracked
+  `data/frontier-public-probes/` remains untouched. No source probe, live
+  collector, production service, or persistent historical store was changed.

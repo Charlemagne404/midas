@@ -16657,3 +16657,36 @@ Terms; Kraken's public endpoints remain subject to regional terms and prior
 permission for certain use. No source gate was changed, no API endpoint was
 called, and no source evidence was touched. See
 [HELD_SOURCE_TERMS_FOLLOWUP_2026-10-29.md](HELD_SOURCE_TERMS_FOLLOWUP_2026-10-29.md).
+
+## Polymarket book snapshot metadata normalization — 2026-10-29 20:35 CET
+
+The bounded market-stream parser previously retained bid/ask levels and
+reported top-of-book values but discarded optional metadata attached to a
+full-book snapshot. The current official
+[Polymarket real-time data schema](https://docs.polymarket.com/market-data/realtime-data)
+documents optional `hash`, `minOrderSize`, `tickSize`, `negRisk`, and
+`lastTradePrice` snapshot fields. Normalized stream schema v2 now preserves
+these fields with bounded identifiers, exact Decimal values, a strict boolean
+flag, and binary-price/tick validation. The capture summary API and Frontier
+event/replay view expose the values while clearly marking fields the source did
+not report.
+
+Schema-v1 frames remain valid. Offline replay re-decodes their immutable raw
+payload and compares against the v1 projection that deliberately omits the new
+metadata. New captures use schema v2 and replay format v2, with the source
+schema, normalized frame hash, and replay identity reflecting that version
+change. This work does not apply stream deltas, establish feed continuity,
+reconstruct a book, or make the observations economics-eligible.
+
+Verification was fixture-only. The focused Polymarket stream module passed
+20/20 in 13.99 seconds under a transient 160 MiB high / 192 MiB maximum,
+zero-swap, 10%-CPU bound; it covers camelCase and snake_case fields, malformed
+and conflicting metadata, API serialization, deterministic replay, and a
+v1-frame replay projection. The focused `Frontier.test.tsx` interaction passed
+1/1 (eight unrelated cases skipped) in 9.00 seconds test time / 26.66 seconds
+wall time under 512 MiB high / 768 MiB maximum, zero swap, 20% CPU, and a
+256 MiB Node heap. Ruff lint/format, Prettier, and ESLint passed. Both
+transient runners reported a 256 KiB memory peak, which is not credible for
+these processes; no cgroup peak is claimed. The host had zero PSI and about
+10 GiB available before and after, but swap remained nearly full. No live
+Polymarket stream, production service, or persistent store was touched.

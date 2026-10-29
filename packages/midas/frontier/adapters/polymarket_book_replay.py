@@ -8,7 +8,7 @@ from collections.abc import Mapping, Sequence
 from datetime import UTC, datetime
 from typing import Any, Literal, cast
 
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 
 from midas.frontier.adapters.polymarket_stream import (
     MAX_STREAM_FRAME_BYTES,
@@ -22,9 +22,9 @@ from midas.frontier.models import (
     Venue,
 )
 
-POLYMARKET_BOOK_EVENT_REPLAY_VERSION: Literal["polymarket-book-event-replay-1"] = (
-    "polymarket-book-event-replay-1"
-)
+POLYMARKET_BOOK_EVENT_REPLAY_VERSION: Literal[
+    "polymarket-book-event-replay-1", "polymarket-book-event-replay-2"
+] = "polymarket-book-event-replay-2"
 MAX_POLYMARKET_REPLAY_FRAMES = 32
 MAX_POLYMARKET_REPLAY_BYTES = MAX_POLYMARKET_REPLAY_FRAMES * MAX_STREAM_FRAME_BYTES
 
@@ -41,7 +41,7 @@ class PolymarketBookReplayFrameEvidence(FrontierModel):
     observation_id: str = Field(pattern=r"^[0-9a-f]{64}$")
     raw_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     normalized_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
-    frame_schema_version: Literal[1] = 1
+    frame_schema_version: Literal[1, 2] = 1
     frame_ordinal: int = Field(ge=0, le=31, strict=True)
     elapsed_since_capture_start_ns: int = Field(ge=0, strict=True)
     received_at_utc: datetime
@@ -65,8 +65,10 @@ class PolymarketBookReplayFrame(FrontierModel):
 class PolymarketBookEventReplay(FrontierModel):
     """Hash-pinned event replay; it deliberately does not reconstruct a book."""
 
-    schema_version: Literal[1] = 1
-    replay_version: Literal["polymarket-book-event-replay-1"] = POLYMARKET_BOOK_EVENT_REPLAY_VERSION
+    schema_version: Literal[1, 2] = 2
+    replay_version: Literal["polymarket-book-event-replay-1", "polymarket-book-event-replay-2"] = (
+        POLYMARKET_BOOK_EVENT_REPLAY_VERSION
+    )
     venue: Literal[Venue.POLYMARKET] = Venue.POLYMARKET
     native_market_id: str
     bound_market_observation_id: str = Field(pattern=r"^[0-9a-f]{64}$")
@@ -87,6 +89,13 @@ class PolymarketBookEventReplay(FrontierModel):
     book_reconstructed: Literal[False] = False
     event_economics_eligible: Literal[False] = False
     classification: Literal["context_only"] = "context_only"
+
+    @model_validator(mode="after")
+    def replay_versions_match(self) -> PolymarketBookEventReplay:
+        expected_version = int(self.replay_version.rsplit("-", maxsplit=1)[1])
+        if self.schema_version != expected_version:
+            raise ValueError("Polymarket replay schema and replay versions differ")
+        return self
 
     @field_validator("capture_started_at_utc")
     @classmethod
@@ -238,6 +247,22 @@ def replay_polymarket_book_capture(
             raw_frame.decode("utf-8", errors="strict"),
             subscribed_asset_ids=frozenset(update.native_instrument_id for update in frame.updates),
         )
+        if frame.schema_version == 1:
+            # Older persisted frames predate optional snapshot metadata. Re-decode
+            # their raw payload, then compare using the exact v1 normalized projection.
+            decoded = tuple(
+                update.model_copy(
+                    update={
+                        "schema_version": 1,
+                        "book_hash": None,
+                        "min_order_size": None,
+                        "tick_size": None,
+                        "neg_risk": None,
+                        "last_trade_price": None,
+                    }
+                )
+                for update in decoded
+            )
         if decoded != frame.updates:
             raise ValueError("Re-decoded Polymarket events differ from normalized evidence")
 
@@ -247,6 +272,7 @@ def replay_polymarket_book_capture(
                 observation_id=item.observation_id,
                 raw_sha256=raw.raw_sha256,
                 normalized_sha256=normalized_sha256,
+                frame_schema_version=frame.schema_version,
                 frame_ordinal=frame_ordinal,
                 elapsed_since_capture_start_ns=cast(int, raw.request_elapsed_monotonic_ns),
                 received_at_utc=frame.received_at_utc,
@@ -286,7 +312,7 @@ def replay_polymarket_book_capture(
     frame_values = tuple(replay_frames)
     event_count = sum(len(frame.updates) for frame in frame_values)
     result_payload = {
-        "schema_version": 1,
+        "schema_version": 2,
         "replay_version": POLYMARKET_BOOK_EVENT_REPLAY_VERSION,
         "venue": Venue.POLYMARKET.value,
         "native_market_id": native_market_id,

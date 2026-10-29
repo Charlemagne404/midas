@@ -373,7 +373,7 @@ class PolymarketAdapter(BaseReadOnlyAdapter):
                     frame_provenance = Provenance(
                         source_url=POLYMARKET_MARKET_STREAM_URL,
                         adapter_version=ADAPTER_VERSION,
-                        source_schema_version="polymarket-market-stream-v1",
+                        source_schema_version="polymarket-market-stream-v2",
                         request_started_at_utc=request_started,
                         response_received_at_utc=capture.received_at_utc,
                         request_elapsed_monotonic_ns=capture.request_elapsed_monotonic_ns,

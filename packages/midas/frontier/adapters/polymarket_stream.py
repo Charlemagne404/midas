@@ -73,6 +73,42 @@ def _decimal(value: Any, label: str, *, allow_zero: bool) -> Decimal:
     return parsed
 
 
+def _optional_payload_value(
+    payload: dict[str, Any], snake_case: str, camel_case: str, label: str
+) -> Any | None:
+    """Read either documented SDK spelling and reject conflicting aliases."""
+    snake_present = snake_case in payload
+    camel_present = camel_case in payload
+    if snake_present and camel_present and payload[snake_case] != payload[camel_case]:
+        raise AdapterError("INVALID_STREAM_EVENT", f"Polymarket {label} aliases conflict")
+    if snake_present:
+        return payload[snake_case]
+    if camel_present:
+        return payload[camel_case]
+    return None
+
+
+def _optional_decimal(
+    payload: dict[str, Any],
+    snake_case: str,
+    camel_case: str,
+    label: str,
+    *,
+    allow_zero: bool,
+) -> Decimal | None:
+    value = _optional_payload_value(payload, snake_case, camel_case, label)
+    return _decimal(value, label, allow_zero=allow_zero) if value is not None else None
+
+
+def _optional_bool(
+    payload: dict[str, Any], snake_case: str, camel_case: str, label: str
+) -> bool | None:
+    value = _optional_payload_value(payload, snake_case, camel_case, label)
+    if value is not None and not isinstance(value, bool):
+        raise AdapterError("INVALID_STREAM_EVENT", f"Polymarket {label} is not a boolean")
+    return value
+
+
 def _event_type_and_payload(event: dict[str, Any]) -> tuple[str, dict[str, Any]]:
     event_type = event.get("type", event.get("event_type"))
     if not isinstance(event_type, str):
@@ -160,6 +196,33 @@ def decode_market_stream_frame(
                     source_timestamp_utc=parse_time(payload.get("timestamp")),
                     bids=_book_levels(payload.get("bids"), "book bids"),
                     asks=_book_levels(payload.get("asks"), "book asks"),
+                    book_hash=(
+                        _text(payload["hash"], "book hash")
+                        if payload.get("hash") is not None
+                        else None
+                    ),
+                    min_order_size=(
+                        _optional_decimal(
+                            payload,
+                            "min_order_size",
+                            "minOrderSize",
+                            "minimum order size",
+                            allow_zero=False,
+                        )
+                    ),
+                    tick_size=_optional_decimal(
+                        payload, "tick_size", "tickSize", "tick size", allow_zero=False
+                    ),
+                    neg_risk=_optional_bool(payload, "neg_risk", "negRisk", "negative-risk flag"),
+                    last_trade_price=(
+                        _optional_decimal(
+                            payload,
+                            "last_trade_price",
+                            "lastTradePrice",
+                            "last trade price",
+                            allow_zero=True,
+                        )
+                    ),
                 )
             )
             continue

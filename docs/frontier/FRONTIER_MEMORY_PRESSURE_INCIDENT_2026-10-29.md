@@ -5042,3 +5042,29 @@ Reality observations remain unresolved. Keep the incident
 resource-capped fixture/code work or documentation after fresh admission
 checks; defer broad tests, builds, replay, live probes, and production code
 integration.
+
+### Bounded Frontier continuation admission sample — 2026-10-29 20:36 CET
+
+After the Polymarket schema-v2 fixture checks, memory PSI remained zero.
+`MemAvailable` was 10,711,552 KiB (about 10.2 GiB), while only 20,696 KiB
+(about 20 MiB) of swap remained free. User-slice memory events were
+`high=16,438,259`, `max=732,165`, `oom=19`, `oom_kill=15`, and
+`oom_group_kill=0`. The sampled counters matched the previous admission sample.
+No matching systemd-oomd or kernel OOM-kill entries were returned for the
+20:00-to-sample journal query.
+
+The API, Reality recorder, Reality API/web, Continental system services, Echo
+production/staging, Caddy, and RustDesk were active in the sampled service
+views. The gap-detail timer remained disabled. Source analysis was scheduled at
+20:40:41, Research Director at 20:45:19, and the next capacity run at 20:50:51;
+the bounded Frontier work completed before those jobs began. The transient
+Python, UI, and ESLint commands exited successfully within configured memory,
+swap, CPU, and task caps. systemd nevertheless reported a 256 KiB peak for
+each, which is not credible for the processes; do not treat those values as
+peak-memory measurements.
+
+This supports continued **serial capped fixture/code work only**. It does not
+resolve the full-swap condition, historical pressure attribution, the
+user-slice limit/OOMD visibility discrepancy, or any unresolved Reality data
+integrity warning. No service, timer, production configuration, recording, or
+historical research evidence was changed during this validation.

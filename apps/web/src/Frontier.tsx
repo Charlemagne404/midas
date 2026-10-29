@@ -527,6 +527,11 @@ type PolymarketBookUpdateCaptureResult = {
       price_change_count: number;
       reported_best_bid: string | null;
       reported_best_ask: string | null;
+      book_hash: string | null;
+      min_order_size: string | null;
+      tick_size: string | null;
+      neg_risk: boolean | null;
+      last_trade_price: string | null;
       continuity: string;
       quality_flags: string[];
     }[];
@@ -556,6 +561,7 @@ type PolymarketStoredBookUpdatePage = {
 };
 type PolymarketBookUpdatesReplayResult = {
   replay_version: string;
+  schema_version: number;
   native_market_id: string;
   bound_market_observation_id: string;
   capture_started_at_utc: string;
@@ -563,7 +569,7 @@ type PolymarketBookUpdatesReplayResult = {
     observation_id: string;
     raw_sha256: string;
     normalized_sha256: string;
-    frame_schema_version: 1;
+    frame_schema_version: 1 | 2;
     frame_ordinal: number;
     elapsed_since_capture_start_ns: number;
     received_at_utc: string;
@@ -6440,11 +6446,22 @@ function PolymarketBookUpdatesPanel({
               <span>Record {shortHash(frame.observation_id)}</span>
               <span>Raw SHA-256 {shortHash(frame.raw_sha256)}</span>
               {frame.updates.map((update, index) => (
-                <span key={`${frame.observation_id}:${index}`}>
-                  {update.event_type} · instrument {update.native_instrument_id} · bid/ask levels{' '}
-                  {update.bid_level_count}/{update.ask_level_count} · changes{' '}
-                  {update.price_change_count} · quality {update.quality_flags.join(', ')}
-                </span>
+                <div key={`${frame.observation_id}:${index}`}>
+                  <span>
+                    {update.event_type} · instrument {update.native_instrument_id} · bid/ask levels{' '}
+                    {update.bid_level_count}/{update.ask_level_count} · changes{' '}
+                    {update.price_change_count} · quality {update.quality_flags.join(', ')}
+                  </span>
+                  {update.event_type === 'book' && (
+                    <small>
+                      Snapshot · min size {update.min_order_size ?? 'not reported'} · tick{' '}
+                      {update.tick_size ?? 'not reported'} · negative risk{' '}
+                      {update.neg_risk == null ? 'not reported' : update.neg_risk ? 'yes' : 'no'} ·
+                      last trade {update.last_trade_price ?? 'not reported'} · hash{' '}
+                      {update.book_hash ? shortHash(update.book_hash) : 'not reported'}
+                    </small>
+                  )}
+                </div>
               ))}
               <EvidenceDisclosure observationId={frame.observation_id} />
             </article>
@@ -6542,6 +6559,17 @@ function PolymarketBookUpdatesPanel({
               <span>
                 Events {frame.updates.map((update) => label(update.event_type)).join(', ')}
               </span>
+              {frame.updates
+                .filter((update) => update.event_type === 'book')
+                .map((update, index) => (
+                  <small key={`${frame.observation_id}:snapshot:${index}`}>
+                    Snapshot · min size {update.min_order_size ?? 'not reported'} · tick{' '}
+                    {update.tick_size ?? 'not reported'} · negative risk{' '}
+                    {update.neg_risk == null ? 'not reported' : update.neg_risk ? 'yes' : 'no'} ·
+                    last trade {update.last_trade_price ?? 'not reported'} · hash{' '}
+                    {update.book_hash ? shortHash(update.book_hash) : 'not reported'}
+                  </small>
+                ))}
               <span>Record {shortHash(frame.observation_id)}</span>
             </article>
           ))}

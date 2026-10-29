@@ -1756,7 +1756,7 @@ it('captures one explicit Polymarket trade page and follows its bound cursor', a
               raw_sha256: 'f'.repeat(64),
               received_at_utc: '2026-10-27T00:01:00Z',
               source_url: 'wss://ws-subscriptions-clob.polymarket.com/ws/market',
-              source_schema_version: 'polymarket-market-stream-v1',
+              source_schema_version: 'polymarket-market-stream-v2',
               adapter_version: 'frontier-polymarket-2',
               updates: [
                 {
@@ -1769,6 +1769,11 @@ it('captures one explicit Polymarket trade page and follows its bound cursor', a
                   price_change_count: 0,
                   reported_best_bid: null,
                   reported_best_ask: null,
+                  book_hash: '0xabc123',
+                  min_order_size: '5',
+                  tick_size: '0.01',
+                  neg_risk: true,
+                  last_trade_price: '0.47',
                   continuity: 'unverified_no_sequence_or_gap_detection',
                   quality_flags: ['NO_SEQUENCE_FIELD', 'DELTAS_NOT_APPLIED_TO_LOCAL_BOOK'],
                 },
@@ -1787,7 +1792,8 @@ it('captures one explicit Polymarket trade page and follows its bound cursor', a
       return {
         ok: true,
         json: async () => ({
-          replay_version: 'polymarket-book-event-replay-1',
+          replay_version: 'polymarket-book-event-replay-2',
+          schema_version: 2,
           native_market_id: conditionId,
           bound_market_observation_id: 'market-observation',
           capture_started_at_utc: '2026-10-27T00:00:00Z',
@@ -1796,7 +1802,7 @@ it('captures one explicit Polymarket trade page and follows its bound cursor', a
               observation_id: 'stream-observation',
               raw_sha256: 'f'.repeat(64),
               normalized_sha256: 'e'.repeat(64),
-              frame_schema_version: 1,
+              frame_schema_version: 2,
               frame_ordinal: 0,
               elapsed_since_capture_start_ns: 100,
               received_at_utc: '2026-10-27T00:01:00Z',
@@ -1819,6 +1825,11 @@ it('captures one explicit Polymarket trade page and follows its bound cursor', a
                   price_change_count: 0,
                   reported_best_bid: null,
                   reported_best_ask: null,
+                  book_hash: '0xabc123',
+                  min_order_size: '5',
+                  tick_size: '0.01',
+                  neg_risk: true,
+                  last_trade_price: '0.47',
                   continuity: 'unverified_no_sequence_or_gap_detection',
                   quality_flags: ['NO_SEQUENCE_FIELD', 'DELTAS_NOT_APPLIED_TO_LOCAL_BOOK'],
                 },
@@ -1942,6 +1953,9 @@ it('captures one explicit Polymarket trade page and follows its bound cursor', a
     }
   });
   expect(screen.getByText(/NO_SEQUENCE_FIELD/)).toBeInTheDocument();
+  expect(
+    screen.getAllByText(/Snapshot · min size 5 · tick 0.01 · negative risk yes/).length,
+  ).toBeGreaterThan(0);
   expect(screen.getAllByText('Inspect immutable source response').length).toBeGreaterThan(0);
   expect(bookUpdateRequests).toEqual([{ market_id: market.canonical_id }]);
   fireEvent.click(screen.getByRole('button', { name: 'Replay saved capture offline' }));

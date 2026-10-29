@@ -167,6 +167,8 @@ def test_decoder_preserves_snapshot_and_deltas_without_claiming_continuity():
 
     assert [item.event_type for item in decoded] == ["book", "price_change"]
     assert decoded[0].bids[0].price == Decimal("0.41")
+    assert decoded[0].schema_version == 2
+    assert decoded[0].book_hash == "0xbook"
     assert decoded[1].changes[0].reported_size == Decimal("0")
     assert decoded[1].changes[0].reported_best_bid == Decimal("0.42")
     assert decoded[0].continuity == "unverified_no_sequence_or_gap_detection"
@@ -197,6 +199,80 @@ def test_decoder_supports_documented_nested_stream_shape_and_control_events():
     assert decoded[0].source_timestamp_utc == T0
     assert decoded[0].changes[0].reported_size == Decimal("3.25")
     assert decode_market_stream_frame("PONG", subscribed_asset_ids=frozenset({ASSET_ID})) == ()
+
+
+@pytest.mark.parametrize(
+    ("event", "expected_hash"),
+    [
+        (
+            {
+                "topic": "market",
+                "type": "book",
+                "payload": {
+                    "conditionId": CONDITION_ID,
+                    "assetId": ASSET_ID,
+                    "bids": [],
+                    "asks": [],
+                    "hash": "camel-hash",
+                    "minOrderSize": "5",
+                    "tickSize": "0.01",
+                    "negRisk": True,
+                    "lastTradePrice": "0.47",
+                },
+            },
+            "camel-hash",
+        ),
+        (
+            {
+                "event_type": "book",
+                "condition_id": CONDITION_ID,
+                "asset_id": ASSET_ID,
+                "bids": [],
+                "asks": [],
+                "hash": "snake-hash",
+                "min_order_size": "2.5",
+                "tick_size": "0.001",
+                "neg_risk": False,
+                "last_trade_price": "0.51",
+            },
+            "snake-hash",
+        ),
+    ],
+)
+def test_decoder_preserves_documented_full_book_metadata(event, expected_hash):
+    (update,) = decode_market_stream_frame(
+        json.dumps(event, separators=(",", ":")),
+        subscribed_asset_ids=frozenset({ASSET_ID}),
+    )
+    assert update.book_hash == expected_hash
+    assert update.min_order_size in {Decimal("5"), Decimal("2.5")}
+    assert update.tick_size in {Decimal("0.01"), Decimal("0.001")}
+    assert update.neg_risk is (expected_hash == "camel-hash")
+    assert update.last_trade_price in {Decimal("0.47"), Decimal("0.51")}
+
+
+@pytest.mark.parametrize(
+    "metadata",
+    [
+        {"negRisk": "false"},
+        {"tickSize": "0"},
+        {"lastTradePrice": "1.01"},
+        {"min_order_size": "2", "minOrderSize": "3"},
+    ],
+)
+def test_decoder_rejects_invalid_or_conflicting_book_metadata(metadata):
+    event = {
+        "type": "book",
+        "payload": {
+            "conditionId": CONDITION_ID,
+            "assetId": ASSET_ID,
+            "bids": [],
+            "asks": [],
+            **metadata,
+        },
+    }
+    with pytest.raises((AdapterError, ValueError)):
+        decode_market_stream_frame(json.dumps(event), subscribed_asset_ids=frozenset({ASSET_ID}))
 
 
 @pytest.mark.parametrize(
@@ -412,6 +488,8 @@ def test_book_update_api_binds_to_saved_market_and_persists_fixture_evidence(tmp
             "stream_connections": 1,
         }
         assert result["frames"][0]["updates"][0]["event_type"] == "book"
+        assert result["frames"][0]["updates"][0]["book_hash"] == "0xbook"
+        assert result["frames"][0]["updates"][0]["min_order_size"] is None
         assert result["frames"][1]["updates"][0]["event_type"] == "price_change"
         assert result["frames"][0]["updates"][0]["native_instrument_id"] == ASSET_ID
         assert (
@@ -466,6 +544,8 @@ def test_book_update_api_binds_to_saved_market_and_persists_fixture_evidence(tmp
         )
         assert replay.status_code == 200, replay.text
         replay_result = replay.json()
+        assert replay_result["schema_version"] == 2
+        assert replay_result["replay_version"] == "polymarket-book-event-replay-2"
         assert replay_result["event_count"] == 2
         assert replay_result["message_order_basis"] == "local_monotonic_elapsed"
         assert replay_result["continuity"] == "unverified_no_sequence_or_gap_detection"
@@ -483,6 +563,26 @@ def test_book_update_api_binds_to_saved_market_and_persists_fixture_evidence(tmp
         assert repeated.status_code == 200, repeated.text
         assert repeated.json() == replay_result
         assert connector.calls == 1
+
+        legacy_record = store.observation(observation_ids[0])
+        assert legacy_record is not None
+        legacy_record["normalized"]["schema_version"] = 1
+        legacy_record["normalized"]["provenance"]["source_schema_version"] = (
+            "polymarket-market-stream-v1"
+        )
+        legacy_update = legacy_record["normalized"]["updates"][0]
+        legacy_update["schema_version"] = 1
+        for field in (
+            "book_hash",
+            "min_order_size",
+            "tick_size",
+            "neg_risk",
+            "last_trade_price",
+        ):
+            legacy_update.pop(field, None)
+        legacy_replay = replay_polymarket_book_capture((legacy_record,))
+        assert legacy_replay.frame_evidence[0].frame_schema_version == 1
+        assert legacy_replay.frames[0].updates[0].book_hash is None
 
         tampered = store.observation(observation_ids[0])
         assert tampered is not None

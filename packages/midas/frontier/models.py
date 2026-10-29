@@ -1209,7 +1209,7 @@ class PolymarketBookUpdate(FrontierModel):
     continuously reconstructed book.
     """
 
-    schema_version: Literal[1] = 1
+    schema_version: Literal[1, 2] = 2
     native_market_id: str = Field(min_length=1, max_length=256)
     native_market_id_kind: Literal["condition_id"] = "condition_id"
     native_instrument_id: str = Field(min_length=1, max_length=256)
@@ -1220,6 +1220,11 @@ class PolymarketBookUpdate(FrontierModel):
     changes: tuple[PolymarketBookPriceChange, ...] = Field(default=(), max_length=100)
     reported_best_bid: Nonnegative | None = None
     reported_best_ask: Nonnegative | None = None
+    book_hash: str | None = Field(default=None, min_length=1, max_length=256)
+    min_order_size: Positive | None = None
+    tick_size: Positive | None = None
+    neg_risk: StrictBool | None = None
+    last_trade_price: Nonnegative | None = None
     old_tick_size: Positive | None = None
     new_tick_size: Positive | None = None
     continuity: Literal["unverified_no_sequence_or_gap_detection"] = (
@@ -1242,9 +1247,25 @@ class PolymarketBookUpdate(FrontierModel):
     def event_payload_matches_type(self) -> PolymarketBookUpdate:
         if any(
             value is not None and value > 1
-            for value in (self.reported_best_bid, self.reported_best_ask)
+            for value in (
+                self.reported_best_bid,
+                self.reported_best_ask,
+                self.tick_size,
+                self.last_trade_price,
+            )
         ):
             raise ValueError("Polymarket contract prices must be between zero and one")
+        snapshot_metadata = (
+            self.book_hash,
+            self.min_order_size,
+            self.tick_size,
+            self.neg_risk,
+            self.last_trade_price,
+        )
+        if self.schema_version == 1 and any(value is not None for value in snapshot_metadata):
+            raise ValueError("Polymarket update schema v1 cannot contain snapshot metadata")
+        if self.event_type != "book" and any(value is not None for value in snapshot_metadata):
+            raise ValueError("Polymarket snapshot metadata is only valid on full book events")
         if self.event_type == "book":
             if self.changes:
                 raise ValueError("A full book event cannot also contain level changes")
@@ -1298,7 +1319,7 @@ class PolymarketBookUpdate(FrontierModel):
 class PolymarketBookUpdateFrame(FrontierModel):
     """Normalized market updates carried by one hash-pinned WebSocket frame."""
 
-    schema_version: Literal[1] = 1
+    schema_version: Literal[1, 2] = 2
     venue: Literal[Venue.POLYMARKET] = Venue.POLYMARKET
     updates: tuple[PolymarketBookUpdate, ...] = Field(min_length=1, max_length=100)
     received_at_utc: datetime
@@ -1323,8 +1344,15 @@ class PolymarketBookUpdateFrame(FrontierModel):
             raise ValueError("Polymarket frame provenance uses an unexpected stream URL")
         if not self.provenance.adapter_version.startswith("frontier-polymarket-"):
             raise ValueError("Polymarket frame adapter version is invalid")
-        if self.provenance.source_schema_version != "polymarket-market-stream-v1":
+        expected_source_schema = (
+            "polymarket-market-stream-v1"
+            if self.schema_version == 1
+            else "polymarket-market-stream-v2"
+        )
+        if self.provenance.source_schema_version != expected_source_schema:
             raise ValueError("Polymarket frame source schema is invalid")
+        if any(update.schema_version != self.schema_version for update in self.updates):
+            raise ValueError("Polymarket frame and update schema versions differ")
         return self
 
     @property
