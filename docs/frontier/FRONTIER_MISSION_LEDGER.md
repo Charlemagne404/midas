@@ -13189,3 +13189,29 @@ test was made under the incident host gate. Follow up with a migration-safe,
 constant-time revision counter design and one focused bounded test after swap
 headroom and OOMD monitor visibility permit it. No Frontier process was
 running.
+
+### Bounded graph-cursor revision improvement — 2026-10-29 04:40 CET
+
+Implemented schema version 8's append-only graph revision counters. A
+single-row SQLite table is backfilled once under `BEGIN IMMEDIATE`; insert
+triggers advance market, relationship, and review revisions in the same
+transactions as their evidence rows. Non-graph book/trade observations do
+not invalidate graph cursors. Legacy databases without the new table retain a
+read-only count fallback before initialization. Added focused tests for
+schema-7 backfill, metadata/book/trade behavior, and atomic review updates;
+also updated the historical replay migration assertion to reference the
+`SCHEMA_VERSION` constant.
+
+The test runner is not installed in host Python (`pytest` and Pydantic are both
+missing), and no dependency installation was attempted. Syntax compilation
+passed for the changed source/test modules, and a SQLite-only smoke check
+passed revision seeding plus filtered insert-trigger behavior. Both used
+separate 256 MiB, zero-swap, 20%-CPU scopes. At 04:39 PSI remained zero,
+`MemAvailable` was 11.62 GB, swap had 2.03 MB free, API/Reality restart
+counts remained 9/14, and no new OOM entry was observed. The targeted pytest
+cases remain unexecuted; no application integration or production evidence is
+claimed. The graph implementation is a local Frontier change only and was not
+deployed.
+
+Implementation checkpoint: `53dcbd1`
+(`perf(frontier): maintain graph cursor revisions incrementally`).
