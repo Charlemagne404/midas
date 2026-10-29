@@ -11,6 +11,7 @@ from midas.frontier.models import (
     AdapterCapabilities,
     AdapterConfig,
     BookSnapshot,
+    CandleSeries,
     Capability,
     CapabilityDeclaration,
     FrontierMarket,
@@ -135,6 +136,18 @@ class PriceHistoryAdapter(Protocol):
         start_ts: int,
         end_ts: int,
     ) -> PriceHistorySeries: ...
+
+
+@runtime_checkable
+class CandleHistoryAdapter(Protocol):
+    """Optional extension for bounded source-specific OHLC candle history."""
+
+    async def fetch_candles(
+        self,
+        native_market_id: str,
+        interval_minutes: int = 60,
+        since_epoch_seconds: int | None = None,
+    ) -> CandleSeries: ...
 
 
 class BaseReadOnlyAdapter:

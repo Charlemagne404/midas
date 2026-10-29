@@ -10,7 +10,7 @@ import math
 import re
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from functools import lru_cache
 from pathlib import Path
@@ -44,6 +44,7 @@ from midas.arena.frontier_timeline import (
 )
 from midas.frontier.adapters.base import (
     AdapterError,
+    CandleHistoryAdapter,
     ExchangeAdapter,
     FailedResponseEvidence,
     PriceHistoryAdapter,
@@ -94,6 +95,7 @@ from midas.frontier.historical_replay import (
 )
 from midas.frontier.models import (
     BookSnapshot,
+    CandleSeries,
     Capability,
     FrontierMarket,
     JointStateMap,
@@ -193,6 +195,21 @@ class PolymarketPriceHistoryProbeRequest(BaseModel):
             raise ValueError("Price-history requests are bounded to 7 days")
         if self.end_ts > now_ts:
             raise ValueError("Price-history end timestamp cannot be in the future")
+        return self
+
+
+class KrakenCandleProbeRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+    native_market_id: str = Field(min_length=1, max_length=64, pattern=r"^[A-Za-z0-9./_-]+$")
+    interval_minutes: Literal[1, 5, 15, 30, 60, 240, 1440, 10080, 21600] = 60
+    since_epoch_seconds: int | None = Field(default=None, strict=True, ge=0)
+
+    @model_validator(mode="after")
+    def since_is_not_future(self) -> KrakenCandleProbeRequest:
+        if self.since_epoch_seconds is not None and self.since_epoch_seconds > int(
+            datetime.now(UTC).timestamp()
+        ):
+            raise ValueError("Candle start timestamp cannot be in the future")
         return self
 
 
@@ -2334,6 +2351,75 @@ def router(
             "source_state": "recorded observations only",
         }
 
+    @api.get("/candles")
+    async def saved_candles(
+        venue: Venue = Venue.KRAKEN,
+        native_market_id: str | None = Query(default=None, min_length=1, max_length=64),
+        limit: int = Query(default=5, ge=1, le=10),
+        offset: int = Query(default=0, ge=0, le=100_000),
+    ) -> dict[str, Any]:
+        """List only hash-checked, locally stored OHLC captures."""
+        if venue != Venue.KRAKEN:
+            raise HTTPException(status_code=409, detail="Historical candles are unsupported here")
+        reject_held_venue(venue)
+        scan_limit = 20 if native_market_id is not None else limit + 1
+        scan_offset = 0 if native_market_id is not None else offset
+        try:
+            observations = _read_stored_observations(
+                store,
+                venue=venue.value,
+                kind="historical_candles",
+                excluded_venues=held_venues,
+                limit=scan_limit,
+                offset=scan_offset,
+            )
+            items: list[dict[str, Any]] = []
+            for observation in observations:
+                normalized = observation["normalized"]
+                if not isinstance(normalized, dict) or "candles" not in normalized:
+                    continue
+                series = CandleSeries.model_validate(normalized)
+                if native_market_id is not None and series.native_market_id != native_market_id:
+                    continue
+                saved = store.observation(str(observation["observation_id"]))
+                if saved is None:
+                    raise ValueError("Stored Kraken candle observation disappeared during read")
+                raw = RawObservation.model_validate(saved["raw"])
+                series = CandleSeries.model_validate(saved["normalized"])
+                _validate_kraken_candle_source_row(saved, raw, series)
+                _validate_kraken_candle_market_binding(store, series)
+                items.append(
+                    {
+                        "series": series.model_dump(mode="json"),
+                        "observation_id": saved["observation_id"],
+                        "raw_sha256": saved["raw_sha256"],
+                        "received_at_utc": saved["received_at_utc"],
+                    }
+                )
+            if native_market_id is not None:
+                items = items[offset : offset + limit + 1]
+            has_more = len(items) > limit
+            items = items[:limit]
+            if native_market_id is None:
+                has_more = len(observations) > limit
+        except (FrontierStoreError, ValueError) as error:
+            raise HTTPException(status_code=409, detail=str(error)) from error
+        return {
+            "items": items,
+            "venue": venue.value,
+            "native_market_id": native_market_id,
+            "limit": limit,
+            "offset": offset,
+            "returned": len(items),
+            "has_more": has_more,
+            "scan_bound": scan_limit,
+            "scan_may_be_incomplete": (
+                native_market_id is not None and len(observations) == scan_limit
+            ),
+            "source_state": "recorded observations only",
+            "network_called": False,
+        }
+
     def eligible_price_history_replay_rows(
         rows: tuple[dict[str, Any], ...],
     ) -> tuple[dict[str, Any], ...]:
@@ -2723,6 +2809,134 @@ def router(
                     status_code=502,
                     detail={
                         "code": "FRONTIER_PRICE_HISTORY_FAILED",
+                        "message": str(error),
+                        "diagnostic_observation_ids": diagnostic_ids,
+                        "diagnostic_persistence_error": diagnostic_error,
+                    },
+                ) from error
+
+    @api.post("/probe/kraken/candles")
+    async def probe_kraken_candles(request: KrakenCandleProbeRequest) -> dict[str, Any]:
+        """Capture one bounded Kraken OHLC response for a saved spot pair."""
+        venue = Venue.KRAKEN
+        reject_held_venue(venue)
+        adapter = registered_source_adapter(venue)
+        if not adapter.capabilities.supports(Capability.HISTORICAL_CANDLES):
+            raise HTTPException(status_code=409, detail="Kraken historical candles are unsupported")
+        if not isinstance(adapter, CandleHistoryAdapter):
+            raise HTTPException(
+                status_code=409,
+                detail="Advertised Kraken candle-history operation is unavailable",
+            )
+        config = require_probe_config(getattr(adapter, "config", None))
+        try:
+            known_markets = await _load_markets(store, 200, excluded_venues=held_venues)
+        except (FrontierStoreError, ValueError) as error:
+            raise HTTPException(status_code=409, detail=str(error)) from error
+        recorded_market = next(
+            (
+                item
+                for item in known_markets
+                if item.venue == venue
+                and item.native_market_id == request.native_market_id
+                and item.market_kind.value == "spot_pair"
+                and len(item.instruments) == 1
+                and item.instruments[0].native_instrument_id == request.native_market_id
+            ),
+            None,
+        )
+        if recorded_market is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Candles can only be fetched for a native Kraken spot pair in the recorded market window",
+            )
+        bound_market_observation_id = recorded_market.provenance.observation_id
+        if bound_market_observation_id is None:
+            raise HTTPException(
+                status_code=409,
+                detail="Recorded spot pair has no immutable source-observation binding",
+            )
+
+        async with source_operation(venue):
+            adapter.take_captures()
+            requests_before = adapter.transport.request_count
+            captures: tuple[RawObservation, ...] = ()
+            try:
+                series = await adapter.fetch_candles(
+                    request.native_market_id,
+                    interval_minutes=request.interval_minutes,
+                    since_epoch_seconds=request.since_epoch_seconds,
+                )
+                captures = adapter.take_captures()
+                if (
+                    len(captures) != 1
+                    or not isinstance(series, CandleSeries)
+                    or series.venue != venue
+                    or series.native_market_id != request.native_market_id
+                    or series.interval_seconds != request.interval_minutes * 60
+                    or series.requested_since_epoch_seconds != request.since_epoch_seconds
+                    or series.provenance.raw_sha256 != captures[0].raw_sha256
+                ):
+                    raise AdapterError(
+                        "CANDLE_CAPTURE_MISMATCH",
+                        "Normalized Kraken candles do not match the requested pair and raw response",
+                    )
+                capture = captures[0]
+                _validate_kraken_candle_capture(capture, series)
+                series = series.model_copy(
+                    update={"bound_market_observation_id": bound_market_observation_id}
+                )
+                observation_id = store.append_observation(capture, series)
+                return {
+                    "venue": venue.value,
+                    "market_id": recorded_market.canonical_id,
+                    "native_market_id": request.native_market_id,
+                    "bound_market_observation_id": bound_market_observation_id,
+                    "series": series.model_dump(mode="json"),
+                    "candle_count": len(series.candles),
+                    "observation_id": observation_id,
+                    "raw_sha256": capture.raw_sha256,
+                    "source_state": (await adapter.health()).state.value,
+                    "request_count_delta": adapter.transport.request_count - requests_before,
+                    "network_calls_bounded_by": config.retries + 1,
+                    "hypothetical_only": True,
+                    "spot_context_only": True,
+                    "note": (
+                        "Kraken OHLC is contextual spot data; it is not an event-contract payoff, "
+                        "executable quote, hedge, or proof of arbitrage. The newest candle may be incomplete."
+                    ),
+                }
+            except AdapterError as error:
+                diagnostic_ids, diagnostic_error = preserve_failed_captures(
+                    adapter,
+                    error.code,
+                    str(error),
+                    error.response_evidence,
+                    already_drained=captures,
+                    response_diagnostic=error.response_diagnostic,
+                )
+                adapter.report_failure(error.code, str(error))
+                raise HTTPException(
+                    status_code=502,
+                    detail={
+                        "code": error.code,
+                        "message": str(error),
+                        "diagnostic_observation_ids": diagnostic_ids,
+                        "diagnostic_persistence_error": diagnostic_error,
+                    },
+                ) from error
+            except (ValueError, FrontierStoreError) as error:
+                diagnostic_ids, diagnostic_error = preserve_failed_captures(
+                    adapter,
+                    "FRONTIER_KRAKEN_CANDLES_FAILED",
+                    str(error),
+                    already_drained=captures,
+                )
+                adapter.report_failure("FRONTIER_KRAKEN_CANDLES_FAILED", str(error))
+                raise HTTPException(
+                    status_code=502,
+                    detail={
+                        "code": "FRONTIER_KRAKEN_CANDLES_FAILED",
                         "message": str(error),
                         "diagnostic_observation_ids": diagnostic_ids,
                         "diagnostic_persistence_error": diagnostic_error,
@@ -6440,6 +6654,171 @@ def _validate_kraken_book_update_market_binding(
     raise ValueError(
         "Bound Kraken market observation does not contain this frame's native spot pair and instrument"
     )
+
+
+def _validate_kraken_candle_capture(raw: RawObservation, series: CandleSeries) -> None:
+    interval_minutes = series.interval_seconds // 60
+    if (
+        series.venue != Venue.KRAKEN
+        or series.interval_seconds % 60
+        or interval_minutes not in {1, 5, 15, 30, 60, 240, 1440, 10080, 21600}
+        or raw.venue != Venue.KRAKEN
+        or raw.observation_kind != "historical_candles"
+        or raw.http_status != 200
+        or raw.raw_body_encoding != "utf8"
+        or raw.raw_body_state != "complete"
+        or raw.raw_sha256 != series.provenance.raw_sha256
+        or raw.adapter_version != series.provenance.adapter_version
+        or raw.request_url != series.provenance.source_url
+        or raw.request_started_at_utc != series.provenance.request_started_at_utc
+        or raw.received_at_utc != series.provenance.response_received_at_utc
+        or raw.request_elapsed_monotonic_ns != series.provenance.request_elapsed_monotonic_ns
+        or series.provenance.source_schema_version != f"OHLC:{interval_minutes}m"
+    ):
+        raise ValueError("Kraken candle normalization does not match its raw response metadata")
+    try:
+        source_url = urlsplit(raw.request_url)
+        source_port = source_url.port
+        query = parse_qs(
+            source_url.query,
+            keep_blank_values=True,
+            max_num_fields=4,
+            strict_parsing=True,
+        )
+    except ValueError as error:
+        raise ValueError("Kraken candle request URL is invalid") from error
+    expected_query = {
+        "pair": [series.native_market_id],
+        "interval": [str(interval_minutes)],
+    }
+    if series.requested_since_epoch_seconds is not None:
+        expected_query["since"] = [str(series.requested_since_epoch_seconds)]
+    if (
+        source_url.scheme != "https"
+        or source_url.hostname is None
+        or source_url.hostname.lower() != "api.kraken.com"
+        or source_port is not None
+        or source_url.path != "/0/public/OHLC"
+        or source_url.fragment
+        or source_url.username is not None
+        or source_url.password is not None
+        or query != expected_query
+    ):
+        raise ValueError("Kraken candle request URL does not match the normalized query")
+    _validate_kraken_candle_raw_body(raw, series)
+
+
+def _validate_kraken_candle_raw_body(raw: RawObservation, series: CandleSeries) -> None:
+    try:
+        payload = json.loads(
+            raw.raw_body,
+            parse_float=Decimal,
+            object_pairs_hook=_reject_duplicate_json_fields,
+            parse_constant=_reject_nonstandard_json_constant,
+        )
+    except (json.JSONDecodeError, RecursionError, ValueError) as error:
+        raise ValueError("Stored Kraken OHLC response is invalid JSON") from error
+    if (
+        not isinstance(payload, dict)
+        or not isinstance(payload.get("error"), list)
+        or payload["error"]
+        or not isinstance(payload.get("result"), dict)
+    ):
+        raise ValueError("Stored Kraken OHLC response has an invalid envelope")
+    result = payload["result"]
+    if series.native_market_id not in result or any(
+        key not in {series.native_market_id, "last"} for key in result
+    ):
+        raise ValueError("Stored Kraken OHLC response contains an unexpected pair")
+    rows = result[series.native_market_id]
+    if not isinstance(rows, list) or len(rows) > 720 or len(rows) != len(series.candles):
+        raise ValueError("Stored Kraken OHLC rows differ from the normalized candle count")
+    for row, candle in zip(rows, series.candles, strict=True):
+        if not isinstance(row, list) or len(row) != 8:
+            raise ValueError("Stored Kraken OHLC response contains a malformed row")
+        timestamp_raw = row[0]
+        if isinstance(timestamp_raw, bool) or timestamp_raw is None:
+            raise ValueError("Stored Kraken OHLC timestamp is invalid")
+        try:
+            timestamp = Decimal(str(timestamp_raw))
+            values = tuple(Decimal(str(value)) for value in row[1:7])
+        except (ArithmeticError, TypeError, ValueError) as error:
+            raise ValueError("Stored Kraken OHLC values are invalid") from error
+        trade_count = row[7]
+        if (
+            not timestamp.is_finite()
+            or timestamp < 0
+            or any(not value.is_finite() or value < 0 for value in values)
+            or type(trade_count) is not int
+            or not 0 <= trade_count <= 2_147_483_647
+        ):
+            raise ValueError("Stored Kraken OHLC values are outside supported bounds")
+        try:
+            whole_seconds = int(timestamp)
+            timestamp_utc = datetime.fromtimestamp(whole_seconds, UTC) + timedelta(
+                microseconds=int((timestamp - Decimal(whole_seconds)) * Decimal(1_000_000))
+            )
+        except (OverflowError, OSError, ValueError) as error:
+            raise ValueError(
+                "Stored Kraken OHLC timestamp is outside the supported range"
+            ) from error
+        open_price, high, low, close, _vwap, volume = values
+        if (
+            low > high
+            or not low <= open_price <= high
+            or not low <= close <= high
+            or candle.open_time_utc != timestamp_utc
+            or candle.open != open_price
+            or candle.high != high
+            or candle.low != low
+            or candle.close != close
+            or candle.volume != volume
+            or candle.trade_count != trade_count
+        ):
+            raise ValueError("Stored Kraken OHLC values differ from normalized candles")
+
+
+def _validate_kraken_candle_source_row(
+    row: dict[str, Any],
+    raw: RawObservation,
+    series: CandleSeries,
+) -> None:
+    if (
+        row["venue"] != Venue.KRAKEN.value
+        or row["observation_kind"] != "historical_candles"
+        or row["raw_sha256"] != raw.raw_sha256
+        or datetime.fromisoformat(str(row["received_at_utc"])) != raw.received_at_utc
+    ):
+        raise ValueError("Stored Kraken candle indexes do not match their raw evidence")
+    _validate_kraken_candle_capture(raw, series)
+
+
+def _validate_kraken_candle_market_binding(
+    store: FrontierStore,
+    series: CandleSeries,
+) -> None:
+    bound_observation_id = series.bound_market_observation_id
+    if bound_observation_id is None:
+        raise ValueError("Persisted Kraken candles have no saved-market observation binding")
+    bound = store.observation(bound_observation_id)
+    if (
+        bound is None
+        or bound["venue"] != Venue.KRAKEN.value
+        or bound["observation_kind"] != "instrument_metadata"
+    ):
+        raise ValueError("Kraken candle binding is missing or is not instrument metadata")
+    normalized = bound["normalized"]
+    if not isinstance(normalized, dict):
+        raise ValueError("Bound Kraken instrument metadata is not a normalized market")
+    market = FrontierMarket.model_validate(normalized)
+    if (
+        market.venue != Venue.KRAKEN
+        or market.market_kind.value != "spot_pair"
+        or market.native_market_id != series.native_market_id
+        or len(market.instruments) != 1
+        or market.instruments[0].native_instrument_id != series.native_market_id
+    ):
+        raise ValueError("Bound Kraken metadata does not contain this native spot pair")
 
 
 async def _load_market_records(

@@ -778,6 +778,7 @@ class KrakenSpotAdapter(BaseReadOnlyAdapter):
             native_market_id=native_market_id,
             interval_seconds=interval_minutes * 60,
             candles=tuple(candles),
+            requested_since_epoch_seconds=since_epoch_seconds,
             source_limit_note="Kraken OHLC is capped at 720 rows; the newest returned candle may be incomplete.",
             provenance=provenance(
                 self.venue,

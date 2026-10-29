@@ -1576,8 +1576,30 @@ class CandleSeries(FrontierModel):
     native_market_id: str = Field(min_length=1, max_length=MAX_SOURCE_IDENTIFIER_CHARS)
     interval_seconds: int = Field(ge=1, le=31_536_000, strict=True)
     candles: tuple[HistoricalCandle, ...] = Field(max_length=MAX_CANDLES_PER_SERIES)
+    requested_since_epoch_seconds: int | None = Field(default=None, strict=True, ge=0)
+    bound_market_observation_id: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
     source_limit_note: str = Field(max_length=512)
     provenance: Provenance
+
+    @field_validator("candles", mode="before")
+    @classmethod
+    def revalidate_candle_instances(cls, value: Any) -> Any:
+        if isinstance(value, (tuple, list)):
+            return tuple(
+                candle.model_dump(mode="python") if isinstance(candle, HistoricalCandle) else candle
+                for candle in value
+            )
+        return value
+
+    @model_validator(mode="after")
+    def candle_series_is_ordered(self) -> CandleSeries:
+        timestamps = tuple(candle.open_time_utc.astimezone(UTC) for candle in self.candles)
+        if any(
+            current <= previous
+            for previous, current in zip(timestamps, timestamps[1:], strict=False)
+        ):
+            raise ValueError("Candle timestamps must be unique and strictly increasing")
+        return self
 
 
 class HistoricalPricePoint(FrontierModel):
