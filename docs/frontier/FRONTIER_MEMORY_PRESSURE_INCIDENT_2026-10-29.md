@@ -2922,10 +2922,11 @@ remained high=16,428,175, max=730,409, oom=19, oom_kill=15, and
 oom_group_kill=0. Its cgroup currently accounted for 10,554,929,152 bytes of
 memory and 2,855,981,056 bytes of swap, with `memory.high=max` and
 `memory.max=max`. `memory.stat` split current memory into 7.02 GB file,
-2.36 GB anonymous, and 1.15 GB kernel categories. Cumulative direct-scan and
-swap-out counters are large, but are not interval measurements and do not
-identify a process or root cause. OOMD/kernel journals had no entries since
-13:14.
+2.36 GB anonymous, and 1.15 GB kernel categories. Cumulative `pgscan_direct`,
+`pswpin`, and `pswpout` counters were 272,492,783, 28,498,730, and 29,863,773
+pages. These are lifetime counters without an interval delta; they evidence
+reclaim/swap activity but do not identify when it occurred or which process
+initiated the pressure. OOMD/kernel journals had no entries since 13:14.
 
 API, Reality, and Reality API remained active at restart counts 9/14/0. API
 current/peak memory was 1.05/1.50 GiB; Reality was 610 MiB/1.125 GiB, each
