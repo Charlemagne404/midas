@@ -2,7 +2,7 @@
 
 **Incident date:** 2026-10-28 (CET)
 
-**Checkpoint captured:** 2026-10-29 01:08 CET
+**Checkpoint captured:** 2026-10-29 01:11 CET
 
 **Scope:** Host reliability interruption during Project Frontier
 
@@ -771,3 +771,26 @@ Continue with bounded tests only. Full test suites, replay, live probes, and
 research batches remain gated pending the 01:16 capacity run under the new
 160 MiB soft bound. Keep the gap-detail timer disabled and preserve the now
 active Reality collector.
+
+## Admission-test harness correction — 2026-10-29 01:11 CET
+
+The Laboratory resource-denial case was first run with a 512 MiB transient
+`MemoryMax`. It failed before reaching the intended admission denial because
+the test's pool-capacity precondition correctly requires 722,894,848 bytes.
+That failure identifies an undersized test harness limit, not a product
+regression. No test code or test data was changed. The same test passed on a
+bounded rerun with a 1 GiB cap, zero swap, 25% CPU quota, 16 tasks, and a
+30-second timeout: **1 passed in 1.41 seconds**.
+
+At 01:11:44, after the rerun, host available memory was 9.8 GiB, host and user
+memory PSI avg10/avg60/avg300 were zero, and user-manager `high`, `max`, `oom`,
+and `oom_kill` counts had not changed from the pre-run sample. Kernel and
+systemd-oomd journals had no new kill. API and Reality were active. API and
+Reality remain near their service `MemoryHigh` boundaries; their current
+charges were 1,609,359,360 / 1,610,612,736 bytes and 1,192,218,624 /
+1,207,959,552 bytes, respectively. These near-boundary values justify keeping
+all broad runtime work gated.
+
+The revised capacity-monitor `MemoryHigh=160M` is still not validated. Its
+scheduled 01:16 run is the next evidence gate. No claims are made that the
+incident is resolved based on this brief quiet period.

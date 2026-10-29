@@ -1,24 +1,24 @@
 # Project Frontier Mission Ledger
 
-## Current host state — 2026-10-29 01:08 CET
+## Current host state — 2026-10-29 01:11 CET
 
 Reality has resumed recording after cold replay: status says
 `RECORDING_UNSEQUENCED`, `active_receiving`, 16/16 fresh books, zero failures,
-and storage grew from 12,133,811,197 bytes at 01:07:24 to 12,134,229,021 at
-01:08:52. `sequence_verified` remains false. Do not restart or alter it.
+and storage continued growing through the 01:10:25 sample. `sequence_verified`
+remains false. Do not restart or alter it.
 
-Two bounded Frontier modules passed in separate user scopes: Arena admission
-15/15 in 5.90 seconds and scheduling 12/12 in 17.89 seconds. Each scope had a
-512 MiB hard cap, zero swap, 25% CPU, 16-task limit, and 30-second timeout.
-The scheduling module emitted one existing Starlette/httpx deprecation
-warning. No OOM counter changed; host/user PSI remained near zero and 9.9 GiB
-was available. API and Reality stayed active with about 1.30 MiB and 0.82 MiB
-`MemoryHigh` headroom.
+The Laboratory admission test first failed its resource-denial assertion
+inside a 512 MiB test scope because its own pool-capacity precondition requires
+722,894,848 bytes. This was a harness ceiling mismatch, not a source failure.
+The same test passed on rerun under a 1 GiB hard cap, no swap, 25% CPU quota,
+16 tasks, and a 30-second timeout (1 passed in 1.41 seconds). No OOM or
+oomd-kill counter changed; host and user PSI avg10/avg60/avg300 were zero and
+9.8 GiB was available after the run. API and Reality remained active.
 
-Continue with bounded tests only. Keep full suites, replay, probes, and
-research batches paused until the 01:16 capacity run validates the 160 MiB
-soft limit. Gap-detail timer remains disabled. Preserve all original dirty
-changes and the untracked public-probe evidence directory.
+The scheduled capacity monitor at 01:16 is the next gate for the 160 MiB soft
+limit. Keep full suites, replay, probes, and research batches paused until
+that run is observed. Gap-detail timer remains disabled. Preserve all original
+dirty changes and the untracked public-probe evidence directory.
 
 ## Current host state — 2026-10-29 01:05 CET
 
