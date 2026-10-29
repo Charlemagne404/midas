@@ -2,14 +2,14 @@
 
 **Report date:** 2026-10-29
 
-## Current completion matrix — 2026-10-29 21:43 CET
+## Current completion matrix — 2026-10-29 22:02 CET
 
 This is an evidence classification, not a final completion claim. The dated
 implementation records below remain the detailed evidence; the
 [current incident report](FRONTIER_MEMORY_PRESSURE_INCIDENT_2026-10-29.md) records
-the current host gate. The host row reflects the 21:43 sample; the other
-component rows retain their scoped evidence, with the 21:38 targeted Polymarket
-panel check and 21:43 bounded TypeScript check included below. A
+the current host gate. The host row reflects the 22:02 post-test sample; the
+other component rows retain their scoped evidence, with the 22:00 targeted
+Polymarket mismatch journey and 21:43 bounded TypeScript check included below. A
 documentation-only cross-check of current official
 exchange market-data contracts is recorded in
 [Adapter Documentation Contract Review](ADAPTER_DOCUMENTATION_CONTRACT_REVIEW_2026-10-29.md);
@@ -32,10 +32,10 @@ sources; it also leaves all holds in place.
 | Source-operation admission telemetry | COMPLETE AND VERIFIED FOR ONE ROUTER INSTANCE | The bounded source gate exposes active venues, admitted totals, and contention rejections by scope with a UTC sample time. The source page can refresh the snapshot. Counters reset with that router and do not aggregate across workers or deployments. |
 | Source-aware coverage and statistical summaries | PARTIALLY VERIFIED | Coverage analytics uses the newest valid joined book per native instrument, labels replay candidate/trade rows as potentially overlapping, and only counts repeated gross-positive constructions after verified audit, distinct pinned book sets, and distinct replay times. The focused analytics fixture module passed 10/10 at 15:40 under a 256/384 MiB zero-swap scope. This supports bounded recorded-sample reporting, not venue-wide prevalence, complete histories, or statistically independent opportunities. |
 | Reality capacity inventory bounds | PARTIALLY VERIFIED | Candidate commits bd09640 (bounded catalog scan), c42f987 (process VmHWM telemetry), and d5847df (tests) remain isolated and undeployed. The 21:51 scheduled monitor exited 0 after 7.092 CPU seconds under High 160M / Max 192M / zero swap; systemd retained a unit MemoryPeak of 11,304,960 bytes and zero swap peak, but the cgroup was removed before local event inspection. Four focused fixture tests passed 4/4 under a 160/192 MiB zero-swap cap. Archive inventory/provenance warnings remain and no archive evidence was altered. |
-| Native Frontier dashboard | PARTIALLY VERIFIED | The native workspace includes source, coverage, graph, opportunity, replay, and readiness views. Existing bounded browser journeys cover overview, explicit-action Polymarket price-history capture/replay, captured market/book/provenance/relationship inspection, deterministic replay, and responsive layouts. The new Polymarket projection panel displays instrument state, top five levels, projected best prices, BBO comparison, hashes, and the size-replacement assumption; its focused interaction passed 1/1 at 21:38 with eight unrelated cases skipped. Live-source capture, production-store validation, and broad integration remain open. |
+| Native Frontier dashboard | PARTIALLY VERIFIED | The native workspace includes source, coverage, graph, opportunity, replay, and readiness views. Existing bounded browser journeys cover overview, explicit-action Polymarket price-history capture/replay, captured market/book/provenance/relationship inspection, deterministic replay, and responsive layouts. The Polymarket projection panel displays top levels, projected best prices, BBO comparison, hashes, and source assumptions. A two-frame snapshot/update journey now asserts the “differs from this projection” state and named quality flag for a reported 0.40 bid versus a 0.42 projected best bid; it passed 1/1 at 22:00 with eight unrelated tests skipped. Live-source capture, production-store validation, and broad integration remain open. |
 | Host reliability containment | PARTIALLY VERIFIED | At 21:51, host PSI averages were zero and MemAvailable was about 10 GiB, but all 4 GiB swap remained used. The user manager had 9.95 GB charged memory / 2.87 GB swap; the Terminal slice had 5.33 GB / 1.66 GB, including a 3.49 GB VTE child mainly charged to file cache with zero swap and zero local OOM events. This is a current distribution, not causality. The user manager has no aggregate memory/swap limit; `oomctl` showed no monitored groups. Gap-detail remains disabled. `memory.events.high` rose by 224 around the scheduled capacity run, while max=732,947 / oom=19 / oom_kill=15 remained unchanged; the unit reported an 11,304,960-byte peak but its leaf events were unavailable. No OOMD/kernel kill appeared through 21:51; API/Reality remained active at restart counts 9/14. This quiet interval is not resolution. Full details and rollback steps remain in the incident report. |
 | Node/V8 and Apport side effect | PARTIALLY VERIFIED | The final-tree TypeScript build check passed at 21:43 using a 512 MiB Node heap in a 768 MiB high / 1 GiB max, zero-swap, 20%-CPU scope; that invocation did not record its transient memory peak. An earlier scoped check measured 378,306,560 bytes peak. Default-heap attempts timed out or exhausted V8 at about 251 MiB; those were process heap failures, not cgroup OOMs. An earlier crash-report upload attempt received HTTP 504; remote receipt remains unknown. |
-| Broad regressions, resource endurance, and performance acceptance | DEFERRED | Selected Python, API, adapter, collection, and economics tests passed under bounded zero-swap scopes. The graph-revision storage/migration cases pass 8/8; API cursor invalidation passes 1/1; four core economics modules pass 79/79; joint-state basket/audit/replay passes 14/14; logical implication/relationship review passes 27/27; transport passes 20/20; readiness resource API passes 7/7 and its focused UI passes 3/3. Captured-store market/book replay passes 1/1 in 40.7 seconds and the 390-pixel responsive journey passes 1/1 in 46.5 seconds. This change's Polymarket stream/API fixtures pass 20/20, focused dashboard interaction passes 1/1, and bounded `tsc -b`, ESLint, Ruff, and Prettier checks pass. Full MIDAS regression, full browser suite, endurance, and broad performance tests remain deferred. |
+| Broad regressions, resource endurance, and performance acceptance | DEFERRED | Selected Python, API, adapter, collection, and economics tests passed under bounded zero-swap scopes. The graph-revision storage/migration cases pass 8/8; API cursor invalidation passes 1/1; four core economics modules pass 79/79; joint-state basket/audit/replay passes 14/14; logical implication/relationship review passes 27/27; transport passes 20/20; readiness resource API passes 7/7 and its focused UI passes 3/3. Captured-store market/book replay passes 1/1 in 40.7 seconds and the 390-pixel responsive journey passes 1/1 in 46.5 seconds. The Polymarket stream/API module passed 20/20 before the latest fixture follow-ups; the current replay API quality-mismatch case passed 1/1 and the dashboard's two-frame mismatch journey passed 1/1 with eight skipped. Targeted ESLint, Ruff, Prettier, and bounded `tsc -b` checks pass. Full MIDAS regression, full browser suite, endurance, and broad performance tests remain deferred. |
 | Live multi-venue source authorization and findings | BLOCKED | The 2026-10-29 terms follow-up records current official use restrictions and unresolved scope/permission for held Kalshi, Kraken, Coinbase, and Gemini sources. No hold was lifted; the worktree Polymarket probe flag remains off. |
 | Production integration/deployment | DEFERRED | Frontier remains isolated; no protected service transition occurred. |
 | Project Frontier overall | PARTIALLY VERIFIED | The engine is substantial, but live cross-venue science, broad verification, recovery, endurance, and deployment gates remain open. |
@@ -78,6 +78,20 @@ reported best bid that disagrees with the projected level book; the specific
 capture/persist/replay test passed **1/1** under the same 384/512 MiB, zero-
 swap, 15%-CPU, 64-task bounds. It confirms the mismatch quality flag is
 retained and does not promote the context-only projection to economics.
+
+### Replay mismatch surfaced in Mission Control — 2026-10-29 22:02 CET
+
+The offline dashboard fixture now follows a full `book` snapshot with a
+`price_change` event. The source reports a best bid of 0.40 while the
+snapshot-anchored projection remains at 0.42; the UI displays the reported
+BBO discrepancy and `REPORTED_BEST_BID_DIFFERS_FROM_PROJECTION`. The saved
+single-frame replay retains a separate one-frame mock response, so captured
+and stored replay journeys remain internally consistent. The focused
+interaction passed **1/1** with eight unrelated tests skipped in 27.88 seconds
+total under a 512 MiB High / 768 MiB Max, zero-swap, 20%-CPU, 64-task scope
+with a 256 MiB Node heap. Prettier and targeted ESLint passed. This is fixture
+validation; it does not establish a live Polymarket discrepancy or executable
+opportunity.
 
 ### Gemini bounded recent-trade parser — 2026-10-29 10:23 CET
 

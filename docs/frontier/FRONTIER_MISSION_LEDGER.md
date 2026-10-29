@@ -1,5 +1,27 @@
 # Project Frontier Mission Ledger
 
+## 2026-10-29 22:02 CET — replay mismatch surfaced in dashboard fixture
+
+- The Polymarket replay panel journey now uses a coherent two-frame fixture:
+  a book snapshot followed by a price-change event reporting 0.40 while the
+  projected best bid remains 0.42. The saved-record path continues to return
+  one frame. The test asserts both the BBO discrepancy text and the named
+  quality flag in Mission Control.
+- The focused UI journey passed **1/1**, with eight unrelated cases skipped
+  (9.811 seconds test time / 27.88 seconds total) under High 512 MiB / Max
+  768 MiB / zero swap / 20% CPU / 64 tasks and a 256 MiB Node heap. Targeted
+  ESLint and Prettier checks passed. Its first run found the mock reused the
+  two-frame replay result for the saved one-frame request; the mock now
+  returns results matching each request. No source endpoint or production
+  store was accessed.
+- At 22:02, PSI averages were zero, MemAvailable about 10 GiB, and all swap
+  remained used. User-manager high/max/oom/oom_kill counters were unchanged
+  from 21:51 at 16,438,607/732,947/19/15; no OOMD/kernel event appeared since
+  21:51. API/Reality/Reality API remained active at restart counts 9/14/0.
+  Source analysis is due at 22:10:28; take the next host sample afterward.
+- Only the owned UI test and this documentation changed. The untracked
+  `data/frontier-public-probes/` directory remains untouched.
+
 ## 2026-10-29 21:51 CET — scheduled capacity run and post-test host sample
 
 - `midas-reality-capacity.service` ran 21:51:04–14, exited 0, and consumed

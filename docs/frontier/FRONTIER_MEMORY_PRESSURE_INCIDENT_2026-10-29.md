@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 21:51 CET |
+| Latest addendum | 2026-10-29 22:02 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Pre-incident checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -15,7 +15,34 @@ This is the current incident report. It supplements the chronological record in
 The full-day journal query below expands that earlier report's final-ten-event
 sample to all October 28 systemd-oomd kills.
 
-## Latest addendum — 2026-10-29 21:51 CET
+## Latest addendum — 2026-10-29 22:02 CET
+
+The Frontier replay panel's offline test now follows a valid two-frame
+sequence: a full book snapshot, then a `price_change` event whose reported
+best bid is 0.40 while the projected best bid remains 0.42. It verifies the
+panel displays both “differs from this projection” and
+`REPORTED_BEST_BID_DIFFERS_FROM_PROJECTION`. The saved-record replay in the
+same journey remains a separate one-frame response. The focused interaction
+passed 1/1 (eight unrelated cases skipped) with 9.811 seconds of test time
+and 27.88 seconds total under a transient scope capped at `MemoryHigh=512
+MiB`, `MemoryMax=768 MiB`, zero swap, 20% CPU, and 64 tasks (Node heap 256
+MiB). Targeted ESLint and Prettier checks passed. These were local UI fixtures;
+no source endpoint or production store was used. The first attempt exposed a
+mock that returned the two-frame result to the separate saved-record replay;
+the fixture now returns the matching one-frame/two-frame result for each
+request.
+
+At 22:02, PSI averages remained zero, `MemAvailable` was about 10 GiB, and
+swap remained full. User-manager counters were unchanged from 21:51:
+`high=16,438,607`, `max=732,947`, `oom=19`, and `oom_kill=15`. API, Reality,
+and Reality API remained active at restart counts 9/14/0. No OOMD or kernel
+OOM entry appeared since 21:51; the gap-detail timer remained disabled. The
+next scheduled Veritas source-analysis run is due at 22:10:28. This adds a
+bounded, quiet post-capacity observation window, not proof of durable
+recovery. Keep work serial and resource-capped, and sample again after the
+scheduled run.
+
+## Prior addendum — 2026-10-29 21:51 CET
 
 The scheduled Reality capacity monitor ran at 21:51:04–14 and exited
 successfully (status 0, 7.092 CPU seconds). Its effective limits remained

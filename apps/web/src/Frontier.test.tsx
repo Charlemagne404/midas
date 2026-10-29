@@ -1742,8 +1742,8 @@ it('captures one explicit Polymarket trade page and follows its bound cursor', a
           native_market_id: conditionId,
           bound_market_observation_id: 'market-observation',
           capture_status: 'captured',
-          frame_count: 1,
-          normalized_update_count: 1,
+          frame_count: 2,
+          normalized_update_count: 2,
           capture_bounds: {
             max_frames: 8,
             max_updates: 50,
@@ -1779,6 +1779,34 @@ it('captures one explicit Polymarket trade page and follows its bound cursor', a
                 },
               ],
             },
+            {
+              observation_id: 'stream-delta-observation',
+              raw_sha256: 'd'.repeat(64),
+              received_at_utc: '2026-10-27T00:02:00Z',
+              source_url: 'wss://ws-subscriptions-clob.polymarket.com/ws/market',
+              source_schema_version: 'polymarket-market-stream-v2',
+              adapter_version: 'frontier-polymarket-2',
+              updates: [
+                {
+                  native_market_id: conditionId,
+                  native_instrument_id: '123456789',
+                  event_type: 'price_change',
+                  source_timestamp_utc: '2026-10-27T00:01:30Z',
+                  bid_level_count: 0,
+                  ask_level_count: 0,
+                  price_change_count: 1,
+                  reported_best_bid: '0.40',
+                  reported_best_ask: '0.46',
+                  book_hash: null,
+                  min_order_size: null,
+                  tick_size: null,
+                  neg_risk: null,
+                  last_trade_price: null,
+                  continuity: 'unverified_no_sequence_or_gap_detection',
+                  quality_flags: [],
+                },
+              ],
+            },
           ],
           source_state: 'available',
           hypothetical_only: true,
@@ -1789,90 +1817,183 @@ it('captures one explicit Polymarket trade page and follows its bound cursor', a
     if (path === '/api/frontier/replay/polymarket/book-updates' && init?.method === 'POST') {
       const body = JSON.parse(String(init.body)) as Record<string, unknown>;
       bookUpdateReplayRequests.push(body);
-      return {
-        ok: true,
-        json: async () => ({
-          replay_version: 'polymarket-book-event-replay-3',
-          schema_version: 3,
-          native_market_id: conditionId,
-          bound_market_observation_id: 'market-observation',
-          capture_started_at_utc: '2026-10-27T00:00:00Z',
-          frame_evidence: [
-            {
-              observation_id: 'stream-observation',
-              raw_sha256: 'f'.repeat(64),
-              normalized_sha256: 'e'.repeat(64),
-              frame_schema_version: 2,
-              frame_ordinal: 0,
-              elapsed_since_capture_start_ns: 100,
-              received_at_utc: '2026-10-27T00:01:00Z',
-              normalized_event_count: 1,
-            },
-          ],
-          frames: [
-            {
-              observation_id: 'stream-observation',
-              frame_ordinal: 0,
-              received_at_utc: '2026-10-27T00:01:00Z',
-              updates: [
-                {
-                  schema_version: 2,
-                  native_market_id: conditionId,
-                  native_market_id_kind: 'condition_id',
-                  native_instrument_id: '123456789',
-                  event_type: 'book',
-                  source_timestamp_utc: '2026-10-27T00:00:00Z',
-                  bids: [{ price: '0.42', quantity: '4.5', exchange_timestamp_utc: null }],
-                  asks: [{ price: '0.46', quantity: '6.25', exchange_timestamp_utc: null }],
-                  changes: [],
-                  reported_best_bid: null,
-                  reported_best_ask: null,
-                  book_hash: '0xabc123',
-                  min_order_size: '5',
-                  tick_size: '0.01',
-                  neg_risk: true,
-                  last_trade_price: '0.47',
-                  old_tick_size: null,
-                  new_tick_size: null,
-                  continuity: 'unverified_no_sequence_or_gap_detection',
-                  quality_flags: ['NO_SEQUENCE_FIELD', 'DELTAS_NOT_APPLIED_TO_LOCAL_BOOK'],
-                },
-              ],
-            },
-          ],
-          book_states: [
-            {
-              observation_id: 'stream-observation',
-              frame_ordinal: 0,
-              native_instrument_id: '123456789',
-              snapshot_observation_id: 'stream-observation',
-              source_timestamp_utc: '2026-10-27T00:00:00Z',
-              received_at_utc: '2026-10-27T00:01:00Z',
-              bids: [{ price: '0.42', quantity: '4.5', exchange_timestamp_utc: null }],
-              asks: [{ price: '0.46', quantity: '6.25', exchange_timestamp_utc: null }],
-              reported_best_bid: null,
-              reported_best_ask: null,
-              projected_best_bid: '0.42',
-              projected_best_ask: '0.46',
-              reported_best_prices_match_projection: null,
-              source_snapshot_hash: '0xabc123',
-              applied_price_change_count: 0,
-              projected_book_sha256: 'c'.repeat(64),
-              quality_flags: ['NO_SOURCE_BEST_PRICE_CROSSCHECK'],
-            },
-          ],
-          event_count: 1,
-          input_sha256: 'a'.repeat(64),
-          result_sha256: 'b'.repeat(64),
-          message_order_basis: 'local_monotonic_elapsed',
-          continuity: 'unverified_no_sequence_or_gap_detection',
-          book_projection_status: 'snapshot_anchored_as_observed_projection',
-          level_size_interpretation: 'source_reported_size_used_as_absolute_level_size_assumption',
-          book_reconstructed: false,
-          event_economics_eligible: false,
-          classification: 'context_only',
-        }),
-      } as Response;
+      const fullReplayResult = {
+        replay_version: 'polymarket-book-event-replay-3',
+        schema_version: 3,
+        native_market_id: conditionId,
+        bound_market_observation_id: 'market-observation',
+        capture_started_at_utc: '2026-10-27T00:00:00Z',
+        frame_evidence: [
+          {
+            observation_id: 'stream-observation',
+            raw_sha256: 'f'.repeat(64),
+            normalized_sha256: 'e'.repeat(64),
+            frame_schema_version: 2,
+            frame_ordinal: 0,
+            elapsed_since_capture_start_ns: 100,
+            received_at_utc: '2026-10-27T00:01:00Z',
+            normalized_event_count: 1,
+          },
+          {
+            observation_id: 'stream-delta-observation',
+            raw_sha256: 'd'.repeat(64),
+            normalized_sha256: 'a'.repeat(64),
+            frame_schema_version: 2,
+            frame_ordinal: 1,
+            elapsed_since_capture_start_ns: 200,
+            received_at_utc: '2026-10-27T00:02:00Z',
+            normalized_event_count: 1,
+          },
+        ],
+        frames: [
+          {
+            observation_id: 'stream-observation',
+            frame_ordinal: 0,
+            received_at_utc: '2026-10-27T00:01:00Z',
+            updates: [
+              {
+                schema_version: 2,
+                native_market_id: conditionId,
+                native_market_id_kind: 'condition_id',
+                native_instrument_id: '123456789',
+                event_type: 'book',
+                source_timestamp_utc: '2026-10-27T00:00:00Z',
+                bids: [{ price: '0.42', quantity: '4.5', exchange_timestamp_utc: null }],
+                asks: [{ price: '0.46', quantity: '6.25', exchange_timestamp_utc: null }],
+                changes: [],
+                reported_best_bid: null,
+                reported_best_ask: null,
+                book_hash: '0xabc123',
+                min_order_size: '5',
+                tick_size: '0.01',
+                neg_risk: true,
+                last_trade_price: '0.47',
+                old_tick_size: null,
+                new_tick_size: null,
+                continuity: 'unverified_no_sequence_or_gap_detection',
+                quality_flags: ['NO_SEQUENCE_FIELD', 'DELTAS_NOT_APPLIED_TO_LOCAL_BOOK'],
+              },
+            ],
+          },
+          {
+            observation_id: 'stream-delta-observation',
+            frame_ordinal: 1,
+            received_at_utc: '2026-10-27T00:02:00Z',
+            updates: [
+              {
+                schema_version: 2,
+                native_market_id: conditionId,
+                native_market_id_kind: 'condition_id',
+                native_instrument_id: '123456789',
+                event_type: 'price_change',
+                source_timestamp_utc: '2026-10-27T00:01:30Z',
+                bids: [],
+                asks: [],
+                changes: [
+                  {
+                    price: '0.40',
+                    reported_size: '3',
+                    side: 'BUY',
+                    source_hash: 'level-3',
+                    reported_best_bid: '0.40',
+                    reported_best_ask: '0.46',
+                  },
+                ],
+                reported_best_bid: null,
+                reported_best_ask: null,
+                book_hash: null,
+                min_order_size: null,
+                tick_size: null,
+                neg_risk: null,
+                last_trade_price: null,
+                old_tick_size: null,
+                new_tick_size: null,
+                continuity: 'unverified_no_sequence_or_gap_detection',
+                quality_flags: [],
+              },
+            ],
+          },
+        ],
+        book_states: [
+          {
+            observation_id: 'stream-observation',
+            frame_ordinal: 0,
+            native_instrument_id: '123456789',
+            snapshot_observation_id: 'stream-observation',
+            source_timestamp_utc: '2026-10-27T00:00:00Z',
+            received_at_utc: '2026-10-27T00:01:00Z',
+            bids: [{ price: '0.42', quantity: '4.5', exchange_timestamp_utc: null }],
+            asks: [{ price: '0.46', quantity: '6.25', exchange_timestamp_utc: null }],
+            reported_best_bid: null,
+            reported_best_ask: null,
+            projected_best_bid: '0.42',
+            projected_best_ask: '0.46',
+            reported_best_prices_match_projection: null,
+            source_snapshot_hash: '0xabc123',
+            applied_price_change_count: 0,
+            projected_book_sha256: 'c'.repeat(64),
+            quality_flags: ['NO_SOURCE_BEST_PRICE_CROSSCHECK'],
+          },
+          {
+            observation_id: 'stream-delta-observation',
+            frame_ordinal: 1,
+            native_instrument_id: '123456789',
+            snapshot_observation_id: 'stream-observation',
+            source_timestamp_utc: '2026-10-27T00:01:30Z',
+            received_at_utc: '2026-10-27T00:02:00Z',
+            bids: [
+              { price: '0.42', quantity: '4.5', exchange_timestamp_utc: null },
+              { price: '0.40', quantity: '3', exchange_timestamp_utc: null },
+            ],
+            asks: [{ price: '0.46', quantity: '6.25', exchange_timestamp_utc: null }],
+            reported_best_bid: '0.40',
+            reported_best_ask: '0.46',
+            projected_best_bid: '0.42',
+            projected_best_ask: '0.46',
+            reported_best_prices_match_projection: false,
+            source_snapshot_hash: '0xabc123',
+            applied_price_change_count: 1,
+            projected_book_sha256: 'd'.repeat(64),
+            quality_flags: [
+              'LEVEL_SIZE_REPLACEMENT_IS_AN_ASSUMPTION',
+              'REPORTED_BEST_BID_DIFFERS_FROM_PROJECTION',
+              'SEQUENCE_CONTINUITY_UNVERIFIED',
+              'SOURCE_GAP_DETECTION_UNAVAILABLE',
+            ],
+          },
+        ],
+        event_count: 2,
+        input_sha256: 'a'.repeat(64),
+        result_sha256: 'b'.repeat(64),
+        message_order_basis: 'local_monotonic_elapsed',
+        continuity: 'unverified_no_sequence_or_gap_detection',
+        book_projection_status: 'snapshot_anchored_as_observed_projection',
+        level_size_interpretation: 'source_reported_size_used_as_absolute_level_size_assumption',
+        book_reconstructed: false,
+        event_economics_eligible: false,
+        classification: 'context_only',
+      };
+      const replayResult =
+        (body.observation_ids as string[])[0] === 'saved-stream-observation'
+          ? {
+              ...fullReplayResult,
+              frame_evidence: fullReplayResult.frame_evidence.slice(0, 1).map((frame) => ({
+                ...frame,
+                observation_id: 'saved-stream-observation',
+              })),
+              frames: fullReplayResult.frames.slice(0, 1).map((frame) => ({
+                ...frame,
+                observation_id: 'saved-stream-observation',
+              })),
+              book_states: fullReplayResult.book_states.slice(0, 1).map((state) => ({
+                ...state,
+                observation_id: 'saved-stream-observation',
+                snapshot_observation_id: 'saved-stream-observation',
+              })),
+              event_count: 1,
+            }
+          : fullReplayResult;
+      return { ok: true, json: async () => replayResult } as Response;
     }
     if (path === '/api/frontier/price-history/replay' && init?.method === 'POST') {
       priceHistoryReplayRequests.push(JSON.parse(String(init.body)) as Record<string, unknown>);
@@ -1975,7 +2096,7 @@ it('captures one explicit Polymarket trade page and follows its bound cursor', a
   await waitFor(() => {
     const panel = screen.getByLabelText('Polymarket public book update capture');
     const panelText = panel.textContent ?? '';
-    if (!panelText.includes('Captured 1 stream frame with 1 normalized event')) {
+    if (!panelText.includes('Captured 2 stream frames with 2 normalized events')) {
       const alert = within(panel).queryByRole('alert')?.textContent ?? 'No capture alert rendered';
       throw new Error(`Polymarket capture result did not render: ${alert}`);
     }
@@ -1988,14 +2109,18 @@ it('captures one explicit Polymarket trade page and follows its bound cursor', a
   expect(bookUpdateRequests).toEqual([{ market_id: market.canonical_id }]);
   fireEvent.click(screen.getByRole('button', { name: 'Replay saved capture offline' }));
   expect(
-    await screen.findByText(/Replayed 1 normalized event across 1 saved update frame/),
+    await screen.findByText(/Replayed 2 normalized events across 2 saved update frames/),
   ).toBeInTheDocument();
-  expect(screen.getByText(/Local projection · instrument 123456789 · frame 0/)).toBeInTheDocument();
-  expect(screen.getByText(/Projected best bid 0.42 · ask 0.46/)).toBeInTheDocument();
+  expect(screen.getByText(/Local projection · instrument 123456789 · frame 1/)).toBeInTheDocument();
+  expect(screen.getAllByText(/Projected best bid 0.42 · ask 0.46/)).toHaveLength(2);
+  expect(
+    screen.getByText(/Reported BBO cross-check differs from this projection/),
+  ).toBeInTheDocument();
+  expect(screen.getByText(/REPORTED BEST BID DIFFERS FROM PROJECTION/)).toBeInTheDocument();
   expect(screen.getByText(/level-size replacement is an assumption/)).toBeInTheDocument();
   expect(bookUpdateReplayRequests).toEqual([
     { observation_ids: ['saved-stream-observation'] },
-    { observation_ids: ['stream-observation'] },
+    { observation_ids: ['stream-observation', 'stream-delta-observation'] },
   ]);
   fireEvent.click(screen.getByRole('button', { name: 'Capture one series' }));
   expect(await screen.findByText('0.42')).toBeInTheDocument();
