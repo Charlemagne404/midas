@@ -3,7 +3,8 @@
 | Field | Value |
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
-| Sample time | 2026-10-29 04:58 CET |
+| Initial sample | 2026-10-29 04:58 CET |
+| Latest addendum | 2026-10-29 05:19 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Preservation checkpoint | `ac4222f` (`feat(frontier): add held Gemini spot research adapter`) |
@@ -413,3 +414,67 @@ available RAM was 11,543,302,144 bytes, free swap was 2,088,960 bytes,
 `oom=19`/`oom_kill=15` were unchanged, and API/Reality remained active.
 `oomctl` monitor visibility and nearly full swap remain unresolved. No
 service configuration or protected data changed.
+
+## Host and service follow-up — 2026-10-29 05:19 CET
+
+This read-only update refreshed the 04:58 assessment. Host memory was
+16,274,968 kB total and 11,326,216 kB available (about 10.80 GiB). Host and
+user-manager PSI `some` and `full` averages were all zero at the sample.
+Swap remained effectively full: 4,194,300 kB total with only 2,052 kB free.
+The zero PSI and high available memory indicate no current reclaim stall; the
+nearly full swap and past events remain operational risks.
+
+The `user@1000.service` cgroup charged 9,199,026,176 bytes (about 8.57 GiB),
+had a recorded peak of 13,992,292,352 bytes (about 13.03 GiB), and used
+2,864,476,160 bytes (about 2.67 GiB) of swap. Its ancestors and the user
+manager still have no memory or swap ceilings. Its counters remained at
+`high=16,417,339`, `max=730,045`, `oom=19`, and `oom_kill=15`. Current
+`memory.stat` charged about 5.47 GiB to file cache, 2.04 GiB to anonymous
+memory, and 1.03 GiB to kernel memory, including about 0.95 GiB reclaimable
+slab. Visible `charlie` process RSS summed to about 4.1 GiB across 157
+processes. This confirms that process RSS alone does not explain the current
+cgroup charge. The Terminal application slice was the largest sampled user
+application slice at 4,389,888,000 bytes current memory and 1,647,280,128
+bytes swap; it contains active interactive/development sessions, which were
+left untouched. These are current charges, not historic attribution.
+
+`midas-api.service` and `midas-reality.service` were active with restart
+counts 9 and 14. Their current cgroup charges were about 0.81 GiB and 0.28
+GiB; recorded peaks remained about 1.50 GiB and 1.13 GiB. The API and Reality
+live service configurations were not changed. The Reality status file was
+updated at 05:19:11 CET and reported `RECORDING_UNSEQUENCED`,
+`active_receiving`, 16/16 fresh books, zero failures, and no backpressure;
+`sequence_verified` remained false. This confirms current receiving only,
+not sequence completeness or archive integrity.
+
+The five-minute gap-detail timer remained `inactive` and `disabled`; its
+service remained failed from the previous OOMD kill. The Reality capacity
+timer remained active at its existing 30-minute schedule. Its last scheduled
+run completed successfully at 05:17:07 with the existing 160 MiB
+`MemoryHigh`, 192 MiB `MemoryMax`, and zero swap limit. The reported peak for
+this run was only about 4.8 MiB, which is inconsistent with prior retained
+peaks and is not used as evidence that the scanner's peak is bounded. Its
+report still contained `ARCHIVE_SEGMENT_INVENTORY_INVALID` and
+`ARCHIVE_MANIFEST_PROVENANCE_INVALID`; neither was repaired or modified.
+
+`systemd-oomd` remained active, but `oomctl --no-pager` still listed no
+monitored cgroups, despite the vendor `user@.service` policy
+`ManagedOOMMemoryPressure=kill` at 50%. No OOMD kill appeared after
+2026-10-28 23:43:24 CET, and no kernel OOM appeared after the 20:15:44 CET
+capacity-checker kill. This is a quiet interval of about 5 hours 36 minutes
+for OOMD and 9 hours for the capacity checker, not an endurance result.
+
+No service configuration was changed in this follow-up and no Frontier test,
+build, replay, batch job, or source probe was launched. The pre-existing
+containment remains in place: the gap-detail timer is stopped/disabled and
+the capacity checker has its reversible 160/192 MiB bound. The gap timer can
+be restored after an explicit resource-admission review with
+`systemctl --user enable --now midas-veritas-gap-detail-v2.timer`; the
+capacity bound rollback procedure is recorded above.
+
+**Continuation decision:** the latest sample supports serial, source-independent
+code and documentation work, plus only small, separately capped fixture
+checks after another admission sample. It does not support broad test suites,
+large replays, concurrent research, or live source probes while swap is full
+and OOMD monitor visibility remains unresolved. Incident status remains
+**PARTIALLY CONTAINED / PARTIALLY VERIFIED**.

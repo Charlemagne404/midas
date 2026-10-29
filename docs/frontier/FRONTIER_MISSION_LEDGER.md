@@ -13429,3 +13429,47 @@ swap remained nearly full. No service, external source, or protected data
 was changed. Full host stability is still unverified.
 
 Documentation commit `05a0707` records this readiness and incident follow-up.
+
+## Infrastructure incident checkpoint — 2026-10-29 05:20 CET
+
+Created the pre-incident recovery ref
+`checkpoint/frontier-pre-memory-incident-20261029` at
+`a8fbcd7cc8b99b3545d8cfe8d586282f967c6906`. The existing untracked
+`data/frontier-public-probes/` directory was not inspected, modified, or
+staged.
+
+At 05:19 CET, host memory available was 10.80 GiB with zero current host and
+user-manager PSI, but swap was 4,192,248 kB used of 4,194,300 kB total
+(2,052 kB free). The user-manager cgroup had a 13.03 GiB peak, about 8.57 GiB
+current memory, 2.67 GiB swap, and still no aggregate memory/swap cap. Its
+OOM counters were unchanged at 19/15. The Terminal app slice currently charged
+4.39 GB memory and 1.65 GB swap, but this snapshot does not establish it as
+the historic incident initiator and its active sessions were left alone.
+
+The systemd-oomd trigger and service-level capacity failures remain separate.
+The full-day October 28 OOMD review identified 129 user-pressure kills, 106
+of them targeting the five-minute finalized-source Veritas gap-detail replay.
+That replay showed local reclaim PSI while parent `user@1000.service`
+pressure was above its 50% threshold. This makes it the strongest recurrent
+identified contributor, without proving it was the only cause. The gap timer
+is already inactive and disabled, so no additional service action was needed.
+Seven kernel `CONSTRAINT_MEMCG` OOMs were separately tied to the capacity
+checker’s original 128 MiB hard limit. The existing reversible 160 MiB high /
+192 MiB max / zero-swap drop-in is active; the checker’s 05:17 run succeeded.
+No archive, manifest, or protected collector setting was changed.
+
+API and Reality remained active at restart counts 9 and 14. Reality's 05:19
+status was `RECORDING_UNSEQUENCED`, `active_receiving`, 16/16 fresh books,
+zero failures, and no backpressure; `sequence_verified` remains false. The
+capacity report still carries invalid archive inventory/provenance alerts.
+`oomctl` still reports no monitored groups although the user unit declares
+the 50% OOMD pressure policy. No OOMD kill appeared since 23:43:24 on October
+28 and no kernel OOM since 20:15:44; this is a short quiet interval, not
+stability proof.
+
+**Frontier admission:** proceed only with serial code/documentation work and
+small fixture checks in isolated capped scopes after a fresh sample. Keep
+broad tests, large replay, concurrent work, and live source probes deferred.
+Incident status is **PARTIALLY CONTAINED / PARTIALLY VERIFIED**. The expanded
+measurements and rollback information are in
+`FRONTIER_MEMORY_PRESSURE_INCIDENT_2026-10-29.md`.
