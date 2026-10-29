@@ -14136,3 +14136,13 @@ its service retains the prior `oom-kill` result. The capacity timer is waiting.
 No service or limit was changed. This confirms current quiet conditions, not
 durable recovery; the original incident remains **PARTIALLY CONTAINED /
 PARTIALLY VERIFIED**.
+
+## Source-admission feedback and final bounded verification — 2026-10-29 06:37 CET
+
+Commit 401994f makes source admission rejections visible in Exchange Explorer. A SOURCE_OPERATION_BUSY HTTP 429 is rendered as a concise capture-busy message with the venue and Retry-After interval. The source card displays the error for the venue that was requested. This complements the process-local one-operation-per-venue / two-total-operation gate in 00e3780; it does not extend the gate across API worker processes.
+
+The focused Exchange Explorer test passed **1/1** with eight unrelated tests skipped (19.40 seconds total). It exercises a fixture 429 response and checks the user-facing retry text. Prettier and ESLint passed for the three changed web files. The full web tsc --noEmit -p tsconfig.json check passed directly on the final change under a 640 MiB soft / 768 MiB hard memory cap, zero swap, a 384 MiB Node heap, and 25% CPU quota. git diff --check passed. The test uses fixture responses; no live venue was contacted.
+
+At 05:37:08 UTC, after the bounded test and type check, host MemAvailable was 11,463,749,632 bytes (10.68 GiB) and SwapFree was 7,979,008 bytes (7.61 MiB). Host memory PSI averages were zero. The user-manager cgroup charged 9,485,979,648 bytes of memory and 2,858,835,968 bytes of swap; cumulative oom=19, oom_kill=15, and oom_group_kill=0 were unchanged. Kernel and systemd-oomd journal searches found no OOM/kill entries since 05:34 UTC. MIDAS API and Reality health endpoints both returned READY with live_execution=false. The capacity timer was waiting; the gap-detail timer remained inactive and its service retained the previous oom-kill result.
+
+This remains a short, quiet observation interval, not incident resolution. Swap remains nearly full, the aggregate user hierarchy is uncapped, and historical workload attribution is incomplete. No production service, timer, configuration, or archive evidence was changed. The pre-existing untracked data/frontier-public-probes/ directory remains untouched. Continue only with serial, bounded, source-independent Frontier work after fresh admission checks; broad regressions, live probes, deployment, and concurrent research remain deferred.

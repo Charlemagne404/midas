@@ -816,3 +816,11 @@ them host PSI remained zero and user-manager OOM counters remained unchanged.
 This observation does not resolve the nearly full swap or historic workload
 attribution. Incident status remains **PARTIALLY CONTAINED / PARTIALLY
 VERIFIED**.
+
+## Post-verification health sample — 2026-10-29 06:37 CET
+
+The user-facing overload feedback change is committed as 401994f. A fixture test returned the bounded-source-operation 429 and verified that Exchange Explorer reports the venue and retry interval. This was a UI/client change only; no service settings, timers, processes, or protected evidence were changed. Prettier, ESLint, full web tsc --noEmit, the focused Exchange Explorer test, and git diff --check passed. The test and type check ran in bounded systemd scopes with swap disabled; the type check used 640/768 MiB memory-high/max, a 384 MiB Node heap, and 25% CPU.
+
+At 05:37:08 UTC, host MemAvailable was 11,463,749,632 bytes (10.68 GiB), SwapFree was 7,979,008 bytes (7.61 MiB), and host memory PSI averages were zero. User-manager memory/swap charges were 9,485,979,648 / 2,858,835,968 bytes. Its cumulative memory events remained oom=19, oom_kill=15, oom_group_kill=0. Kernel and systemd-oomd journal queries had no matching OOM or kill entries since 05:34 UTC. MIDAS API and Reality health endpoints returned READY, with live_execution=false; systemd restart counts remained 9 and 14 in the adjacent 05:34 service sample. The capacity timer was waiting. The gap-detail timer remained inactive and its service retained its prior oom-kill result.
+
+The sample shows no new kill during this brief bounded-work window, but swap remains nearly full and the user-manager hierarchy remains uncapped. Historic system-wide attribution and durable recovery are not established. Incident status remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**. Serial, bounded, source-independent Frontier work may continue after fresh admission checks; do not infer readiness for broad test suites, live probes, deployment, or concurrent research.
