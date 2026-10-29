@@ -1792,8 +1792,8 @@ it('captures one explicit Polymarket trade page and follows its bound cursor', a
       return {
         ok: true,
         json: async () => ({
-          replay_version: 'polymarket-book-event-replay-2',
-          schema_version: 2,
+          replay_version: 'polymarket-book-event-replay-3',
+          schema_version: 3,
           native_market_id: conditionId,
           bound_market_observation_id: 'market-observation',
           capture_started_at_utc: '2026-10-27T00:00:00Z',
@@ -1840,11 +1840,34 @@ it('captures one explicit Polymarket trade page and follows its bound cursor', a
               ],
             },
           ],
+          book_states: [
+            {
+              observation_id: 'stream-observation',
+              frame_ordinal: 0,
+              native_instrument_id: '123456789',
+              snapshot_observation_id: 'stream-observation',
+              source_timestamp_utc: '2026-10-27T00:00:00Z',
+              received_at_utc: '2026-10-27T00:01:00Z',
+              bids: [{ price: '0.42', quantity: '4.5', exchange_timestamp_utc: null }],
+              asks: [{ price: '0.46', quantity: '6.25', exchange_timestamp_utc: null }],
+              reported_best_bid: null,
+              reported_best_ask: null,
+              projected_best_bid: '0.42',
+              projected_best_ask: '0.46',
+              reported_best_prices_match_projection: null,
+              source_snapshot_hash: '0xabc123',
+              applied_price_change_count: 0,
+              projected_book_sha256: 'c'.repeat(64),
+              quality_flags: ['NO_SOURCE_BEST_PRICE_CROSSCHECK'],
+            },
+          ],
           event_count: 1,
           input_sha256: 'a'.repeat(64),
           result_sha256: 'b'.repeat(64),
           message_order_basis: 'local_monotonic_elapsed',
           continuity: 'unverified_no_sequence_or_gap_detection',
+          book_projection_status: 'snapshot_anchored_as_observed_projection',
+          level_size_interpretation: 'source_reported_size_used_as_absolute_level_size_assumption',
           book_reconstructed: false,
           event_economics_eligible: false,
           classification: 'context_only',
@@ -1967,7 +1990,9 @@ it('captures one explicit Polymarket trade page and follows its bound cursor', a
   expect(
     await screen.findByText(/Replayed 1 normalized event across 1 saved update frame/),
   ).toBeInTheDocument();
-  expect(screen.getByText(/no book reconstruction/)).toBeInTheDocument();
+  expect(screen.getByText(/Local projection · instrument 123456789 · frame 0/)).toBeInTheDocument();
+  expect(screen.getByText(/Projected best bid 0.42 · ask 0.46/)).toBeInTheDocument();
+  expect(screen.getByText(/level-size replacement is an assumption/)).toBeInTheDocument();
   expect(bookUpdateReplayRequests).toEqual([
     { observation_ids: ['saved-stream-observation'] },
     { observation_ids: ['stream-observation'] },

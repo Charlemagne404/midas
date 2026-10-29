@@ -136,7 +136,7 @@ def test_polymarket_market_stream_capability_is_explicitly_limited():
         if item.capability == Capability.BOOK_UPDATES
     )
     assert declaration.supported is True
-    assert "does not apply deltas" in declaration.reason
+    assert "level projection" in declaration.reason
     assert "sequence continuity" in declaration.reason
 
 
@@ -441,13 +441,22 @@ def test_book_update_api_binds_to_saved_market_and_persists_fixture_evidence(tmp
             "price_changes": [
                 {
                     "asset_id": ASSET_ID,
-                    "price": "0.42",
+                    "price": "0.41",
                     "size": "0",
                     "side": "BUY",
                     "hash": "level-1",
+                    "best_bid": "0",
+                    "best_ask": "0.43",
+                },
+                {
+                    "asset_id": ASSET_ID,
+                    "price": "0.42",
+                    "size": "5",
+                    "side": "BUY",
+                    "hash": "level-2",
                     "best_bid": "0.42",
                     "best_ask": "0.43",
-                }
+                },
             ],
         },
         separators=(",", ":"),
@@ -544,18 +553,39 @@ def test_book_update_api_binds_to_saved_market_and_persists_fixture_evidence(tmp
         )
         assert replay.status_code == 200, replay.text
         replay_result = replay.json()
-        assert replay_result["schema_version"] == 2
-        assert replay_result["replay_version"] == "polymarket-book-event-replay-2"
+        assert replay_result["schema_version"] == 3
+        assert replay_result["replay_version"] == "polymarket-book-event-replay-3"
         assert replay_result["event_count"] == 2
         assert replay_result["message_order_basis"] == "local_monotonic_elapsed"
         assert replay_result["continuity"] == "unverified_no_sequence_or_gap_detection"
         assert replay_result["book_reconstructed"] is False
+        assert replay_result["book_projection_status"] == "snapshot_anchored_as_observed_projection"
+        assert (
+            replay_result["level_size_interpretation"]
+            == "source_reported_size_used_as_absolute_level_size_assumption"
+        )
         assert replay_result["event_economics_eligible"] is False
+        assert len(replay_result["book_states"]) == 2
+        projected = replay_result["book_states"][1]
+        assert projected["native_instrument_id"] == ASSET_ID
+        assert projected["snapshot_observation_id"] == observation_ids[0]
+        assert projected["bids"] == [
+            {"price": "0.42", "quantity": "5", "exchange_timestamp_utc": None}
+        ]
+        assert projected["asks"] == [
+            {"price": "0.43", "quantity": "8", "exchange_timestamp_utc": None}
+        ]
+        assert projected["reported_best_prices_match_projection"] is True
+        assert projected["applied_price_change_count"] == 2
         assert [frame["frame_ordinal"] for frame in replay_result["frames"]] == [0, 1]
         assert [frame["updates"][0]["event_type"] for frame in replay_result["frames"]] == [
             "book",
             "price_change",
         ]
+        delta_only = store.observation(observation_ids[1])
+        assert delta_only is not None
+        with pytest.raises(ValueError, match="precedes a full book snapshot"):
+            replay_polymarket_book_capture((delta_only,))
         repeated = client.post(
             "/api/frontier/replay/polymarket/book-updates",
             json={"observation_ids": observation_ids},

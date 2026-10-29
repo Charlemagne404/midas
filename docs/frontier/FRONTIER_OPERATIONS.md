@@ -929,13 +929,19 @@ provenance, adapter/schema version, and strict re-decoding against the stored
 normalized events. Frames must belong to one capture and one native market.
 The request and response are bounded to 32 frames and 8 MiB of raw frame data.
 
-Replay orders frames by locally measured monotonic elapsed receive time. That
-is only the order observed by this capture: it is not an exchange sequence,
-does not establish complete delivery, and does not reconstruct a book. Results
-are labeled `context_only` with `event_economics_eligible=false`. The Market
-Details panel exposes this action after a bounded capture and displays the
-input/result hashes and the same limitations. The current UI does not claim
-that event replay restores upstream continuity or produces economics.
+Replay orders frames by locally measured monotonic elapsed receive time. For
+each instrument, it requires a full captured snapshot before applying a
+`price_change`; it interprets each source-reported level size as the resulting
+absolute size, sorts levels deterministically, and cross-checks reported best
+prices when present. This size interpretation is an explicit assumption:
+Polymarket documents the payload fields but does not document a sequence or
+gap-recovery contract. Replay records the snapshot anchor, state hash,
+cross-check result, and quality flags, with a 64-state and 8 MiB input bound.
+The result is not a verified `BookSnapshot`, remains `context_only`, and has
+`event_economics_eligible=false`. The Market Details panel exposes this action
+after a bounded capture and displays the input/result hashes, projected best
+prices, and continuity limitations. It does not claim that replay restores
+upstream continuity or produces economics.
 
 The same panel lists already persisted frames through
 `GET /api/frontier/polymarket/book-updates?limit=32&offset=0`. The endpoint

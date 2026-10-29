@@ -589,8 +589,11 @@ type PolymarketBookReplayUpdate = {
   quality_flags: string[];
 };
 type PolymarketBookUpdatesReplayResult = {
-  replay_version: 'polymarket-book-event-replay-1' | 'polymarket-book-event-replay-2';
-  schema_version: 1 | 2;
+  replay_version:
+    | 'polymarket-book-event-replay-1'
+    | 'polymarket-book-event-replay-2'
+    | 'polymarket-book-event-replay-3';
+  schema_version: 1 | 2 | 3;
   native_market_id: string;
   bound_market_observation_id: string;
   capture_started_at_utc: string;
@@ -610,11 +613,33 @@ type PolymarketBookUpdatesReplayResult = {
     received_at_utc: string;
     updates: PolymarketBookReplayUpdate[];
   }[];
+  book_states: {
+    observation_id: string;
+    frame_ordinal: number;
+    native_instrument_id: string;
+    snapshot_observation_id: string;
+    source_timestamp_utc: string | null;
+    received_at_utc: string;
+    bids: { price: string; quantity: string; exchange_timestamp_utc: string | null }[];
+    asks: { price: string; quantity: string; exchange_timestamp_utc: string | null }[];
+    reported_best_bid: string | null;
+    reported_best_ask: string | null;
+    projected_best_bid: string | null;
+    projected_best_ask: string | null;
+    reported_best_prices_match_projection: boolean | null;
+    source_snapshot_hash: string | null;
+    applied_price_change_count: number;
+    projected_book_sha256: string;
+    quality_flags: string[];
+  }[];
   event_count: number;
   input_sha256: string;
   result_sha256: string;
   message_order_basis: 'local_monotonic_elapsed';
   continuity: 'unverified_no_sequence_or_gap_detection';
+  book_projection_status:
+    'snapshot_anchored_as_observed_projection' | 'no_snapshot_state_available';
+  level_size_interpretation: 'source_reported_size_used_as_absolute_level_size_assumption';
   book_reconstructed: false;
   event_economics_eligible: false;
   classification: 'context_only';
@@ -6440,13 +6465,14 @@ function PolymarketBookUpdatesPanel({
       </div>
       <p className="fr-price-history-note">
         {probeEnabled
-          ? 'Capture starts only after this button is pressed. Public updates have no verified sequence or gap recovery; deltas are not applied to a local book.'
+          ? 'Capture starts only after this button is pressed. Public updates have no verified sequence or gap recovery. Offline replay applies reported level sizes as an explicit assumption and stays context-only.'
           : 'Capture is unavailable because the Polymarket source is disabled, held, or does not advertise book updates.'}
       </p>
       <p className="fr-price-history-note">
-        Saved replay reads immutable raw frames, orders persisted event frames by local monotonic
-        receipt timing, and never applies level changes to a book. Exchange sequence continuity
-        remains unverified; replayed events are excluded from economics.
+        Saved replay reads immutable raw frames and projects reported level changes onto the most
+        recent captured snapshot in local monotonic receipt order. It treats each reported size as
+        the resulting level size; Polymarket does not document sequence continuity or gap recovery
+        for this stream. The projection is excluded from economics.
         {!replayEnabled && replayDisabledReason ? ` ${replayDisabledReason}` : ''}
       </p>
       {probe.isError && probe.variables?.marketId === market.canonical_id && (
@@ -6578,8 +6604,65 @@ function PolymarketBookUpdatesPanel({
           </p>
           <p>
             Replay {replayResult.replay_version} · frame evidence{' '}
-            {replayResult.frame_evidence.length} · continuity unverified
+            {replayResult.frame_evidence.length} · continuity unverified ·{' '}
+            {replayResult.book_states.length} projected state
+            {replayResult.book_states.length === 1 ? '' : 's'}
           </p>
+          {replayResult.book_states.map((state) => (
+            <article
+              key={`${state.observation_id}:${state.native_instrument_id}`}
+              className="fr-price-history-meta"
+            >
+              <strong>
+                Local projection · instrument {state.native_instrument_id} · frame{' '}
+                {state.frame_ordinal}
+              </strong>
+              <span>
+                Projected best bid {state.projected_best_bid ?? 'none'} · ask{' '}
+                {state.projected_best_ask ?? 'none'} · {state.bids.length} bid / {state.asks.length}{' '}
+                ask levels
+              </span>
+              <small>
+                Top 5 bids{' '}
+                {state.bids
+                  .slice(0, 5)
+                  .map((level) => `${level.price} × ${level.quantity}`)
+                  .join(', ') || 'none'}
+                {' · '}asks{' '}
+                {state.asks
+                  .slice(0, 5)
+                  .map((level) => `${level.price} × ${level.quantity}`)
+                  .join(', ') || 'none'}
+              </small>
+              <span>
+                Reported BBO cross-check{' '}
+                {state.reported_best_prices_match_projection == null
+                  ? 'not available'
+                  : state.reported_best_prices_match_projection
+                    ? 'matches this projection'
+                    : 'differs from this projection'}
+                {state.reported_best_bid != null || state.reported_best_ask != null
+                  ? ` · reported ${state.reported_best_bid ?? '—'} / ${state.reported_best_ask ?? '—'}`
+                  : ''}
+              </span>
+              <small>
+                Snapshot {shortHash(state.snapshot_observation_id)} · received{' '}
+                {time(state.received_at_utc)} · applied changes {state.applied_price_change_count}
+                {state.source_snapshot_hash
+                  ? ` · snapshot hash ${shortHash(state.source_snapshot_hash)}`
+                  : ''}
+              </small>
+              <small>
+                Projection SHA-256 {shortHash(state.projected_book_sha256)} ·{' '}
+                {state.quality_flags.map(label).join(', ')}
+              </small>
+            </article>
+          ))}
+          {replayResult.book_states.length === 0 && (
+            <p className="fr-price-history-note">
+              No full snapshot was present in this capture, so replay produced no local book state.
+            </p>
+          )}
           {replayResult.frames.map((frame) => (
             <article key={frame.observation_id} className="fr-price-history-meta">
               <span>
@@ -6607,7 +6690,10 @@ function PolymarketBookUpdatesPanel({
             Input SHA-256 {shortHash(replayResult.input_sha256)} · result SHA-256{' '}
             {shortHash(replayResult.result_sha256)}
           </p>
-          <strong>Context only · no book reconstruction · economics ineligible.</strong>
+          <strong>
+            Context only · unverified sequence continuity · level-size replacement is an assumption
+            · economics ineligible.
+          </strong>
         </div>
       )}
     </section>

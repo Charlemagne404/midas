@@ -1,5 +1,39 @@
 # Project Frontier Mission Ledger
 
+## 2026-10-29 21:38 CET — Polymarket snapshot-anchored replay projection
+
+- Replay schema v3 now creates a bounded, deterministic local projection from
+  full `book` snapshots and later `price_change` events. It records snapshot
+  anchors, local/source timestamps, reported BBO comparison, source snapshot
+  hash, projected-book hash, applied update count, and quality flags. It rejects
+  deltas before a snapshot, absent-level removals, duplicate level changes,
+  receive/source timestamp regressions, and over-limit projected states.
+- The official Polymarket schema documents both event payloads but provides no
+  sequence or gap-recovery guarantee. The replay treats reported `size` as an
+  absolute level-size replacement only as an explicit assumption. Results
+  remain context-only, are not verified `BookSnapshot` objects, and cannot
+  enter economic evaluation. Capture/probe flags and source-use holds were not
+  changed; no public endpoint or production store was used.
+- `tests/frontier/test_polymarket_stream.py` passed 20/20 in 9.20 seconds under
+  High 384 MiB / Max 512 MiB / zero swap / CPU 15% / TasksMax 64. Its first run
+  exposed two fixture assertions after an edit matched the decoder fixture
+  instead of the API fixture; the fixture placement was corrected and the full
+  module passed. The focused Mission Control interaction passed 1/1, eight
+  unrelated cases skipped, in 23.11 seconds under High 512 MiB / Max 768 MiB /
+  zero swap / CPU 20% / TasksMax 64. Targeted ESLint and `tsc -b` passed; the
+  latter was limited to High 768 MiB / Max 1 GiB / zero swap / CPU 20%, with no
+  transient peak recorded. Ruff check passed and formatting was applied.
+- At 21:35, memory PSI was zero, MemAvailable about 10 GiB, and the 4 GiB swap
+  device remained full. User-cgroup high/max/OOM/OOM-kill counters were
+  unchanged; API and Reality were active at restart counts 9/14. This short
+  quiet interval does not resolve the host incident. Source analysis was next
+  due at 21:40:55; avoid running new work across that scheduled window.
+- Current Frontier state is uncommitted on `codex/frontier-20261026`; the
+  preexisting untracked `data/frontier-public-probes/` remains untouched.
+  Next safe action: finish post-format focused checks, record the evidence,
+  and make one isolated Frontier commit, then continue source-independent work
+  after fresh host admission.
+
 ## 2026-10-29 20:21 CET — scheduled capacity check
 
 - The normal capacity timer ran at 20:20:51–20:20:59 and returned success

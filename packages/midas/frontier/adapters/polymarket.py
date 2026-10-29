@@ -124,7 +124,7 @@ class PolymarketAdapter(BaseReadOnlyAdapter):
                 POLY_PROTOCOL_DOC,
             ),
             Capability.BOOK_UPDATES: (
-                "Finite public market-stream capture normalizes full book and level-change events; it does not apply deltas or claim sequence continuity",
+                "Finite public stream capture preserves raw events; offline replay provides a snapshot-anchored level projection under an explicit size-replacement assumption, without sequence continuity or economic eligibility",
                 POLYMARKET_REALTIME_DATA_DOC,
             ),
             Capability.PUBLIC_TRADES: (

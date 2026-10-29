@@ -178,11 +178,14 @@ proxy, no retry/reconnect, and hard bounds on subscription size, received
 frames, normalized updates, duration, frame bytes, and in-memory capture bytes.
 Each normalized event retains the condition and asset IDs plus its source
 timestamp when parseable. `PolymarketBookUpdateFrame` is distinct from
-`BookSnapshot`: source-reported changes remain raw observations because the
-current event contract provides neither sequence continuity nor documented gap
-recovery. A bounded saved-market API and Mission Control panel expose explicit
-capture. The panel is disabled under the default source config, and no live
-capture is claimed.
+`BookSnapshot`: stored replay can build a bounded local projection from full
+snapshots and later price-level reports, but the projection assumes each
+reported `size` replaces that level's prior size. Polymarket's documented
+payload schema does not promise sequence continuity or gap recovery, so the
+projection is not promoted to a `BookSnapshot`, is marked context-only, and is
+ineligible for economic evaluation. A bounded saved-market API and Mission
+Control panel expose explicit capture. The panel is disabled under the default
+source config, and no live capture is claimed.
 
 Persisted frames can be browsed through
 `GET /api/frontier/polymarket/book-updates` in pages of at most 32 summaries.

@@ -5,7 +5,9 @@ from __future__ import annotations
 import hashlib
 import json
 from collections.abc import Mapping, Sequence
+from dataclasses import dataclass, field
 from datetime import UTC, datetime
+from decimal import Decimal
 from typing import Any, Literal, cast
 
 from pydantic import Field, field_validator, model_validator
@@ -15,6 +17,7 @@ from midas.frontier.adapters.polymarket_stream import (
     decode_market_stream_frame,
 )
 from midas.frontier.models import (
+    BookLevel,
     FrontierModel,
     PolymarketBookUpdate,
     PolymarketBookUpdateFrame,
@@ -23,10 +26,14 @@ from midas.frontier.models import (
 )
 
 POLYMARKET_BOOK_EVENT_REPLAY_VERSION: Literal[
-    "polymarket-book-event-replay-1", "polymarket-book-event-replay-2"
-] = "polymarket-book-event-replay-2"
+    "polymarket-book-event-replay-1",
+    "polymarket-book-event-replay-2",
+    "polymarket-book-event-replay-3",
+] = "polymarket-book-event-replay-3"
 MAX_POLYMARKET_REPLAY_FRAMES = 32
 MAX_POLYMARKET_REPLAY_BYTES = MAX_POLYMARKET_REPLAY_FRAMES * MAX_STREAM_FRAME_BYTES
+MAX_POLYMARKET_REPLAY_BOOK_STATES = 64
+MAX_POLYMARKET_REPLAY_INSTRUMENTS = 64
 
 
 class PolymarketPersistedBookFrame(FrontierModel):
@@ -62,13 +69,57 @@ class PolymarketBookReplayFrame(FrontierModel):
     updates: tuple[PolymarketBookUpdate, ...] = Field(min_length=1, max_length=100)
 
 
-class PolymarketBookEventReplay(FrontierModel):
-    """Hash-pinned event replay; it deliberately does not reconstruct a book."""
+class PolymarketBookReplayState(FrontierModel):
+    """One deterministic local projection after a captured frame.
 
-    schema_version: Literal[1, 2] = 2
-    replay_version: Literal["polymarket-book-event-replay-1", "polymarket-book-event-replay-2"] = (
-        POLYMARKET_BOOK_EVENT_REPLAY_VERSION
-    )
+    The projection applies each source-reported price-level size as a replacement
+    for the current size at that price. Polymarket documents the fields but does
+    not document a sequence/gap-recovery contract; this state is contextual only.
+    """
+
+    observation_id: str = Field(pattern=r"^[0-9a-f]{64}$")
+    frame_ordinal: int = Field(ge=0, le=31, strict=True)
+    native_instrument_id: str = Field(min_length=1, max_length=256)
+    snapshot_observation_id: str = Field(pattern=r"^[0-9a-f]{64}$")
+    source_timestamp_utc: datetime | None = None
+    received_at_utc: datetime
+    bids: tuple[BookLevel, ...] = Field(max_length=500)
+    asks: tuple[BookLevel, ...] = Field(max_length=500)
+    reported_best_bid: Decimal | None = Field(default=None, ge=0, le=1)
+    reported_best_ask: Decimal | None = Field(default=None, ge=0, le=1)
+    projected_best_bid: Decimal | None = Field(default=None, ge=0, le=1)
+    projected_best_ask: Decimal | None = Field(default=None, ge=0, le=1)
+    reported_best_prices_match_projection: bool | None = None
+    source_snapshot_hash: str | None = Field(default=None, max_length=256)
+    applied_price_change_count: int = Field(ge=0, strict=True)
+    projected_book_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    quality_flags: tuple[str, ...] = Field(max_length=16)
+
+    @field_validator("source_timestamp_utc", "received_at_utc")
+    @classmethod
+    def state_times_are_utc(cls, value: datetime | None) -> datetime | None:
+        if value is not None and (value.tzinfo is None or value.utcoffset() is None):
+            raise ValueError("Polymarket replay state timestamps must include a timezone")
+        return value.astimezone(UTC) if value is not None else None
+
+    @model_validator(mode="after")
+    def unique_projected_levels(self) -> PolymarketBookReplayState:
+        for side in (self.bids, self.asks):
+            prices = [level.price for level in side]
+            if len(prices) != len(set(prices)):
+                raise ValueError("Duplicate level in Polymarket replay projection")
+        return self
+
+
+class PolymarketBookEventReplay(FrontierModel):
+    """Hash-pinned, context-only replay with a bounded local book projection."""
+
+    schema_version: Literal[1, 2, 3] = 3
+    replay_version: Literal[
+        "polymarket-book-event-replay-1",
+        "polymarket-book-event-replay-2",
+        "polymarket-book-event-replay-3",
+    ] = POLYMARKET_BOOK_EVENT_REPLAY_VERSION
     venue: Literal[Venue.POLYMARKET] = Venue.POLYMARKET
     native_market_id: str
     bound_market_observation_id: str = Field(pattern=r"^[0-9a-f]{64}$")
@@ -79,6 +130,9 @@ class PolymarketBookEventReplay(FrontierModel):
     frames: tuple[PolymarketBookReplayFrame, ...] = Field(
         min_length=1, max_length=MAX_POLYMARKET_REPLAY_FRAMES
     )
+    book_states: tuple[PolymarketBookReplayState, ...] = Field(
+        max_length=MAX_POLYMARKET_REPLAY_BOOK_STATES
+    )
     event_count: int = Field(ge=1, le=MAX_POLYMARKET_REPLAY_FRAMES * 100, strict=True)
     input_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     result_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
@@ -86,6 +140,12 @@ class PolymarketBookEventReplay(FrontierModel):
     continuity: Literal["unverified_no_sequence_or_gap_detection"] = (
         "unverified_no_sequence_or_gap_detection"
     )
+    book_projection_status: Literal[
+        "snapshot_anchored_as_observed_projection", "no_snapshot_state_available"
+    ]
+    level_size_interpretation: Literal[
+        "source_reported_size_used_as_absolute_level_size_assumption"
+    ] = "source_reported_size_used_as_absolute_level_size_assumption"
     book_reconstructed: Literal[False] = False
     event_economics_eligible: Literal[False] = False
     classification: Literal["context_only"] = "context_only"
@@ -95,6 +155,13 @@ class PolymarketBookEventReplay(FrontierModel):
         expected_version = int(self.replay_version.rsplit("-", maxsplit=1)[1])
         if self.schema_version != expected_version:
             raise ValueError("Polymarket replay schema and replay versions differ")
+        if (
+            self.book_states
+            and self.book_projection_status != "snapshot_anchored_as_observed_projection"
+        ):
+            raise ValueError("Polymarket replay states require a snapshot-anchored status")
+        if not self.book_states and self.book_projection_status != "no_snapshot_state_available":
+            raise ValueError("Polymarket replay without states must report no snapshot state")
         return self
 
     @field_validator("capture_started_at_utc")
@@ -139,6 +206,173 @@ def _store_observation_id(raw: RawObservation) -> str:
         )
     )
     return hashlib.sha256(identity.encode("utf-8")).hexdigest()
+
+
+@dataclass(slots=True)
+class _MutableBookProjection:
+    snapshot_observation_id: str
+    bids: dict[Decimal, Decimal] = field(default_factory=dict)
+    asks: dict[Decimal, Decimal] = field(default_factory=dict)
+    source_timestamp_utc: datetime | None = None
+    source_snapshot_hash: str | None = None
+    applied_price_change_count: int = 0
+    reported_best_bid: Decimal | None = None
+    reported_best_ask: Decimal | None = None
+    reported_best_prices_present: bool = False
+
+
+def _levels(values: Mapping[Decimal, Decimal], *, descending: bool) -> tuple[BookLevel, ...]:
+    prices = sorted(values, reverse=descending)
+    return tuple(BookLevel(price=price, quantity=values[price]) for price in prices)
+
+
+def _projected_book_digest(
+    instrument_id: str,
+    bids: tuple[BookLevel, ...],
+    asks: tuple[BookLevel, ...],
+) -> str:
+    return _canonical_sha256(
+        {
+            "native_instrument_id": instrument_id,
+            "bids": [level.model_dump(mode="json") for level in bids],
+            "asks": [level.model_dump(mode="json") for level in asks],
+        }
+    )
+
+
+def _replay_book_frame(
+    *,
+    item: PolymarketPersistedBookFrame,
+    frame_ordinal: int,
+    frame: PolymarketBookUpdateFrame,
+    projections: dict[str, _MutableBookProjection],
+    remaining_state_slots: int,
+) -> list[PolymarketBookReplayState]:
+    touched_assets: set[str] = set()
+    for update in frame.updates:
+        instrument_id = update.native_instrument_id
+        if update.event_type == "book":
+            previous = projections.get(instrument_id)
+            if previous is None and len(projections) >= MAX_POLYMARKET_REPLAY_INSTRUMENTS:
+                raise ValueError("Polymarket replay exceeds the 64 instrument-state bound")
+            if (
+                previous is not None
+                and update.source_timestamp_utc is not None
+                and previous.source_timestamp_utc is not None
+                and update.source_timestamp_utc < previous.source_timestamp_utc
+            ):
+                raise ValueError("Polymarket source timestamps regress within the captured stream")
+            projections[instrument_id] = _MutableBookProjection(
+                snapshot_observation_id=item.observation_id,
+                bids={level.price: level.quantity for level in update.bids},
+                asks={level.price: level.quantity for level in update.asks},
+                source_timestamp_utc=update.source_timestamp_utc,
+                source_snapshot_hash=update.book_hash,
+            )
+            touched_assets.add(instrument_id)
+            continue
+        if update.event_type != "price_change":
+            continue
+
+        state = projections.get(instrument_id)
+        if state is None:
+            raise ValueError(
+                "Polymarket price-change event precedes a full book snapshot in this capture"
+            )
+        if (
+            update.source_timestamp_utc is not None
+            and state.source_timestamp_utc is not None
+            and update.source_timestamp_utc < state.source_timestamp_utc
+        ):
+            raise ValueError("Polymarket source timestamps regress within the captured stream")
+        if update.source_timestamp_utc is not None:
+            state.source_timestamp_utc = update.source_timestamp_utc
+
+        changed_levels: set[tuple[str, Decimal]] = set()
+        reported_best_bid: Decimal | None = None
+        reported_best_ask: Decimal | None = None
+        for change in update.changes:
+            side_name = "BUY" if change.side == "BUY" else "SELL"
+            level_key = (side_name, change.price)
+            if level_key in changed_levels:
+                raise ValueError("Polymarket frame changes one price level more than once")
+            changed_levels.add(level_key)
+            levels = state.bids if change.side == "BUY" else state.asks
+            if change.reported_size == 0:
+                if change.price not in levels:
+                    raise ValueError(
+                        "Polymarket price-change removes a level absent from the captured state"
+                    )
+                del levels[change.price]
+            else:
+                levels[change.price] = change.reported_size
+            state.applied_price_change_count += 1
+            if change.reported_best_bid is not None:
+                reported_best_bid = change.reported_best_bid
+            if change.reported_best_ask is not None:
+                reported_best_ask = change.reported_best_ask
+        state.reported_best_bid = reported_best_bid
+        state.reported_best_ask = reported_best_ask
+        state.reported_best_prices_present = (
+            reported_best_bid is not None or reported_best_ask is not None
+        )
+        if len(state.bids) > 500 or len(state.asks) > 500:
+            raise ValueError("Polymarket projected book exceeds the 500-level side bound")
+        touched_assets.add(instrument_id)
+
+    if len(touched_assets) > remaining_state_slots:
+        raise ValueError("Polymarket replay exceeds the 64 snapshot-anchored book-state bound")
+    states: list[PolymarketBookReplayState] = []
+    for instrument_id in sorted(touched_assets):
+        state = projections[instrument_id]
+        bids = _levels(state.bids, descending=True)
+        asks = _levels(state.asks, descending=False)
+        projected_best_bid = bids[0].price if bids else None
+        projected_best_ask = asks[0].price if asks else None
+        matches: bool | None = None
+        quality_flags = {
+            "SEQUENCE_CONTINUITY_UNVERIFIED",
+            "SOURCE_GAP_DETECTION_UNAVAILABLE",
+            "LEVEL_SIZE_REPLACEMENT_IS_AN_ASSUMPTION",
+        }
+        if state.reported_best_prices_present:
+            matches = True
+            if state.reported_best_bid is not None and state.reported_best_bid != (
+                projected_best_bid if projected_best_bid is not None else Decimal("0")
+            ):
+                matches = False
+                quality_flags.add("REPORTED_BEST_BID_DIFFERS_FROM_PROJECTION")
+            if state.reported_best_ask is not None and state.reported_best_ask != (
+                projected_best_ask if projected_best_ask is not None else Decimal("0")
+            ):
+                matches = False
+                quality_flags.add("REPORTED_BEST_ASK_DIFFERS_FROM_PROJECTION")
+        else:
+            quality_flags.add("NO_SOURCE_BEST_PRICE_CROSSCHECK")
+        if not state.bids or not state.asks:
+            quality_flags.add("ONE_BOOK_SIDE_EMPTY")
+        states.append(
+            PolymarketBookReplayState(
+                observation_id=item.observation_id,
+                frame_ordinal=frame_ordinal,
+                native_instrument_id=instrument_id,
+                snapshot_observation_id=state.snapshot_observation_id,
+                source_timestamp_utc=state.source_timestamp_utc,
+                received_at_utc=frame.received_at_utc,
+                bids=bids,
+                asks=asks,
+                reported_best_bid=state.reported_best_bid,
+                reported_best_ask=state.reported_best_ask,
+                projected_best_bid=projected_best_bid,
+                projected_best_ask=projected_best_ask,
+                reported_best_prices_match_projection=matches,
+                source_snapshot_hash=state.source_snapshot_hash,
+                applied_price_change_count=state.applied_price_change_count,
+                projected_book_sha256=_projected_book_digest(instrument_id, bids, asks),
+                quality_flags=tuple(sorted(quality_flags)),
+            )
+        )
+    return states
 
 
 def replay_polymarket_book_capture(
@@ -205,10 +439,16 @@ def replay_polymarket_book_capture(
     raw_total = 0
     frame_evidence: list[PolymarketBookReplayFrameEvidence] = []
     replay_frames: list[PolymarketBookReplayFrame] = []
+    book_projections: dict[str, _MutableBookProjection] = {}
+    book_states: list[PolymarketBookReplayState] = []
     input_manifest: list[dict[str, Any]] = []
+    last_received_at_utc: datetime | None = None
     for frame_ordinal, item in enumerate(ordered):
         raw = item.raw
         frame = item.normalized
+        if last_received_at_utc is not None and frame.received_at_utc < last_received_at_utc:
+            raise ValueError("Polymarket UTC receive timestamps regress in local-monotonic order")
+        last_received_at_utc = frame.received_at_utc
         if not frame.has_valid_structure:
             raise ValueError("Persisted Polymarket normalized frame failed structure validation")
         frame_market_ids = {update.native_market_id for update in frame.updates}
@@ -287,6 +527,14 @@ def replay_polymarket_book_capture(
                 updates=frame.updates,
             )
         )
+        frame_states = _replay_book_frame(
+            item=item,
+            frame_ordinal=frame_ordinal,
+            frame=frame,
+            projections=book_projections,
+            remaining_state_slots=MAX_POLYMARKET_REPLAY_BOOK_STATES - len(book_states),
+        )
+        book_states.extend(frame_states)
         input_manifest.append(
             {
                 "observation_id": item.observation_id,
@@ -312,7 +560,7 @@ def replay_polymarket_book_capture(
     frame_values = tuple(replay_frames)
     event_count = sum(len(frame.updates) for frame in frame_values)
     result_payload = {
-        "schema_version": 2,
+        "schema_version": 3,
         "replay_version": POLYMARKET_BOOK_EVENT_REPLAY_VERSION,
         "venue": Venue.POLYMARKET.value,
         "native_market_id": native_market_id,
@@ -320,10 +568,17 @@ def replay_polymarket_book_capture(
         "capture_started_at_utc": first.provenance.request_started_at_utc.isoformat(),
         "frame_evidence": [item.model_dump(mode="json") for item in evidence_values],
         "frames": [item.model_dump(mode="json") for item in frame_values],
+        "book_states": [item.model_dump(mode="json") for item in book_states],
         "event_count": event_count,
         "input_sha256": input_sha256,
         "message_order_basis": "local_monotonic_elapsed",
         "continuity": "unverified_no_sequence_or_gap_detection",
+        "book_projection_status": (
+            "snapshot_anchored_as_observed_projection"
+            if book_states
+            else "no_snapshot_state_available"
+        ),
+        "level_size_interpretation": "source_reported_size_used_as_absolute_level_size_assumption",
         "book_reconstructed": False,
         "event_economics_eligible": False,
         "classification": "context_only",
