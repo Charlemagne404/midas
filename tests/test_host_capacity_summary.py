@@ -2,7 +2,24 @@ import json
 
 import pytest
 
+from scripts.host_capacity_sample import cgroup_ancestor_paths
 from scripts.host_capacity_summary import fields, summarize
+
+
+def test_cgroup_ancestor_paths_cover_leaf_to_root():
+    assert cgroup_ancestor_paths("/user.slice/user-1000.slice/user@1000.service") == (
+        "/user.slice/user-1000.slice/user@1000.service",
+        "/user.slice/user-1000.slice",
+        "/user.slice",
+        "/",
+    )
+    assert cgroup_ancestor_paths("/") == ("/",)
+
+
+@pytest.mark.parametrize("path", ("relative/group", "/safe/../../escape", "//double-root/group"))
+def test_cgroup_ancestor_paths_reject_untrusted_path_shapes(path):
+    assert cgroup_ancestor_paths(path) == ()
+    assert cgroup_ancestor_paths("/safe/" + chr(0) + "escape") == ()
 
 
 def test_units_pressure_cpu_and_swap_rates_are_distinct(tmp_path):
