@@ -999,3 +999,31 @@ serial work with fresh admission checks, focused fixture tests capped at
 replay batches, live probes, and deployment deferred. Stop further work if
 host PSI rises, cgroup OOM counters change, or API/Reality approach their
 `MemoryHigh` limits.
+
+## Post-continuation pressure sample — 2026-10-29 07:32 CET
+
+Frontier resumed with one serial graph-context display-bound change. The
+focused Python entity projection (4/4), centered graph API (1/1), and graph UI
+(1/1, eight unrelated tests skipped) passed; strict entity-module mypy,
+frontend TypeScript, Ruff, Prettier, and ESLint passed. A temporary-output
+production bundle completed in 54.10 seconds with a 383.6 MiB peak under a
+768 MiB hard cap, zero swap, and 25% CPU. All transient checks ran one at a
+time. No service, timer, limit, recorder, or historical artifact was changed.
+
+At 07:32:06, host PSI avg10/avg60/avg300 was zero, `MemAvailable` was 10 GiB,
+and only 8.1 MiB swap remained free. The user-manager had about 9.65 GB memory
+and 2.86 GB swap at 07:30; aggregate descendant OOM counters remained
+19/15/0. API and Reality remained active at restarts 9/14 and used about 899
+MiB/381 MiB against 1.5 GiB/1.125 GiB `MemoryHigh`. The gap-detail timer is
+still inactive/disabled. The 30-minute capacity timer is waiting for 07:47:27;
+its 07:17 run exited successfully but still reported invalid archive
+manifest/inventory provenance, unchanged. No kernel or OOMD kill appeared
+between 07:20 and 07:32.
+
+Incident status remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**. The
+bounded feature work did not raise PSI or change OOM counters, so serial
+source-independent Frontier work can continue under the stated caps. Near-full
+swap, the uncapped user-manager hierarchy, unexplained historical parent
+pressure, and archive integrity remain open. The next observation is the
+scheduled 07:47 capacity run; do not infer durable recovery from the current
+quiet interval.

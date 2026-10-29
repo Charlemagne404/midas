@@ -14290,3 +14290,42 @@ user-manager charged 9,739,001,856 bytes of memory and 2,858,446,848 bytes of
 swap; OOM counters remained 19/15/0. API and Reality were active at restart
 counts 9/14; no kernel/OOMD kill entry appeared in the preceding ten-minute
 query. This is a bounded quiet window, not incident resolution.
+
+### Graph context display-field bounds — 2026-10-29 07:32 CET
+
+Commit `e1193c9` versions the projection as
+`frontier-market-entity-context-v2` and makes clipped display fields explicit.
+Entity nodes expose flags for clipped labels, outcome IDs, and payoff-state ID
+lists. Per-state IDs in the graph projection are capped at 512 characters;
+node labels and IDs retain their existing 512-character bound. The graph sets
+`truncated=true` with `entity_field_length_limit`, and Mission Control appends
+an ellipsis or “graph display clipped” marker. The normalized `FrontierMarket`
+record and captured source evidence remain unchanged and retain the complete
+source values.
+
+The new oversized-field fixture and full entity-context file passed **4/4** in
+1.30 seconds under a 512 MiB hard / 384 MiB high limit, zero swap, and 25% CPU.
+It checks that source strings remain intact while graph display values are
+clipped and marked. The centered graph API regression passed **1/1** with the
+existing Starlette/httpx deprecation warning. The relationship graph UI test
+passed **1/1** with eight unrelated tests skipped. Strict mypy for the entity
+module, Ruff check/format, Prettier, ESLint, and frontend TypeScript no-emit
+passed. An isolated production Vite bundle transformed 2,230 modules and
+completed in **54.10 seconds**, with a measured **383.6 MiB** peak, zero swap,
+25% CPU, and a 384 MiB Node heap. Output is in
+`/tmp/midas-frontier-build-20261029T0730Z`; the existing ignored `dist` was
+untouched. Frontier's bundle is 199.13 kB; the existing 544.51 kB Chart chunk
+advisory remains. No live exchange source was queried.
+
+At 07:32:06 CET host memory PSI avg10/avg60/avg300 was zero, `MemAvailable`
+was 10 GiB, and `SwapFree` was 8.1 MiB. The user-manager charge at 07:30 was
+9.65 GB memory and 2.86 GB swap; inherited counters remained
+`oom=19`/`oom_kill=15`. At 07:31 the API and Reality cgroups used about 899 MiB
+and 381 MiB against `MemoryHigh` values of 1.5 GiB and 1.125 GiB; restart counts
+remained 9/14. No new kernel or OOMD kill appeared between 07:20 and 07:32.
+The gap-detail timer remains inactive; the next capacity-monitor run is
+scheduled for 07:47:27. Swap occupancy remains a material limitation and this
+short quiet window does not close the host incident.
+
+| Graph field clipping | COMPLETE AND VERIFIED | Fixture, centered API, focused UI, strict entity-module type check, frontend TypeScript, lint/format, and bounded production build pass; source values remain intact. |
+| Graph context v2 against live venue records | IMPLEMENTED, LIVE VALIDATION PENDING | No live exchange source was queried; evidence is fixture-backed. |
