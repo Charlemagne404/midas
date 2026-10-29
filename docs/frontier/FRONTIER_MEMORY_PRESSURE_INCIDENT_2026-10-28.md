@@ -1207,3 +1207,89 @@ use was 3,313,475,584 bytes. User-manager `oom=19` and `oom_kill=15` remained
 unchanged; API/Reality remained active at restart counts 9/14, with about
 78.3 MiB below the API `MemoryHigh`. This is another bounded quiet sample, not
 endurance or resolution of the unknown original trigger.
+
+## Ancestor-cgroup sampler follow-up — 2026-10-29 02:45 CET
+
+Review of `scripts/host_capacity_sample.py` found that it sampled only the
+direct cgroup path attached to each process. That omitted aggregate ancestors
+such as `user@1000.service`, where systemd-oomd's pressure and memory event
+counters are relevant. The sampler now records each observed cgroup from leaf
+through `/`, deduplicating shared ancestors and rejecting non-absolute,
+double-root, NUL-containing, and parent-traversal paths before filesystem
+mapping. This changes only the isolated Frontier diagnostic script; no host
+service configuration or protected data was changed.
+The sampler change is committed as `2493c2d`; its rollback is
+`git revert 2493c2d`.
+
+The focused host-capacity test file passed **6/6** under a transient 256 MiB,
+zero-swap, 25% CPU unit. A separate one-shot snapshot completed in 0.63 seconds
+under a 256 MiB, zero-swap, 20% CPU unit: 385 processes and 149 distinct cgroup
+paths were sampled, including `/user.slice/user-1000.slice/user@1000.service`
+and `/`. The observed user-manager counters remained `max=729589`, `oom=19`,
+and `oom_kill=15`.
+
+At 02:45:22 CET, host `MemAvailable` was 11,441,176 kB, `SwapFree` was 204 kB,
+and host memory PSI `avg10` was zero. The user-manager event counters matched
+the preceding observation. MIDAS API and Reality were active; the gap-detail
+timer was inactive; the capacity and source-analysis timers were active. The
+next capacity run was due at 02:46:21 and had not yet been observed in this
+check. `whoopsie` remained active with `_usr_bin_node.1000.upload` present and
+no `.uploaded` marker; the 58,222,586-byte crash report was left untouched.
+
+This improves visibility into ancestor limits and pressure counters. It does
+not identify the historical pressure initiator, explain the full swap, or
+establish a sustained quiet period. The capacity report's `INVALID_MANIFEST`
+and archive provenance findings remain a separate integrity issue and were
+not modified.
+
+## Capacity run and post-run observation — 2026-10-29 02:48 CET
+
+The scheduled `midas-reality-capacity.service` run started at 02:46:28 and
+finished at 02:46:38 with `Result=success`, exit status 0, and 6.810 CPU
+seconds. Its effective limits were `MemoryHigh=160M`, `MemoryMax=192M`, and
+`MemorySwapMax=0`; the 30-minute capacity timer remains active. systemd
+reported `MemoryPeak=[not set]`, so the run proves bounded completion at the
+revised limit but supplies no peak-memory measurement. The report still
+returned `INVALID_MANIFEST`, invalid archive segment inventory, and invalid
+manifest provenance; it was read only.
+
+A six-snapshot sampler window ran from 02:47 through 02:48 CET for 24.91
+seconds under a 192 MiB, zero-swap, 20% CPU limit. It observed 383–386
+processes and 148 cgroups per sample, including the user-manager ancestor.
+`MemAvailable` ranged from 11,458,116 to 11,474,644 kB; only 208 kB of swap
+remained free. Host and user-manager memory PSI `some` and `full` averages
+were zero in every sample. The user-manager `memory.events` counters did not
+change (`high=16417194`, `max=729589`, `oom=19`, `oom_kill=15`). The kernel
+journal had no OOM record after the Oct 28 23:43:24 CET event, and the
+systemd-oomd journal ended at that same kill. This is a roughly three-hour
+quiet interval with a short post-run sample, not proof of durable resolution.
+
+At 02:48 CET, the MIDAS API and Reality, Continental tailnet and auth, Echo
+production and staging, Continental contact/status sites, Caddy, RustDesk,
+and `ssh.socket` were active. The gap-detail timer was inactive; the capacity
+timer was active. The failed-unit inventory also contained 37
+`midas-arena-job-*` one-shot records and one `continental-infrastructure-audit`
+unit. These were not reset or restarted, and their relationship to the Oct 28
+OOM events is not established. The Node crash report and Whoopsie `.upload`
+state remained preserved without an `.uploaded` marker at the last check.
+
+The demonstrated historical trigger remains hierarchical reclaim pressure in
+`user@1000.service`; no single initiating workload has been proven. The
+unusually high swap occupancy, failed one-shot records, separate archive
+integrity findings, and current process mix remain open review items. Continue
+Frontier only with isolated, bounded, zero-swap work while preserving the
+existing timer and capacity-monitor rollback commands above.
+
+## Node crash-report submission side effect — 2026-10-29 02:50 CET
+
+The earlier bounded TypeScript check aborted at the Node/V8 heap limit (about
+300.6 MiB cgroup peak); this was not a host or service-cgroup OOM. It caused
+Ubuntu Apport to create `/var/crash/_usr_bin_node.1000.crash` (58,222,586
+bytes) and Whoopsie to attempt a submission. The Whoopsie journal records an
+upload attempt beginning at 02:36:52 and, at 02:45:34, an HTTP 504 Gateway
+Timeout. The `.uploaded` marker is absent; the `.upload` marker and report
+remain. At 02:49:43, `whoopsie.service` was inactive. A 504 does not establish
+whether any part of the report reached the remote endpoint, so receipt is
+unknown. The report contents were not read, and neither the report nor the
+system service was altered. Do not repeat Node tests that may crash until a
+safe diagnostic path is established.

@@ -12593,3 +12593,68 @@ use was 3.09 GB. User-manager OOM counters remained 19/15. API/Reality stayed
 active with restart counts 9/14 and API had about 78.3 MiB below `MemoryHigh`.
 This supports continued bounded offline work, not endurance or incident
 closure. Frontier remains **PARTIALLY VERIFIED**.
+
+## Memory-pressure follow-up: ancestor sampling — 2026-10-29 02:45 CET
+
+Inspection found `scripts/host_capacity_sample.py` captured active leaf
+cgroups but not their aggregate ancestors. It now includes each leaf and its
+ancestors through `/`, with path validation before mapping to cgroup files.
+This is a read-only diagnostic improvement in the Frontier worktree; no
+production unit, historical evidence, or untracked `data/frontier-public-probes/`
+content was modified. The code/test checkpoint is `2493c2d`; rollback with
+`git revert 2493c2d`.
+
+Verification: `tests/test_host_capacity_summary.py` passed **6/6** in 0.61 s
+under a transient 256 MiB, zero-swap, 25% CPU limit. One bounded live snapshot
+completed in 0.63 s, enumerating 385 processes and 149 cgroup paths, including
+the user-manager ancestor that was absent from prior leaf-only data. At
+02:45:22 CET, host MemAvailable was 11,441,176 kB, SwapFree was 204 kB, host
+memory PSI avg10 was zero, and user-manager `max`/`oom`/`oom_kill` counters
+remained 729589/19/15. API and Reality were active, gap-detail timer inactive,
+and capacity/source-analysis timers active. The capacity timer's next run was
+due at 02:46:21 and was not yet validated. The Whoopsie process remained active;
+its `.upload` marker and crash report were preserved.
+
+The original system-wide pressure initiator remains unknown. Full swap use,
+possible stale/reclaimable pages, repeated capacity-job memory-bound failures,
+the auxiliary gap-detail timer change, and the invalid archive manifest remain
+distinct follow-up items. No endurance claim is made. Frontier may continue
+only with bounded, isolated work while the next scheduled capacity execution
+and subsequent host pressure are observed.
+
+### Scheduled capacity completion and post-run sample — 2026-10-29 02:48 CET
+
+The existing Reality capacity timer completed its 02:46:28 run successfully
+at 02:46:38 (exit 0, 6.810 CPU seconds) with effective
+`MemoryHigh=160M`/`MemoryMax=192M`/`MemorySwapMax=0`. systemd did not retain a
+`MemoryPeak`, so no peak is claimed. The report still emitted
+`INVALID_MANIFEST`, `ARCHIVE_SEGMENT_INVENTORY_INVALID`, and
+`ARCHIVE_MANIFEST_PROVENANCE_INVALID`; no archive repair was attempted.
+
+A six-sample, 24.91-second host/cgroup observation then showed
+`MemAvailable=11,458,116–11,474,644 kB`, only 208 kB free swap, and zero host
+and user-manager memory PSI averages. User-manager event counters remained
+`high=16417194`, `max=729589`, `oom=19`, `oom_kill=15`. No systemd-oomd or
+kernel OOM event was logged after 23:43:24 CET on Oct 28. API, Reality,
+Continental auth/tailnet, Echo production/staging, Continental websites,
+Caddy, RustDesk, and `ssh.socket` were active; the gap-detail timer stayed
+inactive and capacity timer active. The failure inventory contained 37
+historical Arena one-shot units plus the failed Continental read-only audit;
+they were left untouched and are not attributed to this memory incident.
+
+This is sufficient for bounded isolated Frontier work, not a declaration that
+the host incident is solved. Full swap, the original workload attribution,
+and invalid archive provenance remain unresolved. Broad suites and competing
+research batches stay deferred; next work should remain resource-gated.
+
+### Node crash-report submission status — 2026-10-29 02:50 CET
+
+The earlier bounded TypeScript check reached the Node/V8 heap limit and
+aborted (about 300.6 MiB cgroup peak, not a kernel or cgroup OOM). Ubuntu
+Apport created a 58,222,586-byte report at
+`/var/crash/_usr_bin_node.1000.crash`; Whoopsie attempted upload from 02:36:52
+and logged HTTP 504 at 02:45:34. There is no `.uploaded` marker, but a 504
+does not prove that no report bytes reached the endpoint. At 02:49:43 the
+Whoopsie service was inactive. The report was not inspected or changed. Avoid
+further Node checks that can crash; this side effect is separate from the
+Oct 28 system-wide memory-pressure/OOM chain.

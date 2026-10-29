@@ -13300,3 +13300,68 @@ MiB below `MemoryHigh`.
 | Synthetic seeded replay/Arena browser journeys | COMPLETE AND VERIFIED | 2/2 with a fresh synthetic-only store; no exchange calls. |
 | Veritas scheduled observation resource impact | COMPLETE AND VERIFIED FOR THIS RUN | 35.6 MiB peak, 1.654 CPU seconds, zero swap; this does not establish long-run resource safety. |
 | Live cross-venue validation | BLOCKED | No genuine Frontier relationship or opportunity was established by this single-venue observation. |
+
+## Host sampler ancestor visibility — 2026-10-29 02:45 CET
+
+The host-capacity sampler previously recorded only cgroups attached directly
+to processes. It now records those cgroups and their ancestors through the
+cgroup root, allowing aggregate user-manager limits and `memory.events` to be
+reviewed. Paths are validated before conversion to filesystem paths. This
+isolated diagnostic change does not alter any running service or historical
+evidence. The implementation is committed as `2493c2d`; rollback with
+`git revert 2493c2d`.
+
+The focused test file passed **6/6** in 0.61 seconds under a transient 256 MiB,
+zero-swap, 25% CPU limit. A single bounded live snapshot completed in 0.63
+seconds under a 256 MiB, zero-swap, 20% CPU limit and captured 385 processes
+and 149 cgroup paths, including `/user.slice/user-1000.slice/user@1000.service`
+and `/`. At 02:45:22 CET, host MemAvailable was 11,441,176 kB, SwapFree was 204
+kB, host PSI avg10 was zero, and user-manager `max=729589`, `oom=19`, and
+`oom_kill=15` were unchanged. API and Reality were active; gap-detail was
+inactive; capacity and source-analysis timers were active. The capacity timer
+had not yet run after this change. The active Whoopsie process, upload marker,
+and 58,222,586-byte Node crash report were not altered.
+
+| Verification item | Status | Evidence / remaining limit |
+| --- | --- | --- |
+| Cgroup ancestor path enumeration | COMPLETE AND VERIFIED | Leaf-to-root and malformed-path fixtures pass; bounded live snapshot includes the user-manager ancestor. |
+| Current host pressure diagnosis | PARTIALLY VERIFIED | Host PSI avg10 was zero and available memory was high at this point; swap remained full and the initiating workload is unknown. |
+| Frontier capacity safety | PARTIALLY VERIFIED | Bounded checks remain quiet; the next scheduled capacity run and longer observation are pending. |
+
+## Scheduled capacity completion and post-run observation — 2026-10-29 02:48 CET
+
+The pre-existing Reality capacity timer completed at 02:46:38 with exit 0
+after 6.810 CPU seconds. Effective limits were `MemoryHigh=160M`,
+`MemoryMax=192M`, and `MemorySwapMax=0`. systemd did not retain
+`MemoryPeak`; completion is verified, peak memory is not. The emitted capacity
+report continued to flag invalid archive inventory and provenance; no archive
+data was changed.
+
+A six-snapshot, 24.91-second sampler window captured 383–386 processes and
+148 cgroups per sample. Host `MemAvailable` was 11,458,116–11,474,644 kB,
+`SwapFree` was 208 kB, and host and user-manager memory PSI averages remained
+zero. User-manager `memory.events` counters stayed at `high=16417194`,
+`max=729589`, `oom=19`, `oom_kill=15`. The last systemd-oomd and kernel OOM
+events remained Oct 28 at 23:43:24 CET. MIDAS API/Reality, Continental
+tailnet/auth and sites, Echo production/staging, Caddy, RustDesk, and
+`ssh.socket` were active. The failed-unit inventory showed 37 Arena one-shot
+unit records and one failed Continental read-only audit; none was reset or
+restarted, and causation was not established.
+
+| Verification item | Status | Evidence / remaining limit |
+| --- | --- | --- |
+| Scheduled capacity run under revised bound | COMPLETE AND VERIFIED FOR THIS RUN | Exit 0, 6.810 CPU seconds, 160/192 MiB and zero swap; systemd did not retain peak memory. |
+| Short post-run memory-pressure observation | PARTIALLY VERIFIED | 24.91 seconds with zero memory PSI and unchanged event counters; swap remains full and this is not endurance evidence. |
+| Safe continuation of Frontier | PARTIALLY VERIFIED | Bounded, isolated, zero-swap work is suitable; broad campaigns and expensive suites remain deferred. |
+
+## Node check crash and Apport side effect — 2026-10-29 02:50 CET
+
+The earlier TypeScript check aborted at the Node/V8 heap limit, with about
+300.6 MiB cgroup peak; this was not a host or cgroup OOM. Ubuntu Apport
+created `/var/crash/_usr_bin_node.1000.crash` (58,222,586 bytes). Whoopsie
+logged an upload attempt at 02:36:52 and an HTTP 504 Gateway Timeout at
+02:45:34. No `.uploaded` marker exists, but remote receipt cannot be ruled out
+from the 504 response. `whoopsie.service` was inactive at 02:49:43. The report
+was not read, modified, or deleted. Avoid further Node checks that could
+crash; frontend verification already completed before this incident remains
+the recorded evidence.
