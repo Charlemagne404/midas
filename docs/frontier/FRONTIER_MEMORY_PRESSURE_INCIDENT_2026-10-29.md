@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 13:29 CET |
+| Latest addendum | 2026-10-29 13:32 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Pre-incident checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -2985,6 +2985,25 @@ Reality API were active at restart counts 9/14/0. Test ports were closed and
 there were no OOMD/kernel journal entries since the pre-run sample. This
 bounded quiet period does not establish host recovery; swap is still nearly
 full and workload attribution remains open.
+
+## Replay determinism check — 2026-10-29 13:32 CET
+
+The captured-store browser journey submitted the same deterministic replay
+twice. Both responses referenced nonempty market and book observation IDs and
+returned the same `run_id` and `result_sha256`; the browser observed exactly
+two replay POSTs and zero source-probe requests. The test used only the
+hash-pinned capture copied to a fresh `/tmp` store.
+
+It passed **1/1 in 42.5 s** (18.5 s in the test) under a transient scope with
+768 MiB high / 1 GiB max, zero swap, 20% CPU, 128 tasks, a 120-second runtime
+limit, and a 384 MiB Node heap. At 13:32:19 CET, `MemAvailable` was 10.16 GiB,
+`SwapFree` was 15.36 MiB, PSI remained zero, user-manager OOM counters remained
+19/15, and API/Reality/Reality API were active at restart counts 9/14/0. Test
+ports were closed; no OOMD/kernel journal entries appeared since 13:29:23.
+
+The sample remains too short to establish host recovery. Continue only
+resource-capped serial offline work; historical workload attribution and
+archive provenance remain unresolved.
 
 ## 320-pixel responsive extension — 2026-10-29 13:29 CET
 

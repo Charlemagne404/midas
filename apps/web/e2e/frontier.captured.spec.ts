@@ -65,22 +65,30 @@ test('Frontier deterministically replays captured books in the isolated browser 
   await page.getByRole('button', { name: 'Frontier', exact: true }).click();
   await page.getByRole('button', { name: 'Economic workbench', exact: true }).click();
 
-  const replayResponse = page.waitForResponse((response) => {
-    const url = new URL(response.url());
-    return url.pathname === '/api/frontier/replay' && response.request().method() === 'POST';
+  const replayButton = page.getByRole('button', {
+    name: 'Run deterministic replay',
+    exact: true,
   });
-  await page.getByRole('button', { name: 'Run deterministic replay', exact: true }).click();
-  const response = await replayResponse;
-  expect(response.status()).toBe(200);
-
-  const replay = (await response.json()) as {
-    manifest: {
-      market_observation_ids: string[];
-      book_observation_ids: string[];
-      code_version: string;
+  const runReplay = async () => {
+    const replayResponse = page.waitForResponse((response) => {
+      const url = new URL(response.url());
+      return url.pathname === '/api/frontier/replay' && response.request().method() === 'POST';
+    });
+    await replayButton.click();
+    const response = await replayResponse;
+    expect(response.status()).toBe(200);
+    return (await response.json()) as {
+      run_id: string;
+      manifest: {
+        market_observation_ids: string[];
+        book_observation_ids: string[];
+        code_version: string;
+      };
+      result_sha256: string;
     };
-    result_sha256: string;
   };
+
+  const replay = await runReplay();
   expect(replay.manifest.market_observation_ids.length).toBeGreaterThan(0);
   expect(replay.manifest.book_observation_ids.length).toBeGreaterThan(0);
   expect(replay.manifest.code_version).toMatch(/^frontier-source-sha256:/);
@@ -88,8 +96,13 @@ test('Frontier deterministically replays captured books in the isolated browser 
   await expect(page.getByText(/Replay saved · \d+ candidate evaluations/)).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Replay output' })).toBeVisible();
 
+  await expect(replayButton).toBeEnabled();
+  const repeatedReplay = await runReplay();
+  expect(repeatedReplay.run_id).toBe(replay.run_id);
+  expect(repeatedReplay.result_sha256).toBe(replay.result_sha256);
+
   expect(sourceProbes).toBe(0);
-  expect(apiMutations).toEqual(['POST /api/frontier/replay']);
+  expect(apiMutations).toEqual(['POST /api/frontier/replay', 'POST /api/frontier/replay']);
 });
 
 test('Frontier primary views fit a narrow viewport without page-level horizontal overflow', async ({

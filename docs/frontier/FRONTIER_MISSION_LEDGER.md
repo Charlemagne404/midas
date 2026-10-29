@@ -14938,3 +14938,19 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
   Broader browser and accessibility coverage remains pending; incident stays
   partially contained because swap is nearly full and historical workload
   attribution is unresolved.
+
+## 2026-10-29 13:32 CET — repeat captured replay for determinism
+
+- The browser journey now runs the same deterministic replay twice against
+  the pinned temporary Polymarket capture. Both responses reference nonempty
+  market/book observation IDs and return matching `run_id` and
+  `result_sha256`; exactly two replay POSTs and zero source probes were seen.
+- It passed 1/1 in 42.5 s (18.5 s in the test) under 768 MiB high / 1 GiB max,
+  zero swap, 20% CPU, 128 tasks, 120 seconds, and a 384 MiB Node heap.
+- Post-run at 13:32:19: `MemAvailable` 10.16 GiB, swap free 15.36 MiB, PSI
+  zero, unchanged OOM counters, API/Reality/Reality API active at restart
+  counts 9/14/0, test listeners closed, and no new OOMD/kernel entry since
+  13:29:23.
+- **Status:** Deterministic UI replay is verified for this pinned single-venue
+  capture. Multi-source captured replay and wider reproducibility coverage
+  remain open; host remains partially contained.
