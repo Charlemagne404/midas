@@ -26,10 +26,7 @@ def cgroup_ancestor_paths(path: str) -> tuple[str, ...]:
     if parsed.anchor != "/" or ".." in parsed.parts:
         return ()
     parts = parsed.parts[1:]
-    return tuple(
-        "/" + "/".join(parts[:end]) if end else "/"
-        for end in range(len(parts), -1, -1)
-    )
+    return tuple("/" + "/".join(parts[:end]) if end else "/" for end in range(len(parts), -1, -1))
 
 
 def snapshot() -> dict:
@@ -67,7 +64,10 @@ def snapshot() -> dict:
                                 "memory.high",
                                 "memory.max",
                                 "memory.swap.max",
+                                # Hierarchical events include descendants;
+                                # local events preserve per-cgroup attribution.
                                 "memory.events",
+                                "memory.events.local",
                                 "memory.stat",
                                 "memory.swap.current",
                                 "memory.pressure",

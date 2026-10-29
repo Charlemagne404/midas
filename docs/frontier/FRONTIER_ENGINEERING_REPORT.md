@@ -15937,3 +15937,28 @@ counts were unchanged; the gap-detail timer remained inactive and the
 capacity timer waiting. No OOMD or kernel kill was logged since the prior
 15:16:48 check. Keep the incident partially contained; do not infer durable
 recovery from this quiet sample.
+
+### Local cgroup event attribution — 2026-10-29 15:33 CET
+
+`host_capacity_sample.py` now records hierarchical and local cgroup event
+counters separately. `host_capacity_summary.py` emits independent deltas and
+does not substitute missing local data. The focused test module passed 8/8;
+Ruff check and format-check passed. Each check ran in its own small transient
+scope with swap disabled.
+
+A six-point, 30-second sample found no hierarchical or local
+`high/max/oom/oom_kill` increments in the sampled user manager, app slice,
+terminal slice, MIDAS API, Reality, or Reality API. Host memory PSI was zero
+and available RAM was about 10.6 GiB, while free swap remained about 15.6
+MiB. At 15:33, the event counters and protected service restart counts were
+unchanged, the MIDAS API and Reality services were active, and no matching
+kernel, OOMD, or service kill entry appeared since the sample. A machine-
+readable summary with input hashes is stored in
+[`evidence/host-capacity-attribution-2026-10-29-1528.json`](evidence/host-capacity-attribution-2026-10-29-1528.json).
+
+This attribution instrumentation cannot explain the earlier 106 parent
+`high` events because no per-leaf baseline was captured then. Swap remains
+nearly full and the user-manager hierarchy uncapped, so the incident remains
+partially contained. Continue only serial, offline Frontier work under
+transient resource bounds; this short quiet period does not establish durable
+recovery.

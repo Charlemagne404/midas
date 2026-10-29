@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 15:21 CET |
+| Latest addendum | 2026-10-29 15:33 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Pre-incident checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -3529,3 +3529,40 @@ no kernel or OOMD kill was logged since 15:20:41. This bounded observation
 shows critical services currently running, not durable incident resolution.
 The incident remains partially contained, with nearly full swap and
 incomplete pressure attribution.
+
+## Hierarchical and local event attribution follow-up — 2026-10-29 15:33 CET
+
+The bounded read-only sampler now records both `memory.events` (including
+descendant activity) and `memory.events.local` (activity originating in that
+cgroup). Its summarizer reports separate deltas and leaves missing local data
+unmeasured. The focused summary tests passed **8/8** under a 256 MiB
+`MemoryHigh`, 384 MiB `MemoryMax`, zero-swap, 15%-CPU, 48-task, 90-second
+transient scope. Ruff check and format-check passed in separate 128/192 MiB,
+zero-swap scopes.
+
+The six-snapshot sample ran from 15:27:59 to 15:28:28 CET. Across the sampled
+user manager, `app.slice`, GNOME Terminal slice, MIDAS API, Reality, and
+Reality API, both hierarchical and local `high`, `max`, `oom`, and `oom_kill`
+deltas were zero. Host memory PSI some/full was zero; minimum available RAM
+was 11.39 GB and minimum free swap was 16.36 MB. The user manager averaged
+10.65 GB memory and 2.86 GB swap; its nested Terminal slice averaged 5.27 GB
+memory and 1.65 GB swap. These parent and child charges overlap. Reality API
+averaged about 528 MB against its 512 MiB hard cap, with no interval event
+increase. The evidence summary and raw-input hashes are retained in
+[`evidence/host-capacity-attribution-2026-10-29-1528.json`](evidence/host-capacity-attribution-2026-10-29-1528.json).
+
+At 15:33:39, available RAM was 11.37 GB, swap free was 16.42 MB, and memory
+PSI remained zero. User-manager `high/max/oom/oom_kill` counters remained
+16,437,792/730,632/19/15; API/Reality/Reality API local counters remained
+11,692/33,176/5,030. MIDAS API, Reality, and Reality API were active at
+restart counts 9/14/0. The gap-detail timer was inactive and the capacity
+timer waiting. No matching kernel, systemd-oomd, or service OOM/kill journal
+entries appeared after 15:28:29.
+
+This improves future attribution but does not explain the earlier 106
+user-manager `high` increment. It does not close the host incident: swap
+remains nearly exhausted, user-manager parents remain uncapped, and the quiet
+window is brief. No service configuration, protected collector, archive,
+manifest, or historical research data changed in this follow-up. The
+diagnostic code can be rolled back with `git revert HEAD` while this
+checkpoint is the branch tip; no runtime rollback is required.

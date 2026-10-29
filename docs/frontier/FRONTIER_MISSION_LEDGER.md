@@ -15401,3 +15401,29 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
   external request was run in this audit.
 - **Status:** this clarifies evidence scope; it does not advance live-source
   or production acceptance. Keep source-use and deployment gates unchanged.
+
+## 2026-10-29 15:33 CET — hierarchical and local cgroup event attribution
+
+- Added `memory.events.local` to bounded host samples and separate local
+  deltas to the summarizer. This distinguishes local cgroup pressure from
+  inherited descendant totals. Focused tests passed **8/8** in a transient
+  256/384 MiB, zero-swap, 15%-CPU, 48-task scope; Ruff check and format-check
+  also passed in separate low-resource scopes.
+- Retained a compact summary and source hashes for the six-point
+  15:27:59–15:28:28 CET sample at
+  `docs/frontier/evidence/host-capacity-attribution-2026-10-29-1528.json`.
+  Available RAM was at least 11.39 GB, free swap at least 16.36 MB, and host
+  memory PSI was zero. Selected user-manager, app, terminal, API, Reality,
+  and Reality API hierarchical and local `high/max/oom/oom_kill` deltas were
+  zero.
+- At 15:33:39, parent and leaf counters remained at the sample values,
+  MIDAS API/Reality/Reality API were active at restart counts 9/14/0, and no
+  matching kernel, OOMD, or service OOM/kill entry appeared since 15:28:29.
+  No service or timer configuration, Reality collection, or research evidence
+  was changed in this addendum. Existing untracked
+  `data/frontier-public-probes/` remains untouched.
+- **Status:** this improves future event attribution but does not explain the
+  earlier 106 parent `high` increment. Swap is nearly full, the user manager
+  remains uncapped, and this quiet interval is brief. Continue only serial,
+  offline Frontier work under transient resource bounds; incident remains
+  partially contained.

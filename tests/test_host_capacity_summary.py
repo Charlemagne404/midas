@@ -52,6 +52,7 @@ def test_units_pressure_cpu_and_swap_rates_are_distinct(tmp_path):
                         "memory.max": "2000",
                         "memory.swap.max": "max",
                         "memory.events": f"high {2 + i}\nmax {i}\noom 0\noom_kill 0\n",
+                        "memory.events.local": f"high {i}\nmax 0\noom 0\noom_kill 0\n",
                         "memory.pressure": (
                             f"some avg10={1 + i}.00 avg60={2 + i}.00 avg300={3 + i}.00 total={100 + 50 * i}\n"
                             f"full avg10={0.5 + i:.2f} avg60={1 + i}.00 avg300={2 + i}.00 total={40 + 20 * i}\n"
@@ -91,6 +92,8 @@ def test_units_pressure_cpu_and_swap_rates_are_distinct(tmp_path):
     }
     assert group["memory_event_deltas"]["oom_kill"]["delta"] == 0
     assert group["memory_event_deltas"]["max"]["delta"] == 1
+    assert group["memory_event_local_deltas"]["high"]["delta"] == 1
+    assert group["memory_event_local_deltas"]["oom_kill"]["delta"] == 0
     assert group["memory_pressure"]["averages"]["some_avg10"] == {
         "min": 1.0,
         "mean": 1.5,
@@ -124,6 +127,7 @@ def test_cgroup_counter_resets_are_not_reported_as_negative_activity(tmp_path):
                         "memory.swap.current": None,
                         "memory.stat": "",
                         "memory.events": f"oom {count}\n",
+                        "memory.events.local": f"oom {count}\n",
                         "memory.pressure": (
                             f"some avg10=0.00 avg60=0.00 avg300=0.00 total={count}\n"
                         ),
@@ -141,9 +145,72 @@ def test_cgroup_counter_resets_are_not_reported_as_negative_activity(tmp_path):
         "delta": None,
         "counter_reset": True,
     }
+    assert group["memory_event_local_deltas"]["oom"] == {
+        "first": 4,
+        "last": 1,
+        "delta": None,
+        "counter_reset": True,
+    }
     assert group["memory_pressure"]["total_us"]["some"] == {
         "first": 4,
         "last": 1,
         "delta": None,
         "counter_reset": True,
     }
+
+
+def test_local_event_deltas_separate_parent_activity_from_descendants(tmp_path):
+    path = tmp_path / "hierarchical-events.jsonl"
+    rows = []
+    for index in range(2):
+        parent_high = 12 + index
+        child_high = 7 + index
+        rows.append(
+            {
+                "time": 100 + index,
+                "monotonic": 200 + index,
+                "host": {
+                    "meminfo": (
+                        "MemAvailable: 1 kB\nSwapFree: 1 kB\nCached: 1 kB\n"
+                        "AnonPages: 1 kB\nSlab: 1 kB\n"
+                    ),
+                    "vmstat": "",
+                    "stat": "",
+                    "diskstats": "",
+                    "pressure": {},
+                },
+                "cgroups": {
+                    "/parent": {
+                        "memory.current": "100",
+                        "memory.swap.current": "0",
+                        "memory.high": "max",
+                        "memory.max": "max",
+                        "memory.swap.max": "max",
+                        "memory.stat": "",
+                        "memory.events": f"high {parent_high}\n",
+                        "memory.events.local": "high 5\n",
+                        "memory.pressure": "",
+                        "cpu.stat": "usage_usec 0\n",
+                    },
+                    "/parent/leaf": {
+                        "memory.current": "50",
+                        "memory.swap.current": "0",
+                        "memory.high": "max",
+                        "memory.max": "max",
+                        "memory.swap.max": "max",
+                        "memory.stat": "",
+                        "memory.events": f"high {child_high}\n",
+                        "memory.events.local": f"high {child_high}\n",
+                        "memory.pressure": "",
+                        "cpu.stat": "usage_usec 0\n",
+                    },
+                },
+            }
+        )
+    path.write_text("".join(json.dumps(row) + "\n" for row in rows))
+
+    groups = summarize(path)["cgroups"]
+
+    assert groups["/parent"]["memory_event_deltas"]["high"]["delta"] == 1
+    assert groups["/parent"]["memory_event_local_deltas"]["high"]["delta"] == 0
+    assert groups["/parent/leaf"]["memory_event_local_deltas"]["high"]["delta"] == 1
