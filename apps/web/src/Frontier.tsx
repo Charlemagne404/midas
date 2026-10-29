@@ -29,6 +29,7 @@ import {
 } from './KalshiFeePanel';
 import { preciseUtcTime } from './frontierTime';
 import { compareRelationshipTerms } from './frontierRelationshipTerms';
+import { KrakenCandleHistoryPanel } from './KrakenCandleHistoryPanel';
 import {
   KrakenBookUpdatesPanel,
   type KrakenBookCaptureReplay,
@@ -2718,6 +2719,16 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
       (capability) => capability.capability === 'book_updates' && capability.supported,
     ),
   );
+  const krakenCandleSource = (sources.data?.items ?? []).find(
+    (source) => source.venue === 'kraken',
+  );
+  const krakenCandleProbeEnabled = Boolean(
+    krakenCandleSource?.public_probe_enabled &&
+    !krakenCandleSource.probe_policy_block_reason &&
+    krakenCandleSource.capabilities.some(
+      (capability) => capability.capability === 'historical_candles' && capability.supported,
+    ),
+  );
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: ['frontier'] });
   const replaySavedPriceHistory = useMutation({
@@ -4096,6 +4107,8 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
               krakenBookUpdatesReplay={replayKrakenBookUpdates}
               krakenBookUpdatesProbeEnabled={krakenBookUpdatesProbeEnabled}
               krakenBookUpdatesDisabledReason={krakenBookUpdatesSource?.probe_policy_block_reason}
+              krakenCandleProbeEnabled={krakenCandleProbeEnabled}
+              krakenCandleDisabledReason={krakenCandleSource?.probe_policy_block_reason}
               eventMarketsProbe={captureEventMarketGroup}
               eventMarketsProbeEnabled={eventMarketGroupsProbeEnabledFor(selectedMarket.venue)}
               mveComponentProbe={captureKalshiMveComponentMarket}
@@ -6558,6 +6571,8 @@ function MarketDetails({
   krakenBookUpdatesReplay,
   krakenBookUpdatesProbeEnabled,
   krakenBookUpdatesDisabledReason,
+  krakenCandleProbeEnabled,
+  krakenCandleDisabledReason,
   eventMarketsProbe,
   eventMarketsProbeEnabled,
   mveComponentProbe,
@@ -6619,6 +6634,8 @@ function MarketDetails({
   >;
   krakenBookUpdatesProbeEnabled: boolean;
   krakenBookUpdatesDisabledReason?: string | null;
+  krakenCandleProbeEnabled: boolean;
+  krakenCandleDisabledReason?: string | null;
   eventMarketsProbe: UseMutationResult<
     EventMarketsCaptureResult,
     Error,
@@ -6760,15 +6777,22 @@ function MarketDetails({
         />
       )}
       {market.venue === 'kraken' && (
-        <KrakenBookUpdatesPanel
-          marketId={market.canonical_id}
-          nativeMarketId={market.native_market_id}
-          probe={krakenBookUpdatesProbe}
-          replay={krakenBookUpdatesReplay}
-          probeEnabled={krakenBookUpdatesProbeEnabled}
-          disabledReason={krakenBookUpdatesDisabledReason}
-          renderEvidence={(observationId) => <EvidenceDisclosure observationId={observationId} />}
-        />
+        <>
+          <KrakenCandleHistoryPanel
+            nativeMarketId={market.native_market_id}
+            probeEnabled={krakenCandleProbeEnabled}
+            disabledReason={krakenCandleDisabledReason}
+          />
+          <KrakenBookUpdatesPanel
+            marketId={market.canonical_id}
+            nativeMarketId={market.native_market_id}
+            probe={krakenBookUpdatesProbe}
+            replay={krakenBookUpdatesReplay}
+            probeEnabled={krakenBookUpdatesProbeEnabled}
+            disabledReason={krakenBookUpdatesDisabledReason}
+            renderEvidence={(observationId) => <EvidenceDisclosure observationId={observationId} />}
+          />
+        </>
       )}
       {market.venue === 'polymarket' && (
         <PolymarketBookUpdatesPanel
