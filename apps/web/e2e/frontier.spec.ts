@@ -1992,6 +1992,11 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
   await expect(contractTerms.nth(0)).toContainText('2026-12-01T00:00:00Z');
   await expect(contractTerms.nth(1)).toContainText('2026-12-03T00:00:00Z');
   await expect(contractComparison).toContainText('do not establish equivalent payoffs');
+  const termDifferences = contractComparison.locator('.fr-term-difference-summary');
+  await expect(termDifferences).toContainText('recorded difference');
+  await expect(termDifferences).toContainText('Resolution authority');
+  await expect(termDifferences).toContainText('Left: Polymarket fixture election board');
+  await expect(termDifferences).toContainText('Right: Kalshi fixture state officials');
   await expect(contractTerms.nth(0)).toContainText('Native market ID');
   const leftSource = contractTerms.nth(0).locator('.fr-contract-source-details');
   await leftSource.locator('summary').click();

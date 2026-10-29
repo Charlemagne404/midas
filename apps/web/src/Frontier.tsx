@@ -28,6 +28,7 @@ import {
   type KalshiFeeOrderSensitivityResponse,
 } from './KalshiFeePanel';
 import { preciseUtcTime } from './frontierTime';
+import { compareRelationshipTerms } from './frontierRelationshipTerms';
 import {
   KrakenBookUpdatesPanel,
   type KrakenBookCaptureReplay,
@@ -4385,6 +4386,7 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
                 {filteredRelationships.map((relationship) => {
                   const left = graphMarketById.get(relationship.left_market_id);
                   const right = graphMarketById.get(relationship.right_market_id);
+                  const termComparison = compareRelationshipTerms(left, right);
                   return (
                     <article className="fr-edge" key={relationship.relationship_id}>
                       <div className="fr-node">
@@ -4444,6 +4446,40 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
                           Side-by-side captured terms help review this relationship. Similarity
                           labels and this comparison do not establish equivalent payoffs.
                         </p>
+                        <div className="fr-term-difference-summary">
+                          <strong>Literal differences in reported fields</strong>
+                          {termComparison.available ? (
+                            <>
+                              <p>
+                                {termComparison.differences.length
+                                  ? `${termComparison.differences.length} recorded difference${termComparison.differences.length === 1 ? '' : 's'}`
+                                  : 'No literal differences'}{' '}
+                                among comparable fields; {termComparison.unavailableFields}{' '}
+                                comparison{termComparison.unavailableFields === 1 ? ' is' : 's are'}{' '}
+                                unavailable in one or both captured records. This summary does not
+                                establish equivalent payoffs.
+                              </p>
+                              {termComparison.differences.length > 0 && (
+                                <dl>
+                                  {termComparison.differences.map((difference) => (
+                                    <div key={difference.field}>
+                                      <dt>{difference.field}</dt>
+                                      <dd>
+                                        <span>Left: {difference.left}</span>
+                                        <span>Right: {difference.right}</span>
+                                      </dd>
+                                    </div>
+                                  ))}
+                                </dl>
+                              )}
+                            </>
+                          ) : (
+                            <p>
+                              A market record is outside the loaded graph window; cross-source field
+                              comparison is unavailable.
+                            </p>
+                          )}
+                        </div>
                         <div className="fr-contract-comparison-grid">
                           <RelationshipContractTerms side="Left" market={left} />
                           <RelationshipContractTerms side="Right" market={right} />

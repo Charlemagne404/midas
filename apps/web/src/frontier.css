@@ -1916,6 +1916,48 @@
   font-size: 9px;
   line-height: 1.5;
 }
+.fr-term-difference-summary {
+  margin: 9px 0 12px;
+  padding: 9px;
+  border: 1px solid #293542;
+  border-radius: 4px;
+  background: #0e1319;
+}
+.fr-term-difference-summary > strong {
+  display: block;
+  color: #d0d8e2;
+  font-size: 9px;
+}
+.fr-term-difference-summary > p {
+  margin: 5px 0 0;
+  color: #8492a3;
+  font-size: 9px;
+  line-height: 1.5;
+}
+.fr-term-difference-summary dl {
+  display: grid;
+  grid-template-columns: minmax(100px, 0.75fr) minmax(0, 1fr);
+  gap: 5px 9px;
+  margin: 9px 0 0;
+}
+.fr-term-difference-summary dl > div {
+  display: contents;
+}
+.fr-term-difference-summary dt {
+  color: #8492a3;
+  font-size: 8px;
+  font-weight: 600;
+}
+.fr-term-difference-summary dd {
+  min-width: 0;
+  margin: 0;
+  color: #d0d8e2;
+  font-size: 8px;
+  overflow-wrap: anywhere;
+}
+.fr-term-difference-summary dd span {
+  display: block;
+}
 .fr-contract-comparison-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
