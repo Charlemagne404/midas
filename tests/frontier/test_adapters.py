@@ -25,6 +25,7 @@ from midas.frontier.models import (
     Venue,
     stable_instrument_id,
 )
+from midas.frontier.registry import default_registry
 from midas.frontier.relationships import (
     RelationshipType,
     VerificationState,
@@ -2170,6 +2171,38 @@ def test_source_configs_and_capability_manifests_fail_closed():
     assert kalshi_fee_declaration.supported
     assert "conservative one-fill taker estimate" in kalshi_fee_declaration.reason
     assert "FCM charges remain unresolved" in kalshi_fee_declaration.reason
+
+
+@pytest.mark.asyncio
+async def test_default_registry_is_complete_disabled_and_network_idle():
+    registry = default_registry()
+    expected_venues = {
+        Venue.POLYMARKET,
+        Venue.KALSHI,
+        Venue.KRAKEN,
+        Venue.COINBASE_EXCHANGE,
+    }
+    try:
+        manifests = registry.capability_manifests()
+        assert {manifest.venue for manifest in manifests} == expected_venues
+
+        for manifest in manifests:
+            assert len(manifest.declarations) == len(Capability)
+            assert {item.capability for item in manifest.declarations} == set(Capability)
+            assert all(item.reason.strip() for item in manifest.declarations)
+
+            adapter = registry.get(manifest.venue)
+            assert adapter.config.enabled is False
+            assert adapter.config.live_public_probe_enabled is False
+            assert adapter.transport.request_count == 0
+            assert not manifest.supports(Capability.BOOK_UPDATES)
+
+        health = await registry.health()
+        assert {item.venue for item in health} == expected_venues
+        assert all(item.state == SourceState.NOT_PROBED for item in health)
+        assert all(item.requests_in_window == 0 for item in health)
+    finally:
+        await registry.aclose()
 
 
 @pytest.mark.asyncio
