@@ -3353,3 +3353,27 @@ incident: swap remains almost full, the shared user hierarchy is uncapped,
 Reality API was previously near its hard limit, and historical pressure
 initiation is still unattributed. Keep browser/build and broad-suite work
 deferred; continue only serial, offline work after a fresh admission sample.
+
+## Static UI state-race correction — 2026-10-29 14:45 CET
+
+A final static review found that a delayed `toggle` close event from a
+previously expanded relationship row could clear the ID of a newer expanded
+row. The handler now clears state only when that row still owns the selected
+ID. The component fixture also asserts that closing the comparison removes its
+deferred term panels. This change is local frontend state only.
+
+Targeted Prettier and ESLint passed for the component and its fixture under
+256 MiB high / 384 MiB max, zero swap, 15% CPU and 48 tasks. No TypeScript or
+browser test was rerun. The earlier bounded component run remains
+**inconclusive** because its Vitest summary and process exit code were not
+retained; the new close assertion is therefore pending browser verification.
+
+At 14:45:39, host available memory was about 10 GiB, free swap about 15 MiB,
+and global PSI avg10 was zero (avg300 some/full 0.02/0.01%). The shared
+user-manager `memory.events high` count had risen by 32 to 16,437,582 since
+14:44:30; the hierarchical counter cannot attribute this to the static checks.
+OOM/oom_kill remained 19/15, API/Reality/Reality API remained active at
+restart counts 9/14/0, and no kernel or systemd-oomd kill was logged in the
+interval. This short sample does not resolve the host incident. Keep browser
+and build workloads deferred and continue only serial, offline work after a
+fresh admission sample.

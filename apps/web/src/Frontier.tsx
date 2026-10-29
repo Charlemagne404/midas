@@ -4458,8 +4458,10 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
                         onToggle={(event) => {
                           if (event.currentTarget.open) {
                             setOpenContractComparisonId(relationship.relationship_id);
-                          } else if (comparisonOpen) {
-                            setOpenContractComparisonId(null);
+                          } else {
+                            setOpenContractComparisonId((current) =>
+                              current === relationship.relationship_id ? null : current,
+                            );
                           }
                         }}
                       >

@@ -15227,3 +15227,24 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
   a fresh admission check; preserve the inconclusive component verification
   as a pending item. The pre-existing untracked
   `data/frontier-public-probes/` remains untouched.
+
+## 2026-10-29 14:46 CET — lazy comparison close handling
+
+- Corrected a UI state race: a delayed close event now clears the selected
+  contract-comparison row only if that same row still owns the selected ID.
+  Added a component-fixture assertion that collapsing the row removes its
+  lazily rendered term panels.
+- Targeted Prettier and ESLint passed for `Frontier.tsx` and `Frontier.test.tsx`
+  in 256/384 MiB high/max, zero-swap, 15%-CPU, 48-task scopes. No TypeScript or
+  browser test was rerun. The previous component test's reporter output and
+  process exit code remain unavailable, so its result and this new assertion
+  are **inconclusive/pending**, not passed.
+- At 14:45:39, available RAM was about 10 GiB, free swap 15 MiB, PSI avg10
+  zero, and avg300 some/full 0.02/0.01%. Shared-user `memory.events high` rose
+  by 32 to 16,437,582 across the static-check interval; this aggregate counter
+  is not process-attributable. OOM counters were unchanged at 19/15, protected
+  service restart counts remained 9/14/0, and no kernel/OOMD kill was logged.
+- **Status:** brief quiet sample only. Keep browser/build work deferred due
+  almost-full swap and the prior reclaim excursion. Continue serial offline
+  Frontier work only after a fresh host admission check. The existing
+  untracked public-probe data remains untouched.

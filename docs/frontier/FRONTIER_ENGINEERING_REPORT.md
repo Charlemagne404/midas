@@ -15777,3 +15777,21 @@ active at restart counts 9/14/0; no OOMD or kernel kill was observed in the
 test interval. This establishes a brief quiet interval only. The incident is
 not resolved, and Frontier continuation remains limited to serial,
 source-independent work with transient resource bounds.
+
+### Relationship comparison close-event race — 2026-10-29 14:45 CET
+
+The expanded comparison's `toggle` handler now uses a conditional functional
+state update when a row closes. A late close event from a previous row can no
+longer clear the currently selected row. The captured-store component fixture
+asserts that deferred term panels disappear after closing the row. Targeted
+Prettier and ESLint passed under 256/384 MiB high/max, zero swap, 15% CPU and a
+48-task cap. No TypeScript or browser rerun was performed; the browser result
+from the preceding attempt remains inconclusive, so this new component
+assertion is pending verification.
+
+At 14:45:39, about 10 GiB RAM remained available, free swap was about 15 MiB,
+and PSI avg10 was zero (avg300 some/full 0.02/0.01%). The shared hierarchical
+`memory.events high` count rose by 32 over the static-check interval; it does
+not identify which process caused the events. OOM counters remained 19/15,
+API/Reality/Reality API remained active at restarts 9/14/0, and no new OOMD or
+kernel kill was observed. This is not evidence of sustained incident recovery.

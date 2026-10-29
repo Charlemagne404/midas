@@ -3373,6 +3373,10 @@ it('renders a bounded accessible relationship graph and opens selected evidence'
   fireEvent.click(screen.getByText('Rules, instruments, and source provenance'));
   expect(await screen.findByText(/Fee evidence SHA-256/)).toBeInTheDocument();
   expect(screen.getByText(/price currency identity fiat:USD/)).toBeInTheDocument();
+  fireEvent.click(screen.getByText('Compare recorded contract terms', { selector: 'summary' }));
+  await vi.waitFor(() =>
+    expect(screen.queryByRole('region', { name: 'Left recorded contract terms' })).toBeNull(),
+  );
 
   fireEvent.change(screen.getByLabelText('Relationship graph center market'), {
     target: { value: '' },
