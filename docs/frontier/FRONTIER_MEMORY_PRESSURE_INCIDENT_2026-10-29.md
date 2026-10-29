@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 18:31 CET |
+| Latest addendum | 2026-10-29 18:34 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Pre-incident checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -4523,3 +4523,26 @@ VERIFIED**: this short quiet window does not identify the historic global
 pressure initiator, and swap remains nearly full. Continue with serial,
 source-independent work under explicit transient limits; do not run broad
 frontend suites or builds on this host during the scheduled analysis window.
+
+### Deployed readiness API contract check — 2026-10-29 18:34 CET
+
+A bounded read-only GET to `127.0.0.1:8000/api/readiness/resources` returned
+captured host data at 18:33:23 CET: 11,189,633,024 bytes available out of
+16,665,567,232 total and zero host memory PSI. The response omitted
+`swap_total_bytes`, `swap_free_bytes`, and the `user-manager` service block.
+The active MIDAS API unit points to release `a152999`; inspection of that
+release confirms its resource collector exposes only `MemTotal` and
+`MemAvailable`, and does not include the user-manager cgroup. The Frontier
+worktree implementation already collects swap and user-manager PSI, but it is
+not deployed. No production update was attempted.
+
+The UI now treats those absent live fields as **Not measured** rather than
+substituting values from another source. The bounded fixture test based on the
+actual API payload passed with the full panel suite: **3/3 in 7.59 seconds**
+under 384 MiB high / 512 MiB max / zero swap / 20% CPU / 64 tasks. At 18:34:51,
+host PSI remained zero with 10,930,916 kB available RAM and 18,932 kB free
+swap. User-manager `high/max/oom/oom_kill` remained
+16,437,902 / 731,309 / 19 / 15; no kernel or OOMD kill appeared since 18:31.
+The core API, Reality collector, and Reality API remained active. This confirms
+the local endpoint contract and truthful UI fallback, not a production UI
+deployment or sustained recovery.

@@ -16173,3 +16173,21 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
 - No services, timers, cgroup limits, protected campaign, or evidence stores
   were modified. Incident status remains **PARTIALLY CONTAINED / PARTIALLY
   VERIFIED**; continue with one bounded source-independent task at a time.
+
+## 2026-10-29 18:34 CET — deployed readiness API contract identified
+
+- A bounded GET to the live local `/api/readiness/resources` route returned
+  host RAM and zero memory PSI but omitted swap and `user-manager` fields.
+  The active API points to release `a152999`; its collector lacks those
+  fields. Frontier's worktree API source already includes them, but no
+  deployment was attempted. The new card renders missing live values as
+  **Not measured**; a fixture matching the observed API shape is covered by
+  the new UI test.
+- `FrontierHostResources.test.tsx`: **3/3 passed in 7.59s** under 384 MiB
+  high / 512 MiB max / zero swap / 20% CPU / 64 tasks. At 18:34:51, host PSI
+  remained zero, 10.4 GiB RAM was available, and 18.5 MiB swap was free.
+  User-manager counters remained 16,437,902 / 731,309 / 19 / 15; no kill
+  appeared in kernel or OOMD journals since 18:31. Critical services were
+  active. The incident remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**;
+  resume only serial, bounded development pending the 18:40:26 scheduled
+  source-analysis run.
