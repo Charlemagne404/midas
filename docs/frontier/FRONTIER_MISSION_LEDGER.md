@@ -14514,3 +14514,14 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
   active, and no user jobs remained. No new kernel or oomd kill appeared after
   11:18 in the checked interval. The observation is brief; durable recovery
   and historical pressure attribution remain open.
+- Checkpoints: `3b45c78` updates the first overview assertion's lazy-load
+  timeout and records typecheck/build/overview-browser results;
+  `d19002c` records the saved-sample replay browser run and post-run host
+  sample. Changed files are the overview E2E spec and the three Frontier
+  engineering/incident/mission documents. No service configuration, archive,
+  historical research evidence, or retained probe data was changed or staged.
+- Next safe action: continue with a single serial, offline fixture-backed
+  relationship or economic-verification case after a fresh admission sample,
+  bounded to zero swap and finite memory, CPU, tasks, and runtime. Keep live
+  source probes, broad regressions, endurance, and production transition
+  deferred while incident status remains partial.
