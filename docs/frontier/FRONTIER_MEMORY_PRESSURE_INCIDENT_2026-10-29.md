@@ -1046,6 +1046,35 @@ capacity timer is due at 07:47:27. The host remains **PARTIALLY CONTAINED /
 PARTIALLY VERIFIED** with nearly full swap and historical pressure attribution
 unresolved.
 
+## Scheduled capacity run and host sample — 2026-10-29 07:48 CET
+
+The 07:47:45 CET `midas-reality-capacity.service` invocation completed with
+status 0 at 07:47:52 after 6.651 seconds of CPU. The configured `MemoryHigh`
+was 160 MiB, `MemoryMax` 192 MiB, and `MemorySwapMax` zero. systemd did not
+retain a completed-oneshot peak value. The report still includes pending
+collector budget/retention changes, a capacity warning and critical runway
+within fourteen days, invalid archive segment inventory, and invalid manifest
+provenance. It reports `RECORDING_UNSEQUENCED`; no collector restart or archive
+repair was attempted.
+
+At 07:47:53 host memory PSI avg10/60/300 was zero, `MemAvailable` was 10 GiB,
+and only 8.2 MiB swap was free. The user-manager cgroup held 9,668,608,000
+bytes of memory and 2,858,422,272 bytes of swap, with inherited event counters
+unchanged at `oom=19`, `oom_kill=15`, `oom_group_kill=0`. OOMD showed the
+50%-threshold monitored user scope at zero current pressure and about 9.0 GiB
+current memory. No OOMD or kernel memory-kill entry appeared since 07:38.
+API, Reality, and Reality API remained active at restart counts 9/14/0; API
+and Reality used approximately 907/384 MiB. The gap-detail timer remains
+inactive; the next capacity run is due at 08:17:45.
+
+The current process snapshot included multiple Codex processes and service
+workloads, but it cannot identify the initiator of the prior host pressure.
+Continental contact/status, user-level tailnet/auth, Echo production/staging,
+Caddy, Headscale, Tailscale, RustDesk, and the SSH socket were active. The
+brief quiet period and successful bounded scan do not resolve near-full swap,
+historical attribution, long-run stability, or archive provenance. Incident
+status remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**.
+
 ## Post-UI assertion pressure sample — 2026-10-29 07:36 CET
 
 The focused graph UI test now asserts the truncation display. It passed **1/1**

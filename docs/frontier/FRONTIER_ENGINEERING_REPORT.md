@@ -2,7 +2,7 @@
 
 **Report date:** 2026-10-29
 
-## Current completion matrix — 2026-10-29 07:38 CET
+## Current completion matrix — 2026-10-29 07:48 CET
 
 This is a current evidence classification, not a final completion claim. The
 dated implementation records below remain the detailed evidence; the
@@ -21,9 +21,9 @@ current host gate.
 | Laboratory/Arena comparisons and bounded orchestration | PARTIALLY VERIFIED | Arena admission and finite scheduling regressions pass; a Laboratory resource-denial case passes with a harness cap above its 722,894,848-byte capacity precondition. Full endurance evidence remains incomplete. |
 | User-cgroup-aware workload admission | IMPLEMENTED, BOUNDED VALIDATION PASSED | Central Arena admission (15), finite schedules (12), and the Laboratory denial case (1) pass fixture tests using user-manager pressure; no runtime deployment occurred. |
 | Source-operation admission telemetry | COMPLETE AND VERIFIED FOR ONE ROUTER INSTANCE | The bounded source gate exposes active venues, admitted totals, and contention rejections by scope with a UTC sample time. The source page can refresh the snapshot. Counters reset with that router and do not aggregate across workers or deployments. |
-| Reality capacity inventory bounds | PARTIALLY VERIFIED | Candidate inventory code remains undeployed. The separate monitor is bounded at `MemoryHigh=160M`, `MemoryMax=192M`, and zero swap; its 07:17 scheduled run succeeded in about seven seconds. No reliable peak was retained for this run; a prior observed 137.4 MiB peak justifies the 160 MiB soft bound but does not bound the invalid-provenance fallback. The monitor still identifies invalid archive inventory/provenance and pending startup-config changes; no archive evidence was altered. |
+| Reality capacity inventory bounds | PARTIALLY VERIFIED | Candidate inventory code remains undeployed. The separate monitor is bounded at `MemoryHigh=160M`, `MemoryMax=192M`, and zero swap; its 07:47:45 scheduled run exited successfully in about seven seconds. No reliable peak was retained for this run; a prior observed 137.4 MiB peak justifies the 160 MiB soft bound but does not bound the invalid-provenance fallback. The monitor still identifies invalid archive inventory/provenance and pending startup-config changes; no archive evidence was altered. |
 | Native Frontier dashboard | PARTIALLY VERIFIED | The dashboard includes the held Gemini capability, timing and user-cgroup pressure explanations, explicit Polymarket event capture, source-admission policy and router-runtime counters, and a refresh action. It displays durable observation IDs, raw hashes, event types, source timestamps, and quality flags while stating captured events are unsequenced and do not form a local book. The Relationships view marks clipped entity-context labels and identifiers; commit `d4e22e6` adds assertions for the visible ellipsis, display-clipped note, and graph truncation reason. The focused graph UI test passed 1/1 (eight skipped); TypeScript, ESLint, and Prettier passed. A production Vite bundle passed at 07:30 in 54.10 s (2,230 modules, 383.6 MiB peak) into a new temporary directory, leaving ignored `apps/web/dist` untouched. The 544.51 kB Chart chunk advisory remains. Default Playwright last passed 17/20 with three opt-in skips; captured-evidence browser validation remains open. |
-| Host reliability containment | PARTIALLY VERIFIED | The five-minute gap-detail timer is inactive/disabled; the October 28 audit found 129 systemd-oomd kills, 106 targeting this finalized-data replay. It is the strongest recurring contributor, not a proven sole trigger. Seven kernel memcg kills hit the capacity checker's original 128 MiB cap; its reversible 160/192 MiB zero-swap bound has since completed successful scheduled runs, most recently at 07:17. By 07:38 there had been no new OOMD kill since 23:43:24 Oct 28 and no kernel OOM since 20:15:44 Oct 28. Host `MemAvailable` was 10 GiB and PSI zero, but only 8.1 MiB swap was free. User-manager memory/swap was 9.68/2.86 GB with no ancestor memory limit; aggregate descendant OOM counters stayed 19/15/0. API/Reality remained active at restarts 9/14 and used about 902/379 MiB against their `MemoryHigh` values; the capacity timer is next due at 07:47. Historical parent-pressure attribution, near-full swap, and archive provenance remain unresolved. |
+| Host reliability containment | PARTIALLY VERIFIED | The five-minute gap-detail timer is inactive/disabled; the October 28 audit found 129 systemd-oomd kills, 106 targeting this finalized-data replay. It is the strongest recurring contributor, not a proven sole trigger. Seven kernel memcg kills hit the capacity checker's original 128 MiB cap; its reversible 160/192 MiB zero-swap bound completed another successful run at 07:47. At 07:47:53 there had been no new OOMD kill since 23:43:24 Oct 28 and no kernel OOM since 20:15:44 Oct 28. Host `MemAvailable` was 10 GiB and PSI zero, but only 8.2 MiB swap was free. User-manager memory/swap was 9.67/2.86 GB with no ancestor memory limit; aggregate descendant OOM counters stayed 19/15/0. API/Reality remained active at restarts 9/14 and used about 907/384 MiB against their `MemoryHigh` values; the capacity timer is next due at 08:17. Historical parent-pressure attribution, near-full swap, and archive provenance remain unresolved. |
 | Node/V8 and Apport side effect | PARTIALLY VERIFIED | The 02:36 TypeScript attempt aborted at Node's heap limit with a 300.6 MiB cgroup peak, not a kernel OOM. Whoopsie attempted to submit the 58,222,586-byte crash report and received HTTP 504; remote receipt is unknown. No `.uploaded` marker exists. This turn's first `tsc --noEmit` attempt also reached its explicit 256 MiB V8 heap limit; a single retry at a 384 MiB heap inside a 768 MiB zero-swap scope passed. Host PSI and OOM counters remained unchanged. |
 | Broad regressions, resource endurance, and performance acceptance | DEFERRED | Selected Python, API, adapter, collection, and economics tests passed under bounded zero-swap scopes. The graph-revision storage/migration cases pass 8/8; API cursor invalidation passes 1/1; four core economics modules pass 79/79; joint-state basket/audit/replay passes 14/14; logical implication/relationship review passes 27/27; transport passes 20/20; readiness resource API passes 7/7 and its focused UI passes 3/3. Ruff check/format, ESLint, Prettier, and strict mypy on the readiness resource module passed under caps. Full MIDAS regression, full browser suite, captured-evidence browser journey, endurance, and broad performance tests remain deferred. |
 | Live multi-venue source authorization and findings | BLOCKED | Kalshi, Kraken, Coinbase, and Gemini probes and retained-data research remain held; the worktree Polymarket probe flag is off. |
@@ -14347,3 +14347,30 @@ regression passed **1/1** in 5.39 seconds with the existing Starlette/httpx
 deprecation warning; Ruff check/format passed. This keeps API metadata aligned
 with the projection implementation while preserving the existing opt-in
 default.
+
+### Capacity timer checkpoint — 2026-10-29 07:48 CET
+
+The scheduled capacity monitor started at 07:47:45 CET and exited successfully
+at 07:47:52, consuming 6.651 seconds of CPU. Its 160 MiB `MemoryHigh`, 192
+MiB `MemoryMax`, and zero-swap limits were effective. systemd did not retain a
+peak for this completed oneshot. The report still warns of pending collector
+budget/retention changes, capacity runway under fourteen days, and invalid
+archive inventory/provenance. It observed the collector as
+`RECORDING_UNSEQUENCED`; no service restart or archive modification occurred.
+
+At 07:47:53, host PSI avg10/60/300 was zero, `MemAvailable` was 10 GiB, and
+only 8.2 MiB of swap remained free. The user-manager cgroup held
+9,668,608,000 bytes of memory and 2,858,422,272 bytes of swap; inherited event
+counters stayed at `oom=19`, `oom_kill=15`, `oom_group_kill=0`. OOMD reported
+the monitored user scope at zero current pressure but about 9.0 GiB current
+memory. There were no OOMD or kernel OOM journal entries since 07:38. API,
+Reality, and Reality API were active at restart counts 9/14/0; API and Reality
+used about 906/384 MiB. Continental contact/status, tailnet/auth user units,
+Echo production/staging, Caddy, Headscale, Tailscale, RustDesk, and the SSH
+socket were active. `ssh.service` itself is inactive under socket activation.
+
+The point-in-time process list included several Codex processes and service
+workloads; it does not establish what initiated the historical pressure. The
+incident remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**: swap occupancy,
+historical pressure attribution, long-run stability, and archive provenance
+are unresolved. The next capacity run is scheduled for 08:17:45 CET.
