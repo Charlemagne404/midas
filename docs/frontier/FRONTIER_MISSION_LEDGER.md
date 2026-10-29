@@ -1,5 +1,27 @@
 # Project Frontier Mission Ledger
 
+## 2026-10-29 17:28 CET — current candle module verification and pressure recheck
+
+- The complete Kraken candle API module passed **4/4 in 7.70 seconds** in a
+  transient 384 MiB high / 512 MiB max, zero-swap, 15% CPU, 64-task,
+  60-second scope. The panel suite passed **4/4**, strict no-unused TypeScript
+  exited 0 on the formatted panel/test, and targeted Ruff, Ruff format,
+  Prettier, and ESLint checks passed. One existing Starlette/httpx deprecation
+  warning remains. No public source call was made. The formatter-only code
+  follow-up is committed as `5610976`.
+- Runtime and persistent Reality API bounds remain 576 MiB high / 640 MiB
+  max / zero swap. The focused tests, format-only updates, and daemon reload
+  did not restart the API or collector. The persistent drop-in and rollback
+  command are recorded in
+  [`FRONTIER_MEMORY_PRESSURE_INCIDENT_2026-10-29.md`](FRONTIER_MEMORY_PRESSURE_INCIDENT_2026-10-29.md).
+- At 17:28:52, memory PSI remained zero and `MemAvailable` was
+  11,248,037,888 bytes; only 19,013,632 bytes of swap were free. User-manager
+  `max=730,822` and Reality API local `max=5,199` remained unchanged since
+  17:19:53, with no OOM. The API, Reality collector, and Reality API remained
+  active at restart counts 9/14/0. This is a short quiet window, not host
+  recovery or endurance evidence. Keep broad suites, builds, browser runs,
+  replay, and source probes deferred.
+
 ## 2026-10-29 17:26 CET — Reality API limit attribution and bounded verification
 
 - Timestamp-aligned cgroup samples from 17:17:59 to 17:19:53 showed the

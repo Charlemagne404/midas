@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 17:26 CET |
+| Latest addendum | 2026-10-29 17:28 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Pre-incident checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -4176,3 +4176,27 @@ still **PARTIALLY CONTAINED / PARTIALLY VERIFIED**: recent per-service hard
 limit contact is now bounded with additional room, while swap remains nearly
 full, the user manager has no aggregate ceiling, OOMD's historical upstream
 workload is not identified, and long-duration stability is unverified.
+
+### Focused candle verification after formatting — 2026-10-29 17:28 CET
+
+The complete `tests/frontier/test_kraken_candles_api.py` module passed
+**4/4 in 7.70 seconds** under the same 384 MiB high / 512 MiB max, zero-swap,
+15% CPU, 64-task, 60-second transient scope. It includes capture validation,
+source-hold behavior, exact market binding, and the older-match-after-20-row
+scan. The only warning was the existing Starlette/httpx TestClient
+deprecation. Targeted Ruff check and format check passed for both changed
+Python files. Targeted Prettier and ESLint passed for the candle panel and its
+test. Strict no-unused TypeScript on the exact formatted panel/test files
+exited 0. The initial Ruff/Prettier checks found formatting-only line wraps;
+they were corrected before these final checks.
+
+At 17:28:52, after the full API module and final typecheck, memory PSI remained
+zero, `MemAvailable` was 11,248,037,888 bytes, and `SwapFree` was
+19,013,632 bytes. The user-manager `max` count remained 730,822 and Reality
+API local `max` remained 5,199; both OOM counters remained unchanged. Reality
+API held 539,901,952 / 671,088,640 bytes, with about 64 MiB below its soft
+high threshold and 126 MiB below its hard max. MIDAS API, Reality, and Reality
+API remained active at original restart counts 9/14/0. No OOMD entry or
+kernel OOM match appeared since 17:26. This extends the quiet post-adjustment
+window to about nine minutes, not an endurance result. Swap remains nearly
+full and the Oct 28 system-wide OOMD workload attribution is unresolved.
