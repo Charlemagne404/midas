@@ -85,8 +85,7 @@ def test_capacity_real_bytes_rates_and_horizon(tmp_path, monkeypatch):
 
 def test_parse_process_peak_rss_bytes():
     assert (
-        operations._parse_process_peak_rss_bytes("Name:\tpython\nVmHWM:\t12345 kB\n")
-        == 12_641_280
+        operations._parse_process_peak_rss_bytes("Name:\tpython\nVmHWM:\t12345 kB\n") == 12_641_280
     )
     assert operations._parse_process_peak_rss_bytes("Name:\tpython\n") is None
     assert operations._parse_process_peak_rss_bytes("VmHWM: invalid kB\n") is None
@@ -639,9 +638,7 @@ def test_archive_capacity_bounds_unverified_inventory_and_reports_unknown_headro
     assert "ARCHIVE_CAPACITY_EXHAUSTED" not in result["alerts"]
 
 
-def test_archive_capacity_skips_walk_when_manifest_provenance_is_invalid(
-    tmp_path, monkeypatch
-):
+def test_archive_capacity_skips_walk_when_manifest_provenance_is_invalid(tmp_path, monkeypatch):
     raw = tmp_path / "raw"
     target = tmp_path / "hdd" / "archive"
     target.mkdir(parents=True)

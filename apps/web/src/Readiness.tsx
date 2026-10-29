@@ -60,6 +60,10 @@ const fmtTime = (value: unknown) => {
   const parsed = typeof value === 'number' ? new Date(value) : new Date(value);
   return Number.isNaN(parsed.getTime()) ? 'Not measured' : parsed.toLocaleString();
 };
+const age = (value: unknown) => {
+  const parsed = asNumber(value);
+  return parsed === null ? 'Not reported' : `${Math.max(0, parsed).toFixed(1)}s ago`;
+};
 const disagreementTotal = (value: unknown) =>
   Object.values(asRecord(value)).reduce<number>((sum, item) => sum + (asNumber(item) ?? 0), 0);
 const disagreementFor = (value: unknown, prefix: string) =>
@@ -351,6 +355,8 @@ export function Readiness() {
   const lastCollectorError = asString(collector.last_error);
   const lastCollectorErrorAt = asNumber(collector.last_error_ns);
   const configuredQueueBound = asNumber(collector.transport_queue_bound);
+  const transportQueueDepth = asNumber(collector.transport_queue_depth);
+  const transportQueueSaturated = collector.transport_queue_saturated === true;
   const observabilityGaps = asArray(sourceQuality.observability_gaps).map(String);
   const finalized = asRecord(veritas.data?.finalized_reality_source);
   const funnelMeasured = funnel.reference_version_current === true;
@@ -819,6 +825,22 @@ export function Readiness() {
             unverified.
           </p>
           <div className="rr-observability-list" aria-label="Collector observability status">
+            <div>
+              <strong>Transport and market data age</strong>
+              <span>
+                WebSocket message {age(collector.transport_message_age_seconds)} · market event{' '}
+                {age(collector.market_event_age_seconds)} · stale books{' '}
+                {count(collector.stale_book_count)}
+              </span>
+            </div>
+            <div>
+              <strong>WebSocket receive queue</strong>
+              <span>
+                {transportQueueDepth === null
+                  ? `Not reported${configuredQueueBound === null ? '' : ` (bound ${configuredQueueBound} frames)`}`
+                  : `${count(transportQueueDepth)} / ${count(configuredQueueBound)} frames${transportQueueSaturated ? ' · saturated' : ''}`}
+              </span>
+            </div>
             <div>
               <strong>Current collector error</strong>
               <span>

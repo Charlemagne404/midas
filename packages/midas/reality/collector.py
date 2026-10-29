@@ -4,6 +4,7 @@ import asyncio
 import hashlib
 import json
 import logging
+import math
 import shutil
 import signal
 import time
@@ -31,6 +32,7 @@ class StorageFailure(RuntimeError):
 
 
 APPEND_BACKPRESSURE_SECONDS = 1.0
+APPEND_LATENCY_WINDOW_NS = 60 * 1_000_000_000
 # The Reality API marks status older than 30 seconds stale; failures report immediately.
 STATUS_REPORT_INTERVAL_SECONDS = 10.0
 
@@ -43,6 +45,7 @@ def collection_health(
     now_ns: int,
     stale_ns: int,
     backpressured: bool = False,
+    transport_backpressured: bool = False,
 ) -> str:
     if state == "FAILED":
         return "failed"
@@ -56,9 +59,73 @@ def collection_health(
         return "active_no_events"
     if now_ns - last_observation_ns >= stale_ns or fresh_books != expected_books:
         return "stale"
+    if transport_backpressured:
+        return "transport_backpressured"
     if backpressured:
         return "backpressured"
     return "active_receiving"
+
+
+def append_latency_summary(
+    samples: deque[tuple[int, int, int]], now_ns: int, process_started_ns: int
+) -> dict[str, Any]:
+    """Summarize durable-write and full append latency for the recent minute."""
+    start_ns = max(process_started_ns, now_ns - APPEND_LATENCY_WINDOW_NS)
+    recent = [sample for sample in samples if start_ns <= sample[0] <= now_ns]
+    window_seconds = max(0.0, (now_ns - start_ns) / 1e9)
+    window_complete = process_started_ns <= now_ns - APPEND_LATENCY_WINDOW_NS
+    if len(samples) == samples.maxlen and samples and samples[0][0] > start_ns:
+        window_complete = False
+
+    def seconds(values: list[int], quantile: float | None = None) -> float | None:
+        if not values:
+            return None
+        ordered = sorted(values)
+        index = -1 if quantile is None else max(0, math.ceil(quantile * len(ordered)) - 1)
+        return ordered[index] / 1e9
+
+    return {
+        "window_seconds": window_seconds,
+        "window_complete": window_complete,
+        "sample_count": len(recent),
+        "max_durable_write_seconds": seconds([sample[1] for sample in recent]),
+        "p95_durable_write_seconds": seconds([sample[1] for sample in recent], 0.95),
+        "max_append_seconds": seconds([sample[2] for sample in recent]),
+        "p95_append_seconds": seconds([sample[2] for sample in recent], 0.95),
+    }
+
+
+def transport_queue_depth(websocket: Any) -> int | None:
+    """Read buffered frames when the installed WebSocket client exposes them."""
+    try:
+        depth = len(websocket.recv_messages.frames)
+    except (AttributeError, TypeError):
+        return None
+    return depth if isinstance(depth, int) and depth >= 0 else None
+
+
+def sample_transport_queue(status: dict[str, Any], websocket: Any, bound: int) -> None:
+    depth = transport_queue_depth(websocket)
+    status.update(
+        transport_queue_observation_available=depth is not None,
+        transport_queue_depth=depth,
+        transport_queue_saturated=depth is not None and depth >= bound,
+        transport_queue_sampled_ns=time.time_ns(),
+    )
+    if depth is not None:
+        status["transport_queue_sample_count"] = status.get("transport_queue_sample_count", 0) + 1
+        status["transport_queue_high_water_depth"] = max(
+            status.get("transport_queue_high_water_depth", 0), depth
+        )
+
+
+def clear_transport_queue_sample(status: dict[str, Any]) -> None:
+    status.update(
+        transport_queue_observation_available=False,
+        transport_queue_depth=None,
+        transport_queue_saturated=False,
+        transport_queue_sampled_ns=time.time_ns(),
+    )
 
 
 def prune_cohort_tracking(
@@ -76,6 +143,9 @@ def prune_cohort_tracking(
 
 async def run(config: Config, duration: float | None = None) -> None:
     root = Path(config.root)
+    started = time.monotonic()
+    last_transport_message = started
+    last_market_event = started
     store = Store(
         root,
         budget=config.budget_bytes,
@@ -107,13 +177,17 @@ async def run(config: Config, duration: float | None = None) -> None:
             )
     store.activate()
 
+    process_started_ns = time.monotonic_ns()
     append_samples: deque[dict[str, int]] = deque(maxlen=1024)
+    append_latency_samples: deque[tuple[int, int, int]] = deque(maxlen=4096)
+    slow_append_timestamps: deque[int] = deque()
     book_updates: Counter[str] = Counter()
     coverage_started: dict[str, int] = {}
     coverage_last: dict[str, int] = {}
     comparison_task: asyncio.Task[dict[str, Any]] | None = None
     last_comparison = 0.0
     comparison_index = 0
+    active_websocket: Any | None = None
 
     def append(kind: str, payload: Any, **metadata: Any) -> dict[str, Any]:
         if time.time_ns() - oldest_ns > config.retention_days * 86400 * 1e9:
@@ -127,6 +201,9 @@ async def run(config: Config, duration: float | None = None) -> None:
         persisted_ns = time.monotonic_ns()
         engine.consume(record)
         processed_ns = time.monotonic_ns()
+        append_latency_samples.append(
+            (processed_ns, persisted_ns - began_ns, processed_ns - began_ns)
+        )
         if kind == "frame":
             append_samples.append(
                 dict(
@@ -148,14 +225,38 @@ async def run(config: Config, duration: float | None = None) -> None:
         )
         if append_seconds >= APPEND_BACKPRESSURE_SECONDS:
             status["process_backpressure_events"] += 1
-            status["backpressure_active"] = True
-        elif kind == "frame":
-            status["backpressure_active"] = False
+        while slow_append_timestamps and slow_append_timestamps[0] < (
+            processed_ns - APPEND_LATENCY_WINDOW_NS
+        ):
+            slow_append_timestamps.popleft()
+        if append_seconds >= APPEND_BACKPRESSURE_SECONDS:
+            slow_append_timestamps.append(processed_ns)
+        status["backpressure_active"] = bool(slow_append_timestamps)
         return record
 
     def report() -> None:
         state = engine.state(max_depth=50)
         now = time.time_ns()
+        latency_now_ns = time.monotonic_ns()
+        if active_websocket is not None:
+            sample_transport_queue(status, active_websocket, config.queue_size)
+        latency = append_latency_summary(append_latency_samples, latency_now_ns, process_started_ns)
+        while slow_append_timestamps and slow_append_timestamps[0] < (
+            latency_now_ns - APPEND_LATENCY_WINDOW_NS
+        ):
+            slow_append_timestamps.popleft()
+        status.update(
+            persistence_latency_window_seconds=APPEND_LATENCY_WINDOW_NS / 1e9,
+            persistence_latency_window_covered_seconds=latency["window_seconds"],
+            persistence_latency_window_complete=latency["window_complete"],
+            recent_append_sample_count=latency["sample_count"],
+            recent_max_append_seconds=latency["max_append_seconds"],
+            recent_p95_append_seconds=latency["p95_append_seconds"],
+            recent_max_persist_seconds=latency["max_durable_write_seconds"],
+            recent_p95_persist_seconds=latency["p95_durable_write_seconds"],
+            backpressure_window_seconds=APPEND_LATENCY_WINDOW_NS / 1e9,
+            backpressure_active=bool(slow_append_timestamps),
+        )
         books = state["books"]
         fresh = sum(
             b["internally_consistent"] and now - b["received_ns"] < config.stale_seconds * 1e9
@@ -190,11 +291,22 @@ async def run(config: Config, duration: float | None = None) -> None:
                     now,
                     int(config.stale_seconds * 1e9),
                     status["backpressure_active"],
+                    status.get("transport_queue_saturated") is True,
                 ),
                 counts=state["counts"],
                 gaps=engine.gaps,
                 fresh_books=fresh,
                 expected_books=status["markets"] * 2,
+                stale_book_count=sum(
+                    not b["internally_consistent"]
+                    or now - b["received_ns"] >= config.stale_seconds * 1e9
+                    for b in books.values()
+                ),
+                book_freshness_basis=(
+                    "age since last per-token market update; a quiet book is not proof of loss or completeness"
+                ),
+                transport_message_age_seconds=max(0.0, time.monotonic() - last_transport_message),
+                market_event_age_seconds=max(0.0, time.monotonic() - last_market_event),
                 state_sha256=engine.digest(),
                 recovery=status["recovery"],
                 sequence_verified=False,
@@ -233,6 +345,13 @@ async def run(config: Config, duration: float | None = None) -> None:
         process_frames=0,
         process_backpressure_events=0,
         backpressure_active=False,
+        transport_queue_unit="websocket_frames",
+        transport_queue_bound=config.queue_size,
+        transport_queue_observation_available=False,
+        transport_queue_depth=None,
+        transport_queue_high_water_depth=0,
+        transport_queue_sample_count=0,
+        transport_queue_saturated=False,
         failures=0,
         markets=0,
         last_observation_ns=None,
@@ -275,7 +394,7 @@ async def run(config: Config, duration: float | None = None) -> None:
             "gap",
             dict(
                 reason="process_start",
-                reconstruction_version=4,
+                reconstruction_version=5,
                 clock_health=clock_health(),
                 recovered=store.recovered,
                 stale_ns=int(config.stale_seconds * 1e9),
@@ -371,6 +490,8 @@ async def run(config: Config, duration: float | None = None) -> None:
                         close_timeout=5,
                         ping_interval=None,
                     ) as ws:
+                        active_websocket = ws
+                        sample_transport_queue(status, ws, config.queue_size)
                         frame = json.dumps(
                             dict(
                                 type="market",
@@ -383,11 +504,14 @@ async def run(config: Config, duration: float | None = None) -> None:
                         subscription_record = append(
                             "subscription", frame, connection=connection, subscription=subscription
                         )
-                        connected = last_ping = last_frame = time.monotonic()
+                        connected = last_ping = last_market_event = last_transport_message = (
+                            time.monotonic()
+                        )
                         pending_snapshots = set(tokens)
                         status["state"] = "AWAITING_DATA"
                         while not stop.is_set():
                             now = time.monotonic()
+                            sample_transport_queue(status, ws, config.queue_size)
                             if now - last_report >= STATUS_REPORT_INTERVAL_SECONDS:
                                 report()
                                 last_report = now
@@ -538,14 +662,15 @@ async def run(config: Config, duration: float | None = None) -> None:
                                 raise TimeoutError(
                                     "Initial snapshots incomplete; reconnect for fresh books"
                                 )
-                            if now - last_frame > config.stale_seconds:
-                                raise TimeoutError(
-                                    "Market observations stale; reconnect for fresh snapshots"
-                                )
+                            if now - last_transport_message > config.stale_seconds:
+                                raise TimeoutError("Market WebSocket heartbeat or event stale")
                             try:
                                 payload = await asyncio.wait_for(ws.recv(), timeout=1)
                             except TimeoutError:
+                                sample_transport_queue(status, ws, config.queue_size)
                                 continue
+                            sample_transport_queue(status, ws, config.queue_size)
+                            last_transport_message = time.monotonic()
                             received, monotonic = time.time_ns(), time.monotonic_ns()
                             normalized = []
                             try:
@@ -620,7 +745,7 @@ async def run(config: Config, duration: float | None = None) -> None:
                                 ):
                                     pending_snapshots.remove(asset)
                             if payload != "PONG":
-                                last_frame = time.monotonic()
+                                last_market_event = time.monotonic()
                                 status.pop("error", None)
                                 status.update(
                                     frames=status["frames"] + 1,
@@ -630,6 +755,9 @@ async def run(config: Config, duration: float | None = None) -> None:
                                 )
                                 if not pending_snapshots:
                                     backoff = 1
+                            sample_transport_queue(status, ws, config.queue_size)
+                    active_websocket = None
+                    clear_transport_queue_sample(status)
                     if comparison_task is not None:
                         comparison_task.cancel()
                         await asyncio.gather(comparison_task, return_exceptions=True)
@@ -641,6 +769,8 @@ async def run(config: Config, duration: float | None = None) -> None:
                     OSError,
                     TimeoutError,
                 ) as error:
+                    active_websocket = None
+                    clear_transport_queue_sample(status)
                     if comparison_task is not None:
                         comparison_task.cancel()
                         await asyncio.gather(comparison_task, return_exceptions=True)
@@ -677,27 +807,7 @@ async def run(config: Config, duration: float | None = None) -> None:
             store.close()
             if status["state"] != "FAILED" and not store.write_failed:
                 save_recovery()
-            atomic_json(
-                root / "status.json",
-                dict(
-                    status,
-                    state="FAILED" if status["state"] == "FAILED" else "STOPPED",
-                    updated_ns=time.time_ns(),
-                    ordinal=store.ordinal,
-                    storage_bytes=store.used,
-                    process_frames=status["process_frames"],
-                    frames=store.counts["frame"],
-                    lifetime_frames=store.counts["frame"],
-                    lifetime_gap_records=store.counts["gap"],
-                    lifetime_records=sum(store.counts.values()),
-                    lifetime_record_counts=dict(store.counts),
-                    collection_health=collection_health(
-                        "FAILED" if status["state"] == "FAILED" else "STOPPED",
-                        status["last_observation_ns"],
-                        0,
-                        status["markets"] * 2,
-                        time.time_ns(),
-                        int(config.stale_seconds * 1e9),
-                    ),
-                ),
-            )
+            active_websocket = None
+            clear_transport_queue_sample(status)
+            status["state"] = "FAILED" if status["state"] == "FAILED" else "STOPPED"
+            report()

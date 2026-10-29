@@ -139,7 +139,7 @@ class Engine:
         if kind == "gap":
             if record["payload"].get("reason") == "process_start":
                 version = record["payload"].get("reconstruction_version", 1)
-                if version not in (1, 2, 3, 4):
+                if version not in (1, 2, 3, 4, 5):
                     raise ValueError("Unsupported reconstruction revision")
                 self.reconstruction_version = version
             if "stale_ns" in record["payload"]:
@@ -178,7 +178,11 @@ class Engine:
             except (ValueError, TypeError, KeyError, DecimalException):
                 self.counts["malformed_frame"] += 1
                 self.invalidate("malformed_frame")
-        self.invalidate_stale()
+        # Revisions 1-4 treated per-token silence as invalid reconstruction.
+        # Revision 5 reports the book age separately and allows a quiet but
+        # internally consistent book to remain valid while the transport lives.
+        if self.reconstruction_version < 5:
+            self.invalidate_stale()
         return parsed_events
 
     def invalidate_stale(self) -> None:

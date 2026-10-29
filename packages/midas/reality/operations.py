@@ -185,8 +185,7 @@ def wait_for_archive_io_window(deadline: float, *, stable_seconds: float = 0) ->
             )
         if now - last_notice >= 60:
             logging.warning(
-                "Archive waiting for MIDAS service I/O headroom: "
-                "pressured=%s; host full PSI=%s",
+                "Archive waiting for MIDAS service I/O headroom: pressured=%s; host full PSI=%s",
                 pressured,
                 host_pressure,
             )
@@ -439,16 +438,14 @@ def archive_capacity(
     free = shutil.disk_usage(mountpoint).free
     headroom = min(budget - used, free - reserve) if used is not None else None
     seconds = (
-        max(0, headroom) / bytes_per_second
-        if headroom is not None and bytes_per_second
-        else None
+        max(0, headroom) / bytes_per_second if headroom is not None and bytes_per_second else None
     )
     if headroom is None:
         alerts.append("ARCHIVE_CAPACITY_UNKNOWN")
     else:
         if headroom <= 0:
             alerts.append("ARCHIVE_CAPACITY_EXHAUSTED")
-        elif budget - used < max(segment_bytes * 2, budget * 0.1):
+        elif used is not None and budget - used < max(segment_bytes * 2, budget * 0.1):
             alerts.append("ARCHIVE_BUDGET_LOW")
         if free - reserve < segment_bytes * 2:
             alerts.append("ARCHIVE_DISK_RESERVE_LOW")
@@ -940,7 +937,7 @@ class _RateLimitedWriter:
 
     def write(self, data: bytes) -> int:
         if not data:
-            return self.destination.write(data)
+            return 0
         now = time.monotonic()
         slot = max(now, self.next_write_at)
         if slot > now:
@@ -949,7 +946,7 @@ class _RateLimitedWriter:
             self.before_write()
             self.next_admission_check_at = slot + ARCHIVE_IO_PRESSURE_POLL_SECONDS
         written = self.destination.write(data)
-        if written != len(data):
+        if not isinstance(written, int) or isinstance(written, bool) or written != len(data):
             raise OSError("Short write while copying Reality archive segment")
         self.next_write_at = slot + written / self.bytes_per_second
         return written

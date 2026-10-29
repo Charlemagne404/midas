@@ -1,10 +1,17 @@
 import hashlib
 import json
+from collections import deque
 from pathlib import Path
 
 import pytest
 from midas.reality import storage as storage_module
-from midas.reality.collector import collection_health, prune_cohort_tracking
+from midas.reality.collector import (
+    append_latency_summary,
+    collection_health,
+    prune_cohort_tracking,
+    sample_transport_queue,
+    transport_queue_depth,
+)
 from midas.reality.discovery import select
 from midas.reality.reconstruction import Engine
 from midas.reality.replay import replay
@@ -79,7 +86,7 @@ def test_bounded_status_depth_preserves_full_reconstruction_digest():
         engine.state(max_depth=0)
 
 
-@pytest.mark.parametrize(("reconstruction_version", "last_gap_ordinal"), [(1, 0), (4, 17)])
+@pytest.mark.parametrize(("reconstruction_version", "last_gap_ordinal"), [(1, 0), (4, 17), (5, 17)])
 def test_streaming_digest_matches_canonical_full_state(
     reconstruction_version, last_gap_ordinal, monkeypatch
 ):
@@ -127,6 +134,29 @@ def test_gaps_staleness_unknown_malformed_crossed():
     raw["bids"] = [dict(price="0.99", size="1")]
     e.consume(event_record(raw))
     assert e.counts["crossed"] > 0
+
+
+def test_revision5_keeps_quiet_book_consistency_separate_from_age():
+    engine = ready()
+    engine.reconstruction_version = 5
+    now = engine.now_ns + engine.stale_ns + 1
+    engine.consume(
+        dict(kind="heartbeat", ordinal=engine.last_ordinal + 1, received_ns=now, payload="PONG")
+    )
+    books = engine.state()["books"]
+    assert all(book["issue"] is None for book in books.values())
+    assert all(book["age_ns"] > engine.stale_ns for book in books.values())
+    assert all(book["internally_consistent"] for book in books.values())
+
+
+def test_revision4_retains_historical_stale_replay_semantics():
+    engine = ready()
+    engine.reconstruction_version = 4
+    now = engine.now_ns + engine.stale_ns + 1
+    engine.consume(
+        dict(kind="heartbeat", ordinal=engine.last_ordinal + 1, received_ns=now, payload="PONG")
+    )
+    assert all(book["issue"] == "stale" for book in engine.books.values())
 
 
 def test_duplicate_removal_tick_regression_and_divergence():
@@ -324,6 +354,70 @@ def test_collection_health_reports_state(
     )
 
 
+def test_transport_queue_pressure_is_distinct_from_append_backpressure():
+    assert (
+        collection_health(
+            "RECORDING_UNSEQUENCED",
+            95,
+            6,
+            6,
+            100,
+            10,
+            transport_backpressured=True,
+        )
+        == "transport_backpressured"
+    )
+
+
+def test_transport_queue_depth_and_recent_persistence_are_bounded():
+    class WebSocket:
+        class ReceiveMessages:
+            frames = [1, 2, 3]
+
+        recv_messages = ReceiveMessages()
+
+    status = {}
+    sample_transport_queue(status, WebSocket(), bound=3)
+    assert transport_queue_depth(WebSocket()) == 3
+    assert status["transport_queue_observation_available"] is True
+    assert status["transport_queue_depth"] == 3
+    assert status["transport_queue_high_water_depth"] == 3
+    assert status["transport_queue_sample_count"] == 1
+    assert status["transport_queue_saturated"] is True
+
+    unknown = {}
+    sample_transport_queue(unknown, object(), bound=3)
+    assert transport_queue_depth(object()) is None
+    assert unknown["transport_queue_observation_available"] is False
+    assert unknown["transport_queue_depth"] is None
+    assert unknown["transport_queue_saturated"] is False
+
+
+def test_append_latency_summary_reports_scope_and_nearest_rank_p95():
+    now_ns = 100 * 1_000_000_000
+    samples = deque(
+        (
+            (45 * 1_000_000_000, 20_000_000, 100_000_000),
+            (70 * 1_000_000_000, 1_100_000_000, 1_200_000_000),
+            (99 * 1_000_000_000, 5_000_000, 20_000_000),
+        ),
+        maxlen=4,
+    )
+    complete = append_latency_summary(samples, now_ns, 0)
+    partial = append_latency_summary(samples, now_ns, 80 * 1_000_000_000)
+    empty = append_latency_summary(deque(maxlen=4), now_ns, 0)
+
+    assert complete["window_complete"] is True
+    assert complete["sample_count"] == 3
+    assert complete["max_durable_write_seconds"] == 1.1
+    assert complete["max_append_seconds"] == 1.2
+    assert partial["window_complete"] is False
+    assert partial["window_seconds"] == 20
+    assert partial["sample_count"] == 1
+    assert empty["max_append_seconds"] is None
+    assert empty["sample_count"] == 0
+
+
 def test_crash_tail_recovery_preserves_complete_records(tmp_path):
     store = Store(tmp_path, reserve=1)
     store.append("test", {"raw": "original"})
@@ -404,6 +498,80 @@ async def test_network_interruption_reconnect_and_safe_stop(tmp_path, monkeypatc
     assert status["lifetime_record_counts"]["frame"] == 2
     resumed = Store(tmp_path, reserve=1)
     resumed.close()
+
+
+async def test_heartbeat_keeps_quiet_books_connected_without_claiming_freshness(
+    tmp_path, monkeypatch
+):
+    import asyncio
+
+    import httpx
+    from midas.reality import collector
+    from midas.reality.config import Config
+    from websockets.asyncio.server import serve
+    from websockets.exceptions import ConnectionClosed
+
+    connections = []
+
+    async def handler(ws):
+        connections.append(await ws.recv())
+        await ws.send(FIXTURE["frames"][0]["payload"])
+        try:
+            for _ in range(6):
+                await asyncio.sleep(0.025)
+                await ws.send("PONG")
+        except ConnectionClosed:
+            pass
+        await ws.wait_closed()
+
+    client = httpx.AsyncClient(
+        transport=httpx.MockTransport(
+            lambda request: httpx.Response(200, text=FIXTURE["discovery"]["payload"])
+        )
+    )
+    monkeypatch.setattr(collector.httpx, "AsyncClient", lambda **kwargs: client)
+
+    class TestConfig(Config):
+        def __post_init__(self):
+            pass
+
+    async with serve(handler, "127.0.0.1", 0) as server:
+        port = server.sockets[0].getsockname()[1]
+        monkeypatch.setattr(collector, "WS", f"ws://127.0.0.1:{port}")
+        await collector.run(
+            TestConfig(
+                root=str(tmp_path),
+                reserve_bytes=1,
+                stale_seconds=0.05,
+                comparison_seconds=0,
+                refresh_seconds=600,
+                resync_seconds=300,
+            ),
+            duration=0.15,
+        )
+
+    rows = list(read_manifest(tmp_path, manifest(tmp_path)))
+    assert len(connections) == 1
+    assert any(row["kind"] == "heartbeat" for row in rows)
+    assert not any(
+        row["kind"] == "gap"
+        and row["payload"]["reason"] in {"book_resynchronization", "connection_failure"}
+        for row in rows
+    )
+    status = json.loads((tmp_path / "status.json").read_text())
+    assert status["state"] == "STOPPED"
+    assert status["transport_message_age_seconds"] < 0.05
+    assert status["market_event_age_seconds"] >= 0.05
+    assert status["fresh_books"] < status["expected_books"]
+    assert status["stale_book_count"] > 0
+    stop = next(
+        row["ordinal"]
+        for row in rows
+        if row["kind"] == "gap" and row["payload"]["reason"] == "process_stop"
+    )
+    replayed, _ = replay(tmp_path, manifest(tmp_path), through=stop - 1)
+    assert all(book["issue"] is None for book in replayed.books.values())
+    assert all(book["age_ns"] > replayed.stale_ns for book in replayed.state()["books"].values())
 
 
 def test_checkpoint_mismatch_and_no_future_state(tmp_path):

@@ -44,7 +44,13 @@ it('shows measured zero-candidate evidence without turning it into a profitabili
         error: null,
         last_error: 'ConnectionClosedOK: prior process shutdown',
         last_error_ns: (now - 60_000) * 1_000_000,
+        transport_message_age_seconds: 0.7,
+        market_event_age_seconds: 12.2,
+        stale_book_count: 3,
         transport_queue_bound: 32,
+        transport_queue_observation_available: false,
+        transport_queue_depth: null,
+        transport_queue_saturated: false,
       },
       source_quality: {
         status: 'incomplete_observability',
@@ -234,6 +240,10 @@ it('shows measured zero-candidate evidence without turning it into a profitabili
   ).toHaveTextContent('BLOCKED');
   expect(screen.getByText(/None reported by the current status projection/)).toBeInTheDocument();
   expect(screen.getByText(/prior process shutdown/)).toBeInTheDocument();
+  expect(
+    screen.getByText(/WebSocket message 0.7s ago · market event 12.2s ago · stale books 3/),
+  ).toBeInTheDocument();
+  expect(screen.getByText(/Not reported \(bound 32 frames\)/)).toBeInTheDocument();
   expect(
     screen.getByText(
       /durable-write lag · recovery and replay state · transport queue depth \(bound 32 frames\)/,
