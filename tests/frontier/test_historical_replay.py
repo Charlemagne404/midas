@@ -13,7 +13,7 @@ from midas.frontier.historical_replay import (
     deterministic_price_history_replay,
 )
 from midas.frontier.models import HistoricalPricePoint, PriceHistorySeries, Venue
-from midas.frontier.storage import FrontierStore, FrontierStoreError
+from midas.frontier.storage import SCHEMA_VERSION, FrontierStore, FrontierStoreError
 from pydantic import ValidationError
 
 from tests.frontier.builders import T0, market
@@ -194,7 +194,7 @@ def test_price_history_replay_store_migrates_schema_six(tmp_path):
         connection.execute("UPDATE frontier_meta SET value='6' WHERE key='schema_version'")
 
     store.initialize()
-    assert store.summary()["schema_version"] == 7
+    assert store.summary()["schema_version"] == SCHEMA_VERSION
     with sqlite3.connect(store.path) as connection:
         objects = {
             row[0]

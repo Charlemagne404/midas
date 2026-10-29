@@ -13712,3 +13712,24 @@ tool streams bounded windows. No additional persistent monitor or sampler
 change was justified; the prior 35-second sample was too early relative to the
 randomized source-analysis timer to measure a representative peak. Historical
 OOM attribution remains unresolved.
+
+## Constant-time graph cursor revisions — 2026-10-29 04:40 CET
+
+The relationship graph API previously calculated its cursor revision by
+counting graph-relevant observations, relationships, and reviews for each
+revision read. These append-only counters now live in a single-row SQLite
+table and are incremented by insert triggers inside the same transactions as
+the evidence rows. Only market-listing/metadata observations advance the
+market counter; books and trades retain the existing non-invalidating
+behavior. Schema version 8 backfills the existing counts once under an
+immediate write transaction. Older databases without the revision table
+retain a read-only count fallback until `initialize()` applies the migration.
+
+Focused tests cover legacy schema-7 counter backfill, graph-relevant versus
+book/trade observations, and atomic relationship/review increments. They are
+not claimed as executed: this host Python has neither pytest nor Pydantic.
+Within separate 256 MiB, zero-swap, 20%-CPU scopes, `py_compile` passed for
+the changed storage and test modules, and a SQLite-only smoke check passed the
+backfill and filtered-trigger counter behavior. The actual Frontier store
+integration remains pending the test environment and is not production
+validation. No database or service was accessed for this implementation.

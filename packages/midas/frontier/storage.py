@@ -28,7 +28,7 @@ from midas.frontier.relationships import (
 )
 from midas.frontier.replay import PairedReplayComparison, ReplayResult
 
-SCHEMA_VERSION = 7
+SCHEMA_VERSION = 8
 MAX_ROW_BYTES = 512 * 1024
 _ModelT = TypeVar("_ModelT", bound=FrontierModel)
 
@@ -70,6 +70,12 @@ class FrontierStore:
                 CREATE TABLE IF NOT EXISTS frontier_meta (
                     key TEXT PRIMARY KEY,
                     value TEXT NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS frontier_graph_revision (
+                    id INTEGER PRIMARY KEY CHECK(id=1),
+                    markets INTEGER NOT NULL,
+                    relationships INTEGER NOT NULL,
+                    reviews INTEGER NOT NULL
                 );
                 CREATE TABLE IF NOT EXISTS observations (
                     observation_id TEXT PRIMARY KEY,
@@ -218,7 +224,7 @@ class FrontierStore:
                     (str(SCHEMA_VERSION),),
                 )
                 connection.commit()
-            elif current[0] in {"4", "5", "6"}:
+            elif current[0] in {"4", "5", "6", "7"}:
                 connection.execute(
                     "UPDATE frontier_meta SET value=? WHERE key='schema_version'",
                     (str(SCHEMA_VERSION),),
@@ -228,7 +234,71 @@ class FrontierStore:
                 raise FrontierStoreError(
                     f"Unsupported Frontier store schema {current[0]}; expected {SCHEMA_VERSION}"
                 )
+            self._ensure_graph_revision(connection)
         self._check_existing_size()
+
+    @staticmethod
+    def _ensure_graph_revision(connection: sqlite3.Connection) -> None:
+        """Backfill append-only graph counters once, then maintain them on writes."""
+        trigger_names = (
+            "observations_graph_revision_insert",
+            "relationships_graph_revision_insert",
+            "relationship_reviews_graph_revision_insert",
+        )
+        counters = connection.execute(
+            "SELECT 1 FROM frontier_graph_revision WHERE id=1"
+        ).fetchone()
+        triggers = {
+            str(row["name"])
+            for row in connection.execute(
+                "SELECT name FROM sqlite_master WHERE type='trigger' AND name IN (?,?,?)",
+                trigger_names,
+            )
+        }
+        if counters is not None and len(triggers) == len(trigger_names):
+            return
+
+        connection.execute("BEGIN IMMEDIATE")
+        try:
+            counters = connection.execute(
+                "SELECT 1 FROM frontier_graph_revision WHERE id=1"
+            ).fetchone()
+            if counters is None:
+                counts = connection.execute(
+                    "SELECT (SELECT COUNT(*) FROM observations WHERE observation_kind IN "
+                    "('market_listing','instrument_metadata','market_metadata',"
+                    "'event_market_listing')) AS markets,"
+                    "(SELECT COUNT(*) FROM relationships) AS relationships,"
+                    "(SELECT COUNT(*) FROM relationship_reviews) AS reviews"
+                ).fetchone()
+                connection.execute(
+                    "INSERT INTO frontier_graph_revision(id,markets,relationships,reviews) "
+                    "VALUES(1,?,?,?)",
+                    (counts["markets"], counts["relationships"], counts["reviews"]),
+                )
+            connection.execute(
+                "CREATE TRIGGER IF NOT EXISTS observations_graph_revision_insert "
+                "AFTER INSERT ON observations "
+                "WHEN NEW.observation_kind IN ('market_listing','instrument_metadata',"
+                "'market_metadata','event_market_listing') "
+                "BEGIN UPDATE frontier_graph_revision SET markets=markets+1 WHERE id=1; END"
+            )
+            connection.execute(
+                "CREATE TRIGGER IF NOT EXISTS relationships_graph_revision_insert "
+                "AFTER INSERT ON relationships "
+                "BEGIN UPDATE frontier_graph_revision "
+                "SET relationships=relationships+1 WHERE id=1; END"
+            )
+            connection.execute(
+                "CREATE TRIGGER IF NOT EXISTS relationship_reviews_graph_revision_insert "
+                "AFTER INSERT ON relationship_reviews "
+                "BEGIN UPDATE frontier_graph_revision "
+                "SET reviews=reviews+1 WHERE id=1; END"
+            )
+            connection.commit()
+        except Exception:
+            connection.rollback()
+            raise
 
     def _connect(self) -> sqlite3.Connection:
         if self.path.is_symlink():
@@ -1550,6 +1620,21 @@ class FrontierStore:
         if not self.path.exists():
             return (0, 0, 0)
         with self._read_connect() as connection:
+            revision_table = connection.execute(
+                "SELECT 1 FROM sqlite_master WHERE type='table' "
+                "AND name='frontier_graph_revision'"
+            ).fetchone()
+            if revision_table is not None:
+                row = connection.execute(
+                    "SELECT markets,relationships,reviews "
+                    "FROM frontier_graph_revision WHERE id=1"
+                ).fetchone()
+                if row is None:
+                    raise FrontierStoreError("Frontier graph revision counters are uninitialized")
+                return (int(row["markets"]), int(row["relationships"]), int(row["reviews"]))
+
+            # Read-only compatibility for an older database before initialize()
+            # has applied the additive graph-revision migration.
             row = connection.execute(
                 "SELECT (SELECT COUNT(*) FROM observations "
                 "WHERE observation_kind IN ('market_listing','instrument_metadata',"

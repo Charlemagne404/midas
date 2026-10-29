@@ -580,6 +580,54 @@ def test_graph_revision_tracks_rendered_market_metadata_but_not_books_or_trades(
     assert store.graph_revision() == after_detail
 
 
+def test_graph_revision_migration_backfills_legacy_database(tmp_path: Path):
+    store = FrontierStore(tmp_path, max_bytes=2 * 1024 * 1024)
+    store.append_observation(
+        _raw(Venue.POLYMARKET, '{"market":"legacy listing"}', kind="market_listing"),
+        market(Venue.POLYMARKET, "legacy-revision"),
+    )
+    left, right = market(Venue.POLYMARKET, "legacy-left"), market(Venue.KALSHI, "legacy-right")
+    store.append_relationship(propose_relationships((left, right), max_pairs=1)[0])
+    expected = store.graph_revision()
+
+    with sqlite3.connect(store.path) as connection:
+        connection.execute("DROP TRIGGER observations_graph_revision_insert")
+        connection.execute("DROP TRIGGER relationships_graph_revision_insert")
+        connection.execute("DROP TRIGGER relationship_reviews_graph_revision_insert")
+        connection.execute("DROP TABLE frontier_graph_revision")
+        connection.execute("UPDATE frontier_meta SET value='7' WHERE key='schema_version'")
+
+    store.initialize()
+
+    assert store.graph_revision() == expected
+    with sqlite3.connect(store.path) as connection:
+        assert connection.execute(
+            "SELECT value FROM frontier_meta WHERE key='schema_version'"
+        ).fetchone()[0] == "8"
+
+
+def test_graph_revision_counts_relationship_reviews_atomically(tmp_path: Path):
+    store = FrontierStore(tmp_path, max_bytes=2 * 1024 * 1024)
+    review, adjudicated = _relationship_review_fixture()
+    hypothesis = adjudicated.model_copy(
+        update={
+            "relationship_id": review.relationship_id,
+            "state": VerificationState.HYPOTHESIS,
+            "supersedes": None,
+        }
+    )
+    store.append_relationship(hypothesis)
+    before_review = store.graph_revision()
+
+    store.append_relationship_review(review, adjudicated)
+
+    assert store.graph_revision() == (
+        before_review[0],
+        before_review[1] + 1,
+        before_review[2] + 1,
+    )
+
+
 def test_dense_relationship_page_scan_has_a_hard_bound(tmp_path: Path):
     store = FrontierStore(tmp_path, max_bytes=8 * 1024 * 1024)
     center = market(Venue.POLYMARKET, "dense-center")

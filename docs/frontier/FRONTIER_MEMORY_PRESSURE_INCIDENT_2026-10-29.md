@@ -196,6 +196,17 @@ capacity service's most recent scheduled result remained successful at
 October 28. This adds four minutes to the bounded quiet observation only;
 swap exhaustion risk and the OOMD registration discrepancy remain unresolved.
 
+At 04:39 the host still had zero PSI and 11.62 GB `MemAvailable`; swap had
+2.03 MB free. API and Reality remained active at restart counts 9 and 14,
+respectively. The capacity monitor timer remained active and the gap-detail
+timer remained disabled. No new OOM event was present since the prior sample.
+Two small Frontier validation scopes (each limited to 256 MiB, zero swap, and
+20% CPU) produced no visible PSI increase. Python syntax compilation and a
+SQLite-only graph-counter smoke check passed. The actual pytest cases could
+not run: host Python has neither pytest nor Pydantic installed. No packages
+were installed. This was bounded development validation, not a host stability
+or application integration test.
+
 ## Frontier continuation gate
 
 Frontier is **safe to continue with serial code/documentation work and small,
