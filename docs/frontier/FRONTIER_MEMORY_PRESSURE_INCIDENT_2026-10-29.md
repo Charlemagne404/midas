@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 06:49 CET |
+| Latest addendum | 2026-10-29 08:27 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Pre-incident checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -1464,3 +1464,18 @@ remained nearly full and OOM counters stayed 19/15/0. API and Reality remained
 active at restarts 9/14. The latest bounded fixture check did not create
 measurable host memory pressure. Incident status remains **PARTIALLY
 CONTAINED / PARTIALLY VERIFIED**.
+
+## Host recheck — 2026-10-29 08:27 CET
+
+At 08:26:15, the host had 11,036,332 kB `MemAvailable` and 8,600 kB
+`SwapFree`. Global memory PSI avg10/60/300 was zero. The user manager held
+9,785,925,632 bytes memory and 2,858,250,240 bytes swap; aggregate descendant
+counters remained `oom=19`, `oom_kill=15`, `oom_group_kill=0`. API and Reality
+were active at restart counts 9 and 14, using 973,557,760 and 430,526,464
+bytes respectively. The capacity timer remained active between scheduled
+runs; the gap-detail timer remained inactive and disabled.
+
+No systemd-oomd entry or kernel OOM appeared after the 08:24:26 sample. This
+is only a three-minute quiet interval with almost no free swap; it is not
+evidence of durable recovery. The historical initiating workload remains
+unknown. No production service or archive data was changed during this check.
