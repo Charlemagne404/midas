@@ -2,7 +2,7 @@
 
 **Report date:** 2026-10-29
 
-## Current completion matrix — 2026-10-29 13:21 CET
+## Current completion matrix — 2026-10-29 13:26 CET
 
 This is a current evidence classification, not a final completion claim. The
 dated implementation records below remain the detailed evidence; the
@@ -25,10 +25,10 @@ it made no endpoint requests and does not change source-use holds.
 | User-cgroup-aware workload admission | IMPLEMENTED, BOUNDED VALIDATION PASSED | Central Arena admission (15), finite schedules (12), and the Laboratory denial case (1) pass fixture tests using user-manager pressure; no runtime deployment occurred. |
 | Source-operation admission telemetry | COMPLETE AND VERIFIED FOR ONE ROUTER INSTANCE | The bounded source gate exposes active venues, admitted totals, and contention rejections by scope with a UTC sample time. The source page can refresh the snapshot. Counters reset with that router and do not aggregate across workers or deployments. |
 | Reality capacity inventory bounds | PARTIALLY VERIFIED | Candidate inventory code remains undeployed. The separate monitor is bounded at MemoryHigh=160M, MemoryMax=192M, and zero swap. Its 12:49 scheduled run exited successfully with a 130.5 MiB peak and zero swap; the service still reports archive inventory/provenance limitations, and no archive evidence was altered. |
-| Native Frontier dashboard | PARTIALLY VERIFIED | The native workspace includes source, coverage, graph, opportunity, replay, and readiness views. The extracted Kalshi fee panel passes 3/3 isolated UI tests; targeted ESLint and Prettier pass. Exact-tree TypeScript, bounded production build, and four offline browser journeys pass: overview responsiveness, saved Polymarket sample replay after explicit user action, captured market/book/provenance/relationship inspection, and deterministic replay over captured market/book rows. The last persists only in a fresh temporary browser store and proves zero source probes. Historical price-series replay and broad integration remain open. |
-| Host reliability containment | PARTIALLY VERIFIED | OOMD's 50%/20s policy monitors user@1000.service pressure; the Oct 28 journal records 129 kills (106 gap-detail), with seven separate kernel memcg OOMs against the capacity job's former 128 MiB cap. Gap-detail remains disabled; capacity remains bounded at 160/192 MiB with zero swap. At 13:21, MemAvailable was 10.54 GiB, PSI zero, and SwapFree 15.25 MiB; cumulative OOM counters remained 19/15/0. API/Reality/Reality API remained active at restart counts 9/14/0. At the 13:17 cgroup sample, the user manager accounted for 10.55 GB memory and 2.86 GB swap with no memory.high/max; cumulative `pgscan_direct`, `pswpin`, and `pswpout` were 272,492,783, 28,498,730, and 29,863,773 pages. These totals are not interval deltas and do not attribute the initiating workload. No new OOMD or kernel event appeared during the capped browser run. Historical workload attribution, nearly full swap, and durable recovery remain unresolved. |
+| Native Frontier dashboard | PARTIALLY VERIFIED | The native workspace includes source, coverage, graph, opportunity, replay, and readiness views. The extracted Kalshi fee panel passes 3/3 isolated UI tests; targeted ESLint and Prettier pass. Exact-tree TypeScript, bounded production build, and five offline browser journeys pass: overview, saved Polymarket sample replay after explicit user action, captured market/book/provenance/relationship inspection, deterministic replay over captured market/book rows, and a 390-pixel layout check across all eight primary sections. Captured replay persists only in a fresh temporary browser store and makes zero source probes. Historical price-series replay and broad integration remain open. |
+| Host reliability containment | PARTIALLY VERIFIED | OOMD's 50%/20s policy monitors user@1000.service pressure; the Oct 28 journal records 129 kills (106 gap-detail), with seven separate kernel memcg OOMs against the capacity job's former 128 MiB cap. Gap-detail remains disabled; capacity remains bounded at 160/192 MiB with zero swap. At 13:26, MemAvailable was 10.21 GiB, PSI zero, and SwapFree 15.28 MiB; cumulative OOM counters remained 19/15/0. API/Reality/Reality API remained active at restart counts 9/14/0. At the 13:17 cgroup sample, the user manager accounted for 10.55 GB memory and 2.86 GB swap with no memory.high/max; cumulative reclaim counters are not interval deltas and do not attribute the initiating workload. No new OOMD or kernel event appeared during the capped browser run. Historical workload attribution, nearly full swap, and durable recovery remain unresolved. |
 | Node/V8 and Apport side effect | PARTIALLY VERIFIED | The exact-tree frontend TypeScript check now passes with an explicit 384 MiB Node heap under a 512 MiB high / 640 MiB max zero-swap cgroup. Earlier attempts with Node's default heap timed out or exhausted V8 at about 251 MiB; those were process heap failures, not cgroup OOMs. An earlier crash-report upload attempt received HTTP 504; remote receipt remains unknown. |
-| Broad regressions, resource endurance, and performance acceptance | DEFERRED | Selected Python, API, adapter, collection, and economics tests passed under bounded zero-swap scopes. The graph-revision storage/migration cases pass 8/8; API cursor invalidation passes 1/1; four core economics modules pass 79/79; joint-state basket/audit/replay passes 14/14; logical implication/relationship review passes 27/27; transport passes 20/20; readiness resource API passes 7/7 and its focused UI passes 3/3. Captured-store market/book replay passes 1/1 in a 40.7-second isolated browser run. Ruff check/format, ESLint, Prettier, and strict mypy on the readiness resource module passed under caps. Full MIDAS regression, full browser suite, endurance, and broad performance tests remain deferred. |
+| Broad regressions, resource endurance, and performance acceptance | DEFERRED | Selected Python, API, adapter, collection, and economics tests passed under bounded zero-swap scopes. The graph-revision storage/migration cases pass 8/8; API cursor invalidation passes 1/1; four core economics modules pass 79/79; joint-state basket/audit/replay passes 14/14; logical implication/relationship review passes 27/27; transport passes 20/20; readiness resource API passes 7/7 and its focused UI passes 3/3. Captured-store market/book replay passes 1/1 in 40.7 seconds and the 390-pixel responsive journey passes 1/1 in 46.5 seconds. Ruff check/format, ESLint, Prettier, and strict mypy on the readiness resource module passed under caps. Full MIDAS regression, full browser suite, endurance, and broad performance tests remain deferred. |
 | Live multi-venue source authorization and findings | BLOCKED | Kalshi, Kraken, Coinbase, and Gemini probes and retained-data research remain held; the worktree Polymarket probe flag is off. |
 | Production integration/deployment | DEFERRED | Frontier remains isolated; no protected service transition occurred. |
 | Project Frontier overall | PARTIALLY VERIFIED | The engine is substantial, but live cross-venue science, broad verification, recovery, endurance, and deployment gates remain open. |
@@ -15452,3 +15452,24 @@ three services remained active at restart counts 9/14/0, test ports 18000 and
 pre-run sample. This is bounded capture-level replay evidence, not current or
 simultaneous venue validation; historical-price replay and broader browser
 integration remain open.
+
+### Narrow viewport coverage — 2026-10-29 13:26 CET
+
+A captured-store browser journey opened all eight primary Frontier sections at
+390 × 844 CSS pixels: Overview, Coverage & quality, Exchanges, Markets,
+Relationship graph, Candidates, Economic workbench, and Replay & readiness.
+Each tab became active, the Frontier workspace heading remained visible, and
+`document.documentElement.scrollWidth` never exceeded its client width. The
+journey made zero source-probe calls and zero API mutations.
+
+It passed **1/1 in 46.5 seconds** (22.3 seconds in the test) under a transient
+scope capped at `MemoryHigh=768M`, `MemoryMax=1G`, zero swap, 20% CPU, 128 tasks,
+and 120 seconds; Node's heap was limited to 384 MiB. The fixture was the
+committed hash-pinned public capture copied into a fresh `/tmp` store.
+
+At 13:26:47, `MemAvailable` was 10.21 GiB, swap free 15.28 MiB, and PSI
+remained zero. User-manager OOM counters stayed at 19/15; API, Reality, and
+Reality API remained active at restart counts 9/14/0. The test ports were
+closed and the checked OOMD/kernel journals contained no new entries since
+13:24:15. The layout check covers the listed viewport and sections only;
+tablet, other browser engines, and assistive-technology coverage remain open.

@@ -91,3 +91,51 @@ test('Frontier deterministically replays captured books in the isolated browser 
   expect(sourceProbes).toBe(0);
   expect(apiMutations).toEqual(['POST /api/frontier/replay']);
 });
+
+test('Frontier primary views fit a narrow viewport without page-level horizontal overflow', async ({
+  page,
+}) => {
+  let sourceProbes = 0;
+  let apiMutations = 0;
+  page.on('request', (request) => {
+    const url = new URL(request.url());
+    if (url.pathname.includes('/api/frontier/probe/')) sourceProbes += 1;
+    if (url.pathname.startsWith('/api/') && request.method() !== 'GET') apiMutations += 1;
+  });
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Frontier', exact: true }).click();
+
+  for (const section of [
+    'Overview',
+    'Coverage & quality',
+    'Exchanges',
+    'Markets',
+    'Relationship graph',
+    'Candidates',
+    'Economic workbench',
+    'Replay & readiness',
+  ]) {
+    const tab = page.getByRole('button', { name: section, exact: true });
+    await tab.click();
+    await expect(tab).toHaveAttribute('aria-current', 'page');
+    await expect(
+      page.getByRole('heading', {
+        level: 1,
+        name: 'Market relationships, with evidence attached.',
+      }),
+    ).toBeVisible();
+    const dimensions = await page.evaluate(() => ({
+      viewport: document.documentElement.clientWidth,
+      document: document.documentElement.scrollWidth,
+    }));
+    expect(
+      dimensions.document,
+      `${section} overflows the ${dimensions.viewport}px viewport`,
+    ).toBeLessThanOrEqual(dimensions.viewport);
+  }
+
+  expect(sourceProbes).toBe(0);
+  expect(apiMutations).toBe(0);
+});

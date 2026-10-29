@@ -14903,3 +14903,21 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
   price-series replay, broader browser coverage, live multi-venue validation,
   and production deployment remain open. Host remains partially contained;
   continue with bounded serial offline work only.
+
+## 2026-10-29 13:26 CET — narrow viewport coverage
+
+- Added a captured-store Playwright journey for the eight primary Frontier
+  sections at 390 × 844 CSS pixels. Each section activated successfully and
+  had no document-level horizontal overflow. The journey issued no probes and
+  no API mutations.
+- It passed 1/1 in 46.5 s (22.3 s in the test) in a transient scope limited to
+  768 MiB high / 1 GiB max, zero swap, 20% CPU, 128 tasks, and 120 seconds;
+  Node's heap was capped at 384 MiB. Only a hash-pinned capture copied to a
+  fresh `/tmp` root was used.
+- Post-run at 13:26:47: `MemAvailable` 10.21 GiB, swap free 15.28 MiB, PSI
+  zero, unchanged OOM counters, and API/Reality/Reality API active at restart
+  counts 9/14/0. Test listeners were closed; no new OOMD/kernel entry appeared.
+- **Status:** Narrow-screen behavior is verified for this viewport and section
+  set. Other viewport widths, browser engines, and assistive-technology
+  coverage remain open. Host stays partially contained; continue bounded
+  offline work only.

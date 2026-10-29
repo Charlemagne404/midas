@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 13:21 CET |
+| Latest addendum | 2026-10-29 13:26 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Pre-incident checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -2968,3 +2968,20 @@ Host admission remains **partially contained**: one short run did not consume
 swap, but only 15.25 MiB remained free before and after. Continue only bounded
 serial offline development. Historical initiating workload and archive
 provenance remain unresolved.
+
+## Narrow-viewport browser check — 2026-10-29 13:26 CET
+
+The pinned capture was copied to a fresh `/tmp` root and used by local
+loopback-only API/Vite servers. One Playwright journey passed **1/1 in 46.5 s**
+(22.3 s in the test) at 390 × 844 CSS pixels. It visited the eight primary
+Frontier sections and checked that the document had no horizontal overflow.
+The run made zero source probes and zero API mutations.
+
+The scope was limited to 768 MiB high / 1 GiB max, zero swap, 20% CPU,
+128 tasks, and 120 seconds; Node's heap was capped at 384 MiB. Post-run at
+13:26:47 CET, host `MemAvailable` was 10.21 GiB, `SwapFree` was 15.28 MiB, PSI
+was zero, and user-manager OOM counters remained 19/15. API, Reality, and
+Reality API were active at restart counts 9/14/0. Test ports were closed and
+there were no OOMD/kernel journal entries since the pre-run sample. This
+bounded quiet period does not establish host recovery; swap is still nearly
+full and workload attribution remains open.
