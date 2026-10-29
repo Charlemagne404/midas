@@ -26,6 +26,7 @@ from midas.frontier.adapters.base import (
     RejectedResponseEvidence,
 )
 from midas.frontier.adapters.coinbase import CoinbaseSpotConfig
+from midas.frontier.adapters.gemini import GeminiSpotConfig
 from midas.frontier.adapters.kraken import KrakenSpotConfig
 from midas.frontier.models import (
     AdapterCapabilities,
@@ -66,11 +67,12 @@ MAX_COLLECTION_JOURNAL_BYTES = 64 * 1024 * 1024
 MAX_COLLECTION_CHECKPOINT_BYTES = 8 * 1024 * 1024
 MAX_COLLECTION_EVIDENCE_BYTES = 16 * 1024 * 1024
 
-AdapterConfigTag = Literal["base", "kraken_spot", "coinbase_spot"]
+AdapterConfigTag = Literal["base", "kraken_spot", "coinbase_spot", "gemini_spot"]
 _ADAPTER_CONFIG_TYPES: dict[AdapterConfigTag, type[AdapterConfig]] = {
     "base": AdapterConfig,
     "kraken_spot": KrakenSpotConfig,
     "coinbase_spot": CoinbaseSpotConfig,
+    "gemini_spot": GeminiSpotConfig,
 }
 
 

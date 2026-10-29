@@ -2,7 +2,7 @@
 
 **Report date:** 2026-10-29
 
-## Current completion matrix — 2026-10-29 03:23 CET
+## Current completion matrix — 2026-10-29 04:22 CET
 
 This is a current evidence classification, not a final completion claim. The
 dated implementation records below remain the detailed evidence; the
@@ -11,23 +11,63 @@ current host gate.
 
 | Component | Status | Current evidence and boundary |
 | --- | --- | --- |
-| Exchange-independent adapter core and Polymarket/Kalshi/Kraken/Coinbase adapters | IMPLEMENTED, LIVE VALIDATION PENDING | Offline default-registry readback confirms four adapters with 19 explicit declarations each: Polymarket 15 supported, Kalshi 16, Kraken 10, Coinbase Exchange 9. All mark incremental book updates unsupported. Kraken Spot config now enforces the official public REST guidance of no more than 1 request/second per adapter instance (v11). The adapter module plus one four-venue trade-contract test passed 169/169 combined under a 640 MiB, zero-swap scope; the later model-copy fail-closed config assertion passed 1/1 under a 384 MiB cap. Source-use holds remain. |
+| Exchange-independent adapter core and Polymarket/Kalshi/Kraken/Coinbase/Gemini adapters | IMPLEMENTED, LIVE VALIDATION PENDING | The default registry now includes five distinct sources. Gemini Spot adds eight declared metadata/book/context capabilities, a 1–20 pair allowlist, exact-string bounded book parsing, no catalog crawl, and explicit rejection of swaps and event-payoff semantics. Its unconditional source-use hold blocks probes and stored research pending current agreement/scope review. Gemini fixture tests pass 4/4; the full adapter module passes 168/168. No Gemini live validation is claimed. |
 | Canonical instruments and supported payoff semantics | PARTIALLY VERIFIED | Supported structures have model and invariant tests; this does not claim universal instrument support. |
 | Relationship graph, evidence binding, and review | PARTIALLY VERIFIED | Deterministic fixture relationships and pinned evidence are covered; a live cross-venue economic equivalence is not established. |
 | Candidate discovery and independent economic verification | PARTIALLY VERIFIED | Bounded mathematical fixtures and independent audits pass selected checks. Receipt age and timestamp/receipt skew now use exact deltas rounded up to milliseconds in both generator and verifier. No live eligible opportunity is demonstrated. |
 | Cross-venue costs, FX, capital, and execution uncertainty | PARTIALLY VERIFIED | Virtual models preserve unknown cost and applicability states; account-specific fees, jurisdiction, transfers, and execution remain unresolved. |
-| Collection, provenance, durable storage, and replay | PARTIALLY VERIFIED | Finite-collection/API fixtures pass 51/51 and storage passes 32/32; timeline replay v3 includes per-instrument receipt time, source timestamp semantics, clock uncertainty, and source freshness limits. Sequencing, multi-venue live collection, and archive provenance remain unverified or held. |
+| Collection, provenance, durable storage, and replay | PARTIALLY VERIFIED | Finite-collection/API fixtures pass 51/51 and storage passes 32/32; timeline replay v3 includes per-instrument receipt time, source timestamp semantics, clock uncertainty, and source freshness limits. Gemini's source-specific configuration tag round-trips in the finite-collection journal; collection remains blocked by the source-use hold. Sequencing, multi-venue live collection, and archive provenance remain unverified or held. |
 | Read-only source network and trading boundary | COMPLETE AND VERIFIED | Only `PublicReadTransport` issues source HTTP requests; it is anonymous HTTPS GET-only, host-allowlisted, redirect-disabled, and bounded. Adapter boundary fixtures cover disabled probes, credential/mutating clients, cookies, redirects, oversized payloads, and JSON complexity. No exchange order/account path was found in the reviewed Frontier code. |
 | Laboratory/Arena comparisons and bounded orchestration | PARTIALLY VERIFIED | Arena admission and finite scheduling regressions pass; a Laboratory resource-denial case passes with a harness cap above its 722,894,848-byte capacity precondition. Full endurance evidence remains incomplete. |
 | User-cgroup-aware workload admission | IMPLEMENTED, BOUNDED VALIDATION PASSED | Central Arena admission (15), finite schedules (12), and the Laboratory denial case (1) pass fixture tests using user-manager pressure; no runtime deployment occurred. |
 | Reality capacity inventory bounds | PARTIALLY VERIFIED | Candidate inventory code remains undeployed. The separate monitor is bounded at `MemoryHigh=160M`, `MemoryMax=192M`, and zero swap; its 02:46 scheduled run succeeded in 6.810 CPU seconds, but systemd retained no peak. Its report still identifies invalid archive inventory and provenance. |
-| Native Frontier dashboard | PARTIALLY VERIFIED | Vitest passed 47/47; default Playwright passed 17/20 with three opt-in skips; synthetic seeded replay/Arena browser tests passed 2/2. The new timeline timing view's focused Vitest case passed 1/1 in 6.2s with an explicit 15s test timeout; eight other cases were skipped. Its first run hit the configured 5s timeout at 5.9s, then passed on retry without assertion or process failure. TypeScript build and browser verification of this view remain pending after the earlier V8 heap failure; captured-evidence browser validation remains open. |
-| Host reliability containment | PARTIALLY VERIFIED | The five-minute gap-detail timer is disabled and capacity monitor has a reversible 160/192 MiB, zero-swap bound. At 03:23, MemAvailable was 11,422,164 kB, SwapFree 1,316 kB, memory PSI was zero, and API/Reality remained active at restart counts 9/14. The 03:16 scheduled capacity run completed successfully; user-manager `oom=19`/`oom_kill=15` were unchanged through the frontend test. Full swap and historical workload attribution remain unresolved. |
+| Native Frontier dashboard | PARTIALLY VERIFIED | The dashboard now includes the held Gemini Spot capability and timing explanation. Its focused explorer fixture passed 1/1 with a 15-second per-test allowance under a 50% CPU cap; eight other cases were skipped. The saved timeline timing and result-pagination browser fixtures passed earlier. TypeScript project build and a production Vite build passed in bounded zero-swap scopes. Default Playwright last passed 17/20 with three opt-in skips; captured-evidence browser validation remains open. |
+| Host reliability containment | PARTIALLY VERIFIED | The five-minute gap-detail timer is disabled and capacity monitor has a reversible 160/192 MiB, zero-swap bound. At 04:22, MemAvailable was 11,356,988 kB, SwapFree 1,844 kB, and host/user-manager PSI was zero; API/Reality remained active at unchanged restart counts 9/14. User-manager `oom=19`/`oom_kill=15` counters were unchanged. No kernel or systemd-oomd event appeared in the preceding 20 minutes. Swap remains 99.96% occupied and the historical initiating workload remains unknown. |
 | Node/V8 and Apport side effect | PARTIALLY VERIFIED | The 02:36 TypeScript attempt aborted at Node's heap limit with a 300.6 MiB cgroup peak, not a kernel OOM. Whoopsie attempted to submit the 58,222,586-byte crash report and received HTTP 504; remote receipt is unknown. No `.uploaded` marker exists; avoid further crash-prone Node checks. |
-| Broad regressions, resource endurance, and performance acceptance | DEFERRED | Frontier Python passed 648/648 at 02:19; the adapter module plus one four-venue trade-contract test passed 169/169 at 03:18; web Vitest passed 47/47, default Playwright 17/20, and synthetic seeded journeys 2/2 under bounded scopes. Full MIDAS regression, captured-evidence browser journey, endurance, and broad performance tests remain deferred. |
-| Live multi-venue source authorization and findings | BLOCKED | Kalshi, Kraken, and Coinbase retained research remain held; the worktree Polymarket probe flag is off. |
+| Broad regressions, resource endurance, and performance acceptance | DEFERRED | Selected Python, API, adapter, and collection suites passed under bounded zero-swap scopes. Full MIDAS regression, full browser suite, captured-evidence browser journey, endurance, and broad performance tests remain deferred. |
+| Live multi-venue source authorization and findings | BLOCKED | Kalshi, Kraken, Coinbase, and Gemini probes and retained-data research remain held; the worktree Polymarket probe flag is off. |
 | Production integration/deployment | DEFERRED | Frontier remains isolated; no protected service transition occurred. |
 | Project Frontier overall | PARTIALLY VERIFIED | The engine is substantial, but live cross-venue science, broad verification, recovery, endurance, and deployment gates remain open. |
+
+### Gemini Spot adapter and source boundary — 2026-10-29 04:22 CET
+
+The fifth adapter is registered as `gemini_spot`. It supports configured
+symbol details and bounded aggregated books only. It requires documented
+vanilla spot metadata and base/quote identity, retains exact decimal
+constraints, rejects derivative/swap metadata, and refuses a book request if
+the normalized record's native spot fields or payoff shape do not match. Book
+prices and quantities must be exact decimal strings. Per-level Gemini
+timestamps are documented dummy values, so they are preserved only in raw
+evidence; normalized levels and snapshots have no exchange timestamp and the
+book is explicitly flagged. Account fee applicability remains unknown.
+
+Current Gemini agreements and official endpoint references are recorded in
+[`SOURCE_DATA_TERMS_REVIEW_2026-10-29.md`](SOURCE_DATA_TERMS_REVIEW_2026-10-29.md)
+and [`GEMINI_SPOT_SCREEN_2026-10-29.md`](GEMINI_SPOT_SCREEN_2026-10-29.md).
+The applicable residency-specific agreement, MIDAS scope, and API Use Form
+remain unresolved. A non-clearable source-use hold causes probe and collection
+routes to reject before a request and keeps any future stored Gemini data out
+of research routes. The fixture adapter, API, and collection tests do not
+establish live functionality or data-use permission.
+
+The focused verification passed: Gemini parser/guard **4/4**, source-use and
+API quarantine **5/5**, collection configuration/recovery **42/42**, default
+adapter module **168/168**, and held-source analytics API **2/2**. Ruff passed
+for changed Python files; strict mypy passed for `adapters/gemini.py`.
+Frontend exchange-explorer fixture passed **1/1** with eight other cases
+skipped and a 15-second per-test allowance. TypeScript `tsc -b`, ESLint,
+Prettier, and production Vite build passed in bounded, zero-swap scopes. The
+Vite build took 53.87 seconds and retained the existing 544.51 kB Chart chunk
+advisory. The complete Frontier UI/API and repository regression suites were
+not rerun.
+
+At 04:22 CET after the frontend build, the host remained quiet in the measured
+window: MemAvailable 11,356,988 kB, SwapFree 1,844 kB, host/user-manager PSI
+zero, API/Reality active at restart counts 9/14, and user-manager `oom=19` /
+`oom_kill=15` counters unchanged from 04:04. No kernel or systemd-oomd record
+appeared in the preceding 20 minutes. Swap remains almost full. The host OOM
+incident remains partially verified; this bounded development checkpoint does
+not establish system-wide resolution. No exchange endpoint was queried.
 
 ### Per-instrument timeline timing evidence — 2026-10-29 03:05 CET
 

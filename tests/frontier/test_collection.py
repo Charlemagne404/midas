@@ -18,6 +18,7 @@ from midas.frontier.adapters.base import (
     build_capabilities,
 )
 from midas.frontier.adapters.coinbase import CoinbaseSpotConfig
+from midas.frontier.adapters.gemini import GeminiSpotConfig
 from midas.frontier.adapters.kraken import KrakenSpotConfig
 from midas.frontier.collection import (
     BoundedSourceCollector,
@@ -645,6 +646,45 @@ async def test_coinbase_product_and_terms_ack_config_persist_while_source_is_hel
     )
     assert changed_ack.has_valid_structure
     assert changed_ack != restored_spec.adapter_config
+
+    with pytest.raises(AdapterError) as error:
+        await BoundedSourceCollector(adapter, FrontierStore(tmp_path / "collector")).start(
+            market_limit=1, book_limit=0
+        )
+    assert error.value.code == "SOURCE_USE_HELD"
+    assert adapter.discovery_calls == 0
+    assert adapter.transport.request_count == 0
+
+
+@pytest.mark.asyncio
+async def test_gemini_pair_config_persists_but_collector_stays_held(tmp_path):
+    config = GeminiSpotConfig(
+        enabled=True,
+        live_public_probe_enabled=True,
+        pairs=("BTCUSD", "ETHUSD"),
+    )
+    adapter = FakeAdapter(venue=Venue.GEMINI_SPOT, config=config)
+    spec = CollectionRunSpec(
+        run_id=str(uuid4()),
+        venue=Venue.GEMINI_SPOT,
+        adapter_version=adapter.capabilities.adapter_version,
+        capability_manifest_sha256=capability_manifest_sha256(adapter.capabilities),
+        adapter_config=config,
+        market_limit=1,
+        book_limit=0,
+        book_depth=1,
+        max_evidence_bytes=1024 * 1024,
+        max_wall_seconds=30,
+        created_at_utc=datetime.now(UTC),
+    )
+    journal = CollectionJournal(tmp_path / "frontier")
+    journal.create_run(spec)
+
+    restored = journal.run_spec(spec.run_id)
+    assert restored.adapter_config_type == "gemini_spot"
+    assert type(restored.adapter_config) is GeminiSpotConfig
+    assert restored.adapter_config.pairs == ("BTCUSD", "ETHUSD")
+    assert restored.adapter_config.probe_policy_block_reason is not None
 
     with pytest.raises(AdapterError) as error:
         await BoundedSourceCollector(adapter, FrontierStore(tmp_path / "collector")).start(

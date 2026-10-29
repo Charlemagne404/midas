@@ -352,6 +352,11 @@
   border-color: #304e79;
   background: #182438;
 }
+.fr-venue-pill.gemini_spot i {
+  color: #b4d09c;
+  border-color: #415637;
+  background: #20291c;
+}
 .fr-source-terms-note {
   display: block;
   margin-top: 7px;
@@ -1700,6 +1705,9 @@
 }
 .fr-network-node.coinbase_exchange circle {
   fill: #79aef7;
+}
+.fr-network-node.gemini_spot circle {
+  fill: #b4d09c;
 }
 .fr-network-venue {
   fill: #758295;

@@ -1626,3 +1626,27 @@ start, so it cannot establish that job's peak; no sampler code change or
 persistent monitor is needed. A future attribution sample should be short and
 scheduled around a known task, and must not be interpreted as historical OOM
 causality.
+
+### Bounded Frontier verification after sampler review — 2026-10-29 04:22 CET
+
+Frontier resumed with a serial offline adapter/UI change under transient
+zero-swap scopes; no protected service or source collector was modified. The
+last host sample at 04:22:11 found `MemAvailable=11,356,988 kB`, `SwapFree=1,844`
+kB of 4,194,300 kB, and host `some`/`full` memory PSI averages at zero. The
+user manager held 9,007,521,792 bytes current memory and 2,864,586,752 bytes
+swap; its `memory.events` counters remained `oom=19`, `oom_kill=15`, unchanged
+from 04:04. User-manager memory PSI was zero. `midas-api.service` and
+`midas-reality.service` were active at their existing restart counts 9 and 14.
+No kernel or systemd-oomd record appeared in the preceding 20 minutes.
+
+The new bounded Gemini adapter was validated only with documented-shape local
+fixtures. It remains blocked by an unconditional source-use hold pending
+residency-specific terms and intended-scope review; no Gemini request, API Use
+Form submission, or external contact occurred. Python tests, a focused UI
+fixture, TypeScript, and a production frontend build completed within explicit
+zero-swap limits. The Vite build took 53.87 seconds and produced the existing
+large Chart-chunk advisory. This quiet observation window does not establish
+that the host incident is resolved: swap remains virtually exhausted and the
+historical OOM initiator remains unknown. Continue only serial, bounded offline
+Frontier work; do not start a live probe, broad suite, research batch, or
+production transition on this evidence.

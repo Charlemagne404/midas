@@ -813,3 +813,13 @@ loads. If a workspace chunk or render fails, the workspace shows an accessible
 error alert instructing the operator to refresh Mission Control; other mounted
 workspace shell content remains available. The current boundary does not offer
 an in-place retry for a rejected chunk.
+
+Gemini Spot has an explicit 1–20 symbol allowlist, a one-request-per-second
+adapter ceiling, no catalog crawl, and bounded book depth. Its source-use hold
+cannot be cleared in configuration: the residency-specific agreement and
+intended scope remain unreviewed, and the documented API Use Form has not been
+submitted. The probe route returns HTTP 409 before any request. Gemini books
+are document-shaped fixture-only in this revision; per-level timestamps are
+documented dummy values and are never used for freshness. See the
+[`Gemini source screen`](GEMINI_SPOT_SCREEN_2026-10-29.md) and
+[`Gemini data-use review`](SOURCE_DATA_TERMS_REVIEW_2026-10-29.md).

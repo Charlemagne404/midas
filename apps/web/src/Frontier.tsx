@@ -24,7 +24,7 @@ import {
 import { api } from './api';
 import './frontier.css';
 
-type Venue = 'polymarket' | 'kalshi' | 'kraken' | 'coinbase_exchange';
+type Venue = 'polymarket' | 'kalshi' | 'kraken' | 'coinbase_exchange' | 'gemini_spot';
 type Source = {
   venue: Venue;
   adapter_version: string;
@@ -1430,6 +1430,7 @@ const venueLabel = (value: string) =>
     kalshi: 'Kalshi',
     kraken: 'Kraken Spot',
     coinbase_exchange: 'Coinbase Exchange Spot',
+    gemini_spot: 'Gemini Spot',
     unknown: 'Not in loaded window',
   })[value] ?? value;
 
@@ -1497,7 +1498,14 @@ function RelationshipGraph({
   onSelect: (relationshipId: string) => void;
 }) {
   const graph = useMemo(() => {
-    const venueOrder = ['polymarket', 'kalshi', 'kraken', 'coinbase_exchange', 'unknown'];
+    const venueOrder = [
+      'polymarket',
+      'kalshi',
+      'kraken',
+      'coinbase_exchange',
+      'gemini_spot',
+      'unknown',
+    ];
     const ids = new Set(
       relationships.flatMap((edge) => [edge.left_market_id, edge.right_market_id]),
     );
@@ -1513,7 +1521,8 @@ function RelationshipGraph({
       kalshi: 360,
       kraken: 600,
       coinbase_exchange: 840,
-      unknown: 1080,
+      gemini_spot: 1080,
+      unknown: 1320,
     };
     const nodes = new Map<string, GraphPoint>();
     let maxRows = 0;
@@ -1549,6 +1558,7 @@ function RelationshipGraph({
       kalshi: 'KALSHI',
       kraken: 'KRAKEN SPOT',
       coinbase_exchange: 'COINBASE SPOT',
+      gemini_spot: 'GEMINI SPOT',
       unknown: 'NOT IN LOADED WINDOW',
     })[venue] ?? venue.toUpperCase();
 
@@ -2681,7 +2691,8 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
       api('/frontier/probe/' + venue, {
         method: 'POST',
         body: JSON.stringify({
-          limit: venue === 'kraken' || venue === 'coinbase_exchange' ? 1 : 10,
+          limit:
+            venue === 'kraken' || venue === 'coinbase_exchange' || venue === 'gemini_spot' ? 1 : 10,
           include_one_book: includeOneBook,
           include_recent_trades: true,
           trade_limit: 10,
@@ -2877,7 +2888,8 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
         (venue === 'polymarket' ||
           venue === 'kalshi' ||
           venue === 'kraken' ||
-          venue === 'coinbase_exchange') &&
+          venue === 'coinbase_exchange' ||
+          venue === 'gemini_spot') &&
         Number.isInteger(milliseconds) &&
         milliseconds > 0
       ) {
@@ -6922,7 +6934,9 @@ function SourcesView({
               <h2>{venueLabel(source.venue)}</h2>
               <code>{source.adapter_version}</code>
               <p className="fr-copy">
-                {source.venue === 'kraken' || source.venue === 'coinbase_exchange'
+                {source.venue === 'kraken' ||
+                source.venue === 'coinbase_exchange' ||
+                source.venue === 'gemini_spot'
                   ? 'Spot instruments provide context for event research. A spot price is not a prediction-contract payoff.'
                   : source.venue === 'kalshi'
                     ? 'Public event metadata and order books are retained with native rules and multivariate-event markers.'
@@ -6932,6 +6946,13 @@ function SourcesView({
                     Source use remains held pending validated permission and intended-scope review;
                     terms acknowledgment is not authorization. Maker-side trade fields are not
                     treated as aggressor-side.
+                  </small>
+                )}
+                {source.venue === 'gemini_spot' && (
+                  <small className="fr-source-terms-note">
+                    Source use is held pending the applicable residency-specific agreement and
+                    intended-scope review. The current hold prevents probes and stored-data
+                    research.
                   </small>
                 )}
               </p>
@@ -7249,18 +7270,21 @@ function VenuePill({ venue }: { venue: string }) {
     venue === 'polymarket' ||
     venue === 'kalshi' ||
     venue === 'kraken' ||
-    venue === 'coinbase_exchange';
+    venue === 'coinbase_exchange' ||
+    venue === 'gemini_spot';
   const venueClass = knownVenue ? venue : 'unknown';
   const icon =
     venue === 'coinbase_exchange'
       ? 'C'
       : venue === 'kraken'
         ? 'K'
-        : venue === 'kalshi'
-          ? 'Ka'
-          : venue === 'polymarket'
-            ? 'P'
-            : '?';
+        : venue === 'gemini_spot'
+          ? 'G'
+          : venue === 'kalshi'
+            ? 'Ka'
+            : venue === 'polymarket'
+              ? 'P'
+              : '?';
   return (
     <span className={`fr-venue-pill ${venueClass}`}>
       <i>{icon}</i>

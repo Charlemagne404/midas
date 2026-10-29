@@ -13,7 +13,7 @@ as mutable Frontier storage.
 | Recorded-sample analytics | `analytics.py` | Bounded market/book/replay coverage, source-quality, pricing, timing, and candidate summaries over hash-checked local evidence. |
 | Adapter protocol and lifecycle | `adapters/base.py` | Capability declarations, local health, response capture, and common read-only adapter contract. |
 | Bounded HTTP transport | `adapters/transport.py` | HTTPS GET only, fixed host allowlist, bounded timeout/retry/rate/raw-response size, identity encoding for successful payloads, no redirects or credentials. |
-| Public venue adapters | `adapters/polymarket.py`, `kalshi.py`, `kraken.py`, `coinbase.py` | Source-specific normalization and native metadata preservation. Coinbase Exchange adds a bounded explicit-product spot source; its exact-version acknowledgement does not lift the unresolved permission hold. |
+| Public venue adapters | `adapters/polymarket.py`, `kalshi.py`, `kraken.py`, `coinbase.py`, `gemini.py` | Source-specific normalization and native metadata preservation. Coinbase Exchange and Gemini add bounded spot context sources; neither source's hold can be lifted by a probe flag or descriptive acknowledgement. |
 | Registry | `registry.py` | Explicit capability inventory; default instances do not probe. |
 | Relationship intelligence | `relationships.py` | Deterministic indexed title and parent-event/outcome hypotheses, source-selected component references, strict payoff checks, and immutable review contracts. |
 | Candidate calculators | `economics.py`, `joint_economics.py` | Decimal cross-venue binary, same-market exhaustive one-hot coverage, bounded constant-payout event baskets, and a separately bounded multi-market basket over an explicit shared-state assertion. Joint-state search caches exact mapped payout vectors, then incrementally accumulates subset payouts, costs, and market coverage; venue fees, native quantity units, depth, freshness, timing, and scenario bounds remain attached. |
@@ -1447,3 +1447,34 @@ derivation, namespace separation, legacy v1–v4 payload migration, tampering,
 each adapter's normalized IDs, and persistence through single-market and batch
 observations. They establish deterministic local identity only, not genuine
 cross-venue equivalence or live-source validation.
+
+## Gemini Spot adapter — 2026-10-29
+
+`GeminiSpotAdapter` uses an explicit allowlist of one to twenty symbols. It
+fetches per-symbol details without crawling the venue-wide catalog and
+supports bounded aggregated REST books with 1–20 levels. The normalizer
+requires `product_type=spot`, `contract_type=vanilla`, consistent base/quote
+identity, and exact price/quantity constraints. Spot records have no event
+outcomes or verified payoff, and account-specific fees remain unknown. Swaps,
+trades, historical candles, incremental book reconstruction, and settlement
+rules are explicitly unsupported.
+
+Gemini documents book price and amount as exact decimal strings and says the
+per-level timestamp fields are dummy values. The adapter requires those
+strings, keeps each level's exchange time absent, sets the snapshot exchange
+time to unknown, and retains local HTTP receipt time and raw response hash.
+This is not evidence of cross-venue simultaneity.
+
+The official Market Data Agreement is dated 2025-10-12 and permits specified
+personal/internal informational and price/market analysis uses subject to
+prohibited-use rules. It also prohibits redistribution and particular
+financial-product and benchmark uses. The API Agreement documents public
+market-data access without an API key, a public limit of 120 requests/minute,
+and asks API users to complete an API Use Form. Residency-specific terms and
+the intended organizational and research scope have not been reviewed, and
+the form has not been submitted. `GeminiSpotConfig` therefore carries an
+unconditional source-use hold; live requests and stored-data research are
+blocked. See the
+[`Gemini source screen`](GEMINI_SPOT_SCREEN_2026-10-29.md) and
+[`Gemini data-use review`](SOURCE_DATA_TERMS_REVIEW_2026-10-29.md).
+Document-shaped fixture tests are not live validation.

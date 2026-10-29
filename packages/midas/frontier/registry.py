@@ -6,6 +6,7 @@ from collections.abc import Iterable
 
 from midas.frontier.adapters import (
     CoinbaseSpotAdapter,
+    GeminiSpotAdapter,
     KalshiAdapter,
     KrakenSpotAdapter,
     PolymarketAdapter,
@@ -46,5 +47,11 @@ class AdapterRegistry:
 def default_registry() -> AdapterRegistry:
     """Return all implemented adapters disabled by default; no startup probe occurs."""
     return AdapterRegistry(
-        (PolymarketAdapter(), KalshiAdapter(), KrakenSpotAdapter(), CoinbaseSpotAdapter())
+        (
+            PolymarketAdapter(),
+            KalshiAdapter(),
+            KrakenSpotAdapter(),
+            CoinbaseSpotAdapter(),
+            GeminiSpotAdapter(),
+        )
     )

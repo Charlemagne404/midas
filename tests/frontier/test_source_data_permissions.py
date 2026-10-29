@@ -67,6 +67,15 @@ def test_probe_flags_and_references_do_not_enable_unvalidated_sources(tmp_path):
                 assert response.json()["detail"] == item["probe_policy_block_reason"]
                 assert app.state.frontier_registry.get(venue).transport.request_count == 0
 
+            gemini = source_by_venue[Venue.GEMINI_SPOT.value]
+            assert gemini["public_probe_enabled"] is False
+            assert "API Use Form" in gemini["probe_policy_block_reason"]
+            assert "2025-10-12" in gemini["probe_policy_block_reason"]
+            response = client.post("/api/frontier/probe/gemini_spot", json={})
+            assert response.status_code == 409
+            assert response.json()["detail"] == gemini["probe_policy_block_reason"]
+            assert app.state.frontier_registry.get(Venue.GEMINI_SPOT).transport.request_count == 0
+
             kalshi_hold = source_by_venue[Venue.KALSHI.value]["probe_policy_block_reason"]
             specialized_kalshi_requests = (
                 ("/api/frontier/probe/kalshi/trades", {"market_id": "KXEVENT-MARKET"}),
@@ -110,6 +119,10 @@ def test_probe_flags_and_references_do_not_enable_unvalidated_sources(tmp_path):
             assert config.enabled is False
             assert config.live_public_probe_enabled is False
             assert config.probe_policy_block_reason
+        gemini_config = app.state.frontier_registry.get(Venue.GEMINI_SPOT).config
+        assert gemini_config.enabled is False
+        assert gemini_config.live_public_probe_enabled is False
+        assert gemini_config.probe_policy_block_reason
     finally:
         asyncio.run(app.state.frontier_registry.aclose())
 

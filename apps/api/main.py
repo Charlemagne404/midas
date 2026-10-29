@@ -28,6 +28,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     service = Service(config)
     from midas.frontier.adapters import (
         CoinbaseSpotAdapter,
+        GeminiSpotAdapter,
         KalshiAdapter,
         KrakenSpotAdapter,
         PolymarketAdapter,
@@ -36,6 +37,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         COINBASE_SOURCE_USE_HOLD_REASON,
         CoinbaseSpotConfig,
     )
+    from midas.frontier.adapters.gemini import GEMINI_SOURCE_USE_HOLD_REASON
     from midas.frontier.adapters.kraken import KrakenSpotConfig
     from midas.frontier.models import AdapterConfig
     from midas.frontier.registry import AdapterRegistry
@@ -107,6 +109,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                     products=tuple(config.frontier_coinbase_products.split(",")),
                 )
             ),
+            GeminiSpotAdapter(),
         )
     )
     frontier_store = FrontierStore(
@@ -222,6 +225,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                     ("kalshi", kalshi_probe_block_reason),
                     ("kraken", kraken_probe_block_reason),
                     ("coinbase_exchange", coinbase_probe_block_reason),
+                    ("gemini_spot", GEMINI_SOURCE_USE_HOLD_REASON),
                 )
                 if reason
             ),

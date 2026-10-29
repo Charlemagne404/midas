@@ -49,6 +49,7 @@ from midas.frontier.adapters.base import (
     SingleMarketMetadataAdapter,
 )
 from midas.frontier.adapters.coinbase import CoinbaseSpotAdapter
+from midas.frontier.adapters.gemini import GeminiSpotAdapter
 from midas.frontier.adapters.kraken import KrakenSpotAdapter
 from midas.frontier.analytics import (
     BOOK_SAMPLE_LIMIT,
@@ -5130,17 +5131,22 @@ def router(
                             "probe_policy_block_reason",
                             None,
                         )
-                        for venue in (Venue.KALSHI, Venue.KRAKEN, Venue.COINBASE_EXCHANGE)
+                        for venue in (
+                            Venue.KALSHI,
+                            Venue.KRAKEN,
+                            Venue.COINBASE_EXCHANGE,
+                            Venue.GEMINI_SPOT,
+                        )
                         if venue in {manifest.venue for manifest in registry.capability_manifests()}
                     )
                     else "NOT_ESTABLISHED",
                     "detail": (
-                        "Kalshi, Kraken, and Coinbase Exchange research use remains blocked "
+                        "Kalshi, Kraken, Coinbase Exchange, and Gemini research use remains blocked "
                         "because Frontier has no validated permission and intended-scope review "
-                        "loader. Configured references and an exact Coinbase Market Data Terms "
-                        "version acknowledgement are descriptive; they do not establish permission "
+                        "loader. Configured references and terms-version acknowledgements are "
+                        "descriptive; they do not establish permission "
                         "for organization, region, retention, derived-data, display, or automated "
-                        "research use. Coinbase spot prices remain contextual evidence."
+                        "research use. Spot prices remain contextual evidence."
                     ),
                 },
                 {
@@ -5473,6 +5479,8 @@ def router(
                     if isinstance(adapter, KrakenSpotAdapter)
                     else min(request.limit, len(adapter.coinbase_config.products))
                     if isinstance(adapter, CoinbaseSpotAdapter)
+                    else min(request.limit, len(adapter.gemini_config.pairs))
+                    if isinstance(adapter, GeminiSpotAdapter)
                     else 1
                 )
                 maximum_http_calls = (

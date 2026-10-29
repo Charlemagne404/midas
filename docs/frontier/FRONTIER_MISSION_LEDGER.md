@@ -13068,3 +13068,57 @@ No new monitor or script change is warranted; future sampling should be brief,
 targeted to a known scheduled task, and treated as current attribution only.
 No service will be changed based on the present sample. Incident status remains
 **PARTIALLY VERIFIED**.
+
+## Gemini Spot adapter checkpoint — 2026-10-29 04:22 CET
+
+Added `Venue.GEMINI_SPOT` and a read-only `GeminiSpotAdapter` with a
+non-clearable source-use hold. It supports only an explicit 1–20 symbol list,
+per-symbol metadata, and 1–20 aggregated REST book levels. It does not crawl
+the symbol catalog or implement trades, candles, swaps, WebSockets, or any
+authenticated/order endpoint. It rejects non-spot contracts, checks raw and
+normalized base/quote identity before a book fetch, and rejects event payoff
+semantics. Price and quantity are accepted only as decimal strings. Gemini's
+per-level timestamps are documented dummy values, so the adapter preserves
+them only in the raw hash-pinned capture and reports no exchange book
+timestamp. Account fees remain unknown.
+
+The current data-use findings and official references are in
+[`SOURCE_DATA_TERMS_REVIEW_2026-10-29.md`](SOURCE_DATA_TERMS_REVIEW_2026-10-29.md)
+and [`GEMINI_SPOT_SCREEN_2026-10-29.md`](GEMINI_SPOT_SCREEN_2026-10-29.md).
+The applicable residency-specific agreement and intended MIDAS scope remain
+unreviewed, and no API Use Form was submitted. The source is registered so the
+dashboard exposes its capabilities and hold, but live probes and stored-data
+research remain blocked. No Gemini endpoint or external contact was used.
+
+Focused verification (all fixture-only, zero-swap scopes):
+
+- Gemini adapter and fail-closed config: **4/4**.
+- Source permissions, API probe block, and held-source quarantine: **5/5**.
+- Finite collection config persistence and recovery: **42/42**.
+- Adapter regression module and five-source disabled registry: **168/168**.
+- Empty-overview and held-source analytics API: **2/2**.
+- Frontier exchange-explorer UI: **1/1** targeted with a 15-second per-test
+  timeout; the other eight cases were skipped. A full file attempt under a 25%
+  CPU quota had one duplicate-text assertion (corrected) and a separate
+  existing 5-second replay-test timeout. No whole-file pass is claimed.
+- Ruff, strict mypy on the Gemini adapter, Prettier, ESLint, and TypeScript
+  project build passed. The isolated production Vite build passed in 53.87
+  seconds with the existing 544.51 kB Chart-chunk advisory.
+
+At 04:22:11, host PSI remained zero, `MemAvailable` was 11,356,988 kB, and
+`SwapFree` was 1,844 kB. The user manager held 9,007,521,792 bytes memory and
+2,864,586,752 bytes swap; `oom=19` and `oom_kill=15` were unchanged from 04:04.
+API/Reality were active at unchanged restart counts 9/14; no kernel or
+systemd-oomd record appeared in the preceding 20 minutes. This is a quiet
+bounded observation, not incident resolution. Keep Frontier work serial,
+offline, and resource-limited. No broad repository suite, endurance run, public
+probe, Arena submission, or production transition was performed.
+
+Changed files: `packages/midas/frontier/models.py`,
+`packages/midas/frontier/adapters/gemini.py`, adapter exports and registry,
+`packages/midas/frontier/collection.py`, `apps/api/main.py`,
+`apps/api/frontier.py`, `apps/web/src/Frontier.tsx`,
+`apps/web/src/Frontier.test.tsx`, `apps/web/src/frontier.css`, focused Python
+tests, architecture/operations/terms/engineering/incident documentation, and
+this ledger. The preserved untracked `data/frontier-public-probes/` directory
+was not read, changed, or staged. Checkpoint commit follows this review.

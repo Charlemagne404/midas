@@ -53,6 +53,7 @@ class Venue(StrEnum):
     KALSHI = "kalshi"
     KRAKEN = "kraken"
     COINBASE_EXCHANGE = "coinbase_exchange"
+    GEMINI_SPOT = "gemini_spot"
 
 
 class MarketKind(StrEnum):

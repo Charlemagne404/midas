@@ -2188,6 +2188,7 @@ async def test_default_registry_is_complete_disabled_and_network_idle():
         Venue.KALSHI,
         Venue.KRAKEN,
         Venue.COINBASE_EXCHANGE,
+        Venue.GEMINI_SPOT,
     }
     try:
         manifests = registry.capability_manifests()

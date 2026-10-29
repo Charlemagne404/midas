@@ -1054,6 +1054,7 @@ def test_coverage_analytics_omits_held_source_market_records(tmp_path):
         assert {item["venue"] for item in payload["market_mix"]} == {"polymarket"}
         assert payload["stored_market_counts_by_venue"] == [
             {"venue": "coinbase_exchange", "market_count": 0, "instrument_count": 0},
+            {"venue": "gemini_spot", "market_count": 0, "instrument_count": 0},
             {"venue": "kalshi", "market_count": 0, "instrument_count": 0},
             {"venue": "kraken", "market_count": 0, "instrument_count": 0},
             {"venue": "polymarket", "market_count": 1, "instrument_count": 2},

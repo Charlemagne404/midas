@@ -72,6 +72,34 @@ it('renders recorded-evidence empty states and never probes a source automatical
       notes: ['local-only status'],
     },
   };
+  const geminiSource = {
+    venue: 'gemini_spot',
+    adapter_version: 'frontier-gemini-spot-1',
+    public_probe_enabled: false,
+    probe_policy_block_reason:
+      'Gemini source use remains held until its residency-specific agreement, intended scope, and API Use Form are reviewed.',
+    capabilities: [
+      {
+        capability: 'market_discovery',
+        supported: true,
+        state: 'implemented',
+        reason: 'configured symbols only',
+      },
+      {
+        capability: 'book_snapshot',
+        supported: true,
+        state: 'implemented',
+        reason: 'bounded aggregated book',
+      },
+    ],
+    health: {
+      state: 'not_probed',
+      last_success_at_utc: null,
+      last_error_code: null,
+      last_error: null,
+      notes: ['local-only status'],
+    },
+  };
   const responses: Record<string, unknown> = {
     '/api/frontier/overview': {
       state: 'EMPTY',
@@ -88,11 +116,11 @@ it('renders recorded-evidence empty states and never probes a source automatical
         database_bytes: 0,
         max_bytes: 67_108_864,
       },
-      sources: [source],
+      sources: [source, geminiSource],
       latest_evidence_at_utc: null,
       limitations: ['No recorded evidence.'],
     },
-    '/api/frontier/sources': { items: [source, enabledSource] },
+    '/api/frontier/sources': { items: [source, enabledSource, geminiSource] },
     '/api/frontier/collection-runs?limit=20': {
       items: [],
       returned: 0,
@@ -158,69 +186,79 @@ it('renders recorded-evidence empty states and never probes a source automatical
       },
       market_mix: [],
       stored_market_counts_by_venue: [],
-      source_quality: ['polymarket', 'kalshi', 'kraken', 'coinbase_exchange'].map((venue) => ({
-        venue,
-        latest_instrument_books: 0,
-        quality_valid_pricing_books: 0,
-        two_sided_books: 0,
-        one_sided_or_empty_books: 0,
-        crossed_books: 0,
-        flagged_books: 0,
-        unflagged_books: 0,
-        unjoined_or_provenance_mismatch_records: 0,
-        with_exchange_timestamp: 0,
-        with_clock_uncertainty: 0,
-        with_declared_freshness_limit: 0,
-        without_declared_freshness_limit: 0,
-        within_declared_freshness_limit: 0,
-        stale_by_declared_freshness_limit: 0,
-        future_received_timestamp: 0,
-        median_receipt_age_ms: null,
-        p90_receipt_age_ms: null,
-      })),
+      source_quality: ['polymarket', 'kalshi', 'kraken', 'coinbase_exchange', 'gemini_spot'].map(
+        (venue) => ({
+          venue,
+          latest_instrument_books: 0,
+          quality_valid_pricing_books: 0,
+          two_sided_books: 0,
+          one_sided_or_empty_books: 0,
+          crossed_books: 0,
+          flagged_books: 0,
+          unflagged_books: 0,
+          unjoined_or_provenance_mismatch_records: 0,
+          with_exchange_timestamp: 0,
+          with_clock_uncertainty: 0,
+          with_declared_freshness_limit: 0,
+          without_declared_freshness_limit: 0,
+          within_declared_freshness_limit: 0,
+          stale_by_declared_freshness_limit: 0,
+          future_received_timestamp: 0,
+          median_receipt_age_ms: null,
+          p90_receipt_age_ms: null,
+        }),
+      ),
       historical_price_quality_scope:
         'Newest bounded saved captures by venue; gaps describe returned samples only.',
       public_trade_quality_scope:
         'Newest bounded saved public-trade responses. Empty results do not establish venue-wide volume.',
-      public_trade_quality: ['polymarket', 'kalshi', 'kraken', 'coinbase_exchange'].map(
-        (venue) => ({
-          venue,
-          capture_count: 0,
-          invalid_capture_count: 0,
-          trade_print_count: 0,
-          empty_capture_count: 0,
-          unique_market_count: 0,
-          unique_instrument_count: 0,
-          prints_with_exchange_timestamp: 0,
-          prints_without_exchange_timestamp: 0,
-          prints_with_clock_uncertainty: 0,
-          prints_without_clock_uncertainty: 0,
-          future_capture_timestamp_count: 0,
-          future_exchange_timestamp_count: 0,
-          latest_capture_received_at_utc: null,
-          median_capture_age_ms: null,
-          p90_capture_age_ms: null,
-        }),
-      ),
-      historical_price_quality: ['polymarket', 'kalshi', 'kraken', 'coinbase_exchange'].map(
-        (venue) => ({
-          venue,
-          capture_count: 0,
-          unique_instrument_count: 0,
-          source_point_count: 0,
-          empty_capture_count: 0,
-          market_bound_capture_count: 0,
-          unbound_capture_count: 0,
-          future_capture_timestamp_count: 0,
-          future_point_timestamp_count: 0,
-          latest_capture_received_at_utc: null,
-          median_capture_age_ms: null,
-          p90_capture_age_ms: null,
-          earliest_source_point_at_utc: null,
-          latest_source_point_at_utc: null,
-          largest_adjacent_sample_gap_seconds: null,
-        }),
-      ),
+      public_trade_quality: [
+        'polymarket',
+        'kalshi',
+        'kraken',
+        'coinbase_exchange',
+        'gemini_spot',
+      ].map((venue) => ({
+        venue,
+        capture_count: 0,
+        invalid_capture_count: 0,
+        trade_print_count: 0,
+        empty_capture_count: 0,
+        unique_market_count: 0,
+        unique_instrument_count: 0,
+        prints_with_exchange_timestamp: 0,
+        prints_without_exchange_timestamp: 0,
+        prints_with_clock_uncertainty: 0,
+        prints_without_clock_uncertainty: 0,
+        future_capture_timestamp_count: 0,
+        future_exchange_timestamp_count: 0,
+        latest_capture_received_at_utc: null,
+        median_capture_age_ms: null,
+        p90_capture_age_ms: null,
+      })),
+      historical_price_quality: [
+        'polymarket',
+        'kalshi',
+        'kraken',
+        'coinbase_exchange',
+        'gemini_spot',
+      ].map((venue) => ({
+        venue,
+        capture_count: 0,
+        unique_instrument_count: 0,
+        source_point_count: 0,
+        empty_capture_count: 0,
+        market_bound_capture_count: 0,
+        unbound_capture_count: 0,
+        future_capture_timestamp_count: 0,
+        future_point_timestamp_count: 0,
+        latest_capture_received_at_utc: null,
+        median_capture_age_ms: null,
+        p90_capture_age_ms: null,
+        earliest_source_point_at_utc: null,
+        latest_source_point_at_utc: null,
+        largest_adjacent_sample_gap_seconds: null,
+      })),
       pricing: [],
       candidate_research: {
         counts_by_classification: {},
@@ -435,15 +473,17 @@ it('renders recorded-evidence empty states and never probes a source automatical
 
   fireEvent.click(screen.getByRole('button', { name: 'Exchanges' }));
   expect(
-    await screen.findByText(/Live capture and stored records are held from research use/),
-  ).toBeInTheDocument();
+    await screen.findAllByText(/Live capture and stored records are held from research use/),
+  ).toHaveLength(2);
   expect(screen.getByRole('heading', { name: 'Coinbase Exchange Spot' })).toBeInTheDocument();
-  expect(screen.getByText(/A spot price is not a prediction-contract payoff/)).toBeInTheDocument();
+  expect(screen.getByRole('heading', { name: 'Gemini Spot' })).toBeInTheDocument();
+  expect(screen.getAllByText(/A spot price is not a prediction-contract payoff/)).toHaveLength(2);
   expect(screen.getByText(/terms acknowledgment is not authorization/)).toBeInTheDocument();
   expect(
     screen.getByText(/develop, train, fine-tune, teach, validate, benchmark, or improve/),
   ).toBeInTheDocument();
-  expect(screen.getAllByRole('button', { name: 'Public probe disabled' })).toHaveLength(1);
+  expect(screen.getByText(/residency-specific agreement and.*scope review/)).toBeInTheDocument();
+  expect(screen.getAllByRole('button', { name: 'Public probe disabled' })).toHaveLength(2);
   screen
     .getAllByRole('button', { name: 'Public probe disabled' })
     .forEach((button) => expect(button).toBeDisabled());
