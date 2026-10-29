@@ -2,14 +2,18 @@
 
 import json
 import math
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
 
 
 @dataclass(frozen=True)
 class Config:
-    root: str = "/home/charlie/midas-reality/data/recordings/reality"
+    root: str = field(
+        default_factory=lambda: str(
+            Path(__file__).resolve().parents[3] / "data/recordings/reality"
+        )
+    )
     markets: int = 3
     discovery_limit: int = 50
     refresh_seconds: float = 600

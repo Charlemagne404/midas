@@ -28,6 +28,50 @@ class StorageFailure(RuntimeError):
     """Persistence failure is terminal; never continue an unrecorded stream."""
 
 
+APPEND_BACKPRESSURE_SECONDS = 1.0
+# The Reality API marks status older than 30 seconds stale; failures report immediately.
+STATUS_REPORT_INTERVAL_SECONDS = 10.0
+
+
+def collection_health(
+    state: str,
+    last_observation_ns: int | None,
+    fresh_books: int,
+    expected_books: int,
+    now_ns: int,
+    stale_ns: int,
+    backpressured: bool = False,
+) -> str:
+    if state == "FAILED":
+        return "failed"
+    if state == "STOPPED":
+        return "stopped"
+    if state == "STARTING":
+        return "recovering"
+    if state in {"CONNECTING", "DEGRADED", "RECONNECTING"}:
+        return "reconnecting"
+    if last_observation_ns is None:
+        return "active_no_events"
+    if now_ns - last_observation_ns >= stale_ns or fresh_books != expected_books:
+        return "stale"
+    if backpressured:
+        return "backpressured"
+    return "active_receiving"
+
+
+def prune_cohort_tracking(
+    book_updates: Counter[str],
+    coverage_started: dict[str, int],
+    coverage_last: dict[str, int],
+    active_assets: set[str],
+) -> None:
+    """Keep per-asset coverage counters bounded to the current market cohort."""
+    for tracker in (book_updates, coverage_started, coverage_last):
+        for asset in tuple(tracker):
+            if asset not in active_assets:
+                del tracker[asset]
+
+
 async def run(config: Config, duration: float | None = None) -> None:
     root = Path(config.root)
     store = Store(
@@ -36,14 +80,19 @@ async def run(config: Config, duration: float | None = None) -> None:
         reserve=config.reserve_bytes,
         segment_bytes=config.segment_bytes,
         segment_seconds=config.segment_seconds,
+        verify_existing=False,
+        defer_open=True,
     )
     try:
-        engine, _ = replay(root, manifest(root))
+        source_manifest = manifest(root)
+        engine, _ = replay(root, source_manifest)
+        if engine.last_ordinal != store.ordinal:
+            raise ValueError("Verified replay ordinal differs from the durable segment index")
     except BaseException:
         store.close()
         raise
     oldest_ns = time.time_ns()
-    oldest = next((s for s in manifest(root)["segments"] if s["count"]), None)
+    oldest = next((s for s in source_manifest["segments"] if s["count"]), None)
     if oldest:
         from .storage import records
 
@@ -54,6 +103,7 @@ async def run(config: Config, duration: float | None = None) -> None:
             raise OSError(
                 "Retention horizon reached; export/archive this root and configure a new root"
             )
+    store.activate()
 
     append_samples: deque[dict[str, int]] = deque(maxlen=1024)
     book_updates: Counter[str] = Counter()
@@ -90,13 +140,19 @@ async def run(config: Config, duration: float | None = None) -> None:
                     book_updates[asset] += 1
                     coverage_started.setdefault(asset, record["received_ns"])
                     coverage_last[asset] = record["received_ns"]
-        status["max_append_seconds"] = max(
-            status.get("max_append_seconds", 0), time.monotonic() - began
+        append_seconds = time.monotonic() - began
+        status["process_max_append_seconds"] = max(
+            status.get("process_max_append_seconds", 0), append_seconds
         )
+        if append_seconds >= APPEND_BACKPRESSURE_SECONDS:
+            status["process_backpressure_events"] += 1
+            status["backpressure_active"] = True
+        elif kind == "frame":
+            status["backpressure_active"] = False
         return record
 
     def report() -> None:
-        state = engine.state()
+        state = engine.state(max_depth=50)
         now = time.time_ns()
         books = state["books"]
         fresh = sum(
@@ -119,6 +175,20 @@ async def run(config: Config, duration: float | None = None) -> None:
                 updated_ns=now,
                 ordinal=store.ordinal,
                 storage_bytes=store.used,
+                process_frames=status["process_frames"],
+                lifetime_frames=store.counts["frame"],
+                lifetime_gap_records=store.counts["gap"],
+                lifetime_records=sum(store.counts.values()),
+                lifetime_record_counts=dict(store.counts),
+                collection_health=collection_health(
+                    status["state"],
+                    status["last_observation_ns"],
+                    fresh,
+                    status["markets"] * 2,
+                    now,
+                    int(config.stale_seconds * 1e9),
+                    status["backpressure_active"],
+                ),
                 counts=state["counts"],
                 gaps=engine.gaps,
                 fresh_books=fresh,
@@ -126,15 +196,7 @@ async def run(config: Config, duration: float | None = None) -> None:
                 state_sha256=engine.digest(),
                 sequence_verified=False,
                 clock_health=clock_health(),
-                books={
-                    asset: dict(
-                        book,
-                        bids=book["bids"][:50],
-                        asks=book["asks"][:50],
-                        depth_truncated=len(book["bids"]) > 50 or len(book["asks"]) > 50,
-                    )
-                    for asset, book in books.items()
-                },
+                books=books,
                 observation_coverage={
                     asset: dict(
                         book_update_frames=book_updates[asset],
@@ -164,7 +226,10 @@ async def run(config: Config, duration: float | None = None) -> None:
     status: dict[str, Any] = dict(
         state="STARTING",
         started_ns=time.time_ns(),
-        frames=0,
+        frames=store.counts["frame"],
+        process_frames=0,
+        process_backpressure_events=0,
+        backpressure_active=False,
         failures=0,
         markets=0,
         last_observation_ns=None,
@@ -259,6 +324,9 @@ async def run(config: Config, duration: float | None = None) -> None:
                     if not cohort:
                         raise ValueError("No supported active markets discovered")
                     tokens = [token for market in cohort for token in market["tokens"]]
+                    prune_cohort_tracking(
+                        book_updates, coverage_started, coverage_last, set(tokens)
+                    )
                     status.update(markets=len(cohort), cohort=cohort, state="CONNECTING")
                     async with connect(
                         WS,
@@ -285,7 +353,7 @@ async def run(config: Config, duration: float | None = None) -> None:
                         status["state"] = "AWAITING_DATA"
                         while not stop.is_set():
                             now = time.monotonic()
-                            if now - last_report >= 2:
+                            if now - last_report >= STATUS_REPORT_INTERVAL_SECONDS:
                                 report()
                                 last_report = now
                             if now - last_checkpoint >= 30 or rotate.is_set():
@@ -513,6 +581,7 @@ async def run(config: Config, duration: float | None = None) -> None:
                                 last_frame = time.monotonic()
                                 status.update(
                                     frames=status["frames"] + 1,
+                                    process_frames=status["process_frames"] + 1,
                                     last_observation_ns=received,
                                     state="RECORDING_UNSEQUENCED",
                                 )
@@ -571,5 +640,19 @@ async def run(config: Config, duration: float | None = None) -> None:
                     updated_ns=time.time_ns(),
                     ordinal=store.ordinal,
                     storage_bytes=store.used,
+                    process_frames=status["process_frames"],
+                    frames=store.counts["frame"],
+                    lifetime_frames=store.counts["frame"],
+                    lifetime_gap_records=store.counts["gap"],
+                    lifetime_records=sum(store.counts.values()),
+                    lifetime_record_counts=dict(store.counts),
+                    collection_health=collection_health(
+                        "FAILED" if status["state"] == "FAILED" else "STOPPED",
+                        status["last_observation_ns"],
+                        0,
+                        status["markets"] * 2,
+                        time.time_ns(),
+                        int(config.stale_seconds * 1e9),
+                    ),
                 ),
             )
