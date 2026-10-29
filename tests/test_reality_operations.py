@@ -55,11 +55,15 @@ def test_capacity_real_bytes_rates_and_horizon(tmp_path, monkeypatch):
 
     monkeypatch.setattr(operations, "manifest", fail_manifest)
     monkeypatch.setattr(operations, "_read_capacity_segment_catalog", counted_catalog_read)
+    monkeypatch.setattr(operations, "_process_peak_rss_bytes", lambda: 12_345_678)
     result = capacity(cfg, now_ns=121_000_000_000)
     assert len(catalog_reads) == len(value["segments"])
     assert result["capacity_builder_version"] == (
-        "receipt-aware-capacity-v5-sustained-growth-windows"
+        "receipt-aware-capacity-v6-bounded-catalog-process-rss"
     )
+    assert result["process_peak_rss_bytes"] == 12_345_678
+    assert result["process_peak_rss_source"] == "linux_proc_self_status_vmhwm"
+    assert result["process_peak_rss_scope"] == "current_python_process_only"
     expected_bytes = sum(
         s["bytes"] + (tmp_path / s["file"]).with_suffix(".json").stat().st_size
         for s in value["segments"]
@@ -77,6 +81,16 @@ def test_capacity_real_bytes_rates_and_horizon(tmp_path, monkeypatch):
     )
     assert result["collector_status_age_seconds"] == 0
     assert result["estimated_action_deadline_ns"] > 121_000_000_000
+
+
+def test_parse_process_peak_rss_bytes():
+    assert (
+        operations._parse_process_peak_rss_bytes("Name:\tpython\nVmHWM:\t12345 kB\n")
+        == 12_641_280
+    )
+    assert operations._parse_process_peak_rss_bytes("Name:\tpython\n") is None
+    assert operations._parse_process_peak_rss_bytes("VmHWM: invalid kB\n") is None
+    assert operations._parse_process_peak_rss_bytes("VmHWM: 123 MB\n") is None
 
 
 def test_capacity_fails_closed_when_catalog_count_exceeds_bound(tmp_path, monkeypatch):

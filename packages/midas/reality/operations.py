@@ -594,6 +594,30 @@ def _trailing_segment_growth_from_stats(
     return result
 
 
+def _parse_process_peak_rss_bytes(proc_status: str) -> int | None:
+    for line in proc_status.splitlines():
+        field, separator, value = line.partition(":")
+        if field != "VmHWM" or not separator:
+            continue
+        fields = value.split()
+        if len(fields) != 2 or fields[1] != "kB":
+            return None
+        try:
+            peak_kib = int(fields[0])
+        except ValueError:
+            return None
+        return peak_kib * 1024 if peak_kib > 0 else None
+    return None
+
+
+def _process_peak_rss_bytes() -> int | None:
+    try:
+        proc_status = Path("/proc/self/status").read_text()
+    except (OSError, UnicodeError):
+        return None
+    return _parse_process_peak_rss_bytes(proc_status)
+
+
 def capacity(
     config: Config,
     *,
@@ -777,8 +801,11 @@ def capacity(
         alerts.append("COLLECTOR_STATUS_STALE")
     return dict(
         schema_version=1,
-        capacity_builder_version="receipt-aware-capacity-v5-sustained-growth-windows",
+        capacity_builder_version="receipt-aware-capacity-v6-bounded-catalog-process-rss",
         capacity_builder_sha256=file_hash(Path(__file__)),
+        process_peak_rss_bytes=_process_peak_rss_bytes(),
+        process_peak_rss_source="linux_proc_self_status_vmhwm",
+        process_peak_rss_scope="current_python_process_only",
         measured_ns=now,
         recording_root=str(root),
         raw_root_bytes=used,
@@ -841,6 +868,7 @@ def capacity(
             "Raw originals never pruned. Retention horizon stops collection.",
             "Capacity metadata does not perform full archive integrity verification.",
             "Local archive copies consume a separately accounted filesystem allocation; they are not off-host redundancy.",
+            "Process peak RSS covers only this Python process, not its aggregate service cgroup; null means unavailable.",
         ],
     )
 
