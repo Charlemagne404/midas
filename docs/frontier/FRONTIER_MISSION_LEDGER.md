@@ -15664,6 +15664,17 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
   host remains partially contained; a brief stable test interval is not a
   recovery claim.
 
+## 2026-10-29 16:18 CET — contract/provenance commit checkpoint
+
+- Committed the nested contract, asset, URL, hash, and raw-capture metadata
+  bounds with fixtures and documentation as `d4cf83a`
+  (`feat(frontier): bound contract provenance metadata`). The worktree has
+  only the pre-existing untracked `data/frontier-public-probes/`.
+- The 15-case focused fixture run passed in 3.19 seconds; Ruff and whitespace
+  checks passed. The latest recorded post-test host sample at 16:17:25 showed
+  zero PSI, almost-full swap, unchanged OOM counters, and protected services
+  active. No live data or protected service state was changed.
+
 ## 2026-10-29 16:14 CET — capability-health metadata checkpoint
 
 - Checkpointed the source-health and capability bounds as `2352c22`
