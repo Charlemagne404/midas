@@ -4436,6 +4436,17 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
                           ))}
                         </details>
                       </div>
+                      <details className="fr-contract-comparison">
+                        <summary>Compare recorded contract terms</summary>
+                        <p className="fr-contract-comparison-note">
+                          Side-by-side captured terms help review this relationship. Similarity
+                          labels and this comparison do not establish equivalent payoffs.
+                        </p>
+                        <div className="fr-contract-comparison-grid">
+                          <RelationshipContractTerms side="Left" market={left} />
+                          <RelationshipContractTerms side="Right" market={right} />
+                        </div>
+                      </details>
                       {relationship.review_target_relationship_id &&
                         (relationship.state === 'hypothesis' || relationship.latest_review) && (
                           <RelationshipReviewForm
@@ -7742,6 +7753,115 @@ function InlineError({ message }: { message: string }) {
       <AlertTriangle size={14} />
       {message}
     </div>
+  );
+}
+
+function RelationshipContractTerms({
+  side,
+  market,
+}: {
+  side: 'Left' | 'Right';
+  market: Market | undefined;
+}) {
+  return (
+    <section className="fr-contract-terms" aria-label={`${side} recorded contract terms`}>
+      {market ? (
+        <>
+          <div className="fr-contract-terms-head">
+            <div>
+              <span className="fr-kicker">{side} source contract</span>
+              <VenuePill venue={market.venue} />
+            </div>
+            <h4>{market.title}</h4>
+            <code>{market.canonical_id}</code>
+          </div>
+          <dl>
+            <div>
+              <dt>Type / lifecycle</dt>
+              <dd>
+                {label(market.market_kind)} · {label(market.lifecycle)}
+              </dd>
+            </div>
+            <div>
+              <dt>Payoff states</dt>
+              <dd>{market.payoff.state_ids.map(label).join(' · ') || 'Not reported'}</dd>
+            </div>
+            <div>
+              <dt>Payoff evidence</dt>
+              <dd>
+                {market.payoff.verified ? 'Verified' : 'Not verified'} ·{' '}
+                {market.payoff.exhaustive ? 'exhaustive' : 'exhaustiveness unestablished'}
+              </dd>
+            </div>
+            <div>
+              <dt>Payout / settlement</dt>
+              <dd>
+                {market.payoff.payout_currency ?? 'Payout not reported'} ·{' '}
+                {market.settlement_asset ?? 'settlement asset not reported'}
+              </dd>
+            </div>
+            <div>
+              <dt>Resolution authority</dt>
+              <dd>{market.resolution.authority ?? 'Not reported'}</dd>
+            </div>
+            <div>
+              <dt>Close / settle</dt>
+              <dd>
+                {market.resolution.closes_at_utc ?? 'Not reported'} /{' '}
+                {market.resolution.settles_at_utc ?? 'Not reported'}
+              </dd>
+            </div>
+            <div>
+              <dt>Fee metadata</dt>
+              <dd>
+                {label(market.fees.status)} · {market.fees.rate ?? 'rate not reported'}
+              </dd>
+            </div>
+          </dl>
+          <details className="fr-contract-source-details">
+            <summary>Rules, instruments, and source provenance</summary>
+            <div className="fr-contract-rule">
+              <strong>Primary resolution rule</strong>
+              <p>{market.resolution.primary_rule ?? 'Not reported'}</p>
+              {market.resolution.secondary_rule && (
+                <>
+                  <strong>Secondary resolution rule</strong>
+                  <p>{market.resolution.secondary_rule}</p>
+                </>
+              )}
+              <strong>Instrument definitions</strong>
+              <ul>
+                {market.instruments.map((instrument) => (
+                  <li key={instrument.canonical_id ?? instrument.native_instrument_id}>
+                    {instrument.label} · {instrument.outcome_id ?? 'outcome not identified'} ·{' '}
+                    <code>{instrument.native_instrument_id}</code>
+                    {instrument.tick_size ? ` · tick ${instrument.tick_size}` : ''}
+                    {instrument.quantity_step ? ` · quantity step ${instrument.quantity_step}` : ''}
+                  </li>
+                ))}
+              </ul>
+              <strong>Source record</strong>
+              <p>
+                Received {market.provenance.response_received_at_utc} · observation{' '}
+                <code>{market.provenance.observation_id}</code>
+              </p>
+              <p>
+                Raw response SHA-256 <code>{market.provenance.raw_sha256}</code>
+              </p>
+              <p>
+                Resolution evidence SHA-256{' '}
+                <code>{market.resolution.evidence_sha256 ?? 'not reported'}</code>
+              </p>
+            </div>
+          </details>
+        </>
+      ) : (
+        <>
+          <span className="fr-kicker">{side} source contract</span>
+          <p>Market details are outside the loaded graph window.</p>
+        </>
+      )}
+    </section>
   );
 }
 

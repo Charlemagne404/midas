@@ -3019,3 +3019,51 @@ Reality API remained active at restart counts 9/14/0. Test ports were closed;
 the OOMD/kernel query had no new entries since 13:26:47. This expands narrow
 screen evidence while leaving host recovery, cross-browser rendering, and
 accessibility evaluation unresolved.
+
+## Contract comparison browser check and post-run host sample — 2026-10-29 13:47 CET
+
+The isolated captured-data responsive test first reached its 30-second
+Playwright test timeout while navigating between sections; the saved failure
+contains no horizontal-overflow assertion. The test was given a 60-second
+test-level bound and rerun once. It passed **1/1 in 37.0 seconds** (runner
+duration 1.0 minute) while opening the relationship contract comparison at
+both 320 px and 390 px widths. The expanded panels remained within the
+document width, with zero source probes and zero API mutations. The single
+browser/API/Vite scope was bounded to 768 MiB high / 1 GiB max, zero swap, 20%
+CPU, 128 tasks, 120 seconds, and a 384 MiB Node heap; its database was a fresh
+temporary copy of the committed public Polymarket capture.
+
+At 13:47:27 CET, `MemAvailable` was 11,169,927,168 bytes (10.40 GiB),
+`SwapFree` was 16,117,760 bytes (15.37 MiB), and global memory PSI was zero.
+The user-manager memory event counters were unchanged at high=16,428,175,
+max=730,409, oom=19, oom_kill=15, oom_group_kill=0. API and Reality remained
+active at restart counts 9 and 14; Reality API remained active at 0 restarts.
+The capacity service was inactive and its timer remained active; the
+gap-detail timer remained disabled and its unit was failed from the earlier
+run. Ports 18000 and 15173 were closed, and the checked OOMD/kernel journals
+had no entries since 13:46:10. The capacity timer's next scheduled run was
+13:49:04 and had not yet been observed at this sample.
+
+This brief interval shows no new kill during the bounded test; it does not
+establish recovery or identify the historical pressure initiator. Swap
+remains nearly full, the user-manager hierarchy remains uncapped, and archive
+provenance remains unresolved. Continue Frontier only as serial, offline,
+resource-capped work after fresh admission checks. Do not start broad suites,
+live probes, or concurrent research on the basis of this sample.
+
+At 13:49:04 the scheduled `midas-reality-capacity.service` invocation started
+without intervention and exited successfully at 13:49:11 (`ExecMainStatus=0`,
+6.514 CPU seconds). The service's measured unit configuration is
+`MemoryHigh=160 MiB`, `MemoryMax=192 MiB`, `MemorySwapMax=0`; its timer remains
+active and next scheduled for 14:19. API, Reality, and Reality API remained
+active at restart counts 9/14/0. No new OOMD or kernel kill appeared after
+13:47:27, and user-manager OOM counters remained unchanged. This is one
+successful run within the revised budget, not evidence that the process peak
+or sustained headroom is safe.
+
+The monitor continues to report `UNVERIFIED_MANIFEST_SIZE_LIMIT`,
+`ARCHIVE_INVENTORY_UNVERIFIED`, `ARCHIVE_CAPACITY_UNKNOWN`,
+`COLLECTOR_STATUS_STALE`, pending budget/retention changes, and capacity
+warnings. These remain integrity and operations findings. No manifest or
+historical evidence was modified. Incident status remains **PARTIALLY
+CONTAINED / PARTIALLY VERIFIED**.

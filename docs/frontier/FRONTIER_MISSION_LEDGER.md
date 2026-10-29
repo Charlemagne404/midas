@@ -14954,3 +14954,47 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
 - **Status:** Deterministic UI replay is verified for this pinned single-venue
   capture. Multi-source captured replay and wider reproducibility coverage
   remain open; host remains partially contained.
+
+## 2026-10-29 13:47 CET — graph contract comparison and bounded mobile check
+
+- Relationship graph edges now expose an expandable, side-by-side view of the
+  recorded contract terms: venue and identifiers, instrument kind and
+  lifecycle, payoff states and verification state, payout/settlement assets,
+  resolution authority and timing, fee metadata, native instrument
+  identifiers and constraints, and raw/resolution evidence hashes. The UI
+  explicitly says this evidence does not establish equivalent payoffs; absent
+  market details are shown as unavailable.
+- The captured public-evidence browser journey checks both term panels,
+  payoff states, resolution authority, raw-response provenance, and the
+  unverified relationship state. The expanded panels are also included while
+  checking the eight primary sections at 320 × 844 and 390 × 844 CSS pixels.
+- The first responsive run hit Playwright's 30-second overall test timeout
+  while moving between sections; it did not fail a layout-overflow assertion.
+  Set this one test's timeout to 60 seconds. The bounded rerun passed **1/1 in
+  37.0 seconds** (reported run duration 1.0 minute), with zero source probes
+  and zero API mutations. Frontend TypeScript, targeted ESLint, formatting,
+  and the separate captured contract-inspection journey had already passed.
+- The browser/API/Vite scope used 768 MiB high / 1 GiB max, zero swap, 20% CPU,
+  128 tasks, 120 seconds, and a 384 MiB Node heap. It used only the committed
+  hash-pinned Polymarket capture copied into a fresh `/tmp` root.
+- Post-run at 13:47:27: `MemAvailable` was 11,169,927,168 bytes (10.40 GiB),
+  free swap 16,117,760 bytes (15.37 MiB), global PSI zero, and user-manager
+  OOM counters unchanged at high/max/oom/oom_kill = 16,428,175/730,409/19/15.
+  API, Reality, and Reality API remained active at restart counts 9/14/0;
+  capacity service was inactive with its timer still active, gap-detail timer
+  remained disabled, and test ports 18000/15173 were closed. No OOMD/kernel
+  kill appeared since the 13:46:10 pre-run sample.
+- **Status:** Contract-term drill-down and this captured responsive journey
+  are verified. The host remains only partially contained: swap is nearly
+  full, historical initiating-workload attribution and archive provenance
+  remain unresolved. Continue only serial offline work under transient caps
+  after fresh admission checks; do not infer readiness for concurrent or
+  broad research workloads.
+- The scheduled Reality capacity monitor then ran at 13:49:04–13:49:11 CET
+  and exited 0 after 6.514 CPU seconds with its configured `MemoryHigh=160
+  MiB`, `MemoryMax=192 MiB`, and zero swap. Its timer remains active for
+  14:19. It still reported `UNVERIFIED_MANIFEST_SIZE_LIMIT`, archive inventory
+  and capacity uncertainty, stale collector status, and pending budget and
+  retention changes. This confirms one successful bounded monitor execution;
+  it does not repair or validate the archive manifest or current collector
+  status.

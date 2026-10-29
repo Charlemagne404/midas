@@ -1898,6 +1898,110 @@
   line-height: 1.5;
   overflow-wrap: anywhere;
 }
+.fr-contract-comparison {
+  grid-column: 1 / -1;
+  min-width: 0;
+  padding-top: 9px;
+  border-top: 1px solid #27313b;
+}
+.fr-contract-comparison > summary,
+.fr-contract-source-details > summary {
+  cursor: pointer;
+  color: #b4c0ce;
+  font-size: 9px;
+}
+.fr-contract-comparison-note {
+  margin: 7px 0;
+  color: #8492a3;
+  font-size: 9px;
+  line-height: 1.5;
+}
+.fr-contract-comparison-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 9px;
+}
+.fr-contract-terms {
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid #293542;
+  border-radius: 4px;
+  background: #0e1319;
+}
+.fr-contract-terms-head > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.fr-contract-terms-head h4 {
+  margin: 8px 0 4px;
+  color: #d0d8e2;
+  font-size: 10px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.fr-contract-terms-head code,
+.fr-contract-terms code {
+  overflow-wrap: anywhere;
+}
+.fr-contract-terms-head > code {
+  color: #77879a;
+  font-size: 8px;
+}
+.fr-contract-terms dl {
+  display: grid;
+  gap: 6px;
+  margin: 10px 0;
+}
+.fr-contract-terms dl > div {
+  display: grid;
+  grid-template-columns: minmax(90px, 0.7fr) minmax(0, 1fr);
+  gap: 8px;
+}
+.fr-contract-terms dt {
+  color: #8190a1;
+  font-size: 8px;
+}
+.fr-contract-terms dd {
+  min-width: 0;
+  margin: 0;
+  color: #b8c2cf;
+  font-size: 8px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.fr-contract-source-details {
+  margin-top: 9px;
+  padding-top: 8px;
+  border-top: 1px solid #252f3a;
+}
+.fr-contract-rule {
+  max-height: 180px;
+  margin-top: 8px;
+  overflow: auto;
+  color: #9ba8b8;
+  font-size: 8px;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+.fr-contract-rule strong {
+  display: block;
+  margin-top: 7px;
+  color: #bec8d5;
+}
+.fr-contract-rule p {
+  margin: 3px 0;
+  white-space: pre-wrap;
+}
+.fr-contract-rule ul {
+  margin: 3px 0;
+  padding-left: 16px;
+}
+.fr-contract-rule li {
+  margin: 4px 0;
+}
 .fr-review-wrap {
   grid-column: 1 / -1;
   display: grid;
@@ -3534,6 +3638,12 @@
   }
   .fr-edge-meta {
     grid-column: auto;
+  }
+  .fr-contract-comparison-grid {
+    grid-template-columns: 1fr;
+  }
+  .fr-contract-terms dl > div {
+    grid-template-columns: minmax(80px, 0.7fr) minmax(0, 1fr);
   }
   .fr-review-form {
     grid-template-columns: 1fr;

@@ -15506,3 +15506,47 @@ counters remained 19/15; API, Reality, and Reality API stayed active at
 restart counts 9/14/0. Test ports were closed and the checked OOMD/kernel
 journals had no new entries since 13:29:23. This verifies deterministic
 identity and result reproduction for this pinned Polymarket capture only.
+
+### Relationship contract comparison and responsive validation — 2026-10-29 13:47 CET
+
+The graph now lets a researcher open each relationship edge and compare the
+two recorded contracts. The view presents source venue and identifiers,
+instrument type and lifecycle, payoff states and verification state,
+payout and settlement assets, resolution authority and timestamps, fee
+metadata, native instrument IDs and available constraints, and observation
+provenance hashes. Detailed resolution rules and raw evidence are expandable.
+The interface explicitly warns that a similarity label or side-by-side
+comparison does not establish equivalent payoffs, and reports when graph
+windowing leaves contract details unavailable. This is a provenance and
+inspection aid; it does not certify the displayed relationship.
+
+Captured-store browser coverage verifies both term panels and their key fields,
+then expands the comparison while checking all eight primary workspace
+sections at 320 × 844 and 390 × 844 CSS pixels. The first responsive attempt
+reached Playwright's 30-second test timeout while changing sections, without
+an overflow assertion failure. Raising only this test's timeout to 60 seconds
+produced a pass in 37.0 seconds (the runner reported 1.0 minute), with zero
+source probes and zero API mutations. It used the committed hash-pinned
+Polymarket capture copied to a fresh temporary store and a process scope
+limited to 768 MiB high / 1 GiB max, zero swap, 20% CPU, 128 tasks, and 120
+seconds; Node's heap was capped at 384 MiB.
+
+At 13:47:27 CET after the run, host `MemAvailable` was 11,169,927,168 bytes
+(10.40 GiB), swap free was 16,117,760 bytes (15.37 MiB), global PSI remained
+zero, and user-manager OOM counters remained high/max/oom/oom_kill =
+16,428,175/730,409/19/15. API, Reality, and Reality API were active at restart
+counts 9/14/0; test ports 18000 and 15173 were closed, and no OOMD/kernel kill
+appeared since 13:46:10. This is a short bounded quiet period, not incident
+resolution. The gap-detail timer remains disabled; the capacity timer remains
+active and its next run had not yet been observed. Multi-venue live
+relationship validation, broad browser/accessibility coverage, and production
+deployment remain open.
+
+The capacity timer subsequently ran at 13:49:04–13:49:11 CET and completed
+with `ExecMainStatus=0` after 6.514 CPU seconds. Its active resource settings
+were `MemoryHigh=160 MiB`, `MemoryMax=192 MiB`, and `MemorySwapMax=0`; the
+timer remains scheduled for 14:19. The report continued to flag
+`UNVERIFIED_MANIFEST_SIZE_LIMIT`, archive inventory/capacity uncertainty,
+stale collector status, and pending budget and retention changes. This
+establishes a successful bounded monitor invocation at the revised limit,
+not archive integrity, fresh collector status, or incident resolution.

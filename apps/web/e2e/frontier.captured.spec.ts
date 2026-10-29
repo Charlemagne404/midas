@@ -43,6 +43,13 @@ test('Frontier renders captured public market, book, provenance, and relationshi
   await expect(relationship).toBeVisible();
   await expect(relationship).toContainText('same event');
   await expect(relationship).toContainText('hypothesis');
+  const terms = page.locator('.fr-contract-comparison').first();
+  await terms.locator('summary').first().click();
+  await expect(terms.locator('.fr-contract-terms')).toHaveCount(2);
+  await expect(terms).toContainText('Payoff states');
+  await expect(terms).toContainText('Resolution authority');
+  await expect(terms).toContainText('Raw response SHA-256');
+  await expect(terms).toContainText('Not verified');
 
   expect(sourceProbes).toBe(0);
   expect(apiMutations).toBe(0);
@@ -108,6 +115,7 @@ test('Frontier deterministically replays captured books in the isolated browser 
 test('Frontier primary views fit a narrow viewport without page-level horizontal overflow', async ({
   page,
 }) => {
+  test.setTimeout(60_000);
   let sourceProbes = 0;
   let apiMutations = 0;
   page.on('request', (request) => {
@@ -134,6 +142,11 @@ test('Frontier primary views fit a narrow viewport without page-level horizontal
       const tab = page.getByRole('button', { name: section, exact: true });
       await tab.click();
       await expect(tab).toHaveAttribute('aria-current', 'page');
+      if (section === 'Relationship graph') {
+        const terms = page.locator('.fr-contract-comparison').first();
+        await expect(terms).toBeVisible();
+        await terms.locator('summary').first().click();
+      }
       await expect(
         page.getByRole('heading', {
           level: 1,
