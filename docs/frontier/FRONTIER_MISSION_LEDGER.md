@@ -15536,3 +15536,22 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
   swap is almost full, the user-manager `high` counter advanced, and this
   short quiet interval cannot establish durable recovery. Continue only serial
   source-independent work under the recorded transient bounds.
+
+## 2026-10-29 16:05 CET — model-bound checkpoint and host continuity
+
+- Checkpointed the model bounds, focused fixtures, and documentation as
+  `d226f6a` (`feat(frontier): bound normalized market input cardinality`).
+  The only remaining worktree item is the previously existing untracked
+  `data/frontier-public-probes/`; it remains untouched.
+- At 16:04:44 CET, MemAvailable was 11,125,800 kB, SwapFree 16,236 kB, and
+  host memory PSI avg10/60/300 was zero. The user-manager `high` count was
+  unchanged from 16:03:53; `max` advanced by one to 730,690, while `oom` and
+  `oom_kill` remained 19 and 15. MIDAS API, Reality, and Reality API were
+  active at restart counts 9/14/0. The gap-detail timer remained disabled;
+  the capacity service remained inactive between its scheduled runs with
+  effective limits 160/192 MiB and zero swap. No matching OOMD or kernel kill
+  entry appeared in the checked interval.
+- **Status:** the brief quiet interval and one new hierarchical `max` event do
+  not demonstrate durable host recovery. Keep the incident partially
+  contained and preserve the same bounded, source-independent admission
+  policy.
