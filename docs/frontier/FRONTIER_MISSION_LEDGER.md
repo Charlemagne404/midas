@@ -15331,3 +15331,17 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
   bounds based on this bounded sample; not evidence that the host incident is
   resolved. Swap remains nearly full and historical pressure attribution is
   incomplete. Preserve the untracked probe evidence.
+
+## 2026-10-29 15:16 CET — exact-tree frontend type-check
+
+- `tsc --noEmit --project tsconfig.json` passed on the final frontend tree
+  under a 640/768 MiB high/max, zero-swap, 25%-CPU, 64-task, 120-second
+  scope. No broad suite or production build ran.
+- At 15:16:48, available RAM was about 10 GiB, free swap about 15 MiB, and
+  PSI zero. Shared user-manager high/max/oom/oom_kill remained
+  16,437,686/730,632/19/15. API/Reality/Reality API remained active at
+  restart counts 9/14/0; gap-detail timer inactive, capacity timer waiting.
+  No OOMD or kernel kill was logged during the compiler interval.
+- **Status:** this bounded sample supports further serial, offline Frontier
+  work but does not establish durable host recovery; swap and causal
+  attribution remain unresolved. Preserve the untracked probe data.

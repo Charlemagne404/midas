@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 15:14 CET |
+| Latest addendum | 2026-10-29 15:16 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Pre-incident checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -3467,3 +3467,18 @@ gap-detail timer inactive. No kernel or systemd-oomd kill was logged in the
 15:13:40–15:14:15 interval. This remains a brief observation only. Nearly all
 swap is occupied, the user-manager hierarchy has no aggregate ceiling, and
 the incident remains partially contained.
+
+## Exact-tree type-check follow-up — 2026-10-29 15:16 CET
+
+The final frontend tree passed `tsc --noEmit --project tsconfig.json` with
+exit code 0 in a transient scope capped at 640 MiB `MemoryHigh`, 768 MiB
+`MemoryMax`, zero swap, 25% CPU, 64 tasks, and 120 seconds. At 15:16:48,
+about 10 GiB RAM was available, swap free was about 15 MiB, and global PSI
+was zero. Shared user-manager `memory.events` remained
+high/max/oom/oom_kill = 16,437,686/730,632/19/15. API, Reality, and Reality API
+were active at restart counts 9/14/0; the gap-detail timer was inactive and
+the capacity timer waiting. No OOMD or kernel kill was logged during the
+compiler interval. This supports continuation of serial offline work under
+transient bounds; it does not resolve the incident or explain the earlier
+counter increase. Nearly all swap remains occupied and pressure attribution
+is incomplete.
