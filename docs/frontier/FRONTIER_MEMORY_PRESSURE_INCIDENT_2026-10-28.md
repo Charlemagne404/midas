@@ -1614,3 +1614,15 @@ No kernel OOM or systemd-oomd kill appeared after the 04:02:10 sample. The
 host remains suitable only for sequential, bounded, offline Frontier work.
 Historical initiating-workload attribution and durable swap recovery remain
 unresolved; no safe service change is supported by this sample alone.
+
+### Diagnostic sampler review — 2026-10-29 04:05 CET
+
+Review of `scripts/host_capacity_sample.py` confirmed it already records each
+active process cgroup and its ancestors, including current/peak/high/max memory,
+swap current/max, `memory.stat`, `memory.events`, memory PSI, CPU, I/O, and PID
+counts. `host_capacity_summary.py` streams bounded time windows. The 35-second
+sample around Veritas source analysis missed most of the randomized timer
+start, so it cannot establish that job's peak; no sampler code change or
+persistent monitor is needed. A future attribution sample should be short and
+scheduled around a known task, and must not be interpreted as historical OOM
+causality.

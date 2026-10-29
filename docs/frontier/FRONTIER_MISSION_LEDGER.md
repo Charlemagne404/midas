@@ -13058,3 +13058,13 @@ cgroup OOMs. It was not changed or restarted. These current charges clarify
 where memory and swap reside now but do not prove the historical October 28
 trigger. Host PSI was zero and no new OOM event appeared; the incident remains
 open and only bounded serial offline work continues.
+
+At 04:05:48, reviewed the existing read-only host sampler. It already records
+active process cgroups and ancestors with memory/swap current and limits,
+`memory.stat`, `memory.events`, and cgroup pressure, and the summary tool
+streams bounded windows. The earlier 35-second sample was poorly aligned with
+the timer's randomized start, so it did not capture a representative peak.
+No new monitor or script change is warranted; future sampling should be brief,
+targeted to a known scheduled task, and treated as current attribution only.
+No service will be changed based on the present sample. Incident status remains
+**PARTIALLY VERIFIED**.

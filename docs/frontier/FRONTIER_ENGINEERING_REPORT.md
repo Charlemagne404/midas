@@ -13664,3 +13664,11 @@ swap was still 99.96% occupied at this sample, so host incident status remains
 **PARTIALLY VERIFIED**.
 
 The two UI checkpoints on this branch are `d7e2482` and `d2d5ff1`.
+
+At 04:05:48, review confirmed the existing read-only host sampler already
+records active process cgroups and ancestors, including memory/swap current,
+limits, `memory.stat`, `memory.events`, and cgroup PSI. The existing summary
+tool streams bounded windows. No additional persistent monitor or sampler
+change was justified; the prior 35-second sample was too early relative to the
+randomized source-analysis timer to measure a representative peak. Historical
+OOM attribution remains unresolved.
