@@ -2793,3 +2793,18 @@ API remained active at restart counts 9/14/0, and the checked OOMd/kernel
 journals showed no new kill since 12:55. Full swap and the historical
 initiating workload remain unresolved; the host stays **PARTIALLY CONTAINED /
 PARTIALLY VERIFIED**.
+
+## Malformed-envelope validation sample — 2026-10-29 13:00 CET
+
+After adding duplicate-key, `NaN`, and instrument-query mismatch cases, the
+focused price-history capture/replay group passed **6/6 in 7.11 s** under a
+512 MiB high / 640 MiB max, zero-swap, 20%-CPU, 128-task scope. Existing
+TestClient deprecation warning remains. The cases use mock transports and
+in-memory rows only.
+
+At 13:00, `MemAvailable` remained about 10 GiB, free swap about 14 MiB, and
+PSI was zero through avg300. User-slice OOM counters remained 19/15/0; API,
+Reality, and Reality API remained active at restart counts 9/14/0. No new
+OOMd/kernel kill appeared in the checked interval since 12:58. This is another
+short sample; full swap, global workload attribution, and long-window recovery
+remain unresolved.
