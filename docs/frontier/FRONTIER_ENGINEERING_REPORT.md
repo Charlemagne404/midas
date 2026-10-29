@@ -15145,3 +15145,27 @@ and no OOMD/kernel kill or service restart appeared. This supports only a
 brief return to low immediate pressure. Keep subsequent work serial and
 lightweight; do not treat the decay or remaining available RAM as incident
 resolution.
+
+### Held-source replay gate regression — 2026-10-29 12:18 CET
+
+Commit `7cf4797` adds a focused API regression for the Polymarket offline
+replay source-use hold. The test submits an unknown observation ID while the
+source is held and verifies that the API returns the configured HTTP 409 hold
+reason before an absent row could yield 404. The fixture connector remains
+unused. This directly covers the route's replay-specific policy boundary;
+existing source-policy tests cover broader observation and replay quarantine.
+
+The focused case passed **1/1 in 4.10 seconds** under 384 MiB high / 512 MiB
+max, zero swap, 20% CPU, 64 tasks, and a 45-second runtime cap. Ruff, format,
+and `git diff --check` passed for the test. One existing
+Starlette/httpx TestClient deprecation warning appeared. No external request
+was made.
+
+At 12:18:14, host `MemAvailable` was 11.43 GB (10.64 GiB), `SwapFree` was
+14.34 MB (13.67 MiB), and PSI was `some avg10/avg60/avg300=0/0.13/1.73%`,
+`full=0/0.12/1.61%`. User-manager high/max/OOM counters stayed at
+16,428,144/730,409/19/15/0. The API, Reality recorder/API, and reliability
+timers remained in their prior states; no OOMD/kernel kill appeared since
+11:18 CET. This brief quiet test remains compatible only with small serialized
+offline continuation while full swap recovery and longer pressure observation
+remain open.

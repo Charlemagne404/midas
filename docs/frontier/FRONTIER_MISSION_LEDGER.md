@@ -14607,3 +14607,25 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
   attribution remain unresolved. Do not run another compiler/build/browser
   suite or broad research job until a fresh admission sample shows pressure
   back near baseline. Resume only serial, bounded offline work after admission.
+
+## 2026-10-29 12:18 CET — held-source replay policy regression
+
+- Commit `7cf4797` adds an API fixture asserting that a Polymarket source-use
+  hold rejects `/replay/polymarket/book-updates` before an absent observation
+  could return 404. The connector stays unused. This adds direct coverage for
+  the new route's evidence-use gate.
+- The focused test passed **1/1 in 4.10 s** with a 384 MiB high / 512 MiB max,
+  zero-swap, 20%-CPU, 64-task, 45-second limit. Ruff and formatting checks
+  passed; the known Starlette/httpx deprecation warning appeared. No public
+  request was made.
+- At 12:18:14, host memory PSI avg10 was zero, avg60 was 0.13% `some` / 0.12%
+  `full`, and avg300 remained 1.73% / 1.61%. `MemAvailable` was 10.64 GiB;
+  `SwapFree` remained 13.67 MiB. User-manager OOM counters were unchanged at
+  19/15/0, and the `high` counter was stable. API, Reality, Reality API,
+  Continental contact/status, Echo production/staging, RustDesk, SSH, and
+  systemd-oomd remained active; gap-detail stayed inactive and capacity timer
+  waited. No OOMD/kernel kill appeared in the checked interval since 11:18.
+- **Status:** The policy regression is verified by fixture. The host remains
+  **PARTIALLY CONTAINED / PARTIALLY VERIFIED**. Continue the Frontier goal with
+  serial offline work and small capped checks after admission; broad suites,
+  source probes, and deployment remain pending.
