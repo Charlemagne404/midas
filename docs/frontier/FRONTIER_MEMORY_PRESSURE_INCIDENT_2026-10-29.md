@@ -3136,3 +3136,32 @@ counter and OOM counts were unchanged. The one-second follow-up showed no
 swap I/O. This reduces the immediate concern but does not establish sustained
 recovery. Further compute is paused pending a fresh admission sample; no
 critical service was restarted or changed.
+
+## Payoff-detail browser check and post-run sample — 2026-10-29 14:06 CET
+
+The relationship comparison panel now displays instrument payout vectors by
+state, quantity units, price currencies, tick and quantity increments, minimum
+quantity/notional, fee applicability and schedule provenance, native market
+IDs, payoff verification basis, and resolution fingerprints. Missing source
+fields remain explicitly unreported. The cross-venue fixture test passed
+**1/1 in 34.7 seconds** (1.1 minutes total runner time). Frontend TypeScript
+passed in 89 seconds; targeted ESLint and formatting passed. A combined
+Prettier invocation exceeded its 45-second transient scope after formatting
+the main component and confirming CSS unchanged; formatting was then finished
+with a separate bounded run on the E2E file. No production bundle or broad
+suite was run.
+
+The test scope used 768 MiB high / 1 GiB max, zero swap, 20% CPU, 128 tasks,
+120 seconds, and a 384 MiB Node heap. At 14:06:26, host `MemAvailable` was
+10.24 GiB and `SwapFree` was 15.45 MiB. Global memory PSI avg10/60/300 was
+zero; `memory.events high` increased by 267 to 16,430,503 while `max`, `oom`,
+and `oom_kill` remained 730,409/19/15. The one-second `vmstat` follow-up had
+zero swap-in/out. The event counter is hierarchical; attribution is not
+assigned to this test. API, Reality, and Reality API remained active at
+restart counts 9/14/0, ports 18000/15173 were closed, and no OOMD or kernel
+kill appeared since 14:05.
+
+This is a successful bounded fixture verification with no observed host PSI
+or OOM event. Swap remains almost full and the shared user manager remains
+uncapped; do not infer sustained recovery. No further browser work was started
+in this checkpoint.

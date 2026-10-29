@@ -15607,3 +15607,32 @@ ports were closed. After 30 seconds without another job, PSI avg10 fell to
 The cgroup counters are hierarchical, so the change cannot be attributed to
 the browser test alone. Further compute was paused after this excursion; this
 quiet interval remains too short to establish sustained host recovery.
+
+### Recorded payout and trading-constraint details — 2026-10-29 14:06 CET
+
+Commit `7c48c5c` expands each graph-side contract panel with the recorded
+per-instrument payout vector by state, quantity unit, price currency, tick and
+increment ranges, quantity step, minimum quantity/notional, native market ID,
+payoff verification basis, resolution fingerprint, and fee applicability,
+formula, version, currency, note, and source reference. Missing fields are
+shown as unreported. The interface retains its explicit warning that recorded
+terms do not by themselves establish equivalent payoffs.
+
+Prettier and targeted ESLint passed; frontend TypeScript passed in 89 seconds.
+The bounded synthetic cross-venue browser test passed **1/1 in 34.7 seconds**
+(1.1 minutes total). Its transient scope was limited to 768 MiB high / 1 GiB
+max, zero swap, 20% CPU, 128 tasks, 120 seconds, and a 384 MiB Node heap. An
+initial combined Prettier command hit its 45-second scope cap after processing
+the component and CSS; a separate file-level invocation completed formatting
+of the test.
+
+At 14:06:26, host memory PSI avg10/60/300 was zero, `MemAvailable` was 10.24
+GiB, and free swap was 15.45 MiB. The user-manager `memory.events high` count
+rose by 267 to 16,430,503; other OOM counters did not change. The single-second
+`vmstat` sample showed no swap-in/out. The hierarchical event count cannot be
+attributed to this browser run alone. The API, Reality, and Reality API
+remained active at restart counts 9/14/0, test listeners were closed, and no
+OOMD/kernel kill appeared since 14:05. No further browser job was launched.
+The fixture is synthetic, so genuine cross-venue validation remains blocked;
+the host also remains partially contained with near-full swap and an uncapped
+user-manager hierarchy.

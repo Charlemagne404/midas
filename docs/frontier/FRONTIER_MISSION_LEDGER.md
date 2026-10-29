@@ -15049,3 +15049,27 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
   pressure excursion. Continue only static or tightly capped serial work after
   a fresh host admission sample; broad suites and concurrent jobs remain
   deferred.
+
+## 2026-10-29 14:06 CET — recorded payout vectors in graph comparison
+
+- Commit `7c48c5c` extends graph contract drill-down to show per-instrument
+  payouts by state, quantity units, quote currency, tick/quantity increments,
+  minimum quantity/notional, fee applicability/formula/version/source,
+  native market ID, payoff verification basis, and resolution fingerprint.
+  Missing vectors and metadata are labeled unreported; the comparison still
+  does not certify cross-venue equivalence.
+- The synthetic cross-venue browser journey passed **1/1 in 34.7 seconds**
+  (1.1 minutes total). Frontend TypeScript passed in 89 seconds; targeted
+  ESLint and Prettier passed. The combined Prettier call reached its 45-second
+  scope limit before finishing the test file; a separate bounded file-level
+  run completed formatting successfully.
+- Post-run at 14:06:26: `MemAvailable` 10.24 GiB, swap free 15.45 MiB, global
+  PSI zero, and OOM counters unchanged. The shared `memory.events high`
+  counter rose by 267 to 16,430,503; because this is a hierarchical counter,
+  causality is not assigned. The one-second `vmstat` interval showed no swap
+  I/O. API/Reality/Reality API remained active at restarts 9/14/0, test ports
+  were closed, and OOMD/kernel journals were quiet since 14:05.
+- **Status:** This payout-and-constraint view is browser-verified against a
+  synthetic two-venue fixture only. No live multi-venue evidence was added.
+  Stop browser work for this checkpoint; continue only after a fresh host
+  admission sample and under transient resource limits.
