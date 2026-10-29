@@ -7,7 +7,10 @@
 This is a current evidence classification, not a final completion claim. The
 dated implementation records below remain the detailed evidence; the
 [current incident report](FRONTIER_MEMORY_PRESSURE_INCIDENT_2026-10-29.md) records the
-current host gate.
+current host gate. A documentation-only cross-check of current official
+exchange market-data contracts is recorded in
+[Adapter Documentation Contract Review](ADAPTER_DOCUMENTATION_CONTRACT_REVIEW_2026-10-29.md);
+it made no endpoint requests and does not change source-use holds.
 
 | Component | Status | Current evidence and boundary |
 | --- | --- | --- |

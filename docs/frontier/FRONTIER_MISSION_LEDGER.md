@@ -1,5 +1,31 @@
 # Project Frontier Mission Ledger
 
+## 2026-10-29 08:27 CET — official adapter protocol review and host recheck
+
+- Reviewed the current official Kalshi, Coinbase Exchange, Kraken Spot,
+  Gemini, and Polymarket market-data documentation against the adapter
+  declarations and selected normalization paths. Added
+  `ADAPTER_DOCUMENTATION_CONTRACT_REVIEW_2026-10-29.md`. The review confirms
+  that the declared timestamp, auction, exact-decimal, and no-delta boundaries
+  match the inspected code. It also records concrete follow-up gaps: Kraken
+  WebSocket sequence/checksum reconstruction is unsupported; Gemini public
+  trades are documented but not normalized; and Polymarket's legacy capture
+  wire contract needs version-specific review before any future use. No code,
+  source-use policy, or service configuration changed; no network endpoint or
+  captured probe data was accessed.
+- Host recheck at 08:26:15: 11,036,332 kB `MemAvailable`; 8,600 kB `SwapFree`;
+  global memory PSI avg10/60/300 remained zero. User-manager memory/swap were
+  9,785,925,632 / 2,858,250,240 bytes; aggregate events stayed
+  `oom=19, oom_kill=15`. API and Reality remained active at restart counts
+  9/14 with about 928/410 MiB current. The capacity timer remained active
+  (idle between its scheduled runs); gap-detail remained inactive/disabled.
+  No OOMD entry or kernel OOM appeared after the preceding 08:24:26 sample.
+- **Status:** Incident remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**.
+  Swap is nearly full, the initiating workload is unknown, and this few-minute
+  quiet interval does not establish durable recovery. Continue only small,
+  serial, fixture-only work after fresh admission; keep live sources, broad UI
+  tests, endurance, and deployment held.
+
 ## Current host and Frontier state — 2026-10-29 01:54 CET
 
 Reality has resumed recording after cold replay: status says

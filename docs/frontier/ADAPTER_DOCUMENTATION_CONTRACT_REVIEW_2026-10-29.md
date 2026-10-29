@@ -1,0 +1,42 @@
+# Exchange adapter documentation contract review — 2026-10-29
+
+## Scope and method
+
+This is a bounded review of current official API documentation against the
+Frontier adapter declarations and selected normalization paths. It used
+documentation pages and local source code only: no exchange endpoint was
+queried, no retained probe was opened, and no source-use hold was changed.
+Technical API documentation does not establish data-use permission, account
+eligibility, regional access, or executable economics.
+
+## Findings
+
+| Source | Officially documented market-data contract | Frontier handling | Remaining boundary |
+| --- | --- | --- | --- |
+| Kalshi | The public market-orderbook endpoint returns binary YES and NO bids; the response example uses fixed-point decimal strings. The documentation describes an opposite-outcome bid at `1 - price` as the corresponding ask. | The adapter preserves exact decimal inputs, derives the opposite-side ask at `1 - price`, retains local receipt provenance, and explicitly marks the absence of one unified exchange book timestamp. | No incremental book reconstruction is implemented. Binary complement logic does not certify contract-resolution equivalence across markets. |
+| Coinbase Exchange | The product-book endpoint's level 2 mode is the full aggregated book and includes `sequence` and `time`. During auction mode, quotes are indicative and can change before trading resumes. | Frontier requests level 2, preserves the raw response including sequence/time and auction fields, validates sequence/time presence, and adds `AUCTION_MODE_INDICATIVE` when the source reports an auction. Candidate evaluation records any book quality flag as a source-quality reason, and the independent audit will not validate a flagged book. | REST response time is not treated as cross-venue simultaneity. The adapter does not reconstruct the Coinbase WebSocket book. |
+| Kraken Spot | REST order-book data is distinct from the documented WebSocket v2 `book` channel. The latter provides aggregated level 2 snapshots and updates, configurable depth, per-symbol acknowledgements, and a checksum; the documentation says updates must be processed in sequence. | Frontier currently uses bounded public REST depth, retains individual level timestamps, and does not claim a single snapshot timestamp. `BOOK_UPDATES` is explicitly unsupported. | An update adapter would need ordered application, checksum validation, bounded capture, and invalidation after a gap; reconnecting must not silently bridge missing updates. The current source-use hold remains in force. |
+| Gemini Spot | The current public book reference specifies aggregated price levels and exact decimal-string prices and quantities. Its per-level timestamp is expressly a dummy compatibility field. The current market-data reference also lists a public trades endpoint. | Frontier preserves exact decimal book fields, ignores the dummy timestamps, and flags that source exchange book time is unavailable. Public trades are explicitly unsupported in this adapter version. | Gemini remains under its non-clearable source-use hold pending agreement and scope review; documented endpoint availability does not authorize requests or retained-data research. |
+| Polymarket | The current public market-stream reference describes distinct `book`, `price_change`, `last_trade_price`, and `tick_size_change` events; book events may carry a hash and timestamp. Outcome identifiers differ by protocol, including CTF token IDs and Protocol V2 position IDs. | Frontier's finite legacy market-stream path binds capture to saved asset IDs, preserves raw frames and normalized observations, and does not apply deltas or claim sequence continuity. The worktree probe flag remains off. | Before any future capture, revalidate the legacy wire format against the exact supported protocol and market version. No capture or live compatibility claim is made by this review. |
+
+## Engineering decisions
+
+- No adapter code change was justified by this documentation-only pass.
+- Keep REST snapshots, event-driven updates, and historical observations as
+  separate declared capabilities; do not infer stream support from REST docs.
+- Keep source time, local receipt time, sequence, and book validity distinct.
+  A timestamp or sequence field alone does not prove cross-venue simultaneity.
+- Prioritize a Kraken update adapter only after host admission is steady and
+  its source-use review permits the intended activity. Its checksum and
+  sequence requirements make a snapshot-only parser insufficient.
+- Reconsider Gemini trade normalization only after the data-use hold is
+  resolved; implementing the parser does not make those observations eligible
+  for research.
+
+## Official references
+
+- Kalshi: [Get Market Orderbook](https://docs.kalshi.com/api-reference/market/get-market-orderbook)
+- Coinbase Exchange: [Get Product Book](https://docs.cdp.coinbase.com/api-reference/exchange-api/rest-api/products/get-product-book)
+- Kraken Spot: [WebSocket v2 Book (Level 2)](https://docs.kraken.com/exchange/api-reference/spot-websocket-v2/book)
+- Gemini: [Get Current Order Book](https://developer.gemini.com/trading/rest-api/market-data/get-current-order-book), [Market Data reference](https://developer.gemini.com/rest/market-data)
+- Polymarket: [Real-Time Data](https://docs.polymarket.com/market-data/realtime-data)
