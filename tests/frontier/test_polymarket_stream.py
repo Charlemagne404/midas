@@ -17,6 +17,7 @@ from midas.frontier.adapters.polymarket import (
     POLYMARKET_MARKET_STREAM_URL,
     PolymarketAdapter,
 )
+from midas.frontier.adapters.polymarket_book_replay import replay_polymarket_book_capture
 from midas.frontier.adapters.polymarket_stream import decode_market_stream_frame
 from midas.frontier.models import (
     AdapterConfig,
@@ -323,7 +324,32 @@ def _store_polymarket_market(store: FrontierStore) -> str:
 
 
 def test_book_update_api_binds_to_saved_market_and_persists_fixture_evidence(tmp_path: Path):
-    connector = FixtureConnector([_legacy_book_frame()])
+    price_change_frame = json.dumps(
+        {
+            "event_type": "price_change",
+            "market": CONDITION_ID,
+            "timestamp": "1793246401000",
+            "price_changes": [
+                {
+                    "asset_id": ASSET_ID,
+                    "price": "0.42",
+                    "size": "0",
+                    "side": "BUY",
+                    "hash": "level-1",
+                    "best_bid": "0.42",
+                    "best_ask": "0.43",
+                }
+            ],
+        },
+        separators=(",", ":"),
+    )
+    connector = FixtureConnector(
+        [
+            _legacy_book_frame(),
+            json.dumps({"event_type": "last_trade_price", "market": CONDITION_ID}),
+            price_change_frame,
+        ]
+    )
     adapter = PolymarketAdapter(
         AdapterConfig(enabled=True, live_public_probe_enabled=True, requests_per_second=5),
         stream_connector=connector,
@@ -337,22 +363,23 @@ def test_book_update_api_binds_to_saved_market_and_persists_fixture_evidence(tmp
     try:
         response = client.post(
             "/api/frontier/probe/polymarket/book-updates",
-            json={"market_id": market_id, "max_frames": 1},
+            json={"market_id": market_id, "max_frames": 3},
         )
         assert response.status_code == 200, response.text
         result = response.json()
         assert result["market_id"] == market_id
         assert result["native_market_id"] == CONDITION_ID
         assert result["capture_status"] == "captured"
-        assert result["frame_count"] == 1
-        assert result["normalized_update_count"] == 1
+        assert result["frame_count"] == 2
+        assert result["normalized_update_count"] == 2
         assert result["capture_bounds"] == {
-            "max_frames": 1,
+            "max_frames": 3,
             "max_updates": 50,
             "max_duration_seconds": 3.0,
             "stream_connections": 1,
         }
         assert result["frames"][0]["updates"][0]["event_type"] == "book"
+        assert result["frames"][1]["updates"][0]["event_type"] == "price_change"
         assert result["frames"][0]["updates"][0]["native_instrument_id"] == ASSET_ID
         assert (
             result["frames"][0]["raw_sha256"]
@@ -374,6 +401,43 @@ def test_book_update_api_binds_to_saved_market_and_persists_fixture_evidence(tmp
             stored["normalized"]["bound_market_observation_id"]
             == result["bound_market_observation_id"]
         )
+
+        observation_ids = [frame["observation_id"] for frame in result["frames"]]
+        replay = client.post(
+            "/api/frontier/replay/polymarket/book-updates",
+            json={"observation_ids": list(reversed(observation_ids))},
+        )
+        assert replay.status_code == 200, replay.text
+        replay_result = replay.json()
+        assert replay_result["event_count"] == 2
+        assert replay_result["message_order_basis"] == "local_monotonic_elapsed"
+        assert replay_result["continuity"] == "unverified_no_sequence_or_gap_detection"
+        assert replay_result["book_reconstructed"] is False
+        assert replay_result["event_economics_eligible"] is False
+        assert [frame["frame_ordinal"] for frame in replay_result["frames"]] == [0, 1]
+        assert [frame["updates"][0]["event_type"] for frame in replay_result["frames"]] == [
+            "book",
+            "price_change",
+        ]
+        repeated = client.post(
+            "/api/frontier/replay/polymarket/book-updates",
+            json={"observation_ids": observation_ids},
+        )
+        assert repeated.status_code == 200, repeated.text
+        assert repeated.json() == replay_result
+        assert connector.calls == 1
+
+        tampered = store.observation(observation_ids[0])
+        assert tampered is not None
+        tampered["raw"]["raw_body"] = "{}"
+        with pytest.raises(ValueError, match="Raw observation hash mismatch"):
+            replay_polymarket_book_capture((tampered,))
+
+        normalized_tampered = store.observation(observation_ids[0])
+        assert normalized_tampered is not None
+        normalized_tampered["normalized"]["updates"][0]["bids"][0]["price"] = "0.40"
+        with pytest.raises(ValueError, match="Re-decoded Polymarket events differ"):
+            replay_polymarket_book_capture((normalized_tampered,))
 
         unknown = client.post(
             "/api/frontier/probe/polymarket/book-updates",

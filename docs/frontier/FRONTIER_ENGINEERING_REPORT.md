@@ -15061,3 +15061,86 @@ been applied to a production API store. Frontier development remains safe only
 for serial bounded fixture work while the host incident is partially
 contained, swap remains nearly full, and historical pressure attribution is
 unresolved.
+
+## Polymarket persisted event replay — 2026-10-29 12:12 CET
+
+The 05:42 entry above records the earlier adapter-only state. The bounded
+Polymarket capture API, persistence path, and explicit Mission Control capture
+action were integrated afterward and already existed in this worktree. This
+checkpoint adds the missing offline replay path; it does not add another
+collector or perform a public probe.
+
+`POST /api/frontier/replay/polymarket/book-updates` accepts one to 32 unique
+lowercase SHA-256 observation IDs. It reads only stored Polymarket
+`public_book_update_frame` evidence, applies the existing source-use hold, and
+does not open a source connection. The replay validates store identity,
+provenance, saved-market binding, capture session, and adapter/schema
+versions; verifies raw frame hashes; re-decodes each bounded UTF-8 frame; and
+requires exact agreement with stored normalized updates. Total raw input is
+capped at 8 MiB. The API returns frames ordered by persisted local monotonic
+receipt elapsed time with deterministic input/result hashes. This is only the
+observed local arrival order: Polymarket's feed has no verified sequence or
+gap recovery in this implementation. Results are `context_only`, with
+`book_reconstructed=false` and `event_economics_eligible=false`.
+
+Mission Control exposes replay only after an explicit capture result, shows
+frame/event counts and hashes, and states the continuity and economics limits.
+The saved capture remains inspectable as immutable source evidence. The replay
+route itself remains usable without a public-probe flag when the venue is not
+held; source policy holds reject evidence replay as well as capture.
+
+Verification on this isolated branch:
+
+- The fixture API test passed **1/1 in 4.21 seconds** under a 384 MiB high /
+  640 MiB max, zero-swap, 20%-CPU, 64-task, 90-second transient bound. It
+  captured two update frames with an intervening ignored trade event, replayed
+  reversed IDs in local monotonic order, repeated the replay with identical
+  output, rejected raw/normalized tampering, and confirmed only one stream
+  connection. One existing Starlette/httpx TestClient deprecation warning
+  appeared.
+- The focused fixture-backed Frontier browser component test passed **1/1 in
+  7.80 seconds** under a 512 MiB high / 640 MiB max, zero-swap, 20%-CPU,
+  64-task, 120-second bound. The response was mocked; no exchange request was
+  made. The test exercises the capture and offline replay UI controls.
+- `tsc -b --pretty false` exited **0** with a 384 MiB Node heap, 512 MiB high /
+  640 MiB max, zero swap, 25% CPU, 64 tasks, and a 120-second transient cap.
+  Ruff, Ruff format check, ESLint, Prettier check, and `git diff --check` also
+  passed for the affected code and documentation.
+
+At 12:10 CET, `MemAvailable` was 11.43 GB (10.64 GiB), swap free was 14.32 MB
+(13.65 MiB), and host memory PSI was zero. User-manager memory/swap charges
+were 10.10 GB / 2.86 GB; cumulative `memory.events` remained `oom=19`,
+`oom_kill=15`, and `oom_group_kill=0`, with `high=16,424,562` and `max=730,409`.
+No OOMD or kernel kill appeared in the checked journal since 11:18 CET. The
+MIDAS API, Reality recorder/API, Continental tailnet and identity services,
+Echo production/staging, RustDesk, SSH socket, and systemd-oomd were active;
+the auxiliary gap-detail timer remained inactive and the capacity timer was
+waiting. This short post-run sample does not clear the incident: swap remains
+nearly exhausted, the user-manager `max` counter has advanced since earlier
+samples, and the October 28 pressure initiator remains unproven.
+
+| Component | Status | Evidence and limit |
+| --- | --- | --- |
+| Polymarket event-frame replay API | COMPLETE AND VERIFIED | Bounded fixture API test, deterministic hashes, raw/normalized revalidation, no second stream connection. No live capture claim. |
+| Polymarket event replay UI | COMPLETE AND VERIFIED IN FIXTURE UI | Explicit capture and replay controls render bounded mocked evidence and limitations. |
+| Live Polymarket stream capture | IMPLEMENTED, LIVE VALIDATION PENDING | Capture integration predates this checkpoint; source eligibility and live behavior remain unverified and disabled. |
+| Frontier production deployment | IMPLEMENTED, DEPLOYMENT PENDING | Work remains on the isolated Frontier branch; no production service or store was changed. |
+
+### Follow-up resource sample and typing check
+
+Strict mypy passed for `polymarket_book_replay.py` with imported modules
+silenced. A combined mypy attempt for that file and the large API router hit
+its configured 60-second runtime cap and exited 143 without diagnostics; this
+does not establish an API type error. At 12:14 CET, after that attempt and the
+focused fixture checks, host `MemAvailable` was 11.35 GB (10.57 GiB) and PSI
+had briefly risen to `some avg10=0.68 / avg60=9.64` and `full avg10=0.63 /
+avg60=8.96`. User-manager `memory.events.high` had advanced by 3,582 since the
+12:10 sample, while `max`, `oom`, `oom_kill`, and `oom_group_kill` were
+unchanged. This timing makes the capped analysis a possible pressure
+contributor, not an established cause. No other compute-heavy check was
+started. A quiet sample 45 seconds later showed `avg10=0` and declining
+avg60 (`some=3.67`, `full=3.41`); the user-manager `high` counter was stable,
+and no OOMD/kernel kill or service restart appeared. This supports only a
+brief return to low immediate pressure. Keep subsequent work serial and
+lightweight; do not treat the decay or remaining available RAM as incident
+resolution.

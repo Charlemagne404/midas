@@ -1452,6 +1452,7 @@ it('captures one explicit Polymarket trade page and follows its bound cursor', a
   const requests: Record<string, unknown>[] = [];
   const priceHistoryRequests: Record<string, unknown>[] = [];
   const bookUpdateRequests: Record<string, unknown>[] = [];
+  const bookUpdateReplayRequests: Record<string, unknown>[] = [];
   const priceHistoryReplayRequests: Record<string, unknown>[] = [];
   let savedPriceHistory: Record<string, unknown> | null = null;
   const market = {
@@ -1735,6 +1736,61 @@ it('captures one explicit Polymarket trade page and follows its bound cursor', a
         }),
       } as Response;
     }
+    if (path === '/api/frontier/replay/polymarket/book-updates' && init?.method === 'POST') {
+      const body = JSON.parse(String(init.body)) as Record<string, unknown>;
+      bookUpdateReplayRequests.push(body);
+      return {
+        ok: true,
+        json: async () => ({
+          replay_version: 'polymarket-book-event-replay-1',
+          native_market_id: conditionId,
+          bound_market_observation_id: 'market-observation',
+          capture_started_at_utc: '2026-10-27T00:00:00Z',
+          frame_evidence: [
+            {
+              observation_id: 'stream-observation',
+              raw_sha256: 'f'.repeat(64),
+              normalized_sha256: 'e'.repeat(64),
+              frame_schema_version: 1,
+              frame_ordinal: 0,
+              elapsed_since_capture_start_ns: 100,
+              received_at_utc: '2026-10-27T00:01:00Z',
+              normalized_event_count: 1,
+            },
+          ],
+          frames: [
+            {
+              observation_id: 'stream-observation',
+              frame_ordinal: 0,
+              received_at_utc: '2026-10-27T00:01:00Z',
+              updates: [
+                {
+                  native_market_id: conditionId,
+                  native_instrument_id: '123456789',
+                  event_type: 'book',
+                  source_timestamp_utc: '2026-10-27T00:00:00Z',
+                  bid_level_count: 1,
+                  ask_level_count: 1,
+                  price_change_count: 0,
+                  reported_best_bid: null,
+                  reported_best_ask: null,
+                  continuity: 'unverified_no_sequence_or_gap_detection',
+                  quality_flags: ['NO_SEQUENCE_FIELD', 'DELTAS_NOT_APPLIED_TO_LOCAL_BOOK'],
+                },
+              ],
+            },
+          ],
+          event_count: 1,
+          input_sha256: 'a'.repeat(64),
+          result_sha256: 'b'.repeat(64),
+          message_order_basis: 'local_monotonic_elapsed',
+          continuity: 'unverified_no_sequence_or_gap_detection',
+          book_reconstructed: false,
+          event_economics_eligible: false,
+          classification: 'context_only',
+        }),
+      } as Response;
+    }
     if (path === '/api/frontier/price-history/replay' && init?.method === 'POST') {
       priceHistoryReplayRequests.push(JSON.parse(String(init.body)) as Record<string, unknown>);
       return {
@@ -1819,13 +1875,24 @@ it('captures one explicit Polymarket trade page and follows its bound cursor', a
     await screen.findByRole('heading', { name: 'Historical price points' }),
   ).toBeInTheDocument();
   expect(bookUpdateRequests).toHaveLength(0);
-  fireEvent.click(screen.getByRole('button', { name: 'Capture 3-second market stream' }));
+  const captureBookUpdatesButton = screen.getByRole('button', {
+    name: 'Capture 3-second market stream',
+  });
+  expect(captureBookUpdatesButton).toBeEnabled();
+  fireEvent.click(captureBookUpdatesButton);
+  await waitFor(() => expect(bookUpdateRequests).toHaveLength(1));
   expect(
     await screen.findByText(/Captured 1 stream frame with 1 normalized event/),
   ).toBeInTheDocument();
   expect(screen.getByText(/NO_SEQUENCE_FIELD/)).toBeInTheDocument();
-  expect(screen.getByText('Inspect immutable source response')).toBeInTheDocument();
+  expect(screen.getAllByText('Inspect immutable source response').length).toBeGreaterThan(0);
   expect(bookUpdateRequests).toEqual([{ market_id: market.canonical_id }]);
+  fireEvent.click(screen.getByRole('button', { name: 'Replay saved capture offline' }));
+  expect(
+    await screen.findByText(/Replayed 1 normalized event across 1 saved update frame/),
+  ).toBeInTheDocument();
+  expect(screen.getByText(/no book reconstruction/)).toBeInTheDocument();
+  expect(bookUpdateReplayRequests).toEqual([{ observation_ids: ['stream-observation'] }]);
   fireEvent.click(screen.getByRole('button', { name: 'Capture one series' }));
   expect(await screen.findByText('0.42')).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Replay saved series' }));
@@ -1857,7 +1924,7 @@ it('captures one explicit Polymarket trade page and follows its bound cursor', a
   await screen.findByText(/Saved 2 trades/);
   await waitFor(() => expect(requests).toHaveLength(3));
   expect(requests[2]).toEqual({ market_id: 'KX-FRONTIER-1', limit: 50 });
-});
+}, 15000);
 
 it('replays multiple saved price-history series and inspects persisted source lineage', async () => {
   const firstObservationId = 'a'.repeat(64);

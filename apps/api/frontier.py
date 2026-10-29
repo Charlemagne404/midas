@@ -55,6 +55,7 @@ from midas.frontier.adapters.gemini import GeminiSpotAdapter
 from midas.frontier.adapters.kraken import KrakenSpotAdapter
 from midas.frontier.adapters.kraken_book_replay import replay_kraken_book_capture
 from midas.frontier.adapters.polymarket import PolymarketAdapter
+from midas.frontier.adapters.polymarket_book_replay import replay_polymarket_book_capture
 from midas.frontier.analytics import (
     BOOK_SAMPLE_LIMIT,
     MARKET_SAMPLE_LIMIT,
@@ -218,6 +219,19 @@ class KrakenBookUpdatesReplayRequest(BaseModel):
             raise ValueError("Kraken book replay requires lowercase observation SHA-256 IDs")
         if len(set(self.observation_ids)) != len(self.observation_ids):
             raise ValueError("Kraken book replay observation IDs must be unique")
+        return self
+
+
+class PolymarketBookUpdatesReplayRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+    observation_ids: tuple[str, ...] = Field(min_length=1, max_length=32)
+
+    @model_validator(mode="after")
+    def observation_ids_are_unique_sha256(self) -> PolymarketBookUpdatesReplayRequest:
+        if any(re.fullmatch(r"[0-9a-f]{64}", item) is None for item in self.observation_ids):
+            raise ValueError("Polymarket book replay requires lowercase observation SHA-256 IDs")
+        if len(set(self.observation_ids)) != len(self.observation_ids):
+            raise ValueError("Polymarket book replay observation IDs must be unique")
         return self
 
 
@@ -2966,6 +2980,49 @@ def router(
                         "diagnostic_persistence_error": diagnostic_error,
                     },
                 ) from error
+
+    @api.post("/replay/polymarket/book-updates")
+    async def replay_polymarket_book_updates(
+        request: PolymarketBookUpdatesReplayRequest,
+    ) -> dict[str, Any]:
+        """Replay persisted Polymarket events without contacting a source or rebuilding a book."""
+        venue = Venue.POLYMARKET
+        reject_held_venue(venue)
+        records: list[dict[str, Any]] = []
+        async with source_operation(venue):
+            for observation_id in request.observation_ids:
+                try:
+                    row = store.observation(observation_id)
+                except (FrontierStoreError, ValueError) as error:
+                    raise HTTPException(status_code=409, detail=str(error)) from error
+                if row is None:
+                    raise HTTPException(status_code=404, detail="Polymarket frame was not found")
+                if (
+                    row["venue"] != venue.value
+                    or row["observation_kind"] != "public_book_update_frame"
+                ):
+                    raise HTTPException(
+                        status_code=409,
+                        detail="Polymarket replay accepts only persisted Polymarket update frames",
+                    )
+                records.append(row)
+            try:
+                result = replay_polymarket_book_capture(records)
+            except (
+                AdapterError,
+                FrontierStoreError,
+                ArithmeticError,
+                TypeError,
+                ValueError,
+            ) as error:
+                raise HTTPException(
+                    status_code=409,
+                    detail={
+                        "code": getattr(error, "code", "POLYMARKET_REPLAY_INVALID"),
+                        "message": str(error),
+                    },
+                ) from error
+        return result.model_dump(mode="json")
 
     @api.post("/probe/kraken/book-updates")
     async def probe_kraken_book_updates(

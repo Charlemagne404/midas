@@ -522,6 +522,36 @@ type PolymarketBookUpdateCaptureResult = {
   hypothetical_only: true;
   note: string;
 };
+type PolymarketBookUpdatesReplayResult = {
+  replay_version: string;
+  native_market_id: string;
+  bound_market_observation_id: string;
+  capture_started_at_utc: string;
+  frame_evidence: {
+    observation_id: string;
+    raw_sha256: string;
+    normalized_sha256: string;
+    frame_schema_version: 1;
+    frame_ordinal: number;
+    elapsed_since_capture_start_ns: number;
+    received_at_utc: string;
+    normalized_event_count: number;
+  }[];
+  frames: {
+    observation_id: string;
+    frame_ordinal: number;
+    received_at_utc: string;
+    updates: PolymarketBookUpdateCaptureResult['frames'][number]['updates'];
+  }[];
+  event_count: number;
+  input_sha256: string;
+  result_sha256: string;
+  message_order_basis: 'local_monotonic_elapsed';
+  continuity: 'unverified_no_sequence_or_gap_detection';
+  book_reconstructed: false;
+  event_economics_eligible: false;
+  classification: 'context_only';
+};
 type PriceHistoryReplayResult = {
   schema_version: number;
   run_id: string;
@@ -2634,14 +2664,18 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
         (capability) => capability.capability === 'price_history' && capability.supported,
       ),
   );
-  const polymarketBookUpdatesProbeEnabled = (sources.data?.items ?? []).some(
-    (source) =>
-      source.venue === 'polymarket' &&
-      source.public_probe_enabled &&
-      !source.probe_policy_block_reason &&
-      source.capabilities.some(
-        (capability) => capability.capability === 'book_updates' && capability.supported,
-      ),
+  const polymarketBookUpdatesSource = (sources.data?.items ?? []).find(
+    (source) => source.venue === 'polymarket',
+  );
+  const polymarketBookUpdatesProbeEnabled = Boolean(
+    polymarketBookUpdatesSource?.public_probe_enabled &&
+    !polymarketBookUpdatesSource.probe_policy_block_reason &&
+    polymarketBookUpdatesSource.capabilities.some(
+      (capability) => capability.capability === 'book_updates' && capability.supported,
+    ),
+  );
+  const polymarketBookUpdatesReplayEnabled = Boolean(
+    sources.data && !polymarketBookUpdatesSource?.probe_policy_block_reason,
   );
   const krakenBookUpdatesSource = (sources.data?.items ?? []).find(
     (source) => source.venue === 'kraken',
@@ -3073,6 +3107,13 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
         body: JSON.stringify({ market_id: input.marketId }),
       }),
     onSuccess: refresh,
+  });
+  const replayPolymarketBookUpdates = useMutation({
+    mutationFn: (input: { observationIds: string[] }) =>
+      api<PolymarketBookUpdatesReplayResult>('/frontier/replay/polymarket/book-updates', {
+        method: 'POST',
+        body: JSON.stringify({ observation_ids: input.observationIds }),
+      }),
   });
   const captureKrakenBookUpdates = useMutation({
     mutationFn: (input: { marketId: string }) =>
@@ -4015,6 +4056,11 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
               priceHistoryProbeEnabled={polymarketPriceHistoryProbeEnabled}
               bookUpdatesProbe={capturePolymarketBookUpdates}
               bookUpdatesProbeEnabled={polymarketBookUpdatesProbeEnabled}
+              bookUpdatesReplay={replayPolymarketBookUpdates}
+              bookUpdatesReplayEnabled={polymarketBookUpdatesReplayEnabled}
+              bookUpdatesReplayDisabledReason={
+                polymarketBookUpdatesSource?.probe_policy_block_reason
+              }
               krakenBookUpdatesProbe={captureKrakenBookUpdates}
               krakenBookUpdatesReplay={replayKrakenBookUpdates}
               krakenBookUpdatesProbeEnabled={krakenBookUpdatesProbeEnabled}
@@ -6169,13 +6215,28 @@ function PolymarketBookUpdatesPanel({
   market,
   probe,
   probeEnabled,
+  replay,
+  replayEnabled,
+  replayDisabledReason,
 }: {
   market: Market;
   probe: UseMutationResult<PolymarketBookUpdateCaptureResult, Error, { marketId: string }, unknown>;
   probeEnabled: boolean;
+  replay: UseMutationResult<
+    PolymarketBookUpdatesReplayResult,
+    Error,
+    { observationIds: string[] },
+    unknown
+  >;
+  replayEnabled: boolean;
+  replayDisabledReason?: string | null;
 }) {
   const result =
     probe.isSuccess && probe.variables?.marketId === market.canonical_id ? probe.data : null;
+  const observationIds = result?.frames.map((frame) => frame.observation_id) ?? [];
+  const replayMatchesCapture =
+    replay.variables?.observationIds.join(',') === observationIds.join(',');
+  const replayResult = replay.isSuccess && replayMatchesCapture ? replay.data : null;
 
   return (
     <section className="fr-price-history-panel" aria-label="Polymarket public book update capture">
@@ -6206,14 +6267,36 @@ function PolymarketBookUpdatesPanel({
               ? 'Capture 3-second market stream'
               : 'Public stream disabled'}
         </button>
+        <button
+          className="fr-inspect-button"
+          disabled={observationIds.length === 0 || !replayEnabled || replay.isPending}
+          onClick={() => replay.mutate({ observationIds })}
+        >
+          {replay.isPending
+            ? 'Replaying stored frames…'
+            : replayEnabled
+              ? 'Replay saved capture offline'
+              : 'Replay unavailable by source policy'}
+        </button>
       </div>
       <p className="fr-price-history-note">
         {probeEnabled
           ? 'Capture starts only after this button is pressed. Public updates have no verified sequence or gap recovery; deltas are not applied to a local book.'
           : 'Capture is unavailable because the Polymarket source is disabled, held, or does not advertise book updates.'}
       </p>
+      <p className="fr-price-history-note">
+        Saved replay reads immutable raw frames, orders persisted event frames by local monotonic
+        receipt timing, and never applies level changes to a book. Exchange sequence continuity
+        remains unverified; replayed events are excluded from economics.
+        {!replayEnabled && replayDisabledReason ? ` ${replayDisabledReason}` : ''}
+      </p>
       {probe.isError && probe.variables?.marketId === market.canonical_id && (
         <ProbeFailureEvidence error={probe.error} />
+      )}
+      {replay.isError && replayMatchesCapture && (
+        <p role="alert" className="fr-price-history-note">
+          {replay.error?.message ?? 'Stored Polymarket replay failed without a diagnostic message.'}
+        </p>
       )}
       {result && (
         <div className="fr-price-history-result" role="status">
@@ -6226,8 +6309,9 @@ function PolymarketBookUpdatesPanel({
             Bound market evidence {shortHash(result.bound_market_observation_id)} · source state{' '}
             {label(result.source_state)}
           </p>
-          {result.frames.map((frame) => (
+          {result.frames.map((frame, frameOrdinal) => (
             <article key={frame.observation_id} className="fr-price-history-meta">
+              <span>Stored event frame {frameOrdinal}</span>
               <span>Received {time(frame.received_at_utc)}</span>
               <span>Record {shortHash(frame.observation_id)}</span>
               <span>Raw SHA-256 {shortHash(frame.raw_sha256)}</span>
@@ -6244,6 +6328,39 @@ function PolymarketBookUpdatesPanel({
           <small>{result.note}</small>
         </div>
       )}
+      {replayResult && (
+        <div
+          className="fr-price-history-result"
+          role="status"
+          aria-label="Polymarket offline event replay result"
+        >
+          <p>
+            Replayed {replayResult.event_count} normalized event
+            {replayResult.event_count === 1 ? '' : 's'} across {replayResult.frames.length} saved
+            update frame{replayResult.frames.length === 1 ? '' : 's'} in local monotonic order.
+          </p>
+          <p>
+            Replay {replayResult.replay_version} · frame evidence{' '}
+            {replayResult.frame_evidence.length} · continuity unverified
+          </p>
+          {replayResult.frames.map((frame) => (
+            <article key={frame.observation_id} className="fr-price-history-meta">
+              <span>
+                Stored event frame {frame.frame_ordinal} · received {time(frame.received_at_utc)}
+              </span>
+              <span>
+                Events {frame.updates.map((update) => label(update.event_type)).join(', ')}
+              </span>
+              <span>Record {shortHash(frame.observation_id)}</span>
+            </article>
+          ))}
+          <p>
+            Input SHA-256 {shortHash(replayResult.input_sha256)} · result SHA-256{' '}
+            {shortHash(replayResult.result_sha256)}
+          </p>
+          <strong>Context only · no book reconstruction · economics ineligible.</strong>
+        </div>
+      )}
     </section>
   );
 }
@@ -6258,6 +6375,9 @@ function MarketDetails({
   priceHistoryProbeEnabled,
   bookUpdatesProbe,
   bookUpdatesProbeEnabled,
+  bookUpdatesReplay,
+  bookUpdatesReplayEnabled,
+  bookUpdatesReplayDisabledReason,
   krakenBookUpdatesProbe,
   krakenBookUpdatesReplay,
   krakenBookUpdatesProbeEnabled,
@@ -6301,6 +6421,14 @@ function MarketDetails({
     unknown
   >;
   bookUpdatesProbeEnabled: boolean;
+  bookUpdatesReplay: UseMutationResult<
+    PolymarketBookUpdatesReplayResult,
+    Error,
+    { observationIds: string[] },
+    unknown
+  >;
+  bookUpdatesReplayEnabled: boolean;
+  bookUpdatesReplayDisabledReason?: string | null;
   krakenBookUpdatesProbe: UseMutationResult<
     KrakenBookUpdateCaptureResult,
     Error,
@@ -6471,6 +6599,9 @@ function MarketDetails({
           market={market}
           probe={bookUpdatesProbe}
           probeEnabled={bookUpdatesProbeEnabled}
+          replay={bookUpdatesReplay}
+          replayEnabled={bookUpdatesReplayEnabled}
+          replayDisabledReason={bookUpdatesReplayDisabledReason}
         />
       )}
       {(market.venue === 'polymarket' || market.venue === 'kalshi') && (

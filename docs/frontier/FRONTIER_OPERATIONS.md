@@ -848,16 +848,20 @@ always-on worker. It connects only to
 `wss://ws-subscriptions-clob.polymarket.com/ws/market`, without credentials or
 proxy, and requires both `enabled` and `live_public_probe_enabled` plus no
 source-use hold. Default configuration leaves both flags false. The current
-Mission Control and HTTP collection routes do not invoke this method.
+Mission Control exposes an explicit capture action for a previously recorded
+Polymarket market through `POST /api/frontier/probe/polymarket/book-updates`;
+opening the workspace does not invoke it automatically.
 
 Each call is bounded to at most 50 unique decimal asset IDs, 32 received
 frames, 100 normalized events, 30 seconds, the configured maximum frame size,
 and a 2 MiB/32-record in-memory raw capture budget. It sends the documented
 application-level `PING` every 10 seconds and performs no automatic retry or
-reconnect. `take_captures()` returns the raw WebSocket frames; each returned
-`PolymarketBookUpdateFrame` can be stored with the generic append-only
-`FrontierStore.append_observation(raw, normalized)` method. Malformed frames
-are rejected, with bounded raw evidence retained when possible.
+reconnect. The API route binds the request to a saved market, persists each
+raw frame and its normalized event evidence, and returns those observation
+IDs. `take_captures()` remains available to adapter callers that persist with
+the generic append-only `FrontierStore.append_observation(raw, normalized)`
+method. Malformed frames are rejected, with bounded raw evidence retained
+when possible.
 
 The [Polymarket real-time reference](https://docs.polymarket.com/market-data/realtime-data)
 documents `book` and `price_change` events, but the CLOB event contract does
@@ -867,6 +871,25 @@ applies deltas to a `BookSnapshot`. Stream events do not feed candidate
 generation or economic evaluation. No live stream capture has been made; user
 location eligibility and intended source terms remain unverified. Do not
 enable the source flags on the host as part of routine development.
+
+## Polymarket persisted event replay
+
+`POST /api/frontier/replay/polymarket/book-updates` accepts 1–32 unique,
+lowercase SHA-256 observation IDs. It reads only stored
+`public_book_update_frame` rows and makes no source connection. Existing
+source-use holds still block use of that venue's saved evidence. The API checks
+the store observation identity, raw-frame hash, capture and market binding,
+provenance, adapter/schema version, and strict re-decoding against the stored
+normalized events. Frames must belong to one capture and one native market.
+The request and response are bounded to 32 frames and 8 MiB of raw frame data.
+
+Replay orders frames by locally measured monotonic elapsed receive time. That
+is only the order observed by this capture: it is not an exchange sequence,
+does not establish complete delivery, and does not reconstruct a book. Results
+are labeled `context_only` with `event_economics_eligible=false`. The Market
+Details panel exposes this action after a bounded capture and displays the
+input/result hashes and the same limitations. The current UI does not claim
+that event replay restores upstream continuity or produces economics.
 
 ## Kraken Spot public book stream
 
