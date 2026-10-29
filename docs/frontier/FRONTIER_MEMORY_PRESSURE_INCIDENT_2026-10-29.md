@@ -3192,3 +3192,23 @@ global PSI avg10/60/300 was zero. No service was stopped, signaled, or
 reconfigured. This is current-state attribution evidence only; root cause
 remains **PARTIALLY IDENTIFIED** at the shared uncapped user-manager and
 high-swap-pressure level, with the initiating workload unconfirmed.
+
+## Reality API hard-limit readback — 2026-10-29 14:09 CET
+
+The Reality API cgroup read back `MemoryCurrent=495,714,304` bytes
+(472.7 MiB), `MemoryPeak=536,870,912` bytes (512 MiB),
+`MemoryMax=536,870,912` bytes, no `MemoryHigh`, and `MemorySwapMax=0`.
+Its `memory.events` showed `max=5,030` but `oom=0` and `oom_kill=0`; its
+current `memory.stat` was approximately 95.9 MiB anonymous, 362.4 MiB file,
+and 14.4 MiB kernel memory. The service remained active with zero restarts.
+Thus the hard boundary has been reached historically and allocations have
+hit it, but this sample shows no OOM termination or service restart.
+
+At 14:09:50, host memory PSI avg10/60/300 remained zero, approximately 10.60
+GiB was available, and only 15.45 MiB of swap was free. API and Reality were
+also active at restarts 9/14; test ports were closed and no OOMD or kernel kill
+appeared since 14:06:26. No limit was changed: the service's file-backed
+charge is large and the aggregate user-manager budget is unresolved, so
+increasing its cap would raise potential host commitment without evidence that
+the added memory is necessary. Track this as a near-limit service risk, not a
+demonstrated OOM cause.

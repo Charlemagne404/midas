@@ -15653,3 +15653,14 @@ sample, `MemAvailable` was 10.60 GiB, swap free 15.45 MiB, and global PSI was
 zero. No process was stopped or reconfigured. The uncapped shared user
 manager remains a broad resource boundary, but the historical initiating
 workload is unconfirmed.
+
+### Reality API hard-limit evidence — 2026-10-29 14:09 CET
+
+The Reality API remained active at zero restarts with `MemoryCurrent` 495,714,304
+bytes (472.7 MiB), `MemoryPeak` equal to its 536,870,912-byte (512 MiB)
+`MemoryMax`, no `MemoryHigh`, and zero swap allowance. Its cgroup recorded
+5,030 `max` events but zero OOM or OOM-kill events. `memory.stat` showed about
+95.9 MiB anonymous, 362.4 MiB file-backed, and 14.4 MiB kernel memory. This
+confirms a near-limit service condition and prior max events, not an OOM
+termination. No cap increase was made without an aggregate host budget; the
+service remains under observation alongside the uncapped shared user manager.

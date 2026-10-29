@@ -15087,3 +15087,17 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
 - No process was stopped or changed. The uncapped shared user-manager remains
   a plausible resource-risk boundary, but per-workload historical attribution
   and sustained recovery remain unproven. No further browser work was started.
+
+## 2026-10-29 14:09 CET — Reality API max-bound observation
+
+- Reality API was active at zero restarts with 472.7 MiB current memory,
+  512 MiB peak and max, zero swap, and no `MemoryHigh`. Its cgroup showed
+  5,030 `memory.events max` events but zero `oom` or `oom_kill` events.
+  About 362.4 MiB of its current charge was file-backed.
+- This is a near-limit condition, not a demonstrated kill. No cap increase was
+  made because its file-backed memory is high and the shared user-manager has
+  no validated aggregate budget. API and Reality remained active; PSI stayed
+  zero and no new OOMD/kernel kill appeared in the observation window.
+- **Status:** Track this service limit as an additional risk. Keep all
+  protected services unchanged and continue only serial, bounded Frontier
+  work while global cause and sustained recovery remain unresolved.
