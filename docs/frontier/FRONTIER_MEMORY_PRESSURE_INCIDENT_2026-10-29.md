@@ -4857,3 +4857,73 @@ the gap-detail timer remained inactive/dead. No service or workload was
 changed. This short quiet interval supports only future serial capped fixture
 work; nearly full swap and the attribution of the +208 parent max events remain
 unresolved.
+
+### Resource and attribution recheck — 2026-10-29 19:48 CET
+
+At 19:47:46 host memory PSI avg10/60/300 was zero, MemAvailable was
+10,897,716 KiB (about 10.4 GiB), and SwapFree was 20,528 KiB (about 20 MiB).
+The user-slice high/max remained unlimited. Its current charge was 11.15 GB,
+including 3.41 GB swap; user@1000.service was at 11.07 GB memory and 2.85 GB
+swap. The preceding 19:43 memory.stat sample showed about 2.6 GB anonymous,
+7.3 GB file cache, and 1.18 GB kernel memory, including 5.9 GB inactive file
+cache and 0.98 GB reclaimable slab. These are cgroup charges, not proof of
+active pressure: PSI was zero and host available memory was high.
+
+The largest current application subtree was the GNOME Terminal slice at
+5.77 GB (about 4.05 GB file cache and 1.19 GB anonymous). The active VTE scope
+containing the Frontier development session was 3.22 GB (2.41 GB file cache,
+0.75 GB anonymous, no swap). This is a substantial present user-session
+footprint and a reason to avoid broad scans/builds here. Its local high/max/
+OOM counters and PSI were zero; this snapshot does not identify the historical
+OOM initiator.
+
+The aggregate user-manager counters were unchanged since 19:42:
+high=16,438,074, max=731,991, oom=19, oom_kill=15, group-kill=0. The max
+increase of 208 recorded between 19:36 and 19:41 remains unattributed, and
+the timing evidence is now more specific: the Veritas source-analysis
+service ran from 19:40:41 to 19:40:52, processed 60 segments, used 8.622 CPU
+seconds, and has MemoryMax=256M. A separate 19:10 run of the same service
+processed 59 segments and directly accounted for 233 parent max events from
+its leaf cgroup. The selected Frontier graph test also ran in the surrounding
+window, and its transient leaf had already been collected before its peak and
+event counters were read. Either workload could contribute; no leaf data
+establishes the source of the +208. Do not attribute it to the UI test alone.
+
+The systemd-oomd journal still has no kill after 2026-10-28 23:43:24 CET; the
+kernel OOM query is empty over the same period. systemd-oomd is active and
+reports default 60% pressure / 20-second and 90%-swap-used settings, while
+oomctl currently lists no monitored cgroups and a zero system context. The
+system manager's user@1000.service property view and that oomctl result do not
+agree; prior kill records prove that user-session pressure kills did occur.
+This monitoring-registration discrepancy remains unresolved. No OOMD policy
+was changed.
+
+The scheduled jobs examined did not overlap in the captured 19:00–19:45
+window: the public observation run took 12 seconds, source analysis 11
+seconds, and the research director 2 seconds. The minutely Arena dispatcher
+reported no schedules in its 19:44 and 19:45 runs. This does not establish
+that all historical runs were non-overlapping, but it gives no basis for
+changing those timers now. The gap-detail timer remains disabled/inactive and
+its service retains its prior OOM failure state; the capacity timer remains
+enabled and its 19:20 run exited successfully under the persistent
+160M/192M/zero-swap bound. No timer, service limit, collector, or archive data
+was changed during this recheck.
+
+At 19:48, API, Reality, Reality API, SSH, RustDesk, Caddy, Continental, and
+Echo production/staging units were active. Reality's status file had updated
+at 19:48:26: state RECORDING_UNSEQUENCED, collection health
+active_receiving, 16/16 expected books fresh, five accumulated failures, and
+sequence_verified=false. Its status still carries a stale-observation timeout
+error even though the last-observation timestamp was current. The collector
+was not restarted; this is a source-health/sequence caveat, not evidence of a
+memory kill.
+
+**Disposition:** the host has no measured PSI pressure now and no OOM kill
+since the Oct 28 cluster, but swap remains nearly full, the OOMD registration
+view is inconsistent, and the +208 max-event increment is unresolved. Resume
+Frontier only with code/documentation work and one serial fixture workload
+after a fresh admission check, under the existing zero-swap resource cap.
+Keep broad builds, full suites, replay batches, live-source probes, and
+deployment deferred. Capture each transient leaf's memory peak and local
+event counters before collecting its unit. Incident status remains
+**PARTIALLY CONTAINED / PARTIALLY VERIFIED**, not solved.

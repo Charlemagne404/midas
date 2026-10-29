@@ -761,6 +761,27 @@ workflow and require a separate decision. The current mission ledger and
 engineering report distinguish fixture verification, live public observations,
 and deployment status.
 
+### Admission recheck — 2026-10-29 19:48 CET
+
+The latest sample had zero host PSI, about 10.4 GiB MemAvailable, and only
+about 20 MiB SwapFree. User-manager max/OOM counters were unchanged from
+19:42. The large user-slice memory.current includes substantial file cache
+and kernel/slab charges; do not treat memory.current as equivalent to
+unreclaimable anonymous memory. A 19:36–19:41 increase of 208 parent max
+events overlaps both the selected UI test and the 19:40 Veritas source
+analysis run. The source-analysis job has a 256 MiB hard cap and a prior
+measured +233 leaf max-event run, so the latest increment cannot be attributed
+to the UI test without its leaf counters.
+
+Before another test, capture the transient unit's cgroup path, memory.peak,
+and local memory.events before collection; do not infer leaf pressure from an
+aggregate parent counter. Keep the existing serial, zero-swap test cap and
+8 GiB minimum MemAvailable gate. Do not run a build, broad suite, replay batch,
+or public-source probe while swap is nearly full. The 19:48 incident recheck
+records current user-session cgroup charges, scheduled-job timing, the
+systemd-oomd/oomctl registration discrepancy, active service state, and the
+Reality source-health caveat.
+
 ## Discovery-scope Arena comparison
 
 The Replay & Readiness view can submit

@@ -16496,3 +16496,32 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
   and 0.15/0.63 GiB current/Max. Capacity timer waited; gap-detail remained
   inactive/dead. No production service was changed. Continue only serial
   capped fixtures; incident remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**.
+
+## 2026-10-29 19:48 CET — incident attribution and admission follow-up
+
+- At 19:47:46 host PSI averages were zero and MemAvailable was 10,897,716 KiB
+  (~10.4 GiB); SwapFree remained only 20,528 KiB (~20 MiB). User-manager
+  counters were unchanged at high 16,438,074 / max 731,991 / oom 19 /
+  oom_kill 15 / group-kill 0. No systemd-oomd kill has appeared since
+  2026-10-28 23:43:24 and the kernel OOM query remains empty.
+- Current user-slice memory is mostly file cache and kernel/slab charge; the
+  Terminal slice is 5.77 GB and the active development VTE scope 3.22 GB.
+  PSI and leaf OOM counters are zero, so these are current footprint evidence,
+  not attribution of the earlier OOM cluster.
+- The unexplained +208 parent max-event window overlaps the Frontier graph
+  test and Veritas source analysis (19:40:41–19:40:52, 60 segments, 8.622 CPU
+  seconds). A previous source-analysis batch produced +233 leaf max events.
+  The transient test leaf was collected before stats capture; attribution
+  remains unknown. Do not blame the UI test alone.
+- systemd-oomd remains active; its current oomctl output lists no monitored
+  groups despite prior recorded user-session pressure kills and an inconsistent
+  system-manager property view. No policy was changed.
+- API, Reality, Reality API, SSH, RustDesk, Caddy, Continental, and Echo
+  production/staging remained active. Reality last reported 16/16 fresh books
+  and active receiving, while remaining unsequenced with five accumulated
+  failures and a retained stale-observation timeout. No restart was attempted.
+- Continue code/documentation work and only one serial fixture workload after
+  a fresh admission sample. Keep builds, full suites, replay batches, live
+  probes, and deployment deferred while swap remains nearly full. Capture
+  each transient leaf's peak/events before collection. Host state is
+  **PARTIALLY CONTAINED / PARTIALLY VERIFIED**.

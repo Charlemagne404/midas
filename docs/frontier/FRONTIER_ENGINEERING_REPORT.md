@@ -16582,3 +16582,51 @@ longer exposed leaf counters or peak, so the increase is unattributed. No new
 systemd-oomd or kernel OOM journal entry appeared since 19:36. Keep the
 incident partially verified and pause further test workloads until a fresh
 admission sample.
+
+### Host incident attribution and source-health follow-up — 2026-10-29 19:48 CET
+
+At 19:47:46, host PSI averages were zero, MemAvailable was 10,897,716 KiB
+(about 10.4 GiB), and SwapFree was 20,528 KiB (about 20 MiB). User-manager
+high/max/oom/oom_kill/group-kill counters were unchanged at
+16,438,074/731,991/19/15/0. The journal contains no systemd-oomd kill after
+the final Oct 28 event at 23:43:24 and no kernel OOM entry since that event.
+
+The user slice currently has no aggregate memory.high or memory.max. At the
+19:43 sample it charged about 11.1 GB, of which memory.stat reported about
+7.3 GB file cache, 2.6 GB anonymous memory, and 1.18 GB kernel memory. The
+largest app subtree was GNOME Terminal at 5.77 GB; the active Frontier
+development VTE scope was 3.22 GB, mostly file cache. These values identify
+current resource footprint, not the workload responsible for the earlier
+ancestor PSI. Available memory remains high and current PSI is zero.
+
+The 19:36–19:41 parent max-event increase of 208 cannot be assigned to the
+selected UI test. Veritas source analysis also ran in that interval
+(19:40:41–19:40:52), processed 60 segments, used 8.622 CPU seconds, and had a
+256 MiB hard cap. Its 19:10 run processed 59 segments and accounted for 233
+leaf max events. The UI test's transient cgroup had already been collected
+before its peak and local counters were read. Keep both as candidates and
+capture local counters before collecting future transient test units.
+
+There was no observed overlap among the sampled 19:00–19:45 observation,
+source-analysis, and research-director runs (12, 11, and 2 seconds wall time).
+The Arena scheduler returned an empty schedule list at 19:44 and 19:45. No
+timer frequency change is supported by these samples. The gap-detail timer
+remains disabled; the capacity check's 19:20 run succeeded with the existing
+160 MiB High / 192 MiB Max / zero-swap override. No service, timer, OOMD
+policy, collector, or archive data was changed in this follow-up.
+
+Reality remains active at about 926 MiB current / 1.25 GiB Max. Its status
+file updated at 19:48:26 and reported RECORDING_UNSEQUENCED,
+active_receiving, 16/16 expected books fresh, five accumulated failures, and a
+retained stale-observation timeout; sequence verification remains false. The
+collector was not restarted. API, Reality API, SSH, RustDesk, Caddy,
+Continental, and Echo production/staging were active.
+
+systemd-oomd is active and reports default pressure 60% for 20 seconds and
+90% swap-used settings, but current oomctl lists no monitored cgroups and a
+zero system context despite prior user-session kill records. This registration
+view remains inconsistent and unresolved. With swap nearly full and the
+attribution of +208 open, safe Frontier continuation is limited to code work
+and a single serial, zero-swap fixture job after a fresh admission check.
+Broad builds, full suites, replays, public-source probes, and deployment remain
+deferred. Incident state is **PARTIALLY CONTAINED / PARTIALLY VERIFIED**.
