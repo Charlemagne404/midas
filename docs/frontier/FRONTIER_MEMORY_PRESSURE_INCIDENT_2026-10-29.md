@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 06:37 CET |
+| Latest addendum | 2026-10-29 06:49 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Pre-incident checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -824,3 +824,13 @@ The user-facing overload feedback change is committed as 401994f. A fixture test
 At 05:37:08 UTC, host MemAvailable was 11,463,749,632 bytes (10.68 GiB), SwapFree was 7,979,008 bytes (7.61 MiB), and host memory PSI averages were zero. User-manager memory/swap charges were 9,485,979,648 / 2,858,835,968 bytes. Its cumulative memory events remained oom=19, oom_kill=15, oom_group_kill=0. Kernel and systemd-oomd journal queries had no matching OOM or kill entries since 05:34 UTC. MIDAS API and Reality health endpoints returned READY, with live_execution=false; systemd restart counts remained 9 and 14 in the adjacent 05:34 service sample. The capacity timer was waiting. The gap-detail timer remained inactive and its service retained its prior oom-kill result.
 
 The sample shows no new kill during this brief bounded-work window, but swap remains nearly full and the user-manager hierarchy remains uncapped. Historic system-wide attribution and durable recovery are not established. Incident status remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**. Serial, bounded, source-independent Frontier work may continue after fresh admission checks; do not infer readiness for broad test suites, live probes, deployment, or concurrent research.
+
+## Post-build and admission-telemetry sample — 2026-10-29 06:49 CET
+
+Frontier added process-local source gate counters and a refreshable Exchange Explorer snapshot in commit d712df1. The API reports current admitted operations/venues, cumulative admissions, and busy rejections split by venue and shared capacity with a UTC sample time. Counters reset with the router and are not aggregated across API workers. This improves visibility into Frontier's own bounded source calls; it is not a host-level resource monitor.
+
+The source-gate tests passed 3/3 in 3.80 seconds, including the two rejection categories and counter cleanup; the focused UI test passed 1/1 with eight unrelated cases skipped. Ruff, strict mypy, Prettier, ESLint, and the exact-tree TypeScript check passed. A production Vite build transformed 2,230 modules and passed in 54.80 seconds under a 640/768 MiB, zero-swap, 25% CPU scope with a 384 MiB Node heap. It wrote to a new /tmp directory; the existing ignored dist output was preserved. Vite still reports the 544.51 kB Chart chunk advisory. No live market endpoint was contacted.
+
+At 05:48:15 UTC, MemAvailable was 11,544,653,824 bytes (10.76 GiB), SwapFree was 8,278,016 bytes (7.90 MiB), and host memory PSI averages were zero. User-manager memory/swap charges were 9,513,750,528 / 2,858,569,728 bytes and OOM counters remained 19/15/0. API and Reality were active at restart counts 9 and 14; their health endpoints returned READY with live_execution=false immediately before the final sample. The capacity timer was waiting; gap-detail remained inactive with the prior OOM-kill result. No kernel or systemd-oomd kill appeared in the short query since 05:47 UTC.
+
+No service, timer, resource limit, protected collector, or historical evidence was changed. The host incident remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**: swap is almost full, the user-manager hierarchy is uncapped, and long-term recovery/attribution is not established. Continue Frontier only through serial, bounded work after fresh admission checks.
