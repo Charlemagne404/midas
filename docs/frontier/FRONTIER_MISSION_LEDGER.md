@@ -14195,3 +14195,24 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
   at 160/192 MiB and zero swap; invalid archive inventory/provenance is
   untouched. Proceed with one bounded offline Frontier task only after fresh
   admission. Do not infer durable recovery from this short quiet interval.
+
+## 2026-10-29 10:13 CET — Gemini hold and collector regressions
+
+- Four focused API/collection regressions passed **4/4 in 9.00 seconds**:
+  the registry kept Gemini probing disabled, its source-specific config
+  persisted while collection remained held, held/disabled sources were
+  rejected before journal or request access, and resume was denied after the
+  adapter capability manifest changed. The test run used temporary state and
+  no external endpoint. One existing Starlette/httpx deprecation warning
+  appeared.
+- The transient unit peaked at 57.5 MiB, used zero swap, and stayed within
+  384 MiB high / 512 MiB max, 20% CPU, 64 tasks, and a 60-second limit. At
+  10:13:28, `MemAvailable=11,310,669,824` bytes (10.54 GiB), `SwapFree` was
+  9,633,792 bytes (9.19 MiB), and global PSI remained zero. User-manager OOM
+  counters stayed at `oom=19`, `oom_kill=15`, `oom_group_kill=0`; no kernel or
+  systemd-oomd kill appeared in the preceding 30 minutes. API, Reality, and
+  Reality API remained active at restart counts 9/14/0.
+- The next scheduled Continental infrastructure audit was due at 10:13:54;
+  no service state or configuration was changed. Continue only after the
+  audit completes and a fresh resource/timer admission passes. Host incident
+  remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**.

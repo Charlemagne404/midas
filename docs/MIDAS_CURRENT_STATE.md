@@ -3987,3 +3987,12 @@ bounded at 160/192 MiB and zero swap. The host incident remains
 and durable recovery unproven. See the
 [`Frontier memory incident report`](frontier/FRONTIER_MEMORY_PRESSURE_INCIDENT_2026-10-29.md)
 and [`Frontier mission ledger`](frontier/FRONTIER_MISSION_LEDGER.md).
+
+The follow-up held-source and collection regression slice passed **4/4 in
+9.00 seconds** under the same zero-swap 384/512 MiB, 20%-CPU, 64-task bound.
+It verifies the Gemini probe gate, collector hold, pre-journal/source request
+rejection, and capability-manifest mismatch on resume. One existing
+Starlette/httpx deprecation warning appeared. At 10:13:28 host PSI remained
+zero, 10.54 GiB RAM was available, swap remained 99.8% occupied, and user
+manager OOM counters stayed at 19/15/0. API/Reality/Reality API remained
+active with restart counts 9/14/0.

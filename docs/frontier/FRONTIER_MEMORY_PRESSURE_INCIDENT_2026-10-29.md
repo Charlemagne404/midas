@@ -2041,3 +2041,18 @@ attribution, and the lack of long-duration observation continue to block a
 resolved disposition. The incident remains **PARTIALLY CONTAINED / PARTIALLY
 VERIFIED**; Frontier may continue only serial, offline, resource-capped work
 after a fresh admission check.
+
+## 2026-10-29 10:13 CET — API and collector boundary regression
+
+Four focused regressions covering Gemini's non-clearable probe hold, held
+collector config persistence, pre-journal/pre-request rejection, and
+capability-manifest resume rejection passed **4/4 in 9.00 s**. The transient
+service peaked at 57.5 MiB, used zero swap, and remained within 384 MiB high /
+512 MiB max, 20% CPU, 64 tasks, and 60 seconds. The only warning was the
+existing Starlette/httpx deprecation notice. At 10:13:28, host PSI was zero,
+`MemAvailable` was 11,310,669,824 bytes, and 9,633,792 bytes of swap was free.
+OOM counters stayed at 19/15/0; no kernel or systemd-oomd kill appeared in
+the prior 30 minutes. API, Reality, and Reality API remained active at
+restart counts 9/14/0. The test used temporary local state and made no
+external request or configuration change. The next scheduled Continental
+audit was due at 10:13:54; wait for it to complete before further work.

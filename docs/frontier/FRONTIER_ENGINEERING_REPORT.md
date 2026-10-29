@@ -2,7 +2,7 @@
 
 **Report date:** 2026-10-29
 
-## Current completion matrix — 2026-10-29 10:10 CET
+## Current completion matrix — 2026-10-29 10:13 CET
 
 This is a current evidence classification, not a final completion claim. The
 dated implementation records below remain the detailed evidence; the
@@ -50,6 +50,14 @@ when both exist.
 The shared five-venue contract stores the normalized trade with its exact raw
 response provenance. Focused Gemini and shared adapter tests pass 8/8; Ruff
 check and format checks pass for the touched Python files.
+
+The held-source and collection boundary also passed four focused regressions:
+Gemini remains disabled in the application registry, collection persists its
+source-specific configuration without making the source eligible, held or
+disabled sources are rejected before journal/request access, and resume is
+rejected after the capability manifest changes. This slice passed 4/4 in
+9.00 seconds with one existing Starlette/httpx deprecation warning. Its
+transient cgroup peak was 57.5 MiB with zero swap.
 
 The tests use injected offline fixture transports only. Gemini's non-clearable
 source-use hold remains unchanged; no Gemini endpoint was queried and no
