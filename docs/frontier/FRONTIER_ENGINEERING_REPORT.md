@@ -2,7 +2,7 @@
 
 **Report date:** 2026-10-29
 
-## Current completion matrix — 2026-10-29 01:36 CET
+## Current completion matrix — 2026-10-29 01:40 CET
 
 This is a current evidence classification, not a final completion claim. The
 dated implementation records below remain the detailed evidence; the
@@ -22,13 +22,13 @@ current host gate.
 | User-cgroup-aware workload admission | IMPLEMENTED, BOUNDED VALIDATION PASSED | Central Arena admission (15), finite schedules (12), and the Laboratory denial case (1) pass fixture tests using user-manager pressure; no runtime deployment occurred. |
 | Reality capacity inventory bounds | PARTIALLY VERIFIED | Isolated candidate tests pass 5/5; candidate code remains undeployed. The separate capacity monitor completed one scheduled run at 134,225,920 bytes under `MemoryHigh=160M`, `MemoryMax=192M`, and zero swap. |
 | Native Frontier dashboard | PARTIALLY VERIFIED | The graph/evidence UI test and all 9 UI cases pass across the default-timeout run and a 15-second retry for its two slow fixtures. Typecheck/build and three isolated Playwright smoke/replay/Arena journeys pass; the full browser suite remains unverified. |
-| Host reliability containment | PARTIALLY VERIFIED | The auxiliary five-minute gap-detail timer is disabled and the capacity soft bound is validated in one scheduled run. No OOM kill has been logged since 23:43 CET; the workload mix that triggered aggregate pressure remains unknown. |
+| Host reliability containment | PARTIALLY VERIFIED | The auxiliary five-minute gap-detail timer is disabled; one scheduled capacity run passed and the 01:40 source-analysis run completed under its 256 MiB cap. No OOM kill has been logged since 23:43 CET; the workload mix that triggered aggregate pressure remains unknown. |
 | Broad regressions, resource endurance, and performance acceptance | DEFERRED | Several targeted suites pass under explicit memory, swap, CPU, task, and wall-time limits; the full repository suite, endurance, and broad performance tests remain deferred. |
 | Live multi-venue source authorization and findings | BLOCKED | Kalshi, Kraken, and Coinbase retained research remain held; the worktree Polymarket probe flag is off. |
 | Production integration/deployment | DEFERRED | Frontier remains isolated; no protected service transition occurred. |
 | Project Frontier overall | PARTIALLY VERIFIED | The engine is substantial, but live cross-venue science, broad verification, recovery, endurance, and deployment gates remain open. |
 
-## Bounded Frontier verification after host containment — 2026-10-29 01:36 CET
+## Bounded Frontier verification after host containment — 2026-10-29 01:40 CET
 
 Frontier work resumed only in sequential transient user scopes. Python test
 scopes used a 768 MiB maximum, zero swap, 25% CPU quota, 64-task cap, and
@@ -84,6 +84,12 @@ scope peak; output was written to a new `/tmp` directory. Vite retained its
 existing warning that the Chart chunk is 544.51 kB minified. The full
 Playwright suite, full repository suite, resource endurance, and live
 multi-venue research remain unrun.
+
+The existing 01:40 Veritas source-analysis timer also completed successfully:
+58 segments processed, zero pending, `status=current`, and readiness
+`awaiting_finalized_campaign_window_end`. It used 8.382 CPU seconds, peaked at
+226.3 MiB under its 256 MiB hard cap, and used no swap. This is a bounded
+operational observation, not evidence of positive or eligible opportunities.
 
 ## Adapter trust boundary and retry bound review — 2026-10-29 00:00 CET
 

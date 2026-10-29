@@ -2,7 +2,7 @@
 
 **Incident date:** 2026-10-28 (CET)
 
-**Checkpoint captured:** 2026-10-29 01:36 CET
+**Checkpoint captured:** 2026-10-29 01:40 CET
 
 **Scope:** Host reliability interruption during Project Frontier
 
@@ -871,3 +871,10 @@ zero, and user-manager `max`, `oom`, and `oom_kill` were unchanged. Reality
 and API were active with restart counts 14/9. The next scheduled source
 analysis is at 01:40 and the next capacity report is due at 01:46; observe
 those existing jobs without starting competing work.
+
+The 01:40 source-analysis run finished at 01:40:13 with exit status 0 after
+processing 58 new segments; pending count was zero and status was `current`.
+Its measured peak was 226.3 MiB under `MemoryMax=256 MiB`, with zero swap and
+8.382 CPU seconds. At 01:40:19, host `MemAvailable` was 9.7 GiB, host PSI was
+zero, and the user-manager's max/OOM/OOM-kill counters were unchanged. The
+next existing capacity check is scheduled for 01:46:04.

@@ -1,6 +1,6 @@
 # Project Frontier Mission Ledger
 
-## Current host and Frontier state — 2026-10-29 01:36 CET
+## Current host and Frontier state — 2026-10-29 01:40 CET
 
 Reality has resumed recording after cold replay: status says
 `RECORDING_UNSEQUENCED`, `active_receiving`, 16/16 fresh books, zero failures,
@@ -30,6 +30,12 @@ active with restart counts 14 and 9; API remains close to its own
 SSH socket were verified active at 01:16. Keep work sequential, fixture-based,
 and explicitly bounded. Full repository regression, the full browser E2E
 suite, live probes, endurance, and research campaigns remain gated.
+
+At 01:40:13, the scheduled Veritas source-analysis job completed with
+`status=current`, 58 segments processed, zero pending, and readiness
+`awaiting_finalized_campaign_window_end`. It peaked at 226.3 MiB under its
+256 MiB cap, used no swap, and exited successfully. The capacity monitor's
+next scheduled run is 01:46:04; do not overlap it with additional tests.
 
 Recent bounded Frontier evidence:
 
