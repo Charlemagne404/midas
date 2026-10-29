@@ -15068,7 +15068,8 @@ The 05:42 entry above records the earlier adapter-only state. The bounded
 Polymarket capture API, persistence path, and explicit Mission Control capture
 action were integrated afterward and already existed in this worktree. This
 checkpoint adds the missing offline replay path; it does not add another
-collector or perform a public probe.
+collector or perform a public probe. The implementation is committed as
+`ec3f2e9` on `codex/frontier-20261026`.
 
 `POST /api/frontier/replay/polymarket/book-updates` accepts one to 32 unique
 lowercase SHA-256 observation IDs. It reads only stored Polymarket

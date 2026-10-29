@@ -14567,3 +14567,43 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
   Continental, Echo, journald, and other services. All remained untouched.
   Host pressure is currently quiet but swap remains nearly exhausted; the
   aggregate workload cause and durable recovery remain unresolved.
+
+## 2026-10-29 12:15 CET — Polymarket event replay checkpoint
+
+- Commit `ec3f2e9` adds deterministic offline replay for already-persisted
+  Polymarket market-stream event frames. The API accepts 1–32 unique
+  observation IDs, rechecks store identity/provenance/raw hashes, re-decodes
+  bounded raw UTF-8 frames, and requires exact agreement with normalized
+  evidence. It reads no source. Replay preserves local monotonic arrival order,
+  explicitly does not rebuild a book, and returns context-only,
+  economics-ineligible results. Frontier UI exposes the replay after explicit
+  capture and shows hashes and limitations. Architecture and operations docs
+  were corrected to describe the existing capture route and the new replay.
+- The focused Polymarket API fixture passed **1/1 in 4.19 s** under 384 MiB
+  high / 640 MiB max, zero swap, 20% CPU, 64 tasks, and 90 seconds. It checks
+  reversed-input ordering, deterministic repeat output, tamper rejection, and
+  that replay opens no second stream. The focused UI fixture passed **1/1 in
+  7.80 s** under 512 MiB high / 640 MiB max with zero swap. `tsc -b` exited 0
+  under a 640 MiB max. Ruff check/format, ESLint, Prettier, and `git diff
+  --check` passed. Strict mypy passed for the new module with imported modules
+  silenced; the combined module/API mypy invocation reached its 60-second
+  runtime cap (exit 143), so API mypy is not verified by this checkpoint.
+  The test output contains one existing Starlette/httpx deprecation warning.
+- The post-checkpoint 12:14 sample showed `MemAvailable` 10.57 GiB and
+  `SwapFree` 13.66 MiB. PSI briefly rose to `some avg10/avg60=0.68/9.64%` and
+  `full=0.63/8.96%`; user-manager `memory.events.high` advanced by 3,582 while
+  max/OOM counters remained unchanged. A quiet sample 58 seconds later showed
+  avg10 PSI at zero and avg60 declining, with events stable. Frontier's capped
+  analysis is a possible contributor, not proven. API/Reality/Reality API,
+  Continental contact/status, Echo production/staging, RustDesk, SSH, and
+  systemd-oomd remained active. The gap-detail timer stayed inactive and the
+  capacity timer waited. No service configuration, protected evidence, or
+  source-probe directory was changed; `data/frontier-public-probes/` remains
+  untracked and unstaged.
+- **Status:** Feature and fixture verification are complete for the bounded
+  event replay. Live Polymarket stream validation remains pending and no
+  positive economics are implied. Host incident remains **PARTIALLY
+  CONTAINED / PARTIALLY VERIFIED**; nearly full swap and historical pressure
+  attribution remain unresolved. Do not run another compiler/build/browser
+  suite or broad research job until a fresh admission sample shows pressure
+  back near baseline. Resume only serial, bounded offline work after admission.

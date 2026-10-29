@@ -2537,3 +2537,43 @@ The 11:49 sample is an attribution snapshot, not a causal reconstruction. It
 reinforces that pressure is aggregate and file-cache-heavy at this time, but
 does not resolve what crossed the user-slice pressure threshold on October 28.
 No process was killed or stopped to reduce the current charge.
+
+## Post-checkpoint pressure signal — 2026-10-29 12:15 CET
+
+The Frontier Polymarket replay slice used only serialized, fixture-backed
+checks under explicit per-task memory, swap, CPU, task, and runtime bounds. The
+focused API replay test and one UI component journey passed; `tsc -b` exited 0.
+A combined strict-mypy invocation covering the new replay module and the large
+API router reached its 60-second runtime cap and exited 143. An isolated strict
+check of the new replay module then passed with imported modules silenced. No
+public-data request or production action occurred.
+
+At 12:14:01, `MemAvailable` was 11,351,244,800 bytes (10.57 GiB), `SwapFree`
+was 14,327,808 bytes (13.66 MiB), and memory PSI had risen to `some`
+avg10/avg60 **0.68% / 9.64%** and `full` **0.63% / 8.96%**. The uncapped
+user-manager cgroup held 10,124,951,552 bytes memory and 2,856,464,384 bytes
+swap. `memory.events.high` was 16,428,144, up 3,582 from the 12:10 sample;
+`max=730,409`, `oom=19`, `oom_kill=15`, and `oom_group_kill=0` were unchanged.
+Current top RSS included several Codex/terminal processes, protected Reality
+at about 293 MB, journald at about 242 MB, MIDAS API at about 143 MB, and
+Reality API at about 112 MB (the `ps` RSS values are KiB, shown here as rounded
+decimal MB). This is a current process snapshot, not proof of
+which workload caused pressure.
+
+After 58 seconds without another compute-heavy check, the 12:14:59 sample had
+`MemAvailable=11,431,800,832` bytes (10.65 GiB), unchanged swap and user-manager
+`memory.events`, PSI avg10 back to zero, and avg60 declining to `some=3.67%` /
+`full=3.41%`. At 12:15:35 the MIDAS API, Reality recorder/API, Continental
+contact/status, Echo production/staging, RustDesk, SSH socket, and systemd-oomd
+were active; API/Reality/Reality API restart counts remained 9/14/0. The gap-
+detail timer remained inactive and the capacity timer was waiting. No matching
+systemd-oomd or kernel kill appeared in the checked journal since 11:18 CET.
+
+The timing leaves Frontier's bounded compiler/type-check activity as a
+possible contributor to the transient PSI rise, but concurrent user workloads
+and the aggregate user-manager scope prevent attribution. No service limit,
+timer, OOMD policy, protected collector, store, or archive was changed in this
+checkpoint. Do not run another compiler/build/browser suite or broad research
+job until a fresh admission sample shows PSI back near baseline. Current status
+remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**; safe continuation is
+limited to small serialized offline edits and checks after admission.
