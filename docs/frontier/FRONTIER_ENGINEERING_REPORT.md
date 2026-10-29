@@ -16536,3 +16536,26 @@ At 19:31, memory PSI averages remained zero, available RAM was about 10.3
 GiB, free swap about 20 MiB, and user-manager event counters remained
 unchanged. Keep the host admission at serial bounded fixtures; Frontier
 remains **PARTIALLY VERIFIED**.
+
+### Relationship-term input bounds — 2026-10-29 19:35 CET
+
+The graph contract-term comparison now limits every compared text value and
+serialized summary to 4,096 characters, state/fee-evidence lists to 64 items,
+and instrument lists to 32. It checks bounds before sorting or serializing,
+applies an aggregate limit to list text, and reports an over-limit field as
+unavailable rather than treating it as equal. Existing payout-vector and tick
+range ordering remains deterministic.
+
+The new adversarial tests first reproduced two gaps (7 prior tests passed,
+2 failed): oversized state/evidence lists were compared, and overlong scalar
+terms were only partly rejected. After the fix, the focused module passed
+**9/9**. ESLint, Prettier, and strict TypeScript checking of the changed pure
+module passed. Vitest emitted a non-fatal CA-certificate worker warning under
+the resource cap. No live source or production store was accessed.
+
+At 19:35:12, PSI averages remained zero and `MemAvailable` was 10,683,568 KiB
+(about 10.2 GiB); only about 20 MiB swap was free. User-manager `high`
+increased by 19 since the earlier sample; max/oom/oom_kill/group-kill remained
+731,783/19/15/0. Individual transient-unit event deltas were not captured, so
+that increment is unattributed. Frontier remains **PARTIALLY VERIFIED** and
+admission stays serial and fixture-only.

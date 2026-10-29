@@ -16439,3 +16439,21 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
   about 20 MiB, and user-manager memory counters unchanged. This strengthens
   bounded multi-leg fixture evidence only; live coverage and host endurance
   remain open. Frontier remains **PARTIALLY VERIFIED**.
+
+## 2026-10-29 19:35 CET — relationship-term input bounds
+
+- The contract-term comparator caps scalar and rendered summary text at
+  4,096 characters, state/evidence lists at 64 entries, and instrument lists
+  at 32. It applies bounds before sorting/serialization and marks oversized
+  evidence unavailable instead of matching it. Existing vector order remains
+  normalized deterministically.
+- Two new adversarial cases reproduced the former behavior. After the fix,
+  `frontierRelationshipTerms.test.tsx` passed **9/9**; focused ESLint,
+  Prettier, and strict TypeScript checks passed. Vitest printed a non-fatal
+  CA-certificate worker warning under caps; no live data or production store
+  was used.
+- At 19:35:12 PSI remained zero, available RAM about 10.2 GiB, and free swap
+  about 20 MiB. Parent user-manager `high` rose by 19 during the bounded work
+  window, but leaf deltas were not retained; max/oom/kill counters were
+  unchanged. Preserve this attribution uncertainty. Continue serial capped
+  fixture work; live validation and incident closure remain open.
