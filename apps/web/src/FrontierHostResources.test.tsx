@@ -59,6 +59,30 @@ it('renders measured host and user-manager metrics as a point-in-time snapshot',
   expect(fetchMock).toHaveBeenCalledTimes(1);
 });
 
+it('does not infer swap or user-manager metrics omitted by the deployed API', async () => {
+  const response = {
+    captured_at_utc: '2026-10-29T17:33:23.830325+00:00',
+    host_memory: {
+      total_bytes: 16_665_567_232,
+      available_bytes: 11_189_633_024,
+    },
+    host_pressure: {
+      memory: { some: { avg10: 0 }, full: { avg10: 0 } },
+    },
+    services: { 'midas-api': { status: 'MEASURED' } },
+  };
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async () => ({ ok: true, json: async () => response }) as Response),
+  );
+
+  renderPanel();
+
+  expect(await screen.findByText('Captured 2026-10-29T17:33:23.830325 UTC')).toBeInTheDocument();
+  expect(screen.getByText('10.4 GiB / 15.5 GiB')).toBeInTheDocument();
+  expect(screen.getAllByText('Not measured')).toHaveLength(2);
+});
+
 it('shows a bounded degraded state when the readiness API is unavailable', async () => {
   vi.stubGlobal(
     'fetch',
