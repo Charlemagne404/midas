@@ -13805,3 +13805,11 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
 - **Bounds:** Retained cgroup peak was 69,042,176 bytes (65.9 MiB), under 384 MiB high / 512 MiB hard, zero swap, 20% CPU, 64 tasks, and 60 seconds. One Starlette/httpx deprecation warning. Temporary stores/fixtures only.
 - **Host:** 08:05:36 PSI zero, MemAvailable 10 GiB, SwapFree 8.4 MiB; user-manager memory/swap 9,732,186,112 / 2,858,254,336 bytes; OOM counters 19/15/0. API/Reality/Reality API active at restarts 9/14/0; API/Reality about 917/399 MiB. No OOMD/kernel OOM since 08:03.
 - **Status:** Provenance/replay rejection evidence advanced. The memory incident remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**; live sources and broader recovery remain open.
+
+## 2026-10-29 08:12 CET — user-slice attribution and UI resource stop
+
+- `oomctl dump` confirmed the OOMD monitor is `user@1000.service` at a 50% memory-pressure threshold for 20 seconds; that hierarchy is uncapped for memory and swap. The Oct 28 log's 54.45% pressure crossing explains the kill trigger but not the initiating workload.
+- Current app-slice use was about 9.34 GB with 2.23 GB swap; GNOME Terminal slice was about 4.54 GB / 1.65 GB swap. A VTE scope used about 1.99 GB across 106 tasks. This is material current usage, not historical root-cause proof. Five `vmstat` samples showed swap-in/out only in the first sample (66/70 pages/s), then none.
+- The bounded Kalshi fee UI test did not complete. Its first run exited 1 without retained assertion output. The 90-second retry was terminated at its runtime limit after 91.6 seconds / 22.09 CPU seconds; it reached the 640 MiB reclaim threshold under a 768 MiB cap and zero swap. The output only showed Vitest startup. No source requests or OOM kills occurred.
+- Global memory PSI rose during/just after that retry, then decayed by 08:11:50; memory stayed about 10 GiB available, swap remained full, API/Reality/Reality API stayed active at restarts 9/14/0, and OOM counters remained 19/15/0. Do not rerun the UI check in this window.
+- **Status:** Incident remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**. Keep gap-detail timer disabled; capacity monitor remains 160/192 MiB with zero swap. Resume only small serial fixture work after a fresh admission check; deployment, broader suites, and live-source use remain deferred/held.

@@ -2,7 +2,7 @@
 
 **Report date:** 2026-10-29
 
-## Current completion matrix — 2026-10-29 08:05 CET
+## Current completion matrix — 2026-10-29 08:12 CET
 
 This is a current evidence classification, not a final completion claim. The
 dated implementation records below remain the detailed evidence; the
@@ -14603,3 +14603,56 @@ At 08:05:36 host PSI remained zero, `MemAvailable` 10 GiB, and `SwapFree`
 OOM counters remained 19/15/0. API, Reality, and Reality API were active at
 restarts 9/14/0, API/Reality about 917/399 MiB. No OOMD or kernel OOM appeared
 since 08:03. The tests used fixtures/local temporary stores only.
+
+## User-slice attribution and Kalshi fee UI check — 2026-10-29 08:12 CET
+
+The focused Kalshi fee-sensitivity UI test is **not verified**. Its first
+transient invocation exited 1 after about 20 seconds; its output was not
+retained, so the assertion-level cause is unknown. A second invocation used
+`MemoryHigh=640M`, `MemoryMax=768M`, `MemorySwapMax=0`, `CPUQuota=25%`,
+`TasksMax=96`, a 90-second runtime, and a 384 MiB Node heap. It reached the
+runtime limit after 91.6 seconds and 22.09 CPU seconds. The captured log only
+contained Vitest's startup line; no assertion result was produced. A live
+cgroup sample during the run showed 667,418,624 current / 672,047,104 peak
+bytes, slightly above its 640 MiB high limit and below its 768 MiB hard limit.
+The final transient-unit summary separately reported a 661.5 MiB peak; the
+two peak readings are retained as separate observations, not a benchmark.
+No source request was made. Further UI checks are deferred until host
+pressure has stayed low and the fixture run can complete within a bounded
+window.
+
+The OOMD policy is now directly observed: `oomctl dump` monitors
+`/user.slice/user-1000.slice/user@1000.service` at a 50% memory-pressure
+threshold, with a 20-second duration; that cgroup has no MemoryHigh, MemoryMax,
+or MemorySwapMax limit. The Oct 28 OOMD log recorded 54.45% pressure above
+that threshold and killed the gap-detail service. This explains the kill
+trigger, but not which workload initiated the user-slice pressure. At 08:07,
+the user app slice accounted for about 9.34 GB memory (about 1.99 GB anonymous,
+6.25 GB file cache, and 1.08 GB kernel/slab) and 2.23 GB swap. GNOME Terminal's
+slice accounted for about 4.54 GB and 1.65 GB swap; one VTE scope held about
+1.99 GB across 106 tasks. Most of that terminal-slice use was file cache and
+kernel/slab, so it is a significant present contributor but not a proven
+historical initiator. No large research timer's historical peak was retained.
+
+At 08:08, a five-sample `vmstat` check showed 66 pages/s swap-in and 70 pages/s
+swap-out only in its first sample, followed by zero swap activity in the next
+four samples. This is evidence against continuous swap churn in that short
+window. The one-minute Arena dispatcher repeatedly returned an empty schedule
+list; its small observed CPU use does not justify changing its timer. Other
+bounded Veritas timers remain potential overlapping work, not a demonstrated
+root cause.
+
+The UI run coincided with a transient rise in global memory PSI: at 08:10:59,
+memory `some` avg10/60/300 was 5.70/2.27/0.53% and `full` was 5.28/2.10/0.49%.
+By 08:11:50 this had decayed to 0.03/0.95/0.44% and 0.02/0.88/0.40%.
+`MemAvailable` stayed about 10 GiB and swap remained effectively full. At
+08:11:50 API, Reality, and Reality API were active at restart counts 9/14/0;
+API and Reality used about 965/421 MiB, below their `MemoryHigh` thresholds.
+OOM counters remained 19/15/0, with no OOMD or kernel OOM entry in the recent
+window. This short quiet sample does not resolve long-run risk.
+
+Current incident state remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**.
+The gap-detail timer stays disabled and the Reality capacity service remains
+bounded at 160/192 MiB with zero swap. Only small, serial, zero-swap fixture
+work is eligible after a fresh admission check; the UI retry and broad suites
+are deferred. Frontier remains isolated from production.

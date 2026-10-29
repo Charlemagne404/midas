@@ -1322,3 +1322,55 @@ counters remained 19/15/0. API, Reality, and Reality API were active at
 restarts 9/14/0; API/Reality used about 917/399 MiB. No OOMD or kernel OOM
 appeared since 08:03. Incident status remains **PARTIALLY CONTAINED /
 PARTIALLY VERIFIED**.
+
+## User-slice attribution and UI test pressure sample — 2026-10-29 08:12 CET
+
+`oomctl dump` confirms the active memory-pressure monitor is
+`/user.slice/user-1000.slice/user@1000.service`: 50% pressure for 20 seconds.
+The user manager has no `MemoryHigh`, `MemoryMax`, or `MemorySwapMax` limit.
+The Oct 28 OOMD entry recorded 54.45% pressure above the 50% threshold with
+reclaim activity, then killed `midas-veritas-gap-detail-v2.service`. This
+proves the OOMD trigger, not the workload that created that pressure. The
+separate capacity-service kernel OOMs remain attributable to its former
+128 MiB `MemoryMax`; the service now reads back as 160 MiB high / 192 MiB max /
+zero swap and its 07:47:45 run succeeded. Its next timer point is 08:17:45.
+
+At 08:07, `app.slice` held 9,335,378,816 bytes and 2,230,583,296 bytes swap.
+Its memory statistics were about 1.99 GB anonymous, 6.25 GB file cache, and
+1.08 GB kernel/slab. The GNOME Terminal slice held 4,539,244,544 bytes and
+1,647,251,456 bytes swap; one VTE scope was 1,985,372,160 bytes across 106
+tasks. This is a large current contributor, with substantial file-cache and
+kernel/slab accounting, but does not establish historical causation. The
+largest user-slice pressure event and the earlier terminal kills remain
+unattributed to a single workload.
+
+At 08:08, five `vmstat` samples showed brief first-sample swap-in/out (66/70
+pages per second) followed by four samples at zero. The one-minute Arena
+dispatcher repeatedly reported no scheduled work; its observed CPU use was
+small. The Veritas observation, analysis, director, and capacity timers are
+bounded but can overlap by schedule; no evidence ties their recent runs to
+the past OOMD threshold crossing.
+
+A focused Kalshi fee-sensitivity UI test was attempted twice. The first
+transient service exited 1 after about 20 seconds, but its assertion output
+was unavailable. A second run was capped at 640 MiB high / 768 MiB max, zero
+swap, 25% CPU, 96 tasks, a 90-second runtime, and a 384 MiB Node heap. It hit
+the runtime limit at 91.6 seconds after 22.09 CPU seconds; the captured log
+contains only the Vitest startup line. It produced no test result. A live
+sample showed 667,418,624 current / 672,047,104 peak bytes; the transient
+summary separately reported a 661.5 MiB peak. Both observations are below the
+hard cap and at/above the 640 MiB high threshold. No source request was made.
+
+At 08:10:59 global memory PSI briefly reached `some` avg10/60/300
+5.70/2.27/0.53% and `full` 5.28/2.10/0.49%; by 08:11:50 it had decayed to
+0.03/0.95/0.44% and 0.02/0.88/0.40%. `MemAvailable` stayed about 10 GiB,
+swap remained nearly full, and recent OOM counters stayed 19/15/0. API,
+Reality, and Reality API remained active at restarts 9/14/0; API and Reality
+were below their configured `MemoryHigh` thresholds. The transient test likely
+contributed to short cgroup reclaim and host PSI, but this does not explain
+the earlier OOMD event. No more UI checks or broad suites should run until a
+fresh, longer low-pressure admission window is observed.
+
+Incident status remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**. The
+gap-detail timer remains inactive and disabled. Rollback commands for both
+the timer and capacity drop-in are in “Actions in effect and rollback” above.
