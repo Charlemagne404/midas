@@ -1,5 +1,20 @@
 # Project Frontier Mission Ledger
 
+## Current host state — 2026-10-29 01:02 CET
+
+All three isolated capacity-candidate fixtures now pass; two were run at
+01:02 in a transient 384 MiB max / zero-swap / 25% CPU / 16-task scope with a
+20-second timeout. They took 0.52 seconds together. No `max`, OOM, or
+OOM-kill counter changed, and PSI remained near zero. Systemd did not retain
+the transient scope's peak after cleanup. The full Reality test file and all
+Frontier suites remain unrun.
+
+At 01:02:32 host available memory was 9.8 GiB and avg300 PSI was
+`some=0.09%`, `full=0.04%`; no OOM was logged after 23:43:24. API and Reality
+remain active, but Reality had only 236 KiB `MemoryHigh` headroom and stale
+capture status. Keep broad tests, replays, probes, and batches paused. The
+160 MiB capacity soft bound still awaits its 01:16 scheduled run.
+
 ## Current host state — 2026-10-29 01:01 CET
 
 The 01:00 Veritas observation completed in 12.1 seconds at a 30.3 MiB peak,

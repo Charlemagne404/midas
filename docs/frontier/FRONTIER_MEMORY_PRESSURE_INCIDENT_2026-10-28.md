@@ -345,10 +345,10 @@ Static review found that the size check followed by `Path.read_text()` still
 left a file-growth race. Isolated candidate commit
 `d8629e4b63c8b8ef68e27294fb3599423a694b76` now opens a regular manifest
 without following symlinks, checks the opened descriptor, and reads at most
-4 MiB plus one byte. A fixture simulates a stale path-level size. The bounded
-manifest case is exercised later below; the other candidate fixtures remain
-unrun. The branch is not deployed. It does not repair or reclassify the
-existing archive.
+4 MiB plus one byte. A fixture simulates a stale path-level size. All three
+new candidate fixtures later pass in bounded runs below; the rest of the
+Reality test file remains unrun. The branch is not deployed. It does not
+repair or reclassify the existing archive.
 
 ### Not established
 
@@ -692,22 +692,29 @@ active; its cgroup current had fallen to 1,207,762,944 bytes, leaving about
 192 KiB below `MemoryHigh`. The observed current therefore fluctuates within
 hundreds of KiB of its soft limit rather than maintaining material headroom.
 
-## Bounded candidate fixture — 2026-10-29 01:01 CET
+## Bounded candidate fixtures — 2026-10-29 01:01–01:02 CET
 
-After the 01:00 Veritas observation completed, one isolated unit fixture ran
-from `/home/charlie/midas-reality-capacity-scan-frontier-20261029`:
-`test_archive_capacity_does_not_parse_an_oversized_manifest` passed (1 test,
-1.01 seconds). It used temporary fixture files and performed no network or
-archive access. `systemd-run --user --scope` configured the transient scope
-with `MemoryMax=384M`, `MemorySwapMax=0`, `CPUQuota=25%`, and `TasksMax=16`; the
-test subprocess also had a 20-second timeout. The transient scope was cleaned
-after exit, so systemd did not retain its `MemoryPeak` for post-run inspection.
+After the 01:00 Veritas observation completed, all three isolated Reality
+capacity-candidate fixtures passed across two runs from
+`/home/charlie/midas-reality-capacity-scan-frontier-20261029`:
 
-Afterward, host `MemAvailable` was 9.8 GiB; host/user avg10 PSI remained 0.00%
-and avg300 `full` PSI was 0.06% / 0.05%. User-manager `max`, `oom`, and
+- Oversized manifest plus stale path-size case: 1 passed in 1.01 seconds.
+- Bounded inventory scan / unknown headroom: 1 passed.
+- Skip inventory walk for invalid provenance: 1 passed; the two-case run
+  completed in 0.52 seconds.
+
+The cases used temporary fixture files and performed no network or archive
+access. Each `systemd-run --user --scope` used `MemoryMax=384M`,
+`MemorySwapMax=0`, `CPUQuota=25%`, `TasksMax=16`, and a 20-second subprocess
+timeout. The transient scopes were cleaned after exit, so systemd did not
+retain their `MemoryPeak` for post-run inspection.
+
+At 01:02:32, host available memory was 9.8 GiB; host/user avg10 PSI remained
+0.00% and avg300 `full` PSI was 0.04%. User-manager `max`, `oom`, and
 `oom_kill` counters were unchanged, and no new OOM journal entry appeared.
-The candidate branch is clean at
-`d8629e4b63c8b8ef68e27294fb3599423a694b76`; the fixture run does not validate
-its other cases, the Reality service, the archive, or production capacity
+API and Reality remained active; Reality had about 236 KiB `MemoryHigh`
+headroom and its status was still stale. The candidate branch is clean at
+`d8629e4b63c8b8ef68e27294fb3599423a694b76`; these fixtures do not validate
+the full test file, the Reality service, the archive, or production capacity
 behavior. Keep broad tests deferred until after the 01:16 capacity run and
 fresh Reality recovery evidence.
