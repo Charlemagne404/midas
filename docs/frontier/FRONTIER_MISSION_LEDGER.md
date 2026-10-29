@@ -14022,3 +14022,26 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
   entries appeared, and API/Reality remained active with unchanged restart
   counts 9/14. The incident remains **PARTIALLY CONTAINED / PARTIALLY
   VERIFIED**; continuation stays serial and offline.
+
+## 2026-10-29 09:20 CET — stream-state UI safeguards and scheduled capacity run
+
+- Expanded `KrakenBookUpdatesPanel.test.tsx` to cover the explicit enabled
+  action and exact saved-market ID, held-source no-request behavior,
+  checksum-verified state rendering, control-only and empty windows, and stale
+  result isolation after selecting a different market. **6/6 tests passed**
+  in one worker. Strict targeted TypeScript checking, ESLint, and Prettier also
+  passed for the integrated panel and tests.
+- The full web TypeScript project check remains unverified: Node reached its
+  own V8 heap ceiling at about 251 MiB inside the 512 MiB cgroup, without a
+  cgroup OOM or host pressure event. Do not raise resource caps or rerun the
+  full project check without a fresh host admission decision.
+- The 09:18 scheduled Reality capacity scan exited 0 with 128.9 MiB peak and
+  no swap under the 160/192 MiB bound. It retained archive inventory and
+  provenance warnings and reported capacity as unknown. No archive state was
+  changed.
+- At 09:20:21 the host still had about 10 GiB available RAM and zero global
+  PSI averages, while swap remained full. No new oomd log entry appeared after
+  09:18:54; the API and Reality stayed active at restart counts 9/14. The
+  incident remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**. Live-source
+  capture, full UI build/browser checks, broad tests, and heavy replay remain
+  deferred.

@@ -1781,3 +1781,28 @@ scope. Full suites, builds, live probes, large replay, profiling, and persistent
 workers remain deferred. The quiet interval and successful bounded tests do not
 prove host recovery; full swap, 9.65 GB current app-slice charge, unresolved
 workload attribution, and archive provenance warnings remain open risks.
+
+## 2026-10-29 09:18 CET — scheduled bounded capacity check
+
+- The existing capacity timer launched `midas-reality-capacity.service` at
+  09:18:07. It exited successfully at 09:18:14 (`ExecMainStatus=0`) with a
+  recorded 128.9 MiB peak and zero swap, below `MemoryHigh=160M`,
+  `MemoryMax=192M`, and `MemorySwapMax=0`. Its 30-minute timer remained active
+  with the next run at 09:48:07. The gap-detail timer remained absent from the
+  active timer listing.
+- The report continues to emit `ARCHIVE_MANIFEST_SIZE_LIMIT`,
+  `ARCHIVE_INVENTORY_UNVERIFIED`, and `ARCHIVE_CAPACITY_UNKNOWN`, along with
+  budget, retention, and capacity-horizon alerts. This run did not repair,
+  rewrite, prune, or otherwise alter archive evidence; archive capacity remains
+  unknown.
+- At 09:18:54, about 10 GiB RAM was available and global PSI averages were
+  zero, but swap remained full at 4/4 GiB. `app.slice` charged about 9.81 GB
+  memory and 2.23 GB swap. API and Reality remained active at restart counts
+  9/14. No new systemd-oomd entry appeared after the 09:18:17 check. This
+  scheduled success verifies the bounded capacity invocation for this run; it
+  does not establish host recovery or identify the earlier pressure source.
+
+**Continuation decision:** retain the current 160/192 MiB capacity bound and
+30-minute schedule. Frontier may continue with focused serial offline work
+after fresh admission. Full suites, builds, live probes, and long replays remain
+deferred while swap is exhausted and workload attribution is unresolved.

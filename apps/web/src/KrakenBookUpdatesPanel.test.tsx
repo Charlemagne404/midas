@@ -87,6 +87,22 @@ it('keeps capture disabled and explains a source policy hold', () => {
   expect(screen.getByText(disabledReason)).toBeInTheDocument();
 });
 
+it('submits only the explicitly selected saved market when capture is enabled', () => {
+  const probe = mutationState();
+  render(
+    <KrakenBookUpdatesPanel
+      marketId={capture.market_id}
+      nativeMarketId={capture.native_market_id}
+      probe={probe}
+      probeEnabled
+      renderEvidence={(observationId) => <span>Inspect stored {observationId}</span>}
+    />,
+  );
+
+  fireEvent.click(screen.getByRole('button', { name: 'Capture 3-second Kraken spot stream' }));
+  expect(probe.mutate).toHaveBeenCalledWith({ marketId: capture.market_id });
+});
+
 it('shows checksum state, source timing, and immutable evidence for a saved-market capture', () => {
   const probe = mutationState({
     isSuccess: true,
@@ -118,4 +134,73 @@ it('shows checksum state, source timing, and immutable evidence for a saved-mark
   expect(
     screen.getByText(/Spot prices are contextual evidence; they are not event-contract payouts/),
   ).toBeInTheDocument();
+});
+
+it.each([
+  {
+    state: 'control_messages_only' as const,
+    frameCount: 1,
+    frames: [
+      {
+        ...capture.frames[0],
+        frame_type: 'heartbeat',
+        source_timestamp_utc: null,
+        checksum: null,
+        checksum_verified: false,
+        bid_level_count: 0,
+        ask_level_count: 0,
+      },
+    ],
+    expected: 'The stream returned control messages only; no book state was captured.',
+  },
+  {
+    state: 'no_stream_messages_observed' as const,
+    frameCount: 0,
+    frames: [],
+    expected: 'No stream messages were observed within the bounded capture window.',
+  },
+])('does not imply a book state for $state', ({ state, frameCount, frames, expected }) => {
+  const probe = mutationState({
+    isSuccess: true,
+    variables: { marketId: capture.market_id },
+    data: {
+      ...capture,
+      capture_status: state,
+      frame_count: frameCount,
+      book_state_count: 0,
+      frames,
+    },
+  });
+  render(
+    <KrakenBookUpdatesPanel
+      marketId={capture.market_id}
+      nativeMarketId={capture.native_market_id}
+      probe={probe}
+      probeEnabled
+      renderEvidence={(observationId) => <span>Inspect stored {observationId}</span>}
+    />,
+  );
+
+  expect(screen.getByText(expected)).toBeInTheDocument();
+  expect(screen.queryByText(/Captured .*checksum-verified book state/)).not.toBeInTheDocument();
+});
+
+it('does not show a prior market capture after the selected market changes', () => {
+  const probe = mutationState({
+    isSuccess: true,
+    variables: { marketId: 'kraken:ETH/USD' },
+    data: capture,
+  });
+  render(
+    <KrakenBookUpdatesPanel
+      marketId="kraken:BTC/USD"
+      nativeMarketId="BTC/USD"
+      probe={probe}
+      probeEnabled
+      renderEvidence={(observationId) => <span>Inspect stored {observationId}</span>}
+    />,
+  );
+
+  expect(screen.getByText('No capture')).toBeInTheDocument();
+  expect(screen.queryByText(/Captured .*checksum-verified book state/)).not.toBeInTheDocument();
 });
