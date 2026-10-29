@@ -1667,3 +1667,69 @@ Keep the five-minute gap-detail timer disabled. Frontier may continue with
 short serial fixture work after fresh admission; do not use the quiet interval
 or successful capacity run as evidence for heavy tests, full recovery, archive
 integrity, or production readiness.
+
+## 2026-10-29 08:54 CET — interruption revalidation
+
+- Before recording this update, the Frontier branch was at
+  `75e6f2602a33ca7d04ffb507279dd61fd33d7bac`, with no tracked changes and the
+  existing untracked `data/frontier-public-probes/` preserved. A fresh local
+  checkpoint branch, `checkpoint/frontier-memory-interruption-20261029-0854`,
+  now points to that commit. No untracked data was staged or changed.
+- At 08:54:26 the host showed about 10 GiB `MemAvailable`, zero current global
+  PSI, and 4.0 GiB of 4.0 GiB swap occupied. User-slice `memory.pressure` also
+  had zero current averages. This is presently quiet, but swap remains an
+  unresolved risk; `swapoff` or a global sysctl/OOM-policy change would be
+  unsafe without better evidence.
+- At 08:52, `app.slice` charged 9.48 GB memory and 2.23 GB swap, with no local
+  `MemoryHigh`, `MemoryMax`, or `MemorySwapMax`. Its `memory.stat` attributed
+  about 6.36 GB to file cache (5.04 GB inactive), 2.02 GB to anonymous memory,
+  and 1.09 GB to kernel memory, including 0.93 GB reclaimable slab. The parent
+  `user@1000.service` was at about 9.88 GB memory and 2.86 GB swap. Its
+  accumulated descendant counters were `high=16,422,194`, `max=730,045`,
+  `oom=19`, `oom_kill=15`; these counters cannot identify one contributing
+  service. The top process RSS sample was below 400 MiB per process. Current
+  occupancy is therefore not a reliable reconstruction of the event-time
+  workload.
+- `systemd-oomd` remains active. The effective user-manager policy is
+  `ManagedOOMMemoryPressure=kill` at 50%; the October 28 logs show 129 kills
+  when user-manager pressure exceeded that threshold for over 20 seconds with
+  reclaim activity. The final such kill remains 23:43:24 on October 28. A
+  separate `sar` sample around 23:30–23:50 showed 10.0–10.4 GB available RAM
+  and about 77% swap use, so these observations do not demonstrate global RAM
+  exhaustion at those sample instants. They do establish severe user-cgroup
+  reclaim pressure and the policy that selected victims. The exact workload
+  mix that caused the pressure remains unattributed. Gap-detail's repeated
+  local pressure and 106/129 kill share make it the strongest known recurring
+  contributor, not a proven sole cause.
+- Kernel logs still show seven separate `CONSTRAINT_MEMCG` kills of
+  `midas-reality-capacity.service` at its former 128 MiB ceiling, the latest
+  at 20:15:44 October 28. Its source previously parsed an unbounded manifest
+  and could walk every archive entry when provenance was invalid; the killed
+  executions did not retain manifest sizes or allocation traces, so this is a
+  supported failure mechanism, not proof of the exact allocation on each run.
+  The local Reality branch now has a 4 MiB manifest read bound, a 65,536-entry
+  walk bound, and skips untrusted inventory. The next existing scheduled run
+  at 08:48 succeeded within effective `MemoryHigh=160M`, `MemoryMax=192M`,
+  `MemorySwapMax=0`, reporting `ARCHIVE_MANIFEST_SIZE_LIMIT`,
+  `ARCHIVE_INVENTORY_UNVERIFIED`, and `ARCHIVE_CAPACITY_UNKNOWN`. The archive
+  capacity remains unknown; no archive evidence or manifest was repaired.
+- At 08:54, `midas-api` and `midas-reality` were active with unchanged restart
+  counts 9 and 14. Their current memory was about 0.99 GB and 0.45 GB against
+  their 1.75 GB and 1.25 GB maxima. No new OOMD kill or kernel OOM appeared
+  after the previously recorded events. The gap-detail timer remains
+  inactive/disabled. No matching pytest, gap-detail, Arena job, capacity
+  process, or recovery-validation worker was active. No critical collector or
+  unrelated service was restarted or reconfigured during this revalidation.
+- No additional host configuration was changed in this interruption. The
+  existing containment and rollback commands are recorded above. The initial
+  `daymark-db.service` failure and the separate Continental audit findings
+  remain unrelated and untouched.
+
+**Current continuation decision:** resume Frontier only with serial source
+work, fresh admission checks, and focused offline fixture checks under a
+transient resource scope (384 MiB `MemoryHigh`, 512 MiB `MemoryMax`, zero swap,
+20% CPU, 64 tasks). Keep full test suites, builds, profiling, large replay,
+live probes, and background experiments deferred. Current zero PSI and the
+quiet interval support this narrow continuation; nearly exhausted swap,
+unknown historical workload attribution, and the unresolved
+`oomctl`/monitor-registration discrepancy mean host recovery is not proven.
