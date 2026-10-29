@@ -5,7 +5,8 @@
 - Added a separate bounded raw-observation offset to the local Kraken candle
   API and an explicit, capped “scan next batch” UI path. Added API and UI
   regression cases, including a fixture with 20 newer unrelated observations
-  before the matching capture. The source request path was not called.
+  before the matching capture. Checkpoint: `7e8d78c`. The source request path
+  was not called.
 - `git diff --check` passed. Tests, type checks, builds, browser checks, and
   probes remain deferred: at 17:11, memory PSI was zero, but swap had only
   18,890,752 bytes free; user-manager `max` events rose by 11 and Reality API

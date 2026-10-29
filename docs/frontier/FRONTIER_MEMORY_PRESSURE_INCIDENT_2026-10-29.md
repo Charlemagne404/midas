@@ -4046,7 +4046,8 @@ match after 17:06:19. This is a short quiet period, not recovery: swap remains
 nearly full, cgroup `max` events continue to advance, and Reality API is
 within 1 MiB of its hard limit.
 
-The isolated Frontier worktree received a bounded pagination follow-up for
+The isolated Frontier worktree checkpointed a bounded pagination follow-up
+in commit `7e8d78c` for
 saved Kraken candle evidence: the API now accepts a separate raw-observation
 scan offset, exposes scanned-row and next-offset metadata, and the UI advances
 by explicit user action with a ten-page client cap. The existing per-request
