@@ -4137,6 +4137,14 @@ it('captures one explicit bounded Kalshi multivariate event page', async () => {
         maximum_acquire_wait_ms: 50,
         overload_status: 429,
         overload_behavior: 'fail_fast_no_request_queued',
+        runtime_snapshot: {
+          sampled_at_utc: '2026-10-29T05:41:00Z',
+          active_operations: 1,
+          active_venues: ['kalshi'],
+          admitted_operations_total: 7,
+          busy_rejections_total: 3,
+          busy_rejections_by_scope: { venue: 1, capacity: 2 },
+        },
       },
       network_called: false,
     },
@@ -4324,6 +4332,13 @@ it('captures one explicit bounded Kalshi multivariate event page', async () => {
   expect(
     screen.getByText(/Public captures allow at most 2 concurrent source operations/),
   ).toBeInTheDocument();
+  expect(
+    screen.getByText(
+      /1 of 2 slots active; 7 admitted and 3 contention rejections since this API router started/,
+    ),
+  ).toBeInTheDocument();
+  expect(screen.getByText(/same-venue 1, shared-capacity 2/)).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Refresh source status' })).toBeInTheDocument();
   fireEvent.change(screen.getByLabelText('Kalshi multivariate filter type'), {
     target: { value: 'event_ticker' },
   });

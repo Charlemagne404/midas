@@ -54,6 +54,20 @@ class BoundedSourceOperationGate:
         self.acquire_timeout_seconds = float(acquire_timeout_seconds)
         self._capacity = asyncio.BoundedSemaphore(max_concurrent)
         self._venue_locks = {venue: asyncio.Lock() for venue in Venue}
+        self._active_venues: set[Venue] = set()
+        self._admitted_operations_total = 0
+        self._busy_rejections_by_scope = {"venue": 0, "capacity": 0}
+
+    def runtime_snapshot(self) -> dict[str, object]:
+        """Return bounded counters scoped to this router instance's lifetime."""
+        rejected_by_scope = dict(self._busy_rejections_by_scope)
+        return {
+            "active_operations": len(self._active_venues),
+            "active_venues": sorted(venue.value for venue in self._active_venues),
+            "admitted_operations_total": self._admitted_operations_total,
+            "busy_rejections_total": sum(rejected_by_scope.values()),
+            "busy_rejections_by_scope": rejected_by_scope,
+        }
 
     @asynccontextmanager
     async def operation(self, venue: Venue) -> AsyncIterator[None]:
@@ -66,6 +80,7 @@ class BoundedSourceOperationGate:
             try:
                 await asyncio.wait_for(venue_lock.acquire(), timeout=self.acquire_timeout_seconds)
             except TimeoutError as error:
+                self._busy_rejections_by_scope["venue"] += 1
                 raise SourceOperationBusy(venue, "venue") from error
             owns_venue = True
             try:
@@ -73,11 +88,15 @@ class BoundedSourceOperationGate:
                     self._capacity.acquire(), timeout=self.acquire_timeout_seconds
                 )
             except TimeoutError as error:
+                self._busy_rejections_by_scope["capacity"] += 1
                 raise SourceOperationBusy(venue, "capacity") from error
             owns_capacity = True
+            self._active_venues.add(venue)
+            self._admitted_operations_total += 1
             yield
         finally:
             if owns_capacity:
+                self._active_venues.remove(venue)
                 self._capacity.release()
             if owns_venue:
                 venue_lock.release()

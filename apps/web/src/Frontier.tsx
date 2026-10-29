@@ -46,6 +46,14 @@ type SourceOperationAdmission = {
   maximum_acquire_wait_ms: number;
   overload_status: number;
   overload_behavior: string;
+  runtime_snapshot?: {
+    sampled_at_utc: string;
+    active_operations: number;
+    active_venues: Venue[];
+    admitted_operations_total: number;
+    busy_rejections_total: number;
+    busy_rejections_by_scope: { venue: number; capacity: number };
+  };
 };
 type SourceInventory = {
   items: Source[];
@@ -3696,6 +3704,8 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
         <SourcesView
           sources={sources.data?.items ?? []}
           operationAdmission={sources.data?.operation_admission}
+          refreshSourceStatus={() => sources.refetch()}
+          sourceStatusRefreshing={sources.isFetching}
           markets={summary?.markets_by_venue ?? {}}
           probe={probe}
           finiteCollection={finiteCollection}
@@ -7004,6 +7014,8 @@ type KalshiMultivariateProbe = UseMutationResult<
 function SourcesView({
   sources,
   operationAdmission,
+  refreshSourceStatus,
+  sourceStatusRefreshing,
   markets,
   probe,
   finiteCollection,
@@ -7021,6 +7033,8 @@ function SourcesView({
 }: {
   sources: Source[];
   operationAdmission?: SourceOperationAdmission;
+  refreshSourceStatus: () => Promise<unknown>;
+  sourceStatusRefreshing: boolean;
   markets: Record<string, number>;
   probe: ProbeMutation;
   finiteCollection: FiniteCollectionMutation;
@@ -7064,8 +7078,35 @@ function SourcesView({
                 source request.
               </small>
             )}
+            {operationAdmission?.runtime_snapshot && (
+              <small role="status">
+                Runtime snapshot at {time(operationAdmission.runtime_snapshot.sampled_at_utc)}:{' '}
+                {operationAdmission.runtime_snapshot.active_operations} of{' '}
+                {operationAdmission.max_concurrent_source_operations} slots active;{' '}
+                {operationAdmission.runtime_snapshot.admitted_operations_total} admitted and{' '}
+                {operationAdmission.runtime_snapshot.busy_rejections_total} contention rejections
+                since this API router started (same-venue{' '}
+                {operationAdmission.runtime_snapshot.busy_rejections_by_scope.venue},
+                shared-capacity{' '}
+                {operationAdmission.runtime_snapshot.busy_rejections_by_scope.capacity}). Active
+                venues:{' '}
+                {operationAdmission.runtime_snapshot.active_venues.length
+                  ? operationAdmission.runtime_snapshot.active_venues.join(', ')
+                  : 'none'}
+                .
+              </small>
+            )}
           </div>
           <div className="fr-collection-history-actions">
+            {operationAdmission && (
+              <button
+                className="fr-inspect-button"
+                disabled={sourceStatusRefreshing}
+                onClick={() => void refreshSourceStatus()}
+              >
+                {sourceStatusRefreshing ? 'Refreshing source status…' : 'Refresh source status'}
+              </button>
+            )}
             {collectionRunsBeforeRunId && (
               <button
                 className="fr-inspect-button"

@@ -1733,6 +1733,10 @@ def router(
                 "maximum_acquire_wait_ms": int(SOURCE_OPERATION_ACQUIRE_TIMEOUT_SECONDS * 1000),
                 "overload_status": 429,
                 "overload_behavior": "fail_fast_no_request_queued",
+                "runtime_snapshot": {
+                    "sampled_at_utc": datetime.now(UTC).isoformat(),
+                    **source_operation_gate.runtime_snapshot(),
+                },
             },
             "network_called": False,
         }

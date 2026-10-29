@@ -61,6 +61,13 @@ async def test_source_gate_rejects_same_venue_and_releases_after_exception():
             async with gate.operation(Venue.POLYMARKET):
                 pytest.fail("A second operation for one venue must be rejected")
         assert busy.value.scope == "venue"
+        assert gate.runtime_snapshot() == {
+            "active_operations": 1,
+            "active_venues": ["polymarket"],
+            "admitted_operations_total": 1,
+            "busy_rejections_total": 1,
+            "busy_rejections_by_scope": {"venue": 1, "capacity": 0},
+        }
     finally:
         release.set()
         await active
@@ -71,6 +78,13 @@ async def test_source_gate_rejects_same_venue_and_releases_after_exception():
 
     async with gate.operation(Venue.POLYMARKET):
         pass
+    assert gate.runtime_snapshot() == {
+        "active_operations": 0,
+        "active_venues": [],
+        "admitted_operations_total": 3,
+        "busy_rejections_total": 1,
+        "busy_rejections_by_scope": {"venue": 1, "capacity": 0},
+    }
 
 
 class _BlockingProbeAdapter(FakeAdapter):
@@ -102,7 +116,18 @@ async def test_frontier_probe_api_applies_shared_gate_and_reports_policy(tmp_pat
             inventory = await client.get("/api/frontier/sources")
             assert inventory.status_code == 200
             assert inventory.json()["network_called"] is False
-            assert inventory.json()["operation_admission"] == {
+            admission = inventory.json()["operation_admission"]
+            assert {
+                key: admission[key]
+                for key in (
+                    "scope",
+                    "max_concurrent_source_operations",
+                    "single_flight_per_venue",
+                    "maximum_acquire_wait_ms",
+                    "overload_status",
+                    "overload_behavior",
+                )
+            } == {
                 "scope": "frontier_router_instance",
                 "max_concurrent_source_operations": 2,
                 "single_flight_per_venue": True,
@@ -110,6 +135,13 @@ async def test_frontier_probe_api_applies_shared_gate_and_reports_policy(tmp_pat
                 "overload_status": 429,
                 "overload_behavior": "fail_fast_no_request_queued",
             }
+            initial_runtime = admission["runtime_snapshot"]
+            assert initial_runtime["sampled_at_utc"].endswith("+00:00")
+            assert initial_runtime["active_operations"] == 0
+            assert initial_runtime["active_venues"] == []
+            assert initial_runtime["admitted_operations_total"] == 0
+            assert initial_runtime["busy_rejections_total"] == 0
+            assert initial_runtime["busy_rejections_by_scope"] == {"venue": 0, "capacity": 0}
 
             first = asyncio.create_task(
                 client.post("/api/frontier/probe/polymarket", json={"limit": 1})
@@ -133,12 +165,27 @@ async def test_frontier_probe_api_applies_shared_gate_and_reports_policy(tmp_pat
                 "message": "Public source operation is busy: the shared source-operation capacity is full",
             }
             assert adapters[2].discovery_calls == 0
+            active_snapshot = (await client.get("/api/frontier/sources")).json()[
+                "operation_admission"
+            ]["runtime_snapshot"]
+            assert active_snapshot["active_operations"] == 2
+            assert active_snapshot["active_venues"] == ["kalshi", "polymarket"]
+            assert active_snapshot["admitted_operations_total"] == 2
+            assert active_snapshot["busy_rejections_total"] == 1
+            assert active_snapshot["busy_rejections_by_scope"] == {"venue": 0, "capacity": 1}
 
             adapters[0].release.set()
             adapters[1].release.set()
             responses = await asyncio.wait_for(asyncio.gather(first, second), timeout=2)
             assert [response.status_code for response in responses] == [200, 200]
             assert adapters[0].discovery_calls == adapters[1].discovery_calls == 1
+            final_snapshot = (await client.get("/api/frontier/sources")).json()[
+                "operation_admission"
+            ]["runtime_snapshot"]
+            assert final_snapshot["active_operations"] == 0
+            assert final_snapshot["active_venues"] == []
+            assert final_snapshot["admitted_operations_total"] == 2
+            assert final_snapshot["busy_rejections_total"] == 1
         finally:
             for adapter in adapters:
                 adapter.release.set()
