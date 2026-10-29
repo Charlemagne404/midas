@@ -1023,7 +1023,7 @@ def test_archive_flushes_copied_segments_in_bounded_filesystem_batches(tmp_path)
     assert json.loads((target / "manifest.json").read_text())["segments"] == value["segments"]
 
 
-def test_archive_resume_after_filesystem_flush_failure_keeps_source_and_retries(tmp_path):
+def test_archive_preserves_partial_after_filesystem_flush_failure_for_review(tmp_path):
     root, target = tmp_path / "raw", tmp_path / "archive"
     value = sample(root)
     with patch.object(operations, "sync_filesystem", side_effect=OSError("flush interrupted")):
@@ -1032,14 +1032,11 @@ def test_archive_resume_after_filesystem_flush_failure_keeps_source_and_retries(
 
     assert not (target / "manifest.json").exists()
     assert not any((target / segment["file"]).exists() for segment in value["segments"])
-    assert list(target.glob("*.copying"))
-
-    with patch.object(operations, "sync_filesystem") as flush:
-        result = archive(root, target, budget=1_000_000, reserve=1)
-
-    assert flush.call_count == 1
-    assert result["segments"] == value["segments"]
-    assert not list(target.glob("*.copying"))
+    partial = next(target.glob("*.copying"))
+    partial_bytes = partial.read_bytes()
+    with pytest.raises(ValueError, match="provenance review"):
+        archive(root, target, budget=1_000_000, reserve=1)
+    assert partial.read_bytes() == partial_bytes
 
 
 def test_archive_resume_counts_destination_once_for_many_missing_segments(tmp_path):
@@ -1075,17 +1072,67 @@ def test_archive_resume_counts_destination_once_for_many_missing_segments(tmp_pa
         assert file_hash(root / name) == file_hash(target / name) == digest
 
 
-def test_archive_budget_failure_resumes_without_publishing(tmp_path):
+def test_archive_budget_failure_preserves_unknown_partial_without_publishing(tmp_path):
     root, target = tmp_path / "raw", tmp_path / "archive"
     value = sample(root)
     with pytest.raises(OSError, match="budget"):
         archive(root, target, budget=1, reserve=1)
     assert not (target / "manifest.json").exists()
     name = value["segments"][0]["file"]
-    (target / Path(name).with_suffix(".copying")).write_bytes(b"interrupted")
-    result = archive(root, target, budget=1_000_000, reserve=1)
-    assert len(result["segments"]) == len(value["segments"])
-    assert not list(target.glob("*.copying"))
+    partial = target / Path(name).with_suffix(".copying")
+    partial.write_bytes(b"interrupted")
+    with pytest.raises(ValueError, match="provenance review"):
+        archive(root, target, budget=1_000_000, reserve=1)
+    assert partial.read_bytes() == b"interrupted"
+
+
+def test_archive_rejects_finalized_segment_without_manifest_and_preserves_it(tmp_path):
+    root, target = tmp_path / "raw", tmp_path / "archive"
+    value = sample(root)
+    target.mkdir()
+    atomic_json(target / "source.json", {"schema_version": 1, "recording_root": str(root)})
+    segment = value["segments"][0]
+    orphan = target / segment["file"]
+    orphan.write_bytes((root / segment["file"]).read_bytes())
+
+    with pytest.raises(ValueError, match="no published manifest"):
+        archive(root, target, budget=1_000_000, reserve=1)
+
+    assert orphan.read_bytes() == (root / segment["file"]).read_bytes()
+    assert not (target / "manifest.json").exists()
+
+
+def test_archive_does_not_follow_symlinked_lock_path(tmp_path):
+    root, target = tmp_path / "raw", tmp_path / "archive"
+    sample(root)
+    target.mkdir()
+    sentinel = tmp_path / "sentinel"
+    sentinel.write_text("preserve")
+    (target / "archive.lock").symlink_to(sentinel)
+
+    with pytest.raises(ValueError, match="lock path"):
+        archive(root, target, budget=1_000_000, reserve=1)
+
+    assert sentinel.read_text() == "preserve"
+
+
+def test_archive_rejects_untracked_segment_and_pending_manifest(tmp_path):
+    root, target = tmp_path / "raw", tmp_path / "archive"
+    sample(root)
+    archive(root, target, budget=1_000_000, reserve=1)
+
+    orphan = target / "99999999999999999999-00000000000000000000000000000000.seg"
+    orphan.write_bytes(b"preserve")
+    with pytest.raises(ValueError, match="absent from source"):
+        archive(root, target, budget=1_000_000, reserve=1)
+    assert orphan.read_bytes() == b"preserve"
+    orphan.unlink()
+
+    pending = target / "manifest.json.tmp"
+    pending.write_bytes(b"unpublished manifest")
+    with pytest.raises(ValueError, match="publication requires review"):
+        archive(root, target, budget=1_000_000, reserve=1)
+    assert pending.read_bytes() == b"unpublished manifest"
 
 
 def test_archive_separation_and_identity(tmp_path):

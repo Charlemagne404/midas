@@ -986,6 +986,36 @@ def _last_catalog_ordinal(segments: list[dict[str, Any]]) -> int:
     return 0
 
 
+def _validate_archive_entries(
+    entries: Iterable[Any], *, current_segments: list[dict[str, Any]], manifest_exists: bool
+) -> None:
+    """Fail closed on partial or unpublished files; preserve them for review."""
+    source_names = {info["file"] for info in current_segments}
+    archived_segments: list[str] = []
+    for entry in entries:
+        name = entry.name
+        if name.endswith(".copying"):
+            raise ValueError(
+                "Unresolved .copying archive files require explicit provenance review; "
+                f"preserved {name}"
+            )
+        if name == "manifest.json.tmp":
+            raise ValueError("Interrupted archive manifest publication requires review")
+        if entry.is_symlink():
+            raise ValueError(f"Archive contains a symlink requiring review: {name}")
+        if not entry.is_file(follow_symlinks=False):
+            raise ValueError(f"Archive contains a non-file entry requiring review: {name}")
+        if name.endswith(".seg"):
+            if name not in source_names:
+                raise ValueError(f"Unpublished archive segment is absent from source: {name}")
+            archived_segments.append(name)
+    if not manifest_exists and archived_segments:
+        raise ValueError(
+            "Finalized archive segments have no published manifest; "
+            f"preserved {archived_segments[0]} for provenance review"
+        )
+
+
 def _archive_incremental_suffix(
     root: Path,
     destination: Path,
@@ -995,6 +1025,7 @@ def _archive_incremental_suffix(
     budget: int,
     reserve: int,
     before_segment: Callable[[], None] | None,
+    destination_entries: dict[str, Any],
 ) -> dict[str, Any]:
     """Extend a full-verified archive without random-reading its old segment files."""
     previous_segments = previous.get("segments")
@@ -1027,7 +1058,6 @@ def _archive_incremental_suffix(
         raise ValueError("Current source catalog changed a previously archived segment")
 
     source_names = {info["file"] for info in current_segments}
-    destination_entries = {entry.name: entry for entry in os.scandir(destination)}
     destination_segment_names = {name for name in destination_entries if name.endswith(".seg")}
     for name in destination_segment_names:
         entry = destination_entries[name]
@@ -1223,8 +1253,9 @@ def archive(
     The first publication fully replay-verifies source and destination. Later
     daily runs validate prior catalog identity, repair missing archived segments,
     and verify appended bytes without random-reading the full HDD prefix.
-    ``full_verify`` replays both entire trees again. Interrupted copies resume
-    from finalized files; original bytes and catalogs remain collector-owned.
+    ``full_verify`` replays both entire trees again. Ambiguous partial or
+    unpublished files are preserved for provenance review; original bytes and
+    catalogs remain collector-owned.
     """
     root, destination = root.resolve(), destination.resolve()
     if destination == root or destination.is_relative_to(root) or root.is_relative_to(destination):
@@ -1262,7 +1293,10 @@ def archive(
 
         before_segment = check_segment_admission
     destination.mkdir(parents=True, exist_ok=True, mode=0o700)
-    with (destination / "archive.lock").open("a") as lock:
+    lock_path = destination / "archive.lock"
+    if lock_path.is_symlink() or (lock_path.exists() and not lock_path.is_file()):
+        raise ValueError("Archive lock path is not a regular file")
+    with lock_path.open("a") as lock:
         try:
             fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except BlockingIOError:
@@ -1280,6 +1314,13 @@ def archive(
         value = manifest(root)
         _validate_catalog_ordinals(value["segments"])
         manifest_path = destination / "manifest.json"
+        with os.scandir(destination) as scan:
+            destination_entries = {entry.name: entry for entry in scan}
+        _validate_archive_entries(
+            destination_entries.values(),
+            current_segments=value["segments"],
+            manifest_exists=manifest_path.exists(),
+        )
         if manifest_path.is_symlink():
             raise ValueError("Archive manifest is unsafe")
         if manifest_path.exists() and not full_verify:
@@ -1296,12 +1337,15 @@ def archive(
                 budget=budget,
                 reserve=reserve,
                 before_segment=before_segment,
+                destination_entries=destination_entries,
             )
         # Validate all source bytes and durable checkpoints once, with admission
         # checks between segments. The copy loop hashes each copied source stream,
         # so it does not need to re-read the source or the temporary destination.
         replay(root, value, before_segment=before_segment)
-        used = sum(p.stat().st_size for p in destination.iterdir() if p.is_file())
+        used = sum(
+            entry.stat(follow_symlinks=False).st_size for entry in destination_entries.values()
+        )
         pending: list[tuple[Path, Path]] = []
         pending_bytes = 0
 
