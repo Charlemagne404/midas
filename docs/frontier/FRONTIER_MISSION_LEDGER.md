@@ -16429,3 +16429,13 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
   free swap about 20 MiB, and user-manager counters were unchanged. This
   supports only the tested assumptions and fixture paths. Live economics,
   host endurance, and deployment remain open; continue serial capped work.
+
+## 2026-10-29 19:31 CET — joint-state and discovery fixture check
+
+- Joint-state, discovery-comparison, and logical-implication fixtures passed
+  **23/23** in 5.02 seconds under 384 MiB High / 512 MiB Max / zero-swap /
+  20%-CPU / 64-task caps. No venue or production store was accessed.
+- Post-run PSI averages were zero, available RAM about 10.3 GiB, free swap
+  about 20 MiB, and user-manager memory counters unchanged. This strengthens
+  bounded multi-leg fixture evidence only; live coverage and host endurance
+  remain open. Frontier remains **PARTIALLY VERIFIED**.

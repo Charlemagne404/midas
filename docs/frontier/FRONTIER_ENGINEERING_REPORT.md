@@ -16523,3 +16523,16 @@ GiB, free swap about 20 MiB, and user-manager memory event counters were
 unchanged. This supports the selected modeled-cost and capital paths; it does
 not verify current fee schedules, accessible venue capital, or live net
 economics. Frontier remains **PARTIALLY VERIFIED**.
+
+### Joint-state and discovery fixture regression — 2026-10-29 19:31 CET
+
+The bounded joint-state, discovery-comparison, and logical-implication suite
+passed **23/23** in 5.02 seconds with a 384 MiB High / 512 MiB Max / zero-swap
+/ 20%-CPU / 64-task scope. These deterministic fixtures exercise multi-leg
+state construction, candidate-discovery comparisons, and logical constraints;
+they do not establish venue-wide discovery coverage or live candidate quality.
+
+At 19:31, memory PSI averages remained zero, available RAM was about 10.3
+GiB, free swap about 20 MiB, and user-manager event counters remained
+unchanged. Keep the host admission at serial bounded fixtures; Frontier
+remains **PARTIALLY VERIFIED**.
