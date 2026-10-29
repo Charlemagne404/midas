@@ -13287,3 +13287,32 @@ the monitor-registration discrepancy.
 
 Completion matrix, incident report, and migration/capacity validation
 checkpoint: `dbc146b` (`docs(frontier): record migration and capacity checks`).
+
+### Core cross-venue economics fixtures and host follow-up — 2026-10-29 04:51 CET
+
+Four focused fixture modules for FX sensitivity, capital carry, Kalshi fees,
+and logical implications passed **79/79 in 4.79 seconds**. They were run from
+the Frontier worktree with a 512 MiB maximum, zero swap, and 20% CPU quota.
+These verify deterministic model cases only; there was no live source probe
+and no profitability or executability claim.
+
+The 04:50 post-run host sample had zero PSI, `MemAvailable=11.59 GB`, about
+2.04 MB swap free, and unchanged user-manager `oom=19`/`oom_kill=15`; API and
+Reality were active at restarts 9/14. A fresh 04:51:44 sample showed
+`MemAvailable=10.82 GiB`, about 2 MiB swap free, zero PSI, and user-manager
+memory/swap current of 9.10/2.86 GB. API was at 814.5 MiB current (1.5 GiB
+high/1.7 GiB max); Reality at 270.7 MiB (1.1 GiB high/1.2 GiB max). Both
+remained active, with restart counts unchanged. The gap-detail timer remained
+inactive and the capacity timer was waiting. `oomctl dump` listed no monitored
+cgroups, and the kernel/systemd-oomd journal query since 04:45 had no OOM
+record. Nearly full swap and OOMD monitor-registration uncertainty remain;
+this short quiet interval is not a stability claim.
+
+**Continuation gate:** safe for serial code and documentation work and small
+capped fixture checks. Keep broad suites, source probes, large replays, and
+parallel analyses deferred. Preserve `data/frontier-public-probes/` untouched.
+
+Working tree at checkpoint: `docs/frontier/FRONTIER_ENGINEERING_REPORT.md`,
+`docs/frontier/FRONTIER_MEMORY_PRESSURE_INCIDENT_2026-10-29.md`, and this
+ledger are pending commit; the untracked probe directory is user evidence and
+must not be staged.

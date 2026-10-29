@@ -256,6 +256,27 @@ appeared. The most recent `oomctl dump` still listed no monitored groups.
 The quiet interval since the last OOMd kill is about five hours and six
 minutes; nearly full swap and monitor visibility remain unresolved.
 
+## Bounded economics regression and current host sample — 2026-10-29 04:51 CET
+
+Four fixture-only cross-venue economics modules (FX sensitivity, capital
+carry, Kalshi fee sensitivity, and logical-implication economics) passed
+**79/79 in 4.79 seconds**. They ran against the Frontier worktree with a
+512 MiB maximum, zero swap, and 20% CPU quota. They provide no live-source,
+execution, or profitability evidence. Immediately after the run, PSI was
+zero, `MemAvailable` was 11.59 GB, free swap was 2.04 MB, user-manager
+`oom=19`/`oom_kill=15` were unchanged, API and Reality were active at restarts
+9/14, and no new OOM record appeared.
+
+At 04:51:44, `MemAvailable` was 10.82 GiB and free swap about 2 MiB. Host and
+user-manager PSI remained zero; the user manager held 9.10 GB memory and
+2.86 GB swap, with `oom=19` and `oom_kill=15`. API was active at 814.5 MiB
+current memory (1.5 GiB high, 1.7 GiB max); Reality was active at 270.7 MiB
+(1.1 GiB high, 1.2 GiB max), with restart counts still 9/14. The gap-detail
+timer was inactive and the capacity timer waiting. `oomctl dump` listed no
+monitored cgroups. A read-only kernel/systemd-oomd journal query since 04:45
+found no OOM record. The observation window is short; swap is still nearly
+full and OOMD monitor registration remains unresolved.
+
 ## Frontier continuation gate
 
 Frontier is **safe to continue with serial code/documentation work and small,
