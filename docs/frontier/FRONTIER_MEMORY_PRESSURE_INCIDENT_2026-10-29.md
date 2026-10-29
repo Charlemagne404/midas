@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 09:30 CET |
+| Latest addendum | 2026-10-29 09:49 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Pre-incident checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -1939,3 +1939,50 @@ resolved.** The recurring auxiliary replay and the capacity checker's proven
 in this short sample, but swap remains full, the parent user cgroup is uncapped,
 the historic pressure initiator is not proven, and long-duration no-kill
 validation remains outstanding.
+
+## 2026-10-29 09:49 CET — Frontier validation admission follow-up
+
+The two focused Kraken stored-frame replay API tests passed **2/2 in 4.91 s**
+under a transient `MemoryHigh=384M`, `MemoryMax=512M`, zero-swap, 20%-CPU,
+64-task, 60-second scope. The existing Starlette/httpx deprecation warning
+appeared. The replay UI test passed **7/7 in 7.10 s** under the same bounds
+after correcting an assertion for the added acknowledgement frame. Ruff lint
+passed; Ruff formatting and Prettier were applied to the changed files.
+
+TypeScript verification did not complete. The full-app check first exited on
+Node's default heap limit after about 65 seconds inside a 512 MiB max scope.
+A retry with a 320 MiB Node heap reached its 90-second runtime bound (scope
+peak 364.9 MiB, zero swap). A narrower check of `Frontier.tsx` and the replay
+panel was then configured with `MemoryHigh=256M` / `MemoryMax=384M`; it reached
+272.1 MiB and was stopped at 49.7 seconds when host PSI rose to
+`some=26.48%` / `full=24.51%` avg10. User-manager `memory.events.high` increased
+from 16,422,194 to 16,424,562 across that interval. This likely contributed to
+the transient reclaim pressure because the check exceeded its own soft bound,
+but does not establish it as the sole cause of that host PSI sample or explain
+the October 28 incident. Aggregate `oom=19`, `oom_kill=15`, and
+`oom_group_kill=0` counters did not change. No further compiler, build, or test
+job was started.
+
+The scheduled Reality capacity monitor then completed at 09:48:30 with
+`Result=success`, `MemoryPeak=148,496,384` bytes, `MemoryHigh=160M`,
+`MemoryMax=192M`, and zero swap. At 09:49:49, `MemAvailable` was
+11,442,974,720 bytes (10.66 GiB), `SwapFree` 9,572,352 bytes (9.13 MiB), and
+host PSI avg10 was zero; avg60/avg300 `some` were 1.22%/1.25% and `full`
+1.10%/1.12%, declining from the compiler interval. Aggregate user-manager
+counters were `high=16,424,562`, `max=730,045`, `oom=19`, and `oom_kill=15`.
+The API, Reality recorder, and Reality API were active with restart counts
+9/14/0; no systemd-oomd or kernel OOM journal entry appeared after 09:30.
+These measurements do not establish sustained recovery. Swap remains nearly
+full, and the compiler attempt demonstrates that even source-independent work
+can cause reclaim if its soft cgroup bound is set below its actual working
+set.
+
+The current Frontier implementation checkpoint is commit `00efbf1`
+(`feat(frontier): replay stored Kraken book captures`). It adds bounded,
+offline reconstruction from hash-bound persisted Kraken frames and a UI replay
+control; it does not open a source connection. The focused Python and UI tests
+passed, while TypeScript checking remains **unverified**. No production service
+or historical evidence was changed. Keep the incident **PARTIALLY CONTAINED /
+PARTIALLY VERIFIED** and limit further work to a single offline job only after
+fresh admission, using a soft limit above the measured working set; stop if PSI
+rises or counters change.

@@ -1,5 +1,39 @@
 # Project Frontier Mission Ledger
 
+## 2026-10-29 09:50 CET — memory-safe Kraken book replay checkpoint
+
+- Commit `00efbf1` adds deterministic offline replay for persisted Kraken Spot
+  book-update captures. Schema-v2 frames now preserve the requested
+  subscription depth; the replay rebuilds the book from raw hash-bound stored
+  messages, checks the normalized states, caps work at 32 frames / 8 MiB, and
+  labels Spot output context-only and event-economics-ineligible. A read-only
+  API route and Frontier market-detail control replay stored rows without
+  opening a source connection. No public-data request was made in this slice.
+- The two focused API tests passed **2/2 in 4.91 s** under a transient 384 MiB
+  High / 512 MiB Max, zero-swap, 20%-CPU, 64-task, 60-second bound. One
+  existing Starlette/httpx deprecation warning appeared. The Kraken panel UI
+  tests passed **7/7 in 7.10 s** under the same bounds. Ruff lint passed;
+  Ruff formatting and Prettier were applied. `git diff --check` passed before
+  checkpointing. The untracked `data/frontier-public-probes/` directory was
+  left untouched.
+- TypeScript remains **unverified**. The full-app check hit Node's default
+  heap limit; a 320 MiB heap retry reached its 90-second runtime limit. A
+  narrower check under a 256 MiB `MemoryHigh` exceeded that soft bound and
+  coincided with host PSI avg10 rising to 26.48% `some` / 24.51% `full`.
+  That process was stopped at 49.7 seconds; no OOM counters changed. Because
+  the transient's measured peak was 272.1 MiB against a 256 MiB soft limit,
+  this is consistent with the check contributing reclaim pressure. No further
+  compiler, build, or test was run. Details are in
+  `FRONTIER_MEMORY_PRESSURE_INCIDENT_2026-10-29.md`.
+- The scheduled Reality capacity run at 09:48:30 succeeded at 148,496,384
+  bytes peak under its 160/192 MiB High/Max bounds with no swap. At 09:49:49,
+  `MemAvailable` was 10.66 GiB, swap free 9.13 MiB, host PSI avg10 zero and
+  avg60/avg300 trending down. OOM counters stayed 19/15/0; API, Reality, and
+  Reality API remained active at restart counts 9/14/0. This brief sample
+  supports continued cautious offline work only; it does not resolve the
+  incident. Continue serially and do not repeat the type check under a soft
+  limit below its measured working set.
+
 ## 2026-10-29 08:33 CET — permission-reference fail-closed fixtures
 
 - Two settings-only cases in `tests/frontier/test_source_data_permissions.py`
