@@ -13396,3 +13396,12 @@ defer broad suites, source probes, and large replay work. The full host
 incident status remains PARTIALLY CONTAINED / PARTIALLY VERIFIED. Preserve
 the untracked `data/frontier-public-probes/` directory without inspection or
 staging.
+
+The 05:06 CET host confirmation after documentation commit `8de85e1` again
+showed zero PSI, `MemAvailable` 10.79 GiB, `SwapFree` 0.002 GiB, unchanged
+user-manager `oom=19`/`oom_kill=15`, and active API/Reality at 0.80/0.27 GiB
+current memory and restart counts 9/14. Gap-detail remained inactive;
+capacity-check remained active. No OOM entry appeared in the preceding
+ten-minute systemd-oomd journal query, but `oomctl dump` still listed no
+monitored groups. This additional brief check supports continued serial,
+capped work only; full-swap and monitor-visibility risks remain.

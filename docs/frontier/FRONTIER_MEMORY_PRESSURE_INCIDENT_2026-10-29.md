@@ -384,3 +384,12 @@ sample only. It does not resolve swap exhaustion, current OOMD monitor
 visibility, root-cause attribution beyond the demonstrated replay-local
 pressure, or endurance stability. Keep broad suites, public probes, and large
 replays deferred.
+
+At 05:06 CET, a separate read-only status check showed `MemAvailable` 10.79
+GiB, `SwapFree` 0.002 GiB, zero host/user-manager PSI, and unchanged
+user-manager `memory.events` (`high=16417339`, `max=730045`, `oom=19`,
+`oom_kill=15`). API/Reality were active at about 0.80/0.27 GiB current
+cgroup memory, with restart counts 9/14. The gap-detail timer was inactive
+and the capacity timer active. No OOM entry was returned by the preceding
+ten-minute systemd-oomd journal query. `oomctl dump` continued to list no
+monitored groups. This remains a short quiet interval, not proof of stability.
