@@ -14,6 +14,7 @@ from midas.simulation.scenarios import SCENARIOS, catalog
 from pydantic import BaseModel, ConfigDict, Field
 
 from apps.api.config import Settings
+from apps.api.deployment import configuration_identity
 from apps.api.service import Service
 
 structlog.configure(
@@ -26,6 +27,7 @@ structlog.configure(
 
 def create_app(settings: Settings | None = None) -> FastAPI:
     config = settings or Settings()
+    process_started_at_utc = datetime.now(UTC).isoformat()
     service = Service(config)
     from midas.frontier.adapters import (
         CoinbaseSpotAdapter,
@@ -151,7 +153,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 parent = (
                     Path(database_path).parent
                     if database_path and database_path != ":memory:"
-                    else Path("data")
+                    else config.runtime_root / "data"
                 )
                 existing = parent / "laboratory-final"
                 root = existing if existing.is_dir() else parent / "laboratory"
@@ -318,6 +320,16 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             "api_release_identity": Path(__file__).resolve().parents[2].name,
             "integrated_source_revision": os.environ.get("MIDAS_SOURCE_REVISION"),
             "checked_at_utc": datetime.now(UTC).isoformat(),
+            "deployment": {
+                "release_id": os.environ.get("MIDAS_RELEASE_ID")
+                or Path(__file__).resolve().parents[2].name,
+                "source_commit": os.environ.get("MIDAS_SOURCE_REVISION"),
+                "configuration_identity": configuration_identity(config),
+                "schema_version": service.store.schema_version,
+                "deployment_timestamp_utc": os.environ.get("MIDAS_DEPLOYED_AT_UTC"),
+                "process_started_at_utc": process_started_at_utc,
+                "runtime_state": status,
+            },
             "startup_status": startup,
             "startup_error": app.state.startup_error,
             "frontier_store": {

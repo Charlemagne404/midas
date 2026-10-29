@@ -14,18 +14,47 @@ commit, source tree hash, Python and frontend lockfile hashes, build command,
 artifact hashes, and verification results. Keep the release directory separate
 from every writable store.
 
-Suggested release layout:
+The candidate release layout separates application code, its locked Python
+environment, per-release configuration, runtime state, and research stores:
 
 ```text
 /home/charlie/.local/share/midas/releases/<full-commit>/
-  api/
-  web/
-  workers/
+  apps/
+  packages/
+  apps/web/dist/
   release-manifest.json
+/home/charlie/.local/share/midas/venvs/<full-commit>/
+/home/charlie/.config/midas/releases/<full-commit>.env
+/home/charlie/.local/state/midas/                 # disposable runtime state
+/home/charlie/midas/data/                         # persistent shared research
+/home/charlie/midas-reality/data/                 # Reality owner
+/home/charlie/midas-veritas/data/                 # Veritas owner
 ```
 
-Keep service configuration under the existing protected configuration root and
-keep each data owner at its current path during the first release:
+Release directories are built from one full commit and become read-only after
+their source, dependency lockfiles, frontend build, and manifest are verified.
+The Python environment and systemd environment file use the same full commit
+identity but live outside the code directory. The environment file contains
+absolute data paths and no implicit source activation. The API reports its
+release ID, source commit, effective settings fingerprint, Alembic schema
+revision, deployment timestamp when supplied, and runtime state from
+`/api/health`. The web build embeds its source commit in Research Readiness.
+Systemd logs remain in the journal; ephemeral API files live below
+`~/.local/state/midas`.
+
+The staged per-release unit templates are
+`deploy/systemd/user/midas-api-release@.service`,
+`deploy/systemd/user/midas-web-release@.service`, and
+`deploy/systemd/user/midas-reality-release@.service`. The API environment
+example is `deploy/config/midas-release.env.example`. They are not installed
+or activated by this plan. The sample keeps `MIDAS_MODE=demo` and all explicit
+Frontier collection switches false. Reality config must set
+`allowed_storage_root` explicitly when its immutable release writes to the
+existing external recording root. Installing the API and web templates still
+requires a coordinated cutover because both bind active production ports and
+the API and Arena scheduler share durable state.
+
+Keep each data owner at its current path during the first release:
 
 - Shared API, Arena, Laboratory, paper, and historical MIDAS records:
   `/home/charlie/midas/data`
@@ -35,8 +64,8 @@ keep each data owner at its current path during the first release:
   paths.
 
 These paths are an ownership map, not approval to move or rewrite them. The
-first release should change code paths only after owners have verified all
-configured data paths and writer identities.
+first release changes only code paths after owners verify all configured data
+paths and writer identities. Do not place mutable data beneath a release.
 
 ## Installed runtime at the read-only sample
 
@@ -85,9 +114,10 @@ not replace a future recheck immediately before deployment.
    suites, route smoke checks, frontend build, and browser checks from
    [DEVELOPMENT.md](DEVELOPMENT.md). Verify the candidate source and test inputs
    by hash.
-5. **Stage units without activating them.** Render candidate unit files from
-   the unified templates, substitute full release paths and explicit data
-   roots, and run `systemd-analyze --user verify` on the staged definitions.
+5. **Stage units without activating them.** Verify the release template
+   instances against the exact full commit, substitute explicit data roots in
+   a per-release environment file, and run `systemd-analyze --user verify` on
+   the staged definitions.
    Compare dependencies, environments, limits, restart policy, readiness, and
    timer schedules with the installed units. Resolve duplicate writers before
    activation.
@@ -97,12 +127,13 @@ not replace a future recheck immediately before deployment.
    schemas to be backward compatible or have a separately verified backup and
    restore procedure. Do not use a data migration to make a code deployment
    appear complete.
-7. **Obtain separate production authorization.** Before any production unit
-   file is installed, reloaded, switched, stopped, or restarted, obtain explicit
-   approval for the named services and exact transition window. Reality recorder
-   adoption and any mutation of its active data boundary require a separate
-   guarded authorization. The project-level instruction prohibits these
-   actions without it.
+7. **Respect the protected boundary.** This migration directive authorizes
+   reversible transitions for eligible, non-protected services when all gates
+   pass. The protected Reality recorder and any change to its active data
+   boundary still require separate explicit authorization. Do not introduce
+   user-facing downtime without a reviewed traffic switch and rollback path.
+   The API/web cutover is a coordinated writer and user-facing transition; the
+   current frontend contract is not compatible with the old API.
 8. **Transition one owner at a time.** During an approved change, preserve the
    service's single-writer boundary, record pre/post identities and cgroup
    counters, verify readiness and data paths, and stop immediately on failed
@@ -129,7 +160,7 @@ authorizes the exact production action. A code release, passing synthetic
 tests, copied archive, or checkpoint prefix does not certify production
 recovery or authorize a recorder restart.
 
-## Not performed
+## Not performed at the original unification handoff
 
 - No service unit or timer was edited, disabled, enabled, or reloaded.
 - No running service was stopped, restarted, or pointed at this checkout.
@@ -137,6 +168,9 @@ recovery or authorize a recorder restart.
   moved, merged, rewritten, or deleted.
 - No branch or historical worktree was deleted.
 - No push or merge to protected `main` was made.
+
+The production migration follow-up is recorded in
+[UNIFICATION_PRODUCTION_MIGRATION_REPORT.md](UNIFICATION_PRODUCTION_MIGRATION_REPORT.md).
 
 Use [OPERATIONS.md](OPERATIONS.md) for the sampled service/data map and
 [UNIFICATION_REPORT.md](UNIFICATION_REPORT.md) for verified code and test

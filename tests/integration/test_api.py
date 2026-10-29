@@ -8,13 +8,19 @@ from apps.api.main import create_app
 
 def test_offline_api_workflow_contract_and_persistence(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("MIDAS_RELEASE_ID", "release-test")
+    monkeypatch.setenv("MIDAS_SOURCE_REVISION", "a" * 40)
+    monkeypatch.setenv("MIDAS_DEPLOYED_AT_UTC", "2026-10-30T00:00:00Z")
 
     def forbidden_network_client(*args, **kwargs):
         raise AssertionError("Demo startup must not construct a public network client")
 
     monkeypatch.setattr("apps.api.service.PublicClient", forbidden_network_client)
     settings = Settings(
-        database_url=f"sqlite+aiosqlite:///{tmp_path}/test.db", mode="demo", refresh_seconds=300
+        runtime_root=tmp_path / "runtime",
+        database_url=f"sqlite+aiosqlite:///{tmp_path}/test.db",
+        mode="demo",
+        refresh_seconds=300,
     )
     app = create_app(settings)
     with TestClient(app) as client:
@@ -24,6 +30,13 @@ def test_offline_api_workflow_contract_and_persistence(tmp_path, monkeypatch):
         assert health["application_version"] == app.version
         assert health["api_release_identity"]
         assert health["checked_at_utc"].endswith("+00:00")
+        assert health["deployment"]["release_id"] == "release-test"
+        assert health["deployment"]["source_commit"] == "a" * 40
+        assert health["deployment"]["configuration_identity"].startswith("sha256:")
+        assert health["deployment"]["schema_version"] == "003"
+        assert health["deployment"]["deployment_timestamp_utc"] == "2026-10-30T00:00:00Z"
+        assert health["deployment"]["process_started_at_utc"].endswith("+00:00")
+        assert health["deployment"]["runtime_state"] == "READY"
         frontier = client.get("/api/frontier/overview")
         assert frontier.status_code == 200
         assert frontier.json()["research_only"] is True
@@ -66,6 +79,7 @@ def test_offline_api_workflow_contract_and_persistence(tmp_path, monkeypatch):
         assert client.post("/api/scenarios/profitable/run", json={}).status_code == 409
         assert not client.get("/api/opportunities/profitable").json()["risk"]["allowed"]
         assert client.get("/api/analytics").json()["simulations"]
+    assert (tmp_path / "runtime" / "data").is_dir()
     with TestClient(create_app(settings)) as client:
         assert len(client.get("/api/simulations").json()) == 3
 

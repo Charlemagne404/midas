@@ -587,7 +587,7 @@ def test_checkpoint_mismatch_and_no_future_state(tmp_path):
         replay(tmp_path, manifest(tmp_path))
 
 
-def test_config_isolation_and_bounds():
+def test_config_isolation_and_bounds(tmp_path):
     from pathlib import Path
 
     from midas.reality.config import Config
@@ -595,6 +595,18 @@ def test_config_isolation_and_bounds():
     assert Path(Config().root) == Path(__file__).resolve().parents[1] / "data/recordings/reality"
     with pytest.raises(ValueError):
         Config(root="/home/charlie/midas/data/laboratory-final")
+    external_root = tmp_path / "persistent" / "recordings"
+    with pytest.raises(ValueError):
+        Config(root=str(external_root / "reality"))
+    configured = Config(
+        root=str(external_root / "reality"), allowed_storage_root=str(external_root)
+    )
+    assert Path(configured.root) == external_root / "reality"
+    with pytest.raises(ValueError):
+        Config(
+            root=str(external_root / "../research"),
+            allowed_storage_root=str(external_root),
+        )
     with pytest.raises(ValueError):
         Config(markets=11)
     with pytest.raises(ValueError):
