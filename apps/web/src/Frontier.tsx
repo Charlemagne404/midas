@@ -745,6 +745,7 @@ type EntityContextNode = {
     | 'asset_reference'
     | 'settlement_asset';
   label: string;
+  label_truncated?: boolean;
   venue: Venue | null;
   native_id: string | null;
   native_id_truncated: boolean;
@@ -752,6 +753,7 @@ type EntityContextNode = {
   lifecycle: string | null;
   quantity_unit: string | null;
   outcome_id: string | null;
+  outcome_id_truncated?: boolean;
   selected_side: 'yes' | 'no' | null;
   identity_scope: string | null;
   value: string | null;
@@ -763,6 +765,7 @@ type EntityContextNode = {
   resolution_fingerprint: string | null;
   resolution_verified: boolean | null;
   payoff_state_ids: string[];
+  payoff_state_ids_truncated?: boolean;
   payoff_exhaustive: boolean | null;
   payoff_verified: boolean | null;
   record_available: boolean;
@@ -1834,6 +1837,7 @@ function EntityContextExplorer({ context }: { context?: EntityContextGraph }) {
                 <option key={node.entity_id} value={marketId}>
                   {node.venue ? `${venueLabel(node.venue)} · ` : ''}
                   {node.label}
+                  {node.label_truncated ? '…' : ''}
                 </option>
               );
             })}
@@ -1867,6 +1871,7 @@ function EntityContextExplorer({ context }: { context?: EntityContextGraph }) {
             </span>
             <span>
               Payoff states: {selectedMarket.payoff_state_ids.join(', ') || 'not supplied'}
+              {selectedMarket.payoff_state_ids_truncated ? '… (graph display clipped)' : ''}
               {' · '}exhaustive:{' '}
               {selectedMarket.payoff_exhaustive == null
                 ? 'unknown'
@@ -1901,9 +1906,13 @@ function EntityContextExplorer({ context }: { context?: EntityContextGraph }) {
               return (
                 <li key={link.link_id}>
                   <strong>
-                    {source ? `${kindLabel(source.kind)}: ${source.label}` : 'Source entity'}
+                    {source
+                      ? `${kindLabel(source.kind)}: ${source.label}${source.label_truncated ? '…' : ''}`
+                      : 'Source entity'}
                     <span> — {kindLabel(link.link_type)} → </span>
-                    {target ? `${kindLabel(target.kind)}: ${target.label}` : 'Unavailable entity'}
+                    {target
+                      ? `${kindLabel(target.kind)}: ${target.label}${target.label_truncated ? '…' : ''}`
+                      : 'Unavailable entity'}
                   </strong>
                   <code>
                     {link.source_field}
@@ -1911,7 +1920,9 @@ function EntityContextExplorer({ context }: { context?: EntityContextGraph }) {
                       ? ` · native ${target.native_id}${target.native_id_truncated ? '…' : ''}`
                       : ''}
                     {target?.quantity_unit ? ` · quantity ${target.quantity_unit}` : ''}
-                    {target?.outcome_id ? ` · outcome ${target.outcome_id}` : ''}
+                    {target?.outcome_id
+                      ? ` · outcome ${target.outcome_id}${target.outcome_id_truncated ? '…' : ''}`
+                      : ''}
                     {target?.value ? ` · value ${target.value}` : ''}
                   </code>
                   <small>Source observation: {link.source_observation_id ?? 'not attached'}</small>

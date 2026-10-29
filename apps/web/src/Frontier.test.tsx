@@ -2999,7 +2999,7 @@ it('renders a bounded accessible relationship graph and opens selected evidence'
       edges: [relation],
       entity_context: {
         schema_version: 1,
-        model_version: 'frontier-market-entity-context-v1',
+        model_version: 'frontier-market-entity-context-v2',
         scope: 'loaded_relationship_market_nodes',
         semantics: 'structural_metadata_only',
         economic_equivalence_asserted: false,

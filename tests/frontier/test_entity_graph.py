@@ -8,7 +8,7 @@ from midas.frontier.entity_graph import (
     EntityContextLinkType,
     project_market_entity_context,
 )
-from midas.frontier.models import MarketInstrument, StatePayout, Venue
+from midas.frontier.models import MarketInstrument, PayoffSpec, StatePayout, Venue
 
 from .builders import market
 
@@ -127,3 +127,42 @@ def test_entity_context_keeps_labels_valid_for_empty_native_labels() -> None:
     assert all(node.label for node in graph.nodes)
     assert any(node.label.startswith("instrument-v1:") for node in graph.nodes)
     assert any(node.label == "Unlabelled payout state" for node in graph.nodes)
+
+
+def test_entity_context_marks_clipped_external_display_fields() -> None:
+    oversized = "x" * 600
+    source = market(Venue.POLYMARKET, "oversized-context").model_copy(
+        update={
+            "instruments": (
+                MarketInstrument(
+                    native_instrument_id="native-id",
+                    label=oversized,
+                    outcome_id=oversized,
+                    payouts=(StatePayout(state_id=oversized, amount=Decimal("1")),),
+                ),
+            ),
+            "payoff": PayoffSpec(state_ids=(oversized,)),
+        }
+    )
+
+    graph = project_market_entity_context(((source.canonical_id, source, "observation"),))
+    market_node = next(node for node in graph.nodes if node.kind == EntityContextKind.MARKET)
+    instrument_node = next(node for node in graph.nodes if node.kind == EntityContextKind.CONTRACT)
+    outcome_node = next(node for node in graph.nodes if node.kind == EntityContextKind.OUTCOME)
+    payout_node = next(node for node in graph.nodes if node.kind == EntityContextKind.PAYOFF_STATE)
+
+    assert instrument_node.label == oversized[:512]
+    assert instrument_node.label_truncated is True
+    assert instrument_node.outcome_id == oversized[:512]
+    assert instrument_node.outcome_id_truncated is True
+    assert outcome_node.native_id_truncated is True
+    assert payout_node.native_id == oversized[:512]
+    assert payout_node.native_id_truncated is True
+    assert market_node.payoff_state_ids == (oversized[:512],)
+    assert market_node.payoff_state_ids_truncated is True
+    assert source.instruments[0].label == oversized
+    assert source.instruments[0].outcome_id == oversized
+    assert source.instruments[0].payouts[0].state_id == oversized
+    assert source.payoff.state_ids == (oversized,)
+    assert graph.truncated is True
+    assert "entity_field_length_limit" in graph.truncation_reasons

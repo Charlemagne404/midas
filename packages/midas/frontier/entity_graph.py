@@ -28,7 +28,7 @@ from midas.frontier.models import (
     stable_instrument_id,
 )
 
-ENTITY_CONTEXT_MODEL_VERSION = "frontier-market-entity-context-v1"
+ENTITY_CONTEXT_MODEL_VERSION = "frontier-market-entity-context-v2"
 MAX_ENTITY_CONTEXT_MARKETS = 512
 MAX_ENTITY_CONTEXT_INSTRUMENTS = 512
 MAX_ENTITY_CONTEXT_COMPONENTS = 256
@@ -68,6 +68,7 @@ class EntityContextNode(FrontierModel):
     entity_id: str = Field(pattern=r"^frontier-entity-v1:[a-z_]+:[0-9a-f]{64}$")
     kind: EntityContextKind
     label: str = Field(min_length=1, max_length=MAX_ENTITY_LABEL_CHARS)
+    label_truncated: bool = False
     venue: Venue | None = None
     native_id: str | None = Field(default=None, max_length=MAX_ENTITY_LABEL_CHARS)
     native_id_truncated: bool = False
@@ -75,6 +76,7 @@ class EntityContextNode(FrontierModel):
     lifecycle: Lifecycle | None = None
     quantity_unit: QuantityUnit | None = None
     outcome_id: str | None = Field(default=None, max_length=MAX_ENTITY_LABEL_CHARS)
+    outcome_id_truncated: bool = False
     selected_side: Literal["yes", "no"] | None = None
     identity_scope: (
         Literal["venue_scoped", "market_scoped", "canonical_settlement_asset"] | None
@@ -88,6 +90,7 @@ class EntityContextNode(FrontierModel):
     resolution_fingerprint: str | None = Field(default=None, max_length=512)
     resolution_verified: bool | None = None
     payoff_state_ids: tuple[str, ...] = Field(default=(), max_length=128)
+    payoff_state_ids_truncated: bool = False
     payoff_exhaustive: bool | None = None
     payoff_verified: bool | None = None
     record_available: bool = True
@@ -132,6 +135,7 @@ class EntityContextGraph(FrontierModel):
 class _NodeAccumulator:
     kind: EntityContextKind
     label: str
+    label_truncated: bool
     venue: Venue | None
     native_id: str | None
     native_id_truncated: bool = False
@@ -139,6 +143,7 @@ class _NodeAccumulator:
     lifecycle: Lifecycle | None = None
     quantity_unit: QuantityUnit | None = None
     outcome_id: str | None = None
+    outcome_id_truncated: bool = False
     selected_side: Literal["yes", "no"] | None = None
     identity_scope: (
         Literal["venue_scoped", "market_scoped", "canonical_settlement_asset"] | None
@@ -152,6 +157,7 @@ class _NodeAccumulator:
     resolution_fingerprint: str | None = None
     resolution_verified: bool | None = None
     payoff_state_ids: tuple[str, ...] = ()
+    payoff_state_ids_truncated: bool = False
     payoff_exhaustive: bool | None = None
     payoff_verified: bool | None = None
     record_available: bool = True
@@ -213,6 +219,7 @@ class _EntityContextBuilder:
             accumulator = _NodeAccumulator(
                 kind=kind,
                 label=label[:MAX_ENTITY_LABEL_CHARS],
+                label_truncated=len(label) > MAX_ENTITY_LABEL_CHARS,
                 venue=venue,
                 native_id=native_id[:MAX_ENTITY_LABEL_CHARS] if native_id else None,
                 native_id_truncated=(
@@ -222,6 +229,9 @@ class _EntityContextBuilder:
                 lifecycle=lifecycle,
                 quantity_unit=quantity_unit,
                 outcome_id=outcome_id[:MAX_ENTITY_LABEL_CHARS] if outcome_id else None,
+                outcome_id_truncated=(
+                    outcome_id is not None and len(outcome_id) > MAX_ENTITY_LABEL_CHARS
+                ),
                 selected_side=selected_side,
                 identity_scope=identity_scope,
                 value=value[:128] if value else None,
@@ -238,12 +248,25 @@ class _EntityContextBuilder:
                     resolution_fingerprint[:512] if resolution_fingerprint else None
                 ),
                 resolution_verified=resolution_verified,
-                payoff_state_ids=payoff_state_ids[:128],
+                payoff_state_ids=tuple(
+                    state_id[:MAX_ENTITY_LABEL_CHARS] for state_id in payoff_state_ids[:128]
+                ),
+                payoff_state_ids_truncated=(
+                    len(payoff_state_ids) > 128
+                    or any(len(state_id) > MAX_ENTITY_LABEL_CHARS for state_id in payoff_state_ids)
+                ),
                 payoff_exhaustive=payoff_exhaustive,
                 payoff_verified=payoff_verified,
                 record_available=record_available,
             )
             self.nodes[entity_id] = accumulator
+            if (
+                accumulator.label_truncated
+                or accumulator.native_id_truncated
+                or accumulator.outcome_id_truncated
+                or accumulator.payoff_state_ids_truncated
+            ):
+                self.truncation_reasons.add("entity_field_length_limit")
         accumulator.market_ids.add(market_id[:512])
         if source_observation_id:
             accumulator.source_observation_ids.add(source_observation_id[:128])
@@ -295,6 +318,7 @@ class _EntityContextBuilder:
                 entity_id=entity_id,
                 kind=node.kind,
                 label=node.label,
+                label_truncated=node.label_truncated,
                 venue=node.venue,
                 native_id=node.native_id,
                 native_id_truncated=node.native_id_truncated,
@@ -302,6 +326,7 @@ class _EntityContextBuilder:
                 lifecycle=node.lifecycle,
                 quantity_unit=node.quantity_unit,
                 outcome_id=node.outcome_id,
+                outcome_id_truncated=node.outcome_id_truncated,
                 selected_side=node.selected_side,
                 identity_scope=node.identity_scope,
                 value=node.value,
@@ -313,6 +338,7 @@ class _EntityContextBuilder:
                 resolution_fingerprint=node.resolution_fingerprint,
                 resolution_verified=node.resolution_verified,
                 payoff_state_ids=node.payoff_state_ids,
+                payoff_state_ids_truncated=node.payoff_state_ids_truncated,
                 payoff_exhaustive=node.payoff_exhaustive,
                 payoff_verified=node.payoff_verified,
                 record_available=node.record_available,
