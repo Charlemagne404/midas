@@ -13742,3 +13742,10 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
 - **Bounds:** Transient service capped at 384 MiB high / 512 MiB max, zero swap, 20% CPU, 64 tasks, and 60 seconds. No network or captured source data was accessed.
 - **Post-test host:** 07:55:22 PSI zero, MemAvailable 10 GiB, SwapFree 8.2 MiB; user-manager memory/swap 9,700,184,064 / 2,858,422,272 bytes; OOM counters 19/15/0. API/Reality active at restarts 9/14 and about 912/390 MiB. No OOMD/kernel OOM since 07:50.
 - **Status:** Relationship safety gains fixture evidence, not live economic equivalence. The memory incident remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**; near-full swap and broader science/verification gates remain open.
+
+## Logical implication economics safeguards — 2026-10-29 07:56 CET
+
+- **Tests:** Five selected `test_logical_implication_economics.py` cases passed **5/5** in 1.60 seconds: reject implication reversal with a counterexample, do not bridge settlement-time differences, do not zero unknown fees, classify stale legs as incomplete with independent reproduction, and exclude post-cutoff relationship assertions.
+- **Bounds:** Transient service capped at 384 MiB high / 512 MiB hard, zero swap, 20% CPU, 64 tasks, and 60 seconds. No live source data was accessed.
+- **Post-test host:** At 07:56:03 PSI zero, MemAvailable 10 GiB, SwapFree 8.2 MiB; user-manager memory/swap 9,697,857,536 / 2,858,422,272 bytes; OOM counters stayed 19/15/0. API/Reality remained active at restarts 9/14 and about 912/391 MiB. No OOMD/kernel OOM since 07:50.
+- **Status:** Fixture economics validation advanced; incident remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**, and no live opportunity is demonstrated.

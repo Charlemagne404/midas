@@ -1169,3 +1169,19 @@ remained 19/15/0. API and Reality were active at restart counts 9/14 and about
 strengthens relationship rejection behavior but does not establish a live
 cross-venue match or change the **PARTIALLY CONTAINED / PARTIALLY VERIFIED**
 incident state.
+
+## Logical implication economics checks — 2026-10-29 07:56 CET
+
+Five focused cases in `test_logical_implication_economics.py` passed **5/5**
+in 1.60 seconds. They reject reverse implication with a counterexample,
+settlement-time bridging, silently treating unknown fees as zero, stale-leg
+completion, and post-cutoff relationship evidence. The test ran under a
+384 MiB high / 512 MiB hard, zero-swap, 20% CPU, 64-task, 60-second transient
+service. No source access occurred.
+
+At 07:56:03 PSI remained zero, `MemAvailable` was 10 GiB, `SwapFree` 8.2 MiB,
+user-manager memory/swap was 9,697,857,536 / 2,858,422,272 bytes, and OOM
+counters remained 19/15/0. API/Reality were active at restarts 9/14 and about
+912/391 MiB; no OOMD or kernel OOM appeared since 07:50. This adds fixture
+evidence for conservative economics but does not alter the partial incident
+status or support live-profitability claims.
