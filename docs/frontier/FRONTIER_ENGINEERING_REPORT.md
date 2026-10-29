@@ -2,14 +2,14 @@
 
 **Report date:** 2026-10-29
 
-## Current completion matrix — 2026-10-29 21:38 CET
+## Current completion matrix — 2026-10-29 21:43 CET
 
 This is an evidence classification, not a final completion claim. The dated
 implementation records below remain the detailed evidence; the
 [current incident report](FRONTIER_MEMORY_PRESSURE_INCIDENT_2026-10-29.md) records
-the current host gate. The host row reflects the 21:35 sample; the other
+the current host gate. The host row reflects the 21:43 sample; the other
 component rows retain their scoped evidence, with the 21:38 targeted Polymarket
-panel check and 21:35 bounded TypeScript check included below. A
+panel check and 21:43 bounded TypeScript check included below. A
 documentation-only cross-check of current official
 exchange market-data contracts is recorded in
 [Adapter Documentation Contract Review](ADAPTER_DOCUMENTATION_CONTRACT_REVIEW_2026-10-29.md);
@@ -33,14 +33,14 @@ sources; it also leaves all holds in place.
 | Source-aware coverage and statistical summaries | PARTIALLY VERIFIED | Coverage analytics uses the newest valid joined book per native instrument, labels replay candidate/trade rows as potentially overlapping, and only counts repeated gross-positive constructions after verified audit, distinct pinned book sets, and distinct replay times. The focused analytics fixture module passed 10/10 at 15:40 under a 256/384 MiB zero-swap scope. This supports bounded recorded-sample reporting, not venue-wide prevalence, complete histories, or statistically independent opportunities. |
 | Reality capacity inventory bounds | PARTIALLY VERIFIED | Candidate commits bd09640 (bounded catalog scan), c42f987 (process VmHWM telemetry), and d5847df (tests) remain isolated and undeployed. The 21:21 scheduled monitor exited 0 after 6.222 CPU seconds under High 160M / Max 192M / zero swap; systemd removed its cgroup before inspection and MemoryPeak was not set, so runtime peak validation remains unavailable. Four focused fixture tests passed 4/4 under a 160/192 MiB zero-swap cap. Archive inventory/provenance warnings remain and no archive evidence was altered. |
 | Native Frontier dashboard | PARTIALLY VERIFIED | The native workspace includes source, coverage, graph, opportunity, replay, and readiness views. Existing bounded browser journeys cover overview, explicit-action Polymarket price-history capture/replay, captured market/book/provenance/relationship inspection, deterministic replay, and responsive layouts. The new Polymarket projection panel displays instrument state, top five levels, projected best prices, BBO comparison, hashes, and the size-replacement assumption; its focused interaction passed 1/1 at 21:38 with eight unrelated cases skipped. Live-source capture, production-store validation, and broad integration remain open. |
-| Host reliability containment | PARTIALLY VERIFIED | At 21:35, host PSI averages remained zero and MemAvailable was about 10 GiB, but all 4 GiB swap remained used. The user manager has no aggregate memory/swap limit; `oomctl` showed no monitored groups, and historical OOM clusters remain unattributed. Gap-detail remains disabled. No new OOMD/kernel kills or user-cgroup OOM counter changes appeared through 21:35, including bounded fixture/type checks; API and Reality remained active at restart counts 9/14. This short quiet interval is not resolution. Full details and rollback steps remain in the incident report. |
-| Node/V8 and Apport side effect | PARTIALLY VERIFIED | The exact-tree TypeScript build check passed at 21:35 using a 512 MiB Node heap in a 768 MiB high / 1 GiB max, zero-swap, 20%-CPU scope; that invocation did not record its transient memory peak. An earlier scoped check measured 378,306,560 bytes peak. Default-heap attempts timed out or exhausted V8 at about 251 MiB; those were process heap failures, not cgroup OOMs. An earlier crash-report upload attempt received HTTP 504; remote receipt remains unknown. |
+| Host reliability containment | PARTIALLY VERIFIED | At 21:43, host PSI averages remained zero and MemAvailable was about 10 GiB, but all 4 GiB swap remained used. The user manager has no aggregate memory/swap limit; `oomctl` showed no monitored groups, and historical OOM clusters remain unattributed. Gap-detail remains disabled. OOM/OOM-kill counts and systemd-oomd/kernel kill journals stayed unchanged through bounded checks. `memory.events.max` rose by 515 around the 21:41 scheduled source-analysis run; its service cgroup had already been removed, so the increment cannot be attributed. API and Reality remained active at restart counts 9/14. This short quiet interval is not resolution. Full details and rollback steps remain in the incident report. |
+| Node/V8 and Apport side effect | PARTIALLY VERIFIED | The final-tree TypeScript build check passed at 21:43 using a 512 MiB Node heap in a 768 MiB high / 1 GiB max, zero-swap, 20%-CPU scope; that invocation did not record its transient memory peak. An earlier scoped check measured 378,306,560 bytes peak. Default-heap attempts timed out or exhausted V8 at about 251 MiB; those were process heap failures, not cgroup OOMs. An earlier crash-report upload attempt received HTTP 504; remote receipt remains unknown. |
 | Broad regressions, resource endurance, and performance acceptance | DEFERRED | Selected Python, API, adapter, collection, and economics tests passed under bounded zero-swap scopes. The graph-revision storage/migration cases pass 8/8; API cursor invalidation passes 1/1; four core economics modules pass 79/79; joint-state basket/audit/replay passes 14/14; logical implication/relationship review passes 27/27; transport passes 20/20; readiness resource API passes 7/7 and its focused UI passes 3/3. Captured-store market/book replay passes 1/1 in 40.7 seconds and the 390-pixel responsive journey passes 1/1 in 46.5 seconds. This change's Polymarket stream/API fixtures pass 20/20, focused dashboard interaction passes 1/1, and bounded `tsc -b`, ESLint, Ruff, and Prettier checks pass. Full MIDAS regression, full browser suite, endurance, and broad performance tests remain deferred. |
 | Live multi-venue source authorization and findings | BLOCKED | The 2026-10-29 terms follow-up records current official use restrictions and unresolved scope/permission for held Kalshi, Kraken, Coinbase, and Gemini sources. No hold was lifted; the worktree Polymarket probe flag remains off. |
 | Production integration/deployment | DEFERRED | Frontier remains isolated; no protected service transition occurred. |
 | Project Frontier overall | PARTIALLY VERIFIED | The engine is substantial, but live cross-venue science, broad verification, recovery, endurance, and deployment gates remain open. |
 
-### Polymarket snapshot-anchored replay projection — 2026-10-29 21:35 CET
+### Polymarket snapshot-anchored replay projection — 2026-10-29 21:43 CET
 
 Replay schema v3 adds an offline, bounded projection for the Polymarket public
 market stream. It requires a captured full `book` snapshot before applying
@@ -68,10 +68,10 @@ Fixture verification passed `tests/frontier/test_polymarket_stream.py` **20/20**
 in 9.20 seconds under a 384 MiB high / 512 MiB max, zero-swap, 15%-CPU,
 64-task scope. The focused Polymarket panel interaction passed **1/1** with
 eight unrelated cases skipped in 23.11 seconds under a 512 MiB high / 768 MiB
-max, zero-swap, 20%-CPU scope. Targeted ESLint and the exact-tree TypeScript
+max, zero-swap, 20%-CPU scope. Targeted ESLint and the final-tree TypeScript
 build check passed; `tsc -b` used a 768 MiB high / 1 GiB max, zero-swap,
-20%-CPU scope, without a sampled transient peak. Ruff check and formatting
-passed/applied. A Starlette/httpx deprecation warning remains in the Python
+20%-CPU scope, without a sampled transient peak. Ruff and Prettier checks
+passed after formatting. A Starlette/httpx deprecation warning remains in the Python
 test harness. No live stream, public endpoint, or production store was used.
 
 ### Gemini bounded recent-trade parser — 2026-10-29 10:23 CET

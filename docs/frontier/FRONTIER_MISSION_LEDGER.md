@@ -1,5 +1,36 @@
 # Project Frontier Mission Ledger
 
+## 2026-10-29 21:43 CET — post-projection verification and checkpoint
+
+- Feature commit `c84d70c2b16b04e69bbb623e95b688d4a930485b` adds the
+  Polymarket replay-v3 snapshot-anchored projection, fixture coverage, panel
+  display, and operations/report documentation. The commit staged only nine
+  owned files; preexisting untracked `data/frontier-public-probes/` remains
+  untouched.
+- Final-tree checks: Polymarket stream/API module **20/20** in 9.20 seconds;
+  focused Mission Control interaction **1/1** with eight unrelated cases
+  skipped in 23.11 seconds; `tsc -b`, targeted ESLint, Ruff check/format, and
+  Prettier check passed. Test scopes used zero swap, CPU/task limits, and
+  bounded memory. No live source or production-store request was made. The
+  Python harness reports an existing Starlette/httpx deprecation warning.
+- The scheduled Veritas source-analysis run started 21:41:04 and exited
+  successfully at 21:41:16 after processing 59 finalized segments, with no
+  pending segments. Its `MemoryMax` is 256 MiB; the unit cgroup had been removed
+  before `MemoryPeak` or local events could be read. User-manager
+  `memory.events.max` advanced by 515 from 732,432 to 732,947 around that run;
+  temporal proximity does not attribute those events to this unit. `high`,
+  `oom`, and `oom_kill` remained 16,438,383 / 19 / 15.
+- At 21:43, memory PSI was zero, MemAvailable was about 10 GiB, and all 4 GiB
+  of swap was still used. systemd-oomd and kernel OOM journals had no entries
+  since 21:35. API and Reality remained active at restart counts 9/14. The
+  capacity timer is waiting for its 21:51 run; gap-detail remains disabled.
+  This quiet interval does not resolve the host incident. Keep broad suites and
+  live probes deferred; take a fresh admission sample after the capacity run
+  before deciding on further work.
+- Current code checkpoint is `c84d70c`; subsequent current-state documentation
+  updates are being committed separately. Frontier remains isolated on
+  `codex/frontier-20261026`.
+
 ## 2026-10-29 21:38 CET — Polymarket snapshot-anchored replay projection
 
 - Replay schema v3 now creates a bounded, deterministic local projection from

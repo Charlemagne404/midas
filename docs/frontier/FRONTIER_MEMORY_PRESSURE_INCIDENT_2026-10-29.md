@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 21:22 CET |
+| Latest addendum | 2026-10-29 21:43 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Pre-incident checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -14,6 +14,46 @@ This is the current incident report. It supplements the chronological record in
 [`FRONTIER_MEMORY_PRESSURE_INCIDENT_2026-10-28.md`](FRONTIER_MEMORY_PRESSURE_INCIDENT_2026-10-28.md).
 The full-day journal query below expands that earlier report's final-ten-event
 sample to all October 28 systemd-oomd kills.
+
+## Latest addendum — 2026-10-29 21:43 CET
+
+The host remained in a low-pressure but swap-saturated state during bounded
+Frontier verification. At 21:43, `MemAvailable` was about 10 GiB and memory
+PSI averages were zero, while the 4 GiB swap device remained fully used. The
+`user@1000.service` memory events were `high=16,438,383`, `max=732,947`,
+`oom=19`, and `oom_kill=15`. `high`, `oom`, and `oom_kill` matched the 21:35
+sample; `max` was 515 higher than its 21:35 value of 732,432.
+
+The Veritas source-analysis timer fired at 21:41:04. The service exited at
+21:41:16 with `Result=success`; its read-only output reported 59 processed
+segments, zero pending segments, and `awaiting_finalized_campaign_window_end`.
+It has `MemoryMax=256 MiB` and unlimited swap. The service cgroup had already
+been removed before inspection, so there is no `MemoryPeak` or local
+`memory.events` evidence. The parent `max` increment happened around this
+scheduled run but cannot be attributed to it; no source-analysis concurrency
+was started manually.
+
+From 21:37 through 21:43, the Frontier worktree ran only the Polymarket stream
+fixture module, one focused Mission Control test, targeted lint/format checks,
+and `tsc -b`. These ran serially in transient scopes capped at 512 MiB to 1 GiB
+with `MemorySwapMax=0`, CPU quotas of 10–20%, task limits of 32–64, and finite
+timeouts. The final-tree checks passed. After them, the user-manager `max`
+counter remained 732,947. systemd-oomd and kernel OOM journals had no entries
+since 21:35. API and Reality remained active at their existing restart counts
+9 and 14. At 21:38, Continental cloud-tailnet and ID-auth services, Echo
+Archives production/staging, RustDesk, and the SSH socket were also active.
+The capacity timer remains active and waiting for 21:51; the gap-detail timer
+remains inactive and disabled.
+
+No production service configuration was changed or restarted for these
+checks. Frontier commit `c84d70c` is isolated on `codex/frontier-20261026`;
+the existing untracked public-probe data was not staged or modified. Incident
+status remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**, not resolved:
+swap is full, the user manager has no aggregate memory/swap limit, `oomctl`
+still showed no monitored groups, the 515 parent `max` events lack leaf
+attribution, and a quiet interval cannot prove durable recovery. Take another
+admission sample after the 21:51 capacity run before deciding whether to run
+more Frontier tests.
 
 ## Executive finding
 
@@ -35,7 +75,7 @@ The gap-detail timer is stopped and disabled. The capacity service has a
 reversible 160 MiB soft / 192 MiB hard limit with swap disabled; its scheduled
 17:50 run succeeded at 147.8 MiB peak with zero swap. Since the final
 systemd-oomd kill at 23:43:24 on October 28, no additional systemd-oomd kill
-has appeared through 18:02 on October 29; no kernel OOM has appeared since the
+has appeared through 21:43 on October 29; no kernel OOM has appeared since the
 20:15:44 capacity kill.
 
 This is **partially contained, not resolved**. At 18:02 the host had
