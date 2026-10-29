@@ -14656,3 +14656,22 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
   live-store validation remains pending. Host incident status remains
   **PARTIALLY CONTAINED / PARTIALLY VERIFIED**. Continue only serial bounded
   offline work while swap remains nearly exhausted.
+
+## 2026-10-29 12:36 CET — corrupted saved-frame rejection
+
+- Commit `dfd264f` adds a data-poisoning regression for the Polymarket saved
+  frame listing API. The temporary fixture mutates normalized JSON and
+  recomputes the SQLite row hash; the route still rejects the malformed frame
+  summary with HTTP 409. This directly checks route schema validation beyond
+  the store's integrity hash.
+- The focused API test passed **1/1 in 4.50 s** under 512 MiB high / 640 MiB
+  max, zero swap, 20%-CPU, 128 tasks, and 60 seconds. Ruff check and format
+  passed. One existing TestClient deprecation warning remains. No source
+  connection or production store was used.
+- At 12:36, PSI was zero through avg300, `MemAvailable` was about 10 GiB, and
+  swap free remained about 14 MiB. User-manager OOM counters were unchanged;
+  no OOMD/kernel kill appeared since 12:31. This remains a brief quiet sample.
+- **Status:** Listing rejects both row-integrity failures (covered by storage
+  tests) and valid-hash malformed normalized shapes (this API test). Production
+  store validation is still pending. Continue serial bounded offline work;
+  incident status remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**.

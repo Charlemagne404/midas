@@ -15205,3 +15205,22 @@ in [`the 2026-10-29 memory-pressure follow-up`](FRONTIER_MEMORY_PRESSURE_INCIDEN
 The host remains partially contained: swap is nearly full, so Frontier work
 continues only as serial, bounded, offline development. No service or timer
 was changed, and no production store was touched.
+
+## Reject corrupted saved Polymarket frame summaries — 2026-10-29 12:36 CET
+
+Commit `dfd264f` adds an adversarial API regression for the saved-frame
+listing route. In a temporary SQLite store, the fixture changes a persisted
+normalized frame to an invalid shape and recomputes the row hash, so the
+storage integrity layer accepts the row. The listing endpoint then rejects
+the malformed frame with HTTP 409. This proves the route's schema validation
+is effective independently of the store's tamper hash. No production data or
+external source is involved.
+
+The focused API test passed **1/1 in 4.50 seconds** under a 512 MiB high /
+640 MiB max, zero-swap, 20%-CPU, 128-task, 60-second scope. Ruff check and
+format passed. One existing Starlette/httpx TestClient deprecation warning
+appeared. At 12:36, host `MemAvailable` remained about 10 GiB, PSI was zero
+through avg300, and swap free remained about 14 MiB. User-manager OOM counters
+were unchanged and no OOMD/kernel kill appeared since 12:31. This short
+fixture check does not change the host incident disposition or establish
+production-store behavior.

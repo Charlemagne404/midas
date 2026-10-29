@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 12:31 CET |
+| Latest addendum | 2026-10-29 12:36 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Pre-incident checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -2629,3 +2629,19 @@ initiator remains unproven.
 a fresh admission sample. Broad suites, builds, public probes, source capture,
 and production deployment remain deferred while swap and long-term pressure
 behavior are unresolved.
+
+## Post-fixture admission sample — 2026-10-29 12:36 CET
+
+The focused malformed-frame listing regression passed **1/1 in 4.50 seconds**
+inside its 512 MiB high / 640 MiB max, zero-swap, 20%-CPU, 128-task scope.
+It changed only the temporary fixture database and made no network request.
+At 12:36, the host had about 10 GiB `MemAvailable`, 14 MiB `SwapFree`, and
+zero PSI through avg300. User-manager counters remained
+`high=16,428,175`, `max=730,409`, `oom=19`, `oom_kill=15`, and
+`oom_group_kill=0`; the enclosing user slice had 896 tasks. The checked
+systemd-oomd and kernel journals had no new kill records since 12:31.
+
+This adds a short quiet point after the prior bounded run, not durable recovery
+evidence. The systemd-oomd user-manager monitor remains enabled at the 50%
+pressure threshold, and near-total swap occupancy continues to constrain
+admission. No host service or schedule was changed.
