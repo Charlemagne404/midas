@@ -3912,6 +3912,12 @@ it('records a self-attributed relationship review with both stored market source
   const recordedReviews: Record<string, unknown>[] = [];
   const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const path = String(input);
+    if (path.startsWith('/api/frontier/graph?')) {
+      return {
+        ok: true,
+        json: async () => responses['/api/frontier/graph?depth=1&limit=100'],
+      } as Response;
+    }
     if (path.endsWith('/relationships/' + 'c'.repeat(64) + '/review')) {
       const request = JSON.parse(String(init?.body));
       reviewRequest(request);

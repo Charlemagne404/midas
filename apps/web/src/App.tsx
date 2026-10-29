@@ -49,6 +49,9 @@ const LazyFrontier = lazy(() =>
 const LazyReadiness = lazy(() =>
   import('./Readiness').then((module) => ({ default: module.Readiness })),
 );
+const LazyObservatory = lazy(() =>
+  import('./Observatory').then((module) => ({ default: module.Observatory })),
+);
 
 type WorkspaceErrorBoundaryProps = {
   name: string;
@@ -118,6 +121,7 @@ import type {
 const pages = [
   ['Mission Control', LayoutDashboard],
   ['Research Readiness', ShieldCheck],
+  ['Observatory', Sparkles],
   ['Reality', Radio],
   ['Veritas', BarChart3],
   ['Frontier', Globe2],
@@ -247,19 +251,25 @@ export function App() {
                 ? 'Veritas research'
                 : page === 'Research Readiness'
                   ? 'Readiness evidence'
-                  : page === 'Frontier'
-                    ? 'Multi-market research'
-                    : 'Foundation lab'}{' '}
-            {page !== 'Veritas' && (
-              <Badge tone="gold">
-                {page === 'Reality'
-                  ? 'M2'
-                  : page === 'Research Readiness'
-                    ? 'LIVE'
+                  : page === 'Observatory'
+                    ? 'Saved Arena artifacts'
                     : page === 'Frontier'
-                      ? 'R&D'
-                      : 'M1'}
-              </Badge>
+                      ? 'Multi-market research'
+                      : 'Foundation lab'}{' '}
+            {page === 'Observatory' ? (
+              <Badge tone="gold">READ ONLY</Badge>
+            ) : (
+              page !== 'Veritas' && (
+                <Badge tone="gold">
+                  {page === 'Reality'
+                    ? 'M2'
+                    : page === 'Research Readiness'
+                      ? 'LIVE'
+                      : page === 'Frontier'
+                        ? 'R&D'
+                        : 'M1'}
+                </Badge>
+              )
             )}
           </div>
         </div>
@@ -311,9 +321,11 @@ export function App() {
                     ? 'FRONTIER · READ-ONLY RESEARCH'
                     : page === 'Research Readiness'
                       ? 'READINESS · EVIDENCE CLASSIFICATION'
-                      : state?.mode === 'live'
-                        ? 'LIVE OBSERVATION'
-                        : 'DEMO · SYNTHETIC'}
+                      : page === 'Observatory'
+                        ? 'OBSERVATORY · SAVED ARENA ARTIFACTS'
+                        : state?.mode === 'live'
+                          ? 'LIVE OBSERVATION'
+                          : 'DEMO · SYNTHETIC'}
             </Badge>
             <span className="topbar-boundary">
               <ShieldCheck size={13} />
@@ -325,6 +337,7 @@ export function App() {
           {page !== 'Reality' &&
             page !== 'Veritas' &&
             page !== 'Research Readiness' &&
+            page !== 'Observatory' &&
             page !== 'Frontier' && (
               <div className="page-heading">
                 <div>
@@ -368,6 +381,7 @@ export function App() {
           {page !== 'Reality' &&
             page !== 'Veritas' &&
             page !== 'Research Readiness' &&
+            page !== 'Observatory' &&
             page !== 'Frontier' &&
             disconnected && (
               <div className="alert danger">
@@ -393,6 +407,7 @@ export function App() {
           {page !== 'Reality' &&
             page !== 'Veritas' &&
             page !== 'Research Readiness' &&
+            page !== 'Observatory' &&
             page !== 'Frontier' &&
             state?.mode === 'demo' && (
               <div className="demo-strip">
@@ -405,6 +420,7 @@ export function App() {
           {page !== 'Reality' &&
             page !== 'Veritas' &&
             page !== 'Research Readiness' &&
+            page !== 'Observatory' &&
             page !== 'Frontier' &&
             state?.status === 'DEGRADED' &&
             !disconnected && (
@@ -417,6 +433,7 @@ export function App() {
           {page !== 'Reality' &&
             page !== 'Veritas' &&
             page !== 'Research Readiness' &&
+            page !== 'Observatory' &&
             page !== 'Frontier' &&
             state?.safety.emergency_stop && (
               <div className="alert danger" role="alert">
@@ -437,6 +454,11 @@ export function App() {
           {page === 'Research Readiness' && (
             <LazyWorkspace name="Readiness" loading="Loading readiness evidence…">
               <LazyReadiness />
+            </LazyWorkspace>
+          )}
+          {page === 'Observatory' && (
+            <LazyWorkspace name="Observatory" loading="Loading saved research artifacts…">
+              <LazyObservatory />
             </LazyWorkspace>
           )}
           {page === 'Scanner' && (

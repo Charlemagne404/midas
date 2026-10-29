@@ -3158,7 +3158,9 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
         method: 'POST',
         body: JSON.stringify({ market_id: marketId }),
       }),
-    onSuccess: refresh,
+    onSuccess: () => {
+      void refresh();
+    },
   });
   const captureEventMarketGroup = useMutation({
     mutationFn: ({
@@ -3174,7 +3176,9 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
         method: 'POST',
         body: JSON.stringify({ market_id: marketId, native_event_id: nativeEventId }),
       }),
-    onSuccess: refresh,
+    onSuccess: () => {
+      void refresh();
+    },
   });
   const captureMarketMetadata = useMutation({
     mutationFn: ({ marketId, venue }: { marketId: string; venue: 'polymarket' | 'kalshi' }) =>
@@ -3182,7 +3186,9 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
         method: 'POST',
         body: JSON.stringify({ market_id: marketId }),
       }),
-    onSuccess: refresh,
+    onSuccess: () => {
+      void refresh();
+    },
   });
   const capturePolymarketPriceHistory = useMutation({
     mutationFn: (input: {
@@ -3257,7 +3263,9 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
           component_market_id: componentMarketId,
         }),
       }),
-    onSuccess: refresh,
+    onSuccess: () => {
+      void refresh();
+    },
   });
   const auditKalshiMveSettlement = useMutation({
     mutationFn: ({ marketId }: { marketId: string }) =>

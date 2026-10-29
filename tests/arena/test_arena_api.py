@@ -1,7 +1,10 @@
+import json
+
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-from midas.arena.artifacts import atomic_json
+from midas.arena.artifacts import atomic_json, sha256
+from midas.arena.features import FEATURE_VERSION, FEATURES
 
 from apps.api.arena import inspect_director, research_activity, router
 
@@ -143,6 +146,174 @@ def test_api_empty_state_validation_and_missing_artifacts(tmp_path):
         )
         assert client.get("/api/arena/models/model-a/artifacts/secrets").status_code == 404
         assert client.get("/api/arena/tournaments/x/rows?limit=10000").status_code == 422
+
+
+def test_observatory_network_computes_a_verified_saved_forward_pass(tmp_path):
+    import math
+
+    model_id = "model-observatory-test"
+    dataset_id = "dataset-observatory-test"
+    features = [1.0, 2.0, *([0.0] * (len(FEATURES) - 2))]
+    atomic_json(
+        tmp_path / "datasets" / dataset_id / "manifest.json",
+        {
+            "dataset_id": dataset_id,
+            "feature_schema": list(FEATURES),
+            "feature_version": FEATURE_VERSION,
+            "label_target": "completion",
+            "provenance": "GENERATED",
+            "limitations": ["Synthetic fixture only"],
+            "rows_sha256": "pending",
+        },
+    )
+    dataset_manifest_path = tmp_path / "datasets" / dataset_id / "manifest.json"
+    dataset = json.loads(dataset_manifest_path.read_text())
+    atomic_json(
+        tmp_path / "datasets" / dataset_id / "rows.json",
+        [
+            {
+                "partition": "validation",
+                "features": features,
+                "family": "calm",
+                "execution_model": "standard",
+                "base_episode_id": "calm:1",
+            }
+        ],
+    )
+    dataset["rows_sha256"] = sha256(tmp_path / "datasets" / dataset_id / "rows.json")
+    atomic_json(dataset_manifest_path, dataset)
+    hidden = 2
+    weights = {
+        "0.weight": [
+            [1.0, *([0.0] * (len(FEATURES) - 1))],
+            [0.0, 1.0, *([0.0] * (len(FEATURES) - 2))],
+        ],
+        "0.bias": [0.0, 0.0],
+        "2.weight": [[1.0, 0.0], [0.0, 1.0]],
+        "2.bias": [0.0, 0.0],
+        "4.weight": [[1.0, -1.0]],
+        "4.bias": [0.0],
+    }
+    atomic_json(
+        tmp_path / "models" / model_id / "parameters.json",
+        {
+            "family": "mlp",
+            "label_target": "completion",
+            "mean": [0.0] * len(FEATURES),
+            "scale": [1.0] * len(FEATURES),
+            "hidden_size": hidden,
+            "excluded_features": [],
+            "weights": weights,
+        },
+    )
+    artifact_hash = sha256(tmp_path / "models" / model_id / "parameters.json")
+    atomic_json(
+        tmp_path / "models" / model_id / "manifest.json",
+        {
+            "model_id": model_id,
+            "family": "mlp",
+            "state": "EVALUATED",
+            "dataset_id": dataset_id,
+            "dataset_sha256": dataset["rows_sha256"],
+            "artifact_sha256": artifact_hash,
+            "feature_schema": list(FEATURES),
+            "feature_version": FEATURE_VERSION,
+            "label_target": "completion",
+            "configuration": {"excluded_features": []},
+        },
+    )
+    app = FastAPI()
+    app.include_router(router(tmp_path))
+    with TestClient(app) as client:
+        response = client.get(f"/api/arena/observatory/models/{model_id}/network")
+    assert response.status_code == 200
+    network = response.json()
+    assert network["model"]["architecture"] == [len(FEATURES), 2, 2, 1]
+    assert network["activations"][1][:2] == [1.0, 2.0]
+    assert network["activations"][2][:2] == [1.0, 2.0]
+    assert math.isclose(network["prediction"]["probability"], 1 / (1 + math.exp(1)), rel_tol=1e-6)
+    assert network["sample"]["family"] == "calm"
+
+
+def test_observatory_universe_links_only_explicit_saved_relationships(tmp_path):
+    dataset_id = "dataset-universe-source"
+    model_id = "model-universe-source"
+    unrelated_model = "model-universe-unrelated"
+    tournament_id = "tournament-universe-result"
+    finding_id = "finding-universe-result"
+    atomic_json(
+        tmp_path / "datasets" / dataset_id / "manifest.json",
+        {
+            "dataset_id": dataset_id,
+            "created_at": 10,
+            "provenance": "GENERATED",
+            "rows": 12,
+            "label_target": "completion",
+            "feature_schema": ["ask_sum", "bid_sum"],
+        },
+    )
+    atomic_json(
+        tmp_path / "models" / model_id / "manifest.json",
+        {
+            "model_id": model_id,
+            "family": "mlp",
+            "state": "EVALUATED",
+            "dataset_id": dataset_id,
+            "created_at": 11,
+            "curves": [{"epoch": 1}],
+        },
+    )
+    atomic_json(
+        tmp_path / "models" / unrelated_model / "manifest.json",
+        {
+            "model_id": unrelated_model,
+            "family": "mlp",
+            "state": "EVALUATED",
+            "dataset_id": "dataset-not-in-view",
+            "created_at": 9,
+        },
+    )
+    atomic_json(
+        tmp_path / "tournaments" / tournament_id / "manifest.json",
+        {
+            "tournament_id": tournament_id,
+            "created_at": 12,
+            "evaluation_design": "TEST",
+            "base_episodes": 30,
+            "configuration": {"dataset_id": dataset_id, "model_ids": [model_id]},
+        },
+    )
+    atomic_json(
+        tmp_path / "findings" / finding_id / "manifest.json",
+        {
+            "finding_id": finding_id,
+            "created_at": 13,
+            "title": "Saved finding",
+            "tournament_id": tournament_id,
+        },
+    )
+    before = {path: path.read_bytes() for path in tmp_path.rglob("*.json")}
+    app = FastAPI()
+    app.include_router(router(tmp_path))
+    with TestClient(app) as client:
+        response = client.get("/api/arena/observatory")
+    assert response.status_code == 200
+    universe = response.json()
+    assert universe["read_only"] is True
+    assert universe["simulations"][0]["dataset_id"] == dataset_id
+    assert universe["simulations"][0]["feature_schema"] == ["ask_sum", "bid_sum"]
+    edge_pairs = {
+        (edge["source"], edge["target"], edge["relationship"])
+        for edge in universe["graph"]["edges"]
+    }
+    assert (f"dataset:{dataset_id}", f"model:{model_id}", "trained with") in edge_pairs
+    assert (f"model:{model_id}", f"experiment:{tournament_id}", "tested in") in edge_pairs
+    assert (f"experiment:{tournament_id}", f"finding:{finding_id}", "produced") in edge_pairs
+    assert not any(
+        edge["source"] == f"dataset:{dataset_id}" and edge["target"] == f"model:{unrelated_model}"
+        for edge in universe["graph"]["edges"]
+    )
+    assert before == {path: path.read_bytes() for path in tmp_path.rglob("*.json")}
 
 
 def test_research_activity_returns_bounded_job_director_schedule_and_alert_status(

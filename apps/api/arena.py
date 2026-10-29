@@ -26,6 +26,625 @@ MAX_FRONTIER_REPLAY_JOB_SCAN = 500
 MAX_ARENA_JOB_ELAPSED_SECONDS = 7_500
 MAX_WORKER_PROCESS_RSS_BYTES = 8 * 1024**3
 
+MAX_OBSERVATORY_MANIFEST_BYTES = 512 * 1024
+MAX_OBSERVATORY_READ_BYTES = 12 * 1024**2
+MAX_OBSERVATORY_DATASET_BYTES = 16 * 1024**2
+MAX_OBSERVATORY_DATASET_ROWS = 60_000
+
+
+def _read_observatory_json(path: Path, limit: int) -> dict[str, Any] | list[Any]:
+    """Read one small, regular JSON artifact without following symlinks."""
+    if path.is_symlink() or not path.is_file() or path.stat().st_size > limit:
+        raise ValueError("Research artifact is unavailable or exceeds the Observatory read bound")
+    try:
+        value = json.loads(path.read_text())
+    except (OSError, json.JSONDecodeError) as error:
+        raise ValueError("Research artifact is unreadable") from error
+    if not isinstance(value, (dict, list)):
+        raise ValueError("Research artifact has an unsupported format")
+    return value
+
+
+def _mapping(value: object) -> dict[str, Any]:
+    return cast(dict[str, Any], value) if isinstance(value, dict) else {}
+
+
+def observatory_universe(root: Path) -> dict[str, Any]:
+    """Project a bounded, read-only graph from explicit Arena artifact references."""
+    kinds = {
+        "datasets": (35, "dataset"),
+        "models": (80, "model"),
+        "tournaments": (60, "experiment"),
+        "findings": (70, "finding"),
+        "sweeps": (20, "experiment"),
+        "plans": (20, "plan"),
+        "directors": (20, "director"),
+        "searches": (15, "experiment"),
+        "recoveries": (15, "experiment"),
+        "unwinds": (20, "experiment"),
+        "observations": (20, "observation"),
+        "schedules": (15, "plan"),
+        "alerts": (15, "finding"),
+    }
+    records: dict[str, dict[str, dict[str, Any]]] = {kind: {} for kind in kinds}
+    counts: dict[str, int] = {}
+    read_bytes = 0
+    truncated = False
+    for kind, (limit, _) in kinds.items():
+        directory = root / kind
+        if directory.is_symlink() or not directory.is_dir():
+            counts[kind] = 0
+            continue
+        manifests = sorted(
+            directory.glob("*/manifest.json"),
+            key=lambda item: item.stat().st_mtime if not item.is_symlink() else 0,
+            reverse=True,
+        )
+        counts[kind] = sum(
+            1
+            for item in manifests
+            if not item.is_symlink()
+            and not item.parent.is_symlink()
+            and re.fullmatch(r"[A-Za-z0-9_-]{1,96}", item.parent.name)
+        )
+        for manifest in manifests[:limit]:
+            if (
+                manifest.is_symlink()
+                or manifest.parent.is_symlink()
+                or not re.fullmatch(r"[A-Za-z0-9_-]{1,96}", manifest.parent.name)
+            ):
+                continue
+            try:
+                size = manifest.stat().st_size
+                if (
+                    size > MAX_OBSERVATORY_MANIFEST_BYTES
+                    or read_bytes + size > MAX_OBSERVATORY_READ_BYTES
+                ):
+                    truncated = True
+                    continue
+                record = _read_observatory_json(manifest, MAX_OBSERVATORY_MANIFEST_BYTES)
+            except (OSError, ValueError):
+                continue
+            if isinstance(record, dict):
+                identity = record.get(
+                    {
+                        "datasets": "dataset_id",
+                        "models": "model_id",
+                        "tournaments": "tournament_id",
+                        "findings": "finding_id",
+                        "sweeps": "sweep_id",
+                        "plans": "plan_id",
+                        "directors": "director_id",
+                        "searches": "search_id",
+                        "recoveries": "recovery_id",
+                        "unwinds": "unwind_id",
+                        "observations": "observation_id",
+                        "schedules": "schedule_id",
+                        "alerts": "alert_id",
+                    }[kind]
+                )
+                if identity == manifest.parent.name:
+                    records[kind][manifest.parent.name] = record
+                    read_bytes += size
+
+    nodes: list[dict[str, Any]] = []
+    edges: list[dict[str, str]] = []
+    node_for: dict[tuple[str, str], str] = {}
+
+    def add_node(kind: str, identity: str, title: str, summary: str, record: dict[str, Any]) -> str:
+        node_id = f"{kind}:{identity}"
+        if (kind, identity) not in node_for:
+            node_for[kind, identity] = node_id
+            nodes.append(
+                {
+                    "id": node_id,
+                    "identity": identity,
+                    "kind": kind,
+                    "title": title[:180],
+                    "summary": summary[:420],
+                    "state": str(record.get("state", "RECORDED"))[:40],
+                    "created_at": record.get("created_at"),
+                    "family": record.get("family"),
+                    "dataset_id": record.get("dataset_id"),
+                    "label_target": record.get("label_target"),
+                    "has_learning_history": bool(record.get("curves")),
+                    "evaluation_design": record.get("evaluation_design"),
+                    "base_episodes": record.get("base_episodes"),
+                    "synthetic": record.get("provenance") == "GENERATED"
+                    or record.get("economically_verified") is False,
+                }
+            )
+        return node_for[kind, identity]
+
+    def edge(source_kind: str, source: str, target_kind: str, target: str, relation: str) -> None:
+        source_id = node_for.get((source_kind, source))
+        target_id = node_for.get((target_kind, target))
+        if source_id and target_id and source_id != target_id:
+            item = {"source": source_id, "target": target_id, "relationship": relation}
+            if item not in edges:
+                edges.append(item)
+
+    node_kinds = {kind: label for kind, (_, label) in kinds.items()}
+    for artifact_kind, artifacts in records.items():
+        for identity, record in artifacts.items():
+            node_kind = node_kinds[artifact_kind]
+            if artifact_kind == "datasets":
+                target = str(record.get("label_target", "research"))
+                title = f"{target.title()} dataset"
+                summary = (
+                    f"{record.get('provenance', 'Recorded')} examples · "
+                    f"{record.get('rows', '—')} rows · {record.get('decision_scope', 'saved')} scope"
+                )
+            elif artifact_kind == "models":
+                family = str(record.get("family", "model")).replace("_", " ").upper()
+                label_target = record.get("label_target")
+                title = f"{family} model"
+                summary = f"{label_target or 'Research policy'} · {record.get('state', 'saved')}"
+            elif artifact_kind == "tournaments":
+                title = "Model evaluation"
+                summary = (
+                    f"{record.get('evaluation_design', 'Recorded')} · "
+                    f"{record.get('base_episodes', '—')} source scenarios · "
+                    f"{record.get('variants', '—')} variants"
+                )
+            elif artifact_kind == "findings":
+                title = str(record.get("title") or "Research finding")
+                summary = str(
+                    record.get("interpretation") or record.get("hypothesis") or "Saved result"
+                )
+            elif artifact_kind == "plans":
+                frozen = _mapping(record.get("frozen"))
+                title = "Research plan"
+                summary = str(
+                    frozen.get("question")
+                    or frozen.get("research_question")
+                    or record.get("state", "Saved plan")
+                )
+            elif artifact_kind == "directors":
+                title = "Research director"
+                summary = str(
+                    record.get("research_question")
+                    or record.get("hypothesis")
+                    or "A bounded research sequence"
+                )
+            elif artifact_kind == "observations":
+                title = "Recorded observations"
+                summary = (
+                    str(record.get("provenance", "Observation dataset")).replace("_", " ").title()
+                )
+            elif artifact_kind == "schedules":
+                configuration = _mapping(record.get("configuration"))
+                title = "Scheduled research"
+                summary = str(configuration.get("question", "Finite scheduled jobs"))
+            elif artifact_kind == "alerts":
+                title = "Research alert"
+                summary = str(record.get("reason", "Saved alert"))
+            else:
+                title = {
+                    "sweeps": "Training sweep",
+                    "searches": "Policy search",
+                    "recoveries": "Recovery comparison",
+                    "unwinds": "Unwind comparison",
+                }.get(artifact_kind, artifact_kind.title())
+                summary = str(record.get("conclusion") or record.get("state") or "Saved experiment")
+            add_node(node_kind, identity, title, summary, record)
+
+    for identity, model in records["models"].items():
+        edge("dataset", str(model.get("dataset_id", "")), "model", identity, "trained with")
+        lineage = model.get("lineage")
+        parent = lineage.get("parent_model_id") if isinstance(lineage, dict) else None
+        if isinstance(parent, str):
+            edge("model", parent, "model", identity, "continued from")
+    for identity, tournament in records["tournaments"].items():
+        config = _mapping(tournament.get("configuration"))
+        edge("dataset", str(config.get("dataset_id", "")), "experiment", identity, "evaluated on")
+        model_ids = (
+            list(config.get("model_ids", [])) if isinstance(config.get("model_ids"), list) else []
+        )
+        for key in ("gates", "cost_gates"):
+            entries = config.get(key)
+            if isinstance(entries, list):
+                model_ids.extend(item.get("model_id") for item in entries if isinstance(item, dict))
+        bindings = tournament.get("policy_bindings")
+        if isinstance(bindings, dict):
+            model_ids.extend(
+                item.get("model_id") for item in bindings.values() if isinstance(item, dict)
+            )
+        for model_id in set(value for value in model_ids if isinstance(value, str)):
+            edge("model", model_id, "experiment", identity, "tested in")
+    for identity, finding in records["findings"].items():
+        edge("experiment", str(finding.get("tournament_id", "")), "finding", identity, "produced")
+        edge("model", str(finding.get("model_id", "")), "finding", identity, "informed")
+        edge("director", str(finding.get("director_id", "")), "finding", identity, "produced")
+    for identity, sweep in records["sweeps"].items():
+        config = _mapping(sweep.get("configuration"))
+        edge("dataset", str(config.get("dataset_id", "")), "experiment", identity, "trained on")
+        trials = sweep.get("trials")
+        if isinstance(trials, list):
+            for item in trials:
+                if isinstance(item, dict):
+                    edge(
+                        "model",
+                        str(item.get("model_id", "")),
+                        "experiment",
+                        identity,
+                        "included in",
+                    )
+    for identity, director in records["directors"].items():
+        steps = director.get("steps")
+        if isinstance(steps, list):
+            for step in steps:
+                artifact = step.get("artifact") if isinstance(step, dict) else None
+                if not isinstance(artifact, dict):
+                    continue
+                target_kind = node_kinds.get(str(artifact.get("kind")))
+                if target_kind:
+                    edge(
+                        "director",
+                        identity,
+                        target_kind,
+                        str(artifact.get("identity", "")),
+                        "created",
+                    )
+    for identity, plan in records["plans"].items():
+        frozen = _mapping(plan.get("frozen"))
+        config = _mapping(frozen.get("configuration"))
+        edge(
+            "dataset",
+            str(config.get("dataset_id") or frozen.get("source_collection") or ""),
+            "plan",
+            identity,
+            "planned from",
+        )
+        evidence = frozen.get("evidence")
+        if isinstance(evidence, list):
+            for artifact in evidence:
+                if isinstance(artifact, dict):
+                    target_kind = node_kinds.get(str(artifact.get("kind")))
+                    if target_kind:
+                        edge(
+                            "plan",
+                            identity,
+                            target_kind,
+                            str(artifact.get("identity", "")),
+                            "uses evidence",
+                        )
+    for identity, observation in records["observations"].items():
+        edge(
+            "dataset",
+            str(observation.get("source_dataset_id", "")),
+            "observation",
+            identity,
+            "derived from",
+        )
+
+    # Persisted job records are a bounded read of the latest training activity.
+    # Do not call the supervisor reconciler here: its normal job inspection can
+    # update stale job records, while this page is deliberately read-only.
+    jobs_root = root / "jobs"
+    jobs: list[dict[str, Any]] = []
+    if not jobs_root.is_symlink() and jobs_root.is_dir():
+        paths = sorted(
+            jobs_root.glob("*/job.json"),
+            key=lambda item: item.stat().st_mtime if not item.is_symlink() else 0,
+            reverse=True,
+        )[:128]
+        for job_path in paths:
+            if job_path.is_symlink() or job_path.parent.is_symlink():
+                continue
+            try:
+                job = _read_observatory_json(job_path, MAX_OBSERVATORY_MANIFEST_BYTES)
+            except (OSError, ValueError):
+                continue
+            if not isinstance(job, dict):
+                continue
+            job_configuration = _mapping(job.get("configuration"))
+            job_kind = job_configuration.get("kind")
+            if job_kind not in {"supervised", "rl"}:
+                continue
+            if job.get("state") not in {"RUNNING", "QUEUED"} and len(jobs) >= 20:
+                continue
+            jobs.append(job)
+            if len(jobs) >= 24:
+                break
+    for job in jobs:
+        identity = job.get("job_id")
+        if not isinstance(identity, str) or not re.fullmatch(r"job-[A-Za-z0-9_-]{1,80}", identity):
+            continue
+        job_configuration = _mapping(job.get("configuration"))
+        active = _mapping(job.get("active_artifact"))
+        job_node = add_node(
+            "training",
+            identity,
+            "Training run",
+            str(job_configuration.get("kind", "training")).upper(),
+            {"state": job.get("state"), "created_at": job.get("created_at")},
+        )
+        progress = _mapping(job.get("progress"))
+        nodes[-1]["progress"] = {
+            "done": progress.get("done"),
+            "total": progress.get("total"),
+            "unit": job.get("unit", "steps"),
+        }
+        target_kind = node_kinds.get(str(active.get("kind")))
+        target_id = (
+            node_for.get((target_kind, str(active.get("identity", "")))) if target_kind else None
+        )
+        if target_id:
+            relation = "produced" if job.get("state") == "COMPLETED" else "training"
+            edges.append({"source": job_node, "target": target_id, "relationship": relation})
+
+    # A hard cap keeps layout and drawing responsive even if artifact limits are raised later.
+    if len(nodes) > 520:
+        truncated = True
+        keep = {node["id"] for node in nodes[:520]}
+        nodes = nodes[:520]
+        edges = [item for item in edges if item["source"] in keep and item["target"] in keep]
+    else:
+        present = {node["id"] for node in nodes}
+        edges = [item for item in edges if item["source"] in present and item["target"] in present]
+    models = [
+        {
+            "model_id": identity,
+            "family": record.get("family"),
+            "state": record.get("state"),
+            "dataset_id": record.get("dataset_id"),
+            "label_target": record.get("label_target"),
+            "created_at": record.get("created_at"),
+            "artifact_sha256": record.get("artifact_sha256"),
+            "has_learning_history": bool(record.get("curves")),
+            "validation": record.get("validation"),
+            "test": record.get("test"),
+            "timesteps": record.get("timesteps"),
+            "training_episodes": record.get("training_episodes"),
+            "configuration": record.get("configuration", {}),
+        }
+        for identity, record in records["models"].items()
+        if record.get("state") in {"TRAINED", "EVALUATED"}
+    ]
+    models.sort(key=lambda item: item.get("created_at") or 0, reverse=True)
+    tournaments = []
+    for identity, record in records["tournaments"].items():
+        configuration = _mapping(record.get("configuration"))
+        dataset_id = configuration.get("dataset_id")
+        dataset_record = (
+            records["datasets"].get(dataset_id, {}) if isinstance(dataset_id, str) else {}
+        )
+        feature_schema = dataset_record.get("feature_schema", [])
+        tournaments.append(
+            {
+                "tournament_id": identity,
+                "created_at": record.get("created_at"),
+                "evaluation_design": record.get("evaluation_design"),
+                "base_episodes": record.get("base_episodes"),
+                "variants": record.get("variants"),
+                "conclusion": record.get("conclusion"),
+                "economically_verified": record.get("economically_verified"),
+                "leaderboard": record.get("leaderboard", [])[:8],
+                "dataset_id": dataset_id,
+                "feature_schema": [
+                    name[:80] for name in feature_schema[:64] if isinstance(name, str)
+                ]
+                if isinstance(feature_schema, list)
+                else [],
+            }
+        )
+    tournaments.sort(key=lambda item: item.get("created_at") or 0, reverse=True)
+    return {
+        "generated_at": __import__("time").time(),
+        "source": "Arena manifests and saved job records",
+        "read_only": True,
+        "bounded": {
+            "manifest_bytes": MAX_OBSERVATORY_READ_BYTES,
+            "artifact_counts_by_type": counts,
+            "truncated": truncated or read_bytes >= MAX_OBSERVATORY_READ_BYTES,
+        },
+        "models": models,
+        "network_models": [item for item in models if item.get("family") == "mlp"],
+        "training_runs": [item for item in models if item.get("has_learning_history")]
+        + [
+            {
+                "model_id": job.get("active_artifact", {}).get("identity"),
+                "job_id": job.get("job_id"),
+                "family": (job.get("configuration") or {}).get("kind"),
+                "state": job.get("state"),
+                "progress": job.get("progress"),
+                "created_at": job.get("created_at"),
+                "has_learning_history": False,
+            }
+            for job in jobs
+            if job.get("state") in {"RUNNING", "QUEUED"}
+        ],
+        "active_training_records": sum(job.get("state") in {"RUNNING", "QUEUED"} for job in jobs),
+        "graph": {"nodes": nodes, "edges": edges},
+        "simulations": tournaments,
+        "interpretation": "Arena-generated decision tasks are synthetic and hypothetical. Recorded public observations are a separate evidence class; simulated results do not establish real-world profitability.",
+    }
+
+
+def observatory_network(root: Path, identity: str, sample_index: int = 0) -> dict[str, Any]:
+    """Compute one bounded MLP forward pass using verified JSON weights and a saved validation row."""
+    import numpy as np
+    from midas.arena.artifacts import artifact_path, sha256
+    from midas.arena.features import FEATURE_VERSION, FEATURES
+
+    directory = artifact_path(root, "models", identity)
+    models_root = root / "models"
+    if models_root.is_symlink() or directory.is_symlink():
+        raise ValueError("Model artifact is unavailable")
+    manifest_path = directory / "manifest.json"
+    parameters_path = directory / "parameters.json"
+    if manifest_path.is_symlink() or parameters_path.is_symlink():
+        raise ValueError("Model artifact is unavailable")
+    manifest = _read_observatory_json(manifest_path, MAX_OBSERVATORY_MANIFEST_BYTES)
+    if not isinstance(manifest, dict) or manifest.get("model_id") != identity:
+        raise ValueError("Model identity does not match the saved artifact")
+    if manifest.get("family") != "mlp" or manifest.get("state") not in {"TRAINED", "EVALUATED"}:
+        raise ValueError("Choose a completed Arena MLP with saved weights")
+    if manifest.get("task") in {"residual_severity_regression", "execution_cost_regression"}:
+        raise ValueError("This network predicts a quantity, not a probability")
+    if (
+        manifest.get("feature_schema") != list(FEATURES)
+        or manifest.get("feature_version") != FEATURE_VERSION
+    ):
+        raise ValueError("Model feature schema is not supported by the Observatory")
+    try:
+        parameter_size = parameters_path.stat().st_size
+    except OSError as error:
+        raise ValueError("Saved model weights are unavailable") from error
+    if not parameters_path.is_file() or parameter_size > 2 * 1024**2:
+        raise ValueError("Saved model weights are unavailable or exceed the read bound")
+    if sha256(parameters_path) != manifest.get("artifact_sha256"):
+        raise ValueError("Saved model weight checksum does not match its manifest")
+    parameters = _read_observatory_json(parameters_path, 2 * 1024**2)
+    if not isinstance(parameters, dict) or parameters.get("family") != "mlp":
+        raise ValueError("Saved model weight format is not supported")
+    dataset_id = manifest.get("dataset_id")
+    if not isinstance(dataset_id, str) or not re.fullmatch(
+        r"dataset-[A-Za-z0-9_-]{1,80}", dataset_id
+    ):
+        raise ValueError("Model dataset reference is invalid")
+    datasets_root = root / "datasets"
+    dataset_dir = artifact_path(root, "datasets", dataset_id)
+    if datasets_root.is_symlink() or dataset_dir.is_symlink():
+        raise ValueError("Training dataset is unavailable")
+    dataset_manifest_path = dataset_dir / "manifest.json"
+    rows_path = dataset_dir / "rows.json"
+    if dataset_manifest_path.is_symlink() or rows_path.is_symlink():
+        raise ValueError("Training dataset is unavailable")
+    dataset = _read_observatory_json(dataset_manifest_path, MAX_OBSERVATORY_MANIFEST_BYTES)
+    if not isinstance(dataset, dict) or dataset.get("dataset_id") != dataset_id:
+        raise ValueError("Training dataset identity does not match")
+    if (
+        dataset.get("feature_schema") != list(FEATURES)
+        or dataset.get("feature_version") != FEATURE_VERSION
+    ):
+        raise ValueError("Training dataset feature schema does not match")
+    if manifest.get("dataset_sha256") != dataset.get("rows_sha256"):
+        raise ValueError("Model and training dataset receipts do not match")
+    if rows_path.stat().st_size > MAX_OBSERVATORY_DATASET_BYTES:
+        raise ValueError("Training dataset exceeds the Observatory sample read bound")
+    if sha256(rows_path) != dataset.get("rows_sha256"):
+        raise ValueError("Training dataset content checksum does not match")
+    try:
+        rows = json.loads(rows_path.read_text())
+    except (OSError, json.JSONDecodeError) as error:
+        raise ValueError("Training examples are unreadable") from error
+    if not isinstance(rows, list) or len(rows) > MAX_OBSERVATORY_DATASET_ROWS:
+        raise ValueError("Training example count exceeds the Observatory read bound")
+    validation_rows = [
+        row for row in rows if isinstance(row, dict) and row.get("partition") == "validation"
+    ]
+    if not validation_rows or sample_index < 0 or sample_index >= min(len(validation_rows), 50):
+        raise ValueError("Choose one of the first 50 saved validation examples")
+    row = validation_rows[sample_index]
+    features = np.asarray(row.get("features"), dtype=np.float32)
+    if features.shape != (len(FEATURES),) or not np.isfinite(features).all():
+        raise ValueError("Saved validation example does not match the model inputs")
+    excluded = parameters.get("excluded_features", [])
+    if not isinstance(excluded, list) or any(name not in FEATURES for name in excluded):
+        raise ValueError("Model input mask is invalid")
+    masked = features.copy()
+    for name in excluded:
+        masked[FEATURES.index(name)] = 0
+    try:
+        mean = np.asarray(parameters["mean"], dtype=np.float32)
+        scale = np.asarray(parameters["scale"], dtype=np.float32)
+        weights = parameters["weights"]
+        hidden = int(parameters["hidden_size"])
+        w0, b0 = (
+            np.asarray(weights["0.weight"], dtype=np.float32),
+            np.asarray(weights["0.bias"], dtype=np.float32),
+        )
+        w1, b1 = (
+            np.asarray(weights["2.weight"], dtype=np.float32),
+            np.asarray(weights["2.bias"], dtype=np.float32),
+        )
+        w2, b2 = (
+            np.asarray(weights["4.weight"], dtype=np.float32),
+            np.asarray(weights["4.bias"], dtype=np.float32),
+        )
+    except (KeyError, TypeError, ValueError, OverflowError) as error:
+        raise ValueError("Saved network structure is incomplete") from error
+    if (
+        mean.shape != (len(FEATURES),)
+        or scale.shape != (len(FEATURES),)
+        or np.any(scale <= 0)
+        or w0.shape != (hidden, len(FEATURES))
+        or b0.shape != (hidden,)
+        or w1.shape != (hidden, hidden)
+        or b1.shape != (hidden,)
+        or w2.shape != (1, hidden)
+        or b2.shape != (1,)
+        or not all(np.isfinite(value).all() for value in (mean, scale, w0, b0, w1, b1, w2, b2))
+    ):
+        raise ValueError("Saved network dimensions or parameters are invalid")
+    model_input = ((masked - mean) / scale).astype(np.float32)
+    pre1 = w0 @ model_input + b0
+    hidden1 = np.maximum(pre1, 0)
+    pre2 = w1 @ hidden1 + b1
+    hidden2 = np.maximum(pre2, 0)
+    logit = float((w2 @ hidden2 + b2)[0])
+    probability = float(1.0 / (1.0 + np.exp(-np.clip(logit, -60.0, 60.0))))
+    connections = [
+        {"from_layer": 0, "to_layer": 1, "weights": w0.tolist(), "bias": b0.tolist()},
+        {"from_layer": 1, "to_layer": 2, "weights": w1.tolist(), "bias": b1.tolist()},
+        {"from_layer": 2, "to_layer": 3, "weights": w2.tolist(), "bias": b2.tolist()},
+    ]
+    return {
+        "model": {
+            "model_id": identity,
+            "state": manifest.get("state"),
+            "family": "mlp",
+            "dataset_id": dataset_id,
+            "label_target": manifest.get(
+                "label_target", parameters.get("label_target", "completion")
+            ),
+            "created_at": manifest.get("created_at"),
+            "architecture": [len(FEATURES), hidden, hidden, 1],
+            "activation": "ReLU hidden layers; sigmoid probability output",
+            "artifact_sha256": manifest["artifact_sha256"],
+        },
+        "dataset": {
+            "id": dataset_id,
+            "provenance": dataset.get("provenance", "RECORDED"),
+            "partition": "validation",
+            "label_target": dataset.get("label_target"),
+            "validation_count": len(validation_rows),
+            "limitations": dataset.get("limitations", [])[:8],
+        },
+        "sample": {
+            "index": sample_index,
+            "family": row.get("family", "Saved example"),
+            "execution_model": row.get("execution_model", "Recorded"),
+            "decision_scope": row.get("decision_scope", dataset.get("decision_scope")),
+            "base_episode_id": row.get("base_episode_id"),
+        },
+        "input": {
+            "features": [
+                {
+                    "name": name,
+                    "raw_value": float(features[index]),
+                    "model_value": float(model_input[index]),
+                    "excluded": name in excluded,
+                }
+                for index, name in enumerate(FEATURES)
+            ],
+        },
+        "activations": [
+            model_input.tolist(),
+            hidden1.tolist(),
+            hidden2.tolist(),
+            [probability],
+        ],
+        "connections": connections,
+        "prediction": {
+            "probability": probability,
+            "logit": logit,
+            "meaning": "Probability for the model's saved target, within this synthetic or observed research dataset's label definition.",
+        },
+    }
+
 
 def _snapshot_uses_held_source(snapshot: Any, frontier_held_venues: tuple[str, ...]) -> bool:
     if not frontier_held_venues:
@@ -1208,6 +1827,24 @@ def router(
     @api.get("")
     async def overview() -> Any:
         return await call(overview_data)
+
+    observatory_cache: tuple[float, dict[str, Any]] | None = None
+
+    @api.get("/observatory")
+    async def observatory() -> Any:
+        nonlocal observatory_cache
+        now = __import__("time").monotonic()
+        if observatory_cache is not None and now - observatory_cache[0] < 10:
+            return observatory_cache[1]
+        result = await call(observatory_universe, root)
+        observatory_cache = (now, result)
+        return result
+
+    @api.get("/observatory/models/{identity}/network")
+    async def observatory_model_network(
+        identity: str, sample_index: int = Query(default=0, ge=0, le=49)
+    ) -> Any:
+        return await call(observatory_network, root, identity, sample_index)
 
     @api.get("/research-activity")
     async def get_research_activity() -> Any:

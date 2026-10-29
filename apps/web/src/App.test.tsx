@@ -60,4 +60,21 @@ describe('application integrity', () => {
     expect(screen.queryByText('DEMO · SYNTHETIC')).not.toBeInTheDocument();
     expect(screen.queryByText('SYNTHETIC DATA')).not.toBeInTheDocument();
   });
+
+  it('opens the Observatory as a read-only view of saved Arena research', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline')));
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={client}>
+        <App />
+      </QueryClientProvider>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Observatory' }));
+
+    expect(await screen.findByText('OBSERVATORY · SAVED ARENA ARTIFACTS')).toBeInTheDocument();
+    expect(await screen.findByText('READ ONLY')).toBeInTheDocument();
+    expect(await screen.findByText('The Observatory could not reach Arena')).toBeInTheDocument();
+    expect(screen.queryByText('SYNTHETIC DATA')).not.toBeInTheDocument();
+  });
 });
