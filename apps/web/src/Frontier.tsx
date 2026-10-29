@@ -8838,6 +8838,19 @@ function DiscoveryCandidateDetails({ candidate }: { candidate: DiscoveryCandidat
 }
 
 function TimelineFrameSummary({ frame }: { frame: FrontierTimelineFrame }) {
+  const timingPageSize = 24;
+  const candidatePageSize = 8;
+  const [timingPage, setTimingPage] = useState(0);
+  const [candidatePage, setCandidatePage] = useState(0);
+  const timingPageCount = Math.ceil(frame.instrument_states.length / timingPageSize);
+  const candidatePageCount = Math.ceil(frame.candidates.length / candidatePageSize);
+  const timingStart = timingPage * timingPageSize;
+  const candidateStart = candidatePage * candidatePageSize;
+  const visibleTiming = frame.instrument_states.slice(timingStart, timingStart + timingPageSize);
+  const visibleCandidates = frame.candidates.slice(
+    candidateStart,
+    candidateStart + candidatePageSize,
+  );
   const classifications = Object.entries(frame.classification_counts)
     .map(([key, value]) => `${label(key)}: ${value}`)
     .join(' · ');
@@ -8900,7 +8913,7 @@ function TimelineFrameSummary({ frame }: { frame: FrontierTimelineFrame }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {frame.instrument_states.slice(0, 24).map((instrument) => (
+                  {visibleTiming.map((instrument) => (
                     <tr
                       key={JSON.stringify([
                         instrument.venue,
@@ -8921,9 +8934,7 @@ function TimelineFrameSummary({ frame }: { frame: FrontierTimelineFrame }) {
                           {label(instrument.book_state)} · {label(instrument.exclusion)}
                         </small>
                       </td>
-                      <td>
-                        {instrument.age_ms == null ? '—' : `${count(instrument.age_ms)} ms`}
-                      </td>
+                      <td>{instrument.age_ms == null ? '—' : `${count(instrument.age_ms)} ms`}</td>
                       <td>{instrument.received_at_utc ?? 'Not observed'}</td>
                       <td>{instrument.exchange_timestamp_utc ?? 'Unknown'}</td>
                       <td>
@@ -8942,32 +8953,92 @@ function TimelineFrameSummary({ frame }: { frame: FrontierTimelineFrame }) {
                 </tbody>
               </table>
             </div>
-            {frame.instrument_states.length > 24 && (
-              <p>Showing 24 of {frame.instrument_states.length} instrument timing records.</p>
+            {timingPageCount > 1 && (
+              <div
+                className="fr-graph-pagination"
+                role="group"
+                aria-label="Per-instrument timing record pages"
+              >
+                <button
+                  className="fr-action"
+                  disabled={timingPage === 0}
+                  onClick={() => setTimingPage((current) => Math.max(0, current - 1))}
+                >
+                  Previous timing records
+                </button>
+                <span aria-live="polite">
+                  Showing {timingStart + 1}–
+                  {Math.min(timingStart + timingPageSize, frame.instrument_states.length)} of{' '}
+                  {frame.instrument_states.length} timing records
+                </span>
+                <button
+                  className="fr-action"
+                  disabled={timingPage + 1 >= timingPageCount}
+                  onClick={() =>
+                    setTimingPage((current) => Math.min(timingPageCount - 1, current + 1))
+                  }
+                >
+                  Next timing records
+                </button>
+              </div>
             )}
           </>
         )}
         {frame.candidates.length > 0 && (
-          <div className="fr-timeline-candidates">
-            {frame.candidates.slice(0, 8).map((candidate) => (
-              <div className="fr-timeline-candidate" key={candidate.candidate_id}>
-                <div>
-                  <strong>{label(candidate.classification)}</strong>
+          <>
+            <div className="fr-timeline-candidates">
+              {visibleCandidates.map((candidate) => (
+                <div className="fr-timeline-candidate" key={candidate.candidate_id}>
+                  <div>
+                    <strong>{label(candidate.classification)}</strong>
+                    <span>
+                      {label(candidate.family)} ·{' '}
+                      {candidate.timing_verified ? 'timing verified' : 'timing not verified'}
+                    </span>
+                  </div>
                   <span>
-                    {label(candidate.family)} ·{' '}
-                    {candidate.timing_verified ? 'timing verified' : 'timing not verified'}
+                    Modeled worst-case net: {candidate.worst_case_net_pnl ?? 'not established'}
                   </span>
+                  <code>{candidate.evidence_sha256}</code>
                 </div>
-                <span>
-                  Modeled worst-case net: {candidate.worst_case_net_pnl ?? 'not established'}
-                </span>
-                <code>{candidate.evidence_sha256}</code>
-              </div>
-            ))}
-            {frame.candidates.length > 8 && (
-              <p>Showing 8 of {frame.candidates.length} bounded candidate summaries.</p>
+              ))}
+            </div>
+            {frame.candidate_count > frame.candidates.length && (
+              <p className="fr-arena-replay-note">
+                The artifact contains {frame.candidates.length} candidate summaries for{' '}
+                {frame.candidate_count} recorded candidates; additional summaries were not saved.
+              </p>
             )}
-          </div>
+            {candidatePageCount > 1 && (
+              <div
+                className="fr-graph-pagination"
+                role="group"
+                aria-label="Timeline candidate summary pages"
+              >
+                <button
+                  className="fr-action"
+                  disabled={candidatePage === 0}
+                  onClick={() => setCandidatePage((current) => Math.max(0, current - 1))}
+                >
+                  Previous candidates
+                </button>
+                <span aria-live="polite">
+                  Showing {candidateStart + 1}–
+                  {Math.min(candidateStart + candidatePageSize, frame.candidates.length)} of{' '}
+                  {frame.candidates.length} saved candidate summaries
+                </span>
+                <button
+                  className="fr-action"
+                  disabled={candidatePage + 1 >= candidatePageCount}
+                  onClick={() =>
+                    setCandidatePage((current) => Math.min(candidatePageCount - 1, current + 1))
+                  }
+                >
+                  Next candidates
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </details>

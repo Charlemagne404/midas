@@ -1552,3 +1552,26 @@ At 03:44:14, `/proc/swaps` read 4,192,872 kB used of 4,194,300 kB with
 1,428 kB free; `MemAvailable` was 11,387,008 kB and PSI remained zero. User
 manager OOM counters were unchanged, and no OOMd or kernel OOM appeared since
 the 03:43:49 check.
+
+### Post-resumption bounded UI verification — 2026-10-29 03:55 CET
+
+Frontier resumed with a serial offline browser check. The TypeScript build
+passed under a transient 768 MiB `MemoryHigh`, 1 GiB `MemoryMax`, zero-swap,
+25%-CPU scope. One fixture-backed Playwright test passed in 33.8 seconds under
+1 GiB high / 1,280 MiB max, zero swap, 25% CPU, one worker, and a 180-second
+timeout. It paged through 26 instrument timing rows and 10 saved candidate
+summaries for 12 recorded candidates, exposing the two unsaved summaries; the
+test made zero public-probe requests and zero Arena submissions. No live venue
+data was used.
+
+At 03:56:57, after the final type check, host PSI was zero and `MemAvailable`
+was 11,111,380 kB. Swap remained effectively full at 4,192,748/4,194,300 kB
+(1,552 kB free).
+User-manager counters remained `high=16,417,339`, `max=730,045`, `oom=19`, and
+`oom_kill=15`. No kernel OOM or systemd-oomd kill appeared since Oct 28
+23:43:24. The API and Reality remained active at restart counts 9 and 14 with
+zero service swap; system `ssh.socket` was listening, and RustDesk and Caddy
+were active. No production service or resource configuration was changed.
+This is a bounded quiet sample; the host incident remains open because swap is
+nearly full, user-manager limits remain unbounded, and the historical
+initiating workload is still unidentified.

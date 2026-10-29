@@ -13598,3 +13598,28 @@ counters remained 19/15; API and Reality were active at restart counts 9/14. Rea
 and `sequence_verified=false`. No OOMd or kernel OOM appeared after Oct 28
 23:43:24. Continue only with serial bounded offline Frontier work. The host
 incident and Frontier overall remain **PARTIALLY VERIFIED**.
+
+## Saved timeline result paging — 2026-10-29 03:55 CET
+
+Timeline frames support up to 500 instrument records and candidate summaries,
+but the view previously exposed only the first 24 timing rows and first 8
+candidates. `TimelineFrameSummary` now renders page-sized slices, has accessible
+previous/next controls and range labels, and discloses when the artifact saved
+fewer candidate summaries than its recorded candidate total. Initial rendering
+remains bounded to 24 timing rows and 8 candidate cards per open frame.
+
+Prettier passed and `tsc -b` exited 0 in a serial zero-swap scope after the
+final UI and fixture changes. The focused fixture-backed browser test passed
+**1/1 in 33.8 seconds** with one worker. Its fixture contains 26 instruments,
+10 saved candidate summaries for 12 recorded candidates, and verifies first
+and last pages in both directions plus the missing-summary notice. It observed
+zero public source probes and zero Arena submissions. No venue was contacted,
+and this is not live artifact retrieval or production verification.
+
+| Requirement | Status | Evidence and boundary |
+| --- | --- | --- |
+| Saved timeline timing-record inspection | COMPLETE AND VERIFIED WITH FIXTURES | All records are reachable in 24-row pages; browser fixture covers 26 records. |
+| Saved timeline candidate-summary inspection | COMPLETE AND VERIFIED WITH FIXTURES | All saved summaries are reachable in 8-card pages; missing summaries are explicitly disclosed. |
+| Live and production artifact validation | DEFERRED | No live source or production API was queried. |
+| Host memory incident | PARTIALLY VERIFIED | At 03:56:57 PSI was zero and OOM counters unchanged; swap was 99.96% occupied and initiating workload remains unknown. |
+| Project Frontier overall | PARTIALLY VERIFIED | Live multi-venue evidence, broad acceptance, endurance, protected recovery, and deployment remain open. |

@@ -438,6 +438,38 @@ test('Arena replay history loads without submitting or launching work', async ({
 test('fixture timeline shows per-instrument source timing evidence', async ({ page }) => {
   const jobId = `job-${'c'.repeat(24)}`;
   const digest = (character: string) => character.repeat(64);
+  const evidenceId = (prefix: string, index: number) =>
+    `${prefix}${index.toString(16).padStart(63, '0')}`;
+  const timingRecords = Array.from({ length: 26 }, (_, index) => {
+    const ordinal = index + 1;
+    const nativeMarketId = index === 0 ? 'fixture-event' : `fixture-event-${ordinal}`;
+    return {
+      market_id: `polymarket:${nativeMarketId}`,
+      venue: 'polymarket',
+      native_market_id: nativeMarketId,
+      native_instrument_id: index === 0 ? 'fixture-token' : `fixture-token-${ordinal}`,
+      book_state: 'fresh',
+      exclusion: 'none',
+      included_in_replay: true,
+      observation_id: evidenceId('b', ordinal),
+      received_at_utc: '2026-10-28T23:59:59.999Z',
+      age_ms: 1,
+      exchange_timestamp_utc: '2026-10-28T23:59:59.990Z',
+      exchange_timestamp_semantics: 'Fixture venue update time',
+      clock_uncertainty_ms: '3.2',
+      freshness_limit_ms: 2000,
+    };
+  });
+  const candidateSummaries = Array.from({ length: 10 }, (_, index) => ({
+    candidate_id: evidenceId('c', index + 1),
+    family: 'cross_venue_price_discrepancy',
+    classification: 'PRICE_DISCREPANCY_ONLY',
+    audit_disposition: 'INCOMPLETE_EVIDENCE',
+    worst_case_gross_pnl: '0.01',
+    worst_case_net_pnl: null,
+    timing_verified: false,
+    evidence_sha256: evidenceId('d', index + 1),
+  }));
   let sourceProbeRequests = 0;
   let arenaSubmissions = 0;
   page.on('request', (request) => {
@@ -488,8 +520,8 @@ test('fixture timeline shows per-instrument source timing evidence', async ({ pa
             manifest: {
               code_version: 'frontier-e2e-fixture-v1',
               input_sha256: digest('c'),
-              market_observation_ids: [digest('d')],
-              book_observation_ids: [digest('e')],
+              market_observation_ids: timingRecords.map((_, index) => evidenceId('a', index + 1)),
+              book_observation_ids: timingRecords.map((_, index) => evidenceId('b', index + 1)),
               relationship_ids: [],
               source_status_sha256s: [],
               evaluation_times_utc: ['2026-10-29T00:00:00Z'],
@@ -500,33 +532,16 @@ test('fixture timeline shows per-instrument source timing evidence', async ({ pa
                 as_of_utc: '2026-10-29T00:00:00Z',
                 replay_run_id: 'run-fixture',
                 replay_result_sha256: digest('f'),
-                fresh_book_count: 1,
-                included_book_count: 1,
+                fresh_book_count: timingRecords.length,
+                included_book_count: timingRecords.length,
                 stale_book_count: 0,
                 not_yet_observed_count: 0,
                 excluded_source_book_count: 0,
                 source_states: [],
-                instrument_states: [
-                  {
-                    market_id: 'polymarket:fixture-event',
-                    venue: 'polymarket',
-                    native_market_id: 'fixture-event',
-                    native_instrument_id: 'fixture-token',
-                    book_state: 'fresh',
-                    exclusion: 'none',
-                    included_in_replay: true,
-                    observation_id: digest('e'),
-                    received_at_utc: '2026-10-28T23:59:59.999Z',
-                    age_ms: 1,
-                    exchange_timestamp_utc: '2026-10-28T23:59:59.990Z',
-                    exchange_timestamp_semantics: 'Fixture venue update time',
-                    clock_uncertainty_ms: '3.2',
-                    freshness_limit_ms: 2000,
-                  },
-                ],
-                candidate_count: 0,
-                classification_counts: {},
-                candidates: [],
+                instrument_states: timingRecords,
+                candidate_count: candidateSummaries.length + 2,
+                classification_counts: { PRICE_DISCREPANCY_ONLY: candidateSummaries.length },
+                candidates: candidateSummaries,
               },
             ],
           },
@@ -546,6 +561,7 @@ test('fixture timeline shows per-instrument source timing evidence', async ({ pa
   await page.locator('.fr-timeline-frame summary').click();
   await expect(timelineTable).toBeVisible();
   const instrumentRow = timelineTable.getByRole('row').nth(1);
+  await expect(timelineTable.getByRole('row')).toHaveCount(25);
   await expect(instrumentRow).toContainText('fixture-event');
   await expect(instrumentRow).toContainText('fixture-token');
   await expect(instrumentRow).toContainText('1 ms');
@@ -554,6 +570,30 @@ test('fixture timeline shows per-instrument source timing evidence', async ({ pa
   await expect(instrumentRow).toContainText('3.2 ms');
   await expect(instrumentRow).toContainText('2,000 ms');
   await expect(instrumentRow).toContainText('Fixture venue update time');
+  const timingPages = page.getByRole('group', { name: 'Per-instrument timing record pages' });
+  await expect(timingPages).toContainText('Showing 1–24 of 26 timing records');
+  await timingPages.getByRole('button', { name: 'Next timing records' }).click();
+  await expect(timelineTable.getByRole('row')).toHaveCount(3);
+  await expect(timelineTable.getByRole('row').nth(1)).toContainText('fixture-event-25');
+  await expect(timelineTable.getByRole('row').nth(2)).toContainText('fixture-event-26');
+  await expect(timingPages).toContainText('Showing 25–26 of 26 timing records');
+  await timingPages.getByRole('button', { name: 'Previous timing records' }).click();
+  await expect(timelineTable.getByRole('row')).toHaveCount(25);
+  await expect(timelineTable.getByRole('row').nth(1)).toContainText('fixture-event');
+  const candidatePages = page.getByRole('group', { name: 'Timeline candidate summary pages' });
+  await expect(candidatePages).toContainText('Showing 1–8 of 10 saved candidate summaries');
+  await expect(
+    page.getByText(
+      'The artifact contains 10 candidate summaries for 12 recorded candidates; additional summaries were not saved.',
+    ),
+  ).toBeVisible();
+  await expect(page.locator('.fr-timeline-candidate')).toHaveCount(8);
+  await candidatePages.getByRole('button', { name: 'Next candidates' }).click();
+  await expect(page.locator('.fr-timeline-candidate')).toHaveCount(2);
+  await expect(page.locator('.fr-timeline-candidate code').nth(0)).toHaveText(evidenceId('d', 9));
+  await expect(candidatePages).toContainText('Showing 9–10 of 10 saved candidate summaries');
+  await candidatePages.getByRole('button', { name: 'Previous candidates' }).click();
+  await expect(page.locator('.fr-timeline-candidate')).toHaveCount(8);
   expect(sourceProbeRequests).toBe(0);
   expect(arenaSubmissions).toBe(0);
 });

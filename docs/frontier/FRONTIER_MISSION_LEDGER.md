@@ -12987,3 +12987,37 @@ after Oct 28 23:43:24. The host is suitable for serial, bounded, offline
 Frontier work only; full swap, unbounded user-manager usage, and historical
 OOM initiator remain unresolved. Overall Frontier status remains
 **PARTIALLY VERIFIED**.
+
+### Saved timeline result paging — 2026-10-29 03:55 CET
+
+`TimelineFrameSummary` previously displayed only the first 24 instrument timing
+records and first 8 candidate summaries even though a saved frame can contain
+up to 500 of each. Added bounded previous/next pages, visible record ranges,
+and an explicit note if the artifact's candidate summary count is below its
+recorded candidate total. This preserves a small initial DOM while making the
+saved evidence inspectable.
+
+Prettier and the web TypeScript project build passed. One fixture-backed
+Playwright case passed in 33.8 seconds, checking 26 timing records and 10 saved
+candidate summaries for 12 recorded candidates across both directions of
+pagination. The fixture test asserts no source probe and no Arena submission.
+It does not validate live or production artifacts. `tsc -b` passed again on the
+final frontend tree. The host check at 03:55:33 found zero memory PSI and
+unchanged OOM counters, with about 11.4 GB `MemAvailable`; swap remained
+99.96% used. API and Reality were active, and no OOM kill appeared during the
+check window.
+
+After the final incremental type build, the 03:56:57 read still had zero PSI,
+`MemAvailable` 11,111,380 kB, swap 4,192,748/4,194,300 kB used, and unchanged
+user-manager OOM counters 19/15. API/Reality stayed active at restarts 9/14;
+SSH socket, RustDesk, and Caddy were active. No post-23:43 Oct 28 OOM appeared.
+The incident remains open.
+
+Files changed: `apps/web/src/Frontier.tsx`,
+`apps/web/e2e/frontier.spec.ts`, this ledger, the engineering report, and the
+memory pressure incident report. The preserved untracked
+`data/frontier-public-probes/` directory remains untouched. Commit checkpoint
+is pending in this worktree; only these five Frontier files are in scope.
+Overall Frontier remains **PARTIALLY VERIFIED**. Next safe step: continue with
+another bounded evidence-inspection gap while source permissions and the host
+incident remain open; do not start live collection or broad suites.
