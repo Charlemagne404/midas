@@ -16427,3 +16427,21 @@ At 19:11 host PSI remained zero with about 10 GiB available RAM and about 19
 MiB swap free. Core API and Reality services remained active. Frontier is
 admitted only for serial, resource-capped fixture work; live probes, broad
 builds/suites, and deployment remain deferred.
+
+### Scheduled capacity worker soft-limit measurement — 2026-10-29 19:20 CET
+
+A second bounded observer sampled the scheduled Reality capacity checker at
+250 ms intervals. Its cgroup peaked at 168,034,304 bytes (about 160.25 MiB),
+slightly over `MemoryHigh=160M` but below `MemoryMax=192M`. The local `high`
+event count was 43 and exactly matched the parent user-manager increase; local
+max/oom/oom_kill and swap were zero. Local PSI some/full totaled 3.1 ms with
+zero averages. The job succeeded under its unchanged limit; the measured
+pressure was brief and did not trigger a kill. Retaining the current 160/192M
+bound is appropriate; no broader limit increase is supported.
+
+At 19:20 the host still had zero memory PSI, about 10 GiB available RAM, and
+about 19 MiB free swap. API, Reality, Reality API, and the capacity timer were
+active; gap-detail remained disabled. No OOMD or kernel kill appeared since
+19:10. The current OOMD `oomctl` registration mismatch remains unresolved.
+The host is suitable for serial capped fixture work only; Frontier overall
+remains **PARTIALLY VERIFIED**.

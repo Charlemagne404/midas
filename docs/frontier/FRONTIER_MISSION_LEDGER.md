@@ -16327,3 +16327,24 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
   kill appeared since 19:00. The gap-detail timer remains disabled. Continue
   only serial, capped Frontier fixture work; incident status is still
   **PARTIALLY CONTAINED / PARTIALLY VERIFIED**.
+
+## 2026-10-29 19:20 CET — capacity worker soft-limit attribution
+
+- The transient watcher sampled the normal capacity run at 250 ms intervals.
+  `memory.peak=168,034,304` bytes (about 160.25 MiB), 0.25 MiB over its
+  existing 160 MiB High and well under the 192 MiB Max. Its local
+  `memory.events.high=43`; max/oom/oom_kill were zero. Swap was zero; local
+  PSI some/full totaled 3,087 microseconds with zero averages.
+- Parent user-manager `high` increased by exactly 43
+  (16,438,012→16,438,055); its max/oom/oom_kill remained 731,783/19/15 and
+  PSI averages remained zero. The capacity command succeeded. This directly
+  attributes today's high events to the capacity worker; the earlier +110 at
+  18:50 remains a plausible, unmeasured association. No limit or timer change
+  was warranted.
+- At 19:20:27, host PSI was zero with about 10 GiB available and about 19 MiB
+  free swap. API, Reality, Reality API, and the capacity timer were active;
+  gap-detail remained disabled. OOMD/kernel journals had no kill since 19:10.
+  The bounded observer exited and was collected.
+- Incident remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**. Continue only
+  serial, capped fixture development; swap and the OOMD registration mismatch
+  remain unresolved, and this brief sample is not endurance evidence.

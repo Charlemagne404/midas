@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 19:11 CET |
+| Latest addendum | 2026-10-29 19:20 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Pre-incident checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -4754,3 +4754,31 @@ kernel kill appeared since the previous incident sample. Keep the current
 source-analysis timer and 256 MiB cap; continue only serial, resource-capped
 Frontier work while the nearly full swap and OOMD registration discrepancy
 remain open.
+
+### Capacity-check cgroup attribution and post-run health — 2026-10-29 19:20 CET
+
+The second read-only watcher captured the scheduled Reality capacity check at
+250 ms intervals. The service's `memory.peak` was 168,034,304 bytes (about
+160.25 MiB), just above its 160 MiB `MemoryHigh` and below its 192 MiB
+`MemoryMax`. Its local `memory.events.high` increased by 43; local max/oom/
+oom_kill remained zero. It used no swap and accumulated 3,087 microseconds of
+local PSI some/full time, with zero avg10/avg60/avg300. The parent user-manager
+`memory.events.high` rose by exactly 43, from 16,438,012 to 16,438,055; its
+max/oom/oom_kill counters did not move and pressure averages remained zero.
+
+The capacity command exited successfully at 19:20:18 under the unchanged
+160 MiB High / 192 MiB Max / zero-swap bound. This directly attributes the
+current soft-limit counter increments to that worker; the measured pressure
+duration was only about 3 ms, with no hard-limit or OOM event. The 18:50
+increase of 110 parent `high` events is consistent with this result but was
+not sampled locally, so it remains a timing-based attribution. No further
+limit increase is justified by the current measurement; the capacity timer
+and service configuration remain unchanged.
+
+At 19:20:27, host PSI was zero, `MemAvailable` about 10 GiB, and free swap
+about 19 MiB. The user-manager counters remained `max=731,783`, `oom=19`, and
+`oom_kill=15`; no OOMD or kernel kill appeared since 19:10. MIDAS API, Reality,
+Reality API, and the capacity timer were active; the gap-detail timer remained
+inactive and disabled. The cgroup watcher exited successfully and was
+collected. This supports continued serial, capped Frontier work, not broad
+admission or incident closure.
