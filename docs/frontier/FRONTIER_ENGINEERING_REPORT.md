@@ -2,7 +2,7 @@
 
 **Report date:** 2026-10-29
 
-## Current completion matrix — 2026-10-29 05:54 CET
+## Current completion matrix — 2026-10-29 06:15 CET
 
 This is a current evidence classification, not a final completion claim. The
 dated implementation records below remain the detailed evidence; the
@@ -11,7 +11,7 @@ current host gate.
 
 | Component | Status | Current evidence and boundary |
 | --- | --- | --- |
-| Exchange-independent adapter core and Polymarket/Kalshi/Kraken/Coinbase/Gemini adapters | IMPLEMENTED, LIVE VALIDATION PENDING | The default registry now includes five distinct sources. Gemini Spot adds eight declared metadata/book/context capabilities, a 1–20 pair allowlist, exact-string bounded book parsing, no catalog crawl, and explicit rejection of swaps and event-payoff semantics. Its unconditional source-use hold blocks probes and stored research pending current agreement/scope review. Polymarket now has a disabled-by-default, finite WebSocket capture for full-book, price-change, top-of-book, and tick-size events. It preserves raw frames and explicitly does not apply deltas because sequence continuity and gap recovery are undocumented. Adapter, stream, and transport fixtures pass 199/199; strict mypy passes on five source files, and Ruff passes. No live stream was opened. No Gemini live validation is claimed. |
+| Exchange-independent adapter core and Polymarket/Kalshi/Kraken/Coinbase/Gemini adapters | IMPLEMENTED, LIVE VALIDATION PENDING | The default registry includes five distinct sources. Gemini Spot adds eight declared metadata/book/context capabilities, bounded symbol detail, exact-string book parsing, and explicit rejection of derivative semantics; its source-use hold blocks probes and retained-data research pending agreement/scope review. Polymarket's finite stream now has an explicit API route bound to one saved market in the bounded 200-market window, plus a market-detail UI action. The route requires `BOOK_UPDATES`, an enabled public-probe configuration, unique saved decimal asset IDs, one per-venue lock, and exact raw/normalized lineage; it captures for at most 3 seconds, 8 frames, and 50 updates. It does not apply deltas or claim sequence continuity. The 13-test adapter/API fixture slice passed; no live stream was opened. |
 | Canonical instruments and supported payoff semantics | PARTIALLY VERIFIED | Supported structures have model and invariant tests; this does not claim universal instrument support. |
 | Relationship graph, evidence binding, and review | PARTIALLY VERIFIED | Deterministic fixture relationships and pinned evidence are covered; a live cross-venue economic equivalence is not established. |
 | Candidate discovery and independent economic verification | PARTIALLY VERIFIED | Bounded mathematical fixtures and independent audits pass selected checks; joint-state basket, audit, and deterministic replay tests pass 14/14; logical implication and relationship review tests pass 27/27. Receipt age and timestamp/receipt skew now use exact deltas rounded up to milliseconds in both generator and verifier. No live eligible opportunity is demonstrated. |
@@ -21,13 +21,61 @@ current host gate.
 | Laboratory/Arena comparisons and bounded orchestration | PARTIALLY VERIFIED | Arena admission and finite scheduling regressions pass; a Laboratory resource-denial case passes with a harness cap above its 722,894,848-byte capacity precondition. Full endurance evidence remains incomplete. |
 | User-cgroup-aware workload admission | IMPLEMENTED, BOUNDED VALIDATION PASSED | Central Arena admission (15), finite schedules (12), and the Laboratory denial case (1) pass fixture tests using user-manager pressure; no runtime deployment occurred. |
 | Reality capacity inventory bounds | PARTIALLY VERIFIED | Candidate inventory code remains undeployed. The separate monitor is bounded at `MemoryHigh=160M`, `MemoryMax=192M`, and zero swap; its scheduled 04:47 run succeeded in 6.257 CPU seconds with zero swap. systemd logged a 3.2 MiB peak, unexpectedly below the earlier 137.4 MiB measurement, so that peak does not establish representative memory use. The report still identifies invalid archive inventory and provenance. |
-| Native Frontier dashboard | PARTIALLY VERIFIED | The dashboard now includes the held Gemini Spot capability, timing explanation, and read-only user-manager cgroup memory PSI/OOM counters. Its focused explorer fixture passed 1/1 with a 15-second per-test allowance under a 50% CPU cap; eight other cases were skipped. The saved timeline timing and result-pagination browser fixtures passed earlier. TypeScript project build and a production Vite build passed in bounded zero-swap scopes. Default Playwright last passed 17/20 with three opt-in skips; captured-evidence browser validation remains open. Readiness swap telemetry retains missing values as unmeasured and does not change admission; the focused readiness UI passes 3/3. |
-| Host reliability containment | PARTIALLY VERIFIED | The five-minute gap-detail timer is disabled; the October 28 journal audit found 129 systemd-oomd kills, 106 targeting this replay. Seven separate kernel memcg kills hit the capacity checker's original 128 MiB cap. The capacity checker now has reversible 160/192 MiB, zero-swap limits. At 05:54, `MemAvailable` was 11,545,051,136 bytes (10.76 GiB), free swap 2,756,608 bytes (2.63 MiB), and host memory PSI was zero; user-manager `oom=19`/`oom_kill=15` were unchanged. API/Reality restart counts remained 9/14, the gap-detail timer disabled and service failed from its earlier OOM, and the capacity timer active/waiting. Caddy, Echo production/staging, Continental tailnet/identity, Tailscale, RustDesk, and `ssh.socket` were active at 05:51. `oomctl` listed `user@1000.service` at its 50% policy with zero current pressure averages at 05:54. The user-manager cgroup and its user.slice ancestors have no aggregate memory or swap cap. No new kernel or OOMD journal entries appeared after 05:42. Near-full swap and the absence of sustained recovery evidence remain unresolved. |
-| Node/V8 and Apport side effect | PARTIALLY VERIFIED | The 02:36 TypeScript attempt aborted at Node's heap limit with a 300.6 MiB cgroup peak, not a kernel OOM. Whoopsie attempted to submit the 58,222,586-byte crash report and received HTTP 504; remote receipt is unknown. No `.uploaded` marker exists. A focused Vitest file now passes with `NODE_OPTIONS=--max-old-space-size=256` inside a 512 MiB zero-swap scope; the full TypeScript build remains deferred. |
+| Native Frontier dashboard | PARTIALLY VERIFIED | The dashboard includes the held Gemini capability, timing and user-cgroup pressure explanations, plus an explicit Polymarket event-capture action on saved market detail. It displays durable observation IDs, raw hashes, event types, source timestamps, and quality flags while stating the events are unsequenced and do not form a local book. The focused capture UI fixture passed 1/1 (eight skipped) under a 512/768 MiB zero-swap scope with 20% CPU; the 15-second attempt timed out under quota, then passed with a 25-second test limit. A full `tsc --noEmit` project check passed with a 384 MiB Node heap inside a 768 MiB zero-swap scope. The production Vite build was not rerun. Default Playwright last passed 17/20 with three opt-in skips; captured-evidence browser validation remains open. |
+| Host reliability containment | PARTIALLY VERIFIED | The five-minute gap-detail timer is disabled; the October 28 journal audit found 129 systemd-oomd kills, 106 targeting this replay. Seven kernel memcg kills hit the capacity checker's original 128 MiB cap; its reversible 160/192 MiB zero-swap bound has since completed scheduled runs successfully. At 06:14, `MemAvailable` was 11,122,409,472 bytes (10.36 GiB), free swap 7,892,992 bytes (7.52 MiB), and host memory PSI was zero. OOM counters remained 19/15/0 and the OOMD 50% monitor was visible. API/Reality restart counts remained 9/14 and both units were active. No kernel or OOMD kill appeared since 05:11 UTC; the user-manager hierarchy remains uncapped, historical workload attribution is incomplete, and the quiet interval is short. |
+| Node/V8 and Apport side effect | PARTIALLY VERIFIED | The 02:36 TypeScript attempt aborted at Node's heap limit with a 300.6 MiB cgroup peak, not a kernel OOM. Whoopsie attempted to submit the 58,222,586-byte crash report and received HTTP 504; remote receipt is unknown. No `.uploaded` marker exists. This turn's first `tsc --noEmit` attempt also reached its explicit 256 MiB V8 heap limit; a single retry at a 384 MiB heap inside a 768 MiB zero-swap scope passed. Host PSI and OOM counters remained unchanged. |
 | Broad regressions, resource endurance, and performance acceptance | DEFERRED | Selected Python, API, adapter, collection, and economics tests passed under bounded zero-swap scopes. The graph-revision storage/migration cases pass 8/8; API cursor invalidation passes 1/1; four core economics modules pass 79/79; joint-state basket/audit/replay passes 14/14; logical implication/relationship review passes 27/27; transport passes 20/20; readiness resource API passes 7/7 and its focused UI passes 3/3. Ruff check/format, ESLint, Prettier, and strict mypy on the readiness resource module passed under caps. Full MIDAS regression, full browser suite, captured-evidence browser journey, endurance, and broad performance tests remain deferred. |
 | Live multi-venue source authorization and findings | BLOCKED | Kalshi, Kraken, Coinbase, and Gemini probes and retained-data research remain held; the worktree Polymarket probe flag is off. |
 | Production integration/deployment | DEFERRED | Frontier remains isolated; no protected service transition occurred. |
 | Project Frontier overall | PARTIALLY VERIFIED | The engine is substantial, but live cross-venue science, broad verification, recovery, endurance, and deployment gates remain open. |
+
+### Finite Polymarket event-capture API and UI — 2026-10-29 06:15 CET
+
+The previously adapter-only Polymarket market stream is now reachable through
+`POST /api/frontier/probe/polymarket/book-updates` and the saved-market detail
+panel in Mission Control. A request identifies a canonical market already
+present in the bounded 200-market recorded window; the route derives asset IDs
+from that record and rejects absent, duplicate, non-decimal, or over-limit
+instrument sets. It requires the declared `BOOK_UPDATES` capability, the
+concrete Polymarket adapter, enabled public-probe configuration with no source
+hold, and the existing per-venue lock.
+
+One explicit capture is capped at 3 seconds, 8 frames, 50 normalized updates,
+and one fixed public WebSocket connection. Each frame must match its raw
+status-101 capture, hash, timestamps, adapter and source schema; every update
+must match the saved condition and one of its recorded instruments. Valid raw
+and normalized pairs are persisted through `FrontierStore`, with the saved
+market-observation ID stored inside each normalized frame. Failure paths keep
+unpersisted raw frames as diagnostic evidence and return any already stored
+record IDs. The UI starts capture only on button press and displays the bound
+market observation, durable frame ID, raw hash, event type, timestamps, and
+quality flags. It explicitly states that events are not sequenced snapshots,
+deltas are not applied, and no executable depth is established.
+
+Verification was fixture-only. `tests/frontier/test_polymarket_stream.py`
+passed **13/13 in 5.71 seconds** in a 384 MiB `MemoryHigh`, 512 MiB
+`MemoryMax`, zero-swap, 20% CPU scope. It includes API source-disable and
+unrecorded-market guards, plus raw/normalized persistence. An earlier version
+of the focused `Frontier.test.tsx` interaction passed **1/1** (eight cases
+skipped) in 6.50 seconds. After adding the immutable source-evidence
+disclosure assertion, the same test passed **1/1** with eight unrelated cases
+skipped, one worker, 256 MiB Node heap, a 512/768 MiB zero-swap cgroup, and 20%
+CPU; test time was 15.90 seconds. Its 15-second-limited attempt timed out at
+15.79 seconds under CPU throttling, then passed with a 25-second test limit.
+This was a bounded test timeout; host OOM counters and memory PSI remained
+unchanged. Ruff, strict mypy on the
+API and model modules, ESLint, and Prettier passed. `tsc --noEmit -p tsconfig.json` passed
+with a 384 MiB Node heap in a 768 MiB, zero-swap, 20% CPU scope. An initial
+256 MiB heap attempt exited on Node's own heap limit; the host remained below
+memory pressure and no kernel/OOMD kill occurred. The production Vite build,
+full test suite, live stream, and deployment were not performed.
+
+The Polymarket source-use flag remains disabled in the running installation.
+No live source was contacted, no execution functionality was added, and no
+service or persistent system configuration changed. This completes fixture
+integration of the adapter path only; source eligibility and live behaviour
+remain pending. The code is committed as `c40c05e`; current host sample and
+incident limitations are recorded in the linked incident report.
 
 ### Gemini Spot adapter and source boundary — 2026-10-29 04:22 CET
 

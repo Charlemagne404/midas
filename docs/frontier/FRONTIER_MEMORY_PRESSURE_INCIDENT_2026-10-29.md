@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 05:58 CET |
+| Latest addendum | 2026-10-29 06:15 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Pre-incident checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -719,3 +719,60 @@ post-containment observation period do not support broad suites, large replay,
 concurrent research, live probes, or deployment. This is safe-to-continue
 within those bounds, not a resolution of the host incident. Status remains
 **PARTIALLY CONTAINED / PARTIALLY VERIFIED**.
+
+## Post-validation host sample — 2026-10-29 06:11 CET
+
+After the bounded Frontier API, UI, mypy, and TypeScript checks, the 05:11:26
+UTC host sample showed 11,522,015,232 bytes (10.73 GiB) `MemAvailable` and
+7,892,992 bytes (7.52 MiB) free swap. Host and user-manager memory PSI
+averages remained zero. User-manager `memory.events` remained
+`oom=19`/`oom_kill=15`/`oom_group_kill=0`; the active `oomctl` monitor still
+showed the 50% threshold with zero current pressure. No kernel or systemd-oomd
+kill appeared since the 06:09 query. The repeated 13-test stream/API fixture
+slice passed after recording the saved-market observation ID inside each
+normalized frame; its 512 MiB zero-swap scope did not advance OOM counters.
+
+The MIDAS API and Reality recorder remained active with unchanged restart
+counts 9 and 14 and current cgroup charges of 897,986,560 and 349,614,080
+bytes, below their respective soft thresholds. Both local API health endpoints
+returned HTTP 200 and `READY` at 06:09, and the units remained active at 06:11.
+The capacity timer remained active and its last run remained successful under
+the 160/192 MiB, zero-swap bound. The
+gap-detail timer remained disabled. No service, protected collector, or
+persistent system configuration was restarted or changed.
+
+This sample supports the bounded test choices; it does not explain the nearly
+full swap, prove long-term stability, or resolve historic child-workload
+attribution. The host remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**.
+
+## Post-UI-validation host sample — 2026-10-29 06:15 CET
+
+The focused Frontier UI test initially timed out at its 15-second test limit
+under the 20% CPU quota after 15.79 seconds; it reported a timeout, not an
+assertion failure. One retry with a 25-second test limit passed **1/1**, with
+eight unrelated tests skipped, in 15.90 seconds of test time (31.61 seconds
+total runner time). Its `systemd-run --user --scope` remained bounded at
+`MemoryHigh=512 MiB`, `MemoryMax=768 MiB`, `MemorySwapMax=0`, and `CPUQuota=20%`;
+a concurrent sample observed about 318 MiB charged and zero swap. Host PSI
+remained zero during the run.
+
+At 05:14:45 UTC, `MemAvailable` was 11,122,409,472 bytes (about 10.36 GiB),
+free swap was 7,892,992 bytes (7.52 MiB), and host memory PSI averages were
+zero. User-manager events remained `oom=19`, `oom_kill=15`, and
+`oom_group_kill=0`; `oomctl` still showed the 50% pressure monitor with zero
+current pressure. Kernel and systemd-oomd journal queries had no kill entries
+since 05:11 UTC. MIDAS API and Reality remained active at restart counts 9 and
+14. Their current charges were 899,960,832 and 347,783,168 bytes. The
+capacity service remains configured at 160/192 MiB with zero swap, and its
+last result remains successful. The gap-detail timer remains inactive and
+disabled. The API, Reality interfaces, Caddy, and SSH socket were active in
+the post-test unit check. The finite Arena dispatcher completed three
+one-minute invocations with no schedules and 35 ms CPU in the latest run; no
+long-running research job was active in the sampled user units.
+
+No service, timer, or persistent system setting was changed during this
+validation. Nearly all swap remains occupied, the user-manager hierarchy is
+uncapped, historical attribution is incomplete, and the observation window is
+short. Incident status remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**;
+continue only serial, source-independent work and capped fixture checks after
+a fresh admission sample.
