@@ -14498,3 +14498,19 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
   and OOM counters remained 19/15/0. API/Reality/Reality API stayed active at
   restarts 9/14/0; no new kernel or oomd kill appeared through 11:31:53. This
   remains a short observation, not evidence of durable recovery.
+
+## 2026-10-29 11:34 CET — bounded saved-sample replay browser journey
+
+- The saved Polymarket price-sample replay browser case passed **1/1 in
+  18.9 s** (37.1 s total unit runtime) under MemoryHigh=768 MiB,
+  MemoryMax=1 GiB, zero swap, 25% CPU, 256 tasks, and 180 seconds. Peak memory
+  was 701,476,864 bytes; cgroup memory and task-limit events remained zero;
+  pids peak was 111. The case used intercepted responses and the isolated demo
+  API, verified explicit capture/replay actions, and did not contact a live
+  exchange.
+- At 11:34:46, MemAvailable was 10.35 GiB, PSI zero, SwapFree 12.0 MiB, and
+  user-manager OOM counters remained 19/15/0. API/Reality/Reality API remained
+  active at restarts 9/14/0. The gap-detail timer was inactive, capacity timer
+  active, and no user jobs remained. No new kernel or oomd kill appeared after
+  11:18 in the checked interval. The observation is brief; durable recovery
+  and historical pressure attribution remain open.

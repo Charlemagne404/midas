@@ -2,7 +2,7 @@
 
 **Report date:** 2026-10-29
 
-## Current completion matrix — 2026-10-29 11:31 CET
+## Current completion matrix — 2026-10-29 11:34 CET
 
 This is a current evidence classification, not a final completion claim. The
 dated implementation records below remain the detailed evidence; the
@@ -25,8 +25,8 @@ it made no endpoint requests and does not change source-use holds.
 | User-cgroup-aware workload admission | IMPLEMENTED, BOUNDED VALIDATION PASSED | Central Arena admission (15), finite schedules (12), and the Laboratory denial case (1) pass fixture tests using user-manager pressure; no runtime deployment occurred. |
 | Source-operation admission telemetry | COMPLETE AND VERIFIED FOR ONE ROUTER INSTANCE | The bounded source gate exposes active venues, admitted totals, and contention rejections by scope with a UTC sample time. The source page can refresh the snapshot. Counters reset with that router and do not aggregate across workers or deployments. |
 | Reality capacity inventory bounds | PARTIALLY VERIFIED | Candidate inventory code remains undeployed. The separate monitor is bounded at MemoryHigh=160M, MemoryMax=192M, and zero swap. Its 10:18 run recorded a 129.4 MiB peak; the 10:48 run exited successfully but did not retain a valid peak. The service still reports archive inventory/provenance limitations, and no archive evidence was altered. |
-| Native Frontier dashboard | PARTIALLY VERIFIED | The native workspace includes source, coverage, graph, opportunity, replay, and readiness views. The extracted Kalshi fee panel passes 3/3 isolated UI tests; targeted ESLint and Prettier pass. Exact-tree TypeScript, bounded production build, and one offline fixture-backed overview browser journey now pass. Captured-evidence browser replay and broad integration remain open. |
-| Host reliability containment | PARTIALLY VERIFIED | OOMD's 50%/20s policy monitors user@1000.service pressure; the Oct 28 journal records 129 kills (106 gap-detail), with seven separate kernel memcg OOMs against the capacity job's former 128 MiB cap. Gap-detail remains disabled; capacity remains bounded at 160/192 MiB with zero swap. At 11:31:43, MemAvailable was 10.65 GiB, PSI zero, and SwapFree 12.0 MiB; cumulative OOM counters remained 19/15/0. API/Reality/Reality API remained active at restart counts 9/14/0. No new kernel or oomd kill appeared after 11:18 through 11:31:53. Historical initiating workload and durable recovery remain unresolved. |
+| Native Frontier dashboard | PARTIALLY VERIFIED | The native workspace includes source, coverage, graph, opportunity, replay, and readiness views. The extracted Kalshi fee panel passes 3/3 isolated UI tests; targeted ESLint and Prettier pass. Exact-tree TypeScript, bounded production build, and two offline fixture-backed browser journeys now pass, covering overview responsiveness and saved Polymarket sample replay after explicit user action. Captured-evidence replay and broad integration remain open. |
+| Host reliability containment | PARTIALLY VERIFIED | OOMD's 50%/20s policy monitors user@1000.service pressure; the Oct 28 journal records 129 kills (106 gap-detail), with seven separate kernel memcg OOMs against the capacity job's former 128 MiB cap. Gap-detail remains disabled; capacity remains bounded at 160/192 MiB with zero swap. At 11:34:46, MemAvailable was 10.35 GiB, PSI zero, and SwapFree 12.0 MiB; cumulative OOM counters remained 19/15/0. API/Reality/Reality API remained active at restart counts 9/14/0. No new kernel or oomd kill appeared after 11:18 through 11:34:46. Historical initiating workload and durable recovery remain unresolved. |
 | Node/V8 and Apport side effect | PARTIALLY VERIFIED | The exact-tree frontend TypeScript check now passes with an explicit 384 MiB Node heap under a 512 MiB high / 640 MiB max zero-swap cgroup. Earlier attempts with Node's default heap timed out or exhausted V8 at about 251 MiB; those were process heap failures, not cgroup OOMs. An earlier crash-report upload attempt received HTTP 504; remote receipt remains unknown. |
 | Broad regressions, resource endurance, and performance acceptance | DEFERRED | Selected Python, API, adapter, collection, and economics tests passed under bounded zero-swap scopes. The graph-revision storage/migration cases pass 8/8; API cursor invalidation passes 1/1; four core economics modules pass 79/79; joint-state basket/audit/replay passes 14/14; logical implication/relationship review passes 27/27; transport passes 20/20; readiness resource API passes 7/7 and its focused UI passes 3/3. Ruff check/format, ESLint, Prettier, and strict mypy on the readiness resource module passed under caps. Full MIDAS regression, full browser suite, captured-evidence browser journey, endurance, and broad performance tests remain deferred. |
 | Live multi-venue source authorization and findings | BLOCKED | Kalshi, Kraken, Coinbase, and Gemini probes and retained-data research remain held; the worktree Polymarket probe flag is off. |
@@ -15005,3 +15005,24 @@ and SwapFree was 12,595,200 bytes (12.0 MiB). At 11:31:53, the user-manager
 OOM counters remained 19/15/0 and the checked journal still contained no
 oomd or kernel kill after 11:18. API, Reality, and Reality API were active at
 restart counts 9/14/0. This short quiet interval does not clear the incident.
+
+## Bounded saved-sample replay browser E2E — 2026-10-29 11:34 CET
+
+The isolated saved Polymarket price-sample replay browser case passed **1/1 in
+18.9 seconds** (37.1 seconds total unit runtime). It uses intercepted test
+responses and the isolated demo API; no live exchange endpoint was involved.
+The assertions verify capture and replay happen only after explicit UI actions
+and that no live probe is made.
+
+The temporary unit was bounded at MemoryHigh=768 MiB, MemoryMax=1 GiB,
+MemorySwapMax=0, CPUQuota=25%, TasksMax=256, and RuntimeMaxSec=180s. Its
+`memory.peak` was 701,476,864 bytes; swap and memory cgroup high/max/OOM events
+were zero. `pids.peak` was 111 and no pids limit event occurred.
+
+At 11:34:46, MemAvailable was 11,109,826,560 bytes (10.35 GiB), PSI was zero,
+SwapFree was 12,607,488 bytes (12.0 MiB), and user-manager counters remained
+19/15/0. API, Reality, and Reality API were active at restart counts 9/14/0;
+the gap-detail timer was inactive and the Reality capacity timer active. No
+user jobs remained and no kernel or systemd-oomd kill appeared in the checked
+journal after 11:18. This remains a short bounded observation, not durable
+recovery evidence.

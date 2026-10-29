@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 11:31 CET |
+| Latest addendum | 2026-10-29 11:34 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Pre-incident checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -2435,3 +2435,23 @@ user-manager counters remained 19/15/0, API/Reality/Reality API remained active
 at restarts 9/14/0, and no kernel or systemd-oomd kill appeared in the checked
 journal after 11:18. This is a short post-run observation, not evidence of
 durable recovery.
+
+
+## 2026-10-29 11:34 CET — saved-sample replay and post-run host check
+
+The fixture-backed saved Polymarket sample replay browser case passed **1/1 in
+18.9 seconds** (37.1 seconds total unit runtime). Its intercepted test
+responses and isolated demo API did not contact a live exchange. It verifies
+that saved sample capture and replay occur only after explicit user actions.
+The transient unit used MemoryHigh=768 MiB, MemoryMax=1 GiB, MemorySwapMax=0,
+CPUQuota=25%, TasksMax=256, and RuntimeMaxSec=180s. Its memory peak was
+701,476,864 bytes; swap and memory high/max/OOM events were zero. Peak tasks
+were 111 with no pids limit event.
+
+At 11:34:46, MemAvailable was 11,109,826,560 bytes (10.35 GiB), memory PSI
+was zero, SwapFree was 12,607,488 bytes (12.0 MiB), and user-manager OOM
+counters remained 19/15/0. API/Reality/Reality API remained active at restart
+counts 9/14/0. The gap-detail timer remained inactive and the Reality capacity
+timer active; no user jobs remained. No kernel or systemd-oomd kill appeared
+in the checked journal after 11:18. This short interval supports only
+continued bounded work and does not establish durable recovery.
