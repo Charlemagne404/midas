@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 10:51 CET |
+| Latest addendum | 2026-10-29 10:57 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Pre-incident checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -2276,3 +2276,37 @@ memory/CPU/task/time limits). Defer broad
 frontend tests, builds, parallel analysis, and any new live-source polling.
 Do not change the user-manager oomd policy, protected service limits, swap, or
 archive provenance without a separately justified and reviewed change.
+
+## 2026-10-29 10:57 CET — bounded Frontier continuation
+
+After a fresh admission sample at 10:56:35 (10.52 GiB available, zero memory
+PSI, 9.35 MiB free swap, no active systemd job), Frontier resumed with one
+small, offline UI utility check. The trade-time formatting function was
+isolated in `apps/web/src/frontierTime.ts`; its focused Vitest file now covers
+microsecond-preserving UTC output, offset-to-UTC conversion, and missing or
+invalid timestamps. The test passed **3/3** in 3.90 seconds. Prettier check
+passed for the four touched UI/test files. Code commit: `46a09f9`.
+
+An initial filter attempt used `.test.ts`, which the repository's Vitest
+configuration excludes (`src/**/*.test.tsx` only); it discovered no tests and
+is not counted as validation. That attempt peaked at 117,239,808 bytes with
+zero cgroup events and zero swap. After renaming to `.test.tsx`, the successful
+run used a transient scope with `MemoryHigh=384M`, `MemoryMax=512M`,
+`MemorySwapMax=0`, `CPUQuota=25%`, `TasksMax=64`, and a 60-second runtime cap.
+The in-unit peak was 120,201,216 bytes; cgroup high/max/OOM counters and swap
+were all zero; CPU time was 5.022 seconds. The earlier full component render
+still timed out twice and remains deferred; the added rendered-table
+assertions are not represented as integration-tested.
+
+At 10:57:18 after the run, `MemAvailable` was 11,172,644 kB (10.65 GiB),
+memory PSI remained zero, `SwapFree` remained 9,576 kB (9.35 MiB), user
+manager `oom/oom_kill/oom_group_kill` stayed 19/15/0, and no oomd or kernel
+kill appeared since 23:43:24 on October 28. API, Reality, and Reality API
+remained active at restart counts 9/14/0. This is evidence the bounded check
+fit within the host envelope; it does not clear the underlying incident.
+
+**Continuation gate:** Frontier may continue only serial, offline, fixture-
+based work after a fresh admission sample, within zero-swap cgroup limits and
+finite CPU, memory, tasks, and runtime. Full frontend tests/builds, parallel
+analysis, and new live-source polling remain deferred. Incident status stays
+**PARTIALLY CONTAINED / PARTIALLY VERIFIED**.

@@ -14378,3 +14378,24 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
   Defer that slow integration test; resume with serial offline work only
   after fresh admission. Host remains **PARTIALLY CONTAINED / PARTIALLY
   VERIFIED**, not resolved.
+
+## 2026-10-29 10:57 CET — isolated Frontier timestamp check
+
+- Resumed the UI timestamp improvement with a fresh admission sample: 10.52
+  GiB available, zero PSI, 9.35 MiB swap free, and no active systemd jobs.
+- Extracted precise UTC formatting to `apps/web/src/frontierTime.ts` and added
+  three focused cases for preserved fractional precision, timezone conversion,
+  and missing/invalid timestamps. The test passed 3/3 in 3.90 seconds;
+  Prettier check passed. The first filter attempt used a filename excluded by
+  Vitest config, discovered zero tests, and is recorded as a failed attempt.
+- Successful transient unit: `MemoryHigh=384M`, `MemoryMax=512M`,
+  `MemorySwapMax=0`, `CPUQuota=25%`, `TasksMax=64`, `RuntimeMaxSec=60s`;
+  in-unit peak 120,201,216 bytes, zero high/max/OOM events, zero swap, and
+  5.022 CPU seconds. The broad component integration test remains unverified
+  after its two earlier timeouts and was not rerun.
+- Code commit `46a09f9`. Post-run 10:57:18 sample remained quiet: 10.65 GiB
+  available, zero PSI, 9.35 MiB swap free, unchanged OOM counters 19/15/0,
+  protected API/Reality services active at restart counts 9/14/0, and no new
+  kill since Oct 28 23:43:24. Host incident remains
+  **PARTIALLY CONTAINED / PARTIALLY VERIFIED**; only serial offline bounded
+  work is admitted.
