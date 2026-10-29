@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 18:53 CET |
+| Latest addendum | 2026-10-29 19:00 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Pre-incident checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -4674,3 +4674,58 @@ This supports continued serial, capped fixture work and confirms that the
 observed terminal and essential-service scopes remained present through this
 sample. It is not an endurance window; nearly exhausted swap and unresolved
 historical workload attribution remain open risks.
+
+### Historical host pressure cross-check and bounded source-analysis observation — 2026-10-29 18:57 CET
+
+The archived October 28 `sysstat` samples nearest the 23:38–23:43 OOMD kills
+showed 10,042,304 kB and 10,231,540 kB `kbavail` at 23:30:04 and 23:40:04.
+Swap use was 77.24% and 77.21%; `pswpout/s` was zero at both samples and
+`pswpin/s` was 0.00 and 0.41. The 23:40 run queue was 1 with no blocked tasks.
+The samples also recorded page scanning (`pgscank/s` 923.56 then 604.21;
+`pgsteal/s` 4,884 then 3,823), so reclaim activity was present. These
+ten-minute samples cannot resolve the OOMD policy's 20-second trigger, but
+they show that physical RAM and swap were not exhausted at those instants.
+The logged action was a user-manager PSI policy kill; these samples do not
+support a whole-host OOM at those instants. Cgroup-local reclaim stalls can
+coexist with abundant host `MemAvailable`.
+
+The active Veritas source-analysis timer is a separate possible local-limit
+contributor. It runs every 30 minutes, processes only pinned finalized source,
+and has `MemoryMax=256 MiB` with no `MemoryHigh` or swap cap. The 18:10 run
+processed 61 segments and systemd reported a 256 MiB peak exactly at that
+limit; the parent `memory.events.max` later rose by 280. After the 18:40 run
+processed 58 segments, the same parent counter rose by 241, while the
+service's reported 256 KiB peak was unusable. Those are repeated temporal
+associations with limit-event churn; leaf counters were not retained, and
+neither run failed or was killed. The job has no pending segment backlog and
+reports `awaiting_finalized_campaign_window_end`. Its timer and output store
+were not changed.
+
+A read-only watcher began at 18:56:46 to sample that service's transient
+cgroup during its next already-scheduled run. The watcher is itself transient,
+with a 16-minute runtime limit, 32 MiB High / 64 MiB Max / no swap / 5% CPU /
+32 tasks. At 18:57:11 it used about 5.7 MiB. It will capture the leaf's local
+`memory.events`, `memory.peak`, swap, and PSI plus parent counters, then exit;
+it does not start the Veritas job or write to the research store. This bounded
+observation is intended to distinguish source-analysis local cap events from
+other descendants without changing the scheduled research workload.
+
+### OOMD registration and scheduled observatory recheck — 2026-10-29 19:00 CET
+
+At 18:59, `oomctl` returned the configured global defaults (60% memory
+pressure, 20 seconds, 90% swap-used limit) but listed no monitored memory- or
+swap-pressure cgroups and showed a zero/zero system context. In contrast,
+`systemctl show user@1000.service` still reports
+`ManagedOOMMemoryPressure=kill` and `ManagedOOMMemoryPressureLimit=50%` (the
+DBus value is 2,147,483,648); the active `user.slice` ancestors remain
+unbounded. An earlier 09:30 `oomctl` sample listed the user manager, and the
+October 28 kill logs explicitly show that policy firing. The current
+introspection mismatch is unresolved; no OOMD or unit policy was changed.
+
+The separately scheduled Veritas observatory job ran 19:00:30–19:00:43 and
+completed successfully under its existing 256 MiB `MemoryMax`. It reported no
+usable post-run `MemoryPeak`; parent `memory.events.high`, `max`, `oom`, and
+`oom_kill` did not change. At 19:00:45, host PSI remained zero, about 10 GiB
+RAM was available, and free swap remained about 19 MiB. OOMD had no kill entry
+in the preceding five minutes. The source-analysis cgroup watcher remains
+bounded and waiting for the 19:10 timer.

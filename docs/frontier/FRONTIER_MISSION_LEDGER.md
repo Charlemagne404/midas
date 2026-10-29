@@ -16266,3 +16266,42 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
 - Continue only serial, capped, source-independent Frontier work. The incident
   is still **PARTIALLY CONTAINED / PARTIALLY VERIFIED**: this short sample does
   not clear nearly full swap or historical pressure attribution.
+
+## 2026-10-29 18:57 CET — historical pressure context and bounded cgroup watch
+
+- Archived `sar` samples at 23:30:04 and 23:40:04 on Oct 28 showed 10,042,304
+  and 10,231,540 kB available RAM, with 77.24% / 77.21% swap use and no
+  swap-out; page scanning/reclaim was present. The ten-minute sampling cannot
+  resolve the 20-second OOMD trigger, but these samples do not show whole-host
+  memory or swap exhaustion. OOMD's recorded trigger was user-manager PSI.
+- Source-analysis is a separate possible limit contributor: the bounded
+  30-minute service has `MemoryMax=256M`, no `MemoryHigh`, and processes
+  finalized segments. Its 18:10 run reported a 256M peak at the cap and the
+  parent `memory.events.max` later rose by 280; after 18:40 the parent counter
+  rose by 241, but its reported 256 KiB peak was unusable. Neither run failed,
+  and local cgroup events were not retained. Its timer and evidence store were
+  not changed.
+- A read-only one-shot watcher started 18:56:46 for the next already-scheduled
+  analysis run. It is capped at 32 MiB High / 64 MiB Max / zero swap / 5% CPU /
+  32 tasks and 16 minutes; at 18:57:11 it charged 5.7 MiB. It reads leaf and
+  parent cgroup files only and will auto-exit. No source job was manually
+  started.
+- Continue serial fixture work only. The OOMD victim set does not establish a
+  single global-pressure source, and nearly full swap remains a risk.
+
+## 2026-10-29 19:00 CET — OOMD introspection discrepancy
+
+- At 18:59 `oomctl` showed global defaults (60% / 20 seconds / 90% swap) but no
+  monitored cgroups and a zero system context. `systemctl show user@1000.service`
+  still showed pressure-kill mode at 50%; its ancestors are unbounded. An
+  earlier 09:30 `oomctl` sample listed the user manager, and Oct 28 kill logs
+  prove the policy acted. Current registration remains inconsistent; no OOMD
+  settings changed.
+- The scheduled Veritas observatory run succeeded 19:00:30–19:00:43 with its
+  existing 256 MiB Max. Its `MemoryPeak` was unavailable, and user-manager
+  `high/max/oom/oom_kill` counters did not change. Host PSI stayed zero with
+  about 10 GiB available and 19 MiB swap free. No OOMD kill appeared in the
+  preceding five minutes.
+- The capped, read-only source-analysis cgroup watcher remains active for its
+  next scheduled 19:10 run. It will observe local cgroup peaks/events without
+  modifying the frozen campaign, service limits, timer, or evidence.
