@@ -2,7 +2,7 @@
 
 **Report date:** 2026-10-29
 
-## Current completion matrix — 2026-10-29 03:05 CET
+## Current completion matrix — 2026-10-29 03:10 CET
 
 This is a current evidence classification, not a final completion claim. The
 dated implementation records below remain the detailed evidence; the
@@ -14,7 +14,7 @@ current host gate.
 | Exchange-independent adapter core and Polymarket/Kalshi/Kraken/Coinbase adapters | IMPLEMENTED, LIVE VALIDATION PENDING | Offline default-registry readback confirms four adapters with 19 explicit declarations each: Polymarket 15 supported, Kalshi 16, Kraken 10, Coinbase Exchange 9. All mark incremental book updates unsupported. The exact-tree adapter module now passes 168/168 under an explicit resource cap using fixture transports. Source-use holds remain. |
 | Canonical instruments and supported payoff semantics | PARTIALLY VERIFIED | Supported structures have model and invariant tests; this does not claim universal instrument support. |
 | Relationship graph, evidence binding, and review | PARTIALLY VERIFIED | Deterministic fixture relationships and pinned evidence are covered; a live cross-venue economic equivalence is not established. |
-| Candidate discovery and independent economic verification | PARTIALLY VERIFIED | Bounded mathematical fixtures and independent audits pass selected checks; no live eligible opportunity is demonstrated. |
+| Candidate discovery and independent economic verification | PARTIALLY VERIFIED | Bounded mathematical fixtures and independent audits pass selected checks. Receipt age and timestamp/receipt skew now use exact deltas rounded up to milliseconds in both generator and verifier. No live eligible opportunity is demonstrated. |
 | Cross-venue costs, FX, capital, and execution uncertainty | PARTIALLY VERIFIED | Virtual models preserve unknown cost and applicability states; account-specific fees, jurisdiction, transfers, and execution remain unresolved. |
 | Collection, provenance, durable storage, and replay | PARTIALLY VERIFIED | Finite-collection/API fixtures pass 51/51 and storage passes 32/32; timeline replay v3 includes per-instrument receipt time, source timestamp semantics, clock uncertainty, and source freshness limits. Sequencing, multi-venue live collection, and archive provenance remain unverified or held. |
 | Read-only source network and trading boundary | COMPLETE AND VERIFIED | Only `PublicReadTransport` issues source HTTP requests; it is anonymous HTTPS GET-only, host-allowlisted, redirect-disabled, and bounded. Adapter boundary fixtures cover disabled probes, credential/mutating clients, cookies, redirects, oversized payloads, and JSON complexity. No exchange order/account path was found in the reviewed Frontier code. |
@@ -22,7 +22,7 @@ current host gate.
 | User-cgroup-aware workload admission | IMPLEMENTED, BOUNDED VALIDATION PASSED | Central Arena admission (15), finite schedules (12), and the Laboratory denial case (1) pass fixture tests using user-manager pressure; no runtime deployment occurred. |
 | Reality capacity inventory bounds | PARTIALLY VERIFIED | Candidate inventory code remains undeployed. The separate monitor is bounded at `MemoryHigh=160M`, `MemoryMax=192M`, and zero swap; its 02:46 scheduled run succeeded in 6.810 CPU seconds, but systemd retained no peak. Its report still identifies invalid archive inventory and provenance. |
 | Native Frontier dashboard | PARTIALLY VERIFIED | Vitest passed 47/47; default Playwright passed 17/20 with three opt-in skips; synthetic seeded replay/Arena browser tests passed 2/2. Timeline frame view now exposes bounded per-instrument timing evidence; this frontend change was not run through Node tooling or browser tests. Captured-evidence browser validation remains open. An earlier `tsc -b` passed at a 768 MiB cap; a later 640 MiB attempt hit the Node/V8 heap limit and generated an Apport report. No further Node check was run. |
-| Host reliability containment | PARTIALLY VERIFIED | The five-minute gap-detail timer is disabled and capacity monitor has a reversible 160/192 MiB, zero-swap bound. At 03:05, MemAvailable was 11,416,944 kB, SwapFree 236 kB, memory PSI was zero, and API/Reality remained active at restart counts 9/14. User-manager `oom=19`/`oom_kill=15` were unchanged; no oomd unit entries appeared after 02:58. Full swap and historical workload attribution remain unresolved. |
+| Host reliability containment | PARTIALLY VERIFIED | The five-minute gap-detail timer is disabled and capacity monitor has a reversible 160/192 MiB, zero-swap bound. At 03:10, MemAvailable was 11,148,512 kB, SwapFree 304 kB, memory PSI was zero, and API/Reality remained active at restart counts 9/14. User-manager `oom=19`/`oom_kill=15` were unchanged; no oomd unit entries appeared after 02:58. Full swap and historical workload attribution remain unresolved. |
 | Node/V8 and Apport side effect | PARTIALLY VERIFIED | The 02:36 TypeScript attempt aborted at Node's heap limit with a 300.6 MiB cgroup peak, not a kernel OOM. Whoopsie attempted to submit the 58,222,586-byte crash report and received HTTP 504; remote receipt is unknown. No `.uploaded` marker exists; avoid further crash-prone Node checks. |
 | Broad regressions, resource endurance, and performance acceptance | DEFERRED | Frontier Python passed 648/648 at 02:19 and the exact-tree adapter module passed 168/168 at 02:58; web Vitest passed 47/47, default Playwright 17/20, and synthetic seeded journeys 2/2 under bounded scopes. Full MIDAS regression, captured-evidence browser journey, endurance, and broad performance tests remain deferred. |
 | Live multi-venue source authorization and findings | BLOCKED | Kalshi, Kraken, and Coinbase retained research remain held; the worktree Polymarket probe flag is off. |
@@ -58,6 +58,52 @@ SwapFree was 236 kB, and user-manager `oom`/`oom_kill` counters remained
 auxiliary gap-detail timer inactive. No systemd-oomd unit entries appeared
 since 02:58. Full swap occupancy and historical pressure attribution remain
 unresolved.
+
+### Conservative sub-millisecond timing boundaries — 2026-10-29 03:08 CET
+
+Candidate generation and the independent auditor now calculate receipt age
+and receipt/source timestamp skew from exact datetime deltas, rounding upward
+to whole milliseconds. A 1,000.001 ms skew is therefore represented as
+1,001 ms and cannot pass a 1,000 ms bound. Both generator and independent
+auditor reject a 2,000.001 ms observation age against a 2,000 ms maximum.
+Multimarket and same-market timing paths use the same conservative generator
+rounding; the verifier independently re-derives the result. Timeline frames
+also round displayed receipt age upward, while freshness inclusion still uses
+the exact timestamp delta.
+
+The focused cross-venue and multi-outcome timing checks passed **2/2 in
+1.40 s**. The full `tests/frontier/test_relationships_economics_replay.py` and
+`tests/frontier/test_joint_state.py` modules then passed **123/123 in 5.69 s**
+under a transient 640 MiB maximum, zero-swap, 25% CPU, 64-task scope. Ruff
+check and format check passed for all changed Python files. One initial test
+collection attempt exposed an outdated `_epoch_ms` import in the joint-state
+calculator; it was updated to the shared conservative skew function before
+the passing runs. No live data was requested.
+
+At 03:08:16 CET, MemAvailable was 11,103,044 kB, SwapFree 248 kB, memory PSI
+was zero, and user-manager OOM counters were unchanged at `oom=19` and
+`oom_kill=15`. API and Reality stayed active with restart counts 9/14; the
+capacity timer was active, gap-detail inactive, and no oomd unit entries had
+appeared since 02:58. The host remains under observation; nearly full swap and
+unknown initiating workload are unresolved.
+
+The follow-up combined suite for candidate economics, independent audit,
+timeline replay/API, and Arena timeline artifacts passed **145/145 in
+15.60 s** under the same 640 MiB maximum, zero-swap, 25% CPU, 64-task bound.
+It reported the existing Starlette/httpx deprecation warning. This includes
+the timeline frame age round-up assertion; no live source was accessed.
+Strict mypy passed for the four changed timing/economics modules.
+
+At 03:09:25 CET, MemAvailable was 11,163,436 kB, SwapFree 304 kB, and host
+memory PSI remained zero. User-manager OOM counters stayed 19/15; API and
+Reality remained active with restart counts 9/14. Capacity timer was active,
+gap-detail inactive, and no systemd-oomd entries had appeared after 02:58.
+This short observation does not establish incident resolution or endurance.
+
+The 03:10:22 CET follow-up sample showed MemAvailable 11,148,512 kB,
+SwapFree 304 kB, zero memory PSI, unchanged user-manager OOM counters 19/15,
+and active API/Reality with restart counts 9/14. The capacity timer was active
+and gap-detail inactive; the systemd-oomd journal had no entries since 02:58.
 
 ## Bounded Frontier verification after host containment — 2026-10-29 01:54 CET
 

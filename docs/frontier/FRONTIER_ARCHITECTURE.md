@@ -952,7 +952,10 @@ so current cross-venue observations cannot pass this timing gate. Candidates
 always retain `practical_eligibility=false`:
 public snapshots do not prove fills, queue priority, venue access, simultaneous
 execution, capital transfer, or settlement. Opportunity classifications describe
-the mathematical and modeled evidence only.
+the mathematical and modeled evidence only. Receipt age and inter-book skew are
+computed from exact `timedelta` values and rounded upward to whole milliseconds
+in both the candidate generator and independent audit, so sub-millisecond
+over-bound observations cannot be rounded down to the configured limit.
 
 Independent economic audit v13 recursively checks typed audit inputs for
 timezone-aware datetimes before any resolution, relationship-evidence, fee, or
@@ -1142,7 +1145,8 @@ also pins each selected book's receipt time and age, source exchange timestamp,
 declared timestamp semantics, clock uncertainty, and source freshness limit in
 the frame. An unobserved instrument cannot carry timing evidence. These fields
 are diagnostics: they do not make unknown clock uncertainty comparable or
-prove simultaneous execution. Previously persisted v2 timeline and Arena
+prove simultaneous execution. Timeline frame ages use the same exact-delta,
+round-up-to-milliseconds rule as economic candidates. Previously persisted v2 timeline and Arena
 artifact hashes retain their original serialized shape during verification.
 It reuses
 `deterministic_replay` and its independent economic audit for every frame. It

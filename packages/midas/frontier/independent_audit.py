@@ -719,9 +719,9 @@ def _independent_timing_summary(
     books = tuple(books_by_leg[(leg.market_id, leg.instrument_id)] for leg in candidate.legs)
     asks = tuple(min(book.asks, key=lambda level: level.price) for book in books)
     as_of = candidate.observed_at_utc
-    received_ms = tuple(_independent_epoch_ms(book.received_at_utc) for book in books)
-    received_skew = max(received_ms) - min(received_ms)
-    ages = tuple(max(0, _independent_epoch_ms(as_of) - value) for value in received_ms)
+    received_times = tuple(book.received_at_utc for book in books)
+    received_skew = _independent_skew_ms(received_times)
+    ages = tuple(_independent_age_ms(as_of, value) for value in received_times)
     exchange_values = tuple(book.exchange_timestamp_utc for book in books)
     exchange_skew: int | None = None
     timing_valid = True
@@ -749,8 +749,7 @@ def _independent_timing_summary(
             timing_valid = False
         else:
             exchange_times = tuple(value for value in exchange_values if value is not None)
-            exchange_ms = tuple(_independent_epoch_ms(value) for value in exchange_times)
-            exchange_skew = max(exchange_ms) - min(exchange_ms)
+            exchange_skew = _independent_skew_ms(exchange_times)
             if exchange_skew > scenario.max_exchange_skew_ms:
                 timing_valid = False
         semantics = {book.exchange_timestamp_semantics.strip().casefold() for book in books}
@@ -780,10 +779,8 @@ def _independent_timing_summary(
             if any(value is None for value in level_times):
                 timing_valid = False
             else:
-                level_ms = tuple(
-                    _independent_epoch_ms(value) for value in level_times if value is not None
-                )
-                if max(level_ms) - min(level_ms) > scenario.max_exchange_skew_ms:
+                concrete_level_times = tuple(value for value in level_times if value is not None)
+                if _independent_skew_ms(concrete_level_times) > scenario.max_exchange_skew_ms:
                     timing_valid = False
     elif candidate.family in {
         OpportunityFamily.WITHIN_MARKET_MULTI_OUTCOME_COVERAGE,
@@ -794,17 +791,12 @@ def _independent_timing_summary(
             exchange_skew = None
             timing_valid = False
         else:
-            exchange_times = tuple(cast(datetime, value) for value in exchange_values)
-            level_times = tuple(cast(datetime, value) for value in level_values)
-            exchange_ms = tuple(_independent_epoch_ms(value) for value in exchange_times)
-            level_ms = tuple(_independent_epoch_ms(value) for value in level_times)
-            exchange_skew = max(exchange_ms) - min(exchange_ms)
-            level_skew = max(level_ms) - min(level_ms)
+            exchange_times = cast(tuple[datetime, ...], exchange_values)
+            level_times = cast(tuple[datetime, ...], level_values)
+            exchange_skew = _independent_skew_ms(exchange_times)
+            level_skew = _independent_skew_ms(level_times)
             if (
-                any(
-                    _independent_epoch_ms(value) > _independent_epoch_ms(as_of)
-                    for value in (*exchange_times, *level_times)
-                )
+                any(value > as_of for value in (*exchange_times, *level_times))
                 or exchange_skew > scenario.max_exchange_skew_ms
                 or level_skew > scenario.max_exchange_skew_ms
             ):
@@ -818,11 +810,28 @@ def _independent_timing_summary(
     return received_skew, exchange_skew, timing_valid
 
 
-def _independent_epoch_ms(value: Any) -> int:
-    """Convert an aware timestamp to the generator's millisecond precision."""
-    if not isinstance(value, datetime) or value.tzinfo is None or value.utcoffset() is None:
+def _independent_delta_ceil_ms(value: timedelta) -> int:
+    if value <= timedelta(0):
+        return 0
+    microseconds = (value.days * 86_400 + value.seconds) * 1_000_000 + value.microseconds
+    return (microseconds + 999) // 1000
+
+
+def _independent_skew_ms(values: tuple[datetime, ...]) -> int:
+    """Conservatively round exact source-time spread up to a whole millisecond."""
+    if len(values) < 2:
+        return 0
+    if any(value.tzinfo is None or value.utcoffset() is None for value in values):
         raise _MissingAuditEvidence("A timestamp in pinned timing evidence is not timezone-aware.")
-    return int(value.timestamp() * 1000)
+    return _independent_delta_ceil_ms(max(values) - min(values))
+
+
+def _independent_age_ms(as_of: datetime, value: datetime) -> int:
+    if as_of.tzinfo is None or as_of.utcoffset() is None:
+        raise _MissingAuditEvidence("Replay time in pinned timing evidence is not timezone-aware.")
+    if value.tzinfo is None or value.utcoffset() is None:
+        raise _MissingAuditEvidence("A timestamp in pinned timing evidence is not timezone-aware.")
+    return _independent_delta_ceil_ms(as_of - value)
 
 
 def _fill_leg_identity(leg: PositionLeg) -> str:

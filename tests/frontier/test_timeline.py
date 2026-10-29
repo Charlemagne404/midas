@@ -244,7 +244,7 @@ def test_timeline_frames_preserve_source_clock_and_freshness_evidence():
         (left, right),
         books,
         verified_relationships=(relationship,),
-        evaluation_times_utc=(T0 + timedelta(milliseconds=250),),
+        evaluation_times_utc=(T0 + timedelta(microseconds=1),),
         code_version="timeline-source-timing-evidence-v1",
     )
     state = next(
@@ -258,6 +258,7 @@ def test_timeline_frames_preserve_source_clock_and_freshness_evidence():
     assert state.exchange_timestamp_semantics == timed_book.exchange_timestamp_semantics
     assert state.clock_uncertainty_ms == Decimal("1.25")
     assert state.freshness_limit_ms == 900
+    assert state.age_ms == 1
 
     with pytest.raises(ValueError, match="cannot have timing evidence"):
         type(state).model_validate(

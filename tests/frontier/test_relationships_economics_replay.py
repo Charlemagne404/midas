@@ -2705,7 +2705,13 @@ def test_cross_venue_timing_requires_comparable_semantics_and_clock_bounds():
     state_mapping = {"yes": "yes", "no": "no"}
     as_of = T0 + timedelta(milliseconds=100)
 
-    def positive(left_snapshots, right_snapshots):
+    def positive(
+        left_snapshots,
+        right_snapshots,
+        *,
+        at=as_of,
+        scenario: ExecutionScenario | None = None,
+    ):
         candidates = generate_binary_coverage_candidates(
             left,
             right,
@@ -2714,7 +2720,8 @@ def test_cross_venue_timing_requires_comparable_semantics_and_clock_bounds():
             right_snapshots,
             state_mapping=state_mapping,
             instrument_mapping=instrument_mapping,
-            as_of_utc=as_of,
+            as_of_utc=at,
+            scenario=scenario or ExecutionScenario(),
         )
         return next(item for item in candidates if item.worst_case_gross_pnl > 0)
 
@@ -2759,6 +2766,60 @@ def test_cross_venue_timing_requires_comparable_semantics_and_clock_bounds():
     assert audited_comparable.independent_audit.disposition.value == "verified"
     assert audited_comparable.independent_audit.recomputed_timing_verified is True
     assert audited_comparable.independent_audit.recomputed_received_skew_ms == 0
+
+    submillisecond_skew_at = T0 + timedelta(milliseconds=1000, microseconds=1)
+    submillisecond_right = {
+        instrument_id: snapshot.model_copy(
+            update={
+                "received_at_utc": submillisecond_skew_at,
+                "provenance": snapshot.provenance.model_copy(
+                    update={
+                        "response_received_at_utc": submillisecond_skew_at,
+                        "processed_at_utc": submillisecond_skew_at,
+                    }
+                ),
+            }
+        )
+        for instrument_id, snapshot in known_right.items()
+    }
+    skew_scenario = ExecutionScenario(max_received_skew_ms=1000, max_book_age_ms=3000)
+    submillisecond_skew = positive(
+        known_left,
+        submillisecond_right,
+        at=T0 + timedelta(seconds=2),
+        scenario=skew_scenario,
+    )
+    assert submillisecond_skew.received_skew_ms == 1001
+    assert submillisecond_skew.timing_verified is False
+    audited_submillisecond_skew = independently_audit_candidate(
+        submillisecond_skew,
+        **{
+            **audit_inputs,
+            "books_by_market": {
+                left.canonical_id: known_left,
+                right.canonical_id: submillisecond_right,
+            },
+            "scenario": skew_scenario,
+        },
+    )
+    assert audited_submillisecond_skew.independent_audit is not None
+    assert audited_submillisecond_skew.independent_audit.recomputed_received_skew_ms == 1001
+    assert audited_submillisecond_skew.independent_audit.recomputed_timing_verified is False
+
+    fractional_age_scenario = ExecutionScenario(max_book_age_ms=2000)
+    fractional_age = positive(
+        known_left,
+        known_right,
+        at=T0 + timedelta(seconds=2, microseconds=1),
+        scenario=fractional_age_scenario,
+    )
+    assert fractional_age.timing_verified is False
+    audited_fractional_age = independently_audit_candidate(
+        fractional_age,
+        **{**audit_inputs, "scenario": fractional_age_scenario},
+    )
+    assert audited_fractional_age.independent_audit is not None
+    assert audited_fractional_age.independent_audit.recomputed_timing_verified is False
 
     tampered_timing = comparable.model_copy(
         update={"timing_verified": False, "received_skew_ms": 7, "independent_audit": None}

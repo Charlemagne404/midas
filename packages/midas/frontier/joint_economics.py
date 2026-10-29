@@ -17,7 +17,6 @@ from midas.frontier.economics import (
     _aligned_multi_outcome_quantity,
     _calculate_fee,
     _candidate_partial_fill_grid_sensitivity,
-    _epoch_ms,
     _fill_pattern_leg_id,
     _full_or_none_fill_sensitivity,
     _high_precision_decimal_context,
@@ -25,6 +24,7 @@ from midas.frontier.economics import (
     _price_matches_instrument_constraints,
     _projected_execution_time,
     _require_valid_execution_scenario,
+    _skew_ms,
 )
 from midas.frontier.models import (
     BookLevel,
@@ -342,9 +342,7 @@ def _evaluate_joint_state_basket(
     received_times = [book.received_at_utc for _, _, book, _ in asks]
     exchange_times = [book.exchange_timestamp_utc for _, _, book, _ in asks]
     level_times = [ask.exchange_timestamp_utc for _, _, _, ask in asks]
-    received_skew = max(_epoch_ms(item) for item in received_times) - min(
-        _epoch_ms(item) for item in received_times
-    )
+    received_skew = _skew_ms(received_times)
     timing_reasons: list[str] = []
     ages = [_age_ms(as_of, item) for item in received_times]
     if any(age > scenario.max_book_age_ms for age in ages):
@@ -372,12 +370,8 @@ def _evaluate_joint_state_basket(
     else:
         exact_exchange_times = tuple(item for item in exchange_times if item is not None)
         exact_level_times = tuple(item for item in level_times if item is not None)
-        exchange_skew = max(_epoch_ms(item) for item in exact_exchange_times) - min(
-            _epoch_ms(item) for item in exact_exchange_times
-        )
-        level_skew = max(_epoch_ms(item) for item in exact_level_times) - min(
-            _epoch_ms(item) for item in exact_level_times
-        )
+        exchange_skew = _skew_ms(exact_exchange_times)
+        level_skew = _skew_ms(exact_level_times)
         if any(item > as_of for item in exact_exchange_times + exact_level_times):
             timing_reasons.append(
                 "At least one selected exchange or best-ask timestamp is after replay time."

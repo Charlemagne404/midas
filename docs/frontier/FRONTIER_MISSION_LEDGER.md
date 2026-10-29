@@ -12776,3 +12776,59 @@ Reality remained active with restart counts 9/14. The capacity timer was active
 and the gap-detail timer inactive; no systemd-oomd entries appeared after
 02:58. The host remains only suitable for sequential, bounded work while swap
 is nearly full and the October 28 pressure initiator remains unknown.
+
+### Conservative fractional-millisecond timing checks — 2026-10-29 03:08 CET
+
+Cross-market candidate generation and independent economic verification now
+derive receipt age and book timestamp/receipt skew from exact datetime deltas
+and round upward to integer milliseconds. This prevents a 1,000.001 ms spread
+from being represented as 1,000 ms or a 2,000.001 ms book age from passing a
+2,000 ms freshness limit. The same generator helper is used by binary,
+multi-outcome, and bounded joint-state opportunity families; the Veritas-style
+economic audit reimplements the calculation independently.
+
+The selected cross-venue/multi-outcome timing cases passed **2/2 in 1.40 s**;
+`tests/frontier/test_relationships_economics_replay.py` plus
+`tests/frontier/test_joint_state.py` passed **123/123 in 5.69 s** under a
+transient 640 MiB cap, zero swap, 25% CPU, and 64 tasks. Ruff check and format
+passed. The first test collection caught one stale import from the removed
+flooring helper in `joint_economics.py`; this was fixed and the focused plus
+full-module reruns passed. No exchange request or production service change
+occurred.
+
+At 03:08:16 CET, MemAvailable was 11,103,044 kB, SwapFree 248 kB, PSI zero,
+and user-manager `oom`/`oom_kill` remained 19/15. API and Reality were active,
+capacity timer active, gap-detail timer inactive, and no oomd unit event was
+logged after 02:58. Keep subsequent work sequential and bounded.
+
+### Timing-boundary exactness and integrated fixture rerun — 2026-10-29 03:09 CET
+
+Timeline frame receipt age now uses the same exact-delta, upward millisecond
+rounding as economics, while frame freshness inclusion continues to compare
+the exact `timedelta`. The new fixture proves a 1 microsecond receipt age is
+shown as 1 ms; economics fixtures prove the generator and independent auditor
+agree that 1,000.001 ms skew is 1,001 ms and 2,000.001 ms age exceeds a
+2,000 ms limit.
+
+The combined candidate economics, independent audit, timeline replay/API, and
+Arena timeline suites passed **145/145 in 15.60 s** under a transient 640 MiB
+maximum, zero-swap, 25% CPU, 64-task scope. Ruff check and format passed. The
+run emitted one existing Starlette/httpx deprecation warning. No external
+source request was made.
+
+At 03:09:25 CET, MemAvailable was 11,163,436 kB, SwapFree 304 kB, PSI zero,
+and user-manager `oom`/`oom_kill` remained 19/15. API and Reality were active
+at restarts 9/14; capacity timer active and gap-detail timer inactive. No
+systemd-oomd unit entries appeared after 02:58. This is a short sample and
+does not resolve the incident or establish endurance.
+
+### Static type verification and 03:10 resource checkpoint — 2026-10-29 03:10 CET
+
+Strict mypy passed for `economics.py`, `independent_audit.py`,
+`joint_economics.py`, and `timeline.py`. The full 145-case fixture run preceded
+one type-only explicit tuple cast in the independent verifier; its behavior is
+unchanged. At 03:10:22 CET, MemAvailable was 11,148,512 kB, SwapFree 304 kB,
+PSI zero, and user-manager OOM counters remained 19/15. API/Reality were active
+with restart counts 9/14. Capacity timer remained active, gap-detail timer
+inactive, and no systemd-oomd entries appeared since 02:58. Keep development
+sequential; the original pressure source and full swap remain unresolved.

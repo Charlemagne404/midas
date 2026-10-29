@@ -18,6 +18,7 @@ from midas.frontier.economics import (
     ExecutionScenario,
     OpportunityClassification,
     OpportunityFamily,
+    _ceil_delta_ms,
     _require_valid_execution_scenario,
 )
 from midas.frontier.models import (
@@ -499,7 +500,7 @@ def deterministic_timeline_replay(
                     )
                     continue
                 age = cutoff - observed.received_at_utc
-                age_ms = max(0, int(age.total_seconds() * 1000))
+                age_ms = _ceil_delta_ms(age)
                 book_state = (
                     TimelineBookState.FRESH if age <= freshness_delta else TimelineBookState.STALE
                 )

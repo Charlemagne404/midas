@@ -405,7 +405,10 @@ The source health `requests_in_window` value counts request starts in the
 trailing 60 seconds. Reading health is local and makes no source request.
 Cross-venue `timing_verified` is stricter than receipt-time proximity: the
 exchange timestamp semantics must agree, the samples cannot be future-dated,
-and quantified source clock uncertainty is added to observed skew. Current
+and quantified source clock uncertainty is added to observed skew. Receipt age
+and timestamp/receipt skew use exact datetime deltas rounded upward to whole
+milliseconds by both the generator and independent verifier; a sub-millisecond
+excess is not rounded down to the configured threshold. Current
 adapters do not yet provide clock-uncertainty estimates, so inspect that field
 and the timing reasons instead of treating a positive recorded-value
 calculation as a simultaneous quote.
@@ -473,7 +476,9 @@ labels, candidate classifications, and hash identities. It also shows up to 24
 per-instrument timing records per frame: local receipt time and age, source
 timestamp, declared timestamp meaning, clock uncertainty, source freshness
 limit, and replay inclusion state. Missing clock uncertainty remains unknown;
-the display does not establish comparable clocks or simultaneous execution.
+frame ages and economic timing bounds round exact elapsed deltas upward to
+whole milliseconds. The display does not establish comparable clocks or
+simultaneous execution.
 These are hypothetical research outputs and do not demonstrate simultaneous
 quotes, fills, venue access, or profit. A frame with no explicit source-state
 event must not be read as evidence that the venue was healthy; receipt-time

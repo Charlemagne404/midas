@@ -1966,9 +1966,7 @@ def _evaluate_single_market_basket(
             )
 
     received_times = [book.received_at_utc for _, book, _ in top_asks]
-    received_skew = max(_epoch_ms(item) for item in received_times) - min(
-        _epoch_ms(item) for item in received_times
-    )
+    received_skew = _skew_ms(received_times)
     exchange_times = [book.exchange_timestamp_utc for _, book, _ in top_asks]
     level_times = [ask.exchange_timestamp_utc for _, _, ask in top_asks]
     timing_reasons: list[str] = []
@@ -2000,12 +1998,8 @@ def _evaluate_single_market_basket(
             timing_reasons.append(
                 "At least one outcome quote timestamp is after the replay analysis time."
             )
-        exchange_skew = max(_epoch_ms(value) for value in concrete_exchange_times) - min(
-            _epoch_ms(value) for value in concrete_exchange_times
-        )
-        level_skew = max(_epoch_ms(value) for value in concrete_level_times) - min(
-            _epoch_ms(value) for value in concrete_level_times
-        )
+        exchange_skew = _skew_ms(concrete_exchange_times)
+        level_skew = _skew_ms(concrete_level_times)
         if (
             exchange_skew > scenario.max_exchange_skew_ms
             or level_skew > scenario.max_exchange_skew_ms
@@ -2461,17 +2455,14 @@ def _evaluate_pair(
         )
     l_age = _age_ms(as_of, left_book.received_at_utc)
     r_age = _age_ms(as_of, right_book.received_at_utc)
-    received_skew = abs(
-        _epoch_ms(left_book.received_at_utc) - _epoch_ms(right_book.received_at_utc)
-    )
+    received_skew = _skew_ms((left_book.received_at_utc, right_book.received_at_utc))
     exchange_skew: int | None = None
     if (
         left_book.exchange_timestamp_utc is not None
         and right_book.exchange_timestamp_utc is not None
     ):
-        exchange_skew = abs(
-            _epoch_ms(left_book.exchange_timestamp_utc)
-            - _epoch_ms(right_book.exchange_timestamp_utc)
+        exchange_skew = _skew_ms(
+            (left_book.exchange_timestamp_utc, right_book.exchange_timestamp_utc)
         )
     timing_reasons = []
     if l_age > scenario.max_book_age_ms or r_age > scenario.max_book_age_ms:
@@ -3143,12 +3134,21 @@ def _candidate_hash(
     ).hexdigest()
 
 
-def _epoch_ms(value: datetime) -> int:
-    return int(value.astimezone(UTC).timestamp() * 1000)
+def _ceil_delta_ms(value: timedelta) -> int:
+    if value <= timedelta(0):
+        return 0
+    microseconds = (value.days * 86_400 + value.seconds) * 1_000_000 + value.microseconds
+    return (microseconds + 999) // 1000
+
+
+def _skew_ms(values: tuple[datetime, ...] | list[datetime]) -> int:
+    if len(values) < 2:
+        return 0
+    return _ceil_delta_ms(max(values) - min(values))
 
 
 def _age_ms(as_of: datetime, value: datetime) -> int:
-    return max(0, _epoch_ms(as_of) - _epoch_ms(value))
+    return _ceil_delta_ms(as_of - value)
 
 
 def _projected_execution_time(
