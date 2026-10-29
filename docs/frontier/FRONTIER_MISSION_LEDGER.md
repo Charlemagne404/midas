@@ -1,5 +1,29 @@
 # Project Frontier Mission Ledger
 
+## 2026-10-29 21:51 CET — scheduled capacity run and post-test host sample
+
+- `midas-reality-capacity.service` ran 21:51:04–14, exited 0, and consumed
+  7.092 CPU seconds under its existing 160 MiB High / 192 MiB Max / zero-swap
+  limits. systemd retained `MemoryPeak=11,304,960` bytes and zero swap peak;
+  the unit cgroup was removed, so local events were unavailable. The monitor
+  still reported pending budget/retention changes and archive
+  manifest/inventory/capacity warnings. No archive evidence, collector, or
+  configuration was modified.
+- PSI averages were zero, MemAvailable about 10 GiB, and host swap remained
+  full. User-manager `memory.events.high` rose by 224 since 21:47, while
+  max/oom/oom_kill stayed 732,947/19/15. Because the unit-reported peak was
+  well below High and its leaf counters were unavailable, the parent increase
+  remains unattributed. No OOMD or kernel OOM event appeared through 21:51.
+- Current user-manager memory/swap charge was 9.95 GB / 2.87 GB. `app.slice`
+  accounted for 9.56 GB / 2.24 GB and the Terminal slice 5.33 GB / 1.66 GB.
+  Its largest VTE child held about 3.49 GB, mostly file cache, with zero swap
+  and zero local high/max/OOM events. This is a current distribution snapshot,
+  not causal attribution of earlier pressure. API/Reality/Reality API remained
+  active at restart counts 9/14/0. Incident status remains partial; continue
+  with serial zero-swap-capped work and avoid broad tests or live probes.
+- The focused replay fixture/doc checkpoint is `aa1fdd6`; this addendum is a
+  separate current-state documentation checkpoint.
+
 ## 2026-10-29 21:47 CET — adversarial replay BBO mismatch fixture
 
 - Extended the Polymarket replay API fixture with a third frame whose reported

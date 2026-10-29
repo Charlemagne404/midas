@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 21:47 CET |
+| Latest addendum | 2026-10-29 21:51 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Pre-incident checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -15,7 +15,49 @@ This is the current incident report. It supplements the chronological record in
 The full-day journal query below expands that earlier report's final-ten-event
 sample to all October 28 systemd-oomd kills.
 
-## Latest addendum — 2026-10-29 21:47 CET
+## Latest addendum — 2026-10-29 21:51 CET
+
+The scheduled Reality capacity monitor ran at 21:51:04–14 and exited
+successfully (status 0, 7.092 CPU seconds). Its effective limits remained
+`MemoryHigh=160 MiB`, `MemoryMax=192 MiB`, and `MemorySwapMax=0`. systemd
+retained a unit `MemoryPeak` of 11,304,960 bytes (about 10.8 MiB) and zero
+swap peak; the one-shot cgroup was removed, so local `memory.events` could
+not be inspected. The read-only report still lists budget/retention changes
+pending, capacity warnings, `ARCHIVE_MANIFEST_SIZE_LIMIT`,
+`ARCHIVE_INVENTORY_UNVERIFIED`, `ARCHIVE_CAPACITY_UNKNOWN`, and
+`COLLECTOR_STATUS_STALE`. No manifest, archive, collector, or service
+configuration was changed.
+
+At 21:51, memory PSI averages were zero, `MemAvailable` was about 10 GiB,
+and all 4 GiB of host swap remained occupied. The `user@1000.service`
+`memory.events.high` count rose by 224 from 16,438,383 at 21:47 to 16,438,607;
+`max=732,947`, `oom=19`, and `oom_kill=15` were unchanged. This overlaps the
+capacity run but cannot be attributed to it: the unit peak was far below its
+High limit and the leaf event counters were unavailable after collection.
+systemd-oomd and kernel OOM journals were empty through 21:51. The change in
+the parent high counter remains unattributed.
+
+A read-only cgroup snapshot showed `user@1000.service` charged 9,949,638,656
+bytes of memory and 2,873,507,840 bytes of swap. `app.slice` accounted for
+9,557,114,880 bytes of memory and 2,243,768,320 bytes of swap; the
+GNOME Terminal slice accounted for 5,325,529,088 bytes of memory and
+1,658,789,888 bytes of swap. Its largest live VTE child was charged about
+3.49 GiB, mostly file cache, with about 0.35 GiB anonymous memory, zero swap,
+and zero local high/max/OOM events. These are current charge distributions,
+not evidence that a particular cgroup caused the earlier OOMD threshold
+crossings. The API, Reality collector, and Reality API remained active at
+restart counts 9/14/0 and below their current High/Max limits; their local
+OOM counters were zero. The gap-detail timer remains disabled.
+
+No new OOMD/kernel kill or critical API/Reality restart appeared between the
+21:45 and 21:51 samples. This adds a short quiet interval after the capacity
+run but does not resolve the incident: global swap is full, the user-manager
+high-counter increment lacks leaf attribution, and the OOMD registration
+discrepancy and earlier marginal workload remain unresolved. Keep Frontier
+serial and capped; do not infer durable recovery or archive integrity from
+this capacity report.
+
+## Prior addendum — 2026-10-29 21:47 CET
 
 The snapshot-anchored Polymarket replay received one adversarial fixture
 update. It now applies a reported bid at 0.40 below the locally projected
