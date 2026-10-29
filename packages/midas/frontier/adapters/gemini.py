@@ -487,7 +487,7 @@ class GeminiSpotAdapter(BaseReadOnlyAdapter):
             if broken:
                 raise AdapterError(
                     "BROKEN_TRADE",
-                    "Gemini broken trades are excluded from normal market-data research",
+                    "Gemini trade page contains a broken print and is rejected from normal market-data research",
                 )
             if previous_timestamp is not None and timestamp > previous_timestamp:
                 raise AdapterError(

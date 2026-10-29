@@ -255,7 +255,7 @@ async def test_gemini_broken_trade_and_timestamp_disagreement_fail_closed():
     try:
         await broken_adapter.discover_markets(limit=1)
         broken_adapter.take_captures()
-        with pytest.raises(AdapterError, match="broken trades are excluded"):
+        with pytest.raises(AdapterError, match="page contains a broken print"):
             await broken_adapter.fetch_trades("BTCUSD", limit=1)
         assert len(broken_adapter.take_captures()) == 1
     finally:
