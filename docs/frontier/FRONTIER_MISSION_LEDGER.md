@@ -14045,3 +14045,46 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
   incident remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**. Live-source
   capture, full UI build/browser checks, broad tests, and heavy replay remain
   deferred.
+
+## OOM pressure attribution and bounded mission resume — 2026-10-29 09:30 CET
+
+- **Confirmed trigger:** October 28 systemd-oomd actions followed
+  `user@1000.service` PSI exceeding its configured 50% limit for 20 seconds
+  with reclaim activity. This was user-manager pressure, not proof that global
+  PSI crossed 50%. Journal counts are 129 total: 106 gap-detail replay, 10
+  Reality, 8 API, 4 terminal scopes, and 1 Firefox. Gap-detail remains the
+  strongest recurrent contributor; aggregate pressure origin remains
+  unproven.
+- **Separate local OOM:** seven kernel memcg kills targeted the Reality
+  capacity oneshot at its former 128 MiB max. It now uses the existing
+  160/192 MiB High/Max and zero-swap drop-in. Its 09:18 scheduled run exited 0
+  at 128.9 MiB peak. Archive warnings and invalid provenance remain untouched.
+- **09:27 host sample:** `MemAvailable=10.43 GiB`, only 9 MiB swap free, and
+  host/user PSI all zero. User manager charged 10.10 GB memory/2.86 GB swap;
+  app.slice charged 9.71 GB/2.23 GB and remains uncapped. A three-interval
+  vmstat sample had first-interval swap activity, then zero in two intervals;
+  this is not durable swap-idle evidence. `oomctl` currently sees the 50%
+  user-manager monitor; prior empty-monitor snapshots remain unexplained.
+- **Service state:** API, Reality recorder and Reality API active at restart
+  counts 9/14/0. API health returned READY and `live_execution=false`.
+  Reality status at 09:29 reported active receiving, 16/16 fresh,
+  `RECORDING_UNSEQUENCED`, one failure, no process backpressure, and no
+  sequence verification. Continental, Echo, RustDesk, Tailscale/Headscale and
+  SSH socket remained active and untouched. Daymark DB and the read-only
+  Continental audit failures are separate and were not changed.
+- **Schedules:** gap-detail remains disabled. The 1-minute Arena dispatcher
+  exits quickly; bounded Veritas observation/source-analysis/director runs
+  were staggered before the 09:18 capacity run. No overlap was observed in
+  this short window. Other periods are not proven overlap-free.
+- **Containment/rollback:** no new host setting was changed in this pass. The
+  report retains exact rollback commands for the timer and capacity drop-in.
+  Do not alter global OOM policy, shared user limits, swap, or protected
+  collector settings from this evidence. Preserve historical archive state.
+- **Continuation:** safe only for one source-independent Frontier task at a
+  time after fresh admission, bounded to 384 MiB High/512 MiB Max, zero swap,
+  20% CPU, 64 tasks and a short timeout. Broad suites, full builds, live
+  probes, large replay and persistent workers remain deferred. Incident is
+  **PARTIALLY CONTAINED / PARTIALLY VERIFIED**, not resolved.
+- **Checkpoint:** report and this ledger update are prepared on
+  `codex/frontier-20261026` from `eb929fc`; the existing untracked
+  `data/frontier-public-probes/` directory is unchanged.

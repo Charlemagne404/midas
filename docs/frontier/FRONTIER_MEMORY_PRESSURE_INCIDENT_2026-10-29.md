@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 08:50 CET |
+| Latest addendum | 2026-10-29 09:30 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Pre-incident checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -1806,3 +1806,136 @@ workload attribution, and archive provenance warnings remain open risks.
 30-minute schedule. Frontier may continue with focused serial offline work
 after fresh admission. Full suites, builds, live probes, and long replays remain
 deferred while swap is exhausted and workload attribution is unresolved.
+
+## 2026-10-29 09:30 CET — high-priority incident revalidation
+
+This pass re-read host PSI, `/proc/meminfo`, `vmstat`, `oomctl`, cgroup files,
+user timers, service properties and journals. It made no service, timer, OOM
+policy, collector, or data change. Frontier was at `eb929fc` before this
+documentation checkpoint; the pre-existing untracked
+`data/frontier-public-probes/` remains untouched.
+
+### Root cause boundaries
+
+The evidence separates three mechanisms and scopes:
+
+1. **Confirmed systemd-oomd trigger.** The effective vendor policy for
+   `user@1000.service` is `ManagedOOMMemoryPressure=kill` with a 50% limit.
+   Current `oomctl` lists `/user.slice/user-1000.slice/user@1000.service` as
+   monitored at 50%; it reports a 20-second default duration. October 28 kill
+   records explicitly say user-manager pressure exceeded 50% for over 20
+   seconds **with reclaim activity**. At 23:43:09 it was 61.64% when Reality
+   was killed; at 23:43:24 it was 54.45% when gap-detail was killed. This is
+   pressure in the monitored user-manager cgroup, not the same metric as
+   global PSI. The lower global PSI sample reported for the incident window
+   does not contradict the user cgroup crossing its threshold.
+2. **Confirmed recurrent association; initiating workload unknown.** The full
+   October 28 OOMD journal contains 129 kills: 106 gap-detail replay, 10
+   Reality, 8 API, 4 terminal scopes, and 1 Firefox scope. Gap-detail was an
+   auxiliary five-minute finalized-data replay. At its last kill it used
+   about 204.8 MiB, below its 256 MiB hard cap, and its local PSI was
+   avg10/avg60 76.50%/50.59%. It is the strongest recurring contributor but
+   the evidence does not prove it initiated all parent pressure. Candidate
+   snapshots also show API, Reality, terminal and other workloads co-resident.
+   Their exact causal shares, any leak, and the initial trigger remain
+   unproven.
+3. **Separate confirmed leaf-cgroup OOM.** Seven kernel
+   `CONSTRAINT_MEMCG` OOM events targeted `midas-reality-capacity.service`
+   at its old 128 MiB hard limit. Killed Python processes had about 129–131
+   MiB anonymous RSS and roughly 11 MiB file RSS. This was a local service
+   limit failure, not a host-wide kernel OOM and not an OOMD pressure kill.
+   Invalid-manifest archive traversal was a plausible source of high memory,
+   not directly measured in the killed runs. The bounded inventory code and
+   archive provenance findings remain separate; no manifest or archive data
+   was repaired.
+
+Thus the incident does not show that **global** PSI crossed 50%. OOMD acted
+on the `user@1000.service` pressure policy. The user-manager and `app.slice`
+ancestors remain without `MemoryHigh`, `MemoryMax`, or `MemorySwapMax`. An
+aggregate cap there could affect desktop and remote-administration sessions,
+so none was introduced. Current OOMD monitor registration is visible; the
+earlier `oomctl` samples showing no monitored group remain unexplained.
+`oomctl` currently lists no swap-monitored cgroups, and October 28 kill
+reasons cite reclaim/pressure rather than a swap-limit action.
+
+### Current host, workloads, and schedules
+
+At 09:27:51 CET, `/proc/meminfo` reported `MemAvailable=10,935,308 kB`
+(10.43 GiB), 4,194,300 kB total swap, and 9,188 kB free (about 9 MiB).
+Global and user-manager memory PSI avg10/avg60/avg300 were all zero. A
+three-interval `vmstat 1 3` sample showed 65/70 kB/s swap-in/out in its first
+interval, then zero in the following two. This short sample cannot establish
+that swap churn is durably absent. No OOMD or kernel kill appeared after
+23:43:24 October 28 and 20:15:44 October 28 respectively.
+
+The user-manager cgroup charged 10.10 GB memory and 2.86 GB swap; its
+`memory.stat` was about 2.14 GiB anonymous, 6.19 GiB file, and 1.06 GiB
+kernel. `app.slice` charged 9.71 GB memory and 2.23 GB swap, with about 1.90
+GiB anonymous, 6.11 GiB file, and 1.02 GiB kernel. These are cgroup charges
+including file cache, not process RSS or a direct estimate of unreclaimable
+memory. Both aggregate cgroups remain uncapped. Descendant counters stayed
+at `oom=19`, `oom_kill=15`, `oom_group_kill=0`.
+
+The largest current app leaf was one GNOME Terminal VTE scope at 2,092 MiB
+current: about 565 MiB anonymous, 1,495 MiB file, and 31 MiB kernel. It was
+left running. Other notable leaf charges were API 961 MiB (118 MiB anonymous,
+835 MiB file), Reality 459 MiB (247 MiB anonymous, 202 MiB file), and Reality
+API 349 MiB (96 MiB anonymous, 242 MiB file). These point-in-time charges do
+not identify the October 28 pressure initiator. The process sample showed
+Codex processes below 400 MiB RSS each; no terminal, browser, desktop, or
+remote-session process was signalled or limited.
+
+At 09:29, MIDAS API, Reality recorder, and Reality API were active with
+restart counts 9/14/0 and effective limits of 1536/1792 MiB, 1152/1280 MiB,
+and 512 MiB respectively, all with zero swap allowance. The API health route
+returned `READY`, release `a152999`, and `live_execution=false`. Reality's
+status file, modified at 09:29:07, reported `RECORDING_UNSEQUENCED`,
+`active_receiving`, 16/16 fresh books, zero process backpressure, one recorded
+failure, and `sequence_verified=false`; it also retains a timeout/staleness
+error. This confirms active receiving at that time, not sequenced completeness
+or archive integrity. Continental tailnet/identity and production web units,
+Echo production/staging, RustDesk, Tailscale/Headscale, and `ssh.socket` were
+active; none was changed. An unrelated Daymark database unit has been failed
+and disabled since October 9; the read-only Continental infrastructure audit
+also has a failed result. Neither appears in the OOMD/kernel kill records.
+
+The gap-detail timer remains `inactive` and `disabled`, with its service's
+last result `oom-kill`; it is absent from the active timer list. The capacity
+timer is active on its 30-minute schedule. Its 09:18 run exited 0 at 128.9
+MiB peak and zero swap under `MemoryHigh=160M`, `MemoryMax=192M`, and
+`MemorySwapMax=0`; archive inventory/provenance warnings and unknown capacity
+remain. The one-minute Arena schedule dispatcher completed in about 33 ms
+CPU. Other scheduled Veritas work has 256 MiB observation/source-analysis
+caps and a 512 MiB director cap. Runs were staggered in the sampled window:
+observation 09:02, source analysis 09:11, director 09:15, and capacity 09:18.
+No overlapping heavy scheduled job was observed in this window; this does not
+guarantee non-overlap at all times.
+
+### Changes, rollback, and safe continuation
+
+No new host configuration change was warranted by this revalidation. The two
+targeted reversible actions remain in effect, with exact rollback commands in
+“Actions in effect and rollback” above:
+
+- Keep the auxiliary gap-detail timer disabled; only re-enable after explicit
+  resource admission and a bounded replay implementation.
+- Keep the capacity monitor at 160 MiB High / 192 MiB Max / zero swap. Its
+  rollback restores the former 128 MiB hard cap and is not recommended without
+  a replacement bound because that setting produced seven leaf OOM kills.
+
+Do not change global OOMD policy, swap configuration, user-manager limits, or
+protected collector settings based on this evidence. Do not clear swap or stop
+active terminal/session processes. Current measurements support **careful
+resumption** of Frontier source-independent work only: one job at a time, with
+fresh admission and a transient 384 MiB High / 512 MiB Max, zero-swap, 20% CPU,
+64-task, short-timeout scope. Defer full suites, UI builds, live probes, large
+replay, profiling, and persistent workers while swap is effectively full.
+Stop on rising PSI, changed OOM counters, any new OOM entry, low API/Reality
+headroom, or a scheduled workload overlap.
+
+**Incident disposition:** **PARTIALLY CONTAINED / PARTIALLY VERIFIED, not
+resolved.** The recurring auxiliary replay and the capacity checker's proven
+128 MiB cap mismatch have targeted containment. Services and PSI are stable
+in this short sample, but swap remains full, the parent user cgroup is uncapped,
+the historic pressure initiator is not proven, and long-duration no-kill
+validation remains outstanding.
