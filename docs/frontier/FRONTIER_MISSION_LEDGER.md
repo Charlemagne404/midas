@@ -13618,3 +13618,11 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
 - **Files:** `apps/api/frontier.py`, `packages/midas/frontier/models.py`, `tests/frontier/test_polymarket_stream.py`, `apps/web/src/Frontier.tsx`, `apps/web/src/Frontier.test.tsx`, `docs/frontier/FRONTIER_ENGINEERING_REPORT.md`, `docs/frontier/FRONTIER_MEMORY_PRESSURE_INCIDENT_2026-10-29.md`, this ledger. Existing `data/frontier-public-probes/` remains untouched and untracked.
 - **Open limits:** Historical system-wide pressure attribution remains incomplete; user-manager ancestors are uncapped; the gap-detail replay and capacity checker require a longer safe observation period; archive inventory/provenance warnings remain unresolved and untouched. No source eligibility or live multi-venue relationship is established.
 - **Next safe action:** After a fresh low-impact memory/PSI/service check, continue one independent Frontier implementation or small capped fixture slice at a time. Keep production deployment, live probes, broad replay/regressions, and concurrent research deferred.
+
+
+## Post-test health checkpoint — 2026-10-29 06:17 CET
+
+- At 05:17:02 UTC, `MemAvailable` was 11,387,441,152 bytes (10.61 GiB), `SwapFree` was 7,921,664 bytes (7.55 MiB), host PSI was zero, and user-manager OOM counters remained 19/15/0. No kernel or OOMD kill appeared since 05:11:26 UTC.
+- The registered MIDAS and Reality `/api/health` endpoints both returned `READY` at 05:16:54 UTC with `live_execution=false`; API and Reality units remained active at restart counts 9/14. Capacity timer active; gap-detail timer inactive.
+- `11f1527` records this health recheck. It follows feature commit `c40c05e`, report commit `f508419`, and ledger checkpoint `bee31d4`. The probe evidence directory remains untouched. No service/config change or live market request occurred.
+- Keep the incident partial: swap is nearly full, the user-manager hierarchy remains uncapped, historical pressure attribution is incomplete, and the quiet interval is short. Continue only after fresh admission checks, with serial bounded work.
