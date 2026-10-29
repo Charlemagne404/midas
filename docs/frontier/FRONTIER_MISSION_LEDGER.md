@@ -12448,3 +12448,39 @@ recovers and PSI remains low. Archive inventory/provenance alerts and
 | Historical pressure initiator | BLOCKED BY MISSING CONTEMPORANEOUS INVENTORY | OOM candidate list is incomplete and snapshots after the event cannot establish the initiating mix. |
 | Host stability | PARTIALLY VERIFIED | PSI zero and OOM counters stable at latest sample; swap remains 3.1/4 GiB and API is near `MemoryHigh`. |
 | Frontier runtime resumption | PARTIALLY VERIFIED | Bounded offline work only; no live probes, broad runtime suites, or long campaigns. |
+
+## Host cgroup summary observability — 2026-10-29 02:07 CET
+
+Extended the existing read-only host sampler and summary so cgroup pressure
+can be interpreted from sampled evidence without losing limit or event
+context. The sampler now records `memory.swap.max`; the summary reports
+memory limits, distributions for cgroup PSI averages, first/last/delta
+`memory.events` counters, and PSI `total` counter deltas. Counter resets are
+explicit and do not produce negative deltas. The raw sample schema remains
+backward-compatible because the summary tolerates absent optional fields.
+
+The focused summary tests passed **2/2** in 1.739 seconds in a transient
+512 MiB, zero-swap, 25%-CPU, 16-task, 30-second scope. They cover positive
+counter deltas and explicit resets. Ruff lint and format checks passed. The
+initial `python -S -m pytest` harness exited before collection because `-S`
+hides site packages; the installed pytest entrypoint passed. The first reset
+fixture omitted required host memory fields and was corrected. The transient
+unit's reported 256 KiB peak is implausible and is not treated as a
+measurement.
+
+At 02:06:32 after the final bounded test, host PSI, user-manager PSI, and API
+PSI were zero, available memory was 10.1 GiB, and swap use was 3.08 GiB.
+User-manager `max`, `oom`, and `oom_kill` stayed unchanged; `high` rose by one.
+API `max`/OOM counters stayed zero and its `high` counter rose by one;
+attribution is unknown. API remained active with about 1.16 MiB below
+`MemoryHigh`; Reality remained active. The code is not deployed to any service
+and does not change collection or stored samples.
+
+| Component | Status | Evidence / boundary |
+| --- | --- | --- |
+| Cgroup PSI summary | COMPLETE AND VERIFIED | Focused fixtures assert per-window averages and PSI total deltas, including resets. |
+| Memory event summary | COMPLETE AND VERIFIED | Focused fixtures assert positive event deltas and counter resets. |
+| Raw sampler swap limit capture | IMPLEMENTED, LIVE VALIDATION PENDING | New `memory.swap.max` field is captured; no new host sampling campaign was run. |
+| Production monitoring rollout | DEFERRED | Isolated Frontier helper only; no production installation or long-running observer. |
+
+Implementation and fixture commit: `b7eab3c114adddd79ef156ec2585c851e0b71dd6`.

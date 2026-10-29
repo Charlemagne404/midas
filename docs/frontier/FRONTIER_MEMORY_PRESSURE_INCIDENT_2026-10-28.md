@@ -1058,3 +1058,42 @@ probes, profiling, and batch replay remain deferred. This is containment and
 partial validation, not incident resolution. Continue to monitor PSI, service
 restart counts, cgroup `memory.events`, and scheduled jobs before increasing
 runtime activity.
+
+## Cgroup summary instrumentation — 2026-10-29 02:07 CET
+
+Frontier's read-only host sampler now captures `memory.swap.max` alongside
+its existing cgroup observations. `host_capacity_summary.py` now retains the
+per-cgroup `memory.high`, `memory.max`, and swap limit; summarizes PSI
+`avg10`/`avg60`/`avg300`; and reports first/last/delta values for
+`memory.events` and PSI `total` counters. Counter decreases are emitted as a
+reset with a null delta, rather than as negative activity. This closes an
+observability gap found during the incident: the sampler held these raw
+fields, but its summary discarded the per-cgroup PSI and OOM-event changes.
+The change is only in the Frontier development worktree; no service was
+reconfigured and no historical sample was rewritten.
+
+`tests/test_host_capacity_summary.py` passed **2/2** in 1.739 seconds in a
+transient scope with `MemoryHigh=448M`, `MemoryMax=512M`, no swap, 25% CPU,
+16 tasks, and a 30-second timeout. The fixtures cover normal event/PSI deltas
+and counter resets. Ruff lint and formatting checks passed. The first test
+invocation used Python `-S`, which hid the installed pytest module and exited
+before test collection; the installed `pytest` entrypoint corrected the
+harness. The first reset-case fixture also omitted the sampler's required host
+memory fields; correcting the fixture yielded the final 2/2 pass. Systemd
+reported a 256 KiB memory peak for the test scope, which is implausible and is
+not used as process-memory evidence.
+
+At 02:06:32 CET after the bounded checks, host available memory was
+10,799,087,616 bytes and swap use was 3,311,185,920 / 4,294,963,200 bytes.
+Host, user-manager, and API PSI averages were zero. The user-manager event
+counters were `high=16,416,873`, `max=728,363`, `oom=19`, `oom_kill=15`; the
+API had `high=11,674` and zero max/OOM/OOM-kill events. The user-manager and
+API high counters each increased by one relative to the preceding sample;
+the timing does not establish causation. The API was active at 1,609,396,224
+bytes versus `MemoryHigh=1,610,612,736` (1,216,512 bytes of headroom), with
+restart count 9; Reality was active with restart count 14. No new OOM was
+observed; this remains a bounded check, not an endurance validation.
+
+The sampler and summary implementation with its two focused fixtures is
+commit `b7eab3c114adddd79ef156ec2585c851e0b71dd6` on
+`codex/frontier-20261026`.

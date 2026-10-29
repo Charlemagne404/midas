@@ -13182,10 +13182,21 @@ The Reality capacity monitor now has a persistent, reversible
 160 MiB `MemoryHigh` / 192 MiB `MemoryMax` bound and passed one scheduled run.
 The historical user-slice pressure initiator remains undetermined.
 
-At the latest 02:02 CET check, host PSI and available-memory headroom were
-healthy, but swap remained 3.1/4 GiB and the API had only about 0.85 MiB below
-its `MemoryHigh`. Frontier status remains **PARTIALLY VERIFIED**. Continue
-static work; allow only sequential bounded fixture checks after remeasuring
-admission conditions. Defer broad runtime suites, live probes, profiling, and
-batch replay until the API recovers material headroom. Do not infer incident
-resolution from this quiet window.
+At 02:02 CET, swap remained 3.1/4 GiB and the API had only about 0.85 MiB
+below its `MemoryHigh`. After the bounded monitoring-summary checks, the
+02:06:32 CET sample had 10.1 GiB available, zero host/user/API PSI, and about
+1.16 MiB API `MemoryHigh` headroom; user-manager/API `high` counters each
+increased by one, with no OOM counter change and no established attribution.
+Frontier status remains **PARTIALLY VERIFIED**. Continue static work; allow
+only sequential bounded fixture checks after remeasuring admission conditions.
+Defer broad runtime suites, live probes, profiling, and batch replay until the
+API recovers material headroom. Do not infer incident resolution from this
+quiet window.
+
+The read-only `host_capacity_sample.py` / `host_capacity_summary.py` tooling
+was also extended in Frontier to report cgroup memory limits, PSI averages,
+memory-event deltas, and PSI total-counter deltas. Two focused fixtures pass
+under a 512 MiB transient scope; production rollout and live sampler
+validation remain pending. The details and current resource gate are in the
+incident report. The implementation and tests are commit
+`b7eab3c114adddd79ef156ec2585c851e0b71dd6` on `codex/frontier-20261026`.
