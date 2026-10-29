@@ -202,6 +202,87 @@ def test_decoder_supports_documented_nested_stream_shape_and_control_events():
 
 
 @pytest.mark.parametrize(
+    ("event", "expected_bid", "expected_ask"),
+    [
+        (
+            {
+                "event_type": "best_bid_ask",
+                "market": CONDITION_ID,
+                "asset_id": ASSET_ID,
+                "best_bid": "0.41",
+                "best_ask": "0.44",
+            },
+            Decimal("0.41"),
+            Decimal("0.44"),
+        ),
+        (
+            {
+                "topic": "market",
+                "type": "best_bid_ask",
+                "payload": {
+                    "conditionId": CONDITION_ID,
+                    "assetId": ASSET_ID,
+                    "bestBid": "0.42",
+                    "bestAsk": "0.45",
+                },
+            },
+            Decimal("0.42"),
+            Decimal("0.45"),
+        ),
+    ],
+)
+def test_decoder_accepts_both_best_price_spellings(event, expected_bid, expected_ask):
+    (update,) = decode_market_stream_frame(
+        json.dumps(event, separators=(",", ":")),
+        subscribed_asset_ids=frozenset({ASSET_ID}),
+    )
+    assert update.event_type == "best_bid_ask"
+    assert update.reported_best_bid == expected_bid
+    assert update.reported_best_ask == expected_ask
+
+
+@pytest.mark.parametrize(
+    ("event_type", "payload"),
+    [
+        (
+            "best_bid_ask",
+            {
+                "market": CONDITION_ID,
+                "asset_id": ASSET_ID,
+                "best_bid": "0.41",
+                "bestBid": "0.42",
+                "best_ask": "0.44",
+            },
+        ),
+        (
+            "price_change",
+            {
+                "market": CONDITION_ID,
+                "timestamp": "1793246401000",
+                "price_changes": [
+                    {
+                        "asset_id": ASSET_ID,
+                        "price": "0.41",
+                        "size": "2",
+                        "side": "BUY",
+                        "best_bid": "0.41",
+                        "bestBid": "0.42",
+                    }
+                ],
+            },
+        ),
+    ],
+)
+def test_decoder_rejects_conflicting_best_price_spellings(event_type, payload):
+    event = {"event_type": event_type, **payload}
+    with pytest.raises(AdapterError, match="aliases conflict"):
+        decode_market_stream_frame(
+            json.dumps(event, separators=(",", ":")),
+            subscribed_asset_ids=frozenset({ASSET_ID}),
+        )
+
+
+@pytest.mark.parametrize(
     ("event", "expected_hash"),
     [
         (

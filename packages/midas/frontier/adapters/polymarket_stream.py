@@ -257,19 +257,11 @@ def decode_market_stream_frame(
                     source_hash=(
                         change.get("hash") if isinstance(change.get("hash"), str) else None
                     ),
-                    reported_best_bid=(
-                        _decimal(change["best_bid"], "best bid", allow_zero=True)
-                        if change.get("best_bid") is not None
-                        else _decimal(change["bestBid"], "best bid", allow_zero=True)
-                        if change.get("bestBid") is not None
-                        else None
+                    reported_best_bid=_optional_decimal(
+                        change, "best_bid", "bestBid", "best bid", allow_zero=True
                     ),
-                    reported_best_ask=(
-                        _decimal(change["best_ask"], "best ask", allow_zero=True)
-                        if change.get("best_ask") is not None
-                        else _decimal(change["bestAsk"], "best ask", allow_zero=True)
-                        if change.get("bestAsk") is not None
-                        else None
+                    reported_best_ask=_optional_decimal(
+                        change, "best_ask", "bestAsk", "best ask", allow_zero=True
                     ),
                 )
                 by_asset.setdefault(asset_id, []).append(change_value)
@@ -296,19 +288,11 @@ def decode_market_stream_frame(
                     native_instrument_id=asset_id,
                     event_type="best_bid_ask",
                     source_timestamp_utc=parse_time(payload.get("timestamp")),
-                    reported_best_bid=(
-                        _decimal(payload["best_bid"], "best bid", allow_zero=True)
-                        if payload.get("best_bid") is not None
-                        else _decimal(payload["bestBid"], "best bid", allow_zero=True)
-                        if payload.get("bestBid") is not None
-                        else None
+                    reported_best_bid=_optional_decimal(
+                        payload, "best_bid", "bestBid", "best bid", allow_zero=True
                     ),
-                    reported_best_ask=(
-                        _decimal(payload["best_ask"], "best ask", allow_zero=True)
-                        if payload.get("best_ask") is not None
-                        else _decimal(payload["bestAsk"], "best ask", allow_zero=True)
-                        if payload.get("bestAsk") is not None
-                        else None
+                    reported_best_ask=_optional_decimal(
+                        payload, "best_ask", "bestAsk", "best ask", allow_zero=True
                     ),
                 )
             )
