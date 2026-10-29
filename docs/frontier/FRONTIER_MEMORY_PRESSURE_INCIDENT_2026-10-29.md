@@ -3999,3 +3999,14 @@ counter continued to move. No test, replay, build, or live probe was started
 after this sample. Until the limit-event counters stop advancing and API
 headroom improves, keep Frontier work to source-independent code and
 documentation; defer even the small fixture checks.
+
+### Post-checkpoint observation — 2026-10-29 17:05 CET
+
+From 17:03:09 to 17:05:02, no systemd-oomd or kernel memcg kill was logged.
+Memory PSI remained zero and `MemAvailable` was 11,372,793,856 bytes. Swap
+was unchanged at 4,276,088,832 / 4,294,963,200 bytes occupied. The user
+manager `max` count increased by three to 730,795; Reality API `max` increased
+by three to 5,172. Reality API current usage was 535,855,104 / 536,870,912
+bytes, leaving 1,015,808 bytes. OOM counts were unchanged. This short sample
+is not a recovery signal; the event counters continued to advance, so no
+additional Frontier tests were run.

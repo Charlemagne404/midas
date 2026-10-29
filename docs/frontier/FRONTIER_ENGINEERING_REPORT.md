@@ -16273,3 +16273,13 @@ seven; both OOM counters stayed unchanged. Reality API remained within about
 resumed only for source-independent edits and documentation while those
 counters move; even small fixture tests are deferred until they stabilize and
 the API has more headroom.
+
+### Short post-checkpoint observation — 2026-10-29 17:05 CET
+
+From 17:03:09 to 17:05:02, no OOMD or kernel memcg kill was logged and
+memory PSI remained zero. Available RAM was 11,372,793,856 bytes, but swap
+remained 4,276,088,832 / 4,294,963,200 bytes occupied. The user-manager
+`max` count rose by three to 730,795 and Reality API `max` rose by three to
+5,172; Reality API had 1,015,808 bytes below its 512 MiB limit. OOM counters
+were unchanged. The short quiet interval does not establish recovery, and the
+limit-event increases keep Frontier tests deferred.

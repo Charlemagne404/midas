@@ -15858,3 +15858,15 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
 - No tests or experiments ran after the 17:03 sample. Continue only
   source-independent edits and docs until limit-event counters stabilize and
   Reality API headroom recovers; keep broad checks and source probes deferred.
+
+## 2026-10-29 17:05 CET — post-checkpoint observation
+
+- During the 1m53s window from 17:03:09, no OOMD or kernel memcg kill was
+  logged. Memory PSI remained zero; available RAM was 11,372,793,856 bytes;
+  swap remained 99.6% occupied.
+- The user-manager `max` count rose three to 730,795; Reality API `max` rose
+  three to 5,172. Reality API had 1,015,808 bytes below its hard limit, with
+  no OOM. The increments are unattributed.
+- The short observation does not establish recovery. No tests ran; keep
+  Frontier to documentation/source edits until counters settle and service
+  headroom improves.
