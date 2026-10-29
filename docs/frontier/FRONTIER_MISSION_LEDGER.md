@@ -13694,3 +13694,9 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
 - **Incident status:** Still **PARTIALLY CONTAINED / PARTIALLY VERIFIED**. Serial bounded Frontier work caused no measured pressure rise or OOM counter change; near-full swap and historical pressure attribution remain unresolved. The 07:17 capacity invocation passed, but archive provenance/inventory warnings remain.
 - **Commits:** `56dcbbd` incident attribution docs; `e1193c9` graph context bounds. The pre-existing untracked `data/frontier-public-probes/` remains untouched.
 - **Next safe action:** Observe the existing 07:47 capacity run and host PSI/OOM counters. Then resume one source-independent acceptance gap at a time after a fresh admission sample; keep broad suites, replay, live probes, and deployment deferred.
+
+## Graph clipping UI assertion and host sample — 2026-10-29 07:36 CET
+
+- **Test:** `d4e22e6` adds UI assertions that graph context marks a clipped label with an ellipsis, marks clipped payoff-state IDs, and shows the truncation reason. The focused UI test passed **1/1**, with eight unrelated cases skipped. Prettier and ESLint passed. The first assertion attempt had a selector-label typo and failed; correcting its expected punctuation made the test pass without product-code changes.
+- **Host:** 07:36:50 host PSI avg10/60/300 was zero; MemAvailable was 10 GiB, SwapFree 8.1 MiB. User-manager memory/swap was 9.67/2.86 GB, counters remained 19/15/0. API/Reality were active at restart counts 9/14 and about 901/379 MiB. No kernel/OOMD kill appeared 07:32–07:36. Gap-detail is inactive; capacity timer next due 07:47:27.
+- **Status:** Incident remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**; source-independent bounded Frontier work continues. Nearly full swap and unexplained historical pressure remain. The next action is to observe the scheduled capacity run and sample host/cgroup pressure afterward.

@@ -1027,3 +1027,21 @@ swap, the uncapped user-manager hierarchy, unexplained historical parent
 pressure, and archive integrity remain open. The next observation is the
 scheduled 07:47 capacity run; do not infer durable recovery from the current
 quiet interval.
+
+## Post-UI assertion pressure sample — 2026-10-29 07:36 CET
+
+The focused graph UI test now asserts the truncation display. It passed **1/1**
+with eight unrelated cases skipped in a 768 MiB hard / 640 MiB high,
+zero-swap, 25% CPU transient unit. Prettier and ESLint passed. An initial test
+assertion had a selector-label typo and failed; after matching the fixture's
+existing question mark before the ellipsis, the test passed. No product or host
+configuration change resulted from that correction.
+
+At 07:36:50 CET, host `MemAvailable` was 10 GiB, free swap 8.1 MiB, and
+memory PSI avg10/avg60/avg300 zero. The user-manager charged 9.67 GB memory and
+2.86 GB swap; aggregate OOM counters remained 19/15/0. API and Reality were
+active at restart counts 9/14, using about 901 MiB / 379 MiB against
+`MemoryHigh` of 1.5 GiB / 1.125 GiB. The gap-detail timer remained inactive;
+capacity monitor next elapses at 07:47:27. No kernel or OOMD kill appeared
+between 07:32 and 07:36. This remains short admission evidence, not resolution
+of nearly full swap or the historical pressure trigger.
