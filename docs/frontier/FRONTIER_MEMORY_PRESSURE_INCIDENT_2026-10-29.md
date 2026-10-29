@@ -4,10 +4,11 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 05:54 CET |
+| Latest addendum | 2026-10-29 05:58 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
-| Preservation checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
+| Pre-incident checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
+| Incident continuation checkpoint | `checkpoint/frontier-pre-followup-20261029-0558` (`0bbb62e`) |
 
 This is the current incident report. It supplements the chronological record in
 [`FRONTIER_MEMORY_PRESSURE_INCIDENT_2026-10-28.md`](FRONTIER_MEMORY_PRESSURE_INCIDENT_2026-10-28.md).
@@ -672,3 +673,49 @@ source-independent edits and small capped fixture tests after fresh admission
 checks; broad tests, replays, live probes, collectors, and production changes
 remain deferred. Incident status remains **PARTIALLY CONTAINED / PARTIALLY
 VERIFIED**.
+
+## Follow-up admission and service validation — 2026-10-29 05:58 CET
+
+A fresh sample at 05:58:38 showed 11,565,940,736 bytes (10.77 GiB) of
+`MemAvailable` and 2,764,800 bytes (2.64 MiB) of free swap out of
+4,294,963,200 bytes. Host and user-manager memory PSI averages remained zero.
+The user-manager cgroup charged 9,356,570,624 bytes of memory and
+2,864,013,312 bytes of swap; its cumulative `oom=19`, `oom_kill=15`, and
+`oom_group_kill=0` counters had not changed. Its app slice charged
+8,957,480,960 bytes of memory and 2,236,010,496 bytes of swap. Current app
+slice memory statistics included 5,897,342,976 bytes of file cache, of which
+4,607,369,216 bytes were inactive, 1,973,886,976 bytes anonymous, and
+1,067,966,464 bytes kernel memory. These are current composition measurements,
+not retrospective attribution for the October 28 pressure episodes.
+
+`oomctl dump` again showed the active 50% / 20-second user-manager memory
+pressure monitor, with zero current pressure. systemd-oomd remained active.
+No systemd-oomd or kernel OOM kill appeared after the prior query at 05:54;
+the historical last kills remain 23:43:24 October 28 for systemd-oomd and
+20:15:44 for the capacity checker's kernel memcg OOM. The earlier empty
+`oomctl` listings remain unexplained.
+
+The API and Reality collector remained active at unchanged restart counts 9
+and 14. Their cgroup current charges were 891,047,936 and 343,289,856 bytes,
+respectively; both remained below their 1,610,612,736 / 1,207,959,552-byte
+soft limits. The main API and Reality API health endpoints both returned
+HTTP 200 with `READY`. MIDAS/Reality web services, Caddy, Echo production and
+staging, Continental tailnet and identity, Headscale, RustDesk, and
+`ssh.socket` were active under their respective system or user managers. No
+service was restarted or reconfigured.
+
+The gap-detail timer remains inactive and disabled. The capacity timer remains
+active/waiting; its 05:47:04–05:47:10 run succeeded with exit status 0 under
+effective `MemoryHigh=160M`, `MemoryMax=192M`, and `MemorySwapMax=0`. Its
+report still carries `ARCHIVE_SEGMENT_INVENTORY_INVALID` and
+`ARCHIVE_MANIFEST_PROVENANCE_INVALID`; those integrity warnings are separate
+and untouched. No persistent service setting changed during this follow-up.
+
+**Continuation decision:** current RAM availability, zero memory PSI, stable
+critical service health, and unchanged kill counters support resuming Frontier
+only in serial, source-independent slices with small capped fixture checks.
+The nearly exhausted swap, historical aggregate attribution gap, and short
+post-containment observation period do not support broad suites, large replay,
+concurrent research, live probes, or deployment. This is safe-to-continue
+within those bounds, not a resolution of the host incident. Status remains
+**PARTIALLY CONTAINED / PARTIALLY VERIFIED**.
