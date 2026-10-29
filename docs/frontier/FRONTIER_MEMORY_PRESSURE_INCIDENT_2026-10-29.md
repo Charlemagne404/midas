@@ -1986,3 +1986,58 @@ or historical evidence was changed. Keep the incident **PARTIALLY CONTAINED /
 PARTIALLY VERIFIED** and limit further work to a single offline job only after
 fresh admission, using a soft limit above the measured working set; stop if PSI
 rises or counters change.
+
+## 2026-10-29 10:06 CET — bounded-work validation follow-up
+
+The Frontier Gemini adapter work resumed only after a fresh host/timer check.
+Its offline Gemini plus shared-trade-contract slice passed **8/8 in 2.51 s**
+under a transient 384 MiB `MemoryHigh`, 512 MiB `MemoryMax`, zero-swap,
+20%-CPU, 64-task, 60-second service. A concurrent cgroup sample during the
+successful run measured 47,181,824 bytes current/peak and zero swap. No live
+exchange request, broad test suite, build, or persistent job ran. No system
+configuration or protected service was changed.
+
+At 10:06:35, `MemAvailable` was 11,346,505,728 bytes (10.57 GiB), while only
+9,625,600 bytes (9.18 MiB) of the 4 GiB swap device was free. Global memory
+PSI `some` and `full` avg10/avg60/avg300 were zero. The user manager still
+charged 10,189,189,120 bytes memory, had a 13,992,292,352-byte lifetime peak,
+and held 2,858,139,648 bytes in swap. Its `high=16,424,562`, `max=730,045`,
+`oom=19`, `oom_kill=15`, and `oom_group_kill=0` counters were unchanged. No
+kernel or systemd-oomd kill entry appeared in the preceding 20 minutes.
+`midas-api`, Reality, and Reality API remained active at restart counts 9/14/0;
+Echo archive/staging, RustDesk, `ssh.socket`, and systemd-oomd were active.
+
+This small, quiet observation window supports continuing one bounded offline
+Frontier task after fresh admission. It does not establish lasting host
+recovery or identify the original aggregate pressure source. Swap remains
+nearly exhausted and the user-manager cgroup remains large. The auxiliary
+gap-detail replay timer remains disabled, Reality capacity remains bounded at
+160/192 MiB with zero swap, and archive provenance/inventory warnings remain
+untouched. **Incident status remains PARTIALLY CONTAINED / PARTIALLY VERIFIED.**
+
+## 2026-10-29 10:10 CET — final bounded-work and scheduled-job follow-up
+
+After clarifying Gemini's fail-closed handling of a page containing any
+broken print, the focused Gemini and shared five-venue trade tests passed
+**8/8 in 2.51 s** under the same zero-swap 384/512 MiB cgroup caps, 20% CPU,
+64 tasks, and 60-second timeout. The transient unit reported a 45.2 MiB peak
+and zero swap. Ruff check and format checks passed. Tests used synthetic
+fixtures only; the source-use hold remains in force. No host setting, timer,
+or protected service was changed.
+
+The 10:10:37 Veritas source-analysis timer ran and the service was inactive by
+10:10:54; PSI remained zero and user-manager OOM counters were unchanged.
+At 10:10:57, `MemAvailable` was 11,317,956,608 bytes (10.54 GiB), while only
+9,629,696 bytes (9.19 MiB) of swap was free. The user manager charged
+10,198,982,656 bytes memory and 2,858,139,648 bytes swap, with a
+13,992,292,352-byte lifetime peak. Event counters remained
+`high=16,424,562`, `max=730,045`, `oom=19`, and `oom_kill=15`; no kernel or
+systemd-oomd kill entry appeared in the previous 25 minutes. API/Reality/
+Reality API stayed active at restart counts 9/14/0.
+
+This confirms only a short bounded validation interval. Near-full swap,
+substantial user-manager charge, unresolved historic aggregate pressure
+attribution, and the lack of long-duration observation continue to block a
+resolved disposition. The incident remains **PARTIALLY CONTAINED / PARTIALLY
+VERIFIED**; Frontier may continue only serial, offline, resource-capped work
+after a fresh admission check.

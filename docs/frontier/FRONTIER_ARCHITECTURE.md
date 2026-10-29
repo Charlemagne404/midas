@@ -1489,8 +1489,17 @@ supports bounded aggregated REST books with 1–20 levels. The normalizer
 requires `product_type=spot`, `contract_type=vanilla`, consistent base/quote
 identity, and exact price/quantity constraints. Spot records have no event
 outcomes or verified payoff, and account-specific fees remain unknown. Swaps,
-trades, historical candles, incremental book reconstruction, and settlement
-rules are explicitly unsupported.
+cursor-paginated trades, historical candles, incremental book reconstruction,
+and settlement rules remain unsupported. Adapter v2 exposes `PUBLIC_TRADES`
+for one bounded recent page of at most 100 records. Trade fetch requires the
+same adapter instance to have successfully normalized source symbol details so
+the native quote currency is not guessed from the pair string. It requires
+exact decimal-string price and amount, an int64 native trade ID, a documented
+buy/sell side, `exchange=gemini`, coherent `timestamp`/`timestampms` values,
+and newest-first timestamps; an entire page is rejected if it contains a
+broken print. The page preserves
+Gemini's native trade ID and quote asset. These parser rules have fixture-only
+coverage and do not authorize a Gemini request or retained-data research.
 
 Gemini documents book price and amount as exact decimal strings and says the
 per-level timestamp fields are dummy values. The adapter requires those
@@ -1510,4 +1519,4 @@ unconditional source-use hold; live requests and stored-data research are
 blocked. See the
 [`Gemini source screen`](GEMINI_SPOT_SCREEN_2026-10-29.md) and
 [`Gemini data-use review`](SOURCE_DATA_TERMS_REVIEW_2026-10-29.md).
-Document-shaped fixture tests are not live validation.
+Document-shaped metadata, book, and trade fixtures are not live validation.

@@ -829,7 +829,14 @@ cannot be cleared in configuration: the residency-specific agreement and
 intended scope remain unreviewed, and the documented API Use Form has not been
 submitted. The probe route returns HTTP 409 before any request. Gemini books
 are document-shaped fixture-only in this revision; per-level timestamps are
-documented dummy values and are never used for freshness. See the
+documented dummy values and are never used for freshness. The adapter also
+supports one recent public-trade page of at most 100 records, with quote asset
+resolved from symbol details, exact decimal fields, native IDs, timestamp
+consistency/order checks, and whole-page rejection if a broken print appears.
+It does not implement cursor pagination. Trade normalization has only
+synthetic fixture coverage;
+no request or retained Gemini trade data is permitted while the source-use
+hold remains. See the
 [`Gemini source screen`](GEMINI_SPOT_SCREEN_2026-10-29.md) and
 [`Gemini data-use review`](SOURCE_DATA_TERMS_REVIEW_2026-10-29.md).
 

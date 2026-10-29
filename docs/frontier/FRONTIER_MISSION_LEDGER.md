@@ -14122,3 +14122,76 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
 - **Checkpoint:** report and this ledger update are prepared on
   `codex/frontier-20261026` from `eb929fc`; the existing untracked
   `data/frontier-public-probes/` directory is unchanged.
+
+## 2026-10-29 10:06 CET — bounded Gemini trades and host follow-up
+
+- **Frontier checkpoint:** Preserved the in-progress Gemini adapter/doc state
+  in `2fb1751`, corrected the capability declaration and fixture setup, then
+  committed the tested implementation as `235bd75`
+  (`feat(frontier): normalize bounded Gemini recent trades`). Adapter v2 now
+  advertises one bounded recent-trade page (local maximum 100) and requires
+  same-instance symbol discovery before assigning a quote currency. It keeps
+  native IDs and exact decimal fields, checks timestamp agreement/order,
+  exchange and side identity, duplicate IDs, and broken prints. Cursor
+  pagination remains unsupported.
+- **Source boundary:** The fixture-only adapter and shared five-venue trade
+  contract passed **8/8 in 2.51 seconds**. Tests use injected mock transports
+  and temporary local stores; no Gemini endpoint or saved probe was read. The
+  non-clearable Gemini source-use hold is unchanged. No source-derived Gemini
+  trades were collected or retained. Ruff check and format checks passed for
+  the three changed Python files. A live sample from the successful bounded
+  run measured 47,181,824 bytes cgroup current/peak, zero swap; no high, max,
+  or OOM event was observed. The formatting-only final rerun passed 8/8, but
+  its short-lived cgroup was collected before a second peak sample.
+- **10:06:35 CET host sample:** `MemAvailable=11,346,505,728` bytes (10.57
+  GiB); `SwapFree=9,625,600` bytes (9.18 MiB). Global PSI `some`/`full` avg10,
+  avg60, and avg300 were zero at sampling. The user manager charged
+  10,189,189,120 bytes current memory, 13,992,292,352 bytes lifetime peak,
+  and 2,858,139,648 bytes swap. Its event counters remained
+  `high=16,424,562`, `max=730,045`, `oom=19`, `oom_kill=15`,
+  `oom_group_kill=0`. Systemd-oomd and kernel journals had no OOM kill entry
+  in the previous 20 minutes. API, Reality, and Reality API were active at
+  restart counts 9/14/0; system Echo archive/staging, RustDesk, SSH socket,
+  and systemd-oomd were active. No configuration, timer, archive, or service
+  state was changed during this work.
+- **Remaining incident boundary:** Swap remains effectively full and the
+  user-manager charge is large. The short quiet window does not identify the
+  historical aggregate pressure initiator or establish durable recovery. The
+  auxiliary gap-detail timer remains disabled; Reality capacity remains at
+  160 MiB `MemoryHigh`, 192 MiB `MemoryMax`, zero swap, and its archive
+  inventory/provenance warnings remain untouched. Incident status remains
+  **PARTIALLY CONTAINED / PARTIALLY VERIFIED**.
+- **Continuation:** Continue only one offline Frontier task at a time after a
+  fresh PSI/cgroup/timer admission, capped at 384 MiB high / 512 MiB max, zero
+  swap, 20% CPU, 64 tasks, and a short runtime. Stop on rising PSI, new OOM
+  entries, changed OOM counters, or overlap with scheduled work. No broad
+  suite, frontend build, live probe, large replay, persistent worker, or
+  production transition was started.
+
+## 2026-10-29 10:10 CET — final trade-page semantics and timer-window check
+
+- Commit `05104c8` clarifies that a Gemini response page containing any
+  `broken=true` print is rejected as a whole. The final post-fix Gemini and
+  shared five-venue trade fixture slice passed **8/8 in 2.51 seconds** under
+  384 MiB `MemoryHigh`, 512 MiB `MemoryMax`, zero swap, 20% CPU, 64 tasks, and
+  a 60-second limit. The systemd result recorded a 45.2 MiB peak and zero
+  swap; host PSI and user-manager OOM counters stayed unchanged. Ruff check
+  and format checks pass on the three changed Python files.
+- Gemini remained fully source-held: the tests used a mock transport only;
+  no public request, saved probe, external data retention, or source-use
+  permission change occurred. Cursor pagination remains unsupported and the
+  full page fails closed if any broken print is present.
+- At 10:10:57, `MemAvailable=11,317,956,608` bytes (10.54 GiB),
+  `SwapFree=9,629,696` bytes (9.19 MiB), and global PSI `some`/`full`
+  avg10/avg60/avg300 were zero. User-manager charge was 10,198,982,656 bytes
+  current memory, 13,992,292,352 bytes lifetime peak, and 2,858,139,648 bytes
+  swap. Counters remained `high=16,424,562`, `max=730,045`, `oom=19`,
+  `oom_kill=15`, `oom_group_kill=0`. No kernel or systemd-oomd kill appeared
+  in the previous 25 minutes. The scheduled source-analysis service had
+  completed and was inactive. API, Reality, and Reality API remained active
+  at restart counts 9/14/0.
+- **Status:** Host incident remains **PARTIALLY CONTAINED / PARTIALLY
+  VERIFIED**. The gap-detail timer is still disabled; Reality capacity stays
+  at 160/192 MiB and zero swap; invalid archive inventory/provenance is
+  untouched. Proceed with one bounded offline Frontier task only after fresh
+  admission. Do not infer durable recovery from this short quiet interval.

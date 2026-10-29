@@ -2,7 +2,7 @@
 
 **Report date:** 2026-10-29
 
-## Current completion matrix — 2026-10-29 09:52 CET
+## Current completion matrix — 2026-10-29 10:10 CET
 
 This is a current evidence classification, not a final completion claim. The
 dated implementation records below remain the detailed evidence; the
@@ -14,12 +14,12 @@ it made no endpoint requests and does not change source-use holds.
 
 | Component | Status | Current evidence and boundary |
 | --- | --- | --- |
-| Exchange-independent adapter core and Polymarket/Kalshi/Kraken/Coinbase/Gemini adapters | IMPLEMENTED, LIVE VALIDATION PENDING | The registry includes five distinct sources; source-specific terms and configuration still hold live use where documented. Kraken Spot has finite WebSocket v2 capture through a saved-market API and Mission Control panel. The endpoint binds one recorded pair, one stream, a full snapshot, ordered checksum-verified states, requested depth, and raw-frame lineage. Fixture capture/parser regressions passed 15/15; stored-frame replay/API regressions passed 2/2 and replay-panel tests 7/7. The offline replayer validates raw hashes and normalized state, rejects legacy rows without depth, and labels results context-only. No live stream was opened. Polymarket finite capture remains separate and does not apply unsequenced deltas to opportunity economics. |
+| Exchange-independent adapter core and Polymarket/Kalshi/Kraken/Coinbase/Gemini adapters | IMPLEMENTED, LIVE VALIDATION PENDING | The registry includes five distinct sources; source-specific terms and configuration still hold live use where documented. Kraken Spot has finite WebSocket v2 capture through a saved-market API and Mission Control panel. Fixture capture/parser regressions passed 15/15; stored-frame replay/API regressions passed 2/2 and replay-panel tests 7/7. Gemini adapter v2 normalizes one recent public-trade page of up to 100 rows after same-instance symbol discovery; a fixture-only adapter-contract slice passed 8/8, covering raw IDs, quote units, timestamps, aggressor-side mapping, and broken-print rejection. Gemini's non-clearable source-use hold remains and no live request was made. Polymarket finite capture remains separate and does not apply unsequenced deltas to opportunity economics. |
 | Canonical instruments and supported payoff semantics | PARTIALLY VERIFIED | Supported structures have model and invariant tests; this does not claim universal instrument support. |
 | Relationship graph, evidence binding, and review | PARTIALLY VERIFIED | Deterministic fixture relationships and pinned evidence are covered; typed entity context v2 exposes clipped display fields explicitly and preserves source records. The centered graph API fixture pins the returned model version to the shared v2 constant. A live cross-venue economic equivalence is not established. |
 | Candidate discovery and independent economic verification | PARTIALLY VERIFIED | Bounded mathematical fixtures and independent audits pass selected checks; joint-state basket, audit, and deterministic replay tests pass 14/14; paired replay acceptance passes 4/4; deterministic three-scope discovery comparison passes 1/1 with candidates only in the fixture-verified cross-venue arm; source-outage invalidation and deterministic/tamper-evident timeline checks pass 2/2; source-clock/freshness, receipt-time ordering, and no-lookahead relationship checks pass 3/3; text-only hypothesis, settlement-authority/currency, and spot-versus-prediction rejection checks pass 5/5; implication-direction, fee, stale-leg, settlement-time, and cutoff checks pass 5/5; multi-outcome tick, hypothetical-classification, and three-leg basket checks pass 3/3. Logical implication and relationship review tests pass 27/27. Receipt age and timestamp/receipt skew now use exact deltas rounded up to milliseconds in both generator and verifier. No live eligible opportunity is demonstrated. |
 | Cross-venue costs, FX, capital, and execution uncertainty | PARTIALLY VERIFIED | Four bounded fixture modules for venue funding/FX, capital carry, Kalshi fees, and logical implications pass 79/79; four additional current-tree capital/FX checks pass 4/4 for venue-separated carry, release delay completeness, fee application across terminal states, and explicit conversion assumptions. Virtual models preserve unknown cost and applicability states; account-specific fees, jurisdiction, transfers, and execution remain unresolved. |
-| Collection, provenance, durable storage, and replay | PARTIALLY VERIFIED | Finite-collection/API fixtures pass 51/51 and the prior storage slice passed 32/32; after schema-v8 graph counters, focused revision/pagination and schema-6/7 migration cases pass 5/5, with older schema-2/4/5 migrations passing 3/3. Recent focused storage-security, graph-revision, collection-safety, and Kraken replay slices passed 2/2, 3/3, 3/3, and 2/2 under zero-swap caps. Timeline replay v3 includes per-instrument receipt time, source timestamp semantics, clock uncertainty, and source freshness limits. Kraken's deterministic book replay pins ordered raw and normalized frame evidence and refuses depth inference for schema-v1 rows. Gemini's source-specific configuration tag round-trips in the finite-collection journal; collection remains blocked by the source-use hold. Sequencing, multi-venue live collection, and archive provenance remain unverified or held. |
+| Collection, provenance, durable storage, and replay | PARTIALLY VERIFIED | Finite-collection/API fixtures pass 51/51 and the prior storage slice passed 32/32; after schema-v8 graph counters, focused revision/pagination and schema-6/7 migration cases pass 5/5, with older schema-2/4/5 migrations passing 3/3. Recent focused storage-security, graph-revision, collection-safety, and Kraken replay slices passed 2/2, 3/3, 3/3, and 2/2 under zero-swap caps. Timeline replay v3 includes per-instrument receipt time, source timestamp semantics, clock uncertainty, and source freshness limits. Kraken's deterministic book replay pins ordered raw and normalized frame evidence and refuses depth inference for schema-v1 rows. Gemini's trade parser requires same-instance source metadata, but collection remains blocked by the source-use hold; no Gemini trade source observation is retained. Sequencing, multi-venue live collection, and archive provenance remain unverified or held. |
 | Read-only source network and trading boundary | COMPLETE AND VERIFIED | Bounded HTTP source reads use anonymous, host-allowlisted HTTPS GET with redirects disabled; the separate Polymarket market stream uses one fixed anonymous WSS URL with proxy, retries, and reconnect disabled. The stream defaults off and its fixtures verify the source gates, bounds, and raw evidence path. Adapter boundary fixtures cover credential/mutating clients, cookies, redirects, oversized payloads, and JSON complexity. No exchange order/account path was found in the reviewed Frontier code. |
 | Laboratory/Arena comparisons and bounded orchestration | PARTIALLY VERIFIED | Arena admission and finite scheduling regressions pass; a Laboratory resource-denial case passes with a harness cap above its 722,894,848-byte capacity precondition. Full endurance evidence remains incomplete. |
 | User-cgroup-aware workload admission | IMPLEMENTED, BOUNDED VALIDATION PASSED | Central Arena admission (15), finite schedules (12), and the Laboratory denial case (1) pass fixture tests using user-manager pressure; no runtime deployment occurred. |
@@ -32,6 +32,29 @@ it made no endpoint requests and does not change source-use holds.
 | Live multi-venue source authorization and findings | BLOCKED | Kalshi, Kraken, Coinbase, and Gemini probes and retained-data research remain held; the worktree Polymarket probe flag is off. |
 | Production integration/deployment | DEFERRED | Frontier remains isolated; no protected service transition occurred. |
 | Project Frontier overall | PARTIALLY VERIFIED | The engine is substantial, but live cross-venue science, broad verification, recovery, endurance, and deployment gates remain open. |
+
+### Gemini bounded recent-trade parser — 2026-10-29 10:10 CET
+
+Commit `235bd75` adds the adapter and fixture-contract implementation; its
+working-tree precursor was preserved as checkpoint `2fb1751` before the
+corrective changes. Commit `05104c8` clarifies and tests whole-page rejection
+when any Gemini row is marked broken.
+
+Gemini adapter v2 advertises `PUBLIC_TRADES` for one recent REST page with a
+strict local maximum of 100 rows; cursor pagination remains unsupported. It
+requires a prior same-instance symbol-details result for quote currency and
+rejects malformed IDs, non-string or out-of-bound decimals, inconsistent
+timestamps, invalid side/exchange fields, duplicate IDs, out-of-order pages,
+and pages containing broken trades. `timestampms` and `timestamp` must agree
+when both exist.
+The shared five-venue contract stores the normalized trade with its exact raw
+response provenance. Focused Gemini and shared adapter tests pass 8/8; Ruff
+check and format checks pass for the touched Python files.
+
+The tests use injected offline fixture transports only. Gemini's non-clearable
+source-use hold remains unchanged; no Gemini endpoint was queried and no
+source-derived trade was retained. This verifies parser shape and adapter
+contract only, not live availability, permission, or economic suitability.
 
 ### Kraken persisted book replay — 2026-10-29 09:50 CET
 

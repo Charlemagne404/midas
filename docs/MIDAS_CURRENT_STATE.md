@@ -3956,3 +3956,34 @@ At `2026-10-28T22:30:06Z`, API `MemoryHigh` headroom was 1,527,808 bytes and
 Reality headroom was 557,928,448 bytes. System PSI `avg10` was 0%; available
 memory was 10,024,416 kB. Broader tests remain deferred under narrow API
 headroom and elevated longer-window PSI.
+
+## Project Frontier bounded resume — 2026-10-29 10:10 CET
+
+The isolated Frontier worktree remains `/home/charlie/midas-frontier` on
+`codex/frontier-20261026`. The Kraken stored-book replay checkpoint remains
+in the branch history; Gemini recent trades were checkpointed as `2fb1751`
+and committed as `235bd75`, with broken-page rejection clarified in `05104c8`.
+Gemini adapter v2 supports one recent page of up
+to 100 public trades after same-instance symbol discovery establishes quote
+currency. The parser retains native trade IDs and exact decimal fields,
+validates timestamps/order/side/exchange, and rejects a page if it contains a
+broken print. The final Gemini and five-venue trade fixture slice passed
+**8/8 in 2.51 seconds** under 384 MiB high / 512 MiB max, zero swap, 20% CPU,
+and 64 tasks; Ruff check and format checks passed. The Gemini source-use hold
+remains non-clearable, so no live Gemini request or source-derived trade
+retention is claimed.
+
+At `2026-10-29T10:10:57+01:00`, host memory PSI was zero and
+`MemAvailable=11,317,956,608` bytes (10.54 GiB), but only 9,629,696 bytes
+(9.19 MiB) of 4 GiB swap was free. The user manager charged 10,198,982,656
+bytes memory and 2,858,139,648 bytes swap, with a 13,992,292,352-byte
+lifetime peak. OOM event counters remained 19/15/0; no kernel or systemd-oomd
+kill appeared in the preceding 25 minutes. API, Reality, and Reality API were
+active at restart counts 9/14/0. At 10:06:35, Echo archive/staging, RustDesk,
+SSH, systemd-oomd, and the Continental user services were also active. The
+gap-detail replay timer remains disabled; the Reality capacity job remains
+bounded at 160/192 MiB and zero swap. The host incident remains
+**PARTIALLY CONTAINED / PARTIALLY VERIFIED**, with historic pressure source
+and durable recovery unproven. See the
+[`Frontier memory incident report`](frontier/FRONTIER_MEMORY_PRESSURE_INCIDENT_2026-10-29.md)
+and [`Frontier mission ledger`](frontier/FRONTIER_MISSION_LEDGER.md).
