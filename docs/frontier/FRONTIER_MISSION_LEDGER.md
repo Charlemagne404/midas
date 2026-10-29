@@ -1,5 +1,26 @@
 # Project Frontier Mission Ledger
 
+## 2026-10-29 22:42 CET — source-analysis cap observation and replay-v4 regression
+
+- The 22:40 source-analysis job completed successfully (59 segments, zero
+  pending, 9.587 CPU seconds) but reached its configured 256 MiB `MemoryMax`
+  exactly and used zero swap. Parent `memory.events.max` increased by 614
+  since 22:36; the service leaf was removed, so exact local event attribution
+  is unavailable. This shows local cap pressure in the source-analysis run,
+  not a process kill or measured global pressure. Its timer and inputs remain
+  unchanged.
+- The full `tests/frontier/test_polymarket_stream.py` module passed **20/20**
+  in 8.88 seconds under High 384 MiB / Max 512 MiB / zero swap / CPU 15% /
+  TasksMax 64 after replay v4. Only the existing Starlette/httpx deprecation
+  warning remains.
+- At 22:41:58, PSI remained zero, MemAvailable about 10 GiB, and swap was full.
+  User `memory.events.max=734,424`, `oom=19`, and `oom_kill=15`; API/Reality/
+  Reality API remained active at 9/14/0 restarts. No OOMD/kernel kill appeared
+  since 22:36. The host remains partially contained, with sustained recovery
+  unproven.
+- No host service/configuration or research artifact changed; untracked probe
+  data remains untouched.
+
 ## 2026-10-29 22:36 CET — three-frame BBO dashboard verification
 
 - Mission Control's captured replay fixture now includes a full snapshot, a

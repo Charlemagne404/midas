@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 22:36 CET |
+| Latest addendum | 2026-10-29 22:42 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Pre-incident checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -15,7 +15,31 @@ This is the current incident report. It supplements the chronological record in
 The full-day journal query below expands that earlier report's final-ten-event
 sample to all October 28 systemd-oomd kills.
 
-## Latest addendum — 2026-10-29 22:36 CET
+## Latest addendum — 2026-10-29 22:42 CET
+
+The 22:40:44–22:40:57 Veritas source-analysis one-shot completed successfully
+after processing 59 finalized segments with none pending. Its configured
+`MemoryMax` is 256 MiB; systemd recorded a 256.0 MiB peak and zero swap peak,
+so the run reached its local hard limit without being killed. It consumed
+9.587 CPU seconds. The user-manager `memory.events.max` count rose by 614
+between 22:36 and 22:41, but the service cgroup was removed before local event
+counters could be read. This strongly associates the increment with the
+source-analysis cap event, but does not assign exact leaf events or establish
+global pressure. PSI remained zero and MemAvailable about 10 GiB; user
+`high=16,438,823`, `oom=19`, and `oom_kill=15` were unchanged. The timer and
+campaign inputs were left unchanged because the job completed, used no swap,
+and no system-wide pressure or kill was observed.
+
+After the run, the bounded Frontier replay-v4 module passed **20/20** in 8.88
+seconds under High 384 MiB / Max 512 MiB / zero swap / 15% CPU / 64 tasks. The
+Starlette/httpx deprecation warning remains. At 22:41:58, PSI was still zero,
+MemAvailable about 10 GiB, and swap remained full. API, Reality, and Reality
+API remained active at restart counts 9/14/0; no OOMD or kernel OOM entry
+appeared since 22:36. The incident remains **PARTIALLY CONTAINED / PARTIALLY
+VERIFIED**: local source-analysis cap pressure is demonstrated, but the
+historical host-level workload attribution and full-swap risk are unresolved.
+
+## Prior addendum — 2026-10-29 22:36 CET
 
 The focused Mission Control fixture now replays three captured frames: a
 snapshot, a price change with a bid discrepancy, and a standalone
