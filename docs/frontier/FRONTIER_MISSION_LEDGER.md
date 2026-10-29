@@ -1,5 +1,18 @@
 # Project Frontier Mission Ledger
 
+## 2026-10-29 14:32 CET — quiet follow-up after bounded browser run
+
+- At 14:32:41, about five minutes after the E2E run, global PSI some/full
+  avg10/60/300 was 0/0.03/0.75% and 0/0.03/0.66%. `MemAvailable` was 10.60
+  GiB, swap free 15.47 MiB, and user-manager OOM counters were unchanged at
+  19/15. The shared `memory.events high` count remained 16,437,550. No
+  OOMD/kernel kill was logged after 14:27:31; API/Reality/Reality API remained
+  active at restarts 9/14/0.
+- Pressure fell back after the test, but swap remains nearly full and the
+  historical trigger remains unknown. This supports only continued
+  source-independent work after fresh admission checks, not host-incident
+  closure or permission for broad tests/builds.
+
 ## 2026-10-29 14:31 CET — post-observation recovery sample
 
 - The scheduled Veritas observatory ran 14:31:04–14:31:16 and exited 0 under

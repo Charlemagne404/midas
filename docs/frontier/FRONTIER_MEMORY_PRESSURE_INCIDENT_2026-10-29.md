@@ -3310,3 +3310,13 @@ since 14:27:31. PSI averages continued to decline; the average window is
 short and swap remains nearly full, so this is not incident closure. Stop
 additional Frontier compute and retain the current resource caps and service
 state pending a longer quiet period.
+
+At 14:32:41, about five minutes after the browser test, PSI had declined
+further: some/full avg10/60/300 = 0/0.03/0.75% and 0/0.03/0.66%. Host
+`MemAvailable` was 10.60 GiB, swap free 15.47 MiB, and the shared user-manager
+`memory.events high` counter remained 16,437,550; `oom`/`oom_kill` remained
+19/15. API, Reality, and Reality API were active at restart counts 9/14/0.
+No OOMD or kernel kill was logged since 14:27:31. This short follow-up shows
+the browser-associated pressure episode receding without an observed kill,
+while swap occupancy, the uncapped parent cgroup, near-cap Reality API, and
+unknown historical trigger continue to block an incident-resolved verdict.

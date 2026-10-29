@@ -15737,3 +15737,11 @@ charges were about 1.09 GiB, 662.6 MiB, and 483.3 MiB; Reality API remains
 close to its 512 MiB hard cap. No OOMD or kernel kill was observed since
 14:27:31. This extends the quiet observation slightly, but does not resolve
 the full-swap or historical-workload-attribution risks.
+
+At 14:32:41, roughly five minutes after the browser run, host some/full PSI
+avg10/60/300 was 0/0.03/0.75% and 0/0.03/0.66%. Available RAM was 10.60 GiB,
+free swap 15.47 MiB, and the user-manager `high` event counter was unchanged
+at 16,437,550; OOM counters remained 19/15. API/Reality/Reality API remained
+active at restart counts 9/14/0, with no OOMD or kernel kill logged since
+14:27:31. PSI is near zero in this short follow-up, but swap occupancy and
+historical workload attribution remain unresolved.
