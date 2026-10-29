@@ -2,6 +2,13 @@
 
 **Report date:** 2026-10-29
 
+## Finalization status — 2026-10-29 22:58 CET
+
+See the [Frontier final handoff](FRONTIER_FINAL_HANDOFF.md) for the current
+completion matrix, final bounded verification, latest host sample, deployment
+decision, and next steps. The detailed matrix below is the 22:42 checkpoint
+and is superseded wherever it differs from the final handoff.
+
 ## Current completion matrix — 2026-10-29 22:42 CET
 
 This is an evidence classification, not a final completion claim. The dated

@@ -1,5 +1,33 @@
 # Project Frontier Mission Ledger
 
+## 2026-10-29 22:58 CET — final bounded verification and closeout checkpoint
+
+- Commit `b0ed1372ab7c0ce05133808d029393423d99c52f` hardens Polymarket
+  `best_bid_ask` and `price_change` parsing: snake_case/camelCase aliases use
+  the shared conflict-checking decimal parser. The focused stream/API module
+  passed **24/24** in 9.60 seconds under High 384 MiB / Max 512 MiB / zero
+  swap / 15% CPU / 64 tasks; Ruff check and format passed. An initial
+  transient test invocation used the wrong working directory and collected
+  no tests; the corrected invocation passed.
+- A bounded Vite production build passed in 1m05s under a 1 GiB / zero-swap /
+  20%-CPU scope. It retains the existing warning that the Chart chunk is
+  544.51 kB (>500 kB). The exact-tree TypeScript check and focused three-frame
+  Mission Control browser journey passed earlier at 22:36 and were not changed
+  by this Python-only fix. Existing scoped economics, graph, storage, and
+  adapter results remain the report's cited evidence; broad regressions and
+  endurance were not rerun.
+- The 22:51:28–36 capacity timer run exited 0 under High 160 MiB / Max 192
+  MiB / zero swap (6.727 CPU seconds). At 22:58, PSI was zero and
+  `MemAvailable` about 10 GiB, but swap remained full. User events were
+  `high=16,438,949`, `max=734,424`, `oom=19`, `oom_kill=15`; no OOMD/kernel
+  kill appeared since 22:41. API/Reality/Reality API remained active at
+  restarts 9/14/0. Gap-detail remains disabled. This is partial containment,
+  not incident resolution.
+- No source request, service change, archive/campaign mutation, deployment, or
+  trading path was used. `data/frontier-public-probes/` remains pre-existing,
+  untracked, and untouched. The final handoff supersedes the 22:42 engineering
+  matrix for current status: [FRONTIER_FINAL_HANDOFF.md](FRONTIER_FINAL_HANDOFF.md).
+
 ## 2026-10-29 22:42 CET — source-analysis cap observation and replay-v4 regression
 
 - The 22:40 source-analysis job completed successfully (59 segments, zero

@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 22:42 CET |
+| Latest addendum | 2026-10-29 22:58 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Pre-incident checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -15,7 +15,36 @@ This is the current incident report. It supplements the chronological record in
 The full-day journal query below expands that earlier report's final-ten-event
 sample to all October 28 systemd-oomd kills.
 
-## Latest addendum — 2026-10-29 22:42 CET
+## Latest addendum — 2026-10-29 22:58 CET
+
+The scheduled Reality capacity monitor ran from 22:51:28 to 22:51:36 and
+exited successfully after 6.727 CPU seconds under `MemoryHigh=160 MiB`,
+`MemoryMax=192 MiB`, and `MemorySwapMax=0`. Its transient cgroup was removed;
+no trustworthy leaf peak or event counters remain. The gap-detail timer is
+still inactive and disabled.
+
+The final host sample at 22:58 had about 10 GiB `MemAvailable`, a full 4 GiB
+swap device (about 272 KiB free), and zero current memory PSI. User-slice
+events were `high=16,438,949`, `max=734,424`, `oom=19`, and `oom_kill=15`;
+the +126 high events since 22:41 cannot be attributed to a specific leaf.
+No OOMD or kernel kill appeared since 22:41. API, protected Reality, and
+Reality API remained active at restart counts 9/14/0. This is a quiet bounded
+window, not durable recovery; full swap and historical workload attribution
+remain unresolved.
+
+The focused Polymarket stream/API module passed **24/24** in 9.60 seconds
+under High 384 MiB / Max 512 MiB / zero swap / 15% CPU / 64 tasks. Ruff check
+and format checks passed for the two changed Python files. The focused
+Mission Control journey and `tsc -b` retain their 22:36 passing evidence. A
+bounded Vite production bundle passed in 1m05s under a 1 GiB / zero-swap / 20%
+CPU scope. Vite reports the existing Chart chunk at 544.51 kB, above its
+500 kB advisory threshold. No exchange endpoint, production store, campaign,
+or protected service was accessed or changed.
+
+The host remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**, and production
+deployment remains blocked. Do not infer resolution from this short window.
+
+## Prior addendum — 2026-10-29 22:42 CET
 
 The 22:40:44–22:40:57 Veritas source-analysis one-shot completed successfully
 after processing 59 finalized segments with none pending. Its configured
