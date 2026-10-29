@@ -1190,3 +1190,20 @@ and Reality collector/API, Continental tailnet/auth and website services,
 Echo production and staging, Caddy, RustDesk, and `ssh.socket` active. This
 confirms those services were available after the bounded checks; it is a
 point-in-time service-state check, not an uptime guarantee.
+
+## Scheduled-job and seeded-browser follow-up — 2026-10-29 02:33 CET
+
+The pre-existing Veritas observatory completed at 02:32:16, recording a
+bounded 40-market Polymarket sample after 7 public GET attempts. Its service
+used 35.6 MiB peak memory, 1.654 CPU seconds, and zero swap. It recorded no
+positive gross candidates. The run was not a Frontier cross-venue result.
+
+The two isolated synthetic Frontier seeded browser journeys then passed
+**2/2** in 25.6 seconds. The unit used a fresh `/tmp` store, peaked at 498.7
+MiB, used 14.751 CPU seconds and zero swap, and had a 120-second limit. No
+captured-evidence store or exchange probe was enabled. At 02:33, host
+`MemAvailable` was 10,383,945,728 bytes, host memory PSI was zero, and swap
+use was 3,313,475,584 bytes. User-manager `oom=19` and `oom_kill=15` remained
+unchanged; API/Reality remained active at restart counts 9/14, with about
+78.3 MiB below the API `MemoryHigh`. This is another bounded quiet sample, not
+endurance or resolution of the unknown original trigger.

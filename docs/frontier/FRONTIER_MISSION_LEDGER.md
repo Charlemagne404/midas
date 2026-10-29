@@ -12574,3 +12574,22 @@ kill. This supports further bounded offline verification, not endurance or
 incident closure. Frontier remains **PARTIALLY VERIFIED**; live cross-venue
 research, captured browser evidence, broad MIDAS regression, endurance,
 protected recovery, and deployment remain open or gated.
+
+## Seeded browser and scheduled-observation follow-up — 2026-10-29 02:33 CET
+
+The two synthetic seeded Frontier browser journeys passed **2/2 in 25.6
+seconds**. The fresh isolated store held 21 generated capture/replay fixtures
+and one fixture-only Arena discovery job. The unit peaked at 498.7 MiB,
+consumed 14.751 CPU seconds, used zero swap, and finished in 30.626 seconds.
+No captured evidence or exchange probe was enabled.
+
+The pre-existing Veritas observatory completed at 02:32:16 with 40 bounded
+Polymarket markets, 7 public GET attempts, 35.6 MiB peak, 1.654 CPU seconds,
+and zero swap. It reported no positive gross candidates. This single-venue
+scheduled observation is distinct from Frontier multi-venue validation.
+
+Post-run host memory PSI remained zero; MemAvailable was 10.38 GB and swap
+use was 3.09 GB. User-manager OOM counters remained 19/15. API/Reality stayed
+active with restart counts 9/14 and API had about 78.3 MiB below `MemoryHigh`.
+This supports continued bounded offline work, not endurance or incident
+closure. Frontier remains **PARTIALLY VERIFIED**.

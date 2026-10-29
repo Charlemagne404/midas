@@ -2,7 +2,7 @@
 
 **Report date:** 2026-10-29
 
-## Current completion matrix — 2026-10-29 02:26 CET
+## Current completion matrix — 2026-10-29 02:33 CET
 
 This is a current evidence classification, not a final completion claim. The
 dated implementation records below remain the detailed evidence; the
@@ -21,8 +21,8 @@ current host gate.
 | Laboratory/Arena comparisons and bounded orchestration | PARTIALLY VERIFIED | Arena admission and finite scheduling regressions pass; a Laboratory resource-denial case passes with a harness cap above its 722,894,848-byte capacity precondition. Full endurance evidence remains incomplete. |
 | User-cgroup-aware workload admission | IMPLEMENTED, BOUNDED VALIDATION PASSED | Central Arena admission (15), finite schedules (12), and the Laboratory denial case (1) pass fixture tests using user-manager pressure; no runtime deployment occurred. |
 | Reality capacity inventory bounds | PARTIALLY VERIFIED | Isolated candidate tests pass 5/5; candidate code remains undeployed. The separate monitor has one measured scheduled run at 134,225,920 bytes under `MemoryHigh=160M`, `MemoryMax=192M`, and zero swap, plus a second successful scheduled run whose peak was not retained. |
-| Native Frontier dashboard | PARTIALLY VERIFIED | Current Vitest passes 47/47 under a bounded single-worker CPU retry. Default Playwright passes 17/20; three opt-in seeded/captured cases were skipped. The captured-evidence browser journey remains unvalidated. |
-| Host reliability containment | PARTIALLY VERIFIED | The five-minute gap-detail timer remains disabled and the capacity monitor uses a reversible 160 MiB/192 MiB/zero-swap bound. API and Reality stayed active through bounded Python, Vitest, and Playwright runs; at 02:26 API had 81.4 MiB below `MemoryHigh`, host memory PSI was zero, and OOM counters were unchanged. The historical pressure initiator and endurance behavior remain unknown. |
+| Native Frontier dashboard | PARTIALLY VERIFIED | Current Vitest passes 47/47; default Playwright passes 17/20 with three opt-in skips; a separate synthetic seeded replay/Arena browser run passes 2/2. The captured-evidence browser journey remains unvalidated. |
+| Host reliability containment | PARTIALLY VERIFIED | The five-minute gap-detail timer remains disabled and the capacity monitor uses a reversible 160 MiB/192 MiB/zero-swap bound. API and Reality stayed active through bounded Python, Vitest, and Playwright runs; at 02:33 API had 78.3 MiB below `MemoryHigh`, host memory PSI was zero, and OOM counters were unchanged. The historical pressure initiator and endurance behavior remain unknown. |
 | Broad regressions, resource endurance, and performance acceptance | DEFERRED | Current Frontier Python passed 648/648, web Vitest passed 47/47, and default Playwright passed 17 with 3 opt-in skips under explicit limits; full MIDAS regression, endurance, and broad performance tests remain deferred. |
 | Live multi-venue source authorization and findings | BLOCKED | Kalshi, Kraken, and Coinbase retained research remain held; the worktree Polymarket probe flag is off. |
 | Production integration/deployment | DEFERRED | Frontier remains isolated; no protected service transition occurred. |
@@ -13274,3 +13274,29 @@ do not demonstrate endurance or identify the historical pressure initiator.
 | Default Playwright suite | PARTIALLY VERIFIED | 17 pass, 3 opt-in cases skipped; no live probes; capture-backed browser view remains unvalidated. |
 | Host response during bounded frontend suites | PARTIALLY VERIFIED | No memory PSI, test-unit swap, OOM, or protected-service restart increase; only a short observation window. |
 | Overall Frontier acceptance | PARTIALLY VERIFIED | Live multi-venue research, full legacy regression, endurance, protected recovery, and deployment remain open. |
+
+## Synthetic seeded browser follow-up — 2026-10-29 02:33 CET
+
+The two opt-in synthetic seeded browser cases passed **2/2 in 25.6 seconds**
+using one Playwright worker. Their store contained 21 generated fixture
+captures/replay artifacts and one fixture-only Arena discovery job in the
+dedicated `/tmp/midas-browser-frontier-seeded-20261029-0232` root. The
+transient unit used `MemoryHigh=1G`, `MemoryMax=1280M`, zero swap, 50% CPU,
+192 tasks, and a 120-second wall limit; it completed in 30.626 seconds with a
+498.7 MiB peak and 14.751 CPU seconds. No source probe or captured-evidence
+store was enabled.
+
+The already scheduled Veritas observatory also completed at 02:32:16 with
+40 bounded Polymarket markets, 7 public GET attempts, 35.6 MiB peak, 1.654
+CPU seconds, and zero swap. Its sampled result had no positive gross
+candidates. This was the pre-existing Veritas timer, not Frontier multi-venue
+evidence. After both scheduled and test work, host memory PSI was zero,
+MemAvailable was 10.38 GB, user-manager `oom=19`/`oom_kill=15` remained
+unchanged, and API/Reality restart counts remained 9/14. API had about 78.3
+MiB below `MemoryHigh`.
+
+| Verification item | Status | Evidence / remaining limit |
+| --- | --- | --- |
+| Synthetic seeded replay/Arena browser journeys | COMPLETE AND VERIFIED | 2/2 with a fresh synthetic-only store; no exchange calls. |
+| Veritas scheduled observation resource impact | COMPLETE AND VERIFIED FOR THIS RUN | 35.6 MiB peak, 1.654 CPU seconds, zero swap; this does not establish long-run resource safety. |
+| Live cross-venue validation | BLOCKED | No genuine Frontier relationship or opportunity was established by this single-venue observation. |
