@@ -1075,6 +1075,28 @@ brief quiet period and successful bounded scan do not resolve near-full swap,
 historical attribution, long-run stability, or archive provenance. Incident
 status remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**.
 
+## Current cgroup attribution — 2026-10-29 07:51 CET
+
+At 07:49, a one-iteration `systemd-cgtop` read showed about 9.0 GiB in the
+user manager, 8.6 GiB in its `app.slice`, and 4.2 GiB in the nested GNOME
+Terminal slice. A 07:50:13 systemd query measured that Terminal slice at
+4,522,909,696 bytes current and 9,433,034,752 bytes peak. One active VTE
+scope, started at 23:39 Oct 28, held 1,969,434,624 bytes current and
+2,391,777,280 bytes peak across 103 tasks. Its process tree is a resumed Codex
+session with app-server and CUA/MCP children. This is a substantial current
+user-session contributor; it does not establish the initiator of the prior
+OOM events, and the named VTE scope began after some recorded kills.
+
+Other current user cgroups included `midas-api` at about 908 MiB, Reality at
+385 MiB, and Reality API at 299 MiB. `system.slice` was about 3.3 GiB; larger
+groups included Netdata (398 MiB), RustDesk (217 MiB), snapd (207 MiB),
+Continental status (199 MiB), and Echo production (170 MiB). These services
+were active and were left untouched. At 07:50:13 host PSI was zero,
+`MemAvailable` 10 GiB, and swap free 8.2 MiB. The evidence supports distributed
+concurrent load and uncapped user-manager exposure; it does not justify
+terminating terminal sessions or changing unrelated service limits. Incident
+status remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**.
+
 ## Post-UI assertion pressure sample — 2026-10-29 07:36 CET
 
 The focused graph UI test now asserts the truncation display. It passed **1/1**

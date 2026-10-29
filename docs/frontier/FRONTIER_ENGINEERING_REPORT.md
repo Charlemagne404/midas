@@ -2,7 +2,7 @@
 
 **Report date:** 2026-10-29
 
-## Current completion matrix — 2026-10-29 07:48 CET
+## Current completion matrix — 2026-10-29 07:51 CET
 
 This is a current evidence classification, not a final completion claim. The
 dated implementation records below remain the detailed evidence; the
@@ -23,7 +23,7 @@ current host gate.
 | Source-operation admission telemetry | COMPLETE AND VERIFIED FOR ONE ROUTER INSTANCE | The bounded source gate exposes active venues, admitted totals, and contention rejections by scope with a UTC sample time. The source page can refresh the snapshot. Counters reset with that router and do not aggregate across workers or deployments. |
 | Reality capacity inventory bounds | PARTIALLY VERIFIED | Candidate inventory code remains undeployed. The separate monitor is bounded at `MemoryHigh=160M`, `MemoryMax=192M`, and zero swap; its 07:47:45 scheduled run exited successfully in about seven seconds. No reliable peak was retained for this run; a prior observed 137.4 MiB peak justifies the 160 MiB soft bound but does not bound the invalid-provenance fallback. The monitor still identifies invalid archive inventory/provenance and pending startup-config changes; no archive evidence was altered. |
 | Native Frontier dashboard | PARTIALLY VERIFIED | The dashboard includes the held Gemini capability, timing and user-cgroup pressure explanations, explicit Polymarket event capture, source-admission policy and router-runtime counters, and a refresh action. It displays durable observation IDs, raw hashes, event types, source timestamps, and quality flags while stating captured events are unsequenced and do not form a local book. The Relationships view marks clipped entity-context labels and identifiers; commit `d4e22e6` adds assertions for the visible ellipsis, display-clipped note, and graph truncation reason. The focused graph UI test passed 1/1 (eight skipped); TypeScript, ESLint, and Prettier passed. A production Vite bundle passed at 07:30 in 54.10 s (2,230 modules, 383.6 MiB peak) into a new temporary directory, leaving ignored `apps/web/dist` untouched. The 544.51 kB Chart chunk advisory remains. Default Playwright last passed 17/20 with three opt-in skips; captured-evidence browser validation remains open. |
-| Host reliability containment | PARTIALLY VERIFIED | The five-minute gap-detail timer is inactive/disabled; the October 28 audit found 129 systemd-oomd kills, 106 targeting this finalized-data replay. It is the strongest recurring contributor, not a proven sole trigger. Seven kernel memcg kills hit the capacity checker's original 128 MiB cap; its reversible 160/192 MiB zero-swap bound completed another successful run at 07:47. At 07:47:53 there had been no new OOMD kill since 23:43:24 Oct 28 and no kernel OOM since 20:15:44 Oct 28. Host `MemAvailable` was 10 GiB and PSI zero, but only 8.2 MiB swap was free. User-manager memory/swap was 9.67/2.86 GB with no ancestor memory limit; aggregate descendant OOM counters stayed 19/15/0. API/Reality remained active at restarts 9/14 and used about 907/384 MiB against their `MemoryHigh` values; the capacity timer is next due at 08:17. Historical parent-pressure attribution, near-full swap, and archive provenance remain unresolved. |
+| Host reliability containment | PARTIALLY VERIFIED | The five-minute gap-detail timer is inactive/disabled; the October 28 audit found 129 systemd-oomd kills, 106 targeting this finalized-data replay. It contributed repeated replay churn but is not proven to be the sole or initiating pressure source. Seven kernel memcg kills hit the capacity checker's original 128 MiB cap; its reversible 160/192 MiB zero-swap bound completed another successful run at 07:47. At 07:50:13 the GNOME Terminal slice held 4.52 GB (historical cgroup peak 9.43 GB), including one active Codex/VTE scope at 1.97 GB (peak 2.39 GB); API, Reality, and Reality API cgroups were also about 908/385/299 MiB. This identifies material current user-slice contributors, not the initiator of prior kills. Host `MemAvailable` was 10 GiB and PSI zero, but only 8.2 MiB swap was free. User-manager memory/swap was 9.67/2.86 GB with no ancestor memory limit; aggregate descendant OOM counters stayed 19/15/0. No OOMD or kernel OOM appeared after 23:43:24 / 20:15:44 Oct 28, respectively. The capacity timer is next due at 08:17. Near-full swap and archive provenance remain unresolved. |
 | Node/V8 and Apport side effect | PARTIALLY VERIFIED | The 02:36 TypeScript attempt aborted at Node's heap limit with a 300.6 MiB cgroup peak, not a kernel OOM. Whoopsie attempted to submit the 58,222,586-byte crash report and received HTTP 504; remote receipt is unknown. No `.uploaded` marker exists. This turn's first `tsc --noEmit` attempt also reached its explicit 256 MiB V8 heap limit; a single retry at a 384 MiB heap inside a 768 MiB zero-swap scope passed. Host PSI and OOM counters remained unchanged. |
 | Broad regressions, resource endurance, and performance acceptance | DEFERRED | Selected Python, API, adapter, collection, and economics tests passed under bounded zero-swap scopes. The graph-revision storage/migration cases pass 8/8; API cursor invalidation passes 1/1; four core economics modules pass 79/79; joint-state basket/audit/replay passes 14/14; logical implication/relationship review passes 27/27; transport passes 20/20; readiness resource API passes 7/7 and its focused UI passes 3/3. Ruff check/format, ESLint, Prettier, and strict mypy on the readiness resource module passed under caps. Full MIDAS regression, full browser suite, captured-evidence browser journey, endurance, and broad performance tests remain deferred. |
 | Live multi-venue source authorization and findings | BLOCKED | Kalshi, Kraken, Coinbase, and Gemini probes and retained-data research remain held; the worktree Polymarket probe flag is off. |
@@ -14374,3 +14374,25 @@ workloads; it does not establish what initiated the historical pressure. The
 incident remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**: swap occupancy,
 historical pressure attribution, long-run stability, and archive provenance
 are unresolved. The next capacity run is scheduled for 08:17:45 CET.
+
+### Current cgroup attribution — 2026-10-29 07:51 CET
+
+A bounded `systemd-cgtop` snapshot at 07:49 showed the user-manager at about
+9.0 GiB, its `app.slice` at 8.6 GiB, and the nested GNOME Terminal slice at
+about 4.2 GiB. At 07:50:13, systemd reported the Terminal slice at
+4,522,909,696 bytes current / 9,433,034,752 bytes peak. One active VTE scope,
+started 23:39 Oct 28, held 1,969,434,624 bytes current / 2,391,777,280 bytes
+peak across 103 tasks. `systemctl status` identified it as a Codex resumed
+session with app-server and CUA/MCP children. This is a substantial current
+user-session load, but it postdates some recorded Oct 28 kills and does not
+prove their initiating process.
+
+At the same snapshot, `midas-api` used about 908 MiB, `midas-reality` about
+385 MiB, and `midas-reality-api` about 299 MiB. `system.slice` used about
+3.3 GiB; among its larger measured groups were Netdata (398 MiB), RustDesk
+(217 MiB), snapd (207 MiB), Continental status (199 MiB), and Echo production
+(170 MiB). These production services remain active and were not changed. Host
+PSI remained zero, `MemAvailable` 10 GiB, and swap free only 8.2 MiB. The
+measurements show distributed concurrent load under an uncapped user-manager;
+they do not justify terminating terminals or changing production service
+limits during this incident.
