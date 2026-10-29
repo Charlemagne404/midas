@@ -16248,3 +16248,21 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
   fixture-based Frontier work; keep live probes, broad builds/suites, and
   replay batches deferred while swap remains nearly exhausted and source
   analysis/capacity local peak attribution is incomplete.
+
+## 2026-10-29 18:53 CET — brief swap and service-health follow-up
+
+- `vmstat -w 1 5` showed no swap-in/out in the four one-second interval rows;
+  the first row is a since-boot summary. CPU idle was 90–94% in the interval
+  rows, with zero blocked tasks. This does not establish sustained absence of
+  swap pressure.
+- At 18:53:09, PSI remained zero, `MemAvailable` was about 10 GiB, and swap
+  free was about 19 MiB. User-manager `high/max/oom/oom_kill` remained
+  16,438,012 / 731,550 / 19 / 15. No OOMD kill was recorded in the preceding
+  20 minutes.
+- MIDAS API, Reality, Reality API, SSH socket activation, Tailscale/Headscale,
+  Caddy, Continental contact, Echo production/staging, and RustDesk were
+  active. Nine GNOME Terminal VTE scopes were running; the gap-detail timer
+  remained disabled.
+- Continue only serial, capped, source-independent Frontier work. The incident
+  is still **PARTIALLY CONTAINED / PARTIALLY VERIFIED**: this short sample does
+  not clear nearly full swap or historical pressure attribution.

@@ -16363,3 +16363,42 @@ from other API/Laboratory routes inside `midas-api.service`, and no Frontier
 job was active during this snapshot.
 
 | Current resource attribution | PARTIALLY VERIFIED | Current cgroup charges are measured; historical causality and per-route Frontier use remain unproven. |
+
+### Host incident interruption and readiness telemetry update — 2026-10-29 18:53 CET
+
+The host incident review confirms the October 28 systemd-oomd trigger was
+user-manager memory PSI above the configured 50% threshold for more than 20
+seconds with reclaim. Its 129 recorded victims were 106 gap-detail, 10
+Reality, 8 MIDAS API, 4 terminal scopes, and 1 Firefox scope. The five-minute
+gap-detail timer remains disabled. Separately, seven kernel memcg OOMs hit the
+Reality capacity checker's former 128 MiB hard limit; the targeted 160 MiB
+High / 192 MiB Max / zero-swap bound remains in place. Gap-detail was a
+recurrent pressure contributor, but the historic aggregate evidence does not
+prove one workload was the sole source. The user manager remains unbounded and
+swap is still nearly full. See
+[`FRONTIER_MEMORY_PRESSURE_INCIDENT_2026-10-29.md`](FRONTIER_MEMORY_PRESSURE_INCIDENT_2026-10-29.md)
+for controls, rollback commands, current measurements, and unresolved
+attribution.
+
+The Frontier Replay & readiness view now has a host-resource panel. It
+displays the live capture time and RAM when those fields are provided, and
+renders missing swap/user-manager PSI as **Not measured**. The active API
+release still omits those fields, so the explanation is visible in the UI and
+no deployment was attempted. The focused component suite passed **3/3** under
+a capped zero-swap transient service; no live exchange request was made.
+
+At 18:53, host PSI was zero with about 10 GiB available RAM but only about 19
+MiB free swap. The 18:50 capacity check succeeded, and the API, Reality,
+Reality API, SSH socket, Continental contact, Echo, and RustDesk services were
+active. Nine terminal scopes were running. A brief vmstat sample showed no
+swap-in/out in four one-second intervals. These observations support only
+serial, resource-capped fixture development; they do not establish sustained
+recovery. The project remains **PARTIALLY VERIFIED** with live cross-venue
+validation, broad regression/endurance, protected recovery, and deployment
+open.
+
+| Current status | Classification | Boundary |
+| --- | --- | --- |
+| Frontier host-resource panel | COMPLETE AND VERIFIED FOR FIXTURE API | Focused UI tests verify measured and omitted-field states; the deployed API omits swap and user-manager fields, and no production deployment was attempted. |
+| Memory incident containment | PARTIALLY VERIFIED | Gap-detail is disabled and bounded checks pass; swap remains nearly full and historical upstream pressure attribution is incomplete. |
+| Project Frontier overall | PARTIALLY VERIFIED | Live cross-venue evidence, broad acceptance, endurance, protected recovery, and production deployment remain open. |

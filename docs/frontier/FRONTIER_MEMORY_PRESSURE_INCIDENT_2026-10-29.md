@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 18:51 CET |
+| Latest addendum | 2026-10-29 18:53 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Pre-incident checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -4654,3 +4654,23 @@ Reality, and Reality API were active; the capacity and source-analysis timers
 were active, and gap-detail remained disabled. The test did not change any
 service or timer. This supports resuming one small, capped, source-independent
 Frontier task at a time; it does not establish sustainable host stability.
+
+### Brief swap and service-health sample — 2026-10-29 18:53 CET
+
+`vmstat -w 1 5` showed zero swap-in and swap-out in each of its four
+one-second interval rows; the first row is the since-boot summary. CPU idle
+was 90–94% in those interval rows, with no blocked tasks. This brief sample
+does not rule out earlier or future swap traffic.
+
+At 18:53:09, the host still had about 10 GiB `MemAvailable`, zero memory PSI,
+and about 19 MiB free swap. User-manager event counters remained
+`high=16,438,012`, `max=731,550`, `oom=19`, `oom_kill=15`. No OOMD kill was
+logged in the 20-minute interval checked. MIDAS API, Reality, Reality API,
+capacity timer, SSH socket activation, Tailscale/Headscale, Caddy, Continental
+contact, Echo production/staging, and RustDesk were active. Nine GNOME Terminal
+VTE scopes were running. The gap-detail timer remained inactive and disabled.
+
+This supports continued serial, capped fixture work and confirms that the
+observed terminal and essential-service scopes remained present through this
+sample. It is not an endurance window; nearly exhausted swap and unresolved
+historical workload attribution remain open risks.
