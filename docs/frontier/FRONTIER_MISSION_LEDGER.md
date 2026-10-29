@@ -14711,3 +14711,20 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
 - **Status:** Saved Polymarket replay now has fixture coverage for absent,
   wrong-kind, and mismatched market parents. Production-store and live-source
   validation remain pending; continue bounded offline work only.
+
+## 2026-10-29 12:42 CET — reject missing market observation references
+
+- Commit `091bb8a` adds a frame with a valid-format but nonexistent saved
+  market observation ID and recomputes the row hash. Both listing and replay
+  reject it. Parent-binding coverage now includes absent, wrong-kind, and
+  valid-but-unrelated market rows.
+- The two focused API cases passed **2/2 in 5.11 s** with 512 MiB high /
+  640 MiB max, zero swap, 20%-CPU, 128 tasks, and 60 seconds. Ruff check and
+  format passed; the existing TestClient warning remains. No network or
+  production store was used.
+- At 12:42, PSI was zero through avg300, `MemAvailable` about 10 GiB, and
+  `SwapFree` about 14 MiB. OOM counters did not change, and no kill appeared
+  since 12:40. This is not long-window recovery evidence.
+- **Status:** Fixture coverage verifies parent existence and semantic match
+  for Polymarket event replay. Production-store/live validation remains
+  pending; continue only serial bounded offline work.

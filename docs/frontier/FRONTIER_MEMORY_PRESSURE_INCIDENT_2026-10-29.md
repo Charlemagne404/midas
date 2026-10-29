@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 12:40 CET |
+| Latest addendum | 2026-10-29 12:42 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Pre-incident checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -2673,3 +2673,13 @@ user slice had 889 tasks, and no OOMD/kernel kill appeared since 12:38. These
 samples cover only short bounded offline tests. Near-total swap occupancy and
 historical pressure attribution remain unresolved; no persistent service or
 schedule changed.
+
+## Missing-binding test observation — 2026-10-29 12:42 CET
+
+The focused API run passed **2/2 in 5.11 seconds** in a 640 MiB maximum,
+zero-swap test scope. A valid-format nonexistent parent ID was rejected by
+both listing and replay. At 12:42, PSI was zero through avg300, available RAM
+was about 10 GiB, and free swap remained about 14 MiB. User-manager OOM
+counters were unchanged, the user slice had 890 tasks, and no OOMD/kernel
+kill appeared since 12:40. No service or schedule changed. This short sample
+does not establish durable incident recovery.

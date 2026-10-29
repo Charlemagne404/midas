@@ -15248,6 +15248,23 @@ host PSI was zero through avg300. User-manager OOM counters remained unchanged;
 no systemd-oomd or kernel kill appeared since 12:36. This is a brief quiet
 post-test sample; production-store and live-source validation remain pending.
 
+## Reject missing Polymarket market bindings — 2026-10-29 12:42 CET
+
+Commit `091bb8a` adds the missing-parent adversarial case. A frame with a
+well-formed but nonexistent `bound_market_observation_id` and a recomputed row
+hash is rejected by both the saved-frame listing and replay routes with HTTP
+409. Together with the existing wrong-kind and unrelated-market cases, this
+proves the API checks parent existence, venue/type, market identity, and
+instrument membership.
+
+The two focused API cases passed **2/2 in 5.11 seconds** under a 512 MiB high /
+640 MiB max, zero-swap, 20%-CPU, 128-task, 60-second scope. Ruff check/format
+passed. One existing Starlette/httpx TestClient deprecation warning appeared.
+At 12:42, host PSI was zero through avg300, `MemAvailable` was about 10 GiB,
+and `SwapFree` remained about 14 MiB. OOM counters were unchanged and no
+OOMD/kernel kill appeared since 12:40. This short result is fixture evidence;
+live and production-store validation remain pending.
+
 ## Reject rehashed cross-market Polymarket bindings — 2026-10-29 12:40 CET
 
 Commit `f8dcfb8` extends the API fixture with a second valid Polymarket market
