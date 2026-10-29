@@ -4002,3 +4002,25 @@ The scheduled Continental read-only audit completed at 10:14:05 with 72 pass,
 unexpected listeners on `0.0.0.0:8081` and `0.0.0.0:5174` and the disabled
 Echo offsite schedule; no Continental or Echo setting was changed. The audit
 was separate from Frontier and had no accompanying PSI or OOM-counter change.
+
+## Frontier adapter and capacity follow-up — 2026-10-29 10:19 CET
+
+Gemini's offline parser suite now passes **8/8**, including duplicate-ID,
+out-of-order timestamp, broken-print, and page-limit rejection. The default
+registry idle test passes **1/1** with Gemini's one-page public-trades
+capability advertised, cursor pagination unsupported, and the non-clearable
+source hold visible in health. The first registry run exposed a stale test
+expectation that only Polymarket declares `BOOK_UPDATES`; it now includes
+Kraken's already implemented declaration. The held-source/API/collector slice
+passes **4/4**. These are fixture results only; no live Gemini request or
+source-derived data retention occurred.
+
+The 10:18:23 Reality capacity run exited successfully at 10:18:29 with a
+129.4 MiB peak under 160 MiB high / 192 MiB max / zero swap. It continues to
+report `ARCHIVE_CAPACITY_UNKNOWN` and archive inventory/provenance issues.
+At 10:19:35, host PSI was zero and 10.54 GiB RAM was available, but swap had
+only 9.19 MiB free. User-manager OOM counters remained 19/15/0 and no kill
+appeared in the previous 40 minutes. API, Reality, and Reality API remained
+active at restart counts 9/14/0. The incident remains **PARTIALLY CONTAINED /
+PARTIALLY VERIFIED**; future Frontier work stays serial, offline, and
+resource-capped.

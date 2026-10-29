@@ -2,7 +2,7 @@
 
 **Report date:** 2026-10-29
 
-## Current completion matrix — 2026-10-29 10:13 CET
+## Current completion matrix — 2026-10-29 10:19 CET
 
 This is a current evidence classification, not a final completion claim. The
 dated implementation records below remain the detailed evidence; the
@@ -24,16 +24,16 @@ it made no endpoint requests and does not change source-use holds.
 | Laboratory/Arena comparisons and bounded orchestration | PARTIALLY VERIFIED | Arena admission and finite scheduling regressions pass; a Laboratory resource-denial case passes with a harness cap above its 722,894,848-byte capacity precondition. Full endurance evidence remains incomplete. |
 | User-cgroup-aware workload admission | IMPLEMENTED, BOUNDED VALIDATION PASSED | Central Arena admission (15), finite schedules (12), and the Laboratory denial case (1) pass fixture tests using user-manager pressure; no runtime deployment occurred. |
 | Source-operation admission telemetry | COMPLETE AND VERIFIED FOR ONE ROUTER INSTANCE | The bounded source gate exposes active venues, admitted totals, and contention rejections by scope with a UTC sample time. The source page can refresh the snapshot. Counters reset with that router and do not aggregate across workers or deployments. |
-| Reality capacity inventory bounds | PARTIALLY VERIFIED | Candidate inventory code remains undeployed. The separate monitor is bounded at `MemoryHigh=160M`, `MemoryMax=192M`, and zero swap; the 07:47:45 and 08:17:52 scheduled runs both exited successfully in about seven seconds. No reliable live peak was retained for either scheduled run; a prior observed 137.4 MiB peak justifies the 160 MiB soft bound but does not bound the invalid-provenance fallback. The monitor still identifies invalid archive inventory/provenance and pending startup-config changes; no archive evidence was altered. |
+| Reality capacity inventory bounds | PARTIALLY VERIFIED | Candidate inventory code remains undeployed. The separate monitor is bounded at `MemoryHigh=160M`, `MemoryMax=192M`, and zero swap. The 10:18:23 scheduled run exited at 10:18:29 and recorded a 129.4 MiB peak with no swap; earlier 07:47/08:17 runs did not retain reliable peaks. This short run fits the current soft bound but does not establish future peak margin. The monitor still reports `ARCHIVE_CAPACITY_UNKNOWN` and archive inventory/provenance limitations; no archive evidence was altered. |
 | Native Frontier dashboard | PARTIALLY VERIFIED | The existing native workspace includes source, coverage, graph, opportunity, replay, and readiness views. The Kraken saved-market inspector exposes a policy-gated explicit spot-stream action, per-frame immutable evidence, and offline replay of the current persisted capture. The panel slice passes 7/7 UI tests. TypeScript checking of this latest integration remains unverified after full-app heap/runtime failures and a targeted check stopped during elevated PSI. A full UI build and browser replay journey remain open. |
-| Host reliability containment | PARTIALLY VERIFIED | OOMD's 50%/20s policy monitors `user@1000.service` pressure, not a global-PSI threshold crossing; its Oct 28 journal records 129 kills (106 auxiliary gap-detail), while seven separate kernel memcg OOMs hit the capacity job's former 128 MiB cap. The gap timer remains disabled; capacity is bounded at 160 MiB high / 192 MiB max / zero swap, and the 09:48:30 run exited 0 at 148.5 MiB. At 09:49:49, `MemAvailable` was 10.66 GiB, avg10 PSI zero, and only 9.13 MiB swap was free. OOM counters remained 19/15/0; active API and Reality restart counts remained 9/14. A Frontier type-check scope above its 256 MiB `MemoryHigh` coincided with a transient PSI spike and was stopped. Historic pressure initiation, long-run recovery, and archive provenance remain unresolved. |
+| Host reliability containment | PARTIALLY VERIFIED | OOMD's 50%/20s policy monitors `user@1000.service` pressure, not a global-PSI threshold crossing; its Oct 28 journal records 129 kills (106 auxiliary gap-detail), while seven separate kernel memcg OOMs hit the capacity job's former 128 MiB cap. The gap timer remains disabled; capacity is bounded at `MemoryHigh=160M`, `MemoryMax=192M`, zero swap. The 10:18:23 run exited 0 at 129.4 MiB peak and zero swap but still reported `ARCHIVE_CAPACITY_UNKNOWN` and inventory/provenance limitations. At 10:19:35, `MemAvailable` was 10.54 GiB, PSI averages were zero, and only 9.19 MiB swap was free. OOM counters stayed 19/15/0 with no kernel/oomd kill in the prior 40 minutes; API/Reality restart counts remained 9/14. Historic pressure initiation, durable recovery, and archive provenance remain unresolved. |
 | Node/V8 and Apport side effect | PARTIALLY VERIFIED | Earlier targeted TypeScript validation passed before this Kraken replay change. The latest full-app check exited at Node's default heap limit; a 320 MiB heap retry reached its runtime limit. A narrower check was stopped after it exceeded `MemoryHigh=256M` and host PSI rose; its cgroup OOM counters did not change. No typecheck result for the latest integration is claimed. An earlier crash-report upload attempt received HTTP 504; remote receipt remains unknown. |
 | Broad regressions, resource endurance, and performance acceptance | DEFERRED | Selected Python, API, adapter, collection, and economics tests passed under bounded zero-swap scopes. The graph-revision storage/migration cases pass 8/8; API cursor invalidation passes 1/1; four core economics modules pass 79/79; joint-state basket/audit/replay passes 14/14; logical implication/relationship review passes 27/27; transport passes 20/20; readiness resource API passes 7/7 and its focused UI passes 3/3. Ruff check/format, ESLint, Prettier, and strict mypy on the readiness resource module passed under caps. Full MIDAS regression, full browser suite, captured-evidence browser journey, endurance, and broad performance tests remain deferred. |
 | Live multi-venue source authorization and findings | BLOCKED | Kalshi, Kraken, Coinbase, and Gemini probes and retained-data research remain held; the worktree Polymarket probe flag is off. |
 | Production integration/deployment | DEFERRED | Frontier remains isolated; no protected service transition occurred. |
 | Project Frontier overall | PARTIALLY VERIFIED | The engine is substantial, but live cross-venue science, broad verification, recovery, endurance, and deployment gates remain open. |
 
-### Gemini bounded recent-trade parser — 2026-10-29 10:10 CET
+### Gemini bounded recent-trade parser — 2026-10-29 10:19 CET
 
 Commit `235bd75` adds the adapter and fixture-contract implementation; its
 working-tree precursor was preserved as checkpoint `2fb1751` before the
@@ -48,8 +48,13 @@ timestamps, invalid side/exchange fields, duplicate IDs, out-of-order pages,
 and pages containing broken trades. `timestampms` and `timestamp` must agree
 when both exist.
 The shared five-venue contract stores the normalized trade with its exact raw
-response provenance. Focused Gemini and shared adapter tests pass 8/8; Ruff
-check and format checks pass for the touched Python files.
+response provenance. Focused Gemini and shared adapter tests pass 8/8,
+including duplicate-ID, out-of-order timestamp, and request-limit rejection.
+The default-registry network-idle test passes 1/1 with Gemini's one-page trade
+capability advertised, cursor pagination unsupported, flags disabled, and the
+source hold still present. Its old BOOK_UPDATES expectation was updated to
+include Kraken after the existing adapter declared that bounded capability.
+Ruff check and format checks pass for the touched Python files.
 
 The held-source and collection boundary also passed four focused regressions:
 Gemini remains disabled in the application registry, collection persists its

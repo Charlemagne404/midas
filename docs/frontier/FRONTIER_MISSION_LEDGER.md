@@ -14235,3 +14235,37 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
 - The audit completed after the Gemini fixtures and did not overlap them.
   Proceed only after fresh admission around the next scheduled research job;
   host incident remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**.
+
+## 2026-10-29 10:19 CET — Gemini adversarial fixtures and capacity-timer observation
+
+- Added fixture regressions for duplicate Gemini trade IDs, a later timestamp
+  appearing after an earlier row in a documented newest-first page, and
+  limits outside 1–100. `tests/frontier/test_gemini.py` passed **8/8 in 2.10
+  seconds** under 384 MiB high / 512 MiB max, zero swap, 20% CPU, 64 tasks,
+  and 60 seconds. The transient unit peaked at 42.2 MiB with zero swap.
+- Strengthened the default-registry idle test to assert Gemini advertises
+  `PUBLIC_TRADES`, not cursor pagination, remains held, and is shown held in
+  health without any request. Its first run revealed the pre-existing test
+  expected only Polymarket `BOOK_UPDATES`; inspection confirmed Kraken already
+  declares its implemented bounded stream, so the test now expects both
+  venues. The corrected test passed **1/1 in 3.70 seconds** at a 49.3 MiB
+  cgroup peak and zero swap. Ruff check and format check passed for both
+  touched test modules.
+- The scheduled Reality capacity monitor ran at 10:18:23 and exited 0 at
+  10:18:29, using 6.233 CPU seconds with a 135,696,384-byte (129.4 MiB) peak,
+  zero swap, `MemoryHigh=160M`, and `MemoryMax=192M`. It continued to report
+  `ARCHIVE_CAPACITY_UNKNOWN` and archive inventory/provenance limitations.
+  No archive or collector state was changed.
+- At 10:19:35, `MemAvailable=11,306,885,120` bytes (10.54 GiB),
+  `SwapFree=9,637,888` bytes (9.19 MiB), and global `some`/`full` PSI
+  avg10/avg60/avg300 were zero. User-manager memory/swap charge was
+  10,237,464,576 / 2,858,139,648 bytes, with lifetime memory peak
+  13,992,292,352 bytes; event counters stayed `oom=19`, `oom_kill=15`,
+  `oom_group_kill=0`. No kernel/oomd kill appeared in the preceding 40
+  minutes. API, Reality, and Reality API remained active at restart counts
+  9/14/0. The work remained serial and offline; the Gemini source-use hold
+  remains unchanged.
+- **Status:** This adds adapter and registry fixture confidence only. Host
+  disposition remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED** because
+  swap is near exhaustion, historical aggregate pressure attribution remains
+  incomplete, and long-duration stability is not established.

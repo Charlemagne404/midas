@@ -2065,3 +2065,28 @@ It consumed 1.526 CPU seconds; memory PSI was zero and the user-manager OOM
 counters did not change. This read-only audit result is separate from the
 memory incident. Continental, Echo, remote-access, and protected MIDAS
 services were not changed.
+
+## 2026-10-29 10:19 CET — capacity run and offline fixture follow-up
+
+The scheduled Reality capacity monitor completed at 10:18:29 with
+`Result=success`, 135,696,384 bytes (129.4 MiB) peak under
+`MemoryHigh=160M`, `MemoryMax=192M`, and zero swap. It still reports
+`ARCHIVE_CAPACITY_UNKNOWN` and archive inventory/provenance limitations; no
+historical evidence or recorder state was altered.
+
+After the capacity run, the Gemini parser suite passed **8/8 in 2.10 s**,
+including malformed duplicate/order/limit cases, in a separate zero-swap
+384/512 MiB transient unit with a 42.2 MiB peak. The default-registry idle
+test passed **1/1 in 3.70 s** at 49.3 MiB peak. A stale expectation that only
+Polymarket declares `BOOK_UPDATES` was corrected to also include Kraken's
+existing declared implementation. Tests caused no observed PSI or OOM-event
+change and made no external request.
+
+At 10:19:35, `MemAvailable` was 11,306,885,120 bytes (10.54 GiB), but only
+9,637,888 bytes (9.19 MiB) of swap was free. Global PSI remained zero. The
+user manager charged 10,237,464,576 bytes current memory and 2,858,139,648
+bytes swap, with a 13,992,292,352-byte peak. `oom=19`, `oom_kill=15`, and
+`oom_group_kill=0` remained unchanged; no kernel/systemd-oomd kill appeared
+in the previous 40 minutes. API/Reality/Reality API stayed active at restart
+counts 9/14/0. This bounded interval permits only continued serial work; it
+does not resolve the incident or validate archive provenance.
