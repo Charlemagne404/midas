@@ -493,6 +493,33 @@ def test_book_update_api_binds_to_saved_market_and_persists_fixture_evidence(tmp
         )
         assert connector.calls == 1
 
+        missing_market_observation_id = "e" * 64
+        normalized_with_missing_binding = json.loads(valid_normalized_json)
+        normalized_with_missing_binding["bound_market_observation_id"] = (
+            missing_market_observation_id
+        )
+        missing_binding_json = store._canonical(normalized_with_missing_binding)
+        missing_binding_row_hash = hashlib.sha256(
+            f"{raw_json}\n{missing_binding_json}".encode()
+        ).hexdigest()
+        with sqlite3.connect(store.path) as connection:
+            connection.execute(
+                "UPDATE observations SET normalized_json=?,row_sha256=? WHERE observation_id=?",
+                (missing_binding_json, missing_binding_row_hash, observation_ids[0]),
+            )
+        missing_binding_listing = client.get("/api/frontier/polymarket/book-updates")
+        assert missing_binding_listing.status_code == 409
+        assert "missing saved-market observation" in missing_binding_listing.json()["detail"]
+        missing_binding_replay = client.post(
+            "/api/frontier/replay/polymarket/book-updates",
+            json={"observation_ids": observation_ids},
+        )
+        assert missing_binding_replay.status_code == 409
+        assert (
+            "missing saved-market observation" in missing_binding_replay.json()["detail"]["message"]
+        )
+        assert connector.calls == 1
+
         normalized_with_wrong_binding = json.loads(valid_normalized_json)
         normalized_with_wrong_binding["bound_market_observation_id"] = observation_ids[1]
         wrong_binding_json = store._canonical(normalized_with_wrong_binding)
