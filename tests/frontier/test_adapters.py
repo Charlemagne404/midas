@@ -2042,7 +2042,7 @@ async def test_kraken_recent_trades_require_exact_pair_key_and_preserve_native_t
     assert first.aggressor_side is None
     assert second.native_trade_id is None
     assert second.aggressor_side is None
-    assert first.provenance.adapter_version == "frontier-kraken-spot-11"
+    assert first.provenance.adapter_version == "frontier-kraken-spot-12"
     assert requests[0].url.params["pair"] == "XXBTZUSD"
     assert requests[0].url.params["count"] == "2"
     assert all("authorization" not in request.headers for request in requests)
@@ -2169,6 +2169,7 @@ def test_source_configs_and_capability_manifests_fail_closed():
     assert len(KrakenSpotAdapter.capabilities.declarations) == len(Capability)
     assert PolymarketAdapter.capabilities.supports(Capability.PAGINATED_PUBLIC_TRADES)
     assert KalshiAdapter.capabilities.supports(Capability.PAGINATED_PUBLIC_TRADES)
+    assert KrakenSpotAdapter.capabilities.supports(Capability.BOOK_UPDATES)
     assert not KrakenSpotAdapter.capabilities.supports(Capability.PAGINATED_PUBLIC_TRADES)
     kalshi_fee_declaration = next(
         item

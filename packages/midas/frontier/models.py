@@ -1315,6 +1315,108 @@ class PolymarketBookUpdateFrame(FrontierModel):
         return validated == self
 
 
+class KrakenBookUpdateFrame(FrontierModel):
+    """One raw-bound Kraken v2 control or CRC-verified L2 book message."""
+
+    schema_version: Literal[1] = 1
+    venue: Literal[Venue.KRAKEN] = Venue.KRAKEN
+    frame_type: Literal["subscription_ack", "status", "heartbeat", "snapshot", "update"]
+    native_market_id: str = Field(min_length=1, max_length=256)
+    symbol: str = Field(pattern=r"^[A-Z0-9]{2,20}/[A-Z0-9]{2,20}$")
+    stream_message_index: int = Field(ge=0, le=31, strict=True)
+    book_message_index: int | None = Field(default=None, ge=0, strict=True)
+    subscription_acknowledged: StrictBool
+    bids: tuple[BookLevel, ...] = Field(default=(), max_length=100)
+    asks: tuple[BookLevel, ...] = Field(default=(), max_length=100)
+    source_timestamp_utc: datetime | None = None
+    checksum: int | None = Field(default=None, ge=0, le=4_294_967_295, strict=True)
+    checksum_verified: StrictBool = False
+    received_at_utc: datetime
+    raw_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    bound_market_observation_id: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
+    provenance: Provenance
+
+    @field_validator("source_timestamp_utc", "received_at_utc")
+    @classmethod
+    def frame_times_are_utc(cls, value: datetime | None) -> datetime | None:
+        if value is not None and (value.tzinfo is None or value.utcoffset() is None):
+            raise ValueError("Kraken WebSocket timestamps must include a timezone")
+        return value.astimezone(UTC) if value is not None else None
+
+    @model_validator(mode="after")
+    def frame_matches_raw_provenance(self) -> KrakenBookUpdateFrame:
+        if self.raw_sha256 != self.provenance.raw_sha256:
+            raise ValueError("Kraken frame hash differs from its provenance")
+        if self.received_at_utc != self.provenance.response_received_at_utc:
+            raise ValueError("Kraken frame receipt time differs from its provenance")
+        if self.source_timestamp_utc != self.provenance.exchange_timestamp_utc:
+            raise ValueError("Kraken frame source time differs from its provenance")
+        if self.provenance.source_url != "wss://ws.kraken.com/v2":
+            raise ValueError("Kraken frame provenance uses an unexpected stream URL")
+        if not self.provenance.adapter_version.startswith("frontier-kraken-spot-"):
+            raise ValueError("Kraken frame adapter version is invalid")
+        if self.provenance.source_schema_version != "kraken-spot-websocket-v2-book-v1":
+            raise ValueError("Kraken frame source schema is invalid")
+        expected_observation_id = hashlib.sha256(
+            "|".join(
+                (
+                    self.venue.value,
+                    "public_book_update_frame",
+                    self.provenance.source_url,
+                    self.raw_sha256,
+                    self.provenance.request_started_at_utc.isoformat(),
+                    self.received_at_utc.isoformat(),
+                )
+            ).encode("utf-8")
+        ).hexdigest()
+        if self.provenance.observation_id != expected_observation_id:
+            raise ValueError("Kraken frame provenance observation identity is invalid")
+        is_book_state = self.frame_type in {"snapshot", "update"}
+        if is_book_state:
+            if (
+                not self.subscription_acknowledged
+                or self.book_message_index is None
+                or self.source_timestamp_utc is None
+                or self.checksum is None
+                or not self.checksum_verified
+            ):
+                raise ValueError("Kraken book states require an acknowledged, CRC-verified stream")
+            if tuple(sorted((level.price for level in self.bids), reverse=True)) != tuple(
+                level.price for level in self.bids
+            ):
+                raise ValueError("Kraken bids must be best-price first")
+            if tuple(sorted(level.price for level in self.asks)) != tuple(
+                level.price for level in self.asks
+            ):
+                raise ValueError("Kraken asks must be best-price first")
+            if len({level.price for level in self.bids}) != len(self.bids) or len(
+                {level.price for level in self.asks}
+            ) != len(self.asks):
+                raise ValueError("Kraken book states cannot contain duplicate prices")
+        elif (
+            self.book_message_index is not None
+            or self.source_timestamp_utc is not None
+            or self.checksum is not None
+            or self.checksum_verified
+            or self.bids
+            or self.asks
+        ):
+            raise ValueError("Kraken control frames cannot claim book state or a checksum")
+        if self.frame_type == "subscription_ack" and not self.subscription_acknowledged:
+            raise ValueError("Kraken subscription acknowledgement must be successful")
+        return self
+
+    @property
+    def has_valid_structure(self) -> bool:
+        try:
+            validated = KrakenBookUpdateFrame.model_validate(
+                self.model_dump(mode="python", warnings=False)
+            )
+        except (TypeError, ValueError):
+            return False
+        return validated == self
+
+
 class TradeObservation(FrontierModel):
     """Normalized print with bounded native execution flags when a venue supplies them."""
 

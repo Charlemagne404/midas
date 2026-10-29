@@ -97,6 +97,7 @@ from midas.frontier.models import (
     JointStateMap,
     KalshiFeeMetadata,
     KalshiFeeOrderFillInput,
+    KrakenBookUpdateFrame,
     MarketBatch,
     MarketMetadataEvidence,
     PolymarketBookUpdateFrame,
@@ -197,6 +198,13 @@ class PolymarketBookUpdatesProbeRequest(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
     market_id: str = Field(min_length=1, max_length=256)
     max_frames: int = Field(default=8, strict=True, ge=1, le=8)
+
+
+class KrakenBookUpdatesProbeRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+    market_id: str = Field(min_length=1, max_length=256)
+    max_frames: int = Field(default=16, strict=True, ge=1, le=16)
+    max_updates: int = Field(default=16, strict=True, ge=1, le=16)
 
 
 class PriceHistoryReplayRequest(BaseModel):
@@ -2938,6 +2946,198 @@ def router(
                     status_code=502,
                     detail={
                         "code": "FRONTIER_BOOK_UPDATES_FAILED",
+                        "message": str(error),
+                        "stored_observation_ids": stored_observation_ids,
+                        "diagnostic_observation_ids": diagnostic_ids,
+                        "diagnostic_persistence_error": diagnostic_error,
+                    },
+                ) from error
+
+    @api.post("/probe/kraken/book-updates")
+    async def probe_kraken_book_updates(
+        request: KrakenBookUpdatesProbeRequest,
+    ) -> dict[str, Any]:
+        """Capture one short Kraken spot stream window for an already-recorded pair."""
+        venue = Venue.KRAKEN
+        adapter = registered_source_adapter(venue)
+        if not adapter.capabilities.supports(Capability.BOOK_UPDATES):
+            raise HTTPException(status_code=409, detail="Kraken book updates are unsupported")
+        if not isinstance(adapter, KrakenSpotAdapter):
+            raise HTTPException(
+                status_code=409,
+                detail="Advertised Kraken book-update operation is unavailable",
+            )
+        require_probe_config(getattr(adapter, "config", None))
+        try:
+            known_markets = await _load_markets(store, 200, excluded_venues=held_venues)
+        except (FrontierStoreError, ValueError) as error:
+            raise HTTPException(status_code=409, detail=str(error)) from error
+        recorded_market = next(
+            (
+                item
+                for item in known_markets
+                if item.venue == venue and item.canonical_id == request.market_id
+            ),
+            None,
+        )
+        if recorded_market is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Book updates can only be captured for a pair in the bounded recorded window",
+            )
+        bound_market_observation_id = recorded_market.provenance.observation_id
+        if bound_market_observation_id is None:
+            raise HTTPException(
+                status_code=409,
+                detail="Recorded pair has no immutable source-observation binding",
+            )
+        if (
+            recorded_market.market_kind.value != "spot_pair"
+            or len(recorded_market.instruments) != 1
+            or recorded_market.instruments[0].native_instrument_id
+            != recorded_market.native_market_id
+        ):
+            raise HTTPException(
+                status_code=409,
+                detail="Saved Kraken record is not a single-instrument native spot pair",
+            )
+
+        stored_observation_ids: list[str] = []
+        unpersisted_captures: list[RawObservation] = []
+        async with source_operation(venue):
+            adapter.take_captures()
+            try:
+                frames = await adapter.capture_book_updates(
+                    recorded_market,
+                    max_frames=request.max_frames,
+                    max_updates=request.max_updates,
+                    max_duration_seconds=3.0,
+                    depth=10,
+                )
+                captures = adapter.take_captures()
+                unpersisted_captures = list(captures)
+                if len(captures) != len(frames):
+                    raise AdapterError(
+                        "BOOK_UPDATE_CAPTURE_MISMATCH",
+                        "Kraken normalized frames do not match the captured raw message count",
+                    )
+                frame_summaries: list[dict[str, Any]] = []
+                state_count = 0
+                for capture, frame in zip(captures, frames, strict=True):
+                    if not isinstance(frame, KrakenBookUpdateFrame) or not frame.has_valid_structure:
+                        raise AdapterError(
+                            "BOOK_UPDATE_CAPTURE_MISMATCH",
+                            "Kraken adapter returned an invalid normalized WebSocket message",
+                        )
+                    if (
+                        frame.venue != venue
+                        or frame.native_market_id != recorded_market.native_market_id
+                        or capture.venue != venue
+                        or capture.observation_kind != "public_book_update_frame"
+                        or capture.http_status != 101
+                        or capture.request_url != frame.provenance.source_url
+                        or capture.adapter_version != frame.provenance.adapter_version
+                        or capture.request_started_at_utc != frame.provenance.request_started_at_utc
+                        or capture.received_at_utc != frame.provenance.response_received_at_utc
+                        or capture.request_elapsed_monotonic_ns
+                        != frame.provenance.request_elapsed_monotonic_ns
+                        or capture.raw_sha256 != frame.raw_sha256
+                    ):
+                        raise AdapterError(
+                            "BOOK_UPDATE_CAPTURE_MISMATCH",
+                            "Kraken normalized message differs from its raw source evidence",
+                        )
+                    bound_frame = frame.model_copy(
+                        update={"bound_market_observation_id": bound_market_observation_id}
+                    )
+                    observation_id = store.append_observation(capture, bound_frame)
+                    stored_observation_ids.append(observation_id)
+                    unpersisted_captures.remove(capture)
+                    is_book_state = frame.frame_type in {"snapshot", "update"}
+                    state_count += int(is_book_state)
+                    frame_summaries.append(
+                        {
+                            "observation_id": observation_id,
+                            "raw_sha256": capture.raw_sha256,
+                            "received_at_utc": capture.received_at_utc.isoformat(),
+                            "source_url": capture.request_url,
+                            "source_schema_version": frame.provenance.source_schema_version,
+                            "adapter_version": frame.provenance.adapter_version,
+                            "frame_type": frame.frame_type,
+                            "stream_message_index": frame.stream_message_index,
+                            "symbol": frame.symbol,
+                            "subscription_acknowledged": frame.subscription_acknowledged,
+                            "source_timestamp_utc": (
+                                frame.source_timestamp_utc.isoformat()
+                                if frame.source_timestamp_utc is not None
+                                else None
+                            ),
+                            "checksum": frame.checksum,
+                            "checksum_verified": frame.checksum_verified,
+                            "bid_level_count": len(frame.bids),
+                            "ask_level_count": len(frame.asks),
+                        }
+                    )
+                return {
+                    "venue": venue.value,
+                    "market_id": recorded_market.canonical_id,
+                    "native_market_id": recorded_market.native_market_id,
+                    "bound_market_observation_id": bound_market_observation_id,
+                    "capture_status": (
+                        "captured_book_states"
+                        if state_count
+                        else "control_messages_only"
+                        if frames
+                        else "no_stream_messages_observed"
+                    ),
+                    "frame_count": len(frames),
+                    "book_state_count": state_count,
+                    "capture_bounds": {
+                        "max_frames": request.max_frames,
+                        "max_updates": request.max_updates,
+                        "max_duration_seconds": 3.0,
+                        "depth": 10,
+                        "stream_connections": 1,
+                    },
+                    "frames": frame_summaries,
+                    "source_state": (await adapter.health()).state.value,
+                    "hypothetical_only": True,
+                    "note": (
+                        "Checksum-verified Kraken spot books are contextual market data. They are "
+                        "not event-contract payoffs, do not establish a hedge or arbitrage, and "
+                        "do not prove simultaneous executable depth or continuity across reconnects."
+                    ),
+                }
+            except AdapterError as error:
+                diagnostic_ids, diagnostic_error = preserve_failed_captures(
+                    adapter,
+                    error.code,
+                    str(error),
+                    already_drained=tuple(unpersisted_captures),
+                )
+                adapter.report_failure(error.code, str(error))
+                raise HTTPException(
+                    status_code=502,
+                    detail={
+                        "code": error.code,
+                        "message": str(error),
+                        "stored_observation_ids": stored_observation_ids,
+                        "diagnostic_observation_ids": diagnostic_ids,
+                        "diagnostic_persistence_error": diagnostic_error,
+                    },
+                ) from error
+            except (ValueError, FrontierStoreError) as error:
+                diagnostic_ids, diagnostic_error = preserve_failed_captures(
+                    adapter,
+                    "FRONTIER_KRAKEN_BOOK_UPDATES_FAILED",
+                    str(error),
+                    already_drained=tuple(unpersisted_captures),
+                )
+                adapter.report_failure("FRONTIER_KRAKEN_BOOK_UPDATES_FAILED", str(error))
+                raise HTTPException(
+                    status_code=502,
+                    detail={
+                        "code": "FRONTIER_KRAKEN_BOOK_UPDATES_FAILED",
                         "message": str(error),
                         "stored_observation_ids": stored_observation_ids,
                         "diagnostic_observation_ids": diagnostic_ids,

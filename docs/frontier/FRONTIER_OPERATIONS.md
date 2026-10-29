@@ -859,3 +859,31 @@ applies deltas to a `BookSnapshot`. Stream events do not feed candidate
 generation or economic evaluation. No live stream capture has been made; user
 location eligibility and intended source terms remain unverified. Do not
 enable the source flags on the host as part of routine development.
+
+## Kraken Spot public book stream
+
+`KrakenSpotAdapter.capture_book_updates` uses one finite connection to
+`wss://ws.kraken.com/v2`. The config-gated API route is
+`POST /api/frontier/probe/kraken/book-updates`; it accepts only a Kraken spot
+pair already present in the bounded local recorded window. Default source
+configuration and the current source-use policy hold block this route before
+storage lookup or connection. Do not clear that hold or enable the probe for
+routine development.
+
+The API bounds each capture to one symbol, at most 16 received messages, at
+most 16 book states, depth 10, three seconds, one connection, 256 KiB per raw
+frame, and the adapter's 2 MiB / 32-record in-memory capture budget. The
+adapter requires a matching subscription acknowledgement and full snapshot,
+applies in-connection updates in arrival order, and verifies the documented
+CRC32 after every snapshot or update. It retains the raw acknowledgement,
+status, heartbeat, snapshot, and update frames with receipt time, monotonic
+elapsed time, raw hash, source URL, adapter version, and recorded-market
+binding. Malformed source messages are rejected and their bounded raw evidence
+is preserved through the diagnostic path when possible.
+
+CRC verification only establishes agreement between the reconstructed state
+and the checksum received in each observed frame. It does not prove that the
+exchange emitted no unobserved message, bridge a reconnect, establish a
+cross-venue simultaneous book, or make spot inventory equivalent to an event
+contract. No live Kraken WebSocket connection has been made by this
+implementation; fixture tests cover the capture and persistence path.

@@ -13950,3 +13950,48 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
 - At 08:49:13 global PSI was zero, MemAvailable 11,267,211,264 bytes, SwapFree 9,240,576 bytes, user-manager memory/swap 9,849,122,816 / 2,858,233,856 bytes; OOM counters remained 19/15/0, with no new kernel/OOMD entries since 08:47:30. The gap-detail timer remains disabled.
 - Rollback is a revert (preserving history): `git -C /home/charlie/midas-reality revert --no-edit 4f5cb5689548987bf30a33f050284ea8cb2f3c28..d8629e4b63c8b8ef68e27294fb3599423a694b76`.
 - **Status:** Capacity scanning is bounded and the timer path is verified for the oversized-manifest case. This does not repair archive provenance or measure memory peak; the incident remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**. Continue only short serial offline Frontier work.
+
+## 2026-10-29 09:03 CET — Kraken bounded stream capture and incident revalidation
+
+- Added a finite Kraken Spot WebSocket v2 capture path to the existing adapter.
+  It uses one configured spot pair and one connection, validates the saved
+  market identity and pair allowlist, waits for a matching subscription
+  acknowledgement, gates book updates on a full snapshot, applies observed
+  updates in order, and verifies the documented CRC32 after each state.
+  No reconnect or continuity claim is made.
+- Added `KrakenBookUpdateFrame` for hash-pinned acknowledgement, status,
+  heartbeat, snapshot, and update messages; added specialized store checks
+  binding each normalized frame to its exact raw WebSocket record. The API at
+  `/api/frontier/probe/kraken/book-updates` accepts only a pair in the bounded
+  recorded window, binds outputs to its market observation, and checks the
+  configured source-use hold before storage lookup or connector use. The
+  existing Kraken hold and disabled flags were not changed.
+- **Tests:** The Kraken capture and parser cases passed **15/15 in 5.50
+  seconds**. Three existing Kraken REST/capability regression cases passed
+  **3/3 in 4.30 seconds**. `ruff check` passed on all changed Python files.
+  Tests used fixture transports only, under transient 384 MiB `MemoryHigh` /
+  512 MiB `MemoryMax`, zero swap, 20% CPU, and 64 tasks. One Starlette/httpx
+  TestClient deprecation warning appeared. No live endpoint or saved probe was
+  accessed.
+- **Post-test host sample (09:03:20 CET):** `MemAvailable` about 10 GiB,
+  global and user-cgroup PSI averages zero, swap 4.0/4.0 GiB occupied, and
+  user-manager `oom=19` / `oom_kill=15` counters unchanged. No new systemd-oomd
+  or kernel OOM entry appeared after the preceding recorded event. API and
+  Reality stayed active at restart counts 9 and 14, using about 0.99 and 0.46
+  GiB respectively. This supports only short, serial fixture work; it does
+  not prove host recovery.
+- The incident report was revalidated and committed as `d740b91`. Before that
+  documentation edit, branch
+  `checkpoint/frontier-memory-interruption-20261029-0854` was created at
+  `75e6f26`; the existing untracked `data/frontier-public-probes/` remains
+  untouched. No production service was restarted or reconfigured in this
+  phase.
+- **Component status:** Kraken ordered stream capture, normalization,
+  provenance, store validation, and config-gated API are **COMPLETE AND
+  VERIFIED WITH FIXTURES**. Live validation remains **BLOCKED** by the current
+  source-use hold. The host incident remains **PARTIALLY CONTAINED / PARTIALLY
+  VERIFIED** because swap remains nearly exhausted and the historical workload
+  mix is not fully attributed.
+- **Next safe work:** Continue serial offline Frontier code and focused fixture
+  checks only after fresh admission. Keep live Kraken probes, UI builds, broad
+  suites, profiling, large replay, and background campaigns deferred.

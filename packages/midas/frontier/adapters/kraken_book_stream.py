@@ -181,6 +181,9 @@ class KrakenBookReconstructor:
         self._synchronized = False
         self._message_index = -1
         self._subscription_acknowledged = False
+        self._last_frame_type: Literal[
+            "subscription_ack", "status", "heartbeat", "snapshot", "update"
+        ] | None = None
 
     @property
     def has_snapshot(self) -> bool:
@@ -189,6 +192,13 @@ class KrakenBookReconstructor:
     @property
     def subscription_acknowledged(self) -> bool:
         return self._subscription_acknowledged
+
+    @property
+    def last_frame_type(
+        self,
+    ) -> Literal["subscription_ack", "status", "heartbeat", "snapshot", "update"] | None:
+        """Normalized protocol message type from the most recent valid frame."""
+        return self._last_frame_type
 
     def process_frame(self, raw_frame: str | bytes) -> KrakenBookState | None:
         try:
@@ -199,8 +209,10 @@ class KrakenBookReconstructor:
 
     def _process_frame(self, raw_frame: str | bytes) -> KrakenBookState | None:
         message = _decode_frame(raw_frame)
+        self._last_frame_type = None
         method = message.get("method")
         if method == "subscribe":
+            self._last_frame_type = "subscription_ack"
             self._subscription_acknowledged = False
             self._validate_subscription_ack(message)
             self._subscription_acknowledged = True
@@ -209,12 +221,15 @@ class KrakenBookReconstructor:
         channel = message.get("channel")
         event_type = message.get("type")
         if channel == "heartbeat" and event_type == "update":
+            self._last_frame_type = "heartbeat"
             return None
         if channel == "status" and event_type == "update":
+            self._last_frame_type = "status"
             self._validate_status(message)
             return None
         if channel != "book" or event_type not in {"snapshot", "update"}:
             raise AdapterError("UNSUPPORTED_STREAM_MESSAGE", "Unexpected Kraken WebSocket message")
+        self._last_frame_type = event_type
         if not self._subscription_acknowledged:
             raise AdapterError(
                 "SUBSCRIPTION_NOT_ACKNOWLEDGED",

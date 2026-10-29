@@ -15,6 +15,7 @@ from midas.frontier.historical_replay import PriceHistoryReplayResult
 from midas.frontier.models import (
     FrontierMarket,
     FrontierModel,
+    KrakenBookUpdateFrame,
     MarketBatch,
     PolymarketBookUpdateFrame,
     Provenance,
@@ -451,6 +452,23 @@ class FrontierStore:
             ):
                 raise FrontierStoreError(
                     "Polymarket update frame does not match its captured WebSocket evidence"
+                )
+        elif isinstance(normalized, KrakenBookUpdateFrame):
+            source = normalized.provenance
+            if (
+                raw.venue != normalized.venue
+                or raw.observation_kind != "public_book_update_frame"
+                or raw.http_status != 101
+                or raw.request_url != "wss://ws.kraken.com/v2"
+                or raw.request_url != source.source_url
+                or raw.adapter_version != source.adapter_version
+                or raw.request_started_at_utc != source.request_started_at_utc
+                or raw.received_at_utc != source.response_received_at_utc
+                or raw.request_elapsed_monotonic_ns != source.request_elapsed_monotonic_ns
+                or raw.raw_sha256 != normalized.raw_sha256
+            ):
+                raise FrontierStoreError(
+                    "Kraken book frame does not match its captured WebSocket evidence"
                 )
         normalized_without_persisted_time = self._with_persisted_at(normalized, None)
         normalized_content_json = self._canonical(normalized_without_persisted_time)
