@@ -276,6 +276,70 @@ it('normalizes instrument ordering and refuses oversized detail summaries', () =
   expect(payoutComparison.unavailableFields).toBeGreaterThan(0);
 });
 
+it('marks oversized state and fee-evidence lists as unavailable', () => {
+  const tooManyStates = contract({
+    payoff: {
+      ...contract().payoff,
+      state_ids: Array.from({ length: 65 }, (_, index) => `state-${index}`),
+    },
+  });
+  const stateComparison = compareRelationshipTerms(tooManyStates, tooManyStates);
+  expect(stateComparison.unavailableFields).toBe(1);
+  expect(
+    stateComparison.differences.some(({ field }) => field === 'Payoff state identifiers'),
+  ).toBe(false);
+
+  const tooManyEvidenceIds = contract({
+    fees: {
+      ...contract().fees,
+      evidence_observation_ids: Array.from({ length: 65 }, () => 'e'.repeat(64)),
+    },
+  });
+  const evidenceComparison = compareRelationshipTerms(tooManyEvidenceIds, tooManyEvidenceIds);
+  expect(evidenceComparison.unavailableFields).toBe(1);
+  expect(
+    evidenceComparison.differences.some(({ field }) => field === 'Fee evidence observations'),
+  ).toBe(false);
+
+  const oversizedCombinedStateText = contract({
+    payoff: { ...contract().payoff, state_ids: ['a'.repeat(2500), 'b'.repeat(2000)] },
+  });
+  expect(
+    compareRelationshipTerms(oversizedCombinedStateText, oversizedCombinedStateText),
+  ).toMatchObject({ unavailableFields: 1, differences: [] });
+});
+
+it('bounds long source text and identity terms before building summaries', () => {
+  const left = contract();
+  const tooLong = 'x'.repeat(4097);
+  const oversized = contract({
+    payoff: { ...left.payoff, state_ids: [tooLong] },
+    settlement_asset_identity: {
+      kind: 'token',
+      code: tooLong,
+      network_id: null,
+      asset_reference: null,
+    },
+    resolution: { ...left.resolution, authority: tooLong },
+    fees: { ...left.fees, formula: tooLong },
+    instruments: left.instruments?.map((instrument, index) =>
+      index === 0
+        ? {
+            ...instrument,
+            label: tooLong,
+            price_increment_ranges: [{ start: '0', end: '1', step: tooLong }],
+            payouts: [{ state_id: 'yes', amount: tooLong }],
+          }
+        : instrument,
+    ),
+  });
+
+  const comparison = compareRelationshipTerms(oversized, oversized);
+
+  expect(comparison.unavailableFields).toBe(7);
+  expect(comparison.differences).toEqual([]);
+});
+
 it('makes the comparison unavailable when one market is outside the loaded graph window', () => {
   expect(compareRelationshipTerms(contract(), undefined)).toEqual({
     available: false,

@@ -84,33 +84,62 @@ export function compareRelationshipTerms(
 
   const differences: RelationshipTermDifference[] = [];
   let unavailableFields = 0;
-  const compare = (field: string, leftValue: string | null, rightValue: string | null) => {
-    if (!leftValue?.trim() || !rightValue?.trim()) {
+  const boundedText = (value: string | null | undefined): string | null => {
+    if (typeof value !== 'string' || value.length > MAX_COMPARISON_TEXT_CHARS) return null;
+    return value.trim() ? value : null;
+  };
+  const compareText = (leftText: string, rightText: string) =>
+    leftText === rightText ? 0 : leftText < rightText ? -1 : 1;
+  const boundedStringList = (items: string[] | undefined): string | null => {
+    if (!items?.length || items.length > MAX_COMPARISON_LIST_ITEMS) return null;
+    let totalChars = 0;
+    for (const item of items) {
+      if (!boundedText(item)) return null;
+      totalChars += item.length;
+      if (totalChars + (items.length - 1) * 3 > MAX_COMPARISON_TEXT_CHARS) return null;
+    }
+    return [...items].sort(compareText).join(' · ');
+  };
+  const compare = (
+    field: string,
+    leftValue: string | null | undefined,
+    rightValue: string | null | undefined,
+  ) => {
+    const leftText = boundedText(leftValue);
+    const rightText = boundedText(rightValue);
+    if (!leftText || !rightText) {
       unavailableFields += 1;
       return;
     }
-    if (leftValue !== rightValue) differences.push({ field, left: leftValue, right: rightValue });
+    if (leftText !== rightText) differences.push({ field, left: leftText, right: rightText });
   };
 
   const identityKey = (identity: AssetIdentity | null | undefined): string | null => {
     if (!identity) return null;
-    return JSON.stringify([
-      identity.kind,
-      identity.code,
-      identity.network_id,
-      identity.asset_reference,
-    ]);
+    const values = [identity.kind, identity.code, identity.network_id, identity.asset_reference];
+    let totalChars = 0;
+    for (const value of values) {
+      if (value !== null) {
+        if (typeof value !== 'string' || value.length > MAX_COMPARISON_TEXT_CHARS) return null;
+        totalChars += value.length;
+        if (totalChars > MAX_COMPARISON_TEXT_CHARS) return null;
+      }
+    }
+    const serialized = JSON.stringify(values);
+    return serialized.length <= MAX_COMPARISON_TEXT_CHARS ? serialized : null;
   };
-  const compareText = (leftText: string, rightText: string) =>
-    leftText === rightText ? 0 : leftText < rightText ? -1 : 1;
   const sortedJson = <T>(items: T[]): string | null => {
     if (!items.length || items.length > MAX_COMPARISON_LIST_ITEMS) return null;
-    const serialized = JSON.stringify(
-      [...items].sort((leftItem, rightItem) =>
-        compareText(JSON.stringify(leftItem) ?? '', JSON.stringify(rightItem) ?? ''),
-      ),
-    );
-    return serialized && serialized.length <= MAX_COMPARISON_TEXT_CHARS ? serialized : null;
+    const serializedItems: string[] = [];
+    let totalChars = 2;
+    for (const item of items) {
+      const serialized = JSON.stringify(item);
+      if (serialized === undefined) return null;
+      totalChars += serialized.length + (serializedItems.length ? 1 : 0);
+      if (totalChars > MAX_COMPARISON_TEXT_CHARS) return null;
+      serializedItems.push(serialized);
+    }
+    return `[${serializedItems.sort(compareText).join(',')}]`;
   };
   const instrumentValues = (
     instruments: InstrumentTermRecord[] | undefined,
@@ -119,29 +148,47 @@ export function compareRelationshipTerms(
     if (!instruments?.length || instruments.length > MAX_COMPARISON_INSTRUMENTS) {
       return null;
     }
-    const entries: { key: string; value: string }[] = [];
+    const entries: { key: string; value: string; serialized: string }[] = [];
+    let totalChars = 2;
     for (const instrument of instruments) {
-      const key = instrument.outcome_id?.trim() || instrument.label.trim();
-      const value = select(instrument);
-      if (!key || !value?.trim()) return null;
-      entries.push({ key, value });
+      if (instrument.outcome_id && instrument.outcome_id.length > MAX_COMPARISON_TEXT_CHARS)
+        return null;
+      const outcomeId = boundedText(instrument.outcome_id);
+      const key = outcomeId ?? boundedText(instrument.label);
+      const value = boundedText(select(instrument));
+      if (!key || !value) return null;
+      const serialized = JSON.stringify([key, value]);
+      totalChars += serialized.length + (entries.length ? 1 : 0);
+      if (totalChars > MAX_COMPARISON_TEXT_CHARS) return null;
+      entries.push({ key, value, serialized });
     }
     entries.sort(
       (leftEntry, rightEntry) =>
         compareText(leftEntry.key, rightEntry.key) ||
         compareText(leftEntry.value, rightEntry.value),
     );
-    const serialized = JSON.stringify(entries.map(({ key, value }) => [key, value]));
-    return serialized.length <= MAX_COMPARISON_TEXT_CHARS ? serialized : null;
+    return `[${entries.map(({ serialized }) => serialized).join(',')}]`;
   };
   const priceIncrementRangesKey = (instrument: InstrumentTermRecord): string | null => {
     const ranges = instrument.price_increment_ranges;
-    if (!ranges?.length || ranges.length > MAX_COMPARISON_LIST_ITEMS) return null;
+    if (
+      !ranges?.length ||
+      ranges.length > MAX_COMPARISON_LIST_ITEMS ||
+      ranges.some(({ start, end, step }) => [start, end, step].some((value) => !boundedText(value)))
+    )
+      return null;
     return sortedJson(ranges.map(({ start, end, step }) => [start, end, step]));
   };
   const payoutVectorKey = (instrument: InstrumentTermRecord): string | null => {
     const payouts = instrument.payouts;
-    if (!payouts?.length || payouts.length > MAX_COMPARISON_LIST_ITEMS) return null;
+    if (
+      !payouts?.length ||
+      payouts.length > MAX_COMPARISON_LIST_ITEMS ||
+      payouts.some(({ state_id, amount }) =>
+        [state_id, amount].some((value) => !boundedText(value)),
+      )
+    )
+      return null;
     return sortedJson(payouts.map(({ state_id, amount }) => [state_id, amount]));
   };
 
@@ -149,12 +196,8 @@ export function compareRelationshipTerms(
   compare('Lifecycle', left.lifecycle, right.lifecycle);
   compare(
     'Payoff state identifiers',
-    left.payoff.state_ids.some((state) => state.trim())
-      ? [...left.payoff.state_ids].sort().join(' · ')
-      : null,
-    right.payoff.state_ids.some((state) => state.trim())
-      ? [...right.payoff.state_ids].sort().join(' · ')
-      : null,
+    boundedStringList(left.payoff.state_ids),
+    boundedStringList(right.payoff.state_ids),
   );
   compare('Payoff verification', String(left.payoff.verified), String(right.payoff.verified));
   compare('Outcome coverage', String(left.payoff.exhaustive), String(right.payoff.exhaustive));
@@ -270,12 +313,8 @@ export function compareRelationshipTerms(
   );
   compare(
     'Fee evidence observations',
-    left.fees.evidence_observation_ids?.length
-      ? [...left.fees.evidence_observation_ids].sort().join(' · ')
-      : null,
-    right.fees.evidence_observation_ids?.length
-      ? [...right.fees.evidence_observation_ids].sort().join(' · ')
-      : null,
+    boundedStringList(left.fees.evidence_observation_ids),
+    boundedStringList(right.fees.evidence_observation_ids),
   );
   compare(
     'Fee evidence observed at (UTC)',
