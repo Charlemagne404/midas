@@ -1088,19 +1088,25 @@ resolution assertions, fee authority, source timing, or execution.
 
 The API uses a separate `MIDAS_FRONTIER_ROOT`. Raw source observations, normalized
 records, relationship decisions/reviews, replay results, and paired comparisons
-are append-only. SQLite schema v7 migrates older v2/v3/v4/v5/v6 stores
-additively and enforces update/delete triggers on evidence tables. The v5
-migration adds endpoint indexes without rewriting stored relationship rows;
-v6 adds an indexed comparison table; v7 adds the bounded price-history replay
-table. These changes do not rewrite earlier evidence. Review records link to
-their derived relationship revision, and effective queries resolve the latest
-decision. Query methods use SQLite read-only mode; they do not initialize or
-mutate the store. Listing reads
+are append-only. SQLite schema v8 migrates older v2-v7 stores additively and
+enforces update/delete triggers on evidence tables. The v5 migration adds
+endpoint indexes without rewriting stored relationship rows; v6 adds an
+indexed comparison table; v7 adds the bounded price-history replay table; v8
+adds append-only graph revision counters. These changes do not rewrite earlier
+evidence. Review records link to their derived relationship revision, and
+effective queries resolve the latest decision. Query methods use SQLite
+read-only mode; they do not initialize or mutate the store. Listing reads
 recheck raw body and normalized row hashes, relationship/review hashes and
 revision linkage, and replay/comparison result digests. Write routes
 enforce row and database byte budgets before committing. Repeated captures remain
 distinct because their request and receipt timestamps form part of the evidence
 identity.
+
+Observation writes require any normalized top-level venue to match the captured
+raw venue. `MarketBatch` members and event groups must also match their declared
+batch venue. Reads repeat the source-venue and batch-member checks after row
+hash validation, so rehashing a changed normalized payload cannot silently
+re-label a market across venues while the captured raw row remains intact.
 
 Deterministic replay rejects duplicate market and relationship identities
 before indexing relationships, constructing candidates, or computing

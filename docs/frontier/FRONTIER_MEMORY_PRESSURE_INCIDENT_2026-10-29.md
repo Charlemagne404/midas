@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 13:03 CET |
+| Latest addendum | 2026-10-29 13:08 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Pre-incident checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -2847,3 +2847,34 @@ is unexplained. The observed short test scopes and current quiet PSI support
 bounded development only; they do not establish that the host-wide incident is
 resolved. Archive-manifest provenance and inventory warnings remain a
 separate unresolved integrity concern.
+
+## Bounded storage venue validation — 2026-10-29 13:08 CET
+
+Commit `fbf8fe9` makes `MarketBatch` reject members whose venue differs from
+the batch, makes observation writes reject a normalized top-level venue that
+differs from the captured raw venue, and repeats both checks when stored rows
+are read. A row with a recomputed local digest cannot silently relabel a
+normalized market while its raw source row remains intact. The `/markets` API
+returns HTTP 409 for these tampered fixtures; no network calls occur.
+
+The focused source/model/storage/API regressions passed **6/6 in 8.70 s**. The
+entire storage module then passed **37/37 in 12.19 s**. Both ran serially in
+transient scopes with `MemoryHigh=512M`, `MemoryMax=640M`,
+`MemorySwapMax=0`, `CPUQuota=20%`, and `TasksMax=128`; the storage module also
+had a 45-second runtime bound. Ruff check, formatting, and `git diff --check`
+passed. Pytest emitted its existing Starlette/httpx deprecation warning. All
+fixtures used temporary SQLite stores; no production database or exchange
+source was accessed.
+
+At 13:08, `MemAvailable` was 11,389,616,128 bytes (10.61 GiB), free swap was
+15,970,304 bytes (15.23 MiB), and host memory PSI remained zero through avg300.
+User-manager `memory.events` were unchanged at `high=16,428,175`,
+`max=730,409`, `oom=19`, and `oom_kill=15`. API, Reality, and Reality API
+remained active at restart counts 9/14/0. The capacity timer remained active;
+the gap-detail timer remained disabled. No new OOMD or kernel kill appeared
+in the checked interval. This short bounded run does not resolve the full-swap
+risk, global workload attribution, or archive integrity uncertainty.
+
+**Status:** Incident remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**.
+Frontier can continue only through serial offline work with explicit resource
+bounds. Broad suites, probes, and deployment remain deferred.

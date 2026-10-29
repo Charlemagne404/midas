@@ -14811,3 +14811,25 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
 - **Status:** Incident **PARTIALLY CONTAINED / PARTIALLY VERIFIED**; Frontier
   may continue in bounded offline mode. Broad suites, probes, high-memory
   profiling, and production deployment remain deferred.
+
+## 2026-10-29 13:08 CET — enforce market source venue bindings
+
+- Commit `fbf8fe9` adds `MarketBatch` member-venue validation, requires the
+  normalized top-level source venue to match its raw observation during writes,
+  and repeats source/member checks when stored evidence is read. API listing
+  returns 409 on rehashed cross-venue fixtures.
+- Focused source/model/storage/API regressions passed **6/6 in 8.70 s**; the
+  complete `tests/frontier/test_storage.py` module passed **37/37 in 12.19 s**.
+  Each ran in its own transient user scope capped at 512 MiB high / 640 MiB max,
+  zero swap, 20% CPU, and 128 tasks; storage module runtime was capped at 45 s.
+  Ruff check/format and `git diff --check` passed. The existing Starlette/httpx
+  deprecation warning remains. Temporary fixture stores and mock transports
+  only; no external request or production database access.
+- At 13:08, host PSI remained zero, `MemAvailable` was 10.61 GiB, and swap had
+  15.23 MiB free. User-manager OOM counters were unchanged at 19/15; API,
+  Reality, and Reality API remained active at restart counts 9/14/0. No new
+  OOMD/kernel kill appeared. This bounded quiet sample does not resolve full
+  swap or historical host workload attribution.
+- **Status:** Market venue binding is fixture-verified. Incident remains
+  **PARTIALLY CONTAINED / PARTIALLY VERIFIED**; continue serial offline Frontier
+  work only, with broad suites, live probes, and deployment deferred.
