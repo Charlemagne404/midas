@@ -469,3 +469,28 @@ def test_book_update_api_respects_probe_disable_before_stream_connect(tmp_path: 
     finally:
         client.close()
         asyncio.run(registry.aclose())
+
+
+def test_book_update_replay_respects_source_hold_before_store_read(tmp_path: Path):
+    hold_reason = "Fixture source-use hold"
+    connector = FixtureConnector([_legacy_book_frame()])
+    adapter = PolymarketAdapter(
+        AdapterConfig(probe_policy_block_reason=hold_reason),
+        stream_connector=connector,
+    )
+    registry = AdapterRegistry((adapter,))
+    store = FrontierStore(tmp_path / "frontier")
+    app = FastAPI()
+    app.include_router(router(store, registry))
+    client = TestClient(app)
+    try:
+        response = client.post(
+            "/api/frontier/replay/polymarket/book-updates",
+            json={"observation_ids": ["a" * 64]},
+        )
+        assert response.status_code == 409
+        assert response.json()["detail"] == hold_reason
+        assert connector.calls == 0
+    finally:
+        client.close()
+        asyncio.run(registry.aclose())
