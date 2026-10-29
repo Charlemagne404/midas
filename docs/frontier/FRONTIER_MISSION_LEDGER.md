@@ -16418,3 +16418,14 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
   evidence, not live relationship validation or incident closure. Keep the
   project at serial capped fixture-only admission; Frontier remains
   **PARTIALLY VERIFIED**.
+
+## 2026-10-29 19:30 CET — modeled cost and capital fixture check
+
+- Payoff invariants, FX sensitivity, Kalshi fee sensitivity, and capital-carry
+  fixtures passed **70/70** in 4.61 seconds within a transient 384 MiB High /
+  512 MiB Max / zero-swap / 20%-CPU / 64-task scope. No live fee source,
+  exchange, or production store was used.
+- Post-run PSI averages remained zero, available RAM was about 10.3 GiB,
+  free swap about 20 MiB, and user-manager counters were unchanged. This
+  supports only the tested assumptions and fixture paths. Live economics,
+  host endurance, and deployment remain open; continue serial capped work.

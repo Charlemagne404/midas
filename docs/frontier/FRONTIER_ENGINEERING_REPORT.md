@@ -16510,3 +16510,16 @@ unchanged. This verifies the selected fixture paths for instrument identity,
 relationship economics, and logical implication; it does not establish live
 venue equivalence or resolve the host incident. Frontier remains
 **PARTIALLY VERIFIED**.
+
+### Cost, FX, and capital-carry fixture regression — 2026-10-29 19:30 CET
+
+The bounded economics group passed **70/70** across payoff model invariants,
+FX sensitivity, Kalshi fee sensitivity, and capital carry. It completed in
+4.61 seconds in a transient 384 MiB High / 512 MiB Max / zero-swap / 20%-CPU /
+64-task scope and used controlled fixtures only.
+
+After the run, host PSI averages remained zero, available RAM was about 10.3
+GiB, free swap about 20 MiB, and user-manager memory event counters were
+unchanged. This supports the selected modeled-cost and capital paths; it does
+not verify current fee schedules, accessible venue capital, or live net
+economics. Frontier remains **PARTIALLY VERIFIED**.
