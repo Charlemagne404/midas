@@ -12524,3 +12524,26 @@ with restart counts 9/14; API headroom was 995,328 bytes below `MemoryHigh`.
 No kernel/oomd kill appeared after 23:43:24. This is one more short scheduled
 run, not endurance evidence. Keep broad tests, profiling, and multi-source
 replay deferred while the API remains near its soft limit.
+
+## Full current Frontier Python suite — 2026-10-29 02:19 CET
+
+On the exact current worktree, `pytest -q tests/frontier` passed **648/648**
+with one existing Starlette/httpx TestClient deprecation warning. The transient
+user service had `MemoryHigh=640M`, `MemoryMax=768M`, no swap, 25% CPU, 64
+tasks, and a 180-second wall limit; it completed successfully in 2:06.432
+wall, 25.157 CPU seconds, 254.8 MiB cgroup peak, zero swap. The autouse test
+guard denied file I/O to both captured-live-source roots; no live probes were
+enabled or requested.
+
+At 02:18:59, host memory PSI and API PSI were zero, MemAvailable was 9.9 GiB,
+swap use 3.08 GiB, user-manager max/OOM/OOM-kill counters were unchanged, and
+the API/Reality services remained active with restarts 9/14. API headroom was
+962,560 bytes below `MemoryHigh`. I/O PSI rose to `some=2.29% avg10 / 4.74%
+avg60 / 2.45% avg300` and `full=2.14% / 4.42% / 2.26%`; attribution is
+unknown, so defer further disk-heavy verification until it eases.
+
+| Verification item | Status | Evidence / remaining limit |
+| --- | --- | --- |
+| Current Frontier Python suite | COMPLETE AND VERIFIED | 648/648 on current tree under explicit cgroup bounds; does not cover all repository legacy, frontend/browser, endurance, or live-source requirements. |
+| Memory/OOM effect of bounded suite | PARTIALLY VERIFIED | No memory PSI, swap, OOM, or service restart increase was observed. |
+| I/O headroom after suite | PARTIALLY VERIFIED | Short-window PSI rose; cause unknown. Defer more disk-heavy checks pending recovery. |

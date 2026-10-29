@@ -13219,3 +13219,22 @@ The existing source-analysis timer completed another bounded run at
 Host PSI remained zero at 02:11:39 and no OOM counter or restart count
 changed. The API remained only 995,328 bytes below `MemoryHigh`. This supports
 continued constrained work, not broad runtime admission or endurance.
+
+## Current Frontier Python regression — 2026-10-29 02:19 CET
+
+The exact current `tests/frontier` suite passed **648/648**, with one existing
+Starlette/httpx TestClient deprecation warning. The transient service was
+bounded to `MemoryMax=768M`, `MemorySwapMax=0`, 25% CPU, 64 tasks, and a
+180-second wall limit; systemd recorded a 254.8 MiB cgroup peak, zero swap,
+25.157 CPU seconds, and successful completion in 2:06.432. The test autouse
+guard denies access to the captured live-source paths. No external source
+probe was enabled.
+
+Post-run memory PSI remained zero and user-manager OOM counters were
+unchanged. Host MemAvailable was 9.9 GiB; swap remained 3.08 GiB; API
+`MemoryHigh` headroom was 962,560 bytes. I/O PSI increased to about 2.3%
+`some` and 2.1% `full` on the 10-second window; attribution is unknown.
+Defer additional disk-heavy tests until it subsides. This completes the
+current Frontier Python suite only; broader MIDAS regressions, frontend and
+browser suites, live cross-venue validation, endurance, and deployment remain
+open.

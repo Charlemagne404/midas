@@ -1119,3 +1119,24 @@ Restart counts remained 9/14. The post-run journal scan found no kernel OOM
 or systemd-oomd kill after 23:43:24 on Oct 28. This successful scheduled run
 supports continuing bounded offline work but does not establish sustained
 headroom or identify the earlier pressure initiator.
+
+## Full Frontier Python suite under the resource gate — 2026-10-29 02:19 CET
+
+The current `tests/frontier` suite passed **648/648** in 120.52 seconds. It
+ran once in a transient user scope with `MemoryHigh=640M`,
+`MemoryMax=768M`, `MemorySwapMax=0`, 25% CPU, 64 tasks, and a 180-second wall
+limit. The unit completed successfully in 2 minutes 6.432 seconds, with
+25.157 CPU seconds, a 254.8 MiB cgroup peak, and zero swap. The suite's
+autouse guard denied reads from both captured live-source paths. The only
+warning was the existing Starlette/httpx TestClient deprecation.
+
+At 02:18:59, host `MemAvailable` was 10,622,218,240 bytes and swap use was
+3,311,120,384 bytes. Memory PSI remained zero on host and API; user-manager
+`max=728,363`, `oom=19`, `oom_kill=15` and API leaf max/OOM counters remained
+unchanged. API and Reality stayed active with restart counts 9/14; API had
+962,560 bytes below `MemoryHigh`. No kernel OOM or systemd-oomd kill was found
+after 23:43:24 on Oct 28. I/O PSI after the run was `some avg10=2.29%`,
+`avg60=4.74%`, `avg300=2.45%`; `full` was `2.14%`, `4.42%`, and `2.26%`.
+The cause of that short I/O-pressure increase is not assigned. Defer further
+disk-heavy suites and persistence tests until I/O PSI eases. This is bounded
+validation, not endurance or incident closure.
