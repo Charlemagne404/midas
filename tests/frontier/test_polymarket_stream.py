@@ -472,10 +472,10 @@ def test_book_update_api_binds_to_saved_market_and_persists_fixture_evidence(tmp
         assert connector.calls == 1
 
         with sqlite3.connect(store.path) as connection:
-            raw_json = connection.execute(
-                "SELECT raw_json FROM observations WHERE observation_id=?",
+            raw_json, valid_normalized_json = connection.execute(
+                "SELECT raw_json,normalized_json FROM observations WHERE observation_id=?",
                 (observation_ids[0],),
-            ).fetchone()[0]
+            ).fetchone()
             invalid_normalized_json = store._canonical({"not_a_stream_frame": True})
             invalid_row_hash = hashlib.sha256(
                 f"{raw_json}\n{invalid_normalized_json}".encode()
@@ -490,6 +490,31 @@ def test_book_update_api_binds_to_saved_market_and_persists_fixture_evidence(tmp
         assert (
             "Stored Polymarket event-frame evidence is not readable"
             in corrupted_listing.json()["detail"]
+        )
+        assert connector.calls == 1
+
+        normalized_with_wrong_binding = json.loads(valid_normalized_json)
+        normalized_with_wrong_binding["bound_market_observation_id"] = observation_ids[1]
+        wrong_binding_json = store._canonical(normalized_with_wrong_binding)
+        wrong_binding_row_hash = hashlib.sha256(
+            f"{raw_json}\n{wrong_binding_json}".encode()
+        ).hexdigest()
+        with sqlite3.connect(store.path) as connection:
+            connection.execute(
+                "UPDATE observations SET normalized_json=?,row_sha256=? WHERE observation_id=?",
+                (wrong_binding_json, wrong_binding_row_hash, observation_ids[0]),
+            )
+        wrong_binding_listing = client.get("/api/frontier/polymarket/book-updates")
+        assert wrong_binding_listing.status_code == 409
+        assert "not a Polymarket market observation" in wrong_binding_listing.json()["detail"]
+        wrong_binding_replay = client.post(
+            "/api/frontier/replay/polymarket/book-updates",
+            json={"observation_ids": observation_ids},
+        )
+        assert wrong_binding_replay.status_code == 409
+        assert (
+            "not a Polymarket market observation"
+            in wrong_binding_replay.json()["detail"]["message"]
         )
         assert connector.calls == 1
     finally:

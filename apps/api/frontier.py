@@ -3021,6 +3021,7 @@ def router(
                     raise FrontierStoreError(
                         "Stored Polymarket stream-frame summary failed provenance validation"
                     )
+                _validate_polymarket_book_update_market_binding(store, frame)
                 items.append(
                     {
                         "observation_id": row["observation_id"],
@@ -3076,6 +3077,9 @@ def router(
                     )
                 records.append(row)
             try:
+                for record in records:
+                    frame = PolymarketBookUpdateFrame.model_validate(record["normalized"])
+                    _validate_polymarket_book_update_market_binding(store, frame)
                 result = replay_polymarket_book_capture(records)
             except (
                 AdapterError,
@@ -6220,6 +6224,50 @@ def _read_stored_observations(
             status_code=409,
             detail=f"Stored source observation evidence is not readable: {error}",
         ) from error
+
+
+def _validate_polymarket_book_update_market_binding(
+    store: FrontierStore,
+    frame: PolymarketBookUpdateFrame,
+) -> None:
+    bound_observation_id = frame.bound_market_observation_id
+    if bound_observation_id is None:
+        raise ValueError("Persisted Polymarket frame has no saved-market observation binding")
+    bound = store.observation(bound_observation_id)
+    if bound is None:
+        raise ValueError("Persisted Polymarket frame references a missing saved-market observation")
+    if bound["venue"] != Venue.POLYMARKET.value or bound["observation_kind"] not in {
+        "market_listing",
+        "instrument_metadata",
+        "market_metadata",
+        "event_market_listing",
+    }:
+        raise ValueError("Polymarket frame binding is not a Polymarket market observation")
+    normalized = bound["normalized"]
+    if not isinstance(normalized, dict):
+        raise ValueError("Bound Polymarket market observation is not a normalized object")
+    values = normalized.get("markets")
+    if not isinstance(values, list):
+        values = [normalized]
+    frame_market_ids = {update.native_market_id for update in frame.updates}
+    frame_instrument_ids = {update.native_instrument_id for update in frame.updates}
+    if len(frame_market_ids) != 1:
+        raise ValueError("Persisted Polymarket frame mixes native market identifiers")
+    native_market_id = next(iter(frame_market_ids))
+    for value in values:
+        if not isinstance(value, dict) or "canonical_id" not in value:
+            continue
+        market = FrontierMarket.model_validate(value)
+        if (
+            market.venue == Venue.POLYMARKET
+            and market.native_market_id == native_market_id
+            and frame_instrument_ids
+            <= {instrument.native_instrument_id for instrument in market.instruments}
+        ):
+            return
+    raise ValueError(
+        "Bound Polymarket market observation does not contain this frame's market and instruments"
+    )
 
 
 async def _load_market_records(
