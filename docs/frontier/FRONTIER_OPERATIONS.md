@@ -894,11 +894,12 @@ that event replay restores upstream continuity or produces economics.
 The same panel lists already persisted frames through
 `GET /api/frontier/polymarket/book-updates?limit=32&offset=0`. The endpoint
 accepts `limit` 1–32 and an offset up to 1,000,000, reads only the local store,
-returns provenance summaries without raw frame bodies, and reports an exact
-next page using a one-row lookahead. Listing and replay both enforce the
-Polymarket evidence-use hold. Neither requires live public probing when the
-venue is otherwise permitted; opening the panel itself does not start a
-capture or contact the exchange.
+returns provenance summaries without raw frame bodies, verifies the saved
+market observation and its instrument IDs, and reports an exact next page
+using a one-row lookahead. Listing and replay both enforce the Polymarket
+evidence-use hold. Neither requires live public probing when the venue is
+otherwise permitted; opening the panel itself does not start a capture or
+contact the exchange.
 
 ## Kraken Spot public book stream
 

@@ -14675,3 +14675,39 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
   tests) and valid-hash malformed normalized shapes (this API test). Production
   store validation is still pending. Continue serial bounded offline work;
   incident status remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**.
+
+## 2026-10-29 12:38 CET — verify stored Polymarket market binding
+
+- Commit `3ce376e` closes a provenance gap in event-frame listing and replay:
+  both routes now load the referenced market observation and require it to be
+  a Polymarket market record containing the event's native market and all
+  instrument IDs. This rejects a valid-hash frame whose binding points to
+  another stream frame or mismatched market.
+- The focused API cases passed **2/2 in 5.39 s** under 512 MiB high / 640 MiB
+  max, zero swap, 20%-CPU, 128 tasks, and 60 seconds. Coverage includes valid
+  parent binding, malformed normalized data, wrong parent kind, and source
+  holds. Ruff check/format passed; the known TestClient warning remains.
+- At 12:38, host `MemAvailable` was about 10 GiB and PSI was zero through
+  avg300; `SwapFree` remained about 14 MiB. OOM counters were unchanged, with
+  no kill records since 12:36. This is not endurance evidence.
+- **Status:** Frame-to-market binding is fixture-verified for listing and
+  replay. Live and production-store validation remain pending. The host stays
+  partially contained; proceed only with serial, bounded, offline work.
+
+## 2026-10-29 12:40 CET — reject rehashed cross-market frame binding
+
+- Commit `f8dcfb8` adds a second valid Polymarket market fixture with different
+  native market and instrument IDs. After the test recomputes a frame row hash
+  to point at that unrelated parent, both listing and replay reject it with
+  HTTP 409. The test complements the malformed-row and wrong-parent-kind
+  cases from the preceding checkpoint.
+- The focused API cases passed **2/2 in 4.81 s** with 512 MiB high / 640 MiB
+  max, zero swap, 20%-CPU, 128 tasks, and 60 seconds. Ruff check/format passed.
+  A test-only append-trigger setup failure was corrected in the temporary
+  store; the final run passed and no production data was involved.
+- At 12:40, host PSI was zero through avg300 and `MemAvailable` was about
+  10 GiB; `SwapFree` remained about 14 MiB. OOM events/counters were unchanged
+  and no kill appeared since 12:38.
+- **Status:** Saved Polymarket replay now has fixture coverage for absent,
+  wrong-kind, and mismatched market parents. Production-store and live-source
+  validation remain pending; continue bounded offline work only.

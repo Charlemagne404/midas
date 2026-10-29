@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 12:36 CET |
+| Latest addendum | 2026-10-29 12:40 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Pre-incident checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -2645,3 +2645,31 @@ This adds a short quiet point after the prior bounded run, not durable recovery
 evidence. The systemd-oomd user-manager monitor remains enabled at the 50%
 pressure threshold, and near-total swap occupancy continues to constrain
 admission. No host service or schedule was changed.
+
+## Post-binding-check admission sample — 2026-10-29 12:38 CET
+
+The saved-frame binding checks passed **2/2 in 5.39 seconds** in a bounded
+zero-swap scope; the test used a temporary store and no exchange connection.
+At 12:38, host PSI was zero through avg300 and `MemAvailable` remained about
+10 GiB, but swap free was still about 14 MiB. User-manager memory events
+remained `high=16,428,175`, `max=730,409`, `oom=19`, `oom_kill=15`, and
+`oom_group_kill=0`; the user-slice task count was 890. No OOMD or kernel kill
+appeared since 12:36. This is another short quiet interval only; no persistent
+service or schedule changed, and the incident remains partially contained.
+
+## Post cross-market binding fixture — 2026-10-29 12:40 CET
+
+The final focused API run passed **2/2 in 4.81 seconds** under a zero-swap,
+640 MiB maximum scope. The extra fixture rejected a rehashed frame bound to a
+valid but unrelated Polymarket market; both listing and replay failed closed.
+An earlier attempt hit the temporary SQLite append-only trigger after a new
+fixture row recreated it. The test setup now drops the trigger again before
+tampering, and the rerun passed. This was a test-fixture failure, not a host
+PID or memory event.
+
+At 12:40, `MemAvailable` was about 10 GiB, `SwapFree` about 14 MiB, and PSI
+was zero through avg300. User-manager OOM counters remained unchanged, the
+user slice had 889 tasks, and no OOMD/kernel kill appeared since 12:38. These
+samples cover only short bounded offline tests. Near-total swap occupancy and
+historical pressure attribution remain unresolved; no persistent service or
+schedule changed.

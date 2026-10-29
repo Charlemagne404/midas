@@ -15074,9 +15074,10 @@ collector or perform a public probe. The implementation is committed as
 `POST /api/frontier/replay/polymarket/book-updates` accepts one to 32 unique
 lowercase SHA-256 observation IDs. It reads only stored Polymarket
 `public_book_update_frame` evidence, applies the existing source-use hold, and
-does not open a source connection. The replay validates store identity,
-provenance, saved-market binding, capture session, and adapter/schema
-versions; verifies raw frame hashes; re-decodes each bounded UTF-8 frame; and
+does not open a source connection. The replay validates store identity and
+provenance, requires a saved-market observation ID shared by the capture, and
+checks capture-session and adapter/schema-version consistency; verifies raw
+frame hashes; re-decodes each bounded UTF-8 frame; and
 requires exact agreement with stored normalized updates. Total raw input is
 capped at 8 MiB. The API returns frames ordered by persisted local monotonic
 receipt elapsed time with deterministic input/result hashes. This is only the
@@ -15224,3 +15225,48 @@ through avg300, and swap free remained about 14 MiB. User-manager OOM counters
 were unchanged and no OOMD/kernel kill appeared since 12:31. This short
 fixture check does not change the host incident disposition or establish
 production-store behavior.
+
+## Verify Polymarket frame-to-market evidence links — 2026-10-29 12:38 CET
+
+Commit `3ce376e` makes both saved-frame listing and offline replay resolve the
+stored `bound_market_observation_id`. The referenced row must be a readable
+Polymarket market observation, and its normalized market must contain the
+frame's native market ID and every native instrument ID in its events. Missing,
+wrong-venue, wrong-kind, and non-matching parent evidence now fails closed.
+This closes a provenance gap: the prior replay code required a non-null binding
+and consistency across frames but did not dereference the saved market row.
+
+The focused API cases passed **2/2 in 5.39 seconds** under a 512 MiB high /
+640 MiB max, zero-swap, 20%-CPU, 128-task, 60-second scope. They exercise valid
+market linkage, an invalid normalized frame with a recomputed row hash, a
+frame linked to another frame instead of a market, and held-source rejection
+for both listing and replay. Ruff check/format passed. No public request or
+production store was used.
+
+At 12:38, `MemAvailable` remained about 10 GiB, `SwapFree` about 14 MiB, and
+host PSI was zero through avg300. User-manager OOM counters remained unchanged;
+no systemd-oomd or kernel kill appeared since 12:36. This is a brief quiet
+post-test sample; production-store and live-source validation remain pending.
+
+## Reject rehashed cross-market Polymarket bindings — 2026-10-29 12:40 CET
+
+Commit `f8dcfb8` extends the API fixture with a second valid Polymarket market
+record whose native market and instrument IDs differ from the captured frame.
+The fixture rewrites the frame's bound observation ID and recomputes its row
+hash. Both listing and replay return HTTP 409, proving they compare the
+resolved parent market and instrument identity rather than only checking the
+parent row's venue and kind.
+
+The two focused API cases passed **2/2 in 4.81 seconds** under a 512 MiB high /
+640 MiB max, zero-swap, 20%-CPU, 128-task, 60-second scope. The run covers the
+valid parent, malformed normalized data, wrong parent kind, a valid but
+unrelated Polymarket parent, and source-use holds. Ruff check/format passed.
+One earlier attempt failed only because `append_observation` recreated the
+temporary database's append-only trigger before the second tamper; the test
+now drops that trigger again in the temporary fixture. No code or production
+store was affected.
+
+At 12:40, `MemAvailable` remained about 10 GiB, swap free about 14 MiB, and
+PSI was zero through avg300. OOM counters were unchanged, and no OOMD/kernel
+kill appeared since 12:38. This short window does not change the partially
+contained host disposition.
