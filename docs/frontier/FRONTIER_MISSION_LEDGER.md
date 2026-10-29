@@ -16761,3 +16761,26 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
   no OOMD/kernel kill appeared. Research Director is due 21:15 and capacity
   21:20:55. The RSS instrumentation candidate remains isolated; its focused
   test is still held pending the scheduled capacity run and fresh admission.
+
+## 2026-10-29 21:22 CET — scheduled capacity run and bounded RSS fixtures
+
+- The capacity timer ran 21:21:04–11 and exited 0 under High 160 MiB /
+  Max 192 MiB / zero swap (6.222 CPU seconds). systemd removed its cgroup
+  before inspection; MemoryPeak was not set. The capacity output retained
+  manifest-size/inventory/provenance warnings; no historical evidence was
+  changed.
+- Four focused tests on the isolated capacity candidate passed in 2.59
+  seconds under a 160/192 MiB, zero-swap, 10%-CPU, 64-task scope. They cover
+  bounded capacity output, Linux VmHWM parsing, source/scope metadata, and
+  unavailable telemetry. The runner used local fixture data only.
+- Post-run PSI averages were zero, MemAvailable about 10 GiB, and swap had
+  about 520 KiB free. User-manager high/max/oom/oom_kill counts were
+  16,438,383/732,432/19/15; no OOMD/kernel kill appeared and API/Reality
+  restarts stayed 9/14. The +12 parent high count since 20:56 is not
+  attributed without a leaf counter.
+- Candidate commits bd09640, c42f987, and d5847df remain in the separate
+  Reality capacity worktree, clean and undeployed. No timer, service,
+  Reality collector, archive, or production configuration was modified.
+  Continue serial and capped; broad tests, live probes, and deployment remain
+  deferred while swap is full and OOMD visibility/cause attribution remain
+  unresolved.

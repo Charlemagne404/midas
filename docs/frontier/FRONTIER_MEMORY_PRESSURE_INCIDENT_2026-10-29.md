@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 21:11 CET |
+| Latest addendum | 2026-10-29 21:22 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Pre-incident checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -5248,3 +5248,37 @@ data job, not live collection or an integrity check. The next Research
 Director run is due 21:15 and the capacity check is due 21:20:55. No Frontier
 test, replay, or public probe was admitted. Keep the capacity-candidate test
 pending until after the scheduled capacity run and a fresh pressure sample.
+
+### Capacity run and isolated RSS test — 2026-10-29 21:22 CET
+
+The scheduled Reality capacity monitor ran at 21:21:04–11 and exited 0,
+consuming 6.222 CPU seconds under High 160 MiB / Max 192 MiB / zero swap.
+systemd removed the inactive service cgroup before this inspection;
+MemoryPeak was not set, so this run has no valid peak measurement. The output
+retained the existing ARCHIVE_MANIFEST_SIZE_LIMIT,
+ARCHIVE_INVENTORY_UNVERIFIED, and ARCHIVE_CAPACITY_UNKNOWN warnings. No
+manifest, archive, collector, or service configuration was changed.
+
+At 21:21, host memory PSI averages were zero, MemAvailable about 10 GiB, and
+only about 520 KiB of the 4 GiB swap remained free. The user-manager
+memory.events.high count was 16,438,383 (+12 since 20:56); max=732,432,
+oom=19, oom_kill=15, and oom_group_kill=0. The +12 was temporally associated
+with the capacity run but cannot be attributed because the service leaf no
+longer exists. No OOMD or kernel kill appeared through 21:22, and API and
+Reality restart counts remained 9 and 14.
+
+The isolated capacity-monitor candidate now has three local commits:
+bd09640 bounds catalog materialization, c42f987 records the Python process's
+Linux VmHWM in bytes with explicit scope/source and null-on-unavailable
+behavior, and d5847df covers the telemetry. The focused fixture selection
+passed 4/4 in 2.59 seconds under MemoryHigh=160 MiB, MemoryMax=192 MiB,
+MemorySwapMax=0, CPUQuota=10%, and TasksMax=64. The user-manager high/max/OOM
+counters were unchanged across the test; no source recordings or network
+transports were used. The candidate remains in its separate worktree,
+uninstalled and undeployed. It does not repair archive evidence or claim a
+service-cgroup peak.
+
+This sample admits another serial, zero-swap-capped fixture/code task after
+a fresh check. It does not support broad tests, simultaneous work, live
+probes, production integration, or deployment while swap remains full and
+OOMD registration/marginal-cause uncertainty remains.
