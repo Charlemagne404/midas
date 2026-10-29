@@ -14629,3 +14629,30 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
   **PARTIALLY CONTAINED / PARTIALLY VERIFIED**. Continue the Frontier goal with
   serial offline work and small capped checks after admission; broad suites,
   source probes, and deployment remain pending.
+
+## 2026-10-29 12:31 CET — browse saved Polymarket event frames
+
+- Commit `ddceb04` adds a bounded local-store listing API and a Mission Control
+  panel for previously persisted Polymarket stream frames. Summaries are
+  provenance-checked, omit raw bodies, honor source-use holds, and paginate
+  with a one-row lookahead. The UI can replay saved evidence offline without
+  requiring the live public-probe flag; no capture is triggered on load.
+- Focused API coverage passed **2/2 in 5.21 s** for local summaries, exact
+  pagination, raw-body omission, and the hold gate. The fixture UI journey
+  passed **1 selected test** (8 skipped) in 17.90 s total. `tsc -b`, ESLint,
+  Ruff, Ruff format, and Prettier formatting passed. No live request occurred.
+- A first UI runner scope with `TasksMax=64` hit its own cgroup fork limit
+  before collecting tests. A 128-task scope with one Vitest worker passed; the
+  user slice was at 889/37,082 tasks and OOM counters remained unchanged. This
+  was a local test cap, not evidence of a host-wide PID shortage.
+- At 12:31, `MemAvailable` was about 10 GiB; `SwapFree` about 14 MiB; PSI
+  avg10/avg60 was zero and avg300 was below 0.1%. systemd-oomd was actively
+  monitoring `user@1000.service` at the 50% pressure threshold; no OOMD/kernel
+  kill appeared since 12:18. API, Reality, Reality API, core Continental and
+  Echo services, Headscale, RustDesk, and SSH socket were active. Gap-detail
+  remained disabled and capacity timer waited. See the incident report for
+  counters, limits, and remaining risks.
+- **Status:** The saved-frame API/UI path is complete and fixture-verified;
+  live-store validation remains pending. Host incident status remains
+  **PARTIALLY CONTAINED / PARTIALLY VERIFIED**. Continue only serial bounded
+  offline work while swap remains nearly exhausted.

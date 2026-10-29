@@ -184,6 +184,14 @@ recovery. A bounded saved-market API and Mission Control panel expose explicit
 capture. The panel is disabled under the default source config, and no live
 capture is claimed.
 
+Persisted frames can be browsed through
+`GET /api/frontier/polymarket/book-updates` in pages of at most 32 summaries.
+This local-store route enforces the venue source-use hold, revalidates frame
+provenance, omits raw bodies, and uses a one-row lookahead for `next_offset`;
+it makes no network request. Mission Control can replay a listed frame using
+the separate stored-evidence replay route even when live probing is disabled,
+provided the evidence-use policy permits it.
+
 Kraken's saved spot-pair inspector exposes a separate explicit action at
 `POST /probe/kraken/book-updates`. The UI requires the recorded source to
 advertise `book_updates`, enable public probing, and have no policy hold; the

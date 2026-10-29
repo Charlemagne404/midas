@@ -15169,3 +15169,39 @@ timers remained in their prior states; no OOMD/kernel kill appeared since
 11:18 CET. This brief quiet test remains compatible only with small serialized
 offline continuation while full swap recovery and longer pressure observation
 remain open.
+
+## Browse saved Polymarket event frames — 2026-10-29 12:31 CET
+
+Commit `ddceb04` adds `GET /api/frontier/polymarket/book-updates` and a saved
+event-frame section to the Polymarket Market Details panel. The API reads only
+the local Frontier store, applies the Polymarket source-use hold, validates
+the stored frame summary and provenance linkage, and returns at most 32
+summaries per page without raw frame bodies. It uses a one-row lookahead for
+`next_offset`; `limit` is bounded to 1–32 and `offset` to 1,000,000. The route
+does not contact Polymarket. The panel filters each bounded page to the
+selected native market and offers an explicit offline replay action for a
+previously saved frame. This works independently of the live-probe flag when
+the evidence-use policy allows it; it does not start a capture.
+
+Verification on the isolated Frontier worktree:
+
+- The fixture-backed UI journey passed **1 selected test** (8 skipped) in
+  17.90 seconds total; it loaded a prior saved frame, replayed it before any
+  capture request, and then retained the explicit capture/replay flow.
+- The focused API cases passed **2/2 in 5.21 seconds**, checking saved-page
+  summaries, raw-body omission, pagination/lookahead, local-only response
+  markers, replay persistence, and the fail-closed source-use hold.
+- `tsc -b` exited 0 with a 384 MiB Node heap in a 640 MiB/zero-swap scope; the
+  measured peak was 411.5 MiB and 20 tasks. ESLint, Ruff, Ruff format, and
+  Prettier formatting passed. The existing Starlette/httpx TestClient warning
+  remained. No live source connection or public capture occurred.
+- A first UI test attempt stopped before test collection because its transient
+  scope was capped at 64 tasks; the kernel rejected a fork in that scope. The
+  bounded retry used a 128-task scope and one Vitest worker and passed. This
+  was a test-wrapper limit, not a host-wide PID shortage.
+
+The current host admission snapshot and this test-scope incident are recorded
+in [`the 2026-10-29 memory-pressure follow-up`](FRONTIER_MEMORY_PRESSURE_INCIDENT_2026-10-29.md).
+The host remains partially contained: swap is nearly full, so Frontier work
+continues only as serial, bounded, offline development. No service or timer
+was changed, and no production store was touched.

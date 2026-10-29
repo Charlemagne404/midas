@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 11:34 CET |
+| Latest addendum | 2026-10-29 12:31 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Pre-incident checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -2577,3 +2577,55 @@ checkpoint. Do not run another compiler/build/browser suite or broad research
 job until a fresh admission sample shows PSI back near baseline. Current status
 remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**; safe continuation is
 limited to small serialized offline edits and checks after admission.
+
+## Bounded Frontier continuation and current admission sample — 2026-10-29 12:31 CET
+
+No persistent service, timer, production store, protected recorder, or OOM
+policy was changed during this Frontier continuation. A focused frontend test
+was first started in a disposable scope capped at 64 tasks. At 12:24:13 the
+kernel logged `fork rejected by pids controller` for that exact transient
+scope, and Vitest stopped before collecting tests. This is attributed to the
+scope's deliberately low `TasksMax=64`, not a host or user-slice task ceiling:
+the enclosing `user-1000.slice` later measured 889 tasks against a 37,082-task
+maximum. The same focused test was rerun with `TasksMax=128`, `GOMAXPROCS=2`,
+and one Vitest worker; it passed **1/1** (7.39 seconds of test time, 17.90
+seconds total). The transient PID-limit failure is separate from the October
+28 memory-pressure kills and did not change OOM counters.
+
+The saved-frame listing API cases passed **2/2 in 5.21 seconds** under a
+512 MiB high / 640 MiB max, zero-swap, 20%-CPU, 128-task, 60-second bound.
+The frontend `tsc -b` check exited 0 under the same memory and task bounds with
+a 384 MiB Node heap; its transient peaked at 411,545,600 bytes and 20 tasks.
+ESLint and Prettier checks passed after formatting the two edited frontend
+files. Ruff check/format passed for the Python files. One existing
+Starlette/httpx TestClient deprecation warning appeared.
+The checks exercised fixture-backed UI/API behavior only; no exchange
+connection or live capture occurred.
+
+At 12:31 CET, `MemAvailable` was about 10 GiB, `SwapFree` about 14 MiB, and
+host PSI was zero over avg10/avg60 (`some` avg300 0.08%, `full` avg300 0.07%).
+`user-1000.slice` charged 10.26 GB memory and 3.41 GB swap; its task count was
+889/37,082. User-manager `memory.events` remained `high=16,428,175`,
+`max=730,409`, `oom=19`, `oom_kill=15`, and `oom_group_kill=0`. The active
+`user@1000.service` had 10.18 GB memory and 2.86 GB swap and retained
+`ManagedOOMMemoryPressure=kill` with its 50% threshold. Unlike the earlier
+04:xx `oomctl` snapshot, `oomctl dump` now lists this user manager among
+memory-pressure monitored cgroups at 50%; the earlier reporting mismatch is
+not present in this sample, but continuity between samples is unverified.
+
+The MIDAS API, Reality collector/API, and systemd-oomd were active. API and
+Reality restart counts remained 9 and 14; Reality API remained at zero. The
+capacity timer was waiting after its 12:18:53 trigger and retained its 160 MiB
+high / 192 MiB max / zero-swap bound. The gap-detail timer remained inactive
+and disabled. Continental contact/status/Cloud, Echo production/staging,
+Headscale, and RustDesk were active; `ssh.socket` was listening on port 22.
+No systemd-oomd kill was recorded since 12:18, and the only new kernel record
+in the checked interval was the bounded test-scope fork rejection. These
+observations establish a quiet bounded validation window, not durable incident
+resolution. Swap is nearly exhausted and the October 28 global pressure
+initiator remains unproven.
+
+**Disposition:** Frontier can continue as serial, bounded, offline work after
+a fresh admission sample. Broad suites, builds, public probes, source capture,
+and production deployment remain deferred while swap and long-term pressure
+behavior are unresolved.
