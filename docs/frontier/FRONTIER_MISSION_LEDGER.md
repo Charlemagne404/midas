@@ -13284,3 +13284,6 @@ timer active, and no new OOM entry was found. `oomctl` last showed no monitored
 groups at 04:46. This extends the quiet observation to about five hours and
 six minutes after the last OOMd kill; it does not resolve nearly full swap or
 the monitor-registration discrepancy.
+
+Completion matrix, incident report, and migration/capacity validation
+checkpoint: `dbc146b` (`docs(frontier): record migration and capacity checks`).
