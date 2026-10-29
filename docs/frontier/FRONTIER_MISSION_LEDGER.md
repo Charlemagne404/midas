@@ -1,5 +1,25 @@
 # Project Frontier Mission Ledger
 
+## Current host state — 2026-10-29 01:08 CET
+
+Reality has resumed recording after cold replay: status says
+`RECORDING_UNSEQUENCED`, `active_receiving`, 16/16 fresh books, zero failures,
+and storage grew from 12,133,811,197 bytes at 01:07:24 to 12,134,229,021 at
+01:08:52. `sequence_verified` remains false. Do not restart or alter it.
+
+Two bounded Frontier modules passed in separate user scopes: Arena admission
+15/15 in 5.90 seconds and scheduling 12/12 in 17.89 seconds. Each scope had a
+512 MiB hard cap, zero swap, 25% CPU, 16-task limit, and 30-second timeout.
+The scheduling module emitted one existing Starlette/httpx deprecation
+warning. No OOM counter changed; host/user PSI remained near zero and 9.9 GiB
+was available. API and Reality stayed active with about 1.30 MiB and 0.82 MiB
+`MemoryHigh` headroom.
+
+Continue with bounded tests only. Keep full suites, replay, probes, and
+research batches paused until the 01:16 capacity run validates the 160 MiB
+soft limit. Gap-detail timer remains disabled. Preserve all original dirty
+changes and the untracked public-probe evidence directory.
+
 ## Current host state — 2026-10-29 01:05 CET
 
 The focused isolated capacity regression passed **5/5** (`35` deselected) in

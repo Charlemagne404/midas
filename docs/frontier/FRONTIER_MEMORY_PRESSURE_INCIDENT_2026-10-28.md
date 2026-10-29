@@ -2,7 +2,7 @@
 
 **Incident date:** 2026-10-28 (CET)
 
-**Checkpoint captured:** 2026-10-29 00:50 CET
+**Checkpoint captured:** 2026-10-29 01:08 CET
 
 **Scope:** Host reliability interruption during Project Frontier
 
@@ -34,24 +34,27 @@ Two narrowly scoped containment changes are in effect:
   128 MiB hard cap caused seven kernel memcg OOM kills. The 00:46 scheduled
   run completed in 33.3 seconds at a 137.4 MiB peak, but the old 128 MiB soft
   limit caused measurable reclaim PSI. The new 160 MiB soft limit is pending
-  its next scheduled validation at 01:16; `capacity.json` is fresh but still
-  flags invalid archive provenance and stale collector status.
+  its next scheduled validation at 01:16; the 00:46 `capacity.json` records
+  invalid archive provenance and stale collector status as of that earlier
+  observation.
 
 Reality was killed by systemd-oomd and automatically restarted. Its restart
 path fully replays and verifies the recording before resuming collection. At
-00:50 CET it remained active but had not written a fresh status since before
-the restart; its process had read about 9.72 GB during cold replay and its
-cgroup was within 0.2 MiB of `MemoryHigh`. Thus the service process is alive,
-but collector recovery and current-boundary capture are not verified. No
+01:07 CET it wrote fresh status: `RECORDING_UNSEQUENCED`,
+`collection_health=active_receiving`, 16/16 fresh books, zero failures, and
+`backpressure_active=false`. Its storage count exceeded the 00:46 capacity
+snapshot by 512 KiB at 01:07 and continued to grow through 01:08, confirming
+new persisted observations after cold replay. Recovery and current capture
+are now demonstrated, with `sequence_verified=false` still explicit. No
 operator restart or protected Reality configuration change was made.
 
-**The host is not yet safe for Frontier tests or research batches.** Continue
-only static/documentation work until Reality has demonstrably resumed capture,
-service headroom recovers, and memory pressure remains low across multiple
-scheduled-job cycles. No new oomd or kernel OOM kill was observed through
-00:50, about 67 minutes after the last kill. PSI has fallen again after the
-capacity run, but API and Reality remain near `MemoryHigh`, Reality status is
-stale, and the revised 160 MiB soft threshold awaits its next scheduled run.
+**The host supports short, strictly bounded tests but not broad suites or
+research batches yet.** No new oomd or kernel OOM kill was observed through
+01:08, about 85 minutes after the last kill. After two scoped Frontier test
+modules, host/user PSI remained near zero and 9.9 GiB was available. API and
+Reality are active with zero leaf PSI, but remain within about 1.1 MiB and
+0.8 MiB of `MemoryHigh`. The next 160 MiB capacity run at 01:16 remains an
+important validation gate before expanding runtime work.
 
 ## Observed impact and timeline
 
@@ -735,3 +738,36 @@ and Reality were still active; Reality remained only about 220 KiB below
 `MemoryHigh` with stale status. Its isolated candidate branch is clean and
 undeployed. Keep the broader runtime gate closed pending the 01:16 capacity
 run and fresh Reality recovery evidence.
+
+## Reality recovery and bounded Frontier tests — 2026-10-29 01:08 CET
+
+Reality status began advancing again at 01:06:42.862 CET, when the new
+recording state started. By 01:07:24 it reported
+`RECORDING_UNSEQUENCED`, `active_receiving`, 16/16 fresh books, zero failures,
+and no backpressure. It reported 5,746,669 lifetime frames and
+12,133,811,197 storage bytes, 511,747 bytes above the 00:46 capacity report.
+At 01:08:52 it still reported `active_receiving`, 16/16 fresh books and zero
+failures, with 5,746,762 frames and 12,134,229,021 storage bytes. The storage
+grew another 417,824 bytes between those snapshots. This demonstrates resumed
+observation and persistent growth after cold replay; sequencing remains
+unverified (`sequence_verified=false`). No collector action was taken.
+
+With fresh capture and low pressure established, bounded Frontier tests
+resumed in separate transient user scopes:
+
+- `tests/arena/test_admission.py`: 15 passed in 5.90 seconds.
+- `tests/arena/test_scheduling.py`: 12 passed in 17.89 seconds; one existing
+  Starlette/httpx deprecation warning.
+
+Each scope used `MemoryMax=512M`, `MemorySwapMax=0`, `CPUQuota=25%`,
+`TasksMax=16`, and a 30-second subprocess timeout. After both, at 01:08:52,
+host available memory was 9.9 GiB; host and user PSI avg10/avg300 were near
+zero. User-manager `high` was 16,416,798, only one more than at 01:07:51;
+`max=728,363`, `oom=19`, and `oom_kill=15` were unchanged. No new OOM journal
+entry appeared. API and Reality remained active with about 1.30 MiB and
+0.82 MiB `MemoryHigh` headroom, respectively; their leaf PSI remained zero.
+
+Continue with bounded tests only. Full test suites, replay, live probes, and
+research batches remain gated pending the 01:16 capacity run under the new
+160 MiB soft bound. Keep the gap-detail timer disabled and preserve the now
+active Reality collector.
