@@ -4,10 +4,10 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 05:24 CET |
+| Latest addendum | 2026-10-29 05:42 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
-| Preservation checkpoint | `ac4222f` (`feat(frontier): add held Gemini spot research adapter`) |
+| Preservation checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
 
 This is the current incident report. It supplements the chronological record in
 [`FRONTIER_MEMORY_PRESSURE_INCIDENT_2026-10-28.md`](FRONTIER_MEMORY_PRESSURE_INCIDENT_2026-10-28.md).
@@ -521,3 +521,81 @@ were active. `ssh.socket` remained active; `ssh.service` was inactive under
 socket activation. No service was stopped, restarted, or reconfigured during
 this check. The current service snapshot supports continued infrastructure
 availability; it is not a recovery or endurance certification.
+
+## Frontier bounded work and post-run host check — 2026-10-29 05:40 CET
+
+The isolated Frontier branch added a finite Polymarket public market-stream
+decoder/capture path. It is disabled by default, makes no request in the
+fixture tests, and does not apply unsequenced price changes to a local book.
+The `tests/frontier/test_polymarket_stream.py` and existing
+`tests/frontier/test_adapters.py` suites passed **179/179 in 8.80 seconds**
+under `MemoryHigh=384M`, `MemoryMax=512M`, `MemorySwapMax=0`, and
+`CPUQuota=20%`; peak RSS was 66,992 KiB, swaps were zero, and the test emitted
+no socket messages. Strict mypy passed for the changed models, adapter,
+decoder, and storage modules (**134,492 KiB peak RSS**) under a 768 MiB hard
+limit, zero swap, and 20% CPU quota. Ruff and `git diff --check` passed. No
+service or persistent system configuration changed.
+
+At 05:40 CET, `MemAvailable` was 11,290,932 kB and `SwapFree` 2,568 kB of
+4,194,300 kB. Host memory PSI remained zero. User-manager OOM counters were
+unchanged at `oom=19`/`oom_kill=15`. The latest service snapshot, at 05:38:27,
+showed MIDAS API/web and Reality recorder/API/web active with API/recorder
+restart counts still 9/14; the capacity timer active/waiting and the
+gap-detail timer inactive/dead. No systemd-oomd or kernel OOM appeared in the
+checked journal interval from 05:20 through 05:38:27 CET.
+
+This short follow-up confirms that the bounded fixture work did not add
+measurable swap use or advance OOM counters. It does not resolve near-full
+host swap, the user-manager pressure-monitor visibility mismatch, historic
+workload attribution, or the separate invalid archive manifest/provenance
+warnings. Frontier may continue only with serial, source-independent edits and
+small capped fixture checks after a fresh resource sample. Broad regressions,
+large replay, live stream probes, and new collectors remain deferred. Incident
+status remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**.
+
+## Polymarket adapter checkpoint and current host sample — 2026-10-29 05:42 CET
+
+The Frontier branch committed a finite, disabled-by-default Polymarket public
+market-stream capture as `0e02c93`. The capture validates and retains full-book,
+price-change, best-bid/ask, and tick-size events as source evidence. It does not
+apply deltas or produce a `BookSnapshot` because the documented feed does not
+specify sequence continuity or gap recovery. It has no API/UI route or
+persistent worker and was not connected to a live source. No service or
+persistent system configuration changed.
+
+The adapter, stream, and transport fixture slice passed **199/199 in 11.11
+seconds** under `MemoryHigh=384M`, `MemoryMax=512M`, `MemorySwapMax=0`, and
+`CPUQuota=20%`; peak RSS was 66,968 KiB, swap use was zero, and no socket
+traffic was emitted. Strict mypy passed for five changed source files in 0.80
+seconds with a 53,180 KiB peak RSS under a 768 MiB hard cap, zero swap, and
+20% CPU. Ruff and whitespace checks passed.
+
+At 05:41 CET the host had 11,287,011,328 bytes available RAM (10.51 GiB) and
+2,641,920 bytes free swap (2.52 MiB of 4.00 GiB); host memory PSI averages were
+zero. User-manager `memory.events` remained `oom=19` and `oom_kill=15`. At
+05:42 the API and Reality recorder were active at restart counts 9 and 14;
+MIDAS web, Reality API/web, Caddy, Echo production/staging, Continental
+tailnet/identity, Tailscale, RustDesk, Headscale, and `ssh.socket` were active.
+The Reality capacity timer was active/waiting. The gap-detail timer remained
+inactive; its service remained failed with its prior `oom-kill` result. No
+service was restarted or changed.
+
+`oomctl dump` now lists `user@1000.service` under the 50% pressure policy with
+zero current pressure averages and about 8.6 GiB current memory. Earlier
+follow-up samples listed no monitored cgroups; the reason for that difference
+is still unknown. Kernel and OOMD journal queries found no new entries from
+05:38 through 05:42. This is a brief quiet interval only. Near-full swap and
+historic attribution limits remain, and the invalid Reality archive inventory
+and provenance alerts remain separate and untouched. Continue only serial,
+source-independent work and small capped fixture checks after a fresh sample;
+do not run broad suites, replay, collectors, or live probes. Status remains
+**PARTIALLY CONTAINED / PARTIALLY VERIFIED**.
+
+At the same service sample, API memory was 881,721,344 bytes current and
+1,611,026,432 bytes peak, against `MemoryHigh=1,610,612,736`,
+`MemoryMax=1,879,048,192`, and `MemorySwapMax=0`. Reality was 310,964,224 bytes
+current and 1,208,467,456 bytes peak, against `MemoryHigh=1,207,959,552`,
+`MemoryMax=1,342,177,280`, and `MemorySwapMax=0`. Both current charges were
+below their high thresholds; the recorded peaks were slightly above
+`MemoryHigh` but below each hard maximum. These cgroup peaks are scoped service
+measurements, not host-wide workload attribution.

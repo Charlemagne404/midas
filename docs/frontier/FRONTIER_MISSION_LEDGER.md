@@ -13506,3 +13506,41 @@ and identity services, Echo production/staging, Headscale, Tailscale,
 RustDesk, MIDAS API/web, and the Reality recorder/API/web active; SSH socket
 activation remained available. No service was changed. This confirms current
 service presence only, not endurance.
+
+## Polymarket stream checkpoint and incident resample — 2026-10-29 05:42 CET
+
+Committed the bounded Polymarket CLOB event capture as `0e02c93` on
+`codex/frontier-20261026`. It is an adapter-only finite operation, off by
+default, with no HTTP/API or Mission Control route, no persistent worker, and
+no live source use. The decoder preserves bounded raw frames and typed
+`book`, `price_change`, best-bid/ask, and tick-size events. It does not
+reconstruct an order book or feed economic evaluation because the public event
+contract documents neither sequence continuity nor gap recovery. Official
+source reference: https://docs.polymarket.com/market-data/realtime-data.
+
+The adapter, stream, and transport fixtures passed **199/199 in 11.11 seconds**
+under a 384 MiB soft / 512 MiB hard cgroup limit, zero swap, and 20% CPU quota;
+peak RSS was 66,968 KiB and socket traffic was zero. Strict mypy passed on five
+changed source modules in 0.80 seconds, peaking at 53,180 KiB under a 768 MiB
+hard limit. Ruff and `git diff --check` passed.
+
+The 05:41 host sample showed 11,287,011,328 bytes available RAM (10.51 GiB),
+2,641,920 bytes free swap (2.52 MiB), and zero host memory PSI. User-manager
+OOM counters remained `oom=19`/`oom_kill=15`. At 05:42, API/Reality remained
+active with restart counts 9/14; MIDAS and Reality web/API services, Caddy,
+Echo production/staging, Continental tailnet/identity, Headscale, Tailscale,
+RustDesk, and `ssh.socket` were active. The capacity timer was waiting; the
+gap-detail timer remained inactive and its service still showed the earlier
+`oom-kill` failure. OOM journals were empty for 05:38–05:42. `oomctl dump`
+now lists the user-manager at its 50% policy and zero pressure averages,
+although earlier samples returned an empty group list; that intermittent
+reporting difference has no established cause.
+
+No services, persistent limits, timers, source flags, or existing research
+evidence were changed in this checkpoint. The original pre-incident recovery
+ref remains `checkpoint/frontier-pre-memory-incident-20261029` at `a8fbcd7`.
+The pre-existing untracked `data/frontier-public-probes/` directory remains
+untouched. The incident is still partially contained, not resolved: swap is
+nearly full and the quiet observation is brief. Continue only serial,
+source-independent work and small capped fixtures after a fresh resource
+sample; keep broad tests, replay, live probes, and new collectors deferred.

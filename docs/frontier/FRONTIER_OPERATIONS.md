@@ -823,3 +823,30 @@ are document-shaped fixture-only in this revision; per-level timestamps are
 documented dummy values and are never used for freshness. See the
 [`Gemini source screen`](GEMINI_SPOT_SCREEN_2026-10-29.md) and
 [`Gemini data-use review`](SOURCE_DATA_TERMS_REVIEW_2026-10-29.md).
+
+## Polymarket public book-event stream
+
+`PolymarketAdapter.capture_book_updates` is a finite adapter operation, not an
+always-on worker. It connects only to
+`wss://ws-subscriptions-clob.polymarket.com/ws/market`, without credentials or
+proxy, and requires both `enabled` and `live_public_probe_enabled` plus no
+source-use hold. Default configuration leaves both flags false. The current
+Mission Control and HTTP collection routes do not invoke this method.
+
+Each call is bounded to at most 50 unique decimal asset IDs, 32 received
+frames, 100 normalized events, 30 seconds, the configured maximum frame size,
+and a 2 MiB/32-record in-memory raw capture budget. It sends the documented
+application-level `PING` every 10 seconds and performs no automatic retry or
+reconnect. `take_captures()` returns the raw WebSocket frames; each returned
+`PolymarketBookUpdateFrame` can be stored with the generic append-only
+`FrontierStore.append_observation(raw, normalized)` method. Malformed frames
+are rejected, with bounded raw evidence retained when possible.
+
+The [Polymarket real-time reference](https://docs.polymarket.com/market-data/realtime-data)
+documents `book` and `price_change` events, but the CLOB event contract does
+not document sequence numbers or recovery after a message gap. Frontier keeps
+reported changes as event evidence, labels continuity unverified, and never
+applies deltas to a `BookSnapshot`. Stream events do not feed candidate
+generation or economic evaluation. No live stream capture has been made; user
+location eligibility and intended source terms remain unverified. Do not
+enable the source flags on the host as part of routine development.

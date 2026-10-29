@@ -14,6 +14,7 @@ as mutable Frontier storage.
 | Adapter protocol and lifecycle | `adapters/base.py` | Capability declarations, local health, response capture, and common read-only adapter contract. |
 | Bounded HTTP transport | `adapters/transport.py` | HTTPS GET only, fixed host allowlist, bounded timeout/retry/rate/raw-response size, identity encoding for successful payloads, no redirects or credentials. |
 | Public venue adapters | `adapters/polymarket.py`, `kalshi.py`, `kraken.py`, `coinbase.py`, `gemini.py` | Source-specific normalization and native metadata preservation. Coinbase Exchange and Gemini add bounded spot context sources; neither source's hold can be lifted by a probe flag or descriptive acknowledgement. |
+| Polymarket market stream | `adapters/polymarket_stream.py`, `PolymarketAdapter.capture_book_updates` | Strict bounded decoding and finite opt-in event capture; preserves full books, price changes, best bid/ask, and tick-size events. No sequence or gap recovery is documented, so updates are never applied to a reconstructed book or passed to opportunity economics. |
 | Registry | `registry.py` | Explicit capability inventory; default instances do not probe. |
 | Relationship intelligence | `relationships.py` | Deterministic indexed title and parent-event/outcome hypotheses, source-selected component references, strict payoff checks, and immutable review contracts. |
 | Candidate calculators | `economics.py`, `joint_economics.py` | Decimal cross-venue binary, same-market exhaustive one-hot coverage, bounded constant-payout event baskets, and a separately bounded multi-market basket over an explicit shared-state assertion. Joint-state search caches exact mapped payout vectors, then incrementally accumulates subset payouts, costs, and market coverage; venue fees, native quantity units, depth, freshness, timing, and scenario bounds remain attached. |
@@ -73,7 +74,7 @@ retry the same rejected module in place.
 
 ## Additional venue selection
 
-The current adapter set is limited to the four sources in the capability
+The current adapter set includes the five sources in the capability
 matrix. The dated [additional venue screen](ADDITIONAL_VENUE_SCREEN_2026-10-27.md)
 declines a Manifold economic adapter because the current market currency is
 non-redeemable mana and its sweepstakes markets ended in 2025. It may be
@@ -169,6 +170,17 @@ The shared adapter timestamp parser converts explicit-offset ISO strings to
 UTC and treats an ISO string with no timezone as unavailable. It does not
 assign the host's local timezone to an ambiguous source time; a regression test
 pins both the rejection and valid-offset normalization.
+
+The Polymarket market-stream method uses a fixed WSS host, no credentials or
+proxy, no retry/reconnect, and hard bounds on subscription size, received
+frames, normalized updates, duration, frame bytes, and in-memory capture bytes.
+Each normalized event retains the condition and asset IDs plus its source
+timestamp when parseable. `PolymarketBookUpdateFrame` is distinct from
+`BookSnapshot`: source-reported changes remain raw observations because the
+current event contract provides neither sequence continuity nor documented gap
+recovery. The method is disabled under the default source config, has no
+Mission Control capture route yet, and has not been used against the live
+source.
 
 ### Polymarket historical price samples
 
@@ -1388,7 +1400,7 @@ checkpoints rather than being represented as print observations.
 
 ## Known scope limits
 
-There are no persistent source workers, incremental order-book streams,
+There are no persistent source workers, reconstructed incremental order books,
 venue-wide universe scans, sourced/live FX conversion, derivatives,
 capital transfer model, a general cross-market solver beyond the bounded
 explicit joint-state family, broad multi-leg search, automatic semantic
