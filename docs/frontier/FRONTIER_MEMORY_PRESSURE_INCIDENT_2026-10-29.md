@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 06:17 CET |
+| Latest addendum | 2026-10-29 06:27 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Pre-incident checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -792,3 +792,27 @@ queries contained no kill entries from 05:11:26 through 05:17 UTC.
 This is a short quiet interval, not evidence of durable recovery. Swap remains
 almost entirely occupied, historical attribution is incomplete, and the
 archive inventory/provenance warnings are unchanged.
+
+## Admission-check implementation sample — 2026-10-29 06:27 CET
+
+At 05:27:21 UTC, `MemAvailable` was 11,116,363,776 bytes (10.36 GiB) and
+`SwapFree` was 7,946,240 bytes (7.58 MiB). Host memory PSI averages were zero.
+The user-manager cgroup charged 9,474,899,968 bytes of memory and
+2,858,856,448 bytes of swap; event counters remained `oom=19`,
+`oom_kill=15`, and `oom_group_kill=0`. Kernel and systemd-oomd journals had no
+kill entries in the preceding 45-minute query.
+
+The MIDAS API and Reality collector remained active with unchanged restart
+counts 9 and 14. Their current cgroup charges were 907,067,392 and 352,432,128
+bytes, respectively, below their 1,610,612,736-byte and 1,207,959,552-byte
+soft limits. The capacity timer remained active; its service was inactive
+after its last successful run at the 160/192 MiB, zero-swap bound. The
+gap-detail timer remained disabled and its service retained the previous
+OOM-kill result. No service, timer, persistent limit, or protected artifact
+was changed for the Frontier source-admission implementation.
+
+The implementation's fixture tests ran in zero-swap resource scopes; during
+them host PSI remained zero and user-manager OOM counters remained unchanged.
+This observation does not resolve the nearly full swap or historic workload
+attribution. Incident status remains **PARTIALLY CONTAINED / PARTIALLY
+VERIFIED**.
