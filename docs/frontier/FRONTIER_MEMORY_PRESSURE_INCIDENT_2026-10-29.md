@@ -4567,6 +4567,13 @@ pressure episodes. Host memory PSI remained zero, `MemAvailable` was
 API remained active; no kernel or OOMD kill appeared since 18:31. The timer,
 service limits, and frozen analysis inputs were not changed.
 
+At 18:41:56, the user-manager `max` count was still 731,550; host memory PSI
+remained zero, `MemAvailable` was 10,911,908 kB, and `SwapFree` was 18,940 kB.
+No later kernel or OOMD kill appeared in the interval checked after the job.
+The source-analysis timer remained active for its next scheduled run at
+19:10:17. This short post-run sample shows no additional limit-event churn;
+it does not prove durable stability or identify the source of the 241 events.
+
 Continue to treat source-analysis as a plausible contributor to cgroup limit
 event churn, not an established sole pressure initiator. No further Frontier
 test overlapped the run. The incident remains **PARTIALLY CONTAINED / PARTIALLY

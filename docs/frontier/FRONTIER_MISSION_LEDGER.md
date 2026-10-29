@@ -16207,3 +16207,7 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
   appeared since 18:31. No campaign, timer, service configuration, or
   evidence store was changed. The incident remains **PARTIALLY CONTAINED /
   PARTIALLY VERIFIED**; proceed only with serial, bounded work.
+- At 18:41:56, `memory.events.max` remained 731,550, PSI stayed zero, and
+  `MemAvailable` / `SwapFree` were 10,911,908 kB / 18,940 kB. No additional
+  post-run limit-event increment was observed; this minute-long follow-up does
+  not establish durable stability. The timer remains unchanged for 19:10:17.
