@@ -13316,3 +13316,28 @@ The report, incident entry, and ledger checkpoint above were committed as
 `ab24391` (`docs(frontier): record economics and host follow-up`). The
 untracked `data/frontier-public-probes/` directory remains untouched and was
 not staged.
+
+### OOMD and current-workload attribution — 2026-10-29 04:57 CET
+
+Read-only OOMD candidate logs for October 28 23:43 show the parent user
+manager over its 50% pressure limit when Reality and then the gap-detail
+replay were killed. The replay had 204.8 MiB current memory and 76.50%/50.59%
+10/60-second local PSI with reclaim activity. The API at 1.4 GiB and a
+457 MiB Terminal child scope had near-zero local PSI in the second decision.
+This confirms local replay pressure but does not attribute the aggregate
+pressure to it alone. The Reality target at the first decision had near-zero
+local PSI, so its selection does not establish it as the cause either.
+
+The 04:54 cgroup inventory showed the Terminal slice as the largest current
+user application slice (4.06 GiB memory, 1.54 GiB swap; 2.69 GiB reported as
+file cache), with PSI zero. API/Reality were 0.80/0.27 GiB and active. No
+Frontier process was active. A fresh 04:57:10 sample showed 10.799 GiB
+`MemAvailable`, 0.002 GiB `SwapFree`, zero host/user-manager PSI, unchanged
+`oom=19`/`oom_kill=15`, API/Reality active at restart counts 9/14, and no OOM
+entry since 04:45. `oomctl` still listed no monitored groups despite
+`ManagedOOMMemoryPressure=kill`/50%; this remains unresolved. No service,
+terminal, or protected collector was interrupted.
+
+The detailed OOMD/workload follow-up is committed with the next report
+checkpoint; the prior evidence-pin commit is `de2d9c5`. Continue only with
+serial, capped Frontier work while swap is nearly full.

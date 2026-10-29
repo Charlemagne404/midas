@@ -3,7 +3,7 @@
 | Field | Value |
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
-| Sample time | 2026-10-29 04:32 CET |
+| Sample time | 2026-10-29 04:57 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Preservation checkpoint | `ac4222f` (`feat(frontier): add held Gemini spot research adapter`) |
@@ -31,16 +31,17 @@ Two separate mechanisms caused process termination:
 
 The gap-detail timer is stopped and disabled. The capacity service now has a
 reversible 160 MiB soft / 192 MiB hard limit with swap disabled, and its
-04:16 scheduled run succeeded. Since the final systemd-oomd kill at 23:43:24
-on October 28, no additional systemd-oomd kill has appeared through 04:32 on
-October 29; no kernel OOM has appeared since the 20:15:44 capacity kill.
+04:16 and 04:46 scheduled runs succeeded. Since the final systemd-oomd kill
+at 23:43:24 on October 28, no additional systemd-oomd kill has appeared
+through 04:57 on October 29; no kernel OOM has appeared since the 20:15:44
+capacity kill.
 
-This is **partially contained, not resolved**. At 04:32 the host had 11.63 GB
-available RAM and zero current host/user PSI, but only 1.94 MB of swap remained
-free. `oomctl dump` currently lists no monitored cgroups despite the active
-user-unit OOM policy and the historical kill records. The reason for this
-current reporting mismatch is unresolved. Do not treat the quiet period as
-proof of durable recovery.
+This is **partially contained, not resolved**. At 04:57 the host had 10.80
+GiB available RAM, zero current host/user PSI, and about 2 MiB free swap.
+`oomctl dump` still lists no monitored cgroups despite the active user-unit
+OOM policy and historical kill records. The reason for this current reporting
+mismatch is unresolved. Do not treat the quiet period as proof of durable
+recovery.
 
 ## Full-day kill evidence
 
@@ -276,6 +277,46 @@ timer was inactive and the capacity timer waiting. `oomctl dump` listed no
 monitored cgroups. A read-only kernel/systemd-oomd journal query since 04:45
 found no OOM record. The observation window is short; swap is still nearly
 full and OOMD monitor registration remains unresolved.
+
+## OOMD candidate and workload attribution follow-up — 2026-10-29 04:56 CET
+
+A read-only review of the October 28 23:43 OOMD candidate logs distinguishes
+the trigger from the selected victims. At 23:43:09 the parent
+`user@1000.service` pressure was 61.64%, exceeding its configured 50% limit.
+OOMD selected Reality at 550.7 MiB current memory (that candidate's 10/60-second
+PSI values were zero). Fifteen seconds later the parent pressure was 54.45%;
+the gap-detail process was 204.8 MiB and recorded 76.50% 10-second / 50.59%
+60-second local PSI with 426 pages scanned in the most recent sample. The API
+was 1.4 GiB with near-zero local PSI; a Terminal child scope was 457 MiB with
+near-zero PSI. The evidence confirms that gap-detail was locally under
+reclaim stress and that it was selected during elevated aggregate user
+pressure. It does not establish it as the sole source of host pressure, and
+the first Reality kill is not itself evidence of high local PSI.
+
+At 04:54:36, systemd-oomd was active, had been running since October 15, and
+had zero restarts. The user manager still reported
+`ManagedOOMMemoryPressure=kill` with a 50% override. A fresh 04:56 `oomctl`
+sample continued to list no monitored groups. The 04:56 host and user-manager
+PSI values were zero, `MemAvailable` was 10.803 GiB, and `SwapFree` was
+0.002 GiB. The registration discrepancy remains unresolved; no daemon reload
+or restart was attempted.
+
+The 04:54 cgroup inventory put `app-org.gnome.Terminal.slice` at 4.06 GiB
+current memory and 1.54 GiB swap, the largest user application slice. Its
+accounting included 2.69 GiB file cache; the largest child scope held 1.68
+GiB, including 1.16 GiB file and 0.50 GiB anonymous memory. API and Reality
+were active at 0.80/0.27 GiB current memory. The Frontier process search found
+no tests, builds, replay jobs, or source probes. The Terminal slice is the
+largest current user workload, but this does not attribute the October 28
+events to it. No terminal, service, or protected collector was interrupted.
+
+At 04:57:10, `MemAvailable` was 10.799 GiB and `SwapFree` 0.002 GiB. Host
+and user-manager PSI remained zero; user-manager `memory.events` stayed at
+`oom=19`/`oom_kill=15`. API and Reality remained active at restart counts
+9/14, the gap-detail timer inactive, and the capacity timer active. No OOM
+entry appeared in the checked kernel/systemd-oomd journal interval since
+04:45. The observation remains short relative to the prior repeated-kill
+pattern, and the swap/monitoring issues remain open.
 
 ## Frontier continuation gate
 

@@ -2,7 +2,7 @@
 
 **Report date:** 2026-10-29
 
-## Current completion matrix — 2026-10-29 04:51 CET
+## Current completion matrix — 2026-10-29 04:57 CET
 
 This is a current evidence classification, not a final completion claim. The
 dated implementation records below remain the detailed evidence; the
@@ -22,7 +22,7 @@ current host gate.
 | User-cgroup-aware workload admission | IMPLEMENTED, BOUNDED VALIDATION PASSED | Central Arena admission (15), finite schedules (12), and the Laboratory denial case (1) pass fixture tests using user-manager pressure; no runtime deployment occurred. |
 | Reality capacity inventory bounds | PARTIALLY VERIFIED | Candidate inventory code remains undeployed. The separate monitor is bounded at `MemoryHigh=160M`, `MemoryMax=192M`, and zero swap; its scheduled 04:47 run succeeded in 6.257 CPU seconds with zero swap. systemd logged a 3.2 MiB peak, unexpectedly below the earlier 137.4 MiB measurement, so that peak does not establish representative memory use. The report still identifies invalid archive inventory and provenance. |
 | Native Frontier dashboard | PARTIALLY VERIFIED | The dashboard now includes the held Gemini Spot capability and timing explanation. Its focused explorer fixture passed 1/1 with a 15-second per-test allowance under a 50% CPU cap; eight other cases were skipped. The saved timeline timing and result-pagination browser fixtures passed earlier. TypeScript project build and a production Vite build passed in bounded zero-swap scopes. Default Playwright last passed 17/20 with three opt-in skips; captured-evidence browser validation remains open. |
-| Host reliability containment | PARTIALLY VERIFIED | The five-minute gap-detail timer is disabled; a full October 28 journal audit found 129 systemd-oomd kills, 106 targeting this replay. Seven separate kernel memcg kills hit the capacity checker's original 128 MiB cap. The capacity checker now has reversible 160/192 MiB, zero-swap limits. At 04:51, `MemAvailable` was 10.82 GiB, free swap about 2 MiB, and host/user-manager PSI was zero; user-manager `oom=19`/`oom_kill=15` were unchanged. API/Reality were active at restart counts 9/14. `oomctl` listed no monitored groups. No OOMd kill has appeared since 23:43 on Oct 28 and no kernel OOM since 20:15, but swap remains effectively full and monitor visibility is unresolved. |
+| Host reliability containment | PARTIALLY VERIFIED | The five-minute gap-detail timer is disabled; a full October 28 journal audit found 129 systemd-oomd kills, 106 targeting this replay. Seven separate kernel memcg kills hit the capacity checker's original 128 MiB cap. The capacity checker now has reversible 160/192 MiB, zero-swap limits. At 04:57, `MemAvailable` was 10.80 GiB, free swap 0.002 GiB, and host/user-manager PSI was zero; user-manager `oom=19`/`oom_kill=15` were unchanged. API/Reality were active at restarts 9/14. `oomctl` listed no groups despite the user-manager 50% pressure policy. OOMD decision logs show the replay had high local PSI during one kill; the target statistics do not prove a single workload caused aggregate pressure. No new kill has appeared since 23:43 Oct 28, but swap and monitor visibility remain unresolved. |
 | Node/V8 and Apport side effect | PARTIALLY VERIFIED | The 02:36 TypeScript attempt aborted at Node's heap limit with a 300.6 MiB cgroup peak, not a kernel OOM. Whoopsie attempted to submit the 58,222,586-byte crash report and received HTTP 504; remote receipt is unknown. No `.uploaded` marker exists; avoid further crash-prone Node checks. |
 | Broad regressions, resource endurance, and performance acceptance | DEFERRED | Selected Python, API, adapter, and collection suites passed under bounded zero-swap scopes. The graph-revision storage/migration cases pass 8/8; API cursor invalidation passes 1/1; four core economics modules pass 79/79; Ruff check/format and strict mypy pass under caps. Full MIDAS regression, full browser suite, captured-evidence browser journey, endurance, and broad performance tests remain deferred. |
 | Live multi-venue source authorization and findings | BLOCKED | Kalshi, Kraken, Coinbase, and Gemini probes and retained-data research remain held; the worktree Polymarket probe flag is off. |
@@ -13821,3 +13821,42 @@ the capacity timer waiting. `oomctl dump` listed no monitored cgroups, and a
 read-only kernel/systemd-oomd journal query since 04:45 found no OOM record.
 This is a short quiet sample, not evidence of durable stability; nearly full
 swap and OOMD monitor registration remain unresolved.
+
+### OOMD candidate and workload attribution follow-up — 2026-10-29 04:56 CET
+
+A bounded journal review of the October 28 23:43 OOMD decisions adds causal
+detail. At 23:43:09 the parent user-manager pressure was 61.64%, above its 50%
+limit for over 20 seconds; OOMD selected Reality at 550.7 MiB current memory,
+with zero local 10/60-second PSI at that sample. Fifteen seconds later the
+parent pressure was 54.45%; the gap-detail replay used 204.8 MiB and reported
+76.50% 10-second / 50.59% 60-second local pressure with reclaim activity. At
+that second decision, the API was 1.4 GiB with near-zero local pressure, and
+one Terminal child scope was 457 MiB with near-zero local pressure. This
+supports the replay as a locally pressured victim and plausible contributor,
+but does not establish that it alone caused host pressure; aggregate user
+work and other simultaneous workloads remain part of the causal picture.
+
+At 04:54:36 the systemd-oomd service was active since October 15 with zero
+restarts. The user manager had `ManagedOOMMemoryPressure=kill` and a 50% limit;
+however, `oomctl dump` listed no monitored cgroups. It is unresolved why the
+current registry view is empty despite the configured policy and historical
+77-cgroup candidate evaluation. No daemon reload or restart was attempted.
+
+The 04:54 cgroup inventory showed `app-org.gnome.Terminal.slice` at 4.06
+GiB memory and 1.54 GiB swap, the largest user application slice. Its cgroup
+accounting included 2.69 GiB file cache; a large child scope was 1.68 GiB with
+1.16 GiB file and 0.50 GiB anonymous memory. Host/user-manager PSI remained
+zero, `MemAvailable` was 10.73 GiB, and free swap about 2 MiB. The fresh 04:56
+host/user-manager PSI values were zero, `MemAvailable` was 10.803 GiB, and
+`SwapFree` was 0.002 GiB; `oomctl dump` still showed no monitored groups. API
+and Reality were active at 0.80/0.27 GiB current memory. No Frontier test,
+build, replay, or source probe was running. This is a current attribution
+snapshot only; it does not prove the Terminal slice caused the October 28
+events. Active terminal/Codex scopes were left untouched.
+
+At 04:57:10, `MemAvailable` was 10.799 GiB and `SwapFree` 0.002 GiB. Host and
+user-manager PSI remained zero; user-manager `memory.events` remained
+`oom=19`/`oom_kill=15`. API and Reality were active at 0.80/0.27 GiB current
+memory and restart counts 9/14. The gap-detail timer remained inactive and
+the capacity timer active. No kernel or systemd-oomd kill appeared in the
+checked journal interval since 04:45.
