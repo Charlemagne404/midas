@@ -825,6 +825,45 @@ At 05:37:08 UTC, host MemAvailable was 11,463,749,632 bytes (10.68 GiB), SwapFre
 
 The sample shows no new kill during this brief bounded-work window, but swap remains nearly full and the user-manager hierarchy remains uncapped. Historic system-wide attribution and durable recovery are not established. Incident status remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**. Serial, bounded, source-independent Frontier work may continue after fresh admission checks; do not infer readiness for broad test suites, live probes, deployment, or concurrent research.
 
+## Graph-context verification and pressure resample — 2026-10-29 07:03 CET
+
+The bounded graph-context fixture/API checks passed **3/3** and the selected
+relationship graph UI fixture passed **1/1**. A strict mypy run was then
+started for the new graph projection and the full Frontier API inside a
+`MemoryMax=768 MiB`, `MemoryHigh=640 MiB`, `MemorySwapMax=0`, `CPUQuota=20%`
+scope. At about 2m20s, its Python process had reached 719,512 KiB RSS and was
+in uninterruptible I/O; I terminated that task process. It had reported one
+type-inference error, which was corrected. No retry was launched. This is a
+resource-bound development check, not a production process.
+
+During the run, a host sample showed memory PSI briefly elevated to
+`some avg10=18.80%` / `full avg10=17.87%`. At 07:02:42 CET it had fallen to
+`some avg10/avg60/avg300=3.11/8.15/2.64%` and
+`full=2.95/7.74/2.51%`. Available memory was 11,497,480,192 bytes (10.71
+GiB), swap free 8,388,608 bytes (8 MiB), user-manager memory 9,553,338,368
+bytes, and user-manager swap 2,858,516,480 bytes. Cumulative memory events
+remained `oom=19`, `oom_kill=15`, and `oom_group_kill=0`; hierarchical `high`
+was 16,420,097 and `max` 730,045. The user-manager OOMD pressure average was
+4.73% over 60 seconds against its 50%/20-second limit. Kernel and OOMD journal
+queries for the last 20 minutes had no kill entries. This temporal association
+does not establish that the type-check caused all observed PSI or explain the
+historic kills.
+
+The gap-detail timer was already inactive and remains so; its service retains
+the prior failed status 9 with `MemoryHigh=192 MiB`, `MemoryMax=256 MiB`, and
+zero swap. It was not stopped or modified in this checkpoint. Arena's
+one-minute dispatcher, the 30-minute Veritas Observatory timer, and the
+30-minute Reality capacity timer remained scheduled; their latest observed
+finite invocations exited 0. MIDAS API and Reality units remained active. No
+service, timer, limit, recorder, archive, or existing research evidence was
+changed. Avoid further build/type-check/replay work until fresh PSI readings
+and a sustained observation window show that the host can admit it safely.
+
+Incident status remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**. The
+historical pressure contributor is still not identified; this check adds a
+bounded development workload as a plausible pressure contributor, not a
+historical root cause.
+
 ## Post-build and admission-telemetry sample — 2026-10-29 06:49 CET
 
 Frontier added process-local source gate counters and a refreshable Exchange Explorer snapshot in commit d712df1. The API reports current admitted operations/venues, cumulative admissions, and busy rejections split by venue and shared capacity with a UTC sample time. Counters reset with the router and are not aggregated across API workers. This improves visibility into Frontier's own bounded source calls; it is not a host-level resource monitor.

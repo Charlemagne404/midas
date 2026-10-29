@@ -14157,3 +14157,67 @@ Verification passed: tests/frontier/test_source_gate.py **3/3 in 3.80 seconds**,
 At 05:48:15 UTC after the final build and focused test, MemAvailable was 11,544,653,824 bytes (10.76 GiB), SwapFree was 8,278,016 bytes (7.90 MiB), and host memory PSI averages were zero. User-manager memory/swap charges were 9,513,750,528 / 2,858,569,728 bytes; cumulative OOM events remained 19/15/0. MIDAS API and Reality were active at restart counts 9/14. Their health endpoints returned READY with live_execution=false at 05:47:18 UTC. The capacity timer was waiting; the gap-detail timer remained inactive and its service retained the earlier oom-kill result. The kernel and systemd-oomd query since 05:47 UTC had no new kill entry.
 
 This continues to be a short observation interval after bounded development, not proof of host recovery. Swap remains almost entirely occupied and historic pressure attribution remains incomplete. No live exchange endpoint, service, timer, protected configuration, or archive evidence was touched. Production deployment, browser validation of captured evidence, broad regressions, and endurance remain open.
+
+## Typed structural context in the relationship graph — 2026-10-29 07:03 CET
+
+Commit `f4c3c46` adds a deterministic, size-bounded structural entity projection
+to `GET /api/frontier/graph`. It models venue, event, market, event contract,
+instrument, selected component, outcome, per-instrument payout state, and asset
+reference/settlement asset nodes. Links retain their normalized source field,
+source market, and recorded observation identity. Market nodes also expose
+source lifecycle, resolution authority/rules/times/fingerprint/verification
+flags, payoff state labels, and source payoff completeness flags. These fields
+preserve source claims; they do not independently verify those claims.
+
+Event IDs are venue-scoped, outcomes and unidentified instrument quote assets
+are market-scoped, base/quote asset tickers remain venue-scoped, and settlement
+assets merge only when the normalized `SettlementAssetIdentity` is present.
+Structural links carry `economic_equivalence_asserted=false`; the existing
+relationship/economic review edges and candidate verifier remain unchanged.
+The projection is bounded at 512 loaded graph markets, 512 instruments, 256
+selected components, 512 instrument payout states, 2,048 entities, and 4,096
+links. The accessible, collapsed UI inspector lets a user select a loaded
+market and inspect at most 100 metadata links at a time. It states explicitly
+that these links do not certify event equivalence, payoff equivalence, hedging,
+or executability.
+
+Focused fixture verification passed: the new entity projection tests plus the
+centered graph API regression **3/3**, and the bounded accessible graph UI test
+**1/1** (eight unrelated tests skipped). Ruff formatting/check and
+`git diff --check` passed before commit. A strict mypy invocation targeting the
+new module and the full Frontier API was stopped after about 2m20s: it had
+reached roughly 703 MiB process RSS inside a 768 MiB, zero-swap, 20% CPU scope,
+was in uninterruptible I/O, and reported one tuple-inference error. The
+annotation was corrected, but strict mypy was not rerun. The final graph UI
+change has not had a fresh TypeScript check, ESLint run, or production bundle;
+these are deferred pending a better host pressure window. No external market
+source was contacted and no live cross-venue relationship was established.
+
+At 07:02:42 CET during that verification window, host `MemAvailable` was
+11,497,480,192 bytes (10.71 GiB) but only 8,388,608 bytes (8 MiB) of swap was
+free. Host memory PSI was `some avg10/avg60/avg300=3.11/8.15/2.64%` and
+`full=2.95/7.74/2.51%`; the user-manager cgroup charged 9,553,338,368 bytes of
+memory and 2,858,516,480 bytes of swap. Its cumulative `oom`/`oom_kill`/
+`oom_group_kill` counters remained 19/15/0. The systemd-oomd monitored
+user-manager's own current 60-second pressure average was 4.73%, below its
+50%/20-second policy. Kernel and systemd-oomd journal queries over the last 20
+minutes returned no kill entry. The relationship between the memory-intensive
+type-check attempt and the elevated host PSI is temporal and plausible, not a
+complete explanation of the prior OOM incidents.
+
+The gap-detail timer remained inactive and its service remained failed with
+the previous status 9; its current unit limits are `MemoryHigh=192 MiB`,
+`MemoryMax=256 MiB`, and zero swap. The Arena scheduler, Veritas Observatory,
+and Reality capacity timer remained scheduled; their latest observed finite
+service invocations exited successfully. The API and Reality units remained
+active. No service, timer, protected collector, persistent configuration, or
+historical evidence was changed during this checkpoint. Host status remains
+**PARTIALLY CONTAINED / PARTIALLY VERIFIED**. Frontier may continue through
+source-independent edits, but defer further builds, broad checks, replay, and
+live probes until fresh PSI and swap observations support admission.
+
+| Frontier graph workstream | Status | Evidence boundary |
+| --- | --- | --- |
+| Typed structural entity projection | IMPLEMENTED, LIVE VALIDATION PENDING | Bounded deterministic fixture/API checks pass; no source-derived cross-venue equivalence is implied. |
+| Relationship graph UI context inspector | PARTIALLY VERIFIED | Focused fixture UI test passes; current-tree tsc, lint, build, and captured-browser validation remain pending. |
+| Strict API type check | PARTIALLY VERIFIED | First issue found and fixed; full check stopped due resource pressure and has not been rerun. |
