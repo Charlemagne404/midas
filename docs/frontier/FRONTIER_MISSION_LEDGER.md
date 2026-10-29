@@ -13756,3 +13756,10 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
 - **Bounds:** Transient user service used 384 MiB high / 512 MiB hard memory, zero swap, 20% CPU, 64 tasks, and 60 seconds. One existing Starlette/httpx deprecation warning. Fixtures only; no exchange endpoint or captured probe evidence was read.
 - **Post-test host:** At 07:57:10 PSI zero, MemAvailable 10 GiB, SwapFree 8.2 MiB; user-manager memory/swap 9,703,047,168 / 2,858,422,272 bytes; OOM counters 19/15/0. API/Reality/Reality API remained active at restarts 9/14/0, API/Reality about 913/393 MiB. No OOMD/kernel OOM since 07:50.
 - **Status:** Offline adapter normalization evidence advanced; live adapter validation remains held. The infrastructure incident remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**.
+
+## Polymarket, Kalshi, and Kraken adapter checks — 2026-10-29 07:58 CET
+
+- **Tests:** Three current-tree adapter cases passed **3/3** in 2.70 seconds: Polymarket fixture data is not promoted to verified payout; Kalshi multivariate event/group/market evidence is retained; Kraken Spot units and level timestamps are preserved.
+- **Bounds:** Transient service had 384 MiB high / 512 MiB hard, zero swap, 20% CPU, 64 tasks, and 60 seconds. No live source or captured probes were used.
+- **Post-test host:** At 07:57:55 PSI zero, MemAvailable 10 GiB, SwapFree 8.2 MiB; user-manager memory/swap 9,709,481,984 / 2,858,422,272 bytes; OOM counters 19/15/0. API/Reality/Reality API active at restarts 9/14/0; API/Reality about 912/393 MiB. No OOMD/kernel OOM since 07:50.
+- **Status:** Fixture adapter coverage advanced; live access remains held and incident status unchanged.

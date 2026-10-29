@@ -2,7 +2,7 @@
 
 **Report date:** 2026-10-29
 
-## Current completion matrix — 2026-10-29 07:57 CET
+## Current completion matrix — 2026-10-29 07:58 CET
 
 This is a current evidence classification, not a final completion claim. The
 dated implementation records below remain the detailed evidence; the
@@ -14483,3 +14483,18 @@ At 07:57:10 host PSI remained zero, `MemAvailable` was 10 GiB, and
 Reality API remained active at restarts 9/14/0; API/Reality used about
 913/393 MiB. No OOMD or kernel OOM appeared since 07:50. This verifies bounded
 offline normalization, not live adapter access or cross-venue science.
+
+### Polymarket, Kalshi, and Kraken fixture checks — 2026-10-29 07:58 CET
+
+Three selected `test_adapters.py` cases passed **3/3** in 2.70 seconds: the
+Polymarket fixture remains descriptive without verified-payout claims; the
+Kalshi multivariate event retains parent/group and market evidence; and
+Kraken Spot preserves native units and per-level timestamps. The run was
+capped at 384 MiB high / 512 MiB hard, zero swap, 20% CPU, 64 tasks, and a
+60-second runtime. No external source was accessed.
+
+At 07:57:55, host PSI remained zero and `MemAvailable` 10 GiB; `SwapFree` was
+8.2 MiB. User-manager memory/swap was 9,709,481,984 / 2,858,422,272 bytes;
+OOM counters were unchanged at 19/15/0. API, Reality, and Reality API were
+active at restarts 9/14/0; API/Reality used about 912/393 MiB. No OOMD or
+kernel OOM appeared since 07:50. This is fixture-only adapter verification.

@@ -1202,3 +1202,19 @@ OOM counters stayed 19/15/0. API, Reality, and Reality API remained active at
 restarts 9/14/0, with API/Reality about 913/393 MiB. No OOMD/kernel OOM
 appeared since 07:50. These fixture tests do not change the partial incident
 status or authorize live source probes.
+
+## Polymarket, Kalshi, and Kraken fixture checks — 2026-10-29 07:58 CET
+
+Three selected `test_adapters.py` cases passed **3/3** in 2.70 seconds:
+Polymarket output remains descriptive without verified-payout claims, Kalshi
+multivariate output preserves event/group/market evidence, and Kraken Spot
+preserves native units and level timestamps. The transient test service used
+384 MiB high / 512 MiB hard memory, zero swap, 20% CPU, 64 tasks, and a
+60-second runtime; no public source was queried.
+
+At 07:57:55 host PSI was zero, `MemAvailable` 10 GiB, and `SwapFree` 8.2 MiB.
+User-manager memory/swap was 9,709,481,984 / 2,858,422,272 bytes; OOM counters
+remained 19/15/0. API, Reality, and Reality API stayed active at restart
+counts 9/14/0; API/Reality used about 912/393 MiB. No OOMD/kernel OOM
+appeared since 07:50. These fixture tests add no live validation and the
+incident remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**.
