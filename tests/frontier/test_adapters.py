@@ -2205,13 +2205,20 @@ async def test_default_registry_is_complete_disabled_and_network_idle():
             assert adapter.config.live_public_probe_enabled is False
             assert adapter.transport.request_count == 0
             assert manifest.supports(Capability.BOOK_UPDATES) is (
-                manifest.venue == Venue.POLYMARKET
+                manifest.venue in {Venue.POLYMARKET, Venue.KRAKEN}
             )
+
+        gemini = registry.get(Venue.GEMINI_SPOT)
+        assert gemini.capabilities.supports(Capability.PUBLIC_TRADES)
+        assert not gemini.capabilities.supports(Capability.PAGINATED_PUBLIC_TRADES)
+        assert gemini.config.probe_policy_block_reason is not None
 
         health = await registry.health()
         assert {item.venue for item in health} == expected_venues
         assert all(item.state == SourceState.NOT_PROBED for item in health)
         assert all(item.requests_in_window == 0 for item in health)
+        gemini_health = next(item for item in health if item.venue == Venue.GEMINI_SPOT)
+        assert any("API Use Form" in note for note in gemini_health.notes)
     finally:
         await registry.aclose()
 

@@ -65,6 +65,18 @@ def _details() -> dict[str, object]:
     }
 
 
+def _trade_row(trade_id: int, timestamp_ms: int) -> dict[str, object]:
+    return {
+        "timestampms": timestamp_ms,
+        "tid": trade_id,
+        "price": "1.00",
+        "amount": "0.1",
+        "exchange": "gemini",
+        "type": "buy",
+        "broken": False,
+    }
+
+
 def _adapter(responses: dict[str, object], *, pairs: tuple[str, ...] = ("BTCUSD",)):
     requests: list[httpx.Request] = []
 
@@ -285,6 +297,47 @@ async def test_gemini_broken_trade_and_timestamp_disagreement_fail_closed():
             await timestamp_adapter.fetch_trades("BTCUSD", limit=1)
     finally:
         await timestamp_client.aclose()
+
+
+@pytest.mark.asyncio
+async def test_gemini_trade_pages_reject_duplicate_ids_newer_later_rows_and_bad_limits():
+    timestamp = int(datetime(2026, 10, 26, 20, 0, tzinfo=UTC).timestamp())
+    cases = (
+        (
+            [_trade_row(1, (timestamp + 2) * 1000), _trade_row(2, (timestamp + 3) * 1000)],
+            "INVALID_TRADE_ORDER",
+        ),
+        (
+            [_trade_row(1, timestamp * 1000), _trade_row(1, timestamp * 1000)],
+            "INVALID_TRADE",
+        ),
+    )
+    for rows, expected_code in cases:
+        adapter, _, client = _adapter(
+            {
+                "/v1/symbols/details/BTCUSD": _details(),
+                "/v1/trades/BTCUSD": rows,
+            }
+        )
+        try:
+            await adapter.discover_markets(limit=1)
+            adapter.take_captures()
+            with pytest.raises(AdapterError) as error:
+                await adapter.fetch_trades("BTCUSD", limit=2)
+            assert error.value.code == expected_code
+            assert len(adapter.take_captures()) == 1
+        finally:
+            await client.aclose()
+
+    adapter, requests, client = _adapter({})
+    try:
+        for limit in (0, 101):
+            with pytest.raises(AdapterError) as error:
+                await adapter.fetch_trades("BTCUSD", limit=limit)
+            assert error.value.code == "INVALID_LIMIT"
+        assert requests == []
+    finally:
+        await client.aclose()
 
 
 @pytest.mark.asyncio
