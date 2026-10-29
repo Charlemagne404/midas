@@ -169,6 +169,8 @@ def test_resource_gate_uses_pressure_and_reserve_not_swap_occupancy():
     ready = {
         "active_job_ids": [],
         "available_memory_bytes": 8 * 1024**3,
+        "swap_total_bytes": 4 * 1024**3,
+        "swap_free_bytes": 18 * 1024**2,
         "disk_free_bytes": 8 * 1024**3,
         "cpu_psi": {"some": 0.0},
         "available_cpu_count": 6,

@@ -152,6 +152,16 @@ def test_host_cpu_psi_from_quota_wait_does_not_block_with_measured_load_headroom
     assert admission.resource_gate(snapshot)["ready"]
 
 
+def test_swap_occupancy_alone_does_not_block_with_ram_headroom_and_quiet_psi():
+    snapshot = {
+        **ready_snapshot(),
+        "swap_total_bytes": 4 * 1024**3,
+        "swap_free_bytes": 18 * 1024**2,
+    }
+
+    assert admission.resource_gate(snapshot)["ready"]
+
+
 def test_worker_budget_preserves_production_reserve():
     snapshot = {**ready_snapshot(), "available_memory_bytes": 4 * 1024**3}
     assert admission.resource_gate(snapshot, requested_memory_bytes=512 * 1024**2)["ready"]
