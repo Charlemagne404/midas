@@ -2,7 +2,7 @@
 
 **Report date:** 2026-10-29
 
-## Current completion matrix — 2026-10-29 07:59 CET
+## Current completion matrix — 2026-10-29 08:00 CET
 
 This is a current evidence classification, not a final completion claim. The
 dated implementation records below remain the detailed evidence; the
@@ -14514,3 +14514,20 @@ User-manager memory/swap was 9,708,617,728 / 2,858,422,272 bytes; OOM counters
 remained 19/15/0. API/Reality stayed active at restarts 9/14 and about
 913/394 MiB. No OOMD or kernel OOM appeared since 07:50. Held-source behavior
 is fixture-verified; external-use authorization remains unresolved.
+
+### Economic Workbench paired-comparison UI — 2026-10-29 08:00 CET
+
+The focused `Frontier.test.tsx` paired-comparison case passed **1/1** with
+eight unrelated tests skipped. In 15.38 seconds, it submitted a saved-evidence
+comparison using a per-venue execution delay plus slippage, partial-fill, and
+quote-decay assumptions, then verified the rendered matched constructions
+and paired result. The transient user service used a 640 MiB high / 768 MiB
+hard bound, zero swap, 25% CPU, 96 tasks, and a 90-second runtime; Node's heap
+was capped at 384 MiB. Fetch was mocked and no source was contacted.
+
+At 08:00:02 host PSI remained zero, `MemAvailable` was 10 GiB, and `SwapFree`
+8.2 MiB. User-manager memory/swap was 9,715,281,920 / 2,858,409,984 bytes;
+OOM counters remained 19/15/0. API, Reality, and Reality API remained active
+at restart counts 9/14/0. No OOMD/kernel OOM appeared after 07:55. This
+verifies a fixture UI interaction, not live opportunity execution or overall
+dashboard completion.

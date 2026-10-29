@@ -1233,3 +1233,19 @@ User-manager memory/swap was 9,708,617,728 / 2,858,422,272 bytes; OOM
 counters remained 19/15/0. API/Reality were active at restart counts 9/14,
 using about 913/394 MiB. No OOMD/kernel OOM appeared since 07:50. This
 verifies the hold boundary in fixtures, not source permission or live access.
+
+## Economic Workbench UI test and host sample — 2026-10-29 08:00 CET
+
+The paired baseline/current-assumptions Economic Workbench UI test passed
+**1/1**, with eight unrelated tests skipped, in 15.38 seconds. It submitted
+execution delay, slippage, partial-fill, and quote-decay assumptions against
+mocked saved-evidence responses. The transient user service was capped at
+640 MiB high / 768 MiB hard, zero swap, 25% CPU, 96 tasks, and 90 seconds;
+Node heap was 384 MiB. No public request was made.
+
+At 08:00:02 host PSI was zero, `MemAvailable` 10 GiB, `SwapFree` 8.2 MiB.
+User-manager memory/swap was 9,715,281,920 / 2,858,409,984 bytes; inherited
+OOM counters remained 19/15/0. API, Reality, and Reality API were active at
+restarts 9/14/0. No OOMD/kernel OOM appeared after 07:55. This short
+fixture-based UI check does not establish long-run stability or change the
+**PARTIALLY CONTAINED / PARTIALLY VERIFIED** incident state.

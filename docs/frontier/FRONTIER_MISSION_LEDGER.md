@@ -13770,3 +13770,10 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
 - **Bounds:** Transient service used 384 MiB high / 512 MiB hard, zero swap, 20% CPU, 64 tasks, and 60 seconds. One existing Starlette/httpx deprecation warning. Fake transports only; no network call.
 - **Post-test host:** At 07:58:42 PSI zero, MemAvailable 10 GiB, SwapFree 8.2 MiB; user-manager memory/swap 9,708,617,728 / 2,858,422,272 bytes; OOM counters 19/15/0. API/Reality active at restarts 9/14 and about 913/394 MiB. No OOMD/kernel OOM since 07:50.
 - **Status:** Hold enforcement is fixture-verified; authorization for live adapter use remains unresolved. Incident remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**.
+
+## Economic Workbench paired comparison UI — 2026-10-29 08:00 CET
+
+- **Test:** Focused `Frontier.test.tsx` case passed **1/1**, eight unrelated tests skipped, in 15.38 seconds. It submits execution-delay, slippage, partial-fill, and quote-decay assumptions and validates the rendered matched constructions and paired result against mocked fetch responses.
+- **Bounds:** Transient service used 640 MiB high / 768 MiB hard, zero swap, 25% CPU, 96 tasks, and 90 seconds; Node heap 384 MiB. No source endpoint was contacted.
+- **Post-test host:** At 08:00:02 PSI zero, MemAvailable 10 GiB, SwapFree 8.2 MiB; user-manager memory/swap 9,715,281,920 / 2,858,409,984 bytes; OOM counters 19/15/0. API/Reality/Reality API active at restart counts 9/14/0. No OOMD/kernel OOM since 07:55.
+- **Status:** Economic Workbench fixture interaction verified. Overall UI remains partial and the incident remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**.
