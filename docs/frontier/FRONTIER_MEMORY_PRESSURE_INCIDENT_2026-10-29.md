@@ -5086,3 +5086,20 @@ and 20:50:51. No additional TypeScript project check, linter, or test was
 started in this window. Continue code review/documentation only until a fresh
 post-schedule admission sample; keep the incident **PARTIALLY CONTAINED /
 PARTIALLY VERIFIED**.
+
+### Bounded frontend typecheck admission — 2026-10-29 20:48 CET
+
+The 20:45:35 Research Director completed successfully. With a fresh PSI-zero
+sample and over 10 GiB available RAM, one bounded TypeScript project check ran
+serially and finished before the 20:50:51 Reality capacity timer. Its transient
+leaf used zero swap, peaked at 378,306,560 bytes, and recorded no local
+`memory.events` high/max/OOM events. ESLint also passed in a separate bounded
+zero-swap unit. No test overlapped a scheduled research or capacity job.
+
+At 20:48:43, PSI remained zero, `MemAvailable` was 10,732,072 KiB, and
+`SwapFree` was just 264 KiB. The user-slice counters remained
+`high=16,438,259`, `max=732,222`, `oom=19`, `oom_kill=15`. The gap-detail timer
+is still disabled; source-analysis and Research Director have completed their
+20:40/20:45 runs, and capacity is due at 20:50:51. This supports the single
+bounded check, not further broad work or incident closure. Recheck after the
+capacity run; keep PSI, OOM, and leaf-limit evidence separate.

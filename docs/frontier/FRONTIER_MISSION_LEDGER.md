@@ -16661,3 +16661,20 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
   unchanged. No live source, production service, or stored evidence was used.
 - **Code checkpoint:** `8177bdf` (`fix(frontier): type Polymarket replay events accurately`)
   on `codex/frontier-20261026`.
+
+## 2026-10-29 20:48 CET — replay contract verification follow-up
+
+- The full frontend project typecheck passed with `tsc --noEmit -p
+  tsconfig.json` in 1:45.3 under 512 MiB High / 640 MiB Max / zero swap / 20%
+  CPU / 64 tasks and a 384 MiB Node heap. A live leaf sample recorded peak
+  378,306,560 bytes, zero local high/max/OOM events, and zero swap use.
+- ESLint passed on `Frontier.tsx` and `Frontier.test.tsx` under 256 MiB High /
+  384 MiB Max / zero swap / 10% CPU. The focused UI fixture and Prettier had
+  passed earlier in this checkpoint.
+- At 20:48:43, host PSI was zero, MemAvailable 10,732,072 KiB, SwapFree 264
+  KiB, and the user-slice high/max/oom/oom_kill counters were
+  16,438,259/732,222/19/15. The 20:50:51 capacity timer remained upcoming;
+  no test overlapped it. This is not incident resolution. Keep serial capped
+  work only and recheck after scheduled load.
+- **Code checkpoint:** `8177bdf`; source and production boundaries remain
+  unchanged. Live source verification and deployment remain pending.

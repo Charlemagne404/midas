@@ -16715,3 +16715,21 @@ No live source, service, or stored evidence was touched. The typecheck remains
 pending a fresh resource-admission window.
 This UI contract checkpoint is commit `8177bdf` on
 `codex/frontier-20261026`.
+
+### Post-schedule TypeScript verification — 2026-10-29 20:48 CET
+
+After the 20:45:35 Research Director completed, the full frontend TypeScript
+project check passed with `tsc --noEmit -p tsconfig.json`. It ran for 1:45.3
+under a 512 MiB `MemoryHigh`, 640 MiB `MemoryMax`, zero-swap, 20%-CPU, 64-task
+transient unit and a 384 MiB Node heap. An in-run cgroup sample measured
+`memory.peak=378,306,560` bytes with `memory.events` high/max/oom/oom_kill all
+zero and `memory.swap.current=0`. The captured compiler completed before the
+20:50:51 capacity timer; it did not overlap that job.
+
+ESLint then passed for `Frontier.tsx` and `Frontier.test.tsx` under a 256 MiB
+high / 384 MiB maximum, zero-swap, 10%-CPU cap. The focused interaction
+fixture and Prettier passed in the preceding checkpoint. After these checks,
+host PSI remained zero and `MemAvailable` was 10,732,072 KiB, but only 264 KiB
+of swap was free. User-slice counters were unchanged at
+high/max/oom/oom_kill `16,438,259/732,222/19/15`. Do not infer resolution from
+the quiet sample; keep further workloads serial and capped.
