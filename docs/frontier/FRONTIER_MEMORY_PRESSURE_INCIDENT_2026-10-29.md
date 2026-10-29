@@ -4842,3 +4842,18 @@ Neither systemd-oomd nor the kernel OOM query showed a new entry since 19:36.
 The timing overlaps the test, but without leaf counters the increase cannot
 be attributed to it. No further test workload was started; retain the serial
 admission policy and re-sample before continuing.
+
+### Post-commit read-only admission sample — 2026-10-29 19:42 CET
+
+At 19:42:48, PSI averages remained zero and `MemAvailable` was 10,894,200 KiB
+(about 10.4 GiB); only 20,512 KiB (about 20 MiB) of swap remained free. The
+user-manager counters were unchanged at high 16,438,074 / max 731,991 / oom
+19 / oom_kill 15 / oom_group_kill 0. There were no systemd-oomd or filtered
+kernel OOM entries since 19:36.
+
+MIDAS API, Reality, and Reality API remained active at about 1.26/1.75,
+0.86/1.25, and 0.15/0.63 GiB current/Max. The capacity timer was waiting and
+the gap-detail timer remained inactive/dead. No service or workload was
+changed. This short quiet interval supports only future serial capped fixture
+work; nearly full swap and the attribution of the +208 parent max events remain
+unresolved.

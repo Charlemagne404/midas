@@ -16485,3 +16485,14 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
   attribution is unknown. OOM/kill counters and PSI averages were unchanged;
   OOMD/kernel queries had no entries since 19:36. Hold further tests until a
   fresh admission sample; incident remains **PARTIALLY VERIFIED**.
+
+## 2026-10-29 19:42 CET — post-commit host admission check
+
+- At 19:42:48 PSI averages were zero, available RAM 10,894,200 KiB (about
+  10.4 GiB), and free swap 20,512 KiB (about 20 MiB). User-manager counters
+  remained high 16,438,074 / max 731,991 / oom 19 / oom_kill 15 /
+  group-kill 0. No OOMD/kernel OOM entry appeared since 19:36.
+- API, Reality, and Reality API were active at about 1.26/1.75, 0.86/1.25,
+  and 0.15/0.63 GiB current/Max. Capacity timer waited; gap-detail remained
+  inactive/dead. No production service was changed. Continue only serial
+  capped fixtures; incident remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**.
