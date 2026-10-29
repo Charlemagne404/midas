@@ -13835,3 +13835,10 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
 - **Bounds:** 384 MiB high / 512 MiB max, zero swap, 20% CPU, 64 tasks, 60 seconds. Direct live cgroup peak 64,749,568 bytes; no swap or high/max/OOM events.
 - **Host:** At 08:19:30 global memory PSI avg10/60 was zero and avg300 0.06%; oomd user-cgroup avg300 0.06%; 10 GiB available; swap nearly full; OOM counters 19/15/0. API/Reality active at restarts 9/14. No recent OOMD/kernel OOM.
 - **Status:** Small serial fixture admission remains acceptable after a fresh check. Live-source access stays held; incident remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**.
+
+## 2026-10-29 08:21 CET — analytics venue coverage fixture
+
+- The selected analytics behaviors were bounded empty-sample output, recurrence across distinct books and replay times, and exclusion of invalid lineage. Two passed; the empty-sample assertion exposed an outdated four-venue expectation. Verified `default_registry()` includes Gemini Spot and `Venue` includes `GEMINI_SPOT`; analytics intentionally emits rows for the declared enum. Updated the test expectation to follow that contract; the focused rerun passed **1/1**. This was a fixture update, not a source adapter change.
+- Live cgroup peaks were 41,836,544 / 41,730,048 bytes under 384 MiB high / 512 MiB max, zero swap, 20% CPU, and 64 tasks; no cgroup pressure/OOM events occurred.
+- At 08:21:35 memory PSI was 0/0/0.03% global avg10/60/300 and oomd user-cgroup avg300 was 0.03%; 10 GiB available, swap nearly full, OOM counters 19/15/0; API/Reality/Reality API remained active.
+- **Status:** Small analytics fixtures are verified. Keep the incident **PARTIALLY CONTAINED / PARTIALLY VERIFIED**; source-use holds and broad UI/performance validation remain open.

@@ -2,7 +2,7 @@
 
 **Report date:** 2026-10-29
 
-## Current completion matrix — 2026-10-29 08:19 CET
+## Current completion matrix — 2026-10-29 08:21 CET
 
 This is a current evidence classification, not a final completion claim. The
 dated implementation records below remain the detailed evidence; the
@@ -14720,3 +14720,23 @@ monitored user-cgroup pressure was zero at avg10/60 and 0.07% at avg300.
 stayed 19/15/0; API and Reality remained active at restarts 9/14 and about
 969/426 MiB. This is bounded fixture evidence; source-use holds and live
 validation limits remain in force.
+
+### Analytics source-quality venue-set update — 2026-10-29 08:21 CET
+
+The selected analytics slice covers bounded empty-sample semantics, recurrence
+across distinct books/replay times, and exclusion of invalid source lineage.
+The latter two passed in the first run. The empty-sample case initially failed
+because its expected venue set omitted `gemini_spot`. Inspection confirmed
+`default_registry()` registers `GeminiSpotAdapter`, `Venue` declares
+`GEMINI_SPOT`, and analytics intentionally emits one row per declared venue.
+The test now compares against the `Venue` enum; the corrected case passed
+**1/1** in 1.61 seconds. Thus all three selected assertions passed across the
+initial run and focused rerun; there was no adapter-code change.
+
+The original and corrected transient runs peaked at 41,836,544 and
+41,730,048 bytes, respectively, under 384 MiB high / 512 MiB max, zero swap,
+20% CPU, and 64 tasks. No cgroup high/max/OOM event or swap use occurred.
+At 08:21:35 memory PSI was 0/0/0.03% avg10/60/300, oomd user-cgroup pressure
+was 0/0/0.03%, and `MemAvailable` remained 10 GiB. OOM counters stayed
+19/15/0; API/Reality/Reality API remained active. The analytic summary still
+describes bounded samples, not venue-wide coverage.

@@ -1398,6 +1398,24 @@ timer is the next validation point. Small serial fixture work may continue
 after fresh admission; UI retries, broad suites, and endurance work remain
 deferred.
 
+## Analytics fixture and host sample — 2026-10-29 08:21 CET
+
+Three selected analytics behaviors were checked: bounded empty-sample output,
+recurrence requiring distinct books and replay times, and exclusion of invalid
+source lineage. The last two passed first. The empty-sample case first failed
+because the expected venue list omitted `gemini_spot`; registry and model code
+confirm the Gemini Spot adapter is registered and analytics emits a row for
+each `Venue`. The assertion now tracks the declared enum, and the corrected
+case passed **1/1** in 1.61 seconds. No adapter implementation was weakened.
+
+Both transient cgroups were under 384 MiB high / 512 MiB max, zero swap, 20%
+CPU, and 64 tasks. Live peaks were 41,836,544 and 41,730,048 bytes; no high,
+max, OOM, or swap events occurred. At 08:21:35 global memory PSI and oomd
+user-cgroup pressure were zero at avg10/60 and 0.03% at avg300. `MemAvailable`
+was 10 GiB, swap nearly full, OOM counters 19/15/0, and API/Reality remained
+active at restart counts 9/14. The small fixture run did not change the
+**PARTIALLY CONTAINED / PARTIALLY VERIFIED** incident status.
+
 ## Scheduled capacity monitor follow-up — 2026-10-29 08:18 CET
 
 The existing timer launched `midas-reality-capacity.service` at 08:17:52;
