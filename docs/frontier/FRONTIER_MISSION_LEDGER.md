@@ -13233,4 +13233,4 @@ found. systemd-oomd did not retain the transient scope's peak. The test pass
 is focused fixture verification, not full-suite or host-endurance evidence.
 
 Verification checkpoint: working-tree test result recorded before the
-follow-up documentation commit.
+follow-up documentation commit `5f7506b`.
