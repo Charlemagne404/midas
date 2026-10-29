@@ -838,6 +838,25 @@ async def test_polymarket_price_history_rejects_unordered_invalid_samples(histor
 
 
 @pytest.mark.asyncio
+async def test_polymarket_price_history_rejects_huge_decimal_timestamp_before_integer_conversion():
+    body = '{"history":[{"t":1e1000000000,"p":"0.4"}]}'
+    transport, _, client = _transport("clob.polymarket.com", {"/prices-history": body})
+    adapter = PolymarketAdapter(
+        AdapterConfig(
+            enabled=True, live_public_probe_enabled=True, requests_per_second=5, retries=0
+        ),
+        transport=transport,
+    )
+    try:
+        with pytest.raises(AdapterError, match="timestamps must be ordered"):
+            await adapter.fetch_price_history(
+                "123", interval="1d", fidelity_minutes=60, start_ts=1, end_ts=30
+            )
+    finally:
+        await client.aclose()
+
+
+@pytest.mark.asyncio
 async def test_synthetic_event_groups_retain_parent_context_and_only_propose_hypotheses():
     poly_body = _synthetic_polymarket_event()
     kalshi_body = _synthetic_kalshi_event()

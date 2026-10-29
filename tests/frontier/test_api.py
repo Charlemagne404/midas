@@ -30,6 +30,8 @@ from midas.frontier.models import (
     MarketInstrument,
     MarketKind,
     PayoffSpec,
+    PriceHistorySeries,
+    Provenance,
     QuantityUnit,
     RawObservation,
     SelectedMarketComponent,
@@ -56,6 +58,7 @@ from pydantic import ValidationError
 from apps.api.frontier import (
     _enrich_markets_with_kalshi_fee_evidence,
     _load_markets,
+    _validate_polymarket_price_history_source_row,
     router,
 )
 from tests.frontier.builders import T0, book, market
@@ -3766,10 +3769,116 @@ def test_polymarket_price_history_probe_is_bound_and_replayable(tmp_path):
         assert first_replay_page.json()["held_replays_omitted"] == 0
         assert second_replay_page.json()["returned"] == 1
         assert second_replay_page.json()["has_more"] is False
+
+        with sqlite3.connect(store.path) as connection:
+            connection.execute("DROP TRIGGER observations_no_update")
+            parent_raw_json, valid_parent_json = connection.execute(
+                "SELECT raw_json,normalized_json FROM observations WHERE observation_id=?",
+                (listing_id,),
+            ).fetchone()
+            mismatched_parent = json.loads(valid_parent_json)
+            mismatched_parent["venue"] = Venue.KALSHI.value
+            mismatched_parent_json = store._canonical(mismatched_parent)
+            mismatched_parent_hash = hashlib.sha256(
+                f"{parent_raw_json}\n{mismatched_parent_json}".encode()
+            ).hexdigest()
+            connection.execute(
+                "UPDATE observations SET normalized_json=?,row_sha256=? WHERE observation_id=?",
+                (mismatched_parent_json, mismatched_parent_hash, listing_id),
+            )
+        mismatched_parent_replay = client.post(
+            "/api/frontier/price-history/replay",
+            json={"observation_ids": [result["observation_id"]]},
+        )
+        assert mismatched_parent_replay.status_code == 409
+        assert "batch and member venues" in mismatched_parent_replay.json()["detail"]
+
+        valid_parent_hash = hashlib.sha256(
+            f"{parent_raw_json}\n{valid_parent_json}".encode()
+        ).hexdigest()
+        with sqlite3.connect(store.path) as connection:
+            connection.execute(
+                "UPDATE observations SET normalized_json=?,row_sha256=? WHERE observation_id=?",
+                (valid_parent_json, valid_parent_hash, listing_id),
+            )
+            history_raw_json, history_normalized_json = connection.execute(
+                "SELECT raw_json,normalized_json FROM observations WHERE observation_id=?",
+                (result["observation_id"],),
+            ).fetchone()
+            changed_history = json.loads(history_normalized_json)
+            changed_history["points"][0]["price"] = "0.99"
+            changed_history_json = store._canonical(changed_history)
+            changed_history_hash = hashlib.sha256(
+                f"{history_raw_json}\n{changed_history_json}".encode()
+            ).hexdigest()
+            connection.execute(
+                "UPDATE observations SET normalized_json=?,row_sha256=? WHERE observation_id=?",
+                (changed_history_json, changed_history_hash, result["observation_id"]),
+            )
+        mismatched_samples_replay = client.post(
+            "/api/frontier/price-history/replay",
+            json={"observation_ids": [result["observation_id"]]},
+        )
+        assert mismatched_samples_replay.status_code == 409
+        assert "Re-decoded Polymarket samples differ" in mismatched_samples_replay.json()["detail"]
     finally:
         client.close()
         asyncio.run(registry.aclose())
         asyncio.run(http_client.aclose())
+
+
+def test_price_history_replay_rejects_huge_decimal_timestamp_before_integer_conversion():
+    start_ts = int(T0.timestamp())
+    end_ts = start_ts + 3600
+    request_started = T0
+    received = T0 + timedelta(seconds=5)
+    request_url = (
+        "https://clob.polymarket.com/prices-history?market=123&interval=1d&fidelity=60"
+        f"&startTs={start_ts}&endTs={end_ts}"
+    )
+    raw_body = '{"history":[{"t":1e1000000000,"p":"0.4"}]}'
+    raw_sha256 = hashlib.sha256(raw_body.encode()).hexdigest()
+    raw = RawObservation(
+        venue=Venue.POLYMARKET,
+        observation_kind="historical_price_points",
+        request_url=request_url,
+        http_status=200,
+        request_started_at_utc=request_started,
+        received_at_utc=received,
+        request_elapsed_monotonic_ns=1_000_000,
+        raw_body=raw_body,
+        raw_sha256=raw_sha256,
+        adapter_version="fixture-polymarket-price-history-v1",
+    )
+    series = PriceHistorySeries(
+        venue=Venue.POLYMARKET,
+        native_instrument_id="123",
+        interval="1d",
+        fidelity_minutes=60,
+        requested_start_ts=start_ts,
+        requested_end_ts=end_ts,
+        points=(),
+        source_limit_note="Controlled fixture only.",
+        provenance=Provenance(
+            source_url=request_url,
+            adapter_version=raw.adapter_version,
+            source_schema_version="CLOB GET /prices-history",
+            request_started_at_utc=request_started,
+            response_received_at_utc=received,
+            request_elapsed_monotonic_ns=raw.request_elapsed_monotonic_ns,
+            processed_at_utc=received + timedelta(seconds=1),
+            raw_sha256=raw_sha256,
+            observation_id="a" * 64,
+        ),
+    )
+    row = {
+        "venue": Venue.POLYMARKET.value,
+        "raw_sha256": raw_sha256,
+        "received_at_utc": received.isoformat(),
+    }
+
+    with pytest.raises(ValueError, match="samples are invalid or unordered"):
+        _validate_polymarket_price_history_source_row(row, raw, series)
 
 
 def test_kraken_instrument_metadata_is_visible_as_a_market(tmp_path):

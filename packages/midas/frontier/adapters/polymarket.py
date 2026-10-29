@@ -1210,6 +1210,7 @@ class PolymarketAdapter(BaseReadOnlyAdapter):
                 if isinstance(timestamp_raw, Decimal)
                 and timestamp_raw.is_finite()
                 and timestamp_raw == timestamp_raw.to_integral_value()
+                and D(start_ts) <= timestamp_raw <= D(end_ts)
                 else None
             )
             price = parse_decimal(row.get("p"))

@@ -2429,50 +2429,9 @@ def router(
                 )
             try:
                 series = PriceHistorySeries.model_validate(row["normalized"])
-                if (
-                    row["venue"] != series.venue.value
-                    or row["raw_sha256"] != series.provenance.raw_sha256
-                    or datetime.fromisoformat(str(row["received_at_utc"]))
-                    != series.provenance.response_received_at_utc
-                ):
-                    raise ValueError(
-                        "Stored price-history provenance does not match its source row"
-                    )
-                bound_observation_id = series.bound_market_observation_id
-                if bound_observation_id is not None:
-                    bound = store.observation(bound_observation_id)
-                    if (
-                        bound is None
-                        or bound["venue"] != row["venue"]
-                        or bound["observation_kind"]
-                        not in {
-                            "market_listing",
-                            "instrument_metadata",
-                            "market_metadata",
-                            "event_market_listing",
-                        }
-                    ):
-                        raise ValueError("Bound market evidence is missing or incompatible")
-                    normalized_market = bound["normalized"]
-                    market_values = (
-                        normalized_market.get("markets", [])
-                        if isinstance(normalized_market, dict)
-                        else []
-                    )
-                    if isinstance(normalized_market, dict) and "instruments" in normalized_market:
-                        market_values = [normalized_market]
-                    if not any(
-                        isinstance(market_value, dict)
-                        and isinstance(market_value.get("instruments"), list)
-                        and any(
-                            isinstance(instrument, dict)
-                            and instrument.get("native_instrument_id")
-                            == series.native_instrument_id
-                            for instrument in market_value["instruments"]
-                        )
-                        for market_value in market_values
-                    ):
-                        raise ValueError("Bound market evidence does not include this instrument")
+                raw = RawObservation.model_validate(row["raw"])
+                _validate_polymarket_price_history_source_row(row, raw, series)
+                _validate_price_history_market_binding(store, row, series)
                 evidence.append(
                     PriceHistoryReplayInput(
                         observation_id=str(row["observation_id"]),
@@ -2482,7 +2441,7 @@ def router(
                         series=series,
                     )
                 )
-            except (KeyError, TypeError, ValueError) as error:
+            except (FrontierStoreError, KeyError, TypeError, ValueError) as error:
                 raise HTTPException(
                     status_code=409,
                     detail=f"Price-history replay evidence is incomplete or inconsistent: {error}",
@@ -6271,6 +6230,187 @@ def _validate_polymarket_book_update_market_binding(
     raise ValueError(
         "Bound Polymarket market observation does not contain this frame's market and instruments"
     )
+
+
+def _reject_duplicate_json_fields(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    result: dict[str, Any] = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError(f"Duplicate JSON object key: {key}")
+        result[key] = value
+    return result
+
+
+def _reject_nonstandard_json_constant(value: str) -> None:
+    raise ValueError(f"Non-standard JSON numeric constant: {value}")
+
+
+def _validate_polymarket_price_history_source_row(
+    row: dict[str, Any],
+    raw: RawObservation,
+    series: PriceHistorySeries,
+) -> None:
+    if (
+        row["venue"] != Venue.POLYMARKET.value
+        or series.venue != Venue.POLYMARKET
+        or raw.venue != Venue.POLYMARKET
+        or raw.observation_kind != "historical_price_points"
+        or raw.http_status != 200
+        or raw.raw_body_encoding != "utf8"
+        or raw.raw_body_state != "complete"
+        or row["raw_sha256"] != raw.raw_sha256
+        or raw.raw_sha256 != series.provenance.raw_sha256
+        or raw.adapter_version != series.provenance.adapter_version
+        or raw.request_url != series.provenance.source_url
+        or raw.request_started_at_utc != series.provenance.request_started_at_utc
+        or raw.received_at_utc != series.provenance.response_received_at_utc
+        or raw.request_elapsed_monotonic_ns != series.provenance.request_elapsed_monotonic_ns
+        or datetime.fromisoformat(str(row["received_at_utc"])) != raw.received_at_utc
+        or series.provenance.source_schema_version != "CLOB GET /prices-history"
+    ):
+        raise ValueError("Stored price-history provenance does not match its source row")
+
+    try:
+        source_url = urlsplit(raw.request_url)
+        source_port = source_url.port
+        query = parse_qs(
+            source_url.query,
+            keep_blank_values=True,
+            max_num_fields=5,
+            strict_parsing=True,
+        )
+    except ValueError as error:
+        raise ValueError("Stored price-history request URL is invalid") from error
+    expected_query = {
+        "market": series.native_instrument_id,
+        "interval": series.interval,
+        "fidelity": str(series.fidelity_minutes),
+        "startTs": str(series.requested_start_ts),
+        "endTs": str(series.requested_end_ts),
+    }
+    if (
+        source_url.scheme != "https"
+        or source_url.hostname != "clob.polymarket.com"
+        or source_port not in {None, 443}
+        or len(raw.request_url) > 2048
+        or source_url.username is not None
+        or source_url.password is not None
+        or source_url.path != "/prices-history"
+        or source_url.fragment
+        or set(query) != set(expected_query)
+        or any(query[key] != [value] for key, value in expected_query.items())
+    ):
+        raise ValueError("Stored price-history request does not match its normalized query")
+
+    try:
+        payload = json.loads(
+            raw.raw_body,
+            parse_float=Decimal,
+            object_pairs_hook=_reject_duplicate_json_fields,
+            parse_constant=_reject_nonstandard_json_constant,
+        )
+    except (json.JSONDecodeError, RecursionError, ValueError) as error:
+        raise ValueError("Stored Polymarket price-history response is invalid JSON") from error
+    rows = payload.get("history") if isinstance(payload, dict) else None
+    if not isinstance(rows, list) or len(rows) > 1500:
+        raise ValueError("Stored Polymarket price-history response has invalid history rows")
+
+    expected_points: list[tuple[int, Decimal]] = []
+    previous_timestamp = -1
+    for item in rows:
+        if not isinstance(item, dict):
+            raise ValueError("Stored Polymarket price-history point is not an object")
+        timestamp_raw = item.get("t")
+        timestamp = (
+            timestamp_raw
+            if type(timestamp_raw) is int
+            else int(timestamp_raw)
+            if isinstance(timestamp_raw, Decimal)
+            and timestamp_raw.is_finite()
+            and timestamp_raw == timestamp_raw.to_integral_value()
+            and Decimal(series.requested_start_ts)
+            <= timestamp_raw
+            <= Decimal(series.requested_end_ts)
+            else None
+        )
+        price_raw = item.get("p")
+        try:
+            price = (
+                Decimal(str(price_raw))
+                if not isinstance(price_raw, bool) and price_raw is not None
+                else None
+            )
+        except (ArithmeticError, TypeError, ValueError):
+            price = None
+        if (
+            timestamp is None
+            or timestamp < series.requested_start_ts
+            or timestamp > series.requested_end_ts
+            or timestamp <= previous_timestamp
+            or price is None
+            or not price.is_finite()
+            or not Decimal(0) <= price <= Decimal(1)
+        ):
+            raise ValueError("Stored Polymarket price-history samples are invalid or unordered")
+        expected_points.append((timestamp, price))
+        previous_timestamp = timestamp
+
+    if len(expected_points) != len(series.points) or any(
+        timestamp != int(point.timestamp_utc.timestamp()) or price != point.price
+        for (timestamp, price), point in zip(expected_points, series.points, strict=False)
+    ):
+        raise ValueError(
+            "Re-decoded Polymarket samples differ from normalized price-history points"
+        )
+
+
+def _validate_price_history_market_binding(
+    store: FrontierStore,
+    row: dict[str, Any],
+    series: PriceHistorySeries,
+) -> None:
+    bound_observation_id = series.bound_market_observation_id
+    if bound_observation_id is None:
+        return
+    bound = store.observation(bound_observation_id)
+    if (
+        bound is None
+        or bound["venue"] != row["venue"]
+        or bound["observation_kind"]
+        not in {
+            "market_listing",
+            "instrument_metadata",
+            "market_metadata",
+            "event_market_listing",
+        }
+    ):
+        raise ValueError("Bound market evidence is missing or incompatible")
+    normalized = bound["normalized"]
+    if not isinstance(normalized, dict):
+        raise ValueError("Bound market evidence is not a normalized market object")
+    if "markets" in normalized:
+        batch = MarketBatch.model_validate(normalized)
+        if batch.venue.value != bound["venue"] or any(
+            market.venue != batch.venue for market in batch.markets
+        ):
+            raise ValueError("Bound market batch and member venues do not match its source row")
+        markets = batch.markets
+    elif "canonical_id" in normalized:
+        market = FrontierMarket.model_validate(normalized)
+        if market.venue.value != bound["venue"]:
+            raise ValueError("Bound market venue does not match its source row")
+        markets = (market,)
+    else:
+        raise ValueError("Bound market evidence has an unsupported normalized shape")
+    if not any(
+        market.venue == series.venue
+        and any(
+            instrument.native_instrument_id == series.native_instrument_id
+            for instrument in market.instruments
+        )
+        for market in markets
+    ):
+        raise ValueError("Bound market evidence does not include this instrument")
 
 
 def _validate_kraken_book_update_market_binding(
