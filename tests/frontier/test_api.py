@@ -3827,16 +3827,16 @@ def test_polymarket_price_history_probe_is_bound_and_replayable(tmp_path):
         asyncio.run(http_client.aclose())
 
 
-def test_price_history_replay_rejects_huge_decimal_timestamp_before_integer_conversion():
+def _price_history_replay_source_fixture(raw_body: str, *, request_market_id: str = "123"):
     start_ts = int(T0.timestamp())
     end_ts = start_ts + 3600
     request_started = T0
     received = T0 + timedelta(seconds=5)
     request_url = (
-        "https://clob.polymarket.com/prices-history?market=123&interval=1d&fidelity=60"
+        "https://clob.polymarket.com/prices-history?market="
+        f"{request_market_id}&interval=1d&fidelity=60"
         f"&startTs={start_ts}&endTs={end_ts}"
     )
-    raw_body = '{"history":[{"t":1e1000000000,"p":"0.4"}]}'
     raw_sha256 = hashlib.sha256(raw_body.encode()).hexdigest()
     raw = RawObservation(
         venue=Venue.POLYMARKET,
@@ -3876,8 +3876,34 @@ def test_price_history_replay_rejects_huge_decimal_timestamp_before_integer_conv
         "raw_sha256": raw_sha256,
         "received_at_utc": received.isoformat(),
     }
+    return row, raw, series
+
+
+def test_price_history_replay_rejects_huge_decimal_timestamp_before_integer_conversion():
+    row, raw, series = _price_history_replay_source_fixture(
+        '{"history":[{"t":1e1000000000,"p":"0.4"}]}'
+    )
 
     with pytest.raises(ValueError, match="samples are invalid or unordered"):
+        _validate_polymarket_price_history_source_row(row, raw, series)
+
+
+@pytest.mark.parametrize(
+    ("raw_body", "request_market_id", "expected_error"),
+    (
+        ('{"history":[],"history":[]}', "123", "invalid JSON"),
+        ('{"history":[{"t":NaN,"p":"0.4"}]}', "123", "invalid JSON"),
+        ('{"history":[]}', "456", "does not match its normalized query"),
+    ),
+)
+def test_price_history_replay_rejects_malformed_source_envelopes(
+    raw_body: str, request_market_id: str, expected_error: str
+):
+    row, raw, series = _price_history_replay_source_fixture(
+        raw_body, request_market_id=request_market_id
+    )
+
+    with pytest.raises(ValueError, match=expected_error):
         _validate_polymarket_price_history_source_row(row, raw, series)
 
 
