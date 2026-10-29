@@ -13427,3 +13427,5 @@ bytes total swap and 2,080,768 bytes free at 05:10 CET. The post-test host
 sample retained zero PSI, unchanged OOM counters, and active API/Reality;
 swap remained nearly full. No service, external source, or protected data
 was changed. Full host stability is still unverified.
+
+Documentation commit `05a0707` records this readiness and incident follow-up.
