@@ -13405,3 +13405,7 @@ capacity-check remained active. No OOM entry appeared in the preceding
 ten-minute systemd-oomd journal query, but `oomctl dump` still listed no
 monitored groups. This additional brief check supports continued serial,
 capped work only; full-swap and monitor-visibility risks remain.
+
+Checkpoint commits: `ef4e77d` (transport formatter-only code cleanup),
+`8de85e1` (bounded verification evidence), and `ca93f78` (05:06 host
+confirmation). `data/frontier-public-probes/` remains untracked and untouched.
