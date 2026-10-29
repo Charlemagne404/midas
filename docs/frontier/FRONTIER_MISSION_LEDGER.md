@@ -13409,3 +13409,21 @@ capped work only; full-swap and monitor-visibility risks remain.
 Checkpoint commits: `ef4e77d` (transport formatter-only code cleanup),
 `8de85e1` (bounded verification evidence), and `ca93f78` (05:06 host
 confirmation). `data/frontier-public-probes/` remains untracked and untouched.
+
+### Readiness host swap telemetry — 2026-10-29 05:10 CET
+
+Implementation commit `f189397` (`feat(readiness): expose host swap capacity`)
+adds bounded `SwapTotal` and `SwapFree` reporting to the read-only readiness
+resource API and Research Readiness UI. The view reports free/total and use
+only for valid values; missing or malformed values remain “Not measured.”
+Swap occupancy remains contextual and does not independently change the
+Arena resource gate.
+
+Evidence: `tests/test_readiness_resources.py` passed **5/5**; the focused
+`Readiness.test.tsx` suite passed **3/3** with one Vitest worker. Ruff
+check/format, ESLint, Prettier, and strict mypy for `apps/api/readiness.py`
+passed. A bounded live API-resource-function sample returned 4,294,963,200
+bytes total swap and 2,080,768 bytes free at 05:10 CET. The post-test host
+sample retained zero PSI, unchanged OOM counters, and active API/Reality;
+swap remained nearly full. No service, external source, or protected data
+was changed. Full host stability is still unverified.

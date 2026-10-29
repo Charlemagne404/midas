@@ -393,3 +393,23 @@ cgroup memory, with restart counts 9/14. The gap-detail timer was inactive
 and the capacity timer active. No OOM entry was returned by the preceding
 ten-minute systemd-oomd journal query. `oomctl dump` continued to list no
 monitored groups. This remains a short quiet interval, not proof of stability.
+
+## Readiness telemetry improvement — 2026-10-29 05:10 CET
+
+The read-only Research Readiness resource API now includes `swap_total_bytes`
+and `swap_free_bytes` from the same bounded `/proc/meminfo` read used for RAM.
+The UI shows free/total swap and utilization only when the data is valid;
+missing or malformed values stay unmeasured. Swap occupancy is displayed as
+context and does not independently change Arena admission, which continues to
+use available memory, pressure, cgroup headroom, and active job evidence.
+
+The API resource tests passed **5/5**, and the focused Readiness UI tests
+passed **3/3**. Ruff check/format, ESLint, Prettier, and strict mypy for the
+readiness resource module passed. A bounded live resource snapshot confirmed
+the new fields are populated from `/proc/meminfo`: total/free swap was
+4,294,963,200 / 2,080,768 bytes at 05:10 CET. This is telemetry evidence,
+not a stability conclusion. At the post-test host check, PSI remained zero,
+available RAM was 11,543,302,144 bytes, free swap was 2,088,960 bytes,
+`oom=19`/`oom_kill=15` were unchanged, and API/Reality remained active.
+`oomctl` monitor visibility and nearly full swap remain unresolved. No
+service configuration or protected data changed.
