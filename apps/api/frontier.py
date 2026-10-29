@@ -51,6 +51,7 @@ from midas.frontier.adapters.base import (
 from midas.frontier.adapters.coinbase import CoinbaseSpotAdapter
 from midas.frontier.adapters.gemini import GeminiSpotAdapter
 from midas.frontier.adapters.kraken import KrakenSpotAdapter
+from midas.frontier.adapters.polymarket import PolymarketAdapter
 from midas.frontier.analytics import (
     BOOK_SAMPLE_LIMIT,
     MARKET_SAMPLE_LIMIT,
@@ -95,6 +96,7 @@ from midas.frontier.models import (
     KalshiFeeOrderFillInput,
     MarketBatch,
     MarketMetadataEvidence,
+    PolymarketBookUpdateFrame,
     PriceHistorySeries,
     RawObservation,
     ResponseRejectionMetadata,
@@ -180,6 +182,12 @@ class PolymarketPriceHistoryProbeRequest(BaseModel):
         if self.end_ts > now_ts:
             raise ValueError("Price-history end timestamp cannot be in the future")
         return self
+
+
+class PolymarketBookUpdatesProbeRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+    market_id: str = Field(min_length=1, max_length=256)
+    max_frames: int = Field(default=8, strict=True, ge=1, le=8)
 
 
 class PriceHistoryReplayRequest(BaseModel):
@@ -2682,6 +2690,217 @@ def router(
                     detail={
                         "code": "FRONTIER_PRICE_HISTORY_FAILED",
                         "message": str(error),
+                        "diagnostic_observation_ids": diagnostic_ids,
+                        "diagnostic_persistence_error": diagnostic_error,
+                    },
+                ) from error
+
+    @api.post("/probe/polymarket/book-updates")
+    async def probe_polymarket_book_updates(
+        request: PolymarketBookUpdatesProbeRequest,
+    ) -> dict[str, Any]:
+        """Capture one short public stream window for an already-recorded market."""
+        venue = Venue.POLYMARKET
+        adapter = registered_source_adapter(venue)
+        if not adapter.capabilities.supports(Capability.BOOK_UPDATES):
+            raise HTTPException(status_code=409, detail="Polymarket book updates are unsupported")
+        if not isinstance(adapter, PolymarketAdapter):
+            raise HTTPException(
+                status_code=409,
+                detail="Advertised Polymarket book-update operation is unavailable",
+            )
+        require_probe_config(getattr(adapter, "config", None))
+        try:
+            known_markets = await _load_markets(store, 200, excluded_venues=held_venues)
+        except (FrontierStoreError, ValueError) as error:
+            raise HTTPException(status_code=409, detail=str(error)) from error
+        recorded_market = next(
+            (
+                item
+                for item in known_markets
+                if item.venue == venue and item.canonical_id == request.market_id
+            ),
+            None,
+        )
+        if recorded_market is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Book updates can only be captured for a market in the bounded recorded window",
+            )
+        bound_market_observation_id = recorded_market.provenance.observation_id
+        if bound_market_observation_id is None:
+            raise HTTPException(
+                status_code=409,
+                detail="Recorded market has no immutable source-observation binding",
+            )
+        asset_ids = tuple(item.native_instrument_id for item in recorded_market.instruments)
+        if (
+            not 1 <= len(asset_ids) <= 50
+            or len(set(asset_ids)) != len(asset_ids)
+            or any(re.fullmatch(r"[0-9]{1,256}", item) is None for item in asset_ids)
+        ):
+            raise HTTPException(
+                status_code=409,
+                detail="Saved market does not contain a bounded set of unique Polymarket asset IDs",
+            )
+
+        stored_observation_ids: list[str] = []
+        unpersisted_captures: list[RawObservation] = []
+        async with source_locks[venue]:
+            adapter.take_captures()
+            try:
+                frames = await adapter.capture_book_updates(
+                    asset_ids,
+                    max_frames=request.max_frames,
+                    max_duration_seconds=3.0,
+                    max_updates=50,
+                )
+                captures = adapter.take_captures()
+                unpersisted_captures = list(captures)
+                if len(captures) != len(frames) or len(
+                    {capture.raw_sha256 for capture in captures}
+                ) != len(captures):
+                    raise AdapterError(
+                        "BOOK_UPDATE_CAPTURE_MISMATCH",
+                        "Normalized stream frames do not match a unique set of raw captures",
+                    )
+                captures_by_hash = {capture.raw_sha256: capture for capture in captures}
+                frame_summaries: list[dict[str, Any]] = []
+                instrument_ids = frozenset(asset_ids)
+                for frame in frames:
+                    if (
+                        not isinstance(frame, PolymarketBookUpdateFrame)
+                        or not frame.has_valid_structure
+                    ):
+                        raise AdapterError(
+                            "BOOK_UPDATE_CAPTURE_MISMATCH",
+                            "Adapter returned an invalid normalized Polymarket stream frame",
+                        )
+                    capture = captures_by_hash.get(frame.raw_sha256)
+                    if capture is None or (
+                        capture.venue != venue
+                        or capture.observation_kind != "public_book_update_frame"
+                        or capture.http_status != 101
+                        or capture.request_url != frame.provenance.source_url
+                        or capture.adapter_version != frame.provenance.adapter_version
+                        or capture.request_started_at_utc != frame.provenance.request_started_at_utc
+                        or capture.received_at_utc != frame.provenance.response_received_at_utc
+                        or capture.request_elapsed_monotonic_ns
+                        != frame.provenance.request_elapsed_monotonic_ns
+                    ):
+                        raise AdapterError(
+                            "BOOK_UPDATE_CAPTURE_MISMATCH",
+                            "Normalized stream frame differs from its raw source evidence",
+                        )
+                    if any(
+                        update.native_market_id != recorded_market.native_market_id
+                        or update.native_instrument_id not in instrument_ids
+                        for update in frame.updates
+                    ):
+                        raise AdapterError(
+                            "BOOK_UPDATE_MARKET_BINDING_MISMATCH",
+                            "Stream frame contains a market or asset outside the saved market binding",
+                        )
+                    bound_frame = frame.model_copy(
+                        update={"bound_market_observation_id": bound_market_observation_id}
+                    )
+                    observation_id = store.append_observation(capture, bound_frame)
+                    stored_observation_ids.append(observation_id)
+                    unpersisted_captures.remove(capture)
+                    frame_summaries.append(
+                        {
+                            "observation_id": observation_id,
+                            "raw_sha256": capture.raw_sha256,
+                            "received_at_utc": capture.received_at_utc.isoformat(),
+                            "source_url": capture.request_url,
+                            "source_schema_version": frame.provenance.source_schema_version,
+                            "adapter_version": frame.provenance.adapter_version,
+                            "updates": [
+                                {
+                                    "native_market_id": update.native_market_id,
+                                    "native_instrument_id": update.native_instrument_id,
+                                    "event_type": update.event_type,
+                                    "source_timestamp_utc": (
+                                        update.source_timestamp_utc.isoformat()
+                                        if update.source_timestamp_utc is not None
+                                        else None
+                                    ),
+                                    "bid_level_count": len(update.bids),
+                                    "ask_level_count": len(update.asks),
+                                    "price_change_count": len(update.changes),
+                                    "reported_best_bid": (
+                                        str(update.reported_best_bid)
+                                        if update.reported_best_bid is not None
+                                        else None
+                                    ),
+                                    "reported_best_ask": (
+                                        str(update.reported_best_ask)
+                                        if update.reported_best_ask is not None
+                                        else None
+                                    ),
+                                    "continuity": update.continuity,
+                                    "quality_flags": list(update.quality_flags),
+                                }
+                                for update in frame.updates
+                            ],
+                        }
+                    )
+                update_count = sum(len(frame.updates) for frame in frames)
+                return {
+                    "venue": venue.value,
+                    "market_id": recorded_market.canonical_id,
+                    "native_market_id": recorded_market.native_market_id,
+                    "bound_market_observation_id": bound_market_observation_id,
+                    "capture_status": "captured" if frames else "no_market_updates_observed",
+                    "frame_count": len(frames),
+                    "normalized_update_count": update_count,
+                    "capture_bounds": {
+                        "max_frames": request.max_frames,
+                        "max_updates": 50,
+                        "max_duration_seconds": 3.0,
+                        "stream_connections": 1,
+                    },
+                    "frames": frame_summaries,
+                    "source_state": (await adapter.health()).state.value,
+                    "hypothetical_only": True,
+                    "note": (
+                        "These are public stream observations pinned to raw frames. They are not "
+                        "sequenced book snapshots, deltas are not applied locally, and the capture "
+                        "does not establish executable depth or simultaneous availability."
+                    ),
+                }
+            except AdapterError as error:
+                diagnostic_ids, diagnostic_error = preserve_failed_captures(
+                    adapter,
+                    error.code,
+                    str(error),
+                    already_drained=tuple(unpersisted_captures),
+                )
+                adapter.report_failure(error.code, str(error))
+                raise HTTPException(
+                    status_code=502,
+                    detail={
+                        "code": error.code,
+                        "message": str(error),
+                        "stored_observation_ids": stored_observation_ids,
+                        "diagnostic_observation_ids": diagnostic_ids,
+                        "diagnostic_persistence_error": diagnostic_error,
+                    },
+                ) from error
+            except (ValueError, FrontierStoreError) as error:
+                diagnostic_ids, diagnostic_error = preserve_failed_captures(
+                    adapter,
+                    "FRONTIER_BOOK_UPDATES_FAILED",
+                    str(error),
+                    already_drained=tuple(unpersisted_captures),
+                )
+                adapter.report_failure("FRONTIER_BOOK_UPDATES_FAILED", str(error))
+                raise HTTPException(
+                    status_code=502,
+                    detail={
+                        "code": "FRONTIER_BOOK_UPDATES_FAILED",
+                        "message": str(error),
+                        "stored_observation_ids": stored_observation_ids,
                         "diagnostic_observation_ids": diagnostic_ids,
                         "diagnostic_persistence_error": diagnostic_error,
                     },

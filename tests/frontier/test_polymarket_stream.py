@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import base64
 import hashlib
 import json
@@ -9,14 +10,27 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
 from midas.frontier.adapters.base import AdapterError
 from midas.frontier.adapters.polymarket import (
     POLYMARKET_MARKET_STREAM_URL,
     PolymarketAdapter,
 )
 from midas.frontier.adapters.polymarket_stream import decode_market_stream_frame
-from midas.frontier.models import AdapterConfig, Capability
+from midas.frontier.models import (
+    AdapterConfig,
+    Capability,
+    MarketBatch,
+    RawObservation,
+    Venue,
+    stable_instrument_id,
+)
+from midas.frontier.registry import AdapterRegistry
 from midas.frontier.storage import FrontierStore, FrontierStoreError
+
+from apps.api.frontier import router
+from tests.frontier.builders import market
 
 ASSET_ID = "107505882767731489358349912513945399560393482969656700824895970500493757150417"
 CONDITION_ID = "0x747dc809fb79e1b05be09c42d6179459a58de2ef3e40f02484a4e1260f741f75"
@@ -49,8 +63,10 @@ class FixtureConnector:
         self.websocket = FixtureWebSocket(frames)
         self.url: str | None = None
         self.options: dict[str, Any] | None = None
+        self.calls = 0
 
     def __call__(self, url: str, **options: Any) -> FixtureWebSocket:
+        self.calls += 1
         self.url = url
         self.options = options
         return self.websocket
@@ -264,3 +280,128 @@ async def test_binary_stream_frame_is_hash_preserved_before_rejection():
     assert captures[0].raw_body_encoding == "base64"
     assert captures[0].raw_body == base64.b64encode(malformed).decode("ascii")
     assert captures[0].raw_sha256 == hashlib.sha256(malformed).hexdigest()
+
+
+def _store_polymarket_market(store: FrontierStore) -> str:
+    fixture_market = market(Venue.POLYMARKET, CONDITION_ID)
+    source_market = fixture_market.model_copy(
+        update={
+            "instruments": (
+                fixture_market.instruments[0].model_copy(
+                    update={
+                        "native_instrument_id": ASSET_ID,
+                        "canonical_id": stable_instrument_id(
+                            Venue.POLYMARKET, CONDITION_ID, ASSET_ID
+                        ),
+                    }
+                ),
+                fixture_market.instruments[1].model_copy(
+                    update={
+                        "native_instrument_id": "987654321",
+                        "canonical_id": stable_instrument_id(
+                            Venue.POLYMARKET, CONDITION_ID, "987654321"
+                        ),
+                    }
+                ),
+            )
+        }
+    )
+    body = '{"recorded_fixture":"Polymarket listing"}'
+    raw = RawObservation(
+        venue=Venue.POLYMARKET,
+        observation_kind="market_listing",
+        request_url="https://gamma-api.polymarket.com/markets?limit=1",
+        http_status=200,
+        request_started_at_utc=T0,
+        received_at_utc=T0,
+        raw_body=body,
+        raw_sha256=hashlib.sha256(body.encode()).hexdigest(),
+        adapter_version="fixture-polymarket-listing-v1",
+    )
+    store.append_observation(raw, MarketBatch(venue=Venue.POLYMARKET, markets=(source_market,)))
+    return source_market.canonical_id
+
+
+def test_book_update_api_binds_to_saved_market_and_persists_fixture_evidence(tmp_path: Path):
+    connector = FixtureConnector([_legacy_book_frame()])
+    adapter = PolymarketAdapter(
+        AdapterConfig(enabled=True, live_public_probe_enabled=True, requests_per_second=5),
+        stream_connector=connector,
+    )
+    registry = AdapterRegistry((adapter,))
+    store = FrontierStore(tmp_path / "frontier")
+    market_id = _store_polymarket_market(store)
+    app = FastAPI()
+    app.include_router(router(store, registry))
+    client = TestClient(app)
+    try:
+        response = client.post(
+            "/api/frontier/probe/polymarket/book-updates",
+            json={"market_id": market_id, "max_frames": 1},
+        )
+        assert response.status_code == 200, response.text
+        result = response.json()
+        assert result["market_id"] == market_id
+        assert result["native_market_id"] == CONDITION_ID
+        assert result["capture_status"] == "captured"
+        assert result["frame_count"] == 1
+        assert result["normalized_update_count"] == 1
+        assert result["capture_bounds"] == {
+            "max_frames": 1,
+            "max_updates": 50,
+            "max_duration_seconds": 3.0,
+            "stream_connections": 1,
+        }
+        assert result["frames"][0]["updates"][0]["event_type"] == "book"
+        assert result["frames"][0]["updates"][0]["native_instrument_id"] == ASSET_ID
+        assert (
+            result["frames"][0]["raw_sha256"]
+            == hashlib.sha256(_legacy_book_frame().encode()).hexdigest()
+        )
+        assert "not sequenced book snapshots" in result["note"]
+        assert connector.calls == 1
+        assert json.loads(connector.websocket.sent[0]) == {
+            "assets_ids": [ASSET_ID, "987654321"],
+            "type": "market",
+        }
+
+        observation_id = result["frames"][0]["observation_id"]
+        stored = store.observation(observation_id)
+        assert stored is not None
+        assert stored["raw"]["raw_body"] == _legacy_book_frame()
+        assert stored["normalized"]["updates"][0]["native_market_id"] == CONDITION_ID
+        assert (
+            stored["normalized"]["bound_market_observation_id"]
+            == result["bound_market_observation_id"]
+        )
+
+        unknown = client.post(
+            "/api/frontier/probe/polymarket/book-updates",
+            json={"market_id": "polymarket:unrecorded", "max_frames": 1},
+        )
+        assert unknown.status_code == 404
+        assert connector.calls == 1
+    finally:
+        client.close()
+        asyncio.run(registry.aclose())
+
+
+def test_book_update_api_respects_probe_disable_before_stream_connect(tmp_path: Path):
+    connector = FixtureConnector([_legacy_book_frame()])
+    adapter = PolymarketAdapter(stream_connector=connector)
+    registry = AdapterRegistry((adapter,))
+    store = FrontierStore(tmp_path / "frontier")
+    app = FastAPI()
+    app.include_router(router(store, registry))
+    client = TestClient(app)
+    try:
+        response = client.post(
+            "/api/frontier/probe/polymarket/book-updates",
+            json={"market_id": f"polymarket:{CONDITION_ID}", "max_frames": 1},
+        )
+        assert response.status_code == 409
+        assert connector.calls == 0
+        assert adapter.take_captures() == ()
+    finally:
+        client.close()
+        asyncio.run(registry.aclose())

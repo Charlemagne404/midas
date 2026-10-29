@@ -451,6 +451,45 @@ type PriceHistoryCaptureResult = {
   hypothetical_only: true;
   note: string;
 };
+type PolymarketBookUpdateCaptureResult = {
+  venue: 'polymarket';
+  market_id: string;
+  native_market_id: string;
+  bound_market_observation_id: string;
+  capture_status: 'captured' | 'no_market_updates_observed';
+  frame_count: number;
+  normalized_update_count: number;
+  capture_bounds: {
+    max_frames: number;
+    max_updates: number;
+    max_duration_seconds: number;
+    stream_connections: number;
+  };
+  frames: {
+    observation_id: string;
+    raw_sha256: string;
+    received_at_utc: string;
+    source_url: string;
+    source_schema_version: string;
+    adapter_version: string;
+    updates: {
+      native_market_id: string;
+      native_instrument_id: string;
+      event_type: string;
+      source_timestamp_utc: string | null;
+      bid_level_count: number;
+      ask_level_count: number;
+      price_change_count: number;
+      reported_best_bid: string | null;
+      reported_best_ask: string | null;
+      continuity: string;
+      quality_flags: string[];
+    }[];
+  }[];
+  source_state: string;
+  hypothetical_only: true;
+  note: string;
+};
 type PriceHistoryReplayResult = {
   schema_version: number;
   run_id: string;
@@ -2395,8 +2434,18 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
     (source) =>
       source.venue === 'polymarket' &&
       source.public_probe_enabled &&
+      !source.probe_policy_block_reason &&
       source.capabilities.some(
         (capability) => capability.capability === 'price_history' && capability.supported,
+      ),
+  );
+  const polymarketBookUpdatesProbeEnabled = (sources.data?.items ?? []).some(
+    (source) =>
+      source.venue === 'polymarket' &&
+      source.public_probe_enabled &&
+      !source.probe_policy_block_reason &&
+      source.capabilities.some(
+        (capability) => capability.capability === 'book_updates' && capability.supported,
       ),
   );
 
@@ -2809,6 +2858,14 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
           start_ts: input.startTs,
           end_ts: input.endTs,
         }),
+      }),
+    onSuccess: refresh,
+  });
+  const capturePolymarketBookUpdates = useMutation({
+    mutationFn: (input: { marketId: string }) =>
+      api<PolymarketBookUpdateCaptureResult>('/frontier/probe/polymarket/book-updates', {
+        method: 'POST',
+        body: JSON.stringify({ market_id: input.marketId }),
       }),
     onSuccess: refresh,
   });
@@ -3733,6 +3790,8 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
               marketMetadataProbeEnabled={marketMetadataProbeEnabledFor(selectedMarket.venue)}
               priceHistoryProbe={capturePolymarketPriceHistory}
               priceHistoryProbeEnabled={polymarketPriceHistoryProbeEnabled}
+              bookUpdatesProbe={capturePolymarketBookUpdates}
+              bookUpdatesProbeEnabled={polymarketBookUpdatesProbeEnabled}
               eventMarketsProbe={captureEventMarketGroup}
               eventMarketsProbeEnabled={eventMarketGroupsProbeEnabledFor(selectedMarket.venue)}
               mveComponentProbe={captureKalshiMveComponentMarket}
@@ -5868,6 +5927,89 @@ function PolymarketPriceHistoryPanel({
   );
 }
 
+function PolymarketBookUpdatesPanel({
+  market,
+  probe,
+  probeEnabled,
+}: {
+  market: Market;
+  probe: UseMutationResult<PolymarketBookUpdateCaptureResult, Error, { marketId: string }, unknown>;
+  probeEnabled: boolean;
+}) {
+  const result =
+    probe.isSuccess && probe.variables?.marketId === market.canonical_id ? probe.data : null;
+
+  return (
+    <section className="fr-price-history-panel" aria-label="Polymarket public book update capture">
+      <div className="fr-price-history-heading">
+        <div>
+          <span className="fr-kicker">FINITE PUBLIC STREAM CAPTURE</span>
+          <h4>Book update events</h4>
+          <p>
+            Opens one explicitly requested stream for up to 3 seconds, 8 frames and 50 normalized
+            updates. Events are stored with their raw frames and this market’s saved source record.
+          </p>
+        </div>
+        <span className="fr-count">
+          {result
+            ? `${result.frame_count} frames · ${result.normalized_update_count} events`
+            : 'No capture'}
+        </span>
+      </div>
+      <div className="fr-price-history-controls">
+        <button
+          className="fr-inspect-button"
+          disabled={!probeEnabled || probe.isPending}
+          onClick={() => probe.mutate({ marketId: market.canonical_id })}
+        >
+          {probe.isPending
+            ? 'Capturing…'
+            : probeEnabled
+              ? 'Capture 3-second market stream'
+              : 'Public stream disabled'}
+        </button>
+      </div>
+      <p className="fr-price-history-note">
+        {probeEnabled
+          ? 'Capture starts only after this button is pressed. Public updates have no verified sequence or gap recovery; deltas are not applied to a local book.'
+          : 'Capture is unavailable because the Polymarket source is disabled, held, or does not advertise book updates.'}
+      </p>
+      {probe.isError && probe.variables?.marketId === market.canonical_id && (
+        <ProbeFailureEvidence error={probe.error} />
+      )}
+      {result && (
+        <div className="fr-price-history-result" role="status">
+          <p>
+            {result.capture_status === 'captured'
+              ? `Captured ${result.frame_count} stream frame${result.frame_count === 1 ? '' : 's'} with ${result.normalized_update_count} normalized event${result.normalized_update_count === 1 ? '' : 's'}.`
+              : 'The bounded stream window opened successfully but contained no market updates.'}
+          </p>
+          <p>
+            Bound market evidence {shortHash(result.bound_market_observation_id)} · source state{' '}
+            {label(result.source_state)}
+          </p>
+          {result.frames.map((frame) => (
+            <article key={frame.observation_id} className="fr-price-history-meta">
+              <span>Received {time(frame.received_at_utc)}</span>
+              <span>Record {shortHash(frame.observation_id)}</span>
+              <span>Raw SHA-256 {shortHash(frame.raw_sha256)}</span>
+              {frame.updates.map((update, index) => (
+                <span key={`${frame.observation_id}:${index}`}>
+                  {update.event_type} · instrument {update.native_instrument_id} · bid/ask levels{' '}
+                  {update.bid_level_count}/{update.ask_level_count} · changes{' '}
+                  {update.price_change_count} · quality {update.quality_flags.join(', ')}
+                </span>
+              ))}
+              <EvidenceDisclosure observationId={frame.observation_id} />
+            </article>
+          ))}
+          <small>{result.note}</small>
+        </div>
+      )}
+    </section>
+  );
+}
+
 function MarketDetails({
   market,
   books,
@@ -5876,6 +6018,8 @@ function MarketDetails({
   marketMetadataProbeEnabled,
   priceHistoryProbe,
   priceHistoryProbeEnabled,
+  bookUpdatesProbe,
+  bookUpdatesProbeEnabled,
   eventMarketsProbe,
   eventMarketsProbeEnabled,
   mveComponentProbe,
@@ -5908,6 +6052,13 @@ function MarketDetails({
     unknown
   >;
   priceHistoryProbeEnabled: boolean;
+  bookUpdatesProbe: UseMutationResult<
+    PolymarketBookUpdateCaptureResult,
+    Error,
+    { marketId: string },
+    unknown
+  >;
+  bookUpdatesProbeEnabled: boolean;
   eventMarketsProbe: UseMutationResult<
     EventMarketsCaptureResult,
     Error,
@@ -6061,6 +6212,13 @@ function MarketDetails({
           market={market}
           probe={priceHistoryProbe}
           probeEnabled={priceHistoryProbeEnabled}
+        />
+      )}
+      {market.venue === 'polymarket' && (
+        <PolymarketBookUpdatesPanel
+          market={market}
+          probe={bookUpdatesProbe}
+          probeEnabled={bookUpdatesProbeEnabled}
         />
       )}
       {(market.venue === 'polymarket' || market.venue === 'kalshi') && (

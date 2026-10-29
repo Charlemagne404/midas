@@ -1280,6 +1280,7 @@ class PolymarketBookUpdateFrame(FrontierModel):
     updates: tuple[PolymarketBookUpdate, ...] = Field(min_length=1, max_length=100)
     received_at_utc: datetime
     raw_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    bound_market_observation_id: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
     provenance: Provenance
 
     @field_validator("received_at_utc")
