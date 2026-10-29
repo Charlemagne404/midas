@@ -114,6 +114,7 @@ from midas.frontier.models import (
     TradeBatch,
     Venue,
 )
+from midas.frontier.provenance import capture_matches_provenance
 from midas.frontier.registry import AdapterRegistry
 from midas.frontier.relationships import (
     MATCHER_VERSION,
@@ -6200,7 +6201,7 @@ def router(
                     matching = tuple(
                         item
                         for item in market_values
-                        if item.provenance.raw_sha256 == capture.raw_sha256
+                        if capture_matches_provenance(capture, item.provenance)
                     )
                     if not matching:
                         raise AdapterError(
@@ -6226,9 +6227,8 @@ def router(
                         )
                         book_captures = adapter.take_captures()
                         unpersisted_captures.extend(book_captures)
-                        if (
-                            len(book_captures) != 1
-                            or book_captures[0].raw_sha256 != book.provenance.raw_sha256
+                        if len(book_captures) != 1 or not capture_matches_provenance(
+                            book_captures[0], book.provenance
                         ):
                             raise AdapterError(
                                 "CAPTURE_LINEAGE_MISMATCH",
@@ -6271,7 +6271,7 @@ def router(
                                     "Adapter did not return exactly one raw trade response",
                                 )
                             if any(
-                                item.provenance.raw_sha256 != trade_captures[0].raw_sha256
+                                not capture_matches_provenance(trade_captures[0], item.provenance)
                                 for item in trade_values
                             ):
                                 raise AdapterError(

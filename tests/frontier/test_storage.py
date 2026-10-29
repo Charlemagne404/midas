@@ -46,6 +46,40 @@ def _raw(venue: Venue, body: str, kind: str = "market_metadata") -> RawObservati
     )
 
 
+def _bind_to_capture(raw: RawObservation, normalized):
+    def bind_record(record):
+        provenance = getattr(record, "provenance", None)
+        if provenance is None:
+            return record
+        return record.model_copy(
+            update={
+                "provenance": provenance.model_copy(
+                    update={
+                        "source_url": raw.request_url,
+                        "adapter_version": raw.adapter_version,
+                        "request_started_at_utc": raw.request_started_at_utc,
+                        "response_received_at_utc": raw.received_at_utc,
+                        "request_elapsed_monotonic_ns": raw.request_elapsed_monotonic_ns,
+                        "raw_sha256": raw.raw_sha256,
+                    }
+                )
+            }
+        )
+
+    if isinstance(normalized, MarketBatch):
+        return normalized.model_copy(
+            update={
+                "markets": tuple(bind_record(item) for item in normalized.markets),
+                "market_groups": tuple(bind_record(item) for item in normalized.market_groups),
+            }
+        )
+    return bind_record(normalized)
+
+
+def _append_capture(store: FrontierStore, raw: RawObservation, normalized) -> str:
+    return store.append_observation(raw, _bind_to_capture(raw, normalized))
+
+
 def test_raw_and_source_failure_schema_v1_records_remain_readable():
     raw_payload = _raw(Venue.POLYMARKET, "legacy fixture").model_dump(mode="json")
     raw_payload["schema_version"] = 1
@@ -324,6 +358,93 @@ def test_append_observation_revalidates_copied_model_inputs(tmp_path: Path, corr
     assert not store.path.exists()
 
 
+@pytest.mark.parametrize(
+    ("field", "replacement"),
+    (
+        ("source_url", "https://mismatched.example/market"),
+        ("adapter_version", "other-adapter-v1"),
+        ("request_started_at_utc", T0 + timedelta(milliseconds=1)),
+        ("response_received_at_utc", T0 + timedelta(milliseconds=6)),
+        ("request_elapsed_monotonic_ns", 1),
+    ),
+)
+def test_append_observation_rejects_capture_provenance_mismatch_with_same_hash(
+    tmp_path: Path, field: str, replacement
+):
+    raw = _raw(Venue.POLYMARKET, f'{{"capture":"{field}"}}')
+    source_market = market(Venue.POLYMARKET, f"provenance-{field}")
+    matched_provenance = source_market.provenance.model_copy(
+        update={
+            "source_url": raw.request_url,
+            "adapter_version": raw.adapter_version,
+            "request_started_at_utc": raw.request_started_at_utc,
+            "response_received_at_utc": raw.received_at_utc,
+            "request_elapsed_monotonic_ns": raw.request_elapsed_monotonic_ns,
+            "raw_sha256": raw.raw_sha256,
+        }
+    )
+    valid_payload = source_market.model_dump(mode="python")
+    valid_payload["provenance"] = matched_provenance.model_dump(mode="python")
+    valid_market = type(source_market).model_validate(valid_payload)
+
+    valid_store = FrontierStore(tmp_path / f"valid-{field}")
+    _append_capture(valid_store, raw, valid_market)
+
+    mismatched_provenance = matched_provenance.model_copy(update={field: replacement})
+    mismatched_market = valid_market.model_copy(update={"provenance": mismatched_provenance})
+    assert mismatched_market.provenance.raw_sha256 == raw.raw_sha256
+    invalid_store = FrontierStore(tmp_path / f"invalid-{field}")
+    with pytest.raises(FrontierStoreError, match="provenance does not match its raw evidence"):
+        invalid_store.append_observation(raw, mismatched_market)
+    assert not invalid_store.path.exists()
+
+
+def test_append_market_batch_checks_group_provenance_as_well_as_market_provenance(
+    tmp_path: Path,
+):
+    raw = _raw(Venue.POLYMARKET, '{"markets":[],"events":[]}', "event_market_listing")
+    source_market = market(Venue.POLYMARKET, "group-provenance-market")
+    matched_provenance = source_market.provenance.model_copy(
+        update={
+            "source_url": raw.request_url,
+            "adapter_version": raw.adapter_version,
+            "request_started_at_utc": raw.request_started_at_utc,
+            "response_received_at_utc": raw.received_at_utc,
+            "request_elapsed_monotonic_ns": raw.request_elapsed_monotonic_ns,
+            "raw_sha256": raw.raw_sha256,
+        }
+    )
+    market_payload = source_market.model_dump(mode="python")
+    market_payload["provenance"] = matched_provenance.model_dump(mode="python")
+    matched_market = type(source_market).model_validate(market_payload)
+    group = MarketGroup(
+        venue=Venue.POLYMARKET,
+        group_type="event",
+        native_group_id="group-provenance-event",
+        title="Group provenance fixture",
+        member_native_market_ids=(matched_market.native_market_id,),
+        member_list_state="included",
+        provenance=matched_provenance,
+    )
+    bad_group = group.model_copy(
+        update={
+            "provenance": matched_provenance.model_copy(
+                update={"source_url": "https://mismatched.example/event"}
+            )
+        }
+    )
+    batch = MarketBatch(
+        venue=Venue.POLYMARKET,
+        markets=(matched_market,),
+        market_groups=(bad_group,),
+    )
+
+    store = FrontierStore(tmp_path / "invalid-group-provenance")
+    with pytest.raises(FrontierStoreError, match="provenance does not match its raw evidence"):
+        store.append_observation(raw, batch)
+    assert not store.path.exists()
+
+
 def test_append_observation_rejects_combined_oversized_row_before_initialization(tmp_path: Path):
     store = FrontierStore(tmp_path / "oversized-observation-store")
     raw = _raw(Venue.POLYMARKET, "r" * 262144)
@@ -333,7 +454,7 @@ def test_append_observation_rejects_combined_oversized_row_before_initialization
     normalized = type(normalized).model_validate(payload)
 
     with pytest.raises(FrontierStoreError, match="512 KiB record bound"):
-        store.append_observation(raw, normalized)
+        _append_capture(store, raw, normalized)
 
     assert not store.path.exists()
 
@@ -341,8 +462,9 @@ def test_append_observation_rejects_combined_oversized_row_before_initialization
 def test_observations_and_relationships_are_append_only(tmp_path: Path):
     store = FrontierStore(tmp_path, max_bytes=2 * 1024 * 1024)
     left, right = market(Venue.POLYMARKET, "left"), market(Venue.KALSHI, "right")
-    first = store.append_observation(_raw(Venue.POLYMARKET, '{"public":true}'), left)
-    assert store.append_observation(_raw(Venue.POLYMARKET, '{"public":true}'), left) == first
+    raw = _raw(Venue.POLYMARKET, '{"public":true}')
+    first = _append_capture(store, raw, left)
+    assert _append_capture(store, raw, left) == first
     assert store.summary()["observations"] == 1
     assert store.observations(limit=10)[0]["observation_id"] == first
     evidence = store.observation(first)
@@ -396,10 +518,8 @@ def test_observation_persistence_stamps_nested_market_and_group_provenance(tmp_p
         market_groups=(group,),
     )
 
-    observation_id = store.append_observation(
-        _raw(Venue.POLYMARKET, '{"markets":[],"events":[]}', "event_market_listing"),
-        batch,
-    )
+    raw = _raw(Venue.POLYMARKET, '{"markets":[],"events":[]}', "event_market_listing")
+    observation_id = _append_capture(store, raw, batch)
     evidence = store.observation(observation_id)
     assert evidence is not None
     normalized = evidence["normalized"]
@@ -421,7 +541,7 @@ def test_legacy_observation_without_persistence_time_remains_readable_and_idempo
     store = FrontierStore(tmp_path, max_bytes=2 * 1024 * 1024)
     raw = _raw(Venue.POLYMARKET, '{"legacy":true}')
     normalized = market(Venue.POLYMARKET, "legacy-market")
-    observation_id = store.append_observation(raw, normalized)
+    observation_id = _append_capture(store, raw, normalized)
 
     with sqlite3.connect(store.path) as connection:
         row = connection.execute(
@@ -447,16 +567,20 @@ def test_legacy_observation_without_persistence_time_remains_readable_and_idempo
     evidence = store.observation(observation_id)
     assert evidence is not None
     assert "persisted_at_utc" not in evidence["normalized"]["provenance"]
-    assert store.append_observation(raw, normalized) == observation_id
+    assert _append_capture(store, raw, normalized) == observation_id
     assert "persisted_at_utc" not in store.observation(observation_id)["normalized"]["provenance"]
 
 
 def test_observation_budget_is_enforced_without_overwriting(tmp_path: Path):
     store = FrontierStore(tmp_path, max_bytes=2 * 1024 * 1024, max_observations=1)
-    store.append_observation(_raw(Venue.POLYMARKET, '{"n":1}'), market(Venue.POLYMARKET, "first"))
+    _append_capture(
+        store,
+        _raw(Venue.POLYMARKET, '{"n":1}'),
+        market(Venue.POLYMARKET, "first"),
+    )
     with pytest.raises(FrontierStoreError, match="count budget"):
-        store.append_observation(
-            _raw(Venue.POLYMARKET, '{"n":2}'), market(Venue.POLYMARKET, "second")
+        _append_capture(
+            store, _raw(Venue.POLYMARKET, '{"n":2}'), market(Venue.POLYMARKET, "second")
         )
     assert store.summary()["observations"] == 1
 
@@ -464,7 +588,7 @@ def test_observation_budget_is_enforced_without_overwriting(tmp_path: Path):
 def test_queries_use_sqlite_read_only_mode_after_initialization(tmp_path: Path, monkeypatch):
     store = FrontierStore(tmp_path, max_bytes=2 * 1024 * 1024)
     left, right = market(Venue.POLYMARKET, "left"), market(Venue.KALSHI, "right")
-    store.append_observation(_raw(Venue.POLYMARKET, '{"public":true}'), left)
+    _append_capture(store, _raw(Venue.POLYMARKET, '{"public":true}'), left)
     relationship = propose_relationships((left, right), max_pairs=10)[0]
     store.append_relationship(relationship)
 
@@ -555,25 +679,29 @@ def test_relationship_neighbor_pages_are_keyset_ordered_and_complete(tmp_path: P
 def test_graph_revision_tracks_rendered_market_metadata_but_not_books_or_trades(tmp_path: Path):
     store = FrontierStore(tmp_path, max_bytes=2 * 1024 * 1024)
     before = store.graph_revision()
-    store.append_observation(
+    _append_capture(
+        store,
         _raw(Venue.POLYMARKET, '{"market":"initial"}', kind="market_listing"),
         market(Venue.POLYMARKET, "revision-market"),
     )
     after_listing = store.graph_revision()
     assert after_listing[0] == before[0] + 1
 
-    store.append_observation(
+    _append_capture(
+        store,
         _raw(Venue.KALSHI, '{"market":"selected component rules"}', kind="market_metadata"),
         market(Venue.KALSHI, "revision-detail"),
     )
     after_detail = store.graph_revision()
     assert after_detail[0] == after_listing[0] + 1
 
-    store.append_observation(
+    _append_capture(
+        store,
         _raw(Venue.KALSHI, '{"book":"unrelated to graph node metadata"}', kind="public_book"),
         market(Venue.KALSHI, "revision-book"),
     )
-    store.append_observation(
+    _append_capture(
+        store,
         _raw(Venue.KRAKEN, '{"trades":"unrelated to graph node metadata"}', kind="public_trades"),
         market(Venue.KRAKEN, "revision-trades"),
     )
@@ -582,7 +710,8 @@ def test_graph_revision_tracks_rendered_market_metadata_but_not_books_or_trades(
 
 def test_graph_revision_migration_backfills_legacy_database(tmp_path: Path):
     store = FrontierStore(tmp_path, max_bytes=2 * 1024 * 1024)
-    store.append_observation(
+    _append_capture(
+        store,
         _raw(Venue.POLYMARKET, '{"market":"legacy listing"}', kind="market_listing"),
         market(Venue.POLYMARKET, "legacy-revision"),
     )
@@ -692,8 +821,8 @@ def test_oversized_base64_raw_body_rejects_before_decoding(monkeypatch):
 
 def test_evidence_read_detects_offline_payload_tampering(tmp_path: Path):
     store = FrontierStore(tmp_path, max_bytes=2 * 1024 * 1024)
-    observation_id = store.append_observation(
-        _raw(Venue.KALSHI, '{"original":true}'), market(Venue.KALSHI, "tamper")
+    observation_id = _append_capture(
+        store, _raw(Venue.KALSHI, '{"original":true}'), market(Venue.KALSHI, "tamper")
     )
     with sqlite3.connect(store.path) as connection:
         connection.execute("DROP TRIGGER observations_no_update")
@@ -726,7 +855,8 @@ def test_rehashed_market_batch_venue_mismatch_is_rejected_on_read(
 ):
     store = FrontierStore(tmp_path, max_bytes=2 * 1024 * 1024)
     source_market = market(Venue.POLYMARKET, "tampered-batch-venue")
-    observation_id = store.append_observation(
+    observation_id = _append_capture(
+        store,
         _raw(Venue.POLYMARKET, '{"source":"polymarket"}'),
         MarketBatch(venue=Venue.POLYMARKET, markets=(source_market,)),
     )

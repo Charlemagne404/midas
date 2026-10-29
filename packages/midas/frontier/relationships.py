@@ -22,7 +22,7 @@ from midas.frontier.models import (
 
 D = Decimal
 MATCHER_VERSION = "frontier-relationship-matcher-5"
-SAME_PAYOFF_VERIFIER_VERSION = "frontier-equivalence-verifier-8"
+SAME_PAYOFF_VERIFIER_VERSION = "frontier-equivalence-verifier-9"
 LOGICAL_IMPLICATION_VERIFIER_VERSION = "frontier-logical-implication-verifier-4"
 MAX_LOGICAL_IMPLICATION_STATES = 1024
 MAX_LOGICAL_STATE_ID_CHARS = 128
@@ -233,6 +233,18 @@ def _identity(
     a, b = sorted((left, right))
     raw = "|".join((version, rel_type.value, a, b, *sorted(set(evidence_ids))))
     return a, hashlib.sha256(raw.encode()).hexdigest()
+
+
+def _resolution_rule_evidence_sha256(market: FrontierMarket) -> str | None:
+    """Recompute rule text hashes for event venues with documented normalization."""
+    resolution = market.resolution
+    if market.venue == Venue.POLYMARKET:
+        material = f"{resolution.authority or ''}\n{resolution.primary_rule or ''}"
+    elif market.venue == Venue.KALSHI:
+        material = f"{resolution.primary_rule or ''}\n{resolution.secondary_rule or ''}"
+    else:
+        return None
+    return hashlib.sha256(material.encode("utf-8")).hexdigest()
 
 
 def propose_relationships(
@@ -570,6 +582,12 @@ def verify_same_payoff(
             checks.append(f"{name} resolution is not verified or fingerprinted")
         if market.resolution.evidence_sha256 is None:
             checks.append(f"{name} resolution evidence hash is absent")
+        else:
+            expected_rule_hash = _resolution_rule_evidence_sha256(market)
+            if expected_rule_hash is None:
+                checks.append(f"{name} venue has no supported resolution-rule hash convention")
+            elif market.resolution.evidence_sha256 != expected_rule_hash:
+                checks.append(f"{name} resolution-rule evidence hash does not match its rule text")
     if left.payoff.payout_currency != right.payoff.payout_currency:
         checks.append("Payout currencies differ")
     if left.payoff.settlement_asset != right.payoff.settlement_asset:
@@ -649,10 +667,15 @@ def verify_same_payoff(
         canonical_instrument_mapping = {value: key for key, value in instrument_mapping.items()}
     market_by_id = {left.canonical_id: left, right.canonical_id: right}
     canonical_asset_identities: dict[str, str] = {}
+    canonical_resolution_evidence: dict[str, str] = {}
     for market_id in (a, b):
-        identity = market_by_id[market_id].payoff.settlement_asset_identity
+        market_value = market_by_id[market_id]
+        identity = market_value.payoff.settlement_asset_identity
         canonical_asset_identities[market_id] = (
             identity.canonical_id if identity is not None else "missing"
+        )
+        canonical_resolution_evidence[market_id] = (
+            market_value.resolution.evidence_sha256 or "missing"
         )
     assertion_evidence = (
         tuple(sorted(set(evidence_observation_ids))) if evidence_ids_bounded else ()
@@ -672,7 +695,8 @@ def verify_same_payoff(
     verifier_version = (
         f"{SAME_PAYOFF_VERIFIER_VERSION}|{external_assertion_id}|{assertion_time.isoformat()}|"
         f"{json_compact(canonical_state_mapping)}|{json_compact(canonical_instrument_mapping)}|"
-        f"{json_compact(canonical_asset_identities)}"
+        f"{json_compact(canonical_asset_identities)}|"
+        f"resolution_evidence={json_compact(canonical_resolution_evidence)}"
     )
     _, relationship_id = _identity(
         a,
@@ -690,17 +714,18 @@ def verify_same_payoff(
         state=VerificationState.VERIFIED if verified else VerificationState.REJECTED,
         confidence=D(1) if verified else D(0),
         reason=(
-            "Payoff, settlement units, resolution identity, timing, and outcome mapping verified by an external assertion"
+            "Payoff, settlement units, resolution identity and rule evidence, timing, and outcome mapping verified by an external assertion"
             if verified
             else "; ".join(checks)
         ),
         evidence=(
             RelationshipEvidence(
-                method="independent-payoff-equivalence-v2",
+                method="independent-payoff-equivalence-v3",
                 verifier_version=SAME_PAYOFF_VERIFIER_VERSION,
                 source_fields=(
                     "payoff",
                     "resolution",
+                    "resolution_rule_evidence",
                     "outcome_mapping",
                     "settlement_asset_identity",
                 ),
@@ -709,6 +734,7 @@ def verify_same_payoff(
                     "state_mapping=" + json_compact(canonical_state_mapping),
                     "instrument_mapping=" + json_compact(canonical_instrument_mapping),
                     "settlement_asset_identities=" + json_compact(canonical_asset_identities),
+                    "resolution_evidence_sha256=" + json_compact(canonical_resolution_evidence),
                 ),
                 external_assertion_id=external_assertion_id,
                 created_at_utc=assertion_time,
@@ -960,7 +986,11 @@ def verify_logical_implication(
 
 
 def evidence_mapping(relationship: Relationship, name: str) -> dict[str, str]:
-    if name not in {"state_mapping", "instrument_mapping"}:
+    if name not in {
+        "state_mapping",
+        "instrument_mapping",
+        "resolution_evidence_sha256",
+    }:
         raise ValueError("Unsupported relationship evidence mapping")
     raw_value = evidence_detail(relationship, name)
     if raw_value is None:

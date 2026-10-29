@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import '@testing-library/jest-dom/vitest';
 import { afterEach, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { KrakenCandleHistoryPanel } from './KrakenCandleHistoryPanel';
 
 afterEach(() => {
@@ -169,6 +169,51 @@ it('scans a later bounded batch when matching captures are older than the first 
   expect(await screen.findByText('60500')).toBeInTheDocument();
   expect(fetchMock).toHaveBeenCalledTimes(2);
   expect(String(fetchMock.mock.calls[1]?.[0])).toContain('scan_offset=20');
+});
+
+it('stops an incomplete saved-data scan after ten requests', async () => {
+  const fetchMock = vi.fn<typeof fetch>(async (input) => {
+    const url = new URL(String(input), 'http://localhost');
+    const scanOffset = Number(url.searchParams.get('scan_offset') ?? 0);
+    return new Response(
+      JSON.stringify({
+        ...savedResponse,
+        items: [],
+        scan_offset: scanOffset,
+        scanned_observations: 20,
+        next_scan_offset: scanOffset + 20,
+        scan_may_be_incomplete: true,
+      }),
+      { status: 200, headers: { 'Content-Type': 'application/json' } },
+    );
+  });
+  vi.stubGlobal('fetch', fetchMock);
+  wrap(
+    <KrakenCandleHistoryPanel
+      nativeMarketId="XXBTZUSD"
+      marketObservationId={'a'.repeat(64)}
+      probeEnabled={false}
+    />,
+  );
+
+  expect(await screen.findByText('No matching captures in the bounded scan')).toBeInTheDocument();
+  for (let requestCount = 2; requestCount <= 10; requestCount += 1) {
+    const next = screen.getByRole('button', { name: 'Scan next 20 observations' });
+    await waitFor(() => expect(next).not.toBeDisabled());
+    fireEvent.click(next);
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(requestCount));
+  }
+
+  expect(
+    await screen.findByText(/Saved-data scanning stopped after 10 requests/),
+  ).toBeInTheDocument();
+  expect(
+    screen.queryByRole('button', { name: /Scan next|Load more matching captures/ }),
+  ).not.toBeInTheDocument();
+  const offsets = fetchMock.mock.calls.map((call) =>
+    Number(new URL(String(call[0]), 'http://localhost').searchParams.get('scan_offset')),
+  );
+  expect(offsets).toEqual([0, 20, 40, 60, 80, 100, 120, 140, 160, 180]);
 });
 
 it('starts a bounded capture only after action and renders persisted evidence', async () => {

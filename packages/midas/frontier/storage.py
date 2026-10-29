@@ -21,6 +21,7 @@ from midas.frontier.models import (
     Provenance,
     RawObservation,
 )
+from midas.frontier.provenance import normalized_capture_matches
 from midas.frontier.relationships import (
     Relationship,
     RelationshipReview,
@@ -473,6 +474,10 @@ class FrontierStore:
         normalized_venue = getattr(normalized, "venue", None)
         if normalized_venue is not None and normalized_venue != raw.venue:
             raise FrontierStoreError("Normalized observation venue does not match its raw evidence")
+        if not normalized_capture_matches(raw, normalized):
+            raise FrontierStoreError(
+                "Normalized observation provenance does not match its raw evidence"
+            )
         normalized_without_persisted_time = self._with_persisted_at(normalized, None)
         normalized_content_json = self._canonical(normalized_without_persisted_time)
         raw_json = self._canonical(raw)

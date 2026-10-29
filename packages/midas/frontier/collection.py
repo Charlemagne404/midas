@@ -36,7 +36,6 @@ from midas.frontier.models import (
     FrontierMarket,
     FrontierModel,
     MarketBatch,
-    Provenance,
     RawObservation,
     ResponseRejectionMetadata,
     SourceFailureRecord,
@@ -45,6 +44,12 @@ from midas.frontier.models import (
     TradeBatch,
     TradeObservation,
     Venue,
+)
+from midas.frontier.provenance import (
+    capture_matches_provenance as _capture_matches_provenance,
+)
+from midas.frontier.provenance import (
+    normalized_capture_matches,
 )
 from midas.frontier.storage import MAX_ROW_BYTES, FrontierStore, FrontierStoreError
 
@@ -197,23 +202,17 @@ class PendingCollectionObservation(FrontierModel):
         if isinstance(self.normalized, MarketBatch):
             if self.normalized.venue != self.raw.venue:
                 raise ValueError("Pending market batch and raw capture venues differ")
-            if any(
-                not _capture_matches_provenance(self.raw, item.provenance)
-                for item in self.normalized.markets
-            ):
+            if not normalized_capture_matches(self.raw, self.normalized):
                 raise ValueError("Pending market provenance does not match its raw capture")
         elif isinstance(self.normalized, BookSnapshot):
-            if self.normalized.venue != self.raw.venue or not _capture_matches_provenance(
-                self.raw, self.normalized.provenance
+            if self.normalized.venue != self.raw.venue or not normalized_capture_matches(
+                self.raw, self.normalized
             ):
                 raise ValueError("Pending book provenance does not match its raw capture")
         elif isinstance(self.normalized, TradeBatch):
             if self.normalized.venue != self.raw.venue:
                 raise ValueError("Pending trade batch and raw capture venues differ")
-            if any(
-                not _capture_matches_provenance(self.raw, item.provenance)
-                for item in self.normalized.trades
-            ):
+            if not normalized_capture_matches(self.raw, self.normalized):
                 raise ValueError("Pending trade provenance does not match its raw capture")
         return self
 
@@ -2253,18 +2252,6 @@ def _hash_json(value: Any) -> str:
 def capability_manifest_sha256(capabilities: AdapterCapabilities) -> str:
     """Return the canonical digest used to pin a collection's adapter contract."""
     return _hash_json(capabilities.model_dump(mode="json"))
-
-
-def _capture_matches_provenance(raw: RawObservation, provenance: Provenance) -> bool:
-    """Bind normalized evidence to the exact captured response, not only its body hash."""
-    return (
-        provenance.raw_sha256 == raw.raw_sha256
-        and provenance.source_url == raw.request_url
-        and provenance.adapter_version == raw.adapter_version
-        and provenance.request_started_at_utc == raw.request_started_at_utc
-        and provenance.response_received_at_utc == raw.received_at_utc
-        and provenance.request_elapsed_monotonic_ns == raw.request_elapsed_monotonic_ns
-    )
 
 
 def _bounded_failures(

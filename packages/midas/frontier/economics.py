@@ -52,7 +52,7 @@ from midas.frontier.relationships import (
 )
 
 D = Decimal
-ECONOMIC_MODEL_VERSION = "frontier-economic-verifiers-24"
+ECONOMIC_MODEL_VERSION = "frontier-economic-verifiers-25"
 PARTIAL_FILL_FRACTIONS = (D(0), D("0.25"), D("0.5"), D("0.75"), D(1))
 KALSHI_MVE_SETTLEMENT_AUDIT_VERSION = "kalshi-mve-settlement-audit-2"
 _KALSHI_TAKER_FEE_TYPES = frozenset({"quadratic", "quadratic_with_combo_maker_fees"})
@@ -1167,6 +1167,24 @@ def generate_binary_coverage_candidates(
                 OpportunityClassification.INVALID_RELATIONSHIP,
                 as_of,
                 "Supplied state or instrument mapping differs from verified relationship evidence.",
+            ),
+        )
+    pinned_resolution_evidence = evidence_mapping(relationship, "resolution_evidence_sha256")
+    expected_resolution_evidence = {
+        market.canonical_id: market.resolution.evidence_sha256 or "" for market in (left, right)
+    }
+    if (
+        any(not digest for digest in expected_resolution_evidence.values())
+        or pinned_resolution_evidence != expected_resolution_evidence
+    ):
+        return (
+            _empty_candidate(
+                left,
+                right,
+                relationship,
+                OpportunityClassification.INCOMPLETE_EVIDENCE,
+                as_of,
+                "The verified relationship does not pin the current resolution-rule evidence hashes.",
             ),
         )
     supported = {MarketKind.BINARY_EVENT}

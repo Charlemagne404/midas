@@ -305,7 +305,7 @@ def test_replay_requires_current_logical_implication_verifier_version(legacy_ver
     candidate = replay.candidates[0]
     assert candidate.classification == OpportunityClassification.INCOMPLETE_EVIDENCE
     assert not candidate.legs
-    assert candidate.model_version == "frontier-economic-verifiers-24"
+    assert candidate.model_version == "frontier-economic-verifiers-25"
     assert any("directed relationship lacks" in reason.lower() for reason in candidate.reasons)
 
 

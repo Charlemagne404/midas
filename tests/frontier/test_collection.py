@@ -1105,7 +1105,15 @@ def test_latest_pinned_market_metadata_wins_without_discarding_capture_rows(tmp_
 
     def captured_market(raw: RawObservation, title: str):
         provenance = base_market.provenance.model_copy(
-            update={"raw_sha256": raw.raw_sha256, "observation_id": raw.raw_sha256}
+            update={
+                "raw_sha256": raw.raw_sha256,
+                "source_url": raw.request_url,
+                "adapter_version": raw.adapter_version,
+                "request_started_at_utc": raw.request_started_at_utc,
+                "response_received_at_utc": raw.received_at_utc,
+                "request_elapsed_monotonic_ns": raw.request_elapsed_monotonic_ns,
+                "observation_id": raw.raw_sha256,
+            }
         )
         return base_market.model_copy(update={"title": title, "provenance": provenance})
 
@@ -1363,8 +1371,27 @@ async def test_oversized_store_row_is_terminal_partial_and_remains_checkpointed(
     class OversizedMarketAdapter(FakeAdapter):
         async def discover_markets(self, limit: int = 20):
             markets = await super().discover_markets(limit)
+            capture = self.market_capture
+            assert capture is not None
+            body = "r" * 262144
+            capture = RawObservation.model_validate(
+                {
+                    **capture.model_dump(mode="python"),
+                    "raw_body": body,
+                    "raw_sha256": hashlib.sha256(body.encode()).hexdigest(),
+                }
+            )
+            self.market_capture = capture
+            self.pending_captures[-1] = capture
             payload = markets[0].model_dump(mode="python")
-            payload["description"] = "x" * 600_000
+            payload["native_fields"] = {"large-fixture": "x" * 262000}
+            provenance = Provenance.model_validate(
+                {
+                    **payload["provenance"],
+                    "raw_sha256": capture.raw_sha256,
+                }
+            )
+            payload["provenance"] = provenance.model_dump(mode="python")
             return (type(markets[0]).model_validate(payload),)
 
     store = FrontierStore(tmp_path / "frontier")
@@ -1372,7 +1399,7 @@ async def test_oversized_store_row_is_terminal_partial_and_remains_checkpointed(
     collector = BoundedSourceCollector(adapter, store)
     result = await collector.start(market_limit=1, book_limit=0)
 
-    assert result.state == "partial"
+    assert result.state == "partial", result.failures
     assert result.failures[-1].code == "COLLECTION_ROW_LIMIT"
     assert result.pending_observation_count == 1
     assert store.summary()["observations"] == 0

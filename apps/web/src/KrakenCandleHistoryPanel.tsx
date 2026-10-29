@@ -84,6 +84,7 @@ const intervals = [
 ] as const;
 
 const shortHash = (value: string) => value.slice(0, 12);
+const MAX_SAVED_CANDLE_SCAN_PAGES = 10;
 
 export function KrakenCandleHistoryPanel({
   nativeMarketId,
@@ -109,7 +110,8 @@ export function KrakenCandleHistoryPanel({
       });
       return api<SavedCandleResponse>(`/frontier/candles?${params.toString()}`);
     },
-    getNextPageParam: (lastPage, _pages, lastPageParam) => {
+    getNextPageParam: (lastPage, pages, lastPageParam) => {
+      if (pages.length >= MAX_SAVED_CANDLE_SCAN_PAGES) return undefined;
       if (lastPage.has_more) {
         return {
           ...lastPageParam,
@@ -121,7 +123,7 @@ export function KrakenCandleHistoryPanel({
       }
       return undefined;
     },
-    maxPages: 10,
+    maxPages: MAX_SAVED_CANDLE_SCAN_PAGES,
     retry: false,
   });
   const capture = useMutation({
@@ -148,6 +150,14 @@ export function KrakenCandleHistoryPanel({
     uniqueItems.set(item.observation_id, item);
   }
   const items = Array.from(uniqueItems.values());
+  const lastSavedPage = saved.data?.pages.at(-1);
+  const savedScanLimitReached =
+    (saved.data?.pages.length ?? 0) >= MAX_SAVED_CANDLE_SCAN_PAGES &&
+    Boolean(
+      lastSavedPage &&
+      (lastSavedPage.has_more ||
+        (lastSavedPage.scan_may_be_incomplete && lastSavedPage.next_scan_offset !== null)),
+    );
   const selected =
     items.find((item) => item.observation_id === selectedObservationId) ?? items[0] ?? null;
   const sinceMillis = sinceInput ? Date.parse(sinceInput) : null;
@@ -229,6 +239,12 @@ export function KrakenCandleHistoryPanel({
       {saved.isError && (
         <p role="alert" className="fr-price-history-note">
           {saved.error.message || 'Saved candle evidence could not be read.'}
+        </p>
+      )}
+      {savedScanLimitReached && (
+        <p role="status" className="fr-price-history-note">
+          Saved-data scanning stopped after {MAX_SAVED_CANDLE_SCAN_PAGES} requests. Older captures
+          may remain unscanned; reload this view to start a fresh bounded scan.
         </p>
       )}
       {capture.isError && (

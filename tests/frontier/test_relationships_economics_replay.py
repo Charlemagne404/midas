@@ -39,6 +39,7 @@ from midas.frontier.models import (
     SettlementAuditState,
     StatePayout,
     Venue,
+    sha256_text,
 )
 from midas.frontier.relationships import (
     Relationship,
@@ -232,6 +233,33 @@ def test_same_payoff_verifier_rejects_malformed_model_copy(corruption, reason):
 
     assert result.state == VerificationState.REJECTED
     assert reason in result.reason.lower()
+
+
+def test_same_payoff_verifier_rejects_resolution_rule_text_hash_mismatch():
+    left, right, _relationship, instrument_mapping = _verified_pair()
+    changed_right = right.model_copy(
+        update={
+            "resolution": right.resolution.model_copy(
+                update={"primary_rule": "A different candidate wins under a different rule."}
+            )
+        }
+    )
+
+    result = verify_same_payoff(
+        left,
+        changed_right,
+        state_mapping={"yes": "yes", "no": "no"},
+        instrument_mapping=instrument_mapping,
+        external_assertion_id="same-fingerprint-different-rule",
+        evidence_observation_ids=(
+            left.provenance.observation_id,
+            right.provenance.observation_id,
+        ),
+        asserted_at_utc=T0,
+    )
+
+    assert result.state == VerificationState.REJECTED
+    assert "resolution-rule evidence hash does not match its rule text" in result.reason
 
 
 def test_same_payoff_verifier_rejects_oversized_observation_identity_inputs():
@@ -551,6 +579,85 @@ def test_cross_venue_replay_rejects_equivalence_assertion_after_cutoff():
     )
 
 
+def test_cross_venue_audit_rejects_resolution_rules_changed_after_assertion():
+    left, right, relationship, instrument_mapping = _verified_pair()
+    left_books, right_books = _books(left, right)
+    candidate = next(
+        item
+        for item in generate_binary_coverage_candidates(
+            left,
+            right,
+            relationship,
+            left_books,
+            right_books,
+            state_mapping={"yes": "yes", "no": "no"},
+            instrument_mapping=instrument_mapping,
+            as_of_utc=T0 + timedelta(milliseconds=100),
+        )
+        if item.legs
+    )
+    changed_rule = "The candidate wins only if the official authority certifies the result."
+    changed_resolution = right.resolution.model_copy(
+        update={
+            "primary_rule": changed_rule,
+            "evidence_sha256": sha256_text(f"{changed_rule}\n"),
+        }
+    )
+    changed_right = right.model_copy(update={"resolution": changed_resolution})
+    reasserted_relationship = verify_same_payoff(
+        left,
+        changed_right,
+        state_mapping={"yes": "yes", "no": "no"},
+        instrument_mapping=instrument_mapping,
+        external_assertion_id="fixture-assertion-1",
+        evidence_observation_ids=(
+            left.provenance.observation_id,
+            right.provenance.observation_id,
+        ),
+        asserted_at_utc=T0,
+    )
+    assert reasserted_relationship.state == VerificationState.VERIFIED
+    assert reasserted_relationship.relationship_id != relationship.relationship_id
+    assert (
+        evidence_mapping(reasserted_relationship, "resolution_evidence_sha256")[right.canonical_id]
+        == changed_resolution.evidence_sha256
+    )
+
+    new_candidates = generate_binary_coverage_candidates(
+        left,
+        changed_right,
+        relationship,
+        left_books,
+        right_books,
+        state_mapping={"yes": "yes", "no": "no"},
+        instrument_mapping=instrument_mapping,
+        as_of_utc=T0 + timedelta(milliseconds=100),
+    )
+    assert new_candidates[0].classification == OpportunityClassification.INCOMPLETE_EVIDENCE
+    assert (
+        "does not pin the current resolution-rule evidence hashes" in new_candidates[0].reasons[0]
+    )
+
+    canonical_instrument_mapping = (
+        instrument_mapping
+        if relationship.left_market_id == left.canonical_id
+        else {right_id: left_id for left_id, right_id in instrument_mapping.items()}
+    )
+    audited = independently_audit_candidate(
+        candidate.model_copy(update={"independent_audit": None}),
+        markets={left.canonical_id: left, changed_right.canonical_id: changed_right},
+        books_by_market={left.canonical_id: left_books, right.canonical_id: right_books},
+        relationships={relationship.relationship_id: relationship},
+        state_mappings={relationship.relationship_id: {"yes": "yes", "no": "no"}},
+        instrument_mappings={relationship.relationship_id: canonical_instrument_mapping},
+        scenario=ExecutionScenario(),
+    )
+    assert audited.classification == OpportunityClassification.INCOMPLETE_EVIDENCE
+    assert audited.independent_audit is not None
+    assert audited.independent_audit.disposition == EconomicAuditDisposition.INCOMPLETE
+    assert "resolution-rule evidence hashes" in audited.independent_audit.message
+
+
 def test_replay_result_rejects_manifest_and_classification_summary_drift():
     left, right, relationship, _instrument_mapping = _verified_pair()
     left_books, right_books = _books(left, right)
@@ -866,7 +973,7 @@ def test_cross_venue_replay_rejects_equivalence_evidence_missing_pinned_market()
     )
 
 
-@pytest.mark.parametrize("legacy_version", (5, 6, 7))
+@pytest.mark.parametrize("legacy_version", (6, 7, 8))
 def test_cross_venue_replay_requires_current_equivalence_verifier_version(legacy_version):
     left, right, relationship, _instrument_mapping = _verified_pair()
     legacy_evidence = relationship.evidence[0].model_copy(
@@ -1047,7 +1154,7 @@ def test_same_ticker_on_different_networks_cannot_verify_same_payoff():
     )
 
     assert same_asset_relationship.state == VerificationState.VERIFIED
-    assert same_asset_relationship.evidence[0].verifier_version == "frontier-equivalence-verifier-8"
+    assert same_asset_relationship.evidence[0].verifier_version == "frontier-equivalence-verifier-9"
     assert any(
         "settlement_asset_identities={" in detail
         for detail in same_asset_relationship.evidence[0].details
@@ -2961,7 +3068,7 @@ def test_independent_audit_rejects_naive_book_time_from_a_reconstructed_model():
     assert audit.independent_audit is not None
     assert audit.independent_audit.disposition.value == "incomplete"
     assert "not timezone-aware" in audit.independent_audit.message
-    assert audit.independent_audit.model_version == "frontier-independent-economic-audit-23"
+    assert audit.independent_audit.model_version == "frontier-independent-economic-audit-24"
 
 
 def test_independent_audit_rejects_quantity_step_mutation():
@@ -3087,7 +3194,7 @@ def test_candidate_generation_and_independent_audit_enforce_price_ticks():
         as_of_utc=T0 + timedelta(milliseconds=100),
     )
     candidate = next(item for item in candidates if item.legs)
-    assert candidate.model_version == "frontier-economic-verifiers-24"
+    assert candidate.model_version == "frontier-economic-verifiers-25"
 
     def with_half_dollar_ticks(market_value):
         instruments = tuple(
@@ -3869,7 +3976,7 @@ def test_deterministic_replay_is_invariant_to_input_order():
     }
     first = deterministic_replay((left, right), all_books, **kwargs)
     second = deterministic_replay((right, left), tuple(reversed(all_books)), **kwargs)
-    assert first.manifest.economic_model_version == "frontier-economic-verifiers-24"
+    assert first.manifest.economic_model_version == "frontier-economic-verifiers-25"
     assert first.run_id == second.run_id
     assert first.result_sha256 == second.result_sha256
     assert first.candidates == second.candidates

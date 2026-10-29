@@ -54,7 +54,7 @@ from midas.frontier.relationships import (
 )
 
 D = Decimal
-_AUDIT_VERSION = "frontier-independent-economic-audit-23"
+_AUDIT_VERSION = "frontier-independent-economic-audit-24"
 _FEE_QUANTUM = D("0.00001")
 _KALSHI_FEE_MAX_EVIDENCE_AGE = timedelta(hours=24)
 _AUDIT_PARTIAL_FILL_FRACTIONS = (D(0), D("0.25"), D("0.5"), D("0.75"), D(1))
@@ -1557,7 +1557,7 @@ def _verify_cross_venue_relationship(
     equivalence_evidence = tuple(
         item
         for item in relationship.evidence
-        if item.method == "independent-payoff-equivalence-v2"
+        if item.method == "independent-payoff-equivalence-v3"
         and item.verifier_version == SAME_PAYOFF_VERIFIER_VERSION
     )
     required_observations = {
@@ -1585,6 +1585,18 @@ def _verify_cross_venue_relationship(
     ):
         raise _MissingAuditEvidence(
             "Same-payoff evidence lacks a post-observation external assertion citing both pinned market records by the replay cutoff."
+        )
+    pinned_resolution_evidence = evidence_mapping(relationship, "resolution_evidence_sha256")
+    expected_resolution_evidence = {
+        market.canonical_id: _independent_resolution_rule_evidence_sha256(market) or ""
+        for market in (left, right)
+    }
+    if (
+        any(not digest for digest in expected_resolution_evidence.values())
+        or pinned_resolution_evidence != expected_resolution_evidence
+    ):
+        raise _MissingAuditEvidence(
+            "Same-payoff relationship does not bind the exact pinned resolution-rule evidence hashes."
         )
     leg_market_ids = tuple(leg.market_id for leg in candidate.legs)
     if (
@@ -1702,6 +1714,7 @@ def _require_verified_event(market: FrontierMarket) -> None:
         or not market.resolution.verified
         or not market.resolution.resolution_fingerprint
         or not market.resolution.evidence_sha256
+        or market.resolution.evidence_sha256 != _independent_resolution_rule_evidence_sha256(market)
         or not market.payoff.state_ids
         or market.lifecycle != Lifecycle.OPEN
         or market.payoff.payout_currency != market.payoff.settlement_asset
@@ -1722,6 +1735,21 @@ def _require_verified_event(market: FrontierMarket) -> None:
             raise _MissingAuditEvidence(
                 "Market instrument contains duplicate payout state identifiers."
             )
+
+
+def _independent_resolution_rule_evidence_sha256(market: FrontierMarket) -> str | None:
+    """Independently hash supported event rule fields without calling the relationship verifier."""
+    if market.venue == Venue.POLYMARKET:
+        rule_evidence = (
+            f"{market.resolution.authority or ''}\n{market.resolution.primary_rule or ''}"
+        )
+    elif market.venue == Venue.KALSHI:
+        rule_evidence = (
+            f"{market.resolution.primary_rule or ''}\n{market.resolution.secondary_rule or ''}"
+        )
+    else:
+        return None
+    return hashlib.sha256(rule_evidence.encode("utf-8")).hexdigest()
 
 
 def _payout(instrument: MarketInstrument, state_id: str) -> Decimal:

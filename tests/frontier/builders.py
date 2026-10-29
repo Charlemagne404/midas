@@ -20,6 +20,7 @@ from midas.frontier.models import (
     SettlementAssetKind,
     StatePayout,
     Venue,
+    sha256_text,
 )
 
 D = Decimal
@@ -32,6 +33,14 @@ def market(
 ) -> FrontierMarket:
     prefix = venue.value.upper()
     units = QuantityUnit.SHARE if venue == Venue.POLYMARKET else QuantityUnit.CONTRACT
+    primary_rule = "The named candidate receives the most votes."
+    secondary_rule = None
+    authority = "Official election authority"
+    rule_material = (
+        f"{authority}\n{primary_rule}"
+        if venue == Venue.POLYMARKET
+        else f"{primary_rule}\n{secondary_rule or ''}"
+    )
     return FrontierMarket(
         venue=venue,
         canonical_id=f"{venue.value}:{native_id}",
@@ -76,11 +85,12 @@ def market(
             verification_basis="controlled-test-fixture",
         ),
         resolution=ResolutionSpec(
-            primary_rule="The named candidate receives the most votes.",
-            authority="Official election authority",
+            primary_rule=primary_rule,
+            secondary_rule=secondary_rule,
+            authority=authority,
             closes_at_utc=T0 + timedelta(hours=1),
             settles_at_utc=T0 + timedelta(hours=2),
-            evidence_sha256="a" * 64,
+            evidence_sha256=sha256_text(rule_material),
             resolution_fingerprint="election:test:2026-11-01:most-votes",
             verified=True,
         ),

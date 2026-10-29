@@ -5091,7 +5091,9 @@ async def test_probe_preserves_drained_capture_on_lineage_mismatch(tmp_path, fai
             return tuple(
                 item.model_copy(
                     update={
-                        "provenance": item.provenance.model_copy(update={"raw_sha256": "0" * 64})
+                        "provenance": item.provenance.model_copy(
+                            update={"source_url": "https://mismatched.example/markets"}
+                        )
                     }
                 )
                 for item in markets
@@ -5105,7 +5107,9 @@ async def test_probe_preserves_drained_capture_on_lineage_mismatch(tmp_path, fai
             snapshot = await fetch_book(market, instrument_id, depth)
             return snapshot.model_copy(
                 update={
-                    "provenance": snapshot.provenance.model_copy(update={"raw_sha256": "0" * 64})
+                    "provenance": snapshot.provenance.model_copy(
+                        update={"adapter_version": "tampered-adapter"}
+                    )
                 }
             )
 
@@ -5118,7 +5122,14 @@ async def test_probe_preserves_drained_capture_on_lineage_mismatch(tmp_path, fai
             return tuple(
                 item.model_copy(
                     update={
-                        "provenance": item.provenance.model_copy(update={"raw_sha256": "0" * 64})
+                        "provenance": item.provenance.model_copy(
+                            update={
+                                "request_elapsed_monotonic_ns": (
+                                    item.provenance.request_elapsed_monotonic_ns or 0
+                                )
+                                + 1
+                            }
+                        )
                     }
                 )
                 for item in trades
