@@ -14187,11 +14187,17 @@ centered graph API regression **3/3**, and the bounded accessible graph UI test
 `git diff --check` passed before commit. A strict mypy invocation targeting the
 new module and the full Frontier API was stopped after about 2m20s: it had
 reached roughly 703 MiB process RSS inside a 768 MiB, zero-swap, 20% CPU scope,
-was in uninterruptible I/O, and reported one tuple-inference error. The
-annotation was corrected, but strict mypy was not rerun. The final graph UI
-change has not had a fresh TypeScript check, ESLint run, or production bundle;
-these are deferred pending a better host pressure window. No external market
-source was contacted and no live cross-venue relationship was established.
+was in uninterruptible I/O, and reported one tuple-inference error. After fixing
+the annotation, a strict check of the new module alone passed under a 512 MiB
+hard, 384 MiB high, zero-swap, 20% CPU scope; the full API check was not
+retried. The exact-tree TypeScript check, ESLint, and Prettier passed. A
+production Vite build transformed 2,230 modules and passed in 54.88 seconds
+under a 768 MiB hard, 640 MiB high, zero-swap, 25% CPU scope with a 384 MiB
+Node heap. It wrote to `/tmp/midas-frontier-build-20261029T0608Z`; the existing
+ignored `dist` output was not used. Frontier's bundle is 198.89 kB and Vite
+still reports the existing 544.51 kB Chart chunk advisory. Browser validation
+of recorded evidence remains pending. No external market source was contacted
+and no live cross-venue relationship was established.
 
 At 07:02:42 CET during that verification window, host `MemAvailable` was
 11,497,480,192 bytes (10.71 GiB) but only 8,388,608 bytes (8 MiB) of swap was
@@ -14216,8 +14222,19 @@ historical evidence was changed during this checkpoint. Host status remains
 source-independent edits, but defer further builds, broad checks, replay, and
 live probes until fresh PSI and swap observations support admission.
 
+At 07:09:34 CET after the bounded module check and isolated Vite build,
+`MemAvailable` was 11,340,759,040 bytes (10.56 GiB), `SwapFree` was 8,429,568
+bytes (8.04 MiB), host memory PSI `avg10/avg60` was zero, and `avg300` was
+`some=0.61%` / `full=0.58%`. The user-manager charged 9,580,249,088 bytes of
+memory and 2,858,450,944 bytes of swap; `oom`/`oom_kill`/`oom_group_kill`
+remained 19/15/0. API and Reality remained active at restart counts 9/14, and
+the last ten-minute kernel/systemd-oomd query had no kill entry. This is a
+successful bounded observation window, not evidence that nearly full swap or
+the historical incident is resolved.
+
 | Frontier graph workstream | Status | Evidence boundary |
 | --- | --- | --- |
 | Typed structural entity projection | IMPLEMENTED, LIVE VALIDATION PENDING | Bounded deterministic fixture/API checks pass; no source-derived cross-venue equivalence is implied. |
-| Relationship graph UI context inspector | PARTIALLY VERIFIED | Focused fixture UI test passes; current-tree tsc, lint, build, and captured-browser validation remain pending. |
-| Strict API type check | PARTIALLY VERIFIED | First issue found and fixed; full check stopped due resource pressure and has not been rerun. |
+| Relationship graph UI context inspector | PARTIALLY VERIFIED | Focused fixture UI test, exact-tree TypeScript, lint, and production build pass; captured-browser validation remains pending. |
+| Strict entity-context module type check | COMPLETE AND VERIFIED | The new module passes strict mypy under a bounded zero-swap scope. |
+| Strict Frontier API type check | PARTIALLY VERIFIED | One issue was found and fixed; whole-API check stopped due resource pressure and was not rerun. |

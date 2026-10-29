@@ -833,8 +833,12 @@ started for the new graph projection and the full Frontier API inside a
 `MemoryMax=768 MiB`, `MemoryHigh=640 MiB`, `MemorySwapMax=0`, `CPUQuota=20%`
 scope. At about 2m20s, its Python process had reached 719,512 KiB RSS and was
 in uninterruptible I/O; I terminated that task process. It had reported one
-type-inference error, which was corrected. No retry was launched. This is a
-resource-bound development check, not a production process.
+type-inference error, which was corrected. A new-module-only strict mypy run
+later passed under a 512 MiB hard, 384 MiB high, zero-swap, 20% CPU scope; the
+full API type check was not retried. Exact-tree TypeScript, ESLint, and
+Prettier checks passed. An isolated Vite production build completed in 54.88
+seconds under a 768 MiB hard, 640 MiB high, zero-swap, 25% CPU scope. This is
+a resource-bound development check, not a production process or deployment.
 
 During the run, a host sample showed memory PSI briefly elevated to
 `some avg10=18.80%` / `full avg10=17.87%`. At 07:02:42 CET it had fallen to
@@ -858,6 +862,15 @@ finite invocations exited 0. MIDAS API and Reality units remained active. No
 service, timer, limit, recorder, archive, or existing research evidence was
 changed. Avoid further build/type-check/replay work until fresh PSI readings
 and a sustained observation window show that the host can admit it safely.
+
+After those bounded checks, the 07:09:34 CET sample showed
+`MemAvailable=11,340,759,040` bytes (10.56 GiB), `SwapFree=8,429,568` bytes
+(8.04 MiB), host memory PSI `avg10/avg60=0` and `avg300=0.61/0.58%` for
+some/full, user-manager memory/swap `9,580,249,088 / 2,858,450,944` bytes,
+and unchanged OOM counters 19/15/0. API and Reality remained active at
+restarts 9/14. The last ten-minute kernel/OOMD query had no kill entry. The
+interval is short; nearly all swap remains used and no sustained recovery has
+been demonstrated.
 
 Incident status remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**. The
 historical pressure contributor is still not identified; this check adds a
