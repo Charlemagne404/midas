@@ -205,10 +205,7 @@ def test_empty_analytics_are_bounded_and_have_explicit_sample_scope():
     assert result["pricing"] == []
     assert result["candidate_research"]["counts_by_classification"] == {}
     assert {item["venue"] for item in result["source_quality"]} == {
-        "polymarket",
-        "kalshi",
-        "kraken",
-        "coinbase_exchange",
+        venue.value for venue in Venue
     }
     assert all(item["quality_valid_pricing_books"] == 0 for item in result["source_quality"])
     assert any("not venue-wide coverage" in item for item in result["limitations"])
