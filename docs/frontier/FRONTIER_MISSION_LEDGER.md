@@ -1,5 +1,19 @@
 # Project Frontier Mission Ledger
 
+## 2026-10-29 22:03 CET — host swap distribution across slices
+
+- A read-only cgroup inventory accounted for the full 4.29 GB swap device:
+  `user.slice` 3.431 GB, `system.slice` 863.5 MB, and `init.scope` 0.89 MB.
+  Within the user slice, `user@1000.service` held 2.874 GB and the active
+  local X11 session held 554.5 MB; neither has a memory/swap ceiling at its
+  parent. The system `status.service` (“Continental status website”) held
+  447.0 MB swap, 209.0 MB current memory, and 831.5 MB peak with no limits;
+  its local high/max/OOM events were zero.
+- PSI remained zero with about 10 GiB available RAM; no OOMD/kernel kill
+  appeared through 22:03. These are current distribution measurements, not
+  proof of which workload triggered the October 28 kills. No unrelated
+  service or configuration was changed. Incident remains partial.
+
 ## 2026-10-29 22:02 CET — replay mismatch surfaced in dashboard fixture
 
 - The Polymarket replay panel journey now uses a coherent two-frame fixture:
@@ -21,6 +35,8 @@
   Source analysis is due at 22:10:28; take the next host sample afterward.
 - Only the owned UI test and this documentation changed. The untracked
   `data/frontier-public-probes/` directory remains untouched.
+- UI fixture and report checkpoint: `f537b5d` (`test(frontier): surface replay
+  mismatch in dashboard`).
 
 ## 2026-10-29 21:51 CET — scheduled capacity run and post-test host sample
 

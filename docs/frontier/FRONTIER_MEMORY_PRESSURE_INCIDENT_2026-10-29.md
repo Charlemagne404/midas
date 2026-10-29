@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 22:02 CET |
+| Latest addendum | 2026-10-29 22:03 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Pre-incident checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -15,7 +15,32 @@ This is the current incident report. It supplements the chronological record in
 The full-day journal query below expands that earlier report's final-ten-event
 sample to all October 28 systemd-oomd kills.
 
-## Latest addendum — 2026-10-29 22:02 CET
+## Latest addendum — 2026-10-29 22:03 CET
+
+A read-only cgroup swap inventory confirms the full 4.29 GB device use is
+distributed across multiple host slices at 22:03: `user.slice` held
+3,430,572,032 bytes, `system.slice` held 863,457,280 bytes, and `init.scope`
+held 888,832 bytes. Within `user-1000.slice`, `user@1000.service` held
+2,873,507,840 bytes and the active local X11 `session-521.scope` held
+554,467,328 bytes; that session has no `MemoryHigh` or `MemoryMax` ceiling.
+
+Within `system.slice`, `status.service` is the “Continental status website.”
+It held 446,988,288 bytes of swap, 209,039,360 bytes of current memory, and a
+retained 831,500,288-byte peak, with no High/Max limit and zero local
+high/max/OOM events. The `system.slice` parent also had zero local
+high/max/OOM events. These readings identify current swap consumers; they do
+not establish which workload caused the October 28 user-slice PSI crossings
+or systemd-oomd kills. I made no changes to this service or to Continental,
+Echo, GNOME, SSH, or other unrelated workloads.
+
+PSI averages remained zero, `MemAvailable` about 10 GiB, and host/user OOM
+counters stayed unchanged at the 22:03 sample. No OOMD or kernel kill
+appeared since 21:51; API and Reality remained active at restart counts 9/14.
+Swap saturation is therefore still a capacity risk without current measured
+reclaim pressure. Keep the incident **PARTIALLY CONTAINED / PARTIALLY
+VERIFIED** and preserve the workload attribution uncertainty.
+
+## Prior addendum — 2026-10-29 22:02 CET
 
 The Frontier replay panel's offline test now follows a valid two-frame
 sequence: a full book snapshot, then a `price_change` event whose reported
