@@ -15627,3 +15627,17 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
 - **Status:** the model count bound is fixture-verified. Event-counter growth
   is recorded without causal attribution; nearly full swap and the Reality
   API hard-limit pressure keep the host incident partially contained.
+
+## 2026-10-29 16:14 CET — capability-health metadata checkpoint
+
+- Checkpointed the source-health and capability bounds as `2352c22`
+  (`feat(frontier): bound adapter health metadata`). The only untracked
+  worktree item remains the pre-existing `data/frontier-public-probes/`.
+- The focused 12-case model/adapter fixture group passed in 2.70 seconds;
+  Ruff check/format and whitespace checks passed. No public source request or
+  protected service action occurred.
+- The last host sample, at 16:13:45 before commit, showed zero PSI,
+  11,099,920 kB MemAvailable, and 16,524 kB SwapFree. OOM counters and
+  protected-service restart counts were unchanged. The latest user-manager
+  and Reality API `max` counters had advanced, so the incident remains
+  partially contained rather than resolved.
