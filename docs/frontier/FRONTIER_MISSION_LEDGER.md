@@ -16388,3 +16388,21 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
 - Continue serial capped fixture-only work. Near-full swap, OOMD registration
   mismatch, and Reality freshness remain unresolved; the incident is
   **PARTIALLY CONTAINED / PARTIALLY VERIFIED**, not closed.
+
+## 2026-10-29 19:29 CET — multi-adapter contract regression check
+
+- The five-trade-adapter contract, Kraken candle API, Kraken book parser and
+  stream capture, and Polymarket stream capture/replay tests passed **35/35**
+  after correcting two test-only listing fixtures to bind provenance to their
+  own raw URL, adapter version, timestamps, and body hash. An initial run's
+  single failure confirmed that storage correctly rejects mismatched fixture
+  provenance; production validation was preserved.
+- Shared adapter, Coinbase, and Gemini suites passed **211/211**. Tests used
+  mock/fixture transports in transient zero-swap cgroups capped at 384 MiB
+  High, 512 MiB Max, 20% CPU, and 64 tasks. Ruff check/format passed. One
+  existing Starlette/httpx deprecation warning remains.
+- Post-test host PSI averaged zero, available RAM was about 10.4 GiB, free
+  swap about 20 MiB, and user-manager counters were unchanged. No live venue
+  request or production-store access occurred. Continue serial, capped fixture
+  work; live cross-venue validation, broad regression, endurance, and incident
+  closure remain open.

@@ -16469,3 +16469,29 @@ available RAM about 10 GiB, free swap about 19 MiB, and OOM counters were
 unchanged. No live source call or broad frontend build was made. Project
 Frontier remains **PARTIALLY VERIFIED**; cross-venue live evidence, broad
 regression/endurance, protected recovery, and deployment remain open.
+
+### Cross-adapter fixture contract regression — 2026-10-29 19:29 CET
+
+A capped adapter verification group first reported 34 passing tests and one
+failure in the Polymarket stream persistence journey. The failure exposed two
+test-only market fixtures whose normalized provenance described the generic
+builder source while their raw observations declared a different Gamma URL,
+adapter version, and body hash. The store correctly rejected that mismatch.
+The test helper now derives those provenance fields from the paired raw
+fixture; production validation was not weakened.
+
+The full focused group then passed **35/35**: the five-trade-adapter contract,
+Kraken candle API, Kraken book parser/stream capture, and Polymarket stream
+capture/replay. A separate shared-adapter/Coinbase/Gemini group passed
+**211/211**. Both groups used fixture/mock transports in transient 384 MiB
+High / 512 MiB Max / zero-swap / 20%-CPU / 64-task scopes; Ruff check and
+format passed for the changed fixture file. The run emitted one existing
+Starlette/httpx deprecation warning. No live exchange endpoint or production
+store was accessed.
+
+After testing, host PSI averages remained zero, `MemAvailable` was about 10.4
+GiB, and only about 20 MiB of swap was free. User-manager memory event counts
+were unchanged. These short capped fixture results add adapter-contract
+evidence but do not resolve the host incident, provide live cross-venue
+validation, or justify broad workload admission. Frontier remains
+**PARTIALLY VERIFIED**.

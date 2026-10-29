@@ -23,6 +23,7 @@ from midas.frontier.adapters.polymarket_stream import decode_market_stream_frame
 from midas.frontier.models import (
     AdapterConfig,
     Capability,
+    FrontierMarket,
     MarketBatch,
     RawObservation,
     Venue,
@@ -37,6 +38,44 @@ from tests.frontier.builders import market
 ASSET_ID = "107505882767731489358349912513945399560393482969656700824895970500493757150417"
 CONDITION_ID = "0x747dc809fb79e1b05be09c42d6179459a58de2ef3e40f02484a4e1260f741f75"
 T0 = datetime(2026, 10, 29, 4, 0, tzinfo=UTC)
+
+
+def _append_fixture_listing(
+    store: FrontierStore,
+    source_market: FrontierMarket,
+    *,
+    body: str,
+    request_url: str,
+) -> str:
+    raw = RawObservation(
+        venue=source_market.venue,
+        observation_kind="market_listing",
+        request_url=request_url,
+        http_status=200,
+        request_started_at_utc=T0,
+        received_at_utc=T0,
+        raw_body=body,
+        raw_sha256=hashlib.sha256(body.encode()).hexdigest(),
+        adapter_version="fixture-polymarket-listing-v1",
+    )
+    market_with_provenance = source_market.model_copy(
+        update={
+            "provenance": source_market.provenance.model_copy(
+                update={
+                    "source_url": raw.request_url,
+                    "adapter_version": raw.adapter_version,
+                    "request_started_at_utc": raw.request_started_at_utc,
+                    "response_received_at_utc": raw.received_at_utc,
+                    "request_elapsed_monotonic_ns": raw.request_elapsed_monotonic_ns,
+                    "raw_sha256": raw.raw_sha256,
+                }
+            )
+        }
+    )
+    return store.append_observation(
+        raw,
+        MarketBatch(venue=source_market.venue, markets=(market_with_provenance,)),
+    )
 
 
 class FixtureWebSocket:
@@ -308,19 +347,12 @@ def _store_polymarket_market(store: FrontierStore) -> str:
             )
         }
     )
-    body = '{"recorded_fixture":"Polymarket listing"}'
-    raw = RawObservation(
-        venue=Venue.POLYMARKET,
-        observation_kind="market_listing",
+    _append_fixture_listing(
+        store,
+        source_market,
+        body='{"recorded_fixture":"Polymarket listing"}',
         request_url="https://gamma-api.polymarket.com/markets?limit=1",
-        http_status=200,
-        request_started_at_utc=T0,
-        received_at_utc=T0,
-        raw_body=body,
-        raw_sha256=hashlib.sha256(body.encode()).hexdigest(),
-        adapter_version="fixture-polymarket-listing-v1",
     )
-    store.append_observation(raw, MarketBatch(venue=Venue.POLYMARKET, markets=(source_market,)))
     return source_market.canonical_id
 
 
@@ -548,19 +580,11 @@ def test_book_update_api_binds_to_saved_market_and_persists_fixture_evidence(tmp
         unrelated_native_market_id = "0x" + "b" * 64
         unrelated_market = market(Venue.POLYMARKET, unrelated_native_market_id)
         unrelated_raw_body = '{"recorded_fixture":"unrelated Polymarket listing"}'
-        unrelated_market_observation_id = store.append_observation(
-            RawObservation(
-                venue=Venue.POLYMARKET,
-                observation_kind="market_listing",
-                request_url="https://gamma-api.polymarket.com/markets?limit=1&fixture=unrelated",
-                http_status=200,
-                request_started_at_utc=T0,
-                received_at_utc=T0,
-                raw_body=unrelated_raw_body,
-                raw_sha256=hashlib.sha256(unrelated_raw_body.encode()).hexdigest(),
-                adapter_version="fixture-polymarket-listing-v1",
-            ),
-            MarketBatch(venue=Venue.POLYMARKET, markets=(unrelated_market,)),
+        unrelated_market_observation_id = _append_fixture_listing(
+            store,
+            unrelated_market,
+            body=unrelated_raw_body,
+            request_url="https://gamma-api.polymarket.com/markets?limit=1&fixture=unrelated",
         )
         normalized_with_unrelated_binding = json.loads(valid_normalized_json)
         normalized_with_unrelated_binding["bound_market_observation_id"] = (
