@@ -1,6 +1,6 @@
 # Project Frontier Mission Ledger
 
-## Current host and Frontier state — 2026-10-29 01:30 CET
+## Current host and Frontier state — 2026-10-29 01:35 CET
 
 Reality has resumed recording after cold replay: status says
 `RECORDING_UNSEQUENCED`, `active_receiving`, 16/16 fresh books, zero failures,
@@ -21,15 +21,15 @@ status age 3.36 seconds, and raw recording size 12,137,375,646 bytes.
 `ARCHIVE_SEGMENT_INVENTORY_INVALID` and
 `ARCHIVE_MANIFEST_PROVENANCE_INVALID` remain; neither was altered.
 
-Through 01:30, host available memory stayed about 9.8–10 GiB, host/user PSI
+Through 01:34, host available memory stayed about 9.6–10 GiB, host/user PSI
 avg10/avg60/avg300 stayed zero, and user-manager `max=728,363`, `oom=19`, and
 `oom_kill=15` remained fixed. The `high` counter rose from 16,416,821 at 01:16
-to 16,416,835 at 01:30 without new max/OOM events. Reality and API remain
+to 16,416,839 at 01:34 without new max/OOM events. Reality and API remain
 active with restart counts 14 and 9; API remains close to its own
 `MemoryHigh`. Echo production/staging, Continental, Caddy, RustDesk, and the
 SSH socket were verified active at 01:16. Keep work sequential, fixture-based,
-and explicitly bounded. Full repository regression, endurance, browser E2E,
-live probes, and research campaigns remain gated.
+and explicitly bounded. Full repository regression, the full browser E2E
+suite, live probes, endurance, and research campaigns remain gated.
 
 Recent bounded Frontier evidence:
 
@@ -46,6 +46,11 @@ Recent bounded Frontier evidence:
 - UI graph test 1/1. The full UI file had two default 5-second timeouts at the
   25% CPU quota; those two passed with a 15-second test timeout. `tsc -b`
   passed and the production Vite build passed in a temporary output directory.
+- One loopback browser smoke journey and both seeded replay/Arena browser
+  journeys passed in isolated temporary stores. These runs used a one-core
+  CPU cap, 1.25 GiB memory cap, zero swap, 192-task limit, and wall timeout;
+  fixture requests made no exchange calls. The broader E2E suite remains
+  unrun.
 
 All tests and builds ran in sequential systemd scopes with a no-swap memory
 cap, CPU quota, task limit, and wall timeout. `data/frontier-public-probes/`

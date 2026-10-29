@@ -2,7 +2,7 @@
 
 **Report date:** 2026-10-29
 
-## Current completion matrix — 2026-10-29 01:30 CET
+## Current completion matrix — 2026-10-29 01:35 CET
 
 This is a current evidence classification, not a final completion claim. The
 dated implementation records below remain the detailed evidence; the
@@ -21,14 +21,14 @@ current host gate.
 | Laboratory/Arena comparisons and bounded orchestration | PARTIALLY VERIFIED | Arena admission and finite scheduling regressions pass; a Laboratory resource-denial case passes with a harness cap above its 722,894,848-byte capacity precondition. Full endurance evidence remains incomplete. |
 | User-cgroup-aware workload admission | IMPLEMENTED, BOUNDED VALIDATION PASSED | Central Arena admission (15), finite schedules (12), and the Laboratory denial case (1) pass fixture tests using user-manager pressure; no runtime deployment occurred. |
 | Reality capacity inventory bounds | PARTIALLY VERIFIED | Isolated candidate tests pass 5/5; candidate code remains undeployed. The separate capacity monitor completed one scheduled run at 134,225,920 bytes under `MemoryHigh=160M`, `MemoryMax=192M`, and zero swap. |
-| Native Frontier dashboard | PARTIALLY VERIFIED | The graph/evidence UI test passes; all 9 UI cases pass across the default-timeout run and a 15-second retry for its two slow fixtures. Typecheck and production build pass; browser E2E remains unverified. |
+| Native Frontier dashboard | PARTIALLY VERIFIED | The graph/evidence UI test and all 9 UI cases pass across the default-timeout run and a 15-second retry for its two slow fixtures. Typecheck/build and three isolated Playwright smoke/replay/Arena journeys pass; the full browser suite remains unverified. |
 | Host reliability containment | PARTIALLY VERIFIED | The auxiliary five-minute gap-detail timer is disabled and the capacity soft bound is validated in one scheduled run. No OOM kill has been logged since 23:43 CET; the workload mix that triggered aggregate pressure remains unknown. |
 | Broad regressions, resource endurance, and performance acceptance | DEFERRED | Several targeted suites pass under explicit memory, swap, CPU, task, and wall-time limits; the full repository suite, endurance, and broad performance tests remain deferred. |
 | Live multi-venue source authorization and findings | BLOCKED | Kalshi, Kraken, and Coinbase retained research remain held; the worktree Polymarket probe flag is off. |
 | Production integration/deployment | DEFERRED | Frontier remains isolated; no protected service transition occurred. |
 | Project Frontier overall | PARTIALLY VERIFIED | The engine is substantial, but live cross-venue science, broad verification, recovery, endurance, and deployment gates remain open. |
 
-## Bounded Frontier verification after host containment — 2026-10-29 01:30 CET
+## Bounded Frontier verification after host containment — 2026-10-29 01:35 CET
 
 Frontier work resumed only in sequential transient user scopes. Python test
 scopes used a 768 MiB maximum, zero swap, 25% CPU quota, 64-task cap, and
@@ -58,17 +58,29 @@ The Frontier UI graph/evidence test passed 1/1. The full `Frontier.test.tsx`
 file produced 7 passes and two default 5-second timeouts at the 25% CPU quota;
 the two slow fixture cases then passed 2/2 with a 15-second test timeout. An
 initial 16-task UI scope failed during esbuild startup before tests began; a
-64-task scope worked. The API suite's initial 60-second harness reached all
-test cases but timed out before pytest's final summary; the 90-second retry
-above completed successfully. These are documented harness adjustments, not
-hidden assertion failures.
+64-task scope worked. At 25% CPU, the loopback browser smoke test stayed in
+the Frontier lazy-loading state beyond its 5-second assertion timeout. With
+one CPU core, a 1.25 GiB cap, zero swap, and 192 tasks, that smoke journey
+passed 1/1. The two seeded Playwright journeys then passed 2/2 against
+temporary local API/Vite services. Their 21 price-history captures and Arena
+artifact were deterministic fixtures stored only under `/tmp`; the tests
+asserted no source probes, and the Arena artifact explicitly reports no orders
+or authenticated requests. The first
+browser attempt at the smaller 1 GiB/96-task scope ended in a `chrome-headless`
+SIGTRAP; there was no OOM or pressure increase, and the cause of that first
+crash is not established.
+
+The API suite's initial 60-second harness reached all test cases but timed out
+before pytest's final summary; the 90-second retry above completed
+successfully. These are documented harness adjustments, not hidden assertion
+failures.
 
 `tsc -b` passed in a 768 MiB, zero-swap scope (376 MiB peak). Vite's production
 build transformed 2,230 modules and passed in 54.79 seconds with a 438.3 MiB
 scope peak; output was written to a new `/tmp` directory. Vite retained its
-existing warning that the Chart chunk is 544.51 kB minified. Playwright E2E,
-the full repository suite, resource endurance, and live multi-venue research
-remain unrun.
+existing warning that the Chart chunk is 544.51 kB minified. The full
+Playwright suite, full repository suite, resource endurance, and live
+multi-venue research remain unrun.
 
 ## Adapter trust boundary and retry bound review — 2026-10-29 00:00 CET
 

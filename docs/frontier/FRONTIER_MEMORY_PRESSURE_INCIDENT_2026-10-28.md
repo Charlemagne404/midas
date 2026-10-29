@@ -2,7 +2,7 @@
 
 **Incident date:** 2026-10-28 (CET)
 
-**Checkpoint captured:** 2026-10-29 01:30 CET
+**Checkpoint captured:** 2026-10-29 01:35 CET
 
 **Scope:** Host reliability interruption during Project Frontier
 
@@ -853,3 +853,14 @@ user-slice pressure remains undetermined, swap remains 3.1/4 GiB used, the
 API remains near its soft bound, and only one capacity run has validated the
 160 MiB threshold. Do not treat the incident as solved or resume broad suites,
 live probes, replay campaigns, endurance, or production changes on this basis.
+
+At 01:34:53, after additional offline UI and browser verification, host
+`MemAvailable` was 9.6 GiB, PSI remained zero, and user-manager
+`max=728,363`, `oom=19`, and `oom_kill=15` were unchanged. Reality and API
+were active with restart counts 14/9; the kernel/oomd journals had no new
+kill. The one-core isolated Playwright smoke passed 1/1, and two seeded
+replay/Arena browser tests passed 2/2 against loopback services and temporary
+fixture stores. No live source calls were made. The earlier Chromium
+SIGTRAP did not repeat with the larger bounded browser scope; it is not
+attributed to memory pressure. This adds bounded verification but does not
+identify the historical pressure initiator or constitute endurance evidence.
