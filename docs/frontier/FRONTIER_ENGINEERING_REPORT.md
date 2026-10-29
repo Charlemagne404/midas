@@ -13212,3 +13212,10 @@ bounded validation used a 768 MiB maximum, zero swap, 25% CPU, 32 tasks, and a
 60-second limit; it completed in 1.899 seconds. The reported 256 KiB peak is
 not considered a valid memory measurement. Commit:
 `85b5f1c0502ba9ae47edc5b26b7026767957f8cb`.
+
+The existing source-analysis timer completed another bounded run at
+02:11:04–02:11:13 CET: 61 new segments, 38,189 cumulative, zero pending,
+218.7 MiB peak under a 256 MiB maximum, 8.494 CPU seconds, and zero swap.
+Host PSI remained zero at 02:11:39 and no OOM counter or restart count
+changed. The API remained only 995,328 bytes below `MemoryHigh`. This supports
+continued constrained work, not broad runtime admission or endurance.

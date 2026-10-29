@@ -12506,3 +12506,21 @@ or production service action occurred. The config fix is commit
 | --- | --- | --- |
 | Standalone strict mypy for Frontier API module | COMPLETE AND VERIFIED | Passes under the checked-in config with `MYPYPATH` unset. |
 | Frontier API runtime regression | PARTIALLY VERIFIED | Prior bounded API fixtures pass; this config-only change did not alter runtime behavior. |
+
+## Scheduled source-analysis resource observation — 2026-10-29 02:11 CET
+
+The already configured source-analysis timer ran 02:11:04–02:11:13 and
+completed with status 0. It processed 61 new segments (38,189 cumulative),
+had zero pending segments/bytes, reported `current` with readiness
+`awaiting_finalized_campaign_window_end`, and emitted summary SHA-256
+`29502af5ffbbba860985513fb572978deceb22e7ece82e69052a8e9d07bccc6d`. The
+service peak was 229,371,904 bytes (218.7 MiB) under its 256 MiB maximum, CPU
+time 8.494 seconds, swap peak 0 bytes.
+
+At 02:11:39, host PSI was zero and available memory 10.0 GiB; swap use was
+3.08 GiB. User-manager `max`, `oom`, and `oom_kill` remained
+728,363/19/15; user-manager `high` was 16,416,878. API/Reality remained active
+with restart counts 9/14; API headroom was 995,328 bytes below `MemoryHigh`.
+No kernel/oomd kill appeared after 23:43:24. This is one more short scheduled
+run, not endurance evidence. Keep broad tests, profiling, and multi-source
+replay deferred while the API remains near its soft limit.

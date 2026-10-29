@@ -1097,3 +1097,25 @@ observed; this remains a bounded check, not an endurance validation.
 The sampler and summary implementation with its two focused fixtures is
 commit `b7eab3c114adddd79ef156ec2585c851e0b71dd6` on
 `codex/frontier-20261026`.
+
+## Scheduled Veritas analysis observation — 2026-10-29 02:11 CET
+
+The existing source-analysis timer ran from 02:11:04 to 02:11:13 and exited
+successfully. Its report recorded 61 newly processed segments, 38,189 total
+processed segments, zero pending segments or source bytes, status `current`,
+and readiness `awaiting_finalized_campaign_window_end`. The summary digest was
+`29502af5ffbbba860985513fb572978deceb22e7ece82e69052a8e9d07bccc6d`. The
+service peaked at 229,371,904 bytes (218.7 MiB) under `MemoryMax=256 MiB`,
+used 8.494 CPU seconds and 0 bytes of swap, then exited with status 0. This is
+the scheduled bounded analysis of local finalized Reality segments; no
+collector restart or service configuration change occurred.
+
+At 02:11:39, host available memory was 10,784,276,480 bytes, swap use was
+3,311,181,824 bytes, and host PSI averages were zero. User-manager counters
+were `high=16,416,878`, `max=728,363`, `oom=19`, `oom_kill=15`. The API was
+active at 1,609,617,408 bytes against a 1,610,612,736-byte `MemoryHigh`
+(995,328 bytes of headroom); Reality was active at 597,573,632 bytes.
+Restart counts remained 9/14. The post-run journal scan found no kernel OOM
+or systemd-oomd kill after 23:43:24 on Oct 28. This successful scheduled run
+supports continuing bounded offline work but does not establish sustained
+headroom or identify the earlier pressure initiator.
