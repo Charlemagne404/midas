@@ -4,6 +4,7 @@ import asyncio
 import base64
 import hashlib
 import json
+import sqlite3
 from datetime import UTC, datetime
 from decimal import Decimal
 from pathlib import Path
@@ -468,6 +469,28 @@ def test_book_update_api_binds_to_saved_market_and_persists_fixture_evidence(tmp
             json={"market_id": "polymarket:unrecorded", "max_frames": 1},
         )
         assert unknown.status_code == 404
+        assert connector.calls == 1
+
+        with sqlite3.connect(store.path) as connection:
+            raw_json = connection.execute(
+                "SELECT raw_json FROM observations WHERE observation_id=?",
+                (observation_ids[0],),
+            ).fetchone()[0]
+            invalid_normalized_json = store._canonical({"not_a_stream_frame": True})
+            invalid_row_hash = hashlib.sha256(
+                f"{raw_json}\n{invalid_normalized_json}".encode()
+            ).hexdigest()
+            connection.execute("DROP TRIGGER observations_no_update")
+            connection.execute(
+                "UPDATE observations SET normalized_json=?,row_sha256=? WHERE observation_id=?",
+                (invalid_normalized_json, invalid_row_hash, observation_ids[0]),
+            )
+        corrupted_listing = client.get("/api/frontier/polymarket/book-updates")
+        assert corrupted_listing.status_code == 409
+        assert (
+            "Stored Polymarket event-frame evidence is not readable"
+            in corrupted_listing.json()["detail"]
+        )
         assert connector.calls == 1
     finally:
         client.close()
