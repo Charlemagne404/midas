@@ -1229,6 +1229,23 @@ counts 9/14/0; API/Reality used about 912/393 MiB. No OOMD/kernel OOM
 appeared since 07:50. These fixture tests add no live validation and the
 incident remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**.
 
+### Read-only admission sample — 2026-10-29 19:36 CET
+
+At 19:36:15, memory PSI avg10/60/300 remained zero and `MemAvailable` was
+10,876,356 KiB (about 10.4 GiB); free swap was 20,480 KiB (about 20 MiB).
+User-manager event counters were unchanged from 19:35 at
+`high=16,438,074`, `max=731,783`, `oom=19`, `oom_kill=15`, and
+`oom_group_kill=0`. The systemd-oomd journal had no entries since 19:20, and
+the filtered kernel OOM query returned no matches.
+
+MIDAS API, Reality, and Reality API were active at about 1.25/1.75 GiB,
+0.86/1.25 GiB, and 0.15/0.63 GiB current/Max. The capacity timer was active
+and waiting; the gap-detail timer remained inactive and disabled, with its
+service still failed. No workload or service configuration was changed for
+this sample. This supports serial fixture-only Frontier work; near-full swap,
+historical pressure attribution, OOMD registration uncertainty, and Reality
+stale-source health remain unresolved.
+
 ## Held-source transport denial — 2026-10-29 07:59 CET
 
 Four focused tests passed **4/4** in 3.29 seconds. They verify that Gemini's

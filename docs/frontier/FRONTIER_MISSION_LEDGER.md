@@ -16457,3 +16457,15 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
   window, but leaf deltas were not retained; max/oom/kill counters were
   unchanged. Preserve this attribution uncertainty. Continue serial capped
   fixture work; live validation and incident closure remain open.
+
+## 2026-10-29 19:36 CET — final read-only host admission sample
+
+- PSI averages were zero; available RAM was 10,876,356 KiB (about 10.4 GiB),
+  but free swap was only 20,480 KiB. User-manager counters were unchanged at
+  high 16,438,074 / max 731,783 / oom 19 / oom_kill 15 / group-kill 0. No
+  systemd-oomd entry or filtered kernel OOM match appeared since 19:20.
+- API, Reality, and Reality API remained active at about 1.25/1.75, 0.86/1.25,
+  and 0.15/0.63 GiB current/Max. Capacity timer was waiting; gap-detail timer
+  remained disabled and its service failed. No workload/config change was
+  made. Continue serial capped fixture work only; incident remains
+  **PARTIALLY CONTAINED / PARTIALLY VERIFIED**.
