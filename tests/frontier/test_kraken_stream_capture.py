@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import json
+import sqlite3
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
@@ -172,6 +173,26 @@ def _record_market(adapter: KrakenSpotAdapter, store: FrontierStore):
     return normalized.canonical_id, normalized
 
 
+def _rewrite_kraken_frame_bindings(
+    store: FrontierStore, observation_ids: list[str], bound_market_observation_id: str
+) -> None:
+    with sqlite3.connect(store.path) as connection:
+        connection.execute("DROP TRIGGER IF EXISTS observations_no_update")
+        for observation_id in observation_ids:
+            raw_json, normalized_json = connection.execute(
+                "SELECT raw_json,normalized_json FROM observations WHERE observation_id=?",
+                (observation_id,),
+            ).fetchone()
+            normalized = json.loads(normalized_json)
+            normalized["bound_market_observation_id"] = bound_market_observation_id
+            rewritten_normalized = store._canonical(normalized)
+            row_hash = hashlib.sha256(f"{raw_json}\n{rewritten_normalized}".encode()).hexdigest()
+            connection.execute(
+                "UPDATE observations SET normalized_json=?,row_sha256=? WHERE observation_id=?",
+                (rewritten_normalized, row_hash, observation_id),
+            )
+
+
 def test_kraken_book_stream_is_disabled_before_connector_use(tmp_path: Path):
     connector = FixtureConnector(list(_stream_frames()))
     adapter = _adapter(connector=connector)
@@ -299,6 +320,60 @@ def test_kraken_book_stream_api_binds_persists_and_verifies_each_raw_message(tmp
         )
         assert replay_reordered_response.status_code == 200, replay_reordered_response.text
         assert replay_reordered_response.json()["result_sha256"] == replay_result["result_sha256"]
+        assert connector.calls == 1
+
+        other_pair_id = "XETHZUSD"
+        other_metadata = {
+            **PAIR_METADATA,
+            "wsname": "ETH/USD",
+            "altname": "ETHUSD",
+            "base": "XETH",
+            "quote": "ZUSD",
+        }
+        other_body = json.dumps(
+            {"error": [], "result": {other_pair_id: other_metadata}}, separators=(",", ":")
+        )
+        other_response = HTTPObservation(
+            url="https://api.kraken.com/0/public/AssetPairs?pair=ETHUSD",
+            status_code=200,
+            raw_body=other_body,
+            request_started_at_utc=T0 + timedelta(seconds=1),
+            response_received_at_utc=T0 + timedelta(seconds=1, milliseconds=2),
+            request_elapsed_monotonic_ns=2_000_000,
+            payload=json.loads(other_body),
+        )
+        other_market = adapter._normalize_pair(other_pair_id, other_metadata, other_response)
+        other_raw = RawObservation(
+            venue=Venue.KRAKEN,
+            observation_kind="instrument_metadata",
+            request_url=other_response.url,
+            http_status=200,
+            request_started_at_utc=other_response.request_started_at_utc,
+            received_at_utc=other_response.response_received_at_utc,
+            request_elapsed_monotonic_ns=other_response.request_elapsed_monotonic_ns,
+            raw_body=other_body,
+            raw_sha256=hashlib.sha256(other_body.encode()).hexdigest(),
+            adapter_version=ADAPTER_VERSION,
+        )
+        unrelated_market_observation_id = store.append_observation(other_raw, other_market)
+        missing_market_observation_id = "e" * 64
+        for invalid_binding, expected_message in (
+            (missing_market_observation_id, "references a missing saved-market observation"),
+            (stored[0]["observation_id"], "not a Kraken instrument metadata observation"),
+            (
+                unrelated_market_observation_id,
+                "does not contain this frame's native spot pair and instrument",
+            ),
+        ):
+            _rewrite_kraken_frame_bindings(
+                store, [item["observation_id"] for item in stored], invalid_binding
+            )
+            invalid_binding_replay = client.post(
+                "/api/frontier/replay/kraken/book-updates",
+                json={"observation_ids": [item["observation_id"] for item in stored]},
+            )
+            assert invalid_binding_replay.status_code == 409
+            assert expected_message in invalid_binding_replay.json()["detail"]["message"]
         assert connector.calls == 1
 
         tampered = json.loads(json.dumps(stored))

@@ -2683,3 +2683,41 @@ was about 10 GiB, and free swap remained about 14 MiB. User-manager OOM
 counters were unchanged, the user slice had 890 tasks, and no OOMD/kernel
 kill appeared since 12:40. No service or schedule changed. This short sample
 does not establish durable incident recovery.
+
+## Kraken replay provenance check and 12:45 admission sample
+
+The Kraken offline replay route had a separate provenance gap: capture frames
+had to share a saved-market observation ID, but replay did not resolve that ID
+or verify that it described their Kraken pair. The route now resolves every
+frame's parent and requires a stored Kraken `instrument_metadata` record for
+the same `SPOT_PAIR` native market with exactly one matching instrument. Its
+fixture regression rehashed frames to point at a missing parent, a persisted
+stream-frame row, and valid but unrelated ETH/USD metadata; every request was
+rejected with HTTP 409. The normal recorded BTC/USD fixture still replays with
+the same deterministic result. The focused API test passed **1/1 in 4.61 s**
+inside a transient scope capped at 512 MiB high / 640 MiB max, zero swap, 20%
+CPU, and 128 tasks. Ruff check and formatting passed. The test used only a
+temporary database and fixture frames; it made no exchange connection and did
+not read production research stores.
+
+At 12:45 CET, host `MemAvailable` was about 10 GiB while swap remained full
+with about 14 MiB free. Host PSI was zero through avg300. User-slice
+`memory.events` remained `high=16,428,175`, `max=730,409`, `oom=19`,
+`oom_kill=15`, and `oom_group_kill=0`. The MIDAS API, Reality collector, and
+Reality API were active with restart counts 9, 14, and 0; their current memory
+was about 1.11 GB, 0.62 GB, and 0.47 GB respectively. The capacity unit was
+inactive between runs with the reversible 160 MiB high / 192 MiB max / zero
+swap override; its 30-minute timer remained active and was due at 12:48:53.
+The gap-detail timer remained disabled; its unit's last state remains failed
+after the October 28 OOM kill. No service or timer was changed during this
+sample. No new OOM record was returned by the checked journal query.
+
+This is a short bounded quiet period, not proof of recovery. The previously
+identified 129 OOMd terminations on October 28 and seven 128 MiB capacity
+memcg kills remain the established incident evidence. The gap-detail replay
+was a demonstrated recurring target and likely contributor, but the initiating
+global workload mix remains unproven. Full swap, unknown long-window pressure,
+and the separate invalid archive-manifest/provenance warnings remain open.
+Frontier may continue only as serial, offline work after fresh admission
+samples; public probes, broad suites, and production deployment remain
+deferred.

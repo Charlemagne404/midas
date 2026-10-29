@@ -3319,6 +3319,9 @@ def router(
                     )
                 records.append(row)
             try:
+                for row in records:
+                    frame = KrakenBookUpdateFrame.model_validate(row["normalized"])
+                    _validate_kraken_book_update_market_binding(store, frame)
                 result = replay_kraken_book_capture(records)
             except (AdapterError, FrontierStoreError, ValueError) as error:
                 raise HTTPException(
@@ -6267,6 +6270,35 @@ def _validate_polymarket_book_update_market_binding(
             return
     raise ValueError(
         "Bound Polymarket market observation does not contain this frame's market and instruments"
+    )
+
+
+def _validate_kraken_book_update_market_binding(
+    store: FrontierStore,
+    frame: KrakenBookUpdateFrame,
+) -> None:
+    bound_observation_id = frame.bound_market_observation_id
+    if bound_observation_id is None:
+        raise ValueError("Persisted Kraken frame has no saved-market observation binding")
+    bound = store.observation(bound_observation_id)
+    if bound is None:
+        raise ValueError("Persisted Kraken frame references a missing saved-market observation")
+    if bound["venue"] != Venue.KRAKEN.value or bound["observation_kind"] != "instrument_metadata":
+        raise ValueError("Kraken frame binding is not a Kraken instrument metadata observation")
+    normalized = bound["normalized"]
+    if not isinstance(normalized, dict):
+        raise ValueError("Bound Kraken instrument metadata is not a normalized object")
+    market = FrontierMarket.model_validate(normalized)
+    if (
+        market.venue == Venue.KRAKEN
+        and market.market_kind.value == "spot_pair"
+        and market.native_market_id == frame.native_market_id
+        and len(market.instruments) == 1
+        and market.instruments[0].native_instrument_id == frame.native_market_id
+    ):
+        return
+    raise ValueError(
+        "Bound Kraken market observation does not contain this frame's native spot pair and instrument"
     )
 
 

@@ -936,11 +936,14 @@ implementation; fixture tests cover the capture and persistence path.
 only persisted Kraken `public_book_update_frame` observations; it never opens a
 WebSocket or fetches market data. The existing source-use hold is checked
 before storage access. Frames must belong to one saved-market binding and
-capture session, record one explicit subscription depth, and form a complete
-zero-based message-index sequence. Each raw frame is limited to 256 KiB and
-the total replay input to 8 MiB. Raw hashes, store IDs, provenance, CRC-verified
-book states, and normalized rows are revalidated before a deterministic result
-hash is returned.
+capture session. The binding must resolve to a stored Kraken
+`instrument_metadata` observation whose normalized market is the same native
+spot pair and whose single instrument has that native pair ID. Replay also
+requires one explicit subscription depth and a complete zero-based
+message-index sequence. Each raw frame is limited to 256 KiB and the total
+replay input to 8 MiB. Raw hashes, store IDs, provenance, CRC-verified book
+states, and normalized rows are revalidated before a deterministic result hash
+is returned.
 
 Legacy schema-v1 rows do not record the requested depth and are rejected;
 replay does not infer that value. Results are classified `context_only` with
