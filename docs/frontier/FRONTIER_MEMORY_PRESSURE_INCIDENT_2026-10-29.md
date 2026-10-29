@@ -2739,6 +2739,9 @@ returned no new kill records since 12:45. MIDAS API, Reality, Reality API,
 Continental contact/status/cloud services, Continental's tailnet and ID-auth
 user services, Echo production/staging, Headscale, RustDesk, and the SSH
 socket were active. API and Reality restart counters remained at 9 and 14.
+The same capacity artifact reports `collector_state=RECORDING_UNSEQUENCED`
+with a 0.187-second-old collector status; this is a fresh status observation,
+not evidence of sequence completeness or archival integrity.
 
 The capacity report written by the scheduled run still reports
 `UNVERIFIED_MANIFEST_SIZE_LIMIT`, `archive_manifest_provenance_valid=null`,

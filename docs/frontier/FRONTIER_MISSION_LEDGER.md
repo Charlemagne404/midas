@@ -14749,6 +14749,9 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
   MIDAS API, Reality, Reality API, Continental contact/status/cloud and its
   tailnet/ID-auth services, Echo production/staging, Headscale, RustDesk, and
   SSH were active in their correct user/system scopes.
+- The same capacity artifact reports `RECORDING_UNSEQUENCED` with a fresh
+  0.187-second-old collector status; sequence completeness and archive
+  integrity remain unproven.
 - The latest capacity artifact still labels archive manifest provenance and
   inventory unverified and archive capacity unknown. No archive or historical
   evidence was modified. Full swap, root attribution for the initiating global
