@@ -13821,3 +13821,10 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
 - **Host:** At 08:15:35 memory PSI was 0/0.01/0.18% global avg10/60/300; oomd user-cgroup pressure 0/0.01/0.20%; `MemAvailable` 10 GiB; swap still full; OOM counters 19/15/0. API/Reality/Reality API active at restarts 9/14/0. No OOMD/kernel OOM in the recent window.
 - **Next:** Observe the 08:17:45 Reality capacity timer under its 160/192 MiB zero-swap bound. Continue only small serial fixture work after fresh admission; keep the heavy UI case deferred.
 - **Status:** Incident remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**. No live source access, deployment, or production service change occurred.
+
+## 2026-10-29 08:18 CET — scheduled capacity monitor confirmation
+
+- The 08:17:52 Reality capacity timer run exited 0 at 08:17:59 after 6.544 CPU seconds. Effective limits were 160 MiB high / 192 MiB max / zero swap. No direct cgroup peak was captured; do not use the post-cleanup 256 KiB systemd summary.
+- The report still flags pending budget/retention restart changes, capacity horizons, invalid archive segment inventory, and invalid archive manifest provenance. No archive or recorder changes were made.
+- Host memory PSI and oomd user-cgroup pressure were zero at launch; `MemAvailable` was 10 GiB, swap nearly full, OOM counters remained 19/15/0, and API/Reality/Reality API stayed active at restart counts 9/14/0.
+- **Status:** Successful bounded scheduled run; long-run memory margin, archive provenance, and the workload that initiated prior OOMD pressure remain unresolved.

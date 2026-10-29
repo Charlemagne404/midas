@@ -1397,3 +1397,21 @@ at restarts 9/14/0, with API/Reality at about 967/423 MiB. OOM counters stayed
 timer is the next validation point. Small serial fixture work may continue
 after fresh admission; UI retries, broad suites, and endurance work remain
 deferred.
+
+## Scheduled capacity monitor follow-up — 2026-10-29 08:18 CET
+
+The existing timer launched `midas-reality-capacity.service` at 08:17:52;
+it exited successfully at 08:17:59 after 6.544 CPU seconds. The effective
+limits remained 160 MiB high / 192 MiB max / zero swap. No live cgroup peak
+was captured. The systemd final summary's 256 KiB peak is invalid after the
+oneshot cgroup had been removed and is not used as a measurement.
+
+The generated report still contains pending budget/retention restart notices,
+capacity horizon warnings, `ARCHIVE_SEGMENT_INVENTORY_INVALID`, and
+`ARCHIVE_MANIFEST_PROVENANCE_INVALID`. These are separate data-integrity and
+configuration issues; no archive repair, deletion, or Reality collector
+restart was performed. At 08:17:52 memory PSI and monitored user-cgroup
+pressure were zero, `MemAvailable` was 10 GiB, swap remained nearly full, and
+OOM counters remained 19/15/0. The API, Reality, and Reality API services
+remained active at restarts 9/14/0. This is another successful bounded run,
+not proof of sustained memory headroom or full incident recovery.

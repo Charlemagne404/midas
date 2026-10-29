@@ -2,7 +2,7 @@
 
 **Report date:** 2026-10-29
 
-## Current completion matrix — 2026-10-29 08:15 CET
+## Current completion matrix — 2026-10-29 08:18 CET
 
 This is a current evidence classification, not a final completion claim. The
 dated implementation records below remain the detailed evidence; the
@@ -14680,5 +14680,24 @@ At 08:15:35 global memory PSI avg10/60/300 was 0/0.01/0.18% (`full`
 was 10 GiB, while swap was still effectively full. OOM counters remained
 19/15/0. API, Reality, and Reality API were active at restart counts 9/14/0;
 API and Reality were about 967/423 MiB. This supports resuming small,
-serial fixture work, not broad UI or endurance testing. The next capacity
-monitor run at 08:17:45 remains an observation point.
+serial fixture work, not broad UI or endurance testing. The scheduled
+08:17:52 capacity-monitor run completed; its result is recorded below.
+
+### Scheduled Reality capacity run — 2026-10-29 08:18 CET
+
+The scheduled run started at 08:17:52 and exited successfully at 08:17:59,
+consuming 6.544 CPU seconds under the effective 160 MiB high / 192 MiB max /
+zero-swap settings. The transient final status printed a 256 KiB memory peak
+after the service cgroup had disappeared; it is not a valid usage measurement.
+The report retained `BUDGET_CHANGE_PENDING_RESTART`,
+`RETENTION_CHANGE_PENDING_RESTART`, the capacity horizon warnings,
+`ARCHIVE_SEGMENT_INVENTORY_INVALID`, and
+`ARCHIVE_MANIFEST_PROVENANCE_INVALID`. No archive integrity or Reality
+collector configuration was changed.
+
+At 08:17:52 global memory PSI and oomd user-cgroup pressure were zero;
+`MemAvailable` was 10 GiB and swap remained nearly full. OOM counters stayed
+19/15/0, and API/Reality/Reality API remained active at restart counts
+9/14/0. A second successful capacity run after the reversible bound is useful
+operational evidence, but does not prove the memory peak margin or clear the
+archive-provenance blocker.
