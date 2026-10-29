@@ -1,5 +1,29 @@
 # Project Frontier Mission Ledger
 
+## 2026-10-29 21:47 CET — adversarial replay BBO mismatch fixture
+
+- Extended the Polymarket replay API fixture with a third frame whose reported
+  best bid is 0.40 while the snapshot-anchored projection's best bid remains
+  0.42. Replay retains the projected levels and reports
+  `REPORTED_BEST_BID_DIFFERS_FROM_PROJECTION`; it remains context-only and
+  economics-ineligible. The capture bound is four raw frames because the
+  existing ignored trade message consumes one frame slot.
+- The focused API/replay test passed **1/1** in 6.49 seconds under a transient
+  scope capped at 384 MiB High / 512 MiB Max / zero swap / 15% CPU / 64 tasks.
+  Its first attempt exposed the raw-frame-bound fixture assumption; after
+  raising that bound, the test passed. A Starlette/httpx deprecation warning
+  remains. Ruff check, Ruff format check, and `git diff --check` passed. No
+  cgroup peak was retained, and no public endpoint or production store was
+  used.
+- At 21:47, MemAvailable was about 10 GiB, swap remained full, and PSI was
+  low but nonzero (some/full avg60 0.05, avg300 0.01; avg10 0.00). User
+  high/max/oom/oom_kill counters remained 16,438,383/732,947/19/15; no OOMD
+  or kernel kill appeared since 21:45. API, Reality, and Reality API were
+  active at restart counts 9/14/0. Capacity is due at 21:51; recheck before
+  admitting more test work. Host incident remains partially contained.
+- Changed test and documentation only; the pre-existing untracked
+  `data/frontier-public-probes/` remains untouched.
+
 ## 2026-10-29 21:43 CET — post-projection verification and checkpoint
 
 - Feature commit `c84d70c2b16b04e69bbb623e95b688d4a930485b` adds the

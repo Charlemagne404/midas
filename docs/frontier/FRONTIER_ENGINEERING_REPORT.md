@@ -73,6 +73,11 @@ build check passed; `tsc -b` used a 768 MiB high / 1 GiB max, zero-swap,
 20%-CPU scope, without a sampled transient peak. Ruff and Prettier checks
 passed after formatting. A Starlette/httpx deprecation warning remains in the Python
 test harness. No live stream, public endpoint, or production store was used.
+After that module run, a focused adversarial API fixture was added for a
+reported best bid that disagrees with the projected level book; the specific
+capture/persist/replay test passed **1/1** under the same 384/512 MiB, zero-
+swap, 15%-CPU, 64-task bounds. It confirms the mismatch quality flag is
+retained and does not promote the context-only projection to economics.
 
 ### Gemini bounded recent-trade parser — 2026-10-29 10:23 CET
 

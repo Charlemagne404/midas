@@ -461,11 +461,31 @@ def test_book_update_api_binds_to_saved_market_and_persists_fixture_evidence(tmp
         },
         separators=(",", ":"),
     )
+    mismatched_best_price_frame = json.dumps(
+        {
+            "event_type": "price_change",
+            "market": CONDITION_ID,
+            "timestamp": "1793246402000",
+            "price_changes": [
+                {
+                    "asset_id": ASSET_ID,
+                    "price": "0.40",
+                    "size": "3",
+                    "side": "BUY",
+                    "hash": "level-3",
+                    "best_bid": "0.40",
+                    "best_ask": "0.43",
+                }
+            ],
+        },
+        separators=(",", ":"),
+    )
     connector = FixtureConnector(
         [
             _legacy_book_frame(),
             json.dumps({"event_type": "last_trade_price", "market": CONDITION_ID}),
             price_change_frame,
+            mismatched_best_price_frame,
         ]
     )
     adapter = PolymarketAdapter(
@@ -481,17 +501,17 @@ def test_book_update_api_binds_to_saved_market_and_persists_fixture_evidence(tmp
     try:
         response = client.post(
             "/api/frontier/probe/polymarket/book-updates",
-            json={"market_id": market_id, "max_frames": 3},
+            json={"market_id": market_id, "max_frames": 4},
         )
         assert response.status_code == 200, response.text
         result = response.json()
         assert result["market_id"] == market_id
         assert result["native_market_id"] == CONDITION_ID
         assert result["capture_status"] == "captured"
-        assert result["frame_count"] == 2
-        assert result["normalized_update_count"] == 2
+        assert result["frame_count"] == 3
+        assert result["normalized_update_count"] == 3
         assert result["capture_bounds"] == {
-            "max_frames": 3,
+            "max_frames": 4,
             "max_updates": 50,
             "max_duration_seconds": 3.0,
             "stream_connections": 1,
@@ -527,7 +547,7 @@ def test_book_update_api_binds_to_saved_market_and_persists_fixture_evidence(tmp
         saved_frame_page = saved_frames.json()
         assert saved_frame_page["network_called"] is False
         assert saved_frame_page["research_only"] is True
-        assert saved_frame_page["returned"] == 2
+        assert saved_frame_page["returned"] == 3
         assert saved_frame_page["next_offset"] is None
         assert {item["observation_id"] for item in saved_frame_page["items"]} == set(
             frame["observation_id"] for frame in result["frames"]
@@ -544,7 +564,11 @@ def test_book_update_api_binds_to_saved_market_and_persists_fixture_evidence(tmp
         second_saved_page = client.get("/api/frontier/polymarket/book-updates?limit=1&offset=1")
         assert second_saved_page.status_code == 200, second_saved_page.text
         assert second_saved_page.json()["returned"] == 1
-        assert second_saved_page.json()["next_offset"] is None
+        assert second_saved_page.json()["next_offset"] == 2
+        third_saved_page = client.get("/api/frontier/polymarket/book-updates?limit=1&offset=2")
+        assert third_saved_page.status_code == 200, third_saved_page.text
+        assert third_saved_page.json()["returned"] == 1
+        assert third_saved_page.json()["next_offset"] is None
 
         observation_ids = [frame["observation_id"] for frame in result["frames"]]
         replay = client.post(
@@ -555,7 +579,7 @@ def test_book_update_api_binds_to_saved_market_and_persists_fixture_evidence(tmp
         replay_result = replay.json()
         assert replay_result["schema_version"] == 3
         assert replay_result["replay_version"] == "polymarket-book-event-replay-3"
-        assert replay_result["event_count"] == 2
+        assert replay_result["event_count"] == 3
         assert replay_result["message_order_basis"] == "local_monotonic_elapsed"
         assert replay_result["continuity"] == "unverified_no_sequence_or_gap_detection"
         assert replay_result["book_reconstructed"] is False
@@ -565,7 +589,7 @@ def test_book_update_api_binds_to_saved_market_and_persists_fixture_evidence(tmp
             == "source_reported_size_used_as_absolute_level_size_assumption"
         )
         assert replay_result["event_economics_eligible"] is False
-        assert len(replay_result["book_states"]) == 2
+        assert len(replay_result["book_states"]) == 3
         projected = replay_result["book_states"][1]
         assert projected["native_instrument_id"] == ASSET_ID
         assert projected["snapshot_observation_id"] == observation_ids[0]
@@ -577,9 +601,17 @@ def test_book_update_api_binds_to_saved_market_and_persists_fixture_evidence(tmp
         ]
         assert projected["reported_best_prices_match_projection"] is True
         assert projected["applied_price_change_count"] == 2
-        assert [frame["frame_ordinal"] for frame in replay_result["frames"]] == [0, 1]
+        mismatched_projection = replay_result["book_states"][2]
+        assert mismatched_projection["bids"] == [
+            {"price": "0.42", "quantity": "5", "exchange_timestamp_utc": None},
+            {"price": "0.40", "quantity": "3", "exchange_timestamp_utc": None},
+        ]
+        assert mismatched_projection["reported_best_prices_match_projection"] is False
+        assert "REPORTED_BEST_BID_DIFFERS_FROM_PROJECTION" in mismatched_projection["quality_flags"]
+        assert [frame["frame_ordinal"] for frame in replay_result["frames"]] == [0, 1, 2]
         assert [frame["updates"][0]["event_type"] for frame in replay_result["frames"]] == [
             "book",
+            "price_change",
             "price_change",
         ]
         delta_only = store.observation(observation_ids[1])

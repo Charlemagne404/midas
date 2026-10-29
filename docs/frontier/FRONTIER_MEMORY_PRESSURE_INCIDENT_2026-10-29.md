@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 21:43 CET |
+| Latest addendum | 2026-10-29 21:47 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Pre-incident checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -15,7 +15,39 @@ This is the current incident report. It supplements the chronological record in
 The full-day journal query below expands that earlier report's final-ten-event
 sample to all October 28 systemd-oomd kills.
 
-## Latest addendum — 2026-10-29 21:43 CET
+## Latest addendum — 2026-10-29 21:47 CET
+
+The snapshot-anchored Polymarket replay received one adversarial fixture
+update. It now applies a reported bid at 0.40 below the locally projected
+0.42 best bid and checks that replay retains the discrepancy as
+`REPORTED_BEST_BID_DIFFERS_FROM_PROJECTION`. The first focused attempt stopped
+at its capture bound because the existing ignored trade event also consumed a
+raw-frame slot; increasing the bound from three to four captured raw frames
+made the intended three normalized updates available. The corrected targeted
+test passed 1/1 in 6.49 seconds (9.36 seconds wall) using a transient scope
+capped at `MemoryHigh=384 MiB`, `MemoryMax=512 MiB`, `MemorySwapMax=0`,
+`CPUQuota=15%`, and `TasksMax=64`. It used fixture data only and did not call a
+public endpoint or production store. The existing Starlette/httpx deprecation
+warning remains. No transient cgroup peak was retained.
+
+At 21:47, `MemAvailable` was about 10 GiB and swap remained fully used. PSI
+averages were low but nonzero (`some/full avg60=0.05`, `avg300=0.01`); the
+10-second averages had returned to zero. `user@1000.service` counters remained
+`high=16,438,383`, `max=732,947`, `oom=19`, and `oom_kill=15`. The API,
+Reality collector, and Reality API remained active at restart counts 9, 14,
+and 0. Their current memory was about 0.95, 0.92, and 0.13 GiB respectively,
+below their configured High/Max limits. No OOMD or kernel OOM entry appeared
+since 21:45. The next capacity run remains scheduled for 21:51; recheck host
+pressure and service state after that run before admitting further tests.
+
+No production service or stored research evidence changed. The test and this
+documentation remain isolated on `codex/frontier-20261026`; the untracked
+`data/frontier-public-probes/` directory was not staged or touched. Incident
+status stays **PARTIALLY CONTAINED / PARTIALLY VERIFIED**: full swap, low
+nonzero PSI averages, unresolved marginal memory attribution, and a quiet
+short window do not prove durable recovery.
+
+## Prior addendum — 2026-10-29 21:43 CET
 
 The host remained in a low-pressure but swap-saturated state during bounded
 Frontier verification. At 21:43, `MemAvailable` was about 10 GiB and memory
