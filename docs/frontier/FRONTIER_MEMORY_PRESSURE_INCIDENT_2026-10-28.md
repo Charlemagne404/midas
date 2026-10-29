@@ -2,7 +2,7 @@
 
 **Incident date:** 2026-10-28 (CET)
 
-**Checkpoint captured:** 2026-10-29 01:52 CET
+**Checkpoint captured:** 2026-10-29 01:54 CET
 
 **Scope:** Host reliability interruption during Project Frontier
 
@@ -943,3 +943,15 @@ and no kernel or systemd-oomd kill was logged since 23:43:24. The sample
 identifies current cgroup contributors but cannot attribute the historical
 OOM window. API `MemoryHigh` margin is now less than half a MiB, so further
 tests and runtime work are deferred pending material recovery.
+
+At 01:53:55, the MIDAS API, Reality collector/API, MIDAS web, Continental
+tailnet/auth, Echo production/staging, Caddy, RustDesk, and `ssh.socket` were
+active. The capacity, source-analysis, and research-director oneshots were
+inactive after their successful completions; the gap-detail timer remained
+disabled/inactive and its last OOM-killed oneshot remained failed. At 01:54:08,
+API usage had eased to 1,609,490,432 bytes, 1.07 MiB below `MemoryHigh`;
+Reality/API restart counts remained 14/9. Host PSI remained zero. User-manager
+`high=16,416,860` had increased by two since 01:51:59; `max=728,363`, `oom=19`,
+and `oom_kill=15` were unchanged. No kernel or systemd-oomd kill was logged
+after 23:43:24. The API remains very near its soft bound, so no further tests
+or runtime work are scheduled in this checkpoint.

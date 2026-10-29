@@ -2,7 +2,7 @@
 
 **Report date:** 2026-10-29
 
-## Current completion matrix — 2026-10-29 01:52 CET
+## Current completion matrix — 2026-10-29 01:54 CET
 
 This is a current evidence classification, not a final completion claim. The
 dated implementation records below remain the detailed evidence; the
@@ -22,13 +22,13 @@ current host gate.
 | User-cgroup-aware workload admission | IMPLEMENTED, BOUNDED VALIDATION PASSED | Central Arena admission (15), finite schedules (12), and the Laboratory denial case (1) pass fixture tests using user-manager pressure; no runtime deployment occurred. |
 | Reality capacity inventory bounds | PARTIALLY VERIFIED | Isolated candidate tests pass 5/5; candidate code remains undeployed. The separate monitor has one measured scheduled run at 134,225,920 bytes under `MemoryHigh=160M`, `MemoryMax=192M`, and zero swap, plus a second successful scheduled run whose peak was not retained. |
 | Native Frontier dashboard | PARTIALLY VERIFIED | The graph/evidence UI test and all 9 UI cases pass across the default-timeout run and a 15-second retry for its two slow fixtures. Typecheck/build and three isolated Playwright smoke/replay/Arena journeys pass; the full browser suite remains unverified. |
-| Host reliability containment | PARTIALLY VERIFIED | The auxiliary five-minute gap-detail timer is disabled; scheduled source-analysis and capacity jobs completed at 01:40 and 01:46. At 01:51 the API was 0.49 MiB below `MemoryHigh`; PSI was zero and no OOM kill has been logged since 23:43 CET. The historical pressure initiator remains unknown. |
+| Host reliability containment | PARTIALLY VERIFIED | The auxiliary five-minute gap-detail timer is disabled; scheduled source-analysis and capacity jobs completed at 01:40 and 01:46. At 01:54 the API was 1.07 MiB below `MemoryHigh` after varying between 0.49 and 1.41 MiB in recent samples. PSI was zero and no OOM kill has been logged since 23:43 CET; the historical pressure initiator remains unknown. |
 | Broad regressions, resource endurance, and performance acceptance | DEFERRED | Several targeted suites pass under explicit memory, swap, CPU, task, and wall-time limits; the full repository suite, endurance, and broad performance tests remain deferred. |
 | Live multi-venue source authorization and findings | BLOCKED | Kalshi, Kraken, and Coinbase retained research remain held; the worktree Polymarket probe flag is off. |
 | Production integration/deployment | DEFERRED | Frontier remains isolated; no protected service transition occurred. |
 | Project Frontier overall | PARTIALLY VERIFIED | The engine is substantial, but live cross-venue science, broad verification, recovery, endurance, and deployment gates remain open. |
 
-## Bounded Frontier verification after host containment — 2026-10-29 01:52 CET
+## Bounded Frontier verification after host containment — 2026-10-29 01:54 CET
 
 Frontier work resumed only in sequential transient user scopes. Python test
 scopes used a 768 MiB maximum, zero swap, 25% CPU quota, 64-task cap, and
@@ -132,6 +132,16 @@ zero. User-manager `high` was 16,416,858; `max`, `oom`, and `oom_kill` remained
 728,363/19/15. The sampler's reported 256 KiB peak was implausible and is not
 used as a measured process peak. Runtime work is deferred because API headroom
 remains extremely narrow.
+
+At 01:53:55, the MIDAS API, Reality collector/API, and web service were active;
+Continental tailnet/auth services, Echo production/staging, Caddy, RustDesk, and
+`ssh.socket` were also active. The gap-detail timer was disabled/inactive and
+its prior OOM-killed oneshot remained in failed state. At 01:54:08, API was
+1,609,490,432 bytes against its 1,610,612,736-byte `MemoryHigh` (1.07 MiB
+headroom); Reality/API restart counts remained 14/9. Host PSI was still zero,
+user-manager `high=16,416,860`, and `max`, `oom`, and `oom_kill` were still
+728,363/19/15. The separately recorded Continental infrastructure-audit
+failure is unrelated to this memory incident and was not changed.
 
 ## Adapter trust boundary and retry bound review — 2026-10-29 00:00 CET
 

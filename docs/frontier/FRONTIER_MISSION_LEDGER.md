@@ -1,6 +1,6 @@
 # Project Frontier Mission Ledger
 
-## Current host and Frontier state — 2026-10-29 01:52 CET
+## Current host and Frontier state — 2026-10-29 01:54 CET
 
 Reality has resumed recording after cold replay: status says
 `RECORDING_UNSEQUENCED`, `active_receiving`, 16/16 fresh books, zero failures,
@@ -21,15 +21,15 @@ status age 3.36 seconds, and raw recording size 12,137,375,646 bytes.
 `ARCHIVE_SEGMENT_INVENTORY_INVALID` and
 `ARCHIVE_MANIFEST_PROVENANCE_INVALID` remain; neither was altered.
 
-At 01:51:59, host `MemAvailable` was 10 GiB, host PSI avg10/avg60/avg300 was
-zero, and swap was 3.1/4 GiB used. User-manager counters were
-`high=16,416,858`, `max=728,363`, `oom=19`, and `oom_kill=15`. The API cgroup
-used 1,610,100,736 bytes against `MemoryHigh=1,610,612,736`, leaving 512,000
-bytes (0.49 MiB); its leaf `max`, `oom`, and `oom_kill` counters were zero.
-Reality used 581,099,520 bytes, and Reality/API were active with restart counts
-14 and 9. Echo production/staging, Continental, Caddy, RustDesk, and the SSH
-socket were verified active at 01:16. Stop runtime work until API headroom
-materially recovers; broader suites remain deferred. Full repository regression, the full browser E2E
+At 01:54:08, API `MemoryCurrent` was 1,609,490,432 bytes against
+`MemoryHigh=1,610,612,736`, leaving 1.07 MiB. It fluctuated between 0.49 and
+1.41 MiB of headroom over recent samples. Host PSI was zero; at 01:51:59
+`MemAvailable` was 10 GiB and swap was 3.1/4 GiB used. User-manager counters
+were `high=16,416,860`, `max=728,363`, `oom=19`, and `oom_kill=15`. Reality/API
+were active with restart counts 14 and 9. At 01:53:55, MIDAS web, Continental
+tailnet/auth, Echo production/staging, Caddy, RustDesk, and `ssh.socket` were
+also active. Keep runtime work paused until API headroom materially recovers;
+broader suites remain deferred. Full repository regression, the full browser E2E
 suite, live probes, endurance, and research campaigns remain gated.
 
 At 01:40:13, the scheduled Veritas source-analysis job completed with
