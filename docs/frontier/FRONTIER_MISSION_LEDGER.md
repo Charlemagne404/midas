@@ -18,6 +18,8 @@
   do not infer sustained recovery from this sample.
 - No service or resource limit changed; the existing untracked public-probe
   directory and all historical evidence remain untouched.
+- Implementation and evidence checkpoint: `c1ad4261f66e0b93998ed6b24ff03c5644626eee`
+  (`feat(frontier): replay standalone Polymarket BBO events`).
 
 ## 2026-10-29 22:30 CET — replay v4 schema check and post-test sample
 

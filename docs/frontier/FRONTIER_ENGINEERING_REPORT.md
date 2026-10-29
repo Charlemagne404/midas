@@ -73,6 +73,9 @@ bounded TypeScript project check completed successfully under 768 MiB High /
 1 GiB Max, zero swap, 20% CPU, and a 512 MiB Node heap. Targeted Ruff check,
 Ruff format check, Prettier, and ESLint passed. These remain offline fixtures;
 no live stream or executable opportunity is demonstrated.
+Implementation and evidence checkpoint: commit
+`c1ad4261f66e0b93998ed6b24ff03c5644626eee` on
+`codex/frontier-20261026`.
 
 ### Polymarket snapshot-anchored replay projection — 2026-10-29 21:43 CET
 
