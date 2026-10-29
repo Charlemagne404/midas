@@ -517,6 +517,54 @@ def test_book_update_api_binds_to_saved_market_and_persists_fixture_evidence(tmp
             in wrong_binding_replay.json()["detail"]["message"]
         )
         assert connector.calls == 1
+
+        unrelated_native_market_id = "0x" + "b" * 64
+        unrelated_market = market(Venue.POLYMARKET, unrelated_native_market_id)
+        unrelated_raw_body = '{"recorded_fixture":"unrelated Polymarket listing"}'
+        unrelated_market_observation_id = store.append_observation(
+            RawObservation(
+                venue=Venue.POLYMARKET,
+                observation_kind="market_listing",
+                request_url="https://gamma-api.polymarket.com/markets?limit=1&fixture=unrelated",
+                http_status=200,
+                request_started_at_utc=T0,
+                received_at_utc=T0,
+                raw_body=unrelated_raw_body,
+                raw_sha256=hashlib.sha256(unrelated_raw_body.encode()).hexdigest(),
+                adapter_version="fixture-polymarket-listing-v1",
+            ),
+            MarketBatch(venue=Venue.POLYMARKET, markets=(unrelated_market,)),
+        )
+        normalized_with_unrelated_binding = json.loads(valid_normalized_json)
+        normalized_with_unrelated_binding["bound_market_observation_id"] = (
+            unrelated_market_observation_id
+        )
+        unrelated_binding_json = store._canonical(normalized_with_unrelated_binding)
+        unrelated_binding_row_hash = hashlib.sha256(
+            f"{raw_json}\n{unrelated_binding_json}".encode()
+        ).hexdigest()
+        with sqlite3.connect(store.path) as connection:
+            connection.execute("DROP TRIGGER observations_no_update")
+            connection.execute(
+                "UPDATE observations SET normalized_json=?,row_sha256=? WHERE observation_id=?",
+                (unrelated_binding_json, unrelated_binding_row_hash, observation_ids[0]),
+            )
+        unrelated_binding_listing = client.get("/api/frontier/polymarket/book-updates")
+        assert unrelated_binding_listing.status_code == 409
+        assert (
+            "does not contain this frame's market and instruments"
+            in unrelated_binding_listing.json()["detail"]
+        )
+        unrelated_binding_replay = client.post(
+            "/api/frontier/replay/polymarket/book-updates",
+            json={"observation_ids": observation_ids},
+        )
+        assert unrelated_binding_replay.status_code == 409
+        assert (
+            "does not contain this frame's market and instruments"
+            in unrelated_binding_replay.json()["detail"]["message"]
+        )
+        assert connector.calls == 1
     finally:
         client.close()
         asyncio.run(registry.aclose())
