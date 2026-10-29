@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 08:33 CET |
+| Latest addendum | 2026-10-29 08:45 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Pre-incident checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -1535,3 +1535,81 @@ At 08:33:36, global PSI and the user-manager `high`, `max`, `oom`, and
 restart counts 9/14. OOMD and kernel OOM journals remained empty since
 08:24:26. This adds source-permission fixture evidence only and does not
 change the incident assessment.
+
+## 2026-10-29 08:45 CET — latest pressure attribution and bounded continuation
+
+- At 08:41:56, the host had 11,306,045,440 bytes (`10.53 GiB`) available and
+  8,835,072 bytes of swap free (4,286,128,128 of 4,294,963,200 bytes used).
+  Global memory PSI avg10/60/300 and full PSI avg10/60/300 were zero. The
+  `user@1000` cgroup held 9,821,118,464 bytes memory and 2,858,233,856 bytes
+  swap. Its cumulative events were unchanged at `high=16,422,194`,
+  `max=730,045`, `oom=19`, `oom_kill=15`, `oom_group_kill=0`.
+- `oomctl dump` now lists the user-manager cgroup at the configured 50%
+  pressure threshold, with current pressure zero and reported usage 9.1 GiB.
+  Its separate System Context totals still show 0 B. The mismatch is
+  unresolved. `user.slice`, `user-1000.slice`, and `user@1000.service` have no
+  `MemoryHigh`, `MemoryMax`, or `MemorySwapMax` ceiling; the OOMD pressure
+  policy, rather than a user-slice hard limit, caused the documented
+  historical OOMD kills.
+- A leaf-cgroup sample at 08:41:07 showed the largest current entries as an
+  active GNOME Terminal `vte-spawn` scope at 1,915 MiB, API at 935.5 MiB,
+  Reality at 421.7 MiB, and Reality API at 324.4 MiB. The Veritas source
+  analysis timer then ran from 08:40:58 to 08:41:09 at about 218 MiB and
+  exited successfully. This describes current occupancy and a scheduled job;
+  it does not establish which process caused the historical parent-cgroup
+  pressure. No interactive scope was altered.
+- At 08:41, API, Reality, and Reality API were active with restart counts
+  9/14/0. Current usage was about 935/422/324 MiB against limits of
+  1,536/1,152/512 MiB respectively (API and Reality also have hard limits of
+  1,792 and 1,280 MiB). The Reality status written at 08:40:05 reported
+  `RECORDING_UNSEQUENCED`, `active_receiving`, 16/16 fresh books, one recorded
+  failure, no process backpressure, and `sequence_verified=false`. No Reality
+  restart, configuration change, or data repair was performed.
+- Continental Cloud tailnet and ID auth remained active. Echo production and
+  staging, RustDesk, `ssh.socket`, and systemd-oomd were active; SSH is
+  socket-activated. The unrelated Continental read-only infrastructure audit
+  failed at 08:34:58 with three policy findings: listeners on `0.0.0.0:8081`
+  and `0.0.0.0:5174`, plus a disabled Echo offsite schedule. It exited with
+  status 1 after 1.529 CPU seconds; this was not an OOM. No listeners,
+  schedules, or unrelated services were changed. The owning service/operator
+  should review those audit findings separately.
+- The gap-detail timer remains `inactive` and `disabled`; its five-minute
+  replay remains the strongest identified recurring OOMD contributor: 106 of
+  129 October 28 kills targeted it, and a captured service cgroup had
+  75% memory PSI while using about 205 MiB under `MemoryHigh=192M` and
+  `MemoryMax=256M`. It was auxiliary finalized-segment analysis, not live
+  capture or an integrity check. The capacity timer remains active every 30
+  minutes; its current effective limit is `MemoryHigh=160M`,
+  `MemoryMax=192M`, `MemorySwapMax=0`. The 08:17:52 run exited successfully at
+  08:17:59. Its post-cleanup 256 KiB peak field is not a valid process peak.
+- Read-only source inspection in the Reality worktree found a plausible
+  capacity-monitor memory mechanism: when archive manifest provenance is
+  invalid, `archive_capacity()` calls `_archive_directory_usage()` without a
+  trusted segment catalog, and that helper materializes every directory entry
+  in an `os.scandir()` dictionary before checking files. This matches the
+  current invalid-manifest warnings and can scale with archive entry count.
+  The killed runs did not retain a memory peak or entry count, so this remains
+  a code-supported hypothesis, not a demonstrated per-run cause. The archive
+  was not rescanned, changed, or repaired.
+- After the scheduled source-analysis job completed, the final formatted
+  Kraken WebSocket reconstructor suite passed **12/12 tests in 1.88 seconds**.
+  It ran in a transient 384 MiB high / 512 MiB max, zero-swap, 20% CPU,
+  64-task scope; targeted `ruff check` also passed. No endpoint or saved probe
+  data was accessed. At 08:44:18, MemAvailable was 11,263,049,728 bytes,
+  SwapFree was 8,839,168 bytes, global PSI remained zero, and the user-manager
+  counters were unchanged. No kernel OOM/systemd-oomd entries appeared after
+  08:44:11. This validates the offline parser only; the adapter continues to
+  declare `BOOK_UPDATES` unsupported pending transport, durable provenance,
+  and service integration.
+- No kernel OOM or systemd-oomd record appeared after the 08:24:26 journal
+  checkpoint; the last known OOMD kill remains 23:43:24 October 28 and the
+  last kernel capacity OOM 20:15:44. This quiet interval is not proof of
+  recovery. Almost all swap remains occupied, current terminal memory is
+  substantial, and the historical workload mix is not fully attributed.
+
+**Continuation gate:** Frontier may continue with short, serial, offline
+fixture work inside transient resource scopes after a fresh PSI/cgroup check.
+Keep broad suites, UI builds, profiling, large replay, new campaigns, live
+source probes, and deployment deferred. The incident stays **PARTIALLY
+CONTAINED / PARTIALLY VERIFIED**; do not infer that the machine is cleared for
+heavy work from available RAM or a brief zero-PSI sample.
