@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 13:26 CET |
+| Latest addendum | 2026-10-29 13:29 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Pre-incident checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -2985,3 +2985,18 @@ Reality API were active at restart counts 9/14/0. Test ports were closed and
 there were no OOMD/kernel journal entries since the pre-run sample. This
 bounded quiet period does not establish host recovery; swap is still nearly
 full and workload attribution remains open.
+
+## 320-pixel responsive extension — 2026-10-29 13:29 CET
+
+The same captured-store Playwright journey now checks all eight primary
+Frontier sections at both 320 × 844 and 390 × 844 CSS pixels. It passed **1/1
+in 49.4 s** (25.2 s in the test), with no document-level horizontal overflow,
+source-probe requests, or API mutations. It ran with a 768 MiB high / 1 GiB
+max, zero-swap, 20%-CPU, 128-task, 120-second cgroup and a 384 MiB Node heap.
+
+Post-run at 13:29:23 CET: `MemAvailable` was 10.60 GiB, swap free was 15.36
+MiB, PSI was zero, user-manager OOM counters remained 19/15, and API/Reality/
+Reality API remained active at restart counts 9/14/0. Test ports were closed;
+the OOMD/kernel query had no new entries since 13:26:47. This expands narrow
+screen evidence while leaving host recovery, cross-browser rendering, and
+accessibility evaluation unresolved.

@@ -14921,3 +14921,20 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
   set. Other viewport widths, browser engines, and assistive-technology
   coverage remain open. Host stays partially contained; continue bounded
   offline work only.
+
+## 2026-10-29 13:29 CET — extend responsive check to 320 pixels
+
+- Expanded the captured-store journey from 390 px to both 320 and 390 px
+  widths, checking all eight primary sections for document-level horizontal
+  overflow. It passed 1/1 in 49.4 s (25.2 s in the test), with zero probes and
+  zero API mutations.
+- The run used 768 MiB high / 1 GiB max, zero swap, 20% CPU, 128 tasks,
+  120 seconds, and a 384 MiB Node heap. It reused only the committed capture
+  copied into a fresh `/tmp` root.
+- Post-run: 10.60 GiB `MemAvailable`, 15.36 MiB swap free, zero PSI, unchanged
+  OOM counters, API/Reality/Reality API active at restart counts 9/14/0, test
+  ports closed, and no new OOMD/kernel entries since 13:26:47.
+- **Status:** Responsive layout has bounded checks at two narrow widths.
+  Broader browser and accessibility coverage remains pending; incident stays
+  partially contained because swap is nearly full and historical workload
+  attribution is unresolved.
