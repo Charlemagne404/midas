@@ -14844,3 +14844,21 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
 - No configuration was modified and no service was reloaded or restarted.
 - **Status:** Rollback instructions verified by readback; incident remains
   partially contained, with swap nearly full and host workload attribution open.
+
+## 2026-10-29 13:14 CET — captured public evidence browser journey
+
+- The isolated Playwright test passed **1/1 in 44.7 s** against the committed,
+  hash-pinned Polymarket capture. It copied the 270,336-byte source store to a
+  fresh `/tmp/midas-browser-*` root, checked SQLite integrity/counts, rendered
+  market, book, raw provenance, and relationship evidence, and asserted zero
+  source probes or API mutations.
+- Local API/Vite servers ran only against the temporary store. The browser
+  scope was bounded to 768 MiB high / 1 GiB max, zero swap, 20% CPU, 128 tasks,
+  120 seconds, with a 384 MiB Node heap. No production service or store was
+  used.
+- Post-run at 13:14: 10.58 GiB `MemAvailable`, 15.24 MiB swap free, zero PSI,
+  unchanged user-manager OOM counters, and API/Reality/Reality API active at
+  restart counts 9/14/0. No new OOMD/kernel kill appeared.
+- **Status:** Captured public evidence rendering is capture-verified.
+  Captured-data replay and broad browser integration remain open. Host remains
+  partially contained; continue only bounded offline work.

@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 13:09 CET |
+| Latest addendum | 2026-10-29 13:14 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Pre-incident checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -2889,3 +2889,19 @@ persistent file with the documented `MemoryMax=128M` and `MemorySwapMax=0`
 content, then reloading, restores the previous effective 128 MiB high/max
 limit. No service configuration or runtime limit was changed during this
 cross-check.
+
+## Captured-evidence browser admission — 2026-10-29 13:14 CET
+
+One Playwright browser journey rendered the committed public Polymarket
+capture in an isolated `/tmp` root. It passed **1/1 in 44.7 seconds** under
+`MemoryHigh=768M`, `MemoryMax=1G`, zero swap, 20% CPU, 128 tasks, and a
+120-second runtime limit. Its fixture copied a 270,336-byte hash-pinned store
+and used only loopback API/Vite servers; assertions observed no source probes
+or API mutations.
+
+At 13:14 the host had 10.58 GiB `MemAvailable`, 15.24 MiB free swap, and zero
+memory PSI through avg300. User-manager OOM counters were unchanged at 19/15;
+API, Reality, and Reality API remained active at restart counts 9/14/0. No new
+OOMD or kernel kill appeared in the checked interval. This bounded browser
+journey did not change the partially contained disposition: nearly full swap,
+historical workload attribution, and archive integrity remain unresolved.
