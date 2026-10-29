@@ -13338,6 +13338,7 @@ entry since 04:45. `oomctl` still listed no monitored groups despite
 `ManagedOOMMemoryPressure=kill`/50%; this remains unresolved. No service,
 terminal, or protected collector was interrupted.
 
-The detailed OOMD/workload follow-up is committed with the next report
-checkpoint; the prior evidence-pin commit is `de2d9c5`. Continue only with
-serial, capped Frontier work while swap is nearly full.
+The OOMD/workload follow-up was committed as `65192c8` (`docs(frontier):
+attribute OOMD candidate pressure`); the prior evidence-pin commit is
+`de2d9c5`. Continue only with serial, capped Frontier work while swap is
+nearly full.
