@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 17:38 CET |
+| Latest addendum | 2026-10-29 18:06 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Pre-incident checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -32,19 +32,27 @@ Two separate mechanisms caused process termination:
    cgroup limit failure, not a host-wide kernel OOM.
 
 The gap-detail timer is stopped and disabled. The capacity service has a
-reversible 160 MiB soft / 192 MiB hard limit with swap disabled; its 15:49
-scheduled run succeeded. Since the final systemd-oomd kill at 23:43:24 on
-October 28, no additional systemd-oomd kill has appeared through 15:51 on
-October 29; no kernel OOM has appeared since the 20:15:44 capacity kill.
+reversible 160 MiB soft / 192 MiB hard limit with swap disabled; its scheduled
+17:50 run succeeded at 147.8 MiB peak with zero swap. Since the final
+systemd-oomd kill at 23:43:24 on October 28, no additional systemd-oomd kill
+has appeared through 18:02 on October 29; no kernel OOM has appeared since the
+20:15:44 capacity kill.
 
-This is **partially contained, not resolved**. At 15:51 the host had
-11,167,420 kB available RAM, zero current memory PSI, and only 16,128 kB
-free swap. At 15:45, `user@1000.service` was charged about 10.0 GiB memory,
-had a 13.03 GiB peak, and used 2.66 GiB swap, with no aggregate memory or
-swap ceiling. The current `oomctl` output lists this parent as monitored at
-the 50% pressure threshold; the earlier 04:58 output that listed no monitored
-cgroups was not reproduced, and its discrepancy remains unexplained. This
-quiet interval and successful bounded jobs do not establish durable recovery.
+This is **partially contained, not resolved**. At 18:02 the host had
+10,923,448 kB available RAM, zero current memory PSI, and only 18,676 kB free
+swap. `user@1000.service` was charged 11,103,875,072 bytes (10.34 GiB)
+memory and 2,853,507,072 bytes (2.66 GiB) swap, with no aggregate memory or
+swap ceiling. Its hierarchical counters were `high=16,437,876`,
+`max=731,029`, `oom=19`, and `oom_kill=15`. The 50% per-user OOMD threshold
+and the prior `oomctl` registration discrepancy remain. This quiet interval
+and successful bounded jobs do not establish durable recovery.
+
+The historical 23:43 OOMD candidate snapshots also show why victim frequency
+cannot identify the only pressure source: `midas-api.service` was charged
+about 1.4 GiB, Reality about 551 MiB, Chromium about 338 MiB, and a terminal
+scope about 457 MiB, while gap-detail was about 205 MiB at its subsequent
+kill. These are charged-memory snapshots, not proof of the marginal cause of
+the parent PSI crossing.
 
 ## Full-day kill evidence
 
@@ -4314,3 +4322,108 @@ October 28 pressure initiator. Current pressure is zero despite the large
 charged-memory totals, while swap remains almost full. No aggregate user-slice
 limit or OOM policy was changed; the host incident remains **PARTIALLY
 CONTAINED / PARTIALLY VERIFIED**.
+
+### Bounded Frontier continuation and scheduled-run check — 2026-10-29 18:02 CET
+
+At 18:02:14, `MemAvailable` was 10,923,448 kB and `SwapFree` was 18,676 kB
+of 4,194,300 kB. Host and user-manager memory PSI some/full avg10, avg60,
+and avg300 were all zero. At 18:02:31, `user@1000.service` charged
+11,103,875,072 bytes memory and 2,853,507,072 bytes swap; its `MemoryHigh`,
+`MemoryMax`, and `MemorySwapMax` remain unlimited. `user.slice` charged
+11,187,195,904 bytes memory and 3,410,563,072 bytes swap. Aggregate
+`memory.events` remained `high=16,437,876`, `max=731,029`, `oom=19`, and
+`oom_kill=15`. OOMD and kernel OOM journal queries since 17:35 returned no
+new kills.
+
+The previously scheduled Reality capacity check completed 17:50:04–17:50:12
+with `Result=success`, 6.793 CPU seconds, 147.8 MiB memory peak, and zero
+swap peak. Its effective limits remain High 160 MiB / Max 192 MiB / SwapMax
+zero; its measured peak was about 12.2 MiB below `MemoryHigh`. The output
+still reports `ARCHIVE_MANIFEST_SIZE_LIMIT`, `ARCHIVE_INVENTORY_UNVERIFIED`,
+and `ARCHIVE_CAPACITY_UNKNOWN`. Those archive provenance and inventory
+warnings were not changed. The separate gap-detail timer remains disabled;
+its service remains failed from the October 28 OOMD kill.
+
+The already scheduled Veritas observatory ran 18:01:43–18:01:55 and exited
+successfully under its existing 256 MiB cap, using 32.2 MiB peak and zero
+swap peak. It did not create a measurable PSI change. This was the existing
+timer's bounded public observation, not a Frontier source probe or manual
+service start.
+
+At 18:02:31, MIDAS API, Reality, and Reality API remained active at unchanged
+restart counts 9/14/0. Their current cgroup charges were about 1.20 GiB,
+824 MiB, and 464 MiB; recorded peaks were 1.50 GiB, 1.13 GiB, and 522 MiB
+respectively. Continental/Echo services, SSH socket activation, Tailscale,
+RustDesk, and systemd-oomd remained active. The protected Reality collector
+was not restarted or reconfigured.
+
+Frontier work resumed only with focused, serial, transient-scope checks:
+
+- Storage provenance tests: **43 passed**; collection checkpoint tests:
+  **42 passed**; the API capture-lineage regression: **3 passed**. Each
+  Python run used a 512 MiB hard maximum, zero swap, 15% CPU, 64 tasks, and
+  a 90-second runtime cap.
+- Kraken candle panel: **5 passed** with one Vitest worker, `GOMAXPROCS=2`,
+  a 768 MiB hard maximum, zero swap, 15% CPU, and 128 tasks. The first run
+  with 64 tasks failed before test collection because esbuild could not
+  create an OS thread (`EAGAIN`); it was not an OOM. The bounded single-worker
+  retry passed.
+- Frontend typecheck (`tsc -b`) passed with a 1 GiB hard maximum, zero swap,
+  50% CPU, 128 tasks, and a 120-second cap. An earlier 60-second run at 15%
+  CPU timed out by its configured runtime limit; it was not killed by OOM.
+- Relationship/rule-evidence regressions: **6 passed** in a 512 MiB,
+  zero-swap, 15%-CPU, 64-task, 90-second scope. Ruff lint/format checks
+  passed. No fixture test called an exchange or modified production stores.
+
+No new service limits, timers, OOM policy, collector settings, or archive
+state were changed in this interval. The isolated Frontier worktree and
+branch remain intact; the pre-existing untracked
+`data/frontier-public-probes/` directory was left untouched. The incident
+remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**: a 27-minute quiet
+window and successful scheduled jobs do not establish durable recovery while
+swap is nearly full and the aggregate user hierarchy remains unbounded.
+Continue only with source-independent work in one explicitly capped scope;
+defer broad suites, builds, browser runs, replay, and probes. Avoid the
+18:10:23 source-analysis, 18:15:27 research-director, and 18:20:04 capacity
+timer windows when scheduling manual checks.
+
+### Post-test admission and service check — 2026-10-29 18:06 CET
+
+At 18:06:04, host memory PSI `some` and `full` avg10/avg60/avg300 remained
+zero. `MemAvailable` was 10,904,152 kB; only 18,688 kB of 4,194,300 kB swap
+was free. `user@1000.service` held 11,140,419,584 bytes memory and
+2,853,507,072 bytes swap; `user.slice` held 11,224,170,496 bytes memory and
+3,410,563,072 bytes swap. The user manager and slice still have no aggregate
+memory or swap limits. Its policy remains `ManagedOOMMemoryPressure=kill`;
+hierarchical `memory.events` were unchanged at `high=16,437,876`,
+`max=731,029`, `oom=19`, and `oom_kill=15`.
+
+Read-only kernel and systemd-oomd journal queries found no OOM or kill since
+18:02. `midas-api`, Reality, and Reality API were active with restart counts
+9/14/0. The capacity timer was enabled and waiting; its service was inactive
+after its last successful run. The gap-detail timer remained disabled and
+inactive. SSH socket activation, Tailscale, and RustDesk were active. The
+Continental contact/status services and cloud container unit, and Echo
+production/staging services, were active. No service was started, stopped,
+reloaded, or reconfigured for this sample.
+
+The bounded Frontier economics replay completed **111/111** tests in 7.71
+seconds; the logical-implication economics file completed **13/13** in 4.29
+seconds. The first replay run exposed three stale version-string assertions
+after the deliberate model-version bump; the model default and assertions were
+updated, and the rerun passed. The replay ran under a transient 384 MiB
+`MemoryHigh`, 512 MiB `MemoryMax`, zero-swap, 15%-CPU, 64-task, 90-second cap.
+The logical-implication tests ran under 256/384 MiB high/max, zero swap, 10%
+CPU, 64 tasks, and 60 seconds. systemd's reported peak values for these
+transient units were inconsistent with Python execution and are not treated
+as measurements. No production stores, network sources, or services were
+used by these tests.
+
+The incident remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**. Zero PSI
+and no recent kills are a short quiet sample; swap remains effectively full,
+the user memory hierarchy is unbounded, and the historic global pressure
+initiator is not identified. Continue only source-independent work in a
+single capped scope after fresh admission checks. Do not overlap the next
+18:10:23 source-analysis, 18:15:27 research-director, or 18:20:04 capacity
+timer runs. No incident-related service configuration changed during this
+interval.

@@ -1,5 +1,73 @@
 # Project Frontier Mission Ledger
 
+## 2026-10-29 18:06 CET — bounded economic verification and pressure recheck
+
+- After pinning same-payoff relationships to exact normalized resolution-rule
+  hashes, the bounded full relationship/economics/replay module passed
+  **111/111** in 7.71 seconds, and the logical-implication economics module
+  passed **13/13** in 4.29 seconds. Ruff and `git diff --check` passed. The
+  first replay run had three stale model-version assertions; I updated the
+  assertions and audit-model default before the passing rerun. Tests used
+  transient memory, zero-swap, CPU, task, and runtime caps. Reported transient
+  memory peaks were inconsistent and are not presented as measurements.
+- At 18:06, host/user memory PSI was zero and `MemAvailable` was 10,904,152
+  kB, while swap free was only 18,688 kB. User-manager and user-slice charges
+  were 11,140,419,584 and 11,224,170,496 bytes; user memory limits remain
+  unbounded. Hierarchical events were unchanged at high/max/oom/oom_kill
+  16,437,876 / 731,029 / 19 / 15. No new kernel or systemd-oomd kill appeared
+  after 18:02.
+- API, protected Reality, and Reality API remained active with restart counts
+  9/14/0. The capacity timer was enabled and waiting; the gap-detail timer
+  remained disabled. SSH, Tailscale, RustDesk, Continental, and Echo services
+  checked in this sample were active. No services or system configuration
+  were changed. Swap pressure and historic global-cause uncertainty remain;
+  admission stays **PARTIALLY CONTAINED / PARTIALLY VERIFIED**.
+- Safe continuation: source-independent changes and serial fixture tests only,
+  each in a zero-swap transient resource cap after a fresh host check. Avoid
+  the 18:10 source-analysis, 18:15 research-director, and 18:20 capacity timer
+  windows. The incident report contains the current evidence and reversible
+  actions.
+
+## 2026-10-29 18:02 CET — capture lineage, rule-evidence binding, and bounded continuation
+
+- Tightened normalized-observation provenance: every market, group, book, and
+  trade record must match its exact captured response hash, URL, adapter
+  version, request start, receipt time, and monotonic elapsed value before
+  collection checkpointing or durable storage. The read-only probe API now
+  checks the same lineage tuple instead of only the raw-body hash.
+- Fixed the saved Kraken candle scan to stop after ten requests, and added a
+  clear notice that older saved captures may remain. React Query's `maxPages`
+  had capped retained pages while still allowing an unbounded sequence of
+  API scans.
+- Bound verified same-payoff relationships to venue-normalized resolution
+  rule hashes, included those hashes in relationship identity/evidence, and
+  independently recomputed the supported Polymarket/Kalshi rule hashes during
+  economic audit. A relationship can no longer remain decisive after a rule
+  text/hash changes under an unchanged fingerprint. The verifier and audit
+  versions were incremented.
+- Focused tests: storage **43/43**, collection **42/42**, API lineage **3/3**,
+  Kraken candle panel **5/5**, and economic-verification regressions **6/6**.
+  Frontend `tsc -b`, Ruff lint/format, and `git diff --check` passed. Tests
+  were serial, fixture-only, zero-swap, and memory/CPU/task/runtime capped;
+  no exchange or production-store input was used. One UI attempt with a
+  64-task limit failed before collection because esbuild could not create a
+  worker thread; retrying with one Vitest worker and a 128-task cap passed.
+  A low-CPU typecheck window timed out; the bounded 50%-CPU retry passed.
+- At 18:02, host memory PSI was zero and `MemAvailable` was 10,923,448 kB,
+  but only 18,676 kB swap remained free. `user@1000.service` charged 10.34
+  GiB memory and 2.66 GiB swap with no aggregate ceiling. User OOM counters
+  remained 19/15; no new OOMD/kernel kill appeared after the 17:35 query.
+  The scheduled observatory completed 18:01:43–55 at 32.2 MiB peak / zero
+  swap. The capacity check completed 17:50:04–12 at 147.8 MiB peak under
+  its current 160/192 MiB bounds. API, Reality, and Reality API remained
+  active at restarts 9/14/0; the gap-detail timer remains disabled.
+- Incident status remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**.
+  Resume only source-independent Frontier work after a fresh pressure check,
+  in one zero-swap capped scope. Defer broad suites, builds, browser tests,
+  replay, and probes; avoid the next scheduled research/capacity timer
+  windows. Detailed evidence and rollback instructions are in
+  [`FRONTIER_MEMORY_PRESSURE_INCIDENT_2026-10-29.md`](FRONTIER_MEMORY_PRESSURE_INCIDENT_2026-10-29.md).
+
 ## 2026-10-29 17:30 CET — read-only transport boundary regression
 
 - `tests/frontier/test_transport.py` passed **20/20 in 4.80 seconds** under
