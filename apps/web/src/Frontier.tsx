@@ -30,6 +30,7 @@ import {
 import { preciseUtcTime } from './frontierTime';
 import { compareRelationshipTerms } from './frontierRelationshipTerms';
 import { KrakenCandleHistoryPanel } from './KrakenCandleHistoryPanel';
+import { FrontierHostResourcePanel } from './FrontierHostResources';
 import {
   KrakenBookUpdatesPanel,
   type KrakenBookCaptureReplay,
@@ -4781,6 +4782,7 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
               </div>
             )}
           </section>
+          <FrontierHostResourcePanel />
           <section className="fr-card">
             <div className="fr-card-head">
               <div>

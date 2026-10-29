@@ -11,6 +11,25 @@ const USD_IDENTITY = {
   asset_reference: null,
 } as const;
 
+const HOST_RESOURCE_FIXTURE = {
+  captured_at_utc: '2026-10-29T17:15:00.000Z',
+  host_memory: {
+    total_bytes: 16 * 1024 ** 3,
+    available_bytes: 10 * 1024 ** 3,
+    swap_total_bytes: 4 * 1024 ** 3,
+    swap_free_bytes: 16 * 1024 ** 2,
+  },
+  host_pressure: {
+    memory: { some: { avg10: 0.23 }, full: { avg10: 0.02 } },
+  },
+  services: {
+    'user-manager': {
+      status: 'MEASURED',
+      pressure: { memory: { some: { avg10: 0.7 }, full: { avg10: 0.2 } } },
+    },
+  },
+} as const;
+
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
@@ -160,6 +179,7 @@ it('renders recorded-evidence empty states and never probes a source automatical
     '/api/frontier/runs?limit=30': { items: [], returned: 0, limit: 30, offset: 0 },
     '/api/frontier/comparisons?limit=30': { items: [], returned: 0, limit: 30, offset: 0 },
     '/api/frontier/readiness': { gates: [] },
+    '/api/readiness/resources': HOST_RESOURCE_FIXTURE,
     '/api/frontier/analytics/coverage': {
       schema_version: 3,
       as_of_utc: '2026-10-27T21:00:00Z',
@@ -2137,6 +2157,7 @@ it('replays multiple saved price-history series and inspects persisted source li
     '/api/frontier/runs?limit=30': { items: [], returned: 0, limit: 30, offset: 0 },
     '/api/frontier/comparisons?limit=30': { items: [], returned: 0, limit: 30, offset: 0 },
     '/api/frontier/readiness': { gates: [] },
+    '/api/readiness/resources': HOST_RESOURCE_FIXTURE,
     '/api/arena/frontier-replays?limit=20': {
       items: [],
       limit: 20,
@@ -3903,6 +3924,7 @@ it('submits bounded Arena replay and discovery comparisons with verified results
     '/api/frontier/runs?limit=30': empty,
     '/api/frontier/comparisons?limit=30': empty,
     '/api/frontier/readiness': { gates: [] },
+    '/api/readiness/resources': HOST_RESOURCE_FIXTURE,
     '/api/frontier/collection-health-events?limit=20': {
       items: [
         {
