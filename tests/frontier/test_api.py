@@ -3860,6 +3860,24 @@ def test_graph_neighborhood_is_centered_bounded_and_review_aware(tmp_path):
             node["market"]["canonical_id"] == markets[0].canonical_id
             for node in centered.json()["nodes"]
         )
+        entity_context = centered.json()["entity_context"]
+        assert entity_context["semantics"] == "structural_metadata_only"
+        assert entity_context["economic_equivalence_asserted"] is False
+        assert entity_context["represented_market_count"] == centered.json()["returned_nodes"]
+        assert {node["kind"] for node in entity_context["nodes"]} >= {
+            "market",
+            "venue",
+            "event",
+            "contract",
+            "outcome",
+            "payoff_state",
+            "settlement_asset",
+        }
+        assert entity_context["links"]
+        assert all(
+            link["economic_equivalence_asserted"] is False for link in entity_context["links"]
+        )
+        assert all(link["source_observation_id"] for link in entity_context["links"])
 
         next_page = client.get(
             "/api/frontier/graph",

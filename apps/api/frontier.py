@@ -79,6 +79,7 @@ from midas.frontier.economics import (
     estimate_kalshi_taker_order_fee_sensitivity,
     kalshi_candidate_fee_schedule,
 )
+from midas.frontier.entity_graph import project_market_entity_context
 from midas.frontier.fx import (
     FundingCurrencySensitivityRequest,
     evaluate_funding_currency_sensitivity,
@@ -4326,9 +4327,20 @@ def router(
                     ),
                 }
             )
+        entity_context = project_market_entity_context(
+            tuple(
+                (
+                    market_id,
+                    market_by_id.get(market_id),
+                    market_observation_by_id.get(market_id),
+                )
+                for market_id in sorted(node_ids)
+            )
+        )
         return {
             "nodes": nodes,
             "edges": edges,
+            "entity_context": entity_context.model_dump(mode="json"),
             "center_market_id": center_market_id,
             "search": q,
             "depth": depth,

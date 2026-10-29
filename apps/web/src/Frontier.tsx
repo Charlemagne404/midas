@@ -731,6 +731,69 @@ type GraphNode = {
   source_observation_record_id: string | null;
   market_record_available: boolean;
 };
+type EntityContextNode = {
+  entity_id: string;
+  kind:
+    | 'venue'
+    | 'event'
+    | 'market'
+    | 'contract'
+    | 'instrument'
+    | 'component_contract'
+    | 'outcome'
+    | 'payoff_state'
+    | 'asset_reference'
+    | 'settlement_asset';
+  label: string;
+  venue: Venue | null;
+  native_id: string | null;
+  native_id_truncated: boolean;
+  market_kind: string | null;
+  lifecycle: string | null;
+  quantity_unit: string | null;
+  outcome_id: string | null;
+  selected_side: 'yes' | 'no' | null;
+  identity_scope: string | null;
+  value: string | null;
+  resolution_authority: string | null;
+  resolution_primary_rule: string | null;
+  resolution_secondary_rule: string | null;
+  resolution_closes_at_utc: string | null;
+  resolution_settles_at_utc: string | null;
+  resolution_fingerprint: string | null;
+  resolution_verified: boolean | null;
+  payoff_state_ids: string[];
+  payoff_exhaustive: boolean | null;
+  payoff_verified: boolean | null;
+  record_available: boolean;
+  market_ids: string[];
+  source_observation_ids: string[];
+};
+type EntityContextLink = {
+  link_id: string;
+  source_entity_id: string;
+  target_entity_id: string;
+  link_type: string;
+  source_market_id: string;
+  source_observation_id: string | null;
+  source_field: string;
+  semantic_basis: 'normalized_source_metadata';
+  economic_equivalence_asserted: false;
+};
+type EntityContextGraph = {
+  schema_version: 1;
+  model_version: string;
+  scope: 'loaded_relationship_market_nodes';
+  semantics: 'structural_metadata_only';
+  economic_equivalence_asserted: false;
+  source_market_count: number;
+  represented_market_count: number;
+  nodes: EntityContextNode[];
+  links: EntityContextLink[];
+  truncated: boolean;
+  truncation_reasons: string[];
+  limitations: string[];
+};
 type GraphResponse = {
   nodes: GraphNode[];
   edges: Relationship[];
@@ -746,6 +809,7 @@ type GraphResponse = {
   relationship_scan_may_be_incomplete: boolean;
   next_cursor: string | null;
   source_market_window_limit: number;
+  entity_context?: EntityContextGraph;
 };
 type GraphPoint = { id: string; title: string; venue: string; x: number; y: number };
 type JointStateMapping = {
@@ -1717,6 +1781,158 @@ function RelationshipGraph({
         </svg>
       </div>
     </div>
+  );
+}
+
+function EntityContextExplorer({ context }: { context?: EntityContextGraph }) {
+  const [selectedMarketId, setSelectedMarketId] = useState('');
+  const marketNodes = useMemo(
+    () => context?.nodes.filter((node) => node.kind === 'market') ?? [],
+    [context],
+  );
+  const marketByEntityId = useMemo(
+    () => new Map((context?.nodes ?? []).map((node) => [node.entity_id, node])),
+    [context],
+  );
+  if (!context) return null;
+  if (!marketNodes.length) {
+    return (
+      <div className="fr-entity-context">
+        <p>No structural market context is available for this bounded graph page.</p>
+      </div>
+    );
+  }
+  const effectiveMarketId = marketNodes.some((node) => node.market_ids.includes(selectedMarketId))
+    ? selectedMarketId
+    : (marketNodes[0].market_ids[0] ?? '');
+  const selectedMarket = marketNodes.find((node) => node.market_ids.includes(effectiveMarketId));
+  const marketLinks = context.links
+    .filter((link) => link.source_market_id === effectiveMarketId)
+    .slice(0, 100);
+  const kindLabel = (kind: string) => kind.replaceAll('_', ' ');
+
+  return (
+    <details className="fr-entity-context">
+      <summary>
+        Source structure and asset context · {context.represented_market_count} recorded markets
+      </summary>
+      <div className="fr-entity-context-body">
+        <p>
+          Structural links come from normalized source metadata. They do not certify event
+          equivalence, payoff equivalence, a hedge, or an executable opportunity.
+        </p>
+        <label>
+          <span>Inspect a market’s source structure</span>
+          <select
+            aria-label="Structural context market"
+            value={effectiveMarketId}
+            onChange={(event) => setSelectedMarketId(event.target.value)}
+          >
+            {marketNodes.map((node) => {
+              const marketId = node.market_ids[0] ?? '';
+              return (
+                <option key={node.entity_id} value={marketId}>
+                  {node.venue ? `${venueLabel(node.venue)} · ` : ''}
+                  {node.label}
+                </option>
+              );
+            })}
+          </select>
+        </label>
+        <div className="fr-entity-context-summary">
+          <span>
+            {context.nodes.length} typed entities · {context.links.length} metadata links
+          </span>
+          <span>
+            {selectedMarket?.record_available
+              ? 'Market record available'
+              : 'Market record unavailable'}
+            {selectedMarket?.native_id ? ` · ${selectedMarket.native_id}` : ''}
+          </span>
+        </div>
+        {selectedMarket?.record_available && (
+          <div className="fr-entity-context-market-facts">
+            <span>
+              Resolution authority: {selectedMarket.resolution_authority ?? 'not supplied'}
+            </span>
+            <span>
+              Closes:{' '}
+              {selectedMarket.resolution_closes_at_utc
+                ? time(selectedMarket.resolution_closes_at_utc)
+                : 'not supplied'}
+              {' · '}settles:{' '}
+              {selectedMarket.resolution_settles_at_utc
+                ? time(selectedMarket.resolution_settles_at_utc)
+                : 'not supplied'}
+            </span>
+            <span>
+              Payoff states: {selectedMarket.payoff_state_ids.join(', ') || 'not supplied'}
+              {' · '}exhaustive:{' '}
+              {selectedMarket.payoff_exhaustive == null
+                ? 'unknown'
+                : selectedMarket.payoff_exhaustive
+                  ? 'source says yes'
+                  : 'source says no'}
+              {' · '}verified:{' '}
+              {selectedMarket.payoff_verified == null
+                ? 'unknown'
+                : selectedMarket.payoff_verified
+                  ? 'source says yes'
+                  : 'source says no'}
+            </span>
+            {selectedMarket.resolution_primary_rule && (
+              <span>Primary resolution rule: {selectedMarket.resolution_primary_rule}</span>
+            )}
+            {selectedMarket.resolution_secondary_rule && (
+              <span>Secondary resolution rule: {selectedMarket.resolution_secondary_rule}</span>
+            )}
+          </div>
+        )}
+        {context.truncated && (
+          <div className="fr-entity-context-warning" role="status">
+            Structural context is bounded; omitted detail: {context.truncation_reasons.join(', ')}.
+          </div>
+        )}
+        {marketLinks.length ? (
+          <ul className="fr-entity-context-links">
+            {marketLinks.map((link) => {
+              const source = marketByEntityId.get(link.source_entity_id);
+              const target = marketByEntityId.get(link.target_entity_id);
+              return (
+                <li key={link.link_id}>
+                  <strong>
+                    {source ? `${kindLabel(source.kind)}: ${source.label}` : 'Source entity'}
+                    <span> — {kindLabel(link.link_type)} → </span>
+                    {target ? `${kindLabel(target.kind)}: ${target.label}` : 'Unavailable entity'}
+                  </strong>
+                  <code>
+                    {link.source_field}
+                    {target?.native_id
+                      ? ` · native ${target.native_id}${target.native_id_truncated ? '…' : ''}`
+                      : ''}
+                    {target?.quantity_unit ? ` · quantity ${target.quantity_unit}` : ''}
+                    {target?.outcome_id ? ` · outcome ${target.outcome_id}` : ''}
+                    {target?.value ? ` · value ${target.value}` : ''}
+                  </code>
+                  <small>Source observation: {link.source_observation_id ?? 'not attached'}</small>
+                </li>
+              );
+            })}
+          </ul>
+        ) : (
+          <p>No structural links were recorded for this market.</p>
+        )}
+        {context.source_market_count > context.represented_market_count && (
+          <small>
+            {context.source_market_count - context.represented_market_count} graph markets lack a
+            normalized market record in the loaded source window.
+          </small>
+        )}
+        {context.limitations.map((limitation) => (
+          <small key={limitation}>{limitation}</small>
+        ))}
+      </div>
+    </details>
   );
 }
 
@@ -4187,6 +4403,9 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
                   : 'Text and native metadata matching create hypotheses only. A verified edge requires exhaustive payout and resolution evidence plus independent mapping.'
               }
             />
+          )}
+          {!graph.isLoading && !graph.isError && (
+            <EntityContextExplorer context={graph.data?.entity_context} />
           )}
           {(graph.data?.next_cursor ||
             graph.data?.truncated_by_edge_limit ||
