@@ -22,6 +22,10 @@ import {
   SlidersHorizontal,
 } from 'lucide-react';
 import { api } from './api';
+import {
+  KrakenBookUpdatesPanel,
+  type KrakenBookUpdateCaptureResult,
+} from './KrakenBookUpdatesPanel';
 import './frontier.css';
 
 type Venue = 'polymarket' | 'kalshi' | 'kraken' | 'coinbase_exchange' | 'gemini_spot';
@@ -2699,6 +2703,16 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
         (capability) => capability.capability === 'book_updates' && capability.supported,
       ),
   );
+  const krakenBookUpdatesSource = (sources.data?.items ?? []).find(
+    (source) => source.venue === 'kraken',
+  );
+  const krakenBookUpdatesProbeEnabled = Boolean(
+    krakenBookUpdatesSource?.public_probe_enabled &&
+    !krakenBookUpdatesSource.probe_policy_block_reason &&
+    krakenBookUpdatesSource.capabilities.some(
+      (capability) => capability.capability === 'book_updates' && capability.supported,
+    ),
+  );
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: ['frontier'] });
   const replaySavedPriceHistory = useMutation({
@@ -3115,6 +3129,14 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
   const capturePolymarketBookUpdates = useMutation({
     mutationFn: (input: { marketId: string }) =>
       api<PolymarketBookUpdateCaptureResult>('/frontier/probe/polymarket/book-updates', {
+        method: 'POST',
+        body: JSON.stringify({ market_id: input.marketId }),
+      }),
+    onSuccess: refresh,
+  });
+  const captureKrakenBookUpdates = useMutation({
+    mutationFn: (input: { marketId: string }) =>
+      api<KrakenBookUpdateCaptureResult>('/frontier/probe/kraken/book-updates', {
         method: 'POST',
         body: JSON.stringify({ market_id: input.marketId }),
       }),
@@ -4046,6 +4068,9 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
               priceHistoryProbeEnabled={polymarketPriceHistoryProbeEnabled}
               bookUpdatesProbe={capturePolymarketBookUpdates}
               bookUpdatesProbeEnabled={polymarketBookUpdatesProbeEnabled}
+              krakenBookUpdatesProbe={captureKrakenBookUpdates}
+              krakenBookUpdatesProbeEnabled={krakenBookUpdatesProbeEnabled}
+              krakenBookUpdatesDisabledReason={krakenBookUpdatesSource?.probe_policy_block_reason}
               eventMarketsProbe={captureEventMarketGroup}
               eventMarketsProbeEnabled={eventMarketGroupsProbeEnabledFor(selectedMarket.venue)}
               mveComponentProbe={captureKalshiMveComponentMarket}
@@ -6277,6 +6302,9 @@ function MarketDetails({
   priceHistoryProbeEnabled,
   bookUpdatesProbe,
   bookUpdatesProbeEnabled,
+  krakenBookUpdatesProbe,
+  krakenBookUpdatesProbeEnabled,
+  krakenBookUpdatesDisabledReason,
   eventMarketsProbe,
   eventMarketsProbeEnabled,
   mveComponentProbe,
@@ -6316,6 +6344,14 @@ function MarketDetails({
     unknown
   >;
   bookUpdatesProbeEnabled: boolean;
+  krakenBookUpdatesProbe: UseMutationResult<
+    KrakenBookUpdateCaptureResult,
+    Error,
+    { marketId: string },
+    unknown
+  >;
+  krakenBookUpdatesProbeEnabled: boolean;
+  krakenBookUpdatesDisabledReason?: string | null;
   eventMarketsProbe: UseMutationResult<
     EventMarketsCaptureResult,
     Error,
@@ -6469,6 +6505,16 @@ function MarketDetails({
           market={market}
           probe={priceHistoryProbe}
           probeEnabled={priceHistoryProbeEnabled}
+        />
+      )}
+      {market.venue === 'kraken' && (
+        <KrakenBookUpdatesPanel
+          marketId={market.canonical_id}
+          nativeMarketId={market.native_market_id}
+          probe={krakenBookUpdatesProbe}
+          probeEnabled={krakenBookUpdatesProbeEnabled}
+          disabledReason={krakenBookUpdatesDisabledReason}
+          renderEvidence={(observationId) => <EvidenceDisclosure observationId={observationId} />}
         />
       )}
       {market.venue === 'polymarket' && (

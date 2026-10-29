@@ -13995,3 +13995,30 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
 - **Next safe work:** Continue serial offline Frontier code and focused fixture
   checks only after fresh admission. Keep live Kraken probes, UI builds, broad
   suites, profiling, large replay, and background campaigns deferred.
+
+## 2026-10-29 09:16 CET — Kraken stream in the saved-market inspector
+
+- Added the Kraken Spot book-stream panel to the existing Frontier market
+  inspector. It submits only the selected saved market ID to the existing
+  bounded capture route after an explicit button press. Enablement requires
+  `book_updates`, public probing enabled, and no configured policy hold; the API
+  retains its independent configuration check. The current source-use hold
+  therefore leaves the action disabled.
+- The panel distinguishes checksum-verified book states from control-only or
+  empty windows, displays the fixed capture bounds, stream and receipt times,
+  CRC32 status, subscription acknowledgement, depth counts, and offers the
+  immutable raw-evidence disclosure for each saved frame. It labels spot data
+  as contextual and does not present a spot/event hedge or arbitrage claim.
+- **Checks:** the dedicated panel tests passed **2/2** in one Vitest worker;
+  targeted strict TypeScript checking of `Frontier.tsx`, the panel, and its
+  tests passed with `src/test-setup.ts` included. File-scoped ESLint and
+  Prettier checks passed. The full `tsc -b` attempt exited with Node's V8 heap
+  exhaustion near 251 MiB inside the 512 MiB transient cgroup; it did not hit
+  the cgroup OOM limit. Do not raise the cgroup or rerun the full check without
+  fresh resource admission.
+- No source request, live capture, UI build, or browser run was made. At
+  09:16:28, about 10 GiB RAM was available and global PSI averages were zero;
+  swap remained full. App-slice OOM counters stayed at 19/15, no new oomd log
+  entries appeared, and API/Reality remained active with unchanged restart
+  counts 9/14. The incident remains **PARTIALLY CONTAINED / PARTIALLY
+  VERIFIED**; continuation stays serial and offline.

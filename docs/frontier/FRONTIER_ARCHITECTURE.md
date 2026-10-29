@@ -180,9 +180,19 @@ Each normalized event retains the condition and asset IDs plus its source
 timestamp when parseable. `PolymarketBookUpdateFrame` is distinct from
 `BookSnapshot`: source-reported changes remain raw observations because the
 current event contract provides neither sequence continuity nor documented gap
-recovery. The method is disabled under the default source config, has no
-Mission Control capture route yet, and has not been used against the live
-source.
+recovery. A bounded saved-market API and Mission Control panel expose explicit
+capture. The panel is disabled under the default source config, and no live
+capture is claimed.
+
+Kraken's saved spot-pair inspector exposes a separate explicit action at
+`POST /probe/kraken/book-updates`. The UI requires the recorded source to
+advertise `book_updates`, enable public probing, and have no policy hold; the
+API independently checks the adapter configuration before network access. The
+panel displays control and book-state frames, source and receipt times,
+checksum status, and links each frame to immutable raw evidence. It states that
+Kraken spot prices are contextual data, not event-contract payoffs or a
+verified hedge. The source-use hold remains in effect, so live capture is
+currently unavailable.
 
 ### Polymarket historical price samples
 
