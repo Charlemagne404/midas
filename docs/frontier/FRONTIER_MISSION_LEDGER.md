@@ -16726,3 +16726,22 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
   start broad tests, concurrent jobs, live probes, or deployment while swap
   remains full and OOMD visibility is unresolved. Incident status remains
   **PARTIALLY CONTAINED / PARTIALLY VERIFIED**.
+
+## 2026-10-29 21:04 CET — post-schedule OOM and service check
+
+- The Veritas observatory one-shot completed successfully at 21:02:14 after
+  1.736 CPU seconds. The Continental infrastructure audit one-shot started
+  at 21:03:55 and exited 1 at 21:03:56. Its systemd result was exit-code,
+  not OOM; its journal has no application diagnostic. The timer and core
+  Continental services remain active. No restart or configuration change was
+  made.
+- From the 20:56 sample through 21:04, host/user PSI averages remained zero,
+  user cgroup counters stayed at high/max/oom/oom_kill
+  16,438,371/732,222/19/15, and no OOMD/kernel kill appeared. API and Reality
+  remained active at restart counts 9/14. This is a short quiet interval;
+  the Continental audit exit-1 cause is an independent open item.
+- Swap remains full with about 10 GiB MemAvailable. Next source analysis,
+  Research Director, and capacity timer runs are due 21:10:33, 21:15:10,
+  and 21:20:55. No Frontier test, replay, live probe, or memory-bearing
+  work was started through this sample. Keep admission serial and wait for a
+  fresh post-capacity sample before another memory-bearing job.

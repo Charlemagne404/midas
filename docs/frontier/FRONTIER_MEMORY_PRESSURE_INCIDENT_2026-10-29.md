@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 20:56 CET |
+| Latest addendum | 2026-10-29 21:04 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Pre-incident checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -5192,3 +5192,33 @@ broad tests, concurrent jobs, large replay, live probes, or deployment.
 Continue the Frontier mission only in serial, with zero-swap worker caps and
 no overlap with scheduled jobs; recheck after the next capacity timer before
 admitting another memory-bearing task.
+
+### Post-schedule observation — 2026-10-29 21:04 CET
+
+The Veritas observatory one-shot started at 21:02:02 and completed
+successfully at 21:02:14 (1.736 CPU seconds). The Continental infrastructure
+audit timer then started its read-only audit at 21:03:55. That service exited
+with status 1 at 21:03:56 and systemd recorded Result=exit-code; the unit has
+no memory or swap ceiling. Its journal contains only systemd start/exit
+records, so the application-level reason is not established. This is not an
+OOM kill: OOMD/kernel journals remain empty for the interval, the user
+hierarchical memory events remain 16,438,371 / 732,222 / 19 / 15, and current
+memory PSI averages remain zero. The timer is still active. I did not restart,
+disable, or reconfigure this unrelated Continental audit or its core
+services.
+
+The API and protected Reality collector remained active at restart counts
+9 and 14, with their October 28 start times unchanged. No new terminal, API,
+or Reality kill was observed between the 20:56 and 21:04 samples. The host
+still had about 10 GiB MemAvailable and effectively full 4 GiB swap at the
+21:03:55 sample. The capacity monitor is next due at 21:20:55; source
+analysis and Research Director are due at 21:10:33 and 21:15:10. No Frontier
+test, replay, live probe, or other memory-bearing task was started during
+this observation window.
+
+This observation supports continued short, serial code/documentation work
+only. It does not close the incident: swap remains full, the user cgroup is
+unbounded, OOMD currently lists no monitored groups, capacity-run peak
+telemetry is invalid, and the Continental audit's exit-1 cause is unknown.
+Wait for the capacity run and a fresh host sample before admitting another
+memory-bearing Frontier job.
