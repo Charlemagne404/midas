@@ -16443,5 +16443,10 @@ At 19:20 the host still had zero memory PSI, about 10 GiB available RAM, and
 about 19 MiB free swap. API, Reality, Reality API, and the capacity timer were
 active; gap-detail remained disabled. No OOMD or kernel kill appeared since
 19:10. The current OOMD `oomctl` registration mismatch remains unresolved.
-The host is suitable for serial capped fixture work only; Frontier overall
-remains **PARTIALLY VERIFIED**.
+The final 19:21 service check found SSH socket activation,
+Tailscale/Headscale, Caddy, Continental contact/status, Echo production/staging,
+RustDesk, and all nine GNOME Terminal VTE scopes active. PSI remained zero,
+available RAM about 10 GiB, free swap about 19 MiB, and the user-manager OOM
+counters were unchanged. No OOMD/kernel kill has appeared since Oct 28. The
+host is suitable for serial capped fixture work only; Frontier overall remains
+**PARTIALLY VERIFIED**.

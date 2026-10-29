@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 19:20 CET |
+| Latest addendum | 2026-10-29 19:21 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Pre-incident checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -4782,3 +4782,9 @@ Reality API, and the capacity timer were active; the gap-detail timer remained
 inactive and disabled. The cgroup watcher exited successfully and was
 collected. This supports continued serial, capped Frontier work, not broad
 admission or incident closure.
+
+At 19:21:07, SSH socket activation, Tailscale, Headscale, Caddy, Continental
+contact/status, Echo production/staging, and RustDesk were active. All nine
+GNOME Terminal VTE scopes were present. Host PSI remained zero with about 10
+GiB available RAM and 19 MiB free swap; user-manager OOM counters were
+unchanged. No kernel or OOMD kill was logged since the October 28 events.

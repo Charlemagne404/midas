@@ -16348,3 +16348,8 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
 - Incident remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**. Continue only
   serial, capped fixture development; swap and the OOMD registration mismatch
   remain unresolved, and this brief sample is not endurance evidence.
+- Final service check at 19:21:07 found SSH socket, Tailscale/Headscale, Caddy,
+  Continental contact/status, Echo production/staging, RustDesk, and all nine
+  GNOME Terminal VTE scopes active. PSI was zero, available RAM about 10 GiB,
+  free swap about 19 MiB, and user-manager OOM counters unchanged. No kernel or
+  OOMD kill has appeared since Oct 28.
