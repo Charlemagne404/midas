@@ -2,7 +2,7 @@
 
 **Report date:** 2026-10-29
 
-## Current completion matrix — 2026-10-29 15:36 CET
+## Current completion matrix — 2026-10-29 15:40 CET
 
 This is a current evidence classification, not a final completion claim. The
 dated implementation records below remain the detailed evidence; the
@@ -24,6 +24,7 @@ it made no endpoint requests and does not change source-use holds.
 | Laboratory/Arena comparisons and bounded orchestration | PARTIALLY VERIFIED | Arena admission and finite scheduling regressions pass; a Laboratory resource-denial case passes with a harness cap above its 722,894,848-byte capacity precondition. Full endurance evidence remains incomplete. |
 | User-cgroup-aware workload admission | IMPLEMENTED, BOUNDED VALIDATION PASSED | Central Arena admission (15), finite schedules (12), and the Laboratory denial case (1) pass fixture tests using user-manager pressure; no runtime deployment occurred. |
 | Source-operation admission telemetry | COMPLETE AND VERIFIED FOR ONE ROUTER INSTANCE | The bounded source gate exposes active venues, admitted totals, and contention rejections by scope with a UTC sample time. The source page can refresh the snapshot. Counters reset with that router and do not aggregate across workers or deployments. |
+| Source-aware coverage and statistical summaries | PARTIALLY VERIFIED | Coverage analytics uses the newest valid joined book per native instrument, labels replay candidate/trade rows as potentially overlapping, and only counts repeated gross-positive constructions after verified audit, distinct pinned book sets, and distinct replay times. The focused analytics fixture module passed 10/10 at 15:40 under a 256/384 MiB zero-swap scope. This supports bounded recorded-sample reporting, not venue-wide prevalence, complete histories, or statistically independent opportunities. |
 | Reality capacity inventory bounds | PARTIALLY VERIFIED | Candidate inventory code remains undeployed. The separate monitor is bounded at MemoryHigh=160M, MemoryMax=192M, and zero swap. Its 12:49 scheduled run exited successfully with a 130.5 MiB peak and zero swap; the service still reports archive inventory/provenance limitations, and no archive evidence was altered. |
 | Native Frontier dashboard | PARTIALLY VERIFIED | The native workspace includes source, coverage, graph, opportunity, replay, and readiness views. The extracted Kalshi fee panel passes 3/3 isolated UI tests; targeted ESLint and Prettier pass. Exact-tree TypeScript, bounded production build, and offline browser journeys pass: overview, explicit-action Polymarket price-history capture/replay, captured market/book/provenance/relationship inspection, deterministic replay over captured market/book rows, and 320- and 390-pixel layout checks across all eight primary sections. The two seeded Playwright journeys passed 2/2; one checks paging and multi-series replay of 21 deterministic price-history fixtures through a temporary local API/store, including hashes and lineage, with no source probes. At 15:14, the graph journey also passed 1/1 with explicit missing-market state and rendered quote-identity, quantity-step, and payout-value comparisons. Exact-tree TypeScript passed at 15:16 under a 640/768 MiB zero-swap scope. Fixture-backed historical price-history replay is verified; live-source UI capture, production-store validation, and broad integration remain open. |
 | Host reliability containment | PARTIALLY VERIFIED | OOMD's pressure-kill policy remains active on `user@1000.service`; user/slice ancestors remain uncapped. The Oct 28 journal records 129 pressure kills (106 gap-detail) and seven kernel memcg OOMs against the capacity job's former 128 MiB limit. Gap-detail remains inactive; capacity remains bounded at 160/192 MiB with zero swap. On the six-point 15:27:59–15:28:28 sample, selected user-manager, app, terminal, API, Reality, and Reality API hierarchical and local `high/max/oom/oom_kill` deltas were zero. At 15:36:56, host PSI was zero, MemAvailable was 11.40 GB, SwapFree was 16.45 MB, and user-manager counters remained 16,437,792/730,632/19/15. API/Reality/Reality API remained active at restart counts 9/14/0; the gap timer was inactive and capacity waiting. The earlier 106 parent `high` events remain unattributed; the brief quiet window does not establish sustained recovery. The user manager and GNOME Terminal slice still hold large overlapping memory/swap charges; no ancestor cap is applied. No matching kernel/OOMD/service kill entry appeared after 15:33:39. Incident remains partially contained; continue serial, offline work only under transient resource bounds. |
@@ -15967,3 +15968,23 @@ At 15:36:56 CET, the three MIDAS services remained active at restart counts
 9/14/0, host memory PSI was zero, and no matching kernel/OOMD/service kill
 entry had appeared since 15:33:39. Available RAM was 11.40 GB and free swap
 16.45 MB. This brief post-commit check does not establish sustained recovery.
+
+### Source-aware analytics anti-overcount check — 2026-10-29 15:40 CET
+
+The current analytics implementation counts only the newest valid joined
+book per native instrument for pricing summaries. Replay candidate counts are
+explicitly labelled as records that may reuse overlapping inputs; the
+repeated gross-positive construction metric requires verified audit, distinct
+pinned book sets, and distinct replay times. Trade and historical-price
+summaries also state that overlapping captures may repeat rows or points and
+do not estimate venue-wide coverage or source completeness.
+
+`tests/frontier/test_analytics.py` passed **10/10 in 2.20 seconds** under a
+256 MiB `MemoryHigh`, 384 MiB `MemoryMax`, zero-swap, 15%-CPU, 48-task,
+90-second transient scope. At 15:40:05, host memory PSI remained zero,
+MemAvailable was 11.39 GB, and SwapFree was 16.46 MB. MIDAS API, Reality,
+and Reality API remained active at restart counts 9/14/0; both timers retained
+their expected states, and no matching kernel/OOMD/service kill entry
+appeared since 15:36:56. No code change was needed for this acceptance point.
+The source-backed result remains a bounded captured sample; this check does
+not establish statistical independence or venue-wide prevalence.

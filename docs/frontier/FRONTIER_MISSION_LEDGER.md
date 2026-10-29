@@ -15442,3 +15442,23 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
 - **Status:** serial, offline Frontier implementation may continue under
   transient resource bounds. Swap is still almost full and this observation
   window is too short to establish durable host recovery.
+
+## 2026-10-29 15:40 CET — source-aware analytics anti-overcount acceptance
+
+- Reviewed the existing coverage summary and confirmed it reduces pricing
+  to the newest valid joined book per native instrument. Candidate-record
+  counts are explicitly non-independent replay records; repeated
+  gross-positive constructions require verified audit, distinct pinned book
+  sets, and distinct replay times. Trade and historical-price scopes disclose
+  that overlapping captures may repeat observations.
+- `tests/frontier/test_analytics.py` passed **10/10 in 2.20 seconds** in a
+  transient 256/384 MiB, zero-swap, 15%-CPU, 48-task scope. No code change was
+  warranted; the test confirms existing fixture behavior.
+- At 15:40:05, memory PSI remained zero, available RAM was 11,389,853,696
+  bytes, free swap was 16,461,824 bytes, and API/Reality/Reality API were
+  active at restart counts 9/14/0. No matching kernel/OOMD/service kill
+  entry appeared since 15:36:56.
+- **Status:** this acceptance point is verified with bounded fixtures only.
+  The metrics do not estimate venue-wide coverage, source completeness, or
+  statistically independent opportunity prevalence. Host incident remains
+  partially contained due nearly full swap and short observation duration.
