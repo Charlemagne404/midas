@@ -2,7 +2,7 @@
 
 **Report date:** 2026-10-29
 
-## Current completion matrix — 2026-10-29 07:56 CET
+## Current completion matrix — 2026-10-29 07:57 CET
 
 This is a current evidence classification, not a final completion claim. The
 dated implementation records below remain the detailed evidence; the
@@ -14465,3 +14465,21 @@ OOM counters remained 19/15/0. API and Reality stayed active at restarts 9/14
 and about 912/391 MiB. No OOMD/kernel OOM appeared since 07:50. The tests add
 fixture verification of fail-closed economic semantics, not a live opportunity
 or clearance of the resource incident.
+
+### Offline multi-exchange adapter checks — 2026-10-29 07:57 CET
+
+Five focused cases passed **5/5** in 3.71 seconds: source configuration and
+capability manifests fail closed; the default adapter registry is complete,
+disabled, and network-idle; Coinbase Spot preserves native book/trade
+semantics; Gemini Spot normalizes documentation-shaped metadata/books; and
+Gemini rejects perpetual products and non-string book decimals. This slice
+used a 384 MiB high / 512 MiB hard, zero-swap, 20% CPU, 64-task, 60-second
+transient bound. One existing Starlette/httpx deprecation warning appeared.
+Fixtures only; no exchange endpoint or saved probe evidence was accessed.
+
+At 07:57:10 host PSI remained zero, `MemAvailable` was 10 GiB, and
+`SwapFree` was 8.2 MiB. User-manager memory/swap was 9,703,047,168 /
+2,858,422,272 bytes and OOM counters remained 19/15/0. API, Reality, and
+Reality API remained active at restarts 9/14/0; API/Reality used about
+913/393 MiB. No OOMD or kernel OOM appeared since 07:50. This verifies bounded
+offline normalization, not live adapter access or cross-venue science.

@@ -1185,3 +1185,20 @@ counters remained 19/15/0. API/Reality were active at restarts 9/14 and about
 912/391 MiB; no OOMD or kernel OOM appeared since 07:50. This adds fixture
 evidence for conservative economics but does not alter the partial incident
 status or support live-profitability claims.
+
+## Offline adapter acceptance and host sample — 2026-10-29 07:57 CET
+
+Five focused cases passed **5/5** in 3.71 seconds: adapter configs/capabilities
+fail closed, the default registry remains disabled and network-idle, Coinbase
+Spot keeps native book/trade semantics, Gemini Spot normalizes fixture
+metadata/books, and Gemini rejects perpetual products and non-string book
+decimals. The transient service used 384 MiB high / 512 MiB hard, zero swap,
+20% CPU, 64 tasks, and a 60-second runtime. One existing Starlette/httpx
+deprecation warning appeared; no exchange endpoint was contacted.
+
+At 07:57:10 host PSI remained zero, `MemAvailable` 10 GiB, and `SwapFree`
+8.2 MiB. User-manager memory/swap was 9,703,047,168 / 2,858,422,272 bytes;
+OOM counters stayed 19/15/0. API, Reality, and Reality API remained active at
+restarts 9/14/0, with API/Reality about 913/393 MiB. No OOMD/kernel OOM
+appeared since 07:50. These fixture tests do not change the partial incident
+status or authorize live source probes.
