@@ -25,6 +25,14 @@ D = Decimal
 COINBASE_MARKET_DATA_TERMS_VERSION = "2026-08-07"
 MAX_RAW_OBSERVATION_BODY_BYTES = 262144
 MAX_RAW_OBSERVATION_BASE64_CHARS = 4 * ((MAX_RAW_OBSERVATION_BODY_BYTES + 2) // 3)
+MAX_MARKETS_PER_BATCH = 100
+MAX_INSTRUMENTS_PER_MARKET = 256
+MAX_PAYOFF_STATES = 64
+MAX_BOOK_LEVELS_PER_SIDE = 1000
+MAX_TRADES_PER_BATCH = 1000
+MAX_SOURCE_IDENTIFIER_CHARS = 256
+MAX_MARKET_TITLE_CHARS = 2048
+MAX_MARKET_DESCRIPTION_CHARS = 65536
 Nonnegative = Annotated[Decimal, Field(ge=0, max_digits=36, decimal_places=18, allow_inf_nan=False)]
 MonotonicElapsedNs = Annotated[int, Field(strict=True, ge=0, le=9_223_372_036_854_775_807)]
 ExactNonnegative = Annotated[Decimal, Field(ge=0, allow_inf_nan=False)]
@@ -178,7 +186,7 @@ class AdapterConfig(FrontierModel):
     timeout_seconds: Annotated[float, Field(ge=0.5, le=15)] = 5.0
     requests_per_second: Annotated[float, Field(gt=0, le=5)] = 1.0
     max_response_bytes: Annotated[int, Field(ge=1024, le=262144)] = 262144
-    max_markets_per_call: Annotated[int, Field(ge=1, le=100)] = 20
+    max_markets_per_call: Annotated[int, Field(ge=1, le=MAX_MARKETS_PER_BATCH)] = 20
     retries: Annotated[int, Field(ge=0, le=2)] = 1
 
     @property
@@ -222,7 +230,7 @@ class SourceHealth(FrontierModel):
 
 
 class StatePayout(FrontierModel):
-    state_id: str
+    state_id: JointStateId
     amount: Nonnegative
 
 
@@ -247,9 +255,9 @@ class MarketInstrument(FrontierModel):
         max_length=78,
         pattern=r"^instrument-v1:[0-9a-f]{64}$",
     )
-    native_instrument_id: str
-    label: str
-    outcome_id: str | None = None
+    native_instrument_id: str = Field(min_length=1, max_length=MAX_SOURCE_IDENTIFIER_CHARS)
+    label: str = Field(max_length=512)
+    outcome_id: str | None = Field(default=None, max_length=MAX_SOURCE_IDENTIFIER_CHARS)
     quantity_unit: QuantityUnit = QuantityUnit.UNKNOWN
     price_currency: str | None = None
     price_currency_identity: SettlementAssetIdentity | None = None
@@ -260,7 +268,7 @@ class MarketInstrument(FrontierModel):
     quantity_step: Positive | None = None
     minimum_quantity: Positive | None = None
     minimum_notional: Positive | None = None
-    payouts: tuple[StatePayout, ...] = ()
+    payouts: tuple[StatePayout, ...] = Field(default=(), max_length=MAX_PAYOFF_STATES)
 
     @field_validator("price_currency")
     @classmethod
@@ -371,7 +379,7 @@ class SettlementAssetIdentity(FrontierModel):
 
 class PayoffSpec(FrontierModel):
     schema_version: int = 2
-    state_ids: tuple[str, ...] = ()
+    state_ids: tuple[JointStateId, ...] = Field(default=(), max_length=MAX_PAYOFF_STATES)
     payout_currency: str | None = None
     settlement_asset: str | None = None
     settlement_asset_identity: SettlementAssetIdentity | None = None
@@ -816,16 +824,18 @@ class Provenance(FrontierModel):
 class FrontierMarket(FrontierModel):
     schema_version: int = 5
     venue: Venue
-    canonical_id: str
-    native_market_id: str
-    native_event_id: str | None = None
+    canonical_id: str = Field(min_length=1, max_length=512)
+    native_market_id: str = Field(min_length=1, max_length=MAX_SOURCE_IDENTIFIER_CHARS)
+    native_event_id: str | None = Field(default=None, max_length=MAX_SOURCE_IDENTIFIER_CHARS)
     native_event_title: str | None = Field(default=None, max_length=512)
     outcome_label: str | None = Field(default=None, max_length=512)
-    title: str
-    description: str = ""
+    title: str = Field(max_length=MAX_MARKET_TITLE_CHARS)
+    description: str = Field(default="", max_length=MAX_MARKET_DESCRIPTION_CHARS)
     market_kind: MarketKind
     lifecycle: Lifecycle = Lifecycle.UNKNOWN
-    instruments: tuple[MarketInstrument, ...] = ()
+    instruments: tuple[MarketInstrument, ...] = Field(
+        default=(), max_length=MAX_INSTRUMENTS_PER_MARKET
+    )
     selected_components: tuple[SelectedMarketComponent, ...] = Field(default=(), max_length=64)
     payoff: PayoffSpec = PayoffSpec()
     resolution: ResolutionSpec = ResolutionSpec()
@@ -837,7 +847,7 @@ class FrontierMarket(FrontierModel):
     reported_settlement_value_dollars: SettlementScalar | None = None
     settlement_is_provisional: StrictBool | None = None
     native_fields: dict[str, Any] = Field(default_factory=dict)
-    quality_flags: tuple[str, ...] = ()
+    quality_flags: tuple[str, ...] = Field(default=(), max_length=64)
     provenance: Provenance
 
     @field_validator("schema_version")
@@ -1063,12 +1073,15 @@ class MarketGroup(FrontierModel):
 class MarketBatch(FrontierModel):
     schema_version: int = 2
     venue: Venue
-    markets: tuple[FrontierMarket, ...]
+    markets: tuple[FrontierMarket, ...] = Field(max_length=MAX_MARKETS_PER_BATCH)
     market_groups: tuple[MarketGroup, ...] = Field(default=(), max_length=100)
-    cursor: str | None = None
+    cursor: str | None = Field(default=None, max_length=2048)
     complete_for_request: bool = False
-    note: str = (
-        "One bounded discovery response; absence from this page is not proof of venue-wide absence."
+    note: str = Field(
+        default=(
+            "One bounded discovery response; absence from this page is not proof of venue-wide absence."
+        ),
+        max_length=512,
     )
 
     @model_validator(mode="after")
@@ -1096,19 +1109,19 @@ class BookLevel(FrontierModel):
 class BookSnapshot(FrontierModel):
     schema_version: int = 2
     venue: Venue
-    native_market_id: str
-    native_instrument_id: str
-    asks: tuple[BookLevel, ...] = ()
-    bids: tuple[BookLevel, ...] = ()
-    price_unit: str
+    native_market_id: str = Field(min_length=1, max_length=MAX_SOURCE_IDENTIFIER_CHARS)
+    native_instrument_id: str = Field(min_length=1, max_length=MAX_SOURCE_IDENTIFIER_CHARS)
+    asks: tuple[BookLevel, ...] = Field(default=(), max_length=MAX_BOOK_LEVELS_PER_SIDE)
+    bids: tuple[BookLevel, ...] = Field(default=(), max_length=MAX_BOOK_LEVELS_PER_SIDE)
+    price_unit: str = Field(max_length=128)
     price_currency: str | None = None
     price_currency_identity: SettlementAssetIdentity | None = None
     quantity_unit: QuantityUnit
     received_at_utc: datetime
     exchange_timestamp_utc: datetime | None = None
-    exchange_timestamp_semantics: str = "unknown"
+    exchange_timestamp_semantics: str = Field(default="unknown", max_length=256)
     freshness_limit_ms: int | None = None
-    quality_flags: tuple[str, ...] = ()
+    quality_flags: tuple[str, ...] = Field(default=(), max_length=64)
     provenance: Provenance
 
     @field_validator("received_at_utc", "exchange_timestamp_utc")
@@ -1429,16 +1442,16 @@ class TradeObservation(FrontierModel):
 
     schema_version: int = 1
     venue: Venue
-    native_market_id: str
+    native_market_id: str = Field(min_length=1, max_length=MAX_SOURCE_IDENTIFIER_CHARS)
     native_trade_id: str | None = Field(default=None, max_length=256)
     native_instrument_id: str | None = Field(default=None, max_length=256)
     outcome_label: str | None = Field(default=None, max_length=160)
     outcome_index: int | None = Field(default=None, ge=0, le=2_147_483_647)
     price: Nonnegative
     quantity: Positive
-    quote_currency: str | None = None
+    quote_currency: str | None = Field(default=None, max_length=16)
     quote_currency_identity: SettlementAssetIdentity | None = None
-    aggressor_side: str | None = None
+    aggressor_side: str | None = Field(default=None, max_length=64)
     is_block_trade: StrictBool | None = None
     taker_outcome_side: Literal["yes", "no"] | None = None
     taker_book_side: Literal["bid", "ask"] | None = None
@@ -1485,7 +1498,7 @@ class TradeBatch(FrontierModel):
 
     schema_version: int = 1
     venue: Venue
-    trades: tuple[TradeObservation, ...]
+    trades: tuple[TradeObservation, ...] = Field(max_length=MAX_TRADES_PER_BATCH)
     requested_market_id: str | None = Field(default=None, max_length=256)
     page_limit: int | None = Field(default=None, ge=1, le=1000)
     source_cursor: str | None = Field(default=None, max_length=2048)

@@ -15512,3 +15512,27 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
   The metrics do not estimate venue-wide coverage, source completeness, or
   statistically independent opportunity prevalence. Host incident remains
   partially contained due nearly full swap and short observation duration.
+
+## 2026-10-29 16:04 CET — normalized model input bounds
+
+- Added explicit cardinality and text-length bounds to normalized market,
+  instrument, payoff, book, and trade models. Oversized values are rejected;
+  source input is not silently truncated. Added fixture tests for oversized
+  identifiers/text, payoff state cardinality, market/trade page cardinality,
+  and book depth. Documented the model ceilings in the Frontier architecture.
+- The new input-bound tests passed **7/7**; the existing payoff and trade
+  adapter regressions passed **5/5**; the combined focused set passed
+  **12/12 in 3.09 seconds**. Each test invocation ran serially in its own
+  transient 256/384 MiB, zero-swap, 15%-CPU, 48-task scope. Ruff check,
+  formatting, and `git diff --check` passed.
+- At 16:03:53 CET, MemAvailable was 11,123,696 kB, SwapFree 16,228 kB, and
+  host PSI avg10/60/300 was zero. The user-manager cumulative hierarchical
+  `high` event count was 30 above its 15:56 sample, while `oom`/`oom_kill`
+  remained 19/15. MIDAS API, Reality, and Reality API were active at restart
+  counts 9/14/0; capacity service was waiting and the gap-detail timer
+  inactive. No matching kernel/OOMD kill entry was returned for the interval.
+- **Status:** model-bound verification is fixture-only and adds no live-source
+  claims. The host remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**:
+  swap is almost full, the user-manager `high` counter advanced, and this
+  short quiet interval cannot establish durable recovery. Continue only serial
+  source-independent work under the recorded transient bounds.

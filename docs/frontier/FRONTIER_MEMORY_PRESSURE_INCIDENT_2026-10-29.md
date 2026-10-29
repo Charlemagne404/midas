@@ -3680,3 +3680,19 @@ overlapping research jobs while swap remains nearly full and the parent has
 no aggregate ceiling. Stop the workload if PSI rises or available RAM falls
 below 8 GiB. This is a bounded development allowance, not production
 readiness or durable host recovery.
+
+### Bounded Frontier continuation check — 2026-10-29 16:04 CET
+
+After the 12-test normalized-model group, the user manager reported
+`MemAvailable=11,123,696 kB`, `SwapFree=16,228 kB`, and zero host memory PSI
+avg10/60/300. Its hierarchical `memory.events high` count was 30 above the
+15:56 sample; `oom=19`, `oom_kill=15`, and `oom_group_kill=0` were unchanged.
+MIDAS API, Reality, and Reality API were active at restart counts 9/14/0. The
+capacity service was waiting and the gap-detail timer remained inactive. No
+matching OOMD or kernel kill entry was returned for the checked period.
+
+The short verification window is not evidence of durable host recovery. In
+particular, almost all swap remains allocated, the parent `high` counter
+advanced, and no sustained low-pressure interval has been demonstrated. Keep
+the incident **PARTIALLY CONTAINED / PARTIALLY VERIFIED** and retain the
+source-independent, serial, transiently capped Frontier admission limit.

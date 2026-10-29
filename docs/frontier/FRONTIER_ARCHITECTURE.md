@@ -771,6 +771,20 @@ evidence.
 The API serializes probes per venue and the store defaults to 64 MiB, 50,000 raw
 observations, 100,000 relationship records, and 512 KiB per stored record.
 
+### Normalized record bounds
+
+The normalized models also reject oversized records instead of truncating
+them. A discovery batch contains at most 100 markets; a market contains at
+most 256 instruments; each instrument/payoff contains at most 64 payout
+states; each book side contains at most 1,000 levels; and a trade page
+contains at most 1,000 observations. Native market/event/instrument IDs are
+limited to 256 characters, market titles to 2,048, and market descriptions to
+65,536. Transport response bodies remain capped at 256 KiB and JSON nesting
+at 64 levels, while `native_fields` has its own 256 KiB serialized bound.
+Exceeding a model limit rejects the whole object; no source values or list
+members are silently clipped. These schema ceilings bound supported inputs,
+not a claim that every venue can supply every record shape.
+
 When the terms gate blocks a venue, read APIs also quarantine that venue's
 stored observations and derived research. SQL-level exclusions cover source
 aggregates, market/book/trade rows, relationships, and bounded graph neighbors.

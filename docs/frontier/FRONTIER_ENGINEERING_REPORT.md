@@ -15988,3 +15988,32 @@ their expected states, and no matching kernel/OOMD/service kill entry
 appeared since 15:36:56. No code change was needed for this acceptance point.
 The source-backed result remains a bounded captured sample; this check does
 not establish statistical independence or venue-wide prevalence.
+
+### Normalized model input bounds — 2026-10-29 16:04 CET
+
+Normalized market records now reject values exceeding the documented field
+and collection bounds: at most 100 markets per discovery batch, 256
+instruments per market, 64 payoff states, 1,000 levels per book side, and
+1,000 trades per page. Native identifiers, display text, pagination fields,
+and quality-flag collections also have explicit limits. Rejection preserves
+the distinction between source data and accepted model data; values are not
+silently clipped. `docs/frontier/FRONTIER_ARCHITECTURE.md` records the limits
+and their relationship to existing raw-body and `native_fields` bounds.
+
+The new model-bound fixtures passed **7/7**. Existing payoff invariants and
+trade-adapter contract tests passed **5/5**, and the combined focused run
+passed **12/12 in 3.09 seconds**. Runs were serial in isolated transient
+scopes capped at 256 MiB high, 384 MiB max, zero swap, 15% CPU, and 48 tasks.
+Ruff check/format and `git diff --check` passed. This verifies the selected
+schema constraints using deterministic fixtures; it does not validate venue
+payload distributions or live integrations.
+
+At 16:03:53 CET, host memory PSI avg10/60/300 was zero and MemAvailable was
+11,123,696 kB, while only 16,228 kB of swap was free. The user-manager
+hierarchical `high` count had advanced by 30 since 15:56, with `oom` and
+`oom_kill` unchanged at 19 and 15. API, Reality, and Reality API remained
+active at restart counts 9/14/0. This bounded post-test observation does not
+establish sustained recovery; the incident remains **PARTIALLY CONTAINED /
+PARTIALLY VERIFIED**.
+
+| Frontier normalized input bounds | COMPLETE AND VERIFIED FOR FIXTURE PATH | Focused reject-on-limit tests and existing payoff/trade regressions pass under strict transient resource caps; live payload coverage remains unmeasured. |
