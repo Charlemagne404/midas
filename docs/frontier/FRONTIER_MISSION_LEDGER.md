@@ -12881,3 +12881,16 @@ At 03:16:52, host PSI was zero, MemAvailable was 11,428,380 kB, SwapFree was
 were active at restarts 9/14, with no new oomd or kernel OOM entry. The
 capacity timer remains safe for this bounded run; the full swap and unknown
 historical OOM initiator remain unresolved.
+
+### Timeline timing-view component validation — 2026-10-29 03:23 CET
+
+Ran the focused `Frontier.test.tsx` timeline replay journey, which asserts that
+the saved frame renders per-instrument receipt age, exchange timestamp
+semantics, clock uncertainty, and freshness limit. The first attempt expired
+at 5.9s against the test's existing 5s default. With a 15s test timeout, it
+passed 1/1 in 6.2s under a single-worker 768/896 MiB, zero-swap, 25%-CPU scope;
+eight unrelated tests in that file were skipped. No live source or API was
+contacted. TypeScript build/browser checks remain open due the earlier V8 heap
+failure. At 03:23:39, host PSI was zero, MemAvailable 11,422,164 kB,
+SwapFree 1,316 kB, and OOM counters unchanged at 19/15; API/Reality remained
+active at restarts 9/14. Updated the engineering and incident reports.

@@ -3,7 +3,7 @@
 **Incident date:** 2026-10-28 (CET)
 
 **Initial checkpoint:** 2026-10-29 01:54 CET; append-only follow-up observations
-through 2026-10-29 03:16 CET are recorded below.
+through 2026-10-29 03:23 CET are recorded below.
 
 **Scope:** Host reliability interruption during Project Frontier
 
@@ -1383,3 +1383,12 @@ restart counts 9 and 14. No systemd-oomd or kernel OOM entry appeared after
 the check began. This validates a bounded scheduled execution and service
 continuity for this sample; it does not establish sustained stability, remove
 the full-swap condition, or identify the historical initiating workload.
+
+### Post-frontend-test resource check — 2026-10-29 03:23 CET
+
+After the focused, single-worker Frontier Vitest run, host PSI was still zero,
+MemAvailable was 11,422,164 kB, and only 1,316 kB of swap was free. The user
+manager remained at `oom=19`/`oom_kill=15`; API and Reality remained active at
+restarts 9/14. No new systemd-oomd or kernel OOM records appeared after 03:20.
+This observation window is only a few minutes and does not establish
+endurance; retain the zero-swap test gate and defer broad or Node build work.

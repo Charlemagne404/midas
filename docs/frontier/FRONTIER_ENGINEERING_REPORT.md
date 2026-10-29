@@ -2,7 +2,7 @@
 
 **Report date:** 2026-10-29
 
-## Current completion matrix — 2026-10-29 03:20 CET
+## Current completion matrix — 2026-10-29 03:23 CET
 
 This is a current evidence classification, not a final completion claim. The
 dated implementation records below remain the detailed evidence; the
@@ -21,8 +21,8 @@ current host gate.
 | Laboratory/Arena comparisons and bounded orchestration | PARTIALLY VERIFIED | Arena admission and finite scheduling regressions pass; a Laboratory resource-denial case passes with a harness cap above its 722,894,848-byte capacity precondition. Full endurance evidence remains incomplete. |
 | User-cgroup-aware workload admission | IMPLEMENTED, BOUNDED VALIDATION PASSED | Central Arena admission (15), finite schedules (12), and the Laboratory denial case (1) pass fixture tests using user-manager pressure; no runtime deployment occurred. |
 | Reality capacity inventory bounds | PARTIALLY VERIFIED | Candidate inventory code remains undeployed. The separate monitor is bounded at `MemoryHigh=160M`, `MemoryMax=192M`, and zero swap; its 02:46 scheduled run succeeded in 6.810 CPU seconds, but systemd retained no peak. Its report still identifies invalid archive inventory and provenance. |
-| Native Frontier dashboard | PARTIALLY VERIFIED | Vitest passed 47/47; default Playwright passed 17/20 with three opt-in skips; synthetic seeded replay/Arena browser tests passed 2/2. Timeline frame view now exposes bounded per-instrument timing evidence; this frontend change was not run through Node tooling or browser tests. Captured-evidence browser validation remains open. An earlier `tsc -b` passed at a 768 MiB cap; a later 640 MiB attempt hit the Node/V8 heap limit and generated an Apport report. No further Node check was run. |
-| Host reliability containment | PARTIALLY VERIFIED | The five-minute gap-detail timer is disabled and capacity monitor has a reversible 160/192 MiB, zero-swap bound. At 03:16, MemAvailable was 11,428,380 kB, SwapFree 1,272 kB, memory PSI was zero, and API/Reality remained active at restart counts 9/14. The 03:16 scheduled capacity run completed successfully; user-manager `oom=19`/`oom_kill=15` were unchanged. Full swap and historical workload attribution remain unresolved. |
+| Native Frontier dashboard | PARTIALLY VERIFIED | Vitest passed 47/47; default Playwright passed 17/20 with three opt-in skips; synthetic seeded replay/Arena browser tests passed 2/2. The new timeline timing view's focused Vitest case passed 1/1 in 6.2s with an explicit 15s test timeout; eight other cases were skipped. Its first run hit the configured 5s timeout at 5.9s, then passed on retry without assertion or process failure. TypeScript build and browser verification of this view remain pending after the earlier V8 heap failure; captured-evidence browser validation remains open. |
+| Host reliability containment | PARTIALLY VERIFIED | The five-minute gap-detail timer is disabled and capacity monitor has a reversible 160/192 MiB, zero-swap bound. At 03:23, MemAvailable was 11,422,164 kB, SwapFree 1,316 kB, memory PSI was zero, and API/Reality remained active at restart counts 9/14. The 03:16 scheduled capacity run completed successfully; user-manager `oom=19`/`oom_kill=15` were unchanged through the frontend test. Full swap and historical workload attribution remain unresolved. |
 | Node/V8 and Apport side effect | PARTIALLY VERIFIED | The 02:36 TypeScript attempt aborted at Node's heap limit with a 300.6 MiB cgroup peak, not a kernel OOM. Whoopsie attempted to submit the 58,222,586-byte crash report and received HTTP 504; remote receipt is unknown. No `.uploaded` marker exists; avoid further crash-prone Node checks. |
 | Broad regressions, resource endurance, and performance acceptance | DEFERRED | Frontier Python passed 648/648 at 02:19; the adapter module plus one four-venue trade-contract test passed 169/169 at 03:18; web Vitest passed 47/47, default Playwright 17/20, and synthetic seeded journeys 2/2 under bounded scopes. Full MIDAS regression, captured-evidence browser journey, endurance, and broad performance tests remain deferred. |
 | Live multi-venue source authorization and findings | BLOCKED | Kalshi, Kraken, and Coinbase retained research remain held; the worktree Polymarket probe flag is off. |
@@ -13495,3 +13495,20 @@ memory PSI remained zero. User-manager OOM counters were unchanged at
 `oom=19`/`oom_kill=15`; API and Reality stayed active with restart counts
 9/14. No new systemd-oomd entry appeared after 02:57. This was one short
 bounded check, not endurance validation.
+
+## Timeline source-timing UI regression — 2026-10-29 03:23 CET
+
+The focused Vitest case `submits bounded Arena replay and discovery comparisons
+with verified results` exercises the saved timeline replay and per-instrument
+source-timing table. It passed **1/1 in 6.2 seconds** with `--testTimeout=15000`
+under a 768 MiB high / 896 MiB max, zero-swap, 25%-CPU, single-worker scope.
+Eight unrelated cases in `Frontier.test.tsx` were skipped. The first attempt
+used the default five-second per-test timeout and expired at 5.9 seconds; the
+retry passed without assertion or process failure. No public source/API call
+was made. This is focused component coverage; the TypeScript build, browser
+verification of the new view, and captured-evidence path remain open.
+
+At 03:23:39 CET, MemAvailable was 11,422,164 kB, SwapFree was 1,316 kB, host
+memory PSI was zero, and user-manager `oom`/`oom_kill` counters remained 19/15.
+MIDAS API and Reality were active at restart counts 9/14. This does not
+resolve the host's full-swap or historical workload-attribution issues.
