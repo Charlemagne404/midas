@@ -13784,3 +13784,10 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
 - **Pytest sampling:** The current-tree replay comparison file passed **4/4** in 1.61 seconds while a wrapper retained its cgroup for five seconds. Live systemd telemetry showed 42,086,400 bytes peak (about 40.1 MiB). The prior fast `--collect --wait` exit summary printed 256 KiB because its cgroup disappeared before peak sampling; do not use that value as a pytest memory measurement. Future peak records require retained cgroup telemetry.
 - **Host:** At 08:02:24 PSI zero, MemAvailable 10 GiB, SwapFree 8.3 MiB; user-manager memory/swap 9,718,988,800 / 2,858,340,352 bytes; OOM counters 19/15/0. API/Reality/Reality API active at restarts 9/14/0; API/Reality about 915/397 MiB. No OOMD/kernel OOM since 07:58.
 - **Status:** Cgroup limits are effective; the peak-summary issue is measurement-only and documented. Incident remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**, with near-full swap and sustained recovery unresolved.
+
+## Multi-outcome opportunity economics — 2026-10-29 08:03 CET
+
+- **Tests:** Three current-tree cases passed **3/3** in 1.70 seconds: multi-outcome price ticks are enforced by candidate and audit, coverage remains exactly hypothetical, and bounded overlapping three-leg basket search verifies the construction.
+- **Resource evidence:** A five-second post-test wrapper preserved the transient cgroup. Its live peak was 43,180,032 bytes (41.1 MiB); limits were 384 MiB high / 512 MiB hard, zero swap, 20% CPU, 64 tasks. No external data was used.
+- **Host after run:** At 08:03:24 PSI zero, MemAvailable 10 GiB, SwapFree 8.4 MiB; user-manager memory/swap 9,731,592,192 / 2,858,254,336 bytes; OOM counters 19/15/0. API/Reality active at restarts 9/14, about 916/397 MiB. No OOMD/kernel OOM since 08:00.
+- **Status:** Multi-outcome fixture science advances; no live eligible opportunity is demonstrated. Incident remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**.

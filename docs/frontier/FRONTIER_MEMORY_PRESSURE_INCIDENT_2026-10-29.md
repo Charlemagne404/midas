@@ -1272,3 +1272,19 @@ counters remained 19/15/0. API/Reality/Reality API remained active at
 restarts 9/14/0; API/Reality used about 915/397 MiB. No OOMD or kernel OOM
 appeared since 07:58. This instrumentation check changed no persistent host
 configuration and does not resolve near-full swap or long-run stability.
+
+## Multi-outcome economics checks and host sample — 2026-10-29 08:03 CET
+
+Three selected current-tree tests passed **3/3** in 1.70 seconds: multi-
+outcome candidate and audit price-tick enforcement, exact hypothetical
+coverage classification, and bounded overlapping three-leg payoff-basket
+search. The 384 MiB high / 512 MiB hard transient cgroup was retained for
+five seconds after pytest exit; live `memory.peak` was 43,180,032 bytes
+(about 41.1 MiB), with zero swap. This is a measured peak for this slice.
+
+At 08:03:24 host PSI was zero, `MemAvailable` 10 GiB, and `SwapFree` 8.4 MiB.
+User-manager memory/swap was 9,731,592,192 / 2,858,254,336 bytes; OOM
+counters remained 19/15/0. API/Reality were active at restart counts 9/14,
+using about 916/397 MiB. No OOMD or kernel OOM appeared since 08:00. The
+bounded fixture test did not change the **PARTIALLY CONTAINED / PARTIALLY
+VERIFIED** incident status.
