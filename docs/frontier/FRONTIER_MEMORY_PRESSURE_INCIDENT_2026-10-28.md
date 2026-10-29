@@ -955,3 +955,106 @@ Reality/API restart counts remained 14/9. Host PSI remained zero. User-manager
 and `oom_kill=15` were unchanged. No kernel or systemd-oomd kill was logged
 after 23:43:24. The API remains very near its soft bound, so no further tests
 or runtime work are scheduled in this checkpoint.
+
+## OOM victim evidence and bounded follow-up — 2026-10-29 02:02 CET
+
+A narrow journal extraction around the two final systemd-oomd decisions on
+2026-10-28 establishes the immediate kill mechanism and the memory present in
+the candidate cgroups:
+
+| Time CET | Selected cgroup | Candidate memory / local pressure | Parent trigger |
+| --- | --- | --- | --- |
+| 23:43:09 | `midas-reality.service` | 550.7 MiB; local PSI Avg10/60/300 all 0.00% | `user@1000.service` PSI 61.64%, above 50% for over 20 seconds with reclaim |
+| 23:43:24 | `midas-veritas-gap-detail-v2.service` | 204.8 MiB; local PSI Avg10 76.50%, Avg60 50.59%, Avg300 15.12% | `user@1000.service` PSI 54.45%, above 50% for over 20 seconds with reclaim |
+
+At the first decision, other listed candidates included the MIDAS API at
+about 1.4 GiB, Chromium at 337.9 MiB, Reality API at 156.6 MiB, a GNOME
+ChatGPT scope at 131.1 MiB, and GNOME terminal scopes. At the second, the API
+remained about 1.4 GiB, one terminal VTE scope was 457.0 MiB, Chromium was
+338.3 MiB, and another terminal scope was 318.4 MiB. These are oomd candidate
+snapshots, not a complete process inventory or proof that any one service
+initiated system-wide reclaim. They do show that the gap-detail process was
+above its effective 192 MiB `MemoryHigh` and experiencing substantial local
+reclaim pressure when selected; that makes it a demonstrated contributor at
+that instant, not a demonstrated sole cause of the user-slice pressure.
+
+The five-minute unit is explicitly the bounded finalized-Reality gap-detail
+replay. It runs `veritas_gap_detail_v2_batch.py` over saved segment and Arena
+paths, with per-run bounds of 128 segments, 32 MiB of source, and a 4 GiB
+artifact limit; it has a ten-minute timeout and no declared dependency on the
+Reality collector. It is auxiliary research replay, not live capture or
+integrity monitoring. The timer remains disabled/inactive, and the service's
+last result remains `oom-kill`. It can be restored with:
+
+```sh
+systemctl --user reset-failed midas-veritas-gap-detail-v2.service
+systemctl --user enable --now midas-veritas-gap-detail-v2.timer
+```
+
+Recent scheduled work was staggered in the observed window: source analysis
+processed 58 segments in about nine seconds (226.3 MiB peak, 256 MiB max,
+zero swap); research director completed in about one second; the capacity
+report completed in about six seconds; and Veritas observatory completed in
+about twelve seconds. Arena's minute timer returned an empty schedule in
+about one second. These observations show no overlap in that sample, but do
+not establish that historical jobs never overlapped. No timer schedule other
+than the auxiliary gap-detail timer was changed.
+
+The revised capacity monitor has effective `MemoryHigh=160M`,
+`MemoryMax=192M`, and `MemorySwapMax=0` in the persistent drop-in
+`~/.config/systemd/user/midas-reality-capacity.service.d/90-frontier-memory-bound.conf`.
+Its 01:16 run recorded a 134,225,920-byte peak under the new bound and
+completed successfully. This is one validated run; later 01:46 completion
+did not retain a peak, so long-term headroom is not established. The exact
+rollback is to remove only that drop-in and reload the user manager:
+
+```sh
+rm ~/.config/systemd/user/midas-reality-capacity.service.d/90-frontier-memory-bound.conf
+systemctl --user daemon-reload
+```
+
+At 02:02 CET on 2026-10-29, host memory was 15 GiB total, 5.8 GiB used,
+9.8 GiB available; swap use was 3.1/4 GiB; host PSI Avg10/60/300 was zero.
+The user-manager cgroup was charged 11,100,119,040 bytes; its event counters
+were `high=16,416,870`, `max=728,363`, `oom=19`, `oom_kill=15`, unchanged for
+max/OOM/OOM-kill since the prior checkpoints. Its current memory PSI averages
+were zero. The short 01:50 sample had no change in swap-in or swap-out
+counters, but elevated swap occupancy remains a risk indicator and does not
+rule out earlier reclaim or swap activity.
+
+At that same check, the API was active at 1,609,719,808 bytes against a
+1,610,612,736-byte `MemoryHigh` (892,928 bytes, about 0.85 MiB, of headroom),
+with `MemoryMax=1,879,048,192`; Reality was active at 587,796,480 bytes
+against a 1,207,959,552-byte `MemoryHigh`. API and Reality restart counts
+remained 9 and 14. Reality API, MIDAS web, Continental tailnet/auth, Echo
+production/staging, Caddy, RustDesk, and `ssh.socket` were active. No kernel
+OOM or systemd-oomd kill was found after 23:43:24 CET. The gap-detail timer
+was disabled; its failed oneshot remains visible for diagnosis.
+
+### Causal assessment and operating gate
+
+- **Confirmed:** systemd-oomd killed processes after sustained PSI/reclaim in
+  the shared user-manager hierarchy. The kernel memcg OOMs on the old capacity
+  monitor were separate local-limit failures. The capacity monitor exceeded
+  its old 128 MiB bound; one run passed under the revised 160/192 MiB bounds.
+- **Demonstrated contributor:** the gap-detail process was at 204.8 MiB with
+  high local PSI when it was killed. Disabling its five-minute auxiliary timer
+  removes this repeated replay workload while keeping live collection
+  untouched.
+- **Not established:** which workload or combination first drove the whole
+  user manager into sustained pressure. API, Reality, GUI/browser and terminal
+  cgroups were all sizable in the candidate snapshots. Current cgroup samples
+  taken after the incident cannot reconstruct that trigger.
+- **Not established:** absence of historical timer overlap, long-term success
+  of the capacity-monitor bound, or closure of the archive provenance issues.
+  `ARCHIVE_SEGMENT_INVENTORY_INVALID`,
+  `ARCHIVE_MANIFEST_PROVENANCE_INVALID`, and `RECORDING_UNSEQUENCED` remain
+  separate integrity findings; no archive or manifest was modified.
+
+The measured quiet window supports static/offline Frontier work and only
+sequential, explicitly bounded fixture checks. At 02:02 the API had less than
+1 MiB of `MemoryHigh` headroom, so further test processes, broad suites, live
+probes, profiling, and batch replay remain deferred. This is containment and
+partial validation, not incident resolution. Continue to monitor PSI, service
+restart counts, cgroup `memory.events`, and scheduled jobs before increasing
+runtime activity.

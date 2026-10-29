@@ -13169,3 +13169,23 @@ Reality headroom **557,928,448 bytes**, PSI `avg10` 0%, and available memory
 the API remained near its limit. This is focused evidence, not the full
 comparison/storage regression or full Frontier suite.
 Documentation checkpoint: `52c48b5cb87f5ecaf3a6645fa868e123dde24fc8`.
+
+## Infrastructure reliability interruption — 2026-10-29
+
+The Oct 28 systemd-oomd incident and Oct 29 containment are documented in
+[`FRONTIER_MEMORY_PRESSURE_INCIDENT_2026-10-28.md`](FRONTIER_MEMORY_PRESSURE_INCIDENT_2026-10-28.md).
+The immediate trigger is confirmed as sustained PSI/reclaim in the shared
+user-manager hierarchy. A five-minute auxiliary Veritas gap-detail replay was
+under high local memory pressure at one kill decision and its timer is
+disabled; the critical Reality collector was not restarted or reconfigured.
+The Reality capacity monitor now has a persistent, reversible
+160 MiB `MemoryHigh` / 192 MiB `MemoryMax` bound and passed one scheduled run.
+The historical user-slice pressure initiator remains undetermined.
+
+At the latest 02:02 CET check, host PSI and available-memory headroom were
+healthy, but swap remained 3.1/4 GiB and the API had only about 0.85 MiB below
+its `MemoryHigh`. Frontier status remains **PARTIALLY VERIFIED**. Continue
+static work; allow only sequential bounded fixture checks after remeasuring
+admission conditions. Defer broad runtime suites, live probes, profiling, and
+batch replay until the API recovers material headroom. Do not infer incident
+resolution from this quiet window.

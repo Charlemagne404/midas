@@ -12395,3 +12395,56 @@ deferred because the API remains close to its soft memory boundary.
 
 Next safe action: continue offline coverage and implementation; defer broad
 runtime work until API headroom and PSI admit it.
+
+## OOM victim evidence and containment checkpoint — 2026-10-29 02:02 CET
+
+The narrow historical journal query confirms systemd-oomd selected Reality at
+23:43:09 CET on Oct 28 because the shared `user@1000.service` hierarchy had
+61.64% PSI for more than 20 seconds with reclaim. Reality was 550.7 MiB and
+its local pressure averages were zero; the API was about 1.4 GiB, Chromium
+337.9 MiB, Reality API 156.6 MiB, and multiple GUI/terminal scopes were also
+listed. At 23:43:24, oomd selected the gap-detail replay while parent PSI was
+54.45% for more than 20 seconds. That process was 204.8 MiB against its
+192 MiB `MemoryHigh`, with local PSI Avg10 76.50%, Avg60 50.59%, Avg300
+15.12%. This demonstrates local reclaim contribution at that point but does
+not identify the sole initiator of user-manager pressure.
+
+The five-minute gap-detail timer runs a bounded saved-data Veritas replay
+(128 segments / 32 MiB source / 4 GiB artifact cap), has no declared Reality
+collector dependency, and is not required for capture or integrity. It remains
+disabled/inactive as authorized; the last oneshot remains failed with
+`oom-kill`. Restore with `systemctl --user reset-failed
+midas-veritas-gap-detail-v2.service` followed by
+`systemctl --user enable --now midas-veritas-gap-detail-v2.timer`. No other
+timer was changed. In the recent sample, the source analysis, research
+director, capacity monitor, observatory and empty Arena scheduler runs were
+short and staggered; that sample does not prove historical non-overlap.
+
+The capacity-monitor persistent drop-in sets `MemoryHigh=160M`,
+`MemoryMax=192M`, and `MemorySwapMax=0`. One scheduled run peaked at
+134,225,920 bytes and succeeded. Roll back by removing only
+`~/.config/systemd/user/midas-reality-capacity.service.d/90-frontier-memory-bound.conf`
+and running `systemctl --user daemon-reload`. Do not change the protected
+Reality collector or archive state.
+
+At 02:02, host PSI was zero, MemAvailable 9.8 GiB, swap use 3.1/4 GiB, and
+user-manager PSI was zero. User-manager counters were
+`high=16,416,870`, `max=728,363`, `oom=19`, `oom_kill=15`; no kernel or oomd
+kill was found after 23:43:24. MIDAS API and Reality were active with restart
+counts 9/14; the API had only 892,928 bytes of headroom below its
+`MemoryHigh`. Reality API/web, Continental tailnet/auth, Echo production and
+staging, Caddy, RustDesk and SSH socket were active. The containment window is
+quiet but does not prove the underlying workload mix is fixed. Continue only
+static/low-footprint Frontier work; defer further test processes, live probes,
+profiling, replay batches, and broad suites until API headroom materially
+recovers and PSI remains low. Archive inventory/provenance alerts and
+`RECORDING_UNSEQUENCED` remain separate unresolved integrity constraints.
+
+| Incident item | Status | Evidence / remaining limit |
+| --- | --- | --- |
+| OOMd trigger mechanism | COMPLETE AND VERIFIED | Journal records parent user-manager PSI over 50% with reclaim at both kill decisions. |
+| Capacity monitor local cap | PARTIALLY VERIFIED | One scheduled run passed at 134.2 MiB under 160/192 MiB; endurance remains open. |
+| Gap-detail containment | IMPLEMENTED, LIVE VALIDATION PENDING | Five-minute timer disabled; no later kill observed, but only a short observation window. |
+| Historical pressure initiator | BLOCKED BY MISSING CONTEMPORANEOUS INVENTORY | OOM candidate list is incomplete and snapshots after the event cannot establish the initiating mix. |
+| Host stability | PARTIALLY VERIFIED | PSI zero and OOM counters stable at latest sample; swap remains 3.1/4 GiB and API is near `MemoryHigh`. |
+| Frontier runtime resumption | PARTIALLY VERIFIED | Bounded offline work only; no live probes, broad runtime suites, or long campaigns. |
