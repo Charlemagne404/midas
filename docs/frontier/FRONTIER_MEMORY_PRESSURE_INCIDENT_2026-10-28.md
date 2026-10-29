@@ -1293,3 +1293,27 @@ whether any part of the report reached the remote endpoint, so receipt is
 unknown. The report contents were not read, and neither the report nor the
 system service was altered. Do not repeat Node tests that may crash until a
 safe diagnostic path is established.
+
+## Sampler input resilience and final point check — 2026-10-29 02:51 CET
+
+While resuming bounded Frontier work, a further low-cost failure mode was
+closed: undecodable `/proc` text now yields an explicit unavailable (`null`)
+field instead of aborting the whole sampler. The fixture writes invalid UTF-8
+bytes and verifies this fail-closed behavior. Commit `e4d12ac` contains only
+this script and focused test; rollback with `git revert e4d12ac`. The focused
+test file passed **7/7 in 0.60 seconds** under a 256 MiB, zero-swap, 25% CPU
+limit; Ruff passed under a 192 MiB, zero-swap, 20% CPU limit.
+
+At 02:51:34 CET, `MemAvailable` was 11,455,120 kB and only 216 kB of swap was
+free. Host memory PSI remained zero; user-manager counters remained
+`max=729589`, `oom=19`, `oom_kill=15`. API and Reality were active with restart
+counts still 9 and 14. The capacity timer was active and gap-detail timer
+inactive. Caddy, RustDesk, and `ssh.socket` were active. Whoopsie was inactive;
+the 58,222,586-byte crash report and `.upload` marker remained, with no
+`.uploaded` marker. No host configuration or data was changed by this follow-up.
+
+Safe continuation remains limited to small isolated, zero-swap work. Do not
+run Node checks that could create another crash report, broad suites, or
+competing research batches until the resource and upload conditions are
+reviewed. This point sample does not resolve the high swap occupancy or the
+historical workload attribution.

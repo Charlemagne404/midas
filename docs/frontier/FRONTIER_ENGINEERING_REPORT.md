@@ -13365,3 +13365,24 @@ from the 504 response. `whoopsie.service` was inactive at 02:49:43. The report
 was not read, modified, or deleted. Avoid further Node checks that could
 crash; frontend verification already completed before this incident remains
 the recorded evidence.
+
+## Sampler malformed-input guard — 2026-10-29 02:51 CET
+
+`read()` now catches `UnicodeDecodeError` and returns `None`, so malformed
+`/proc` text is explicitly unavailable rather than terminating a host sample.
+The focused fixture passed **7/7 in 0.60 seconds** under 256 MiB, zero swap,
+and 25% CPU; Ruff passed under 192 MiB, zero swap, and 20% CPU. Commit
+`e4d12ac` contains the change and test; rollback with `git revert e4d12ac`.
+
+The 02:51:34 CET point check showed 11,455,120 kB MemAvailable, 216 kB
+SwapFree, zero host memory PSI, unchanged user-manager OOM counters, and active
+API/Reality services at restart counts 9/14. Whoopsie was inactive; the Node
+crash report and `.upload` marker were retained with no `.uploaded` marker.
+This is a small isolated continuation checkpoint and does not resolve the
+incident or validate endurance.
+
+| Verification item | Status | Evidence / remaining limit |
+| --- | --- | --- |
+| Sampler behavior on undecodable proc data | COMPLETE AND VERIFIED | Invalid-byte fixture returns explicit unavailable value; focused tests and lint pass. |
+| Current resource state | PARTIALLY VERIFIED | Point-in-time available memory is high and PSI is zero; swap remains full and workload attribution unknown. |
+| Safe Frontier continuation | PARTIALLY VERIFIED | One small Python-only change completed under cgroup limits; broad tests and Node checks remain deferred. |

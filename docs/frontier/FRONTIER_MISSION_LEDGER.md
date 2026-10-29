@@ -12658,3 +12658,20 @@ does not prove that no report bytes reached the endpoint. At 02:49:43 the
 Whoopsie service was inactive. The report was not inspected or changed. Avoid
 further Node checks that can crash; this side effect is separate from the
 Oct 28 system-wide memory-pressure/OOM chain.
+
+### Sampler malformed-input guard — 2026-10-29 02:51 CET
+
+The host sampler now treats undecodable `/proc` text as unavailable, preventing
+one malformed process entry from aborting a complete snapshot. The test writes
+invalid UTF-8 and confirms a `None` result. Commit `e4d12ac` contains only the
+script and test; rollback with `git revert e4d12ac`. Focused tests passed **7/7
+in 0.60 s** under 256 MiB, zero swap, and 25% CPU; Ruff passed under 192 MiB,
+zero swap, and 20% CPU.
+
+At 02:51:34 CET, host MemAvailable was 11,455,120 kB, SwapFree 216 kB, memory
+PSI zero, and user-manager `max`/`oom`/`oom_kill` counters unchanged at
+729589/19/15. API/Reality stayed active with restart counts 9/14; capacity
+timer active and gap-detail inactive. Whoopsie was inactive; its report and
+`.upload` marker were retained without a `.uploaded` marker. No production or
+archive changes were made. Continue only bounded, isolated, zero-swap work;
+full swap and historical workload attribution remain unresolved.
