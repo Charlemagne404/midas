@@ -2,11 +2,11 @@
 
 **Report date:** 2026-10-29
 
-## Current completion matrix — 2026-10-29 04:22 CET
+## Current completion matrix — 2026-10-29 04:32 CET
 
 This is a current evidence classification, not a final completion claim. The
 dated implementation records below remain the detailed evidence; the
-[incident report](FRONTIER_MEMORY_PRESSURE_INCIDENT_2026-10-28.md) records the
+[current incident report](FRONTIER_MEMORY_PRESSURE_INCIDENT_2026-10-29.md) records the
 current host gate.
 
 | Component | Status | Current evidence and boundary |
@@ -22,7 +22,7 @@ current host gate.
 | User-cgroup-aware workload admission | IMPLEMENTED, BOUNDED VALIDATION PASSED | Central Arena admission (15), finite schedules (12), and the Laboratory denial case (1) pass fixture tests using user-manager pressure; no runtime deployment occurred. |
 | Reality capacity inventory bounds | PARTIALLY VERIFIED | Candidate inventory code remains undeployed. The separate monitor is bounded at `MemoryHigh=160M`, `MemoryMax=192M`, and zero swap; its 02:46 scheduled run succeeded in 6.810 CPU seconds, but systemd retained no peak. Its report still identifies invalid archive inventory and provenance. |
 | Native Frontier dashboard | PARTIALLY VERIFIED | The dashboard now includes the held Gemini Spot capability and timing explanation. Its focused explorer fixture passed 1/1 with a 15-second per-test allowance under a 50% CPU cap; eight other cases were skipped. The saved timeline timing and result-pagination browser fixtures passed earlier. TypeScript project build and a production Vite build passed in bounded zero-swap scopes. Default Playwright last passed 17/20 with three opt-in skips; captured-evidence browser validation remains open. |
-| Host reliability containment | PARTIALLY VERIFIED | The five-minute gap-detail timer is disabled and capacity monitor has a reversible 160/192 MiB, zero-swap bound. At 04:22, MemAvailable was 11,356,988 kB, SwapFree 1,844 kB, and host/user-manager PSI was zero; API/Reality remained active at unchanged restart counts 9/14. User-manager `oom=19`/`oom_kill=15` counters were unchanged. No kernel or systemd-oomd event appeared in the preceding 20 minutes. Swap remains 99.96% occupied and the historical initiating workload remains unknown. |
+| Host reliability containment | PARTIALLY VERIFIED | The five-minute gap-detail timer is disabled; a full October 28 journal audit found 129 systemd-oomd kills, 106 targeting this replay. Seven separate kernel memcg kills hit the capacity checker's original 128 MiB cap. The capacity checker now has reversible 160/192 MiB, zero-swap limits. At 04:32, MemAvailable was 11.63 GB, SwapFree 1.94 MB, and host/user-manager PSI was zero; API/Reality remained active at restart counts 9/14. User-manager `oom=19`/`oom_kill=15` counters were unchanged. No OOMd kill has appeared since 23:43 on Oct 28 and no kernel OOM since 20:15, but swap is 99.96% occupied and current `oomctl` monitor visibility is unresolved. |
 | Node/V8 and Apport side effect | PARTIALLY VERIFIED | The 02:36 TypeScript attempt aborted at Node's heap limit with a 300.6 MiB cgroup peak, not a kernel OOM. Whoopsie attempted to submit the 58,222,586-byte crash report and received HTTP 504; remote receipt is unknown. No `.uploaded` marker exists; avoid further crash-prone Node checks. |
 | Broad regressions, resource endurance, and performance acceptance | DEFERRED | Selected Python, API, adapter, and collection suites passed under bounded zero-swap scopes. Full MIDAS regression, full browser suite, captured-evidence browser journey, endurance, and broad performance tests remain deferred. |
 | Live multi-venue source authorization and findings | BLOCKED | Kalshi, Kraken, Coinbase, and Gemini probes and retained-data research remain held; the worktree Polymarket probe flag is off. |
