@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 20:21 CET |
+| Latest addendum | 2026-10-29 20:56 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Pre-incident checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -163,7 +163,7 @@ prove that other workloads never overlap or contribute.
 | Bound Reality capacity monitor at High 160M / Max 192M / SwapMax 0 | Original 128M cap had seven kernel memcg kills. The scheduled 17:50 run exited successfully with a 147.8 MiB reported peak and zero swap. The isolated scan fix addresses the identified full-manifest materialization but is not installed. | Persistent drop-in `/home/charlie/.config/systemd/user/midas-reality-capacity.service.d/90-frontier-memory-bound.conf`; timer remains active at 30-minute intervals. | To restore the prior 128M hard cap, replace that file with `[Service]`, `MemoryMax=128M`, `MemorySwapMax=0`, then run `systemctl --user daemon-reload` and verify `systemctl --user show midas-reality-capacity.service -p MemoryHigh -p MemoryMax -p MemorySwapMax`. |
 | Bound the capacity scan in an isolated worktree | `manifest(root)` expanded all 40,316 sidecar rows in memory. The revised scan caps count and row size, keeps only the sample, and computes growth stats in one pass. Fixture tests passed under the existing service budget. | Commit `bd09640` on `codex/frontier-capacity-scan-bound-20261029`; no change to the active Reality worktree or services. | In that worktree, run `git revert bd09640`; do not deploy or cherry-pick without the separate production transition. |
 | Bound isolated Reality API at High 576M / Max 640M / SwapMax 0 | Between 17:17:59 and 17:19:53, five user-manager `max` increments matched five Reality API local `memory.max` increments; the service was repeatedly contacting its original 512M hard cap. This is local-limit evidence, not the cause of the October 28 global OOMD events. | Persistent API-only drop-in `/home/charlie/.config/systemd/user/midas-reality-api.service.d/70-frontier-memory-bound.conf`; applied without restarting the API or protected collector. | Remove the drop-in, reload the user manager, then restore runtime `MemoryHigh=infinity` / `MemoryMax=512M` with `systemctl --user set-property --runtime midas-reality-api.service MemoryHigh=infinity MemoryMax=512M`. Exact sequence is recorded in the 17:26 follow-up below. |
-| Checkpoint Frontier worktree | Preserve current implementation before incident edits. | Current commit `f2d0199`; branch `codex/frontier-20261026`. Untracked `data/frontier-public-probes/` remains untouched. | No rollback needed; normal Git history is the recovery point. |
+| Checkpoint Frontier worktree | Preserve current implementation before incident edits. | Tag `checkpoint/frontier-pre-host-memory-incident-20261029-2054` points to commit `01d51aa` on `codex/frontier-20261026`. Untracked `data/frontier-public-probes/` remains untouched. | No rollback needed; normal Git history and the tag are the recovery point. |
 
 The exact capacity rollback can be applied with:
 
@@ -5119,3 +5119,76 @@ claimed for the parent high-event increment.
 The service succeeded within its bound, but swap remains full and parent high
 events advanced. Do not start another memory-bearing task before a fresh
 admission sample; continue only code review/documentation in the meantime.
+
+### Host and service recheck — 2026-10-29 20:56 CET
+
+The worktree was checkpointed before this follow-up with annotated tag
+`checkpoint/frontier-pre-host-memory-incident-20261029-2054` targeting
+`01d51aa9972c112c77747b7c903a001c238e15a2`. The branch had no tracked
+changes; the existing untracked `data/frontier-public-probes/` directory was
+left untouched. This follow-up changes documentation only. No service,
+timer, cgroup limit, collector process, archive, manifest, or research store
+was changed.
+
+At 20:56, host PSI was zero for the reported avg10/avg60/avg300 windows and
+MemAvailable was about 10 GiB. The 4 GiB swap device remained full, with
+about 336 KiB free. At 20:54, user@1000.service was charged about 10.9 GB
+(10.2 GiB) memory and 2.87 GB (2.67 GiB) swap; it and its user slice have no MemoryHigh, MemoryMax,
+or MemorySwapMax. Its hierarchical events were unchanged at 20:56:
+high=16,438,371, max=732,222, oom=19, oom_kill=15, and oom_group_kill=0.
+No systemd-oomd or kernel OOM kill was logged on October 29 through this
+sample. The last recorded OOMD kill remains 23:43:24 on October 28; the last
+kernel memcg OOM remains the 20:15:44 October 28 capacity-check run.
+
+Current user-manager memory is concentrated in several live groups. At 20:54,
+app.slice charged about 10.5 GB memory and 2.24 GB swap. Its
+app-org.gnome.Terminal.slice charged about 5.65 GB memory and 1.66 GB swap;
+midas-api.service charged 1.35 GB and midas-reality.service charged 0.97 GB.
+These are current contributors, not proof of the historical marginal cause.
+API and Reality were below their local High limits at the sample and had no
+local max/OOM/kill events, but their lifetime local memory.events.high
+counters were 11,692 and 33,176. Their current local PSI averages were zero.
+The cgroup data therefore shows large competing workloads and prior reclaim
+activity without identifying which workload crossed the user-manager PSI
+threshold during the October 28 kills.
+
+The documented kill mechanism remains clear even though the marginal
+workload is not: the October 28 OOMD records cite sustained pressure above
+the user manager's 50% policy; the five-minute gap-detail replay accounted
+for 106 of 129 OOMD kills and showed high local PSI near 50–76% at sampled
+kills. This makes gap-detail the strongest recurring removable contributor,
+not a proven sole cause. The 128 MiB capacity-service MemoryMax separately
+explains seven kernel CONSTRAINT_MEMCG kills. The full sidecar catalog in
+the capacity implementation is a plausible memory driver, supported by
+source inspection and the 40,316-sidecar inventory; no per-kill allocator
+profile exists. Its bounded fix remains isolated in commit bd09640, not
+deployed or run against live recordings.
+
+At 20:56, the gap-detail timer was still disabled and its service remained
+failed from the historical OOMD kill. The capacity timer was active; the
+20:50:55 run exited successfully at 20:51:03 under High 160 MiB / Max
+192 MiB / zero swap and consumed 6.259 CPU seconds. systemd's reported
+256 KiB memory peak is not credible and is not treated as a measurement.
+The timer remains every 30 minutes; no overlap with the other sampled
+scheduled jobs was observed. No further Frontier test, replay, public probe,
+or memory-bearing job was started after that capacity run.
+
+MIDAS API, Reality, Reality API/web, MIDAS web, Continental user services,
+Echo services, Caddy, and RustDesk were active. The SSH socket was active
+and port 22 was listening; the standalone SSH service unit was inactive as
+expected for socket activation. API and Reality restart counts remained 9
+and 14, with their last starts at 23:33:08 and 23:43:19 on October 28. This
+confirms service processes are currently running, not that Reality's live
+books are fresh, sequenced, or archive-complete. The pre-existing
+INVALID_MANIFEST and archive provenance/inventory warnings remain a separate
+integrity issue; no attempt was made to repair them.
+
+The host is **partially contained, not resolved**. Zero current PSI and about
+10 GiB available RAM permit serial documentation and small, resource-capped
+code work after a fresh admission check. Full swap, near-High API/Reality
+history, the unbounded user-manager cgroup, the OOMD registration
+discrepancy, and unresolved marginal workload attribution do not support
+broad tests, concurrent jobs, large replay, live probes, or deployment.
+Continue the Frontier mission only in serial, with zero-swap worker caps and
+no overlap with scheduled jobs; recheck after the next capacity timer before
+admitting another memory-bearing task.

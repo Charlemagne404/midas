@@ -16691,3 +16691,38 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
 - The gap-detail timer remains disabled. The TypeScript replay-contract check
   is verified; live source validation, broad acceptance, and deployment remain
   pending. Host containment remains **PARTIALLY VERIFIED** with full swap.
+
+## 2026-10-29 20:56 CET — host incident recheck and Frontier admission
+
+- Created annotated checkpoint tag
+  `checkpoint/frontier-pre-host-memory-incident-20261029-2054` at
+  `01d51aa` before changing incident documentation. The existing untracked
+  public-probe directory remains untouched.
+- At 20:56, host PSI averages were zero and MemAvailable was about 10 GiB,
+  but all 4 GiB swap remained occupied (about 336 KiB free). At 20:54,
+  user@1000 charged about 10.9 GB (10.2 GiB) memory and 2.87 GB (2.67 GiB)
+  swap, with no aggregate memory or swap ceilings. Its high/max/oom/oom_kill
+  counters were 16,438,371/732,222/19/15 and remained unchanged through 20:56.
+- Current charge is concentrated in app.slice (~10.5 GB memory / 2.24 GB
+  swap), including the GNOME Terminal slice (~5.65 GB / 1.66 GB), MIDAS API
+  (~1.35 GB), and Reality (~0.97 GB). API and Reality were below local High
+  limits with zero current PSI and no local max/OOM/kill events. Their local
+  high counters show historical reclaim events, not current failure.
+- systemd-oomd is active, but oomctl dump still lists no monitored cgroups
+  despite the loaded 50% user-manager pressure policy. No October 29 kernel
+  or OOMD kill appeared. OOMD's 129 October 28 kills, including 106
+  gap-detail victims, and the seven old-cap capacity memcg OOMs remain the
+  strongest demonstrated incident mechanisms; the exact global/marginal
+  workload is unresolved.
+- The gap-detail timer remains disabled. Capacity's 20:50:55 run succeeded
+  at 20:51:03 under High 160 MiB / Max 192 MiB / zero swap; its 256 KiB
+  reported peak is invalid. The bounded scan fix bd09640 remains isolated
+  and undeployed. The API, Reality, Reality API/web, MIDAS web, Continental,
+  Echo, Caddy, RustDesk, and SSH socket listener were active; no service or
+  production configuration was changed.
+- No Frontier test, replay, public probe, or other memory-bearing job was
+  started after the capacity run. Continue with serial documentation or
+  small zero-swap-capped code work after a fresh admission check. Do not
+  start broad tests, concurrent jobs, live probes, or deployment while swap
+  remains full and OOMD visibility is unresolved. Incident status remains
+  **PARTIALLY CONTAINED / PARTIALLY VERIFIED**.
