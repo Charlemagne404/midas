@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 08:45 CET |
+| Latest addendum | 2026-10-29 08:50 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Pre-incident checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -1582,15 +1582,11 @@ change the incident assessment.
   minutes; its current effective limit is `MemoryHigh=160M`,
   `MemoryMax=192M`, `MemorySwapMax=0`. The 08:17:52 run exited successfully at
   08:17:59. Its post-cleanup 256 KiB peak field is not a valid process peak.
-- Read-only source inspection in the Reality worktree found a plausible
-  capacity-monitor memory mechanism: when archive manifest provenance is
-  invalid, `archive_capacity()` calls `_archive_directory_usage()` without a
-  trusted segment catalog, and that helper materializes every directory entry
-  in an `os.scandir()` dictionary before checking files. This matches the
-  current invalid-manifest warnings and can scale with archive entry count.
-  The killed runs did not retain a memory peak or entry count, so this remains
-  a code-supported hypothesis, not a demonstrated per-run cause. The archive
-  was not rescanned, changed, or repaired.
+- The pre-fix `project/reality` code parsed an unbounded archive manifest and,
+  when its provenance was invalid, materialized every directory entry before
+  checking files. The killed runs did not retain a memory peak or entry count,
+  so this was a code-supported risk, not a demonstrated per-run cause. The
+  08:50 addendum below records the bounded fix and scheduled-run evidence.
 - After the scheduled source-analysis job completed, the final formatted
   Kraken WebSocket reconstructor suite passed **12/12 tests in 1.88 seconds**.
   It ran in a transient 384 MiB high / 512 MiB max, zero-swap, 20% CPU,
@@ -1613,3 +1609,61 @@ Keep broad suites, UI builds, profiling, large replay, new campaigns, live
 source probes, and deployment deferred. The incident stays **PARTIALLY
 CONTAINED / PARTIALLY VERIFIED**; do not infer that the machine is cleared for
 heavy work from available RAM or a brief zero-PSI sample.
+
+## 2026-10-29 08:50 CET — capacity-scan mitigation and scheduled validation
+
+- Inspected the isolated `/home/charlie/midas-reality-capacity-scan-frontier-20261029`
+  branch. It was based exactly on the clean service worktree commit
+  `4f5cb5689548987bf30a33f050284ea8cb2f3c28` and had four local commits:
+  `8b2131f`, `9868dac`, `7e637a9`, and `d8629e4`. The focused
+  `tests/test_reality_operations.py -k archive_capacity` run passed **5/5**
+  (35 deselected) in 0.80 seconds under a 384 MiB high / 512 MiB max,
+  zero-swap, 20% CPU, 64-task transient scope. It used temporary fixtures and
+  did not scan the real archive.
+- Fast-forwarded only the local `/home/charlie/midas-reality` branch
+  `project/reality` from `4f5cb56` to `d8629e4`. The worktree was clean before
+  and after. No service configuration changed, no manual capacity invocation
+  occurred, and the protected Reality recorder was not restarted. The next
+  existing timer invocation therefore exercised the fix without an explicit
+  restart.
+- The change streams the inventory directory walk with a hard 65,536-entry
+  bound, returns unknown bytes/headroom if that bound is exceeded, reads the
+  archive manifest with a 4 MiB byte cap plus a growth-race check and no-follow
+  regular-file open, and skips an inventory walk when manifest provenance is
+  invalid or size-limited. It leaves all archive bytes and manifest contents
+  untouched. The report deliberately shows unknown archive capacity when its
+  inventory cannot be trusted.
+- The scheduled capacity service ran at 08:48:00 and finished successfully at
+  08:48:07 (6.572 CPU seconds), under its existing
+  `MemoryHigh=160M` / `MemoryMax=192M` / `MemorySwapMax=0` bounds. The new
+  report carries `ARCHIVE_MANIFEST_SIZE_LIMIT`,
+  `ARCHIVE_INVENTORY_UNVERIFIED`, and `ARCHIVE_CAPACITY_UNKNOWN`; archive
+  `raw_archive_bytes`, headroom, and runway are null. This confirms the
+  over-4-MiB manifest is rejected before inventory traversal and that the
+  scheduled checker completed. Its process memory peak was not retained, so
+  this does not quantify the memory reduction.
+- Reality status briefly changed at 08:48:34 to `DEGRADED_BOOKS`, 15/16 fresh,
+  stale. By 08:48:55 it had returned to `RECORDING_UNSEQUENCED`,
+  `active_receiving`, 16/16 fresh, one recorded failure, no backpressure, and
+  `sequence_verified=false`. The recorder PID stayed 1235804, restart count
+  14; no matching error or OOM record appeared. This transient source-quality
+  change is recorded as an observation, not attributed to the capacity code.
+- At 08:49:13, MemAvailable was 11,267,211,264 bytes, SwapFree was 9,240,576
+  bytes, global PSI remained zero, user-manager memory/swap were
+  9,849,122,816 / 2,858,233,856 bytes, and OOM counters remained 19/15/0. No
+  kernel or systemd-oomd record appeared since 08:47:30. API and Reality
+  remained active at restart counts 9/14. The host remains partially
+  contained; nearly full swap and uncertain historical workload attribution
+  are unresolved.
+
+Rollback for the code-only fast-forward, if needed, is a revert commit (no
+reset or forced branch movement):
+
+```sh
+git -C /home/charlie/midas-reality revert --no-edit 4f5cb5689548987bf30a33f050284ea8cb2f3c28..d8629e4b63c8b8ef68e27294fb3599423a694b76
+```
+
+Keep the five-minute gap-detail timer disabled. Frontier may continue with
+short serial fixture work after fresh admission; do not use the quiet interval
+or successful capacity run as evidence for heavy tests, full recovery, archive
+integrity, or production readiness.
