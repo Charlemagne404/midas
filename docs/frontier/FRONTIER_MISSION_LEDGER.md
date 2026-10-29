@@ -15705,3 +15705,43 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
   active. MIDAS restart counts remained 9/14/0. Host status remains
   partially contained because swap is nearly full and max-event counters
   continue to rise.
+
+## 2026-10-29 16:28 CET — infrastructure incident recheck
+
+- Confirmed the Frontier branch checkpoint remains `1b34bb2` on
+  `codex/frontier-20261026`; the sole untracked item is the pre-existing
+  `data/frontier-public-probes/`, preserved untouched.
+- Rechecked host, user-manager, and service cgroups. At 16:28, host PSI was
+  zero and MemAvailable was 11,101,272 kB, but only 17,980 kB swap remained.
+  `user@1000.service` had 10,877,222,912 bytes current / 13,992,292,352 peak,
+  2,853,961,728 bytes swap, and no hard memory/swap ceiling. `Committed_AS`
+  exceeded `CommitLimit` under `vm.overcommit_memory=0`; this is virtual
+  commit accounting, not resident use or proof of current failure.
+- OOMD's Oct 28 journal contains 129 user-manager-pressure victim events:
+  106 gap-detail, 10 Reality, 8 MIDAS API, 4 Terminal scopes, and 1 Firefox.
+  The trigger was user-manager PSI >50% for >20s with reclaim. Seven kernel
+  OOM kills were local memcg failures in the Reality capacity checker under
+  the former 128 MiB cap; no global kernel OOM was found in the queried
+  interval. These facts establish the trigger and local cap fault, not one
+  dominant host-wide initiating workload.
+- The gap-detail replay timer remains disabled/inactive and its service is
+  failed; it is auxiliary finalized-data replay. The capacity checker now has
+  a persistent 160/192 MiB high/max, zero-swap bound and its 16:19 scheduled
+  run completed in 8 seconds. No service configuration or protected service
+  was changed in this follow-up.
+- Reality is active and its status was fresh at 16:26:31: 16 fresh books / 8
+  markets, one stale-source error, no backpressure, and sequence verification
+  false. The isolated Reality API was at 535,916,544 / 536,870,912 bytes with
+  14 new local `max` events and no OOM; its cap was left unchanged. API,
+  Reality, Reality API, Continental, Echo, SSH, RustDesk, and systemd-oomd
+  were active. OOMD and kernel OOM journals had no new matching events since
+  their Oct 28 final kills.
+- Frontier's heavier checks later on Oct 29 produced measured transient PSI
+  rises; they were not running during the Oct 28 kill cluster. Continue only
+  serial source-independent implementation and small fixture checks after a
+  fresh admission sample (256 MiB high / 384 MiB max, zero swap, 15% CPU, 48
+  tasks, 90 seconds). Defer browser/build/broad tests, replay batches, and
+  external probes. The host incident remains **PARTIALLY CONTAINED / PARTIALLY
+  VERIFIED**, not resolved.
+- Detailed evidence and rollback guidance are appended to
+  [`FRONTIER_MEMORY_PRESSURE_INCIDENT_2026-10-28.md`](FRONTIER_MEMORY_PRESSURE_INCIDENT_2026-10-28.md).

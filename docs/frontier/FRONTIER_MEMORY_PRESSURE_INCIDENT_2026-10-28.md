@@ -3,7 +3,7 @@
 **Incident date:** 2026-10-28 (CET)
 
 **Initial checkpoint:** 2026-10-29 01:54 CET; append-only follow-up observations
-through 2026-10-29 03:44 CET are recorded below.
+through 2026-10-29 16:28 CET are recorded below.
 
 **Scope:** Host reliability interruption during Project Frontier
 
@@ -364,10 +364,14 @@ repair or reclassify the existing archive.
   23:23–23:43 system-wide pressure. The large Terminal, API, and Reality file
   cache charges are substantial, but page-cache attribution is incomplete and
   a current snapshot cannot reconstruct the incident peak.
-- Frontier tests were not running during the OOMd kill cluster. The last
-  bounded Frontier checks occurred earlier; no evidence ties them to the
-  incident. No new Frontier test or research process was started during this
-  incident response.
+- Frontier tests were not running during the Oct 28 OOMd kill cluster, so
+  they did not initiate that cluster. Later on Oct 29, Frontier verification
+  did create measured transient pressure: a TypeScript check under a 256 MiB
+  `MemoryHigh` reached a 272.1 MiB peak and coincided with host PSI avg10 of
+  26.48% `some` / 24.51% `full`; a bounded browser check later coincided with
+  6.32% / 5.51% avg10. OOM counters did not change in those windows. These
+  observations make heavier Frontier verification a demonstrated controllable
+  pressure contributor, but do not attribute the earlier OOMd cluster to it.
 - The Arena scheduler continued to run its one-second dispatcher and reported
   `schedules: []`; the evidence does not show it as a material load source.
 - The archive’s `INVALID_MANIFEST`, segment inventory, and provenance warnings
@@ -411,8 +415,13 @@ At 00:05 CET, the same values were made persistent in
 The effective properties read back successfully after user-manager reload;
 the service was inactive, so no running job or live collector was restarted.
 The scheduled 00:16 run was terminated at 00:17 by the existing 60-second
-start timeout. No kernel OOM was logged, but systemd did not retain its peak
-memory, so the revised limit is not validated.
+start timeout. The persistent override was subsequently revised to
+`MemoryHigh=160M`, retaining `MemoryMax=192M` and `MemorySwapMax=0`. Later
+scheduled runs completed, including the 00:46 run (33.3 seconds, 137.4 MiB
+measured peak), the 01:16 run (134,225,920-byte peak), and the 16:19 run
+(exit 0 in 8 seconds, 7.487 CPU seconds). systemd did not retain the last
+run's peak. This demonstrates successful bounded executions, not endurance
+or proof that the underlying inventory path is resource-safe at every size.
 
 Rollback the effective memory properties:
 
@@ -460,10 +469,12 @@ Read-only validation after the containment actions confirmed:
 - The gap-detail timer is `inactive/dead` and `disabled`; its last trigger
   remains 23:42:14 CET. Restore with `systemctl --user enable --now
   midas-veritas-gap-detail-v2.timer` after admission review.
-- Capacity monitor effective properties read back as `128M` high, `192M` max,
-  and swap max `0`, backed by the persistent `90-frontier-memory-bound.conf`.
-  Its 00:16 run timed out after 60 seconds without a kernel OOM; peak memory
-  was unavailable and the updated limits are not validated.
+- Capacity monitor effective properties now read back as `160M` high,
+  `192M` max, and swap max `0`, backed by the persistent
+  `90-frontier-memory-bound.conf`. The initial 00:16 run timed out after 60
+  seconds; later scheduled runs succeeded, including 16:19. systemd did not
+  retain the most recent run's peak, so only the earlier measured runs bound
+  peak usage.
 - At 23:51:44 host PSI avg10 was 0%, avg300 was 3.82%; there were no new oomd
   kill entries after 23:43:24 through that sample. The quiet interval was only
   about eight minutes total and about five minutes after stopping the timer.
@@ -512,9 +523,13 @@ coverage was added but not run, and the change is not deployed. It is not
 counted as current host protection; no worker or service was started for this
 change.
 
-Until then, Frontier may continue static/documentation work only. Do not run
-tests, replays, live probes, or batch research. Continue to preserve the
-untracked `data/frontier-public-probes/` and all Reality/Veritas/Arena data.
+The original 23:55 continuation gate above is historical and has been
+superseded by the later bounded validations and the current observation at the
+end of this report. The current gate remains serial, fixture-only work under
+the per-job resource caps recorded in the latest follow-up; broad suites,
+browser/build workloads, live probes, and batch research remain deferred.
+Continue to preserve the untracked `data/frontier-public-probes/` and all
+Reality/Veritas/Arena data.
 
 ## Follow-up observation — 2026-10-29 00:40 CET
 
@@ -1650,3 +1665,126 @@ that the host incident is resolved: swap remains virtually exhausted and the
 historical OOM initiator remains unknown. Continue only serial, bounded offline
 Frontier work; do not start a live probe, broad suite, research batch, or
 production transition on this evidence.
+
+## Host recheck and current operating gate — 2026-10-29 16:28 CET
+
+### Current resource state
+
+At 16:28:06, the host reported 11,101,272 kB `MemAvailable` (about 10.59
+GiB), 17,980 kB swap free (about 17.6 MiB of 4 GiB), and zero host PSI
+avg10/avg60/avg300. The user manager's PSI averages were also zero. A four
+second `vmstat` sample showed no continuing swap-in or swap-out after its
+first one-second sample (about 0.25 MiB each). This is a quiet current sample
+with exhausted swap headroom, not evidence of durable recovery.
+
+The uncapped `user@1000.service` cgroup charged 10,877,222,912 bytes memory
+and 2,853,961,728 bytes swap; its historical memory peak is
+13,992,292,352 bytes. Its `memory.events` were
+`high=16,437,792`, `max=730,731`, `oom=19`, and `oom_kill=15`. The app slice
+charged 10,472,050,688 bytes memory and 2,226,974,720 bytes swap. The user
+manager, its app slice, and inspected ancestors have no memory or swap hard
+limit. File cache is material: the Terminal slice was 5,097 MiB current,
+including about 3,625 MiB file-backed memory, 978 MiB anonymous memory, and
+1,571 MiB swap. One nested terminal scope held 2,667 MiB, mostly file-backed.
+These are current cgroup charges; they do not identify the command that
+populated file cache or reconstruct the earlier peak.
+
+`Committed_AS` was 20,991,236 kB versus a 12,331,784 kB `CommitLimit`, with
+`vm.overcommit_memory=0` and ratio 50. This is virtual commit accounting,
+not resident usage or proof of a current failure, but it is another reason to
+defer high-commit workloads. It does not identify the historical OOMD
+initiator.
+
+### Attribution and service behavior
+
+The OOMD log for Oct 28 contains 129 victim events: 106 gap-detail replay,
+10 Reality, 8 MIDAS API, 4 GNOME Terminal scopes, and 1 Firefox scope. Each
+OOMD kill in the incident cluster names user-manager PSI above its configured
+50% threshold for more than 20 seconds with reclaim active. This proves the
+user-hierarchy pressure trigger and the victims, not a sole initiating
+workload. The gap-detail timer is still disabled/inactive; its failed
+oneshot has not been reset or relaunched.
+
+The kernel journal contains seven Reality capacity-checker memcg OOM kills
+between 17:15 and 20:15 on Oct 28. All are `CONSTRAINT_MEMCG` events naming
+that service, with about 129–131 MiB anonymous RSS plus about 11 MiB file RSS
+against the old 128 MiB hard cap. No global kernel OOM kill was found in the
+queried journal interval. The persistent capacity override is now
+`MemoryHigh=160M`, `MemoryMax=192M`, `MemorySwapMax=0`; the scheduled 16:19
+run exited successfully after eight seconds (7.487 CPU seconds). Its peak was
+not retained. The existing archive manifest, inventory, and provenance
+warnings remain untouched and separate from this memory incident.
+
+During the sampled afternoon, the Arena dispatcher completed at 16:24:09 in
+the same second it started; Veritas observatory, source analysis, and research
+director ran for 12, 12, and 1 seconds at 16:00, 16:10, and 16:15. The
+capacity check completed at 16:19. These bounded jobs were staggered in this
+sample; this does not establish that all earlier schedules never overlapped.
+
+The isolated Reality API is the current leaf near a hard memory limit:
+535,916,544 bytes current of 536,870,912 bytes (`MemoryMax=512M`), with
+`memory.peak` exactly at the cap and `memory.events max=5,107`, but
+`oom=0`/`oom_kill=0`. Its `max` count rose by 14 since the 16:18 sample. The
+parent user-manager `max` count rose by 15 in the same interval, so most of
+the increment is attributable to this leaf; the remaining event is not
+attributed. Its PSI averages remain zero. No limit or service change is
+justified by this short sample, so the cap and service were left alone.
+
+MIDAS API was active at PID 1218662, restart count 9, with 1,237,774,336
+bytes current against `MemoryHigh=1.5G` and `MemoryMax=1.75G`; leaf OOM
+counters were zero. Reality was active at PID 1235804, restart count 14,
+with 804,958,208 bytes current against `MemoryHigh=1.125G` and
+`MemoryMax=1.25G`; its leaf OOM counters were zero. The Reality status file
+was updated at 16:26:31 and reported `collection_health=active_receiving`,
+16 fresh books across 8 markets, one failure, no backpressure, and
+`sequence_verified=false`. Its state remains `DEGRADED_SOURCE_TIMING` and
+its last error is `TimeoutError: Market observations stale; reconnect for
+fresh snapshots`. This is evidence of current receiving with a source-quality
+warning, not proof of fully healthy or sequenced capture. A local GET of the
+Reality API health route returned HTTP 200 and `READY` in demo mode with
+`live_execution=false`; this only checks that route.
+
+Continental tailnet and identity services, Echo production and staging,
+RustDesk, systemd-oomd, and listening `ssh.socket` remained active. No OOMD
+kill appeared after Oct 28 23:43:24; the latest kernel memcg OOM was Oct 28
+20:15:44. No critical service was restarted or reconfigured in this follow-up.
+
+### Frontier contribution and continuation gate
+
+No Frontier test or research worker ran during the Oct 28 OOMD kill cluster.
+Later Oct 29 measurements do show that heavier Frontier verification can
+add transient pressure: a TypeScript check under a 256 MiB `MemoryHigh`
+reached a 272.1 MiB peak and coincided with host PSI avg10 26.48% `some` /
+24.51% `full`; a later bounded browser check coincided with 6.32% / 5.51%
+avg10. The tests were stopped/completed, OOM counters did not change, and PSI
+subsided. These runs do not explain Oct 28, but they establish that Frontier
+verification belongs inside the host's admission controls. No Frontier test,
+build, browser, or research process was started during this 16:28 follow-up.
+
+The Frontier worktree remains at checkpoint `1b34bb2` on
+`codex/frontier-20261026`; only the pre-existing untracked
+`data/frontier-public-probes/` is present. The five-minute gap-detail timer is
+disabled and can be restored only after admission review:
+
+```sh
+systemctl --user enable --now midas-veritas-gap-detail-v2.timer
+```
+
+The capacity drop-in rollback command remains recorded in **Changes made
+and rollback**; restoring the old 128 MiB maximum would reintroduce the
+demonstrated local OOM failure and is not recommended without an alternative
+bounded implementation. No persistent service configuration, Reality data,
+archive manifest, API configuration, or other project data was changed in
+this follow-up.
+
+**Current status: PARTIALLY CONTAINED / PARTIALLY VERIFIED, not resolved.**
+There has been no new OOMD kill for more than 16 hours and no kernel memcg OOM
+for more than 20 hours, but swap remains nearly full, the user hierarchy is
+uncapped, Reality API continues to touch its hard maximum, and the historical
+initiating workload remains unidentified. Frontier may resume only serial,
+source-independent code and small fixture tests, after a fresh pressure
+check, in a transient zero-swap scope bounded at 256 MiB `MemoryHigh`,
+384 MiB `MemoryMax`, 15% CPU, 48 tasks, and 90 seconds. Stop if host/user PSI
+rises or `MemAvailable` falls below 8 GiB. Defer broad test suites, frontend
+type/build/browser work, archive scans, replay batches, external probes, and
+concurrent research.
