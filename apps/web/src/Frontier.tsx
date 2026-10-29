@@ -8432,6 +8432,11 @@ function CandidateCard({
 
 function RunSummary({ run, expanded = false }: { run: Run; expanded?: boolean }) {
   const { manifest, candidates: runCandidates, classification_counts: countsByClass } = run.result;
+  const candidatePageSize = 10;
+  const [candidatePage, setCandidatePage] = useState(0);
+  const candidatePageCount = Math.ceil(runCandidates.length / candidatePageSize);
+  const candidateStart = candidatePage * candidatePageSize;
+  const visibleCandidates = runCandidates.slice(candidateStart, candidateStart + candidatePageSize);
   return (
     <article className="fr-run-summary">
       <div className="fr-run-top">
@@ -8470,9 +8475,38 @@ function RunSummary({ run, expanded = false }: { run: Run; expanded?: boolean })
               .map(([key, value]) => `${key}: ${value}`)
               .join(' · ') || 'none'}
           </p>
-          {runCandidates.slice(0, 10).map((candidate) => (
+          {visibleCandidates.map((candidate) => (
             <CandidateCard key={candidate.candidate_id} candidate={candidate} />
           ))}
+          {candidatePageCount > 1 && (
+            <div
+              className="fr-graph-pagination"
+              role="group"
+              aria-label="Saved replay candidate pages"
+            >
+              <button
+                className="fr-action"
+                disabled={candidatePage === 0}
+                onClick={() => setCandidatePage((current) => Math.max(0, current - 1))}
+              >
+                Previous replay candidates
+              </button>
+              <span aria-live="polite">
+                Showing {candidateStart + 1}–
+                {Math.min(candidateStart + candidatePageSize, runCandidates.length)} of{' '}
+                {runCandidates.length} saved replay candidates
+              </span>
+              <button
+                className="fr-action"
+                disabled={candidatePage + 1 >= candidatePageCount}
+                onClick={() =>
+                  setCandidatePage((current) => Math.min(candidatePageCount - 1, current + 1))
+                }
+              >
+                Next replay candidates
+              </button>
+            </div>
+          )}
         </details>
       )}
     </article>

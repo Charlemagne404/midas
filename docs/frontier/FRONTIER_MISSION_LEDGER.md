@@ -13021,3 +13021,23 @@ is pending in this worktree; only these five Frontier files are in scope.
 Overall Frontier remains **PARTIALLY VERIFIED**. Next safe step: continue with
 another bounded evidence-inspection gap while source permissions and the host
 incident remain open; do not start live collection or broad suites.
+
+### Saved replay candidate paging — 2026-10-29 04:02 CET
+
+The saved replay history `RunSummary` previously showed only the first 10
+candidate details and did not let a reviewer reach later candidates. Added
+accessible 10-candidate pages with previous/next navigation and a visible range
+inside the expanded saved replay manifest. The initial render remains bounded.
+
+Prettier passed; `tsc -b` passed on the final UI and test tree. The focused
+fixture-backed Playwright case passed **1/1 in 38.9 seconds**. It loads a
+synthetic saved run with 12 candidates and verifies both pages and return
+navigation; it made no source probe and no Arena submission. At 04:02:10 PSI
+remained zero, OOM counters 19/15 were unchanged, and the API and Reality were
+active at restarts 9/14. Swap was 99.96% occupied, so the host incident remains
+open and research remains serial and offline.
+
+Files: `apps/web/src/Frontier.tsx`, `apps/web/e2e/frontier.spec.ts`, this
+ledger, the engineering report, and the memory pressure incident report. No
+untracked evidence or historical data was touched. The changes are awaiting a
+separate local commit. Overall Frontier remains **PARTIALLY VERIFIED**.

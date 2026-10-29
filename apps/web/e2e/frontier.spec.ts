@@ -470,11 +470,68 @@ test('fixture timeline shows per-instrument source timing evidence', async ({ pa
     timing_verified: false,
     evidence_sha256: evidenceId('d', index + 1),
   }));
+  const savedReplayCandidates = Array.from({ length: 12 }, (_, index) => ({
+    candidate_id: evidenceId('e', index + 1),
+    family: `fixture_saved_replay_candidate_${index + 1}`,
+    classification: 'PRICE_DISCREPANCY_ONLY',
+    hypothetical: true,
+    practical_eligibility: false,
+    venues: ['polymarket'],
+    legs: [],
+    gross_cost: '0',
+    modeled_fees: null,
+    modeled_net_cost: null,
+    outcome_payout_by_state: {},
+    gross_pnl_by_state: {},
+    net_pnl_by_state: {},
+    worst_case_gross_pnl: '0',
+    worst_case_net_pnl: null,
+    capital_by_venue: {},
+    received_skew_ms: null,
+    exchange_skew_ms: null,
+    timing_verified: false,
+    independent_audit: null,
+    assumptions: ['Fixture only.'],
+    reasons: ['Saved replay fixture candidate.'],
+    evidence_sha256: evidenceId('f', index + 1),
+  }));
   let sourceProbeRequests = 0;
   let arenaSubmissions = 0;
   page.on('request', (request) => {
     if (request.url().includes('/api/frontier/probe/')) sourceProbeRequests += 1;
     if (request.method() === 'POST' && request.url().includes('/api/arena/')) arenaSubmissions += 1;
+  });
+
+  await page.route('**/api/frontier/runs?limit=30', async (route) => {
+    await route.fulfill({
+      json: {
+        items: [
+          {
+            run_id: digest('1'),
+            created_at_utc: '2026-10-29T00:00:00Z',
+            result_sha256: digest('2'),
+            result: {
+              manifest: {
+                replay_version: 'frontier-fixture-replay',
+                code_version: 'frontier-e2e-fixture-v1',
+                normalized_input_sha256: digest('3'),
+                market_observation_ids: [],
+                fee_metadata_observation_ids: [],
+                book_observation_ids: [],
+                relationship_ids: [],
+                as_of_utc: '2026-10-29T00:00:00Z',
+                scenario: { name: 'fixture saved replay' },
+              },
+              candidates: savedReplayCandidates,
+              classification_counts: { PRICE_DISCREPANCY_ONLY: savedReplayCandidates.length },
+            },
+          },
+        ],
+        returned: 1,
+        limit: 30,
+        offset: 0,
+      },
+    });
   });
 
   await page.route('**/api/arena/frontier-timelines?limit=20', async (route) => {
@@ -594,6 +651,27 @@ test('fixture timeline shows per-instrument source timing evidence', async ({ pa
   await expect(candidatePages).toContainText('Showing 9–10 of 10 saved candidate summaries');
   await candidatePages.getByRole('button', { name: 'Previous candidates' }).click();
   await expect(page.locator('.fr-timeline-candidate')).toHaveCount(8);
+
+  await page.getByRole('heading', { name: 'Experiment history' }).scrollIntoViewIfNeeded();
+  const savedReplay = page.locator('.fr-run-list .fr-run-summary');
+  await expect(savedReplay).toHaveCount(1);
+  await savedReplay.locator('.fr-run-details > summary').click();
+  const replayCandidatePages = savedReplay.getByRole('group', {
+    name: 'Saved replay candidate pages',
+  });
+  await expect(replayCandidatePages).toContainText('Showing 1–10 of 12 saved replay candidates');
+  await expect(savedReplay.locator('.fr-candidate')).toHaveCount(10);
+  await expect(savedReplay.locator('.fr-candidate-head .fr-kicker').nth(0)).toHaveText(
+    'fixture saved replay candidate 1',
+  );
+  await replayCandidatePages.getByRole('button', { name: 'Next replay candidates' }).click();
+  await expect(savedReplay.locator('.fr-candidate')).toHaveCount(2);
+  await expect(savedReplay.locator('.fr-candidate-head .fr-kicker').nth(0)).toHaveText(
+    'fixture saved replay candidate 11',
+  );
+  await expect(replayCandidatePages).toContainText('Showing 11–12 of 12 saved replay candidates');
+  await replayCandidatePages.getByRole('button', { name: 'Previous replay candidates' }).click();
+  await expect(savedReplay.locator('.fr-candidate')).toHaveCount(10);
   expect(sourceProbeRequests).toBe(0);
   expect(arenaSubmissions).toBe(0);
 });

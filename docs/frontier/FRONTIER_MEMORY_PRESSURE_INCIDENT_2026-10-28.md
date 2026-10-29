@@ -1575,3 +1575,16 @@ were active. No production service or resource configuration was changed.
 This is a bounded quiet sample; the host incident remains open because swap is
 nearly full, user-manager limits remain unbounded, and the historical
 initiating workload is still unidentified.
+
+### Saved replay paging resource check — 2026-10-29 04:02 CET
+
+The follow-up saved replay UI check was fixture-backed and ran alone under a
+transient 1 GiB `MemoryHigh`, 1,280 MiB `MemoryMax`, zero-swap, 25%-CPU scope.
+It passed one Playwright test in 38.9 seconds with one worker. No live source
+request or Arena submission was made. At 04:02:10, PSI remained zero and
+user-manager OOM counters were unchanged at 19/15. `MemAvailable` was
+11,378,708 kB; swap remained 4,192,684/4,194,300 kB used (1,616 kB free).
+API/Reality remained active at restart counts 9/14 with zero service swap. No
+kernel OOM or oomd kill appeared after 03:56:57; the last previously recorded
+OOM event remains Oct 28 23:43:24. This remains a quiet bounded interval, not
+evidence of sustained host stability.

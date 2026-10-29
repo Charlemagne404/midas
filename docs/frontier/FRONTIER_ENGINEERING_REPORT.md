@@ -13623,3 +13623,24 @@ and this is not live artifact retrieval or production verification.
 | Live and production artifact validation | DEFERRED | No live source or production API was queried. |
 | Host memory incident | PARTIALLY VERIFIED | At 03:56:57 PSI was zero and OOM counters unchanged; swap was 99.96% occupied and initiating workload remains unknown. |
 | Project Frontier overall | PARTIALLY VERIFIED | Live multi-venue evidence, broad acceptance, endurance, protected recovery, and deployment remain open. |
+
+## Saved replay candidate paging — 2026-10-29 04:02 CET
+
+The saved experiment-history view used `runCandidates.slice(0, 10)` and exposed
+no way to inspect the rest of a persisted run's candidates. `RunSummary` now
+keeps the initial view at 10 candidate cards and adds accessible previous/next
+pages with a visible range. This path only renders already saved, integrity
+checked local run evidence; it does not alter replay results.
+
+Prettier and `tsc -b` passed. The focused fixture browser case passed **1/1 in
+38.9 seconds** with one worker in a transient 1 GiB high / 1,280 MiB max,
+zero-swap, 25%-CPU scope. It presents 12 synthetic saved candidates, traverses
+both pages in both directions, and confirms no public probe or Arena
+submission. No live or production artifact was used.
+
+| Requirement | Status | Evidence and boundary |
+| --- | --- | --- |
+| Saved replay candidate detail inspection | COMPLETE AND VERIFIED WITH FIXTURES | All 12 saved candidates are reachable through 10-card pages in the browser fixture. |
+| Persisted run integrity or live artifact validation | PARTIALLY VERIFIED | The UI consumes the existing verified-run API contract; this fixture does not retrieve a production artifact. |
+| Host memory incident | PARTIALLY VERIFIED | At 04:02:10 PSI was zero and OOM counters unchanged, but swap remained 99.96% occupied. |
+| Project Frontier overall | PARTIALLY VERIFIED | Live multi-venue evidence, broad acceptance, endurance, protected recovery, and deployment remain open. |
