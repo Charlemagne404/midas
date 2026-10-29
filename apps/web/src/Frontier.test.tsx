@@ -3010,6 +3010,7 @@ it('renders a bounded accessible relationship graph and opens selected evidence'
             entity_id: `frontier-entity-v1:market:${'a'.repeat(64)}`,
             kind: 'market',
             label: 'Who wins the mayoral election?',
+            label_truncated: true,
             venue: 'polymarket',
             native_id: 'event-1',
             native_id_truncated: false,
@@ -3028,6 +3029,7 @@ it('renders a bounded accessible relationship graph and opens selected evidence'
             resolution_fingerprint: 'election-rules-v1',
             resolution_verified: false,
             payoff_state_ids: ['no', 'yes'],
+            payoff_state_ids_truncated: true,
             payoff_exhaustive: true,
             payoff_verified: false,
             record_available: true,
@@ -3076,8 +3078,8 @@ it('renders a bounded accessible relationship graph and opens selected evidence'
             economic_equivalence_asserted: false,
           },
         ],
-        truncated: false,
-        truncation_reasons: [],
+        truncated: true,
+        truncation_reasons: ['entity_field_length_limit'],
         limitations: ['Event identifiers are venue-scoped.'],
       },
       center_market_id: null,
@@ -3152,6 +3154,13 @@ it('renders a bounded accessible relationship graph and opens selected evidence'
   fireEvent.click(await screen.findByText(/Source structure and asset context/));
   expect(
     await screen.findByText(/Structural links come from normalized source metadata/),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByRole('option', { name: /Who wins the mayoral election\?…/ }),
+  ).toBeInTheDocument();
+  expect(screen.getByText(/graph display clipped/)).toBeInTheDocument();
+  expect(
+    screen.getByText(/Structural context is bounded; omitted detail: entity_field_length_limit/),
   ).toBeInTheDocument();
   expect(screen.getByText(/Resolution authority: Official election authority/)).toBeInTheDocument();
   expect(screen.getByText(/native_event_id · native native-election-event/)).toBeInTheDocument();
