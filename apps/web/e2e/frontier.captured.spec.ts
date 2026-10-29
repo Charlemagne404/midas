@@ -47,3 +47,47 @@ test('Frontier renders captured public market, book, provenance, and relationshi
   expect(sourceProbes).toBe(0);
   expect(apiMutations).toBe(0);
 });
+
+test('Frontier deterministically replays captured books in the isolated browser store', async ({
+  page,
+}) => {
+  let sourceProbes = 0;
+  const apiMutations: string[] = [];
+  page.on('request', (request) => {
+    const url = new URL(request.url());
+    if (url.pathname.includes('/api/frontier/probe/')) sourceProbes += 1;
+    if (url.pathname.startsWith('/api/') && request.method() !== 'GET') {
+      apiMutations.push(`${request.method()} ${url.pathname}`);
+    }
+  });
+
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Frontier', exact: true }).click();
+  await page.getByRole('button', { name: 'Economic workbench', exact: true }).click();
+
+  const replayResponse = page.waitForResponse((response) => {
+    const url = new URL(response.url());
+    return url.pathname === '/api/frontier/replay' && response.request().method() === 'POST';
+  });
+  await page.getByRole('button', { name: 'Run deterministic replay', exact: true }).click();
+  const response = await replayResponse;
+  expect(response.status()).toBe(200);
+
+  const replay = (await response.json()) as {
+    manifest: {
+      market_observation_ids: string[];
+      book_observation_ids: string[];
+      code_version: string;
+    };
+    result_sha256: string;
+  };
+  expect(replay.manifest.market_observation_ids.length).toBeGreaterThan(0);
+  expect(replay.manifest.book_observation_ids.length).toBeGreaterThan(0);
+  expect(replay.manifest.code_version).toMatch(/^frontier-source-sha256:/);
+  expect(replay.result_sha256).toMatch(/^[0-9a-f]{64}$/);
+  await expect(page.getByText(/Replay saved · \d+ candidate evaluations/)).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Replay output' })).toBeVisible();
+
+  expect(sourceProbes).toBe(0);
+  expect(apiMutations).toEqual(['POST /api/frontier/replay']);
+});

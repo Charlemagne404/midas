@@ -14883,3 +14883,22 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
   contained. Continue Frontier as serial, offline, memory-capped work with
   zero swap; reassess before each step. No live probe, production change,
   broad suite, or persistent worker was started.
+
+## 2026-10-29 13:21 CET — deterministic replay of captured public books
+
+- Added a captured-store browser journey for the existing Economic workbench
+  replay action. It uses the committed hash-pinned Polymarket database copied
+  into a fresh `/tmp` root, verifies nonempty market/book observation IDs, the
+  code-version pin and result hash, and confirms one replay write with zero
+  source-probe requests.
+- The test passed 1/1 in 40.7 s (17.4 s in the test) under 768 MiB high / 1 GiB
+  max, zero swap, 20% CPU, 128 tasks, 120 seconds, and a 384 MiB Node heap.
+  The replay result was persisted only to the disposable test store.
+- Post-run at 13:21:41: `MemAvailable` 10.54 GiB, swap free 15.25 MiB, PSI
+  zero, unchanged user-manager OOM events; API/Reality/Reality API active at
+  restart counts 9/14/0. Test ports 18000/15173 were closed; no new OOMD or
+  kernel event appeared since the pre-run sample.
+- **Status:** Captured market/book replay is browser-verified. Historical
+  price-series replay, broader browser coverage, live multi-venue validation,
+  and production deployment remain open. Host remains partially contained;
+  continue with bounded serial offline work only.

@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 13:17 CET |
+| Latest addendum | 2026-10-29 13:21 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Pre-incident checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -2941,3 +2941,29 @@ scope with an explicit memory cap and zero swap. Keep live source probes,
 production changes, broad suites, and persistent workers deferred. Reassess
 swap and cgroup PSI before each bounded step; do not treat this sample as
 proof the host has recovered.
+
+## Captured-store replay validation — 2026-10-29 13:21 CET
+
+One offline Playwright journey passed **1/1 in 40.7 s** (17.4 s test runtime)
+against the committed hash-pinned Polymarket store copied into a fresh `/tmp`
+root. It clicked the Mission Control Economic workbench replay action and
+asserted the successful response referenced nonempty market and book
+observation IDs, a version-pinned Frontier code digest, and a well-formed
+result hash. It also asserted exactly one mutation (`POST /api/frontier/replay`)
+and zero source-probe requests. The replay persisted only in the disposable
+test store. This validates captured historical evidence through the UI; it
+does not establish current data or simultaneous cross-venue availability.
+
+The Playwright/API/Vite scope used 768 MiB high / 1 GiB max, zero swap, 20% CPU,
+128 tasks, a 120-second runtime cap, and a 384 MiB Node heap. At 13:21:41 CET,
+host `MemAvailable` was 11,311,423,488 bytes (10.54 GiB), `SwapFree` was
+15,994,880 bytes (15.25 MiB), global PSI remained zero, and user-manager OOM
+counters stayed at high=16,428,175, max=730,409, oom=19, oom_kill=15,
+oom_group_kill=0. API, Reality, and Reality API remained active at restart
+counts 9/14/0. The local test ports 18000 and 15173 had no listeners, and no
+OOMD/kernel journal entries appeared since the 13:19:51 pre-run sample.
+
+Host admission remains **partially contained**: one short run did not consume
+swap, but only 15.25 MiB remained free before and after. Continue only bounded
+serial offline development. Historical initiating workload and archive
+provenance remain unresolved.
