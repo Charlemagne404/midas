@@ -3010,10 +3010,25 @@ it('renders a bounded accessible relationship graph and opens selected evidence'
     description: '',
     base_asset: null,
     quote_asset: null,
-    settlement_asset: null,
+    settlement_asset: 'USD',
+    settlement_asset_identity: {
+      schema_version: 1,
+      kind: 'fiat',
+      code: 'USD',
+      network_id: null,
+      asset_reference: null,
+    },
     payoff: {
       state_ids: [],
-      payout_currency: null,
+      payout_currency: 'USD',
+      settlement_asset: 'USD',
+      settlement_asset_identity: {
+        schema_version: 1,
+        kind: 'fiat',
+        code: 'USD',
+        network_id: null,
+        asset_reference: null,
+      },
       exhaustive: false,
       verified: false,
       verification_basis: 'unverified',
@@ -3029,16 +3044,51 @@ it('renders a bounded accessible relationship graph and opens selected evidence'
     },
     fees: {
       status: 'unknown',
-      version: null,
-      applies_to: null,
-      rate: null,
-      formula: null,
-      fee_currency: null,
-      source_url: null,
-      note: 'unknown',
+      version: 'fixture-fee-v2',
+      applies_to: 'taker',
+      fixed_fee: '0.01',
+      rate: '0.02',
+      fee_multiplier: '1.5',
+      formula: 'fixed plus percentage fee',
+      fee_currency: 'USD',
+      fee_currency_identity: {
+        schema_version: 1,
+        kind: 'fiat',
+        code: 'USD',
+        network_id: null,
+        asset_reference: null,
+      },
+      source_url: 'https://example.invalid/fee-spec',
+      evidence_sha256: 'f'.repeat(64),
+      evidence_observation_ids: ['e'.repeat(64)],
+      evidence_observed_at_utc: '2026-10-26T19:00:00Z',
+      effective_at_utc: '2026-10-26T20:00:00Z',
+      expires_at_utc: '2026-11-26T20:00:00Z',
+      note: 'Fixture-only fee terms',
     },
     native_fields: venue === 'polymarket' ? { conditionId: `0x${'a'.repeat(64)}` } : {},
-    instruments: [],
+    instruments: [
+      {
+        native_instrument_id: `${nativeId}-yes`,
+        label: 'Yes',
+        outcome_id: 'yes',
+        quantity_unit: 'contract',
+        price_currency: 'USD',
+        price_currency_identity: {
+          schema_version: 1,
+          kind: 'fiat',
+          code: 'USD',
+          network_id: null,
+          asset_reference: null,
+        },
+        tick_size: '0.01',
+        price_increment_ranges: [{ start: '0', end: '1', step: '0.01' }],
+        quantity_step: '1',
+        minimum_quantity: '1',
+        minimum_notional: '1',
+        payouts: [],
+      },
+    ],
     quality_flags: [],
     provenance: {
       response_received_at_utc: '2026-10-26T20:00:00Z',
@@ -3312,6 +3362,17 @@ it('renders a bounded accessible relationship graph and opens selected evidence'
   ).toBeInTheDocument();
   expect(screen.getByText(/matcher frontier-relationship-matcher-5/)).toBeInTheDocument();
   expect(screen.getByText('shared_terms=mayor,election')).toBeInTheDocument();
+  expect(screen.queryByRole('region', { name: 'Left recorded contract terms' })).toBeNull();
+  fireEvent.click(screen.getByText('Compare recorded contract terms', { selector: 'summary' }));
+  expect(
+    await screen.findByRole('region', { name: 'Left recorded contract terms' }),
+  ).toBeInTheDocument();
+  expect(screen.getByText(/Market identity fiat:USD/)).toBeInTheDocument();
+  expect(screen.getByText(/fixed fee 0\.01/)).toBeInTheDocument();
+  expect(screen.getByText(/expires 2026-11-26T20:00:00Z/)).toBeInTheDocument();
+  fireEvent.click(screen.getByText('Rules, instruments, and source provenance'));
+  expect(await screen.findByText(/Fee evidence SHA-256/)).toBeInTheDocument();
+  expect(screen.getByText(/price currency identity fiat:USD/)).toBeInTheDocument();
 
   fireEvent.change(screen.getByLabelText('Relationship graph center market'), {
     target: { value: '' },

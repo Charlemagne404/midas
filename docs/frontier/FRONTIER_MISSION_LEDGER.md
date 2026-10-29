@@ -15193,3 +15193,37 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
 - **Status:** Track this service limit as an additional risk. Keep all
   protected services unchanged and continue only serial, bounded Frontier
   work while global cause and sustained recovery remain unresolved.
+
+## 2026-10-29 14:43 CET — settlement and fee evidence detail
+
+- Expanded the relationship contract comparison to show nominal settlement
+  codes separately from canonical market/payoff asset identities and compare
+  fee fixed amount, multiplier, applicability, source/evidence provenance,
+  and evidence/effective/expiry timestamps. Instrument details now show quote
+  asset identity. Comparison calculations are lazy until the contract row is
+  expanded.
+- Changed files: `apps/web/src/Frontier.tsx`,
+  `apps/web/src/frontierRelationshipTerms.ts`,
+  `apps/web/src/Frontier.test.tsx`,
+  `apps/web/src/frontierRelationshipTerms.test.tsx`, plus the engineering,
+  incident, and mission-ledger documents.
+- Pure comparator suite passed **4/4**; targeted Prettier and ESLint passed;
+  full frontend TypeScript passed before the final component-test fixture
+  changes. A bounded component test ran in a 512 MiB high / 768 MiB max,
+  zero-swap, 20%-CPU, 64-task scope, but its terminal report was lost. Systemd
+  recorded normal scope completion without the test exit code or assertion
+  summary. Classify that check as **inconclusive**, not passed; it was not
+  repeated. The added fixture assertions did pass formatting and targeted lint.
+- At 14:42:48, host available RAM was about 10 GiB, free swap about 15 MiB,
+  PSI some/full avg10/60/300 was 0/0.01/0.06%, and user-manager
+  high/max/oom/oom_kill counters were unchanged at
+  16,437,550/730,447/19/15. API, Reality, and Reality API remained active at
+  restart counts 9/14/0. The gap-detail timer remained inactive, capacity
+  timer waiting, and no kernel/systemd-oomd kill appeared since test start.
+- **Status:** This is a short quiet sample, not incident resolution. Almost
+  all swap remains occupied; the user-manager parent remains uncapped; the
+  historical initiating workload remains unattributed. No browser/build work
+  or broad suite was started. Continue serial offline Frontier work only after
+  a fresh admission check; preserve the inconclusive component verification
+  as a pending item. The pre-existing untracked
+  `data/frontier-public-probes/` remains untouched.

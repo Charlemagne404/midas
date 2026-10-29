@@ -15745,3 +15745,35 @@ at 16,437,550; OOM counters remained 19/15. API/Reality/Reality API remained
 active at restart counts 9/14/0, with no OOMD or kernel kill logged since
 14:27:31. PSI is near zero in this short follow-up, but swap occupancy and
 historical workload attribution remain unresolved.
+
+### Asset and fee provenance in relationship comparison — 2026-10-29 14:42 CET
+
+The contract comparison now distinguishes nominal settlement codes from
+canonical market and payoff settlement-asset identities, so equal tickers do
+not conceal a network or token-reference mismatch. It compares the captured
+fee version, applicability, fixed fee, rate, multiplier, formula, currency
+identity, source URL, evidence hash and observation IDs, and evidence/effective/
+expiry times. The instrument details expose quote-currency identity and
+unreported constraints. Relationship comparison details are computed only
+while a row is expanded, avoiding unnecessary per-edge work in the collapsed
+graph.
+
+The pure relationship-term tests passed **4/4**; targeted formatting and ESLint
+passed; full frontend TypeScript checking passed before the latest fixture-only
+test edit. A bounded component test was started with 512 MiB high / 768 MiB
+max, zero swap, 20% CPU, 64 tasks and a 90-second runtime bound. The terminal
+session output was lost before the assertion summary was available. The
+transient scope subsequently disappeared with ordinary systemd scope
+completion, but no process exit code or Vitest report was retained. Treat this
+component test as **inconclusive**; do not claim it passed. The added fixture
+assertions did pass formatting and targeted lint. No further browser or build
+test was launched because the host retains almost no free swap and previous
+browser validation coincided with elevated shared-hierarchy reclaim events.
+
+The 14:42:48 host follow-up showed about 10 GiB available RAM, 15 MiB free
+swap, global PSI some/full avg10/60/300 of 0/0.01/0.06%, and unchanged
+user-manager OOM counters at 19/15. API, Reality and Reality API remained
+active at restart counts 9/14/0; no OOMD or kernel kill was observed in the
+test interval. This establishes a brief quiet interval only. The incident is
+not resolved, and Frontier continuation remains limited to serial,
+source-independent work with transient resource bounds.

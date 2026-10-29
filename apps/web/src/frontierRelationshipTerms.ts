@@ -1,13 +1,23 @@
+type AssetIdentity = {
+  kind: string;
+  code: string;
+  network_id: string | null;
+  asset_reference: string | null;
+};
+
 export type RelationshipTermRecord = {
   market_kind: string;
   lifecycle: string;
   payoff: {
     state_ids: string[];
     payout_currency: string | null;
+    settlement_asset?: string | null;
+    settlement_asset_identity?: AssetIdentity | null;
     exhaustive: boolean;
     verified: boolean;
   };
   settlement_asset: string | null;
+  settlement_asset_identity?: AssetIdentity | null;
   resolution: {
     authority: string | null;
     closes_at_utc: string | null;
@@ -18,9 +28,18 @@ export type RelationshipTermRecord = {
     status: string;
     version: string | null;
     applies_to: string | null;
+    fixed_fee?: string | null;
     rate: string | null;
+    fee_multiplier?: string | null;
     formula: string | null;
     fee_currency: string | null;
+    fee_currency_identity?: AssetIdentity | null;
+    source_url?: string | null;
+    evidence_sha256?: string | null;
+    evidence_observation_ids?: string[];
+    evidence_observed_at_utc?: string | null;
+    effective_at_utc?: string | null;
+    expires_at_utc?: string | null;
   };
 };
 
@@ -54,12 +73,14 @@ export function compareRelationshipTerms(
     if (leftValue !== rightValue) differences.push({ field, left: leftValue, right: rightValue });
   };
 
-  const feeSchedule = (market: RelationshipTermRecord): string | null => {
-    const { version, applies_to, rate, formula, fee_currency } = market.fees;
-    if ([version, applies_to, rate, formula, fee_currency].some((value) => !value?.trim())) {
-      return null;
-    }
-    return [version, applies_to, rate, formula, fee_currency].join(' · ');
+  const identityKey = (identity: AssetIdentity | null | undefined): string | null => {
+    if (!identity) return null;
+    return JSON.stringify([
+      identity.kind,
+      identity.code,
+      identity.network_id,
+      identity.asset_reference,
+    ]);
   };
 
   compare('Instrument type', left.market_kind, right.market_kind);
@@ -77,6 +98,21 @@ export function compareRelationshipTerms(
   compare('Outcome coverage', String(left.payoff.exhaustive), String(right.payoff.exhaustive));
   compare('Payout currency', left.payoff.payout_currency, right.payoff.payout_currency);
   compare('Settlement asset', left.settlement_asset, right.settlement_asset);
+  compare(
+    'Market settlement identity',
+    identityKey(left.settlement_asset_identity),
+    identityKey(right.settlement_asset_identity),
+  );
+  compare(
+    'Payoff settlement asset',
+    left.payoff.settlement_asset ?? null,
+    right.payoff.settlement_asset ?? null,
+  );
+  compare(
+    'Payoff settlement identity',
+    identityKey(left.payoff.settlement_asset_identity),
+    identityKey(right.payoff.settlement_asset_identity),
+  );
   compare('Resolution authority', left.resolution.authority, right.resolution.authority);
   compare(
     'Resolution fingerprint',
@@ -86,7 +122,48 @@ export function compareRelationshipTerms(
   compare('Close time (UTC)', left.resolution.closes_at_utc, right.resolution.closes_at_utc);
   compare('Settlement time (UTC)', left.resolution.settles_at_utc, right.resolution.settles_at_utc);
   compare('Fee status', left.fees.status, right.fees.status);
-  compare('Fee schedule', feeSchedule(left), feeSchedule(right));
+  compare('Fee version', left.fees.version, right.fees.version);
+  compare('Fee applicability', left.fees.applies_to, right.fees.applies_to);
+  compare('Fixed fee', left.fees.fixed_fee ?? null, right.fees.fixed_fee ?? null);
+  compare('Fee rate', left.fees.rate, right.fees.rate);
+  compare('Fee multiplier', left.fees.fee_multiplier ?? null, right.fees.fee_multiplier ?? null);
+  compare('Fee formula', left.fees.formula, right.fees.formula);
+  compare('Fee currency', left.fees.fee_currency, right.fees.fee_currency);
+  compare(
+    'Fee currency identity',
+    identityKey(left.fees.fee_currency_identity),
+    identityKey(right.fees.fee_currency_identity),
+  );
+  compare('Fee source URL', left.fees.source_url ?? null, right.fees.source_url ?? null);
+  compare(
+    'Fee evidence hash',
+    left.fees.evidence_sha256 ?? null,
+    right.fees.evidence_sha256 ?? null,
+  );
+  compare(
+    'Fee evidence observations',
+    left.fees.evidence_observation_ids?.length
+      ? [...left.fees.evidence_observation_ids].sort().join(' · ')
+      : null,
+    right.fees.evidence_observation_ids?.length
+      ? [...right.fees.evidence_observation_ids].sort().join(' · ')
+      : null,
+  );
+  compare(
+    'Fee evidence observed at (UTC)',
+    left.fees.evidence_observed_at_utc ?? null,
+    right.fees.evidence_observed_at_utc ?? null,
+  );
+  compare(
+    'Fee effective at (UTC)',
+    left.fees.effective_at_utc ?? null,
+    right.fees.effective_at_utc ?? null,
+  );
+  compare(
+    'Fee expires at (UTC)',
+    left.fees.expires_at_utc ?? null,
+    right.fees.expires_at_utc ?? null,
+  );
 
   return { available: true, differences, unavailableFields };
 }

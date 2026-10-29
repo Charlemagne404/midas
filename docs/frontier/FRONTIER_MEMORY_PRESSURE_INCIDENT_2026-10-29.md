@@ -3320,3 +3320,36 @@ No OOMD or kernel kill was logged since 14:27:31. This short follow-up shows
 the browser-associated pressure episode receding without an observed kill,
 while swap occupancy, the uncapped parent cgroup, near-cap Reality API, and
 unknown historical trigger continue to block an incident-resolved verdict.
+
+## Bounded relationship-terms UI follow-up — 2026-10-29 14:42 CET
+
+After a fresh admission sample, Frontier made a source-independent UI change:
+the relationship comparison now exposes canonical market/payoff settlement
+asset identities and more fee-schedule provenance (fixed fee, multiplier,
+evidence hash and observation IDs, observation/effective/expiry timestamps).
+Comparison content is computed only for the expanded relationship row. The
+instrument detail also names the captured quote-currency identity and keeps
+unreported constraints explicit. No live source, production API, or evidence
+store was read or written.
+
+Formatting, targeted lint, the pure comparator suite (4/4), and full frontend
+TypeScript checking passed under the previously documented bounded scopes.
+A targeted component test was then launched in a 512 MiB high / 768 MiB max,
+zero-swap, 20%-CPU, 64-task scope. Its terminal session handle disappeared
+before Vitest's result could be retained. At 14:42:48, systemd no longer
+listed the transient scope and its journal recorded ordinary scope
+completion, but it did not retain the test process exit code or assertion
+summary. Therefore that component check is **inconclusive**, not a pass. It
+was not rerun.
+
+At 14:42:29–14:42:48, host `MemAvailable` was about 10 GiB, swap free about
+15 MiB, PSI avg10/60/300 some/full was 0/0.01/0.06%, and user-manager
+`memory.events` remained high/max/oom/oom_kill =
+16,437,550/730,447/19/15. API, Reality, and Reality API remained active at
+restart counts 9/14/0; the auxiliary gap-detail timer remained inactive and
+the capacity timer remained waiting. No kernel OOM or systemd-oomd kill was
+logged since the test started. This short quiet window does not resolve the
+incident: swap remains almost full, the shared user hierarchy is uncapped,
+Reality API was previously near its hard limit, and historical pressure
+initiation is still unattributed. Keep browser/build and broad-suite work
+deferred; continue only serial, offline work after a fresh admission sample.

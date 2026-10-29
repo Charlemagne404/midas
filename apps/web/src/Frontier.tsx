@@ -292,6 +292,7 @@ type Market = {
   payoff: {
     state_ids: string[];
     payout_currency: string | null;
+    settlement_asset?: string | null;
     settlement_asset_identity?: SettlementAssetIdentity | null;
     exhaustive: boolean;
     verified: boolean;
@@ -311,11 +312,18 @@ type Market = {
     status: string;
     version: string | null;
     applies_to: string | null;
+    fixed_fee?: string | null;
     rate: string | null;
+    fee_multiplier?: string | null;
     formula: string | null;
     fee_currency: string | null;
     fee_currency_identity?: SettlementAssetIdentity | null;
     source_url: string | null;
+    evidence_sha256?: string | null;
+    evidence_observation_ids?: string[];
+    evidence_observed_at_utc?: string | null;
+    effective_at_utc?: string | null;
+    expires_at_utc?: string | null;
     note: string;
   };
   native_fields: Record<string, unknown>;
@@ -2314,6 +2322,7 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
   const [graphSearch, setGraphSearch] = useState('');
   const [selectedMarketId, setSelectedMarketId] = useState<string | null>(null);
   const [selectedRelationshipId, setSelectedRelationshipId] = useState<string | null>(null);
+  const [openContractComparisonId, setOpenContractComparisonId] = useState<string | null>(null);
   const [relationshipState, setRelationshipState] = useState('all');
   const [graphCenterMarketId, setGraphCenterMarketId] = useState('');
   const [graphDepth, setGraphDepth] = useState(1);
@@ -4386,7 +4395,10 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
                 {filteredRelationships.map((relationship) => {
                   const left = graphMarketById.get(relationship.left_market_id);
                   const right = graphMarketById.get(relationship.right_market_id);
-                  const termComparison = compareRelationshipTerms(left, right);
+                  const comparisonOpen = openContractComparisonId === relationship.relationship_id;
+                  const termComparison = comparisonOpen
+                    ? compareRelationshipTerms(left, right)
+                    : null;
                   return (
                     <article className="fr-edge" key={relationship.relationship_id}>
                       <div className="fr-node">
@@ -4440,50 +4452,65 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
                           ))}
                         </details>
                       </div>
-                      <details className="fr-contract-comparison">
+                      <details
+                        className="fr-contract-comparison"
+                        open={comparisonOpen}
+                        onToggle={(event) => {
+                          if (event.currentTarget.open) {
+                            setOpenContractComparisonId(relationship.relationship_id);
+                          } else if (comparisonOpen) {
+                            setOpenContractComparisonId(null);
+                          }
+                        }}
+                      >
                         <summary>Compare recorded contract terms</summary>
                         <p className="fr-contract-comparison-note">
                           Side-by-side captured terms help review this relationship. Similarity
                           labels and this comparison do not establish equivalent payoffs.
                         </p>
-                        <div className="fr-term-difference-summary">
-                          <strong>Literal differences in reported fields</strong>
-                          {termComparison.available ? (
-                            <>
+                        {termComparison && (
+                          <div className="fr-term-difference-summary">
+                            <strong>Literal differences in reported fields</strong>
+                            {termComparison.available ? (
+                              <>
+                                <p>
+                                  {termComparison.differences.length
+                                    ? `${termComparison.differences.length} recorded difference${termComparison.differences.length === 1 ? '' : 's'}`
+                                    : 'No literal differences'}{' '}
+                                  among comparable fields; {termComparison.unavailableFields}{' '}
+                                  comparison
+                                  {termComparison.unavailableFields === 1 ? ' is' : 's are'}{' '}
+                                  unavailable in one or both captured records. This summary does not
+                                  establish equivalent payoffs.
+                                </p>
+                                {termComparison.differences.length > 0 && (
+                                  <dl>
+                                    {termComparison.differences.map((difference) => (
+                                      <div key={difference.field}>
+                                        <dt>{difference.field}</dt>
+                                        <dd>
+                                          <span>Left: {difference.left}</span>
+                                          <span>Right: {difference.right}</span>
+                                        </dd>
+                                      </div>
+                                    ))}
+                                  </dl>
+                                )}
+                              </>
+                            ) : (
                               <p>
-                                {termComparison.differences.length
-                                  ? `${termComparison.differences.length} recorded difference${termComparison.differences.length === 1 ? '' : 's'}`
-                                  : 'No literal differences'}{' '}
-                                among comparable fields; {termComparison.unavailableFields}{' '}
-                                comparison{termComparison.unavailableFields === 1 ? ' is' : 's are'}{' '}
-                                unavailable in one or both captured records. This summary does not
-                                establish equivalent payoffs.
+                                A market record is outside the loaded graph window; cross-source
+                                field comparison is unavailable.
                               </p>
-                              {termComparison.differences.length > 0 && (
-                                <dl>
-                                  {termComparison.differences.map((difference) => (
-                                    <div key={difference.field}>
-                                      <dt>{difference.field}</dt>
-                                      <dd>
-                                        <span>Left: {difference.left}</span>
-                                        <span>Right: {difference.right}</span>
-                                      </dd>
-                                    </div>
-                                  ))}
-                                </dl>
-                              )}
-                            </>
-                          ) : (
-                            <p>
-                              A market record is outside the loaded graph window; cross-source field
-                              comparison is unavailable.
-                            </p>
-                          )}
-                        </div>
-                        <div className="fr-contract-comparison-grid">
-                          <RelationshipContractTerms side="Left" market={left} />
-                          <RelationshipContractTerms side="Right" market={right} />
-                        </div>
+                            )}
+                          </div>
+                        )}
+                        {comparisonOpen && (
+                          <div className="fr-contract-comparison-grid">
+                            <RelationshipContractTerms side="Left" market={left} />
+                            <RelationshipContractTerms side="Right" market={right} />
+                          </div>
+                        )}
                       </details>
                       {relationship.review_target_relationship_id &&
                         (relationship.state === 'hypothesis' || relationship.latest_review) && (
@@ -7838,10 +7865,13 @@ function RelationshipContractTerms({
               </dd>
             </div>
             <div>
-              <dt>Payout / settlement</dt>
+              <dt>Payout / settlement identity</dt>
               <dd>
-                {market.payoff.payout_currency ?? 'Payout not reported'} ·{' '}
-                {market.settlement_asset ?? 'settlement asset not reported'}
+                Payout currency {market.payoff.payout_currency ?? 'not reported'} · market
+                settlement {market.settlement_asset ?? 'not reported'} · payoff settlement{' '}
+                {market.payoff.settlement_asset ?? 'not reported'} · market identity{' '}
+                {settlementIdentityLabel(market.settlement_asset_identity)} · payoff identity{' '}
+                {settlementIdentityLabel(market.payoff.settlement_asset_identity)}
               </dd>
             </div>
             <div>
@@ -7858,7 +7888,9 @@ function RelationshipContractTerms({
             <div>
               <dt>Fee metadata</dt>
               <dd>
-                {label(market.fees.status)} · {market.fees.rate ?? 'rate not reported'} ·{' '}
+                {label(market.fees.status)} · fixed {market.fees.fixed_fee ?? 'not reported'} · rate{' '}
+                {market.fees.rate ?? 'not reported'} · multiplier{' '}
+                {market.fees.fee_multiplier ?? 'not reported'} ·{' '}
                 {market.fees.applies_to ?? 'applicability not reported'}
               </dd>
             </div>
@@ -7889,22 +7921,25 @@ function RelationshipContractTerms({
                           : 'quantity unit not reported',
                         instrument.price_currency
                           ? `price currency ${instrument.price_currency}`
-                          : null,
-                        instrument.tick_size ? `tick ${instrument.tick_size}` : null,
+                          : 'price currency not reported',
+                        `price currency identity ${settlementIdentityLabel(instrument.price_currency_identity)}`,
+                        instrument.tick_size
+                          ? `tick ${instrument.tick_size}`
+                          : 'tick size not reported',
                         instrument.price_increment_ranges?.length
                           ? `price increments ${instrument.price_increment_ranges
                               .map(({ start, end, step }) => `${start}–${end} by ${step}`)
                               .join(', ')}`
-                          : null,
+                          : 'price increments not reported',
                         instrument.quantity_step
                           ? `quantity step ${instrument.quantity_step}`
-                          : null,
+                          : 'quantity step not reported',
                         instrument.minimum_quantity
                           ? `minimum quantity ${instrument.minimum_quantity}`
-                          : null,
+                          : 'minimum quantity not reported',
                         instrument.minimum_notional
                           ? `minimum notional ${instrument.minimum_notional}`
-                          : null,
+                          : 'minimum notional not reported',
                       ]
                         .filter(Boolean)
                         .join(' · ')}
@@ -7924,9 +7959,25 @@ function RelationshipContractTerms({
               <p>{market.payoff.verification_basis || 'Not reported'}</p>
               <strong>Fee schedule details</strong>
               <p>
-                Version {market.fees.version ?? 'not reported'} · formula{' '}
-                {market.fees.formula ?? 'not reported'} · currency{' '}
-                {market.fees.fee_currency ?? 'not reported'}
+                Version {market.fees.version ?? 'not reported'} · applies to{' '}
+                {market.fees.applies_to ?? 'not reported'} · fixed fee{' '}
+                {market.fees.fixed_fee ?? 'not reported'} · rate{' '}
+                {market.fees.rate ?? 'not reported'}
+                {' · '}multiplier {market.fees.fee_multiplier ?? 'not reported'} · formula{' '}
+                {market.fees.formula ?? 'not reported'}
+              </p>
+              <p>
+                Fee currency {market.fees.fee_currency ?? 'not reported'} · identity{' '}
+                {settlementIdentityLabel(market.fees.fee_currency_identity)}
+              </p>
+              <p>
+                Effective {market.fees.effective_at_utc ?? 'not reported'} · expires{' '}
+                {market.fees.expires_at_utc ?? 'not reported'} · evidence observed{' '}
+                {market.fees.evidence_observed_at_utc ?? 'not reported'}
+              </p>
+              <p>
+                Fee evidence SHA-256 {market.fees.evidence_sha256 ?? 'not reported'} · observation{' '}
+                {market.fees.evidence_observation_ids?.join(', ') || 'not reported'}
               </p>
               <p>
                 Source {market.fees.source_url ?? 'not reported'} ·{' '}
