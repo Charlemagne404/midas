@@ -705,6 +705,15 @@ sample is not an admission grant. Stop or defer builds and broad suites if host
 pressure rises. Do not add persistent workers or run multi-day experiments as
 part of ordinary development.
 
+`GET /api/readiness/resources` also reads the current user's systemd manager
+cgroup as `services.user-manager`. It reports bounded current memory, PSI, and
+cumulative `memory.events` counters such as `oom`, `oom_kill`, and
+`oom_group_kill`. These counters include descendants and cannot attribute a
+kill to a service; they are not a systemd-oomd kill tally. Use the kernel and
+systemd-oomd journals for attribution. Missing counters remain unmeasured. This
+is diagnostic telemetry and does not change the admission gate or start a
+worker.
+
 ### Host memory-incident gate — 2026-10-29
 
 systemd-oomd last logged a kill at 2026-10-28 23:43:24 CET after
@@ -725,13 +734,13 @@ Current service state, exact rollback commands, and the bounded post-run
 sample are recorded in
 [`FRONTIER_MEMORY_PRESSURE_INCIDENT_2026-10-28.md`](FRONTIER_MEMORY_PRESSURE_INCIDENT_2026-10-28.md).
 
-The last TypeScript attempt reached Node's internal heap limit and triggered
+The earlier TypeScript attempt reached Node's internal heap limit and triggered
 Apport/Whoopsie. Whoopsie logged HTTP 504 and no successful-upload marker is
-present; remote receipt remains unknown. Do not rerun Node checks that could
-crash until an explicitly bounded heap and crash-report path are established.
-The crash report was left untouched. Current development admission is limited
-to isolated, short, zero-swap tasks; broad suites and competing research jobs
-remain deferred.
+present; remote receipt remains unknown. The crash report was left untouched.
+A focused readiness test now passes with a 256 MiB Node heap inside a 512 MiB
+zero-swap cgroup, but that does not validate a full TypeScript build. Keep broad
+builds, suites, and competing research jobs deferred while the incident remains
+partially contained.
 
 The API, UI, adapter fixtures, and bounded Arena replay are development
 artifacts. Production deployment, protected-service changes, Reality restart,

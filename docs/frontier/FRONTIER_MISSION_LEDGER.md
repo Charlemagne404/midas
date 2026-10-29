@@ -13544,3 +13544,34 @@ untouched. The incident is still partially contained, not resolved: swap is
 nearly full and the quiet observation is brief. Continue only serial,
 source-independent work and small capped fixtures after a fresh resource
 sample; keep broad tests, replay, live probes, and new collectors deferred.
+
+## Readiness cgroup pressure telemetry — 2026-10-29 05:51 CET
+
+Commit `4595e46` adds read-only user-manager memory telemetry to the existing
+Research Readiness resource API and UI. The API samples the fixed
+`user@<uid>.service` cgroup's current charge, memory PSI, and hierarchical
+`memory.events` counters; unavailable counters remain null. Mission Control
+shows OOM, process-kill, and group-kill counters with a note that they are
+cumulative, include descendants, and do not identify the responsible process.
+This telemetry does not change scheduling/admission and is not deployed.
+
+Focused verification: `tests/test_readiness_resources.py` **7/7 in 0.89 s**
+with a 43,852 KiB peak RSS; `Readiness.test.tsx` **3/3 in 14.01 s** with a 256
+MiB Node heap. Both ran under `MemoryHigh=384M`, `MemoryMax=512M`, zero swap,
+and 20% CPU quota. Strict mypy, Ruff check/format, ESLint, Prettier, and
+`git diff --check` passed. A single bounded live resource-sampler call
+completed in 0.09 s at 12,888 KiB RSS, with no swap or socket activity. It
+reported user-manager memory charge 9,317,834,752 bytes, zero memory PSI, and
+cumulative counters `oom=19`, `oom_kill=15`, `oom_group_kill=0`. The same short
+sample showed cgroup CPU PSI some avg10 8.87% and full avg10 8.38%; workload
+attribution is unknown.
+
+At 05:51, host available RAM was 11,573,329,920 bytes (10.78 GiB), swap free
+was 2,695,168 bytes (2.57 MiB), host memory PSI was zero, and user-manager OOM
+counters were unchanged. `oomctl` showed the user-manager under its 50%
+pressure policy with zero pressure averages. Kernel and OOMD journal queries
+had no entries since 05:42. API/Reality and their web/API services, Echo,
+Continental, Caddy, Headscale, Tailscale, RustDesk, and `ssh.socket` were
+active. The capacity timer remained waiting and gap-detail timer inactive;
+the old service failure remains visible. This is a short quiet period, not
+resolution. Swap remains near full. No service or protected data changed.

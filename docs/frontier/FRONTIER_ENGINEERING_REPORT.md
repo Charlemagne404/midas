@@ -2,7 +2,7 @@
 
 **Report date:** 2026-10-29
 
-## Current completion matrix — 2026-10-29 05:42 CET
+## Current completion matrix — 2026-10-29 05:51 CET
 
 This is a current evidence classification, not a final completion claim. The
 dated implementation records below remain the detailed evidence; the
@@ -21,10 +21,10 @@ current host gate.
 | Laboratory/Arena comparisons and bounded orchestration | PARTIALLY VERIFIED | Arena admission and finite scheduling regressions pass; a Laboratory resource-denial case passes with a harness cap above its 722,894,848-byte capacity precondition. Full endurance evidence remains incomplete. |
 | User-cgroup-aware workload admission | IMPLEMENTED, BOUNDED VALIDATION PASSED | Central Arena admission (15), finite schedules (12), and the Laboratory denial case (1) pass fixture tests using user-manager pressure; no runtime deployment occurred. |
 | Reality capacity inventory bounds | PARTIALLY VERIFIED | Candidate inventory code remains undeployed. The separate monitor is bounded at `MemoryHigh=160M`, `MemoryMax=192M`, and zero swap; its scheduled 04:47 run succeeded in 6.257 CPU seconds with zero swap. systemd logged a 3.2 MiB peak, unexpectedly below the earlier 137.4 MiB measurement, so that peak does not establish representative memory use. The report still identifies invalid archive inventory and provenance. |
-| Native Frontier dashboard | PARTIALLY VERIFIED | The dashboard now includes the held Gemini Spot capability and timing explanation. Its focused explorer fixture passed 1/1 with a 15-second per-test allowance under a 50% CPU cap; eight other cases were skipped. The saved timeline timing and result-pagination browser fixtures passed earlier. TypeScript project build and a production Vite build passed in bounded zero-swap scopes. Default Playwright last passed 17/20 with three opt-in skips; captured-evidence browser validation remains open. The Research Readiness view now displays bounded host swap free/total and utilization, keeping missing values unmeasured and occupancy separate from the admission gate; focused UI coverage passes 3/3. |
-| Host reliability containment | PARTIALLY VERIFIED | The five-minute gap-detail timer is disabled; the October 28 journal audit found 129 systemd-oomd kills, 106 targeting this replay. Seven separate kernel memcg kills hit the capacity checker's original 128 MiB cap. The capacity checker now has reversible 160/192 MiB, zero-swap limits. At 05:41, `MemAvailable` was 11,287,011,328 bytes (10.51 GiB), free swap 2,641,920 bytes (2.52 MiB), and host PSI was zero; user-manager `oom=19`/`oom_kill=15` were unchanged. At 05:42 API and Reality were active at restart counts 9/14, the gap-detail timer inactive and service still failed from its prior OOM, and the capacity timer active/waiting. Caddy, Echo production/staging, Continental tailnet/identity, Tailscale, RustDesk, and `ssh.socket` were active. `oomctl` now lists `user@1000.service` with zero current pressure averages; earlier empty listings remain unexplained. No new OOM appeared in the checked 05:38–05:42 journal interval. Near-full swap and the absence of sustained recovery evidence remain unresolved. |
-| Node/V8 and Apport side effect | PARTIALLY VERIFIED | The 02:36 TypeScript attempt aborted at Node's heap limit with a 300.6 MiB cgroup peak, not a kernel OOM. Whoopsie attempted to submit the 58,222,586-byte crash report and received HTTP 504; remote receipt is unknown. No `.uploaded` marker exists; avoid further crash-prone Node checks. |
-| Broad regressions, resource endurance, and performance acceptance | DEFERRED | Selected Python, API, adapter, collection, and economics tests passed under bounded zero-swap scopes. The graph-revision storage/migration cases pass 8/8; API cursor invalidation passes 1/1; four core economics modules pass 79/79; joint-state basket/audit/replay passes 14/14; logical implication/relationship review passes 27/27; transport passes 20/20; readiness resource API passes 5/5 and its focused UI passes 3/3. Ruff check/format, ESLint, Prettier, and strict mypy on the readiness resource module passed under caps. Full MIDAS regression, full browser suite, captured-evidence browser journey, endurance, and broad performance tests remain deferred. |
+| Native Frontier dashboard | PARTIALLY VERIFIED | The dashboard now includes the held Gemini Spot capability, timing explanation, and read-only user-manager cgroup memory PSI/OOM counters. Its focused explorer fixture passed 1/1 with a 15-second per-test allowance under a 50% CPU cap; eight other cases were skipped. The saved timeline timing and result-pagination browser fixtures passed earlier. TypeScript project build and a production Vite build passed in bounded zero-swap scopes. Default Playwright last passed 17/20 with three opt-in skips; captured-evidence browser validation remains open. Readiness swap telemetry retains missing values as unmeasured and does not change admission; the focused readiness UI passes 3/3. |
+| Host reliability containment | PARTIALLY VERIFIED | The five-minute gap-detail timer is disabled; the October 28 journal audit found 129 systemd-oomd kills, 106 targeting this replay. Seven separate kernel memcg kills hit the capacity checker's original 128 MiB cap. The capacity checker now has reversible 160/192 MiB, zero-swap limits. At 05:51, `MemAvailable` was 11,573,329,920 bytes (10.78 GiB), free swap 2,695,168 bytes (2.57 MiB), and host memory PSI was zero; user-manager `oom=19`/`oom_kill=15` were unchanged. API/Reality restart counts remained 9/14, the gap-detail timer inactive and service failed from its earlier OOM, and the capacity timer active/waiting. Caddy, Echo production/staging, Continental tailnet/identity, Tailscale, RustDesk, and `ssh.socket` were active. `oomctl` listed `user@1000.service` at its 50% policy with zero current pressure averages at 05:42 and 05:51. No new kernel or OOMD journal entries appeared after 05:42. Near-full swap and the absence of sustained recovery evidence remain unresolved. |
+| Node/V8 and Apport side effect | PARTIALLY VERIFIED | The 02:36 TypeScript attempt aborted at Node's heap limit with a 300.6 MiB cgroup peak, not a kernel OOM. Whoopsie attempted to submit the 58,222,586-byte crash report and received HTTP 504; remote receipt is unknown. No `.uploaded` marker exists. A focused Vitest file now passes with `NODE_OPTIONS=--max-old-space-size=256` inside a 512 MiB zero-swap scope; the full TypeScript build remains deferred. |
+| Broad regressions, resource endurance, and performance acceptance | DEFERRED | Selected Python, API, adapter, collection, and economics tests passed under bounded zero-swap scopes. The graph-revision storage/migration cases pass 8/8; API cursor invalidation passes 1/1; four core economics modules pass 79/79; joint-state basket/audit/replay passes 14/14; logical implication/relationship review passes 27/27; transport passes 20/20; readiness resource API passes 7/7 and its focused UI passes 3/3. Ruff check/format, ESLint, Prettier, and strict mypy on the readiness resource module passed under caps. Full MIDAS regression, full browser suite, captured-evidence browser journey, endurance, and broad performance tests remain deferred. |
 | Live multi-venue source authorization and findings | BLOCKED | Kalshi, Kraken, Coinbase, and Gemini probes and retained-data research remain held; the worktree Polymarket probe flag is off. |
 | Production integration/deployment | DEFERRED | Frontier remains isolated; no protected service transition occurred. |
 | Project Frontier overall | PARTIALLY VERIFIED | The engine is substantial, but live cross-venue science, broad verification, recovery, endurance, and deployment gates remain open. |
@@ -13996,3 +13996,36 @@ The implementation is committed as `0e02c93`. It remains adapter-only: there
 is no API or Mission Control route for this stream, no persistent collector,
 and no live source observation. The worktree's pre-existing
 `data/frontier-public-probes/` directory was left untouched.
+
+## Readiness cgroup pressure telemetry — 2026-10-29 05:51 CET
+
+Commit `4595e46` adds `services.user-manager` to the existing read-only
+`GET /api/readiness/resources` sample. It reads a fixed current-user systemd
+manager cgroup, retaining its current charged memory, memory PSI, and
+hierarchical `memory.events` values for high/max, OOM, process kills, and group
+kills. Missing event counters serialize as `null`, so the UI renders “Not
+measured” rather than zero. Mission Control labels the counts as cumulative,
+explains descendant aggregation and PSI, and does not use them to alter the
+admission gate. Kernel/OOMD journals remain necessary for kill attribution.
+
+Verification passed: `tests/test_readiness_resources.py` **7/7 in 0.89 seconds**
+(43,852 KiB peak RSS) under a 384 MiB soft / 512 MiB hard limit, zero swap, and
+20% CPU quota; `Readiness.test.tsx` **3/3 in 14.01 seconds** under the same
+cgroup bounds with a 256 MiB Node heap. Strict mypy, Ruff check/format, ESLint,
+Prettier, and `git diff --check` passed. A one-shot live call to the bounded
+resource sampler took 0.09 seconds at 12,888 KiB peak RSS with zero swap and
+returned the user-manager cgroup as measured. At that sample its charge was
+9,317,834,752 bytes, memory PSI was zero, and counters were `oom=19`,
+`oom_kill=15`, and `oom_group_kill=0`. Its CPU PSI some avg10 was 8.87% and
+full avg10 was 8.38%; no workload attribution is established from this single
+sample.
+
+The latest 05:51 host sample showed 11,573,329,920 bytes available RAM, only
+2,695,168 bytes free swap, and zero host memory PSI. User-manager counters were
+unchanged. `oomctl` listed the user-manager with zero current pressure
+averages; kernel and OOMD journals had no entries since 05:42. API, Reality,
+web/API dependents, Echo, Continental, Caddy, and remote access remained active;
+the capacity timer was waiting and the gap-detail timer inactive. These are
+short-window checks, not incident resolution. No service, timer, resource
+limit, or protected evidence was changed. The telemetry is committed but not
+deployed.

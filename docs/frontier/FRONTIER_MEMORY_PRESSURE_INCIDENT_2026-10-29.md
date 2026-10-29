@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 05:42 CET |
+| Latest addendum | 2026-10-29 05:51 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Preservation checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -599,3 +599,40 @@ current and 1,208,467,456 bytes peak, against `MemoryHigh=1,207,959,552`,
 below their high thresholds; the recorded peaks were slightly above
 `MemoryHigh` but below each hard maximum. These cgroup peaks are scoped service
 measurements, not host-wide workload attribution.
+
+## Readiness resource telemetry and post-test sample — 2026-10-29 05:51 CET
+
+The isolated Frontier branch committed `4595e46`, adding a read-only
+`user-manager` cgroup record to the existing Research Readiness resource API and
+dashboard. It exposes current memory charge, hierarchical memory PSI, and
+cumulative `memory.events` counters for high/max, OOM, process kills, and group
+kills. Missing counters remain null and display as not measured. The view does
+not alter scheduling or admission decisions, and its cgroup event counters do
+not replace kernel or systemd-oomd journal evidence for kill attribution.
+
+The bounded API resource test passed **7/7 in 0.89 seconds**, with 43,852 KiB
+peak RSS. The focused dashboard file passed **3/3 in 14.01 seconds**, using a
+256 MiB Node heap. Both used 384 MiB `MemoryHigh`, 512 MiB `MemoryMax`, zero
+swap, and 20% CPU quota. Strict mypy, Ruff, ESLint, Prettier, and whitespace
+checks passed. The single-file UI run did not build the full TypeScript project.
+The tests were fixture-only and caused no socket traffic.
+
+A live bounded call to the resource sampler at about 05:49 took 0.09 seconds
+and peaked at 12,888 KiB RSS. It measured user-manager charge of 9,317,834,752
+bytes, zero memory PSI, and cumulative `oom=19`, `oom_kill=15`, and
+`oom_group_kill=0`. In that one sample, user-manager CPU PSI some avg10 was
+8.87% and full avg10 was 8.38%; no workload attribution is established. At
+05:51 host memory available was 11,573,329,920 bytes (10.78 GiB), free swap was
+2,695,168 bytes (2.57 MiB), and host memory PSI remained zero. OOM counters
+remained unchanged. `oomctl` listed the user-manager at its 50% policy with
+zero current pressure averages. Kernel and OOMD journal queries found no
+entries since 05:42.
+
+At 05:51 the API and Reality recorder remained active with restart counts 9/14;
+MIDAS and Reality web/API, Echo production/staging, Continental tailnet/auth,
+Caddy, Headscale, Tailscale, RustDesk, and `ssh.socket` remained available.
+The capacity timer was active/waiting; the gap-detail timer remained inactive
+and its failed service retained the earlier OOM result. Nothing was restarted,
+reconfigured, or deployed. The host remains only partially contained because
+swap is nearly full and the observation window is short. Keep only serial,
+source-independent edits and capped fixtures within the admission limits.
