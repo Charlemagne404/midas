@@ -2,7 +2,7 @@
 
 **Report date:** 2026-10-29
 
-## Current completion matrix — 2026-10-29 08:12 CET
+## Current completion matrix — 2026-10-29 08:15 CET
 
 This is a current evidence classification, not a final completion claim. The
 dated implementation records below remain the detailed evidence; the
@@ -14656,3 +14656,29 @@ The gap-detail timer stays disabled and the Reality capacity service remains
 bounded at 160/192 MiB with zero swap. Only small, serial, zero-swap fixture
 work is eligible after a fresh admission check; the UI retry and broad suites
 are deferred. Frontier remains isolated from production.
+
+## Bounded storage-security and graph-revision fixtures — 2026-10-29 08:15 CET
+
+After a fresh admission sample, two storage-security tests passed **2/2** in
+2.01 seconds: oversized base64 evidence is rejected before decoding, and
+offline payload tampering is detected on evidence read. Three graph-revision
+tests passed **3/3** in 2.31 seconds: rendered market metadata changes the
+graph revision while books/trades do not, legacy schema migration backfills
+the revision, and relationship-review counts update atomically. The first
+security-test harness attempt used systemd's default working directory and
+ran no tests; it was corrected with an explicit Frontier `WorkingDirectory`.
+
+Both successful runs used a serial transient unit at 384 MiB high / 512 MiB
+max, zero swap, 20% CPU, 64 tasks, and a 60-second runtime. A live cgroup
+sample for the graph tests measured a 44,711,936-byte peak (about 42.6 MiB),
+zero swap, and zero high/max/OOM events. The collected security-test unit's
+256 KiB exit summary is invalid after cgroup removal and is not used as a
+peak. No external source or captured probe data was accessed.
+
+At 08:15:35 global memory PSI avg10/60/300 was 0/0.01/0.18% (`full`
+0/0.01/0.17%); oomd's monitored user cgroup was 0/0.01/0.20%. `MemAvailable`
+was 10 GiB, while swap was still effectively full. OOM counters remained
+19/15/0. API, Reality, and Reality API were active at restart counts 9/14/0;
+API and Reality were about 967/423 MiB. This supports resuming small,
+serial fixture work, not broad UI or endurance testing. The next capacity
+monitor run at 08:17:45 remains an observation point.

@@ -1374,3 +1374,26 @@ fresh, longer low-pressure admission window is observed.
 Incident status remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**. The
 gap-detail timer remains inactive and disabled. Rollback commands for both
 the timer and capacity drop-in are in “Actions in effect and rollback” above.
+
+## Low-memory fixture admission after UI stop — 2026-10-29 08:15 CET
+
+With global memory PSI avg10 at zero and oomd's monitored user cgroup near
+zero, two bounded storage-security checks passed **2/2** in 2.01 seconds:
+oversized base64 rejection before decode and offline evidence-tamper detection.
+Three graph-revision checks passed **3/3** in 2.31 seconds: graph revision
+changes for rendered market metadata but not books/trades, legacy migration
+backfills graph revisions, and relationship-review counters update
+atomically. Both runs used 384 MiB high / 512 MiB max, zero swap, 20% CPU,
+64 tasks, and a 60-second runtime. A concurrent live cgroup sample of the
+graph run measured a 44,711,936-byte peak, zero swap, and no high/max/OOM
+events. The fast collected-unit 256 KiB peak from the first test is invalid
+after cgroup removal and is excluded.
+
+At 08:15:35 global memory PSI was 0/0.01/0.18% avg10/60/300 and full
+0/0.01/0.17%; oomd's user-cgroup pressure was 0/0.01/0.20%. `MemAvailable`
+was 10 GiB; swap remained nearly full. API/Reality/Reality API remained active
+at restarts 9/14/0, with API/Reality at about 967/423 MiB. OOM counters stayed
+19/15/0, and no recent OOMD/kernel OOM entry appeared. The 08:17:45 capacity
+timer is the next validation point. Small serial fixture work may continue
+after fresh admission; UI retries, broad suites, and endurance work remain
+deferred.
