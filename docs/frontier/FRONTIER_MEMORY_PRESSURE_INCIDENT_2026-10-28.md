@@ -2,7 +2,7 @@
 
 **Incident date:** 2026-10-28 (CET)
 
-**Checkpoint captured:** 2026-10-29 01:17 CET
+**Checkpoint captured:** 2026-10-29 01:30 CET
 
 **Scope:** Host reliability interruption during Project Frontier
 
@@ -827,3 +827,29 @@ Current evidence supports resuming only bounded offline Frontier tests with
 explicit memory, swap, CPU, task, and wall-time limits. Keep broad suites,
 replay, live probes, and research batches gated; do not treat this single run
 or quiet observation window as incident closure.
+
+## Bounded Frontier resumption — 2026-10-29 01:30 CET
+
+After the scheduled capacity run passed, Frontier fixture work resumed
+sequentially in transient user scopes. Typical Python scopes used a 768 MiB
+hard cap, zero swap, 25% CPU quota, 64-task cap, and explicit wall timeout.
+The frontend scopes also used a 768 MiB cap, zero swap, 25% CPU quota,
+64-task cap, and `GOMAXPROCS=2`. These bounded workloads did not produce a
+host/user PSI spike or a max/OOM event.
+
+At 01:30:17, `MemAvailable` was 10 GiB, host PSI avg10/avg60/avg300 was 0%,
+and the user-manager counters were `high=16,416,835`, `max=728,363`,
+`oom=19`, `oom_kill=15`. The high count had risen 14 since 01:16:56, but max,
+OOM, and OOM-kill counts were unchanged. The kernel and oomd journals still
+had no new kill after 23:43:24 CET. Reality and API remained active with
+unchanged restart counts 14/9; Reality usage was about 627 MiB after reclaim,
+while API stayed near its service `MemoryHigh`. No critical service was
+restarted or reconfigured during the tests.
+
+The verified capacity run, continued fresh Reality status, zero current PSI,
+and stable OOM counters support continued **bounded offline development and
+fixture tests only**. The root workload mix that triggered the historic
+user-slice pressure remains undetermined, swap remains 3.1/4 GiB used, the
+API remains near its soft bound, and only one capacity run has validated the
+160 MiB threshold. Do not treat the incident as solved or resume broad suites,
+live probes, replay campaigns, endurance, or production changes on this basis.

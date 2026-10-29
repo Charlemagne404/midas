@@ -85,27 +85,19 @@ def test_paired_replay_rejects_duplicate_scenario_names():
         )
 
 
-def test_paired_replay_evidence_digest_includes_effective_mappings():
+def test_paired_replay_rejects_mapping_override_conflicting_with_pinned_evidence():
     markets, books, relationships = _inputs()
     scenarios = (ExecutionScenario(name="baseline"), ExecutionScenario(name="stress"))
-    baseline, _ = paired_deterministic_replay(
-        markets,
-        books,
-        verified_relationships=relationships,
-        scenarios=scenarios,
-        as_of_utc=T0,
-        code_version="frontier-test-source-v1",
-    )
-    changed, _ = paired_deterministic_replay(
-        markets,
-        books,
-        verified_relationships=relationships,
-        state_mappings={relationships[0].relationship_id: {"yes": "no", "no": "yes"}},
-        scenarios=scenarios,
-        as_of_utc=T0,
-        code_version="frontier-test-source-v1",
-    )
-    assert changed.evidence_input_sha256 != baseline.evidence_input_sha256
+    with pytest.raises(ValueError, match="differs from the relationship's pinned evidence"):
+        paired_deterministic_replay(
+            markets,
+            books,
+            verified_relationships=relationships,
+            state_mappings={relationships[0].relationship_id: {"yes": "no", "no": "yes"}},
+            scenarios=scenarios,
+            as_of_utc=T0,
+            code_version="frontier-test-source-v1",
+        )
 
 
 def test_paired_replay_enforces_double_pass_input_bounds():

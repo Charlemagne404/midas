@@ -2,7 +2,7 @@
 
 **Report date:** 2026-10-29
 
-## Current completion matrix — 2026-10-29 00:31 CET
+## Current completion matrix — 2026-10-29 01:30 CET
 
 This is a current evidence classification, not a final completion claim. The
 dated implementation records below remain the detailed evidence; the
@@ -16,16 +16,59 @@ current host gate.
 | Relationship graph, evidence binding, and review | PARTIALLY VERIFIED | Deterministic fixture relationships and pinned evidence are covered; a live cross-venue economic equivalence is not established. |
 | Candidate discovery and independent economic verification | PARTIALLY VERIFIED | Bounded mathematical fixtures and independent audits pass selected checks; no live eligible opportunity is demonstrated. |
 | Cross-venue costs, FX, capital, and execution uncertainty | PARTIALLY VERIFIED | Virtual models preserve unknown cost and applicability states; account-specific fees, jurisdiction, transfers, and execution remain unresolved. |
-| Collection, provenance, durable storage, and replay | IMPLEMENTED, LIVE VALIDATION PENDING | Fixture and captured Polymarket evidence paths exist; multi-venue live collection is held, and protected Reality recovery is currently unverified. |
+| Collection, provenance, durable storage, and replay | PARTIALLY VERIFIED | Fixture and captured Polymarket evidence paths exist; Reality resumed fresh `RECORDING_UNSEQUENCED` capture after cold replay. Sequencing, multi-venue live collection, and archive provenance remain unverified or held. |
 | Read-only source network and trading boundary | COMPLETE AND VERIFIED | Only `PublicReadTransport` issues source HTTP requests; it is anonymous HTTPS GET-only, host-allowlisted, redirect-disabled, and bounded. Adapter boundary fixtures cover disabled probes, credential/mutating clients, cookies, redirects, oversized payloads, and JSON complexity. No exchange order/account path was found in the reviewed Frontier code. |
-| Laboratory/Arena comparisons and bounded orchestration | PARTIALLY VERIFIED | Selected deterministic comparisons exist; Arena admission now also gates on user-manager cgroup PSI associated with the configured oomd policy, but its regression is pending and full endurance evidence remains incomplete. |
-| User-cgroup-aware workload admission | IMPLEMENTED, VALIDATION PENDING | Central Arena, finite schedules, Laboratory, and the gap-replay source now require bounded `user@UID.service` memory PSI; live deployment remains unchanged. |
-| Reality capacity inventory bounds | IMPLEMENTED, VALIDATION PENDING | Isolated commits `8b2131f`, `9868dac`, and `7e637a9` stream/cap scans, skip invalid-provenance walks, and cap archive-manifest parsing at 4 MiB; fixtures are unrun and code is not installed. |
-| Native Frontier dashboard | PARTIALLY VERIFIED | The workspace and focused UI checks exist; the latest graph-layout assertion and full browser acceptance remain unverified. |
-| Broad regressions, resource endurance, and performance acceptance | DEFERRED | Held during the host memory incident; no stress run is authorized by this report. |
+| Laboratory/Arena comparisons and bounded orchestration | PARTIALLY VERIFIED | Arena admission and finite scheduling regressions pass; a Laboratory resource-denial case passes with a harness cap above its 722,894,848-byte capacity precondition. Full endurance evidence remains incomplete. |
+| User-cgroup-aware workload admission | IMPLEMENTED, BOUNDED VALIDATION PASSED | Central Arena admission (15), finite schedules (12), and the Laboratory denial case (1) pass fixture tests using user-manager pressure; no runtime deployment occurred. |
+| Reality capacity inventory bounds | PARTIALLY VERIFIED | Isolated candidate tests pass 5/5; candidate code remains undeployed. The separate capacity monitor completed one scheduled run at 134,225,920 bytes under `MemoryHigh=160M`, `MemoryMax=192M`, and zero swap. |
+| Native Frontier dashboard | PARTIALLY VERIFIED | The graph/evidence UI test passes; all 9 UI cases pass across the default-timeout run and a 15-second retry for its two slow fixtures. Typecheck and production build pass; browser E2E remains unverified. |
+| Host reliability containment | PARTIALLY VERIFIED | The auxiliary five-minute gap-detail timer is disabled and the capacity soft bound is validated in one scheduled run. No OOM kill has been logged since 23:43 CET; the workload mix that triggered aggregate pressure remains unknown. |
+| Broad regressions, resource endurance, and performance acceptance | DEFERRED | Several targeted suites pass under explicit memory, swap, CPU, task, and wall-time limits; the full repository suite, endurance, and broad performance tests remain deferred. |
 | Live multi-venue source authorization and findings | BLOCKED | Kalshi, Kraken, and Coinbase retained research remain held; the worktree Polymarket probe flag is off. |
 | Production integration/deployment | DEFERRED | Frontier remains isolated; no protected service transition occurred. |
 | Project Frontier overall | PARTIALLY VERIFIED | The engine is substantial, but live cross-venue science, broad verification, recovery, endurance, and deployment gates remain open. |
+
+## Bounded Frontier verification after host containment — 2026-10-29 01:30 CET
+
+Frontier work resumed only in sequential transient user scopes. Python test
+scopes used a 768 MiB maximum, zero swap, 25% CPU quota, 64-task cap, and
+bounded timeouts unless a smaller scope is stated. The adapter, economics,
+relationship, storage, and API suites use local fixtures; no source probe or
+exchange request was made.
+
+| Area | Result | Scope |
+| --- | ---: | --- |
+| Public-read transport and retry boundary | 20/20 passed | 512 MiB, zero swap, 25% CPU, 16 tasks; 3.50 s. |
+| Exchange adapter fixtures | 167/167 passed | 768 MiB, zero swap, 25% CPU, 64 tasks; 4.89 s. |
+| Instrument identity, payoff invariants, FX, capital carry, and Kalshi fee sensitivity | 77/77 passed | 768 MiB, zero swap, 25% CPU, 64 tasks; 3.58 s. |
+| Joint-state and logical-implication economics | 35/35 passed | 768 MiB, zero swap, 25% CPU, 64 tasks; 4.19 s. |
+| Frontier storage | 32/32 passed | 768 MiB, zero swap, 25% CPU, 64 tasks; 9.59 s. |
+| Frontier API | 59/59 passed | 768 MiB, zero swap, 25% CPU, 64 tasks; 58.60 s. One existing Starlette/httpx deprecation warning. |
+| Relationship, historical replay, paired replay, and source-permission slice | 126 passed, 1 failed on first run | The failing assertion supplied a flipped mapping against a verified relationship's pinned evidence. |
+| Paired-replay mapping regression after correction | 4/4 passed | The stale assertion now verifies that conflicting overrides are rejected, preserving the integrity rule from `40afc20`. |
+
+The mapping-test correction changes no production behavior: the old test treated
+a prohibited override as a way to vary the digest, despite verified
+same-payoff mappings being bound to relationship evidence. The corrected test
+checks the intended rejection. The other 126 cases in the combined replay
+slice passed before this test-only correction; the combined slice was not
+rerun as a whole.
+
+The Frontier UI graph/evidence test passed 1/1. The full `Frontier.test.tsx`
+file produced 7 passes and two default 5-second timeouts at the 25% CPU quota;
+the two slow fixture cases then passed 2/2 with a 15-second test timeout. An
+initial 16-task UI scope failed during esbuild startup before tests began; a
+64-task scope worked. The API suite's initial 60-second harness reached all
+test cases but timed out before pytest's final summary; the 90-second retry
+above completed successfully. These are documented harness adjustments, not
+hidden assertion failures.
+
+`tsc -b` passed in a 768 MiB, zero-swap scope (376 MiB peak). Vite's production
+build transformed 2,230 modules and passed in 54.79 seconds with a 438.3 MiB
+scope peak; output was written to a new `/tmp` directory. Vite retained its
+existing warning that the Chart chunk is 544.51 kB minified. Playwright E2E,
+the full repository suite, resource endurance, and live multi-venue research
+remain unrun.
 
 ## Adapter trust boundary and retry bound review — 2026-10-29 00:00 CET
 

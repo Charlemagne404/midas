@@ -1,19 +1,17 @@
 # Project Frontier Mission Ledger
 
-## Current host state — 2026-10-29 01:17 CET
+## Current host and Frontier state — 2026-10-29 01:30 CET
 
 Reality has resumed recording after cold replay: status says
 `RECORDING_UNSEQUENCED`, `active_receiving`, 16/16 fresh books, zero failures,
 and storage continued growing through the 01:10:25 sample. `sequence_verified`
 remains false. Do not restart or alter it.
 
-The Laboratory admission test first failed its resource-denial assertion
-inside a 512 MiB test scope because its own pool-capacity precondition requires
-722,894,848 bytes. This was a harness ceiling mismatch, not a source failure.
-The same test passed on rerun under a 1 GiB hard cap, no swap, 25% CPU quota,
-16 tasks, and a 30-second timeout (1 passed in 1.41 seconds). No OOM or
-oomd-kill counter changed; host and user PSI avg10/avg60/avg300 were zero and
-9.8 GiB was available after the run. API and Reality remained active.
+The incident is contained enough for bounded offline work, but remains open:
+the capacity run passed once with its 160 MiB soft bound, no kill is logged
+since 23:43 CET, and the original pressure initiator is unknown. The auxiliary
+five-minute gap-detail timer remains disabled. Reality is fresh but
+`RECORDING_UNSEQUENCED`; the archive manifest/inventory alerts are preserved.
 
 The scheduled capacity monitor completed at 01:16:11 with `Result=success`,
 `MemoryPeak=134,225,920` bytes, `MemoryHigh=160 MiB`, `MemoryMax=192 MiB`,
@@ -23,16 +21,37 @@ status age 3.36 seconds, and raw recording size 12,137,375,646 bytes.
 `ARCHIVE_SEGMENT_INVENTORY_INVALID` and
 `ARCHIVE_MANIFEST_PROVENANCE_INVALID` remain; neither was altered.
 
-At 01:16:56 host available memory was 9.8 GiB and host PSI avg10/avg60/avg300
-was zero. User-manager `max=728,363`, `oom=19`, and `oom_kill=15` stayed fixed;
-`high` rose by three during the interval. No OOM journal entry appeared after
-the 23:43 incident. Reality and API remained active with unchanged restart
-counts (14 and 9) and were close to their own `MemoryHigh` bounds. Echo
-production/staging, Continental, Caddy, RustDesk, and the SSH socket were also
-active. This supports resuming bounded offline Frontier tests only. Keep full
-suites, replay, live probes, and research batches gated; continue to avoid
-overlap with scheduled work. The five-minute gap-detail timer remains disabled.
-Preserve all original dirty changes and the untracked public-probe evidence.
+Through 01:30, host available memory stayed about 9.8–10 GiB, host/user PSI
+avg10/avg60/avg300 stayed zero, and user-manager `max=728,363`, `oom=19`, and
+`oom_kill=15` remained fixed. The `high` counter rose from 16,416,821 at 01:16
+to 16,416,835 at 01:30 without new max/OOM events. Reality and API remain
+active with restart counts 14 and 9; API remains close to its own
+`MemoryHigh`. Echo production/staging, Continental, Caddy, RustDesk, and the
+SSH socket were verified active at 01:16. Keep work sequential, fixture-based,
+and explicitly bounded. Full repository regression, endurance, browser E2E,
+live probes, and research campaigns remain gated.
+
+Recent bounded Frontier evidence:
+
+- Transport 20/20; adapters 167/167.
+- Instrument/payoff/FX/capital/Kalshi-fee 77/77; joint-state and implication
+  economics 35/35.
+- Storage 32/32; API 59/59; the API suite required a 90-second harness after
+  its 60-second run reached the final cases but timed out before summary.
+- The combined relationship/history/replay/source-permission slice had
+  126 passes and one stale mapping-override assertion. The assertion now
+  checks the intended rejection of a caller mapping that conflicts with
+  verified pinned evidence; `test_replay_comparison.py` passes 4/4 after this
+  correction. The combined slice was not rerun.
+- UI graph test 1/1. The full UI file had two default 5-second timeouts at the
+  25% CPU quota; those two passed with a 15-second test timeout. `tsc -b`
+  passed and the production Vite build passed in a temporary output directory.
+
+All tests and builds ran in sequential systemd scopes with a no-swap memory
+cap, CPU quota, task limit, and wall timeout. `data/frontier-public-probes/`
+remains intentionally untracked and untouched. The latest working change is
+the replay-comparison test correction; stage only that test and the current
+Frontier documentation when committing.
 
 ## Current host state — 2026-10-29 01:05 CET
 
