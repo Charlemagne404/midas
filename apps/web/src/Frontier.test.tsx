@@ -3078,15 +3078,18 @@ it('renders a bounded accessible relationship graph and opens selected evidence'
           schema_version: 1,
           kind: 'fiat',
           code: 'USD',
-          network_id: null,
-          asset_reference: null,
+          network_id: null as string | null,
+          asset_reference: null as string | null,
         },
         tick_size: '0.01',
         price_increment_ranges: [{ start: '0', end: '1', step: '0.01' }],
         quantity_step: '1',
         minimum_quantity: '1',
         minimum_notional: '1',
-        payouts: [],
+        payouts: [
+          { state_id: 'no', amount: '0' },
+          { state_id: 'yes', amount: '1' },
+        ],
       },
     ],
     quality_flags: [],
@@ -3118,6 +3121,23 @@ it('renders a bounded accessible relationship graph and opens selected evidence'
       },
     ],
   };
+  const polymarketMarket = marketRecord('polymarket', 'event-1', 'Who wins the mayoral election?');
+  const kalshiMarket = marketRecord('kalshi', 'event-1', 'Who wins the mayoral election?');
+  kalshiMarket.instruments = kalshiMarket.instruments.map((instrument) => ({
+    ...instrument,
+    price_currency_identity: {
+      schema_version: 1,
+      kind: 'token',
+      code: 'USD',
+      network_id: 'eip155:137',
+      asset_reference: `0x${'b'.repeat(40)}`,
+    },
+    quantity_step: '0.5',
+    payouts: [
+      { state_id: 'no', amount: '0' },
+      { state_id: 'yes', amount: '0.99' },
+    ],
+  }));
   const responses: Record<string, unknown> = {
     '/api/frontier/overview': {
       state: 'AVAILABLE',
@@ -3140,7 +3160,7 @@ it('renders a bounded accessible relationship graph and opens selected evidence'
     },
     '/api/frontier/sources': { items: [] },
     '/api/frontier/markets?limit=100': {
-      items: [marketRecord('polymarket', 'event-1', 'Who wins the mayoral election?')],
+      items: [polymarketMarket],
       returned: 1,
       limit: 100,
       offset: 0,
@@ -3307,11 +3327,6 @@ it('renders a bounded accessible relationship graph and opens selected evidence'
         String(input).includes('include_entity_context=true'),
     ),
   ).toBe(true);
-  expect(await screen.findByText('Not in loaded window')).toBeInTheDocument();
-  expect(screen.getByText('market not in loaded window')).toBeInTheDocument();
-  expect(
-    screen.getByText('NOT IN LOADED WINDOW', { selector: 'text.fr-network-column' }),
-  ).toBeInTheDocument();
   expect(
     await screen.findByText(
       /considered 500 relationship rows.*additional neighbors may be omitted/,
@@ -3331,6 +3346,19 @@ it('renders a bounded accessible relationship graph and opens selected evidence'
   expect(screen.getByText(/Resolution authority: Official election authority/)).toBeInTheDocument();
   expect(screen.getByText(/native_event_id · native native-election-event/)).toBeInTheDocument();
   expect(screen.getByText('Source observation: poly-observation')).toBeInTheDocument();
+  expect(await screen.findByText('Not in loaded window')).toBeInTheDocument();
+  expect(screen.getByText('market not in loaded window')).toBeInTheDocument();
+  expect(
+    screen.getByText('NOT IN LOADED WINDOW', { selector: 'text.fr-network-column' }),
+  ).toBeInTheDocument();
+  responses['/api/frontier/markets?limit=100'] = {
+    items: [polymarketMarket, kalshiMarket],
+    returned: 2,
+    limit: 100,
+    offset: 0,
+  };
+  await queryClient.refetchQueries({ queryKey: ['frontier', 'markets'] });
+  await vi.waitFor(() => expect(screen.queryByText('market not in loaded window')).toBeNull());
   fireEvent.change(screen.getByLabelText('Relationship graph center market'), {
     target: { value: 'polymarket:event-1' },
   });
@@ -3368,11 +3396,22 @@ it('renders a bounded accessible relationship graph and opens selected evidence'
     name: 'Left recorded contract terms',
   });
   expect(leftContractTerms).toHaveTextContent(/market identity fiat:USD/i);
-  expect(screen.getByText(/fixed fee 0\.01/)).toBeInTheDocument();
-  expect(screen.getByText(/expires 2026-11-26T20:00:00Z/)).toBeInTheDocument();
-  fireEvent.click(screen.getByText('Rules, instruments, and source provenance'));
-  expect(await screen.findByText(/Fee evidence SHA-256/)).toBeInTheDocument();
-  expect(screen.getByText(/price currency identity fiat:USD/)).toBeInTheDocument();
+  const quoteAssetDifference = screen.getByText('Instrument quote asset identities').parentElement;
+  expect(quoteAssetDifference).toHaveTextContent(/Left:.*fiat.*USD/);
+  expect(quoteAssetDifference).toHaveTextContent(/Right:.*token.*eip155:137/);
+  const quantityStepDifference = screen.getByText('Instrument quantity steps').parentElement;
+  expect(quantityStepDifference).toHaveTextContent(/Left:.*"1"/);
+  expect(quantityStepDifference).toHaveTextContent(/Right:.*"0\.5"/);
+  const payoutDifference = screen.getByText('Instrument payout vectors').parentElement;
+  expect(payoutDifference).toHaveTextContent(/Left:.*no.*0.*yes.*1/);
+  expect(payoutDifference).toHaveTextContent(/Right:.*no.*0.*yes.*0\.99/);
+  expect(leftContractTerms).toHaveTextContent(/fixed fee 0\.01/);
+  expect(leftContractTerms).toHaveTextContent(/expires 2026-11-26T20:00:00Z/);
+  fireEvent.click(within(leftContractTerms).getByText('Rules, instruments, and source provenance'));
+  expect(await within(leftContractTerms).findByText(/Fee evidence SHA-256/)).toBeInTheDocument();
+  expect(
+    within(leftContractTerms).getByText(/price currency identity fiat:USD/),
+  ).toBeInTheDocument();
   fireEvent.click(screen.getByText('Compare recorded contract terms', { selector: 'summary' }));
   await vi.waitFor(() =>
     expect(screen.queryByRole('region', { name: 'Left recorded contract terms' })).toBeNull(),

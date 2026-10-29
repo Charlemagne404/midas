@@ -15291,3 +15291,43 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
   user manager has no aggregate cap, and live cross-venue scientific findings
   remain unvalidated. Continue serial offline work only. Preserve the
   pre-existing untracked public-probe data untouched.
+
+## 2026-10-29 15:11 CET — staged market-load graph journey
+
+- Restored assertions for the graph's explicit missing-market state, then
+  changed the fixture response and refetched two markets before examining
+  cross-venue instrument-term differences (quote-asset identity, quantity
+  step, and payout vector). The selected component journey passed **1/1** in
+  a 512/768 MiB high/max, zero-swap, 20%-CPU, 64-task scope. Targeted
+  Prettier and ESLint passed. No live source or production store was used.
+- At 15:11:30, `MemAvailable` was about 10 GiB, swap free about 15 MiB, and
+  global PSI avg10/60/300 some/full was zero. API/Reality/Reality API were
+  active at restarts 9/14/0; the gap-detail timer was inactive and capacity
+  timer waiting. Shared user-manager high/max/oom/oom_kill counters were
+  16,437,686/730,632/19/15; `max` increased by 185 since 14:59 without an
+  attributable scope. No kernel or OOMD kill was logged during the short test
+  interval.
+- **Status:** the host incident remains partially contained, not resolved.
+  Nearly all swap remains occupied; the user manager has no aggregate memory
+  ceiling; recent `memory.events max` growth is not attributed. Continue
+  serial, offline, resource-bounded Frontier work only. `Frontier.test.tsx`
+  and this documentation are the only intended tracked changes for this
+  checkpoint; existing untracked probe evidence remains untouched.
+
+## 2026-10-29 15:14 CET — assert rendered instrument-term values
+
+- Strengthened the graph UI journey to check the values as well as the three
+  instrument-difference headings: fiat USD vs token USD on `eip155:137`,
+  quantity step 1 vs 0.5, and payout 1 vs 0.99. The first strengthened run
+  exposed a regex mismatch against escaped JSON output; after a narrow test
+  correction the journey passed **1/1** (6.6 seconds test time). Targeted
+  Prettier and ESLint passed. No live source or production store was used.
+- Post-run at 15:14:15: about 10 GiB available RAM, 15 MiB free swap, zero
+  PSI, and unchanged shared-user high/max/oom/oom_kill counters
+  16,437,686/730,632/19/15. API/Reality/Reality API remained active at
+  restarts 9/14/0; the gap timer was inactive and capacity timer waiting. No
+  OOMD/kernel kill was logged during the short post-run window.
+- **Status:** safe for serial, offline Frontier work under transient resource
+  bounds based on this bounded sample; not evidence that the host incident is
+  resolved. Swap remains nearly full and historical pressure attribution is
+  incomplete. Preserve the untracked probe evidence.

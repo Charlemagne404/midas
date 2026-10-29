@@ -15815,6 +15815,45 @@ kernel kill was logged during the test interval. This bounded check adds UI
 verification but does not establish host recovery or live multi-venue
 validation; nearly full swap and unattributed historical pressure remain.
 
+### Staged graph-load and instrument-difference UI verification — 2026-10-29 15:11 CET
+
+The relationship-graph component fixture first verifies the explicit
+"market not in loaded window" state with one loaded market, then updates the
+mocked list and refetches Polymarket and Kalshi fixtures. Its contract
+comparison checks that quote-asset identity, quantity step, and payout-vector
+differences are visible with the existing fee and settlement evidence. The
+selected component test passed **1/1** in a bounded 512 MiB high / 768 MiB
+max, zero-swap, 20%-CPU, 64-task scope. Targeted Prettier and ESLint passed.
+The run used fixtures only; it does not validate live venue matching or
+economic equivalence.
+
+At 15:11:30, host PSI was zero and about 10 GiB RAM was available, but only
+about 15 MiB swap was free. API, Reality, and Reality API remained active at
+restart counts 9/14/0. User-manager `memory.events max` increased by 185 since
+14:59; the aggregate descendant counter does not identify which cgroup
+triggered it. No new OOM kill appeared in the brief test interval. The host
+incident remains partially contained, and further Frontier work remains
+serial, offline, and resource-bounded pending a longer quiet observation and
+resolution of nearly full swap and unattributed pressure.
+
+### Rendered instrument-term values in the graph UI — 2026-10-29 15:14 CET
+
+The relationship-graph fixture now asserts the actual displayed left/right
+values for quote-asset identity (fiat USD versus token USD on `eip155:137`),
+quantity step (1 versus 0.5), and payout vector (1 versus 0.99). The
+strengthened journey passed **1/1** under the same bounded UI-test scope. An
+intermediate assertion failed because its regex expected unescaped JSON
+quotes; adjusting the assertion to the actual rendered JSON text fixed the
+test. The result is fixture-level presentation validation only and does not
+establish live source equivalence or economic opportunity.
+
+At 15:14:15, available RAM was about 10 GiB, free swap about 15 MiB, and PSI
+zero. The shared user-manager `memory.events` values were unchanged at
+16,437,686/730,632/19/15 from the pre-run sample; no kernel or OOMD kill was
+logged during the short interval. API/Reality/Reality API remained active at
+restart counts 9/14/0. This does not resolve the host incident; continuation
+remains serial, offline, and resource-bounded.
+
 ### Bounded instrument-level relationship comparison — 2026-10-29 14:59 CET
 
 The graph's recorded-term difference summary now compares instrument count,

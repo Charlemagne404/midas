@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 14:59 CET |
+| Latest addendum | 2026-10-29 15:14 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Pre-incident checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -3421,3 +3421,49 @@ Shared-user high/max/oom/oom_kill counters remained
 counts 9/14/0, and no OOMD or kernel kill was logged since 14:57:45. This is
 bounded verification and a brief quiet sample only; swap remains nearly full
 and the incident stays partially contained.
+
+## Bounded UI verification — 2026-10-29 15:11 CET
+
+The graph UI fixture starts with only the Polymarket market loaded and
+asserts the explicit missing-market state, then refetches a two-market
+Polymarket/Kalshi fixture and checks recorded instrument differences in
+quote-asset identity, quantity step, and payout vector. The selected
+component journey passed **1/1** in a 512 MiB `MemoryHigh` / 768 MiB
+`MemoryMax`, zero-swap, 20%-CPU, 64-task scope. Prettier and file-scoped
+ESLint passed. No network source, production API, or production store was
+used.
+
+At 15:11:30, `MemAvailable` was about 10 GiB, free swap about 15 MiB, and
+global PSI some/full avg10/60/300 was zero. API, Reality, and Reality API
+remained active at restart counts 9/14/0. The gap-detail timer remained
+inactive; the capacity timer was waiting. User-manager `memory.events`
+high/max/oom/oom_kill was 16,437,686/730,632/19/15: `max` had increased by
+185 from the 14:59 sample while `high`, `oom`, and `oom_kill` were unchanged.
+The hierarchical counter cannot attribute that increase to a particular
+scope. No kernel or systemd-oomd kill was logged during the short test
+interval. This check is bounded UI evidence, not incident closure. Swap is
+still nearly exhausted, the user-manager hierarchy remains uncapped, and
+pressure initiation is not fully attributed. Continue only serial,
+source-independent work after fresh admission checks.
+
+## UI assertion refinement and post-run sample — 2026-10-29 15:14 CET
+
+The graph journey was strengthened to assert the left/right values for all
+three instrument differences: fiat USD versus token USD on `eip155:137`,
+quantity step 1 versus 0.5, and payout 1 versus 0.99. One intermediate run
+failed because the test regex expected unescaped JSON quotes; the rendered
+comparison values were present. After correcting the regex to match the
+rendered payout-state values, the selected test passed **1/1** (6.6 seconds
+test time, 23.1 seconds total) under the same 512/768 MiB, zero-swap, 20%-CPU,
+64-task scope. This is a fixture assertion correction, not an application
+failure.
+
+At 15:14:15, about 10 GiB RAM was available, swap free was about 15 MiB, and
+global PSI was zero. Shared user-manager counters remained
+high/max/oom/oom_kill = 16,437,686/730,632/19/15 across the last bounded test;
+the prior `max` increase is not attributed. API, Reality, and Reality API
+were active at restart counts 9/14/0; the capacity timer was waiting and the
+gap-detail timer inactive. No kernel or systemd-oomd kill was logged in the
+15:13:40–15:14:15 interval. This remains a brief observation only. Nearly all
+swap is occupied, the user-manager hierarchy has no aggregate ceiling, and
+the incident remains partially contained.
