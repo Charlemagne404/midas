@@ -1185,7 +1185,7 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
     quote_asset: null,
     settlement_asset: 'USD',
     payoff: {
-      state_ids: [`${venue}-${nativeId}-world`],
+      state_ids: [`${venue}-${nativeId}-affirmative`, `${venue}-${nativeId}-negative`],
       payout_currency: 'USD',
       exhaustive: true,
       verified: true,
@@ -1219,8 +1219,36 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
     },
     native_fields: venue === 'polymarket' ? { conditionId: `0x${'a'.repeat(64)}` } : {},
     instruments: [
-      { native_instrument_id: `${venue}-${nativeId}-yes`, label: 'Yes', outcome_id: 'yes' },
-      { native_instrument_id: `${venue}-${nativeId}-no`, label: 'No', outcome_id: 'no' },
+      {
+        native_instrument_id: `${venue}-${nativeId}-yes`,
+        label: 'Yes',
+        outcome_id: 'yes',
+        quantity_unit: 'contract',
+        price_currency: 'USD',
+        tick_size: '0.01',
+        quantity_step: '1',
+        minimum_quantity: '1',
+        minimum_notional: '1',
+        payouts: [
+          { state_id: `${venue}-${nativeId}-affirmative`, amount: '1' },
+          { state_id: `${venue}-${nativeId}-negative`, amount: '0' },
+        ],
+      },
+      {
+        native_instrument_id: `${venue}-${nativeId}-no`,
+        label: 'No',
+        outcome_id: 'no',
+        quantity_unit: 'contract',
+        price_currency: 'USD',
+        tick_size: '0.01',
+        quantity_step: '1',
+        minimum_quantity: '1',
+        minimum_notional: '1',
+        payouts: [
+          { state_id: `${venue}-${nativeId}-affirmative`, amount: '0' },
+          { state_id: `${venue}-${nativeId}-negative`, amount: '1' },
+        ],
+      },
     ],
     selected_components:
       venue === 'kalshi'
@@ -1964,6 +1992,16 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
   await expect(contractTerms.nth(0)).toContainText('2026-12-01T00:00:00Z');
   await expect(contractTerms.nth(1)).toContainText('2026-12-03T00:00:00Z');
   await expect(contractComparison).toContainText('do not establish equivalent payoffs');
+  await expect(contractTerms.nth(0)).toContainText('Native market ID');
+  const leftSource = contractTerms.nth(0).locator('.fr-contract-source-details');
+  await leftSource.locator('summary').click();
+  await expect(leftSource).toContainText('Payout by state');
+  await expect(leftSource).toContainText('polymarket-election-1-affirmative: 1');
+  await expect(leftSource).toContainText('minimum notional 1');
+  const rightSource = contractTerms.nth(1).locator('.fr-contract-source-details');
+  await rightSource.locator('summary').click();
+  await expect(rightSource).toContainText('kalshi-election-1-negative: 1');
+  await expect(rightSource).toContainText('Fee schedule details');
   await page.screenshot({
     path: test.info().outputPath('frontier-relationship-network.png'),
     fullPage: true,
@@ -1988,7 +2026,9 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
   await page.getByLabel('External assertion ID (reference only)').fill('fixture-assertion-e2e');
   await page
     .getByLabel('Complete state mapping (left to right JSON)')
-    .fill('{"election-1-world":"election-1-world"}');
+    .fill(
+      '{"polymarket-election-1-affirmative":"kalshi-election-1-affirmative","polymarket-election-1-negative":"kalshi-election-1-negative"}',
+    );
   await page.getByLabel('YES implication direction').selectOption('right_to_left');
   await page.getByRole('button', { name: 'Record immutable review' }).click();
   await expect
@@ -1997,7 +2037,10 @@ test('relationship network remains bounded, selectable, and scroll-contained on 
       decision: 'verified',
       relationship_type: 'logical_implication',
       external_assertion_id: 'fixture-assertion-e2e',
-      state_mapping: { 'election-1-world': 'election-1-world' },
+      state_mapping: {
+        'polymarket-election-1-affirmative': 'kalshi-election-1-affirmative',
+        'polymarket-election-1-negative': 'kalshi-election-1-negative',
+      },
       instrument_mapping: {},
       implication_from_market_id: 'kalshi:election-1',
       implication_to_market_id: 'polymarket:election-1',

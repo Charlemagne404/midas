@@ -323,6 +323,7 @@ type Market = {
     native_instrument_id: string;
     label: string;
     outcome_id: string | null;
+    quantity_unit?: string;
     price_currency?: string | null;
     price_currency_identity?: SettlementAssetIdentity | null;
     tick_size?: string | null;
@@ -330,6 +331,7 @@ type Market = {
     quantity_step?: string | null;
     minimum_quantity?: string | null;
     minimum_notional?: string | null;
+    payouts?: { state_id: string; amount: string }[];
   }[];
   selected_components?: {
     venue: Venue;
@@ -7777,6 +7779,12 @@ function RelationshipContractTerms({
           </div>
           <dl>
             <div>
+              <dt>Native market ID</dt>
+              <dd>
+                <code>{market.native_market_id}</code>
+              </dd>
+            </div>
+            <div>
               <dt>Type / lifecycle</dt>
               <dd>
                 {label(market.market_kind)} · {label(market.lifecycle)}
@@ -7814,7 +7822,8 @@ function RelationshipContractTerms({
             <div>
               <dt>Fee metadata</dt>
               <dd>
-                {label(market.fees.status)} · {market.fees.rate ?? 'rate not reported'}
+                {label(market.fees.status)} · {market.fees.rate ?? 'rate not reported'} ·{' '}
+                {market.fees.applies_to ?? 'applicability not reported'}
               </dd>
             </div>
           </dl>
@@ -7833,13 +7842,60 @@ function RelationshipContractTerms({
               <ul>
                 {market.instruments.map((instrument) => (
                   <li key={instrument.canonical_id ?? instrument.native_instrument_id}>
-                    {instrument.label} · {instrument.outcome_id ?? 'outcome not identified'} ·{' '}
-                    <code>{instrument.native_instrument_id}</code>
-                    {instrument.tick_size ? ` · tick ${instrument.tick_size}` : ''}
-                    {instrument.quantity_step ? ` · quantity step ${instrument.quantity_step}` : ''}
+                    <span>
+                      {instrument.label} · {instrument.outcome_id ?? 'outcome not identified'} ·{' '}
+                      <code>{instrument.native_instrument_id}</code>
+                    </span>
+                    <span className="fr-contract-instrument-meta">
+                      {[
+                        instrument.quantity_unit
+                          ? `quantity unit ${label(instrument.quantity_unit)}`
+                          : 'quantity unit not reported',
+                        instrument.price_currency
+                          ? `price currency ${instrument.price_currency}`
+                          : null,
+                        instrument.tick_size ? `tick ${instrument.tick_size}` : null,
+                        instrument.price_increment_ranges?.length
+                          ? `price increments ${instrument.price_increment_ranges
+                              .map(({ start, end, step }) => `${start}–${end} by ${step}`)
+                              .join(', ')}`
+                          : null,
+                        instrument.quantity_step
+                          ? `quantity step ${instrument.quantity_step}`
+                          : null,
+                        instrument.minimum_quantity
+                          ? `minimum quantity ${instrument.minimum_quantity}`
+                          : null,
+                        instrument.minimum_notional
+                          ? `minimum notional ${instrument.minimum_notional}`
+                          : null,
+                      ]
+                        .filter(Boolean)
+                        .join(' · ')}
+                    </span>
+                    <span className="fr-contract-payout-vector">
+                      Payout by state:{' '}
+                      {instrument.payouts?.length
+                        ? instrument.payouts
+                            .map(({ state_id, amount }) => `${state_id}: ${amount}`)
+                            .join(' · ')
+                        : 'not reported'}
+                    </span>
                   </li>
                 ))}
               </ul>
+              <strong>Payoff verification basis</strong>
+              <p>{market.payoff.verification_basis || 'Not reported'}</p>
+              <strong>Fee schedule details</strong>
+              <p>
+                Version {market.fees.version ?? 'not reported'} · formula{' '}
+                {market.fees.formula ?? 'not reported'} · currency{' '}
+                {market.fees.fee_currency ?? 'not reported'}
+              </p>
+              <p>
+                Source {market.fees.source_url ?? 'not reported'} ·{' '}
+                {market.fees.note || 'No fee note recorded'}
+              </p>
               <strong>Source record</strong>
               <p>
                 Received {market.provenance.response_received_at_utc} · observation{' '}
@@ -7851,6 +7907,10 @@ function RelationshipContractTerms({
               <p>
                 Resolution evidence SHA-256{' '}
                 <code>{market.resolution.evidence_sha256 ?? 'not reported'}</code>
+              </p>
+              <p>
+                Resolution fingerprint{' '}
+                <code>{market.resolution.resolution_fingerprint ?? 'not reported'}</code>
               </p>
             </div>
           </details>

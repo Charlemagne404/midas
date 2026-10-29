@@ -2002,6 +2002,18 @@
 .fr-contract-rule li {
   margin: 4px 0;
 }
+.fr-contract-instrument-meta,
+.fr-contract-payout-vector {
+  display: block;
+  margin-top: 3px;
+  overflow-wrap: anywhere;
+}
+.fr-contract-instrument-meta {
+  color: #8291a2;
+}
+.fr-contract-payout-vector {
+  color: #c4b28c;
+}
 .fr-review-wrap {
   grid-column: 1 / -1;
   display: grid;
