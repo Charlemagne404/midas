@@ -2,7 +2,7 @@
 
 **Report date:** 2026-10-29
 
-## Current completion matrix — 2026-10-29 11:13 CET
+## Current completion matrix — 2026-10-29 11:16 CET
 
 This is a current evidence classification, not a final completion claim. The
 dated implementation records below remain the detailed evidence; the
@@ -26,7 +26,7 @@ it made no endpoint requests and does not change source-use holds.
 | Source-operation admission telemetry | COMPLETE AND VERIFIED FOR ONE ROUTER INSTANCE | The bounded source gate exposes active venues, admitted totals, and contention rejections by scope with a UTC sample time. The source page can refresh the snapshot. Counters reset with that router and do not aggregate across workers or deployments. |
 | Reality capacity inventory bounds | PARTIALLY VERIFIED | Candidate inventory code remains undeployed. The separate monitor is bounded at MemoryHigh=160M, MemoryMax=192M, and zero swap. Its 10:18 run recorded a 129.4 MiB peak; the 10:48 run exited successfully but did not retain a valid peak. The service still reports archive inventory/provenance limitations, and no archive evidence was altered. |
 | Native Frontier dashboard | PARTIALLY VERIFIED | The native workspace includes source, coverage, graph, opportunity, replay, and readiness views. The Kalshi fee/sensitivity panel is extracted as a focused component and its isolated UI suite passes 3/3; targeted ESLint and Prettier checks pass. TypeScript remains unverified after bounded runtime and V8-heap failures, while the full UI build and browser replay journey remain open. |
-| Host reliability containment | PARTIALLY VERIFIED | OOMD's 50%/20s policy monitors user@1000.service pressure; the Oct 28 journal records 129 kills (106 gap-detail), with seven separate kernel memcg OOMs against the capacity job's former 128 MiB cap. Gap-detail remains disabled; capacity remains bounded at 160/192 MiB with zero swap. At 11:11:53, MemAvailable was 10.54 GiB, PSI zero, SwapFree 10.1 MiB, and cumulative OOM counters 19/15/0; API/Reality/Reality API remained active at restart counts 9/14/0. Historical initiating workload and durable recovery remain unresolved. |
+| Host reliability containment | PARTIALLY VERIFIED | OOMD's 50%/20s policy monitors user@1000.service pressure; the Oct 28 journal records 129 kills (106 gap-detail), with seven separate kernel memcg OOMs against the capacity job's former 128 MiB cap. Gap-detail remains disabled; capacity remains bounded at 160/192 MiB with zero swap. At 11:16:11, MemAvailable was 10.53 GiB, PSI zero, SwapFree 10.1 MiB, and cumulative OOM counters 19/15/0; API/Reality/Reality API remained active at restart counts 9/14/0. No kernel or oomd kill appeared in the checked 11:05–11:16 interval. Historical initiating workload and durable recovery remain unresolved. |
 | Node/V8 and Apport side effect | PARTIALLY VERIFIED | The current frontend TypeScript check remains unverified. Two memory-capped attempts produced no diagnostics: one hit its 60-second runtime cap; the other reached Node's default V8 heap limit near 251 MiB after 50 seconds while the cgroup peaked at 315 MiB with zero cgroup OOM events. This was a process heap failure, not a host or cgroup OOM. An earlier crash-report upload attempt received HTTP 504; remote receipt remains unknown. |
 | Broad regressions, resource endurance, and performance acceptance | DEFERRED | Selected Python, API, adapter, collection, and economics tests passed under bounded zero-swap scopes. The graph-revision storage/migration cases pass 8/8; API cursor invalidation passes 1/1; four core economics modules pass 79/79; joint-state basket/audit/replay passes 14/14; logical implication/relationship review passes 27/27; transport passes 20/20; readiness resource API passes 7/7 and its focused UI passes 3/3. Ruff check/format, ESLint, Prettier, and strict mypy on the readiness resource module passed under caps. Full MIDAS regression, full browser suite, captured-evidence browser journey, endurance, and broad performance tests remain deferred. |
 | Live multi-venue source authorization and findings | BLOCKED | Kalshi, Kraken, Coinbase, and Gemini probes and retained-data research remain held; the worktree Polymarket probe flag is off. |
@@ -14920,3 +14920,15 @@ retains the existing 160 MiB high / 192 MiB max / zero-swap limit. Archive
 provenance warnings remain untouched. Host status remains PARTIALLY CONTAINED /
 PARTIALLY VERIFIED; continue only serial, offline, resource-capped Frontier work
 after a fresh admission sample.
+
+
+### Post-commit host sample — 2026-10-29 11:16 CET
+
+The 11:16:11 sample remained quiet after the bounded panel test, TypeScript
+attempts, targeted lint, and scheduled Veritas analysis: memory PSI was zero,
+MemAvailable was 10.53 GiB, SwapFree was 10.1 MiB, and user-manager OOM counters
+remained 19/15/0. API, Reality, and Reality API remained active at restart
+counts 9/14/0. Continental contact/status, Echo production/staging, and RustDesk
+services were active. The scheduled Veritas research director exited
+successfully; no systemd-oomd or kernel kill entry appeared after 11:05. This is
+a short observation only.

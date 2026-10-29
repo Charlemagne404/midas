@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 11:13 CET |
+| Latest addendum | 2026-10-29 11:16 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Pre-incident checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -2350,3 +2350,16 @@ remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**. Safe continuation is
 limited to serial, offline, fixture-based tasks under fresh admission and finite
 zero-swap cgroup bounds; historical pressure attribution and durable recovery
 remain unresolved.
+
+
+## 2026-10-29 11:16 CET — post-commit observation
+
+At 11:16:11, MemAvailable was 10.53 GiB, SwapFree 10.1 MiB, global memory PSI
+was zero, and user-manager OOM counters remained 19/15/0. API, Reality, and
+Reality API were active at restart counts 9/14/0. Continental contact/status,
+Echo production/staging, and RustDesk were active. The 11:15 Veritas research-
+director unit exited successfully. No systemd-oomd or kernel kill appeared in
+the checked interval after 11:05. There were no active systemd jobs at 11:16:25.
+This quiet interval includes the bounded offline test and compiler attempts but
+does not establish sustained recovery; swap remains nearly full and historical
+pressure attribution is unresolved.

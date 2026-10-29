@@ -14433,3 +14433,15 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
   VERIFIED**. Continue with serial offline fixtures only after another fresh
   resource-admission sample; type checking, broad UI integration, build/browser
   validation, and production deployment remain open.
+
+## 2026-10-29 11:16 CET — post-commit admission recheck
+
+- At 11:16:11, PSI remained zero, MemAvailable was 10.53 GiB, SwapFree was
+  10.1 MiB, and user-manager OOM counters remained 19/15/0. API, Reality, and
+  Reality API stayed active at restarts 9/14/0; Continental contact/status,
+  Echo production/staging, and RustDesk were active. The 11:15 research-director
+  run exited successfully. No oomd/kernel kill appeared after 11:05, and no
+  systemd jobs were active at 11:16:25.
+- This brief quiet sample supports only serial offline work with fresh
+  zero-swap cgroup admission. It does not resolve the nearly full swap or
+  identify the historical pressure initiator.
