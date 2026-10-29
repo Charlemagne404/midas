@@ -2,7 +2,7 @@ from copy import deepcopy
 from decimal import Decimal
 
 import pytest
-from midas.frontier.models import FrontierMarket, StatePayout, Venue
+from midas.frontier.models import FrontierMarket, MarketBatch, StatePayout, Venue
 from pydantic import ValidationError
 
 from tests.frontier.builders import market
@@ -34,3 +34,10 @@ def test_market_validation_revalidates_prebuilt_instrument_payouts() -> None:
 
     with pytest.raises(ValidationError, match="payout state identifiers must be unique"):
         FrontierMarket.model_validate(payload)
+
+
+def test_market_batch_rejects_a_member_from_another_venue() -> None:
+    foreign_market = market(Venue.KALSHI, "FOREIGN-BATCH-MEMBER")
+
+    with pytest.raises(ValidationError, match="Market-member venue must match its batch"):
+        MarketBatch(venue=Venue.POLYMARKET, markets=(foreign_market,))

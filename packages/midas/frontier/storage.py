@@ -470,6 +470,9 @@ class FrontierStore:
                 raise FrontierStoreError(
                     "Kraken book frame does not match its captured WebSocket evidence"
                 )
+        normalized_venue = getattr(normalized, "venue", None)
+        if normalized_venue is not None and normalized_venue != raw.venue:
+            raise FrontierStoreError("Normalized observation venue does not match its raw evidence")
         normalized_without_persisted_time = self._with_persisted_at(normalized, None)
         normalized_content_json = self._canonical(normalized_without_persisted_time)
         raw_json = self._canonical(raw)
@@ -1344,6 +1347,20 @@ class FrontierStore:
             normalized = json.loads(normalized_json)
         except json.JSONDecodeError as error:
             raise FrontierStoreError("Stored normalized observation payload is invalid") from error
+        if not isinstance(normalized, dict):
+            raise FrontierStoreError("Stored normalized observation payload is invalid")
+        normalized_venue = normalized.get("venue")
+        if normalized_venue is not None and normalized_venue != row["venue"]:
+            raise FrontierStoreError(
+                "Stored normalized observation venue does not match its raw evidence"
+            )
+        if "markets" in normalized:
+            try:
+                MarketBatch.model_validate(normalized)
+            except ValidationError as error:
+                raise FrontierStoreError(
+                    "Stored market batch violates its normalized venue schema"
+                ) from error
         result: dict[str, Any] = {
             "observation_id": row["observation_id"],
             "venue": row["venue"],

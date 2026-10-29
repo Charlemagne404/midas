@@ -1072,7 +1072,9 @@ class MarketBatch(FrontierModel):
     )
 
     @model_validator(mode="after")
-    def group_venues_match_batch(self) -> MarketBatch:
+    def member_venues_match_batch(self) -> MarketBatch:
+        if any(market.venue != self.venue for market in self.markets):
+            raise ValueError("Market-member venue must match its batch")
         if any(group.venue != self.venue for group in self.market_groups):
             raise ValueError("Market-group venue must match its batch")
         return self

@@ -707,6 +707,55 @@ def test_evidence_read_detects_offline_payload_tampering(tmp_path: Path):
         store.observation(observation_id)
 
 
+def test_append_observation_rejects_source_and_normalized_venue_mismatch(tmp_path: Path):
+    store = FrontierStore(tmp_path, max_bytes=2 * 1024 * 1024)
+    kalshi_market = market(Venue.KALSHI, "wrong-source-venue")
+
+    with pytest.raises(FrontierStoreError, match="venue does not match its raw evidence"):
+        store.append_observation(
+            _raw(Venue.POLYMARKET, '{"source":"polymarket"}'),
+            MarketBatch(venue=Venue.KALSHI, markets=(kalshi_market,)),
+        )
+
+    assert not store.path.exists()
+
+
+@pytest.mark.parametrize("tamper_batch_venue", (False, True))
+def test_rehashed_market_batch_venue_mismatch_is_rejected_on_read(
+    tmp_path: Path, tamper_batch_venue: bool
+):
+    store = FrontierStore(tmp_path, max_bytes=2 * 1024 * 1024)
+    source_market = market(Venue.POLYMARKET, "tampered-batch-venue")
+    observation_id = store.append_observation(
+        _raw(Venue.POLYMARKET, '{"source":"polymarket"}'),
+        MarketBatch(venue=Venue.POLYMARKET, markets=(source_market,)),
+    )
+    with sqlite3.connect(store.path) as connection:
+        connection.execute("DROP TRIGGER observations_no_update")
+        raw_json, normalized_json = connection.execute(
+            "SELECT raw_json,normalized_json FROM observations WHERE observation_id=?",
+            (observation_id,),
+        ).fetchone()
+        normalized = json.loads(normalized_json)
+        if tamper_batch_venue:
+            normalized["venue"] = Venue.KALSHI.value
+        normalized["markets"][0]["venue"] = Venue.KALSHI.value
+        changed_json = store._canonical(normalized)
+        changed_hash = hashlib.sha256(f"{raw_json}\n{changed_json}".encode()).hexdigest()
+        connection.execute(
+            "UPDATE observations SET normalized_json=?,row_sha256=? WHERE observation_id=?",
+            (changed_json, changed_hash, observation_id),
+        )
+
+    expected = (
+        "Stored normalized observation venue"
+        if tamper_batch_venue
+        else "Stored market batch violates"
+    )
+    with pytest.raises(FrontierStoreError, match=expected):
+        store.observations(limit=10)
+
+
 def test_relationship_list_detects_offline_payload_tampering(tmp_path: Path):
     store = FrontierStore(tmp_path, max_bytes=2 * 1024 * 1024)
     left, right = market(Venue.POLYMARKET, "left"), market(Venue.KALSHI, "right")

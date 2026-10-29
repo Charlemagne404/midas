@@ -406,6 +406,54 @@ def _client(tmp_path, *, arena_root=None, hold_sources=False):
     return TestClient(app), registry, client, requests, store
 
 
+@pytest.mark.parametrize("tamper_batch_venue", (False, True))
+def test_markets_route_rejects_rehashed_cross_venue_market_batch(
+    tmp_path, tamper_batch_venue: bool
+):
+    client, registry, http_client, requests, store = _client(tmp_path)
+    source_market = market(Venue.POLYMARKET, "market-route-venue-binding")
+    raw = RawObservation(
+        venue=Venue.POLYMARKET,
+        observation_kind="market_listing",
+        request_url="https://fixture.example/public-markets",
+        http_status=200,
+        request_started_at_utc=T0,
+        received_at_utc=T0 + timedelta(milliseconds=1),
+        raw_body='{"fixture":true}',
+        raw_sha256=hashlib.sha256(b'{"fixture":true}').hexdigest(),
+        adapter_version="frontier-market-venue-test-v1",
+    )
+    observation_id = store.append_observation(
+        raw,
+        MarketBatch(venue=Venue.POLYMARKET, markets=(source_market,)),
+    )
+    try:
+        with sqlite3.connect(store.path) as connection:
+            connection.execute("DROP TRIGGER observations_no_update")
+            raw_json, normalized_json = connection.execute(
+                "SELECT raw_json,normalized_json FROM observations WHERE observation_id=?",
+                (observation_id,),
+            ).fetchone()
+            normalized = json.loads(normalized_json)
+            if tamper_batch_venue:
+                normalized["venue"] = Venue.KALSHI.value
+            normalized["markets"][0]["venue"] = Venue.KALSHI.value
+            changed_json = store._canonical(normalized)
+            changed_hash = hashlib.sha256(f"{raw_json}\n{changed_json}".encode()).hexdigest()
+            connection.execute(
+                "UPDATE observations SET normalized_json=?,row_sha256=? WHERE observation_id=?",
+                (changed_json, changed_hash, observation_id),
+            )
+
+        response = client.get("/api/frontier/markets")
+        assert response.status_code == 409
+        assert requests == []
+    finally:
+        client.close()
+        asyncio.run(registry.aclose())
+        asyncio.run(http_client.aclose())
+
+
 def test_finite_collection_api_lists_and_resumes_a_checkpointed_run(tmp_path):
     from tests.frontier.test_collection import FailOnceStore, FakeAdapter
 
