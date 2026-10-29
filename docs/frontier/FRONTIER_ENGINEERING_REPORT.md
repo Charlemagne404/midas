@@ -2,7 +2,7 @@
 
 **Report date:** 2026-10-29
 
-## Current completion matrix — 2026-10-29 15:16 CET
+## Current completion matrix — 2026-10-29 15:21 CET
 
 This is a current evidence classification, not a final completion claim. The
 dated implementation records below remain the detailed evidence; the
@@ -26,7 +26,7 @@ it made no endpoint requests and does not change source-use holds.
 | Source-operation admission telemetry | COMPLETE AND VERIFIED FOR ONE ROUTER INSTANCE | The bounded source gate exposes active venues, admitted totals, and contention rejections by scope with a UTC sample time. The source page can refresh the snapshot. Counters reset with that router and do not aggregate across workers or deployments. |
 | Reality capacity inventory bounds | PARTIALLY VERIFIED | Candidate inventory code remains undeployed. The separate monitor is bounded at MemoryHigh=160M, MemoryMax=192M, and zero swap. Its 12:49 scheduled run exited successfully with a 130.5 MiB peak and zero swap; the service still reports archive inventory/provenance limitations, and no archive evidence was altered. |
 | Native Frontier dashboard | PARTIALLY VERIFIED | The native workspace includes source, coverage, graph, opportunity, replay, and readiness views. The extracted Kalshi fee panel passes 3/3 isolated UI tests; targeted ESLint and Prettier pass. Exact-tree TypeScript, bounded production build, and five offline browser journeys pass: overview, saved Polymarket sample replay after explicit user action, captured market/book/provenance/relationship inspection, deterministic replay over captured market/book rows, and 320- and 390-pixel layout checks across all eight primary sections. At 15:14, the graph journey also passed 1/1 with explicit missing-market state and rendered quote-identity, quantity-step, and payout-value comparisons. The exact-tree TypeScript check passed again at 15:16 under a 640/768 MiB zero-swap scope. Repeated replay of pinned captured input returned the same run ID and result hash. Captured replay persists only in a fresh temporary browser store and makes zero source probes. Historical price-series replay and broad integration remain open. |
-| Host reliability containment | PARTIALLY VERIFIED | OOMD's 50%/20s policy monitors user@1000.service pressure; the Oct 28 journal records 129 kills (106 gap-detail), with seven separate kernel memcg OOMs against the capacity job's former 128 MiB cap. Gap-detail remains disabled; capacity remains bounded at 160/192 MiB with zero swap. At 15:16, MemAvailable was about 10 GiB, PSI zero, and SwapFree about 15 MiB; user-manager high/max/oom/oom_kill counters were 16,437,686/730,632/19/15. API/Reality/Reality API remained active at restart counts 9/14/0; the gap timer was inactive and capacity timer waiting. No OOMD or kernel kill appeared in bounded checks from 15:07 to 15:16. The max counter increased by 185 by 15:11 and was unchanged at 15:16; this aggregate descendant counter does not identify the cgroup. Historical workload attribution, nearly full swap, and durable recovery remain unresolved. |
+| Host reliability containment | PARTIALLY VERIFIED | OOMD's pressure-kill policy remains active on `user@1000.service`; its user/slice ancestors have no MemoryHigh/MemoryMax/MemorySwapMax. The Oct 28 journal records 129 kills (106 gap-detail), with seven separate kernel memcg OOMs against the capacity job's former 128 MiB cap. Gap-detail remains disabled; capacity remains bounded at 160/192 MiB with zero swap. At 15:21, MemAvailable was about 10 GiB, PSI zero, and SwapFree about 15 MiB; user-manager high/max/oom/oom_kill counters were 16,437,792/730,632/19/15. The 106 high-event increase since 15:16:48 was not attributable; it remained unchanged from 15:20:41 to 15:21:27. At 15:19, current swap was 3.41 GB in user.slice and 0.865 GB in system.slice; within user@1000, app.slice used 2.23 GB, including 1.65 GB in its active GNOME Terminal slice, and session.slice used 0.62 GB. This is current footprint, not historical kill attribution. Reality API was at 500 MiB against a 512 MiB hard cap, with a recorded 512 MiB peak and 5,030 local max events but no local OOM/kill; do not alter this protected service without review. API/Reality/Reality API remained active at restarts 9/14/0; the gap timer was inactive and capacity waiting. Continental tailnet/identity, Echo production/staging, RustDesk, and systemd-oomd were active. No OOMD or kernel kill appeared in bounded checks from 15:07 to 15:21. Historical pressure attribution, nearly full swap, and durable recovery remain unresolved. |
 | Node/V8 and Apport side effect | PARTIALLY VERIFIED | The exact-tree frontend TypeScript check passed with an explicit 384 MiB Node heap under a 512 MiB high / 640 MiB max zero-swap cgroup. A later exact-tree check also passed at 15:16 in a 640 MiB high / 768 MiB max, zero-swap scope. Earlier attempts with Node's default heap timed out or exhausted V8 at about 251 MiB; those were process heap failures, not cgroup OOMs. An earlier crash-report upload attempt received HTTP 504; remote receipt remains unknown. |
 | Broad regressions, resource endurance, and performance acceptance | DEFERRED | Selected Python, API, adapter, collection, and economics tests passed under bounded zero-swap scopes. The graph-revision storage/migration cases pass 8/8; API cursor invalidation passes 1/1; four core economics modules pass 79/79; joint-state basket/audit/replay passes 14/14; logical implication/relationship review passes 27/27; transport passes 20/20; readiness resource API passes 7/7 and its focused UI passes 3/3. Captured-store market/book replay passes 1/1 in 40.7 seconds and the 390-pixel responsive journey passes 1/1 in 46.5 seconds. Ruff check/format, ESLint, Prettier, and strict mypy on the readiness resource module passed under caps. Full MIDAS regression, full browser suite, endurance, and broad performance tests remain deferred. |
 | Live multi-venue source authorization and findings | BLOCKED | Kalshi, Kraken, Coinbase, and Gemini probes and retained-data research remain held; the worktree Polymarket probe flag is off. |
@@ -15891,3 +15891,49 @@ about 15 MiB swap was free. User-manager counters were unchanged at
 16,437,686/730,632/19/15; API/Reality/Reality API remained active at restart
 counts 9/14/0. No OOMD or kernel kill was logged during the type-check
 interval. This is another bounded check, not sustained resource validation.
+
+### Service-slice attribution and critical-service check — 2026-10-29 15:21 CET
+
+At 15:19, 3.41 GB of swap was charged to `user.slice` and 0.865 GB to
+`system.slice`. Within `user@1000`, `app.slice` used 2.23 GB swap, including
+1.65 GB in its nested GNOME Terminal slice, and `session.slice` used 0.62 GB.
+The terminal slice held about 5.27 GB memory and contains active interactive
+sessions; it was left untouched. These are hierarchical current charges, not
+historical OOMD cause attribution.
+
+At 15:21:27, user-manager `memory.events high` was 16,437,792, up 106 from
+15:16:48, while `max/oom/oom_kill` remained 730,632/19/15. The increment
+was unchanged between 15:20:41 and 15:21:27. The per-unit local counters
+were API `high=11,692`, Reality `high=33,176`, and Reality API `max=5,030`;
+no interval baseline exists for attributing the 106 new parent events. API
+and Reality were below their soft limits at the sample. Reality API was at
+about 500 MiB of its 512 MiB `MemoryMax`, with a prior peak at the cap and
+zero local OOM/kill events. Its narrow headroom is recorded for review; the
+service was not reconfigured.
+
+The user-manager parents remain uncapped and systemd-oomd remains active.
+At 15:20:41, MIDAS API, Reality, Reality API, Continental tailnet and
+identity, Echo production and staging, and RustDesk were active; protected
+restart counts were unchanged. PSI remained zero and no kernel/OOMD kill
+appeared since 15:20:41. Current swap placement and leaf counters do not
+fully attribute historical pressure. Continue only serial, offline work;
+the host incident remains partially contained.
+
+### Current cgroup swap attribution — 2026-10-29 15:19 CET
+
+The read-only cgroup sample found 3.41 GB of swap charged to `user.slice`
+and 0.865 GB to `system.slice`, consistent with the host's nearly full
+4.0 GiB swap. Within the user manager, `app.slice` used 2.23 GB swap and
+`session.slice` 0.62 GB. The GNOME Terminal sub-slice was the largest
+identified child, at 5.27 GB memory and 1.65 GB swap; these values are
+hierarchical, so its use is included in `app.slice` and must not be added a
+second time. The terminal slice contains active interactive sessions and was
+left untouched. This current allocation describes where swapped pages
+reside, not which workload caused the October 28 pressure-triggered kills.
+
+At 15:19, host PSI remained zero, about 10 GiB was available, and only about
+15 MiB swap was free. User-manager `memory.events` and API/Reality restart
+counts were unchanged; the gap-detail timer remained inactive and the
+capacity timer waiting. No OOMD or kernel kill was logged since the prior
+15:16:48 check. Keep the incident partially contained; do not infer durable
+recovery from this quiet sample.

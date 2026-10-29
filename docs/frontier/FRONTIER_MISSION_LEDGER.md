@@ -15345,3 +15345,44 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
 - **Status:** this bounded sample supports further serial, offline Frontier
   work but does not establish durable host recovery; swap and causal
   attribution remain unresolved. Preserve the untracked probe data.
+
+## 2026-10-29 15:19 CET — current swap cgroup attribution
+
+- Read cgroup memory/swap counters without changing services. `user.slice`
+  held 3.41 GB swap and `system.slice` 0.865 GB. Within the user manager,
+  `app.slice` held 2.23 GB (including 1.65 GB under its nested GNOME Terminal
+  slice) and `session.slice` held 0.62 GB. These hierarchical counters are
+  not additive across parent/child slices. The active terminal slice was
+  left untouched; current swap placement does not explain the historical
+  pressure-triggered OOMD kills.
+- At 15:19, PSI was zero, about 10 GiB RAM was available, and swap free was
+  about 15 MiB. User-manager high/max/oom/oom_kill stayed at
+  16,437,686/730,632/19/15; API/Reality/Reality API restart counts stayed
+  9/14/0. Gap-detail remained inactive, capacity waiting, and no kill was
+  logged since 15:16:48.
+- **Status:** no service configuration was changed. The current footprint
+  helps bound the remaining swap risk but does not identify the historical
+  pressure initiator or establish durable recovery. Continue only with
+  serial, offline work under transient resource bounds.
+
+## 2026-10-29 15:21 CET — current slice footprint and protected-service check
+
+- At 15:19, `user.slice` held 3.41 GB swap and `system.slice` 0.865 GB.
+  `app.slice` held 2.23 GB (including 1.65 GB in its nested GNOME Terminal
+  slice), while `session.slice` held 0.62 GB. The terminal slice held about
+  5.27 GB memory and was left untouched because it contains active sessions.
+- At 15:21:27, the user-manager `memory.events high` counter had risen by 106
+  since 15:16:48, with max/oom/oom_kill unchanged at 730,632/19/15; the
+  increment was stable during the last 46-second interval. API/Reality local
+  cumulative high counters were 11,692/33,176. Reality API was at about
+  500/512 MiB, had reached its cap previously, and showed 5,030 local max
+  events but no local OOM/kill. No prior per-leaf interval sample exists to
+  attribute the parent high-counter increase; the Reality API service was
+  left unchanged.
+- MIDAS API, Reality, Reality API, Continental tailnet/identity, Echo
+  production/staging, RustDesk, and systemd-oomd were active at 15:20:41.
+  PSI remained zero; no OOMD/kernel kill was observed since 15:20:41. The
+  user-manager hierarchy remains uncapped and nearly all swap remains used.
+- **Status:** current service footprint is clearer, but it does not prove
+  historical causation or sustained recovery. Continue only serial, offline
+  Frontier work under transient resource bounds.

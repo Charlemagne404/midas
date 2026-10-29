@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 15:16 CET |
+| Latest addendum | 2026-10-29 15:21 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Pre-incident checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -3482,3 +3482,50 @@ compiler interval. This supports continuation of serial offline work under
 transient bounds; it does not resolve the incident or explain the earlier
 counter increase. Nearly all swap remains occupied and pressure attribution
 is incomplete.
+
+## Current cgroup swap attribution — 2026-10-29 15:19 CET
+
+Read-only cgroup files showed 3.41 GB swap charged to `user.slice` and
+0.865 GB to `system.slice`, close to the host's 4.0 GiB in use. Within the
+user manager, `app.slice` used 2.23 GB swap and `session.slice` 0.62 GB. The
+GNOME Terminal sub-slice used 5.27 GB memory and 1.65 GB swap; it is nested
+inside `app.slice`, so those amounts are not additive. It contains active
+interactive sessions and was left untouched to preserve the desktop and
+remote work. This is a current location-of-pages measurement, not causal
+attribution for the October 28 OOMD events.
+
+At 15:19, PSI was zero, about 10 GiB RAM was available, and only about 15 MiB
+swap was free. Shared user-manager counters remained
+high/max/oom/oom_kill = 16,437,686/730,632/19/15. API, Reality, and Reality
+API remained active at restarts 9/14/0; the gap-detail timer was inactive and
+the capacity timer waiting. No kernel or systemd-oomd kill was logged since
+15:16:48. The host incident remains partially contained: swap is nearly
+full, historical pressure initiation is not fully attributed, and sustained
+recovery has not been established.
+
+## Service-slice attribution and continuity check — 2026-10-29 15:21 CET
+
+At 15:19, cgroup counters charged 3.41 GB of swap to `user.slice` and
+0.865 GB to `system.slice`. Within the user manager, `app.slice` used 2.23 GB
+swap (including 1.65 GB in its nested GNOME Terminal slice) and `session.slice`
+used 0.62 GB. GNOME Terminal held about 5.27 GB memory. Its slice contains
+active interactive sessions and was left untouched. This describes current
+swap residency, not causation of the October 28 OOMD events.
+
+At 15:21:27, user-manager `memory.events high` reached 16,437,792, an increase
+of 106 since 15:16:48; `max/oom/oom_kill` remained 730,632/19/15. That high
+count was unchanged from 15:20:41 through 15:21:27. The parent cgroup has no
+memory or swap ceiling, while systemd-oomd and its pressure-kill policy
+remain active. API and Reality local cumulative `high` counts were 11,692
+and 33,176. Reality API's local `max` count was 5,030 with no local OOM or
+kill; its current charge was 500 MiB against a 512 MiB hard cap and its
+recorded peak reached that cap. The 106 parent events cannot be attributed
+without a prior per-leaf interval sample. Reality API was not reconfigured.
+
+At 15:20:41, MIDAS API, Reality, Reality API, Continental tailnet and
+identity, Echo production and staging, RustDesk, and systemd-oomd were active.
+API/Reality/Reality API restart counts remained 9/14/0. PSI remained zero;
+no kernel or OOMD kill was logged since 15:20:41. This bounded observation
+shows critical services currently running, not durable incident resolution.
+The incident remains partially contained, with nearly full swap and
+incomplete pressure attribution.
