@@ -13122,3 +13122,51 @@ Changed files: `packages/midas/frontier/models.py`,
 tests, architecture/operations/terms/engineering/incident documentation, and
 this ledger. The preserved untracked `data/frontier-public-probes/` directory
 was not read, changed, or staged. Checkpoint commit follows this review.
+
+### High-priority host memory incident — 2026-10-29 04:32 CET
+
+Paused feature work and committed the current Gemini adapter/frontend/docs
+state as `ac4222f` on `codex/frontier-20261026` before incident edits. A
+full-day October 28 systemd-oomd journal audit found 129 pressure kills:
+106 gap-detail replay, 10 Reality, 8 API, 4 GNOME Terminal scopes, and 1
+Firefox. Logs explicitly report user-manager pressure above 50% for more than
+20 seconds with reclaim. The five-minute gap-detail replay's own cgroup also
+showed 50–76% memory PSI. It is the strongest identified recurrent
+contributor, but aggregate user-cgroup pressure prevents sole-source
+attribution.
+
+Seven independent kernel memcg OOM records killed the Reality capacity
+checker against its original 128 MiB `MemoryMax` (about 129–131 MiB anonymous
+RSS plus 11 MiB file RSS). The capacity timer continues every 30 minutes; the
+reversible effective bound is now 160 MiB `MemoryHigh`, 192 MiB `MemoryMax`,
+and zero swap. Its 04:16:51 run succeeded. The five-minute gap-detail timer
+was stopped and disabled at 23:46 on Oct 28; its unit only replays finalized
+Reality segments.
+
+At 04:32 the host had 11.63 GB available RAM, 1.94 MB free swap, and zero
+host/user-manager PSI. User-manager memory was about 9.04 GB, current swap
+2.86 GB, `memory.peak` 13.99 GB, and aggregate `oom=19` / `oom_kill=15`
+counters were unchanged. No OOMd kill has appeared since 23:43:24 on Oct 28;
+no kernel OOM since 20:15:44. `oomctl dump` nevertheless shows no currently
+monitored cgroups even while systemd-oomd is active and the user manager
+reports `ManagedOOMMemoryPressure=kill`; follow this discrepancy read-only.
+
+API and Reality remain active with lifetime restart counts 9/14 and no new
+restart since 23:43. Reality's 04:32 status is `RECORDING_UNSEQUENCED`,
+`active_receiving`, 16/16 fresh books, zero failures, and no backpressure;
+`sequence_verified=false`. A transient 04:29:40 stale/0-of-16 read was
+followed by fresh status. Archive `INVALID_MANIFEST` and provenance warnings
+remain separate and untouched. Continental user services, Echo archive and
+staging, RustDesk, and the terminal server were left running.
+
+Frontier may continue with serial code/docs work and small targeted fixture
+checks under resource limits. No broad suite, batch replay, cross-source
+probe, production transition, or live service change is admitted while swap
+is nearly exhausted and current OOMD monitor visibility is unresolved. No
+Frontier test/build/replay was active during this incident check.
+
+Current incident report: `FRONTIER_MEMORY_PRESSURE_INCIDENT_2026-10-29.md`.
+The completion matrix in `FRONTIER_ENGINEERING_REPORT.md` now links to it.
+The only untracked path remains the preserved `data/frontier-public-probes/`
+directory; it was neither read nor changed. The report commit is
+`06f7886`; the ledger follow-up commit records that identity.
