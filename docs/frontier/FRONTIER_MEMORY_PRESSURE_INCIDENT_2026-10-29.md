@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 17:11 CET |
+| Latest addendum | 2026-10-29 17:26 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Pre-incident checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -4065,3 +4065,114 @@ source-independent edits and documentation after a fresh sample. Defer even
 the focused regression tests until the `max` counters stop advancing and
 Reality API has meaningful headroom; this short sample cannot establish that
 the next Frontier phase can safely run.
+
+### Reality API local-limit attribution and reversible bound — 2026-10-29 17:19 CET
+
+Timestamp-aligned cgroup samples narrow the recent `memory.max` events.
+Between 17:17:59 and 17:19:53, the `user@1000.service` hierarchical `max`
+counter advanced from 730,817 to 730,822 (+5). Over the same interval,
+Reality API's local `memory.events.local max` advanced from 5,194 to 5,199
+(+5). This attributes the **new limit-event increments in that interval** to
+Reality API, rather than proving it caused the October 28 systemd-oomd PSI
+episodes.
+
+Before the adjustment, Reality API had `MemoryMax=512M`, `MemorySwapMax=0`,
+and no `MemoryHigh`. At 17:19:53 it held 535,375,872 bytes and its recorded
+`memory.peak` was exactly 536,870,912 bytes (the hard limit). Its current
+`memory.stat` showed about 398.9 MiB file cache, including 398.8 MiB inactive
+file pages, 95.5 MiB anonymous memory, and 15.6 MiB kernel memory.
+`memory.pressure` avg10/60/300 was zero; the service had no OOM or kill event. This shows
+repeated local hard-limit contact and reclaimable file-backed charge, not a
+service OOM.
+
+Applied one **runtime-only, no-restart** bound:
+
+```sh
+systemctl --user set-property --runtime midas-reality-api.service MemoryHigh=576M MemoryMax=640M
+```
+
+`MemorySwapMax=0` remains in force. systemd applied the new 576 MiB high / 640
+MiB max immediately. The Reality API remained active with the same MainPID
+610950 and zero restarts; the protected Reality collector remained active
+with the same MainPID 1235804 and restart count 14. The immediate post-change
+sample showed 535,097,344 bytes current usage and no new `max` or OOM event.
+The parent user-manager counters also remained unchanged in that immediate
+check. This is only an initial application check; a later observation is
+needed before judging the adjustment.
+
+To restore the previous runtime values without restarting the service:
+
+```sh
+systemctl --user set-property --runtime midas-reality-api.service MemoryHigh=infinity MemoryMax=512M
+```
+
+No persistent unit or drop-in was edited. Host `MemAvailable` was still about
+10.6 GiB, but swap had only 18.9 MB free. Keep broad tests, builds, replay,
+and source probes deferred; the live collector and its settings remain
+untouched, and the upstream cause of October 28's system-wide PSI remains
+unresolved.
+
+### Persistent limit and focused validation follow-up — 2026-10-29 17:26 CET
+
+The Reality API runtime bound remained effective through two focused
+verification checks and a follow-up observation. At 17:26:02, the user-manager
+hierarchical `max` count was still 730,822 and Reality API local `max` remained
+5,199, unchanged since the 17:19:53 pre-change baseline. Memory PSI avg10/60/
+300 was zero, `MemAvailable` was 11,314,196,480 bytes, and `SwapFree` was
+19,001,344 bytes. No OOMD or kernel OOM entry appeared after 17:25. Reality
+API was at 538,447,872 / 671,088,640 bytes; the 576 MiB soft threshold and
+zero-swap rule were active. This six-minute observation is encouraging for
+the local `MemoryMax` churn, but does not establish durable host recovery or
+explain the October 28 system-wide OOMD episodes.
+
+After the cgroup counters had stopped advancing, two targeted Frontier
+checks ran serially in separate transient scopes, each bounded by
+`MemoryHigh=384M`, `MemoryMax=512M`, `MemorySwapMax=0`, `CPUQuota=15%`,
+`TasksMax=64`, and `RuntimeMaxSec=60s`:
+
+- The saved-candle API scan regression passed **1/1 in 5.61 seconds**. It
+  populated a temporary SQLite fixture with 20 newer unrelated rows before
+  the matching row. It made no network request. One existing
+  Starlette/httpx TestClient deprecation warning was emitted.
+- The Kraken candle panel suite passed **4/4 in 14.29 seconds**. The probe
+  action was served by its test mock; no external request was made.
+- A strict, no-unused TypeScript check of the changed panel and its test
+  exited 0 under the same transient resource bounds.
+
+At the 17:25:13 post-check, user-manager `max=730,822`, Reality API local
+`max=5,199`, `oom=0`, and `oom_kill=0` remained unchanged; memory PSI was
+zero, `MemAvailable` was 11,198,201,856 bytes, and all three APIs/collectors
+were active at their original restart counts (MIDAS API 9, Reality 14,
+Reality API 0). The 17:26 sample remained quiet after the persistent change.
+No broad suite, browser run, replay, or source probe was started.
+
+To carry the targeted bound across user-manager restarts, added
+`/home/charlie/.config/systemd/user/midas-reality-api.service.d/70-frontier-memory-bound.conf`:
+
+```ini
+[Service]
+MemoryHigh=576M
+MemoryMax=640M
+MemorySwapMax=0
+```
+
+`systemctl --user daemon-reload` loaded it without restarting the Reality API.
+The service stayed on MainPID 610950 with zero restarts; the protected
+collector stayed on MainPID 1235804 with restart count 14. This change is
+scoped to the Reality API, not the live collector. No other limit or OOM
+policy changed.
+
+Rollback the persistent file and restore the original active cgroup values
+with:
+
+```sh
+rm /home/charlie/.config/systemd/user/midas-reality-api.service.d/70-frontier-memory-bound.conf
+systemctl --user daemon-reload
+systemctl --user set-property --runtime midas-reality-api.service MemoryHigh=infinity MemoryMax=512M
+```
+
+The service's existing `MemorySwapMax=0` remains unchanged. The incident is
+still **PARTIALLY CONTAINED / PARTIALLY VERIFIED**: recent per-service hard
+limit contact is now bounded with additional room, while swap remains nearly
+full, the user manager has no aggregate ceiling, OOMD's historical upstream
+workload is not identified, and long-duration stability is unverified.

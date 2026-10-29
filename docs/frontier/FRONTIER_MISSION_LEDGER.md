@@ -1,5 +1,31 @@
 # Project Frontier Mission Ledger
 
+## 2026-10-29 17:26 CET — Reality API limit attribution and bounded verification
+
+- Timestamp-aligned cgroup samples from 17:17:59 to 17:19:53 showed the
+  user-manager hierarchical `max` count and Reality API local `max` count
+  both rose by five; the API cgroup reached its old 512 MiB peak. Its current
+  charge was mostly inactive file cache, not anonymous RSS. This attributes
+  the recent local-limit events to Reality API, not the historical Oct 28
+  systemd-oomd pressure kills.
+- Raised only Reality API's bounded allowance to 576 MiB high / 640 MiB max,
+  with zero swap. It was first applied at runtime, then persisted in
+  `/home/charlie/.config/systemd/user/midas-reality-api.service.d/70-frontier-memory-bound.conf`.
+  `daemon-reload` did not restart the API or the protected Reality collector.
+  Exact rollback commands are in the incident report.
+- The new saved-candle API regression passed **1/1 in 5.61 seconds**, the
+  dedicated panel suite passed **4/4 in 14.29 seconds**, and strict targeted
+  TypeScript exited 0. Runs were serial and used 384 MiB high / 512 MiB max,
+  zero swap, 15% CPU, 64 tasks, and 60 seconds. No public source request or
+  persisted production evidence was used.
+- At 17:26, memory PSI remained zero, `MemAvailable` was 11,314,196,480
+  bytes, and `SwapFree` was 19,001,344 bytes. User-manager `max=730,822` and
+  Reality API local `max=5,199` had not advanced for about six minutes;
+  OOM counts were unchanged and API/Reality/Reality API stayed active at
+  restart counts 9/14/0. This does not establish sustained recovery or
+  identify the historical system-wide PSI source. Keep broad suites, builds,
+  browser checks, replays, and probes deferred.
+
 ## 2026-10-29 17:11 CET — saved-candle scan pagination and admission gate
 
 - Added a separate bounded raw-observation offset to the local Kraken candle
