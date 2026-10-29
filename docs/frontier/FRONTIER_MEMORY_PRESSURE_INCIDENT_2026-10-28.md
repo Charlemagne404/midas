@@ -3,7 +3,7 @@
 **Incident date:** 2026-10-28 (CET)
 
 **Initial checkpoint:** 2026-10-29 01:54 CET; append-only follow-up observations
-through 2026-10-29 03:14 CET are recorded below.
+through 2026-10-29 03:16 CET are recorded below.
 
 **Scope:** Host reliability interruption during Project Frontier
 
@@ -1369,3 +1369,17 @@ checkpoint. The host remains suitable only for sequential, isolated,
 resource-bounded offline Frontier work with zero-swap transient scopes. This
 quiet interval and current zero PSI do not clear the full-swap condition or
 identify the original initiating workload.
+
+### Scheduled capacity run and service check — 2026-10-29 03:16 CET
+
+The active capacity timer started `midas-reality-capacity.service` at 03:16:36
+and it completed successfully at 03:16:44 (exit 0, 6.575 CPU seconds). The
+effective limits remained 160 MiB `MemoryHigh`, 192 MiB `MemoryMax`, and zero
+swap. systemd retained no memory peak. At 03:16:52, host memory PSI remained
+zero, `MemAvailable` was 11,428,380 kB, and only 1,272 kB of swap was free.
+User-manager `oom=19` and `oom_kill=15` were unchanged; its `high` counter
+increased by 145 during the interval. MIDAS API and Reality were active at
+restart counts 9 and 14. No systemd-oomd or kernel OOM entry appeared after
+the check began. This validates a bounded scheduled execution and service
+continuity for this sample; it does not establish sustained stability, remove
+the full-swap condition, or identify the historical initiating workload.

@@ -12855,3 +12855,13 @@ report updated at `docs/frontier/FRONTIER_MEMORY_PRESSURE_INCIDENT_2026-10-28.md
 No host configuration or historical data was changed in this check. Continue
 only sequential, isolated, zero-swap offline work; full swap and initiating
 workload attribution remain unresolved.
+
+### Capacity timer observation — 2026-10-29 03:16 CET
+
+The scheduled capacity monitor completed at 03:16:44 in 8 seconds (6.575 CPU
+seconds) with the 160/192 MiB and zero-swap limits; no memory peak was retained.
+At 03:16:52, host PSI was zero, MemAvailable was 11,428,380 kB, SwapFree was
+1,272 kB, and user-manager `oom`/`oom_kill` remained 19/15. API and Reality
+were active at restarts 9/14, with no new oomd or kernel OOM entry. The
+capacity timer remains safe for this bounded run; the full swap and unknown
+historical OOM initiator remain unresolved.
