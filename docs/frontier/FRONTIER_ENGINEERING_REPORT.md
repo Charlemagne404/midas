@@ -16295,3 +16295,71 @@ shows advancing user-manager and Reality API `max` events, nearly full swap,
 and roughly 1.3 MiB of Reality API limit headroom. `git diff --check` passed;
 type and runtime verification remain pending. This change did not modify any
 service, source request, or stored market evidence.
+
+### Incident-safe candle pagination verification — 2026-10-29 17:36 CET
+
+The saved Kraken candle API now pages its bounded 20-observation raw scan by
+`scan_offset`, allowing Mission Control to find an older matching saved pair
+without increasing the work of one request. The panel advances pages only on
+explicit user action, caps the scan at ten pages, and distinguishes a complete
+empty result from a bounded scan that may omit older matches. The implementation
+is committed as `7e8d78c` (`fix(frontier): page saved Kraken candle evidence`).
+
+After the memory-pressure interruption, the API candle suite passed **4/4**,
+the panel suite passed **4/4**, strict no-unused TypeScript passed for the
+panel/test files, and the transport boundary suite passed **20/20**. These
+checks used local fixtures or mock transports and made no exchange request.
+A fresh bounded recheck of
+`test_kraken_candle_scan_reaches_older_matching_observations` passed **1/1 in
+5.91 seconds** in a transient zero-swap service capped at 384 MiB high / 512
+MiB max, 15% CPU, 64 tasks, and 60 seconds. One earlier invocation omitted the
+transient service's working directory and collected no tests; the corrected
+invocation passed. systemd printed a 256 KiB memory-peak value for that Python
+process, which is inconsistent and is not accepted as a measurement. No
+transient cgroup peak was retained after collection.
+
+At 17:35:42 after the test, host memory PSI was zero, `MemAvailable` was
+11,382,681,600 bytes, and `SwapFree` was 19,021,824 bytes. User-manager
+`high/max/oom/oom_kill` remained 16,437,792 / 730,822 / 19 / 15; Reality API
+local `max/oom/oom_kill` remained 5,199 / 0 / 0. MIDAS API, the protected
+Reality collector, Reality API, Continental contact/status, Echo
+production/staging, RustDesk, SSH socket activation, and systemd-oomd were
+active. The gap-detail timer stayed disabled; the capacity timer stayed
+active. This short sample is not endurance evidence.
+
+The Reality API's isolated development service has a persistent
+576 MiB `MemoryHigh` / 640 MiB `MemoryMax` / zero-swap bound in
+`/home/charlie/.config/systemd/user/midas-reality-api.service.d/70-frontier-memory-bound.conf`.
+It was loaded without restarting that API or the protected Reality collector;
+its rollback is recorded in
+[`FRONTIER_MEMORY_PRESSURE_INCIDENT_2026-10-29.md`](FRONTIER_MEMORY_PRESSURE_INCIDENT_2026-10-29.md).
+The auxiliary gap-detail timer remains inactive/disabled, and the capacity
+monitor remains on its existing 30-minute schedule.
+
+| Current status | Classification | Boundary |
+| --- | --- | --- |
+| Saved Kraken candle pagination | COMPLETE AND VERIFIED FOR FIXTURE PATH | Bounded stored-only pagination and older-match fixture pass; live source use remains held. |
+| Kraken candle Mission Control panel | COMPLETE AND VERIFIED FOR FIXTURE UI | Local and mocked UI states pass focused tests; full frontend build and browser validation remain deferred. |
+| Memory incident containment | PARTIALLY VERIFIED | Recent PSI and OOM counters stayed quiet during bounded work; swap remains almost full and historical upstream pressure attribution is incomplete. |
+| Project Frontier overall | PARTIALLY VERIFIED | Live cross-venue validation, broader acceptance, endurance, protected recovery, and production deployment remain open. |
+
+### Current cgroup attribution follow-up — 2026-10-29 17:38 CET
+
+A read-only cgroup snapshot at 17:37:58 measured `user@1000.service` at
+11,025,600,512 bytes current memory and 2,853,588,992 bytes swap. Its
+`MemoryHigh`, `MemoryMax`, and `MemorySwapMax` remain unbounded; current PSI
+averages are zero. The user-manager `high/max/oom/oom_kill` counters remained
+16,437,792 / 730,822 / 19 / 15. Memory composition was about 2.40 GB
+anonymous, 7.44 GB file-backed, and 1.17 GB kernel.
+
+The largest direct app cgroup was the GNOME Terminal slice at 5,398,392,832
+bytes memory and 1,647,218,688 bytes swap, mainly file-backed pages. The
+MIDAS API cgroup held 1,276,764,160 bytes, of which 1,138,827,264 was
+file-backed; Reality held 839,221,248 bytes; the isolated Reality API held
+544,784,384 bytes. Their service-local PSI averages were zero. These are
+current charges, not identification of the Oct 28 OOMD initiator. Interactive
+scopes were left untouched. Frontier's incremental use cannot be separated
+from other API/Laboratory routes inside `midas-api.service`, and no Frontier
+job was active during this snapshot.
+
+| Current resource attribution | PARTIALLY VERIFIED | Current cgroup charges are measured; historical causality and per-route Frontier use remain unproven. |

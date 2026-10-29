@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 17:32 CET |
+| Latest addendum | 2026-10-29 17:38 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Pre-incident checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -4258,3 +4258,59 @@ scope with explicit memory, CPU, task, swap, and runtime limits; defer builds,
 browser suites, broad replay, and live source probes. No additional test or
 service action was in progress at the sample time. The incident remains
 **PARTIALLY CONTAINED / PARTIALLY VERIFIED**, not resolved.
+
+### Bounded post-adjustment Frontier check — 2026-10-29 17:36 CET
+
+After a fresh 17:35:10 admission sample showed zero memory PSI, 11,357,548,544
+bytes available RAM, unchanged user-manager / Reality API `max` counters, and
+no OOM counters, the single saved-candle pagination regression
+`test_kraken_candle_scan_reaches_older_matching_observations` passed **1/1 in
+5.91 seconds**. It used only a temporary local store and did not make a
+network request. It ran in a transient service configured with
+`MemoryHigh=384M`, `MemoryMax=512M`, `MemorySwapMax=0`, `CPUQuota=15%`,
+`TasksMax=64`, and `RuntimeMaxSec=60s`. The service was collected after exit;
+its printed 256 KiB memory-peak figure is inconsistent with a Python test
+process and is not treated as a valid peak measurement. No test cgroup peak
+was retained.
+
+At 17:35:42 after the test, host memory PSI remained zero, `MemAvailable` was
+11,382,681,600 bytes, and `SwapFree` was 19,021,824 bytes. User-manager
+`high/max/oom/oom_kill` stayed at 16,437,792 / 730,822 / 19 / 15, and Reality
+API local `max/oom/oom_kill` stayed at 5,199 / 0 / 0. The OOMD and kernel
+journal queries since 17:35:10 returned no entries. MIDAS API, Reality,
+Reality API, Continental contact/status, Echo production/staging, RustDesk,
+SSH socket activation, and systemd-oomd remained active; the gap-detail timer
+remained inactive and the capacity timer active. This is a short, bounded
+post-test sample, not endurance evidence. Continue only serial fixture work;
+the incident remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**.
+
+### Current app-slice attribution — 2026-10-29 17:38 CET
+
+A bounded read-only cgroup snapshot at 17:37:58 found `user@1000.service` at
+11,025,600,512 bytes current memory and 2,853,588,992 bytes current swap.
+The user-manager `MemoryHigh`, `MemoryMax`, and `MemorySwapMax` remain
+unbounded. Its PSI averages were zero and its counters were unchanged at
+`high=16,437,792`, `max=730,822`, `oom=19`, and `oom_kill=15`. The current
+composition was about 2.40 GB anonymous, 7.44 GB file-backed, 1.17 GB kernel,
+and 5.97 GB inactive file pages.
+
+Among direct app cgroups, the GNOME Terminal slice held 5,398,392,832 bytes
+memory and 1,647,218,688 bytes swap; its composition was about 1.05 GB
+anonymous, 3.83 GB file-backed, and 0.51 GB kernel. Its PSI and OOM counters
+were zero. `midas-api.service` held 1,276,764,160 bytes (1,138,827,264 file,
+122,138,624 anonymous, 15,798,272 kernel); `midas-reality.service` held
+839,221,248 bytes (482,787,328 file, 336,842,752 anonymous, 19,591,168
+kernel); and `midas-reality-api.service` held 544,784,384 bytes (427,585,536
+file, 100,524,032 anonymous, 16,674,816 kernel). All three leaf-cgroup PSI
+averages were zero, with no local OOM events. Reality API remained below its
+new 576 MiB high / 640 MiB max limits, but had about 56 MiB before `MemoryHigh`.
+
+This identifies the largest **current** cgroup charges only. The terminal
+scope includes active interactive/development work and was not disturbed.
+The shared MIDAS API cgroup includes Frontier and other API/Laboratory work;
+there is no per-route attribution, so Frontier's incremental contribution
+cannot be measured from this snapshot. These figures do not identify the
+October 28 pressure initiator. Current pressure is zero despite the large
+charged-memory totals, while swap remains almost full. No aggregate user-slice
+limit or OOM policy was changed; the host incident remains **PARTIALLY
+CONTAINED / PARTIALLY VERIFIED**.

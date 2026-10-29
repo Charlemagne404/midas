@@ -16002,3 +16002,43 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
   transient scope. Keep broad builds, browser suites, replay batches, and live
   source probes deferred; do not change the user-manager limits or protected
   collector.
+
+## 2026-10-29 17:36 CET — candle pagination recheck under admission cap
+
+- With a fresh zero-PSI sample, 10.58 GiB available RAM, stable user-manager
+  and Reality API `max` counters, and no OOM counter changes, ran
+  `test_kraken_candle_scan_reaches_older_matching_observations` in a
+  zero-swap transient service capped at 384 MiB high / 512 MiB max, 15% CPU,
+  64 tasks, and 60 seconds. **1/1 passed in 5.91 seconds** using the local
+  fixture store; no network request was made. The first corrected service
+  invocation lacked a working directory and collected no tests; the successful
+  rerun set `WorkingDirectory` explicitly.
+- At 17:35:42, host PSI remained zero, `MemAvailable` was 11,382,681,600 bytes,
+  and `SwapFree` was 19,021,824 bytes. User-manager event counts were still
+  16,437,792 / 730,822 / 19 / 15 (`high/max/oom/oom_kill`); Reality API local
+  `max/oom/oom_kill` remained 5,199 / 0 / 0. No OOMD or kernel OOM journal
+  entries appeared during the test window. Critical services remained active.
+- The transient service's printed 256 KiB memory peak was inconsistent with
+  the Python process and is not accepted as a peak measurement. The unit was
+  collected, so its cgroup peak is unavailable. Do not infer resource
+  sustainability from this run.
+- Mission work can continue only through serial bounded fixtures after a
+  fresh admission check. Full builds, browser suites, broad replays, and live
+  source probes remain deferred; host incident status remains partial.
+
+## 2026-10-29 17:38 CET — current cgroup attribution snapshot
+
+- A bounded direct-child scan at 17:37:58 found the user manager at
+  11,025,600,512 bytes current memory and 2,853,588,992 bytes swap. PSI
+  averages remained zero; the user-manager `high/max/oom/oom_kill` counters
+  remained 16,437,792 / 730,822 / 19 / 15. No aggregate cgroup ceiling exists.
+- The GNOME Terminal slice was the largest direct app cgroup at
+  5,398,392,832 bytes memory and 1,647,218,688 bytes swap, mostly
+  file-backed. MIDAS API was at 1,276,764,160 bytes (mostly file-backed),
+  Reality at 839,221,248 bytes, and Reality API at 544,784,384 bytes. The
+  service-local PSI averages were zero. This is current charged usage, not
+  proof of the historical PSI cause. Interactive scopes were left untouched.
+- Frontier's incremental memory use cannot be separated from other API and
+  Laboratory work in `midas-api.service`. No Frontier job was active at this
+  sample. The host remains suitable only for serial bounded fixtures; no
+  broad check, build, browser suite, replay batch, or source probe was admitted.
