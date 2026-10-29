@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 18:41 CET |
+| Latest addendum | 2026-10-29 18:51 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Pre-incident checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -4578,3 +4578,79 @@ Continue to treat source-analysis as a plausible contributor to cgroup limit
 event churn, not an established sole pressure initiator. No further Frontier
 test overlapped the run. The incident remains **PARTIALLY CONTAINED / PARTIALLY
 VERIFIED**.
+
+### Current resource and kill-distribution recheck — 2026-10-29 18:45 CET
+
+At 18:44:59 the host had 10 GiB `MemAvailable`; host memory PSI `some` and
+`full` avg10/avg60/avg300 were zero. Swap remained nearly full: 4,274,946,048
+of 4,294,963,200 bytes used, with about 19 MiB free. This is a low-pressure
+instantaneous sample, not evidence that the host has durable headroom.
+
+`user@1000.service` charged 11,224,907,776 bytes memory and 3,410,530,304
+bytes swap; its recorded memory peak was 13,992,292,352 bytes. It has no
+aggregate `MemoryHigh`, `MemoryMax`, or `MemorySwapMax`. Its current
+`memory.stat` included 2.55 GB anonymous, 7.48 GB file, 1.18 GB kernel, and
+6.08 GB inactive file memory. The inactive-file component is reclaimable; the
+cgroup charge must not be treated as an equal amount of pinned physical RAM.
+The hierarchical event counters were unchanged from the prior source-analysis
+follow-up: `high=16,437,902`, `max=731,550`, `oom=19`, `oom_kill=15`. The
+user-manager's PSI averages were also zero.
+
+The installed policy still marks `user@1000.service` for
+`ManagedOOMMemoryPressure=kill` at 50% pressure; its ancestor cgroups have no
+memory ceiling. The October 28 journal identifies the immediate OOMD trigger
+as that parent pressure exceeding 50% for more than 20 seconds with reclaim
+activity. The full-day target tally is 106 gap-detail, 10 Reality, 8 API, 4
+terminal scopes, and 1 Firefox scope. At several kill records gap-detail was
+around 205 MiB and showed 50–73% avg60/avg300 local PSI, while the API, Reality,
+Chromium, and terminal scopes held larger charges. This makes the repeated
+gap-detail replay a demonstrated pressure contributor and the clearest
+recurrent workload to contain, but does not prove it alone caused parent PSI
+to cross the OOMD threshold.
+
+The distinct capacity-checker failure is directly explained by its former
+128 MiB `MemoryMax`: seven kernel `CONSTRAINT_MEMCG` kills recorded about
+129–131 MiB anonymous RSS plus roughly 11 MiB file RSS. The active persistent
+160 MiB High / 192 MiB Max / zero-swap bound remains applied; the 18:20 run
+completed successfully, but its peak was not retained. `INVALID_MANIFEST` and
+archive-provenance warnings remain separate, unresolved data-integrity
+issues. No archive or manifest was changed.
+
+At this sample MIDAS API, Reality, and Reality API were active. The capacity
+timer remained active for 18:50; source-analysis remained scheduled for 19:10;
+the gap-detail timer was both inactive and disabled. The kernel and OOMD
+journals had no new kills after the recorded October 28 incidents. No
+service, timer, protected collector, campaign, or OOM policy was changed in
+this recheck. Do not treat zero PSI and the quiet interval as closure: swap is
+still nearly exhausted, historical marginal workload attribution is
+incomplete, and the source-analysis `max` counter increment after its prior
+run remains unattributed.
+
+### Scheduled capacity check and capped Frontier UI smoke — 2026-10-29 18:51 CET
+
+The unchanged capacity timer ran at 18:50:04–18:50:12 and reported success.
+Its effective limits remained High 160 MiB / Max 192 MiB / SwapMax 0; the
+oneshot cgroup was collected and no usable peak was retained. Between the
+18:48 and 18:50 samples, the hierarchical user-manager `memory.events.high`
+counter rose by 110; `max`, `oom`, and `oom_kill` did not change. The timing
+coincides with the capacity run, but its leaf cgroup was removed before local
+events could be read, so this is a possible association rather than proven
+service-local attribution. At 18:51 the counter was stable again.
+
+After that scheduled job exited, the changed Frontier host-resource panel was
+formatted and its focused test passed **3/3 in 10.09 seconds** under a
+transient user service capped at 384 MiB High / 512 MiB Max / zero swap / 20%
+CPU / 64 tasks / 120 seconds. The test covers the observed deployed API shape
+that omits swap and user-manager PSI, and verifies that the UI says those
+values remain not measured. Prettier and `git diff --check` passed. The
+transient service's reported 256 KiB peak is not a credible process-memory
+measurement and is not used as evidence. No live source request was made.
+
+At 18:51:17, host PSI remained zero, `MemAvailable` was about 10 GiB, and only
+about 19 MiB of swap was free. User-manager counters remained
+`high=16,438,012`, `max=731,550`, `oom=19`, `oom_kill=15`; no OOMD or kernel
+kill entry appeared in the interval checked after the capacity run. MIDAS API,
+Reality, and Reality API were active; the capacity and source-analysis timers
+were active, and gap-detail remained disabled. The test did not change any
+service or timer. This supports resuming one small, capped, source-independent
+Frontier task at a time; it does not establish sustainable host stability.

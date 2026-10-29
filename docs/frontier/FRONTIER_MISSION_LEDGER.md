@@ -16211,3 +16211,40 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
   `MemAvailable` / `SwapFree` were 10,911,908 kB / 18,940 kB. No additional
   post-run limit-event increment was observed; this minute-long follow-up does
   not establish durable stability. The timer remains unchanged for 19:10:17.
+
+## 2026-10-29 18:51 CET — incident follow-up and Frontier smoke check
+
+- Current user-manager resource sample at 18:44:59 showed 10 GiB
+  `MemAvailable`, zero PSI, and approximately 19 MiB free swap. The user
+  manager was charged 11.22 GB memory / 3.41 GB swap, with no aggregate memory
+  or swap ceiling. Its inactive-file charge was 6.08 GB and is reclaimable.
+  The hierarchical counters were `high/max/oom/oom_kill` =
+  16,437,902 / 731,550 / 19 / 15.
+- Full October 28 OOMD tally reconfirmed 129 pressure kills: 106 gap-detail,
+  10 Reality, 8 API, 4 terminal scopes, and 1 Firefox. OOMD's recorded trigger
+  was user-manager PSI above 50% for more than 20 seconds with reclaim. The
+  gap-detail cgroup itself showed high PSI around its 192 MiB soft threshold,
+  making it a repeated pressure contributor; the evidence does not identify
+  it as the sole initiator. Seven kernel capacity-checker deaths were separate
+  local OOMs against the old 128 MiB hard limit.
+- The already-applied containment remains: gap-detail timer disabled; Reality
+  capacity monitor bounded at High 160 MiB / Max 192 MiB / no swap; separate
+  Reality API bound at High 576 MiB / Max 640 MiB / no swap. No critical
+  collector, Continental, Echo, SSH, or RustDesk service was restarted or
+  reconfigured in this follow-up.
+- The capacity timer completed its 18:50:04 run successfully in 8 seconds.
+  User-manager `memory.events.high` rose by 110 between 18:48 and 18:50; max,
+  oom, and oom_kill were unchanged. The cgroup was collected before local
+  attribution, so its correlation with the capacity run is unproven. No usable
+  peak was retained.
+- After the capacity run, the Frontier host-resource UI's focused suite passed
+  **3/3 in 10.09s** in a transient 384 MiB High / 512 MiB Max / zero-swap /
+  20%-CPU / 64-task / 120-second scope. Prettier and `git diff --check`
+  passed. The scope printed an implausible 256 KiB memory peak, not accepted as
+  measurement. At 18:51:17, PSI was zero, available RAM about 10 GiB, free swap
+  about 19 MiB, and manager counters unchanged. API, Reality, and Reality API
+  were active; no recent kernel or OOMD kills were found.
+- This is partial containment, not closure. Continue only serial, capped,
+  fixture-based Frontier work; keep live probes, broad builds/suites, and
+  replay batches deferred while swap remains nearly exhausted and source
+  analysis/capacity local peak attribution is incomplete.
