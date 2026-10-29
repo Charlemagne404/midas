@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 08:30 CET |
+| Latest addendum | 2026-10-29 08:32 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Pre-incident checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -1499,3 +1499,24 @@ bytes swap. Aggregate events remained `oom=19`, `oom_kill=15`, and
 appeared after 08:24:26. This five-minute observation remains too short to
 establish recovery; nearly full swap and the historical initiating workload
 remain unresolved.
+
+## Source-use hold regression — 2026-10-29 08:32 CET
+
+`tests/frontier/test_source_data_permissions.py::test_probe_flags_and_references_do_not_enable_unvalidated_sources`
+passed **1/1 in 7.21 seconds**. The fixture deliberately requested Kalshi and
+Kraken probes with enabled flags and arbitrary permission-reference strings;
+both remained disabled, all relevant routes returned HTTP 409 with the
+policy reason, and each adapter transport retained `request_count=0`. Gemini
+also remained held. This used no exchange endpoint or saved probe data.
+
+The test ran serially with the existing repository Python environment inside a
+transient user scope bounded at 384 MiB high / 512 MiB max, zero swap, 20% CPU,
+and 64 tasks. One existing Starlette/httpx deprecation warning appeared. No
+direct cgroup peak was retained. At 08:32:39, global and user-cgroup memory
+PSI was zero; `MemAvailable` was 11,058,496 kB and `SwapFree` 8,612 kB.
+User-manager `memory.events` remained unchanged (`high=16,422,194`,
+`max=730,045`, `oom=19`, `oom_kill=15`); API and Reality remained active at
+restart counts 9/14. No systemd-oomd or kernel OOM entry appeared since
+08:24:26. This supports the offline permission gate only; the incident is
+still **PARTIALLY CONTAINED / PARTIALLY VERIFIED**, with almost no free swap
+and the historical initiating workload unknown.

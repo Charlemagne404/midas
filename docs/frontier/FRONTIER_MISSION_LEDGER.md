@@ -1,5 +1,24 @@
 # Project Frontier Mission Ledger
 
+## 2026-10-29 08:32 CET — source-use hold regression
+
+- `tests/frontier/test_source_data_permissions.py::test_probe_flags_and_references_do_not_enable_unvalidated_sources`
+  passed **1/1 in 7.21 seconds**. It sets Kalshi/Kraken public-probe request
+  flags and arbitrary permission-reference strings, then verifies API 409
+  source holds and zero transport calls; Gemini also remains held. No API
+  endpoint or saved probe data was read.
+- Ran with the existing repository Python environment in a transient scope:
+  384 MiB high / 512 MiB max, zero swap, 20% CPU, 64 tasks. One existing
+  Starlette/httpx deprecation warning. No cgroup peak was retained.
+- At 08:32:39, host and user-cgroup PSI were zero, `MemAvailable` was
+  11,058,496 kB, `SwapFree` 8,612 kB, user-manager OOM counters unchanged at
+  19/15/0, and API/Reality stayed active at restarts 9/14. No OOMD or kernel
+  OOM appeared since 08:24:26.
+- **Status:** Source-use fail-closed behavior is fixture-verified. Incident
+  remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**; nearly full swap and
+  historical workload attribution remain open. Continue only small serial
+  offline checks.
+
 ## 2026-10-29 08:30 CET — OOMD monitor-tree recheck
 
 - The previous point-in-time `oomctl dump` with no monitored-cgroup rows is
