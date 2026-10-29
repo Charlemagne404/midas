@@ -3821,3 +3821,34 @@ VERIFIED**.
 The isolated Frontier feature/test checkpoint is `2f1c81c`
 (`feat(frontier): expose bounded Kraken candle history`). It does not alter
 the host's service configuration or source-use holds.
+
+### Mission Control panel follow-up — 2026-10-29 16:47 CET
+
+The bounded Kraken candle panel is now integrated into the existing Kraken
+market detail in the isolated Frontier worktree. It reads stored candles only
+on page load and makes a public source request only after explicit user action.
+Source capability and policy gates control the button. The panel is committed
+as `fc622ee`; no production service or source configuration changed.
+
+The focused component test passed **2/2 in 10.20 seconds**, and strict
+standalone TypeScript for the component/test passed. ESLint and Prettier passed
+for the component/test and `Frontier.tsx`. The fixture test ran in a transient
+384 MiB high / 512 MiB max, zero-swap, 15%-CPU scope and peaked at
+111,771,648 bytes; the standalone typecheck peaked at 195,706,880 bytes in an
+equivalent scope. No external request was made. A full web typecheck, build,
+and browser test were deferred; main-tree type verification remains open.
+
+At 16:47:22, host memory PSI avg10/60/300 was zero, I/O PSI avg10 was
+0.59% some / 0.32% full, `MemAvailable` was 11,030,868 kB, and
+`SwapFree` was 18,272 kB. User-manager events were
+high/max/oom/oom_kill = 16,437,792/730,766/19/15; `max` advanced by one
+during the last fixture interval, without an OOM. At 16:47:35, MIDAS API and
+Reality remained active with unchanged restart counts 9/14; Reality API was
+active at 535,810,048 / 536,870,912 bytes, local `max=5,143`, `oom=0`. The
+capacity timer remained active and gap-detail inactive. No new OOMD or kernel
+kill was found since 16:38:58.
+
+The cgroup `max` movement is recorded without causal attribution. The host
+still has almost no free swap and the Reality API remains about 1 MiB below
+its hard limit. This short validation interval does not establish recovery;
+the incident remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**.

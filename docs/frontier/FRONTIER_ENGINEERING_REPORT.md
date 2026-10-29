@@ -16169,3 +16169,43 @@ matching kill since the Oct 28 final events. This brief fixture interval does
 not establish sustained recovery; the host incident remains
 **PARTIALLY CONTAINED / PARTIALLY VERIFIED**. Kraken candle UI integration,
 type-checking, and live-source validation remain pending.
+
+### Kraken candles in Mission Control — 2026-10-29 16:47 CET
+
+The Kraken market detail now includes a candle-history panel beside the saved
+spot-book capture. It lists only locally saved captures on load, exposes the
+documented intervals and optional start time, and requires an explicit action
+for a source request. The panel respects the source capability/use hold, shows
+the market binding and raw hash, and renders at most the latest 20 rows from
+the selected bounded series. It labels the data as spot context and says that
+the newest candle may be incomplete.
+
+The dedicated panel tests pass **2/2** in 10.20 seconds and strict standalone
+TypeScript on the panel and its tests passes. ESLint and Prettier checks pass
+for the panel, its tests, and the `Frontier.tsx` integration. The test scope
+used 384 MiB high / 512 MiB max, zero swap, 15% CPU, 48 tasks, and 90 seconds;
+the observed cgroup peak was 111,771,648 bytes. The focused TypeScript scope
+used the same memory/swap/CPU/task caps; its observed peak was 195,706,880
+bytes. The UI test's fetch mock served both local reads and the explicit probe
+response; it made no external request. No complete web-project typecheck,
+production build, or browser run was started due the host incident.
+
+The panel and integration are committed as `fc622ee`
+(`feat(frontier): expose Kraken candles in Mission Control`). The preceding
+backend/API commit is `2f1c81c`. The main `Frontier.tsx` integration was linted
+but not included in the focused TypeScript invocation, so full-tree type
+verification remains open.
+
+At 16:47:22, host memory PSI avg10/60/300 remained zero and I/O PSI avg10 was
+0.59% some / 0.32% full. `MemAvailable` was 11,030,868 kB and `SwapFree`
+18,272 kB. User-manager events were high/max/oom/oom_kill =
+16,437,792/730,766/19/15; max advanced by one during the final UI fixture
+run, with no OOM. At 16:47:35, MIDAS API and Reality were active at
+1,249,042,432 / 1,879,048,192 and 816,824,320 / 1,342,177,280 bytes, with
+restart counts 9 and 14. Reality API was active at 535,810,048 /
+536,870,912 bytes with local `max=5,143` and `oom=0`. No OOMD or kernel kill
+was found since 16:38:58. The active capacity timer and disabled gap-detail
+timer were unchanged. Almost all swap remains occupied and Reality API has
+about 1 MiB below its hard cap. The host incident remains
+**PARTIALLY CONTAINED / PARTIALLY VERIFIED**; avoid further memory-bearing
+work when pressure exceeds the gate.

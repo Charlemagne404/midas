@@ -15779,3 +15779,26 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
   source-independent work with a fresh admission sample and a zero-swap
   transient scope. See the incident report and the dated implementation
   addendum in `FRONTIER_ENGINEERING_REPORT.md`.
+
+## 2026-10-29 16:47 CET — Kraken candle Mission Control panel
+
+- Added the candle-history panel to the existing Kraken market detail. It
+  loads only saved local observations, uses the source capability and hold to
+  gate the explicit public-probe action, shows provenance and market binding,
+  and limits display to the latest 20 rows of the selected series. No source
+  request was made by the UI tests.
+- Committed as `fc622ee` (`feat(frontier): expose Kraken candles in Mission
+  Control`). The focused UI tests pass **2/2 in 10.20 seconds**; the standalone
+  panel/test TypeScript check passes, and targeted ESLint and Prettier pass.
+  The 384 MiB high / 512 MiB max zero-swap test scope peaked at
+  111,771,648 bytes; the equally bounded standalone typecheck peaked at
+  195,706,880 bytes. Full web typecheck, build, and browser verification remain
+  deferred under the incident gate.
+- At 16:47:22, host memory PSI avg10/60/300 was zero and I/O PSI avg10 was
+  0.59% some / 0.32% full; available RAM was 11,030,868 kB, free swap 18,272
+  kB. Parent events were 16,437,792/730,766/19/15; the `max` counter advanced
+  by one during the last fixture interval, with no OOM. At 16:47:35, MIDAS API,
+  Reality and Reality API were active; Reality API was at 535,810,048 /
+  536,870,912 bytes, local `max=5,143`, `oom=0`. No new OOMD/kernel kill was
+  found since 16:38:58. The host remains **PARTIALLY CONTAINED / PARTIALLY
+  VERIFIED**, not recovered.
