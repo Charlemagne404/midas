@@ -15703,3 +15703,37 @@ GiB kernel memory, including 0.99 GiB slab; the containing user slice charged
 remained zero. This confirms the aggregate hierarchy is still a substantial
 resource boundary while demonstrating neither active reclaim pressure at
 that moment nor which workload initiated the earlier events.
+
+### Captured relationship-difference browser verification — 2026-10-29 14:29 CET
+
+The bounded captured-store browser journey that exercises the synthetic
+Polymarket/Kalshi relationship passed **1/1** (53.7 seconds for the selected
+test; 1.4 minutes total runner time). It asserts the literal resolution
+authority and other field differences rendered by the new comparison summary.
+The run was capped at 768 MiB high / 1 GiB max, zero swap, 20% CPU, 128 tasks,
+120 seconds, and a 384 MiB Node heap. It used local fixtures only; test ports
+closed and no exchange or production API was contacted.
+
+The post-run host sample at 14:27:31 recorded some/full PSI avg10/60/300 of
+6.32/7.88/2.25% and 5.51/6.96/1.99%, with the shared hierarchical
+`memory.events high` counter up by 7,047 to 16,437,550. OOM counters remained
+19/15. This is temporally consistent with reclaim pressure from this capped
+browser workload or other activity in the shared user hierarchy; the counter
+does not allow attribution to this process. PSI declined at later quiet
+samples: by 14:29:41 avg10 was zero, avg60 0.90/0.79%, and avg300 1.42/1.26%
+some/full. At that time `MemAvailable` was 10.60 GiB, free swap 15.47 MiB,
+OOM counters were unchanged, and API/Reality/Reality API remained active at
+restart counts 9/14/0. No OOMD or kernel kill was observed in the interval.
+This is a short recovery observation, not sustained-recovery evidence. Further
+browser and build work is deferred pending a longer quiet interval and fresh
+admission sample.
+
+The scheduled Veritas observatory then completed at 14:31:16 with status 0
+under its 256 MiB hard cap and zero swap. At 14:31:35, PSI some/full avg10/60/300
+had declined to 0/0.13/0.96% and 0/0.11/0.85%; `MemAvailable` was 10.62 GiB,
+free swap 15.47 MiB, and user-manager OOM counters remained 19/15. The API,
+Reality, and Reality API remained active at restarts 9/14/0. Current cgroup
+charges were about 1.09 GiB, 662.6 MiB, and 483.3 MiB; Reality API remains
+close to its 512 MiB hard cap. No OOMD or kernel kill was observed since
+14:27:31. This extends the quiet observation slightly, but does not resolve
+the full-swap or historical-workload-attribution risks.

@@ -1,5 +1,46 @@
 # Project Frontier Mission Ledger
 
+## 2026-10-29 14:31 CET — post-observation recovery sample
+
+- The scheduled Veritas observatory ran 14:31:04–14:31:16 and exited 0 under
+  its existing 256 MiB max / zero-swap bound. At 14:31:35, host PSI had fallen
+  to some/full avg10/60/300 = 0/0.13/0.96% and 0/0.11/0.85%; user-manager
+  events were unchanged at high/max/oom/oom_kill =
+  16,437,550/730,447/19/15. `MemAvailable` was 10.62 GiB and free swap
+  15.47 MiB.
+- API, Reality, and Reality API remained active at restart counts 9/14/0 and
+  current cgroup charges of about 1.09 GiB, 662.6 MiB, and 483.3 MiB. The
+  Reality API remains near its 512 MiB hard cap. No OOMD or kernel kill was
+  logged since 14:27:31.
+- After the bounded E2E's short PSI rise, later samples show declining
+  pressure, not resolution. Pause further compute in this window; use a fresh
+  admission check before resuming any Frontier tests or builds. Preserve the
+  disabled gap-detail timer and do not alter protected service limits.
+
+## 2026-10-29 14:29 CET — relationship difference browser verification and pressure response
+
+- The captured-store cross-venue relationship journey passed **1/1**; the
+  selected test ran 53.7 seconds (1.4 minutes total) and now asserts the
+  literal-difference summary in the UI. It used the committed fixture and a
+  transient 768 MiB high / 1 GiB max, zero-swap, 20%-CPU, 128-task,
+  120-second scope with a 384 MiB Node heap. No exchange or production API was
+  queried, and test ports closed after the run.
+- At 14:27:31, immediately after the journey, PSI rose to some/full
+  avg10/60/300 = 6.32/7.88/2.25% and 5.51/6.96/1.99%. The shared hierarchical
+  `memory.events high` count rose by 7,047 to 16,437,550; max/OOM/OOM-kill
+  counters stayed 730,447/19/15. Timing is consistent with the browser scope
+  or concurrent user-session work adding reclaim pressure, but the parent
+  counter cannot isolate attribution. No further compute was started.
+- Quiet readbacks at 14:28:10, 14:28:45, and 14:29:41 showed avg10 PSI
+  declining to zero; at 14:29:41 avg60 was 0.90/0.79% and avg300 1.42/1.26%
+  some/full. Available RAM was 10.60 GiB, swap free 15.47 MiB, counters stayed
+  fixed, and API/Reality/Reality API remained active at restart counts
+  9/14/0. This short decay interval is not proof of sustained recovery.
+- **Admission:** do not run more browser, build, or broad test work in this
+  window. Continue only read-only/source-independent work after a fresh
+  pressure check; the memory incident remains **PARTIALLY CONTAINED / PARTIALLY
+  VERIFIED**, and Frontier remains **PARTIALLY VERIFIED**.
+
 ## 2026-10-29 14:23 CET — literal relationship-term difference summary
 
 - The graph contract comparison now computes a bounded side-by-side summary of

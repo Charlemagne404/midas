@@ -3269,3 +3269,44 @@ zero. User-manager event counters remained high/max/oom/oom_kill =
 16,430,503/730,447/19/15. This shows that substantial aggregate user-session
 charges coexist with currently quiet PSI and available host RAM. It does not
 identify the initiating workload for the historical OOMD or kernel events.
+
+## Browser verification and transient reclaim-pressure follow-up — 2026-10-29 14:29 CET
+
+The captured-store cross-venue relationship test was subsequently run and
+passed **1/1**; it executed for 53.7 seconds (1.4 minutes total) and asserted
+the new visible comparison of literal contract-field differences. The
+Playwright scope was bounded at 768 MiB `MemoryHigh`, 1 GiB `MemoryMax`, zero
+swap, 20% CPU, 128 tasks, and 120 seconds, with a 384 MiB Node heap. All data
+was fixture-backed; no live exchange, production API, or production store was
+used. The local test listeners were closed after the run.
+
+At 14:27:31, the post-run sample recorded host some/full memory PSI
+avg10/avg60/avg300 = 6.32/7.88/2.25% and 5.51/6.96/1.99%; host available RAM
+was about 10.45 GiB and free swap 15.46 MiB. The shared user-manager
+`memory.events high` count increased by 7,047 to 16,437,550; `max`, `oom`, and
+`oom_kill` stayed at 730,447/19/15. API/Reality/Reality API restart counts
+remained 9/14/0, and no OOMD or kernel kill appeared. This timing is
+consistent with the capped browser workload or concurrent user-session work
+contributing to reclaim pressure, but the hierarchical counter cannot
+attribute the event to the test alone.
+
+During quiet follow-up, avg10 PSI returned to zero by 14:28:45. At 14:29:41,
+avg60 had declined to some/full 0.90/0.79% and avg300 to 1.42/1.26%; available
+RAM was 10.60 GiB and swap free was 15.47 MiB. The `high` and OOM counters did
+not increase after the immediate post-run sample. This is a brief declining
+pressure interval, not proof of sustained recovery. No additional test,
+build, or batch was started. Continue only read-only/source-independent work
+after a fresh admission check; defer browser and build verification until a
+longer quiet period is demonstrated.
+
+The scheduled Veritas observatory ran at 14:31:04–14:31:16 and exited 0 under
+its 256 MiB hard cap / zero-swap setting. At 14:31:35, host some/full PSI
+avg10/60/300 was 0/0.13/0.96% and 0/0.11/0.85%; available memory was 10.62
+GiB and swap free 15.47 MiB. User-manager `memory.events` stayed at
+high/max/oom/oom_kill = 16,437,550/730,447/19/15. API, Reality, and Reality API
+remained active at restart counts 9/14/0, with current charges about 1.09 GiB,
+662.6 MiB, and 483.3 MiB respectively. No OOMD or kernel kill was logged
+since 14:27:31. PSI averages continued to decline; the average window is
+short and swap remains nearly full, so this is not incident closure. Stop
+additional Frontier compute and retain the current resource caps and service
+state pending a longer quiet period.
