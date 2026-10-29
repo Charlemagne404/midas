@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 08:32 CET |
+| Latest addendum | 2026-10-29 08:33 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Pre-incident checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -1520,3 +1520,18 @@ restart counts 9/14. No systemd-oomd or kernel OOM entry appeared since
 08:24:26. This supports the offline permission gate only; the incident is
 still **PARTIALLY CONTAINED / PARTIALLY VERIFIED**, with almost no free swap
 and the historical initiating workload unknown.
+
+Two configuration-only cases in
+`tests/frontier/test_source_data_permissions.py` also passed **2/2 in 5.70
+seconds**: arbitrary Kalshi/Kraken permission-reference values do not enable
+sources, and whitespace-only references do not enable probes. These use local
+settings validation only. The same 384/512 MiB high/max, zero-swap, 20% CPU,
+64-task scope was used; a Starlette/httpx deprecation warning appeared. No
+direct cgroup peak was retained.
+
+At 08:33:36, global PSI and the user-manager `high`, `max`, `oom`, and
+`oom_kill` counters were unchanged from the 08:32 sample; `MemAvailable` was
+11,044,580 kB and `SwapFree` 8,612 kB. API and Reality remained active at
+restart counts 9/14. OOMD and kernel OOM journals remained empty since
+08:24:26. This adds source-permission fixture evidence only and does not
+change the incident assessment.

@@ -1,5 +1,21 @@
 # Project Frontier Mission Ledger
 
+## 2026-10-29 08:33 CET — permission-reference fail-closed fixtures
+
+- Two settings-only cases in `tests/frontier/test_source_data_permissions.py`
+  passed **2/2 in 5.70 seconds**: arbitrary permission-reference strings and
+  whitespace-only references do not enable Kalshi/Kraken public probes.
+  Local configuration only, no transport or source calls. Same transient
+  384 MiB high / 512 MiB max, zero-swap, 20% CPU, 64-task bound; the existing
+  Starlette/httpx deprecation warning appeared. No direct cgroup peak retained.
+- At 08:33:36 host PSI was zero, `MemAvailable` 11,044,580 kB,
+  `SwapFree` 8,612 kB; user-manager high/max/OOM events were unchanged,
+  aggregate OOM counters remained 19/15/0, and API/Reality active at restarts
+  9/14. No OOMD or kernel OOM appeared since 08:24:26.
+- **Status:** Source permission reference handling is fixture-verified.
+  Incident remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**; nearly full
+  swap and historical workload attribution are unresolved.
+
 ## 2026-10-29 08:32 CET — source-use hold regression
 
 - `tests/frontier/test_source_data_permissions.py::test_probe_flags_and_references_do_not_enable_unvalidated_sources`
