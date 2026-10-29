@@ -13369,6 +13369,6 @@ appeared in the checked interval. Both timers retained their intended states.
 This is fixture evidence only and does not establish endurance or live
 cross-venue validation.
 
-Checkpoint commits: `65192c8` (incident attribution) and `87e2241` (ledger
-pin). The untracked `data/frontier-public-probes/` directory remains
-untouched.
+Checkpoint commits: `65192c8` (incident attribution), `87e2241` (evidence
+pin), and `fe9d59c` (bounded joint-state verification). The untracked
+`data/frontier-public-probes/` directory remains untouched.
