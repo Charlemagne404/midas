@@ -716,23 +716,35 @@ worker.
 
 ### Host memory-incident gate — 2026-10-29
 
-systemd-oomd last logged a kill at 2026-10-28 23:43:24 CET after
-`user@1000.service` memory pressure exceeded 50% for more than 20 seconds
-while reclaim was active. The five-minute `midas-veritas-gap-detail-v2.timer`
-remains stopped because it only replays finalized segments. The separate
-Reality capacity monitor has a reversible user-unit override of
-`MemoryHigh=160M`, `MemoryMax=192M`, and `MemorySwapMax=0`; its 02:46 scheduled
-run exited successfully, but systemd did not retain a peak-memory value. The
-monitor still reports invalid archive inventory/provenance; do not edit or
-repair those artifacts as part of Frontier development.
+The five-minute `midas-veritas-gap-detail-v2.timer` is disabled because it
+replays finalized segments and was the target of 106 of 129 October 28
+systemd-oomd pressure kills. The separate Reality capacity monitor has a
+reversible user-unit override of `MemoryHigh=160M`, `MemoryMax=192M`, and
+`MemorySwapMax=0`; its 15:49 scheduled run exited successfully. The
+user-manager has no aggregate memory or swap ceiling, and swap remains almost
+full. At 15:56, `MemAvailable` was 11,393,916,928 bytes, `SwapFree` was
+16,547,840 bytes, and host memory PSI was zero. In a 34-second sample, host
+swap-in increased one page, swap-out did not change, and user-manager swap
+counters did not change; direct scan/steal increased 73 pages. This indicates
+little active paging in that sample, not durable recovery. At 15:45, the user
+manager held about 10.0 GiB memory, had a 13.03 GiB peak, and used 2.66 GiB
+swap. OOMD currently reports the user manager monitored at the 50%
+memory-pressure threshold; its last kill was 23:43:24 on October 28.
 
-At 02:53 CET, host `MemAvailable` was about 11.44 GB and memory PSI was zero,
-while only 220 kB of the 4 GiB swap device was free. User-manager OOM counters
-were `oom=19` and `oom_kill=15`. Treat the full swap and unknown historical
-workload attribution as active cautions even when a short PSI sample is quiet.
-Current service state, exact rollback commands, and the bounded post-run
-sample are recorded in
-[`FRONTIER_MEMORY_PRESSURE_INCIDENT_2026-10-28.md`](FRONTIER_MEMORY_PRESSURE_INCIDENT_2026-10-28.md).
+Reality is active and writing new segments. Its 15:52:29 status reported
+`RECORDING_UNSEQUENCED`, 16 fresh books across 8 markets, one failure, and
+`sequence_verified=false`. The same status file's capacity section reports
+archive manifest-size and inventory-verification warnings and unknown archive
+capacity. Do not edit or repair archive provenance or historical data as part
+of Frontier development.
+
+Continue only serial, source-independent code and small fixture work after a
+fresh PSI/available-memory check. Use a transient zero-swap cgroup capped at
+384 MiB `MemoryMax`, 15% CPU, and one worker; stop if memory PSI rises or
+`MemAvailable` falls below 8 GiB. Defer browser/build/full-suite runs, source
+probes, replay batches, and overlapping research while swap is nearly full.
+The incident report records current service state and exact rollback commands:
+[`FRONTIER_MEMORY_PRESSURE_INCIDENT_2026-10-29.md`](FRONTIER_MEMORY_PRESSURE_INCIDENT_2026-10-29.md).
 
 The earlier TypeScript attempt reached Node's internal heap limit and triggered
 Apport/Whoopsie. Whoopsie logged HTTP 504 and no successful-upload marker is

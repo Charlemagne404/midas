@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 15:40 CET |
+| Latest addendum | 2026-10-29 15:56 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Pre-incident checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -31,19 +31,20 @@ Two separate mechanisms caused process termination:
    MiB anonymous RSS plus roughly 11 MiB file RSS. This was a separate leaf
    cgroup limit failure, not a host-wide kernel OOM.
 
-The gap-detail timer is stopped and disabled. The capacity service now has a
-reversible 160 MiB soft / 192 MiB hard limit with swap disabled, and its
-04:16 and 04:46 scheduled runs succeeded. Since the final systemd-oomd kill
-at 23:43:24 on October 28, no additional systemd-oomd kill has appeared
-through 04:58 on October 29; no kernel OOM has appeared since the 20:15:44
-capacity kill.
+The gap-detail timer is stopped and disabled. The capacity service has a
+reversible 160 MiB soft / 192 MiB hard limit with swap disabled; its 15:49
+scheduled run succeeded. Since the final systemd-oomd kill at 23:43:24 on
+October 28, no additional systemd-oomd kill has appeared through 15:51 on
+October 29; no kernel OOM has appeared since the 20:15:44 capacity kill.
 
-This is **partially contained, not resolved**. At 04:58 the host had 10.80
-GiB available RAM, zero current host/user PSI, and about 2 MiB free swap.
-`oomctl dump` still lists no monitored cgroups despite the active user-unit
-OOM policy and historical kill records. The reason for this current reporting
-mismatch is unresolved. Do not treat the quiet period as proof of durable
-recovery.
+This is **partially contained, not resolved**. At 15:51 the host had
+11,167,420 kB available RAM, zero current memory PSI, and only 16,128 kB
+free swap. At 15:45, `user@1000.service` was charged about 10.0 GiB memory,
+had a 13.03 GiB peak, and used 2.66 GiB swap, with no aggregate memory or
+swap ceiling. The current `oomctl` output lists this parent as monitored at
+the 50% pressure threshold; the earlier 04:58 output that listed no monitored
+cgroups was not reproduced, and its discrepancy remains unexplained. This
+quiet interval and successful bounded jobs do not establish durable recovery.
 
 ## Full-day kill evidence
 
@@ -138,7 +139,7 @@ prove that other workloads never overlap or contribute.
 | Change | Reason and evidence | Current state | Rollback |
 | --- | --- | --- | --- |
 | Stop/disable `midas-veritas-gap-detail-v2.timer` | Auxiliary replay only; 106 of 129 October 28 OOMd kills targeted its service. It is not live capture or an integrity check. | `inactive`, `disabled`; service remains failed after its last OOMd kill. | After resource admission and an explicit decision to resume replay: `systemctl --user enable --now midas-veritas-gap-detail-v2.timer` |
-| Bound Reality capacity monitor at High 160M / Max 192M / SwapMax 0 | Original 128M cap had seven kernel memcg kills. Latest scheduled run at 04:16:51 succeeded; the 00:46 run previously recorded a 137.4 MiB peak. This does not repair the possible unbounded archive scan. | Persistent drop-in `/home/charlie/.config/systemd/user/midas-reality-capacity.service.d/90-frontier-memory-bound.conf`; timer remains active at 30-minute intervals. | To restore the prior 128M hard cap, replace that file with `[Service]`, `MemoryMax=128M`, `MemorySwapMax=0`, then run `systemctl --user daemon-reload` and verify `systemctl --user show midas-reality-capacity.service -p MemoryHigh -p MemoryMax -p MemorySwapMax`. The existing runtime High setting is 128M. |
+| Bound Reality capacity monitor at High 160M / Max 192M / SwapMax 0 | Original 128M cap had seven kernel memcg kills. Latest scheduled run at 15:49:17 succeeded; the 00:46 run previously recorded a 137.4 MiB peak. systemd retained no peak for the 15:49 run. This does not repair the possible unbounded archive scan. | Persistent drop-in `/home/charlie/.config/systemd/user/midas-reality-capacity.service.d/90-frontier-memory-bound.conf`; timer remains active at 30-minute intervals. | To restore the prior 128M hard cap, replace that file with `[Service]`, `MemoryMax=128M`, `MemorySwapMax=0`, then run `systemctl --user daemon-reload` and verify `systemctl --user show midas-reality-capacity.service -p MemoryHigh -p MemoryMax -p MemorySwapMax`. The existing runtime High setting is 128M. |
 | Checkpoint Frontier worktree | Preserve current implementation before incident edits. | Local commit `ac4222f`; branch `codex/frontier-20261026`. Probe evidence directory remains untracked and untouched. | No rollback needed; normal Git history is the recovery point. |
 
 The exact capacity rollback can be applied with:
@@ -3586,3 +3587,96 @@ restart counts 9/14/0; gap-detail stayed inactive and capacity was waiting.
 No matching kernel, systemd-oomd, or service OOM/kill entry appeared between
 15:36:56 and this check. This remains a brief quiet interval, not evidence of
 sustained recovery; swap remains almost entirely used.
+
+## Host incident continuation and swap sample — 2026-10-29 15:56 CET
+
+The pre-report Frontier checkpoint was `7dcc865` on
+`codex/frontier-20261026`. Its tracked worktree was clean; the pre-existing
+untracked `data/frontier-public-probes/` directory was preserved and not
+read, staged, or changed. No Frontier batch or broad test was started for
+this incident update.
+
+At 15:51, host `MemAvailable` was 11,167,420 kB, `SwapFree` was 16,128 kB of
+4,194,300 kB, and host memory PSI some/full avg10/60/300 were all zero. The
+last OOMD kill remains 23:43:24 on October 28 (about 16 hours earlier); the
+last kernel memcg OOM remains 20:15:44 (about 19.5 hours earlier). The
+15:49:17–15:49:24 Reality capacity run completed successfully under effective
+`MemoryHigh=160M`, `MemoryMax=192M`, `MemorySwapMax=0`. The Veritas observatory,
+source-analysis, and research-director timers also completed their sampled
+15:30, 15:40, and 15:45 runs without overlap in that window. systemd-oomd
+remains active and its current `oomctl` view lists `user@1000.service` under
+the 50% memory-pressure policy; that cgroup had zero current PSI when read.
+
+The present cgroup sample locates a substantial share of memory and swap in
+the user application and terminal subtrees, especially file-backed cache, but
+does not reconstruct which process populated those pages during the earlier
+kill window. The demonstrated systemd-oomd trigger was aggregate
+user-manager PSI with reclaim activity; the five-minute replay was a
+substantial recurring contributor with severe pressure in its own cgroup.
+The capacity job had a separate local hard-limit failure. It is not
+established that the replay was the only source, that the currently large
+terminal cache caused the historic events, or that the host underwent a
+kernel-wide OOM. The full swap remains a live constraint. No OOM policy,
+Reality, API, Continental, Echo, SSH, RustDesk, archive, or service
+configuration was changed in this follow-up.
+
+At 15:45, `user@1000.service` was charged about 10.0 GiB memory, had a
+13.03 GiB peak, and used 2.66 GiB swap; its aggregate memory/swap ceilings
+were unlimited. `memory.stat` charged about 2.20 GiB anonymous, 6.69 GiB
+file-backed, and 1.08 GiB kernel memory. The parent counters were
+`high=16,437,792`, `max=730,659`, `oom=19`, and `oom_kill=15`; these are
+hierarchical counters, not service-specific OOMD tallies. The `app.slice` used
+about 9.62 GiB memory. Its nested GNOME Terminal slice used about 4.92 GiB
+memory and 1.53 GiB swap. The active terminal scope for this Frontier/Codex
+session was charged about 2.54 GiB, comprising about 1.96 GiB file-backed,
+559 MiB anonymous, and 41 MiB kernel memory; enumerated process RSS in that
+scope was about 1.0 GiB. This is a substantial current session footprint and
+relevant to future admission, but it does not prove that Frontier research
+caused the October 28 pressure. The session and all terminal scopes were left
+untouched.
+
+At the same sample, `midas-api.service` used 1.13 GiB against High 1.50 GiB
+and Max 1.75 GiB (zero local OOM kills); `midas-reality.service` used 0.71
+GiB against High 1.125 GiB and Max 1.25 GiB (zero local OOM kills); and
+`midas-reality-api.service` used 0.50 GiB against its 512 MiB Max, with 5,042
+local `max` events but no local OOM kill. These tight leaf budgets and event
+counters do not identify which workloads initiated the earlier parent
+pressure. The parent, terminal, and application cgroup values overlap and
+must not be summed as independent host use.
+
+The capacity JSON written by the successful run still reports
+`ARCHIVE_MANIFEST_SIZE_LIMIT`, `ARCHIVE_INVENTORY_UNVERIFIED`, and
+`ARCHIVE_CAPACITY_UNKNOWN` (as well as pending budget/retention changes and
+short-runway warnings). Its destination state is
+`UNVERIFIED_MANIFEST_SIZE_LIMIT`; no archive manifest or inventory was
+repaired. This remains a separate data-integrity and capacity-planning issue.
+
+At 15:52:29, the Reality `status.json` reported
+`RECORDING_UNSEQUENCED`, 16 fresh books across 8 markets, one recorded
+failure, and `sequence_verified=false`; new segment files were being written
+at 15:52:31. The collector process is active and writing, but this does not
+establish complete or sequenced capture. Its 06:32 journal warning reported
+`DEGRADED` after a stale-observation timeout. No restart or reconfiguration
+was attempted. Continue to treat source continuity and archive provenance as
+unverified.
+
+During a 34-second read-only swap/reclaim sample from 15:56:12 to 15:56:46,
+host `pswpin` increased by one page and `pswpout` did not change. The
+user-manager `pswpin`/`pswpout` counters did not change; its direct scan and
+steal counters each increased by 73 pages. Host PSI avg10/60/300 stayed at
+zero; the cumulative PSI total increased only 23 microseconds. At 15:56:46,
+`MemAvailable` was 11,393,916,928 bytes and `SwapFree` was 16,547,840 bytes.
+This suggests the swap device was nearly full but not materially paging during
+that short sample; it is not evidence that future pressure cannot recur.
+
+The root `systemctl --failed` view lists `daymark-db.service`; no connection to
+this incident was established and the unit was left untouched.
+
+**Admission decision:** Frontier may resume source-independent code and small
+fixture work only, serially, after a fresh PSI/available-memory check, under a
+transient zero-swap cap no larger than 384 MiB `MemoryMax`, 15% CPU, and one
+worker. Defer browser/build/full-suite runs, live probes, replay batches, and
+overlapping research jobs while swap remains nearly full and the parent has
+no aggregate ceiling. Stop the workload if PSI rises or available RAM falls
+below 8 GiB. This is a bounded development allowance, not production
+readiness or durable host recovery.

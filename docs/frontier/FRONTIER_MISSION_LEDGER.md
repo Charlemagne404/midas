@@ -1,5 +1,55 @@
 # Project Frontier Mission Ledger
 
+## 2026-10-29 15:56 CET — short swap and reclaim delta
+
+- Across 15:56:12–15:56:46, host swap-in rose one page and swap-out stayed
+  unchanged; user-manager swap-in/out counters did not change. User-manager
+  direct scan/steal increased 73 pages. PSI avg10/60/300 remained zero; the
+  cumulative PSI total rose by only 23 microseconds. At 15:56:46,
+  `MemAvailable` was 11,393,916,928 bytes and `SwapFree` was 16,547,840 bytes.
+- This indicates little active paging during the sample, while the swap
+  device remains nearly full. It does not show sustained recovery or rule out
+  a later pressure event. Continue only with serial, bounded, offline work.
+
+## 2026-10-29 15:52 CET — high-priority host memory incident follow-up
+
+- Rechecked the Frontier branch before incident documentation: checkpoint
+  `7dcc865` (`codex/frontier-20261026`), tracked tree clean. Preserved the
+  pre-existing untracked `data/frontier-public-probes/` without reading or
+  modifying it.
+- The Oct 28 journal records 129 systemd-oomd kills: gap-detail 106, Reality
+  10, API 8, GNOME Terminal scopes 4, Firefox 1. OOMD logs cite
+  `user@1000.service` above 50% PSI for over 20 seconds with reclaim activity.
+  Seven separate kernel memcg OOMs killed capacity-checker processes near
+  130 MiB anonymous RSS against the former 128 MiB hard cap. The repeated
+  replay is a demonstrated recurring contributor, but not a proven sole cause.
+- Current containment was already in effect: gap-detail timer inactive and
+  disabled; capacity checker at 160/192 MiB high/max and zero swap. Its
+  15:49:17–15:49:24 run succeeded. No OOMD kill has appeared since
+  23:43:24 Oct 28; no kernel memcg OOM since 20:15:44. No service, timer,
+  OOM policy, collector, or archive configuration was changed during this
+  follow-up.
+- At 15:51, host `MemAvailable` was 11,167,420 kB, `SwapFree` 16,128 kB, and
+  memory PSI avg10/60/300 zero. At 15:45, the uncapped user manager held
+  about 10.0 GiB memory, peaked at 13.03 GiB, and used 2.66 GiB swap. The
+  active terminal subtree had a 4.92 GiB current charge; one Frontier/Codex
+  terminal scope accounted for 2.54 GiB, mostly file-backed cache. This is a
+  current resource footprint, not historical root-cause proof. `oomctl`
+  currently lists the user manager under the 50% pressure monitor; the earlier
+  output without listed cgroups was not reproduced.
+- Reality, MIDAS API, Reality API, MIDAS web, Continental, Echo, remote-access
+  units, and systemd-oomd were active. Reality was writing segments at 15:52;
+  status reported `RECORDING_UNSEQUENCED`, 16 fresh books / 8 markets, one
+  failure, and no sequence verification. The capacity JSON retains archive
+  manifest-size, inventory-unverified, and unknown-capacity warnings. These
+  integrity issues were not edited or repaired.
+- Safe continuation is limited to source-independent code and small fixture
+  work, one worker at a time, after fresh pressure checks and under a transient
+  zero-swap 384 MiB maximum / 15% CPU cap. Defer broad tests, builds, browsers,
+  source probes, and replay batches while swap is nearly full. This is not
+  durable recovery; see
+  [`FRONTIER_MEMORY_PRESSURE_INCIDENT_2026-10-29.md`](FRONTIER_MEMORY_PRESSURE_INCIDENT_2026-10-29.md).
+
 ## 2026-10-29 14:32 CET — quiet follow-up after bounded browser run
 
 - At 14:32:41, about five minutes after the E2E run, global PSI some/full
