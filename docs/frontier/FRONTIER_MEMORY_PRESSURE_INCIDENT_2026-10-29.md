@@ -4927,3 +4927,23 @@ Keep broad builds, full suites, replay batches, live-source probes, and
 deployment deferred. Capture each transient leaf's memory peak and local
 event counters before collecting its unit. Incident status remains
 **PARTIALLY CONTAINED / PARTIALLY VERIFIED**, not solved.
+
+### Scheduled capacity run follow-up — 2026-10-29 19:51 CET
+
+The scheduled capacity monitor ran from 19:50:43 to 19:50:51 and exited
+successfully (status 0) under MemoryHigh=160M, MemoryMax=192M, and
+MemorySwapMax=0. It consumed 6.191 CPU seconds. systemd had already removed
+the inactive unit's leaf cgroup, so MemoryPeak and local memory.events were
+not available after completion.
+
+At 19:51:06, PSI averages remained zero, MemAvailable was 10,890,672 KiB,
+and SwapFree was 20,536 KiB. Parent user-slice memory.events.high increased
+by 111 from the 19:47 sample; max remained 731,991 and oom/oom_kill remained
+19/15. The increase coincides with the capacity run, but API and Reality
+services were also active and their local counters were not sampled at both
+ends of this interval. Record it as an association, not a leaf attribution.
+No OOM or kill occurred, and no service limit was changed.
+
+This successful bounded run supports the current hard cap and timer operation;
+it does not establish a peak, endurance safety, or resolution of the global
+swap and OOMD-monitoring concerns. Keep the current admission restrictions.

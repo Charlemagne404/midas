@@ -16525,3 +16525,16 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
   probes, and deployment deferred while swap remains nearly full. Capture
   each transient leaf's peak/events before collection. Host state is
   **PARTIALLY CONTAINED / PARTIALLY VERIFIED**.
+
+## 2026-10-29 19:51 CET — scheduled capacity-run check
+
+- The normal 19:50 Reality capacity timer run exited successfully (status 0,
+  6.191 CPU seconds) under its persistent 160 MiB High / 192 MiB Max /
+  zero-swap bound. Its leaf was collected before MemoryPeak or local events
+  could be read.
+- PSI stayed zero, MemAvailable was 10,890,672 KiB, SwapFree 20,536 KiB.
+  Parent user-slice high events rose by 111; max/oom/oom_kill remained
+  731,991/19/15. This coincides with the monitor run but is not directly
+  attributable without leaf counters. No kill or service change occurred.
+- Keep the current bound and serial admission gate. The sample supports a
+  successful run, not an observed peak or endurance claim.

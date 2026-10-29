@@ -782,6 +782,14 @@ records current user-session cgroup charges, scheduled-job timing, the
 systemd-oomd/oomctl registration discrepancy, active service state, and the
 Reality source-health caveat.
 
+The 19:50 scheduled Reality capacity check exited successfully with the
+160M/192M/zero-swap limits. Its inactive leaf had already been removed, so its
+peak and local event counters were unavailable. Parent memory.events.high
+rose by 111 in the interval, while max/OOM/kill counters and PSI remained
+unchanged/zero. This coincides with the capacity run but is not per-unit
+attribution. Keep the limit and admission policy unchanged pending a captured
+leaf measurement.
+
 ## Discovery-scope Arena comparison
 
 The Replay & Readiness view can submit

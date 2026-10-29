@@ -16630,3 +16630,12 @@ attribution of +208 open, safe Frontier continuation is limited to code work
 and a single serial, zero-swap fixture job after a fresh admission check.
 Broad builds, full suites, replays, public-source probes, and deployment remain
 deferred. Incident state is **PARTIALLY CONTAINED / PARTIALLY VERIFIED**.
+
+The scheduled 19:50 Reality capacity check then exited successfully (status 0,
+6.191 CPU seconds) under the persistent 160 MiB High / 192 MiB Max / zero-swap
+limit. Its inactive cgroup was no longer available for a peak/local-event
+read. At 19:51:06 host PSI remained zero, MemAvailable was 10,890,672 KiB,
+SwapFree was 20,536 KiB, and user-slice max/oom/oom_kill were unchanged.
+Parent high events rose by 111 during this interval. This coincides with the
+capacity run but remains unassigned because API/Reality leaf deltas were not
+sampled at both ends. No limit change is justified by this evidence.
