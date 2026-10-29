@@ -14176,10 +14176,13 @@ Structural links carry `economic_equivalence_asserted=false`; the existing
 relationship/economic review edges and candidate verifier remain unchanged.
 The projection is bounded at 512 loaded graph markets, 512 instruments, 256
 selected components, 512 instrument payout states, 2,048 entities, and 4,096
-links. The accessible, collapsed UI inspector lets a user select a loaded
-market and inspect at most 100 metadata links at a time. It states explicitly
-that these links do not certify event equivalence, payoff equivalence, hedging,
-or executability.
+links. It is opt-in through `include_entity_context=true`; default graph reads
+omit this projection. Mission Control requests it only in the relationship
+workspace, so the overview's bounded relationship-count request avoids the
+extra projection and serialized context. The accessible, collapsed UI
+inspector lets a user select a loaded market and inspect at most 100 metadata
+links at a time. It states explicitly that these links do not certify event
+equivalence, payoff equivalence, hedging, or executability.
 
 Focused fixture verification passed: the new entity projection tests plus the
 centered graph API regression **3/3**, and the bounded accessible graph UI test
@@ -14260,3 +14263,30 @@ unchanged restart counts 9/14 and the last ten-minute OOM journal query was
 quiet. This remains short observation, not recovery evidence. The full API
 mypy check and captured-browser validation remain pending; no live source was
 queried or matched.
+
+### Lazy graph context and exact-tree bundle — 2026-10-29 07:17 CET
+
+Commit `8417971` makes the graph projection opt-in at the API and adds the
+parameter to the graph query key. Mission Control sets it only while the
+Relationships workspace is selected. The centered API fixture confirms the
+default response omits `entity_context` and the opted-in response includes the
+typed projection. This bounds extra serialization cost to explicit graph
+inspection.
+
+The backend/API fixture selection passed **4/4** (one existing
+Starlette/httpx deprecation warning), and the relationship graph UI test passed
+**1/1** with eight unrelated tests skipped. Ruff, Prettier, ESLint, exact-tree
+TypeScript, and the isolated Vite build passed. Vite transformed 2,230 modules
+and built in **53.40 seconds** under `MemoryHigh=640 MiB`, `MemoryMax=768 MiB`,
+zero swap, and 25% CPU with a 384 MiB Node heap. Output is in
+`/tmp/midas-frontier-build-20261029T0616Z`; the existing ignored `dist` was
+not used. Frontier is 198.95 kB; the existing 544.51 kB Chart chunk advisory
+remains. The full Frontier API mypy check is still deferred.
+
+At 07:17:31 CET after the build, host `MemAvailable` was 11,121,684,480 bytes
+(10.36 GiB), `SwapFree` was 8,445,952 bytes (8.06 MiB), host memory PSI
+`avg10/avg60` was zero and `avg300` was `some=0.09%` / `full=0.08%`. The
+user-manager charged 9,739,001,856 bytes of memory and 2,858,446,848 bytes of
+swap; OOM counters remained 19/15/0. API and Reality were active at restart
+counts 9/14; no kernel/OOMD kill entry appeared in the preceding ten-minute
+query. This is a bounded quiet window, not incident resolution.

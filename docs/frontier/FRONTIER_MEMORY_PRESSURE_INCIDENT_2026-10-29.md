@@ -905,3 +905,22 @@ The source-gate tests passed 3/3 in 3.80 seconds, including the two rejection ca
 At 05:48:15 UTC, MemAvailable was 11,544,653,824 bytes (10.76 GiB), SwapFree was 8,278,016 bytes (7.90 MiB), and host memory PSI averages were zero. User-manager memory/swap charges were 9,513,750,528 / 2,858,569,728 bytes and OOM counters remained 19/15/0. API and Reality were active at restart counts 9 and 14; their health endpoints returned READY with live_execution=false immediately before the final sample. The capacity timer was waiting; gap-detail remained inactive with the prior OOM-kill result. No kernel or systemd-oomd kill appeared in the short query since 05:47 UTC.
 
 No service, timer, resource limit, protected collector, or historical evidence was changed. The host incident remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**: swap is almost full, the user-manager hierarchy is uncapped, and long-term recovery/attribution is not established. Continue Frontier only through serial, bounded work after fresh admission checks.
+
+## Lazy relationship graph context and post-build sample — 2026-10-29 07:17 CET
+
+Commit `8417971` makes structural context opt-in with
+`include_entity_context=true`. The ordinary graph response no longer builds or
+serializes entity context; Mission Control requests it only in the
+Relationships workspace. Fixture tests confirm default omission and explicit
+inclusion. The backend selection passed **4/4** (one existing
+Starlette/httpx deprecation warning); the focused graph UI test passed **1/1**
+with eight skipped. Prettier, ESLint, exact-tree TypeScript, Ruff, and a fresh
+53.40-second Vite production bundle passed under bounded, zero-swap scopes.
+
+At 07:17:31 CET, host PSI avg10/avg60 was zero and avg300 was `some=0.09%`,
+`full=0.08%`; `MemAvailable=11,121,684,480` bytes (10.36 GiB),
+`SwapFree=8,445,952` bytes (8.06 MiB), user-manager memory/swap
+`9,739,001,856 / 2,858,446,848` bytes, and OOM counters 19/15/0. API and
+Reality remained active at restart counts 9/14. The last ten-minute kernel and
+OOMD journal query was quiet. This sample follows one bounded build; nearly
+full swap and historic OOM attribution remain unresolved.
