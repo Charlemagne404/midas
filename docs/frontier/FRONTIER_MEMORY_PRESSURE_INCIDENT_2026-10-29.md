@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 09:49 CET |
+| Latest addendum | 2026-10-29 10:25 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Pre-incident checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -2090,3 +2090,30 @@ bytes swap, with a 13,992,292,352-byte peak. `oom=19`, `oom_kill=15`, and
 in the previous 40 minutes. API/Reality/Reality API stayed active at restart
 counts 9/14/0. This bounded interval permits only continued serial work; it
 does not resolve the incident or validate archive provenance.
+
+## 2026-10-29 10:25 CET — host recheck and Frontier timestamp correction
+
+The Gemini List Trades parser was corrected after the official documentation
+example showed a whole-second `timestamp` alongside subsecond
+`timestampms`. Mixed-unit fields now have to agree at whole-second precision,
+same-unit fields must match exactly, and `timestampms` is preferred. Its
+focused parser plus shared adapter contract tests passed 9/9 in 2.51 seconds;
+the run was fixture-only, peaked at 42.1 MiB, used zero swap, and made no
+external request. Gemini remains under the non-clearable source-use hold.
+
+At 10:25:09, host `MemAvailable` was 11,197,222,912 bytes (10.43 GiB), while
+only 9,641,984 bytes (9.20 MiB) of swap was free. Host memory PSI was zero.
+The user manager charged 10,253,131,776 bytes memory and 2,858,139,648 bytes
+swap, with lifetime peak 13,992,292,352 bytes. Its counters remained
+`high=16,424,562`, `max=730,045`, `oom=19`, `oom_kill=15`, and
+`oom_group_kill=0`. Read-only journal queries found no matching kernel,
+systemd-oomd, API, Reality, or gap-detail kill entries since 10:00. API,
+Reality, and Reality API were active/running with restart counts 9/14/0. The
+gap-detail service still reports its prior `oom-kill` result, but its timer is
+inactive and no restart was requested. No service configuration changed.
+
+This recheck is another short quiet interval, not a resolution. Swap remains
+near exhaustion, the user-manager charge remains substantial, historical
+pressure initiation is not fully attributed, and archive inventory/provenance
+remains unresolved. Continue only serial, offline, resource-capped Frontier
+work after fresh admission; do not run broad suites or live source probes.

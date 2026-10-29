@@ -14269,3 +14269,53 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
   disposition remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED** because
   swap is near exhaustion, historical aggregate pressure attribution remains
   incomplete, and long-duration stability is not established.
+
+## 2026-10-29 10:23 CET — Gemini timestamp precision correction
+
+- A fresh review of the official Gemini List Trades response example showed
+  `timestamp=1547146811` paired with `timestampms=1547146811357`. The two
+  fields are not necessarily numerically or instant-equal: the seconds field
+  can omit the milliseconds carried by `timestampms`. Updated the adapter to
+  validate equality at matching precision, compare whole seconds for a
+  mixed-precision pair, and prefer `timestampms` for normalized source time.
+  This prevents valid subsecond prints from being rejected while still
+  rejecting a second-level mismatch. The same source review verified newest-
+  first ordering, the int64 trade ID, exact decimal strings, and the
+  documented aggressive-side meaning; it did not authorize live access.
+- `tests/frontier/test_gemini.py` plus the shared trade-adapter contract passed
+  **9/9 in 2.51 seconds** after the change. Fixtures cover 123/875 ms
+  subsecond timestamps, timestamp disagreement, duplicate IDs, out-of-order
+  rows, broken pages, and limits. Ruff check and format checks passed for the
+  adapter/test files. The transient run peaked at 42.1 MiB and used zero swap.
+  No external request or retained source observation occurred.
+- At 10:23:37, `MemAvailable=11,211,096,064` bytes (10.44 GiB),
+  `SwapFree=9,641,984` bytes (9.20 MiB), and global PSI averages were zero.
+  User-manager memory/swap charge was 10,257,371,136 / 2,858,139,648 bytes;
+  lifetime memory peak was 13,992,292,352 bytes. OOM counters remained
+  `oom=19`, `oom_kill=15`, `oom_group_kill=0`; no kernel/oomd kill appeared in
+  the preceding 45 minutes. API, Reality, and Reality API stayed active at
+  restart counts 9/14/0.
+- **Boundary:** Gemini remains non-clearably held. This source-contract
+  correction is fixture verified only; it establishes neither live API
+  availability nor permission to collect or retain Gemini data. Host incident
+  remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**.
+
+## 2026-10-29 10:25 CET — fresh host admission and timestamp checkpoint
+
+- Follow-up host sample at 10:25:09 showed `MemAvailable=11,197,222,912`
+  bytes (10.43 GiB), `SwapFree=9,641,984` bytes (9.20 MiB), and zero global
+  memory PSI. User-manager memory/swap were 10,253,131,776 / 2,858,139,648
+  bytes; lifetime peak was 13,992,292,352 bytes. `high/max/oom/oom_kill` stayed
+  at 16,424,562 / 730,045 / 19 / 15. No matching kill journal entry appeared
+  after 10:00. API, Reality, and Reality API remained active at restart counts
+  9/14/0. Gap-detail's last result remains `oom-kill`, with its timer inactive.
+- The Gemini timestamp precision correction is recorded in the engineering,
+  architecture, operations, current-state, and incident documentation. The
+  parser plus shared contract fixture slice passed 9/9 in 2.51 seconds under
+  the previously admitted bounded zero-swap scope (42.1 MiB peak). No source
+  endpoint was queried; the Gemini hold remains in force.
+- No further test or source request was started during this checkpoint. The
+  incident remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED** because swap
+  is nearly full, pressure attribution and durable recovery remain unresolved,
+  and the quiet interval is short. Continue only after a fresh bounded-work
+  admission check; do not start broad or concurrent research workloads.

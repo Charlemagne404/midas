@@ -4024,3 +4024,24 @@ appeared in the previous 40 minutes. API, Reality, and Reality API remained
 active at restart counts 9/14/0. The incident remains **PARTIALLY CONTAINED /
 PARTIALLY VERIFIED**; future Frontier work stays serial, offline, and
 resource-capped.
+
+### Frontier checkpoint — 2026-10-29 10:25 CET
+
+The Gemini trade timestamp parser now follows the precision shown in Gemini's
+official example: it accepts a whole-second `timestamp` paired with a
+subsecond `timestampms`, requires same-second agreement for those mixed
+precisions, and prefers `timestampms` for normalized time. The parser and
+shared trade-adapter contract tests passed 9/9 in a bounded fixture-only run;
+no Gemini endpoint was queried and the non-clearable source-use hold remains.
+
+At 10:25:09, `MemAvailable` was 11,197,222,912 bytes (10.43 GiB) and only
+9,641,984 bytes (9.20 MiB) of swap was free. Global memory PSI was zero.
+The user-manager cgroup charged 10,253,131,776 bytes memory and
+2,858,139,648 bytes swap; its recorded peak was 13,992,292,352 bytes.
+Counters remained `oom=19`, `oom_kill=15`, and `oom_group_kill=0`. No matching
+kernel or systemd-oomd kill entry appeared after 10:00. `midas-api`,
+`midas-reality`, and `midas-reality-api` were active/running with restart
+counts 9/14/0. The gap-detail service retained a failed `oom-kill` result but
+its timer remained inactive and no rerun was requested. This remains a short
+observation, not proof of durable recovery; Frontier work stays serial,
+offline, and resource-capped.

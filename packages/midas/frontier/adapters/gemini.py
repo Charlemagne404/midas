@@ -559,7 +559,7 @@ def _positive_decimal(value: Any) -> D | None:
 
 
 def _gemini_trade_timestamp(row: dict[str, Any]) -> datetime | None:
-    values: list[datetime] = []
+    values: dict[str, tuple[int, datetime]] = {}
     for field in ("timestampms", "timestamp"):
         if field not in row:
             continue
@@ -575,10 +575,24 @@ def _gemini_trade_timestamp(row: dict[str, Any]) -> datetime | None:
         timestamp = parse_time(value)
         if timestamp is None:
             return None
-        values.append(timestamp)
-    if not values or any(value != values[0] for value in values[1:]):
+        values[field] = (int(value), timestamp)
+    if not values:
         return None
-    return values[0]
+
+    if "timestamp" in values and "timestampms" in values:
+        seconds_value, seconds_time = values["timestamp"]
+        milliseconds_value, milliseconds_time = values["timestampms"]
+        seconds_is_milliseconds = seconds_value > 10_000_000_000
+        milliseconds_is_milliseconds = milliseconds_value > 10_000_000_000
+        if seconds_is_milliseconds == milliseconds_is_milliseconds:
+            if seconds_time != milliseconds_time:
+                return None
+        elif int(seconds_time.timestamp()) != int(milliseconds_time.timestamp()):
+            # Gemini's documented response pairs a whole-second `timestamp`
+            # with a subsecond `timestampms`; they agree at their precisions.
+            return None
+
+    return values.get("timestampms", values.get("timestamp"))[1]
 
 
 def _book_side(value: Any, depth: int, *, reverse: bool) -> tuple[BookLevel, ...]:

@@ -2,7 +2,7 @@
 
 **Report date:** 2026-10-29
 
-## Current completion matrix — 2026-10-29 10:19 CET
+## Current completion matrix — 2026-10-29 10:25 CET
 
 This is a current evidence classification, not a final completion claim. The
 dated implementation records below remain the detailed evidence; the
@@ -14,7 +14,7 @@ it made no endpoint requests and does not change source-use holds.
 
 | Component | Status | Current evidence and boundary |
 | --- | --- | --- |
-| Exchange-independent adapter core and Polymarket/Kalshi/Kraken/Coinbase/Gemini adapters | IMPLEMENTED, LIVE VALIDATION PENDING | The registry includes five distinct sources; source-specific terms and configuration still hold live use where documented. Kraken Spot has finite WebSocket v2 capture through a saved-market API and Mission Control panel. Fixture capture/parser regressions passed 15/15; stored-frame replay/API regressions passed 2/2 and replay-panel tests 7/7. Gemini adapter v2 normalizes one recent public-trade page of up to 100 rows after same-instance symbol discovery; a fixture-only adapter-contract slice passed 8/8, covering raw IDs, quote units, timestamps, aggressor-side mapping, and broken-print rejection. Gemini's non-clearable source-use hold remains and no live request was made. Polymarket finite capture remains separate and does not apply unsequenced deltas to opportunity economics. |
+| Exchange-independent adapter core and Polymarket/Kalshi/Kraken/Coinbase/Gemini adapters | IMPLEMENTED, LIVE VALIDATION PENDING | The registry includes five distinct sources; source-specific terms and configuration still hold live use where documented. Kraken Spot has finite WebSocket v2 capture through a saved-market API and Mission Control panel. Fixture capture/parser regressions passed 15/15; stored-frame replay/API regressions passed 2/2 and replay-panel tests 7/7. Gemini adapter v2 normalizes one recent public-trade page of up to 100 rows after same-instance symbol discovery; the corrected fixture-only adapter-contract slice passed 9/9, covering raw IDs, quote units, precision-aware timestamps, aggressor-side mapping, and broken-print rejection. Gemini's non-clearable source-use hold remains and no live request was made. Polymarket finite capture remains separate and does not apply unsequenced deltas to opportunity economics. |
 | Canonical instruments and supported payoff semantics | PARTIALLY VERIFIED | Supported structures have model and invariant tests; this does not claim universal instrument support. |
 | Relationship graph, evidence binding, and review | PARTIALLY VERIFIED | Deterministic fixture relationships and pinned evidence are covered; typed entity context v2 exposes clipped display fields explicitly and preserves source records. The centered graph API fixture pins the returned model version to the shared v2 constant. A live cross-venue economic equivalence is not established. |
 | Candidate discovery and independent economic verification | PARTIALLY VERIFIED | Bounded mathematical fixtures and independent audits pass selected checks; joint-state basket, audit, and deterministic replay tests pass 14/14; paired replay acceptance passes 4/4; deterministic three-scope discovery comparison passes 1/1 with candidates only in the fixture-verified cross-venue arm; source-outage invalidation and deterministic/tamper-evident timeline checks pass 2/2; source-clock/freshness, receipt-time ordering, and no-lookahead relationship checks pass 3/3; text-only hypothesis, settlement-authority/currency, and spot-versus-prediction rejection checks pass 5/5; implication-direction, fee, stale-leg, settlement-time, and cutoff checks pass 5/5; multi-outcome tick, hypothetical-classification, and three-leg basket checks pass 3/3. Logical implication and relationship review tests pass 27/27. Receipt age and timestamp/receipt skew now use exact deltas rounded up to milliseconds in both generator and verifier. No live eligible opportunity is demonstrated. |
@@ -26,14 +26,14 @@ it made no endpoint requests and does not change source-use holds.
 | Source-operation admission telemetry | COMPLETE AND VERIFIED FOR ONE ROUTER INSTANCE | The bounded source gate exposes active venues, admitted totals, and contention rejections by scope with a UTC sample time. The source page can refresh the snapshot. Counters reset with that router and do not aggregate across workers or deployments. |
 | Reality capacity inventory bounds | PARTIALLY VERIFIED | Candidate inventory code remains undeployed. The separate monitor is bounded at `MemoryHigh=160M`, `MemoryMax=192M`, and zero swap. The 10:18:23 scheduled run exited at 10:18:29 and recorded a 129.4 MiB peak with no swap; earlier 07:47/08:17 runs did not retain reliable peaks. This short run fits the current soft bound but does not establish future peak margin. The monitor still reports `ARCHIVE_CAPACITY_UNKNOWN` and archive inventory/provenance limitations; no archive evidence was altered. |
 | Native Frontier dashboard | PARTIALLY VERIFIED | The existing native workspace includes source, coverage, graph, opportunity, replay, and readiness views. The Kraken saved-market inspector exposes a policy-gated explicit spot-stream action, per-frame immutable evidence, and offline replay of the current persisted capture. The panel slice passes 7/7 UI tests. TypeScript checking of this latest integration remains unverified after full-app heap/runtime failures and a targeted check stopped during elevated PSI. A full UI build and browser replay journey remain open. |
-| Host reliability containment | PARTIALLY VERIFIED | OOMD's 50%/20s policy monitors `user@1000.service` pressure, not a global-PSI threshold crossing; its Oct 28 journal records 129 kills (106 auxiliary gap-detail), while seven separate kernel memcg OOMs hit the capacity job's former 128 MiB cap. The gap timer remains disabled; capacity is bounded at `MemoryHigh=160M`, `MemoryMax=192M`, zero swap. The 10:18:23 run exited 0 at 129.4 MiB peak and zero swap but still reported `ARCHIVE_CAPACITY_UNKNOWN` and inventory/provenance limitations. At 10:19:35, `MemAvailable` was 10.54 GiB, PSI averages were zero, and only 9.19 MiB swap was free. OOM counters stayed 19/15/0 with no kernel/oomd kill in the prior 40 minutes; API/Reality restart counts remained 9/14. Historic pressure initiation, durable recovery, and archive provenance remain unresolved. |
+| Host reliability containment | PARTIALLY VERIFIED | OOMD's 50%/20s policy monitors `user@1000.service` pressure, not a global-PSI threshold crossing; its Oct 28 journal records 129 kills (106 auxiliary gap-detail), while seven separate kernel memcg OOMs hit the capacity job's former 128 MiB cap. The gap timer remains disabled; capacity is bounded at `MemoryHigh=160M`, `MemoryMax=192M`, zero swap. The 10:18:23 run exited 0 at 129.4 MiB peak and zero swap but still reported `ARCHIVE_CAPACITY_UNKNOWN` and inventory/provenance limitations. At 10:25:09, `MemAvailable` was 10.43 GiB, PSI averages were zero, and only 9.20 MiB swap was free. OOM counters stayed 19/15/0 with no matching kernel/oomd kill entries since 10:00; API/Reality/Reality API restart counts were 9/14/0. Historic pressure initiation, durable recovery, and archive provenance remain unresolved. |
 | Node/V8 and Apport side effect | PARTIALLY VERIFIED | Earlier targeted TypeScript validation passed before this Kraken replay change. The latest full-app check exited at Node's default heap limit; a 320 MiB heap retry reached its runtime limit. A narrower check was stopped after it exceeded `MemoryHigh=256M` and host PSI rose; its cgroup OOM counters did not change. No typecheck result for the latest integration is claimed. An earlier crash-report upload attempt received HTTP 504; remote receipt remains unknown. |
 | Broad regressions, resource endurance, and performance acceptance | DEFERRED | Selected Python, API, adapter, collection, and economics tests passed under bounded zero-swap scopes. The graph-revision storage/migration cases pass 8/8; API cursor invalidation passes 1/1; four core economics modules pass 79/79; joint-state basket/audit/replay passes 14/14; logical implication/relationship review passes 27/27; transport passes 20/20; readiness resource API passes 7/7 and its focused UI passes 3/3. Ruff check/format, ESLint, Prettier, and strict mypy on the readiness resource module passed under caps. Full MIDAS regression, full browser suite, captured-evidence browser journey, endurance, and broad performance tests remain deferred. |
 | Live multi-venue source authorization and findings | BLOCKED | Kalshi, Kraken, Coinbase, and Gemini probes and retained-data research remain held; the worktree Polymarket probe flag is off. |
 | Production integration/deployment | DEFERRED | Frontier remains isolated; no protected service transition occurred. |
 | Project Frontier overall | PARTIALLY VERIFIED | The engine is substantial, but live cross-venue science, broad verification, recovery, endurance, and deployment gates remain open. |
 
-### Gemini bounded recent-trade parser — 2026-10-29 10:19 CET
+### Gemini bounded recent-trade parser — 2026-10-29 10:23 CET
 
 Commit `235bd75` adds the adapter and fixture-contract implementation; its
 working-tree precursor was preserved as checkpoint `2fb1751` before the
@@ -46,9 +46,14 @@ requires a prior same-instance symbol-details result for quote currency and
 rejects malformed IDs, non-string or out-of-bound decimals, inconsistent
 timestamps, invalid side/exchange fields, duplicate IDs, out-of-order pages,
 and pages containing broken trades. `timestampms` and `timestamp` must agree
-when both exist.
+when both exist at their documented precision: the official response example
+uses a whole-second `timestamp` and subsecond `timestampms`, so the adapter
+checks their whole-second agreement and prefers `timestampms` for normalized
+source time. Same-precision values must match exactly. A dedicated fixture
+with 123/875 milliseconds and the disagreement rejection both pass.
 The shared five-venue contract stores the normalized trade with its exact raw
-response provenance. Focused Gemini and shared adapter tests pass 8/8,
+response provenance. Focused Gemini and shared adapter tests pass 9/9 after
+the precision correction,
 including duplicate-ID, out-of-order timestamp, and request-limit rejection.
 The default-registry network-idle test passes 1/1 with Gemini's one-page trade
 capability advertised, cursor pagination unsupported, flags disabled, and the
@@ -68,6 +73,17 @@ The tests use injected offline fixture transports only. Gemini's non-clearable
 source-use hold remains unchanged; no Gemini endpoint was queried and no
 source-derived trade was retained. This verifies parser shape and adapter
 contract only, not live availability, permission, or economic suitability.
+
+### Gemini timestamp precision correction — 2026-10-29 10:23 CET
+
+A second review of the official [Gemini List Trades reference](https://developer.gemini.com/trading/rest-api/market-data/list-trades)
+found its example pairs a whole-second `timestamp` with a millisecond
+`timestampms` ending in subsecond digits. The prior exact-equality rule would
+have rejected valid subsecond executions. The parser now requires agreement
+at the reported precision, prefers `timestampms`, and continues to reject a
+whole-second mismatch. The Gemini adapter plus shared trade-contract tests
+pass **9/9 in 2.51 seconds** after this change; Ruff check and format checks
+pass. This used mock transports only and made no source request.
 
 ### Kraken persisted book replay — 2026-10-29 09:50 CET
 

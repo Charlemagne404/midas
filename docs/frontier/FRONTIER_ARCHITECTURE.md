@@ -1496,8 +1496,11 @@ same adapter instance to have successfully normalized source symbol details so
 the native quote currency is not guessed from the pair string. It requires
 exact decimal-string price and amount, an int64 native trade ID, a documented
 buy/sell side, `exchange=gemini`, coherent `timestamp`/`timestampms` values,
-and newest-first timestamps; an entire page is rejected if it contains a
-broken print. The page preserves
+and newest-first timestamps; `timestampms` is preferred for normalized source
+time. Gemini's documented example pairs a whole-second `timestamp` with a
+millisecond `timestampms`; when the units differ, the adapter checks that they
+identify the same whole second, while same-precision fields must match exactly.
+An entire page is rejected if it contains a broken print. The page preserves
 Gemini's native trade ID and quote asset. These parser rules have fixture-only
 coverage and do not authorize a Gemini request or retained-data research.
 

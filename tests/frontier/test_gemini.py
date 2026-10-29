@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from time import monotonic, monotonic_ns
 
@@ -159,7 +159,7 @@ async def test_gemini_recent_trades_preserve_exact_units_side_and_order_offline(
             "/v1/trades/BTCUSD": [
                 {
                     "timestamp": timestamp + 5,
-                    "timestampms": (timestamp + 5) * 1000,
+                    "timestampms": (timestamp + 5) * 1000 + 123,
                     "tid": 102,
                     "price": "67001.1250",
                     "amount": "0.12500000",
@@ -169,7 +169,7 @@ async def test_gemini_recent_trades_preserve_exact_units_side_and_order_offline(
                 },
                 {
                     "timestamp": timestamp,
-                    "timestampms": timestamp * 1000,
+                    "timestampms": timestamp * 1000 + 875,
                     "tid": 101,
                     "price": "67000.5000",
                     "amount": "0.25000000",
@@ -194,6 +194,9 @@ async def test_gemini_recent_trades_preserve_exact_units_side_and_order_offline(
     assert trades[0].native_instrument_id == "BTCUSD"
     assert trades[0].quote_currency == "USD"
     assert trades[0].aggressor_side == "buy"
+    assert trades[0].exchange_timestamp_utc == datetime.fromtimestamp(
+        timestamp + 5, UTC
+    ) + timedelta(milliseconds=123)
     assert trades[1].aggressor_side == "sell"
     assert all(trade.exchange_timestamp_utc is not None for trade in trades)
     assert all(trade.provenance.raw_sha256 == capture.raw_sha256 for trade in trades)
