@@ -13254,3 +13254,33 @@ contained. The scope's test peak was not retained for inspection.
 
 Code-quality, completion-matrix, and 04:44 host-sample checkpoint:
 `b6b3b74` (`style(frontier): finalize graph revision validation`).
+
+### Legacy migration, API cursor, and scheduled capacity follow-up — 2026-10-29 04:47 CET
+
+Three legacy storage migration cases for schemas 2, 4, and 5 passed **3/3**
+under a 512 MiB, zero-swap, 20%-CPU scope. The multihop graph API test passed
+**1/1**, proving it rejects a previously issued cursor after a relationship
+append. Together with the graph-revision cases above, the fixture verification
+now covers 8 storage/migration cases and 1 API cursor case. The API test has
+the existing Starlette/httpx deprecation warning. No broad suite was run.
+
+The regular `midas-reality-capacity.timer` fired on schedule at 04:46:58; its
+service completed at 04:47:04 with success, exit 0, 6.257 CPU seconds, and
+zero swap peak. systemd reported a 3.2 MiB memory peak, unexpectedly below
+the previous 137.4 MiB observation; this sample is not representative peak
+evidence. `INVALID_MANIFEST` and archive inventory/provenance alerts remain
+untouched. At 04:47 host PSI was zero and `MemAvailable` was 11.59 GB. At
+04:46 user-manager PSI was zero, `oom=19`/`oom_kill=15` were unchanged, and
+API/Reality were active at restart counts 9/14. `oomctl` continued to list no
+monitored groups. The incident remains partially contained, with nearly full
+swap and unresolved monitor visibility.
+
+### 04:49 host continuation sample — 2026-10-29
+
+PSI remained zero, `MemAvailable` was 11.53 GB, and 2.04 MB of swap was free.
+User-manager `oom=19`/`oom_kill=15` stayed unchanged; API and Reality were
+active at restarts 9/14. The gap-detail timer was inactive, the capacity
+timer active, and no new OOM entry was found. `oomctl` last showed no monitored
+groups at 04:46. This extends the quiet observation to about five hours and
+six minutes after the last OOMd kill; it does not resolve nearly full swap or
+the monitor-registration discrepancy.

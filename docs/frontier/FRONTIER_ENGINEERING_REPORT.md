@@ -2,7 +2,7 @@
 
 **Report date:** 2026-10-29
 
-## Current completion matrix — 2026-10-29 04:44 CET
+## Current completion matrix — 2026-10-29 04:49 CET
 
 This is a current evidence classification, not a final completion claim. The
 dated implementation records below remain the detailed evidence; the
@@ -16,15 +16,15 @@ current host gate.
 | Relationship graph, evidence binding, and review | PARTIALLY VERIFIED | Deterministic fixture relationships and pinned evidence are covered; a live cross-venue economic equivalence is not established. |
 | Candidate discovery and independent economic verification | PARTIALLY VERIFIED | Bounded mathematical fixtures and independent audits pass selected checks. Receipt age and timestamp/receipt skew now use exact deltas rounded up to milliseconds in both generator and verifier. No live eligible opportunity is demonstrated. |
 | Cross-venue costs, FX, capital, and execution uncertainty | PARTIALLY VERIFIED | Virtual models preserve unknown cost and applicability states; account-specific fees, jurisdiction, transfers, and execution remain unresolved. |
-| Collection, provenance, durable storage, and replay | PARTIALLY VERIFIED | Finite-collection/API fixtures pass 51/51 and the prior storage slice passed 32/32; after schema-v8 graph counters, focused graph revision, pagination, and migration cases pass 5/5. Timeline replay v3 includes per-instrument receipt time, source timestamp semantics, clock uncertainty, and source freshness limits. Gemini's source-specific configuration tag round-trips in the finite-collection journal; collection remains blocked by the source-use hold. Sequencing, multi-venue live collection, and archive provenance remain unverified or held. |
+| Collection, provenance, durable storage, and replay | PARTIALLY VERIFIED | Finite-collection/API fixtures pass 51/51 and the prior storage slice passed 32/32; after schema-v8 graph counters, focused revision/pagination and schema-6/7 migration cases pass 5/5, with older schema-2/4/5 migrations passing 3/3. Timeline replay v3 includes per-instrument receipt time, source timestamp semantics, clock uncertainty, and source freshness limits. Gemini's source-specific configuration tag round-trips in the finite-collection journal; collection remains blocked by the source-use hold. Sequencing, multi-venue live collection, and archive provenance remain unverified or held. |
 | Read-only source network and trading boundary | COMPLETE AND VERIFIED | Only `PublicReadTransport` issues source HTTP requests; it is anonymous HTTPS GET-only, host-allowlisted, redirect-disabled, and bounded. Adapter boundary fixtures cover disabled probes, credential/mutating clients, cookies, redirects, oversized payloads, and JSON complexity. No exchange order/account path was found in the reviewed Frontier code. |
 | Laboratory/Arena comparisons and bounded orchestration | PARTIALLY VERIFIED | Arena admission and finite scheduling regressions pass; a Laboratory resource-denial case passes with a harness cap above its 722,894,848-byte capacity precondition. Full endurance evidence remains incomplete. |
 | User-cgroup-aware workload admission | IMPLEMENTED, BOUNDED VALIDATION PASSED | Central Arena admission (15), finite schedules (12), and the Laboratory denial case (1) pass fixture tests using user-manager pressure; no runtime deployment occurred. |
-| Reality capacity inventory bounds | PARTIALLY VERIFIED | Candidate inventory code remains undeployed. The separate monitor is bounded at `MemoryHigh=160M`, `MemoryMax=192M`, and zero swap; its 04:16 scheduled run succeeded in 6.280 CPU seconds, but systemd retained no peak. Its report still identifies invalid archive inventory and provenance. |
+| Reality capacity inventory bounds | PARTIALLY VERIFIED | Candidate inventory code remains undeployed. The separate monitor is bounded at `MemoryHigh=160M`, `MemoryMax=192M`, and zero swap; its scheduled 04:47 run succeeded in 6.257 CPU seconds with zero swap. systemd logged a 3.2 MiB peak, unexpectedly below the earlier 137.4 MiB measurement, so that peak does not establish representative memory use. The report still identifies invalid archive inventory and provenance. |
 | Native Frontier dashboard | PARTIALLY VERIFIED | The dashboard now includes the held Gemini Spot capability and timing explanation. Its focused explorer fixture passed 1/1 with a 15-second per-test allowance under a 50% CPU cap; eight other cases were skipped. The saved timeline timing and result-pagination browser fixtures passed earlier. TypeScript project build and a production Vite build passed in bounded zero-swap scopes. Default Playwright last passed 17/20 with three opt-in skips; captured-evidence browser validation remains open. |
-| Host reliability containment | PARTIALLY VERIFIED | The five-minute gap-detail timer is disabled; a full October 28 journal audit found 129 systemd-oomd kills, 106 targeting this replay. Seven separate kernel memcg kills hit the capacity checker's original 128 MiB cap. The capacity checker now has reversible 160/192 MiB, zero-swap limits. At 04:44, MemAvailable was 11.60 GB, SwapFree 2.04 MB, host and user-manager PSI were zero, and API/Reality were active at restart counts 9/14. The user manager held 9.09 GB memory and 2.86 GB swap with a 13.99 GB peak; `oom=19`/`oom_kill=15`. `oomctl` still listed no monitored groups. No OOMd kill has appeared since 23:43 on Oct 28 and no kernel OOM since 20:15, but swap remains 99.95% occupied and monitor visibility is unresolved. |
+| Host reliability containment | PARTIALLY VERIFIED | The five-minute gap-detail timer is disabled; a full October 28 journal audit found 129 systemd-oomd kills, 106 targeting this replay. Seven separate kernel memcg kills hit the capacity checker's original 128 MiB cap. The capacity checker now has reversible 160/192 MiB, zero-swap limits. At 04:49, MemAvailable was 11.53 GB, SwapFree 2.04 MB, and host/user-manager PSI was zero. User-manager `oom=19`/`oom_kill=15` remained unchanged; API/Reality remained active at restart counts 9/14. `oomctl` last listed no monitored groups at 04:46. No OOMd kill has appeared since 23:43 on Oct 28 and no kernel OOM since 20:15, but swap remains 99.95% occupied and monitor visibility is unresolved. |
 | Node/V8 and Apport side effect | PARTIALLY VERIFIED | The 02:36 TypeScript attempt aborted at Node's heap limit with a 300.6 MiB cgroup peak, not a kernel OOM. Whoopsie attempted to submit the 58,222,586-byte crash report and received HTTP 504; remote receipt is unknown. No `.uploaded` marker exists; avoid further crash-prone Node checks. |
-| Broad regressions, resource endurance, and performance acceptance | DEFERRED | Selected Python, API, adapter, and collection suites passed under bounded zero-swap scopes. The new graph-revision storage slice passes 5/5 with Ruff check/format and strict mypy under capped scopes. Full MIDAS regression, full browser suite, captured-evidence browser journey, endurance, and broad performance tests remain deferred. |
+| Broad regressions, resource endurance, and performance acceptance | DEFERRED | Selected Python, API, adapter, and collection suites passed under bounded zero-swap scopes. The new graph-revision storage and migration cases pass 8/8 across focused scopes; the API stale-cursor case passes 1/1; Ruff check/format and strict mypy pass under caps. Full MIDAS regression, full browser suite, captured-evidence browser journey, endurance, and broad performance tests remain deferred. |
 | Live multi-venue source authorization and findings | BLOCKED | Kalshi, Kraken, Coinbase, and Gemini probes and retained-data research remain held; the worktree Polymarket probe flag is off. |
 | Production integration/deployment | DEFERRED | Frontier remains isolated; no protected service transition occurred. |
 | Project Frontier overall | PARTIALLY VERIFIED | The engine is substantial, but live cross-venue science, broad verification, recovery, endurance, and deployment gates remain open. |
@@ -13751,6 +13751,36 @@ After the run, PSI remained zero, available memory was 11.52 GB, swap had
 not retain the transient test scope's peak for later inspection. This closes
 the focused storage-test gap only; full-suite, broader regression, and
 production validation remain open.
+
+### Migration and API cursor compatibility — 2026-10-29 04:47 CET
+
+The legacy schema-2, schema-4, and schema-5 storage upgrades passed **3/3** in
+a 512 MiB maximum, zero-swap, 20%-CPU scope. The API multihop graph test that
+binds cursors to depth and rejects a stale revision after a relationship
+append passed **1/1** in the same resource envelope. Together with the
+focused graph tests above, eight storage/migration cases and one API cursor
+case pass on fixture databases. The API test reports the existing
+Starlette/httpx `TestClient` deprecation warning.
+
+At 04:46:58 the normal 30-minute Reality capacity timer fired; its service
+finished successfully at 04:47:04, using 6.257 CPU seconds and zero swap.
+systemd logged a 3.2 MiB memory peak, unexpectedly below the prior 137.4 MiB
+observation; retain the discrepancy and do not treat this as representative
+peak evidence. Its archive inventory/provenance alerts remain. At 04:47 host
+PSI was zero and `MemAvailable` was 11.59 GB. User-manager PSI and OOM counters
+were zero pressure and 19/15 respectively at 04:46; API/Reality were active
+at restart counts 9/14. `oomctl dump` still listed no monitored groups. No new
+OOM was present. Swap remains effectively full, so this remains bounded
+validation, not a stability or endurance result.
+
+At 04:49 the host and user-manager PSI remained zero, `MemAvailable` was
+11.53 GB, and free swap was 2.04 MB. User-manager `oom=19` and `oom_kill=15`
+were unchanged. API and Reality were active with restart counts 9/14; the
+gap-detail timer remained inactive and the capacity timer active. No new OOM
+record appeared. The 04:46 `oomctl` sample still listed no monitored groups.
+This extends the quiet interval to about five hours and six minutes after the
+last OOMd kill, while leaving the full-swap risk and OOMd visibility issue
+open.
 
 ### Final bounded code-quality and host sample — 2026-10-29 04:44 CET
 

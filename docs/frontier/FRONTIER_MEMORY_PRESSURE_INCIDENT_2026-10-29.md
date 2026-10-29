@@ -229,6 +229,33 @@ capacity timer active. `oomctl dump` still listed no monitored groups while
 the user-manager 50% memory-pressure policy property remained present. The
 current quiet interval does not resolve the swap or monitoring risks.
 
+The normal capacity timer fired at 04:46:58 and the service completed at
+04:47:04 with `Result=success`, exit status 0, 6.257 CPU seconds, and zero
+swap peak. systemd reported a 3.2 MiB memory peak, much lower than the prior
+137.4 MiB sample; treat the new peak as non-comparable and do not infer that
+the inventory path is bounded from it. The report still contains
+`INVALID_MANIFEST`, inventory, and provenance alerts; no archive state was
+changed. At 04:47 the host had zero PSI and 11.59 GB `MemAvailable`; user
+manager `oom=19`/`oom_kill=15` remained unchanged at 04:46. API and Reality
+remained active at restart counts 9/14, the gap-detail timer remained
+disabled, and no new OOM journal entry appeared. This is one scheduled run,
+not endurance validation.
+
+The schema-2, schema-4, and schema-5 storage migration cases passed **3/3** in
+a 512 MiB, zero-swap, 20%-CPU scope. The API multihop stale-cursor case
+passed **1/1** under the same cap after an appended relationship. Together
+with the earlier focused five-case graph/storage run, this verifies eight
+storage/migration cases and one API cursor case on fixtures. The API test
+emitted the existing Starlette/httpx deprecation warning.
+
+At 04:49, host and user-manager PSI remained zero, `MemAvailable` was 11.53
+GB, and free swap was 2.04 MB. User-manager `oom=19` and `oom_kill=15` were
+unchanged. API and Reality were active at restart counts 9/14, the gap-detail
+timer inactive, and the capacity timer active. No new OOM journal entry
+appeared. The most recent `oomctl dump` still listed no monitored groups.
+The quiet interval since the last OOMd kill is about five hours and six
+minutes; nearly full swap and monitor visibility remain unresolved.
+
 ## Frontier continuation gate
 
 Frontier is **safe to continue with serial code/documentation work and small,
