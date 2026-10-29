@@ -2,12 +2,14 @@
 
 **Report date:** 2026-10-29
 
-## Current completion matrix — 2026-10-29 15:56 CET
+## Current completion matrix — 2026-10-29 15:56 CET (host follow-up at 16:38 CET)
 
 This is a current evidence classification, not a final completion claim. The
 dated implementation records below remain the detailed evidence; the
 [current incident report](FRONTIER_MEMORY_PRESSURE_INCIDENT_2026-10-29.md) records the
-current host gate. A documentation-only cross-check of current official
+current host gate. The 16:38 host state and Kraken candle API evidence are
+recorded in the dated addenda below; other matrix detail reflects its 15:56
+snapshot. A documentation-only cross-check of current official
 exchange market-data contracts is recorded in
 [Adapter Documentation Contract Review](ADAPTER_DOCUMENTATION_CONTRACT_REVIEW_2026-10-29.md);
 it made no endpoint requests and does not change source-use holds.
@@ -16128,3 +16130,42 @@ Reality API local `max=5,090` matched the 16:17:07 pre-test sample; OOM
 counters were unchanged. API, Reality, and Reality API remained active at
 restart counts 9/14/0. OOMD/kernel kill queries since 16:16:30 were empty.
 This is a short bounded check and does not establish host recovery.
+
+### Kraken historical-candle API — 2026-10-29 16:38 CET
+
+Kraken's existing bounded OHLC adapter now has an API path for capturing one
+requested candle response after the native spot pair has already been saved
+with immutable market-metadata provenance. `GET /api/frontier/candles` lists
+stored rows only; it checks the observation index, raw-response hash, source
+URL/query, every raw OHLC row, the normalized candles, and the saved-market
+binding. The probe labels the result as spot context, never event-contract
+payoff or arbitrage evidence. It remains subject to the source-use configuration
+gate and does not add authentication or trading operations.
+
+The two new FastAPI cases passed **2/2 in 4.70 seconds** using an injected
+`httpx.MockTransport`. One case saves mocked market/OHLC evidence, checks exact
+request parameters, verifies immutable persistence and stored-only listing,
+then proves a raw/normalized close mismatch is rejected. The second confirms
+that a held source and a future timestamp are rejected before any request.
+The fixture process was capped at 384 MiB `MemoryHigh`, 512 MiB `MemoryMax`,
+zero swap, 20% CPU, 64 tasks, and 90 seconds. Ruff check, format check, and
+`git diff --check` passed in a separate capped scope. No real Kraken request,
+frontend build, broad suite, or browser run occurred.
+The implementation is committed as `2f1c81c`
+(`feat(frontier): expose bounded Kraken candle history`); it changes
+`apps/api/frontier.py`, the shared candle adapter protocol and exports, the
+Kraken adapter, the candle model, and `tests/frontier/test_kraken_candles_api.py`.
+
+At 16:38:58 CET, host memory PSI avg10/60/300 remained zero and I/O PSI
+avg10 was 0.74% some / 0.72% full. `MemAvailable` was 11,101,848 kB and
+`SwapFree` 18,108 kB. The user-manager cgroup was at 10,898,702,336 bytes
+current, 13,992,292,352 bytes lifetime peak, and 2,853,851,136 bytes swap;
+its high/max/oom/oom_kill event counts remained
+16,437,792/730,748/19/15 after the test. Reality API was active at
+536,154,112 / 536,870,912 bytes, with local `max=5,127` and `oom=0`.
+MIDAS API and Reality were active, the gap-detail timer remained inactive,
+and the capacity timer remained active. OOMD and kernel journals had no new
+matching kill since the Oct 28 final events. This brief fixture interval does
+not establish sustained recovery; the host incident remains
+**PARTIALLY CONTAINED / PARTIALLY VERIFIED**. Kraken candle UI integration,
+type-checking, and live-source validation remain pending.

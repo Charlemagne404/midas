@@ -15745,3 +15745,37 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
   VERIFIED**, not resolved.
 - Detailed evidence and rollback guidance are appended to
   [`FRONTIER_MEMORY_PRESSURE_INCIDENT_2026-10-28.md`](FRONTIER_MEMORY_PRESSURE_INCIDENT_2026-10-28.md).
+
+## 2026-10-29 16:38 CET — bounded Kraken candle API and host recheck
+
+- Resumed the isolated Frontier branch after the incident checkpoint without
+  touching the pre-existing `data/frontier-public-probes/` directory. Added a
+  bounded Kraken OHLC probe for a previously saved spot pair and a stored-only
+  candle listing route. Each candle series is bound to the immutable market
+  observation; saved reads revalidate the raw OHLC response, request URL and
+  query, normalized values, and binding. The API labels spot candles as
+  contextual evidence, not event payoff, hedge, executable quote, or arbitrage.
+- Committed the isolated API, adapter contract, model, and fixture as `2f1c81c`
+  (`feat(frontier): expose bounded Kraken candle history`). The new path has
+  not been connected to Mission Control and remains fixture-verified only.
+- The API fixture module passed **2/2 in 4.70 seconds** with an injected
+  `httpx.MockTransport`, under 384 MiB high / 512 MiB max, zero swap, 20% CPU,
+  64 tasks, and a 90-second runtime bound. It made no external request. Ruff
+  check/format and whitespace checks passed under a separate 384/512 MiB
+  zero-swap transient scope. The new API path has no Mission Control panel
+  yet; no UI, broad, type, or live-source verification was run.
+- At 16:38:58, host memory PSI avg10/60/300 was zero; I/O PSI avg10 was
+  0.74% some / 0.72% full; `MemAvailable` was 11,101,848 kB; `SwapFree` was
+  18,108 kB. User-manager `current=10,898,702,336`, `peak=13,992,292,352`,
+  and `swap.current=2,853,851,136` bytes; hierarchical event counts stayed
+  16,437,792/730,748/19/15 (high/max/oom/oom_kill). Reality API was
+  active at 536,154,112 / 536,870,912 bytes, local `max=5,127`, `oom=0`.
+  No new kill appeared in the checked OOMD/kernel interval; MIDAS API,
+  Reality, capacity timer, Continental, Echo, SSH, RustDesk, and systemd-oomd
+  remained active, while the auxiliary gap-detail timer remained inactive.
+- The incident remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**: almost
+  all swap is occupied, the user-manager has no aggregate memory ceiling, and
+  Reality API stays close to its hard limit. Continue only serial,
+  source-independent work with a fresh admission sample and a zero-swap
+  transient scope. See the incident report and the dated implementation
+  addendum in `FRONTIER_ENGINEERING_REPORT.md`.

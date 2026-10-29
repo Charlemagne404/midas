@@ -3787,3 +3787,37 @@ The bounded fixture run did not demonstrate recovery or identify what caused
 the limit-event increments. Do not change the protected Reality API limits
 without authorization; retain the serial admission policy and continue
 monitoring.
+
+### Follow-up after focused Frontier fixture test — 2026-10-29 16:38 CET
+
+The source-independent Kraken OHLC API fixture passed **2/2 in 4.70 seconds**
+in a transient scope capped at 384 MiB `MemoryHigh`, 512 MiB `MemoryMax`, zero
+swap, 20% CPU, 64 tasks, and 90 seconds. Ruff check, format check, and
+`git diff --check` passed in a separate zero-swap bounded scope. The tests
+used a mocked transport only; they did not contact Kraken. They cover a
+market-bound capture and stored-only read, plus held-source/future-timestamp
+rejection before network access.
+
+At 16:38:58, host memory PSI avg10/60/300 was zero and I/O PSI avg10 was
+0.74% some / 0.72% full. `MemAvailable` was 11,101,848 kB and only 18,108 kB
+of swap remained free. The user-manager cgroup held 10,898,702,336 bytes
+memory and 2,853,851,136 bytes swap; event counts were
+high/max/oom/oom_kill = 16,437,792/730,748/19/15 and did not change across
+the focused test. Reality API remained active at 536,154,112 / 536,870,912
+bytes, with local `max=5,127` and no OOM. MIDAS API, Reality, Continental,
+Echo, SSH, RustDesk, and systemd-oomd remained in service; the gap-detail
+timer was inactive and the capacity timer active. No new OOMD or kernel kill
+was present in the checked interval. The short quiet interval does not
+establish recovery, and swap remains nearly full.
+
+This follow-up changed no service, timer, OOM policy, production code, or
+historical data. Preserve the existing gap-detail disablement and the
+160/192 MiB zero-swap capacity-checker bound. Continue only serial offline
+code/fixture work after a fresh host PSI, I/O PSI, `MemAvailable`, parent
+cgroup counter, and protected-service check; defer browser/build/broad-suite
+work and all live probes. The host remains **PARTIALLY CONTAINED / PARTIALLY
+VERIFIED**.
+
+The isolated Frontier feature/test checkpoint is `2f1c81c`
+(`feat(frontier): expose bounded Kraken candle history`). It does not alter
+the host's service configuration or source-use holds.
