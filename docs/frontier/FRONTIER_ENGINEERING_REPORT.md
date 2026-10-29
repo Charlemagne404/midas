@@ -13200,3 +13200,15 @@ under a 512 MiB transient scope; production rollout and live sampler
 validation remain pending. The details and current resource gate are in the
 incident report. The implementation and tests are commit
 `b7eab3c114adddd79ef156ec2585c851e0b71dd6` on `codex/frontier-20261026`.
+
+## Strict mypy path correction — 2026-10-29 02:10 CET
+
+The standalone `mypy apps/api/frontier.py` invocation had reported 14
+`no-any-return` errors while treating local `midas.*` imports as untyped.
+Supplying the worktree's `packages/` explicitly made that check pass. The
+checked-in config now sets `mypy_path` relative to its own directory, and the
+ordinary command passed with `MYPYPATH` unset. No endpoint code changed. The
+bounded validation used a 768 MiB maximum, zero swap, 25% CPU, 32 tasks, and a
+60-second limit; it completed in 1.899 seconds. The reported 256 KiB peak is
+not considered a valid memory measurement. Commit:
+`85b5f1c0502ba9ae47edc5b26b7026767957f8cb`.

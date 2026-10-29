@@ -12484,3 +12484,25 @@ and does not change collection or stored samples.
 | Production monitoring rollout | DEFERRED | Isolated Frontier helper only; no production installation or long-running observer. |
 
 Implementation and fixture commit: `b7eab3c114adddd79ef156ec2585c851e0b71dd6`.
+
+## Strict mypy local package resolution — 2026-10-29 02:10 CET
+
+Reproduced the standalone strict-mypy check's 14 `no-any-return` diagnostics
+for `apps/api/frontier.py`. Re-running with the worktree's `packages/` as
+`MYPYPATH` passed without diagnostics, showing that the local `midas.*`
+modules were otherwise treated as untyped imports. Added the config-relative
+`mypy_path = "$MYPY_CONFIG_FILE_DIR/packages"` to `pyproject.toml`; the
+ordinary one-file command then passed with `MYPYPATH` explicitly unset. No API
+code or route behavior changed.
+
+The final strict check ran in a 768 MiB maximum, zero-swap, 25%-CPU,
+32-task, 60-second transient scope. It completed successfully in 1.899 seconds
+and used 0.497 CPU seconds. Systemd reported a 256 KiB peak, which is not
+credible process-memory evidence. This was a static check; no network request
+or production service action occurred. The config fix is commit
+`85b5f1c0502ba9ae47edc5b26b7026767957f8cb`.
+
+| Component | Status | Evidence / boundary |
+| --- | --- | --- |
+| Standalone strict mypy for Frontier API module | COMPLETE AND VERIFIED | Passes under the checked-in config with `MYPYPATH` unset. |
+| Frontier API runtime regression | PARTIALLY VERIFIED | Prior bounded API fixtures pass; this config-only change did not alter runtime behavior. |
