@@ -17,7 +17,8 @@ import os
 import shutil
 import stat
 import time
-from collections.abc import Callable
+from collections import deque
+from collections.abc import Callable, Iterable
 from pathlib import Path
 from typing import Any
 
@@ -40,6 +41,10 @@ CAPACITY_ACTION_SECONDS = 7 * 86400
 # Bound JSON object expansion under the capacity service's 128 MiB high limit.
 MAX_ARCHIVE_MANIFEST_BYTES = 4 * 1024**2
 MAX_ARCHIVE_INVENTORY_ENTRIES = 65_536
+# Capacity should retain only its bounded sample, not every parsed segment row.
+# The path list itself is capped so a damaged directory cannot grow unbounded.
+MAX_CAPACITY_SEGMENT_CATALOGS = 100_000
+MAX_CAPACITY_SEGMENT_CATALOG_BYTES = 16 * 1024
 CAPACITY_GROWTH_WINDOWS_SECONDS = (6 * 3600, 24 * 3600)
 ARCHIVE_IO_FULL_AVG10_MAX = 2.0
 ARCHIVE_IO_FULL_AVG60_MAX = 2.0
@@ -474,7 +479,7 @@ def archive_capacity(
 
 
 def _trailing_segment_growth(
-    root: Path, segments: list[dict[str, Any]], now_ns: int
+    root: Path, segments: Iterable[dict[str, Any]], now_ns: int
 ) -> dict[str, dict[str, Any]]:
     """Estimate calendar-time growth from finalized files in rolling windows.
 
@@ -483,30 +488,86 @@ def _trailing_segment_growth(
     separate burst signal. If the source clock is inconsistent, callers can fall
     back to that conservative sample.
     """
+    return _trailing_segment_growth_from_stats(
+        (_capacity_segment_growth_stat(root, info) for info in segments), now_ns
+    )
+
+
+def _capacity_segment_catalog_paths(root: Path) -> list[Path]:
+    """Return a bounded, deterministically ordered list of segment sidecars."""
+    paths: list[Path] = []
+    with os.scandir(root) as entries:
+        for entry in entries:
+            name = entry.name
+            if not name or not name[0].isdigit() or not name.endswith(".json"):
+                continue
+            if len(paths) >= MAX_CAPACITY_SEGMENT_CATALOGS:
+                raise ValueError(
+                    f"Capacity segment catalog count exceeds {MAX_CAPACITY_SEGMENT_CATALOGS}"
+                )
+            if entry.is_symlink() or not entry.is_file(follow_symlinks=False):
+                raise ValueError(f"Capacity segment catalog is not a regular file: {name}")
+            paths.append(root / name)
+    paths.sort(key=lambda path: path.name)
+    return paths
+
+
+def _read_capacity_segment_catalog(path: Path) -> dict[str, Any]:
+    """Read one regular segment catalog without following links or unbounded reads."""
+    flags = os.O_RDONLY | getattr(os, "O_CLOEXEC", 0)
+    flags |= getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0)
+    descriptor = os.open(path, flags)
+    try:
+        metadata = os.fstat(descriptor)
+        if not stat.S_ISREG(metadata.st_mode):
+            raise OSError("Capacity segment catalog is not a regular file")
+        if metadata.st_size > MAX_CAPACITY_SEGMENT_CATALOG_BYTES:
+            raise ValueError(f"Capacity segment catalog exceeds byte limit: {path.name}")
+        with os.fdopen(descriptor, "rb") as source:
+            descriptor = -1
+            contents = source.read(MAX_CAPACITY_SEGMENT_CATALOG_BYTES + 1)
+        if len(contents) > MAX_CAPACITY_SEGMENT_CATALOG_BYTES:
+            raise ValueError(f"Capacity segment catalog exceeds byte limit: {path.name}")
+        value = json.loads(contents.decode("utf-8"))
+        if not isinstance(value, dict):
+            raise ValueError(f"Capacity segment catalog is not an object: {path.name}")
+        return value
+    finally:
+        if descriptor >= 0:
+            os.close(descriptor)
+
+
+def _capacity_segment_growth_stat(root: Path, info: dict[str, Any]) -> tuple[int, int]:
+    name = str(info.get("file", ""))
+    if Path(name).name != name:
+        raise ValueError("Unsafe segment path in capacity growth window")
+    segment = root / name
+    catalog = segment.with_suffix(".json")
+    if segment.is_symlink() or catalog.is_symlink():
+        raise ValueError("Capacity growth window contains a symlink")
+    segment_stat = segment.stat()
+    catalog_stat = catalog.stat()
+    if segment_stat.st_size != int(info["bytes"]):
+        raise ValueError(f"Capacity growth size differs from catalog: {segment}")
+    return max(segment_stat.st_mtime_ns, catalog_stat.st_mtime_ns), (
+        segment_stat.st_size + catalog_stat.st_size
+    )
+
+
+def _trailing_segment_growth_from_stats(
+    stats: Iterable[tuple[int, int]], now_ns: int
+) -> dict[str, dict[str, Any]]:
     oldest_mtime_ns: int | None = None
     timestamp_mismatch = False
     bytes_by_window = {seconds: 0 for seconds in CAPACITY_GROWTH_WINDOWS_SECONDS}
     segments_by_window = {seconds: 0 for seconds in CAPACITY_GROWTH_WINDOWS_SECONDS}
 
-    for info in segments:
-        name = str(info.get("file", ""))
-        if Path(name).name != name:
-            raise ValueError("Unsafe segment path in capacity growth window")
-        segment = root / name
-        catalog = segment.with_suffix(".json")
-        if segment.is_symlink() or catalog.is_symlink():
-            raise ValueError("Capacity growth window contains a symlink")
-        segment_stat = segment.stat()
-        catalog_stat = catalog.stat()
-        if segment_stat.st_size != int(info["bytes"]):
-            raise ValueError(f"Capacity growth size differs from catalog: {segment}")
-        finalized_ns = max(segment_stat.st_mtime_ns, catalog_stat.st_mtime_ns)
+    for finalized_ns, amount in stats:
         oldest_mtime_ns = (
             finalized_ns if oldest_mtime_ns is None else min(oldest_mtime_ns, finalized_ns)
         )
         if finalized_ns > now_ns + 60 * 10**9:
             timestamp_mismatch = True
-        amount = segment_stat.st_size + catalog_stat.st_size
         for window_seconds in CAPACITY_GROWTH_WINDOWS_SECONDS:
             if finalized_ns >= now_ns - window_seconds * 10**9:
                 bytes_by_window[window_seconds] += amount
@@ -549,14 +610,23 @@ def capacity(
     if forecast_floor_bytes_per_day < 0:
         raise ValueError("Forecast floor must be nonnegative")
     root = Path(config.root)
-    source = manifest(root)
-    sample = source["segments"][-window_segments:]
+    catalog_paths = _capacity_segment_catalog_paths(root)
+    sample_queue: deque[dict[str, Any]] = deque(maxlen=window_segments)
+    first_info: dict[str, Any] | None = None
+    growth_stats: list[tuple[int, int]] = []
+    for catalog_path in catalog_paths:
+        info = _read_capacity_segment_catalog(catalog_path)
+        if first_info is None:
+            first_info = info
+        sample_queue.append(info)
+        growth_stats.append(_capacity_segment_growth_stat(root, info))
+    sample = list(sample_queue)
     first = last = previous_ns = previous_frame_ns = None
     raw_bytes = frames = sampled_bytes = 0
     clock_regressions = receipt_regressions = 0
     oldest = None
-    if source["segments"]:
-        name = source["segments"][0]["file"]
+    if first_info is not None:
+        name = first_info["file"]
         if Path(name).name != name:
             raise ValueError("Unsafe segment path")
         first_record = next(records(root / name), None)
@@ -593,7 +663,7 @@ def capacity(
     status = json.loads(status_path.read_text()) if status_path.exists() else {}
     # Collection continues during sampling; measure status and capacity at the end.
     now = time.time_ns() if now_ns is None else now_ns
-    growth_windows = _trailing_segment_growth(root, source["segments"], now)
+    growth_windows = _trailing_segment_growth_from_stats(growth_stats, now)
     sustained_rates = [
         float(value["bytes_per_second"])
         for value in growth_windows.values()

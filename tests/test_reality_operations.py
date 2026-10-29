@@ -40,10 +40,23 @@ def config(root, **kwargs):
         return Config(root=str(root), **kwargs)
 
 
-def test_capacity_real_bytes_rates_and_horizon(tmp_path):
+def test_capacity_real_bytes_rates_and_horizon(tmp_path, monkeypatch):
     value = sample(tmp_path)
     cfg = config(tmp_path)
+    catalog_reads = []
+    read_catalog = operations._read_capacity_segment_catalog
+
+    def counted_catalog_read(path):
+        catalog_reads.append(path)
+        return read_catalog(path)
+
+    def fail_manifest(_root):
+        pytest.fail("capacity must not materialize every segment catalog")
+
+    monkeypatch.setattr(operations, "manifest", fail_manifest)
+    monkeypatch.setattr(operations, "_read_capacity_segment_catalog", counted_catalog_read)
     result = capacity(cfg, now_ns=121_000_000_000)
+    assert len(catalog_reads) == len(value["segments"])
     assert result["capacity_builder_version"] == (
         "receipt-aware-capacity-v5-sustained-growth-windows"
     )
@@ -64,6 +77,26 @@ def test_capacity_real_bytes_rates_and_horizon(tmp_path):
     )
     assert result["collector_status_age_seconds"] == 0
     assert result["estimated_action_deadline_ns"] > 121_000_000_000
+
+
+def test_capacity_fails_closed_when_catalog_count_exceeds_bound(tmp_path, monkeypatch):
+    sample(tmp_path)
+    atomic_json(
+        tmp_path / "99999999.json",
+        {"file": "99999999.zlib", "bytes": 0},
+    )
+    monkeypatch.setattr(operations, "MAX_CAPACITY_SEGMENT_CATALOGS", 2)
+
+    with pytest.raises(ValueError, match="catalog count exceeds 2"):
+        capacity(config(tmp_path), now_ns=121_000_000_000)
+
+
+def test_capacity_fails_closed_on_oversized_segment_catalog(tmp_path, monkeypatch):
+    sample(tmp_path)
+    monkeypatch.setattr(operations, "MAX_CAPACITY_SEGMENT_CATALOG_BYTES", 1)
+
+    with pytest.raises(ValueError, match="catalog exceeds byte limit"):
+        capacity(config(tmp_path), now_ns=121_000_000_000)
 
 
 def test_capacity_forecast_separates_sustained_windows_from_short_sample_burst(tmp_path):
