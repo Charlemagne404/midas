@@ -3067,3 +3067,43 @@ The monitor continues to report `UNVERIFIED_MANIFEST_SIZE_LIMIT`,
 warnings. These remain integrity and operations findings. No manifest or
 historical evidence was modified. Incident status remains **PARTIALLY
 CONTAINED / PARTIALLY VERIFIED**.
+
+## Current cgroup and OOMD attribution sample — 2026-10-29 13:50 CET
+
+At 13:50:56 CET, host `MemAvailable` was 11,377,102,848 bytes (10.60 GiB),
+while only 16,134,144 bytes (15.39 MiB) of swap remained free. Global memory
+PSI avg10/avg60/avg300 was zero. The one-second follow-up `vmstat` interval
+showed no swap-in or swap-out; this is a short instantaneous sample, not a
+trend. User-manager OOM counters remained high=16,428,175, max=730,409, oom=19,
+oom_kill=15, oom_group_kill=0, and no OOMD/kernel kill appeared since 13:47:27.
+
+`systemd-oomd` is active and not in dry-run mode. Its current policy reports a
+90% swap-used limit, default 60% memory-pressure limit for 20 seconds, and a
+monitored `/user.slice/user-1000.slice/user@1000.service` pressure limit of
+50%. That user-manager cgroup currently has no `memory.high`, `memory.max`, or
+`memory.swap.max` bound. Its current charge was 10,534,014,976 bytes (9.81
+GiB), including 2,855,960,576 bytes (2.66 GiB) of swap; `memory.stat` showed
+2.20 GiB anonymous, 6.51 GiB file cache, and 1.08 GiB kernel memory, of which
+about 0.99 GiB was slab. The containing `user-1000.slice` was at 10.64 GiB
+memory and 3.18 GiB swap, also without those limits.
+
+The process RSS snapshot showed three Codex processes at approximately 404,
+352, and 328 MiB and the Reality Python process at approximately 305 MiB.
+These current resident sizes do not identify which workload caused the past
+pressure: RSS omits page cache and kernel memory, and this sample was taken
+after the historical kills. The data demonstrates an uncapped shared user
+hierarchy with substantial file-cache, kernel/slab, anonymous, and swap
+charges, but does not establish the initiating workload or prove that Frontier
+caused the incident. No cap was applied to the shared user hierarchy because
+it contains protected collection, API, desktop, and administrative sessions;
+choosing a parent budget without a verified aggregate service budget could
+jeopardize those services.
+
+The API, Reality, and Reality API remained active at restart counts 9/14/0.
+The scheduled capacity monitor had completed successfully at 13:49:11 under
+its 160/192 MiB high/max limits and zero swap, while continuing to report
+archive manifest/inventory uncertainty and stale collector status. The
+gap-detail timer remains disabled. Incident status is still **PARTIALLY
+CONTAINED / PARTIALLY VERIFIED**: the service-specific cap mismatch and
+auxiliary timer churn are contained, but system-wide historical workload
+attribution and sustained recovery are not established.

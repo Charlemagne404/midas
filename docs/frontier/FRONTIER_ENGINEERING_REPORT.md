@@ -15550,3 +15550,36 @@ timer remains scheduled for 14:19. The report continued to flag
 stale collector status, and pending budget and retention changes. This
 establishes a successful bounded monitor invocation at the revised limit,
 not archive integrity, fresh collector status, or incident resolution.
+
+### Current cgroup attribution sample — 2026-10-29 13:50 CET
+
+At 13:50:56 CET, host `MemAvailable` was 11,377,102,848 bytes (10.60 GiB),
+but only 16,134,144 bytes (15.39 MiB) of swap remained free. Global memory
+PSI avg10/avg60/avg300 was zero, and the one-second follow-up `vmstat` sample
+showed no swap-in/out. User-manager OOM events remained unchanged; no OOMD or
+kernel kill appeared after 13:47:27.
+
+`systemd-oomd` was active and not in dry-run mode. The reported policy has a
+90% swap-used limit, a default 60% memory-pressure threshold for 20 seconds,
+and a 50%/20-second threshold on `/user.slice/user-1000.slice/user@1000.service`.
+That shared user manager currently has no memory high, max, or swap-max bound.
+It charged 10,534,014,976 bytes (9.81 GiB) of memory and 2,855,960,576 bytes
+(2.66 GiB) of swap. Its current composition was 2.20 GiB anonymous, 6.51 GiB
+file cache, and 1.08 GiB kernel memory, including about 0.99 GiB slab. The
+containing `user-1000.slice` charged 10.64 GiB memory and 3.18 GiB swap.
+
+The largest individual resident processes included three Codex processes at
+about 404, 352, and 328 MiB, followed by Reality Python at about 305 MiB.
+These post-incident RSS values omit page cache and kernel memory and cannot
+identify the workload that initiated historical pressure. They also do not
+show that Frontier caused it. No parent cap was applied because this shared
+hierarchy includes the protected collector, API, desktop, and administrative
+sessions, and a safe aggregate budget has not been established. API, Reality,
+and Reality API remained active at restart counts 9/14/0.
+
+The new UI checkpoint is `d131d1c`; the tracked worktree is clean and the
+existing untracked probe-evidence directory was left untouched. Frontier
+remains **PARTIALLY VERIFIED**. Continue with serial, offline, transiently
+capped development only. Historical initiating-workload attribution,
+sustained host recovery, archive provenance, genuine cross-venue validation,
+broad MIDAS regression, and production readiness remain open.

@@ -14998,3 +14998,31 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
   retention changes. This confirms one successful bounded monitor execution;
   it does not repair or validate the archive manifest or current collector
   status.
+
+## 2026-10-29 13:50 CET — incident attribution sample and continuation checkpoint
+
+- Committed the graph contract comparison and its captured responsive
+  verification as `d131d1c` on `codex/frontier-20261026`. The tracked
+  worktree is clean after the commit; the pre-existing untracked
+  `data/frontier-public-probes/` remains untouched and uncommitted.
+- At 13:50:56, host `MemAvailable` was 10.60 GiB and swap had only 15.39 MiB
+  free. Global memory PSI was zero and OOM counters remained unchanged. A
+  one-second `vmstat` follow-up showed no swap I/O.
+- `systemd-oomd` is active, not dry-run, with swap-used limit 90%; it monitors
+  `user@1000.service` at a 50% pressure threshold for 20 seconds. That shared
+  user manager had 9.81 GiB memory and 2.66 GiB swap charged with no
+  `memory.high`, `memory.max`, or `memory.swap.max` limit. Current composition
+  was 2.20 GiB anonymous, 6.51 GiB file cache, and 1.08 GiB kernel memory
+  (about 0.99 GiB slab). Top resident processes included three Codex processes
+  and Reality Python, but this post-incident snapshot does not prove which
+  workload initiated the historical pressure.
+- No parent cap was imposed: the shared user hierarchy contains protected
+  collection, API, desktop, and administrative sessions, and no aggregate
+  budget has been validated. API, Reality, and Reality API were active at
+  restarts 9/14/0. The capacity monitor completed within its revised
+  160/192 MiB, zero-swap limit; archive and collector warnings persist.
+- **Status:** The known capacity-limit mismatch and auxiliary gap-detail timer
+  churn have targeted containment. System-wide cause and sustained recovery
+  remain unproven. Resume only serial offline Frontier work with transient
+  resource caps and fresh host admission checks; do not run heavy suites,
+  live probes, or concurrent research.
