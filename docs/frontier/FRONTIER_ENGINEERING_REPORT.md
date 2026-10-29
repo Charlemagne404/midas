@@ -15583,3 +15583,27 @@ remains **PARTIALLY VERIFIED**. Continue with serial, offline, transiently
 capped development only. Historical initiating-workload attribution,
 sustained host recovery, archive provenance, genuine cross-venue validation,
 broad MIDAS regression, and production readiness remain open.
+
+### Cross-venue contract comparison fixture — 2026-10-29 13:57 CET
+
+Commit `770b308` extends the fixture-backed relationship graph browser journey
+with a Polymarket/Kalshi pair that shares a title but has different recorded
+resolution authorities, primary rules, close and settlement dates, payoff
+state IDs, rule fingerprints, and native instrument IDs. The test opens both
+term panels, checks those differences, and verifies the UI warning that a
+comparison does not establish equivalent payoffs. Prettier and targeted
+ESLint passed. Playwright passed **1/1 in 32.9 seconds** (59.6 seconds total)
+under 768 MiB high / 1 GiB max, zero swap, 20% CPU, 128 tasks, a 120-second
+scope, and a 384 MiB Node heap. The fixture is synthetic and does not
+constitute live multi-venue validation.
+
+After the run at 13:56:22, global PSI rose to some avg10/60/300 =
+1.09/0.53/0.13% and full = 0.96/0.45/0.11%; the shared user-manager
+`memory.events high` counter increased by 2,061. `max`, `oom`, and `oom_kill`
+counters were unchanged, about 10.58 GiB RAM was available, swap free was
+15.42 MiB, and the API, Reality, and Reality API stayed active. The local test
+ports were closed. After 30 seconds without another job, PSI avg10 fell to
+0.01% some/full and avg60 to 0.25/0.21%; the `high` counter remained stable.
+The cgroup counters are hierarchical, so the change cannot be attributed to
+the browser test alone. Further compute was paused after this excursion; this
+quiet interval remains too short to establish sustained host recovery.

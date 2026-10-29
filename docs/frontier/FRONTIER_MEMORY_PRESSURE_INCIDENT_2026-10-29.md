@@ -3107,3 +3107,32 @@ gap-detail timer remains disabled. Incident status is still **PARTIALLY
 CONTAINED / PARTIALLY VERIFIED**: the service-specific cap mismatch and
 auxiliary timer churn are contained, but system-wide historical workload
 attribution and sustained recovery are not established.
+
+## Cross-venue fixture and post-test pressure observation — 2026-10-29 13:57 CET
+
+The fixture-only graph browser journey now opens the saved cross-venue
+Polymarket/Kalshi relationship and displays deliberately different
+resolution authorities, primary rules, close/settlement times, payoff state
+IDs, rule fingerprints, and native instrument IDs. The view retains the
+hypothesis status and warns that the comparison does not establish equivalent
+payoffs. The targeted test passed **1/1** (32.9 seconds for the test; 59.6
+seconds total runner time) with Prettier and ESLint passing. It uses synthetic
+browser fixtures only and provides no evidence of live multi-venue matching.
+
+The transient Playwright/API/Vite scope was limited to 768 MiB high / 1 GiB
+max, zero swap, 20% CPU, 128 tasks, 120 seconds, and a 384 MiB Node heap. The
+pre-run sample at 13:55:07 showed zero global PSI and user-manager
+`memory.events high=16,428,175`. At 13:56:22, after the run, PSI had risen to
+some avg10/avg60/avg300 = 1.09/0.53/0.13% and full = 0.96/0.45/0.11%; the
+hierarchical `high` counter was 16,430,236 (+2,061). `max`, `oom`, and
+`oom_kill` remained 730,409/19/15. Available RAM was 10.58 GiB, swap free
+15.42 MiB, test ports 18000/15173 were closed, and API/Reality/Reality API
+remained active at restart counts 9/14/0. The aggregate counter and timing do
+not establish that this test alone caused the increase.
+
+After a 30-second quiet interval, at 13:57:05, PSI had fallen to some
+avg10/avg60/avg300 = 0.01/0.25/0.10% and full = 0.01/0.21/0.08%; the `high`
+counter and OOM counts were unchanged. The one-second follow-up showed no
+swap I/O. This reduces the immediate concern but does not establish sustained
+recovery. Further compute is paused pending a fresh admission sample; no
+critical service was restarted or changed.

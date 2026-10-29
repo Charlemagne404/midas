@@ -15026,3 +15026,26 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
   remain unproven. Resume only serial offline Frontier work with transient
   resource caps and fresh host admission checks; do not run heavy suites,
   live probes, or concurrent research.
+
+## 2026-10-29 13:57 CET — cross-venue graph inspection test and load response
+
+- Commit `770b308` extends the existing two-venue browser fixture with
+  intentionally different Polymarket/Kalshi resolution authorities, rules,
+  dates, state IDs, fingerprints, and native IDs. The UI test verifies both
+  recorded term panels and the explicit warning that the comparison does not
+  establish payoff equivalence. This is synthetic fixture evidence only.
+- Prettier and targeted ESLint passed. The scoped Playwright run passed **1/1
+  in 32.9 seconds** (59.6 seconds total) under 768 MiB high / 1 GiB max, zero
+  swap, 20% CPU, 128 tasks, 120 seconds, and a 384 MiB Node heap.
+- The post-run shared user-manager `memory.events high` counter increased
+  2,061 during the test window and global PSI briefly rose (some avg10 1.09%,
+  full avg10 0.96%). OOM and `memory.max` counters did not change. After a
+  30-second quiet interval, PSI avg10 fell to 0.01% and the shared `high`
+  counter remained unchanged; a one-second follow-up showed no swap I/O.
+  Because these counters are hierarchical and other workloads remained active,
+  causality is not assigned to the test.
+- **Status:** Test servers and ports were gone, and API/Reality/Reality API
+  stayed active at restarts 9/14/0. No further compute was started after the
+  pressure excursion. Continue only static or tightly capped serial work after
+  a fresh host admission sample; broad suites and concurrent jobs remain
+  deferred.
