@@ -16406,3 +16406,15 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
   request or production-store access occurred. Continue serial, capped fixture
   work; live cross-venue validation, broad regression, endurance, and incident
   closure remain open.
+
+## 2026-10-29 19:30 CET — relationship and economics fixture check
+
+- `test_relationships_economics_replay.py`, `test_instrument_identity.py`,
+  and `test_logical_implication_economics.py` passed **132/132** in 4.7 seconds
+  within a transient 384 MiB High / 512 MiB Max / zero-swap / 20%-CPU /
+  64-task scope. The run used deterministic fixtures and no external source.
+- Post-run PSI averages were zero, `MemAvailable` about 10.4 GiB, free swap
+  about 20 MiB, and user-manager counters unchanged. This extends fixture
+  evidence, not live relationship validation or incident closure. Keep the
+  project at serial capped fixture-only admission; Frontier remains
+  **PARTIALLY VERIFIED**.

@@ -16495,3 +16495,18 @@ were unchanged. These short capped fixture results add adapter-contract
 evidence but do not resolve the host incident, provide live cross-venue
 validation, or justify broad workload admission. Frontier remains
 **PARTIALLY VERIFIED**.
+
+### Relationship and economic fixture regression — 2026-10-29 19:30 CET
+
+The focused relationship/economics group passed **132/132** across
+`test_relationships_economics_replay.py`, `test_instrument_identity.py`, and
+`test_logical_implication_economics.py`. It ran in a transient 384 MiB High /
+512 MiB Max / zero-swap / 20%-CPU / 64-task scope, completed in 4.7 seconds,
+and used deterministic fixtures only.
+
+After the run, memory PSI averages remained zero, available RAM was about
+10.4 GiB, free swap about 20 MiB, and user-manager memory event counters were
+unchanged. This verifies the selected fixture paths for instrument identity,
+relationship economics, and logical implication; it does not establish live
+venue equivalence or resolve the host incident. Frontier remains
+**PARTIALLY VERIFIED**.
