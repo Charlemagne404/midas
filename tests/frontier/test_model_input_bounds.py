@@ -4,7 +4,9 @@ import pytest
 from midas.frontier.models import (
     BookLevel,
     BookSnapshot,
+    CandleSeries,
     FrontierMarket,
+    HistoricalCandle,
     MarketBatch,
     MarketInstrument,
     PayoffSpec,
@@ -99,3 +101,60 @@ def test_book_snapshot_rejects_more_than_one_thousand_levels_per_side() -> None:
 
     with pytest.raises(ValidationError):
         BookSnapshot.model_validate(payload)
+
+
+def test_candle_series_rejects_more_than_shared_record_limit() -> None:
+    source_market = market(Venue.KRAKEN, "CANDLE-BOUNDS")
+    candle = HistoricalCandle(
+        open_time_utc=T0,
+        open=Decimal("10"),
+        high=Decimal("12"),
+        low=Decimal("9"),
+        close=Decimal("11"),
+        volume=Decimal("3"),
+        trade_count=2,
+    )
+
+    with pytest.raises(ValidationError):
+        CandleSeries(
+            venue=Venue.KRAKEN,
+            native_market_id=source_market.native_market_id,
+            interval_seconds=3600,
+            candles=(candle,) * 10_001,
+            source_limit_note="bounded fixture",
+            provenance=source_market.provenance,
+        )
+
+
+def test_candle_series_rejects_oversized_source_identity_and_invalid_trade_count() -> None:
+    source_market = market(Venue.KRAKEN, "CANDLE-IDENTITY-BOUNDS")
+    candle = HistoricalCandle(
+        open_time_utc=T0,
+        open=Decimal("10"),
+        high=Decimal("12"),
+        low=Decimal("9"),
+        close=Decimal("11"),
+        volume=Decimal("3"),
+    )
+    payload = {
+        "venue": Venue.KRAKEN,
+        "native_market_id": "m" * 257,
+        "interval_seconds": 3600,
+        "candles": (candle,),
+        "source_limit_note": "bounded fixture",
+        "provenance": source_market.provenance,
+    }
+
+    with pytest.raises(ValidationError):
+        CandleSeries.model_validate(payload)
+
+    with pytest.raises(ValidationError):
+        HistoricalCandle(
+            open_time_utc=T0,
+            open=Decimal("10"),
+            high=Decimal("12"),
+            low=Decimal("9"),
+            close=Decimal("11"),
+            volume=Decimal("3"),
+            trade_count=2_147_483_648,
+        )

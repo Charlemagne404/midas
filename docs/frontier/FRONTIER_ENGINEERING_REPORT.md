@@ -16017,3 +16017,29 @@ establish sustained recovery; the incident remains **PARTIALLY CONTAINED /
 PARTIALLY VERIFIED**.
 
 | Frontier normalized input bounds | COMPLETE AND VERIFIED FOR FIXTURE PATH | Focused reject-on-limit tests and existing payoff/trade regressions pass under strict transient resource caps; live payload coverage remains unmeasured. |
+
+### Candle-series record and source-page limits — 2026-10-29 16:10 CET
+
+The normalized `CandleSeries` model now rejects more than 10,000 rows, bounds
+the native market ID and explanatory note, and constrains the interval to
+one year. `HistoricalCandle.trade_count` is a strict nonnegative 32-bit
+integer. The shared record ceiling does not replace a venue's own semantics:
+the Kraken OHLC adapter continues to reject a response above its stricter
+720-row source page limit.
+
+`tests/frontier/test_model_input_bounds.py` and the focused Kraken 721-row
+fixture passed **10/10 in 4.30 seconds** under the 256 MiB high / 384 MiB max,
+zero-swap, 15%-CPU, 48-task scope. Ruff check and format check passed. The
+adapter fixture used the in-memory transport; no public source request was
+made. The exact cap is a schema resource boundary, not evidence that every
+venue supports this interval or page size.
+
+At 16:09:33 CET, host PSI avg10/60/300 remained zero, `MemAvailable` was
+11,069,868 kB, and `SwapFree` was 16,324 kB. User-manager `oom`/`oom_kill`
+remained 19/15; its `max` count was 730,699. Reality API's local `max` count
+was 5,076, with local `oom`/`oom_kill` still zero. MIDAS API, Reality, and
+Reality API remained active at restart counts 9/14/0. No matching OOMD or
+kernel kill appeared since 16:04:44. These counters remain warning evidence;
+they do not identify a causal workload or establish sustained recovery.
+
+| Normalized candle bounds and Kraken source-page guard | COMPLETE AND VERIFIED FOR FIXTURE PATH | Shared 10,000-row cap and Kraken 720-row rejection have focused fixtures; no live exchange call or venue-wide payload assessment. |

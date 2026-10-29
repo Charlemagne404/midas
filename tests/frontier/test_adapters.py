@@ -1976,6 +1976,34 @@ async def test_kraken_ohlc_normalizes_exact_eight_field_native_rows():
 
 
 @pytest.mark.asyncio
+async def test_kraken_ohlc_rejects_rows_above_its_native_page_limit():
+    config = KrakenSpotConfig(
+        enabled=True,
+        live_public_probe_enabled=True,
+        pairs=("XBTUSD",),
+        requests_per_second=1,
+        retries=0,
+    )
+    rows = [
+        [1793110000 + index * 3600, "60000", "61000", "59000", "60500", "60000", "1.5", 23]
+        for index in range(721)
+    ]
+    body = json.dumps({"error": [], "result": {"XXBTZUSD": rows}})
+    transport, requests, client = _transport("api.kraken.com", {"/OHLC": body}, config)
+    adapter = KrakenSpotAdapter(config, transport=transport)
+    try:
+        with pytest.raises(AdapterError) as error:
+            await adapter.fetch_candles("XXBTZUSD", interval_minutes=60)
+        captures = adapter.take_captures()
+    finally:
+        await client.aclose()
+
+    assert error.value.code == "INVALID_CANDLES"
+    assert len(requests) == 1
+    assert len(captures) == 1 and captures[0].raw_body == body
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "row",
     (

@@ -3696,3 +3696,19 @@ particular, almost all swap remains allocated, the parent `high` counter
 advanced, and no sustained low-pressure interval has been demonstrated. Keep
 the incident **PARTIALLY CONTAINED / PARTIALLY VERIFIED** and retain the
 source-independent, serial, transiently capped Frontier admission limit.
+
+### Post-test observation — 2026-10-29 16:09 CET
+
+The bounded candle-model and Kraken parser fixture group completed with host
+PSI avg10/60/300 still zero. At 16:09:33, `MemAvailable` was 11,069,868 kB
+and `SwapFree` 16,324 kB. The user-manager hierarchical event counts were
+`high=16,437,792`, `max=730,699`, `oom=19`, and `oom_kill=15`. Reality API's
+local `max` count was 5,076; its local `oom` and `oom_kill` remained zero.
+MIDAS API, Reality, and Reality API were active at restart counts 9/14/0.
+The gap-detail timer remained disabled. No matching OOMD or kernel kill was
+returned since 16:04:44.
+
+These are bounded before/after observations and do not prove that Frontier
+work caused a counter change or that the host has recovered. The Reality API
+is a protected service and its near-limit event history remains an unresolved
+constraint. Keep the same serial, source-independent resource gate.

@@ -776,11 +776,15 @@ observations, 100,000 relationship records, and 512 KiB per stored record.
 The normalized models also reject oversized records instead of truncating
 them. A discovery batch contains at most 100 markets; a market contains at
 most 256 instruments; each instrument/payoff contains at most 64 payout
-states; each book side contains at most 1,000 levels; and a trade page
-contains at most 1,000 observations. Native market/event/instrument IDs are
-limited to 256 characters, market titles to 2,048, and market descriptions to
-65,536. Transport response bodies remain capped at 256 KiB and JSON nesting
-at 64 levels, while `native_fields` has its own 256 KiB serialized bound.
+states; each book side contains at most 1,000 levels; a trade page contains at
+most 1,000 observations; and a normalized candle series contains at most
+10,000 rows. Source adapters may impose stricter documented page limits: for
+example, the Kraken OHLC adapter rejects responses over its 720-row source
+limit. Candle interval values are bounded to one year. Native market, event,
+and instrument IDs are limited to 256 characters, market titles to 2,048, and
+market descriptions to 65,536. Transport response bodies remain capped at
+256 KiB and JSON nesting at 64 levels, while `native_fields` has its own
+256 KiB serialized bound.
 Exceeding a model limit rejects the whole object; no source values or list
 members are silently clipped. These schema ceilings bound supported inputs,
 not a claim that every venue can supply every record shape.

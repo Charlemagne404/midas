@@ -30,6 +30,7 @@ MAX_INSTRUMENTS_PER_MARKET = 256
 MAX_PAYOFF_STATES = 64
 MAX_BOOK_LEVELS_PER_SIDE = 1000
 MAX_TRADES_PER_BATCH = 1000
+MAX_CANDLES_PER_SERIES = 10_000
 MAX_SOURCE_IDENTIFIER_CHARS = 256
 MAX_MARKET_TITLE_CHARS = 2048
 MAX_MARKET_DESCRIPTION_CHARS = 65536
@@ -1540,7 +1541,7 @@ class HistoricalCandle(FrontierModel):
     low: Nonnegative
     close: Nonnegative
     volume: Nonnegative
-    trade_count: int | None = None
+    trade_count: int | None = Field(default=None, ge=0, le=2_147_483_647, strict=True)
 
     @field_validator("open_time_utc")
     @classmethod
@@ -1565,10 +1566,10 @@ class HistoricalCandle(FrontierModel):
 class CandleSeries(FrontierModel):
     schema_version: int = 1
     venue: Venue
-    native_market_id: str
-    interval_seconds: int
-    candles: tuple[HistoricalCandle, ...]
-    source_limit_note: str
+    native_market_id: str = Field(min_length=1, max_length=MAX_SOURCE_IDENTIFIER_CHARS)
+    interval_seconds: int = Field(ge=1, le=31_536_000, strict=True)
+    candles: tuple[HistoricalCandle, ...] = Field(max_length=MAX_CANDLES_PER_SERIES)
+    source_limit_note: str = Field(max_length=512)
     provenance: Provenance
 
 

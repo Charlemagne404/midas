@@ -15555,3 +15555,24 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
   not demonstrate durable host recovery. Keep the incident partially
   contained and preserve the same bounded, source-independent admission
   policy.
+
+## 2026-10-29 16:10 CET — canonical candle-series bounds
+
+- Added a shared 10,000-row cap for normalized candle series, bounds on its
+  identifier, interval, and source-limit note, plus strict bounds for candle
+  trade counts. Kept Kraken's distinct 720-row response limit in its adapter;
+  a fixture now verifies the adapter rejects 721 rows instead of applying the
+  Kraken limit as a universal model limit.
+- The focused normalized-model and Kraken page-limit set passed **10/10 in
+  4.30 seconds** under a transient 256/384 MiB, zero-swap, 15%-CPU, 48-task
+  scope. Ruff check and format check passed. The adapter used an in-memory
+  fixture and made no public request.
+- At 16:09:33, host PSI remained zero, MemAvailable was 11,069,868 kB, and
+  SwapFree was 16,324 kB. User-manager `oom`/`oom_kill` remained 19/15; the
+  aggregate `max` count was 730,699. Reality API's local `max` count was
+  5,076, while its local OOM counters remained zero. Protected services were
+  active at restart counts 9/14/0 and no checked OOMD/kernel kill was new.
+- **Status:** fixture-level normalization and the source-specific Kraken page
+  guard are verified. The host remains partially contained: free swap is
+  negligible and capped-service `max` counters continue to advance. Keep the
+  incident admission limits and do not infer causation from these counters.
