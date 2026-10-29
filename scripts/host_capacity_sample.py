@@ -44,6 +44,7 @@ def snapshot() -> dict:
                             "memory.peak",
                             "memory.high",
                             "memory.max",
+                            "memory.swap.max",
                             "memory.events",
                             "memory.stat",
                             "memory.swap.current",
