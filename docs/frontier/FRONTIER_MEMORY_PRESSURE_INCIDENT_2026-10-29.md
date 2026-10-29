@@ -1452,3 +1452,15 @@ active at restart counts 9/14, around 969/426 MiB. No OOMD or kernel OOM
 appeared in the recent window. This supports continuing small serial fixture
 work only; the 640 MiB UI retry, broad suites, and endurance runs stay
 deferred.
+
+## Cross-venue discovery fixture admission — 2026-10-29 08:24 CET
+
+The deterministic three-scope discovery fixture passed **1/1** in 1.69
+seconds. Its transient cgroup peaked at 42,405,888 bytes under 384 MiB high /
+512 MiB max, zero swap, 20% CPU, and 64 tasks; no high/max/OOM event occurred.
+The cgroup was isolated from live sources. At 08:24:26 memory PSI and oomd's
+monitored user-cgroup pressure were zero, with about 10 GiB available; swap
+remained nearly full and OOM counters stayed 19/15/0. API and Reality remained
+active at restarts 9/14. The latest bounded fixture check did not create
+measurable host memory pressure. Incident status remains **PARTIALLY
+CONTAINED / PARTIALLY VERIFIED**.

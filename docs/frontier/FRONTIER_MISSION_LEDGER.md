@@ -13842,3 +13842,10 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
 - Live cgroup peaks were 41,836,544 / 41,730,048 bytes under 384 MiB high / 512 MiB max, zero swap, 20% CPU, and 64 tasks; no cgroup pressure/OOM events occurred.
 - At 08:21:35 memory PSI was 0/0/0.03% global avg10/60/300 and oomd user-cgroup avg300 was 0.03%; 10 GiB available, swap nearly full, OOM counters 19/15/0; API/Reality/Reality API remained active.
 - **Status:** Small analytics fixtures are verified. Keep the incident **PARTIALLY CONTAINED / PARTIALLY VERIFIED**; source-use holds and broad UI/performance validation remain open.
+
+## 2026-10-29 08:24 CET — deterministic discovery-scope comparison
+
+- `test_discovery_scope_comparison_is_deterministic_and_exposes_cross_venue_delta` passed **1/1** in 1.69 seconds. Two identical replays matched; Polymarket-only and venue-local scopes emitted no relationship candidates; the verified fixture cross-venue scope emitted two; invalid fill fraction was rejected. Fixture only, no live source match.
+- Transient cgroup: 384 MiB high / 512 MiB max, zero swap, 20% CPU, 64 tasks; direct peak 42,405,888 bytes and no high/max/OOM event.
+- At 08:24:26 memory PSI and oomd user-cgroup pressure were zero, 10 GiB available, swap nearly full, OOM counters 19/15/0, API/Reality active at restarts 9/14. No OOMD/kernel OOM in the recent window.
+- **Status:** Multi-venue comparison has deterministic fixture evidence only. No genuine live cross-venue equivalence or profitable opportunity is claimed; incident remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**.
