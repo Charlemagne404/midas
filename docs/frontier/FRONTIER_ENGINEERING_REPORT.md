@@ -12,7 +12,10 @@ recorded in the dated addenda below; other matrix detail reflects its 15:56
 snapshot. A documentation-only cross-check of current official
 exchange market-data contracts is recorded in
 [Adapter Documentation Contract Review](ADAPTER_DOCUMENTATION_CONTRACT_REVIEW_2026-10-29.md);
-it made no endpoint requests and does not change source-use holds.
+it made no endpoint requests and does not change source-use holds. The separate
+[2026-10-29 held-source terms follow-up](HELD_SOURCE_TERMS_FOLLOWUP_2026-10-29.md)
+narrows the rationale for the held Kalshi, Kraken, Coinbase, and Gemini
+sources; it also leaves all holds in place.
 
 | Component | Status | Current evidence and boundary |
 | --- | --- | --- |
@@ -32,7 +35,7 @@ it made no endpoint requests and does not change source-use holds.
 | Host reliability containment | PARTIALLY VERIFIED | OOMD's 50% pressure-kill policy remains active on uncapped `user@1000.service`. The Oct 28 journal records 129 pressure kills (106 gap-detail) and seven kernel memcg OOMs against the capacity job's former 128 MiB limit. Gap-detail is disabled; capacity is bounded at 160/192 MiB with zero swap and its 15:49 run succeeded. At 15:56, host PSI was zero, `MemAvailable` 11,393,916,928 bytes, and `SwapFree` 16,547,840 bytes. In the 34-second delta, swap counters were nearly flat and user-manager direct scan/steal rose only 73 pages. At 15:45, user-manager charge was 10.0 GiB, peak 13.03 GiB, and swap 2.66 GiB; the active terminal subtree held about 4.92 GiB including file cache. OOMD currently lists the user-manager cgroup; no new OOMD kill has appeared since Oct 28 23:43:24 and no kernel OOM since 20:15:44. Reality is active and writing, but its 15:52 status is `RECORDING_UNSEQUENCED` with 16 fresh books/8 markets, one failure, and `sequence_verified=false`; archive manifest/inventory provenance remains unverified. Current cgroup residency does not identify historical workload causation, and full swap plus an uncapped parent remain risks. Continue only serial, offline code/fixture work under a 384 MiB zero-swap cap; no broad tests or source probes. Incident remains partially contained, not resolved. |
 | Node/V8 and Apport side effect | PARTIALLY VERIFIED | The exact-tree frontend TypeScript check passed with an explicit 384 MiB Node heap under a 512 MiB high / 640 MiB max zero-swap cgroup. A later exact-tree check also passed at 15:16 in a 640 MiB high / 768 MiB max, zero-swap scope. Earlier attempts with Node's default heap timed out or exhausted V8 at about 251 MiB; those were process heap failures, not cgroup OOMs. An earlier crash-report upload attempt received HTTP 504; remote receipt remains unknown. |
 | Broad regressions, resource endurance, and performance acceptance | DEFERRED | Selected Python, API, adapter, collection, and economics tests passed under bounded zero-swap scopes. The graph-revision storage/migration cases pass 8/8; API cursor invalidation passes 1/1; four core economics modules pass 79/79; joint-state basket/audit/replay passes 14/14; logical implication/relationship review passes 27/27; transport passes 20/20; readiness resource API passes 7/7 and its focused UI passes 3/3. Captured-store market/book replay passes 1/1 in 40.7 seconds and the 390-pixel responsive journey passes 1/1 in 46.5 seconds. Ruff check/format, ESLint, Prettier, and strict mypy on the readiness resource module passed under caps. Full MIDAS regression, full browser suite, endurance, and broad performance tests remain deferred. |
-| Live multi-venue source authorization and findings | BLOCKED | Kalshi, Kraken, Coinbase, and Gemini probes and retained-data research remain held; the worktree Polymarket probe flag is off. |
+| Live multi-venue source authorization and findings | BLOCKED | The 2026-10-29 terms follow-up records current official use restrictions and unresolved scope/permission for held Kalshi, Kraken, Coinbase, and Gemini sources. No hold was lifted; the worktree Polymarket probe flag remains off. |
 | Production integration/deployment | DEFERRED | Frontier remains isolated; no protected service transition occurred. |
 | Project Frontier overall | PARTIALLY VERIFIED | The engine is substantial, but live cross-venue science, broad verification, recovery, endurance, and deployment gates remain open. |
 
@@ -16639,3 +16642,18 @@ SwapFree was 20,536 KiB, and user-slice max/oom/oom_kill were unchanged.
 Parent high events rose by 111 during this interval. This coincides with the
 capacity run but remains unassigned because API/Reality leaf deltas were not
 sampled at both ends. No limit change is justified by this evidence.
+
+### Held-source terms follow-up — 2026-10-29
+
+The official terms review records venue-specific boundaries for Kalshi,
+Kraken, Coinbase, and Gemini. Public endpoint availability does not settle
+retention or research-use rights. Coinbase's current Market Data Terms
+restrict automated-system/AI use without express written consent. Gemini's
+agreement describes personal/internal market analysis as a permitted-use
+category but also imposes prohibited-use, redistribution, regional-entity, and
+API-form conditions that remain unresolved for Frontier. Kalshi's public API
+description does not override its separate Developer Agreement and Data
+Terms; Kraken's public endpoints remain subject to regional terms and prior
+permission for certain use. No source gate was changed, no API endpoint was
+called, and no source evidence was touched. See
+[HELD_SOURCE_TERMS_FOLLOWUP_2026-10-29.md](HELD_SOURCE_TERMS_FOLLOWUP_2026-10-29.md).

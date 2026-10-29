@@ -137,6 +137,11 @@ required permission is recorded. For these two sources, no configuration
 currently enables collection. The application has no validated authorization
 loader, so both probes and all stored Kalshi/Kraken research reads remain
 blocked even when a probe flag and reference are set.
+The [2026-10-29 held-source terms follow-up](HELD_SOURCE_TERMS_FOLLOWUP_2026-10-29.md)
+records current Kalshi, Kraken, and Coinbase boundaries. Gemini's detailed
+agreement and API-form review remains in
+[its source-data terms review](SOURCE_DATA_TERMS_REVIEW_2026-10-29.md). These
+reviews lifted no source hold and made no exchange market-data request.
 `MIDAS_FRONTIER_KALSHI_RESEARCH_AUTHORIZATION_REF` and
 `MIDAS_FRONTIER_KRAKEN_MARKET_DATA_PERMISSION_REF` are descriptive only; a
 string reference is not permission. See the

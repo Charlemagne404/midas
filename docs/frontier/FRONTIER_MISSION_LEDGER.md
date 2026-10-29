@@ -16538,3 +16538,22 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
   attributable without leaf counters. No kill or service change occurred.
 - Keep the current bound and serial admission gate. The sample supports a
   successful run, not an observed peak or endurance claim.
+
+## 2026-10-29 19:54 CET — official source-use terms follow-up
+
+- Reviewed current official terms/help pages for Kalshi, Kraken, Coinbase,
+  and Gemini without calling exchange APIs or touching saved source evidence.
+- Coinbase's 2026-08-07 Market Data Terms require express written consent for
+  automated-system/AI development or operation and external dissemination.
+  Kraken's public endpoint terms remain region/use dependent and require prior
+  permission for certain non-personal commercial use. Kalshi's public API
+  availability does not grant research/retention rights under its separate
+  Developer Agreement and Data Terms.
+- Gemini's agreement explicitly permits some personal/internal market analysis
+  but has prohibited-use, redistribution, regional-entity, and API Use Form
+  conditions. Frontier's intended retention/display scope and form status
+  remain unresolved. No source hold was lifted.
+- The latest review is
+  [HELD_SOURCE_TERMS_FOLLOWUP_2026-10-29.md](HELD_SOURCE_TERMS_FOLLOWUP_2026-10-29.md);
+  Gemini's detailed review remains in its existing terms artifact.
+  Live multi-venue acceptance remains blocked; fixture-backed work continues.
