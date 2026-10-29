@@ -1,5 +1,43 @@
 # Project Frontier Mission Ledger
 
+## 2026-10-29 14:23 CET — literal relationship-term difference summary
+
+- The graph contract comparison now computes a bounded side-by-side summary of
+  literal differences in reported instrument type, lifecycle, payoff state
+  identifiers, payoff verification and coverage, payout/settlement currency,
+  resolution authority/fingerprint/times, and fee metadata. Missing or blank
+  optional values count as unavailable; state IDs are sorted for comparison.
+  The UI states that this review aid does not establish equivalent payoffs.
+- Added three helper tests for recorded differences, unordered state IDs and
+  missing/blank values, and unavailable comparison when a market is outside
+  the loaded graph window. They pass **3/3 in 9.39 seconds**. Targeted ESLint,
+  Prettier, a strict helper type check, and the full web `tsc --noEmit` pass.
+  An assertion was added to the existing cross-venue browser journey, but that
+  browser journey was not rerun in this incident window. No source request,
+  production API call, or database mutation was made.
+- Checks ran serially in transient scopes: helper tests at 384/512 MiB
+  high/max, strict helper typing at 256/384 MiB, and full web typing at
+  640/768 MiB; all had zero swap, capped CPU/task counts, and bounded runtimes.
+- At 14:23:22, `MemAvailable` was 11,382,661,120 bytes (10.60 GiB), swap free
+  was 16,211,968 bytes (15.46 MiB), and host PSI was zero. User-manager events
+  were high/max/oom/oom_kill = 16,430,503/730,447/19/15. API, Reality, and
+  Reality API were active at restart counts 9/14/0. The capacity monitor
+  completed at 14:19:11 with status 0 under 160/192 MiB high/max and zero
+  swap. No OOMD or kernel kill appeared since 14:19:11. Gap-detail remains
+  disabled. These are short observations; the host incident and Frontier
+  remain **PARTIALLY VERIFIED**.
+- At 14:24:54, the uncapped user manager charged 10,612,408,320 bytes
+  (9.88 GiB) memory and 2,855,936,000 bytes (2.66 GiB) swap; its composition
+  was 2.23 GiB anonymous, 6.55 GiB file-backed, and 1.08 GiB kernel/slab. The
+  containing user slice charged 9.95 GiB memory and 3.18 GiB swap. Host
+  availability remained 10.59 GiB, PSI zero, and OOM counters unchanged. This
+  reinforces the uncapped aggregate hierarchy as a demonstrated constraint,
+  not an attribution to one process.
+- Next safe work: continue serial offline implementation only after a fresh
+  admission sample. The new comparison's browser assertion, production-store
+  behavior, genuine cross-venue validation, broad regressions, and deployment
+  are still pending. Leave `data/frontier-public-probes/` untouched.
+
 ## 2026-10-29 09:50 CET — memory-safe Kraken book replay checkpoint
 
 - Commit `00efbf1` adds deterministic offline replay for persisted Kraken Spot

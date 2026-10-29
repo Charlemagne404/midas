@@ -15664,3 +15664,42 @@ bytes (472.7 MiB), `MemoryPeak` equal to its 536,870,912-byte (512 MiB)
 confirms a near-limit service condition and prior max events, not an OOM
 termination. No cap increase was made without an aggregate host budget; the
 service remains under observation alongside the uncapped shared user manager.
+
+### Literal relationship-term difference summary — 2026-10-29 14:23 CET
+
+The graph comparison now lists literal mismatches among fields reported by
+both captured market records: instrument type, lifecycle, payoff state IDs,
+payoff verification and coverage, payout and settlement currencies, resolution
+authority/fingerprint/times, and fee status/schedule. Optional null or
+whitespace-only values are counted as unavailable. State IDs are sorted for
+set-like comparison. The UI explicitly says that matching or differing fields
+do not determine payoff equivalence. The existing synthetic Polymarket/Kalshi
+browser journey now asserts the differences panel, but that E2E assertion was
+not rerun in this checkpoint.
+
+The helper tests passed **3/3 in 9.39 seconds** under a 384 MiB `MemoryHigh`,
+512 MiB `MemoryMax`, zero-swap, 20%-CPU, 64-task transient scope. Targeted
+ESLint and Prettier passed. Full web TypeScript checking passed under 640/768
+MiB high/max, zero swap, 25% CPU and a 64-task cap. After the last minor
+whitespace-as-unavailable adjustment, the helper also passed isolated strict
+TypeScript checking under 256/384 MiB high/max. No browser, live source,
+production API, or store was used.
+
+At 14:23:22, `MemAvailable` was 11,382,661,120 bytes (10.60 GiB), free swap
+was 16,211,968 bytes (15.46 MiB), global memory PSI was zero, and the
+user-manager OOM counters were unchanged at 19 OOMs / 15 kills. The API,
+Reality, and Reality API remained active at restart counts 9/14/0. The
+bounded capacity monitor exited 0 at 14:19:11 under its 160/192 MiB bounds
+with swap disabled. No OOMD or kernel kill appeared after that run. This is a
+short quiet window, not proof of sustained recovery. The host incident and
+Frontier remain **PARTIALLY VERIFIED**; swap is nearly full, the shared user
+manager is uncapped, and historical pressure initiation remains unattributed.
+
+A separate 14:24:54 cgroup readback measured the uncapped user manager at
+10,612,408,320 bytes (9.88 GiB) memory and 2,855,936,000 bytes (2.66 GiB)
+swap. Its composition was 2.23 GiB anonymous, 6.55 GiB file-backed, and 1.08
+GiB kernel memory, including 0.99 GiB slab; the containing user slice charged
+9.95 GiB memory and 3.18 GiB swap. Host `MemAvailable` was 10.59 GiB and PSI
+remained zero. This confirms the aggregate hierarchy is still a substantial
+resource boundary while demonstrating neither active reclaim pressure at
+that moment nor which workload initiated the earlier events.

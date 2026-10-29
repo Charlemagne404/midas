@@ -3212,3 +3212,60 @@ charge is large and the aggregate user-manager budget is unresolved, so
 increasing its cap would raise potential host commitment without evidence that
 the added memory is necessary. Track this as a near-limit service risk, not a
 demonstrated OOM cause.
+
+## Scheduled-workload boundary and bounded Frontier continuation — 2026-10-29 14:23 CET
+
+Read-only inspection of scheduled one-shot units found differing containment:
+the Arena scheduler and Veritas research director each have a 512 MiB hard
+limit but no `MemoryHigh` or swap cap; Veritas source analysis has a 256 MiB
+hard limit but no high or swap cap; the observatory has a 256 MiB hard limit
+and zero swap; and the Continental infrastructure audit has no memory or swap
+limit. The Arena dispatcher runs once per minute, while research and audit
+timers can run near one another. This exposes possible aggregate concurrency
+and some noncritical units without reclaim/swap bounds, but does not prove
+these jobs caused the October 28 pressure. At the 14:16–14:23 observation,
+host PSI remained zero, user-manager OOM counters did not change, and no new
+OOMD or kernel kill was logged. No timer or unit was modified because there
+was no new evidence to justify changing unrelated scheduled operations or a
+host-wide budget.
+
+The gap-detail timer is confirmed **disabled and inactive**. Its restoration
+command is `systemctl --user enable --now midas-veritas-gap-detail-v2.timer`;
+re-enabling it is not recommended until the finalized-replay cadence and
+resource admission are reviewed. The capacity monitor ran 14:19:04–14:19:11
+and exited 0 with its runtime configuration at `MemoryHigh=160 MiB`,
+`MemoryMax=192 MiB`, and `MemorySwapMax=0`. No cap or persistent unit file was
+changed in this checkpoint.
+
+Frontier resumed only with serialized fixture work. Prettier and targeted
+ESLint passed; the pure relationship-term comparator tests passed 3/3; full
+frontend TypeScript passed, followed by a strict isolated type check of the
+final helper adjustment. All scopes had explicit memory, zero-swap, CPU, task,
+and runtime bounds. The browser E2E assertion was added but not run. There
+were no live source requests or production-store writes.
+
+At 14:23:22 CET, host `MemAvailable` was 11,382,661,120 bytes (10.60 GiB),
+`SwapFree` was 16,211,968 bytes (15.46 MiB), and global PSI avg10/60/300 was
+zero. The user-manager counters were high/max/oom/oom_kill =
+16,430,503/730,447/19/15, unchanged from the 14:11–14:13 sample. API, Reality,
+and Reality API remained active at restart counts 9/14/0. No OOMD or kernel
+kill was logged after 14:19:11. This short, quiet observation does not
+establish recovery: swap remains effectively full, the user manager remains
+uncapped, historical workload attribution remains incomplete, and the
+Reality API is still close to its hard memory limit. Continue only serial,
+offline, resource-capped Frontier work after another fresh admission check.
+
+## User-hierarchy composition after bounded validation — 2026-10-29 14:24 CET
+
+At 14:24:54, the uncapped `user@1000.service` cgroup charged
+10,612,408,320 bytes (9.88 GiB) memory and 2,855,936,000 bytes (2.66 GiB)
+swap. `memory.stat` reported 2,396,262,400 bytes anonymous, 7,035,355,136
+bytes file-backed, and 1,157,074,944 bytes kernel memory; slab was
+1,061,658,896 bytes (0.99 GiB). The containing `user-1000.slice` charged
+10,687,549,440 bytes (9.95 GiB) memory and 3,412,992,000 bytes (3.18 GiB)
+swap. At the same readback, host `MemAvailable` was 11,371,073,536 bytes
+(10.59 GiB), free swap was 16,216,064 bytes (15.46 MiB), and global PSI was
+zero. User-manager event counters remained high/max/oom/oom_kill =
+16,430,503/730,447/19/15. This shows that substantial aggregate user-session
+charges coexist with currently quiet PSI and available host RAM. It does not
+identify the initiating workload for the historical OOMD or kernel events.
