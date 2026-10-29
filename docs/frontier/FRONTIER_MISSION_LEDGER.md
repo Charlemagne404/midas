@@ -14319,3 +14319,33 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
   is nearly full, pressure attribution and durable recovery remain unresolved,
   and the quiet interval is short. Continue only after a fresh bounded-work
   admission check; do not start broad or concurrent research workloads.
+
+## 2026-10-29 10:33 CET — five-venue trade timestamp persistence
+
+- Parser correction commit `1016eb3` and shared-contract test commit `cd20960`
+  carry the Gemini mixed-precision timestamp into the five-venue persistence
+  contract. The fixture supplies a whole-second `timestamp` and a
+  `timestampms` 123 ms later, then checks that the subsecond time survives
+  normalization and hash-pinned `FrontierStore` append/readback. The focused
+  test passed **1/1 in 2.30 seconds on committed tree `cd20960`**. Its
+  transient cgroup was capped at 384 MiB high / 512 MiB max, zero swap, 20%
+  CPU, 64 tasks, and 60 seconds. The in-unit `memory.peak` was 52,412,416
+  bytes; `memory.events` reported zero high/max/OOM events and zero swap.
+  systemd's post-cleanup 256 KiB summary was discarded as an invalid peak;
+  the live in-unit measurement is the recorded value.
+- Ruff check and format check passed for the modified contract module in a
+  separate bounded unit with an 8,695,808-byte peak and no cgroup events.
+  Test transports were fixtures; no source request, live observation, or
+  `data/frontier-public-probes/` access occurred.
+- At 10:33:26, global memory PSI was zero, `MemAvailable` was
+  11,243,335,680 bytes (10.47 GiB), and `SwapFree` was 9,666,560 bytes
+  (9.22 MiB). User-manager `oom/oom_kill/oom_group_kill` counters remained
+  19/15/0. API, Reality, and Reality API stayed active at restarts 9/14/0.
+- The scheduled Continental read-only audit at 10:29:08 exited 1 with 72
+  pass, 19 warn, 3 fail, and 3 unknown. It repeated the two unreviewed
+  non-loopback listeners and disabled Echo offsite schedule; it used 1.443
+  CPU seconds and no Continental/Echo configuration was changed. This is a
+  separate infrastructure finding.
+- Host memory incident remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**:
+  swap is almost full and there is no endurance evidence. Continue Frontier
+  only as serial, fixture-only, resource-capped work after fresh admission.

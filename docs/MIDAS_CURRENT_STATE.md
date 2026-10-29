@@ -4045,3 +4045,24 @@ counts 9/14/0. The gap-detail service retained a failed `oom-kill` result but
 its timer remained inactive and no rerun was requested. This remains a short
 observation, not proof of durable recovery; Frontier work stays serial,
 offline, and resource-capped.
+
+### Frontier persistence-contract checkpoint — 2026-10-29 10:33 CET
+
+The shared five-venue public-trade contract now uses a Gemini fixture with a
+subsecond `timestampms` and verifies that the normalized timestamp survives
+hash-pinned `FrontierStore` append/readback. The test passed 1/1 in 2.30 seconds
+on committed tree `cd20960` under the bounded zero-swap transient scope. Its
+cgroup peak was 52,412,416 bytes with no high/max/OOM events. Ruff check and
+format check also passed under the same class of cap, peaking at 8,695,808
+bytes with no cgroup events. The work used fixture transports only; no public
+request or captured probe data was accessed.
+
+At 10:33:26, `MemAvailable` was 11,243,335,680 bytes (10.47 GiB),
+`SwapFree=9,666,560` bytes (9.22 MiB), and global memory PSI remained zero.
+User-manager counters stayed at `oom=19`, `oom_kill=15`,
+`oom_group_kill=0`; the three MIDAS API/Reality services remained active at
+restart counts 9/14/0. The scheduled Continental read-only audit at 10:29:08
+again reported 72 pass, 19 warnings, 3 failures, and 3 unknowns, including
+the two previously recorded non-loopback listeners and disabled Echo offsite
+schedule. No Continental/Echo configuration was changed. The host incident
+remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**.

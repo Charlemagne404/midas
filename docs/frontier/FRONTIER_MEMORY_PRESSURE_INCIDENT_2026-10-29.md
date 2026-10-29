@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 10:25 CET |
+| Latest addendum | 2026-10-29 10:33 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Pre-incident checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -2117,3 +2117,36 @@ near exhaustion, the user-manager charge remains substantial, historical
 pressure initiation is not fully attributed, and archive inventory/provenance
 remains unresolved. Continue only serial, offline, resource-capped Frontier
 work after fresh admission; do not run broad suites or live source probes.
+
+## 2026-10-29 10:33 CET — bounded persistence regression and host recheck
+
+The five-venue trade adapter contract test was extended to carry Gemini's
+documented mixed-precision timestamp through normalization and
+hash-pinned `FrontierStore` append/readback. It passed **1/1 in 2.31 seconds**
+in a transient scope capped at 384 MiB high, 512 MiB max, zero swap, 20% CPU,
+64 tasks, and 60 seconds. After commit `cd20960`, the test was rerun and
+passed **1/1 in 2.30 seconds**. Its wrapper sampled the live cgroup before it
+exited: peak `memory.peak` was 52,412,416 bytes, with zero high/max/OOM events
+and zero swap. Targeted Ruff check and format check also passed in a separate
+bounded unit at an 8,695,808-byte peak. systemd's post-cleanup `MemoryPeak`
+summary reported only 256 KiB for the pytest unit and is not used as the peak;
+the in-unit cgroup sample is the recorded measurement. Fixture transports
+only; no endpoint, source-use hold, captured probe, or protected service was
+accessed or changed.
+
+At 10:33:26, `MemAvailable` was 11,243,335,680 bytes (10.47 GiB),
+`SwapFree` was 9,666,560 bytes (9.22 MiB), and global memory PSI averages
+were zero. User-manager counters remained `high=16,424,562`, `max=730,045`,
+`oom=19`, and `oom_kill=15`; API, Reality, and Reality API remained active
+with restart counts 9/14/0. The gap-detail timer remained inactive.
+
+The scheduled 10:29:08 Continental audit separately exited 1 after 1.443
+CPU seconds with the same 72 pass / 19 warn / 3 fail / 3 unknown result. Its
+failures were non-loopback listeners on `0.0.0.0:8081` and `0.0.0.0:5174`
+and the disabled Echo offsite schedule. No related services/configuration were
+changed; this is separate from memory-pressure evidence.
+
+The short test did not change cgroup OOM counters or PSI, but swap remains
+near exhaustion and no long-duration stability evidence exists. Host status
+remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**; continue only serial,
+offline, resource-capped Frontier work after a fresh admission check.
