@@ -13473,3 +13473,30 @@ broad tests, large replay, concurrent work, and live source probes deferred.
 Incident status is **PARTIALLY CONTAINED / PARTIALLY VERIFIED**. The expanded
 measurements and rollback information are in
 `FRONTIER_MEMORY_PRESSURE_INCIDENT_2026-10-29.md`.
+
+### Arena host-admission follow-up — 2026-10-29 05:22 CET
+
+Reviewed the existing Arena admission and schedule-dispatch gates. The shared
+worker gate serializes launches, checks active jobs, requires 2 GiB plus the
+requested budget in available memory, checks disk and CPU capacity, and reads
+host and `user@1000.service` PSI plus I/O PSI. Missing required pressure data
+denies admission. The schedule gate similarly limits concurrent Arena jobs
+and checks host/user PSI. Frontier replay, timeline, and discovery jobs are
+bounded to 512 MiB, 50% CPU, five minutes, and idle I/O. The existing gate
+does not reject only because swap is occupied; at this sample available RAM
+was 10.79 GiB and memory PSI was zero, so a small isolated test remained
+admissible.
+
+The three targeted existing user-manager admission tests passed **3/3 in
+7.09 seconds** under a 384 MiB soft / 512 MiB hard memory cap, zero swap, and
+20% CPU. They cover cgroup path resolution, pressure-based denial, and
+fail-closed behavior when the PSI source is missing. Post-test available RAM
+was 10.77 GiB, free swap 2,216 kB, host memory PSI zero, and OOM counters
+remained 19/15. API and Reality remained active at restart counts 9/14. No
+code or service configuration changed; no broad test, replay, or live probe ran.
+
+This confirms the current fail-closed gate for the tested path. The host is
+admitted only for serial source-independent work and small bounded fixtures;
+the incident remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**. Keep broad
+work deferred while swap remains full and `oomctl` monitor visibility is
+unresolved.

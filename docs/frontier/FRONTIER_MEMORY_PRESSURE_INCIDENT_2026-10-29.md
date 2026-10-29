@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 05:19 CET |
+| Latest addendum | 2026-10-29 05:22 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Preservation checkpoint | `ac4222f` (`feat(frontier): add held Gemini spot research adapter`) |
@@ -478,3 +478,36 @@ checks after another admission sample. It does not support broad test suites,
 large replays, concurrent research, or live source probes while swap is full
 and OOMD monitor visibility remains unresolved. Incident status remains
 **PARTIALLY CONTAINED / PARTIALLY VERIFIED**.
+
+## Admission review and bounded regression — 2026-10-29 05:22 CET
+
+The existing Arena host gate was reviewed without code changes. It admits one
+worker at a time and checks active job IDs, at least 2 GiB of `MemAvailable`
+plus the requested worker budget, disk reserve, CPU load, host and user-manager
+memory PSI, and I/O PSI. It fails closed when required pressure readings are
+missing. Its thresholds are `some > 10%` or `full > 1%` for host/user memory
+PSI and `some > 20%` for I/O PSI. The scheduled-job gate applies the same
+host/user PSI and single-active-job constraints. Frontier replay, timeline,
+and discovery requests are bounded to a 512 MiB memory limit, 50% CPU quota,
+five minutes maximum wall time, and idle I/O priority. Full swap alone does
+not force rejection when `MemAvailable` and PSI remain healthy; swap is
+retained as context, not misrepresented as current pressure.
+
+Three existing cgroup admission regressions passed (**3/3 in 7.09 seconds**):
+user-manager PSI path resolution, denial under user-manager pressure, and
+fail-closed behavior when the user pressure reading is unavailable. They ran
+serially in a transient scope with `MemoryHigh=384M`, `MemoryMax=512M`,
+`MemorySwapMax=0`, and `CPUQuota=20%`; no new tests were added. Before the
+run, at 05:22:15, `MemAvailable` was 11,318,100 kB, `SwapFree` was 2,216 kB,
+and host memory PSI was zero. At 05:22:35 after the run, `MemAvailable` was
+11,291,496 kB, `SwapFree` remained 2,216 kB, and host memory PSI remained
+zero. User-manager `memory.events` stayed at `oom=19`/`oom_kill=15`. API and
+Reality remained active at restart counts 9/14; the capacity timer remained
+active/waiting and the gap-detail timer inactive. No OOM journal event
+appeared in the checked interval after 05:22.
+
+This targeted check supports the existing admission implementation and
+serial, bounded continuation only. It does not validate the complete scheduler
+or host endurance, and it does not resolve full swap, the OOMD monitor-listing
+mismatch, uncertain historic workload attribution, or the invalid archive
+provenance/inventory evidence.
