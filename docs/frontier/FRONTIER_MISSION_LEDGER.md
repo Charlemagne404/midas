@@ -1,5 +1,31 @@
 # Project Frontier Mission Ledger
 
+## 2026-10-29 18:16 CET — admission policy evidence and scheduled-job attribution
+
+- The scheduled Veritas source-analysis service succeeded at 18:10:44–56,
+  processed a 61-segment batch (40,082 cumulative; none pending), and reached
+  its 256 MiB `MemoryMax` exactly (`MemoryPeak=256 MiB`, zero swap peak). Its
+  30-minute timer imports a frozen campaign runtime. Service, timer, campaign,
+  and evidence were left unchanged.
+- The user-manager `memory.events.max` count increased by 280 during the
+  interval containing that run and then stabilized through 18:16:48. Timing
+  makes source analysis a plausible contributor, but the post-exit leaf event
+  file is unavailable, so these increments are not attributed solely to it.
+  OOM counters stayed 19/15; Reality API local max/oom/kill stayed 5,199/0/0.
+- Research Director completed at 18:15:45 with `WAITING_FOR_FINALIZATION` and
+  no qualified gross candidate. No manual job overlapped the scheduled runs.
+- Added explicit near-full-swap cases to both Arena admission gate test files:
+  18 MiB free of 4 GiB swap, 8 GiB available RAM, zero PSI remains admissible.
+  This records the current policy that swap occupancy alone does not establish
+  active reclaim pressure; no arbitrary reserve threshold was added. Both
+  modules passed **28/28** under a 384/512 MiB high/max, zero-swap, 15%-CPU,
+  64-task, 90-second transient cap. Ruff and Ruff format passed. The test
+  cgroup's printed 256 KiB peak was inconsistent and is not a measurement.
+- At 18:16:48, PSI was zero, `MemAvailable` was 10,872,412 kB, and only
+  18,708 kB swap remained free. User OOM counters remained 19/15 and the
+  `max` counter remained 731,309. Incident status stays **PARTIALLY
+  CONTAINED / PARTIALLY VERIFIED**; keep work serial, fixture-only, and capped.
+
 ## 2026-10-29 18:06 CET — bounded economic verification and pressure recheck
 
 - After pinning same-payoff relationships to exact normalized resolution-rule

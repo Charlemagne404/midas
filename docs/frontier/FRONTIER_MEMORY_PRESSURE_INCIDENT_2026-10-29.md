@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 18:08 CET |
+| Latest addendum | 2026-10-29 18:16 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Pre-incident checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -4438,3 +4438,44 @@ Reality API were active with restart counts 9/14/0; the gap-detail timer was
 inactive and the Reality capacity timer active. This is a two-minute
 follow-up, not evidence of sustained recovery. The next source-analysis timer
 was due at 18:10:23, so no further manual check was started in this interval.
+
+### Scheduled analysis cap contact and bounded admission verification — 2026-10-29 18:16 CET
+
+The scheduled `midas-veritas-source-analysis.service` ran 18:10:44–18:10:56
+and succeeded. It processed 61 segments (40,082 cumulative, no pending
+segments) and reported `awaiting_finalized_campaign_window_end`. systemd
+recorded 9.702 CPU seconds and a 256 MiB memory peak exactly equal to its
+`MemoryMax=256M`; its `MemorySwapMax` is unlimited, though the journal reports
+zero swap peak. This unit imports a frozen campaign runtime and reads finalized
+Reality data. Its timer and campaign remain unchanged.
+
+The user-manager hierarchical `memory.events.max` count rose from 731,029 at
+18:10:45 to 731,309 by 18:13:59, then remained 731,309 at 18:15:13 and
+18:16:48. The timing coincides with the source-analysis run, making it a
+plausible contributor to the increase; the unit's post-exit local event file
+was not retained, so the 280 increments cannot be attributed solely to that
+unit. `oom=19` and `oom_kill=15` did not change. The isolated Reality API's
+local `max=5,199`, `oom=0`, and `oom_kill=0` remained unchanged. This narrows
+recent cgroup-limit activity but does not identify the October 28 global PSI
+initiator.
+
+The already scheduled Veritas Research Director ran 18:15:44–18:15:45 and
+completed successfully, reporting `WAITING_FOR_FINALIZATION`, no qualified
+gross candidate, and no readiness promotion. No manual test overlapped either
+scheduled service.
+
+The bounded Arena admission/scheduling suites passed **28/28 in 27.10
+seconds**, with one existing Starlette/httpx deprecation warning. They ran in
+a transient scope capped at 384 MiB high / 512 MiB max, zero swap, 15% CPU,
+64 tasks, and 90 seconds. A fixture with 18 MiB free of 4 GiB swap, 8 GiB
+available RAM, and zero PSI confirms the existing policy: swap occupancy alone
+does not deny work. The Readiness API already reports swap; no arbitrary
+swap-only threshold was added. systemd's reported 256 KiB test peak is
+inconsistent and is not accepted as a measurement. At 18:16:48, host PSI
+remained zero, `MemAvailable` was 10,872,412 kB, `SwapFree` 18,708 kB, user
+`memory.events` were unchanged, and Reality API current charge was 494,047,232
+bytes. Ruff and Ruff format checks passed for the two changed test files.
+
+No service, timer, protected campaign, Reality collector setting, or archive
+data was changed. This remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**;
+the latest short check supports only serial, capped, fixture-based work.
