@@ -18,6 +18,7 @@ from midas.frontier.adapters.normalization import (
     lifecycle,
     native_json,
     parse_decimal,
+    parse_time,
     provenance,
 )
 from midas.frontier.adapters.transport import HTTPObservation, PublicReadTransport
@@ -122,6 +123,10 @@ class GeminiSpotAdapter(BaseReadOnlyAdapter):
                 "Bounded aggregated public REST levels; per-level timestamps are documented dummy values and ignored",
                 BOOK_DOC,
             ),
+            Capability.PUBLIC_TRADES: (
+                "One bounded recent page after quote currency is established from native symbol details; cursor pagination is not integrated",
+                TRADES_DOC,
+            ),
             Capability.TICK_CONSTRAINTS: (
                 "Gemini quote_increment is preserved as the exact quote-price step",
                 DETAILS_DOC,
@@ -155,10 +160,6 @@ class GeminiSpotAdapter(BaseReadOnlyAdapter):
             Capability.BOOK_UPDATES: (
                 "Incremental WebSocket reconstruction is not implemented",
                 None,
-            ),
-            Capability.PUBLIC_TRADES: (
-                "One bounded recent page after quote currency is established from native symbol details; cursor pagination is not integrated",
-                TRADES_DOC,
             ),
             Capability.PAGINATED_PUBLIC_TRADES: (
                 "Trade pagination is not implemented",
@@ -425,7 +426,7 @@ class GeminiSpotAdapter(BaseReadOnlyAdapter):
         if not quote_currency:
             raise AdapterError(
                 "QUOTE_CURRENCY_UNRESOLVED",
-                "Gemini trade normalization requires a prior source-verified symbol-details result",
+                "Gemini trade normalization requires source-verified quote-currency metadata from symbol details",
             )
         response = await self.transport.get_json(
             f"{BASE}/trades/{native_market_id}", {"limit_trades": limit}
@@ -474,7 +475,9 @@ class GeminiSpotAdapter(BaseReadOnlyAdapter):
                     "Gemini trade row has invalid trade ID, exact decimal price, or amount",
                 )
             if timestamp is None:
-                raise AdapterError("INVALID_TRADE", "Gemini trade timestamp is invalid or inconsistent")
+                raise AdapterError(
+                    "INVALID_TRADE", "Gemini trade timestamp is invalid or inconsistent"
+                )
             if not isinstance(trade_type, str) or trade_type not in {"buy", "sell"}:
                 raise AdapterError("INVALID_TRADE", "Gemini trade side is not buy or sell")
             if row.get("exchange") != "gemini":
@@ -530,11 +533,11 @@ class GeminiSpotAdapter(BaseReadOnlyAdapter):
             or native_market_id != native_market_id.upper()
             or native_market_id not in self.gemini_config.pairs
         ):
-            raise AdapterError("INVALID_MARKET", "Gemini trade symbol is outside its pair allowlist")
-        if type(limit) is not int or not 1 <= limit <= 100:
             raise AdapterError(
-                "INVALID_LIMIT", "Gemini trade page limit must be between 1 and 100"
+                "INVALID_MARKET", "Gemini trade symbol is outside its pair allowlist"
             )
+        if type(limit) is not int or not 1 <= limit <= 100:
+            raise AdapterError("INVALID_LIMIT", "Gemini trade page limit must be between 1 and 100")
 
     @staticmethod
     def _object(response: HTTPObservation, label: str) -> dict[str, Any]:
@@ -562,8 +565,11 @@ def _gemini_trade_timestamp(row: dict[str, Any]) -> datetime | None:
             continue
         value = row[field]
         if not (
-            type(value) is int and value >= 0
-            or isinstance(value, str) and value.isdecimal() and len(value) <= 20
+            type(value) is int
+            and value >= 0
+            or isinstance(value, str)
+            and value.isdecimal()
+            and len(value) <= 20
         ):
             return None
         timestamp = parse_time(value)

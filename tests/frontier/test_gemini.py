@@ -165,7 +165,7 @@ async def test_gemini_recent_trades_preserve_exact_units_side_and_order_offline(
                     "type": "sell",
                     "broken": False,
                 },
-            ]
+            ],
         }
     )
     try:
@@ -238,6 +238,7 @@ async def test_gemini_broken_trade_and_timestamp_disagreement_fail_closed():
     timestamp = int(datetime(2026, 10, 26, 20, 0, tzinfo=UTC).timestamp())
     broken_adapter, _, broken_client = _adapter(
         {
+            "/v1/symbols/details/BTCUSD": _details(),
             "/v1/trades/BTCUSD": [
                 {
                     "timestampms": timestamp * 1000,
@@ -248,10 +249,12 @@ async def test_gemini_broken_trade_and_timestamp_disagreement_fail_closed():
                     "type": "buy",
                     "broken": True,
                 }
-            ]
+            ],
         }
     )
     try:
+        await broken_adapter.discover_markets(limit=1)
+        broken_adapter.take_captures()
         with pytest.raises(AdapterError, match="broken trades are excluded"):
             await broken_adapter.fetch_trades("BTCUSD", limit=1)
         assert len(broken_adapter.take_captures()) == 1
@@ -260,6 +263,7 @@ async def test_gemini_broken_trade_and_timestamp_disagreement_fail_closed():
 
     timestamp_adapter, _, timestamp_client = _adapter(
         {
+            "/v1/symbols/details/BTCUSD": _details(),
             "/v1/trades/BTCUSD": [
                 {
                     "timestamp": timestamp,
@@ -271,10 +275,12 @@ async def test_gemini_broken_trade_and_timestamp_disagreement_fail_closed():
                     "type": "buy",
                     "broken": False,
                 }
-            ]
+            ],
         }
     )
     try:
+        await timestamp_adapter.discover_markets(limit=1)
+        timestamp_adapter.take_captures()
         with pytest.raises(AdapterError, match="timestamp is invalid or inconsistent"):
             await timestamp_adapter.fetch_trades("BTCUSD", limit=1)
     finally:
@@ -325,7 +331,7 @@ async def test_gemini_rejects_perpetual_symbol_and_non_string_book_decimals():
 
 
 @pytest.mark.asyncio
-async def test_gemini_hold_blocks_real_transport_before_request_and_trades_are_unsupported():
+async def test_gemini_source_hold_blocks_real_transport_before_request():
     adapter = GeminiSpotAdapter()
     try:
         assert adapter.config.probe_policy_block_reason == GEMINI_SOURCE_USE_HOLD_REASON
@@ -335,6 +341,7 @@ async def test_gemini_hold_blocks_real_transport_before_request_and_trades_are_u
         assert adapter.transport.request_count == 0
         assert adapter.capabilities.supports(Capability.PUBLIC_TRADES)
         assert not adapter.capabilities.supports(Capability.PAGINATED_PUBLIC_TRADES)
+        adapter._quote_currency_by_pair["BTCUSD"] = "USD"
         with pytest.raises(AdapterError, match="source use remains held"):
             await adapter.fetch_trades("BTCUSD", limit=1)
         assert adapter.transport.request_count == 0

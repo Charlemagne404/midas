@@ -106,6 +106,7 @@ class TradeFixtureCase:
     timestamp_semantics: str
     supports_paginated_trades: bool
     fixture_only_transport: bool = False
+    prerequisite_responses: dict[str, Any] | None = None
 
 
 class TradeAdapter(Protocol):
@@ -276,6 +277,21 @@ async def test_five_trade_adapters_share_capture_contract_and_keep_native_semant
             ),
             supports_paginated_trades=False,
             fixture_only_transport=True,
+            prerequisite_responses={
+                "/v1/symbols/details/BTCUSD": {
+                    "symbol": "btcusd",
+                    "base_currency": "BTC",
+                    "quote_currency": "USD",
+                    "tick_size": 1e-8,
+                    "quote_increment": 0.01,
+                    "min_order_size": "0.00001",
+                    "status": "open",
+                    "wrap_enabled": False,
+                    "product_type": "spot",
+                    "contract_type": "vanilla",
+                    "contract_price_currency": "USD",
+                }
+            },
         ),
     )
 
@@ -291,10 +307,12 @@ async def test_five_trade_adapters_share_capture_contract_and_keep_native_semant
             request: httpx.Request,
             *,
             payload: Any = case.payload,
+            prerequisite_responses: dict[str, Any] | None = case.prerequisite_responses,
             request_log: list[httpx.Request] = requests,
         ) -> httpx.Response:
             request_log.append(request)
-            return httpx.Response(200, json=payload, request=request)
+            response_payload = (prerequisite_responses or {}).get(request.url.path, payload)
+            return httpx.Response(200, json=response_payload, request=request)
 
         client = httpx.AsyncClient(transport=httpx.MockTransport(handler))
         transport_type = (
@@ -336,8 +354,13 @@ async def test_five_trade_adapters_share_capture_contract_and_keep_native_semant
         assert trade.provenance.response_received_at_utc == capture.received_at_utc
         assert trade.provenance.request_elapsed_monotonic_ns == capture.request_elapsed_monotonic_ns
 
-        assert len(requests) == 1
-        request = requests[0]
+        expected_request_count = 2 if case.venue == Venue.GEMINI_SPOT else 1
+        assert len(requests) == expected_request_count
+        if case.venue == Venue.GEMINI_SPOT:
+            assert requests[0].url.path == "/v1/symbols/details/BTCUSD"
+            request = requests[1]
+        else:
+            request = requests[0]
         assert request.method == "GET"
         assert request.url.path.endswith(case.path_suffix)
         assert request.url.params[case.query_name] == case.query_value
@@ -358,15 +381,13 @@ async def test_five_trade_adapters_share_capture_contract_and_keep_native_semant
         observed[case.venue] = trade
 
     stored_rows = store.observations(kind="public_trades", limit=10)
-    assert len(stored_rows) == 4
+    assert len(stored_rows) == 5
     for row in stored_rows:
         batch = TradeBatch.model_validate(row["normalized"])
         venue = Venue(str(row["venue"]))
         assert row["observation_id"] == stored_observation_ids[venue]
         assert batch.venue == venue
         assert all(trade.provenance.raw_sha256 == row["raw_sha256"] for trade in batch.trades)
-    assert len(stored_rows) == 5
-
     polymarket = observed[Venue.POLYMARKET]
     assert polymarket.native_instrument_id == "1234567890"
     assert polymarket.quote_currency == "USDC"
