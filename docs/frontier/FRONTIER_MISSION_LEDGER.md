@@ -12547,3 +12547,30 @@ unknown, so defer further disk-heavy verification until it eases.
 | Current Frontier Python suite | COMPLETE AND VERIFIED | 648/648 on current tree under explicit cgroup bounds; does not cover all repository legacy, frontend/browser, endurance, or live-source requirements. |
 | Memory/OOM effect of bounded suite | PARTIALLY VERIFIED | No memory PSI, swap, OOM, or service restart increase was observed. |
 | I/O headroom after suite | PARTIALLY VERIFIED | Short-window PSI rose; cause unknown. Defer more disk-heavy checks pending recovery. |
+
+## Post-incident frontend verification — 2026-10-29 02:26 CET
+
+The first all-web Vitest run under a 25% CPU quota reached 34 passing tests;
+13 hit the default five-second timeout. A command-line-only retry with one
+worker, 50% CPU, and a 15-second per-test timeout passed **47/47 across nine
+files**. It peaked at 286.7 MiB, used no swap, consumed 27.508 CPU seconds,
+and finished in 56.916 seconds. No test or source configuration was changed.
+
+The default Playwright browser suite ran 20 cases using one worker and
+isolated loopback services and temporary stores. **17 passed; 3 were skipped**
+(the two opt-in seeded Frontier cases and the opt-in captured-evidence case).
+The captured and synthetic-seeded modes were not enabled. The transient
+service was capped at 1,280 MiB, zero swap, 50% CPU, 192 tasks, and 180
+seconds; it finished in 1:32.623 with a 744.5 MiB peak and 44.398 CPU seconds.
+Fixture stores and artifacts are retained in the unique `/tmp` roots named in
+the incident report; no existing research store or held capture was touched.
+
+After the run, host memory PSI remained zero, MemAvailable was 10.37 GB, and
+host swap use was 3.09 GB. User-manager `oom`/`oom_kill` counters remained
+19/15; the user-manager PSI avg300 was `some=0.98%`, `full=0.69%`. API and
+Reality remained active with restart counts 9/14. API had about 81 MiB below
+`MemoryHigh`. No oomd or kernel OOM was observed after the 23:43:24 Oct 28
+kill. This supports further bounded offline verification, not endurance or
+incident closure. Frontier remains **PARTIALLY VERIFIED**; live cross-venue
+research, captured browser evidence, broad MIDAS regression, endurance,
+protected recovery, and deployment remain open or gated.

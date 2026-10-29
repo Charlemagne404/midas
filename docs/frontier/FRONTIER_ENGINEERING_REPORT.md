@@ -2,7 +2,7 @@
 
 **Report date:** 2026-10-29
 
-## Current completion matrix — 2026-10-29 01:54 CET
+## Current completion matrix — 2026-10-29 02:26 CET
 
 This is a current evidence classification, not a final completion claim. The
 dated implementation records below remain the detailed evidence; the
@@ -21,9 +21,9 @@ current host gate.
 | Laboratory/Arena comparisons and bounded orchestration | PARTIALLY VERIFIED | Arena admission and finite scheduling regressions pass; a Laboratory resource-denial case passes with a harness cap above its 722,894,848-byte capacity precondition. Full endurance evidence remains incomplete. |
 | User-cgroup-aware workload admission | IMPLEMENTED, BOUNDED VALIDATION PASSED | Central Arena admission (15), finite schedules (12), and the Laboratory denial case (1) pass fixture tests using user-manager pressure; no runtime deployment occurred. |
 | Reality capacity inventory bounds | PARTIALLY VERIFIED | Isolated candidate tests pass 5/5; candidate code remains undeployed. The separate monitor has one measured scheduled run at 134,225,920 bytes under `MemoryHigh=160M`, `MemoryMax=192M`, and zero swap, plus a second successful scheduled run whose peak was not retained. |
-| Native Frontier dashboard | PARTIALLY VERIFIED | The graph/evidence UI test and all 9 UI cases pass across the default-timeout run and a 15-second retry for its two slow fixtures. Typecheck/build and three isolated Playwright smoke/replay/Arena journeys pass; the full browser suite remains unverified. |
-| Host reliability containment | PARTIALLY VERIFIED | The auxiliary five-minute gap-detail timer is disabled; scheduled source-analysis and capacity jobs completed at 01:40 and 01:46. At 01:54 the API was 1.07 MiB below `MemoryHigh` after varying between 0.49 and 1.41 MiB in recent samples. PSI was zero and no OOM kill has been logged since 23:43 CET; the historical pressure initiator remains unknown. |
-| Broad regressions, resource endurance, and performance acceptance | DEFERRED | Several targeted suites pass under explicit memory, swap, CPU, task, and wall-time limits; the full repository suite, endurance, and broad performance tests remain deferred. |
+| Native Frontier dashboard | PARTIALLY VERIFIED | Current Vitest passes 47/47 under a bounded single-worker CPU retry. Default Playwright passes 17/20; three opt-in seeded/captured cases were skipped. The captured-evidence browser journey remains unvalidated. |
+| Host reliability containment | PARTIALLY VERIFIED | The five-minute gap-detail timer remains disabled and the capacity monitor uses a reversible 160 MiB/192 MiB/zero-swap bound. API and Reality stayed active through bounded Python, Vitest, and Playwright runs; at 02:26 API had 81.4 MiB below `MemoryHigh`, host memory PSI was zero, and OOM counters were unchanged. The historical pressure initiator and endurance behavior remain unknown. |
+| Broad regressions, resource endurance, and performance acceptance | DEFERRED | Current Frontier Python passed 648/648, web Vitest passed 47/47, and default Playwright passed 17 with 3 opt-in skips under explicit limits; full MIDAS regression, endurance, and broad performance tests remain deferred. |
 | Live multi-venue source authorization and findings | BLOCKED | Kalshi, Kraken, and Coinbase retained research remain held; the worktree Polymarket probe flag is off. |
 | Production integration/deployment | DEFERRED | Frontier remains isolated; no protected service transition occurred. |
 | Project Frontier overall | PARTIALLY VERIFIED | The engine is substantial, but live cross-venue science, broad verification, recovery, endurance, and deployment gates remain open. |
@@ -13238,3 +13238,39 @@ Defer additional disk-heavy tests until it subsides. This completes the
 current Frontier Python suite only; broader MIDAS regressions, frontend and
 browser suites, live cross-venue validation, endurance, and deployment remain
 open.
+
+## Reliability interruption: browser verification — 2026-10-29 02:26 CET
+
+The default web Vitest run under a 25% CPU quota produced 34 passes and 13
+five-second test timeouts. Retrying with one worker, 50% CPU, and a
+command-line 15-second test timeout passed **47/47 tests across nine files**.
+The retry used `MemoryHigh=768M`, `MemoryMax=896M`, zero swap, and a
+180-second wall limit; it completed in 56.916 seconds with a 286.7 MiB cgroup
+peak and 27.508 CPU seconds. No test code or checked-in timeout configuration
+changed.
+
+The default Playwright suite completed **17/20**, with three explicit opt-in
+cases skipped (two seeded Frontier journeys and one captured-evidence
+journey). It used one worker, loopback-only API/UI services, and a dedicated
+temporary root and artifact directory. The bounded service completed in
+1:32.623 with a 744.5 MiB peak, 44.398 CPU seconds, and zero swap. No public
+venue probe was enabled; the captured-evidence fixture was not read. Prior
+fixture-backed seeded browser passes exist, but this run does not count them
+as current. The captured-evidence journey remains intentionally unrun while
+its source-retention status is held.
+
+After both runs, host memory PSI was zero, available memory was 10.37 GB, and
+swap use was 3.09 GB. User-manager `max=728,363`, `oom=19`, and `oom_kill=15`
+were unchanged; API and Reality remained active with restart counts 9/14. No
+oomd or kernel OOM occurred after the 23:43:24 Oct 28 kill. API
+`MemoryHigh` headroom was about 81 MiB. These observations establish that the
+two bounded frontend runs did not recreate the incident in this window; they
+do not demonstrate endurance or identify the historical pressure initiator.
+
+| Verification item | Status | Evidence / remaining limit |
+| --- | --- | --- |
+| Current Frontier Python suite | COMPLETE AND VERIFIED | 648/648 on the current tree under the incident resource gate. |
+| Current web Vitest suite | COMPLETE AND VERIFIED | 47/47; retry used one worker and a command-line timeout to account for the 50% CPU share. |
+| Default Playwright suite | PARTIALLY VERIFIED | 17 pass, 3 opt-in cases skipped; no live probes; capture-backed browser view remains unvalidated. |
+| Host response during bounded frontend suites | PARTIALLY VERIFIED | No memory PSI, test-unit swap, OOM, or protected-service restart increase; only a short observation window. |
+| Overall Frontier acceptance | PARTIALLY VERIFIED | Live multi-venue research, full legacy regression, endurance, protected recovery, and deployment remain open. |

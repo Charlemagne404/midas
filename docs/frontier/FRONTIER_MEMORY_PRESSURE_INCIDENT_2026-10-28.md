@@ -2,7 +2,8 @@
 
 **Incident date:** 2026-10-28 (CET)
 
-**Checkpoint captured:** 2026-10-29 01:54 CET
+**Initial checkpoint:** 2026-10-29 01:54 CET; follow-up observations through
+02:26 CET are appended below.
 
 **Scope:** Host reliability interruption during Project Frontier
 
@@ -1140,3 +1141,52 @@ after 23:43:24 on Oct 28. I/O PSI after the run was `some avg10=2.29%`,
 The cause of that short I/O-pressure increase is not assigned. Defer further
 disk-heavy suites and persistence tests until I/O PSI eases. This is bounded
 validation, not endurance or incident closure.
+
+## Bounded web regression and browser observation — 2026-10-29 02:26 CET
+
+The first complete Vitest invocation used a 25% CPU quota and the configured
+five-second per-test timeout. It ended with 34 passed and 13 timed out; all
+reported failures were timeout errors, with no assertion, import, or process
+failure. A single-worker retry used a 50% CPU quota, a 15-second invocation
+timeout, `MemoryHigh=768M`, `MemoryMax=896M`, zero swap, 64 tasks, and a
+180-second wall limit. It passed **47/47 across nine files** in 56.916 seconds
+with a 286.7 MiB cgroup peak, 27.508 CPU seconds, and zero swap. The timeout
+override was command-line only; test code and repository configuration were
+not changed.
+
+The default Playwright suite then ran one worker against loopback-only Vite and
+API servers, with isolated database, Frontier, and Arena roots under
+`/tmp/midas-browser-frontier-20261029-0226` and artifacts under
+`/tmp/midas-frontier-e2e-artifacts-20261029-0226`. It reported **17 passed and
+3 skipped** out of 20. The skips were the two explicitly seeded Frontier tests
+and the captured-evidence test, none of which were enabled in this run. No
+public exchange probes were enabled. The transient service used
+`MemoryHigh=1G`, `MemoryMax=1280M`, zero swap, 50% CPU, 192 tasks, and a
+180-second wall limit. It completed in 1:32.623 with a 744.5 MiB peak, 44.398
+CPU seconds, and zero swap. Temporary fixture databases and synthetic
+recordings remain in the dedicated `/tmp` roots; no project data was touched.
+
+At 02:26 CET, host `MemAvailable` was 10,371,465,216 bytes and host memory PSI
+averages were zero. Swap use was 3,313,573,888 bytes. User-manager PSI was
+`some=0.20%/0.55%/0.98%` and `full=0.04%/0.16%/0.69%` for avg10/avg60/avg300.
+Its counters remained `high=16,416,891`, `max=728,363`, `oom=19`, and
+`oom_kill=15`; no new oomd or kernel OOM event appeared after the 23:43:24
+Oct 28 kill. API and Reality remained active with restart counts 9 and 14.
+API was at 1,525,174,272 / 1,610,612,736 bytes `MemoryHigh` (about 81.4 MiB
+headroom); Reality was at 222,257,152 bytes. The gap-detail timer remains
+disabled. The scheduled capacity monitor's effective limits remain 160 MiB
+`MemoryHigh`, 192 MiB `MemoryMax`, and zero swap.
+
+These bounded runs did not raise memory PSI, use test-unit swap, change OOM
+counters, or restart the protected services. They support continued bounded
+offline work. They do not explain the historical system-wide pressure source,
+clear the host's high swap occupancy, validate endurance, or resolve the
+invalid Reality archive manifest/inventory. Keep the gap-detail timer stopped
+until its workload and resource budget are reviewed; keep public probes,
+profiling, and batch research disabled.
+
+At 02:28 CET, the sampled user and system managers also showed the MIDAS API
+and Reality collector/API, Continental tailnet/auth and website services,
+Echo production and staging, Caddy, RustDesk, and `ssh.socket` active. This
+confirms those services were available after the bounded checks; it is a
+point-in-time service-state check, not an uptime guarantee.
