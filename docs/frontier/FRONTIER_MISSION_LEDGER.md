@@ -15970,3 +15970,35 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
 - The edit is source-only; no service, API behavior, timer, market source, or
   evidence store changed. Continue source-only work; do not run tests until
   limit-event counters stabilize and Reality API headroom improves.
+
+## 2026-10-29 17:32 CET — incident admission and bounded continuation
+
+- Rechecked the isolated Frontier branch `codex/frontier-20261026` at
+  `c1f27b7`. Tracked files are clean before this ledger update; the pre-existing
+  untracked `data/frontier-public-probes/` directory remains untouched.
+- The persistent Reality API bound is active without a service restart:
+  576 MiB high / 640 MiB max / zero swap. At 17:31:31 it used 542,195,712
+  bytes; local `max=5,199`, `oom=0`, and `oom_kill=0`. The API, protected
+  Reality collector, and MIDAS API remained active at restart counts 0/14/9.
+- Host memory PSI remained zero with 11,330,150,400 bytes available, but only
+  19,013,632 bytes of swap were free. The unbounded user-manager cgroup held
+  10,998,468,608 bytes and 2,853,588,992 bytes swap; its `high/max/oom/kill`
+  counters were 16,437,792 / 730,822 / 19 / 15. Current `memory.stat` showed
+  about 2.39 GB anonymous, 7.42 GB file-backed, and 1.17 GB kernel memory.
+  These are measured cgroup charges, not attribution of the historic OOMD
+  trigger to one process.
+- The auxiliary gap-detail replay timer remains inactive/disabled; its unit is
+  failed from the previous OOMD kill. The capacity timer remains active on its
+  30-minute schedule. MIDAS, Reality, Reality API, Continental contact/status,
+  Echo production/staging, RustDesk, SSH socket activation, and systemd-oomd
+  were active. No OOMD or kernel OOM entry appeared after 17:25.
+- Previously completed bounded Frontier checks in this continuation include
+  Kraken candle API **4/4**, panel **4/4**, strict targeted TypeScript, and
+  transport boundary fixtures **20/20**, all under explicit zero-swap
+  transient limits; no public source request was made. No new test, build,
+  replay, or probe was running during this sample.
+- Admission remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**. Resume only
+  serial, small fixture work with fresh pressure/counter checks and a bounded
+  transient scope. Keep broad builds, browser suites, replay batches, and live
+  source probes deferred; do not change the user-manager limits or protected
+  collector.

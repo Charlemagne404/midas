@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 17:30 CET |
+| Latest addendum | 2026-10-29 17:32 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Pre-incident checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -4219,3 +4219,42 @@ The Reality API was at 540,794,880 / 671,088,640 bytes. No systemd-oomd
 entry appeared after 17:29. This additional short fixture interval supports
 bounded continuation only; nearly full swap and historical OOMD source
 attribution remain unresolved.
+
+### User-manager and service recheck — 2026-10-29 17:32 CET
+
+At 17:31:31, host memory PSI remained zero. `MemAvailable` was
+11,330,150,400 bytes (about 10.55 GiB) and only 19,013,632 bytes of the
+4,294,963,200-byte swap area were free. The user-manager cgroup held
+10,998,468,608 bytes current memory, had a 13,992,292,352-byte peak, and
+used 2,853,588,992 bytes of swap. It has no `MemoryHigh`, `MemoryMax`, or
+`MemorySwapMax`; `ManagedOOMMemoryPressure=kill` remains configured with the
+50% threshold. Its hierarchical counters were `high=16,437,792`,
+`max=730,822`, `oom=19`, and `oom_kill=15`, unchanged from the earlier
+post-adjustment sample.
+
+The user-manager memory composition was approximately 2.39 GB anonymous,
+7.42 GB file-backed, and 1.17 GB kernel memory. The GNOME Terminal slice held
+5.38 GB current and 1.65 GB swap; the sampled active terminal scope held 2.83
+GB current, mainly file-backed pages. These are current charged-memory
+measurements, not proof of which process or dataset initiated the October 28
+pressure episodes. No limit was added to the user hierarchy, and interactive
+scopes were left untouched.
+
+The protected Reality collector, MIDAS API, and Reality API remained active
+at restart counts 14, 9, and 0. Reality API was at 542,195,712 / 671,088,640
+bytes, with `memory.events.local max=5,199`, `oom=0`, and `oom_kill=0`. The
+recent 576 MiB high / 640 MiB max / zero-swap drop-in is active. The gap-detail
+timer remains inactive and disabled; its service is failed from its previous
+OOMD kill. The Reality capacity timer is active, with its last run at 17:19:53
+and next run scheduled at 17:49:53. Continental contact/status services,
+Echo production/staging, RustDesk, SSH socket activation, and systemd-oomd
+were active. No OOMD journal entry or kernel OOM match appeared since 17:25.
+
+This sample supports **serial bounded fixture work only**: current PSI is
+zero and local API limit events have not advanced since the targeted bound,
+but the aggregate user manager remains large and unbounded, swap is nearly
+full, and the observation window is short. Keep tests in a single transient
+scope with explicit memory, CPU, task, swap, and runtime limits; defer builds,
+browser suites, broad replay, and live source probes. No additional test or
+service action was in progress at the sample time. The incident remains
+**PARTIALLY CONTAINED / PARTIALLY VERIFIED**, not resolved.
