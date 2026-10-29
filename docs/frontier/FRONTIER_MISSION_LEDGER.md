@@ -13312,7 +13312,7 @@ this short quiet interval is not a stability claim.
 capped fixture checks. Keep broad suites, source probes, large replays, and
 parallel analyses deferred. Preserve `data/frontier-public-probes/` untouched.
 
-Working tree at checkpoint: `docs/frontier/FRONTIER_ENGINEERING_REPORT.md`,
-`docs/frontier/FRONTIER_MEMORY_PRESSURE_INCIDENT_2026-10-29.md`, and this
-ledger are pending commit; the untracked probe directory is user evidence and
-must not be staged.
+The report, incident entry, and ledger checkpoint above were committed as
+`ab24391` (`docs(frontier): record economics and host follow-up`). The
+untracked `data/frontier-public-probes/` directory remains untouched and was
+not staged.
