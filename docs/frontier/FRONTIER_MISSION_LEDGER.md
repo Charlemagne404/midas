@@ -14833,3 +14833,14 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
 - **Status:** Market venue binding is fixture-verified. Incident remains
   **PARTIALLY CONTAINED / PARTIALLY VERIFIED**; continue serial offline Frontier
   work only, with broad suites, live probes, and deployment deferred.
+
+## 2026-10-29 13:09 CET — verify capacity rollback precedence
+
+- Read the persistent Reality-capacity drop-in and the user manager's runtime
+  resource-control drop-ins. The persistent 160/192 MiB high/max values
+  override runtime High=128 MiB and Max=192 MiB; both set zero swap. The
+  documented rollback file (Max=128 MiB, SwapMax=0) therefore restores the
+  former effective High=128 MiB and Max=128 MiB after daemon reload.
+- No configuration was modified and no service was reloaded or restarted.
+- **Status:** Rollback instructions verified by readback; incident remains
+  partially contained, with swap nearly full and host workload attribution open.

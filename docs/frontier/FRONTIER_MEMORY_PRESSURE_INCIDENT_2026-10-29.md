@@ -4,7 +4,7 @@
 | --- | --- |
 | Host | Ubuntu, 16.67 GB RAM, 4.29 GB swap |
 | Initial sample | 2026-10-29 04:58 CET |
-| Latest addendum | 2026-10-29 13:08 CET |
+| Latest addendum | 2026-10-29 13:09 CET |
 | Frontier worktree | `/home/charlie/midas-frontier` |
 | Branch | `codex/frontier-20261026` |
 | Pre-incident checkpoint | `checkpoint/frontier-pre-memory-incident-20261029` (`a8fbcd7`) |
@@ -2878,3 +2878,14 @@ risk, global workload attribution, or archive integrity uncertainty.
 **Status:** Incident remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**.
 Frontier can continue only through serial offline work with explicit resource
 bounds. Broad suites, probes, and deployment remain deferred.
+
+## Rollback-path readback — 2026-10-29 13:09 CET
+
+Read-only inspection confirmed that the persistent
+`90-frontier-memory-bound.conf` overrides the user manager's runtime
+`50-MemoryHigh.conf`: the persistent values are 160/192 MiB high/max, while the
+runtime fallback is 128 MiB high, 192 MiB max, and zero swap. Replacing the
+persistent file with the documented `MemoryMax=128M` and `MemorySwapMax=0`
+content, then reloading, restores the previous effective 128 MiB high/max
+limit. No service configuration or runtime limit was changed during this
+cross-check.
