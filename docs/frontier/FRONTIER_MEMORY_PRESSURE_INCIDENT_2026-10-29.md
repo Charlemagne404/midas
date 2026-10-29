@@ -2721,3 +2721,36 @@ and the separate invalid archive-manifest/provenance warnings remain open.
 Frontier may continue only as serial, offline work after fresh admission
 samples; public probes, broad suites, and production deployment remain
 deferred.
+
+## Scheduled capacity run — 2026-10-29 12:49 CET
+
+The existing 30-minute `midas-reality-capacity.timer` fired at 12:49:00 and
+the service exited successfully at 12:49:07. systemd recorded a **130.5 MiB
+memory peak**, **zero swap peak**, and 6.556 CPU seconds. The peak was below
+the configured 160 MiB `MemoryHigh` and 192 MiB `MemoryMax`; the timer returned
+to `active (waiting)` for its 13:19 run. This is one successful bounded run
+under the revised limit, not endurance evidence. No service or timer was
+manually started, stopped, or reconfigured for this validation.
+
+After completion, the host still had about 10 GiB `MemAvailable`, 14 MiB free
+swap, and zero memory PSI through avg300. User-slice OOM counters remained
+unchanged at `oom=19` / `oom_kill=15`; the checked OOMd and kernel journals
+returned no new kill records since 12:45. MIDAS API, Reality, Reality API,
+Continental contact/status/cloud services, Continental's tailnet and ID-auth
+user services, Echo production/staging, Headscale, RustDesk, and the SSH
+socket were active. API and Reality restart counters remained at 9 and 14.
+
+The capacity report written by the scheduled run still reports
+`UNVERIFIED_MANIFEST_SIZE_LIMIT`, `archive_manifest_provenance_valid=null`,
+and `ARCHIVE_MANIFEST_SIZE_LIMIT`, `ARCHIVE_INVENTORY_UNVERIFIED`, and
+`ARCHIVE_CAPACITY_UNKNOWN`. No archive manifest, recording, or historical
+research evidence was changed. This remains a separate data-integrity and
+capacity uncertainty; the successful memory-bound run does not validate the
+archive or establish off-host redundancy.
+
+**Current disposition:** Partially contained and partially verified. The
+observed capacity workload fits the revised bound in this scheduled run, and
+critical services were active in the checked scopes. Full swap and the
+unidentified initiating global workload mix remain open. Continue Frontier
+only with serial offline work and fresh admission samples; broad suites, live
+probes, and production deployment remain deferred.

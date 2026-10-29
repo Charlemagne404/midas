@@ -14728,3 +14728,33 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
 - **Status:** Fixture coverage verifies parent existence and semantic match
   for Polymarket event replay. Production-store/live validation remains
   pending; continue only serial bounded offline work.
+
+## 2026-10-29 12:49 CET — verify Kraken replay market bindings
+
+- Commit `0718fb1` makes persisted Kraken replay resolve each frame's bound
+  observation and require a Kraken instrument-metadata market for the same
+  native spot pair with exactly one matching instrument. Fixture requests
+  rehashed to a missing observation, a stream-frame row, and valid unrelated
+  ETH/USD metadata all fail closed; the valid BTC/USD capture remains
+  deterministic. Architecture and operations docs now describe the binding
+  check.
+- The focused API test passed **1/1 in 4.61 s** under a 512 MiB high / 640 MiB
+  max, zero-swap, 20%-CPU, 128-task transient scope. Ruff and formatting passed.
+  No network or production store was used.
+- At 12:45, PSI was zero, `MemAvailable` about 10 GiB, swap free about 14 MiB,
+  and user-slice OOM counters unchanged. At 12:49 the existing capacity timer
+  completed successfully with a 130.5 MiB memory peak, zero swap peak, and
+  6.556 CPU seconds under its 160 MiB high / 192 MiB max bound; it returned to
+  waiting for 13:19. After that run, PSI and OOM counters remained unchanged.
+  MIDAS API, Reality, Reality API, Continental contact/status/cloud and its
+  tailnet/ID-auth services, Echo production/staging, Headscale, RustDesk, and
+  SSH were active in their correct user/system scopes.
+- The latest capacity artifact still labels archive manifest provenance and
+  inventory unverified and archive capacity unknown. No archive or historical
+  evidence was modified. Full swap, root attribution for the initiating global
+  pressure, and long-window recovery remain unresolved; OOMd containment is
+  not declared complete.
+- **Status:** Resume Frontier only as serial, bounded, offline development
+  after fresh host admission samples. Broad suites, live probes, and production
+  deployment remain deferred. Host incident disposition remains
+  **PARTIALLY CONTAINED / PARTIALLY VERIFIED**.
