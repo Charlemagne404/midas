@@ -14216,3 +14216,22 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
   no service state or configuration was changed. Continue only after the
   audit completes and a fresh resource/timer admission passes. Host incident
   remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**.
+
+## 2026-10-29 10:14 CET — scheduled audit completed with known findings
+
+- The scheduled read-only `continental-infrastructure-audit.service` ran at
+  10:14:04 and exited 1 after 1.526 CPU seconds. It reported **72 pass, 19
+  warn, 3 fail, 3 unknown**. The failures repeat the previously observed
+  non-loopback listeners on `0.0.0.0:8081` and `0.0.0.0:5174`, plus the
+  disabled Echo offsite schedule. This is a separate pre-existing
+  infrastructure audit result, not an OOM or Frontier side effect. No
+  Continental or Echo service/configuration was changed.
+- At 10:14:29, memory PSI was zero, `MemAvailable` was 11,318,046,720 bytes
+  (about 10.54 GiB), and `SwapFree` was 9,637,888 bytes (about 9.19 MiB).
+  User-manager OOM counters stayed at 19/15/0 and no kernel/systemd-oomd kill
+  appeared in the preceding 30 minutes. API/Reality/Reality API remained
+  active at restart counts 9/14/0; Continental user services, Echo archive
+  and staging, RustDesk, SSH, and systemd-oomd were active.
+- The audit completed after the Gemini fixtures and did not overlap them.
+  Proceed only after fresh admission around the next scheduled research job;
+  host incident remains **PARTIALLY CONTAINED / PARTIALLY VERIFIED**.

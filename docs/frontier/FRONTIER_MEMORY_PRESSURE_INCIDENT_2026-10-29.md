@@ -2056,3 +2056,12 @@ the prior 30 minutes. API, Reality, and Reality API remained active at
 restart counts 9/14/0. The test used temporary local state and made no
 external request or configuration change. The next scheduled Continental
 audit was due at 10:13:54; wait for it to complete before further work.
+
+The scheduled Continental audit completed at 10:14:05 with `Result=exit-code`
+and reported 72 pass, 19 warnings, 3 failures, and 3 unknowns. Its failures
+were the previously recorded unexpected non-loopback listeners on
+`0.0.0.0:8081` and `0.0.0.0:5174`, plus the disabled Echo offsite schedule.
+It consumed 1.526 CPU seconds; memory PSI was zero and the user-manager OOM
+counters did not change. This read-only audit result is separate from the
+memory incident. Continental, Echo, remote-access, and protected MIDAS
+services were not changed.

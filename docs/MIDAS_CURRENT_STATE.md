@@ -3996,3 +3996,9 @@ Starlette/httpx deprecation warning appeared. At 10:13:28 host PSI remained
 zero, 10.54 GiB RAM was available, swap remained 99.8% occupied, and user
 manager OOM counters stayed at 19/15/0. API/Reality/Reality API remained
 active with restart counts 9/14/0.
+
+The scheduled Continental read-only audit completed at 10:14:05 with 72 pass,
+19 warnings, 3 failures, and 3 unknowns. It repeated the known findings for
+unexpected listeners on `0.0.0.0:8081` and `0.0.0.0:5174` and the disabled
+Echo offsite schedule; no Continental or Echo setting was changed. The audit
+was separate from Frontier and had no accompanying PSI or OOM-counter change.
