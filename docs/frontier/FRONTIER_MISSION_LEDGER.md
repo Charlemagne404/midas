@@ -15386,3 +15386,18 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
 - **Status:** current service footprint is clearer, but it does not prove
   historical causation or sustained recovery. Continue only serial, offline
   Frontier work under transient resource bounds.
+
+## 2026-10-29 15:24 CET — price-history replay evidence audit
+
+- Audited the current E2E sources and recorded results. `frontier.spec.ts`
+  contains the explicit-user-action Polymarket price-history capture and
+  replay journey; `frontier.seeded.spec.ts` exercises persisted pagination,
+  multi-series replay, hashes, and lineage against 21 deterministic records
+  in an isolated local API/store. The two seeded journeys are recorded as
+  passing 2/2 with no source probes.
+- Corrected the current completion matrix: fixture-backed historical
+  price-history replay is verified, while live-source UI capture,
+  production-store validation, and broad integration remain open. No test or
+  external request was run in this audit.
+- **Status:** this clarifies evidence scope; it does not advance live-source
+  or production acceptance. Keep source-use and deployment gates unchanged.
