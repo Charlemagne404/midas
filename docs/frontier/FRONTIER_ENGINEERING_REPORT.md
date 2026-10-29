@@ -16713,3 +16713,5 @@ of swap free; host PSI remained low and no OOM count changed, but the parent
 test. The transient runner again reported an implausible 256 KiB memory peak.
 No live source, service, or stored evidence was touched. The typecheck remains
 pending a fresh resource-admission window.
+This UI contract checkpoint is commit `8177bdf` on
+`codex/frontier-20261026`.

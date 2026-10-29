@@ -16659,3 +16659,5 @@ fresh checks; do not run broad suites, replay, live probes, or deployment.
 - **Files:** `apps/web/src/Frontier.tsx` and `Frontier.test.tsx`; this entry and
   the engineering/incident reports. The untracked public-probe directory is
   unchanged. No live source, production service, or stored evidence was used.
+- **Code checkpoint:** `8177bdf` (`fix(frontier): type Polymarket replay events accurately`)
+  on `codex/frontier-20261026`.
