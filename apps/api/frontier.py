@@ -2981,6 +2981,75 @@ def router(
                     },
                 ) from error
 
+    @api.get("/polymarket/book-updates")
+    async def polymarket_book_update_observations(
+        limit: int = Query(default=32, ge=1, le=32),
+        offset: int = Query(default=0, ge=0, le=1_000_000),
+    ) -> dict[str, Any]:
+        """List one bounded page of stored Polymarket stream-frame summaries."""
+        venue = Venue.POLYMARKET
+        reject_held_venue(venue)
+        try:
+            queried_rows = _read_stored_observations(
+                store,
+                venue=venue.value,
+                kind="public_book_update_frame",
+                limit=limit + 1,
+                offset=offset,
+            )
+        except (FrontierStoreError, TypeError, ValueError) as error:
+            raise HTTPException(
+                status_code=409,
+                detail=f"Stored Polymarket event-frame evidence is not readable: {error}",
+            ) from error
+        has_more = len(queried_rows) > limit and offset + limit <= 1_000_000
+        rows = queried_rows[:limit]
+        items: list[dict[str, Any]] = []
+        try:
+            for row in rows:
+                frame = PolymarketBookUpdateFrame.model_validate(row["normalized"])
+                market_ids = {update.native_market_id for update in frame.updates}
+                if (
+                    row["venue"] != venue.value
+                    or row["observation_kind"] != "public_book_update_frame"
+                    or row["raw_sha256"] != frame.raw_sha256
+                    or frame.provenance.observation_id != row["observation_id"]
+                    or frame.received_at_utc.isoformat() != row["received_at_utc"]
+                    or len(market_ids) != 1
+                    or not frame.has_valid_structure
+                ):
+                    raise FrontierStoreError(
+                        "Stored Polymarket stream-frame summary failed provenance validation"
+                    )
+                items.append(
+                    {
+                        "observation_id": row["observation_id"],
+                        "received_at_utc": row["received_at_utc"],
+                        "raw_sha256": row["raw_sha256"],
+                        "native_market_id": next(iter(market_ids)),
+                        "capture_started_at_utc": frame.provenance.request_started_at_utc.isoformat(),
+                        "bound_market_observation_id": frame.bound_market_observation_id,
+                        "normalized_event_count": len(frame.updates),
+                        "event_types": list(
+                            dict.fromkeys(update.event_type for update in frame.updates)
+                        ),
+                    }
+                )
+        except (FrontierStoreError, ValueError, TypeError) as error:
+            raise HTTPException(
+                status_code=409,
+                detail=f"Stored Polymarket event-frame evidence is not readable: {error}",
+            ) from error
+        return {
+            "items": items,
+            "returned": len(items),
+            "limit": limit,
+            "offset": offset,
+            "next_offset": offset + limit if has_more else None,
+            "network_called": False,
+            "research_only": True,
+        }
+
     @api.post("/replay/polymarket/book-updates")
     async def replay_polymarket_book_updates(
         request: PolymarketBookUpdatesReplayRequest,

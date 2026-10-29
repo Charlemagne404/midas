@@ -402,6 +402,30 @@ def test_book_update_api_binds_to_saved_market_and_persists_fixture_evidence(tmp
             == result["bound_market_observation_id"]
         )
 
+        saved_frames = client.get("/api/frontier/polymarket/book-updates?limit=32&offset=0")
+        assert saved_frames.status_code == 200, saved_frames.text
+        saved_frame_page = saved_frames.json()
+        assert saved_frame_page["network_called"] is False
+        assert saved_frame_page["research_only"] is True
+        assert saved_frame_page["returned"] == 2
+        assert saved_frame_page["next_offset"] is None
+        assert {item["observation_id"] for item in saved_frame_page["items"]} == set(
+            frame["observation_id"] for frame in result["frames"]
+        )
+        assert all(item["native_market_id"] == CONDITION_ID for item in saved_frame_page["items"])
+        assert all(
+            "raw_body" not in item and "raw_bytes" not in item for item in saved_frame_page["items"]
+        )
+
+        first_saved_page = client.get("/api/frontier/polymarket/book-updates?limit=1&offset=0")
+        assert first_saved_page.status_code == 200, first_saved_page.text
+        assert first_saved_page.json()["returned"] == 1
+        assert first_saved_page.json()["next_offset"] == 1
+        second_saved_page = client.get("/api/frontier/polymarket/book-updates?limit=1&offset=1")
+        assert second_saved_page.status_code == 200, second_saved_page.text
+        assert second_saved_page.json()["returned"] == 1
+        assert second_saved_page.json()["next_offset"] is None
+
         observation_ids = [frame["observation_id"] for frame in result["frames"]]
         replay = client.post(
             "/api/frontier/replay/polymarket/book-updates",
@@ -484,6 +508,9 @@ def test_book_update_replay_respects_source_hold_before_store_read(tmp_path: Pat
     app.include_router(router(store, registry))
     client = TestClient(app)
     try:
+        listing = client.get("/api/frontier/polymarket/book-updates")
+        assert listing.status_code == 409
+        assert listing.json()["detail"] == hold_reason
         response = client.post(
             "/api/frontier/replay/polymarket/book-updates",
             json={"observation_ids": ["a" * 64]},

@@ -522,6 +522,25 @@ type PolymarketBookUpdateCaptureResult = {
   hypothetical_only: true;
   note: string;
 };
+type PolymarketStoredBookUpdateFrame = {
+  observation_id: string;
+  received_at_utc: string;
+  raw_sha256: string;
+  native_market_id: string;
+  capture_started_at_utc: string;
+  bound_market_observation_id: string | null;
+  normalized_event_count: number;
+  event_types: string[];
+};
+type PolymarketStoredBookUpdatePage = {
+  items: PolymarketStoredBookUpdateFrame[];
+  returned: number;
+  limit: number;
+  offset: number;
+  next_offset: number | null;
+  network_called: false;
+  research_only: true;
+};
 type PolymarketBookUpdatesReplayResult = {
   replay_version: string;
   native_market_id: string;
@@ -3109,7 +3128,7 @@ export function Frontier({ onNavigate }: { onNavigate?: (page: string) => void }
     onSuccess: refresh,
   });
   const replayPolymarketBookUpdates = useMutation({
-    mutationFn: (input: { observationIds: string[] }) =>
+    mutationFn: (input: { observationIds: string[]; nativeMarketId: string }) =>
       api<PolymarketBookUpdatesReplayResult>('/frontier/replay/polymarket/book-updates', {
         method: 'POST',
         body: JSON.stringify({ observation_ids: input.observationIds }),
@@ -6225,18 +6244,30 @@ function PolymarketBookUpdatesPanel({
   replay: UseMutationResult<
     PolymarketBookUpdatesReplayResult,
     Error,
-    { observationIds: string[] },
+    { observationIds: string[]; nativeMarketId: string },
     unknown
   >;
   replayEnabled: boolean;
   replayDisabledReason?: string | null;
 }) {
+  const [savedFrameOffset, setSavedFrameOffset] = useState(0);
+  const savedFramePage = useQuery({
+    queryKey: ['frontier', 'polymarket-book-update-frames', savedFrameOffset],
+    queryFn: () =>
+      api<PolymarketStoredBookUpdatePage>(
+        `/frontier/polymarket/book-updates?limit=32&offset=${savedFrameOffset}`,
+      ),
+    enabled: replayEnabled,
+    retry: false,
+  });
   const result =
     probe.isSuccess && probe.variables?.marketId === market.canonical_id ? probe.data : null;
   const observationIds = result?.frames.map((frame) => frame.observation_id) ?? [];
-  const replayMatchesCapture =
-    replay.variables?.observationIds.join(',') === observationIds.join(',');
-  const replayResult = replay.isSuccess && replayMatchesCapture ? replay.data : null;
+  const replayMatchesMarket = replay.variables?.nativeMarketId === market.native_market_id;
+  const replayResult = replay.isSuccess && replayMatchesMarket ? replay.data : null;
+  const savedFrames = (savedFramePage.data?.items ?? []).filter(
+    (frame) => frame.native_market_id === market.native_market_id,
+  );
 
   return (
     <section className="fr-price-history-panel" aria-label="Polymarket public book update capture">
@@ -6270,7 +6301,7 @@ function PolymarketBookUpdatesPanel({
         <button
           className="fr-inspect-button"
           disabled={observationIds.length === 0 || !replayEnabled || replay.isPending}
-          onClick={() => replay.mutate({ observationIds })}
+          onClick={() => replay.mutate({ observationIds, nativeMarketId: market.native_market_id })}
         >
           {replay.isPending
             ? 'Replaying stored frames…'
@@ -6293,7 +6324,7 @@ function PolymarketBookUpdatesPanel({
       {probe.isError && probe.variables?.marketId === market.canonical_id && (
         <ProbeFailureEvidence error={probe.error} />
       )}
-      {replay.isError && replayMatchesCapture && (
+      {replay.isError && replayMatchesMarket && (
         <p role="alert" className="fr-price-history-note">
           {replay.error?.message ?? 'Stored Polymarket replay failed without a diagnostic message.'}
         </p>
@@ -6328,6 +6359,73 @@ function PolymarketBookUpdatesPanel({
           <small>{result.note}</small>
         </div>
       )}
+      <section aria-label="Saved Polymarket event frames" className="fr-price-history-result">
+        <div className="fr-price-history-heading">
+          <div>
+            <strong>Saved event frames</strong>
+            <small>Read from the local Frontier store. Listing does not contact Polymarket.</small>
+          </div>
+          <span className="fr-count">
+            {savedFramePage.isPending
+              ? 'Loading…'
+              : `${savedFrames.length} for this market · ${savedFramePage.data?.returned ?? 0} on page`}
+          </span>
+        </div>
+        {savedFramePage.isError && (
+          <p role="alert" className="fr-price-history-note">
+            {savedFramePage.error.message || 'Stored Polymarket event frames could not be loaded.'}
+          </p>
+        )}
+        {savedFrames.map((frame) => (
+          <article key={frame.observation_id} className="fr-price-history-meta">
+            <span>Received {time(frame.received_at_utc)}</span>
+            <span>Capture started {time(frame.capture_started_at_utc)}</span>
+            <span>Record {shortHash(frame.observation_id)}</span>
+            <span>Raw SHA-256 {shortHash(frame.raw_sha256)}</span>
+            <span>
+              {frame.normalized_event_count} normalized event
+              {frame.normalized_event_count === 1 ? '' : 's'} ·{' '}
+              {frame.event_types.map(label).join(', ')}
+            </span>
+            <button
+              className="fr-inspect-button"
+              disabled={!replayEnabled || replay.isPending}
+              onClick={() =>
+                replay.mutate({
+                  observationIds: [frame.observation_id],
+                  nativeMarketId: market.native_market_id,
+                })
+              }
+            >
+              Replay this saved frame offline
+            </button>
+            <EvidenceDisclosure observationId={frame.observation_id} />
+          </article>
+        ))}
+        {savedFramePage.isSuccess && savedFrames.length === 0 && (
+          <p className="fr-price-history-note">
+            {savedFramePage.data.next_offset === null
+              ? 'No saved stream frames for this market.'
+              : 'No matching frame on this page. Continue to older saved frames.'}
+          </p>
+        )}
+        <div className="fr-price-history-controls">
+          <button
+            className="fr-inspect-button"
+            disabled={savedFrameOffset === 0 || savedFramePage.isFetching}
+            onClick={() => setSavedFrameOffset((offset) => Math.max(0, offset - 32))}
+          >
+            Newer saved frames
+          </button>
+          <button
+            className="fr-inspect-button"
+            disabled={savedFramePage.data?.next_offset == null || savedFramePage.isFetching}
+            onClick={() => setSavedFrameOffset(savedFramePage.data!.next_offset!)}
+          >
+            Older saved frames
+          </button>
+        </div>
+      </section>
       {replayResult && (
         <div
           className="fr-price-history-result"
@@ -6424,7 +6522,7 @@ function MarketDetails({
   bookUpdatesReplay: UseMutationResult<
     PolymarketBookUpdatesReplayResult,
     Error,
-    { observationIds: string[] },
+    { observationIds: string[]; nativeMarketId: string },
     unknown
   >;
   bookUpdatesReplayEnabled: boolean;
@@ -6596,6 +6694,7 @@ function MarketDetails({
       )}
       {market.venue === 'polymarket' && (
         <PolymarketBookUpdatesPanel
+          key={market.native_market_id}
           market={market}
           probe={bookUpdatesProbe}
           probeEnabled={bookUpdatesProbeEnabled}
