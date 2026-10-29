@@ -12832,3 +12832,26 @@ PSI zero, and user-manager OOM counters remained 19/15. API/Reality were active
 with restart counts 9/14. Capacity timer remained active, gap-detail timer
 inactive, and no systemd-oomd entries appeared since 02:58. Keep development
 sequential; the original pressure source and full swap remain unresolved.
+
+### Host incident evidence update — 2026-10-29 03:14 CET
+
+Rechecked the journal and cgroups. There were 12 systemd-oomd kills on Oct 28
+20:18–23:43: API x4, Reality x3, gap-detail x4, and one GNOME Terminal scope.
+Every kill cites `user@1000.service` PSI above its configured 50% for more
+than 20 seconds with reclaim. The hierarchy has no memory or swap ceiling and
+peaked at 13,992,292,352 bytes. At 23:23, oomd's candidate snapshot included
+API 1.4 GiB, Reality 1.0 GiB, a terminal scope 1.0 GiB, and gap-detail
+204.7 MiB. This is evidence for overlapping consumers, not proof of a sole
+initiator. Seven separate capacity-monitor memcg kills (17:15–20:15) ran under
+the original 128 MiB cap; the 160/192 MiB/zero-swap override has completed
+scheduled runs through 02:46.
+
+At 03:14:18, MemAvailable was 11,159,352 kB, PSI zero, SwapFree 1,272 kB,
+user-manager memory 7,519,457,280 bytes and swap 2,864,898,048 bytes; event
+counters remained `oom=19`, `oom_kill=15`. API/Reality, `ssh.socket`, RustDesk,
+Caddy, Continental auth/tailnet, and Echo production/staging were active. The
+gap-detail timer remains disabled and the capacity timer active. Incident
+report updated at `docs/frontier/FRONTIER_MEMORY_PRESSURE_INCIDENT_2026-10-28.md`.
+No host configuration or historical data was changed in this check. Continue
+only sequential, isolated, zero-swap offline work; full swap and initiating
+workload attribution remain unresolved.

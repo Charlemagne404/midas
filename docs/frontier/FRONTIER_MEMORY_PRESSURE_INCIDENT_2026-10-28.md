@@ -2,8 +2,8 @@
 
 **Incident date:** 2026-10-28 (CET)
 
-**Initial checkpoint:** 2026-10-29 01:54 CET; follow-up observations through
-02:26 CET are appended below.
+**Initial checkpoint:** 2026-10-29 01:54 CET; append-only follow-up observations
+through 2026-10-29 03:14 CET are recorded below.
 
 **Scope:** Host reliability interruption during Project Frontier
 
@@ -1317,3 +1317,55 @@ run Node checks that could create another crash report, broad suites, or
 competing research batches until the resource and upload conditions are
 reviewed. This point sample does not resolve the high swap occupancy or the
 historical workload attribution.
+
+## OOM policy confirmation and 03:14 incident checkpoint
+
+The system journal contains **12 systemd-oomd kills** from 20:18:23 through
+23:43:24 CET on Oct 28: four `midas-api` kills, three Reality collector kills,
+four gap-detail replay kills, and one GNOME Terminal scope. Each kill entry
+states that `user@1000.service` memory pressure exceeded its 50% threshold for
+more than 20 seconds with reclaim activity. The effective policy comes from
+`/usr/lib/systemd/system/user@.service.d/10-oomd-user-service-defaults.conf`:
+`ManagedOOMMemoryPressure=kill`, `ManagedOOMMemoryPressureLimit=50%`. The user
+slice and manager have no `MemoryHigh`, `MemoryMax`, or `MemorySwapMax` bound.
+This confirms the aggregate trigger and leaf victims; it still does not prove
+which workload initiated pressure.
+
+Candidate snapshots support a mixed-workload explanation. At 23:23, oomd
+listed the API at 1.4 GiB, Reality at 1.0 GiB, one terminal scope at 1.0 GiB,
+and gap-detail at 204.7 MiB. At 23:43, API was 1.4 GiB while Reality was
+550.7 MiB. These are cgroup charges, including file cache, and show concurrent
+large consumers rather than a unique source. API, Reality, the terminal,
+Chromium, and scheduled replay all resided inside the same user manager.
+
+The separate kernel memcg OOM chain for `midas-reality-capacity.service` is
+confirmed seven times between 17:15 and 20:15 CET on Oct 28. The killed
+Python processes had approximately 129–131 MiB anonymous RSS plus 11 MiB file
+RSS under the original 128 MiB hard limit. The effective reversible override
+is currently `MemoryHigh=160M`, `MemoryMax=192M`, `MemorySwapMax=0`; scheduled
+runs at 00:46 and 01:16 completed with retained peaks of 137.4 MiB and 128.0
+MiB, and the 02:46 run also completed successfully (6.810 CPU seconds; no
+peak was retained). This supports the revised monitor cap, not a claim about
+the historical host-wide pressure source.
+
+At 03:14:18 CET, host `MemAvailable` was 11,159,352 kB, memory PSI was zero,
+and only 1,272 kB of 4,194,300 kB swap was free. `user@1000.service` charged
+7,519,457,280 bytes of memory and 2,864,898,048 bytes of swap; its recorded
+peak was 13,992,292,352 bytes. Its `memory.events` were `high=16,417,194`,
+`max=730,045`, `oom=19`, and `oom_kill=15`. Those counters did not change
+during this read-only check. The last systemd-oomd kill remains 23:43:24 Oct
+28; the last capacity memcg OOM remains 20:15:44 Oct 28. API and Reality are
+active (`NRestarts=9` and `14`); `ssh.socket`, RustDesk, Caddy, Continental
+tailnet/auth, and Echo production/staging were active. No collector restart,
+configuration change, OOM policy change, or historical-data operation was
+made in this follow-up.
+
+The gap-detail timer remains disabled and its failed service remains stopped;
+rollback is documented above. The capacity override and rollback remain as
+documented above. Do not raise the user-wide oomd threshold or exempt Reality
+without a separate design review: doing so could trade service kills for a
+kernel OOM, and changing the critical collector's containment is outside this
+checkpoint. The host remains suitable only for sequential, isolated,
+resource-bounded offline Frontier work with zero-swap transient scopes. This
+quiet interval and current zero PSI do not clear the full-swap condition or
+identify the original initiating workload.
