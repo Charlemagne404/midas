@@ -4184,6 +4184,21 @@ it('captures one explicit bounded Kalshi multivariate event page', async () => {
   const failureObservationId = 'd'.repeat(64);
   const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const path = String(input);
+    if (path === '/api/frontier/probe/kalshi' && init?.method === 'POST') {
+      return {
+        ok: false,
+        headers: new Headers({ 'Retry-After': '1' }),
+        json: async () => ({
+          detail: {
+            code: 'SOURCE_OPERATION_BUSY',
+            venue: 'kalshi',
+            scope: 'capacity',
+            message:
+              'Public source operation is busy: the shared source-operation capacity is full',
+          },
+        }),
+      } as Response;
+    }
     if (path === '/api/frontier/probe/kalshi/multivariate-events' && init?.method === 'POST') {
       multivariateCaptureCount += 1;
       if (multivariateCaptureCount === 2) {
@@ -4342,6 +4357,10 @@ it('captures one explicit bounded Kalshi multivariate event page', async () => {
     ),
   ).toBeInTheDocument();
   expect(screen.getByText(`Stored raw SHA-256 · ${'e'.repeat(64)}`)).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Capture markets, one book & trades' }));
+  expect(
+    await screen.findByText(/Source capture busy for kalshi:.*Retry after 1 second/),
+  ).toBeInTheDocument();
   expect(fetchMock.mock.calls.some(([input]) => String(input).includes('/probe/'))).toBe(true);
   queryClient.clear();
 });

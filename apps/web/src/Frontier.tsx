@@ -7201,6 +7201,9 @@ function SourcesView({
                   Enabled capture requests at most one listing page, one book, and ten recent
                   trades.
                 </small>
+                {probe.isError && probe.variables?.venue === source.venue && (
+                  <InlineError message={probe.error.message} />
+                )}
               </div>
               <div className="fr-probe-row fr-collection-row">
                 <button
