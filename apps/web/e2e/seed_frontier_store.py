@@ -106,7 +106,7 @@ def seed_store(root: Path) -> None:
             provenance=Provenance(
                 source_url=request_url,
                 adapter_version=CODE_VERSION,
-                source_schema_version="fixture-v1",
+                source_schema_version="CLOB GET /prices-history",
                 request_started_at_utc=request_started_at,
                 response_received_at_utc=received_at,
                 processed_at_utc=received_at + timedelta(milliseconds=1),
