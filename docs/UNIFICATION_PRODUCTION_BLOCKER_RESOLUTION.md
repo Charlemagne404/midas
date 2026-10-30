@@ -391,6 +391,7 @@ that unit is not production-ready despite its local dispatcher tests.
 - Working directory: `/home/charlie/midas-unification`
 - Branch: `codex/midas-unification`
 - Starting HEAD: `5237269821e5a6c3d54a3a92e76a0bc850a1f3b5`
+- Mission engineering commit: `ade994576a8614ce5f7376d877371e1704f0ff5b`
 - Application release identity: `b13477e86477eadeccac22ebd84595a808dcd1f9`
 - Release directory: `/home/charlie/.local/share/midas/releases/b13477e86477eadeccac22ebd84595a808dcd1f9`
 - Repeatable backup/restore: `scripts/midas_sqlite_snapshot.py backup|verify|restore`
