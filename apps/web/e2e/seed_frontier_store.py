@@ -60,7 +60,11 @@ def seed_store(root: Path) -> None:
             separators=(",", ":"),
         )
         raw_sha256 = hashlib.sha256(raw_body.encode("utf-8")).hexdigest()
-        request_url = f"https://clob.polymarket.com/prices-history?market={native_instrument_id}"
+        request_url = (
+            "https://clob.polymarket.com/prices-history"
+            f"?market={native_instrument_id}&interval=1d&fidelity=60"
+            f"&startTs={requested_start_ts}&endTs={requested_end_ts}"
+        )
         raw = RawObservation(
             venue=Venue.POLYMARKET,
             observation_kind="historical_price_points",
