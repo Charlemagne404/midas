@@ -109,7 +109,7 @@ class Store:
             result = await connection.execute(
                 text("SELECT version_num FROM alembic_version ORDER BY version_num")
             )
-            revisions = [str(value) for value in result.scalars()]
+            revisions: list[str] = [str(value) for value in result.scalars()]
         self.schema_version = ",".join(revisions) if revisions else "UNVERSIONED"
         logging.getLogger("uvicorn.error").info(
             "MIDAS storage runtime: source=%s account_codec=%s schema_version=%s",

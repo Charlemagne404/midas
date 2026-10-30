@@ -1,10 +1,10 @@
 # MIDAS deployment migration plan
 
-**Status: DEPLOYMENT PENDING.** This is a guarded plan for migrating the
-installed user services from retained worktrees and mixed releases to the
-unified code baseline. It is not a record of a deployment. No service was
-stopped, restarted, reloaded, replaced, or reconfigured during Project
-Unification.
+**Status: RELEASE CANDIDATE BUILT; PRODUCTION MIGRATION PENDING.** This is the
+guarded plan for migrating installed user services from retained worktrees and
+mixed releases to the unified code baseline. The 2026-10-30 migration snapshot
+and service decisions are in
+[UNIFICATION_PRODUCTION_MIGRATION_REPORT.md](UNIFICATION_PRODUCTION_MIGRATION_REPORT.md).
 
 ## Destination layout
 
@@ -13,6 +13,11 @@ lockfiles. A future release should have a manifest that records the full Git
 commit, source tree hash, Python and frontend lockfile hashes, build command,
 artifact hashes, and verification results. Keep the release directory separate
 from every writable store.
+
+Use `uv sync --locked --group dev --group arena-rl` for the complete CPU Arena
+runtime; `arena-rl` and the explicit CPU Torch index are resolved into
+`uv.lock`. A core-only environment is suitable only for workflows that do not
+load Arena modeling/training or NumPy/scikit-learn research paths.
 
 The candidate release layout separates application code, its locked Python
 environment, per-release configuration, runtime state, and research stores:

@@ -15,18 +15,19 @@ in [the previous development guide](history/DEVELOPMENT_HISTORY_2026-10-30.md).
 
 Python 3.12 or newer, uv, Node 22 or newer, Corepack, and pnpm 10.18.0 are
 expected. Python dependencies are pinned by uv.lock; web dependencies are
-pinned by the repository-root pnpm-lock.yaml.
+pinned by the repository-root pnpm-lock.yaml. The full Arena RL dependency set
+is the optional `arena-rl` group, including the CPU-only Torch wheel source.
 
 From the repository root:
 
-    uv sync --locked --group dev
+    uv sync --locked --group dev --group arena-rl
     corepack pnpm install --frozen-lockfile
 
 This creates the checkout-local Python environment and frontend packages. The
-unification verification reused the existing Python environment at
-/home/charlie/midas/.venv because uv was unavailable in that shell; no
-checkout-local .venv or node_modules is committed or required. The environment
-installation from the lockfiles was not run during this mission.
+production migration used an isolated uv bootstrap and a per-release Python
+environment; dependency installation and lockfile verification are recorded
+in [UNIFICATION_PRODUCTION_MIGRATION_REPORT.md](UNIFICATION_PRODUCTION_MIGRATION_REPORT.md).
+Do not point a development process at a service-owned data path.
 
 Copy .env.example to .env only for local overrides. Use demo mode, temporary
 database/artifact roots, and explicit false values for public probe flags. Never
