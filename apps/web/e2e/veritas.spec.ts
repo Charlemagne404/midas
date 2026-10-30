@@ -1,6 +1,27 @@
 import { expect, test } from '@playwright/test';
 
-test('shows historical evidence and marks the current observatory as unmeasured', async ({
+type VeritasOverview = {
+  finalized_gap_detail: Record<string, unknown> | null;
+  opportunity_observatory: {
+    analysis_version: string | null;
+    measurement_status: string;
+    processed_snapshot_count: number;
+    discovery: {
+      latest_by_category: Record<string, number>;
+      latest_selected_market_rows: unknown[];
+      latest_snapshot_url: string | null;
+      latest_scan_id: string | null;
+      collection_bounds: Record<string, unknown> | null;
+    };
+    opportunity: {
+      quality_valid_pairs: number | null;
+      positive_full_depth_gross_by_quantity: Record<string, number> | null;
+    };
+    recent_candidates: unknown[];
+  };
+};
+
+test('shows historical evidence and matches current observatory labels to its data', async ({
   page,
 }) => {
   await page.route('**/api/arena/research-activity', (route) =>
@@ -77,6 +98,16 @@ test('shows historical evidence and marks the current observatory as unmeasured'
   await expect(
     page.getByRole('heading', { level: 1, name: /Evidence before conviction/ }),
   ).toBeVisible();
+  const overviewResponse = await page.request.get('/api/veritas/overview');
+  expect(overviewResponse.ok()).toBeTruthy();
+  const overview = (await overviewResponse.json()) as VeritasOverview;
+  const observatory = overview.opportunity_observatory;
+  const opportunityMeasured =
+    observatory.measurement_status === 'MEASURED' ||
+    typeof observatory.opportunity.quality_valid_pairs === 'number';
+  const economicGateQuantities = Object.keys(
+    observatory.opportunity.positive_full_depth_gross_by_quantity ?? {},
+  );
   await expect(page.getByRole('heading', { name: 'Snapshot quality prediction' })).toBeVisible();
   await expect(page.getByText(/Held-out positive gross candidates: 0/)).toBeVisible();
   const qualityExperimentLink = page.getByRole('link', {
@@ -109,9 +140,17 @@ test('shows historical evidence and marks the current observatory as unmeasured'
   expect(independentAudit.data.snapshot_count).toBe(84);
   expect(independentAudit.data.independent_fee_disagreement_count).toBe(0);
   await expect(page.getByRole('heading', { name: 'Market discovery and coverage' })).toBeVisible();
-  await expect(page.getByText('No finalized public snapshot has been indexed yet.')).toBeVisible();
-  await expect(page.getByLabel('Current collector limits')).toHaveCount(0);
-  await expect(page.getByText(/Inspect latest per-market selection probabilities/)).toHaveCount(0);
+  if (Object.keys(observatory.discovery.latest_by_category).length === 0) {
+    await expect(page.getByText('No finalized public snapshot has been indexed yet.')).toBeVisible();
+  } else {
+    await expect(page.getByText('No finalized public snapshot has been indexed yet.')).toHaveCount(0);
+  }
+  await expect(page.getByLabel('Current collector limits')).toHaveCount(
+    observatory.discovery.collection_bounds ? 1 : 0,
+  );
+  await expect(page.getByText(/Inspect latest per-market selection probabilities/)).toHaveCount(
+    observatory.discovery.latest_selected_market_rows.length > 0 ? 1 : 0,
+  );
   await page.getByText(/Recent Director history/).click();
   await expect(page.getByText(/automatic retry is disabled for this scan/)).toBeVisible();
   await expect(page.getByText(/VERITAS-M2-ECO-QUAL-001-RUN-b3fc19f69680/)).toBeVisible();
@@ -122,20 +161,38 @@ test('shows historical evidence and marks the current observatory as unmeasured'
   await expect(
     page.getByRole('heading', { name: 'Opportunity observatory and data quality' }),
   ).toBeVisible();
-  await expect(
-    page.getByText(
-      'No finalized public snapshot has been analyzed; candidate presence is not measured.',
-    ),
-  ).toBeVisible();
+  if (!opportunityMeasured) {
+    await expect(
+      page.getByText(
+        'No finalized public snapshot has been analyzed; candidate presence is not measured.',
+      ),
+    ).toBeVisible();
+  } else if (observatory.recent_candidates.length === 0) {
+    await expect(
+      page.getByText(
+        'No quality-valid positive full-depth gross candidate has been recorded in the analyzed snapshots.',
+      ),
+    ).toBeVisible();
+  }
   const economicGateTable = page.getByRole('table', {
     name: 'Positive economic states by quantity and gate',
   });
-  await expect(
-    economicGateTable.getByRole('row', {
-      name: /Not measured — awaiting the first finalized snapshot/,
-    }),
-  ).toBeVisible();
-  await expect(page.getByText(/candidate presence is not measured/).last()).toBeVisible();
+  if (!opportunityMeasured) {
+    await expect(
+      economicGateTable.getByRole('row', {
+        name: /Not measured — awaiting the first finalized snapshot/,
+      }),
+    ).toBeVisible();
+    await expect(page.getByText(/candidate presence is not measured/).last()).toBeVisible();
+  } else if (economicGateQuantities.length === 0) {
+    await expect(
+      economicGateTable.getByRole('row', {
+        name: /No economic-gate rows are available in this measured summary/,
+      }),
+    ).toBeVisible();
+  } else {
+    await expect(economicGateTable.getByRole('row').nth(1)).toBeVisible();
+  }
   await expect(page.getByText(/Latest read-only campaign snapshot/)).toBeVisible();
 
   const coverageDesignAudit = page.getByTestId('coverage-design-audit');
@@ -161,14 +218,19 @@ test('shows historical evidence and marks the current observatory as unmeasured'
   expect(coverageAuditArtifact.data.interpretation.no_venue_wide_inference).toBe(true);
 
   await expect(page.getByRole('link', { name: /Inspect latest immutable snapshot/ })).toHaveCount(
-    0,
+    observatory.discovery.latest_scan_id && observatory.discovery.latest_snapshot_url ? 1 : 0,
   );
 
   const analysis = await page.request.get('/api/veritas/artifacts/continuous-analysis');
-  expect(analysis.status()).toBe(404);
-  expect((await analysis.json()).detail).toBe(
-    'Veritas public observatory analysis has not been generated',
-  );
+  if (observatory.analysis_version) {
+    expect(analysis.status()).toBe(200);
+    expect((await analysis.json()).data.analysis_version).toBe(observatory.analysis_version);
+  } else {
+    expect(analysis.status()).toBe(404);
+    expect((await analysis.json()).detail).toBe(
+      'Veritas public observatory analysis has not been generated',
+    );
+  }
 
   const censoring = await page.request.get('/api/veritas/artifacts/censoring');
   expect(censoring.ok()).toBeTruthy();
@@ -194,8 +256,16 @@ test('shows historical evidence and marks the current observatory as unmeasured'
     'href',
     '/api/veritas/artifacts/censor-gap-audit',
   );
-  await expect(page.getByText('Not available in the current workspace')).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Inspect verified prefix' })).toHaveCount(0);
+  if (overview.finalized_gap_detail) {
+    await expect(page.getByText('Not available in the current workspace')).toHaveCount(0);
+    await expect(page.getByRole('link', { name: 'Inspect verified prefix' })).toHaveAttribute(
+      'href',
+      '/api/veritas/artifacts/gap-detail-current',
+    );
+  } else {
+    await expect(page.getByText('Not available in the current workspace')).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Inspect verified prefix' })).toHaveCount(0);
+  }
 
   const attribution = await page.request.get('/api/veritas/artifacts/censor-gap-attribution');
   expect(attribution.ok()).toBeTruthy();
