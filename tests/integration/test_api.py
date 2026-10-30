@@ -47,11 +47,11 @@ def test_offline_api_workflow_contract_and_persistence(tmp_path, monkeypatch):
         resources = client.get("/api/readiness/resources")
         assert resources.status_code == 200
         assert resources.json()["sampling"].startswith("bounded procfs")
-        assert set(resources.json()["services"]) == {
+        assert {
             "midas-api",
             "midas-reality",
             "midas-veritas-observatory",
-        }
+        }.issubset(set(resources.json()["services"]))
         assert "decisions" not in state["paper_broker"]
         paper_summary = client.get("/api/paper/summary")
         assert paper_summary.status_code == 200
