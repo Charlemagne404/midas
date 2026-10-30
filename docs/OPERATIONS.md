@@ -182,3 +182,50 @@ on their original sources. No service was restarted, stopped, replaced,
 reconfigured, reloaded, or pointed at the unified branch. Production adoption
 is **DEPLOYMENT PENDING**; the exact approvals and transition checklist are in
 the deployment plan.
+
+## Migration remeasurement — 2026-10-30
+
+The active PIDs and source paths in the service table remained the same at the
+00:56–00:57 UTC remeasurement. The main API still reported old release a152999
+on port 8000; the dashboard remained on 5173, the protected recorder on its
+original PID and config, and the two Reality interface services on 8010 and
+5180. The terminal-owned dashboard on port 5174 remained a separate
+development process.
+
+The host had 9.9 GiB MemAvailable and 134 GiB free on the root filesystem, but
+the 4 GiB swap file was 99.99% occupied. A one-second vmstat interval showed
+no swap-in or swap-out. Latest CPU PSI some was 2.40% avg10 and 9.67% avg300;
+I/O PSI some/full was 0.91%/0.79% avg10. The user slice used about 9.9 GiB and
+its cumulative memory.events showed 19 OOM events and 15 OOM kills. The API
+and Reality service cgroups had 11,692 and 33,176 high events, respectively,
+with zero max/OOM events in those service cgroups.
+
+At 00:58 CET, systemd-oomd killed nine processes in the isolated
+“MIDAS unified release frontend unit tests” scope after reclaim pressure. A
+later serial run passed. This was not a production service. Earlier Oct 28
+OOMD events had killed the API and Reality recorder before automatic recovery;
+their current restart counters are 9 and 14. The resource sample permits
+capped isolated work, but does not establish enough sustained headroom for an
+overlapping production deployment.
+
+The new release, matching per-release Python environment, configuration, and
+three systemd templates are staged under versioned paths. Unit verification
+passed, but none of the templates was installed or activated. The candidate
+uses explicit persistent data roots and keeps Frontier public-source probes
+disabled. API and web remain a coordinated cutover because the API database
+and Arena timer have active shared state and the route contracts differ.
+
+The current Reality read-only projection varied between stale and
+active_receiving during the snapshot. At the last sample it showed 16 fresh
+books, sequence verification false, 25,395 lifetime gap records, and a
+retained stale-timeout diagnostic. Veritas returned
+insufficient_independent_evidence; its finalized-source projection covered
+40,967 of 40,967 segments, with zero positive gross pairs and zero candidate
+events. These are source and research-quality limitations, not deployment
+health claims.
+
+No service migrated. The protected recorder transition still requires
+separate authorization after fresh resource admission and data-root rollback
+preflight. The exact staged unit, configuration identities, continuity
+estimate, and executable stop/start/rollback procedure are in the
+[migration report](UNIFICATION_PRODUCTION_MIGRATION_REPORT.md).

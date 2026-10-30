@@ -1,5 +1,7 @@
 # MIDAS current state
 
+**Freshness note:** this remains the 2026-10-29 point-in-time snapshot. The later 2026-10-30 release, resource remeasurement, and migration outcome are in [UNIFICATION_PRODUCTION_MIGRATION_REPORT.md](UNIFICATION_PRODUCTION_MIGRATION_REPORT.md).
+
 **Snapshot:** read-only service and host sample at `2026-10-29 23:09:12 UTC` (2026-10-30 00:09 CET). Repository code baseline: `fd3d16dacdfc726915c48dcbc71321396a6b0cfa`; documentation closeout is committed on the same branch. Historical observations are preserved in [the archived current-state ledger](history/MIDAS_CURRENT_STATE_HISTORY_2026-10-29.md) and dated engineering reports.
 
 ## Authoritative development baseline

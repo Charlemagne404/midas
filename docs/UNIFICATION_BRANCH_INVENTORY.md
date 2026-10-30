@@ -22,7 +22,7 @@ sparse checkout. The unification worktree has no separate worktree config.
 
 | Branch | Head | Branch-only commits | Disposition | Finding |
 |---|---:|---:|---|---|
-| `codex/midas-unification` | `fd3d16d` plus documentation closeout | — | **AUTHORITATIVE** | Clean unified development source after documentation closeout. |
+| `codex/midas-unification` | b13477e plus migration documentation closeout | — | **AUTHORITATIVE** | Unified development source; b13477e is the validated release source, while production adoption remains pending. |
 | `codex/frontier-20261026` | `f6ac37f` | 0 | **FULLY INTEGRATED** | Selected starting baseline; Frontier and Veritas V6 implementation history is retained in ancestry. |
 | `codex/frontier-capacity-scan-bound-20261029` | `d5847df` | 0 | **FULLY INTEGRATED** | Included as the second parent of the bounded Reality/capacity integration. |
 | `checkpoint/frontier-memory-interruption-20261029-0854` | `75e6f26` | 0 | **HISTORICAL / RETAIN FOR PROVENANCE** | Checkpoint in selected Frontier history; retain as a recovery reference. |
@@ -150,3 +150,20 @@ and any owner confirms their provenance value.
 - The authoritative future checkout is `/home/charlie/midas-unification` on
   `codex/midas-unification`. Do not merge or push to protected `main` without
   separate authorization.
+
+## Production migration addendum — 2026-10-30
+
+The production migration used the authoritative checkout at release source
+b13477e86477eadeccac22ebd84595a808dcd1f9 and staged its versioned artifact
+outside the Git worktrees. It did not displace a runtime dependency: the
+installed API and Arena scheduler still use /home/charlie/midas, the Reality
+services still use /home/charlie/midas-reality or its separate release, and
+Veritas timers still use /home/charlie/midas-veritas and their existing
+release.
+
+The earlier 29-worktree inventory count was rechecked; no branch or worktree
+was removed, reset, cleaned, or rewritten. The current runtime dependencies
+therefore do not justify retiring any inventoried worktree in this migration.
+Keep the existing clean candidates and historical evidence for the separate
+review described above. The complete release and service status are in
+[UNIFICATION_PRODUCTION_MIGRATION_REPORT.md](UNIFICATION_PRODUCTION_MIGRATION_REPORT.md).

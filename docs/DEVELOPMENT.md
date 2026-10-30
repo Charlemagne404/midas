@@ -95,6 +95,33 @@ while a synthetic serialization case was still running. The full suite is
 therefore partial, not verified. Exact details are in
 [UNIFICATION_REPORT.md](UNIFICATION_REPORT.md).
 
+## Reproducible production release verification — 2026-10-30
+
+The migration resolved the earlier missing-uv evidence. A pinned uv 0.13.6
+binary is installed at
+/home/charlie/.local/share/midas/toolchains/uv-0.13.6/bin/uv. Python 3.12.3
+and the dev plus arena-rl groups were synced against the Python lockfile; the
+locked resync resolved 78 records and checked 77 installed packages. The
+Python environment lives outside the release at
+/home/charlie/.local/share/midas/venvs/b13477e86477eadeccac22ebd84595a808dcd1f9.
+The source archive, frontend lock, dist hash, and release manifest identities
+are in
+[UNIFICATION_PRODUCTION_MIGRATION_REPORT.md](UNIFICATION_PRODUCTION_MIGRATION_REPORT.md).
+
+From the exact release directory, the locked environment can be recreated
+without changing another checkout's environment:
+
+    cd /home/charlie/.local/share/midas/releases/b13477e86477eadeccac22ebd84595a808dcd1f9
+    UV_PROJECT_ENVIRONMENT=/home/charlie/.local/share/midas/venvs/b13477e86477eadeccac22ebd84595a808dcd1f9 /home/charlie/.local/share/midas/toolchains/uv-0.13.6/bin/uv sync --locked --group dev --group arena-rl
+    corepack pnpm install --frozen-lockfile
+
+The release used Node v22.23.4 and Corepack pnpm 10.18.0. Build, lint and
+typecheck passed; 78 frontend tests passed in the final serial run. An earlier
+frontend test scope was killed by systemd-oomd during memory reclaim; the
+bounded rerun passed and the event is documented in the migration report.
+The final backend suite collected 2,130 cases but did not complete. The prior
+unification closeout counts above remain a separate historical snapshot.
+
 ## Branch and integration workflow
 
 Check the starting state before edits:

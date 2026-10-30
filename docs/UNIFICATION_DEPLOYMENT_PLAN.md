@@ -180,3 +180,39 @@ The production migration follow-up is recorded in
 Use [OPERATIONS.md](OPERATIONS.md) for the sampled service/data map and
 [UNIFICATION_REPORT.md](UNIFICATION_REPORT.md) for verified code and test
 status.
+
+## Production migration attempt — 2026-10-30
+
+Release b13477e86477eadeccac22ebd84595a808dcd1f9 was built from the verified
+unification branch, its locked Python and frontend dependencies, and a clean
+source archive. The release manifest, exact hashes, isolated route smoke,
+frontend/browser checks, and regression limitations are recorded in
+[UNIFICATION_PRODUCTION_MIGRATION_REPORT.md](UNIFICATION_PRODUCTION_MIGRATION_REPORT.md).
+
+The candidate starts and exposes the consolidated interfaces in isolated demo
+mode. The API has 136 OpenAPI paths and returned 200 from 18 selected read-only
+routes. Python and frontend lockfiles were verified, all staged unit instances
+passed systemd-analyze verification, and no public probes were enabled.
+No service unit was installed, reloaded, enabled, stopped, restarted, or
+redirected to the candidate.
+
+No production service met every migration gate. The API and Arena scheduler
+share a live database/data owner, the old API and candidate route sets differ,
+and a consistent backup/restore plus candidate compatibility check against a
+production snapshot has not been performed. A frontend-only switch is
+incompatible. Recent oomd action on an isolated test scope, full swap, and
+ongoing CPU/I/O pressure also mean this host has not demonstrated sustained
+headroom for an overlapping deployment.
+
+The Reality code release, exact external data root, per-release configuration,
+and systemd unit are staged. The active recorder remains protected and
+unchanged. The transition still requires explicit owner authorization, a
+fresh recorder resource check, and recording-root integrity/rollback
+preflight. The report includes the exact procedure and estimated recording
+gap. That authorization does not cover the API/database, web, Arena, Veritas,
+or other research-worker transitions.
+
+The full backend suite remains incomplete: 2,130 tests collected, with a
+previous broad run stopped in synthetic serialization; the isolated slow
+Arena case and focused integration set passed separately. No endurance or
+production stability claim is made.
