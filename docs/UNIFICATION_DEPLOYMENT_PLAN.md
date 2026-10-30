@@ -1,6 +1,7 @@
 # MIDAS deployment migration plan
 
-**Status: RELEASE CANDIDATE BUILT; PRODUCTION MIGRATION PENDING.** This is the
+**Status: RELEASE CANDIDATE BUILT; RECOVERY TOOLING VERIFIED ON FIXTURES; LIVE
+DATA GATE BLOCKED.** This is the
 guarded plan for migrating installed user services from retained worktrees and
 mixed releases to the unified code baseline. The 2026-10-30 migration snapshot
 and service decisions are in
@@ -216,3 +217,56 @@ The full backend suite remains incomplete: 2,130 tests collected, with a
 previous broad run stopped in synthetic serialization; the isolated slow
 Arena case and focused integration set passed separately. No endurance or
 production stability claim is made.
+
+## Operational blocker resolution — 2026-10-30
+
+The detailed evidence and service matrix are in
+[UNIFICATION_PRODUCTION_BLOCKER_RESOLUTION.md](UNIFICATION_PRODUCTION_BLOCKER_RESOLUTION.md).
+This follow-up adds a fail-closed resource runner, SQLite online snapshot and
+restore tool, restored-database candidate smoke, OpenAPI contract comparison,
+and versioned Arena timer/service templates. These are staged in the checkout;
+no user service or timer was installed, reloaded, enabled, stopped, or started.
+
+The live API remains release `a1529991a880965a8ad37a7528e2c4cabfc341d8` on
+port 8000 and still owns the 12.58 GB SQLite database. The read-only contract
+comparison found 60 new candidate path-method pairs and 35 added schemas, with
+no removed routes or changes to existing request/response/security fields.
+The old web's routes are retained by the candidate API; the unified web must
+not be switched before the unified API is serving its added routes. API,
+Arena, and their shared mutable state still require one controlled cutover
+boundary.
+
+The online SQLite snapshot method passed full integrity/restore checks on an
+11.26 MB synthetic legacy fixture, including WAL behavior in generated tests.
+The unified API reached `READY` twice against the restored legacy fixture,
+preserved the original record prefix, migrated it to schema 003, recovered
+the paper journal on the second start, and returned 200 from 15 read-only
+routes. Demo mode appended explicitly `SYNTHETIC` rows. This is legacy
+compatibility evidence only.
+
+The current production snapshot was denied by the heavy resource gate before
+any database work: swap reserve was below 256 MiB and the protected Reality
+recorder had less than 2 MiB headroom to `MemoryHigh`. The user-manager cgroup
+has no finite memory ceiling and carries 19 OOM / 15 OOM-kill events. No
+production restore, full database scan, or candidate start against current
+production state is claimed. A production-sized snapshot and isolated restore
+remain the API/Arena deployment gate.
+
+The new Arena release service and timer are
+`deploy/systemd/user/midas-arena-scheduler-release@.service` and `.timer`.
+They retain the one-minute schedule, use the candidate's bounded dispatcher,
+and point at the existing Arena root. The candidate adds a dispatcher cursor
+and can update existing manifests, so snapshot/compatibility and rollback
+checks against a copy of current Arena state are still required before
+activation.
+
+**Required activation order after explicit authorization:** heavy preflight;
+online snapshot, verify, isolated restore and two-start API rehearsal; stop
+the old Arena timer and wait for its service/lock to clear; stop old web and
+API writers; start candidate API and require readiness; start the paired web;
+then start the versioned Arena timer after schedule-root checks. Reality and
+Veritas remain on their current owners. Do not downgrade schema, delete
+snapshots, or point old/new writers at the same database concurrently. The
+runbook's rollback starts only after all candidate writers and locks are
+stopped, and remains conditional on production-sized journal and Arena
+compatibility evidence.

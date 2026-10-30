@@ -229,3 +229,53 @@ separate authorization after fresh resource admission and data-root rollback
 preflight. The exact staged unit, configuration identities, continuity
 estimate, and executable stop/start/rollback procedure are in the
 [migration report](UNIFICATION_PRODUCTION_MIGRATION_REPORT.md).
+
+## Blocker-resolution remeasurement — 2026-10-30 21:36–21:40 UTC
+
+The follow-up engineering report is
+[UNIFICATION_PRODUCTION_BLOCKER_RESOLUTION.md](UNIFICATION_PRODUCTION_BLOCKER_RESOLUTION.md).
+It supersedes the older point-in-time memory and swap figures above for
+admission decisions; those earlier records remain historical evidence.
+
+At the 21:36 UTC `/proc` sample, the host had 16.27 GB RAM, 9.18 GiB
+MemAvailable, 4 GiB swap with about 5.3 MiB free, 4.54 GiB anonymous pages,
+and 5.91 GiB page cache. Memory PSI some/full was 0%; CPU PSI some was 2.44%
+avg10 and 5.55% avg300; I/O PSI some/full was about 1.06% avg10. A two-second
+swap sample during subsequent scoped checks was normally 0/0; one sample
+observed one page-in without memory PSI. Heavy jobs require no sampled swap
+movement and at least 256 MiB free swap. Short bounded checks permit at most
+eight pages per sample, retain PSI/cgroup gates, and run with swap disabled.
+
+`Committed_AS` measured 22.7 GiB against a 11.76 GiB `CommitLimit` with
+`vm.overcommit_memory=0` and ratio 50. This virtual commitment is not resident
+memory use. The user-manager cgroup had no finite `MemoryHigh`/`MemoryMax`,
+used about 9.8 GiB, and retained 19 OOM / 15 OOM-kill events. The API cgroup
+used about 561 MB and had about 1.05 GiB headroom to `MemoryHigh`; the Reality
+recorder used about 1.21 GB with less than 2 MiB headroom. Their current
+service cgroups showed zero OOM kills. API cgroup usage included about 405 MB
+inactive file cache; Reality included about 588 MB. This sample does not
+establish sustained stability or a Python heap profile.
+
+The Oct 30 systemd-oomd event killed the isolated frontend-test scope after
+user-slice pressure reached 58.40%, above the 50% threshold for more than 20
+seconds with reclaim activity. It was not a production API or Reality kill.
+No new kernel OOM line appeared in the bounded Oct 29–30 kernel journal query.
+An active Veritas source-analysis one-shot was observed during final inventory;
+it was preserved and no competing test or research job was started.
+
+The new admission and SQLite snapshot tools passed focused unit tests and
+small fixture rehearsal. A heavy check for a 12,500 MiB snapshot plus 5,120
+MiB reserve was denied before workload start because the Reality cgroup lacked
+64 MiB headroom and free swap was below 256 MiB. The live 12.58 GB SQLite
+database therefore has no new backup or restore evidence. The historic
+11.26 MB fixture passed full snapshot/restore integrity and the unified API
+two-start compatibility check; it is synthetic legacy data and cannot
+substitute for production.
+
+The contract diff found 60 candidate route-method additions and 35 added
+schemas, with no removed old operation or changed existing request/response
+contract fields. The unified web still requires the candidate API for those
+new routes. A versioned Arena dispatcher service and timer are staged under
+`deploy/systemd/user`; neither is installed, enabled, or started. The
+complete verified gates and remaining conditions are in the blocker-resolution
+report.
