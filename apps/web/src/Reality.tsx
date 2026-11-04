@@ -56,15 +56,15 @@ const tabs = [
   'Operations',
 ];
 const descriptions = [
-  'A continuous record of public markets. A measured account of what remains unknown.',
-  'Complementary outcomes, displayed liquidity and observation quality.',
-  'Sampled market history with quality barriers kept visible.',
-  'Theoretical discrepancies and the evidence available at each decision.',
-  'Observed market behavior and explicit execution assumptions.',
-  'Chronological evaluation, simple controls and complete training provenance.',
-  'Frozen hypothetical decisions. Public follow-ups. No submitted orders.',
-  'Models and rules frozen before future observations arrive.',
-  'Independent recording, bounded research and server-authoritative health.',
+  'A running record of public markets, including the gaps and unknowns.',
+  'Markets, available prices, and how recent each observation is.',
+  'Past market observations with missing or uncertain periods marked.',
+  'Possible price differences and the evidence recorded for each one.',
+  'How market conditions and assumed costs affect a virtual result.',
+  'Model results in time order, with the saved training data attached.',
+  'Saved virtual decisions compared with later public prices. No orders are sent.',
+  'Models and rules are saved before new observations arrive.',
+  'How market data is collected and whether the research service is running.',
 ];
 function useEvidence(path: string, enabled = true, interval = 15000) {
   return useQuery({
@@ -178,7 +178,7 @@ export function Reality() {
         </div>
         <div className="r-live">
           <Status good={data.health === 'recording'}>{txt(data.health).toUpperCase()}</Status>
-          <small>{utc(c.updated_ns)}</small>
+          <small>Updated {utc(c.updated_ns)}</small>
           <button
             className="r-icon"
             aria-label="Refresh Reality evidence"
@@ -204,11 +204,24 @@ export function Reality() {
       <div className="r-boundary">
         <ShieldCheck size={16} />
         <span>
-          <b>Public observations</b> · Unsequenced receipt-order data. Displayed quotes do not
-          establish hypothetical fills, queue position or actual profitability.
+          <b>Public market data</b> · These are prices MIDAS observed. A displayed price does not
+          prove an order could have filled or made money.
         </span>
         <span className="r-boundary-end">NO ORDER EXECUTION</span>
       </div>
+      <details className="r-reader-guide">
+        <summary>New to Reality? How to read this page</summary>
+        <div>
+          <p>
+            Start with the status and the first four counts. They describe what the collector has
+            recorded, not a forecast or a trading result.
+          </p>
+          <p>
+            The tabs lead to prices, past observations, model checks, and later follow-ups. Open
+            “Inspect exact evidence” within a section when you want the saved technical record.
+          </p>
+        </div>
+      </details>
       {query.isPending && <Empty>Connecting to the Reality evidence service…</Empty>}
       {query.isError && (
         <div className="r-error" role="alert">
@@ -228,32 +241,32 @@ export function Reality() {
             <>
               <div className="r-metrics">
                 <Metric
-                  label="Captured public records"
+                  label="Public records captured"
                   value={fmt(c.ordinal)}
-                  note={`${fmt(c.frames)} frames in the active producer epoch`}
+                  note={`${fmt(c.frames)} updates in the current collection period`}
                 />
                 <Metric
-                  label="Observation panel"
+                  label="Markets with recent quotes"
                   value={
                     <>
                       {fmt(c.markets)}
                       <em> markets</em>
                     </>
                   }
-                  note={`${fmt(c.fresh_books)} / ${fmt(c.expected_books)} books fresh at collector's 60 s threshold`}
+                  note={`${fmt(c.fresh_books)} of ${fmt(c.expected_books)} quote sets are less than one minute old`}
                 />
                 <Metric
-                  label="Raw evidence"
+                  label="Saved market data"
                   value={
                     <>
                       {fmt(Number(c.storage_bytes) / 2 ** 20, 1)}
                       <em> MiB</em>
                     </>
                   }
-                  note={`${fmt(Number(obj(data.capacity).estimated_storage_seconds_remaining) / 86400, 1)} days estimated remaining at recent ingest rate`}
+                  note={`About ${fmt(Number(obj(data.capacity).estimated_storage_seconds_remaining) / 86400, 1)} days of space left at the recent save rate`}
                 />
                 <Metric
-                  label="Prospective decisions"
+                  label="Virtual decisions being followed"
                   value={fmt(f.decisions)}
                   note={`${fmt(f.markets)} markets · ${fmt(f.families)} families · ${arr(f.days).length} UTC day(s)`}
                 />
@@ -296,24 +309,24 @@ export function Reality() {
                       <span className="r-orbit">
                         <Activity size={30} />
                       </span>
-                      <Status>INSUFFICIENT EVIDENCE</Status>
-                      <h3>No scientific champion</h3>
+                      <Status>MORE EVIDENCE NEEDED</Status>
+                      <h3>No model is ready for use</h3>
                       <p>
-                        Short recording coverage and missing future observations limit inference.
-                        Experimental models remain ineligible for policy activation.
+                        There are too few recorded days and future observations to tell whether any
+                        model would work reliably. Models stay in research mode.
                       </p>
                       <button className="r-link" onClick={() => setTab('Models')}>
                         Review chronological results <ArrowUpRight size={14} />
                       </button>
                     </div>
                   </Panel>
-                  <Panel title="Forward research is accumulating">
+                  <Panel title="Following future market data">
                     <dl className="r-facts">
                       <dt>Campaign</dt>
                       <dd>{txt(f.state).replaceAll('_', ' ')}</dd>
-                      <dt>Measured follow-ups</dt>
+                      <dt>Later prices recorded</dt>
                       <dd>{fmt(obj(f.followups).observed_public_measurement)}</dd>
-                      <dt>Censored follow-ups</dt>
+                      <dt>Later prices unavailable</dt>
                       <dd>{fmt(obj(f.followups).censored)}</dd>
                       <dt>Actual submitted orders</dt>
                       <dd>0</dd>
@@ -324,28 +337,31 @@ export function Reality() {
                   </Panel>
                 </div>
               </div>
-              <div className="r-metrics r-secondary">
-                <Metric
-                  label="Collector uptime"
-                  value={`${fmt((Number(data.now_ns) - Number(c.started_ns)) / 3.6e12, 1)} h`}
-                  note="Current producer process epoch"
-                />
-                <Metric
-                  label="Recorded quality gaps"
-                  value={fmt(c.gaps)}
-                  note="Includes resynchronization, not a count of disconnects"
-                />
-                <Metric
-                  label="Timing-uncertain books"
-                  value={fmt(c.timing_uncertain_books)}
-                  note="Additional to unverified venue sequencing"
-                />
-                <Metric
-                  label="Collector failures"
-                  value={fmt(c.failures)}
-                  note="Current process counters"
-                />
-              </div>
+              <details className="r-advanced-metrics">
+                <summary>More collection diagnostics</summary>
+                <div className="r-metrics r-secondary">
+                  <Metric
+                    label="Collector uptime"
+                    value={`${fmt((Number(data.now_ns) - Number(c.started_ns)) / 3.6e12, 1)} h`}
+                    note="Current producer process epoch"
+                  />
+                  <Metric
+                    label="Recorded quality gaps"
+                    value={fmt(c.gaps)}
+                    note="Includes resynchronization, not a count of disconnects"
+                  />
+                  <Metric
+                    label="Timing-uncertain books"
+                    value={fmt(c.timing_uncertain_books)}
+                    note="Additional to unverified venue sequencing"
+                  />
+                  <Metric
+                    label="Collector failures"
+                    value={fmt(c.failures)}
+                    note="Current process counters"
+                  />
+                </div>
+              </details>
             </>
           )}
           {(tab === 'Live explorer' || tab === 'Historical') && (
@@ -369,8 +385,8 @@ export function Reality() {
       )}
       <div className="r-provenance">
         <Fingerprint size={13} />
-        <span>Server-side queries · raw archives stay on disk</span>
-        <span>UTC · shares · collateral units</span>
+        <span>Source records are preserved for review</span>
+        <span>Times shown in UTC · amounts in shares or virtual dollars</span>
       </div>
       {decision && <DecisionDetail uid={decision} close={() => setDecision('')} />}
     </div>

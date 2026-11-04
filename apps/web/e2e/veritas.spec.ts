@@ -1,6 +1,73 @@
 import { expect, test } from '@playwright/test';
 
 test('shows the bounded discovery cohort and links its finalized evidence', async ({ page }) => {
+  const latestScanId = 'scan-20261021T000000Z-abcdef123456';
+  const latestSnapshotUrl = `/api/veritas/observatory/snapshots/${latestScanId}`;
+  await page.route('**/api/veritas/overview', async (route) => {
+    const response = await route.fetch();
+    const body = await response.json();
+    const observatory = body.opportunity_observatory;
+    observatory.status = 'available';
+    observatory.processed_snapshot_count = 1;
+    observatory.readiness = 'descriptive_panel_ready_for_dependence_review';
+    observatory.coverage_window_hours = 1;
+    Object.assign(observatory.discovery, {
+      current_bounded_eligible_markets: 40,
+      unique_market_ids_observed: 1,
+      latest_phase: 'completed',
+      latest_scan_id: latestScanId,
+      latest_snapshot_url: latestSnapshotUrl,
+      latest_selected_markets: 1,
+      latest_stable_control_markets: 1,
+      latest_rotating_markets: 1,
+      latest_by_category: { technology: 1 },
+      latest_frame_protocol: 'stratified-gamma-page-rotation-v2',
+      latest_query_count: 6,
+      latest_query_candidate_records: 50,
+      latest_unique_market_ids: 40,
+      latest_http_attempts: 6,
+      latest_selected_market_rows: [
+        {
+          market_id: 'fixture-market',
+          primary_category: 'technology',
+          primary_category_source: 'fixture',
+          cohort_role: 'rotating_stratified',
+          selection_stratum: 'high_liquidity',
+          selection_probability: '1/40',
+          selection_probability_basis: 'bounded_query_union',
+        },
+      ],
+      collection_bounds: {
+        target_markets: 40,
+        maximum_markets: 50,
+        gamma_queries_per_scan: 6,
+        gamma_page_limit: 100,
+        maximum_public_read_calls_per_scan: 6,
+        maximum_public_http_attempts_per_scan: 18,
+        maximum_retries_per_public_read: 2,
+        minimum_request_interval_seconds: 1,
+        request_timeout_seconds: 10,
+        maximum_response_bytes: 16 * 1024 * 1024,
+        maximum_root_bytes: 2 * 1024 * 1024 * 1024,
+        quantity_grid: ['20', '100'],
+      },
+    });
+    await route.fulfill({
+      status: response.status(),
+      contentType: 'application/json',
+      body: JSON.stringify(body),
+    });
+  });
+  await page.route(`**${latestSnapshotUrl}`, (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        artifact: 'finalized_public_observation_snapshot',
+        data: { scan_id: latestScanId, orders_submitted: false },
+      }),
+    }),
+  );
   await page.route('**/api/arena/research-activity', (route) =>
     route.fulfill({
       status: 200,
@@ -161,9 +228,12 @@ test('shows the bounded discovery cohort and links its finalized evidence', asyn
   );
   const snapshotUrl = await snapshotLink.getAttribute('href');
   expect(snapshotUrl).toBeTruthy();
-  const snapshotResponse = await page.request.get(snapshotUrl!);
-  expect(snapshotResponse.ok()).toBeTruthy();
-  const snapshot = await snapshotResponse.json();
+  const snapshotResponse = await page.evaluate(async (url) => {
+    const response = await fetch(url);
+    return { ok: response.ok, body: await response.json() };
+  }, snapshotUrl!);
+  expect(snapshotResponse.ok).toBeTruthy();
+  const snapshot = snapshotResponse.body;
   expect(snapshot.artifact).toBe('finalized_public_observation_snapshot');
   expect(snapshot.data.orders_submitted).toBe(false);
 

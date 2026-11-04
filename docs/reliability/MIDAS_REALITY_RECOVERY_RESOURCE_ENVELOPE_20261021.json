@@ -1,0 +1,32 @@
+{
+  "archive_bytes": 4607172862,
+  "catalog_sha256": "a8233e505c97b2800a482bddf8e7fed874901382d70a4c25ed21fe3df4d1c316",
+  "checkpoint_bytes": 6943606,
+  "checkpoint_path": "/mnt/continental-cloud/data/midas-reality-staging/recovery-validation-20261021T003930CEST/valid.checkpoint",
+  "checkpoint_sha256": "d137aa943838200c1d65397abac09d16733fff86b3c971f128e980c3241f26a5",
+  "checkpoint_wall_seconds": 86.10158791393042,
+  "cold_cpu_seconds": 390.58772600000003,
+  "cold_wall_seconds": 2712.4088209460024,
+  "evidence_sha256": "27bcf9d9c79d6beb7784c2124b5d5fa5638e22cc706c70a3e6e5e2bfe4cbfe72",
+  "identities_sha256": "dca8998bdf16b17b6c445497f7e8a958f7e78f2c3cfd2738bbacfac6c7bc13bf",
+  "internal_sha256": "1d6bf2cd6657e94c73849ebbd424e5c0dcb5a0116c4067eb9de0c9fd531ce9fb",
+  "measured_startup_peak_bytes": 671612928,
+  "monitor_events": {
+    "pressure_clear_sample": 6,
+    "sample": 520,
+    "worker_frozen_for_host_pressure": 3,
+    "worker_resumed_after_host_pressure": 3
+  },
+  "monitor_samples": 520,
+  "root": "/mnt/continental-cloud/data/midas-reality-staging/recovery-validation-20261021T003930CEST",
+  "segment_count": 17494,
+  "state_sha256": "6bb770e275918593a29e7e054dd0042200b56c81426b230b81b707e73856a392",
+  "verification_boundary": {
+    "checkpoint_restore_and_corrupt_fallback": true,
+    "full_archive_checksum_and_reconstruction": true,
+    "interrupted_checkpoint_and_sigkill_resume": true,
+    "open_tail_preserved": true,
+    "production_recorder_deployed": false,
+    "recovery_matrix": "PASSED"
+  }
+}

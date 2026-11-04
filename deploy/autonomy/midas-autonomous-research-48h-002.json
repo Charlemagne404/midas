@@ -1,0 +1,63 @@
+{
+  "version": "midas-autonomy-campaign-2",
+  "campaign_id": "48H-002",
+  "title": "MIDAS REAL-SOURCE QUALITY AND LABEL-FEASIBILITY CAMPAIGN — 48H-002",
+  "duration_seconds": 172800,
+  "poll_interval_seconds": 300,
+  "completion_grace_seconds": 1800,
+  "protected_services_required_active": [
+    "midas-api.service",
+    "midas-reality.service",
+    "midas-arena-scheduler.timer",
+    "midas-reality-research.timer",
+    "midas-reality-shadow-integrity.timer",
+    "midas-reality-capacity.timer",
+    "midas-veritas-observatory.timer",
+    "midas-veritas-gap-detail-v2.timer",
+    "midas-veritas-source-analysis.timer",
+    "midas-veritas-research-director.timer"
+  ],
+  "protected_reality_campaign_paths": [
+    "data/research/reality/forward/mission2/campaign.json",
+    "data/research/reality/forward/mission2-successor-20261016/campaign.json"
+  ],
+  "resource_limits": {
+    "minimum_available_memory_mb": 6144,
+    "minimum_disk_free_bytes": 17179869184,
+    "maximum_recorder_memory_fraction": 0.9,
+    "maximum_recorder_status_age_seconds": 180,
+    "maximum_last_observation_age_seconds": 180,
+    "maximum_swap_activity_bytes_per_interval": 67108864,
+    "maximum_memory_psi_some_avg10_percent": 2.0,
+    "maximum_memory_psi_full_avg10_percent": 0.5,
+    "maximum_io_psi_some_avg10_percent": 10.0,
+    "maximum_load_average_1m": 4.5,
+    "runtime_advisory_checks": [
+      "reality_recorder_headroom",
+      "reality_source_continuity",
+      "veritas_source_fresh_and_current"
+    ]
+  },
+  "research": {
+    "baseline_scan_count": 96,
+    "audit_batch_size": 32,
+    "maximum_audit_input_bytes": 100663296,
+    "maximum_source_age_seconds": 3600,
+    "required_consecutive_healthy_checks": 2,
+    "maximum_task_failures": 5,
+    "retry_backoff_base_seconds": 300,
+    "retry_backoff_max_seconds": 3600,
+    "freshness_extension_threshold": 0.2,
+    "strategy_training": false,
+    "arena_tournaments": false,
+    "orders": false,
+    "authenticated_requests": false,
+    "primary_hypothesis": "An independent replay of a frozen recent real-source window can reproduce quality, strict freshness, fee, and candidate gates; the same captured stream may not contain settled outcome or execution labels.",
+    "adaptive_rules": {
+      "candidate": "Independently audit every new completed scan; require strict freshness before elevating any positive candidate.",
+      "implementation_mismatch": "If independent fee or stored-versus-replayed validity/edge mismatches appear, extend the frozen audit by the preceding 32 scans.",
+      "freshness_bottleneck": "If fewer than 20% of independent quality-valid observations pass the conservative timestamp gate, extend the audit by the preceding 32 scans.",
+      "no_candidate": "If no strict-fresh candidate appears after 12 hours, shift priority to prospective source-quality and outcome/fill-label feasibility; do not train on synthetic targets."
+    }
+  }
+}

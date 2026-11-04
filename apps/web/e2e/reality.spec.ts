@@ -3,6 +3,136 @@ import { test, expect } from '@playwright/test';
 test('native Reality exposes genuine evidence and frozen replay without synthetic labeling', async ({
   page,
 }) => {
+  const nowNs = Date.now() * 1_000_000;
+  await page.route('**/api/reality/overview', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        now_ns: nowNs,
+        health: 'recording',
+        collector: {
+          updated_ns: nowNs,
+          started_ns: nowNs - 3_600_000_000_000,
+          ordinal: 42,
+          frames: 21,
+          markets: 1,
+          fresh_books: 2,
+          expected_books: 2,
+          cohort: [
+            {
+              condition: 'fixture-condition',
+              question: 'Will the fixture event happen?',
+              protocol: 'ctf',
+              metadata_ordinal: 1,
+              selection_role: 'rotating',
+              negative_risk: false,
+              tokens: { 'fixture-yes': 'Yes', 'fixture-no': 'No' },
+            },
+          ],
+          books: {
+            'fixture-yes': {
+              received_ns: nowNs,
+              asks: [['0.55', '100']],
+              best_bid: '0.54',
+              best_ask: '0.55',
+              spread: '0.01',
+              last: [42],
+              depth_truncated: false,
+            },
+            'fixture-no': {
+              received_ns: nowNs,
+              asks: [['0.45', '100']],
+              best_bid: '0.44',
+              best_ask: '0.45',
+              spread: '0.01',
+              last: [43],
+              depth_truncated: false,
+            },
+          },
+          observation_coverage: {
+            'fixture-yes': {
+              first_received_ns: nowNs - 3_600_000_000_000,
+              last_received_ns: nowNs,
+              book_update_frames: 12,
+            },
+            'fixture-no': {
+              first_received_ns: nowNs - 3_600_000_000_000,
+              last_received_ns: nowNs,
+              book_update_frames: 9,
+            },
+          },
+        },
+        forward: {
+          state: 'recording',
+          decisions: 0,
+          markets: 0,
+          families: 0,
+          days: [],
+          followups: { observed_public_measurement: 0, censored: 0 },
+        },
+        capacity: { estimated_storage_seconds_remaining: 0 },
+        schedule: {},
+      }),
+    }),
+  );
+  await page.route(/\/api\/reality\/decisions(?:\?.*)?$/, (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        rows: [
+          {
+            id: 'fixture-decision',
+            decision_ns: nowNs - 1_000_000,
+            decision_ordinal: 42,
+            market_title: 'Will the fixture event happen?',
+            condition: 'fixture-condition',
+            baseline: {
+              opportunity: false,
+              acquisition: { yes: { value: '0.55' }, no: { value: '0.45' } },
+            },
+            policies: [{ action: 'abstain' }],
+          },
+        ],
+        has_more: false,
+      }),
+    }),
+  );
+  await page.route('**/api/reality/decisions/fixture-decision', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        decision: {
+          market_title: 'Will the fixture event happen?',
+          decision_ns: nowNs - 1_000_000,
+          reconstruction_version: 'isolated-browser-fixture-v1',
+          producer_implementation_sha256: '0'.repeat(64),
+          source_input_lag_ns: 1_000_000,
+          decision_latency_ns: 2_000_000,
+          policies: [{ policy: 'control', action: 'abstain', reason: 'fixture' }],
+          source_record_ref: {
+            ordinal: 42,
+            segment: '00000000000000000001-00000000000000000000000000000000.seg',
+            offset: 8,
+          },
+          features: {},
+          predictions: {},
+          feature_sources: {},
+          baseline: {},
+        },
+        commit_ns: nowNs,
+        outcomes: [
+          {
+            horizon_ms: 1_000,
+            labels: { status: 'unknown', reason: 'isolated fixture' },
+            execution: [],
+          },
+        ],
+      }),
+    }),
+  );
   // Keep this browser pass isolated from source payloads and service controls.
   await page.route('**/api/reality/records/**', async (route) => {
     await route.fulfill({

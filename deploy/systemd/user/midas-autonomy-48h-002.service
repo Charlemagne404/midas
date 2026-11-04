@@ -1,0 +1,33 @@
+[Unit]
+Description=MIDAS 48H-002 read-only real-source research and recovery controller
+After=midas-api.service midas-reality.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=%h/midas
+ExecStart=%h/midas/.venv/bin/python %h/midas/scripts/autonomy_48h_002.py tick --workspace %h/midas --reality-root %h/midas-reality --veritas-root %h/midas-veritas/data/veritas-observatory
+Environment=PYTHONPATH=%h/midas/packages
+Environment=PYTHONDONTWRITEBYTECODE=1
+Environment=OMP_NUM_THREADS=1
+Environment=OPENBLAS_NUM_THREADS=1
+Environment=MKL_NUM_THREADS=1
+Environment=CUDA_VISIBLE_DEVICES=
+MemoryHigh=402653184
+MemoryMax=536870912
+MemorySwapMax=0
+CPUQuota=10%
+Nice=19
+IOSchedulingClass=idle
+UMask=0077
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadOnlyPaths=%h/midas-reality/data/recordings/reality %h/midas-reality/data/research/reality/forward/mission2 %h/midas-reality/data/research/reality/forward/mission2-successor-20261016 %h/midas-veritas/data/veritas-observatory
+ReadWritePaths=%h/midas/data/autonomy/48H-002
+PrivateTmp=true
+RestrictSUIDSGID=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+SystemCallArchitectures=native
+TimeoutStartSec=900s
+StandardOutput=journal
+StandardError=journal

@@ -763,6 +763,18 @@ export function Arena() {
           </button>
         ))}
       </div>
+      <details className="workspace-guide">
+        <summary>How to use the Arena</summary>
+        <div>
+          <p>
+            Begin with Overview, then choose a saved dataset and a research tool. The registry,
+            tournaments, and findings show what each run produced and which evidence it used.
+          </p>
+          <p>
+            Models and tournament results are simulated research, not proof of live performance.
+          </p>
+        </div>
+      </details>
       {message && (
         <p className="lab-note" role="status">
           {message}

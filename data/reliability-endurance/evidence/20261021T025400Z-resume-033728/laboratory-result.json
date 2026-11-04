@@ -1,0 +1,16 @@
+{
+  "campaign_id": "40df57f841a2460c95295a95d7e5f256",
+  "campaign_root": "/home/charlie/midas/data/reliability-endurance/evidence/20261021T025400Z-resume-033728/laboratory",
+  "code_hash": "81d385df597fecc22b7c25e83971a3ccf0bfc96fdcbfce30d8955b1c7572fd82",
+  "code_revision": "00495c227bb277e605393899fbae75ebcde8c858",
+  "elapsed_seconds": 5.2744918171083555,
+  "episodes": 32,
+  "events": 562,
+  "failed": 0,
+  "passed": 64,
+  "runs": 64,
+  "runs_per_second": 12.13387037447085,
+  "status": "COMPLETED",
+  "verified_result_hash": "4d871ea1edd4ba91fbbcbad4a3ff1179339969bf549ed3e60a29612afa8ea2cd",
+  "verified_run_id": "6f1452a3e2f34890060548494b3f202e"
+}

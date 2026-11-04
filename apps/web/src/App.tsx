@@ -15,6 +15,7 @@ import {
   Beaker,
   CheckCircle2,
   ChevronRight,
+  CircleHelp,
   Clock3,
   Database,
   FlaskConical,
@@ -40,6 +41,9 @@ import { PaperPage, PaperSummary, ExperimentPanel } from './Paper';
 import { chartBase } from './chart-theme';
 const LazyChart = lazy(() => import('./Chart').then((module) => ({ default: module.Chart })));
 const LazyVeritas = lazy(() => import('./Veritas').then((module) => ({ default: module.Veritas })));
+const LazyObservatory = lazy(() =>
+  import('./Observatory').then((module) => ({ default: module.Observatory })),
+);
 function Chart(props: ComponentProps<typeof LazyChart>) {
   return (
     <Suspense fallback={<div className="chart empty">Loading chart…</div>}>
@@ -59,20 +63,55 @@ import type {
   SystemEvent,
 } from './types';
 
-const pages = [
-  ['Mission Control', LayoutDashboard],
-  ['Reality', Radio],
-  ['Veritas', BarChart3],
-  ['Scanner', Search],
-  ['Paper Trading', Database],
-  ['Simulation Lab', FlaskConical],
-  ['Laboratory', Beaker],
-  ['Analytics', Activity],
-  ['Arena', Sparkles],
-  ['Incidents', TriangleAlert],
-  ['Telemetry', Radio],
-  ['Settings', Settings2],
+const pageGroups = [
+  {
+    label: 'Overview',
+    pages: [
+      ['Mission Control', LayoutDashboard],
+      ['Scanner', Search],
+    ],
+  },
+  {
+    label: 'Research',
+    pages: [
+      ['Observatory', Sparkles],
+      ['Reality', Radio],
+      ['Veritas', BarChart3],
+      ['Laboratory', Beaker],
+      ['Arena', Sparkles],
+    ],
+  },
+  {
+    label: 'Experiments',
+    pages: [
+      ['Paper Trading', Database],
+      ['Simulation Lab', FlaskConical],
+    ],
+  },
+  {
+    label: 'System',
+    pages: [
+      ['Analytics', Activity],
+      ['Incidents', TriangleAlert],
+      ['Telemetry', Radio],
+      ['Settings', Settings2],
+    ],
+  },
 ] as const;
+const pageSummaries: Record<string, string> = {
+  'Mission Control':
+    'A clear view of recent market checks, saved evidence, and virtual experiments.',
+  Scanner: 'Search markets and see why each observation passed or failed the checks.',
+  'Paper Trading': 'Track a virtual portfolio and review hypothetical paper orders.',
+  'Simulation Lab':
+    'Try a repeatable virtual scenario and see how its assumptions change the result.',
+  Laboratory: 'Compare repeatable experiments and inspect the evidence behind each result.',
+  Analytics: 'Review recorded market checks and virtual experiment results.',
+  Arena: 'Train and compare research models using saved data and simulated markets.',
+  Incidents: 'Review warnings and errors recorded by the system.',
+  Telemetry: 'Check whether data feeds and background services are running as expected.',
+  Settings: 'Review the safety boundaries and virtual risk controls.',
+};
 export const money = (value: string | number | null | undefined, digits = 2) =>
   value == null
     ? '—'
@@ -84,6 +123,12 @@ const percent = (value: string | number) => `${(Number(value) * 100).toFixed(2)}
 const date = (ts: number | null | undefined) =>
   ts ? new Date(ts).toLocaleTimeString(undefined, { hour12: false }) : '—';
 const readable = (value: string) => value.replaceAll('_', ' ').toLowerCase();
+const statusLabel = (value: string) =>
+  value === 'VERIFIED_MATHEMATICAL'
+    ? 'Passed math checks'
+    : value === 'NEGATIVE_EDGE'
+      ? 'No positive estimate'
+      : readable(value);
 const isVerified = (e: Evaluation) => e.status === 'VERIFIED_MATHEMATICAL';
 
 function Badge({ children, tone = 'neutral' }: { children: React.ReactNode; tone?: string }) {
@@ -126,6 +171,7 @@ function Metric({
   detail,
   positive,
   icon: Icon,
+  help,
 }: {
   label: string;
   value: React.ReactNode;
@@ -133,11 +179,13 @@ function Metric({
   detail: string;
   positive?: boolean;
   icon: LucideIcon;
+  help?: string;
 }) {
   return (
     <div className="metric">
       <div className="metric-label">
-        {label}
+        <span>{label}</span>
+        {help && <HelpTip label={label}>{help}</HelpTip>}
         <Icon size={15} />
       </div>
       <div className={`metric-value ${positive ? 'green' : ''}`}>
@@ -149,10 +197,24 @@ function Metric({
   );
 }
 
+function HelpTip({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <details className="help-tip">
+      <summary aria-label={`About ${label}`} title={`About ${label}`}>
+        <CircleHelp size={14} />
+      </summary>
+      <div className="help-tip-popover">{children}</div>
+    </details>
+  );
+}
+
 export function App() {
   const [page, setPage] = useState('Mission Control');
   const [selected, setSelected] = useState<Evaluation | null>(null);
-  const stateQuery = useQuery({ queryKey: ['state'], queryFn: () => api<State>('/state') });
+  const stateQuery = useQuery({
+    queryKey: ['state'],
+    queryFn: () => api<State>('/state'),
+  });
   const opportunities = useQuery({
     queryKey: ['opportunities'],
     queryFn: () => api<Evaluation[]>('/opportunities'),
@@ -163,6 +225,32 @@ export function App() {
   });
   const state = stateQuery.data;
   const disconnected = stateQuery.isError;
+  const activeGroup =
+    pageGroups.find((group) => group.pages.some(([name]) => name === page))?.label ?? 'Overview';
+  const dataLabel =
+    page === 'Observatory'
+      ? 'Saved research evidence'
+      : page === 'Reality'
+        ? 'Public market observations'
+        : page === 'Veritas'
+          ? 'Saved economic evidence'
+          : state?.mode === 'live'
+            ? 'Live public data'
+            : state?.mode === 'demo'
+              ? 'Example data'
+              : 'Connecting to data';
+  const dataHelp =
+    page === 'Observatory'
+      ? 'Saved research records updated about every 30 seconds. No market prices or live orders are used here.'
+      : page === 'Reality'
+        ? 'Public market observations collected over time. The page shows when this record was last updated.'
+        : page === 'Veritas'
+          ? 'A saved evidence snapshot. Its capture time is shown beside the assessment.'
+          : state?.mode === 'live'
+            ? 'Prices come from public market data. Quote age and data quality appear in System status.'
+            : state?.mode === 'demo'
+              ? 'Sample data is included so you can explore the site. It is not live market data, and all balances are virtual.'
+              : 'MIDAS is connecting to its data service. The source label will update when it is available.';
   useEffect(() => {
     document.title = `MIDAS — ${page}`;
   }, [page]);
@@ -180,33 +268,33 @@ export function App() {
           <span className="brand-mark">M</span>MIDAS<span className="brand-dot">.</span>
         </a>
         <div className="workspace">
-          <span className="tiny-label">RESEARCH WORKSPACE</span>
+          <span className="tiny-label">CURRENT AREA</span>
           <div>
             <Beaker size={15} />
-            {page === 'Reality'
-              ? 'Reality lab'
-              : page === 'Veritas'
-                ? 'Veritas research'
-                : 'Foundation lab'}{' '}
-            {page !== 'Veritas' && <Badge tone="gold">{page === 'Reality' ? 'M2' : 'M1'}</Badge>}
+            {activeGroup}
           </div>
         </div>
         <nav aria-label="Main navigation">
-          {pages.map(([name, Icon]) => (
-            <button
-              key={name}
-              aria-label={name}
-              aria-current={page === name ? 'page' : undefined}
-              className={page === name ? 'nav active' : 'nav'}
-              onClick={() => setPage(name)}
-            >
-              <Icon size={17} />
-              <span>{name}</span>
-              {name === 'Scanner' && state && (
-                <span className="nav-count">{state.verified_opportunities}</span>
-              )}
-              {name === 'Arena' && <span className="soon">BETA</span>}
-            </button>
+          {pageGroups.map(({ label, pages: groupPages }) => (
+            <div className="nav-group" key={label}>
+              <span className="nav-group-label">{label}</span>
+              {groupPages.map(([name, Icon]) => (
+                <button
+                  key={name}
+                  aria-label={name}
+                  aria-current={page === name ? 'page' : undefined}
+                  className={page === name ? 'nav active' : 'nav'}
+                  onClick={() => setPage(name)}
+                >
+                  <Icon size={17} />
+                  <span>{name}</span>
+                  {name === 'Scanner' && state && (
+                    <span className="nav-count">{state.verified_opportunities}</span>
+                  )}
+                  {name === 'Arena' && <span className="soon">BETA</span>}
+                </button>
+              ))}
+            </div>
           ))}
         </nav>
         <div className="sidebar-footer">
@@ -225,101 +313,96 @@ export function App() {
       <div className="main-shell">
         <header className="topbar">
           <div className="breadcrumb">
-            Midas laboratory
+            MIDAS
             <ChevronRight size={13} />
             <span>{page}</span>
           </div>
           <div className="topbar-right">
-            <Badge tone={page !== 'Veritas' && state?.mode === 'live' ? 'cyan' : 'gold'}>
-              {page === 'Reality'
-                ? 'REALITY · PUBLIC OBSERVATIONS'
-                : page === 'Veritas'
-                  ? 'VERITAS · ECONOMIC EVIDENCE'
-                  : state?.mode === 'live'
-                    ? 'LIVE OBSERVATION'
-                    : 'DEMO · SYNTHETIC'}
+            <Badge
+              tone={
+                page === 'Observatory' || page === 'Reality' || state?.mode === 'live'
+                  ? 'cyan'
+                  : 'gold'
+              }
+            >
+              {dataLabel}
             </Badge>
+            <HelpTip label={dataLabel}>{dataHelp}</HelpTip>
             <span className="topbar-boundary">
               <ShieldCheck size={13} />
-              SIMULATION ONLY
+              No live orders
             </span>
           </div>
         </header>
         <main>
-          {page !== 'Reality' && page !== 'Veritas' && (
+          {page !== 'Reality' && page !== 'Veritas' && page !== 'Observatory' && (
             <div className="page-heading">
               <div>
-                <div className="eyebrow">
-                  POLYMARKET RESEARCH / {page === 'Laboratory' ? 'MILESTONE 003' : 'MILESTONE 002'}
-                </div>
+                <div className="eyebrow">WORKSPACE / {activeGroup}</div>
                 <h1>{page}</h1>
-                <p>
-                  {
-                    (
-                      {
-                        'Mission Control':
-                          'Market intelligence. Verified mathematics. Measurable uncertainty.',
-                        Scanner:
-                          'Inspect complete binary positions and every assumption behind their edge.',
-                        'Simulation Lab':
-                          'Reproduce the trade. Stress the execution. Reconcile every balance.',
-                        Laboratory:
-                          'Adversarial experiments. Inspectable evidence. Reproducible decisions.',
-                        Analytics: 'Recorded observations and independent virtual experiments.',
-                        Arena: 'Train policies. Compare outcomes. Inspect the evidence.',
-                        Incidents:
-                          'An auditable record of warnings, errors, and scenario outcomes.',
-                        Telemetry: 'Measured health of the data and research pipeline.',
-                        Settings: 'Operating boundaries and conservative risk controls.',
-                      } as Record<string, string>
-                    )[page]
-                  }
-                </p>
+                <p>{pageSummaries[page]}</p>
               </div>
               <div className="heading-status">
                 <span
                   className={`status-dot ${disconnected || state?.status === 'DEGRADED' ? 'red' : ''}`}
                 />
-                {disconnected ? 'API DISCONNECTED' : (state?.status ?? 'CONNECTING')}
-                <span className="heading-time">{date(state?.timestamp_ms)} LOCAL</span>
+                {disconnected
+                  ? 'Data service offline'
+                  : state?.status
+                    ? readable(state.status)
+                    : 'Connecting'}
+                <span className="heading-time">Updated {date(state?.timestamp_ms)} local time</span>
               </div>
             </div>
           )}
-          {page !== 'Reality' && page !== 'Veritas' && disconnected && (
+          {page !== 'Reality' && page !== 'Veritas' && page !== 'Observatory' && disconnected && (
             <div className="alert danger">
               <TriangleAlert size={17} />
               <div>
-                Backend connection unavailable. Displayed observations may be outdated.
-                <span>{stateQuery.error.message}</span>
+                MIDAS cannot reach its data service. Some values may be out of date.
+                <details className="error-details">
+                  <summary>Connection details</summary>
+                  <span>{stateQuery.error.message}</span>
+                </details>
               </div>
               <button onClick={() => void stateQuery.refetch()}>Retry connection</button>
             </div>
           )}
-          {page !== 'Reality' && page !== 'Veritas' && state?.mode === 'demo' && (
-            <div className="demo-strip">
-              <FlaskConical size={14} />
-              <strong>SYNTHETIC DATA</strong>
-              <span>Bundled fixtures · virtual USD · hypothetical market observations</span>
-              <span className="strip-end">No deposited funds</span>
-            </div>
-          )}
           {page !== 'Reality' &&
             page !== 'Veritas' &&
+            page !== 'Observatory' &&
+            state?.mode === 'demo' && (
+              <div className="demo-strip">
+                <FlaskConical size={14} />
+                <strong>EXAMPLE DATA</strong>
+                <span>
+                  Sample market records for exploring the interface. All balances and results are
+                  virtual.
+                </span>
+                <span className="strip-end">No real funds or orders</span>
+              </div>
+            )}
+          {page !== 'Reality' &&
+            page !== 'Veritas' &&
+            page !== 'Observatory' &&
             state?.status === 'DEGRADED' &&
             !disconnected && (
               <div className="alert danger">
                 <TriangleAlert size={17} />
-                Data quality is degraded. Inspect book timestamps and Telemetry before interpreting
-                observations.
+                Some market quotes may be incomplete or out of date. Check System → Telemetry before
+                relying on these summaries.
               </div>
             )}
-          {page !== 'Reality' && page !== 'Veritas' && state?.safety.emergency_stop && (
-            <div className="alert danger" role="alert">
-              <ShieldX size={17} />
-              Emergency stop active. New virtual proposals and scenario runs are blocked.
-              <button onClick={() => setPage('Settings')}>View controls</button>
-            </div>
-          )}
+          {page !== 'Reality' &&
+            page !== 'Veritas' &&
+            page !== 'Observatory' &&
+            state?.safety.emergency_stop && (
+              <div className="alert danger" role="alert">
+                <ShieldX size={17} />
+                The safety stop is on, so new virtual proposals and scenarios are paused.
+                <button onClick={() => setPage('Settings')}>Review safety controls</button>
+              </div>
+            )}
           {page === 'Mission Control' && (
             <Mission
               state={state}
@@ -352,16 +435,23 @@ export function App() {
               <LazyVeritas />
             </Suspense>
           )}
+          {page === 'Observatory' && (
+            <Suspense fallback={<div className="empty">Opening the Observatory…</div>}>
+              <LazyObservatory />
+            </Suspense>
+          )}
           {page === 'Incidents' && <Incidents />}
           {page === 'Telemetry' && <Telemetry state={state} />}
           {page === 'Settings' && <SettingsPage />}
-          <footer className="page-footer">
-            <span>MIDAS / Independent prediction-market research</span>
-            <span>
-              Observed edge ≠ executable profit<span className="footer-divider">/</span>All balances
-              are virtual
-            </span>
-          </footer>
+          {page !== 'Observatory' && (
+            <footer className="page-footer">
+              <span>MIDAS / Independent prediction-market research</span>
+              <span>
+                Observed edge ≠ executable profit<span className="footer-divider">/</span>All
+                balances are virtual
+              </span>
+            </footer>
+          )}
         </main>
       </div>
       {selected && <Details evaluation={selected} close={() => setSelected(null)} />}
@@ -378,7 +468,7 @@ function ActivityChart({ data }: { data: Analytics | undefined }) {
       xAxis: { ...chartBase.xAxis, data: data?.activity.map((x) => date(x.timestamp_ms)) ?? [] },
       series: [
         {
-          name: 'Observed',
+          name: 'Market checks',
           type: 'line',
           data: data?.activity.map((x) => x.observations),
           symbolSize: 5,
@@ -386,7 +476,7 @@ function ActivityChart({ data }: { data: Analytics | undefined }) {
           areaStyle: { opacity: 0.04 },
         },
         {
-          name: 'Verified',
+          name: 'Passed checks',
           type: 'line',
           data: data?.activity.map((x) => x.verified),
           symbolSize: 5,
@@ -397,10 +487,7 @@ function ActivityChart({ data }: { data: Analytics | undefined }) {
     [data],
   );
   return data?.activity.length ? (
-    <Chart
-      option={option}
-      label="Recorded observation counts and mathematically verified counts per minute"
-    />
+    <Chart option={option} label="Market checks and checks that passed each minute" />
   ) : (
     <Empty title="Waiting for observations">
       The chart appears when the backend records a refresh.
@@ -422,126 +509,189 @@ function Mission({
 }) {
   return (
     <>
-      <PaperSummary />
+      <section className="mission-start">
+        <div className="mission-start-copy">
+          <span className="eyebrow">A QUICK WAY TO GET STARTED</span>
+          <h2>Follow a market observation through the research process.</h2>
+          <p>
+            Explore what MIDAS checked, review the public evidence, then try a virtual scenario.
+            Every result is for research; no live orders are placed.
+          </p>
+        </div>
+        <div className="mission-start-actions">
+          <button className="mission-start-action" onClick={() => navigate('Scanner')}>
+            <span>01</span>
+            <span>
+              <strong>Explore markets</strong>
+              <small>Review recent checks</small>
+            </span>
+            <ChevronRight size={16} />
+          </button>
+          <button className="mission-start-action" onClick={() => navigate('Reality')}>
+            <span>02</span>
+            <span>
+              <strong>Read the evidence</strong>
+              <small>See public observations</small>
+            </span>
+            <ChevronRight size={16} />
+          </button>
+          <button className="mission-start-action" onClick={() => navigate('Simulation Lab')}>
+            <span>03</span>
+            <span>
+              <strong>Try a simulation</strong>
+              <small>Test virtual outcomes</small>
+            </span>
+            <ChevronRight size={16} />
+          </button>
+        </div>
+      </section>
+      <PaperSummary compact />
       <div className="metrics">
         <Metric
-          label="Markets monitored"
+          label="Markets checked"
           value={state?.markets ?? '—'}
-          detail={`${state?.instruments ?? 0} outcome instruments`}
+          detail="Distinct markets included in the latest scan."
+          help="A market is one question with possible outcomes. MIDAS checks its available public prices."
           icon={Radio}
         />
         <Metric
-          label="Verified observations"
+          label="Checks passed"
           value={state?.verified_opportunities ?? '—'}
-          detail={`${state?.rejected_opportunities ?? 0} rejected current observations`}
+          detail={`${state?.rejected_opportunities ?? 0} checks did not pass`}
+          help="Passing means the observation met MIDAS’s built-in mathematical checks. It does not predict what will happen next."
           icon={ShieldCheck}
           positive
         />
         <Metric
-          label="Observed modeled edge sum"
+          label="Modeled edge · estimate"
           value={money(state?.potential_net_profit)}
           unit={state?.unit ?? 'USD'}
-          detail={`Independent snapshots · not jointly executable · gross ${money(state?.potential_gross_profit)}`}
+          detail="Separate snapshots added together; they may not be achievable together."
+          help="An estimate from observed prices and modeled costs. It does not guarantee a fill or profit. The gross estimate is shown in Scanner."
           icon={ArrowUpRight}
         />
         <Metric
-          label="Virtual starting capital"
+          label="Starting virtual balance"
           value={money(state?.virtual_starting_capital)}
           unit="USD"
-          detail="Each experiment starts an independent portfolio"
+          detail="Each experiment starts with its own simulated balance."
+          help="This is simulated money for research. No funds are deposited or moved."
           icon={Database}
         />
       </div>
       <div className="overview-grid">
         <Panel
-          title="Observation activity"
-          aside={<Badge>{analytics?.source ?? 'WAITING'} · PER MINUTE</Badge>}
+          title="Recent market activity"
+          aside={<Badge>{analytics?.observation_window ?? 0} recorded checks</Badge>}
         >
           <ActivityChart data={analytics} />
           <div className="chart-footnote">
-            Last {analytics?.observation_window ?? 0} recorded observations · counts include
-            repeated refreshes
+            Counts are grouped by minute. The same market can appear in more than one check.
           </div>
         </Panel>
-        <Panel title="System integrity" aside={<ShieldCheck size={16} />}>
+        <Panel title="System status" aside={<Badge tone="green">Research only</Badge>}>
           <div className="health-list">
             <div>
-              <span>Paper broker pending / processing delay</span>
+              <span>Public market connection</span>
+              <strong>{state?.connection ? readable(state.connection) : 'Checking'}</strong>
+            </div>
+            <div>
+              <span>Oldest available quote</span>
               <strong>
-                {state?.telemetry.broker_pending_actions ?? '—'} /{' '}
-                {state?.telemetry.broker_processing_delay_ms ?? '—'} ms
+                {state?.oldest_book_age_ms == null
+                  ? 'No quotes received'
+                  : `About ${(state.oldest_book_age_ms / 1000).toFixed(1)} seconds old`}
               </strong>
             </div>
             <div>
-              <span>Reconciled broker startups</span>
-              <strong>{state?.telemetry.broker_recoveries ?? '—'}</strong>
-            </div>
-            <div>
-              <span>Process CPU time / peak memory</span>
+              <span>Quote checks with issues</span>
               <strong>
-                {state?.telemetry.cpu_seconds ?? '—'} s / {state?.telemetry.peak_memory_kib ?? '—'}{' '}
-                KiB
+                {state?.invalid_books ?? 0} of {state?.books ?? 0}
               </strong>
             </div>
             <div>
-              <span>Last scanner throughput (including persistence)</span>
-              <strong>
-                {state?.telemetry.scanner_markets_per_second?.toFixed(2) ?? '—'} markets/s
-              </strong>
+              <span>Real orders placed</span>
+              <strong>None · virtual research only</strong>
             </div>
-            {[
-              ['Market connection', state?.connection ?? 'Waiting'],
-              [
-                'Book freshness',
-                state?.oldest_book_age_ms == null
-                  ? 'No books'
-                  : `${(state.oldest_book_age_ms / 1000).toFixed(1)}s oldest`,
-              ],
-              [
-                'Book integrity',
-                `${state?.invalid_books ?? 0} invalid / ${state?.books ?? 0} books`,
-              ],
-              ['Audit storage', state?.telemetry.database_healthy ? 'Available' : 'Unavailable'],
-              ['Execution boundary', 'Virtual venue only'],
-            ].map(([key, value]) => (
-              <div key={key}>
-                <span>{key}</span>
-                <strong>{value}</strong>
-              </div>
-            ))}
           </div>
+          <details className="mission-details">
+            <summary>Technical system details</summary>
+            <div className="health-list">
+              <div>
+                <span>Pending paper proposals / processing delay</span>
+                <strong>
+                  {state?.telemetry.broker_pending_actions ?? '—'} /{' '}
+                  {state?.telemetry.broker_processing_delay_ms ?? '—'} ms
+                </strong>
+              </div>
+              <div>
+                <span>Recovered broker restarts</span>
+                <strong>{state?.telemetry.broker_recoveries ?? '—'}</strong>
+              </div>
+              <div>
+                <span>Process CPU time / peak memory</span>
+                <strong>
+                  {state?.telemetry.cpu_seconds ?? '—'} s /{' '}
+                  {state?.telemetry.peak_memory_kib ?? '—'} KiB
+                </strong>
+              </div>
+              <div>
+                <span>Latest scan speed, including saved records</span>
+                <strong>
+                  {state?.telemetry.scanner_markets_per_second?.toFixed(2) ?? '—'} markets/s
+                </strong>
+              </div>
+              <div>
+                <span>Research record storage</span>
+                <strong>
+                  {state == null
+                    ? 'Checking'
+                    : state.telemetry.database_healthy
+                      ? 'Available'
+                      : 'Unavailable'}
+                </strong>
+              </div>
+            </div>
+          </details>
           <div className="lab-result">
-            <div className="tiny-label">LATEST INDEPENDENT SIMULATION</div>
+            <div className="tiny-label">LATEST VIRTUAL SCENARIO</div>
             <strong
               className={Number(state?.latest_simulated_pnl ?? 0) < 0 ? 'red-text' : 'cyan-text'}
             >
               {money(state?.latest_simulated_pnl)}
-              <small> virtual USD P&L</small>
+              <small> simulated USD result</small>
             </strong>
             <span>
               {state?.latest_simulation
                 ? readable(state.latest_simulation)
-                : 'Run a scenario to produce ledger-derived results'}
+                : 'Run a scenario to create a virtual result'}
             </span>
             <button className="text-button" onClick={() => navigate('Simulation Lab')}>
-              Open simulation lab <ChevronRight size={14} />
+              Try a simulation <ChevronRight size={14} />
             </button>
           </div>
         </Panel>
       </div>
       <Panel
-        title="Current scanner observations"
+        title="Recent market checks"
         aside={
           <button className="text-button" onClick={() => navigate('Scanner')}>
             Open scanner <ChevronRight size={14} />
           </button>
         }
       >
-        <CompactTable evaluations={evaluations} onInspect={onInspect} />
+        <div className="panel-note">
+          These are observations based on public prices. A positive estimate does not guarantee a
+          trade or a profit.
+        </div>
+        <CompactTable evaluations={evaluations.slice(0, 5)} onInspect={onInspect} />
       </Panel>
-      <Panel title="System event log" aside={<Badge>ACTUAL APPLICATION EVENTS</Badge>}>
-        <EventList events={state?.events.slice(0, 6) ?? []} />
-      </Panel>
+      <details className="mission-event-details">
+        <summary>Recent system activity</summary>
+        <Panel title="Latest recorded events" aside={<Badge>System log</Badge>}>
+          <EventList events={state?.events.slice(0, 6) ?? []} />
+        </Panel>
+      </details>
     </>
   );
 }
@@ -557,12 +707,12 @@ function CompactTable({
       <table>
         <thead>
           <tr>
-            <th>Market / complete binary</th>
-            <th>Gross edge</th>
-            <th>Net edge</th>
-            <th>Size</th>
-            <th>Status</th>
-            <th>Observed</th>
+            <th>Market</th>
+            <th>Gross estimate</th>
+            <th>After modeled costs</th>
+            <th>Est. amount</th>
+            <th>Check result</th>
+            <th>Last checked</th>
           </tr>
         </thead>
         <tbody>
@@ -584,7 +734,7 @@ function CompactTable({
                 <Badge
                   tone={isVerified(e) ? 'green' : e.status === 'NEGATIVE_EDGE' ? 'red' : 'neutral'}
                 >
-                  {readable(e.status)}
+                  {statusLabel(e.status)}
                 </Badge>
               </td>
               <td className="mono muted">{date(e.observed_ts_ms)}</td>
@@ -595,7 +745,7 @@ function CompactTable({
     </div>
   ) : (
     <Empty title="No market observations">
-      Live mode requires reachable public market data. Demo mode loads labeled synthetic fixtures.
+      No observations are available. Check the data connection or adjust your filters.
     </Empty>
   );
 }
@@ -639,7 +789,7 @@ function Scanner({
       },
       {
         id: 'type',
-        header: 'Position',
+        header: 'Outcomes',
         cell: (i) => (
           <span className="muted">
             {i.row.original.market?.instruments.map((x) => x.label).join(' + ')}
@@ -649,13 +799,13 @@ function Scanner({
       },
       {
         accessorKey: 'gross_edge',
-        header: 'Gross edge',
+        header: 'Gross estimate',
         sortingFn: (a, b) => Number(a.original.gross_edge) - Number(b.original.gross_edge),
         cell: (i) => <span className="mono">{percent(i.getValue<string>())}</span>,
       },
       {
         accessorKey: 'net_edge',
-        header: 'Net edge',
+        header: 'After modeled costs',
         sortingFn: (a, b) => Number(a.original.net_edge) - Number(b.original.net_edge),
         cell: (i) => (
           <span className={`mono ${Number(i.getValue()) > 0 ? 'green' : ''}`}>
@@ -665,34 +815,34 @@ function Scanner({
       },
       {
         accessorKey: 'quantity',
-        header: 'Modeled size',
+        header: 'Est. amount',
         sortingFn: (a, b) => Number(a.original.quantity) - Number(b.original.quantity),
         cell: (i) => <span className="mono">{money(i.getValue<string>())}</span>,
       },
       {
         accessorKey: 'available_quantity',
-        header: 'Matched depth',
+        header: 'Displayed amount',
         cell: (i) => <span className="mono">{money(i.getValue<string>())}</span>,
       },
       {
         accessorKey: 'required_capital',
-        header: 'Capital',
+        header: 'Virtual funds needed',
         sortingFn: (a, b) =>
           Number(a.original.required_capital) - Number(b.original.required_capital),
         cell: (i) => <span className="mono">{money(i.getValue<string>())}</span>,
       },
       {
         accessorKey: 'status',
-        header: 'Status',
+        header: 'Check result',
         cell: (i) => (
           <Badge tone={isVerified(i.row.original) ? 'green' : 'neutral'}>
-            {readable(i.getValue<string>())}
+            {statusLabel(i.getValue<string>())}
           </Badge>
         ),
       },
       {
         id: 'reason',
-        header: 'Decision reason',
+        header: 'Why it passed or failed',
         cell: (i) => (
           <span className="reason" title={i.row.original.reasons.join('; ')}>
             {i.row.original.reasons[0]}
@@ -702,7 +852,7 @@ function Scanner({
       },
       {
         accessorKey: 'observed_ts_ms',
-        header: 'Observed',
+        header: 'Last checked',
         cell: (i) => <span className="mono muted">{date(i.getValue<number>())}</span>,
       },
     ],
@@ -717,21 +867,20 @@ function Scanner({
     getSortedRowModel: getSortedRowModel(),
   });
   return (
-    <Panel
-      title="Complementary outcome scanner"
-      aside={
-        <Badge>
-          {data.length} OBSERVATIONS ·{' '}
-          {evaluations[0]?.source === 'LIVE' ? 'MODELED pUSD' : 'VIRTUAL USD'}
-        </Badge>
-      }
-    >
-      <div className="toolbar">
+    <Panel title="Market checks" aside={<Badge>{data.length} results</Badge>}>
+      <div className="scanner-explainer">
+        <strong>What you’re seeing</strong>
+        <span>
+          Each row is a check of public market prices. “Net edge” is an estimate after modeled
+          costs; it does not guarantee that an order could fill or make money.
+        </span>
+      </div>
+      <div className="toolbar scanner-toolbar">
         <label className="search-field">
           <Search size={15} />
           <input
             aria-label="Search markets"
-            placeholder="Filter markets…"
+            placeholder="Search markets…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -741,31 +890,32 @@ function Scanner({
           value={status}
           onChange={(e) => setStatus(e.target.value)}
         >
-          <option value="all">All classifications</option>
+          <option value="all">All results</option>
           {[...new Set(evaluations.map((e) => e.status))].map((s) => (
             <option key={s} value={s}>
-              {readable(s)}
+              {statusLabel(s)}
             </option>
           ))}
         </select>
-        <select
-          aria-label="Filter protocol"
-          value={protocol}
-          onChange={(e) => setProtocol(e.target.value)}
-        >
-          <option value="all">All protocols</option>
-          <option value="v1">CTF v1</option>
-          <option value="v2">Protocol V2</option>
-        </select>
-        <input
-          aria-label="Filter rejection reason"
-          placeholder="Rejection reason…"
-          value={reason}
-          onChange={(e) => setReason(e.target.value)}
-        />
-        <span className="toolbar-note">
-          Exact arithmetic · observed ask depth · no fill guarantee
-        </span>
+        <details className="filter-more">
+          <summary>More filters</summary>
+          <select
+            aria-label="Filter protocol"
+            value={protocol}
+            onChange={(e) => setProtocol(e.target.value)}
+          >
+            <option value="all">All protocols</option>
+            <option value="v1">CTF v1</option>
+            <option value="v2">Protocol V2</option>
+          </select>
+          <input
+            aria-label="Filter rejection reason"
+            placeholder="Rejection reason…"
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+          />
+        </details>
+        <span className="toolbar-note">{data.length} matching markets</span>
       </div>
       {error && (
         <div role="alert" className="alert danger">
@@ -816,8 +966,8 @@ function Scanner({
         </Empty>
       )}
       <div className="panel-note">
-        Modeled size is the best evaluated depth breakpoint under capital constraints. Rejected
-        evaluations may have no computable size.
+        “Modeled size” estimates the quantity available at the observed price. Some checks have no
+        size estimate. Open a row to see its assumptions and reasons.
       </div>
     </Panel>
   );
@@ -1074,10 +1224,22 @@ function SimulationLab() {
   const groups = [...new Set(scenarios.data?.map((s) => s.category))];
   return (
     <>
+      <details className="workspace-guide simulation-guide">
+        <summary>How to run a virtual scenario</summary>
+        <div>
+          <p>
+            Choose a scenario, keep or change the repeat number, then run it. The same scenario and
+            repeat number reproduce the same virtual run.
+          </p>
+          <p>
+            Results use sample market data and estimated fills. They are not live trading results.
+          </p>
+        </div>
+      </details>
       <div className="simulation-grid">
         <Panel
           title="Scenario library"
-          aside={<Badge>{scenarios.data?.length ?? 0} TESTS</Badge>}
+          aside={<Badge>{scenarios.data?.length ?? 0} scenarios</Badge>}
           className="scenario-panel"
         >
           {groups.map((group) => (
@@ -1100,8 +1262,8 @@ function SimulationLab() {
         </Panel>
         <div className="simulation-workbench">
           <Panel
-            title="Experiment configuration"
-            aside={<Badge tone="cyan">DETERMINISTIC · INTERNAL VENUE</Badge>}
+            title="Set up a virtual scenario"
+            aside={<Badge tone="cyan">REPEATABLE · SIMULATED</Badge>}
           >
             <div className="experiment-intro">
               <div className="experiment-icon">
@@ -1114,7 +1276,7 @@ function SimulationLab() {
             </div>
             <div className="run-controls">
               <label>
-                Random seed
+                Repeat number
                 <input
                   type="number"
                   min={0}
@@ -1123,9 +1285,7 @@ function SimulationLab() {
                   onChange={(e) => setSeed(Number(e.target.value))}
                 />
               </label>
-              <div className="run-info">
-                DATASET synthetic-1<span>STRATEGY binary-depth-1</span>
-              </div>
+              <span className="run-seed-note">Use the same number to repeat a run.</span>
               <button
                 className="primary-button"
                 disabled={
@@ -1134,7 +1294,7 @@ function SimulationLab() {
                 onClick={() => execute.mutate()}
               >
                 <Play size={15} />
-                {execute.isPending ? 'Executing…' : 'Run scenario'}
+                {execute.isPending ? 'Running…' : 'Run scenario'}
               </button>
             </div>
             {execute.error && (
@@ -1142,32 +1302,40 @@ function SimulationLab() {
                 {execute.error.message}
               </div>
             )}
-            <div className="panel-note">
-              Non-atomic IOC legs · deterministic latency · price-priority matching · estimated
-              execution
-            </div>
+            <details className="simulation-assumptions">
+              <summary>How fills and costs are estimated</summary>
+              <div>
+                <p>
+                  The scenario uses a saved sample dataset, modeled fees, delays, and price-based
+                  matching. Actual market conditions and order fills may be different.
+                </p>
+                <code>dataset synthetic-1 · strategy binary-depth-1</code>
+              </div>
+            </details>
           </Panel>
           {run ? (
             <>
               <div className={`run-result ${run.passed ? 'pass' : 'fail'}`}>
                 <CheckCircle2 size={21} />
                 <div>
-                  <strong>{run.passed ? 'INVARIANTS PASSED' : 'INVARIANT FAILURE'}</strong>
+                  <strong>
+                    {run.passed ? 'SCENARIO CHECKS PASSED' : 'SCENARIO CHECKS FOUND A PROBLEM'}
+                  </strong>
                   <span>
-                    {readable(run.scenario_id)} · seed {run.seed} · {run.timeline.length} scheduled
-                    events · {run.ledger.length} ledger entries
+                    {readable(run.scenario_id)} · repeat {run.seed} · {run.timeline.length} steps
+                    recorded
                   </span>
                 </div>
-                <Badge tone="gold">SYNTHETIC</Badge>
+                <Badge tone="gold">SAMPLE SCENARIO</Badge>
               </div>
               <Panel
-                title="Virtual portfolio at replay cursor"
-                aside={<Badge tone="cyan">T + {selectedEvent?.time_ms ?? 0} ms</Badge>}
+                title="Virtual balance at this step"
+                aside={<Badge tone="cyan">Elapsed {selectedEvent?.time_ms ?? 0} ms</Badge>}
               >
                 {selectedEvent && <PortfolioGrid portfolio={selectedEvent.portfolio} />}
               </Panel>
               <Panel
-                title="Event replay"
+                title="Step-by-step replay"
                 aside={
                   <span className="mono muted">
                     {cursor + 1} / {run.timeline.length}
@@ -1215,12 +1383,15 @@ function SimulationLab() {
                     </button>
                   ))}
                 </div>
-                <pre className="event-json" tabIndex={0}>
-                  {JSON.stringify(selectedEvent?.detail, null, 2)}
-                </pre>
+                <details className="simulation-event-details">
+                  <summary>Show the technical event record</summary>
+                  <pre className="event-json" tabIndex={0}>
+                    {JSON.stringify(selectedEvent?.detail, null, 2)}
+                  </pre>
+                </details>
               </Panel>
               <Panel
-                title="Audit & reproducibility"
+                title="Result details"
                 aside={
                   <button
                     className="text-button"
@@ -1235,63 +1406,73 @@ function SimulationLab() {
                       URL.revokeObjectURL(url);
                     }}
                   >
-                    Download artifact ↓
+                    Download result details ↓
                   </button>
                 }
               >
                 <div className="audit-summary">
-                  <span>Strategy classification</span>
+                  <span>Market check</span>
                   <Badge tone={isVerified(run.evaluation) ? 'green' : 'neutral'}>
-                    {readable(run.evaluation.status)}
+                    {statusLabel(run.evaluation.status)}
                   </Badge>
-                  <span>Risk gate</span>
+                  <span>Safety check</span>
                   <Badge tone={run.risk.allowed ? 'green' : 'red'}>
-                    {run.risk.allowed ? 'allowed' : 'rejected'}
+                    {run.risk.allowed ? 'passed' : 'blocked'}
                   </Badge>
                 </div>
-                <p className="audit-description">{run.risk.reasons.join('; ')}</p>
-                {run.invariant_violations.length > 0 && (
-                  <ul className="red-text">
-                    {run.invariant_violations.map((x) => (
-                      <li key={x}>{x}</li>
-                    ))}
-                  </ul>
-                )}
-                <code className="identifier hash">SHA-256 {run.reproducibility_hash}</code>
                 <div className="panel-note">
-                  Identical scenario, seed, versions and configuration produce an identical artifact
-                  hash. Expected trading losses can pass all invariants.
+                  A passed check means the virtual run followed its rules. It does not show that a
+                  strategy would work in a real market. Repeating the same inputs reproduces the
+                  saved result.
                 </div>
-                <details className="ledger-details">
-                  <summary>Inspect complete ledger ({run.ledger.length} movements)</summary>
-                  <pre tabIndex={0}>{JSON.stringify(run.ledger, null, 2)}</pre>
+                <details className="simulation-safety-details" open={!run.risk.allowed}>
+                  <summary>
+                    Why the safety check {run.risk.allowed ? 'passed' : 'was blocked'}
+                  </summary>
+                  <div>
+                    <p className="audit-description">{run.risk.reasons.join('; ')}</p>
+                    {run.invariant_violations.length > 0 && (
+                      <ul className="red-text">
+                        {run.invariant_violations.map((x) => (
+                          <li key={x}>{x}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                </details>
+                <details className="simulation-tech-record">
+                  <summary>Technical result record</summary>
+                  <div>
+                    <code className="identifier hash">SHA-256 {run.reproducibility_hash}</code>
+                    <details className="ledger-details">
+                      <summary>Inspect full record ({run.ledger.length} movements)</summary>
+                      <pre tabIndex={0}>{JSON.stringify(run.ledger, null, 2)}</pre>
+                    </details>
+                  </div>
                 </details>
               </Panel>
             </>
           ) : (
             <Panel title="Experiment output">
-              <Empty title="Ready for the first run">
-                Choose a scenario and execute it. Results, balances and event records are calculated
-                by the backend.
+              <Empty title="Ready for your first run">
+                Choose a scenario and select Run scenario. Its virtual balance and recorded steps
+                will appear here.
               </Empty>
             </Panel>
           )}
         </div>
       </div>
-      <Panel
-        title="Persisted experiment history"
-        aside={<Badge>INDEPENDENT VIRTUAL PORTFOLIOS</Badge>}
-      >
+      <Panel title="Previous virtual runs" aside={<Badge>Each run is separate</Badge>}>
         {history.data?.length ? (
           <div className="table-scroll">
             <table>
               <thead>
                 <tr>
                   <th>Scenario</th>
-                  <th>Seed</th>
-                  <th>Invariants</th>
-                  <th>Realized virtual USD P&L</th>
-                  <th>Executed</th>
+                  <th>Repeat number</th>
+                  <th>Scenario checks</th>
+                  <th>Virtual result · USD</th>
+                  <th>Saved</th>
                 </tr>
               </thead>
               <tbody>
@@ -1314,7 +1495,7 @@ function SimulationLab() {
                     <td className="mono">{row.payload.seed}</td>
                     <td>
                       <Badge tone={row.payload.passed ? 'green' : 'red'}>
-                        {row.payload.passed ? 'PASS' : 'FAIL'}
+                        {row.payload.passed ? 'Passed' : 'Review'}
                       </Badge>
                     </td>
                     <td
@@ -1329,8 +1510,8 @@ function SimulationLab() {
             </table>
           </div>
         ) : (
-          <Empty title="No persisted experiments">
-            Your scenario runs will appear here and survive a backend restart.
+          <Empty title="No virtual runs yet">
+            Runs you complete in the scenario library will appear here.
           </Empty>
         )}
       </Panel>

@@ -1,0 +1,13 @@
+[Unit]
+Description=Run MIDAS 48H-002 recovery and source monitoring every five minutes
+
+[Timer]
+OnBootSec=2min
+OnCalendar=*:0/5
+Persistent=true
+RandomizedDelaySec=5
+AccuracySec=5
+Unit=midas-autonomy-48h-002.service
+
+[Install]
+WantedBy=timers.target

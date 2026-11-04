@@ -109,12 +109,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(router(lambda: app.state.laboratory))
     from apps.api.arena import router as arena_router
 
-    veritas_workspace = (
-        config.veritas_workspace or Path(__file__).resolve().parents[2]
-    ).resolve()
-    app.include_router(
-        arena_router(config.arena_root, veritas_repository=veritas_workspace)
-    )
+    veritas_workspace = (config.veritas_workspace or Path(__file__).resolve().parents[2]).resolve()
+    app.include_router(arena_router(config.arena_root, veritas_repository=veritas_workspace))
     from apps.api.reality import router as reality_router
 
     app.include_router(reality_router(config.reality_workspace.resolve()))

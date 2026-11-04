@@ -1,0 +1,12 @@
+{
+  "duration_seconds": 754.485,
+  "error": "RuntimeError: Isolated Laboratory campaign did not complete: FAILED BrokenProcessPool: A process in the process pool was terminated abruptly while the future was running or pending.",
+  "evidence_root": "/home/charlie/midas/data/reliability-endurance/evidence/20261021T025400Z-resume-031931",
+  "evidence_session_id": "20261021T025400Z-resume-031931",
+  "finished_at": "2026-10-21T03:32:05.510073+00:00",
+  "run_id": "20261021T025400Z",
+  "schedule_id": null,
+  "started_at": "2026-10-21T03:19:31.146901+00:00",
+  "status": "FAIL",
+  "test_root": "/home/charlie/midas/data/reliability-endurance/arena"
+}

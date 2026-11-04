@@ -1,0 +1,12 @@
+{
+  "duration_seconds": 0.349,
+  "error": "RuntimeError: Worker unit failed to load: midas-arena-job-40d0ae39904e477fb2f162be.service {'MainPID': '0', 'Result': 'success', 'NRestarts': '0', 'ControlGroup': '', 'MemoryCurrent': '[not set]', 'MemoryPeak': '[not set]', 'MemorySwapCurrent': '[not set]', 'MemorySwapPeak': '[not set]', 'CPUUsageNSec': '[not set]', 'IOReadBytes': '[not set]', 'IOWriteBytes': '[not set]', 'CPUQuotaPerSecUSec': 'infinity', 'MemoryHigh': 'infinity', 'MemoryMax': 'infinity', 'MemorySwapMax': 'infinity', 'LoadState': 'not-found', 'ActiveState': 'inactive', 'SubState': 'dead'}",
+  "evidence_root": "/home/charlie/midas/data/reliability-endurance/evidence/20261021T025400Z-resume-033655",
+  "evidence_session_id": "20261021T025400Z-resume-033655",
+  "finished_at": "2026-10-21T03:36:55.765981+00:00",
+  "run_id": "20261021T025400Z",
+  "schedule_id": null,
+  "started_at": "2026-10-21T03:36:55.537151+00:00",
+  "status": "FAIL",
+  "test_root": "/home/charlie/midas/data/reliability-endurance/arena"
+}

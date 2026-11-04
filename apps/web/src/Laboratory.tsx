@@ -309,6 +309,16 @@ export function Laboratory() {
           </button>
         ))}
       </div>
+      <details className="workspace-guide">
+        <summary>How to use this laboratory</summary>
+        <div>
+          <p>
+            Start in Overview, then open Experiment builder to set up a repeatable virtual test.
+            Campaign monitor tracks saved runs; Replay workstation lets you step through one result.
+          </p>
+          <p>Creating a research run does not place a market order.</p>
+        </div>
+      </details>
       {(campaigns.error || catalog.error) && (
         <p role="alert">{campaigns.error?.message ?? catalog.error?.message}</p>
       )}

@@ -147,7 +147,11 @@ def storage_commitment(
         )
 
     archive_root = archive_destination.resolve()
-    if archive_root == raw_root or archive_root.is_relative_to(raw_root) or raw_root.is_relative_to(archive_root):
+    if (
+        archive_root == raw_root
+        or archive_root.is_relative_to(raw_root)
+        or raw_root.is_relative_to(archive_root)
+    ):
         raise ValueError("Archive destination must be separate from the raw recording root")
     archive_mount = archive_root
     while not archive_mount.exists() and archive_mount != archive_mount.parent:

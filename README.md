@@ -130,6 +130,8 @@ actual experiments and explicit remaining scope.
 For persistent local services, interrupted campaign recovery, and remote MacBook access, see
 [recovery and service operations](docs/RELIABILITY_OPERATIONS.md).
 
+The source-grounded 48-hour research runbook is [48H-002 operations](docs/AUTONOMY_48H_002_OPERATIONS.md).
+
 Use `uv` in place of `.venv/bin/uv` when it is on PATH.
 
 ```bash

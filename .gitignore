@@ -61,5 +61,8 @@ data/datasets/public-series-*.manifest.json
 
 # Isolated reliability endurance artifacts; compact evidence remains tracked.
 data/reliability-endurance/arena/
+# Local coordination locks are runtime state, not source or evidence.
+.arena-global.lock
+data/reliability-endurance/evidence/**/laboratory/owner.lock
 # Raw host time series and disposable fixtures; compact receipts live in docs.
 data/host-capacity-*/

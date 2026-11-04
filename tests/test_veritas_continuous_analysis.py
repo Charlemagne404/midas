@@ -163,9 +163,7 @@ def _write_snapshot(
 
 
 def test_finalized_analysis_is_incremental_idempotent_and_lineage_preserving(tmp_path):
-    _write_snapshot(
-        tmp_path, "scan-001", valid=True, candidate=True, reported_age_ms=1_000
-    )
+    _write_snapshot(tmp_path, "scan-001", valid=True, candidate=True, reported_age_ms=1_000)
     prior_summary = {
         "schema_version": 1,
         "analysis_version": "veritas-finalized-snapshot-analysis-v1",
@@ -192,9 +190,7 @@ def test_finalized_analysis_is_incremental_idempotent_and_lineage_preserving(tmp
     assert again["cumulative"]["quality_valid_pairs"] == 1
     assert len(list((tmp_path / "analysis-events" / "v4").glob("*.json"))) == 1
 
-    _write_snapshot(
-        tmp_path, "scan-002", valid=False, minutes_after=30, state_version="changed"
-    )
+    _write_snapshot(tmp_path, "scan-002", valid=False, minutes_after=30, state_version="changed")
     updated = update_finalized_analysis(tmp_path)
     assert updated["processed_snapshot_count"] == 2
     assert updated["cumulative"]["quality_valid_pairs"] == 1
@@ -211,9 +207,7 @@ def test_finalized_analysis_is_incremental_idempotent_and_lineage_preserving(tmp
     assert market["sampled_state_fingerprint_count"] == 2
     assert market["sampled_state_comparisons"] == 1
     assert market["sampled_state_changes"] == 1
-    assert updated["cumulative"]["legacy_freshness_invalid_reasons"] == {
-        "no_empty_ask_side": 1
-    }
+    assert updated["cumulative"]["legacy_freshness_invalid_reasons"] == {"no_empty_ask_side": 1}
 
 
 def test_finalized_analysis_processes_only_its_bounded_backlog_slice(tmp_path):

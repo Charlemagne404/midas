@@ -63,7 +63,11 @@ def apply_readonly_source_policy(source_root: Path, writable_root: Path) -> dict
     writable_root = writable_root.resolve(strict=True)
     if not source_root.is_dir() or not writable_root.is_dir():
         raise ValueError("Landlock roots must be existing directories")
-    if source_root == writable_root or source_root.is_relative_to(writable_root) or writable_root.is_relative_to(source_root):
+    if (
+        source_root == writable_root
+        or source_root.is_relative_to(writable_root)
+        or writable_root.is_relative_to(source_root)
+    ):
         raise ValueError("Source and writable staging roots must be disjoint")
 
     libc = ctypes.CDLL(None, use_errno=True)

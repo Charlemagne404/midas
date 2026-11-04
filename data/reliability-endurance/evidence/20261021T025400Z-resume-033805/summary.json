@@ -1,0 +1,12 @@
+{
+  "duration_seconds": 3842.315,
+  "error": "RuntimeError: Endurance workers remain active after finalization: [{'job_id': 'job-35664d91d23b41c48da7943b', 'MainPID': '493882', 'Result': 'success', 'NRestarts': '0', 'ControlGroup': '/user.slice/user-1000.slice/user@1000.service/app.slice/midas-arena-job-35664d91d23b41c48da7943b.service', 'MemoryCurrent': '348340224', 'MemoryPeak': '381870080', 'MemorySwapCurrent': '0', 'MemorySwapPeak': '0', 'CPUUsageNSec': '38920627000', 'IOReadBytes': '[not set]', 'IOWriteBytes': '[not set]', 'CPUQuotaPerSecUSec': '350ms', 'MemoryHigh': 'infinity', 'MemoryMax': '1073741824', 'MemorySwapMax': '0', 'LoadState': 'loaded', 'ActiveState': 'active', 'SubState': 'running'}]",
+  "evidence_root": "/home/charlie/midas/data/reliability-endurance/evidence/20261021T025400Z-resume-033805",
+  "evidence_session_id": "20261021T025400Z-resume-033805",
+  "finished_at": "2026-10-21T04:42:07.761759+00:00",
+  "run_id": "20261021T025400Z",
+  "schedule_id": "schedule-1dcc0f99f0074083b0a77d74",
+  "started_at": "2026-10-21T03:38:05.567748+00:00",
+  "status": "FAIL",
+  "test_root": "/home/charlie/midas/data/reliability-endurance/arena"
+}
