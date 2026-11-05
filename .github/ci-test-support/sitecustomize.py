@@ -11,12 +11,8 @@ from __future__ import annotations
 
 import os
 
-if (
-    os.environ.get("MIDAS_PHASE5_SYNTHETIC_USER_PSI") == "1"
-    and (
-        os.environ.get("PYTEST_CURRENT_TEST")
-        or os.environ.get("MIDAS_PHASE5_ISOLATED_API") == "1"
-    )
+if os.environ.get("MIDAS_PHASE5_SYNTHETIC_USER_PSI") == "1" and (
+    os.environ.get("PYTEST_CURRENT_TEST") or os.environ.get("MIDAS_PHASE5_ISOLATED_API") == "1"
 ):
     from midas.arena import admission
 
