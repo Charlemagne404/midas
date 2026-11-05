@@ -1,15 +1,17 @@
 # MIDAS development
 
-**Authoritative checkout:** /home/charlie/midas-unification
+**Baseline:** the current, reviewed `origin/main` branch. This guide was
+refreshed on 2026-11-05; the exact checkout, runtime, and backup state is in the
+[maintainer handoff](MIDAS_MAINTAINER_HANDOFF.md).
 
-**Branch:** codex/midas-unification
-
-Start future development here. The original /home/charlie/midas checkout
-remains on protected main because the API working directory and Arena timer
-still use it. Reality and Veritas worktrees also remain as runtime dependencies.
-See [OPERATIONS.md](OPERATIONS.md) before accessing installed services or
-preserved stores. Older checkpoint-specific commands and results are archived
-in [the previous development guide](history/DEVELOPMENT_HISTORY_2026-10-30.md).
+The original `/home/charlie/midas` checkout may be behind `origin/main` and is
+still used by running services and Vite processes. Do not update or use it for
+ordinary code changes. `/home/charlie/midas-unification` preserves the source
+history that was squash-integrated into `main`; it is no longer the default
+development baseline. Reality and Veritas worktrees still own live services or
+data. Read [OPERATIONS.md](OPERATIONS.md) before accessing them. Older
+checkpoint-specific commands and results are archived in
+[the previous development guide](history/DEVELOPMENT_HISTORY_2026-10-30.md).
 
 ## Requirements and install
 
@@ -124,26 +126,35 @@ unification closeout counts above remain a separate historical snapshot.
 
 ## Branch and integration workflow
 
-Check the starting state before edits:
+First inspect the repository and existing worktrees. Reuse a clean, suitable
+development checkout for a small change. Create a separate worktree when
+parallel work or isolation actually needs one; do not create branches or
+worktrees for trivial edits. Keep running service checkouts and worktrees with
+unclassified changes untouched.
 
-    git status --short --branch
-    git rev-parse HEAD
+For a new task, fetch the current remote refs without pruning preserved refs,
+then branch from `origin/main`:
 
-Create a task branch from the unified branch:
+```bash
+git fetch origin
+git status --short --branch
+git worktree list --porcelain
+git worktree add -b codex/<task>-YYYYMMDD /home/charlie/midas-<task> origin/main
+```
 
-    git switch codex/midas-unification
-    git switch -c codex/<short-task-name>
+Run focused tests for the changed subsystem and the relevant local lint or
+type checks. Group related source, tests, and documentation into commits that
+represent completed logical changes. Avoid progress-only commits and routine
+progress Markdown. Stage exact paths, inspect the staged diff, and preserve
+published history. Use the standard hosted CI for the isolated full suite;
+do not run service operations or data-heavy tests against live roots.
 
-For isolated parallel work, add a named worktree for that branch and record the
-path. Do not reuse main, a runtime worktree, or a historical branch as the
-development baseline. Before integrating subsystem work, compare unique
-commits, working-tree changes, and runtime dependencies. Cherry-pick or port
-only reviewed changes; preserve source commit IDs in the integration report.
-Do not delete ambiguous evidence, stash unrelated work, or use blanket cleanup.
-
-Run affected tests before committing. Keep integration commits small enough to
-review, report any failed or partial checks accurately, then verify a clean
-branch status. Use the branch disposition manifest for the current history.
+Before integration, compare the candidate with the current `origin/main`,
+inspect its CI results, and review any concurrent branch or worktree changes.
+Source integration, release staging, and deployment are separate states. Use
+[UNIFICATION_DEPLOYMENT_PLAN.md](UNIFICATION_DEPLOYMENT_PLAN.md) and the
+release owner’s current authorization for service transitions. Do not remove
+ambiguous branches, worktrees, or research files during integration.
 
 ## Research data and operational boundaries
 

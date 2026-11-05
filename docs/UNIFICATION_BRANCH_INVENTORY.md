@@ -1,4 +1,131 @@
-# MIDAS Git branch and worktree inventory
+# MIDAS Git branch and worktree inventory — current snapshot
+
+**Refreshed:** 2026-11-05 after fetching `origin`; counts and worktree status are a snapshot from before this maintenance branch was committed or published. The handoff records the final maintenance tip. The old 2026-10-30 inventory follows below as historical evidence and its dispositions are not current.
+
+There are **62 local branches**, **53 `origin` branch heads**, and **37 worktrees**. Every fetched origin head has a same-name local branch; nine local branches have no same-name origin ref. The worktree list has no stale entries under `git worktree prune --dry-run`; `git remote prune origin --dry-run` also proposed no stale remote refs. No worktree or branch was removed. Status counts include tracked changes and untracked, non-ignored files, but not ignored research data.
+
+## Branch refs and dispositions
+
+The table lists every local branch, its exact head, and the matching fetched origin head where one exists. `—` means the ref is local-only. The current source baseline is `origin/main` at `c00bd128605c85b5c34220efbee54f0993e9b560`. The old local `main` remains in use by services. The squash integration `6aa7c7f00d736d02ee7ca5629d1b9f102e0ae9d9` is an ancestor of current main. The original `codex/midas-unification` ref remains available at `c256cd1b0743d0c3ba6229c0115fd200fa0f014f`; its original development history is not an ancestor of the squash. The preservation tags from the consolidation remain present.
+
+| Local branch | Head | Matching `origin` head | Current disposition |
+|---|---:|---:|---|
+| `checkpoint/frontier-memory-interruption-20261029-0854` | `75e6f26` | `75e6f26` | Checkpoint or recovery provenance; retain. |
+| `checkpoint/frontier-pre-followup-20261029-0558` | `0bbb62e` | `0bbb62e` | Checkpoint or recovery provenance; retain. |
+| `checkpoint/frontier-pre-memory-incident-20261029` | `a8fbcd7` | `a8fbcd7` | Checkpoint or recovery provenance; retain. |
+| `codex/frontier-20261026` | `f6ac37f` | `f6ac37f` | Historical research/feature tip; compare with current source before reuse; retain until its commits and associated data are backed up and classified. |
+| `codex/frontier-capacity-scan-bound-20261029` | `d5847df` | `d5847df` | Selected functionality was reconciled during consolidation; retain branch history pending a separate cleanup review. |
+| `codex/midas-ci-stabilization-20261105` | `c00bd12` | `c00bd12` | Same source head as current `origin/main`; functionality is superseded, worktree kept pending environment review. |
+| `codex/midas-comprehensive-engineering-mission-20261025` | `005f6fa` | `005f6fa` | Historical research/feature tip; compare with current source before reuse; retain until its commits and associated data are backed up and classified. |
+| `codex/midas-integration-20261104` | `b723bfd` | `—` | Historical integration checkpoint with a dirty worktree; preserve all edits and data. |
+| `codex/midas-maintenance-20261105` | `c00bd12` | `—` | Current maintenance candidate based on `origin/main`; retain for hosted CI/review. |
+| `codex/midas-squash-integration-20261105` | `6aa7c7f` | `—` | Original squash integration, ancestor of current `origin/main`; retain as history. |
+| `codex/midas-unification` | `c256cd1` | `c256cd1` | Original 1,196-commit development history; retained on its local and remote refs, not current baseline. |
+| `codex/midas-validation-control-20261105` | `d1fb321` | `d1fb321` | Validation snapshot/checkpoint; retain until its evidence and owner are separately reviewed. |
+| `codex/midas-validation-control-20261105-r2` | `c827be9` | `c827be9` | Validation snapshot/checkpoint; retain until its evidence and owner are separately reviewed. |
+| `codex/midas-validation-control-20261105-r3` | `7910898` | `7910898` | Validation snapshot/checkpoint; retain until its evidence and owner are separately reviewed. |
+| `codex/midas-validation-control-20261105-r4` | `4bdfbc0` | `4bdfbc0` | Validation snapshot/checkpoint; retain until its evidence and owner are separately reviewed. |
+| `codex/midas-validation-control-20261105-r5` | `8b233f4` | `8b233f4` | Validation snapshot/checkpoint; retain until its evidence and owner are separately reviewed. |
+| `codex/midas-validation-snapshot-20261105` | `8c450aa` | `—` | Validation snapshot/checkpoint; retain until its evidence and owner are separately reviewed. |
+| `codex/midas-validation-snapshot-20261105-r10` | `93e94d2` | `93e94d2` | Validation snapshot/checkpoint; retain until its evidence and owner are separately reviewed. |
+| `codex/midas-validation-snapshot-20261105-r10-preservation` | `1438d62` | `—` | Validation snapshot/checkpoint; retain until its evidence and owner are separately reviewed. |
+| `codex/midas-validation-snapshot-20261105-r11` | `0b5303d` | `0b5303d` | Validation snapshot/checkpoint; retain until its evidence and owner are separately reviewed. |
+| `codex/midas-validation-snapshot-20261105-r12` | `8a2bd48` | `8a2bd48` | Validation snapshot/checkpoint; retain until its evidence and owner are separately reviewed. |
+| `codex/midas-validation-snapshot-20261105-r13` | `cd7a159` | `cd7a159` | Validation snapshot/checkpoint; retain until its evidence and owner are separately reviewed. |
+| `codex/midas-validation-snapshot-20261105-r14` | `f4d9136` | `f4d9136` | Validation snapshot/checkpoint; retain until its evidence and owner are separately reviewed. |
+| `codex/midas-validation-snapshot-20261105-r15` | `2c6dcaa` | `2c6dcaa` | Validation snapshot/checkpoint; retain until its evidence and owner are separately reviewed. |
+| `codex/midas-validation-snapshot-20261105-r16` | `5c4d910` | `5c4d910` | Validation snapshot/checkpoint; retain until its evidence and owner are separately reviewed. |
+| `codex/midas-validation-snapshot-20261105-r17` | `2715617` | `2715617` | Validation snapshot/checkpoint; retain until its evidence and owner are separately reviewed. |
+| `codex/midas-validation-snapshot-20261105-r18` | `97d1c64` | `97d1c64` | Validation snapshot/checkpoint; retain until its evidence and owner are separately reviewed. |
+| `codex/midas-validation-snapshot-20261105-r19` | `57d126f` | `57d126f` | Validation snapshot/checkpoint; retain until its evidence and owner are separately reviewed. |
+| `codex/midas-validation-snapshot-20261105-r2` | `dcb800b` | `—` | Validation snapshot/checkpoint; retain until its evidence and owner are separately reviewed. |
+| `codex/midas-validation-snapshot-20261105-r20` | `a20c184` | `a20c184` | Validation snapshot/checkpoint; retain until its evidence and owner are separately reviewed. |
+| `codex/midas-validation-snapshot-20261105-r21` | `49602ae` | `49602ae` | Validation snapshot/checkpoint; retain until its evidence and owner are separately reviewed. |
+| `codex/midas-validation-snapshot-20261105-r22` | `fb07638` | `fb07638` | Validation snapshot/checkpoint; retain until its evidence and owner are separately reviewed. |
+| `codex/midas-validation-snapshot-20261105-r23` | `53a5dcc` | `53a5dcc` | Validation snapshot/checkpoint; retain until its evidence and owner are separately reviewed. |
+| `codex/midas-validation-snapshot-20261105-r24` | `2708269` | `2708269` | Validation snapshot/checkpoint; retain until its evidence and owner are separately reviewed. |
+| `codex/midas-validation-snapshot-20261105-r3` | `32a5ab3` | `—` | Validation snapshot/checkpoint; retain until its evidence and owner are separately reviewed. |
+| `codex/midas-validation-snapshot-20261105-r4` | `1a159cc` | `—` | Validation snapshot/checkpoint; retain until its evidence and owner are separately reviewed. |
+| `codex/midas-validation-snapshot-20261105-r5` | `91762c8` | `91762c8` | Validation snapshot/checkpoint; retain until its evidence and owner are separately reviewed. |
+| `codex/midas-validation-snapshot-20261105-r6` | `001536c` | `001536c` | Validation snapshot/checkpoint; retain until its evidence and owner are separately reviewed. |
+| `codex/midas-validation-snapshot-20261105-r7` | `4323137` | `4323137` | Validation snapshot/checkpoint; retain until its evidence and owner are separately reviewed. |
+| `codex/midas-validation-snapshot-20261105-r8` | `b22b48f` | `—` | Validation snapshot/checkpoint; retain until its evidence and owner are separately reviewed. |
+| `codex/midas-validation-snapshot-20261105-r9` | `1c41970` | `1c41970` | Validation snapshot/checkpoint; retain until its evidence and owner are separately reviewed. |
+| `codex/readiness-loading-state-20261026` | `767f330` | `767f330` | Selected functionality was reconciled during consolidation; retain branch history pending a separate cleanup review. |
+| `codex/readiness-memory-composition-api-20261026` | `a152999` | `a152999` | Selected functionality was reconciled during consolidation; retain branch history pending a separate cleanup review. |
+| `codex/readiness-memory-composition-web-20261026` | `4e64a2e` | `4e64a2e` | Selected functionality was reconciled during consolidation; retain branch history pending a separate cleanup review. |
+| `codex/real-market-research-overhaul` | `3b10292` | `3b10292` | Historical research/feature tip; compare with current source before reuse; retain until its commits and associated data are backed up and classified. |
+| `codex/reality-archive-provenance-20261026` | `a1f2fe9` | `a1f2fe9` | Historical research/feature tip; compare with current source before reuse; retain until its commits and associated data are backed up and classified. |
+| `codex/veritas-v6-integration-20261026` | `11d32a0` | `11d32a0` | Selected functionality was reconciled during consolidation; retain branch history pending a separate cleanup review. |
+| `fix/reality-archive-quota-20261020` | `350db69` | `350db69` | Selected functionality was reconciled during consolidation; retain branch history pending a separate cleanup review. |
+| `fix/reality-foundation-20261020` | `4278b5b` | `4278b5b` | Historical research/feature tip; compare with current source before reuse; retain until its commits and associated data are backed up and classified. |
+| `fix/reality-report-hotpath-20261020` | `397ec50` | `397ec50` | Selected functionality was reconciled during consolidation; retain branch history pending a separate cleanup review. |
+| `fix/reality-stale-error-status` | `b0610c1` | `b0610c1` | Selected functionality was reconciled during consolidation; retain branch history pending a separate cleanup review. |
+| `fix/veritas-gap-market-bound` | `49275d9` | `49275d9` | Selected functionality was reconciled during consolidation; retain branch history pending a separate cleanup review. |
+| `fix/veritas-gap-timer-stagger-20261020` | `e530cef` | `e530cef` | Selected functionality was reconciled during consolidation; retain branch history pending a separate cleanup review. |
+| `main` | `b723bfd` | `c00bd12` | Runtime source branch; six commits behind `origin/main`; retain while loaded services depend on it. |
+| `preservation/phase1/reality-staging-87788aee` | `87788ae` | `87788ae` | Checkpoint or recovery provenance; retain. |
+| `preservation/phase1/veritas-staging-9e342363` | `9e34236` | `9e34236` | Checkpoint or recovery provenance; retain. |
+| `project/reality` | `d8629e4` | `d8629e4` | Active Reality service/data branch; retain. |
+| `project/veritas` | `3b10292` | `3b10292` | Active Veritas service/data branch; retain. |
+| `recovery/preconsolidation-main-20261017` | `f968095` | `f968095` | Checkpoint or recovery provenance; retain. |
+| `recovery/preconsolidation-reality-20261017` | `2b83818` | `2b83818` | Checkpoint or recovery provenance; retain. |
+| `recovery/preconsolidation-veritas-20261017` | `1f8f1df` | `1f8f1df` | Checkpoint or recovery provenance; retain. |
+| `recovery/veritas-uncommitted-20261017` | `683dba2` | `683dba2` | Checkpoint or recovery provenance; retain. |
+
+## Worktrees and dispositions
+
+All 37 registered worktrees are listed below. Preserve every dirty worktree and every clean historical checkout until both its ignored data and provenance are classified. “Clean” describes Git status only; it does not imply that the directory can be deleted.
+
+| Worktree | Branch / state | HEAD | Tracked and untracked status entries | Disposition |
+|---|---|---:|---:|---|
+| `/home/charlie/midas` | `main` | `b723bfda` | 0 | Active runtime checkout; branch is behind current `origin/main`; preserve its files and processes. |
+| `/home/charlie/midas-ci-stabilization-20261105` | `codex/midas-ci-stabilization-20261105` | `c00bd128` | 0 | Clean checkout at current `origin/main`; retained, no runtime path identified. |
+| `/home/charlie/midas-engineering-mission-20261025` | `codex/midas-comprehensive-engineering-mission-20261025` | `005f6fa5` | 3160 | Preserve 3160 modified/untracked entries exactly; ownership/data not safe to discard. |
+| `/home/charlie/midas-frontier` | `codex/frontier-20261026` | `f6ac37ff` | 5 | Preserve 5 modified/untracked entries exactly; ownership/data not safe to discard. |
+| `/home/charlie/midas-integration-20261104` | `codex/midas-integration-20261104` | `b723bfda` | 444 | Preserve 444 modified/untracked entries exactly; ownership/data not safe to discard. |
+| `/home/charlie/midas-maintenance` | `codex/midas-maintenance-20261105` | `c00bd128` | 14 | Current isolated maintenance worktree; review and validate before any integration. |
+| `/home/charlie/midas-reality` | `project/reality` | `d8629e4b` | 0 | Active Reality service and recording data owner; preserve. |
+| `/home/charlie/midas-reality-archive-provenance` | `codex/reality-archive-provenance-20261026` | `a1f2fe99` | 0 | Clean historical/experimental checkout; no deletion authorized; retain pending data and owner review. |
+| `/home/charlie/midas-reality-capacity-scan-frontier-20261029` | `codex/frontier-capacity-scan-bound-20261029` | `d5847df1` | 0 | Clean historical/experimental checkout; no deletion authorized; retain pending data and owner review. |
+| `/home/charlie/midas-reality-reliability` | `fix/reality-foundation-20261020` | `4278b5b5` | 26 | Preserve 26 modified/untracked entries exactly; ownership/data not safe to discard. |
+| `/home/charlie/midas-unification` | `codex/midas-unification` | `c256cd1b` | 0 | Clean historical source checkout; preserve original unification history. |
+| `/home/charlie/midas-validation-control-20261105` | `codex/midas-validation-control-20261105` | `d1fb3216` | 2 | Preserve 2 modified/untracked entries exactly; ownership/data not safe to discard. |
+| `/home/charlie/midas-validation-control-20261105-r2` | `codex/midas-validation-control-20261105-r2` | `c827be91` | 0 | Clean historical/experimental checkout; no deletion authorized; retain pending data and owner review. |
+| `/home/charlie/midas-validation-control-20261105-r3` | `codex/midas-validation-control-20261105-r3` | `79108982` | 0 | Clean historical/experimental checkout; no deletion authorized; retain pending data and owner review. |
+| `/home/charlie/midas-validation-control-20261105-r4` | `codex/midas-validation-control-20261105-r4` | `4bdfbc07` | 0 | Clean historical/experimental checkout; no deletion authorized; retain pending data and owner review. |
+| `/home/charlie/midas-validation-control-20261105-r5` | `codex/midas-validation-control-20261105-r5` | `8b233f45` | 0 | Clean historical/experimental checkout; no deletion authorized; retain pending data and owner review. |
+| `/home/charlie/midas-veritas` | `project/veritas` | `3b102928` | 0 | Active Veritas timer/data owner; preserve. |
+| `/home/charlie/midas-veritas-gap-v2-code` | `DETACHED` | `71dcdd90` | 0 | Detached historical checkout; retain its commit and inspect any ignored data before cleanup. |
+| `/home/charlie/midas-veritas-research-overhaul` | `codex/real-market-research-overhaul` | `3b102928` | 25 | Preserve 25 modified/untracked entries exactly; ownership/data not safe to discard. |
+| `/home/charlie/midas-veritas-v6-integration-20261026` | `codex/veritas-v6-integration-20261026` | `11d32a06` | 0 | Clean historical/experimental checkout; no deletion authorized; retain pending data and owner review. |
+| `/tmp/midas-api-veritas-v2-ccb4211` | `DETACHED` | `ccb42114` | 0 | Detached historical checkout; retain its commit and inspect any ignored data before cleanup. |
+| `/tmp/midas-frontier-full-regression-20261028T0435Z` | `DETACHED` | `29b09fa0` | 0 | Detached historical checkout; retain its commit and inspect any ignored data before cleanup. |
+| `/tmp/midas-frontier-regression-sparse-20261028T0440Z` | `DETACHED` | `c8989d5e` | 0 | Detached historical checkout; retain its commit and inspect any ignored data before cleanup. |
+| `/tmp/midas-readiness-api-20261026` | `codex/readiness-memory-composition-api-20261026` | `a1529991` | 0 | Clean historical/experimental checkout; no deletion authorized; retain pending data and owner review. |
+| `/tmp/midas-readiness-loading-20261026` | `codex/readiness-loading-state-20261026` | `767f3300` | 0 | Clean historical/experimental checkout; no deletion authorized; retain pending data and owner review. |
+| `/tmp/midas-readiness-web-20261026` | `codex/readiness-memory-composition-web-20261026` | `4e64a2ea` | 0 | Clean historical/experimental checkout; no deletion authorized; retain pending data and owner review. |
+| `/tmp/midas-reality-archive-quota-20261020` | `fix/reality-archive-quota-20261020` | `350db699` | 0 | Clean historical/experimental checkout; no deletion authorized; retain pending data and owner review. |
+| `/tmp/midas-reality-deploy-guard-20261020` | `DETACHED` | `a4f49593` | 7 | Preserve 7 modified/untracked entries exactly; ownership/data not safe to discard. |
+| `/tmp/midas-reality-report-hotpath-20261020` | `fix/reality-report-hotpath-20261020` | `397ec50e` | 0 | Clean historical/experimental checkout; no deletion authorized; retain pending data and owner review. |
+| `/tmp/midas-reality-staging-20261020` | `DETACHED` | `87788aee` | 0 | Detached historical checkout; retain its commit and inspect any ignored data before cleanup. |
+| `/tmp/midas-reality-status-clear-20261020` | `fix/reality-stale-error-status` | `b0610c1b` | 0 | Clean historical/experimental checkout; no deletion authorized; retain pending data and owner review. |
+| `/tmp/midas-reliability-reality-361fd6a` | `DETACHED` | `361fd6a2` | 2 | Preserve 2 modified/untracked entries exactly; ownership/data not safe to discard. |
+| `/tmp/midas-reliability-tests-20261020` | `DETACHED` | `71dcdd90` | 4 | Preserve 4 modified/untracked entries exactly; ownership/data not safe to discard. |
+| `/tmp/midas-veritas-fix` | `fix/veritas-gap-market-bound` | `49275d98` | 0 | Clean historical/experimental checkout; no deletion authorized; retain pending data and owner review. |
+| `/tmp/midas-veritas-gap-timer-20261020` | `fix/veritas-gap-timer-stagger-20261020` | `e530ceff` | 0 | Clean historical/experimental checkout; no deletion authorized; retain pending data and owner review. |
+| `/tmp/midas-veritas-gapfix-9b0b104` | `DETACHED` | `9b0b1040` | 0 | Detached historical checkout; retain its commit and inspect any ignored data before cleanup. |
+| `/tmp/midas-veritas-staging-20261020` | `DETACHED` | `9e342363` | 0 | Detached historical checkout; retain its commit and inspect any ignored data before cleanup. |
+
+## Preservation and cleanup result
+
+- The 26 orphaned commit objects discovered in the refreshed object inventory are retained by **24 refs** under `refs/preservation/orphaned-20261105/`. `git fsck --no-reflogs --unreachable` reports no unreachable commits after pinning, though unrelated unreachable tree/blob objects remain. No garbage collection was run.
+- No stale worktree or origin bookkeeping was identified by the dry-run prune commands. No pruning, checkout cleanup, branch deletion, or worktree removal was performed.
+- Nine worktrees were dirty before the isolated maintenance worktree was created: `/home/charlie/midas-engineering-mission-20261025`, `/home/charlie/midas-frontier`, `/home/charlie/midas-integration-20261104`, `/home/charlie/midas-reality-reliability`, `/home/charlie/midas-validation-control-20261105`, `/home/charlie/midas-veritas-research-overhaul`, `/tmp/midas-reality-deploy-guard-20261020`, `/tmp/midas-reliability-reality-361fd6a`, and `/tmp/midas-reliability-tests-20261020`. Their entries remain untouched. The maintenance worktree is also dirty while this candidate is being prepared.
+- The current `data/backups/` ignore rule prevents accidental staging of local snapshots. It does not constitute backup storage or an independent copy.
+- The separate 2026-10-30 tables below preserve the earlier code-level branch comparison and migration narrative. Use this refreshed table for today's Git refs and worktree states; verify again before any later cleanup.
+
+# Historical inventory (2026-10-30 snapshot; superseded)
 
 This is the disposition manifest for the 2026-10-30 unification review. The
 repository comparison baseline for unique-commit counts is code commit

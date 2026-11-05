@@ -10,22 +10,20 @@ Midas evaluates complementary binary positions using exact ask-depth arithmetic,
 
 ## Current project state
 
-The authoritative development checkout is `/home/charlie/midas-unification`,
-branch `codex/midas-unification`. It contains the integrated Core, Prometheus,
-Laboratory, Arena, Reality, Veritas V6, Frontier, Mission Control, and Research
-Readiness code. Production services still use versioned releases and retained
-runtime worktrees; Project Unification did not deploy or restart them.
+The consolidated source is on `main`; the current remote baseline is recorded
+in the [maintainer handoff](docs/MIDAS_MAINTAINER_HANDOFF.md). The original
+`codex/midas-unification` history remains preserved behind the squash
+integration. Existing runtime services still use versioned releases and
+retained worktrees. A source merge does not deploy or restart them.
 
-Use the [current state](docs/MIDAS_CURRENT_STATE.md),
-[architecture](docs/ARCHITECTURE.md),
-[development guide](docs/DEVELOPMENT.md), and
-[operations guide](docs/OPERATIONS.md) as the current references. The
-[unification report](docs/UNIFICATION_REPORT.md),
-[branch inventory](docs/UNIFICATION_BRANCH_INVENTORY.md), and
-[deployment plan](docs/UNIFICATION_DEPLOYMENT_PLAN.md) record the integration
-and remaining guarded transitions. Historical measurements remain in the
-[archived current-state ledger](docs/history/MIDAS_CURRENT_STATE_HISTORY_2026-10-29.md)
-and the dated engineering reports.
+Start with the [maintainer handoff](docs/MIDAS_MAINTAINER_HANDOFF.md),
+[architecture](docs/ARCHITECTURE.md), [development guide](docs/DEVELOPMENT.md),
+[backup and recovery guide](docs/BACKUP_AND_RECOVERY.md), and
+[operations guide](docs/OPERATIONS.md). The [repository inventory](docs/UNIFICATION_BRANCH_INVENTORY.md)
+records the dated branch and worktree review. The older
+[current-state report](docs/MIDAS_CURRENT_STATE.md) and
+[unification report](docs/UNIFICATION_REPORT.md) are historical snapshots; use
+the handoff for current host and release facts.
 
 Recorded, synthetic, paper, and independently checked evidence remain distinct.
 No current artifact establishes realized profitability or real fills.

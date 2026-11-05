@@ -1,8 +1,10 @@
-# MIDAS operations
+# MIDAS operations (historical systemd snapshot, 2026-10-29)
 
-**Resource sample:** 2026-10-29 23:09:12 UTC. **Final unit census:**
-2026-10-29 23:24:58 UTC, read-only. This document describes the existing
-runtime, not a deployment of `codex/midas-unification`.
+**Historical record:** the detailed service, PID, and resource values below
+were sampled read-only on 2026-10-29. They are not current service facts. Use
+the [maintainer handoff](MIDAS_MAINTAINER_HANDOFF.md) for the 2026-11-05
+inventory and [backup and recovery guide](BACKUP_AND_RECOVERY.md) for current
+data protection procedures. Recheck live services before any operation.
 
 ## Active service ownership
 

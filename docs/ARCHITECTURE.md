@@ -1,10 +1,11 @@
 # MIDAS architecture
 
-**Authority:** this document describes branch codex/midas-unification. Dated
-milestone details from the former architecture guide are preserved in
-[history](history/ARCHITECTURE_HISTORY_2026-10-30.md). Use
-[MIDAS_CURRENT_STATE.md](MIDAS_CURRENT_STATE.md) and
-[OPERATIONS.md](OPERATIONS.md) for runtime facts.
+**Authority:** this describes the consolidated source layout on `main`. The
+original `codex/midas-unification` history is preserved behind the squash
+integration. Dated milestone details from the former architecture guide are in
+[history](history/ARCHITECTURE_HISTORY_2026-10-30.md). Use the
+[maintainer handoff](MIDAS_MAINTAINER_HANDOFF.md) and
+[operations guide](OPERATIONS.md) for dated runtime facts.
 
 ## System shape
 
@@ -69,10 +70,11 @@ is not realized trading profitability.
 
 ## Development and runtime boundaries
 
-The development source of truth is /home/charlie/midas-unification on
-codex/midas-unification. Installed API/web releases and the Reality and
-Veritas worktrees remain separate runtime dependencies until a guarded rollout
-is approved. Runtime working directories are not development checkouts.
+The current development baseline is the reviewed `origin/main` source. Create
+task branches from that baseline in a suitable clean checkout or isolated
+worktree. The legacy `/home/charlie/midas` checkout and the Reality and Veritas
+worktrees remain runtime dependencies on this host; do not treat a development
+checkout or a source integration as a deployed release.
 
 The API uses demo mode and local SQLite by default. Public Frontier probes are
 disabled/held by default; collectors, campaign workers, timers, and long-running
