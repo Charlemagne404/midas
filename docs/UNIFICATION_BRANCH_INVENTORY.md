@@ -2,9 +2,9 @@
 
 **Refreshed:** 2026-11-05 after publishing the maintenance branch and
 rechecking all worktree Git statuses, before source integration. There are
-**63 local branches**, **54 fetched `origin` branch heads**, and **37 worktrees**.
-Each fetched origin head
-has a same-name local branch; nine local branches have no matching origin ref.
+**63 local branches**, **55 fetched `origin` branch heads**, and **37 worktrees**.
+Each fetched origin head has a same-name local branch; eight local branches
+have no matching origin ref.
 Nine worktrees have tracked or non-ignored untracked changes; the maintenance
 worktree is clean. No stale worktree or remote refs were reported by prune
 dry-runs. No branches, worktrees, or files were removed. Status excludes
