@@ -22,7 +22,7 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           repository: ${{ github.repository }}
-          ref: 43231377d1be5fed2e2ac845120b0822113b1d00
+          ref: 1c41970b219cdfed91ab23cc8bd9b482210e3056
           path: candidate
           fetch-depth: 1
           persist-credentials: false
@@ -30,8 +30,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git -C candidate rev-parse HEAD)" = 43231377d1be5fed2e2ac845120b0822113b1d00
-          test "$(git -C candidate rev-parse 'HEAD^{tree}')" = 509f1ef02f6a8cabecaf2dcefd8a2505a2fc09e2
+          test "$(git -C candidate rev-parse HEAD)" = 1c41970b219cdfed91ab23cc8bd9b482210e3056
+          test "$(git -C candidate rev-parse 'HEAD^{tree}')" = 4f25e282a472f72eda8133c11e6ad52f087eab12
           if git -C candidate config --local --get-regexp 'http\..*\.extraheader' >/dev/null 2>&1; then
             echo "checkout token persisted in candidate git configuration" >&2
             exit 1
@@ -81,6 +81,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          validation_data="$RUNNER_TEMP/midas-phase5-data-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          test ! -e "$validation_data"
+          mkdir -m 0777 "$validation_data"
           docker create --name midas-phase5-tests --init \
             --network midas-phase5-net \
             --memory=11g --memory-reservation=10g --memory-swap=11g --cpus=3 --pids-limit=512 \
@@ -94,8 +97,9 @@ jobs:
             --tmpfs /var/tmp:rw,nosuid,nodev,size=256m,uid=10001,gid=10001,mode=1777 \
             --mount "type=bind,src=$GITHUB_WORKSPACE/candidate,dst=/source,readonly" \
             --mount "type=bind,src=$GITHUB_WORKSPACE/.github/validation,dst=/control,readonly" \
-            --env MIDAS_PHASE5_SOURCE_SHA=43231377d1be5fed2e2ac845120b0822113b1d00 \
-            --env MIDAS_PHASE5_SOURCE_TREE=509f1ef02f6a8cabecaf2dcefd8a2505a2fc09e2 \
+            --mount "type=bind,src=$validation_data,dst=/test-data" \
+            --env MIDAS_PHASE5_SOURCE_SHA=1c41970b219cdfed91ab23cc8bd9b482210e3056 \
+            --env MIDAS_PHASE5_SOURCE_TREE=4f25e282a472f72eda8133c11e6ad52f087eab12 \
             --env MIDAS_PHASE5_SYNTHETIC_USER_PSI=1 \
             --env MIDAS_MODE=demo \
             --env MIDAS_RUNTIME_ROOT=/tmp/midas-phase5/runtime \
@@ -111,7 +115,7 @@ jobs:
             --env MIDAS_FRONTIER_KRAKEN_PUBLIC_PROBE_ENABLED=false \
             --env MIDAS_FRONTIER_COINBASE_PUBLIC_PROBE_ENABLED=false \
             --env HOME=/home/midas \
-            --env TMPDIR=/tmp \
+            --env TMPDIR=/test-data/tmp \
             --env XDG_CACHE_HOME=/tmp/home-cache \
             --env XDG_CONFIG_HOME=/tmp/home-config \
             --env XDG_STATE_HOME=/tmp/home-state \
@@ -128,7 +132,7 @@ jobs:
             --env OMP_NUM_THREADS=1 \
             --env OPENBLAS_NUM_THREADS=1 \
             --env MKL_NUM_THREADS=1 \
-            midas-phase5-validation bash /control/run-validation.sh
+            midas-phase5-validation bash -c 'exec sleep infinity'
           python3 - <<'PY'
           import json
           import subprocess
@@ -150,11 +154,16 @@ jobs:
           assert not host.get("Devices") and not host.get("DeviceRequests")
           binds = [m for m in container["Mounts"] if m["Type"] == "bind"]
           bind_destinations = {m["Destination"] for m in binds}
-          assert {"/source", "/control"}.issubset(bind_destinations)
+          assert {"/source", "/control", "/test-data"}.issubset(bind_destinations)
           assert bind_destinations <= {
-              "/source", "/control", "/etc/hosts", "/etc/hostname", "/etc/resolv.conf"
+              "/source", "/control", "/test-data", "/etc/hosts", "/etc/hostname", "/etc/resolv.conf"
           }
-          assert all(m["RW"] is False for m in binds)
+          for mount in binds:
+              if mount["Destination"] == "/test-data":
+                  assert mount["RW"] is True and mount["Source"] == validation_data
+                  assert not any(__import__("pathlib").Path(validation_data).iterdir())
+              else:
+                  assert mount["RW"] is False
           assert all(m["Type"] in {"bind", "tmpfs"} for m in container["Mounts"])
           tmpfs_config = host.get("Tmpfs") or {}
           required_tmpfs = {"/tmp", "/workspace", "/home/midas", "/home/charlie", "/run", "/var/tmp"}
@@ -173,10 +182,58 @@ jobs:
           assert all(m["Type"] != "bind" for m in postgres["Mounts"])
           print("Container isolation policy verified before candidate code starts.")
           PY
-          docker start --attach midas-phase5-tests
+          docker start midas-phase5-tests
+          container_pid="$(docker inspect --format '{{.State.Pid}}' midas-phase5-tests)"
+          container_id="$(docker inspect --format '{{.Id}}' midas-phase5-tests)"
+          sudo python3 - "$container_pid" "$container_id" <<'PY'
+          import os
+          import sys
+          from pathlib import Path
+
+          pid, container_id = sys.argv[1:]
+          if not pid.isdecimal() or int(pid) <= 0:
+              raise SystemExit("test container has no valid init PID")
+          memberships = Path(f"/proc/{pid}/cgroup").read_text().splitlines()
+          relative = next(
+              (line.split(":", 2)[2] for line in memberships if line.startswith("0::")),
+              None,
+          )
+          if not relative or not relative.startswith("/") or ".." in Path(relative).parts:
+              raise SystemExit("test container cgroup path is invalid")
+          if not any(container_id in component for component in Path(relative).parts):
+              raise SystemExit("refusing to write a cgroup not uniquely owned by this container")
+          root = Path("/sys/fs/cgroup")
+          group = root / relative.lstrip("/")
+          if group.is_symlink() or not group.is_dir() or not group.resolve().is_relative_to(root.resolve()):
+              raise SystemExit("test container cgroup escaped the cgroup hierarchy")
+          maximum = (group / "memory.max").read_text().strip()
+          swap = (group / "memory.swap.max").read_text().strip()
+          current = int((group / "memory.current").read_text().strip())
+          if maximum != str(11 * 1024**3) or swap != "0":
+              raise SystemExit(f"unexpected test cgroup limits: max={maximum}, swap={swap}")
+          high = 10 * 1024**3
+          if current >= high:
+              raise SystemExit("container is already too close to its high memory threshold")
+          high_file = group / "memory.high"
+          if high_file.is_symlink():
+              raise SystemExit("test cgroup memory.high is a symlink")
+          fd = os.open(high_file, os.O_WRONLY | os.O_CLOEXEC | getattr(os, "O_NOFOLLOW", 0))
+          with os.fdopen(fd, "w") as stream:
+              stream.write(str(high))
+          if high_file.read_text().strip() != str(high):
+              raise SystemExit("finite memory.high could not be established")
+          print(f"Test container cgroup bounded: memory.high={high} memory.max={maximum} memory.swap.max={swap}")
+          PY
+          test "$(docker exec midas-phase5-tests cat /sys/fs/cgroup/memory.high)" = "$((10 * 1024 * 1024 * 1024))"
+          docker exec midas-phase5-tests bash /control/run-validation.sh
       - name: Remove disposable validation containers and network
         if: always()
         shell: bash
         run: |
           docker rm --force midas-phase5-tests midas-phase5-postgres 2>/dev/null || true
           docker network rm midas-phase5-net 2>/dev/null || true
+          validation_data="$RUNNER_TEMP/midas-phase5-data-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          case "$validation_data" in
+            "$RUNNER_TEMP"/midas-phase5-data-*) rm -rf -- "$validation_data" ;;
+            *) echo "Refusing to remove unexpected validation data path" >&2; exit 1 ;;
+          esac

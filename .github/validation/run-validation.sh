@@ -39,8 +39,10 @@ maximum = limits["memory.max"]
 high = limits["memory.high"]
 if maximum in {"max", "infinity"} or not maximum.isdecimal() or int(maximum) <= 0:
     raise SystemExit("test container memory.max is not finite and positive")
-if high not in {"max", "infinity"} and (not high.isdecimal() or int(high) <= 0):
-    raise SystemExit("test container memory.high is neither unlimited nor finite and positive")
+if high in {"max", "infinity"} or not high.isdecimal() or int(high) <= 0:
+    raise SystemExit("test container memory.high is not finite and positive")
+if int(high) >= int(maximum):
+    raise SystemExit("test container memory.high must be below memory.max")
 swap_max = (group / "memory.swap.max").read_text(encoding="ascii").strip()
 if swap_max != "0":
     raise SystemExit(f"test container swap is not disabled: memory.swap.max={swap_max}")
@@ -76,6 +78,10 @@ for line in Path("/proc/self/mountinfo").read_text().splitlines():
 for point in ("/tmp", "/workspace", "/home/midas", "/home/charlie", "/run"):
     if mounts.get(point, (None,))[0] != "tmpfs":
         raise SystemExit(f"{point} is not an isolated tmpfs mount")
+if "/test-data" not in mounts:
+    raise SystemExit("/test-data is not the dedicated disposable validation mount")
+if not os.access("/test-data", os.W_OK):
+    raise SystemExit("dedicated disposable test-data mount is not writable")
 if "ro" not in mounts["/home/charlie"][1]:
     raise SystemExit("/home/charlie must be a read-only tmpfs shadow of host paths")
 if os.access("/sys/fs/cgroup", os.W_OK):
@@ -191,7 +197,7 @@ while True:
 print("Only the expected synthetic PostgreSQL service is reachable.")
 PY
 
-mkdir -p /tmp/midas-phase5/runtime /tmp/midas-phase5/recordings \
+mkdir -p /test-data/tmp /tmp/midas-phase5/runtime /tmp/midas-phase5/recordings \
   /tmp/midas-phase5/arena /tmp/midas-phase5/laboratory \
   /tmp/midas-phase5/frontier /tmp/midas-phase5/reality \
   /tmp/midas-phase5/veritas /tmp/midas-phase5/xdg-runtime \
@@ -263,17 +269,11 @@ corepack pnpm lint
 corepack pnpm typecheck
 corepack pnpm build
 
-# Runtime variables were checked above. Remove them before tests so explicit
-# tmp_path fixtures and disposable CWDs remain authoritative.
-unset MIDAS_MODE MIDAS_RUNTIME_ROOT MIDAS_DATABASE_URL MIDAS_RECORDING_ROOT \
-  MIDAS_LABORATORY_ROOT MIDAS_ARENA_ROOT MIDAS_FRONTIER_ROOT \
-  MIDAS_REALITY_WORKSPACE MIDAS_VERITAS_WORKSPACE \
-  MIDAS_FRONTIER_POLYMARKET_PUBLIC_PROBE_ENABLED \
-  MIDAS_FRONTIER_KALSHI_PUBLIC_PROBE_ENABLED \
-  MIDAS_FRONTIER_KRAKEN_PUBLIC_PROBE_ENABLED \
-  MIDAS_FRONTIER_COINBASE_PUBLIC_PROBE_ENABLED
-mkdir -p /tmp/midas-phase5/test-runtime
-cd /tmp/midas-phase5/test-runtime
+# Keep the verified demo mode and disposable roots for every child process.
+# Pytest data lives on a dedicated disposable runner-disk mount so disk-reserve
+# checks see realistic free space without using production storage.
+export TMPDIR=/test-data/tmp
+cd /workspace
 
 run_pytest() {
   local label="$1"
@@ -348,7 +348,7 @@ export MIDAS_TEST_POSTGRES_URL="$MIDAS_DATABASE_URL"
 cd /workspace
 /opt/venv/bin/alembic upgrade head
 /opt/venv/bin/python scripts/storage_smoke.py
-cd /tmp/midas-phase5/test-runtime
+cd /workspace
 run_pytest postgres-integration /workspace/tests/integration/test_postgres_paper.py
 unset MIDAS_DATABASE_URL MIDAS_TEST_POSTGRES_URL
 export MIDAS_DATABASE_URL='sqlite+aiosqlite:////tmp/midas-phase5/runtime/offline.sqlite3'
