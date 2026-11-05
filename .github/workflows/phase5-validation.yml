@@ -22,7 +22,7 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           repository: ${{ github.repository }}
-          ref: 1c41970b219cdfed91ab23cc8bd9b482210e3056
+          ref: 93e94d245efcc75c9e1ef6daad6d1a711bef18e3
           path: candidate
           fetch-depth: 1
           persist-credentials: false
@@ -30,8 +30,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git -C candidate rev-parse HEAD)" = 1c41970b219cdfed91ab23cc8bd9b482210e3056
-          test "$(git -C candidate rev-parse 'HEAD^{tree}')" = 4f25e282a472f72eda8133c11e6ad52f087eab12
+          test "$(git -C candidate rev-parse HEAD)" = 93e94d245efcc75c9e1ef6daad6d1a711bef18e3
+          test "$(git -C candidate rev-parse 'HEAD^{tree}')" = 4ac8ff038e974e818d91089c9b65a33f4180ec51
           if git -C candidate config --local --get-regexp 'http\..*\.extraheader' >/dev/null 2>&1; then
             echo "checkout token persisted in candidate git configuration" >&2
             exit 1
@@ -98,14 +98,13 @@ jobs:
             --mount "type=bind,src=$GITHUB_WORKSPACE/candidate,dst=/source,readonly" \
             --mount "type=bind,src=$GITHUB_WORKSPACE/.github/validation,dst=/control,readonly" \
             --mount "type=bind,src=$validation_data,dst=/test-data" \
-            --env MIDAS_PHASE5_SOURCE_SHA=1c41970b219cdfed91ab23cc8bd9b482210e3056 \
-            --env MIDAS_PHASE5_SOURCE_TREE=4f25e282a472f72eda8133c11e6ad52f087eab12 \
+            --env MIDAS_PHASE5_SOURCE_SHA=93e94d245efcc75c9e1ef6daad6d1a711bef18e3 \
+            --env MIDAS_PHASE5_SOURCE_TREE=4ac8ff038e974e818d91089c9b65a33f4180ec51 \
             --env MIDAS_PHASE5_SYNTHETIC_USER_PSI=1 \
             --env MIDAS_MODE=demo \
             --env MIDAS_RUNTIME_ROOT=/tmp/midas-phase5/runtime \
             --env MIDAS_DATABASE_URL=sqlite+aiosqlite:////tmp/midas-phase5/runtime/paper.sqlite3 \
             --env MIDAS_RECORDING_ROOT=/tmp/midas-phase5/recordings \
-            --env MIDAS_LABORATORY_ROOT=/tmp/midas-phase5/laboratory \
             --env MIDAS_ARENA_ROOT=/tmp/midas-phase5/arena \
             --env MIDAS_FRONTIER_ROOT=/tmp/midas-phase5/frontier \
             --env MIDAS_REALITY_WORKSPACE=/tmp/midas-phase5/reality \
@@ -115,7 +114,7 @@ jobs:
             --env MIDAS_FRONTIER_KRAKEN_PUBLIC_PROBE_ENABLED=false \
             --env MIDAS_FRONTIER_COINBASE_PUBLIC_PROBE_ENABLED=false \
             --env HOME=/home/midas \
-            --env TMPDIR=/test-data/tmp \
+            --env TMPDIR=/tmp/midas-phase5/tmp \
             --env XDG_CACHE_HOME=/tmp/home-cache \
             --env XDG_CONFIG_HOME=/tmp/home-config \
             --env XDG_STATE_HOME=/tmp/home-state \

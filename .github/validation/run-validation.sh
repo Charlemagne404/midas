@@ -106,7 +106,6 @@ for name in (
     "MIDAS_RUNTIME_ROOT",
     "MIDAS_RECORDING_ROOT",
     "MIDAS_ARENA_ROOT",
-    "MIDAS_LABORATORY_ROOT",
     "MIDAS_FRONTIER_ROOT",
     "MIDAS_REALITY_WORKSPACE",
 ):
@@ -114,6 +113,9 @@ for name in (
     resolved = value.resolve(strict=False)
     if not resolved.is_relative_to(Path("/tmp/midas-phase5")):
         raise SystemExit(f"{name} is outside disposable storage: {resolved}")
+lab_root = os.environ.get("MIDAS_LABORATORY_ROOT")
+if lab_root and not Path(lab_root).resolve(strict=False).is_relative_to(Path("/tmp/midas-phase5")):
+    raise SystemExit("MIDAS_LABORATORY_ROOT is outside disposable storage")
 if not Path(os.environ["MIDAS_VERITAS_WORKSPACE"]).resolve().is_relative_to(Path("/workspace")):
     raise SystemExit("Veritas workspace is outside the disposable source copy")
 if not os.environ["MIDAS_DATABASE_URL"].startswith(
@@ -134,21 +136,21 @@ if secret_like:
 print("Isolation mounts, runtime roots, database target, and absent host sockets verified.")
 PY
 
-set +e
-systemctl --user list-units >/dev/null 2>&1
-systemctl_status=$?
-systemd-run --user --unit=midas-phase5-denied true >/dev/null 2>&1
-systemd_run_status=$?
-set -e
-test "$systemctl_status" -eq 125 || fail "systemctl was not rejected"
-test "$systemd_run_status" -eq 125 || fail "systemd-run was not rejected"
-test "$(realpath "$(command -v systemctl)")" = /opt/isolation/bin/midas-deny-command || fail "systemctl shim is not first on PATH"
-test "$(realpath /usr/bin/systemctl)" = /opt/isolation/bin/midas-deny-command || fail "absolute systemctl path is not intercepted"
-test "$(realpath /usr/bin/systemd-run)" = /opt/isolation/bin/midas-deny-command || fail "absolute systemd-run path is not intercepted"
-test "$(realpath /bin/systemctl)" = /opt/isolation/bin/midas-deny-command || fail "absolute /bin/systemctl path is not intercepted"
-test "$(realpath /bin/systemd-run)" = /opt/isolation/bin/midas-deny-command || fail "absolute /bin/systemd-run path is not intercepted"
-grep -q '^blocked systemctl ' /tmp/midas-blocked-command.log || fail "systemctl rejection was not recorded"
-grep -q '^blocked systemd-run ' /tmp/midas-blocked-command.log || fail "systemd-run rejection was not recorded"
+for command in systemctl systemd-run busctl dbus-send gdbus sudo; do
+  set +e
+  "$command" --midas-phase5-isolation-probe >/dev/null 2>&1
+  command_status=$?
+  set -e
+  test "$command_status" -eq 125 || fail "$command was not rejected"
+  test "$(realpath "$(command -v "$command")")" = /opt/isolation/bin/midas-deny-command || \
+    fail "$command shim is not first on PATH"
+  for absolute_path in "/usr/bin/$command" "/bin/$command"; do
+    test "$(realpath "$absolute_path")" = /opt/isolation/bin/midas-deny-command || \
+      fail "absolute $absolute_path is not intercepted"
+  done
+  grep -q "^blocked $command " /tmp/midas-blocked-command.log || \
+    fail "$command rejection was not recorded"
+done
 
 /opt/venv/bin/python - <<'PY'
 import socket
@@ -198,6 +200,7 @@ print("Only the expected synthetic PostgreSQL service is reachable.")
 PY
 
 mkdir -p /test-data/tmp /tmp/midas-phase5/runtime /tmp/midas-phase5/recordings \
+  /tmp/midas-phase5/tmp \
   /tmp/midas-phase5/arena /tmp/midas-phase5/laboratory \
   /tmp/midas-phase5/frontier /tmp/midas-phase5/reality \
   /tmp/midas-phase5/veritas /tmp/midas-phase5/xdg-runtime \
@@ -234,7 +237,6 @@ expected = {
     "runtime_root": "MIDAS_RUNTIME_ROOT",
     "reality_workspace": "MIDAS_REALITY_WORKSPACE",
     "veritas_workspace": "MIDAS_VERITAS_WORKSPACE",
-    "laboratory_root": "MIDAS_LABORATORY_ROOT",
     "arena_root": "MIDAS_ARENA_ROOT",
     "recording_root": "MIDAS_RECORDING_ROOT",
     "frontier_root": "MIDAS_FRONTIER_ROOT",
@@ -270,9 +272,8 @@ corepack pnpm typecheck
 corepack pnpm build
 
 # Keep the verified demo mode and disposable roots for every child process.
-# Pytest data lives on a dedicated disposable runner-disk mount so disk-reserve
-# checks see realistic free space without using production storage.
-export TMPDIR=/test-data/tmp
+# Pytest temporary paths remain on the isolated tmpfs at the approved /tmp root.
+export TMPDIR=/tmp/midas-phase5/tmp
 cd /workspace
 
 run_pytest() {
