@@ -1,14 +1,47 @@
 import { afterEach, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Veritas } from './Veritas';
+
+type CachedVeritasOverview = {
+  [key: string]: unknown;
+  opportunity_observatory: {
+    measurement_status: string;
+    processed_snapshot_count: number;
+    pending_snapshot_count: number;
+    coverage_window_hours: number;
+    discovery: {
+      latest_by_category: Record<string, number>;
+      latest_by_liquidity: Record<string, number>;
+      latest_by_expiry: Record<string, number>;
+      latest_by_spread: Record<string, number>;
+      latest_exclusions: Record<string, number>;
+      latest_selected_market_rows: unknown[];
+      latest_snapshot_url: string | null;
+      latest_scan_id: string | null;
+      collection_bounds: Record<string, unknown> | null;
+    };
+    opportunity: {
+      quality_valid_pairs: number | null;
+      invalid_pairs: number | null;
+      positive_top_gross_pairs: number | null;
+      positive_full_depth_gross_by_quantity: Record<string, number> | null;
+      positive_minimum_notional_by_quantity: Record<string, number> | null;
+      positive_single_match_by_quantity: Record<string, number> | null;
+      positive_fragmentation_safe_by_quantity: Record<string, number> | null;
+      candidate_market_count: number | null;
+      candidate_event_count: number | null;
+    };
+    recent_candidates: unknown[];
+  };
+};
 
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
 });
 
-it('labels measured evidence and keeps synthetic execution separate from actual fills', async () => {
+it('labels measured and missing opportunity evidence without implying actual fills', async () => {
   vi.stubGlobal(
     'fetch',
     vi.fn().mockImplementation((input: RequestInfo | URL) =>
@@ -535,7 +568,7 @@ it('labels measured evidence and keeps synthetic execution separate from actual 
                       '50': 0,
                       '100': 0,
                     },
-                    candidate_event_count: 0,
+                    candidate_event_count: null,
                     candidate_market_count: 0,
                     minimum_top_edge_per_share: null,
                     maximum_top_edge_per_share: null,
@@ -1118,7 +1151,9 @@ it('labels measured evidence and keeps synthetic execution separate from actual 
     'href',
     '/api/veritas/artifacts/gap-detail-current',
   );
-  expect(screen.getByText(/0.000 events \/ panel hour/)).toBeInTheDocument();
+  expect(screen.getByText('Recorded candidate frequency').parentElement?.textContent).toContain(
+    'Not measured',
+  );
   expect(screen.getByRole('heading', { name: 'Snapshot quality prediction' })).toBeInTheDocument();
   expect(screen.getByText(/Held-out positive gross candidates: 0/)).toBeInTheDocument();
   expect(screen.getByText('Independent opportunity audit')).toBeInTheDocument();
@@ -1134,4 +1169,70 @@ it('labels measured evidence and keeps synthetic execution separate from actual 
     name: 'Positive economic states by quantity and gate',
   });
   expect(within(economicGateTable).getByRole('row', { name: '20 0 0 0 0' })).toBeInTheDocument();
+
+  const fetchedOverview = client.getQueryData<CachedVeritasOverview>(['veritas', 'overview']);
+  if (!fetchedOverview) throw new Error('Veritas overview was not cached');
+  const populatedWorkspace = structuredClone(fetchedOverview);
+  const latestScanId = 'scan-20261104T000000Z-abcdef123456';
+  populatedWorkspace.opportunity_observatory.discovery.latest_scan_id = latestScanId;
+  populatedWorkspace.opportunity_observatory.discovery.latest_snapshot_url = `/api/veritas/observatory/snapshots/${latestScanId}`;
+  act(() => client.setQueryData(['veritas', 'overview'], populatedWorkspace));
+  await waitFor(() =>
+    expect(screen.getByRole('link', { name: /Inspect latest immutable snapshot/ })).toHaveAttribute(
+      'href',
+      `/api/veritas/observatory/snapshots/${latestScanId}`,
+    ),
+  );
+  expect(screen.getByText(/Inclusion probability 0.25/)).toBeInTheDocument();
+
+  const emptyWorkspace = structuredClone(populatedWorkspace);
+  const emptyObservatory = emptyWorkspace.opportunity_observatory;
+  emptyObservatory.measurement_status = 'NOT_MEASURED';
+  emptyObservatory.processed_snapshot_count = 0;
+  emptyObservatory.pending_snapshot_count = 0;
+  emptyObservatory.coverage_window_hours = 0;
+  emptyObservatory.discovery.latest_by_category = {};
+  emptyObservatory.discovery.latest_by_liquidity = {};
+  emptyObservatory.discovery.latest_by_expiry = {};
+  emptyObservatory.discovery.latest_by_spread = {};
+  emptyObservatory.discovery.latest_exclusions = {};
+  emptyObservatory.discovery.latest_selected_market_rows = [];
+  emptyObservatory.discovery.latest_snapshot_url = null;
+  emptyObservatory.discovery.latest_scan_id = null;
+  emptyObservatory.discovery.collection_bounds = null;
+  emptyObservatory.opportunity.quality_valid_pairs = null;
+  emptyObservatory.opportunity.invalid_pairs = null;
+  emptyObservatory.opportunity.positive_top_gross_pairs = null;
+  emptyObservatory.opportunity.positive_full_depth_gross_by_quantity = null;
+  emptyObservatory.opportunity.positive_minimum_notional_by_quantity = null;
+  emptyObservatory.opportunity.positive_single_match_by_quantity = null;
+  emptyObservatory.opportunity.positive_fragmentation_safe_by_quantity = null;
+  emptyObservatory.opportunity.candidate_market_count = null;
+  emptyObservatory.opportunity.candidate_event_count = null;
+  emptyObservatory.recent_candidates = [];
+  act(() => client.setQueryData(['veritas', 'overview'], emptyWorkspace));
+
+  await waitFor(() => {
+    expect(
+      screen.getByText('No finalized public snapshot has been indexed yet.'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'No finalized public snapshot has been analyzed; candidate presence is not measured.',
+      ),
+    ).toBeInTheDocument();
+    const emptyEconomicGateTable = screen.getByRole('table', {
+      name: 'Positive economic states by quantity and gate',
+    });
+    expect(
+      within(emptyEconomicGateTable).getByRole('row', {
+        name: /Not measured — awaiting the first finalized snapshot/,
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('link', { name: /Inspect latest immutable snapshot/ }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/Inspect latest per-market selection probabilities/)).toBeNull();
+    expect(screen.queryByText(/Inclusion probability 0.25/)).toBeNull();
+  });
 });

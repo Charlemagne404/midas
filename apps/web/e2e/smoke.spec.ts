@@ -2,7 +2,9 @@ import { test, expect } from '@playwright/test';
 test('discover, inspect, simulate, replay and expose execution failure', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'Mission Control', exact: true })).toBeVisible();
-  await expect(page.getByText('DEMO · SYNTHETIC')).toBeVisible();
+  await expect(page.getByText('Example data', { exact: true })).toBeVisible();
+  await expect(page.getByText('EXAMPLE DATA', { exact: true })).toBeVisible();
+  await expect(page.getByText(/All balances and results are virtual/)).toBeVisible();
   await expect(page.getByText('API DISCONNECTED')).toHaveCount(0);
   await expect(page.locator('.chart svg')).toBeVisible();
   await page.screenshot({ path: test.info().outputPath('mission-control.png'), fullPage: true });
