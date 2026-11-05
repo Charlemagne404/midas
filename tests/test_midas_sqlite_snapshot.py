@@ -1,0 +1,115 @@
+from __future__ import annotations
+
+import importlib.util
+import json
+import os
+import sqlite3
+import time
+from pathlib import Path
+
+import pytest
+
+SCRIPT = Path(__file__).parents[1] / "scripts/midas_sqlite_snapshot.py"
+SPEC = importlib.util.spec_from_file_location("midas_sqlite_snapshot", SCRIPT)
+assert SPEC and SPEC.loader
+midas_sqlite_snapshot = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(midas_sqlite_snapshot)
+
+
+def test_wal_snapshot_restore_is_consistent_and_never_checkpoints_source(tmp_path: Path) -> None:
+    source = tmp_path / "source.db"
+    writer = sqlite3.connect(source)
+    assert writer.execute("PRAGMA journal_mode=WAL").fetchone()[0] == "wal"
+    writer.execute("PRAGMA wal_autocheckpoint=0")
+    writer.execute("CREATE TABLE events (id INTEGER PRIMARY KEY, label TEXT NOT NULL)")
+    writer.executemany("INSERT INTO events(label) VALUES (?)", [("first",), ("second",)])
+    writer.commit()
+    wal = Path(f"{source}-wal")
+    assert wal.exists()
+    wal_bytes_before = wal.stat().st_size
+
+    snapshot = tmp_path / "snapshot"
+    manifest = midas_sqlite_snapshot.create_snapshot(source, snapshot, reserve_mib=0)
+    assert manifest["source"]["metadata"]["journal_mode"] == "wal"
+    assert manifest["snapshot"]["journal_mode"] == "delete"
+    assert manifest["snapshot"]["integrity_result"] == ["ok"]
+    assert wal.exists()
+    assert wal.stat().st_size == wal_bytes_before
+    assert writer.execute("PRAGMA journal_mode").fetchone()[0] == "wal"
+
+    writer.execute("INSERT INTO events(label) VALUES ('after-snapshot')")
+    writer.commit()
+    assert writer.execute("SELECT count(*) FROM events").fetchone()[0] == 3
+
+    verified = midas_sqlite_snapshot.verify_snapshot(snapshot)
+    assert verified["decision"] == "VERIFIED"
+    restored = tmp_path / "restored.db"
+    receipt = midas_sqlite_snapshot.restore_snapshot(snapshot, restored)
+    assert receipt["decision"] == "RESTORED"
+    with sqlite3.connect(f"file:{restored}?mode=ro", uri=True) as recovered:
+        assert recovered.execute("SELECT label FROM events ORDER BY id").fetchall() == [
+            ("first",),
+            ("second",),
+        ]
+    writer.close()
+
+
+def test_existing_restore_destination_is_never_overwritten(tmp_path: Path) -> None:
+    source = tmp_path / "source.db"
+    with sqlite3.connect(source) as connection:
+        connection.execute("CREATE TABLE state (value TEXT)")
+        connection.execute("INSERT INTO state VALUES ('preserved')")
+    snapshot = tmp_path / "snapshot"
+    midas_sqlite_snapshot.create_snapshot(source, snapshot, reserve_mib=0)
+    destination = tmp_path / "existing.db"
+    destination.write_bytes(b"preserve-this")
+    with pytest.raises(midas_sqlite_snapshot.SnapshotError):
+        midas_sqlite_snapshot.restore_snapshot(snapshot, destination)
+    assert destination.read_bytes() == b"preserve-this"
+
+
+def test_manifest_checksum_detects_tampering(tmp_path: Path) -> None:
+    source = tmp_path / "source.db"
+    with sqlite3.connect(source) as connection:
+        connection.execute("CREATE TABLE state (value TEXT)")
+    snapshot = tmp_path / "snapshot"
+    midas_sqlite_snapshot.create_snapshot(source, snapshot, reserve_mib=0)
+    manifest_path = snapshot / "manifest.json"
+    manifest = json.loads(manifest_path.read_text())
+    manifest["snapshot"]["bytes"] += 1
+    manifest_path.write_text(json.dumps(manifest))
+    with pytest.raises(midas_sqlite_snapshot.SnapshotError, match="manifest checksum"):
+        midas_sqlite_snapshot.verify_snapshot(snapshot)
+
+
+def test_large_sqlite_work_requires_heavy_preflight_profile() -> None:
+    with pytest.raises(midas_sqlite_snapshot.SnapshotError, match="requires a successful heavy"):
+        midas_sqlite_snapshot._require_admitted_scope(require_heavy_profile=True)
+
+
+def test_incomplete_snapshot_cleanup_is_reviewable_and_scoped(tmp_path: Path) -> None:
+    partial = tmp_path / ".snapshot.partial.999999999.deadbeef"
+    partial.mkdir(mode=0o700)
+    marker = {
+        "format": midas_sqlite_snapshot.FORMAT_VERSION,
+        "uid": os.getuid(),
+        "pid": 999999999,
+        "boot_id": midas_sqlite_snapshot._boot_id(),
+        "created_at_epoch": time.time() - 7200,
+        "final_destination": str(tmp_path / "snapshot"),
+    }
+    (partial / midas_sqlite_snapshot.INCOMPLETE_NAME).write_text(json.dumps(marker))
+    review = midas_sqlite_snapshot.cleanup_incomplete(
+        tmp_path,
+        older_than_seconds=3600,
+        delete=False,
+    )
+    assert review["candidates"][0]["deletion"] == "pending"
+    assert partial.exists()
+    cleanup = midas_sqlite_snapshot.cleanup_incomplete(
+        tmp_path,
+        older_than_seconds=3600,
+        delete=True,
+    )
+    assert cleanup["candidates"][0]["deletion"] == "removed"
+    assert not partial.exists()

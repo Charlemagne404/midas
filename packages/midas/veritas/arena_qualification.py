@@ -16,7 +16,7 @@ from pydantic import Field
 from midas.arena.artifacts import artifact_path, atomic_json
 from midas.core.models import Model
 
-from .continuous_analysis import VERSION as SNAPSHOT_ANALYSIS_VERSION
+from .continuous_analysis import event_path_for_scan
 from .economic_experiment import VERSION as ECONOMIC_EXPERIMENT_VERSION
 from .economic_experiment import compare_qualification_rules
 
@@ -42,7 +42,7 @@ def run_qualification(
     *,
     source_root: Path | None = None,
 ) -> dict[str, Any]:
-    """Read only finalized v4 analysis events and persist a deterministic Arena finding."""
+    """Read one supported finalized analysis protocol and persist a deterministic finding."""
     repository = Path(__file__).resolve().parents[3]
     data_root = source_root or repository / "data" / "veritas-observatory"
     if data_root.is_symlink():
@@ -50,9 +50,16 @@ def run_qualification(
     analysis_events_root = data_root / "analysis-events"
     if analysis_events_root.is_symlink():
         raise ValueError("Veritas finalized analysis event root cannot be a symlink")
-    event_dir = data_root / "analysis-events" / "v4"
+    latest_event, selected_analysis_version = event_path_for_scan(
+        data_root, spec.expected_latest_scan_id
+    )
+    if latest_event is None or selected_analysis_version is None:
+        raise ValueError(
+            "Expected finalized Veritas scan is not indexed by a supported analysis version"
+        )
+    event_dir = latest_event.parent
     if event_dir.is_symlink() or not event_dir.is_dir():
-        raise ValueError("Finalized Veritas v4 analysis events are unavailable")
+        raise ValueError("Finalized Veritas analysis event directory is unavailable")
     paths = list(itertools.islice(event_dir.glob("scan-*.json"), MAX_EVENT_CATALOG_FILES + 1))
     if len(paths) > MAX_EVENT_CATALOG_FILES:
         raise ValueError("Finalized Veritas event catalog exceeds the file-count bound")
@@ -65,7 +72,7 @@ def run_qualification(
         if path.stem == spec.expected_latest_scan_id:
             break
     if not selected_paths or selected_paths[-1].stem != spec.expected_latest_scan_id:
-        raise ValueError("Expected finalized Veritas scan is not indexed by v4 analysis")
+        raise ValueError("Expected finalized Veritas scan is not indexed by its analysis version")
     if len(selected_paths) > spec.max_events:
         raise ValueError("Finalized Veritas event count exceeds the Arena job bound")
     source_bytes = 0
@@ -85,6 +92,8 @@ def run_qualification(
         value = json.loads(path.read_text())
         if not isinstance(value, dict) or value.get("scan_id") != path.stem:
             raise ValueError(f"Invalid finalized Veritas event identity: {path.name}")
+        if value.get("analysis_version") != selected_analysis_version:
+            raise ValueError(f"Finalized Veritas event protocol mismatch: {path.name}")
         events.append(value)
         if progress:
             progress(index, len(selected_paths))
@@ -135,7 +144,7 @@ def run_qualification(
             "artifact_id": identity,
             "artifact_type": "veritas_public_opportunity_qualification",
             "artifact_version": "veritas-arena-qualification-v1",
-            "analysis_version": SNAPSHOT_ANALYSIS_VERSION,
+            "analysis_version": selected_analysis_version,
             "economic_experiment_version": ECONOMIC_EXPERIMENT_VERSION,
             "expected_latest_scan_id": spec.expected_latest_scan_id,
             "source_event_count": len(events),

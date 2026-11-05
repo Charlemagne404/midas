@@ -1,5 +1,8 @@
+import os
+import sqlite3
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -11,6 +14,7 @@ from midas.simulation.scenarios import SCENARIOS, catalog
 from pydantic import BaseModel, ConfigDict, Field
 
 from apps.api.config import Settings
+from apps.api.deployment import configuration_identity
 from apps.api.service import Service
 
 structlog.configure(
@@ -23,7 +27,98 @@ structlog.configure(
 
 def create_app(settings: Settings | None = None) -> FastAPI:
     config = settings or Settings()
+    process_started_at_utc = datetime.now(UTC).isoformat()
     service = Service(config)
+    from midas.frontier.adapters import (
+        CoinbaseSpotAdapter,
+        GeminiSpotAdapter,
+        KalshiAdapter,
+        KrakenSpotAdapter,
+        PolymarketAdapter,
+    )
+    from midas.frontier.adapters.coinbase import (
+        COINBASE_SOURCE_USE_HOLD_REASON,
+        CoinbaseSpotConfig,
+    )
+    from midas.frontier.adapters.gemini import GEMINI_SOURCE_USE_HOLD_REASON
+    from midas.frontier.adapters.kraken import KrakenSpotConfig
+    from midas.frontier.models import AdapterConfig
+    from midas.frontier.registry import AdapterRegistry
+    from midas.frontier.storage import FrontierStore, FrontierStoreError
+
+    kalshi_probe_allowed = config.frontier_kalshi_probe_allowed
+    kraken_probe_allowed = config.frontier_kraken_probe_allowed
+    coinbase_terms_acknowledged = config.frontier_coinbase_terms_acknowledged
+    coinbase_probe_allowed = config.frontier_coinbase_probe_allowed
+
+    def source_permission_block_reason(venue: str, reference: str | None) -> str:
+        if reference and reference.strip():
+            return (
+                f"{venue} source use remains held because the configured permission reference "
+                "is not independently validated by Frontier."
+            )
+        return (
+            f"{venue} source use remains held because no validated permission record is "
+            "available to Frontier."
+        )
+
+    kalshi_probe_block_reason = source_permission_block_reason(
+        "Kalshi", config.frontier_kalshi_research_authorization_ref
+    )
+    kraken_probe_block_reason = source_permission_block_reason(
+        "Kraken", config.frontier_kraken_market_data_permission_ref
+    )
+    coinbase_probe_block_reason = COINBASE_SOURCE_USE_HOLD_REASON
+
+    frontier_registry = AdapterRegistry(
+        (
+            PolymarketAdapter(
+                AdapterConfig(
+                    enabled=config.frontier_polymarket_public_probe_enabled,
+                    live_public_probe_enabled=config.frontier_polymarket_public_probe_enabled,
+                )
+            ),
+            KalshiAdapter(
+                AdapterConfig(
+                    enabled=kalshi_probe_allowed,
+                    live_public_probe_enabled=kalshi_probe_allowed,
+                    probe_policy_block_reason=kalshi_probe_block_reason,
+                )
+            ),
+            KrakenSpotAdapter(
+                KrakenSpotConfig(
+                    enabled=kraken_probe_allowed,
+                    live_public_probe_enabled=kraken_probe_allowed,
+                    probe_policy_block_reason=kraken_probe_block_reason,
+                    pairs=tuple(config.frontier_kraken_pairs.split(",")),
+                )
+            ),
+            CoinbaseSpotAdapter(
+                CoinbaseSpotConfig(
+                    enabled=(
+                        coinbase_probe_allowed
+                        and coinbase_terms_acknowledged
+                        and config.frontier_coinbase_public_probe_enabled
+                    ),
+                    live_public_probe_enabled=(
+                        coinbase_probe_allowed
+                        and coinbase_terms_acknowledged
+                        and config.frontier_coinbase_public_probe_enabled
+                    ),
+                    probe_policy_block_reason=coinbase_probe_block_reason,
+                    market_data_terms_version_acknowledged=(
+                        config.frontier_coinbase_market_data_terms_version_acknowledged
+                    ),
+                    products=tuple(config.frontier_coinbase_products.split(",")),
+                )
+            ),
+            GeminiSpotAdapter(),
+        )
+    )
+    frontier_store = FrontierStore(
+        config.frontier_root,
+        max_bytes=config.frontier_store_max_bytes,
+    )
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
@@ -38,8 +133,18 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         app.state.startup_error = None
         app.state.campaign_recovery_ids = []
         app.state.campaign_recovery_errors = []
+        app.state.frontier_store_startup_error = None
         app.state.laboratory = None
         try:
+            if frontier_store.path.is_file():
+                try:
+                    await asyncio.to_thread(frontier_store.initialize)
+                except (FrontierStoreError, OSError, sqlite3.Error, ValueError) as error:
+                    app.state.frontier_store_startup_error = f"{type(error).__name__}: {error}"
+                    structlog.get_logger().error(
+                        "frontier_store_startup_migration_failed",
+                        error=app.state.frontier_store_startup_error,
+                    )
             await service.start()
             database_path = service.store.engine.url.database
             if config.laboratory_root is not None:
@@ -48,7 +153,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 parent = (
                     Path(database_path).parent
                     if database_path and database_path != ":memory:"
-                    else Path("data")
+                    else config.runtime_root / "data"
                 )
                 existing = parent / "laboratory-final"
                 root = existing if existing.is_dir() else parent / "laboratory"
@@ -71,7 +176,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                     app.state.campaign_recovery_errors.append(
                         {"campaign_id": campaign["id"], "error": str(error)}
                     )
-            app.state.startup_status = "DEGRADED" if app.state.campaign_recovery_errors else "READY"
+            app.state.startup_status = (
+                "DEGRADED"
+                if app.state.campaign_recovery_errors or app.state.frontier_store_startup_error
+                else "READY"
+            )
         except Exception as error:
             startup_failed = True
             app.state.startup_status = "FAILED"
@@ -94,6 +203,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 if laboratory is not None:
                     await asyncio.to_thread(laboratory.close)
                 await service.stop()
+            await frontier_registry.aclose()
 
     app = FastAPI(
         title="Midas Research API",
@@ -102,15 +212,42 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         description="Read-only public market data and internal virtual simulation. No trading credentials or live orders.",
     )
     app.state.service = service
+    app.state.frontier_store = frontier_store
+    app.state.frontier_registry = frontier_registry
     app.state.startup_status = "RECOVERING"
     app.state.startup_error = None
     from apps.api.laboratory import router
+    from apps.api.readiness import (
+        resource_snapshot,
+        staged_repository_snapshot,
+        systemd_unit_snapshot,
+    )
 
     app.include_router(router(lambda: app.state.laboratory))
+    from apps.api.frontier import router as frontier_router
+
+    app.include_router(
+        frontier_router(frontier_store, frontier_registry, arena_root=config.arena_root)
+    )
     from apps.api.arena import router as arena_router
 
     veritas_workspace = (config.veritas_workspace or Path(__file__).resolve().parents[2]).resolve()
-    app.include_router(arena_router(config.arena_root, veritas_repository=veritas_workspace))
+    app.include_router(
+        arena_router(
+            config.arena_root,
+            veritas_repository=veritas_workspace,
+            frontier_held_venues=tuple(
+                venue
+                for venue, reason in (
+                    ("kalshi", kalshi_probe_block_reason),
+                    ("kraken", kraken_probe_block_reason),
+                    ("coinbase_exchange", coinbase_probe_block_reason),
+                    ("gemini_spot", GEMINI_SOURCE_USE_HOLD_REASON),
+                )
+                if reason
+            ),
+        )
+    )
     from apps.api.reality import router as reality_router
 
     app.include_router(reality_router(config.reality_workspace.resolve()))
@@ -179,8 +316,32 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         )
         result = {
             "status": status,
+            "application_version": app.version,
+            "api_release_identity": Path(__file__).resolve().parents[2].name,
+            "integrated_source_revision": os.environ.get("MIDAS_SOURCE_REVISION"),
+            "checked_at_utc": datetime.now(UTC).isoformat(),
+            "deployment": {
+                "release_id": os.environ.get("MIDAS_RELEASE_ID")
+                or Path(__file__).resolve().parents[2].name,
+                "source_commit": os.environ.get("MIDAS_SOURCE_REVISION"),
+                "configuration_identity": configuration_identity(config),
+                "schema_version": service.store.schema_version,
+                "deployment_timestamp_utc": os.environ.get("MIDAS_DEPLOYED_AT_UTC"),
+                "process_started_at_utc": process_started_at_utc,
+                "runtime_state": status,
+            },
             "startup_status": startup,
             "startup_error": app.state.startup_error,
+            "frontier_store": {
+                "status": (
+                    "DEGRADED"
+                    if app.state.frontier_store_startup_error
+                    else "READY"
+                    if frontier_store.path.is_file()
+                    else "EMPTY"
+                ),
+                "startup_error": app.state.frontier_store_startup_error,
+            },
             "mode": config.mode,
             "live_execution": False,
             "paper_recovery": {
@@ -200,6 +361,21 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
             return JSONResponse(status_code=503, content=result)  # type: ignore[return-value]
         return result
+
+    @app.get("/api/readiness/resources")
+    def readiness_resources() -> dict[str, Any]:
+        reality_service = systemd_unit_snapshot("midas-reality.service")
+        working_directory = reality_service.pop("working_directory", None)
+        if isinstance(working_directory, str):
+            reality_service["source_root_label"] = Path(working_directory).name
+        return {
+            **resource_snapshot(config.reality_workspace.resolve()),
+            "observer_last_run": systemd_unit_snapshot("midas-veritas-observatory.service"),
+            "reality_service": reality_service,
+            "staged_reality_candidate": staged_repository_snapshot(
+                os.environ.get("MIDAS_STAGED_REALITY_PATH")
+            ),
+        }
 
     @app.get("/api/state")
     async def state() -> dict[str, Any]:

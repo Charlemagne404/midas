@@ -1,0 +1,30 @@
+[Unit]
+Description=MIDAS unified web release %i
+After=midas-api-release@%i.service
+Wants=midas-api-release@%i.service
+StartLimitIntervalSec=120
+StartLimitBurst=3
+
+[Service]
+Type=simple
+WorkingDirectory=%h/.local/share/midas/releases/%i/apps/web
+Environment=MIDAS_API_TARGET=http://127.0.0.1:8000
+ExecStart=/usr/bin/node %h/.local/share/midas/releases/%i/apps/web/node_modules/vite/bin/vite.js preview --host 127.0.0.1 --port 5173 --strictPort
+Restart=on-failure
+RestartSec=5
+KillSignal=SIGINT
+TimeoutStopSec=30
+CPUQuota=25%
+MemoryHigh=384M
+MemoryMax=512M
+MemorySwapMax=0
+Nice=10
+TasksMax=32
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+PrivateTmp=true
+ReadOnlyPaths=%h/.local/share/midas/releases/%i
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=midas-web-release-%i
