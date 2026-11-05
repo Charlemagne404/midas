@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   Activity,
@@ -14,15 +14,8 @@ import {
   X,
 } from 'lucide-react';
 import { api } from './api';
-import type { ComponentProps } from 'react';
-const LazyChart = lazy(() => import('./Chart').then((m) => ({ default: m.Chart })));
-function Chart(props: ComponentProps<typeof LazyChart>) {
-  return (
-    <Suspense fallback={<Empty>Loading chart…</Empty>}>
-      <LazyChart {...props} />
-    </Suspense>
-  );
-}
+import { DeferredChart } from './DeferredChart';
+const Chart = DeferredChart;
 import { chartBase } from './chart-theme';
 import './reality.css';
 import { historyBarrier, historySeries } from './reality-history';

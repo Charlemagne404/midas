@@ -44,6 +44,7 @@ def prepared(tmp_path, monkeypatch):
             "available_cpu_count": 6,
             "host_load_avg1": 0.0,
             "memory_psi": {"some": 0.0, "full": 0.0},
+            "user_memory_psi": {"some": 0.0, "full": 0.0},
             "io_psi": {"some": 0.0},
         },
     )
@@ -63,6 +64,17 @@ def test_due_time_admission_and_completion(prepared):
     path.write_text(json.dumps(job))
     assert tick(root, identity, now=1012)["state"] == "COMPLETED"
     assert len(list(root.glob("jobs/*/job.json"))) == 1
+    decisions = sorted((root / "schedules" / identity / "decisions").glob("*.json"))
+    assert [json.loads(path.read_text())["state"] for path in decisions] == [
+        "WAITING_TIME",
+        "ADMITTING",
+        "RUNNING",
+        "RUNNING",
+        "COMPLETED",
+    ]
+    assert [json.loads(path.read_text())["decision_sequence"] for path in decisions] == list(
+        range(1, 6)
+    )
 
 
 def test_crash_between_admission_and_plan_publication_reuses_job(prepared):
@@ -129,6 +141,7 @@ def test_admission_expiry_and_resource_deferral(prepared, monkeypatch):
             "available_cpu_count": 6,
             "host_load_avg1": 0.0,
             "memory_psi": {"some": 0.0, "full": 0.0},
+            "user_memory_psi": {"some": 0.0, "full": 0.0},
             "io_psi": {"some": 0.0},
         },
     )
@@ -167,11 +180,14 @@ def test_resource_gate_uses_pressure_and_reserve_not_swap_occupancy():
     ready = {
         "active_job_ids": [],
         "available_memory_bytes": 8 * 1024**3,
+        "swap_total_bytes": 4 * 1024**3,
+        "swap_free_bytes": 18 * 1024**2,
         "disk_free_bytes": 8 * 1024**3,
         "cpu_psi": {"some": 0.0},
         "available_cpu_count": 6,
         "host_load_avg1": 0.0,
         "memory_psi": {"some": 0.0, "full": 0.0},
+        "user_memory_psi": {"some": 0.0, "full": 0.0},
         "io_psi": {"some": 0.0},
     }
     assert scheduling.resource_gate(ready) == {"ready": True, "reasons": []}
@@ -179,6 +195,10 @@ def test_resource_gate_uses_pressure_and_reserve_not_swap_occupancy():
     assert scheduling.resource_gate(quota_wait)["ready"]
     saturated = {**ready, "host_load_avg1": 6.0}
     assert scheduling.resource_gate(saturated)["reasons"] == ["host_cpu_capacity"]
+    user_pressure = {**ready, "user_memory_psi": {"some": 11.0, "full": 0.0}}
+    assert scheduling.resource_gate(user_pressure)["reasons"] == ["user_memory_pressure"]
+    unavailable = {key: value for key, value in ready.items() if key != "user_memory_psi"}
+    assert scheduling.resource_gate(unavailable)["reasons"] == ["resource_pressure_unavailable"]
 
 
 def test_expired_crash_intent_without_child_does_not_admit(prepared):

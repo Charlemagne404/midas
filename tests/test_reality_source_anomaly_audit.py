@@ -33,7 +33,7 @@ def source_records():
             "ordinal": 1,
             "received_ns": 1,
             "kind": "gap",
-            "payload": {"reason": "process_start", "reconstruction_version": 5},
+            "payload": {"reason": "process_start", "reconstruction_version": 4},
         },
         {
             "ordinal": 2,
@@ -136,7 +136,7 @@ def test_anomaly_audit_counts_each_affected_asset_in_batched_events():
             "ordinal": 1,
             "received_ns": 1,
             "kind": "gap",
-            "payload": {"reason": "process_start", "reconstruction_version": 5},
+            "payload": {"reason": "process_start", "reconstruction_version": 4},
         },
         {
             "ordinal": 2,

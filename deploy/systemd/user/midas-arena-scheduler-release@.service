@@ -1,0 +1,32 @@
+[Unit]
+Description=MIDAS unified finite research schedule dispatcher release %i
+Documentation=man:systemd.service(5)
+StartLimitIntervalSec=120
+StartLimitBurst=2
+
+[Service]
+Type=oneshot
+WorkingDirectory=%h/.local/share/midas/releases/%i
+ExecStart=%h/.local/share/midas/venvs/%i/bin/python -B -m scripts.dispatch_schedules --root %h/midas/data/arena
+Restart=no
+TimeoutStartSec=60
+CPUQuota=100%
+MemoryHigh=384M
+MemoryMax=512M
+MemorySwapMax=0
+Nice=10
+IOWeight=10
+TasksMax=128
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+PrivateTmp=true
+ReadWritePaths=%h/midas/data/arena
+Environment=PYTHONDONTWRITEBYTECODE=1
+Environment=OMP_NUM_THREADS=1
+Environment=MKL_NUM_THREADS=1
+Environment=OPENBLAS_NUM_THREADS=1
+Environment=CUDA_VISIBLE_DEVICES=
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=midas-arena-scheduler-release-%i

@@ -1,4 +1,4 @@
-"""Summarize a time window of host_capacity_sample JSONL without loading its history."""
+"""Summarize bounded host samples, keeping hierarchical and local cgroup events distinct."""
 
 import argparse
 import json
@@ -42,6 +42,14 @@ def summarize(path, since=0, until=float("inf")):
             "cpu_seconds": 0,
             "interval_seconds": 0,
             "throttled_seconds": 0,
+            "memory_event_first": {},
+            "memory_event_last": {},
+            "memory_event_local_first": {},
+            "memory_event_local_last": {},
+            "memory_psi_avg": defaultdict(list),
+            "memory_psi_total_first": {},
+            "memory_psi_total_last": {},
+            "memory_limits": {},
         }
     )
     previous = None
@@ -149,6 +157,25 @@ def summarize(path, since=0, until=float("inf")):
                         service["samples"][name].append(int(data[name]))
                 for name in ("anon", "file", "kernel"):
                     service["samples"][name].append(fields(data["memory.stat"]).get(name, 0))
+                for name in ("memory.high", "memory.max", "memory.swap.max"):
+                    if data.get(name) is not None:
+                        service["memory_limits"][name] = data[name].strip()
+                event_counts = fields(data.get("memory.events"))
+                for name, value in event_counts.items():
+                    service["memory_event_first"].setdefault(name, value)
+                    service["memory_event_last"][name] = value
+                local_event_counts = fields(data.get("memory.events.local"))
+                for name, value in local_event_counts.items():
+                    service["memory_event_local_first"].setdefault(name, value)
+                    service["memory_event_local_last"][name] = value
+                for scope, values in pressure(data.get("memory.pressure")).items():
+                    for name in ("avg10", "avg60", "avg300"):
+                        if name in values:
+                            service["memory_psi_avg"][f"{scope}_{name}"].append(float(values[name]))
+                    if "total" in values:
+                        total = int(values["total"])
+                        service["memory_psi_total_first"].setdefault(scope, total)
+                        service["memory_psi_total_last"][scope] = total
                 if dt and group in previous["cgroups"]:
                     old = fields(previous["cgroups"][group]["cpu.stat"])
                     new = fields(data["cpu.stat"])
@@ -168,8 +195,66 @@ def summarize(path, since=0, until=float("inf")):
         "host": {k: distribution(v) for k, v in samples.items()},
         "cgroups": {
             k: {
-                **{n: v for n, v in d.items() if n != "samples"},
+                **{
+                    n: v
+                    for n, v in d.items()
+                    if n
+                    not in {
+                        "samples",
+                        "memory_event_first",
+                        "memory_event_last",
+                        "memory_event_local_first",
+                        "memory_event_local_last",
+                        "memory_psi_avg",
+                        "memory_psi_total_first",
+                        "memory_psi_total_last",
+                    }
+                },
                 "observations": {n: distribution(v) for n, v in d["samples"].items()},
+                "memory_event_deltas": {
+                    name: {
+                        "first": first,
+                        "last": d["memory_event_last"][name],
+                        "delta": (
+                            d["memory_event_last"][name] - first
+                            if d["memory_event_last"][name] >= first
+                            else None
+                        ),
+                        "counter_reset": d["memory_event_last"][name] < first,
+                    }
+                    for name, first in d["memory_event_first"].items()
+                },
+                "memory_event_local_deltas": {
+                    name: {
+                        "first": first,
+                        "last": d["memory_event_local_last"][name],
+                        "delta": (
+                            d["memory_event_local_last"][name] - first
+                            if d["memory_event_local_last"][name] >= first
+                            else None
+                        ),
+                        "counter_reset": d["memory_event_local_last"][name] < first,
+                    }
+                    for name, first in d["memory_event_local_first"].items()
+                },
+                "memory_pressure": {
+                    "averages": {
+                        name: distribution(values) for name, values in d["memory_psi_avg"].items()
+                    },
+                    "total_us": {
+                        scope: {
+                            "first": first,
+                            "last": d["memory_psi_total_last"][scope],
+                            "delta": (
+                                d["memory_psi_total_last"][scope] - first
+                                if d["memory_psi_total_last"][scope] >= first
+                                else None
+                            ),
+                            "counter_reset": d["memory_psi_total_last"][scope] < first,
+                        }
+                        for scope, first in d["memory_psi_total_first"].items()
+                    },
+                },
             }
             for k, d in services.items()
         },
