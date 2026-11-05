@@ -144,3 +144,21 @@ def test_director_retry_resumes_cancelled_step_and_publishes_completed_state(tmp
     assert record["current_stage"] is None
     assert all(step["state"] == "COMPLETED" for step in record["steps"])
     assert not record.get("last_error")
+
+
+def test_reusable_sweep_rejects_non_object_manifest_before_field_access(tmp_path, monkeypatch):
+    monkeypatch.setattr(
+        director,
+        "load",
+        lambda _root, _identity: ({"rows_sha256": "a" * 64}, None),
+    )
+    manifest = tmp_path / "sweeps" / "sweep-fixture" / "manifest.json"
+    manifest.parent.mkdir(parents=True)
+    manifest.write_text(json.dumps(["malformed", "sweep", "manifest"]))
+
+    with pytest.raises(ValueError, match="Reusable sweep manifest must be a JSON object"):
+        director.load_reusable_sweep(
+            tmp_path,
+            "sweep-fixture",
+            DirectorSpec(dataset_id="dataset-fixture"),
+        )

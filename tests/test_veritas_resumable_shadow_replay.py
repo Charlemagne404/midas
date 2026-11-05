@@ -15,13 +15,13 @@ from midas.reality.shadow_campaign import freeze
 from midas.reality.shadow_source import Context, Tail
 from midas.reality.shadow_worker import _restore_context_cohort_order
 from midas.reality.storage import MAGIC, Store, atomic_json, canonical, manifest
-from test_reality_foundry import START, market, snapshot
 
 from scripts.benchmark_shadow_consume import (
     _resolve_isolated_path,
     run_resumable_once,
     stable_sha256,
 )
+from tests.test_reality_foundry import START, market, snapshot
 
 RUN_ID = "b" * 64
 PRODUCER_HASH = "a" * 64

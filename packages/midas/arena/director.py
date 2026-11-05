@@ -56,9 +56,10 @@ def load_reusable_sweep(root: Path, sweep_id: str, spec: DirectorSpec) -> dict[s
     path = artifact_path(root, "sweeps", sweep_id) / "manifest.json"
     if not path.is_file():
         raise ValueError(f"Reusable sweep is missing: {sweep_id}")
-    sweep = json.loads(path.read_text())
-    if not isinstance(sweep, dict):
-        raise ValueError("Reusable sweep manifest is malformed")
+    sweep_data = json.loads(path.read_text())
+    if not isinstance(sweep_data, dict):
+        raise ValueError("Reusable sweep manifest must be a JSON object")
+    sweep: dict[str, Any] = sweep_data
     if (
         sweep.get("state") != "COMPLETED"
         or sweep.get("configuration") != sweep_spec.model_dump(mode="json")
