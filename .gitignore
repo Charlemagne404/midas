@@ -36,6 +36,8 @@ data/laboratory-milestone3/
 data/laboratory-final/
 data/arena/
 data/arena-cold/
+# Bounded worktree-local Frontier Arena validation artifacts; summaries live in docs.
+data/frontier-arena-validation-*/
 data/exports/
 data/backups/
 data/runtime/
@@ -59,6 +61,8 @@ data/datasets/public-series-*.manifest.json
 *.sqlite-shm
 *.sqlite-wal
 
+# Versioned production output is preserved locally, not staged as source.
+data/veritas-gap-detail-v2/
 # Isolated reliability endurance artifacts; compact evidence remains tracked.
 data/reliability-endurance/arena/
 # Local coordination locks are runtime state, not source or evidence.

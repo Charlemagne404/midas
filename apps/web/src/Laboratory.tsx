@@ -13,6 +13,7 @@ import {
   Square,
 } from 'lucide-react';
 import { api } from './api';
+import { LaboratoryFrontierResearch } from './LaboratoryFrontierResearch';
 
 type Configuration = {
   preset: string;
@@ -184,6 +185,7 @@ const tabs = [
   'Adversarial testing',
   'Strategy comparison',
   'Scenario explorer',
+  'Frontier research',
 ] as const;
 type Tab = (typeof tabs)[number];
 function Json({ value }: { value: unknown }) {
@@ -221,7 +223,7 @@ function Stat({ label, value, detail }: { label: string; value: string | number;
   );
 }
 
-export function Laboratory() {
+export function Laboratory({ onNavigate }: { onNavigate?: (page: string) => void }) {
   const cache = useQueryClient();
   const [tab, setTab] = useState<Tab>('Overview');
   const [campaignId, setCampaignId] = useState<string | null>(null);
@@ -605,6 +607,7 @@ export function Laboratory() {
           )}
         </Section>
       )}
+      {tab === 'Frontier research' && <LaboratoryFrontierResearch onNavigate={onNavigate} />}
       <p className="lab-footnote">
         All financial outcomes are simulated. Economic verification is unavailable while collateral
         routing, empirical execution, and applicable costs remain unresolved.

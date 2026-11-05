@@ -1,0 +1,35 @@
+{
+  "adapter_version": "frontier-polymarket-7",
+  "capture_kind": "genuine_public_source_response",
+  "content_matches_initial_capture": true,
+  "endpoint": "https://clob.polymarket.com/prices-history",
+  "http_status": 200,
+  "native_instrument_id": "98022490269692409998126496127597032490334070080325855126491859374983463996227",
+  "note": "One unauthenticated read-only GET; raw response is preserved byte-for-byte. No project source database or service was accessed.",
+  "point_count": 79,
+  "query": {
+    "endTs": 1785888000,
+    "fidelity": 60,
+    "interval": "1d",
+    "startTs": 1785283200
+  },
+  "raw_sha256": "0b69fa1f31cd9618e922ab681c41c67e4de51d5572e662fa3db1d3267e50afc8",
+  "received_at_utc": "2026-10-28T06:12:42.205452+00:00",
+  "request_elapsed_monotonic_ns": 38639409,
+  "request_started_at_utc": "2026-10-28T06:12:42.166811+00:00",
+  "request_url": "https://clob.polymarket.com/prices-history?market=98022490269692409998126496127597032490334070080325855126491859374983463996227&interval=1d&fidelity=60&startTs=1785283200&endTs=1785888000",
+  "response_bytes": 2139,
+  "source_limit_observations": [
+    {
+      "message": "invalid filters: 'startTs' and 'endTs' interval is too long",
+      "range_days": 30,
+      "status": 400
+    },
+    {
+      "message": "invalid filters: 'startTs' and 'endTs' interval is too long",
+      "range_days": 36,
+      "status": 400
+    }
+  ],
+  "venue": "polymarket"
+}

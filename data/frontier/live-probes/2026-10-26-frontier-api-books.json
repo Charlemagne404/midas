@@ -1,0 +1,1451 @@
+{
+  "capture_version": 1,
+  "captured_at_utc": "2026-10-26T21:10:43.987650+00:00",
+  "envelope_sha256": "101094b56c3dc620f8f66b423c92b5796db0a57852a5f7807aab50b2af956d60",
+  "method": "one Frontier API discovery request and at most one public book per source; temporary 8 MiB SQLite store; zero retries; 8 second adapter timeout; 64 KiB response cap; sources called sequentially",
+  "sources": {
+    "kalshi": {
+      "http_status": 200,
+      "observations": [
+        {
+          "normalized": {
+            "complete_for_request": false,
+            "cursor": null,
+            "markets": [
+              {
+                "base_asset": null,
+                "canonical_id": "kalshi:KXMVECROSSCATEGORY-S2026A4AUQZ6YHWTOBLVR-7Y26I3JGP",
+                "description": "",
+                "fees": {
+                  "applies_to": null,
+                  "effective_at_utc": null,
+                  "evidence_sha256": null,
+                  "expires_at_utc": null,
+                  "fee_currency": null,
+                  "fixed_fee": null,
+                  "formula": null,
+                  "note": "Unknown: market-specific fee rules are not resolved by adapter v1",
+                  "rate": null,
+                  "source_url": null,
+                  "status": "unknown",
+                  "version": null
+                },
+                "instruments": [
+                  {
+                    "label": "yes Gremio,yes Flamengo,yes Over 2.5 goals scored,yes Over 2.5 goals scored,yes Independ. Santa Fe,yes Junior Caminero: 1+,yes Dallas,yes CeeDee Lamb: 1+,yes Javonte Williams: 1+",
+                    "minimum_notional": null,
+                    "minimum_quantity": null,
+                    "native_instrument_id": "KXMVECROSSCATEGORY-S2026A4AUQZ6YHWTOBLVR-7Y26I3JGP:YES",
+                    "outcome_id": "yes",
+                    "payouts": [
+                      {
+                        "amount": "1.0000",
+                        "state_id": "yes"
+                      },
+                      {
+                        "amount": "0",
+                        "state_id": "no"
+                      }
+                    ],
+                    "price_currency": "USD",
+                    "quantity_step": null,
+                    "quantity_unit": "contract",
+                    "tick_size": null
+                  },
+                  {
+                    "label": "yes Gremio,yes Flamengo,yes Over 2.5 goals scored,yes Over 2.5 goals scored,yes Independ. Santa Fe,yes Junior Caminero: 1+,yes Dallas,yes CeeDee Lamb: 1+,yes Javonte Williams: 1+",
+                    "minimum_notional": null,
+                    "minimum_quantity": null,
+                    "native_instrument_id": "KXMVECROSSCATEGORY-S2026A4AUQZ6YHWTOBLVR-7Y26I3JGP:NO",
+                    "outcome_id": "no",
+                    "payouts": [
+                      {
+                        "amount": "0",
+                        "state_id": "yes"
+                      },
+                      {
+                        "amount": "1.0000",
+                        "state_id": "no"
+                      }
+                    ],
+                    "price_currency": "USD",
+                    "quantity_step": null,
+                    "quantity_unit": "contract",
+                    "tick_size": null
+                  }
+                ],
+                "lifecycle": "open",
+                "market_kind": "conditional_event",
+                "native_event_id": "KXMVECROSSCATEGORY-S2026A4AUQZ6YHWTOBLVR",
+                "native_fields": {
+                  "can_close_early": true,
+                  "close_time": "2026-10-30T00:00:00Z",
+                  "created_time": "2026-10-26T21:10:35.803942Z",
+                  "custom_strike": {
+                    "Associated Events": "KXBRASILEIROGAME-26OCT26CFCGPA,KXBRASILEIROGAME-26OCT26FLAATL,KXBRASILEIROTOTAL-26OCT26CFCGPA,KXBRASILEIROTOTAL-26OCT26FLAATL,KXDIMAYORGAME-26OCT26SFEBUC,KXMLBHR-26OCT262000MILTB,KXNFLGAME-26OCT26DALPHI,KXNFLTD-26OCT26DALPHI,KXNFLTD-26OCT26DALPHI",
+                    "Associated Market Sides": "yes,yes,yes,yes,yes,yes,yes,yes,yes",
+                    "Associated Markets": "KXBRASILEIROGAME-26OCT26CFCGPA-GPA,KXBRASILEIROGAME-26OCT26FLAATL-FLA,KXBRASILEIROTOTAL-26OCT26CFCGPA-3,KXBRASILEIROTOTAL-26OCT26FLAATL-3,KXDIMAYORGAME-26OCT26SFEBUC-SFE,KXMLBHR-26OCT262000MILTB-TBJCAMINERO13-1,KXNFLGAME-26OCT26DALPHI-DAL,KXNFLTD-26OCT26DALPHI-DALCLAMB88-1,KXNFLTD-26OCT26DALPHI-DALJWILLIAMS33-1",
+                    "Multivariate Event Ticker": "KXMVECROSSCATEGORY-S2026A4AUQZ6YHWTOBLVR"
+                  },
+                  "event_ticker": "KXMVECROSSCATEGORY-S2026A4AUQZ6YHWTOBLVR",
+                  "exchange_index": 1,
+                  "expected_expiration_time": "2026-10-27T07:05:00Z",
+                  "expiration_time": "2026-10-30T00:00:00Z",
+                  "expiration_value": "",
+                  "is_provisional": true,
+                  "last_price_dollars": "0.0000",
+                  "latest_expiration_time": "2026-10-30T00:00:00Z",
+                  "market_type": "binary",
+                  "mve_collection_ticker": "KXMVECROSSCATEGORY-R",
+                  "mve_selected_legs": [
+                    {
+                      "event_ticker": "KXBRASILEIROGAME-26OCT26CFCGPA",
+                      "market_ticker": "KXBRASILEIROGAME-26OCT26CFCGPA-GPA",
+                      "side": "yes"
+                    },
+                    {
+                      "event_ticker": "KXBRASILEIROGAME-26OCT26FLAATL",
+                      "market_ticker": "KXBRASILEIROGAME-26OCT26FLAATL-FLA",
+                      "side": "yes"
+                    },
+                    {
+                      "event_ticker": "KXBRASILEIROTOTAL-26OCT26CFCGPA",
+                      "market_ticker": "KXBRASILEIROTOTAL-26OCT26CFCGPA-3",
+                      "side": "yes"
+                    },
+                    {
+                      "event_ticker": "KXBRASILEIROTOTAL-26OCT26FLAATL",
+                      "market_ticker": "KXBRASILEIROTOTAL-26OCT26FLAATL-3",
+                      "side": "yes"
+                    },
+                    {
+                      "event_ticker": "KXDIMAYORGAME-26OCT26SFEBUC",
+                      "market_ticker": "KXDIMAYORGAME-26OCT26SFEBUC-SFE",
+                      "side": "yes"
+                    },
+                    {
+                      "event_ticker": "KXMLBHR-26OCT262000MILTB",
+                      "market_ticker": "KXMLBHR-26OCT262000MILTB-TBJCAMINERO13-1",
+                      "side": "yes"
+                    },
+                    {
+                      "event_ticker": "KXNFLGAME-26OCT26DALPHI",
+                      "market_ticker": "KXNFLGAME-26OCT26DALPHI-DAL",
+                      "side": "yes"
+                    },
+                    {
+                      "event_ticker": "KXNFLTD-26OCT26DALPHI",
+                      "market_ticker": "KXNFLTD-26OCT26DALPHI-DALCLAMB88-1",
+                      "side": "yes"
+                    },
+                    {
+                      "event_ticker": "KXNFLTD-26OCT26DALPHI",
+                      "market_ticker": "KXNFLTD-26OCT26DALPHI-DALJWILLIAMS33-1",
+                      "side": "yes"
+                    }
+                  ],
+                  "no_ask_dollars": "1.0000",
+                  "no_bid_dollars": "1.0000",
+                  "no_sub_title": "yes Gremio,yes Flamengo,yes Over 2.5 goals scored,yes Over 2.5 goals scored,yes Independ. Santa Fe,yes Junior Caminero: 1+,yes Dallas,yes CeeDee Lamb: 1+,yes Javonte Williams: 1+",
+                  "notional_value_dollars": "1.0000",
+                  "open_interest_fp": "0.00",
+                  "open_time": "2026-10-26T21:10:35Z",
+                  "previous_price_dollars": "0.0000",
+                  "previous_yes_ask_dollars": "0.0000",
+                  "previous_yes_bid_dollars": "0.0000",
+                  "price_level_structure": "center_deci_edge_centi_cent",
+                  "price_ranges": [
+                    {
+                      "end": "0.0100",
+                      "start": "0.0000",
+                      "step": "0.0001"
+                    },
+                    {
+                      "end": "0.9900",
+                      "start": "0.0100",
+                      "step": "0.0010"
+                    },
+                    {
+                      "end": "1.0000",
+                      "start": "0.9900",
+                      "step": "0.0001"
+                    }
+                  ],
+                  "result": "",
+                  "rules_primary": "",
+                  "rules_secondary": "Kalshi is not affiliated, associated, authorized, endorsed by, or in any way officially connected with the Governing League. All trademarks, logos, and brand names are the property of their respective owners.",
+                  "settlement_bounds_type": "default",
+                  "settlement_timer_seconds": 5,
+                  "status": "active",
+                  "strike_type": "custom",
+                  "ticker": "KXMVECROSSCATEGORY-S2026A4AUQZ6YHWTOBLVR-7Y26I3JGP",
+                  "title": "yes Gremio,yes Flamengo,yes Over 2.5 goals scored,yes Over 2.5 goals scored,yes Independ. Santa Fe,yes Junior Caminero: 1+,yes Dallas,yes CeeDee Lamb: 1+,yes Javonte Williams: 1+",
+                  "updated_time": "2026-10-26T21:10:36.381756Z",
+                  "volume_24h_fp": "0.00",
+                  "volume_fp": "0.00",
+                  "yes_ask_dollars": "0.0000",
+                  "yes_ask_size_fp": "0.00",
+                  "yes_bid_dollars": "0.0000",
+                  "yes_bid_size_fp": "0.00",
+                  "yes_sub_title": "yes Gremio,yes Flamengo,yes Over 2.5 goals scored,yes Over 2.5 goals scored,yes Independ. Santa Fe,yes Junior Caminero: 1+,yes Dallas,yes CeeDee Lamb: 1+,yes Javonte Williams: 1+"
+                },
+                "native_market_id": "KXMVECROSSCATEGORY-S2026A4AUQZ6YHWTOBLVR-7Y26I3JGP",
+                "payoff": {
+                  "exhaustive": false,
+                  "payout_currency": "USD",
+                  "schema_version": 1,
+                  "settlement_asset": "USD",
+                  "state_ids": [
+                    "yes",
+                    "no"
+                  ],
+                  "verification_basis": "Native YES/NO and notional metadata only; resolution and settlement conditions require independent validation.",
+                  "verified": false
+                },
+                "provenance": {
+                  "adapter_version": "frontier-kalshi-1",
+                  "clock_uncertainty_ms": null,
+                  "exchange_timestamp_semantics": "updated_time is metadata update time",
+                  "exchange_timestamp_utc": "2026-10-26T21:10:36.381756Z",
+                  "observation_id": "9d50797a51db418ab8ed0b5ee978766e192b9b5de05919ea47e531c974898004",
+                  "persisted_at_utc": null,
+                  "processed_at_utc": "2026-10-26T21:10:42.161121Z",
+                  "raw_sha256": "1da576473af201f03f408e0c4ada022159a2c54ed39bb1081209bcb46d92759f",
+                  "request_started_at_utc": "2026-10-26T21:10:41.806202Z",
+                  "response_received_at_utc": "2026-10-26T21:10:42.160815Z",
+                  "source_schema_version": "market_type:binary",
+                  "source_url": "https://external-api.kalshi.com/trade-api/v2/markets?limit=1&status=open"
+                },
+                "quality_flags": [
+                  "MVE_PAYOFF_NOT_MODELED",
+                  "RULES_PRIMARY_MISSING",
+                  "FEE_SCHEDULE_UNKNOWN",
+                  "PAYOFF_NOT_VERIFIED",
+                  "BOOK_TIMESTAMP_NOT_PROVIDED"
+                ],
+                "quote_asset": null,
+                "resolution": {
+                  "authority": null,
+                  "closes_at_utc": "2026-10-30T00:00:00Z",
+                  "evidence_sha256": "0c6cf6f52da96393526eb670c739eb82979e77771d4af81de6776a4176ebba03",
+                  "primary_rule": null,
+                  "resolution_fingerprint": null,
+                  "secondary_rule": "Kalshi is not affiliated, associated, authorized, endorsed by, or in any way officially connected with the Governing League. All trademarks, logos, and brand names are the property of their respective owners.",
+                  "settles_at_utc": "2026-10-27T07:05:00Z",
+                  "source_timestamp_semantics": "Kalshi updated_time is market metadata update time, not a book timestamp",
+                  "verified": false
+                },
+                "schema_version": 1,
+                "settlement_asset": "USD",
+                "title": "yes Gremio,yes Flamengo,yes Over 2.5 goals scored,yes Over 2.5 goals scored,yes Independ. Santa Fe,yes Junior Caminero: 1+,yes Dallas,yes CeeDee Lamb: 1+,yes Javonte Williams: 1+",
+                "venue": "kalshi"
+              }
+            ],
+            "note": "One bounded discovery response; absence from this page is not proof of venue-wide absence.",
+            "schema_version": 1,
+            "venue": "kalshi"
+          },
+          "normalized_json": "{\"complete_for_request\":false,\"cursor\":null,\"markets\":[{\"base_asset\":null,\"canonical_id\":\"kalshi:KXMVECROSSCATEGORY-S2026A4AUQZ6YHWTOBLVR-7Y26I3JGP\",\"description\":\"\",\"fees\":{\"applies_to\":null,\"effective_at_utc\":null,\"evidence_sha256\":null,\"expires_at_utc\":null,\"fee_currency\":null,\"fixed_fee\":null,\"formula\":null,\"note\":\"Unknown: market-specific fee rules are not resolved by adapter v1\",\"rate\":null,\"source_url\":null,\"status\":\"unknown\",\"version\":null},\"instruments\":[{\"label\":\"yes Gremio,yes Flamengo,yes Over 2.5 goals scored,yes Over 2.5 goals scored,yes Independ. Santa Fe,yes Junior Caminero: 1+,yes Dallas,yes CeeDee Lamb: 1+,yes Javonte Williams: 1+\",\"minimum_notional\":null,\"minimum_quantity\":null,\"native_instrument_id\":\"KXMVECROSSCATEGORY-S2026A4AUQZ6YHWTOBLVR-7Y26I3JGP:YES\",\"outcome_id\":\"yes\",\"payouts\":[{\"amount\":\"1.0000\",\"state_id\":\"yes\"},{\"amount\":\"0\",\"state_id\":\"no\"}],\"price_currency\":\"USD\",\"quantity_step\":null,\"quantity_unit\":\"contract\",\"tick_size\":null},{\"label\":\"yes Gremio,yes Flamengo,yes Over 2.5 goals scored,yes Over 2.5 goals scored,yes Independ. Santa Fe,yes Junior Caminero: 1+,yes Dallas,yes CeeDee Lamb: 1+,yes Javonte Williams: 1+\",\"minimum_notional\":null,\"minimum_quantity\":null,\"native_instrument_id\":\"KXMVECROSSCATEGORY-S2026A4AUQZ6YHWTOBLVR-7Y26I3JGP:NO\",\"outcome_id\":\"no\",\"payouts\":[{\"amount\":\"0\",\"state_id\":\"yes\"},{\"amount\":\"1.0000\",\"state_id\":\"no\"}],\"price_currency\":\"USD\",\"quantity_step\":null,\"quantity_unit\":\"contract\",\"tick_size\":null}],\"lifecycle\":\"open\",\"market_kind\":\"conditional_event\",\"native_event_id\":\"KXMVECROSSCATEGORY-S2026A4AUQZ6YHWTOBLVR\",\"native_fields\":{\"can_close_early\":true,\"close_time\":\"2026-10-30T00:00:00Z\",\"created_time\":\"2026-10-26T21:10:35.803942Z\",\"custom_strike\":{\"Associated Events\":\"KXBRASILEIROGAME-26OCT26CFCGPA,KXBRASILEIROGAME-26OCT26FLAATL,KXBRASILEIROTOTAL-26OCT26CFCGPA,KXBRASILEIROTOTAL-26OCT26FLAATL,KXDIMAYORGAME-26OCT26SFEBUC,KXMLBHR-26OCT262000MILTB,KXNFLGAME-26OCT26DALPHI,KXNFLTD-26OCT26DALPHI,KXNFLTD-26OCT26DALPHI\",\"Associated Market Sides\":\"yes,yes,yes,yes,yes,yes,yes,yes,yes\",\"Associated Markets\":\"KXBRASILEIROGAME-26OCT26CFCGPA-GPA,KXBRASILEIROGAME-26OCT26FLAATL-FLA,KXBRASILEIROTOTAL-26OCT26CFCGPA-3,KXBRASILEIROTOTAL-26OCT26FLAATL-3,KXDIMAYORGAME-26OCT26SFEBUC-SFE,KXMLBHR-26OCT262000MILTB-TBJCAMINERO13-1,KXNFLGAME-26OCT26DALPHI-DAL,KXNFLTD-26OCT26DALPHI-DALCLAMB88-1,KXNFLTD-26OCT26DALPHI-DALJWILLIAMS33-1\",\"Multivariate Event Ticker\":\"KXMVECROSSCATEGORY-S2026A4AUQZ6YHWTOBLVR\"},\"event_ticker\":\"KXMVECROSSCATEGORY-S2026A4AUQZ6YHWTOBLVR\",\"exchange_index\":1,\"expected_expiration_time\":\"2026-10-27T07:05:00Z\",\"expiration_time\":\"2026-10-30T00:00:00Z\",\"expiration_value\":\"\",\"is_provisional\":true,\"last_price_dollars\":\"0.0000\",\"latest_expiration_time\":\"2026-10-30T00:00:00Z\",\"market_type\":\"binary\",\"mve_collection_ticker\":\"KXMVECROSSCATEGORY-R\",\"mve_selected_legs\":[{\"event_ticker\":\"KXBRASILEIROGAME-26OCT26CFCGPA\",\"market_ticker\":\"KXBRASILEIROGAME-26OCT26CFCGPA-GPA\",\"side\":\"yes\"},{\"event_ticker\":\"KXBRASILEIROGAME-26OCT26FLAATL\",\"market_ticker\":\"KXBRASILEIROGAME-26OCT26FLAATL-FLA\",\"side\":\"yes\"},{\"event_ticker\":\"KXBRASILEIROTOTAL-26OCT26CFCGPA\",\"market_ticker\":\"KXBRASILEIROTOTAL-26OCT26CFCGPA-3\",\"side\":\"yes\"},{\"event_ticker\":\"KXBRASILEIROTOTAL-26OCT26FLAATL\",\"market_ticker\":\"KXBRASILEIROTOTAL-26OCT26FLAATL-3\",\"side\":\"yes\"},{\"event_ticker\":\"KXDIMAYORGAME-26OCT26SFEBUC\",\"market_ticker\":\"KXDIMAYORGAME-26OCT26SFEBUC-SFE\",\"side\":\"yes\"},{\"event_ticker\":\"KXMLBHR-26OCT262000MILTB\",\"market_ticker\":\"KXMLBHR-26OCT262000MILTB-TBJCAMINERO13-1\",\"side\":\"yes\"},{\"event_ticker\":\"KXNFLGAME-26OCT26DALPHI\",\"market_ticker\":\"KXNFLGAME-26OCT26DALPHI-DAL\",\"side\":\"yes\"},{\"event_ticker\":\"KXNFLTD-26OCT26DALPHI\",\"market_ticker\":\"KXNFLTD-26OCT26DALPHI-DALCLAMB88-1\",\"side\":\"yes\"},{\"event_ticker\":\"KXNFLTD-26OCT26DALPHI\",\"market_ticker\":\"KXNFLTD-26OCT26DALPHI-DALJWILLIAMS33-1\",\"side\":\"yes\"}],\"no_ask_dollars\":\"1.0000\",\"no_bid_dollars\":\"1.0000\",\"no_sub_title\":\"yes Gremio,yes Flamengo,yes Over 2.5 goals scored,yes Over 2.5 goals scored,yes Independ. Santa Fe,yes Junior Caminero: 1+,yes Dallas,yes CeeDee Lamb: 1+,yes Javonte Williams: 1+\",\"notional_value_dollars\":\"1.0000\",\"open_interest_fp\":\"0.00\",\"open_time\":\"2026-10-26T21:10:35Z\",\"previous_price_dollars\":\"0.0000\",\"previous_yes_ask_dollars\":\"0.0000\",\"previous_yes_bid_dollars\":\"0.0000\",\"price_level_structure\":\"center_deci_edge_centi_cent\",\"price_ranges\":[{\"end\":\"0.0100\",\"start\":\"0.0000\",\"step\":\"0.0001\"},{\"end\":\"0.9900\",\"start\":\"0.0100\",\"step\":\"0.0010\"},{\"end\":\"1.0000\",\"start\":\"0.9900\",\"step\":\"0.0001\"}],\"result\":\"\",\"rules_primary\":\"\",\"rules_secondary\":\"Kalshi is not affiliated, associated, authorized, endorsed by, or in any way officially connected with the Governing League. All trademarks, logos, and brand names are the property of their respective owners.\",\"settlement_bounds_type\":\"default\",\"settlement_timer_seconds\":5,\"status\":\"active\",\"strike_type\":\"custom\",\"ticker\":\"KXMVECROSSCATEGORY-S2026A4AUQZ6YHWTOBLVR-7Y26I3JGP\",\"title\":\"yes Gremio,yes Flamengo,yes Over 2.5 goals scored,yes Over 2.5 goals scored,yes Independ. Santa Fe,yes Junior Caminero: 1+,yes Dallas,yes CeeDee Lamb: 1+,yes Javonte Williams: 1+\",\"updated_time\":\"2026-10-26T21:10:36.381756Z\",\"volume_24h_fp\":\"0.00\",\"volume_fp\":\"0.00\",\"yes_ask_dollars\":\"0.0000\",\"yes_ask_size_fp\":\"0.00\",\"yes_bid_dollars\":\"0.0000\",\"yes_bid_size_fp\":\"0.00\",\"yes_sub_title\":\"yes Gremio,yes Flamengo,yes Over 2.5 goals scored,yes Over 2.5 goals scored,yes Independ. Santa Fe,yes Junior Caminero: 1+,yes Dallas,yes CeeDee Lamb: 1+,yes Javonte Williams: 1+\"},\"native_market_id\":\"KXMVECROSSCATEGORY-S2026A4AUQZ6YHWTOBLVR-7Y26I3JGP\",\"payoff\":{\"exhaustive\":false,\"payout_currency\":\"USD\",\"schema_version\":1,\"settlement_asset\":\"USD\",\"state_ids\":[\"yes\",\"no\"],\"verification_basis\":\"Native YES/NO and notional metadata only; resolution and settlement conditions require independent validation.\",\"verified\":false},\"provenance\":{\"adapter_version\":\"frontier-kalshi-1\",\"clock_uncertainty_ms\":null,\"exchange_timestamp_semantics\":\"updated_time is metadata update time\",\"exchange_timestamp_utc\":\"2026-10-26T21:10:36.381756Z\",\"observation_id\":\"9d50797a51db418ab8ed0b5ee978766e192b9b5de05919ea47e531c974898004\",\"persisted_at_utc\":null,\"processed_at_utc\":\"2026-10-26T21:10:42.161121Z\",\"raw_sha256\":\"1da576473af201f03f408e0c4ada022159a2c54ed39bb1081209bcb46d92759f\",\"request_started_at_utc\":\"2026-10-26T21:10:41.806202Z\",\"response_received_at_utc\":\"2026-10-26T21:10:42.160815Z\",\"source_schema_version\":\"market_type:binary\",\"source_url\":\"https://external-api.kalshi.com/trade-api/v2/markets?limit=1&status=open\"},\"quality_flags\":[\"MVE_PAYOFF_NOT_MODELED\",\"RULES_PRIMARY_MISSING\",\"FEE_SCHEDULE_UNKNOWN\",\"PAYOFF_NOT_VERIFIED\",\"BOOK_TIMESTAMP_NOT_PROVIDED\"],\"quote_asset\":null,\"resolution\":{\"authority\":null,\"closes_at_utc\":\"2026-10-30T00:00:00Z\",\"evidence_sha256\":\"0c6cf6f52da96393526eb670c739eb82979e77771d4af81de6776a4176ebba03\",\"primary_rule\":null,\"resolution_fingerprint\":null,\"secondary_rule\":\"Kalshi is not affiliated, associated, authorized, endorsed by, or in any way officially connected with the Governing League. All trademarks, logos, and brand names are the property of their respective owners.\",\"settles_at_utc\":\"2026-10-27T07:05:00Z\",\"source_timestamp_semantics\":\"Kalshi updated_time is market metadata update time, not a book timestamp\",\"verified\":false},\"schema_version\":1,\"settlement_asset\":\"USD\",\"title\":\"yes Gremio,yes Flamengo,yes Over 2.5 goals scored,yes Over 2.5 goals scored,yes Independ. Santa Fe,yes Junior Caminero: 1+,yes Dallas,yes CeeDee Lamb: 1+,yes Javonte Williams: 1+\",\"venue\":\"kalshi\"}],\"note\":\"One bounded discovery response; absence from this page is not proof of venue-wide absence.\",\"schema_version\":1,\"venue\":\"kalshi\"}",
+          "observation_id": "e3d8729467fd6e6d540bdd47c2d117c8c4936fb522d88ab9b0d1d832fe65bf60",
+          "observation_kind": "market_listing",
+          "raw": {
+            "adapter_version": "frontier-kalshi-1",
+            "http_status": 200,
+            "observation_kind": "market_listing",
+            "raw_body": "{\"cursor\":\"CgwIy4P_1gYQ8Nys_wISMktYTVZFQ1JPU1NDQVRFR09SWS1TMjAyNkE0QVVRWjZZSFdUT0JMVlItN1kyNkkzSkdQ\",\"markets\":[{\"can_close_early\":true,\"close_time\":\"2026-10-30T00:00:00Z\",\"created_time\":\"2026-10-26T21:10:35.803942Z\",\"custom_strike\":{\"Associated Events\":\"KXBRASILEIROGAME-26OCT26CFCGPA,KXBRASILEIROGAME-26OCT26FLAATL,KXBRASILEIROTOTAL-26OCT26CFCGPA,KXBRASILEIROTOTAL-26OCT26FLAATL,KXDIMAYORGAME-26OCT26SFEBUC,KXMLBHR-26OCT262000MILTB,KXNFLGAME-26OCT26DALPHI,KXNFLTD-26OCT26DALPHI,KXNFLTD-26OCT26DALPHI\",\"Associated Market Sides\":\"yes,yes,yes,yes,yes,yes,yes,yes,yes\",\"Associated Markets\":\"KXBRASILEIROGAME-26OCT26CFCGPA-GPA,KXBRASILEIROGAME-26OCT26FLAATL-FLA,KXBRASILEIROTOTAL-26OCT26CFCGPA-3,KXBRASILEIROTOTAL-26OCT26FLAATL-3,KXDIMAYORGAME-26OCT26SFEBUC-SFE,KXMLBHR-26OCT262000MILTB-TBJCAMINERO13-1,KXNFLGAME-26OCT26DALPHI-DAL,KXNFLTD-26OCT26DALPHI-DALCLAMB88-1,KXNFLTD-26OCT26DALPHI-DALJWILLIAMS33-1\",\"Multivariate Event Ticker\":\"KXMVECROSSCATEGORY-S2026A4AUQZ6YHWTOBLVR\"},\"event_ticker\":\"KXMVECROSSCATEGORY-S2026A4AUQZ6YHWTOBLVR\",\"exchange_index\":1,\"expected_expiration_time\":\"2026-10-27T07:05:00Z\",\"expiration_time\":\"2026-10-30T00:00:00Z\",\"expiration_value\":\"\",\"is_provisional\":true,\"last_price_dollars\":\"0.0000\",\"latest_expiration_time\":\"2026-10-30T00:00:00Z\",\"market_type\":\"binary\",\"mve_collection_ticker\":\"KXMVECROSSCATEGORY-R\",\"mve_selected_legs\":[{\"event_ticker\":\"KXBRASILEIROGAME-26OCT26CFCGPA\",\"market_ticker\":\"KXBRASILEIROGAME-26OCT26CFCGPA-GPA\",\"side\":\"yes\"},{\"event_ticker\":\"KXBRASILEIROGAME-26OCT26FLAATL\",\"market_ticker\":\"KXBRASILEIROGAME-26OCT26FLAATL-FLA\",\"side\":\"yes\"},{\"event_ticker\":\"KXBRASILEIROTOTAL-26OCT26CFCGPA\",\"market_ticker\":\"KXBRASILEIROTOTAL-26OCT26CFCGPA-3\",\"side\":\"yes\"},{\"event_ticker\":\"KXBRASILEIROTOTAL-26OCT26FLAATL\",\"market_ticker\":\"KXBRASILEIROTOTAL-26OCT26FLAATL-3\",\"side\":\"yes\"},{\"event_ticker\":\"KXDIMAYORGAME-26OCT26SFEBUC\",\"market_ticker\":\"KXDIMAYORGAME-26OCT26SFEBUC-SFE\",\"side\":\"yes\"},{\"event_ticker\":\"KXMLBHR-26OCT262000MILTB\",\"market_ticker\":\"KXMLBHR-26OCT262000MILTB-TBJCAMINERO13-1\",\"side\":\"yes\"},{\"event_ticker\":\"KXNFLGAME-26OCT26DALPHI\",\"market_ticker\":\"KXNFLGAME-26OCT26DALPHI-DAL\",\"side\":\"yes\"},{\"event_ticker\":\"KXNFLTD-26OCT26DALPHI\",\"market_ticker\":\"KXNFLTD-26OCT26DALPHI-DALCLAMB88-1\",\"side\":\"yes\"},{\"event_ticker\":\"KXNFLTD-26OCT26DALPHI\",\"market_ticker\":\"KXNFLTD-26OCT26DALPHI-DALJWILLIAMS33-1\",\"side\":\"yes\"}],\"no_ask_dollars\":\"1.0000\",\"no_bid_dollars\":\"1.0000\",\"no_sub_title\":\"yes Gremio,yes Flamengo,yes Over 2.5 goals scored,yes Over 2.5 goals scored,yes Independ. Santa Fe,yes Junior Caminero: 1+,yes Dallas,yes CeeDee Lamb: 1+,yes Javonte Williams: 1+\",\"notional_value_dollars\":\"1.0000\",\"open_interest_fp\":\"0.00\",\"open_time\":\"2026-10-26T21:10:35Z\",\"previous_price_dollars\":\"0.0000\",\"previous_yes_ask_dollars\":\"0.0000\",\"previous_yes_bid_dollars\":\"0.0000\",\"price_level_structure\":\"center_deci_edge_centi_cent\",\"price_ranges\":[{\"end\":\"0.0100\",\"start\":\"0.0000\",\"step\":\"0.0001\"},{\"end\":\"0.9900\",\"start\":\"0.0100\",\"step\":\"0.0010\"},{\"end\":\"1.0000\",\"start\":\"0.9900\",\"step\":\"0.0001\"}],\"result\":\"\",\"rules_primary\":\"\",\"rules_secondary\":\"Kalshi is not affiliated, associated, authorized, endorsed by, or in any way officially connected with the Governing League. All trademarks, logos, and brand names are the property of their respective owners.\",\"settlement_bounds_type\":\"default\",\"settlement_timer_seconds\":5,\"status\":\"active\",\"strike_type\":\"custom\",\"ticker\":\"KXMVECROSSCATEGORY-S2026A4AUQZ6YHWTOBLVR-7Y26I3JGP\",\"title\":\"yes Gremio,yes Flamengo,yes Over 2.5 goals scored,yes Over 2.5 goals scored,yes Independ. Santa Fe,yes Junior Caminero: 1+,yes Dallas,yes CeeDee Lamb: 1+,yes Javonte Williams: 1+\",\"updated_time\":\"2026-10-26T21:10:36.381756Z\",\"volume_24h_fp\":\"0.00\",\"volume_fp\":\"0.00\",\"yes_ask_dollars\":\"0.0000\",\"yes_ask_size_fp\":\"0.00\",\"yes_bid_dollars\":\"0.0000\",\"yes_bid_size_fp\":\"0.00\",\"yes_sub_title\":\"yes Gremio,yes Flamengo,yes Over 2.5 goals scored,yes Over 2.5 goals scored,yes Independ. Santa Fe,yes Junior Caminero: 1+,yes Dallas,yes CeeDee Lamb: 1+,yes Javonte Williams: 1+\"}]}\n",
+            "raw_sha256": "1da576473af201f03f408e0c4ada022159a2c54ed39bb1081209bcb46d92759f",
+            "received_at_utc": "2026-10-26T21:10:42.160815Z",
+            "request_started_at_utc": "2026-10-26T21:10:41.806202Z",
+            "request_url": "https://external-api.kalshi.com/trade-api/v2/markets?limit=1&status=open",
+            "schema_version": 1,
+            "venue": "kalshi"
+          },
+          "raw_json": "{\"adapter_version\":\"frontier-kalshi-1\",\"http_status\":200,\"observation_kind\":\"market_listing\",\"raw_body\":\"{\\\"cursor\\\":\\\"CgwIy4P_1gYQ8Nys_wISMktYTVZFQ1JPU1NDQVRFR09SWS1TMjAyNkE0QVVRWjZZSFdUT0JMVlItN1kyNkkzSkdQ\\\",\\\"markets\\\":[{\\\"can_close_early\\\":true,\\\"close_time\\\":\\\"2026-10-30T00:00:00Z\\\",\\\"created_time\\\":\\\"2026-10-26T21:10:35.803942Z\\\",\\\"custom_strike\\\":{\\\"Associated Events\\\":\\\"KXBRASILEIROGAME-26OCT26CFCGPA,KXBRASILEIROGAME-26OCT26FLAATL,KXBRASILEIROTOTAL-26OCT26CFCGPA,KXBRASILEIROTOTAL-26OCT26FLAATL,KXDIMAYORGAME-26OCT26SFEBUC,KXMLBHR-26OCT262000MILTB,KXNFLGAME-26OCT26DALPHI,KXNFLTD-26OCT26DALPHI,KXNFLTD-26OCT26DALPHI\\\",\\\"Associated Market Sides\\\":\\\"yes,yes,yes,yes,yes,yes,yes,yes,yes\\\",\\\"Associated Markets\\\":\\\"KXBRASILEIROGAME-26OCT26CFCGPA-GPA,KXBRASILEIROGAME-26OCT26FLAATL-FLA,KXBRASILEIROTOTAL-26OCT26CFCGPA-3,KXBRASILEIROTOTAL-26OCT26FLAATL-3,KXDIMAYORGAME-26OCT26SFEBUC-SFE,KXMLBHR-26OCT262000MILTB-TBJCAMINERO13-1,KXNFLGAME-26OCT26DALPHI-DAL,KXNFLTD-26OCT26DALPHI-DALCLAMB88-1,KXNFLTD-26OCT26DALPHI-DALJWILLIAMS33-1\\\",\\\"Multivariate Event Ticker\\\":\\\"KXMVECROSSCATEGORY-S2026A4AUQZ6YHWTOBLVR\\\"},\\\"event_ticker\\\":\\\"KXMVECROSSCATEGORY-S2026A4AUQZ6YHWTOBLVR\\\",\\\"exchange_index\\\":1,\\\"expected_expiration_time\\\":\\\"2026-10-27T07:05:00Z\\\",\\\"expiration_time\\\":\\\"2026-10-30T00:00:00Z\\\",\\\"expiration_value\\\":\\\"\\\",\\\"is_provisional\\\":true,\\\"last_price_dollars\\\":\\\"0.0000\\\",\\\"latest_expiration_time\\\":\\\"2026-10-30T00:00:00Z\\\",\\\"market_type\\\":\\\"binary\\\",\\\"mve_collection_ticker\\\":\\\"KXMVECROSSCATEGORY-R\\\",\\\"mve_selected_legs\\\":[{\\\"event_ticker\\\":\\\"KXBRASILEIROGAME-26OCT26CFCGPA\\\",\\\"market_ticker\\\":\\\"KXBRASILEIROGAME-26OCT26CFCGPA-GPA\\\",\\\"side\\\":\\\"yes\\\"},{\\\"event_ticker\\\":\\\"KXBRASILEIROGAME-26OCT26FLAATL\\\",\\\"market_ticker\\\":\\\"KXBRASILEIROGAME-26OCT26FLAATL-FLA\\\",\\\"side\\\":\\\"yes\\\"},{\\\"event_ticker\\\":\\\"KXBRASILEIROTOTAL-26OCT26CFCGPA\\\",\\\"market_ticker\\\":\\\"KXBRASILEIROTOTAL-26OCT26CFCGPA-3\\\",\\\"side\\\":\\\"yes\\\"},{\\\"event_ticker\\\":\\\"KXBRASILEIROTOTAL-26OCT26FLAATL\\\",\\\"market_ticker\\\":\\\"KXBRASILEIROTOTAL-26OCT26FLAATL-3\\\",\\\"side\\\":\\\"yes\\\"},{\\\"event_ticker\\\":\\\"KXDIMAYORGAME-26OCT26SFEBUC\\\",\\\"market_ticker\\\":\\\"KXDIMAYORGAME-26OCT26SFEBUC-SFE\\\",\\\"side\\\":\\\"yes\\\"},{\\\"event_ticker\\\":\\\"KXMLBHR-26OCT262000MILTB\\\",\\\"market_ticker\\\":\\\"KXMLBHR-26OCT262000MILTB-TBJCAMINERO13-1\\\",\\\"side\\\":\\\"yes\\\"},{\\\"event_ticker\\\":\\\"KXNFLGAME-26OCT26DALPHI\\\",\\\"market_ticker\\\":\\\"KXNFLGAME-26OCT26DALPHI-DAL\\\",\\\"side\\\":\\\"yes\\\"},{\\\"event_ticker\\\":\\\"KXNFLTD-26OCT26DALPHI\\\",\\\"market_ticker\\\":\\\"KXNFLTD-26OCT26DALPHI-DALCLAMB88-1\\\",\\\"side\\\":\\\"yes\\\"},{\\\"event_ticker\\\":\\\"KXNFLTD-26OCT26DALPHI\\\",\\\"market_ticker\\\":\\\"KXNFLTD-26OCT26DALPHI-DALJWILLIAMS33-1\\\",\\\"side\\\":\\\"yes\\\"}],\\\"no_ask_dollars\\\":\\\"1.0000\\\",\\\"no_bid_dollars\\\":\\\"1.0000\\\",\\\"no_sub_title\\\":\\\"yes Gremio,yes Flamengo,yes Over 2.5 goals scored,yes Over 2.5 goals scored,yes Independ. Santa Fe,yes Junior Caminero: 1+,yes Dallas,yes CeeDee Lamb: 1+,yes Javonte Williams: 1+\\\",\\\"notional_value_dollars\\\":\\\"1.0000\\\",\\\"open_interest_fp\\\":\\\"0.00\\\",\\\"open_time\\\":\\\"2026-10-26T21:10:35Z\\\",\\\"previous_price_dollars\\\":\\\"0.0000\\\",\\\"previous_yes_ask_dollars\\\":\\\"0.0000\\\",\\\"previous_yes_bid_dollars\\\":\\\"0.0000\\\",\\\"price_level_structure\\\":\\\"center_deci_edge_centi_cent\\\",\\\"price_ranges\\\":[{\\\"end\\\":\\\"0.0100\\\",\\\"start\\\":\\\"0.0000\\\",\\\"step\\\":\\\"0.0001\\\"},{\\\"end\\\":\\\"0.9900\\\",\\\"start\\\":\\\"0.0100\\\",\\\"step\\\":\\\"0.0010\\\"},{\\\"end\\\":\\\"1.0000\\\",\\\"start\\\":\\\"0.9900\\\",\\\"step\\\":\\\"0.0001\\\"}],\\\"result\\\":\\\"\\\",\\\"rules_primary\\\":\\\"\\\",\\\"rules_secondary\\\":\\\"Kalshi is not affiliated, associated, authorized, endorsed by, or in any way officially connected with the Governing League. All trademarks, logos, and brand names are the property of their respective owners.\\\",\\\"settlement_bounds_type\\\":\\\"default\\\",\\\"settlement_timer_seconds\\\":5,\\\"status\\\":\\\"active\\\",\\\"strike_type\\\":\\\"custom\\\",\\\"ticker\\\":\\\"KXMVECROSSCATEGORY-S2026A4AUQZ6YHWTOBLVR-7Y26I3JGP\\\",\\\"title\\\":\\\"yes Gremio,yes Flamengo,yes Over 2.5 goals scored,yes Over 2.5 goals scored,yes Independ. Santa Fe,yes Junior Caminero: 1+,yes Dallas,yes CeeDee Lamb: 1+,yes Javonte Williams: 1+\\\",\\\"updated_time\\\":\\\"2026-10-26T21:10:36.381756Z\\\",\\\"volume_24h_fp\\\":\\\"0.00\\\",\\\"volume_fp\\\":\\\"0.00\\\",\\\"yes_ask_dollars\\\":\\\"0.0000\\\",\\\"yes_ask_size_fp\\\":\\\"0.00\\\",\\\"yes_bid_dollars\\\":\\\"0.0000\\\",\\\"yes_bid_size_fp\\\":\\\"0.00\\\",\\\"yes_sub_title\\\":\\\"yes Gremio,yes Flamengo,yes Over 2.5 goals scored,yes Over 2.5 goals scored,yes Independ. Santa Fe,yes Junior Caminero: 1+,yes Dallas,yes CeeDee Lamb: 1+,yes Javonte Williams: 1+\\\"}]}\\n\",\"raw_sha256\":\"1da576473af201f03f408e0c4ada022159a2c54ed39bb1081209bcb46d92759f\",\"received_at_utc\":\"2026-10-26T21:10:42.160815Z\",\"request_started_at_utc\":\"2026-10-26T21:10:41.806202Z\",\"request_url\":\"https://external-api.kalshi.com/trade-api/v2/markets?limit=1&status=open\",\"schema_version\":1,\"venue\":\"kalshi\"}",
+          "raw_sha256": "1da576473af201f03f408e0c4ada022159a2c54ed39bb1081209bcb46d92759f",
+          "received_at_utc": "2026-10-26T21:10:42.160815+00:00",
+          "row_sha256": "f2ac6ddc98261d4eb5b6c7dede85e02df951d0acab342b35e9f5de13f107f5cd",
+          "venue": "kalshi"
+        },
+        {
+          "normalized": {
+            "asks": [],
+            "bids": [],
+            "exchange_timestamp_semantics": "REST response has no unified exchange book timestamp",
+            "exchange_timestamp_utc": null,
+            "freshness_limit_ms": null,
+            "native_instrument_id": "KXMVECROSSCATEGORY-S2026A4AUQZ6YHWTOBLVR-7Y26I3JGP:YES",
+            "native_market_id": "KXMVECROSSCATEGORY-S2026A4AUQZ6YHWTOBLVR-7Y26I3JGP",
+            "price_unit": "USD per binary contract",
+            "provenance": {
+              "adapter_version": "frontier-kalshi-1",
+              "clock_uncertainty_ms": null,
+              "exchange_timestamp_semantics": "No exchange snapshot timestamp in endpoint response",
+              "exchange_timestamp_utc": null,
+              "observation_id": "ab93f90bf2a7c7717a8096db71ee8a6ddb414ea657fa18cd3e09dfe8da094435",
+              "persisted_at_utc": null,
+              "processed_at_utc": "2026-10-26T21:10:42.921500Z",
+              "raw_sha256": "e07d09f130e604a9e1acfc736fb57cbdfc33d8a5a253466a0cbd5c98cf6c9f74",
+              "request_started_at_utc": "2026-10-26T21:10:42.807027Z",
+              "response_received_at_utc": "2026-10-26T21:10:42.921419Z",
+              "source_schema_version": "orderbook_fp",
+              "source_url": "https://external-api.kalshi.com/trade-api/v2/markets/KXMVECROSSCATEGORY-S2026A4AUQZ6YHWTOBLVR-7Y26I3JGP/orderbook?depth=10"
+            },
+            "quality_flags": [
+              "EMPTY_BOOK",
+              "NO_EXCHANGE_SNAPSHOT_TIMESTAMP"
+            ],
+            "quantity_unit": "contract",
+            "received_at_utc": "2026-10-26T21:10:42.921419Z",
+            "schema_version": 1,
+            "venue": "kalshi"
+          },
+          "normalized_json": "{\"asks\":[],\"bids\":[],\"exchange_timestamp_semantics\":\"REST response has no unified exchange book timestamp\",\"exchange_timestamp_utc\":null,\"freshness_limit_ms\":null,\"native_instrument_id\":\"KXMVECROSSCATEGORY-S2026A4AUQZ6YHWTOBLVR-7Y26I3JGP:YES\",\"native_market_id\":\"KXMVECROSSCATEGORY-S2026A4AUQZ6YHWTOBLVR-7Y26I3JGP\",\"price_unit\":\"USD per binary contract\",\"provenance\":{\"adapter_version\":\"frontier-kalshi-1\",\"clock_uncertainty_ms\":null,\"exchange_timestamp_semantics\":\"No exchange snapshot timestamp in endpoint response\",\"exchange_timestamp_utc\":null,\"observation_id\":\"ab93f90bf2a7c7717a8096db71ee8a6ddb414ea657fa18cd3e09dfe8da094435\",\"persisted_at_utc\":null,\"processed_at_utc\":\"2026-10-26T21:10:42.921500Z\",\"raw_sha256\":\"e07d09f130e604a9e1acfc736fb57cbdfc33d8a5a253466a0cbd5c98cf6c9f74\",\"request_started_at_utc\":\"2026-10-26T21:10:42.807027Z\",\"response_received_at_utc\":\"2026-10-26T21:10:42.921419Z\",\"source_schema_version\":\"orderbook_fp\",\"source_url\":\"https://external-api.kalshi.com/trade-api/v2/markets/KXMVECROSSCATEGORY-S2026A4AUQZ6YHWTOBLVR-7Y26I3JGP/orderbook?depth=10\"},\"quality_flags\":[\"EMPTY_BOOK\",\"NO_EXCHANGE_SNAPSHOT_TIMESTAMP\"],\"quantity_unit\":\"contract\",\"received_at_utc\":\"2026-10-26T21:10:42.921419Z\",\"schema_version\":1,\"venue\":\"kalshi\"}",
+          "observation_id": "7adaef8ad026ccedae22086170502709f4373fba9b8d9d74f347625dc4e0fc73",
+          "observation_kind": "book_snapshot",
+          "raw": {
+            "adapter_version": "frontier-kalshi-1",
+            "http_status": 200,
+            "observation_kind": "book_snapshot",
+            "raw_body": "{\"orderbook_fp\":{\"no_dollars\":[],\"yes_dollars\":[]}}",
+            "raw_sha256": "e07d09f130e604a9e1acfc736fb57cbdfc33d8a5a253466a0cbd5c98cf6c9f74",
+            "received_at_utc": "2026-10-26T21:10:42.921419Z",
+            "request_started_at_utc": "2026-10-26T21:10:42.807027Z",
+            "request_url": "https://external-api.kalshi.com/trade-api/v2/markets/KXMVECROSSCATEGORY-S2026A4AUQZ6YHWTOBLVR-7Y26I3JGP/orderbook?depth=10",
+            "schema_version": 1,
+            "venue": "kalshi"
+          },
+          "raw_json": "{\"adapter_version\":\"frontier-kalshi-1\",\"http_status\":200,\"observation_kind\":\"book_snapshot\",\"raw_body\":\"{\\\"orderbook_fp\\\":{\\\"no_dollars\\\":[],\\\"yes_dollars\\\":[]}}\",\"raw_sha256\":\"e07d09f130e604a9e1acfc736fb57cbdfc33d8a5a253466a0cbd5c98cf6c9f74\",\"received_at_utc\":\"2026-10-26T21:10:42.921419Z\",\"request_started_at_utc\":\"2026-10-26T21:10:42.807027Z\",\"request_url\":\"https://external-api.kalshi.com/trade-api/v2/markets/KXMVECROSSCATEGORY-S2026A4AUQZ6YHWTOBLVR-7Y26I3JGP/orderbook?depth=10\",\"schema_version\":1,\"venue\":\"kalshi\"}",
+          "raw_sha256": "e07d09f130e604a9e1acfc736fb57cbdfc33d8a5a253466a0cbd5c98cf6c9f74",
+          "received_at_utc": "2026-10-26T21:10:42.921419+00:00",
+          "row_sha256": "a4a696c2ab952f72dfacdf5e2daa4ea79a62c4d0815dea523b59ede43128c0fb",
+          "venue": "kalshi"
+        }
+      ],
+      "response": {
+        "book_query": {
+          "items": [
+            {
+              "asks": [],
+              "bids": [],
+              "exchange_timestamp_semantics": "REST response has no unified exchange book timestamp",
+              "exchange_timestamp_utc": null,
+              "freshness_limit_ms": null,
+              "native_instrument_id": "KXMVECROSSCATEGORY-S2026A4AUQZ6YHWTOBLVR-7Y26I3JGP:YES",
+              "native_market_id": "KXMVECROSSCATEGORY-S2026A4AUQZ6YHWTOBLVR-7Y26I3JGP",
+              "price_unit": "USD per binary contract",
+              "provenance": {
+                "adapter_version": "frontier-kalshi-1",
+                "clock_uncertainty_ms": null,
+                "exchange_timestamp_semantics": "No exchange snapshot timestamp in endpoint response",
+                "exchange_timestamp_utc": null,
+                "observation_id": "ab93f90bf2a7c7717a8096db71ee8a6ddb414ea657fa18cd3e09dfe8da094435",
+                "persisted_at_utc": null,
+                "processed_at_utc": "2026-10-26T21:10:42.921500Z",
+                "raw_sha256": "e07d09f130e604a9e1acfc736fb57cbdfc33d8a5a253466a0cbd5c98cf6c9f74",
+                "request_started_at_utc": "2026-10-26T21:10:42.807027Z",
+                "response_received_at_utc": "2026-10-26T21:10:42.921419Z",
+                "source_schema_version": "orderbook_fp",
+                "source_url": "https://external-api.kalshi.com/trade-api/v2/markets/KXMVECROSSCATEGORY-S2026A4AUQZ6YHWTOBLVR-7Y26I3JGP/orderbook?depth=10"
+              },
+              "quality_flags": [
+                "EMPTY_BOOK",
+                "NO_EXCHANGE_SNAPSHOT_TIMESTAMP"
+              ],
+              "quantity_unit": "contract",
+              "received_at_utc": "2026-10-26T21:10:42.921419Z",
+              "schema_version": 1,
+              "source_observation_record_id": "7adaef8ad026ccedae22086170502709f4373fba9b8d9d74f347625dc4e0fc73",
+              "venue": "kalshi"
+            }
+          ],
+          "limit": 1,
+          "offset": 0,
+          "returned": 1
+        },
+        "book_snapshots_stored": 1,
+        "hypothetical_only": true,
+        "market_count": 1,
+        "network_calls_bounded_by": 2,
+        "observation_ids": [
+          "e3d8729467fd6e6d540bdd47c2d117c8c4936fb522d88ab9b0d1d832fe65bf60"
+        ],
+        "request_count": 2,
+        "request_count_delta": 2,
+        "requested_limit": 1,
+        "source_state": "healthy",
+        "venue": "kalshi"
+      }
+    },
+    "kraken": {
+      "http_status": 200,
+      "observations": [
+        {
+          "normalized": {
+            "complete_for_request": false,
+            "cursor": null,
+            "markets": [
+              {
+                "base_asset": "XBT",
+                "canonical_id": "kraken:XXBTZUSD",
+                "description": "Cash spot pair; contextual evidence only unless a separate hedge model proves equivalence.",
+                "fees": {
+                  "applies_to": null,
+                  "effective_at_utc": null,
+                  "evidence_sha256": null,
+                  "expires_at_utc": null,
+                  "fee_currency": null,
+                  "fixed_fee": null,
+                  "formula": null,
+                  "note": "Unknown: public pair fee fields do not establish the account's current applicable fee tier",
+                  "rate": null,
+                  "source_url": null,
+                  "status": "unknown",
+                  "version": null
+                },
+                "instruments": [
+                  {
+                    "label": "XBT/USD",
+                    "minimum_notional": "0.5",
+                    "minimum_quantity": "0.00006",
+                    "native_instrument_id": "XXBTZUSD",
+                    "outcome_id": null,
+                    "payouts": [],
+                    "price_currency": "USD",
+                    "quantity_step": "1E-8",
+                    "quantity_unit": "base_asset",
+                    "tick_size": "0.1"
+                  }
+                ],
+                "lifecycle": "open",
+                "market_kind": "spot_pair",
+                "native_event_id": null,
+                "native_fields": {
+                  "aclass_base": "currency",
+                  "aclass_quote": "currency",
+                  "altname": "XBTUSD",
+                  "base": "XXBT",
+                  "cost_decimals": 5,
+                  "costmin": "0.5",
+                  "execution_venue": "international",
+                  "fee_volume_currency": "ZUSD",
+                  "fees": [],
+                  "fees_maker": [],
+                  "leverage_buy": [
+                    2,
+                    3,
+                    4,
+                    5,
+                    6,
+                    7,
+                    8,
+                    9,
+                    10
+                  ],
+                  "leverage_sell": [
+                    2,
+                    3,
+                    4,
+                    5,
+                    6,
+                    7,
+                    8,
+                    9,
+                    10
+                  ],
+                  "long_position_limit": 350,
+                  "lot": "unit",
+                  "lot_decimals": 8,
+                  "lot_multiplier": 1,
+                  "margin_call": 80,
+                  "margin_stop": 40,
+                  "ordermin": "0.00006",
+                  "pair_decimals": 1,
+                  "quote": "ZUSD",
+                  "short_position_limit": 250,
+                  "status": "online",
+                  "tick_size": "0.1",
+                  "wsname": "XBT/USD"
+                },
+                "native_market_id": "XXBTZUSD",
+                "payoff": {
+                  "exhaustive": false,
+                  "payout_currency": null,
+                  "schema_version": 1,
+                  "settlement_asset": null,
+                  "state_ids": [],
+                  "verification_basis": "Spot inventory has no event settlement payoff model.",
+                  "verified": false
+                },
+                "provenance": {
+                  "adapter_version": "frontier-kraken-spot-1",
+                  "clock_uncertainty_ms": null,
+                  "exchange_timestamp_semantics": "unknown",
+                  "exchange_timestamp_utc": null,
+                  "observation_id": "5dbbb3392ffef7c1070cd07554ab0ee8add2f5176bb28be49a24a538eb0dd33a",
+                  "persisted_at_utc": null,
+                  "processed_at_utc": "2026-10-26T21:10:42.966234Z",
+                  "raw_sha256": "5dc381d15b5c5b808ba1845b840cc08630bba718fa765fc1a9033b0f818d032a",
+                  "request_started_at_utc": "2026-10-26T21:10:42.932478Z",
+                  "response_received_at_utc": "2026-10-26T21:10:42.966135Z",
+                  "source_schema_version": "AssetPairs",
+                  "source_url": "https://api.kraken.com/0/public/AssetPairs?pair=XBTUSD"
+                },
+                "quality_flags": [
+                  "SPOT_NOT_EVENT_PAYOFF",
+                  "ACCOUNT_FEE_TIER_UNKNOWN",
+                  "ACCOUNT_ACCESS_AND_CUSTODY_UNVERIFIED"
+                ],
+                "quote_asset": "USD",
+                "resolution": {
+                  "authority": null,
+                  "closes_at_utc": null,
+                  "evidence_sha256": null,
+                  "primary_rule": null,
+                  "resolution_fingerprint": null,
+                  "secondary_rule": null,
+                  "settles_at_utc": null,
+                  "source_timestamp_semantics": null,
+                  "verified": false
+                },
+                "schema_version": 1,
+                "settlement_asset": null,
+                "title": "XBT/USD spot",
+                "venue": "kraken"
+              }
+            ],
+            "note": "One bounded discovery response; absence from this page is not proof of venue-wide absence.",
+            "schema_version": 1,
+            "venue": "kraken"
+          },
+          "normalized_json": "{\"complete_for_request\":false,\"cursor\":null,\"markets\":[{\"base_asset\":\"XBT\",\"canonical_id\":\"kraken:XXBTZUSD\",\"description\":\"Cash spot pair; contextual evidence only unless a separate hedge model proves equivalence.\",\"fees\":{\"applies_to\":null,\"effective_at_utc\":null,\"evidence_sha256\":null,\"expires_at_utc\":null,\"fee_currency\":null,\"fixed_fee\":null,\"formula\":null,\"note\":\"Unknown: public pair fee fields do not establish the account's current applicable fee tier\",\"rate\":null,\"source_url\":null,\"status\":\"unknown\",\"version\":null},\"instruments\":[{\"label\":\"XBT/USD\",\"minimum_notional\":\"0.5\",\"minimum_quantity\":\"0.00006\",\"native_instrument_id\":\"XXBTZUSD\",\"outcome_id\":null,\"payouts\":[],\"price_currency\":\"USD\",\"quantity_step\":\"1E-8\",\"quantity_unit\":\"base_asset\",\"tick_size\":\"0.1\"}],\"lifecycle\":\"open\",\"market_kind\":\"spot_pair\",\"native_event_id\":null,\"native_fields\":{\"aclass_base\":\"currency\",\"aclass_quote\":\"currency\",\"altname\":\"XBTUSD\",\"base\":\"XXBT\",\"cost_decimals\":5,\"costmin\":\"0.5\",\"execution_venue\":\"international\",\"fee_volume_currency\":\"ZUSD\",\"fees\":[],\"fees_maker\":[],\"leverage_buy\":[2,3,4,5,6,7,8,9,10],\"leverage_sell\":[2,3,4,5,6,7,8,9,10],\"long_position_limit\":350,\"lot\":\"unit\",\"lot_decimals\":8,\"lot_multiplier\":1,\"margin_call\":80,\"margin_stop\":40,\"ordermin\":\"0.00006\",\"pair_decimals\":1,\"quote\":\"ZUSD\",\"short_position_limit\":250,\"status\":\"online\",\"tick_size\":\"0.1\",\"wsname\":\"XBT/USD\"},\"native_market_id\":\"XXBTZUSD\",\"payoff\":{\"exhaustive\":false,\"payout_currency\":null,\"schema_version\":1,\"settlement_asset\":null,\"state_ids\":[],\"verification_basis\":\"Spot inventory has no event settlement payoff model.\",\"verified\":false},\"provenance\":{\"adapter_version\":\"frontier-kraken-spot-1\",\"clock_uncertainty_ms\":null,\"exchange_timestamp_semantics\":\"unknown\",\"exchange_timestamp_utc\":null,\"observation_id\":\"5dbbb3392ffef7c1070cd07554ab0ee8add2f5176bb28be49a24a538eb0dd33a\",\"persisted_at_utc\":null,\"processed_at_utc\":\"2026-10-26T21:10:42.966234Z\",\"raw_sha256\":\"5dc381d15b5c5b808ba1845b840cc08630bba718fa765fc1a9033b0f818d032a\",\"request_started_at_utc\":\"2026-10-26T21:10:42.932478Z\",\"response_received_at_utc\":\"2026-10-26T21:10:42.966135Z\",\"source_schema_version\":\"AssetPairs\",\"source_url\":\"https://api.kraken.com/0/public/AssetPairs?pair=XBTUSD\"},\"quality_flags\":[\"SPOT_NOT_EVENT_PAYOFF\",\"ACCOUNT_FEE_TIER_UNKNOWN\",\"ACCOUNT_ACCESS_AND_CUSTODY_UNVERIFIED\"],\"quote_asset\":\"USD\",\"resolution\":{\"authority\":null,\"closes_at_utc\":null,\"evidence_sha256\":null,\"primary_rule\":null,\"resolution_fingerprint\":null,\"secondary_rule\":null,\"settles_at_utc\":null,\"source_timestamp_semantics\":null,\"verified\":false},\"schema_version\":1,\"settlement_asset\":null,\"title\":\"XBT/USD spot\",\"venue\":\"kraken\"}],\"note\":\"One bounded discovery response; absence from this page is not proof of venue-wide absence.\",\"schema_version\":1,\"venue\":\"kraken\"}",
+          "observation_id": "daa9dc43204978fe48b6054dd6bc96a2e4368d8adb8aacc9888b4adf6e977305",
+          "observation_kind": "instrument_metadata",
+          "raw": {
+            "adapter_version": "frontier-kraken-spot-1",
+            "http_status": 200,
+            "observation_kind": "instrument_metadata",
+            "raw_body": "{\"error\":[],\"result\":{\"XXBTZUSD\":{\"altname\":\"XBTUSD\",\"wsname\":\"XBT/USD\",\"aclass_base\":\"currency\",\"base\":\"XXBT\",\"aclass_quote\":\"currency\",\"quote\":\"ZUSD\",\"lot\":\"unit\",\"cost_decimals\":5,\"pair_decimals\":1,\"lot_decimals\":8,\"lot_multiplier\":1,\"leverage_buy\":[2,3,4,5,6,7,8,9,10],\"leverage_sell\":[2,3,4,5,6,7,8,9,10],\"fees\":[],\"fees_maker\":[],\"fee_volume_currency\":\"ZUSD\",\"margin_call\":80,\"margin_stop\":40,\"ordermin\":\"0.00006\",\"costmin\":\"0.5\",\"tick_size\":\"0.1\",\"status\":\"online\",\"execution_venue\":\"international\",\"long_position_limit\":350,\"short_position_limit\":250}}}",
+            "raw_sha256": "5dc381d15b5c5b808ba1845b840cc08630bba718fa765fc1a9033b0f818d032a",
+            "received_at_utc": "2026-10-26T21:10:42.966135Z",
+            "request_started_at_utc": "2026-10-26T21:10:42.932478Z",
+            "request_url": "https://api.kraken.com/0/public/AssetPairs?pair=XBTUSD",
+            "schema_version": 1,
+            "venue": "kraken"
+          },
+          "raw_json": "{\"adapter_version\":\"frontier-kraken-spot-1\",\"http_status\":200,\"observation_kind\":\"instrument_metadata\",\"raw_body\":\"{\\\"error\\\":[],\\\"result\\\":{\\\"XXBTZUSD\\\":{\\\"altname\\\":\\\"XBTUSD\\\",\\\"wsname\\\":\\\"XBT/USD\\\",\\\"aclass_base\\\":\\\"currency\\\",\\\"base\\\":\\\"XXBT\\\",\\\"aclass_quote\\\":\\\"currency\\\",\\\"quote\\\":\\\"ZUSD\\\",\\\"lot\\\":\\\"unit\\\",\\\"cost_decimals\\\":5,\\\"pair_decimals\\\":1,\\\"lot_decimals\\\":8,\\\"lot_multiplier\\\":1,\\\"leverage_buy\\\":[2,3,4,5,6,7,8,9,10],\\\"leverage_sell\\\":[2,3,4,5,6,7,8,9,10],\\\"fees\\\":[],\\\"fees_maker\\\":[],\\\"fee_volume_currency\\\":\\\"ZUSD\\\",\\\"margin_call\\\":80,\\\"margin_stop\\\":40,\\\"ordermin\\\":\\\"0.00006\\\",\\\"costmin\\\":\\\"0.5\\\",\\\"tick_size\\\":\\\"0.1\\\",\\\"status\\\":\\\"online\\\",\\\"execution_venue\\\":\\\"international\\\",\\\"long_position_limit\\\":350,\\\"short_position_limit\\\":250}}}\",\"raw_sha256\":\"5dc381d15b5c5b808ba1845b840cc08630bba718fa765fc1a9033b0f818d032a\",\"received_at_utc\":\"2026-10-26T21:10:42.966135Z\",\"request_started_at_utc\":\"2026-10-26T21:10:42.932478Z\",\"request_url\":\"https://api.kraken.com/0/public/AssetPairs?pair=XBTUSD\",\"schema_version\":1,\"venue\":\"kraken\"}",
+          "raw_sha256": "5dc381d15b5c5b808ba1845b840cc08630bba718fa765fc1a9033b0f818d032a",
+          "received_at_utc": "2026-10-26T21:10:42.966135+00:00",
+          "row_sha256": "92f2927f5bb90ea5eb07911e6a4a0020bde992ce95538040c9098c6e29f92290",
+          "venue": "kraken"
+        },
+        {
+          "normalized": {
+            "asks": [
+              {
+                "exchange_timestamp_utc": "2026-10-26T21:10:42Z",
+                "price": "79823.30000",
+                "quantity": "0.001"
+              },
+              {
+                "exchange_timestamp_utc": "2026-10-26T21:10:26Z",
+                "price": "79824.00000",
+                "quantity": "0.001"
+              },
+              {
+                "exchange_timestamp_utc": "2026-10-26T21:09:22Z",
+                "price": "79828.00000",
+                "quantity": "0.001"
+              },
+              {
+                "exchange_timestamp_utc": "2026-10-26T21:10:31Z",
+                "price": "79828.20000",
+                "quantity": "0.026"
+              },
+              {
+                "exchange_timestamp_utc": "2026-10-26T21:10:30Z",
+                "price": "79829.40000",
+                "quantity": "0.001"
+              },
+              {
+                "exchange_timestamp_utc": "2026-10-26T21:10:38Z",
+                "price": "79832.00000",
+                "quantity": "0.001"
+              },
+              {
+                "exchange_timestamp_utc": "2026-10-26T21:10:38Z",
+                "price": "79832.60000",
+                "quantity": "0.001"
+              },
+              {
+                "exchange_timestamp_utc": "2026-10-26T21:10:42Z",
+                "price": "79832.90000",
+                "quantity": "0.008"
+              },
+              {
+                "exchange_timestamp_utc": "2026-10-26T21:10:42Z",
+                "price": "79833.00000",
+                "quantity": "0.188"
+              },
+              {
+                "exchange_timestamp_utc": "2026-10-26T21:10:42Z",
+                "price": "79833.70000",
+                "quantity": "0.001"
+              }
+            ],
+            "bids": [
+              {
+                "exchange_timestamp_utc": "2026-10-26T21:10:42Z",
+                "price": "79823.20000",
+                "quantity": "1.269"
+              },
+              {
+                "exchange_timestamp_utc": "2026-10-26T21:10:42Z",
+                "price": "79822.40000",
+                "quantity": "0.232"
+              },
+              {
+                "exchange_timestamp_utc": "2026-10-26T21:10:42Z",
+                "price": "79822.30000",
+                "quantity": "2.832"
+              },
+              {
+                "exchange_timestamp_utc": "2026-10-26T21:10:42Z",
+                "price": "79820.90000",
+                "quantity": "2.832"
+              },
+              {
+                "exchange_timestamp_utc": "2026-10-26T21:10:42Z",
+                "price": "79820.10000",
+                "quantity": "0.001"
+              },
+              {
+                "exchange_timestamp_utc": "2026-10-26T21:10:42Z",
+                "price": "79818.10000",
+                "quantity": "2.832"
+              },
+              {
+                "exchange_timestamp_utc": "2026-10-26T21:10:41Z",
+                "price": "79816.10000",
+                "quantity": "0.001"
+              },
+              {
+                "exchange_timestamp_utc": "2026-10-26T21:10:39Z",
+                "price": "79815.90000",
+                "quantity": "0.012"
+              },
+              {
+                "exchange_timestamp_utc": "2026-10-26T21:10:42Z",
+                "price": "79815.60000",
+                "quantity": "0.026"
+              },
+              {
+                "exchange_timestamp_utc": "2026-10-26T21:10:42Z",
+                "price": "79814.90000",
+                "quantity": "0.063"
+              }
+            ],
+            "exchange_timestamp_semantics": "Each level has an independent last-update time; no unified book snapshot time is asserted",
+            "exchange_timestamp_utc": null,
+            "freshness_limit_ms": null,
+            "native_instrument_id": "XXBTZUSD",
+            "native_market_id": "XXBTZUSD",
+            "price_unit": "USD per XBT",
+            "provenance": {
+              "adapter_version": "frontier-kraken-spot-1",
+              "clock_uncertainty_ms": null,
+              "exchange_timestamp_semantics": "Per-level timestamps, not a single snapshot timestamp",
+              "exchange_timestamp_utc": null,
+              "observation_id": "0bfd92e3bbd58c56239c478188960703296f4bf81f712f2e6bfc676bb2a80e07",
+              "persisted_at_utc": null,
+              "processed_at_utc": "2026-10-26T21:10:43.974229Z",
+              "raw_sha256": "c329443a957d0ce85ee1c0d464eea3b4d9c7a3b25c1971a3a8273da86700f3f5",
+              "request_started_at_utc": "2026-10-26T21:10:43.934917Z",
+              "response_received_at_utc": "2026-10-26T21:10:43.973956Z",
+              "source_schema_version": "REST Depth",
+              "source_url": "https://api.kraken.com/0/public/Depth?pair=XBTUSD&count=10"
+            },
+            "quality_flags": [],
+            "quantity_unit": "base_asset",
+            "received_at_utc": "2026-10-26T21:10:43.973956Z",
+            "schema_version": 1,
+            "venue": "kraken"
+          },
+          "normalized_json": "{\"asks\":[{\"exchange_timestamp_utc\":\"2026-10-26T21:10:42Z\",\"price\":\"79823.30000\",\"quantity\":\"0.001\"},{\"exchange_timestamp_utc\":\"2026-10-26T21:10:26Z\",\"price\":\"79824.00000\",\"quantity\":\"0.001\"},{\"exchange_timestamp_utc\":\"2026-10-26T21:09:22Z\",\"price\":\"79828.00000\",\"quantity\":\"0.001\"},{\"exchange_timestamp_utc\":\"2026-10-26T21:10:31Z\",\"price\":\"79828.20000\",\"quantity\":\"0.026\"},{\"exchange_timestamp_utc\":\"2026-10-26T21:10:30Z\",\"price\":\"79829.40000\",\"quantity\":\"0.001\"},{\"exchange_timestamp_utc\":\"2026-10-26T21:10:38Z\",\"price\":\"79832.00000\",\"quantity\":\"0.001\"},{\"exchange_timestamp_utc\":\"2026-10-26T21:10:38Z\",\"price\":\"79832.60000\",\"quantity\":\"0.001\"},{\"exchange_timestamp_utc\":\"2026-10-26T21:10:42Z\",\"price\":\"79832.90000\",\"quantity\":\"0.008\"},{\"exchange_timestamp_utc\":\"2026-10-26T21:10:42Z\",\"price\":\"79833.00000\",\"quantity\":\"0.188\"},{\"exchange_timestamp_utc\":\"2026-10-26T21:10:42Z\",\"price\":\"79833.70000\",\"quantity\":\"0.001\"}],\"bids\":[{\"exchange_timestamp_utc\":\"2026-10-26T21:10:42Z\",\"price\":\"79823.20000\",\"quantity\":\"1.269\"},{\"exchange_timestamp_utc\":\"2026-10-26T21:10:42Z\",\"price\":\"79822.40000\",\"quantity\":\"0.232\"},{\"exchange_timestamp_utc\":\"2026-10-26T21:10:42Z\",\"price\":\"79822.30000\",\"quantity\":\"2.832\"},{\"exchange_timestamp_utc\":\"2026-10-26T21:10:42Z\",\"price\":\"79820.90000\",\"quantity\":\"2.832\"},{\"exchange_timestamp_utc\":\"2026-10-26T21:10:42Z\",\"price\":\"79820.10000\",\"quantity\":\"0.001\"},{\"exchange_timestamp_utc\":\"2026-10-26T21:10:42Z\",\"price\":\"79818.10000\",\"quantity\":\"2.832\"},{\"exchange_timestamp_utc\":\"2026-10-26T21:10:41Z\",\"price\":\"79816.10000\",\"quantity\":\"0.001\"},{\"exchange_timestamp_utc\":\"2026-10-26T21:10:39Z\",\"price\":\"79815.90000\",\"quantity\":\"0.012\"},{\"exchange_timestamp_utc\":\"2026-10-26T21:10:42Z\",\"price\":\"79815.60000\",\"quantity\":\"0.026\"},{\"exchange_timestamp_utc\":\"2026-10-26T21:10:42Z\",\"price\":\"79814.90000\",\"quantity\":\"0.063\"}],\"exchange_timestamp_semantics\":\"Each level has an independent last-update time; no unified book snapshot time is asserted\",\"exchange_timestamp_utc\":null,\"freshness_limit_ms\":null,\"native_instrument_id\":\"XXBTZUSD\",\"native_market_id\":\"XXBTZUSD\",\"price_unit\":\"USD per XBT\",\"provenance\":{\"adapter_version\":\"frontier-kraken-spot-1\",\"clock_uncertainty_ms\":null,\"exchange_timestamp_semantics\":\"Per-level timestamps, not a single snapshot timestamp\",\"exchange_timestamp_utc\":null,\"observation_id\":\"0bfd92e3bbd58c56239c478188960703296f4bf81f712f2e6bfc676bb2a80e07\",\"persisted_at_utc\":null,\"processed_at_utc\":\"2026-10-26T21:10:43.974229Z\",\"raw_sha256\":\"c329443a957d0ce85ee1c0d464eea3b4d9c7a3b25c1971a3a8273da86700f3f5\",\"request_started_at_utc\":\"2026-10-26T21:10:43.934917Z\",\"response_received_at_utc\":\"2026-10-26T21:10:43.973956Z\",\"source_schema_version\":\"REST Depth\",\"source_url\":\"https://api.kraken.com/0/public/Depth?pair=XBTUSD&count=10\"},\"quality_flags\":[],\"quantity_unit\":\"base_asset\",\"received_at_utc\":\"2026-10-26T21:10:43.973956Z\",\"schema_version\":1,\"venue\":\"kraken\"}",
+          "observation_id": "698d894f6b281b51aeb93bb72e9bbb42de0fffb1cc773cd7b0c890bbd24507a5",
+          "observation_kind": "book_snapshot",
+          "raw": {
+            "adapter_version": "frontier-kraken-spot-1",
+            "http_status": 200,
+            "observation_kind": "book_snapshot",
+            "raw_body": "{\"error\":[],\"result\":{\"XXBTZUSD\":{\"asks\":[[\"79823.30000\",\"0.001\",1793049042],[\"79824.00000\",\"0.001\",1793049026],[\"79828.00000\",\"0.001\",1793048962],[\"79828.20000\",\"0.026\",1793049031],[\"79829.40000\",\"0.001\",1793049030],[\"79832.00000\",\"0.001\",1793049038],[\"79832.60000\",\"0.001\",1793049038],[\"79832.90000\",\"0.008\",1793049042],[\"79833.00000\",\"0.188\",1793049042],[\"79833.70000\",\"0.001\",1793049042]],\"bids\":[[\"79823.20000\",\"1.269\",1793049042],[\"79822.40000\",\"0.232\",1793049042],[\"79822.30000\",\"2.832\",1793049042],[\"79820.90000\",\"2.832\",1793049042],[\"79820.10000\",\"0.001\",1793049042],[\"79818.10000\",\"2.832\",1793049042],[\"79816.10000\",\"0.001\",1793049041],[\"79815.90000\",\"0.012\",1793049039],[\"79815.60000\",\"0.026\",1793049042],[\"79814.90000\",\"0.063\",1793049042]]}}}",
+            "raw_sha256": "c329443a957d0ce85ee1c0d464eea3b4d9c7a3b25c1971a3a8273da86700f3f5",
+            "received_at_utc": "2026-10-26T21:10:43.973956Z",
+            "request_started_at_utc": "2026-10-26T21:10:43.934917Z",
+            "request_url": "https://api.kraken.com/0/public/Depth?pair=XBTUSD&count=10",
+            "schema_version": 1,
+            "venue": "kraken"
+          },
+          "raw_json": "{\"adapter_version\":\"frontier-kraken-spot-1\",\"http_status\":200,\"observation_kind\":\"book_snapshot\",\"raw_body\":\"{\\\"error\\\":[],\\\"result\\\":{\\\"XXBTZUSD\\\":{\\\"asks\\\":[[\\\"79823.30000\\\",\\\"0.001\\\",1793049042],[\\\"79824.00000\\\",\\\"0.001\\\",1793049026],[\\\"79828.00000\\\",\\\"0.001\\\",1793048962],[\\\"79828.20000\\\",\\\"0.026\\\",1793049031],[\\\"79829.40000\\\",\\\"0.001\\\",1793049030],[\\\"79832.00000\\\",\\\"0.001\\\",1793049038],[\\\"79832.60000\\\",\\\"0.001\\\",1793049038],[\\\"79832.90000\\\",\\\"0.008\\\",1793049042],[\\\"79833.00000\\\",\\\"0.188\\\",1793049042],[\\\"79833.70000\\\",\\\"0.001\\\",1793049042]],\\\"bids\\\":[[\\\"79823.20000\\\",\\\"1.269\\\",1793049042],[\\\"79822.40000\\\",\\\"0.232\\\",1793049042],[\\\"79822.30000\\\",\\\"2.832\\\",1793049042],[\\\"79820.90000\\\",\\\"2.832\\\",1793049042],[\\\"79820.10000\\\",\\\"0.001\\\",1793049042],[\\\"79818.10000\\\",\\\"2.832\\\",1793049042],[\\\"79816.10000\\\",\\\"0.001\\\",1793049041],[\\\"79815.90000\\\",\\\"0.012\\\",1793049039],[\\\"79815.60000\\\",\\\"0.026\\\",1793049042],[\\\"79814.90000\\\",\\\"0.063\\\",1793049042]]}}}\",\"raw_sha256\":\"c329443a957d0ce85ee1c0d464eea3b4d9c7a3b25c1971a3a8273da86700f3f5\",\"received_at_utc\":\"2026-10-26T21:10:43.973956Z\",\"request_started_at_utc\":\"2026-10-26T21:10:43.934917Z\",\"request_url\":\"https://api.kraken.com/0/public/Depth?pair=XBTUSD&count=10\",\"schema_version\":1,\"venue\":\"kraken\"}",
+          "raw_sha256": "c329443a957d0ce85ee1c0d464eea3b4d9c7a3b25c1971a3a8273da86700f3f5",
+          "received_at_utc": "2026-10-26T21:10:43.973956+00:00",
+          "row_sha256": "9d8d024d0a6eaf3de66bf7429ba5ed8d82eb61c0b78a7b2b54e64c4deedb7894",
+          "venue": "kraken"
+        }
+      ],
+      "response": {
+        "book_query": {
+          "items": [
+            {
+              "asks": [
+                {
+                  "exchange_timestamp_utc": "2026-10-26T21:10:42Z",
+                  "price": "79823.30000",
+                  "quantity": "0.001"
+                },
+                {
+                  "exchange_timestamp_utc": "2026-10-26T21:10:26Z",
+                  "price": "79824.00000",
+                  "quantity": "0.001"
+                },
+                {
+                  "exchange_timestamp_utc": "2026-10-26T21:09:22Z",
+                  "price": "79828.00000",
+                  "quantity": "0.001"
+                },
+                {
+                  "exchange_timestamp_utc": "2026-10-26T21:10:31Z",
+                  "price": "79828.20000",
+                  "quantity": "0.026"
+                },
+                {
+                  "exchange_timestamp_utc": "2026-10-26T21:10:30Z",
+                  "price": "79829.40000",
+                  "quantity": "0.001"
+                },
+                {
+                  "exchange_timestamp_utc": "2026-10-26T21:10:38Z",
+                  "price": "79832.00000",
+                  "quantity": "0.001"
+                },
+                {
+                  "exchange_timestamp_utc": "2026-10-26T21:10:38Z",
+                  "price": "79832.60000",
+                  "quantity": "0.001"
+                },
+                {
+                  "exchange_timestamp_utc": "2026-10-26T21:10:42Z",
+                  "price": "79832.90000",
+                  "quantity": "0.008"
+                },
+                {
+                  "exchange_timestamp_utc": "2026-10-26T21:10:42Z",
+                  "price": "79833.00000",
+                  "quantity": "0.188"
+                },
+                {
+                  "exchange_timestamp_utc": "2026-10-26T21:10:42Z",
+                  "price": "79833.70000",
+                  "quantity": "0.001"
+                }
+              ],
+              "bids": [
+                {
+                  "exchange_timestamp_utc": "2026-10-26T21:10:42Z",
+                  "price": "79823.20000",
+                  "quantity": "1.269"
+                },
+                {
+                  "exchange_timestamp_utc": "2026-10-26T21:10:42Z",
+                  "price": "79822.40000",
+                  "quantity": "0.232"
+                },
+                {
+                  "exchange_timestamp_utc": "2026-10-26T21:10:42Z",
+                  "price": "79822.30000",
+                  "quantity": "2.832"
+                },
+                {
+                  "exchange_timestamp_utc": "2026-10-26T21:10:42Z",
+                  "price": "79820.90000",
+                  "quantity": "2.832"
+                },
+                {
+                  "exchange_timestamp_utc": "2026-10-26T21:10:42Z",
+                  "price": "79820.10000",
+                  "quantity": "0.001"
+                },
+                {
+                  "exchange_timestamp_utc": "2026-10-26T21:10:42Z",
+                  "price": "79818.10000",
+                  "quantity": "2.832"
+                },
+                {
+                  "exchange_timestamp_utc": "2026-10-26T21:10:41Z",
+                  "price": "79816.10000",
+                  "quantity": "0.001"
+                },
+                {
+                  "exchange_timestamp_utc": "2026-10-26T21:10:39Z",
+                  "price": "79815.90000",
+                  "quantity": "0.012"
+                },
+                {
+                  "exchange_timestamp_utc": "2026-10-26T21:10:42Z",
+                  "price": "79815.60000",
+                  "quantity": "0.026"
+                },
+                {
+                  "exchange_timestamp_utc": "2026-10-26T21:10:42Z",
+                  "price": "79814.90000",
+                  "quantity": "0.063"
+                }
+              ],
+              "exchange_timestamp_semantics": "Each level has an independent last-update time; no unified book snapshot time is asserted",
+              "exchange_timestamp_utc": null,
+              "freshness_limit_ms": null,
+              "native_instrument_id": "XXBTZUSD",
+              "native_market_id": "XXBTZUSD",
+              "price_unit": "USD per XBT",
+              "provenance": {
+                "adapter_version": "frontier-kraken-spot-1",
+                "clock_uncertainty_ms": null,
+                "exchange_timestamp_semantics": "Per-level timestamps, not a single snapshot timestamp",
+                "exchange_timestamp_utc": null,
+                "observation_id": "0bfd92e3bbd58c56239c478188960703296f4bf81f712f2e6bfc676bb2a80e07",
+                "persisted_at_utc": null,
+                "processed_at_utc": "2026-10-26T21:10:43.974229Z",
+                "raw_sha256": "c329443a957d0ce85ee1c0d464eea3b4d9c7a3b25c1971a3a8273da86700f3f5",
+                "request_started_at_utc": "2026-10-26T21:10:43.934917Z",
+                "response_received_at_utc": "2026-10-26T21:10:43.973956Z",
+                "source_schema_version": "REST Depth",
+                "source_url": "https://api.kraken.com/0/public/Depth?pair=XBTUSD&count=10"
+              },
+              "quality_flags": [],
+              "quantity_unit": "base_asset",
+              "received_at_utc": "2026-10-26T21:10:43.973956Z",
+              "schema_version": 1,
+              "source_observation_record_id": "698d894f6b281b51aeb93bb72e9bbb42de0fffb1cc773cd7b0c890bbd24507a5",
+              "venue": "kraken"
+            }
+          ],
+          "limit": 1,
+          "offset": 0,
+          "returned": 1
+        },
+        "book_snapshots_stored": 1,
+        "hypothetical_only": true,
+        "market_count": 1,
+        "network_calls_bounded_by": 2,
+        "observation_ids": [
+          "daa9dc43204978fe48b6054dd6bc96a2e4368d8adb8aacc9888b4adf6e977305"
+        ],
+        "request_count": 2,
+        "request_count_delta": 2,
+        "requested_limit": 1,
+        "source_state": "healthy",
+        "venue": "kraken"
+      }
+    },
+    "polymarket": {
+      "http_status": 200,
+      "observations": [
+        {
+          "normalized": {
+            "complete_for_request": false,
+            "cursor": null,
+            "markets": [
+              {
+                "base_asset": null,
+                "canonical_id": "polymarket:562802",
+                "description": "This market will resolve according to the party that wins control of the United States House of Representatives in the 2026 United States midterm election.\n\nA party wins control of the United States House of Representatives if it wins a majority of the chamber’s voting seats. If no party wins a majority of voting seats, the chamber will be deemed controlled by the party with which the first elected Speaker of the House of the Congress that convenes after the 2026 midterm election is affiliated.\n\nThe following rules govern the counting of seats for determining which party wins control of the chamber.\n\nAll House elections in the 2026 United States midterm election that elect voting members and determine representation in the upcoming 120th Congress are included. Where a seat is decided by a runoff, the runoff result will determine attribution of that seat.\n\nSeats are attributed to the party under which the member was elected. If a member-elect changes party affiliation, or vacates their seat, between election day and the formal organization of Congress, the seat is attributed to the party under which the member was elected.\n\nHouse members elected as independents who formally caucus with, or, for newly elected members, who announce their intent to caucus with, a party are included in that party’s count. If the caucus decisions of members of the House elected as independents cannot be determined on the date of the election, this market may remain open until the earlier of (i) an announcement from the relevant members of their intents to caucus, or (ii) January 4th, 11:59 PM ET of the following calendar year. If no such announcement is made by January 4th, 11:59 PM ET of the following calendar year, the member will not count towards the seat count of any party.\n\nThe resolution sources for this market will be official information from relevant state electoral authorities, the United States Congress, and a consensus of credible reporting.",
+                "fees": {
+                  "applies_to": "taker",
+                  "effective_at_utc": "2026-10-26T21:10:40.775221Z",
+                  "evidence_sha256": "67c034e8076849615409d09f621d0a4111c468747dee9f346c809949ef1e3faa",
+                  "expires_at_utc": "2026-10-26T21:15:40.775000Z",
+                  "fee_currency": "USDC",
+                  "fixed_fee": null,
+                  "formula": "quantity * rate * price * (1 - price); exponent 1",
+                  "note": "Source-specific fee is retained; settlement/collateral equivalence remains unverified.",
+                  "rate": "0",
+                  "source_url": "https://docs.polymarket.com/trading/fees",
+                  "status": "verified",
+                  "version": "polymarket-fees-2026-10-11"
+                },
+                "instruments": [
+                  {
+                    "label": "Yes",
+                    "minimum_notional": null,
+                    "minimum_quantity": "5",
+                    "native_instrument_id": "83247781037352156539108067944461291821683755894607244160607042790356561625563",
+                    "outcome_id": "yes",
+                    "payouts": [
+                      {
+                        "amount": "1",
+                        "state_id": "yes"
+                      },
+                      {
+                        "amount": "0",
+                        "state_id": "no"
+                      }
+                    ],
+                    "price_currency": "USDC",
+                    "quantity_step": null,
+                    "quantity_unit": "share",
+                    "tick_size": "0.01"
+                  },
+                  {
+                    "label": "No",
+                    "minimum_notional": null,
+                    "minimum_quantity": "5",
+                    "native_instrument_id": "33156410999665902694791064431724433042010245771106314074312009703157423879038",
+                    "outcome_id": "no",
+                    "payouts": [
+                      {
+                        "amount": "0",
+                        "state_id": "yes"
+                      },
+                      {
+                        "amount": "1",
+                        "state_id": "no"
+                      }
+                    ],
+                    "price_currency": "USDC",
+                    "quantity_step": null,
+                    "quantity_unit": "share",
+                    "tick_size": "0.01"
+                  }
+                ],
+                "lifecycle": "open",
+                "market_kind": "binary_event",
+                "native_event_id": "32225",
+                "native_fields": {
+                  "acceptingOrders": true,
+                  "acceptingOrdersTimestamp": "2025-07-11T19:50:22Z",
+                  "active": true,
+                  "approved": true,
+                  "archived": false,
+                  "automaticallyActive": true,
+                  "bestAsk": "0.92",
+                  "bestBid": "0.91",
+                  "clearBookOnStart": true,
+                  "clobRewards": [
+                    {
+                      "assetAddress": "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
+                      "conditionId": "0xd5d9fc47718bd553592d126b1fa5e87183d27f3936975b0c04cc0f2dec1f1bb4",
+                      "endDate": "2500-12-31",
+                      "id": "2866189",
+                      "rewardsAmount": 0,
+                      "rewardsDailyRate": 214,
+                      "startDate": "2026-10-26"
+                    }
+                  ],
+                  "clobTokenIds": "[\"83247781037352156539108067944461291821683755894607244160607042790356561625563\", \"33156410999665902694791064431724433042010245771106314074312009703157423879038\"]",
+                  "closed": false,
+                  "comboStatus": "disabled",
+                  "competitive": "0.8530785472072341",
+                  "conditionId": "0xd5d9fc47718bd553592d126b1fa5e87183d27f3936975b0c04cc0f2dec1f1bb4",
+                  "createdAt": "2025-07-11T19:29:37.755178Z",
+                  "customLiveness": 0,
+                  "cyom": false,
+                  "deploying": false,
+                  "deployingTimestamp": "2025-07-11T19:48:58.056658Z",
+                  "description": "This market will resolve according to the party that wins control of the United States House of Representatives in the 2026 United States midterm election.\n\nA party wins control of the United States House of Representatives if it wins a majority of the chamber’s voting seats. If no party wins a majority of voting seats, the chamber will be deemed controlled by the party with which the first elected Speaker of the House of the Congress that convenes after the 2026 midterm election is affiliated.\n\nThe following rules govern the counting of seats for determining which party wins control of the chamber.\n\nAll House elections in the 2026 United States midterm election that elect voting members and determine representation in the upcoming 120th Congress are included. Where a seat is decided by a runoff, the runoff result will determine attribution of that seat.\n\nSeats are attributed to the party under which the member was elected. If a member-elect changes party affiliation, or vacates their seat, between election day and the formal organization of Congress, the seat is attributed to the party under which the member was elected.\n\nHouse members elected as independents who formally caucus with, or, for newly elected members, who announce their intent to caucus with, a party are included in that party’s count. If the caucus decisions of members of the House elected as independents cannot be determined on the date of the election, this market may remain open until the earlier of (i) an announcement from the relevant members of their intents to caucus, or (ii) January 4th, 11:59 PM ET of the following calendar year. If no such announcement is made by January 4th, 11:59 PM ET of the following calendar year, the member will not count towards the seat count of any party.\n\nThe resolution sources for this market will be official information from relevant state electoral authorities, the United States Congress, and a consensus of credible reporting.",
+                  "enableOrderBook": true,
+                  "endDate": "2026-11-04T04:59:00Z",
+                  "endDateIso": "2026-11-04",
+                  "events": [
+                    {
+                      "active": true,
+                      "archived": false,
+                      "automaticallyActive": true,
+                      "closed": false,
+                      "commentCount": 30,
+                      "competitive": "0.8530785472072341",
+                      "countryName": "U.S.",
+                      "createdAt": "2025-07-11T19:29:37.155683Z",
+                      "creationDate": "2025-07-11T19:53:05.123806Z",
+                      "cumulativeMarkets": false,
+                      "cyom": false,
+                      "deploying": false,
+                      "deployingTimestamp": "2025-07-11T19:47:25.402219Z",
+                      "description": "This market will resolve according to the party that wins control of the United States House of Representatives in the 2026 United States midterm election.\n\nA party wins control of the United States House of Representatives if it wins a majority of the chamber’s voting seats. If no party wins a majority of voting seats, the chamber will be deemed controlled by the party with which the first elected Speaker of the House of the Congress that convenes after the 2026 midterm election is affiliated.\n\nThe following rules govern the counting of seats for determining which party wins control of the chamber.\n\nAll House elections in the 2026 United States midterm election that elect voting members and determine representation in the upcoming 120th Congress are included. Where a seat is decided by a runoff, the runoff result will determine attribution of that seat.\n\nSeats are attributed to the party under which the member was elected. If a member-elect changes party affiliation, or vacates their seat, between election day and the formal organization of Congress, the seat is attributed to the party under which the member was elected.\n\nHouse members elected as independents who formally caucus with, or, for newly elected members, who announce their intent to caucus with, a party are included in that party’s count. If the caucus decisions of members of the House elected as independents cannot be determined on the date of the election, this market may remain open until the earlier of (i) an announcement from the relevant members of their intents to caucus, or (ii) January 4th, 11:59 PM ET of the following calendar year. If no such announcement is made by January 4th, 11:59 PM ET of the following calendar year, the member will not count towards the seat count of any party.\n\nThe resolution sources for this market will be official information from relevant state electoral authorities, the United States Congress, and a consensus of credible reporting.",
+                      "electionType": "House",
+                      "enableNegRisk": true,
+                      "enableOrderBook": true,
+                      "endDate": "2026-11-04T04:59:00Z",
+                      "estimateValue": false,
+                      "eventMetadata": {
+                        "context_requires_regen": true
+                      },
+                      "featured": true,
+                      "featuredOrder": 4,
+                      "gmpChartMode": "default",
+                      "icon": "https://polymarket-upload.s3.us-east-2.amazonaws.com/which-party-will-win-the-house-in-2026-lO2ezdY5lP2i.png",
+                      "id": "32225",
+                      "image": "https://polymarket-upload.s3.us-east-2.amazonaws.com/which-party-will-win-the-house-in-2026-lO2ezdY5lP2i.png",
+                      "liquidity": "6836474.0357",
+                      "liquidityClob": "6836474.0357",
+                      "negRisk": true,
+                      "negRiskAugmented": true,
+                      "negRiskMarketID": "0xd4ec843b5228dfe0779147cf13ca9954bc22edc63876954dc2fb95fcee42ef00",
+                      "new": false,
+                      "openInterest": "10357171.933857",
+                      "pendingDeployment": false,
+                      "resolutionSource": "",
+                      "restricted": true,
+                      "showAllOutcomes": true,
+                      "showMarketImages": true,
+                      "slug": "which-party-will-win-the-house-in-2026",
+                      "sortBy": "price",
+                      "startDate": "2025-07-11T19:50:44.885Z",
+                      "startTime": "2026-11-03T12:00:00Z",
+                      "ticker": "which-party-will-win-the-house-in-2026",
+                      "title": "Which party will win the House in 2026?",
+                      "updatedAt": "2026-10-26T21:08:53.266297Z",
+                      "version": "v1",
+                      "volume": "23772059.299967002",
+                      "volume1mo": "11391512.190335",
+                      "volume1wk": "5120665.67653",
+                      "volume1yr": "23664030.652772997",
+                      "volume24hr": "1679669.53014"
+                    }
+                  ],
+                  "fallbackResolutionType": "none",
+                  "featured": false,
+                  "feeSchedule": {
+                    "exponent": 1,
+                    "rate": 0,
+                    "rebateRate": 0,
+                    "takerOnly": true
+                  },
+                  "feeType": "zero_fees",
+                  "feesEnabled": true,
+                  "funded": false,
+                  "groupItemThreshold": "0",
+                  "groupItemTitle": "Democratic Party",
+                  "hasReviewedDates": true,
+                  "holdingRewardsEnabled": true,
+                  "icon": "https://polymarket-upload.s3.us-east-2.amazonaws.com/will-the-democratic-party-control-the-senate-after-the-2026-midterm-elections-JJ9h02JGR09z.png",
+                  "id": "562802",
+                  "image": "https://polymarket-upload.s3.us-east-2.amazonaws.com/will-the-democratic-party-control-the-senate-after-the-2026-midterm-elections-JJ9h02JGR09z.png",
+                  "lastTradePrice": "0.92",
+                  "liquidity": "3937340.0178",
+                  "liquidityClob": "3937340.0178",
+                  "liquidityNum": "3937340.0178",
+                  "makerBaseFee": 1000,
+                  "manualActivation": false,
+                  "marketMakerAddress": "",
+                  "negRisk": true,
+                  "negRiskMarketID": "0xd4ec843b5228dfe0779147cf13ca9954bc22edc63876954dc2fb95fcee42ef00",
+                  "negRiskOther": false,
+                  "negRiskRequestID": "0x5410be0dba03c48613a43de966637a38a4645a2c085d3e04ec1adbebbd01e7b3",
+                  "new": false,
+                  "oneMonthPriceChange": "-0.01",
+                  "oneYearPriceChange": "0.335",
+                  "orderMinSize": 5,
+                  "orderPriceMinTickSize": "0.01",
+                  "outcomePrices": "[\"0.915\", \"0.085\"]",
+                  "outcomes": "[\"Yes\", \"No\"]",
+                  "pendingDeployment": false,
+                  "question": "Will the Democratic Party control the House after the 2026 Midterm elections?",
+                  "questionID": "0xd4ec843b5228dfe0779147cf13ca9954bc22edc63876954dc2fb95fcee42ef00",
+                  "ready": false,
+                  "resolutionSource": "",
+                  "resolvedBy": "0x2F5e3684cb1F318ec51b00Edba38d79Ac2c0aA9d",
+                  "restricted": true,
+                  "rewardsMaxSpread": "4.5",
+                  "rewardsMinSize": 50,
+                  "rfqEnabled": false,
+                  "seriesColor": "blue",
+                  "showGmpOutcome": false,
+                  "showGmpSeries": false,
+                  "slug": "will-the-democratic-party-control-the-house-after-the-2026-midterm-elections",
+                  "spread": "0.01",
+                  "startDate": "2025-07-11T19:50:44.885Z",
+                  "startDateIso": "2025-07-11",
+                  "submitted_by": "0x91430CaD2d3975766499717fA0D66A78D814E5c5",
+                  "takerBaseFee": 1000,
+                  "umaBond": "10000",
+                  "umaResolutionStatuses": "[]",
+                  "umaReward": "10",
+                  "updatedAt": "2026-10-26T21:08:39.762125Z",
+                  "version": "v1",
+                  "volume": "13597521.551313002",
+                  "volume1mo": "6506250.132995",
+                  "volume1moClob": "6506250.132995",
+                  "volume1wk": "2831434.127709",
+                  "volume1wkClob": "2831434.127709",
+                  "volume1yr": "13550539.799192997",
+                  "volume1yrClob": "13550539.799192997",
+                  "volume24hr": "694370.5500999999",
+                  "volume24hrClob": "694370.5500999999",
+                  "volumeClob": "13597521.551313002",
+                  "volumeNum": "13597521.551313002"
+                },
+                "native_market_id": "562802",
+                "payoff": {
+                  "exhaustive": false,
+                  "payout_currency": "USD",
+                  "schema_version": 1,
+                  "settlement_asset": null,
+                  "state_ids": [
+                    "yes",
+                    "no"
+                  ],
+                  "verification_basis": "Outcome labels/token IDs are source metadata; CTF payout and collateral attestation is not performed here.",
+                  "verified": false
+                },
+                "provenance": {
+                  "adapter_version": "frontier-polymarket-1",
+                  "clock_uncertainty_ms": null,
+                  "exchange_timestamp_semantics": "unknown",
+                  "exchange_timestamp_utc": null,
+                  "observation_id": "2e03ca5a0f4b1cb9d2fc6f44717af4acd9ccea6c3ed2a341bd192ad03f39c581",
+                  "persisted_at_utc": null,
+                  "processed_at_utc": "2026-10-26T21:10:40.776004Z",
+                  "raw_sha256": "c09bcfd830e40c7290d3c44d77ce74dfb56b7ad62307ed03fe6bedb521475efd",
+                  "request_started_at_utc": "2026-10-26T21:10:40.723555Z",
+                  "response_received_at_utc": "2026-10-26T21:10:40.775221Z",
+                  "source_schema_version": "v1",
+                  "source_url": "https://gamma-api.polymarket.com/markets?active=true&closed=false&limit=1&order=liquidity&ascending=false"
+                },
+                "quality_flags": [
+                  "PAYOUT_NOT_ATTESTED",
+                  "SETTLEMENT_ASSET_NOT_ATTESTED",
+                  "RESOLUTION_SEMANTICS_NOT_VERIFIED",
+                  "CROSS_VENUE_EQUIVALENCE_NOT_ASSERTED"
+                ],
+                "quote_asset": "USDC",
+                "resolution": {
+                  "authority": null,
+                  "closes_at_utc": null,
+                  "evidence_sha256": "2d30c3858cfd333005c6feff77d1c94d667ca444ad1a5619f0ceda84745abb60",
+                  "primary_rule": "This market will resolve according to the party that wins control of the United States House of Representatives in the 2026 United States midterm election.\n\nA party wins control of the United States House of Representatives if it wins a majority of the chamber’s voting seats. If no party wins a majority of voting seats, the chamber will be deemed controlled by the party with which the first elected Speaker of the House of the Congress that convenes after the 2026 midterm election is affiliated.\n\nThe following rules govern the counting of seats for determining which party wins control of the chamber.\n\nAll House elections in the 2026 United States midterm election that elect voting members and determine representation in the upcoming 120th Congress are included. Where a seat is decided by a runoff, the runoff result will determine attribution of that seat.\n\nSeats are attributed to the party under which the member was elected. If a member-elect changes party affiliation, or vacates their seat, between election day and the formal organization of Congress, the seat is attributed to the party under which the member was elected.\n\nHouse members elected as independents who formally caucus with, or, for newly elected members, who announce their intent to caucus with, a party are included in that party’s count. If the caucus decisions of members of the House elected as independents cannot be determined on the date of the election, this market may remain open until the earlier of (i) an announcement from the relevant members of their intents to caucus, or (ii) January 4th, 11:59 PM ET of the following calendar year. If no such announcement is made by January 4th, 11:59 PM ET of the following calendar year, the member will not count towards the seat count of any party.\n\nThe resolution sources for this market will be official information from relevant state electoral authorities, the United States Congress, and a consensus of credible reporting.",
+                  "resolution_fingerprint": null,
+                  "secondary_rule": null,
+                  "settles_at_utc": null,
+                  "source_timestamp_semantics": null,
+                  "verified": false
+                },
+                "schema_version": 1,
+                "settlement_asset": null,
+                "title": "Will the Democratic Party control the House after the 2026 Midterm elections?",
+                "venue": "polymarket"
+              }
+            ],
+            "note": "One bounded discovery response; absence from this page is not proof of venue-wide absence.",
+            "schema_version": 1,
+            "venue": "polymarket"
+          },
+          "normalized_json": "{\"complete_for_request\":false,\"cursor\":null,\"markets\":[{\"base_asset\":null,\"canonical_id\":\"polymarket:562802\",\"description\":\"This market will resolve according to the party that wins control of the United States House of Representatives in the 2026 United States midterm election.\\n\\nA party wins control of the United States House of Representatives if it wins a majority of the chamber’s voting seats. If no party wins a majority of voting seats, the chamber will be deemed controlled by the party with which the first elected Speaker of the House of the Congress that convenes after the 2026 midterm election is affiliated.\\n\\nThe following rules govern the counting of seats for determining which party wins control of the chamber.\\n\\nAll House elections in the 2026 United States midterm election that elect voting members and determine representation in the upcoming 120th Congress are included. Where a seat is decided by a runoff, the runoff result will determine attribution of that seat.\\n\\nSeats are attributed to the party under which the member was elected. If a member-elect changes party affiliation, or vacates their seat, between election day and the formal organization of Congress, the seat is attributed to the party under which the member was elected.\\n\\nHouse members elected as independents who formally caucus with, or, for newly elected members, who announce their intent to caucus with, a party are included in that party’s count. If the caucus decisions of members of the House elected as independents cannot be determined on the date of the election, this market may remain open until the earlier of (i) an announcement from the relevant members of their intents to caucus, or (ii) January 4th, 11:59 PM ET of the following calendar year. If no such announcement is made by January 4th, 11:59 PM ET of the following calendar year, the member will not count towards the seat count of any party.\\n\\nThe resolution sources for this market will be official information from relevant state electoral authorities, the United States Congress, and a consensus of credible reporting.\",\"fees\":{\"applies_to\":\"taker\",\"effective_at_utc\":\"2026-10-26T21:10:40.775221Z\",\"evidence_sha256\":\"67c034e8076849615409d09f621d0a4111c468747dee9f346c809949ef1e3faa\",\"expires_at_utc\":\"2026-10-26T21:15:40.775000Z\",\"fee_currency\":\"USDC\",\"fixed_fee\":null,\"formula\":\"quantity * rate * price * (1 - price); exponent 1\",\"note\":\"Source-specific fee is retained; settlement/collateral equivalence remains unverified.\",\"rate\":\"0\",\"source_url\":\"https://docs.polymarket.com/trading/fees\",\"status\":\"verified\",\"version\":\"polymarket-fees-2026-10-11\"},\"instruments\":[{\"label\":\"Yes\",\"minimum_notional\":null,\"minimum_quantity\":\"5\",\"native_instrument_id\":\"83247781037352156539108067944461291821683755894607244160607042790356561625563\",\"outcome_id\":\"yes\",\"payouts\":[{\"amount\":\"1\",\"state_id\":\"yes\"},{\"amount\":\"0\",\"state_id\":\"no\"}],\"price_currency\":\"USDC\",\"quantity_step\":null,\"quantity_unit\":\"share\",\"tick_size\":\"0.01\"},{\"label\":\"No\",\"minimum_notional\":null,\"minimum_quantity\":\"5\",\"native_instrument_id\":\"33156410999665902694791064431724433042010245771106314074312009703157423879038\",\"outcome_id\":\"no\",\"payouts\":[{\"amount\":\"0\",\"state_id\":\"yes\"},{\"amount\":\"1\",\"state_id\":\"no\"}],\"price_currency\":\"USDC\",\"quantity_step\":null,\"quantity_unit\":\"share\",\"tick_size\":\"0.01\"}],\"lifecycle\":\"open\",\"market_kind\":\"binary_event\",\"native_event_id\":\"32225\",\"native_fields\":{\"acceptingOrders\":true,\"acceptingOrdersTimestamp\":\"2025-07-11T19:50:22Z\",\"active\":true,\"approved\":true,\"archived\":false,\"automaticallyActive\":true,\"bestAsk\":\"0.92\",\"bestBid\":\"0.91\",\"clearBookOnStart\":true,\"clobRewards\":[{\"assetAddress\":\"0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174\",\"conditionId\":\"0xd5d9fc47718bd553592d126b1fa5e87183d27f3936975b0c04cc0f2dec1f1bb4\",\"endDate\":\"2500-12-31\",\"id\":\"2866189\",\"rewardsAmount\":0,\"rewardsDailyRate\":214,\"startDate\":\"2026-10-26\"}],\"clobTokenIds\":\"[\\\"83247781037352156539108067944461291821683755894607244160607042790356561625563\\\", \\\"33156410999665902694791064431724433042010245771106314074312009703157423879038\\\"]\",\"closed\":false,\"comboStatus\":\"disabled\",\"competitive\":\"0.8530785472072341\",\"conditionId\":\"0xd5d9fc47718bd553592d126b1fa5e87183d27f3936975b0c04cc0f2dec1f1bb4\",\"createdAt\":\"2025-07-11T19:29:37.755178Z\",\"customLiveness\":0,\"cyom\":false,\"deploying\":false,\"deployingTimestamp\":\"2025-07-11T19:48:58.056658Z\",\"description\":\"This market will resolve according to the party that wins control of the United States House of Representatives in the 2026 United States midterm election.\\n\\nA party wins control of the United States House of Representatives if it wins a majority of the chamber’s voting seats. If no party wins a majority of voting seats, the chamber will be deemed controlled by the party with which the first elected Speaker of the House of the Congress that convenes after the 2026 midterm election is affiliated.\\n\\nThe following rules govern the counting of seats for determining which party wins control of the chamber.\\n\\nAll House elections in the 2026 United States midterm election that elect voting members and determine representation in the upcoming 120th Congress are included. Where a seat is decided by a runoff, the runoff result will determine attribution of that seat.\\n\\nSeats are attributed to the party under which the member was elected. If a member-elect changes party affiliation, or vacates their seat, between election day and the formal organization of Congress, the seat is attributed to the party under which the member was elected.\\n\\nHouse members elected as independents who formally caucus with, or, for newly elected members, who announce their intent to caucus with, a party are included in that party’s count. If the caucus decisions of members of the House elected as independents cannot be determined on the date of the election, this market may remain open until the earlier of (i) an announcement from the relevant members of their intents to caucus, or (ii) January 4th, 11:59 PM ET of the following calendar year. If no such announcement is made by January 4th, 11:59 PM ET of the following calendar year, the member will not count towards the seat count of any party.\\n\\nThe resolution sources for this market will be official information from relevant state electoral authorities, the United States Congress, and a consensus of credible reporting.\",\"enableOrderBook\":true,\"endDate\":\"2026-11-04T04:59:00Z\",\"endDateIso\":\"2026-11-04\",\"events\":[{\"active\":true,\"archived\":false,\"automaticallyActive\":true,\"closed\":false,\"commentCount\":30,\"competitive\":\"0.8530785472072341\",\"countryName\":\"U.S.\",\"createdAt\":\"2025-07-11T19:29:37.155683Z\",\"creationDate\":\"2025-07-11T19:53:05.123806Z\",\"cumulativeMarkets\":false,\"cyom\":false,\"deploying\":false,\"deployingTimestamp\":\"2025-07-11T19:47:25.402219Z\",\"description\":\"This market will resolve according to the party that wins control of the United States House of Representatives in the 2026 United States midterm election.\\n\\nA party wins control of the United States House of Representatives if it wins a majority of the chamber’s voting seats. If no party wins a majority of voting seats, the chamber will be deemed controlled by the party with which the first elected Speaker of the House of the Congress that convenes after the 2026 midterm election is affiliated.\\n\\nThe following rules govern the counting of seats for determining which party wins control of the chamber.\\n\\nAll House elections in the 2026 United States midterm election that elect voting members and determine representation in the upcoming 120th Congress are included. Where a seat is decided by a runoff, the runoff result will determine attribution of that seat.\\n\\nSeats are attributed to the party under which the member was elected. If a member-elect changes party affiliation, or vacates their seat, between election day and the formal organization of Congress, the seat is attributed to the party under which the member was elected.\\n\\nHouse members elected as independents who formally caucus with, or, for newly elected members, who announce their intent to caucus with, a party are included in that party’s count. If the caucus decisions of members of the House elected as independents cannot be determined on the date of the election, this market may remain open until the earlier of (i) an announcement from the relevant members of their intents to caucus, or (ii) January 4th, 11:59 PM ET of the following calendar year. If no such announcement is made by January 4th, 11:59 PM ET of the following calendar year, the member will not count towards the seat count of any party.\\n\\nThe resolution sources for this market will be official information from relevant state electoral authorities, the United States Congress, and a consensus of credible reporting.\",\"electionType\":\"House\",\"enableNegRisk\":true,\"enableOrderBook\":true,\"endDate\":\"2026-11-04T04:59:00Z\",\"estimateValue\":false,\"eventMetadata\":{\"context_requires_regen\":true},\"featured\":true,\"featuredOrder\":4,\"gmpChartMode\":\"default\",\"icon\":\"https://polymarket-upload.s3.us-east-2.amazonaws.com/which-party-will-win-the-house-in-2026-lO2ezdY5lP2i.png\",\"id\":\"32225\",\"image\":\"https://polymarket-upload.s3.us-east-2.amazonaws.com/which-party-will-win-the-house-in-2026-lO2ezdY5lP2i.png\",\"liquidity\":\"6836474.0357\",\"liquidityClob\":\"6836474.0357\",\"negRisk\":true,\"negRiskAugmented\":true,\"negRiskMarketID\":\"0xd4ec843b5228dfe0779147cf13ca9954bc22edc63876954dc2fb95fcee42ef00\",\"new\":false,\"openInterest\":\"10357171.933857\",\"pendingDeployment\":false,\"resolutionSource\":\"\",\"restricted\":true,\"showAllOutcomes\":true,\"showMarketImages\":true,\"slug\":\"which-party-will-win-the-house-in-2026\",\"sortBy\":\"price\",\"startDate\":\"2025-07-11T19:50:44.885Z\",\"startTime\":\"2026-11-03T12:00:00Z\",\"ticker\":\"which-party-will-win-the-house-in-2026\",\"title\":\"Which party will win the House in 2026?\",\"updatedAt\":\"2026-10-26T21:08:53.266297Z\",\"version\":\"v1\",\"volume\":\"23772059.299967002\",\"volume1mo\":\"11391512.190335\",\"volume1wk\":\"5120665.67653\",\"volume1yr\":\"23664030.652772997\",\"volume24hr\":\"1679669.53014\"}],\"fallbackResolutionType\":\"none\",\"featured\":false,\"feeSchedule\":{\"exponent\":1,\"rate\":0,\"rebateRate\":0,\"takerOnly\":true},\"feeType\":\"zero_fees\",\"feesEnabled\":true,\"funded\":false,\"groupItemThreshold\":\"0\",\"groupItemTitle\":\"Democratic Party\",\"hasReviewedDates\":true,\"holdingRewardsEnabled\":true,\"icon\":\"https://polymarket-upload.s3.us-east-2.amazonaws.com/will-the-democratic-party-control-the-senate-after-the-2026-midterm-elections-JJ9h02JGR09z.png\",\"id\":\"562802\",\"image\":\"https://polymarket-upload.s3.us-east-2.amazonaws.com/will-the-democratic-party-control-the-senate-after-the-2026-midterm-elections-JJ9h02JGR09z.png\",\"lastTradePrice\":\"0.92\",\"liquidity\":\"3937340.0178\",\"liquidityClob\":\"3937340.0178\",\"liquidityNum\":\"3937340.0178\",\"makerBaseFee\":1000,\"manualActivation\":false,\"marketMakerAddress\":\"\",\"negRisk\":true,\"negRiskMarketID\":\"0xd4ec843b5228dfe0779147cf13ca9954bc22edc63876954dc2fb95fcee42ef00\",\"negRiskOther\":false,\"negRiskRequestID\":\"0x5410be0dba03c48613a43de966637a38a4645a2c085d3e04ec1adbebbd01e7b3\",\"new\":false,\"oneMonthPriceChange\":\"-0.01\",\"oneYearPriceChange\":\"0.335\",\"orderMinSize\":5,\"orderPriceMinTickSize\":\"0.01\",\"outcomePrices\":\"[\\\"0.915\\\", \\\"0.085\\\"]\",\"outcomes\":\"[\\\"Yes\\\", \\\"No\\\"]\",\"pendingDeployment\":false,\"question\":\"Will the Democratic Party control the House after the 2026 Midterm elections?\",\"questionID\":\"0xd4ec843b5228dfe0779147cf13ca9954bc22edc63876954dc2fb95fcee42ef00\",\"ready\":false,\"resolutionSource\":\"\",\"resolvedBy\":\"0x2F5e3684cb1F318ec51b00Edba38d79Ac2c0aA9d\",\"restricted\":true,\"rewardsMaxSpread\":\"4.5\",\"rewardsMinSize\":50,\"rfqEnabled\":false,\"seriesColor\":\"blue\",\"showGmpOutcome\":false,\"showGmpSeries\":false,\"slug\":\"will-the-democratic-party-control-the-house-after-the-2026-midterm-elections\",\"spread\":\"0.01\",\"startDate\":\"2025-07-11T19:50:44.885Z\",\"startDateIso\":\"2025-07-11\",\"submitted_by\":\"0x91430CaD2d3975766499717fA0D66A78D814E5c5\",\"takerBaseFee\":1000,\"umaBond\":\"10000\",\"umaResolutionStatuses\":\"[]\",\"umaReward\":\"10\",\"updatedAt\":\"2026-10-26T21:08:39.762125Z\",\"version\":\"v1\",\"volume\":\"13597521.551313002\",\"volume1mo\":\"6506250.132995\",\"volume1moClob\":\"6506250.132995\",\"volume1wk\":\"2831434.127709\",\"volume1wkClob\":\"2831434.127709\",\"volume1yr\":\"13550539.799192997\",\"volume1yrClob\":\"13550539.799192997\",\"volume24hr\":\"694370.5500999999\",\"volume24hrClob\":\"694370.5500999999\",\"volumeClob\":\"13597521.551313002\",\"volumeNum\":\"13597521.551313002\"},\"native_market_id\":\"562802\",\"payoff\":{\"exhaustive\":false,\"payout_currency\":\"USD\",\"schema_version\":1,\"settlement_asset\":null,\"state_ids\":[\"yes\",\"no\"],\"verification_basis\":\"Outcome labels/token IDs are source metadata; CTF payout and collateral attestation is not performed here.\",\"verified\":false},\"provenance\":{\"adapter_version\":\"frontier-polymarket-1\",\"clock_uncertainty_ms\":null,\"exchange_timestamp_semantics\":\"unknown\",\"exchange_timestamp_utc\":null,\"observation_id\":\"2e03ca5a0f4b1cb9d2fc6f44717af4acd9ccea6c3ed2a341bd192ad03f39c581\",\"persisted_at_utc\":null,\"processed_at_utc\":\"2026-10-26T21:10:40.776004Z\",\"raw_sha256\":\"c09bcfd830e40c7290d3c44d77ce74dfb56b7ad62307ed03fe6bedb521475efd\",\"request_started_at_utc\":\"2026-10-26T21:10:40.723555Z\",\"response_received_at_utc\":\"2026-10-26T21:10:40.775221Z\",\"source_schema_version\":\"v1\",\"source_url\":\"https://gamma-api.polymarket.com/markets?active=true&closed=false&limit=1&order=liquidity&ascending=false\"},\"quality_flags\":[\"PAYOUT_NOT_ATTESTED\",\"SETTLEMENT_ASSET_NOT_ATTESTED\",\"RESOLUTION_SEMANTICS_NOT_VERIFIED\",\"CROSS_VENUE_EQUIVALENCE_NOT_ASSERTED\"],\"quote_asset\":\"USDC\",\"resolution\":{\"authority\":null,\"closes_at_utc\":null,\"evidence_sha256\":\"2d30c3858cfd333005c6feff77d1c94d667ca444ad1a5619f0ceda84745abb60\",\"primary_rule\":\"This market will resolve according to the party that wins control of the United States House of Representatives in the 2026 United States midterm election.\\n\\nA party wins control of the United States House of Representatives if it wins a majority of the chamber’s voting seats. If no party wins a majority of voting seats, the chamber will be deemed controlled by the party with which the first elected Speaker of the House of the Congress that convenes after the 2026 midterm election is affiliated.\\n\\nThe following rules govern the counting of seats for determining which party wins control of the chamber.\\n\\nAll House elections in the 2026 United States midterm election that elect voting members and determine representation in the upcoming 120th Congress are included. Where a seat is decided by a runoff, the runoff result will determine attribution of that seat.\\n\\nSeats are attributed to the party under which the member was elected. If a member-elect changes party affiliation, or vacates their seat, between election day and the formal organization of Congress, the seat is attributed to the party under which the member was elected.\\n\\nHouse members elected as independents who formally caucus with, or, for newly elected members, who announce their intent to caucus with, a party are included in that party’s count. If the caucus decisions of members of the House elected as independents cannot be determined on the date of the election, this market may remain open until the earlier of (i) an announcement from the relevant members of their intents to caucus, or (ii) January 4th, 11:59 PM ET of the following calendar year. If no such announcement is made by January 4th, 11:59 PM ET of the following calendar year, the member will not count towards the seat count of any party.\\n\\nThe resolution sources for this market will be official information from relevant state electoral authorities, the United States Congress, and a consensus of credible reporting.\",\"resolution_fingerprint\":null,\"secondary_rule\":null,\"settles_at_utc\":null,\"source_timestamp_semantics\":null,\"verified\":false},\"schema_version\":1,\"settlement_asset\":null,\"title\":\"Will the Democratic Party control the House after the 2026 Midterm elections?\",\"venue\":\"polymarket\"}],\"note\":\"One bounded discovery response; absence from this page is not proof of venue-wide absence.\",\"schema_version\":1,\"venue\":\"polymarket\"}",
+          "observation_id": "187d2a3e549953f65838c67e6165a4994e001697cb588a4a121c81647d1a2cef",
+          "observation_kind": "market_listing",
+          "raw": {
+            "adapter_version": "frontier-polymarket-1",
+            "http_status": 200,
+            "observation_kind": "market_listing",
+            "raw_body": "[{\"id\":\"562802\",\"question\":\"Will the Democratic Party control the House after the 2026 Midterm elections?\",\"conditionId\":\"0xd5d9fc47718bd553592d126b1fa5e87183d27f3936975b0c04cc0f2dec1f1bb4\",\"slug\":\"will-the-democratic-party-control-the-house-after-the-2026-midterm-elections\",\"resolutionSource\":\"\",\"endDate\":\"2026-11-04T04:59:00Z\",\"liquidity\":\"3937340.0178\",\"startDate\":\"2025-07-11T19:50:44.885Z\",\"image\":\"https://polymarket-upload.s3.us-east-2.amazonaws.com/will-the-democratic-party-control-the-senate-after-the-2026-midterm-elections-JJ9h02JGR09z.png\",\"icon\":\"https://polymarket-upload.s3.us-east-2.amazonaws.com/will-the-democratic-party-control-the-senate-after-the-2026-midterm-elections-JJ9h02JGR09z.png\",\"description\":\"This market will resolve according to the party that wins control of the United States House of Representatives in the 2026 United States midterm election.\\n\\nA party wins control of the United States House of Representatives if it wins a majority of the chamber’s voting seats. If no party wins a majority of voting seats, the chamber will be deemed controlled by the party with which the first elected Speaker of the House of the Congress that convenes after the 2026 midterm election is affiliated.\\n\\nThe following rules govern the counting of seats for determining which party wins control of the chamber.\\n\\nAll House elections in the 2026 United States midterm election that elect voting members and determine representation in the upcoming 120th Congress are included. Where a seat is decided by a runoff, the runoff result will determine attribution of that seat.\\n\\nSeats are attributed to the party under which the member was elected. If a member-elect changes party affiliation, or vacates their seat, between election day and the formal organization of Congress, the seat is attributed to the party under which the member was elected.\\n\\nHouse members elected as independents who formally caucus with, or, for newly elected members, who announce their intent to caucus with, a party are included in that party’s count. If the caucus decisions of members of the House elected as independents cannot be determined on the date of the election, this market may remain open until the earlier of (i) an announcement from the relevant members of their intents to caucus, or (ii) January 4th, 11:59 PM ET of the following calendar year. If no such announcement is made by January 4th, 11:59 PM ET of the following calendar year, the member will not count towards the seat count of any party.\\n\\nThe resolution sources for this market will be official information from relevant state electoral authorities, the United States Congress, and a consensus of credible reporting.\",\"outcomes\":\"[\\\"Yes\\\", \\\"No\\\"]\",\"outcomePrices\":\"[\\\"0.915\\\", \\\"0.085\\\"]\",\"volume\":\"13597521.551313002\",\"active\":true,\"closed\":false,\"marketMakerAddress\":\"\",\"createdAt\":\"2025-07-11T19:29:37.755178Z\",\"updatedAt\":\"2026-10-26T21:08:39.762125Z\",\"new\":false,\"featured\":false,\"submitted_by\":\"0x91430CaD2d3975766499717fA0D66A78D814E5c5\",\"archived\":false,\"resolvedBy\":\"0x2F5e3684cb1F318ec51b00Edba38d79Ac2c0aA9d\",\"restricted\":true,\"groupItemTitle\":\"Democratic Party\",\"groupItemThreshold\":\"0\",\"questionID\":\"0xd4ec843b5228dfe0779147cf13ca9954bc22edc63876954dc2fb95fcee42ef00\",\"enableOrderBook\":true,\"orderPriceMinTickSize\":0.01,\"orderMinSize\":5,\"volumeNum\":13597521.551313002,\"liquidityNum\":3937340.0178,\"endDateIso\":\"2026-11-04\",\"startDateIso\":\"2025-07-11\",\"hasReviewedDates\":true,\"volume24hr\":694370.5500999999,\"volume1wk\":2831434.127709,\"volume1mo\":6506250.132995,\"volume1yr\":13550539.799192997,\"clobTokenIds\":\"[\\\"83247781037352156539108067944461291821683755894607244160607042790356561625563\\\", \\\"33156410999665902694791064431724433042010245771106314074312009703157423879038\\\"]\",\"comboStatus\":\"disabled\",\"umaBond\":\"10000\",\"umaReward\":\"10\",\"volume24hrClob\":694370.5500999999,\"volume1wkClob\":2831434.127709,\"volume1moClob\":6506250.132995,\"volume1yrClob\":13550539.799192997,\"volumeClob\":13597521.551313002,\"liquidityClob\":3937340.0178,\"makerBaseFee\":1000,\"takerBaseFee\":1000,\"customLiveness\":0,\"acceptingOrders\":true,\"negRisk\":true,\"negRiskMarketID\":\"0xd4ec843b5228dfe0779147cf13ca9954bc22edc63876954dc2fb95fcee42ef00\",\"negRiskRequestID\":\"0x5410be0dba03c48613a43de966637a38a4645a2c085d3e04ec1adbebbd01e7b3\",\"events\":[{\"id\":\"32225\",\"ticker\":\"which-party-will-win-the-house-in-2026\",\"slug\":\"which-party-will-win-the-house-in-2026\",\"title\":\"Which party will win the House in 2026?\",\"description\":\"This market will resolve according to the party that wins control of the United States House of Representatives in the 2026 United States midterm election.\\n\\nA party wins control of the United States House of Representatives if it wins a majority of the chamber’s voting seats. If no party wins a majority of voting seats, the chamber will be deemed controlled by the party with which the first elected Speaker of the House of the Congress that convenes after the 2026 midterm election is affiliated.\\n\\nThe following rules govern the counting of seats for determining which party wins control of the chamber.\\n\\nAll House elections in the 2026 United States midterm election that elect voting members and determine representation in the upcoming 120th Congress are included. Where a seat is decided by a runoff, the runoff result will determine attribution of that seat.\\n\\nSeats are attributed to the party under which the member was elected. If a member-elect changes party affiliation, or vacates their seat, between election day and the formal organization of Congress, the seat is attributed to the party under which the member was elected.\\n\\nHouse members elected as independents who formally caucus with, or, for newly elected members, who announce their intent to caucus with, a party are included in that party’s count. If the caucus decisions of members of the House elected as independents cannot be determined on the date of the election, this market may remain open until the earlier of (i) an announcement from the relevant members of their intents to caucus, or (ii) January 4th, 11:59 PM ET of the following calendar year. If no such announcement is made by January 4th, 11:59 PM ET of the following calendar year, the member will not count towards the seat count of any party.\\n\\nThe resolution sources for this market will be official information from relevant state electoral authorities, the United States Congress, and a consensus of credible reporting.\",\"resolutionSource\":\"\",\"startDate\":\"2025-07-11T19:50:44.885Z\",\"creationDate\":\"2025-07-11T19:53:05.123806Z\",\"endDate\":\"2026-11-04T04:59:00Z\",\"image\":\"https://polymarket-upload.s3.us-east-2.amazonaws.com/which-party-will-win-the-house-in-2026-lO2ezdY5lP2i.png\",\"icon\":\"https://polymarket-upload.s3.us-east-2.amazonaws.com/which-party-will-win-the-house-in-2026-lO2ezdY5lP2i.png\",\"active\":true,\"closed\":false,\"archived\":false,\"new\":false,\"featured\":true,\"restricted\":true,\"liquidity\":6836474.0357,\"volume\":23772059.299967002,\"openInterest\":10357171.933857,\"sortBy\":\"price\",\"createdAt\":\"2025-07-11T19:29:37.155683Z\",\"updatedAt\":\"2026-10-26T21:08:53.266297Z\",\"competitive\":0.8530785472072341,\"volume24hr\":1679669.53014,\"volume1wk\":5120665.67653,\"volume1mo\":11391512.190335,\"volume1yr\":23664030.652772997,\"enableOrderBook\":true,\"liquidityClob\":6836474.0357,\"negRisk\":true,\"negRiskMarketID\":\"0xd4ec843b5228dfe0779147cf13ca9954bc22edc63876954dc2fb95fcee42ef00\",\"commentCount\":30,\"cyom\":false,\"showAllOutcomes\":true,\"showMarketImages\":true,\"enableNegRisk\":true,\"automaticallyActive\":true,\"startTime\":\"2026-11-03T12:00:00Z\",\"gmpChartMode\":\"default\",\"negRiskAugmented\":true,\"countryName\":\"U.S.\",\"electionType\":\"House\",\"featuredOrder\":4,\"estimateValue\":false,\"cumulativeMarkets\":false,\"pendingDeployment\":false,\"deploying\":false,\"deployingTimestamp\":\"2025-07-11T19:47:25.402219Z\",\"eventMetadata\":{\"context_requires_regen\":true},\"version\":\"v1\"}],\"ready\":false,\"funded\":false,\"acceptingOrdersTimestamp\":\"2025-07-11T19:50:22Z\",\"cyom\":false,\"competitive\":0.8530785472072341,\"approved\":true,\"clobRewards\":[{\"id\":\"2866189\",\"conditionId\":\"0xd5d9fc47718bd553592d126b1fa5e87183d27f3936975b0c04cc0f2dec1f1bb4\",\"assetAddress\":\"0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174\",\"rewardsAmount\":0,\"rewardsDailyRate\":214,\"startDate\":\"2026-10-26\",\"endDate\":\"2500-12-31\"}],\"rewardsMinSize\":50,\"rewardsMaxSpread\":4.5,\"spread\":0.01,\"oneMonthPriceChange\":-0.01,\"oneYearPriceChange\":0.335,\"lastTradePrice\":0.92,\"bestBid\":0.91,\"bestAsk\":0.92,\"automaticallyActive\":true,\"clearBookOnStart\":true,\"seriesColor\":\"blue\",\"showGmpSeries\":false,\"showGmpOutcome\":false,\"manualActivation\":false,\"negRiskOther\":false,\"umaResolutionStatuses\":\"[]\",\"pendingDeployment\":false,\"deploying\":false,\"deployingTimestamp\":\"2025-07-11T19:48:58.056658Z\",\"rfqEnabled\":false,\"holdingRewardsEnabled\":true,\"feesEnabled\":true,\"feeType\":\"zero_fees\",\"feeSchedule\":{\"exponent\":1,\"rate\":0,\"takerOnly\":true,\"rebateRate\":0},\"fallbackResolutionType\":\"none\",\"version\":\"v1\"}]\n",
+            "raw_sha256": "c09bcfd830e40c7290d3c44d77ce74dfb56b7ad62307ed03fe6bedb521475efd",
+            "received_at_utc": "2026-10-26T21:10:40.775221Z",
+            "request_started_at_utc": "2026-10-26T21:10:40.723555Z",
+            "request_url": "https://gamma-api.polymarket.com/markets?active=true&closed=false&limit=1&order=liquidity&ascending=false",
+            "schema_version": 1,
+            "venue": "polymarket"
+          },
+          "raw_json": "{\"adapter_version\":\"frontier-polymarket-1\",\"http_status\":200,\"observation_kind\":\"market_listing\",\"raw_body\":\"[{\\\"id\\\":\\\"562802\\\",\\\"question\\\":\\\"Will the Democratic Party control the House after the 2026 Midterm elections?\\\",\\\"conditionId\\\":\\\"0xd5d9fc47718bd553592d126b1fa5e87183d27f3936975b0c04cc0f2dec1f1bb4\\\",\\\"slug\\\":\\\"will-the-democratic-party-control-the-house-after-the-2026-midterm-elections\\\",\\\"resolutionSource\\\":\\\"\\\",\\\"endDate\\\":\\\"2026-11-04T04:59:00Z\\\",\\\"liquidity\\\":\\\"3937340.0178\\\",\\\"startDate\\\":\\\"2025-07-11T19:50:44.885Z\\\",\\\"image\\\":\\\"https://polymarket-upload.s3.us-east-2.amazonaws.com/will-the-democratic-party-control-the-senate-after-the-2026-midterm-elections-JJ9h02JGR09z.png\\\",\\\"icon\\\":\\\"https://polymarket-upload.s3.us-east-2.amazonaws.com/will-the-democratic-party-control-the-senate-after-the-2026-midterm-elections-JJ9h02JGR09z.png\\\",\\\"description\\\":\\\"This market will resolve according to the party that wins control of the United States House of Representatives in the 2026 United States midterm election.\\\\n\\\\nA party wins control of the United States House of Representatives if it wins a majority of the chamber’s voting seats. If no party wins a majority of voting seats, the chamber will be deemed controlled by the party with which the first elected Speaker of the House of the Congress that convenes after the 2026 midterm election is affiliated.\\\\n\\\\nThe following rules govern the counting of seats for determining which party wins control of the chamber.\\\\n\\\\nAll House elections in the 2026 United States midterm election that elect voting members and determine representation in the upcoming 120th Congress are included. Where a seat is decided by a runoff, the runoff result will determine attribution of that seat.\\\\n\\\\nSeats are attributed to the party under which the member was elected. If a member-elect changes party affiliation, or vacates their seat, between election day and the formal organization of Congress, the seat is attributed to the party under which the member was elected.\\\\n\\\\nHouse members elected as independents who formally caucus with, or, for newly elected members, who announce their intent to caucus with, a party are included in that party’s count. If the caucus decisions of members of the House elected as independents cannot be determined on the date of the election, this market may remain open until the earlier of (i) an announcement from the relevant members of their intents to caucus, or (ii) January 4th, 11:59 PM ET of the following calendar year. If no such announcement is made by January 4th, 11:59 PM ET of the following calendar year, the member will not count towards the seat count of any party.\\\\n\\\\nThe resolution sources for this market will be official information from relevant state electoral authorities, the United States Congress, and a consensus of credible reporting.\\\",\\\"outcomes\\\":\\\"[\\\\\\\"Yes\\\\\\\", \\\\\\\"No\\\\\\\"]\\\",\\\"outcomePrices\\\":\\\"[\\\\\\\"0.915\\\\\\\", \\\\\\\"0.085\\\\\\\"]\\\",\\\"volume\\\":\\\"13597521.551313002\\\",\\\"active\\\":true,\\\"closed\\\":false,\\\"marketMakerAddress\\\":\\\"\\\",\\\"createdAt\\\":\\\"2025-07-11T19:29:37.755178Z\\\",\\\"updatedAt\\\":\\\"2026-10-26T21:08:39.762125Z\\\",\\\"new\\\":false,\\\"featured\\\":false,\\\"submitted_by\\\":\\\"0x91430CaD2d3975766499717fA0D66A78D814E5c5\\\",\\\"archived\\\":false,\\\"resolvedBy\\\":\\\"0x2F5e3684cb1F318ec51b00Edba38d79Ac2c0aA9d\\\",\\\"restricted\\\":true,\\\"groupItemTitle\\\":\\\"Democratic Party\\\",\\\"groupItemThreshold\\\":\\\"0\\\",\\\"questionID\\\":\\\"0xd4ec843b5228dfe0779147cf13ca9954bc22edc63876954dc2fb95fcee42ef00\\\",\\\"enableOrderBook\\\":true,\\\"orderPriceMinTickSize\\\":0.01,\\\"orderMinSize\\\":5,\\\"volumeNum\\\":13597521.551313002,\\\"liquidityNum\\\":3937340.0178,\\\"endDateIso\\\":\\\"2026-11-04\\\",\\\"startDateIso\\\":\\\"2025-07-11\\\",\\\"hasReviewedDates\\\":true,\\\"volume24hr\\\":694370.5500999999,\\\"volume1wk\\\":2831434.127709,\\\"volume1mo\\\":6506250.132995,\\\"volume1yr\\\":13550539.799192997,\\\"clobTokenIds\\\":\\\"[\\\\\\\"83247781037352156539108067944461291821683755894607244160607042790356561625563\\\\\\\", \\\\\\\"33156410999665902694791064431724433042010245771106314074312009703157423879038\\\\\\\"]\\\",\\\"comboStatus\\\":\\\"disabled\\\",\\\"umaBond\\\":\\\"10000\\\",\\\"umaReward\\\":\\\"10\\\",\\\"volume24hrClob\\\":694370.5500999999,\\\"volume1wkClob\\\":2831434.127709,\\\"volume1moClob\\\":6506250.132995,\\\"volume1yrClob\\\":13550539.799192997,\\\"volumeClob\\\":13597521.551313002,\\\"liquidityClob\\\":3937340.0178,\\\"makerBaseFee\\\":1000,\\\"takerBaseFee\\\":1000,\\\"customLiveness\\\":0,\\\"acceptingOrders\\\":true,\\\"negRisk\\\":true,\\\"negRiskMarketID\\\":\\\"0xd4ec843b5228dfe0779147cf13ca9954bc22edc63876954dc2fb95fcee42ef00\\\",\\\"negRiskRequestID\\\":\\\"0x5410be0dba03c48613a43de966637a38a4645a2c085d3e04ec1adbebbd01e7b3\\\",\\\"events\\\":[{\\\"id\\\":\\\"32225\\\",\\\"ticker\\\":\\\"which-party-will-win-the-house-in-2026\\\",\\\"slug\\\":\\\"which-party-will-win-the-house-in-2026\\\",\\\"title\\\":\\\"Which party will win the House in 2026?\\\",\\\"description\\\":\\\"This market will resolve according to the party that wins control of the United States House of Representatives in the 2026 United States midterm election.\\\\n\\\\nA party wins control of the United States House of Representatives if it wins a majority of the chamber’s voting seats. If no party wins a majority of voting seats, the chamber will be deemed controlled by the party with which the first elected Speaker of the House of the Congress that convenes after the 2026 midterm election is affiliated.\\\\n\\\\nThe following rules govern the counting of seats for determining which party wins control of the chamber.\\\\n\\\\nAll House elections in the 2026 United States midterm election that elect voting members and determine representation in the upcoming 120th Congress are included. Where a seat is decided by a runoff, the runoff result will determine attribution of that seat.\\\\n\\\\nSeats are attributed to the party under which the member was elected. If a member-elect changes party affiliation, or vacates their seat, between election day and the formal organization of Congress, the seat is attributed to the party under which the member was elected.\\\\n\\\\nHouse members elected as independents who formally caucus with, or, for newly elected members, who announce their intent to caucus with, a party are included in that party’s count. If the caucus decisions of members of the House elected as independents cannot be determined on the date of the election, this market may remain open until the earlier of (i) an announcement from the relevant members of their intents to caucus, or (ii) January 4th, 11:59 PM ET of the following calendar year. If no such announcement is made by January 4th, 11:59 PM ET of the following calendar year, the member will not count towards the seat count of any party.\\\\n\\\\nThe resolution sources for this market will be official information from relevant state electoral authorities, the United States Congress, and a consensus of credible reporting.\\\",\\\"resolutionSource\\\":\\\"\\\",\\\"startDate\\\":\\\"2025-07-11T19:50:44.885Z\\\",\\\"creationDate\\\":\\\"2025-07-11T19:53:05.123806Z\\\",\\\"endDate\\\":\\\"2026-11-04T04:59:00Z\\\",\\\"image\\\":\\\"https://polymarket-upload.s3.us-east-2.amazonaws.com/which-party-will-win-the-house-in-2026-lO2ezdY5lP2i.png\\\",\\\"icon\\\":\\\"https://polymarket-upload.s3.us-east-2.amazonaws.com/which-party-will-win-the-house-in-2026-lO2ezdY5lP2i.png\\\",\\\"active\\\":true,\\\"closed\\\":false,\\\"archived\\\":false,\\\"new\\\":false,\\\"featured\\\":true,\\\"restricted\\\":true,\\\"liquidity\\\":6836474.0357,\\\"volume\\\":23772059.299967002,\\\"openInterest\\\":10357171.933857,\\\"sortBy\\\":\\\"price\\\",\\\"createdAt\\\":\\\"2025-07-11T19:29:37.155683Z\\\",\\\"updatedAt\\\":\\\"2026-10-26T21:08:53.266297Z\\\",\\\"competitive\\\":0.8530785472072341,\\\"volume24hr\\\":1679669.53014,\\\"volume1wk\\\":5120665.67653,\\\"volume1mo\\\":11391512.190335,\\\"volume1yr\\\":23664030.652772997,\\\"enableOrderBook\\\":true,\\\"liquidityClob\\\":6836474.0357,\\\"negRisk\\\":true,\\\"negRiskMarketID\\\":\\\"0xd4ec843b5228dfe0779147cf13ca9954bc22edc63876954dc2fb95fcee42ef00\\\",\\\"commentCount\\\":30,\\\"cyom\\\":false,\\\"showAllOutcomes\\\":true,\\\"showMarketImages\\\":true,\\\"enableNegRisk\\\":true,\\\"automaticallyActive\\\":true,\\\"startTime\\\":\\\"2026-11-03T12:00:00Z\\\",\\\"gmpChartMode\\\":\\\"default\\\",\\\"negRiskAugmented\\\":true,\\\"countryName\\\":\\\"U.S.\\\",\\\"electionType\\\":\\\"House\\\",\\\"featuredOrder\\\":4,\\\"estimateValue\\\":false,\\\"cumulativeMarkets\\\":false,\\\"pendingDeployment\\\":false,\\\"deploying\\\":false,\\\"deployingTimestamp\\\":\\\"2025-07-11T19:47:25.402219Z\\\",\\\"eventMetadata\\\":{\\\"context_requires_regen\\\":true},\\\"version\\\":\\\"v1\\\"}],\\\"ready\\\":false,\\\"funded\\\":false,\\\"acceptingOrdersTimestamp\\\":\\\"2025-07-11T19:50:22Z\\\",\\\"cyom\\\":false,\\\"competitive\\\":0.8530785472072341,\\\"approved\\\":true,\\\"clobRewards\\\":[{\\\"id\\\":\\\"2866189\\\",\\\"conditionId\\\":\\\"0xd5d9fc47718bd553592d126b1fa5e87183d27f3936975b0c04cc0f2dec1f1bb4\\\",\\\"assetAddress\\\":\\\"0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174\\\",\\\"rewardsAmount\\\":0,\\\"rewardsDailyRate\\\":214,\\\"startDate\\\":\\\"2026-10-26\\\",\\\"endDate\\\":\\\"2500-12-31\\\"}],\\\"rewardsMinSize\\\":50,\\\"rewardsMaxSpread\\\":4.5,\\\"spread\\\":0.01,\\\"oneMonthPriceChange\\\":-0.01,\\\"oneYearPriceChange\\\":0.335,\\\"lastTradePrice\\\":0.92,\\\"bestBid\\\":0.91,\\\"bestAsk\\\":0.92,\\\"automaticallyActive\\\":true,\\\"clearBookOnStart\\\":true,\\\"seriesColor\\\":\\\"blue\\\",\\\"showGmpSeries\\\":false,\\\"showGmpOutcome\\\":false,\\\"manualActivation\\\":false,\\\"negRiskOther\\\":false,\\\"umaResolutionStatuses\\\":\\\"[]\\\",\\\"pendingDeployment\\\":false,\\\"deploying\\\":false,\\\"deployingTimestamp\\\":\\\"2025-07-11T19:48:58.056658Z\\\",\\\"rfqEnabled\\\":false,\\\"holdingRewardsEnabled\\\":true,\\\"feesEnabled\\\":true,\\\"feeType\\\":\\\"zero_fees\\\",\\\"feeSchedule\\\":{\\\"exponent\\\":1,\\\"rate\\\":0,\\\"takerOnly\\\":true,\\\"rebateRate\\\":0},\\\"fallbackResolutionType\\\":\\\"none\\\",\\\"version\\\":\\\"v1\\\"}]\\n\",\"raw_sha256\":\"c09bcfd830e40c7290d3c44d77ce74dfb56b7ad62307ed03fe6bedb521475efd\",\"received_at_utc\":\"2026-10-26T21:10:40.775221Z\",\"request_started_at_utc\":\"2026-10-26T21:10:40.723555Z\",\"request_url\":\"https://gamma-api.polymarket.com/markets?active=true&closed=false&limit=1&order=liquidity&ascending=false\",\"schema_version\":1,\"venue\":\"polymarket\"}",
+          "raw_sha256": "c09bcfd830e40c7290d3c44d77ce74dfb56b7ad62307ed03fe6bedb521475efd",
+          "received_at_utc": "2026-10-26T21:10:40.775221+00:00",
+          "row_sha256": "969360d61ae6780ff99e6f78a3a87772da6c8fde935d9cbeab08a71b4e2194a2",
+          "venue": "polymarket"
+        },
+        {
+          "normalized": {
+            "asks": [
+              {
+                "exchange_timestamp_utc": null,
+                "price": "0.99",
+                "quantity": "1707860.06"
+              },
+              {
+                "exchange_timestamp_utc": null,
+                "price": "0.98",
+                "quantity": "66302.19"
+              },
+              {
+                "exchange_timestamp_utc": null,
+                "price": "0.97",
+                "quantity": "31995.69"
+              },
+              {
+                "exchange_timestamp_utc": null,
+                "price": "0.96",
+                "quantity": "7478.38"
+              },
+              {
+                "exchange_timestamp_utc": null,
+                "price": "0.95",
+                "quantity": "2444086.48"
+              },
+              {
+                "exchange_timestamp_utc": null,
+                "price": "0.94",
+                "quantity": "3168560.16"
+              },
+              {
+                "exchange_timestamp_utc": null,
+                "price": "0.93",
+                "quantity": "1695837.87"
+              },
+              {
+                "exchange_timestamp_utc": null,
+                "price": "0.92",
+                "quantity": "11334.79"
+              }
+            ],
+            "bids": [
+              {
+                "exchange_timestamp_utc": null,
+                "price": "0.01",
+                "quantity": "2000049.73"
+              },
+              {
+                "exchange_timestamp_utc": null,
+                "price": "0.02",
+                "quantity": "1000000"
+              },
+              {
+                "exchange_timestamp_utc": null,
+                "price": "0.03",
+                "quantity": "233883.23"
+              },
+              {
+                "exchange_timestamp_utc": null,
+                "price": "0.04",
+                "quantity": "90000"
+              },
+              {
+                "exchange_timestamp_utc": null,
+                "price": "0.05",
+                "quantity": "152000"
+              },
+              {
+                "exchange_timestamp_utc": null,
+                "price": "0.06",
+                "quantity": "30000"
+              },
+              {
+                "exchange_timestamp_utc": null,
+                "price": "0.07",
+                "quantity": "69999.99"
+              },
+              {
+                "exchange_timestamp_utc": null,
+                "price": "0.08",
+                "quantity": "5000"
+              },
+              {
+                "exchange_timestamp_utc": null,
+                "price": "0.09",
+                "quantity": "227802.77"
+              },
+              {
+                "exchange_timestamp_utc": null,
+                "price": "0.1",
+                "quantity": "20000"
+              }
+            ],
+            "exchange_timestamp_semantics": "CLOB book timestamp; source precision and matching-engine simultaneity are not established",
+            "exchange_timestamp_utc": "2026-10-26T21:10:36.905000Z",
+            "freshness_limit_ms": null,
+            "native_instrument_id": "83247781037352156539108067944461291821683755894607244160607042790356561625563",
+            "native_market_id": "562802",
+            "price_unit": "USDC per outcome share",
+            "provenance": {
+              "adapter_version": "frontier-polymarket-1",
+              "clock_uncertainty_ms": null,
+              "exchange_timestamp_semantics": "CLOB response timestamp",
+              "exchange_timestamp_utc": "2026-10-26T21:10:36.905000Z",
+              "observation_id": "66d8d0403d2b9022b0e24886e1ce69dad75d1e7d1f53af4f98546bd61d3ddad9",
+              "persisted_at_utc": null,
+              "processed_at_utc": "2026-10-26T21:10:41.783569Z",
+              "raw_sha256": "1937845756646a589dbec9353badde9520418d716d95dadacd42e07051855bf6",
+              "request_started_at_utc": "2026-10-26T21:10:41.725025Z",
+              "response_received_at_utc": "2026-10-26T21:10:41.783365Z",
+              "source_schema_version": "v1",
+              "source_url": "https://clob.polymarket.com/book?token_id=83247781037352156539108067944461291821683755894607244160607042790356561625563"
+            },
+            "quality_flags": [],
+            "quantity_unit": "share",
+            "received_at_utc": "2026-10-26T21:10:41.783365Z",
+            "schema_version": 1,
+            "venue": "polymarket"
+          },
+          "normalized_json": "{\"asks\":[{\"exchange_timestamp_utc\":null,\"price\":\"0.99\",\"quantity\":\"1707860.06\"},{\"exchange_timestamp_utc\":null,\"price\":\"0.98\",\"quantity\":\"66302.19\"},{\"exchange_timestamp_utc\":null,\"price\":\"0.97\",\"quantity\":\"31995.69\"},{\"exchange_timestamp_utc\":null,\"price\":\"0.96\",\"quantity\":\"7478.38\"},{\"exchange_timestamp_utc\":null,\"price\":\"0.95\",\"quantity\":\"2444086.48\"},{\"exchange_timestamp_utc\":null,\"price\":\"0.94\",\"quantity\":\"3168560.16\"},{\"exchange_timestamp_utc\":null,\"price\":\"0.93\",\"quantity\":\"1695837.87\"},{\"exchange_timestamp_utc\":null,\"price\":\"0.92\",\"quantity\":\"11334.79\"}],\"bids\":[{\"exchange_timestamp_utc\":null,\"price\":\"0.01\",\"quantity\":\"2000049.73\"},{\"exchange_timestamp_utc\":null,\"price\":\"0.02\",\"quantity\":\"1000000\"},{\"exchange_timestamp_utc\":null,\"price\":\"0.03\",\"quantity\":\"233883.23\"},{\"exchange_timestamp_utc\":null,\"price\":\"0.04\",\"quantity\":\"90000\"},{\"exchange_timestamp_utc\":null,\"price\":\"0.05\",\"quantity\":\"152000\"},{\"exchange_timestamp_utc\":null,\"price\":\"0.06\",\"quantity\":\"30000\"},{\"exchange_timestamp_utc\":null,\"price\":\"0.07\",\"quantity\":\"69999.99\"},{\"exchange_timestamp_utc\":null,\"price\":\"0.08\",\"quantity\":\"5000\"},{\"exchange_timestamp_utc\":null,\"price\":\"0.09\",\"quantity\":\"227802.77\"},{\"exchange_timestamp_utc\":null,\"price\":\"0.1\",\"quantity\":\"20000\"}],\"exchange_timestamp_semantics\":\"CLOB book timestamp; source precision and matching-engine simultaneity are not established\",\"exchange_timestamp_utc\":\"2026-10-26T21:10:36.905000Z\",\"freshness_limit_ms\":null,\"native_instrument_id\":\"83247781037352156539108067944461291821683755894607244160607042790356561625563\",\"native_market_id\":\"562802\",\"price_unit\":\"USDC per outcome share\",\"provenance\":{\"adapter_version\":\"frontier-polymarket-1\",\"clock_uncertainty_ms\":null,\"exchange_timestamp_semantics\":\"CLOB response timestamp\",\"exchange_timestamp_utc\":\"2026-10-26T21:10:36.905000Z\",\"observation_id\":\"66d8d0403d2b9022b0e24886e1ce69dad75d1e7d1f53af4f98546bd61d3ddad9\",\"persisted_at_utc\":null,\"processed_at_utc\":\"2026-10-26T21:10:41.783569Z\",\"raw_sha256\":\"1937845756646a589dbec9353badde9520418d716d95dadacd42e07051855bf6\",\"request_started_at_utc\":\"2026-10-26T21:10:41.725025Z\",\"response_received_at_utc\":\"2026-10-26T21:10:41.783365Z\",\"source_schema_version\":\"v1\",\"source_url\":\"https://clob.polymarket.com/book?token_id=83247781037352156539108067944461291821683755894607244160607042790356561625563\"},\"quality_flags\":[],\"quantity_unit\":\"share\",\"received_at_utc\":\"2026-10-26T21:10:41.783365Z\",\"schema_version\":1,\"venue\":\"polymarket\"}",
+          "observation_id": "535ae78e3f4a15edc7e5cc55b7ba0190fad9aabd2cdcd85463dbea74f8449390",
+          "observation_kind": "book_snapshot",
+          "raw": {
+            "adapter_version": "frontier-polymarket-1",
+            "http_status": 200,
+            "observation_kind": "book_snapshot",
+            "raw_body": "{\"market\":\"0xd5d9fc47718bd553592d126b1fa5e87183d27f3936975b0c04cc0f2dec1f1bb4\",\"asset_id\":\"83247781037352156539108067944461291821683755894607244160607042790356561625563\",\"timestamp\":\"1793049036905\",\"hash\":\"e168e7eac9dedb8cca46063a3dbdf02a2ee6e66e\",\"bids\":[{\"price\":\"0.01\",\"size\":\"2000049.73\"},{\"price\":\"0.02\",\"size\":\"1000000\"},{\"price\":\"0.03\",\"size\":\"233883.23\"},{\"price\":\"0.04\",\"size\":\"90000\"},{\"price\":\"0.05\",\"size\":\"152000\"},{\"price\":\"0.06\",\"size\":\"30000\"},{\"price\":\"0.07\",\"size\":\"69999.99\"},{\"price\":\"0.08\",\"size\":\"5000\"},{\"price\":\"0.09\",\"size\":\"227802.77\"},{\"price\":\"0.1\",\"size\":\"20000\"},{\"price\":\"0.11\",\"size\":\"5.15\"},{\"price\":\"0.14\",\"size\":\"17857.14\"},{\"price\":\"0.15\",\"size\":\"1500\"},{\"price\":\"0.19\",\"size\":\"10526.31\"},{\"price\":\"0.25\",\"size\":\"17537.5\"},{\"price\":\"0.27\",\"size\":\"16407\"},{\"price\":\"0.28\",\"size\":\"357\"},{\"price\":\"0.29\",\"size\":\"14461.21\"},{\"price\":\"0.33\",\"size\":\"12130.68\"},{\"price\":\"0.36\",\"size\":\"5555\"},{\"price\":\"0.37\",\"size\":\"10304.04\"},{\"price\":\"0.39\",\"size\":\"10000\"},{\"price\":\"0.4\",\"size\":\"9000\"},{\"price\":\"0.41\",\"size\":\"6509.15\"},{\"price\":\"0.45\",\"size\":\"11061.94\"},{\"price\":\"0.49\",\"size\":\"4279.34\"},{\"price\":\"0.5\",\"size\":\"235\"},{\"price\":\"0.52\",\"size\":\"5000\"},{\"price\":\"0.53\",\"size\":\"3596.7\"},{\"price\":\"0.55\",\"size\":\"5.4\"},{\"price\":\"0.57\",\"size\":\"3344.3\"},{\"price\":\"0.58\",\"size\":\"50\"},{\"price\":\"0.6\",\"size\":\"25\"},{\"price\":\"0.61\",\"size\":\"2500\"},{\"price\":\"0.62\",\"size\":\"5000\"},{\"price\":\"0.63\",\"size\":\"952\"},{\"price\":\"0.64\",\"size\":\"13.09\"},{\"price\":\"0.7\",\"size\":\"100\"},{\"price\":\"0.72\",\"size\":\"347\"},{\"price\":\"0.75\",\"size\":\"6.66\"},{\"price\":\"0.76\",\"size\":\"6.57\"},{\"price\":\"0.79\",\"size\":\"6.31\"},{\"price\":\"0.8\",\"size\":\"100\"},{\"price\":\"0.81\",\"size\":\"185\"},{\"price\":\"0.82\",\"size\":\"12.18\"},{\"price\":\"0.83\",\"size\":\"1250\"},{\"price\":\"0.85\",\"size\":\"558.95\"},{\"price\":\"0.86\",\"size\":\"78.24\"},{\"price\":\"0.87\",\"size\":\"618.48\"},{\"price\":\"0.88\",\"size\":\"16292.24\"},{\"price\":\"0.89\",\"size\":\"82382.76\"},{\"price\":\"0.9\",\"size\":\"784880.88\"},{\"price\":\"0.91\",\"size\":\"2802631.48\"}],\"asks\":[{\"price\":\"0.99\",\"size\":\"1707860.06\"},{\"price\":\"0.98\",\"size\":\"66302.19\"},{\"price\":\"0.97\",\"size\":\"31995.69\"},{\"price\":\"0.96\",\"size\":\"7478.38\"},{\"price\":\"0.95\",\"size\":\"2444086.48\"},{\"price\":\"0.94\",\"size\":\"3168560.16\"},{\"price\":\"0.93\",\"size\":\"1695837.87\"},{\"price\":\"0.92\",\"size\":\"11334.79\"}],\"min_order_size\":\"5\",\"tick_size\":\"0.01\",\"neg_risk\":true,\"last_trade_price\":\"0.080\"}\n",
+            "raw_sha256": "1937845756646a589dbec9353badde9520418d716d95dadacd42e07051855bf6",
+            "received_at_utc": "2026-10-26T21:10:41.783365Z",
+            "request_started_at_utc": "2026-10-26T21:10:41.725025Z",
+            "request_url": "https://clob.polymarket.com/book?token_id=83247781037352156539108067944461291821683755894607244160607042790356561625563",
+            "schema_version": 1,
+            "venue": "polymarket"
+          },
+          "raw_json": "{\"adapter_version\":\"frontier-polymarket-1\",\"http_status\":200,\"observation_kind\":\"book_snapshot\",\"raw_body\":\"{\\\"market\\\":\\\"0xd5d9fc47718bd553592d126b1fa5e87183d27f3936975b0c04cc0f2dec1f1bb4\\\",\\\"asset_id\\\":\\\"83247781037352156539108067944461291821683755894607244160607042790356561625563\\\",\\\"timestamp\\\":\\\"1793049036905\\\",\\\"hash\\\":\\\"e168e7eac9dedb8cca46063a3dbdf02a2ee6e66e\\\",\\\"bids\\\":[{\\\"price\\\":\\\"0.01\\\",\\\"size\\\":\\\"2000049.73\\\"},{\\\"price\\\":\\\"0.02\\\",\\\"size\\\":\\\"1000000\\\"},{\\\"price\\\":\\\"0.03\\\",\\\"size\\\":\\\"233883.23\\\"},{\\\"price\\\":\\\"0.04\\\",\\\"size\\\":\\\"90000\\\"},{\\\"price\\\":\\\"0.05\\\",\\\"size\\\":\\\"152000\\\"},{\\\"price\\\":\\\"0.06\\\",\\\"size\\\":\\\"30000\\\"},{\\\"price\\\":\\\"0.07\\\",\\\"size\\\":\\\"69999.99\\\"},{\\\"price\\\":\\\"0.08\\\",\\\"size\\\":\\\"5000\\\"},{\\\"price\\\":\\\"0.09\\\",\\\"size\\\":\\\"227802.77\\\"},{\\\"price\\\":\\\"0.1\\\",\\\"size\\\":\\\"20000\\\"},{\\\"price\\\":\\\"0.11\\\",\\\"size\\\":\\\"5.15\\\"},{\\\"price\\\":\\\"0.14\\\",\\\"size\\\":\\\"17857.14\\\"},{\\\"price\\\":\\\"0.15\\\",\\\"size\\\":\\\"1500\\\"},{\\\"price\\\":\\\"0.19\\\",\\\"size\\\":\\\"10526.31\\\"},{\\\"price\\\":\\\"0.25\\\",\\\"size\\\":\\\"17537.5\\\"},{\\\"price\\\":\\\"0.27\\\",\\\"size\\\":\\\"16407\\\"},{\\\"price\\\":\\\"0.28\\\",\\\"size\\\":\\\"357\\\"},{\\\"price\\\":\\\"0.29\\\",\\\"size\\\":\\\"14461.21\\\"},{\\\"price\\\":\\\"0.33\\\",\\\"size\\\":\\\"12130.68\\\"},{\\\"price\\\":\\\"0.36\\\",\\\"size\\\":\\\"5555\\\"},{\\\"price\\\":\\\"0.37\\\",\\\"size\\\":\\\"10304.04\\\"},{\\\"price\\\":\\\"0.39\\\",\\\"size\\\":\\\"10000\\\"},{\\\"price\\\":\\\"0.4\\\",\\\"size\\\":\\\"9000\\\"},{\\\"price\\\":\\\"0.41\\\",\\\"size\\\":\\\"6509.15\\\"},{\\\"price\\\":\\\"0.45\\\",\\\"size\\\":\\\"11061.94\\\"},{\\\"price\\\":\\\"0.49\\\",\\\"size\\\":\\\"4279.34\\\"},{\\\"price\\\":\\\"0.5\\\",\\\"size\\\":\\\"235\\\"},{\\\"price\\\":\\\"0.52\\\",\\\"size\\\":\\\"5000\\\"},{\\\"price\\\":\\\"0.53\\\",\\\"size\\\":\\\"3596.7\\\"},{\\\"price\\\":\\\"0.55\\\",\\\"size\\\":\\\"5.4\\\"},{\\\"price\\\":\\\"0.57\\\",\\\"size\\\":\\\"3344.3\\\"},{\\\"price\\\":\\\"0.58\\\",\\\"size\\\":\\\"50\\\"},{\\\"price\\\":\\\"0.6\\\",\\\"size\\\":\\\"25\\\"},{\\\"price\\\":\\\"0.61\\\",\\\"size\\\":\\\"2500\\\"},{\\\"price\\\":\\\"0.62\\\",\\\"size\\\":\\\"5000\\\"},{\\\"price\\\":\\\"0.63\\\",\\\"size\\\":\\\"952\\\"},{\\\"price\\\":\\\"0.64\\\",\\\"size\\\":\\\"13.09\\\"},{\\\"price\\\":\\\"0.7\\\",\\\"size\\\":\\\"100\\\"},{\\\"price\\\":\\\"0.72\\\",\\\"size\\\":\\\"347\\\"},{\\\"price\\\":\\\"0.75\\\",\\\"size\\\":\\\"6.66\\\"},{\\\"price\\\":\\\"0.76\\\",\\\"size\\\":\\\"6.57\\\"},{\\\"price\\\":\\\"0.79\\\",\\\"size\\\":\\\"6.31\\\"},{\\\"price\\\":\\\"0.8\\\",\\\"size\\\":\\\"100\\\"},{\\\"price\\\":\\\"0.81\\\",\\\"size\\\":\\\"185\\\"},{\\\"price\\\":\\\"0.82\\\",\\\"size\\\":\\\"12.18\\\"},{\\\"price\\\":\\\"0.83\\\",\\\"size\\\":\\\"1250\\\"},{\\\"price\\\":\\\"0.85\\\",\\\"size\\\":\\\"558.95\\\"},{\\\"price\\\":\\\"0.86\\\",\\\"size\\\":\\\"78.24\\\"},{\\\"price\\\":\\\"0.87\\\",\\\"size\\\":\\\"618.48\\\"},{\\\"price\\\":\\\"0.88\\\",\\\"size\\\":\\\"16292.24\\\"},{\\\"price\\\":\\\"0.89\\\",\\\"size\\\":\\\"82382.76\\\"},{\\\"price\\\":\\\"0.9\\\",\\\"size\\\":\\\"784880.88\\\"},{\\\"price\\\":\\\"0.91\\\",\\\"size\\\":\\\"2802631.48\\\"}],\\\"asks\\\":[{\\\"price\\\":\\\"0.99\\\",\\\"size\\\":\\\"1707860.06\\\"},{\\\"price\\\":\\\"0.98\\\",\\\"size\\\":\\\"66302.19\\\"},{\\\"price\\\":\\\"0.97\\\",\\\"size\\\":\\\"31995.69\\\"},{\\\"price\\\":\\\"0.96\\\",\\\"size\\\":\\\"7478.38\\\"},{\\\"price\\\":\\\"0.95\\\",\\\"size\\\":\\\"2444086.48\\\"},{\\\"price\\\":\\\"0.94\\\",\\\"size\\\":\\\"3168560.16\\\"},{\\\"price\\\":\\\"0.93\\\",\\\"size\\\":\\\"1695837.87\\\"},{\\\"price\\\":\\\"0.92\\\",\\\"size\\\":\\\"11334.79\\\"}],\\\"min_order_size\\\":\\\"5\\\",\\\"tick_size\\\":\\\"0.01\\\",\\\"neg_risk\\\":true,\\\"last_trade_price\\\":\\\"0.080\\\"}\\n\",\"raw_sha256\":\"1937845756646a589dbec9353badde9520418d716d95dadacd42e07051855bf6\",\"received_at_utc\":\"2026-10-26T21:10:41.783365Z\",\"request_started_at_utc\":\"2026-10-26T21:10:41.725025Z\",\"request_url\":\"https://clob.polymarket.com/book?token_id=83247781037352156539108067944461291821683755894607244160607042790356561625563\",\"schema_version\":1,\"venue\":\"polymarket\"}",
+          "raw_sha256": "1937845756646a589dbec9353badde9520418d716d95dadacd42e07051855bf6",
+          "received_at_utc": "2026-10-26T21:10:41.783365+00:00",
+          "row_sha256": "9a39188381e46b7593966f04461e0b6d91ef203bc882d5275ba153be0fd5b74b",
+          "venue": "polymarket"
+        }
+      ],
+      "response": {
+        "book_query": {
+          "items": [
+            {
+              "asks": [
+                {
+                  "exchange_timestamp_utc": null,
+                  "price": "0.99",
+                  "quantity": "1707860.06"
+                },
+                {
+                  "exchange_timestamp_utc": null,
+                  "price": "0.98",
+                  "quantity": "66302.19"
+                },
+                {
+                  "exchange_timestamp_utc": null,
+                  "price": "0.97",
+                  "quantity": "31995.69"
+                },
+                {
+                  "exchange_timestamp_utc": null,
+                  "price": "0.96",
+                  "quantity": "7478.38"
+                },
+                {
+                  "exchange_timestamp_utc": null,
+                  "price": "0.95",
+                  "quantity": "2444086.48"
+                },
+                {
+                  "exchange_timestamp_utc": null,
+                  "price": "0.94",
+                  "quantity": "3168560.16"
+                },
+                {
+                  "exchange_timestamp_utc": null,
+                  "price": "0.93",
+                  "quantity": "1695837.87"
+                },
+                {
+                  "exchange_timestamp_utc": null,
+                  "price": "0.92",
+                  "quantity": "11334.79"
+                }
+              ],
+              "bids": [
+                {
+                  "exchange_timestamp_utc": null,
+                  "price": "0.01",
+                  "quantity": "2000049.73"
+                },
+                {
+                  "exchange_timestamp_utc": null,
+                  "price": "0.02",
+                  "quantity": "1000000"
+                },
+                {
+                  "exchange_timestamp_utc": null,
+                  "price": "0.03",
+                  "quantity": "233883.23"
+                },
+                {
+                  "exchange_timestamp_utc": null,
+                  "price": "0.04",
+                  "quantity": "90000"
+                },
+                {
+                  "exchange_timestamp_utc": null,
+                  "price": "0.05",
+                  "quantity": "152000"
+                },
+                {
+                  "exchange_timestamp_utc": null,
+                  "price": "0.06",
+                  "quantity": "30000"
+                },
+                {
+                  "exchange_timestamp_utc": null,
+                  "price": "0.07",
+                  "quantity": "69999.99"
+                },
+                {
+                  "exchange_timestamp_utc": null,
+                  "price": "0.08",
+                  "quantity": "5000"
+                },
+                {
+                  "exchange_timestamp_utc": null,
+                  "price": "0.09",
+                  "quantity": "227802.77"
+                },
+                {
+                  "exchange_timestamp_utc": null,
+                  "price": "0.1",
+                  "quantity": "20000"
+                }
+              ],
+              "exchange_timestamp_semantics": "CLOB book timestamp; source precision and matching-engine simultaneity are not established",
+              "exchange_timestamp_utc": "2026-10-26T21:10:36.905000Z",
+              "freshness_limit_ms": null,
+              "native_instrument_id": "83247781037352156539108067944461291821683755894607244160607042790356561625563",
+              "native_market_id": "562802",
+              "price_unit": "USDC per outcome share",
+              "provenance": {
+                "adapter_version": "frontier-polymarket-1",
+                "clock_uncertainty_ms": null,
+                "exchange_timestamp_semantics": "CLOB response timestamp",
+                "exchange_timestamp_utc": "2026-10-26T21:10:36.905000Z",
+                "observation_id": "66d8d0403d2b9022b0e24886e1ce69dad75d1e7d1f53af4f98546bd61d3ddad9",
+                "persisted_at_utc": null,
+                "processed_at_utc": "2026-10-26T21:10:41.783569Z",
+                "raw_sha256": "1937845756646a589dbec9353badde9520418d716d95dadacd42e07051855bf6",
+                "request_started_at_utc": "2026-10-26T21:10:41.725025Z",
+                "response_received_at_utc": "2026-10-26T21:10:41.783365Z",
+                "source_schema_version": "v1",
+                "source_url": "https://clob.polymarket.com/book?token_id=83247781037352156539108067944461291821683755894607244160607042790356561625563"
+              },
+              "quality_flags": [],
+              "quantity_unit": "share",
+              "received_at_utc": "2026-10-26T21:10:41.783365Z",
+              "schema_version": 1,
+              "source_observation_record_id": "535ae78e3f4a15edc7e5cc55b7ba0190fad9aabd2cdcd85463dbea74f8449390",
+              "venue": "polymarket"
+            }
+          ],
+          "limit": 1,
+          "offset": 0,
+          "returned": 1
+        },
+        "book_snapshots_stored": 1,
+        "hypothetical_only": true,
+        "market_count": 1,
+        "network_calls_bounded_by": 2,
+        "observation_ids": [
+          "187d2a3e549953f65838c67e6165a4994e001697cb588a4a121c81647d1a2cef"
+        ],
+        "request_count": 2,
+        "request_count_delta": 2,
+        "requested_limit": 1,
+        "source_state": "healthy",
+        "venue": "polymarket"
+      }
+    }
+  }
+}
