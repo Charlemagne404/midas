@@ -642,14 +642,18 @@ def _make_summary(
     code_hash: str,
 ) -> dict[str, Any]:
     processed = state["processed_segment_count"]
+    pending_segment_count = catalog_scan.pending_segment_count - batch_count
+    pending_source_bytes = catalog_scan.pending_source_bytes - batch_bytes
+    if pending_segment_count < 0 or pending_source_bytes < 0:
+        raise ValueError("Finalized-source batch exceeds the pending catalog")
     identity = campaign["identity"]
     window = state["cumulative"]["source_receipt_window_ns"]
     now_ns = time.time_ns()
-    if catalog_scan.pending_segment_count:
+    if pending_segment_count:
         status = "catching_up"
     else:
         status = "current"
-    if catalog_scan.pending_segment_count:
+    if pending_segment_count:
         readiness = "catching_up_finalized_source"
     elif not processed:
         readiness = "waiting_for_finalized_source"
@@ -680,8 +684,8 @@ def _make_summary(
         "catalog_segment_count": catalog_scan.segment_count,
         "empty_finalized_segment_count": catalog_scan.empty_segment_count,
         "processed_segment_count": processed,
-        "pending_segment_count": catalog_scan.pending_segment_count,
-        "pending_source_bytes": catalog_scan.pending_source_bytes,
+        "pending_segment_count": pending_segment_count,
+        "pending_source_bytes": pending_source_bytes,
         "processed_source_bytes": state["processed_source_bytes"],
         "last_processed_ordinal": state["last_ordinal"],
         "last_processed_segment_file": state["last_segment_file"],

@@ -193,6 +193,13 @@ def test_finalized_source_analysis_is_bounded_resumable_and_matches_one_pass(tmp
     first = _run(output, campaign_dir, raw, campaign_hash, max_segments=1)
     assert first["batch_processed_segment_count"] == 1
     assert first["pending_segment_count"] == 3
+    remaining = analysis._read_catalogs(
+        raw,
+        processed_count=1,
+        max_segments=1,
+        max_source_bytes=32 * 1024**2,
+    )
+    assert first["pending_source_bytes"] == remaining.pending_source_bytes
     assert first["active_segment_read"] is False
 
     summary = first
