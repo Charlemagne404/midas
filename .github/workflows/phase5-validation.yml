@@ -135,8 +135,13 @@ jobs:
             midas-phase5-validation bash -c 'exec sleep infinity'
           python3 - <<'PY'
           import json
+          import os
           import subprocess
+          from pathlib import Path
 
+          validation_data = Path(os.environ["RUNNER_TEMP"]) / (
+              f"midas-phase5-data-{os.environ['GITHUB_RUN_ID']}-{os.environ['GITHUB_RUN_ATTEMPT']}"
+          )
           net = json.loads(subprocess.check_output(["docker", "network", "inspect", "midas-phase5-net"]))[0]
           assert net["Internal"] is True, "Docker network is not internal"
           container = json.loads(subprocess.check_output(["docker", "inspect", "midas-phase5-tests"]))[0]
@@ -160,8 +165,8 @@ jobs:
           }
           for mount in binds:
               if mount["Destination"] == "/test-data":
-                  assert mount["RW"] is True and mount["Source"] == validation_data
-                  assert not any(__import__("pathlib").Path(validation_data).iterdir())
+                  assert mount["RW"] is True and Path(mount["Source"]) == validation_data
+                  assert not any(validation_data.iterdir())
               else:
                   assert mount["RW"] is False
           assert all(m["Type"] in {"bind", "tmpfs"} for m in container["Mounts"])
