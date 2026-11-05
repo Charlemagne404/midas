@@ -12,7 +12,7 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { basename, dirname, join, resolve } from 'node:path';
+import { basename, delimiter, dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const webRoot = dirname(fileURLToPath(import.meta.url));
@@ -21,7 +21,7 @@ const python =
   process.env.MIDAS_PYTHON ??
   (existsSync(join(repository, '.venv/bin/python'))
     ? join(repository, '.venv/bin/python')
-    : '/home/charlie/midas/.venv/bin/python');
+    : (process.env.PYTHON ?? 'python3'));
 const temporaryRoot = resolve(tmpdir());
 const browserRoot = resolve(
   process.env.MIDAS_FRONTIER_E2E_ROOT ?? mkdtempSync(join(temporaryRoot, 'midas-browser-')),
@@ -147,7 +147,11 @@ export default defineConfig({
         MIDAS_ARENA_ROOT: arenaRoot,
         MIDAS_FRONTIER_ROOT: frontierRoot,
         MIDAS_REALITY_WORKSPACE: realityRoot,
-        MIDAS_VERITAS_WORKSPACE: repository,
+        MIDAS_VERITAS_WORKSPACE: process.env.MIDAS_VERITAS_WORKSPACE ?? repository,
+        MIDAS_FRONTIER_POLYMARKET_PUBLIC_PROBE_ENABLED: 'false',
+        MIDAS_FRONTIER_KALSHI_PUBLIC_PROBE_ENABLED: 'false',
+        MIDAS_FRONTIER_KRAKEN_PUBLIC_PROBE_ENABLED: 'false',
+        MIDAS_FRONTIER_COINBASE_PUBLIC_PROBE_ENABLED: 'false',
         ...(useSyntheticResourceAdmission
           ? {
               MIDAS_PHASE5_SYNTHETIC_USER_PSI: '1',
@@ -157,7 +161,7 @@ export default defineConfig({
         PYTHONPATH: [
           ...(useSyntheticResourceAdmission ? [phase5TestSupportRoot!] : []),
           join(repository, 'packages'),
-        ].join(':'),
+        ].join(delimiter),
       },
     },
     {

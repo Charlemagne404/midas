@@ -1,57 +1,161 @@
 name: Midas offline verification
 on: [push, pull_request]
+
+permissions:
+  contents: read
+
 jobs:
   python:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    env:
+      MIDAS_MODE: demo
+      MIDAS_RUNTIME_ROOT: ${{ runner.temp }}/midas-ci-${{ github.run_id }}-${{ github.run_attempt }}/runtime
+      MIDAS_DATABASE_URL: sqlite+aiosqlite:///${{ runner.temp }}/midas-ci-${{ github.run_id }}-${{ github.run_attempt }}/runtime/paper.sqlite3
+      MIDAS_RECORDING_ROOT: ${{ runner.temp }}/midas-ci-${{ github.run_id }}-${{ github.run_attempt }}/recordings
+      MIDAS_LABORATORY_ROOT: ${{ runner.temp }}/midas-ci-${{ github.run_id }}-${{ github.run_attempt }}/laboratory
+      MIDAS_ARENA_ROOT: ${{ runner.temp }}/midas-ci-${{ github.run_id }}-${{ github.run_attempt }}/arena
+      MIDAS_FRONTIER_ROOT: ${{ runner.temp }}/midas-ci-${{ github.run_id }}-${{ github.run_attempt }}/frontier
+      MIDAS_REALITY_WORKSPACE: ${{ runner.temp }}/midas-ci-${{ github.run_id }}-${{ github.run_attempt }}/reality
+      MIDAS_VERITAS_WORKSPACE: ${{ github.workspace }}
+      MIDAS_FRONTIER_POLYMARKET_PUBLIC_PROBE_ENABLED: "false"
+      MIDAS_FRONTIER_KALSHI_PUBLIC_PROBE_ENABLED: "false"
+      MIDAS_FRONTIER_KRAKEN_PUBLIC_PROBE_ENABLED: "false"
+      MIDAS_FRONTIER_COINBASE_PUBLIC_PROBE_ENABLED: "false"
+      TMPDIR: ${{ runner.temp }}
+      OMP_NUM_THREADS: "1"
+      OPENBLAS_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: astral-sh/setup-uv@v6
         with:
           version: "0.13.0"
+          enable-cache: true
       - run: uv python install 3.12
-      - run: uv sync --frozen
-      - run: uv run ruff check packages apps/api tests infra scripts
-      - run: uv run ruff format --check packages apps/api tests infra scripts
+      - name: Prepare disposable backend roots
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/midas-ci-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          test ! -e "$root"
+          mkdir -p "$root"
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+
+          run_id = f"midas-ci-{os.environ['GITHUB_RUN_ID']}-{os.environ['GITHUB_RUN_ATTEMPT']}"
+          root = (Path(os.environ["RUNNER_TEMP"]) / run_id).resolve()
+          names = (
+              "MIDAS_RUNTIME_ROOT",
+              "MIDAS_RECORDING_ROOT",
+              "MIDAS_LABORATORY_ROOT",
+              "MIDAS_ARENA_ROOT",
+              "MIDAS_FRONTIER_ROOT",
+              "MIDAS_REALITY_WORKSPACE",
+          )
+          for name in names:
+              path = Path(os.environ[name]).resolve()
+              path.relative_to(root)
+              path.mkdir(parents=True, exist_ok=True)
+          prefix = "sqlite+aiosqlite:///"
+          url = os.environ["MIDAS_DATABASE_URL"]
+          if not url.startswith(prefix):
+              raise SystemExit("CI database must use a disposable SQLite file")
+          database = Path(url.removeprefix(prefix)).resolve()
+          database.relative_to(root)
+          if database.exists():
+              raise SystemExit("CI SQLite database path is not fresh")
+          source_workspace = Path(os.environ["MIDAS_VERITAS_WORKSPACE"]).resolve()
+          if source_workspace != Path(os.environ["GITHUB_WORKSPACE"]).resolve():
+              raise SystemExit("Veritas source evidence must come from the disposable CI checkout")
+          if os.environ["MIDAS_MODE"] != "demo":
+              raise SystemExit("CI runtime is not in demo mode")
+          print(f"Runtime and SQLite paths are confined to disposable root {root}")
+          PY
+      - run: uv sync --frozen --group arena-rl
+      - run: uv run ruff check packages apps/api tests infra scripts .github/ci-test-support
+      - run: uv run ruff format --check packages apps/api tests infra scripts .github/ci-test-support
       - run: uv run mypy packages/midas apps/api
-      - run: uv run pytest -q
-      - run: uv run python scripts/replay.py
+      - name: Full backend regression suite
+        run: uv run pytest -q
+      - name: Offline synthetic replay
+        run: uv run python scripts/replay.py
+
   web:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: "22"
       - run: corepack enable
       - run: pnpm install --frozen-lockfile
       - run: pnpm format:check
       - run: pnpm lint
       - run: pnpm typecheck
-      - run: pnpm test
+      - name: Frontend component tests
+        run: pnpm --dir apps/web exec vitest run --maxWorkers=2 --minWorkers=1
       - run: pnpm build
+
   browser:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      TMPDIR: ${{ runner.temp }}
+      MIDAS_PHASE5_SYNTHETIC_USER_PSI: "1"
+      MIDAS_PHASE5_TEST_SUPPORT_ROOT: ${{ github.workspace }}/.github/ci-test-support
+      OMP_NUM_THREADS: "1"
+      OPENBLAS_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: "22"
       - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.13.0"
+          enable-cache: true
       - run: uv python install 3.12
-      - run: uv sync --frozen
+      - run: uv sync --frozen --group arena-rl
       - run: corepack enable
       - run: pnpm install --frozen-lockfile
       - run: pnpm --dir apps/web exec playwright install --with-deps chromium
-      - run: pnpm test:e2e
+      - name: Run standard browser suite with isolated synthetic resource PSI
+        run: pnpm --dir apps/web exec playwright test --workers=1
+      - name: Run captured Frontier browser coverage
+        env:
+          MIDAS_FRONTIER_E2E_CAPTURED: "1"
+        run: >-
+          pnpm --dir apps/web exec playwright test --workers=1
+          --grep 'Frontier renders captured public market|Frontier deterministically replays captured books|Frontier primary views fit a narrow viewport'
+      - name: Run seeded Frontier browser coverage
+        env:
+          MIDAS_SEED_FRONTIER_E2E: "1"
+        run: >-
+          pnpm --dir apps/web exec playwright test --workers=1
+          --grep 'seeded Frontier history pages|seeded Frontier discovery artifact'
+      - name: Run isolated Reality browser coverage
+        run: pnpm --dir apps/web exec playwright test --config playwright.reality.config.ts --workers=1
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: browser-artifacts
           path: |
-            apps/web/test-results
-            docs/dashboard-smoke.png
+            ${{ runner.temp }}/midas-browser-*/test-results
+            ${{ runner.temp }}/midas-reality-browser-*/test-results
+          if-no-files-found: ignore
+
   postgres:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
     services:
       postgres:
         image: postgres:17-alpine
@@ -59,19 +163,41 @@ jobs:
           POSTGRES_USER: midas
           POSTGRES_PASSWORD: midas_local
           POSTGRES_DB: midas_ci
-        ports: ['5432:5432']
+        ports: ["5432:5432"]
         options: >-
           --health-cmd "pg_isready -U midas -d midas_ci"
           --health-interval 5s --health-timeout 3s --health-retries 10
     env:
+      MIDAS_MODE: demo
       MIDAS_DATABASE_URL: postgresql+asyncpg://midas:midas_local@localhost:5432/midas_ci
+      MIDAS_RUNTIME_ROOT: ${{ runner.temp }}/midas-postgres-${{ github.run_id }}-${{ github.run_attempt }}/runtime
+      MIDAS_RECORDING_ROOT: ${{ runner.temp }}/midas-postgres-${{ github.run_id }}-${{ github.run_attempt }}/recordings
+      MIDAS_LABORATORY_ROOT: ${{ runner.temp }}/midas-postgres-${{ github.run_id }}-${{ github.run_attempt }}/laboratory
+      MIDAS_ARENA_ROOT: ${{ runner.temp }}/midas-postgres-${{ github.run_id }}-${{ github.run_attempt }}/arena
+      MIDAS_FRONTIER_ROOT: ${{ runner.temp }}/midas-postgres-${{ github.run_id }}-${{ github.run_attempt }}/frontier
+      MIDAS_REALITY_WORKSPACE: ${{ runner.temp }}/midas-postgres-${{ github.run_id }}-${{ github.run_attempt }}/reality
+      MIDAS_VERITAS_WORKSPACE: ${{ runner.temp }}/midas-postgres-${{ github.run_id }}-${{ github.run_attempt }}/veritas
+      MIDAS_FRONTIER_POLYMARKET_PUBLIC_PROBE_ENABLED: "false"
+      MIDAS_FRONTIER_KALSHI_PUBLIC_PROBE_ENABLED: "false"
+      MIDAS_FRONTIER_KRAKEN_PUBLIC_PROBE_ENABLED: "false"
+      MIDAS_FRONTIER_COINBASE_PUBLIC_PROBE_ENABLED: "false"
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.13.0"
+          enable-cache: true
       - run: uv python install 3.12
+      - name: Prepare disposable migration roots
+        run: mkdir -p "$MIDAS_RUNTIME_ROOT" "$MIDAS_RECORDING_ROOT" "$MIDAS_LABORATORY_ROOT" "$MIDAS_ARENA_ROOT" "$MIDAS_FRONTIER_ROOT" "$MIDAS_REALITY_WORKSPACE" "$MIDAS_VERITAS_WORKSPACE"
       - run: uv sync --frozen
-      - run: uv run alembic upgrade head
-      - run: uv run python scripts/storage_smoke.py
-      - run: uv run pytest tests/integration/test_postgres_paper.py -q
+      - name: Apply migrations to synthetic PostgreSQL
+        run: uv run alembic upgrade head
+      - name: Verify PostgreSQL storage path
+        run: uv run python scripts/storage_smoke.py
+      - name: Verify PostgreSQL paper recovery
+        run: uv run pytest tests/integration/test_postgres_paper.py -q
         env:
           MIDAS_TEST_POSTGRES_URL: postgresql+asyncpg://midas:midas_local@localhost:5432/midas_ci
