@@ -4,8 +4,10 @@ import copy
 import json
 import sqlite3
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
+from midas.reality import shadow_store
 from midas.reality.research_schema import digest
 from midas.reality.shadow_audit import audit
 from midas.reality.shadow_campaign import freeze, freeze_successor, verify
@@ -15,10 +17,20 @@ from midas.reality.shadow_source import Context, Tail
 from midas.reality.shadow_store import Journal
 from midas.reality.shadow_worker import Shadow
 from midas.reality.storage import MAGIC, atomic_json, canonical, describe, file_hash, manifest
-from test_reality_foundry import START, tape
+
+from tests.test_reality_foundry import START, tape
+
+
+def synthetic_disk_headroom(monkeypatch, *, free_bytes=64 * 1024**3):
+    monkeypatch.setattr(
+        shadow_store.shutil,
+        "disk_usage",
+        lambda _path: SimpleNamespace(free=free_bytes),
+    )
 
 
 def setup(tmp_path, monkeypatch, *, gap=None, times=(0, 110, 310, 1010, 5010), only_yes=None):
+    synthetic_disk_headroom(monkeypatch)
     raw = tmp_path / "raw"
     tape(raw, times=times, gap_at=gap, only_yes_at=only_yes)
     training = tmp_path / "training"
@@ -52,6 +64,7 @@ def close(worker):
 
 
 def successor_fixture(tmp_path, monkeypatch):
+    synthetic_disk_headroom(monkeypatch)
     raw = tmp_path / "raw"
     tape(raw, times=(0, 110, 310, 1010, 5010))
     source = Tail(raw)
@@ -614,3 +627,18 @@ def test_corrupt_event_bytes_are_detected_independently(tmp_path):
     with pytest.raises(ValueError, match="hash-chain"):
         store.verify()
     store.close()
+
+
+def test_journal_refuses_to_write_below_its_disk_reserve(tmp_path, monkeypatch):
+    reserve = 1024**3
+    store = Journal(tmp_path, budget=16 * 1024**2, reserve=reserve)
+    monkeypatch.setattr(
+        shadow_store.shutil,
+        "disk_usage",
+        lambda _path: SimpleNamespace(free=reserve + 8 * 1024**2 - 1),
+    )
+    try:
+        with pytest.raises(ValueError, match="free-space reserve breached"):
+            store.check_capacity()
+    finally:
+        store.close()

@@ -4,10 +4,12 @@ import json
 import shutil
 from pathlib import Path
 
-from fastapi import FastAPI
+import pytest
+from fastapi import FastAPI, HTTPException
 from fastapi.testclient import TestClient
 from midas.veritas.coverage_pilot_v2 import record_coverage_pilot_v2
 from midas.veritas.gap_detail_control import run_v2_batch
+from midas.veritas.independent_economics import REFERENCE_VERSION
 
 from apps.api.veritas import (
     GAP_DETAIL_V2_CAMPAIGN_PATH,
@@ -15,9 +17,22 @@ from apps.api.veritas import (
     GAP_DETAIL_V2_SOURCE_ROOT,
     MAX_ARTIFACT_BYTES,
     MAX_LEDGER_ARTIFACT_BYTES,
+    MAX_OBSERVATORY_LATEST_BYTES,
+    _read_latest_observatory_scan,
     coverage_design_audit_overview,
     router,
 )
+
+
+def test_latest_scan_reader_matches_bounded_publication_limit(tmp_path):
+    path = tmp_path / "data" / "veritas-observatory" / "latest-summary.json"
+    path.parent.mkdir(parents=True)
+    path.write_bytes(b" " * (MAX_OBSERVATORY_LATEST_BYTES + 1))
+
+    with pytest.raises(HTTPException) as error:
+        _read_latest_observatory_scan(tmp_path)
+
+    assert error.value.status_code == 503
 
 
 def write_artifact(root: Path, name: str, value: dict) -> None:
@@ -984,8 +999,23 @@ def test_overview_uses_bounded_versioned_evidence_without_raw_paths(tmp_path):
     assert data["execution_sensitivity"]["fee_model_version"] == "veritas-economic-feasibility-v3"
     assert data["execution_sensitivity"]["fee_collection_medium_for_buy"] == "collateral"
     assert data["opportunity_observatory"]["status"] == "not_started"
+    assert data["opportunity_observatory"]["measurement_status"] == "NOT_MEASURED"
+    assert data["opportunity_observatory"]["discovery"]["selected_market_observations"] is None
+    assert data["opportunity_observatory"]["opportunity"]["positive_top_gross_pairs"] is None
     assert data["finalized_reality_source"]["status"] == "not_started"
     assert "source_root" not in response.text
+
+
+def test_baseline_policy_aggregation_does_not_treat_empty_data_as_all_abstained():
+    from apps.api.veritas import _baseline_policy_summary
+
+    missing = _baseline_policy_summary({}, decisions=10)
+    measured = _baseline_policy_summary({"policy-a": {"abstain": 10}}, decisions=10)
+
+    assert missing["measurement_status"] == "NOT_MEASURED"
+    assert missing["all_abstained"] is None
+    assert measured["measurement_status"] == "MEASURED"
+    assert measured["all_abstained"] is True
 
 
 def test_overview_uses_hash_receipted_current_execution_sensitivity(tmp_path):
@@ -1663,7 +1693,7 @@ def test_overview_exposes_incremental_public_observatory_summary(tmp_path):
     data_dir.mkdir(parents=True)
     summary = {
         "schema_version": 1,
-        "analysis_version": "veritas-finalized-snapshot-analysis-v1",
+        "analysis_version": "veritas-finalized-snapshot-analysis-v6",
         "updated_at_utc": "2026-10-15T06:00:00+00:00",
         "processed_snapshot_count": 2,
         "pending_snapshot_count": 0,
@@ -1713,6 +1743,42 @@ def test_overview_exposes_incremental_public_observatory_summary(tmp_path):
             "top_edge_state_count": 70,
             "minimum_top_edge_per_share": "-0.5",
             "maximum_top_edge_per_share": "-0.001",
+        },
+    }
+    legacy_reference_version = "veritas-independent-economic-reference-v1"
+    summary["independent_reference_version"] = REFERENCE_VERSION
+    summary["independent_economic_by_reference_version"] = {
+        legacy_reference_version: {
+            "status": "MEASURED",
+            "processed_snapshot_count": 99,
+            "selected_market_observations": 999,
+            "observed_pair_observations": 999,
+            "primary_quality_valid_pairs": 999,
+            "reference_audited_pairs": 999,
+            "snapshot_valid_pairs": 999,
+            "economic_supported_pairs": 999,
+            "unsupported_pairs": 0,
+            "positive_gross_pair_observations": 999,
+            "net_eligible_pairs": 999,
+            "unique_markets": 99,
+            "unique_positive_gross_markets": 99,
+            "disagreement_counts": {},
+        },
+        REFERENCE_VERSION: {
+            "status": "MEASURED",
+            "processed_snapshot_count": 1,
+            "selected_market_observations": 3,
+            "observed_pair_observations": 3,
+            "primary_quality_valid_pairs": 2,
+            "reference_audited_pairs": 3,
+            "snapshot_valid_pairs": 2,
+            "economic_supported_pairs": 1,
+            "unsupported_pairs": 2,
+            "positive_gross_pair_observations": 1,
+            "net_eligible_pairs": 0,
+            "unique_markets": 2,
+            "unique_positive_gross_markets": 1,
+            "disagreement_counts": {"fee_reference": 1},
         },
     }
     summary["analysis_summary_sha256"] = hashlib.sha256(
@@ -1803,6 +1869,23 @@ def test_overview_exposes_incremental_public_observatory_summary(tmp_path):
     assert panel["market_coverage"]["tracked_markets"] == 1
     assert panel["market_coverage"]["coverage_denominator_snapshots"] == 2
     assert panel["market_coverage"]["sampled_state_changes"] == 1
+    economic = panel["independent_economic_audit"]
+    assert economic["reference_version"] == REFERENCE_VERSION
+    assert economic["current_reference_status"] == "MEASURED"
+    assert economic["status"] == "MEASURED"
+    assert economic["reference_pairs"] == 3
+    assert economic["economic_supported_pairs"] == 1
+    assert (
+        economic["available_reference_versions"][legacy_reference_version][
+            "reference_audited_pairs"
+        ]
+        == 999
+    )
+    funnel = panel["observation_funnel"]
+    assert funnel["selected_market_observations"] == 3
+    assert funnel["unique_markets_observed"] == 2
+    assert funnel["positive_gross_pair_observations"] == 1
+    assert funnel["net_economically_eligible_pair_observations"] == 0
     market = panel["market_coverage"]["least_observed_markets"][0]
     assert market["snapshot_coverage_percent"] == 100.0
     assert market["quality_valid_percent"] == 100.0
@@ -1810,6 +1893,25 @@ def test_overview_exposes_incremental_public_observatory_summary(tmp_path):
     assert market["sampled_state_change_fraction"] == 1.0
     assert market["sampled_activity_band"] == "unclassified"
     assert any(item["id"] == "continuous-analysis" for item in response.json()["artifacts"])
+
+    summary["independent_reference_version"] = legacy_reference_version
+    summary["independent_economic_by_reference_version"] = {
+        legacy_reference_version: summary["independent_economic_by_reference_version"][
+            legacy_reference_version
+        ]
+    }
+    summary.pop("analysis_summary_sha256", None)
+    summary["analysis_summary_sha256"] = hashlib.sha256(
+        json.dumps(summary, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
+    ).hexdigest()
+    (data_dir / "research-summary.json").write_text(json.dumps(summary))
+    stale_response = client.get("/api/veritas/overview")
+    assert stale_response.status_code == 200, stale_response.text
+    stale_panel = stale_response.json()["opportunity_observatory"]
+    assert stale_panel["independent_economic_audit"]["status"] == "STALE"
+    assert stale_panel["independent_economic_audit"]["current_reference_status"] == "NOT_MEASURED"
+    assert stale_panel["independent_economic_audit"]["reference_pairs"] == 999
+    assert stale_panel["observation_funnel"]["reference_version_current"] is False
 
 
 def test_overview_exposes_hash_verified_coverage_pilot_and_artifact(tmp_path):

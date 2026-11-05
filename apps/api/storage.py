@@ -57,6 +57,7 @@ class Record(Base):
 class Store:
     def __init__(self, url: str) -> None:
         self.engine: AsyncEngine = create_async_engine(url, pool_pre_ping=True)
+        self.schema_version: str | None = None
         if self.engine.dialect.name == "sqlite":
 
             @event.listens_for(self.engine.sync_engine, "connect")
@@ -104,8 +105,17 @@ class Store:
                 )
             await asyncio.to_thread(command.stamp, config, "001")
         await asyncio.to_thread(command.upgrade, config, "head")
+        async with self.engine.connect() as connection:
+            result = await connection.execute(
+                text("SELECT version_num FROM alembic_version ORDER BY version_num")
+            )
+            revisions: list[str] = list(map(str, result.scalars()))
+        self.schema_version = ",".join(revisions) if revisions else "UNVERSIONED"
         logging.getLogger("uvicorn.error").info(
-            "MIDAS storage runtime: source=%s account_codec=%s", __file__, STATE_CODEC_VERSION
+            "MIDAS storage runtime: source=%s account_codec=%s schema_version=%s",
+            __file__,
+            STATE_CODEC_VERSION,
+            self.schema_version,
         )
 
     async def append(
