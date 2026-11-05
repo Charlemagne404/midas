@@ -15,7 +15,8 @@ from midas.reality.shadow_source import Context, Tail
 from midas.reality.shadow_store import Journal
 from midas.reality.shadow_worker import Shadow
 from midas.reality.storage import MAGIC, atomic_json, canonical, describe, file_hash, manifest
-from test_reality_foundry import START, tape
+
+from tests.test_reality_foundry import START, tape
 
 
 def setup(tmp_path, monkeypatch, *, gap=None, times=(0, 110, 310, 1010, 5010), only_yes=None):

@@ -30,6 +30,15 @@ def test_recorded_real_gamma_and_clob():
     assert market.fee.verified
 
 
+def test_legacy_polymarket_event_id_fallback_remains_compatible():
+    raw = json.loads((FIXTURES / "gamma_live.json").read_text())[0]
+    raw.pop("events", None)
+
+    market = normalize_market(raw)
+
+    assert market.event_id == f"market:{raw['id']}"
+
+
 def test_protocol_selection_uses_version_even_when_both_fields_present():
     raw = json.loads((FIXTURES / "gamma_live.json").read_text())[0]
     raw["version"] = "v2"

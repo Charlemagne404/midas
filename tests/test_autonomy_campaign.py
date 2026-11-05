@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from contextlib import nullcontext
 from pathlib import Path
 
 from midas.arena.jobs import JobSpec, create
@@ -33,6 +34,9 @@ def test_campaign_job_budget_and_durable_schedule_are_bounded(tmp_path, monkeypa
         seen.append(command)
 
     monkeypatch.setattr("midas.arena.jobs.subprocess.run", fake_run)
+    # This test checks the bounded worker command and durable schedule shape;
+    # admission telemetry is isolated in the dedicated admission suite.
+    monkeypatch.setattr("midas.arena.jobs.admission_slot", lambda *_args, **_kwargs: nullcontext())
     tournament = TournamentSpec(
         dataset_id="dataset-fixture",
         challenge={"episodes": 30, "seed": 930001},

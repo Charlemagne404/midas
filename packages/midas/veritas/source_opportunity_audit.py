@@ -129,6 +129,7 @@ def audit_source_opportunities(source_root: Path, scan_ids: list[str]) -> dict[s
     invalid_reasons: dict[str, int] = {}
     quantity_counts = _new_quantity_counts()
     strict_quantity_counts = _new_quantity_counts()
+    minimum_notional_unit_statuses: set[str] = set()
     examples: list[dict[str, Any]] = []
     total_compressed_bytes = 0
 
@@ -277,6 +278,14 @@ def audit_source_opportunities(source_root: Path, scan_ids: list[str]) -> dict[s
                 v3_valid_count += 1
                 if not stored_v4_valid:
                     v4_v3_validity_mismatch_count += 1
+                constraint_support = report.get("constraint_support")
+                minimum_notional_unit_statuses.add(
+                    str(
+                        constraint_support.get("minimum_order_notional_unit_status")
+                        if isinstance(constraint_support, dict)
+                        else "unverified"
+                    )
+                )
                 try:
                     v2_edge = Decimal(str(report.get("top_pair_gross_edge_per_share")))
                     v4_edge = event_row.get("top_pair_gross_edge_per_share")
@@ -408,6 +417,13 @@ def audit_source_opportunities(source_root: Path, scan_ids: list[str]) -> dict[s
         if positive_top_count
         else "NO_POSITIVE_GROSS_CANDIDATE_OBSERVED"
     )
+    minimum_notional_unit_status = (
+        next(iter(minimum_notional_unit_statuses))
+        if len(minimum_notional_unit_statuses) == 1
+        else "mixed"
+        if minimum_notional_unit_statuses
+        else "unmeasured"
+    )
     payload: dict[str, Any] = {
         "experiment_id": EXPERIMENT_ID,
         "version": VERSION,
@@ -418,6 +434,7 @@ def audit_source_opportunities(source_root: Path, scan_ids: list[str]) -> dict[s
         "fee_collection_source": FEE_COLLECTION_SOURCE,
         "source_root": str(source_root),
         "status": status,
+        "minimum_order_notional_unit_status": minimum_notional_unit_status,
         "complete": True,
         "snapshot_count": len(manifest),
         "selected_market_observation_count": selected_count,

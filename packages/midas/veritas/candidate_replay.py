@@ -556,6 +556,10 @@ def _replay_one(
         market_minimum = _decimal(
             normalized.get("minimum_order_notional_usdc"), "market_minimum_order_notional"
         )
+        minimum_notional_unit_status = str(
+            normalized.get("minimum_order_notional_unit_status") or "unverified"
+        )
+        minimum_notional_supported = minimum_notional_unit_status == "verified_usdc"
         for side in ("yes", "no"):
             full_depth_by_leg[side], notional_by_leg[side], used_depth_by_leg[side] = (
                 _independent_depth(asks_by_leg[side], requested_quantity)
@@ -568,13 +572,17 @@ def _replay_one(
             if minimum_shares_by_leg[side] <= 0:
                 raise ValueError(f"independent_{side}_minimum_order_shares_invalid")
         full_depth = all(full_depth_by_leg.values())
-        minimum_notional_met = all(
-            notional_by_leg[side] >= minimum_notional_by_leg[side] for side in ("yes", "no")
+        minimum_notional_met = (
+            all(notional_by_leg[side] >= market_minimum for side in ("yes", "no"))
+            if minimum_notional_supported
+            else None
         )
         minimum_shares_met = all(
             requested_quantity >= minimum_shares_by_leg[side] for side in ("yes", "no")
         )
-        minimum_constraints_met = minimum_notional_met and minimum_shares_met
+        minimum_constraints_met = (
+            None if minimum_notional_met is None else minimum_notional_met and minimum_shares_met
+        )
         independent_gross_usdc = (
             requested_quantity - sum(notional_by_leg.values(), Decimal(0)) if full_depth else None
         )
@@ -618,9 +626,11 @@ def _replay_one(
             quantity_result.get("positive_fragmentation_safe_sensitivity") is True
         )
         result_status = (
-            "GROSS_POSITIVE_REPLAYED_ECONOMIC_SENSITIVITIES_POSITIVE"
+            "GROSS_POSITIVE_REPLAYED_NOTIONAL_SEMANTICS_UNVERIFIED"
+            if not minimum_notional_supported
+            else "GROSS_POSITIVE_REPLAYED_ECONOMIC_SENSITIVITIES_POSITIVE"
             if full_depth
-            and minimum_constraints_met
+            and minimum_constraints_met is True
             and single_match_positive
             and fragmentation_safe_positive
             else "GROSS_POSITIVE_REPLAYED_ECONOMIC_GATES_NOT_ALL_POSITIVE"
@@ -645,8 +655,13 @@ def _replay_one(
                         str(independent_gross_usdc) if independent_gross_usdc is not None else None
                     ),
                     "minimum_order_notional_usdc_by_leg": {
-                        side: str(value) for side, value in minimum_notional_by_leg.items()
+                        side: str(value) if minimum_notional_supported else None
+                        for side, value in minimum_notional_by_leg.items()
                     },
+                    "minimum_order_declared_value_by_leg": {
+                        side: str(market_minimum) for side in ("yes", "no")
+                    },
+                    "minimum_order_notional_unit_status": minimum_notional_unit_status,
                     "minimum_order_shares_by_leg": {
                         side: str(value) for side, value in minimum_shares_by_leg.items()
                     },
@@ -677,8 +692,13 @@ def _replay_one(
                         str(independent_gross_usdc) if independent_gross_usdc is not None else None
                     ),
                     "minimum_order_notional_usdc_by_leg": {
-                        side: str(value) for side, value in minimum_notional_by_leg.items()
+                        side: str(value) if minimum_notional_supported else None
+                        for side, value in minimum_notional_by_leg.items()
                     },
+                    "minimum_order_declared_value_by_leg": {
+                        side: str(market_minimum) for side in ("yes", "no")
+                    },
+                    "minimum_order_notional_unit_status": minimum_notional_unit_status,
                     "minimum_order_shares_by_leg": {
                         side: str(value) for side, value in minimum_shares_by_leg.items()
                     },
