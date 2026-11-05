@@ -136,6 +136,8 @@ if secret_like:
 print("Isolation mounts, runtime roots, database target, and absent host sockets verified.")
 PY
 
+test -f /control/test-support/sitecustomize.py || fail "synthetic resource shim is missing"
+
 for command in systemctl systemd-run busctl dbus-send gdbus sudo; do
   set +e
   "$command" --midas-phase5-isolation-probe >/dev/null 2>&1

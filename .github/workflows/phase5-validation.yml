@@ -22,7 +22,7 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           repository: ${{ github.repository }}
-          ref: a20c1842f4ad6d147b8b56a74ba0b59e68d5f84f
+          ref: 49602ae7d904526c5de3fc2b9f25bd2aa28560a1
           path: candidate
           fetch-depth: 1
           persist-credentials: false
@@ -30,8 +30,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git -C candidate rev-parse HEAD)" = a20c1842f4ad6d147b8b56a74ba0b59e68d5f84f
-          test "$(git -C candidate rev-parse 'HEAD^{tree}')" = dc77cdae75709deb710c633b56a1e476bf69a0f9
+          test "$(git -C candidate rev-parse HEAD)" = 49602ae7d904526c5de3fc2b9f25bd2aa28560a1
+          test "$(git -C candidate rev-parse 'HEAD^{tree}')" = eecab0b53f555f40b49a9f285d9d11575b2ed55c
           if git -C candidate config --local --get-regexp 'http\..*\.extraheader' >/dev/null 2>&1; then
             echo "checkout token persisted in candidate git configuration" >&2
             exit 1
@@ -98,10 +98,11 @@ jobs:
             --mount "type=bind,src=$GITHUB_WORKSPACE/candidate,dst=/source,readonly" \
             --mount "type=bind,src=$GITHUB_WORKSPACE/.github/validation,dst=/control,readonly" \
             --mount "type=bind,src=$validation_data,dst=/test-data" \
-            --env MIDAS_PHASE5_SOURCE_SHA=a20c1842f4ad6d147b8b56a74ba0b59e68d5f84f \
-            --env MIDAS_PHASE5_SOURCE_TREE=dc77cdae75709deb710c633b56a1e476bf69a0f9 \
+            --env MIDAS_PHASE5_SOURCE_SHA=49602ae7d904526c5de3fc2b9f25bd2aa28560a1 \
+            --env MIDAS_PHASE5_SOURCE_TREE=eecab0b53f555f40b49a9f285d9d11575b2ed55c \
             --env MIDAS_PHASE5_MODE=diagnostic-browser \
             --env MIDAS_PHASE5_SYNTHETIC_USER_PSI=1 \
+            --env MIDAS_PHASE5_TEST_SUPPORT_ROOT=/control/test-support \
             --env MIDAS_MODE=demo \
             --env MIDAS_RUNTIME_ROOT=/tmp/midas-phase5/runtime \
             --env MIDAS_DATABASE_URL=sqlite+aiosqlite:////tmp/midas-phase5/runtime/paper.sqlite3 \
