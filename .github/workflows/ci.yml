@@ -35,6 +35,14 @@ jobs:
           path: reality-v5-baseline
           fetch-depth: 1
           persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository }}
+          # The exact bounded Reality v6 source at the start of this maintenance task.
+          ref: 7ab2d0d98d71e32c7ce7a62275afdc8f45402f04
+          path: reality-v6-main
+          fetch-depth: 1
+          persist-credentials: false
       - name: Run bounded, isolated backend validation
         run: bash .github/ci-test-support/run-backend-container.sh
       - name: Verify Veritas source analysis under the 256 MiB no-swap limit
@@ -58,11 +66,12 @@ jobs:
             /source/.github/ci-test-support/measure-veritas-catalog-memory.py \
             --current-root /source --baseline-root /veritas-memory-baseline \
             --catalog-counts 58367 --current-only --fixture-root /veritas-fixtures
-      - name: Compare Reality v5 and v6 on full stores under 192 MiB and 60 seconds
+      - name: Compare Reality v5, main v6, and candidate under the service limits
         run: |
           python3 .github/ci-test-support/run-reality-capacity-benchmarks.py \
             --source-root "$GITHUB_WORKSPACE" \
             --baseline-root "$GITHUB_WORKSPACE/reality-v5-baseline" \
+            --main-root "$GITHUB_WORKSPACE/reality-v6-main" \
             --runner-temp "$RUNNER_TEMP" \
             --image "midas-ci-backend:${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" \
             --run-key "${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"

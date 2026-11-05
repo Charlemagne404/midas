@@ -22,16 +22,19 @@ def cgroup_snapshot() -> dict[str, int]:
             values[name] = int(value)
     for line in (root / "memory.events").read_text(encoding="ascii").splitlines():
         key, value = line.split()
-        if key in {"oom", "oom_kill", "max"}:
+        if key in {"high", "oom", "oom_kill", "max"}:
             values[f"events.{key}"] = int(value)
     return values
 
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--implementation", choices=("v5", "v6"), required=True)
+    parser.add_argument(
+        "--implementation", choices=("v5", "v6-main", "v6-candidate"), required=True
+    )
     parser.add_argument("--source-root", type=Path, required=True)
     parser.add_argument("--baseline-root", type=Path, required=True)
+    parser.add_argument("--main-root", type=Path, required=True)
     parser.add_argument("--data-root", type=Path, required=True)
     parser.add_argument("--catalog-count", type=int, required=True)
     args = parser.parse_args()
@@ -47,7 +50,11 @@ def main() -> None:
     if cgroup_before.get("memory.swap.max") != 0:
         raise SystemExit(f"capacity benchmark must disable swap: {cgroup_before}")
 
-    selected_root = args.baseline_root if args.implementation == "v5" else args.source_root
+    selected_root = {
+        "v5": args.baseline_root,
+        "v6-main": args.main_root,
+        "v6-candidate": args.source_root,
+    }[args.implementation]
     sys.path.insert(0, str(selected_root / "packages"))
     from midas.reality.operations import capacity
 

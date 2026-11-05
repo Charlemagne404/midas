@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import base64
 import hashlib
 import json
 import struct
@@ -12,6 +13,8 @@ import zlib
 from pathlib import Path
 
 MAGIC = b"MIDASR1\n"
+SAMPLE_SEGMENTS = 120
+SAMPLE_PAYLOAD_BYTES = 340 * 1024
 
 
 def create_store(root: Path, count: int, now_ns: int) -> None:
@@ -20,12 +23,16 @@ def create_store(root: Path, count: int, now_ns: int) -> None:
         token = hashlib.sha256(str(ordinal).encode()).hexdigest()[:32]
         stem = f"{ordinal:020d}-{token}"
         name = f"{stem}.seg"
+        payload = "PONG"
+        if ordinal > count - SAMPLE_SEGMENTS:
+            random_bytes = hashlib.shake_256(str(ordinal).encode()).digest(SAMPLE_PAYLOAD_BYTES)
+            payload = base64.b64encode(random_bytes).decode("ascii")
         record = json.dumps(
             {
                 "schema_version": 1,
                 "ordinal": ordinal,
                 "kind": "frame",
-                "payload": "PONG",
+                "payload": payload,
                 "received_ns": now_ns - (count - ordinal) * 1_000_000_000,
             },
             sort_keys=True,
