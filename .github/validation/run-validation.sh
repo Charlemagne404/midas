@@ -32,10 +32,18 @@ if group.is_symlink() or not group.is_dir():
     raise SystemExit("test container cgroup is missing or unsafe")
 if not group.resolve().is_relative_to(Path("/sys/fs/cgroup").resolve()):
     raise SystemExit("test container cgroup escaped the cgroup mount")
+limits = {}
 for name in ("memory.high", "memory.max"):
-    value = (group / name).read_text(encoding="ascii").strip()
-    if value in {"max", "infinity"} or not value.isdecimal() or int(value) <= 0:
-        raise SystemExit(f"test container {name} is not finite and positive")
+    limits[name] = (group / name).read_text(encoding="ascii").strip()
+maximum = limits["memory.max"]
+high = limits["memory.high"]
+if maximum in {"max", "infinity"} or not maximum.isdecimal() or int(maximum) <= 0:
+    raise SystemExit("test container memory.max is not finite and positive")
+if high not in {"max", "infinity"} and (not high.isdecimal() or int(high) <= 0):
+    raise SystemExit("test container memory.high is neither unlimited nor finite and positive")
+swap_max = (group / "memory.swap.max").read_text(encoding="ascii").strip()
+if swap_max != "0":
+    raise SystemExit(f"test container swap is not disabled: memory.swap.max={swap_max}")
 if os.access("/sys/fs/cgroup", os.W_OK):
     raise SystemExit("candidate UID can write the cgroup hierarchy")
 tmp = os.statvfs("/tmp")
@@ -43,8 +51,8 @@ if tmp.f_bavail * tmp.f_frsize < 6 * 1024**3:
     raise SystemExit("test temporary filesystem is smaller than the required 6 GiB reserve")
 print(
     "Bounded container cgroup verified: "
-    f"memory.high={(group / 'memory.high').read_text().strip()} "
-    f"memory.max={(group / 'memory.max').read_text().strip()}"
+    f"memory.high={high} memory.max={maximum} memory.swap.max={swap_max} "
+    f"effective_limit={high if high not in {'max', 'infinity'} else maximum}"
 )
 print(f"Disposable /tmp available capacity: {tmp.f_bavail * tmp.f_frsize} bytes")
 PY
