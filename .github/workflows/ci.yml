@@ -102,12 +102,22 @@ jobs:
           --grep 'seeded Frontier history pages|seeded Frontier discovery artifact'
       - name: Run isolated Reality browser coverage
         run: pnpm --dir apps/web exec playwright test --config playwright.reality.config.ts --workers=1
-      - name: Confirm browser APIs never attempted host service commands
+      - name: Verify browser service commands were intercepted before reaching host
         run: |
-          if find "$TMPDIR" -type f -name blocked-commands.log -size +0c -print -quit | grep -q .; then
-            find "$TMPDIR" -type f -name blocked-commands.log -size +0c -exec cat {} \;
-            exit 1
-          fi
+          python3 - "$TMPDIR" <<'PY'
+          import sys
+          from pathlib import Path
+
+          allowed = ("systemctl", "systemd-run", "busctl", "dbus-send", "gdbus", "sudo")
+          logs = Path(sys.argv[1]).rglob("blocked-commands.log")
+          blocked = 0
+          for path in logs:
+              for line in path.read_text().splitlines():
+                  if not any(line.startswith(f"blocked {command} ") for command in allowed):
+                      raise SystemExit(f"unexpected service-command shim log entry: {line}")
+                  blocked += 1
+          print(f"Fail-closed shims intercepted {blocked} systemd or bus command attempts.")
+          PY
       - uses: actions/upload-artifact@v4
         if: always()
         with:

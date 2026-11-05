@@ -22,9 +22,7 @@ for (const path of [homeRoot, xdgCacheRoot, xdgConfigRoot, xdgStateRoot, xdgRunt
   mkdirSync(path, { recursive: true, mode: 0o700 });
 }
 const phase5TestSupportRoot = process.env.MIDAS_PHASE5_TEST_SUPPORT_ROOT;
-const phase5TestSupportBin = phase5TestSupportRoot
-  ? join(phase5TestSupportRoot, 'bin')
-  : undefined;
+const phase5TestSupportBin = phase5TestSupportRoot ? join(phase5TestSupportRoot, 'bin') : undefined;
 const useSyntheticResourceAdmission =
   process.env.MIDAS_PHASE5_SYNTHETIC_USER_PSI === '1' && Boolean(phase5TestSupportRoot);
 if (phase5TestSupportRoot && !existsSync(join(phase5TestSupportRoot, 'sitecustomize.py'))) {

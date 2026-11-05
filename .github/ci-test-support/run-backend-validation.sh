@@ -139,7 +139,7 @@ mkdir -p /test-data/tmp /tmp/midas-ci/runtime /tmp/midas-ci/recordings \
 chmod 0700 /tmp/midas-ci/xdg-runtime
 export TMPDIR=/tmp/midas-ci/tmp
 
-git -C /source archive --format=tar HEAD | tar -C /workspace -xf -
+git -c safe.directory=/source -C /source archive --format=tar HEAD | tar -C /workspace -xf -
 cp -R /source/.git /workspace/.git
 test "$(git -C /workspace rev-parse HEAD)" = "$MIDAS_CI_SOURCE_SHA" \
   || fail "writable source copy has the wrong commit"
