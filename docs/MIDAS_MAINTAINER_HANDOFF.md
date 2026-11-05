@@ -1,14 +1,14 @@
 # MIDAS maintainer handoff
 
-**Verified operational snapshot:** 2026-11-05 17:11, Europe/Stockholm.
-Resource pressure was sampled at 17:09; database and recording sizes below
-were measured around 15:30, with recorder retention configuration checked at
-16:45. The consolidation baseline before this maintenance pass was
-`3e700b9b2bba7a9da1564e3ab8b2e18be2eba6ea`, with all five hosted CI jobs
-passing. The maintenance implementation is now integrated in `origin/main`;
-the handoff itself is updated with that work. Source integration and
-deployment remain separate states. Recheck current refs and the host before
-acting on these dated observations.
+**Verified operational snapshot:** 2026-11-05 18:40, Europe/Stockholm.
+Memory, swap, pressure, service results, and active database file sizes were
+refreshed at 18:40–18:43. The Reality recording count/bytes and wider ignored
+research inventory were not re-scanned because the host had active swap and
+elevated I/O pressure. The source baseline at the start of this release
+readiness pass was `7ab2d0d98d71e32c7ce7a62275afdc8f45402f04`, with all five
+hosted CI jobs passing. Source integration and deployment remain separate
+states. Recheck current refs and the host before acting on these dated
+observations.
 
 ## What MIDAS contains
 
@@ -123,40 +123,46 @@ exists yet.
 
 ## Current operational assessment and blockers
 
-At the 17:09 host sample, RAM was 15 GiB with 7.4 GiB available; all 4 GiB of
-swap was occupied, with 264 KiB free. Memory PSI 5-minute `some`/`full` was
-0.33%/0.28%; I/O PSI was 0.70%/0.56%. The first `vmstat` sample showed 50/53
-pages of swap-in/out; the next two had none. CPU idle was 78–86%, with 1–2%
-I/O wait. At about 17:11 `/` was 82% full with 82 GiB free and
-`/mnt/continental-cloud` had 592 GiB free on a separate internal SATA disk.
-That disk is a same-host copy, not off-host protection. The unrelated Echo
-Archives headless browser (PID 2574398) was using about 1.50 GiB RSS and 63%
-CPU at the earlier 16:31 check; it was left alone.
+At 18:40, RAM was 15 GiB with 7.3 GiB available and 478 MiB immediately free.
+All 4 GiB of swap was occupied, with 52 KiB free. Memory PSI 5-minute
+`some`/`full` was 0.27%/0.23%; I/O PSI was 0.60%/0.48%. The first `vmstat`
+sample showed 49/53 pages of swap-in/out, followed by two samples with no
+swap traffic; those later samples had 7% I/O wait. `/` remained 82% full with
+82 GiB free. `/mnt/continental-cloud` had 592 GiB free on `/dev/sda4`, a
+separate internal disk on the same host. It is a local recovery copy only,
+not protection against host failure.
 
-The Veritas source-analysis timer remains enabled and failing. The kernel
-recorded **35 cgroup OOM kills on 2026-11-05**, with the latest at 17:11 under
-its 256 MiB service limit. The 17:10:59 run was killed 12 seconds after start
-and used 7.268 CPU seconds; it made no useful progress.
-Each run reaches roughly 260 MiB anonymous RSS plus about 19–51 MiB file RSS
-before the kernel kills it. The catalog contains 58,367 finalized sidecars;
-the last durable state still records 53,340 processed segments, leaving about
-5,027 pending. Root cause is confirmed: `_read_catalogs` builds a path object
-and decoded metadata dictionary for every catalog before the batch-size limit
-is applied. The source fix scans one JSON catalog at a time, keeps only names
-plus the next bounded batch, and migrates the known v1 checkpoint into a v2
-state file while retaining the v1 file and event ledger. It has not been
-deployed or run on live research data. Keep the memory cap and live state
-untouched until review and an approved deployment.
+The latest Veritas source-analysis run failed at 18:40:56 with
+`Result=oom-kill`, exit status 9, `MemoryPeak=268435456` (exactly 256 MiB),
+and 7.213 seconds CPU time. Its timer is active; the service has no automatic
+restart count. The v1 state file still records 53,340 processed of 58,367
+catalogs (about 5,027 pending) and was last modified Nov 4 at 11:41. The
+campaign and event ledger were not changed by this maintenance pass. The
+runtime root cause is confirmed: the loaded v1 `_read_catalogs` materializes
+all sidecar paths and decoded metadata before applying the batch limit. The
+source fix in main scans sidecars sequentially and retains only the next
+bounded batch. It preserves the legacy digest mapping, writes v2 state
+atomically, keeps the original v1 file and event ledger, and reconciles an
+orphan event idempotently. It remains undeployed and has not touched live
+research state.
 
-`midas-reality.service` is active now but has 19 historical restarts; 18
-`systemd-oomd` kills from Oct 22–Nov 4 were followed by automatic restarts.
-Its current cgroup used about 730 MiB, with a 1.1 GiB peak and a 1.2 GiB
-limit. The active `midas-reality-capacity.timer` also fires every 30 minutes;
-the capacity service hit its 60-second timeout on seven consecutive runs from
-13:54 through 16:56 on Nov 5, consuming 3.448 CPU seconds in the latest run.
-Those failures leave the capacity report stale. The monitor
-traverses the full 58k finalized catalog and needs isolated profiling; no
-timer, unit, or resource ceiling was changed. The old
+`midas-reality.service` was active at the prior service check and had 19
+historical restarts; 18 `systemd-oomd` kills from Oct 22–Nov 4 were followed
+by automatic restarts. The active `midas-reality-capacity.timer` is scheduled
+every 30 minutes. Its last recorded service run started at 18:25:44 and timed
+out at 18:26:44 (exit signal 15, 3.360 CPU seconds) under `MemoryHigh=160 MiB`,
+`MemoryMax=192 MiB`, no swap, and a 60-second deadline. The timer remains
+active. The saved capacity report is still builder v5, measured Nov 3 at
+14:15; it reports archive inventory/size limits and unknown archive capacity,
+and is stale by more than two timer intervals. The loaded v5 path materializes
+all sidecars with `manifest()`, then separately stats each segment/catalog for
+growth and scans the directory again for total bytes. Low CPU use during the
+timeout plus current I/O pressure make metadata/storage contention a likely
+runtime contributor; isolated full-store measurements are pending. The release
+candidate built on v6 keeps sidecar parsing bounded, caches metadata observed
+during inventory, and counts root bytes in that same directory pass. It still
+performs a bounded full catalog walk. No live limit, timer, service, report, or
+recording was changed. The old
 `midas-veritas-gap-detail-v2.timer` is inactive and its service is failed after
 134 historical oomd kills; this is not a currently scheduled loop. The 104
 failed user units observed at 17:10 were a mixture of historical one-shot,
@@ -175,16 +181,19 @@ the Veritas service is not yet relocatable by changing workspace settings
 alone. Relocating those inputs requires a reviewed evidence migration and
 matching tests; do not replace the pins with generic defaults casually.
 
-The main API database, Reality interface database, Reality recordings, and
-additional research stores have no verified independent backup. The backup
-and restore tools support consistent SQLite snapshots and finalized recording
-stores, and their disposable tests passed in the previous maintenance run. No
-live snapshot has been taken: the heavy resource gate previously denied work
-for the full swap and observed swap activity. `restic` is installed, but no
-MIDAS repository, off-host endpoint, credential, schedule, retention policy, or
-alert is configured. The `/mnt/continental-cloud` partition is an extra local
-disk only. See [BACKUP_AND_RECOVERY.md](BACKUP_AND_RECOVERY.md) for exact
-commands, known data sizes, and the off-host prerequisites.
+The main API database and its WAL were 16,528,715,776 and 4,482,592 bytes at
+18:42; the Reality interface database and WAL were 12,615,774,208 and
+4,317,792 bytes at 18:43. Both are actively written. The main Reality
+recordings and ignored research stores have no independently verified backup.
+The snapshot/restore tools use SQLite's online backup API and finalized
+recording checks, and their disposable tests passed in the previous
+maintenance run. No live snapshot was taken: swap remained effectively full,
+the host showed swap traffic and I/O pressure, and the previous heavy resource
+admission denied work. `restic 0.16.4` is installed, but there is no MIDAS
+repository, off-host endpoint, credential, schedule, retention policy, or
+external failure alert. The full ignored-data inventory is incomplete. See
+[BACKUP_AND_RECOVERY.md](BACKUP_AND_RECOVERY.md) for destination sizing,
+verification cadence, and the remaining requirements.
 
 ## Resume development safely
 
@@ -229,20 +238,72 @@ after checking compatibility. The backend run also reports a
 Starlette/httpx `TestClient` deprecation warning; review it with the next
 dependency refresh rather than suppressing it.
 
-## Veritas source-analysis rollout gate
+## Approval-gated Reality and Veritas release
 
-The source-only fix does not change the active observatory release or timer.
-Before any rollout, identify the service's exact loaded release and verify its
-analysis code digest against the v1 compatibility manifest. Require a
-resource-admission pass and an independently verified backup of the v1 state,
-event ledger, campaign inputs, and source evidence. Exercise the migration on
-a disposable copy of that exact checkpoint. During an explicitly approved
-cutover, serialize timer invocations, install the new immutable release, and
-run one controlled analysis;
-verify the v2 state seal and migration provenance, unchanged v1 file, event
-chain, processed cursor, summary, and peak memory below the existing limit
-before allowing scheduled retries to resume. If any prerequisite is missing,
-leave the timer and state untouched.
+The following release is prepared but not authorized or executed. CI and
+disposable-data checks may be automated; production service control, live
+checkpoint migration, database/recording snapshots, timer changes, and release
+switches require the owner's explicit approval and a fresh maintenance window.
+
+1. **Pass the preservation and resource gates.** Complete a read-only inventory
+   of ignored research roots. Establish and verify an off-host recovery point
+   for the main and Reality SQLite databases, Reality recordings, Veritas
+   campaign/source inputs, checkpoint and event ledger, and all other required
+   research evidence. Verify a restore. Re-run the heavy resource preflight;
+   require adequate free swap, no active swap churn, acceptable PSI, disk
+   reserve, and protected-service headroom. Current host measurements fail
+   these gates and there is no off-host backup.
+2. **Record exact release and service ownership.** Capture the loaded
+   `ExecStart`, `WorkingDirectory`, environment/root paths, cgroup limits,
+   active timer state, current process identity, source release SHA, Veritas
+   campaign digest, Reality recorder release, and current capacity report
+   digest. Confirm the service is the expected v1 Veritas / v5 Reality
+   implementation; checkout HEAD alone is not runtime identity.
+3. **Verify the exact live Veritas checkpoint.** After the analysis service is
+   inactive and before a timer can start another run, record hashes and sizes
+   for `source-analysis-state-v1.json`, the complete
+   `source-analysis-events/v1` ledger, `source-research-summary.json`, the
+   pinned campaign, and source catalog boundary. Compare them with the
+   independent recovery point. Copy that exact checkpoint to a disposable
+   isolated root and rerun the v1-to-v2 migration, interruption, restart,
+   digest-compatibility, and event-chain checks. A rejected migration must
+   leave the v1 checkpoint and ledger unchanged.
+4. **Roll Veritas once under approval.** Only after the service has drained,
+   pause its timer and install the immutable validated source release. Keep the
+   original v1 checkpoint and ledger in place. Run one admitted batch with the
+   existing 128-segment / 32-MiB bounds and existing 256-MiB limit. Verify the
+   v2 state seal, migration provenance, unchanged v1 hash, event-chain
+   continuity, processed cursor, summary digest, and cgroup peak below 256 MiB.
+   Do not resume the timer if any value differs or the run fails.
+5. **Roll Reality capacity once under approval.** Keep the Reality recorder
+   and its schedule unchanged. Install the immutable validated v6 monitor
+   release and run one admitted capacity measurement under the existing
+   160-MiB high / 192-MiB maximum, no-swap, 60-second policy. Verify completion
+   before the deadline, the v6 builder identity, non-stale `measured_ns`,
+   `raw_root_bytes`, sample digest, growth windows, archive validation state,
+   and capacity alerts against the pre-release evidence. Publish the new report
+   atomically only after review.
+6. **Verify and resume.** Confirm the services' loaded source paths and hashes,
+   `Result=success`, bounded memory, execution duration, and intended timer
+   schedule through `systemctl show` and the application API. Check that the
+   Veritas processed count advanced exactly by the completed batch and that
+   the event ledger has no duplicate or missing event. Check the Reality report
+   timestamp and source identity. Resume only the approved timers after these
+   checks.
+7. **Rollback on any mismatch.** Pause the affected timer after the current
+   one-shot has finished; do not kill a writer. Restore the prior immutable
+   code release and service definition. Preserve both v1 and v2 checkpoint
+   files, all event files, and the pre-release report. If the candidate wrote
+   an event or changed a checkpoint, do not start the old analysis against a
+   mixed ledger; restore the complete matching checkpoint-plus-ledger recovery
+   point or reconcile it offline first. Restore the prior capacity report only
+   if its recorded digest matches the saved copy. Verify loaded release and
+   service result before any timer resumes.
+
+The rollout is blocked today by full swap, repeated Veritas OOM, the stale v5
+capacity report and timeouts, missing independently verified off-host backups,
+and an incomplete ignored-data inventory. A green source CI run does not clear
+these production gates.
 
 ## Actions that need specific review
 

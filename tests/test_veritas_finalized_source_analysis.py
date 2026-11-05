@@ -315,6 +315,29 @@ def test_v1_checkpoint_migrates_without_resetting_cursor_or_provenance(tmp_path)
     assert len(list((output / "source-analysis-events" / "v1").glob("*.json"))) == 2
 
 
+def test_rejected_v1_migration_preserves_checkpoint_and_event_ledger(tmp_path):
+    campaign_dir, raw, campaign_hash = _fixture(tmp_path)
+    output = tmp_path / "observatory"
+    _make_legacy_checkpoint(output, campaign_dir, raw, campaign_hash)
+    legacy_path = output / "source-analysis-state-v1.json"
+    legacy = json.loads(legacy_path.read_text())
+    legacy.pop("state_sha256")
+    legacy["campaign_sha256"] = "0" * 64
+    analysis._atomic_json(
+        legacy_path, analysis._sealed(legacy, "state_sha256"), maximum=analysis.MAX_STATE_BYTES
+    )
+    original_checkpoint = legacy_path.read_bytes()
+    event_root = output / "source-analysis-events" / "v1"
+    original_events = {path.name: path.read_bytes() for path in event_root.glob("*.json")}
+
+    with pytest.raises(ValueError, match="Legacy source-analysis state is not a supported checkpoint"):
+        _run(output, campaign_dir, raw, campaign_hash, max_segments=1)
+
+    assert legacy_path.read_bytes() == original_checkpoint
+    assert {path.name: path.read_bytes() for path in event_root.glob("*.json")} == original_events
+    assert not (output / "source-analysis-state-v2.json").exists()
+
+
 def test_v1_migration_interruption_restarts_from_preserved_checkpoint(tmp_path, monkeypatch):
     campaign_dir, raw, campaign_hash = _fixture(tmp_path)
     output = tmp_path / "observatory"

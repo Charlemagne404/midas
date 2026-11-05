@@ -4,6 +4,7 @@ import hashlib
 import json
 import sqlite3
 import struct
+import subprocess
 import time
 import zlib
 from unittest.mock import Mock
@@ -13,7 +14,31 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from midas.reality.storage import MAGIC
 
-from apps.api.reality import classify_collector_health, router, source_quality_report
+from apps.api.reality import (
+    classify_capacity_freshness,
+    classify_collector_health,
+    router,
+    source_quality_report,
+)
+
+
+def test_capacity_report_freshness_uses_two_timer_intervals_and_fails_closed():
+    now_ns = 10_000_000_000_000
+    assert classify_capacity_freshness({"measured_ns": now_ns}, now_ns)["state"] == "fresh"
+    assert (
+        classify_capacity_freshness({"measured_ns": now_ns - 3600 * 10**9}, now_ns)["state"]
+        == "fresh"
+    )
+    assert (
+        classify_capacity_freshness({"measured_ns": now_ns - 3601 * 10**9}, now_ns)["state"]
+        == "stale"
+    )
+    assert (
+        classify_capacity_freshness({"measured_ns": now_ns + 1}, now_ns)["state"]
+        == "clock_uncertain"
+    )
+    for report in ({}, {"measured_ns": True}, {"measured_ns": 0}, {"measured_ns": "bad"}):
+        assert classify_capacity_freshness(report, now_ns)["state"] == "unavailable"
 
 
 @pytest.fixture
@@ -117,6 +142,20 @@ def test_stale_status_not_reported_as_healthy(dashboard):
     assert r["health"] == "degraded"
     assert r["health_reasons"] == ["status_stale"]
     assert "selection_audit" not in r["collector"]
+
+
+def test_capacity_report_freshness_is_projected_without_mutating_saved_evidence(dashboard):
+    c, root, _ = dashboard
+    path = root / "data/recordings/capacity.json"
+    saved = {"measured_ns": time.time_ns() - 2 * 60 * 60 * 1_000_000_000, "alerts": []}
+    path.write_text(json.dumps(saved))
+
+    overview = c.get("/api/reality/overview").json()
+    artifact = c.get("/api/reality/artifacts/capacity").json()
+
+    assert overview["capacity"]["freshness"]["state"] == "stale"
+    assert artifact["data"]["freshness"]["state"] == "stale"
+    assert json.loads(path.read_text()) == saved
 
 
 def test_recovered_capture_projects_last_error_as_historical(dashboard):
@@ -498,3 +537,46 @@ def test_operations_no_arbitrary_command_or_cross_origin(dashboard, monkeypatch)
     assert json.loads((root / "data/research/reality/interface/operations.jsonl").read_text())[
         "accepted"
     ]
+
+
+def test_operations_expose_failed_analysis_and_timer_diagnostics_read_only(dashboard, monkeypatch):
+    c, _, _ = dashboard
+
+    def show_unit(args, **_kwargs):
+        unit = args[3]
+        output = "ActiveState=failed\nSubState=failed\nNRestarts=0\n"
+        if unit == "midas-veritas-source-analysis.service":
+            output += "Result=oom-kill\nExecMainStatus=9\nExecMainExitTimestamp=Thu 2026-11-05 17:41:16 CET\n"
+        if unit == "midas-reality-capacity.service":
+            output += "Result=timeout\nExecMainStatus=0\n"
+        if unit == "midas-veritas-source-analysis.timer":
+            output += "LastTriggerUSec=Thu 2026-11-05 17:30:00 CET\nNextElapseUSecRealtime=Thu 2026-11-05 18:00:00 CET\n"
+        return Mock(returncode=0, stdout=output, stderr="")
+
+    run = Mock(side_effect=show_unit)
+    monkeypatch.setattr("apps.api.reality.subprocess.run", run)
+
+    services = c.get("/api/reality/operations").json()["services"]
+    by_unit = {service["unit"]: service for service in services}
+
+    assert by_unit["midas-veritas-source-analysis.service"]["properties"]["Result"] == "oom-kill"
+    assert by_unit["midas-reality-capacity.service"]["properties"]["Result"] == "timeout"
+    assert by_unit["midas-veritas-source-analysis.timer"]["properties"]["LastTriggerUSec"]
+    assert all(call.args[0][0:3] == ["systemctl", "--user", "show"] for call in run.call_args_list)
+
+
+def test_operations_report_systemd_query_timeout_without_failing_endpoint(dashboard, monkeypatch):
+    c, _, _ = dashboard
+    unit = "midas-veritas-source-analysis.service"
+
+    def show_unit(args, **_kwargs):
+        if args[3] == unit:
+            raise subprocess.TimeoutExpired(args, 2)
+        return Mock(returncode=0, stdout="ActiveState=active\n", stderr="")
+
+    monkeypatch.setattr("apps.api.reality.subprocess.run", show_unit)
+    services = c.get("/api/reality/operations").json()["services"]
+    service = next(item for item in services if item["unit"] == unit)
+    assert service["available"] is False
+    assert service["error"] == "systemd_query_timeout"
+    assert service["properties"] == {}

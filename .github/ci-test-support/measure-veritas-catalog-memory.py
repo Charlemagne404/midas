@@ -13,6 +13,7 @@ import tempfile
 from pathlib import Path
 
 COUNT = 58_367
+DEFAULT_COUNTS = (1_000, 10_000, 25_000, COUNT)
 SEGMENT = b"MIDASR1\n" + (b"x" * 56)
 CATALOG = {
     "schema_version": 1,
@@ -46,12 +47,15 @@ def create_catalog(root: Path, count: int) -> None:
         )
 
 
-def measure(source_root: Path, raw_root: Path, *, baseline: bool) -> tuple[int, int]:
+def measure(
+    source_root: Path, raw_root: Path, *, baseline: bool, timeout: int = 600
+) -> tuple[int, int, float]:
     code = r"""
-import json, resource, sys
+import json, resource, sys, time
 from pathlib import Path
 from midas.veritas import finalized_source_analysis as analysis
 raw = Path(sys.argv[1])
+started = time.monotonic()
 if sys.argv[2] == "baseline":
     result = analysis._read_catalogs(raw)
     selected = len(result)
@@ -65,6 +69,7 @@ print(
         {
             "selected": selected,
             "peak_rss_kib": resource.getrusage(resource.RUSAGE_SELF).ru_maxrss,
+            "elapsed_seconds": time.monotonic() - started,
         }
     )
 )
@@ -79,42 +84,91 @@ print(
         cwd=source_root,
         env=environment,
         check=True,
+        timeout=timeout,
         capture_output=True,
         text=True,
     )
     result = json.loads(completed.stdout)
-    return int(result["selected"]), int(result["peak_rss_kib"])
+    return (
+        int(result["selected"]),
+        int(result["peak_rss_kib"]),
+        float(result["elapsed_seconds"]),
+    )
+
+
+def memory_cgroup_snapshot() -> dict[str, int]:
+    root = Path("/sys/fs/cgroup")
+    values: dict[str, int] = {}
+    for name in ("memory.max", "memory.swap.max", "memory.peak"):
+        try:
+            value = (root / name).read_text(encoding="ascii").strip()
+            if value.isdecimal():
+                values[name] = int(value)
+        except OSError:
+            continue
+    try:
+        for line in (root / "memory.events").read_text(encoding="ascii").splitlines():
+            key, value = line.split()
+            if key in {"oom", "oom_kill", "max"}:
+                values[f"events.{key}"] = int(value)
+    except (OSError, ValueError):
+        pass
+    return values
 
 
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--current-root", type=Path, required=True)
     parser.add_argument("--baseline-root", type=Path, required=True)
-    parser.add_argument("--catalog-count", type=int, default=COUNT)
+    parser.add_argument("--catalog-counts", type=int, nargs="+", default=list(DEFAULT_COUNTS))
+    parser.add_argument("--current-only", action="store_true")
     args = parser.parse_args()
-    if args.catalog_count != COUNT:
-        parser.error(f"catalog-count must stay pinned to the production scale ({COUNT})")
+    counts = args.catalog_counts
+    if (
+        not counts
+        or counts != sorted(set(counts))
+        or any(count < 1 or count > COUNT for count in counts)
+        or (not args.current_only and counts[-1] != COUNT)
+    ):
+        parser.error(f"catalog-counts must be unique, ascending, and end at {COUNT} for comparison")
+    cgroup_before = memory_cgroup_snapshot()
     with tempfile.TemporaryDirectory(prefix="midas-veritas-catalog-") as temporary:
-        raw_root = Path(temporary) / "raw"
-        create_catalog(raw_root, args.catalog_count)
-        base_selected, base_peak = measure(args.baseline_root, raw_root, baseline=True)
-        new_selected, new_peak = measure(args.current_root, raw_root, baseline=False)
-    baseline_mib = base_peak / 1024
-    current_mib = new_peak / 1024
-    print(
-        f"Synthetic finalized catalog entries: {args.catalog_count}; "
-        f"baseline retained {base_selected}, streaming batch retained {new_selected}."
-    )
-    print(
-        f"Isolated peak RSS: baseline={baseline_mib:.1f} MiB, "
-        f"streaming={current_mib:.1f} MiB, reduction={baseline_mib - current_mib:.1f} MiB."
-    )
-    if new_selected != min(args.catalog_count, 128):
-        raise SystemExit("streaming reader did not retain the expected bounded batch")
-    if new_peak >= 256 * 1024:
-        raise SystemExit("streaming reader exceeded the production 256 MiB memory limit")
-    if new_peak >= base_peak:
-        raise SystemExit("streaming reader did not reduce peak RSS against the baseline")
+        for catalog_count in counts:
+            raw_root = Path(temporary) / f"raw-{catalog_count}"
+            create_catalog(raw_root, catalog_count)
+            new_selected, new_peak, new_seconds = measure(
+                args.current_root, raw_root, baseline=False
+            )
+            if args.current_only:
+                print(
+                    f"Streaming reader at {catalog_count:,} entries: "
+                    f"peak RSS={new_peak / 1024:.1f} MiB, runtime={new_seconds:.2f}s."
+                )
+            else:
+                base_selected, base_peak, base_seconds = measure(
+                    args.baseline_root, raw_root, baseline=True
+                )
+                print(
+                    f"{catalog_count:,} entries: baseline retained {base_selected} in "
+                    f"{base_seconds:.2f}s at {base_peak / 1024:.1f} MiB RSS; "
+                    f"streaming retained {new_selected} in {new_seconds:.2f}s "
+                    f"at {new_peak / 1024:.1f} MiB RSS."
+                )
+                if new_peak >= base_peak and catalog_count == COUNT:
+                    raise SystemExit("streaming reader did not reduce peak RSS at production scale")
+            if new_selected != min(catalog_count, 128):
+                raise SystemExit("streaming reader did not retain the expected bounded batch")
+            if new_peak >= 256 * 1024:
+                raise SystemExit("streaming reader exceeded the production 256 MiB memory limit")
+    if args.current_only:
+        cgroup_after = memory_cgroup_snapshot()
+        if cgroup_after.get("memory.max") != 256 * 1024**2:
+            raise SystemExit(f"expected an exact 256 MiB cgroup limit, got {cgroup_after}")
+        if cgroup_after.get("memory.swap.max") != 0:
+            raise SystemExit(f"expected swap disabled for the constrained benchmark, got {cgroup_after}")
+        if cgroup_after.get("events.oom_kill", 0) > cgroup_before.get("events.oom_kill", 0):
+            raise SystemExit("streaming reader triggered an OOM kill under the service limit")
+        print(f"256 MiB no-swap cgroup peak: {cgroup_after.get('memory.peak', 'unreported')} bytes.")
 
 
 if __name__ == "__main__":

@@ -292,6 +292,8 @@ export function Readiness() {
   const discovery = asRecord(overview.discovery);
   const integrity = asRecord(reality.data?.integrity);
   const capacity = asRecord(reality.data?.capacity);
+  const capacityFreshness = asRecord(capacity.freshness);
+  const capacityFreshnessState = asString(capacityFreshness.state);
   const collector = asRecord(reality.data?.collector);
   const sourceQuality = asRecord(reality.data?.source_quality);
   const runtimeResources = asRecord(resources.data?.services);
@@ -319,14 +321,25 @@ export function Readiness() {
     ) ||
     (shortWindowRunwayDays !== null && shortWindowRunwayDays <= 14);
   const storageGateStatus: GateStatus =
-    !Object.keys(capacity).length || asNumber(disk.available_bytes) === null
-      ? 'NOT MEASURED'
-      : storageCritical
-        ? 'BLOCKED'
-        : 'CONDITIONAL';
-  const storageGateDetail = storageCritical
-    ? `Active short-window runway is ${shortWindowRunwayDays === null ? 'not measured' : `${shortWindowRunwayDays.toFixed(1)} days`}; the capacity service reports a 14-day critical threshold. Staged budget or retention values remain inactive until the guarded recorder transition.`
-    : 'Runway depends on the active retention and recording budget. Staged values remain separate until the guarded recorder transition.';
+    capacityFreshnessState === 'stale' || capacityFreshnessState === 'clock_uncertain'
+      ? 'STALE'
+      : capacityFreshnessState !== 'fresh' ||
+          !Object.keys(capacity).length ||
+          asNumber(disk.available_bytes) === null
+        ? 'NOT MEASURED'
+        : storageCritical
+          ? 'BLOCKED'
+          : 'CONDITIONAL';
+  const storageGateDetail =
+    capacityFreshnessState === 'stale' || capacityFreshnessState === 'clock_uncertain'
+      ? `The capacity report is ${capacityFreshnessState.replaceAll('_', ' ')}. The runway below is the last recorded estimate and is not current.`
+      : capacityFreshnessState !== 'fresh'
+        ? 'A capacity report with a verified measurement time is unavailable; storage runway is not measured.'
+        : storageCritical
+          ? `Active short-window runway is ${shortWindowRunwayDays === null ? 'not measured' : `${shortWindowRunwayDays.toFixed(1)} days`}; the capacity service reports a 14-day critical threshold. Staged budget or retention values remain inactive until the guarded recorder transition.`
+          : 'Runway depends on the active retention and recording budget. Staged values remain separate until the guarded recorder transition.';
+  const storageRunwayLabel =
+    capacityFreshnessState === 'fresh' ? 'Active runway' : 'Last measured runway';
   const realitySample = asRecord(realityRuntime.sample_delta);
   const apiSample = asRecord(apiRuntime.sample_delta);
   const realityMemoryComposition = asRecord(realityRuntime.memory_composition_bytes);
@@ -1102,7 +1115,11 @@ export function Readiness() {
                     <strong>{bytes(capacity.budget_bytes)}</strong>
                   </div>
                   <div>
-                    <span>Effective runway, active config</span>
+                    <span>
+                      {capacityFreshnessState === 'fresh'
+                        ? 'Effective runway, active config'
+                        : 'Last measured effective runway'}
+                    </span>
                     <strong>
                       {effectiveRunwayDays === null
                         ? 'Not measured'
@@ -1208,7 +1225,7 @@ export function Readiness() {
             title="Storage sustainability"
             status={storageGateStatus}
             detail={storageGateDetail}
-            evidence={`Active runway ${effectiveRunwayDays === null ? 'not measured' : `${effectiveRunwayDays.toFixed(1)} days`} · short window ${shortWindowRunwayDays === null ? 'not measured' : `${shortWindowRunwayDays.toFixed(1)} days`} · staged ${configuredRunwayDays === null ? 'not measured' : `${configuredRunwayDays.toFixed(1)} days`} · filesystem available ${bytes(disk.available_bytes)}`}
+            evidence={`${storageRunwayLabel} ${effectiveRunwayDays === null ? 'not measured' : `${effectiveRunwayDays.toFixed(1)} days`} · short window ${shortWindowRunwayDays === null ? 'not measured' : `${shortWindowRunwayDays.toFixed(1)} days`} · staged ${configuredRunwayDays === null ? 'not measured' : `${configuredRunwayDays.toFixed(1)} days`} · filesystem available ${bytes(disk.available_bytes)}`}
           />
           <GateCard
             title="Resource and scheduling stability"

@@ -83,6 +83,12 @@ it('shows measured zero-candidate evidence without turning it into a profitabili
       },
       integrity: { status: 'verified' },
       capacity: {
+        freshness: {
+          state: 'stale',
+          measured_ns: (now - 2 * 60 * 60 * 1000) * 1_000_000,
+          age_seconds: 7200,
+          stale_after_seconds: 3600,
+        },
         status: 'measured',
         budget_bytes: 24 * 1024 ** 3,
         effective_capacity_runway_days: 16.5,
@@ -273,7 +279,12 @@ it('shows measured zero-candidate evidence without turning it into a profitabili
   expect(
     screen.getByText(/Mission Control API is at or above 95% of MemoryHigh/),
   ).toBeInTheDocument();
-  expect(screen.getByText(/Active short-window runway is 12.5 days/)).toBeInTheDocument();
+  const storageGate = screen
+    .getByRole('heading', { name: 'Storage sustainability' })
+    .closest('.rr-gate');
+  expect(storageGate).toHaveTextContent('STALE');
+  expect(storageGate).toHaveTextContent('last recorded estimate and is not current');
+  expect(storageGate).toHaveTextContent('Last measured runway 16.5 days');
   expect(screen.getByText(/112\.0 GiB \/ 120 days · pending restart/)).toBeInTheDocument();
   expect(screen.getByText(/108\.2 days · not active/)).toBeInTheDocument();
   expect(screen.getByText(/No live order execution/)).toBeInTheDocument();

@@ -66,6 +66,52 @@ it('shows empty prospective candidates without treating them as profit', async (
   expect(screen.getByRole('checkbox')).toBeChecked();
 });
 
+it('marks stale capacity evidence and exposes failed background analysis results', async () => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn().mockImplementation((input: RequestInfo | URL) => {
+      const url = String(input);
+      const value = url.includes('/operations')
+        ? {
+            services: [
+              {
+                unit: 'midas-veritas-source-analysis.service',
+                available: true,
+                properties: {
+                  ActiveState: 'failed',
+                  SubState: 'failed',
+                  Result: 'oom-kill',
+                  ExecMainStatus: '9',
+                  NRestarts: '0',
+                  ExecMainExitTimestamp: 'Thu 2026-11-05 17:41:16 CET',
+                },
+              },
+            ],
+          }
+        : url.includes('/overview')
+          ? {
+              health: 'recording',
+              collector: { cohort: [], books: {} },
+              forward: {},
+              capacity: {
+                measured_ns: Date.now() * 1_000_000 - 2 * 60 * 60 * 1_000_000_000,
+                freshness: { state: 'stale' },
+                estimated_storage_seconds_remaining: 86400,
+                alerts: [],
+              },
+            }
+          : {};
+      return Promise.resolve({ ok: true, json: async () => value });
+    }),
+  );
+  mount();
+
+  expect(await screen.findByRole('alert')).toHaveTextContent(/Capacity estimate is stale/);
+  fireEvent.click(screen.getByRole('button', { name: /Operations/ }));
+  expect(await screen.findByText(/oom-kill \/ 9/)).toBeInTheDocument();
+  expect(screen.getByText(/Thu 2026-11-05 17:41:16 CET/)).toBeInTheDocument();
+});
+
 it('counts only confirmed sampled updates and refuses a gap-spanning update rate', () => {
   const samples = [
     { ns: 1e12, legs: { yes: { last: [10, 0] } } },

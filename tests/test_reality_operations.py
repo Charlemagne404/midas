@@ -44,7 +44,7 @@ def test_capacity_real_bytes_rates_and_horizon(tmp_path, monkeypatch):
     value = sample(tmp_path)
     cfg = config(tmp_path)
     catalog_reads = []
-    read_catalog = operations._read_capacity_segment_catalog
+    read_catalog = operations._read_capacity_segment_catalog_snapshot
 
     def counted_catalog_read(path):
         catalog_reads.append(path)
@@ -54,7 +54,7 @@ def test_capacity_real_bytes_rates_and_horizon(tmp_path, monkeypatch):
         pytest.fail("capacity must not materialize every segment catalog")
 
     monkeypatch.setattr(operations, "manifest", fail_manifest)
-    monkeypatch.setattr(operations, "_read_capacity_segment_catalog", counted_catalog_read)
+    monkeypatch.setattr(operations, "_read_capacity_segment_catalog_snapshot", counted_catalog_read)
     monkeypatch.setattr(operations, "_process_peak_rss_bytes", lambda: 12_345_678)
     result = capacity(cfg, now_ns=121_000_000_000)
     assert len(catalog_reads) == len(value["segments"])

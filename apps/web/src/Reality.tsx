@@ -154,6 +154,9 @@ export function Reality() {
   const data = query.data ?? {};
   const c = obj(data.collector);
   const f = obj(data.forward);
+  const capacity = obj(data.capacity);
+  const capacityFreshness = obj(capacity.freshness);
+  const capacityIsFresh = capacityFreshness.state === 'fresh';
   const markets = arr(c.cohort).map(obj);
   const selected = markets.find((m) => m.condition === condition) ?? markets[0];
   return (
@@ -256,7 +259,11 @@ export function Reality() {
                       <em> MiB</em>
                     </>
                   }
-                  note={`About ${fmt(Number(obj(data.capacity).estimated_storage_seconds_remaining) / 86400, 1)} days of space left at the recent save rate`}
+                  note={
+                    capacityIsFresh
+                      ? `About ${fmt(Number(capacity.estimated_storage_seconds_remaining) / 86400, 1)} days of space left at the recent save rate`
+                      : `Capacity estimate ${txt(capacityFreshness.state).toLowerCase()}; last measured ${utc(capacity.measured_ns)}`
+                  }
                 />
                 <Metric
                   label="Virtual decisions being followed"
@@ -1624,6 +1631,7 @@ function Operations({ overview }: { overview: Obj }) {
   const [result, setResult] = useState('');
   const [busy, setBusy] = useState(false);
   const capacity = obj(overview.capacity);
+  const freshness = obj(capacity.freshness);
   async function operate(action: string) {
     setBusy(true);
     try {
@@ -1641,6 +1649,13 @@ function Operations({ overview }: { overview: Obj }) {
   return (
     <>
       <QueryState query={query} />
+      {freshness.state !== 'fresh' && (
+        <div className="r-error" role="alert">
+          Capacity estimate is {txt(freshness.state).toLowerCase()}. The runway shown below is the
+          last recorded measurement from {utc(capacity.measured_ns)} and must not be treated as
+          current.
+        </div>
+      )}
       <div className="r-metrics">
         <Metric
           label="Raw storage budget"
@@ -1660,7 +1675,7 @@ function Operations({ overview }: { overview: Obj }) {
         <Metric
           label="Action horizon"
           value={`${fmt(Number(capacity.estimated_storage_seconds_remaining) / 86400, 1)} days`}
-          note={`Measured ${utc(capacity.measured_ns)}`}
+          note={`${freshness.state === 'fresh' ? 'Measured' : 'Last measured'} ${utc(capacity.measured_ns)}`}
         />
       </div>
       <Panel
@@ -1676,6 +1691,9 @@ function Operations({ overview }: { overview: Obj }) {
                 <th>PID</th>
                 <th>Restarts</th>
                 <th>Cgroup memory</th>
+                <th>Result / exit</th>
+                <th>Last exit / trigger</th>
+                <th>Next trigger</th>
               </tr>
             </thead>
             <tbody>
@@ -1700,6 +1718,13 @@ function Operations({ overview }: { overview: Obj }) {
                           ? `${fmt(Number(p.MemoryCurrent) / 2 ** 20, 1)} MiB`
                           : '—'}
                       </td>
+                      <td>
+                        {s.error
+                          ? txt(s.error)
+                          : `${txt(p.Result)}${p.ExecMainStatus ? ` / ${txt(p.ExecMainStatus)}` : ''}`}
+                      </td>
+                      <td>{txt(p.ExecMainExitTimestamp ?? p.LastTriggerUSec)}</td>
+                      <td>{txt(p.NextElapseUSecRealtime)}</td>
                     </tr>
                   );
                 })}

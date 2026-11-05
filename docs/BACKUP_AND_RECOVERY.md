@@ -1,11 +1,11 @@
 # MIDAS backup and recovery
 
 This runbook covers active SQLite databases and the Reality recording store.
-Database and recording sizes below were measured on 2026-11-05 around 15:30
-Europe/Stockholm; the active Reality retention configuration was read at
-16:45, storage capacity at about 17:11, and host resource pressure at 17:09.
-Recheck mounts, service ownership, database sizes, and the resource gate before
-each operation.
+The principal data-tree inventory was measured on 2026-11-05 around 15:30
+Europe/Stockholm; the active database file sizes below were refreshed at
+18:42–18:43. Recording and ignored-research sizes remain from the earlier
+inventory. Recheck mounts, service ownership, data sizes, and the resource gate
+before each operation.
 
 ## Current protection status
 
@@ -27,8 +27,8 @@ Current measured sources include:
 
 | Source | Current owner and state | Measured size |
 |---|---|---:|
-| `/home/charlie/midas/data/midas.db` | `midas-api.service`, open in WAL mode | 16,422,002,688 bytes; WAL 4,482,592 bytes |
-| `/home/charlie/midas-reality/data/research/reality/interface/preview.db` | `midas-reality-api.service`, open in WAL mode | 12,513,951,744 bytes; WAL 4,317,792 bytes |
+| `/home/charlie/midas/data/midas.db` | `midas-api.service`, actively written in WAL mode | 16,528,715,776 bytes; WAL 4,482,592 bytes at 18:42 |
+| `/home/charlie/midas-reality/data/research/reality/interface/preview.db` | `midas-reality-api.service`, actively written in WAL mode | 12,615,774,208 bytes; WAL 4,317,792 bytes at 18:43 |
 | `/home/charlie/midas-reality/data/recordings/reality` | `midas-reality.service`; writer lock held and one `.open` segment active | 58,367 finalized segments and sidecars; segment bytes 19,739,677,482 |
 
 Additional ignored research data exists in Reality, Veritas, Arena, and
@@ -69,6 +69,70 @@ provider and transfer of private research data require the owner's choice and
 approval. Keep the repository encrypted, test a fresh-host restore, and alert
 outside the source host when a scheduled backup or integrity check fails.
 
+### Destination sizing and proposed operating schedule
+
+The latest read-only mount check found `/mnt/continental-cloud` on ext4
+`/dev/sda4`, UUID `2be0060d-8620-4c13-ad02-6e2bada0fb9b`, with about 592 GiB
+free; `/` is on NVMe `/dev/nvme0n1p2`. This is useful local disk-failure
+separation, but both devices are in the same host and failure domain. It cannot
+protect against loss of the machine, theft, fire, host compromise, or a
+host-level deletion.
+
+Use these conservative minima until a complete ignored-data inventory and
+30-day change sample exist:
+
+- The first off-host baseline must store at least the known 68.3 GB of
+  uncompressed source data. The total is incomplete; do not provision exactly
+  that amount.
+- Add the measured 30-day changed-data volume, repository metadata, and at
+  least 20% free reserve. Neither the change volume nor deduplication ratio is
+  currently known.
+- A separate restore target needs at least the full current source payload
+  (currently at least 68.3 GB) plus 20% working headroom. This is a minimum of
+  about 82 GB before the incomplete inventory is added. For a new-host recovery,
+  the destination host also needs room for restored data alongside its
+  operating system and tools.
+- The two SQLite snapshot outputs alone need roughly 29.2 GB of local
+  destination space while created. The Reality recording snapshot needs about
+  19.8 GB for finalized segments and sidecars, before other research roots,
+  receipts, or reserve. Snapshots must be serialized and pass fresh admission.
+
+`restic 0.16.4` is installed locally, but no MIDAS repository, URI, credentials,
+timer, or external alert exists. The only active backup timers found were for
+the unrelated continental infrastructure and Status database; neither covers
+MIDAS. Do not add a service or timer until the owner selects an off-host
+failure domain and supplies a secret through a host-owned credential store.
+The eventual operator-owned environment should provide `RESTIC_REPOSITORY` and
+`RESTIC_PASSWORD_FILE`; keep both out of Git and use a separate restricted
+credential for retention pruning.
+
+Suggested policy after approval, not enabled:
+
+- Seed and fully verify an off-host baseline after the full data inventory and
+  heavy resource preflight pass. Take the SQLite snapshots one at a time using
+  the online backup API, then transfer immutable snapshots with restic.
+- Run daily incremental repository snapshots for data sources with reviewed
+  consistency semantics. The current Reality recording tool deliberately
+  refuses an active writer and `.open` segment; it therefore needs either a
+  separately approved clean-stop window or a separately reviewed
+  writer-coordinated incremental snapshot design before automated daily
+  recording protection can be claimed. Never copy the active SQLite main file
+  directly or include an open recording segment as finalized evidence.
+- After the repository is known-good, keep 35 daily and 12 monthly recovery
+  points as an initial retention proposal. Review it against research/evidence
+  retention requirements before enabling deletion. Run `restic check` weekly,
+  verify a random data subset monthly, and perform a restored SQLite plus
+  recording replay drill quarterly. Perform a full off-host recovery exercise
+  at least annually. Send failures and last-success age to monitoring outside
+  the source host.
+
+The source-side snapshot commands already create timestamped receipts, hashes,
+integrity results, and non-replacing destinations. An off-host schedule still
+needs to link each receipt to its restic snapshot ID and publish a distinct
+failure receipt; there is no such integration yet. Retention expiration must
+be visibly reported and must not silently prune the only verified recovery
+point.
+
 ## Resource admission
 
 Large backup and verification work must run through
@@ -79,15 +143,15 @@ unless the scope reports the `heavy` profile. The Reality recording snapshot
 always requires that profile. These checks must pass at run time; do not lower
 their thresholds or bypass them.
 
-The 2026-11-05 probe had 24 KiB free swap, an observed swap-in page, and
-adequate separate-disk capacity. Heavy admission returned `DENY` for
+The 2026-11-05 heavy admission probe returned `DENY` for
 `swap_reserve_below_profile_floor` and `swap_activity_above_profile_limit`.
-No live data backup was attempted. Wait for the machine to satisfy admission
-and rerun the gate. The 17:09 host sample still showed all 4 GiB of swap in use
-with only 264 KiB free; the first `vmstat` sample had 50 pages swapped in and
-53 out, with none in the next two samples. This is not a fresh admission pass.
-Capture each gate result in a private receipt log so denials and failures
-remain reviewable.
+The 18:40 read-only refresh showed all 4 GiB of swap occupied with 52 KiB free;
+the first `vmstat` sample had 49 pages swapped in and 53 out, with none in the
+next two samples. I/O PSI was elevated and the two later samples had 7% I/O
+wait. `/mnt/continental-cloud` has capacity, but no live data backup or heavy
+preflight was attempted during this refresh. Wait for the machine to satisfy
+admission and rerun the gate. This is not a fresh pass. Capture each gate
+result in a private receipt log so denials and failures remain reviewable.
 
 ## SQLite snapshot
 

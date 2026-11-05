@@ -27,8 +27,41 @@ jobs:
           path: veritas-memory-baseline
           fetch-depth: 1
           persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository }}
+          # The exact Reality v5 source still loaded by the active service.
+          ref: d8629e4b63c8b8ef68e27294fb3599423a694b76
+          path: reality-v5-baseline
+          fetch-depth: 1
+          persist-credentials: false
       - name: Run bounded, isolated backend validation
         run: bash .github/ci-test-support/run-backend-container.sh
+      - name: Verify Veritas source analysis under the 256 MiB no-swap limit
+        env:
+          MIDAS_CI_IMAGE: midas-ci-backend:${{ github.run_id }}-${{ github.run_attempt }}
+        run: |
+          docker run --rm --network=none \
+            --memory=256m --memory-swap=256m --cpus=1 --pids-limit=64 \
+            --read-only --cap-drop=ALL --security-opt=no-new-privileges:true \
+            --tmpfs /tmp:rw,nosuid,nodev,size=1g,uid=10001,gid=10001,mode=1777 \
+            --mount "type=bind,src=$GITHUB_WORKSPACE,dst=/source,readonly" \
+            --mount "type=bind,src=$GITHUB_WORKSPACE/veritas-memory-baseline,dst=/veritas-memory-baseline,readonly" \
+            --env PYTHONDONTWRITEBYTECODE=1 \
+            --env PYTHONPATH=/source/packages \
+            --env HOME=/home/midas --env TMPDIR=/tmp \
+            "$MIDAS_CI_IMAGE" /opt/venv/bin/python \
+            /source/.github/ci-test-support/measure-veritas-catalog-memory.py \
+            --current-root /source --baseline-root /veritas-memory-baseline \
+            --catalog-counts 1000 10000 25000 58367 --current-only
+      - name: Compare Reality v5 and v6 on full stores under 192 MiB and 60 seconds
+        run: |
+          python3 .github/ci-test-support/run-reality-capacity-benchmarks.py \
+            --source-root "$GITHUB_WORKSPACE" \
+            --baseline-root "$GITHUB_WORKSPACE/reality-v5-baseline" \
+            --runner-temp "$RUNNER_TEMP" \
+            --image "midas-ci-backend:${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" \
+            --run-key "${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
       - uses: actions/upload-artifact@v4
         if: always()
         with:

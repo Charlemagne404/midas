@@ -490,11 +490,18 @@ def _trailing_segment_growth(
     )
 
 
-def _capacity_segment_catalog_paths(root: Path) -> list[Path]:
-    """Return a bounded, deterministically ordered list of segment sidecars."""
+def _capacity_segment_catalog_inventory(
+    root: Path,
+) -> tuple[list[Path], int, dict[str, os.stat_result]]:
+    """Inventory finalized sidecars and root bytes in one bounded directory pass."""
     paths: list[Path] = []
+    catalog_stats: dict[str, os.stat_result] = {}
+    raw_root_bytes = 0
     with os.scandir(root) as entries:
         for entry in entries:
+            metadata = entry.stat(follow_symlinks=False)
+            if stat.S_ISREG(metadata.st_mode):
+                raw_root_bytes += metadata.st_size
             name = entry.name
             if not name or not name[0].isdigit() or not name.endswith(".json"):
                 continue
@@ -502,14 +509,20 @@ def _capacity_segment_catalog_paths(root: Path) -> list[Path]:
                 raise ValueError(
                     f"Capacity segment catalog count exceeds {MAX_CAPACITY_SEGMENT_CATALOGS}"
                 )
-            if entry.is_symlink() or not entry.is_file(follow_symlinks=False):
+            if not stat.S_ISREG(metadata.st_mode):
                 raise ValueError(f"Capacity segment catalog is not a regular file: {name}")
             paths.append(root / name)
+            catalog_stats[name] = metadata
     paths.sort(key=lambda path: path.name)
-    return paths
+    return paths, raw_root_bytes, catalog_stats
 
 
-def _read_capacity_segment_catalog(path: Path) -> dict[str, Any]:
+def _capacity_segment_catalog_paths(root: Path) -> list[Path]:
+    """Return a bounded, deterministically ordered list of segment sidecars."""
+    return _capacity_segment_catalog_inventory(root)[0]
+
+
+def _read_capacity_segment_catalog_snapshot(path: Path) -> tuple[dict[str, Any], os.stat_result]:
     """Read one regular segment catalog without following links or unbounded reads."""
     flags = os.O_RDONLY | getattr(os, "O_CLOEXEC", 0)
     flags |= getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0)
@@ -528,22 +541,29 @@ def _read_capacity_segment_catalog(path: Path) -> dict[str, Any]:
         value = json.loads(contents.decode("utf-8"))
         if not isinstance(value, dict):
             raise ValueError(f"Capacity segment catalog is not an object: {path.name}")
-        return value
+        return value, metadata
     finally:
         if descriptor >= 0:
             os.close(descriptor)
 
 
-def _capacity_segment_growth_stat(root: Path, info: dict[str, Any]) -> tuple[int, int]:
+def _read_capacity_segment_catalog(path: Path) -> dict[str, Any]:
+    """Compatibility wrapper for callers that need only the parsed catalog."""
+    return _read_capacity_segment_catalog_snapshot(path)[0]
+
+
+def _capacity_segment_growth_stat(
+    root: Path, info: dict[str, Any], catalog_stat: os.stat_result | None = None
+) -> tuple[int, int]:
     name = str(info.get("file", ""))
     if Path(name).name != name:
         raise ValueError("Unsafe segment path in capacity growth window")
     segment = root / name
     catalog = segment.with_suffix(".json")
-    if segment.is_symlink() or catalog.is_symlink():
+    if segment.is_symlink() or (catalog_stat is None and catalog.is_symlink()):
         raise ValueError("Capacity growth window contains a symlink")
     segment_stat = segment.stat()
-    catalog_stat = catalog.stat()
+    catalog_stat = catalog.stat() if catalog_stat is None else catalog_stat
     if segment_stat.st_size != int(info["bytes"]):
         raise ValueError(f"Capacity growth size differs from catalog: {segment}")
     return max(segment_stat.st_mtime_ns, catalog_stat.st_mtime_ns), (
@@ -631,16 +651,31 @@ def capacity(
     if forecast_floor_bytes_per_day < 0:
         raise ValueError("Forecast floor must be nonnegative")
     root = Path(config.root)
-    catalog_paths = _capacity_segment_catalog_paths(root)
+    catalog_paths, raw_root_bytes, inventory_catalog_stats = _capacity_segment_catalog_inventory(
+        root
+    )
     sample_queue: deque[dict[str, Any]] = deque(maxlen=window_segments)
     first_info: dict[str, Any] | None = None
     growth_stats: list[tuple[int, int]] = []
     for catalog_path in catalog_paths:
-        info = _read_capacity_segment_catalog(catalog_path)
+        info, catalog_stat = _read_capacity_segment_catalog_snapshot(catalog_path)
+        inventory_stat = inventory_catalog_stats[catalog_path.name]
+        if (
+            catalog_stat.st_dev,
+            catalog_stat.st_ino,
+            catalog_stat.st_size,
+            catalog_stat.st_mtime_ns,
+        ) != (
+            inventory_stat.st_dev,
+            inventory_stat.st_ino,
+            inventory_stat.st_size,
+            inventory_stat.st_mtime_ns,
+        ):
+            raise ValueError(f"Capacity catalog changed during inventory: {catalog_path.name}")
         if first_info is None:
             first_info = info
         sample_queue.append(info)
-        growth_stats.append(_capacity_segment_growth_stat(root, info))
+        growth_stats.append(_capacity_segment_growth_stat(root, info, catalog_stat))
     sample = list(sample_queue)
     first = last = previous_ns = previous_frame_ns = None
     raw_bytes = frames = sampled_bytes = 0
@@ -659,7 +694,7 @@ def capacity(
         path = root / info["file"]
         if describe(path) != info:
             raise ValueError(f"Capacity sample integrity mismatch: {path}")
-        sampled_bytes += info["bytes"] + path.with_suffix(".json").stat().st_size
+        sampled_bytes += info["bytes"] + inventory_catalog_stats[path.with_suffix(".json").name].st_size
         for record, _ in records(path):
             received = record["received_ns"]
             first = received if first is None else min(first, received)
@@ -702,7 +737,7 @@ def capacity(
             if forecast_floor_bytes_per_day
             else "recent_sample_fallback_no_valid_growth_windows"
         )
-    used = sum(p.stat().st_size for p in root.iterdir() if p.is_file())
+    used = raw_root_bytes
     free = shutil.disk_usage(root).free
     runtime_budget, budget_source = _last_started_budget(root, config.budget_bytes, status)
     budget_pending = runtime_budget != config.budget_bytes

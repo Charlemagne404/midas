@@ -19,6 +19,43 @@ from midas.reality.storage import MAGIC
 
 CALIBRATION = "8e29bed2af533d3e2ee1640c5c9e876d3323480d8b2d579b454b6c9768aa2500"
 TRAINING = "9f593b0e68c61c5a8eabf3b01b7ad38c9e1df27436bd041a55a505c995a0a9f9"
+CAPACITY_REPORT_STALE_AFTER_NS = 60 * 60 * 1_000_000_000
+
+
+def classify_capacity_freshness(
+    capacity_report: dict[str, Any], now_ns: int
+) -> dict[str, Any]:
+    """Keep old capacity estimates from being presented as current evidence."""
+    measured_ns = capacity_report.get("measured_ns")
+    if not isinstance(measured_ns, int) or isinstance(measured_ns, bool) or measured_ns <= 0:
+        return dict(
+            state="unavailable",
+            reason="measurement_timestamp_unavailable",
+            measured_ns=None,
+            age_seconds=None,
+            stale_after_seconds=CAPACITY_REPORT_STALE_AFTER_NS / 1e9,
+        )
+    age_ns = now_ns - measured_ns
+    if age_ns < 0:
+        state, reason = "clock_uncertain", "measurement_timestamp_is_in_the_future"
+    elif age_ns > CAPACITY_REPORT_STALE_AFTER_NS:
+        state, reason = "stale", "measurement_exceeds_two_capacity_intervals"
+    else:
+        state, reason = "fresh", None
+    return dict(
+        state=state,
+        reason=reason,
+        measured_ns=measured_ns,
+        age_seconds=age_ns / 1e9,
+        stale_after_seconds=CAPACITY_REPORT_STALE_AFTER_NS / 1e9,
+    )
+
+
+def project_capacity_report(capacity_report: dict[str, Any], now_ns: int) -> dict[str, Any]:
+    """Attach request-time freshness without mutating the persisted report."""
+    projected = dict(capacity_report)
+    projected["freshness"] = classify_capacity_freshness(capacity_report, now_ns)
+    return projected
 
 
 def classify_collector_health(status: dict[str, Any], now_ns: int) -> tuple[str, list[str]]:
@@ -445,6 +482,7 @@ def router(workspace: Path) -> APIRouter:
                 or ["source_quality_unavailable"]
             )
         status = project_collector_status(status, capture_health)
+        capacity_report = project_capacity_report(read_json(artifact_paths()["capacity"]), now)
         return dict(
             now_ns=now,
             collector=status,
@@ -454,7 +492,7 @@ def router(workspace: Path) -> APIRouter:
             health_reasons=health_reasons,
             source_quality=source_quality,
             forward=read_json(forward / "status.json"),
-            capacity=read_json(artifact_paths()["capacity"]),
+            capacity=capacity_report,
             schedule=read_json(artifact_paths()["schedule"]),
             integrity=read_json(artifact_paths()["integrity"]),
             execution_ground_truth="unknown_counterfactual",
@@ -469,6 +507,8 @@ def router(workspace: Path) -> APIRouter:
         data = read_json(path)
         if not data:
             raise HTTPException(404, "Evidence has not been generated")
+        if kind == "capacity":
+            data = project_capacity_report(data, time.time_ns())
         # The empirical joint kernel contains thousands of individual rows, not UI data.
         if kind == "calibration":
             data.pop("empirical_joint_kernel", None)
@@ -652,10 +692,13 @@ def router(workspace: Path) -> APIRouter:
     units = (
         "midas-reality.service",
         "midas-reality-shadow.service",
+        "midas-reality-capacity.service",
         "midas-reality-capacity.timer",
         "midas-reality-archive.timer",
         "midas-reality-research.timer",
         "midas-reality-shadow-integrity.timer",
+        "midas-veritas-source-analysis.service",
+        "midas-veritas-source-analysis.timer",
     )
 
     @routes.get("/operations")
@@ -665,26 +708,33 @@ def router(workspace: Path) -> APIRouter:
             return cached[1]  # type: ignore[no-any-return]
         services = []
         for unit in units:
-            result = subprocess.run(
-                [
-                    "systemctl",
-                    "--user",
-                    "show",
-                    unit,
-                    "--property=ActiveState,SubState,MainPID,NRestarts,MemoryCurrent,CPUUsageNSec",
-                ],
-                capture_output=True,
-                text=True,
-                timeout=2,
-                check=False,
-            )
+            try:
+                result = subprocess.run(
+                    [
+                        "systemctl",
+                        "--user",
+                        "show",
+                        unit,
+                        "--property=ActiveState,SubState,MainPID,NRestarts,MemoryCurrent,CPUUsageNSec,Result,ExecMainStatus,ExecMainExitTimestamp,ActiveEnterTimestamp,LastTriggerUSec,NextElapseUSecRealtime",
+                    ],
+                    capture_output=True,
+                    text=True,
+                    timeout=2,
+                    check=False,
+                )
+                properties = dict(
+                    line.split("=", 1) for line in result.stdout.splitlines() if "=" in line
+                )
+                error = None if result.returncode == 0 else "systemd_query_failed"
+            except subprocess.TimeoutExpired:
+                properties = {}
+                error = "systemd_query_timeout"
             services.append(
                 dict(
                     unit=unit,
-                    available=result.returncode == 0,
-                    properties=dict(
-                        line.split("=", 1) for line in result.stdout.splitlines() if "=" in line
-                    ),
+                    available=error is None,
+                    error=error,
+                    properties=properties,
                 )
             )
         value = dict(
