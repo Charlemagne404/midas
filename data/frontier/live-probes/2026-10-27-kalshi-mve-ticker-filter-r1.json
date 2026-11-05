@@ -1,0 +1,152 @@
+{
+  "api_result": {
+    "complete_for_request": true,
+    "event_count": 1,
+    "events": [
+      {
+        "collection_ticker": null,
+        "market_count": 0,
+        "member_list_state": "omitted",
+        "native_event_id": "KXMVECROSSCATEGORY-S2026ZZZB25KKPHBN3TFC",
+        "series_ticker": "KXMVECROSSCATEGORY",
+        "title": "Which party will win the U.S. House?"
+      }
+    ],
+    "filter_type": "tickers",
+    "filter_value": "KXMVECROSSCATEGORY-S2026ZZZB25KKPHBN3TFC",
+    "has_more_source_pages": false,
+    "hypothetical_only": true,
+    "market_count": 0,
+    "network_calls_bounded_by": 1,
+    "note": "One Kalshi multivariate-event page filtered by one series, collection, or event ticker. A source continuation cursor is retained but not followed; event grouping and selected legs do not verify combo payoff or component settlement equivalence. The source omitted nested markets, so only event metadata was normalized.",
+    "observation_id": "28a3046b807d101281ed2ae369becfe41c28f1b08214ea8e3d26405e1d08acb5",
+    "raw_sha256": "3e2372de6143c0c8f37b3e77265a210596bf3c414fa33d19ee4028b1d2d3a7bb",
+    "request_count_delta": 1,
+    "venue": "kalshi"
+  },
+  "artifact_state": "capture_raw_body_preserved_and_offline_snapshot_reverified",
+  "capture_time_artifact_state_reported": "capture_and_temporary_store_readback_verified",
+  "captured_at_utc": "2026-10-27T12:03:59.526568+00:00",
+  "evidence_type": "genuine_public_kalshi_mve_single_event_filter",
+  "normalized_observation": {
+    "complete_for_request": true,
+    "cursor": null,
+    "market_groups": [
+      {
+        "group_type": "multivariate_event",
+        "member_list_state": "omitted",
+        "member_native_market_ids": [],
+        "native_collection_id": null,
+        "native_fields": {
+          "category": "Exotics",
+          "collateral_return_type": "",
+          "event_ticker": "KXMVECROSSCATEGORY-S2026ZZZB25KKPHBN3TFC",
+          "exchange_index": 1,
+          "last_updated_ts": "0001-01-01T00:00:00Z",
+          "mutually_exclusive": false,
+          "series_ticker": "KXMVECROSSCATEGORY",
+          "settlement_sources": [
+            {
+              "name": "the league governing the game",
+              "url": "https://www.ncaa.com/sports/football/fbs"
+            },
+            {
+              "name": "the league governing the game",
+              "url": "https://www.nfl.com/"
+            }
+          ],
+          "strike_period": "",
+          "sub_title": "MVE",
+          "title": "Which party will win the U.S. House?"
+        },
+        "native_group_id": "KXMVECROSSCATEGORY-S2026ZZZB25KKPHBN3TFC",
+        "native_series_id": "KXMVECROSSCATEGORY",
+        "provenance": {
+          "adapter_version": "frontier-kalshi-9",
+          "clock_uncertainty_ms": null,
+          "exchange_timestamp_semantics": "unknown",
+          "exchange_timestamp_utc": null,
+          "observation_id": "50e61e55d481684077512602e8bbc468aae3ea9d3986e8511975e85adaab099b",
+          "persisted_at_utc": null,
+          "processed_at_utc": "2026-10-27T12:03:59.300677Z",
+          "raw_sha256": "3e2372de6143c0c8f37b3e77265a210596bf3c414fa33d19ee4028b1d2d3a7bb",
+          "request_started_at_utc": "2026-10-27T12:03:58.951465Z",
+          "response_received_at_utc": "2026-10-27T12:03:59.300528Z",
+          "source_schema_version": "Kalshi GET /events/multivariate",
+          "source_url": "https://external-api.kalshi.com/trade-api/v2/events/multivariate?tickers=KXMVECROSSCATEGORY-S2026ZZZB25KKPHBN3TFC&limit=1&with_nested_markets=true"
+        },
+        "schema_version": 1,
+        "subtitle": "MVE",
+        "title": "Which party will win the U.S. House?",
+        "venue": "kalshi"
+      }
+    ],
+    "markets": [],
+    "note": "One Kalshi multivariate-event page filtered by one series, collection, or event ticker. A source continuation cursor is retained but not followed; event grouping and selected legs do not verify combo payoff or component settlement equivalence. The source omitted nested markets, so only event metadata was normalized.",
+    "schema_version": 2,
+    "venue": "kalshi"
+  },
+  "probe_harness_cleanup": {
+    "capture_and_store_readback_completed_before_cleanup": true,
+    "error": "RuntimeError: Event loop is closed during AsyncClient cleanup after TestClient shutdown",
+    "live_request_repeated": false,
+    "state": "error_after_capture_and_store_readback"
+  },
+  "raw_observation": {
+    "adapter_version": "frontier-kalshi-9",
+    "http_status": 200,
+    "observation_kind": "multivariate_event_listing",
+    "raw_body": "{\"cursor\":\"\",\"events\":[{\"category\":\"Exotics\",\"collateral_return_type\":\"\",\"event_ticker\":\"KXMVECROSSCATEGORY-S2026ZZZB25KKPHBN3TFC\",\"exchange_index\":1,\"last_updated_ts\":\"0001-01-01T00:00:00Z\",\"mutually_exclusive\":false,\"series_ticker\":\"KXMVECROSSCATEGORY\",\"settlement_sources\":[{\"name\":\"the league governing the game\",\"url\":\"https://www.ncaa.com/sports/football/fbs\"},{\"name\":\"the league governing the game\",\"url\":\"https://www.nfl.com/\"}],\"strike_period\":\"\",\"sub_title\":\"MVE\",\"title\":\"Which party will win the U.S. House?\"}]}\n",
+    "raw_body_encoding": "utf8",
+    "raw_sha256": "3e2372de6143c0c8f37b3e77265a210596bf3c414fa33d19ee4028b1d2d3a7bb",
+    "received_at_utc": "2026-10-27T12:03:59.300528Z",
+    "request_started_at_utc": "2026-10-27T12:03:58.951465Z",
+    "request_url": "https://external-api.kalshi.com/trade-api/v2/events/multivariate?tickers=KXMVECROSSCATEGORY-S2026ZZZB25KKPHBN3TFC&limit=1&with_nested_markets=true",
+    "schema_version": 1,
+    "venue": "kalshi"
+  },
+  "raw_sha256": "3e2372de6143c0c8f37b3e77265a210596bf3c414fa33d19ee4028b1d2d3a7bb",
+  "request_bounds": {
+    "authenticated": false,
+    "cursor_followed": false,
+    "max_pages_requested": 1,
+    "method": "GET",
+    "request_count": 1,
+    "requested_limit": 1,
+    "response_cap_bytes": 262144,
+    "retries": 0,
+    "timeout_seconds": 10.0,
+    "with_nested_markets": true
+  },
+  "response_schema_summary": {
+    "complete_for_request": true,
+    "cursor_present": false,
+    "event_count": 1,
+    "events": [
+      {
+        "event_ticker": "KXMVECROSSCATEGORY-S2026ZZZB25KKPHBN3TFC",
+        "member_list_state": "omitted",
+        "member_market_count": 0,
+        "title": "Which party will win the U.S. House?"
+      }
+    ],
+    "market_count": 0
+  },
+  "capture_time_reported_row_sha256_unreconciled": "cea5ea38a3ffad129fa2baedf3520b9bae71e8d4919521e140f46467baf57d50",
+  "offline_snapshot_row_sha256": "e6dcb76b2e18316866c078fd4778c2dff93891132e8b92104e3385c08d1271bd",
+  "row_hash_reconciliation": "offline_snapshot_row_sha256 was recomputed from the preserved raw_observation and normalized_observation canonical JSON and read back from a fresh temporary store; the original capture-time reported digest is retained above but does not match the preserved payload",
+  "schema_version": 1,
+  "scientific_limitations": [
+    "One ticker-filtered event page is not venue-wide inventory.",
+    "Source cursor was retained but not followed.",
+    "Selected legs and event grouping do not establish component rules or combo payoff.",
+    "No synchronized cross-venue quote, executable opportunity, or profitability is established."
+  ],
+  "source_filter": {
+    "derived_from_capture": "data/frontier/live-probes/2026-10-27-kalshi-multivariate-page-r1.json",
+    "event_ticker": "KXMVECROSSCATEGORY-S2026ZZZB25KKPHBN3TFC",
+    "query_parameter": "tickers",
+    "single_ticker_only": true
+  },
+  "offline_snapshot_readback_verified": true
+}

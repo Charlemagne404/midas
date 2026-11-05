@@ -13,6 +13,8 @@ from pathlib import Path
 from typing import Any, TypeGuard
 
 from fastapi import APIRouter, HTTPException
+from midas.veritas.independent_economics import REFERENCE_VERSION
+from midas.veritas.observatory import MAX_LATEST_SUMMARY_BYTES
 
 ARTIFACTS = {
     "baseline": "VERITAS_GATE_A_BASELINE.json",
@@ -33,7 +35,10 @@ ARTIFACTS = {
 }
 MAX_ARTIFACT_BYTES = 512 * 1024
 MAX_LEDGER_ARTIFACT_BYTES = 1024 * 1024
-MAX_OBSERVATORY_SUMMARY_BYTES = 2 * 1024**2
+# The cumulative public projection is deliberately much smaller than the
+# full SQLite state. Detail remains paginated in event and catalog evidence.
+MAX_OBSERVATORY_SUMMARY_BYTES = 512 * 1024
+MAX_OBSERVATORY_LATEST_BYTES = MAX_LATEST_SUMMARY_BYTES
 MAX_OBSERVATORY_SNAPSHOT_COMPRESSED_BYTES = 4 * 1024**2
 MAX_OBSERVATORY_SNAPSHOT_BYTES = 16 * 1024**2
 MAX_SOURCE_ANALYSIS_SUMMARY_BYTES = 4 * 1024**2
@@ -2594,7 +2599,7 @@ def _read_latest_observatory_scan(repository: Path) -> dict[str, Any] | None:
         raise HTTPException(404, "Veritas public observatory artifact is unavailable")
     if not path.exists():
         return None
-    if not path.is_file() or path.stat().st_size > MAX_OBSERVATORY_SUMMARY_BYTES:
+    if not path.is_file() or path.stat().st_size > MAX_OBSERVATORY_LATEST_BYTES:
         raise HTTPException(503, "Latest Veritas public scan exceeds the interface bound")
     try:
         value = json.loads(path.read_text())
@@ -2611,6 +2616,7 @@ def observatory_overview(repository: Path) -> dict[str, Any]:
         return {
             "status": "not_started",
             "analysis_version": None,
+            "measurement_status": "NOT_MEASURED",
             "processed_snapshot_count": 0,
             "pending_snapshot_count": 0,
             "readiness": "waiting_for_first_finalized_snapshot",
@@ -2619,16 +2625,16 @@ def observatory_overview(repository: Path) -> dict[str, Any]:
             "last_captured_at_utc": None,
             "observed_utc_days": [],
             "discovery": {
-                "current_bounded_eligible_markets": 0,
-                "maximum_bounded_eligible_markets_seen": 0,
-                "unique_market_ids_observed": 0,
-                "selected_market_observations": 0,
+                "current_bounded_eligible_markets": None,
+                "maximum_bounded_eligible_markets_seen": None,
+                "unique_market_ids_observed": None,
+                "selected_market_observations": None,
                 "latest_phase": None,
                 "latest_scan_id": None,
                 "latest_snapshot_url": None,
-                "latest_selected_markets": 0,
-                "latest_stable_control_markets": 0,
-                "latest_rotating_markets": 0,
+                "latest_selected_markets": None,
+                "latest_stable_control_markets": None,
+                "latest_rotating_markets": None,
                 "latest_by_category": {},
                 "latest_by_liquidity": {},
                 "latest_by_expiry": {},
@@ -2636,33 +2642,33 @@ def observatory_overview(repository: Path) -> dict[str, Any]:
                 "latest_exclusions": {},
                 "latest_frame_protocol": None,
                 "latest_offset_bucket_seconds": None,
-                "latest_query_count": 0,
-                "latest_query_candidate_records": 0,
-                "latest_unique_market_ids": 0,
-                "latest_http_attempts": 0,
-                "latest_target_markets": 0,
+                "latest_query_count": None,
+                "latest_query_candidate_records": None,
+                "latest_unique_market_ids": None,
+                "latest_http_attempts": None,
+                "latest_target_markets": None,
                 "latest_selected_market_rows": [],
                 "collection_bounds": None,
                 "latest_snapshot_invalid_reasons": {},
             },
             "opportunity": {
-                "quality_valid_pairs": 0,
-                "invalid_pairs": 0,
-                "positive_top_gross_pairs": 0,
-                "positive_full_depth_gross_by_quantity": {},
-                "positive_minimum_notional_by_quantity": {},
-                "positive_single_match_by_quantity": {},
-                "positive_fragmentation_safe_by_quantity": {},
-                "candidate_event_count": 0,
-                "candidate_market_count": 0,
+                "quality_valid_pairs": None,
+                "invalid_pairs": None,
+                "positive_top_gross_pairs": None,
+                "positive_full_depth_gross_by_quantity": None,
+                "positive_minimum_notional_by_quantity": None,
+                "positive_single_match_by_quantity": None,
+                "positive_fragmentation_safe_by_quantity": None,
+                "candidate_event_count": None,
+                "candidate_market_count": None,
                 "minimum_top_edge_per_share": None,
                 "maximum_top_edge_per_share": None,
             },
             "measurement_comparison": {
-                "denominator_selected_market_observations": 0,
-                "legacy_freshness_valid_pairs": 0,
-                "corrected_freshness_valid_pairs": 0,
-                "recovered_valid_pairs": 0,
+                "denominator_selected_market_observations": None,
+                "legacy_freshness_valid_pairs": None,
+                "corrected_freshness_valid_pairs": None,
+                "recovered_valid_pairs": None,
                 "legacy_valid_percent": None,
                 "corrected_valid_percent": None,
                 "recovered_percentage_points": None,
@@ -2672,17 +2678,17 @@ def observatory_overview(repository: Path) -> dict[str, Any]:
                 "invalid_reasons": {},
                 "latest_invalid_reasons": {},
                 "reported_update_age_bands_by_leg": {"yes": {}, "no": {}},
-                "reported_update_age_above_5s_by_leg": {"yes": 0, "no": 0},
+                "reported_update_age_above_5s_by_leg": None,
                 "reported_update_timestamp_skew_bands": {},
-                "reported_update_timestamp_skew_above_250ms_pairs": 0,
+                "reported_update_timestamp_skew_above_250ms_pairs": None,
                 "sampled_activity_bands": {},
             },
             "market_concentration": [],
             "market_coverage": {
-                "coverage_denominator_snapshots": 0,
-                "tracked_markets": 0,
-                "sampled_state_comparisons": 0,
-                "sampled_state_changes": 0,
+                "coverage_denominator_snapshots": None,
+                "tracked_markets": None,
+                "sampled_state_comparisons": None,
+                "sampled_state_changes": None,
                 "sampled_state_change_fraction": None,
                 "sampled_activity_bands": {},
                 "least_observed_markets": [],
@@ -2690,15 +2696,59 @@ def observatory_overview(repository: Path) -> dict[str, Any]:
             },
             "category_coverage": [],
             "recent_candidates": [],
+            "independent_economic_audit": {
+                "reference_version": None,
+                "implementation_reference_version": REFERENCE_VERSION,
+                "current_reference_status": "NOT_MEASURED",
+                "status": "NOT_MEASURED",
+                "source_version_current": False,
+                "reference_pairs": None,
+                "snapshot_valid_pairs": None,
+                "economic_supported_pairs": None,
+                "net_eligible_pairs": None,
+                "disagreement_counts": {},
+                "available_reference_versions": {},
+            },
+            "observation_funnel": None,
             "summary_artifact": None,
             "limitations": ["No finalized public snapshots have been indexed yet."],
         }
     summary, path = stored
     cumulative = summary["cumulative"]
+    reference_versions = summary.get("independent_economic_by_reference_version")
+    if not isinstance(reference_versions, dict):
+        reference_versions = cumulative.get("independent_economic_by_reference_version", {})
+    if not isinstance(reference_versions, dict):
+        reference_versions = {}
+    persisted_reference_version = summary.get("independent_reference_version")
+    persisted_reference_metrics = (
+        reference_versions.get(persisted_reference_version)
+        if isinstance(persisted_reference_version, str)
+        else None
+    )
+    if not isinstance(persisted_reference_metrics, dict):
+        persisted_reference_metrics = None
+    current_reference_metrics = reference_versions.get(REFERENCE_VERSION)
+    if not isinstance(current_reference_metrics, dict):
+        current_reference_metrics = None
+
+    def reference_count(metrics: dict[str, Any] | None, name: str) -> int | None:
+        if metrics is None:
+            return None
+        value = metrics.get(name)
+        return (
+            value if isinstance(value, int) and not isinstance(value, bool) and value >= 0 else None
+        )
+
     market_rows = cumulative.get("observed_market_ids", {})
     if not isinstance(market_rows, dict):
         raise HTTPException(503, "Veritas public observatory market index is invalid")
-    unique_markets = len(market_rows)
+    unique_markets = int(cumulative.get("unique_market_id_count", len(market_rows)))
+    unique_candidate_markets = int(
+        cumulative.get(
+            "unique_candidate_market_id_count", len(cumulative.get("candidate_market_ids", []))
+        )
+    )
     snapshot_count = int(summary.get("processed_snapshot_count", 0))
     first = cumulative.get("first_captured_at_utc")
     last = cumulative.get("last_captured_at_utc")
@@ -2841,6 +2891,11 @@ def observatory_overview(repository: Path) -> dict[str, Any]:
     return {
         "status": "recording" if int(summary.get("processed_snapshot_count", 0)) else "catching_up",
         "analysis_version": summary["analysis_version"],
+        "measurement_status": summary.get(
+            "measurement_status",
+            "MEASURED" if int(summary.get("processed_snapshot_count", 0)) else "NOT_MEASURED",
+        ),
+        "analysis_catchup_status": summary.get("status"),
         "updated_at_utc": summary.get("updated_at_utc"),
         "processed_snapshot_count": int(summary.get("processed_snapshot_count", 0)),
         "pending_snapshot_count": int(summary.get("pending_snapshot_count", 0)),
@@ -2901,7 +2956,7 @@ def observatory_overview(repository: Path) -> dict[str, Any]:
                 "positive_fragmentation_safe_by_quantity", {}
             ),
             "candidate_event_count": int(cumulative.get("candidate_event_count", 0)),
-            "candidate_market_count": len(cumulative.get("candidate_market_ids", [])),
+            "candidate_market_count": unique_candidate_markets,
             "minimum_top_edge_per_share": cumulative.get("minimum_top_edge_per_share"),
             "maximum_top_edge_per_share": cumulative.get("maximum_top_edge_per_share"),
         },
@@ -2966,6 +3021,8 @@ def observatory_overview(repository: Path) -> dict[str, Any]:
         "market_coverage": {
             "coverage_denominator_snapshots": snapshot_count,
             "tracked_markets": unique_markets,
+            "market_detail_rows": len(market_rows),
+            "market_details_truncated": cumulative.get("summary_market_details_truncated", False),
             "sampled_state_comparisons": sampled_state_comparisons,
             "sampled_state_changes": sampled_state_changes,
             "sampled_state_change_fraction": round(
@@ -2979,6 +3036,121 @@ def observatory_overview(repository: Path) -> dict[str, Any]:
         },
         "category_coverage": category_coverage,
         "recent_candidates": recent_candidates,
+        "independent_economic_audit": {
+            "reference_version": persisted_reference_version,
+            "implementation_reference_version": REFERENCE_VERSION,
+            "current_reference_status": "MEASURED"
+            if current_reference_metrics is not None
+            else "NOT_MEASURED",
+            "status": (
+                "NOT_MEASURED"
+                if persisted_reference_metrics is None
+                else str(persisted_reference_metrics.get("status") or "PARTIALLY_MEASURED")
+                if persisted_reference_version == REFERENCE_VERSION
+                else "STALE"
+            ),
+            "persisted_result_status": (
+                str(persisted_reference_metrics.get("status") or "PARTIALLY_MEASURED")
+                if persisted_reference_metrics is not None
+                else "NOT_MEASURED"
+            ),
+            "source_version_current": persisted_reference_version == REFERENCE_VERSION,
+            "processed_snapshot_count": reference_count(
+                persisted_reference_metrics, "processed_snapshot_count"
+            ),
+            "unique_markets": reference_count(persisted_reference_metrics, "unique_markets"),
+            "unique_positive_gross_markets": reference_count(
+                persisted_reference_metrics, "unique_positive_gross_markets"
+            ),
+            "reference_pairs": reference_count(
+                persisted_reference_metrics, "reference_audited_pairs"
+            ),
+            "primary_quality_valid_pairs": reference_count(
+                persisted_reference_metrics, "primary_quality_valid_pairs"
+            ),
+            "snapshot_valid_pairs": reference_count(
+                persisted_reference_metrics, "snapshot_valid_pairs"
+            ),
+            "economic_supported_pairs": reference_count(
+                persisted_reference_metrics, "economic_supported_pairs"
+            ),
+            "net_eligible_pairs": reference_count(
+                persisted_reference_metrics, "net_eligible_pairs"
+            ),
+            "positive_gross_pair_observations": reference_count(
+                persisted_reference_metrics, "positive_gross_pair_observations"
+            ),
+            "unsupported_pairs": reference_count(persisted_reference_metrics, "unsupported_pairs"),
+            "disagreement_counts": (
+                persisted_reference_metrics.get("disagreement_counts", {})
+                if persisted_reference_metrics is not None
+                else {}
+            ),
+            "available_reference_versions": {
+                str(version): {
+                    "status": str(metrics.get("status") or "NOT_MEASURED"),
+                    "processed_snapshot_count": reference_count(
+                        metrics, "processed_snapshot_count"
+                    ),
+                    "reference_audited_pairs": reference_count(metrics, "reference_audited_pairs"),
+                    "economic_supported_pairs": reference_count(
+                        metrics, "economic_supported_pairs"
+                    ),
+                    "net_eligible_pairs": reference_count(metrics, "net_eligible_pairs"),
+                }
+                for version, metrics in reference_versions.items()
+                if isinstance(version, str) and isinstance(metrics, dict)
+            },
+            "basis": "Version-separated Decimal reference replay of immutable public snapshots; no fill or profitability is inferred.",
+        },
+        "observation_funnel": (
+            {
+                "basis": "one persisted independent-reference version; counts are repeated observations, not independent trials",
+                "reference_version": persisted_reference_version,
+                "reference_version_current": persisted_reference_version == REFERENCE_VERSION,
+                "repeated_observations_included": True,
+                "independent_trials": False,
+                "bounded_query_frame_market_visits": reference_count(
+                    cumulative, "bounded_frame_market_visits"
+                ),
+                "query_candidate_record_visits": reference_count(
+                    cumulative, "query_candidate_record_visits"
+                ),
+                "selected_market_observations": reference_count(
+                    persisted_reference_metrics, "selected_market_observations"
+                ),
+                "observed_pair_observations": reference_count(
+                    persisted_reference_metrics, "observed_pair_observations"
+                ),
+                "quality_valid_pair_observations": reference_count(
+                    persisted_reference_metrics, "primary_quality_valid_pairs"
+                ),
+                "independent_snapshot_valid_pair_observations": reference_count(
+                    persisted_reference_metrics, "snapshot_valid_pairs"
+                ),
+                "independently_verified_pair_observations": reference_count(
+                    persisted_reference_metrics, "snapshot_valid_pairs"
+                ),
+                "independent_economic_supported_pair_observations": reference_count(
+                    persisted_reference_metrics, "economic_supported_pairs"
+                ),
+                "positive_gross_pair_observations": reference_count(
+                    persisted_reference_metrics, "positive_gross_pair_observations"
+                ),
+                "net_economically_eligible_pair_observations": reference_count(
+                    persisted_reference_metrics, "net_eligible_pairs"
+                ),
+                "unique_markets_observed": reference_count(
+                    persisted_reference_metrics, "unique_markets"
+                ),
+                "unique_markets_with_positive_gross": reference_count(
+                    persisted_reference_metrics, "unique_positive_gross_markets"
+                ),
+            }
+            if persisted_reference_metrics is not None
+            or "query_candidate_record_visits" in cumulative
+            else None
+        ),
         "summary_artifact": {
             "id": "continuous-analysis",
             "label": "Incremental public snapshot analysis",
@@ -3677,6 +3849,25 @@ def independent_opportunity_audit_overview(
     }
 
 
+def _baseline_policy_summary(
+    policy_actions: dict[str, dict[str, int]], decisions: int
+) -> dict[str, Any]:
+    measured = bool(policy_actions)
+    return {
+        "count": len(policy_actions),
+        "measurement_status": "MEASURED" if measured else "NOT_MEASURED",
+        "all_abstained": (
+            all(
+                sum(actions.values()) == decisions and set(actions) == {"abstain"}
+                for actions in policy_actions.values()
+            )
+            if measured
+            else None
+        ),
+        "actions": policy_actions,
+    }
+
+
 def overview(repository: Path) -> dict[str, Any]:
     baseline, _ = read_artifact(repository, "baseline")
     funnel, _ = read_artifact(repository, "raw-funnel")
@@ -3861,14 +4052,9 @@ def overview(repository: Path) -> dict[str, Any]:
         "gap_censor_audit": gap_censor_audit,
         "gap_censor_attribution": gap_censor_attribution,
         "finalized_gap_detail": gap_detail,
-        "baseline_policies": {
-            "count": len(frozen["policy_actions"]),
-            "all_abstained": all(
-                sum(actions.values()) == coverage["decisions"] and set(actions) == {"abstain"}
-                for actions in frozen["policy_actions"].values()
-            ),
-            "actions": frozen["policy_actions"],
-        },
+        "baseline_policies": _baseline_policy_summary(
+            frozen["policy_actions"], coverage["decisions"]
+        ),
         "execution_sensitivity": {
             "quantity_shares_per_leg": quantity,
             "fee_model_version": break_even.get("fee_model_version", "legacy_unknown"),
