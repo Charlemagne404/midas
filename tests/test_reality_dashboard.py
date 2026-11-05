@@ -13,7 +13,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from midas.reality.storage import MAGIC
 
-from apps.api.reality import router
+from apps.api.reality import classify_collector_health, router, source_quality_report
 
 
 @pytest.fixture
@@ -254,6 +254,46 @@ def test_source_quality_handles_missing_and_malformed_legacy_metrics(dashboard):
     assert quality["recorded_gaps"]["count"] is None
     assert quality["lineage"]["stable_local_divergences"] is None
     assert quality["event_integrity_signals"]["duplicate_event_hashes_recent_window"] is None
+
+
+def test_queue_saturation_degrades_health_but_unavailable_depth_stays_unknown(dashboard):
+    _client, root, _ = dashboard
+    now_ns = time.time_ns()
+    saturated = {
+        "state": "RECORDING_UNSEQUENCED",
+        "updated_ns": now_ns,
+        "last_observation_ns": now_ns,
+        "config": {"stale_seconds": 60},
+        "expected_books": 2,
+        "fresh_books": 2,
+        "sequence_verified": False,
+        "backpressure_active": False,
+        "transport_queue_observation_available": True,
+        "transport_queue_depth": 32,
+        "transport_queue_bound": 32,
+        "transport_queue_saturated": True,
+        "recovery": {"state": "verified"},
+    }
+    health, reasons = classify_collector_health(saturated, now_ns)
+    quality = source_quality_report(saturated, now_ns)
+    assert health == "degraded"
+    assert reasons == ["transport_queue_saturated"]
+    assert "transport_queue_saturated" in quality["current_issues"]
+    assert quality["transport_queue"]["depth"] == 32
+    assert quality["transport_queue"]["saturated"] is True
+
+    unavailable = dict(saturated)
+    unavailable.update(
+        transport_queue_observation_available=False,
+        transport_queue_depth=None,
+        transport_queue_saturated=False,
+    )
+    health, reasons = classify_collector_health(unavailable, now_ns)
+    quality = source_quality_report(unavailable, now_ns)
+    assert health == "recording"
+    assert reasons == []
+    assert "transport_queue_depth_unreported" in quality["observability_gaps"]
+    assert quality["transport_queue"]["observation_available"] is False
 
 
 def test_recent_persistence_window_is_reported_with_its_coverage(dashboard):

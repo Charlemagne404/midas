@@ -8,8 +8,10 @@ import pytest
 from midas.reality.model_training import TrainingSpec, run
 from midas.reality.research_schedule import clear_unpublished, prune_disposable, tick
 from midas.reality.storage import atomic_json, file_hash
-from test_reality_foundry import START, tape
-from test_reality_training import dataset_fixture
+
+from tests import test_reality_foundry
+from tests.test_reality_foundry import START, tape
+from tests.test_reality_training import dataset_fixture
 
 
 def config(tmp_path):
@@ -62,9 +64,12 @@ def test_pruning_only_disposes_marked_completed_rows_and_preserves_regeneration(
     cache.mkdir()
     training, ledger = tmp_path / "training", tmp_path / "ledger"
     paths = []
+    dataset_ids = set()
     for i in (1, 2):
-        monkeypatch.setattr("test_reality_foundry.START", START + i * 86400 * 10**9)
+        monkeypatch.setattr(test_reality_foundry, "START", START + i * 86400 * 10**9)
         source, manifest = dataset_fixture(tmp_path / str(i))
+        assert manifest["dataset_id"] not in dataset_ids
+        dataset_ids.add(manifest["dataset_id"])
         destination = cache / manifest["dataset_id"]
         shutil.copytree(source, destination)
         report = run(

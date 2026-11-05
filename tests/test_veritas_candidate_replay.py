@@ -222,6 +222,7 @@ def _write_source_fixture(
         "attempted_market_pairs": 1,
         "valid_quality_pairs": 1,
         "positive_top_gross_pairs": 1,
+        "minimum_order_notional_unit_status": "unverified",
         "counts": {
             "positive_full_depth_gross_by_quantity": {"20": 1},
             "positive_minimum_notional_by_quantity": {"20": 1},
@@ -263,7 +264,7 @@ def test_positive_candidate_replays_hashed_source_and_recomputes_economic_checks
     assert result["gross_candidate_replay"]["status"] == "ALL_GROSS_CANDIDATES_REPLAYED"
     assert result["gross_candidate_replay"]["complete"] is True
     replay = result["gross_candidate_replay"]["candidates"][0]
-    assert replay["status"] == "GROSS_POSITIVE_REPLAYED_ECONOMIC_SENSITIVITIES_POSITIVE"
+    assert replay["status"] == "GROSS_POSITIVE_REPLAYED_NOTIONAL_SEMANTICS_UNVERIFIED"
     assert replay["top_pair_gross_edge_per_share"] == "0.01"
     assert replay["independent_arithmetic"]["method"] == (
         "decimal_best_ask_and_sorted_depth_replay-v2"
@@ -274,26 +275,29 @@ def test_positive_candidate_replays_hashed_source_and_recomputes_economic_checks
     assert replay["freshness"]["request_to_receipt_gate_passed"] is True
     assert replay["freshness"]["sequence_verified"] is False
     assert replay["quantity_qualification"]["full_displayed_depth"] is True
-    assert replay["quantity_qualification"]["minimum_order_notional_satisfied_both_legs"] is True
+    assert replay["quantity_qualification"]["minimum_order_notional_satisfied_both_legs"] is None
+    assert replay["quantity_qualification"]["minimum_order_notional_unit_status"] == "unverified"
     assert replay["quantity_qualification"]["minimum_order_shares_satisfied_both_legs"] is True
-    assert replay["quantity_qualification"]["minimum_order_constraints_satisfied_both_legs"] is True
+    assert replay["quantity_qualification"]["minimum_order_constraints_satisfied_both_legs"] is None
     assert replay["quantity_qualification"]["fragmentation_safe_fee_sensitivity_positive"] is True
     assert replay["promotion_status"] == "BLOCKED_NO_SEQUENCE_OR_ORDER_ARRIVAL_EVIDENCE"
     assert result["gross_candidate_evidence"][0]["verification_status"] == (
         "GROSS_EDGE_SOURCE_REPLAYED"
     )
+    assert result["status"] == "minimum_notional_semantics_unverified"
+    assert result["minimum_order_notional_unit_status"] == "unverified"
     assert result["independent_candidate_replay_qualification"]["complete"] is True
     assert (
         result["independent_candidate_replay_qualification"][
             "positive_full_depth_and_both_minimums"
         ]
-        == 1
+        is None
     )
     assert (
         result["independent_candidate_replay_qualification"][
             "positive_under_both_fee_sensitivities"
         ]
-        == 1
+        is None
     )
 
 
@@ -309,7 +313,8 @@ def test_independent_source_audit_recomputes_positive_fixture_and_strict_freshne
     assert audit["strict_freshness_valid_count"] == 1
     assert audit["positive_top_pair_gross_count"] == 1
     assert audit["strict_fresh_positive_top_pair_gross_count"] == 1
-    assert audit["positive_full_depth_and_both_minimums_by_quantity"]["20"] == 1
+    assert audit["minimum_order_notional_unit_status"] == "unverified"
+    assert audit["positive_full_depth_and_both_minimums_by_quantity"]["20"] == 0
     assert audit["positive_both_fee_sensitivities_by_quantity"]["20"] == 1
     assert audit["fee_model_version"] == "veritas-economic-feasibility-v3"
     assert audit["fee_collection_medium_for_buy"] == "collateral"
@@ -378,7 +383,7 @@ def test_positive_candidate_replays_early_snapshot_selection_schema(tmp_path):
     replay = result["gross_candidate_replay"]["candidates"][0]
     assert result["gross_candidate_replay"]["complete"] is True
     assert replay["source_integrity"]["clob_response_payload_verified"] is True
-    assert replay["quantity_qualification"]["minimum_order_constraints_satisfied_both_legs"] is True
+    assert replay["quantity_qualification"]["minimum_order_constraints_satisfied_both_legs"] is None
 
 
 def test_raw_market_constraint_audit_keeps_mismatched_units_separate(tmp_path):
@@ -414,7 +419,7 @@ def test_raw_market_constraint_audit_keeps_mismatched_units_separate(tmp_path):
     assert audit["status"] == "CONSTRAINT_VALUE_MISMATCHES_OBSERVED"
 
 
-def test_candidate_replay_keeps_usdc_and_share_minimums_in_separate_units(tmp_path):
+def test_candidate_replay_keeps_unverified_declared_minimum_and_share_units_separate(tmp_path):
     _write_source_fixture(
         tmp_path,
         market_minimum="2",
@@ -428,7 +433,7 @@ def test_candidate_replay_keeps_usdc_and_share_minimums_in_separate_units(tmp_pa
     ]["candidates"][0]
     assert (
         below_share_minimum["quantity_qualification"]["minimum_order_notional_satisfied_both_legs"]
-        is True
+        is None
     )
     assert (
         below_share_minimum["quantity_qualification"]["minimum_order_shares_satisfied_both_legs"]
@@ -438,16 +443,14 @@ def test_candidate_replay_keeps_usdc_and_share_minimums_in_separate_units(tmp_pa
         below_share_minimum["quantity_qualification"][
             "minimum_order_constraints_satisfied_both_legs"
         ]
-        is False
+        is None
     )
-    assert below_share_minimum["status"] == (
-        "GROSS_POSITIVE_REPLAYED_ECONOMIC_GATES_NOT_ALL_POSITIVE"
-    )
+    assert below_share_minimum["status"] == "GROSS_POSITIVE_REPLAYED_NOTIONAL_SEMANTICS_UNVERIFIED"
     assert (
         compare_qualification_rules([event], source_root=tmp_path, quantity="5")[
             "independent_candidate_replay_qualification"
         ]["positive_full_depth_and_both_minimums"]
-        == 0
+        is None
     )
 
     at_both_minimums = compare_qualification_rules([event], source_root=tmp_path, quantity="10")[
@@ -455,7 +458,7 @@ def test_candidate_replay_keeps_usdc_and_share_minimums_in_separate_units(tmp_pa
     ]["candidates"][0]
     assert (
         at_both_minimums["quantity_qualification"]["minimum_order_notional_satisfied_both_legs"]
-        is True
+        is None
     )
     assert (
         at_both_minimums["quantity_qualification"]["minimum_order_shares_satisfied_both_legs"]
@@ -463,13 +466,13 @@ def test_candidate_replay_keeps_usdc_and_share_minimums_in_separate_units(tmp_pa
     )
     assert (
         at_both_minimums["quantity_qualification"]["minimum_order_constraints_satisfied_both_legs"]
-        is True
+        is None
     )
     assert (
         compare_qualification_rules([event], source_root=tmp_path, quantity="10")[
             "independent_candidate_replay_qualification"
         ]["positive_full_depth_and_both_minimums"]
-        == 1
+        is None
     )
 
 

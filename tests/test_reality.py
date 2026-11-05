@@ -1,11 +1,21 @@
+import hashlib
 import json
+from collections import deque
 from pathlib import Path
 
 import pytest
+from midas.reality import storage as storage_module
+from midas.reality.collector import (
+    append_latency_summary,
+    collection_health,
+    prune_cohort_tracking,
+    sample_transport_queue,
+    transport_queue_depth,
+)
 from midas.reality.discovery import select
 from midas.reality.reconstruction import Engine
 from midas.reality.replay import replay
-from midas.reality.storage import MAGIC, Store, manifest, read_manifest
+from midas.reality.storage import MAGIC, Store, canonical, manifest, read_manifest
 
 FIXTURE = json.loads((Path(__file__).parent / "fixtures/reality/observed.json").read_text())
 
@@ -50,6 +60,55 @@ def test_observed_discovery_and_books():
         assert b["issue"] is None
 
 
+def test_bounded_status_depth_preserves_full_reconstruction_digest():
+    from decimal import Decimal
+
+    engine = ready()
+    asset = next(iter(engine.books))
+    book = engine.books[asset]
+    book["bids"] = {Decimal(i) / 1000: Decimal(i) for i in range(1, 101)}
+    book["asks"] = {Decimal(i) / 1000: Decimal(i) for i in range(201, 301)}
+    digest_before = engine.digest()
+
+    full = engine.state()["books"][asset]
+    status = engine.state(max_depth=50)["books"][asset]
+
+    assert len(full["bids"]) == len(full["asks"]) == 100
+    assert status["bids"] == full["bids"][:50]
+    assert status["asks"] == full["asks"][:50]
+    assert status["bid_depth_levels"] == status["ask_depth_levels"] == 100
+    assert status["depth_truncated"] is True
+    assert "depth_truncated" not in full
+    assert "bid_depth_levels" not in full
+    assert engine.digest() == digest_before
+
+    with pytest.raises(ValueError, match="positive integer"):
+        engine.state(max_depth=0)
+
+
+@pytest.mark.parametrize(("reconstruction_version", "last_gap_ordinal"), [(1, 0), (4, 17), (5, 17)])
+def test_streaming_digest_matches_canonical_full_state(
+    reconstruction_version, last_gap_ordinal, monkeypatch
+):
+    from decimal import Decimal
+
+    engine = ready()
+    engine.reconstruction_version = reconstruction_version
+    engine.last_gap_ordinal = last_gap_ordinal
+    asset = next(iter(engine.books))
+    book = engine.books[asset]
+    book["bids"] = {Decimal(i) / 100_000: Decimal(i) for i in range(1, 10_001)}
+    book["asks"] = {Decimal(i) / 100_000: Decimal(i) for i in range(20_001, 30_001)}
+
+    expected = hashlib.sha256(canonical(engine.state())).hexdigest()
+
+    def fail_if_full_state_is_materialized(**kwargs):
+        raise AssertionError("digest must stream state instead of calling state()")
+
+    monkeypatch.setattr(engine, "state", fail_if_full_state_is_materialized)
+    assert engine.digest() == expected
+
+
 def test_gaps_staleness_unknown_malformed_crossed():
     e = ready()
     e.consume(dict(kind="gap", ordinal=10, received_ns=e.now_ns, payload=dict(reason="disconnect")))
@@ -75,6 +134,29 @@ def test_gaps_staleness_unknown_malformed_crossed():
     raw["bids"] = [dict(price="0.99", size="1")]
     e.consume(event_record(raw))
     assert e.counts["crossed"] > 0
+
+
+def test_revision5_keeps_quiet_book_consistency_separate_from_age():
+    engine = ready()
+    engine.reconstruction_version = 5
+    now = engine.now_ns + engine.stale_ns + 1
+    engine.consume(
+        dict(kind="heartbeat", ordinal=engine.last_ordinal + 1, received_ns=now, payload="PONG")
+    )
+    books = engine.state()["books"]
+    assert all(book["issue"] is None for book in books.values())
+    assert all(book["age_ns"] > engine.stale_ns for book in books.values())
+    assert all(book["internally_consistent"] for book in books.values())
+
+
+def test_revision4_retains_historical_stale_replay_semantics():
+    engine = ready()
+    engine.reconstruction_version = 4
+    now = engine.now_ns + engine.stale_ns + 1
+    engine.consume(
+        dict(kind="heartbeat", ordinal=engine.last_ordinal + 1, received_ns=now, payload="PONG")
+    )
+    assert all(book["issue"] == "stale" for book in engine.books.values())
 
 
 def test_duplicate_removal_tick_regression_and_divergence():
@@ -143,6 +225,197 @@ def test_storage_integrity_rotation_lock_budget_and_replay(tmp_path):
     with pytest.raises(OSError):
         tiny.append("test", {})
     tiny.close()
+
+
+def test_lifetime_record_counts_survive_store_restart(tmp_path):
+    store = Store(tmp_path, reserve=1)
+    store.append("frame", {"raw": "first"})
+    store.append("gap", {"reason": "disconnect"})
+    store.close()
+
+    resumed = Store(tmp_path, reserve=1)
+    assert resumed.counts == {"frame": 1, "gap": 1}
+    resumed.append("frame", {"raw": "second"})
+    assert resumed.counts["frame"] == 2
+    resumed.close()
+
+    restarted = Store(tmp_path, reserve=1)
+    assert restarted.counts == {"frame": 2, "gap": 1}
+    restarted.close()
+
+
+def test_manifest_integrity_and_replay_share_one_segment_pass(tmp_path, monkeypatch):
+    store = Store(tmp_path, reserve=1)
+    store.append("gap", {"reason": "fixture"})
+    store.close()
+    value = manifest(tmp_path)
+
+    def unexpected_second_pass(_path):
+        raise AssertionError("read_manifest must not call standalone hash or describe passes")
+
+    monkeypatch.setattr(storage_module, "file_hash", unexpected_second_pass)
+    monkeypatch.setattr(storage_module, "describe", unexpected_second_pass)
+    rows = list(read_manifest(tmp_path, value))
+    assert len(rows) == 1 and rows[0]["payload"]["reason"] == "fixture"
+
+
+def test_startup_store_defers_writer_until_verified_replay(tmp_path):
+    created = Store(tmp_path, reserve=1)
+    created.append("gap", {"reason": "startup"})
+    created.close()
+    before = {p.name for p in tmp_path.iterdir()}
+
+    store = Store(tmp_path, reserve=1, verify_existing=False, defer_open=True)
+    assert store.file is None
+    engine, _ = replay(tmp_path, manifest(tmp_path))
+    assert engine.last_ordinal == store.ordinal == 1
+    assert {p.name for p in tmp_path.iterdir()} == before
+    store.activate()
+    store.append("gap", {"reason": "after_verified_replay"})
+    store.close()
+
+
+def test_startup_store_does_not_write_after_corrupt_replay(tmp_path):
+    created = Store(tmp_path, reserve=1)
+    created.append("gap", {"reason": "startup"})
+    created.close()
+    value = manifest(tmp_path)
+    segment = tmp_path / value["segments"][0]["file"]
+    data = bytearray(segment.read_bytes())
+    data[-1] ^= 1
+    segment.write_bytes(data)
+    before = {p.name for p in tmp_path.iterdir()}
+
+    store = Store(tmp_path, reserve=1, verify_existing=False, defer_open=True)
+    assert store.file is None
+    with pytest.raises(ValueError):
+        replay(tmp_path, value)
+    store.close()
+    assert {p.name for p in tmp_path.iterdir()} == before
+
+
+def test_cohort_tracking_retains_only_active_assets():
+    from collections import Counter
+
+    updates = Counter({"old-1": 5, "active-1": 2})
+    started = {"old-1": 10, "active-1": 20}
+    last = {"old-1": 15, "active-1": 25}
+    prune_cohort_tracking(updates, started, last, {"active-1", "active-2"})
+    assert updates == {"active-1": 2}
+    assert started == {"active-1": 20}
+    assert last == {"active-1": 25}
+
+
+def test_prefix_replay_still_checks_segment_tail_integrity(tmp_path):
+    store = Store(tmp_path, reserve=1)
+    store.append("gap", {"reason": "prefix"})
+    store.append("gap", {"reason": "tail"})
+    store.close()
+    value = manifest(tmp_path)
+    segment = tmp_path / value["segments"][0]["file"]
+    payload = bytearray(segment.read_bytes())
+    payload[-1] ^= 1
+    segment.write_bytes(payload)
+
+    with pytest.raises(ValueError):
+        replay(tmp_path, value, through=1)
+
+
+@pytest.mark.parametrize(
+    (
+        "state",
+        "last_observation",
+        "fresh",
+        "expected",
+        "now",
+        "stale",
+        "backpressured",
+        "health",
+    ),
+    [
+        ("STARTING", None, 0, 6, 100, 10, False, "recovering"),
+        ("RECORDING_UNSEQUENCED", None, 0, 6, 100, 10, False, "active_no_events"),
+        ("RECORDING_UNSEQUENCED", 95, 6, 6, 100, 10, False, "active_receiving"),
+        ("RECORDING_UNSEQUENCED", 95, 6, 6, 100, 10, True, "backpressured"),
+        ("RECORDING_UNSEQUENCED", 80, 6, 6, 100, 10, False, "stale"),
+        ("RECORDING_UNSEQUENCED", 80, 6, 6, 100, 10, True, "stale"),
+        ("DEGRADED", 95, 6, 6, 100, 10, True, "reconnecting"),
+        ("FAILED", 95, 6, 6, 100, 10, False, "failed"),
+    ],
+)
+def test_collection_health_reports_state(
+    state, last_observation, fresh, expected, now, stale, backpressured, health
+):
+    assert (
+        collection_health(
+            state, last_observation, fresh, expected, now, stale, backpressured=backpressured
+        )
+        == health
+    )
+
+
+def test_transport_queue_pressure_is_distinct_from_append_backpressure():
+    assert (
+        collection_health(
+            "RECORDING_UNSEQUENCED",
+            95,
+            6,
+            6,
+            100,
+            10,
+            transport_backpressured=True,
+        )
+        == "transport_backpressured"
+    )
+
+
+def test_transport_queue_depth_and_recent_persistence_are_bounded():
+    class WebSocket:
+        class ReceiveMessages:
+            frames = [1, 2, 3]
+
+        recv_messages = ReceiveMessages()
+
+    status = {}
+    sample_transport_queue(status, WebSocket(), bound=3)
+    assert transport_queue_depth(WebSocket()) == 3
+    assert status["transport_queue_observation_available"] is True
+    assert status["transport_queue_depth"] == 3
+    assert status["transport_queue_high_water_depth"] == 3
+    assert status["transport_queue_sample_count"] == 1
+    assert status["transport_queue_saturated"] is True
+
+    unknown = {}
+    sample_transport_queue(unknown, object(), bound=3)
+    assert transport_queue_depth(object()) is None
+    assert unknown["transport_queue_observation_available"] is False
+    assert unknown["transport_queue_depth"] is None
+    assert unknown["transport_queue_saturated"] is False
+
+
+def test_append_latency_summary_reports_scope_and_nearest_rank_p95():
+    now_ns = 100 * 1_000_000_000
+    samples = deque(
+        (
+            (45 * 1_000_000_000, 20_000_000, 100_000_000),
+            (70 * 1_000_000_000, 1_100_000_000, 1_200_000_000),
+            (99 * 1_000_000_000, 5_000_000, 20_000_000),
+        ),
+        maxlen=4,
+    )
+    complete = append_latency_summary(samples, now_ns, 0)
+    partial = append_latency_summary(samples, now_ns, 80 * 1_000_000_000)
+    empty = append_latency_summary(deque(maxlen=4), now_ns, 0)
+
+    assert complete["window_complete"] is True
+    assert complete["sample_count"] == 3
+    assert complete["max_durable_write_seconds"] == 1.1
+    assert complete["max_append_seconds"] == 1.2
+    assert partial["window_complete"] is False
+    assert partial["window_seconds"] == 20
+    assert partial["sample_count"] == 1
+    assert empty["max_append_seconds"] is None
+    assert empty["sample_count"] == 0
 
 
 def test_crash_tail_recovery_preserves_complete_records(tmp_path):
@@ -218,8 +491,87 @@ async def test_network_interruption_reconnect_and_safe_stop(tmp_path, monkeypatc
     engine, checkpoints = replay(tmp_path, manifest(tmp_path))
     assert engine.counts["book"] >= 12 and checkpoints >= 1
     assert json.loads((tmp_path / "status.json").read_text())["state"] == "STOPPED"
+    status = json.loads((tmp_path / "status.json").read_text())
+    assert status["frames"] == 2
+    assert status["process_frames"] == 2
+    assert status["lifetime_frames"] == 2
+    assert status["lifetime_record_counts"]["frame"] == 2
     resumed = Store(tmp_path, reserve=1)
     resumed.close()
+
+
+async def test_heartbeat_keeps_quiet_books_connected_without_claiming_freshness(
+    tmp_path, monkeypatch
+):
+    import asyncio
+
+    import httpx
+    from midas.reality import collector
+    from midas.reality.config import Config
+    from websockets.asyncio.server import serve
+    from websockets.exceptions import ConnectionClosed
+
+    connections = []
+
+    async def handler(ws):
+        connections.append(await ws.recv())
+        await ws.send(FIXTURE["frames"][0]["payload"])
+        try:
+            for _ in range(6):
+                await asyncio.sleep(0.025)
+                await ws.send("PONG")
+        except ConnectionClosed:
+            pass
+        await ws.wait_closed()
+
+    client = httpx.AsyncClient(
+        transport=httpx.MockTransport(
+            lambda request: httpx.Response(200, text=FIXTURE["discovery"]["payload"])
+        )
+    )
+    monkeypatch.setattr(collector.httpx, "AsyncClient", lambda **kwargs: client)
+
+    class TestConfig(Config):
+        def __post_init__(self):
+            pass
+
+    async with serve(handler, "127.0.0.1", 0) as server:
+        port = server.sockets[0].getsockname()[1]
+        monkeypatch.setattr(collector, "WS", f"ws://127.0.0.1:{port}")
+        await collector.run(
+            TestConfig(
+                root=str(tmp_path),
+                reserve_bytes=1,
+                stale_seconds=0.05,
+                comparison_seconds=0,
+                refresh_seconds=600,
+                resync_seconds=300,
+            ),
+            duration=0.15,
+        )
+
+    rows = list(read_manifest(tmp_path, manifest(tmp_path)))
+    assert len(connections) == 1
+    assert any(row["kind"] == "heartbeat" for row in rows)
+    assert not any(
+        row["kind"] == "gap"
+        and row["payload"]["reason"] in {"book_resynchronization", "connection_failure"}
+        for row in rows
+    )
+    status = json.loads((tmp_path / "status.json").read_text())
+    assert status["state"] == "STOPPED"
+    assert status["transport_message_age_seconds"] < 0.05
+    assert status["market_event_age_seconds"] >= 0.05
+    assert status["fresh_books"] < status["expected_books"]
+    assert status["stale_book_count"] > 0
+    stop = next(
+        row["ordinal"]
+        for row in rows
+        if row["kind"] == "gap" and row["payload"]["reason"] == "process_stop"
+    )
+    replayed, _ = replay(tmp_path, manifest(tmp_path), through=stop - 1)
+    assert all(book["issue"] is None for book in replayed.books.values())
+    assert all(book["age_ns"] > replayed.stale_ns for book in replayed.state()["books"].values())
 
 
 def test_checkpoint_mismatch_and_no_future_state(tmp_path):
@@ -235,11 +587,26 @@ def test_checkpoint_mismatch_and_no_future_state(tmp_path):
         replay(tmp_path, manifest(tmp_path))
 
 
-def test_config_isolation_and_bounds():
+def test_config_isolation_and_bounds(tmp_path):
+    from pathlib import Path
+
     from midas.reality.config import Config
 
+    assert Path(Config().root) == Path(__file__).resolve().parents[1] / "data/recordings/reality"
     with pytest.raises(ValueError):
         Config(root="/home/charlie/midas/data/laboratory-final")
+    external_root = tmp_path / "persistent" / "recordings"
+    with pytest.raises(ValueError):
+        Config(root=str(external_root / "reality"))
+    configured = Config(
+        root=str(external_root / "reality"), allowed_storage_root=str(external_root)
+    )
+    assert Path(configured.root) == external_root / "reality"
+    with pytest.raises(ValueError):
+        Config(
+            root=str(external_root / "../research"),
+            allowed_storage_root=str(external_root),
+        )
     with pytest.raises(ValueError):
         Config(markets=11)
     with pytest.raises(ValueError):
@@ -411,6 +778,10 @@ async def test_restart_with_stale_books_waits_for_initial_snapshots(tmp_path, mo
     rows = list(read_manifest(tmp_path, manifest(tmp_path)))
     assert len(connections) == 1
     assert len([r for r in rows if r["kind"] == "frame"]) == 2
+    status = json.loads((tmp_path / "status.json").read_text())
+    assert status["frames"] == 2
+    assert status["process_frames"] == 1
+    assert status["lifetime_gap_records"] >= 2
     assert not any(
         r["kind"] == "gap" and r["payload"]["reason"] == "book_resynchronization" for r in rows
     )

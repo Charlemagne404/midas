@@ -1,6 +1,6 @@
 # MIDAS
 
-**A read-only Polymarket research command center and deterministic virtual exchange laboratory.**
+**A read-only market research command center and deterministic virtual exchange laboratory.**
 
 Midas evaluates complementary binary positions using exact ask-depth arithmetic, independently gates virtual risk, and tests sequential execution against an auditable simulated venue. The research system remains useful when every observed real opportunity is rejected.
 
@@ -10,49 +10,140 @@ Midas evaluates complementary binary positions using exact ask-depth arithmetic,
 
 ## Current project state
 
-Prometheus, Reality, and Veritas engineering is consolidated in `main`. The
-Reality recorder and campaign workers continue from their retained runtime
-worktree; Veritas scheduled replay and observation use their retained data
-workspace. These worktrees remain because active services depend on their paths.
-Their runtime stores and historical evidence remain separate and unchanged.
+The authoritative development checkout is `/home/charlie/midas-unification`,
+branch `codex/midas-unification`. It contains the integrated Core, Prometheus,
+Laboratory, Arena, Reality, Veritas V6, Frontier, Mission Control, and Research
+Readiness code. Production services still use versioned releases and retained
+runtime worktrees; Project Unification did not deploy or restart them.
 
-The recorded Reality and Veritas evidence does not establish an eligible trading
-strategy, real fills, or profitability. Read the [current state and operations
-reference](docs/MIDAS_CURRENT_STATE.md) for the live service map, retained
-worktrees, data locations, latest receipted findings, and known operating limits.
-The [Reality acceptance record](docs/REALITY_MISSION2_ACCEPTANCE.md),
-[Veritas research ledger](docs/VERITAS_RESEARCH_LEDGER.json), and historical
-checkpoints preserve the original evidence and provenance.
+Use the [current state](docs/MIDAS_CURRENT_STATE.md),
+[architecture](docs/ARCHITECTURE.md),
+[development guide](docs/DEVELOPMENT.md), and
+[operations guide](docs/OPERATIONS.md) as the current references. The
+[unification report](docs/UNIFICATION_REPORT.md),
+[branch inventory](docs/UNIFICATION_BRANCH_INVENTORY.md), and
+[deployment plan](docs/UNIFICATION_DEPLOYMENT_PLAN.md) record the integration
+and remaining guarded transitions. Historical measurements remain in the
+[archived current-state ledger](docs/history/MIDAS_CURRENT_STATE_HISTORY_2026-10-29.md)
+and the dated engineering reports.
+
+Recorded, synthetic, paper, and independently checked evidence remain distinct.
+No current artifact establishes realized profitability or real fills.
+
+Project Frontier is integrated into the unified branch. It adds
+Polymarket, Kalshi, and Kraken Spot research adapters, evidence-backed market
+normalization, conservative relationship hypotheses with append-only review
+revisions, independent hypothetical economics for verified cross-venue binary
+coverage and fixture-tested exhaustive multi-outcome coverage, and a native
+Frontier workspace. Replay candidates also carry a separate arithmetic audit
+over pinned normalized inputs; this checks calculations, not external market
+truth, synchronized quotes, fills, or profitability.
+Replay v6 also pins effective relationship mappings and proposal limits into
+each run identity. Store-backed API replay replaces adapter-derived model
+provenance IDs with the exact immutable market/book observation record IDs, so
+manifests and candidate legs link to resolvable saved evidence. Direct
+adapter/in-memory replay retains adapter-derived IDs. This changes replay
+identity without rewriting stored observations or adding a database migration.
+The centered relationship explorer pages one-hop keysets and two-/three-hop
+breadth-first results against the same bounded graph revision; it rejects stale
+continuations instead of mixing graph states.
+Supported candidates include an exact full-or-no-fill
+exposure sensitivity over up to 16 legs, with fee-inclusive results omitted if
+any applicable fee is unknown. The Economic Workbench can persist a paired
+comparison of two virtual scenarios over the same saved evidence; it does not
+score assumptions as better or establish executable opportunities.
+Candidate detail also allows a researcher to enter a browser-local virtual
+balance for each venue and compare it with that venue's modeled capital
+requirement. Balances remain separate, are compared with exact decimal
+arithmetic, and are never pooled or transferred. Unknown fees remain unresolved
+and prevent a funding-sufficiency claim; no real account or balance is read.
+The Replay & Readiness workspace can submit an explicit paired replay to the
+existing Arena supervisor from a content-hashed snapshot of local Frontier
+evidence. Arena keeps its host-wide admission gate and applies strict CPU,
+memory, time, disk and network-family bounds; the result is hash-verified.
+Fixture, API, unit and browser tests cover this path. Two systemd-supervised
+workers completed over the same controlled fixture after normal host admission;
+this does not validate live market data. The durable job record captures process
+CPU and peak RSS, and Mission Control displays those sample measurements;
+resource sustainability remains unmeasured. No Laboratory campaign was started.
+Polymarket's explicit v2 trade-page path preserves outcome-token identity and
+supports bounded cursor continuation; one first page and one API-route
+continuation have been captured, while no full history walk was attempted.
+Polymarket and Kalshi also expose capability-gated, one-request event-group
+captures that retain parent event titles and native outcome labels. A preserved
+public 2026 U.S. House event pair produces a deterministic text hypothesis in
+offline adapter tests, while differing resolution timing and rules fail the
+same-payoff audit. This is metadata-only evidence: no synchronized prices,
+verified cross-venue payoff, or economic opportunity was observed.
+Kalshi's adapter also supports an operator-triggered multivariate-event page
+filtered by exactly one series, collection, or event ticker. A ticker maps to
+Kalshi's documented `tickers` query parameter. It captures one event page
+requesting nested markets, stores typed event-group context and the raw
+response, and retains but never follows a continuation cursor. One live,
+unauthenticated page returned an event but omitted its nested market list; the
+captured event is normalized with membership marked `omitted`, not interpreted
+as an empty event. A second ticker-filtered capture returned one event with no
+cursor and again omitted nested markets. Its raw body and temporary-store
+read-back are preserved; its harness raised an event-loop cleanup error only
+after both verifications, and the request was not repeated. Adapter/API/store/UI
+tests replay the exact response. Native MVE selected legs remain unverified
+payoff descriptions. One bounded event-detail follow-up also returned an
+explicit empty top-level `markets` array for that event; adapter v8 can replay it
+as a valid zero-child response without implying venue-wide absence. Adapter v9
+adds the single-event ticker filter; it still does not validate combo payoff.
+Adapter v10 adds a one-ticker public market-detail lookup for a component
+already named by a saved MVE. The Mission Control inspector can capture that
+child's rules through one explicit GET; the route rejects unreferenced tickers,
+checks both market and event identity, and stores the raw plus normalized row.
+One captured player-assists child was already closed and included a fair-price
+fallback for inactive/non-playing or postponed games. This demonstrates why
+native YES/NO labels alone do not establish a simple exhaustive terminal payoff;
+the MVE combo payout remains unverified.
+Adapter v11 also preserves Kalshi's optional `yes_settlement_value_dollars`
+component field as an exact Decimal and displays it with its native label. The
+documented schema exposes this value, but does not establish that it is the
+multivariate event's payout. Missing values remain unknown, and the live child
+capture above did not include this field; the new value path is verified with
+documentation-shaped fixtures only. See Kalshi's [Get Multivariate Events
+schema](https://docs.kalshi.com/api-reference/events/get-multivariate-events).
+Adapter v12 adds a local audit over recorded Kalshi multivariate-event
+settlement values. It recomputes the selected component-value product and
+compares it with the parent market's recorded settlement value only when all
+component values are present and the parent is settled and non-provisional.
+Mission Control links directly to Kalshi's [combo settlement guidance](https://help.kalshi.com/en/articles/13823820-combos),
+[NO scalar rule](https://help.kalshi.com/en/articles/17515177-protected-nfl-player-markets),
+and [MVE field schema](https://docs.kalshi.com/api-reference/events/get-multivariate-events).
+This reports source-stated arithmetic consistency, not verified market rules,
+outcomes, synchronized prices, or returns. Only documentation-shaped fixtures
+currently contain the required parent and component settlement values; no live
+settlement audit has been observed.
+Review labels and assertion references are not authenticated; replay follows
+only the latest revision. It is not merged into protected `main` or deployed.
+Read the [Frontier mission ledger](docs/frontier/FRONTIER_MISSION_LEDGER.md)
+and [current engineering report](docs/frontier/FRONTIER_ENGINEERING_REPORT.md)
+for verified scope and remaining work.
 
 ## Install and run
 
-Requirements: Python 3.12+, Node 22+, Corepack, and uv. Dependencies are locked. If uv is unavailable, bootstrap it locally:
+Requirements: Python 3.12+, Node 22+, Corepack, and uv. Python and frontend
+dependencies are pinned by the checked-in lockfiles. Start with the safe,
+temporary-data workflow in [DEVELOPMENT.md](docs/DEVELOPMENT.md).
 
 ```bash
 python3 -m venv .venv
 .venv/bin/pip install uv
-.venv/bin/uv sync --frozen
-```
-
-If uv is already installed, `uv sync --frozen` creates the environment. Frontend dependencies:
-
-```bash
+.venv/bin/uv sync --locked --group dev
 corepack pnpm install --frozen-lockfile
 ```
 
-Start the API from the repository root:
+If uv is already installed, run `uv sync --locked --group dev` from the
+repository root. Do not point a development process at a service-owned data
+root. The development guide starts the API on a separate local port with all
+mutable stores under a temporary directory.
 
-```bash
-.venv/bin/uv run uvicorn apps.api.main:app --host 127.0.0.1 --port 8000
-```
-
-Start the dashboard in a second terminal:
-
-```bash
-corepack pnpm dev
-```
-
-Open **http://127.0.0.1:5173**. API documentation: **http://127.0.0.1:8000/docs**. Default mode is `demo`; Alembic migrates SQLite and automatically initializes `data/midas.db`. The frontend uses only local assets and its `/api` proxy. Copy `.env.example` to `.env` to customize settings.
+The dashboard and API URLs depend on the port configuration in the development
+guide. The default application mode is `demo`; the frontend uses local assets
+and its `/api` proxy.
 
 Optional container startup uses PostgreSQL and versioned migrations:
 
@@ -126,6 +217,19 @@ See the [Milestone 3 engineering report](docs/MILESTONE_3_ENGINEERING_REPORT.md)
 [test evidence](docs/MILESTONE_3_TEST_REPORT.md) and
 [Laboratory architecture](docs/LABORATORY_ARCHITECTURE.md) for implemented functionality,
 actual experiments and explicit remaining scope.
+
+Frontier uses a separate bounded SQLite store, selected with
+`MIDAS_FRONTIER_ROOT` (default `data/frontier-store`). Each public source is
+disabled for live probing by default. A read-only probe requires an explicit
+per-venue `MIDAS_FRONTIER_*_PUBLIC_PROBE_ENABLED=true` setting and a deliberate
+Capture action in the Frontier Exchanges view. No startup request is made.
+The bounded capture can record one listing, one book, and up to ten public
+trades for one selected market; all remain timestamped, source-attributed
+research observations.
+Source contracts, replay behavior, limits, and known gaps are documented in the
+[Frontier architecture](docs/frontier/FRONTIER_ARCHITECTURE.md). Bounded capture,
+diagnostic-observation, resource, and deployment boundaries are in the
+[Frontier operations guide](docs/frontier/FRONTIER_OPERATIONS.md).
 
 For persistent local services, interrupted campaign recovery, and remote MacBook access, see
 [recovery and service operations](docs/RELIABILITY_OPERATIONS.md).

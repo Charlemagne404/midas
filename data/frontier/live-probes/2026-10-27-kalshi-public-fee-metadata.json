@@ -1,0 +1,436 @@
+{
+  "capture_kind": "kalshi_public_fee_metadata",
+  "capture_sha256": "945610033e34816f057f054a58fa3672e7f9300d04791b0f76e7b48411fdd607",
+  "captured_completed_at_utc": "2026-10-26T23:16:18.427714Z",
+  "captured_started_at_utc": "2026-10-26T23:16:17.123889Z",
+  "credentials_sent": false,
+  "data_classification": "public_market_metadata",
+  "limitations": [
+    "One market and its event/series metadata were sampled; this is not a venue-wide fee survey.",
+    "Native fee parameters do not establish account tier, exact per-order rounding, maker/taker execution classification, or current fee-change applicability.",
+    "Frontier keeps the market fee schedule unknown and does not use these parameters as a modeled fee or as zero."
+  ],
+  "market": {
+    "canonical_id": "kalshi:KXMVECROSSCATEGORY-S202664GKNBS2X3SFAX4H-2IBWA6SLM",
+    "market_listing_observation_id": "2348717af07c38da51d72e39e94b06b24fb8147f3d6245762fbc80901a10a107",
+    "native_event_id": "KXMVECROSSCATEGORY-S202664GKNBS2X3SFAX4H",
+    "native_market_id": "KXMVECROSSCATEGORY-S202664GKNBS2X3SFAX4H-2IBWA6SLM",
+    "title": "yes Brandon Miller: 2+,yes Anthony Davis: 2+,yes Naz Reid: 10+,yes Trae Young: 15+,yes Anthony Davis: 6+"
+  },
+  "probe_results": {
+    "fee_metadata": {
+      "fee_cost_modeled": false,
+      "market_id": "kalshi:KXMVECROSSCATEGORY-S202664GKNBS2X3SFAX4H-2IBWA6SLM",
+      "metadata": {
+        "adapter_version": "frontier-kalshi-2",
+        "economics_state": "unresolved",
+        "effective_fee_multiplier": "1",
+        "effective_fee_type": "quadratic_with_combo_maker_fees",
+        "event_fee_multiplier_override": null,
+        "event_fee_multiplier_override_field_present": false,
+        "event_fee_type_override": null,
+        "event_fee_type_override_field_present": false,
+        "event_raw_sha256": "dc09b478c3ade9c09fafca71d2f488c28a1da14fd3f3fbdb9916334185a9406d",
+        "event_received_at_utc": "2026-10-26T23:16:17.916305Z",
+        "fee_rounding_documentation_url": "https://docs.kalshi.com/getting_started/fee_rounding",
+        "limitations": [
+          "Native type and multiplier metadata do not by themselves calculate fees.",
+          "Maker/taker applicability and any scheduled fee changes require the current published schedule.",
+          "Account balance precision and per-order rounding/rebates are unknown without account-specific data."
+        ],
+        "native_event_id": "KXMVECROSSCATEGORY-S202664GKNBS2X3SFAX4H",
+        "native_market_id": "KXMVECROSSCATEGORY-S202664GKNBS2X3SFAX4H-2IBWA6SLM",
+        "schedule_source_url": "https://kalshi.com/fee-schedule",
+        "schema_version": 1,
+        "series_fee_multiplier": "1",
+        "series_fee_type": "quadratic_with_combo_maker_fees",
+        "series_raw_sha256": "896821229942685424576e6e2e5b23254a0bfef6eb8091e55869a1bb834478ec",
+        "series_received_at_utc": "2026-10-26T23:16:18.408650Z",
+        "series_ticker": "KXMVECROSSCATEGORY"
+      },
+      "network_calls_bounded_by": 2,
+      "note": "One explicit read-only event plus series metadata probe. These public parameters are preserved as evidence; account-specific fee and rounding costs remain unknown and are not used as zero.",
+      "observation_ids": [
+        "b33327d6fd935c041db106614b51d8b18a7b15242b00b195be70d71535aa795c",
+        "21a035c3f8d142a9e71a8d23769cb3cab8be7de5de525e51c84881a7b4b3a6df"
+      ],
+      "raw_sha256": {
+        "event": "dc09b478c3ade9c09fafca71d2f488c28a1da14fd3f3fbdb9916334185a9406d",
+        "series": "896821229942685424576e6e2e5b23254a0bfef6eb8091e55869a1bb834478ec"
+      },
+      "request_count_delta": 2
+    },
+    "listing": {
+      "book_snapshots_stored": 0,
+      "hypothetical_only": true,
+      "market_count": 1,
+      "network_calls_bounded_by": 1,
+      "observation_ids": [
+        "2348717af07c38da51d72e39e94b06b24fb8147f3d6245762fbc80901a10a107"
+      ],
+      "request_count": 1,
+      "request_count_delta": 1,
+      "requested_limit": 1,
+      "source_state": "healthy",
+      "trade_capture_state": "not_requested",
+      "trade_error": null,
+      "trade_observation_record_id": null,
+      "trade_observations_stored": 0,
+      "venue": "kalshi"
+    }
+  },
+  "records": [
+    {
+      "normalized": {
+        "complete_for_request": false,
+        "cursor": null,
+        "markets": [
+          {
+            "base_asset": null,
+            "canonical_id": "kalshi:KXMVECROSSCATEGORY-S202664GKNBS2X3SFAX4H-2IBWA6SLM",
+            "description": "",
+            "fees": {
+              "applies_to": null,
+              "effective_at_utc": null,
+              "evidence_sha256": null,
+              "expires_at_utc": null,
+              "fee_currency": null,
+              "fixed_fee": null,
+              "formula": null,
+              "note": "Unknown: market-specific fee rules are not resolved by adapter v1",
+              "rate": null,
+              "source_url": null,
+              "status": "unknown",
+              "version": null
+            },
+            "instruments": [
+              {
+                "label": "yes Brandon Miller: 2+,yes Anthony Davis: 2+,yes Naz Reid: 10+,yes Trae Young: 15+,yes Anthony Davis: 6+",
+                "minimum_notional": null,
+                "minimum_quantity": null,
+                "native_instrument_id": "KXMVECROSSCATEGORY-S202664GKNBS2X3SFAX4H-2IBWA6SLM:YES",
+                "outcome_id": "yes",
+                "payouts": [
+                  {
+                    "amount": "1.0000",
+                    "state_id": "yes"
+                  },
+                  {
+                    "amount": "0",
+                    "state_id": "no"
+                  }
+                ],
+                "price_currency": "USD",
+                "quantity_step": null,
+                "quantity_unit": "contract",
+                "tick_size": null
+              },
+              {
+                "label": "yes Brandon Miller: 2+,yes Anthony Davis: 2+,yes Naz Reid: 10+,yes Trae Young: 15+,yes Anthony Davis: 6+",
+                "minimum_notional": null,
+                "minimum_quantity": null,
+                "native_instrument_id": "KXMVECROSSCATEGORY-S202664GKNBS2X3SFAX4H-2IBWA6SLM:NO",
+                "outcome_id": "no",
+                "payouts": [
+                  {
+                    "amount": "0",
+                    "state_id": "yes"
+                  },
+                  {
+                    "amount": "1.0000",
+                    "state_id": "no"
+                  }
+                ],
+                "price_currency": "USD",
+                "quantity_step": null,
+                "quantity_unit": "contract",
+                "tick_size": null
+              }
+            ],
+            "lifecycle": "open",
+            "market_kind": "conditional_event",
+            "native_event_id": "KXMVECROSSCATEGORY-S202664GKNBS2X3SFAX4H",
+            "native_fields": {
+              "can_close_early": true,
+              "close_time": "2026-10-28T23:00:00Z",
+              "created_time": "2026-10-26T23:15:53.81523Z",
+              "custom_strike": {
+                "Associated Events": "KXNBAAST-26OCT26WASCHA,KXNBAAST-26OCT26WASCHA,KXNBAPTS-26OCT26WASCHA,KXNBAPTS-26OCT26WASCHA,KXNBAREB-26OCT26WASCHA",
+                "Associated Market Sides": "yes,yes,yes,yes,yes",
+                "Associated Markets": "KXNBAAST-26OCT26WASCHA-CHABMILLER24-2,KXNBAAST-26OCT26WASCHA-WASADAVIS23-2,KXNBAPTS-26OCT26WASCHA-CHANREID0-10,KXNBAPTS-26OCT26WASCHA-WASTYOUNG3-15,KXNBAREB-26OCT26WASCHA-WASADAVIS23-6",
+                "Multivariate Event Ticker": "KXMVECROSSCATEGORY-S202664GKNBS2X3SFAX4H"
+              },
+              "event_ticker": "KXMVECROSSCATEGORY-S202664GKNBS2X3SFAX4H",
+              "exchange_index": 1,
+              "expected_expiration_time": "2026-10-27T05:00:00Z",
+              "expiration_time": "2026-10-28T23:00:00Z",
+              "expiration_value": "",
+              "is_provisional": true,
+              "last_price_dollars": "0.0000",
+              "latest_expiration_time": "2026-10-28T23:00:00Z",
+              "market_type": "binary",
+              "mve_collection_ticker": "KXMVECROSSCATEGORY-R",
+              "mve_selected_legs": [
+                {
+                  "event_ticker": "KXNBAAST-26OCT26WASCHA",
+                  "market_ticker": "KXNBAAST-26OCT26WASCHA-CHABMILLER24-2",
+                  "side": "yes"
+                },
+                {
+                  "event_ticker": "KXNBAAST-26OCT26WASCHA",
+                  "market_ticker": "KXNBAAST-26OCT26WASCHA-WASADAVIS23-2",
+                  "side": "yes"
+                },
+                {
+                  "event_ticker": "KXNBAPTS-26OCT26WASCHA",
+                  "market_ticker": "KXNBAPTS-26OCT26WASCHA-CHANREID0-10",
+                  "side": "yes"
+                },
+                {
+                  "event_ticker": "KXNBAPTS-26OCT26WASCHA",
+                  "market_ticker": "KXNBAPTS-26OCT26WASCHA-WASTYOUNG3-15",
+                  "side": "yes"
+                },
+                {
+                  "event_ticker": "KXNBAREB-26OCT26WASCHA",
+                  "market_ticker": "KXNBAREB-26OCT26WASCHA-WASADAVIS23-6",
+                  "side": "yes"
+                }
+              ],
+              "no_ask_dollars": "1.0000",
+              "no_bid_dollars": "1.0000",
+              "no_sub_title": "yes Brandon Miller: 2+,yes Anthony Davis: 2+,yes Naz Reid: 10+,yes Trae Young: 15+,yes Anthony Davis: 6+",
+              "notional_value_dollars": "1.0000",
+              "open_interest_fp": "0.00",
+              "open_time": "2026-10-26T23:15:53Z",
+              "previous_price_dollars": "0.0000",
+              "previous_yes_ask_dollars": "0.0000",
+              "previous_yes_bid_dollars": "0.0000",
+              "price_level_structure": "center_deci_edge_centi_cent",
+              "price_ranges": [
+                {
+                  "end": "0.0100",
+                  "start": "0.0000",
+                  "step": "0.0001"
+                },
+                {
+                  "end": "0.9900",
+                  "start": "0.0100",
+                  "step": "0.0010"
+                },
+                {
+                  "end": "1.0000",
+                  "start": "0.9900",
+                  "step": "0.0001"
+                }
+              ],
+              "result": "",
+              "rules_primary": "",
+              "rules_secondary": "Kalshi is not affiliated, associated, authorized, endorsed by, or in any way officially connected with the Governing League. All trademarks, logos, and brand names are the property of their respective owners.",
+              "settlement_bounds_type": "default",
+              "settlement_timer_seconds": 5,
+              "status": "active",
+              "strike_type": "custom",
+              "ticker": "KXMVECROSSCATEGORY-S202664GKNBS2X3SFAX4H-2IBWA6SLM",
+              "title": "yes Brandon Miller: 2+,yes Anthony Davis: 2+,yes Naz Reid: 10+,yes Trae Young: 15+,yes Anthony Davis: 6+",
+              "updated_time": "2026-10-26T23:15:54.515648Z",
+              "volume_24h_fp": "0.00",
+              "volume_fp": "0.00",
+              "yes_ask_dollars": "0.0000",
+              "yes_ask_size_fp": "0.00",
+              "yes_bid_dollars": "0.0000",
+              "yes_bid_size_fp": "0.00",
+              "yes_sub_title": "yes Brandon Miller: 2+,yes Anthony Davis: 2+,yes Naz Reid: 10+,yes Trae Young: 15+,yes Anthony Davis: 6+"
+            },
+            "native_market_id": "KXMVECROSSCATEGORY-S202664GKNBS2X3SFAX4H-2IBWA6SLM",
+            "payoff": {
+              "exhaustive": false,
+              "payout_currency": "USD",
+              "schema_version": 1,
+              "settlement_asset": "USD",
+              "state_ids": [
+                "yes",
+                "no"
+              ],
+              "verification_basis": "Native YES/NO and notional metadata only; resolution and settlement conditions require independent validation.",
+              "verified": false
+            },
+            "provenance": {
+              "adapter_version": "frontier-kalshi-2",
+              "clock_uncertainty_ms": null,
+              "exchange_timestamp_semantics": "updated_time is metadata update time",
+              "exchange_timestamp_utc": "2026-10-26T23:15:54.515648Z",
+              "observation_id": "fdfa7f8f356796ba26904d4b423ed03bab3708cad16427f03c73a894b9b30022",
+              "persisted_at_utc": null,
+              "processed_at_utc": "2026-10-26T23:16:17.590464Z",
+              "raw_sha256": "b3baf233c8ed0c266d9c05210dfc90cec4b1b07073514e2c18a5e26b73cba677",
+              "request_started_at_utc": "2026-10-26T23:16:17.238638Z",
+              "response_received_at_utc": "2026-10-26T23:16:17.590145Z",
+              "source_schema_version": "market_type:binary",
+              "source_url": "https://external-api.kalshi.com/trade-api/v2/markets?limit=1&status=open"
+            },
+            "quality_flags": [
+              "MVE_PAYOFF_NOT_MODELED",
+              "RULES_PRIMARY_MISSING",
+              "FEE_SCHEDULE_UNKNOWN",
+              "PAYOFF_NOT_VERIFIED",
+              "BOOK_TIMESTAMP_NOT_PROVIDED"
+            ],
+            "quote_asset": null,
+            "resolution": {
+              "authority": null,
+              "closes_at_utc": "2026-10-28T23:00:00Z",
+              "evidence_sha256": "0c6cf6f52da96393526eb670c739eb82979e77771d4af81de6776a4176ebba03",
+              "primary_rule": null,
+              "resolution_fingerprint": null,
+              "secondary_rule": "Kalshi is not affiliated, associated, authorized, endorsed by, or in any way officially connected with the Governing League. All trademarks, logos, and brand names are the property of their respective owners.",
+              "settles_at_utc": "2026-10-27T05:00:00Z",
+              "source_timestamp_semantics": "Kalshi updated_time is market metadata update time, not a book timestamp",
+              "verified": false
+            },
+            "schema_version": 1,
+            "settlement_asset": "USD",
+            "title": "yes Brandon Miller: 2+,yes Anthony Davis: 2+,yes Naz Reid: 10+,yes Trae Young: 15+,yes Anthony Davis: 6+",
+            "venue": "kalshi"
+          }
+        ],
+        "note": "One bounded discovery response; absence from this page is not proof of venue-wide absence.",
+        "schema_version": 1,
+        "venue": "kalshi"
+      },
+      "observation_id": "2348717af07c38da51d72e39e94b06b24fb8147f3d6245762fbc80901a10a107",
+      "observation_kind": "market_listing",
+      "raw": {
+        "adapter_version": "frontier-kalshi-2",
+        "http_status": 200,
+        "observation_kind": "market_listing",
+        "raw_body": "{\"cursor\":\"CgwIqb7_1gYQsNjdhAMSMktYTVZFQ1JPU1NDQVRFR09SWS1TMjAyNjY0R0tOQlMyWDNTRkFYNEgtMklCV0E2U0xN\",\"markets\":[{\"can_close_early\":true,\"close_time\":\"2026-10-28T23:00:00Z\",\"created_time\":\"2026-10-26T23:15:53.81523Z\",\"custom_strike\":{\"Associated Events\":\"KXNBAAST-26OCT26WASCHA,KXNBAAST-26OCT26WASCHA,KXNBAPTS-26OCT26WASCHA,KXNBAPTS-26OCT26WASCHA,KXNBAREB-26OCT26WASCHA\",\"Associated Market Sides\":\"yes,yes,yes,yes,yes\",\"Associated Markets\":\"KXNBAAST-26OCT26WASCHA-CHABMILLER24-2,KXNBAAST-26OCT26WASCHA-WASADAVIS23-2,KXNBAPTS-26OCT26WASCHA-CHANREID0-10,KXNBAPTS-26OCT26WASCHA-WASTYOUNG3-15,KXNBAREB-26OCT26WASCHA-WASADAVIS23-6\",\"Multivariate Event Ticker\":\"KXMVECROSSCATEGORY-S202664GKNBS2X3SFAX4H\"},\"event_ticker\":\"KXMVECROSSCATEGORY-S202664GKNBS2X3SFAX4H\",\"exchange_index\":1,\"expected_expiration_time\":\"2026-10-27T05:00:00Z\",\"expiration_time\":\"2026-10-28T23:00:00Z\",\"expiration_value\":\"\",\"is_provisional\":true,\"last_price_dollars\":\"0.0000\",\"latest_expiration_time\":\"2026-10-28T23:00:00Z\",\"market_type\":\"binary\",\"mve_collection_ticker\":\"KXMVECROSSCATEGORY-R\",\"mve_selected_legs\":[{\"event_ticker\":\"KXNBAAST-26OCT26WASCHA\",\"market_ticker\":\"KXNBAAST-26OCT26WASCHA-CHABMILLER24-2\",\"side\":\"yes\"},{\"event_ticker\":\"KXNBAAST-26OCT26WASCHA\",\"market_ticker\":\"KXNBAAST-26OCT26WASCHA-WASADAVIS23-2\",\"side\":\"yes\"},{\"event_ticker\":\"KXNBAPTS-26OCT26WASCHA\",\"market_ticker\":\"KXNBAPTS-26OCT26WASCHA-CHANREID0-10\",\"side\":\"yes\"},{\"event_ticker\":\"KXNBAPTS-26OCT26WASCHA\",\"market_ticker\":\"KXNBAPTS-26OCT26WASCHA-WASTYOUNG3-15\",\"side\":\"yes\"},{\"event_ticker\":\"KXNBAREB-26OCT26WASCHA\",\"market_ticker\":\"KXNBAREB-26OCT26WASCHA-WASADAVIS23-6\",\"side\":\"yes\"}],\"no_ask_dollars\":\"1.0000\",\"no_bid_dollars\":\"1.0000\",\"no_sub_title\":\"yes Brandon Miller: 2+,yes Anthony Davis: 2+,yes Naz Reid: 10+,yes Trae Young: 15+,yes Anthony Davis: 6+\",\"notional_value_dollars\":\"1.0000\",\"open_interest_fp\":\"0.00\",\"open_time\":\"2026-10-26T23:15:53Z\",\"previous_price_dollars\":\"0.0000\",\"previous_yes_ask_dollars\":\"0.0000\",\"previous_yes_bid_dollars\":\"0.0000\",\"price_level_structure\":\"center_deci_edge_centi_cent\",\"price_ranges\":[{\"end\":\"0.0100\",\"start\":\"0.0000\",\"step\":\"0.0001\"},{\"end\":\"0.9900\",\"start\":\"0.0100\",\"step\":\"0.0010\"},{\"end\":\"1.0000\",\"start\":\"0.9900\",\"step\":\"0.0001\"}],\"result\":\"\",\"rules_primary\":\"\",\"rules_secondary\":\"Kalshi is not affiliated, associated, authorized, endorsed by, or in any way officially connected with the Governing League. All trademarks, logos, and brand names are the property of their respective owners.\",\"settlement_bounds_type\":\"default\",\"settlement_timer_seconds\":5,\"status\":\"active\",\"strike_type\":\"custom\",\"ticker\":\"KXMVECROSSCATEGORY-S202664GKNBS2X3SFAX4H-2IBWA6SLM\",\"title\":\"yes Brandon Miller: 2+,yes Anthony Davis: 2+,yes Naz Reid: 10+,yes Trae Young: 15+,yes Anthony Davis: 6+\",\"updated_time\":\"2026-10-26T23:15:54.515648Z\",\"volume_24h_fp\":\"0.00\",\"volume_fp\":\"0.00\",\"yes_ask_dollars\":\"0.0000\",\"yes_ask_size_fp\":\"0.00\",\"yes_bid_dollars\":\"0.0000\",\"yes_bid_size_fp\":\"0.00\",\"yes_sub_title\":\"yes Brandon Miller: 2+,yes Anthony Davis: 2+,yes Naz Reid: 10+,yes Trae Young: 15+,yes Anthony Davis: 6+\"}]}\n",
+        "raw_body_encoding": "utf8",
+        "raw_sha256": "b3baf233c8ed0c266d9c05210dfc90cec4b1b07073514e2c18a5e26b73cba677",
+        "received_at_utc": "2026-10-26T23:16:17.590145Z",
+        "request_started_at_utc": "2026-10-26T23:16:17.238638Z",
+        "request_url": "https://external-api.kalshi.com/trade-api/v2/markets?limit=1&status=open",
+        "schema_version": 1,
+        "venue": "kalshi"
+      },
+      "raw_sha256": "b3baf233c8ed0c266d9c05210dfc90cec4b1b07073514e2c18a5e26b73cba677",
+      "received_at_utc": "2026-10-26T23:16:17.590145+00:00",
+      "row_sha256": "23ebd6de993edaa8e793e0b5f95089bc4380d6f88c80707848b6694374114a77",
+      "venue": "kalshi"
+    },
+    {
+      "normalized": {
+        "adapter_version": "frontier-kalshi-2",
+        "economics_state": "unresolved",
+        "effective_fee_multiplier": "1",
+        "effective_fee_type": "quadratic_with_combo_maker_fees",
+        "event_fee_multiplier_override": null,
+        "event_fee_multiplier_override_field_present": false,
+        "event_fee_type_override": null,
+        "event_fee_type_override_field_present": false,
+        "event_raw_sha256": "dc09b478c3ade9c09fafca71d2f488c28a1da14fd3f3fbdb9916334185a9406d",
+        "event_received_at_utc": "2026-10-26T23:16:17.916305Z",
+        "fee_rounding_documentation_url": "https://docs.kalshi.com/getting_started/fee_rounding",
+        "limitations": [
+          "Native type and multiplier metadata do not by themselves calculate fees.",
+          "Maker/taker applicability and any scheduled fee changes require the current published schedule.",
+          "Account balance precision and per-order rounding/rebates are unknown without account-specific data."
+        ],
+        "native_event_id": "KXMVECROSSCATEGORY-S202664GKNBS2X3SFAX4H",
+        "native_market_id": "KXMVECROSSCATEGORY-S202664GKNBS2X3SFAX4H-2IBWA6SLM",
+        "schedule_source_url": "https://kalshi.com/fee-schedule",
+        "schema_version": 1,
+        "series_fee_multiplier": "1",
+        "series_fee_type": "quadratic_with_combo_maker_fees",
+        "series_raw_sha256": "896821229942685424576e6e2e5b23254a0bfef6eb8091e55869a1bb834478ec",
+        "series_received_at_utc": "2026-10-26T23:16:18.408650Z",
+        "series_ticker": "KXMVECROSSCATEGORY"
+      },
+      "observation_id": "b33327d6fd935c041db106614b51d8b18a7b15242b00b195be70d71535aa795c",
+      "observation_kind": "event_fee_metadata",
+      "raw": {
+        "adapter_version": "frontier-kalshi-2",
+        "http_status": 200,
+        "observation_kind": "event_fee_metadata",
+        "raw_body": "{\"event\":{\"category\":\"Exotics\",\"collateral_return_type\":\"\",\"event_ticker\":\"KXMVECROSSCATEGORY-S202664GKNBS2X3SFAX4H\",\"exchange_index\":1,\"last_updated_ts\":\"0001-01-01T00:00:00Z\",\"mutually_exclusive\":false,\"series_ticker\":\"KXMVECROSSCATEGORY\",\"settlement_sources\":[{\"name\":\"the league governing the game\",\"url\":\"https://www.ncaa.com/sports/football/fbs\"},{\"name\":\"the league governing the game\",\"url\":\"https://www.nfl.com/\"}],\"strike_period\":\"\",\"sub_title\":\"MVE\",\"title\":\"Washington vs Charlotte\"},\"markets\":[]}\n",
+        "raw_body_encoding": "utf8",
+        "raw_sha256": "dc09b478c3ade9c09fafca71d2f488c28a1da14fd3f3fbdb9916334185a9406d",
+        "received_at_utc": "2026-10-26T23:16:17.916305Z",
+        "request_started_at_utc": "2026-10-26T23:16:17.792427Z",
+        "request_url": "https://external-api.kalshi.com/trade-api/v2/events/KXMVECROSSCATEGORY-S202664GKNBS2X3SFAX4H?exclude_markets=true",
+        "schema_version": 1,
+        "venue": "kalshi"
+      },
+      "raw_sha256": "dc09b478c3ade9c09fafca71d2f488c28a1da14fd3f3fbdb9916334185a9406d",
+      "received_at_utc": "2026-10-26T23:16:17.916305+00:00",
+      "row_sha256": "d1e574dc10e79db07220a20ba94f3947224aef7ebdefeb6f01fd5b5993b4efa9",
+      "venue": "kalshi"
+    },
+    {
+      "normalized": {
+        "adapter_version": "frontier-kalshi-2",
+        "economics_state": "unresolved",
+        "effective_fee_multiplier": "1",
+        "effective_fee_type": "quadratic_with_combo_maker_fees",
+        "event_fee_multiplier_override": null,
+        "event_fee_multiplier_override_field_present": false,
+        "event_fee_type_override": null,
+        "event_fee_type_override_field_present": false,
+        "event_raw_sha256": "dc09b478c3ade9c09fafca71d2f488c28a1da14fd3f3fbdb9916334185a9406d",
+        "event_received_at_utc": "2026-10-26T23:16:17.916305Z",
+        "fee_rounding_documentation_url": "https://docs.kalshi.com/getting_started/fee_rounding",
+        "limitations": [
+          "Native type and multiplier metadata do not by themselves calculate fees.",
+          "Maker/taker applicability and any scheduled fee changes require the current published schedule.",
+          "Account balance precision and per-order rounding/rebates are unknown without account-specific data."
+        ],
+        "native_event_id": "KXMVECROSSCATEGORY-S202664GKNBS2X3SFAX4H",
+        "native_market_id": "KXMVECROSSCATEGORY-S202664GKNBS2X3SFAX4H-2IBWA6SLM",
+        "schedule_source_url": "https://kalshi.com/fee-schedule",
+        "schema_version": 1,
+        "series_fee_multiplier": "1",
+        "series_fee_type": "quadratic_with_combo_maker_fees",
+        "series_raw_sha256": "896821229942685424576e6e2e5b23254a0bfef6eb8091e55869a1bb834478ec",
+        "series_received_at_utc": "2026-10-26T23:16:18.408650Z",
+        "series_ticker": "KXMVECROSSCATEGORY"
+      },
+      "observation_id": "21a035c3f8d142a9e71a8d23769cb3cab8be7de5de525e51c84881a7b4b3a6df",
+      "observation_kind": "series_fee_metadata",
+      "raw": {
+        "adapter_version": "frontier-kalshi-2",
+        "http_status": 200,
+        "observation_kind": "series_fee_metadata",
+        "raw_body": "{\"series\":{\"additional_prohibitions\":[\"Persons who are employed by any of the Source Agencies are not permitted to trade on the Contract.\",\"Persons who hold any material, non-public information on the Underlying are not permitted to trade on the Contract.\"],\"categories\":[\"Exotics\"],\"category\":\"Exotics\",\"contract_terms_url\":\"https://assets.kalshi.com/contract_terms/FOOTBALLSTATS.pdf\",\"contract_url\":\"https://assets.kalshi.com/regulatory/product-certifications/FOOTBALLSTATS.pdf\",\"exchange_index\":1,\"fee_multiplier\":1,\"fee_type\":\"quadratic_with_combo_maker_fees\",\"frequency\":\"custom\",\"last_updated_ts\":\"2026-09-29T17:19:02.307426Z\",\"settlement_sources\":[{\"name\":\"the league governing the game\",\"url\":\"https://www.ncaa.com/sports/football/fbs\"},{\"name\":\"the league governing the game\",\"url\":\"https://www.nfl.com/\"}],\"tags\":null,\"ticker\":\"KXMVECROSSCATEGORY\",\"title\":\"MVE Cross Category\"}}\n",
+        "raw_body_encoding": "utf8",
+        "raw_sha256": "896821229942685424576e6e2e5b23254a0bfef6eb8091e55869a1bb834478ec",
+        "received_at_utc": "2026-10-26T23:16:18.408650Z",
+        "request_started_at_utc": "2026-10-26T23:16:18.293034Z",
+        "request_url": "https://external-api.kalshi.com/trade-api/v2/series/KXMVECROSSCATEGORY",
+        "schema_version": 1,
+        "venue": "kalshi"
+      },
+      "raw_sha256": "896821229942685424576e6e2e5b23254a0bfef6eb8091e55869a1bb834478ec",
+      "received_at_utc": "2026-10-26T23:16:18.408650+00:00",
+      "row_sha256": "68d096172cdc151e474f456033b39289ab132876ad8973f74adc22bd5489e663",
+      "venue": "kalshi"
+    }
+  ],
+  "request_bounds": {
+    "book_or_trade_requests": 0,
+    "event_query_excludes_child_markets": true,
+    "http_methods": [
+      "GET"
+    ],
+    "maximum_markets_listed": 1,
+    "maximum_response_bytes": 65536,
+    "network_gets": 3,
+    "retries_per_request": 0,
+    "source": "Kalshi public market listing, event metadata, and series metadata",
+    "temporary_store_bytes": 8388608,
+    "temporary_store_discarded_after_readback": true,
+    "timeout_seconds": 8
+  },
+  "research_only": true,
+  "schema_version": 1,
+  "trading_or_mutating_requests": false
+}

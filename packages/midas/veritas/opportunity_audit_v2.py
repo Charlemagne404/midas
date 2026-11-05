@@ -140,13 +140,17 @@ def normalize_market(raw: dict[str, Any]) -> tuple[dict[str, Any] | None, str | 
             "negative_risk": neg_risk,
             "negative_risk_group": raw.get("negRiskMarketID") or None,
             "minimum_order_notional_usdc": str(minimum),
+            # Gamma orderMinSize is copied through without unit conversion by the
+            # source schema. Do not infer USDC-notional semantics from its name.
+            "minimum_order_notional_source": "Gamma.orderMinSize",
+            "minimum_order_notional_unit_status": "unverified",
             "tick_size": str(tick),
             "fee_regime": fee_regime,
             "active": True,
             "closed": False,
             "accepting_orders": True,
             "orderbook_enabled": True,
-            "restricted": raw.get("restricted") is True,
+            "restricted": raw.get("restricted") if type(raw.get("restricted")) is bool else None,
             "augmented_negative_risk": False,
         },
         None,
@@ -239,6 +243,7 @@ def audit_pair_snapshot(
     *,
     captured_ns: int,
     batch_started_ns: int | None = None,
+    request_duration_ms: int | float | None = None,
     quantities: tuple[str, ...] = ("5", "10", "20", "50", "100"),
     max_batch_duration_ms: int = 5_000,
     reported_update_age_threshold_ms: int = 5_000,
@@ -250,7 +255,11 @@ def audit_pair_snapshot(
     if not quantities or any(_decimal(q, "quantity") <= 0 for q in quantities):
         raise ValueError("Quantities must be positive")
     batch_start = captured_ns if batch_started_ns is None else batch_started_ns
-    batch_duration_ms = (captured_ns - batch_start) // 1_000_000
+    batch_duration_ms = (
+        int(request_duration_ms)
+        if request_duration_ms is not None
+        else (captured_ns - batch_start) // 1_000_000
+    )
     if batch_duration_ms < 0 or batch_duration_ms > max_batch_duration_ms:
         return {
             "valid": False,
@@ -318,6 +327,10 @@ def audit_pair_snapshot(
     skew_ms = abs(legs["yes"]["timestamp_ms"] - legs["no"]["timestamp_ms"])
 
     top_edge = ONE - legs["yes"]["best_ask"] - legs["no"]["best_ask"]
+    minimum_notional_unit_status = str(
+        market.get("minimum_order_notional_unit_status") or "unverified"
+    )
+    minimum_notional_supported = minimum_notional_unit_status == "verified_usdc"
     fee_rate, fee_exponent, fee_status = _fee_parameters(market)
     quantity_results: list[dict[str, Any]] = []
     for requested in quantities:
@@ -325,9 +338,13 @@ def audit_pair_snapshot(
         walked = {side: _walk_asks(legs[side]["asks"], quantity) for side in ("yes", "no")}
         full_depth = all(item["complete"] for item in walked.values())
         notional_by_leg = {side: D(walked[side]["notional"]) for side in ("yes", "no")}
-        minimums_satisfied = all(
-            notional_by_leg[side] >= legs[side]["minimum_order_notional_usdc"]
-            for side in ("yes", "no")
+        minimums_satisfied = (
+            all(
+                notional_by_leg[side] >= legs[side]["minimum_order_notional_usdc"]
+                for side in ("yes", "no")
+            )
+            if minimum_notional_supported
+            else None
         )
         minimum_share_quantities_satisfied = all(
             quantity >= legs[side]["minimum_order_shares"] for side in ("yes", "no")
@@ -339,7 +356,6 @@ def audit_pair_snapshot(
         independent_fee_agrees_with_shared: bool | None = None
         if (
             full_depth
-            and minimums_satisfied
             and minimum_share_quantities_satisfied
             and fee_rate is not None
             and fee_exponent is not None
@@ -354,10 +370,14 @@ def audit_pair_snapshot(
                     pair_semantics=SUPPORTED_PAIR,
                     same_condition=True,
                     payoff_verified=True,
-                    minimum_order_notional={
-                        "yes": str(legs["yes"]["minimum_order_notional_usdc"]),
-                        "no": str(legs["no"]["minimum_order_notional_usdc"]),
-                    },
+                    minimum_order_notional=(
+                        {
+                            "yes": str(legs["yes"]["minimum_order_notional_usdc"]),
+                            "no": str(legs["no"]["minimum_order_notional_usdc"]),
+                        }
+                        if minimum_notional_supported
+                        else {"yes": None, "no": None}
+                    ),
                     fee_exponent=fee_exponent,
                 )
                 for side in ("yes", "no"):
@@ -429,15 +449,24 @@ def audit_pair_snapshot(
                 },
                 "depth_walk_by_leg": walked,
                 "minimum_order_notional_usdc_by_leg": {
+                    side: str(legs[side]["minimum_order_notional_usdc"])
+                    if minimum_notional_supported
+                    else None
+                    for side in ("yes", "no")
+                },
+                "minimum_order_declared_value_by_leg": {
                     side: str(legs[side]["minimum_order_notional_usdc"]) for side in ("yes", "no")
                 },
+                "minimum_order_notional_unit_status": minimum_notional_unit_status,
                 "minimum_order_shares_by_leg": {
                     side: str(legs[side]["minimum_order_shares"]) for side in ("yes", "no")
                 },
                 "minimum_order_notional_satisfied": minimums_satisfied,
                 "minimum_order_shares_satisfied": minimum_share_quantities_satisfied,
                 "minimum_order_constraints_satisfied": (
-                    minimums_satisfied and minimum_share_quantities_satisfied
+                    None
+                    if minimums_satisfied is None
+                    else minimums_satisfied and minimum_share_quantities_satisfied
                 ),
                 "shared_fee_model_evaluated": shared_result is not None,
                 "full_depth_gross_edge_usdc": str(gross_edge) if gross_edge is not None else None,
@@ -461,6 +490,11 @@ def audit_pair_snapshot(
         "audit_version": VERSION,
         "valid": True,
         "reason": None,
+        "constraint_support": {
+            "minimum_order_notional_unit_status": minimum_notional_unit_status,
+            "minimum_order_notional_source": market.get("minimum_order_notional_source"),
+            "book_minimum_order_size_unit": "shares",
+        },
         "payoff_identity": {
             "protocol": "v1",
             "pair_semantics": SUPPORTED_PAIR,
