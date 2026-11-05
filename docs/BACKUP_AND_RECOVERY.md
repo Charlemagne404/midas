@@ -3,9 +3,9 @@
 This runbook covers active SQLite databases and the Reality recording store.
 The principal data-tree inventory was measured on 2026-11-05 around 15:30
 Europe/Stockholm; the active database file sizes below were refreshed at
-18:42–18:43. Recording and ignored-research sizes remain from the earlier
-inventory. Recheck mounts, service ownership, data sizes, and the resource gate
-before each operation.
+19:49. Recording and ignored-research sizes remain from the earlier inventory.
+The 19:49 resource snapshot still had a full swap device. Recheck mounts,
+service ownership, data sizes, and the resource gate before each operation.
 
 ## Current protection status
 
@@ -27,8 +27,8 @@ Current measured sources include:
 
 | Source | Current owner and state | Measured size |
 |---|---|---:|
-| `/home/charlie/midas/data/midas.db` | `midas-api.service`, actively written in WAL mode | 16,528,715,776 bytes; WAL 4,482,592 bytes at 18:42 |
-| `/home/charlie/midas-reality/data/research/reality/interface/preview.db` | `midas-reality-api.service`, actively written in WAL mode | 12,615,774,208 bytes; WAL 4,317,792 bytes at 18:43 |
+| `/home/charlie/midas/data/midas.db` | `midas-api.service`, actively written in WAL mode | 16,559,865,856 bytes; WAL 4,482,592 bytes at 19:49 |
+| `/home/charlie/midas-reality/data/research/reality/interface/preview.db` | `midas-reality-api.service`, actively written in WAL mode | 12,645,478,400 bytes; WAL 4,317,792 bytes at 19:49 |
 | `/home/charlie/midas-reality/data/recordings/reality` | `midas-reality.service`; writer lock held and one `.open` segment active | 58,367 finalized segments and sidecars; segment bytes 19,739,677,482 |
 
 Additional ignored research data exists in Reality, Veritas, Arena, and
@@ -145,13 +145,14 @@ their thresholds or bypass them.
 
 The 2026-11-05 heavy admission probe returned `DENY` for
 `swap_reserve_below_profile_floor` and `swap_activity_above_profile_limit`.
-The 18:40 read-only refresh showed all 4 GiB of swap occupied with 52 KiB free;
-the first `vmstat` sample had 49 pages swapped in and 53 out, with none in the
-next two samples. I/O PSI was elevated and the two later samples had 7% I/O
-wait. `/mnt/continental-cloud` has capacity, but no live data backup or heavy
-preflight was attempted during this refresh. Wait for the machine to satisfy
-admission and rerun the gate. This is not a fresh pass. Capture each gate
-result in a private receipt log so denials and failures remain reviewable.
+The 19:49 read-only refresh showed all 4 GiB of swap occupied with 236 KiB
+free; the first `vmstat` sample had 49 pages swapped in and 53 out, with none
+in the next two samples. The sample had about 1% I/O wait. Memory PSI was low,
+but I/O PSI remained measurable. `/mnt/continental-cloud` has capacity, but no
+live data backup or fresh heavy preflight was attempted. Wait for the machine
+to satisfy admission and rerun the gate. This is not a fresh pass. Capture
+each gate result in a private receipt log so denials and failures remain
+reviewable.
 
 ## SQLite snapshot
 
