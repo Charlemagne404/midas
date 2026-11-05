@@ -3,11 +3,14 @@ set -euo pipefail
 
 workspace="$(realpath "$GITHUB_WORKSPACE")"
 capacity_base="$workspace/validation-capacity-base"
+veritas_baseline="$workspace/veritas-memory-baseline"
+veritas_baseline_sha=3e700b9b2bba7a9da1564e3ab8b2e18be2eba6ea
 support="$workspace/.github/ci-test-support"
 source_sha="$(git -C "$workspace" rev-parse HEAD)"
 source_tree="$(git -C "$workspace" rev-parse 'HEAD^{tree}')"
 test "$source_sha" = "$GITHUB_SHA"
 test "$(git -C "$capacity_base" rev-parse HEAD)" = c83320000a085bf30490b4b76b425527fe8574f7
+test "$(git -C "$veritas_baseline" rev-parse HEAD)" = "$veritas_baseline_sha"
 
 context="$RUNNER_TEMP/midas-ci-backend-context-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
 test_data="$RUNNER_TEMP/midas-ci-backend-data-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
@@ -40,9 +43,11 @@ docker create --name "$container" --init \
   --mount "type=bind,src=$workspace,dst=/source,readonly" \
   --mount "type=bind,src=$support,dst=/control,readonly" \
   --mount "type=bind,src=$capacity_base,dst=/capacity-base,readonly" \
+  --mount "type=bind,src=$veritas_baseline,dst=/veritas-memory-baseline,readonly" \
   --mount "type=bind,src=$test_data,dst=/test-data" \
   --env MIDAS_CI_SOURCE_SHA="$source_sha" \
   --env MIDAS_CI_SOURCE_TREE="$source_tree" \
+  --env MIDAS_CI_VERITAS_BASELINE_SHA="$veritas_baseline_sha" \
   --env GIT_ALTERNATE_OBJECT_DIRECTORIES=/capacity-base/.git/objects \
   --env MIDAS_PHASE5_SYNTHETIC_USER_PSI=1 \
   --env MIDAS_MODE=demo \
@@ -75,13 +80,13 @@ docker create --name "$container" --init \
   --env MKL_NUM_THREADS=1 \
   "$image" bash -c 'exec sleep infinity' >/dev/null
 
-python3 - "$container" "$workspace" "$support" "$capacity_base" "$test_data" <<'PY'
+python3 - "$container" "$workspace" "$support" "$capacity_base" "$veritas_baseline" "$test_data" <<'PY'
 import json
 import subprocess
 import sys
 from pathlib import Path
 
-name, workspace, support, capacity_base, test_data = sys.argv[1:]
+name, workspace, support, capacity_base, veritas_baseline, test_data = sys.argv[1:]
 details = json.loads(subprocess.check_output(["docker", "inspect", name]))[0]
 host = details["HostConfig"]
 assert host["NetworkMode"] == "none"
@@ -97,10 +102,11 @@ assert details["Config"]["User"] == "10001:10001"
 assert not host.get("Devices") and not host.get("DeviceRequests")
 
 binds = {mount["Destination"]: mount for mount in details["Mounts"] if mount["Type"] == "bind"}
-assert set(binds) == {"/source", "/control", "/capacity-base", "/test-data"}, binds
+assert set(binds) == {"/source", "/control", "/capacity-base", "/veritas-memory-baseline", "/test-data"}, binds
 assert binds["/source"]["Source"] == workspace and not binds["/source"]["RW"]
 assert binds["/control"]["Source"] == support and not binds["/control"]["RW"]
 assert binds["/capacity-base"]["Source"] == capacity_base and not binds["/capacity-base"]["RW"]
+assert binds["/veritas-memory-baseline"]["Source"] == veritas_baseline and not binds["/veritas-memory-baseline"]["RW"]
 assert binds["/test-data"]["Source"] == test_data and binds["/test-data"]["RW"]
 assert not list(Path(test_data).iterdir()), "test-data mount must be fresh"
 environment = details["Config"]["Env"]

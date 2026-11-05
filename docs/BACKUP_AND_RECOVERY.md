@@ -1,8 +1,9 @@
 # MIDAS backup and recovery
 
 This runbook covers active SQLite databases and the Reality recording store.
-The machine-specific measurements below are from 2026-11-05. Recheck mounts,
-service ownership, database sizes, and the resource gate before each operation.
+The machine-specific measurements below were refreshed on 2026-11-05 around
+15:30 Europe/Stockholm. Recheck mounts, service ownership, database sizes, and
+the resource gate before each operation.
 
 ## Current protection status
 
@@ -13,7 +14,7 @@ up only Status. Neither includes MIDAS. The `data/backups/` ignore rule only
 keeps local backup files out of Git; it does not provide backup storage.
 
 `/mnt/continental-cloud` is currently a separate ext4 partition on `/dev/sda4`
-with about 591 GiB free. The root filesystem is on a different NVMe device.
+with about 592 GiB free. The root filesystem is on a different NVMe device.
 This is a useful second disk on the same host, not an off-host copy. Confirm
 that the mount is present and still uses a separate physical device before
 writing; an absent mount must never be replaced by a same-named directory on
@@ -24,15 +25,40 @@ Current measured sources include:
 
 | Source | Current owner and state | Measured size |
 |---|---|---:|
-| `/home/charlie/midas/data/midas.db` | `midas-api.service`, open in WAL mode | 16,362,156,032 bytes |
-| `/home/charlie/midas-reality/data/research/reality/interface/preview.db` | `midas-reality-api.service`, open in WAL mode | 12,456,755,200 bytes |
-| `/home/charlie/midas-reality/data/recordings/reality` | `midas-reality.service`; writer lock held and one `.open` segment active | about 23 GiB, 132,311 files |
+| `/home/charlie/midas/data/midas.db` | `midas-api.service`, open in WAL mode | 16,422,002,688 bytes; WAL 4,482,592 bytes |
+| `/home/charlie/midas-reality/data/research/reality/interface/preview.db` | `midas-reality-api.service`, open in WAL mode | 12,513,951,744 bytes; WAL 4,317,792 bytes |
+| `/home/charlie/midas-reality/data/recordings/reality` | `midas-reality.service`; writer lock held and one `.open` segment active | 58,367 finalized segments and sidecars; segment bytes 19,739,677,482 |
 
 Additional ignored research data exists in Reality, Veritas, Arena, and
 historical worktrees. These stores have different writers and evidence
 contracts; they are not covered by the procedures below until individually
 classified and added to the inventory. Source branches and Git history do not
 back up ignored data.
+
+## Off-host destination requirements
+
+There is no MIDAS backup repository or verified off-host copy. `restic` is
+installed, but no repository URL, credentials, schedule, retention rule, or
+failure alert is configured. Do not use `/mnt/continental-cloud` as proof of
+off-host protection: it is another internal disk in the same computer.
+
+The measured principal data roots total about 64.2 GB, and a Reality staging
+root adds about 4.1 GB. That gives a **known minimum payload of about 68.3 GB**;
+the ignored research data across 37 worktrees has not been completely inventoried,
+so the actual total is larger or equal and remains unknown. Size the off-host
+destination only after classifying all protected roots. It must hold one full
+verified baseline, at least 30 days of incremental change, verification and
+restore workspace, and safety reserve. Do not treat compression or deduplication
+as guaranteed capacity savings.
+
+To enable it, MIDAS needs an approved destination in a separate host or cloud
+failure domain, network access from the backup runner, and a least-privilege
+repository credential stored outside Git (for example, a user-owned secret
+store or systemd credential). The credential must permit writing and listing
+snapshots; pruning access should be isolated to the retention job. A remote
+provider and transfer of private research data require the owner's choice and
+approval. Keep the repository encrypted, test a fresh-host restore, and alert
+outside the source host when a scheduled backup or integrity check fails.
 
 ## Resource admission
 
@@ -48,8 +74,9 @@ The 2026-11-05 probe had 24 KiB free swap, an observed swap-in page, and
 adequate separate-disk capacity. Heavy admission returned `DENY` for
 `swap_reserve_below_profile_floor` and `swap_activity_above_profile_limit`.
 No live data backup was attempted. Wait for the machine to satisfy admission
-and rerun the gate. Capture the gate output in a private receipt log so denials
-and failures remain reviewable.
+and rerun the gate. A later 15:30 host sample still showed all 4 GiB of swap in
+use with only 16 KiB free. Capture each gate result in a private receipt log so
+denials and failures remain reviewable.
 
 ## SQLite snapshot
 

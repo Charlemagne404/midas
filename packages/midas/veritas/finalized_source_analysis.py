@@ -14,6 +14,7 @@ import re
 import tempfile
 import time
 from collections import Counter
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from decimal import ROUND_CEILING, Decimal
 from pathlib import Path
@@ -51,6 +52,8 @@ MAX_EVENTS_BYTES = 256 * 1024**2
 MAX_MARKETS = 20_000
 MAX_EDGE_BINS = 50_000
 MAX_RECENT_MARKETS = 20
+STATE_SCHEMA_VERSION = 2
+LEGACY_V1_CODE_SHA256 = "9f9e2249b49dd1cb10c11713aa2683567aa9cf0914c3ed2b08cf8e3fea25ebf8"
 
 _SEGMENT_CATALOG = re.compile(r"(?P<first>[0-9]{20})-(?P<uuid>[0-9a-f]{32})\.json\Z")
 _SHA256 = re.compile(r"[0-9a-f]{64}\Z")
@@ -171,27 +174,50 @@ def _read_campaign(
     return plan, campaign_sha256, raw_root
 
 
-def _read_catalogs(raw_root: Path) -> list[dict[str, Any]]:
-    """Read only finalized sidecars; catalog hashing is cheap and detects prefix edits."""
-    entries: list[tuple[str, Path]] = []
+@dataclass(frozen=True)
+class _CatalogScan:
+    selected: list[dict[str, Any]]
+    segment_count: int
+    empty_segment_count: int
+    pending_segment_count: int
+    pending_source_bytes: int
+    processed_prefix_sha256: str
+    processed_last_ordinal: int
+
+
+def _read_catalogs(
+    raw_root: Path,
+    *,
+    processed_count: int,
+    max_segments: int,
+    max_source_bytes: int,
+) -> _CatalogScan:
+    """Validate the full catalog while retaining only names and the next bounded batch."""
+    names: list[str] = []
     try:
         with os.scandir(raw_root) as iterator:
             for entry in iterator:
                 match = _SEGMENT_CATALOG.fullmatch(entry.name)
                 if match:
-                    entries.append((entry.name, Path(entry.path)))
+                    names.append(entry.name)
                 elif entry.name[:1].isdigit() and entry.name.endswith(".json"):
                     raise ValueError("Malformed numeric finalized Reality catalog name")
     except OSError as error:
         raise ValueError("Finalized Reality source directory cannot be scanned") from error
-    entries.sort(key=lambda item: item[0])
-    if len(entries) > MAX_CATALOG_SEGMENTS:
+    names.sort()
+    if len(names) > MAX_CATALOG_SEGMENTS:
         raise ValueError("Finalized Reality source catalog count exceeds its bound")
 
-    result: list[dict[str, Any]] = []
     total_catalog_bytes = 0
     prior_last = 0
-    for name, sidecar in entries:
+    segment_count = empty_count = pending_count = pending_bytes = 0
+    selected: list[dict[str, Any]] = []
+    selected_bytes = 0
+    batch_closed = False
+    prefix_chain = bytes(32)
+    processed_last_ordinal = 0
+    for name in names:
+        sidecar = raw_root / name
         if sidecar.is_symlink() or not sidecar.is_file():
             raise ValueError("Finalized Reality catalog sidecar is unsafe")
         size = sidecar.stat().st_size
@@ -238,6 +264,7 @@ def _read_catalogs(raw_root: Path) -> list[dict[str, Any]]:
         if count == 0:
             if first != 0 or last != 0 or segment_bytes != len(MAGIC) or kinds:
                 raise ValueError(f"Malformed empty finalized Reality catalog: {name}")
+            empty_count += 1
         elif (
             first != prior_last + 1
             or last != first + count - 1
@@ -257,17 +284,35 @@ def _read_catalogs(raw_root: Path) -> list[dict[str, Any]]:
             raise ValueError(
                 f"Finalized Reality segment cannot be inspected: {file_name}"
             ) from error
-        result.append(info)
-        if count:
-            prior_last = last
-    return result
-
-
-def _prefix_hash(catalogs: list[dict[str, Any]], count: int) -> str:
-    chain = bytes(32)
-    for info in catalogs[:count]:
-        chain = hashlib.sha256(chain + _canonical(info)).digest()
-    return chain.hex()
+        if not count:
+            continue
+        current_index = segment_count
+        segment_count += 1
+        if current_index < processed_count:
+            prefix_chain = hashlib.sha256(prefix_chain + _canonical(info)).digest()
+            processed_last_ordinal = last
+        else:
+            pending_count += 1
+            pending_bytes += segment_bytes
+            if batch_closed or len(selected) >= max_segments:
+                continue
+            if not selected and segment_bytes > max_source_bytes:
+                raise ValueError("A finalized Reality segment exceeds the per-run byte bound")
+            if selected and selected_bytes + segment_bytes > max_source_bytes:
+                batch_closed = True
+                continue
+            selected.append(info)
+            selected_bytes += segment_bytes
+        prior_last = last
+    return _CatalogScan(
+        selected=selected,
+        segment_count=segment_count,
+        empty_segment_count=empty_count,
+        pending_segment_count=pending_count,
+        pending_source_bytes=pending_bytes,
+        processed_prefix_sha256=prefix_chain.hex(),
+        processed_last_ordinal=processed_last_ordinal,
+    )
 
 
 def _new_cumulative() -> dict[str, Any]:
@@ -505,7 +550,12 @@ def _event_directory(root: Path) -> Path:
     return versioned
 
 
-def _write_event(path: Path, event: dict[str, Any]) -> bool:
+def _write_event(
+    path: Path,
+    event: dict[str, Any],
+    *,
+    allow_legacy_code_hash: bool = False,
+) -> bool:
     sealed = _sealed(event, "analysis_event_sha256")
     data = _canonical(sealed)
     if len(data) > MAX_EVENT_BYTES:
@@ -515,7 +565,17 @@ def _write_event(path: Path, event: dict[str, Any]) -> bool:
     if path.exists():
         existing = _read_sealed(path, maximum=MAX_EVENT_BYTES, key="analysis_event_sha256")
         if _canonical(existing) != data:
-            raise ValueError("Existing finalized-source event differs from replayed evidence")
+            legacy = dict(existing)
+            legacy.pop("analysis_event_sha256", None)
+            legacy_code_hash = legacy.pop("analysis_code_sha256", None)
+            expected = dict(event)
+            expected.pop("analysis_code_sha256", None)
+            if (
+                not allow_legacy_code_hash
+                or legacy_code_hash != LEGACY_V1_CODE_SHA256
+                or _canonical(legacy) != _canonical(expected)
+            ):
+                raise ValueError("Existing finalized-source event differs from replayed evidence")
         return False
     fd, name = tempfile.mkstemp(prefix=".pending-", suffix=".json", dir=path.parent)
     temporary = Path(name)
@@ -552,6 +612,7 @@ def _analysis_bytes(root: Path) -> int:
         total += path.stat().st_size
     for pattern in (
         ".source-analysis-state-v1.json.*.tmp",
+        ".source-analysis-state-v2.json.*.tmp",
         ".source-research-summary.json.*.tmp",
     ):
         for path in root.glob(pattern):
@@ -560,6 +621,7 @@ def _analysis_bytes(root: Path) -> int:
             total += path.stat().st_size
     for path in (
         root / "source-analysis-state-v1.json",
+        root / "source-analysis-state-v2.json",
         root / "source-research-summary.json",
     ):
         if path.exists():
@@ -571,9 +633,8 @@ def _analysis_bytes(root: Path) -> int:
 
 def _make_summary(
     state: dict[str, Any],
-    catalogs: list[dict[str, Any]],
+    catalog_scan: _CatalogScan,
     *,
-    empty_finalized_segment_count: int,
     batch_count: int,
     batch_bytes: int,
     campaign: dict[str, Any],
@@ -581,15 +642,14 @@ def _make_summary(
     code_hash: str,
 ) -> dict[str, Any]:
     processed = state["processed_segment_count"]
-    pending = catalogs[processed:]
     identity = campaign["identity"]
     window = state["cumulative"]["source_receipt_window_ns"]
     now_ns = time.time_ns()
-    if pending:
+    if catalog_scan.pending_segment_count:
         status = "catching_up"
     else:
         status = "current"
-    if pending:
+    if catalog_scan.pending_segment_count:
         readiness = "catching_up_finalized_source"
     elif not processed:
         readiness = "waiting_for_finalized_source"
@@ -617,11 +677,11 @@ def _make_summary(
         "campaign_sha256": campaign_sha256,
         "analysis_code_sha256": code_hash,
         "active_segment_read": False,
-        "catalog_segment_count": len(catalogs),
-        "empty_finalized_segment_count": empty_finalized_segment_count,
+        "catalog_segment_count": catalog_scan.segment_count,
+        "empty_finalized_segment_count": catalog_scan.empty_segment_count,
         "processed_segment_count": processed,
-        "pending_segment_count": len(pending),
-        "pending_source_bytes": sum(int(item["bytes"]) for item in pending),
+        "pending_segment_count": catalog_scan.pending_segment_count,
+        "pending_source_bytes": catalog_scan.pending_source_bytes,
         "processed_source_bytes": state["processed_source_bytes"],
         "last_processed_ordinal": state["last_ordinal"],
         "last_processed_segment_file": state["last_segment_file"],
@@ -681,22 +741,18 @@ def update_finalized_source_analysis(
             expected_campaign_id=expected_campaign_id,
             expected_source_root=expected_source_root,
         )
-        all_catalogs = _read_catalogs(raw_root)
-        empty_finalized_segment_count = sum(1 for item in all_catalogs if item["count"] == 0)
-        # Empty finalized headers have no source records and may share the next
-        # ordinal's filename prefix with a later nonempty segment. They are
-        # validated but excluded from the replay cursor so late empty catalogs
-        # cannot reorder an already processed record prefix.
-        catalogs = [item for item in all_catalogs if item["count"] > 0]
         code = _code_identity()
         code_hash = digest(code)
-        event_dir = _event_directory(root)
-        state_path = root / "source-analysis-state-v1.json"
+        legacy_state_path = root / "source-analysis-state-v1.json"
+        state_path = root / "source-analysis-state-v2.json"
         summary_path = root / "source-research-summary.json"
+        if legacy_state_path.is_symlink() or state_path.is_symlink():
+            raise ValueError("Source-analysis state path is a symlink")
+        migrated = False
         if state_path.exists():
             stored_state = _read_sealed(state_path, maximum=MAX_STATE_BYTES, key="state_sha256")
             if (
-                stored_state.get("schema_version") != 1
+                stored_state.get("schema_version") != STATE_SCHEMA_VERSION
                 or stored_state.get("analysis_version") != VERSION
                 or stored_state.get("campaign_sha256") != campaign_sha256
                 or stored_state.get("campaign_id") != campaign["campaign_id"]
@@ -706,20 +762,47 @@ def update_finalized_source_analysis(
                 raise ValueError("Source-analysis state is pinned to different campaign or code")
             state = dict(stored_state)
             state.pop("state_sha256", None)
-            processed = state["processed_segment_count"]
-            if not isinstance(processed, int) or not 0 <= processed <= len(catalogs):
-                raise ValueError("Source-analysis processed prefix is inconsistent")
-            if state["prefix_catalog_sha256"] != _prefix_hash(catalogs, processed):
-                raise ValueError(
-                    "Finalized Reality catalog prefix changed behind analysis progress"
+        elif legacy_state_path.exists():
+            stored_state = _read_sealed(
+                legacy_state_path, maximum=MAX_STATE_BYTES, key="state_sha256"
+            )
+            legacy_files = stored_state.get("analysis_code_files")
+            legacy_code_hash = stored_state.get("analysis_code_sha256")
+            if (
+                stored_state.get("schema_version") != 1
+                or stored_state.get("analysis_version") != VERSION
+                or stored_state.get("campaign_sha256") != campaign_sha256
+                or stored_state.get("campaign_id") != campaign["campaign_id"]
+                or legacy_code_hash != LEGACY_V1_CODE_SHA256
+                or not isinstance(legacy_files, dict)
+                or digest(legacy_files) != legacy_code_hash
+                or any(
+                    not isinstance(name, str)
+                    or not isinstance(value, str)
+                    or _SHA256.fullmatch(value) is None
+                    for name, value in legacy_files.items()
                 )
-            expected_last = catalogs[processed - 1]["last"] if processed else 0
-            if state["last_ordinal"] != expected_last:
-                raise ValueError("Source-analysis ordinal cursor differs from catalog prefix")
-            context = Context.restore(state["context"])
-            if context.engine.last_ordinal != state["last_ordinal"]:
-                raise ValueError("Restored source-analysis replay ordinal differs from cursor")
-            cumulative = state["cumulative"]
+            ):
+                raise ValueError("Legacy source-analysis state is not a supported checkpoint")
+            state = dict(stored_state)
+            prior_state_sha256 = state.pop("state_sha256")
+            processed = state.get("processed_segment_count")
+            if not isinstance(processed, int) or isinstance(processed, bool) or processed < 0:
+                raise ValueError("Legacy source-analysis processed prefix is inconsistent")
+            state.update(
+                schema_version=STATE_SCHEMA_VERSION,
+                analysis_code_sha256=code_hash,
+                analysis_code_files=code,
+                migration={
+                    "from_state_schema_version": 1,
+                    "from_state_sha256": prior_state_sha256,
+                    "from_analysis_code_sha256": legacy_code_hash,
+                    "from_processed_segment_count": processed,
+                    "to_state_schema_version": STATE_SCHEMA_VERSION,
+                    "to_analysis_code_sha256": code_hash,
+                },
+            )
+            migrated = True
         else:
             cumulative = _new_cumulative()
             identity = campaign["identity"]
@@ -729,7 +812,7 @@ def update_finalized_source_analysis(
             }
             cumulative["quantity_requested"] = str(identity["quantity"])
             state = {
-                "schema_version": 1,
+                "schema_version": STATE_SCHEMA_VERSION,
                 "analysis_version": VERSION,
                 "campaign_sha256": campaign_sha256,
                 "campaign_id": campaign["campaign_id"],
@@ -739,12 +822,38 @@ def update_finalized_source_analysis(
                 "last_ordinal": 0,
                 "last_segment_file": None,
                 "processed_source_bytes": 0,
-                "prefix_catalog_sha256": _prefix_hash([], 0),
+                "prefix_catalog_sha256": "0" * 64,
                 "last_event_sha256": None,
                 "context": Context().snapshot(),
                 "cumulative": cumulative,
             }
-            context = Context()
+
+        processed = state["processed_segment_count"]
+        if not isinstance(processed, int) or isinstance(processed, bool) or processed < 0:
+            raise ValueError("Source-analysis processed prefix is inconsistent")
+        # Empty finalized headers may share the next ordinal's filename prefix
+        # with a later nonempty segment. They are validated but excluded from
+        # the replay cursor so late empty catalogs cannot reorder the prefix.
+        catalog_scan = _read_catalogs(
+            raw_root,
+            processed_count=processed,
+            max_segments=max_segments,
+            max_source_bytes=max_source_bytes,
+        )
+        if processed > catalog_scan.segment_count:
+            raise ValueError("Source-analysis processed prefix is inconsistent")
+        if state["prefix_catalog_sha256"] != catalog_scan.processed_prefix_sha256:
+            raise ValueError("Finalized Reality catalog prefix changed behind analysis progress")
+        if state["last_ordinal"] != catalog_scan.processed_last_ordinal:
+            raise ValueError("Source-analysis ordinal cursor differs from catalog prefix")
+        context = Context.restore(state["context"])
+        if context.engine.last_ordinal != state["last_ordinal"]:
+            raise ValueError("Restored source-analysis replay ordinal differs from cursor")
+        cumulative = state["cumulative"]
+
+        event_dir = _event_directory(root)
+        if migrated:
+            _atomic_json(state_path, _sealed(state, "state_sha256"), maximum=MAX_STATE_BYTES)
 
         initial_bytes = _analysis_bytes(root)
         if initial_bytes > MAX_EVENTS_BYTES:
@@ -753,10 +862,8 @@ def update_finalized_source_analysis(
         batch_count = batch_bytes = 0
         prior_catalog_prefix = state["prefix_catalog_sha256"]
         started_processed = state["processed_segment_count"]
-        for index in range(started_processed, len(catalogs)):
-            if batch_count >= max_segments:
-                break
-            info = catalogs[index]
+        for offset_in_batch, info in enumerate(catalog_scan.selected):
+            index = started_processed + offset_in_batch
             segment_bytes = int(info["bytes"])
             if segment_bytes > MAX_SEGMENT_BYTES:
                 raise ValueError("A finalized Reality segment exceeds the per-segment bound")
@@ -848,7 +955,15 @@ def update_finalized_source_analysis(
             event_data_size = len(_canonical(_sealed(event, "analysis_event_sha256")))
             if not event_path.exists() and initial_bytes + event_data_size > MAX_EVENTS_BYTES:
                 raise ValueError("Finalized-source analysis event store would exceed its bound")
-            event_created = _write_event(event_path, event)
+            migration = state.get("migration")
+            allow_legacy_event = (
+                isinstance(migration, dict)
+                and state["processed_segment_count"]
+                == migration.get("from_processed_segment_count")
+            )
+            event_created = _write_event(
+                event_path, event, allow_legacy_code_hash=allow_legacy_event
+            )
 
             prior_event = state["last_event_sha256"]
             prior_event = prior_event or ("0" * 64)
@@ -879,10 +994,9 @@ def update_finalized_source_analysis(
             _atomic_json(state_path, _sealed(state, "state_sha256"), maximum=MAX_STATE_BYTES)
         summary = _make_summary(
             state,
-            catalogs,
+            catalog_scan,
             batch_count=batch_count,
             batch_bytes=batch_bytes,
-            empty_finalized_segment_count=empty_finalized_segment_count,
             campaign=campaign,
             campaign_sha256=campaign_sha256,
             code_hash=code_hash,

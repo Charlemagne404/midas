@@ -1,11 +1,11 @@
 # MIDAS maintainer handoff
 
-**Verified snapshot:** 2026-11-05, Europe/Stockholm. **Source base before this
-maintenance pass:** `origin/main` at
-`c00bd128605c85b5c34220efbee54f0993e9b560`. The work was prepared on
-`codex/midas-maintenance-20261105`; source integration and deployment are
-separate states. Recheck current refs and the host before acting on these dated
-observations.
+**Verified snapshot:** 2026-11-05 15:32, Europe/Stockholm. **Source base before
+this operational resilience pass:** `origin/main` at
+`3e700b9b2bba7a9da1564e3ab8b2e18be2eba6ea`, whose five hosted CI jobs passed.
+This work is on `codex/midas-operational-resilience-20261105`; source
+integration and deployment are separate states. Recheck current refs and the
+host before acting on these dated observations.
 
 ## What MIDAS contains
 
@@ -34,9 +34,8 @@ The detailed subsystem map is in [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## Source history and repository state
 
-- `origin/main` was refreshed to `c00bd128`. The successful hosted run on this
-  SHA was GitHub Actions run `42017520116` (four jobs: Python, web, browser,
-  and PostgreSQL).
+- `origin/main` is `3e700b9b2bba7a9da1564e3ab8b2e18be2eba6ea`; its five hosted CI
+  jobs passed before this operational resilience work began.
 - The maintenance implementation at `2bb3ffa` passed GitHub Actions run
   `42030063692` across all five jobs: Python, web, browser, PostgreSQL, and the
   required systemd unit parser. The isolated backend suite reported 2,185
@@ -57,8 +56,9 @@ The detailed subsystem map is in [ARCHITECTURE.md](ARCHITECTURE.md).
   2026-11-05, 26 otherwise unreachable commit objects were found and pinned by
   24 local refs under `refs/preservation/orphaned-20261105/`. Those refs are
   local to this repository and are not an independent backup.
-- The refreshed inventory contained 62 local branches, 53 `origin` heads, and
-  37 worktrees. Nine worktrees had uncommitted source or evidence changes.
+- The refreshed inventory now contains 63 local branches, 54 `origin` heads,
+  and 37 worktrees (one maintenance branch added; no new worktree). Nine
+  worktrees had uncommitted source or evidence changes.
   No stale worktree entries were reported by `git worktree prune --dry-run`;
   neither worktrees nor branches were removed. See
   [UNIFICATION_BRANCH_INVENTORY.md](UNIFICATION_BRANCH_INVENTORY.md) for
@@ -76,17 +76,18 @@ are not interchangeable with the maintenance worktree.
 
 | Unit/process | Active source or working directory | Data and observation |
 |---|---|---|
-| `midas-api.service`, PID 1218662 | API release `a152999`; working directory `/home/charlie/midas` | Open `/home/charlie/midas/data/midas.db`, WAL mode, 16,362,156,032 bytes. The Arena scheduler also uses this checkout and its `data/arena`. |
-| `midas-reality-api.service`, PID 610950 | Versioned Reality interface release; working directory `/home/charlie/midas-reality` | Open `data/research/reality/interface/preview.db`, WAL mode, 12,456,755,200 bytes. |
-| `midas-reality.service`, PID 2366325 | `/home/charlie/midas-reality` | Owns `data/recordings/reality`; the writer lock and an `.open` segment were active. Recording data was about 23 GiB across 132,311 files. |
+| `midas-api.service`, PID 1218662 | API release `a152999`; working directory `/home/charlie/midas` | Open `/home/charlie/midas/data/midas.db`, WAL mode, 16,422,002,688 bytes plus a 4,482,592-byte WAL. The Arena scheduler also uses this checkout and its `data/arena`. |
+| `midas-reality-api.service`, PID 610950 | Versioned Reality interface release; working directory `/home/charlie/midas-reality` | Open `data/research/reality/interface/preview.db`, WAL mode, 12,513,951,744 bytes plus a 4,317,792-byte WAL. |
+| `midas-reality.service`, PID 2366325 | `/home/charlie/midas-reality` | Owns `data/recordings/reality`; the writer lock and one `.open` segment were active. There were 58,367 finalized segment/sidecar pairs totaling 19,739,677,482 segment bytes. |
 | Reality and main Vite processes | `/home/charlie/midas-reality/apps/web` and `/home/charlie/midas` | Both source worktrees are in use; leave their dependencies and files in place. |
 | Veritas timers | Versioned observatory release and `/home/charlie/midas-veritas` | Write/read Veritas state under `/home/charlie/midas-veritas/data`. |
 
-The major `data` trees measured about 24.2 GB in `/home/charlie/midas`,
-40.6 GB in `/home/charlie/midas-reality`, 2.0 GB in `/home/charlie/midas-veritas`,
-1.3 GB in the old engineering-mission worktree, and 4.1 GB in a Reality staging
-worktree. These are point-in-time directory sizes, not backup sizes. Other
-research artifacts are distributed across the remaining worktrees.
+The latest measured `data` trees were about 23 GB in `/home/charlie/midas`,
+38 GB in `/home/charlie/midas-reality`, 1.9 GB in `/home/charlie/midas-veritas`,
+17 MB in `/home/charlie/midas-frontier`, 1.3 GB in the old
+engineering-mission worktree, and 4.1 GB in a Reality staging worktree. These
+point-in-time sizes total about 68.3 GB and exclude research data not included
+in that scan; they are not a complete backup inventory.
 
 Configuration belongs in `.env.example` for documented local settings,
 deployment JSON for service-specific configuration, and systemd templates
@@ -105,31 +106,44 @@ status. A clean Git status says nothing about ignored datasets. No complete
 machine-readable inventory or independent copy of all these research roots
 exists yet.
 
-## Validation status and live blockers
+## Current operational assessment and blockers
 
-The maintenance implementation passed all five hosted jobs in run
-`42030063692`; the backend results were **2,185 passed, 2 skipped, 0 failed**.
-The dedicated systemd job required `systemd-analyze` and parsed the generated
-user service and timer units, so that check did not silently skip. The focused
-backup, recording, Veritas source-analysis, and systemd parser tests passed
-locally: **23 passed**. Ruff checks and formatting passed for the changed
-Python files. No full backend, browser, or PostgreSQL suite was run locally.
+At the 15:32 host sample, RAM was 15 GiB, 7.2 GiB available, and swap was fully
+used (4 GiB, 16 KiB free). Memory pressure averaged 0.00% over the last 10
+seconds but 1.35%/1.11% for `some`/`full` over five minutes; I/O pressure was
+0.08%/0.07% over 10 seconds. Four later one-second `vmstat` samples showed no
+swap-in or swap-out, CPU idle of 69–79%, and I/O wait of 0–2%. `/` was 82% full
+with 82 GiB free; `/mnt/continental-cloud` had 592 GiB free on a separate
+internal SATA disk. This is a same-host recovery copy, not off-host protection.
+An unrelated Echo Archives headless browser process (PID 2574398) was using
+about 1.43 GiB RSS and 63% CPU after running for over a day; it was left alone.
 
-The Veritas source-analysis timer is enabled and is failing repeatedly. The
-2026-11-05 journal contains **27 OOM kills since midnight**; the latest run
-used 7.551 CPU seconds and ended after 12 seconds with exit status 9 under
-`MemoryMax=256 MiB`. The Reality raw root had 58,181 finalized segment
-sidecars (23,465,741 bytes total); the last durable analysis state, last
-updated 2026-11-04 11:41, records 53,340 processed segments and about 370 KiB
-of state. The catalog reader retains path objects and all decoded catalog
-dictionaries while it scans the complete source root. At this catalog size
-that is a plausible cause of the cap failure, but the worker's peak RSS was
-not captured, so it is not proven. A streaming refactor passed fixture tests
-but was removed: the existing recovery state includes this source file's
-digest, so deploying that refactor unchanged would reject the durable state.
-The fix needs a reviewed, versioned state-identity migration and
-bounded-memory validation. Keep the 256 MiB service cap; do not launch another
-live run or change the timer/limits without a separate resource review.
+The Veritas source-analysis timer remains enabled and failing. The kernel
+recorded **31 cgroup OOM kills on 2026-11-05** under its 256 MiB service limit.
+Each run reaches roughly 260 MiB anonymous RSS plus about 19–51 MiB file RSS
+before the kernel kills it. The catalog contains 58,367 finalized sidecars;
+the last durable state still records 53,340 processed segments, leaving about
+5,027 pending. Root cause is confirmed: `_read_catalogs` builds a path object
+and decoded metadata dictionary for every catalog before the batch-size limit
+is applied. The source-only fix in this branch scans one JSON catalog at a
+time, keeps only names plus the next bounded batch, and migrates the known v1
+checkpoint into a v2 state file while retaining the v1 file and event ledger.
+It has not been deployed or run on live research data. Keep the memory cap and
+the live state untouched until review and an approved deployment.
+
+`midas-reality.service` is active now but has 19 historical restarts; 18
+`systemd-oomd` kills from Oct 22–Nov 4 were followed by automatic restarts.
+Its current cgroup was using about 786 MiB, with a 1.21 GiB peak and a 1.25 GiB
+limit. The active `midas-reality-capacity.timer` also fires every 30 minutes,
+but the capacity service hit its 60-second timeout on four consecutive runs
+from 13:54 through 15:24 on Nov 5. Those failures leave the capacity report
+stale. The monitor traverses the full 58k finalized catalog and needs isolated
+profiling; no timer, unit, or resource ceiling was changed. The old
+`midas-veritas-gap-detail-v2.timer` is inactive and its service is failed after
+134 historical oomd kills; this is not a currently scheduled loop. The 98
+failed user services observed were historical one-shot or validation units,
+not 98 active restart loops. The Arena scheduler's empty schedule result is
+intentional idle behavior.
 
 Some Veritas Mission 2 readers and API lineage checks deliberately pin the
 Reality campaign digest and absolute recording/campaign paths under
@@ -139,13 +153,15 @@ alone. Relocating those inputs requires a reviewed evidence migration and
 matching tests; do not replace the pins with generic defaults casually.
 
 The main API database, Reality interface database, Reality recordings, and
-additional research stores have no verified independent backup. A separate
-physical disk is mounted at `/mnt/continental-cloud`, but the resource gate
-denied even a no-op heavy admission probe: only 24 KiB of swap was free and a
-swap-in page occurred during sampling. Capacity passed; swap reserve and swap
-activity failed. No live backup or service operation was attempted. The
-[backup and recovery guide](BACKUP_AND_RECOVERY.md) records the procedures,
-tested disposable formats, and remaining protection gaps.
+additional research stores have no verified independent backup. The backup
+and restore tools support consistent SQLite snapshots and finalized recording
+stores, and their disposable tests passed in the previous maintenance run. No
+live snapshot has been taken: the heavy resource gate previously denied work
+for the full swap and observed swap activity. `restic` is installed, but no
+MIDAS repository, off-host endpoint, credential, schedule, retention policy, or
+alert is configured. The `/mnt/continental-cloud` partition is an extra local
+disk only. See [BACKUP_AND_RECOVERY.md](BACKUP_AND_RECOVERY.md) for exact
+commands, known data sizes, and the off-host prerequisites.
 
 ## Resume development safely
 

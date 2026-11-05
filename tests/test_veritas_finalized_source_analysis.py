@@ -14,6 +14,19 @@ from midas.veritas.raw_funnel import analyze_raw_opportunity_funnel
 START = 1_792_000_000_000_000_000
 CONDITION = "0x" + "1" * 64
 PRODUCER_HASH = "a" * 64
+LEGACY_CODE_FILES = {
+    "economics.py": "0fc69b88d160acd3123bbff38ed6480d9ae9853b48429b3f739200d6cba5eda8",
+    "finalized_source_analysis.py": "e6304b6547dc5d285baab4aae3940b0fe7a6828712d995bb677aad582a44f016",
+    "reality/execution_research.py": "99aaf3d1f1d00a3440392f373db8b661c8420ab1bb4713fc9e4fe2340831e5c1",
+    "reality/reconstruction.py": "ed7ca007f8fdb62c00aa25ebf4692e0c54eb0a9c0b06c9712e092a87c28c30cb",
+    "reality/research_measurements.py": "35200c42beef6c169b7244d56d93b30229c1394217faf4dd072853814f05b084",
+    "reality/research_schema.py": "fa31024164ae1e20b579403e79417c1eaa8fc2670d154153aae247546d8f9f33",
+    "reality/shadow_campaign.py": "fbca040df77c90182fa7b94375590f89e95289b21e31a8990da390d1241c9aed",
+    "reality/shadow_source.py": "6e0cb3811a8e32a81e9003a79de0ab778eccc28ff9e725f2163d58decf31b327",
+    "reality/shadow_worker.py": "0b745947399dc33898bdba41df4f0b183ba87477f5dcddecb7ae2d26f29e3c6d",
+    "reality/storage.py": "551966d10c2494dd6fcb50988bf32c26558ff6a02d6bd68617f8593b1f5ec3cc",
+    "scripts/veritas_source_analysis.py": "783b4c15b2f360c134319502d2037b0bfb110a3a2b7154dbce8e2a77e2454f9d",
+}
 
 
 def test_source_analysis_code_identity_remains_on_pinned_depth_module():
@@ -21,6 +34,7 @@ def test_source_analysis_code_identity_remains_on_pinned_depth_module():
 
     assert "economics.py" in code
     assert "economic_feasibility_v3.py" not in code
+    assert digest(LEGACY_CODE_FILES) == analysis.LEGACY_V1_CODE_SHA256
 
 
 def _market() -> dict[str, Any]:
@@ -132,6 +146,27 @@ def _run(
     )
 
 
+def _make_legacy_checkpoint(
+    output: Path, campaign_dir: Path, raw: Path, campaign_hash: str
+) -> bytes:
+    original_identity = analysis._code_identity
+    analysis._code_identity = lambda: dict(LEGACY_CODE_FILES)
+    try:
+        _run(output, campaign_dir, raw, campaign_hash, max_segments=1)
+    finally:
+        analysis._code_identity = original_identity
+
+    current_path = output / "source-analysis-state-v2.json"
+    legacy_path = output / "source-analysis-state-v1.json"
+    state = json.loads(current_path.read_text())
+    state.pop("state_sha256")
+    state["schema_version"] = 1
+    state.pop("migration", None)
+    analysis._atomic_json(legacy_path, analysis._sealed(state, "state_sha256"), maximum=analysis.MAX_STATE_BYTES)
+    current_path.unlink()
+    return legacy_path.read_bytes()
+
+
 def test_finalized_source_analysis_is_bounded_resumable_and_matches_one_pass(tmp_path):
     campaign_dir, raw, campaign_hash = _fixture(tmp_path)
     output = tmp_path / "observatory"
@@ -218,7 +253,7 @@ def test_orphan_event_from_crash_is_replayed_once_and_then_committed(tmp_path, m
 
     def fail_state_once(path: Path, value: dict[str, Any], *, maximum: int) -> int:
         nonlocal failed
-        if path.name == "source-analysis-state-v1.json" and not failed:
+        if path.name == "source-analysis-state-v2.json" and not failed:
             failed = True
             raise OSError("simulated state commit interruption")
         return original_atomic_json(path, value, maximum=maximum)
@@ -233,3 +268,88 @@ def test_orphan_event_from_crash_is_replayed_once_and_then_committed(tmp_path, m
     summary = _run(output, campaign_dir, raw, campaign_hash, max_segments=1)
     assert summary["processed_segment_count"] == 1
     assert len(list(event_dir.glob("*.json"))) == 1
+
+
+def test_v1_checkpoint_migrates_without_resetting_cursor_or_provenance(tmp_path):
+    campaign_dir, raw, campaign_hash = _fixture(tmp_path)
+    output = tmp_path / "observatory"
+    original_legacy_bytes = _make_legacy_checkpoint(output, campaign_dir, raw, campaign_hash)
+
+    summary = _run(output, campaign_dir, raw, campaign_hash, max_segments=1)
+
+    legacy_path = output / "source-analysis-state-v1.json"
+    migrated_path = output / "source-analysis-state-v2.json"
+    migrated = json.loads(migrated_path.read_text())
+    assert legacy_path.read_bytes() == original_legacy_bytes
+    assert migrated["schema_version"] == 2
+    assert migrated["processed_segment_count"] == 2
+    assert migrated["migration"]["from_state_schema_version"] == 1
+    assert migrated["migration"]["from_processed_segment_count"] == 1
+    assert migrated["migration"]["from_analysis_code_sha256"] == analysis.LEGACY_V1_CODE_SHA256
+    assert migrated["analysis_code_sha256"] == digest(analysis._code_identity())
+    assert summary["processed_segment_count"] == 2
+    assert len(list((output / "source-analysis-events" / "v1").glob("*.json"))) == 2
+
+
+def test_v1_migration_interruption_restarts_from_preserved_checkpoint(tmp_path, monkeypatch):
+    campaign_dir, raw, campaign_hash = _fixture(tmp_path)
+    output = tmp_path / "observatory"
+    original_legacy_bytes = _make_legacy_checkpoint(output, campaign_dir, raw, campaign_hash)
+    original_write_event = analysis._write_event
+    failed = False
+
+    def interrupt_before_event(path: Path, event: dict[str, Any], *, allow_legacy_code_hash: bool = False) -> bool:
+        nonlocal failed
+        if not failed:
+            failed = True
+            raise OSError("simulated interruption after migration")
+        return original_write_event(path, event, allow_legacy_code_hash=allow_legacy_code_hash)
+
+    monkeypatch.setattr(analysis, "_write_event", interrupt_before_event)
+    with pytest.raises(OSError, match="after migration"):
+        _run(output, campaign_dir, raw, campaign_hash, max_segments=1)
+
+    legacy_path = output / "source-analysis-state-v1.json"
+    migrated_path = output / "source-analysis-state-v2.json"
+    interrupted = json.loads(migrated_path.read_text())
+    assert legacy_path.read_bytes() == original_legacy_bytes
+    assert interrupted["processed_segment_count"] == 1
+    assert len(list((output / "source-analysis-events" / "v1").glob("*.json"))) == 1
+
+    summary = _run(output, campaign_dir, raw, campaign_hash, max_segments=1)
+    assert summary["processed_segment_count"] == 2
+    assert len(list((output / "source-analysis-events" / "v1").glob("*.json"))) == 2
+
+
+def test_legacy_orphan_event_is_reconciled_once_after_migration(tmp_path, monkeypatch):
+    campaign_dir, raw, campaign_hash = _fixture(tmp_path)
+    output = tmp_path / "observatory"
+    original_legacy_bytes = _make_legacy_checkpoint(output, campaign_dir, raw, campaign_hash)
+    original_identity = analysis._code_identity
+    original_atomic_json = analysis._atomic_json
+
+    def use_legacy_identity() -> dict[str, str]:
+        return dict(LEGACY_CODE_FILES)
+
+    def fail_second_state_commit(path: Path, value: dict[str, Any], *, maximum: int) -> int:
+        if path.name == "source-analysis-state-v2.json" and value.get("processed_segment_count") == 2:
+            raise OSError("simulated interruption after event write")
+        return original_atomic_json(path, value, maximum=maximum)
+
+    monkeypatch.setattr(analysis, "_code_identity", use_legacy_identity)
+    monkeypatch.setattr(analysis, "_atomic_json", fail_second_state_commit)
+    with pytest.raises(OSError, match="after event write"):
+        _run(output, campaign_dir, raw, campaign_hash, max_segments=1)
+
+    event_dir = output / "source-analysis-events" / "v1"
+    assert len(list(event_dir.glob("*.json"))) == 2
+    assert (output / "source-analysis-state-v1.json").read_bytes() == original_legacy_bytes
+    # The legacy process could only have persisted v1; drop its disposable v2
+    # migration file to model an orphan event left before the new code starts.
+    (output / "source-analysis-state-v2.json").unlink()
+
+    monkeypatch.setattr(analysis, "_code_identity", original_identity)
+    monkeypatch.setattr(analysis, "_atomic_json", original_atomic_json)
+    summary = _run(output, campaign_dir, raw, campaign_hash, max_segments=1)
+    assert summary["processed_segment_count"] == 2
+    assert len(list(event_dir.glob("*.json"))) == 2

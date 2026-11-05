@@ -19,6 +19,14 @@ jobs:
           path: validation-capacity-base
           fetch-depth: 1
           persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository }}
+          # Fixed pre-fix source for an isolated memory comparison in backend CI.
+          ref: 3e700b9b2bba7a9da1564e3ab8b2e18be2eba6ea
+          path: veritas-memory-baseline
+          fetch-depth: 1
+          persist-credentials: false
       - name: Run bounded, isolated backend validation
         run: bash .github/ci-test-support/run-backend-container.sh
       - uses: actions/upload-artifact@v4

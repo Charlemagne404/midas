@@ -13,6 +13,9 @@ test "$(git -c safe.directory=/source -C /source rev-parse 'HEAD^{tree}')" = "$M
 test "$(git -c safe.directory=/capacity-base -C /capacity-base rev-parse HEAD)" = \
   c83320000a085bf30490b4b76b425527fe8574f7 \
   || fail "pinned archive base mismatch"
+test "$(git -c safe.directory=/veritas-memory-baseline -C /veritas-memory-baseline rev-parse HEAD)" = \
+  "$MIDAS_CI_VERITAS_BASELINE_SHA" \
+  || fail "pinned Veritas memory baseline mismatch"
 
 cgroup_relative="$(awk -F: '$1 == "0" && $2 == "" { print $3; exit }' /proc/self/cgroup)"
 test -n "$cgroup_relative" || fail "test container has no cgroup v2 membership"
@@ -70,6 +73,8 @@ for point in ("/tmp", "/workspace", "/home/midas", "/home/charlie", "/run", "/va
         raise SystemExit(f"{point} is not a disposable tmpfs mount")
 if "/test-data" not in mounts or not os.access("/test-data", os.W_OK):
     raise SystemExit("dedicated test-data mount is missing or read-only")
+if "/veritas-memory-baseline" not in mounts or "ro" not in mounts["/veritas-memory-baseline"][1]:
+    raise SystemExit("pinned Veritas memory baseline is missing or writable")
 if "ro" not in mounts["/home/charlie"][1]:
     raise SystemExit("/home/charlie must be a read-only shadow of host paths")
 if os.access("/sys/fs/cgroup", os.W_OK):
@@ -199,6 +204,11 @@ printf '\n=== Native worker and process lifecycle checks ===\n'
 /opt/venv/bin/pytest -q \
   tests/laboratory/test_campaigns.py::test_campaign_parallel_results_deterministic_and_compact_reconstruction \
   tests/laboratory/test_campaigns.py::test_interrupt_checkpoint_cancel_resume_and_reopen
+
+printf '\n=== Isolated Veritas catalog memory comparison ===\n'
+/opt/venv/bin/python /control/measure-veritas-catalog-memory.py \
+  --current-root /workspace \
+  --baseline-root /veritas-memory-baseline
 
 printf '\n=== Offline synthetic replay ===\n'
 /opt/venv/bin/python scripts/replay.py
