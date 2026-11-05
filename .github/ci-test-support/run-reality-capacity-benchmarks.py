@@ -86,12 +86,14 @@ def run_one(
         "--main-root",
         "/reality-v6-main",
         "--data-root",
-        f"/reality-test-data/reality-{count}",
+        "/reality-test-data",
         "--catalog-count",
         str(count),
     ]
     created = False
     actual: dict[str, Any] = {}
+    if not (data / "status.json").is_file():
+        raise SystemExit(f"Reality benchmark fixture is incomplete: {data}")
     try:
         subprocess.run(create, capture_output=True, text=True, check=True)
         created = True
