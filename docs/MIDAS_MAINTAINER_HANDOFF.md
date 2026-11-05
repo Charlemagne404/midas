@@ -1,16 +1,19 @@
 # MIDAS maintainer handoff
 
-**Verified operational snapshot:** 2026-11-05 19:57, Europe/Stockholm.
-Memory, swap, pressure, service state, and active database sizes were refreshed
-between 19:49 and 19:57. The 19:56 Reality capacity timer run naturally timed
-out. The Reality recording count/bytes and wider ignored research inventory
-were not rescanned because swap is full and research roots are large. The
+**Verified operational snapshot:** 2026-11-05 20:54, Europe/Stockholm.
+Memory, swap activity, pressure, service results, and active database sizes
+were refreshed at 20:54. The latest Reality capacity attempt timed out at
+20:27 and Veritas source analysis was OOM-killed at 20:40. The Reality
+recording count/bytes and wider ignored research inventory were not rescanned
+because swap remains full and research roots are large. The
 source baseline for this release readiness pass is
 `7ab2d0d98d71e32c7ce7a62275afdc8f45402f04`. Candidate source commit
 `7d06ec163b02ed916a881b913c9263c19aed7d80` passed hosted run `42094481010`
-across all five jobs. Verify the exact current ref before acting; source
-integration and deployment remain separate states. Recheck current refs and
-host state before acting on these dated observations.
+across all five jobs and was fast-forwarded to `origin/main` with the
+documentation handoff. Verify the exact current ref and its latest Actions
+result before acting; source integration and deployment remain separate
+states. Recheck current refs and host state before acting on these dated
+observations.
 
 ## What MIDAS contains
 
@@ -83,8 +86,8 @@ The detailed subsystem map is in [ARCHITECTURE.md](ARCHITECTURE.md).
   preserves the original development history, including its 1,196 commits
   that are not ancestors of the squash. The corresponding remote branch is
   retained.
-- The local `/home/charlie/midas` checkout is on `main` at
-  `b723bfda47dc5fae3103725a1dbe341f35487754`, 18 commits behind the starting
+- At this operational snapshot, the local `/home/charlie/midas` checkout was
+  on `main` at `b723bfda47dc5fae3103725a1dbe341f35487754`, 27 commits behind
   `origin/main`. It is a live service working directory. Do not fast-forward
   or edit it during ordinary development; compare it with `origin/main` only
   from a separate task checkout.
@@ -93,11 +96,13 @@ The detailed subsystem map is in [ARCHITECTURE.md](ARCHITECTURE.md).
   2026-11-05, 26 otherwise unreachable commit objects were found and pinned by
   24 local refs under `refs/preservation/orphaned-20261105/`. Those refs are
   local to this repository and are not an independent backup.
-- The latest reference count is 64 local branches, 56 fetched `origin` heads,
+- The last ref inventory counted 64 local branches, 56 fetched `origin` heads,
   8 local-only branches, and 37 worktrees. The release-readiness work was done
   on `codex/midas-release-readiness-20261105`, originally based on `origin/main`
   at `7ab2d0d`; this task reused `/home/charlie/midas-maintenance` and added no
-  worktree. The last full
+  worktree. The active runtime checkout's local `main` is at
+  `b723bfda47dc5fae3103725a1dbe341f35487754`, 27 commits behind the current
+  `origin/main`; it remains untouched. The last full
   status audit found nine dirty worktrees. This pass did not repeat an
   all-worktree status scan while swap was full and services were active. No
   worktrees, branches, or research data were removed. See
@@ -116,11 +121,11 @@ are not interchangeable with the maintenance worktree.
 
 | Unit/process | Active source or working directory | Data and observation |
 |---|---|---|
-| `midas-api.service`, PID 1218662 | API release `a152999`; working directory `/home/charlie/midas` | Open `/home/charlie/midas/data/midas.db`, WAL mode, 16,559,865,856 bytes plus a 4,482,592-byte WAL at 19:49. The Arena scheduler also uses this checkout and its `data/arena`. |
-| `midas-web.service`, PID 1095134 | Vite release `767f330`; working directory under `/home/charlie/.local/share/midas-api/releases` | Running development UI process; left untouched. |
-| `midas-reality-api.service`, PID 610950 | Reality interface release `interface-capacity-v3-20261021`; working directory `/home/charlie/midas-reality` | Open `data/research/reality/interface/preview.db`, WAL mode, 12,645,478,400 bytes plus a 4,317,792-byte WAL at 19:49. |
-| `midas-reality-web.service`, PID 2890819 | Vite under `/home/charlie/midas-reality/apps/web` | Running Reality development UI; left untouched. |
-| `midas-reality.service`, PID 2366325 | `/home/charlie/midas-reality` | Owns `data/recordings/reality`; recorder process is active. The last measured inventory found 58,367 finalized segment/sidecar pairs totaling 19,739,677,482 segment bytes; it was not rescanned during this pass. |
+| `midas-api.service`, PID 1218662 | API release `a152999`; working directory `/home/charlie/midas` | Active, 309 MiB `MemoryCurrent`, 1,537 MiB `MemoryPeak`; 9 historical restarts. Open `data/midas.db`, WAL mode, 16,590,041,088 bytes plus a 4,482,592-byte WAL at 20:54. The Arena scheduler also uses this checkout and its `data/arena`. |
+| `midas-web.service`, PID 1095134 | Vite release `767f330`; working directory under `/home/charlie/.local/share/midas-api/releases` | Active, 55 MiB `MemoryCurrent`, 0 restarts; left untouched. |
+| `midas-reality-api.service`, PID 610950 | Reality interface release `interface-capacity-v3-20261021`; working directory `/home/charlie/midas-reality` | Active, 194 MiB `MemoryCurrent`, 0 restarts. Open `data/research/reality/interface/preview.db`, WAL mode, 12,674,199,552 bytes plus a 4,317,792-byte WAL at 20:54. |
+| `midas-reality-web.service`, PID 2890819 | Vite under `/home/charlie/midas-reality/apps/web` | Active, 23 MiB `MemoryCurrent`, 0 restarts; left untouched. |
+| `midas-reality.service`, PID 2366325 | `/home/charlie/midas-reality` | Active recorder, 854 MiB `MemoryCurrent`, 1,152 MiB `MemoryPeak`, 19 historical restarts. The last measured inventory found 58,367 finalized segment/sidecar pairs totaling 19,739,677,482 segment bytes; it was not rescanned during this pass. |
 | Veritas source-analysis timer | Script in `/home/charlie/midas-veritas`, Python environment from `/home/charlie/midas/.venv` | Reads `/home/charlie/midas-veritas/data/veritas-observatory`, with 128-segment and 32-MiB batch bounds. Its latest timer run OOM-killed. |
 | Reality capacity timer | `midas.reality.operations` from `/home/charlie/midas-reality` | Reads the active recording tree and archive policy; its latest timer run timed out. |
 
@@ -150,26 +155,27 @@ exists yet.
 
 ## Current operational assessment and blockers
 
-At 19:49, RAM was 15 GiB with 7.1 GiB available and 621 MiB immediately free.
-All 4 GiB of swap remained occupied, with 236 KiB free. Three `vmstat` samples
+At 20:54, RAM was 15.5 GiB with 7.3 GiB available and 727 MiB immediately free.
+All 4 GiB of swap remained occupied, with 220 KiB free. Three `vmstat` samples
 showed swap-in/out only in the first sample (49/53 pages), followed by no swap
-traffic; CPU idle was 80–86% and I/O wait about 1%. Memory PSI 5-minute
-`some`/`full` was 0.02%/0.01%; I/O PSI was 0.72%/0.55%. `/` was 82% full with
-82 GiB free. `/mnt/continental-cloud` had 592 GiB free on `/dev/sda4`, a
-separate internal disk on the same host. It can hold a local recovery copy but
-cannot protect against host failure.
+traffic; CPU idle was 71–86% and I/O wait about 1%. Memory PSI 5-minute
+`some`/`full` was 0.00%/0.00%; I/O PSI was 0.60%/0.45%. At the earlier 19:49
+disk check `/` was 82% full with 82 GiB free and `/mnt/continental-cloud` had
+592 GiB free on `/dev/sda4`, a separate internal disk on the same host. It can
+hold a local recovery copy but cannot protect against host failure.
 
-The top process sample included the active Reality recorder at about 723 MiB,
-the MIDAS API at about 160 MiB, and an unrelated long-lived headless browser
-process at about 1.49 GiB. Its owning task was not established; it was not
-stopped or modified. Five MIDAS user services were running (API, main web,
-Reality API, Reality web, recorder); these services and their processes were
-left untouched.
+The 19:57 top process sample included the active Reality recorder at about
+723 MiB, the MIDAS API at about 160 MiB, and an unrelated long-lived headless
+browser process at about 1.49 GiB. Its owning task was not established; it was
+not stopped or modified. At 20:54 the user-service cgroups reported about
+854 MiB for the Reality recorder, 309 MiB for the MIDAS API, 194 MiB for the
+Reality API, 55 MiB for the main web process, and 23 MiB for the Reality web
+process. All five services were active and were left untouched.
 
-The latest Veritas source-analysis run failed at 19:40:56 with
-`Result=oom-kill`, exit status 9, 7.393 seconds CPU time, and a 256-MiB
+The latest Veritas source-analysis run failed at 20:40:27 with
+`Result=oom-kill`, exit status 9, 7.213 seconds CPU time, and a 256-MiB
 `MemoryMax`; the unit has `Restart=no`, while its timer remains active. The
-journal contains 64 OOM-kill entries since Nov 4 00:00. The v1 state still
+journal contains 66 OOM-kill entries since Nov 4 00:00. The v1 state still
 records 53,340 processed of 58,367 catalogs (about 5,027 pending), last
 observed in the earlier state check. The campaign and event ledger were not
 modified by this maintenance pass. The confirmed root cause is that the
@@ -181,12 +187,12 @@ mapping, writes v2 state atomically, keeps the original v1 file and event
 ledger, and reconciles an orphan event idempotently. It remains undeployed and
 has not touched live research state.
 
-`midas-reality.service` was active and had 19 historical restarts, including
-18 `systemd-oomd` kills through Nov 4. The active capacity timer is scheduled
-every 30 minutes. Its latest attempt started at 19:56:04 and timed out at
-19:57:04 (exit signal 15, 3.593 CPU seconds, 176.8 MiB peak) under
+`midas-reality.service` was active at 20:54 and had 19 historical restarts,
+including 18 `systemd-oomd` kills through Nov 4. The active capacity timer is scheduled
+every 30 minutes. Its latest attempt started at 20:26:04 and timed out at
+20:27:04 (exit signal 15, 3.475 CPU seconds, 168.5 MiB peak) under
 `MemoryHigh=160 MiB`, `MemoryMax=192 MiB`, no swap, and a 60-second deadline.
-The timer remains active. The service journal contains 81 timeout entries
+The timer remains active. The service journal contains 83 timeout entries
 since Nov 4 00:00. The saved capacity report is still builder v5, measured Nov
 3 at 14:15; it reports archive inventory/size limits and unknown archive
 capacity, and is stale by more than two timer intervals. The loaded v5 path

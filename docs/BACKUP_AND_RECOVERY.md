@@ -2,9 +2,9 @@
 
 This runbook covers active SQLite databases and the Reality recording store.
 The principal data-tree inventory was measured on 2026-11-05 around 15:30
-Europe/Stockholm; the active database file sizes below were refreshed at
-19:49. Recording and ignored-research sizes remain from the earlier inventory.
-The 19:49 resource snapshot still had a full swap device. Recheck mounts,
+Europe/Stockholm; active database file sizes below were refreshed at 20:54.
+Recording and ignored-research sizes remain from the earlier inventory. The
+20:54 resource snapshot still had a full swap device. Recheck mounts,
 service ownership, data sizes, and the resource gate before each operation.
 
 ## Current protection status
@@ -27,8 +27,8 @@ Current measured sources include:
 
 | Source | Current owner and state | Measured size |
 |---|---|---:|
-| `/home/charlie/midas/data/midas.db` | `midas-api.service`, actively written in WAL mode | 16,559,865,856 bytes; WAL 4,482,592 bytes at 19:49 |
-| `/home/charlie/midas-reality/data/research/reality/interface/preview.db` | `midas-reality-api.service`, actively written in WAL mode | 12,645,478,400 bytes; WAL 4,317,792 bytes at 19:49 |
+| `/home/charlie/midas/data/midas.db` | `midas-api.service`, actively written in WAL mode | 16,590,041,088 bytes; WAL 4,482,592 bytes at 20:54 |
+| `/home/charlie/midas-reality/data/research/reality/interface/preview.db` | `midas-reality-api.service`, actively written in WAL mode | 12,674,199,552 bytes; WAL 4,317,792 bytes at 20:54 |
 | `/home/charlie/midas-reality/data/recordings/reality` | `midas-reality.service`; writer lock held and one `.open` segment active | 58,367 finalized segments and sidecars; segment bytes 19,739,677,482 |
 
 Additional ignored research data exists in Reality, Veritas, Arena, and
@@ -145,7 +145,7 @@ their thresholds or bypass them.
 
 The 2026-11-05 heavy admission probe returned `DENY` for
 `swap_reserve_below_profile_floor` and `swap_activity_above_profile_limit`.
-The 19:49 read-only refresh showed all 4 GiB of swap occupied with 236 KiB
+The 20:54 read-only refresh showed all 4 GiB of swap occupied with 220 KiB
 free; the first `vmstat` sample had 49 pages swapped in and 53 out, with none
 in the next two samples. The sample had about 1% I/O wait. Memory PSI was low,
 but I/O PSI remained measurable. `/mnt/continental-cloud` has capacity, but no
