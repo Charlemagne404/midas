@@ -12,8 +12,19 @@ DATASETS = Path(__file__).resolve().parents[2] / "data/datasets"
 
 
 @pytest.fixture(autouse=True)
-def isolated_admission(tmp_path, monkeypatch):
+def isolated_admission(tmp_path, monkeypatch, request):
     from midas.arena import admission
+    from midas.laboratory import campaigns
+
+    proc_root = tmp_path / "host-proc"
+    cgroup_root = tmp_path / "host-cgroup"
+    (proc_root / "self").mkdir(parents=True)
+    group = cgroup_root / "user" / "api"
+    group.mkdir(parents=True)
+    (proc_root / "self/cgroup").write_text("0::/user/api\n")
+    (proc_root / "self/status").write_text("VmRSS: 262144 kB\n")
+    (group / "memory.high").write_text(str(64 * 1024**3))
+    (group / "memory.max").write_text(str(64 * 1024**3))
 
     monkeypatch.setattr(admission, "global_lock_path", lambda: tmp_path / "admission.lock")
     monkeypatch.setattr(
@@ -27,9 +38,20 @@ def isolated_admission(tmp_path, monkeypatch):
             "available_cpu_count": 6,
             "host_load_avg1": 1.0,
             "memory_psi": {"some": 0, "full": 0},
+            "user_memory_psi": {"some": 0, "full": 0},
             "io_psi": {"some": 0},
         },
     )
+    # Never inspect the machine running pytest. Exercise the real capacity gate
+    # against disposable proc/cgroup inputs; the focused test below supplies its
+    # own constrained values.
+    if request.node.name != "test_pool_capacity_respects_api_and_ancestor_limits":
+        require_pool_capacity = campaigns.require_pool_capacity
+        monkeypatch.setattr(
+            campaigns,
+            "require_pool_capacity",
+            lambda spec: require_pool_capacity(spec, proc_root=proc_root, cgroup_root=cgroup_root),
+        )
 
 
 def test_pool_capacity_respects_api_and_ancestor_limits(tmp_path):
@@ -76,8 +98,17 @@ def test_laboratory_holds_shared_admission_through_pause_drain(tmp_path, monkeyp
 def test_resource_denial_keeps_campaign_ready_and_releases_lease(tmp_path, monkeypatch):
     from midas.arena import admission
 
-    snapshot = admission.resource_snapshot(tmp_path)
-    snapshot["host_load_avg1"] = 6.0
+    snapshot = {
+        "active_job_ids": [],
+        "available_memory_bytes": 8 * 1024**3,
+        "disk_free_bytes": 20 * 1024**3,
+        "cpu_psi": {"some": 0.0},
+        "available_cpu_count": 6,
+        "host_load_avg1": 6.0,
+        "memory_psi": {"some": 0.0, "full": 0.0},
+        "user_memory_psi": {"some": 0.0, "full": 0.0},
+        "io_psi": {"some": 0.0},
+    }
     monkeypatch.setattr(admission, "resource_snapshot", lambda _: snapshot)
     lab = Campaigns(tmp_path / "lab", DATASETS)
     try:

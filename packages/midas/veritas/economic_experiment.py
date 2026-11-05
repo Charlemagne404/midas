@@ -93,13 +93,24 @@ def compare_qualification_rules(
         )
         for event in ordered
     )
-    minimum_positive = sum(
-        int(
-            event.get("counts", {})
-            .get("positive_minimum_notional_by_quantity", {})
-            .get(quantity, 0)
-        )
+    notional_unit_statuses = {
+        str(event.get("minimum_order_notional_unit_status") or "unverified")
         for event in ordered
+    }
+    minimum_notional_unit_status = (
+        next(iter(notional_unit_statuses)) if len(notional_unit_statuses) == 1 else "mixed"
+    )
+    minimum_positive = (
+        sum(
+            int(
+                event.get("counts", {})
+                .get("positive_minimum_notional_by_quantity", {})
+                .get(quantity, 0)
+            )
+            for event in ordered
+        )
+        if minimum_notional_unit_status == "verified_usdc"
+        else None
     )
     single_match_positive = sum(
         int(
@@ -217,13 +228,15 @@ def compare_qualification_rules(
         for event in ordered
     ]
     status = (
-        "candidate_requires_independent_replay"
+        "minimum_notional_semantics_unverified"
+        if minimum_positive is None and (top_positive or depth_positive)
+        else "candidate_requires_independent_replay"
         if minimum_positive
         else "preliminary_gross_edge_failed_economic_qualification"
         if top_positive or depth_positive
         else "no_positive_gross_candidate_observed"
     )
-    criteria = [
+    criteria: list[tuple[str, int | None]] = [
         ("unchanged_top_ask_gross_sign", top_positive),
         ("full_displayed_depth_gross", depth_positive),
         ("full_depth_and_per_leg_minimum_notional", minimum_positive),
@@ -259,13 +272,18 @@ def compare_qualification_rules(
     ) == len(gross_candidate_evidence)
     replay_depth_and_minimum_count: int | None = 0 if not gross_candidate_evidence else None
     replay_both_fee_sensitivities_count: int | None = 0 if not gross_candidate_evidence else None
+    replay_minimum_notional_unit_status = minimum_notional_unit_status
     if replay_complete and gross_candidate_evidence:
         replay_depth_and_minimum_count = 0
         replay_both_fee_sensitivities_count = 0
+        replay_minimum_unit_statuses: set[str] = set()
         for replay_row in replay_by_identity.values():
             qualification = replay_row.get("quantity_qualification")
             if not isinstance(qualification, dict):
                 raise ValueError("Completed candidate replay is missing quantity qualification")
+            replay_minimum_unit_statuses.add(
+                str(qualification.get("minimum_order_notional_unit_status") or "unverified")
+            )
             qualifies_minima = (
                 qualification.get("full_displayed_depth") is True
                 and qualification.get("minimum_order_constraints_satisfied_both_legs") is True
@@ -278,11 +296,20 @@ def compare_qualification_rules(
                     and qualification.get("fragmentation_safe_fee_sensitivity_positive") is True
                 ):
                     replay_both_fee_sensitivities_count += 1
+        replay_minimum_notional_unit_status = (
+            next(iter(replay_minimum_unit_statuses))
+            if len(replay_minimum_unit_statuses) == 1
+            else "mixed"
+        )
+        if replay_minimum_notional_unit_status != "verified_usdc":
+            replay_depth_and_minimum_count = None
+            replay_both_fee_sensitivities_count = None
     independent_candidate_replay = {
         "version": CANDIDATE_REPLAY_VERSION,
         "complete": replay_complete,
         "candidate_count": len(gross_candidate_evidence),
         "replayed_candidate_count": gross_candidate_replay.get("replayed_candidate_count"),
+        "minimum_order_notional_unit_status": replay_minimum_notional_unit_status,
         "quantity_shares_per_leg": quantity,
         "positive_full_depth_and_both_minimums": replay_depth_and_minimum_count,
         "positive_under_both_fee_sensitivities": replay_both_fee_sensitivities_count,
@@ -312,26 +339,28 @@ def compare_qualification_rules(
         "dataset_sha256": dataset_sha256,
         "experiment_source_code_sha256": _sha256(Path(__file__).read_bytes()),
         "status": status,
+        "minimum_order_notional_unit_status": minimum_notional_unit_status,
         "baseline": {
             "name": "unchanged top-ask gross sign",
             "rule": "same-condition V1 YES and NO best asks sum to less than one collateral unit",
             "positive_states": top_positive,
         },
         "research_improvement": {
-            "name": "depth and USDC-notional event prefilter with independent share-minimum replay",
+            "name": "depth and status-aware minimum event prefilter with independent share-minimum replay",
             "rule": (
                 f"finalized events screen for complete displayed ask depth and positive gross edge "
-                f"at {quantity} shares per leg plus both Gamma USDC minimums; source replay then "
-                "independently checks both CLOB share minimums and the versioned fee sensitivities"
+                f"at {quantity} shares per leg; provider minimum notionals are applied only when "
+                "their units are verified as USDC, while source replay independently checks both "
+                "CLOB share minimums and the versioned fee sensitivities"
             ),
             "positive_states": minimum_positive,
-            "count_stage": "finalized_event_usdc_notional_prefilter",
+            "count_stage": "finalized_event_status_aware_notional_prefilter",
         },
         "economic_qualification_funnel": [
             {
                 "criterion": name,
                 "positive_states": count,
-                "valid_state_rate": count / valid if valid else 0,
+                "valid_state_rate": count / valid if valid and count is not None else None,
             }
             for name, count in criteria
         ],
@@ -358,10 +387,12 @@ def compare_qualification_rules(
             if status == "no_positive_gross_candidate_observed"
             else "Do not promote the preliminary edge. Preserve source lineage and investigate the failed depth, minimum, or fee gate."
             if status == "preliminary_gross_edge_failed_economic_qualification"
+            else "Keep no-trade. Preserve the positive gross and depth evidence, but do not claim minimum-notional qualification until provider units are verified."
+            if status == "minimum_notional_semantics_unverified"
             else "Preserve the candidate for independent source replay and later hypothetical review."
         ),
         "limitations": [
-            "The top-ask rule is the unchanged discovery baseline; the improved replay keeps Gamma USDC minimum notionals and CLOB minimum share quantities separate, then adds full-depth and fee checks.",
+            "The top-ask rule is the unchanged discovery baseline; provider minimum-notional units remain unverified unless explicitly marked verified_usdc, and CLOB minimum share quantities remain separate.",
             "Repeated market snapshots are dependent and the panel is a short selected public sample, not independent confirmation.",
             "Fee sensitivities are hypothetical and do not establish order arrival, persistence, fills, or profitability.",
             "The experiment tests candidate qualification, not realized or hypothetical strategy PnL.",

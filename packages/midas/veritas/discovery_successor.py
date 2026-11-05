@@ -39,6 +39,7 @@ from .observatory import (
     MAX_STATE_BYTES,
     REQUEST_INTERVAL_SECONDS,
     REQUEST_TIMEOUT_SECONDS,
+    CumulativeResponseBudgetExceeded,
     PublicReadClient,
     _atomic_json,
     _book_state_hash,
@@ -148,7 +149,9 @@ class DiscoverySuccessorClient(PublicReadClient):
             raise ValueError("Public response receipt has an invalid byte count")
         self.response_bytes += response_bytes
         if self.response_bytes > MAX_CUMULATIVE_RESPONSE_BYTES:
-            raise ValueError("Discovery-successor cumulative response budget exceeded")
+            raise CumulativeResponseBudgetExceeded(
+                "Discovery-successor cumulative response budget exceeded"
+            )
 
     async def discover(self, params: dict[str, Any]) -> tuple[list[dict[str, Any]], dict[str, Any]]:
         if self.control_lookup_done or self.frame_reads >= DISCOVERY_QUERIES:
@@ -328,6 +331,7 @@ def _collect_observations(
         "positive_single_match": Counter(),
         "positive_fragmentation_safe": Counter(),
     }
+    minimum_notional_unit_statuses: set[str] = set()
 
     for row in selected:
         two_books: dict[str, dict[str, Any]] = {}
@@ -355,6 +359,14 @@ def _collect_observations(
         if not audit["valid"]:
             invalid_reasons[str(audit.get("reason") or "invalid_snapshot")] += 1
         else:
+            constraint_support = audit.get("constraint_support")
+            minimum_notional_unit_statuses.add(
+                str(
+                    constraint_support.get("minimum_order_notional_unit_status")
+                    if isinstance(constraint_support, dict)
+                    else "unverified"
+                )
+            )
             quality = audit["quality"]
             for side, age_ms in quality["reported_update_age_ms_by_leg"].items():
                 # Keep the same diagnostic bands as the existing observer.
@@ -439,7 +451,15 @@ def _collect_observations(
             }
         )
 
+    minimum_notional_unit_status = (
+        next(iter(minimum_notional_unit_statuses))
+        if len(minimum_notional_unit_statuses) == 1
+        else "mixed"
+        if minimum_notional_unit_statuses
+        else "unmeasured"
+    )
     counts = {
+        "minimum_order_notional_unit_status": minimum_notional_unit_status,
         "selected_markets": len(selected),
         "valid_quality_pairs": sum(bool(row["audit"]["valid"]) for row in observations),
         "invalid_reasons": dict(sorted(invalid_reasons.items())),
