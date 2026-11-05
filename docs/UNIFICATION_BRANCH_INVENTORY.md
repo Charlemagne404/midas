@@ -1,10 +1,10 @@
 # MIDAS Git branch and worktree inventory — 2026-11-05 snapshot
 
-**Reference snapshot refreshed:** 2026-11-05 after first source integration,
-before this operational-document refresh. At the reference snapshot,
-`origin/main` was `4f17b875f1e2aa9d602530b07630d80be3157d29`; the final
-documentation update is a subsequent commit, so verify current refs before
-using the per-branch heads below.
+**Reference snapshot:** 2026-11-05 at `origin/main` commit
+`4f17b875f1e2aa9d602530b07630d80be3157d29`, after the first source
+integration. The table records refs at that point; later commits only refreshed
+operational documentation. Verify current refs before using the per-branch
+heads below.
 There are **64 local branches**, **56 fetched `origin` branch heads**, and
 **37 worktrees**. Each fetched origin head has a same-name local branch; eight
 local branches have no matching origin ref. Source-only changes were
@@ -43,7 +43,7 @@ The table lists every local branch, its exact head, and the matching fetched ori
 | `codex/midas-integration-20261104` | `b723bfd` | `—` | Historical integration checkpoint with a dirty worktree; preserve all edits and data. |
 | `codex/midas-maintenance-20261105` | `3e700b9` | `3e700b9` | Previous maintenance baseline, superseded by `origin/main`; retain pending environment/data review. |
 | `codex/midas-operational-resilience-20261105` | `dcefed2` | `dcefed2` | Previous Veritas bounded-memory source candidate; its source changes are in the later baseline. Retain its technical history pending environment/data review. |
-| `codex/midas-release-readiness-20261105` | `4f17b87` | `7d06ec1` | Source-only changes are integrated in `origin/main`; remote candidate ref is one commit behind. Do not deploy. |
+| `codex/midas-release-readiness-20261105` | `4f17b87` | `7d06ec1` | At this snapshot, source-only changes were integrated in `origin/main`; remote candidate ref was one commit behind. Do not deploy. |
 | `codex/midas-squash-integration-20261105` | `6aa7c7f` | `—` | Original squash integration, ancestor of current `origin/main`; retain as history. |
 | `codex/midas-unification` | `c256cd1` | `c256cd1` | Original 1,196-commit development history; retained on its local and remote refs, not current baseline. |
 | `codex/midas-validation-control-20261105` | `d1fb321` | `d1fb321` | Validation snapshot/checkpoint; retain until its evidence and owner are separately reviewed. |
