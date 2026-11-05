@@ -44,13 +44,9 @@ def main() -> None:
 
     cgroup_before = cgroup_snapshot()
     if cgroup_before.get("memory.high") != 160 * 1024**2:
-        raise SystemExit(
-            f"unexpected MemoryHigh for capacity benchmark: {cgroup_before}"
-        )
+        raise SystemExit(f"unexpected MemoryHigh for capacity benchmark: {cgroup_before}")
     if cgroup_before.get("memory.max") != 192 * 1024**2:
-        raise SystemExit(
-            f"unexpected MemoryMax for capacity benchmark: {cgroup_before}"
-        )
+        raise SystemExit(f"unexpected MemoryMax for capacity benchmark: {cgroup_before}")
     if cgroup_before.get("memory.swap.max") != 0:
         raise SystemExit(f"capacity benchmark must disable swap: {cgroup_before}")
 
@@ -67,9 +63,7 @@ def main() -> None:
         (selected_root / "deploy/reality-candidate.json").read_text(encoding="utf-8")
     )
     storage_policy = json.loads(
-        (selected_root / "deploy/reality-storage-policy.json").read_text(
-            encoding="utf-8"
-        )
+        (selected_root / "deploy/reality-storage-policy.json").read_text(encoding="utf-8")
     )
     status = json.loads((root / "status.json").read_text(encoding="utf-8"))
     config = SimpleNamespace(
@@ -87,9 +81,7 @@ def main() -> None:
     result = capacity(
         config,
         now_ns=int(status["updated_ns"]),
-        forecast_floor_bytes_per_day=int(
-            storage_policy["forecast_floor_bytes_per_day"]
-        ),
+        forecast_floor_bytes_per_day=int(storage_policy["forecast_floor_bytes_per_day"]),
         archive_path=archive_path,
         archive_budget=int(storage_policy["archive_budget_bytes"]),
         archive_reserve=int(storage_policy["archive_filesystem_reserve_bytes"]),
@@ -101,9 +93,7 @@ def main() -> None:
         "implementation": args.implementation,
         "catalog_count": args.catalog_count,
         "elapsed_seconds": elapsed_seconds,
-        "process_peak_rss_bytes": (
-            resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * 1024
-        ),
+        "process_peak_rss_bytes": (resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * 1024),
         "cgroup": cgroup_after,
         "result": {
             key: result.get(key)
