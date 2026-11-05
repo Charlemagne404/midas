@@ -30,7 +30,8 @@ admission.global_lock_path = lambda: root / "test-global.lock"
 snapshot = {"active_job_ids": [], "available_memory_bytes": 3 * 1024**3,
             "disk_free_bytes": 20 * 1024**3, "cpu_psi": {"some": 0},
             "available_cpu_count": 6, "host_load_avg1": 1.0,
-            "memory_psi": {"some": 0, "full": 0}, "io_psi": {"some": 0}}
+            "memory_psi": {"some": 0, "full": 0},
+            "user_memory_psi": {"some": 0, "full": 0}, "io_psi": {"some": 0}}
 admission.resource_snapshot = lambda _: snapshot
 spec = jobs.JobSpec(kind="dataset", dataset=DatasetSpec(episodes=30))
 calls = []

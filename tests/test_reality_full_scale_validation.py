@@ -7,6 +7,7 @@ import subprocess
 import sys
 from decimal import Decimal
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 from midas.reality import recovery
@@ -377,6 +378,18 @@ def test_source_quality_audit_keeps_absent_affected_assets_unknown():
 def test_failed_admission_does_not_create_snapshot(tmp_path, monkeypatch):
     source = fixture(tmp_path)
     output = tmp_path / "never-created"
+
+    monkeypatch.setattr(
+        validation.shutil,
+        "disk_usage",
+        lambda _path: SimpleNamespace(
+            free=validation.PROTECTED_DISK_RESERVE_BYTES + validation.STAGING_EXTRA_BYTES + 1
+        ),
+    )
+
+    # The test isolates the systemd read boundary; candidate validation keeps
+    # systemctl unavailable so it cannot inspect or affect a host user manager.
+    monkeypatch.setattr(validation, "ensure_no_active_validation_units", lambda: None)
 
     def reject():
         raise ValueError("resource gate")

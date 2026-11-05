@@ -8,7 +8,8 @@ from apps.api.config import Settings
 from apps.api.service import Service
 
 
-def test_temporary_database_has_its_own_recording_directory(tmp_path):
+def test_temporary_database_has_its_own_recording_directory(tmp_path, monkeypatch):
+    monkeypatch.delenv("MIDAS_RECORDING_ROOT", raising=False)
     service = Service(Settings(database_url=f"sqlite+aiosqlite:///{tmp_path}/paper.db"))
     assert service.recorder.root == tmp_path / "recordings"
 
@@ -24,7 +25,8 @@ def test_explicit_recording_root_is_preserved(tmp_path):
     assert service.recorder.root == destination
 
 
-def test_default_production_recording_location_is_compatible():
+def test_default_production_recording_location_is_compatible(monkeypatch):
+    monkeypatch.delenv("MIDAS_RECORDING_ROOT", raising=False)
     service = Service(Settings(database_url="sqlite+aiosqlite:///./data/midas.db"))
     assert service.recorder.root == Path("data/recordings")
 
