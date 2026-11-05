@@ -106,8 +106,8 @@ it('marks stale capacity evidence and exposes failed background analysis results
   );
   mount();
 
-  expect(await screen.findByRole('alert')).toHaveTextContent(/Capacity estimate is stale/);
   fireEvent.click(screen.getByRole('button', { name: /Operations/ }));
+  expect(await screen.findByRole('alert')).toHaveTextContent(/Capacity estimate is stale/);
   expect(await screen.findByText(/oom-kill \/ 9/)).toBeInTheDocument();
   expect(screen.getByText(/Thu 2026-11-05 17:41:16 CET/)).toBeInTheDocument();
 });

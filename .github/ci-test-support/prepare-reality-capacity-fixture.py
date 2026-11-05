@@ -32,7 +32,11 @@ def create_store(root: Path, count: int, now_ns: int) -> None:
             separators=(",", ":"),
         ).encode()
         compressed = zlib.compress(record)
-        contents = MAGIC + struct.pack(">I32s", len(compressed), hashlib.sha256(compressed).digest()) + compressed
+        contents = (
+            MAGIC
+            + struct.pack(">I32s", len(compressed), hashlib.sha256(compressed).digest())
+            + compressed
+        )
         (root / name).write_bytes(contents)
         catalog = {
             "schema_version": 1,
@@ -60,7 +64,9 @@ def main() -> None:
     args = parser.parse_args()
     counts = args.counts
     if counts != sorted(set(counts)) or counts[0] < 1 or counts[-1] != 58_367:
-        parser.error("counts must be unique, ascending, and end at the 58,367-catalog production scale")
+        parser.error(
+            "counts must be unique, ascending, and end at the 58,367-catalog production scale"
+        )
     args.root.mkdir(mode=0o755, parents=True, exist_ok=False)
     for count in counts:
         create_store(args.root / f"reality-{count}", count, time.time_ns())

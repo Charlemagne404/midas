@@ -694,7 +694,9 @@ def capacity(
         path = root / info["file"]
         if describe(path) != info:
             raise ValueError(f"Capacity sample integrity mismatch: {path}")
-        sampled_bytes += info["bytes"] + inventory_catalog_stats[path.with_suffix(".json").name].st_size
+        sampled_bytes += (
+            info["bytes"] + inventory_catalog_stats[path.with_suffix(".json").name].st_size
+        )
         for record, _ in records(path):
             received = record["received_ns"]
             first = received if first is None else min(first, received)

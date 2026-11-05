@@ -330,7 +330,9 @@ def test_rejected_v1_migration_preserves_checkpoint_and_event_ledger(tmp_path):
     event_root = output / "source-analysis-events" / "v1"
     original_events = {path.name: path.read_bytes() for path in event_root.glob("*.json")}
 
-    with pytest.raises(ValueError, match="Legacy source-analysis state is not a supported checkpoint"):
+    with pytest.raises(
+        ValueError, match="Legacy source-analysis state is not a supported checkpoint"
+    ):
         _run(output, campaign_dir, raw, campaign_hash, max_segments=1)
 
     assert legacy_path.read_bytes() == original_checkpoint

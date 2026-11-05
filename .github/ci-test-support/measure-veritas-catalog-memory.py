@@ -165,10 +165,14 @@ def main() -> None:
         if cgroup_after.get("memory.max") != 256 * 1024**2:
             raise SystemExit(f"expected an exact 256 MiB cgroup limit, got {cgroup_after}")
         if cgroup_after.get("memory.swap.max") != 0:
-            raise SystemExit(f"expected swap disabled for the constrained benchmark, got {cgroup_after}")
+            raise SystemExit(
+                f"expected swap disabled for the constrained benchmark, got {cgroup_after}"
+            )
         if cgroup_after.get("events.oom_kill", 0) > cgroup_before.get("events.oom_kill", 0):
             raise SystemExit("streaming reader triggered an OOM kill under the service limit")
-        print(f"256 MiB no-swap cgroup peak: {cgroup_after.get('memory.peak', 'unreported')} bytes.")
+        print(
+            f"256 MiB no-swap cgroup peak: {cgroup_after.get('memory.peak', 'unreported')} bytes."
+        )
 
 
 if __name__ == "__main__":

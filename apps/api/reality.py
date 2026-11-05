@@ -22,9 +22,7 @@ TRAINING = "9f593b0e68c61c5a8eabf3b01b7ad38c9e1df27436bd041a55a505c995a0a9f9"
 CAPACITY_REPORT_STALE_AFTER_NS = 60 * 60 * 1_000_000_000
 
 
-def classify_capacity_freshness(
-    capacity_report: dict[str, Any], now_ns: int
-) -> dict[str, Any]:
+def classify_capacity_freshness(capacity_report: dict[str, Any], now_ns: int) -> dict[str, Any]:
     """Keep old capacity estimates from being presented as current evidence."""
     measured_ns = capacity_report.get("measured_ns")
     if not isinstance(measured_ns, int) or isinstance(measured_ns, bool) or measured_ns <= 0:
