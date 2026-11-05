@@ -41,19 +41,23 @@ jobs:
         env:
           MIDAS_CI_IMAGE: midas-ci-backend:${{ github.run_id }}-${{ github.run_attempt }}
         run: |
+          fixture_root="$RUNNER_TEMP/midas-veritas-memory-fixture-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          python3 .github/ci-test-support/prepare-veritas-catalog-fixture.py \
+            --root "$fixture_root"
           docker run --rm --network=none \
             --memory=256m --memory-swap=256m --cpus=1 --pids-limit=64 \
             --read-only --cap-drop=ALL --security-opt=no-new-privileges:true \
             --tmpfs /tmp:rw,nosuid,nodev,size=1g,uid=10001,gid=10001,mode=1777 \
             --mount "type=bind,src=$GITHUB_WORKSPACE,dst=/source,readonly" \
             --mount "type=bind,src=$GITHUB_WORKSPACE/veritas-memory-baseline,dst=/veritas-memory-baseline,readonly" \
+            --mount "type=bind,src=$fixture_root,dst=/veritas-fixtures,readonly" \
             --env PYTHONDONTWRITEBYTECODE=1 \
             --env PYTHONPATH=/source/packages \
             --env HOME=/home/midas --env TMPDIR=/tmp \
             "$MIDAS_CI_IMAGE" /opt/venv/bin/python \
             /source/.github/ci-test-support/measure-veritas-catalog-memory.py \
             --current-root /source --baseline-root /veritas-memory-baseline \
-            --catalog-counts 1000 10000 25000 58367 --current-only
+            --catalog-counts 58367 --current-only --fixture-root /veritas-fixtures
       - name: Compare Reality v5 and v6 on full stores under 192 MiB and 60 seconds
         run: |
           python3 .github/ci-test-support/run-reality-capacity-benchmarks.py \

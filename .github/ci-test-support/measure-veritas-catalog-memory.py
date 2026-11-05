@@ -122,6 +122,7 @@ def main() -> None:
     parser.add_argument("--baseline-root", type=Path, required=True)
     parser.add_argument("--catalog-counts", type=int, nargs="+", default=list(DEFAULT_COUNTS))
     parser.add_argument("--current-only", action="store_true")
+    parser.add_argument("--fixture-root", type=Path)
     args = parser.parse_args()
     counts = args.catalog_counts
     if (
@@ -132,10 +133,19 @@ def main() -> None:
     ):
         parser.error(f"catalog-counts must be unique, ascending, and end at {COUNT} for comparison")
     cgroup_before = memory_cgroup_snapshot()
-    with tempfile.TemporaryDirectory(prefix="midas-veritas-catalog-") as temporary:
+    if args.fixture_root is not None:
+        roots = {count: args.fixture_root / f"raw-{count}" for count in counts}
+        if any(not root.is_dir() for root in roots.values()):
+            parser.error("fixture-root must contain a raw-<count> directory for every scale")
+    else:
+        temporary = tempfile.TemporaryDirectory(prefix="midas-veritas-catalog-")
+        roots = {}
+        for count in counts:
+            roots[count] = Path(temporary.name) / f"raw-{count}"
+            create_catalog(roots[count], count)
+    try:
         for catalog_count in counts:
-            raw_root = Path(temporary) / f"raw-{catalog_count}"
-            create_catalog(raw_root, catalog_count)
+            raw_root = roots[catalog_count]
             new_selected, new_peak, new_seconds = measure(
                 args.current_root, raw_root, baseline=False
             )
@@ -160,6 +170,9 @@ def main() -> None:
                 raise SystemExit("streaming reader did not retain the expected bounded batch")
             if new_peak >= 256 * 1024:
                 raise SystemExit("streaming reader exceeded the production 256 MiB memory limit")
+    finally:
+        if args.fixture_root is None:
+            temporary.cleanup()
     if args.current_only:
         cgroup_after = memory_cgroup_snapshot()
         if cgroup_after.get("memory.max") != 256 * 1024**2:
