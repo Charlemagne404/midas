@@ -286,6 +286,7 @@ def _read_catalogs(
             ) from error
         if not count:
             continue
+        prior_last = last
         current_index = segment_count
         segment_count += 1
         if current_index < processed_count:
@@ -303,7 +304,6 @@ def _read_catalogs(
                 continue
             selected.append(info)
             selected_bytes += segment_bytes
-        prior_last = last
     return _CatalogScan(
         selected=selected,
         segment_count=segment_count,

@@ -146,6 +146,21 @@ def _run(
     )
 
 
+def test_catalog_scan_advances_continuity_after_batch_is_full(tmp_path):
+    _, raw, _ = _fixture(tmp_path)
+
+    scan = analysis._read_catalogs(
+        raw,
+        processed_count=0,
+        max_segments=1,
+        max_source_bytes=32 * 1024**2,
+    )
+
+    assert len(scan.selected) == 1
+    assert scan.segment_count == 4
+    assert scan.pending_segment_count == 4
+
+
 def _make_legacy_checkpoint(
     output: Path, campaign_dir: Path, raw: Path, campaign_hash: str
 ) -> bytes:
