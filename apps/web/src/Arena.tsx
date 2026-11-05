@@ -1,11 +1,12 @@
-import { lazy, Suspense, useState } from 'react';
+import { Suspense, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Activity, ArrowUpRight, ShieldCheck } from 'lucide-react';
 import { api } from './api';
 import { chartBase } from './chart-theme';
+import { DeferredChart } from './DeferredChart';
 
-const Chart = lazy(() => import('./Chart').then((module) => ({ default: module.Chart })));
+const Chart = DeferredChart;
 type EconomicParameter =
   'operating_per_fill' | 'redemption_cost' | 'annual_financing_rate' | 'collateral_value_factor';
 type Economics = {

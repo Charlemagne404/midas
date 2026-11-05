@@ -1,5 +1,7 @@
-# Install CPU torch first to avoid CUDA wheels:
-# .venv/bin/pip install torch==2.8.0+cpu --index-url https://download.pytorch.org/whl/cpu
+# Compatibility mirror of the optional Arena RL dependency group.
+# The complete transitive, CPU-only resolution lives in uv.lock. Install a
+# release environment with `uv sync --locked --group dev --group arena-rl` so
+# Torch is obtained from the explicit CPU wheel index in pyproject.toml.
 torch==2.8.0+cpu
 numpy==2.2.6
 scikit-learn==1.7.2

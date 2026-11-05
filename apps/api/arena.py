@@ -4,6 +4,7 @@ import asyncio
 import hashlib
 import importlib.util
 import json
+import math
 import re
 import subprocess
 from decimal import Decimal, InvalidOperation
@@ -21,6 +22,10 @@ MAX_DIRECTOR_OWNER_JOBS_READ = 100
 MAX_VERITAS_LATEST_SUMMARY_BYTES = 2 * 1024**2
 MAX_VERITAS_ANALYSIS_EVENT_BYTES = 2 * 1024**2
 MAX_VERITAS_QUALIFICATION_FINDING_BYTES = 2 * 1024**2
+MAX_FRONTIER_REPLAY_JOB_SCAN = 500
+MAX_ARENA_JOB_ELAPSED_SECONDS = 7_500
+MAX_WORKER_PROCESS_RSS_BYTES = 8 * 1024**3
+
 MAX_OBSERVATORY_MANIFEST_BYTES = 512 * 1024
 MAX_OBSERVATORY_READ_BYTES = 12 * 1024**2
 MAX_OBSERVATORY_DATASET_BYTES = 16 * 1024**2
@@ -641,6 +646,101 @@ def observatory_network(root: Path, identity: str, sample_index: int = 0) -> dic
     }
 
 
+def _snapshot_uses_held_source(snapshot: Any, frontier_held_venues: tuple[str, ...]) -> bool:
+    if not frontier_held_venues:
+        return False
+    held_market_prefixes = tuple(f"{venue}:" for venue in frontier_held_venues)
+    return (
+        any(market.venue.value in frontier_held_venues for market in snapshot.markets)
+        or any(book.venue.value in frontier_held_venues for book in snapshot.books)
+        or any(
+            relationship.left_market_id.startswith(held_market_prefixes)
+            or relationship.right_market_id.startswith(held_market_prefixes)
+            for relationship in snapshot.verified_relationships
+        )
+        or any(
+            event.venue.value in frontier_held_venues
+            for event in getattr(snapshot, "source_status_events", ())
+        )
+    )
+
+
+def _reject_held_frontier_replay(
+    root: Path, frontier_held_venues: tuple[str, ...], record: Any
+) -> None:
+    if not frontier_held_venues:
+        return
+    configuration = record.get("configuration") if isinstance(record, dict) else None
+    configuration_kind = configuration.get("kind") if isinstance(configuration, dict) else None
+    configuration_is_frontier = configuration_kind in {
+        "frontier_replay",
+        "frontier_timeline",
+        "frontier_discovery",
+    }
+    job_id = record.get("job_id") if isinstance(record, dict) else None
+    result_paths = (
+        tuple(
+            root / "jobs" / job_id / artifact
+            for artifact in (
+                "frontier-replay-result.json",
+                "frontier-timeline-result.json",
+                "frontier-discovery-result.json",
+            )
+        )
+        if isinstance(job_id, str) and re.fullmatch(r"job-[a-f0-9]{24}", job_id)
+        else ()
+    )
+    result_marks_frontier = any(path.is_file() or path.is_symlink() for path in result_paths)
+    if not configuration_is_frontier and not result_marks_frontier:
+        return
+    if not isinstance(configuration, dict):
+        raise ValueError("Frontier research job has no verifiable source snapshot configuration")
+    try:
+        snapshot: Any
+        if configuration_kind == "frontier_replay":
+            from midas.arena.frontier_replay import (
+                FrontierReplayJobSpec,
+            )
+            from midas.arena.frontier_replay import (
+                load_snapshot as load_replay_snapshot,
+            )
+
+            spec_value = configuration.get("frontier_replay")
+            snapshot = load_replay_snapshot(root, FrontierReplayJobSpec.model_validate(spec_value))
+        elif configuration_kind == "frontier_timeline":
+            from midas.arena.frontier_timeline import (
+                FrontierTimelineJobSpec,
+            )
+            from midas.arena.frontier_timeline import (
+                load_snapshot as load_timeline_snapshot,
+            )
+
+            spec_value = configuration.get("frontier_timeline")
+            snapshot = load_timeline_snapshot(
+                root, FrontierTimelineJobSpec.model_validate(spec_value)
+            )
+        elif configuration_kind == "frontier_discovery":
+            from midas.arena.frontier_discovery import FrontierDiscoveryJobSpec
+            from midas.arena.frontier_discovery import (
+                load_snapshot as load_discovery_snapshot,
+            )
+
+            spec_value = configuration.get("frontier_discovery")
+            snapshot = load_discovery_snapshot(
+                root, FrontierDiscoveryJobSpec.model_validate(spec_value)
+            )
+        else:
+            raise ValueError(
+                "Frontier research job has no verifiable source snapshot configuration"
+            )
+    except (FileNotFoundError, OSError, ValueError, KeyError) as error:
+        raise ValueError(
+            "Frontier research job has no verifiable source snapshot or clear held-source provenance"
+        ) from error
+    if _snapshot_uses_held_source(snapshot, frontier_held_venues):
+        raise ValueError("Frontier replay uses source data held from research use")
+
+
 def veritas_repository_root() -> Path:
     return Path(__file__).resolve().parents[2]
 
@@ -700,6 +800,16 @@ def _qualification_source_scan_id(row: dict[str, Any]) -> str | None:
 
 def _bounded_string(value: object, limit: int) -> str | None:
     return value[:limit] if isinstance(value, str) else None
+
+
+def _bounded_measurement(value: object, maximum: int) -> int | float | None:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return None
+    if isinstance(value, float) and not math.isfinite(value):
+        return None
+    if value < 0 or value > maximum:
+        return None
+    return value
 
 
 def read_veritas_qualification_finding(root: Path, identity: str) -> dict[str, Any]:
@@ -1132,7 +1242,7 @@ def _director_runtime_state(
 
 
 def _recent_owner_jobs(root: Path) -> list[dict[str, Any]]:
-    files = []
+    files: list[tuple[float, Path]] = []
     for file in (root / "jobs").glob("*/job.json"):
         try:
             files.append((file.stat().st_mtime, file))
@@ -1183,7 +1293,7 @@ def _project_director_record(
     return {**row, **_director_runtime_state(root, row, owner_jobs, supervisors)}
 
 
-def research_activity(root: Path) -> dict[str, Any]:
+def research_activity(root: Path, *, frontier_held_venues: tuple[str, ...] = ()) -> dict[str, Any]:
     """Return a small read-only summary of Arena's durable research activity."""
     invalid_records = 0
 
@@ -1218,6 +1328,15 @@ def research_activity(root: Path) -> dict[str, Any]:
         return values
 
     director_owner_jobs = records("jobs", "job.json", MAX_DIRECTOR_OWNER_JOBS_READ)
+    if frontier_held_venues:
+        eligible_jobs = []
+        for row in director_owner_jobs:
+            try:
+                _reject_held_frontier_replay(root, frontier_held_venues, row)
+            except ValueError:
+                continue
+            eligible_jobs.append(row)
+        director_owner_jobs = eligible_jobs
     jobs = director_owner_jobs[:25]
     latest_veritas_qualification = _latest_veritas_qualification_distribution(root, jobs)
     directors = records("directors", "manifest.json", 10)
@@ -1504,8 +1623,19 @@ def inspect_director(root: Path, identity: str) -> dict[str, Any]:
     return record
 
 
-def router(root: Path, *, veritas_repository: Path | None = None) -> APIRouter:
+def router(
+    root: Path,
+    *,
+    veritas_repository: Path | None = None,
+    frontier_held_venues: tuple[str, ...] = (),
+) -> APIRouter:
     api = APIRouter(prefix="/api/arena", tags=["Arena"])
+
+    def snapshot_uses_held_source(snapshot: Any) -> bool:
+        return _snapshot_uses_held_source(snapshot, frontier_held_venues)
+
+    def reject_held_frontier_replay(record: Any) -> None:
+        _reject_held_frontier_replay(root, frontier_held_venues, record)
 
     async def call(fn: Any, *args: Any) -> Any:
         try:
@@ -1621,12 +1751,22 @@ def router(root: Path, *, veritas_repository: Path | None = None) -> APIRouter:
             (root / "jobs").glob("*/job.json"), key=lambda p: p.stat().st_mtime, reverse=True
         )[:100]
         for file in files:
+            job_record = json.loads(file.read_text())
+            try:
+                reject_held_frontier_replay(job_record)
+            except ValueError:
+                # Check before inspect(), which may reconcile and rewrite a stale job manifest.
+                continue
             if all(dependencies.values()):
                 from midas.arena.jobs import inspect
 
-                jobs.append(inspect(root, file.parent.name))
-            else:
-                jobs.append(json.loads(file.read_text()))
+                job_record = inspect(root, file.parent.name)
+            try:
+                reject_held_frontier_replay(job_record)
+            except ValueError:
+                # The overview can expose job results; held or unproven inputs stay hidden.
+                continue
+            jobs.append(job_record)
         memory = {}
         recorded_sources = []
         from midas.laboratory.datasets import load_dataset, validate
@@ -1708,7 +1848,9 @@ def router(root: Path, *, veritas_repository: Path | None = None) -> APIRouter:
 
     @api.get("/research-activity")
     async def get_research_activity() -> Any:
-        return await call(research_activity, root)
+        return await call(
+            lambda: research_activity(root, frontier_held_venues=frontier_held_venues)
+        )
 
     @api.get("/datasets/{identity}")
     async def dataset(identity: str) -> Any:
@@ -2056,7 +2198,9 @@ def router(root: Path, *, veritas_repository: Path | None = None) -> APIRouter:
         def create() -> Any:
             from midas.arena.jobs import JobSpec, create
 
-            return create(root, JobSpec.model_validate(body.configuration))
+            specification = JobSpec.model_validate(body.configuration)
+            reject_held_frontier_replay({"configuration": specification.model_dump(mode="json")})
+            return create(root, specification)
 
         return await call(create)
 
@@ -2068,20 +2212,335 @@ def router(root: Path, *, veritas_repository: Path | None = None) -> APIRouter:
             veritas_repository or veritas_repository_root(),
         )
 
+    @api.get("/frontier-replays")
+    async def frontier_replay_jobs(limit: int = Query(default=20, ge=1, le=50)) -> Any:
+        def read() -> dict[str, Any]:
+            jobs_root = root / "jobs"
+            if root.is_symlink() or jobs_root.is_symlink():
+                raise ValueError("Arena Frontier replay job catalog is unsafe")
+            items: list[tuple[float, dict[str, Any]]] = []
+            scanned = 0
+            for directory in jobs_root.iterdir() if jobs_root.is_dir() else ():
+                if scanned >= MAX_FRONTIER_REPLAY_JOB_SCAN:
+                    break
+                scanned += 1
+                manifest = directory / "job.json"
+                if (
+                    directory.is_symlink()
+                    or manifest.is_symlink()
+                    or not manifest.is_file()
+                    or manifest.stat().st_size > MAX_RESEARCH_ACTIVITY_RECORD_BYTES
+                ):
+                    continue
+                try:
+                    row = json.loads(manifest.read_text())
+                except (OSError, json.JSONDecodeError):
+                    continue
+                if not isinstance(row, dict):
+                    continue
+                configuration = row.get("configuration")
+                if not isinstance(configuration, dict) or configuration.get("kind") != (
+                    "frontier_replay"
+                ):
+                    continue
+                replay_spec = configuration.get("frontier_replay")
+                replay_spec = replay_spec if isinstance(replay_spec, dict) else {}
+                if frontier_held_venues:
+                    try:
+                        reject_held_frontier_replay(row)
+                    except ValueError:
+                        # Missing provenance cannot establish that this artifact is clear.
+                        continue
+                result_value = row.get("result")
+                result = result_value if isinstance(result_value, dict) else None
+                runtime_value = row.get("runtime_profile")
+                runtime_profile: dict[str, int | float] = {}
+                if isinstance(runtime_value, dict):
+                    metric_limits = {
+                        "worker_process_user_cpu_seconds": MAX_ARENA_JOB_ELAPSED_SECONDS,
+                        "worker_process_system_cpu_seconds": MAX_ARENA_JOB_ELAPSED_SECONDS,
+                        "worker_process_peak_rss_bytes": MAX_WORKER_PROCESS_RSS_BYTES,
+                    }
+                    for key, maximum in metric_limits.items():
+                        value = _bounded_measurement(runtime_value.get(key), maximum)
+                        if value is not None:
+                            runtime_profile[key] = value
+                elapsed = _bounded_measurement(
+                    row.get("elapsed_seconds"), MAX_ARENA_JOB_ELAPSED_SECONDS
+                )
+                projected = {
+                    "job_id": row.get("job_id"),
+                    "state": row.get("state"),
+                    "created_at": row.get("created_at"),
+                    "updated_at": row.get("updated_at"),
+                    "elapsed_seconds": elapsed,
+                    "progress": row.get("progress"),
+                    "phase": row.get("phase"),
+                    "error": _bounded_string(row.get("error"), 300),
+                    "snapshot_id": replay_spec.get("snapshot_id"),
+                    "snapshot_sha256": replay_spec.get("snapshot_sha256"),
+                    "result": result,
+                    "runtime_profile": runtime_profile or None,
+                }
+                items.append((manifest.stat().st_mtime, projected))
+            items.sort(key=lambda item: item[0], reverse=True)
+            return {
+                "items": [item for _, item in items[:limit]],
+                "limit": limit,
+                "scanned": scanned,
+                "scan_bound": MAX_FRONTIER_REPLAY_JOB_SCAN,
+                "scan_may_be_incomplete": scanned >= MAX_FRONTIER_REPLAY_JOB_SCAN,
+                "research_only": True,
+            }
+
+        return await call(read)
+
+    @api.get("/frontier-timelines")
+    async def frontier_timeline_jobs(limit: int = Query(default=20, ge=1, le=50)) -> Any:
+        def read() -> dict[str, Any]:
+            jobs_root = root / "jobs"
+            if root.is_symlink() or jobs_root.is_symlink():
+                raise ValueError("Arena Frontier timeline job catalog is unsafe")
+            items: list[tuple[float, dict[str, Any]]] = []
+            scanned = 0
+            for directory in jobs_root.iterdir() if jobs_root.is_dir() else ():
+                if scanned >= MAX_FRONTIER_REPLAY_JOB_SCAN:
+                    break
+                scanned += 1
+                manifest = directory / "job.json"
+                if (
+                    directory.is_symlink()
+                    or manifest.is_symlink()
+                    or not manifest.is_file()
+                    or manifest.stat().st_size > MAX_RESEARCH_ACTIVITY_RECORD_BYTES
+                ):
+                    continue
+                try:
+                    row = json.loads(manifest.read_text())
+                except (OSError, json.JSONDecodeError):
+                    continue
+                if not isinstance(row, dict):
+                    continue
+                configuration = row.get("configuration")
+                if not isinstance(configuration, dict) or configuration.get("kind") != (
+                    "frontier_timeline"
+                ):
+                    continue
+                timeline_spec = configuration.get("frontier_timeline")
+                timeline_spec = timeline_spec if isinstance(timeline_spec, dict) else {}
+                if frontier_held_venues:
+                    try:
+                        reject_held_frontier_replay(row)
+                    except ValueError:
+                        continue
+                result_value = row.get("result")
+                result = result_value if isinstance(result_value, dict) else None
+                runtime_value = row.get("runtime_profile")
+                runtime_profile: dict[str, int | float] = {}
+                if isinstance(runtime_value, dict):
+                    for key, maximum in {
+                        "worker_process_user_cpu_seconds": MAX_ARENA_JOB_ELAPSED_SECONDS,
+                        "worker_process_system_cpu_seconds": MAX_ARENA_JOB_ELAPSED_SECONDS,
+                        "worker_process_peak_rss_bytes": MAX_WORKER_PROCESS_RSS_BYTES,
+                    }.items():
+                        value = _bounded_measurement(runtime_value.get(key), maximum)
+                        if value is not None:
+                            runtime_profile[key] = value
+                projected = {
+                    "job_id": row.get("job_id"),
+                    "state": row.get("state"),
+                    "created_at": row.get("created_at"),
+                    "updated_at": row.get("updated_at"),
+                    "elapsed_seconds": _bounded_measurement(
+                        row.get("elapsed_seconds"), MAX_ARENA_JOB_ELAPSED_SECONDS
+                    ),
+                    "progress": row.get("progress"),
+                    "phase": row.get("phase"),
+                    "error": _bounded_string(row.get("error"), 300),
+                    "snapshot_id": timeline_spec.get("snapshot_id"),
+                    "snapshot_sha256": timeline_spec.get("snapshot_sha256"),
+                    "result": result,
+                    "runtime_profile": runtime_profile or None,
+                }
+                items.append((manifest.stat().st_mtime, projected))
+            items.sort(key=lambda item: item[0], reverse=True)
+            return {
+                "items": [item for _, item in items[:limit]],
+                "limit": limit,
+                "scanned": scanned,
+                "scan_bound": MAX_FRONTIER_REPLAY_JOB_SCAN,
+                "scan_may_be_incomplete": scanned >= MAX_FRONTIER_REPLAY_JOB_SCAN,
+                "research_only": True,
+            }
+
+        return await call(read)
+
+    @api.get("/frontier-discovery-comparisons")
+    async def frontier_discovery_jobs(limit: int = Query(default=20, ge=1, le=50)) -> Any:
+        def read() -> dict[str, Any]:
+            jobs_root = root / "jobs"
+            if root.is_symlink() or jobs_root.is_symlink():
+                raise ValueError("Arena Frontier discovery job catalog is unsafe")
+            items: list[tuple[float, dict[str, Any]]] = []
+            scanned = 0
+            for directory in jobs_root.iterdir() if jobs_root.is_dir() else ():
+                if scanned >= MAX_FRONTIER_REPLAY_JOB_SCAN:
+                    break
+                scanned += 1
+                manifest = directory / "job.json"
+                if (
+                    directory.is_symlink()
+                    or manifest.is_symlink()
+                    or not manifest.is_file()
+                    or manifest.stat().st_size > MAX_RESEARCH_ACTIVITY_RECORD_BYTES
+                ):
+                    continue
+                try:
+                    row = json.loads(manifest.read_text())
+                except (OSError, json.JSONDecodeError):
+                    continue
+                if not isinstance(row, dict):
+                    continue
+                configuration = row.get("configuration")
+                if not isinstance(configuration, dict) or configuration.get("kind") != (
+                    "frontier_discovery"
+                ):
+                    continue
+                discovery_spec = configuration.get("frontier_discovery")
+                discovery_spec = discovery_spec if isinstance(discovery_spec, dict) else {}
+                if frontier_held_venues:
+                    try:
+                        reject_held_frontier_replay(row)
+                    except ValueError:
+                        continue
+                result_value = row.get("result")
+                result = result_value if isinstance(result_value, dict) else None
+                runtime_value = row.get("runtime_profile")
+                runtime_profile: dict[str, int | float] = {}
+                if isinstance(runtime_value, dict):
+                    for key, maximum in {
+                        "worker_process_user_cpu_seconds": MAX_ARENA_JOB_ELAPSED_SECONDS,
+                        "worker_process_system_cpu_seconds": MAX_ARENA_JOB_ELAPSED_SECONDS,
+                        "worker_process_peak_rss_bytes": MAX_WORKER_PROCESS_RSS_BYTES,
+                    }.items():
+                        value = _bounded_measurement(runtime_value.get(key), maximum)
+                        if value is not None:
+                            runtime_profile[key] = value
+                projected = {
+                    "job_id": row.get("job_id"),
+                    "state": row.get("state"),
+                    "created_at": row.get("created_at"),
+                    "updated_at": row.get("updated_at"),
+                    "elapsed_seconds": _bounded_measurement(
+                        row.get("elapsed_seconds"), MAX_ARENA_JOB_ELAPSED_SECONDS
+                    ),
+                    "progress": row.get("progress"),
+                    "phase": row.get("phase"),
+                    "error": _bounded_string(row.get("error"), 300),
+                    "snapshot_id": discovery_spec.get("snapshot_id"),
+                    "snapshot_sha256": discovery_spec.get("snapshot_sha256"),
+                    "result": result,
+                    "runtime_profile": runtime_profile or None,
+                }
+                items.append((manifest.stat().st_mtime, projected))
+            items.sort(key=lambda item: item[0], reverse=True)
+            return {
+                "items": [item for _, item in items[:limit]],
+                "limit": limit,
+                "scanned": scanned,
+                "scan_bound": MAX_FRONTIER_REPLAY_JOB_SCAN,
+                "scan_may_be_incomplete": scanned >= MAX_FRONTIER_REPLAY_JOB_SCAN,
+                "research_only": True,
+            }
+
+        return await call(read)
+
     @api.get("/jobs/{identity}")
     async def job(identity: str) -> Any:
         def inspect() -> Any:
+            record = json.loads((path("jobs", identity) / "job.json").read_text())
+            reject_held_frontier_replay(record)
             from midas.arena.jobs import inspect
 
-            return inspect(root, identity)
+            record = inspect(root, identity)
+            reject_held_frontier_replay(record)
+            return record
 
         return await call(inspect)
+
+    @api.get("/jobs/{identity}/frontier-replay")
+    async def frontier_replay_result(identity: str) -> Any:
+        def read() -> Any:
+            from midas.arena.frontier_replay import verify_frontier_replay_job_result
+            from midas.arena.jobs import inspect
+
+            record = json.loads((path("jobs", identity) / "job.json").read_text())
+            reject_held_frontier_replay(record)
+            record = inspect(root, identity)
+            reject_held_frontier_replay(record)
+            artifact = verify_frontier_replay_job_result(root, identity, record)
+            return {
+                "artifact": artifact.model_dump(mode="json"),
+                "research_only": True,
+                "orders_submitted": False,
+                "authenticated_requests": False,
+                "integrity_verified": True,
+            }
+
+        return await call(read)
+
+    @api.get("/jobs/{identity}/frontier-timeline")
+    async def frontier_timeline_result(identity: str) -> Any:
+        def read() -> Any:
+            from midas.arena.frontier_timeline import (
+                serialize_frontier_timeline_artifact,
+                verify_frontier_timeline_job_result,
+            )
+            from midas.arena.jobs import inspect
+
+            record = json.loads((path("jobs", identity) / "job.json").read_text())
+            reject_held_frontier_replay(record)
+            record = inspect(root, identity)
+            reject_held_frontier_replay(record)
+            artifact = verify_frontier_timeline_job_result(root, identity, record)
+            return {
+                "artifact": serialize_frontier_timeline_artifact(artifact),
+                "research_only": True,
+                "orders_submitted": False,
+                "authenticated_requests": False,
+                "integrity_verified": True,
+            }
+
+        return await call(read)
+
+    @api.get("/jobs/{identity}/frontier-discovery")
+    async def frontier_discovery_result(identity: str) -> Any:
+        def read() -> Any:
+            from midas.arena.frontier_discovery import verify_frontier_discovery_job_result
+            from midas.arena.jobs import inspect
+
+            record = json.loads((path("jobs", identity) / "job.json").read_text())
+            reject_held_frontier_replay(record)
+            record = inspect(root, identity)
+            reject_held_frontier_replay(record)
+            artifact = verify_frontier_discovery_job_result(root, identity, record)
+            return {
+                "artifact": artifact.model_dump(mode="json"),
+                "research_only": True,
+                "orders_submitted": False,
+                "authenticated_requests": False,
+                "integrity_verified": True,
+            }
+
+        return await call(read)
 
     @api.post("/jobs/{identity}/cancel")
     async def cancel_job(identity: str) -> Any:
         def cancel() -> Any:
             from midas.arena.jobs import cancel
 
+            record = json.loads((path("jobs", identity) / "job.json").read_text())
+            reject_held_frontier_replay(record)
             return cancel(root, identity)
 
         return await call(cancel)
@@ -2092,6 +2551,7 @@ def router(root: Path, *, veritas_repository: Path | None = None) -> APIRouter:
             import subprocess
 
             record = json.loads((path("jobs", identity) / "job.json").read_text())
+            reject_held_frontier_replay(record)
             result = subprocess.run(
                 [
                     "journalctl",

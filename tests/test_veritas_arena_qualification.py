@@ -45,7 +45,7 @@ def test_arena_qualification_is_bounded_pinned_idempotent_and_source_read_only(t
     first_id = "scan-20261015T090047Z-6f98ffeaecab"
     latest_id = "scan-20261015T093047Z-9c98ffeaecab"
     source_root = tmp_path / "veritas"
-    event_dir = source_root / "analysis-events" / "v4"
+    event_dir = source_root / "analysis-events" / VERSION.rsplit("-", 1)[-1]
     event_dir.mkdir(parents=True)
     older = _event(first_id, 1_800_000_000_000_000_000)
     latest = _event(latest_id, 1_800_001_800_000_000_000)
@@ -71,7 +71,7 @@ def test_arena_qualification_is_bounded_pinned_idempotent_and_source_read_only(t
 def test_arena_qualification_rejects_missing_scan_and_source_byte_overrun(tmp_path):
     first_id = "scan-20261015T090047Z-6f98ffeaecab"
     source_root = tmp_path / "veritas"
-    event_dir = source_root / "analysis-events" / "v4"
+    event_dir = source_root / "analysis-events" / VERSION.rsplit("-", 1)[-1]
     event_dir.mkdir(parents=True)
     (event_dir / f"{first_id}.json").write_text(
         json.dumps(_event(first_id, 1_800_000_000_000_000_000))

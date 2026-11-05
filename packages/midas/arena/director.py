@@ -3,7 +3,7 @@
 import json
 import time
 from pathlib import Path
-from typing import Any, Self, cast
+from typing import Any, Self
 
 from pydantic import Field, model_validator
 
@@ -56,9 +56,10 @@ def load_reusable_sweep(root: Path, sweep_id: str, spec: DirectorSpec) -> dict[s
     path = artifact_path(root, "sweeps", sweep_id) / "manifest.json"
     if not path.is_file():
         raise ValueError(f"Reusable sweep is missing: {sweep_id}")
-    sweep = json.loads(path.read_text())
-    if not isinstance(sweep, dict):
-        raise ValueError("Reusable sweep manifest is malformed")
+    sweep_data = json.loads(path.read_text())
+    if not isinstance(sweep_data, dict):
+        raise ValueError("Reusable sweep manifest must be a JSON object")
+    sweep: dict[str, Any] = sweep_data
     if (
         sweep.get("state") != "COMPLETED"
         or sweep.get("configuration") != sweep_spec.model_dump(mode="json")
@@ -103,7 +104,7 @@ def load_reusable_sweep(root: Path, sweep_id: str, spec: DirectorSpec) -> dict[s
         or selection.get("selected_model_id") not in trial_ids
     ):
         raise ValueError("Reusable sweep has no validation-selected trained model")
-    return cast(dict[str, Any], sweep)
+    return sweep
 
 
 def run_director(root: Path, spec: DirectorSpec, progress: Any = None) -> dict[str, Any]:

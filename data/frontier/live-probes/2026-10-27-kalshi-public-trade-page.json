@@ -1,0 +1,449 @@
+{
+  "capture_kind": "kalshi_public_trade_page",
+  "capture_sha256": "94cb4aeed436c5ac6b7d1175f99532fea57caa2b8d998600bf332451e0bcd06b",
+  "captured_completed_at_utc": "2026-10-26T23:29:54.049333+00:00",
+  "captured_started_at_utc": "2026-10-26T23:29:53.349697+00:00",
+  "credentials_sent": false,
+  "data_classification": "public_market_listing_and_trade_prints",
+  "limitations": [
+    "One bounded market listing and one ticker-filtered trade page; no history crawl was run.",
+    "A public trade print is not available order-book depth or evidence of simultaneous execution.",
+    "The captured market may be conditional or otherwise unverified; this page does not establish payoff equivalence.",
+    "No account fee, capital, transfer, custody, jurisdiction, or settlement economics are modeled by this observation."
+  ],
+  "market": {
+    "canonical_id": "kalshi:KXMVECROSSCATEGORY-S2026AI6WGLUADXUYU2PZ-PGLXFSG4I",
+    "market_kind": "conditional_event",
+    "native_market_id": "KXMVECROSSCATEGORY-S2026AI6WGLUADXUYU2PZ-PGLXFSG4I",
+    "source_observation_id": "1ef47195229c6d4ce286c1a9a9b8bb417ceea369c91ccc06b8ac28615706f8dd",
+    "title": "yes Philadelphia,yes Dak Prescott: 19+,yes Dak Prescott: 1+,yes Tanner McKee: 1+,yes Dak Prescott: 200+,yes Tanner McKee: 125+,yes CeeDee Lamb: 4+,yes George Pickens: 3+,yes Javonte Williams: 2+,yes Darius Cooper: 2+,yes Dallas Goedert: 4+,yes Makai Lemon: 2+,yes CeeDee Lamb: 50+,yes George Pickens: 40+,yes Ryan Flournoy: 10+,yes Darius Cooper: 20+,yes Dallas Goedert: 20+,yes Makai Lemon: 15+,yes Javonte Williams: 40+,yes Saquon Barkley: 40+,yes CeeDee Lamb: 1+,yes Javonte Williams: 1+,yes Dallas Goedert: 1+"
+  },
+  "probe_results": {
+    "listing": {
+      "book_snapshots_stored": 0,
+      "hypothetical_only": true,
+      "market_count": 1,
+      "network_calls_bounded_by": 1,
+      "observation_ids": [
+        "1ef47195229c6d4ce286c1a9a9b8bb417ceea369c91ccc06b8ac28615706f8dd"
+      ],
+      "request_count": 1,
+      "request_count_delta": 1,
+      "requested_limit": 1,
+      "source_state": "healthy",
+      "trade_capture_state": "not_requested",
+      "trade_error": null,
+      "trade_observation_record_id": null,
+      "trade_observations_stored": 0,
+      "venue": "kalshi"
+    },
+    "readback": {
+      "items": [],
+      "limit": 100,
+      "observation_count": 1,
+      "offset": 0,
+      "pages": [
+        {
+          "condition_id": "KXMVECROSSCATEGORY-S2026AI6WGLUADXUYU2PZ-PGLXFSG4I",
+          "has_more": false,
+          "market_id": "KXMVECROSSCATEGORY-S2026AI6WGLUADXUYU2PZ-PGLXFSG4I",
+          "next_cursor": null,
+          "observation_id": "725fc39f9823a7249b6860b355b5cf84889fe0aa620a461d32a3e28efd0e7885",
+          "page_limit": 2,
+          "received_at_utc": "2026-10-26T23:29:54.037148+00:00",
+          "venue": "kalshi"
+        }
+      ],
+      "trade_count": 0
+    },
+    "trade_page": {
+      "has_more": false,
+      "hypothetical_only": true,
+      "market_id": "KXMVECROSSCATEGORY-S2026AI6WGLUADXUYU2PZ-PGLXFSG4I",
+      "network_calls_bounded_by": 1,
+      "next_cursor": null,
+      "note": "One explicit read-only Kalshi ticker-filtered public trade page. The source includes block trades by default; no trade-history crawl is started.",
+      "observation_id": "725fc39f9823a7249b6860b355b5cf84889fe0aa620a461d32a3e28efd0e7885",
+      "page_limit": 2,
+      "raw_sha256": "ce91679332b1b83d2574366e4cc72f6d41bf656ccc2fa9cf574ee4f9ac6809e7",
+      "request_count_delta": 1,
+      "source_state": "healthy",
+      "trade_count": 0,
+      "venue": "kalshi"
+    }
+  },
+  "records": [
+    {
+      "normalized": {
+        "complete_for_request": false,
+        "cursor": null,
+        "markets": [
+          {
+            "base_asset": null,
+            "canonical_id": "kalshi:KXMVECROSSCATEGORY-S2026AI6WGLUADXUYU2PZ-PGLXFSG4I",
+            "description": "",
+            "fees": {
+              "applies_to": null,
+              "effective_at_utc": null,
+              "evidence_sha256": null,
+              "expires_at_utc": null,
+              "fee_currency": null,
+              "fixed_fee": null,
+              "formula": null,
+              "note": "Unknown: native event/series fee parameters are available separately, but maker/taker applicability and account-specific fee rounding are not modeled.",
+              "rate": null,
+              "source_url": null,
+              "status": "unknown",
+              "version": null
+            },
+            "instruments": [
+              {
+                "label": "yes Philadelphia,yes Dak Prescott: 19+,yes Dak Prescott: 1+,yes Tanner McKee: 1+,yes Dak Prescott: 200+,yes Tanner McKee: 125+,yes CeeDee Lamb: 4+,yes George Pickens: 3+,yes Javonte Williams: 2+,yes Darius Cooper: 2+,yes Dallas Goedert: 4+,yes Makai Lemon: 2+,yes CeeDee Lamb: 50+,yes George Pickens: 40+,yes Ryan Flournoy: 10+,yes Darius Cooper: 20+,yes Dallas Goedert: 20+,yes Makai Lemon: 15+,yes Javonte Williams: 40+,yes Saquon Barkley: 40+,yes CeeDee Lamb: 1+,yes Javonte Williams: 1+,yes Dallas Goedert: 1+",
+                "minimum_notional": null,
+                "minimum_quantity": null,
+                "native_instrument_id": "KXMVECROSSCATEGORY-S2026AI6WGLUADXUYU2PZ-PGLXFSG4I:YES",
+                "outcome_id": "yes",
+                "payouts": [
+                  {
+                    "amount": "1.0000",
+                    "state_id": "yes"
+                  },
+                  {
+                    "amount": "0",
+                    "state_id": "no"
+                  }
+                ],
+                "price_currency": "USD",
+                "quantity_step": null,
+                "quantity_unit": "contract",
+                "tick_size": null
+              },
+              {
+                "label": "yes Philadelphia,yes Dak Prescott: 19+,yes Dak Prescott: 1+,yes Tanner McKee: 1+,yes Dak Prescott: 200+,yes Tanner McKee: 125+,yes CeeDee Lamb: 4+,yes George Pickens: 3+,yes Javonte Williams: 2+,yes Darius Cooper: 2+,yes Dallas Goedert: 4+,yes Makai Lemon: 2+,yes CeeDee Lamb: 50+,yes George Pickens: 40+,yes Ryan Flournoy: 10+,yes Darius Cooper: 20+,yes Dallas Goedert: 20+,yes Makai Lemon: 15+,yes Javonte Williams: 40+,yes Saquon Barkley: 40+,yes CeeDee Lamb: 1+,yes Javonte Williams: 1+,yes Dallas Goedert: 1+",
+                "minimum_notional": null,
+                "minimum_quantity": null,
+                "native_instrument_id": "KXMVECROSSCATEGORY-S2026AI6WGLUADXUYU2PZ-PGLXFSG4I:NO",
+                "outcome_id": "no",
+                "payouts": [
+                  {
+                    "amount": "0",
+                    "state_id": "yes"
+                  },
+                  {
+                    "amount": "1.0000",
+                    "state_id": "no"
+                  }
+                ],
+                "price_currency": "USD",
+                "quantity_step": null,
+                "quantity_unit": "contract",
+                "tick_size": null
+              }
+            ],
+            "lifecycle": "open",
+            "market_kind": "conditional_event",
+            "native_event_id": "KXMVECROSSCATEGORY-S2026AI6WGLUADXUYU2PZ",
+            "native_fields": {
+              "can_close_early": true,
+              "close_time": "2026-10-29T00:15:00Z",
+              "created_time": "2026-10-26T23:29:38.809186Z",
+              "custom_strike": {
+                "Associated Events": "KXNFLGAME-26OCT26DALPHI,KXNFLPASSCOMP-26OCT26DALPHI,KXNFLPASSTDSPROT-26OCT26DALPHI,KXNFLPASSTDSPROT-26OCT26DALPHI,KXNFLPASSYDSPROT-26OCT26DALPHI,KXNFLPASSYDSPROT-26OCT26DALPHI,KXNFLRECPROT-26OCT26DALPHI,KXNFLRECPROT-26OCT26DALPHI,KXNFLRECPROT-26OCT26DALPHI,KXNFLRECPROT-26OCT26DALPHI,KXNFLRECPROT-26OCT26DALPHI,KXNFLRECPROT-26OCT26DALPHI,KXNFLRECYDSPROT-26OCT26DALPHI,KXNFLRECYDSPROT-26OCT26DALPHI,KXNFLRECYDSPROT-26OCT26DALPHI,KXNFLRECYDSPROT-26OCT26DALPHI,KXNFLRECYDSPROT-26OCT26DALPHI,KXNFLRECYDSPROT-26OCT26DALPHI,KXNFLRSHYDSPROT-26OCT26DALPHI,KXNFLRSHYDSPROT-26OCT26DALPHI,KXNFLTDPROT-26OCT26DALPHI,KXNFLTDPROT-26OCT26DALPHI,KXNFLTDPROT-26OCT26DALPHI",
+                "Associated Market Sides": "yes,yes,yes,yes,yes,yes,yes,yes,yes,yes,yes,yes,yes,yes,yes,yes,yes,yes,yes,yes,yes,yes,yes",
+                "Associated Markets": "KXNFLGAME-26OCT26DALPHI-PHI,KXNFLPASSCOMP-26OCT26DALPHI-DALDPRESCOTT4-19,KXNFLPASSTDSPROT-26OCT26DALPHI-DALDPRESCOTT4-1,KXNFLPASSTDSPROT-26OCT26DALPHI-PHITMCKEE16-1,KXNFLPASSYDSPROT-26OCT26DALPHI-DALDPRESCOTT4-200,KXNFLPASSYDSPROT-26OCT26DALPHI-PHITMCKEE16-125,KXNFLRECPROT-26OCT26DALPHI-DALCLAMB88-4,KXNFLRECPROT-26OCT26DALPHI-DALGPICKENS3-3,KXNFLRECPROT-26OCT26DALPHI-DALJWILLIAMS33-2,KXNFLRECPROT-26OCT26DALPHI-PHIDCOOPER80-2,KXNFLRECPROT-26OCT26DALPHI-PHIDGOEDERT88-4,KXNFLRECPROT-26OCT26DALPHI-PHIMLEMON9-2,KXNFLRECYDSPROT-26OCT26DALPHI-DALCLAMB88-50,KXNFLRECYDSPROT-26OCT26DALPHI-DALGPICKENS3-40,KXNFLRECYDSPROT-26OCT26DALPHI-DALRFLOURNOY19-10,KXNFLRECYDSPROT-26OCT26DALPHI-PHIDCOOPER80-20,KXNFLRECYDSPROT-26OCT26DALPHI-PHIDGOEDERT88-20,KXNFLRECYDSPROT-26OCT26DALPHI-PHIMLEMON9-15,KXNFLRSHYDSPROT-26OCT26DALPHI-DALJWILLIAMS33-40,KXNFLRSHYDSPROT-26OCT26DALPHI-PHISBARKLEY26-40,KXNFLTDPROT-26OCT26DALPHI-DALCLAMB88-1,KXNFLTDPROT-26OCT26DALPHI-DALJWILLIAMS33-1,KXNFLTDPROT-26OCT26DALPHI-PHIDGOEDERT88-1",
+                "Multivariate Event Ticker": "KXMVECROSSCATEGORY-S2026AI6WGLUADXUYU2PZ"
+              },
+              "event_ticker": "KXMVECROSSCATEGORY-S2026AI6WGLUADXUYU2PZ",
+              "exchange_index": 1,
+              "expected_expiration_time": "2026-10-27T06:15:00Z",
+              "expiration_time": "2026-10-29T00:15:00Z",
+              "expiration_value": "",
+              "is_provisional": true,
+              "last_price_dollars": "0.0000",
+              "latest_expiration_time": "2026-10-29T00:15:00Z",
+              "market_type": "binary",
+              "mve_collection_ticker": "KXMVECROSSCATEGORY-R",
+              "mve_selected_legs": [
+                {
+                  "event_ticker": "KXNFLGAME-26OCT26DALPHI",
+                  "market_ticker": "KXNFLGAME-26OCT26DALPHI-PHI",
+                  "side": "yes"
+                },
+                {
+                  "event_ticker": "KXNFLPASSCOMP-26OCT26DALPHI",
+                  "market_ticker": "KXNFLPASSCOMP-26OCT26DALPHI-DALDPRESCOTT4-19",
+                  "side": "yes"
+                },
+                {
+                  "event_ticker": "KXNFLPASSTDSPROT-26OCT26DALPHI",
+                  "market_ticker": "KXNFLPASSTDSPROT-26OCT26DALPHI-DALDPRESCOTT4-1",
+                  "side": "yes"
+                },
+                {
+                  "event_ticker": "KXNFLPASSTDSPROT-26OCT26DALPHI",
+                  "market_ticker": "KXNFLPASSTDSPROT-26OCT26DALPHI-PHITMCKEE16-1",
+                  "side": "yes"
+                },
+                {
+                  "event_ticker": "KXNFLPASSYDSPROT-26OCT26DALPHI",
+                  "market_ticker": "KXNFLPASSYDSPROT-26OCT26DALPHI-DALDPRESCOTT4-200",
+                  "side": "yes"
+                },
+                {
+                  "event_ticker": "KXNFLPASSYDSPROT-26OCT26DALPHI",
+                  "market_ticker": "KXNFLPASSYDSPROT-26OCT26DALPHI-PHITMCKEE16-125",
+                  "side": "yes"
+                },
+                {
+                  "event_ticker": "KXNFLRECPROT-26OCT26DALPHI",
+                  "market_ticker": "KXNFLRECPROT-26OCT26DALPHI-DALCLAMB88-4",
+                  "side": "yes"
+                },
+                {
+                  "event_ticker": "KXNFLRECPROT-26OCT26DALPHI",
+                  "market_ticker": "KXNFLRECPROT-26OCT26DALPHI-DALGPICKENS3-3",
+                  "side": "yes"
+                },
+                {
+                  "event_ticker": "KXNFLRECPROT-26OCT26DALPHI",
+                  "market_ticker": "KXNFLRECPROT-26OCT26DALPHI-DALJWILLIAMS33-2",
+                  "side": "yes"
+                },
+                {
+                  "event_ticker": "KXNFLRECPROT-26OCT26DALPHI",
+                  "market_ticker": "KXNFLRECPROT-26OCT26DALPHI-PHIDCOOPER80-2",
+                  "side": "yes"
+                },
+                {
+                  "event_ticker": "KXNFLRECPROT-26OCT26DALPHI",
+                  "market_ticker": "KXNFLRECPROT-26OCT26DALPHI-PHIDGOEDERT88-4",
+                  "side": "yes"
+                },
+                {
+                  "event_ticker": "KXNFLRECPROT-26OCT26DALPHI",
+                  "market_ticker": "KXNFLRECPROT-26OCT26DALPHI-PHIMLEMON9-2",
+                  "side": "yes"
+                },
+                {
+                  "event_ticker": "KXNFLRECYDSPROT-26OCT26DALPHI",
+                  "market_ticker": "KXNFLRECYDSPROT-26OCT26DALPHI-DALCLAMB88-50",
+                  "side": "yes"
+                },
+                {
+                  "event_ticker": "KXNFLRECYDSPROT-26OCT26DALPHI",
+                  "market_ticker": "KXNFLRECYDSPROT-26OCT26DALPHI-DALGPICKENS3-40",
+                  "side": "yes"
+                },
+                {
+                  "event_ticker": "KXNFLRECYDSPROT-26OCT26DALPHI",
+                  "market_ticker": "KXNFLRECYDSPROT-26OCT26DALPHI-DALRFLOURNOY19-10",
+                  "side": "yes"
+                },
+                {
+                  "event_ticker": "KXNFLRECYDSPROT-26OCT26DALPHI",
+                  "market_ticker": "KXNFLRECYDSPROT-26OCT26DALPHI-PHIDCOOPER80-20",
+                  "side": "yes"
+                },
+                {
+                  "event_ticker": "KXNFLRECYDSPROT-26OCT26DALPHI",
+                  "market_ticker": "KXNFLRECYDSPROT-26OCT26DALPHI-PHIDGOEDERT88-20",
+                  "side": "yes"
+                },
+                {
+                  "event_ticker": "KXNFLRECYDSPROT-26OCT26DALPHI",
+                  "market_ticker": "KXNFLRECYDSPROT-26OCT26DALPHI-PHIMLEMON9-15",
+                  "side": "yes"
+                },
+                {
+                  "event_ticker": "KXNFLRSHYDSPROT-26OCT26DALPHI",
+                  "market_ticker": "KXNFLRSHYDSPROT-26OCT26DALPHI-DALJWILLIAMS33-40",
+                  "side": "yes"
+                },
+                {
+                  "event_ticker": "KXNFLRSHYDSPROT-26OCT26DALPHI",
+                  "market_ticker": "KXNFLRSHYDSPROT-26OCT26DALPHI-PHISBARKLEY26-40",
+                  "side": "yes"
+                },
+                {
+                  "event_ticker": "KXNFLTDPROT-26OCT26DALPHI",
+                  "market_ticker": "KXNFLTDPROT-26OCT26DALPHI-DALCLAMB88-1",
+                  "side": "yes"
+                },
+                {
+                  "event_ticker": "KXNFLTDPROT-26OCT26DALPHI",
+                  "market_ticker": "KXNFLTDPROT-26OCT26DALPHI-DALJWILLIAMS33-1",
+                  "side": "yes"
+                },
+                {
+                  "event_ticker": "KXNFLTDPROT-26OCT26DALPHI",
+                  "market_ticker": "KXNFLTDPROT-26OCT26DALPHI-PHIDGOEDERT88-1",
+                  "side": "yes"
+                }
+              ],
+              "no_ask_dollars": "1.0000",
+              "no_bid_dollars": "1.0000",
+              "no_sub_title": "yes Philadelphia,yes Dak Prescott: 19+,yes Dak Prescott: 1+,yes Tanner McKee: 1+,yes Dak Prescott: 200+,yes Tanner McKee: 125+,yes CeeDee Lamb: 4+,yes George Pickens: 3+,yes Javonte Williams: 2+,yes Darius Cooper: 2+,yes Dallas Goedert: 4+,yes Makai Lemon: 2+,yes CeeDee Lamb: 50+,yes George Pickens: 40+,yes Ryan Flournoy: 10+,yes Darius Cooper: 20+,yes Dallas Goedert: 20+,yes Makai Lemon: 15+,yes Javonte Williams: 40+,yes Saquon Barkley: 40+,yes CeeDee Lamb: 1+,yes Javonte Williams: 1+,yes Dallas Goedert: 1+",
+              "notional_value_dollars": "1.0000",
+              "open_interest_fp": "0.00",
+              "open_time": "2026-10-26T23:29:38Z",
+              "previous_price_dollars": "0.0000",
+              "previous_yes_ask_dollars": "0.0000",
+              "previous_yes_bid_dollars": "0.0000",
+              "price_level_structure": "center_deci_edge_centi_cent",
+              "price_ranges": [
+                {
+                  "end": "0.0100",
+                  "start": "0.0000",
+                  "step": "0.0001"
+                },
+                {
+                  "end": "0.9900",
+                  "start": "0.0100",
+                  "step": "0.0010"
+                },
+                {
+                  "end": "1.0000",
+                  "start": "0.9900",
+                  "step": "0.0001"
+                }
+              ],
+              "result": "",
+              "rules_primary": "",
+              "rules_secondary": "Kalshi is not affiliated, associated, authorized, endorsed by, or in any way officially connected with the Governing League. All trademarks, logos, and brand names are the property of their respective owners.",
+              "settlement_bounds_type": "default",
+              "settlement_timer_seconds": 5,
+              "status": "active",
+              "strike_type": "custom",
+              "ticker": "KXMVECROSSCATEGORY-S2026AI6WGLUADXUYU2PZ-PGLXFSG4I",
+              "title": "yes Philadelphia,yes Dak Prescott: 19+,yes Dak Prescott: 1+,yes Tanner McKee: 1+,yes Dak Prescott: 200+,yes Tanner McKee: 125+,yes CeeDee Lamb: 4+,yes George Pickens: 3+,yes Javonte Williams: 2+,yes Darius Cooper: 2+,yes Dallas Goedert: 4+,yes Makai Lemon: 2+,yes CeeDee Lamb: 50+,yes George Pickens: 40+,yes Ryan Flournoy: 10+,yes Darius Cooper: 20+,yes Dallas Goedert: 20+,yes Makai Lemon: 15+,yes Javonte Williams: 40+,yes Saquon Barkley: 40+,yes CeeDee Lamb: 1+,yes Javonte Williams: 1+,yes Dallas Goedert: 1+",
+              "updated_time": "2026-10-26T23:29:39.396483Z",
+              "volume_24h_fp": "0.00",
+              "volume_fp": "0.00",
+              "yes_ask_dollars": "0.0000",
+              "yes_ask_size_fp": "0.00",
+              "yes_bid_dollars": "0.0000",
+              "yes_bid_size_fp": "0.00",
+              "yes_sub_title": "yes Philadelphia,yes Dak Prescott: 19+,yes Dak Prescott: 1+,yes Tanner McKee: 1+,yes Dak Prescott: 200+,yes Tanner McKee: 125+,yes CeeDee Lamb: 4+,yes George Pickens: 3+,yes Javonte Williams: 2+,yes Darius Cooper: 2+,yes Dallas Goedert: 4+,yes Makai Lemon: 2+,yes CeeDee Lamb: 50+,yes George Pickens: 40+,yes Ryan Flournoy: 10+,yes Darius Cooper: 20+,yes Dallas Goedert: 20+,yes Makai Lemon: 15+,yes Javonte Williams: 40+,yes Saquon Barkley: 40+,yes CeeDee Lamb: 1+,yes Javonte Williams: 1+,yes Dallas Goedert: 1+"
+            },
+            "native_market_id": "KXMVECROSSCATEGORY-S2026AI6WGLUADXUYU2PZ-PGLXFSG4I",
+            "payoff": {
+              "exhaustive": false,
+              "payout_currency": "USD",
+              "schema_version": 1,
+              "settlement_asset": "USD",
+              "state_ids": [
+                "yes",
+                "no"
+              ],
+              "verification_basis": "Native YES/NO and notional metadata only; resolution and settlement conditions require independent validation.",
+              "verified": false
+            },
+            "provenance": {
+              "adapter_version": "frontier-kalshi-3",
+              "clock_uncertainty_ms": null,
+              "exchange_timestamp_semantics": "updated_time is metadata update time",
+              "exchange_timestamp_utc": "2026-10-26T23:29:39.396483Z",
+              "observation_id": "f3d52a4f5a04ab2a2ffe7104bdfe3b1fb70550c93727e8a130be3f60e796d30c",
+              "persisted_at_utc": null,
+              "processed_at_utc": "2026-10-26T23:29:53.723741Z",
+              "raw_sha256": "ccd9144ebab67664ef0b724925d97fe597f906b9b26e30be421cf43d269f4d4c",
+              "request_started_at_utc": "2026-10-26T23:29:53.368212Z",
+              "response_received_at_utc": "2026-10-26T23:29:53.723332Z",
+              "source_schema_version": "market_type:binary",
+              "source_url": "https://external-api.kalshi.com/trade-api/v2/markets?limit=1&status=open"
+            },
+            "quality_flags": [
+              "MVE_PAYOFF_NOT_MODELED",
+              "RULES_PRIMARY_MISSING",
+              "FEE_SCHEDULE_UNKNOWN",
+              "PAYOFF_NOT_VERIFIED",
+              "BOOK_TIMESTAMP_NOT_PROVIDED"
+            ],
+            "quote_asset": null,
+            "resolution": {
+              "authority": null,
+              "closes_at_utc": "2026-10-29T00:15:00Z",
+              "evidence_sha256": "0c6cf6f52da96393526eb670c739eb82979e77771d4af81de6776a4176ebba03",
+              "primary_rule": null,
+              "resolution_fingerprint": null,
+              "secondary_rule": "Kalshi is not affiliated, associated, authorized, endorsed by, or in any way officially connected with the Governing League. All trademarks, logos, and brand names are the property of their respective owners.",
+              "settles_at_utc": "2026-10-27T06:15:00Z",
+              "source_timestamp_semantics": "Kalshi updated_time is market metadata update time, not a book timestamp",
+              "verified": false
+            },
+            "schema_version": 1,
+            "settlement_asset": "USD",
+            "title": "yes Philadelphia,yes Dak Prescott: 19+,yes Dak Prescott: 1+,yes Tanner McKee: 1+,yes Dak Prescott: 200+,yes Tanner McKee: 125+,yes CeeDee Lamb: 4+,yes George Pickens: 3+,yes Javonte Williams: 2+,yes Darius Cooper: 2+,yes Dallas Goedert: 4+,yes Makai Lemon: 2+,yes CeeDee Lamb: 50+,yes George Pickens: 40+,yes Ryan Flournoy: 10+,yes Darius Cooper: 20+,yes Dallas Goedert: 20+,yes Makai Lemon: 15+,yes Javonte Williams: 40+,yes Saquon Barkley: 40+,yes CeeDee Lamb: 1+,yes Javonte Williams: 1+,yes Dallas Goedert: 1+",
+            "venue": "kalshi"
+          }
+        ],
+        "note": "One bounded discovery response; absence from this page is not proof of venue-wide absence.",
+        "schema_version": 1,
+        "venue": "kalshi"
+      },
+      "observation_id": "1ef47195229c6d4ce286c1a9a9b8bb417ceea369c91ccc06b8ac28615706f8dd",
+      "observation_kind": "market_listing",
+      "raw": {
+        "adapter_version": "frontier-kalshi-3",
+        "http_status": 200,
+        "observation_kind": "market_listing",
+        "raw_body": "{\"cursor\":\"CgwI4sT_1gYQ0OXsgQMSMktYTVZFQ1JPU1NDQVRFR09SWS1TMjAyNkFJNldHTFVBRFhVWVUyUFotUEdMWEZTRzRJ\",\"markets\":[{\"can_close_early\":true,\"close_time\":\"2026-10-29T00:15:00Z\",\"created_time\":\"2026-10-26T23:29:38.809186Z\",\"custom_strike\":{\"Associated Events\":\"KXNFLGAME-26OCT26DALPHI,KXNFLPASSCOMP-26OCT26DALPHI,KXNFLPASSTDSPROT-26OCT26DALPHI,KXNFLPASSTDSPROT-26OCT26DALPHI,KXNFLPASSYDSPROT-26OCT26DALPHI,KXNFLPASSYDSPROT-26OCT26DALPHI,KXNFLRECPROT-26OCT26DALPHI,KXNFLRECPROT-26OCT26DALPHI,KXNFLRECPROT-26OCT26DALPHI,KXNFLRECPROT-26OCT26DALPHI,KXNFLRECPROT-26OCT26DALPHI,KXNFLRECPROT-26OCT26DALPHI,KXNFLRECYDSPROT-26OCT26DALPHI,KXNFLRECYDSPROT-26OCT26DALPHI,KXNFLRECYDSPROT-26OCT26DALPHI,KXNFLRECYDSPROT-26OCT26DALPHI,KXNFLRECYDSPROT-26OCT26DALPHI,KXNFLRECYDSPROT-26OCT26DALPHI,KXNFLRSHYDSPROT-26OCT26DALPHI,KXNFLRSHYDSPROT-26OCT26DALPHI,KXNFLTDPROT-26OCT26DALPHI,KXNFLTDPROT-26OCT26DALPHI,KXNFLTDPROT-26OCT26DALPHI\",\"Associated Market Sides\":\"yes,yes,yes,yes,yes,yes,yes,yes,yes,yes,yes,yes,yes,yes,yes,yes,yes,yes,yes,yes,yes,yes,yes\",\"Associated Markets\":\"KXNFLGAME-26OCT26DALPHI-PHI,KXNFLPASSCOMP-26OCT26DALPHI-DALDPRESCOTT4-19,KXNFLPASSTDSPROT-26OCT26DALPHI-DALDPRESCOTT4-1,KXNFLPASSTDSPROT-26OCT26DALPHI-PHITMCKEE16-1,KXNFLPASSYDSPROT-26OCT26DALPHI-DALDPRESCOTT4-200,KXNFLPASSYDSPROT-26OCT26DALPHI-PHITMCKEE16-125,KXNFLRECPROT-26OCT26DALPHI-DALCLAMB88-4,KXNFLRECPROT-26OCT26DALPHI-DALGPICKENS3-3,KXNFLRECPROT-26OCT26DALPHI-DALJWILLIAMS33-2,KXNFLRECPROT-26OCT26DALPHI-PHIDCOOPER80-2,KXNFLRECPROT-26OCT26DALPHI-PHIDGOEDERT88-4,KXNFLRECPROT-26OCT26DALPHI-PHIMLEMON9-2,KXNFLRECYDSPROT-26OCT26DALPHI-DALCLAMB88-50,KXNFLRECYDSPROT-26OCT26DALPHI-DALGPICKENS3-40,KXNFLRECYDSPROT-26OCT26DALPHI-DALRFLOURNOY19-10,KXNFLRECYDSPROT-26OCT26DALPHI-PHIDCOOPER80-20,KXNFLRECYDSPROT-26OCT26DALPHI-PHIDGOEDERT88-20,KXNFLRECYDSPROT-26OCT26DALPHI-PHIMLEMON9-15,KXNFLRSHYDSPROT-26OCT26DALPHI-DALJWILLIAMS33-40,KXNFLRSHYDSPROT-26OCT26DALPHI-PHISBARKLEY26-40,KXNFLTDPROT-26OCT26DALPHI-DALCLAMB88-1,KXNFLTDPROT-26OCT26DALPHI-DALJWILLIAMS33-1,KXNFLTDPROT-26OCT26DALPHI-PHIDGOEDERT88-1\",\"Multivariate Event Ticker\":\"KXMVECROSSCATEGORY-S2026AI6WGLUADXUYU2PZ\"},\"event_ticker\":\"KXMVECROSSCATEGORY-S2026AI6WGLUADXUYU2PZ\",\"exchange_index\":1,\"expected_expiration_time\":\"2026-10-27T06:15:00Z\",\"expiration_time\":\"2026-10-29T00:15:00Z\",\"expiration_value\":\"\",\"is_provisional\":true,\"last_price_dollars\":\"0.0000\",\"latest_expiration_time\":\"2026-10-29T00:15:00Z\",\"market_type\":\"binary\",\"mve_collection_ticker\":\"KXMVECROSSCATEGORY-R\",\"mve_selected_legs\":[{\"event_ticker\":\"KXNFLGAME-26OCT26DALPHI\",\"market_ticker\":\"KXNFLGAME-26OCT26DALPHI-PHI\",\"side\":\"yes\"},{\"event_ticker\":\"KXNFLPASSCOMP-26OCT26DALPHI\",\"market_ticker\":\"KXNFLPASSCOMP-26OCT26DALPHI-DALDPRESCOTT4-19\",\"side\":\"yes\"},{\"event_ticker\":\"KXNFLPASSTDSPROT-26OCT26DALPHI\",\"market_ticker\":\"KXNFLPASSTDSPROT-26OCT26DALPHI-DALDPRESCOTT4-1\",\"side\":\"yes\"},{\"event_ticker\":\"KXNFLPASSTDSPROT-26OCT26DALPHI\",\"market_ticker\":\"KXNFLPASSTDSPROT-26OCT26DALPHI-PHITMCKEE16-1\",\"side\":\"yes\"},{\"event_ticker\":\"KXNFLPASSYDSPROT-26OCT26DALPHI\",\"market_ticker\":\"KXNFLPASSYDSPROT-26OCT26DALPHI-DALDPRESCOTT4-200\",\"side\":\"yes\"},{\"event_ticker\":\"KXNFLPASSYDSPROT-26OCT26DALPHI\",\"market_ticker\":\"KXNFLPASSYDSPROT-26OCT26DALPHI-PHITMCKEE16-125\",\"side\":\"yes\"},{\"event_ticker\":\"KXNFLRECPROT-26OCT26DALPHI\",\"market_ticker\":\"KXNFLRECPROT-26OCT26DALPHI-DALCLAMB88-4\",\"side\":\"yes\"},{\"event_ticker\":\"KXNFLRECPROT-26OCT26DALPHI\",\"market_ticker\":\"KXNFLRECPROT-26OCT26DALPHI-DALGPICKENS3-3\",\"side\":\"yes\"},{\"event_ticker\":\"KXNFLRECPROT-26OCT26DALPHI\",\"market_ticker\":\"KXNFLRECPROT-26OCT26DALPHI-DALJWILLIAMS33-2\",\"side\":\"yes\"},{\"event_ticker\":\"KXNFLRECPROT-26OCT26DALPHI\",\"market_ticker\":\"KXNFLRECPROT-26OCT26DALPHI-PHIDCOOPER80-2\",\"side\":\"yes\"},{\"event_ticker\":\"KXNFLRECPROT-26OCT26DALPHI\",\"market_ticker\":\"KXNFLRECPROT-26OCT26DALPHI-PHIDGOEDERT88-4\",\"side\":\"yes\"},{\"event_ticker\":\"KXNFLRECPROT-26OCT26DALPHI\",\"market_ticker\":\"KXNFLRECPROT-26OCT26DALPHI-PHIMLEMON9-2\",\"side\":\"yes\"},{\"event_ticker\":\"KXNFLRECYDSPROT-26OCT26DALPHI\",\"market_ticker\":\"KXNFLRECYDSPROT-26OCT26DALPHI-DALCLAMB88-50\",\"side\":\"yes\"},{\"event_ticker\":\"KXNFLRECYDSPROT-26OCT26DALPHI\",\"market_ticker\":\"KXNFLRECYDSPROT-26OCT26DALPHI-DALGPICKENS3-40\",\"side\":\"yes\"},{\"event_ticker\":\"KXNFLRECYDSPROT-26OCT26DALPHI\",\"market_ticker\":\"KXNFLRECYDSPROT-26OCT26DALPHI-DALRFLOURNOY19-10\",\"side\":\"yes\"},{\"event_ticker\":\"KXNFLRECYDSPROT-26OCT26DALPHI\",\"market_ticker\":\"KXNFLRECYDSPROT-26OCT26DALPHI-PHIDCOOPER80-20\",\"side\":\"yes\"},{\"event_ticker\":\"KXNFLRECYDSPROT-26OCT26DALPHI\",\"market_ticker\":\"KXNFLRECYDSPROT-26OCT26DALPHI-PHIDGOEDERT88-20\",\"side\":\"yes\"},{\"event_ticker\":\"KXNFLRECYDSPROT-26OCT26DALPHI\",\"market_ticker\":\"KXNFLRECYDSPROT-26OCT26DALPHI-PHIMLEMON9-15\",\"side\":\"yes\"},{\"event_ticker\":\"KXNFLRSHYDSPROT-26OCT26DALPHI\",\"market_ticker\":\"KXNFLRSHYDSPROT-26OCT26DALPHI-DALJWILLIAMS33-40\",\"side\":\"yes\"},{\"event_ticker\":\"KXNFLRSHYDSPROT-26OCT26DALPHI\",\"market_ticker\":\"KXNFLRSHYDSPROT-26OCT26DALPHI-PHISBARKLEY26-40\",\"side\":\"yes\"},{\"event_ticker\":\"KXNFLTDPROT-26OCT26DALPHI\",\"market_ticker\":\"KXNFLTDPROT-26OCT26DALPHI-DALCLAMB88-1\",\"side\":\"yes\"},{\"event_ticker\":\"KXNFLTDPROT-26OCT26DALPHI\",\"market_ticker\":\"KXNFLTDPROT-26OCT26DALPHI-DALJWILLIAMS33-1\",\"side\":\"yes\"},{\"event_ticker\":\"KXNFLTDPROT-26OCT26DALPHI\",\"market_ticker\":\"KXNFLTDPROT-26OCT26DALPHI-PHIDGOEDERT88-1\",\"side\":\"yes\"}],\"no_ask_dollars\":\"1.0000\",\"no_bid_dollars\":\"1.0000\",\"no_sub_title\":\"yes Philadelphia,yes Dak Prescott: 19+,yes Dak Prescott: 1+,yes Tanner McKee: 1+,yes Dak Prescott: 200+,yes Tanner McKee: 125+,yes CeeDee Lamb: 4+,yes George Pickens: 3+,yes Javonte Williams: 2+,yes Darius Cooper: 2+,yes Dallas Goedert: 4+,yes Makai Lemon: 2+,yes CeeDee Lamb: 50+,yes George Pickens: 40+,yes Ryan Flournoy: 10+,yes Darius Cooper: 20+,yes Dallas Goedert: 20+,yes Makai Lemon: 15+,yes Javonte Williams: 40+,yes Saquon Barkley: 40+,yes CeeDee Lamb: 1+,yes Javonte Williams: 1+,yes Dallas Goedert: 1+\",\"notional_value_dollars\":\"1.0000\",\"open_interest_fp\":\"0.00\",\"open_time\":\"2026-10-26T23:29:38Z\",\"previous_price_dollars\":\"0.0000\",\"previous_yes_ask_dollars\":\"0.0000\",\"previous_yes_bid_dollars\":\"0.0000\",\"price_level_structure\":\"center_deci_edge_centi_cent\",\"price_ranges\":[{\"end\":\"0.0100\",\"start\":\"0.0000\",\"step\":\"0.0001\"},{\"end\":\"0.9900\",\"start\":\"0.0100\",\"step\":\"0.0010\"},{\"end\":\"1.0000\",\"start\":\"0.9900\",\"step\":\"0.0001\"}],\"result\":\"\",\"rules_primary\":\"\",\"rules_secondary\":\"Kalshi is not affiliated, associated, authorized, endorsed by, or in any way officially connected with the Governing League. All trademarks, logos, and brand names are the property of their respective owners.\",\"settlement_bounds_type\":\"default\",\"settlement_timer_seconds\":5,\"status\":\"active\",\"strike_type\":\"custom\",\"ticker\":\"KXMVECROSSCATEGORY-S2026AI6WGLUADXUYU2PZ-PGLXFSG4I\",\"title\":\"yes Philadelphia,yes Dak Prescott: 19+,yes Dak Prescott: 1+,yes Tanner McKee: 1+,yes Dak Prescott: 200+,yes Tanner McKee: 125+,yes CeeDee Lamb: 4+,yes George Pickens: 3+,yes Javonte Williams: 2+,yes Darius Cooper: 2+,yes Dallas Goedert: 4+,yes Makai Lemon: 2+,yes CeeDee Lamb: 50+,yes George Pickens: 40+,yes Ryan Flournoy: 10+,yes Darius Cooper: 20+,yes Dallas Goedert: 20+,yes Makai Lemon: 15+,yes Javonte Williams: 40+,yes Saquon Barkley: 40+,yes CeeDee Lamb: 1+,yes Javonte Williams: 1+,yes Dallas Goedert: 1+\",\"updated_time\":\"2026-10-26T23:29:39.396483Z\",\"volume_24h_fp\":\"0.00\",\"volume_fp\":\"0.00\",\"yes_ask_dollars\":\"0.0000\",\"yes_ask_size_fp\":\"0.00\",\"yes_bid_dollars\":\"0.0000\",\"yes_bid_size_fp\":\"0.00\",\"yes_sub_title\":\"yes Philadelphia,yes Dak Prescott: 19+,yes Dak Prescott: 1+,yes Tanner McKee: 1+,yes Dak Prescott: 200+,yes Tanner McKee: 125+,yes CeeDee Lamb: 4+,yes George Pickens: 3+,yes Javonte Williams: 2+,yes Darius Cooper: 2+,yes Dallas Goedert: 4+,yes Makai Lemon: 2+,yes CeeDee Lamb: 50+,yes George Pickens: 40+,yes Ryan Flournoy: 10+,yes Darius Cooper: 20+,yes Dallas Goedert: 20+,yes Makai Lemon: 15+,yes Javonte Williams: 40+,yes Saquon Barkley: 40+,yes CeeDee Lamb: 1+,yes Javonte Williams: 1+,yes Dallas Goedert: 1+\"}]}\n",
+        "raw_body_encoding": "utf8",
+        "raw_sha256": "ccd9144ebab67664ef0b724925d97fe597f906b9b26e30be421cf43d269f4d4c",
+        "received_at_utc": "2026-10-26T23:29:53.723332Z",
+        "request_started_at_utc": "2026-10-26T23:29:53.368212Z",
+        "request_url": "https://external-api.kalshi.com/trade-api/v2/markets?limit=1&status=open",
+        "schema_version": 1,
+        "venue": "kalshi"
+      },
+      "raw_sha256": "ccd9144ebab67664ef0b724925d97fe597f906b9b26e30be421cf43d269f4d4c",
+      "received_at_utc": "2026-10-26T23:29:53.723332+00:00",
+      "row_sha256": "72e105ad6b96f6d0968fb68822016bb7384fdc5f65956219343e219cf07e389b",
+      "venue": "kalshi"
+    },
+    {
+      "normalized": {
+        "has_more": false,
+        "page_limit": 2,
+        "requested_market_id": "KXMVECROSSCATEGORY-S2026AI6WGLUADXUYU2PZ-PGLXFSG4I",
+        "schema_version": 2,
+        "source_cursor": null,
+        "source_next_cursor": null,
+        "trades": [],
+        "venue": "kalshi"
+      },
+      "observation_id": "725fc39f9823a7249b6860b355b5cf84889fe0aa620a461d32a3e28efd0e7885",
+      "observation_kind": "public_trades",
+      "raw": {
+        "adapter_version": "frontier-kalshi-3",
+        "http_status": 200,
+        "observation_kind": "public_trades",
+        "raw_body": "{\"cursor\":\"\",\"trades\":[]}",
+        "raw_body_encoding": "utf8",
+        "raw_sha256": "ce91679332b1b83d2574366e4cc72f6d41bf656ccc2fa9cf574ee4f9ac6809e7",
+        "received_at_utc": "2026-10-26T23:29:54.037148Z",
+        "request_started_at_utc": "2026-10-26T23:29:53.921918Z",
+        "request_url": "https://external-api.kalshi.com/trade-api/v2/markets/trades?ticker=KXMVECROSSCATEGORY-S2026AI6WGLUADXUYU2PZ-PGLXFSG4I&limit=2",
+        "schema_version": 1,
+        "venue": "kalshi"
+      },
+      "raw_sha256": "ce91679332b1b83d2574366e4cc72f6d41bf656ccc2fa9cf574ee4f9ac6809e7",
+      "received_at_utc": "2026-10-26T23:29:54.037148+00:00",
+      "row_sha256": "cc12462c22bd77a76bb674c8ace8b9b081726e032a4ff981c7ee17980e19c51a",
+      "venue": "kalshi"
+    }
+  ],
+  "request_bounds": {
+    "listing_pages": 1,
+    "max_response_bytes": 65536,
+    "retries": 0,
+    "temporary_store_max_bytes": 8388608,
+    "timeout_seconds": 8,
+    "trade_page_limit": 2,
+    "trade_pages": 1,
+    "unauthenticated_get_count": 2
+  },
+  "research_only": true,
+  "schema_version": 1,
+  "trading_or_mutating_requests": false
+}
