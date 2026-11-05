@@ -14,8 +14,9 @@ from midas.reality.model_training import TrainingSpec, load_targets, run, verify
 from midas.reality.research_access import open_final_test
 from midas.reality.research_schema import digest
 from midas.reality.storage import atomic_json, file_hash
-from test_reality_foundry import spec as fixture_spec
-from test_reality_foundry import tape
+
+from tests.test_reality_foundry import spec as fixture_spec
+from tests.test_reality_foundry import tape
 
 
 def rows(n=40, partition="train", regression=False, offset=0):

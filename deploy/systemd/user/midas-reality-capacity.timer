@@ -1,9 +1,9 @@
 [Unit]
-Description=Inspect MIDAS Reality capacity every five minutes
+Description=Inspect MIDAS Reality capacity every thirty minutes
 
 [Timer]
 OnBootSec=1min
-OnUnitActiveSec=5min
+OnUnitActiveSec=30min
 Persistent=true
 Unit=midas-reality-capacity.service
 

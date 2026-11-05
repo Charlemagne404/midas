@@ -34,7 +34,7 @@ class Service:
             if self.store.engine.url.get_backend_name() == "sqlite"
             and database_path
             and database_path != ":memory:"
-            else Path("data")
+            else settings.runtime_root / "data"
         )
         self.recorder = Recorder(
             settings.recording_root or database_parent / "recordings",
@@ -105,7 +105,7 @@ class Service:
             await self.report("ERROR", f"Market recording halted: {error}")
 
     async def start(self) -> None:
-        Path("data").mkdir(exist_ok=True)
+        (self.settings.runtime_root / "data").mkdir(parents=True, exist_ok=True)
         await self.store.initialize()
         await self.broker.start(now_ms())
         self.limits = self.limits.model_copy(
@@ -499,7 +499,7 @@ class Service:
                 key = hashlib.sha256(f"{scenario_id}:{seed}:{now_ms()}".encode()).hexdigest()[:16]
                 await self.store.append("simulation", key, "SYNTHETIC", now_ms(), result)
                 if not result["passed"]:
-                    root = Path("data/failures")
+                    root = self.settings.runtime_root / "data/failures"
                     await asyncio.to_thread(root.mkdir, parents=True, exist_ok=True)
                     import json
 
