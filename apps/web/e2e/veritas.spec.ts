@@ -1,55 +1,73 @@
 import { expect, test } from '@playwright/test';
 
-test('shows the bounded discovery cohort and links its finalized evidence', async ({ page }) => {
-  const latestScanId = 'scan-20261021T000000Z-abcdef123456';
+type VeritasOverview = {
+  finalized_gap_detail: Record<string, unknown> | null;
+  opportunity_observatory: {
+    analysis_version: string | null;
+    measurement_status: string;
+    processed_snapshot_count: number;
+    discovery: {
+      latest_by_category: Record<string, number>;
+      latest_selected_market_rows: unknown[];
+      latest_snapshot_url: string | null;
+      latest_scan_id: string | null;
+      collection_bounds: Record<string, unknown> | null;
+    };
+    opportunity: {
+      quality_valid_pairs: number | null;
+      positive_full_depth_gross_by_quantity: Record<string, number> | null;
+    };
+    recent_candidates: unknown[];
+  };
+};
+
+test('shows historical evidence and matches current observatory labels to its data', async ({
+  page,
+}) => {
+  page.on('pageerror', (error) =>
+    console.error(`[veritas pageerror] ${error.stack ?? error.message}`),
+  );
+  page.on('console', (message) => {
+    if (message.type() === 'error') {
+      console.error(`[veritas browser console] ${message.text()}`);
+    }
+  });
+  const latestScanId = 'scan-20261104T000000Z-abcdef123456';
   const latestSnapshotUrl = `/api/veritas/observatory/snapshots/${latestScanId}`;
   await page.route('**/api/veritas/overview', async (route) => {
     const response = await route.fetch();
-    const body = await response.json();
+    const body = (await response.json()) as VeritasOverview;
     const observatory = body.opportunity_observatory;
-    observatory.status = 'available';
-    observatory.processed_snapshot_count = 1;
-    observatory.readiness = 'descriptive_panel_ready_for_dependence_review';
-    observatory.coverage_window_hours = 1;
+    observatory.measurement_status = 'MEASURED';
+    observatory.processed_snapshot_count = Math.max(1, observatory.processed_snapshot_count);
     Object.assign(observatory.discovery, {
-      current_bounded_eligible_markets: 40,
-      unique_market_ids_observed: 1,
-      latest_phase: 'completed',
       latest_scan_id: latestScanId,
       latest_snapshot_url: latestSnapshotUrl,
-      latest_selected_markets: 1,
-      latest_stable_control_markets: 1,
-      latest_rotating_markets: 1,
-      latest_by_category: { technology: 1 },
-      latest_frame_protocol: 'stratified-gamma-page-rotation-v2',
-      latest_query_count: 6,
-      latest_query_candidate_records: 50,
-      latest_unique_market_ids: 40,
-      latest_http_attempts: 6,
+      latest_by_category: { Technology: 1 },
       latest_selected_market_rows: [
         {
-          market_id: 'fixture-market',
-          primary_category: 'technology',
-          primary_category_source: 'fixture',
+          market_id: 'phase3-selection-probability-market',
+          primary_category: 'Technology',
+          primary_category_source: 'market.category',
           cohort_role: 'rotating_stratified',
-          selection_stratum: 'high_liquidity',
           selection_probability: '1/40',
           selection_probability_basis: 'bounded_query_union',
+          selection_stratum: 'high_liquidity',
         },
       ],
       collection_bounds: {
         target_markets: 40,
         maximum_markets: 50,
         gamma_queries_per_scan: 6,
-        gamma_page_limit: 100,
-        maximum_public_read_calls_per_scan: 6,
-        maximum_public_http_attempts_per_scan: 18,
-        maximum_retries_per_public_read: 2,
+        gamma_page_limit: 50,
+        maximum_public_read_calls_per_scan: 8,
+        maximum_public_http_attempts_per_scan: 16,
+        maximum_retries_per_public_read: 1,
+        request_timeout_seconds: 15,
+        maximum_response_bytes: 48 * 1024 * 1024,
         minimum_request_interval_seconds: 1,
-        request_timeout_seconds: 10,
-        maximum_response_bytes: 16 * 1024 * 1024,
-        maximum_root_bytes: 2 * 1024 * 1024 * 1024,
-        quantity_grid: ['20', '100'],
+        maximum_root_bytes: 1024 * 1024 * 1024,
+        quantity_grid: ['5', '10', '20', '50', '100'],
       },
     });
     await route.fulfill({
@@ -58,7 +76,7 @@ test('shows the bounded discovery cohort and links its finalized evidence', asyn
       body: JSON.stringify(body),
     });
   });
-  await page.route(`**${latestSnapshotUrl}`, (route) =>
+  await page.route(latestSnapshotUrl, (route) =>
     route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -142,6 +160,19 @@ test('shows the bounded discovery cohort and links its finalized evidence', asyn
   await expect(
     page.getByRole('heading', { level: 1, name: /Evidence before conviction/ }),
   ).toBeVisible();
+  const overviewResponse = await page.evaluate(async () => {
+    const response = await fetch('/api/veritas/overview');
+    return { ok: response.ok, body: await response.json() };
+  });
+  expect(overviewResponse.ok).toBeTruthy();
+  const overview = overviewResponse.body as VeritasOverview;
+  const observatory = overview.opportunity_observatory;
+  const opportunityMeasured =
+    observatory.measurement_status === 'MEASURED' ||
+    typeof observatory.opportunity.quality_valid_pairs === 'number';
+  const economicGateQuantities = Object.keys(
+    observatory.opportunity.positive_full_depth_gross_by_quantity ?? {},
+  );
   await expect(page.getByRole('heading', { name: 'Snapshot quality prediction' })).toBeVisible();
   await expect(page.getByText(/Held-out positive gross candidates: 0/)).toBeVisible();
   const qualityExperimentLink = page.getByRole('link', {
@@ -174,29 +205,64 @@ test('shows the bounded discovery cohort and links its finalized evidence', asyn
   expect(independentAudit.data.snapshot_count).toBe(84);
   expect(independentAudit.data.independent_fee_disagreement_count).toBe(0);
   await expect(page.getByRole('heading', { name: 'Market discovery and coverage' })).toBeVisible();
-  await expect(page.getByText('stratified-gamma-page-rotation-v2')).toBeVisible();
-  await expect(page.getByText(/40 target · 50 markets max/)).toBeVisible();
+  if (Object.keys(observatory.discovery.latest_by_category).length === 0) {
+    await expect(
+      page.getByText('No finalized public snapshot has been indexed yet.'),
+    ).toBeVisible();
+  } else {
+    await expect(page.getByText('No finalized public snapshot has been indexed yet.')).toHaveCount(
+      0,
+    );
+  }
+  await expect(page.getByLabel('Current collector limits')).toHaveCount(1);
+  const selectionProbabilityDetails = page.getByText(
+    /Inspect latest per-market selection probabilities/,
+  );
+  await expect(selectionProbabilityDetails).toHaveCount(1);
+  await selectionProbabilityDetails.click();
+  await expect(page.getByText(/Inclusion probability 1\/40/)).toBeVisible();
   await page.getByText(/Recent Director history/).click();
   await expect(page.getByText(/automatic retry is disabled for this scan/)).toBeVisible();
   await expect(page.getByText(/VERITAS-M2-ECO-QUAL-001-RUN-b3fc19f69680/)).toBeVisible();
   await expect(page.getByText(/veritas-qualification-v1-0e39c79c039a76cf/)).toBeVisible();
-  await expect(page.getByLabel('Current collector limits')).toBeVisible();
   await expect(
     page.getByRole('button', { name: 'Run bounded qualification in Arena' }),
-  ).toBeVisible();
-  await page.getByText(/Inspect latest per-market selection probabilities/).click();
-  await expect(page.getByText(/Inclusion probability/).first()).toBeVisible();
+  ).toBeDisabled();
   await expect(
     page.getByRole('heading', { name: 'Opportunity observatory and data quality' }),
   ).toBeVisible();
-  await expect(page.getByText(/0.000 events \/ panel hour/)).toBeVisible();
+  if (!opportunityMeasured) {
+    await expect(
+      page.getByText(
+        'No finalized public snapshot has been analyzed; candidate presence is not measured.',
+      ),
+    ).toBeVisible();
+  } else if (observatory.recent_candidates.length === 0) {
+    await expect(
+      page.getByText(
+        'No quality-valid positive full-depth gross candidate has been recorded in the analyzed snapshots.',
+      ),
+    ).toBeVisible();
+  }
   const economicGateTable = page.getByRole('table', {
     name: 'Positive economic states by quantity and gate',
   });
-  await expect(economicGateTable.getByRole('row', { name: '20 0 0 0 0' })).toBeVisible();
-  await expect(
-    page.getByText(/No quality-valid positive full-depth gross candidate has been recorded/),
-  ).toBeVisible();
+  if (!opportunityMeasured) {
+    await expect(
+      economicGateTable.getByRole('row', {
+        name: /Not measured — awaiting the first finalized snapshot/,
+      }),
+    ).toBeVisible();
+    await expect(page.getByText(/candidate presence is not measured/).last()).toBeVisible();
+  } else if (economicGateQuantities.length === 0) {
+    await expect(
+      economicGateTable.getByRole('row', {
+        name: /No economic-gate rows are available in this measured summary/,
+      }),
+    ).toBeVisible();
+  } else {
+    await expect(economicGateTable.getByRole('row').nth(1)).toBeVisible();
+  }
   await expect(page.getByText(/Latest read-only campaign snapshot/)).toBeVisible();
 
   const coverageDesignAudit = page.getByTestId('coverage-design-audit');
@@ -222,26 +288,27 @@ test('shows the bounded discovery cohort and links its finalized evidence', asyn
   expect(coverageAuditArtifact.data.interpretation.no_venue_wide_inference).toBe(true);
 
   const snapshotLink = page.getByRole('link', { name: /Inspect latest immutable snapshot/ });
-  await expect(snapshotLink).toHaveAttribute(
-    'href',
-    /\/api\/veritas\/observatory\/snapshots\/scan-/,
-  );
-  const snapshotUrl = await snapshotLink.getAttribute('href');
-  expect(snapshotUrl).toBeTruthy();
+  await expect(snapshotLink).toHaveCount(1);
+  await expect(snapshotLink).toHaveAttribute('href', latestSnapshotUrl);
   const snapshotResponse = await page.evaluate(async (url) => {
     const response = await fetch(url);
     return { ok: response.ok, body: await response.json() };
-  }, snapshotUrl!);
+  }, latestSnapshotUrl);
   expect(snapshotResponse.ok).toBeTruthy();
-  const snapshot = snapshotResponse.body;
-  expect(snapshot.artifact).toBe('finalized_public_observation_snapshot');
-  expect(snapshot.data.orders_submitted).toBe(false);
+  expect(snapshotResponse.body.artifact).toBe('finalized_public_observation_snapshot');
+  expect(snapshotResponse.body.data.scan_id).toBe(latestScanId);
+  expect(snapshotResponse.body.data.orders_submitted).toBe(false);
 
   const analysis = await page.request.get('/api/veritas/artifacts/continuous-analysis');
-  expect(analysis.ok()).toBeTruthy();
-  expect((await analysis.json()).data.analysis_version).toBe(
-    'veritas-finalized-snapshot-analysis-v4',
-  );
+  if (observatory.analysis_version) {
+    expect(analysis.status()).toBe(200);
+    expect((await analysis.json()).data.analysis_version).toBe(observatory.analysis_version);
+  } else {
+    expect(analysis.status()).toBe(404);
+    expect((await analysis.json()).detail).toBe(
+      'Veritas public observatory analysis has not been generated',
+    );
+  }
 
   const censoring = await page.request.get('/api/veritas/artifacts/censoring');
   expect(censoring.ok()).toBeTruthy();
@@ -267,10 +334,16 @@ test('shows the bounded discovery cohort and links its finalized evidence', asyn
     'href',
     '/api/veritas/artifacts/censor-gap-audit',
   );
-  await expect(page.getByRole('link', { name: 'Inspect verified prefix' })).toHaveAttribute(
-    'href',
-    '/api/veritas/artifacts/gap-detail-current',
-  );
+  if (overview.finalized_gap_detail) {
+    await expect(page.getByText('Not available in the current workspace')).toHaveCount(0);
+    await expect(page.getByRole('link', { name: 'Inspect verified prefix' })).toHaveAttribute(
+      'href',
+      '/api/veritas/artifacts/gap-detail-current',
+    );
+  } else {
+    await expect(page.getByText('Not available in the current workspace')).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Inspect verified prefix' })).toHaveCount(0);
+  }
 
   const attribution = await page.request.get('/api/veritas/artifacts/censor-gap-attribution');
   expect(attribution.ok()).toBeTruthy();
@@ -280,4 +353,43 @@ test('shows the bounded discovery cohort and links its finalized evidence', asyn
   expect(attributionArtifact.data.gap_censors.same_market_preceding_gap_is_causal_proof).toBe(
     false,
   );
+});
+
+test('shows explicit not-measured state when no finalized snapshots exist', async ({ page }) => {
+  await page.route('**/api/veritas/overview', async (route) => {
+    const response = await route.fetch();
+    const body = (await response.json()) as VeritasOverview;
+    const observatory = body.opportunity_observatory;
+    observatory.measurement_status = 'NOT_MEASURED';
+    observatory.processed_snapshot_count = 0;
+    observatory.discovery.latest_by_category = {};
+    observatory.discovery.latest_selected_market_rows = [];
+    observatory.discovery.latest_snapshot_url = null;
+    observatory.discovery.latest_scan_id = null;
+    observatory.discovery.collection_bounds = null;
+    observatory.opportunity.quality_valid_pairs = null;
+    observatory.opportunity.positive_full_depth_gross_by_quantity = null;
+    observatory.recent_candidates = [];
+    await route.fulfill({
+      status: response.status(),
+      contentType: 'application/json',
+      body: JSON.stringify(body),
+    });
+  });
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Veritas', exact: true }).click();
+
+  await expect(page.getByText('No finalized public snapshot has been indexed yet.')).toBeVisible();
+  await expect(
+    page.getByText(
+      'No finalized public snapshot has been analyzed; candidate presence is not measured.',
+    ),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('row', { name: /Not measured — awaiting the first finalized snapshot/ }),
+  ).toBeVisible();
+  await expect(page.getByRole('link', { name: /Inspect latest immutable snapshot/ })).toHaveCount(
+    0,
+  );
+  await expect(page.getByText(/Inspect latest per-market selection probabilities/)).toHaveCount(0);
 });

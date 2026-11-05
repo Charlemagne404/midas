@@ -1,115 +1,82 @@
 # MIDAS current state
 
-**Updated:** 2026-10-17 (local operational state). This is the current engineering and operations reference. Mission reports, checkpoints, ledgers, and experiment artifacts remain historical records and should be read with their own version and capture time.
+**Freshness note:** this remains the 2026-10-29 point-in-time snapshot. The later 2026-10-30 release, resource remeasurement, and migration outcome are in [UNIFICATION_PRODUCTION_MIGRATION_REPORT.md](UNIFICATION_PRODUCTION_MIGRATION_REPORT.md).
 
-## Project status
+**Snapshot:** read-only service and host sample at `2026-10-29 23:09:12 UTC` (2026-10-30 00:09 CET). Repository code baseline: `fd3d16dacdfc726915c48dcbc71321396a6b0cfa`; documentation closeout is committed on the same branch. Historical observations are preserved in [the archived current-state ledger](history/MIDAS_CURRENT_STATE_HISTORY_2026-10-29.md) and dated engineering reports.
 
-Prometheus, Reality, and Veritas engineering is consolidated into `main`. Prometheus provides the simulation, Laboratory, Arena, provenance, and bounded research foundations. Reality provides public read-only market recording, replay, and forward shadow campaigns. Veritas provides versioned market observation, independent audits, economic sensitivities, source replay, Arena qualification, and the dashboard/API.
+## Authoritative development baseline
 
-MIDAS has no real-order, wallet, deposit, or trading-credential path. Public observations, shadow campaigns, and Arena/Laboratory simulations do not establish real fills or profitability.
+- **Path:** `/home/charlie/midas-unification`
+- **Branch:** `codex/midas-unification`
+- **Starting implementation:** `f6ac37fffcd97eafab4915492200217fbe8c358a`, the verified Frontier handoff based on the Veritas V6 integration.
+- **Working state:** code and documentation are committed locally; the branch is not pushed or merged into protected `main`.
+- **Next development session:** open this checkout and branch. Check `git status --short` and `git rev-parse HEAD` before changing files.
 
-## Repository and worktrees
+The old `/home/charlie/midas` checkout remains on `main` because the live API and Arena scheduler use it. It is a runtime dependency, not the development baseline. The Reality and Veritas worktrees also remain in place for active services and data ownership.
 
-| Path | Branch | Purpose and dependency |
+## Integrated capabilities
+
+| Area | Current implementation and boundary |
+|---|---|
+| Core and paper foundations | Exact arithmetic, separate risk gates, deterministic simulation, and virtual paper accounting. MIDAS has no real order submission, wallet, deposit, or credential path. |
+| Market Data | Public, read-only acquisition and normalized observations. Frontier adapters remain capability and source-policy gated. |
+| Reality | Recording, source-quality observations, reconstruction, replay, and recovery. The unified code reports WebSocket transport activity separately from per-market book freshness, bounded queue pressure, and recent persistence latency. Ambiguous partial or unpublished archive files are preserved for provenance review. No protected recorder transition was performed. |
+| Veritas V6 | Versioned scan/analysis catalogs, independent economic audit, and evidence qualification remain separate from source observations. Conditional assumptions and incomplete evidence remain explicit. |
+| Frontier | Bounded multi-venue evidence store, hypothesis and review history, deterministic replay, and separate arithmetic audit. Stored observations remain immutable and venue-specific. |
+| Laboratory and Arena | Deterministic synthetic experiments, bounded job admission, artifact verification, and a fair rotating schedule dispatcher. No campaign or long-running worker was started for this mission. |
+| Research Director and Observatory | Research coordination and read-only catalog projections are integrated through the shared API. |
+| Mission Control and Research Readiness | One React shell contains the scanner, paper, Reality, Veritas, Frontier, Laboratory, Arena, Observatory, readiness, analytics, settings, and operations views. The existing `Readiness.tsx` is the single readiness workspace. |
+
+A saved result, a recorded observation, a synthetic simulation, a virtual paper outcome, and an independently checked calculation are different evidence classes. None establishes realized trading profit or real fills.
+
+## Live service architecture
+
+This is a point-in-time user-systemd inventory. Installed units live under `/home/charlie/.config/systemd/user`; repository templates are under `deploy/systemd/user`. The running services still reference legacy worktrees or separately versioned releases.
+
+| Unit | Active source/runtime path | Persistent owner or boundary |
 |---|---|---|
-| `/home/charlie/midas` | `main` | Authoritative development checkout. Main API, dashboard, and Arena scheduler run from here. |
-| `/home/charlie/midas-reality` | `project/reality` | Retained runtime checkout for the public recorder, frozen Reality campaign, successor campaign, and Reality interface. Systemd units use this path; its `data/` and `.venv/` stay local. |
-| `/home/charlie/midas-veritas` | `project/veritas` | Retained data and runtime workspace for Veritas observation, source replay, gap-detail replay, Research Director, and Veritas API artifacts. Timers use this path; its ignored data remains local. |
+| `midas-api.service` | API release `/home/charlie/.local/share/midas-api/releases/a152999`; `WorkingDirectory=/home/charlie/midas`; PID 1218662 | Main checkout configuration and data; `MemoryHigh=1536 MiB`, `MemoryMax=1792 MiB`, swap max 0. |
+| `midas-web.service` | Web release `/home/charlie/.local/share/midas-api/releases/767f330/apps/web` | Versioned web release; no memory limit is set. |
+| `midas-reality.service` | `/home/charlie/midas-reality`; `deploy/reality.json`; PID 1235804 | Protected recorder and Reality data; `MemoryHigh=1152 MiB`, `MemoryMax=1280 MiB`, swap max 0. |
+| `midas-reality-api.service` | API release `/home/charlie/.local/share/midas-capacity/interface-capacity-v3-20261021`; working directory `/home/charlie/midas-reality`; PID 610950 | Reality workspace; `MemoryHigh=576 MiB`, `MemoryMax=640 MiB`, swap max 0. |
+| `midas-reality-web.service` | Vite source `/home/charlie/midas-reality/apps/web`; PID 2890819 | Legacy Reality web checkout; `MemoryMax=512 MiB`. |
 
-Both feature branch histories are represented in `main`. The Reality and Veritas worktrees remain because active services and preserved runtime data depend on their paths. Do not remove either worktree until those services and their data have a separately verified migration plan. Temporary consolidation worktrees are not part of the operating layout.
+Seven enabled timers were present: Arena scheduler; Reality capacity, research, and shadow integrity; Veritas observatory, research director, and source analysis. The Arena timer's one-shot service uses `/home/charlie/midas`; Reality timers use `/home/charlie/midas-reality`; Veritas research services use `/home/charlie/midas-veritas`. The Veritas observatory runs from release `e988cbb0af86fe89e07da9af8036598b65068deb` and writes to the Veritas workspace. A later unit census found 121 MIDAS unit-file entries, including 90 transient service records from past Arena, validation, Reality, Veritas, and reliability work; these were not loaded units, and no unit state was cleared. Five timers were disabled, including archive, two 48-hour autonomy, and two Veritas gap-detail timers. The static gap-detail services remain installed. No unit was restarted, reloaded, disabled, or rewritten. No MIDAS container or cron job was found.
 
-Recovery refs created during consolidation:
+At the sample time, host memory available was about 10 GiB and swap was effectively full (436 KiB free of 4 GiB). Memory PSI was 0% over the sampled windows; I/O PSI was about 1.4% avg10. Reality cgroup memory was 977,072,128 bytes against 1,207,959,552-byte `MemoryHigh` and 1,342,177,280-byte `MemoryMax`; its counters showed 33,176 high events and zero max/OOM events. These are time-specific measurements, not a sustained capacity guarantee.
 
-- `recovery/preconsolidation-main-20261017`
-- `recovery/preconsolidation-reality-20261017`
-- `recovery/preconsolidation-veritas-20261017`
-- `recovery/veritas-uncommitted-20261017` (preserved interrupted Veritas changes)
+## Preserved data and ownership
 
-Project Atlas and Frontier are not implemented and are deferred.
+No research database, recording, model, journal, campaign, archive, snapshot, or runtime release was merged, migrated, or rewritten during Project Unification.
 
-## Architecture and source layout
+| Path | Measured inventory | Ownership and handling |
+|---|---:|---|
+| `/home/charlie/midas/data` | 18 GiB | Shared historical scanner, paper, Arena, Laboratory, research, reliability, and campaign data. Multiple active writers; preserve in place. |
+| `/home/charlie/midas-reality/data` | 27 GiB | Reality recordings, datasets, journals, research, and canary/export data. Recorder-owned; preserve and do not migrate while active. |
+| `/home/charlie/midas-veritas/data` | 1.6 GiB | Veritas V6 catalogs, scans, experiments, Arena records, and scheduled analysis outputs. Keep physically separate. |
+| `/home/charlie/midas-frontier/data` | 17 MiB | Public captures, evidence receipts, and Frontier research store. Preserve raw and normalized evidence. |
+| `/home/charlie/midas-engineering-mission-20261025/data` | 1.3 GiB | 522-file offline Veritas replay evidence. The worktree also contains more than 3,000 untracked data files; preserve it intact. |
+| `/mnt/continental-cloud/data/midas-reality-staging` | 6.2 GiB | Recovery/staging material, including the 5.1 GiB `archive-mission3`. Its historical provenance is not a current-boundary recovery certification. |
+| `/home/charlie/.local/share/midas-api/releases` | 601 MiB | Immutable API and web release directories, including the active `a152999` and `767f330` releases. |
+| `/home/charlie/.local/share/midas-capacity` | 29 MiB | Versioned Reality interface releases. |
+| `/home/charlie/.local/share/midas-veritas/releases` | 85 MiB | Versioned Veritas observer release. |
 
-MIDAS is a Python modular monolith with a separate React dashboard:
+Sizes are the read-only inventory captured on 2026-10-29. Do not infer that ignored files, copied archives, or staging trees are disposable. No database consolidation is planned merely to normalize layout.
 
-- `packages/midas/core`, `market_data`, `simulation`, `risk`, and `paper` contain the domain, read-only adapters, deterministic exchange, and virtual accounting.
-- `packages/midas/laboratory` and `packages/midas/arena` contain durable simulated experiments and bounded research jobs.
-- `packages/midas/reality` contains public recording, finalized-segment replay, and shadow-campaign code.
-- `packages/midas/veritas` contains observation, source replay, measurement, audit, and economic analysis.
-- `apps/api` registers the FastAPI routes and configures persistence and storage paths.
-- `apps/web` contains the React command center, including Arena, Reality, and Veritas pages.
-- `docs/` contains current operations guidance plus preserved historical research, checkpoint, provenance, and verification records.
+## Verification status
 
-The Veritas API uses source code from `main` and reads its versioned documents and runtime artifacts from `MIDAS_VERITAS_WORKSPACE` (currently `/home/charlie/midas-veritas`). This keeps the 122 MB observatory and 133 MB Arena runtime stores in place. The main Arena store remains `/home/charlie/midas/data/arena` unless `MIDAS_ARENA_ROOT` is changed.
+- Full Frontier backend suite: **748 passed**, one upstream Starlette/httpx deprecation warning.
+- Focused Reality, recovery/resource, and Arena schedule tests: **122 passed** after the archive safeguard; one upstream deprecation warning.
+- Full-project typing: **mypy packages/midas apps/api — 192 source files, no issues**.
+- Python lint and formatting: **`ruff check .` and `ruff format --check .` passed**. Immutable `deploy/runtime/**` snapshots and archived docs are excluded from Ruff so their contents remain unchanged.
+- Frontend unit tests: **78 passed**; lint, typecheck, and production build passed.
+- Isolated browser suite: **19 passed, 5 skipped**. The test used temporary Lab/Reality/Arena/Frontier roots and the unified checkout as the empty Veritas workspace.
+- Unified API smoke: startup completed in demo mode with temporary data roots. OpenAPI exposed 136 paths; representative core, Reality, Frontier, Arena, Laboratory, and readiness GET routes returned 200. The empty Veritas workspace returned its no-evidence 404 without generating synthetic evidence.
+- Broad backend suite: **2,119 tests collected**. The serial run was stopped after **119 passed in 319.91 seconds** while a synthetic JSON serialization test was still running. It had no assertion failure before interruption; the complete suite is **not verified**.
+- `uv sync` was not run because `uv` was unavailable in this shell. Verification used the existing Python 3.12 environment at `/home/charlie/midas/.venv`; Node was 22.23.4 and pnpm was 10.18.0.
 
-The deployed `midas-api.service` now sets `MIDAS_VERITAS_WORKSPACE=%h/midas-veritas`; its existing recording-budget drop-in is preserved. After this deployment, `/api/health` reported `READY`, Laboratory `READY`, paper journal recovery `CHECKPOINT_VERIFIED` across 236,471 events, and `live_execution=false`. Veritas overview and artifact endpoints returned HTTP 200. API startup verified the durable paper journal for about 74 seconds; the service cgroup peaked at 8.54 GiB. At 00:53 local, cgroup use was 3.23 GiB, including 1.61 GiB `inactive_file` cache, while process RSS was 1.61 GiB. The host reported 8.0 GiB available RAM and 3.6 GiB swap in use. Allow for that startup cost when planning any future API restart.
+## Remaining state
 
-## Services and dashboard access
+The unified development baseline is implemented and checked through the focused subsystem, frontend, and browser suites. **Production adoption is pending.** The API, web, Reality recorder, Reality API/web, Arena timer, and Veritas timers still use the paths and releases listed above. See [OPERATIONS.md](OPERATIONS.md) and [UNIFICATION_DEPLOYMENT_PLAN.md](UNIFICATION_DEPLOYMENT_PLAN.md) before any transition.
 
-The active local dashboard and API use loopback addresses:
-
-- Main command center: <http://127.0.0.1:5173>
-- Main API health: <http://127.0.0.1:8000/api/health>
-- Veritas overview: <http://127.0.0.1:8000/api/veritas/overview>
-- Reality API: <http://127.0.0.1:8010/api/health>
-- Reality interface: <http://127.0.0.1:5180>
-
-The main API and web development server use `/home/charlie/midas`. Reality recorder, shadow workers, API, and web services use `/home/charlie/midas-reality`. Veritas timer units use `/home/charlie/midas-veritas`; Veritas observation, source replay, gap-detail replay, and Research Director services are one-shot jobs and are normally inactive between timer runs. `midas-arena-scheduler.timer` also runs bounded dispatch checks; its service is normally inactive after each check.
-
-The managed main dashboard is on `127.0.0.1:5173`; a separate shell-owned Vite development server also remains on `0.0.0.0:5174` in an active GNOME Terminal session. The latter has no systemd dependency and was left running with its terminal intact.
-
-The Reality interface API on `127.0.0.1:8010` is the isolated demo preview. It returns HTTP 200 and `startup_status=READY`, but its health status is `DEGRADED`: the synthetic demo recorder exhausted its default 100,000,000-byte budget under `data/research/reality/interface/recordings`, and the service logs repeated recording-budget errors. This preview database/recording path is separate from the public collector's `data/recordings`; the collector and campaigns are unaffected. The preview API was left running without resetting its data or raising the cap. A rotation or disabled-demo-recording policy needs a separate operational decision if this preview remains in use.
-
-At 00:53 local, the Reality recorder was running at about 704 MiB against `MemoryHigh=704 MiB` and `MemoryMax=768 MiB`; its recorded cgroup peak was about 704.3 MiB. It is near the high threshold but below the hard cap. Do not raise the limit to hide growth. The frozen Reality worker is still running but is severely behind source input; its campaign is preserved and unchanged. The successor worker is active on its own versioned campaign. Both report zero actual orders.
-
-The frozen worker's last status showed `WARMING_OR_LAGGED_SOURCE`, 10,253 decisions, and 215,099 lagged frames skipped. Its last decision was at 2026-10-15 08:58 UTC while the status was updated at 2026-10-16 22:40 UTC. The successor status was `FORWARD_EVALUATING_EXPERIMENTAL`, with its last decision and source receipt near 2026-10-16 22:40 UTC. Do not restart, reset, reconfigure, or rewrite either campaign as part of routine deployment.
-
-The latest gap-detail run completed at 00:51 local time with 7,383 segments processed, `status=current`, and zero pending segments. An earlier run processed 7,354 replayable finalized segments from a 7,356-segment catalog; the remaining two were recorded as empty finalized segments. Source analysis completed at 00:42 local time with 7,364 segments processed, `status=current`, and no pending source bytes. The latest public observation scan completed at 00:30 local time. The scheduled Research Director run completed at 00:45:50 local time; its next timer is scheduled for 01:15.
-
-Historical failed one-shot Arena jobs, test suites, capture attempts, and the Reality canary remain visible in systemd's failed-unit list. They are not active processes or recurring timers. Do not clear or rerun them just to make the unit list look clean; consult their saved records and logs first.
-
-## Data and archive locations
-
-Mutable databases, model files, recordings, campaign state, and research runtime outputs are ignored by Git and must remain in place:
-
-- Prometheus and main application state: `/home/charlie/midas/data/` (about 5.3 GB), including Arena and Laboratory stores.
-- Reality recordings: `/home/charlie/midas-reality/data/recordings/` (about 3.4 GB); Reality research and campaigns: `/home/charlie/midas-reality/data/research/` (about 1.7 GB).
-- Frozen Reality campaign: `/home/charlie/midas-reality/data/research/reality/forward/mission2/`.
-- Successor campaign: `/home/charlie/midas-reality/data/research/reality/forward/mission2-successor-20261016/`.
-- Veritas finalized-source observations and summaries: `/home/charlie/midas-veritas/data/veritas-observatory/` (about 122 MB); Veritas Arena store: `/home/charlie/midas-veritas/data/arena/` (about 133 MB).
-- Recovery snapshots: `/home/charlie/midas-recovery-20261011T2355/` and `/home/charlie/midas-recovery-post-campaign-20261012/` (about 480 MB and 504 MB). Each snapshot manifest listed 47 files; all recorded sizes and SHA-256 values verified.
-- Prometheus bundles: `/home/charlie/midas-prometheus-bundles/` (about 555 MB). All 24 `.tar.gz` archives passed a read-only archive listing/integrity check. Related bundle verification records remain in `docs/`.
-
-The frozen Reality campaign configuration SHA-256 is `aa8acb2b46823c1a1e3ac5d01a57dde917746c2c7471098ae2a4598875e322f5`; the successor configuration SHA-256 is `c5eb8b98cbfd657372fc620192c5a0c0bb46f41d760800e680181fa7f3ee95a3`. A read-only integrity check verified both campaign identities, 20 pinned code files, four models, SQLite integrity, and event chains. The frozen journal had 113,419 events and tail SHA-256 `0d4757d1bb9d9145c90ce1ce004943dcb1c733da18617ec2a844444591a279e`; the successor had 23,657 events and tail SHA-256 `59475db679ae4c2ce8e3fe464d76046d1dde337ae07861110662c97d373f9921`. These checks did not write to the campaign directories.
-
-## Research conclusions and evidence limits
-
-- Prometheus demonstrated model and policy behavior in synthetic simulation. It did not establish real-market profitability.
-- Reality's frozen forward state remains `insufficient_forward_evidence`; no scientific champion or real fill is established.
-- The latest ledger-receipted Veritas independent audit covers 84 saved scans and 3,360 selected observations. It reports zero quality-valid positive gross candidates, zero stored-versus-independent validity/top-edge mismatches, and zero disagreements across 3,768 fee checks. The sample is finite, selected, and correlated; it is not venue-wide or evidence of fills.
-- The market-quality experiment predicts the same-snapshot book-quality gate only. It reports zero positive gross candidates in its held-out panel and is explicitly not deployed as an economic strategy.
-- `VERITAS_MISSION2_INDEPENDENT_OPPORTUNITY_AUDIT_021.json` contains an 85-scan result but has no matching ledger receipt. It is preserved as unreceipted evidence and is not the artifact returned by the dashboard. The API intentionally serves the newest ledger-receipted audit (scan 84).
-
-No historical observation, campaign journal, or economic result should be rewritten to make versions agree. Synthetic execution sensitivities, public quote observations, and shadow decisions must remain distinct.
-
-## Development and verification
-
-From `/home/charlie/midas`, use Python 3.12+, Node 22+, Corepack, and the lockfiles. See [Development and verification](DEVELOPMENT.md) for full install instructions.
-
-```bash
-uv sync --frozen
-corepack pnpm install --frozen-lockfile
-.venv/bin/uv run uvicorn apps.api.main:app --host 127.0.0.1 --port 8000
-corepack pnpm dev
-```
-
-The main backend tests are run with `.venv/bin/uv run --frozen pytest -q`; frontend checks use `corepack pnpm lint`, `typecheck`, `test`, and `build`. Browser tests use `corepack pnpm test:e2e`. Tests that admit Arena jobs or start campaigns can write durable state; use a temporary data root for intentional tests and inspect the command before running it.
-
-For focused Veritas regression tests:
-
-```bash
-PYTHONPATH=packages .venv/bin/python -m pytest -q tests/test_veritas_*.py
-```
-
-## Deferred work and operating limits
-
-The frozen worker's lag and recorder memory growth need a separately versioned operational decision. Preserve the current campaigns, records, and source segments while making that decision. Do not change the frozen campaign configuration or journal. Atlas/Frontier, new market discovery, strategy expansion, training, exploratory experiments, and economic optimization are outside the current maintenance scope.
+The repository inventory contains 26 local branches, 7 remote heads, and 29 worktrees. No old branch or worktree was deleted. Several of them contain active-runtime dependencies, uncommitted source, or unique research data. The complete disposition is in [UNIFICATION_BRANCH_INVENTORY.md](UNIFICATION_BRANCH_INVENTORY.md).

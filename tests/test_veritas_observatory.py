@@ -7,13 +7,34 @@ from pathlib import Path
 from typing import Any
 
 import httpx
+import pytest
 from midas.veritas.observatory import (
     DEFAULT_SEED,
+    MAX_LATEST_SUMMARY_BYTES,
     VERSION,
     PublicReadClient,
+    _atomic_json,
+    _collect_pair_books,
     _query_plan,
+    _validate_book_batch,
     run_scan,
 )
+
+
+def test_latest_summary_publication_is_bounded_and_preserves_prior_file(tmp_path):
+    path = tmp_path / "latest-summary.json"
+    previous = b'{"scan_id":"prior"}'
+    path.write_bytes(previous)
+
+    with pytest.raises(ValueError, match="publication exceeds"):
+        _atomic_json(
+            path,
+            {"detail": "x" * MAX_LATEST_SUMMARY_BYTES},
+            maximum=MAX_LATEST_SUMMARY_BYTES,
+        )
+
+    assert path.read_bytes() == previous
+    assert not list(tmp_path.glob(".latest-summary.json.*.tmp"))
 
 
 def _market(index: int) -> dict[str, Any]:
@@ -136,11 +157,10 @@ def test_stratified_observatory_is_bounded_reproducible_and_keeps_controls(tmp_p
 
     assert first["analysis_version"] == VERSION
     assert first["measurement_pilot"]["study_id"] == "VERITAS-M2-COVERAGE-PILOT-001"
-    assert first["measurement_pilot"]["status"] == "running"
+    assert first["measurement_pilot"]["status"] == "not_advanced_analysis_protocol_changed"
     assert first["measurement_pilot_v2"]["study_id"] == "VERITAS-M2-COVERAGE-PILOT-002"
-    assert first["measurement_pilot_v2"]["status"] == "running"
-    assert first["measurement_pilot_v2"]["completed_scans"] == 1
-    assert first["discovery_frame_protocol"] == "stratified-gamma-page-rotation-v2"
+    assert first["measurement_pilot_v2"]["status"] == "not_advanced_analysis_protocol_changed"
+    assert first["discovery_frame_protocol"] == "stratified-gamma-page-rotation-v3-reference-sample"
     assert first["selection"]["plan"]["phase"] == "liquidity"
     assert second["selection"]["plan"]["phase"] == "expiry"
     assert first_controls == second_controls
@@ -160,8 +180,15 @@ def test_stratified_observatory_is_bounded_reproducible_and_keeps_controls(tmp_p
         for row in first["selection"]["selected_markets"]
         if row["cohort_role"] == "rotating_stratified"
     ]
+    reference_rows = [
+        row
+        for row in first["selection"]["selected_markets"]
+        if row["cohort_role"] == "reference_random"
+    ]
     assert all(row["selection_probability"] == str(4 / 45) for row in stable_rows)
     assert all(0 < float(row["selection_probability"]) <= 1 for row in rotating_rows)
+    assert len(reference_rows) == 8
+    assert all(row["selection_probability"] == str(8 / 41) for row in reference_rows)
     assert first["discovery"]["query_count"] == 6
     assert first["discovery"]["eligible_pair_markets"] == 45
     assert first["counts"]["valid_quality_pairs"] == 30
@@ -169,7 +196,9 @@ def test_stratified_observatory_is_bounded_reproducible_and_keeps_controls(tmp_p
     assert all(row["expiry_band"] != "unknown" for row in first["selection"]["selected_markets"])
     assert all(row["spread_band"] != "unknown" for row in first["selection"]["selected_markets"])
     assert first["counts"]["positive_full_depth_gross_by_quantity"]["20"] == 30
-    assert first["counts"]["positive_minimum_notional_by_quantity"]["20"] == 30
+    assert first["counts"]["positive_minimum_notional_by_quantity"]["20"] == 0
+    assert first["counts"]["positive_minimum_shares_by_quantity"]["20"] == 30
+    assert first["counts"]["positive_reported_constraints_by_quantity"]["20"] == 0
     assert first["counts"]["positive_fragmentation_safe_fee_sensitivity_by_quantity"]["20"] == 30
     assert first["orders_submitted"] is False
     assert first["authenticated_requests"] is False
@@ -184,26 +213,56 @@ def test_stratified_observatory_is_bounded_reproducible_and_keeps_controls(tmp_p
     snapshot_path = tmp_path / first["snapshot_file"]
     stored = json.loads(gzip.decompress(snapshot_path.read_bytes()))
     assert stored["snapshot_evidence_sha256"] == first["snapshot_evidence_sha256"]
+    assert all(
+        row["audit"]["constraint_support"]["minimum_order_notional_unit_status"] == "unverified"
+        and all(
+            quantity["minimum_order_notional_satisfied"] is None
+            and quantity["minimum_order_constraints_satisfied"] is None
+            for quantity in row["audit"]["quantity_results"]
+        )
+        for row in stored["market_observations"]
+    )
     assert len(stored["source_requests"]["gamma_pages"]) == 6
     assert all(page["response_payload"] for page in stored["source_requests"]["gamma_pages"])
     assert stored["source_requests"]["clob_books"]["response_payload"]
     latest = json.loads((tmp_path / "latest-summary.json").read_text())
     assert latest["scan_id"] == second["scan_id"]
-    assert latest["measurement_pilot"]["completed_scans"] == 2
-    assert latest["measurement_pilot_v2"]["completed_scans"] == 2
+    assert latest["measurement_pilot"]["status"] == "not_advanced_analysis_protocol_changed"
+    assert latest["measurement_pilot_v2"]["status"] == "not_advanced_analysis_protocol_changed"
     assert latest["coverage_kind"] == "intermittent_public_snapshots"
-    assert latest["discovery"]["frame_protocol"] == "stratified-gamma-page-rotation-v2"
+    assert (
+        latest["discovery"]["frame_protocol"]
+        == "stratified-gamma-page-rotation-v3-reference-sample"
+    )
     assert latest["discovery"]["offset_bucket_seconds"] == 30 * 60
     assert latest["collection_bounds"]["target_markets"] == 30
-    assert latest["collection_bounds"]["maximum_public_read_calls_per_scan"] == 7
-    assert latest["collection_bounds"]["maximum_public_http_attempts_per_scan"] == 14
+    assert latest["collection_bounds"]["maximum_public_read_calls_per_scan"] == 8
+    assert latest["collection_bounds"]["maximum_public_http_attempts_per_scan"] == 16
     assert latest["collection_bounds"]["maximum_retries_per_public_read"] == 1
     assert latest["collection_bounds"]["maximum_response_bytes"] == 48 * 1024**2
     assert latest["source_http_attempts"] == 7
     assert len(latest["selection"]["sampled_markets"]) == 30
     assert all("selection_probability" in row for row in latest["selection"]["sampled_markets"])
     assert all("primary_category_source" in row for row in latest["selection"]["sampled_markets"])
+    assert (
+        sum(
+            row["cohort_role"] == "reference_random"
+            for row in latest["selection"]["sampled_markets"]
+        )
+        == 8
+    )
     assert "unknown" not in latest["selection"]["selected_by_liquidity"]
+    assert (
+        latest["continuous_analysis"]["analysis_version"]
+        == "veritas-finalized-snapshot-analysis-v6"
+    )
+    assert "observed_market_ids" not in latest["continuous_analysis"].get("cumulative", {})
+    from midas.veritas.scan_catalog import summary as catalog_summary
+
+    assert catalog_summary(tmp_path)["scan_count"] == 2
+    status_files = list((tmp_path / "pipeline-status").glob("*.json"))
+    assert len(status_files) == 2
+    assert all(json.loads(path.read_text())["snapshot_file_sha256"] for path in status_files)
 
 
 def test_snapshot_change_stratum_requires_repeated_snapshot_evidence():
@@ -332,3 +391,141 @@ def test_public_read_enforces_response_byte_bound_while_streaming(monkeypatch):
     with pytest.raises(ValueError, match="response exceeds its byte bound"):
         asyncio.run(exercise())
     assert attempts == 1
+
+
+def _book(asset_id: str, condition: str) -> dict[str, Any]:
+    return {
+        "market": condition,
+        "asset_id": asset_id,
+        "timestamp": "1792044000000",
+        "hash": f"book-{asset_id}",
+        "bids": [{"price": "0.39", "size": "100"}],
+        "asks": [{"price": "0.40", "size": "100"}],
+        "min_order_size": "5",
+        "tick_size": "0.01",
+        "neg_risk": False,
+    }
+
+
+def test_book_batch_classifies_missing_duplicate_unexpected_and_malformed_assets():
+    valid_d = _book("d", "condition-d")
+    payload = [
+        _book("a", "condition-a"),
+        _book("a", "condition-a"),
+        {**_book("b", "condition-b"), "asks": None},
+        _book("unexpected", "condition-x"),
+        "not-a-book-object",
+        valid_d,
+    ]
+
+    usable, integrity = _validate_book_batch(payload, ["a", "b", "c", "d"])
+
+    assert integrity["status"] == "partial"
+    assert integrity["missing_asset_ids"] == ["c"]
+    assert integrity["duplicate_asset_ids"] == ["a"]
+    assert integrity["unexpected_asset_ids"] == ["unexpected"]
+    assert integrity["malformed_assets"] == {"b": ["asks_not_array"]}
+    assert integrity["malformed_rows"] == [{"row_index": 4, "reason": "row_not_object"}]
+    assert set(usable) == {"d"}
+    isolated_usable, isolated_integrity = _validate_book_batch(
+        [_book("a", "condition-a"), _book("unexpected", "condition-x")], ["a"]
+    )
+    assert isolated_integrity["status"] == "partial"
+    assert isolated_integrity["unexpected_asset_ids"] == ["unexpected"]
+    assert set(isolated_usable) == {"a"}
+
+
+def test_eighty_requested_seventy_eight_returned_recovers_only_the_affected_pair():
+    import asyncio
+    import hashlib
+
+    rows = [
+        {
+            "market_id": f"market-{index}",
+            "condition": f"condition-{index}",
+            "outcomes": {"yes": f"yes-{index}", "no": f"no-{index}"},
+        }
+        for index in range(40)
+    ]
+    initial_missing = {"yes-17", "no-17"}
+
+    class FixtureClient:
+        def __init__(self):
+            self.calls: list[list[str]] = []
+
+        async def books(self, assets: list[str]):
+            self.calls.append(list(assets))
+            is_retry = len(self.calls) > 1
+            returned = [
+                _book(asset, f"condition-{asset.split('-')[-1]}")
+                for asset in assets
+                if is_retry or asset not in initial_missing
+            ]
+            wire = json.dumps(returned, separators=(",", ":"))
+            receipt = {
+                "requested_at_ns": 1_792_044_000_000_000_000,
+                "received_at_ns": 1_792_044_000_010_000_000,
+                "request_duration_ms": 10.0,
+                "request_asset_ids": list(assets),
+                "response_book_count": len(returned),
+                "response_sha256": hashlib.sha256(wire.encode()).hexdigest(),
+                "response_payload": wire,
+            }
+            return returned, receipt
+
+    client = FixtureClient()
+    result = asyncio.run(_collect_pair_books(client, rows))
+
+    assert [len(call) for call in client.calls] == [80, 2]
+    assert result["batch_receipts"][0]["response_book_count"] == 78
+    assert result["initial_integrity"]["returned_row_count"] == 78
+    assert result["retry_pair_count"] == 1
+    assert result["pair_timing"]["market-17"]["status"] == "recovered_by_pair_retry"
+    assert sum(item["status"] == "complete" for item in result["pair_timing"].values()) == 39
+    assert all(len(result["pair_books"][f"market-{index}"]) == 2 for index in range(40))
+
+
+def test_failed_pair_retry_does_not_invalidate_other_complete_pairs():
+    import asyncio
+    import hashlib
+
+    rows = [
+        {
+            "market_id": f"market-{index}",
+            "condition": f"condition-{index}",
+            "outcomes": {"yes": f"yes-{index}", "no": f"no-{index}"},
+        }
+        for index in range(4)
+    ]
+
+    class FixtureClient:
+        def __init__(self):
+            self.calls = 0
+
+        async def books(self, assets: list[str]):
+            self.calls += 1
+            returned = [
+                _book(asset, f"condition-{asset.split('-')[-1]}")
+                for asset in assets
+                if asset != "yes-1"
+            ]
+            wire = json.dumps(returned, separators=(",", ":"))
+            return returned, {
+                "requested_at_ns": 1_792_044_000_000_000_000,
+                "received_at_ns": 1_792_044_000_010_000_000,
+                "request_duration_ms": 10.0,
+                "request_asset_ids": list(assets),
+                "response_book_count": len(returned),
+                "response_sha256": hashlib.sha256(wire.encode()).hexdigest(),
+                "response_payload": wire,
+            }
+
+    client = FixtureClient()
+    result = asyncio.run(_collect_pair_books(client, rows))
+
+    assert client.calls == 2
+    assert result["pair_timing"]["market-1"]["status"] == "incomplete_after_retry"
+    assert result["pair_books"]["market-1"] == {}
+    for index in (0, 2, 3):
+        assert result["pair_timing"][f"market-{index}"]["status"] == "complete"
+        assert len(result["pair_books"][f"market-{index}"]) == 2

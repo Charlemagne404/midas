@@ -2,7 +2,9 @@ import { test, expect } from '@playwright/test';
 test('discover, inspect, simulate, replay and expose execution failure', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'Mission Control', exact: true })).toBeVisible();
-  await expect(page.getByText('DEMO · SYNTHETIC')).toBeVisible();
+  await expect(page.getByText('Example data', { exact: true })).toBeVisible();
+  await expect(page.getByText('EXAMPLE DATA', { exact: true })).toBeVisible();
+  await expect(page.getByText(/All balances and results are virtual/)).toBeVisible();
   await expect(page.getByText('API DISCONNECTED')).toHaveCount(0);
   await expect(page.locator('.chart svg')).toBeVisible();
   await page.screenshot({ path: test.info().outputPath('mission-control.png'), fullPage: true });
@@ -13,7 +15,7 @@ test('discover, inspect, simulate, replay and expose execution failure', async (
   await page.getByRole('button', { name: 'Close observation detail' }).click();
   await page.getByRole('button', { name: 'Simulation Lab', exact: true }).click();
   await page.getByRole('button', { name: 'Run scenario', exact: true }).click();
-  await expect(page.getByText('INVARIANTS PASSED')).toBeVisible();
+  await expect(page.getByText('SCENARIO CHECKS PASSED', { exact: true })).toBeVisible();
   await expect(page.locator('.portfolio-grid').getByText('0.5000', { exact: true })).toBeVisible();
   await page.getByLabel('Replay event timeline').fill('4');
   await expect(page.locator('.timeline-row.current')).toBeVisible();
@@ -28,7 +30,7 @@ test('discover, inspect, simulate, replay and expose execution failure', async (
     .getByRole('button', { name: 'unprofitable', exact: true })
     .click();
   await page.getByRole('button', { name: 'Run scenario', exact: true }).click();
-  await expect(page.locator('.audit-summary').getByText('negative edge')).toBeVisible();
+  await expect(page.locator('.audit-summary').getByText('No positive estimate')).toBeVisible();
   await page.screenshot({ path: test.info().outputPath('dashboard-smoke.png'), fullPage: true });
   for (const name of ['Analytics', 'Arena', 'Incidents', 'Telemetry', 'Settings']) {
     await page.getByRole('button', { name, exact: true }).click();

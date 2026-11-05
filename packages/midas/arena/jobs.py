@@ -3,6 +3,7 @@
 import fcntl
 import json
 import os
+import resource
 import shutil
 import signal
 import subprocess
@@ -19,6 +20,9 @@ from midas.arena.costs import CostSpec
 from midas.arena.datasets import DatasetSpec, research_hash
 from midas.arena.director import DirectorSpec
 from midas.arena.evolution import SweepSpec
+from midas.arena.frontier_discovery import FrontierDiscoveryJobSpec
+from midas.arena.frontier_replay import FrontierReplayJobSpec
+from midas.arena.frontier_timeline import FrontierTimelineJobSpec
 from midas.arena.migrations import MigrationSpec
 from midas.arena.observations import ObservationSpec
 from midas.arena.policy_search import PolicySearchSpec
@@ -36,6 +40,18 @@ MAX_QUEUE_WAIT_SECONDS = 300
 QUEUE_STATUS_PUBLISH_SECONDS = 30
 MAX_ARENA_ARTIFACT_BYTES = 8 * 1024**3
 MINIMUM_DISK_RESERVE_BYTES = 2 * 1024**3
+
+
+def _worker_process_usage_profile(
+    start: Any, end: Any, *, platform: str | None = None
+) -> dict[str, int | float]:
+    rss_multiplier = 1 if (platform or sys.platform) == "darwin" else 1024
+    return {
+        "worker_process_user_cpu_seconds": max(0.0, end.ru_utime - start.ru_utime),
+        "worker_process_system_cpu_seconds": max(0.0, end.ru_stime - start.ru_stime),
+        # Linux and the BSDs report ru_maxrss in KiB; macOS reports bytes.
+        "worker_process_peak_rss_bytes": int(end.ru_maxrss * rss_multiplier),
+    }
 
 
 class JobSpec(Model):
@@ -57,6 +73,9 @@ class JobSpec(Model):
         "migration",
         "plan",
         "veritas_qualification",
+        "frontier_replay",
+        "frontier_timeline",
+        "frontier_discovery",
     ]
     dataset: DatasetSpec | None = None
     training: TrainingSpec | None = None
@@ -74,6 +93,9 @@ class JobSpec(Model):
     director: DirectorSpec | None = None
     policy_search: PolicySearchSpec | None = None
     veritas_qualification: VeritasQualificationSpec | None = None
+    frontier_replay: FrontierReplayJobSpec | None = None
+    frontier_timeline: FrontierTimelineJobSpec | None = None
+    frontier_discovery: FrontierDiscoveryJobSpec | None = None
     max_wall_seconds: int = Field(default=1800, ge=10, le=7200)
     memory_limit_mb: int = Field(default=3072, ge=128, le=3072)
     cpu_quota_percent: int = Field(default=100, ge=1, le=100)
@@ -93,6 +115,9 @@ class JobSpec(Model):
             "migration": "migration",
             "plan": "plan_id",
             "veritas_qualification": "veritas_qualification",
+            "frontier_replay": "frontier_replay",
+            "frontier_timeline": "frontier_timeline",
+            "frontier_discovery": "frontier_discovery",
             "evaluation": "model_id",
             "diagnostics": "model_id",
             "rl": "rl",
@@ -118,9 +143,22 @@ class JobSpec(Model):
             "director",
             "policy_search",
             "veritas_qualification",
+            "frontier_replay",
+            "frontier_timeline",
+            "frontier_discovery",
         ):
             if (getattr(self, field) is not None) != (field == required):
                 raise ValueError(f"{self.kind} job requires only {required}")
+        if self.kind in {"frontier_replay", "frontier_timeline", "frontier_discovery"} and (
+            self.max_wall_seconds > 300
+            or self.memory_limit_mb > 512
+            or self.cpu_quota_percent > 50
+            or self.nice < 15
+            or self.io_scheduling_class != "idle"
+        ):
+            raise ValueError(
+                "Frontier replay, timeline, and discovery jobs are limited to 300 seconds, 512 MiB, half a CPU, nice 15, and idle I/O"
+            )
         return self
 
 
@@ -216,6 +254,12 @@ def _create(
     identity = "job-" + uuid.uuid4().hex[:24]
     directory = artifact_path(root, "jobs", identity)
     veritas_read_only = spec.kind == "veritas_qualification"
+    network_restricted = spec.kind in {
+        "veritas_qualification",
+        "frontier_replay",
+        "frontier_timeline",
+        "frontier_discovery",
+    }
     memory_limit_mb = 512 if veritas_read_only else spec.memory_limit_mb
     # Global admission permits one worker. Respect its declared <= one-core
     # budget: a hidden 10% qualification cap stretched CPU work across ten
@@ -279,7 +323,7 @@ def _create(
             "--property=TimeoutStopSec=30",
             f"--working-directory={repository}",
             f"--setenv=PYTHONPATH={repository / 'packages'}",
-            *(["--property=RestrictAddressFamilies=AF_UNIX"] if veritas_read_only else []),
+            *(["--property=RestrictAddressFamilies=AF_UNIX"] if network_restricted else []),
             "--setenv=OMP_NUM_THREADS=1",
             "--setenv=OPENBLAS_NUM_THREADS=1",
             "--setenv=MKL_NUM_THREADS=1",
@@ -343,6 +387,7 @@ def _run(root: Path, identity: str) -> None:
     if record["state"] != "QUEUED":
         return
     spec = JobSpec.model_validate(record["configuration"])
+    process_usage_started = resource.getrusage(resource.RUSAGE_SELF)
     began: float | None = None
     queue_started = time.monotonic()
     queue_wait_seconds = 0.0
@@ -578,6 +623,45 @@ def _run(root: Path, identity: str) -> None:
                     "status": result["result"]["status"],
                     "experiment_sha256": result["experiment_sha256"],
                 }
+            elif spec.kind == "frontier_replay":
+                from midas.arena.frontier_replay import execute_frontier_replay_job
+
+                assert spec.frontier_replay is not None
+                artifact = execute_frontier_replay_job(
+                    root, identity, spec.frontier_replay, progress
+                )
+                record["result"] = {
+                    "frontier_replay_sha256": artifact.result_sha256,
+                    "comparison_id": artifact.comparison.comparison_id,
+                    "snapshot_id": artifact.snapshot_id,
+                    "artifact": "frontier-replay-result.json",
+                }
+            elif spec.kind == "frontier_timeline":
+                from midas.arena.frontier_timeline import execute_frontier_timeline_job
+
+                assert spec.frontier_timeline is not None
+                timeline_artifact = execute_frontier_timeline_job(
+                    root, identity, spec.frontier_timeline, progress
+                )
+                record["result"] = {
+                    "frontier_timeline_sha256": timeline_artifact.result_sha256,
+                    "timeline_id": timeline_artifact.timeline.timeline_id,
+                    "snapshot_id": timeline_artifact.snapshot_id,
+                    "artifact": "frontier-timeline-result.json",
+                }
+            elif spec.kind == "frontier_discovery":
+                from midas.arena.frontier_discovery import execute_frontier_discovery_job
+
+                assert spec.frontier_discovery is not None
+                discovery_artifact = execute_frontier_discovery_job(
+                    root, identity, spec.frontier_discovery, progress
+                )
+                record["result"] = {
+                    "frontier_discovery_sha256": discovery_artifact.result_sha256,
+                    "comparison_id": discovery_artifact.comparison.comparison_id,
+                    "snapshot_id": discovery_artifact.snapshot_id,
+                    "artifact": "frontier-discovery-result.json",
+                }
             elif spec.kind == "supervised":
                 from midas.arena.supervised import train
 
@@ -669,6 +753,10 @@ def _run(root: Path, identity: str) -> None:
         except Exception as error:
             record.update(state="FAILED", error=f"{type(error).__name__}: {error}", exit_status=1)
         finally:
+            process_usage_finished = resource.getrusage(resource.RUSAGE_SELF)
+            overhead.update(
+                _worker_process_usage_profile(process_usage_started, process_usage_finished)
+            )
             record.update(
                 runtime_profile=dict(overhead),
                 updated_at=time.time(),

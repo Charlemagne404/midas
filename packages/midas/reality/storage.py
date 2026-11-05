@@ -8,12 +8,14 @@ import json
 import os
 import shutil
 import struct
+import tempfile
 import time
 import uuid
 import zlib
-from collections.abc import Iterator
+from collections import Counter
+from collections.abc import Callable, Iterator
 from pathlib import Path
-from typing import Any
+from typing import Any, BinaryIO, cast
 
 MAGIC = b"MIDASR1\n"
 MAX_RECORD = 8 * 1024 * 1024
@@ -31,6 +33,33 @@ def sync_dir(root: Path) -> None:
         os.close(fd)
 
 
+def _preserve_open_tail(path: Path, offset: int) -> Path:
+    """Save an incomplete segment suffix without overwriting prior recovery data."""
+    root = path.parent
+    base = path.with_suffix(".tail")
+    candidate = base
+    while True:
+        try:
+            with candidate.open("xb") as out:
+                with path.open("rb") as source:
+                    source.seek(offset)
+                    shutil.copyfileobj(source, out, length=64 * 1024)
+                out.flush()
+                os.fsync(out.fileno())
+            # The tail must be durable before the original segment is changed.
+            sync_dir(root)
+            return candidate
+        except FileExistsError:
+            candidate = path.with_name(f"{path.stem}-{uuid.uuid4().hex}.tail")
+        except BaseException:
+            # This name was created exclusively here; the original remains intact.
+            try:
+                candidate.unlink()
+            except FileNotFoundError:
+                pass
+            raise
+
+
 def atomic_json(path: Path, value: Any) -> None:
     tmp = path.with_suffix(path.suffix + ".tmp")
     with tmp.open("wb") as f:
@@ -43,35 +72,58 @@ def atomic_json(path: Path, value: Any) -> None:
 
 def records(path: Path, *, incomplete: bool = False) -> Iterator[tuple[dict[str, Any], int]]:
     with path.open("rb") as f:
-        if f.read(len(MAGIC)) != MAGIC:
-            raise ValueError(f"Bad segment header: {path}")
-        while True:
-            start = f.tell()
-            header = f.read(36)
-            if not header:
+        yield from _record_stream(f, path, incomplete=incomplete)
+
+
+def _record_stream(
+    f: Any, path: Path, *, incomplete: bool = False
+) -> Iterator[tuple[dict[str, Any], int]]:
+    if f.read(len(MAGIC)) != MAGIC:
+        raise ValueError(f"Bad segment header: {path}")
+    while True:
+        start = f.tell()
+        header = f.read(36)
+        if not header:
+            return
+        if len(header) != 36:
+            if incomplete:
                 return
-            if len(header) != 36:
-                if incomplete:
-                    return
-                raise ValueError(f"Truncated header: {path}:{start}")
-            length, digest = struct.unpack(">I32s", header)
-            if not 0 < length <= MAX_RECORD:
-                raise ValueError(f"Invalid length: {path}:{start}")
-            compressed = f.read(length)
-            if len(compressed) != length:
-                if incomplete:
-                    return
-                raise ValueError(f"Truncated payload: {path}:{start}")
-            if hashlib.sha256(compressed).digest() != digest:
-                raise ValueError(f"Corrupt record: {path}:{start}")
-            dec = zlib.decompressobj()
-            raw = dec.decompress(compressed, MAX_RECORD + 1)
-            if len(raw) > MAX_RECORD or not dec.eof or dec.unused_data:
-                raise ValueError(f"Invalid compression: {path}:{start}")
-            record = json.loads(raw)
-            if record["schema_version"] != 1:
-                raise ValueError("Unsupported record schema")
-            yield record, f.tell()
+            raise ValueError(f"Truncated header: {path}:{start}")
+        length, digest = struct.unpack(">I32s", header)
+        if not 0 < length <= MAX_RECORD:
+            raise ValueError(f"Invalid length: {path}:{start}")
+        compressed = f.read(length)
+        if len(compressed) != length:
+            if incomplete:
+                return
+            raise ValueError(f"Truncated payload: {path}:{start}")
+        if hashlib.sha256(compressed).digest() != digest:
+            raise ValueError(f"Corrupt record: {path}:{start}")
+        dec = zlib.decompressobj()
+        raw = dec.decompress(compressed, MAX_RECORD + 1)
+        if len(raw) > MAX_RECORD or not dec.eof or dec.unused_data:
+            raise ValueError(f"Invalid compression: {path}:{start}")
+        record = json.loads(raw)
+        if record["schema_version"] != 1:
+            raise ValueError("Unsupported record schema")
+        yield record, f.tell()
+
+
+class _HashingReader:
+    def __init__(self, source: BinaryIO, digest: Any, copy_to: Any = None) -> None:
+        self.source = source
+        self.digest = digest
+        self.copy_to = copy_to
+
+    def read(self, size: int = -1) -> bytes:
+        data = self.source.read(size)
+        self.digest.update(data)
+        if self.copy_to is not None:
+            self.copy_to.write(data)
+        return data
+
+    def tell(self) -> int:
+        return self.source.tell()
 
 
 def file_hash(path: Path) -> str:
@@ -82,22 +134,64 @@ def file_hash(path: Path) -> str:
 def describe(path: Path) -> dict[str, Any]:
     first = last = count = 0
     kinds: dict[str, int] = {}
-    for record, _ in records(path):
-        if not count:
-            first = record["ordinal"]
-        last = record["ordinal"]
-        count += 1
-        kinds[record["kind"]] = kinds.get(record["kind"], 0) + 1
+    digest = hashlib.sha256()
+    with path.open("rb") as f:
+        for record, _ in _record_stream(_HashingReader(f, digest), path):
+            if not count:
+                first = record["ordinal"]
+            last = record["ordinal"]
+            count += 1
+            kinds[record["kind"]] = kinds.get(record["kind"], 0) + 1
     return dict(
         schema_version=1,
         file=path.name,
-        sha256=file_hash(path),
+        sha256=digest.hexdigest(),
         bytes=path.stat().st_size,
         first=first,
         last=last,
         count=count,
         kinds=kinds,
     )
+
+
+def _validate_manifest_metadata(path: Path, info: Any) -> dict[str, Any]:
+    """Validate the fields needed for bounded setup before replay checks bytes."""
+    if not isinstance(info, dict):
+        raise ValueError(f"Invalid segment manifest: {path}")
+    if info.get("schema_version") != 1 or info.get("file") != path.name:
+        raise ValueError(f"Invalid segment manifest identity: {path}")
+    if info.get("bytes") != path.stat().st_size:
+        raise ValueError(f"Segment size differs from manifest: {path}")
+    digest = info.get("sha256")
+    if (
+        not isinstance(digest, str)
+        or len(digest) != 64
+        or any(char not in "0123456789abcdef" for char in digest)
+    ):
+        raise ValueError(f"Invalid segment manifest digest: {path}")
+    first_value, last_value, count_value, kinds = (
+        info.get("first"),
+        info.get("last"),
+        info.get("count"),
+        info.get("kinds"),
+    )
+    if any(type(value) is not int or value < 0 for value in (first_value, last_value, count_value)):
+        raise ValueError(f"Invalid segment manifest counters: {path}")
+    first, last, count = (
+        cast(int, first_value),
+        cast(int, last_value),
+        cast(int, count_value),
+    )
+    if not isinstance(kinds, dict) or any(
+        not isinstance(kind, str) or type(amount) is not int or amount < 0
+        for kind, amount in kinds.items()
+    ):
+        raise ValueError(f"Invalid segment manifest kinds: {path}")
+    if sum(kinds.values()) != count or (count == 0 and (first != 0 or last != 0)):
+        raise ValueError(f"Inconsistent segment manifest counters: {path}")
+    if count > 0 and (first < 1 or last < first):
+        raise ValueError(f"Invalid segment ordinal range: {path}")
+    return cast(dict[str, Any], info)
 
 
 class Store:
@@ -109,7 +203,11 @@ class Store:
         reserve: int = 5 * 1024**3,
         segment_bytes: int = 8 * 1024**2,
         segment_seconds: float = 300,
+        verify_existing: bool = True,
+        defer_open: bool = False,
     ) -> None:
+        if not verify_existing and not defer_open:
+            raise ValueError("Unverified segments require deferred writer activation")
         self.root = root.resolve()
         self.root.mkdir(parents=True, exist_ok=True, mode=0o700)
         self.lock = (self.root / "writer.lock").open("a")
@@ -121,6 +219,7 @@ class Store:
         self.budget, self.reserve = budget, reserve
         self.segment_bytes, self.segment_seconds = segment_bytes, segment_seconds
         self.ordinal = 0
+        self.counts: Counter[str] = Counter()
         self.recovered: list[dict[str, Any]] = []
         self.file: Any = None
         self.write_failed = False
@@ -130,7 +229,8 @@ class Store:
                     prefix = path.read_bytes()
                     if not MAGIC.startswith(prefix):
                         raise ValueError(f"Corrupt partial segment header: {path}")
-                    os.replace(path, path.with_suffix(".tail"))
+                    _preserve_open_tail(path, 0)
+                    path.unlink()
                     sync_dir(self.root)
                     self.recovered.append(
                         dict(
@@ -145,12 +245,7 @@ class Store:
                     end = position
                 tail = path.stat().st_size - end
                 if tail:
-                    with path.open("rb") as f:
-                        f.seek(end)
-                        with path.with_suffix(".tail").open("wb") as out:
-                            out.write(f.read())
-                            out.flush()
-                            os.fsync(out.fileno())
+                    _preserve_open_tail(path, end)
                     with path.open("r+b") as f:
                         f.truncate(end)
                         f.flush()
@@ -159,18 +254,32 @@ class Store:
                 os.replace(path, final)
                 sync_dir(self.root)
                 self.recovered.append(dict(segment=final.name, discarded_partial_bytes=tail))
+            previous_ordinal = 0
             for path in sorted(self.root.glob("*.seg")):
                 manifest_path = path.with_suffix(".json")
                 if manifest_path.exists():
                     info = json.loads(manifest_path.read_text())
-                    if info["sha256"] != file_hash(path):
-                        raise ValueError(f"Segment checksum mismatch: {path}")
+                    if verify_existing:
+                        actual = describe(path)
+                        if actual != info:
+                            raise ValueError(f"Segment checksum mismatch: {path}")
+                    else:
+                        info = _validate_manifest_metadata(path, info)
                 else:
                     info = describe(path)
                     atomic_json(manifest_path, info)
+                if info["count"]:
+                    if (
+                        info["first"] != previous_ordinal + 1
+                        or info["count"] != info["last"] - info["first"] + 1
+                    ):
+                        raise ValueError(f"Segment ordinal overlap or gap: {path}")
+                    previous_ordinal = info["last"]
                 self.ordinal = max(self.ordinal, info["last"])
+                self.counts.update(info["kinds"])
             self.used = sum(p.stat().st_size for p in self.root.iterdir() if p.is_file())
-            self._open()
+            if not defer_open:
+                self._open()
         except BaseException:
             self.lock.close()
             raise
@@ -186,6 +295,11 @@ class Store:
         self.opened = time.monotonic()
         self.count = 0
 
+    def activate(self) -> None:
+        """Open the append segment after the caller has verified existing data."""
+        if self.file is None:
+            self._open()
+
     def append(
         self,
         kind: str,
@@ -199,6 +313,8 @@ class Store:
     ) -> dict[str, Any]:
         if self.write_failed:
             raise OSError("Recorder persistence previously failed; restart/recovery required")
+        if self.file is None:
+            raise RuntimeError("Recorder writer activation requires verified startup replay")
         record = dict(
             schema_version=1,
             ordinal=self.ordinal + 1,
@@ -214,15 +330,16 @@ class Store:
         if len(raw) > MAX_RECORD:
             raise ValueError("Record exceeds maximum size")
         compressed = zlib.compress(raw, 3)
-        frame = (
-            struct.pack(">I32s", len(compressed), hashlib.sha256(compressed).digest()) + compressed
-        )
-        if self.used + len(frame) + 8192 > self.budget or shutil.disk_usage(
-            self.root
-        ).free < self.reserve + len(frame):
+        header = struct.pack(">I32s", len(compressed), hashlib.sha256(compressed).digest())
+        frame_size = len(header) + len(compressed)
+        if (
+            self.used + frame_size + 8192 > self.budget
+            or shutil.disk_usage(self.root).free < self.reserve + frame_size
+        ):
             raise OSError("Reality storage budget or free-space reserve reached")
         try:
-            self.file.write(frame)
+            self.file.write(header)
+            self.file.write(compressed)
             self.file.flush()
             os.fsync(self.file.fileno())
         except OSError:
@@ -232,29 +349,38 @@ class Store:
             raise
         self.ordinal += 1
         self.count += 1
-        self.used += len(frame)
+        self.counts[kind] += 1
+        self.used += frame_size
         if (
             self.file.tell() >= self.segment_bytes
             or time.monotonic() - self.opened >= self.segment_seconds
         ):
-            self.rotate()
+            try:
+                self.rotate()
+            except OSError:
+                self.write_failed = True
+                raise
         return record
 
     def rotate(self, *, reopen: bool = True) -> None:
         if self.file is None:
             return
-        self.file.flush()
-        os.fsync(self.file.fileno())
-        self.file.close()
-        self.file = None
-        final = self.path.with_suffix(".seg")
-        os.replace(self.path, final)
-        sync_dir(self.root)
-        info = describe(final)
-        atomic_json(final.with_suffix(".json"), info)
-        self.used += final.with_suffix(".json").stat().st_size
-        if reopen:
-            self._open()
+        try:
+            self.file.flush()
+            os.fsync(self.file.fileno())
+            self.file.close()
+            self.file = None
+            final = self.path.with_suffix(".seg")
+            os.replace(self.path, final)
+            sync_dir(self.root)
+            info = describe(final)
+            atomic_json(final.with_suffix(".json"), info)
+            self.used += final.with_suffix(".json").stat().st_size
+            if reopen:
+                self._open()
+        except OSError:
+            self.write_failed = True
+            raise
 
     def close(self) -> None:
         try:
@@ -288,10 +414,84 @@ def read_manifest(root: Path, value: dict[str, Any]) -> Iterator[dict[str, Any]]
         if Path(info["file"]).name != info["file"]:
             raise ValueError("Unsafe segment path")
         path = root / info["file"]
-        if file_hash(path) != info["sha256"] or describe(path) != info:
+        first = last = count = 0
+        kinds: dict[str, int] = {}
+        digest = hashlib.sha256()
+        # Verify before exposing records. The spool keeps memory use bounded and
+        # avoids re-reading large source segments just to validate their checksum.
+        with tempfile.SpooledTemporaryFile(max_size=8 * 1024**2, mode="w+b") as spool:
+            with path.open("rb") as f:
+                for record, _ in _record_stream(_HashingReader(f, digest, spool), path):
+                    if record["ordinal"] != previous + 1:
+                        raise ValueError("Non-contiguous recording ordinal")
+                    previous = record["ordinal"]
+                    first = first or record["ordinal"]
+                    last = record["ordinal"]
+                    count += 1
+                    kinds[record["kind"]] = kinds.get(record["kind"], 0) + 1
+            actual = dict(
+                schema_version=1,
+                file=path.name,
+                sha256=digest.hexdigest(),
+                bytes=path.stat().st_size,
+                first=first,
+                last=last,
+                count=count,
+                kinds=kinds,
+            )
+            if actual != info:
+                raise ValueError(f"Segment integrity mismatch: {path}")
+            spool.seek(0)
+            for record, _ in _record_stream(spool, path):
+                yield record
+
+
+def _read_manifest_for_replay(
+    root: Path,
+    value: dict[str, Any],
+    *,
+    previous: int = 0,
+    before_segment: Callable[[], None] | None = None,
+) -> Iterator[dict[str, Any]]:
+    """Verify and stream records into private replay state with bounded memory.
+
+    The final segment digest is checked after records have been yielded. Replay
+    owns only a local Engine and returns it only after this iterator completes;
+    an integrity failure therefore discards all partially reconstructed state.
+    Callers that expose records incrementally must use read_manifest instead.
+    """
+    if value["schema_version"] != 1 or value["format"] != "midas-reality-framed-zlib-v1":
+        raise ValueError("Unsupported manifest")
+    if type(previous) is not int or previous < 0:
+        raise ValueError("Invalid replay prefix ordinal")
+    for info in value["segments"]:
+        if Path(info["file"]).name != info["file"]:
+            raise ValueError("Unsafe segment path")
+        if before_segment is not None:
+            before_segment()
+        path = root / info["file"]
+        first = last = count = 0
+        kinds: dict[str, int] = {}
+        digest = hashlib.sha256()
+        with path.open("rb") as source:
+            for record, _ in _record_stream(_HashingReader(source, digest), path):
+                if record["ordinal"] != previous + 1:
+                    raise ValueError("Non-contiguous recording ordinal")
+                previous = record["ordinal"]
+                first = first or record["ordinal"]
+                last = record["ordinal"]
+                count += 1
+                kinds[record["kind"]] = kinds.get(record["kind"], 0) + 1
+                yield record
+        actual = dict(
+            schema_version=1,
+            file=path.name,
+            sha256=digest.hexdigest(),
+            bytes=path.stat().st_size,
+            first=first,
+            last=last,
+            count=count,
+            kinds=kinds,
+        )
+        if actual != info:
             raise ValueError(f"Segment integrity mismatch: {path}")
-        for record, _ in records(path):
-            if record["ordinal"] != previous + 1:
-                raise ValueError("Non-contiguous recording ordinal")
-            previous = record["ordinal"]
-            yield record
