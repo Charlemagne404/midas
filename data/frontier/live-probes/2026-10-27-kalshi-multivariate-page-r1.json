@@ -1,0 +1,75 @@
+{
+  "artifact_state": "capture_and_store_readback_verified",
+  "capture_attempts_for_this_artifact": 1,
+  "captured_at_utc": "2026-10-27T11:43:52.321303+00:00",
+  "evidence_type": "genuine_public_kalshi_mve_capture",
+  "normalization_result": {
+    "failure": {
+      "code": "INVALID_SCHEMA",
+      "message": "Kalshi nested multivariate markets are absent or exceed the configured bound"
+    },
+    "normalized": {
+      "error_code": "INVALID_SCHEMA",
+      "failure_stage": "normalization",
+      "message": "Kalshi nested multivariate markets are absent or exceed the configured bound",
+      "record_kind": "source_failure",
+      "schema_version": 1
+    },
+    "state": "rejected"
+  },
+  "observation_id": "e6f04d341edf88001c21804ac0756b7dfe6c68c82aea3db7ad5e9b7555112447",
+  "raw_observation": {
+    "adapter_version": "frontier-kalshi-6",
+    "http_status": 200,
+    "observation_kind": "multivariate_event_listing",
+    "raw_body": "{\"cursor\":\"CgYI8IeY-AYSKEtYTVZFQ1JPU1NDQVRFR09SWS1TMjAyNlpaWkIyNUtLUEhCTjNURkM\",\"events\":[{\"category\":\"Exotics\",\"collateral_return_type\":\"\",\"event_ticker\":\"KXMVECROSSCATEGORY-S2026ZZZB25KKPHBN3TFC\",\"exchange_index\":1,\"last_updated_ts\":\"0001-01-01T00:00:00Z\",\"mutually_exclusive\":false,\"series_ticker\":\"KXMVECROSSCATEGORY\",\"settlement_sources\":[{\"name\":\"the league governing the game\",\"url\":\"https://www.ncaa.com/sports/football/fbs\"},{\"name\":\"the league governing the game\",\"url\":\"https://www.nfl.com/\"}],\"strike_period\":\"\",\"sub_title\":\"MVE\",\"title\":\"Which party will win the U.S. House?\"}]}\n",
+    "raw_body_encoding": "utf8",
+    "raw_sha256": "f04f5a2a0421a349e338828a9ba219352e841d5a7729247778cfbe47a5fa570d",
+    "received_at_utc": "2026-10-27T11:43:52.321208Z",
+    "request_started_at_utc": "2026-10-27T11:43:51.960999Z",
+    "request_url": "https://external-api.kalshi.com/trade-api/v2/events/multivariate?collection_ticker=KXMVECROSSCATEGORY-R&limit=1&with_nested_markets=true",
+    "schema_version": 1,
+    "venue": "kalshi"
+  },
+  "raw_sha256": "f04f5a2a0421a349e338828a9ba219352e841d5a7729247778cfbe47a5fa570d",
+  "request_bounds": {
+    "authenticated": false,
+    "max_pages_requested": 1,
+    "method": "GET",
+    "request_count": 1,
+    "requested_limit": 1,
+    "response_cap_bytes": 262144,
+    "retries": 0,
+    "with_nested_markets": true
+  },
+  "response_schema_summary": {
+    "events": [
+      {
+        "event_ticker": "KXMVECROSSCATEGORY-S2026ZZZB25KKPHBN3TFC",
+        "nested_market_count": null,
+        "nested_markets_field_present": false,
+        "nested_markets_type": "NoneType",
+        "series_ticker": "KXMVECROSSCATEGORY",
+        "title": "Which party will win the U.S. House?"
+      }
+    ],
+    "events_count": 1,
+    "events_type": "list",
+    "source_cursor_present": true
+  },
+  "row_sha256": "a8fa28b85e0474bab7ba62e7ab2b74785198aedeaba1228fdac7294ca100ebea",
+  "schema_version": 1,
+  "scientific_limitations": [
+    "One filtered page is not venue-wide inventory.",
+    "No source continuation cursor was followed.",
+    "Native MVE selected legs do not establish component payoff or settlement equivalence.",
+    "This metadata response contains no synchronized cross-venue quotes or execution evidence."
+  ],
+  "source_filter": {
+    "collection_ticker": "KXMVECROSSCATEGORY-R",
+    "derived_from_capture": "data/frontier/live-probes/2026-10-26-public-source-probe-r2.json",
+    "native_market_ticker": "KXMVECROSSCATEGORY-S2026KCUDJTPZBDVDK2OZ-ISTID3QWK",
+    "source_listing_raw_sha256": "5285d145fed96c70a727e7573b7a7094a69790da18bb1d1eff1fc6b840073f14"
+  },
+  "store_readback_verified": true
+}

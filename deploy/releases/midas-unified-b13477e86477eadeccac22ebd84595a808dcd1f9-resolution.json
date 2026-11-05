@@ -1,0 +1,123 @@
+{
+  "format": "midas-coordinated-release-resolution",
+  "format_version": 1,
+  "prepared_at_utc": "2026-10-30T21:48:00Z",
+  "mission_branch": "codex/midas-unification",
+  "mission_start_commit": "5237269821e5a6c3d54a3a92e76a0bc850a1f3b5",
+  "application_release": {
+    "source_commit": "b13477e86477eadeccac22ebd84595a808dcd1f9",
+    "release_root": "/home/charlie/.local/share/midas/releases/b13477e86477eadeccac22ebd84595a808dcd1f9",
+    "web_build_root": "/home/charlie/.local/share/midas/releases/b13477e86477eadeccac22ebd84595a808dcd1f9/apps/web/dist",
+    "python_environment": "/home/charlie/.local/share/midas/venvs/b13477e86477eadeccac22ebd84595a808dcd1f9",
+    "release_manifest_sha256": "0569450c05e72238295b026ec2f369ae1eaba586366e2ee897220df76b6759b7",
+    "api_openapi_paths": 136,
+    "database_schema_head": "003",
+    "frontier_public_probes_enabled": false,
+    "activated": false
+  },
+  "staged_configuration": {
+    "api_environment_path": "/home/charlie/.config/midas/releases/b13477e86477eadeccac22ebd84595a808dcd1f9.env",
+    "api_environment_sha256": "5f3394fe9ea3889d4b054650adfe5f0635b5835029607caa526253aefec38ff6",
+    "reality_config_path": "/home/charlie/.config/midas/reality/releases/b13477e86477eadeccac22ebd84595a808dcd1f9.json",
+    "reality_config_sha256": "a863f96c58e73bcf10ccf3848c04eb1b0738ef0450b8095b7d9a5afbb55551a8"
+  },
+  "staged_service_templates": {
+    "api": {
+      "path": "deploy/systemd/user/midas-api-release@.service",
+      "sha256": "d5f67a65547c2f51a819c193aca0c7e3780f9c5292a4fc6444f3ce1fd3abd5de"
+    },
+    "web": {
+      "path": "deploy/systemd/user/midas-web-release@.service",
+      "sha256": "fba3f19df0e76ad73d5a4844f979e747333c16e3931f587f255d6cada16457b9"
+    },
+    "reality": {
+      "path": "deploy/systemd/user/midas-reality-release@.service",
+      "sha256": "2aca38048900330a09e74b84574aa5aa706e83f20d096da6776f8093949b62b1"
+    },
+    "arena_service": {
+      "path": "deploy/systemd/user/midas-arena-scheduler-release@.service",
+      "sha256": "fa39250819c55d23a9f8c104118b9b38a9111762d696d85920c175dd87215585"
+    },
+    "arena_timer": {
+      "path": "deploy/systemd/user/midas-arena-scheduler-release@.timer",
+      "sha256": "745553855704162622a7ae65e8478b7884bdf74cb547c416662f90d6fb6d2b7a"
+    }
+  },
+  "production_runtime_observed": {
+    "api_release": "a1529991a880965a8ad37a7528e2c4cabfc341d8",
+    "api_port": 8000,
+    "api_status": "READY",
+    "api_mode": "demo",
+    "api_live_execution": false,
+    "database": "/home/charlie/midas/data/midas.db",
+    "database_measured_bytes": 12589813760,
+    "database_wal_measured_bytes": 4482592,
+    "database_shm_measured_bytes": 32768,
+    "database_stat_at_utc": "2026-10-30T21:42:54Z",
+    "database_wal_active": true,
+    "database_snapshot_taken": false,
+    "arena_root": "/home/charlie/midas/data/arena",
+    "reality_recorder_pid_observed": 1235804,
+    "reality_recorder_transitioned": false
+  },
+  "contract_comparison": {
+    "existing_paths": 76,
+    "existing_path_method_pairs": 81,
+    "candidate_paths": 136,
+    "candidate_path_method_pairs": 141,
+    "added_path_method_pairs": 60,
+    "removed_path_method_pairs": 0,
+    "changed_existing_operation_fields": 0,
+    "global_security_changed": false,
+    "servers_changed": false,
+    "changed_shared_component_fields": 0,
+    "added_schemas": 35,
+    "changed_existing_schemas": 0,
+    "result": "COORDINATED_CUTOVER_REQUIRED",
+    "evidence_file": "/tmp/midas-contract-validation-20261030/api-contract-diff-v3.json"
+  },
+  "database_validation": {
+    "legacy_fixture": "/home/charlie/midas/data/backups/midas-before-milestone2-1791742584.db",
+    "fixture_bytes": 11259904,
+    "fixture_rows_before": 4495,
+    "fixture_schema_before": "unversioned records-only",
+    "snapshot_sha256": "b5fd5f1281a081238a353efa78dfaa496977edccd32717d23529d4a00ddd696f",
+    "snapshot_integrity": "ok",
+    "restore_integrity": "ok",
+    "candidate_start_cycles": 2,
+    "candidate_schema_after": "003",
+    "preserved_record_prefix_sha256": "d85802d09a66ac5566d7975164a8ccf11d3a0c0d727aae9d7d92f434abc69de5",
+    "synthetic_records_appended": 50,
+    "candidate_read_only_get_routes_per_cycle": 15,
+    "production_database_backup": "NOT_ATTEMPTED_RESOURCE_GATE_DENIED"
+  },
+  "arena_dispatcher": {
+    "current_source_sha256": "6aeb7ad115d3a1690299d01de26a093b638c71ea9d465da70a4b53ae9b340",
+    "candidate_source_sha256": "525aa7a54dc57d8fd52518822b50c960c75dbfd5e43164efa46b33b69608c1fc",
+    "versioned_service_template": "deploy/systemd/user/midas-arena-scheduler-release@.service",
+    "versioned_timer_template": "deploy/systemd/user/midas-arena-scheduler-release@.timer",
+    "installed_or_started": false,
+    "production_arena_state_rehearsed": false
+  },
+  "verification": {
+    "focused_operational_tests": 26,
+    "focused_operational_tests_passed": 26,
+    "focused_operational_tests_failed": 0,
+    "ruff_check": "PASS",
+    "bounded_scope_memory_high_mib": 512,
+    "bounded_scope_memory_max_mib": 768,
+    "bounded_scope_memory_swap_max_mib": 0,
+    "bounded_scope_oom_events": 0,
+    "arena_unit_instance_verify": "PASS",
+    "full_backend_suite": "NOT_COMPLETED_IN_PRIOR_VALIDATION"
+  },
+  "deployment_decision": {
+    "production_cutover_executed": false,
+    "api_status": "BLOCKED_BY_DATA_COMPATIBILITY",
+    "arena_status": "BLOCKED_BY_DATA_COMPATIBILITY",
+    "web_status": "READY_WITH_CONDITIONS",
+    "reality_recorder_status": "BLOCKED_BY_AUTHORIZATION",
+    "overall_status": "NOT_READY",
+    "required_next_gate": "heavy-profile production snapshot, isolated restore, candidate API and Arena compatibility plus rollback rehearsal"
+  }
+}

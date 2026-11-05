@@ -23,6 +23,21 @@ dependencies = [
 
 [dependency-groups]
 dev = ["pytest>=8,<9", "pytest-asyncio>=0.25,<2", "hypothesis>=6.130,<7", "ruff>=0.11,<1", "mypy>=1.15,<2"]
+arena-rl = [
+    "numpy==2.2.6",
+    "scikit-learn==1.7.2",
+    "gymnasium==1.2.1",
+    "stable-baselines3==2.7.0",
+    "torch==2.8.0+cpu",
+]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cpu" }
 
 [tool.hatch.build.targets.wheel]
 packages = ["packages/midas", "apps"]
@@ -30,11 +45,12 @@ exclude = ["apps/web/**"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = ["."]
+pythonpath = [".", "packages"]
 asyncio_mode = "auto"
 
 [tool.ruff]
 line-length = 100
+extend-exclude = ["deploy/runtime/**", "docs/history/**"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP"]
@@ -45,3 +61,4 @@ python_version = "3.12"
 strict = true
 ignore_missing_imports = true
 exclude = ["tests", "infra"]
+mypy_path = "$MYPY_CONFIG_FILE_DIR/packages"

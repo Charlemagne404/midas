@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 import pytest
 from midas.arena.artifacts import sha256
@@ -143,6 +144,11 @@ def test_coordinator_runs_real_worker_and_verifies_portable_export(
 
     monkeypatch.setattr(coordinator.subprocess, "run", command)
 
+    project_packages = str(Path(__file__).resolve().parents[2] / "packages")
+    child_pythonpath = os.pathsep.join(
+        part for part in (project_packages, os.environ.get("PYTHONPATH", "")) if part
+    )
+
     def launch(directory, spec, admission_key):
         job = native_create(directory, spec, launch=False, admission_key=admission_key)
         result = real_run(
@@ -161,6 +167,7 @@ def test_coordinator_runs_real_worker_and_verifies_portable_export(
             timeout=30,
             env={
                 **os.environ,
+                "PYTHONPATH": child_pythonpath,
                 "OMP_NUM_THREADS": "1",
                 "MKL_NUM_THREADS": "1",
                 "OPENBLAS_NUM_THREADS": "1",

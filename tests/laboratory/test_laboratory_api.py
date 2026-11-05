@@ -4,6 +4,7 @@ import time
 from pathlib import Path
 
 from fastapi.testclient import TestClient
+from midas.arena import admission
 from midas.economics.attestation import digest
 from midas.laboratory.campaigns import Campaigns, CampaignSpec
 
@@ -11,7 +12,26 @@ from apps.api.config import Settings
 from apps.api.main import create_app
 
 
-def test_laboratory_api_contract_and_reproduction(tmp_path):
+def _allow_synthetic_campaign_resources(monkeypatch):
+    monkeypatch.setattr(
+        admission,
+        "resource_snapshot",
+        lambda root: {
+            "active_job_ids": [],
+            "available_memory_bytes": 64 * 1024**3,
+            "disk_free_bytes": 64 * 1024**3,
+            "cpu_psi": {"some": 0.0},
+            "available_cpu_count": 8,
+            "host_load_avg1": 0.5,
+            "memory_psi": {"some": 0.0, "full": 0.0},
+            "user_memory_psi": {"some": 0.0, "full": 0.0},
+            "io_psi": {"some": 0.0},
+        },
+    )
+
+
+def test_laboratory_api_contract_and_reproduction(tmp_path, monkeypatch):
+    _allow_synthetic_campaign_resources(monkeypatch)
     app = create_app(
         Settings(
             database_url=f"sqlite+aiosqlite:///{tmp_path}/api.db",
@@ -108,7 +128,8 @@ def test_api_uses_existing_final_archive_with_many_persisted_runs(tmp_path, monk
         assert client.get("/docs").status_code == 200
 
 
-def test_api_graceful_shutdown_and_restart_resume_without_duplicate_runs(tmp_path):
+def test_api_graceful_shutdown_and_restart_resume_without_duplicate_runs(tmp_path, monkeypatch):
+    _allow_synthetic_campaign_resources(monkeypatch)
     settings = Settings(
         database_url=f"sqlite+aiosqlite:///{tmp_path / 'api.db'}",
         laboratory_root=tmp_path / "laboratory",
