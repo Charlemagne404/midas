@@ -1,0 +1,162 @@
+name: MIDAS Phase 5 isolated validation
+on:
+  push:
+    branches:
+      - codex/midas-validation-control-20261105-r2
+permissions:
+  contents: read
+concurrency:
+  group: midas-phase5-isolated-validation
+  cancel-in-progress: false
+jobs:
+  isolated-validation:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 350
+    steps:
+      - name: Checkout validation controller without retaining credentials
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Checkout immutable candidate snapshot without retaining credentials
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: ${{ github.repository }}
+          ref: dcb800b76a19b223596df258b27d1fdd4fdbd616
+          path: candidate
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Verify exact source and credential boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C candidate rev-parse HEAD)" = dcb800b76a19b223596df258b27d1fdd4fdbd616
+          test "$(git -C candidate rev-parse 'HEAD^{tree}')" = 32f8c2ad56f0dea6502e3b67e24eb35545e3b3b8
+          if git -C candidate config --local --get-regexp 'http\..*\.extraheader' >/dev/null 2>&1; then
+            echo "checkout token persisted in candidate git configuration" >&2
+            exit 1
+          fi
+          if git -C candidate config --local --get remote.origin.url | grep -Eq '://[^/]*@'; then
+            echo "candidate remote URL contains user information" >&2
+            exit 1
+          fi
+          git -C candidate rev-parse HEAD 'HEAD^{tree}'
+      - name: Build dependencies from lockfiles only
+        shell: bash
+        run: |
+          set -euo pipefail
+          context="$RUNNER_TEMP/midas-dependency-context"
+          mkdir -p "$context/apps/web"
+          cp candidate/pyproject.toml candidate/uv.lock "$context/"
+          cp candidate/package.json candidate/pnpm-lock.yaml candidate/pnpm-workspace.yaml "$context/"
+          cp candidate/apps/web/package.json "$context/apps/web/"
+          docker build --pull \
+            --file "$GITHUB_WORKSPACE/.github/validation/Dockerfile" \
+            --tag midas-phase5-validation "$context"
+      - name: Create isolated network and synthetic PostgreSQL
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker network create --driver bridge --internal midas-phase5-net
+          docker run --detach --name midas-phase5-postgres \
+            --network midas-phase5-net --network-alias postgres \
+            --memory=1536m --memory-swap=1536m --cpus=1 --pids-limit=256 \
+            --tmpfs /var/lib/postgresql/data:rw,nosuid,nodev,size=1024m \
+            --health-cmd='pg_isready -U midas -d midas_ci' \
+            --health-interval=5s --health-timeout=3s --health-retries=20 \
+            --env POSTGRES_USER=midas \
+            --env POSTGRES_PASSWORD=phase5_synthetic_only \
+            --env POSTGRES_DB=midas_ci \
+            postgres:17-alpine
+          for attempt in $(seq 1 60); do
+            state="$(docker inspect --format '{{.State.Health.Status}}' midas-phase5-postgres)"
+            if [[ "$state" == healthy ]]; then
+              exit 0
+            fi
+            sleep 2
+          done
+          docker logs midas-phase5-postgres
+          exit 1
+      - name: Create, inspect, then execute bounded test container
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker create --name midas-phase5-tests --init \
+            --network midas-phase5-net \
+            --memory=11g --memory-swap=11g --cpus=3 --pids-limit=512 \
+            --read-only --cap-drop=ALL --security-opt=no-new-privileges:true \
+            --shm-size=512m \
+            --tmpfs /tmp:rw,nosuid,nodev,size=2048m,uid=10001,gid=10001,mode=1777 \
+            --tmpfs /workspace:rw,nosuid,nodev,exec,size=4096m,uid=10001,gid=10001,mode=0755 \
+            --tmpfs /home/midas:rw,nosuid,nodev,size=512m,uid=10001,gid=10001,mode=0755 \
+            --tmpfs /home/charlie:ro,nosuid,nodev,size=64m,mode=0755 \
+            --tmpfs /run:rw,nosuid,nodev,noexec,size=64m,mode=0755 \
+            --tmpfs /var/tmp:rw,nosuid,nodev,size=256m,uid=10001,gid=10001,mode=1777 \
+            --mount "type=bind,src=$GITHUB_WORKSPACE/candidate,dst=/source,readonly" \
+            --mount "type=bind,src=$GITHUB_WORKSPACE/.github/validation,dst=/control,readonly" \
+            --env MIDAS_PHASE5_SOURCE_SHA=dcb800b76a19b223596df258b27d1fdd4fdbd616 \
+            --env MIDAS_PHASE5_SOURCE_TREE=32f8c2ad56f0dea6502e3b67e24eb35545e3b3b8 \
+            --env MIDAS_MODE=demo \
+            --env MIDAS_RUNTIME_ROOT=/tmp/midas-phase5/runtime \
+            --env MIDAS_DATABASE_URL=sqlite+aiosqlite:////tmp/midas-phase5/runtime/paper.sqlite3 \
+            --env MIDAS_RECORDING_ROOT=/tmp/midas-phase5/recordings \
+            --env MIDAS_LABORATORY_ROOT=/tmp/midas-phase5/laboratory \
+            --env MIDAS_ARENA_ROOT=/tmp/midas-phase5/arena \
+            --env MIDAS_FRONTIER_ROOT=/tmp/midas-phase5/frontier \
+            --env MIDAS_REALITY_WORKSPACE=/tmp/midas-phase5/reality \
+            --env MIDAS_VERITAS_WORKSPACE=/workspace \
+            --env MIDAS_FRONTIER_POLYMARKET_PUBLIC_PROBE_ENABLED=false \
+            --env MIDAS_FRONTIER_KALSHI_PUBLIC_PROBE_ENABLED=false \
+            --env MIDAS_FRONTIER_KRAKEN_PUBLIC_PROBE_ENABLED=false \
+            --env MIDAS_FRONTIER_COINBASE_PUBLIC_PROBE_ENABLED=false \
+            --env HOME=/home/midas \
+            --env TMPDIR=/tmp \
+            --env XDG_CACHE_HOME=/tmp/home-cache \
+            --env XDG_CONFIG_HOME=/tmp/home-config \
+            --env XDG_STATE_HOME=/tmp/home-state \
+            --env XDG_RUNTIME_DIR=/tmp/midas-phase5/xdg-runtime \
+            --env DBUS_SESSION_BUS_ADDRESS=unix:path=/tmp/midas-phase5/no-user-bus \
+            --env DBUS_SYSTEM_BUS_ADDRESS=unix:path=/tmp/midas-phase5/no-system-bus \
+            --env SYSTEMD_BUS_ADDRESS=unix:path=/tmp/midas-phase5/no-system-bus \
+            --env MIDAS_BLOCKED_COMMAND_LOG=/tmp/midas-blocked-command.log \
+            --env PYTHONPATH=/workspace:/workspace/packages \
+            --env MIDAS_PYTHON=/opt/venv/bin/python \
+            --env COREPACK_HOME=/opt/corepack \
+            --env PLAYWRIGHT_BROWSERS_PATH=/ms-playwright \
+            --env OMP_NUM_THREADS=1 \
+            --env OPENBLAS_NUM_THREADS=1 \
+            --env MKL_NUM_THREADS=1 \
+            midas-phase5-validation bash /control/run-validation.sh
+          python3 - <<'PY'
+          import json
+          import subprocess
+
+          net = json.loads(subprocess.check_output(["docker", "network", "inspect", "midas-phase5-net"]))[0]
+          assert net["Internal"] is True, "Docker network is not internal"
+          container = json.loads(subprocess.check_output(["docker", "inspect", "midas-phase5-tests"]))[0]
+          host = container["HostConfig"]
+          assert host["NetworkMode"] == "midas-phase5-net"
+          assert host["ReadonlyRootfs"] is True
+          assert host["Privileged"] is False
+          assert "ALL" in host["CapDrop"]
+          assert any("no-new-privileges" in item for item in host["SecurityOpt"])
+          assert host["PidMode"] != "host" and host["IpcMode"] != "host"
+          binds = [m for m in container["Mounts"] if m["Type"] == "bind"]
+          assert {m["Destination"] for m in binds} == {"/source", "/control"}
+          assert all(m["RW"] is False for m in binds)
+          assert all(m["Type"] in {"bind", "tmpfs"} for m in container["Mounts"])
+          env = container["Config"]["Env"]
+          assert not any(item.startswith(("GITHUB_", "ACTIONS_")) for item in env)
+          assert not any(item.startswith("MIDAS_") and "TOKEN" in item for item in env)
+          postgres = json.loads(subprocess.check_output(["docker", "inspect", "midas-phase5-postgres"]))[0]
+          assert postgres["HostConfig"]["PortBindings"] in (None, {})
+          assert all(m["Type"] != "bind" for m in postgres["Mounts"])
+          print("Container isolation policy verified before candidate code starts.")
+          PY
+          docker start --attach midas-phase5-tests
+      - name: Remove disposable validation containers and network
+        if: always()
+        shell: bash
+        run: |
+          docker rm --force midas-phase5-tests midas-phase5-postgres 2>/dev/null || true
+          docker network rm midas-phase5-net 2>/dev/null || true
