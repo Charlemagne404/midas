@@ -11,6 +11,7 @@ from midas.veritas.observatory import (
     DEFAULT_CONTROL_MARKETS,
     DEFAULT_MARKETS,
     DEFAULT_QUANTITIES,
+    DEFAULT_REFERENCE_MARKETS,
     DEFAULT_SEED,
     REQUEST_INTERVAL_SECONDS,
     _summary,
@@ -27,6 +28,7 @@ def main() -> None:
     )
     parser.add_argument("--markets", type=int, default=DEFAULT_MARKETS)
     parser.add_argument("--controls", type=int, default=DEFAULT_CONTROL_MARKETS)
+    parser.add_argument("--reference-markets", type=int, default=DEFAULT_REFERENCE_MARKETS)
     parser.add_argument("--seed", type=int, default=DEFAULT_SEED)
     parser.add_argument("--quantities", default=",".join(DEFAULT_QUANTITIES))
     parser.add_argument("--request-interval", type=float, default=REQUEST_INTERVAL_SECONDS)
@@ -37,6 +39,7 @@ def main() -> None:
             args.root,
             target_markets=args.markets,
             control_count=args.controls,
+            reference_count=args.reference_markets,
             seed=args.seed,
             quantity_grid=quantities,
             request_interval_seconds=args.request_interval,

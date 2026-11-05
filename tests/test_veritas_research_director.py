@@ -16,10 +16,11 @@ SCAN_ID = "scan-20261015T100000Z-6f98ffeaecab"
 def _source(tmp_path, *, age_seconds: int = 30, valid_digest: bool = True):
     repository = tmp_path / "repository"
     data_root = repository / "data" / "veritas-observatory"
-    event_path = data_root / "analysis-events" / "v4" / f"{SCAN_ID}.json"
+    event_path = data_root / "analysis-events" / VERSION.rsplit("-", 1)[-1] / f"{SCAN_ID}.json"
     captured = datetime(2026, 10, 15, 10, 0, tzinfo=UTC).timestamp()
     event = {
         "analysis_version": VERSION,
+        "minimum_order_notional_unit_status": "unverified",
         "scan_id": SCAN_ID,
         "snapshot_file": f"snapshots/{SCAN_ID}.json.gz",
         "snapshot_evidence_sha256": "e" * 64,
@@ -233,7 +234,12 @@ def test_invalid_source_summary_is_reported_without_blocking_public_qualificatio
 def test_director_waits_for_finalization(tmp_path):
     repository, now = _source(tmp_path)
     arena_root = tmp_path / "arena"
-    event = repository / "data/veritas-observatory/analysis-events/v4" / f"{SCAN_ID}.json"
+    event = (
+        repository
+        / "data/veritas-observatory/analysis-events"
+        / VERSION.rsplit("-", 1)[-1]
+        / f"{SCAN_ID}.json"
+    )
     event.unlink()
     waiting = research_director.tick(repository, arena_root, now=now, launch_jobs=False)
     assert waiting["state"] == "WAITING_FOR_FINALIZATION"
@@ -268,6 +274,35 @@ def test_director_defers_for_resource_pressure_and_recovers_without_duplicate_jo
     assert not list(arena_root.glob("jobs/*/job.json"))
     admitted = research_director.tick(repository, arena_root, now=now + 30, launch_jobs=False)
     assert admitted["state"] == "RUNNING"
+    assert len(list(arena_root.glob("jobs/*/job.json"))) == 1
+
+
+def test_director_recovers_from_host_wide_admission_lock_contention(tmp_path, monkeypatch):
+    from midas.arena.admission import ResourceAdmissionDenied
+
+    repository, now = _source(tmp_path)
+    arena_root = tmp_path / "arena"
+    monkeypatch.setattr(research_director, "resources_ready", lambda root: True)
+    create_job = research_director._create_job
+    calls = 0
+
+    def defer_once(root, scan_id, launch):
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            raise ResourceAdmissionDenied(["resource_admission_lock_busy"])
+        return create_job(root, scan_id, launch=False)
+
+    monkeypatch.setattr(research_director, "_create_job", defer_once)
+    waiting = research_director.tick(repository, arena_root, now=now, launch_jobs=True)
+    assert waiting["state"] == "WAITING_RESOURCES"
+    assert waiting["pending_scan_id"] == SCAN_ID
+    assert waiting.get("failed_admission_scan_id") is None
+    assert not list(arena_root.glob("jobs/*/job.json"))
+
+    recovered = research_director.tick(repository, arena_root, now=now + 30, launch_jobs=True)
+    assert recovered["state"] == "RUNNING"
+    assert recovered["pending_scan_id"] is None
     assert len(list(arena_root.glob("jobs/*/job.json"))) == 1
 
 
@@ -408,3 +443,79 @@ def test_finding_summary_accepts_persisted_v2_without_replay_field(tmp_path):
     assert summary["gross_candidate_replay_status"] == "REPLAY_NOT_AVAILABLE_LEGACY_V2"
     assert summary["gross_candidate_replayed_count"] == 0
     assert summary["gross_candidate_replay_complete"] is False
+
+
+def test_finding_summary_preserves_unknown_notional_replay_counts(tmp_path):
+    arena_root = tmp_path / "arena"
+    finding_id = "veritas-qualification-v1-fedcba9876543210"
+    experiment = {
+        "experiment_run_id": "VERITAS-M2-ECO-QUAL-001-V4-RUN-unknown-units",
+        "analysis_version": "veritas-economic-qualification-comparison-v4",
+        "dataset_sha256": "d" * 64,
+        "status": "minimum_notional_semantics_unverified",
+        "minimum_order_notional_unit_status": "unverified",
+        "gross_candidate_evidence_count": 1,
+        "gross_candidate_evidence_complete": True,
+        "gross_candidate_evidence": [{"market_id": "market-a"}],
+        "gross_candidate_replay": {
+            "version": "veritas-gross-candidate-source-replay-v2",
+            "source_code_sha256": "e" * 64,
+            "candidate_count": 1,
+            "replayed_candidate_count": 1,
+            "complete": True,
+            "status": "ALL_GROSS_CANDIDATES_REPLAYED",
+            "candidates": [],
+        },
+        "independent_candidate_replay_qualification": {
+            "version": "veritas-gross-candidate-source-replay-v2",
+            "complete": True,
+            "candidate_count": 1,
+            "replayed_candidate_count": 1,
+            "minimum_order_notional_unit_status": "unverified",
+            "positive_full_depth_and_both_minimums": None,
+            "positive_under_both_fee_sensitivities": None,
+            "counts_are_null_when_incomplete": True,
+        },
+        "sample": {"snapshot_count": 1, "attempted_market_pairs": 1, "quality_valid_pairs": 1},
+        "source_snapshots": [{"scan_id": SCAN_ID}],
+        "economic_qualification_funnel": [
+            {"criterion": "unchanged_top_ask_gross_sign", "positive_states": 1}
+        ],
+        "orders_submitted": False,
+        "authenticated_requests": False,
+    }
+    experiment["experiment_sha256"] = hashlib.sha256(
+        json.dumps(experiment, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
+    ).hexdigest()
+    atomic_json(
+        arena_root / "findings" / finding_id / "manifest.json",
+        {
+            "artifact_id": finding_id,
+            "expected_latest_scan_id": SCAN_ID,
+            "experiment_sha256": experiment["experiment_sha256"],
+            "result": experiment,
+        },
+    )
+
+    summary = research_director._finding_summary(
+        arena_root,
+        {"result": {"finding_id": finding_id}, "submitted_source_hash": "a" * 64},
+        SCAN_ID,
+    )
+
+    assert summary["status"] == "minimum_notional_semantics_unverified"
+    assert summary["minimum_order_notional_unit_status"] == "unverified"
+    assert (
+        summary["independent_candidate_replay_qualification"][
+            "positive_full_depth_and_both_minimums"
+        ]
+        is None
+    )
+
+
+def test_unverified_minimum_notional_readiness_keeps_no_trade_and_preserves_evidence():
+    readiness = research_director._qualification_readiness("minimum_notional_semantics_unverified")
+
+    assert readiness["strategy_readiness"] == "GROSS_CANDIDATE_NOTIONAL_SEMANTICS_UNVERIFIED"
+    assert "Keep no-trade" in readiness["recommendation"]
+    assert "provider provenance" in readiness["recommendation"]

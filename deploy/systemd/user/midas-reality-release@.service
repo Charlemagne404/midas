@@ -1,0 +1,34 @@
+[Unit]
+Description=MIDAS protected Reality recorder release %i
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=300
+StartLimitBurst=5
+
+[Service]
+Type=simple
+WorkingDirectory=%h/.local/share/midas/releases/%i
+EnvironmentFile=%h/.config/midas/reality/releases/%i.env
+Environment=MIDAS_RELEASE_ID=%i
+Environment=MIDAS_SOURCE_REVISION=%i
+ExecStart=%h/.local/share/midas/venvs/%i/bin/python -m midas.reality record --config %h/.config/midas/reality/releases/%i.json
+Restart=on-failure
+RestartSec=10
+KillSignal=SIGTERM
+TimeoutStopSec=45
+MemoryHigh=1152M
+MemoryMax=1280M
+MemorySwapMax=0
+CPUQuota=25%
+TasksMax=32
+LimitNOFILE=128
+Nice=10
+UMask=0077
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=%h/midas-reality/data/recordings
+PrivateTmp=true
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=midas-reality-release-%i

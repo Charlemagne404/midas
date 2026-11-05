@@ -278,7 +278,7 @@ def evaluate_binary_pair(
     pair_semantics: str,
     same_condition: bool,
     payoff_verified: bool,
-    minimum_order_notional: Any,
+    minimum_order_notional: Any | None,
     fee_exponent: Any = 1,
     hypothetical_capital: Any | None = None,
     payout_per_complete_set: Any = ONE,
@@ -324,11 +324,17 @@ def evaluate_binary_pair(
         raise ValueError("Invalid fee exponent")
     if isinstance(minimum_order_notional, dict):
         minimums = {
-            side: _decimal(
-                minimum_order_notional.get(side), f"{side.upper()} minimum order notional"
+            side: (
+                None
+                if minimum_order_notional.get(side) is None
+                else _decimal(
+                    minimum_order_notional.get(side), f"{side.upper()} minimum order notional"
+                )
             )
             for side in ("yes", "no")
         }
+    elif minimum_order_notional is None:
+        minimums = {"yes": None, "no": None}
     else:
         minimum = _decimal(minimum_order_notional, "minimum order notional")
         minimums = {"yes": minimum, "no": minimum}
@@ -336,8 +342,9 @@ def evaluate_binary_pair(
     financing_rate = _decimal(annual_financing_rate, "annual financing rate")
     redemption = _decimal(redemption_cost_per_set, "redemption cost per set")
     operations = _decimal(operational_cost_per_share, "operational cost per share")
-    if q <= ZERO or min(minimums.values()) <= ZERO or payout <= ZERO:
-        raise ValueError("Quantity, minimum order notional, and payout must be positive")
+    known_minimums = [value for value in minimums.values() if value is not None]
+    if q <= ZERO or any(value <= ZERO for value in known_minimums) or payout <= ZERO:
+        raise ValueError("Quantity, known minimum order notionals, and payout must be positive")
     if min(days, financing_rate, redemption, operations) < ZERO:
         raise ValueError("Costs and durations must be nonnegative")
 
@@ -354,7 +361,17 @@ def evaluate_binary_pair(
         "yes": _decimal(yes["displayed_notional_for_supported_quantity"], "YES notional"),
         "no": _decimal(no["displayed_notional_for_supported_quantity"], "NO notional"),
     }
-    minimums_satisfied = all(order_notionals[side] >= minimums[side] for side in minimums)
+    minimums_satisfied_by_leg: dict[str, bool | None] = {}
+    for side, order_notional in order_notionals.items():
+        minimum = minimums[side]
+        minimums_satisfied_by_leg[side] = None if minimum is None else order_notional >= minimum
+    minimums_satisfied = (
+        False
+        if any(value is False for value in minimums_satisfied_by_leg.values())
+        else True
+        if all(value is True for value in minimums_satisfied_by_leg.values())
+        else None
+    )
     result: dict[str, Any] = {
         "version": VERSION,
         "protocol": protocol,
@@ -362,7 +379,10 @@ def evaluate_binary_pair(
         "same_condition": same_condition,
         "payoff_verified": payoff_verified,
         "quantity_requested": str(q),
-        "minimum_order_notional_by_leg": {side: str(value) for side, value in minimums.items()},
+        "minimum_order_notional_by_leg": {
+            side: str(value) if value is not None else None for side, value in minimums.items()
+        },
+        "minimum_order_notional_satisfied_by_leg": minimums_satisfied_by_leg,
         "observed_order_notional_by_leg": {
             side: str(value) for side, value in order_notionals.items()
         },
@@ -402,7 +422,7 @@ def evaluate_binary_pair(
             hypothetical_capital_sufficient=None,
         )
         return result
-    if not minimums_satisfied:
+    if minimums_satisfied is False:
         result.update(
             economic_status="below_reported_minimum_order_notional",
             net_hypothetical_single_match=None,
@@ -479,7 +499,9 @@ def evaluate_binary_pair(
         raise ValueError("Hypothetical capital must be positive")
     result.update(
         economic_status=(
-            "positive_under_fragmentation_safe_fee_bound"
+            "fee_sensitivity_only_minimum_order_notional_unverified"
+            if minimums_satisfied is None
+            else "positive_under_fragmentation_safe_fee_bound"
             if pnl_lower > ZERO
             else "positive_under_single_match_rounding_scenario_only"
             if single_worst > ZERO
