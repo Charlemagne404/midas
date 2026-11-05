@@ -156,16 +156,15 @@ jobs:
           }
           assert all(m["RW"] is False for m in binds)
           assert all(m["Type"] in {"bind", "tmpfs"} for m in container["Mounts"])
-          tmpfs_destinations = {
-              m["Destination"] for m in container["Mounts"] if m["Type"] == "tmpfs"
-          }
+          tmpfs_config = host.get("Tmpfs") or {}
           required_tmpfs = {"/tmp", "/workspace", "/home/midas", "/home/charlie", "/run", "/var/tmp"}
-          missing_tmpfs = required_tmpfs - tmpfs_destinations
+          missing_tmpfs = required_tmpfs - set(tmpfs_config)
           assert not missing_tmpfs, {
               "missing_tmpfs": sorted(missing_tmpfs),
-              "observed_tmpfs": sorted(tmpfs_destinations),
+              "observed_tmpfs": tmpfs_config,
               "mounts": container["Mounts"],
           }
+          assert "ro" in tmpfs_config["/home/charlie"].split(","), tmpfs_config["/home/charlie"]
           env = container["Config"]["Env"]
           assert not any(item.startswith(("GITHUB_", "ACTIONS_")) for item in env)
           assert not any(item.startswith("MIDAS_") and "TOKEN" in item for item in env)
