@@ -330,7 +330,7 @@ run_pytest focused-integration "${focused[@]}"
 
 printf '\n=== Stage C: Frontend component and browser suites ===\n'
 corepack pnpm --dir /workspace/apps/web exec vitest run --maxWorkers=2 --minWorkers=1
-export MIDAS_FRONTIER_E2E_ROOT=/tmp/midas-browser-phase5
+export MIDAS_FRONTIER_E2E_ROOT="$TMPDIR/midas-browser-phase5"
 corepack pnpm --dir /workspace/apps/web exec playwright test --workers=1 --reporter=line
 corepack pnpm --dir /workspace/apps/web exec playwright test --config playwright.reality.config.ts --workers=1 --reporter=line
 unset MIDAS_FRONTIER_E2E_ROOT
