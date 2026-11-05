@@ -1,12 +1,26 @@
-# MIDAS Git branch and worktree inventory — current snapshot
+# MIDAS Git branch and worktree inventory — 2026-11-05 snapshot
 
-**Refreshed:** 2026-11-05 after fetching `origin`; counts and worktree status are a snapshot from before this maintenance branch was committed or published. The handoff records the final maintenance tip. The old 2026-10-30 inventory follows below as historical evidence and its dispositions are not current.
+**Refreshed:** 2026-11-05 after publishing the maintenance branch and
+rechecking all worktree Git statuses, before source integration. There are
+**63 local branches**, **54 fetched `origin` branch heads**, and **37 worktrees**.
+Each fetched origin head
+has a same-name local branch; nine local branches have no matching origin ref.
+Nine worktrees have tracked or non-ignored untracked changes; the maintenance
+worktree is clean. No stale worktree or remote refs were reported by prune
+dry-runs. No branches, worktrees, or files were removed. Status excludes
+ignored research data. The old 2026-10-30 inventory follows as historical
+evidence and its dispositions are not current. Fetch `origin` and recheck
+worktree status before acting on this snapshot.
 
-There are **62 local branches**, **53 `origin` branch heads**, and **37 worktrees**. Every fetched origin head has a same-name local branch; nine local branches have no same-name origin ref. The worktree list has no stale entries under `git worktree prune --dry-run`; `git remote prune origin --dry-run` also proposed no stale remote refs. No worktree or branch was removed. Status counts include tracked changes and untracked, non-ignored files, but not ignored research data.
+For housekeeping planning, the local refs divide into 3 known runtime branches,
+1 current maintenance candidate, 30 validation/control snapshots, 11 history or
+recovery references, and 18 other historical, feature, or maintenance refs.
+These categories describe branch purpose; they do not prove which commit a
+running process has loaded.
 
 ## Branch refs and dispositions
 
-The table lists every local branch, its exact head, and the matching fetched origin head where one exists. `—` means the ref is local-only. The current source baseline is `origin/main` at `c00bd128605c85b5c34220efbee54f0993e9b560`. The old local `main` remains in use by services. The squash integration `6aa7c7f00d736d02ee7ca5629d1b9f102e0ae9d9` is an ancestor of current main. The original `codex/midas-unification` ref remains available at `c256cd1b0743d0c3ba6229c0115fd200fa0f014f`; its original development history is not an ancestor of the squash. The preservation tags from the consolidation remain present.
+The table lists every local branch, its exact head, and the matching fetched origin head where one exists. `—` means the ref is local-only. At this inventory snapshot, `origin/main` was `3e700b9b2bba7a9da1564e3ab8b2e18be2eba6ea`. The old local `main` remains in use by services and was ten commits behind. The squash integration `6aa7c7f00d736d02ee7ca5629d1b9f102e0ae9d9` is an ancestor of main. The original `codex/midas-unification` ref remains available at `c256cd1b0743d0c3ba6229c0115fd200fa0f014f`; its original development history is not an ancestor of the squash. The preservation tags from the consolidation remain present.
 
 | Local branch | Head | Matching `origin` head | Current disposition |
 |---|---:|---:|---|
@@ -15,10 +29,11 @@ The table lists every local branch, its exact head, and the matching fetched ori
 | `checkpoint/frontier-pre-memory-incident-20261029` | `a8fbcd7` | `a8fbcd7` | Checkpoint or recovery provenance; retain. |
 | `codex/frontier-20261026` | `f6ac37f` | `f6ac37f` | Historical research/feature tip; compare with current source before reuse; retain until its commits and associated data are backed up and classified. |
 | `codex/frontier-capacity-scan-bound-20261029` | `d5847df` | `d5847df` | Selected functionality was reconciled during consolidation; retain branch history pending a separate cleanup review. |
-| `codex/midas-ci-stabilization-20261105` | `c00bd12` | `c00bd12` | Same source head as current `origin/main`; functionality is superseded, worktree kept pending environment review. |
+| `codex/midas-ci-stabilization-20261105` | `c00bd12` | `c00bd12` | Previous source base, superseded by `origin/main` at `3e700b9`; keep pending environment/data review. |
 | `codex/midas-comprehensive-engineering-mission-20261025` | `005f6fa` | `005f6fa` | Historical research/feature tip; compare with current source before reuse; retain until its commits and associated data are backed up and classified. |
 | `codex/midas-integration-20261104` | `b723bfd` | `—` | Historical integration checkpoint with a dirty worktree; preserve all edits and data. |
-| `codex/midas-maintenance-20261105` | `c00bd12` | `—` | Current maintenance candidate based on `origin/main`; retain for hosted CI/review. |
+| `codex/midas-maintenance-20261105` | `3e700b9` | `3e700b9` | Previous maintenance candidate at the current `origin/main` base; worktree has been reused for this maintenance pass. |
+| `codex/midas-operational-resilience-20261105` | `dcefed2` | `dcefed2` | Current Veritas bounded-memory and recovery candidate; preserve pending hosted CI and source-only integration review. |
 | `codex/midas-squash-integration-20261105` | `6aa7c7f` | `—` | Original squash integration, ancestor of current `origin/main`; retain as history. |
 | `codex/midas-unification` | `c256cd1` | `c256cd1` | Original 1,196-commit development history; retained on its local and remote refs, not current baseline. |
 | `codex/midas-validation-control-20261105` | `d1fb321` | `d1fb321` | Validation snapshot/checkpoint; retain until its evidence and owner are separately reviewed. |
@@ -63,7 +78,7 @@ The table lists every local branch, its exact head, and the matching fetched ori
 | `fix/reality-stale-error-status` | `b0610c1` | `b0610c1` | Selected functionality was reconciled during consolidation; retain branch history pending a separate cleanup review. |
 | `fix/veritas-gap-market-bound` | `49275d9` | `49275d9` | Selected functionality was reconciled during consolidation; retain branch history pending a separate cleanup review. |
 | `fix/veritas-gap-timer-stagger-20261020` | `e530cef` | `e530cef` | Selected functionality was reconciled during consolidation; retain branch history pending a separate cleanup review. |
-| `main` | `b723bfd` | `c00bd12` | Runtime source branch; six commits behind `origin/main`; retain while loaded services depend on it. |
+| `main` | `b723bfd` | `3e700b9` | Runtime source branch; ten commits behind `origin/main`; retain while loaded services depend on it. |
 | `preservation/phase1/reality-staging-87788aee` | `87788ae` | `87788ae` | Checkpoint or recovery provenance; retain. |
 | `preservation/phase1/veritas-staging-9e342363` | `9e34236` | `9e34236` | Checkpoint or recovery provenance; retain. |
 | `project/reality` | `d8629e4` | `d8629e4` | Active Reality service/data branch; retain. |
@@ -79,12 +94,12 @@ All 37 registered worktrees are listed below. Preserve every dirty worktree and 
 
 | Worktree | Branch / state | HEAD | Tracked and untracked status entries | Disposition |
 |---|---|---:|---:|---|
-| `/home/charlie/midas` | `main` | `b723bfda` | 0 | Active runtime checkout; branch is behind current `origin/main`; preserve its files and processes. |
-| `/home/charlie/midas-ci-stabilization-20261105` | `codex/midas-ci-stabilization-20261105` | `c00bd128` | 0 | Clean checkout at current `origin/main`; retained, no runtime path identified. |
-| `/home/charlie/midas-engineering-mission-20261025` | `codex/midas-comprehensive-engineering-mission-20261025` | `005f6fa5` | 3160 | Preserve 3160 modified/untracked entries exactly; ownership/data not safe to discard. |
-| `/home/charlie/midas-frontier` | `codex/frontier-20261026` | `f6ac37ff` | 5 | Preserve 5 modified/untracked entries exactly; ownership/data not safe to discard. |
+| `/home/charlie/midas` | `main` | `b723bfda` | 0 | Active runtime checkout; ten commits behind current `origin/main`; preserve its files and processes. |
+| `/home/charlie/midas-ci-stabilization-20261105` | `codex/midas-ci-stabilization-20261105` | `c00bd128` | 0 | Clean previous CI checkout, superseded by current `origin/main`; retain pending ignored-data and environment review. |
+| `/home/charlie/midas-engineering-mission-20261025` | `codex/midas-comprehensive-engineering-mission-20261025` | `005f6fa5` | 6 | Preserve all modified/untracked entries exactly; ownership/data not safe to discard. |
+| `/home/charlie/midas-frontier` | `codex/frontier-20261026` | `f6ac37ff` | 1 | Preserve all modified/untracked entries exactly; ownership/data not safe to discard. |
 | `/home/charlie/midas-integration-20261104` | `codex/midas-integration-20261104` | `b723bfda` | 444 | Preserve 444 modified/untracked entries exactly; ownership/data not safe to discard. |
-| `/home/charlie/midas-maintenance` | `codex/midas-maintenance-20261105` | `c00bd128` | 14 | Current isolated maintenance worktree; review and validate before any integration. |
+| `/home/charlie/midas-maintenance` | `codex/midas-operational-resilience-20261105` | `dcefed29` | 0 | Current maintenance worktree on the published candidate; reuse it for follow-up work. |
 | `/home/charlie/midas-reality` | `project/reality` | `d8629e4b` | 0 | Active Reality service and recording data owner; preserve. |
 | `/home/charlie/midas-reality-archive-provenance` | `codex/reality-archive-provenance-20261026` | `a1f2fe99` | 0 | Clean historical/experimental checkout; no deletion authorized; retain pending data and owner review. |
 | `/home/charlie/midas-reality-capacity-scan-frontier-20261029` | `codex/frontier-capacity-scan-bound-20261029` | `d5847df1` | 0 | Clean historical/experimental checkout; no deletion authorized; retain pending data and owner review. |
@@ -106,7 +121,7 @@ All 37 registered worktrees are listed below. Preserve every dirty worktree and 
 | `/tmp/midas-readiness-loading-20261026` | `codex/readiness-loading-state-20261026` | `767f3300` | 0 | Clean historical/experimental checkout; no deletion authorized; retain pending data and owner review. |
 | `/tmp/midas-readiness-web-20261026` | `codex/readiness-memory-composition-web-20261026` | `4e64a2ea` | 0 | Clean historical/experimental checkout; no deletion authorized; retain pending data and owner review. |
 | `/tmp/midas-reality-archive-quota-20261020` | `fix/reality-archive-quota-20261020` | `350db699` | 0 | Clean historical/experimental checkout; no deletion authorized; retain pending data and owner review. |
-| `/tmp/midas-reality-deploy-guard-20261020` | `DETACHED` | `a4f49593` | 7 | Preserve 7 modified/untracked entries exactly; ownership/data not safe to discard. |
+| `/tmp/midas-reality-deploy-guard-20261020` | `DETACHED` | `a4f49593` | 6 | Preserve all modified/untracked entries exactly; ownership/data not safe to discard. |
 | `/tmp/midas-reality-report-hotpath-20261020` | `fix/reality-report-hotpath-20261020` | `397ec50e` | 0 | Clean historical/experimental checkout; no deletion authorized; retain pending data and owner review. |
 | `/tmp/midas-reality-staging-20261020` | `DETACHED` | `87788aee` | 0 | Detached historical checkout; retain its commit and inspect any ignored data before cleanup. |
 | `/tmp/midas-reality-status-clear-20261020` | `fix/reality-stale-error-status` | `b0610c1b` | 0 | Clean historical/experimental checkout; no deletion authorized; retain pending data and owner review. |
@@ -121,9 +136,27 @@ All 37 registered worktrees are listed below. Preserve every dirty worktree and 
 
 - The 26 orphaned commit objects discovered in the refreshed object inventory are retained by **24 refs** under `refs/preservation/orphaned-20261105/`. `git fsck --no-reflogs --unreachable` reports no unreachable commits after pinning, though unrelated unreachable tree/blob objects remain. No garbage collection was run.
 - No stale worktree or origin bookkeeping was identified by the dry-run prune commands. No pruning, checkout cleanup, branch deletion, or worktree removal was performed.
-- Nine worktrees were dirty before the isolated maintenance worktree was created: `/home/charlie/midas-engineering-mission-20261025`, `/home/charlie/midas-frontier`, `/home/charlie/midas-integration-20261104`, `/home/charlie/midas-reality-reliability`, `/home/charlie/midas-validation-control-20261105`, `/home/charlie/midas-veritas-research-overhaul`, `/tmp/midas-reality-deploy-guard-20261020`, `/tmp/midas-reliability-reality-361fd6a`, and `/tmp/midas-reliability-tests-20261020`. Their entries remain untouched. The maintenance worktree is also dirty while this candidate is being prepared.
+- Nine worktrees currently have uncommitted entries: `/home/charlie/midas-engineering-mission-20261025` (6), `/home/charlie/midas-frontier` (1), `/home/charlie/midas-integration-20261104` (444), `/home/charlie/midas-reality-reliability` (26), `/home/charlie/midas-validation-control-20261105` (2), `/home/charlie/midas-veritas-research-overhaul` (25), `/tmp/midas-reality-deploy-guard-20261020` (6), `/tmp/midas-reliability-reality-361fd6a` (2), and `/tmp/midas-reliability-tests-20261020` (4). Their entries remain untouched. The maintenance worktree has zero Git status entries.
 - The current `data/backups/` ignore rule prevents accidental staging of local snapshots. It does not constitute backup storage or an independent copy.
 - The separate 2026-10-30 tables below preserve the earlier code-level branch comparison and migration narrative. Use this refreshed table for today's Git refs and worktree states; verify again before any later cleanup.
+
+## Future retirement candidates (not authorization)
+
+- `codex/midas-maintenance-20261105` currently points to the same commit as
+  `origin/main`, so it has no branch-only source changes. `codex/midas-ci-stabilization-20261105`
+  points to `c00bd12`, four commits behind current `origin/main`; its attached
+  worktree is Git-clean. These are the clearest eventual branch/worktree
+  retirement candidates after checking ignored files and confirming that no
+  active development session owns either directory.
+- Branches marked “selected functionality reconciled” have no current runtime
+  path identified, but their research history remains valuable provenance.
+  Keep those refs until their distinct commits and associated data have an
+  independently preserved manifest.
+- Do not retire the active `main`, `project/reality`, or `project/veritas`
+  worktrees, any dirty worktree, the original `codex/midas-unification`
+  history, recovery/preservation refs, or detached checkouts whose commit has
+  not been pinned elsewhere. Ignored data must be inventoried and backed up
+  before removing any worktree.
 
 # Historical inventory (2026-10-30 snapshot; superseded)
 

@@ -1,6 +1,6 @@
 # MIDAS maintainer handoff
 
-**Verified snapshot:** 2026-11-05 15:32, Europe/Stockholm. **Source base before
+**Verified snapshot:** 2026-11-05 16:31, Europe/Stockholm. **Source base before
 this operational resilience pass:** `origin/main` at
 `3e700b9b2bba7a9da1564e3ab8b2e18be2eba6ea`, whose five hosted CI jobs passed.
 This work is on `codex/midas-operational-resilience-20261105`; source
@@ -36,11 +36,19 @@ The detailed subsystem map is in [ARCHITECTURE.md](ARCHITECTURE.md).
 
 - `origin/main` is `3e700b9b2bba7a9da1564e3ab8b2e18be2eba6ea`; its five hosted CI
   jobs passed before this operational resilience work began.
-- The maintenance implementation at `2bb3ffa` passed GitHub Actions run
+- The prior maintenance implementation at `2bb3ffa` passed GitHub Actions run
   `42030063692` across all five jobs: Python, web, browser, PostgreSQL, and the
   required systemd unit parser. The isolated backend suite reported 2,185
-  passed, 2 skipped, and 0 failed. This handoff records that completed result;
-  check current CI for any later branch tip.
+  passed, 2 skipped, and 0 failed.
+- The Veritas streaming, migration, and summary fixes are at
+  `dcefed29b3d1cbed3baf15ecc1b25cde4c27882e`. Hosted run `42054636224` passed
+  all five jobs: Python, web, browser, PostgreSQL, and the required systemd
+  parser. Backend JUnit reported 2,189 passed, 2 skipped, and 0 failed; the two
+  worker lifecycle checks also passed. On 58,367 synthetic catalog entries,
+  isolated peak RSS fell from 287.4 MiB on the pre-fix reader to 175.9 MiB on
+  the streaming reader, a 111.5 MiB reduction. The new reader retained 128
+  entries and stayed below the existing 256 MiB service limit. This validates
+  the source code only; no live state was migrated.
 - `6aa7c7f00d736d02ee7ca5629d1b9f102e0ae9d9` is the original squash
   integration and is an ancestor of `origin/main`.
 - `codex/midas-unification` at `c256cd1b0743d0c3ba6229c0115fd200fa0f014f`
@@ -108,18 +116,19 @@ exists yet.
 
 ## Current operational assessment and blockers
 
-At the 15:32 host sample, RAM was 15 GiB, 7.2 GiB available, and swap was fully
-used (4 GiB, 16 KiB free). Memory pressure averaged 0.00% over the last 10
-seconds but 1.35%/1.11% for `some`/`full` over five minutes; I/O pressure was
-0.08%/0.07% over 10 seconds. Four later one-second `vmstat` samples showed no
-swap-in or swap-out, CPU idle of 69–79%, and I/O wait of 0–2%. `/` was 82% full
-with 82 GiB free; `/mnt/continental-cloud` had 592 GiB free on a separate
-internal SATA disk. This is a same-host recovery copy, not off-host protection.
-An unrelated Echo Archives headless browser process (PID 2574398) was using
-about 1.43 GiB RSS and 63% CPU after running for over a day; it was left alone.
+At the 16:31 host sample, RAM was 15 GiB with 7.4 GiB available; all 4 GiB of
+swap remained used, with 208 KiB free. Five-minute memory PSI was 2.04%/1.78%
+for `some`/`full`; I/O PSI was about 0.7%. The first `vmstat` sample showed
+swap-in/out, while the next two had none; CPU idle was 80–81% with 1% I/O wait.
+`/` was 82% full with 82 GiB free; `/mnt/continental-cloud` had 592 GiB free
+on a separate internal SATA disk. It is a same-host copy, not off-host
+protection. An unrelated Echo Archives headless browser (PID 2574398) was
+using about 1.50 GiB RSS and 63% CPU after running for over a day; it was left
+alone.
 
 The Veritas source-analysis timer remains enabled and failing. The kernel
-recorded **31 cgroup OOM kills on 2026-11-05** under its 256 MiB service limit.
+recorded **33 cgroup OOM kills on 2026-11-05**, the latest at 16:10, under its
+256 MiB service limit.
 Each run reaches roughly 260 MiB anonymous RSS plus about 19–51 MiB file RSS
 before the kernel kills it. The catalog contains 58,367 finalized sidecars;
 the last durable state still records 53,340 processed segments, leaving about
@@ -133,17 +142,22 @@ the live state untouched until review and an approved deployment.
 
 `midas-reality.service` is active now but has 19 historical restarts; 18
 `systemd-oomd` kills from Oct 22–Nov 4 were followed by automatic restarts.
-Its current cgroup was using about 786 MiB, with a 1.21 GiB peak and a 1.25 GiB
-limit. The active `midas-reality-capacity.timer` also fires every 30 minutes,
-but the capacity service hit its 60-second timeout on four consecutive runs
-from 13:54 through 15:24 on Nov 5. Those failures leave the capacity report
-stale. The monitor traverses the full 58k finalized catalog and needs isolated
-profiling; no timer, unit, or resource ceiling was changed. The old
+Its current cgroup used about 733 MiB, with a 1.13 GiB peak and a 1.25 GiB
+limit. The active `midas-reality-capacity.timer` also fires every 30 minutes;
+the capacity service hit its 60-second timeout on six consecutive runs from
+13:54 through 16:25 on Nov 5, consuming only about 3.4 CPU seconds in the
+latest run. Those failures leave the capacity report stale. The monitor
+traverses the full 58k finalized catalog and needs isolated profiling; no
+timer, unit, or resource ceiling was changed. The old
 `midas-veritas-gap-detail-v2.timer` is inactive and its service is failed after
 134 historical oomd kills; this is not a currently scheduled loop. The 98
 failed user services observed were historical one-shot or validation units,
-not 98 active restart loops. The Arena scheduler's empty schedule result is
+not 104 active restart loops. The Arena scheduler's empty schedule result is
 intentional idle behavior.
+
+The API had nine historical `systemd-oomd` kills during whole-user-slice
+pressure; its own cgroup OOM counter was zero and its `MemoryMax` was not the
+trigger. The user-slice kills are distinct from per-unit `MemoryMax` events.
 
 Some Veritas Mission 2 readers and API lineage checks deliberately pin the
 Reality campaign digest and absolute recording/campaign paths under
@@ -189,12 +203,37 @@ long-running workers do not belong to ordinary development startup.
 
 For systems with `systemd-analyze`, run the user-unit parser test in
 `tests/arena/test_schedule_timer_install.py`. Hosted CI has a dedicated job
-that first requires the parser, so this test cannot silently skip there.
+that first requires the parser, so this test cannot silently skip there. The
+offline backend suite also skips its PostgreSQL paper recovery test when no
+PostgreSQL URL is set; the separate PostgreSQL job runs that recovery check.
 
 Source integration, release staging, and deployment are separate states. Use
 the [deployment plan](UNIFICATION_DEPLOYMENT_PLAN.md) and a current reviewed
 release procedure before touching live services. Green CI is not a
 production-readiness claim.
+
+## Non-blocking CI maintenance signals
+
+Hosted runs pass, but GitHub currently reports that several action tags target
+Node 20 and are being forced to run on Node 24. Upgrade those action majors
+after checking compatibility. The backend run also reports a
+Starlette/httpx `TestClient` deprecation warning; review it with the next
+dependency refresh rather than suppressing it.
+
+## Veritas source-analysis rollout gate
+
+The source-only fix does not change the active observatory release or timer.
+Before any rollout, identify the service's exact loaded release and verify its
+analysis code digest against the v1 compatibility manifest. Require a
+resource-admission pass and an independently verified backup of the v1 state,
+event ledger, campaign inputs, and source evidence. Exercise the migration on
+a disposable copy of that exact checkpoint. During an explicitly approved
+cutover, serialize timer invocations, install the new immutable release, and
+run one controlled analysis;
+verify the v2 state seal and migration provenance, unchanged v1 file, event
+chain, processed cursor, summary, and peak memory below the existing limit
+before allowing scheduled retries to resume. If any prerequisite is missing,
+leave the timer and state untouched.
 
 ## Actions that need specific review
 
