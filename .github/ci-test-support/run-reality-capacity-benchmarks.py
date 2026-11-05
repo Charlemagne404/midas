@@ -16,6 +16,24 @@ from typing import Any
 COUNTS = (1_000, 10_000, 58_367)
 MEMORY_MAX = 192 * 1024**2
 MEMORY_HIGH = 160 * 1024**2
+ENVIRONMENT_DEPENDENT_CAPACITY_FIELDS = {
+    "available_headroom_bytes",
+    "estimated_storage_seconds_remaining",
+    "filesystem_free_bytes",
+}
+
+
+def comparable_capacity_report(value: Any) -> Any:
+    """Drop only container-local free-space readings from cross-version equality."""
+    if isinstance(value, dict):
+        return {
+            key: comparable_capacity_report(item)
+            for key, item in value.items()
+            if key not in ENVIRONMENT_DEPENDENT_CAPACITY_FIELDS
+        }
+    if isinstance(value, list):
+        return [comparable_capacity_report(item) for item in value]
+    return value
 
 
 def run_one(
@@ -257,7 +275,7 @@ def main() -> None:
                     for implementation in ("v5", "v6-main", "v6-candidate")
                 ]
                 successful_reports = [
-                    result["measurement"]["result"]
+                    comparable_capacity_report(result["measurement"]["result"])
                     for result in results
                     if result.get("measurement")
                 ]
@@ -265,7 +283,7 @@ def main() -> None:
                     value != successful_reports[0] for value in successful_reports[1:]
                 ):
                     raise RuntimeError(
-                        "Reality capacity reports differ between available versions "
+                        "Reality capacity report semantics differ between available versions "
                         f"at {count} catalogs"
                     )
     finally:
