@@ -1,9 +1,11 @@
 # MIDAS backup and recovery
 
 This runbook covers active SQLite databases and the Reality recording store.
-The machine-specific measurements below were refreshed on 2026-11-05 around
-15:30 Europe/Stockholm. Recheck mounts, service ownership, database sizes, and
-the resource gate before each operation.
+Database and recording sizes below were measured on 2026-11-05 around 15:30
+Europe/Stockholm; the active Reality retention configuration was read at
+16:45, storage capacity at about 17:11, and host resource pressure at 17:09.
+Recheck mounts, service ownership, database sizes, and the resource gate before
+each operation.
 
 ## Current protection status
 
@@ -34,6 +36,13 @@ historical worktrees. These stores have different writers and evidence
 contracts; they are not covered by the procedures below until individually
 classified and added to the inventory. Source branches and Git history do not
 back up ignored data.
+
+A read-only check of the active Reality recorder configuration at 16:45 on
+2026-11-05 found `retention_days=90`; its storage policy defines a 120-day
+retention stop threshold. These runtime values are not backup retention
+settings and do not prove that automated evidence pruning is enabled or
+functioning. No backup retention schedule or policy is configured; confirm the
+intended evidence and backup retention with the owner before enabling pruning.
 
 ## Off-host destination requirements
 
@@ -74,9 +83,11 @@ The 2026-11-05 probe had 24 KiB free swap, an observed swap-in page, and
 adequate separate-disk capacity. Heavy admission returned `DENY` for
 `swap_reserve_below_profile_floor` and `swap_activity_above_profile_limit`.
 No live data backup was attempted. Wait for the machine to satisfy admission
-and rerun the gate. A later 15:30 host sample still showed all 4 GiB of swap in
-use with only 16 KiB free. Capture each gate result in a private receipt log so
-denials and failures remain reviewable.
+and rerun the gate. The 17:09 host sample still showed all 4 GiB of swap in use
+with only 264 KiB free; the first `vmstat` sample had 50 pages swapped in and
+53 out, with none in the next two samples. This is not a fresh admission pass.
+Capture each gate result in a private receipt log so denials and failures
+remain reviewable.
 
 ## SQLite snapshot
 
